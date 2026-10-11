@@ -152,7 +152,8 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                                         this->exx_nao,
                                                         this->exx_info_,
                                                         *this->inp_,
-                                                        load_exx_flag);
+                                                        load_exx_flag,
+                                                        this->get_td_info());
     }
 
     // for each ionic step, the overlap <phi|alpha> must be rebuilt

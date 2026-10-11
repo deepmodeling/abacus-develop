@@ -11,6 +11,7 @@
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
 #include "source_lcao/allocate_dm.h" // mohan add 2025-10-30
+#include "source_lcao/module_rt/td_info.h"
 
 #include <memory>
 #include <complex>
@@ -42,6 +43,9 @@ class ESolver_KS_LCAO : public ESolver_KS
     void after_all_runners(BaseCell& basecell) override;
 
   protected:
+    /** @brief Optional solver-owned RT state passed to LCAO consumers. */
+    virtual TD_info* get_td_info() const { return nullptr; }
+
     virtual void before_scf(UnitCell& ucell, const int istep) override;
 
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;

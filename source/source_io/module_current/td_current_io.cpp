@@ -8,7 +8,6 @@
 #include "source_base/tool_threading.h"
 #include "source_base/vector3.h"
 #include "source_estate/module_dm/dm_from_psi.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/lcao_domain.h"
 
@@ -29,8 +28,12 @@ void ModuleIO::write_current(const UnitCell& ucell,
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
+    if (td_p == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::write_current", "RT-TDDFT current requires an explicit TD context.");
+    }
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
-    if (PARAM.inp.td_stype != 1)
+    if (td_p->field().gauge() != 1)
     {
         for (int dir = 0; dir < 3; dir++)
         {
@@ -39,13 +42,9 @@ void ModuleIO::write_current(const UnitCell& ucell,
     }
     else
     {
-        if (TD_info::td_vel_op == nullptr)
-        {
-            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gauge infos is null!");
-        }
         for (int dir = 0; dir < 3; dir++)
         {
-            current_term[dir] = TD_info::td_vel_op->get_current_term_pointer(dir);
+            current_term[dir] = td_p->get_current_term_pointer(dir);
         }
     }
     double omega = ucell.omega;
@@ -61,13 +60,13 @@ void ModuleIO::write_current(const UnitCell& ucell,
     // init DMR
     tmp_dm.init_dmr(ra, &ucell);
 
-    if (PARAM.inp.td_stype != 2)
+    if (td_p->field().gauge() != 2)
     {
         tmp_dm.cal_dmr(-1);
     }
     else
     {
-        tmp_dm.cal_dmr_td(td_p->get_phase_hybrid(), TD_info::A_prop_ha, -1);
+        tmp_dm.cal_dmr_td(td_p->get_phase_hybrid(), td_p->endpoint_A(), -1);
     }
     // DM_real.sum_DMR_spin();
     // DM_imag.sum_DMR_spin();
@@ -191,8 +190,12 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
+    if (td_p == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::write_current", "RT-TDDFT current requires an explicit TD context.");
+    }
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
-    if (PARAM.inp.td_stype != 1)
+    if (td_p->field().gauge() != 1)
     {
         for (int dir = 0; dir < 3; dir++)
         {
@@ -201,13 +204,9 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
     }
     else
     {
-        if (TD_info::td_vel_op == nullptr)
-        {
-            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gauge infos is null!");
-        }
         for (int dir = 0; dir < 3; dir++)
         {
-            current_term[dir] = TD_info::td_vel_op->get_current_term_pointer(dir);
+            current_term[dir] = td_p->get_current_term_pointer(dir);
         }
     }
     double omega = ucell.omega;
@@ -233,13 +232,13 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
     {
         for (int ik = 0; ik < nks; ++ik)
         {
-            if (PARAM.inp.td_stype != 2)
+            if (td_p->field().gauge() != 2)
             {
                 tmp_dm.cal_dmr(ik);
             }
             else
             {
-                tmp_dm.cal_dmr_td(td_p->get_phase_hybrid(), TD_info::A_prop_ha, ik);
+                tmp_dm.cal_dmr_td(td_p->get_phase_hybrid(), td_p->endpoint_A(), ik);
             }
 
             // check later

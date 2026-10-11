@@ -175,7 +175,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
             two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_, *this->inp_,
-            load_exx_flag);
+            load_exx_flag, this->get_td_info());
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -283,7 +283,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
                        this->pw_rho, this->solvent, *this->dftu_, this->deepks,
                        this->exx_nao, &ucell.symm, this->exx_info_,
                        fs_cfg,
-                       this->inp_->td_stype,
+                       this->get_td_info(),
                        static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
 
     // delete RA after cal_force
@@ -389,14 +389,15 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 #endif
 		module_dm::Init_DM_Config init_dm_cfg;
 	init_dm_cfg.esolver_type = PARAM.inp.esolver_type;
-	init_dm_cfg.td_stype = PARAM.inp.td_stype;
+	TD_info* td_info = this->get_td_info();
+	init_dm_cfg.td_stype = td_info != nullptr ? td_info->field().gauge() : 0;
 	init_dm_cfg.nspin = PARAM.inp.nspin;
 	init_dm_cfg.nelec = PARAM.inp.nelec;
-	init_dm_cfg.td_phase_hybrid = (PARAM.inp.td_stype == 2 && PARAM.inp.esolver_type != "tddft")
-		? &TD_info::td_vel_op->get_phase_hybrid()
+	init_dm_cfg.td_phase_hybrid = (init_dm_cfg.td_stype == 2 && init_dm_cfg.esolver_type != "tddft")
+		? &td_info->get_phase_hybrid()
 		: nullptr;
-	init_dm_cfg.td_cart_At = (PARAM.inp.td_stype == 2 && PARAM.inp.esolver_type != "tddft")
-		? TD_info::A_prop_ha
+	init_dm_cfg.td_cart_At = (init_dm_cfg.td_stype == 2 && init_dm_cfg.esolver_type != "tddft")
+		? td_info->endpoint_A()
 		: ModuleBase::Vector3<double>();
 	init_dm_cfg.dm2rho_func = &LCAO_domain::dm2rho;
 	module_dm::init_dm<TK>(ucell, this->pelec, this->dmat, this->psi, this->chr, this->pv, iter, exx_two_level_step, init_dm_cfg);

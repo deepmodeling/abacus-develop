@@ -64,7 +64,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                Exx_NAO<TK> &exx_nao,
                                const Exx_Info& exx_info,
                                const Input_para& inp,
-                               const bool load_exx_flag)
+                               const bool load_exx_flag,
+                               TD_info* td_info)
 {
     this->classname = "HamiltLCAO";
 
@@ -114,7 +115,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     {
         bundle = build_multik_ops<TK, TR>(ucell, grid_d, paraV, pot_in, two_center_bundle,
                                           orb, DM_in, p_dftu, deepks, inp, pot_register_in,
-                                          this->kv, this->hsk.get(), this->hR.get(), this->sR.get());
+                                          this->kv, this->hsk.get(), this->hR.get(), this->sR.get(), td_info);
     }
     this->getOperator() = bundle.ops;
 #ifdef __MLALGO
@@ -147,6 +148,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         this->hR->allocate(this->hRS2.data(), 0);
         memory_fold = 2;
     }
+
+    // Hybrid-gauge folding runs in the final operator, so bind the complete chain after appending EXX.
+    // Sub-chain TD operators must share the same solver-owned context.
+    bundle.ops->bind_td_info(td_info);
 
     ModuleBase::Memory::record("HamiltLCAO::hR", this->hR->get_memory_size() * memory_fold);
     ModuleBase::Memory::record("HamiltLCAO::sR", this->sR->get_memory_size());
