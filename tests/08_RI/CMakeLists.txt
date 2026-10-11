@@ -33,12 +33,12 @@ else()
     endforeach()
     add_test(
         NAME 08_RI_librpa_wavefunction_checks
-        COMMAND ${BASH} ../integrate/validation_tools/run_librpa_wavefunction_checks.sh
+        COMMAND ${BASH} ${ABACUS_TEST_DIR}/integrate/validation_tools/run_librpa_wavefunction_checks.sh
                 ${ABACUS_TEST_DIR}/integrate/validation_tools
     )
     add_test(
         NAME 08_RI_librpa_producer_mpi
-        COMMAND ${BASH} ../integrate/validation_tools/run_librpa_mpi.sh
+        COMMAND ${BASH} ${ABACUS_TEST_DIR}/integrate/validation_tools/run_librpa_mpi.sh
                 --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
                 --mpirun ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
                 ${MPI_LAUNCHER_FLAGS}
@@ -46,7 +46,7 @@ else()
     set_tests_properties(08_RI_librpa_producer_mpi PROPERTIES PROCESSORS 2 TIMEOUT 1200)
     add_test(
         NAME 08_RI_librpa_symmetry
-        COMMAND ${BASH} ../integrate/validation_tools/run_librpa_sym.sh
+        COMMAND ${BASH} ${ABACUS_TEST_DIR}/integrate/validation_tools/run_librpa_sym.sh
                 --abacus ${ABACUS_BIN_PATH} --cases ${ABACUS_TEST_DIR}/08_RI
                 --mpirun ${MPIEXEC_EXECUTABLE} --mpi-np-flag=${MPIEXEC_NUMPROC_FLAG}
                 ${MPI_LAUNCHER_FLAGS}
