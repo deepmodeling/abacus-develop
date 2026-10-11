@@ -1,7 +1,7 @@
 #ifndef RPA_LRI_INPUT_H
 #define RPA_LRI_INPUT_H
 
-class Input_para;
+struct Input_para;
 class K_Vectors;
 
 namespace ModuleRI

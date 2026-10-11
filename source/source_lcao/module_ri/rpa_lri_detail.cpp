@@ -47,8 +47,8 @@ std::size_t coulomb_atom_pair_index(const std::size_t I, const std::size_t J, co
     {
         throw std::runtime_error("LibRPA v1 Coulomb output expects upper-triangular atom pairs.");
     }
-    // Pack the upper triangle row by row: rows before I contain
-    // natoms-I, natoms-(I+1), ... entries, followed by the J entry.
+    // Rows before I contribute I*natoms - I*(I-1)/2 entries;
+    // J-I then selects the element within row I.
     return I * natoms - I * (I - 1) / 2 + (J - I);
 }
 
