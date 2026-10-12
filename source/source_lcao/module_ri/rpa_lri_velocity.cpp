@@ -73,8 +73,7 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
                                            nspin_tmp,
                                            nbands,
                                            nbasis,
-                                           nbands,
-                                           *this->p_kv);
+                                           nbands);
     }
     ModuleBase::timer::end("RPA_LRI", "out_velocity");
 }

@@ -860,6 +860,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       ri_util.o\
       rpa_lri.o\
       rpa_lri_detail.o\
+      rpa_lri_band_io.o\
       rpa_lri_mpi_layout.o\
       rpa_lri_wfc_mpi.o\
       rpa_lri_bz_io.o\

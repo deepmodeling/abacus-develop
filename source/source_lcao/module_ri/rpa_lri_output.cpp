@@ -1,5 +1,6 @@
 #include "exx_lri.h"
 #include "rpa_lri.h"
+#include "rpa_lri_band_io.h"
 #include "rpa_lri_detail.h"
 #include "source_base/global_function.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
@@ -103,6 +104,7 @@ catch (...)
 
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
+try
 {
     ModuleBase::TITLE("DFT_RPA_interface", "out_bands");
     if (this->runtime.rank != 0)
@@ -111,30 +113,46 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
     }
     const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
     const int nspin_tmp = this->runtime.input.nspin == 2 ? 2 : 1;
-    std::ofstream ofs;
-    ofs.open(this->runtime.input.rpa_outdir + "band_out.txt", std::ios::out);
-    ofs << std::fixed << std::setprecision(15);
-    ofs << nks_tot << std::endl;
-    ofs << nspin_tmp << std::endl;
-    ofs << this->runtime.input.nbands << std::endl;
-    ofs << this->runtime.nlocal << std::endl;
-    ofs << (pelec->eferm.ef / 2.0) << std::endl;
-
+    RpaLriDetail::BandOutputData data;
+    data.nk = nks_tot;
+    data.nspin = nspin_tmp;
+    data.nbands = this->runtime.input.nbands;
+    data.nbasis = this->runtime.nlocal;
+    data.fermi_ry = pelec->eferm.ef;
+    data.samples.reserve(static_cast<std::size_t>(nks_tot) * static_cast<std::size_t>(nspin_tmp)
+                         * static_cast<std::size_t>(this->runtime.input.nbands));
     for (int ik = 0; ik != nks_tot; ik++)
     {
         for (int is = 0; is != nspin_tmp; is++)
         {
-            ofs << std::setw(6) << ik + 1 << std::setw(6) << is + 1 << std::endl;
             for (int ib = 0; ib != this->runtime.input.nbands; ib++)
             {
-                ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << pelec->wg(ik + is * nks_tot, ib) * nks_tot
-                    << std::setw(25) << pelec->ekb(ik + is * nks_tot, ib) / 2.0 << std::setw(25)
-                    << pelec->ekb(ik + is * nks_tot, ib) * ModuleBase::Ry_to_eV << std::endl;
+                RpaLriDetail::BandSample sample;
+                sample.occupation = pelec->wg(ik + is * nks_tot, ib) * nks_tot;
+                sample.energy_ry = pelec->ekb(ik + is * nks_tot, ib);
+                data.samples.push_back(sample);
             }
         }
     }
+    std::ofstream ofs(this->runtime.input.rpa_outdir + "band_out.txt", std::ios::out | std::ios::trunc);
+    if (!ofs.good())
+    {
+        throw std::runtime_error("Failed to open band_out.txt");
+    }
+    RpaLriDetail::write_band_output(ofs, data);
     ofs.close();
-    return;
+    if (!ofs.good())
+    {
+        throw std::runtime_error("Failed to write band_out.txt");
+    }
+}
+catch (const std::exception& error)
+{
+    RpaLriDetail::abort_output(this->mpi_comm, error.what());
+}
+catch (...)
+{
+    RpaLriDetail::abort_output(this->mpi_comm, "Unknown exception in out_bands");
 }
 
 template void RPA_LRI<double, double>::out_struc(const UnitCell& ucell);
