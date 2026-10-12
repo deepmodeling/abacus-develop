@@ -433,15 +433,16 @@ TEST_F(OccupyTest, CompensatedWeightedOccupationSum)
 
 TEST_F(OccupyTest, FermiSearchAtRepresentableEnergyLimit)
 {
-    ModuleBase::matrix energies(1, 1);
-    energies(0, 0) = 1e8;
+    ModuleBase::matrix energies(1, 2);
+    energies(0, 0) = 0.0;
+    energies(0, 1) = 1e8;
     const std::vector<double> weights{1.0};
     const std::vector<int> spins{0};
     double ef = 0.0;
-    // The width is smaller than one ULP of the eigenvalue. No double-valued
-    // chemical potential can yield the requested fractional occupation.
+    // Unlike a common energy shift, this enormous spectral span still leaves
+    // the root unresolved in the centered coordinate. It must not pass silently.
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(occupy_smearing::efermig(energies, 1, 1, 0.3, weights, 1e-8, 0, ef, -1, spins),
+    EXPECT_EXIT(occupy_smearing::efermig(energies, 2, 1, 0.3, weights, 1e-8, 0, ef, -1, spins),
                 ::testing::ExitedWithCode(1), "");
     const std::string diagnostic = testing::internal::GetCapturedStdout();
     EXPECT_THAT(diagnostic, testing::HasSubstr("Fermi bracket reached floating-point resolution"));
@@ -527,4 +528,108 @@ TEST_F(OccupyTest, GweightsHonorsExplicitBandRange)
     EXPECT_NEAR(occupations(0, 0), target, 2e-15);
     EXPECT_DOUBLE_EQ(occupations(0, 1), -123.0);
     EXPECT_DOUBLE_EQ(occupations(0, 2), -123.0);
+}
+
+TEST_F(OccupyTest, DegenerateSpectrumEnergyShift)
+{
+    // Reproduce ElecStateTest.CalculateWeightsGWeights without changing its fixture.
+    const int points = 5;
+    const int bands = 6;
+    ModuleBase::matrix energies(points, bands);
+    ModuleBase::matrix occupations(points, bands);
+    const std::vector<double> weights(points, 2.0);
+    const std::vector<int> spins(points, 0);
+    const double target = 10.0;
+    const double tolerance = 16.0 * std::numeric_limits<double>::epsilon() * target;
+    for (const double shift : {0.0, 100.0, 200.0, 1e8})
+    {
+        for (int ik = 0; ik < points; ++ik)
+        {
+            for (int ib = 0; ib < bands; ++ib)
+            {
+                energies(ik, ib) = shift;
+            }
+        }
+        double ef = 0.0;
+        double entropy = 0.0;
+        occupy.gweights(points, weights, bands, target, 0.01, 0, energies, ef, entropy, occupations, -1, spins);
+        long double count = 0.0L;
+        for (int ik = 0; ik < points; ++ik)
+        {
+            for (int ib = 0; ib < bands; ++ib)
+            {
+                EXPECT_NEAR(occupations(ik, ib), 1.0 / 3.0, 2e-15);
+                count += occupations(ik, ib);
+            }
+        }
+        EXPECT_NEAR(count, target, tolerance) << shift;
+        if (shift == 100.0)
+        {
+            const double residual = std::abs(static_cast<double>(count - target));
+            std::ostringstream value;
+            value.precision(17);
+            value << residual;
+            RecordProperty("shift100_particle_residual", value.str());
+        }
+    }
+}
+
+TEST_F(OccupyTest, OccupationAndEntropyEnergyShift)
+{
+    ModuleBase::matrix energies(1, 3);
+    ModuleBase::matrix occupations(1, 3);
+    ModuleBase::matrix reference(1, 3);
+    const std::vector<double> weights{2.0};
+    const std::vector<int> spins{0};
+    const double target = 2.3;
+    for (const int smearing : {0, 1, 2, -1, -99})
+    {
+        double reference_entropy = 0.0;
+        double reference_fermi = 0.0;
+        for (const double shift : {0.0, 100.0, 200.0, 1e8})
+        {
+            for (int ib = 0; ib < 3; ++ib)
+            {
+                // Binary fractions ensure the shifted input spectrum is exact.
+                energies(0, ib) = shift - 0.5 + 0.5 * ib;
+            }
+            double ef = 0.0;
+            double entropy = 0.0;
+            occupy.gweights(1, weights, 3, target, 0.125, smearing, energies, ef, entropy, occupations, -1, spins);
+            if (shift == 0.0)
+            {
+                reference_entropy = entropy;
+                reference_fermi = ef;
+                for (int ib = 0; ib < 3; ++ib)
+                {
+                    reference(0, ib) = occupations(0, ib);
+                }
+            }
+            double count = 0.0;
+            for (int ib = 0; ib < 3; ++ib)
+            {
+                EXPECT_NEAR(occupations(0, ib), reference(0, ib), 2e-15);
+                count += occupations(0, ib);
+            }
+            EXPECT_NEAR(count, target, 8e-15);
+            EXPECT_NEAR(entropy, reference_entropy, 2e-15);
+            const double expected_fermi = reference_fermi + shift;
+            EXPECT_DOUBLE_EQ(ef, expected_fermi);
+        }
+    }
+}
+
+TEST_F(OccupyTest, NarrowSmearingAtLargeEnergyOffset)
+{
+    ModuleBase::matrix energies(1, 1);
+    energies(0, 0) = 1e8;
+    ModuleBase::matrix occupations(1, 1);
+    const std::vector<double> weights{1.0};
+    const std::vector<int> spins{0};
+    double ef = 0.0;
+    double entropy = 0.0;
+    occupy.gweights(1, weights, 1, 0.3, 1e-8, 0, energies, ef, entropy, occupations, -1, spins);
+    EXPECT_NEAR(occupations(0, 0), 0.3, 2e-15);
+    EXPECT_TRUE(std::isfinite(ef));
+    EXPECT_TRUE(std::isfinite(entropy));
 }
