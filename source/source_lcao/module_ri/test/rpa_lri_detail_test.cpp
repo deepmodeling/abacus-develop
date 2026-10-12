@@ -1,20 +1,25 @@
 #include "../rpa_lri_detail.h"
+
+#include "../rpa_lri_bz_io.h"
 #include "../rpa_lri_coeff_v1.h"
 
 #include <RI/global/Tensor.h>
-#include <gtest/gtest.h>
-
+#include <array>
 #include <complex>
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace
 {
+using RpaLriDetail::BzSampleData;
+using RpaLriDetail::BzSamplePoint;
 using RpaLriDetail::checked_add_u64;
 using RpaLriDetail::checked_i32_from_int;
 using RpaLriDetail::checked_i32_from_size;
@@ -26,6 +31,7 @@ using RpaLriDetail::LIBRPA_LRICOEF_V1_MARKER;
 using RpaLriDetail::LriCoefV1Block;
 using RpaLriDetail::real_as_double;
 using RpaLriDetail::sum_int_vector;
+using RpaLriDetail::write_bz_sample;
 using RpaLriDetail::write_lri_coef_v1;
 }
 
@@ -209,4 +215,156 @@ TEST(RpaLriDetail, CoefficientV1RejectsShapeMismatch)
     std::vector<LriCoefV1Block> blocks(1, block);
 
     EXPECT_THROW(write_lri_coef_v1("unused.dat", 1, blocks), std::runtime_error);
+}
+
+namespace
+{
+BzSamplePoint make_bz_point(const double weight,
+                            const std::array<double, 3>& direct,
+                            const std::array<double, 3>& cartesian)
+{
+    BzSamplePoint point;
+    point.weight = weight;
+    point.direct = direct;
+    point.cartesian = cartesian;
+    return point;
+}
+
+BzSampleData make_reduced_bz_sample()
+{
+    BzSampleData data;
+    data.mesh = {{2, 1, 2}};
+    data.reduced.push_back(make_bz_point(2.0, {{0.0, 0.0, 0.0}}, {{0.0, 0.0, 0.0}}));
+    data.reduced.push_back(make_bz_point(2.0, {{0.5, 0.0, 0.5}}, {{1.0, 0.0, 1.0}}));
+    data.full_cartesian = {{{0.0, 0.0, 0.0}}, {{0.0, 0.0, 1.0}}, {{1.0, 0.0, 0.0}}, {{1.0, 0.0, 1.0}}};
+    data.full_map = {0, 0, 1, 1};
+    return data;
+}
+} // namespace
+
+TEST(RpaLriDetail, BzSampleWritesReducedGridAndFullMap)
+{
+    const std::string filename = "rpa_lri_bz_sample_test.txt";
+    std::remove(filename.c_str());
+    write_bz_sample(filename, make_reduced_bz_sample());
+
+    std::ifstream input(filename.c_str());
+    ASSERT_TRUE(input.good());
+    std::string line;
+    ASSERT_TRUE(static_cast<bool>(std::getline(input, line)));
+    EXPECT_EQ(line, "2     1     2");
+    ASSERT_TRUE(static_cast<bool>(std::getline(input, line)));
+    EXPECT_EQ(line, "2       2");
+
+    ASSERT_TRUE(static_cast<bool>(std::getline(input, line)));
+    std::istringstream first_point(line);
+    int index = 0;
+    double weight = 0.0;
+    double direct_x = 0.0;
+    double direct_y = 0.0;
+    double direct_z = 0.0;
+    double cart_x = 0.0;
+    double cart_y = 0.0;
+    double cart_z = 0.0;
+    int scf_index = 0;
+    int coulomb_index = 0;
+    first_point >> index >> weight >> direct_x >> direct_y >> direct_z >> cart_x >> cart_y >> cart_z >> scf_index
+        >> coulomb_index;
+    EXPECT_EQ(index, 1);
+    EXPECT_DOUBLE_EQ(weight, 0.5);
+    EXPECT_DOUBLE_EQ(direct_x, 0.0);
+    EXPECT_DOUBLE_EQ(direct_y, 0.0);
+    EXPECT_DOUBLE_EQ(direct_z, 0.0);
+    EXPECT_DOUBLE_EQ(cart_x, 0.0);
+    EXPECT_DOUBLE_EQ(cart_y, 0.0);
+    EXPECT_DOUBLE_EQ(cart_z, 0.0);
+    EXPECT_EQ(scf_index, 1);
+    EXPECT_EQ(coulomb_index, 1);
+
+    ASSERT_TRUE(static_cast<bool>(std::getline(input, line)));
+    std::istringstream second_point(line);
+    second_point >> index >> weight >> direct_x >> direct_y >> direct_z >> cart_x >> cart_y >> cart_z >> scf_index
+        >> coulomb_index;
+    EXPECT_EQ(index, 2);
+    EXPECT_DOUBLE_EQ(weight, 0.5);
+    EXPECT_DOUBLE_EQ(direct_x, 0.5);
+    EXPECT_DOUBLE_EQ(direct_y, 0.0);
+    EXPECT_DOUBLE_EQ(direct_z, 0.5);
+    EXPECT_DOUBLE_EQ(cart_x, 1.0);
+    EXPECT_DOUBLE_EQ(cart_y, 0.0);
+    EXPECT_DOUBLE_EQ(cart_z, 1.0);
+    EXPECT_EQ(scf_index, 2);
+    EXPECT_EQ(coulomb_index, 2);
+
+    ASSERT_TRUE(static_cast<bool>(std::getline(input, line)));
+    EXPECT_EQ(line, "full_kmap 4");
+    for (int full_index = 1; full_index <= 4; ++full_index)
+    {
+        ASSERT_TRUE(static_cast<bool>(std::getline(input, line)));
+        std::istringstream full_point(line);
+        int point_index = 0;
+        int representative = 0;
+        double full_x = 0.0;
+        double full_y = 0.0;
+        double full_z = 0.0;
+        full_point >> point_index;
+        full_point >> full_x >> full_y >> full_z;
+        full_point >> representative;
+        EXPECT_EQ(point_index, full_index);
+        EXPECT_DOUBLE_EQ(full_x, full_index == 1 || full_index == 2 ? 0.0 : 1.0);
+        EXPECT_DOUBLE_EQ(full_y, 0.0);
+        EXPECT_DOUBLE_EQ(full_z, full_index == 1 || full_index == 3 ? 0.0 : 1.0);
+        EXPECT_EQ(representative, full_index <= 2 ? 1 : 2);
+    }
+    EXPECT_FALSE(static_cast<bool>(std::getline(input, line)));
+    input.close();
+    std::remove(filename.c_str());
+}
+
+TEST(RpaLriDetail, BzSampleRejectsInvalidRepresentative)
+{
+    BzSampleData data = make_reduced_bz_sample();
+    data.full_map[3] = 2;
+    EXPECT_THROW(write_bz_sample("unused.txt", data), std::runtime_error);
+}
+
+TEST(RpaLriDetail, BzSampleRejectsInconsistentFoldedWeight)
+{
+    BzSampleData data = make_reduced_bz_sample();
+    data.reduced[0].weight = 3.0;
+    data.reduced[1].weight = 1.0;
+    EXPECT_THROW(write_bz_sample("unused.txt", data), std::runtime_error);
+}
+
+TEST(RpaLriDetail, BzSampleKeepsFullGridFormatWithoutMapTail)
+{
+    const std::string filename = "rpa_lri_bz_full_test.txt";
+    std::remove(filename.c_str());
+    BzSampleData data;
+    data.mesh = {{1, 1, 2}};
+    data.reduced.push_back(make_bz_point(0.5, {{0.0, 0.0, 0.0}}, {{0.0, 0.0, 0.0}}));
+    data.reduced.push_back(make_bz_point(0.5, {{0.0, 0.0, 0.5}}, {{0.0, 0.0, 1.0}}));
+    data.full_cartesian = {{{0.0, 0.0, 0.0}}, {{0.0, 0.0, 1.0}}};
+    data.full_map = {0, 1};
+    write_bz_sample(filename, data);
+
+    std::ifstream input(filename.c_str());
+    ASSERT_TRUE(input.good());
+    std::string line;
+    int line_count = 0;
+    while (std::getline(input, line))
+    {
+        ++line_count;
+        EXPECT_NE(line, "full_kmap 2");
+    }
+    EXPECT_EQ(line_count, 4);
+    input.close();
+    std::remove(filename.c_str());
+}
+
+TEST(RpaLriDetail, BzSampleRejectsGridSizeOutsideIndexRange)
+{
+    BzSampleData data;
+    data.mesh = {{std::numeric_limits<int>::max(), 2, 1}};
+    EXPECT_THROW(write_bz_sample("unused.txt", data), std::runtime_error);
 }

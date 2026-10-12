@@ -862,6 +862,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       rpa_lri_detail.o\
       rpa_lri_mpi_layout.o\
       rpa_lri_wfc_mpi.o\
+      rpa_lri_bz_io.o\
       rpa_lri_coulomb.o\
       rpa_lri_coulomb_io.o\
       rpa_lri_overlap.o\
