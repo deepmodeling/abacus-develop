@@ -99,8 +99,6 @@ python3 .ci/slurm/runner.py run --help
 
 Resource labels are generated, not configured separately. A single-node resource is shown as `N GPU` or `N GPUs`; a multi-node resource is shown as `N nodes / M GPUs`. Thus `gpu1`, `gpu2`, and `gpu4` display `1 GPU`, `2 GPUs`, and `4 GPUs`; `gpu4x2` displays `2 nodes / 8 GPUs`. Test results are reported by their `tests/` folder even though Slurm arrays remain grouped by resource. `case.049` is `05_rtTDDFT/00_NO_Si48_CUSOLVERMP_TDDFT_GPU`; it uses `gpu4x2` and the `cusolvermp` runner.
 
-The matrix contains 117 cases, including 67 PW cases. The PW selection is maintained independently of `tests/01_PW/CASES_GPU.txt` and retains the Slurm-specific `090_PW_out_pchg_wfc_spinor` case. Renamed cases use their current directory names, merged cases run once, and the removed legacy cases and currently disabled `scf_brav_bcc_smear_m2` and `md_npt` cases are excluded. When renaming or merging cases, update this configuration as well as the regular case lists and check that every configured case has an `INPUT` file.
-
 ## Results and retention
 
 On the remote cluster, a run is created below:
