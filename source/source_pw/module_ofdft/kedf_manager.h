@@ -73,6 +73,15 @@ class KEDF_Manager
     );
 
 private:
+    void init_tf(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV);
+    void init_vw(const Input_para& inp, double dV);
+    void init_wt(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
+    void init_extwt(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
+    void init_xwm(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
+    void init_lkt(const Input_para& inp, double dV);
+#ifdef __MLALGO
+    void init_ml(const Input_para& inp, ModulePW::PW_Basis* pw_rho, double dV, double nelec);
+#endif
 
     KEDF_LKT* lkt_ = nullptr; // Luo-Karasiev-Trickey KEDF
     KEDF_TF* tf_ = nullptr;   // Thomas-Fermi KEDF

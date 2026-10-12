@@ -125,6 +125,7 @@ props_init(){
 	out_mul=$(get_input_key_value "out_mul" "INPUT")
 	gamma_only=$(get_input_key_value "gamma_only" "INPUT")
 	imp_sol=$(get_input_key_value "imp_sol" "INPUT")
+	assume_isolated=$(get_input_key_value "assume_isolated" "INPUT")
 	run_rpa=$(get_input_key_value "rpa" "INPUT")
 	out_pot=$(get_input_key_value "out_pot" "INPUT")
 	out_elf=$(get_input_key_value "out_elf" "INPUT")

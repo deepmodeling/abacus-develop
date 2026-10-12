@@ -1,8 +1,15 @@
 # These tests exercise CPU code and need no GPU kernels.
 abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
+# Manager tests exercise the conventional KEDFs without the optional ML backend.
+abacus_disable_feature_definitions(__MLALGO)
 
-set(ofdft_test_sources test_kedf_tf.cpp ../kedf_tf.cpp test_kedf_vw.cpp ../kedf_vw.cpp)
+set(ofdft_test_sources
+  test_kedf_tf.cpp ../kedf_tf.cpp
+  test_kedf_vw.cpp ../kedf_vw.cpp
+  test_kedf_manager.cpp ../kedf_manager.cpp
+  ../kedf_wt.cpp ../kedf_extwt.cpp ../kedf_xwm.cpp ../kedf_lkt.cpp
+)
 set(ofdft_test_libs parameter base device planewave)
 if(ENABLE_MPI)
   # The linked base library performs MPI reductions even for a single rank.

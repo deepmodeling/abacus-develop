@@ -22,6 +22,7 @@ void write_elecstat_pot(
     const UnitCell* ucell,
     const double* v_eff,
     const surchem& solvent,
+    const std::vector<double>* pcc_potential,
     const int precision,
     std::ofstream& ofs_running)
 {
@@ -66,6 +67,10 @@ void write_elecstat_pot(
         if (efield>0 && dip_corr>0)
         {
             v_elecstat[ir] += v_efield(0, ir);
+        }
+        if (pcc_potential != nullptr)
+        {
+            v_elecstat[ir] += (*pcc_potential)[ir];
         }
         if(imp_sol == true)
         {

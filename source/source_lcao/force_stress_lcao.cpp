@@ -186,6 +186,11 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     // vdW force/stress and external-field forces
     LCAO_domain::cal_vdw_fields_fs(vdw_result, ucell, solvent, rhopw, locpp,
                                    isforce, isstress, parts, sparts);
+    if (isforce)
+    {
+        parts.fpcc.create(ucell.nat, 3);
+        pelec->pot->add_pcc_force(ucell, parts.fpcc);
+    }
 
     // DFT+U force/stress
     LCAO_domain::cal_dftu_fs(ucell, gd, pv, orb, kv, dmat, two_center_bundle, dftu, isforce, isstress, parts, sparts);
