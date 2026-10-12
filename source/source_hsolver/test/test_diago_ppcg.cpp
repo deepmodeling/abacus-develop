@@ -3209,6 +3209,14 @@ TEST_F(DiagoPPCGTridiagSTest, BlockSubspace)
 class DiagoPPCGBenchmarkTest : public ::testing::Test
 {
   protected:
+    struct RunResult
+    {
+        double average_iterations;
+        double wall_time;
+        bool converged;
+        Real max_residual;
+    };
+
     void SetUp() override
     {
     }
@@ -3249,8 +3257,7 @@ class DiagoPPCGBenchmarkTest : public ::testing::Test
         }
     }
 
-    // Run PPCG and return {avg_iter, wall_sec}.
-    static std::pair<double, double> run_ppcg(int n, int nband, const std::vector<T>& H, const std::vector<Real>& prec)
+    static RunResult run_ppcg(int n, int nband, const std::vector<T>& H, const std::vector<Real>& prec)
     {
         int ld = n;
         std::mt19937 rng(42);
@@ -3294,14 +3301,14 @@ class DiagoPPCGBenchmarkTest : public ::testing::Test
         std::vector<double> ethr(nband, 1e-4);
         auto h_op = [&H, n](T* in, T* out, int ldi, int nc) { dense_h_multiply(H.data(), n, in, out, ldi, nc); };
 
-        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, nband, std::min(nband, 4)
-                                                                       );
+        const int rr_step = std::min(nband, 4);
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, nband, rr_step);
 
         auto t0 = std::chrono::high_resolution_clock::now();
         double avg_iter = solver.diag(h_op, nullptr, ld, nband, n, psi.data(), eval.data(), ethr, prec.data());
         auto t1 = std::chrono::high_resolution_clock::now();
         double wall = std::chrono::duration<double>(t1 - t0).count();
-        return {avg_iter, wall};
+        return {avg_iter, wall, solver.converged(), solver.max_residual()};
     }
 };
 
@@ -3326,9 +3333,9 @@ TEST_F(DiagoPPCGBenchmarkTest, DISABLED_FullBenchmark)
         std::vector<T> H;
         std::vector<Real> prec;
         make_random_hamilt(c.n, c.sparsity, H, prec);
-        const std::pair<double, double> result = run_ppcg(c.n, c.nband, H, prec);
-        const double avg_iter = result.first;
-        const double wall = result.second;
+        const RunResult result = run_ppcg(c.n, c.nband, H, prec);
+        const double avg_iter = result.average_iterations;
+        const double wall = result.wall_time;
         printf(" %5d   %3d     %2d%%       %6.1f      %7.4f\n", c.n, c.nband, c.sparsity, avg_iter, wall);
     }
     std::cout << "=================================================\n";
@@ -3341,10 +3348,11 @@ TEST_F(DiagoPPCGBenchmarkTest, QuickBenchmark)
     std::vector<T> H;
     std::vector<Real> prec;
     make_random_hamilt(80, 60, H, prec);
-    const std::pair<double, double> result = run_ppcg(80, 8, H, prec);
-    const double avg_iter = result.first;
-    EXPECT_LE(avg_iter, 500.0) << "PPCG did not converge within 500 iters";
-    SUCCEED();
+    const RunResult result = run_ppcg(80, 8, H, prec);
+    EXPECT_TRUE(result.converged);
+    EXPECT_TRUE(std::isfinite(result.max_residual));
+    EXPECT_LE(result.max_residual, Real(1.0e-4));
+    EXPECT_LE(result.average_iterations, 500.0);
 }
 
 int main(int argc, char** argv)

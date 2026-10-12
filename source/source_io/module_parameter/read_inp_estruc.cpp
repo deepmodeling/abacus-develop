@@ -1136,11 +1136,17 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "Rayleigh-Ritz re-application interval for PPCG";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = ppcg. It controls how often (in subspace iterations) H and S are re-applied to reset the accumulated rounding drift after the Rayleigh-Ritz rotation. A larger value reduces the number of H/S applications and thus the wall time without changing the iteration count in well-conditioned cases; a smaller value is more robust against rounding drift in ill-conditioned problems.";
+        item.description = "Only useful when you use ks_solver = ppcg. It must be a positive integer and controls how often (in subspace iterations) H and S are re-applied to reset the accumulated rounding drift after the Rayleigh-Ritz rotation. A larger value reduces the number of H/S applications and thus the wall time without changing the iteration count in well-conditioned cases; a smaller value is more robust against rounding drift in ill-conditioned problems.";
         item.default_value = "16";
         item.unit = "";
         item.set_availability("basis_type==pw and ks_solver==ppcg");
         read_sync_int(input.pw_diag_rr_step);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.pw_diag_rr_step <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pw_diag_rr_step must be greater than 0");
+            }
+        };
         this->add_item(item);
     }
     {

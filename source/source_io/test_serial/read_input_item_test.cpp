@@ -412,6 +412,14 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).pw_diag_thr, 1.0e-5);
     }
+    { // pw_diag_rr_step
+        auto it = find_label("pw_diag_rr_step", readinput.input_lists);
+        TestParameters::input(param).pw_diag_rr_step = 1;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+
+        TestParameters::input(param).pw_diag_rr_step = 0;
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+    }
     { // nb2d
         auto it = find_label("nb2d", readinput.input_lists);
         TestParameters::input(param).nb2d = -1;

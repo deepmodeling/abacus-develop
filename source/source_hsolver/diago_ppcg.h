@@ -14,10 +14,10 @@ namespace hsolver {
 // DiagoPPCG: Projection Preconditioned solver
 // -----------------------------------------------------------------------------
 //
-// Implements the block-subspace diagonalization strategy (File 1 approach),
-// the production path used by ks_solver=ppcg.  The band-by-band conjugate
-// gradient variant (File 2 approach) was removed from this PR: it was slower
-// than the block subspace path on the dense benchmark and was not used.
+// Implements the block-subspace diagonalization strategy used by
+// ks_solver=ppcg. The solver updates groups of active Ritz pairs in a bounded
+// local subspace and periodically refreshes their Hamiltonian and overlap
+// images with a global Rayleigh-Ritz step.
 // -----------------------------------------------------------------------------
 
 namespace base_device = ::base_device;
