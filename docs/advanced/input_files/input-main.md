@@ -490,7 +490,7 @@
     - [td\_supsine\_sigma](#td_supsine_sigma)
     - [td\_supsine\_tstart](#td_supsine_tstart)
     - [td\_supsine\_tend](#td_supsine_tend)
-    - [init\_vecpot\_file](#init_vecpot_file)
+    - [init\_vecpot](#init_vecpot)
     - [ocp](#ocp)
     - [ocp\_set](#ocp_set)
     - [out\_freq\_td](#out_freq_td)
@@ -4344,7 +4344,7 @@
 ### td_vext
 
 - **Type**: Boolean
-- **Description**: Controls the analytic time-dependent electric field. With `init_vecpot_file=True`, the external field is supplied through the vector-potential file instead, independently of `td_vext`.
+- **Description**: Controls the analytic time-dependent electric field. With `init_vecpot=True`, the external field is supplied through the vector-potential file instead, independently of `td_vext`.
   - `True`: Enable the analytic electric field.
   - `False`: Disable the analytic electric field.
 - **Default**: False
@@ -4386,13 +4386,13 @@
 ### td_tstart
 
 - **Type**: Integer
-- **Description**: First active electronic-step index of the analytic electric field. Index $n$ corresponds to time $n\Delta t$, where $\Delta t=\mathtt{td\_dt}$. The interval from `td_tstart` through `td_tend` includes both endpoints. In velocity and hybrid gauges, each active index $n$ selects the integration interval $[n\Delta t,(n+1)\Delta t]$; its result is used at the next endpoint. The initial state at time zero does not integrate a future interval. Ignored when `init_vecpot_file=True`.
+- **Description**: First active electronic-step index of the analytic electric field. Index $n$ corresponds to time $n\Delta t$, where $\Delta t=\mathtt{td\_dt}$. The interval from `td_tstart` through `td_tend` includes both endpoints. In velocity and hybrid gauges, each active index $n$ selects the integration interval $[n\Delta t,(n+1)\Delta t]$; its result is used at the next endpoint. The initial state at time zero does not integrate a future interval. Ignored when `init_vecpot=True`.
 - **Default**: 1
 
 ### td_tend
 
 - **Type**: Integer
-- **Description**: Last active electronic-step index of the analytic electric field, using the time convention defined by `td_tstart`. The interval includes both endpoints. In velocity and hybrid gauges, the last selected integration interval is $[\mathtt{td\_tend}\Delta t,(\mathtt{td\_tend}+1)\Delta t]$. Ignored when `init_vecpot_file=True`.
+- **Description**: Last active electronic-step index of the analytic electric field, using the time convention defined by `td_tstart`. The interval includes both endpoints. In velocity and hybrid gauges, the last selected integration interval is $[\mathtt{td\_tend}\Delta t,(\mathtt{td\_tend}+1)\Delta t]$. Ignored when `init_vecpot=True`.
 - **Default**: 1000
 
 ### td_lcut1
@@ -4591,7 +4591,7 @@
 - **Description**: Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or `default` token for each `td_ttype 4` occurrence, in occurrence order; each `default` token inherits `td_tend`. The complete pulse support must lie inside the inclusive global `td_tstart` to `td_tend` interval; hard truncation of a supersine pulse is rejected.
 - **Default**: default
 
-### init_vecpot_file
+### init_vecpot
 
 - **Type**: Boolean
 - **Availability**: *[`esolver_type`](#esolver_type)==tddft and (([`basis_type`](#basis_type)==pw and [`td_stype`](#td_stype)==1) or ([`basis_type`](#basis_type)==lcao and [`td_stype`](#td_stype) in [1, 2]))*
@@ -4659,7 +4659,7 @@
 
 - **Type**: Boolean
 - **Availability**: *[`esolver_type`](#esolver_type)==tddft*
-- **Description**: Controls time-dependent electric-field output in `OUT.{suffix}/`. With `init_vecpot_file=True`, `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Otherwise, `efield_[index].txt` contains time in fs and the field value in V/Angstrom for each configured field. The one-based index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+- **Description**: Controls time-dependent electric-field output in `OUT.{suffix}/`. With `init_vecpot=True`, `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Otherwise, `efield_[index].txt` contains time in fs and the field value in V/Angstrom for each configured field. The one-based index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
   - `True`: Output electric-field values on active electronic steps.
   - `False`: Do not output electric-field values.
 - **Default**: False
@@ -4668,7 +4668,7 @@
 
 - **Type**: Boolean
 - **Availability**: *[`esolver_type`](#esolver_type)==tddft and (([`basis_type`](#basis_type)==pw and [`td_stype`](#td_stype)==1) or ([`basis_type`](#basis_type)==lcao and [`td_stype`](#td_stype) in [1, 2]))*
-- **Description**: Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot_file` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+- **Description**: Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
   - `True`: Output the vector potential.
   - `False`: Do not output the vector potential.
 - **Default**: False

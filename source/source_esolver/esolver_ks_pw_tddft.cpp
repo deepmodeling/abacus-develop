@@ -37,7 +37,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
     const std::string& output_dir = PARAM.globalv.global_out_dir;
 
     this->td_field_manager_ = elecstate::create_td_field_manager(inp);
-    if (inp.init_vecpot_file)
+    if (inp.init_vecpot)
     {
         // An empty directory selects the calculation working directory, not OUT.<suffix>.
         const std::vector<ModuleBase::Vector3<double>> samples = ModuleIO::read_td_vector_pot("");
@@ -76,7 +76,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
         }
         if (inp.out_vecpot)
         {
-            if (inp.init_vecpot_file)
+            if (inp.init_vecpot)
             {
                 ModuleIO::check_td_vector_pot_paths("", output_dir);
             }

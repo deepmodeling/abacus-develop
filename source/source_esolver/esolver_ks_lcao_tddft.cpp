@@ -84,7 +84,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
     // components. Both propagation gauges and the length-gauge potential must
     // observe the same electronic-step counter.
     td_field_manager_ = elecstate::create_td_field_manager(inp);
-    if (inp.init_vecpot_file)
+    if (inp.init_vecpot)
     {
         // An empty directory selects the calculation working directory, not OUT.<suffix>.
         const std::vector<ModuleBase::Vector3<double>> samples = ModuleIO::read_td_vector_pot("");
@@ -100,7 +100,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
     }
     if (inp.out_vecpot && GlobalV::MY_RANK == 0)
     {
-        if (inp.init_vecpot_file)
+        if (inp.init_vecpot)
         {
             ModuleIO::check_td_vector_pot_paths("", output_dir);
         }

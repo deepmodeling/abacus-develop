@@ -331,7 +331,7 @@ struct Input_para
     // std::string td_vext_dire = "1";   ///< vext direction
     std::vector<int> td_vext_dire = {1}; ///< vector of vext direction
 
-    bool init_vecpot_file = false;   ///< initialize the vector potential, though file or integral
+    bool init_vecpot = false;        ///< initialize the vector potential, though file or integral
     double td_print_eij = -1.0;      ///< threshold to output Eij elements
     int td_edm = 0;                  ///< 0: new edm method   1: old edm method
     int propagator = 0;              ///< method of propagator

@@ -2658,7 +2658,7 @@ parameters:
     category: Real-Time TDDFT (Common)
     type: Boolean
     description: |
-      Controls the analytic time-dependent electric field. With `init_vecpot_file=True`, the external field is supplied through the vector-potential file instead, independently of `td_vext`.
+      Controls the analytic time-dependent electric field. With `init_vecpot=True`, the external field is supplied through the vector-potential file instead, independently of `td_vext`.
       * `True`: Enable the analytic electric field.
       * `False`: Disable the analytic electric field.
     default_value: "False"
@@ -2707,7 +2707,7 @@ parameters:
     category: Real-Time TDDFT (Common)
     type: Integer
     description: |
-      First active electronic-step index of the analytic electric field. Index $n$ corresponds to time $n\Delta t$, where $\Delta t=\mathtt{td\_dt}$. The interval from `td_tstart` through `td_tend` includes both endpoints. In velocity and hybrid gauges, each active index $n$ selects the integration interval $[n\Delta t,(n+1)\Delta t]$; its result is used at the next endpoint. The initial state at time zero does not integrate a future interval. Ignored when `init_vecpot_file=True`.
+      First active electronic-step index of the analytic electric field. Index $n$ corresponds to time $n\Delta t$, where $\Delta t=\mathtt{td\_dt}$. The interval from `td_tstart` through `td_tend` includes both endpoints. In velocity and hybrid gauges, each active index $n$ selects the integration interval $[n\Delta t,(n+1)\Delta t]$; its result is used at the next endpoint. The initial state at time zero does not integrate a future interval. Ignored when `init_vecpot=True`.
     default_value: "1"
     unit: ""
     availability: ""
@@ -2715,7 +2715,7 @@ parameters:
     category: Real-Time TDDFT (Common)
     type: Integer
     description: |
-      Last active electronic-step index of the analytic electric field, using the time convention defined by `td_tstart`. The interval includes both endpoints. In velocity and hybrid gauges, the last selected integration interval is $[\mathtt{td\_tend}\Delta t,(\mathtt{td\_tend}+1)\Delta t]$. Ignored when `init_vecpot_file=True`.
+      Last active electronic-step index of the analytic electric field, using the time convention defined by `td_tstart`. The interval includes both endpoints. In velocity and hybrid gauges, the last selected integration interval is $[\mathtt{td\_tend}\Delta t,(\mathtt{td\_tend}+1)\Delta t]$. Ignored when `init_vecpot=True`.
     default_value: "1000"
     unit: ""
     availability: ""
@@ -2927,7 +2927,7 @@ parameters:
     default_value: default
     unit: ""
     availability: td_ttype contains 4
-  - name: init_vecpot_file
+  - name: init_vecpot
     category: Real-Time TDDFT (Common)
     type: Boolean
     description: |
@@ -3982,7 +3982,7 @@ parameters:
     category: Real-Time TDDFT (Common)
     type: Boolean
     description: |
-      Controls time-dependent electric-field output in `OUT.{suffix}/`. With `init_vecpot_file=True`, `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Otherwise, `efield_[index].txt` contains time in fs and the field value in V/Angstrom for each configured field. The one-based index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+      Controls time-dependent electric-field output in `OUT.{suffix}/`. With `init_vecpot=True`, `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Otherwise, `efield_[index].txt` contains time in fs and the field value in V/Angstrom for each configured field. The one-based index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
       * `True`: Output electric-field values on active electronic steps.
       * `False`: Do not output electric-field values.
     default_value: "False"
@@ -3992,7 +3992,7 @@ parameters:
     category: Real-Time TDDFT (Common)
     type: Boolean
     description: |
-      Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot_file` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+      Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
       * `True`: Output the vector potential.
       * `False`: Do not output the vector potential.
     default_value: "False"

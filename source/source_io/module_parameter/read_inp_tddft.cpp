@@ -69,7 +69,7 @@ struct FieldParameterRule
 void check_td_efield_parameters(const Input_para& input)
 {
     // File input replaces the analytic waveforms, whose unused parameter arrays may be incomplete.
-    if (input.init_vecpot_file)
+    if (input.init_vecpot)
     {
         return;
     }
@@ -491,7 +491,7 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
         item.annotation = "add extern potential or not";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls the analytic time-dependent electric field. With `init_vecpot_file=True`, the external field is supplied through the vector-potential file instead, independently of `td_vext`.
+        item.description = R"(Controls the analytic time-dependent electric field. With `init_vecpot=True`, the external field is supplied through the vector-potential file instead, independently of `td_vext`.
 * `True`: Enable the analytic electric field.
 * `False`: Disable the analytic electric field.)";
         item.default_value = "False";
@@ -559,7 +559,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.annotation = " number of steps where electric field starts";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
-        item.description = R"(First active electronic-step index of the analytic electric field. Index $n$ corresponds to time $n\Delta t$, where $\Delta t=\mathtt{td\_dt}$. The interval from `td_tstart` through `td_tend` includes both endpoints. In velocity and hybrid gauges, each active index $n$ selects the integration interval $[n\Delta t,(n+1)\Delta t]$; its result is used at the next endpoint. The initial state at time zero does not integrate a future interval. Ignored when `init_vecpot_file=True`.)";
+        item.description = R"(First active electronic-step index of the analytic electric field. Index $n$ corresponds to time $n\Delta t$, where $\Delta t=\mathtt{td\_dt}$. The interval from `td_tstart` through `td_tend` includes both endpoints. In velocity and hybrid gauges, each active index $n$ selects the integration interval $[n\Delta t,(n+1)\Delta t]$; its result is used at the next endpoint. The initial state at time zero does not integrate a future interval. Ignored when `init_vecpot=True`.)";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.td_tstart);
@@ -570,7 +570,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.annotation = "number of steps where electric field ends";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
-        item.description = R"(Last active electronic-step index of the analytic electric field, using the time convention defined by `td_tstart`. The interval includes both endpoints. In velocity and hybrid gauges, the last selected integration interval is $[\mathtt{td\_tend}\Delta t,(\mathtt{td\_tend}+1)\Delta t]$. Ignored when `init_vecpot_file=True`.)";
+        item.description = R"(Last active electronic-step index of the analytic electric field, using the time convention defined by `td_tstart`. The interval includes both endpoints. In velocity and hybrid gauges, the last selected integration interval is $[\mathtt{td\_tend}\Delta t,(\mathtt{td\_tend}+1)\Delta t]$. Ignored when `init_vecpot=True`.)";
         item.default_value = "1000";
         item.unit = "";
         read_sync_int(input.td_tend);
@@ -965,7 +965,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         this->add_item(item);
     }
     {
-        Input_Item item("init_vecpot_file");
+        Input_Item item("init_vecpot");
         item.annotation = "read endpoint vector potentials from file";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
@@ -977,15 +977,15 @@ The file takes precedence over analytic waveforms, independently of `td_vext`, `
         item.default_value = "False";
         item.unit = "";
         item.set_availability("esolver_type==tddft and ((basis_type==pw and td_stype==1) or (basis_type==lcao and td_stype in [1, 2]))");
-        read_sync_bool(input.init_vecpot_file);
+        read_sync_bool(input.init_vecpot);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             const Input_para& inp = para.inp;
             const bool supported = inp.esolver_type == "tddft"
                 && ((inp.basis_type == "pw" && inp.td_stype == 1)
                     || (inp.basis_type == "lcao" && (inp.td_stype == 1 || inp.td_stype == 2)));
-            if (inp.init_vecpot_file && !supported)
+            if (inp.init_vecpot && !supported)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "init_vecpot_file requires PW velocity gauge or LCAO velocity/hybrid gauge RT-TDDFT.");
+                ModuleBase::WARNING_QUIT("ReadInput", "init_vecpot requires PW velocity gauge or LCAO velocity/hybrid gauge RT-TDDFT.");
             }
         };
         this->add_item(item);

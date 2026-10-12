@@ -356,7 +356,7 @@ std::shared_ptr<TDFieldManager> create_td_field_manager(const Input_para& input)
     fields.reserve(input.td_ttype.size());
 
     // File input supplies A and its derived E, so unused analytic waveform parameters need not be populated.
-    const std::size_t field_count = input.init_vecpot_file ? 0 : input.td_ttype.size();
+    const std::size_t field_count = input.init_vecpot ? 0 : input.td_ttype.size();
     for (std::size_t field_index = 0; field_index < field_count; ++field_index)
     {
         const int field_type = input.td_ttype[field_index];

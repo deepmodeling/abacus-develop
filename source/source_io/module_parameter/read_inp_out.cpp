@@ -1685,7 +1685,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output dipole or not";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls time-dependent electric-field output in `OUT.{suffix}/`. With `init_vecpot_file=True`, `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Otherwise, `efield_[index].txt` contains time in fs and the field value in V/Angstrom for each configured field. The one-based index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+        item.description = R"(Controls time-dependent electric-field output in `OUT.{suffix}/`. With `init_vecpot=True`, `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Otherwise, `efield_[index].txt` contains time in fs and the field value in V/Angstrom for each configured field. The one-based index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
 * `True`: Output electric-field values on active electronic steps.
 * `False`: Do not output electric-field values.)";
         item.default_value = "False";
@@ -1699,7 +1699,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output endpoint vector potentials";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot_file` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+        item.description = R"(Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
 * `True`: Output the vector potential.
 * `False`: Do not output the vector potential.)";
         item.default_value = "False";
