@@ -1,5 +1,8 @@
 #include "occupy.h"
 
+#include <limits>
+#include <sstream>
+
 #include "source_base/constants.h"
 #include "source_base/mymath.h"
 #include "source_base/parallel_reduce.h"
@@ -235,7 +238,7 @@ void Occupy::gweights(const int nks,
             continue;
 }
 
-        for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
+        for (int ib = 0; ib < nband; ib++)
         {
             //================================
             // Calculate the gaussian weights
@@ -281,104 +284,126 @@ void occupy_smearing::efermig(const ModuleBase::matrix& ekb,
                      const int& is,
                      const std::vector<int>& isk)
 {
-    // ModuleBase::TITLE("Occupy","efermig");
-    //==================================================================
-    //  Finds the Fermi energy - Gaussian Broadening (Methfessel-Paxton)
-    //==================================================================
-    // find bounds for the Fermi energy. Very safe choice!
-    const int maxiter = 300;
-    const double eps = 1.0e-10;
-
-    /*
-    for(int ik=0; ik<nks; ik++)
+    // Resolve particle number to floating-point accuracy, independently of the
+    // outer SCF threshold. A fixed absolute tolerance leaves a charge floor.
+    const double electron_magnitude = std::abs(nelec);
+    const double scale = std::max(1.0, electron_magnitude);
+    const double tolerance = 8.0 * std::numeric_limits<double>::epsilon() * scale;
+    if (!(smearing_sigma > 0.0) || !std::isfinite(smearing_sigma) || !std::isfinite(nelec))
     {
-        for(int i=0; i<nband; i++)
-        {
-            std::cout << " ib=" << i << " ekb=" << ekb[ik][i] << std::endl;
-        }
-    }
-    */
-
-    // the first 0 stands for the first k point.
-    double elw = ekb(0, 0);
-    double eup = ekb(0, nband - 1);
-
-    for (int ik = 1; ik < nks; ik++) // do ik = 2, nks
-    {
-        elw = std::min(elw, ekb(ik, 0));
-        eup = std::max(eup, ekb(ik, nband - 1));
+        ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Invalid smearing width or electron number");
     }
 
-    eup += 2 * smearing_sigma;
-    elw -= 2 * smearing_sigma;
-    // find min and max across pools
-    #ifdef __MPI
-    Parallel_Reduce::reduce_max(eup);
-    Parallel_Reduce::reduce_min(elw);
-    #endif
-    //=================
-    // Bisection method
-    //=================
-    // call sumkg
-    int changetime = 0;
-    while (true)
+    // Empty local partitions contribute neutral extrema to the global bounds.
+    double lower = std::numeric_limits<double>::infinity();
+    double upper = -std::numeric_limits<double>::infinity();
+    for (int ik = 0; ik < nks; ++ik)
     {
-        const double sumkup = occupy_smearing::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, eup, is, isk);
-        const double sumklw = occupy_smearing::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, elw, is, isk);
+        if (is != -1 && is != isk[ik])
+        {
+            continue;
+        }
+        for (int ib = 0; ib < nband; ++ib)
+        {
+            const double eigenvalue = ekb(ik, ib);
+            lower = std::min(lower, eigenvalue);
+            upper = std::max(upper, eigenvalue);
+        }
+    }
+#ifdef __MPI
+    Parallel_Reduce::reduce_min(lower);
+    Parallel_Reduce::reduce_max(upper);
+#endif
+    if (!std::isfinite(lower) || !std::isfinite(upper))
+    {
+        ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "No finite eigenvalue bounds");
+    }
 
-        if (changetime > 1000)
+    double step = 2.0 * smearing_sigma;
+    lower -= step;
+    upper += step;
+    double low_count = sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, lower, is, isk);
+    double high_count = sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, upper, is, isk);
+    int expansion = 0;
+    while (low_count > nelec + tolerance || high_count < nelec - tolerance)
+    {
+        if (++expansion > 100 || !std::isfinite(step))
         {
-            std::cout << " SOMETHING WRONG: " << std::endl;
-            std::cout << " is = " << is << std::endl;
-            std::cout << " eup = " << eup << std::endl;
-            std::cout << " elw = " << elw << std::endl;
-            std::cout << " nband = " << nband << std::endl;
-            std::cout << " nelec = " << nelec << std::endl;
-            std::cout << " sumkup = " << sumkup << std::endl;
-            std::cout << " sumklw = " << sumklw << std::endl;
-            std::cout << " sumkup - nelec = " << sumkup - nelec << std::endl;
-            std::cout << " sumklw - nelec = " << sumklw - nelec << std::endl;
-            ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "ERROS in SMEARING");
-            // no need to break; quit directly
+            ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Cannot bracket the requested electron number");
         }
-        else if ((sumkup - nelec) < -eps)
+        step *= 2.0;
+        if (low_count > nelec + tolerance)
         {
-            eup += 2 * smearing_sigma;
-            ++changetime;
+            lower -= step;
+            low_count = sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, lower, is, isk);
         }
-        else if ((sumklw - nelec) > eps)
+        if (high_count < nelec - tolerance)
         {
-            elw -= 2 * smearing_sigma;
-            ++changetime;
-        }
-        else
-        {
-            break;
+            upper += step;
+            high_count = sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, upper, is, isk);
         }
     }
 
-    for (int i = 0; i < maxiter; i++)
+    if (!std::isfinite(low_count) || !std::isfinite(high_count)
+        || !std::isfinite(lower) || !std::isfinite(upper))
     {
-        //======================
-        // change ef value
-        //======================
-        ef = (eup + elw) / 2.0;
-        const double sumkmid = occupy_smearing::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, ef, is, isk);
+        ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Non-finite Fermi bracket");
+    }
 
-        if (std::abs(sumkmid - nelec) < eps)
+    // Keep the best evaluated point, including the saturated endpoints. For
+    // empty/full bands or a resolved gap, the chemical potential is not unique.
+    ef = lower;
+    double best_error = std::abs(low_count - nelec);
+    const double high_error = std::abs(high_count - nelec);
+    if (high_error < best_error)
+    {
+        ef = upper;
+        best_error = high_error;
+    }
+    for (int iteration = 0; iteration < 300; ++iteration)
+    {
+        if (best_error <= tolerance)
         {
             return;
         }
-        else if ((sumkmid - nelec) < -eps)
+        const double middle = 0.5 * lower + 0.5 * upper;
+        if (middle == lower || middle == upper)
         {
-            elw = ef;
+            // No representable interior point remains. Do not silently spin to
+            // maxiter, nor claim that a small energy interval proves charge accuracy.
+            std::ostringstream message;
+            message.precision(17);
+            message << "Fermi bracket reached floating-point resolution; electron residual = "
+                    << best_error << ", requested tolerance = " << tolerance;
+            const std::string diagnostic = message.str();
+            ModuleBase::WARNING_QUIT("occupy_smearing::efermig", diagnostic);
+            return;
+        }
+        const double count = sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, middle, is, isk);
+        if (!std::isfinite(count))
+        {
+            ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Non-finite electron number");
+        }
+        const double error = std::abs(count - nelec);
+        if (error < best_error)
+        {
+            ef = middle;
+            best_error = error;
+        }
+        if (best_error <= tolerance)
+        {
+            return;
+        }
+        if (count < nelec)
+        {
+            lower = middle;
         }
         else
         {
-            eup = ef;
+            upper = middle;
         }
     }
-    return;
+    ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Fermi search exceeded its iteration limit");
 }
 
 /**
@@ -407,21 +432,24 @@ double occupy_smearing::sumkg(const ModuleBase::matrix& ekb,
 {
     // ModuleBase::TITLE("Occupy","sumkg");
     double sum2 = 0.0;
-    for (int ik = 0; ik < nks; ik++)
+    double compensation = 0.0;
+    for (int ik = 0; ik < nks; ++ik)
     {
-        if (is != -1 && is != isk[ik]) {
-            continue;
-}
-
-        double sum1 = 0.0;
-        for (int ib = 0; ib < nband; ib++)
+        if (is != -1 && is != isk[ik])
         {
-            //===========================
-            // call wgauss
-            //===========================
-            sum1 += occupy_smearing::wgauss((e - ekb(ik, ib)) / smearing_sigma, ngauss);
+            continue;
         }
-        sum2 += wk[ik] * sum1;
+        for (int ib = 0; ib < nband; ++ib)
+        {
+            // Sum the same weighted occupations as gweights, compensating the
+            // local accumulation before the existing pool/band reduction.
+            const double argument = (e - ekb(ik, ib)) / smearing_sigma;
+            const double occupation = wk[ik] * wgauss(argument, ngauss);
+            const double corrected = occupation - compensation;
+            const double next = sum2 + corrected;
+            compensation = (next - sum2) - corrected;
+            sum2 = next;
+        }
     }
 
     // GlobalV::ofs_running << "\n sum2 before reduce = " << sum2 << std::endl;

@@ -1,4 +1,7 @@
 #include <string>
+#include <cmath>
+#include <limits>
+#include <sstream>
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "source_io/module_parameter/parameter.h"
@@ -268,7 +271,11 @@ TEST_F(OccupyTest, Efermig)
   std::vector<int> isk = {0, 0};
   double ef = 0.0;
   occupy_smearing::efermig(ekb, 1, 1, 1.0, wk, smearing_sigma, ngauss, ef, is, isk);
-  EXPECT_NEAR(ef, -0.5, 1e-13);
+  // Full occupation fixes particle number, not a unique finite chemical potential.
+  EXPECT_TRUE(std::isfinite(ef));
+  EXPECT_GT(ef, ekb(0, 0));
+  const double count = occupy_smearing::sumkg(ekb, 1, 1, wk, smearing_sigma, ngauss, ef, is, isk);
+  EXPECT_NEAR(count, 1.0, 2e-15);
 }
 
 TEST_F(OccupyTest, Gweights)
@@ -283,10 +290,241 @@ TEST_F(OccupyTest, Gweights)
   std::vector<int> isk = {0, 0};
   double ef = 0.0;
   ModuleBase::matrix wg(1, 1);
-  wg(0, 0) = 1.0;
+  wg(0, 0) = -123.0;
   double demet = 0.0;
   occupy.gweights(1, wk, 1, 1.0, smearing_sigma, ngauss, ekb, ef, demet, wg, is, isk);
-  EXPECT_NEAR(ef, -0.5, 1e-13);
+  // Full occupation fixes particle number, not a unique finite chemical potential.
+  EXPECT_TRUE(std::isfinite(ef));
+  EXPECT_GT(ef, ekb(0, 0));
+  const double count = occupy_smearing::sumkg(ekb, 1, 1, wk, smearing_sigma, ngauss, ef, is, isk);
+  EXPECT_NEAR(count, 1.0, 2e-15);
   EXPECT_NEAR(demet, 0.0, 1e-13);
   EXPECT_NEAR(wg(0, 0), 1.0, 1e-13);
+}
+
+TEST_F(OccupyTest, FractionalFermiDiracOccupation)
+{
+    ModuleBase::matrix energies(1, 1);
+    energies(0, 0) = -0.7;
+    const std::vector<double> weights{1.0};
+    const std::vector<int> spins{0};
+    const double sigma = 0.13;
+    const double target = 0.3141592653589793;
+    double ef = 0.0;
+    occupy_smearing::efermig(energies, 1, 1, target, weights, sigma, -99, ef, -1, spins);
+    const double expected = energies(0, 0) + sigma * std::log(target / (1.0 - target));
+    EXPECT_NEAR(ef, expected, 2e-15);
+    ModuleBase::matrix occupations(1, 1);
+    occupations(0, 0) = -123.0;
+    double entropy = 0.0;
+    occupy.gweights(1, weights, 1, target, sigma, -99, energies, ef, entropy, occupations, -1, spins);
+    EXPECT_NEAR(occupations(0, 0), target, 2e-15);
+    const double expected_entropy = sigma * (target * std::log(target) + (1.0 - target) * std::log(1.0 - target));
+    EXPECT_NEAR(entropy, expected_entropy, 2e-15);
+}
+
+TEST_F(OccupyTest, WeightedParticleNumberAllSmearings)
+{
+    ModuleBase::matrix energies(3, 4);
+    const std::vector<double> weights{0.17, 0.29, 0.54};
+    const std::vector<int> spins{0, 0, 0};
+    for (int ik = 0; ik < 3; ++ik)
+    {
+        for (int ib = 0; ib < 4; ++ib)
+        {
+            energies(ik, ib) = -0.4 + 0.27 * ib + 0.07 * ik;
+        }
+    }
+    const double target = 1.23456789;
+    for (const int smearing : {0, 1, 2, -1, -99})
+    {
+        double ef = 0.0;
+        double entropy = 0.0;
+        ModuleBase::matrix occupations(3, 4);
+        occupy.gweights(3, weights, 4, target, 0.1, smearing, energies, ef, entropy, occupations, -1, spins);
+        long double count = 0.0L;
+        for (int ik = 0; ik < 3; ++ik)
+        {
+            for (int ib = 0; ib < 4; ++ib)
+            {
+                count += occupations(ik, ib);
+            }
+        }
+        EXPECT_NEAR(count, target, 3e-15) << smearing;
+        EXPECT_TRUE(std::isfinite(entropy));
+    }
+}
+
+TEST_F(OccupyTest, EmptyFullAndGappedSpectra)
+{
+    ModuleBase::matrix energies(1, 2);
+    energies(0, 0) = -1.0;
+    energies(0, 1) = 1.0;
+    const std::vector<double> weights{1.0};
+    const std::vector<int> spins{0};
+    for (const double target : {0.0, 1.0, 2.0})
+    {
+        double ef = 0.0;
+        double entropy = 0.0;
+        ModuleBase::matrix occupations(1, 2);
+        occupy.gweights(1, weights, 2, target, 0.01, 0, energies, ef, entropy, occupations, -1, spins);
+        const double count = occupations(0, 0) + occupations(0, 1);
+        EXPECT_NEAR(count, target, 4e-15);
+        EXPECT_NEAR(entropy, 0.0, 1e-14);
+        if (target == 1.0)
+        {
+            EXPECT_GT(ef, energies(0, 0));
+            EXPECT_LT(ef, energies(0, 1));
+            EXPECT_NEAR(occupations(0, 0), 1.0, 2e-15);
+            EXPECT_NEAR(occupations(0, 1), 0.0, 2e-15);
+        }
+    }
+}
+
+TEST_F(OccupyTest, SelectedSpinAndUnsortedBands)
+{
+    ModuleBase::matrix energies(2, 3);
+    energies(0, 0) = 100.0;
+    energies(0, 1) = 200.0;
+    energies(0, 2) = 300.0;
+    energies(1, 0) = 0.4;
+    energies(1, 1) = -0.3;
+    energies(1, 2) = 0.1;
+    const std::vector<double> weights{1.0, 1.0};
+    const std::vector<int> spins{0, 1};
+    ModuleBase::matrix occupations(2, 3);
+    for (int ib = 0; ib < 3; ++ib)
+    {
+        occupations(0, ib) = -123.0;
+    }
+    double ef = 0.0;
+    double entropy = 0.0;
+    occupy.gweights(2, weights, 3, 1.314159, 0.08, 0, energies, ef, entropy, occupations, 1, spins);
+    double count = 0.0;
+    for (int ib = 0; ib < 3; ++ib)
+    {
+        EXPECT_EQ(occupations(0, ib), -123.0);
+        count += occupations(1, ib);
+    }
+    EXPECT_NEAR(count, 1.314159, 3e-15);
+}
+
+TEST_F(OccupyTest, CompensatedWeightedOccupationSum)
+{
+    const int points = 4096;
+    ModuleBase::matrix energies(points, 2);
+    std::vector<double> weights(points, 1.0 / points);
+    const std::vector<int> spins(points, 0);
+    long double expected = 0.0L;
+    for (int ik = 0; ik < points; ++ik)
+    {
+        // Repeated degenerate levels expose drift in ordinary accumulation.
+        energies(ik, 0) = -0.1;
+        energies(ik, 1) = 0.2;
+        for (int ib = 0; ib < 2; ++ib)
+        {
+            const double argument = (0.123 - energies(ik, ib)) / 0.1;
+            expected += weights[ik] * 0.5 * std::erfc(-argument);
+        }
+    }
+    const double count = occupy_smearing::sumkg(energies, 2, points, weights, 0.1, 0, 0.123, -1, spins);
+    EXPECT_NEAR(count, expected, 5e-16);
+}
+
+TEST_F(OccupyTest, FermiSearchAtRepresentableEnergyLimit)
+{
+    ModuleBase::matrix energies(1, 1);
+    energies(0, 0) = 1e8;
+    const std::vector<double> weights{1.0};
+    const std::vector<int> spins{0};
+    double ef = 0.0;
+    // The width is smaller than one ULP of the eigenvalue. No double-valued
+    // chemical potential can yield the requested fractional occupation.
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(occupy_smearing::efermig(energies, 1, 1, 0.3, weights, 1e-8, 0, ef, -1, spins),
+                ::testing::ExitedWithCode(1), "");
+    const std::string diagnostic = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(diagnostic, testing::HasSubstr("Fermi bracket reached floating-point resolution"));
+    EXPECT_THAT(diagnostic, testing::HasSubstr("electron residual"));
+}
+
+TEST_F(OccupyTest, RejectInvalidWidthAndUnbracketedCharge)
+{
+    ModuleBase::matrix energies(1, 1);
+    energies(0, 0) = 0.0;
+    const std::vector<double> weights{1.0};
+    const std::vector<int> spins{0};
+    double ef = 0.0;
+    EXPECT_EXIT(occupy_smearing::efermig(energies, 1, 1, 0.5, weights, 0.0, 0, ef, -1, spins),
+                ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(occupy_smearing::efermig(energies, 1, 1, 1.1, weights, 0.1, 0, ef, -1, spins),
+                ::testing::ExitedWithCode(1), "");
+}
+
+TEST_F(OccupyTest, FermiParticleNumberAcrossScales)
+{
+    ModuleBase::matrix energies(3, 64);
+    const std::vector<double> weights{0.17, 0.29, 0.54};
+    const std::vector<int> spins{0, 0, 0};
+    for (int ik = 0; ik < 3; ++ik)
+    {
+        for (int ib = 0; ib < 64; ++ib)
+        {
+            energies(ik, ib) = -1.0 + 0.05 * ib + 0.013 * ik;
+        }
+    }
+    // Exercise efermig directly, independently of gweights' band-count fix.
+    for (const double target : {0.3141592653589793, 33.0, 63.125})
+    {
+        for (const int smearing : {0, 1, 2, -1, -99})
+        {
+            double ef = 0.0;
+            occupy_smearing::efermig(energies, 64, 3, target, weights, 0.1, smearing, ef, -1, spins);
+            long double count = 0.0L;
+            for (int ik = 0; ik < 3; ++ik)
+            {
+                for (int ib = 0; ib < 64; ++ib)
+                {
+                    const double argument = (ef - energies(ik, ib)) / 0.1;
+                    const double occupation = weights[ik] * occupy_smearing::wgauss(argument, smearing);
+                    count += occupation;
+                }
+            }
+            const double scale = std::max(1.0, target);
+            // Allow the independently accumulated result a small rounding margin.
+            const double tolerance = 16.0 * std::numeric_limits<double>::epsilon() * scale;
+            EXPECT_NEAR(count, target, tolerance) << "N = " << target << ", smearing = " << smearing;
+            if (target == 33.0 && smearing == 0)
+            {
+                const double residual = std::abs(static_cast<double>(count - target));
+                std::ostringstream value;
+                value.precision(17);
+                value << residual;
+                RecordProperty("N33_gaussian_residual", value.str());
+            }
+        }
+    }
+}
+
+TEST_F(OccupyTest, GweightsHonorsExplicitBandRange)
+{
+    ModuleBase::matrix energies(1, 3);
+    energies(0, 0) = -0.7;
+    energies(0, 1) = 0.1;
+    energies(0, 2) = 0.8;
+    ModuleBase::matrix occupations(1, 3);
+    for (int ib = 0; ib < 3; ++ib)
+    {
+        occupations(0, ib) = -123.0;
+    }
+    const std::vector<double> weights{1.0};
+    const std::vector<int> spins{0};
+    const double target = 0.3141592653589793;
+    double ef = 0.0;
+    double entropy = 0.0;
+    // The explicit one-band range must govern both root finding and writing.
+    occupy.gweights(1, weights, 1, target, 0.13, -99, energies, ef, entropy, occupations, -1, spins);
+    EXPECT_NEAR(occupations(0, 0), target, 2e-15);
+    EXPECT_DOUBLE_EQ(occupations(0, 1), -123.0);
+    EXPECT_DOUBLE_EQ(occupations(0, 2), -123.0);
 }
