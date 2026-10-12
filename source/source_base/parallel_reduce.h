@@ -14,6 +14,9 @@ namespace Parallel_Reduce
 /// Return whether the plane-wave pool communicator is ready for collectives.
 bool pool_ready();
 
+/// Return whether this process is the MPI world root (or is running serially).
+bool is_world_root();
+
 #ifdef __MPI
 template <typename T>
 struct MPI_Type;

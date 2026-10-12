@@ -1419,10 +1419,12 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     active_cols.reserve(ncol);
 
     std::ofstream residual_trace;
-    if (const char* path = std::getenv("ABACUS_PPCG_RESIDUAL_TRACE"))
+    const char* residual_trace_path = std::getenv("ABACUS_PPCG_RESIDUAL_TRACE");
+    if (residual_trace_path != nullptr && Parallel_Reduce::is_world_root())
     {
-        // Optional debug trace for plotting PPCG convergence curves.
-        residual_trace.open(path);
+        // A single writer avoids file corruption when several MPI pools solve
+        // different k-points concurrently.
+        residual_trace.open(residual_trace_path);
         if (residual_trace)
         {
             residual_trace << std::setprecision(std::numeric_limits<Real>::max_digits10);
@@ -1436,11 +1438,15 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             residual_trace << ",local_overlap_min,local_overlap_max,local_overlap_condition\n";
         }
     }
+    int residual_trace_writer_count = residual_trace ? 1 : 0;
+    reduce_pool_if_ready(&residual_trace_writer_count, 1);
+    const bool residual_trace_enabled = residual_trace_writer_count > 0;
+    const bool write_residual_trace = bool(residual_trace);
     Real local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
     Real local_overlap_max = std::numeric_limits<Real>::quiet_NaN();
     Real local_overlap_condition = std::numeric_limits<Real>::quiet_NaN();
     auto record_residual = [&](int iteration, const char* stage) {
-        if (!residual_trace)
+        if (!residual_trace_enabled)
         {
             return;
         }
@@ -1450,6 +1456,10 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                                             ld_psi_,
                                                             n_dim_,
                                                             ncol);
+        if (!write_residual_trace)
+        {
+            return;
+        }
         residual_trace << iteration << ',' << stage << ',' << max_residual;
         for (int ib = 0; ib < ncol; ++ib)
         {
@@ -1463,23 +1473,34 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     auto measure_local_overlap = [&](const SmallSubspace& local_subspace,
                                      const int local_dim) {
-        if (!residual_trace)
+        if (!write_residual_trace)
         {
             return;
         }
         std::vector<T> overlap = local_subspace.m;
         std::vector<Real> overlap_eigenvalues(local_dim);
-        container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
-            local_dim,
-            overlap.data(),
-            local_dim,
-            overlap_eigenvalues.data());
+        try
+        {
+            container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
+                local_dim,
+                overlap.data(),
+                local_dim,
+                overlap_eigenvalues.data());
+        }
+        catch (const std::exception&)
+        {
+            // Trace diagnostics must not change the solver's MPI control flow.
+            local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
+            local_overlap_max = std::numeric_limits<Real>::quiet_NaN();
+            local_overlap_condition = std::numeric_limits<Real>::infinity();
+            return;
+        }
         const Real min_eigenvalue = overlap_eigenvalues.front();
         const Real max_eigenvalue = overlap_eigenvalues.back();
         const Real denominator = std::max(std::abs(min_eigenvalue),
                                           Real(ppcg_numerical_threshold));
         const Real condition = std::abs(max_eigenvalue) / denominator;
-        if (!std::isfinite(local_overlap_condition) || condition > local_overlap_condition)
+        if (std::isnan(local_overlap_condition) || condition > local_overlap_condition)
         {
             local_overlap_min = min_eigenvalue;
             local_overlap_max = max_eigenvalue;

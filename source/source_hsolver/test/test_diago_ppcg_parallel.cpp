@@ -19,7 +19,10 @@
 #include <cmath>
 #include <complex>
 #include <cstdio>
+#include <cstdlib>
+#include <fstream>
 #include <random>
+#include <string>
 #include <vector>
 
 int main(int argc, char** argv)
@@ -30,11 +33,12 @@ int main(int argc, char** argv)
     const bool pool_unavailable_before_setup = !Parallel_Reduce::pool_ready();
 
     int nproc_in_pool = 0;
-    int kpar = 1;
+    int kpar = argc > 1 ? std::atoi(argv[1]) : 1;
     int mypool = 0;
     int rank_in_pool = 0;
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
     const bool pool_available_after_setup = Parallel_Reduce::pool_ready();
+    const bool world_root_is_correct = Parallel_Reduce::is_world_root() == (myrank == 0);
     BP_WORLD = MPI_COMM_WORLD;
 
     using T    = std::complex<double>;
@@ -42,14 +46,34 @@ int main(int argc, char** argv)
 
     const int nband = 3;
     const int n_local = 2 * nband;  // each process owns this many rows
-    const int n_dim_total = nproc * n_local;
+    const int n_dim_total = nproc_in_pool * n_local;
+
+    // With one pool, only rank zero requests a trace to exercise inconsistent
+    // process environments. With multiple pools, every rank requests the same
+    // path to verify that only the MPI world root writes it.
+    const char* trace_environment = "ABACUS_PPCG_RESIDUAL_TRACE";
+    const std::string trace_path = "ppcg_residual_trace_parallel_test.csv";
+    int trace_environment_ok = 1;
+    if (myrank == 0)
+    {
+        std::remove(trace_path.c_str());
+        trace_environment_ok = ::setenv(trace_environment, trace_path.c_str(), 1) == 0 ? 1 : 0;
+    }
+    else if (kpar > 1)
+    {
+        trace_environment_ok = ::setenv(trace_environment, trace_path.c_str(), 1) == 0 ? 1 : 0;
+    }
+    else
+    {
+        trace_environment_ok = ::unsetenv(trace_environment) == 0 ? 1 : 0;
+    }
 
     // Diagonal H with entries 1, 2, ..., n_dim_total; process owns a slice.
     std::vector<Real> diag_local(n_local);
     std::vector<Real> prec(n_local);
     for (int i = 0; i < n_local; ++i)
     {
-        diag_local[i] = Real(myrank * n_local + i + 1);
+        diag_local[i] = Real(rank_in_pool * n_local + i + 1);
         prec[i] = diag_local[i];
     }
 
@@ -88,7 +112,14 @@ int main(int argc, char** argv)
                 psi.data(), eval.data(), ethr, prec.data());
 
     // The lowest nband eigenvalues of the global diagonal matrix are 1..nband.
-    int ok = pool_unavailable_before_setup && pool_available_after_setup ? 1 : 0;
+    int ok = 1;
+    if (!pool_unavailable_before_setup
+        || !pool_available_after_setup
+        || !world_root_is_correct
+        || trace_environment_ok != 1)
+    {
+        ok = 0;
+    }
     if (!pool_unavailable_before_setup)
     {
         std::fprintf(stderr, "rank %d: pool communicator reported ready before setup\n", myrank);
@@ -97,6 +128,27 @@ int main(int argc, char** argv)
     {
         std::fprintf(stderr, "rank %d: pool communicator reported unavailable after setup\n", myrank);
     }
+    if (!world_root_is_correct)
+    {
+        std::fprintf(stderr, "rank %d: MPI world-root detection is inconsistent\n", myrank);
+    }
+    if (!solver.converged()
+        || solver.active_band_count() != 0
+        || solver.iteration_limit_reached()
+        || !std::isfinite(solver.max_residual())
+        || solver.max_residual() > 1.0e-8)
+    {
+        const int converged = solver.converged() ? 1 : 0;
+        const int active_band_count = solver.active_band_count();
+        const Real max_residual = solver.max_residual();
+        std::fprintf(stderr,
+                     "rank %d: solver status is inconsistent (converged=%d, active=%d, max_residual=%.12e)\n",
+                     myrank,
+                     converged,
+                     active_band_count,
+                     max_residual);
+        ok = 0;
+    }
     for (int i = 0; i < nband; ++i)
     {
         if (std::abs(eval[i] - Real(i + 1)) > 1e-6)
@@ -104,6 +156,41 @@ int main(int argc, char** argv)
             std::printf("rank %d: eval[%d] = %.12f != %d\n", myrank, i, eval[i], i + 1);
             ok = 0;
         }
+    }
+
+    if (myrank == 0)
+    {
+        std::ifstream trace(trace_path.c_str());
+        std::string line;
+        int header_count = 0;
+        int record_count = 0;
+        bool has_final_record = false;
+        while (std::getline(trace, line))
+        {
+            if (line.find("iteration,stage,max_residual") == 0)
+            {
+                ++header_count;
+            }
+            else if (!line.empty())
+            {
+                ++record_count;
+                if (line.find(",final,") != std::string::npos)
+                {
+                    has_final_record = true;
+                }
+            }
+        }
+        if (!trace.eof() || header_count != 1 || record_count == 0 || !has_final_record)
+        {
+            const int final_record = has_final_record ? 1 : 0;
+            std::fprintf(stderr,
+                         "rank 0: residual trace is incomplete (headers=%d, records=%d, final=%d)\n",
+                         header_count,
+                         record_count,
+                         final_record);
+            ok = 0;
+        }
+        std::remove(trace_path.c_str());
     }
 
     int global_ok = ok;
