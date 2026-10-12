@@ -1,5 +1,6 @@
 #include "exx_lri.h"
 #include "rpa_lri.h"
+#include "rpa_lri_coeff_v1.h"
 #include "rpa_lri_detail.h"
 #include "source_base/global_function.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
@@ -77,20 +78,7 @@ try
     ModuleBase::TITLE("DFT_RPA_interface", "out_Cs_v1");
     ModuleBase::timer::start("RPA_LRI", "out_Cs_v1");
 
-    struct CsRecord
-    {
-        int ia1 = 0;
-        int ia2 = 0;
-        int R[3] = {0, 0, 0};
-        double max_abs = 0.0;
-        std::int64_t offset = 0;
-        RI::Tensor<Tdata>* tensor = nullptr;
-        int nw1 = 0;
-        int nw2 = 0;
-        int naux = 0;
-    };
-
-    std::vector<CsRecord> records;
+    std::vector<RpaLriDetail::LriCoefV1Block> records;
     records.reserve(Cs_in.size());
     for (auto& Ip: Cs_in)
     {
@@ -109,12 +97,13 @@ try
             {
                 throw std::runtime_error("LibRPA v1 Cs output encountered an inconsistent tensor shape.");
             }
-            CsRecord record;
+            RpaLriDetail::LriCoefV1Block record;
             record.ia1 = I + 1;
             record.ia2 = J + 1;
-            record.R[0] = JPp.first.second[0];
-            record.R[1] = JPp.first.second[1];
-            record.R[2] = JPp.first.second[2];
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                record.r[axis] = JPp.first.second[axis];
+            }
             record.tensor = &tmp_Cs;
             record.nw1 = i_num;
             record.nw2 = j_num;
@@ -134,73 +123,10 @@ try
         }
     }
 
-    const std::int64_t nblocks = static_cast<std::int64_t>(records.size());
-    const std::int64_t record_bytes
-        = static_cast<std::int64_t>(5 * sizeof(std::int32_t) + sizeof(double) + sizeof(std::int64_t));
-    std::int64_t offset
-        = static_cast<std::int64_t>(3 * sizeof(std::int32_t) + 2 * sizeof(std::int64_t)) + nblocks * record_bytes;
-    for (auto& record: records)
-    {
-        record.offset = offset;
-        const unsigned long long nw_product = RpaLriDetail::checked_mul_u64(static_cast<unsigned long long>(record.nw1),
-                                                                            static_cast<unsigned long long>(record.nw2),
-                                                                            "LibRPA v1 Cs block size");
-        const unsigned long long values = RpaLriDetail::checked_mul_u64(nw_product,
-                                                                        static_cast<unsigned long long>(record.naux),
-                                                                        "LibRPA v1 Cs block size");
-        const unsigned long long bytes = RpaLriDetail::checked_mul_u64(values,
-                                                                       static_cast<unsigned long long>(sizeof(double)),
-                                                                       "LibRPA v1 Cs block size");
-        offset += RpaLriDetail::checked_i64_from_u64(bytes, "LibRPA v1 Cs block size");
-    }
-
     std::stringstream ss;
     ss << filename << this->runtime.rank << ".dat";
     const std::string out_name = this->runtime.input.rpa_outdir + ss.str();
-    std::ofstream ofs(out_name.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
-    if (!ofs.good())
-    {
-        throw std::runtime_error("Failed to open " + out_name);
-    }
-
-    const std::int32_t marker = RpaLriDetail::LIBRPA_LRICOEF_V1_MARKER;
-    const std::int32_t natom = static_cast<std::int32_t>(ucell.nat);
-    const std::int32_t ncell = 0;
-    RpaLriDetail::write_scalar(ofs, marker, out_name);
-    RpaLriDetail::write_scalar(ofs, natom, out_name);
-    RpaLriDetail::write_scalar(ofs, ncell, out_name);
-    RpaLriDetail::write_scalar(ofs, nblocks, out_name);
-    RpaLriDetail::write_scalar(ofs, nblocks, out_name);
-    for (const auto& record: records)
-    {
-        const std::int32_t ia1 = record.ia1;
-        const std::int32_t ia2 = record.ia2;
-        const std::int32_t r0 = record.R[0];
-        const std::int32_t r1 = record.R[1];
-        const std::int32_t r2 = record.R[2];
-        RpaLriDetail::write_scalar(ofs, ia1, out_name);
-        RpaLriDetail::write_scalar(ofs, ia2, out_name);
-        RpaLriDetail::write_scalar(ofs, r0, out_name);
-        RpaLriDetail::write_scalar(ofs, r1, out_name);
-        RpaLriDetail::write_scalar(ofs, r2, out_name);
-        RpaLriDetail::write_scalar(ofs, record.max_abs, out_name);
-        RpaLriDetail::write_scalar(ofs, record.offset, out_name);
-    }
-    for (const auto& record: records)
-    {
-        for (int i = 0; i != record.nw1; ++i)
-        {
-            for (int j = 0; j != record.nw2; ++j)
-            {
-                for (int mu = 0; mu != record.naux; ++mu)
-                {
-                    const double value = RpaLriDetail::real_as_double((*record.tensor)(mu, i, j));
-                    RpaLriDetail::write_scalar(ofs, value, out_name);
-                }
-            }
-        }
-    }
-    ofs.close();
+    RpaLriDetail::write_lri_coef_v1(out_name, static_cast<std::int32_t>(ucell.nat), records);
     ModuleBase::timer::end("RPA_LRI", "out_Cs_v1");
 }
 catch (const std::exception& error)

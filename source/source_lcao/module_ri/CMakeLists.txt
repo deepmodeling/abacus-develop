@@ -25,6 +25,7 @@ if (ENABLE_LIBRI)
         ri_util.cpp
         rpa_lri.cpp
         rpa_lri_detail.cpp
+        rpa_lri_coeff_v1.cpp
         rpa_lri_mpi_layout.cpp
         rpa_lri_wfc_mpi.cpp
         rpa_lri_coulomb.cpp

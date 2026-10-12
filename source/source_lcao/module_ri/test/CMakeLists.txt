@@ -19,6 +19,6 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_rpa_lri_detail_test
   LIBS parameter base device
-  SOURCES rpa_lri_detail_test.cpp ../rpa_lri_detail.cpp
+  SOURCES rpa_lri_detail_test.cpp ../rpa_lri_detail.cpp ../rpa_lri_coeff_v1.cpp
 )
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
