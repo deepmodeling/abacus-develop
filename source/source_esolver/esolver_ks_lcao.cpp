@@ -1,6 +1,8 @@
 #include "esolver_ks_lcao.h"
 #include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
+#include "source_base/tool_quit.h"
 #include "source_base/module_external/blacs_connector.h"
+#include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
@@ -24,6 +26,7 @@
 #include "source_estate/module_charge/chg_routine.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/dm_routine.h" // init dm from electronic wave functions
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
+#include "source_io/module_parameter/input_parameter.h"
 #include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao()
 #include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao()
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
@@ -35,6 +38,22 @@
 
 namespace ModuleESolver
 {
+
+#ifdef __EXX
+namespace
+{
+void validate_librpa_v1_kpoints(const Input_para& input, const K_Vectors& kv)
+{
+    // Reader-v1 writes the complete Monkhorst-Pack mesh for LibRPA.
+    if (input.rpa && input.out_librpa_ver == 1 && !kv.is_uniform_mp())
+    {
+        ModuleBase::WARNING_QUIT(
+            "ESolver_KS_LCAO::before_all_runners",
+            "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid.");
+    }
+}
+} // namespace
+#endif
 
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
@@ -64,6 +83,10 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
 
     // 1) before_all_runners in ESolver_KS (includes init_general_exx_info)
     ESolver_KS::before_all_runners(ucell, inp);
+
+#ifdef __EXX
+    validate_librpa_v1_kpoints(inp, this->kv);
+#endif
 
     // 2) init full Exx_Info for LCAO (includes info_ri, info_opt_abfs, info_lip)
     init_exx_info(this->exx_info_, inp);

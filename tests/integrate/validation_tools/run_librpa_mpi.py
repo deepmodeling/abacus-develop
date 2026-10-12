@@ -89,7 +89,8 @@ def main():
             "K_POINTS\n2\nDirect\n0.0 0.0 0.0 0.5\n0.5 0.0 0.0 0.5\n"
         )
         invalid = subprocess.run(mpi_command(args, 2), cwd=invalid_kpt, env=env,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=90)
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                 universal_newlines=True, timeout=90)
         expected_error = "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid."
         if invalid.returncode == 0 or expected_error not in invalid.stdout:
             raise RuntimeError("reader-v1 accepted an explicit KPT list or failed unclearly:\n{}".format(invalid.stdout))
@@ -106,7 +107,8 @@ def main():
             inp.write_text(inp.read_text().replace("../../PP_ORB", str(source.parent / "PP_ORB")))
             (case / "OUT.librpa" / name).mkdir(parents=True)
             run = subprocess.run(mpi_command(args, 2), cwd=case, env=env,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=90)
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                 universal_newlines=True, timeout=90)
             if run.returncode == 0 or "RPA producer output failed:" not in run.stdout:
                 raise RuntimeError("{} did not report a communicator-wide failure:\n{}".format(name, run.stdout))
             print("MPI output failure check: PASS ({})".format(name))

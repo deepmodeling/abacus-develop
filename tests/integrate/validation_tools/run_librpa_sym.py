@@ -21,7 +21,7 @@ def check_output(case, mesh, symmetry, nspin):
     rows = [line.split() for line in (out / "bz_sample.txt").read_text().splitlines()]
     assert tuple(map(int, rows[0])) == mesh
     nk, nq = map(int, rows[1])
-    full = math.prod(mesh)
+    full = mesh[0] * mesh[1] * mesh[2]
     assert 0 < nk <= full and nk == nq
     weights = [float(row[1]) for row in rows[2:2 + nk]]
     assert abs(sum(weights) - 1) < 1e-12

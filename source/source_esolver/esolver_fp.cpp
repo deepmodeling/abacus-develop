@@ -22,10 +22,6 @@
 #include "source_base/module_parallel/para_world.h"
 #include "source_base/module_parallel/para_tag.h"
 #include "source_base/module_parallel/para_bridge.h"
-#if defined(__LCAO) && defined(__EXX)
-#include "source_lcao/module_ri/rpa_lri_input.h"
-#endif
-
 namespace ModuleESolver
 {
 
@@ -137,10 +133,6 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     const double kspacing[3] = {this->inp_->kspacing[0], this->inp_->kspacing[1], this->inp_->kspacing[2]};
     const double koffset[3] = {this->inp_->koffset[0], this->inp_->koffset[1], this->inp_->koffset[2]};
     this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, GlobalV::ofs_warning, use_ibz, global_out_dir, gamma_only_local, kspacing, this->inp_->kmesh_type, koffset);
-#if defined(__LCAO) && defined(__EXX)
-    // Keep LibRPA protocol checks in its module, after KPT state is available.
-    ModuleRI::validate_librpa_v1_kpoints(inp, this->kv);
-#endif
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     //! 8) print information
