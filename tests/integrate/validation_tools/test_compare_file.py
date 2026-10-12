@@ -49,8 +49,13 @@ class CompareFileTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 1)
 
-    def test_extra_blank_line_fails(self):
+    def test_trailing_blank_lines_are_ignored(self):
         result = self.run_compare("value 1.0\n\n", "value 1.0\n")
+
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_extra_interior_blank_line_fails(self):
+        result = self.run_compare("first 1.0\n\nsecond 2.0\n", "first 1.0\nsecond 2.0\n")
 
         self.assertEqual(result.returncode, 1)
 

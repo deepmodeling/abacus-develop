@@ -63,6 +63,11 @@ def ReadFile(file1,lines):
     try:
         with open(file1) as f1:
             for line in f1.readlines(): lines.append(line)
+        # A final blank line carries no numerical information and varies among
+        # otherwise equivalent output writers. Keep interior blank lines so a
+        # missing or shifted data row is still detected below.
+        while lines and not lines[-1].strip():
+            lines.pop()
     except OSError:
         print("Error: can not find file %s" % file1)
         sys.exit(1)
