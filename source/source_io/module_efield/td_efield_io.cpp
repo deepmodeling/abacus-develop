@@ -48,7 +48,6 @@ void prepare_td_field_output(const std::string& output_dir, const elecstate::TDF
     if (!manager.file_source())
     {
         prepare_td_field_output(output_dir, manager.fields().size(), restart);
-        return;
     }
     if (!restart)
     {
@@ -57,13 +56,25 @@ void prepare_td_field_output(const std::string& output_dir, const elecstate::TDF
         {
             ModuleBase::WARNING_QUIT("ModuleIO::prepare_td_field_output", "Cannot prepare efield_total.txt.");
         }
-        output << "# time(fs) Ex(V/Angstrom) Ey(V/Angstrom) Ez(V/Angstrom); endpoint finite differences\n";
+        output << "# time(fs) Ex(V/Angstrom) Ey(V/Angstrom) Ez(V/Angstrom); ";
+        if (manager.file_source())
+        {
+            output << "endpoint finite differences\n";
+        }
+        else
+        {
+            output << "sum of analytic fields\n";
+        }
     }
 }
 
 void write_td_field_values(const elecstate::TDFieldManager& manager, const std::string& output_dir)
 {
-    if (manager.file_source())
+    // Preserve the analytic sampling window for both total and per-waveform output.
+    if (!manager.file_source() && !manager.active())
+    {
+        return;
+    }
     {
         std::ofstream output((output_dir + "efield_total.txt").c_str(), std::ofstream::app);
         if (!output)
@@ -76,9 +87,8 @@ void write_td_field_values(const elecstate::TDFieldManager& manager, const std::
             output << '\t' << manager.efield_ha()[direction] * ModuleBase::Hartree_to_eV / ModuleBase::BOHR_TO_A;
         }
         output << '\n';
-        return;
     }
-    if (!manager.active())
+    if (manager.file_source())
     {
         return;
     }

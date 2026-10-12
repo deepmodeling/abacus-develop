@@ -21,7 +21,7 @@ namespace ModuleIO
  */
 void prepare_td_field_output(const std::string& output_dir, std::size_t field_count, bool restart);
 
-/** @brief Prepare total endpoint E for file-driven A, or the configured waveform files. */
+/** @brief Prepare total endpoint E and, for analytic fields, the configured waveform files. */
 void prepare_td_field_output(const std::string& output_dir, const elecstate::TDFieldManager& manager, bool restart);
 
 /**

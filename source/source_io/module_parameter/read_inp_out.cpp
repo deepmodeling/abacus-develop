@@ -1682,11 +1682,11 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
     }
     {
         Input_Item item("out_efield");
-        item.annotation = "output dipole or not";
+        item.annotation = "output electric fields";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls time-dependent electric-field output in `OUT.{suffix}/`. With `init_vecpot=True`, `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Otherwise, `efield_[index].txt` contains time in fs and the field value in V/Angstrom for each configured field. The one-based index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
-* `True`: Output electric-field values on active electronic steps.
+        item.description = R"(Controls time-dependent electric-field output in `OUT.{suffix}/`. `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Each configured analytic field is additionally written to `efield_[index].txt`, containing time in fs and the field value in V/Angstrom. The one-based index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Output is written on active electronic steps. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+* `True`: Output electric-field values.
 * `False`: Do not output electric-field values.)";
         item.default_value = "False";
         item.unit = "";
