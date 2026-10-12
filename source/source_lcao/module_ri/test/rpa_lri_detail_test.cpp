@@ -368,3 +368,9 @@ TEST(RpaLriDetail, BzSampleRejectsGridSizeOutsideIndexRange)
     data.mesh = {{std::numeric_limits<int>::max(), 2, 1}};
     EXPECT_THROW(write_bz_sample("unused.txt", data), std::runtime_error);
 }
+
+TEST(RpaLriDetail, BzSampleRejectsOutputOpenFailure)
+{
+    EXPECT_THROW(write_bz_sample("missing_bz_sample_directory/bz_sample.txt", make_reduced_bz_sample()),
+                 std::runtime_error);
+}
