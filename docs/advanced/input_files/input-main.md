@@ -20,6 +20,7 @@
     - [bndpar](#bndpar)
     - [latname](#latname)
     - [assume\_isolated](#assume_isolated)
+    - [pcc\_2d\_axis](#pcc_2d_axis)
     - [init\_wfc](#init_wfc)
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
@@ -504,6 +505,8 @@
     - [init\_vecpot\_file](#init_vecpot_file)
     - [out\_vecpot](#out_vecpot)
   - [Real-Time TDDFT (PW)](#real-time-tddft-pw)
+    - [td\_orthonormal](#td_orthonormal)
+    - [td\_out\_stat](#td_out_stat)
     - [lin\_solver](#lin_solver)
     - [lin\_precond](#lin_precond)
     - [lin\_thr](#lin_thr)
@@ -770,10 +773,21 @@
   Available options are:
 
   - none: regular periodic calculation without isolated-system correction.
+  - pcc_0d: self-consistent point-counter-charge (PCC) correction for a molecule in a cubic cell. The multipoles are taken about the mass-weighted ionic center.
+  - pcc_2d: self-consistent PCC correction for a slab, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane (rewrite a tilted cell as the equivalent perpendicular one), and the k-point sampling along it must be Gamma only. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge. ENVIRON uses -pi*Q/(3*L), so charged-slab energies agree with ENVIRON only for A = L^2.
   - makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
-  Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).
+  pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho.
+
+  Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).
 - **Default**: none
+
+### pcc_2d_axis
+
+- **Type**: Integer
+- **Availability**: *[`assume_isolated`](#assume_isolated)==pcc_2d*
+- **Description**: Index of the lattice vector along which assume_isolated=pcc_2d is open: 0, 1 or 2 for the first, second or third vector of LATTICE_VECTORS. The selected vector must be perpendicular to the other two, which span the periodic plane; the k-point sampling along it must be Gamma only.
+- **Default**: 2
 
 ### init_wfc
 
@@ -1373,6 +1387,8 @@
   - 1: Spin degeneracy
   - 2: Collinear spin polarized.
   - 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.
+  - Note: With nspin=2 and no initial magnetization in STRU, a moment of 1.0 is autoset for every atom, unless symmetry is 1.
+  - Note: With nspin=4 no moment is ever autoset. The calculation starts from zero magnetic moment and a warning is printed; set 'mag' explicitly in STRU for the magnetic atoms if a magnetic ground state is expected.
 - **Default**: 1
 
 ### gga_grad
@@ -1614,6 +1630,8 @@
   - noncolin=0, lspinorb=1: SOC with z-axis magnetism only (for non-magnetic materials with SOC)
   - noncolin=1, lspinorb=0: Non-collinear magnetism without SOC
   - noncolin=1, lspinorb=1: Both non-collinear magnetism and SOC
+  - Note: When nspin=4 and noncolin=0, only the z component of the initial magnetization in STRU is used; x/y components are ignored and a warning is printed.
+  - Note: When nspin=4 and no initial magnetization is set in STRU, the calculation starts from zero magnetic moment; no automatic magnetization is assigned.
 - **Default**: False
 
 ### soc_lambda
@@ -4702,6 +4720,28 @@
 
 ## Real-Time TDDFT (PW)
 
+### td_orthonormal
+
+- **Type**: String
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Orthonormalize each propagated wavefunction before constructing its density. With the wavefunctions as columns of $\boldsymbol{\Psi}$, define the Gram matrix $\boldsymbol{S}=\boldsymbol{\Psi}^{\dagger}\boldsymbol{\Psi}$ and apply $\boldsymbol{\Psi}\leftarrow\boldsymbol{\Psi}\boldsymbol{C}$.
+  - `cholesky`: Cholesky orthonormalization. Factor $\boldsymbol{S}=\boldsymbol{R}^{\dagger}\boldsymbol{R}$ with upper-triangular $\boldsymbol{R}$ and use $\boldsymbol{C}=\boldsymbol{R}^{-1}$.
+  - `lowdin`: Löwdin symmetric orthonormalization. Compute $\boldsymbol{C}=\boldsymbol{S}^{-1/2}$ by eigendecomposition.
+  - `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
+  - `none`: Disable orthonormalization.
+
+  > Note: Orthonormalization is applied after the Crank-Nicolson linear solve and uses an orthogonality tolerance independent of `lin_thr`. With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. Wavefunctions within this tolerance are left unchanged. Nonfinite or nonpositive orbital norms are rejected even with `none`.
+- **Default**: cholesky
+
+### td_out_stat
+
+- **Type**: Boolean
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
+- **Description**: Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Electron counts describe the end-of-step state; orthogonality errors before and after correction are separate maxima over all SCF iterations and k points within that step. Orthogonality errors are omitted when `td_orthonormal=none`.
+
+  > Note: Enabling this output adds density integration and diagnostic communication.
+- **Default**: false
+
 ### lin_solver
 
 - **Type**: String
@@ -4735,7 +4775,7 @@
   - `bicgstab` and `gmres`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\max(1,\lVert\boldsymbol{b}\rVert)$.
   - `cgs`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\lVert\boldsymbol{b}\rVert$ for nonzero $\boldsymbol{b}$, or $\lVert\boldsymbol{r}\rVert\leqslant\tau$ for zero $\boldsymbol{b}$.
 
-  All methods check the final residual explicitly. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled.
+  All methods check the residual at the end of the linear solve, before orthonormalization. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled. Subsequent orthonormalization uses a separate orthogonality tolerance and does not guarantee that the corrected wavefunctions satisfy the same linear residual tolerance.
 - **Default**: 0
 
 ### lin_maxiter

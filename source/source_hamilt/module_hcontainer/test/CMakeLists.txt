@@ -14,12 +14,15 @@ AddTest(
   ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
 )
 
-AddTest(
-  TARGET MODULE_LCAO_hcontainer_cost_test
-  LIBS parameter psi base device
-  SOURCES test_hcontainer_time.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp  
-  ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
-)
+# This driver only measures time and memory; keep it with the opt-in benchmarks.
+if(ENABLE_GOOGLEBENCH)
+  AddTest(
+    TARGET MODULE_LCAO_hcontainer_cost_test
+    LIBS parameter psi base device
+    SOURCES test_hcontainer_time.cpp ../base_matrix.cpp ../hcontainer.cpp ../atom_pair.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp
+  )
+endif()
 
 AddTest(
   TARGET MODULE_LCAO_hcontainer_folding_test

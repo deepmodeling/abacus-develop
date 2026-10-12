@@ -281,7 +281,7 @@ For general usage requirements, the APNSv1.0 pseudopotential and orbital set is 
       0.0 0.0 0.0 m 0 0 0
       0.5 0.5 0.5 m 1 1 1
       ```
-      For `nspin==2`, we will autoset atomic magmon is `1.0`:
+      For `nspin==2`, the atomic magnetic moment is autoset to `1.0`:
       ```
       Fe
       1.0
@@ -295,21 +295,32 @@ For general usage requirements, the APNSv1.0 pseudopotential and orbital set is 
       0.0 0.0 0.0 m 0 0 0
       0.5 0.5 0.5 m 1 1 1
       ```
-      For `nspin==4`, we will autoset atomic magmon as follow:
+      This autoset is skipped as soon as `STRU` specifies a finite moment for
+      any single atom, and also when [`symmetry`](input-main.md#symmetry) is
+      `1`, because an all-zero moment is a legitimate nonmagnetic choice under
+      the full point group.
+
+      For `nspin==4`, **no** moment is autoset: the calculation starts from a
+      zero magnetic moment and a warning is printed. Zero magnetization is a
+      stationary point, so such a run stays nonmagnetic. Set `mag` explicitly
+      on the magnetic atoms if a magnetic ground state is expected, e.g.:
       ```
       Fe
       0.0
       2
-      0.0 0.0 0.0 m 0 0 0 mag 1 1 1
-      0.5 0.5 0.5 m 1 1 1 mag 1 1 1
+      0.0 0.0 0.0 m 0 0 0 mag 0.0 0.0 2.0
+      0.5 0.5 0.5 m 1 1 1 mag 0.0 0.0 2.0
 
       O
       0.0
       2
-      0.0 0.0 0.0 m 0 0 0 mag 1 1 1
-      0.5 0.5 0.5 m 1 1 1 mag 1 1 1
+      0.0 0.0 0.0 m 0 0 0
+      0.5 0.5 0.5 m 1 1 1
       ```
-      However, this autoset will not be vaild once `STRU` specalize a finite magnetic for any single atom.
+      With [`noncolin`](input-main.md#noncolin) `0`, only the z component of
+      `mag` is used; the x/y components are discarded and the number of
+      affected atoms is reported per atom type. A moment given purely along
+      x/y therefore also leaves a zero starting moment.
 
   - `lambda`: Lagrange multiplier vector for spin constraint method. Can specify one value (z-component) or three values for x, y, z components (e.g., `lambda 0.5` or `lambda 0.1 0.2 0.3`). Values are in eV and will be converted to Rydberg internally. Used with spin-constrained DFT (enable with `sc_mag_switch` in INPUT file).
 

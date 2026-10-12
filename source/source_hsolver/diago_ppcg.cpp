@@ -39,10 +39,10 @@ namespace hsolver {
 namespace {
 
 template <typename Value>
-void reduce_pool_if_mpi_ready(Value& value)
+void reduce_pool_if_ready(Value& value)
 {
 #ifdef __MPI
-    if (Parallel_Reduce::mpi_ready())
+    if (Parallel_Reduce::pool_ready())
     {
         Parallel_Reduce::reduce_pool(value);
     }
@@ -50,10 +50,10 @@ void reduce_pool_if_mpi_ready(Value& value)
 }
 
 template <typename Value>
-void reduce_pool_if_mpi_ready(Value* value, const int n)
+void reduce_pool_if_ready(Value* value, const int n)
 {
 #ifdef __MPI
-    if (Parallel_Reduce::mpi_ready())
+    if (Parallel_Reduce::pool_ready())
     {
         Parallel_Reduce::reduce_pool(value, n);
     }
@@ -63,7 +63,7 @@ void reduce_pool_if_mpi_ready(Value* value, const int n)
 bool all_pool_operations_succeeded(const bool local_success)
 {
     int failure_count = local_success ? 0 : 1;
-    reduce_pool_if_mpi_ready(&failure_count, 1);
+    reduce_pool_if_ready(&failure_count, 1);
     return failure_count == 0;
 }
 
@@ -91,7 +91,7 @@ Real max_generalized_residual(
         }
         nrm2_all[j] = nrm2;
     }
-    reduce_pool_if_mpi_ready(nrm2_all.data(), ncol);
+    reduce_pool_if_ready(nrm2_all.data(), ncol);
     for (int j = 0; j < ncol; ++j)
     {
         const Real residual_norm = std::sqrt(Real(nrm2_all[j]));
@@ -175,14 +175,15 @@ template <typename T, typename Device>
 DiagoPPCG<T, Device>::DiagoPPCG(const Real& diag_thr,
                                  const int& diag_iter_max,
                                  const int& sbsize,
-                                 const int& rr_step,
-                                 const bool gamma_g0_real)
+                                 const int& rr_step)
     : maxiter_(diag_iter_max),
-      sbsize_(std::max(1, sbsize)),
-      rr_step_(std::max(1, rr_step)),
-      diag_thr_(std::max(diag_thr, Real(ppcg_minimum_diagonalization_threshold))),
-      gamma_g0_real_(gamma_g0_real)
+      sbsize_(sbsize),
+      rr_step_(rr_step),
+      diag_thr_(diag_thr)
 {
+    sbsize_ = std::max(1, sbsize_);
+    rr_step_ = std::max(1, rr_step_);
+    diag_thr_ = std::max(diag_thr_, Real(ppcg_minimum_diagonalization_threshold));
 }
 
 // =============================================================================
@@ -237,22 +238,6 @@ void DiagoPPCG<T, Device>::validate_input(
 }
 
 // =============================================================================
-// Gamma-point symmetry: enforce real-valued first element
-// =============================================================================
-template <typename T, typename Device>
-void DiagoPPCG<T, Device>::force_g0_real(T* x, int ncol) const
-{
-    if (!gamma_g0_real_ || n_dim_ <= 0)
-    {
-        return;
-    }
-    for (int j = 0; j < ncol; ++j)
-    {
-        x[idx(0, j, ld_psi_)] = T(std::real(x[idx(0, j, ld_psi_)]), 0.0);
-    }
-}
-
-// =============================================================================
 // Operator application
 // =============================================================================
 template <typename T, typename Device>
@@ -300,7 +285,7 @@ typename DiagoPPCG<T, Device>::Real
 DiagoPPCG<T, Device>::gamma_dot(const T* x, const T* y) const
 {
     Real result = ModuleBase::dot_real_op<T, Device>()(n_dim_, x, y, false);
-    reduce_pool_if_mpi_ready(result);
+    reduce_pool_if_ready(result);
     return result;
 }
 
@@ -329,7 +314,7 @@ void DiagoPPCG<T, Device>::gram(const T* mat_a, const T* mat_b,
                                      &zero,
                                      out.data(),
                                      ld_out);
-    reduce_pool_if_mpi_ready(out.data(), ld_out * ncol_b);
+    reduce_pool_if_ready(out.data(), ld_out * ncol_b);
 }
 
 // =============================================================================
@@ -556,7 +541,7 @@ void DiagoPPCG<T, Device>::lock_epairs(
         }
         nrm2_all[j] = nrm2;
     }
-    reduce_pool_if_mpi_ready(nrm2_all.data(), n_band_);
+    reduce_pool_if_ready(nrm2_all.data(), n_band_);
     bool found_unconverged = false;
     max_residual_ = Real(0);
     for (int j = 0; j < n_band_; ++j)
@@ -603,7 +588,7 @@ void DiagoPPCG<T, Device>::scale_to_unit_snorm(std::vector<T>& x,
         }
         inverse_snorm[j] = snorm_squared;
     }
-    reduce_pool_if_mpi_ready(inverse_snorm.data(), ncols);
+    reduce_pool_if_ready(inverse_snorm.data(), ncols);
     for (int j = 0; j < ncols; ++j)
     {
         const Real snorm = std::sqrt(std::max(
@@ -649,21 +634,22 @@ template <typename T, typename Device>
 void DiagoPPCG<T, Device>::insert_startup_gram_block(
     const T* left,
     const T* right,
+    const int row_count,
+    const int column_count,
     const int row_offset,
     const int column_offset,
+    const int matrix_dim,
     std::vector<T>& matrix,
     std::vector<T>& workspace) const
 {
-    const int block_size = n_band_;
-    const int matrix_dim = 2 * n_band_;
-    gram(left, right, block_size, block_size, workspace, block_size);
-    for (int j = 0; j < block_size; ++j)
+    gram(left, right, row_count, column_count, workspace, row_count);
+    for (int j = 0; j < column_count; ++j)
     {
-        for (int i = 0; i < block_size; ++i)
+        for (int i = 0; i < row_count; ++i)
         {
             const int matrix_index = row_offset + i
                                      + (column_offset + j) * matrix_dim;
-            matrix[matrix_index] = workspace[i + j * block_size];
+            matrix[matrix_index] = workspace[i + j * row_count];
         }
     }
 }
@@ -671,11 +657,17 @@ void DiagoPPCG<T, Device>::insert_startup_gram_block(
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::build_startup_global_subspace(
     const T* psi,
+    std::vector<T>& w_active,
+    std::vector<T>& sw_active,
+    std::vector<T>& hw_active,
+    const int active_count,
     SmallSubspace& subspace)
 {
-    scale_to_unit_snorm(w_, sw_, hw_, n_band_);
+    scale_to_unit_snorm(w_active, sw_active, hw_active, active_count);
 
-    const int local_dim = 2 * n_band_;
+    const int state_count = n_band_;
+    const int correction_offset = state_count;
+    const int local_dim = state_count + active_count;
     const int matrix_size = local_dim * local_dim;
     subspace.k.assign(matrix_size, T(0));
     subspace.m.assign(matrix_size, T(0));
@@ -684,50 +676,74 @@ void DiagoPPCG<T, Device>::build_startup_global_subspace(
 
     insert_startup_gram_block(psi,
                               hpsi_.data(),
+                              state_count,
+                              state_count,
                               0,
                               0,
+                              local_dim,
                               subspace.k,
                               gram_workspace);
     insert_startup_gram_block(psi,
-                              hw_.data(),
+                              hw_active.data(),
+                              state_count,
+                              active_count,
                               0,
-                              n_band_,
+                              correction_offset,
+                              local_dim,
                               subspace.k,
                               gram_workspace);
-    insert_startup_gram_block(w_.data(),
+    insert_startup_gram_block(w_active.data(),
                               hpsi_.data(),
-                              n_band_,
+                              active_count,
+                              state_count,
+                              correction_offset,
                               0,
+                              local_dim,
                               subspace.k,
                               gram_workspace);
-    insert_startup_gram_block(w_.data(),
-                              hw_.data(),
-                              n_band_,
-                              n_band_,
+    insert_startup_gram_block(w_active.data(),
+                              hw_active.data(),
+                              active_count,
+                              active_count,
+                              correction_offset,
+                              correction_offset,
+                              local_dim,
                               subspace.k,
                               gram_workspace);
     insert_startup_gram_block(psi,
                               spsi_.data(),
+                              state_count,
+                              state_count,
                               0,
                               0,
+                              local_dim,
                               subspace.m,
                               gram_workspace);
     insert_startup_gram_block(psi,
-                              sw_.data(),
+                              sw_active.data(),
+                              state_count,
+                              active_count,
                               0,
-                              n_band_,
+                              correction_offset,
+                              local_dim,
                               subspace.m,
                               gram_workspace);
-    insert_startup_gram_block(w_.data(),
+    insert_startup_gram_block(w_active.data(),
                               spsi_.data(),
-                              n_band_,
+                              active_count,
+                              state_count,
+                              correction_offset,
                               0,
+                              local_dim,
                               subspace.m,
                               gram_workspace);
-    insert_startup_gram_block(w_.data(),
-                              sw_.data(),
-                              n_band_,
-                              n_band_,
+    insert_startup_gram_block(w_active.data(),
+                              sw_active.data(),
+                              active_count,
+                              active_count,
+                              correction_offset,
+                              correction_offset,
+                              local_dim,
                               subspace.m,
                               gram_workspace);
 
@@ -738,17 +754,21 @@ void DiagoPPCG<T, Device>::build_startup_global_subspace(
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::update_startup_global_subspace(
     T* psi,
+    const std::vector<T>& w_active,
+    const std::vector<T>& sw_active,
+    const std::vector<T>& hw_active,
+    const int active_count,
     const SmallSubspace& subspace)
 {
-    const int local_dim = 2 * n_band_;
+    const int local_dim = n_band_ + active_count;
     const T* state_coefficients = subspace.k.data();
     const T* correction_coefficients = state_coefficients + n_band_;
     const T one = T(1);
     const T zero = T(0);
 
-    set_zero(rr_psi_);
-    set_zero(rr_spsi_);
-    set_zero(rr_hpsi_);
+    set_zero(w_);
+    set_zero(sw_);
+    set_zero(hw_);
     set_zero(p_);
     set_zero(sp_);
     set_zero(hp_);
@@ -774,7 +794,7 @@ void DiagoPPCG<T, Device>::update_startup_global_subspace(
                                          'N',
                                          n_dim_,
                                          n_band_,
-                                         n_band_,
+                                         active_count,
                                          &one,
                                          correction,
                                          ld_psi_,
@@ -790,7 +810,7 @@ void DiagoPPCG<T, Device>::update_startup_global_subspace(
                                          'N',
                                          n_dim_,
                                          n_band_,
-                                         n_band_,
+                                         active_count,
                                          &one,
                                          correction,
                                          ld_psi_,
@@ -801,16 +821,16 @@ void DiagoPPCG<T, Device>::update_startup_global_subspace(
                                          ld_psi_);
     };
 
-    combine_state(psi, w_.data(), rr_psi_.data());
-    combine_state(spsi_.data(), sw_.data(), rr_spsi_.data());
-    combine_state(hpsi_.data(), hw_.data(), rr_hpsi_.data());
-    combine_direction(w_.data(), p_.data());
-    combine_direction(sw_.data(), sp_.data());
-    combine_direction(hw_.data(), hp_.data());
+    combine_state(psi, w_active.data(), w_.data());
+    combine_state(spsi_.data(), sw_active.data(), sw_.data());
+    combine_state(hpsi_.data(), hw_active.data(), hw_.data());
+    combine_direction(w_active.data(), p_.data());
+    combine_direction(sw_active.data(), sp_.data());
+    combine_direction(hw_active.data(), hp_.data());
 
-    std::copy(rr_psi_.begin(), rr_psi_.end(), psi);
-    std::copy(rr_spsi_.begin(), rr_spsi_.end(), spsi_.begin());
-    std::copy(rr_hpsi_.begin(), rr_hpsi_.end(), hpsi_.begin());
+    std::copy(w_.begin(), w_.end(), psi);
+    std::copy(sw_.begin(), sw_.end(), spsi_.begin());
+    std::copy(hw_.begin(), hw_.end(), hpsi_.begin());
 }
 
 // ---------------------------------------------------------------------------
@@ -1246,9 +1266,9 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
     if (sygvd_ok)
     {
         const int sz = ld_psi_ * n_band_;
-        std::copy(psi, psi + sz, rr_psi_.begin());
-        std::copy(spsi_.begin(), spsi_.end(), rr_spsi_.begin());
-        std::copy(hpsi_.begin(), hpsi_.end(), rr_hpsi_.begin());
+        std::copy(psi, psi + sz, w_.begin());
+        std::copy(spsi_.begin(), spsi_.end(), sw_.begin());
+        std::copy(hpsi_.begin(), hpsi_.end(), hw_.begin());
 
         std::fill(psi, psi + ld_psi_ * n_band_, T(0));
         set_zero(spsi_);
@@ -1262,7 +1282,7 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
                                          n_band_,
                                          n_band_,
                                          &one,
-                                         rr_psi_.data(),
+                                         w_.data(),
                                          ld_psi_,
                                          rr_hsub_.data(),
                                          n_band_,
@@ -1275,7 +1295,7 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
                                          n_band_,
                                          n_band_,
                                          &one,
-                                         rr_spsi_.data(),
+                                         sw_.data(),
                                          ld_psi_,
                                          rr_hsub_.data(),
                                          n_band_,
@@ -1288,7 +1308,7 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
                                          n_band_,
                                          n_band_,
                                          &one,
-                                         rr_hpsi_.data(),
+                                         hw_.data(),
                                          ld_psi_,
                                          rr_hsub_.data(),
                                          n_band_,
@@ -1383,9 +1403,6 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     p_.assign(sz, T(0));
     sp_.assign(sz, T(0));
     hp_.assign(sz, T(0));
-    rr_psi_.resize(sz);
-    rr_spsi_.resize(sz);
-    rr_hpsi_.resize(sz);
     rr_hsub_.resize(ncol * ncol);
     rr_ssub_.resize(ncol * ncol);
     rr_eval_.resize(ncol);
@@ -1393,7 +1410,6 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     std::vector<int> all_cols(ncol);
     std::iota(all_cols.begin(), all_cols.end(), 0);
 
-    force_g0_real(psi_in, ncol);
     apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
     apply_s_current(psi_in, spsi_.data(), ncol);
 
@@ -1476,31 +1492,14 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         psi_in, eigenvalue_in, active_cols, ethr_band);
     const bool needs_startup_global_correction = !active_cols.empty()
                                                  && sbsize_ < ncol;
-    if (needs_startup_global_correction)
-    {
-        // A local block can discard a lower-root residual direction before
-        // the global Rayleigh-Ritz step can compare it with other blocks.
-        // Keep every residual direction during the first correction, so the
-        // requested lowest roots are selected in one common subspace.
-        active_cols = all_cols;
-    }
     // Recompute to keep hpsi/spi consistent with rotated psi.
     apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
     apply_s_current(psi_in, spsi_.data(), ncol);
     record_residual(0, "initial_rr");
 
-    std::vector<T> w_active;
-    std::vector<T> sw_active;
-    std::vector<T> hw_active;
-    std::vector<T> p_active;
-    std::vector<T> sp_active;
-    std::vector<T> hp_active;
-    w_active.reserve(sz);
-    sw_active.reserve(sz);
-    hw_active.reserve(sz);
-    p_active.reserve(sz);
-    sp_active.reserve(sz);
-    hp_active.reserve(sz);
+    std::vector<T> active_vector;
+    std::vector<T> s_active_vector;
+    std::vector<T> h_active_vector;
     std::vector<int> cols;
     cols.reserve(std::min(sbsize_, ncol));
     SmallSubspace subspace;
@@ -1525,22 +1524,21 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
         // Precondition the residual.
         divide_by_preconditioner(active_cols, prec, w_);
-        copy_cols(w_.data(), active_cols, w_active);
-        sw_active.assign(ld_psi_ * nact, T(0));
-        apply_s_current(w_active.data(), sw_active.data(), nact);
-        scatter_cols(sw_.data(), active_cols, sw_active);
+        copy_cols(w_.data(), active_cols, active_vector);
+        s_active_vector.assign(ld_psi_ * nact, T(0));
+        apply_s_current(active_vector.data(), s_active_vector.data(), nact);
+        scatter_cols(sw_.data(), active_cols, s_active_vector);
         project_against(psi_in, spsi_.data(), all_cols, w_, sw_, active_cols);
 
         // Apply H to the search direction.
-        copy_cols(w_.data(), active_cols, w_active);
-        force_g0_real(w_active.data(), nact);
-        hw_active.assign(ld_psi_ * nact, T(0));
-        sw_active.assign(ld_psi_ * nact, T(0));
-        scatter_cols(w_.data(), active_cols, w_active);
-        apply_h(hpsi_func, w_active.data(), hw_active.data(), nact);
-        apply_s_current(w_active.data(), sw_active.data(), nact);
-        scatter_cols(hw_.data(), active_cols, hw_active);
-        scatter_cols(sw_.data(), active_cols, sw_active);
+        copy_cols(w_.data(), active_cols, active_vector);
+        h_active_vector.assign(ld_psi_ * nact, T(0));
+        s_active_vector.assign(ld_psi_ * nact, T(0));
+        scatter_cols(w_.data(), active_cols, active_vector);
+        apply_h(hpsi_func, active_vector.data(), h_active_vector.data(), nact);
+        apply_s_current(active_vector.data(), s_active_vector.data(), nact);
+        scatter_cols(hw_.data(), active_cols, h_active_vector);
+        scatter_cols(sw_.data(), active_cols, s_active_vector);
 
         // S-orthogonalize the previous search direction p against psi, then
         // re-apply H/S.  The full Rayleigh-Ritz rotation re-mixes psi columns
@@ -1548,21 +1546,20 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // destabilize the [psi, w, p] block subspace.
         if (use_p)
         {
-            copy_cols(p_.data(), active_cols, p_active);
-            sp_active.assign(ld_psi_ * nact, T(0));
-            apply_s_current(p_active.data(), sp_active.data(), nact);
-            scatter_cols(sp_.data(), active_cols, sp_active);
+            copy_cols(p_.data(), active_cols, active_vector);
+            s_active_vector.assign(ld_psi_ * nact, T(0));
+            apply_s_current(active_vector.data(), s_active_vector.data(), nact);
+            scatter_cols(sp_.data(), active_cols, s_active_vector);
             project_against(psi_in, spsi_.data(), all_cols, p_, sp_, active_cols);
 
-            copy_cols(p_.data(), active_cols, p_active);
-            force_g0_real(p_active.data(), nact);
-            hp_active.assign(ld_psi_ * nact, T(0));
-            sp_active.assign(ld_psi_ * nact, T(0));
-            scatter_cols(p_.data(), active_cols, p_active);
-            apply_h(hpsi_func, p_active.data(), hp_active.data(), nact);
-            apply_s_current(p_active.data(), sp_active.data(), nact);
-            scatter_cols(hp_.data(), active_cols, hp_active);
-            scatter_cols(sp_.data(), active_cols, sp_active);
+            copy_cols(p_.data(), active_cols, active_vector);
+            h_active_vector.assign(ld_psi_ * nact, T(0));
+            s_active_vector.assign(ld_psi_ * nact, T(0));
+            scatter_cols(p_.data(), active_cols, active_vector);
+            apply_h(hpsi_func, active_vector.data(), h_active_vector.data(), nact);
+            apply_s_current(active_vector.data(), s_active_vector.data(), nact);
+            scatter_cols(hp_.data(), active_cols, h_active_vector);
+            scatter_cols(sp_.data(), active_cols, s_active_vector);
         }
 
         avg_iter += double(nact) / double(ncol);
@@ -1573,17 +1570,27 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // The w/p blocks are normalized to unit S-norm before building the
         // Gram matrix (see build_small_subspace), keeping M well-conditioned.
 
-        // The startup correction needs a global [X, W] comparison to retain
-        // the requested lowest roots.  Build its projected matrices directly
-        // from the persistent blocks to avoid materializing three additional
-        // ld_psi-by-nband bases.  Other sweeps retain the generic local path.
+        // The startup correction needs a global [X, W_active] comparison to
+        // retain the requested lowest roots.  All current Ritz vectors remain
+        // available, while a converged prefix contributes no correction
+        // vectors and stays outside the active iteration count.
         if (iter == 1 && needs_startup_global_correction)
         {
-            const int local_dim = 2 * ncol;
-            build_startup_global_subspace(psi_in, subspace);
+            const int local_dim = ncol + nact;
+            build_startup_global_subspace(psi_in,
+                                          active_vector,
+                                          s_active_vector,
+                                          h_active_vector,
+                                          nact,
+                                          subspace);
             measure_local_overlap(subspace, local_dim);
             solve_small_generalized(local_dim, ncol, subspace);
-            update_startup_global_subspace(psi_in, subspace);
+            update_startup_global_subspace(psi_in,
+                                           active_vector,
+                                           s_active_vector,
+                                           h_active_vector,
+                                           nact,
+                                           subspace);
         }
         else
         {

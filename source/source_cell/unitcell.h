@@ -2,6 +2,7 @@
 #define UNITCELL_H
 
 #include <memory>
+#include <vector>
 #include "source_base/global_function.h"
 #include "source_cell/sep_cell.h"
 #include "source_cell/magnetism.h"
@@ -16,6 +17,18 @@ class UnitCell : public BaseCell {
   public:
     UnitCell();
     ~UnitCell();
+
+    /// Copy and move are both disabled. The defaulted move constructor
+    /// shallow-copies the owning pointer 'atoms' and 'set_atom_flag' without
+    /// resetting the source (double free), and the reference aliases into
+    /// 'lat' (Coordinate, a1, latvec, ...) make the defaulted move assignment
+    /// implicitly deleted (-Wdefaulted-function-deleted). Correct move
+    /// semantics require an owning container for 'atoms' and removing the
+    /// aliases; until then any accidental move must fail at compile time.
+    UnitCell(const UnitCell&) = delete;
+    UnitCell& operator=(const UnitCell&) = delete;
+    UnitCell(UnitCell&&) = delete;
+    UnitCell& operator=(UnitCell&&) = delete;
 
     /// @brief Initialize basic cell parameters (latname, ntype, lmaxmax, init_vel)
     ///        from INPUT and parse fixed_axes into lat_axis_free flags.
@@ -138,16 +151,15 @@ class UnitCell : public BaseCell {
 
     /// @name Statistics
     /// @{
-    Statistics st;
-    int& ntype = st.ntype;
-    int& nat = st.nat;
-    int*& iat2it = st.iat2it;
-    int*& iat2ia = st.iat2ia;
-    int*& iwt2iat = st.iwt2iat;
-    int*& iwt2iw = st.iwt2iw;
-    ModuleBase::IntArray& itia2iat = st.itia2iat;
-    int& namax = st.namax;
-    int& nwmax = st.nwmax;
+    int ntype = 0;                 ///< number of atom species in UnitCell
+    int nat = 0;                   ///< total number of atoms of all species in unitcell
+    std::vector<int> iat2it;       ///< iat==>it, distinguish a atom belong to which type
+    std::vector<int> iat2ia;       ///< iat==>ia
+    std::vector<int> iwt2iat;      ///< iwt ==> iat
+    std::vector<int> iwt2iw;       ///< iwt ==> iw (Peize Lin add 2018-07-02)
+    ModuleBase::IntArray itia2iat; ///< (it, ia)==>iat, the index in nat (add 2009-3-2 by mohan)
+    int namax = 0;                 ///< the max na among all atom species
+    int nwmax = 0;                 ///< the max nw among all atom species
     /// @}
 
     Atom* atoms = nullptr;

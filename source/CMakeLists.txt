@@ -147,6 +147,20 @@ target_link_libraries(abacus_link_libs INTERFACE
 set(_abacus_linalg_libs)
 set(_abacus_linalg_include_dirs)
 
+if(USE_DSP)
+  if(NOT MT_CPACK_DIR)
+    message(FATAL_ERROR
+      "USE_DSP requires MT_CPACK_DIR to be set to the DSP C_PACK install prefix "
+      "(the directory containing lib/libc_pack.a).")
+  endif()
+  set(_abacus_cpack_library "${MT_CPACK_DIR}/lib/libc_pack.a")
+  if(NOT EXISTS "${_abacus_cpack_library}")
+    message(FATAL_ERROR
+      "MT_CPACK_DIR is set to '${MT_CPACK_DIR}' but '${_abacus_cpack_library}' does not exist.")
+  endif()
+  list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
+endif()
+
 if(USE_KML)
   if(ENABLE_MPI)
     list(APPEND _abacus_linalg_libs KML::ScaLAPACK)

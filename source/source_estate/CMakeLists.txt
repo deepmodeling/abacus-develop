@@ -11,12 +11,16 @@ list(APPEND objects
     elecstate_pw_sdft.cpp
     elecstate_pw_cal_tau.cpp
     makov_payne.cpp
+    charge_moments.cpp
+    pcc_0d.cpp
+    pcc_2d.cpp
     module_pot/gatefield.cpp
     module_pot/efield.cpp
     module_pot/h_hartree_pw.cpp
     module_pot/h_tddft_pw.cpp
     module_pot/pot_xc.cpp
     module_pot/pot_local.cpp
+    module_pot/pot_pcc.cpp
     module_pot/potential_new.cpp
     module_pot/potential_types.cpp
     module_pot/pot_surchem.cpp

@@ -16,6 +16,11 @@
 
 #include "source_io/module_hs/dhs_sparse_writer.h"
 
+#include <fstream>
+
+// Dummy output stream for running-log writes in tests; discards output.
+static std::ofstream ofs_running;
+
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -35,7 +40,7 @@ TEST(DhsSparseWriter, TextCountsOnlyValuesAboveThreshold)
     arrays.dHRx_sparse[0][r_vector][1][0] = 0.0;
     arrays.dHRx_sparse[0][r_vector][1][1] = -2.0;
 
-    ModuleIO::save_dH_sparse(5, pv, arrays, 1e-10, false, "h", 8, "./", "./", "scf", false, 1, 2);
+    ModuleIO::save_dH_sparse(5, pv, arrays, 1e-10, false, "h", 8, "./", "./", "scf", false, 1, 2, ofs_running);
 
     const std::vector<std::string> lines = read_lines("dhrxs1g6_nao.csr");
     ASSERT_GE(lines.size(), 7);
@@ -86,7 +91,7 @@ TEST(DhsSparseWriter, BinaryCountsOnlyValuesAboveThreshold)
     arrays.dHRx_sparse[0][r_vector][1][0] = 0.0;
     arrays.dHRx_sparse[0][r_vector][1][1] = -2.0;
 
-    ModuleIO::save_dH_sparse(6, pv, arrays, 1e-10, true, "h", 8, "./", "./", "scf", false, 1, 2);
+    ModuleIO::save_dH_sparse(6, pv, arrays, 1e-10, true, "h", 8, "./", "./", "scf", false, 1, 2, ofs_running);
 
     std::ifstream ifs("dhrxs1g7_nao.csr", std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
@@ -122,7 +127,7 @@ TEST(DhsSparseWriter, SocWritesAllDirections)
     arrays.dHRy_soc_sparse[r_vector][0][1] = std::complex<double>(2.0, -1.0);
     arrays.dHRz_soc_sparse[r_vector][1][1] = std::complex<double>(-3.0, 0.5);
 
-    ModuleIO::save_dH_sparse(7, pv, arrays, 1e-10, false, "s", 8, "./", "./", "scf", false, 4, 2);
+    ModuleIO::save_dH_sparse(7, pv, arrays, 1e-10, false, "s", 8, "./", "./", "scf", false, 4, 2, ofs_running);
 
     const std::string x_output = read_file("dsrxs1g8_nao.csr");
     const std::string y_output = read_file("dsrys1g8_nao.csr");

@@ -89,8 +89,8 @@ class Test_SETGRAD : public testing::Test
             ucell.omega = 1.0;
             ucell.lat0 = 1.0;
             
-            ucell.iat2it = new int[nat];
-            ucell.iat2ia = new int[nat];
+            ucell.iat2it.resize(nat);
+            ucell.iat2ia.resize(nat);
             ucell.atoms[0].mbl.resize(nat);
             ucell.atoms[0].taud.resize(nat);
             ucell.atoms[0].tau.resize(nat);
@@ -296,8 +296,8 @@ class Test_RELAX : public testing::Test
 
             ucell.omega = 452.590903143121;
             ucell.lat0 = 1.8897259886;
-            ucell.iat2it = new int[nat];
-            ucell.iat2ia = new int[nat];
+            ucell.iat2it.resize(nat);
+            ucell.iat2ia.resize(nat);
             ucell.iat2it[0] = 0;
             ucell.iat2it[1] = 1;
             ucell.iat2it[2] = 2;
@@ -417,8 +417,8 @@ TEST(RelaxSyncSummary, ConvergedPrintsSummary)
     ucell.atoms[0].label = "Si";
     ucell.omega = 1.0;
     ucell.lat0 = 1.0;
-    ucell.iat2it = new int[nat];
-    ucell.iat2ia = new int[nat];
+    ucell.iat2it.resize(nat);
+    ucell.iat2ia.resize(nat);
     ucell.iat2it[0] = 0;
     ucell.iat2ia[0] = 0;
     ucell.atoms[0].mbl.resize(nat);
@@ -477,8 +477,8 @@ TEST(RelaxSyncSummary, TwoStepConvergence)
     ucell.atoms[0].label = "Si";
     ucell.omega = 1.0;
     ucell.lat0 = 1.0;
-    ucell.iat2it = new int[nat];
-    ucell.iat2ia = new int[nat];
+    ucell.iat2it.resize(nat);
+    ucell.iat2ia.resize(nat);
     ucell.iat2it[0] = 0;
     ucell.iat2ia[0] = 0;
     ucell.atoms[0].mbl.resize(nat);
@@ -547,8 +547,8 @@ TEST(RelaxSyncSummary, CellRelaxConvergedPrintsStressHistory)
     ucell.atoms[0].label = "Si";
     ucell.omega = 1.0;
     ucell.lat0 = 1.0;
-    ucell.iat2it = new int[nat];
-    ucell.iat2ia = new int[nat];
+    ucell.iat2it.resize(nat);
+    ucell.iat2ia.resize(nat);
     ucell.iat2it[0] = 0;
     ucell.iat2ia[0] = 0;
     ucell.atoms[0].mbl.resize(nat);
@@ -622,8 +622,8 @@ void make_two_type_cell(UnitCell& ucell, const int mbl_flat[9])
         ucell.atoms[t].vel.resize(na);
     }
     // iat: 0 -> (type0, ia0); 1 -> (type1, ia0); 2 -> (type1, ia1)
-    ucell.iat2it = new int[3];
-    ucell.iat2ia = new int[3];
+    ucell.iat2it.resize(3);
+    ucell.iat2ia.resize(3);
     ucell.iat2it[0] = 0; ucell.iat2it[1] = 1; ucell.iat2it[2] = 1;
     ucell.iat2ia[0] = 0; ucell.iat2ia[1] = 0; ucell.iat2ia[2] = 1;
 
@@ -648,11 +648,6 @@ void make_two_type_cell(UnitCell& ucell, const int mbl_flat[9])
 void free_two_type_cell(UnitCell& ucell)
 {
     delete[] ucell.atoms;
-    // iat2it / iat2ia are owned by the mock; release explicitly.
-    delete[] ucell.iat2it;
-    delete[] ucell.iat2ia;
-    ucell.iat2it = nullptr;
-    ucell.iat2ia = nullptr;
 }
 } // namespace
 
@@ -730,8 +725,8 @@ TEST(RelaxSyncMaxStep, GeometryMovedAndNotConverged)
     ucell.atoms[0].label = "Si";
     ucell.omega = 1.0;
     ucell.lat0 = 1.0;
-    ucell.iat2it = new int[nat];
-    ucell.iat2ia = new int[nat];
+    ucell.iat2it.resize(nat);
+    ucell.iat2ia.resize(nat);
     ucell.iat2it[0] = 0;
     ucell.iat2ia[0] = 0;
     ucell.atoms[0].mbl.resize(nat);

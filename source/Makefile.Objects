@@ -212,6 +212,9 @@ OBJS_CELL=atom_pseudo.o\
     read_pp_blps.o\
     read_pp_vwr.o\
     unitcell.o\
+    unitcell_index.o\
+    unitcell_stats.o\
+    unitcell_setup.o\
     read_atoms.o\
     read_atoms_helper.o\
     print_cell.o\
@@ -221,6 +224,7 @@ OBJS_CELL=atom_pseudo.o\
     reciprocal_grid.o\
     cell_index.o\
     cell_tools.o\
+    cell_geometry.o\
     record_adj.o\
     check_atomic_stru.o\
     update_cell.o\
@@ -271,6 +275,10 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_pw_sdft.o\
     elecstate_pw_cal_tau.o\
     makov_payne.o\
+    charge_moments.o\
+    pcc_0d.o\
+    pcc_2d.o\
+    pot_pcc.o\
     elecstate_op.o\
     efield.o\
     gatefield.o\
@@ -467,12 +475,13 @@ OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
     diago_dav_subspace.o\
     diago_bpcg.o\
-    diago_params.o\
     diago_ppcg.o\
     para_lin_tf.o\
     hsolver.o\
     hsolver_pw.o\
     hsolver_pw_tddft.o\
+    orthonormal.o\
+    orthonormal_small.o\
     hsolver_lcaopw.o\
     diago_iter_assist.o\
     hegvd_op.o\
@@ -564,6 +573,7 @@ OBJS_PSI_INITIALIZER=psi_base.o\
 OBJS_PW=fft_bundle.o\
     fft_cpu.o\
     pw_basis.o\
+    pw_grid_geometry.o\
     pw_basis_k.o\
     pw_basis_sup.o\
     pw_distributeg.o\
@@ -629,7 +639,7 @@ OBJS_SYMMETRY=symm_other.o\
     symm_rho.o\
     little_group.o\
     symmetry.o\
-    irreducible_sector.o\
+    irred_sec.o\
     irred_sec_bvk.o\
     symm_rotation_k.o\
 
@@ -848,6 +858,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       symm_rot_out.o\
       gaussian_abfs.o\
       exx_lri_detail.o\
+      ri_util.o\
       singular_value.o\
 
 OBJS_BSE=esolver_lr_lcao_bse.o\
@@ -1011,6 +1022,7 @@ OBJS_DELTASPIN=basic_funcs.o\
       deltaspin_init.o\
       lambda_loop_helper.o\
       lambda_loop.o\
+      lambda_loop_diag.o\
       spin_constrain.o\
       deltaspin_lcao.o\
       deltaspin_lcao_mi.o\

@@ -26,7 +26,6 @@
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include <algorithm>
 #include <iomanip>
 #include <array>
 #include <sstream>
@@ -131,11 +130,18 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         std::vector<int> ilist(static_cast<std::size_t>(nowned_atoms), 0);
         std::vector<int> numneigh(static_cast<std::size_t>(nowned_atoms), 0);
         std::vector<int*> firstneigh(static_cast<std::size_t>(nowned_atoms), NULL);
+        std::vector<std::vector<int> > sorted_neighbors(static_cast<std::size_t>(nowned_atoms));
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             ilist[static_cast<std::size_t>(iat)] = iat;
-            numneigh[static_cast<std::size_t>(iat)] = neighbor_list.get_numneigh(iat);
-            firstneigh[static_cast<std::size_t>(iat)] = const_cast<int*>(neighbor_list.get_firstneigh(iat));
+            sorted_neighbors[static_cast<std::size_t>(iat)]
+                = neighbor_list.get_neighbors_sorted_by_distance(iat, coord);
+            numneigh[static_cast<std::size_t>(iat)]
+                = static_cast<int>(sorted_neighbors[static_cast<std::size_t>(iat)].size());
+            firstneigh[static_cast<std::size_t>(iat)]
+                = sorted_neighbors[static_cast<std::size_t>(iat)].empty()
+                      ? NULL
+                      : sorted_neighbors[static_cast<std::size_t>(iat)].data();
         }
 #ifdef __DPMDC
         deepmd::hpp::InputNlist nlist(nowned_atoms,

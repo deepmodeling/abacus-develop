@@ -167,9 +167,17 @@ public:
      * as up to date. The spin multiplicity is not touched: it was fixed by
      * set() and never changes during a run.
      *
+     * Reindex existing k-stars using the newly analyzed symmetry operations,
+     * preserving IBZ representatives, weights, and pool/spin ownership.
+     *
      * @param G The new reciprocal lattice matrix.
+     * @param symm The symmetry analyzed for the new cell.
+     * @param update_symmetry Whether crystal symmetry is enabled.
      */
-    void set_after_vc(const ModuleBase::Matrix3& G, std::ofstream& ofs_running);
+    void set_after_vc(const ModuleBase::Matrix3& G,
+                      const ModuleSymmetry::Symmetry& symm,
+                      const bool update_symmetry,
+                      std::ofstream& ofs_running);
 
     //====================================================================
     // Test seam.

@@ -3,19 +3,19 @@ find_package(Python3 REQUIRED)
 
 add_test(
     NAME compare_file_test
-    COMMAND ${Python3_EXECUTABLE} -m unittest tools/test_compare_file.py
+    COMMAND ${Python3_EXECUTABLE} -m unittest validation_tools/test_compare_file.py
     WORKING_DIRECTORY ${ABACUS_TEST_DIR}/integrate
 )
 
 add_test(
     NAME compare_wannier90_test
-    COMMAND ${Python3_EXECUTABLE} -m unittest tools/test_compare_wannier90.py
+    COMMAND ${Python3_EXECUTABLE} -m unittest validation_tools/test_compare_wannier90.py
     WORKING_DIRECTORY ${ABACUS_TEST_DIR}/integrate
 )
 
 add_test(
     NAME catch_properties_test
-    COMMAND ${BASH} tools/test_catch_properties.sh
+    COMMAND ${BASH} validation_tools/test_catch_properties.sh
     WORKING_DIRECTORY ${ABACUS_TEST_DIR}/integrate
 )
    

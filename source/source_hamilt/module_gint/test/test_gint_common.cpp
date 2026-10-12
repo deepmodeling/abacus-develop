@@ -13,8 +13,8 @@ class GintCommonTest : public ::testing::Test
         ucell_.ntype = 1;
         ucell_.nat = 2;
         ucell_.atoms = new Atom[ucell_.ntype];
-        ucell_.iat2it = new int[ucell_.nat];
-        ucell_.iat2ia = new int[ucell_.nat];
+        ucell_.iat2it.resize(ucell_.nat);
+        ucell_.iat2ia.resize(ucell_.nat);
 
         ucell_.atoms[0].na = 2;
         ucell_.atoms[0].nw = 2;

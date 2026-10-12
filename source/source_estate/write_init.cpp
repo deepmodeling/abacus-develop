@@ -64,7 +64,8 @@ void ModuleIO::write_chg_init(
     const int istep,
     const std::string& out_dir,
     const Input_para& inp,
-    const bool two_fermi)
+    const bool two_fermi,
+    std::ofstream& ofs_running)
 {
     const int nspin = inp.nspin;
     assert(nspin == 1 || nspin == 2 || nspin == 4);
@@ -104,6 +105,8 @@ void ModuleIO::write_chg_init(
                     }
                 }
 
+                const std::string desc_chg = ModuleIO::make_data_desc("charge density", "magnetization density m", is, nspin);
+
                 ModuleIO::write_vdata_palgrid(para_grid,
                                               chr.rho[is],
                                               is,
@@ -115,7 +118,9 @@ void ModuleIO::write_chg_init(
                                               inp.out_chg[1],
                                               1,
                                               two_fermi,
-                                              false);
+                                              false,
+                                              ofs_running,
+                                              desc_chg);
             }
         }
     }
@@ -130,7 +135,8 @@ void ModuleIO::write_pot_init(
     const int istep,
     const std::string& out_dir,
     const Input_para& inp,
-    const bool two_fermi)
+    const bool two_fermi,
+    std::ofstream& ofs_running)
 {
     const int nspin = inp.nspin;
     assert(nspin == 1 || nspin == 2 || nspin == 4);
@@ -153,6 +159,8 @@ void ModuleIO::write_pot_init(
             {
                 std::string filename = gen_ini_filename("pot", out_dir, nspin, is, istep, include_geom_step);
 
+                const std::string desc_pot = ModuleIO::make_data_desc("effective potential", "effective magnetic field b", is, nspin);
+
                 ModuleIO::write_vdata_palgrid(para_grid,
                                               pelec->pot->get_eff_v(is),
                                               is,
@@ -164,7 +172,9 @@ void ModuleIO::write_pot_init(
                                               inp.out_pot[1],
                                               0,
                                               two_fermi,
-                                              false);
+                                              false,
+                                              ofs_running,
+                                              desc_pot);
             }
         }
     }

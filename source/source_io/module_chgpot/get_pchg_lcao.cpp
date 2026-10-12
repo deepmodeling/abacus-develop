@@ -78,9 +78,9 @@ void Get_pchg_lcao::begin_gamma(const UnitCell& ucell,
             std::stringstream ssc;
             ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
 
-            ofs_running << " Writing cube file " << ssc.str() << std::endl;
+            const std::string desc_pchg = ModuleIO::make_data_desc("partial charge", "partial magnetization m", is, nspin_);
 
-            ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false);
+            ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false, ofs_running, desc_pchg);
         }
     }
 }
@@ -170,9 +170,9 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
                     std::stringstream ssc;
                     ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << "k" << ik + 1 << ".cube";
 
-                    ofs_running << " Writing cube file " << ssc.str() << std::endl;
+                    const std::string desc_pchg = ModuleIO::make_data_desc("partial charge", "partial magnetization m", is, nspin_);
 
-                    ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false);
+                    ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false, ofs_running, desc_pchg);
                 }
             }
         }
@@ -210,9 +210,9 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
                 std::stringstream ssc;
                 ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
 
-                ofs_running << " Writing cube file " << ssc.str() << std::endl;
+                const std::string desc_pchg = ModuleIO::make_data_desc("partial charge", "partial magnetization m", is, nspin_);
 
-                ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false);
+                ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false, ofs_running, desc_pchg);
             }
         }
     }

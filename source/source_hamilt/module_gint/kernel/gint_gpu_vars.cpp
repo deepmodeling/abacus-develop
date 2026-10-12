@@ -96,7 +96,7 @@ GintGpuVars::GintGpuVars(std::shared_ptr<const BigGridInfo> biggrid_info,
     CHECK_CUDA(cudaMemcpy(mgrids_pos_d, mgrids_pos_h.data(), sizeof(double3) * mgrid_num, cudaMemcpyHostToDevice));
     
     CHECK_CUDA(cudaMalloc((void**)&iat2it_d, sizeof(int) * ucell.nat));
-    CHECK_CUDA(cudaMemcpy(iat2it_d, ucell.iat2it, sizeof(int) * ucell.nat, cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(iat2it_d, ucell.iat2it.data(), sizeof(int) * ucell.nat, cudaMemcpyHostToDevice));
 }
 
 GintGpuVars::~GintGpuVars()

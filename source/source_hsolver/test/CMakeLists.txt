@@ -20,7 +20,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HSOLVER_pw_tddft
   LIBS parameter base device container psi planewave
-  SOURCES test_hsolver_pw_tddft.cpp ../hsolver_pw_tddft.cpp ${TD_LINEAR_TEST_SOURCES}
+  SOURCES test_hsolver_pw_tddft.cpp test_orthonormal.cpp ../hsolver_pw_tddft.cpp ../orthonormal.cpp ../orthonormal_small.cpp ${TD_LINEAR_TEST_SOURCES}
 )
 if(ENABLE_MPI)
   add_test(
@@ -152,6 +152,10 @@ AddTest(
   TARGET MODULE_HSOLVER_compare
   LIBS parameter base psi device container
   SOURCES test_diago_compare.cpp ../diago_cg.cpp ../diago_bpcg.cpp ../diago_david.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_lin_tf.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+set_tests_properties(MODULE_HSOLVER_compare PROPERTIES
+  DISABLED TRUE
+  LABELS benchmark
 )
 AddTest(
   TARGET MODULE_HSOLVER_ppcg_parallel

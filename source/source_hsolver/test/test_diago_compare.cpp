@@ -23,10 +23,7 @@
 
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/parallel_comm.h"
-#include "source_base/global_variable.h"
 #include "source_basis/module_pw/test/test_tool.h"
-
-#include "mpi.h"
 
 #include <algorithm>
 #include <chrono>
@@ -35,6 +32,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
+#include <limits>
 #include <malloc.h>
 #include <random>
 #include <string>
@@ -77,7 +75,12 @@ static double max_eval_err(const Real* eval, const Real* ref, int nband)
     double err = 0.0;
     for (int i = 0; i < nband; ++i)
     {
-        err = std::max(err, std::abs(eval[i] - ref[i]));
+        const double band_err = std::abs(eval[i] - ref[i]);
+        if (!std::isfinite(band_err))
+        {
+            return std::numeric_limits<double>::infinity();
+        }
+        err = std::max(err, band_err);
     }
     return err;
 }
@@ -139,7 +142,8 @@ static void ref_eigen(const Real* band, int n, int bw, int bd, int nband_req, Re
 {
     std::vector<double> ab(band, band + size_t(bd) * n);
     std::vector<double> w(n);
-    const char jobz = 'N', uplo = 'U';
+    const char jobz = 'N';
+    const char uplo = 'U';
     std::vector<double> work(3 * n);
     int info = 0;
     dsbev_(&jobz, &uplo, &n, &bw, ab.data(), &bd, w.data(), nullptr, &n, work.data(), &info);
@@ -233,12 +237,14 @@ static void rr_subspace(const Real* band, int n, int bw, int bd, T* psi_in, T* p
     banded_h_multiply(band, n, bw, bd, psi_in, hpsi.data(), n, nband);
 
     // S_sub = Psi^H Psi (S = I), H_sub = Psi^H H Psi
-    std::vector<T> s_sub(nband * nband, T(0)), h_sub(nband * nband, T(0));
+    std::vector<T> s_sub(nband * nband, T(0));
+    std::vector<T> h_sub(nband * nband, T(0));
     for (int i = 0; i < nband; ++i)
     {
         for (int j = 0; j < nband; ++j)
         {
-            T s = 0, h = 0;
+            T s = 0;
+            T h = 0;
             for (int k = 0; k < n; ++k)
             {
                 T pk = psi_in[k + i * ld];
@@ -255,8 +261,11 @@ static void rr_subspace(const Real* band, int n, int bw, int bd, T* psi_in, T* p
     std::vector<T> work(lwork);
     std::vector<Real> rwork(3 * nband - 2);
     std::vector<Real> w(nband);
-    int info = 0, itype = 1, nn = nband;
-    char jobz = 'V', uplo = 'U';
+    int info = 0;
+    int itype = 1;
+    int nn = nband;
+    char jobz = 'V';
+    char uplo = 'U';
     zhegv_(&itype, &jobz, &uplo, &nn, h_sub.data(), &nn, s_sub.data(), &nn, w.data(), work.data(), &lwork, rwork.data(),
            &info);
 
@@ -320,7 +329,7 @@ static Result run_ppcg(const std::vector<Real>& band, int n, int bw, int bd, int
     long mem0 = heap_bytes();
     const int sbsize = (g_sbsize > 0) ? g_sbsize : nband;
     const int rr_step = (g_rr_step > 0) ? g_rr_step : 16;
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, sbsize, rr_step, false);
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, sbsize, rr_step);
     auto h_op = [&band, n, bw, bd](T* in, T* out, int ld, int nc) { banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc); };
     auto t0 = std::chrono::high_resolution_clock::now();
     int pass = 0;
@@ -336,7 +345,7 @@ static Result run_ppcg(const std::vector<Real>& band, int n, int bw, int bd, int
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.mem_bytes = heap_bytes() - mem0;
     r.max_err = max_eval_err(eval.data(), ref, nband);
-    r.ok = true;
+    r.ok = std::isfinite(r.max_err) && r.max_err < err_target;
     return r;
 }
 
@@ -369,7 +378,7 @@ static Result run_cg(const std::vector<Real>& band, int n, int bw, int bd, int n
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.mem_bytes = heap_bytes() - mem0;
     r.max_err = max_eval_err(eval.data(), ref, nband);
-    r.ok = true;
+    r.ok = std::isfinite(r.max_err) && r.max_err < err_target;
     return r;
 }
 
@@ -402,7 +411,7 @@ static Result run_bpcg(const std::vector<Real>& band, int n, int bw, int bd, int
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.mem_bytes = heap_bytes() - mem0;
     r.max_err = max_eval_err(eval.data(), ref, nband);
-    r.ok = true;
+    r.ok = std::isfinite(r.max_err) && r.max_err < err_target;
     return r;
 }
 
@@ -429,17 +438,21 @@ static Result run_dav(const std::vector<Real>& band, int n, int bw, int bd, int 
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.mem_bytes = heap_bytes() - mem0;
     r.max_err = max_eval_err(eval.data(), ref, nband);
-    r.ok = true;
+    r.ok = std::isfinite(r.max_err) && r.max_err < err_target;
     return r;
 }
 
 int main(int argc, char** argv)
 {
-    int nproc = 1, myrank = 0;
-    int nproc_in_pool, kpar = 1, mypool, rank_in_pool;
+    int nproc = 1;
+    int myrank = 0;
+    int nproc_in_pool = 0;
+    int kpar = 1;
+    int mypool = 0;
+    int rank_in_pool = 0;
     setupmpi(argc, argv, nproc, myrank);
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
-    MPI_Comm_split(MPI_COMM_WORLD, myrank, 0, &BP_WORLD);
+    BP_WORLD = MPI_COMM_WORLD;
 
     struct Case
     {
@@ -474,6 +487,7 @@ int main(int argc, char** argv)
                 "max_err", "mem(MB)");
     std::printf("-----------------------------------------------------------------\n");
 
+    bool all_ok = true;
     for (const auto& c : cases)
     {
         std::vector<Real> band;
@@ -490,6 +504,7 @@ int main(int argc, char** argv)
         Result r_cg = run_cg(band, c.n, c.bw, bd, c.nband, prec, psi0, ethr, ref.data());
         Result r_bpcg = run_bpcg(band, c.n, c.bw, bd, c.nband, prec, psi0, ethr, ref.data());
         Result r_dav = run_dav(band, c.n, c.bw, bd, c.nband, prec, psi0, ethr, ref.data());
+        all_ok = all_ok && r_ppcg.ok && r_cg.ok && r_bpcg.ok && r_dav.ok;
 
         std::printf("%-5d %-5d %-6d %-10s %-14.5f %-10.2e %-12.2f\n", c.n, c.nband, c.bw, "PPCG", r_ppcg.wall_s,
                     r_ppcg.max_err, r_ppcg.mem_bytes / 1048576.0);
@@ -502,6 +517,7 @@ int main(int argc, char** argv)
         std::printf("-----------------------------------------------------------------\n");
     }
 
-    MPI_Finalize();
-    return 0;
+    const int exit_code = all_ok ? 0 : 1;
+    finishmpi();
+    return exit_code;
 }

@@ -26,7 +26,8 @@ void ModuleIO::ctrl_iter_pw(const int istep,
                             Setup_Psi_pw& stp,
                             const K_Vectors& kv,
                             const ModulePW::PW_Basis_K* pw_wfc,
-                            const Input_para& inp)
+                            const Input_para& inp,
+                            std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_iter_pw");
@@ -76,7 +77,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
                                stp.psi_cpu[0],
                                kv,
                                pw_wfc,
-                               GlobalV::ofs_running);
+                               ofs_running);
     }
 
     ModuleBase::timer::end("ModuleIO", "ctrl_iter_pw");
@@ -96,7 +97,8 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                            const ModulePW::PW_Basis_Big* pw_big,
                            Setup_Psi_pw& stp,
                            const Parallel_Grid& para_grid,
-                           const Input_para& inp)
+                           const Input_para& inp,
+                           std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_pw");
@@ -167,7 +169,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
                                    inp.out_app_flag,
                                    inp.bndpar,
                                    PARAM.globalv.global_out_dir,
-                                   GlobalV::ofs_running);
+                                   ofs_running);
         }
     }
 
@@ -180,14 +182,14 @@ void ModuleIO::ctrl_scf_pw(const int istep,
         // Use the solver's native wavefunction precision for FFT and projector overlaps.
         ModuleIO::Get_pchg_pw<T, Device>
             output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, ppcell, inp.nspin, inp.nbands);
-        output.begin(&ucell, para_grid, kv, inp.out_pchg, PARAM.globalv.global_out_dir, inp.if_separate_k, inp.noncolin);
+        output.begin(&ucell, para_grid, kv, inp.out_pchg, PARAM.globalv.global_out_dir, inp.if_separate_k, inp.noncolin, ofs_running);
     }
 
     if (inp.out_wfc_norm.size() > 0 || inp.out_wfc_re_im.size() > 0)
     {
         // Use the solver's native wavefunction precision for FFT.
         ModuleIO::Get_wf_pw<T, Device> output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, inp.nspin, inp.nbands);
-        output.begin(ucell, para_grid, kv, inp.out_wfc_norm, inp.out_wfc_re_im, PARAM.globalv.global_out_dir);
+        output.begin(ucell, para_grid, kv, inp.out_wfc_norm, inp.out_wfc_re_im, PARAM.globalv.global_out_dir, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -232,7 +234,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     {
         spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
         spinconstrain::pw::cal_mi_pw(sc.state_, sc.psi, sc.pelec);
-        spinconstrain::print_Mag_Force(sc, GlobalV::ofs_running);
+        spinconstrain::print_Mag_Force(sc, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -263,7 +265,8 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                               pseudopot_cell_vnl& ppcell,
                               surchem& solvent,
                               Parallel_Grid& para_grid,
-                              const Input_para& inp)
+                              const Input_para& inp,
+                              std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_runner_pw");
@@ -295,7 +298,8 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                               PARAM.globalv.dos_setemin,
                               inp.dos_emin_ev,
                               inp.dos_sigma,
-                              inp.ldos_line);
+                              inp.ldos_line,
+                              ofs_running);
     }
 
     //----------------------------------------------------------
@@ -317,7 +321,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                 Numerical_Basis numerical_basis;
                 numerical_basis.output_overlap(stp.psi_cpu[0], sf, kv, pw_wfc, ucell, i);
             }
-            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "BASIS OVERLAP (Q and S) GENERATION.");
+            ModuleBase::GlobalFunc::DONE(ofs_running, "BASIS OVERLAP (Q and S) GENERATION.");
         }
     }
 
@@ -357,7 +361,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                                              inp.of_ml_kernel_file,
                                              ucell.omega,
                                              pw_rho,
-                                             GlobalV::ofs_running);
+                                             ofs_running);
 
         write_mlkedf_desc.generateTrainData_KS(PARAM.globalv.global_mlkedf_descriptor_dir,
                                                stp.template get_psi_t<T, Device>(),
@@ -386,7 +390,8 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU
                                                                                   const ModulePW::PW_Basis_Big* pw_big,
                                                                                   Setup_Psi_pw& stp,
                                                                                   const Parallel_Grid& para_grid,
-                                                                                  const Input_para& inp);
+                                                                                  const Input_para& inp,
+                                                                                  std::ofstream& ofs_running);
 
 // complex<double> + CPU
 template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CPU>(const int nstep,
@@ -401,7 +406,8 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CP
                                                                                    const ModulePW::PW_Basis_Big* pw_big,
                                                                                    Setup_Psi_pw& stp,
                                                                                    const Parallel_Grid& para_grid,
-                                                                                   const Input_para& inp);
+                                                                                   const Input_para& inp,
+                                                                                   std::ofstream& ofs_running);
 
 #if ((defined __CUDA) || (defined __ROCM))
 // complex<float> + GPU
@@ -417,7 +423,8 @@ template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU
                                                                                   const ModulePW::PW_Basis_Big* pw_big,
                                                                                   Setup_Psi_pw& stp,
                                                                                   const Parallel_Grid& para_grid,
-                                                                                  const Input_para& inp);
+                                                                                  const Input_para& inp,
+                                                                                  std::ofstream& ofs_running);
 
 // complex<double> + GPU
 template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GPU>(const int nstep,
@@ -432,7 +439,8 @@ template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GP
                                                                                    const ModulePW::PW_Basis_Big* pw_big,
                                                                                    Setup_Psi_pw& stp,
                                                                                    const Parallel_Grid& para_grid,
-                                                                                   const Input_para& inp);
+                                                                                   const Input_para& inp,
+                                                                                   std::ofstream& ofs_running);
 #endif
 
 // complex<float> + CPU
@@ -448,7 +456,8 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
                                                                                      pseudopot_cell_vnl& ppcell,
                                                                                      surchem& solvent,
                                                                                      Parallel_Grid& para_grid,
-                                                                                     const Input_para& inp);
+                                                                                     const Input_para& inp,
+                                                                                     std::ofstream& ofs_running);
 
 // complex<double> + CPU
 template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE_CPU>(UnitCell& ucell,
@@ -463,7 +472,8 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
                                                                                       pseudopot_cell_vnl& ppcell,
                                                                                       surchem& solvent,
                                                                                       Parallel_Grid& para_grid,
-                                                                                      const Input_para& inp);
+                                                                                      const Input_para& inp,
+                                                                                      std::ofstream& ofs_running);
 
 #if ((defined __CUDA) || (defined __ROCM))
 // complex<float> + GPU
@@ -479,7 +489,8 @@ template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_
                                                                                      pseudopot_cell_vnl& ppcell,
                                                                                      surchem& solvent,
                                                                                      Parallel_Grid& para_grid,
-                                                                                     const Input_para& inp);
+                                                                                     const Input_para& inp,
+                                                                                     std::ofstream& ofs_running);
 
 // complex<double> + GPU
 template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE_GPU>(UnitCell& ucell,
@@ -494,5 +505,6 @@ template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE
                                                                                       pseudopot_cell_vnl& ppcell,
                                                                                       surchem& solvent,
                                                                                       Parallel_Grid& para_grid,
-                                                                                      const Input_para& inp);
+                                                                                      const Input_para& inp,
+                                                                                      std::ofstream& ofs_running);
 #endif

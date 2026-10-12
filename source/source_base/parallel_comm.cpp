@@ -3,7 +3,8 @@
 #include "mpi.h"
 #include "parallel_global.h"
 
-MPI_Comm POOL_WORLD; //groups for different plane waves. In this group, only plane waves are different. K-points and bands are the same.
+// Plane-wave pool: only the plane waves differ; k-points and bands are shared.
+MPI_Comm POOL_WORLD = MPI_COMM_NULL;
 MPI_Comm KP_WORLD;   // groups for differnt k. In this group, only k-points are different. Bands and plane waves are the same.
 MPI_Comm BP_WORLD;   // groups for differnt bands. In this group, only bands are different. K-points and plane waves are the same.
 MPI_Comm INT_BGROUP; // internal comm groups for same bands. In this group, only bands are the same. K-points and plane waves are different.

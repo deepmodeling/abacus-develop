@@ -153,8 +153,7 @@ TEST_F(DiagoPPCGTridiagTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 100,
         /* sbsize   = */ 4,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -178,8 +177,7 @@ TEST_F(DiagoPPCGTridiagTest, ReportsIterationLimit)
         /* diag_thr = */ 1.0e-14,
         /* max_iter = */ 1,
         /* sbsize   = */ 3,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -220,8 +218,7 @@ TEST(DiagoPPCGStatusTest, ReportsActiveTailStart)
         /* diag_thr = */ 1.0e-12,
         /* max_iter = */ 0,
         /* sbsize   = */ 3,
-        /* rr_step  = */ 1,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 1);
 
     solver.diag(h_op, nullptr, ld, nband, n_dim,
                 psi.data(), eval.data(), ethr, prec.data());
@@ -264,8 +261,7 @@ TEST(DiagoPPCGStatusTest, NonFiniteFinalResidualIsNotConverged)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 10,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 2,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 2);
 
     solver.diag(h_op, nullptr, ld, nband, n_dim,
                 psi.data(), eval.data(), ethr, prec.data());
@@ -299,8 +295,7 @@ TEST(DiagoPPCGStatusTest, FailedRayleighRitzCannotCertifyLowestRoots)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 0,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 2,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 2);
 
     solver.diag(h_op, nullptr, ld, nband, n_dim,
                 psi.data(), eval.data(), ethr, prec.data());
@@ -326,8 +321,7 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 100,
         /* sbsize   = */ 4,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -474,8 +468,7 @@ TEST_F(DiagoPPCGDiagonalTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 50,
         /* sbsize   = */ 3,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 3);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -523,8 +516,7 @@ TEST(DiagoPPCGRootSelectionTest, StartupCorrectionKeepsLowestRoots)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 50,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -575,8 +567,7 @@ TEST(DiagoPPCGRootSelectionTest, StartupCorrectionKeepsLowestRootsWithoutInitial
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 50,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -590,6 +581,58 @@ TEST(DiagoPPCGRootSelectionTest, StartupCorrectionKeepsLowestRootsWithoutInitial
     }
     EXPECT_TRUE(solver.converged());
     EXPECT_LE(avg_iter, 50.0);
+}
+
+TEST(DiagoPPCGRootSelectionTest, StartupCorrectionKeepsConvergedPrefixInactive)
+{
+    const int n_dim = 10;
+    const int nband = 6;
+    const int ld = n_dim;
+    const Real inv_sqrt_two = Real(1) / std::sqrt(Real(2));
+
+    std::vector<T> h_mat(n_dim * n_dim, T(0));
+    std::vector<Real> prec(n_dim);
+    for (int i = 0; i < n_dim; ++i)
+    {
+        const Real diagonal = Real(i + 1);
+        h_mat[i + i * n_dim] = T(diagonal, 0);
+        prec[i] = diagonal;
+    }
+
+    // The first two roots are already converged.  The active tail still needs
+    // one global comparison: its first two vectors contain roots 3--6, while
+    // its last two vectors are exact high-energy states.
+    std::vector<T> psi(ld * nband, T(0));
+    psi[0] = T(1, 0);
+    psi[1 + ld] = T(1, 0);
+    psi[2 + 2 * ld] = T(inv_sqrt_two, 0);
+    psi[4 + 2 * ld] = T(inv_sqrt_two, 0);
+    psi[3 + 3 * ld] = T(inv_sqrt_two, 0);
+    psi[5 + 3 * ld] = T(inv_sqrt_two, 0);
+    psi[8 + 4 * ld] = T(1, 0);
+    psi[9 + 5 * ld] = T(1, 0);
+
+    std::vector<Real> eval(nband, Real(0));
+    const std::vector<double> ethr(nband, 1e-12);
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1e-12,
+        /* max_iter = */ 1,
+        /* sbsize   = */ 2,
+        /* rr_step  = */ 4);
+    const auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
+        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+
+    const double avg_iter = solver.diag(
+        h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+
+    for (int i = 0; i < nband; ++i)
+    {
+        EXPECT_NEAR(eval[i], Real(i + 1), 1e-10) << "root[" << i << "] mismatch";
+    }
+    const double expected_avg_iter = 1.0 + 4.0 / 6.0;
+    EXPECT_TRUE(solver.converged());
+    EXPECT_NEAR(avg_iter, expected_avg_iter, 1e-12);
 }
 
 TEST(DiagoPPCGRootSelectionTest, WarmStartAfterHamiltonianChangeKeepsLowestRoots)
@@ -628,8 +671,7 @@ TEST(DiagoPPCGRootSelectionTest, WarmStartAfterHamiltonianChangeKeepsLowestRoots
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 50,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
     auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
     };
@@ -707,8 +749,7 @@ TEST(DiagoPPCGRootSelectionTest, StartupCorrectionKeepsLowestGeneralizedRoots)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 50,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -760,8 +801,7 @@ TEST(DiagoPPCGRootSelectionTest, LockingKeepsRequestedLowRoots)
             /* diag_thr = */ 1e-12,
             /* max_iter = */ 80,
             /* sbsize   = */ 2,
-            /* rr_step  = */ 1,
-            /* gamma_g0 = */ false);
+            /* rr_step  = */ 1);
         const double avg_iter = solver.diag(
             h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
         EXPECT_NEAR(eval[0], 1.0, 1e-8);
@@ -832,8 +872,7 @@ TEST(DiagoPPCGRankTruncationTest, ComplexHermitianStartupSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 30,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -858,8 +897,7 @@ TEST_F(DiagoPPCGDiagonalTest, EmptyHOperatorThrows)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 50,
         /* sbsize   = */ 3,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 3);
 
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU>::HPsiFunc h_op;
     EXPECT_THROW(solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data()),
@@ -875,8 +913,7 @@ TEST_F(DiagoPPCGDiagonalTest, NonFiniteInputThrows)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 50,
         /* sbsize   = */ 3,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 3);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -954,8 +991,7 @@ TEST(DiagoPPCGLeadingDimensionTest, BlockSubspaceWithPadding)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 80,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 3);
 
     auto h_op = [&H_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -1055,8 +1091,7 @@ TEST_F(DiagoPPCG2x2Test, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 50,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 2,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 2);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -1097,8 +1132,7 @@ TEST(DiagoPPCGComplexHermitianTest, DefaultKeepsImaginaryProjection)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 10,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 1,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 1);
 
     auto h_op = [&H_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -1135,8 +1169,7 @@ TEST(DiagoPPCGComplexHermitianTest, BlockSubspaceSmokeNoNaN)
         /* diag_thr = */ 1e-10,
         /* max_iter = */ 8,
         /* sbsize   = */ 2,
-        /* rr_step  = */ 1,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 1);
 
     auto h_op = [&H_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -1248,8 +1281,7 @@ TEST_F(DiagoPPCGDegenerateTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 100,
         /* sbsize   = */ 4,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -1357,8 +1389,7 @@ TEST_F(DiagoPPCGLargeTridiagTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 150,
         /* sbsize   = */ 5,
-        /* rr_step  = */ 5,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 5);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -1515,8 +1546,7 @@ TEST_F(DiagoPPCGDenseTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 200,
         /* sbsize   = */ 4,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -1664,8 +1694,7 @@ TEST_F(DiagoPPCGWithSTest, BlockSubspace)
         /* diag_thr = */ 1e-10,
         /* max_iter = */ 100,
         /* sbsize   = */ 3,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 3);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -1699,126 +1728,6 @@ TEST_F(DiagoPPCGWithSTest, BlockSubspace)
     }
 
     EXPECT_LE(avg_iter, double(100)) << "WithS BLOCK: too many iterations";
-}
-
-// =============================================================================
-// Test fixture: gamma_g0 = true (Gamma-point real constraint)
-// Same tridiagonal Laplacian, but with gamma_g0=true forcing G=0 wavefunctions
-// to stay real-valued. Tests the force_g0_real codepath.
-// =============================================================================
-class DiagoPPCGGammaG0Test : public ::testing::Test
-{
-  protected:
-    void SetUp() override
-    {
-        n_dim = 8;
-        nband = 3;
-        ld = n_dim;
-
-        H_mat.assign(n_dim * n_dim, T(0));
-        for (int i = 0; i < n_dim; ++i)
-        {
-            H_mat[i + i * n_dim] = T(2.0, 0);
-            if (i > 0)
-            {
-                H_mat[i + (i - 1) * n_dim] = T(-1.0, 0);
-            }
-            if (i < n_dim - 1)
-            {
-                H_mat[i + (i + 1) * n_dim] = T(-1.0, 0);
-            }
-        }
-
-        prec.assign(n_dim, 2.0);
-
-        exact.resize(nband);
-        for (int k = 0; k < nband; ++k)
-        {
-            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
-        }
-
-        ethr.assign(nband, 1e-10);
-
-        std::mt19937 rng(555);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
-    }
-
-    int n_dim, nband, ld;
-    std::vector<T> H_mat;
-    std::vector<Real> prec;
-    std::vector<Real> exact;
-    std::vector<double> ethr;
-    std::vector<T> psi;
-};
-
-TEST_F(DiagoPPCGGammaG0Test, BlockSubspace)
-{
-    std::vector<T> psi_run = psi;
-    std::vector<Real> eval(nband, 0.0);
-
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-12,
-        /* max_iter = */ 100,
-        /* sbsize   = */ 3,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ true // <-- Force G=0 wavefunctions to be real
-        );
-
-    auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
-
-    double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
-
-    for (int i = 0; i < nband; ++i)
-    {
-        EXPECT_NEAR(eval[i], exact[i], 1e-8) << "GammaG0 BLOCK: eigenvalue[" << i << "] mismatch";
-    }
-
-    // Verify G=0 band (first band) is real
-    Real max_imag = 0;
-    for (int i = 0; i < n_dim; ++i)
-    {
-        max_imag = std::max(max_imag, std::abs(std::imag(psi_run[i])));
-    }
-    EXPECT_LT(max_imag, 1e-12) << "GammaG0 BLOCK: G=0 band has non-zero imaginary part: " << max_imag;
-
-    EXPECT_LE(avg_iter, double(100)) << "GammaG0 BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1894,8 +1803,7 @@ TEST_F(DiagoPPCGSingleBandTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 50,
         /* sbsize   = */ 1,
-        /* rr_step  = */ 1,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 1);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -2002,8 +1910,7 @@ TEST_F(DiagoPPCGEigenvectorTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 100,
         /* sbsize   = */ 3,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 3);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -2152,8 +2059,7 @@ TEST_F(DiagoPPCGAllBandsTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 100,
         /* sbsize   = */ 3,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 3);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -2261,8 +2167,7 @@ TEST_F(DiagoPPCGMediumTridiagTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 120,
         /* sbsize   = */ 4,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -2275,128 +2180,6 @@ TEST_F(DiagoPPCGMediumTridiagTest, BlockSubspace)
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Medium Tridiag BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, double(120)) << "Medium Tridiag BLOCK: too many iterations";
-}
-
-// =============================================================================
-// Test fixture: gamma_g0 = true on a 7×7 tridiagonal, nband=2
-// Verifies eigenvalues are correct and the first band stays real-valued
-// when gamma_g0_real is enabled (H and S are both real-symmetric).
-// =============================================================================
-class DiagoPPCGGammaG0SmallTest : public ::testing::Test
-{
-  protected:
-    void SetUp() override
-    {
-        n_dim = 7;
-        nband = 2;
-        ld = n_dim;
-
-        H_mat.assign(n_dim * n_dim, T(0));
-        for (int i = 0; i < n_dim; ++i)
-        {
-            H_mat[i + i * n_dim] = T(2.0, 0);
-            if (i > 0)
-            {
-                H_mat[i + (i - 1) * n_dim] = T(-1.0, 0);
-            }
-            if (i < n_dim - 1)
-            {
-                H_mat[i + (i + 1) * n_dim] = T(-1.0, 0);
-            }
-        }
-
-        prec.assign(n_dim, 2.0);
-
-        exact.resize(nband);
-        for (int k = 0; k < nband; ++k)
-        {
-            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
-        }
-
-        ethr.assign(nband, 1e-10);
-
-        std::mt19937 rng(404);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
-    }
-
-    int n_dim, nband, ld;
-    std::vector<T> H_mat;
-    std::vector<Real> prec;
-    std::vector<Real> exact;
-    std::vector<double> ethr;
-    std::vector<T> psi;
-};
-
-TEST_F(DiagoPPCGGammaG0SmallTest, BlockSubspace)
-{
-    std::vector<T> psi_run = psi;
-    std::vector<Real> eval(nband, 0.0);
-
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-12,
-        /* max_iter = */ 100,
-        /* sbsize   = */ 2,
-        /* rr_step  = */ 2,
-        /* gamma_g0 = */ true);
-
-    auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
-        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
-    };
-
-    double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
-
-    for (int i = 0; i < nband; ++i)
-    {
-        EXPECT_NEAR(eval[i], exact[i], 1e-8) << "GammaG0Small BLOCK: eigenvalue[" << i << "] mismatch";
-    }
-
-    // Both bands should be real-valued when gamma_g0_real is true
-    for (int j = 0; j < nband; ++j)
-    {
-        Real max_imag = 0;
-        for (int i = 0; i < n_dim; ++i)
-        {
-            max_imag = std::max(max_imag, std::abs(std::imag(psi_run[i + j * ld])));
-        }
-        EXPECT_LT(max_imag, 1e-12) << "GammaG0Small BLOCK: band[" << j << "] has non-zero imaginary part: " << max_imag;
-    }
-
-    EXPECT_LE(avg_iter, double(100)) << "GammaG0Small BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -2509,8 +2292,7 @@ TEST_F(DiagoPPCGPentaTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 150,
         /* sbsize   = */ 4,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -2608,8 +2390,7 @@ TEST_F(DiagoPCGGappedSpectrumTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 100,
         /* sbsize   = */ 3,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 3);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -2720,8 +2501,7 @@ TEST_F(DiagoPPCGBadPrecTest, BlockSubspace)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 200, // more iterations due to bad preconditioner
         /* sbsize   = */ 4,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -2766,7 +2546,7 @@ TEST_F(DiagoPPCG1x1Test, BlockSubspace)
 {
     std::vector<T> psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 10, 1, 1, false
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 10, 1, 1
                                                                    );
     auto h_op = [this](T* in, T* out, int ldi, int nc) { dense_h_multiply(H_mat.data(), n_dim, in, out, ldi, nc); };
     double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
@@ -2858,7 +2638,7 @@ TEST_F(DiagoPPCGScaledTest, BlockSubspace)
 {
     std::vector<T> psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-10, 120, 4, 4, false
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-10, 120, 4, 4
                                                                    );
     auto h_op = [this](T* in, T* out, int ldi, int nc) { dense_h_multiply(H_mat.data(), n_dim, in, out, ldi, nc); };
     double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
@@ -2953,7 +2733,7 @@ TEST_F(DiagoPPCGManyBandsTest, BlockSubspace)
 {
     std::vector<T> psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 150, 4, 4, false
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 150, 4, 4
                                                                    );
     auto h_op = [this](T* in, T* out, int ldi, int nc) { dense_h_multiply(H_mat.data(), n_dim, in, out, ldi, nc); };
     double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
@@ -3048,7 +2828,7 @@ TEST_F(DiagoPPCGRrStep1Test, BlockSubspace)
 {
     std::vector<T> psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 100, 3, 1 /*rr_step=1*/, false
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 100, 3, 1 /*rr_step=1*/
                                                                    );
     auto h_op = [this](T* in, T* out, int ldi, int nc) { dense_h_multiply(H_mat.data(), n_dim, in, out, ldi, nc); };
     double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
@@ -3146,7 +2926,7 @@ TEST_F(DiagoPPCGNeumannTest, BlockSubspace)
 {
     std::vector<T> psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 100, 4, 4, false
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-12, 100, 4, 4
                                                                    );
     auto h_op = [this](T* in, T* out, int ldi, int nc) { dense_h_multiply(H_mat.data(), n_dim, in, out, ldi, nc); };
     double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
@@ -3241,7 +3021,7 @@ TEST_F(DiagoPPCGTightEthrTest, BlockSubspace)
 {
     std::vector<T> psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-14, 200, 3, 3, false
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-14, 200, 3, 3
                                                                    );
     auto h_op = [this](T* in, T* out, int ldi, int nc) { dense_h_multiply(H_mat.data(), n_dim, in, out, ldi, nc); };
     double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
@@ -3384,7 +3164,7 @@ TEST_F(DiagoPPCGTridiagSTest, BlockSubspace)
             }
         }
     };
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-10, 150, 3, 3, false
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-10, 150, 3, 3
                                                                    );
     auto h_op = [this](T* in, T* out, int ldi, int nc) { dense_h_multiply(H_mat.data(), n_dim, in, out, ldi, nc); };
     double avg_iter = solver.diag(h_op, spsi_func, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
@@ -3514,7 +3294,7 @@ class DiagoPPCGBenchmarkTest : public ::testing::Test
         std::vector<double> ethr(nband, 1e-4);
         auto h_op = [&H, n](T* in, T* out, int ldi, int nc) { dense_h_multiply(H.data(), n, in, out, ldi, nc); };
 
-        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, nband, std::min(nband, 4), false
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, nband, std::min(nband, 4)
                                                                        );
 
         auto t0 = std::chrono::high_resolution_clock::now();

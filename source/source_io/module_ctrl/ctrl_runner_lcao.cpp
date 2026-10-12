@@ -37,7 +37,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         ModuleBase::matrix &vloc,     // local pseudopotential 
 		Exx_NAO<TK> &exx_nao,
         const Exx_Info& exx_info,
-        surchem &solvent)             // solvent model
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_runner_lcao");
@@ -54,7 +55,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(pelec->eferm, chr, dmat, kv,
           pelec->ekb, pelec->wg, psi[0], pgrid, pv, gd, ucell,
           inp.stm_bias, inp.nspin, PARAM.globalv.global_out_dir,
-          PARAM.globalv.two_fermi, inp.out_ldos[1]);
+          PARAM.globalv.two_fermi, inp.out_ldos[1], ofs_running);
     }
 
     // 3) print out exchange-correlation potential
@@ -128,7 +129,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       hexxc_ptr
 #endif
                                       ,
-                                      sparse_thr
+                                      sparse_thr,
+                                      ofs_running
         );
     }
 
@@ -188,7 +190,8 @@ template void ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<double> &exx_nao,
         const Exx_Info& exx_info,
-        surchem &solvent);             // solvent model
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running);
 
 // TK: complex<double>  TR: double 
 template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,      // unitcell
@@ -210,7 +213,8 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<std::complex<double>> &exx_nao,
         const Exx_Info& exx_info,
-        surchem &solvent);             // solvent model
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running);
 
 // TK: complex<double>  TR: complex<double>
 template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell,      // unitcell
@@ -232,6 +236,7 @@ template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitC
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<std::complex<double>> &exx_nao,
         const Exx_Info& exx_info,
-        surchem &solvent);             // solvent model
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running);
 
 } // end namespace

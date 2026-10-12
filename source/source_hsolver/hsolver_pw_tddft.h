@@ -7,6 +7,7 @@
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/hsolver_linear.h"
 #include "source_hsolver/linear_low_rank.h"
+#include "source_hsolver/orthonormal.h"
 #include "source_psi/psi.h"
 
 #include <iosfwd>
@@ -27,13 +28,25 @@ enum class PWPreconditioner
 /** @brief Numerical and propagation options, resolved once at the input boundary. */
 struct PWLinearOptions
 {
+    OrthMethod orthonormal = OrthMethod::cholesky;
     LinearSolveOptions linear;
     PWPreconditioner preconditioner = PWPreconditioner::kinetic;
     bool cn_init = false;
     bool kinetic_enabled = true;
+    bool out_stat = false;
+    std::vector<int> global_k_indices; ///< Required zero-based global index for every local k point.
 };
 
 LinearMethod parse_linear_method(const std::string& name);
+/** @brief Independent maxima over all SCF iterations and local k points in one electronic step.
+ * Values are replicated within each pool and reduced across pools for step-end output.
+ * The before and after maxima need not come from the same correction.
+ */
+struct TDOrthStats
+{
+    double before = 0.0;
+    double after = 0.0;
+};
 PWPreconditioner parse_pw_precond(const std::string& name);
 
 /** @brief PW Crank-Nicolson solves and endpoint Hamiltonian expectations. */
@@ -50,6 +63,18 @@ class HSolverPWTDDFT
      *  updates and ionic motion at fixed basis do not require this notification.
      */
     void invalidate_basis();
+    /** @brief Reset diagnostics without invalidating preconditioner history. */
+    void reset_orth_stats();
+    /** @brief Correct initial orbitals when needed; return whether this pool changed any orbital. */
+    bool correct_initial(psi::Psi<T, Device>* current, int iter);
+    /** @brief Check the converged initial state once; finite orthogonality errors are diagnostic only. */
+    void check_initial(const psi::Psi<T, Device>& current, int iter);
+    /** @brief Occupation-weighted electron count for the local k-point pool. */
+    double wave_electrons(const ModuleBase::matrix& occupations) const;
+    const TDOrthStats& orth_stats() const
+    {
+        return orth_stats_;
+    }
 
     /** @brief Propagate from the fixed previous step, retaining the current iterate as the initial guess.
      *  @param dt Electronic time step in Hartree atomic units.
@@ -64,8 +89,7 @@ class HSolverPWTDDFT
                const ModuleBase::Vector3<double>& momentum_shift,
                const int istep,
                const int iter,
-               const bool detailed_output,
-               std::ostream& log);
+               const bool detailed_output);
 
     /** @brief Evaluate band expectations after the caller restores the endpoint Hamiltonian. */
     void cal_band_energy(HSOperator<T, Device>& op, const psi::Psi<T, Device>& current, ModuleBase::matrix* energies);
@@ -104,6 +128,11 @@ class HSolverPWTDDFT
     const diag_comm_info comm_;
     PWLinearOptions options_;
     LinearAlgebra<T, Device> algebra_;
+    Orthonormal<T, Device> orthonormal_;
+    TDOrthStats orth_stats_;
+    std::vector<std::vector<double>> orth_norms_;
+    std::ostream& log_;
+    unsigned int warned_events_ = 0;
     CNSubspace<T, Device> projection_;
     std::vector<KPointState> states_;
     SequenceState sequence_;
@@ -115,7 +144,7 @@ class HSolverPWTDDFT
     ct::Tensor response_workspace_;
     ct::Tensor correction_workspace_;
 
-    void initialize(std::ostream& log);
+    void initialize();
     bool tracks_state() const;
     void prepare_sequence(int nk, int ld, int bands, double dt, int step, int iteration);
     bool require_audit(int step, KPointState* state) const;
@@ -128,9 +157,12 @@ class HSolverPWTDDFT
                               KPointState* state);
     void retry_kinetic(const LinearOperator<T, Device>& op, T* current, const SolveBatch& batch, LinearSolveResult* result);
     void update_state(KPointState* state, const SolveDetails& details, int step, const SolveBatch& batch, const T* current);
-    void report_solve(const SolveDetails& details, int ik, int step, int iteration, double elapsed, std::ostream& log) const;
+    void report_solve(const SolveDetails& details, int ik, int step, int iteration) const;
     void prepare_buffers(const int nbands, const int nbasis);
     void update_precond(const int ik, const int dim, const T coefficient, const ModuleBase::Vector3<double>& momentum_shift);
+    void correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter, bool detailed_output);
+    void record_orth(const OrthResult& result, int ik, int istep, int iter);
+    void report_orth_warning(const OrthResult& result, int ik, int istep, int iter);
 };
 
 } // namespace hsolver

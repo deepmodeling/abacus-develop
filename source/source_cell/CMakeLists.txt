@@ -24,6 +24,9 @@ add_library(
     mdcell_reader.cpp
     mdcell.cpp
     unitcell.cpp
+    unitcell_index.cpp
+    unitcell_stats.cpp
+    unitcell_setup.cpp
     read_atoms.cpp
     read_atoms_helper.cpp
     read_orb.cpp
@@ -33,6 +36,7 @@ add_library(
     parallel_kpoints.cpp
     cell_index.cpp
     cell_tools.cpp
+    cell_geometry.cpp
     record_adj.cpp
     check_atomic_stru.cpp
     update_cell.cpp

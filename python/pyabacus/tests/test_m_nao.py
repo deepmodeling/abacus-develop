@@ -28,9 +28,12 @@ def test_nr():
     assert chi.nr == sz
     assert chi.nk == 0
     assert chi.rmax == grid[sz-1]
+    # Each property returns a copy of the entire radial array.
+    rgrid = chi.rgrid
+    rvalue = chi.rvalue
     for i in range(sz):
-        assert(chi.rgrid[i] == grid[i])
-        assert(chi.rvalue[i] == f[i])
+        assert(rgrid[i] == grid[i])
+        assert(rvalue[i] == f[i])
     assert chi.pr == pr
     assert chi.pk == 0
     assert chi.is_fft_compliant == False 

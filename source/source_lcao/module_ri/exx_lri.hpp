@@ -7,6 +7,7 @@
 #define EXX_LRI_HPP
 
 #include "exx_lri.h"
+#include "source_cell/unitcell.h"
 #include "ri_2d_comm.h"
 #include "ri_util.h"
 #include "exx_lri_detail.h"
@@ -69,27 +70,62 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
     }
 
     this->exx_objs.clear();
-    this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
-
+    const auto settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
     this->MGT = std::make_shared<ORB_gaunt_table>();
-    for(const auto &settings_list : this->coulomb_settings)
+    this->refresh_coulomb(ucell, orb, settings);
+
+    ModuleBase::timer::end("Exx_LRI", "init");
+}
+
+template<typename Tdata>
+void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
+                                   const LCAO_Orbitals& orb,
+                                   const CoulombSettings& settings)
+{
+    ModuleBase::TITLE("Exx_LRI", "refresh_coulomb");
+    ModuleBase::timer::start("Exx_LRI", "refresh_coulomb");
+
+    for (auto object = this->exx_objs.begin(); object != this->exx_objs.end();)
     {
-        this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
-        this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
-                                                            this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
-                                                            this->info.kmesh_times, this->MGT, settings_list.second.first );
-        this->exx_objs[settings_list.first].cv.set_info_ri(&this->info);
+        if (settings.count(object->first) == 0)
+        {
+            object = this->exx_objs.erase(object);
+        }
+        else
+        {
+            ++object;
+        }
+    }
+    for (const auto& settings_list : settings)
+    {
+        const auto previous = this->coulomb_settings.find(settings_list.first);
+        const bool unchanged = previous != this->coulomb_settings.end()
+                               && previous->second == settings_list.second;
+        if (unchanged && this->exx_objs.count(settings_list.first) != 0)
+        {
+            continue;
+        }
+
+        // Discard interpolation and point-value caches belonging to the old kernel.
+        // In particular, reusing Matrix_Orbs maps would retain old entries inserted by init().
+        this->exx_objs.erase(settings_list.first);
+        auto& object = this->exx_objs[settings_list.first];
+        object.abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(
+            this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
+        object.cv.set_orbitals(ucell, orb, this->lcaos, this->abfs, object.abfs_ccp,
+                               this->info.kmesh_times, this->MGT, settings_list.second.first);
+        object.cv.set_info_ri(&this->info);
         if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
         {
             const int evq_abfs_Lmax = this->abfs_Lmax_;
-            this->exx_objs[settings_list.first].evq.init(ucell, orb,
-                                                        this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-                                                        settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times,
-                                                        evq_abfs_Lmax);
+            object.evq.init(ucell, orb, this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
+                            settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
+                            this->info.kmesh_times, evq_abfs_Lmax);
         }
     }
+    this->coulomb_settings = settings;
 
-    ModuleBase::timer::end("Exx_LRI", "init");
+    ModuleBase::timer::end("Exx_LRI", "refresh_coulomb");
 }
 
 template <typename Tdata>
@@ -789,7 +825,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
     const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell,pv);
 
     if(p_symrot)
-        { this->exx_lri.set_symmetry(true, p_symrot->get_irreducible_sector()); }
+        { this->exx_lri.set_symmetry(true, p_symrot->get_irred_sector()); }
     else
         { this->exx_lri.set_symmetry(false, {}); }
 
@@ -822,7 +858,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
             // reduce but not repeat
             auto Hs_a2D = this->exx_lri.post_2D.set_tensors_map2(this->exx_lri.Hs);
             // rotate locally without repeat
-            Hs_a2D = p_symrot->restore_HR(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_a2D);
+            Hs_a2D = p_symrot->restore_HR(ucell.symm, ucell.atoms, ucell.iat2it, 'H', Hs_a2D);
             // cal energy using full Hs without repeat
             this->exx_lri.energy = this->exx_lri.post_2D.cal_energy(
                 this->exx_lri.post_2D.saves["Ds_" + suffix],
@@ -864,7 +900,7 @@ void Exx_LRI<Tdata>::cal_exx_elec_soc(
 
     // pass 2: spinor-coupled rotation of the 4 channels from the irreducible sector to the full BZ
     std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_full =
-        p_symrot->restore_HR_nspin4(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_irr);
+        p_symrot->restore_HR_nspin4(ucell.symm, ucell.atoms, ucell.iat2it, 'H', Hs_irr);
 
     // pass 3: per-channel energy (full Hs, no repeat), then gather the repeated full Hs for abacus
     for (int is = 0; is < 4; ++is)

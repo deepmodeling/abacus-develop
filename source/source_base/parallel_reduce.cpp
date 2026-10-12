@@ -13,14 +13,19 @@ const MPI_Datatype Parallel_Reduce::MPI_Type<std::complex<float>>::value = MPI_C
 const MPI_Datatype Parallel_Reduce::MPI_Type<long long>::value = MPI_LONG_LONG;
 #endif
 
-bool Parallel_Reduce::mpi_ready()
+bool Parallel_Reduce::pool_ready()
 {
 #ifdef __MPI
     int initialized = 0;
-    int finalized = 0;
     MPI_Initialized(&initialized);
+    if (!initialized)
+    {
+        return false;
+    }
+
+    int finalized = 0;
     MPI_Finalized(&finalized);
-    return initialized && !finalized;
+    return !finalized && POOL_WORLD != MPI_COMM_NULL;
 #else
     return false;
 #endif
@@ -83,6 +88,13 @@ void Parallel_Reduce::reduce_min_pool(const int& nproc_in_pool, T& v)
     }
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &v, 1, MPI_Type<T>::value, MPI_MIN, POOL_WORLD);
+#endif
+}
+
+void Parallel_Reduce::reduce_max(double* values, const int count)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, values, count, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 #endif
 }
 

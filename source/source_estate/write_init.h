@@ -18,6 +18,7 @@
 #define WRITE_INIT_H
 
 #include <string>
+#include <fstream>
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/fp_energy.h"
@@ -53,7 +54,8 @@ void write_chg_init(
     const int istep,
     const std::string& out_dir,
     const Input_para& inp,
-    const bool two_fermi);
+    const bool two_fermi,
+    std::ofstream& ofs_running);
 
 // Write initial effective potential to cube file in real space.
 // Triggered when inp.out_pot[0] == 3.
@@ -71,7 +73,8 @@ void write_pot_init(
     const int istep,
     const std::string& out_dir,
     const Input_para& inp,
-    const bool two_fermi);
+    const bool two_fermi,
+    std::ofstream& ofs_running);
 
 }
 

@@ -119,8 +119,7 @@ TEST(DiagoPPCGFloatTest, DiagonalBlockSubspace)
         /* diag_thr = */ 1e-5f,
         /* max_iter = */ 100,
         /* sbsize   = */ 3,
-        /* rr_step  = */ 3,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 3);
 
     auto h_op = [&](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -188,8 +187,7 @@ TEST(DiagoPPCGFloatTest, TridiagonalBlockSubspace)
         /* diag_thr = */ 1e-5f,
         /* max_iter = */ 100,
         /* sbsize   = */ 4,
-        /* rr_step  = */ 4,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 4);
 
     auto h_op = [&](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -227,7 +225,7 @@ TEST(DiagoPPCGFloatTest, NonFiniteInputThrows)
     std::vector<double> ethr(nband, 1e-4);
 
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        /* diag_thr = */ 1e-5f, 100, 3, 3, false);
+        /* diag_thr = */ 1e-5f, 100, 3, 3);
 
     auto h_op = [&](T* in, T* out, int ld_in, int ncol) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
@@ -274,8 +272,7 @@ TEST(DiagoPPCGFloatTest, RankDeficientStartupSubspace)
         /* diag_thr = */ 1e-5f,
         /* max_iter = */ 20,
         /* sbsize   = */ 1,
-        /* rr_step  = */ 2,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ 2);
 
     solver.diag(h_op, nullptr, ld, nband, n_dim,
                 psi.data(), eval.data(), ethr, prec.data());

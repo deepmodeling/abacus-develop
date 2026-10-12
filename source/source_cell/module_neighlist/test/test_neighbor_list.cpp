@@ -76,3 +76,24 @@ TEST(NeighborList_Getters, Accessors)
     EXPECT_EQ(nl.get_numneigh(0), 0);
     EXPECT_EQ(nl.get_firstneigh(0), nullptr);
 }
+
+TEST(NeighborList_Sort, ByDistanceWithIndexTieBreak)
+{
+    NeighborList nl;
+    nl.initialize(1, 16);
+    const std::vector<int> neighbors = {3, 1, 4, 2};
+    nl.set_neighbors(0, neighbors);
+
+    const std::vector<double> coordinates = {
+        0.0, 0.0, 0.0,
+        2.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        0.0, 3.0, 0.0,
+        -1.0, 0.0, 0.0};
+
+    const std::vector<int> sorted = nl.get_neighbors_sorted_by_distance(0, coordinates);
+
+    const std::vector<int> expected = {2, 4, 1, 3};
+    EXPECT_EQ(sorted, expected);
+    EXPECT_EQ(nl.get_firstneigh(0)[0], 3);
+}

@@ -13,10 +13,8 @@
 #include "../diago_ppcg.h"
 
 #include "source_base/parallel_comm.h"
-#include "source_base/parallel_global.h"
+#include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/test/test_tool.h"
-
-#include "mpi.h"
 
 #include <cmath>
 #include <complex>
@@ -29,12 +27,15 @@ int main(int argc, char** argv)
     int nproc = 1;
     int myrank = 0;
     setupmpi(argc, argv, nproc, myrank);
+    const bool pool_unavailable_before_setup = !Parallel_Reduce::pool_ready();
+
     int nproc_in_pool = 0;
     int kpar = 1;
     int mypool = 0;
     int rank_in_pool = 0;
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
-    MPI_Comm_split(MPI_COMM_WORLD, myrank, 0, &BP_WORLD);
+    const bool pool_available_after_setup = Parallel_Reduce::pool_ready();
+    BP_WORLD = MPI_COMM_WORLD;
 
     using T    = std::complex<double>;
     using Real = double;
@@ -70,8 +71,7 @@ int main(int argc, char** argv)
         /* diag_thr = */ 1e-12,
         /* max_iter = */ 100,
         /* sbsize   = */ 2,
-        /* rr_step  = */ nband,
-        /* gamma_g0 = */ false);
+        /* rr_step  = */ nband);
 
     auto h_op = [&](T* in, T* out, int ld, int ncol) {
         for (int j = 0; j < ncol; ++j)
@@ -88,7 +88,15 @@ int main(int argc, char** argv)
                 psi.data(), eval.data(), ethr, prec.data());
 
     // The lowest nband eigenvalues of the global diagonal matrix are 1..nband.
-    int ok = 1;
+    int ok = pool_unavailable_before_setup && pool_available_after_setup ? 1 : 0;
+    if (!pool_unavailable_before_setup)
+    {
+        std::fprintf(stderr, "rank %d: pool communicator reported ready before setup\n", myrank);
+    }
+    if (!pool_available_after_setup)
+    {
+        std::fprintf(stderr, "rank %d: pool communicator reported unavailable after setup\n", myrank);
+    }
     for (int i = 0; i < nband; ++i)
     {
         if (std::abs(eval[i] - Real(i + 1)) > 1e-6)
@@ -98,19 +106,21 @@ int main(int argc, char** argv)
         }
     }
 
-    int global_ok = 0;
-    MPI_Allreduce(&ok, &global_ok, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+    int global_ok = ok;
+    Parallel_Reduce::reduce_min(global_ok);
 
-    MPI_Finalize();
     if (myrank == 0)
     {
         if (global_ok == 1)
         {
             std::printf("PPCG MPI parallel test PASSED\n");
-            return 0;
         }
-        std::printf("PPCG MPI parallel test FAILED\n");
-        return 1;
+        else
+        {
+            std::printf("PPCG MPI parallel test FAILED\n");
+        }
     }
-    return global_ok == 1 ? 0 : 1;
+    const int exit_code = global_ok == 1 ? 0 : 1;
+    finishmpi();
+    return exit_code;
 }

@@ -46,6 +46,39 @@ void autoset_magnetization(UnitCell& ucell, int nspin,
                           std::ofstream& ofs_running);
 
 /**
+ * @brief Check whether every atom carries a zero collinear magnetic moment
+ * @param ucell Unit cell object
+ * @return true if |mag| of every atom is below the magnetization threshold
+ */
+bool is_magnetization_all_zero(const UnitCell& ucell);
+
+/**
+ * @brief Warn when a nspin=4 run starts from an all-zero magnetization vector
+ *
+ * The check uses m_loc_, the vector actually consumed by cal_ux(), and not
+ * mag: the collinear projection applied when noncolin=0 can leave mag
+ * non-zero while m_loc_ is already zero, so keying the check on mag would
+ * miss exactly the silent zero-moment start this warning reports.
+ *
+ * @param ucell Unit cell object
+ * @param ofs_running Output stream for running information
+ */
+void warn_zero_magnetization_nspin4(const UnitCell& ucell,
+                                    std::ofstream& ofs_running);
+
+/**
+ * @brief Report, once per atom type, that x/y magnetization was discarded
+ * @param label Element label of the atom type
+ * @param n_discarded Number of atoms of this type whose x/y moment was dropped
+ * @param na Number of atoms of this type
+ * @param ofs_running Output stream for running information
+ */
+void warn_xy_magnetization_ignored(const std::string& label,
+                                   int n_discarded,
+                                   int na,
+                                   std::ofstream& ofs_running);
+
+/**
  * @brief Perform final validation and output
  * @param ucell Unit cell object
  * @param ofs_running Output stream for running information
@@ -94,8 +127,10 @@ void transform_atom_coordinates(Atom& atom, int ia,
  * @param input_vec_mag Whether vector magnetization was input
  * @param input_angle_mag Whether angle magnetization was input
  * @param ofs_running Output stream for running information
+ * @return true if the x/y components were discarded by the collinear
+ *         projection applied when nspin=4 and noncolin=0
  */
-void process_magnetization(Atom& atom, int it, int ia,
+bool process_magnetization(Atom& atom, int it, int ia,
                           int nspin, bool input_vec_mag,
                           bool input_angle_mag,
                           std::ofstream& ofs_running,

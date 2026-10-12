@@ -55,17 +55,16 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
                           const int diag_iter_max,
                           const int pw_diag_ndim,
                           const int rr_step,
-                          const bool gamma_only,
                           std::true_type)
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
     const int rr_step_safe = std::max(1, rr_step);
+    const Real solver_diag_thr = static_cast<Real>(diag_thr);
 
-    DiagoPPCG<T, Device> ppcg(Real(diag_thr),
+    DiagoPPCG<T, Device> ppcg(solver_diag_thr,
                               diag_iter_max,
                               sbsize,
-                              rr_step_safe,
-                              gamma_only);
+                              rr_step_safe);
 
     PPCGRunResult result;
     result.average_iterations = ppcg.diag(hpsi_func,
@@ -100,12 +99,12 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
                           const int diag_iter_max,
                           const int pw_diag_ndim,
                           const int rr_step,
-                          const bool gamma_only,
                           std::false_type)
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
     const int rr_step_safe = std::max(1, rr_step);
     const int nelem = ld_psi * nband;
+    const Real solver_diag_thr = static_cast<Real>(diag_thr);
 
     // Transitional GPU path: keep PPCG's control logic and small dense solves
     // on host, while applying H/S through the device operators.
@@ -126,8 +125,9 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     };
 
     std::vector<T> psi_host(nelem, T(0));
+    T* psi_host_ptr = psi_host.data();
     base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
-        psi_host.data(), psi, nelem);
+        psi_host_ptr, psi, nelem);
 
     DeviceBuffer psi_dev(nelem);
     DeviceBuffer out_dev(nelem);
@@ -164,18 +164,17 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
         copy_from_device(spsi_out, ld, nvec);
     };
 
-    DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(Real(diag_thr),
+    DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(solver_diag_thr,
                                                diag_iter_max,
                                                sbsize,
-                                               rr_step_safe,
-                                               gamma_only);
+                                               rr_step_safe);
     PPCGRunResult result;
     result.average_iterations = ppcg.diag(bridge_hpsi,
                                            bridge_spsi,
                                            ld_psi,
                                            nband,
                                            dim,
-                                           psi_host.data(),
+                                           psi_host_ptr,
                                            eigenvalue,
                                            ethr_band,
                                            pre_condition);
@@ -186,7 +185,7 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     result.first_active_band = ppcg.first_active_band();
     result.first_active_threshold = double(ppcg.first_active_threshold());
     base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
-        psi, psi_host.data(), nelem);
+        psi, psi_host_ptr, nelem);
     return result;
 }
 } // namespace
@@ -408,25 +407,26 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
     const diag_comm_info comm_info = {this->rank_in_pool, this->nproc_in_pool};
 #endif
 
-    const int cur_nbasis = psi.get_current_nbas();
+    const int local_basis_rank = psi.get_current_nbas() * psi.get_npol();
 
-    // Check for rank deficiency: the total number of plane waves (summed across
-    // all MPI processes) must be >= nbands. When npw_total < nbands, the basis is
-    // rank-deficient, leading to psi_norm <= 0 during Schmidt orthogonalization.
-    // Note: we sum cur_nbasis (local npw for this k-point) across the pool because
-    // psi.get_nbasis() gives the local storage dimension, not the total.
+    // Check for rank deficiency: the active wavefunction dimension (summed
+    // across all MPI processes) must be at least nbands. Otherwise Schmidt
+    // orthogonalization encounters a non-positive norm.
+    // Count both spinor components for nspin=4. psi.get_nbasis() is unsuitable
+    // here because it is the padded storage stride rather than the active rank.
     const int nbands = psi.get_nbands();
-    int npw_total = cur_nbasis;
+    int basis_rank_total = local_basis_rank;
 #ifdef __MPI
     if (this->nproc_in_pool > 1)
     {
-        Parallel_Reduce::reduce_pool(&npw_total, 1);
+        Parallel_Reduce::reduce_pool(&basis_rank_total, 1);
     }
 #endif
-    if (npw_total < nbands)
+    if (basis_rank_total < nbands)
     {
-        const std::string msg = "npw_total < nbands (" + std::to_string(npw_total) + " < " + std::to_string(nbands)
-                            + "): the total number of plane waves across all MPI processes "
+        const std::string msg = "basis_rank_total < nbands (" + std::to_string(basis_rank_total) + " < "
+                            + std::to_string(nbands)
+                            + "): the total active wavefunction dimension across all MPI processes "
                             + "is less than the number of bands, "
                             + "which leads to a rank-deficient problem. "
                             + "Please increase ecutwfc or reduce nbands.";
@@ -527,21 +527,27 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
             op.spsi(psi_in, spsi_out, ld, nvec);
         };
         const std::is_same<Device, base_device::DEVICE_CPU> cpu_path;
+        const int ld_psi = psi.get_nbasis();
+        const int nband = psi.get_nbands();
+        const int dim = psi.get_current_ngk();
+        T* psi_pointer = psi.get_pointer();
+        const Real* precondition_pointer = pre_condition.data();
+        const int pw_diag_ndim = DiagoIterAssist<T, Device>::PW_DIAG_NDIM;
+        const int pw_diag_rr_step = DiagoIterAssist<T, Device>::PW_DIAG_RR_STEP;
         const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
             hpsi_func,
             spsi_func,
-            psi.get_nbasis(),
-            psi.get_nbands(),
-            psi.get_current_ngk(),
-            psi.get_pointer(),
+            ld_psi,
+            nband,
+            dim,
+            psi_pointer,
             eigenvalue,
             this->ethr_band,
-            pre_condition.data(),
+            precondition_pointer,
             this->diag_thr,
             this->diag_iter_max,
-            DiagoIterAssist<T, Device>::PW_DIAG_NDIM,
-            DiagoIterAssist<T, Device>::PW_DIAG_RR_STEP,
-            this->wfc_basis->gamma_only,
+            pw_diag_ndim,
+            pw_diag_rr_step,
             cpu_path);
         DiagoIterAssist<T, Device>::avg_iter += ppcg_result.average_iterations;
         if (!ppcg_result.converged)

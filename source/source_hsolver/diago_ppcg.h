@@ -41,8 +41,7 @@ public:
     DiagoPPCG(const Real& diag_thr,
               const int& diag_iter_max,
               const int& sbsize,
-              const int& rr_step,
-              const bool gamma_g0_real);
+              const int& rr_step);
 
     // -------------------------------------------------------------------------
     // Main entry point
@@ -97,7 +96,6 @@ private:
     int sbsize_;
     int rr_step_;
     Real diag_thr_;
-    bool gamma_g0_real_;
 
     // Problem dimensions (set in diag())
     int ld_psi_ = 0;
@@ -122,9 +120,6 @@ private:
     std::vector<T> p_;       // previous search direction (LOBPCG)
     std::vector<T> sp_;      // S * p
     std::vector<T> hp_;      // H * p
-    std::vector<T> rr_psi_;  // Rayleigh-Ritz rotation workspace
-    std::vector<T> rr_spsi_;
-    std::vector<T> rr_hpsi_;
     std::vector<T> rr_hsub_;
     std::vector<T> rr_ssub_;
     std::vector<Real> rr_eval_;
@@ -141,8 +136,6 @@ private:
                         const T* psi_in, const Real* eigenvalue_in,
                         const std::vector<double>& ethr_band,
                         const Real* prec) const;
-
-    void force_g0_real(T* x, int ncol) const;
 
     // S-application (identity fallback if spsi_func is null).
     void apply_h(const HPsiFunc& hpsi_func, T* psi_in, T* hpsi_out,
@@ -215,15 +208,26 @@ private:
 
     void insert_startup_gram_block(const T* left,
                                    const T* right,
+                                   int row_count,
+                                   int column_count,
                                    int row_offset,
                                    int column_offset,
+                                   int matrix_dim,
                                    std::vector<T>& matrix,
                                    std::vector<T>& workspace) const;
 
     void build_startup_global_subspace(const T* psi,
+                                       std::vector<T>& w_active,
+                                       std::vector<T>& sw_active,
+                                       std::vector<T>& hw_active,
+                                       int active_count,
                                        SmallSubspace& subspace);
 
     void update_startup_global_subspace(T* psi,
+                                        const std::vector<T>& w_active,
+                                        const std::vector<T>& sw_active,
+                                        const std::vector<T>& hw_active,
+                                        int active_count,
                                         const SmallSubspace& subspace);
 
     void lock_epairs(const std::vector<T>& residual,

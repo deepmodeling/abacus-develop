@@ -191,6 +191,45 @@ void ReadInput::item_rt_tddft()
     // in the generated documentation (docs/advanced/input_files/input-main.md).
     // Please preserve this ordering when adding new parameters.
     {
+        Input_Item item("td_orthonormal");
+        item.annotation = "orthonormalization method for PW real-time propagation";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "String";
+        item.description = R"(Orthonormalize each propagated wavefunction before constructing its density. With the wavefunctions as columns of $\boldsymbol{\Psi}$, define the Gram matrix $\boldsymbol{S}=\boldsymbol{\Psi}^{\dagger}\boldsymbol{\Psi}$ and apply $\boldsymbol{\Psi}\leftarrow\boldsymbol{\Psi}\boldsymbol{C}$.
+* `cholesky`: Cholesky orthonormalization. Factor $\boldsymbol{S}=\boldsymbol{R}^{\dagger}\boldsymbol{R}$ with upper-triangular $\boldsymbol{R}$ and use $\boldsymbol{C}=\boldsymbol{R}^{-1}$.
+* `lowdin`: Löwdin symmetric orthonormalization. Compute $\boldsymbol{C}=\boldsymbol{S}^{-1/2}$ by eigendecomposition.
+* `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
+* `none`: Disable orthonormalization.
+
+[NOTE] Orthonormalization is applied after the Crank-Nicolson linear solve and uses an orthogonality tolerance independent of `lin_thr`. With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. Wavefunctions within this tolerance are left unchanged. Nonfinite or nonpositive orbital norms are rejected even with `none`.)";
+        item.default_value = "cholesky";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft");
+        read_sync_string(input.td_orthonormal);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& method = para.inp.td_orthonormal;
+            if (method != "none" && method != "cholesky" && method != "lowdin" && method != "newton_schulz")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "td_orthonormal must be cholesky, lowdin, newton_schulz or none.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_out_stat");
+        item.annotation = "output PW real-time conservation diagnostics";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Boolean";
+        item.description = R"(Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Electron counts describe the end-of-step state; orthogonality errors before and after correction are separate maxima over all SCF iterations and k points within that step. Orthogonality errors are omitted when `td_orthonormal=none`.
+
+[NOTE] Enabling this output adds density integration and diagnostic communication.)";
+        item.default_value = "false";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft");
+        read_sync_bool(input.td_out_stat);
+        this->add_item(item);
+    }
+    {
         Input_Item item("lin_solver");
         item.annotation = "linear solver for real-time propagation";
         item.category = "Real-Time TDDFT (PW)";
@@ -247,7 +286,7 @@ Preconditioning changes the convergence rate, while `lin_thr` still controls the
 * `bicgstab` and `gmres`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\max(1,\lVert\boldsymbol{b}\rVert)$.
 * `cgs`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\lVert\boldsymbol{b}\rVert$ for nonzero $\boldsymbol{b}$, or $\lVert\boldsymbol{r}\rVert\leqslant\tau$ for zero $\boldsymbol{b}$.
 
-All methods check the final residual explicitly. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled.)";
+All methods check the residual at the end of the linear solve, before orthonormalization. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled. Subsequent orthonormalization uses a separate orthogonality tolerance and does not guarantee that the corrected wavefunctions satisfy the same linear residual tolerance.)";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
