@@ -358,7 +358,7 @@ FermiLevel find_fermi_level(const ModuleBase::matrix& ekb,
     // Keep the energy origin separate from the small chemical-potential offset.
     // Rounding reference + offset before evaluating occupations can destroy
     // particle-number accuracy even for a harmless constant shift of all levels.
-    const double reference = 0.5 * lower + 0.5 * upper;
+    double reference = 0.5 * lower + 0.5 * upper;
     lower -= reference;
     upper -= reference;
     double step = 2.0 * smearing_sigma;
@@ -408,6 +408,18 @@ FermiLevel find_fermi_level(const ModuleBase::matrix& ekb,
         {
             return result;
         }
+        // Follow the shrinking bracket: a fixed spectral midpoint can be far
+        // from the Fermi surface when there are high unoccupied bands. Keep
+        // the small interval in offsets even when the absolute origin rounds.
+        const double trial_offset = 0.5 * lower + 0.5 * upper;
+        const double next_reference = reference + trial_offset;
+        const double shift = next_reference - reference;
+        if (shift != 0.0 && std::isfinite(next_reference))
+        {
+            lower -= shift;
+            upper -= shift;
+            reference = next_reference;
+        }
         const double middle = 0.5 * lower + 0.5 * upper;
         if (middle == lower || middle == upper)
         {
@@ -429,6 +441,7 @@ FermiLevel find_fermi_level(const ModuleBase::matrix& ekb,
         const double error = std::abs(count - nelec);
         if (error < best_error)
         {
+            result.reference = reference;
             result.offset = middle;
             best_error = error;
         }

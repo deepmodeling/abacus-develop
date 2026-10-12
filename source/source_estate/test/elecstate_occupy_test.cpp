@@ -433,16 +433,16 @@ TEST_F(OccupyTest, CompensatedWeightedOccupationSum)
 
 TEST_F(OccupyTest, FermiSearchAtRepresentableEnergyLimit)
 {
-    ModuleBase::matrix energies(1, 2);
+    ModuleBase::matrix energies(1, 1);
     energies(0, 0) = 0.0;
-    energies(0, 1) = 1e8;
     const std::vector<double> weights{1.0};
     const std::vector<int> spins{0};
     double ef = 0.0;
-    // Unlike a common energy shift, this enormous spectral span still leaves
-    // the root unresolved in the centered coordinate. It must not pass silently.
+    // A subnormal width leaves too few representable offsets to resolve this
+    // occupation, even after moving the energy origin close to the root.
+    const double sigma = 1024.0 * std::numeric_limits<double>::denorm_min();
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(occupy_smearing::efermig(energies, 2, 1, 0.3, weights, 1e-8, 0, ef, -1, spins),
+    EXPECT_EXIT(occupy_smearing::efermig(energies, 1, 1, 0.3, weights, sigma, 0, ef, -1, spins),
                 ::testing::ExitedWithCode(1), "");
     const std::string diagnostic = testing::internal::GetCapturedStdout();
     EXPECT_THAT(diagnostic, testing::HasSubstr("Fermi bracket reached floating-point resolution"));
@@ -632,4 +632,32 @@ TEST_F(OccupyTest, NarrowSmearingAtLargeEnergyOffset)
     EXPECT_NEAR(occupations(0, 0), 0.3, 2e-15);
     EXPECT_TRUE(std::isfinite(ef));
     EXPECT_TRUE(std::isfinite(entropy));
+}
+
+TEST_F(OccupyTest, FermiSurfaceAwayFromSpectralMidpoint)
+{
+    ModuleBase::matrix energies(1, 7);
+    ModuleBase::matrix occupations(1, 7);
+    const std::vector<double> weights{2.0};
+    const std::vector<int> spins{0};
+    const double target = 10.0;
+    const double tolerance = 16.0 * std::numeric_limits<double>::epsilon() * target;
+    for (const double shift : {0.0, 100.0, 1e8})
+    {
+        for (int ib = 0; ib < 6; ++ib)
+        {
+            energies(0, ib) = shift;
+        }
+        energies(0, 6) = shift + 100.0;
+        double ef = 0.0;
+        double entropy = 0.0;
+        occupy.gweights(1, weights, 7, target, 0.01, 0, energies, ef, entropy, occupations, -1, spins);
+        long double count = 0.0L;
+        for (int ib = 0; ib < 7; ++ib)
+        {
+            count += occupations(0, ib);
+        }
+        EXPECT_NEAR(count, target, tolerance) << shift;
+        EXPECT_DOUBLE_EQ(occupations(0, 6), 0.0);
+    }
 }
