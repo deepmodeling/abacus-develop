@@ -13,8 +13,6 @@ gamma_only        0
 ecutwfc           20
 scf_nmax          50
 
-ks_solver         scalapack_gvx
-
 mixing_type       broyden
 mixing_beta       0.7
 mixing_gg0        0.0

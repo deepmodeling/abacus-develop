@@ -146,9 +146,16 @@ jobs:
           done
           bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
-      - name: Test 15_rtTDDFT_GPU
+      - name: Test 05_rtTDDFT on GPU
         run: |
-          cd tests/15_rtTDDFT_GPU
+          cd tests/05_rtTDDFT
+          find . -name INPUT | while read f; do
+              if grep -qE '^[[:space:]]*device[[:space:]]+' "$f"; then
+                  sed -i -E 's/^[[:space:]]*device[[:space:]]+.*/device    gpu/' "$f"
+              else
+                  echo "device    gpu" >> "$f"
+              fi
+          done
           bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 16_SDFT_GPU
