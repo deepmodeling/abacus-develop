@@ -17,10 +17,11 @@
 #include "source_psi/psi.h"
 
 #include <algorithm>
+#include <cmath>
+#include <exception>
 #include <iomanip>
 #include <ostream>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -37,8 +38,6 @@ struct PPCGRunResult
     int active_band_count;
     bool iteration_limit_reached;
     double max_residual;
-    int first_active_band;
-    double first_active_threshold;
 };
 
 template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
@@ -80,8 +79,6 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     result.active_band_count = ppcg.active_band_count();
     result.iteration_limit_reached = ppcg.iteration_limit_reached();
     result.max_residual = double(ppcg.max_residual());
-    result.first_active_band = ppcg.first_active_band();
-    result.first_active_threshold = double(ppcg.first_active_threshold());
     return result;
 }
 
@@ -137,18 +134,22 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     // corrupt the column stride expected by the device implementation.
     const auto copy_to_device = [&](T* host_ptr, const int ld, const int nvec) {
         const int count = ld * nvec;
-        if (count > nelem)
+        int invalid_block = count < 0 || count > nelem ? 1 : 0;
+        Parallel_Reduce::reduce_pool(&invalid_block, 1);
+        if (invalid_block != 0)
         {
-            throw std::out_of_range("PPCG GPU bridge: block exceeds allocated workspace");
+            ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Input block exceeds allocated workspace on a pool rank.");
         }
         base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
             psi_dev.ptr, host_ptr, count);
     };
     const auto copy_from_device = [&](T* host_ptr, const int ld, const int nvec) {
         const int count = ld * nvec;
-        if (count > nelem)
+        int invalid_block = count < 0 || count > nelem ? 1 : 0;
+        Parallel_Reduce::reduce_pool(&invalid_block, 1);
+        if (invalid_block != 0)
         {
-            throw std::out_of_range("PPCG GPU bridge: block exceeds allocated workspace");
+            ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Output block exceeds allocated workspace on a pool rank.");
         }
         base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
             host_ptr, out_dev.ptr, count);
@@ -182,8 +183,6 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     result.active_band_count = ppcg.active_band_count();
     result.iteration_limit_reached = ppcg.iteration_limit_reached();
     result.max_residual = double(ppcg.max_residual());
-    result.first_active_band = ppcg.first_active_band();
-    result.first_active_threshold = double(ppcg.first_active_threshold());
     base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
         psi, psi_host_ptr, nelem);
     return result;
@@ -260,6 +259,14 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
     std::vector<Real> eigenvalues(this->wfc_basis->nks * psi.get_nbands(), 0.0);
     ethr_band.resize(psi.get_nbands(), this->diag_thr);
 
+    std::vector<DiagonalizationStatus> diagonalization_status;
+    const auto solve_kpoint = [&](const int ik) {
+        Real* eigenvalues_k = eigenvalues.data() + ik * psi.get_nbands();
+        const DiagonalizationStatus status = this->hamiltSolvePsiK(
+            op, psi, precondition, eigenvalues_k, this->wfc_basis->nks);
+        diagonalization_status.push_back(status);
+    };
+
     // Initialize k-point continuity if enabled
     static int count = 0;
     if (use_k_continuity) {
@@ -301,7 +308,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            solve_kpoint(ik);
 
             if (skip_charge)
             {
@@ -339,7 +346,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            solve_kpoint(ik);
 
             // output iteration information and reset avg_iter
             if (skip_charge)
@@ -353,6 +360,11 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
             /// calculate the contribution of Psi for charge density rho
         }
     } // else (use_k_continuity)
+
+    if (this->method == "ppcg")
+    {
+        this->report_ppcg_convergence(diagonalization_status, log);
+    }
 
     // output average iteration information and reset avg_iter
     this->output_iterInfo(log);
@@ -394,13 +406,14 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
+typename HSolverPW<T, Device>::DiagonalizationStatus HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                                            psi::Psi<T, Device>& psi,
                                            std::vector<Real>& pre_condition,
                                            Real* eigenvalue,
                                            const int& nk_nums)
 {
     ModuleBase::timer::start("HSolverPW", "solve_psik");
+    DiagonalizationStatus status;
 #ifdef __MPI
     const diag_comm_info comm_info = {POOL_WORLD, this->rank_in_pool, this->nproc_in_pool};
 #else
@@ -532,58 +545,94 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         const int dim = psi.get_current_ngk();
         T* psi_pointer = psi.get_pointer();
         const Real* precondition_pointer = pre_condition.data();
-        const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
-            hpsi_func,
-            spsi_func,
-            ld_psi,
-            nband,
-            dim,
-            psi_pointer,
-            eigenvalue,
-            this->ethr_band,
-            precondition_pointer,
-            this->diag_thr,
-            this->diag_iter_max,
-            this->pw_diag_ndim,
-            this->pw_diag_rr_step,
-            cpu_path);
-        DiagoIterAssist<T, Device>::avg_iter += ppcg_result.average_iterations;
-        if (!ppcg_result.converged)
+        // PW diagonalization thresholds have an eigenvalue-change scale.
+        // PPCG consumes residual-norm thresholds, so compare squared residuals
+        // against that scale. This is a stopping policy, not a gap-independent
+        // bound on the eigenvalue error. Keep DiagoPPCG's residual API unchanged.
+        const double energy_threshold = std::max(this->diag_thr, 1.0e-14);
+        const double residual_threshold = std::sqrt(energy_threshold);
+        std::vector<double> residual_thresholds(this->ethr_band.size());
+        for (size_t ib = 0; ib < this->ethr_band.size(); ++ib)
         {
-            std::ostringstream warning_stream;
-            if (ppcg_result.iteration_limit_reached)
-            {
-                warning_stream << "PPCG reached pw_diag_nmax="
-                               << this->diag_iter_max
-                               << "; active tail contains "
-                               << ppcg_result.active_band_count << " band(s)";
-                if (ppcg_result.first_active_band >= 0)
-                {
-                    const int first_active_band = ppcg_result.first_active_band + 1;
-                    warning_stream << " starting at band " << first_active_band
-                                   << "; threshold at tail start = "
-                                   << std::scientific << std::setprecision(6)
-                                   << ppcg_result.first_active_threshold;
-                }
-                warning_stream << "; final max residual = "
-                               << std::scientific << std::setprecision(6)
-                               << ppcg_result.max_residual
-                               << "; requested residual thresholds were not all reached.";
-            }
-            else
-            {
-                warning_stream << "PPCG final convergence validation failed with "
-                               << ppcg_result.active_band_count
-                               << " active band(s); final max residual = "
-                               << std::scientific << std::setprecision(6)
-                               << ppcg_result.max_residual << '.';
-            }
-            const std::string warning = warning_stream.str();
-            ModuleBase::WARNING("HSolverPW::hamiltSolvePsiK", warning);
+            const double band_threshold = std::max(this->ethr_band[ib], energy_threshold);
+            residual_thresholds[ib] = std::sqrt(band_threshold);
+        }
+        try
+        {
+            const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
+                hpsi_func,
+                spsi_func,
+                ld_psi,
+                nband,
+                dim,
+                psi_pointer,
+                eigenvalue,
+                residual_thresholds,
+                precondition_pointer,
+                residual_threshold,
+                this->diag_iter_max,
+                this->pw_diag_ndim,
+                this->pw_diag_rr_step,
+                cpu_path);
+            DiagoIterAssist<T, Device>::avg_iter += ppcg_result.average_iterations;
+            status.converged = ppcg_result.converged;
+            status.iteration_limit_reached = ppcg_result.iteration_limit_reached;
+            status.active_band_count = ppcg_result.active_band_count;
+            status.max_residual = ppcg_result.max_residual;
+        }
+        catch (const std::exception& error)
+        {
+            const std::string message = std::string("PPCG diagonalization failed: ") + error.what();
+            ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", message);
         }
     }
     ModuleBase::timer::end("HSolverPW", "solve_psik");
-    return;
+    return status;
+}
+
+template <typename T, typename Device>
+void HSolverPW<T, Device>::report_ppcg_convergence(const std::vector<DiagonalizationStatus>& status,
+                                                  std::ostream& log) const
+{
+    int unconverged_kpoints = 0;
+    int iteration_limits = 0;
+    int active_bands = 0;
+    double max_residual = 0.0;
+    // Each pool contributes each k point once, including pools not owning
+    // world rank zero. All ranks enter the same final reductions.
+    if (this->rank_in_pool == 0)
+    {
+        for (const DiagonalizationStatus& item : status)
+        {
+            if (!item.converged)
+            {
+                ++unconverged_kpoints;
+                if (item.iteration_limit_reached)
+                {
+                    ++iteration_limits;
+                }
+                active_bands += item.active_band_count;
+                max_residual = std::max(max_residual, item.max_residual);
+            }
+        }
+    }
+    Parallel_Reduce::reduce_all(unconverged_kpoints);
+    Parallel_Reduce::reduce_all(iteration_limits);
+    Parallel_Reduce::reduce_all(active_bands);
+    Parallel_Reduce::reduce_max(max_residual);
+    if (unconverged_kpoints > 0)
+    {
+        std::ostringstream warning_stream;
+        warning_stream << "PPCG did not reach the requested residual thresholds at "
+                       << unconverged_kpoints << " k point(s) in electronic iteration " << this->scf_iter
+                       << "; " << iteration_limits << " reached the iteration limit " << this->diag_iter_max
+                       << "; active bands across those k points = " << active_bands
+                       << "; final max residual = " << std::scientific << std::setprecision(6)
+                       << max_residual << '.';
+        const std::string warning = warning_stream.str();
+        log << warning << '\n';
+        ModuleBase::WARNING("HSolverPW::solve", warning);
+    }
 }
 
 template <typename T, typename Device>

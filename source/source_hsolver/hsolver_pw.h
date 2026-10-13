@@ -71,12 +71,23 @@ class HSolverPW
                const bool skip_charge);
 
   protected:
+    struct DiagonalizationStatus
+    {
+        bool converged = true;
+        bool iteration_limit_reached = false;
+        int active_band_count = 0;
+        double max_residual = 0.0;
+    };
+
     // diago caller
-    void hamiltSolvePsiK(const HSOperator<T, Device>& op,
+    DiagonalizationStatus hamiltSolvePsiK(const HSOperator<T, Device>& op,
                          psi::Psi<T, Device>& psi,
                          std::vector<Real>& pre_condition,
                          Real* eigenvalue,
                          const int& nk_nums);
+
+    void report_ppcg_convergence(const std::vector<DiagonalizationStatus>& status,
+                                 std::ostream& log) const;
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);

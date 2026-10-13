@@ -94,10 +94,10 @@ struct Input_para
                                             ///< use mesh, which is used in QE.
     int nspin = 1;                          ///< LDA ; LSDA ; non-linear spin
     int pw_diag_nmax = 50;
-    double pw_diag_thr = 0.01;      ///< used in cg method
+    double pw_diag_thr = 0.01;      ///< energy-scale threshold for iterative PW solvers
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
-    int pw_diag_rr_step = 16;       ///< Rayleigh-Ritz re-application interval for PPCG diagonalization
+    int pw_diag_rr_step = 16;       ///< full Rayleigh-Ritz interval for PPCG diagonalization
     int diago_cg_prec = 1;          ///< mohan add 2012-03-31
     int diag_subspace = 0;          // 0: Lapack, 1: elpa, 2: scalapack
     bool use_k_continuity = false;  ///< whether to use k-point continuity for initializing wave functions

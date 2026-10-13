@@ -1049,10 +1049,10 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_thr");
-        item.annotation = "threshold for eigenvalues is cg electron iterations";
+        item.annotation = "energy-scale threshold for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
+        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. CG and Davidson methods compare eigenvalue changes against the threshold. PPCG uses the same energy scale as a squared-residual stopping policy: the norm of H psi - epsilon S psi must not exceed sqrt(max(ethr_band, ethr, 1e-14)). This policy is not a gap-independent bound on eigenvalue error. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
         item.default_value = "0.01";
         item.unit = "";
         read_sync_double(input.pw_diag_thr);
@@ -1109,10 +1109,10 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_nmax");
-        item.annotation = "max iteration number for cg";
+        item.annotation = "maximum iteration count for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/ppcg method.";
+        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/ppcg method. The shared PW NSCF setup retains the existing iteration limit (30 in a fresh run) for all solvers instead of updating it from this input.";
         item.default_value = "50";
         item.unit = "";
         item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, ppcg]");
@@ -1133,10 +1133,10 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_rr_step");
-        item.annotation = "Rayleigh-Ritz re-application interval for PPCG";
+        item.annotation = "full Rayleigh-Ritz interval for PPCG";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = ppcg. It must be a positive integer and controls how often (in subspace iterations) H and S are re-applied to reset the accumulated rounding drift after the Rayleigh-Ritz rotation. A larger value reduces the number of H/S applications and thus the wall time without changing the iteration count in well-conditioned cases; a smaller value is more robust against rounding drift in ill-conditioned problems.";
+        item.description = "Only useful when you use ks_solver = ppcg. It must be a positive integer and sets the interval, in subspace iterations, between full Rayleigh-Ritz diagonalizations. The solver also performs a full Rayleigh-Ritz step at initialization, final validation, tentative convergence, or when overlap orthogonalization fails. Between these steps it maintains S-orthogonality without diagonalizing the full projected Hamiltonian. H and S images are refreshed at periodic Rayleigh-Ritz steps to limit accumulated rounding drift. A larger interval reduces full projected eigensolves but may change the iteration count.";
         item.default_value = "16";
         item.unit = "";
         item.set_availability("basis_type==pw and ks_solver==ppcg");

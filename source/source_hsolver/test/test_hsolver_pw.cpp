@@ -6,12 +6,17 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "source_hsolver/diag_comm_info.h"
+#include "source_hsolver/diago_ppcg.h"
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
+#include "source_basis/module_pw/test/test_tool.h"
+#include "source_base/parallel_reduce.h"
 
 #include <algorithm>
 #include <complex>
+#include <cmath>
+#include <limits>
 
 /// H = S = identity: the simplest operator the solvers can be handed
 template <typename T>
@@ -29,6 +34,27 @@ class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU
     {
         std::copy(x, x + static_cast<size_t>(ld) * nvec, sx);
     }
+};
+
+class DiagonalPPCGOperator : public IdentityHSOperator<std::complex<double>>
+{
+  public:
+    void hpsi(const std::complex<double>* x,
+              std::complex<double>* hx,
+              const int ld,
+              const int nvec) const override
+    {
+        block_sizes.push_back(nvec);
+        for (int ib = 0; ib < nvec; ++ib)
+        {
+            for (int ig = 0; ig < ld; ++ig)
+            {
+                hx[ib * ld + ig] = double(ig + 1) * x[ib * ld + ig];
+            }
+        }
+    }
+
+    mutable std::vector<int> block_sizes;
 };
 
 // Mock implementations for the template functions causing linking errors
@@ -172,14 +198,34 @@ class TestHSolverPW : public ::testing::Test {
     // class derived from it and friendship is not inherited, so the call into
     // the protected hamiltSolvePsiK() is routed through here.
     template <typename T, typename Device>
-    static void hamiltSolvePsiK(hsolver::HSolverPW<T, Device>& hs,
+    static bool hamiltSolvePsiK(hsolver::HSolverPW<T, Device>& hs,
                                 const hsolver::HSOperator<T, Device>& op,
                                 psi::Psi<T, Device>& ps,
                                 std::vector<typename GetTypeReal<T>::type>& pre,
                                 typename GetTypeReal<T>::type* eig,
                                 const int ntry)
     {
-        hs.hamiltSolvePsiK(op, ps, pre, eig, ntry);
+        return hs.hamiltSolvePsiK(op, ps, pre, eig, ntry).converged;
+    }
+
+    template <typename T, typename Device>
+    static void set_thresholds(hsolver::HSolverPW<T, Device>& hs, const std::vector<double>& thresholds)
+    {
+        hs.ethr_band = thresholds;
+    }
+
+    static void report_failed_kpoints(hsolver::HSolverPW<std::complex<double>>& hs, std::ostream& log)
+    {
+        using Status = hsolver::HSolverPW<std::complex<double>>::DiagonalizationStatus;
+        std::vector<Status> statuses(3);
+        statuses[0].converged = false;
+        statuses[0].iteration_limit_reached = true;
+        statuses[0].active_band_count = 2;
+        statuses[0].max_residual = 0.125;
+        statuses[2].converged = false;
+        statuses[2].active_band_count = 1;
+        statuses[2].max_residual = 0.25;
+        hs.report_ppcg_convergence(statuses, log);
     }
 
     ModulePW::PW_Basis_K pwbk;
@@ -474,4 +520,126 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
         ::testing::ExitedWithCode(1),
         ".*"
     );
+}
+
+TEST_F(TestHSolverPW, PpcgUsesIndependentConstructorConfiguration)
+{
+    using T = std::complex<double>;
+    const int dim = 18;
+    const int nband = 3;
+    const int maxiter = 4;
+    const double energy_threshold = 1.0e-8;
+    const double residual_threshold = 1.0e-4;
+    const std::vector<double> energy_thresholds = {1.0e-8, 4.0e-8, 9.0e-8};
+    const std::vector<double> residual_thresholds = {1.0e-4, 2.0e-4, 3.0e-4};
+    std::vector<double> precondition(dim, 1.0);
+    std::vector<T> initial(dim * nband);
+    for (size_t i = 0; i < initial.size(); ++i)
+    {
+        const double index = double(i + 1);
+        const double phase = index * 1.7;
+        const double real = std::sin(index);
+        const double imaginary = std::cos(phase);
+        initial[i] = T(real, imaginary);
+    }
+
+    // Neither object calls setup_diago_params_pw. Dispatch must honor its own
+    // block size and RR interval, including after a different object was used.
+    hsolver::HSolverPW<T> first(&pwbk, "scf", "pw", "ppcg", false, 1, 1,
+                               maxiter, energy_threshold, false, nband, false, 1, 3, 0, 0);
+    hsolver::HSolverPW<T> second(&pwbk, "scf", "pw", "ppcg", false, 1, 1,
+                                maxiter, energy_threshold, false, nband, false, 2, 1, 0, 0);
+    set_thresholds(first, energy_thresholds);
+    set_thresholds(second, energy_thresholds);
+    hsolver::HSolverPW<T>* solvers[] = {&first, &second, &first};
+    const int block_sizes[] = {1, 2, 1};
+    const int rr_steps[] = {3, 1, 3};
+    for (int run = 0; run < 3; ++run)
+    {
+        psi::Psi<T> wavefunctions(1, nband, dim, dim, true);
+        wavefunctions.set_all_psi(initial.data(), initial.size());
+        std::vector<T> reference = initial;
+        std::vector<double> actual_eigenvalues(nband);
+        std::vector<double> reference_eigenvalues(nband);
+        DiagonalPPCGOperator actual_operator;
+        DiagonalPPCGOperator reference_operator;
+        hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> direct(
+            residual_threshold, maxiter, block_sizes[run], rr_steps[run]);
+        const auto hpsi = [&](T* x, T* hx, const int ld, const int nvec) {
+            reference_operator.hpsi(x, hx, ld, nvec);
+        };
+        const auto spsi = [&](T* x, T* sx, const int ld, const int nvec) {
+            reference_operator.spsi(x, sx, ld, nvec);
+        };
+        direct.diag(hpsi, spsi, dim, nband, dim, reference.data(),
+                    reference_eigenvalues.data(), residual_thresholds, precondition.data());
+        const bool converged = hamiltSolvePsiK(*solvers[run], actual_operator, wavefunctions,
+                                               precondition, actual_eigenvalues.data(), 1);
+        EXPECT_EQ(converged, direct.converged());
+        EXPECT_EQ(actual_operator.block_sizes, reference_operator.block_sizes);
+        for (int ib = 0; ib < nband; ++ib)
+        {
+            EXPECT_NEAR(actual_eigenvalues[ib], reference_eigenvalues[ib], 1.0e-12);
+        }
+    }
+}
+
+TEST_F(TestHSolverPW, PpcgFailureUsesApplicationDiagnostic)
+{
+    using T = std::complex<double>;
+    hsolver::HSolverPW<T> solver(&pwbk, "scf", "pw", "ppcg", false, 1, 1,
+                                4, 1.0e-8, false, 1, false, 1, 3, 0, 0);
+    const std::vector<double> thresholds(1, 1.0e-8);
+    set_thresholds(solver, thresholds);
+    psi::Psi<T> wavefunctions(1, 1, 3, 3, true);
+    std::vector<double> precondition(3, 1.0);
+    precondition[0] = std::numeric_limits<double>::quiet_NaN();
+    std::vector<double> eigenvalues(1);
+    EXPECT_EXIT({
+        std::cout.rdbuf(std::cerr.rdbuf());
+        hamiltSolvePsiK(solver, hamilt_test_d, wavefunctions,
+                        precondition, eigenvalues.data(), 1);
+    }, ::testing::ExitedWithCode(1), "PPCG diagonalization failed:.*preconditioner contains non-finite");
+}
+
+TEST_F(TestHSolverPW, PpcgConvergenceWarningSummarizesKpoints)
+{
+    int contributing_pools = 1;
+    Parallel_Reduce::reduce_all(contributing_pools);
+    const int kpoints = 2 * contributing_pools;
+    const int bands = 3 * contributing_pools;
+    const std::string expected_kpoints = std::to_string(kpoints) + " k point(s)";
+    const std::string expected_limits = std::to_string(contributing_pools) + " reached the iteration limit";
+    const std::string expected_bands = "active bands across those k points = " + std::to_string(bands);
+    std::ostringstream log;
+    report_failed_kpoints(hs_d, log);
+    const std::string message = log.str();
+    EXPECT_NE(message.find(expected_kpoints), std::string::npos);
+    EXPECT_NE(message.find(expected_limits), std::string::npos);
+    EXPECT_NE(message.find(expected_bands), std::string::npos);
+    EXPECT_NE(message.find("2.500000e-01"), std::string::npos);
+    EXPECT_EQ(std::count(message.begin(), message.end(), '\n'), 1);
+}
+
+int main(int argc, char** argv)
+{
+#ifdef __MPI
+    int nproc = 1;
+    int myrank = 0;
+    setupmpi(argc, argv, nproc, myrank);
+    int nproc_in_pool = 1;
+    int kpar = nproc;
+    int mypool = 0;
+    int rank_in_pool = 0;
+    divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
+#endif
+    testing::InitGoogleTest(&argc, argv);
+    // Re-execute death tests so they initialize their own MPI runtime instead
+    // of using MPI state inherited from a forked parent process.
+    testing::FLAGS_gtest_death_test_style = "threadsafe";
+    const int result = RUN_ALL_TESTS();
+#ifdef __MPI
+    finishmpi();
+#endif
+    return result;
 }

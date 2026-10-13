@@ -95,6 +95,7 @@ if (ENABLE_MPI)
     ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
     ../../source_hamilt/module_xc/exx_info.cpp
     ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+    ../../source_basis/module_pw/test/test_tool.cpp
   )
 
   if(ENABLE_LCAO)
