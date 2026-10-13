@@ -1303,6 +1303,7 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
     const std::vector<double>& ethr_band)
 {
     const PPCGFunctionTimer timer("rayleigh_ritz");
+    ++rayleigh_ritz_count_;
     gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
     gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
 
@@ -1425,8 +1426,107 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
         // arbitrary column based on its residual alone.
         active_cols.resize(n_band_);
         std::iota(active_cols.begin(), active_cols.end(), 0);
+        max_residual_ = max_generalized_residual(hpsi_.data(),
+                                                spsi_.data(),
+                                                eigenvalue,
+                                                ld_psi_,
+                                                n_dim_,
+                                                n_band_);
     }
     return sygvd_ok;
+}
+
+template <typename T, typename Device>
+bool DiagoPPCG<T, Device>::orthonormalize(T* psi)
+{
+    const PPCGFunctionTimer timer("orthonormalize");
+    gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
+    bool local_success = false;
+    try
+    {
+        container::kernels::lapack_potrf<T, container::DEVICE_CPU>()(
+            'U', n_band_, rr_ssub_.data(), n_band_);
+        container::kernels::lapack_trtri<T, container::DEVICE_CPU>()(
+            'U', 'N', n_band_, rr_ssub_.data(), n_band_);
+        local_success = true;
+    }
+    catch (const std::runtime_error&)
+    {
+        // The caller performs a common Rayleigh-Ritz fallback on all ranks.
+    }
+    if (!all_pool_operations_succeeded(local_success))
+    {
+        return false;
+    }
+    for (int j = 0; j < n_band_; ++j)
+    {
+        for (int i = j + 1; i < n_band_; ++i)
+        {
+            rr_ssub_[i + j * n_band_] = T(0);
+        }
+    }
+    // X^H SX = R^H R. Right multiplication by the upper triangular R^{-1}
+    // keeps a previously locked prefix independent of the active columns.
+    const int size = ld_psi_ * n_band_;
+    const T one = T(1);
+    const T zero = T(0);
+    const auto rotate = [&](T* values) {
+        std::copy(values, values + size, w_.begin());
+        std::fill(values, values + size, T(0));
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         n_band_,
+                                         n_band_,
+                                         &one,
+                                         w_.data(),
+                                         ld_psi_,
+                                         rr_ssub_.data(),
+                                         n_band_,
+                                         &zero,
+                                         values,
+                                         ld_psi_);
+    };
+    rotate(psi);
+    rotate(hpsi_.data());
+    rotate(spsi_.data());
+    return true;
+}
+
+template <typename T, typename Device>
+bool DiagoPPCG<T, Device>::update_block_gradient(
+    const T* psi,
+    Real* eigenvalue,
+    const std::vector<double>& ethr_band)
+{
+    const PPCGFunctionTimer timer("update_block_gradient");
+    gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
+    hermitize_projected(rr_hsub_, n_band_);
+    for (int j = 0; j < n_band_; ++j)
+    {
+        // These are Rayleigh quotients for tracing, not ordered Ritz values.
+        eigenvalue[j] = std::real(rr_hsub_[j + j * n_band_]);
+    }
+    std::copy(hpsi_.begin(), hpsi_.end(), w_.begin());
+    const T minus_one = T(-1);
+    const T one = T(1);
+    ModuleBase::gemm_op<T, Device>()('N',
+                                     'N',
+                                     n_dim_,
+                                     n_band_,
+                                     n_band_,
+                                     &minus_one,
+                                     spsi_.data(),
+                                     ld_psi_,
+                                     rr_hsub_.data(),
+                                     n_band_,
+                                     &one,
+                                     w_.data(),
+                                     ld_psi_);
+    std::vector<int> candidates;
+    lock_epairs(w_, ethr_band, candidates);
+    // Do not change the actual locked prefix without a successful Ritz solve.
+    return candidates.empty();
 }
 
 } // namespace hsolver
@@ -1458,6 +1558,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     max_residual_ = Real(0);
     first_active_band_ = -1;
     first_active_threshold_ = Real(0);
+    rayleigh_ritz_count_ = 0;
 
     validate_input(hpsi_func, psi_in, eigenvalue_in, ethr_band, prec);
     spsi_func_ = spsi_func;
@@ -1646,7 +1747,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // retain the requested lowest roots.  All current Ritz vectors remain
         // available, while a converged prefix contributes no correction
         // vectors and stays outside the active iteration count.
-        if (iter == 1 && needs_startup_global_correction)
+        const bool startup_correction = iter == 1 && needs_startup_global_correction;
+        if (startup_correction)
         {
             const int local_dim = ncol + nact;
             build_startup_global_subspace(psi_in,
@@ -1688,24 +1790,41 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         }
         use_p = true;
 
-        // Rayleigh-Ritz after each block update keeps the global subspace
-        // synchronized with the updated active vectors.  The block update
-        // can otherwise drift into an ill-conditioned basis before the next
-        // Ritz rotation.
-        last_rr_succeeded = rayleigh_ritz(
-            psi_in, eigenvalue_in, active_cols, ethr_band);
+        // Refresh operator caches on the same cadence as the full Ritz solve.
+        // Intermediate sweeps maintain S-orthonormality without diagonalizing
+        // the full projected Hamiltonian.
+        const bool scheduled_rr = (iter % rr_step_) == 0;
+        if (scheduled_rr)
+        {
+            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+            apply_s_current(psi_in, spsi_.data(), ncol);
+            apply_h(hpsi_func, p_.data(), hp_.data(), ncol);
+            apply_s_current(p_.data(), sp_.data(), ncol);
+        }
+        // The startup subspace can insert a newly discovered lower root into
+        // an old locked prefix. Reclassify it before freezing any column.
+        bool perform_rr = scheduled_rr || startup_correction || iter == maxiter_;
+        if (!perform_rr)
+        {
+            perform_rr = !orthonormalize(psi_in);
+        }
+        if (!perform_rr)
+        {
+            perform_rr = update_block_gradient(psi_in, eigenvalue_in, ethr_band);
+        }
+        last_rr_succeeded = false;
+        if (perform_rr)
+        {
+            last_rr_succeeded = rayleigh_ritz(
+                psi_in, eigenvalue_in, active_cols, ethr_band);
+        }
         // Restart the search direction if the residual keeps rising.  With a
         // poor preconditioner the LOBPCG recurrence can stagnate (or slowly
         // diverge) instead of reducing the residual.  Requiring several
         // consecutive rises avoids resetting on a transient bump, and a reset
         // falls back to a steepest-descent step to recover the low eigenpairs.
         {
-            const Real cur_res = max_generalized_residual(hpsi_.data(),
-                                                          spsi_.data(),
-                                                          eigenvalue_in,
-                                                          ld_psi_,
-                                                          n_dim_,
-                                                          ncol);
+            const Real cur_res = max_residual_;
             if (cur_res < best_res)
             {
                 best_res = cur_res;
@@ -1725,18 +1844,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 best_res = cur_res;
             }
         }
-        // The Rayleigh-Ritz rotation already keeps hpsi_/spsi_ consistent
-        // with the rotated psi up to rounding; re-applying H/S exactly is
-        // only needed every rr_step_ iterations to reset the accumulated
-        // rounding drift.
-        if ((iter % rr_step_) == 0)
-        {
-            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-            apply_s_current(psi_in, spsi_.data(), ncol);
-            apply_h(hpsi_func, p_.data(), hp_.data(), ncol);
-            apply_s_current(p_.data(), sp_.data(), ncol);
-        }
-        record_residual(iter, "rayleigh_ritz");
+        const char* stage = perform_rr ? "rayleigh_ritz" : "block_sweep";
+        record_residual(iter, stage);
 
         ++iter;
     }

@@ -88,6 +88,11 @@ public:
         return first_active_threshold_;
     }
 
+    int rayleigh_ritz_count() const
+    {
+        return rayleigh_ritz_count_;
+    }
+
 private:
     // -------------------------------------------------------------------------
     // Data members
@@ -107,6 +112,7 @@ private:
     Real max_residual_ = Real(0);
     int first_active_band_ = -1;
     Real first_active_threshold_ = Real(0);
+    int rayleigh_ritz_count_ = 0;
 
     // Cached S-operator (null if identity).
     SPsiFunc spsi_func_;
@@ -252,6 +258,14 @@ private:
     bool rayleigh_ritz(T* psi, Real* eigenvalue,
                        std::vector<int>& active_cols,
                        const std::vector<double>& ethr_band);
+
+    bool orthonormalize(T* psi);
+
+    // Between Ritz solves the columns need not be individual eigenvectors.
+    // Use the block gradient, and request a Ritz solve before declaring them
+    // converged or changing the locked prefix.
+    bool update_block_gradient(const T* psi, Real* eigenvalue,
+                               const std::vector<double>& ethr_band);
 };
 
 } // namespace hsolver

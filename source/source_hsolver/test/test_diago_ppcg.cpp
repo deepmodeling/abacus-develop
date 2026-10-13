@@ -244,6 +244,208 @@ TEST_F(DiagoPPCGTridiagTest, ReusesProjectedOperatorImages)
     EXPECT_NEAR(solver.max_residual(), max_residual, 1.0e-13);
 }
 
+TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
+{
+    const int dimension = 48;
+    const int bands = 8;
+    const int sweeps = 10;
+    std::mt19937 random(184);
+    std::uniform_real_distribution<double> uniform(-1.0, 1.0);
+    std::vector<T> initial(dimension * bands);
+    for (T& value : initial)
+    {
+        const double real = uniform(random);
+        const double imaginary = uniform(random);
+        value = T(real, imaginary);
+    }
+    const std::vector<Real> prec(dimension, 2.0);
+    const std::vector<double> thresholds(bands, 1.0e-14);
+    const int intervals[] = {1, 4, 16};
+    for (const int interval : intervals)
+    {
+        SCOPED_TRACE(interval);
+        std::vector<T> psi = initial;
+        std::vector<Real> eigenvalues(bands, 0.0);
+        int applications = 0;
+        const auto h_op = [&applications, dimension](T* in, T* out, int ld, int ncol) {
+            ++applications;
+            for (int j = 0; j < ncol; ++j)
+            {
+                for (int i = 0; i < dimension; ++i)
+                {
+                    T value = 2.0 * in[i + j * ld];
+                    if (i > 0)
+                    {
+                        value -= in[i - 1 + j * ld];
+                    }
+                    if (i + 1 < dimension)
+                    {
+                        value -= in[i + 1 + j * ld];
+                    }
+                    out[i + j * ld] = value;
+                }
+            }
+        };
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+            1.0e-14, sweeps, 2, interval);
+        solver.diag(h_op, nullptr, dimension, bands, dimension,
+                    psi.data(), eigenvalues.data(), thresholds, prec.data());
+        ASSERT_TRUE(solver.iteration_limit_reached());
+        const int scheduled = sweeps / interval;
+        const int final_extra = sweeps % interval == 0 ? 0 : 1;
+        const int startup_extra = interval == 1 ? 0 : 1;
+        const int expected_ritz = 1 + scheduled + final_extra + startup_extra;
+        const int expected_applications = 2 + sweeps + 2 * scheduled;
+        EXPECT_EQ(solver.rayleigh_ritz_count(), expected_ritz);
+        EXPECT_EQ(applications, expected_applications);
+        EXPECT_TRUE(std::is_sorted(eigenvalues.begin(), eigenvalues.end()));
+        std::vector<T> hpsi(psi.size());
+        h_op(psi.data(), hpsi.data(), dimension, bands);
+        double residual = 0.0;
+        for (int j = 0; j < bands; ++j)
+        {
+            double norm_squared = 0.0;
+            for (int i = 0; i < dimension; ++i)
+            {
+                const T value = hpsi[i + j * dimension] - eigenvalues[j] * psi[i + j * dimension];
+                norm_squared += std::norm(value);
+            }
+            residual = std::max(residual, std::sqrt(norm_squared));
+            for (int k = 0; k < bands; ++k)
+            {
+                T overlap = T(0);
+                for (int i = 0; i < dimension; ++i)
+                {
+                    overlap += std::conj(psi[i + k * dimension]) * psi[i + j * dimension];
+                }
+                const T expected = j == k ? T(1) : T(0);
+                const double error = std::abs(overlap - expected);
+                EXPECT_LT(error, 1.0e-11);
+            }
+        }
+        EXPECT_NEAR(solver.max_residual(), residual, 1.0e-13);
+    }
+}
+
+TEST(DiagoPPCGPeriodicRitzTest, StartupReclassifiesDisplacedLockedPrefix)
+{
+    const int dimension = 5;
+    const int bands = 2;
+    std::vector<T> psi(dimension * bands, T(0));
+    // The initial exact eigenvalue 2 appears converged, but it is not the
+    // lowest root. The startup correction discovers a lower approximate
+    // root, which must replace and unlock this column before the next sweep.
+    psi[1] = T(1);
+    const double scale = 1.0 / std::sqrt(3.0);
+    psi[dimension] = T(scale);
+    psi[2 + dimension] = T(scale);
+    psi[4 + dimension] = T(scale);
+    std::vector<Real> eigenvalues(bands, 0.0);
+    const std::vector<Real> prec(dimension, 1.0);
+    const std::vector<double> thresholds(bands, 1.0e-10);
+    const auto h_op = [dimension](T* in, T* out, int ld, int ncol) {
+        for (int j = 0; j < ncol; ++j)
+        {
+            for (int i = 0; i < dimension; ++i)
+            {
+                out[i + j * ld] = double(i + 1) * in[i + j * ld];
+            }
+        }
+    };
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1.0e-12, 5, 1, 16);
+    solver.diag(h_op, nullptr, dimension, bands, dimension,
+                psi.data(), eigenvalues.data(), thresholds, prec.data());
+    EXPECT_TRUE(solver.converged());
+    EXPECT_NEAR(eigenvalues[0], 1.0, 1.0e-10);
+    EXPECT_NEAR(eigenvalues[1], 2.0, 1.0e-10);
+    EXPECT_LE(solver.max_residual(), 1.0e-10);
+}
+
+TEST(DiagoPPCGPeriodicRitzTest, ClusteredGeneralizedSpectrumWithLockedPrefix)
+{
+    const int dimension = 16;
+    const int bands = 4;
+    std::vector<Real> spectrum(dimension);
+    spectrum[0] = -1.0;
+    spectrum[1] = 0.0;
+    spectrum[2] = 1.0e-6;
+    spectrum[3] = 1.0e-6;
+    spectrum[4] = 2.0e-6;
+    std::vector<Real> overlap(dimension);
+    std::vector<Real> prec(dimension, 1.0);
+    for (int i = 0; i < dimension; ++i)
+    {
+        overlap[i] = std::pow(10.0, 3.0 * i / (dimension - 1));
+        if (i >= 5)
+        {
+            spectrum[i] = 1.0 + i;
+        }
+        prec[i] = overlap[i];
+    }
+    std::mt19937 random(392);
+    std::uniform_real_distribution<double> uniform(-1.0, 1.0);
+    std::vector<T> initial(dimension * bands, T(0));
+    initial[0] = T(1.0 / std::sqrt(overlap[0]));
+    for (int j = 1; j < bands; ++j)
+    {
+        for (int i = 1; i < dimension; ++i)
+        {
+            const double real = uniform(random);
+            const double imaginary = uniform(random);
+            initial[i + j * dimension] = T(real, imaginary) / std::sqrt(overlap[i]);
+        }
+    }
+    const auto h_op = [&spectrum, &overlap, dimension](T* in, T* out, int ld, int ncol) {
+        for (int j = 0; j < ncol; ++j)
+        {
+            for (int i = 0; i < dimension; ++i)
+            {
+                out[i + j * ld] = spectrum[i] * overlap[i] * in[i + j * ld];
+            }
+        }
+    };
+    const auto s_op = [&overlap, dimension](T* in, T* out, int ld, int ncol) {
+        for (int j = 0; j < ncol; ++j)
+        {
+            for (int i = 0; i < dimension; ++i)
+            {
+                out[i + j * ld] = overlap[i] * in[i + j * ld];
+            }
+        }
+    };
+    const std::vector<double> thresholds(bands, 1.0e-10);
+    const int intervals[] = {1, 16};
+    for (const int interval : intervals)
+    {
+        SCOPED_TRACE(interval);
+        std::vector<T> psi = initial;
+        std::vector<Real> eigenvalues(bands, 0.0);
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+            1.0e-12, 600, 2, interval);
+        solver.diag(h_op, s_op, dimension, bands, dimension,
+                    psi.data(), eigenvalues.data(), thresholds, prec.data());
+        EXPECT_TRUE(solver.converged());
+        EXPECT_LE(solver.max_residual(), 1.0e-10);
+        for (int j = 0; j < bands; ++j)
+        {
+            EXPECT_NEAR(eigenvalues[j], spectrum[j], 1.0e-10);
+            for (int k = 0; k < bands; ++k)
+            {
+                T product = T(0);
+                for (int i = 0; i < dimension; ++i)
+                {
+                    product += std::conj(psi[i + k * dimension]) * overlap[i] * psi[i + j * dimension];
+                }
+                const T expected = j == k ? T(1) : T(0);
+                const double error = std::abs(product - expected);
+                EXPECT_LT(error, 1.0e-10);
+            }
+        }
+        const double prefix_weight = std::norm(psi[0]) * overlap[0];
+        EXPECT_NEAR(prefix_weight, 1.0, 1.0e-12);
+    }
+}
+
 TEST(DiagoPPCGStatusTest, ReportsActiveTailStart)
 {
     const int n_dim = 4;
