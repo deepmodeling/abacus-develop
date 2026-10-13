@@ -210,7 +210,9 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         if (GlobalV::MY_RANK == 0)
         {
             dos.push_back(nstates);
-            ene.push_back(curr_energy);
+            // label the bin [e_old, curr_energy) with its left edge so that the
+            // TDOS grid (emin + n*de_ev) matches the PDOS grid point-by-point
+            ene.push_back(e_old);
             sum_elec.push_back(sum);
         }
     }
