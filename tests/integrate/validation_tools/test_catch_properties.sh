@@ -118,6 +118,57 @@ if [ -e "${hsk_case_dir}/result.ref" ]; then
     exit 1
 fi
 
+# Keep upstream's renamed VXC files while retaining failure propagation in
+# both Gamma-only and multi-k collectors. No legacy vxc_out.* files exist.
+for gamma in 0 1; do
+    vxc_case_dir="${test_root}/tests/01_PW/vxc_case_${gamma}"
+    mkdir -p "${vxc_case_dir}/OUT.autotest"
+    printf 'INPUT_PARAMETERS\ncalculation get_s\nout_mat_xc 1\ngamma_only %s\n' \
+        "${gamma}" > "${vxc_case_dir}/INPUT"
+    printf 'Driver atomic_world 0.01\n' > "${vxc_case_dir}/OUT.autotest/running_get_s.log"
+    touch "${vxc_case_dir}/sr_nao.csr.ref" "${vxc_case_dir}/OUT.autotest/sr_nao.csr"
+    if [ "${gamma}" -eq 1 ]; then
+        vxc_name=vxc_nao.txt
+    else
+        vxc_name=vxck2_nao.txt
+    fi
+    printf 'value 1\n' > "${vxc_case_dir}/${vxc_name}.ref"
+    printf 'value 1\n' > "${vxc_case_dir}/OUT.autotest/${vxc_name}"
+    printf 'value 1\n' > "${vxc_case_dir}/vxc.ref"
+    printf 'value 1\n' > "${vxc_case_dir}/OUT.autotest/vxc.txt"
+    (
+        cd "${vxc_case_dir}"
+        bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+    )
+    grep -qx 'CompareVXC_pass 0' "${vxc_case_dir}/result.ref"
+    grep -qx 'CompareOrbXC_pass 0' "${vxc_case_dir}/result.ref"
+
+    for failure in different missing; do
+        if [ "${failure}" = different ]; then
+            printf 'value 2\n' > "${vxc_case_dir}/OUT.autotest/vxc.txt"
+        else
+            rm "${vxc_case_dir}/OUT.autotest/vxc.txt"
+        fi
+        (
+            cd "${vxc_case_dir}"
+            bash -e ../../integrate/validation_tools/catch_properties.sh result.out
+        )
+        grep -qx 'CompareVXC_pass 0' "${vxc_case_dir}/result.out"
+        grep -qx 'CompareOrbXC_pass 1' "${vxc_case_dir}/result.out"
+        if (
+            cd "${vxc_case_dir}"
+            bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+        ); then
+            echo "catch_properties.sh accepted ${failure} VXC output in result.ref" >&2
+            exit 1
+        fi
+        if [ -e "${vxc_case_dir}/result.ref" ]; then
+            echo "catch_properties.sh left a partial VXC result.ref" >&2
+            exit 1
+        fi
+    done
+done
+
 deepks_case_dir="${test_root}/tests/01_PW/deepks_case"
 mkdir -p "${deepks_case_dir}/OUT.autotest"
 
@@ -284,3 +335,46 @@ if [ -e "${case_dir}/result.ref" ]; then
     echo "Autotest.sh left a partial result.ref after generation failure" >&2
     exit 1
 fi
+
+# Upstream's dedicated-validator path must still honor a custom MPI launcher,
+# its flags, the OFML single-rank exception, and commented case-list entries.
+launcher_case_dir="${test_root}/tests/01_PW/launcher_case"
+mkdir -p "${launcher_case_dir}"
+printf 'INPUT_PARAMETERS\ncalculation get_s\nout_band 1\n' > "${launcher_case_dir}/INPUT"
+printf '\n  # absent_case\nlauncher_case\n' > "${test_root}/tests/01_PW/LAUNCHER_CASES.txt"
+cat > "${test_root}/fake_bin/custom_mpi" <<'EOF'
+#!/usr/bin/env bash
+set -eu
+[ "$#" -eq 6 ]
+[ "$1" = "--ranks" ]
+[ "$2" = "$EXPECTED_RANKS" ]
+[ "$3" = "--test-pre-one" ]
+[ "$4" = "--test-pre-two" ]
+[ "$6" = "--test-post" ]
+touch "$LAUNCHER_MARKER"
+exec "$5"
+EOF
+chmod +x "${test_root}/fake_bin/custom_mpi"
+for expected_ranks in 4 1; do
+    if [ "${expected_ranks}" -eq 1 ]; then
+        printf 'of_ml_gene_data 1\n' >> "${launcher_case_dir}/INPUT"
+    fi
+    launcher_log="${test_root}/launcher-${expected_ranks}.log"
+    (
+        cd "${test_root}/tests/01_PW"
+        EXPECTED_RANKS="${expected_ranks}" \
+        LAUNCHER_MARKER="${test_root}/launcher-${expected_ranks}.used" \
+        ABACUS_MPIEXEC="${test_root}/fake_bin/custom_mpi" \
+        ABACUS_MPIEXEC_NUMPROC_FLAG=--ranks \
+        ABACUS_MPIEXEC_PREFLAGS='--test-pre-one --test-pre-two' \
+        ABACUS_MPIEXEC_POSTFLAGS=--test-post \
+            OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh \
+            -a "${test_root}/fake_abacus" -n 4 -o 1 -j 1 -f LAUNCHER_CASES.txt -p
+    ) > "${launcher_log}" 2>&1
+    test -f "${test_root}/launcher-${expected_ranks}.used"
+    grep -q 'Property collectors skipped' "${launcher_log}"
+    if [ -e "${launcher_case_dir}/result.out" ] || [ -e "${launcher_case_dir}/result.ref" ]; then
+        echo "Autotest.sh ran property collectors despite -p" >&2
+        exit 1
+    fi
+done

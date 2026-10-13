@@ -1,2 +1,2 @@
-Test LCAO DeltaSpin atomic forces with noncollinear spin (nspin=4) and SOC.
+Test LCAO DeltaSpin with SOC and nonparallel xyz target moments of magnitude 3 mu_B (nspin=4).
 Check the two-overlap product-rule force regression at 12 Ry with at most 10 SCF steps.

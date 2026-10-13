@@ -206,6 +206,7 @@
     - [rpa](#rpa)
     - [rpa\_out\_vel](#rpa_out_vel)
     - [rpa\_outdir](#rpa_outdir)
+    - [out\_librpa\_ver](#out_librpa_ver)
     - [out\_pchg](#out_pchg)
     - [out\_wfc\_norm](#out_wfc_norm)
     - [out\_wfc\_re\_im](#out_wfc_re_im)
@@ -490,6 +491,7 @@
     - [td\_supsine\_sigma](#td_supsine_sigma)
     - [td\_supsine\_tstart](#td_supsine_tstart)
     - [td\_supsine\_tend](#td_supsine_tend)
+    - [init\_vecpot](#init_vecpot)
     - [ocp](#ocp)
     - [ocp\_set](#ocp_set)
     - [out\_freq\_td](#out_freq_td)
@@ -497,12 +499,11 @@
     - [out\_current](#out_current)
     - [out\_current\_k](#out_current_k)
     - [out\_efield](#out_efield)
+    - [out\_vecpot](#out_vecpot)
   - [Real-Time TDDFT (LCAO)](#real-time-tddft-lcao)
     - [td\_edm](#td_edm)
     - [td\_print\_eij](#td_print_eij)
     - [td\_propagator](#td_propagator)
-    - [init\_vecpot\_file](#init_vecpot_file)
-    - [out\_vecpot](#out_vecpot)
   - [Real-Time TDDFT (PW)](#real-time-tddft-pw)
     - [td\_orthonormal](#td_orthonormal)
     - [td\_out\_stat](#td_out_stat)
@@ -2327,7 +2328,7 @@
 
 - **Type**: Boolean
 - **Availability**: *[`basis_type`](#basis_type) in [lcao, lcao_in_pw]*
-- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in Kohn-Sham orbital representation: for each k point into files in the directory OUT.i_nao.txt, where {suffix}/vxc_out.dat. If EXX is calculated, the local and EXX part of band energy will also be printed in OUT.{suffix}/vxc_exx_out.dat, respectively. All the vxc_out.dat files contains 3 integers (nk, nspin, nband) followed by nk*nspin*nband lines of energy Hartree and eV.
+- **Description**: Write exchange-correlation matrices in the Kohn-Sham orbital basis and their diagonal expectation values. The diagonal energies are saved in OUT.${suffix}/vxc.txt. When EXX is calculated, its local and EXX contributions are also saved as vxc_local.txt and vxc_exx.txt in the same directory. Each energy file begins with nk, nspin, and nbands, followed by nk*nspin*nbands rows of energies in Hartree and eV.
 
   > Note: In the 3.10-LTS version, the file name is k-$k-Vxc and so on.
 - **Default**: False
@@ -2455,6 +2456,13 @@
 - **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: The directory to save files for LibRPA.
 - **Default**: "OUT.librpa"
+
+### out_librpa_ver
+
+- **Type**: Integer
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
+- **Description**: Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 supports symmetry-reduced Monkhorst-Pack grids and requires a uniform Monkhorst-Pack KPT grid.
+- **Default**: 0
 
 ### out_pchg
 
@@ -4337,48 +4345,48 @@
 ### td_dt
 
 - **Type**: Real
-- **Description**: The time step used for electronic propagation. If td_dt is not specified, it is set to md_dt / estep_per_md. If td_dt is specified explicitly, md_dt is reset to td_dt * estep_per_md.
+- **Description**: The time step used for electronic propagation. If `td_dt` is not specified, it is set to `md_dt / estep_per_md`. If `td_dt` is specified explicitly, `md_dt` is reset to `td_dt * estep_per_md`.
 - **Default**: md_dt / estep_per_md
 - **Unit**: fs
 
 ### td_vext
 
 - **Type**: Boolean
-- **Description**: Controls whether a time-dependent external electric field is applied.
-  - True: Add a laser-material interaction (external electric field).
-  - False: No external electric field.
+- **Description**: Controls the analytic time-dependent electric field. With `init_vecpot=True`, the external field is supplied through the vector-potential file instead, independently of `td_vext`.
+  - `True`: Enable the analytic electric field.
+  - `False`: Disable the analytic electric field.
 - **Default**: False
 
 ### td_vext_dire
 
 - **Type**: Vector of Integer
-- **Description**: Specifies one absolute Cartesian direction for each external electric field when td_vext is enabled. Unlike the ground-state efield_dir parameter, these directions are not defined by lattice or reciprocal-lattice vectors. The number of values must equal that of td_ttype, and repeated directions are allowed; fields assigned to the same direction are added. For example, td_vext_dire 1 2 applies one field along Cartesian x and one along Cartesian y.
-  - 1: The external field direction is along the x-axis.
-  - 2: The external field direction is along the y-axis.
-  - 3: The external field direction is along the z-axis.
+- **Description**: Specifies one absolute Cartesian direction for each external electric field when `td_vext` is enabled. Unlike the ground-state `efield_dir` parameter, these directions are not defined by lattice or reciprocal-lattice vectors. The number of values must equal that of `td_ttype`, and repeated directions are allowed; fields assigned to the same direction are added. For example, `td_vext_dire 1 2` applies one field along Cartesian x and one along Cartesian y.
+  - `1`: The external field direction is along the x-axis.
+  - `2`: The external field direction is along the y-axis.
+  - `3`: The external field direction is along the z-axis.
 - **Default**: 1
 
 ### td_stype
 
 - **Type**: Integer
 - **Description**: Type of electric field in the space domain, i.e. the gauge of the electric field.
-  - 0: Length gauge, available for PW and LCAO.
-  - 1: Velocity gauge, available for PW and LCAO.
-  - 2: Hybrid gauge, available only for LCAO. See J. Chem. Theory Comput. 2025, 21, 3335-3341 for more information.
+  - `0`: Length gauge, available for PW and LCAO.
+  - `1`: Velocity gauge, available for PW and LCAO.
+  - `2`: Hybrid gauge, available only for LCAO. See J. Chem. Theory Comput. 2025, 21, 3335-3341 for more information.
 - **Default**: 0
 
 ### td_ttype
 
 - **Type**: Vector of Integer
-- **Description**: Specifies one time-domain type for each external electric field. Its number of values must equal that of td_vext_dire. Parameters belonging to each type must provide exactly one value for every occurrence of that type, in occurrence order; fields with a repeated direction are added.
+- **Description**: Specifies one time-domain type for each external electric field. Its number of values must equal that of `td_vext_dire`. Parameters belonging to each type must provide exactly one value for every occurrence of that type, in occurrence order; fields with a repeated direction are added.
 
   The formulas below use Hartree atomic units. For every ordinary input frequency $f$, $\omega=2\pi f$; $\Delta t=\mathtt{td\_dt}$; and $E_0$ denotes the corresponding amplitude parameter. A step-valued parameter $n_q$ represents the physical time $t_q=n_q\Delta t$.
 
-  - 0: Gaussian pulse, $E(t)=E_0\cos\left[\omega(t-t_0)+\varphi\right]\mathrm{e}^{-(t-t_0)^2/(2\sigma^2)}$, where $t_0=\mathtt{td\_gauss\_t0}\Delta t$.
-  - 1: Trapezoid pulse, $E(t)=E_0g(t)\cos(\omega t+\varphi)$. With $t_1=\mathtt{td\_trape\_t1}\Delta t$, $t_2=\mathtt{td\_trape\_t2}\Delta t$, and $t_3=\mathtt{td\_trape\_t3}\Delta t$, the envelope is $g(t)=t/t_1$ for $0\leqslant t\lt t_1$, $g(t)=1$ for $t_1\leqslant t\lt t_2$, $g(t)=(t_3-t)/(t_3-t_2)$ for $t_2\leqslant t\lt t_3$, and $g(t)=0$ otherwise.
-  - 2: Trigonometric pulse, $E(t)=E_0\cos(\omega_1t+\varphi_1)\sin^2(\omega_2t+\varphi_2)$.
-  - 3: Heaviside pulse defined on electronic steps. With $n_0=\mathtt{td\_heavi\_t0}$, $E(n)=E_0$ for $n\lt n_0$ and $E(n)=0$ for $n\geqslant n_0$.
-  - 4: Finite-support supersine pulse. For $t_{\mathrm{s}}\lt t\lt t_{\mathrm{e}}$, the envelope is $f(t)=\left\{\sin\left[\pi\frac{t-t_{\mathrm{s}}}{t_{\mathrm{e}}-t_{\mathrm{s}}}\right]\right\}^{\frac{\pi}{\sigma}\left|\frac{t-t_{\mathrm{s}}}{t_{\mathrm{e}}-t_{\mathrm{s}}}-\frac{1}{2}\right|}$ and the electric field is $E(t)=E_0\left\{f(t)\cos\left[\omega\left(t-\frac{t_{\mathrm{s}}+t_{\mathrm{e}}}{2}\right)+\varphi\right]+\frac{\dot{f}(t)}{\omega}\sin\left[\omega\left(t-\frac{t_{\mathrm{s}}+t_{\mathrm{e}}}{2}\right)+\varphi\right]\right\}$. The corresponding analytic vector potential is $\boldsymbol{A}(t)=-\frac{E_0}{\omega}f(t)\sin\left[\omega\left(t-\frac{t_{\mathrm{s}}+t_{\mathrm{e}}}{2}\right)+\varphi\right]\hat{\boldsymbol{e}}$, with $\boldsymbol{E}(t)=-\partial\boldsymbol{A}(t)/\partial t$. The envelope, electric field, and vector potential are zero at the pulse boundaries and outside the interval.
+  - `0`: Gaussian pulse, $E(t)=E_0\cos\left[\omega(t-t_0)+\varphi\right]\mathrm{e}^{-(t-t_0)^2/(2\sigma^2)}$, where $t_0=\mathtt{td\_gauss\_t0}\Delta t$.
+  - `1`: Trapezoid pulse, $E(t)=E_0g(t)\cos(\omega t+\varphi)$. With $t_1=\mathtt{td\_trape\_t1}\Delta t$, $t_2=\mathtt{td\_trape\_t2}\Delta t$, and $t_3=\mathtt{td\_trape\_t3}\Delta t$, the envelope is $g(t)=t/t_1$ for $0\leqslant t\lt t_1$, $g(t)=1$ for $t_1\leqslant t\lt t_2$, $g(t)=(t_3-t)/(t_3-t_2)$ for $t_2\leqslant t\lt t_3$, and $g(t)=0$ otherwise.
+  - `2`: Trigonometric pulse, $E(t)=E_0\cos(\omega_1t+\varphi_1)\sin^2(\omega_2t+\varphi_2)$.
+  - `3`: Heaviside pulse defined on electronic steps. With $n_0=\mathtt{td\_heavi\_t0}$, $E(n)=E_0$ for $n\lt n_0$ and $E(n)=0$ for $n\geqslant n_0$.
+  - `4`: Finite-support supersine pulse. For $t_{\mathrm{s}}\lt t\lt t_{\mathrm{e}}$, the envelope is $f(t)=\left\{\sin\left[\pi\frac{t-t_{\mathrm{s}}}{t_{\mathrm{e}}-t_{\mathrm{s}}}\right]\right\}^{\frac{\pi}{\sigma}\left|\frac{t-t_{\mathrm{s}}}{t_{\mathrm{e}}-t_{\mathrm{s}}}-\frac{1}{2}\right|}$ and the electric field is $E(t)=E_0\left\{f(t)\cos\left[\omega\left(t-\frac{t_{\mathrm{s}}+t_{\mathrm{e}}}{2}\right)+\varphi\right]+\frac{\dot{f}(t)}{\omega}\sin\left[\omega\left(t-\frac{t_{\mathrm{s}}+t_{\mathrm{e}}}{2}\right)+\varphi\right]\right\}$. The corresponding analytic vector potential is $\boldsymbol{A}(t)=-\frac{E_0}{\omega}f(t)\sin\left[\omega\left(t-\frac{t_{\mathrm{s}}+t_{\mathrm{e}}}{2}\right)+\varphi\right]\hat{\boldsymbol{e}}$, with $\boldsymbol{E}(t)=-\partial\boldsymbol{A}(t)/\partial t$. The envelope, electric field, and vector potential are zero at the pulse boundaries and outside the interval.
 
   In the velocity and hybrid gauges, ABACUS obtains the vector potential actually used in propagation by Simpson integration of the selected electric fields, including the supersine field, so a residual at the numerical-quadrature accuracy scale may remain.
 - **Default**: 0
@@ -4386,13 +4394,13 @@
 ### td_tstart
 
 - **Type**: Integer
-- **Description**: First electronic step at which the time-dependent electric field is active. The interval from td_tstart through td_tend includes both endpoints. On each active step $n$, the velocity and hybrid gauges integrate the field over $[n\Delta t,(n+1)\Delta t]$, where $\Delta t=\mathtt{td\_dt}$.
+- **Description**: First active electronic-step index of the analytic electric field. Index $n$ corresponds to time $n\Delta t$, where $\Delta t=\mathtt{td\_dt}$. The interval from `td_tstart` through `td_tend` includes both endpoints. In velocity and hybrid gauges, each active index $n$ selects the integration interval $[n\Delta t,(n+1)\Delta t]$; its result is used at the next endpoint. The initial state at time zero does not integrate a future interval. Ignored when `init_vecpot=True`.
 - **Default**: 1
 
 ### td_tend
 
 - **Type**: Integer
-- **Description**: Last electronic step at which the time-dependent electric field is active. The interval from td_tstart through td_tend includes both endpoints. On each active step $n$, the velocity and hybrid gauges integrate the field over $[n\Delta t,(n+1)\Delta t]$, where $\Delta t=\mathtt{td\_dt}$.
+- **Description**: Last active electronic-step index of the analytic electric field, using the time convention defined by `td_tstart`. The interval includes both endpoints. In velocity and hybrid gauges, the last selected integration interval is $[\mathtt{td\_tend}\Delta t,(\mathtt{td\_tend}+1)\Delta t]$. Ignored when `init_vecpot=True`.
 - **Default**: 1000
 
 ### td_lcut1
@@ -4411,7 +4419,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 0*
-- **Description**: Ordinary frequency $f$ in the Gaussian-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
+- **Description**: Ordinary frequency $f$ in the Gaussian-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each `td_ttype 0` occurrence, in occurrence order.
 - **Default**: 22.13
 - **Unit**: 1/fs
 
@@ -4419,7 +4427,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 0*
-- **Description**: Carrier phase $\varphi$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
+- **Description**: Carrier phase $\varphi$ in the Gaussian-pulse formula. Supply exactly one value for each `td_ttype 0` occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
 
@@ -4427,7 +4435,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 0*
-- **Description**: Nonzero standard deviation $\sigma$ of the Gaussian envelope. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
+- **Description**: Nonzero standard deviation $\sigma$ of the Gaussian envelope. Supply exactly one value for each `td_ttype 0` occurrence, in occurrence order.
 - **Default**: 30.0
 - **Unit**: fs
 
@@ -4435,14 +4443,14 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 0*
-- **Description**: Electronic-step position of the Gaussian center, which defines $t_0=\mathtt{td\_gauss\_t0}\Delta t$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
+- **Description**: Electronic-step position of the Gaussian center, which defines $t_0=\mathtt{td\_gauss\_t0}\Delta t$. Supply exactly one value for each `td_ttype 0` occurrence, in occurrence order.
 - **Default**: 100
 
 ### td_gauss_amp
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 0*
-- **Description**: Electric-field scale $E_0$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
+- **Description**: Electric-field scale $E_0$ in the Gaussian-pulse formula. Supply exactly one value for each `td_ttype 0` occurrence, in occurrence order.
 - **Default**: 0.25
 - **Unit**: V/Angstrom
 
@@ -4450,7 +4458,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 1*
-- **Description**: Ordinary carrier frequency $f$ in the trapezoid-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+- **Description**: Ordinary carrier frequency $f$ in the trapezoid-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.
 - **Default**: 1.60
 - **Unit**: 1/fs
 
@@ -4458,7 +4466,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 1*
-- **Description**: Carrier phase $\varphi$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+- **Description**: Carrier phase $\varphi$ in the trapezoid-pulse formula. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
 
@@ -4466,28 +4474,28 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 1*
-- **Description**: Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+- **Description**: Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy `td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3`. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.
 - **Default**: 1875
 
 ### td_trape_t2
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 1*
-- **Description**: Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+- **Description**: Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy `td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3`. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.
 - **Default**: 5625
 
 ### td_trape_t3
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 1*
-- **Description**: Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as 2.0 are accepted. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+- **Description**: Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy `td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3`. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.
 - **Default**: 7500
 
 ### td_trape_amp
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 1*
-- **Description**: Electric-field scale $E_0$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
+- **Description**: Electric-field scale $E_0$ in the trapezoid-pulse formula. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.
 - **Default**: 2.74
 - **Unit**: V/Angstrom
 
@@ -4495,7 +4503,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 2*
-- **Description**: First ordinary frequency $f_1$ in the trigonometric-pulse formula, with $\omega_1=2\pi f_1$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
+- **Description**: First ordinary frequency $f_1$ in the trigonometric-pulse formula, with $\omega_1=2\pi f_1$. Supply exactly one value for each `td_ttype 2` occurrence, in occurrence order.
 - **Default**: 1.164656
 - **Unit**: 1/fs
 
@@ -4503,7 +4511,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 2*
-- **Description**: Second ordinary frequency $f_2$ in the trigonometric-pulse formula, with $\omega_2=2\pi f_2$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
+- **Description**: Second ordinary frequency $f_2$ in the trigonometric-pulse formula, with $\omega_2=2\pi f_2$. Supply exactly one value for each `td_ttype 2` occurrence, in occurrence order.
 - **Default**: 0.029116
 - **Unit**: 1/fs
 
@@ -4511,7 +4519,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 2*
-- **Description**: Carrier phase $\varphi_1$ in the cosine factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
+- **Description**: Carrier phase $\varphi_1$ in the cosine factor of the trigonometric-pulse formula. Supply exactly one value for each `td_ttype 2` occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
 
@@ -4519,7 +4527,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 2*
-- **Description**: Envelope phase $\varphi_2$ in the sine-squared factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
+- **Description**: Envelope phase $\varphi_2$ in the sine-squared factor of the trigonometric-pulse formula. Supply exactly one value for each `td_ttype 2` occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
 
@@ -4527,7 +4535,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 2*
-- **Description**: Electric-field scale $E_0$ in the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
+- **Description**: Electric-field scale $E_0$ in the trigonometric-pulse formula. Supply exactly one value for each `td_ttype 2` occurrence, in occurrence order.
 - **Default**: 2.74
 - **Unit**: V/Angstrom
 
@@ -4535,14 +4543,14 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 3*
-- **Description**: Electronic switch step $n_0$ in the Heaviside-pulse definition. The field is $E_0$ for $n\lt n_0$ and zero for $n\geqslant n_0$. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.
+- **Description**: Electronic switch step $n_0$ in the Heaviside-pulse definition. The field is $E_0$ for $n\lt n_0$ and zero for $n\geqslant n_0$. Supply exactly one value for each `td_ttype 3` occurrence, in occurrence order.
 - **Default**: 100
 
 ### td_heavi_amp
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 3*
-- **Description**: Electric-field scale $E_0$ in the Heaviside-pulse definition. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.
+- **Description**: Electric-field scale $E_0$ in the Heaviside-pulse definition. Supply exactly one value for each `td_ttype 3` occurrence, in occurrence order.
 - **Default**: 1.0
 - **Unit**: V/Angstrom
 
@@ -4550,7 +4558,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 4*
-- **Description**: Carrier electric-field scale $E_0$ of each supersine pulse. This is not a normalization of the complete waveform maximum, because the envelope-derivative term also contributes. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
+- **Description**: Carrier electric-field scale $E_0$ of each supersine pulse. This is not a normalization of the complete waveform maximum, because the envelope-derivative term also contributes. Supply exactly one value for each `td_ttype 4` occurrence, in occurrence order.
 - **Default**: 0.27
 - **Unit**: V/Angstrom
 
@@ -4558,7 +4566,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 4*
-- **Description**: Nonzero ordinary carrier frequency $f$ of each supersine pulse, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
+- **Description**: Nonzero ordinary carrier frequency $f$ of each supersine pulse, with $\omega=2\pi f$. Supply exactly one value for each `td_ttype 4` occurrence, in occurrence order.
 - **Default**: 0.18737028625
 - **Unit**: 1/fs
 
@@ -4566,7 +4574,7 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 4*
-- **Description**: Electric-field carrier phase $\varphi$ at the center of each supersine envelope. A value of 0 places a cosine carrier maximum at the envelope center. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
+- **Description**: Electric-field carrier phase $\varphi$ at the center of each supersine envelope. A value of `0` places a cosine carrier maximum at the envelope center. Supply exactly one value for each `td_ttype 4` occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
 
@@ -4574,54 +4582,66 @@
 
 - **Type**: Vector of Real
 - **Availability**: *[`td_ttype`](#td_ttype) contains 4*
-- **Description**: Dimensionless shape parameter $\sigma$ of each supersine envelope. It must satisfy $0\lt\sigma\lt\pi/2$ so that the electric field approaches zero at the pulse boundaries. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
+- **Description**: Dimensionless shape parameter $\sigma$ of each supersine envelope. It must satisfy $0\lt\sigma\lt\pi/2$ so that the electric field approaches zero at the pulse boundaries. Supply exactly one value for each `td_ttype 4` occurrence, in occurrence order.
 - **Default**: 0.75
 
 ### td_supsine_tstart
 
 - **Type**: Vector of String
 - **Availability**: *[`td_ttype`](#td_ttype) contains 4*
-- **Description**: Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supsine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
+- **Description**: Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supsine\_tstart}\Delta t$. Supply exactly one integer or `default` token for each `td_ttype 4` occurrence, in occurrence order; each `default` token inherits `td_tstart`. The complete pulse support must lie inside the inclusive global `td_tstart` to `td_tend` interval; hard truncation of a supersine pulse is rejected.
 - **Default**: default
 
 ### td_supsine_tend
 
 - **Type**: Vector of String
 - **Availability**: *[`td_ttype`](#td_ttype) contains 4*
-- **Description**: Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
+- **Description**: Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or `default` token for each `td_ttype 4` occurrence, in occurrence order; each `default` token inherits `td_tend`. The complete pulse support must lie inside the inclusive global `td_tstart` to `td_tend` interval; hard truncation of a supersine pulse is rejected.
 - **Default**: default
+
+### init_vecpot
+
+- **Type**: Boolean
+- **Availability**: *[`esolver_type`](#esolver_type)==tddft and (([`basis_type`](#basis_type)==pw and [`td_stype`](#td_stype)==1) or ([`basis_type`](#basis_type)==lcao and [`td_stype`](#td_stype) in [1, 2]))*
+- **Description**: Selects the source of the vector potential $\boldsymbol{A}$. The input file `vector_pot.txt` is read from the calculation working directory. Each non-comment line contains four columns: an integer label followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. Rows are read in order; labels are not used for lookup. The first row corresponds to time zero, and subsequent rows are separated by `td_dt`. After the last row, $\boldsymbol{A}$ remains constant.
+
+  The file takes precedence over analytic waveforms, independently of `td_vext`, `td_tstart`, and `td_tend`.
+
+  - `True`: Read the vector potential from file.
+  - `False`: Obtain the vector potential from the configured analytic electric field.
+- **Default**: False
 
 ### ocp
 
 - **Type**: Boolean
-- **Description**: Controls fixed band occupations. In PW RT-TDDFT and calculations other than LCAO RT-TDDFT, fixed values from ocp_set are applied during electronic-state setup. PW real-time propagation preserves these initial occupations. In LCAO RT-TDDFT, the initial ground-state SCF determines occupations normally, and fixed values are applied during the subsequent real-time propagation steps.
-  - True: Use the fixed occupations specified by ocp_set at the stage described above.
-  - False: Determine occupations normally; real-time propagation preserves the initial SCF occupations.
+- **Description**: Controls fixed band occupations. In PW RT-TDDFT and calculations other than LCAO RT-TDDFT, fixed values from `ocp_set` are applied during electronic-state setup. PW real-time propagation preserves these initial occupations. In LCAO RT-TDDFT, the initial ground-state SCF determines occupations normally, and fixed values are applied during the subsequent real-time propagation steps.
+  - `True`: Use the fixed occupations specified by `ocp_set` at the stage described above.
+  - `False`: Determine occupations normally; real-time propagation preserves the initial SCF occupations.
 - **Default**: False
 
 ### ocp_set
 
 - **Type**: String
-- **Description**: Fixed occupation weights used when ocp is true. Values are assigned in band order for each k-point, following k-point order. In PW RT-TDDFT and other calculations outside LCAO RT-TDDFT, this array is applied during electronic-state setup. PW propagation preserves these occupations. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
-  - Example: 1 10*1 0 1 expands to 13 values, with the 12th value equal to 0 and all other values equal to 1.
-  - After expansion, provide one block of nbands values for each k-point. If nspin is 2, provide all k-point blocks for spin up followed by all k-point blocks for spin down; otherwise, provide one block per k-point.
-  - The sum of all weights must equal nelec; otherwise the calculation terminates with an error.
+- **Description**: Fixed occupation weights used when `ocp` is `true`. Values are assigned in band order for each k-point, following k-point order. In PW RT-TDDFT and other calculations outside LCAO RT-TDDFT, this array is applied during electronic-state setup. PW propagation preserves these occupations. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax `N*x` expands to `N` copies of `x`.
+  - Example: `1 10*1 0 1` expands to 13 values, with the 12th value equal to `0` and all other values equal to `1`.
+  - After expansion, provide one block of `nbands` values for each k-point. If `nspin` is `2`, provide all k-point blocks for spin up followed by all k-point blocks for spin down; otherwise, provide one block per k-point.
+  - The sum of all weights must equal `nelec`; otherwise the calculation terminates with an error.
 - **Default**: None
 
 ### out_freq_td
 
 - **Type**: Integer
-- **Description**: Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer n, detailed information (see out_freq_ion) is printed every n electron time-evolution steps (i.e., every STEP OF ELECTRON EVOLVE). For example, if you wish to output information once per ionic step, you should set out_freq_td equal to estep_per_md, since one ionic step corresponds to estep_per_md electronic evolution steps.
+- **Description**: Controls the output interval in completed electronic evolution steps during RT-TDDFT calculations. When set to a positive integer `n`, detailed information (see `out_freq_ion`) is printed every `n` electron time-evolution steps (i.e., every `STEP OF ELECTRON EVOLVE`). For example, if you wish to output information once per ionic step, you should set `out_freq_td` equal to `estep_per_md`, since one ionic step corresponds to `estep_per_md` electronic evolution steps.
 
-  > Note: This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.
+  > Note: This parameter is only active in RT-TDDFT mode (`esolver_type = tddft`). It has no effect in ground-state calculations.
 - **Default**: 0
 
 ### out_dipole
 
 - **Type**: Boolean
-- **Description**: Controls electric-dipole output. In RT-TDDFT, each enabled spin channel is written to OUT.{suffix}/dipole_s[spin].txt using a one-based spin number. Every row contains the one-based electronic-step index followed by the Cartesian electronic-dipole components $P_x$, $P_y$, and $P_z$ in atomic units. The running log additionally reports the electronic, ionic, and total dipoles and the norm of the total dipole.
-  - True: Output the electric dipole information.
-  - False: Do not output the electric dipole information.
+- **Description**: Controls electric-dipole output. In RT-TDDFT, each enabled spin channel is written to `OUT.{suffix}/dipole_s[spin].txt` using a one-based spin number. Every row contains the one-based electronic-step index followed by the Cartesian electronic-dipole components $P_x$, $P_y$, and $P_z$ in atomic units. The running log additionally reports the electronic, ionic, and total dipoles and the norm of the total dipole.
+  - `True`: Output the electric dipole information.
+  - `False`: Do not output the electric dipole information.
 - **Default**: False
 
 ### out_current
@@ -4629,27 +4649,36 @@
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type) in [pw, lcao] and [`esolver_type`](#esolver_type)==tddft*
 - **Description**: Controls the current-density output method for RT-TDDFT. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units; the initial ground state is step 1 and subsequent steps increase by one.
-  - 0: Do not output current.
-  - 1: Available for PW and LCAO. PW evaluates the occupied-state expectation values of the velocity operator, using plane-wave momentum and nonlocal-projector derivatives; in the velocity gauge these are evaluated at the vector-potential-shifted momentum. In the length gauge, a kinetic-energy-density functional also contributes its velocity term. LCAO explicitly constructs the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to OUT.{suffix}/current_tot.txt.
-  - 2: Available only for LCAO. Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to OUT.{suffix}/current_tot_comm.txt.
+  - `0`: Do not output current.
+  - `1`: Available for PW and LCAO. PW evaluates the occupied-state expectation values of the velocity operator, using plane-wave momentum and nonlocal-projector derivatives; in the velocity gauge these are evaluated at the vector-potential-shifted momentum. In the length gauge, a kinetic-energy-density functional also contributes its velocity term. LCAO explicitly constructs the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (`td_stype=1`); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to `OUT.{suffix}/current_tot.txt`.
+  - `2`: Available only for LCAO. Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to `OUT.{suffix}/current_tot_comm.txt`.
 - **Default**: 0
 
 ### out_current_k
 
 - **Type**: Boolean
 - **Availability**: *[`basis_type`](#basis_type) in [pw, lcao] and [`esolver_type`](#esolver_type)==tddft and [`out_current`](#out_current)>0*
-- **Description**: Controls whether RT-TDDFT current density is also resolved by spin and k-point. PW supports out_current=1; LCAO supports out_current=1 or 2. The total-current file is always written when current output is enabled.
-  - True: In addition to the total, out_current=1 writes OUT.{suffix}/current_s[spin]k[kpoint].txt; out_current=2 writes OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Rows follow the step numbering, atomic units, precision, and append convention described in out_current. These weighted contributions sum to the total current.
-  - False: Output only current_tot.txt for out_current=1 or current_tot_comm.txt for out_current=2.
+- **Description**: Controls whether RT-TDDFT current density is also resolved by spin and k-point. PW supports `out_current=1`; LCAO supports `out_current=1` or `2`. The total-current file is always written when current output is enabled.
+  - `True`: In addition to the total, `out_current=1` writes `OUT.{suffix}/current_s[spin]k[kpoint].txt`; `out_current=2` writes `OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt`. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Rows follow the step numbering, atomic units, precision, and append convention described in `out_current`. These weighted contributions sum to the total current.
+  - `False`: Output only `current_tot.txt` for `out_current=1` or `current_tot_comm.txt` for `out_current=2`.
 - **Default**: False
 
 ### out_efield
 
 - **Type**: Boolean
-- **Availability**: *[`esolver_type`](#esolver_type)==tddft and [`td_vext`](#td_vext)==true*
-- **Description**: Controls time-dependent electric-field output. For each configured field, OUT.{suffix}/efield_[index].txt contains two columns: physical time in fs and the field value in V/Angstrom. The one-based field index follows the occurrence order shared by td_ttype and td_vext_dire, so fields assigned to the same direction remain in separate files. At initialization, a fresh calculation with md_restart=False truncates the files corresponding to the currently configured fields, whereas a calculation with md_restart=True preserves them and appends new samples.
-  - True: Output electric-field values on active electronic steps.
-  - False: Do not output electric-field values.
+- **Availability**: *[`esolver_type`](#esolver_type)==tddft*
+- **Description**: Controls time-dependent electric-field output in `OUT.{suffix}/`. `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Each configured analytic field is additionally written to `efield_[index].txt`, containing time in fs and the field value in V/Angstrom. The one-based index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Output is written on active electronic steps. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+  - `True`: Output electric-field values.
+  - `False`: Do not output electric-field values.
+- **Default**: False
+
+### out_vecpot
+
+- **Type**: Boolean
+- **Availability**: *[`esolver_type`](#esolver_type)==tddft and (([`basis_type`](#basis_type)==pw and [`td_stype`](#td_stype)==1) or ([`basis_type`](#basis_type)==lcao and [`td_stype`](#td_stype) in [1, 2]))*
+- **Description**: Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+  - `True`: Output the vector potential.
+  - `False`: Do not output the vector potential.
 - **Default**: False
 
 [back to top](#full-list-of-input-keywords)
@@ -4661,8 +4690,8 @@
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
 - **Description**: Method used to calculate the energy-density matrix for the overlap contribution to forces in LCAO RT-TDDFT.
-  - 0: Use $\mathrm{EDM}_{\boldsymbol{k}}=\frac{1}{2}\left(S_{\boldsymbol{k}}^{-1}H_{\boldsymbol{k}}\rho_{\boldsymbol{k}}+\rho_{\boldsymbol{k}}H_{\boldsymbol{k}}S_{\boldsymbol{k}}^{-1}\right)$.
-  - 1: Use the ground-state eigenvalue-weighted expression $\mathrm{EDM}_{\mu\nu,\boldsymbol{k}}=\sum_i w_{i\boldsymbol{k}}\epsilon_{i\boldsymbol{k}}C_{\mu i,\boldsymbol{k}}C_{\nu i,\boldsymbol{k}}^*$. This expression is deprecated for RT-TDDFT and is generally not valid when the propagated wave functions are not Hamiltonian eigenstates.
+  - `0`: Use $\mathrm{EDM}_{\boldsymbol{k}}=\frac{1}{2}\left(S_{\boldsymbol{k}}^{-1}H_{\boldsymbol{k}}\rho_{\boldsymbol{k}}+\rho_{\boldsymbol{k}}H_{\boldsymbol{k}}S_{\boldsymbol{k}}^{-1}\right)$.
+  - `1`: Use the ground-state eigenvalue-weighted expression $\mathrm{EDM}_{\mu\nu,\boldsymbol{k}}=\sum_i w_{i\boldsymbol{k}}\epsilon_{i\boldsymbol{k}}C_{\mu i,\boldsymbol{k}}C_{\nu i,\boldsymbol{k}}^*$. This expression is deprecated for RT-TDDFT and is generally not valid when the propagated wave functions are not Hamiltonian eigenstates.
 - **Default**: 0
 
 ### td_print_eij
@@ -4671,7 +4700,7 @@
 - **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
 - **Description**: Controls output of the propagated-state Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i | \hat{H} | \psi_j}$ to the running log. The printed band indices $i$ and $j$ are one-based global indices. Both the threshold and the printed matrix elements are in Ry.
   - $\lt 0$: Disable the output.
-  - $\geqslant 0$: Print an element when either $\left|\operatorname{Re}E_{ij}\right|$ or $\left|\operatorname{Im}E_{ij}\right|$ is greater than or equal to td_print_eij.
+  - $\geqslant 0$: Print an element when either $\left|\operatorname{Re}E_{ij}\right|$ or $\left|\operatorname{Im}E_{ij}\right|$ is greater than or equal to `td_print_eij`.
 - **Default**: -1
 - **Unit**: Ry
 
@@ -4680,31 +4709,13 @@
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
 - **Description**: Method used to propagate the electronic states in a nonorthogonal LCAO basis. The formulas below use Hartree atomic units, with $S$, $H$, and $\Delta t=\mathtt{td\_dt}$ evaluated as required by each approximation.
-  - 0: Crank-Nicolson through an explicitly constructed evolution matrix, $U=\left[S+\mathrm{i}H\Delta t/2\right]^{-1}\left[S-\mathrm{i}H\Delta t/2\right]$.
-  - 1: Fourth-order Taylor approximation to the exponential. With $\mathcal{A}=-\mathrm{i}S^{-1}H\Delta t$, $U=I+\mathcal{A}+\mathcal{A}^2/2+\mathcal{A}^3/6+\mathcal{A}^4/24$.
-  - 2: Enforced time-reversal symmetry (ETRS), $U(t+\Delta t,t)=\exp\left[-\mathrm{i}S^{-1}H(t+\Delta t)\Delta t/2\right]\exp\left[-\mathrm{i}S^{-1}H(t)\Delta t/2\right]$. In the implementation, each exponential is replaced by the fourth-order Taylor polynomial from method 1 evaluated with a half time step.
-  - 3: Crank-Nicolson by directly solving $\left[S+\mathrm{i}H\Delta t/2\right]\psi(t+\Delta t)=\left[S-\mathrm{i}H\Delta t/2\right]\psi(t)$.
+  - `0`: Crank-Nicolson through an explicitly constructed evolution matrix, $U=\left[S+\mathrm{i}H\Delta t/2\right]^{-1}\left[S-\mathrm{i}H\Delta t/2\right]$.
+  - `1`: Fourth-order Taylor approximation to the exponential. With $\mathcal{A}=-\mathrm{i}S^{-1}H\Delta t$, $U=I+\mathcal{A}+\mathcal{A}^2/2+\mathcal{A}^3/6+\mathcal{A}^4/24$.
+  - `2`: Enforced time-reversal symmetry (ETRS), $U(t+\Delta t,t)=\exp\left[-\mathrm{i}S^{-1}H(t+\Delta t)\Delta t/2\right]\exp\left[-\mathrm{i}S^{-1}H(t)\Delta t/2\right]$. In the implementation, each exponential is replaced by the fourth-order Taylor polynomial from method `1` evaluated with a half time step.
+  - `3`: Crank-Nicolson by directly solving $\left[S+\mathrm{i}H\Delta t/2\right]\psi(t+\Delta t)=\left[S-\mathrm{i}H\Delta t/2\right]\psi(t)$.
 
-  > Note: GPU execution currently supports only method 0 in both single-GPU and multi-GPU solver configurations. CPU execution supports methods 0 through 3.
+  > Note: GPU execution currently supports only method `0` in both single-GPU and multi-GPU solver configurations. CPU execution supports methods `0` through `3`.
 - **Default**: 0
-
-### init_vecpot_file
-
-- **Type**: Boolean
-- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
-- **Description**: Selects the source of the Cartesian vector potential used by LCAO RT-TDDFT.
-  - True: Read vector_pot.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. These are propagation values, not endpoint samples. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
-  - False: Obtain the vector potential by integrating the configured electric field.
-- **Default**: False
-
-### out_vecpot
-
-- **Type**: Boolean
-- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
-- **Description**: Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The vector potential is the propagation value: the average of interval endpoints for an integrated electric field, or the supplied sample for init_vecpot_file=True. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
-  - True: Write vector-potential samples on electronic propagation steps.
-  - False: Do not output the vector potential.
-- **Default**: False
 
 [back to top](#full-list-of-input-keywords)
 
@@ -4761,7 +4772,7 @@
 
 - **Type**: Real
 - **Availability**: *[`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==tddft*
-- **Description**: Nonnegative finite residual tolerance for each band in a PW real-time Crank-Nicolson solve $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$, with residual $\boldsymbol{r}=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}$. A value of 0 selects $\tau=\max(10^{-10},100\epsilon)$, where $\epsilon$ is machine epsilon for the wavefunction precision. This gives a tolerance of approximately $1.19209\times10^{-5}$ in single precision and $10^{-10}$ in double precision. A positive value specifies $\tau$ directly.
+- **Description**: Nonnegative finite residual tolerance for each band in a PW real-time Crank-Nicolson solve $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$, with residual $\boldsymbol{r}=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}$. A value of `0` selects $\tau=\max(10^{-10},100\epsilon)$, where $\epsilon$ is machine epsilon for the wavefunction precision. This gives a tolerance of approximately $1.19209\times10^{-5}$ in single precision and $10^{-10}$ in double precision. A positive value specifies $\tau$ directly.
   - `bicgstab` and `gmres`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\max(1,\lVert\boldsymbol{b}\rVert)$.
   - `cgs`: Require $\lVert\boldsymbol{r}\rVert\leqslant\tau\lVert\boldsymbol{b}\rVert$ for nonzero $\boldsymbol{b}$, or $\lVert\boldsymbol{r}\rVert\leqslant\tau$ for zero $\boldsymbol{b}$.
 

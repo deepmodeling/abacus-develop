@@ -187,7 +187,7 @@ fi
 #--------------------------------
 # exchange-correlation potential
 #--------------------------------
-if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
+if ! test -z "$has_xc" && [ "$has_xc" == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
 			xcref=vxc_nao.txt.ref
 			xccal=OUT.autotest/vxc_nao.txt
@@ -195,8 +195,8 @@ if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 			xcref=vxck2_nao.txt.ref
 			xccal=OUT.autotest/vxck2_nao.txt
 	fi
-	oeref=vxc_out.ref
-	oecal=OUT.autotest/vxc_out.dat
+	oeref=vxc.ref
+	oecal=OUT.autotest/vxc.txt
 	record_compare_result "$props_result_file" "CompareVXC_pass" "$xcref" "$xccal" 4
 	record_compare_result "$props_result_file" "CompareOrbXC_pass" "$oeref" "$oecal" 5
 fi

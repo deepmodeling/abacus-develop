@@ -331,7 +331,7 @@ struct Input_para
     // std::string td_vext_dire = "1";   ///< vext direction
     std::vector<int> td_vext_dire = {1}; ///< vector of vext direction
 
-    bool init_vecpot_file = false;   ///< initialize the vector potential, though file or integral
+    bool init_vecpot = false;        ///< initialize the vector potential, though file or integral
     double td_print_eij = -1.0;      ///< threshold to output Eij elements
     int td_edm = 0;                  ///< 0: new edm method   1: old edm method
     int propagator = 0;              ///< method of propagator
@@ -648,6 +648,7 @@ struct Input_para
     double shrink_LU_inv_thr = 1e-6; ///< threshold to get inverse of overlap matrix by LU decomposition in auxiliary basis representation
     bool out_ri_cv = false;          ///< Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V
     bool out_unshrinked_v = false;   ///< whether to output the large Vq matrix in unshrinked auxiliary basis
+    int out_librpa_ver = 0; ///< 0: legacy ABACUS LibRPA text files; 1: LibRPA reader-v1 binary files
     bool exx_coul_moment = false;    ///< whether to use moment method for Coulomb calculation
     bool exx_rotate_abfs = false;    ///< whether to rotate auxiliary basis for Coulomb calculation
     double exx_multip_moments_threshold = 1e-10; ///< threshold to screen multipole moments in Coulomb calculation

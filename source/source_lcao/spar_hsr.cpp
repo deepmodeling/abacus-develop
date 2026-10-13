@@ -111,7 +111,7 @@ void sparse_format::cal_HContainer(const Parallel_Orbitals& pv,
 }
 
 // in case there are elements smaller than the threshold
-void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& current_spin, const double& sparse_thr)
+void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& current_spin, const double& sparse_thr, TD_info* td_info)
 {
     ModuleBase::TITLE("sparse_format", "clear_zero_elements");
 
@@ -136,9 +136,9 @@ void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& cu
                 }
             }
         }
-        if (PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 1)
+        if (td_info != nullptr && td_info->field().gauge() == 1)
         {
-            for (auto& R_loop: TD_info::td_vel_op->HR_sparse_td_vel[current_spin])
+            for (auto& R_loop: td_info->HR_sparse_td_vel[current_spin])
             {
                 for (auto& row_loop: R_loop.second)
                 {

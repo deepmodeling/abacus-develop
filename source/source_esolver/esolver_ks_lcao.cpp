@@ -1,6 +1,8 @@
 #include "esolver_ks_lcao.h"
 #include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
+#include "source_base/tool_quit.h"
 #include "source_base/module_external/blacs_connector.h"
+#include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
@@ -24,6 +26,7 @@
 #include "source_estate/module_charge/chg_routine.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/dm_routine.h" // init dm from electronic wave functions
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
+#include "source_io/module_parameter/input_parameter.h"
 #include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao()
 #include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao()
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
@@ -35,6 +38,22 @@
 
 namespace ModuleESolver
 {
+
+#ifdef __EXX
+namespace
+{
+void validate_librpa_v1_kpoints(const Input_para& input, const K_Vectors& kv)
+{
+    // Reader-v1 writes the complete Monkhorst-Pack mesh for LibRPA.
+    if (input.rpa && input.out_librpa_ver == 1 && !kv.is_uniform_mp())
+    {
+        ModuleBase::WARNING_QUIT(
+            "ESolver_KS_LCAO::before_all_runners",
+            "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid.");
+    }
+}
+} // namespace
+#endif
 
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
@@ -64,6 +83,10 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
 
     // 1) before_all_runners in ESolver_KS (includes init_general_exx_info)
     ESolver_KS::before_all_runners(ucell, inp);
+
+#ifdef __EXX
+    validate_librpa_v1_kpoints(inp, this->kv);
+#endif
 
     // 2) init full Exx_Info for LCAO (includes info_ri, info_opt_abfs, info_lip)
     init_exx_info(this->exx_info_, inp);
@@ -175,7 +198,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
             two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_, *this->inp_,
-            load_exx_flag);
+            load_exx_flag, this->get_td_info());
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -283,7 +306,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
                        this->pw_rho, this->solvent, *this->dftu_, this->deepks,
                        this->exx_nao, &ucell.symm, this->exx_info_,
                        fs_cfg,
-                       this->inp_->td_stype,
+                       this->get_td_info(),
                        static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
 
     // delete RA after cal_force
@@ -389,14 +412,15 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 #endif
 		module_dm::Init_DM_Config init_dm_cfg;
 	init_dm_cfg.esolver_type = PARAM.inp.esolver_type;
-	init_dm_cfg.td_stype = PARAM.inp.td_stype;
+	TD_info* td_info = this->get_td_info();
+	init_dm_cfg.td_stype = td_info != nullptr ? td_info->field().gauge() : 0;
 	init_dm_cfg.nspin = PARAM.inp.nspin;
 	init_dm_cfg.nelec = PARAM.inp.nelec;
-	init_dm_cfg.td_phase_hybrid = (PARAM.inp.td_stype == 2 && PARAM.inp.esolver_type != "tddft")
-		? &TD_info::td_vel_op->get_phase_hybrid()
+	init_dm_cfg.td_phase_hybrid = (init_dm_cfg.td_stype == 2 && init_dm_cfg.esolver_type != "tddft")
+		? &td_info->get_phase_hybrid()
 		: nullptr;
-	init_dm_cfg.td_cart_At = (PARAM.inp.td_stype == 2 && PARAM.inp.esolver_type != "tddft")
-		? TD_info::A_prop_ha
+	init_dm_cfg.td_cart_At = (init_dm_cfg.td_stype == 2 && init_dm_cfg.esolver_type != "tddft")
+		? td_info->endpoint_A()
 		: ModuleBase::Vector3<double>();
 	init_dm_cfg.dm2rho_func = &LCAO_domain::dm2rho;
 	module_dm::init_dm<TK>(ucell, this->pelec, this->dmat, this->psi, this->chr, this->pv, iter, exx_two_level_step, init_dm_cfg);

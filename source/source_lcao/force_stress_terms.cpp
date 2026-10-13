@@ -68,7 +68,8 @@ void cal_external_field_forces(UnitCell& ucell,
                                surchem& solvent,
                                ModulePW::PW_Basis* rhopw,
                                const pseudopot_cell_vl& locpp,
-                               LCAOForceParts& parts)
+                               LCAOForceParts& parts,
+                               const elecstate::TDFieldManager* td_field)
 {
     //! forces from E-field
     if (PARAM.inp.efield_flag)
@@ -78,10 +79,10 @@ void cal_external_field_forces(UnitCell& ucell,
     }
 
     //! atomic forces from E-field of rt-TDDFT
-    if (PARAM.inp.esolver_type == "tddft")
+    if (td_field != nullptr)
     {
         parts.fefield_tddft.create(ucell.nat, 3);
-        elecstate::H_TDDFT_pw::compute_force(ucell, parts.fefield_tddft);
+        elecstate::H_TDDFT_pw::compute_force(ucell, *td_field, parts.fefield_tddft);
     }
 
     //! atomic forces from gate field
@@ -108,7 +109,8 @@ void cal_vdw_fields_fs(const vdw::VdwResult* vdw_result,
                        const bool isforce,
                        const bool isstress,
                        LCAOForceParts& parts,
-                       LCAOStressParts& sparts)
+                       LCAOStressParts& sparts,
+                       const elecstate::TDFieldManager* td_field)
 {
     //! forces and stress from vdw
     //  Peize Lin add 2014-04-04, update 2021-03-09
@@ -118,7 +120,7 @@ void cal_vdw_fields_fs(const vdw::VdwResult* vdw_result,
     //! external-field forces
     if (isforce)
     {
-        cal_external_field_forces(ucell, solvent, rhopw, locpp, parts);
+        cal_external_field_forces(ucell, solvent, rhopw, locpp, parts, td_field);
     }
 }
 

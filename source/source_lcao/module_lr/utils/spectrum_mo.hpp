@@ -172,8 +172,7 @@ inline void output_spectrum_mo(const std::vector<std::complex<double>>& out_spec
 inline void output_spectrum_mo_librpa(const std::vector<std::complex<double>>& out_spectrum_mo,
                         const std::string& filename,
                         const int nk, const int nspin_tmp, const int nbands, const int nbasis,
-                        const int KS_num,/*= nocc+nvirt, can be different from nbands, */
-                        const K_Vectors& kv)
+                        const int KS_num/*= nocc+nvirt, can be different from nbands*/)
 {
     assert(out_spectrum_mo.size() == nspin_tmp * 3 * nk * KS_num * KS_num);
     std::ofstream ofs(filename);
