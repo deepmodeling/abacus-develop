@@ -1154,7 +1154,7 @@
 
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver) in [cg, dav, dav_subspace, bpcg, ppcg]*
-- **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/ppcg method. The shared PW NSCF setup retains the existing iteration limit (30 in a fresh run) for all solvers instead of updating it from this input.
+- **Description**: Sets the iterative diagonalization limit for ks_solver = cg/dav/dav_subspace/ppcg in both SCF and NSCF calculations. NSCF uses this input, including its default of 50, rather than retaining a previous calculation's limit. CG and Davidson methods apply this limit within each internal diagonalization attempt and may retry; PPCG applies it to its subspace updates. It is not a common bound on total operator applications across solvers. Increasing the limit does not change convergence thresholds or guarantee convergence. BPCG currently does not use this parameter; its internal budget remains 24 updates in the first electronic iteration and 4 in later iterations.
 - **Default**: 50
 
 ### pw_diag_ndim
