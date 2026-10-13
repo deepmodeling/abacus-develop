@@ -134,7 +134,7 @@ endif()
 AddTest(
   TARGET MODULE_HSOLVER_ppcg
   LIBS parameter base psi device container
-  SOURCES test_diago_ppcg.cpp ../diago_ppcg.cpp
+  SOURCES test_diago_ppcg.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 AddTest(
   TARGET MODULE_HSOLVER_diago_params
@@ -144,7 +144,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HSOLVER_ppcg_float
   LIBS parameter base psi device container
-  SOURCES test_diago_ppcg_float.cpp ../diago_ppcg.cpp
+  SOURCES test_diago_ppcg_float.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 if (ENABLE_MPI)

@@ -8,6 +8,9 @@
  */
 
 #include "../diago_ppcg.h"
+#ifdef __MPI
+#include "source_basis/module_pw/test/test_tool.h"
+#endif
 
 #include <gtest/gtest.h>
 #include <cmath>
@@ -280,4 +283,24 @@ TEST(DiagoPPCGFloatTest, RankDeficientStartupSubspace)
     EXPECT_NEAR(eval[0], Real(1), Real(2e-4));
     EXPECT_NEAR(eval[1], Real(2), Real(2e-4));
     EXPECT_TRUE(solver.converged());
+}
+
+int main(int argc, char** argv)
+{
+#ifdef __MPI
+    int nproc = 1;
+    int myrank = 0;
+    setupmpi(argc, argv, nproc, myrank);
+    int nproc_in_pool = 1;
+    int kpar = nproc;
+    int mypool = 0;
+    int rank_in_pool = 0;
+    divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
+#endif
+    testing::InitGoogleTest(&argc, argv);
+    const int result = RUN_ALL_TESTS();
+#ifdef __MPI
+    finishmpi();
+#endif
+    return result;
 }

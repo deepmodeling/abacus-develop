@@ -13,24 +13,6 @@ const MPI_Datatype Parallel_Reduce::MPI_Type<std::complex<float>>::value = MPI_C
 const MPI_Datatype Parallel_Reduce::MPI_Type<long long>::value = MPI_LONG_LONG;
 #endif
 
-bool Parallel_Reduce::pool_ready()
-{
-#ifdef __MPI
-    int initialized = 0;
-    MPI_Initialized(&initialized);
-    if (!initialized)
-    {
-        return false;
-    }
-
-    int finalized = 0;
-    MPI_Finalized(&finalized);
-    return !finalized && POOL_WORLD != MPI_COMM_NULL;
-#else
-    return false;
-#endif
-}
-
 bool Parallel_Reduce::is_world_root()
 {
 #ifdef __MPI

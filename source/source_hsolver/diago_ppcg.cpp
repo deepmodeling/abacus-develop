@@ -58,31 +58,21 @@ namespace hsolver {
 namespace {
 
 template <typename Value>
-void reduce_pool_if_ready(Value& value)
+void reduce_pool_values(Value& value)
 {
-#ifdef __MPI
-    if (Parallel_Reduce::pool_ready())
-    {
-        Parallel_Reduce::reduce_pool(value);
-    }
-#endif
+    Parallel_Reduce::reduce_pool(value);
 }
 
 template <typename Value>
-void reduce_pool_if_ready(Value* value, const int n)
+void reduce_pool_values(Value* value, const int n)
 {
-#ifdef __MPI
-    if (Parallel_Reduce::pool_ready())
-    {
-        Parallel_Reduce::reduce_pool(value, n);
-    }
-#endif
+    Parallel_Reduce::reduce_pool(value, n);
 }
 
 bool all_pool_operations_succeeded(const bool local_success)
 {
     int failure_count = local_success ? 0 : 1;
-    reduce_pool_if_ready(&failure_count, 1);
+    reduce_pool_values(&failure_count, 1);
     return failure_count == 0;
 }
 
@@ -110,7 +100,7 @@ Real max_generalized_residual(
         }
         nrm2_all[j] = nrm2;
     }
-    reduce_pool_if_ready(nrm2_all.data(), ncol);
+    reduce_pool_values(nrm2_all.data(), ncol);
     for (int j = 0; j < ncol; ++j)
     {
         const Real residual_norm = std::sqrt(Real(nrm2_all[j]));
@@ -306,7 +296,7 @@ typename DiagoPPCG<T, Device>::Real
 DiagoPPCG<T, Device>::gamma_dot(const T* x, const T* y) const
 {
     Real result = ModuleBase::dot_real_op<T, Device>()(n_dim_, x, y, false);
-    reduce_pool_if_ready(result);
+    reduce_pool_values(result);
     return result;
 }
 
@@ -335,7 +325,7 @@ void DiagoPPCG<T, Device>::gram(const T* mat_a, const T* mat_b,
                                      &zero,
                                      out.data(),
                                      ld_out);
-    reduce_pool_if_ready(out.data(), ld_out * ncol_b);
+    reduce_pool_values(out.data(), ld_out * ncol_b);
 }
 
 // =============================================================================
@@ -598,7 +588,7 @@ void DiagoPPCG<T, Device>::lock_epairs(
         }
         nrm2_all[j] = nrm2;
     }
-    reduce_pool_if_ready(nrm2_all.data(), n_band_);
+    reduce_pool_values(nrm2_all.data(), n_band_);
     bool found_unconverged = false;
     max_residual_ = Real(0);
     for (int j = 0; j < n_band_; ++j)
@@ -645,7 +635,7 @@ void DiagoPPCG<T, Device>::scale_to_unit_snorm(std::vector<T>& x,
         }
         inverse_snorm[j] = snorm_squared;
     }
-    reduce_pool_if_ready(inverse_snorm.data(), ncols);
+    reduce_pool_values(inverse_snorm.data(), ncols);
     for (int j = 0; j < ncols; ++j)
     {
         const Real snorm = std::sqrt(std::max(
@@ -1501,7 +1491,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         }
     }
     int residual_trace_writer_count = residual_trace ? 1 : 0;
-    reduce_pool_if_ready(&residual_trace_writer_count, 1);
+    reduce_pool_values(&residual_trace_writer_count, 1);
     const bool residual_trace_enabled = residual_trace_writer_count > 0;
     const bool write_residual_trace = bool(residual_trace);
     Real local_overlap_min = std::numeric_limits<Real>::quiet_NaN();

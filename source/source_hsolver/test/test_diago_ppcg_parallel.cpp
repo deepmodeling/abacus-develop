@@ -30,14 +30,12 @@ int main(int argc, char** argv)
     int nproc = 1;
     int myrank = 0;
     setupmpi(argc, argv, nproc, myrank);
-    const bool pool_unavailable_before_setup = !Parallel_Reduce::pool_ready();
 
     int nproc_in_pool = 0;
     int kpar = argc > 1 ? std::atoi(argv[1]) : 1;
     int mypool = 0;
     int rank_in_pool = 0;
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
-    const bool pool_available_after_setup = Parallel_Reduce::pool_ready();
     const bool world_root_is_correct = Parallel_Reduce::is_world_root() == (myrank == 0);
     BP_WORLD = MPI_COMM_WORLD;
 
@@ -113,20 +111,10 @@ int main(int argc, char** argv)
 
     // The lowest nband eigenvalues of the global diagonal matrix are 1..nband.
     int ok = 1;
-    if (!pool_unavailable_before_setup
-        || !pool_available_after_setup
-        || !world_root_is_correct
+    if (!world_root_is_correct
         || trace_environment_ok != 1)
     {
         ok = 0;
-    }
-    if (!pool_unavailable_before_setup)
-    {
-        std::fprintf(stderr, "rank %d: pool communicator reported ready before setup\n", myrank);
-    }
-    if (!pool_available_after_setup)
-    {
-        std::fprintf(stderr, "rank %d: pool communicator reported unavailable after setup\n", myrank);
     }
     if (!world_root_is_correct)
     {
