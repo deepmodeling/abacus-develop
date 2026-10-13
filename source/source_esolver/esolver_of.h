@@ -51,13 +51,13 @@ class ESolver_OF : public ESolver_FP
 
     // ------------------ parameters from other module --------------
     double dV_ = 0;           // volume of one grid point in real space
-    double* nelec_ = nullptr; // number of electrons with each spin
+    std::vector<double> nelec_; // number of electrons with each spin
 
     // ----- parameters and arrays used in density optimization -----
     int iter_ = 0;                                // iteration number
     double** pdirect_ = nullptr;                  // optimization direction of phi, which is sqrt(rho)
     std::complex<double>** precip_dir_ = nullptr; // direction in reciprocal space, used when of_full_pw=false.
-    double* theta_ = nullptr;                     // step length
+    std::vector<double> theta_;                   // step length
     double** pdEdphi_ = nullptr;                  // dE/dphi
     double** pdLdphi_ = nullptr;                  // dL/dphi
     double** pphi_ = nullptr;                     // pphi[i] = ppsi.get_pointer(i), which will be freed in ~Psi().

@@ -141,7 +141,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
                 }
 
                 // get dEdtheta of new tempPhi and tempRho
-                this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, this->theta_, dEdtheta);
+                this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, this->theta_.data(), dEdtheta);
 
                 if (numDC > this->max_dcsrch_)
                 {

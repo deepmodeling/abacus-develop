@@ -96,7 +96,7 @@ void ESolver_OF::allocate_array()
     this->ptemp_rho_->allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(),
                                this->inp_->test_charge);
 
-    this->theta_ = new double[this->inp_->nspin];
+    this->theta_.resize(this->inp_->nspin);
     this->pdLdphi_ = new double*[this->inp_->nspin];
     this->pdEdphi_ = new double*[this->inp_->nspin];
     this->pdirect_ = new double*[this->inp_->nspin];
@@ -363,7 +363,7 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
                     = this->pphi_[0][ir] * cos(this->theta_[0]) + this->pdirect_[0][ir] * sin(this->theta_[0]);
                 ptemp_rho_->rho[0][ir] = ptemp_phi[0][ir] * ptemp_phi[0][ir];
             }
-            this->cal_dEdtheta(ptemp_phi, ptemp_rho_, ucell, this->theta_, dEdtheta);
+            this->cal_dEdtheta(ptemp_phi, ptemp_rho_, ucell, this->theta_.data(), dEdtheta);
             this->pelec->cal_energies(2,
                                       this->inp_->imp_sol,
                                       this->inp_->sc_mag_switch,

@@ -44,8 +44,6 @@ ESolver_OF::~ESolver_OF()
     delete[] this->pdEdphi_;
     delete[] this->precip_dir_;
 
-    delete[] this->nelec_;
-    delete[] this->theta_;
     delete this->ptemp_rho_;
 
     delete this->kedf_manager_;
@@ -122,7 +120,7 @@ void ESolver_OF::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     // Initialize KEDF
     // Calculate electron numbers, which will be used to initialize WT KEDF
-    this->nelec_ = new double[inp.nspin];
+    this->nelec_.resize(inp.nspin);
     if (inp.nspin == 1)
     {
         this->nelec_[0] = inp.nelec;
