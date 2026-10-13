@@ -66,6 +66,7 @@ Enable the optional backend with a CMake package that exports
 
 ```bash
 cmake -B build-libvdwxc -DBUILD_TESTING=ON \
+  -DENABLE_MPI=OFF \
   -DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON \
   -DCMAKE_PREFIX_PATH=/path/to/libvdwxc-prefix
 ```

@@ -27,7 +27,7 @@ ctest --test-dir build -R RVV10_LIBVDWXC_CONTRACT --output-on-failure
 With the pinned libvdwxc installation available, enable the real adapter test:
 
 ```bash
-cmake -B build-libvdwxc -DBUILD_TESTING=ON -DENABLE_LIBXC=ON \
+cmake -B build-libvdwxc -DBUILD_TESTING=ON -DENABLE_MPI=OFF -DENABLE_LIBXC=ON \
   -DENABLE_LIBVDWXC=ON -DCMAKE_PREFIX_PATH=/path/to/libvdwxc
 cmake --build build-libvdwxc --target MODULE_HAMILT_vdwTest_LIBVDWXC
 ctest --test-dir build-libvdwxc -R LIBVDWXC --output-on-failure
