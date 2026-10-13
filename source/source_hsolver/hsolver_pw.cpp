@@ -532,8 +532,6 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         const int dim = psi.get_current_ngk();
         T* psi_pointer = psi.get_pointer();
         const Real* precondition_pointer = pre_condition.data();
-        const int pw_diag_ndim = DiagoIterAssist<T, Device>::PW_DIAG_NDIM;
-        const int pw_diag_rr_step = DiagoIterAssist<T, Device>::PW_DIAG_RR_STEP;
         const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
             hpsi_func,
             spsi_func,
@@ -546,8 +544,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
             precondition_pointer,
             this->diag_thr,
             this->diag_iter_max,
-            pw_diag_ndim,
-            pw_diag_rr_step,
+            this->pw_diag_ndim,
+            this->pw_diag_rr_step,
             cpu_path);
         DiagoIterAssist<T, Device>::avg_iter += ppcg_result.average_iterations;
         if (!ppcg_result.converged)
