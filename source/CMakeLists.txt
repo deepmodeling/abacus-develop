@@ -569,16 +569,16 @@ add_subdirectory(source_basis/module_ao)
 add_subdirectory(source_basis/module_nao)
 add_subdirectory(source_md)
 add_subdirectory(source_basis/module_pw)
-if(BUILD_TESTING)
-  # Register after the PW basis target exists; the optional adapter test links
-  # the existing planewave object library.
-  add_subdirectory(source_hamilt/module_vdw/test)
-endif()
 add_subdirectory(source_esolver)
 add_subdirectory(source_io)
 add_subdirectory(source_relax)
 add_subdirectory(source_lcao/module_ri)
 add_subdirectory(source_io/module_parameter)
+if(BUILD_TESTING)
+  # Register after PW, XC and INPUT targets exist; the optional adapter test
+  # links those existing object libraries instead of creating wrappers.
+  add_subdirectory(source_hamilt/module_vdw/test)
+endif()
 add_subdirectory(source_lcao/module_lr)
 add_subdirectory(source_lcao/module_rdmft) # add by jghan
 
