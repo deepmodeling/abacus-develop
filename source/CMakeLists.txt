@@ -574,11 +574,6 @@ add_subdirectory(source_io)
 add_subdirectory(source_relax)
 add_subdirectory(source_lcao/module_ri)
 add_subdirectory(source_io/module_parameter)
-if(BUILD_TESTING)
-  # Register after PW, XC and INPUT targets exist; the optional adapter test
-  # links those existing object libraries instead of creating wrappers.
-  add_subdirectory(source_hamilt/module_vdw/test)
-endif()
 add_subdirectory(source_lcao/module_lr)
 add_subdirectory(source_lcao/module_rdmft) # add by jghan
 
@@ -725,6 +720,12 @@ endif()
 
 # base uses symbols from device (memory_op and math_ylm_op).
 target_link_libraries(base PUBLIC device)
+
+if(BUILD_TESTING)
+  # Register after all object-library dependencies exist; the optional adapter
+  # test links the existing PW, INPUT and device targets.
+  add_subdirectory(source_hamilt/module_vdw/test)
+endif()
 
 if(ENABLE_COVERAGE)
   add_coverage(driver)
