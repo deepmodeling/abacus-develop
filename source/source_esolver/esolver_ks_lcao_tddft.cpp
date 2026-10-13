@@ -416,7 +416,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
         this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
         {
-            bool skip_charge = this->inp_->calculation == "nscf" ? true : false;
+            const bool skip_charge = false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv,
                                                                         this->inp_->ks_solver,
                                                                         PARAM.globalv.kpar_lcao,
@@ -428,7 +428,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
                                                                         GlobalV::MY_RANK);
             hamilt::HamiltHSMatrix<std::complex<double>> hs(static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
             hsolver_lcao_obj.solve(hs, this->psi[0], this->pelec, *this->dmat.dm, this->chr, this->inp_->nspin, ucell.omega, skip_charge);
-            if (this->inp_->td_stype == 2 && !skip_charge)
+            if (this->inp_->td_stype == 2)
             {
                 // Taoni add 2026-10-11
                 // Ground-state diagonalization forms an ordinary DMR. Apply the

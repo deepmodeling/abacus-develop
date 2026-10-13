@@ -18,6 +18,7 @@
 #include "source_pw/module_pwdft/td_pw.h"
 
 #include <iomanip>
+#include <iostream>
 
 namespace ModuleESolver
 {
@@ -86,8 +87,40 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
 }
 
 template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::runner(BaseCell& basecell, const int istep)
+{
+    const int steps_per_md = this->inp_->estep_per_md;
+    int first_step = 0;
+    int last_step = 0;
+    if (this->inp_->mdp.md_nstep == 1)
+    {
+        // Include the initial state before the fixed-ion propagation sequence.
+        last_step = steps_per_md;
+    }
+    else if (istep > 0)
+    {
+        first_step = (istep - 1) * steps_per_md + 1;
+        last_step = istep * steps_per_md;
+    }
+    for (int electronic_step = first_step; electronic_step <= last_step; ++electronic_step)
+    {
+        ESolver_KS::runner(basecell, electronic_step);
+    }
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::print_step(const int istep) const
+{
+    const int evolution_step = istep + 1;
+    std::cout << " -------------------------------------------" << std::endl;
+    std::cout << " STEP OF ELECTRON EVOLVE : " << evolution_step << std::endl;
+    std::cout << " -------------------------------------------" << std::endl;
+}
+
+template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
+    this->print_step(istep);
     this->prepare_td_step(istep);
     this->td_solver_->reset_orth_stats();
     const bool basis_updated = ucell.cell_parameter_updated;
@@ -134,6 +167,13 @@ void ESolver_KS_PW_TDDFT<T, Device>::prepare_td_step(const int istep)
         const int interval_left = istep - 1;
         this->td_field_manager_->prepare_interval(interval_left, istep);
     }
+    if (this->td_field_manager_->gauge() == 1)
+    {
+        const ModuleBase::Vector3<double>& A_right_ha = this->td_field_manager_->A_right_ha();
+        ModuleBase::GlobalFunc::OUT(log_, "Cartesian vector potential Ax(t)", A_right_ha[0]);
+        ModuleBase::GlobalFunc::OUT(log_, "Cartesian vector potential Ay(t)", A_right_ha[1]);
+        ModuleBase::GlobalFunc::OUT(log_, "Cartesian vector potential Az(t)", A_right_ha[2]);
+    }
     if (GlobalV::MY_RANK == 0)
     {
         if (this->inp_->out_vecpot)
@@ -161,8 +201,12 @@ std::string ESolver_KS_PW_TDDFT<T, Device>::diag_policy(const int istep) const
 template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
-    // With estep_per_md=1, the ionic and electronic step indices coincide.
-    ModuleIO::write_head_td(GlobalV::ofs_running, istep, istep, iter, this->basisname);
+    int ionic_step = 0;
+    if (this->inp_->mdp.md_nstep > 1 && istep > 0)
+    {
+        ionic_step = (istep - 1) / this->inp_->estep_per_md + 1;
+    }
+    ModuleIO::write_head_td(GlobalV::ofs_running, ionic_step, istep, iter, this->basisname);
     ESolver_KS_PW<T, Device>::iter_init(ucell, istep, iter);
 }
 
@@ -230,7 +274,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
         momentum_shift = this->td_field_manager_->A_prop_ha();
     }
     hamiltonian->bind_td_state(propagation.veff, propagation.vofk, momentum_shift);
-    // Pass the electronic step; it coincides with the MD step while estep_per_md=1.
+    // The solver sequence follows electronic steps across MD boundaries.
     this->td_solver_->solve(op,
                             this->history_.previous(),
                             current,
@@ -260,7 +304,10 @@ void ESolver_KS_PW_TDDFT<T, Device>::iter_finish(UnitCell& ucell, const int iste
     ESolver_KS_PW<T, Device>::iter_finish(ucell, istep, iter, conv_esolver);
     if (istep > 0 && !conv_esolver && iter >= this->inp_->scf_nmax)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "The time-dependent SCF step did not converge.");
+        const int evolution_step = istep + 1;
+        const std::string message = "The time-dependent SCF step did not converge. Electronic evolution step: "
+                                    + std::to_string(evolution_step) + ", SCF iteration: " + std::to_string(iter) + ".";
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", message);
     }
 }
 
@@ -269,7 +316,10 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
 {
     if (!conv_esolver)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "Cannot propagate an unconverged electronic state.");
+        const int evolution_step = istep + 1;
+        const std::string message
+            = "Cannot propagate an unconverged electronic state. Electronic evolution step: " + std::to_string(evolution_step) + ".";
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", message);
     }
     if (istep == 0 && this->inp_->td_orthonormal == "none")
     {
@@ -277,6 +327,9 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
         this->td_solver_->check_initial(*current, this->niter);
     }
     ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver);
+    const std::streamsize original_precision = std::cout.precision();
+    std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot << std::endl;
+    std::cout.precision(original_precision);
     if (istep >= 0)
     {
         psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
