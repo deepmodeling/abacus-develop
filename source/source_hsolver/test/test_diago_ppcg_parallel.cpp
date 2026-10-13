@@ -21,7 +21,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <limits>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -95,7 +97,9 @@ int main(int argc, char** argv)
         /* sbsize   = */ 2,
         /* rr_step  = */ nband);
 
+    int h_calls = 0;
     auto h_op = [&](T* in, T* out, int ld, int ncol) {
+        ++h_calls;
         for (int j = 0; j < ncol; ++j)
         {
             for (int i = 0; i < n_local; ++i)
@@ -106,12 +110,32 @@ int main(int argc, char** argv)
     };
 
     std::vector<Real> eval(nband, 0.0);
+    // One invalid rank must stop every rank in its pool before H/S collectives.
+    // Otherwise the valid ranks would hang while the invalid rank unwinds.
+    std::vector<Real> invalid_prec = prec;
+    if (rank_in_pool == 0)
+    {
+        invalid_prec[0] = std::numeric_limits<Real>::quiet_NaN();
+    }
+    bool collective_validation_failed = false;
+    try
+    {
+        solver.diag(h_op, nullptr, n_local, nband, n_local,
+                    psi.data(), eval.data(), ethr, invalid_prec.data());
+    }
+    catch (const std::invalid_argument&)
+    {
+        collective_validation_failed = true;
+    }
+    const bool validation_before_operator = collective_validation_failed && h_calls == 0;
+
     solver.diag(h_op, nullptr, n_local, nband, n_local,
                 psi.data(), eval.data(), ethr, prec.data());
 
     // The lowest nband eigenvalues of the global diagonal matrix are 1..nband.
     int ok = 1;
     if (!world_root_is_correct
+        || !validation_before_operator
         || trace_environment_ok != 1)
     {
         ok = 0;
@@ -119,6 +143,10 @@ int main(int argc, char** argv)
     if (!world_root_is_correct)
     {
         std::fprintf(stderr, "rank %d: MPI world-root detection is inconsistent\n", myrank);
+    }
+    if (!validation_before_operator)
+    {
+        std::fprintf(stderr, "rank %d: invalid input was not rejected before operator calls\n", myrank);
     }
     if (!solver.converged()
         || solver.active_band_count() != 0

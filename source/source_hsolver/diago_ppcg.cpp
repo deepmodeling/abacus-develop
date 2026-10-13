@@ -206,43 +206,62 @@ void DiagoPPCG<T, Device>::validate_input(
     const std::vector<double>& ethr_band,
     const Real* prec) const
 {
-    if (!hpsi_func)
+    std::string local_error;
+    try
     {
-        throw std::invalid_argument("PPCG: H operator is empty.");
-    }
-    if (psi_in == nullptr || eigenvalue_in == nullptr)
-    {
-        throw std::invalid_argument("PPCG: psi/eigenvalue pointer is null.");
-    }
-    if (prec == nullptr)
-    {
-        throw std::invalid_argument("PPCG: preconditioner pointer is null.");
-    }
-    if (ld_psi_ <= 0 || n_band_ <= 0 || n_dim_ <= 0)
-    {
-        throw std::invalid_argument("PPCG: invalid dimensions.");
-    }
-    if (n_dim_ > ld_psi_)
-    {
-        throw std::invalid_argument("PPCG: dim must not exceed ld_psi.");
-    }
-    if (ethr_band.size() < size_t(n_band_))
-    {
-        throw std::invalid_argument("PPCG: ethr_band size is smaller than nband.");
-    }
-    for (int i = 0; i < n_band_; ++i)
-    {
-        if (!std::isfinite(ethr_band[i]))
+        if (!hpsi_func)
         {
-            throw std::invalid_argument("PPCG: ethr_band contains non-finite value.");
+            throw std::invalid_argument("PPCG: H operator is empty.");
+        }
+        if (psi_in == nullptr || eigenvalue_in == nullptr)
+        {
+            throw std::invalid_argument("PPCG: psi/eigenvalue pointer is null.");
+        }
+        if (prec == nullptr)
+        {
+            throw std::invalid_argument("PPCG: preconditioner pointer is null.");
+        }
+        if (ld_psi_ <= 0 || n_band_ <= 0 || n_dim_ <= 0)
+        {
+            throw std::invalid_argument("PPCG: invalid dimensions.");
+        }
+        if (n_dim_ > ld_psi_)
+        {
+            throw std::invalid_argument("PPCG: dim must not exceed ld_psi.");
+        }
+        if (ethr_band.size() < size_t(n_band_))
+        {
+            throw std::invalid_argument("PPCG: ethr_band size is smaller than nband.");
+        }
+        for (int i = 0; i < n_band_; ++i)
+        {
+            if (!std::isfinite(ethr_band[i]))
+            {
+                throw std::invalid_argument("PPCG: ethr_band contains non-finite value.");
+            }
+        }
+        for (int i = 0; i < n_dim_; ++i)
+        {
+            if (!std::isfinite(prec[i]))
+            {
+                throw std::invalid_argument("PPCG: preconditioner contains non-finite value.");
+            }
         }
     }
-    for (int i = 0; i < n_dim_; ++i)
+    catch (const std::invalid_argument& error)
     {
-        if (!std::isfinite(prec[i]))
+        local_error = error.what();
+    }
+    // All pool ranks must reject the call before any rank enters an operator
+    // callback or Gram-matrix collective, even if only one input is invalid.
+    const bool local_success = local_error.empty();
+    if (!all_pool_operations_succeeded(local_success))
+    {
+        if (local_error.empty())
         {
-            throw std::invalid_argument("PPCG: preconditioner contains non-finite value.");
+            local_error = "PPCG: invalid input on another rank in the MPI pool.";
         }
+        throw std::invalid_argument(local_error);
     }
 }
 
