@@ -1399,6 +1399,56 @@ TEST(DiagoPPCGComplexHermitianTest, DefaultKeepsImaginaryProjection)
     EXPECT_NEAR(eval[1], 2.5 + delta, 1e-10);
 }
 
+TEST(DiagoPPCGComplexHermitianTest, ExactImaginaryLeadingCoefficientNeedsNoProjection)
+{
+    const int n_dim = 3;
+    const int nband = 1;
+    const int ld = n_dim;
+    const int matrix_size = n_dim * n_dim;
+    const Real diagonal[n_dim] = {Real(1), Real(4), Real(9)};
+    std::vector<T> h_mat(matrix_size, T(0));
+    for (int i = 0; i < n_dim; ++i)
+    {
+        h_mat[i + i * n_dim] = T(diagonal[i], 0);
+    }
+
+    // A valid full-complex eigenvector may have an imaginary first
+    // coefficient. Clearing that coefficient would destroy its norm and
+    // rank. A Ritz solve is free to choose another overall phase, so check
+    // the eigenpair and normalization rather than a particular phase.
+    std::vector<T> psi(ld, T(0));
+    psi[0] = T(0, 1);
+    std::vector<Real> eval(nband, Real(0));
+    const std::vector<double> ethr(nband, 1e-12);
+    const std::vector<Real> prec(n_dim, Real(1));
+    const auto h_op = [&h_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
+        dense_h_multiply(h_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1e-12,
+        /* max_iter = */ 0,
+        /* sbsize   = */ 1,
+        /* rr_step  = */ 4);
+
+    solver.diag(
+        h_op, nullptr, ld, nband, n_dim, psi.data(), eval.data(), ethr, prec.data());
+
+    Real norm_squared = Real(0);
+    Real residual_squared = Real(0);
+    for (int i = 0; i < n_dim; ++i)
+    {
+        const T residual = diagonal[i] * psi[i] - eval[0] * psi[i];
+        norm_squared += std::norm(psi[i]);
+        residual_squared += std::norm(residual);
+    }
+    const Real residual_norm = std::sqrt(residual_squared);
+    EXPECT_TRUE(solver.converged());
+    EXPECT_FALSE(solver.iteration_limit_reached());
+    EXPECT_NEAR(eval[0], diagonal[0], 1e-12);
+    EXPECT_NEAR(norm_squared, Real(1), 1e-12);
+    EXPECT_LE(residual_norm, Real(1e-12));
+}
+
 TEST(DiagoPPCGComplexHermitianTest, BlockSubspaceSmokeNoNaN)
 {
     const int n_dim = 2;

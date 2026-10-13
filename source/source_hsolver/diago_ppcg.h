@@ -47,6 +47,10 @@ public:
     // Main entry point
     //
     // Returns average number of subspace iterations per band.
+    // Optional ABACUS_PPCG_RESIDUAL_TRACE CSV: initial_rr, rayleigh_ritz and
+    // final rows contain ordered Ritz values after a successful Ritz solve.
+    // block_sweep rows instead contain the current column Rayleigh quotients;
+    // exclude those rows when plotting ordered eigenvalue errors.
     // -------------------------------------------------------------------------
     double diag(const HPsiFunc& hpsi_func,
                 const SPsiFunc& spsi_func,
