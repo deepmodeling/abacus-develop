@@ -1136,8 +1136,8 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "full Rayleigh-Ritz interval for PPCG";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = ppcg. It must be a positive integer and sets the interval, in subspace iterations, between full Rayleigh-Ritz diagonalizations. The solver also performs a full Rayleigh-Ritz step at initialization, after the startup global correction, at final validation or tentative convergence, or when overlap orthogonalization fails. Between these steps it maintains S-orthogonality without diagonalizing the full projected Hamiltonian. H and S images are refreshed at periodic Rayleigh-Ritz steps to limit accumulated rounding drift. A larger interval reduces full projected eigensolves but may change the iteration count.";
-        item.default_value = "16";
+        item.description = "Only useful when you use ks_solver = ppcg. It must be a positive integer and sets the interval, in subspace iterations, between full Rayleigh-Ritz diagonalizations. The conservative default of 1 preserves the established every-iteration Rayleigh-Ritz cadence. The solver also performs a full Rayleigh-Ritz step at initialization, after the startup global correction, at final validation or tentative convergence, or when overlap orthogonalization fails. Between these steps it maintains S-orthogonality without diagonalizing the full projected Hamiltonian. H and S image refreshes use a separate internal interval of 16 iterations to limit rounding drift. Larger Rayleigh-Ritz intervals reduce full projected eigensolves but can change the SCF trajectory or require more diagonalization iterations; validate energies, forces, stresses, and the iteration budget for the intended calculation.";
+        item.default_value = "1";
         item.unit = "";
         item.set_availability("basis_type==pw and ks_solver==ppcg");
         read_sync_int(input.pw_diag_rr_step);

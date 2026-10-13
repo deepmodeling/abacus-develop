@@ -414,7 +414,13 @@ TEST_F(InputTest, Item_test)
     }
     { // pw_diag_rr_step
         auto it = find_label("pw_diag_rr_step", readinput.input_lists);
+        const Input_para defaults;
+        EXPECT_EQ(defaults.pw_diag_rr_step, 1);
+        EXPECT_EQ(it->second.default_value, "1");
         TestParameters::input(param).pw_diag_rr_step = 1;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+
+        TestParameters::input(param).pw_diag_rr_step = 16;
         EXPECT_NO_THROW(it->second.check_value(it->second, param));
 
         TestParameters::input(param).pw_diag_rr_step = 0;
