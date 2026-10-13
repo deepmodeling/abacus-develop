@@ -7,6 +7,8 @@
 #include "source_cell/cal_ux.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
+#include <vector>
+
 namespace ModuleESolver
 {
 
@@ -122,12 +124,11 @@ void ESolver_OF::allocate_array()
  */
 void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& ucell)
 {
-    double** dEdtemp_phi = new double*[this->inp_->nspin];
-    double** temp_phi = new double*[this->inp_->nspin];
+    std::vector<double> dEdtemp_phi(this->pw_rho->nrxx);
+    std::vector<double*> temp_phi(this->inp_->nspin);
 
     for (int is = 0; is < this->inp_->nspin; ++is)
     {
-        dEdtemp_phi[is] = new double[this->pw_rho->nrxx];
         if (is == this->tn_spin_flag_)
         {
             temp_phi[is] = ptemp_phi;
@@ -147,24 +148,18 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& uce
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_eff_v();
 
     this->kedf_manager_->get_potential(this->ptemp_rho_->rho,
-                                       temp_phi,
+                                       temp_phi.data(),
                                        this->pw_rho,
                                        vr_eff); // KEDF potential
     for (int i = 0; i < this->pw_rho->nrxx; ++i)
     {
-        dEdtemp_phi[this->tn_spin_flag_][i] = vr_eff(this->tn_spin_flag_, i);
+        dEdtemp_phi[i] = vr_eff(this->tn_spin_flag_, i);
     }
-    double temp_mu = this->cal_mu(ptemp_phi, dEdtemp_phi[this->tn_spin_flag_], this->nelec_[this->tn_spin_flag_]);
+    double temp_mu = this->cal_mu(ptemp_phi, dEdtemp_phi.data(), this->nelec_[this->tn_spin_flag_]);
     for (int i = 0; i < this->pw_rho->nrxx; ++i)
     {
-        rdLdphi[i] = dEdtemp_phi[this->tn_spin_flag_][i] - 2. * temp_mu * ptemp_phi[i];
+        rdLdphi[i] = dEdtemp_phi[i] - 2. * temp_mu * ptemp_phi[i];
     }
-    for (int is = 0; is < this->inp_->nspin; ++is)
-    {
-        delete[] dEdtemp_phi[is];
-    }
-    delete[] dEdtemp_phi;
-    delete[] temp_phi;
 }
 
 /**
@@ -180,7 +175,7 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& uce
  */
 void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta)
 {
-    double* dphi_dtheta = new double[this->pw_rho->nrxx];
+    std::vector<double> dphi_dtheta(this->pw_rho->nrxx);
 
     unitcell::cal_ux(ucell, this->inp_->nspin);
     this->pelec->pot->update_from_charge(temp_rho, &ucell);
@@ -197,10 +192,9 @@ void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& uc
             this->pdEdphi_[is][ir] = vr_eff(is, ir);
             dphi_dtheta[ir] = -this->pphi_[is][ir] * sin(ptheta[is]) + this->pdirect_[is][ir] * cos(ptheta[is]);
         }
-        rdEdtheta[is] = this->inner_product(this->pdEdphi_[is], dphi_dtheta, this->pw_rho->nrxx, this->dV_);
+        rdEdtheta[is] = this->inner_product(this->pdEdphi_[is], dphi_dtheta.data(), this->pw_rho->nrxx, this->dV_);
         Parallel_Reduce::reduce_all(rdEdtheta[is]);
     }
-    delete[] dphi_dtheta;
 }
 
 /**
@@ -308,11 +302,10 @@ void ESolver_OF::adjust_direction(void)
 void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
 {
     assert(this->inp_->nspin > 0);
-    double* temp_theta = new double[this->inp_->nspin];
-    ModuleBase::GlobalFunc::ZEROS(temp_theta, this->inp_->nspin);
+    std::vector<double> temp_theta(this->inp_->nspin, 0.0);
 
     double max_dEdtheta = 1e5; // threshould of dEdtheta, avoid the unstable optimization
-    this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta, dEdtheta);
+    this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta.data(), dEdtheta);
 
     // Assert dEdtheta(theta = 0) < 0, otherwise line search will not work.
     for (int is = 0; is < this->inp_->nspin; ++is)
@@ -331,7 +324,7 @@ void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell&
                 this->pdirect_[is][ir] = -this->pdLdphi_[is][ir];
             }
             this->adjust_direction();
-            this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta, dEdtheta);
+            this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta.data(), dEdtheta);
             if (dEdtheta[is] > max_dEdtheta)
             {
                 std::cout << "dEdtheta    " << dEdtheta[is] << std::endl;
@@ -346,7 +339,6 @@ void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell&
             }
         }
     }
-    delete[] temp_theta;
 }
 
 /**

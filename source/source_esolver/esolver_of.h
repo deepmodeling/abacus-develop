@@ -2,6 +2,7 @@
 #define ESOLVER_OF_H
 
 #include <string>
+#include <vector>
 
 #include "esolver_fp.h"
 #include "source_base/opt_dcsrch.h"

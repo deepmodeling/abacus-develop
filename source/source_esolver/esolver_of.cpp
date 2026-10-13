@@ -1,5 +1,7 @@
 #include "esolver_of.h"
 
+#include <cstddef>
+
 #include "source_io/module_parameter/parameter.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
@@ -350,10 +352,12 @@ void ESolver_OF::optimize(UnitCell& ucell)
     // (1) get |d0> with optimization algorithm
     this->get_direction(ucell);
     // initialize temp_phi and temp_rho used in line search
-    double** ptemp_phi = new double*[this->inp_->nspin];
+    std::vector<double> ptemp_phi_storage(static_cast<std::size_t>(this->inp_->nspin)
+                                          * static_cast<std::size_t>(this->pw_rho->nrxx));
+    std::vector<double*> ptemp_phi(this->inp_->nspin);
     for (int is = 0; is < this->inp_->nspin; ++is)
     {
-        ptemp_phi[is] = new double[this->pw_rho->nrxx];
+        ptemp_phi[is] = ptemp_phi_storage.data() + static_cast<std::size_t>(is) * this->pw_rho->nrxx;
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
             ptemp_phi[is][ir] = this->pphi_[is][ir];
@@ -365,21 +369,13 @@ void ESolver_OF::optimize(UnitCell& ucell)
     this->adjust_direction();
 
     // (3) make sure that dEdtheta<0 at theta = 0
-    double* dEdtheta = new double[this->inp_->nspin]; // dE/dtheta of tempPhi
-    ModuleBase::GlobalFunc::ZEROS(dEdtheta, this->inp_->nspin);
+    std::vector<double> dEdtheta(this->inp_->nspin, 0.0); // dE/dtheta of tempPhi
 
-    this->check_direction(dEdtheta, ptemp_phi, ucell);
+    this->check_direction(dEdtheta.data(), ptemp_phi.data(), ucell);
     // this->test_direction(dEdtheta, ptemp_phi, ucell);
 
     // (4) call line search to find the best theta (step length)
-    this->get_step_length(dEdtheta, ptemp_phi, ucell);
-
-    for (int is = 0; is < this->inp_->nspin; ++is)
-    {
-        delete[] ptemp_phi[is];
-    }
-    delete[] ptemp_phi;
-    delete[] dEdtheta;
+    this->get_step_length(dEdtheta.data(), ptemp_phi.data(), ucell);
 }
 
 /**
