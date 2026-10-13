@@ -38,7 +38,6 @@ gamma_only        0
 ecutwfc           20
 scf_nmax          50
 scf_thr           1e-6
-ks_solver         scalapack_gvx
 
 
 # charge mixing

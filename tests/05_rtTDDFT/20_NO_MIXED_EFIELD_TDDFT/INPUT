@@ -12,7 +12,6 @@ ecutwfc           20
 
 scf_nmax          50
 scf_thr           1.0e-6
-ks_solver         scalapack_gvx
 mixing_type       broyden
 mixing_beta       0.7
 mixing_gg0        0.0
