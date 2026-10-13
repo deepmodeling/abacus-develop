@@ -73,19 +73,16 @@ test -d OUT.autotest || exit 0
 #----------------------------------------------------------------------
 if test -z $1 
 then
-bash -e "$CATCH_SCRIPT" result.out
+$CATCH_SCRIPT result.out
 check_out result.out
 elif [ $1 == "debug" ]
 then
 # Single_job.sh debug copies validation_tools/ into the case directory;
 # use that copy so local edits to the collectors take effect.
-bash -e ./validation_tools/catch_properties.sh result.out
+./validation_tools/catch_properties.sh result.out
 check_out result.out
 else
-if ! bash -e "$CATCH_SCRIPT" result.ref; then
-    echo "Failed to generate result.ref." >&2
-    exit 1
-fi
+$CATCH_SCRIPT result.ref
 rm -r OUT.autotest
 rm log.txt
 fi

@@ -7,24 +7,7 @@
 # one-time INPUT switch parsing) and then runs each property block below.
 PROPS_SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$PROPS_SCRIPT_DIR/props_common.sh"
-props_result_file=$1
-props_reference_mode=0
-case "$props_result_file" in
-    result.ref|*/result.ref)
-        props_reference_mode=1
-        cleanup_failed_reference(){
-            reference_status=$?
-            trap - EXIT
-            if [ "$reference_status" -ne 0 ]; then
-                rm -f "$props_result_file"
-            fi
-            exit "$reference_status"
-        }
-        trap cleanup_failed_reference EXIT
-        set -e
-        ;;
-esac
-props_init "$props_result_file"
+props_init "$1"
 source "$PROPS_SCRIPT_DIR/props_basic.sh"
 source "$PROPS_SCRIPT_DIR/props_mat.sh"
 source "$PROPS_SCRIPT_DIR/props_cube.sh"
@@ -89,14 +72,8 @@ run_ml_rpa_props
 # Before the split this block ran as a separate `bash` process without -e,
 # so a failing helper (get_sum_*.py, a missing deepks_desc.dat) left an
 # empty value for the threshold check instead of aborting the collection.
-# Keep that behavior for result.out. Reference generation instead inherits the
-# entry point's errexit mode, so an early failure cannot be hidden by a later
-# successful command in the collector.
-if [ "$props_reference_mode" -eq 1 ]; then
-    run_deepks_props
-else
-    ( set +e; run_deepks_props ) || true
-fi
+# Keep that behavior with a subshell that disables errexit.
+( set +e; run_deepks_props )
 
 #--------------------------------------------
 # basic collectors that run after deepks: symmetry

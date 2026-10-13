@@ -14,8 +14,8 @@ run_tddft_props(){
 if ! test -z "$out_current" && [ $out_current ]; then
 	current1ref=current_tot.txt.ref
 	current1cal=OUT.autotest/current_tot.txt
-	record_compare_result "$props_result_file" "CompareCurrent_pass" \
-		"$current1ref" "$current1cal" 10
+	python3 $COMPARE_SCRIPT $current1ref $current1cal 10
+	echo "CompareCurrent_pass $?" >>$props_result_file
 fi
 
 #--------------------------------------------
@@ -24,7 +24,7 @@ fi
 if ! test -z "$out_efield" && [ "$out_efield" == 1 ]; then
 	efield_refs=(efield_*.txt.ref)
 	if [ ! -e "${efield_refs[0]}" ]; then
-		record_compare_status "$props_result_file" "CompareEfieldReference_pass" 1
+		echo "CompareEfieldReference_pass 1" >>$props_result_file
 	else
 		for efield_ref in "${efield_refs[@]}"; do
 			efield_name=${efield_ref%.ref}

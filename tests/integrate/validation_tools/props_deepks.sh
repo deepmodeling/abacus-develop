@@ -177,11 +177,15 @@ if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
     fi
 
     # For deepks_v_delta < 0
+    # CompareFile.py exits 1 when the files differ; capture the status in a
+    # named variable so it is recorded even when sourced under `bash -e`.
     if ! test -z "$deepks_v_delta" && [ $deepks_v_delta -lt 0 ]; then
-        record_compare_result "$props_result_file" "deepks_hr_label_pass" \
-            "deepks_hrtot.csr.ref" "OUT.autotest/deepks_hrtot.csr" 8
-        record_compare_result "$props_result_file" "deepks_vdelta_r_pass" \
-            "deepks_hrdelta.csr.ref" "OUT.autotest/deepks_hrdelta.csr" 8
+        hr_pass=0
+        python3 $COMPARE_SCRIPT "deepks_hrtot.csr.ref" "OUT.autotest/deepks_hrtot.csr" 8 || hr_pass=$?
+        echo "deepks_hr_label_pass $hr_pass" >>$props_result_file
+        hrdelta_pass=0
+        python3 $COMPARE_SCRIPT "deepks_hrdelta.csr.ref" "OUT.autotest/deepks_hrdelta.csr" 8 || hrdelta_pass=$?
+        echo "deepks_vdelta_r_pass $hrdelta_pass" >>$props_result_file
         # For deepks_v_delta = -1
         if [ $deepks_v_delta -eq -1 ]; then
             process_npy "single" "abs" "vdrpre" "" "deepks_vdrp" "$props_result_file"
