@@ -16,8 +16,8 @@ namespace hsolver {
 //
 // Implements the block-subspace diagonalization strategy used by
 // ks_solver=ppcg. The solver updates groups of active Ritz pairs in a bounded
-// local subspace and periodically refreshes their Hamiltonian and overlap
-// images with a global Rayleigh-Ritz step.
+// local subspace with configurable global Rayleigh-Ritz steps. Operator images
+// are cached, with independent periodic and cancellation-triggered refreshes.
 // -----------------------------------------------------------------------------
 
 namespace base_device = ::base_device;
@@ -100,6 +100,7 @@ public:
     }
 
 private:
+    friend class DiagoPPCGProjectionTest;
     // -------------------------------------------------------------------------
     // Data members
     // -------------------------------------------------------------------------
@@ -175,6 +176,10 @@ private:
                          const std::vector<int>& basis_cols,
                          std::vector<T>& x, std::vector<T>& sx, std::vector<T>* hx,
                          const std::vector<int>& x_cols) const;
+
+    void project_search_directions(const HPsiFunc& hpsi_func, const T* psi,
+                                    const std::vector<int>& all_cols,
+                                    const std::vector<int>& active_cols);
 
     // x[c] /= max(prec, eps)  for each active column c.
     void divide_by_preconditioner(const std::vector<int>& active_cols,
@@ -264,6 +269,8 @@ private:
     bool rayleigh_ritz(T* psi, Real* eigenvalue,
                        std::vector<int>& active_cols,
                        const std::vector<double>& ethr_band);
+
+    void compute_eigenpair_residual(const Real* eigenvalue);
 
     bool orthonormalize(T* psi);
 

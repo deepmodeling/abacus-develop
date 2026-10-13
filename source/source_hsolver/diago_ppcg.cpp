@@ -550,6 +550,71 @@ void DiagoPPCG<T, Device>::project_against(
 }
 
 // =============================================================================
+// Project P and refresh its operator images when subtraction loses precision.
+// =============================================================================
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::project_search_directions(
+    const HPsiFunc& hpsi_func,
+    const T* psi,
+    const std::vector<int>& all_cols,
+    const std::vector<int>& active_cols)
+{
+    const PPCGFunctionTimer timer("project_search_directions");
+    const int nactive = int(active_cols.size());
+    std::vector<double> norms(2 * nactive, 0.0);
+    for (int j = 0; j < nactive; ++j)
+    {
+        const int column = active_cols[j];
+        for (int i = 0; i < n_dim_; ++i)
+        {
+            norms[j] += std::norm(p_[idx(i, column, ld_psi_)]);
+        }
+    }
+    project_against(psi, spsi_.data(), hpsi_.data(), all_cols, p_, sp_, &hp_, active_cols);
+    for (int j = 0; j < nactive; ++j)
+    {
+        const int column = active_cols[j];
+        for (int i = 0; i < n_dim_; ++i)
+        {
+            norms[nactive + j] += std::norm(p_[idx(i, column, ld_psi_)]);
+        }
+    }
+    const int norm_count = int(norms.size());
+    reduce_pool_values(norms.data(), norm_count);
+    std::vector<int> refresh_cols;
+    for (int j = 0; j < nactive; ++j)
+    {
+        if (norms[j] == 0.0 || norms[nactive + j] == 0.0)
+        {
+            const int offset = active_cols[j] * ld_psi_;
+            std::fill(p_.begin() + offset, p_.begin() + offset + ld_psi_, T(0));
+            std::fill(sp_.begin() + offset, sp_.begin() + offset + ld_psi_, T(0));
+            std::fill(hp_.begin() + offset, hp_.begin() + offset + ld_psi_, T(0));
+            continue;
+        }
+        // A strongly reduced P suffers cancellation in HP-HX*C and SP-SX*C.
+        // Normalizing that tiny P would amplify the absolute image error.
+        // Refresh only these columns; reduction gives every rank one selection.
+        if (norms[nactive + j] < 0.5 * norms[j])
+        {
+            refresh_cols.push_back(active_cols[j]);
+        }
+    }
+    if (!refresh_cols.empty())
+    {
+        std::vector<T> projected;
+        copy_cols(p_.data(), refresh_cols, projected);
+        std::vector<T> hprojected(projected.size(), T(0));
+        std::vector<T> sprojected(projected.size(), T(0));
+        const int refresh_count = int(refresh_cols.size());
+        apply_h(hpsi_func, projected.data(), hprojected.data(), refresh_count);
+        apply_s_current(projected.data(), sprojected.data(), refresh_count);
+        scatter_cols(hp_.data(), refresh_cols, hprojected);
+        scatter_cols(sp_.data(), refresh_cols, sprojected);
+    }
+}
+
+// =============================================================================
 // Preconditioner: x[c] /= max(prec, eps) for each active column c
 // =============================================================================
 template <typename T, typename Device>
@@ -1404,19 +1469,7 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
         }
     }
 
-    // Compute residual: w_i = H|psi_i> - eps_i * S|psi_i>
-    set_zero(w_);
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
-#endif
-    for (int j = 0; j < n_band_; ++j)
-    {
-        for (int ig = 0; ig < n_dim_; ++ig)
-        {
-            w_[idx(ig, j, ld_psi_)] = hpsi_[idx(ig, j, ld_psi_)]
-                                    - spsi_[idx(ig, j, ld_psi_)] * eigenvalue[j];
-        }
-    }
+    compute_eigenpair_residual(eigenvalue);
 
     if (sygvd_ok)
     {
@@ -1437,6 +1490,24 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
                                                 n_band_);
     }
     return sygvd_ok;
+}
+
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::compute_eigenpair_residual(const Real* eigenvalue)
+{
+    const PPCGFunctionTimer timer("compute_eigenpair_residual");
+    set_zero(w_);
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
+#endif
+    for (int j = 0; j < n_band_; ++j)
+    {
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            w_[idx(ig, j, ld_psi_)] = hpsi_[idx(ig, j, ld_psi_)]
+                                    - spsi_[idx(ig, j, ld_psi_)] * eigenvalue[j];
+        }
+    }
 }
 
 template <typename T, typename Device>
@@ -1704,6 +1775,34 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     while (!active_cols.empty() && iter <= maxiter_)
     {
+        // Near the floating-point cancellation scale, form a reliable
+        // residual before using it as a new search direction. This safeguard
+        // also covers cancellation in the W/P recurrence, not only in the
+        // explicit projection of P. The final fresh residual remains the
+        // convergence certificate; this scale is not an error bound.
+        Real spectral_scale = Real(1);
+        for (int ib = 0; ib < ncol; ++ib)
+        {
+            spectral_scale = std::max(spectral_scale, std::abs(eigenvalue_in[ib]));
+        }
+        const Real reliable_update_threshold = std::sqrt(std::numeric_limits<Real>::epsilon())
+                                               * spectral_scale;
+        const bool near_precision = max_residual_ <= reliable_update_threshold;
+        if (near_precision)
+        {
+            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+            apply_s_current(psi_in, spsi_.data(), ncol);
+            apply_h(hpsi_func, p_.data(), hp_.data(), ncol);
+            apply_s_current(p_.data(), sp_.data(), ncol);
+            if (last_rr_succeeded)
+            {
+                compute_eigenpair_residual(eigenvalue_in);
+            }
+            else
+            {
+                update_block_gradient(psi_in, eigenvalue_in, ethr_band);
+            }
+        }
         local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
         local_overlap_max = std::numeric_limits<Real>::quiet_NaN();
         local_overlap_condition = std::numeric_limits<Real>::quiet_NaN();
@@ -1732,10 +1831,11 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         scatter_cols(hw_.data(), active_cols, h_active_vector);
 
         // Project the cached P, SP and HP together. Linearity preserves their
-        // consistency without another expensive Hamiltonian/overlap application.
+        // consistency without another Hamiltonian/overlap application except
+        // when strong cancellation requires a fresh image of selected columns.
         if (use_p)
         {
-            project_against(psi_in, spsi_.data(), hpsi_.data(), all_cols, p_, sp_, &hp_, active_cols);
+            project_search_directions(hpsi_func, psi_in, all_cols, active_cols);
         }
 
         avg_iter += double(nact) / double(ncol);
@@ -1798,7 +1898,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // Intermediate sweeps maintain S-orthonormality without diagonalizing
         // the full projected Hamiltonian.
         const bool scheduled_rr = (iter % rr_step_) == 0;
-        const bool refresh_operators = (iter % ppcg_operator_refresh_interval) == 0;
+        const bool refresh_operators = (iter % ppcg_operator_refresh_interval) == 0
+                                       && !near_precision;
         if (refresh_operators)
         {
             apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
@@ -1822,6 +1923,23 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         {
             last_rr_succeeded = rayleigh_ritz(
                 psi_in, eigenvalue_in, active_cols, ethr_band);
+            if (last_rr_succeeded && active_cols.empty())
+            {
+                // A small cached residual is only tentative. Refresh the
+                // operator images before stopping, and keep iterating if
+                // roundoff had made the cached criterion overly optimistic.
+                apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+                apply_s_current(psi_in, spsi_.data(), ncol);
+                compute_eigenpair_residual(eigenvalue_in);
+                lock_epairs(w_, ethr_band, active_cols);
+                if (!active_cols.empty())
+                {
+                    set_zero(p_);
+                    set_zero(sp_);
+                    set_zero(hp_);
+                    use_p = false;
+                }
+            }
         }
         // Restart the search direction if the residual keeps rising.  With a
         // poor preconditioner the LOBPCG recurrence can stagnate (or slowly
@@ -1860,18 +1978,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     // cached Rayleigh-Ritz state.
     apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
     apply_s_current(psi_in, spsi_.data(), ncol);
-    set_zero(w_);
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
-#endif
-    for (int j = 0; j < n_band_; ++j)
-    {
-        for (int ig = 0; ig < n_dim_; ++ig)
-        {
-            w_[idx(ig, j, ld_psi_)] = hpsi_[idx(ig, j, ld_psi_)]
-                                      - spsi_[idx(ig, j, ld_psi_)] * eigenvalue_in[j];
-        }
-    }
+    compute_eigenpair_residual(eigenvalue_in);
     if (last_rr_succeeded)
     {
         lock_epairs(w_, ethr_band, active_cols);

@@ -58,6 +58,120 @@ static void dense_h_multiply(const T* H_data, int n_dim, const T* in, T* out, in
     }
 }
 
+namespace hsolver
+{
+
+// Narrow friend access exercises cancellation in the projection helper without
+// relying on a particular sequence of LAPACK rotations in an end-to-end solve.
+class DiagoPPCGProjectionTest : public ::testing::Test
+{
+protected:
+    void check_projection(const bool nearly_parallel, const bool zero_direction)
+    {
+        const int dimension = 2;
+        const int bands = 1;
+        const std::vector<Real> h_diagonal = {1.0, 1000.0};
+        const std::vector<Real> s_diagonal = {1.0, 3.0};
+        const std::vector<T> x = {T(0.5), T(0.5)};
+        const double scale = 1.0 / std::sqrt(12.0);
+        const std::vector<T> z = {T(3.0 * scale), T(-scale)};
+        DiagoPPCG<T, base_device::DEVICE_CPU> solver(1.0e-12, 20, bands, 1);
+        solver.ld_psi_ = dimension;
+        solver.n_dim_ = dimension;
+        solver.n_band_ = bands;
+        solver.hpsi_.resize(dimension);
+        solver.spsi_.resize(dimension);
+        solver.p_.resize(dimension);
+        solver.hp_.resize(dimension);
+        solver.sp_.resize(dimension);
+        for (int i = 0; i < dimension; ++i)
+        {
+            solver.hpsi_[i] = h_diagonal[i] * x[i];
+            solver.spsi_[i] = s_diagonal[i] * x[i];
+            solver.p_[i] = z[i];
+            if (nearly_parallel)
+            {
+                solver.p_[i] = x[i] + 1.0e-10 * z[i];
+            }
+            solver.hp_[i] = h_diagonal[i] * solver.p_[i];
+            solver.sp_[i] = s_diagonal[i] * solver.p_[i];
+            if (zero_direction)
+            {
+                solver.p_[i] = T(0);
+                solver.hp_[i] = T(1.0e-15);
+                solver.sp_[i] = T(1.0e-15);
+            }
+        }
+        int h_calls = 0;
+        int s_calls = 0;
+        const auto h_op = [&h_calls, &h_diagonal, dimension](T* in, T* out, int ld, int ncol) {
+            ++h_calls;
+            for (int j = 0; j < ncol; ++j)
+            {
+                for (int i = 0; i < dimension; ++i)
+                {
+                    out[i + j * ld] = h_diagonal[i] * in[i + j * ld];
+                }
+            }
+        };
+        solver.spsi_func_ = [&s_calls, &s_diagonal, dimension](T* in, T* out, int ld, int ncol) {
+            ++s_calls;
+            for (int j = 0; j < ncol; ++j)
+            {
+                for (int i = 0; i < dimension; ++i)
+                {
+                    out[i + j * ld] = s_diagonal[i] * in[i + j * ld];
+                }
+            }
+        };
+        const std::vector<int> columns = {0};
+        solver.project_search_directions(h_op, x.data(), columns, columns);
+        double direction_norm_squared = 0.0;
+        double h_error_squared = 0.0;
+        double s_error_squared = 0.0;
+        for (int i = 0; i < dimension; ++i)
+        {
+            direction_norm_squared += std::norm(solver.p_[i]);
+            h_error_squared += std::norm(solver.hp_[i] - h_diagonal[i] * solver.p_[i]);
+            s_error_squared += std::norm(solver.sp_[i] - s_diagonal[i] * solver.p_[i]);
+        }
+        if (zero_direction)
+        {
+            EXPECT_DOUBLE_EQ(direction_norm_squared, 0.0);
+            EXPECT_DOUBLE_EQ(h_error_squared, 0.0);
+            EXPECT_DOUBLE_EQ(s_error_squared, 0.0);
+            EXPECT_EQ(h_calls, 0);
+            EXPECT_EQ(s_calls, 0);
+            return;
+        }
+        ASSERT_GT(direction_norm_squared, 0.0);
+        const double h_error = std::sqrt(h_error_squared / direction_norm_squared);
+        const double s_error = std::sqrt(s_error_squared / direction_norm_squared);
+        EXPECT_LT(h_error, 1.0e-12);
+        EXPECT_LT(s_error, 1.0e-12);
+        const int expected_calls = nearly_parallel ? 1 : 0;
+        EXPECT_EQ(h_calls, expected_calls);
+        EXPECT_EQ(s_calls, expected_calls);
+    }
+};
+
+TEST_F(DiagoPPCGProjectionTest, RefreshesImagesAfterSevereProjectionCancellation)
+{
+    check_projection(true, false);
+}
+
+TEST_F(DiagoPPCGProjectionTest, ReusesImagesForWellSeparatedDirection)
+{
+    check_projection(false, false);
+}
+
+TEST_F(DiagoPPCGProjectionTest, ClearsStaleImagesForZeroDirection)
+{
+    check_projection(false, true);
+}
+
+} // namespace hsolver
+
 // =============================================================================
 // Test fixture: 1D particle-in-a-box (tridiagonal Laplacian)
 // =============================================================================
@@ -221,10 +335,11 @@ TEST_F(DiagoPPCGTridiagTest, ReusesProjectedOperatorImages)
                 psi_run.data(), eval.data(), strict_ethr, prec.data());
 
     ASSERT_TRUE(solver.iteration_limit_reached());
-    // Initial/final X applications plus one W application per sweep. P and
-    // projected SW must be updated algebraically, including when S is not I.
-    EXPECT_EQ(h_calls, 4);
-    EXPECT_EQ(s_calls, 4);
+    // Initial/final X applications, one W application per sweep, and one
+    // cancellation-triggered P refresh. No unconditional HP or projected SW
+    // recomputation is needed, including when S is not I.
+    EXPECT_EQ(h_calls, 5);
+    EXPECT_EQ(s_calls, 5);
     double max_residual = 0.0;
     for (int j = 0; j < nband; ++j)
     {
@@ -242,6 +357,45 @@ TEST_F(DiagoPPCGTridiagTest, ReusesProjectedOperatorImages)
         max_residual = std::max(max_residual, std::sqrt(residual_squared));
     }
     EXPECT_NEAR(solver.max_residual(), max_residual, 1.0e-13);
+}
+
+TEST(DiagoPPCGReliableUpdateTest, RefreshesBeforeUsingNearPrecisionResidual)
+{
+    const int dimension = 2;
+    const std::vector<Real> prec(dimension, 1.0);
+    const std::vector<double> thresholds(1, 1.0e-14);
+    const double perturbations[] = {1.0e-5, 1.0e-10};
+    for (const double perturbation : perturbations)
+    {
+        SCOPED_TRACE(perturbation);
+        const double normalization = std::sqrt(1.0 + perturbation * perturbation);
+        std::vector<T> psi = {T(1.0 / normalization), T(perturbation / normalization)};
+        std::vector<Real> eigenvalues(1, 0.0);
+        int h_calls = 0;
+        const auto h_op = [&h_calls](T* in, T* out, int ld, int ncol) {
+            ++h_calls;
+            for (int j = 0; j < ncol; ++j)
+            {
+                out[j * ld] = in[j * ld];
+                out[1 + j * ld] = 3.0 * in[1 + j * ld];
+            }
+        };
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+            1.0e-14, 1, 1, 1);
+        solver.diag(h_op, nullptr, dimension, 1, dimension,
+                    psi.data(), eigenvalues.data(), thresholds, prec.data());
+        EXPECT_TRUE(solver.converged());
+        EXPECT_LT(solver.max_residual(), 1.0e-14);
+        EXPECT_NEAR(eigenvalues[0], 1.0, 1.0e-14);
+        const T residual0 = (1.0 - eigenvalues[0]) * psi[0];
+        const T residual1 = (3.0 - eigenvalues[0]) * psi[1];
+        const double residual = std::sqrt(std::norm(residual0) + std::norm(residual1));
+        EXPECT_LT(residual, 1.0e-14);
+        // Initial X, W, tentative-convergence validation, and final validation.
+        // Only the near-precision solve adds a reliable X/P refresh before W.
+        const int expected_calls = perturbation < 1.0e-8 ? 6 : 4;
+        EXPECT_EQ(h_calls, expected_calls);
+    }
 }
 
 TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
@@ -264,7 +418,8 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
         int sweeps;
         int interval;
     };
-    // Ten sweeps need no refresh; eighteen exercise the fixed refresh at 16.
+    // Ten sweeps need no periodic refresh; eighteen exercise the one at 16.
+    // Each configuration additionally encounters one projection cancellation.
     const Configuration configurations[] = {{10, 1}, {10, 4}, {10, 16},
                                              {18, 1}, {18, 4}, {18, 16}};
     for (const Configuration& configuration : configurations)
@@ -305,7 +460,9 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
         const int startup_extra = interval == 1 ? 0 : 1;
         const int expected_ritz = 1 + scheduled + final_extra + startup_extra;
         const int operator_refreshes = sweeps / 16;
-        const int expected_applications = 2 + sweeps + 2 * operator_refreshes;
+        const int cancellation_refreshes = 1;
+        const int expected_applications = 2 + sweeps + 2 * operator_refreshes
+                                          + cancellation_refreshes;
         EXPECT_EQ(solver.rayleigh_ritz_count(), expected_ritz);
         EXPECT_EQ(applications, expected_applications);
         EXPECT_TRUE(std::is_sorted(eigenvalues.begin(), eigenvalues.end()));
