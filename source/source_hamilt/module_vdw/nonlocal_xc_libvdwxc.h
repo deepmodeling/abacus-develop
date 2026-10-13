@@ -11,6 +11,11 @@
 // C++ templates with C linkage.
 #include <complex.h>
 #include <vdwxc.h>
+// complex.h defines I as a macro; it collides with template identifiers in
+// GoogleTest and other C++ headers, but is not needed after vdwxc.h parsing.
+#ifdef I
+#undef I
+#endif
 #endif
 
 namespace vdw

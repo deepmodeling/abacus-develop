@@ -3,9 +3,6 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
-#include <complex.h>
-#include <vdwxc.h>
-
 #include <cmath>
 #include <complex>
 #include <gtest/gtest.h>
