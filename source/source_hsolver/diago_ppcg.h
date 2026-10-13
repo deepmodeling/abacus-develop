@@ -37,6 +37,8 @@ public:
 
     // -------------------------------------------------------------------------
     // Constructor
+    // rr_step is the explicit Ritz interval; PW INPUT defaults are supplied by
+    // the caller. The internal H/S cache-refresh interval is independent of it.
     // -------------------------------------------------------------------------
     DiagoPPCG(const Real& diag_thr,
               const int& diag_iter_max,

@@ -23,6 +23,9 @@ const double ppcg_preconditioner_threshold = 1.0e-12;
 const double ppcg_numerical_threshold = 1.0e-30;
 const double ppcg_scaling_threshold = 1.0e-15;
 const int ppcg_stagnation_restart_interval = 15;
+// Operator images are transformed with their vectors. Refresh their accumulated
+// roundoff independently of the user-selected Ritz diagonalization interval.
+const int ppcg_operator_refresh_interval = 16;
 // Relative cutoff for overlap eigenvalues in a local [X, W, P] subspace.
 // Directions below this level are numerically dependent; retaining them can
 // make the reduced generalized solve stagnate instead of improving a Ritz pair.
@@ -1790,11 +1793,13 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         }
         use_p = true;
 
-        // Refresh operator caches on the same cadence as the full Ritz solve.
+        // Refresh cached images independently of the full Ritz cadence, so
+        // rr_step=1 does not add two full H/S applications on every sweep.
         // Intermediate sweeps maintain S-orthonormality without diagonalizing
         // the full projected Hamiltonian.
         const bool scheduled_rr = (iter % rr_step_) == 0;
-        if (scheduled_rr)
+        const bool refresh_operators = (iter % ppcg_operator_refresh_interval) == 0;
+        if (refresh_operators)
         {
             apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
             apply_s_current(psi_in, spsi_.data(), ncol);

@@ -248,7 +248,6 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
 {
     const int dimension = 48;
     const int bands = 8;
-    const int sweeps = 10;
     std::mt19937 random(184);
     std::uniform_real_distribution<double> uniform(-1.0, 1.0);
     std::vector<T> initial(dimension * bands);
@@ -260,9 +259,19 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
     }
     const std::vector<Real> prec(dimension, 2.0);
     const std::vector<double> thresholds(bands, 1.0e-14);
-    const int intervals[] = {1, 4, 16};
-    for (const int interval : intervals)
+    struct Configuration
     {
+        int sweeps;
+        int interval;
+    };
+    // Ten sweeps need no refresh; eighteen exercise the fixed refresh at 16.
+    const Configuration configurations[] = {{10, 1}, {10, 4}, {10, 16},
+                                             {18, 1}, {18, 4}, {18, 16}};
+    for (const Configuration& configuration : configurations)
+    {
+        const int sweeps = configuration.sweeps;
+        const int interval = configuration.interval;
+        SCOPED_TRACE(sweeps);
         SCOPED_TRACE(interval);
         std::vector<T> psi = initial;
         std::vector<Real> eigenvalues(bands, 0.0);
@@ -295,7 +304,8 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
         const int final_extra = sweeps % interval == 0 ? 0 : 1;
         const int startup_extra = interval == 1 ? 0 : 1;
         const int expected_ritz = 1 + scheduled + final_extra + startup_extra;
-        const int expected_applications = 2 + sweeps + 2 * scheduled;
+        const int operator_refreshes = sweeps / 16;
+        const int expected_applications = 2 + sweeps + 2 * operator_refreshes;
         EXPECT_EQ(solver.rayleigh_ritz_count(), expected_ritz);
         EXPECT_EQ(applications, expected_applications);
         EXPECT_TRUE(std::is_sorted(eigenvalues.begin(), eigenvalues.end()));
