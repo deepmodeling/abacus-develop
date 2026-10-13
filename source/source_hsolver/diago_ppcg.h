@@ -159,9 +159,9 @@ private:
                       const std::vector<T>& src) const;
 
     // Project x onto vectors orthogonal to the S-orthonormal basis.
-    void project_against(const T* basis, const T* sbasis,
+    void project_against(const T* basis, const T* sbasis, const T* hbasis,
                          const std::vector<int>& basis_cols,
-                         std::vector<T>& x, std::vector<T>& sx,
+                         std::vector<T>& x, std::vector<T>& sx, std::vector<T>* hx,
                          const std::vector<int>& x_cols) const;
 
     // x[c] /= max(prec, eps)  for each active column c.

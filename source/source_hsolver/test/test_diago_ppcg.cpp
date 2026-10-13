@@ -192,6 +192,55 @@ TEST_F(DiagoPPCGTridiagTest, ReportsIterationLimit)
     EXPECT_GT(solver.max_residual(), Real(1.0e-14));
 }
 
+TEST_F(DiagoPPCGTridiagTest, ReusesProjectedOperatorImages)
+{
+    std::vector<T> psi_run = psi;
+    std::vector<Real> eval(nband, 0.0);
+    const std::vector<double> strict_ethr(nband, 1.0e-14);
+    int h_calls = 0;
+    int s_calls = 0;
+    const auto h_op = [this, &h_calls](T* in, T* out, int ld_in, int ncol) {
+        ++h_calls;
+        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+    const auto s_op = [this, &s_calls](T* in, T* out, int ld_in, int ncol) {
+        ++s_calls;
+        for (int j = 0; j < ncol; ++j)
+        {
+            for (int i = 0; i < n_dim; ++i)
+            {
+                out[i + j * ld_in] = (1.0 + 0.1 * i) * in[i + j * ld_in];
+            }
+        }
+    };
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1.0e-14, 2, 3, 16);
+    solver.diag(h_op, s_op, ld, nband, n_dim,
+                psi_run.data(), eval.data(), strict_ethr, prec.data());
+
+    ASSERT_TRUE(solver.iteration_limit_reached());
+    // Initial/final X applications plus one W application per sweep. P and
+    // projected SW must be updated algebraically, including when S is not I.
+    EXPECT_EQ(h_calls, 4);
+    EXPECT_EQ(s_calls, 4);
+    double max_residual = 0.0;
+    for (int j = 0; j < nband; ++j)
+    {
+        double residual_squared = 0.0;
+        for (int i = 0; i < n_dim; ++i)
+        {
+            T hpsi = T(0);
+            for (int k = 0; k < n_dim; ++k)
+            {
+                hpsi += H_mat[i + k * n_dim] * psi_run[k + j * ld];
+            }
+            const T spsi = (1.0 + 0.1 * i) * psi_run[i + j * ld];
+            residual_squared += std::norm(hpsi - eval[j] * spsi);
+        }
+        max_residual = std::max(max_residual, std::sqrt(residual_squared));
+    }
+    EXPECT_NEAR(solver.max_residual(), max_residual, 1.0e-13);
+}
+
 TEST(DiagoPPCGStatusTest, ReportsActiveTailStart)
 {
     const int n_dim = 4;

@@ -1,5 +1,6 @@
 #include "diago_ppcg.h"
 #include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
 #include <algorithm>
 #include <cmath>
 #include <vector>
@@ -29,6 +30,24 @@ const double ppcg_subspace_rank_threshold = 1.0e-8;
 
 // Diagonal shifts used by the small projected eigensolve fallback.
 const double ppcg_subspace_shifts[] = {0.0, 1.0e-10, 1.0e-8, 1.0e-6};
+
+// A whole-function timer also closes correctly on early return or exception.
+class PPCGFunctionTimer
+{
+public:
+    explicit PPCGFunctionTimer(const char* function) : function_(function)
+    {
+        ModuleBase::timer::start("DiagoPPCG", function_);
+    }
+
+    ~PPCGFunctionTimer()
+    {
+        ModuleBase::timer::end("DiagoPPCG", function_);
+    }
+
+private:
+    const char* function_;
+};
 
 } // namespace
 } // namespace hsolver
@@ -245,6 +264,7 @@ void DiagoPPCG<T, Device>::apply_h(const HPsiFunc& hpsi_func,
                                     T* psi_in, T* hpsi_out,
                                     int ncol) const
 {
+    const PPCGFunctionTimer timer("apply_h");
     hpsi_func(psi_in, hpsi_out, ld_psi_, ncol);
 }
 
@@ -253,6 +273,7 @@ void DiagoPPCG<T, Device>::apply_s(const SPsiFunc& spsi_func,
                                     T* psi_in, T* spsi_out,
                                     int ncol) const
 {
+    const PPCGFunctionTimer timer("apply_s");
     if (spsi_func)
     {
         spsi_func(psi_in, spsi_out, ld_psi_, ncol);
@@ -393,11 +414,12 @@ void DiagoPPCG<T, Device>::scatter_cols(
 // =============================================================================
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::project_against(
-    const T* basis, const T* sbasis,
+    const T* basis, const T* sbasis, const T* hbasis,
     const std::vector<int>& basis_cols,
-    std::vector<T>& x, std::vector<T>& sx,
+    std::vector<T>& x, std::vector<T>& sx, std::vector<T>* hx,
     const std::vector<int>& x_cols) const
 {
+    const PPCGFunctionTimer timer("project_against");
     if (basis_cols.empty() || x_cols.empty())
     {
         return;
@@ -411,8 +433,10 @@ void DiagoPPCG<T, Device>::project_against(
 
     std::vector<T> x_l;
     std::vector<T> sx_l;
+    std::vector<T> hx_l;
     T* x_data = x.data() + x_first * ld_psi_;
     T* sx_data = sx.data() + x_first * ld_psi_;
+    T* hx_data = hx == nullptr ? nullptr : hx->data() + x_first * ld_psi_;
     if (!contiguous_x)
     {
         x_l.reserve(ld_psi_ * nx);
@@ -421,6 +445,11 @@ void DiagoPPCG<T, Device>::project_against(
         copy_cols(sx.data(), x_cols, sx_l);
         x_data = x_l.data();
         sx_data = sx_l.data();
+        if (hx != nullptr)
+        {
+            copy_cols(hx->data(), x_cols, hx_l);
+            hx_data = hx_l.data();
+        }
     }
 
     int basis_first = 0;
@@ -429,8 +458,10 @@ void DiagoPPCG<T, Device>::project_against(
 
     std::vector<T> basis_l;
     std::vector<T> sbasis_l;
+    std::vector<T> hbasis_l;
     const T* basis_data = basis + basis_first * ld_psi_;
     const T* sbasis_data = sbasis + basis_first * ld_psi_;
+    const T* hbasis_data = hbasis == nullptr ? nullptr : hbasis + basis_first * ld_psi_;
     if (!contiguous_basis)
     {
         basis_l.reserve(ld_psi_ * nbasis);
@@ -439,6 +470,11 @@ void DiagoPPCG<T, Device>::project_against(
         copy_cols(sbasis, basis_cols, sbasis_l);
         basis_data = basis_l.data();
         sbasis_data = sbasis_l.data();
+        if (hx != nullptr)
+        {
+            copy_cols(hbasis, basis_cols, hbasis_l);
+            hbasis_data = hbasis_l.data();
+        }
     }
 
     std::vector<T> coeff(nbasis * nx, T(0));
@@ -472,11 +508,32 @@ void DiagoPPCG<T, Device>::project_against(
                                      &one,
                                      sx_data,
                                      ld_psi_);
+    if (hx != nullptr)
+    {
+        // H(x-X*C) = Hx-HX*C; the same coefficients update all three images.
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         nx,
+                                         nbasis,
+                                         &minus_one,
+                                         hbasis_data,
+                                         ld_psi_,
+                                         coeff.data(),
+                                         nbasis,
+                                         &one,
+                                         hx_data,
+                                         ld_psi_);
+    }
 
     if (!contiguous_x)
     {
         scatter_cols(x.data(), x_cols, x_l);
         scatter_cols(sx.data(), x_cols, sx_l);
+        if (hx != nullptr)
+        {
+            scatter_cols(hx->data(), x_cols, hx_l);
+        }
     }
 }
 
@@ -843,6 +900,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     int nblk,
     SmallSubspace& subspace) const
 {
+    const PPCGFunctionTimer timer("build_small_subspace");
     const int l = int(cols.size());
     const int dim = nblk * l;
     subspace.k.resize(dim * dim);
@@ -930,6 +988,7 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
     const int nstates,
     SmallSubspace& subspace) const
 {
+    const PPCGFunctionTimer timer("solve_small_generalized");
     const std::vector<T> k0 = subspace.k;
     const std::vector<T> m0 = subspace.m;
 
@@ -1122,6 +1181,7 @@ void DiagoPPCG<T, Device>::update_one_block(
     int nblk,
     SmallSubspace& subspace)
 {
+    const PPCGFunctionTimer timer("update_one_block");
     const int dim = nblk * l;
     const T* eigvec = subspace.k.data();
 
@@ -1233,6 +1293,7 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
     std::vector<int>& active_cols,
     const std::vector<double>& ethr_band)
 {
+    const PPCGFunctionTimer timer("rayleigh_ritz");
     gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
     gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
 
@@ -1378,6 +1439,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                   const std::vector<double>& ethr_band,
                                   const Real* prec)
 {
+    const PPCGFunctionTimer timer("diag");
     ld_psi_ = ld_psi;
     n_band_ = nband;
     n_dim_ = dim;
@@ -1513,9 +1575,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         psi_in, eigenvalue_in, active_cols, ethr_band);
     const bool needs_startup_global_correction = !active_cols.empty()
                                                  && sbsize_ < ncol;
-    // Recompute to keep hpsi/spi consistent with rotated psi.
-    apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-    apply_s_current(psi_in, spsi_.data(), ncol);
+    // The Ritz transformation updates X, HX and SX with identical coefficients.
     record_residual(0, "initial_rr");
 
     std::vector<T> active_vector;
@@ -1549,38 +1609,20 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         s_active_vector.assign(ld_psi_ * nact, T(0));
         apply_s_current(active_vector.data(), s_active_vector.data(), nact);
         scatter_cols(sw_.data(), active_cols, s_active_vector);
-        project_against(psi_in, spsi_.data(), all_cols, w_, sw_, active_cols);
+        project_against(psi_in, spsi_.data(), nullptr, all_cols, w_, sw_, nullptr, active_cols);
 
         // Apply H to the search direction.
         copy_cols(w_.data(), active_cols, active_vector);
         h_active_vector.assign(ld_psi_ * nact, T(0));
-        s_active_vector.assign(ld_psi_ * nact, T(0));
-        scatter_cols(w_.data(), active_cols, active_vector);
+        copy_cols(sw_.data(), active_cols, s_active_vector);
         apply_h(hpsi_func, active_vector.data(), h_active_vector.data(), nact);
-        apply_s_current(active_vector.data(), s_active_vector.data(), nact);
         scatter_cols(hw_.data(), active_cols, h_active_vector);
-        scatter_cols(sw_.data(), active_cols, s_active_vector);
 
-        // S-orthogonalize the previous search direction p against psi, then
-        // re-apply H/S.  The full Rayleigh-Ritz rotation re-mixes psi columns
-        // every step, which would otherwise let p drift into psi's span and
-        // destabilize the [psi, w, p] block subspace.
+        // Project the cached P, SP and HP together. Linearity preserves their
+        // consistency without another expensive Hamiltonian/overlap application.
         if (use_p)
         {
-            copy_cols(p_.data(), active_cols, active_vector);
-            s_active_vector.assign(ld_psi_ * nact, T(0));
-            apply_s_current(active_vector.data(), s_active_vector.data(), nact);
-            scatter_cols(sp_.data(), active_cols, s_active_vector);
-            project_against(psi_in, spsi_.data(), all_cols, p_, sp_, active_cols);
-
-            copy_cols(p_.data(), active_cols, active_vector);
-            h_active_vector.assign(ld_psi_ * nact, T(0));
-            s_active_vector.assign(ld_psi_ * nact, T(0));
-            scatter_cols(p_.data(), active_cols, active_vector);
-            apply_h(hpsi_func, active_vector.data(), h_active_vector.data(), nact);
-            apply_s_current(active_vector.data(), s_active_vector.data(), nact);
-            scatter_cols(hp_.data(), active_cols, h_active_vector);
-            scatter_cols(sp_.data(), active_cols, s_active_vector);
+            project_against(psi_in, spsi_.data(), hpsi_.data(), all_cols, p_, sp_, &hp_, active_cols);
         }
 
         avg_iter += double(nact) / double(ncol);
