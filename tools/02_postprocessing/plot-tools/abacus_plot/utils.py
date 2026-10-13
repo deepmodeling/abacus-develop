@@ -237,6 +237,26 @@ def energy_minus_efermi(energy: Sequence, efermi: float) -> np.ndarray:
     return np.array(energy)-efermi
 
 
+def gaussian_smearing(energy: Sequence, dos: Sequence, sigma: float) -> np.ndarray:
+    """Apply Gaussian smearing to a raw (per-bin histogram) DOS.
+
+    Follows the same convention as the smearing ABACUS applies internally:
+    ``dos_smear[j] = sum_i dos[i] * G(E_j - E_i)`` with a normalized
+    Gaussian G of width parameter ``sigma`` (the ``dos_sigma`` input).
+
+    :params energy: energy grid in eV
+    :params dos: raw DOS (number of states per energy bin), shape
+        (npoints,) or (npoints, nspin)
+    :params sigma: Gaussian width parameter in eV
+    """
+    energy = np.asarray(energy, dtype=float).flatten()
+    dos = np.asarray(dos, dtype=float)
+    width = np.sqrt(2.0) * sigma
+    delta = energy[:, None] - energy[None, :]
+    gauss = np.exp(-(delta / width) ** 2) / (np.sqrt(np.pi) * width)
+    return gauss @ dos
+
+
 angular_momentum_label = ['s', 'p', 'd', 'f', 'g']
 
 

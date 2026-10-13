@@ -120,6 +120,16 @@ class DOSPlot:
         # x-axis
         if energy_range:
             self.ax.set_xlim(energy_range[0], energy_range[1])
+        # label the x-axis only on the bottom-most subplot when several
+        # axes share the x-axis; plain axes have no subplotspec and are
+        # always labeled
+        spec = self.ax.get_subplotspec()
+        if spec is None or spec.is_last_row():
+            if "xlabel_params" in self.plot_params.keys():
+                self.ax.set_xlabel("Energy(eV)", **
+                                   self.plot_params["xlabel_params"])
+            else:
+                self.ax.set_xlabel("Energy(eV)", size=25)
 
         # notes
         if notes:
@@ -162,20 +172,66 @@ class DOSPlot:
 
 
 class TDOS(DOS):
-    """Parse total DOS data"""
+    """Parse total DOS data
 
-    def __init__(self, tdosfile: PathLike = None) -> None:
+    ``tdosfile`` may be a single TDOS file, a list of one or two per-spin
+    files, or a directory containing them. ABACUS writes one 5-column text
+    file per spin channel (``doss1*``/``doss2*``; legacy PW names
+    ``dos1.txt``/``dos2.txt``). A single spin-channel file is paired with
+    its counterpart when present, searching in both directions, so passing
+    either spin file works. For nspin=4 ABACUS writes a single
+    spinor-summed file, which is handled like nspin=1.
+    """
+
+    def __init__(self, tdosfile: Union[PathLike, Sequence[PathLike]] = None) -> None:
         self.tdosfile = tdosfile
         self._read()
         super().__init__(self.nspin)
 
-    def _read(self) -> tuple:
-        """Read total DOS data file
+    def _find_spin_files(self) -> List[str]:
+        """Locate the per-spin TDOS file(s) from a file, a list, or a directory."""
+        if isinstance(self.tdosfile, (list, tuple)):
+            files = [str(f) for f in self.tdosfile]
+            if not 1 <= len(files) <= 2:
+                raise ValueError(
+                    f"tdosfile accepts 1 or 2 files, got {len(files)}")
+            return files
 
-        :params tdosfile: string of TDOS data file
+        path = Path(self.tdosfile)
+        if path.is_dir():
+            candidates = []
+            for spin in (1, 2):
+                matches = sorted(glob.glob(str(path / f"doss{spin}*.txt")))
+                if not matches:
+                    matches = sorted(glob.glob(str(path / f"dos{spin}.txt")))
+                if matches:
+                    candidates.append(matches[0])
+            if not candidates:
+                raise FileNotFoundError(
+                    f"No TDOS file found in directory '{path}'")
+            return candidates
+
+        if path.is_file():
+            name = path.name
+            for one, two in (("doss1", "doss2"), ("dos1", "dos2")):
+                if one in name or two in name:
+                    spin1 = path.parent / name.replace(two, one)
+                    spin2 = path.parent / name.replace(one, two)
+                    files = [str(p) for p in (spin1, spin2) if p.is_file()]
+                    return files
+            # any other file (e.g. legacy TDOS.dat): parse as is
+        return [str(path)]
+
+    def _read_one(self, fname: str) -> Dict[str, Any]:
+        """Read one TDOS file; the returned keys map 1:1 to the file columns.
+
+        Returns a dict with ``energy`` of shape (npoints, 1) and dos/dos_int/
+        dos_smear/dos_smear_int arrays whose second dimension counts the spin
+        channels stored in this file (None where the column is absent, e.g.
+        the legacy 2/3-column formats carry no smeared DOS).
         """
         rows = []
-        with open(self.tdosfile) as f:
+        with open(fname) as f:
             for line in f:
                 if line.startswith("#"):
                     continue
@@ -185,36 +241,70 @@ class TDOS(DOS):
                     continue
                 rows.append([float(x) for x in line.split()])
         if not rows:
-            raise ValueError(f"Empty TDOS file: {self.tdosfile}")
+            raise ValueError(f"Empty TDOS file: {fname}")
         # New format has two header lines ("ionic step" / "number of points")
         # with a single column; data lines have 5 columns per spin channel.
         # Old format (DOS1_smearing.dat) has only energy + dos columns.
         ncols = len(rows[-1])
         data = np.asarray([r for r in rows if len(r) == ncols])
+        out = {"energy": None, "dos": None, "dos_int": None,
+               "dos_smear": None, "dos_smear_int": None}
         if ncols == 2:
-            self.nspin = 1
-            self.energy, self.dos = np.hsplit(data, 2)
+            out["energy"], out["dos"] = np.hsplit(data, 2)
         elif ncols == 3:
-            self.nspin = 2
-            self.energy, dos_up, dos_dw = np.hsplit(data, 3)
-            self.dos = np.hstack((dos_up, dos_dw))
+            energy, dos_up, dos_dw = np.hsplit(data, 3)
+            out["energy"] = energy
+            out["dos"] = np.hstack((dos_up, dos_dw))
         elif ncols == 5:
-            self.nspin = 1
-            self.energy, self.dos, self.dos_int, self.dos_smear, self.dos_smear_int = np.hsplit(data, 5)
+            out["energy"], out["dos"], out["dos_int"], out["dos_smear"], out["dos_smear_int"] = np.hsplit(data, 5)
         elif ncols == 9:
-            self.nspin = 2
-            self.energy, dos_up, dos_dw, dos_int_up, dos_int_dw, smear_up, smear_dw, smear_int_up, smear_int_dw = np.hsplit(data, 9)
-            self.dos = np.hstack((dos_up, dos_dw))
-            self.dos_int = np.hstack((dos_int_up, dos_int_dw))
-            self.dos_smear = np.hstack((smear_up, smear_dw))
-            self.dos_smear_int = np.hstack((smear_int_up, smear_int_dw))
+            energy, dos_up, dos_dw, int_up, int_dw, sm_up, sm_dw, sint_up, sint_dw = np.hsplit(data, 9)
+            out["energy"] = energy
+            out["dos"] = np.hstack((dos_up, dos_dw))
+            out["dos_int"] = np.hstack((int_up, int_dw))
+            out["dos_smear"] = np.hstack((sm_up, sm_dw))
+            out["dos_smear_int"] = np.hstack((sint_up, sint_dw))
         else:
             raise ValueError(f"Unrecognized TDOS format: {ncols} columns")
+        return out
 
-    def _shift_energy(self, efermi: float = 0, shift: bool = False, prec: float = 0.01):
+    def _read(self) -> None:
+        spin_files = self._find_spin_files()
+        parsed = [self._read_one(f) for f in spin_files]
+
+        keys = ("dos", "dos_int", "dos_smear", "dos_smear_int")
+        self.energy = parsed[0]["energy"]
+        if len(parsed) == 1:
+            for key in keys:
+                setattr(self, key, parsed[0][key])
+            self.nspin = parsed[0]["dos"].shape[1]
+        else:
+            if parsed[0]["dos"].shape[1] != 1 or parsed[1]["dos"].shape[1] != 1:
+                raise ValueError(
+                    "Each TDOS file already contains two spin channels; "
+                    "do not pass two files")
+            if not np.allclose(parsed[0]["energy"], parsed[1]["energy"]):
+                raise ValueError(
+                    "Spin-up and spin-down TDOS files have different energy "
+                    f"grids: '{spin_files[0]}' vs '{spin_files[1]}'")
+            self.nspin = 2
+            for key in keys:
+                up, dw = parsed[0][key], parsed[1][key]
+                setattr(self, key, None if up is None or dw is None
+                        else np.hstack((up, dw)))
+
+    def _selected_dos(self, smearing: bool) -> np.ndarray:
+        """DOS array to plot or analyze: the smeared column (unit 1/eV) when
+        available and requested, otherwise the raw histogram column."""
+        if smearing and self.dos_smear is not None:
+            return self.dos_smear
+        return self.dos
+
+    def _shift_energy(self, efermi: float = 0, shift: bool = False, prec: float = 0.01, smearing: bool = True):
+        dos = self._selected_dos(smearing)
         if shift:
             vb, cb = self.set_vcband(
-                energy_minus_efermi(self.energy, efermi), self.dos, prec)
+                energy_minus_efermi(self.energy, efermi), dos, prec)
             self.info(vb, cb)
             energy_f = np.concatenate((vb.band, cb.band))
         else:
@@ -222,12 +312,13 @@ class TDOS(DOS):
 
         return energy_f
 
-    def plot(self, fig: Figure, ax: Union[axes.Axes, Sequence[axes.Axes]], efermi: float = 0, energy_range: Sequence[float] = [], dos_range: Sequence[float] = [], shift: bool = False, prec: float = 0.01, **kwargs):
+    def plot(self, fig: Figure, ax: Union[axes.Axes, Sequence[axes.Axes]], efermi: float = 0, energy_range: Sequence[float] = [], dos_range: Sequence[float] = [], shift: bool = False, prec: float = 0.01, smearing: bool = True, **kwargs):
 
-        energy_f = self._shift_energy(efermi, shift, prec)
+        energy_f = self._shift_energy(efermi, shift, prec, smearing)
 
+        dos = self._selected_dos(smearing)
         dosplot = DOSPlot(fig, ax, self.nspin, **kwargs)
-        dosplot.ax = self._plot(dosplot, energy_f, self.dos, "TDOS")
+        dosplot.ax = self._plot(dosplot, energy_f, dos, "TDOS")
         if "notes" in dosplot.plot_params.keys():
             dosplot._set_figure(energy_range, dos_range,
                                 notes=dosplot.plot_params["notes"])
@@ -282,7 +373,7 @@ class PDOS(DOS):
         if path.is_file():
             name = path.name
             if name.startswith("pdoss"):
-                # A concrete spin-channel file e.g. pdoss1g1_nao.txt: use it
+                # A concrete spin-channel file e.g. pdoss1g1.txt: use it
                 # directly as the spin-1 channel and look for the matching
                 # spin-2 file by replacing "s1" with "s2" in the filename.
                 spin1 = str(path)
@@ -575,11 +666,6 @@ class PDOS(DOS):
 
         if isinstance(species, (list, tuple)):
             dosplot = DOSPlot(fig, ax[0], self.nspin, **kwargs)
-            if "xlabel_params" in dosplot.plot_params.keys():
-                dosplot.ax.set_xlabel("Energy(eV)", **
-                                      dosplot.plot_params["xlabel_params"])
-            else:
-                dosplot.ax.set_xlabel("Energy(eV)", size=25)
             self._plot(dosplot, energy_f, tdos, "TDOS")
             for elem in dos.keys():
                 self._plot(dosplot, energy_f, dos[elem], elem)
@@ -614,11 +700,6 @@ class PDOS(DOS):
                 else:
                     dosplot._set_figure(energy_range, dos_range)
                 dosplots.append(dosplot)
-            if "xlabel_params" in dosplot.plot_params.keys():
-                dosplot.ax.set_xlabel("Energy(eV)", **
-                                      dosplot.plot_params["xlabel_params"])
-            else:
-                dosplot.ax.set_xlabel("Energy(eV)", size=25)
 
             return dosplots
 

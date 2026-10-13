@@ -70,9 +70,10 @@ class Show:
             figsize = text.pop("figsize", (12, 10))
             fig, ax = plt.subplots(figsize=figsize)
             prec = text.pop("prec", 0.01)
+            smearing = text.pop("smearing", True)
             tdos = TDOS(tdosfile)
             tdos.plot(fig, ax, efermi=efermi, shift=shift,
-                      energy_range=energy_range, dos_range=dos_range, prec=prec, **text)
+                      energy_range=energy_range, dos_range=dos_range, prec=prec, smearing=smearing, **text)
             dpi = text.pop("dpi", 400)
             fig.savefig(text.pop("tdosfig", "tdos.png"), dpi=dpi)
 
