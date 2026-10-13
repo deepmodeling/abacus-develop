@@ -115,6 +115,11 @@ jobs:
           cmake --build build -j8
           cmake --install build
 
+      - name: rVV10 host contract
+        run: |
+          source toolchain/install/setup
+          ctest --test-dir build --output-on-failure --no-tests=error -R RVV10_LIBVDWXC_CONTRACT
+
       - name: Report compiler cache
         if: always()
         run: |

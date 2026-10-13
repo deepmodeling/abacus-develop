@@ -46,6 +46,7 @@ option(USE_SW "Enable SW Architecture" OFF)
 
 option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
+option(ENABLE_LIBVDWXC "Enable libvdwxc-backed nonlocal XC" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
@@ -615,6 +616,57 @@ if(ENABLE_LIBXC)
   find_package(Libxc CONFIG REQUIRED)
   if(Libxc_VERSION VERSION_LESS "5.1.7")
     message(FATAL_ERROR "Libxc >= 5.1.7 is required; found version ${Libxc_VERSION}")
+  endif()
+endif()
+
+if(ENABLE_LIBVDWXC)
+  if(NOT ENABLE_LIBXC)
+    message(FATAL_ERROR
+      "ENABLE_LIBVDWXC currently requires ENABLE_LIBXC=ON because the first "
+      "rVV10 interface uses Libxc for the semilocal RPW86+PBE part.")
+  endif()
+  # libvdwxc's rVV10 API is currently available from its development branch;
+  # keep discovery explicit so a normal build never acquires this dependency.
+  # The package target carries FFTW/PFFT and math transitive dependencies for
+  # static builds; do not replace it with a bare -lvdwxc lookup.
+  find_package(libvdwxc CONFIG REQUIRED)
+  if(NOT TARGET libvdwxc::vdwxc)
+    message(FATAL_ERROR
+      "ENABLE_LIBVDWXC requires the libvdwxc::vdwxc CMake target. "
+      "Use the libvdwxc development build that includes the rVV10 API.")
+  endif()
+  get_target_property(LIBVDWXC_INCLUDE_DIRS libvdwxc::vdwxc INTERFACE_INCLUDE_DIRECTORIES)
+  if(NOT LIBVDWXC_INCLUDE_DIRS)
+    message(FATAL_ERROR "libvdwxc::vdwxc does not expose its include directory")
+  endif()
+  # Installed packages expose a concrete include path, while build-tree
+  # targets may expose generator expressions. Strip those expressions before
+  # probing so configuration gives a useful error instead of a later include
+  # failure.
+  set(_libvdwxc_include_hints)
+  foreach(_include_dir IN LISTS LIBVDWXC_INCLUDE_DIRS)
+    string(GENEX_STRIP "${_include_dir}" _include_dir_stripped)
+    if(IS_DIRECTORY "${_include_dir_stripped}")
+      list(APPEND _libvdwxc_include_hints "${_include_dir_stripped}")
+    endif()
+  endforeach()
+  unset(LIBVDWXC_HEADER_DIR CACHE)
+  find_path(LIBVDWXC_HEADER_DIR NAMES vdwxc.h HINTS ${_libvdwxc_include_hints}
+            NO_DEFAULT_PATH)
+  if(NOT LIBVDWXC_HEADER_DIR)
+    message(FATAL_ERROR "libvdwxc::vdwxc does not provide vdwxc.h")
+  endif()
+  file(READ "${LIBVDWXC_HEADER_DIR}/vdwxc.h" LIBVDWXC_HEADER_TEXT)
+  if(NOT LIBVDWXC_HEADER_TEXT MATCHES "VDWXC_RVV10"
+     OR NOT LIBVDWXC_HEADER_TEXT MATCHES "vdwxc_new"
+     OR NOT LIBVDWXC_HEADER_TEXT MATCHES "vdwxc_set_rvv10_parameters"
+     OR NOT LIBVDWXC_HEADER_TEXT MATCHES "vdwxc_set_unit_cell"
+     OR NOT LIBVDWXC_HEADER_TEXT MATCHES "vdwxc_init_serial"
+     OR NOT LIBVDWXC_HEADER_TEXT MATCHES "vdwxc_calculate"
+     OR NOT LIBVDWXC_HEADER_TEXT MATCHES "vdwxc_finalize")
+    message(FATAL_ERROR
+      "The selected libvdwxc headers do not provide the complete serial rVV10 API; "
+      "use the pinned development build containing MR !32.")
   endif()
 endif()
 

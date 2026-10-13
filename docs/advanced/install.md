@@ -99,6 +99,27 @@ vdw_d4_model d4    # or d4s for the smooth D4S model
 
 If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `dft_functional` or pseudopotential metadata and pass it to the DFT-D4 library. The `vdw_d4_model` keyword selects the dispersion model inside the DFT-D4 library; the default is `d4`, while `d4s` enables the smooth D4S model.
 
+## Build with libvdwxc-backed rVV10 support
+
+The first rVV10 integration uses the external [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) library for the nonlocal kernel. The current rVV10 API is under review in Draft MR !32, so this option is intended for development and reproducible integration testing rather than a stable release build.
+
+Build and install the pinned libvdwxc development branch first (MR !32,
+`rvv10-cmake`, commit
+`91ef4820f3270e22b35fddc2ab4cab8efa4b6d79`), then pass its CMake prefix to
+ABACUS together with Libxc:
+
+```bash
+cmake -B build-libvdwxc -DBUILD_TESTING=ON \
+  -DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON \
+  -DCMAKE_PREFIX_PATH=/path/to/libvdwxc-prefix
+```
+
+The first host adapter is limited to CPU, double-precision, full-complex PW,
+one process, `nspin=1`, norm-conserving pseudopotentials and SCF energy/potential
+evaluation. It is not available through the legacy Makefile. See
+`docs/developers_guide/nonlocal_xc.md` for the exact dependency commit and
+runtime restrictions.
+
 ## Build with JSON support
 
 ABACUS uses [nlohmann-json](https://github.com/nlohmann/json) for optional JSON output. To build ABACUS with JSON support, pass `-DENABLE_JSON=ON` to CMake.

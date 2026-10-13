@@ -66,6 +66,7 @@ set(_abacus_feature_definitions
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_LCAO=0>
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
   $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
+  $<$<BOOL:${ENABLE_LIBVDWXC}>:__LIBVDWXC>
   $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
   $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
@@ -270,9 +271,14 @@ set(_abacus_feature_libs
   $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
   $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
   $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
-  $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>)
+  $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>
+  $<$<BOOL:${ENABLE_LIBVDWXC}>:libvdwxc::vdwxc>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
+
+if(ENABLE_LIBVDWXC)
+  list(APPEND _abacus_feature_include_dirs ${LIBVDWXC_HEADER_DIR})
+endif()
 
 if(ENABLE_ELPA)
   list(APPEND _abacus_feature_include_dirs ${ELPA_INCLUDE_DIR})
@@ -392,6 +398,7 @@ foreach(_abacus_feature_target IN ITEMS
     cereal::cereal
     ELPA::ELPA
     Libxc::xc
+    libvdwxc::vdwxc
     dftd4::dftd4
     DeePMD::deepmd_c
     DeePMD::deepmd_cc
@@ -556,6 +563,11 @@ add_subdirectory(source_psi)
 add_subdirectory(source_estate)
 add_subdirectory(source_hamilt)
 add_subdirectory(source_pw)
+if(BUILD_TESTING)
+  # Register the nonlocal XC tests once; CMake resolves their PW dependencies
+  # after all source subdirectories have been processed.
+  add_subdirectory(source_hamilt/module_vdw/test)
+endif()
 add_subdirectory(source_lcao)
 add_subdirectory(source_hsolver)
 add_subdirectory(source_basis/module_ao)
@@ -737,6 +749,7 @@ target_link_libraries(
     module_stodft
     module_dfpt
     xc_
+    nonlocal_xc
     vdw
     relax
     io_advanced

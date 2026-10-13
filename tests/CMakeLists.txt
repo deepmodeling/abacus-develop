@@ -1,4 +1,5 @@
 add_subdirectory(integrate)
+add_subdirectory(rvv10)
 add_subdirectory(01_PW)
 add_subdirectory(02_NAO_Gamma)
 add_subdirectory(03_NAO_multik)

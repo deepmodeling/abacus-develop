@@ -90,6 +90,9 @@
     - [nelec\_delta](#nelec_delta)
     - [nupdown](#nupdown)
     - [dft\_functional](#dft_functional)
+    - [xc\_nonlocal](#xc_nonlocal)
+    - [rvv10\_b](#rvv10_b)
+    - [rvv10\_c](#rvv10_c)
     - [xc\_temperature](#xc_temperature)
     - [xc\_exch\_ext](#xc_exch_ext)
     - [xc\_corr\_ext](#xc_corr_ext)
@@ -1335,6 +1338,28 @@
 
   The other way is only available when compiling with LIBXC, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'.
 - **Default**: Used the same as DFT functional as specified in the pseudopotential files.
+
+### xc_nonlocal
+
+- **Type**: String
+- **Description**: Select an optional libvdwxc-backed nonlocal exchange-correlation correction. `none` disables the correction. The current rVV10 interface requires a CMake build with `ENABLE_LIBXC=ON` and `ENABLE_LIBVDWXC=ON`, `dft_functional=GGA_X_RPW86+GGA_C_PBE`, fixed b=6.3 and C=0.0093, and a single-process, CPU double-precision, plane-wave, norm-conserving, spin-unpolarized SCF calculation. Forces, stress, geometry optimization, molecular dynamics, LCAO, GPU, reduced-gamma layouts, ultrasoft/PAW pseudopotentials, spin-polarized calculations and pairwise vdW corrections are not part of this interface.
+- **Default**: none
+
+### rvv10_b
+
+- **Type**: Real
+- **Availability**: *[`xc_nonlocal`](#xc_nonlocal)==rvv10*
+- **Description**: Fixed damping parameter b=6.3 for the current libvdwxc-backed `GGA_X_RPW86+GGA_C_PBE` rVV10 interface.
+- **Default**: 6.3
+- **Unit**: dimensionless
+
+### rvv10_c
+
+- **Type**: Real
+- **Availability**: *[`xc_nonlocal`](#xc_nonlocal)==rvv10*
+- **Description**: Fixed parameter C=0.0093 for the current libvdwxc-backed `GGA_X_RPW86+GGA_C_PBE` rVV10 interface.
+- **Default**: 0.0093
+- **Unit**: dimensionless
 
 ### xc_temperature
 

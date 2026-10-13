@@ -3,6 +3,10 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+
 namespace ModuleIO
 {
 void ReadInput::item_elec_stru()
@@ -333,6 +337,107 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.default_value = "Used the same as DFT functional as specified in the pseudopotential files.";
         item.unit = "";
         read_sync_string(input.dft_functional);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            std::string name = para.input.dft_functional;
+            std::transform(name.begin(), name.end(), name.begin(), [](unsigned char c) {
+                return static_cast<char>(std::toupper(c));
+            });
+            if (name == "RVV10")
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput", "Use xc_nonlocal=rvv10 with an explicit semilocal dft_functional");
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("xc_nonlocal");
+        item.annotation = "none; rvv10";
+        item.category = "Electronic structure";
+        item.type = "String";
+        item.description = R"(Select an optional libvdwxc-backed nonlocal exchange-correlation correction. `none` disables the correction. The current rVV10 interface requires a CMake build with `ENABLE_LIBXC=ON` and `ENABLE_LIBVDWXC=ON`, `dft_functional=GGA_X_RPW86+GGA_C_PBE`, fixed b=6.3 and C=0.0093, and a single-process, CPU double-precision, plane-wave, norm-conserving, spin-unpolarized SCF calculation. Forces, stress, geometry optimization, molecular dynamics, LCAO, GPU, reduced-gamma layouts, ultrasoft/PAW pseudopotentials, spin-polarized calculations and pairwise vdW corrections are not part of this interface.)";
+        item.default_value = "none";
+        item.unit = "";
+        read_sync_string(input.xc_nonlocal);
+        item.reset_value = [](const Input_Item&, Parameter& para) {
+            std::transform(para.input.xc_nonlocal.begin(), para.input.xc_nonlocal.end(), para.input.xc_nonlocal.begin(),
+                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        };
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            std::string nonlocal = para.input.xc_nonlocal;
+            std::transform(nonlocal.begin(), nonlocal.end(), nonlocal.begin(), [](unsigned char c) {
+                return static_cast<char>(std::tolower(c));
+            });
+            if (nonlocal != "none" && nonlocal != "rvv10")
+                ModuleBase::WARNING_QUIT("ReadInput", "xc_nonlocal must be either none or rvv10");
+            if (nonlocal != "rvv10")
+                return;
+#if !defined(__LIBXC) || !defined(__LIBVDWXC)
+            ModuleBase::WARNING_QUIT("ReadInput", "xc_nonlocal=rvv10 requires Libxc and libvdwxc-enabled CMake builds");
+#endif
+            if (!std::isfinite(para.input.rvv10_b) || para.input.rvv10_b <= 0.0 || !std::isfinite(para.input.rvv10_c)
+                || para.input.rvv10_c < 0.0)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput", "rvv10_b must be finite and positive, and rvv10_c must be finite and non-negative");
+            }
+            std::string functional = para.input.dft_functional;
+            std::transform(functional.begin(), functional.end(), functional.begin(), [](unsigned char c) {
+                return static_cast<char>(std::toupper(c));
+            });
+            functional.erase(std::remove_if(functional.begin(), functional.end(), [](unsigned char c) {
+                return std::isspace(c);
+            }), functional.end());
+            if (functional.empty() || functional == "DEFAULT")
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput", "xc_nonlocal=rvv10 requires an explicit semilocal dft_functional");
+            if (functional != "GGA_X_RPW86+GGA_C_PBE")
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "xc_nonlocal=rvv10 requires dft_functional=GGA_X_RPW86+GGA_C_PBE for the libvdwxc backend");
+            if (std::abs(para.input.rvv10_b - 6.3) > 1.0e-12 || std::abs(para.input.rvv10_c - 0.0093) > 1.0e-12)
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput", "xc_nonlocal=rvv10 uses fixed parameters rvv10_b=6.3 and rvv10_c=0.0093");
+            const auto& p = para.input;
+            if (para.globalv.nproc != 1 || p.calculation != "scf" || p.esolver_type != "ksdft" || p.basis_type != "pw" || p.device != "cpu"
+                || p.precision != "double" || p.nspin != 1 || p.cal_force || p.cal_stress
+                || p.gamma_only || p.vdw_method != "none" || !p.vl_in_h)
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "xc_nonlocal=rvv10 supports only one MPI rank with CPU double PW nspin=1 "
+                                         "serial SCF without forces, stress, gamma_only or other vdW corrections");
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rvv10_b");
+        item.annotation = "positive real";
+        item.category = "Electronic structure";
+        item.type = "Real";
+        item.description = "Fixed damping parameter b=6.3 for the current libvdwxc-backed `GGA_X_RPW86+GGA_C_PBE` rVV10 interface.";
+        item.default_value = "6.3";
+        item.unit = "dimensionless";
+        item.set_availability("xc_nonlocal==rvv10");
+        read_sync_double(input.rvv10_b);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.xc_nonlocal == "rvv10"
+                && (!std::isfinite(para.input.rvv10_b) || para.input.rvv10_b <= 0.0))
+                ModuleBase::WARNING_QUIT("ReadInput", "rvv10_b must be finite and positive");
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rvv10_c");
+        item.annotation = "non-negative real";
+        item.category = "Electronic structure";
+        item.type = "Real";
+        item.description = "Fixed parameter C=0.0093 for the current libvdwxc-backed `GGA_X_RPW86+GGA_C_PBE` rVV10 interface.";
+        item.default_value = "0.0093";
+        item.unit = "dimensionless";
+        item.set_availability("xc_nonlocal==rvv10");
+        read_sync_double(input.rvv10_c);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.xc_nonlocal == "rvv10"
+                && (!std::isfinite(para.input.rvv10_c) || para.input.rvv10_c < 0.0))
+                ModuleBase::WARNING_QUIT("ReadInput", "rvv10_c must be finite and non-negative");
+        };
         this->add_item(item);
     }
     {
@@ -805,6 +910,18 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.basis_type == "pw" && para.input.gamma_only)
             {
+                // Resets precede validation. Reject before the PW fallback
+                // overwrites KPT; xc_nonlocal may not yet be lowercased.
+                std::string nonlocal = para.input.xc_nonlocal;
+                std::transform(nonlocal.begin(), nonlocal.end(), nonlocal.begin(), [](unsigned char c) {
+                    return static_cast<char>(std::tolower(c));
+                });
+                if (nonlocal == "rvv10")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "xc_nonlocal=rvv10 supports only one MPI rank with CPU double PW nspin=1 "
+                                             "serial SCF without forces, stress, gamma_only or other vdW corrections");
+                }
                 para.input.gamma_only = false;
                 GlobalV::ofs_warning << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
                 GlobalV::ofs_warning << "gamma_only is not supported in the pw model" << std::endl;
