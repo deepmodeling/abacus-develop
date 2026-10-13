@@ -10,12 +10,13 @@
 #include "source_base/module_out/read_exit_file.h"
 #include "source_io/module_parameter/parameter.h"
 
-void Relax_Driver::relax_driver(
+bool Relax_Driver::relax_driver(
         ModuleESolver::ESolver* p_esolver,
         UnitCell& ucell,
-        const Input_para& inp,
+        Parameter& parameters,
         std::ofstream& ofs_running)
 {
+    const Input_para& inp = parameters.inp;
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
     ModuleBase::timer::start("Relax_Driver", "relax_driver");
 
@@ -28,9 +29,9 @@ void Relax_Driver::relax_driver(
     if (inp.socket_driver)
     {
         Socket_Driver socket_driver;
-        socket_driver.socket_driver(p_esolver, ucell, inp, ofs_running);
+        const bool ran_frame = socket_driver.socket_driver(p_esolver, ucell, parameters, ofs_running);
         ModuleBase::timer::end("Relax_Driver", "relax_driver");
-        return;
+        return ran_frame;
     }
 
     this->init_relax(ucell.nat, inp);
@@ -83,7 +84,7 @@ void Relax_Driver::relax_driver(
     this->final_out(steps[0], ucell, inp, etot, stress, force, geometry_evaluated, ofs_running);
 
     ModuleBase::timer::end("Relax_Driver", "relax_driver");
-    return;
+    return true;
 }
 
 void Relax_Driver::init_relax(const int nat, const Input_para& inp)

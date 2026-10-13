@@ -83,7 +83,13 @@ std::string properties_extra(const ComputedFrame& frame)
         extra << ",\"stress\"";
     }
     extra << "],\"scf_converged\":"
-          << (frame.scf_converged ? "true" : "false") << "}";
+          << (frame.scf_converged ? "true" : "false");
+    if (frame.electronic_present)
+    {
+        const std::string electronic = SocketCP::serialize_observables(frame.electronic);
+        extra << "," << electronic.substr(1, electronic.size() - 2);
+    }
+    extra << "}";
     return extra.str();
 }
 
@@ -288,6 +294,9 @@ void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& pos
             atom->dis[ia].x = dx - atom->taud[ia].x;
             atom->dis[ia].y = dy - atom->taud[ia].y;
             atom->dis[ia].z = dz - atom->taud[ia].z;
+            atom->dis[ia].x -= std::round(atom->dis[ia].x);
+            atom->dis[ia].y -= std::round(atom->dis[ia].y);
+            atom->dis[ia].z -= std::round(atom->dis[ia].z);
             atom->taud[ia].x = dx;
             atom->taud[ia].y = dy;
             atom->taud[ia].z = dz;

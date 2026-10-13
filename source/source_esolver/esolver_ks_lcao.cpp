@@ -119,6 +119,17 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
 
 
 template <typename TK, typename TR>
+bool ESolver_KS_LCAO<TK, TR>::apply_electronic_control(Parameter& parameters, const ElectronicControl& control)
+{
+    if (!ESolver_FP::apply_electronic_control(parameters, control)) { return false; }
+#ifdef __EXX
+    if (this->exx_nao.exd) { this->exx_nao.exd->begin_electronic_step(); }
+    if (this->exx_nao.exc) { this->exx_nao.exc->begin_electronic_step(); }
+#endif
+    return true;
+}
+
+template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");

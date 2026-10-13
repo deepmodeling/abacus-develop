@@ -411,6 +411,10 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         const double ediff = std::abs(etot - etot_last_outer_loop) * ModuleBase::Ry_to_eV;
         if (two_level_step)
             { std::cout << FmtCore::format(" deltaE (eV) from outer loop: %.8e \n", ediff); }
+        const bool outer_converged = this->two_level_step != 0
+            && (iter == 1 || ediff < scf_ene_thr);
+        if (strict_electronic_step_ && this->two_level_step >= this->hybrid_step_ && !outer_converged)
+        { throw std::runtime_error("constant-potential EXX outer loop did not converge; increase exx_hybrid_step"); }
         // exx converged or get max exx steps
         if (this->two_level_step == this->hybrid_step_
             || (iter == 1 && this->two_level_step != 0) // density convergence of outer loop

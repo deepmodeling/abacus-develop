@@ -17,6 +17,7 @@ list(APPEND objects
     module_pot/gatefield.cpp
     module_pot/efield.cpp
     module_pot/h_hartree_pw.cpp
+    module_pot/electrostatic_potential.cpp
     module_pot/h_tddft_pw.cpp
     module_pot/pot_xc.cpp
     module_pot/pot_local.cpp

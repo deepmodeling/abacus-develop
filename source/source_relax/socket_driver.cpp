@@ -6,6 +6,7 @@
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
 #include "source_io/module_parameter/input_parameter.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <exception>
 #include <fstream>
@@ -51,10 +52,11 @@ void log_peer_closed(std::ofstream& ofs_running)
 }
 } // namespace
 
-void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
-                                  UnitCell& ucell,
-                                  const Input_para& inp,
-                                  std::ofstream& ofs_running)
+static bool run_socket_driver(ModuleESolver::ESolver* p_esolver,
+                              UnitCell& ucell,
+                              const Input_para& inp,
+                              Parameter* parameters,
+                              std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Socket_Driver", "socket_driver");
     ModuleBase::timer::start("Socket_Driver", "socket_driver");
@@ -64,15 +66,16 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
         ModuleBase::WARNING_QUIT("ABACUS socket", "socket driver requires a valid ESolver.");
     }
     IpiSocket socket;
+    DriverContext context;
 
     try
     {
         connect_on_root(socket, ofs_running);
 
-        DriverContext context;
         context.esolver = p_esolver;
         context.ucell = &ucell;
         context.inp = &inp;
+        context.parameters = parameters;
         context.state = DriverState::NeedInit;
         context.nat_return = ucell.nat;
         context.reference_cell = ipi_cell_bohr_from_unitcell(ucell);
@@ -80,7 +83,7 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
         while (true)
         {
             const std::string header
-                = SocketHandlers::read_header_bcast(socket, context.state);
+                = SocketHandlers::read_header_bcast(socket, context);
             if (header.empty())
             {
                 log_peer_closed(ofs_running);
@@ -98,13 +101,17 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
             {
                 SocketHandlers::handle_posdata(socket, context, ofs_running);
             }
+            else if (header == "CHGDATA")
+            {
+                SocketHandlers::handle_chgdata(socket, context, ofs_running);
+            }
             else if (header == "GETFORCE")
             {
-                SocketHandlers::handle_getforce(socket, context);
+                SocketHandlers::handle_getforce(socket, context, ofs_running);
             }
             else if (header == "EXIT")
             {
-                SocketHandlers::handle_exit(ofs_running);
+                SocketHandlers::handle_exit(context, ofs_running);
                 break;
             }
             else
@@ -125,4 +132,17 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
     }
 
     ModuleBase::timer::end("Socket_Driver", "socket_driver");
+    return context.istep > 0;
+}
+
+bool Socket_Driver::socket_driver(ModuleESolver::ESolver* solver, UnitCell& cell,
+                                 const Input_para& input, std::ofstream& log)
+{
+    return run_socket_driver(solver, cell, input, nullptr, log);
+}
+
+bool Socket_Driver::socket_driver(ModuleESolver::ESolver* solver, UnitCell& cell,
+                                 Parameter& parameters, std::ofstream& log)
+{
+    return run_socket_driver(solver, cell, parameters.inp, &parameters, log);
 }

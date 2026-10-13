@@ -219,7 +219,11 @@ void ReadInput::item_system()
 When using the ASE AbacusSocketIO interface, this environment variable is set automatically from the port or unixsocket calculator argument.)";
         item.description += R"(
 
-Socket mode always computes energy. Force and stress extraction follows cal_force and cal_stress independently; disabled properties are sent as protocol padding and marked absent in the ABACUS i-PI extras metadata, not reported as physical zero values. This metadata extension is required for safe optional-property handling: a legacy response with empty extras is accepted only for energy-only use, while a generic client that ignores extras cannot distinguish padding from a computed zero. A non-converged SCF step is returned with scf_converged=false metadata so an external driver can choose its policy.)";
+Socket mode always computes energy. Force and stress extraction follows cal_force and cal_stress independently; disabled properties are sent as protocol padding and marked absent in the ABACUS i-PI extras metadata, not reported as physical zero values. This metadata extension is required for safe optional-property handling: a legacy response with empty extras is accepted only for energy-only use, while a generic client that ignores extras cannot distinguish padding from a computed zero. A non-converged ordinary SCF step is returned with scf_converged=false metadata so an external driver can choose its policy.
+
+Socket mode defaults symmetry to 0 so moving atoms do not retain the initial STRU spatial symmetry; an explicit symmetry input remains unchanged.
+
+Constant-potential i-PI sessions use INIT electron metadata and CHGDATA before each POSDATA to set the total electron number. Use fixed-cell CPU double-precision norm-conserving PW/LCAO KSDFT with cal_force=1, cal_stress=0, symmetry=0 or -1, and nspin=1 or 2. CHGDATA flags are zero. Each response contains the converged energy and forces, actual electron count, Fermi level, and requested work function. Set electron-control options in the i-PI electrons block. See the [i-PI examples and tests](https://github.com/zhangchenyu-USTC/i-pi_constant-potential/tree/abacus-develop-validation/examples/clients/abacus/validation).)";
         item.default_value = "False";
         read_sync_bool(input.socket_driver);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -294,7 +298,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
                 {
                     para.input.symmetry = "-1";
                 }
-                else if (para.input.gamma_only || para.input.calculation == "nscf" || para.input.calculation == "get_s"
+                else if (para.input.socket_driver || para.input.gamma_only || para.input.calculation == "nscf" || para.input.calculation == "get_s"
                     || para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
                 {
                     para.input.symmetry = "0"; // if md or exx, symmetry will be
