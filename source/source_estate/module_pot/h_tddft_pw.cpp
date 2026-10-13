@@ -7,10 +7,6 @@
 namespace elecstate
 {
 
-int H_TDDFT_pw::stype = 0;
-ModuleBase::Vector3<double> H_TDDFT_pw::efield_ha;
-std::vector<double> H_TDDFT_pw::global_vext_time = {0.0, 0.0, 0.0};
-
 H_TDDFT_pw::H_TDDFT_pw(const ModulePW::PW_Basis* rho_basis_in,
                        const UnitCell* ucell_in,
                        const std::shared_ptr<TDFieldManager>& field_manager)
@@ -24,17 +20,6 @@ H_TDDFT_pw::H_TDDFT_pw(const ModulePW::PW_Basis* rho_basis_in,
     {
         ModuleBase::WARNING_QUIT("H_TDDFT_pw", "RT-TDDFT field manager is not initialized.");
     }
-    set_field_state(*field_manager_);
-}
-
-void H_TDDFT_pw::set_field_state(const TDFieldManager& manager)
-{
-    stype = manager.gauge();
-    efield_ha = manager.efield_ha();
-    const ModuleBase::Vector3<double>& total_field = manager.efield_ha();
-    // Velocity gauge has no scalar electric-field force.
-    const double ry_scale = stype == 1 ? 0.0 : 2.0;
-    global_vext_time = {ry_scale * total_field[0], ry_scale * total_field[1], ry_scale * total_field[2]};
 }
 
 void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
@@ -119,8 +104,11 @@ double H_TDDFT_pw::cal_v_space_length_potential(const double coordinate) const
     return -((coordinate - upper_cut) * (upper_cut - lower_cut) / (lower_cut + 1.0 - upper_cut) - upper_cut) * this->ucell_->lat0;
 }
 
-void H_TDDFT_pw::compute_force(const UnitCell& cell, ModuleBase::matrix& force)
+void H_TDDFT_pw::compute_force(const UnitCell& cell, const TDFieldManager& manager, ModuleBase::matrix& force)
 {
+    // Velocity gauge has no scalar electric-field force. Forces use Rydberg units.
+    const double ry_scale = manager.gauge() == 1 ? 0.0 : 2.0;
+    const ModuleBase::Vector3<double> field = manager.efield_ha() * ry_scale;
     int atom_index = 0;
     for (int type = 0; type < cell.ntype; ++type)
     {
@@ -128,7 +116,7 @@ void H_TDDFT_pw::compute_force(const UnitCell& cell, ModuleBase::matrix& force)
         {
             for (int direction = 0; direction < 3; ++direction)
             {
-                force(atom_index, direction) = global_vext_time[direction] * cell.atoms[type].ncpp.zv;
+                force(atom_index, direction) = field[direction] * cell.atoms[type].ncpp.zv;
             }
             ++atom_index;
         }

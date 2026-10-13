@@ -2,9 +2,11 @@
 
 #include "source_base/tool_quit.h"
 
+#include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <sys/stat.h>
 
 namespace
 {
@@ -19,7 +21,7 @@ std::string vector_pot_path(const std::string& directory)
 void write_vector_pot_header(std::ofstream& output)
 {
     output << std::left << std::setw(8) << "#istep" << std::setw(15) << "A_x" << std::setw(15) << "A_y" << std::setw(15) << "A_z"
-           << "# propagation values, Hartree atomic units" << std::endl;
+           << "# endpoint values, Hartree atomic units" << std::endl;
 }
 
 bool is_blank_or_comment(const std::string& line)
@@ -62,6 +64,13 @@ std::vector<ModuleBase::Vector3<double>> read_td_vector_pot(const std::string& i
                                      "Invalid vector-potential data on line " + std::to_string(line_number) + " of " + input_path + "!");
         }
         row >> std::ws;
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            if (!std::isfinite(vector_pot[direction]))
+            {
+                ModuleBase::WARNING_QUIT("ModuleIO::read_td_vector_pot", "Non-finite vector potential in " + input_path);
+            }
+        }
         if (!row.eof())
         {
             ModuleBase::WARNING_QUIT("ModuleIO::read_td_vector_pot",
@@ -75,6 +84,20 @@ std::vector<ModuleBase::Vector3<double>> read_td_vector_pot(const std::string& i
         ModuleBase::WARNING_QUIT("ModuleIO::read_td_vector_pot", "No vector-potential data found in " + input_path + "!");
     }
     return vector_potentials;
+}
+
+void check_td_vector_pot_paths(const std::string& input_dir, const std::string& output_dir)
+{
+    struct stat input_state;
+    struct stat output_state;
+    const std::string input_path = vector_pot_path(input_dir);
+    const std::string output_path = vector_pot_path(output_dir);
+    // Different paths can name the same file through symbolic or hard links; compare file identity before writing.
+    if (stat(input_path.c_str(), &input_state) == 0 && stat(output_path.c_str(), &output_state) == 0
+        && input_state.st_dev == output_state.st_dev && input_state.st_ino == output_state.st_ino)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::check_td_vector_pot_paths", "Vector-potential output would overwrite its input file.");
+    }
 }
 
 void prepare_td_vector_pot_output(const std::string& output_dir, const bool restart)

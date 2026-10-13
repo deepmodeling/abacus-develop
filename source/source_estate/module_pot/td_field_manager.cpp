@@ -97,6 +97,32 @@ void TDFieldManager::sample_field(const int step)
     active_ = enabled_ && step >= start_step_ && step <= end_step_;
     std::fill(field_vals_ha_.begin(), field_vals_ha_.end(), 0.0);
     efield_ha_.set(0.0, 0.0, 0.0);
+    if (file_source())
+    {
+        // File samples define the field independently of the analytic enable flag and time window.
+        active_ = true;
+        if (step == 0)
+        {
+            // Three actual rows give second-order initial E; shorter files fall back to two points or zero.
+            // Padding with held values here would change the initial slope of a short file.
+            if (A_samples_ha_.size() >= 3)
+            {
+                efield_ha_ = ((A_samples_ha_[0] - A_samples_ha_[1]) * 3.0 + (A_samples_ha_[2] - A_samples_ha_[1])) * (0.5 / dt_ha_);
+            }
+            else if (A_samples_ha_.size() == 2)
+            {
+                efield_ha_ = (A_samples_ha_[0] - A_samples_ha_[1]) * (1.0 / dt_ha_);
+            }
+            return;
+        }
+        // Clamping extends A as constant past EOF, while the centered stencil still spans 2*dt.
+        const std::size_t last = A_samples_ha_.size() - 1;
+        const std::size_t next = std::min(static_cast<std::size_t>(step + 1), last);
+        const std::size_t previous = std::min(static_cast<std::size_t>(std::max(0, step - 1)), last);
+        const double span = 2.0 * dt_ha_;
+        efield_ha_ = (A_samples_ha_[previous] - A_samples_ha_[next]) * (1.0 / span);
+        return;
+    }
     if (!active_)
     {
         return;
@@ -113,6 +139,11 @@ void TDFieldManager::sample_field(const int step)
 
 void TDFieldManager::prepare_sample(const int step)
 {
+    if (step < 0 || (gauge_ != 0 && step != 0))
+    {
+        ModuleBase::WARNING_QUIT("TDFieldManager::prepare_sample", "Use interval preparation after the initial vector-potential endpoint.");
+    }
+    // Initialization and the electronic loop may request the same sample.
     if (step == current_step_)
     {
         return;
@@ -122,19 +153,39 @@ void TDFieldManager::prepare_sample(const int step)
         ModuleBase::WARNING_QUIT("TDFieldManager::prepare_sample", "Invalid electronic-step sequence.");
     }
     sample_field(step);
+    if (step == 0)
+    {
+        // Initial SCF uses A(0); integrating a future interval here would shift the initial Hamiltonian in time.
+        if (file_source())
+        {
+            A_right_ha_ = A_samples_ha_.front();
+        }
+        A_left_ha_ = A_right_ha_;
+        select_A_prop();
+    }
 }
 
 void TDFieldManager::prepare_interval(const int left_step, const int sample_step)
 {
+    if (left_step < 0 || sample_step != left_step + 1)
+    {
+        ModuleBase::WARNING_QUIT("TDFieldManager::prepare_interval", "Expected consecutive interval endpoints.");
+    }
+    // Solver setup and the electronic loop can request the same interval; integrate it only once.
     if (left_step == interval_left_ && sample_step == current_step_)
     {
         return;
     }
-    if (left_step != interval_left_ + 1 || (sample_step != left_step && sample_step != left_step + 1))
+    if (left_step != interval_left_ + 1 || sample_step != left_step + 1 || current_step_ != left_step)
     {
         ModuleBase::WARNING_QUIT("TDFieldManager::prepare_interval", "Invalid field interval sequence.");
     }
     A_left_ha_ = A_right_ha_;
+    if (file_source())
+    {
+        const std::size_t index = std::min(static_cast<std::size_t>(left_step + 1), A_samples_ha_.size() - 1);
+        A_right_ha_ = A_samples_ha_[index];
+    }
     if (A_samples_ha_.empty() && enabled_ && left_step >= start_step_ && left_step <= end_step_)
     {
         for (const TDField& field: fields_)
@@ -175,7 +226,7 @@ void TDFieldManager::read_restart(const std::string& file_dir)
     double dt = 0.0;
     if (!(state >> current_step_ >> interval_left_ >> gauge >> dt >> file_source) || !(left >> A_left_ha_.x >> A_left_ha_.y >> A_left_ha_.z)
         || !(right >> A_right_ha_.x >> A_right_ha_.y >> A_right_ha_.z) || current_step_ < 0 || interval_left_ < -1
-        || (gauge_ == 0 && interval_left_ != -1) || (gauge_ != 0 && interval_left_ != current_step_ && interval_left_ != current_step_ - 1)
+        || (gauge_ == 0 && interval_left_ != -1) || (gauge_ != 0 && interval_left_ != current_step_ - 1)
         || file_source != !A_samples_ha_.empty() || gauge != gauge_ || !std::isfinite(dt) || std::abs(dt - dt_ha_) > 1.0e-12 * dt_ha_)
     {
         ModuleBase::WARNING_QUIT("TDFieldManager::read_restart", "Invalid or incompatible field restart state.");
@@ -217,7 +268,7 @@ void TDFieldManager::set_A_samples(const std::vector<ModuleBase::Vector3<double>
 {
     if (current_step_ != -1 || samples_ha.empty())
     {
-        ModuleBase::WARNING_QUIT("TDFieldManager::set_A_samples", "Supply nonempty propagation samples before initialization.");
+        ModuleBase::WARNING_QUIT("TDFieldManager::set_A_samples", "Supply nonempty endpoint samples before initialization.");
     }
     for (const ModuleBase::Vector3<double>& A: samples_ha)
     {
@@ -225,7 +276,7 @@ void TDFieldManager::set_A_samples(const std::vector<ModuleBase::Vector3<double>
         {
             if (!std::isfinite(A[d]))
             {
-                ModuleBase::WARNING_QUIT("TDFieldManager::set_A_samples", "Non-finite propagation sample.");
+                ModuleBase::WARNING_QUIT("TDFieldManager::set_A_samples", "Non-finite endpoint sample.");
             }
         }
     }
@@ -234,15 +285,13 @@ void TDFieldManager::set_A_samples(const std::vector<ModuleBase::Vector3<double>
 
 void TDFieldManager::select_A_prop()
 {
-    if (A_samples_ha_.empty())
-    {
-        A_prop_ha_ = (A_left_ha_ + A_right_ha_) * 0.5;
-    }
-    else
-    {
-        const std::size_t index = std::min(static_cast<std::size_t>(current_step_), A_samples_ha_.size() - 1);
-        A_prop_ha_ = A_samples_ha_[index];
-    }
+    // Both file rows and analytic integration define endpoints; PW propagation uses their average.
+    A_prop_ha_ = (A_left_ha_ + A_right_ha_) * 0.5;
+}
+
+bool TDFieldManager::file_source() const
+{
+    return !A_samples_ha_.empty();
 }
 
 int TDFieldManager::gauge() const
@@ -279,18 +328,10 @@ const std::vector<double>& TDFieldManager::field_vals_ha() const
 }
 const ModuleBase::Vector3<double>& TDFieldManager::A_left_ha() const
 {
-    if (!A_samples_ha_.empty())
-    {
-        ModuleBase::WARNING_QUIT("TDFieldManager::A_left_ha", "File propagation samples do not define endpoints.");
-    }
     return A_left_ha_;
 }
 const ModuleBase::Vector3<double>& TDFieldManager::A_right_ha() const
 {
-    if (!A_samples_ha_.empty())
-    {
-        ModuleBase::WARNING_QUIT("TDFieldManager::A_right_ha", "File propagation samples do not define endpoints.");
-    }
     return A_right_ha_;
 }
 const ModuleBase::Vector3<double>& TDFieldManager::A_prop_ha() const
@@ -314,7 +355,9 @@ std::shared_ptr<TDFieldManager> create_td_field_manager(const Input_para& input)
     std::vector<TDField> fields;
     fields.reserve(input.td_ttype.size());
 
-    for (std::size_t field_index = 0; field_index < input.td_ttype.size(); ++field_index)
+    // File input supplies A and its derived E, so unused analytic waveform parameters need not be populated.
+    const std::size_t field_count = input.init_vecpot ? 0 : input.td_ttype.size();
+    for (std::size_t field_index = 0; field_index < field_count; ++field_index)
     {
         const int field_type = input.td_ttype[field_index];
         const std::size_t occurrence = occurrences[field_type]++;

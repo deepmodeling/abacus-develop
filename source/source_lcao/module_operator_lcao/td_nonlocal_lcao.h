@@ -38,7 +38,8 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      hamilt::HContainer<TR>* hR_in,
                                      const UnitCell* ucell_in,
                                      const LCAO_Orbitals& orb,
-                                     const Grid_Driver* GridD_in);
+                                     const Grid_Driver* GridD_in,
+                                     TD_info& td_info);
     ~TDNonlocal<OperatorLCAO<TK, TR>>();
 
     /**
