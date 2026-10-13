@@ -1136,7 +1136,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "full Rayleigh-Ritz interval for PPCG";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = ppcg. It must be a positive integer and sets the interval, in subspace iterations, between full Rayleigh-Ritz diagonalizations. The solver also performs a full Rayleigh-Ritz step at initialization, final validation, tentative convergence, or when overlap orthogonalization fails. Between these steps it maintains S-orthogonality without diagonalizing the full projected Hamiltonian. H and S images are refreshed at periodic Rayleigh-Ritz steps to limit accumulated rounding drift. A larger interval reduces full projected eigensolves but may change the iteration count.";
+        item.description = "Only useful when you use ks_solver = ppcg. It must be a positive integer and sets the interval, in subspace iterations, between full Rayleigh-Ritz diagonalizations. The solver also performs a full Rayleigh-Ritz step at initialization, after the startup global correction, at final validation or tentative convergence, or when overlap orthogonalization fails. Between these steps it maintains S-orthogonality without diagonalizing the full projected Hamiltonian. H and S images are refreshed at periodic Rayleigh-Ritz steps to limit accumulated rounding drift. A larger interval reduces full projected eigensolves but may change the iteration count.";
         item.default_value = "16";
         item.unit = "";
         item.set_availability("basis_type==pw and ks_solver==ppcg");

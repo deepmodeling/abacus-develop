@@ -1134,7 +1134,7 @@
 ### pw_diag_thr
 
 - **Type**: Real
-- **Description**: Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be &lt;= 1e-3.
+- **Description**: Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. CG and Davidson methods compare eigenvalue changes against the threshold. PPCG uses the same energy scale as a squared-residual stopping policy: the norm of H psi - epsilon S psi must not exceed sqrt(max(ethr_band, ethr, 1e-14)). This policy is not a gap-independent bound on eigenvalue error. For nscf calculations with planewave basis set, pw_diag_thr should be &lt;= 1e-3.
 - **Default**: 0.01
 
 ### diago_smooth_ethr
@@ -1154,7 +1154,7 @@
 
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver) in [cg, dav, dav_subspace, bpcg, ppcg]*
-- **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/ppcg method.
+- **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/ppcg method. The shared PW NSCF setup retains the existing iteration limit (30 in a fresh run) for all solvers instead of updating it from this input.
 - **Default**: 50
 
 ### pw_diag_ndim
@@ -1168,7 +1168,7 @@
 
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver)==ppcg*
-- **Description**: Only useful when you use ks_solver = ppcg. It must be a positive integer and controls how often (in subspace iterations) H and S are re-applied to reset the accumulated rounding drift after the Rayleigh-Ritz rotation. A larger value reduces the number of H/S applications and thus the wall time without changing the iteration count in well-conditioned cases; a smaller value is more robust against rounding drift in ill-conditioned problems.
+- **Description**: Only useful when you use ks_solver = ppcg. It must be a positive integer and sets the interval, in subspace iterations, between full Rayleigh-Ritz diagonalizations. The solver also performs a full Rayleigh-Ritz step at initialization, after the startup global correction, at final validation or tentative convergence, or when overlap orthogonalization fails. Between these steps it maintains S-orthogonality without diagonalizing the full projected Hamiltonian. H and S images are refreshed at periodic Rayleigh-Ritz steps to limit accumulated rounding drift. A larger interval reduces full projected eigensolves but may change the iteration count.
 - **Default**: 16
 
 ### diago_cg_prec
