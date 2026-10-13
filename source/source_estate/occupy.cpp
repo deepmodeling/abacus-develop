@@ -37,85 +37,7 @@ double sum_occupations(const ModuleBase::matrix& ekb,
                        const double reference,
                        const double offset,
                        const int& is,
-                       const std::vector<int>& isk,
-                       double* roundoff);
-
-// First-order scalar error estimate, used only when the Fermi search stalls.
-// The 8u/4u allowances for erfc/exp are tested libm assumptions, not a portable
-// correctly-rounded guarantee. Keep MP component magnitudes before cancellation.
-double smearing_roundoff(const double x, const int n, const double value, const double x_error)
-{
-    const double u = 0.5 * std::numeric_limits<double>::epsilon();
-    const double tiny = std::numeric_limits<double>::denorm_min();
-    if (n == -99)
-    {
-        const double magnitude = std::abs(x);
-        if (magnitude > 200.0)
-        {
-            const double tail_argument = -magnitude;
-            return std::exp(tail_argument) + tiny;
-        }
-        const double slope = value * (1.0 - value);
-        return u * (2.0 * std::abs(value) + 4.0 * slope) + slope * x_error + tiny;
-    }
-    const double negative_x = -x;
-    const double gaussian = 0.5 * std::erfc(negative_x);
-    const double x2 = x * x;
-    const double negative_x2 = -x2;
-    const double density = std::exp(negative_x2) / std::sqrt(ModuleBase::PI);
-    if (n == 0)
-    {
-        return 8.0 * u * gaussian + density * x_error + tiny;
-    }
-    if (n == -1)
-    {
-        const double shift = 1.0 / ModuleBase::SQRT2;
-        const double xp = x - shift;
-        const double xp2 = xp * xp;
-        const double negative_xp = -xp;
-        const double base = 0.5 * std::erfc(negative_xp);
-        const double argument = std::min(200.0, xp2);
-        const double negative_argument = -argument;
-        const double correction = std::exp(negative_argument) / std::sqrt(ModuleBase::TWO_PI);
-        if (xp2 > 200.0)
-        {
-            // The existing exponential clamp leaves a nonzero tail.
-            return 8.0 * u * base + correction + tiny;
-        }
-        const double derivative = (ModuleBase::SQRT2 - 2.0 * xp) * correction;
-        const double slope = std::abs(derivative);
-        const double shifted_error = x_error + u * (std::abs(xp) + 2.0 * shift);
-        // Square, exp, normalization and addition; include the shift's rounding.
-        return u * (8.0 * base + (xp2 + 10.0) * correction + std::abs(value)) + slope * shifted_error + tiny;
-    }
-    if (n != 1 && n != 2)
-    {
-        return std::numeric_limits<double>::infinity();
-    }
-    const double magnitude = std::abs(x);
-    double polynomial = 0.5 * magnitude;
-    double derivative = 1.5 - x2;
-    double slope = std::abs(derivative) * density;
-    double operations = 8.0;
-    if (n == 2)
-    {
-        polynomial = magnitude * (0.875 + 0.25 * x2);
-        derivative = 1.875 - 2.5 * x2 + 0.5 * x2 * x2;
-        slope = std::abs(derivative) * density;
-        operations = 12.0;
-    }
-    const double argument = std::min(200.0, x2);
-    const double negative_argument = -argument;
-    const double correction_scale = polynomial * std::exp(negative_argument) / std::sqrt(ModuleBase::PI);
-    if (x2 > 200.0)
-    {
-        return 8.0 * u * gaussian + correction_scale + tiny;
-    }
-    // 8/12 count first-order rounding allowances in the MP1/MP2 recurrence,
-    // including the exponential and normalization, not an electron tolerance.
-    return u * (8.0 * gaussian + (operations + x2) * correction_scale + n * std::abs(value))
-           + slope * x_error + tiny;
-}
+                       const std::vector<int>& isk);
 } // namespace
 
 Occupy::Occupy()
@@ -399,10 +321,11 @@ FermiLevel find_fermi_level(const ModuleBase::matrix& ekb,
                            const std::vector<int>& isk)
 {
     // Resolve particle number to floating-point accuracy, independently of the
-    // outer SCF threshold. A fixed absolute tolerance leaves a charge floor.
+    // outer SCF threshold. The modest 16-epsilon allowance is validated against
+    // independent occupation sums; it is not an all-spectra rounding bound.
     const double electron_magnitude = std::abs(nelec);
     const double scale = std::max(1.0, electron_magnitude);
-    const double tolerance = 8.0 * std::numeric_limits<double>::epsilon() * scale;
+    const double tolerance = 16.0 * std::numeric_limits<double>::epsilon() * scale;
     if (!(smearing_sigma > 0.0) || !std::isfinite(smearing_sigma) || !std::isfinite(nelec))
     {
         ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Invalid smearing width or electron number");
@@ -442,8 +365,8 @@ FermiLevel find_fermi_level(const ModuleBase::matrix& ekb,
     double step = 2.0 * smearing_sigma;
     lower -= step;
     upper += step;
-    double low_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, lower, is, isk, nullptr);
-    double high_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, upper, is, isk, nullptr);
+    double low_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, lower, is, isk);
+    double high_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, upper, is, isk);
     int expansion = 0;
     while (low_count > nelec + tolerance || high_count < nelec - tolerance)
     {
@@ -455,12 +378,12 @@ FermiLevel find_fermi_level(const ModuleBase::matrix& ekb,
         if (low_count > nelec + tolerance)
         {
             lower -= step;
-            low_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, lower, is, isk, nullptr);
+            low_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, lower, is, isk);
         }
         if (high_count < nelec - tolerance)
         {
             upper += step;
-            high_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, upper, is, isk, nullptr);
+            high_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, upper, is, isk);
         }
     }
 
@@ -480,8 +403,7 @@ FermiLevel find_fermi_level(const ModuleBase::matrix& ekb,
         result.offset = upper;
         best_error = high_error;
     }
-    // Inherited safety cap, not an accuracy criterion. Stagnation is checked
-    // separately; exhausting this cap must never report convergence.
+    // Inherited safety cap; exhausting it must not report convergence.
     const int maxiter = 300;
     for (int iteration = 0; iteration < maxiter; ++iteration)
     {
@@ -504,30 +426,17 @@ FermiLevel find_fermi_level(const ModuleBase::matrix& ekb,
         const double middle = 0.5 * lower + 0.5 * upper;
         if (middle == lower || middle == upper)
         {
-            // Audit only the best candidate, in its original centered coordinates.
-            // A large error estimate must not buy a loose electron tolerance.
-            double roundoff = 0.0;
-            const double count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss,
-                                                 result.reference, result.offset, is, isk, &roundoff);
-            const double count_error = count - nelec;
-            const double residual = std::abs(count_error);
+            // No representable interior point remains. Do not silently spin to
+            // maxiter, nor claim that a small energy interval proves charge accuracy.
             std::ostringstream message;
             message.precision(17);
-            if (std::isfinite(roundoff) && roundoff <= tolerance && residual <= tolerance + roundoff)
-            {
-                message << "Fermi search reached rounding accuracy; electron residual = " << residual
-                        << ", target = " << tolerance << ", estimated roundoff = " << roundoff;
-                const std::string diagnostic = message.str();
-                ModuleBase::WARNING("occupy_smearing::efermig", diagnostic);
-                return result;
-            }
             message << "Fermi bracket reached floating-point resolution; electron residual = "
-                    << residual << ", requested tolerance = " << tolerance << ", estimated roundoff = " << roundoff;
+                    << best_error << ", requested tolerance = " << tolerance;
             const std::string diagnostic = message.str();
             ModuleBase::WARNING_QUIT("occupy_smearing::efermig", diagnostic);
             return result;
         }
-        const double count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, middle, is, isk, nullptr);
+        const double count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, middle, is, isk);
         if (!std::isfinite(count))
         {
             ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Non-finite electron number");
@@ -600,15 +509,11 @@ double sum_occupations(const ModuleBase::matrix& ekb,
                        const double reference,
                        const double offset,
                        const int& is,
-                       const std::vector<int>& isk,
-                       double* roundoff)
+                       const std::vector<int>& isk)
 {
     // ModuleBase::TITLE("Occupy","sumkg");
     double sum2 = 0.0;
     double compensation = 0.0;
-    const double u = 0.5 * std::numeric_limits<double>::epsilon();
-    double absolute_sum = 0.0;
-    double evaluation_error = 0.0;
     for (int ik = 0; ik < nks; ++ik)
     {
         if (is != -1 && is != isk[ik])
@@ -621,58 +526,24 @@ double sum_occupations(const ModuleBase::matrix& ekb,
             // local accumulation before the existing pool/band reduction.
             const double relative_energy = ekb(ik, ib) - reference;
             const double argument = (offset - relative_energy) / smearing_sigma;
-            const double value = occupy_smearing::wgauss(argument, ngauss);
-            const double occupation = wk[ik] * value;
+            const double occupation = wk[ik] * occupy_smearing::wgauss(argument, ngauss);
             const double corrected = occupation - compensation;
             const double next = sum2 + corrected;
             compensation = (next - sum2) - corrected;
             sum2 = next;
-            if (roundoff != nullptr)
-            {
-                const double magnitude = std::abs(occupation);
-                absolute_sum += magnitude;
-                const double difference = offset - relative_energy;
-                const double coordinate_scale = std::abs(relative_energy) / smearing_sigma
-                                                + std::abs(difference) / smearing_sigma + std::abs(argument);
-                const double x_error = u * coordinate_scale;
-                const double scalar_error = smearing_roundoff(argument, ngauss, value, x_error);
-                evaluation_error += std::abs(wk[ik]) * scalar_error + u * magnitude;
-            }
         }
     }
 
     // GlobalV::ofs_running << "\n sum2 before reduce = " << sum2 << std::endl;
 
-    double totals[3] = {sum2, absolute_sum, evaluation_error};
-    double reduction_error = 0.0;
 #ifdef __MPI
     const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
-    const int count = roundoff == nullptr ? 1 : 3;
-    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, totals, count);
-    if (roundoff != nullptr && npool > 1)
-    {
-        int participants = 1;
-        Parallel_Reduce::reduce_all(participants);
-        const double additions = (participants - 1) * u;
-        // Pool scaling plus an order-independent reduction bound; used only
-        // for the capped stagnation check, never for early termination.
-        reduction_error = (u + additions / (1.0 - additions)) * totals[1];
-    }
+    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, sum2);
 #endif
-    if (roundoff != nullptr)
-    {
-        // First-order Kahan bound, function/argument evaluation, MPI and the
-        // final count subtraction. Subnormal widths invalidate this model.
-        *roundoff = totals[2] + 2.0 * u * totals[1] + reduction_error + u * std::abs(totals[0]);
-        if (smearing_sigma < std::numeric_limits<double>::min())
-        {
-            *roundoff = std::numeric_limits<double>::infinity();
-        }
-    }
 
     // GlobalV::ofs_running << "\n sum2 after reduce = " << sum2 << std::endl;
 
-    return totals[0];
+    return sum2;
 }
 } // namespace
 
@@ -687,7 +558,7 @@ double occupy_smearing::sumkg(const ModuleBase::matrix& ekb,
                              const std::vector<int>& isk)
 {
     const double reference = 0.0;
-    return sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, e, is, isk, nullptr);
+    return sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, e, is, isk);
 }
 
 double occupy_smearing::wgauss(const double& x, const int n)
