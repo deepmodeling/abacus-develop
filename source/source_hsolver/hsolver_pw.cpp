@@ -20,6 +20,7 @@
 #include <cmath>
 #include <exception>
 #include <iomanip>
+#include <limits>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -100,6 +101,16 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
     const int rr_step_safe = std::max(1, rr_step);
+    // The host solver uses int indices. Check the product before allocation or
+    // copying, and reject it on every pool rank before any operator callback.
+    const int max_elements = std::numeric_limits<int>::max();
+    int invalid_dimensions = ld_psi <= 0 || nband <= 0 || dim <= 0 || dim > ld_psi
+                                 || nband > max_elements / ld_psi ? 1 : 0;
+    Parallel_Reduce::reduce_pool(&invalid_dimensions, 1);
+    if (invalid_dimensions != 0)
+    {
+        ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Invalid or oversized wavefunction dimensions on a pool rank.");
+    }
     const int nelem = ld_psi * nband;
     const Real solver_diag_thr = static_cast<Real>(diag_thr);
 
@@ -133,24 +144,24 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
     // may receive padded wavefunction columns, so copying only ``dim`` would
     // corrupt the column stride expected by the device implementation.
     const auto copy_to_device = [&](T* host_ptr, const int ld, const int nvec) {
-        const int count = ld * nvec;
-        int invalid_block = count < 0 || count > nelem ? 1 : 0;
+        int invalid_block = ld <= 0 || nvec <= 0 || nvec > nelem / ld ? 1 : 0;
         Parallel_Reduce::reduce_pool(&invalid_block, 1);
         if (invalid_block != 0)
         {
             ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Input block exceeds allocated workspace on a pool rank.");
         }
+        const int count = ld * nvec;
         base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
             psi_dev.ptr, host_ptr, count);
     };
     const auto copy_from_device = [&](T* host_ptr, const int ld, const int nvec) {
-        const int count = ld * nvec;
-        int invalid_block = count < 0 || count > nelem ? 1 : 0;
+        int invalid_block = ld <= 0 || nvec <= 0 || nvec > nelem / ld ? 1 : 0;
         Parallel_Reduce::reduce_pool(&invalid_block, 1);
         if (invalid_block != 0)
         {
             ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Output block exceeds allocated workspace on a pool rank.");
         }
+        const int count = ld * nvec;
         base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
             host_ptr, out_dev.ptr, count);
     };
