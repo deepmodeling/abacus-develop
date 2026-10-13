@@ -1168,8 +1168,8 @@
 
 - **Type**: Integer
 - **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver)==ppcg*
-- **Description**: Only useful when you use ks_solver = ppcg. It must be a positive integer and sets the interval, in subspace iterations, between full Rayleigh-Ritz diagonalizations. The solver also performs a full Rayleigh-Ritz step at initialization, after the startup global correction, at final validation or tentative convergence, or when overlap orthogonalization fails. Between these steps it maintains S-orthogonality without diagonalizing the full projected Hamiltonian. H and S images are refreshed at periodic Rayleigh-Ritz steps to limit accumulated rounding drift. A larger interval reduces full projected eigensolves but may change the iteration count.
-- **Default**: 16
+- **Description**: Only useful when you use ks_solver = ppcg. It must be a positive integer and sets the interval, in subspace iterations, between full Rayleigh-Ritz diagonalizations. The conservative default of 1 preserves the established every-iteration Rayleigh-Ritz cadence. The solver also performs a full Rayleigh-Ritz step at initialization, after the startup global correction, at final validation or tentative convergence, or when overlap orthogonalization fails. Between these steps it maintains S-orthogonality without diagonalizing the full projected Hamiltonian. H and S images are refreshed independently every 16 iterations, with additional refreshes when search-direction projection loses precision or residuals approach a floating-point cancellation scale. Convergence and final residuals are checked using freshly applied operators. Larger Rayleigh-Ritz intervals reduce full projected eigensolves but can change the SCF trajectory or require more diagonalization iterations; validate energies, forces, stresses, and the iteration budget for the intended calculation.
+- **Default**: 1
 
 ### diago_cg_prec
 
