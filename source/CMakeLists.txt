@@ -563,17 +563,17 @@ add_subdirectory(source_psi)
 add_subdirectory(source_estate)
 add_subdirectory(source_hamilt)
 add_subdirectory(source_pw)
-if(BUILD_TESTING)
-  # Register the nonlocal XC tests once; CMake resolves their PW dependencies
-  # after all source subdirectories have been processed.
-  add_subdirectory(source_hamilt/module_vdw/test)
-endif()
 add_subdirectory(source_lcao)
 add_subdirectory(source_hsolver)
 add_subdirectory(source_basis/module_ao)
 add_subdirectory(source_basis/module_nao)
 add_subdirectory(source_md)
 add_subdirectory(source_basis/module_pw)
+if(BUILD_TESTING)
+  # Register after the PW basis target exists; the optional adapter test links
+  # the existing planewave object library.
+  add_subdirectory(source_hamilt/module_vdw/test)
+endif()
 add_subdirectory(source_esolver)
 add_subdirectory(source_io)
 add_subdirectory(source_relax)

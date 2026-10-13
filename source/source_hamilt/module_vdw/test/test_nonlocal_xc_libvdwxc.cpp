@@ -42,6 +42,21 @@ class LibvdwxcAdapterTest : public testing::Test
                 }
         return values;
     }
+
+    std::vector<double> perturbation() const
+    {
+        std::vector<double> values(pw.nrxx, 0.0);
+        for (int x = 0; x < pw.nx; ++x)
+            for (int y = 0; y < pw.ny; ++y)
+                for (int z = 0; z < pw.nz; ++z)
+                {
+                    const int index = (x * pw.ny + y) * pw.nz + z;
+                    const double ax = 2.0 * pi * x / pw.nx;
+                    const double ay = 2.0 * pi * y / pw.ny;
+                    values[index] = std::sin(ax + ay) + 0.3 * std::cos(2.0 * ay);
+                }
+        return values;
+    }
 };
 
 #ifdef __LIBVDWXC
@@ -99,6 +114,35 @@ TEST_F(LibvdwxcAdapterTest, MatchesDirectSerialApiForNonuniformDensity)
     }
     EXPECT_NEAR(adapted.vtxc, expected_vtxc, 2.0e-12);
     vdwxc_finalize(&direct);
+}
+
+TEST_F(LibvdwxcAdapterTest, PotentialMatchesFiniteDifferenceOfEnergy)
+{
+    const double b = 6.3;
+    const double c = 0.0093;
+    const double step = 1.0e-5;
+    const std::vector<double> total = density(0.004, 0.006);
+    const std::vector<double> valence = total;
+    const std::vector<double> direction = perturbation();
+    vdw::LibvdwxcNonlocalXC adapter(pw, b, c);
+    const vdw::NonlocalXCResult reference = adapter.evaluate(pw, total, valence);
+    std::vector<double> plus = total;
+    std::vector<double> minus = total;
+    for (int r = 0; r < pw.nrxx; ++r)
+    {
+        plus[r] += step * direction[r];
+        minus[r] -= step * direction[r];
+    }
+    const vdw::NonlocalXCResult forward = adapter.evaluate(pw, plus, valence);
+    const vdw::NonlocalXCResult backward = adapter.evaluate(pw, minus, valence);
+    const double finite_difference = (forward.energy - backward.energy) / (2.0 * step);
+    const double dv = pw.omega / pw.nxyz;
+    double potential_contraction = 0.0;
+    for (int r = 0; r < pw.nrxx; ++r)
+    {
+        potential_contraction += dv * reference.potential[r] * direction[r];
+    }
+    EXPECT_NEAR(finite_difference, potential_contraction, 2.0e-6);
 }
 #endif
 
