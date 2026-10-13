@@ -528,10 +528,8 @@ TEST_F(TestHSolverPW, PpcgUsesIndependentConstructorConfiguration)
     const int dim = 18;
     const int nband = 3;
     const int maxiter = 4;
-    const double energy_threshold = 1.0e-8;
-    const double residual_threshold = 1.0e-4;
-    const std::vector<double> energy_thresholds = {1.0e-8, 4.0e-8, 9.0e-8};
-    const std::vector<double> residual_thresholds = {1.0e-4, 2.0e-4, 3.0e-4};
+    const double residual_threshold = 1.0e-8;
+    const std::vector<double> residual_thresholds = {1.0e-8, 4.0e-8, 9.0e-8};
     std::vector<double> precondition(dim, 1.0);
     std::vector<T> initial(dim * nband);
     for (size_t i = 0; i < initial.size(); ++i)
@@ -546,11 +544,11 @@ TEST_F(TestHSolverPW, PpcgUsesIndependentConstructorConfiguration)
     // Neither object calls setup_diago_params_pw. Dispatch must honor its own
     // block size and RR interval, including after a different object was used.
     hsolver::HSolverPW<T> first(&pwbk, "scf", "pw", "ppcg", false, 1, 1,
-                               maxiter, energy_threshold, false, nband, false, 1, 3, 0, 0);
+                               maxiter, residual_threshold, false, nband, false, 1, 3, 0, 0);
     hsolver::HSolverPW<T> second(&pwbk, "scf", "pw", "ppcg", false, 1, 1,
-                                maxiter, energy_threshold, false, nband, false, 2, 1, 0, 0);
-    set_thresholds(first, energy_thresholds);
-    set_thresholds(second, energy_thresholds);
+                                maxiter, residual_threshold, false, nband, false, 2, 1, 0, 0);
+    set_thresholds(first, residual_thresholds);
+    set_thresholds(second, residual_thresholds);
     hsolver::HSolverPW<T>* solvers[] = {&first, &second, &first};
     const int block_sizes[] = {1, 2, 1};
     const int rr_steps[] = {3, 1, 3};
@@ -600,6 +598,35 @@ TEST_F(TestHSolverPW, PpcgFailureUsesApplicationDiagnostic)
         hamiltSolvePsiK(solver, hamilt_test_d, wavefunctions,
                         precondition, eigenvalues.data(), 1);
     }, ::testing::ExitedWithCode(1), "PPCG diagonalization failed:.*preconditioner contains non-finite");
+}
+
+TEST_F(TestHSolverPW, PpcgPreservesRequestedResidualNorm)
+{
+    using T = std::complex<double>;
+    const double threshold = 1.0e-8;
+    hsolver::HSolverPW<T> solver(&pwbk, "scf", "pw", "ppcg", false, 1, 1,
+                                10, threshold, false, 1, false, 1, 3, 0, 0);
+    const std::vector<double> thresholds(1, threshold);
+    set_thresholds(solver, thresholds);
+    psi::Psi<T> wavefunctions(1, 1, 3, 3, true);
+    wavefunctions.zero_out();
+    wavefunctions(0, 0) = T(1.0, 0.0);
+    wavefunctions(0, 1) = T(1.0e-5, 0.0);
+    std::vector<double> precondition(3, 1.0);
+    std::vector<double> eigenvalues(1);
+    DiagonalPPCGOperator op;
+    // This starting residual is below sqrt(threshold), but above threshold.
+    // Energy alone is already accurate to O(1e-10), so check the wavefunction.
+    EXPECT_TRUE(hamiltSolvePsiK(solver, op, wavefunctions,
+                               precondition, eigenvalues.data(), 1));
+    double squared_residual = 0.0;
+    for (int ig = 0; ig < 3; ++ig)
+    {
+        const T residual = (double(ig + 1) - eigenvalues[0]) * wavefunctions(0, ig);
+        squared_residual += std::norm(residual);
+    }
+    const double residual_norm = std::sqrt(squared_residual);
+    EXPECT_LE(residual_norm, threshold);
 }
 
 TEST_F(TestHSolverPW, PpcgConvergenceWarningSummarizesKpoints)

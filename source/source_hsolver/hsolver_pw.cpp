@@ -556,18 +556,9 @@ typename HSolverPW<T, Device>::DiagonalizationStatus HSolverPW<T, Device>::hamil
         const int dim = psi.get_current_ngk();
         T* psi_pointer = psi.get_pointer();
         const Real* precondition_pointer = pre_condition.data();
-        // PW diagonalization thresholds have an eigenvalue-change scale.
-        // PPCG consumes residual-norm thresholds, so compare squared residuals
-        // against that scale. This is a stopping policy, not a gap-independent
-        // bound on the eigenvalue error. Keep DiagoPPCG's residual API unchanged.
-        const double energy_threshold = std::max(this->diag_thr, 1.0e-14);
-        const double residual_threshold = std::sqrt(energy_threshold);
-        std::vector<double> residual_thresholds(this->ethr_band.size());
-        for (size_t ib = 0; ib < this->ethr_band.size(); ++ib)
-        {
-            const double band_threshold = std::max(this->ethr_band[ib], energy_threshold);
-            residual_thresholds[ib] = std::sqrt(band_threshold);
-        }
+        // PPCG uses a residual-norm stopping criterion. Preserve the requested
+        // norm tolerance: taking its square root can leave forces and stresses
+        // inaccurate even when the total energy appears converged.
         try
         {
             const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
@@ -578,9 +569,9 @@ typename HSolverPW<T, Device>::DiagonalizationStatus HSolverPW<T, Device>::hamil
                 dim,
                 psi_pointer,
                 eigenvalue,
-                residual_thresholds,
+                this->ethr_band,
                 precondition_pointer,
-                residual_threshold,
+                this->diag_thr,
                 this->diag_iter_max,
                 this->pw_diag_ndim,
                 this->pw_diag_rr_step,

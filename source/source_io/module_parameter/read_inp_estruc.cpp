@@ -1049,10 +1049,10 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_thr");
-        item.annotation = "energy-scale threshold for iterative PW diagonalization";
+        item.annotation = "threshold for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. CG and Davidson methods compare eigenvalue changes against the threshold. PPCG uses the same energy scale as a squared-residual stopping policy: the norm of H psi - epsilon S psi must not exceed sqrt(max(ethr_band, ethr, 1e-14)). This policy is not a gap-independent bound on eigenvalue error. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
+        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. The stopping criterion is solver-dependent: CG and Davidson methods compare eigenvalue changes against the threshold, whereas PPCG requires the norm of H psi - epsilon S psi to be at most max(ethr_band, ethr, 1e-14). The same numerical threshold therefore does not imply the same accuracy or cost across these methods. PPCG keeps the direct residual tolerance because an energy-only or square-root residual tolerance can leave forces and stresses insufficiently converged. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
         item.default_value = "0.01";
         item.unit = "";
         read_sync_double(input.pw_diag_thr);
