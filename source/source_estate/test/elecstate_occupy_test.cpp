@@ -447,6 +447,7 @@ TEST_F(OccupyTest, FermiSearchAtRepresentableEnergyLimit)
     const std::string diagnostic = testing::internal::GetCapturedStdout();
     EXPECT_THAT(diagnostic, testing::HasSubstr("Fermi bracket reached floating-point resolution"));
     EXPECT_THAT(diagnostic, testing::HasSubstr("electron residual"));
+    EXPECT_THAT(diagnostic, testing::HasSubstr("estimated roundoff = inf"));
 }
 
 TEST_F(OccupyTest, RejectInvalidWidthAndUnbracketedCharge)
@@ -659,5 +660,77 @@ TEST_F(OccupyTest, FermiSurfaceAwayFromSpectralMidpoint)
         }
         EXPECT_NEAR(count, target, tolerance) << shift;
         EXPECT_DOUBLE_EQ(occupations(0, 6), 0.0);
+    }
+}
+
+TEST_F(OccupyTest, ReviewerDegenerateGaussianSpectrum)
+{
+    // PR #8130: the former 1-erf evaluation stalls at 3.99680288865e-15.
+    const int bands = 74;
+    ModuleBase::matrix energies(1, bands);
+    ModuleBase::matrix occupations(1, bands);
+    const std::vector<double> weights{2.0};
+    const std::vector<int> spins{0};
+    const double target = 2.0;
+    const double tolerance = 8.0 * std::numeric_limits<double>::epsilon() * target;
+    for (const double shift : {0.0, 100.0, 1e8})
+    {
+        for (int ib = 0; ib < bands; ++ib)
+        {
+            energies(0, ib) = shift;
+        }
+        double ef = 0.0;
+        double entropy = 0.0;
+        occupy.gweights(1, weights, bands, target, 0.01, 0, energies, ef, entropy, occupations, -1, spins);
+        long double count = 0.0L;
+        for (int ib = 0; ib < bands; ++ib)
+        {
+            count += occupations(0, ib);
+        }
+        EXPECT_NEAR(count, target, tolerance) << shift;
+        EXPECT_TRUE(std::isfinite(entropy));
+    }
+}
+
+TEST_F(OccupyTest, SmearingHighPrecisionReference)
+{
+    // Independent 100-decimal-digit erfc/exp evaluations of the closed forms.
+    // Include signed MP tails and cold-smearing overshoot; do not clamp to [0,1].
+    struct Reference
+    {
+        int order;
+        double x;
+        double occupation;
+    };
+    const Reference references[] = {
+        {0, -6.0, 1.0759868356249456558e-17},
+        {0, -8.0, 5.61214858649146354e-30},
+        {-1, -6.0, 1.2797773847197835025e-20},
+        {-1, -8.0, 5.1183964952735562742e-34},
+        {0, -2.0, 0.002338867490523632918965},
+        {0, -0.5, 0.2397500610934767311586},
+        {0, 0.5, 0.7602499389065232688414},
+        {0, 2.0, 0.997661132509476367081},
+        {1, -2.0, -0.007994625186522394009569},
+        {1, -0.5, 0.1299022387265461318969},
+        {1, 0.5, 0.8700977612734538681031},
+        {1, 2.0, 1.00799462518652239401},
+        {2, -2.0, 0.004922240659785139651099},
+        {2, -0.5, 0.06124734974721450735834},
+        {2, 0.5, 0.9387526502527854926417},
+        {2, 2.0, 0.9950777593402148603489},
+        {-1, -2.0, 0.0003264301114214816118753},
+        {-1, -0.5, 0.1368184140991744579818},
+        {-1, 0.5, 0.766994049270187616701},
+        {-1, 2.0, 1.041238947228640924942},
+        {-99, -2.0, 0.1192029220221175559403},
+        {-99, -0.5, 0.3775406687981454353611},
+        {-99, 0.5, 0.6224593312018545646389},
+        {-99, 2.0, 0.8807970779778824440597}};
+    for (const Reference& reference : references)
+    {
+        const double value = occupy_smearing::wgauss(reference.x, reference.order);
+        const double tolerance = 32.0 * std::numeric_limits<double>::epsilon() * std::abs(reference.occupation);
+        EXPECT_NEAR(value, reference.occupation, tolerance) << reference.order << ", x = " << reference.x;
     }
 }

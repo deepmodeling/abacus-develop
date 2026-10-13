@@ -40,6 +40,11 @@ double sumkg(const ModuleBase::matrix& ekb,
 /// @note ef is the rounded absolute chemical potential. Re-evaluating sumkg(ef)
 ///       can lose precision for a large energy offset; gweights retains the
 ///       centered chemical potential internally when forming occupations.
+///       The usual electron-count target is 8*epsilon*max(1,abs(nelec)). At
+///       floating-point stagnation only, a diagnosed rounding-limited result
+///       may exceed it by an estimated error no larger than the target itself.
+///       The estimate is a first-order libm/arithmetic model, not a certified
+///       physical-accuracy bound; a larger estimate still causes failure.
 void efermig(const ModuleBase::matrix& ekb,
              const int nbnd,
              const int nks,
