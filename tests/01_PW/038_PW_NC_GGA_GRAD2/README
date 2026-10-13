@@ -1,7 +1,7 @@
 PBE noncollinear Fe2 regression for gga_grad=2, including forces and stress.
 
 Derived from 038_PW_NC with different initial spin directions on the two atoms,
-explicit PBE/gga_grad settings, and scf_thr=1e-10.
+explicit PBE/gga_grad settings, BPCG, and scf_thr=1e-14.
 The initial moments point in different directions and decay towards zero during
 SCF. This case exercises the noncollinear path including its weak-moment limit;
 it is not a regression for a stable magnetic ground state.
@@ -14,3 +14,24 @@ result.ref is generated with one MPI rank using the same command with -n 1 -g.
 The reference covers energy per atom, the force summary, and the stress summary.
 Default Autotest tolerances apply; no case-specific threshold overrides are used.
 This SCF regression complements the XC module's density/stress derivative tests.
+
+Reference uses the mapped-density FFT definition of gga_grad=2. At the previous
+scf_thr=1e-10, changing the XC iteration trajectory left force/stress differences
+larger than the regression tolerances even though total energies agreed within
+1e-9 eV. Using BPCG with scf_thr=1e-14 reduces that terminal-state sensitivity;
+the energy/force/stress comparison tolerances remain unchanged.
+
+The reference was regenerated with one CPU MPI rank. CPU four-rank and GPU
+one-rank runs agree within the default tolerances. These are reproducibility
+checks of the converged SCF output, not absolute force/stress accuracy bounds.
+
+BPCG is used because tight-threshold Davidson probes stopped with psi_norm <= 0
+on CPU and GPU. No eigensolver implementation or production default is changed.
+At these settings, upstream and mapped-density CPU references have identical
+energy/force/stress fingerprints at the reported precision. All eight displaced
+and strained corners converged for each XC implementation. Force finite-difference
+errors are 2.80e-5 and 4.24e-5 eV/Angstrom for displacements of 0.002 and 0.001
+Angstrom; xx stress errors are 0.0168 and 0.0171 kbar for strains of 1e-4 and 5e-5.
+These residual errors are the same for both XC implementations: this weak-moment,
+20-Ry SCF fixture does not establish absolute stress derivative closure or replace
+the finite-magnetization XC module derivative tests.
