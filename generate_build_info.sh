@@ -165,6 +165,22 @@ if [ "${USE_CUDA}" == "ON" ]; then
     fi
 fi
 
+# 6b. libvdwxc
+#
+# The Makefile build does not currently compile the libvdwxc adapter, but the
+# generated build-info header must still define every placeholder used by the
+# CMake build.  Keep the value explicit (rather than leaving the literal
+# @ABACUS_LIBVDWXC_VERSION@ marker in the header) and report a detected version
+# when a future Makefile configuration provides the dependency.
+LIBVDWXC_VERSION="no"
+if [ "${ENABLE_LIBVDWXC}" == "ON" ]; then
+    LIBVDWXC_VERSION="yes (version unknown)"
+    if command -v pkg-config > /dev/null; then
+        version=$(pkg-config --modversion libvdwxc 2>/dev/null)
+        if [ -n "$version" ]; then LIBVDWXC_VERSION="yes (v$version)"; fi
+    fi
+fi
+
 # 7. ROCm/HIP
 ROCM_VERSION="no"
 if [ "${USE_ROCM}" == "ON" ]; then
@@ -279,6 +295,7 @@ sed \
     -e "s#@ABACUS_OPENMP_VERSION@#$OPENMP_VERSION#g" \
     -e "s#@ABACUS_MKL_SUPPORT@#$MKL_SUPPORT#g" \
     -e "s#@ABACUS_LIBXC_VERSION@#$LIBXC_VERSION#g" \
+    -e "s#@ABACUS_LIBVDWXC_VERSION@#$LIBVDWXC_VERSION#g" \
     -e "s#@ABACUS_FFTW_VERSION@#$FFTW3_VERSION#g" \
     -e "s#@ABACUS_CUDA_VERSION@#$CUDA_VERSION#g" \
     -e "s#@ABACUS_ROCM_VERSION@#$ROCM_VERSION#g" \
