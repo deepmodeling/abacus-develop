@@ -5,7 +5,6 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
-#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <stdexcept>
@@ -43,7 +42,17 @@ bool same_cell(const std::array<double, 9>& lhs, const std::array<double, 9>& rh
 {
     for (std::size_t i = 0; i < lhs.size(); ++i)
     {
-        const double scale = std::max({1.0, std::abs(lhs[i]), std::abs(rhs[i])});
+        const double lhs_abs = std::abs(lhs[i]);
+        const double rhs_abs = std::abs(rhs[i]);
+        double scale = 1.0;
+        if (lhs_abs > scale)
+        {
+            scale = lhs_abs;
+        }
+        if (rhs_abs > scale)
+        {
+            scale = rhs_abs;
+        }
         if (std::abs(lhs[i] - rhs[i]) > 1.0e-12 * scale)
         {
             return false;
@@ -102,8 +111,21 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
                                               const std::vector<double>& valence_density) const
 {
     check_serial_basis(pw);
-    if (pw.nx != nx_ || pw.ny != ny_ || pw.nz != nz_ || !same_cell(cell_, cell_columns(pw))
-        || std::abs(pw.omega - omega_) > 1.0e-12 * std::max({1.0, std::abs(pw.omega), std::abs(omega_)})
+    const std::array<double, 9> current_cell = cell_columns(pw);
+    const double omega_abs = std::abs(pw.omega);
+    const double initialized_omega_abs = std::abs(omega_);
+    double volume_scale = 1.0;
+    if (omega_abs > volume_scale)
+    {
+        volume_scale = omega_abs;
+    }
+    if (initialized_omega_abs > volume_scale)
+    {
+        volume_scale = initialized_omega_abs;
+    }
+    const bool same_grid = pw.nx == nx_ && pw.ny == ny_ && pw.nz == nz_;
+    const bool same_volume = std::abs(pw.omega - omega_) <= 1.0e-12 * volume_scale;
+    if (!same_grid || !same_cell(cell_, current_cell) || !same_volume
         || total_density.size() != static_cast<std::size_t>(pw.nrxx)
         || valence_density.size() != total_density.size())
     {
@@ -166,7 +188,9 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
     }
     XC_Functional::grad_dot(field.data(), divergence.data(), &pw, pw.tpiba);
 
-    NonlocalXCResult result{2.0 * energy_ha, 0.0, std::vector<double>(pw.nrxx, 0.0)};
+    const double energy_ry = 2.0 * energy_ha;
+    std::vector<double> potential(pw.nrxx, 0.0);
+    NonlocalXCResult result{energy_ry, 0.0, potential};
     const double dv = pw.omega / pw.nxyz;
     for (int r = 0; r < pw.nrxx; ++r)
     {
