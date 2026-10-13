@@ -27,6 +27,89 @@
 #include <string>
 #include <vector>
 
+// A local block can discover two low roots while another block already holds
+// an exact higher root. The discarded low direction must survive global root
+// selection, including when its rows and projection norms are distributed.
+static bool check_competing_roots(const int rank_in_pool, const int nproc_in_pool)
+{
+    using Scalar = std::complex<double>;
+    const int bands = 2;
+    const int local_rows = nproc_in_pool == 1 ? 4 : 2;
+    const int size = local_rows * bands;
+    std::vector<double> diagonal(local_rows);
+    std::vector<double> preconditioner(local_rows, 1.0);
+    std::vector<double> thresholds(bands, 1.0e-10);
+    std::vector<Scalar> vectors(size, Scalar(0));
+    const double scale = 1.0 / std::sqrt(3.0);
+    for (int row = 0; row < local_rows; ++row)
+    {
+        const int global_row = rank_in_pool * local_rows + row;
+        diagonal[row] = global_row < 3 ? global_row + 1.0 : 97.0 + global_row;
+        if (global_row == 0 || global_row == 1 || global_row == 3)
+        {
+            vectors[row] = Scalar(scale);
+        }
+        if (global_row == 2)
+        {
+            vectors[row + local_rows] = Scalar(1);
+        }
+    }
+    bool operator_capacity_ok = true;
+    const auto h_op = [&](Scalar* in, Scalar* out, int ld, int ncol) {
+        operator_capacity_ok = operator_capacity_ok && ncol <= bands;
+        for (int column = 0; column < ncol; ++column)
+        {
+            for (int row = 0; row < local_rows; ++row)
+            {
+                out[row + column * ld] = diagonal[row] * in[row + column * ld];
+            }
+        }
+    };
+    hsolver::DiagoPPCG<Scalar, base_device::DEVICE_CPU> solver(1.0e-10, 80, 1, 4);
+    std::vector<double> eigenvalues(bands);
+    solver.diag(h_op, nullptr, local_rows, bands, local_rows,
+                vectors.data(), eigenvalues.data(), thresholds, preconditioner.data());
+
+    std::vector<double> residuals(bands, 0.0);
+    std::vector<Scalar> overlap(bands * bands, Scalar(0));
+    for (int column = 0; column < bands; ++column)
+    {
+        for (int row = 0; row < local_rows; ++row)
+        {
+            const Scalar value = vectors[row + column * local_rows];
+            const Scalar residual = (diagonal[row] - eigenvalues[column]) * value;
+            residuals[column] += std::norm(residual);
+            for (int other = 0; other < bands; ++other)
+            {
+                overlap[other + column * bands] += std::conj(vectors[row + other * local_rows]) * value;
+            }
+        }
+    }
+    Parallel_Reduce::reduce_pool(residuals.data(), bands);
+    const int overlap_size = bands * bands;
+    Parallel_Reduce::reduce_pool(overlap.data(), overlap_size);
+    bool correct = solver.converged() && operator_capacity_ok && solver.root_recovery_count() > 0;
+    for (int column = 0; column < bands; ++column)
+    {
+        const double expected = column + 1.0;
+        correct = correct && std::isfinite(eigenvalues[column]);
+        correct = correct && std::abs(eigenvalues[column] - expected) < 1.0e-8;
+        correct = correct && std::isfinite(residuals[column]) && residuals[column] < 1.0e-16;
+        for (int other = 0; other < bands; ++other)
+        {
+            const Scalar expected_overlap = other == column ? Scalar(1) : Scalar(0);
+            const double error = std::abs(overlap[other + column * bands] - expected_overlap);
+            correct = correct && std::isfinite(error) && error < 1.0e-8;
+        }
+    }
+    if (!correct)
+    {
+        std::fprintf(stderr, "pool rank %d: competing-root regression returned %.12g, %.12g\n",
+                     rank_in_pool, eigenvalues[0], eigenvalues[1]);
+    }
+    return correct;
+}
+
 int main(int argc, char** argv)
 {
     int nproc = 1;
@@ -207,6 +290,15 @@ int main(int argc, char** argv)
             ok = 0;
         }
         std::remove(trace_path.c_str());
+    }
+
+    // Complete the single-trace assertions before this additional solve writes
+    // its own trace. Each pool must independently recover both lowest roots.
+    const int trace_unset_status = ::unsetenv(trace_environment);
+    const bool competing_roots_ok = check_competing_roots(rank_in_pool, nproc_in_pool);
+    if (trace_unset_status != 0 || !competing_roots_ok)
+    {
+        ok = 0;
     }
 
     int global_ok = ok;

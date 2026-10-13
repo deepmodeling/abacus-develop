@@ -420,6 +420,8 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
     };
     // Ten sweeps need no periodic refresh; eighteen exercise the one at 16.
     // Each configuration additionally encounters one projection cancellation.
+    // The interval-16 runs encounter one competing discarded direction and
+    // therefore add one conditional expanded Ritz solve, without another H call.
     const Configuration configurations[] = {{10, 1}, {10, 4}, {10, 16},
                                              {18, 1}, {18, 4}, {18, 16}};
     for (const Configuration& configuration : configurations)
@@ -458,11 +460,13 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
         const int scheduled = sweeps / interval;
         const int final_extra = sweeps % interval == 0 ? 0 : 1;
         const int startup_extra = interval == 1 ? 0 : 1;
-        const int expected_ritz = 1 + scheduled + final_extra + startup_extra;
+        const int competing_extra = interval == 16 ? 1 : 0;
+        const int expected_ritz = 1 + scheduled + final_extra + startup_extra + competing_extra;
         const int operator_refreshes = sweeps / 16;
         const int cancellation_refreshes = 1;
         const int expected_applications = 2 + sweeps + 2 * operator_refreshes
                                           + cancellation_refreshes;
+        EXPECT_EQ(solver.root_recovery_count(), competing_extra);
         EXPECT_EQ(solver.rayleigh_ritz_count(), expected_ritz);
         EXPECT_EQ(applications, expected_applications);
         EXPECT_TRUE(std::is_sorted(eigenvalues.begin(), eigenvalues.end()));
@@ -1229,6 +1233,184 @@ TEST(DiagoPPCGRootSelectionTest, LockingKeepsRequestedLowRoots)
         EXPECT_NEAR(eval[1], 2.0, 1e-8);
         EXPECT_TRUE(solver.converged());
         EXPECT_LE(avg_iter, 80.0);
+    }
+}
+
+TEST(DiagoPPCGRootSelectionTest, LaterCorrectionKeepsLowestRootsAcrossBlocks)
+{
+    const int n_dim = 4;
+    const int nband = 2;
+    const int ld = n_dim;
+    const std::vector<Real> diagonal = {1.0, 2.0, 3.0, 100.0};
+    const std::vector<Real> prec(n_dim, 1.0);
+    const std::vector<double> ethr(nband, 1.0e-10);
+    const Real coefficient = 1.0 / std::sqrt(3.0);
+    const int block_sizes[] = {1, 2};
+    const auto h_op = [&diagonal, n_dim](T* in, T* out, int ld_in, int ncol) {
+        for (int column = 0; column < ncol; ++column)
+        {
+            for (int row = 0; row < n_dim; ++row)
+            {
+                out[row + column * ld_in] = diagonal[row] * in[row + column * ld_in];
+            }
+        }
+    };
+
+    for (const int block_size : block_sizes)
+    {
+        SCOPED_TRACE("block_size = " + std::to_string(block_size));
+        // The first expanded subspace keeps a low mixture and the exact
+        // third root. The missing second root needs a later correction;
+        // convergence of the retained vectors alone does not certify it.
+        std::vector<T> psi(ld * nband, T(0));
+        psi[0] = T(coefficient);
+        psi[1] = T(coefficient);
+        psi[3] = T(coefficient);
+        psi[2 + ld] = T(1);
+        std::vector<Real> eval(nband, 0.0);
+        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+            1.0e-10, 100, block_size, 1);
+        solver.diag(h_op, nullptr, ld, nband, n_dim,
+                    psi.data(), eval.data(), ethr, prec.data());
+
+        double max_residual = 0.0;
+        for (int column = 0; column < nband; ++column)
+        {
+            double residual_squared = 0.0;
+            for (int row = 0; row < n_dim; ++row)
+            {
+                const T residual = (diagonal[row] - eval[column]) * psi[row + column * ld];
+                residual_squared += std::norm(residual);
+            }
+            const double residual_norm = std::sqrt(residual_squared);
+            max_residual = std::max(max_residual, residual_norm);
+            for (int other = 0; other < nband; ++other)
+            {
+                T overlap(0);
+                for (int row = 0; row < n_dim; ++row)
+                {
+                    overlap += std::conj(psi[row + column * ld]) * psi[row + other * ld];
+                }
+                const T expected_overlap = column == other ? T(1) : T(0);
+                const double overlap_error = std::abs(overlap - expected_overlap);
+                EXPECT_LE(overlap_error, 1.0e-12);
+            }
+        }
+        EXPECT_TRUE(solver.converged());
+        EXPECT_LE(max_residual, 1.0e-10);
+        EXPECT_NEAR(solver.max_residual(), max_residual, 1.0e-13);
+        EXPECT_NEAR(eval[0], 1.0, 1.0e-9);
+        EXPECT_NEAR(eval[1], 2.0, 1.0e-9)
+            << "returned roots = " << eval[0] << ", " << eval[1]
+            << "; fresh max residual = " << max_residual;
+        if (block_size == 1)
+        {
+            EXPECT_GT(solver.root_recovery_count(), 0);
+        }
+        else
+        {
+            EXPECT_EQ(solver.root_recovery_count(), 0);
+        }
+    }
+}
+
+TEST(DiagoPPCGRootSelectionTest, LaterCorrectionsRecoverMultipleComplexGeneralizedRoots)
+{
+    const int dimension = 6;
+    const int bands = 3;
+    const Real spectrum[] = {1.0, 2.0, 3.0, 4.0, 5.0, 100.0};
+    const Real overlap_spectrum[] = {1.0, 2.0, 4.0, 7.0, 3.0, 5.0};
+    std::vector<T> unitary(dimension * dimension);
+    const Real normalization = 1.0 / std::sqrt(Real(dimension));
+    for (int column = 0; column < dimension; ++column)
+    {
+        for (int row = 0; row < dimension; ++row)
+        {
+            const Real angle = 2.0 * M_PI * row * column / dimension;
+            const T phase(std::cos(angle), std::sin(angle));
+            unitary[row + column * dimension] = normalization * phase;
+        }
+    }
+    std::vector<T> hamiltonian(dimension * dimension, T(0));
+    std::vector<T> overlap(dimension * dimension, T(0));
+    for (int column = 0; column < dimension; ++column)
+    {
+        for (int row = 0; row < dimension; ++row)
+        {
+            for (int state = 0; state < dimension; ++state)
+            {
+                const T projector = unitary[row + state * dimension]
+                                    * std::conj(unitary[column + state * dimension]);
+                hamiltonian[row + column * dimension] += projector * overlap_spectrum[state] * spectrum[state];
+                overlap[row + column * dimension] += projector * overlap_spectrum[state];
+            }
+        }
+    }
+    const auto h_op = [&hamiltonian, dimension](T* in, T* out, int ld, int count) {
+        dense_h_multiply(hamiltonian.data(), dimension, in, out, ld, count);
+    };
+    const auto s_op = [&overlap, dimension](T* in, T* out, int ld, int count) {
+        dense_h_multiply(overlap.data(), dimension, in, out, ld, count);
+    };
+    const std::vector<Real> preconditioner(dimension, 1.0);
+    const std::vector<double> thresholds(bands, 1.0e-9);
+    const int block_sizes[] = {1, 2, 3};
+    const int ritz_intervals[] = {1, 4};
+    for (const int block_size : block_sizes)
+    {
+        for (const int ritz_interval : ritz_intervals)
+        {
+            SCOPED_TRACE("block_size = " + std::to_string(block_size)
+                         + ", ritz_interval = " + std::to_string(ritz_interval));
+            std::vector<T> psi(dimension * bands, T(0));
+            // Four spectral components in the first vector require more
+            // than the first [X,W] expansion to resolve all three low roots.
+            const int mixed_states[] = {0, 1, 2, 5};
+            for (int row = 0; row < dimension; ++row)
+            {
+                for (const int state : mixed_states)
+                {
+                    psi[row] += 0.5 * unitary[row + state * dimension]
+                                / std::sqrt(overlap_spectrum[state]);
+                }
+                psi[row + dimension] = unitary[row + 3 * dimension] / std::sqrt(overlap_spectrum[3]);
+                psi[row + 2 * dimension] = unitary[row + 4 * dimension] / std::sqrt(overlap_spectrum[4]);
+            }
+            std::vector<Real> eigenvalues(bands, 0.0);
+            hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+                1.0e-9, 120, block_size, ritz_interval);
+            solver.diag(h_op, s_op, dimension, bands, dimension,
+                        psi.data(), eigenvalues.data(), thresholds, preconditioner.data());
+            std::vector<T> hpsi(psi.size(), T(0));
+            std::vector<T> spsi(psi.size(), T(0));
+            h_op(psi.data(), hpsi.data(), dimension, bands);
+            s_op(psi.data(), spsi.data(), dimension, bands);
+            EXPECT_TRUE(solver.converged());
+            for (int column = 0; column < bands; ++column)
+            {
+                EXPECT_NEAR(eigenvalues[column], spectrum[column], 1.0e-8);
+                double residual_squared = 0.0;
+                for (int row = 0; row < dimension; ++row)
+                {
+                    const int offset = row + column * dimension;
+                    const T residual = hpsi[offset] - eigenvalues[column] * spsi[offset];
+                    residual_squared += std::norm(residual);
+                }
+                const double residual_norm = std::sqrt(residual_squared);
+                EXPECT_LE(residual_norm, 1.0e-9);
+                for (int other = 0; other < bands; ++other)
+                {
+                    T inner_product(0);
+                    for (int row = 0; row < dimension; ++row)
+                    {
+                        inner_product += std::conj(psi[row + column * dimension]) * spsi[row + other * dimension];
+                    }
+                    const T expected = column == other ? T(1) : T(0);
+                    const double orthogonality_error = std::abs(inner_product - expected);
+                    EXPECT_LE(orthogonality_error, 1.0e-11);
+                }
+            }
+        }
     }
 }
 

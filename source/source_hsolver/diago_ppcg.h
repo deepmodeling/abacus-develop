@@ -99,6 +99,11 @@ public:
         return rayleigh_ritz_count_;
     }
 
+    int root_recovery_count() const
+    {
+        return root_recovery_count_;
+    }
+
 private:
     friend class DiagoPPCGProjectionTest;
     // -------------------------------------------------------------------------
@@ -120,6 +125,7 @@ private:
     int first_active_band_ = -1;
     Real first_active_threshold_ = Real(0);
     int rayleigh_ritz_count_ = 0;
+    int root_recovery_count_ = 0;
 
     // Cached S-operator (null if identity).
     SPsiFunc spsi_func_;
@@ -216,6 +222,13 @@ private:
         std::vector<T> hp_new;
     };
 
+    struct OperatorBlock
+    {
+        std::vector<T> vectors;
+        std::vector<T> hvectors;
+        std::vector<T> svectors;
+    };
+
     void scale_to_unit_snorm(std::vector<T>& x,
                              std::vector<T>& sx,
                              std::vector<T>& hx,
@@ -256,9 +269,25 @@ private:
                               int nblk,
                               SmallSubspace& subspace) const;
 
-    void solve_small_generalized(const int dim,
-                                 const int nstates,
-                                 SmallSubspace& subspace) const;
+    // Returns the number of valid Ritz vectors, including discarded states.
+    // An identity fallback reports zero rather than pretending it is a solve.
+    int solve_small_generalized(const int dim,
+                                const int nstates,
+                                SmallSubspace& subspace) const;
+
+    void collect_discarded_ritz(const SmallSubspace& subspace,
+                                int kept_count, int valid_count,
+                                OperatorBlock& candidates) const;
+
+    void project_candidate_complement(const HPsiFunc& hpsi_func,
+                                      const T* psi, OperatorBlock& candidates) const;
+
+    bool recover_competing_ritz(const HPsiFunc& hpsi_func,
+                                T* psi, Real* eigenvalue,
+                                bool ordered_ritz,
+                                std::vector<int>& active_cols,
+                                const std::vector<double>& ethr_band,
+                                OperatorBlock& candidates);
 
     void update_one_block(T* psi,
                           const std::vector<int>& cols,
