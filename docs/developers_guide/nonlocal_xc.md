@@ -110,8 +110,8 @@ valence `vtxc` contraction.
 Before converting a Draft PR to Ready, run both libraries' tests and add an
 ABACUS SCF reference case with the exact executable, pseudopotential hashes,
 input, dependency commit, compiler, FFT provider, and numerical tolerances.
-The current local environment cannot provide a complete CMake/libvdwxc build;
-therefore this change remains a Draft until that evidence is attached.
+The pull request must attach this evidence explicitly; the default CI contract
+test does not build the optional external dependency.
 
 ## Follow-up work
 
