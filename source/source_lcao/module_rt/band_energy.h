@@ -8,22 +8,14 @@
 
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_io/module_energy/td_eij_io.h"
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 #include <complex>
 
 namespace module_rt
 {
-/** @brief Eij output settings and one-based identifiers for one propagation block. */
-struct EijOutputInfo
-{
-    double threshold;
-    int electronic_step;
-    int scf_iteration;
-    int kpoint;
-    int nspin;
-    int spin;
-};
+using ModuleIO::EijOutputInfo;
 
 #ifdef __MPI
 /**

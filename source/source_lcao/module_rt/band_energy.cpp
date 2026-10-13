@@ -10,10 +10,8 @@
 #endif
 
 #include <algorithm>
-#include <cmath>
 #include <complex>
 #include <fstream>
-#include <iomanip>
 #include <vector>
 
 namespace module_rt
@@ -21,53 +19,6 @@ namespace module_rt
 #ifdef __MPI
 namespace
 {
-void print_eij(const std::complex<double>* eij,
-               const int nband,
-               const int leading_dimension,
-               const EijOutputInfo& output_info,
-               std::ofstream& ofs)
-{
-    const std::ios::fmtflags original_flags = ofs.flags();
-    const std::streamsize original_precision = ofs.precision();
-    ofs << std::right << std::noshowpos;
-    ofs << "------------------------------------------------------------------------------------------------\n";
-    ofs << " Eij (Ry): electronic step = " << output_info.electronic_step << ", SCF iteration = " << output_info.scf_iteration
-        << ", k-point = " << output_info.kpoint;
-    if (output_info.nspin == 2)
-    {
-        const char* spin_label = output_info.spin == 1 ? " (up)" : " (down)";
-        ofs << ", spin = " << output_info.spin << spin_label;
-    }
-    else if (output_info.nspin == 4)
-    {
-        ofs << " (spinor)";
-    }
-    ofs << '\n' << std::scientific << std::setprecision(8);
-    bool printed = false;
-    for (int i = 0; i < nband; ++i)
-    {
-        for (int j = 0; j < nband; ++j)
-        {
-            const std::complex<double>& value = eij[j * leading_dimension + i];
-            if (std::abs(value.real()) < output_info.threshold && std::abs(value.imag()) < output_info.threshold)
-            {
-                continue;
-            }
-            const char* imaginary_sign = std::signbit(value.imag()) ? " - " : " + ";
-            ofs << " i = " << std::setw(2) << i + 1 << ", j = " << std::setw(2) << j + 1 << ", Eij = " << std::setw(16) << value.real()
-                << imaginary_sign << std::abs(value.imag()) << " i\n";
-            printed = true;
-        }
-    }
-    if (!printed)
-    {
-        ofs << " No elements meet the threshold.\n";
-    }
-    ofs << "------------------------------------------------------------------------------------------------" << std::endl;
-    ofs.flags(original_flags);
-    ofs.precision(original_precision);
-}
-
 void gather_eij(const Parallel_Orbitals& pv,
                 const int nband,
                 std::complex<double>* eij,
@@ -84,7 +35,7 @@ void gather_eij(const Parallel_Orbitals& pv,
     Cpxgemr2d(nband, nband, eij, 1, 1, source_desc, gathered.data(), 1, 1, target_desc, source_desc[1]);
     if (is_root)
     {
-        print_eij(gathered.data(), nband, nband, output_info, ofs);
+        ModuleIO::print_eij(gathered.data(), nband, nband, output_info, ofs);
     }
 }
 } // namespace
@@ -457,7 +408,7 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
     if (output_info.threshold >= 0.0)
     {
         ct::Tensor eij_cpu = eij.to_device<ct::DEVICE_CPU>();
-        print_eij(eij_cpu.data<std::complex<double>>(), nband, nlocal, output_info, ofs_running);
+        ModuleIO::print_eij(eij_cpu.data<std::complex<double>>(), nband, nlocal, output_info, ofs_running);
     }
 
     // Extract diagonal elements of eij into ekb

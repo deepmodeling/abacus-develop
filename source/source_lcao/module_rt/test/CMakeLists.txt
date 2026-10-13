@@ -19,6 +19,7 @@ AddTest(
   TARGET MODULE_LCAO_tddft_band_energy_test
   LIBS parameter base device tddft_test_lib
   SOURCES band_energy_test.cpp ../band_energy.cpp ../../../source_basis/module_ao/parallel_orbitals.cpp
+          ../../../source_io/module_energy/td_eij_io.cpp
 )
 
 AddTest(

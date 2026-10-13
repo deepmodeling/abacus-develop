@@ -63,6 +63,8 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     double initial_rho_electrons_ = 0.0;
     /** @brief Print the one-based electronic step header. */
     void print_step(const int istep) const;
+    /** @brief Print Eij from the converged density, collecting all k-point pools on the main rank. */
+    void print_eij(const int istep);
     void report_orth(const UnitCell& ucell, int istep);
     void prepare_td_step(const int istep);
 };

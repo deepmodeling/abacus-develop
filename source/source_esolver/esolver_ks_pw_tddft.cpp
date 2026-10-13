@@ -3,6 +3,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_device.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_pw.h"
@@ -12,13 +13,16 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_efield/td_efield_io.h"
 #include "source_io/module_efield/td_vector_pot_io.h"
+#include "source_io/module_energy/td_eij_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_pw/module_pwdft/td_pw.h"
 
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 
 namespace ModuleESolver
 {
@@ -326,6 +330,10 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
         const psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
         this->td_solver_->check_initial(*current, this->niter);
     }
+    if (this->inp_->td_print_eij >= 0.0)
+    {
+        print_eij(istep);
+    }
     ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver);
     const std::streamsize original_precision = std::cout.precision();
     std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot << std::endl;
@@ -356,6 +364,75 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     {
         report_orth(ucell, istep);
     }
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::print_eij(const int istep)
+{
+    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "print_eij");
+    psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
+    const int original_k = current->get_current_k();
+    const int nband = current->get_nbands();
+    const size_t elements = static_cast<size_t>(nband) * nband;
+    const int nspin = this->inp_->nspin;
+    const int nk = this->kv.get_nkstot() / (nspin == 2 ? 2 : 1);
+    const Parallel_Kpoints& pools = this->kv.para_k;
+    const bool main_rank = pools.my_pool == 0 && pools.rank_in_pool == 0;
+    auto* hamiltonian = static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+    const Real* veff = this->pelec->pot->template get_veff_smooth_data<Real>();
+    const Real* vofk = this->pelec->pot->template get_vofk_smooth_data<Real>();
+    // cal_converged() updates the potential from the final density, after the last band-energy evaluation.
+    hamiltonian->bind_td_state(veff, vofk, this->td_field_manager_->A_right_ha());
+    hamilt::HamiltHSOperator<T, Device> op(hamiltonian, this->pw_wfc);
+    for (int global_k = 0; global_k < this->kv.get_nkstot(); ++global_k)
+    {
+        const int physical_k = global_k % nk;
+        const int spin = global_k / nk;
+        int owner = 0;
+        int local_k = global_k;
+#ifdef __MPI
+        owner = pools.whichpool[physical_k];
+        local_k = physical_k - pools.startk_pool[owner] + spin * pools.nks_pool[owner];
+#endif
+        std::vector<std::complex<double>> eij;
+        if (pools.my_pool == owner)
+        {
+            eij = this->td_solver_->cal_eij(op, *current, local_k);
+        }
+#ifdef __MPI
+        // Each pool already has the full matrix; transfer only one copy to the main log.
+        if (owner != 0 && pools.rank_in_pool == 0 && (main_rank || pools.my_pool == owner))
+        {
+            if (main_rank)
+            {
+                eij.resize(elements);
+            }
+            MPI_Comm world = MPI_COMM_WORLD;
+            const int source = pools.get_startpro_pool(owner);
+            const size_t max_count = std::numeric_limits<int>::max();
+            for (size_t offset = 0; offset < elements; offset += max_count)
+            {
+                const int count = static_cast<int>(std::min(max_count, elements - offset));
+                if (main_rank)
+                {
+                    Parallel_Common::recv_data(eij.data() + offset, count, source, 0, world, MPI_STATUS_IGNORE);
+                }
+                else
+                {
+                    Parallel_Common::send_data(eij.data() + offset, count, 0, 0, world);
+                }
+            }
+        }
+#endif
+        if (main_rank)
+        {
+            const ModuleIO::EijOutputInfo info{this->inp_->td_print_eij, istep + 1, this->niter, physical_k + 1, nspin, spin + 1};
+            ModuleIO::print_eij(eij.data(), nband, nband, info, log_);
+        }
+    }
+    current->fix_k(original_k);
+    op.update_k(original_k);
+    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "print_eij");
 }
 
 template <typename T, typename Device>
