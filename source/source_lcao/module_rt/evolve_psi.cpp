@@ -1,18 +1,18 @@
 #include "evolve_psi.h"
 
 #include "band_energy.h"
+#include "gather_mat.h"
 #include "middle_hamilt.h"
 #include "norm_psi.h"
 #include "propagator.h"
 #include "solve_propagation.h"
-#include "source_base/module_external/blas_connector.h"
 #include "source_base/global_function.h"
 #include "source_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
 #include "source_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
-#include "gather_mat.h"
 #include "upsi.h"
 
 #include <complex>
@@ -32,7 +32,8 @@ void evolve_psi(const int nband,
                 double* ekb,
                 int propagator,
                 std::ofstream& ofs_running,
-                const int print_matrix)
+                const int print_matrix,
+                const EijOutputInfo& output_info)
 {
     ModuleBase::TITLE("module_rt", "evolve_psi");
     time_t time_start = time(nullptr);
@@ -97,7 +98,7 @@ void evolve_psi(const int nband,
         }
         else
         {
-        solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
+            solve_propagation(pv, nband, nlocal, PARAM.inp.td_dt, Stmp, Htmp, psi_k_laststep, psi_k);
         }
     }
 
@@ -113,7 +114,7 @@ void evolve_psi(const int nband,
     /// @brief compute ekb
     /// @input Htmp, psi_k
     /// @output ekb
-    compute_ekb(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
+    compute_ekb(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running, output_info);
 
     delete[] Stmp;
     delete[] Htmp;
@@ -142,7 +143,8 @@ void evolve_psi_tensor(const int nband,
                        std::ofstream& ofs_running,
                        const int print_matrix,
                        const bool use_lapack,
-                       CublasMpResources& cublas_res)
+                       CublasMpResources& cublas_res,
+                       const EijOutputInfo& output_info)
 {
     ModuleBase::TITLE("module_rt", "evolve_psi_tensor");
     time_t time_start = time(nullptr);
@@ -152,8 +154,7 @@ void evolve_psi_tensor(const int nband,
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     // Memory operations
-    using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (ct_device_type == ct::DeviceType::GpuDevice)
@@ -234,28 +235,11 @@ void evolve_psi_tensor(const int nband,
     {
         if (!use_lapack)
         {
-            half_Hmatrix_tensor(pv,
-                                nband,
-                                nlocal,
-                                Htmp,
-                                Stmp,
-                                H_laststep,
-                                S_laststep,
-                                ofs_running,
-                                print_matrix,
-                                cublas_res);
+            half_Hmatrix_tensor(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix, cublas_res);
         }
         else if (myid == root_proc)
         {
-            half_Hmatrix_tensor_lapack<Device>(pv,
-                                               nband,
-                                               nlocal,
-                                               Htmp,
-                                               Stmp,
-                                               H_laststep,
-                                               S_laststep,
-                                               ofs_running,
-                                               print_matrix);
+            half_Hmatrix_tensor_lapack<Device>(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
         }
     }
 
@@ -264,15 +248,7 @@ void evolve_psi_tensor(const int nband,
 
     // (2) Compute U_operator
     Propagator prop(propagator, pv, PARAM.inp.td_dt);
-    prop.compute_propagator_tensor<Device>(nlocal,
-                                           Stmp,
-                                           Htmp,
-                                           H_laststep,
-                                           U_operator,
-                                           ofs_running,
-                                           print_matrix,
-                                           use_lapack,
-                                           cublas_res);
+    prop.compute_propagator_tensor<Device>(nlocal, Stmp, Htmp, H_laststep, U_operator, ofs_running, print_matrix, use_lapack, cublas_res);
 
     // (3) Apply U_operator (psi_k = U * psi_last)
     if (!use_lapack)
@@ -314,7 +290,7 @@ void evolve_psi_tensor(const int nband,
     }
     else if (myid == root_proc)
     {
-        compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
+        compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running, output_info);
     }
 #endif // __MPI
 
@@ -347,7 +323,8 @@ template void evolve_psi_tensor<base_device::DEVICE_CPU>(const int nband,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,
                                                          const bool use_lapack,
-                                                         CublasMpResources& cublas_res);
+                                                         CublasMpResources& cublas_res,
+                                                         const EijOutputInfo& output_info);
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
@@ -363,7 +340,8 @@ template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
                                                          std::ofstream& ofs_running,
                                                          const int print_matrix,
                                                          const bool use_lapack,
-                                                         CublasMpResources& cublas_res);
+                                                         CublasMpResources& cublas_res,
+                                                         const EijOutputInfo& output_info);
 #endif // __CUDA
 
 } // namespace module_rt

@@ -14,6 +14,17 @@
 
 namespace module_rt
 {
+/** @brief Eij output settings and one-based identifiers for one propagation block. */
+struct EijOutputInfo
+{
+    double threshold;
+    int electronic_step;
+    int scf_iteration;
+    int kpoint;
+    int nspin;
+    int spin;
+};
+
 #ifdef __MPI
 /**
  *  @brief compute band energy ekb <psi_i|H|psi_i>
@@ -31,7 +42,8 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  const std::complex<double>* Htmp,
                  const std::complex<double>* psi_k,
                  double* ekb,
-                 std::ofstream& ofs_running);
+                 std::ofstream& ofs_running,
+                 const EijOutputInfo& output_info);
 
 void compute_ekb_tensor(const Parallel_Orbitals* pv,
                         const int nband,
@@ -49,7 +61,8 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                const ct::Tensor& Htmp,
                                const ct::Tensor& psi_k,
                                ct::Tensor& ekb,
-                               std::ofstream& ofs_running);
+                               std::ofstream& ofs_running,
+                               const EijOutputInfo& output_info);
 #endif // __MPI
 } // namespace module_rt
 #endif

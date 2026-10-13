@@ -352,6 +352,22 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::print_step()
 template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
+    std::vector<module_rt::EijOutputInfo> eij_output(this->kv.get_nks());
+    for (int ik = 0; ik < this->kv.get_nks(); ++ik)
+    {
+        module_rt::EijOutputInfo& info = eij_output[ik];
+        info.threshold = this->inp_->td_print_eij;
+        info.electronic_step = istep + 1;
+        info.scf_iteration = iter;
+        info.kpoint = this->kv.ik2iktot[ik] + 1;
+        info.nspin = this->inp_->nspin;
+        info.spin = this->kv.isk[ik] + 1;
+        if (info.nspin == 2)
+        {
+            info.kpoint -= this->kv.isk[ik] * (this->kv.get_nkstot() / 2);
+        }
+    }
+
     // Update the moving spatial gauge
     if (use_td_moving_gauge)
     {
@@ -364,7 +380,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
     {
         if (istep >= restart_step_ + 1)
         {
-            module_rt::Evolve_elec<Device>::solve_psi(istep,
+            module_rt::Evolve_elec<Device>::solve_psi(eij_output,
                                                       this->inp_->nbands,
                                                       PARAM.globalv.nlocal,
                                                       this->kv.get_nks(),
@@ -388,7 +404,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
     }
     else if (istep >= 1)
     {
-        module_rt::Evolve_elec<Device>::solve_psi(istep,
+        module_rt::Evolve_elec<Device>::solve_psi(eij_output,
                                                   this->inp_->nbands,
                                                   PARAM.globalv.nlocal,
                                                   this->kv.get_nks(),
