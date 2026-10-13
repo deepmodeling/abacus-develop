@@ -372,7 +372,11 @@ run_case()
                         check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold
                     fi
                 else
-                    bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+                    if ! bash -e ../../integrate/validation_tools/catch_properties.sh result.ref; then
+                        echo -e "\e[0;31m [ERROR     ]  Failed to generate result.ref \e[0m"
+                        let fatal++
+                        fatal_case_list+=$dir'\n'
+                    fi
                 fi
             fi
 
@@ -515,5 +519,11 @@ else
     exit 1
 fi
 else
-echo "Generate test cases complete."
+if [ "$fatal" -eq 0 ] && [ "$failed" -eq 0 ]; then
+    echo "Generate test cases complete."
+else
+    echo -e "\e[0;31m[ERROR     ]\e[0m Failed to generate references for $[ $fatal + $failed ] case(s)."
+    printf "%b" "$fatal_case_list$failed_case_list"
+    exit 1
+fi
 fi
