@@ -12,10 +12,6 @@ namespace pw
 
 void check_td_input(const Input_para& input, const UnitCell& cell, const bool needs_ked, const bool cal_exx)
 {
-    if (input.init_vecpot_file)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support init_vecpot_file=true; set init_vecpot_file=false.");
-    }
     if (input.out_current != 0 && input.out_current != 1)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires out_current=0 or 1.");

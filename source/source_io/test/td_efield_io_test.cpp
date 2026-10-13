@@ -40,6 +40,7 @@ class TDEFieldIOTest : public testing::Test
             std::remove(output_path(field_index).c_str());
         }
         std::remove(blocking_path_.c_str());
+        std::remove((output_prefix_ + "efield_total.txt").c_str());
     }
 
     std::shared_ptr<elecstate::TDFieldManager> create_manager(const std::vector<double>& amplitudes) const

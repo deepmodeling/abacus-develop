@@ -5,6 +5,7 @@
 #include "source_hamilt/operator.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/hs_matrix_k.h"
+#include "source_lcao/module_rt/td_info.h"
 
 namespace hamilt {
 
@@ -25,6 +26,9 @@ class OperatorLCAO : public Operator<TK> {
             delete[] this->smatrix_k;
         }
     }
+
+    /** @brief Bind the solver-owned RT state once, after constructing the operator chain. */
+    void bind_td_info(TD_info* info);
 
     /* Function init(k) is used for update HR and HK ,
     data pointers of HR and HK are not passed by this function, but passed by
@@ -105,6 +109,8 @@ class OperatorLCAO : public Operator<TK> {
     const std::vector<ModuleBase::Vector3<double>>& kvec_d;
 
   protected:
+    TD_info* td_info_ = nullptr;
+
     bool new_e_iteration = true;
 
     //! Real-space Hamiltonian pointer

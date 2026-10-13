@@ -1,6 +1,8 @@
 #ifndef FORCE_STRESS_LCAO_H
 #define FORCE_STRESS_LCAO_H
 
+#include "source_lcao/module_rt/td_info.h"
+
 #include <string>
 
 #include "edm.h"
@@ -129,8 +131,8 @@ class Force_Stress_LCAO
                         ModuleSymmetry::Symmetry* symm,
                         const Exx_Info& exx_info,
                         const FSCalcConfig& cfg,
-                        const int td_stype = 0,
-                        hamilt::Hamilt<T>* p_hamilt = nullptr);
+                        TD_info* td_info,
+                        hamilt::Hamilt<T>* p_hamilt);
 
   private:
     int nat;
@@ -152,7 +154,7 @@ class Force_Stress_LCAO
                          const bool isforce,
                          const bool isstress,
                          const FSCalcConfig& cfg,
-                         const int td_stype,
+                         TD_info* td_info,
                          hamilt::Hamilt<T>* p_hamilt,
                          LCAOForceParts& parts,
                          LCAOStressParts& sparts);

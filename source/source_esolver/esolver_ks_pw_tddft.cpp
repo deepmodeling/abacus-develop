@@ -8,10 +8,10 @@
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/module_charge/chg_symm.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_efield/td_efield_io.h"
+#include "source_io/module_efield/td_vector_pot_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
@@ -34,9 +34,15 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    const std::string& output_dir = PARAM.globalv.global_out_dir;
 
     this->td_field_manager_ = elecstate::create_td_field_manager(inp);
-    elecstate::H_TDDFT_pw::set_field_state(*this->td_field_manager_);
+    if (inp.init_vecpot)
+    {
+        // An empty directory selects the calculation working directory, not OUT.<suffix>.
+        const std::vector<ModuleBase::Vector3<double>> samples = ModuleIO::read_td_vector_pot("");
+        this->td_field_manager_->set_A_samples(samples);
+    }
 
     ESolver_KS_PW<T, Device>::before_all_runners(ucell, inp);
     // The parent resolves the XC functional, including pseudopotential defaults.
@@ -62,9 +68,20 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
     this->td_solver_.reset(new hsolver::HSolverPWTDDFT<T, Device>(*this->pw_wfc, options, comm, log_));
     this->history_.prepare(*this->pelec->pot, XC_Functional::get_ked_flag());
     // Preserve existing field history until input validation and initialization succeed.
-    if (inp.out_efield && GlobalV::MY_RANK == 0)
+    if (GlobalV::MY_RANK == 0)
     {
-        ModuleIO::prepare_td_field_output(PARAM.globalv.global_out_dir, this->td_field_manager_->fields().size(), false);
+        if (inp.out_efield)
+        {
+            ModuleIO::prepare_td_field_output(output_dir, *this->td_field_manager_, false);
+        }
+        if (inp.out_vecpot)
+        {
+            if (inp.init_vecpot)
+            {
+                ModuleIO::check_td_vector_pot_paths("", output_dir);
+            }
+            ModuleIO::prepare_td_vector_pot_output(output_dir, false);
+        }
     }
 }
 
@@ -80,11 +97,22 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_scf(UnitCell& ucell, const int istep
         this->td_solver_->invalidate_basis();
     }
     this->history_.prepare(*this->pelec->pot, XC_Functional::get_ked_flag());
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::prepare_init_hamilt(const UnitCell& ucell)
+{
     if (this->td_field_manager_->gauge() == 1)
     {
-        // Refresh after the parent updates the cell and distributed basis.
+        // The updated basis and endpoint A determine the required nonlocal projector range.
         const double q_unshifted = pw::td_momentum_bound(*this->pw_wfc, ucell.tpiba);
         pw::ensure_td_vnl(ucell, q_unshifted, this->td_field_manager_->A_right_ha(), this->td_field_manager_->A_prop_ha(), &this->ppcell);
+        elecstate::Potential& potential = *this->pelec->pot;
+        const Real* veff = potential.template get_veff_smooth_data<Real>();
+        const Real* vofk = potential.template get_vofk_smooth_data<Real>();
+        auto* hamiltonian = static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+        // A file can supply nonzero A(0), which must enter H before the initial wavefunctions are prepared.
+        hamiltonian->bind_td_state(veff, vofk, this->td_field_manager_->A_right_ha());
     }
 }
 
@@ -106,10 +134,16 @@ void ESolver_KS_PW_TDDFT<T, Device>::prepare_td_step(const int istep)
         const int interval_left = istep - 1;
         this->td_field_manager_->prepare_interval(interval_left, istep);
     }
-    elecstate::H_TDDFT_pw::set_field_state(*this->td_field_manager_);
-    if (this->inp_->out_efield && GlobalV::MY_RANK == 0)
+    if (GlobalV::MY_RANK == 0)
     {
-        ModuleIO::write_td_field_values(*this->td_field_manager_, PARAM.globalv.global_out_dir);
+        if (this->inp_->out_vecpot)
+        {
+            ModuleIO::write_td_vector_pot(PARAM.globalv.global_out_dir, istep, this->td_field_manager_->A_right_ha());
+        }
+        if (this->inp_->out_efield)
+        {
+            ModuleIO::write_td_field_values(*this->td_field_manager_, PARAM.globalv.global_out_dir);
+        }
     }
     ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "prepare_td_step");
 }
@@ -207,7 +241,6 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
                             this->inp_->out_level == "ie");
 
     // Restore the endpoint Hamiltonian before evaluating density and energy.
-    elecstate::H_TDDFT_pw::set_field_state(*this->td_field_manager_);
     hamiltonian->bind_td_state(endpoint_veff, endpoint_vofk, this->td_field_manager_->A_right_ha());
     elecstate::ElecStatePW<T, Device>* estate = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
     // Propagation keeps the occupations of the initial state fixed.

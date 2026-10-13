@@ -410,7 +410,7 @@ run_case()
 test -e $cases_file || (echo "Please specify test cases file by -f option." && exit 1)
 which $abacus > /dev/null || (echo "No ABACUS executable was found." && exit 1)
 
-testdir=`cat $cases_file | grep -E $case`
+testdir=$(grep -Ev '^[[:space:]]*(#|$)' "$cases_file" | grep -E "$case")
 failed=0
 failed_case_list=""
 ok=0

@@ -67,7 +67,8 @@ TEST(TDFieldManagerTest, MixedFieldsSumAndAccumulate)
     EXPECT_EQ(manager->fields()[0].subdivisions(), 2);
     EXPECT_EQ(manager->fields()[1].subdivisions(), 2);
 
-    manager->prepare_interval(0, 0);
+    manager->prepare_sample(0);
+    manager->prepare_interval(0, 1);
     ASSERT_EQ(manager->field_vals_ha().size(), 2U);
     EXPECT_NEAR(manager->field_vals_ha()[0], 2.0 * amplitude_conversion, 1.0e-14);
     EXPECT_NEAR(manager->field_vals_ha()[1], 3.0 * amplitude_conversion, 1.0e-14);
@@ -76,7 +77,7 @@ TEST(TDFieldManagerTest, MixedFieldsSumAndAccumulate)
     EXPECT_NEAR(manager->A_right_ha()[0], -total_field, 1.0e-14);
     EXPECT_NEAR(manager->A_prop_ha()[0], -0.5 * total_field, 1.0e-14);
 
-    manager->prepare_interval(1, 1);
+    manager->prepare_interval(1, 2);
     EXPECT_NEAR(manager->A_prop_ha()[0], -1.5 * total_field, 1.0e-14);
 
     Input_para oscillatory_input;
@@ -108,7 +109,7 @@ TEST(TDFieldManagerTest, RestartRequiresCompleteState)
 
     {
         std::ofstream output(restart_path.c_str());
-        output << "# Hartree units\n\n7 7 1 1 0\n1 2 3 # A_left\n4 5 6 # A_right\n";
+        output << "# Hartree units\n\n7 6 1 1 0\n1 2 3 # A_left\n4 5 6 # A_right\n";
     }
     manager->read_restart(restart_prefix);
     EXPECT_EQ(manager->current_step(), 7);
