@@ -198,7 +198,9 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     if (this->inp_->calculation == "nscf" && this->general_exx_info_.cal_exx)
     {
-        this->prepare_exx_nscf(ucell, PARAM.globalv.global_readin_dir);
+        const Input_para& inp = *this->inp_;
+        const std::string& readin_dir = PARAM.globalv.global_readin_dir;
+        ModuleESolver::prepare_exx_nscf<T, Device>(inp, ucell, this->pw_wfc, this->exx_helper, readin_dir);
     }
 
     ModuleBase::timer::end("ESolver_KS_PW", "before_scf");

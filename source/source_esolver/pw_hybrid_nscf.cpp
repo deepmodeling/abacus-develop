@@ -210,10 +210,15 @@ void validate_hybrid_nscf(const Input_para& inp, const General_Exx_Info& info)
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::prepare_exx_nscf(const UnitCell& ucell, const std::string& readin_dir)
+void prepare_exx_nscf(const Input_para& inp,
+                      const UnitCell& ucell,
+                      const ModulePW::PW_Basis_K* pw_wfc,
+                      Exx_HelperBase* exx_helper,
+                      const std::string& readin_dir)
 {
     ModuleBase::timer::start("ESolver_KS_PW", "prepare_exx_nscf");
-    const Input_para& inp = *this->inp_;
+    std::unique_ptr<K_Vectors> source_points(new K_Vectors);
+    ModuleBase::matrix source_weights;
     warn_source_configuration(inp, readin_dir);
     const int spin_mult = inp.nspin == 2 ? 2 : 1;
     const std::vector<int> first_index(1, 0);
@@ -229,26 +234,26 @@ void ESolver_KS_PW<T, Device>::prepare_exx_nscf(const UnitCell& ucell, const std
         {
             throw std::runtime_error("Invalid EXX source spin dimensions");
         }
-        exx_source_points_.set_nks(nks);
-        exx_source_points_.set_nkstot(nks);
+        source_points->set_nks(nks);
+        source_points->set_nkstot(nks);
         const int nq = nks / spin_mult;
-        exx_source_points_.set_nkstot_nospin(nq);
-        exx_source_points_.set_spin_mult(spin_mult);
-        exx_source_points_.kvec_d.resize(nks);
-        exx_source_points_.kvec_c.resize(nks);
-        exx_source_points_.wk.resize(nks);
-        exx_source_points_.isk.resize(nks);
-        exx_source_points_.ngk.resize(nks);
-        exx_source_points_.ik2iktot.resize(nks);
+        source_points->set_nkstot_nospin(nq);
+        source_points->set_spin_mult(spin_mult);
+        source_points->kvec_d.resize(nks);
+        source_points->kvec_c.resize(nks);
+        source_points->wk.resize(nks);
+        source_points->isk.resize(nks);
+        source_points->ngk.resize(nks);
+        source_points->ik2iktot.resize(nks);
         for (int iq = 0; iq < nks; ++iq)
         {
-            exx_source_points_.ik2iktot[iq] = iq;
+            source_points->ik2iktot[iq] = iq;
         }
         const ModuleBase::Matrix3 inverse_reciprocal = ucell.G.Inverse();
         for (int iq = 0; iq < nks; ++iq)
         {
             const std::string filename = ModuleIO::filename_output(readin_dir, "wf", "pw", iq,
-                exx_source_points_.ik2iktot, inp.nspin, nks, 2, false, false, -1);
+                source_points->ik2iktot, inp.nspin, nks, 2, false, false, -1);
             std::ifstream in(filename, std::ios::binary);
             const auto metadata = read_exx_source_header(in);
             if (metadata.ecutwfc != inp.ecutwfc)
@@ -256,62 +261,64 @@ void ESolver_KS_PW<T, Device>::prepare_exx_nscf(const UnitCell& ucell, const std
                 throw std::runtime_error("EXX source wavefunction cutoff differs from the current basis");
             }
             headers.push_back(metadata);
-            auto& q = exx_source_points_.kvec_c[iq];
+            auto& q = source_points->kvec_c[iq];
             q.x = metadata.kvec_c[0];
             q.y = metadata.kvec_c[1];
             q.z = metadata.kvec_c[2];
-            exx_source_points_.kvec_d[iq] = q * inverse_reciprocal;
-            exx_source_points_.wk[iq] = metadata.weight;
-            exx_source_points_.isk[iq] = iq / nq;
+            source_points->kvec_d[iq] = q * inverse_reciprocal;
+            source_points->wk[iq] = metadata.weight;
+            source_points->isk[iq] = iq / nq;
         }
         std::ifstream occupations(readin_dir + "eig_occ.txt");
-        read_exx_source_occupations(occupations, headers, inp.nspin, exx_source_weights_);
+        read_exx_source_occupations(occupations, headers, inp.nspin, source_weights);
     }
     catch (const std::exception& error)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW", error.what());
     }
-    const int nqs = exx_source_points_.get_nks();
-    int nq = exx_source_points_.get_nkstot_nospin();
-    exx_source_points_.para_k.kinfo(nq, 1, 0, this->pw_wfc->poolrank, this->pw_wfc->poolnproc, inp.nspin);
-    exx_source_basis_.reset(new ModulePW::PW_Basis_K(inp.device, inp.precision));
+    const int nqs = source_points->get_nks();
+    int nq = source_points->get_nkstot_nospin();
+    source_points->para_k.kinfo(nq, 1, 0, pw_wfc->poolrank, pw_wfc->poolnproc, inp.nspin);
+    std::unique_ptr<ModulePW::PW_Basis_K> source_basis(
+        new ModulePW::PW_Basis_K(inp.device, inp.precision));
 #ifdef __MPI
-    exx_source_basis_->initmpi(this->pw_wfc->poolnproc, this->pw_wfc->poolrank, this->pw_wfc->pool_world);
+    source_basis->initmpi(pw_wfc->poolnproc, pw_wfc->poolrank, pw_wfc->pool_world);
 #endif
-    exx_source_basis_->initgrids(ucell.lat0, ucell.latvec,
-                               this->pw_wfc->nx, this->pw_wfc->ny, this->pw_wfc->nz);
-    exx_source_basis_->initparameters(false, inp.ecutwfc, nqs, exx_source_points_.kvec_d.data());
+    source_basis->initgrids(ucell.lat0, ucell.latvec,
+                               pw_wfc->nx, pw_wfc->ny, pw_wfc->nz);
+    source_basis->initparameters(false, inp.ecutwfc, nqs, source_points->kvec_d.data());
     // Preserve the exact stored Cartesian coordinates expected by the existing reader.
     for (int iq = 0; iq < nqs; ++iq)
     {
-        exx_source_basis_->kvec_c[iq] = exx_source_points_.kvec_c[iq];
+        source_basis->kvec_c[iq] = source_points->kvec_c[iq];
     }
-    exx_source_basis_->fft_bundle.initfftmode(inp.fft_mode);
-    exx_source_basis_->setuptransform();
-    exx_source_basis_->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
+    source_basis->fft_bundle.initfftmode(inp.fft_mode);
+    source_basis->setuptransform();
+    source_basis->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
     for (int iq = 0; iq < nqs; ++iq)
     {
-        exx_source_points_.ngk[iq] = exx_source_basis_->npwk[iq];
+        source_points->ngk[iq] = source_basis->npwk[iq];
     }
-    const int nbands = exx_source_weights_.nc;
-    const int nbasis = exx_source_basis_->npwk_max;
-    exx_source_psi_.reset(new psi::Psi<T, Device>(nqs, nbands, nbasis, exx_source_points_.ngk, true));
+    const int nbands = source_weights.nc;
+    const int nbasis = source_basis->npwk_max;
+    std::unique_ptr<psi::Psi<T, Device>> source_psi(
+        new psi::Psi<T, Device>(nqs, nbands, nbasis, source_points->ngk, true));
     for (int iq = 0; iq < nqs; ++iq)
     {
         const std::string wfc_filename = ModuleIO::filename_output(readin_dir, "wf", "pw", iq,
-            exx_source_points_.ik2iktot, inp.nspin, nqs, 2, false, false, -1);
+            source_points->ik2iktot, inp.nspin, nqs, 2, false, false, -1);
         try
         {
-            validate_source_grid(wfc_filename, *exx_source_basis_, iq);
+            validate_source_grid(wfc_filename, *source_basis, iq);
         }
         catch (const std::exception& error)
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_PW", error.what());
         }
         ModuleBase::ComplexMatrix wfc(nbands, nbasis);
-        ModuleIO::read_wfc_pw(wfc_filename, exx_source_basis_.get(), this->pw_wfc->poolrank,
-                             this->pw_wfc->poolnproc, nbands, 1, iq, iq, nqs, wfc);
-        exx_source_psi_->fix_k(iq);
+        ModuleIO::read_wfc_pw(wfc_filename, source_basis.get(), pw_wfc->poolrank,
+                             pw_wfc->poolnproc, nbands, 1, iq, iq, nqs, wfc);
+        source_psi->fix_k(iq);
         std::vector<T> coefficients(nbands * nbasis);
         for (int ib = 0; ib < nbands; ++ib)
         {
@@ -321,22 +328,23 @@ void ESolver_KS_PW<T, Device>::prepare_exx_nscf(const UnitCell& ucell, const std
             }
         }
         base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
-            exx_source_psi_->get_pointer(), coefficients.data(), coefficients.size());
+            source_psi->get_pointer(), coefficients.data(), coefficients.size());
     }
-    auto* helper = static_cast<Exx_Helper<T, Device>*>(this->exx_helper);
-    helper->op_exx->set_source(*exx_source_basis_, exx_source_points_, *exx_source_psi_, exx_source_weights_);
+    auto* helper = static_cast<Exx_Helper<T, Device>*>(exx_helper);
+    helper->op_exx->set_source(std::move(source_basis), std::move(source_points),
+        *source_psi, std::move(source_weights));
     ModuleBase::timer::end("ESolver_KS_PW", "prepare_exx_nscf");
 }
 
 
-template void ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>::prepare_exx_nscf(
-    const UnitCell&, const std::string&);
-template void ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>::prepare_exx_nscf(
-    const UnitCell&, const std::string&);
+template void prepare_exx_nscf<std::complex<float>, base_device::DEVICE_CPU>(
+    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*, Exx_HelperBase*, const std::string&);
+template void prepare_exx_nscf<std::complex<double>, base_device::DEVICE_CPU>(
+    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*, Exx_HelperBase*, const std::string&);
 #if defined(__CUDA) || defined(__ROCM)
-template void ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>::prepare_exx_nscf(
-    const UnitCell&, const std::string&);
-template void ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>::prepare_exx_nscf(
-    const UnitCell&, const std::string&);
+template void prepare_exx_nscf<std::complex<float>, base_device::DEVICE_GPU>(
+    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*, Exx_HelperBase*, const std::string&);
+template void prepare_exx_nscf<std::complex<double>, base_device::DEVICE_GPU>(
+    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*, Exx_HelperBase*, const std::string&);
 #endif
 } // namespace ModuleESolver

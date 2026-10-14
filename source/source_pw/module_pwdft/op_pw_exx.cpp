@@ -239,27 +239,30 @@ void OperatorEXXPW<T, Device>::act(const int nbands,
 }
 
 template <typename T, typename Device>
-void OperatorEXXPW<T, Device>::set_source(const ModulePW::PW_Basis_K& source_basis,
-                                        const K_Vectors& source_points,
+void OperatorEXXPW<T, Device>::set_source(std::unique_ptr<ModulePW::PW_Basis_K> source_basis,
+                                        std::unique_ptr<K_Vectors> source_points,
                                         const psi::Psi<T, Device>& source_psi,
-                                        const ModuleBase::matrix& source_weights)
+                                        ModuleBase::matrix source_weights)
 {
     if (exxace_ || gamma_extrapolation || exx_sg_init)
     {
         ModuleBase::WARNING_QUIT("OperatorEXXPW", "Independent EXX sources require direct exchange without gamma extrapolation, before FFT initialization");
     }
-    if (source_basis.nks != source_points.get_nks() || source_psi.get_nk() != source_basis.nks
-        || source_weights.nr != source_basis.nks || source_weights.nc != source_psi.get_nbands()
-        || source_psi.get_nbasis() != source_basis.npwk_max
-        || source_basis.nx != wfcpw->nx || source_basis.ny != wfcpw->ny || source_basis.nz != wfcpw->nz
-        || source_basis.nrxx != wfcpw->nrxx || source_basis.poolnproc != wfcpw->poolnproc)
+    if (source_basis->nks != source_points->get_nks() || source_psi.get_nk() != source_basis->nks
+        || source_weights.nr != source_basis->nks || source_weights.nc != source_psi.get_nbands()
+        || source_psi.get_nbasis() != source_basis->npwk_max
+        || source_basis->nx != wfcpw->nx || source_basis->ny != wfcpw->ny || source_basis->nz != wfcpw->nz
+        || source_basis->nrxx != wfcpw->nrxx || source_basis->poolnproc != wfcpw->poolnproc)
     {
         ModuleBase::WARNING_QUIT("OperatorEXXPW", "Incompatible EXX source dimensions or FFT distribution");
     }
-    source_basis_ = &source_basis;
-    source_points_ = &source_points;
+    owned_source_basis_ = std::move(source_basis);
+    owned_source_points_ = std::move(source_points);
+    owned_source_weights_ = std::move(source_weights);
+    source_basis_ = owned_source_basis_.get();
+    source_points_ = owned_source_points_.get();
+    wg = &owned_source_weights_;
     psi = source_psi;
-    wg = &source_weights;
     // Cache the Gygi-Baldereschi auxiliary correction on the frozen source mesh, rather than
     // the independent target path. Limits keeps this correction at zero.
     const auto screened = coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
@@ -274,8 +277,8 @@ void OperatorEXXPW<T, Device>::set_source(const ModulePW::PW_Basis_K& source_bas
                 const double omega = std::stod(param.at("omega"));
                 erfc_div[i] = exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc,
                                             omega,
-                                            &source_points,
-                                            &source_basis,
+                                            source_points_,
+                                            source_basis_,
                                             rhopw_dev,
                                             tpiba,
                                             gamma_extrapolation,
@@ -1010,6 +1013,11 @@ template <typename T, typename Device>
 template <typename T_in, typename Device_in>
 OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op)
 {
+    if (op->owned_source_basis_ || op->owned_source_points_)
+    {
+        ModuleBase::WARNING_QUIT("OperatorEXXPW",
+            "Precision conversion after EXX source installation is unsupported");
+    }
     // copy all the datas
     this->isk = op->isk;
     this->wfcpw = op->wfcpw;
