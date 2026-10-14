@@ -3,7 +3,6 @@
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_reduce.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include "td_folding.h"
 #include "td_info.h"
@@ -13,13 +12,14 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                      hamilt::Hamilt<std::complex<double>>* p_hamilt,
                      const K_Vectors& kv,
                      Parallel_Orbitals& pv,
-                     UnitCell& ucell)
+                     UnitCell& ucell,
+                     TD_info& td_state)
 {
 #ifdef __MPI
     const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
 
-    TD_info* td_info = TD_info::td_vel_op;
+    TD_info* td_info = &td_state;
     // get dS/dR_{x,y,z}
     std::vector<hamilt::HContainer<double>*> dsxr = td_info->get_grad_overlap();
     // allocate matrix
@@ -74,14 +74,34 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         // if liwork = -1, then the size of iwork is (at least) of length 1.
         std::vector<int> iwork(1, 0);
 
-        ScalapackConnector::getri(nlocal, Sinv.data(), one_int, one_int, pv.desc, ipiv.data(), work.data(), &lwork, iwork.data(), &liwork, &info);
+        ScalapackConnector::getri(nlocal,
+                                  Sinv.data(),
+                                  one_int,
+                                  one_int,
+                                  pv.desc,
+                                  ipiv.data(),
+                                  work.data(),
+                                  &lwork,
+                                  iwork.data(),
+                                  &liwork,
+                                  &info);
 
         lwork = work[0].real();
         work.resize(lwork, 0);
         liwork = iwork[0];
         iwork.resize(liwork, 0);
 
-        ScalapackConnector::getri(nlocal, Sinv.data(), one_int, one_int, pv.desc, ipiv.data(), work.data(), &lwork, iwork.data(), &liwork, &info);
+        ScalapackConnector::getri(nlocal,
+                                  Sinv.data(),
+                                  one_int,
+                                  one_int,
+                                  pv.desc,
+                                  ipiv.data(),
+                                  work.data(),
+                                  &lwork,
+                                  iwork.data(),
+                                  &liwork,
+                                  &info);
 
         const char N_char = 'N';
         const char T_char = 'T';
@@ -131,16 +151,16 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
             ModuleBase::GlobalFunc::ZEROS(dsxk.data(), nloc);
             ModuleBase::GlobalFunc::ZEROS(pdsxk.data(), nloc);
             ModuleBase::GlobalFunc::ZEROS(tmp3.data(), nloc);
-            module_rt::folding_HR_td(*dsxr[dir], dsxk.data(), kv.kvec_d[ik], TD_info::A_prop_ha, TD_info::td_vel_op->get_phase_hybrid(), nrow, 1);
-            const ModuleBase::Vector3<double> electric_field_ry = elecstate::H_TDDFT_pw::efield_ha * 2.0;
+            module_rt::folding_HR_td(*dsxr[dir], dsxk.data(), kv.kvec_d[ik], td_info->endpoint_A(), td_info->get_phase_hybrid(), nrow, 1);
+            const ModuleBase::Vector3<double> electric_field_ry = td_info->field().efield_ha() * 2.0;
             module_rt::folding_partial_dot(*dsxr[dir],
                                            pdsxk.data(),
                                            kv.kvec_d[ik],
                                            nrow,
                                            1,
                                            &ucell,
-                                           TD_info::td_vel_op->get_phase_hybrid(),
-                                           TD_info::A_prop_ha,
+                                           td_info->get_phase_hybrid(),
+                                           td_info->endpoint_A(),
                                            electric_field_ry);
             ScalapackConnector::gemm(N_char,
                                      N_char,
@@ -253,7 +273,8 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                      hamilt::Hamilt<double>* p_hamilt,
                      const K_Vectors& kv,
                      Parallel_Orbitals& pv,
-                     UnitCell& ucell)
+                     UnitCell& ucell,
+                     TD_info& td_state)
 {
     return;
 }

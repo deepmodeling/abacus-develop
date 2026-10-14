@@ -1,7 +1,6 @@
 #include "source_lcao/hamilt_lcao_factory.h"
 
 #include "source_base/global_function.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 
 #ifdef __MLALGO
@@ -215,7 +214,8 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
                                        const K_Vectors* kv,
                                        HS_Matrix_K<TK>* hsk,
                                        HContainer<TR>* hR,
-                                       HContainer<TR>* sR)
+                                       HContainer<TR>* sR,
+                                       TD_info* td_info)
 {
     LcaoOpsBundle<TK, TR> bundle;
 
@@ -281,7 +281,7 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
         // TDNonlocal both build hR_tmp by iterating over hR's pairs, so the
         // Nonlocal constructor must run even when the operator itself is not
         // added to the chain (TDDFT velocity gauge case).
-        if (inp.esolver_type != "tddft" || elecstate::H_TDDFT_pw::stype != 1)
+        if (inp.esolver_type != "tddft" || inp.td_stype != 1)
         {
             ops->add(nonlocal);
         }
@@ -298,6 +298,10 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
                                                  orb, DM_in, deepks, kv, hsk, hR);
     }
 #endif
+    if (inp.esolver_type == "tddft" && td_info == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("build_multik_ops", "RT-TDDFT requires an explicit TD context.");
+    }
     // TDDFT_velocity_gauge
     // These operators are complex-only (no double instantiation of
     // TDEkinetic/TDNonlocal). The std::is_same guard lets the compiler
@@ -308,12 +312,12 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
         Operator<TK>* td_ekinetic = new TDEkinetic<OperatorLCAO<TK, TR>>(hsk,
                                                                          hR, kv,
                                                                          &ucell, orb.cutoffs(), &grid_d,
-                                                                         two_center_bundle.overlap_orb.get());
+                                                                         two_center_bundle.overlap_orb.get(), *td_info);
         ops->add(td_ekinetic);
 
         Operator<TK>* td_nonlocal = new TDNonlocal<OperatorLCAO<TK, TR>>(hsk,
                                                                          kv->kvec_d, hR,
-                                                                         &ucell, orb, &grid_d);
+                                                                         &ucell, orb, &grid_d, *td_info);
         ops->add(td_nonlocal);
     }
     if (inp.esolver_type == "tddft" && inp.td_stype == 2)
@@ -321,7 +325,7 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
         Operator<TK>* td_pot_hybrid = new TD_pot_hybrid<OperatorLCAO<TK, TR>>(hsk,
                                                                               kv, hR, sR,
                                                                               orb, &ucell, orb.cutoffs(), &grid_d,
-                                                                              two_center_bundle.kinetic_orb.get());
+                                                                              two_center_bundle.kinetic_orb.get(), *td_info);
         ops->add(td_pot_hybrid);
     }
     if (inp.dft_plus_u)
@@ -362,7 +366,7 @@ template LcaoOpsBundle<double, double> build_multik_ops<double, double>(
     elecstate::Potential*, const TwoCenterBundle&, const LCAO_Orbitals&,
     module_dm::DensityMatrix<double, double>*, Plus_U_Base*, Setup_DeePKS<double>&,
     const Input_para&, const std::vector<std::string>&, const K_Vectors*,
-    HS_Matrix_K<double>*, HContainer<double>*, HContainer<double>*);
+    HS_Matrix_K<double>*, HContainer<double>*, HContainer<double>*, TD_info*);
 
 template LcaoOpsBundle<std::complex<double>, double> build_gamma_ops<std::complex<double>, double>(
     const UnitCell&, const Grid_Driver&, const Parallel_Orbitals*,
@@ -378,7 +382,7 @@ template LcaoOpsBundle<std::complex<double>, double> build_multik_ops<std::compl
     module_dm::DensityMatrix<std::complex<double>, double>*, Plus_U_Base*,
     Setup_DeePKS<std::complex<double>>&, const Input_para&,
     const std::vector<std::string>&, const K_Vectors*,
-    HS_Matrix_K<std::complex<double>>*, HContainer<double>*, HContainer<double>*);
+    HS_Matrix_K<std::complex<double>>*, HContainer<double>*, HContainer<double>*, TD_info*);
 
 template LcaoOpsBundle<std::complex<double>, std::complex<double>>
 build_gamma_ops<std::complex<double>, std::complex<double>>(
@@ -398,6 +402,6 @@ build_multik_ops<std::complex<double>, std::complex<double>>(
     Setup_DeePKS<std::complex<double>>&, const Input_para&,
     const std::vector<std::string>&, const K_Vectors*,
     HS_Matrix_K<std::complex<double>>*, HContainer<std::complex<double>>*,
-    HContainer<std::complex<double>>*);
+    HContainer<std::complex<double>>*, TD_info*);
 
 } // namespace hamilt

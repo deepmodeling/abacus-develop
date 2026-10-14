@@ -26,7 +26,7 @@ struct Exx_Helper : public Exx_HelperBase
 
     bool iter_finish(void* p_elec, Charge* p_charge, void* psi,
                      UnitCell& ucell, const Input_para& inp,
-                     bool& conv_esolver, int& iter) override;
+                     bool& conv_esolver, int iter) override;
 
     void set_firstiter(bool flag = true) override { first_iter = flag; }
     void set_wg(const ModuleBase::matrix *wg_) override { wg = wg_; }
@@ -40,7 +40,7 @@ struct Exx_Helper : public Exx_HelperBase
         op_exx->set_wg(wg);
     }
 
-    bool exx_after_converge(int &iter, bool ene_conv) override;
+    bool exx_after_converge(int iter, bool ene_conv) override;
 
     double cal_exx_energy(void* psi_) override;
 

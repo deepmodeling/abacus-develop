@@ -17,7 +17,6 @@
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/module_dm/dm_from_psi.h"
 #include "source_estate/module_dm/edm_tddft.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_estate/module_pot/td_field_manager.h"
 #include "source_hamilt/hamilt_hs_adapter.h"
@@ -41,20 +40,20 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::ESolver_KS_LCAO_TDDFT()
 template <typename TR, typename Device>
 ESolver_KS_LCAO_TDDFT<TR, Device>::~ESolver_KS_LCAO_TDDFT()
 {
-    //*************************************************
-    // Do not add any code in this destructor function
-    //*************************************************
     if (psi_laststep != nullptr)
     {
         delete psi_laststep;
         psi_laststep = nullptr;
     }
 
+    // Destroy operators before their non-owning TD context.
+    delete this->p_hamilt;
+    this->p_hamilt = nullptr;
+
     if (td_p != nullptr)
     {
         delete td_p;
     }
-    TD_info::td_vel_op = nullptr;
 
     if (td_mg_ != nullptr)
     {
@@ -68,6 +67,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    const std::string& output_dir = PARAM.globalv.global_out_dir;
 
     // If the device is GPU, we must open use_tensor and use_lapack
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
@@ -84,8 +84,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
     // components. Both propagation gauges and the length-gauge potential must
     // observe the same electronic-step counter.
     td_field_manager_ = elecstate::create_td_field_manager(inp);
-    if (inp.init_vecpot_file)
+    if (inp.init_vecpot)
     {
+        // An empty directory selects the calculation working directory, not OUT.<suffix>.
         const std::vector<ModuleBase::Vector3<double>> samples = ModuleIO::read_td_vector_pot("");
         td_field_manager_->set_A_samples(samples);
     }
@@ -95,22 +96,24 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
     }
     if (inp.out_efield && GlobalV::MY_RANK == 0)
     {
-        ModuleIO::prepare_td_field_output(PARAM.globalv.global_out_dir, td_field_manager_->fields().size(), inp.mdp.md_restart);
+        ModuleIO::prepare_td_field_output(output_dir, *td_field_manager_, inp.mdp.md_restart);
     }
     if (inp.out_vecpot && GlobalV::MY_RANK == 0)
     {
-        ModuleIO::prepare_td_vector_pot_output(PARAM.globalv.global_out_dir, inp.mdp.md_restart);
+        if (inp.init_vecpot)
+        {
+            ModuleIO::check_td_vector_pot_paths("", output_dir);
+        }
+        ModuleIO::prepare_td_vector_pot_output(output_dir, inp.mdp.md_restart);
     }
-    elecstate::H_TDDFT_pw::set_field_state(*td_field_manager_);
 
     // Run before_all_runners in ESolver_KS_LCAO
     ESolver_KS_LCAO<std::complex<double>, TR>::before_all_runners(ucell, inp);
     this->pelec->pot->set_td_field_manager(td_field_manager_);
 
-    const int restart_step = inp.mdp.md_restart ? td_field_manager_->current_step() : 0;
-    td_p = new TD_info(&ucell, this->pv, this->orb_, restart_step);
-    TD_info::td_vel_op = td_p;
-    totstep += TD_info::estep_shift;
+    restart_step_ = inp.mdp.md_restart ? td_field_manager_->current_step() : 0;
+    td_p = new TD_info(&ucell, this->pv, this->orb_, *td_field_manager_);
+    totstep += restart_step_;
 
     if (this->inp_->init_wfc == "file")
     {
@@ -124,7 +127,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
                                     this->inp_->nspin,
                                     this->inp_->init_wfc_file_format == "binary",
                                     0,
-                                    TD_info::estep_shift))
+                                    restart_step_))
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO_TDDFT", "Read electronic wavefunction from file failed!");
         }
@@ -143,14 +146,22 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
     //----------------------------------------------------------------
     // 1) before_scf (electronic iteration loops)
     //----------------------------------------------------------------
+    // Prepare the endpoint field before before_scf initializes the potential and constructs TD operators.
     const int first_electronic_step = this->totstep + 1;
-    if (this->inp_->td_stype == 0)
+    if (this->inp_->td_stype == 0 || first_electronic_step == 0)
     {
         td_field_manager_->prepare_sample(first_electronic_step);
-        elecstate::H_TDDFT_pw::set_field_state(*td_field_manager_);
     }
+    else
+    {
+        const int left_step = first_electronic_step - 1;
+        td_field_manager_->prepare_interval(left_step, first_electronic_step);
+    }
+    td_p->update_field();
     this->before_scf(ucell, istep); // From ESolver_KS_LCAO
     td_p->initialize_phase_hybrid(ucell, dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt)->getHR());
+    // Refresh existing entries too: phase initialization updates geometry but only creates missing keys.
+    td_p->update_field();
     td_p->calculate_grad_overlap(this->pv, ucell, this->gd, this->orb_.cutoffs(), this->two_center_bundle_.overlap_orb.get());
     // Initialize the moving spatial gauge
     if (use_td_moving_gauge && this->td_mg_ == nullptr)
@@ -163,7 +174,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
 
     if (this->inp_->td_stype == 2)
     {
-        this->dmat.dm->cal_dmr_td(td_p->get_phase_hybrid(), TD_info::A_prop_ha, -1);
+        this->dmat.dm->cal_dmr_td(td_p->get_phase_hybrid(), td_p->endpoint_A(), -1);
     }
     else
     {
@@ -200,24 +211,35 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
         // update At
         if (this->inp_->td_stype > 0)
         {
-            td_field_manager_->prepare_interval(this->totstep, this->totstep);
-            elecstate::H_TDDFT_pw::set_field_state(*td_field_manager_);
-            td_p->set_A_prop(this->totstep, td_field_manager_->A_prop_ha());
-            if (this->inp_->out_vecpot && GlobalV::MY_RANK == 0)
+            if (this->totstep == 0)
             {
-                ModuleIO::write_td_vector_pot(PARAM.globalv.global_out_dir, this->totstep, td_field_manager_->A_prop_ha());
+                td_field_manager_->prepare_sample(0);
             }
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", TD_info::A_prop_ha[0]);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ay(t)", TD_info::A_prop_ha[1]);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Az(t)", TD_info::A_prop_ha[2]);
+            else
+            {
+                const int left_step = this->totstep - 1;
+                td_field_manager_->prepare_interval(left_step, this->totstep);
+            }
+            td_p->update_field();
+            TD_info::evolve_once = true;
+            // Replaying the saved endpoint rebuilds electronic state without appending another A sample.
+            const bool replay_restart = this->inp_->mdp.md_restart && !restart_done;
+            if (this->inp_->out_vecpot && GlobalV::MY_RANK == 0 && !replay_restart)
+            {
+                ModuleIO::write_td_vector_pot(PARAM.globalv.global_out_dir, this->totstep, td_field_manager_->A_right_ha());
+            }
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", td_p->endpoint_A()[0]);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ay(t)", td_p->endpoint_A()[1]);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Az(t)", td_p->endpoint_A()[2]);
         }
 
         if (this->inp_->td_stype == 0)
         {
             td_field_manager_->prepare_sample(this->totstep);
-            elecstate::H_TDDFT_pw::set_field_state(*td_field_manager_);
         }
-        if (this->inp_->out_efield && GlobalV::MY_RANK == 0)
+        // Keep E output aligned with A by omitting the same replayed restart endpoint.
+        const bool replay_restart = this->inp_->mdp.md_restart && !restart_done;
+        if (this->inp_->out_efield && GlobalV::MY_RANK == 0 && !replay_restart)
         {
             ModuleIO::write_td_field_values(*td_field_manager_, PARAM.globalv.global_out_dir);
         }
@@ -296,7 +318,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
         if (!restart_done && this->inp_->mdp.md_restart)
         {
             restart_done = true;
-            estep += TD_info::estep_shift % this->inp_->estep_per_md;
+            estep += restart_step_ % this->inp_->estep_per_md;
             if (estep == 0)
             {
                 break;
@@ -340,7 +362,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
 
     if (this->inp_->init_wfc == "file")
     {
-        if (istep >= TD_info::estep_shift + 1)
+        if (istep >= restart_step_ + 1)
         {
             module_rt::Evolve_elec<Device>::solve_psi(istep,
                                                       this->inp_->nbands,
@@ -406,6 +428,14 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
                                                                         GlobalV::MY_RANK);
             hamilt::HamiltHSMatrix<std::complex<double>> hs(static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt));
             hsolver_lcao_obj.solve(hs, this->psi[0], this->pelec, *this->dmat.dm, this->chr, this->inp_->nspin, ucell.omega, skip_charge);
+            if (this->inp_->td_stype == 2 && !skip_charge)
+            {
+                // Taoni add 2026-10-11
+                // Ground-state diagonalization forms an ordinary DMR. Apply the
+                // same hybrid phase convention as propagation before building rho.
+                this->dmat.dm->cal_dmr_td(td_p->get_phase_hybrid(), td_p->endpoint_A(), -1);
+                LCAO_domain::dm2rho(this->dmat.dm->get_dmr_vec(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
+            }
         }
     }
 
@@ -600,25 +630,29 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
     // Output energy for sub-loop (electronic step)
     std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot << std::endl;
 
-    // Output dipole, current, etc.
-    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt);
-    ModuleIO::ctrl_output_td<TR>(ucell,
-                                 this->chr.rho_save,
-                                 this->chr.rhopw,
-                                 istep,
-                                 this->psi,
-                                 this->pelec,
-                                 this->kv,
-                                 this->two_center_bundle_.overlap_orb.get(),
-                                 &this->pv,
-                                 this->orb_,
-                                 this->velocity_mat,
-                                 this->gd,
-                                 hamilt_lcao,
-                                 this->RA,
-                                 this->td_p,
-                                 this->exx_nao,
-                                 this->exx_info_);
+    // Match field output by skipping the replayed restart endpoint.
+    const bool replay_restart = this->inp_->mdp.md_restart && !restart_done;
+    if (!replay_restart)
+    {
+        auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt);
+        ModuleIO::ctrl_output_td<TR>(ucell,
+                                     this->chr.rho_save,
+                                     this->chr.rhopw,
+                                     istep,
+                                     this->psi,
+                                     this->pelec,
+                                     this->kv,
+                                     this->two_center_bundle_.overlap_orb.get(),
+                                     &this->pv,
+                                     this->orb_,
+                                     this->velocity_mat,
+                                     this->gd,
+                                     hamilt_lcao,
+                                     this->RA,
+                                     this->td_p,
+                                     this->exx_nao,
+                                     this->exx_info_);
+    }
 
     ModuleBase::timer::end(this->classname, "after_scf");
 }
@@ -642,7 +676,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
     module_dm::dm_from_psi(&this->pv, this->pelec->wg, this->psi[0], *this->dmat.dm);
     if (this->inp_->td_stype == 2)
     {
-        this->dmat.dm->cal_dmr_td(td_p->get_phase_hybrid(), TD_info::A_prop_ha, -1);
+        this->dmat.dm->cal_dmr_td(td_p->get_phase_hybrid(), td_p->endpoint_A(), -1);
     }
     else
     {

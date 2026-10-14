@@ -24,9 +24,9 @@ Apply these instructions when reviewing or changing ABACUS code:
   exceptions.
 - Flag new `#pragma once` in header files as a blocker-level governance issue.
   Require traditional `#ifndef`/`#define`/`#endif` include guards instead.
-- For INPUT parameter behavior changes, require synchronized updates to
-  `docs/parameters.yaml` and `docs/advanced/input_files/input-main.md`, or a
-  clear no-update explanation in the PR.
+- For INPUT parameter behavior changes, require corresponding C++ `Input_Item`
+  metadata updates, or a clear no-update explanation in the PR. Do not require
+  generated YAML or Markdown documentation files to be committed.
 - Check that new source files are linked through the relevant `CMakeLists.txt`
   unless the PR explains generated or indirect inclusion.
 - Keep default C++ changes compatible with the repository C++11 baseline.

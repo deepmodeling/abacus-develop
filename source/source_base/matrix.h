@@ -3,9 +3,6 @@
 
 // Peize Lin update 2018-07-29
 
-#ifdef _MCD_CHECK
-#endif
-
 #include <ostream>
 #include<cassert>
 

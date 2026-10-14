@@ -119,8 +119,8 @@ scf_brav_bco_smear_mv
 812_PW_LT_sm
 813_PW_LT_bacm
 814_PW_LT_triclinic
-scf_dftu_spin2
-scf_dftu_spin4
+relax_dftu_spin2
+relax_dftu_spin4
 817_PW_PPCG
 818_PW_PPCG_Si
 819_PW_PPCG_Al

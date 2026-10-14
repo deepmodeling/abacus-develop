@@ -216,9 +216,6 @@ HEADERS := $(patsubst %,$(ABACUS_ROOT)%,$(HEADERS))
 # Optional HONG
 #==========================
 HONG += -D__SELINV -DMETIS 
-# ifeq ($(MEM_CHECK), ON)
-#     HONG += -D_MCD_CHECK -DWIN32 -DMCD_VERBOSE
-# endif
 
 #==========================
 # OBJECTS NEEDED

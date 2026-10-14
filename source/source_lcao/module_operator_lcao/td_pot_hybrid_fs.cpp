@@ -2,7 +2,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/libm/libm.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 
 namespace hamilt
 {
@@ -15,7 +14,7 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     {
         return;
     }
-    Et = elecstate::H_TDDFT_pw::efield_ha * 2.0; // Hamiltonian and forces use Rydberg units.
+    Et = this->td_info_->field().efield_ha() * 2.0; // Hamiltonian and forces use Rydberg units.
     const Parallel_Orbitals* paraV = dmR->get_paraV();
     #pragma omp parallel
     {

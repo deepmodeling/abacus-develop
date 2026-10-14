@@ -87,6 +87,13 @@ void K_Vectors::set(const UnitCell& ucell,
                             this->kvec_c_full);
 
 
+    // initialize ibz_index
+    this->ibz_index.resize(this->nkstot_nospin);
+    for (int ik = 0; ik < this->nkstot_nospin; ik++)
+    {
+        this->ibz_index[ik] = ik;
+    }
+
     // (2)
     // reduce kpoints to IBZ according to symmetry operations
     if (use_ibz)
@@ -140,13 +147,6 @@ void K_Vectors::set(const UnitCell& ucell,
     // set the k vectors for the up and down spin
     this->set_kup_and_kdw(ofs);
 
-    // initialize ibz_index
-    this->ibz_index.resize(this->nkstot_nospin);
-    for (int ik = 0; ik < this->nkstot_nospin; ik++)
-    {
-        this->ibz_index[ik] = ik;
-    }
-    
     // get ik2iktot: map local k indices to global indices in the pool
     KListIO::build_ik2iktot(this->para_k.my_pool,
                             this->para_k.startk_pool,
@@ -201,6 +201,24 @@ void K_Vectors::renew(const int& kpoint_number)
     isk.resize(kpoint_number);
 
     return;
+}
+
+bool K_Vectors::is_uniform_mp() const
+{
+    if (!this->is_mp || this->nkstot_nospin <= 0)
+    {
+        return false;
+    }
+    long long full_kpoints = 1;
+    for (const int size : this->nmp)
+    {
+        if (size <= 0 || full_kpoints > this->nkstot_nospin / size)
+        {
+            return false;
+        }
+        full_kpoints *= size;
+    }
+    return full_kpoints == this->nkstot_nospin;
 }
 
 // Read the KPT file, which contains K-point coordinates, weights, and grid size information
@@ -662,6 +680,9 @@ void K_Vectors::mpi_k(std::ofstream& ofs_running, const int my_rank, const int m
     Parallel_Common::bcast_int(this->nkstot_nospin);
 
     Parallel_Common::bcast_int(this->nmp, 3);
+
+    // The MP flag is set while rank 0 reads KPT and is consumed on every rank.
+    Parallel_Common::bcast_bool(this->is_mp);
 
     this->kl_segids.resize(this->nkstot);
     Parallel_Common::bcast_int(this->kl_segids.data(), this->nkstot);

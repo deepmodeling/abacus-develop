@@ -3,7 +3,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -18,9 +17,11 @@ hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::TD_pot_hybrid(
     const UnitCell* ucell_in,
     const std::vector<double>& orb_cutoff,
     const Grid_Driver* GridD_in,
-    const TwoCenterIntegrator* intor)
+    const TwoCenterIntegrator* intor,
+    TD_info& td_info)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kv_in->kvec_d, hR_in), SR(SR_in), orb_(orb), orb_cutoff_(orb_cutoff), intor_(intor)
 {
+    this->td_info_ = &td_info;
     this->cal_type = calculation_type::lcao_tddft_periodic;
     this->ucell = ucell_in;
     this->gridD = GridD_in;
@@ -44,10 +45,6 @@ hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::~TD_pot_hybrid()
     {
         delete this->HR_fixed;
     }
-    /*if(TD_info::td_vel_op!=nullptr)
-    {
-        TD_info::td_vel_op->hk_hybrid = nullptr;
-    }*/
 }
 
 // initialize_HR()
@@ -231,15 +228,14 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::init_td()
 {
     // initialize the r_calculator
-    this->r_calculator = &TD_info::td_vel_op->r_calculator;
+    this->r_calculator = &this->td_info_->r_calculator;
 }
 template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::update_td()
 {
     //std::cout<<"hybrid gauge" <<std::endl;
-    this->cart_At = TD_info::A_prop_ha;
-    //std::cout<<"At: "<< TD_info::td_vel_op->cart_At[0] <<" "<<TD_info::td_vel_op->cart_At[1]<<" "<<TD_info::td_vel_op->cart_At[2]<<" "<<std::endl;
-    Et = elecstate::H_TDDFT_pw::efield_ha * 2.0; // Hamiltonian and forces use Rydberg units.
+    this->cart_At = this->td_info_->endpoint_A();
+    Et = this->td_info_->field().efield_ha() * 2.0; // Hamiltonian and forces use Rydberg units.
 }
 // set_HR_fixed()
 template <typename TK, typename TR>

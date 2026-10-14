@@ -19,7 +19,7 @@ The purposes for this test directory are:
 | `02_NAO_Gamma` | KSDFT calculations in NAO basis with gamma-only k-point setting. |
 | `03_NAO_multik` | KSDFT calculations in NAO basis with multiple k-point setting. |
 | `04_FF` | Force fields, including Lennard-Jones potentials, Deep Potentials and Neuroevolution Potential. |
-| `05_rtTDDFT` | Real-time TDDFT tests. |
+| `05_rtTDDFT` | Real-time TDDFT tests in LCAO and PW bases. |
 | `06_SDFT` | Stochastic DFT tests. |
 | `07_OFDFT` | Orbital-free DFT tests. |
 | `08_RI` | Resolution-of-identity (RI) based tests, including hybrid functionals, LR-TDDFT, RPA and BSE. |
@@ -28,7 +28,6 @@ The purposes for this test directory are:
 | `11_PW_GPU` | KSDFT calculations in PW basis with multiple k-point setting using GPU. |
 | `12_NAO_Gamma_GPU` | KSDFT calculations in NAO basis with gamma-only k-point setting using GPU. |
 | `13_NAO_multik_GPU` | KSDFT calculations in NAO basis with multiple k-point setting using GPU. |
-| `15_rtTDDFT_GPU` | Real-time TDDFT tests using LCAO basis running on GPU. |
 | `16_SDFT_GPU` | Integrate tests for stochastic DFT running on GPU. |
 | `CMakeLists.txt` | CMake file for this directory. |
 | `integrate` | Stores scripts for integrate tests. |

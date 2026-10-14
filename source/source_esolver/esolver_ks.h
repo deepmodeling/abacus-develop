@@ -98,6 +98,15 @@ class ESolver_KS : public ESolver_FP
     bool oscillate_esolver = false; // whether esolver is oscillated
     bool scf_nmax_flag = false;     // whether scf has reached nmax, mohan add 20250921
 
+    /// Set by a subclass (e.g. ESolver_KS_PW via EXX) to request a fresh SCF
+    /// rerun from iter=1 after the current electronic iteration. ESolver_KS::
+    /// runner watches this flag at the bottom of each loop body and, when set,
+    /// clears it and restarts the SCF loop with iter=1. This replaces the
+    /// historical "iter=0 restart signal" trick that wrote 0 into the iter
+    /// reference, which crashed DFT+U occupation-matrix writers that validate
+    /// iter>=1.
+    bool scf_rerun_ = false;
+
     /// General EXX info owned by ESolver, initialized from input parameters.
     General_Exx_Info general_exx_info_;
 };
