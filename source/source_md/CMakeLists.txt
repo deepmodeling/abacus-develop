@@ -11,6 +11,8 @@ add_library(
     verlet.cpp
 )
 
+add_subdirectory(snap)
+
 if(ENABLE_COVERAGE)
   add_coverage(md)
 endif()

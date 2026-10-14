@@ -21,7 +21,7 @@ struct Input_para
                                         ///< "nscf" : non-self consistent calculation.
                                         ///< "relax" : cell relaxations
     bool socket_driver = false;         ///< run ABACUS as an i-PI socket client
-    std::string esolver_type = "ksdft"; ///< the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
+    std::string esolver_type = "ksdft"; ///< the energy solver: ksdft, sdft, ofdft, tddft, lj, dp, nep, snap
     /* symmetry level:
       -1, no symmetry at all;
       0, only basic time reversal would be considered;

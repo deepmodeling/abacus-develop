@@ -9,6 +9,7 @@ list(APPEND objects
     esolver_lj.cpp
     esolver_dp.cpp
     esolver_nep.cpp
+    esolver_snap.cpp
     esolver_of.cpp
     esolver_of_tddft.cpp
     esolver_of_interface.cpp

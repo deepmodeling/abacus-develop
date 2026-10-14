@@ -52,7 +52,8 @@ void Driver::driver_run()
     this->init_hardware();
     ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp);
 
-    const bool direct_mdcell = input.esolver_type == "lj" || input.esolver_type == "dp" || input.esolver_type == "nep";
+    const bool direct_mdcell = input.esolver_type == "lj" || input.esolver_type == "dp" || input.esolver_type == "nep"
+                               || input.esolver_type == "snap";
     UnitCell ucell;
     bool ucell_initialized = false;
     const auto initialize_ucell = [&ucell, &ucell_initialized, &input]()

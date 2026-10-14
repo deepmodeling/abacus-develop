@@ -23,6 +23,7 @@
 #endif
 #include "esolver_dp.h"
 #include "esolver_nep.h"
+#include "esolver_snap.h"
 #include "esolver_lj.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
@@ -112,6 +113,10 @@ std::string determine_type(const Input_para& inp)
     else if (inp.esolver_type == "nep")
     {
         esolver_type = "nep_pot";
+    }
+    else if (inp.esolver_type == "snap")
+    {
+        esolver_type = "snap_pot";
     }
     else if (esolver_type == "none")
     {
@@ -386,6 +391,10 @@ ESolver* init_esolver(const Input_para& inp)
     else if (esolver_type == "nep_pot")
     {
         return new ESolver_NEP(PARAM.mdp.pot_file);
+    }
+    else if (esolver_type == "snap_pot")
+    {
+        return new ESolver_SNAP(PARAM.mdp.pot_file, PARAM.mdp.snap_param_file);
     }
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));
