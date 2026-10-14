@@ -31,7 +31,8 @@ With the pinned libvdwxc installation available, enable the real adapter test:
 
 ```bash
 # Configure build-libvdwxc with the standalone-FFTW command in install.md.
-cmake --build build-libvdwxc --target MODULE_HAMILT_vdwTest_LIBVDWXC
+cmake --build build-libvdwxc --target MODULE_HAMILT_vdwTest_LIBVDWXC \
+  MODULE_ESTATE_pot_nonlocal_xc_LIBVDWXC
 ctest --test-dir build-libvdwxc -R LIBVDWXC --output-on-failure
 ```
 
@@ -39,6 +40,9 @@ The C++ tests check energy and potential against the serial API, the potential
 by a finite difference of energy, and geometry using equivalent oblique and
 orthogonal cells with an analytically matched reciprocal vector. Negative
 tests exercise the standard ABACUS error diagnostics.
+The adapter cannot be copied because it owns its library handle. A separate
+host test uses real `Charge` and `UnitCell` objects to check valence/core density
+construction, additive energy/potential bookkeeping and unchanged input data.
 
 The host reuses `PW_Basis`, `grad_rho` and `grad_dot` to supply
 `n = n_valence + n_core` and `sigma = |grad(n)|^2` to libvdwxc. The library
