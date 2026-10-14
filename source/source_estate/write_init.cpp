@@ -3,9 +3,10 @@
 // to cube files in real space. It is part of the module_io package.
 //
 // Output files are named according to the following convention:
-//   - out_freq_ion = 0: chg_ini.cube/pot_ini.cube, chgs1_ini.cube/chgs2_ini.cube
-//   - out_freq_ion > 0: chgg{#}_ini.cube/potg{#}_ini.cube, chgs{#}g{#}_ini.cube
-//   - Geometry step index starts from 1 (geom_step = istep + 1)
+//   - Frequency is out_freq_td for RT-TDDFT and out_freq_ion otherwise.
+//   - Frequency = 0: chg_ini.cube/pot_ini.cube, chgs1_ini.cube/chgs2_ini.cube
+//   - Frequency > 0: chgg{#}_ini.cube/potg{#}_ini.cube, chgs{#}g{#}_ini.cube
+//   - File indices start from 1 (istep + 1); RT-TDDFT uses electronic steps.
 //
 // Usage:
 //   ModuleIO::write_chg_init(ucell, para_grid, chr, efermi, istep, out_dir, inp);
