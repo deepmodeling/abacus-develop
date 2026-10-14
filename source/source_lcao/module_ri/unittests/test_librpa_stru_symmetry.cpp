@@ -3,6 +3,7 @@
 #include "../librpa_bz_sampling.h"
 
 #include "source_base/constants.h"
+#include "source_cell/module_symmetry/symm_rot_spin.h"
 
 #include <cmath>
 #include <gtest/gtest.h>
@@ -95,5 +96,35 @@ TEST(RpaLriSymmetry, ConvertsCartesianKPointWithPhysicalScale)
     EXPECT_DOUBLE_EQ(cartesian.y, -2.0 * ModuleBase::PI);
     EXPECT_DOUBLE_EQ(cartesian.z, 0.5 * ModuleBase::PI);
     EXPECT_THROW(RpaLriDetail::librpa_cartesian_kvec(ModuleBase::Vector3<double>(), -1.0), std::invalid_argument);
+}
+
+TEST(RpaLriSymmetry, ConvertsNonorthogonalLatticeRotationBeforeSpinMapping)
+{
+    const double half = 0.5;
+    const double height = std::sqrt(3.0) * half;
+    const ModuleBase::Matrix3 latvec(1.0, 0.0, 0.0, half, height, 0.0, 0.0, 0.0, 1.0);
+    // This fractional operation is a 60-degree rotation of the triangular lattice.
+    const ModuleBase::Matrix3 fractional_rotation(0.0, 1.0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    const auto operations = RpaLriDetail::make_librpa_spin_symmetry_operations(
+        latvec, std::vector<ModuleBase::Matrix3>{fractional_rotation}, {});
+
+    ASSERT_EQ(operations.size(), 1u);
+    const double half_angle_cos = std::sqrt(3.0) * half;
+    EXPECT_NEAR(operations[0].spin_u[0], half_angle_cos, 1e-12);
+    EXPECT_NEAR(operations[0].spin_u[1], -half, 1e-12);
+    EXPECT_NEAR(operations[0].spin_u[2], 0.0, 1e-12);
+    EXPECT_NEAR(operations[0].spin_u[3], 0.0, 1e-12);
+    EXPECT_NEAR(operations[0].spin_u[4], 0.0, 1e-12);
+    EXPECT_NEAR(operations[0].spin_u[5], 0.0, 1e-12);
+    EXPECT_NEAR(operations[0].spin_u[6], half_angle_cos, 1e-12);
+    EXPECT_NEAR(operations[0].spin_u[7], half, 1e-12);
+
+    const ModuleBase::Matrix3 cartesian = latvec.Inverse() * fractional_rotation * latvec;
+    const auto expected = ModuleSymmetry::SpinRotation::so3_to_su2(cartesian);
+    for (int i = 0; i != 4; ++i)
+    {
+        EXPECT_NEAR(operations[0].spin_u[static_cast<std::size_t>(2 * i)], expected[i].real(), 1e-12);
+        EXPECT_NEAR(operations[0].spin_u[static_cast<std::size_t>(2 * i + 1)], expected[i].imag(), 1e-12);
+    }
 }
 } // namespace

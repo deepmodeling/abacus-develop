@@ -33,7 +33,7 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_rpa_lri_symmetry_test
   LIBS base device symmetry
-  SOURCES test_rpa_lri_symmetry.cpp ../librpa_bz_sampling.cpp ../librpa_stru_symmetry.cpp ../librpa_stru_units.cpp
+  SOURCES test_librpa_stru_symmetry.cpp ../librpa_bz_sampling.cpp ../librpa_stru_symmetry.cpp ../librpa_stru_units.cpp
 )
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/support"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
