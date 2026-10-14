@@ -16,25 +16,30 @@ namespace
 {
 void check_serial_basis(const ModulePW::PW_Basis& pw)
 {
+    const double determinant = pw.latvec.Det();
     if (pw.gamma_only || pw.get_device() != "cpu" || pw.get_precision() != "double" || pw.poolnproc != 1
         || pw.nrxx != pw.nxyz || pw.nx <= 0 || pw.ny <= 0 || pw.nz <= 0 || pw.nxyz <= 0 || pw.npw <= 0
-        || !std::isfinite(pw.omega) || pw.omega <= 0.0 || !std::isfinite(pw.tpiba) || pw.tpiba <= 0.0)
+        || !std::isfinite(pw.omega) || pw.omega <= 0.0 || !std::isfinite(determinant) || determinant <= 0.0
+        || !std::isfinite(pw.tpiba) || pw.tpiba <= 0.0)
     {
-        throw std::invalid_argument("libvdwxc rVV10 requires one-process CPU/double full-complex PW density grid");
+        throw std::invalid_argument(
+            "libvdwxc rVV10 requires one-process CPU/double full-complex PW density grid and a right-handed cell");
     }
 }
 
-std::array<double, 9> cell_columns(const ModulePW::PW_Basis& pw)
+std::array<double, 9> cell_vectors(const ModulePW::PW_Basis& pw)
 {
     const auto& a = pw.latvec;
+    // ABACUS stores a1, a2, a3 as rows. The C API groups C00,C10,C20 as
+    // one vector, so pass the ABACUS rows consecutively in those groups.
     return {a.e11 * pw.lat0,
-            a.e21 * pw.lat0,
-            a.e31 * pw.lat0,
             a.e12 * pw.lat0,
-            a.e22 * pw.lat0,
-            a.e32 * pw.lat0,
             a.e13 * pw.lat0,
+            a.e21 * pw.lat0,
+            a.e22 * pw.lat0,
             a.e23 * pw.lat0,
+            a.e31 * pw.lat0,
+            a.e32 * pw.lat0,
             a.e33 * pw.lat0};
 }
 
@@ -76,7 +81,7 @@ LibvdwxcNonlocalXC::LibvdwxcNonlocalXC(const ModulePW::PW_Basis& pw, double b, d
         throw std::invalid_argument("libvdwxc rejected the rVV10 b/C parameters");
     }
 
-    cell_ = cell_columns(pw);
+    cell_ = cell_vectors(pw);
     // libvdwxc names the arguments by matrix columns (C00,C10,C20,...).
     vdwxc_set_unit_cell(data_,
                         pw.nx,
@@ -111,7 +116,7 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
                                               const std::vector<double>& valence_density) const
 {
     check_serial_basis(pw);
-    const std::array<double, 9> current_cell = cell_columns(pw);
+    const std::array<double, 9> current_cell = cell_vectors(pw);
     const double omega_abs = std::abs(pw.omega);
     const double initialized_omega_abs = std::abs(omega_);
     double volume_scale = 1.0;

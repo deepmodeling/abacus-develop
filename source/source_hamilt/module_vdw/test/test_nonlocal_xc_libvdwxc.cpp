@@ -6,6 +6,7 @@
 #include <cmath>
 #include <complex>
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <vector>
 
 namespace
@@ -74,9 +75,11 @@ TEST_F(LibvdwxcAdapterTest, MatchesDirectSerialApiForNonuniformDensity)
     ASSERT_EQ(vdwxc_set_rvv10_parameters(direct, b, c), 0);
     const auto& a = pw.latvec;
     vdwxc_set_unit_cell(direct, pw.nx, pw.ny, pw.nz,
-                        a.e11 * pw.lat0, a.e21 * pw.lat0, a.e31 * pw.lat0,
-                        a.e12 * pw.lat0, a.e22 * pw.lat0, a.e32 * pw.lat0,
-                        a.e13 * pw.lat0, a.e23 * pw.lat0, a.e33 * pw.lat0);
+                        // libvdwxc stores each C00,C10,C20 group as one
+                        // lattice vector; ABACUS stores lattice vectors in rows.
+                        a.e11 * pw.lat0, a.e12 * pw.lat0, a.e13 * pw.lat0,
+                        a.e21 * pw.lat0, a.e22 * pw.lat0, a.e23 * pw.lat0,
+                        a.e31 * pw.lat0, a.e32 * pw.lat0, a.e33 * pw.lat0);
     vdwxc_init_serial(direct);
 
     std::vector<std::complex<double>> total_g(pw.npw);
@@ -114,6 +117,17 @@ TEST_F(LibvdwxcAdapterTest, MatchesDirectSerialApiForNonuniformDensity)
     }
     EXPECT_NEAR(adapted.vtxc, expected_vtxc, 2.0e-12);
     vdwxc_finalize(&direct);
+}
+
+TEST_F(LibvdwxcAdapterTest, RejectsLeftHandedCell)
+{
+    ModulePW::PW_Basis reflected("cpu", "double");
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -2.0);
+    reflected.initgrids(10.0, lattice, 6, 8, 12);
+    reflected.initparameters(false, 4.0, 1, true);
+    reflected.setuptransform();
+    reflected.collect_local_pw();
+    EXPECT_THROW((vdw::LibvdwxcNonlocalXC(reflected, 6.3, 0.0093)), std::invalid_argument);
 }
 
 TEST_F(LibvdwxcAdapterTest, PotentialMatchesFiniteDifferenceOfEnergy)

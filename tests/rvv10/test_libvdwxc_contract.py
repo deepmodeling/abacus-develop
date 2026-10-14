@@ -59,6 +59,15 @@ class LibvdwxcContract(unittest.TestCase):
         source = (ROOT / "source/source_estate/module_pot/pot_nonlocal_xc.cpp").read_text()
         self.assertIn("chg->nspin != 1", source)
         self.assertIn("first rVV10 interface requires a consistent nspin=1 density basis", source)
+        self.assertIn('timer::start("PotNonlocalXC", "cal_v_eff")', source)
+        self.assertIn('timer::end("PotNonlocalXC", "cal_v_eff")', source)
+
+    def test_adapter_uses_row_vectors_and_rejects_left_handed_cells(self):
+        source = (ROOT / "source/source_hamilt/module_vdw/nonlocal_xc_libvdwxc.cpp").read_text()
+        self.assertIn("const double determinant = pw.latvec.Det();", source)
+        self.assertIn("determinant <= 0.0", source)
+        self.assertIn("a.e11 * pw.lat0,\n            a.e12 * pw.lat0,\n            a.e13 * pw.lat0", source)
+        self.assertIn("right-handed cell", source)
 
     def test_docs_do_not_describe_a_bundled_native_kernel(self):
         docs = (ROOT / "docs/developers_guide/nonlocal_xc.md").read_text()

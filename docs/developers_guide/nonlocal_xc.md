@@ -89,9 +89,11 @@ to a special rVV10 branch in the generic SCF solver.
 ## Numerical and layout contract
 
 The serial API receives an ABACUS full real-space grid with z as the fastest
-index. The unit-cell matrix is passed column by column, and the adapter checks
-the grid dimensions, cell identity, precision, device, gamma flag, rank count,
-density sizes and finite values before calling the library. It forms
+index. ABACUS stores lattice vectors as rows, while the libvdwxc C API groups
+`C00,C10,C20` as one vector; the adapter therefore passes the three ABACUS rows
+in those groups and rejects left-handed cells. It also checks the grid
+dimensions, cell identity, precision, device, gamma flag, rank count, density
+sizes and finite values before calling the library. It forms
 `sigma=|grad(n_total)|^2`, converts the library Hartree outputs to ABACUS Ry,
 and uses the same reciprocal-space projection for the gradient and divergence.
 

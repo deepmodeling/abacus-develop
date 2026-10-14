@@ -28,7 +28,7 @@ PotNonlocalXC::~PotNonlocalXC() = default;
 void PotNonlocalXC::cal_v_eff(const Charge* chg, const UnitCell* cell, ModuleBase::matrix& v_eff)
 {
     ModuleBase::TITLE("PotNonlocalXC", "cal_veff");
-    ModuleBase::timer::start("PotNonlocalXC", "cal_veff");
+    ModuleBase::timer::start("PotNonlocalXC", "cal_v_eff");
     if (!chg || !cell || !rho_basis_ || chg->rhopw != rho_basis_ || chg->nspin != 1
         || chg->nrxx != rho_basis_->nrxx || !chg->rho || !chg->rho_core || v_eff.nr != chg->nspin
         || v_eff.nc != chg->nrxx)
@@ -63,6 +63,6 @@ void PotNonlocalXC::cal_v_eff(const Charge* chg, const UnitCell* cell, ModuleBas
     for (int is = 0; is < chg->nspin; ++is)
         for (int r = 0; r < chg->nrxx; ++r)
             v_eff(is, r) += nl.potential[r];
-    ModuleBase::timer::end("PotNonlocalXC", "cal_veff");
+    ModuleBase::timer::end("PotNonlocalXC", "cal_v_eff");
 }
 } // namespace elecstate

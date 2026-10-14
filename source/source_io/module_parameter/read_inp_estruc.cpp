@@ -353,7 +353,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "none; rvv10";
         item.category = "Electronic structure";
         item.type = "String";
-        item.description = R"(Select an optional libvdwxc-backed nonlocal exchange-correlation correction. `none` disables the correction. The current rVV10 interface requires a CMake build with `ENABLE_LIBXC=ON` and `ENABLE_LIBVDWXC=ON`, `dft_functional=GGA_X_RPW86+GGA_C_PBE`, fixed b=6.3 and C=0.0093, and a single-process, CPU double-precision, plane-wave, single-density-grid, norm-conserving, spin-unpolarized SCF calculation. Forces, stress, geometry optimization, molecular dynamics, LCAO, GPU, reduced-gamma layouts, ultrasoft/PAW pseudopotentials, spin-polarized calculations and pairwise vdW corrections are not part of this interface.)";
+        item.description = R"(Select an optional libvdwxc-backed nonlocal exchange-correlation correction. `none` disables the correction. The current rVV10 interface requires a CMake build with `ENABLE_LIBXC=ON` and `ENABLE_LIBVDWXC=ON`, `dft_functional=GGA_X_RPW86+GGA_C_PBE`, fixed b=6.3 and C=0.0093, and a single-process, CPU double-precision, plane-wave, single-density-grid, right-handed-cell, norm-conserving, spin-unpolarized SCF calculation. Forces, stress, geometry optimization, molecular dynamics, LCAO, GPU, reduced-gamma layouts, ultrasoft/PAW pseudopotentials, spin-polarized calculations and pairwise vdW corrections are not part of this interface.)";
         item.default_value = "none";
         item.unit = "";
         read_sync_string(input.xc_nonlocal);
