@@ -121,10 +121,11 @@ class DOSPlot:
         if energy_range:
             self.ax.set_xlim(energy_range[0], energy_range[1])
         # label the x-axis only on the bottom-most subplot when several
-        # axes share the x-axis; plain axes have no subplotspec and are
-        # always labeled
-        spec = self.ax.get_subplotspec()
-        if spec is None or spec.is_last_row():
+        # axes share the x-axis. get_subplotspec()/is_last_row() require
+        # matplotlib >= 3.4; fall back to always labeling on older versions
+        get_spec = getattr(self.ax, "get_subplotspec", None)
+        spec = get_spec() if get_spec is not None else None
+        if spec is None or not hasattr(spec, "is_last_row") or spec.is_last_row():
             if "xlabel_params" in self.plot_params.keys():
                 self.ax.set_xlabel("Energy(eV)", **
                                    self.plot_params["xlabel_params"])
@@ -195,20 +196,35 @@ class TDOS(DOS):
             if not 1 <= len(files) <= 2:
                 raise ValueError(
                     f"tdosfile accepts 1 or 2 files, got {len(files)}")
+            # canonicalize spin order: the spin-1 channel always comes first
+            if len(files) == 2:
+                first, second = Path(files[0]).name, Path(files[1]).name
+                if ("doss2" in first or "dos2" in first) and \
+                   ("doss1" in second or "dos1" in second):
+                    files = files[::-1]
             return files
 
         path = Path(self.tdosfile)
         if path.is_dir():
-            candidates = []
-            for spin in (1, 2):
-                matches = sorted(glob.glob(str(path / f"doss{spin}*.txt")))
-                if not matches:
-                    matches = sorted(glob.glob(str(path / f"dos{spin}.txt")))
-                if matches:
-                    candidates.append(matches[0])
-            if not candidates:
+            matches1 = sorted(glob.glob(str(path / "doss1*.txt")))
+            if not matches1:
+                matches1 = sorted(glob.glob(str(path / "dos1.txt")))
+            if not matches1 and (path / "dos.txt").is_file():
+                matches1 = [str(path / "dos.txt")]  # legacy PW nspin=1 name
+            if not matches1:
                 raise FileNotFoundError(
                     f"No TDOS file found in directory '{path}'")
+            spin1 = Path(matches1[0])
+            candidates = [str(spin1)]
+            # pair with the spin-2 file carrying the same name suffix, e.g.
+            # doss1g1.txt -> doss2g1.txt, so different geometry steps are
+            # never mixed
+            for one, two in (("doss1", "doss2"), ("dos1", "dos2")):
+                if one in spin1.name:
+                    spin2 = spin1.parent / spin1.name.replace(one, two)
+                    if spin2.is_file():
+                        candidates.append(str(spin2))
+                    break
             return candidates
 
         if path.is_file():
@@ -346,8 +362,8 @@ class PDOS(DOS):
     continuous ``l = 0..nwl``. Zeta components are already summed by ABACUS.
 
     ``pdosfile`` may point to a single spin-channel file
-    (``pdoss1_*.txt``), to the spin-up file of a spin-polarized pair, or to a
-    path/prefix from which the ``pdoss1_*`` and (optionally) ``pdoss2_*``
+    (``pdoss1*.txt``), to the spin-up file of a spin-polarized pair, or to a
+    path/prefix from which the ``pdoss1*`` and (optionally) ``pdoss2*``
     files are discovered automatically.
     """
 
@@ -475,7 +491,7 @@ class PDOS(DOS):
 
         :params pdosfile: path of a text PDOS file, a spin-up file of a
             spin-polarized pair, or a path/prefix used to discover the
-            ``pdoss1_*``/``pdoss2_*`` files.
+            ``pdoss1*``/``pdoss2*`` files.
         """
         spin_files = self._find_spin_files()
         self.nspin = len(spin_files)
@@ -763,7 +779,7 @@ if __name__ == "__main__":
     #                     energy_range=energy_range, dos_range=dos_range, notes={'s': '(a)'})
     # fig.savefig("tdos.png")
 
-    # directory or prefix containing the text PDOS files pdoss1_*[/pdoss2_*]
+    # directory or prefix containing the text PDOS files pdoss1*[/pdoss2*]
     pdosfile = "./pdos"
     pdos = PDOS(pdosfile)
     #species = {"Ag": [2], "Cl": [1], "In": [0]}
