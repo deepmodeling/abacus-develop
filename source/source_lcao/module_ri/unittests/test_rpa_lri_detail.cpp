@@ -1,4 +1,5 @@
 #include "../rpa_lri_detail.h"
+#include "source_base/constants.h"
 
 #include "../rpa_lri_bz_io.h"
 #include "../rpa_lri_coeff_v1.h"
