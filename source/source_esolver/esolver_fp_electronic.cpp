@@ -39,12 +39,12 @@ bool ESolver_FP::apply_electronic_control(Parameter& parameters, const Electroni
             "constant-potential forces require dft_plus_u=1; "
             "the legacy dft_plus_u=2 force implementation is unavailable");
     }
-    if (inp.dft_plus_u && (inp.occ_mat_ctrl < 0 || inp.occ_mat_ctrl > 1
+    if (inp.dft_plus_u && (inp.init_occ_mat < 0 || inp.init_occ_mat > 1
                           || inp.yukawa_potential || parameters.globalv.uramping > 0.0))
     {
         throw std::runtime_error(
             "constant-potential DFT+U requires fixed Hubbard U and self-consistent occupations "
-            "(omc=0/1, yukawa_potential=false, uramping disabled)");
+            "(init_occ_mat=0/1, yukawa_potential=false, uramping disabled)");
     }
     if (inp.init_chg == "dm_no_renormalize")
     { throw std::runtime_error("electron-number control requires charge-density renormalization"); }
