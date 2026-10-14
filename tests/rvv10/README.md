@@ -1,10 +1,12 @@
 # libvdwxc-backed rVV10 checks
 
 The numerical kernel is provided by libvdwxc MR !32, revision
-`91ef4820f3270e22b35fddc2ab4cab8efa4b6d79`. This unreleased API is tested
-with standalone FFTW 3.3.11. The same revision's MKL 2022.2.1 compatibility
-backend has known finite-difference failures; do not mix both FFT providers
-in one ABACUS process. Installation and supported inputs are documented in
+`94410ebdf3dc9615a40f40c3a5b59dbe20a433d2`. This revision fixes FFT boundary
+symmetry in oblique cells. Its eight library tests pass with both standalone
+FFTW 3.3.11 and the MKL 2022.2.1 compatibility backend (GCC 11.2.1).
+The ABACUS adapter and host tests are verified with standalone FFTW, not an
+MKL-based ABACUS build. Do not mix both FFT providers in one process.
+Installation and supported inputs are documented in
 `docs/advanced/install.md`.
 
 The host adapter is intentionally limited to the current API contract:

@@ -105,11 +105,13 @@ The first rVV10 integration uses the external [libvdwxc](https://gitlab.com/libv
 
 Build and install the pinned libvdwxc development branch first (MR !32,
 `rvv10-cmake`, commit
-`91ef4820f3270e22b35fddc2ab4cab8efa4b6d79`), then pass its CMake prefix to
-ABACUS together with Libxc. Use standalone FFTW for both programs: with GCC
-11.2.1 the pinned library passes all eight tests using FFTW 3.3.11, whereas its
-MKL 2022.2.1 compatibility backend fails 69 finite-difference comparisons.
-The rVV10 source is identical in those builds. To use the validated serial
+`94410ebdf3dc9615a40f40c3a5b59dbe20a433d2`), then pass its CMake prefix to
+ABACUS together with Libxc. This revision fixes Hermitian symmetry on stored
+FFT boundary planes in oblique cells. With GCC 11.2.1, its eight library tests
+pass using either FFTW 3.3.11 or the MKL 2022.2.1 compatibility backend.
+The ABACUS adapter is tested with standalone FFTW for both programs; the
+library's MKL tests alone do not validate an MKL-based ABACUS build. Do not
+mix the two FFT providers in one process. To use the validated serial
 configuration, leave `MKLROOT`/`MKL_ROOT` unset and select OpenBLAS/LAPACK plus
 FFTW through ABACUS's existing dependency options:
 
