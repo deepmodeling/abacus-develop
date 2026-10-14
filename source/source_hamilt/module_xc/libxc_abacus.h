@@ -10,7 +10,6 @@
 #include <xc.h>
 #include <xc_funcs.h>
 
-#include <array>
 #include <tuple>
 #include <vector>
 
