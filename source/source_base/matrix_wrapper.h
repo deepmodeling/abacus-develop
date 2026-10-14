@@ -3,8 +3,6 @@
 // DATE : 2018-07-31
 //==========================================================
 
-#ifndef MATRIX_WRAPPER_TIANHE2
-
 #ifndef MATRIX_WRAPPER_H
 #define MATRIX_WRAPPER_H
 
@@ -85,8 +83,4 @@ inline Matrix_Wrapper& Matrix_Wrapper::operator=( Matrix_Wrapper&&m )
 
 }
 
-#endif
-
-#else
-#include "matrix_wrapper_tianhe2.h"
 #endif

@@ -442,6 +442,8 @@ struct Input_para
                                               ///< 0: output only when ion steps are finished
     int out_freq_td = 0;                      ///< output interval in RT-TDDFT
     std::vector<int> out_chg = {0, 3};        ///< output charge density. 0: no; 1: yes
+    bool out_occ_mat = true;                  ///< output DFT+U occupation matrices;
+                                              ///< frequency controlled by out_freq_ion/out_freq_elec
     std::vector<int> out_xc_r = {-1, 3};      ///< output xc(r). -1: no; >=0: output the order of xc(r)
     std::vector<int> out_pot = {0, 8};        ///< output potential
     int out_wfc_pw = 0;                       ///< 0: no; 1: txt; 2: dat
@@ -648,6 +650,7 @@ struct Input_para
     double shrink_LU_inv_thr = 1e-6; ///< threshold to get inverse of overlap matrix by LU decomposition in auxiliary basis representation
     bool out_ri_cv = false;          ///< Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V
     bool out_unshrinked_v = false;   ///< whether to output the large Vq matrix in unshrinked auxiliary basis
+    int out_librpa_ver = 0; ///< 0: legacy ABACUS LibRPA text files; 1: LibRPA reader-v1 binary files
     bool exx_coul_moment = false;    ///< whether to use moment method for Coulomb calculation
     bool exx_rotate_abfs = false;    ///< whether to rotate auxiliary basis for Coulomb calculation
     double exx_multip_moments_threshold = 1e-10; ///< threshold to screen multipole moments in Coulomb calculation
@@ -658,7 +661,10 @@ struct Input_para
     bool yukawa_potential = false;         ///< default: false
     double yukawa_lambda = -1.0;           ///< default: -1.0, which means we calculate lambda
     double uramping_eV = -1.0;             ///< U-Ramping method (eV)
-    int occ_mat_ctrl = 0;                  ///< the mode of occupation matrix control
+    int init_occ_mat = 0;                  ///< mode of occupation-matrix initialization: 0: no;
+                                           ///< 1: read the initial matrix from file, then update it in SCF;
+                                           ///< 2: read the matrix from file and keep it fixed
+    int omc = 0;                           ///< legacy alias for init_occ_mat
     double onsite_radius = 0.0;            ///< radius of the sphere for onsite projection (Bohr)
     std::vector<double> hubbard_u_eV = {}; ///< Hubbard Coulomb interaction parameter U(ev)
     std::vector<int> l_channel = {};    ///< which correlated orbitals need corrected ; d:2 ,f:3, do not

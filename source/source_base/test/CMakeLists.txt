@@ -219,12 +219,6 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_BASE_projgen
-  SOURCES projgen_test.cpp
-  LIBS parameter base device
-)
-
-AddTest(
   TARGET MODULE_BASE_clebsch_gordan_coeff_test
   SOURCES cg_coeff_test.cpp
   LIBS parameter  base device

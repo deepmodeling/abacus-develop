@@ -5,8 +5,6 @@
 
 #include "matrix.h"
 
-#ifdef _MCD_CHECK
-#endif
 namespace ModuleBase
 {
 class ComplexMatrix

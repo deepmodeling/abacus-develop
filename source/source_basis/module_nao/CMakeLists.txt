@@ -1,3 +1,20 @@
+# smoothgen is consumed by both NAO (atomic_radials) and PW
+# (source_pw/module_proj/onsite_proj_init) code, so it must be built
+# and linked regardless of ENABLE_LCAO.
+add_library(
+  nao_smoothgen
+  OBJECT
+  smoothgen.cpp
+)
+
+if(ENABLE_COVERAGE)
+  add_coverage(nao_smoothgen)
+endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(unittests)
+endif()
+
 if(ENABLE_LCAO)
   add_library(
 	numerical_atomic_orbitals
