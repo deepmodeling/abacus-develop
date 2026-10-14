@@ -7,6 +7,7 @@
 #include <complex>
 #include <gtest/gtest.h>
 #include <limits>
+#include <type_traits>
 #include <vector>
 
 namespace
@@ -61,6 +62,12 @@ class LibvdwxcAdapterTest : public testing::Test
 };
 
 #ifdef __LIBVDWXC
+TEST(LibvdwxcOwnershipTest, BackendHandleCannotBeCopied)
+{
+    EXPECT_FALSE(std::is_copy_constructible<vdw::LibvdwxcNonlocalXC>::value);
+    EXPECT_FALSE(std::is_copy_assignable<vdw::LibvdwxcNonlocalXC>::value);
+}
+
 TEST_F(LibvdwxcAdapterTest, MatchesDirectSerialApiForNonuniformDensity)
 {
     const double b = 6.3;

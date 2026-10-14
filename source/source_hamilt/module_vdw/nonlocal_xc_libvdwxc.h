@@ -35,6 +35,8 @@ class LibvdwxcNonlocalXC final : public NonlocalXC
   public:
     LibvdwxcNonlocalXC(const ModulePW::PW_Basis& pw, double b, double c);
     ~LibvdwxcNonlocalXC() override;
+    LibvdwxcNonlocalXC(const LibvdwxcNonlocalXC&) = delete;
+    LibvdwxcNonlocalXC& operator=(const LibvdwxcNonlocalXC&) = delete;
 
     NonlocalXCResult evaluate(const ModulePW::PW_Basis& pw,
                               const std::vector<double>& total_density,
