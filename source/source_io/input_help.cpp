@@ -452,6 +452,11 @@ void ParameterHelp::show_general_help(std::ostream& os) {
     os << "  -i, -I, --info         Display detailed build information\n";
     os << "  -h, --help [param]     Display help for parameter (or this message)\n";
     os << "  -s, --search <query>   Search for parameters matching query\n";
+    os << "  -p, --parameter <name> <value> (Not taking effects yet)\n";
+    os << "                         Set an INPUT variable from the command line.\n";
+    // os << "                         usable in INPUT as ${name} or $name.\n";
+    // os << "                         Repeatable; overrides INPUT 'variable'.\n";
+    os << "  -in, --input <file>    Path to INPUT (default: INPUT)\n";
     os << "  --check-input          Check input file syntax and exit\n";
     os << "  --generate-parameters-yaml\n";
     os << "                         Dump all parameter metadata as YAML\n";

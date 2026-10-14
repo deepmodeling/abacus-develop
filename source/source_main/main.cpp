@@ -7,6 +7,7 @@
 #include "fftw3.h"
 #include "source_base/parallel_global.h"
 #include "source_io/parse_args.h"
+#include "source_io/parse_command_line.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_main/version.h"
 #ifdef _OPENMP
@@ -86,11 +87,30 @@ int main(int argc, char** argv)
 #endif
     PARAM.set_pal_param(my_rank, nproc, nthread_per_proc);
 
+    // Step 1: informational flags + --check-input.
+    // May exit(0)/exit(1) for -v/-i/-h/-s/--generate-parameters-yaml;
+    // -p/-in tokens are validated and passed through.
+    ModuleIO::parse_args(argc, argv);
+
+    // Step 2: run-control options. All ranks execute the identical
+    // parse, so the result is rank-consistent without any Bcast.
+    ModuleIO::CommandLineArgs cli;
+    try
+    {
+        cli = ModuleIO::parse_command_line(argc, argv);
+    }
+    catch (const std::exception& e)
+    {
+        const std::string err = e.what();
+        std::fprintf(stderr, "Command line error: %s\n", err.c_str());
+        ModuleIO::print_help(argv[0]);
+        return 1;
+    }
     /*
     main program for doing electronic structure calculations.
     */
     Driver DD;
-    DD.init();
+    DD.init(cli);
 
     /*
     After running mpi version of abacus, release the mpi resources.

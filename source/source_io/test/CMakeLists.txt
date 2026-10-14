@@ -119,6 +119,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_IO_parse_command_line_test
+  LIBS parameter  base device io_input
+  SOURCES parse_command_line_test.cpp ../parse_command_line.cpp
+)
+
+AddTest(
   TARGET MODULE_IO_bessel_basis_test
   LIBS parameter  base device
   SOURCES bessel_basis_test.cpp ../module_bessel/bessel_basis.cpp
