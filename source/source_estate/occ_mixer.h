@@ -52,7 +52,7 @@ class OccMatMixer
     /**
      * @brief Seed uom_save from an occupation matrix loaded from file.
      *
-     * Used when occ_mat_ctrl != 0 (restart from dm_onsite_ini.txt) so that
+     * Used when init_occ_mat != 0 (restart from dm_onsite_ini.txt) so that
      * the first mixing step has a meaningful "previous" matrix.
      */
     void seed_save(const OccupationMatrix& occmat);

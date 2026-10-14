@@ -43,6 +43,18 @@ cases_file=CASES_CPU.txt
 case='^[^#].*_.*$'
 # enable AddressSanitizer
 sanitize=false
+# Skip property collectors when a dedicated validator owns the output format.
+# This is a generic harness option; the harness itself does not know which
+# physics module produced the files.
+property_check=true
+# CMake can provide the MPI launcher while standalone runs retain the default.
+mpi_launcher=${ABACUS_MPIEXEC:-mpirun}
+mpi_np_flag=${ABACUS_MPIEXEC_NUMPROC_FLAG:--np}
+# FindMPI may require launcher-specific flags (for example
+# Open MPI's --allow-run-as-root in a CI container). Keep these as arrays so
+# every invocation uses the same command assembled by the CMake test setup.
+read -r -a mpi_preflags <<< "${ABACUS_MPIEXEC_PREFLAGS:-}"
+read -r -a mpi_postflags <<< "${ABACUS_MPIEXEC_POSTFLAGS:-}"
 
 threshold_file="threshold"
 # can specify the threshold for each test case
@@ -53,7 +65,7 @@ threshold_file="threshold"
 # fatal_threshold 1
 
 
-while getopts a:n:t:c:s:r:f:go:j: flag
+while getopts a:n:t:c:s:r:f:gpo:j: flag
 do
     case "${flag}" in
         a) abacus=${OPTARG};;
@@ -64,6 +76,7 @@ do
         r) case=${OPTARG};;
         f) cases_file=${OPTARG};;
         g) g=true;; #generate test reference
+        p) property_check=false;; #skip property collectors
         o) nt=${OPTARG}; nt_explicit=true;; # number of OpenMP threads
         j) njobs=${OPTARG};; # number of concurrent test cases, or "auto"
     esac
@@ -141,6 +154,7 @@ echo "Check accuaracy: $ca"
 echo "Test cases file: $cases_file"
 echo "Test cases regex: $case"
 echo "Generate reference: $g"
+echo "Property collectors: $property_check"
 echo "--------------------------------"
 echo ""
 
@@ -337,13 +351,11 @@ run_case()
                 # This lets a serial ABACUS (ENABLE_MPI=OFF, e.g. the native
                 # Windows build) reuse this harness unchanged.
                 $abacus > log.txt
-            elif [ "$case" = "282_NO_RPA" ]; then
-                mpirun -np 1 $abacus > log.txt
             elif grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
                 # of_ml_gene_data supports single-rank only.
-                mpirun -np 1 $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" 1 "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
             else
-                mpirun -np $np $abacus > log.txt
+                "$mpi_launcher" "$mpi_np_flag" $np "${mpi_preflags[@]}" "$abacus" "${mpi_postflags[@]}" > log.txt
             fi
 
             # if ABACUS failed, print out the error message
@@ -356,7 +368,10 @@ run_case()
             else
                 # check the output
                 test -d OUT.autotest || (echo "No 'OUT.autotest' dir presented. Some errors may happened in ABACUS." && exit 1)
-                if test -z $g
+                if [ "$property_check" == false ]; then
+                    echo "[----------] Property collectors skipped; use the dedicated validator for this output contract."
+                    let ok++
+                elif test -z $g
                 then
                     bash -e ../../integrate/validation_tools/catch_properties.sh result.out
                     if [ $? -ne 0 ]; then

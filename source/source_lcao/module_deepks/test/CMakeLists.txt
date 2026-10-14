@@ -108,6 +108,7 @@ set(DEEPKS_UNIT_LIBS
     orb
     gint
     numerical_atomic_orbitals
+    nao_smoothgen
     symmetry
     ${TORCH_LIBRARIES}
 )

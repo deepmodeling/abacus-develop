@@ -3,6 +3,11 @@ AddTest(
     SOURCES test_force_op.cpp ../force_op.cpp
 )
 
+AddTest(
+    TARGET deltaspin_stress_cpu_test
+    SOURCES test_stress_op.cpp ../stress_op.cpp
+)
+
 if(USE_CUDA)
 AddTest(
     TARGET deltaspin_force_gpu_test

@@ -16,6 +16,7 @@ void ReadInput::item_output()
         item.category = "Output information";
         item.type = "Integer";
         item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis, and structure files (STRU{istep} or STRU{istep}.cif, when out_stru is 1 or 2) is printed every n ionic steps."
+                          "\n\nFor DFT+U calculations with out_occ_mat = 1, a separate occupation-matrix file occ_matg{geom_step}.txt is created for every output ionic step. The converged (or final, if not converged) electronic step is always recorded in that file; when out_freq_elec is set smaller than scf_nmax, additional electronic steps are appended as separate sections, each labelled only with the electronic-step number."
                           "\n\n[NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.";
         item.default_value = "0";
         item.unit = "";
@@ -51,7 +52,8 @@ void ReadInput::item_output()
         item.annotation = "print information every few electronic steps";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Output the charge density (only binary format, controlled by out_chg), wavefunction (controlled by out_wfc_pw) per out_freq_elec electronic iterations. Note that they are always output when converged or reach the maximum iterations scf_nmax.";
+        item.description = "Output the charge density (only binary format, controlled by out_chg), wavefunction (controlled by out_wfc_pw) per out_freq_elec electronic iterations. Note that they are always output when converged or reach the maximum iterations scf_nmax."
+                          "\n\nIn DFT+U calculations with out_freq_ion > 0 and out_occ_mat = 1, this parameter also selects the electronic iterations recorded as separate sections inside occ_matg{geom_step}.txt (the converged or final electronic step is recorded regardless of this parameter).";
         item.default_value = "scf_nmax";
         item.unit = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -115,6 +117,18 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
                                         : para.input.out_chg[0];
         };
         sync_intvec(input.out_chg, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_occ_mat");
+        item.annotation = "output DFT+U occupation matrices";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to output the DFT+U occupation matrices. When set to 1 (default), the latest occupation matrix is written to occ_mat.txt at every electronic step, and a numbered file occ_matg{geom_step}.txt is created for every output ionic step selected by out_freq_ion, in which electronic-step sections are appended according to out_freq_elec."
+                           "\n\nThis parameter only takes effect for DFT+U calculations (dft_plus_u > 0) and is independent of out_chg: disabling the charge density output does not disable the occupation-matrix output.";
+        item.default_value = "True";
+        item.unit = "";
+        read_sync_bool(input.out_occ_mat);
         this->add_item(item);
     }
     {
@@ -1180,7 +1194,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output exchange-correlation matrix in KS-orbital representation";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print the upper triangular part of the exchange-correlation matrices in Kohn-Sham orbital representation: for each k point into files in the directory OUT.i_nao.txt, where {suffix}/vxc_out.dat. If EXX is calculated, the local and EXX part of band energy will also be printed in OUT.{suffix}/vxc_exx_out.dat, respectively. All the vxc_out.dat files contains 3 integers (nk, nspin, nband) followed by nk*nspin*nband lines of energy Hartree and eV."
+        item.description = "Write exchange-correlation matrices in the Kohn-Sham orbital basis and their diagonal expectation values. The diagonal energies are saved in OUT.${suffix}/vxc.txt. When EXX is calculated, its local and EXX contributions are also saved as vxc_local.txt and vxc_exx.txt in the same directory. Each energy file begins with nk, nspin, and nbands, followed by nk*nspin*nbands rows of energies in Hartree and eV."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is k-$k-Vxc and so on.";
         item.default_value = "False";
         item.unit = "Ry";
@@ -1466,6 +1480,25 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         read_sync_string(input.rpa_outdir);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.rpa_outdir = to_dir(para.input.rpa_outdir);
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_librpa_ver");
+        item.annotation = "LibRPA output reader version";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Select the LibRPA file protocol: 0 for legacy text output and 1 for reader-v1 output. Reader-v1 supports symmetry-reduced Monkhorst-Pack grids and requires a uniform Monkhorst-Pack KPT grid.";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("basis_type==lcao");
+        read_sync_int(input.out_librpa_ver);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const int value = para.input.out_librpa_ver;
+            if (value != 0 && value != 1)
+            {
+                ModuleBase::WARNING_QUIT("INPUT", "out_librpa_ver must be 0 or 1.");
+            }
         };
         this->add_item(item);
     }

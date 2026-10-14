@@ -41,7 +41,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_tddft_snap_psibeta_half_test
-  LIBS parameter base device orb numerical_atomic_orbitals tddft_test_lib
+  LIBS parameter base device orb numerical_atomic_orbitals nao_smoothgen tddft_test_lib
   SOURCES snap_psb_half_tddft_test.cpp ../radial_interpolation.cpp ../snap_proj_half_tddft.cpp ../snap_psb_half_tddft.cpp
           ../../center2orb.cpp
           ../../center2orb_orb11.cpp
