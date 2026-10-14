@@ -66,6 +66,66 @@ namespace hsolver
 class DiagoPPCGProjectionTest : public ::testing::Test
 {
 protected:
+    void check_rank_truncated_outputs(const int kept_count)
+    {
+        const int dimension = 8;
+        const int rank = 7;
+        const int matrix_size = dimension * dimension;
+        DiagoPPCG<T, base_device::DEVICE_CPU> solver(1.0e-12, 20, kept_count, 1);
+        DiagoPPCG<T, base_device::DEVICE_CPU>::SmallSubspace subspace;
+        subspace.k.assign(matrix_size, T(0));
+        subspace.m.assign(matrix_size, T(0));
+        subspace.eval.assign(dimension, 0.0);
+        for (int column = 0; column < rank; ++column)
+        {
+            const double weight = column + 1.0;
+            subspace.m[column + column * dimension] = T(weight);
+            subspace.k[column + column * dimension] = T(weight * weight);
+            if (column + 1 < rank)
+            {
+                const double scale = std::sqrt(weight * (weight + 1.0));
+                const T coupling = T(-0.3, 0.2) * scale;
+                subspace.k[column + (column + 1) * dimension] = coupling;
+                subspace.k[column + 1 + column * dimension] = std::conj(coupling);
+            }
+        }
+        const std::vector<T> hamiltonian = subspace.k;
+        const std::vector<T> overlap = subspace.m;
+        const int valid_count = solver.solve_small_generalized(dimension, kept_count, subspace);
+        ASSERT_EQ(valid_count, rank);
+        // Check every exported vector, including those not used for the local
+        // update: the recovery path must receive valid, normalized Ritz pairs.
+        for (int column = 0; column < valid_count; ++column)
+        {
+            double residual_squared = 0.0;
+            for (int row = 0; row < dimension; ++row)
+            {
+                T residual(0);
+                for (int inner = 0; inner < dimension; ++inner)
+                {
+                    const int offset = row + inner * dimension;
+                    residual += (hamiltonian[offset] - subspace.eval[column] * overlap[offset])
+                                * subspace.k[inner + column * dimension];
+                }
+                residual_squared += std::norm(residual);
+            }
+            const double residual_norm = std::sqrt(residual_squared);
+            EXPECT_LT(residual_norm, 1.0e-12);
+            for (int other = 0; other < valid_count; ++other)
+            {
+                T inner_product(0);
+                for (int row = 0; row < rank; ++row)
+                {
+                    inner_product += std::conj(subspace.k[row + column * dimension])
+                                     * (row + 1.0) * subspace.k[row + other * dimension];
+                }
+                const T expected = column == other ? T(1) : T(0);
+                const double error = std::abs(inner_product - expected);
+                EXPECT_LT(error, 1.0e-12);
+            }
+        }
+    }
+
     void check_projection(const bool nearly_parallel, const bool zero_direction)
     {
         const int dimension = 2;
@@ -168,6 +228,16 @@ TEST_F(DiagoPPCGProjectionTest, ReusesImagesForWellSeparatedDirection)
 TEST_F(DiagoPPCGProjectionTest, ClearsStaleImagesForZeroDirection)
 {
     check_projection(false, true);
+}
+
+TEST_F(DiagoPPCGProjectionTest, RankTruncationExportsKeptAndDiscardedRitzVectors)
+{
+    const int kept_counts[] = {2, 3, 7};
+    for (const int kept_count : kept_counts)
+    {
+        SCOPED_TRACE(kept_count);
+        check_rank_truncated_outputs(kept_count);
+    }
 }
 
 } // namespace hsolver
