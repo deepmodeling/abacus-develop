@@ -123,3 +123,5 @@ scf_dftu_spin2
 scf_dftu_spin4
 scf_deltaspin2
 scf_deltaspin4
+nscf_hse_same
+nscf_hse_path

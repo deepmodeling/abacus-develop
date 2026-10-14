@@ -1,0 +1,3 @@
+PW HSE NSCF on the frozen SCF source committed in this directory (binary
+wavefunctions, eig_occ.txt, charge restart). Same k mesh with more target
+bands; an explicit zero exx_fock_alpha is accepted like an omitted Fock term.
