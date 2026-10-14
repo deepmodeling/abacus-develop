@@ -32,18 +32,6 @@ ESolver_OF::~ESolver_OF()
     delete psi_;
     delete[] this->pphi_;
 
-    for (int i = 0; i < this->inp_->nspin; ++i)
-    {
-        delete[] this->pdirect_[i];
-        delete[] this->pdLdphi_[i];
-        delete[] this->pdEdphi_[i];
-        delete[] this->precip_dir_[i];
-    }
-    delete[] this->pdirect_;
-    delete[] this->pdLdphi_;
-    delete[] this->pdEdphi_;
-    delete[] this->precip_dir_;
-
     delete this->ptemp_rho_;
 
     delete this->kedf_manager_;
@@ -236,17 +224,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 		this->ptemp_rho_->allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(),
 		                           this->inp_->test_charge);
 
-        for (int is = 0; is < this->inp_->nspin; ++is)
-        {
-            delete[] this->pdLdphi_[is];
-            delete[] this->pdEdphi_[is];
-            delete[] this->pdirect_[is];
-            delete[] this->precip_dir_[is];
-            this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
-            this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
-            this->pdirect_[is] = new double[this->pw_rho->nrxx];
-            this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
-        }
+        this->resize_spin_arrays();
     }
 
     elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, PARAM.globalv.global_out_dir, *this->inp_, this->pelec);

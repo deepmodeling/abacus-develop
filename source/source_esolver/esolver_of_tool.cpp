@@ -1,4 +1,8 @@
 #include "esolver_of.h"
+
+#include <cstddef>
+#include <vector>
+
 #include "source_base/formatter.h"
 #include "source_base/memory_recorder.h"
 #include "source_estate/module_pot/efield.h"
@@ -6,8 +10,6 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/cal_ux.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-
-#include <vector>
 
 namespace ModuleESolver
 {
@@ -97,22 +99,35 @@ void ESolver_OF::allocate_array()
                                this->inp_->test_charge);
 
     this->theta_.resize(this->inp_->nspin);
-    this->pdLdphi_ = new double*[this->inp_->nspin];
-    this->pdEdphi_ = new double*[this->inp_->nspin];
-    this->pdirect_ = new double*[this->inp_->nspin];
-    this->precip_dir_ = new std::complex<double>*[this->inp_->nspin];
-
-    for (int is = 0; is < this->inp_->nspin; ++is)
-    {
-        this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
-        this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
-        this->pdirect_[is] = new double[this->pw_rho->nrxx];
-        this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
-    }
+    this->resize_spin_arrays();
     ModuleBase::Memory::record("OFDFT::pdLdphi_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::pdEdphi_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::pdirect_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * this->inp_->nspin * this->pw_rho->npw);
+}
+
+void ESolver_OF::resize_spin_arrays()
+{
+    const std::size_t nspin = static_cast<std::size_t>(this->inp_->nspin);
+    const std::size_t nrxx = static_cast<std::size_t>(this->pw_rho->nrxx);
+    const std::size_t npw = static_cast<std::size_t>(this->pw_rho->npw);
+
+    this->pdirect_storage_.resize(nspin * nrxx);
+    this->pdirect_.resize(nspin);
+    this->pdEdphi_storage_.resize(nspin * nrxx);
+    this->pdEdphi_.resize(nspin);
+    this->pdLdphi_storage_.resize(nspin * nrxx);
+    this->pdLdphi_.resize(nspin);
+    this->precip_dir_storage_.resize(nspin * npw);
+    this->precip_dir_.resize(nspin);
+
+    for (std::size_t is = 0; is < nspin; ++is)
+    {
+        this->pdirect_[is] = this->pdirect_storage_.data() + is * nrxx;
+        this->pdEdphi_[is] = this->pdEdphi_storage_.data() + is * nrxx;
+        this->pdLdphi_[is] = this->pdLdphi_storage_.data() + is * nrxx;
+        this->precip_dir_[is] = this->precip_dir_storage_.data() + is * npw;
+    }
 }
 
 /**
