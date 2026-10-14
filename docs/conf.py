@@ -64,24 +64,6 @@ myst_enable_extensions = [
 ]
 myst_heading_anchors = 4
 nitpicky = True
-# nitpick_ignore_regex = [
-#     (r"py:.*", r"abacus\..*"),
-#    
-#     (r"py:class", r"numpy\..*"),
-#     (r"py:class", r"scipy\..*"),
-#     (r"py:class", r"ase\..*"),
-#     (r"py:.*", r"cython\..*"),
-#
-#     (r"cpp:.*", r"ModuleBase::.*"),
-#     (r"cpp:.*", r"ModuleIO::.*"),
-#     (r"cpp:identifier", r".*"),          
-#    
-#     (r"std:ref", r"input-.*"),
-#     (r"std:doc", r"advanced/input_files/.*"),
-# 
-#     (r"myst", r".*"),
-#     (r"std:term", r".*"),
-# ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -89,7 +71,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ["build", "README.md"]
 
 
 # -- Options for HTML output -------------------------------------------------
