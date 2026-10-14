@@ -870,6 +870,9 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       rpa_lri_output.o\
       rpa_lri_bz.o\
       rpa_lri_sym.o\
+      librpa_bz_sampling.o\
+      librpa_stru_symmetry.o\
+      librpa_stru_units.o\
       rpa_lri_coeff_io.o\
       rpa_lri_velocity.o\
       rpa_lri_basis.o\

@@ -1,5 +1,6 @@
 #include "../librpa_stru_symmetry.h"
 #include "../librpa_stru_units.h"
+#include "../librpa_bz_sampling.h"
 
 #include "source_base/constants.h"
 
@@ -85,5 +86,14 @@ TEST(RpaLriSymmetry, UsesPhysicalLatticeConstantForBothUnits)
                 ModuleBase::TWO_PI,
                 4.0 * std::numeric_limits<double>::epsilon());
     EXPECT_THROW(RpaLriDetail::librpa_stru_unit_scales(0.0), std::invalid_argument);
+}
+
+TEST(RpaLriSymmetry, ConvertsCartesianKPointWithPhysicalScale)
+{
+    const auto cartesian = RpaLriDetail::librpa_cartesian_kvec(ModuleBase::Vector3<double>(1.0, -2.0, 0.5), 2.0);
+    EXPECT_DOUBLE_EQ(cartesian.x, ModuleBase::PI);
+    EXPECT_DOUBLE_EQ(cartesian.y, -2.0 * ModuleBase::PI);
+    EXPECT_DOUBLE_EQ(cartesian.z, 0.5 * ModuleBase::PI);
+    EXPECT_THROW(RpaLriDetail::librpa_cartesian_kvec(ModuleBase::Vector3<double>(), -1.0), std::invalid_argument);
 }
 } // namespace

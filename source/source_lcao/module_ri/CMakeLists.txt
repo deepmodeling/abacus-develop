@@ -37,6 +37,9 @@ if (ENABLE_LIBRI)
         rpa_lri_output.cpp
         rpa_lri_bz.cpp
         rpa_lri_sym.cpp
+        librpa_bz_sampling.cpp
+        librpa_stru_symmetry.cpp
+        librpa_stru_units.cpp
         rpa_lri_coeff_io.cpp
         rpa_lri_velocity.cpp
         rpa_lri_basis.cpp
