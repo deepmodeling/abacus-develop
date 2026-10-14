@@ -80,6 +80,40 @@ TEST_F(DomainDecompositionTest, CutoffSetterDoesNotExchangeAtoms)
     }
 }
 
+TEST_F(DomainDecompositionTest, GhostExchangePlanMatchesGhostLayout)
+{
+    decomp.prepare_neighbors(cell);
+    const GhostExchangePlan plan = decomp.build_ghost_exchange_plan(cell);
+    const std::size_t exchange_count = plan.sendnum.size();
+    ASSERT_EQ(plan.recvnum.size(), exchange_count);
+    ASSERT_EQ(plan.firstrecv.size(), exchange_count);
+    ASSERT_EQ(plan.send_atom_indices.size(), exchange_count);
+    ASSERT_EQ(plan.sendproc.size(), exchange_count);
+    ASSERT_EQ(plan.recvproc.size(), exchange_count);
+    EXPECT_EQ(plan.nprocs, domain.size());
+
+    std::size_t ghost_offset = cell.owned_atoms().size();
+    std::size_t ghost_count = 0;
+    for (std::size_t iswap = 0; iswap < exchange_count; ++iswap)
+    {
+        EXPECT_EQ(plan.sendnum[iswap], static_cast<int>(plan.send_atom_indices[iswap].size()));
+        EXPECT_EQ(plan.firstrecv[iswap], static_cast<int>(ghost_offset));
+        EXPECT_GE(plan.recvnum[iswap], 0);
+        EXPECT_GE(plan.sendproc[iswap], 0);
+        EXPECT_LT(plan.sendproc[iswap], domain.size());
+        EXPECT_GE(plan.recvproc[iswap], 0);
+        EXPECT_LT(plan.recvproc[iswap], domain.size());
+        for (const int atom_index : plan.send_atom_indices[iswap])
+        {
+            EXPECT_GE(atom_index, 0);
+            EXPECT_LT(atom_index, static_cast<int>(cell.owned_atoms().size()));
+        }
+        ghost_offset += static_cast<std::size_t>(plan.recvnum[iswap]);
+        ghost_count += static_cast<std::size_t>(plan.recvnum[iswap]);
+    }
+    EXPECT_EQ(ghost_count, cell.ghost_atoms().size());
+}
+
 TEST_F(DomainDecompositionTest, GhostForcesAreReturnedAndConsumed)
 {
     decomp.prepare_neighbors(cell);

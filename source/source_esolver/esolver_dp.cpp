@@ -20,6 +20,7 @@
 #include "esolver_dp.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
+#include "source_cell/domain_decomposition.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/cif_io.h"
@@ -28,10 +29,20 @@
 
 #include <iomanip>
 #include <array>
+#include <limits>
+#include <map>
 #include <sstream>
 #include <unordered_map>
 
 using namespace ModuleESolver;
+
+#ifdef __DPMD
+#ifdef __DPMDC
+using DPInputNlist = deepmd::hpp::InputNlist;
+#else
+using DPInputNlist = deepmd::InputNlist;
+#endif
+#endif
 
 void ESolver_DP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
@@ -143,16 +154,102 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
                       ? NULL
                       : sorted_neighbors[static_cast<std::size_t>(iat)].data();
         }
-#ifdef __DPMDC
-        deepmd::hpp::InputNlist nlist(nowned_atoms,
-                                      nowned_atoms > 0 ? &ilist[0] : NULL,
-                                      nowned_atoms > 0 ? &numneigh[0] : NULL,
-                                      nowned_atoms > 0 ? &firstneigh[0] : NULL);
+
+        const GhostExchangePlan& ghost_plan = mdcell.get_ghost_exchange_plan();
+        const std::size_t nswap_size = ghost_plan.sendnum.size();
+        if (ghost_plan.recvnum.size() != nswap_size || ghost_plan.firstrecv.size() != nswap_size
+            || ghost_plan.send_atom_indices.size() != nswap_size
+            || ghost_plan.sendproc.size() != nswap_size || ghost_plan.recvproc.size() != nswap_size)
+        {
+            ModuleBase::WARNING_QUIT("ESolver_DP", "Invalid MDCell ghost exchange plan.");
+        }
+        if (nswap_size > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        {
+            ModuleBase::WARNING_QUIT("ESolver_DP", "MDCell ghost exchange plan exceeds int range.");
+        }
+        const bool use_mapping = ghost_plan.nprocs == 1;
+        std::vector<int> mapping;
+        if (use_mapping)
+        {
+            std::map<std::pair<int, std::int64_t>, int> owned_atom_map;
+            for (int iat = 0; iat < nowned_atoms; ++iat)
+            {
+                const LocalAtom& atom = owned_atoms[static_cast<std::size_t>(iat)];
+                owned_atom_map[std::make_pair(atom.type, atom.type_index)] = iat;
+            }
+            mapping.resize(static_cast<std::size_t>(natom), 0);
+            for (int iat = 0; iat < natom; ++iat)
+            {
+                if (iat < nowned_atoms)
+                {
+                    mapping[static_cast<std::size_t>(iat)] = iat;
+                    continue;
+                }
+                const LocalAtom& atom = ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
+                const std::map<std::pair<int, std::int64_t>, int>::const_iterator owner
+                    = owned_atom_map.find(std::make_pair(atom.type, atom.type_index));
+                if (owner == owned_atom_map.end())
+                {
+                    ModuleBase::WARNING_QUIT("ESolver_DP", "Cannot match a DeePMD ghost atom to its local owner.");
+                }
+                mapping[static_cast<std::size_t>(iat)] = owner->second;
+            }
+        }
+        const int nswap = static_cast<int>(nswap_size);
+        std::vector<std::vector<int> > sendlist_storage = ghost_plan.send_atom_indices;
+        std::vector<int*> sendlist(nswap_size, NULL);
+        for (std::size_t iswap = 0; iswap < nswap_size; ++iswap)
+        {
+            if (!sendlist_storage[iswap].empty())
+            {
+                sendlist[iswap] = sendlist_storage[iswap].data();
+            }
+        }
+        std::vector<int> sendnum_data = ghost_plan.sendnum;
+        std::vector<int> recvnum_data = ghost_plan.recvnum;
+        std::vector<int> firstrecv_data = ghost_plan.firstrecv;
+        std::vector<int> sendproc_data = ghost_plan.sendproc;
+        std::vector<int> recvproc_data = ghost_plan.recvproc;
+        int* sendnum = sendnum_data.empty() ? NULL : &sendnum_data[0];
+        int* recvnum = recvnum_data.empty() ? NULL : &recvnum_data[0];
+        int* firstrecv = firstrecv_data.empty() ? NULL : &firstrecv_data[0];
+        int** sendlist_data = sendlist.empty() ? NULL : &sendlist[0];
+        int* sendproc = sendproc_data.empty() ? NULL : &sendproc_data[0];
+        int* recvproc = recvproc_data.empty() ? NULL : &recvproc_data[0];
+        int* ilist_data = nowned_atoms > 0 ? &ilist[0] : NULL;
+        int* numneigh_data = nowned_atoms > 0 ? &numneigh[0] : NULL;
+        int** firstneigh_data = nowned_atoms > 0 ? &firstneigh[0] : NULL;
+        int* mapping_data = use_mapping && natom > 0 ? &mapping[0] : NULL;
+        void* dp_world = NULL;
+#ifdef __MPI
+        MPI_Comm dp_world_comm = mdcell.communicator();
+        dp_world = &dp_world_comm;
+#endif
+#ifdef __DPMD_COMM_NLIST
+        DPInputNlist nlist(nowned_atoms,
+                           ilist_data,
+                           numneigh_data,
+                           firstneigh_data,
+                           nswap,
+                           sendnum,
+                           recvnum,
+                           firstrecv,
+                           sendlist_data,
+                           sendproc,
+                           recvproc,
+                           dp_world,
+                           ghost_plan.nprocs);
 #else
-        deepmd::InputNlist nlist(nowned_atoms,
-                                 nowned_atoms > 0 ? &ilist[0] : NULL,
-                                 nowned_atoms > 0 ? &numneigh[0] : NULL,
-                                 nowned_atoms > 0 ? &firstneigh[0] : NULL);
+        DPInputNlist nlist(nowned_atoms,
+                           ilist_data,
+                           numneigh_data,
+                           firstneigh_data);
+#endif
+#if !defined(__DPMDC) || defined(__DPMD_COMM_NLIST)
+        if (use_mapping)
+        {
+            nlist.set_mapping(mapping_data);
+        }
 #endif
         double local_energy = 0.0;
         std::vector<double> force, virial;

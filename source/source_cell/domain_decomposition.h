@@ -3,6 +3,7 @@
 
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
+#include "source_cell/ghost_exchange_plan.h"
 #include "source_cell/module_neighlist/local_atom.h"
 
 #include <array>
@@ -47,6 +48,7 @@ public:
     void update_ghost_atom_positions(MDCell& cell);
     void accumulate_ghost_forces(MDCell& cell);
     void prepare_neighbors(MDCell& cell);
+    GhostExchangePlan build_ghost_exchange_plan(const MDCell& cell) const;
 
     int owner_rank_from_frac(const ModuleBase::Vector3<double>& frac) const;
 
