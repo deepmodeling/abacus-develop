@@ -19,7 +19,11 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_rpa_lri_detail_test
   LIBS parameter base device
-  SOURCES test_rpa_lri_detail.cpp ../rpa_lri_detail.cpp ../rpa_lri_coeff_v1.cpp ../rpa_lri_bz_io.cpp
+  SOURCES test_rpa_lri_detail.cpp
+          ../rpa_lri_detail.cpp
+          ../rpa_lri_coeff_v1.cpp
+          ../rpa_lri_bz_io.cpp
+          ../librpa_bz_sampling.cpp
 )
 AddTest(
   TARGET MODULE_RI_rpa_lri_band_io_test
