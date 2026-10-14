@@ -106,20 +106,34 @@ The first rVV10 integration uses the external [libvdwxc](https://gitlab.com/libv
 Build and install the pinned libvdwxc development branch first (MR !32,
 `rvv10-cmake`, commit
 `91ef4820f3270e22b35fddc2ab4cab8efa4b6d79`), then pass its CMake prefix to
-ABACUS together with Libxc:
+ABACUS together with Libxc. Use standalone FFTW for both programs: with GCC
+11.2.1 the pinned library passes all eight tests using FFTW 3.3.11, whereas its
+MKL 2022.2.1 compatibility backend fails 69 finite-difference comparisons.
+The rVV10 source is identical in those builds. To use the validated serial
+configuration, leave `MKLROOT`/`MKL_ROOT` unset and select OpenBLAS/LAPACK plus
+FFTW through ABACUS's existing dependency options:
 
 ```bash
 cmake -B build-libvdwxc -DBUILD_TESTING=ON \
-  -DENABLE_MPI=OFF \
+  -DENABLE_MPI=OFF -DENABLE_LCAO=OFF \
   -DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON \
-  -DCMAKE_PREFIX_PATH=/path/to/libvdwxc-prefix
+  -DCMAKE_PREFIX_PATH="/path/to/libvdwxc-prefix;/path/to/libxc-prefix" \
+  -DFFTW3_DIR=/path/to/fftw-prefix \
+  -DBLA_VENDOR=OpenBLAS \
+  -DBLAS_DIR=/path/to/openblas-prefix \
+  -DLAPACK_DIR=/path/to/openblas-prefix
 ```
 
-The first host adapter is limited to CPU, double-precision, full-complex PW,
-one process, `nspin=1`, norm-conserving pseudopotentials and SCF energy/potential
-evaluation. It is not available through the legacy Makefile. See
-`docs/developers_guide/nonlocal_xc.md` for the exact dependency commit and
-runtime restrictions.
+Enable the correction with `xc_nonlocal rvv10` and explicitly select
+`dft_functional GGA_X_RPW86+GGA_C_PBE`; this first parameterization uses
+`rvv10_b 6.3` and `rvv10_c 0.0093`.
+
+The first adapter supports CPU double-precision, full-complex PW, one process,
+`nspin=1`, a single density grid, a right-handed cell and norm-conserving
+pseudopotentials for SCF energy/potential evaluation. Other spin/layout modes,
+forces, stress, relaxation and pairwise D2/D3/D4 combinations are rejected.
+The legacy Makefile does not build this backend. See `tests/rvv10/README.md`
+for the numerical tests and host/backend accounting.
 
 ## Build with JSON support
 

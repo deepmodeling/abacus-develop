@@ -167,19 +167,9 @@ fi
 
 # 6b. libvdwxc
 #
-# The Makefile build does not currently compile the libvdwxc adapter, but the
-# generated build-info header must still define every placeholder used by the
-# CMake build.  Keep the value explicit (rather than leaving the literal
-# @ABACUS_LIBVDWXC_VERSION@ marker in the header) and report a detected version
-# when a future Makefile configuration provides the dependency.
+# The legacy Makefile does not compile the adapter, even if an environment
+# variable requests it. Report the compiled feature, not a discovered library.
 LIBVDWXC_VERSION="no"
-if [ "${ENABLE_LIBVDWXC}" == "ON" ]; then
-    LIBVDWXC_VERSION="yes (version unknown)"
-    if command -v pkg-config > /dev/null; then
-        version=$(pkg-config --modversion libvdwxc 2>/dev/null)
-        if [ -n "$version" ]; then LIBVDWXC_VERSION="yes (v$version)"; fi
-    fi
-fi
 
 # 7. ROCm/HIP
 ROCM_VERSION="no"

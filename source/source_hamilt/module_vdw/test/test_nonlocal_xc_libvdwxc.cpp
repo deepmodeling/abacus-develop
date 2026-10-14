@@ -6,7 +6,7 @@
 #include <cmath>
 #include <complex>
 #include <gtest/gtest.h>
-#include <stdexcept>
+#include <limits>
 #include <vector>
 
 namespace
@@ -127,7 +127,77 @@ TEST_F(LibvdwxcAdapterTest, RejectsLeftHandedCell)
     reflected.initparameters(false, 4.0, 1, true);
     reflected.setuptransform();
     reflected.collect_local_pw();
-    EXPECT_THROW((vdw::LibvdwxcNonlocalXC(reflected, 6.3, 0.0093)), std::invalid_argument);
+    EXPECT_EXIT(vdw::LibvdwxcNonlocalXC(reflected, 6.3, 0.0093), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(LibvdwxcAdapterTest, RejectsInvalidParametersWithStandardDiagnostic)
+{
+    EXPECT_EXIT(vdw::LibvdwxcNonlocalXC(pw, 0.0, 0.0093), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(LibvdwxcAdapterTest, RejectsInvalidDensityWithStandardDiagnostic)
+{
+    vdw::LibvdwxcNonlocalXC adapter(pw, 6.3, 0.0093);
+    const std::vector<double> total = density(0.004, 0.006);
+    std::vector<double> invalid = total;
+    invalid.pop_back();
+    EXPECT_EXIT(adapter.evaluate(pw, invalid, total), testing::ExitedWithCode(1), "");
+    invalid = total;
+    invalid[0] = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_EXIT(adapter.evaluate(pw, invalid, total), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(LibvdwxcAdapterTest, CellMappingPreservesIndependentReciprocalGeometry)
+{
+    // Both cells have volume sqrt(3)*lat0^3 and |G100|=4*pi/(sqrt(3)*lat0).
+    // A density depending only on fractional x must therefore give identical
+    // isotropic nonlocal energy; transposing the oblique cell breaks this equality.
+    ModulePW::PW_Basis orthogonal("cpu", "double");
+    const ModuleBase::Matrix3 lattice(std::sqrt(0.75), 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0);
+    orthogonal.initgrids(10.0, lattice, pw.nx, pw.ny, pw.nz);
+    orthogonal.initparameters(false, 4.0, 1, true);
+    orthogonal.setuptransform();
+    orthogonal.collect_local_pw();
+
+    const double amplitude = 0.003;
+    std::vector<double> total(pw.nrxx);
+    for (int x = 0; x < pw.nx; ++x)
+        for (int y = 0; y < pw.ny; ++y)
+            for (int z = 0; z < pw.nz; ++z)
+            {
+                const int index = (x * pw.ny + y) * pw.nz + z;
+                const double phase = 2.0 * pi * x / pw.nx;
+                total[index] = 0.01 + amplitude * std::cos(phase);
+            }
+
+    // The hand-derived gradient of cos(2*pi*s1) uses b1=(1,1/sqrt(3),0).
+    std::vector<std::complex<double>> density_g(pw.npw);
+    std::vector<ModuleBase::Vector3<double>> gradient(pw.nrxx);
+    pw.real2recip(total.data(), density_g.data());
+    XC_Functional::grad_rho(density_g.data(), gradient.data(), &pw, pw.tpiba);
+    for (int x = 0; x < pw.nx; ++x)
+        for (int y = 0; y < pw.ny; ++y)
+            for (int z = 0; z < pw.nz; ++z)
+            {
+                const int index = (x * pw.ny + y) * pw.nz + z;
+                const double phase = 2.0 * pi * x / pw.nx;
+                const double derivative = -amplitude * (2.0 * pi / pw.lat0) * std::sin(phase);
+                EXPECT_NEAR(gradient[index].x, derivative, 2.0e-12);
+                EXPECT_NEAR(gradient[index].y, derivative / std::sqrt(3.0), 2.0e-12);
+                EXPECT_NEAR(gradient[index].z, 0.0, 2.0e-12);
+            }
+
+    vdw::LibvdwxcNonlocalXC oblique_adapter(pw, 6.3, 0.0093);
+    vdw::LibvdwxcNonlocalXC orthogonal_adapter(orthogonal, 6.3, 0.0093);
+    const vdw::NonlocalXCResult oblique_result = oblique_adapter.evaluate(pw, total, total);
+    const vdw::NonlocalXCResult orthogonal_result = orthogonal_adapter.evaluate(orthogonal, total, total);
+    EXPECT_NEAR(pw.omega, orthogonal.omega, 2.0e-12);
+    ASSERT_NEAR(oblique_result.energy, orthogonal_result.energy, 2.0e-12);
+    EXPECT_NEAR(oblique_result.vtxc, orthogonal_result.vtxc, 2.0e-12);
+    for (int r = 0; r < pw.nrxx; ++r)
+    {
+        EXPECT_NEAR(oblique_result.potential[r], orthogonal_result.potential[r], 2.0e-12);
+    }
 }
 
 TEST_F(LibvdwxcAdapterTest, PotentialMatchesFiniteDifferenceOfEnergy)

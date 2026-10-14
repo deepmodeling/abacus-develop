@@ -3,11 +3,11 @@
 #ifdef __LIBVDWXC
 
 #include "source_basis/module_pw/pw_basis.h"
+#include "source_base/tool_quit.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
 #include <cmath>
 #include <complex>
-#include <stdexcept>
 #include <vector>
 
 namespace vdw
@@ -22,7 +22,7 @@ void check_serial_basis(const ModulePW::PW_Basis& pw)
         || !std::isfinite(pw.omega) || pw.omega <= 0.0 || !std::isfinite(determinant) || determinant <= 0.0
         || !std::isfinite(pw.tpiba) || pw.tpiba <= 0.0)
     {
-        throw std::invalid_argument(
+        ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC",
             "libvdwxc rVV10 requires one-process CPU/double full-complex PW density grid and a right-handed cell");
     }
 }
@@ -73,12 +73,12 @@ LibvdwxcNonlocalXC::LibvdwxcNonlocalXC(const ModulePW::PW_Basis& pw, double b, d
     data_ = vdwxc_new(VDWXC_RVV10);
     if (data_ == nullptr)
     {
-        throw std::runtime_error("libvdwxc failed to create an rVV10 evaluator");
+        ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc failed to create an rVV10 evaluator");
     }
     if (vdwxc_set_rvv10_parameters(data_, b, c) != 0)
     {
         vdwxc_finalize(&data_);
-        throw std::invalid_argument("libvdwxc rejected the rVV10 b/C parameters");
+        ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc rejected the rVV10 b/C parameters");
     }
 
     cell_ = cell_vectors(pw);
@@ -134,7 +134,8 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
         || total_density.size() != static_cast<std::size_t>(pw.nrxx)
         || valence_density.size() != total_density.size())
     {
-        throw std::invalid_argument("libvdwxc rVV10 received a density grid different from its initialized cell");
+        ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC",
+                                "libvdwxc rVV10 received a density grid different from its initialized cell");
     }
 
     using Complex = std::complex<double>;
@@ -150,14 +151,14 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
     {
         if (!std::isfinite(value))
         {
-            throw std::invalid_argument("libvdwxc rVV10 received a nonfinite total density");
+            ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc rVV10 received a nonfinite total density");
         }
     }
     for (double value: valence_density)
     {
         if (!std::isfinite(value))
         {
-            throw std::invalid_argument("libvdwxc rVV10 received a nonfinite valence density");
+            ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc rVV10 received a nonfinite valence density");
         }
     }
 
@@ -177,14 +178,14 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
                                              dedsigma.data());
     if (!std::isfinite(energy_ha))
     {
-        throw std::runtime_error("libvdwxc returned a nonfinite rVV10 energy");
+        ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc returned a nonfinite rVV10 energy");
     }
 
     for (int r = 0; r < pw.nrxx; ++r)
     {
         if (!std::isfinite(dedn[r]) || !std::isfinite(dedsigma[r]))
         {
-            throw std::runtime_error("libvdwxc returned a nonfinite rVV10 derivative");
+            ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc returned a nonfinite rVV10 derivative");
         }
         const double coefficient = 2.0 * dedsigma[r];
         field[r].x = coefficient * gradient[r].x;
@@ -203,13 +204,13 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
         result.potential[r] = 2.0 * (dedn[r] - divergence[r]);
         if (!std::isfinite(divergence[r]) || !std::isfinite(result.potential[r]))
         {
-            throw std::runtime_error("libvdwxc produced a nonfinite rVV10 potential");
+            ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc produced a nonfinite rVV10 potential");
         }
         result.vtxc += dv * valence_density[r] * result.potential[r];
     }
     if (!std::isfinite(result.vtxc))
     {
-        throw std::runtime_error("libvdwxc produced a nonfinite rVV10 vtxc");
+        ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc produced a nonfinite rVV10 vtxc");
     }
     return result;
 }

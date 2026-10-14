@@ -1,8 +1,11 @@
 # libvdwxc-backed rVV10 checks
 
-This directory checks the host-side contract of the first ABACUS integration.
-The numerical rVV10 kernel is provided by the pinned libvdwxc development
-branch; ABACUS does not carry a second kernel implementation.
+The numerical kernel is provided by libvdwxc MR !32, revision
+`91ef4820f3270e22b35fddc2ab4cab8efa4b6d79`. This unreleased API is tested
+with standalone FFTW 3.3.11. The same revision's MKL 2022.2.1 compatibility
+backend has known finite-difference failures; do not mix both FFT providers
+in one ABACUS process. Installation and supported inputs are documented in
+`docs/advanced/install.md`.
 
 The host adapter is intentionally limited to the current API contract:
 
@@ -13,11 +16,11 @@ The host adapter is intentionally limited to the current API contract:
 
 MPI, spin-polarized calculations, GPU/LCAO, gamma-only layouts, ultrasoft/PAW
 pseudopotentials, forces and stress are rejected by the input contract and are
-follow-up work. The current libvdwxc MR is still Draft, so a Ready PR must pin
-commit `91ef4820f3270e22b35fddc2ab4cab8efa4b6d79` and show both the library's `ctest -R rvv10` output and the
-ABACUS adapter test output.
+follow-up work. The initial integration remains Draft pending independent QE
+reference data and maintainer agreement on this staged scope.
 
-Configure the host-side contract test with:
+The dependency-free test executes the Makefile build-info generator and
+checks that an installed library cannot be mistaken for a compiled feature:
 
 ```bash
 cmake -B build -DBUILD_TESTING=ON
@@ -27,12 +30,19 @@ ctest --test-dir build -R RVV10_LIBVDWXC_CONTRACT --output-on-failure
 With the pinned libvdwxc installation available, enable the real adapter test:
 
 ```bash
-cmake -B build-libvdwxc -DBUILD_TESTING=ON -DENABLE_MPI=OFF -DENABLE_LIBXC=ON \
-  -DENABLE_LIBVDWXC=ON -DCMAKE_PREFIX_PATH=/path/to/libvdwxc
+# Configure build-libvdwxc with the standalone-FFTW command in install.md.
 cmake --build build-libvdwxc --target MODULE_HAMILT_vdwTest_LIBVDWXC
 ctest --test-dir build-libvdwxc -R LIBVDWXC --output-on-failure
 ```
 
-The adapter test uses a nonuniform density and an oblique cell. It compares
-ABACUS energy, the host-computed `dedn - div(2*dedsigma*grad(n))` potential,
-and the valence `vtxc` contraction against the direct serial libvdwxc API.
+The C++ tests check energy and potential against the serial API, the potential
+by a finite difference of energy, and geometry using equivalent oblique and
+orthogonal cells with an analytically matched reciprocal vector. Negative
+tests exercise the standard ABACUS error diagnostics.
+
+The host reuses `PW_Basis`, `grad_rho` and `grad_dot` to supply
+`n = n_valence + n_core` and `sigma = |grad(n)|^2` to libvdwxc. The library
+includes the beta compensation. The returned derivatives form
+`v = 2*(dedn - div(2*dedsigma*grad(n)))` in Ry; `vtxc` contracts this potential
+with the valence density. The generic host component adds these quantities
+after `PotXC`, while the numerical backend stays in `module_vdw`.

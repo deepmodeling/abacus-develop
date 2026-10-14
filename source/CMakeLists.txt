@@ -276,10 +276,6 @@ set(_abacus_feature_libs
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
-if(ENABLE_LIBVDWXC)
-  list(APPEND _abacus_feature_include_dirs ${LIBVDWXC_HEADER_DIR})
-endif()
-
 if(ENABLE_ELPA)
   list(APPEND _abacus_feature_include_dirs ${ELPA_INCLUDE_DIR})
 endif()

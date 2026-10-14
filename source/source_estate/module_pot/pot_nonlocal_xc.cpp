@@ -4,7 +4,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 
-#include <exception>
 #include <vector>
 
 namespace elecstate
@@ -27,7 +26,7 @@ PotNonlocalXC::~PotNonlocalXC() = default;
 
 void PotNonlocalXC::cal_v_eff(const Charge* chg, const UnitCell* cell, ModuleBase::matrix& v_eff)
 {
-    ModuleBase::TITLE("PotNonlocalXC", "cal_veff");
+    ModuleBase::TITLE("PotNonlocalXC", "cal_v_eff");
     ModuleBase::timer::start("PotNonlocalXC", "cal_v_eff");
     if (!chg || !cell || !rho_basis_ || chg->rhopw != rho_basis_ || chg->nspin != 1
         || chg->nrxx != rho_basis_->nrxx || !chg->rho || !chg->rho_core || v_eff.nr != chg->nspin
@@ -42,15 +41,7 @@ void PotNonlocalXC::cal_v_eff(const Charge* chg, const UnitCell* cell, ModuleBas
     std::vector<double> total = valence;
     for (int r = 0; r < chg->nrxx; ++r)
         total[r] += chg->rho_core[r];
-    vdw::NonlocalXCResult nl = {0.0, 0.0, std::vector<double>()};
-    try
-    {
-        nl = backend_->evaluate(*rho_basis_, total, valence);
-    }
-    catch (const std::exception& error)
-    {
-        ModuleBase::WARNING_QUIT("PotNonlocalXC", error.what());
-    }
+    const vdw::NonlocalXCResult nl = backend_->evaluate(*rho_basis_, total, valence);
     if (nl.potential.size() != static_cast<std::size_t>(chg->nrxx))
     {
         ModuleBase::WARNING_QUIT("PotNonlocalXC", "nonlocal XC backend returned an invalid potential size");
