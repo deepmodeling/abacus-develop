@@ -149,11 +149,14 @@ void ModuleESolver::read_exx_source_occupations(std::istream& in,
             }
             if (weights(iq, ib) < 0 || weights(iq, ib) > expected_weight + 1e-10)
             {
-                // Smearing such as Methfessel-Paxton can write occupations below zero or
-                // above the k-point weight; hybrid NSCF supports only a fixed-occupation source.
+                // Methfessel-Paxton smearing can write occupations below zero or above
+                // the k-point weight, and the EXX operator silently drops wg < 1e-12;
+                // only non-negative occupation schemes are supported.
                 throw std::runtime_error(
                     "EXX source eig_occ.txt occupation is outside [0, k-point weight]; "
-                    "hybrid NSCF requires a fixed-occupation source (smearing_method fixed)");
+                    "Methfessel-Paxton smearing (mp/mp2/mp3) can produce such occupations, "
+                    "which hybrid NSCF does not support. Rerun the SCF source with "
+                    "smearing_method fixed, gauss, mv or fd");
             }
         }
     }

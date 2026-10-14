@@ -85,6 +85,7 @@ TEST(PWHybridSource, RejectsInvalidExistingOccupationFiles)
     }
     catch (const std::runtime_error& error)
     {
+        EXPECT_NE(std::string(error.what()).find("Methfessel-Paxton"), std::string::npos);
         EXPECT_NE(std::string(error.what()).find("smearing_method fixed"), std::string::npos);
     }
 }
