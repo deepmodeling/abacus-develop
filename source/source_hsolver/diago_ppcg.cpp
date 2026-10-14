@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <limits>
 #include <numeric>
+#include <utility>
 
 namespace hsolver {
 namespace {
@@ -1060,7 +1061,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
 // Solve K v = λ M v (small generalized eigenvalue problem)
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::solve_small_generalized(
+int DiagoPPCG<T, Device>::solve_small_generalized(
     const int dim,
     const int nstates,
     SmallSubspace& subspace) const
@@ -1075,6 +1076,7 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
     std::vector<T> overlap_eigenvectors = m0;
     std::vector<Real> overlap_eigenvalues(dim);
     bool local_rank_truncation_succeeded = false;
+    int retained_count = 0;
     try
     {
         container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
@@ -1174,14 +1176,14 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
                 reduced_eigenvalues.data());
 
             std::fill(subspace.k.begin(), subspace.k.end(), T(0));
-            for (int state = 0; state < nstates; ++state)
+            for (int state = 0; state < retained_dim; ++state)
             {
                 subspace.eval[state] = reduced_eigenvalues[state];
             }
             ModuleBase::gemm_op<T, Device>()('N',
                                              'N',
                                              dim,
-                                             nstates,
+                                             retained_dim,
                                              retained_dim,
                                              &one,
                                              retained_basis.data(),
@@ -1192,6 +1194,7 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
                                              subspace.k.data(),
                                              dim);
             local_rank_truncation_succeeded = true;
+            retained_count = retained_dim;
         }
     }
     catch (const std::runtime_error&)
@@ -1200,7 +1203,7 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
     }
     if (all_pool_operations_succeeded(local_rank_truncation_succeeded))
     {
-        return;
+        return retained_count;
     }
 
     // Try with increasing diagonal shifts; fall back to identity (no update)
@@ -1233,7 +1236,7 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
         }
         if (all_pool_operations_succeeded(local_sygvd_succeeded))
         {
-            return;
+            return dim;
         }
     }
     // All attempts failed — set eigenvectors to identity (no update).
@@ -1245,6 +1248,277 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
                          / std::max(Real(std::real(m0[i + i * dim])),
                                     Real(ppcg_numerical_threshold));
     }
+    return 0;
+}
+
+// Keep valid local Ritz directions that a block-size restriction would discard.
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::collect_discarded_ritz(
+    const SmallSubspace& subspace,
+    const int kept_count,
+    const int valid_count,
+    OperatorBlock& candidates) const
+{
+    const PPCGFunctionTimer timer("collect_discarded_ritz");
+    const int count = valid_count - kept_count;
+    if (count <= 0)
+    {
+        return;
+    }
+    const int dim = int(subspace.eval.size());
+    const int offset = int(candidates.vectors.size());
+    const T* coefficients = subspace.k.data() + kept_count * dim;
+    const T one(1);
+    const T zero(0);
+    const auto append = [&](const std::vector<T>& basis, std::vector<T>& output) {
+        output.resize(offset + ld_psi_ * count, T(0));
+        T* destination = output.data() + offset;
+        ModuleBase::gemm_op<T, Device>()('N', 'N', n_dim_, count, dim,
+                                         &one, basis.data(), ld_psi_, coefficients, dim,
+                                         &zero, destination, ld_psi_);
+    };
+    append(subspace.basis, candidates.vectors);
+    append(subspace.hbasis, candidates.hvectors);
+    append(subspace.sbasis, candidates.svectors);
+}
+
+// Preserve X exactly as a subspace: rank decisions apply only to its complement.
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::project_candidate_complement(
+    const HPsiFunc& hpsi_func, const T* psi, OperatorBlock& candidates) const
+{
+    const PPCGFunctionTimer timer("project_candidate_complement");
+    const int count = int(candidates.vectors.size()) / ld_psi_;
+    std::vector<int> basis_cols(n_band_);
+    std::iota(basis_cols.begin(), basis_cols.end(), 0);
+    std::vector<int> candidate_cols(count);
+    std::iota(candidate_cols.begin(), candidate_cols.end(), 0);
+    std::vector<double> norms(2 * count, 0.0);
+    for (int column = 0; column < count; ++column)
+    {
+        for (int row = 0; row < n_dim_; ++row)
+        {
+            norms[column] += std::norm(candidates.vectors[idx(row, column, ld_psi_)]);
+        }
+    }
+    // Two passes suppress overlap left by cancellation against the retained X.
+    for (int pass = 0; pass < 2; ++pass)
+    {
+        project_against(psi, spsi_.data(), hpsi_.data(), basis_cols,
+                        candidates.vectors, candidates.svectors, &candidates.hvectors, candidate_cols);
+    }
+    for (int column = 0; column < count; ++column)
+    {
+        for (int row = 0; row < n_dim_; ++row)
+        {
+            norms[count + column] += std::norm(candidates.vectors[idx(row, column, ld_psi_)]);
+        }
+    }
+    const int norm_count = int(norms.size());
+    reduce_pool_values(norms.data(), norm_count);
+    const Real precision_floor = Real(10) * std::numeric_limits<Real>::epsilon();
+    const Real rank_threshold = std::max(Real(ppcg_subspace_rank_threshold), precision_floor);
+    std::vector<int> retained;
+    std::vector<int> refresh;
+    for (int column = 0; column < count; ++column)
+    {
+        const double before = norms[column];
+        const double after = norms[count + column];
+        if (!std::isfinite(before) || !std::isfinite(after) || after <= rank_threshold * before)
+        {
+            continue;
+        }
+        retained.push_back(column);
+        if (after < 0.5 * before)
+        {
+            refresh.push_back(column);
+        }
+    }
+    // The GPU bridge owns only nband columns, even if the complement is larger.
+    for (int first = 0; first < int(refresh.size()); first += n_band_)
+    {
+        const int last = std::min(first + n_band_, int(refresh.size()));
+        const std::vector<int> columns(refresh.begin() + first, refresh.begin() + last);
+        std::vector<T> vectors;
+        copy_cols(candidates.vectors.data(), columns, vectors);
+        std::vector<T> hvectors(vectors.size(), T(0));
+        std::vector<T> svectors(vectors.size(), T(0));
+        const int batch_count = int(columns.size());
+        apply_h(hpsi_func, vectors.data(), hvectors.data(), batch_count);
+        apply_s_current(vectors.data(), svectors.data(), batch_count);
+        scatter_cols(candidates.hvectors.data(), columns, hvectors);
+        scatter_cols(candidates.svectors.data(), columns, svectors);
+    }
+    OperatorBlock projected;
+    copy_cols(candidates.vectors.data(), retained, projected.vectors);
+    copy_cols(candidates.hvectors.data(), retained, projected.hvectors);
+    copy_cols(candidates.svectors.data(), retained, projected.svectors);
+    candidates = std::move(projected);
+}
+
+template <typename T, typename Device>
+bool DiagoPPCG<T, Device>::recover_competing_ritz(
+    const HPsiFunc& hpsi_func, T* psi, Real* eigenvalue,
+    const bool ordered_ritz, std::vector<int>& active_cols,
+    const std::vector<double>& ethr_band, OperatorBlock& candidates)
+{
+    const PPCGFunctionTimer timer("recover_competing_ritz");
+    if (candidates.vectors.empty())
+    {
+        return false;
+    }
+    Real upper_bound = eigenvalue[n_band_ - 1];
+    if (!ordered_ritz)
+    {
+        // Between Ritz steps a column Rayleigh quotient is not an upper bound
+        // on the largest target Ritz value. Use the Hermitian row-sum bound.
+        upper_bound = std::numeric_limits<Real>::lowest();
+        for (int row = 0; row < n_band_; ++row)
+        {
+            Real row_bound = std::real(rr_hsub_[row + row * n_band_]);
+            for (int column = 0; column < n_band_; ++column)
+            {
+                if (column != row)
+                {
+                    row_bound += std::abs(rr_hsub_[row + column * n_band_]);
+                }
+            }
+            upper_bound = std::max(upper_bound, row_bound);
+        }
+    }
+    project_candidate_complement(hpsi_func, psi, candidates);
+    const int count = int(candidates.vectors.size()) / ld_psi_;
+    if (count == 0)
+    {
+        return false;
+    }
+    std::vector<double> moments(2 * count, 0.0);
+    for (int column = 0; column < count; ++column)
+    {
+        for (int row = 0; row < n_dim_; ++row)
+        {
+            const int offset = idx(row, column, ld_psi_);
+            const T conjugate = std::conj(candidates.vectors[offset]);
+            moments[column] += std::real(conjugate * candidates.svectors[offset]);
+            moments[count + column] += std::real(conjugate * candidates.hvectors[offset]);
+        }
+    }
+    const int moment_count = int(moments.size());
+    reduce_pool_values(moments.data(), moment_count);
+    const Real scale = std::max(Real(1), std::abs(upper_bound));
+    const Real margin = Real(32) * std::numeric_limits<Real>::epsilon() * scale;
+    std::vector<int> competing;
+    for (int column = 0; column < count; ++column)
+    {
+        const double norm = moments[column];
+        const double energy = moments[count + column];
+        if (!std::isfinite(norm) || !std::isfinite(energy) || norm <= 0.0)
+        {
+            continue;
+        }
+        // Use the physical quotient, not an eigenvalue of the shifted-M
+        // fallback; they need not represent the same projected problem.
+        if (energy / norm < upper_bound - margin)
+        {
+            competing.push_back(column);
+        }
+    }
+    if (competing.empty())
+    {
+        return false;
+    }
+    OperatorBlock selected;
+    copy_cols(candidates.vectors.data(), competing, selected.vectors);
+    copy_cols(candidates.hvectors.data(), competing, selected.hvectors);
+    copy_cols(candidates.svectors.data(), competing, selected.svectors);
+    // The selected copies own the surviving directions; release the larger
+    // candidate buffers before constructing their orthogonal basis.
+    candidates = OperatorBlock{};
+    const int selected_count = int(competing.size());
+    scale_to_unit_snorm(selected.vectors, selected.svectors, selected.hvectors, selected_count);
+    std::vector<T> overlap;
+    gram(selected.vectors.data(), selected.svectors.data(), selected_count, selected_count,
+         overlap, selected_count);
+    hermitize_projected(overlap, selected_count);
+    std::vector<Real> norms(selected_count);
+    bool local_success = false;
+    try
+    {
+        container::kernels::lapack_heevd<T, container::DEVICE_CPU>()(
+            selected_count, overlap.data(), selected_count, norms.data());
+        local_success = true;
+    }
+    catch (const std::runtime_error&)
+    {
+    }
+    if (!all_pool_operations_succeeded(local_success))
+    {
+        throw std::runtime_error("PPCG: competing-direction overlap diagonalization failed.");
+    }
+    const Real precision_floor = Real(10) * std::numeric_limits<Real>::epsilon();
+    const Real rank_threshold = std::max(Real(ppcg_subspace_rank_threshold), precision_floor);
+    const Real cutoff = norms.back() * rank_threshold;
+    int retained_count = 0;
+    for (int column = 0; column < selected_count; ++column)
+    {
+        if (norms[column] <= cutoff)
+        {
+            continue;
+        }
+        const Real inverse_norm = Real(1) / std::sqrt(norms[column]);
+        for (int row = 0; row < selected_count; ++row)
+        {
+            overlap[row + retained_count * selected_count] = overlap[row + column * selected_count] * inverse_norm;
+        }
+        ++retained_count;
+    }
+    if (retained_count == 0)
+    {
+        throw std::runtime_error("PPCG: competing-direction complement has zero numerical rank.");
+    }
+    OperatorBlock orthogonal;
+    const T one(1);
+    const T zero(0);
+    const auto transform = [&](const std::vector<T>& input, std::vector<T>& output) {
+        output.assign(ld_psi_ * retained_count, T(0));
+        ModuleBase::gemm_op<T, Device>()('N', 'N', n_dim_, retained_count, selected_count,
+                                         &one, input.data(), ld_psi_, overlap.data(), selected_count,
+                                         &zero, output.data(), ld_psi_);
+    };
+    transform(selected.vectors, orthogonal.vectors);
+    transform(selected.hvectors, orthogonal.hvectors);
+    transform(selected.svectors, orthogonal.svectors);
+    selected = OperatorBlock{};
+    SmallSubspace expanded;
+    build_startup_global_subspace(psi, orthogonal.vectors, orthogonal.svectors,
+                                  orthogonal.hvectors, retained_count, expanded);
+    const int expanded_dim = n_band_ + retained_count;
+    local_success = false;
+    try
+    {
+        // No rank truncation of [X,Q]: X is retained intact and Q has already
+        // been rank-revealed independently in its S-orthogonal complement.
+        HermitianLapack<T>::sygvd(expanded_dim, expanded.k.data(), expanded.m.data(), expanded.eval.data());
+        local_success = true;
+    }
+    catch (const std::runtime_error&)
+    {
+    }
+    if (!all_pool_operations_succeeded(local_success))
+    {
+        throw std::runtime_error("PPCG: competing-direction Rayleigh-Ritz solve failed.");
+    }
+    update_startup_global_subspace(psi, orthogonal.vectors, orthogonal.svectors,
+                                   orthogonal.hvectors, retained_count, expanded);
+    std::copy(expanded.eval.begin(), expanded.eval.begin() + n_band_, eigenvalue);
+    set_zero(p_);
+    set_zero(sp_);
+    set_zero(hp_);
+    compute_eigenpair_residual(eigenvalue);
+    lock_epairs(w_, ethr_band, active_cols);
+    ++rayleigh_ritz_count_;
+    ++root_recovery_count_;
+    return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -1633,6 +1907,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     first_active_band_ = -1;
     first_active_threshold_ = Real(0);
     rayleigh_ritz_count_ = 0;
+    root_recovery_count_ = 0;
 
     validate_input(hpsi_func, psi_in, eigenvalue_in, ethr_band, prec);
     spsi_func_ = spsi_func;
@@ -1775,6 +2050,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     while (!active_cols.empty() && iter <= maxiter_)
     {
+        OperatorBlock discarded;
         // Near the floating-point cancellation scale, form a reliable
         // residual before using it as a new search direction. This safeguard
         // also covers cancellation in the W/P recurrence, not only in the
@@ -1886,7 +2162,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 build_small_subspace(psi_in, cols, nblk, subspace);
                 const int local_dim = nblk * l;
                 measure_local_overlap(subspace, local_dim);
-                solve_small_generalized(local_dim, l, subspace);
+                const int valid_ritz_count = solve_small_generalized(local_dim, l, subspace);
+                collect_discarded_ritz(subspace, l, valid_ritz_count, discarded);
                 update_one_block(psi_in, cols, l, nblk, subspace);
                 i0 += l;
             }
@@ -1923,22 +2200,37 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         {
             last_rr_succeeded = rayleigh_ritz(
                 psi_in, eigenvalue_in, active_cols, ethr_band);
-            if (last_rr_succeeded && active_cols.empty())
+        }
+        // A residual only certifies the retained eigenpairs, not that no lower
+        // state was discarded by another local block. Inspect those available
+        // directions before accepting a newly converged set of columns.
+        if (!perform_rr || last_rr_succeeded)
+        {
+            const bool recovered = recover_competing_ritz(hpsi_func, psi_in, eigenvalue_in,
+                                                           last_rr_succeeded, active_cols,
+                                                           ethr_band, discarded);
+            if (recovered)
             {
-                // A small cached residual is only tentative. Refresh the
-                // operator images before stopping, and keep iterating if
-                // roundoff had made the cached criterion overly optimistic.
-                apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-                apply_s_current(psi_in, spsi_.data(), ncol);
-                compute_eigenpair_residual(eigenvalue_in);
-                lock_epairs(w_, ethr_band, active_cols);
-                if (!active_cols.empty())
-                {
-                    set_zero(p_);
-                    set_zero(sp_);
-                    set_zero(hp_);
-                    use_p = false;
-                }
+                last_rr_succeeded = true;
+                perform_rr = true;
+                use_p = false;
+            }
+        }
+        if (last_rr_succeeded && active_cols.empty())
+        {
+            // A small cached residual is only tentative. Refresh the
+            // operator images before stopping, and keep iterating if
+            // roundoff had made the cached criterion overly optimistic.
+            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+            apply_s_current(psi_in, spsi_.data(), ncol);
+            compute_eigenpair_residual(eigenvalue_in);
+            lock_epairs(w_, ethr_band, active_cols);
+            if (!active_cols.empty())
+            {
+                set_zero(p_);
+                set_zero(sp_);
+                set_zero(hp_);
+                use_p = false;
             }
         }
         // Restart the search direction if the residual keeps rising.  With a
