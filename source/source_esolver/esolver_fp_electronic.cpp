@@ -14,6 +14,11 @@ namespace ModuleESolver
 bool ESolver_FP::apply_electronic_control(Parameter& parameters, const ElectronicControl& control)
 {
     const auto& inp = parameters.inp;
+    if (inp.assume_isolated == "makov-payne")
+    {
+        throw std::runtime_error(
+            "constant-potential electron control is incompatible with the energy-only Makov-Payne correction");
+    }
     if (inp.esolver_type != "ksdft" || (inp.basis_type != "pw" && inp.basis_type != "lcao")
         || inp.device != "cpu" || inp.precision != "double" || parameters.globalv.use_uspp
         || inp.sc_mag_switch || inp.deepks_scf || inp.rpa || inp.rdmft || inp.dft_plus_dmft)
