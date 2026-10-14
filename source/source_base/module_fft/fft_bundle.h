@@ -210,8 +210,27 @@ class FFT_Bundle
     int fft_mode = 0;
     bool float_flag = false;
     bool double_flag = false;
+    // Backends serving the device-memory ("gpu-like") 3D FFT interface for the
+    // configured device. When device == "cpu" they also serve the host-memory
+    // ("cpu-like") interface.
     std::shared_ptr<FFT_BASE<float>> fft_float = nullptr;
     std::shared_ptr<FFT_BASE<double>> fft_double = nullptr;
+    // CPU backends serving the host-memory ("cpu-like") interface when the
+    // configured device is not "cpu" (the gpu/dsp backends implement only the
+    // 3D FFT interface). They keep host post-processing such as the Wannier90
+    // interface and Berry phase working, since those run on the CPU
+    // wavefunction mirror even in GPU calculations.
+    std::shared_ptr<FFT_BASE<float>> fft_float_cpu = nullptr;
+    std::shared_ptr<FFT_BASE<double>> fft_double_cpu = nullptr;
+
+    FFT_BASE<float>* fft_host_float() const
+    {
+        return (this->device == "cpu") ? this->fft_float.get() : this->fft_float_cpu.get();
+    }
+    FFT_BASE<double>* fft_host_double() const
+    {
+        return (this->device == "cpu") ? this->fft_double.get() : this->fft_double_cpu.get();
+    }
 
     std::string device = "cpu";
     std::string precision = "double";
