@@ -12,4 +12,3 @@ This section provides guidelines and resources for developers working on the ABA
    basic_types_class.md
    input_availability.md
    agent_governance.md
-   rt_normalization_fix.md
