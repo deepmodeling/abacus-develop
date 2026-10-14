@@ -100,6 +100,11 @@ void warn_source_configuration(const Input_para& inp, const std::string& readin_
         std::ostringstream value;
         for (const auto& number : term.second)
         {
+            // Zero-valued Fock coefficients are equivalent to omitting the term.
+            if (term.first == "exx_fock_alpha" && std::stod(number) == 0.0)
+            {
+                continue;
+            }
             value << number << ' ';
         }
         expected[term.first] = value.str();
@@ -137,6 +142,11 @@ void warn_source_configuration(const Input_para& inp, const std::string& readin_
         bool mismatch = false;
         while (original >> source_value)
         {
+            // Mirror the target-side normalization for saved zero Fock coefficients.
+            if (item.first == "exx_fock_alpha" && std::stod(source_value) == 0.0)
+            {
+                continue;
+            }
             if (!(current >> target_value))
             {
                 mismatch = true;
@@ -168,8 +178,21 @@ void validate_hybrid_nscf(const Input_para& inp, const General_Exx_Info& info)
     {
         return;
     }
+    bool has_fock = false;
     const auto fock = info.coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
-    const bool has_fock = fock != info.coulomb_param.end() && !fock->second.empty();
+    if (fock != info.coulomb_param.end())
+    {
+        // An explicit zero coefficient (`exx_fock_alpha 0`) retains a Fock entry but is
+        // equivalent to omitting the term; only a nonzero coefficient is unscreened exchange.
+        for (const auto& term : fock->second)
+        {
+            if (std::stod(term.at("alpha")) != 0.0)
+            {
+                has_fock = true;
+                break;
+            }
+        }
+    }
     bool compatible_device = inp.device == "cpu";
 #ifdef __CUDA
     compatible_device = compatible_device || inp.device == "gpu";

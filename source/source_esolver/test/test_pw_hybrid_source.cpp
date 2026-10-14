@@ -76,7 +76,17 @@ TEST(PWHybridSource, RejectsInvalidExistingOccupationFiles)
     std::string invalid = saved;
     invalid.replace(invalid.find("0.125"), 5, "-0.25");
     std::istringstream negative(invalid);
-    EXPECT_THROW(ModuleESolver::read_exx_source_occupations(negative, headers, 1, weights), std::runtime_error);
+    try
+    {
+        // A negative occupation is what a Methfessel-Paxton source can produce; the
+        // diagnostic must name the unsupported smearing rather than report invalid data.
+        ModuleESolver::read_exx_source_occupations(negative, headers, 1, weights);
+        FAIL() << "Expected std::runtime_error";
+    }
+    catch (const std::runtime_error& error)
+    {
+        EXPECT_NE(std::string(error.what()).find("smearing_method fixed"), std::string::npos);
+    }
 }
 
 TEST(PWHybridSource, RejectsDifferentMeshesInSpinChannels)

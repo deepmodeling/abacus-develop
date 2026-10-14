@@ -81,8 +81,9 @@ def verify(executable, root, mpi_ranks):
     assert not (source / "EXX_SOURCE").exists()
     original = digest(source)
     extra = f"calculation nscf\nread_file_dir {source}\nout_chg 0\nout_wfc_pw 0\n"
-    # More target bands than source bands, initialized independently.
-    same = create_case(root, "same", extra)
+    # More target bands than source bands, initialized independently. An explicit zero
+    # exx_fock_alpha must be accepted like an omitted Fock term and leave bands unchanged.
+    same = create_case(root, "same", extra + "exx_fock_alpha 0\n")
     (same / "INPUT").write_text((same / "INPUT").read_text().replace("nbands 3", "nbands 5"))
     run(executable, same, [])
     delta = max_difference(bands(scf), bands(same))

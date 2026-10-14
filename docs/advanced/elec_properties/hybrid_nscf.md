@@ -11,8 +11,10 @@ Use a complete, uniformly weighted source mesh and:
 
 ```text
 calculation scf
+suffix hybrid
 basis_type pw
 dft_functional HSE
+smearing_method fixed
 symmetry -1
 kpar 1
 bndpar 1
@@ -47,7 +49,9 @@ Set `symmetry -1`: input `0` is accepted but PW EXX resets it to `-1` at runtime
 
 HSE defaults to `exx_singularity_correction limits`, as in LCAO. Set `gygi` to
 retain the historical PW correction, which can produce jumps at source K points.
-Use matching SCF/NSCF settings for consistent bands. Configuration differences
+Use matching SCF/NSCF settings for consistent bands. The source must use fixed
+occupations (`smearing_method fixed`); smearing can write occupations outside
+`[0, k-point weight]`, which hybrid NSCF rejects. Configuration differences
 or missing `INPUT.info` produce warnings; missing or incompatible numerical
 source data produces an error.
 
