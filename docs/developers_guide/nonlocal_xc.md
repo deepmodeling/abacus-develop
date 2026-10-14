@@ -17,12 +17,14 @@ rvv10_c         0.0093
 
 The first adapter requires both Libxc and libvdwxc at build time. It accepts a
 CPU, double-precision, full-complex plane-wave SCF calculation with one MPI
-rank, `nspin=1`, and norm-conserving pseudopotentials. It returns the nonlocal
-energy, the local potential, and the valence `vtxc` contraction. The parser
-rejects forces, stress, relaxation, molecular dynamics, LCAO, GPU, gamma-only
-layouts, spin-polarized inputs, ultrasoft/PAW pseudopotentials, MPI runs with
-more than one rank, and pairwise D2/D3/D4 corrections. These are follow-up
-interfaces, not silently approximated results.
+rank, `nspin=1`, a single density grid, and norm-conserving pseudopotentials.
+It returns the nonlocal energy, the local potential, and the valence `vtxc`
+contraction. The parser rejects explicit double-grid inputs (for example,
+`ecutrho` or `ndx/ndy/ndz` settings that create a separate smooth grid),
+forces, stress, relaxation, molecular dynamics, LCAO, GPU, gamma-only layouts,
+spin-polarized inputs, ultrasoft/PAW pseudopotentials, MPI runs with more than
+one rank, and pairwise D2/D3/D4 corrections. These are follow-up interfaces,
+not silently approximated results.
 
 `xc_nonlocal=rvv10` must not be encoded as `dft_functional=RVV10`, and it must
 not be combined with a semilocal functional that already contains a nonlocal

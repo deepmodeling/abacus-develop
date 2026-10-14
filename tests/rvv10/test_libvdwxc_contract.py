@@ -50,6 +50,15 @@ class LibvdwxcContract(unittest.TestCase):
         cmake = (ROOT / "CMakeLists.txt").read_text()
         self.assertIn("#if !defined(__LIBXC) || !defined(__LIBVDWXC)", source)
         self.assertIn("ENABLE_LIBVDWXC currently requires ENABLE_LIBXC=ON", cmake)
+        self.assertIn("para.sys.double_grid", source)
+        self.assertIn("single density grid", source)
+        parameters = (ROOT / "docs/parameters.yaml").read_text()
+        self.assertIn("single-density-grid", parameters)
+
+    def test_host_component_matches_the_declared_first_pr_spin_scope(self):
+        source = (ROOT / "source/source_estate/module_pot/pot_nonlocal_xc.cpp").read_text()
+        self.assertIn("chg->nspin != 1", source)
+        self.assertIn("first rVV10 interface requires a consistent nspin=1 density basis", source)
 
     def test_docs_do_not_describe_a_bundled_native_kernel(self):
         docs = (ROOT / "docs/developers_guide/nonlocal_xc.md").read_text()

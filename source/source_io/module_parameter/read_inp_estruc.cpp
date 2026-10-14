@@ -353,7 +353,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "none; rvv10";
         item.category = "Electronic structure";
         item.type = "String";
-        item.description = R"(Select an optional libvdwxc-backed nonlocal exchange-correlation correction. `none` disables the correction. The current rVV10 interface requires a CMake build with `ENABLE_LIBXC=ON` and `ENABLE_LIBVDWXC=ON`, `dft_functional=GGA_X_RPW86+GGA_C_PBE`, fixed b=6.3 and C=0.0093, and a single-process, CPU double-precision, plane-wave, norm-conserving, spin-unpolarized SCF calculation. Forces, stress, geometry optimization, molecular dynamics, LCAO, GPU, reduced-gamma layouts, ultrasoft/PAW pseudopotentials, spin-polarized calculations and pairwise vdW corrections are not part of this interface.)";
+        item.description = R"(Select an optional libvdwxc-backed nonlocal exchange-correlation correction. `none` disables the correction. The current rVV10 interface requires a CMake build with `ENABLE_LIBXC=ON` and `ENABLE_LIBVDWXC=ON`, `dft_functional=GGA_X_RPW86+GGA_C_PBE`, fixed b=6.3 and C=0.0093, and a single-process, CPU double-precision, plane-wave, single-density-grid, norm-conserving, spin-unpolarized SCF calculation. Forces, stress, geometry optimization, molecular dynamics, LCAO, GPU, reduced-gamma layouts, ultrasoft/PAW pseudopotentials, spin-polarized calculations and pairwise vdW corrections are not part of this interface.)";
         item.default_value = "none";
         item.unit = "";
         read_sync_string(input.xc_nonlocal);
@@ -398,11 +398,11 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                     "ReadInput", "xc_nonlocal=rvv10 uses fixed parameters rvv10_b=6.3 and rvv10_c=0.0093");
             const auto& p = para.input;
             if (para.globalv.nproc != 1 || p.calculation != "scf" || p.esolver_type != "ksdft" || p.basis_type != "pw" || p.device != "cpu"
-                || p.precision != "double" || p.nspin != 1 || p.cal_force || p.cal_stress
+                || p.precision != "double" || p.nspin != 1 || p.cal_force || p.cal_stress || para.sys.double_grid
                 || p.gamma_only || p.vdw_method != "none" || !p.vl_in_h)
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "xc_nonlocal=rvv10 supports only one MPI rank with CPU double PW nspin=1 "
-                                         "serial SCF without forces, stress, gamma_only or other vdW corrections");
+                                         "serial SCF with a single density grid, without forces, stress, gamma_only or other vdW corrections");
         };
         this->add_item(item);
     }

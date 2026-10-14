@@ -29,11 +29,11 @@ void PotNonlocalXC::cal_v_eff(const Charge* chg, const UnitCell* cell, ModuleBas
 {
     ModuleBase::TITLE("PotNonlocalXC", "cal_veff");
     ModuleBase::timer::start("PotNonlocalXC", "cal_veff");
-    if (!chg || !cell || !rho_basis_ || chg->rhopw != rho_basis_ || (chg->nspin != 1 && chg->nspin != 2)
+    if (!chg || !cell || !rho_basis_ || chg->rhopw != rho_basis_ || chg->nspin != 1
         || chg->nrxx != rho_basis_->nrxx || !chg->rho || !chg->rho_core || v_eff.nr != chg->nspin
         || v_eff.nc != chg->nrxx)
     {
-        ModuleBase::WARNING_QUIT("PotNonlocalXC", "nonlocal XC requires a consistent nspin=1 or nspin=2 density basis");
+        ModuleBase::WARNING_QUIT("PotNonlocalXC", "the first rVV10 interface requires a consistent nspin=1 density basis");
     }
     std::vector<double> valence(chg->nrxx, 0.0);
     for (int is = 0; is < chg->nspin; ++is)
