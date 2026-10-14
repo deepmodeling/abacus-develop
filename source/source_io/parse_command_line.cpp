@@ -7,21 +7,42 @@
 namespace ModuleIO
 {
 
+int run_control_option_size(int argc, char* argv[], int index)
+{
+    const std::string option = argv[index];
+    int size = 0;
+    std::string required;
+    if (option == "-p" || option == "--parameter")
+    {
+        size = 3;
+        required = "<name> <value>";
+    }
+    else if (option == "-in" || option == "--input")
+    {
+        size = 2;
+        required = "<file>";
+    }
+    else if (option == "--check-input")
+    {
+        size = 1;
+    }
+    if (size > argc - index)
+    {
+        throw std::runtime_error("Option " + option + " requires " + required);
+    }
+    return size;
+}
+
 CommandLineArgs parse_command_line(int argc, char* argv[])
 {
     CommandLineArgs args;
     for (int i = 1; i < argc; ++i)
     {
         const std::string arg = argv[i];
+        const int option_size = run_control_option_size(argc, argv, i);
 
-        if (arg == "-p" || arg == "--parameter")
+        if (option_size == 3)
         {
-            if (i + 2 >= argc)
-            {
-                const std::string msg = "Option " + arg
-                                        + " requires <name> <value>";
-                throw std::runtime_error(msg);
-            }
             ++i;
             const std::string name = argv[i];
             if (name.empty())
@@ -41,15 +62,19 @@ CommandLineArgs parse_command_line(int argc, char* argv[])
             const std::string value = argv[i];
             args.vars[name] = value;   // later duplicates override earlier ones
         }
-        else if (arg == "-in" || arg == "--input")
+        else if (option_size == 2)
         {
-            if (i + 1 >= argc)
-            {
-                const std::string msg = "Option " + arg + " requires <file>";
-                throw std::runtime_error(msg);
-            }
             ++i;
             args.input_file = argv[i];
+            if (args.input_file.empty())
+            {
+                throw std::runtime_error("Option " + arg + " requires a nonempty <file>");
+            }
+        }
+        else if (option_size == 1)
+        {
+            // parse_args has already enabled ReadInput's check mode.
+            continue;
         }
         else
         {
@@ -65,16 +90,7 @@ CommandLineArgs parse_command_line(int argc, char* argv[])
 
 void print_help(const std::string& bin)
 {
-    // Run-control options only; the general help is owned by
-    // ParameterHelp::show_general_help (via parse_args).
-    std::printf(
-        "Run-control options of %s:\n"
-        "  -p, --parameter <name> <value>\n"
-        "                         Set an INPUT variable from the command line,\n"
-        "                         usable in INPUT as ${name} or $name.\n"
-        "                         Repeatable; overrides INPUT 'variable'.\n"
-        "  -in, --input <file>    Path to INPUT (default: INPUT)\n",
-        bin.c_str());
+    std::fprintf(stderr, "Run '%s -h' for usage.\n", bin.c_str());
 }
 
 } // namespace ModuleIO

@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <stdexcept>
+#include <vector>
 
 namespace
 {
@@ -112,5 +113,50 @@ TEST(ParseCommandLineTest, TruncatedArgcThrows)
                     (char*)"-p", (char*)"b", (char*)"x",
                     nullptr};
     EXPECT_THROW(ModuleIO::parse_command_line(9, argv), std::runtime_error);
+}
+
+TEST(ParseCommandLineTest, CheckInputWithCustomPathInEitherOrder)
+{
+    const std::vector<std::vector<std::string>> cases = {
+        {"--check-input"},
+        {"--check-input", "-in", "sub/INPUT"},
+        {"--input", "sub/INPUT", "--check-input"}};
+    for (auto tokens : cases)
+    {
+        std::vector<char*> storage;
+        const int argc = make_argv(tokens, storage);
+        const auto args = ModuleIO::parse_command_line(argc, storage.data());
+        EXPECT_EQ(args.input_file, argc == 2 ? "INPUT" : "sub/INPUT");
+        EXPECT_TRUE(args.vars.empty());
+    }
+}
+
+TEST(ParseCommandLineTest, RepeatedInputLastWins)
+{
+    std::vector<std::string> tokens = {"-in", "first", "--input", "../cases/INPUT.alt"};
+    std::vector<char*> storage;
+    const int argc = make_argv(tokens, storage);
+    EXPECT_EQ(ModuleIO::parse_command_line(argc, storage.data()).input_file, "../cases/INPUT.alt");
+}
+
+TEST(ParseCommandLineTest, ValuesMayStartWithDash)
+{
+    std::vector<std::string> tokens = {"-p", "a", "-1", "--parameter", "b", "--check-input"};
+    std::vector<char*> storage;
+    const int argc = make_argv(tokens, storage);
+    const auto args = ModuleIO::parse_command_line(argc, storage.data());
+    EXPECT_EQ(args.vars.at("a"), "-1");
+    EXPECT_EQ(args.vars.at("b"), "--check-input");
+}
+
+TEST(ParseCommandLineTest, MissingOrEmptyInputThrows)
+{
+    const std::vector<std::vector<std::string>> cases = {{"-in"}, {"--input"}, {"-in", ""}};
+    for (auto tokens : cases)
+    {
+        std::vector<char*> storage;
+        const int argc = make_argv(tokens, storage);
+        EXPECT_THROW(ModuleIO::parse_command_line(argc, storage.data()), std::runtime_error);
+    }
 }
 

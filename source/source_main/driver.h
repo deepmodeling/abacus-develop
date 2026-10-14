@@ -18,9 +18,8 @@ class Driver
      * @brief An interface function.
      * This function calls "this->reading()", "this->atomic_world()" in order.
      *
-     * The parsed command line arguments are passed explicitly so that the
-     * INPUT variable pool injected via -p/--parameter reaches ReadInput
-     * without going through any global state (governance rule 1).
+     * The selected INPUT path is passed explicitly without global state.
+     * Parsed variables are reserved for PART II and are not applied here.
      */
     void init(const ModuleIO::CommandLineArgs& cli);
 
@@ -35,7 +34,7 @@ class Driver
      * This function read the parameter in "INPUT", "STRU" etc,
      * and split the MPI world into different groups.
      *
-     * The command line variable pool is forwarded to ReadInput here.
+     * The selected INPUT path is forwarded to ReadInput here.
      */
     void reading(const ModuleIO::CommandLineArgs& cli);
 

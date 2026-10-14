@@ -11,6 +11,11 @@ AddTest(
     ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
+AddTest(
+  TARGET MODULE_IO_parse_command_line_test
+  SOURCES test_parse_command_line.cpp ../parse_command_line.cpp
+)
+
 if(NOT ENABLE_MPI)
   return()
 endif()
@@ -104,19 +109,13 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_parse_args
   LIBS parameter  base device io_input
-  SOURCES parse_args_test.cpp ../parse_args.cpp ../input_help.cpp
+  SOURCES parse_args_test.cpp ../parse_args.cpp ../parse_command_line.cpp ../input_help.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_input_help_test
   LIBS parameter  base device io_input
   SOURCES input_help_test.cpp ../input_help.cpp
-)
-
-AddTest(
-  TARGET MODULE_IO_parse_command_line_test
-  LIBS parameter  base device io_input
-  SOURCES parse_command_line_test.cpp ../parse_command_line.cpp
 )
 
 AddTest(

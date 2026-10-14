@@ -119,10 +119,7 @@ void Driver::reading(const ModuleIO::CommandLineArgs& cli)
     GlobalV::NPROC = PARAM.globalv.nproc;
 
     // (1) read the input file
-    // The command line variable pool (-p/--parameter) is forwarded
-    // explicitly; no global state is introduced (governance rule 1).
     ModuleIO::ReadInput input(PARAM.globalv.myrank);
-    // input.read_parameters(PARAM, cli.input_file, cli.vars);
     input.read_parameters(PARAM, cli.input_file);
 
     ModuleBase::set_quit_out_dir(PARAM.globalv.global_out_dir);
@@ -147,7 +144,8 @@ void Driver::reading(const ModuleIO::CommandLineArgs& cli)
 
     // (3) write the input file
     std::stringstream ss1;
-    ss1 << PARAM.globalv.global_out_dir << cli.input_file << ".info";
+    const std::string input_name = cli.input_file.substr(cli.input_file.find_last_of("/\\") + 1);
+    ss1 << PARAM.globalv.global_out_dir << input_name << ".info";
     input.write_parameters(PARAM, ss1.str());
 
     // (*temp*) copy the variables from INPUT to each class
