@@ -733,6 +733,7 @@ target_link_libraries(
     elecstate
     module_pwdft
     module_proj
+    nao_smoothgen
     module_ofdft
     module_stodft
     module_dfpt

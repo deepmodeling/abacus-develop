@@ -13,6 +13,7 @@
 
 list(APPEND objects
     radial_proj.cpp
+    projgen.cpp
     onsite_proj_print.cpp
     onsite_proj.cpp
     onsite_proj_init.cpp

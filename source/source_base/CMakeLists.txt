@@ -17,7 +17,6 @@ add_library(
     complexarray.cpp
     complexmatrix.cpp
     element_basis_index.cpp
-    export.cpp
     inverse_matrix.cpp
     gather_math_lib_info.cpp
     global_file.cpp
@@ -61,7 +60,6 @@ add_library(
     sph_bessel_tf.cpp
     cubic_spline.cpp
     parallel_2d.cpp
-    projgen.cpp
     module_out/binstream.cpp
     module_out/filename.cpp
     module_out/sparse_matrix.cpp

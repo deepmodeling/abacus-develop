@@ -22,7 +22,6 @@
 #include "source_base/module_parallel/para_world.h"
 #include "source_base/module_parallel/para_tag.h"
 #include "source_base/module_parallel/para_bridge.h"
-
 namespace ModuleESolver
 {
 

@@ -212,7 +212,7 @@ namespace ModuleESolver
                 {
                     // update exx and redo scf
                     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-                    iter = 0;
+                    this->scf_rerun_ = true;
                     std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
                     this->two_level_step++;
                     conv_esolver = false;
@@ -238,7 +238,7 @@ namespace ModuleESolver
                 gettimeofday(&t_start, nullptr);
 
                 this->exx_lip->cal_exx();
-                iter = 0;
+                this->scf_rerun_ = true;
                 this->two_level_step++;
 
                 timeval t_end;
