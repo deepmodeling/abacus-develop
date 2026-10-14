@@ -1,1 +1,65 @@
 pw basis for Al metal with ks_solver ppcg (projection preconditioned conjugate-gradient), multi k
+
+SCF accuracy and reference validation (2026-10-14)
+------------------------------------------------
+This case checks energy, force, stress, symmetry, and the irreducible k-point
+count. The previous scf_thr=1e-6 reciprocal-space criterion stopped after four
+SCF steps, before stress was stable. Its totalstressref was 1108.971264 kbar;
+the integrated PPCG implementation produced 1108.968411, exceeding the
+unchanged 0.001 kbar acceptance tolerance by a deviation of 0.002853.
+Tighter independent calculations instead approach 1107.675822 kbar.
+The old reference and failure are retained in git history and this record.
+
+The revised input explicitly selects scf_thr_type=2, the existing real-space
+density criterion, with scf_thr=1e-10 and pw_diag_nmax=200. For this nonmagnetic
+case the SCF quantity is integral(abs(rho_out-rho_in))/nelec. The two criterion
+types have different definitions and units; their numeric thresholds are not
+directly comparable. This selection also changes the existing charge-mixing
+path to real space. It does not change the Hamiltonian, basis, occupations,
+PPCG stopping criterion, or any global default.
+
+Simply reducing the reciprocal-space threshold drove the automatic inner
+tolerance close to double-precision roundoff: PPCG reported residuals around
+2e-14 above its effective tolerance, and some CG/Davidson diagnostic runs
+aborted during orthogonalization. Those runs were not used as references.
+The real-space runs below converged without such failures; PPCG emitted no
+inner-convergence warnings. The 200-step budget covers the initial PPCG solve.
+
+Reference cross-check on d993c7a19, GNU 12.3, OpenMPI 4.1.2, Release CPU,
+MPI/ELPA/Libxc enabled, LCAO/CUDA disabled, 4 ranks and one OpenMP/BLAS thread:
+
+solver       real-space scf_thr   SCF steps   energy/eV             stress L1/kbar
+PPCG         1e-10                14          -1882.177947234083     1107.6758226435
+PPCG         1e-11                15          -1882.177947234496     1107.6758228259
+CG           1e-9                 41          -1882.177947234288     1107.6759529017
+Davidson     1e-10                26          -1882.177947233738     1107.6758361099
+BPCG         1e-9                 13          -1882.177947234290     1107.6758167596
+
+Stress L1 here is the sum of absolute tensor components from running_scf.log.
+The property collector rounds individual components before summing: the
+reference stores its PPCG result 1107.675822, not the higher-precision L1 above.
+Compared with PPCG, CG and Davidson differ by less than 1.4e-4 and 1.4e-5 kbar
+in the logged L1 stress, and less than 4e-10 eV in energy. Maximum individual
+stress-component differences are below 4.4e-5 kbar. All forces are zero.
+Tightening PPCG from 1e-10 to 1e-11 changes L1 stress by less than 2e-7 kbar.
+PPCG at 1, 2, and 4 MPI ranks agrees within 6e-9 kbar, without inner warnings.
+The saved b5d5fdb36 PPCG binary also agrees within 1e-8 kbar with the new input;
+that older binary lacks Libxc, but this case uses the built-in PBE functional.
+CG at 1e-10 did not reach SCF convergence within 50 or 100 steps, so neither
+of those outputs is counted as a converged cross-check.
+
+Only the input accuracy settings and numerical energy/stress references change.
+The existing 1e-7 eV energy, 1e-4 eV/Angstrom force, and 1e-3 kbar stress
+acceptance tolerances are unchanged. No local threshold override is added.
+totaltimeref is historical metadata, not a new controlled performance result.
+
+Run from tests/01_PW with an absolute path to the executable:
+  OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+    bash ../integrate/Autotest.sh -a /path/to/abacus -n4 -o1 -j1 \
+    -r '^819_PW_PPCG_Al$'
+
+For independent checks, use fresh copies with the same structure, k mesh and
+pseudopotential, change only ks_solver to cg/dav/bpcg and use the SCF thresholds
+shown above. Check SCF completion and solver warnings as well as result.out;
+an executable exit code or a final energy alone is not a convergence test.
+The larger all-PPCG replacement suite and GPU runs are separate validations.
