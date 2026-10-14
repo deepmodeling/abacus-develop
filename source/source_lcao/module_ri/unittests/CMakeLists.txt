@@ -26,5 +26,10 @@ AddTest(
   LIBS parameter base device
   SOURCES test_rpa_lri_band_io.cpp ../rpa_lri_band_io.cpp
 )
+AddTest(
+  TARGET MODULE_RI_rpa_lri_symmetry_test
+  LIBS base device symmetry
+  SOURCES test_rpa_lri_symmetry.cpp
+)
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/support"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")

@@ -55,6 +55,22 @@ class WavefunctionContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "disagrees"):
             check_ks_nao(self.ks, self.root, 1e-7)
 
+    def test_spinor_text_file_uses_spinor_tag(self):
+        # Binary v1 stores component-major blocks; the text writer interleaves
+        # the two spinor components at each spatial orbital.
+        values = (1, 0.5, 2, -0.5, 3, 0.25, 4, -0.25,
+                  5, 0.125, 6, -0.125, 7, 0.75, 8, -0.75)
+        header = struct.pack("<6iiq", -12345679, 28, 1, 1, 2, 4, 1, 36)
+        payload = struct.pack("<16d", *values)
+        self.ks.write_bytes(header + payload)
+        (self.root / "wfk1s4_nao.txt").write_text(
+            "1 (index of k points)\n0 0 0\n2 (number of bands)\n4 (number of orbitals)\n"
+            "1 (band)\n0 (Ry)\n1 (Occupations)\n"
+            "1 0.5 5 0.125 2 -0.5 6 -0.125\n"
+            "2 (band)\n1 (Ry)\n0 (Occupations)\n"
+            "3 0.25 7 0.75 4 -0.25 8 -0.75\n")
+        check_ks_nao(self.ks, self.root, 1e-7, spinor=True)
+
     def test_truncated_header_and_payload(self):
         for data in (self.data[:20], self.data[:-1], self.data + b"x"):
             self.ks.write_bytes(data)

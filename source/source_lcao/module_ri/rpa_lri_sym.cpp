@@ -1,4 +1,5 @@
 #include "rpa_lri_detail.h"
+#include "librpa_stru_symmetry.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 
@@ -37,33 +38,48 @@ bool preserves_mesh(const ModuleBase::Matrix3& kg, const K_Vectors& kv, const Un
 }
 }
 
-void RpaLriDetail::write_stru_sym(std::ostream& output, const UnitCell& cell, const K_Vectors& kv)
+void RpaLriDetail::write_stru_sym(std::ostream& output, const UnitCell& cell, const K_Vectors& kv, const int nspin)
 {
     const auto& symm = cell.symm;
-    std::vector<int> operations;
+    std::vector<LibRpaSymmetryOperation> unitary_operations;
+    std::vector<LibRpaSymmetryOperation> antiunitary_operations;
+    std::vector<ModuleBase::Matrix3> unitary_rotations;
+    std::vector<ModuleBase::Matrix3> antiunitary_rotations;
     for (int isym = 0; isym < symm.nrotk; ++isym)
     {
         // Use the same reciprocal-space matrices that ABACUS used to reduce
         // this mesh.  Reconstructing them from gmatrix can change the basis
         // convention for non-orthogonal primitive cells.
-        if (preserves_mesh(symm.kgmatrix[isym], kv, cell)) operations.push_back(isym);
-    }
-    if (operations.empty()) throw std::runtime_error("Missing mesh-preserving spatial symmetry operations");
-    // Use the subgroup that preserves this mesh. The full crystal group may
-    // rotate an anisotropic mesh outside itself and cannot accelerate its RPA.
-    output << operations.size() << " row\n";
-    for (const int isym : operations)
-    {
-        const auto& r = symm.gmatrix[isym];
-        const double entries[9] = {r.e11, r.e12, r.e13, r.e21, r.e22, r.e23, r.e31, r.e32, r.e33};
-        for (const double entry : entries)
+        if (preserves_mesh(symm.kgmatrix[isym], kv, cell))
         {
-            if (!std::isfinite(entry) || std::abs(entry - std::round(entry)) > 1e-8)
-                throw std::runtime_error("Nonintegral fractional symmetry rotation");
-            output << std::setw(4) << static_cast<int>(std::round(entry));
+            unitary_operations.push_back(make_librpa_symmetry_operation(symm.gmatrix[isym], symm.gtrans[isym]));
+            unitary_rotations.push_back(symm.gmatrix[isym]);
         }
-        const auto& t = symm.gtrans[isym];
-        output << std::scientific << std::setprecision(15) << std::setw(24) << t.x
-               << std::setw(24) << t.y << std::setw(24) << t.z << '\n';
+    }
+    if (unitary_operations.empty())
+    {
+        throw std::runtime_error("Missing mesh-preserving spatial symmetry operations");
+    }
+
+    if (nspin == 4 && symm.magnetic_nspin4)
+    {
+        for (int isym = 0; isym < symm.nrotk_anti; ++isym)
+        {
+            if (preserves_mesh(symm.kgmatrix_anti[isym], kv, cell))
+            {
+                antiunitary_operations.push_back(
+                    make_librpa_symmetry_operation(symm.gmatrix_anti[isym], symm.gtrans_anti[isym]));
+                antiunitary_rotations.push_back(symm.gmatrix_anti[isym]);
+            }
+        }
+    }
+
+    write_librpa_symmetry_rows(output, unitary_operations, antiunitary_operations);
+    if (nspin == 4)
+    {
+        const auto spin_operations
+            = make_librpa_spin_symmetry_operations(cell.latvec, unitary_rotations, antiunitary_rotations);
+        const int grey_group = symm.magnetic_nspin4 ? 0 : 1;
+        write_librpa_spin_symmetry(output, grey_group, 1, spin_operations);
     }
 }
