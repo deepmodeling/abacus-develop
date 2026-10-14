@@ -23,22 +23,25 @@ namespace elecstate
 class TDFieldManager
 {
   public:
-    /** @brief Sample E at step*dt without integrating A (length gauge or initial state). */
+    /** @brief Sample the length gauge, or initialize A(0) and E(0) without advancing time. */
     void prepare_sample(const int step);
 
-    /** @brief Integrate [left_step*dt, (left_step+1)*dt] and sample E at sample_step*dt.
+    /** @brief Prepare consecutive endpoints, with sample_step=left_step+1.
      * Repeating the same interval and sample is idempotent. Propagation A is the
      * endpoint average, not an exact midpoint sample.
      */
     void prepare_interval(const int left_step, const int sample_step);
 
-    /** @brief Supply file-based propagation samples before preparing any steps. */
+    /** @brief Supply endpoint samples starting at t=0 before preparing any steps. */
     void set_A_samples(const std::vector<ModuleBase::Vector3<double>>& samples_ha);
 
-    /** @brief Return integrated endpoints in Hartree units; unavailable for file-based propagation samples. */
+    /** @brief Whether endpoints and finite-difference electric fields come from a file. */
+    bool file_source() const;
+
+    /** @brief Return interval endpoints in Hartree atomic units. */
     const ModuleBase::Vector3<double>& A_left_ha() const;
     const ModuleBase::Vector3<double>& A_right_ha() const;
-    /** @brief Return the endpoint average or supplied file sample used for propagation, in Hartree units. */
+    /** @brief Return the endpoint average in Hartree units, or A(0) at initialization. */
     const ModuleBase::Vector3<double>& A_prop_ha() const;
 
     /**

@@ -8,6 +8,7 @@ list(APPEND _naos
     ${NAO_PATH}/radial_collection.cpp
     ${NAO_PATH}/radial_set.cpp
     ${NAO_PATH}/real_gaunt_table.cpp
+    ${NAO_PATH}/smoothgen.cpp
     ${NAO_PATH}/sphbes_radials.cpp
     ${NAO_PATH}/two_center_bundle.cpp
     ${NAO_PATH}/two_center_integrator.cpp

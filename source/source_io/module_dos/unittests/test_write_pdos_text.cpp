@@ -32,8 +32,8 @@ static UnitCell* make_si_ucell()
     atom.l_nchi = {1, 1};
 
     // iat2it / iat2ia
-    ucell->iat2it = new int[1];
-    ucell->iat2ia = new int[1];
+    ucell->iat2it.resize(1);
+    ucell->iat2ia.resize(1);
     ucell->iat2it[0] = 0;
     ucell->iat2ia[0] = 0;
 
@@ -57,8 +57,6 @@ protected:
     }
     void TearDown() override
     {
-        // iat2it/iat2ia are owned by UnitCell's internal Statistics member,
-        // whose destructor releases them; do not delete them here.
         delete ucell;
     }
 

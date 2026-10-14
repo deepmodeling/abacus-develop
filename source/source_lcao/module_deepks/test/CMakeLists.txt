@@ -15,6 +15,9 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     deepks_test_prep.cpp
     deepks_test.cpp
     ../../../source_cell/unitcell.cpp
+    ../../../source_cell/unitcell_index.cpp
+    ../../../source_cell/unitcell_stats.cpp
+    ../../../source_cell/unitcell_setup.cpp
     ../../../source_cell/update_cell.cpp
     ../../../source_cell/bcast_cell.cpp
     ../../../source_cell/atom_spec.cpp
@@ -105,6 +108,7 @@ set(DEEPKS_UNIT_LIBS
     orb
     gint
     numerical_atomic_orbitals
+    nao_smoothgen
     symmetry
     ${TORCH_LIBRARIES}
 )

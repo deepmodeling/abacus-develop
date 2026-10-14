@@ -57,6 +57,9 @@ class ESolver_KS_PW : public ESolver_KS
     ModuleBase::matrix exx_source_weights_;
     std::unique_ptr<psi::Psi<T, Device>> exx_source_psi_;
 
+    /** @brief Let RT-TDDFT bind its endpoint field before wavefunction initialization uses H; ordinary DFT does nothing. */
+    virtual void prepare_init_hamilt(const UnitCell& ucell);
+
     // Electronic wave function psi
     Setup_Psi_pw stp;
 

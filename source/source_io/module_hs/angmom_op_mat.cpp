@@ -225,17 +225,7 @@ ModuleIO::Angmom_op::Angmom_op(
         this->ofs_ = &this->fallback_ofs_;
     }
 
-    *ofs_ << "\n\n\n\n";
-    *ofs_ << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    *ofs_ << " |                                                                    |" << std::endl;
-    *ofs_ << " |  Angular momentum expectation value calculation:                   |" << std::endl;
-    *ofs_ << " |  This is a post-processing step. The expectation value of operator |" << std::endl;
-    *ofs_ << " |  Lx, Ly, Lz (<a|L|b>, in which a and b are ABACUS numerical atomic |" << std::endl;
-    *ofs_ << " |  orbitals) will be calculated.                                     |" << std::endl;
-    *ofs_ << " |  The result will be printed to file with name l{x,y,z}[g{step}]_nao.txt |" << std::endl;
-    *ofs_ << " |                                                                    |" << std::endl;
-    *ofs_ << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-    *ofs_ << "\n\n\n\n";
+    *ofs_ << " Calculate angular momentum expectation values Lx, Ly, Lz (<a|L|b>) in NAO basis." << std::endl;
 
     int ntype_ = ucell.ntype;
     Parallel_Common::bcast_int(ntype_);
@@ -427,6 +417,7 @@ void ModuleIO::Angmom_op::calculate(
         ofout << title;
         this->kernel(&ofout, ucell, d, precision);
         ofout.close();
+        *ofs_ << " Write L(R) (" << d << " component) matrix in NAO basis to file: " << fn << std::endl;
     }
     ModuleBase::timer::end("Angmom_op", "calculate");
 }

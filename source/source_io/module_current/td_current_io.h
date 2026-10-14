@@ -72,7 +72,8 @@ void sum_HR(
     const hamilt::HContainer<TR>* hR,
     hamilt::HContainer<std::complex<double>>* full_hR,
     const Exx_NAO<std::complex<double>>& exx_nao,
-    const Exx_Info& exx_info
+    const Exx_Info& exx_info,
+    const TD_info& td_info
 );
 
 template <typename Tadd, typename Tfull>

@@ -33,8 +33,7 @@ class DftuFsAccumTest : public ::testing::Test
         pv.set_serial(3, 3);
 
         // iwt2iat: orbital 0,1 -> atom 0; orbital 2 -> atom 1
-        // Must use new[] because Statistics destructor will delete[] it.
-        ucell.iwt2iat = new int[3]{0, 0, 1};
+        ucell.iwt2iat = {0, 0, 1};
     }
 
     Parallel_Orbitals pv;

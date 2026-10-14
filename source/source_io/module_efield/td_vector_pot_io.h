@@ -17,6 +17,9 @@ namespace ModuleIO
  */
 std::vector<ModuleBase::Vector3<double>> read_td_vector_pot(const std::string& input_dir);
 
+/** @brief Reject output that aliases the input file, including symbolic and hard links. */
+void check_td_vector_pot_paths(const std::string& input_dir, const std::string& output_dir);
+
 /**
  * @brief Prepare the vector-potential output file for an RT-TDDFT calculation.
  *

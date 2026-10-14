@@ -556,10 +556,8 @@ TEST_F(DFPTQ0SerialTest, StarRotationCyclicGroup)
         ucell_.atoms[0].taud[i] = ModuleBase::Vector3<double>(t0[i], t0[(i + 1) % 3], t0[(i + 2) % 3]);
         ucell_.atoms[0].tau[i] = ucell_.atoms[0].taud[i] * a_;
     }
-    delete[] ucell_.iat2it;
-    delete[] ucell_.iat2ia;
-    ucell_.iat2it = new int[3];
-    ucell_.iat2ia = new int[3];
+    ucell_.iat2it.resize(3);
+    ucell_.iat2ia.resize(3);
     for (int i = 0; i < 3; ++i)
     {
         ucell_.iat2it[i] = 0;

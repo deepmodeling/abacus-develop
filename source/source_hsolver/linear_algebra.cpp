@@ -2,6 +2,7 @@
 
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_device.h"
+#include "source_base/timer.h"
 #include "source_hsolver/kernels/linear_op.h"
 
 #include <cmath>
@@ -303,6 +304,50 @@ std::vector<std::complex<double>> LinearAlgebra<T, Device>::cross(int ld, int di
                                                                                             result.size());
     }
     reduce(&result);
+    return result;
+}
+
+template <typename T, typename Device>
+std::vector<std::complex<double>> LinearAlgebra<T, Device>::gram(int ld, int dim, int bands, const T* input)
+{
+    ModuleBase::timer::start("LinearAlgebra", "gram");
+    const int64_t elements = static_cast<int64_t>(bands) * bands;
+    std::vector<Wide> result(elements, Wide(0));
+    if (dim > 0 && bands > 0)
+    {
+        const Wide* wide = reinterpret_cast<const Wide*>(input);
+        if (!std::is_same<T, Wide>::value)
+        {
+            const int64_t input_elements = static_cast<int64_t>(ld) * bands;
+            linear_buffer<Wide, Device>(&left_, input_elements);
+            Wide* converted = left_.template data<Wide>();
+            // The existing conversion kernels use int indices, even though their wrappers accept size_t.
+            if (ld == dim && input_elements <= std::numeric_limits<int>::max())
+            {
+                base_device::memory::cast_memory_op<Wide, T, Device, Device>()(converted, input, input_elements);
+            }
+            else
+            {
+                // Padding may be uninitialized; convert only the active rows of each column.
+                for (int band = 0; band < bands; ++band)
+                {
+                    const int64_t offset = static_cast<int64_t>(band) * ld;
+                    Wide* destination = converted + offset;
+                    const T* source = input + offset;
+                    base_device::memory::cast_memory_op<Wide, T, Device, Device>()(destination, source, dim);
+                }
+            }
+            wide = converted;
+        }
+        linear_buffer<Wide, Device>(&products_, elements);
+        const Wide one(1);
+        const Wide zero(0);
+        Wide* products = products_.template data<Wide>();
+        ModuleBase::gemm_op<Wide, Device>()('C', 'N', bands, bands, dim, &one, wide, ld, wide, ld, &zero, products, bands);
+        base_device::memory::synchronize_memory_op<Wide, base_device::DEVICE_CPU, Device>()(result.data(), products, elements);
+    }
+    reduce(&result);
+    ModuleBase::timer::end("LinearAlgebra", "gram");
     return result;
 }
 

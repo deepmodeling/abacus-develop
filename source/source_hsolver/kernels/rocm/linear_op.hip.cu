@@ -407,12 +407,6 @@ void linear_op<T, base_device::DEVICE_GPU>::native_dots(int ld, int dim, int nve
     check_launch();
 }
 
-template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::synchronize() const
-{
-    const hipError_t error = hipDeviceSynchronize();
-    if (error != hipSuccess) throw std::runtime_error("Linear solver device synchronization failed.");
-}
 template class linear_op<std::complex<float>, base_device::DEVICE_GPU>;
 template class linear_op<std::complex<double>, base_device::DEVICE_GPU>;
 

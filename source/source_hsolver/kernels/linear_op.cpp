@@ -291,10 +291,6 @@ void linear_op<T, Device>::native_dots(int ld, int dim, int nvec, int count, int
     }
 }
 
-template <typename T, typename Device>
-void linear_op<T, Device>::synchronize() const
-{
-}
 template class linear_op<std::complex<float>, base_device::DEVICE_CPU>;
 template class linear_op<std::complex<double>, base_device::DEVICE_CPU>;
 

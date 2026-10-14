@@ -226,8 +226,8 @@ TEST_F(BFGSTest, UpdateUsesAbsoluteDisplacementThreshold)
     ucell.atoms = new Atom[ucell.ntype];
     ucell.atoms[0].na = 1;
     ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(1, {1, 1, 1});
-    ucell.iat2it = new int[ucell.nat];
-    ucell.iat2ia = new int[ucell.nat];
+    ucell.iat2it.resize(ucell.nat);
+    ucell.iat2ia.resize(ucell.nat);
     ucell.iat2it[0] = 0;
     ucell.iat2ia[0] = 0;
 
@@ -266,8 +266,8 @@ TEST_F(BFGSTest, GetPosAndPostaud)
     ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
 
     // allocate mapping arrays 
-    ucell.iat2it = new int[ucell.nat];
-    ucell.iat2ia = new int[ucell.nat];
+    ucell.iat2it.resize(ucell.nat);
+    ucell.iat2ia.resize(ucell.nat);
     int k = 0;
     for (int it = 0; it < ucell.ntype; ++it) {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia) {
@@ -301,8 +301,8 @@ TEST_F(BFGSTest, CalculateLargestGrad)
     ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
 
     // mapping arrays
-    ucell.iat2it = new int[ucell.nat];
-    ucell.iat2ia = new int[ucell.nat];
+    ucell.iat2it.resize(ucell.nat);
+    ucell.iat2ia.resize(ucell.nat);
     int k = 0;
     for (int it = 0; it < ucell.ntype; ++it) {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia) {
@@ -343,8 +343,8 @@ TEST_F(BFGSTest, RelaxStepBasic)
     ucell.atoms[0].tau = std::vector<ModuleBase::Vector3<double>>(2);
     ucell.atoms[0].taud = std::vector<ModuleBase::Vector3<double>>(2);
     ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
-    ucell.iat2it = new int[ucell.nat];
-    ucell.iat2ia = new int[ucell.nat];
+    ucell.iat2it.resize(ucell.nat);
+    ucell.iat2ia.resize(ucell.nat);
     int k = 0;
     for (int it = 0; it < ucell.ntype; ++it) {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia) {

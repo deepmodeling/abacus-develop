@@ -2,7 +2,6 @@
 
 #include "source_base/libm/libm.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_io/module_parameter/parameter.h"
 
 bool TD_info::out_mat_R = false;
@@ -10,16 +9,13 @@ int TD_info::out_current = 0;
 bool TD_info::out_current_k = false;
 bool TD_info::evolve_once = false;
 
-TD_info* TD_info::td_vel_op = nullptr;
-
-int TD_info::estep_shift = 0;
-int TD_info::istep = -1;
-ModuleBase::Vector3<double> TD_info::A_prop_ha;
-
-TD_info::TD_info(const UnitCell* ucell_in, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb, const int restart_step)
+TD_info::TD_info(const UnitCell* ucell_in,
+                 const Parallel_Orbitals& pv,
+                 const LCAO_Orbitals& orb,
+                 const elecstate::TDFieldManager& field_manager)
+    : field_manager_(field_manager)
 {
-    estep_shift = restart_step;
-    if (out_current == 2 || elecstate::H_TDDFT_pw::stype == 2)
+    if (out_current == 2 || field_manager_.gauge() == 2)
     {
         const bool cal_force = PARAM.inp.cal_force;
         const int nlocal = PARAM.globalv.nlocal;
@@ -29,7 +25,7 @@ TD_info::TD_info(const UnitCell* ucell_in, const Parallel_Orbitals& pv, const LC
 }
 TD_info::~TD_info()
 {
-    if (elecstate::H_TDDFT_pw::stype == 1)
+    if (field_manager_.gauge() == 1)
     {
         this->destroy_HS_R_td_sparse();
     }
@@ -49,18 +45,21 @@ TD_info::~TD_info()
     }
 }
 
-void TD_info::set_A_prop(const int step, const ModuleBase::Vector3<double>& A_ha)
+const ModuleBase::Vector3<double>& TD_info::endpoint_A() const
 {
-    istep = step;
-    A_prop_ha = A_ha;
+    return field_manager_.A_right_ha();
+}
+
+void TD_info::update_field()
+{
     // update hybrid gauge phase
-    if (elecstate::H_TDDFT_pw::stype == 2)
+    if (field_manager_.gauge() == 2)
     {
         for (const auto& phase_pair: phase_hybrid)
         {
             const ModuleBase::Vector3<int>& r_index = phase_pair.first;
             ModuleBase::Vector3<double> dR = double(r_index.x) * a1 + double(r_index.y) * a2 + double(r_index.z) * a3;
-            const double arg_td = A_prop_ha * dR * lat0;
+            const double arg_td = endpoint_A() * dR * lat0;
             double sinp, cosp;
             ModuleBase::libm::sincos(arg_td, &sinp, &cosp);
             phase_hybrid[r_index] = std::complex<double>(cosp, sinp);
@@ -85,7 +84,7 @@ void TD_info::initialize_phase_hybrid(const UnitCell& ucell, const hamilt::HCont
                 continue;
 
             ModuleBase::Vector3<double> dR = double(r_index.x) * a1 + double(r_index.y) * a2 + double(r_index.z) * a3;
-            const double arg_td = A_prop_ha * dR * lat0;
+            const double arg_td = endpoint_A() * dR * lat0;
             double sinp, cosp;
             ModuleBase::libm::sincos(arg_td, &sinp, &cosp);
             phase_hybrid[r_index] = std::complex<double>(cosp, sinp);

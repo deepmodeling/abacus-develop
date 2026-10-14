@@ -506,9 +506,13 @@ Available options are:
 
 Available options are:
 * none: regular periodic calculation without isolated-system correction.
+* pcc_0d: self-consistent point-counter-charge (PCC) correction for a molecule in a cubic cell. The multipoles are taken about the mass-weighted ionic center.
+* pcc_2d: self-consistent PCC correction for a slab, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane (rewrite a tilted cell as the equivalent perpendicular one), and the k-point sampling along it must be Gamma only. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge. ENVIRON uses -pi*Q/(3*L), so charged-slab energies agree with ENVIRON only for A = L^2.
 * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
-Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
+pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho.
+
+Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).)";
         item.default_value = "none";
         read_sync_string(input.assume_isolated);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -518,7 +522,7 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> allowed = {"none", "makov-payne", "m-p", "mp"};
+            const std::vector<std::string> allowed = {"none", "makov-payne", "m-p", "mp", "pcc_0d", "pcc_2d"};
             if (std::find(allowed.begin(), allowed.end(), para.input.assume_isolated) == allowed.end())
             {
                 ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "assume_isolated"));
@@ -529,6 +533,48 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "Makov-Payne correction is available only for cubic lattices: latname = sc, fcc, or bcc.");
+            }
+            const Input_para& inp = para.input;
+            if (inp.assume_isolated == "pcc_0d" || inp.assume_isolated == "pcc_2d")
+            {
+                std::string error;
+                if (inp.imp_sol) { error = "cannot be combined with imp_sol"; }
+                else if (inp.nspin != 1 && inp.nspin != 2) { error = "requires nspin 1 or 2"; }
+                else if (inp.device != "cpu") { error = "requires device cpu"; }
+                else if (inp.esolver_type != "ksdft") { error = "requires esolver_type ksdft"; }
+                else if (inp.basis_type != "pw" && inp.basis_type != "lcao") { error = "requires basis_type pw or lcao"; }
+                else if (inp.calculation != "scf" && inp.calculation != "relax") { error = "requires calculation scf or fixed-cell relax"; }
+                else if (inp.efield_flag) { error = "cannot be combined with efield_flag"; }
+                else if (inp.gate_flag) { error = "cannot be combined with gate_flag"; }
+                else if (inp.cal_stress) { error = "does not support cal_stress"; }
+                else if (inp.dfthalf_type != 0) { error = "cannot be combined with dfthalf_type"; }
+                else if (inp.deepks_scf || inp.deepks_out_labels || inp.deepks_bandgap || inp.deepks_v_delta)
+                {
+                    error = "cannot be combined with DeePKS correction or output";
+                }
+                else if (inp.dm_to_rho) { error = "cannot be combined with dm_to_rho"; }
+                if (!error.empty())
+                {
+                    const std::string message = inp.assume_isolated + " " + error;
+                    ModuleBase::WARNING_QUIT("ReadInput", message);
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pcc_2d_axis");
+        item.annotation = "open lattice vector of assume_isolated pcc_2d";
+        item.category = "System variables";
+        item.type = "Integer";
+        item.description = "Index of the lattice vector along which assume_isolated=pcc_2d is open: 0, 1 or 2 for the first, second or third vector of LATTICE_VECTORS. The selected vector must be perpendicular to the other two, which span the periodic plane; the k-point sampling along it must be Gamma only.";
+        item.default_value = "2";
+        item.set_availability("assume_isolated==pcc_2d");
+        read_sync_int(input.pcc_2d_axis);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.pcc_2d_axis < 0 || para.input.pcc_2d_axis > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pcc_2d_axis must be 0, 1 or 2");
             }
         };
         this->add_item(item);

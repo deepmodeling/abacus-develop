@@ -7,6 +7,7 @@
 #include "source_io/module_current/td_current_pw.h"
 #include "source_pw/module_pwdft/td_history_pw.h"
 
+#include <iosfwd>
 #include <memory>
 
 namespace ModuleESolver
@@ -31,6 +32,9 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
 
     void before_scf(UnitCell& ucell, const int istep) override;
 
+    /** @brief Cover shifted projectors and bind endpoint A before the first Hamiltonian application. */
+    void prepare_init_hamilt(const UnitCell& ucell) override;
+
     /** @brief Print the TDDFT iteration header and initialize the PW iteration. */
     void iter_init(UnitCell& ucell, const int istep, const int iter) override;
 
@@ -45,12 +49,16 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
 
   private:
     using Real = typename GetTypeReal<T>::type;
+    std::ofstream& log_;
     std::unique_ptr<hsolver::HSolverPWTDDFT<T, Device>> td_solver_;
 
     std::shared_ptr<elecstate::TDFieldManager> td_field_manager_;
     ModuleIO::CurrentPW<Real, Device> current_output_;
 
     pw::TDHistoryPW<T, Device> history_;
+    double initial_wave_electrons_ = 0.0;
+    double initial_rho_electrons_ = 0.0;
+    void report_orth(const UnitCell& ucell, int istep);
     void prepare_td_step(const int istep);
 };
 

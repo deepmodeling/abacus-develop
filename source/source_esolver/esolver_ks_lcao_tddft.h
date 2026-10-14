@@ -29,6 +29,8 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
   protected:
+    TD_info* get_td_info() const override { return td_p; }
+
     virtual void runner(BaseCell& basecell, const int istep) override;
 
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
@@ -77,6 +79,9 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     std::shared_ptr<elecstate::TDFieldManager> td_field_manager_;
 
   private:
+    /** @brief Fixed electronic-step origin loaded at restart, independent of field advancement. */
+    int restart_step_ = 0;
+
     void weight_dm_rho(const UnitCell& ucell);
 };
 

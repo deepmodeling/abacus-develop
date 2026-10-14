@@ -78,6 +78,7 @@ jobs:
           source toolchain/install/setup
           rm -rf build
           cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
+            -DENABLE_GOOGLEBENCH=OFF \
             -DCMAKE_CUDA_ARCHITECTURES=70
           cmake --build build -j "$(nproc)"
           cmake --install build
@@ -145,9 +146,16 @@ jobs:
           done
           bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
-      - name: Test 15_rtTDDFT_GPU
+      - name: Test 05_rtTDDFT on GPU
         run: |
-          cd tests/15_rtTDDFT_GPU
+          cd tests/05_rtTDDFT
+          find . -name INPUT | while read f; do
+              if grep -qE '^[[:space:]]*device[[:space:]]+' "$f"; then
+                  sed -i -E 's/^[[:space:]]*device[[:space:]]+.*/device    gpu/' "$f"
+              else
+                  echo "device    gpu" >> "$f"
+              fi
+          done
           bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
       - name: Test 16_SDFT_GPU

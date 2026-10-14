@@ -11,6 +11,7 @@
 #include "source_hamilt/module_xc/exx_info.h"
 
 #include <complex>
+#include <fstream>
 #include <map>
 #include <string>
 #include <vector>
@@ -50,7 +51,8 @@ void write_Vxc_R(const int nspin,
                  const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
 #endif
                  ,
-                 const double sparse_thr);
+                 const double sparse_thr,
+                 std::ofstream& ofs_running);
 
 } // namespace ModuleIO
 

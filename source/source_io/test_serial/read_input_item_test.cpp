@@ -98,6 +98,53 @@ TEST_F(InputTest, RelaxMethod)
     EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
 }
 
+TEST_F(InputTest, PccSelectionAndUnsupportedCombinations)
+{
+    ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    Input_para& input = TestParameters::input(param);
+    input.device = "cpu";
+    input.esolver_type = "ksdft";
+    input.basis_type = "pw";
+    input.calculation = "scf";
+    auto it = find_label("assume_isolated", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    it->second.str_values = {"pcc_0d"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(input.assume_isolated, "pcc_0d");
+    it->second.check_value(it->second, param);
+    input.basis_type = "lcao";
+    input.calculation = "relax";
+    it->second.check_value(it->second, param);
+    const Input_para valid = input;
+
+    input.nspin = 4;
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    input = valid;
+    input.device = "gpu";
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    input = valid;
+    input.cal_stress = true;
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    input = valid;
+    input.calculation = "cell-relax";
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    input = valid;
+    input.assume_isolated = "pcc_2d";
+    it->second.check_value(it->second, param);
+    auto axis = find_label("pcc_2d_axis", readinput.input_lists);
+    ASSERT_NE(axis, readinput.input_lists.end());
+    for (int value = 0; value < 3; ++value)
+    {
+        input.pcc_2d_axis = value;
+        axis->second.check_value(axis->second, param);
+    }
+    input.pcc_2d_axis = 3;
+    EXPECT_EXIT(axis->second.check_value(axis->second, param), testing::ExitedWithCode(1), "");
+    input.assume_isolated = "pcc_invalid";
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+}
+
 TEST_F(InputTest, Item_test)
 {
     ModuleIO::ReadInput readinput(0);
@@ -1836,6 +1883,29 @@ TEST_F(InputTest, Item_test2)
     { // rpa_ccp_rmesh_times
         auto it = find_label("rpa_ccp_rmesh_times", readinput.input_lists);
         TestParameters::input(param).rpa_ccp_rmesh_times = 0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // out_librpa_ver
+        auto it = find_label("out_librpa_ver", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(TestParameters::input(param).out_librpa_ver, 0);
+
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_librpa_ver, 1);
+
+        for (const std::string symmetry : {"-1", "0", "1"})
+        {
+            TestParameters::input(param).symmetry = symmetry;
+            it->second.check_value(it->second, param);
+        }
+        TestParameters::input(param).out_librpa_ver = 0;
+        it->second.check_value(it->second, param);
+
+        TestParameters::input(param).out_librpa_ver = 2;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();

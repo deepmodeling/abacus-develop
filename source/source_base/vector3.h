@@ -7,9 +7,6 @@
 #include <iostream>
 #include <array>
 
-#ifdef _MCD_CHECK
-#endif
-
 namespace ModuleBase
 {
     // Small epsilon value for numerical comparisons

@@ -32,7 +32,7 @@ scf_out_chg_tau
 029_PW_15_CF_CS_S1_smallg
 030_PW_15_CF_CS_S2_smallg
 032_PW_15_CF_CS_bspline
-035_PW_15_SO
+scf_spin4
 036_PW_AF
 038_PW_NC
 038_PW_NC_GGA_GRAD2
@@ -46,7 +46,7 @@ scf_Al100_kspace3
 051_PW_OBOD_MemSaver
 scf_out_band_dos_wf
 056_PW_IW
-057_PW_SO_IW
+scf_in_wf_spin4
 058_PW_RE_MB
 059_PW_RE_MB_traj
 060_PW_RE_MG
@@ -119,9 +119,11 @@ scf_brav_bco_smear_mv
 812_PW_LT_sm
 813_PW_LT_bacm
 814_PW_LT_triclinic
-scf_dftu_spin2
-scf_dftu_spin4
+relax_dftu_spin2
+relax_dftu_spin4
 scf_deltaspin2
 scf_deltaspin4
 nscf_hse_same
 nscf_hse_path
+221_PW_PCC0D_H3O
+222_PW_PCC2D_H3O

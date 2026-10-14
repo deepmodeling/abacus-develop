@@ -3,6 +3,7 @@
 
 #include "source_lcao/lcao_hs_arrays.h"
 
+#include <fstream>
 #include <string>
 
 class Parallel_Orbitals;
@@ -21,7 +22,8 @@ void save_dH_sparse(const int& istep,
                     const std::string& calculation,
                     const bool out_app_flag,
                     const int nspin,
-                    const int nlocal);
+                    const int nlocal,
+                    std::ofstream& ofs_running);
 } // namespace ModuleIO
 
 #endif

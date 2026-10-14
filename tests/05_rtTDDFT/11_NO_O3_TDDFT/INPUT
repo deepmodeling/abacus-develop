@@ -14,7 +14,6 @@ nbands            18
 ecutwfc           20
 scf_nmax          30
 
-ks_solver         genelpa
 # out_chg          1
 
 mixing_type       broyden

@@ -70,6 +70,7 @@ AddTest(
   SOURCES
   test_hsr_writer.cpp
   ../hsr_writer.cpp
+  ../../../source_estate/fp_energy.cpp
   ../../../source_cell/ucell_io.cpp
   ../../../source_basis/module_ao/parallel_orbitals.cpp
   ../../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
@@ -96,6 +97,7 @@ AddTest(
   ../../../source_basis/module_nao/hydrogen_radials.cpp
   ../../../source_basis/module_nao/pswfc_radials.cpp
   ../../../source_basis/module_nao/atomic_radials.cpp
+  ../../../source_basis/module_nao/smoothgen.cpp
   ../../../source_basis/module_nao/sphbes_radials.cpp
   ../../../source_basis/module_nao/two_center_integrator.cpp
   ../../../source_basis/module_nao/two_center_table.cpp

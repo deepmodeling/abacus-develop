@@ -1,12 +1,15 @@
 #include "esolver_ks_lcao.h"
 #include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
+#include "source_base/tool_quit.h"
 #include "source_base/module_external/blacs_connector.h"
+#include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_deltaspin/deltaspin_lcao.h"
 #include "source_lcao/setup_dftu_lcao.h"
 #include "source_pw/module_pwdft/dftu_base.h" // Plus_U_Base (PW and LCAO share it)
+#include "source_pw/module_pwdft/dftu_base_io.h" // append_ion_step_snapshot
 #include "source_hamilt/hs_matrix_k.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/module_charge/chg_dmr.h"
@@ -24,6 +27,7 @@
 #include "source_estate/module_charge/chg_routine.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/dm_routine.h" // init dm from electronic wave functions
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
+#include "source_io/module_parameter/input_parameter.h"
 #include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao()
 #include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao()
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
@@ -35,6 +39,22 @@
 
 namespace ModuleESolver
 {
+
+#ifdef __EXX
+namespace
+{
+void validate_librpa_v1_kpoints(const Input_para& input, const K_Vectors& kv)
+{
+    // Reader-v1 writes the complete Monkhorst-Pack mesh for LibRPA.
+    if (input.rpa && input.out_librpa_ver == 1 && !kv.is_uniform_mp())
+    {
+        ModuleBase::WARNING_QUIT(
+            "ESolver_KS_LCAO::before_all_runners",
+            "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid.");
+    }
+}
+} // namespace
+#endif
 
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
@@ -64,6 +84,10 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
 
     // 1) before_all_runners in ESolver_KS (includes init_general_exx_info)
     ESolver_KS::before_all_runners(ucell, inp);
+
+#ifdef __EXX
+    validate_librpa_v1_kpoints(inp, this->kv);
+#endif
 
     // 2) init full Exx_Info for LCAO (includes info_ri, info_opt_abfs, info_lip)
     init_exx_info(this->exx_info_, inp);
@@ -175,7 +199,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
             two_center_bundle_, orb_, this->dmat.dm, this->dftu_.get(), this->deepks, istep, exx_nao, this->exx_info_, *this->inp_,
-            load_exx_flag);
+            load_exx_flag, this->get_td_info());
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -192,7 +216,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     init_deltaspin_lcao<TK>(ucell, *this->inp_, &(this->pv), this->kv, this->p_hamilt, this->psi, this->dmat.dm, this->pelec);
 
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
-    this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, *this->inp_, this->exx_info_);
+    this->exx_nao.before_scf(ucell, this->kv, orb_, this->pv, this->p_chgmix, istep, *this->inp_, this->exx_info_);
 
     // 12) initalize DM(R), which has the same size with Hamiltonian(R)
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
@@ -283,7 +307,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
                        this->pw_rho, this->solvent, *this->dftu_, this->deepks,
                        this->exx_nao, &ucell.symm, this->exx_info_,
                        fs_cfg,
-                       this->inp_->td_stype,
+                       this->get_td_info(),
                        static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
 
     // delete RA after cal_force
@@ -338,7 +362,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
 	    this->gd, this->psi, this->chr, hamilt_lcao,
 	    this->two_center_bundle_,
 	    this->orb_, this->pw_rho, this->pw_rhod,
-	    this->sf, this->locpp.vloc, this->exx_nao, this->exx_info_, this->solvent);
+	    this->sf, this->locpp.vloc, this->exx_nao, this->exx_info_, this->solvent, GlobalV::ofs_running);
 
     ModuleBase::timer::end("ESolver_KS_LCAO", "after_all_runners");
 }
@@ -389,14 +413,15 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 #endif
 		module_dm::Init_DM_Config init_dm_cfg;
 	init_dm_cfg.esolver_type = PARAM.inp.esolver_type;
-	init_dm_cfg.td_stype = PARAM.inp.td_stype;
+	TD_info* td_info = this->get_td_info();
+	init_dm_cfg.td_stype = td_info != nullptr ? td_info->field().gauge() : 0;
 	init_dm_cfg.nspin = PARAM.inp.nspin;
 	init_dm_cfg.nelec = PARAM.inp.nelec;
-	init_dm_cfg.td_phase_hybrid = (PARAM.inp.td_stype == 2 && PARAM.inp.esolver_type != "tddft")
-		? &TD_info::td_vel_op->get_phase_hybrid()
+	init_dm_cfg.td_phase_hybrid = (init_dm_cfg.td_stype == 2 && init_dm_cfg.esolver_type != "tddft")
+		? &td_info->get_phase_hybrid()
 		: nullptr;
-	init_dm_cfg.td_cart_At = (PARAM.inp.td_stype == 2 && PARAM.inp.esolver_type != "tddft")
-		? TD_info::A_prop_ha
+	init_dm_cfg.td_cart_At = (init_dm_cfg.td_stype == 2 && init_dm_cfg.esolver_type != "tddft")
+		? td_info->endpoint_A()
 		: ModuleBase::Vector3<double>();
 	init_dm_cfg.dm2rho_func = &LCAO_domain::dm2rho;
 	module_dm::init_dm<TK>(ucell, this->pelec, this->dmat, this->psi, this->chr, this->pv, iter, exx_two_level_step, init_dm_cfg);
@@ -557,7 +582,17 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 	const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_dmk_vec();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
-    finish_dftu_lcao<TK>(conv_esolver, this->inp_->dft_plus_u, this->inp_->out_chg[0], this->dftu_.get(), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, PARAM.globalv.global_out_dir, this->inp_->nspin, PARAM.globalv.npol, PARAM.globalv.gamma_only_local);
+    const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion,
+                                                this->inp_->out_freq_elec,
+                                                this->inp_->scf_nmax,
+                                                this->inp_->out_occ_mat,
+                                                this->inp_->dft_plus_u};
+    // Read globalv values once into locals so the repeated DFT+U call sites
+    // below do not each re-enter the global dependency surface.
+    const std::string& global_out_dir = PARAM.globalv.global_out_dir;
+    const int npol = PARAM.globalv.npol;
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
+    finish_dftu_lcao<TK>(conv_esolver, this->inp_->dft_plus_u, this->dftu_.get(), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, global_out_dir, this->inp_->nspin, npol, gamma_only_local, istep, iter, occmat_cfg);
 
     // mohan add 2025-11: push DFT+U energy from Plus_U instance to ElecState.
     // Covers both dft_plus_u==1 (new method, energy accumulated by DFTU::contributeHR
@@ -578,6 +613,39 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // charge mixing is performed, potential is updated,
     // HF and kS energies are computed, meta-GGA, Jason and restart
     ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
+
+    // overwrite occ_mat.txt with the latest occupation matrix and the
+    // actual charge-density residual; ESolver_KS::iter_finish() above has
+    // computed drho for this electronic step.
+    DFTU_BASE::write_latest_occmat(*this->dftu_,
+                                      ucell,
+                                      global_out_dir,
+                                      this->inp_->nspin,
+                                      npol,
+                                      istep,
+                                      iter,
+                                      this->scf_thr,
+                                      this->drho,
+                                      occmat_cfg,
+                                      DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+
+    // append the current electronic-step section to occ_matg{#}.txt
+    // LCAO computes the occupation matrix in every electronic iteration, so
+    // the snapshot always carries a real matrix.
+    DFTU_BASE::append_ion_step_snapshot(*this->dftu_,
+                                        ucell,
+                                        global_out_dir,
+                                        this->inp_->nspin,
+                                        npol,
+                                        istep,
+                                        iter,
+                                        conv_esolver,
+                                        true,
+                                        this->scf_thr,
+                                        this->drho,
+                                        occmat_cfg,
+                                        DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+
     const bool precision_switched = this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
     this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
     if (precision_switched)
@@ -649,7 +717,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
             this->pw_rhod, this->locpp.vloc, this->solvent,
             this->rdmft_solver, this->deepks, this->exx_nao, this->exx_info_,
-            conv_esolver, this->scf_nmax_flag, istep);
+            conv_esolver, this->scf_nmax_flag, istep, GlobalV::ofs_running);
 
     //! 3) Clean up RA, which is used to serach for adjacent atoms
     if (!this->inp_->cal_force && !this->inp_->cal_stress)

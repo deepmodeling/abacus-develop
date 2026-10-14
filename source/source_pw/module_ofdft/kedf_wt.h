@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdio>
 #include <complex>
+#include <vector>
 
 #include "source_base/global_function.h"
 #include "source_base/matrix.h"
@@ -30,7 +31,6 @@ class KEDF_WT
 #ifdef __CUDA
         this->free_gpu_buffers();
 #endif
-        delete[] this->kernel_;
     }
 
     void set_para(double dV,
@@ -72,7 +72,7 @@ class KEDF_WT
         = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
           * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
     double wt_coef_ = 0.; // coefficient of WT kernel
-    double* kernel_ = nullptr;
+    std::vector<double> kernel_;
 
 #ifdef __CUDA
     void multi_kernel_gpu(const double* const* prho, double** rkernel_rho, int nspin,
