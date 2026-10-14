@@ -27,6 +27,22 @@ AddTest(
 
 if (ENABLE_MPI)
 
+AddTest(
+  TARGET MODULE_ESTATE_electrostatic_potential_test
+  LIBS parameter base device planewave MPI::MPI_CXX
+  KEEP_FEATURE_DEFINITIONS __MPI
+  SOURCES test_electrostatic_potential.cpp ../module_pot/electrostatic_potential.cpp
+)
+set_tests_properties(MODULE_ESTATE_electrostatic_potential_test
+  PROPERTIES TIMEOUT 30 ENVIRONMENT "OMP_NUM_THREADS=1")
+add_test(
+  NAME MODULE_ESTATE_electrostatic_potential_mpi4_test
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+          $<TARGET_FILE:MODULE_ESTATE_electrostatic_potential_test> ${MPIEXEC_POSTFLAGS}
+)
+set_tests_properties(MODULE_ESTATE_electrostatic_potential_mpi4_test
+  PROPERTIES TIMEOUT 30 PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
+
 set(pcc_test_sources
     ../module_pot/pot_pcc.cpp ../pcc_0d.cpp ../pcc_2d.cpp ../charge_moments.cpp
     ../../source_cell/cell_geometry.cpp ../../source_cell/cell_tools.cpp

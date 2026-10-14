@@ -1,8 +1,7 @@
 #include "source_base/element_name.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_estate/module_pot/h_hartree_pw.h"
-#include "source_estate/module_pot/efield.h"
+#include "source_estate/module_pot/electrostatic_potential.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_io/module_output/output_log.h"
 #include "write_elecstat_pot.h"
@@ -29,54 +28,8 @@ void write_elecstat_pot(
     ModuleBase::TITLE("ModuleIO", "write_elecstat_pot");
     ModuleBase::timer::start("ModuleIO", "write_elecstat_pot");
 
-    std::vector<double> v_elecstat(rho_basis->nrxx, 0.0);
-
-    const int nspin = PARAM.inp.nspin;
-    const int efield = PARAM.inp.efield_flag;
-    const int dip_corr = PARAM.inp.dip_cor_flag;
-    const bool imp_sol = PARAM.inp.imp_sol;
-
-    //==========================================
-    // Hartree potential
-    //==========================================
-    ModuleBase::matrix vh(nspin, rho_basis->nrxx);
-    vh = elecstate::H_Hartree_pw::v_hartree(*ucell, rho_basis, nspin, chr->rho);
-
-    //==========================================
-    //! Dipole correction
-    //==========================================
-    ModuleBase::matrix v_efield;
-    if (efield>0 && dip_corr>0)
-    {
-        v_efield.create(nspin, rho_basis->nrxx);
-        v_efield = elecstate::Efield::add_efield(*ucell,
-                                                 const_cast<ModulePW::PW_Basis*>(rho_basis),
-                                                 nspin,
-                                                 chr->rho,
-                                                 solvent);
-    }
-
-    //==========================================
-    //! Add hartree potential and local pseudopot
-    //==========================================
-    for (int ir = 0; ir < rho_basis->nrxx; ir++)
-    {
-        // the spin index is 0
-        v_elecstat[ir] = vh(0, ir) + v_eff[ir];
-
-        if (efield>0 && dip_corr>0)
-        {
-            v_elecstat[ir] += v_efield(0, ir);
-        }
-        if (pcc_potential != nullptr)
-        {
-            v_elecstat[ir] += (*pcc_potential)[ir];
-        }
-        if(imp_sol == true)
-        {
-            v_elecstat[ir] += solvent.delta_phi[ir];
-        }
-    }
+    auto v_elecstat = elecstate::electrostatic_potential(*ucell, *rho_basis, *chr,
+                                                       v_eff, solvent, PARAM.inp, pcc_potential);
 
     //-------------------------------------------
     //! Get the vacuum level of the system
@@ -103,7 +56,7 @@ void write_elecstat_pot(
     ModuleIO::write_vdata_palgrid(*chr->pgrid,
         v_elecstat.data(),
         is,
-        nspin,
+        PARAM.inp.nspin,
         istep,
         fn,
         ef_tmp,

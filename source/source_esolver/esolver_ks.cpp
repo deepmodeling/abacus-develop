@@ -177,6 +177,8 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
     ModuleBase::TITLE("ESolver_KS", "runner");
     ModuleBase::timer::start(this->classname, "runner");
 
+    this->conv_esolver = false;
+
     // 1) before_scf (electronic iteration loops)
     this->before_scf(ucell, istep);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
@@ -243,6 +245,7 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
     } // end scf iterations
 
     // 7) after scf
+    conv_esolver = conv_esolver && !this->oscillate_esolver;
     this->after_scf(ucell, istep, conv_esolver);
     this->conv_esolver = conv_esolver;
 

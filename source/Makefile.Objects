@@ -282,6 +282,7 @@ OBJS_ELECSTAT=elecstate.o\
     efield.o\
     gatefield.o\
     potential_new.o\
+    electrostatic_potential.o\
     potential_types.o\
     pot_surchem.o\
     pot_sep.o\
@@ -321,6 +322,8 @@ OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
 OBJS_ESOLVER=esolver_factory.o\
     esolver_ks.o\
     esolver_fp.o\
+    esolver_fp_electronic.o\
+    electronic_occupations.o\
     esolver_ks_pw.o\
     esolver_ks_pw_tddft.o\
     esolver_ks_lcaopw.o\
@@ -590,6 +593,7 @@ OBJS_RELAXATION=relax_data.o\
     socket_driver.o\
     socket_utils.o\
     socket_handlers.o\
+    socket_constant_potential.o\
     cg_base.o\
     bfgs_basic.o\
     relax_driver.o\

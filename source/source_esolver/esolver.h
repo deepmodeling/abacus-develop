@@ -6,9 +6,13 @@
 #include "source_cell/unitcell.h"
 
 struct Input_para;
+class Parameter;
 
 namespace ModuleESolver
 {
+struct ElectronicControl;
+struct PotentialWindow;
+struct ElectronicObservables;
 class ESolver
 {
   public:
@@ -45,6 +49,11 @@ class ESolver
 
     //! calcualte stress of given cell
     virtual void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) = 0;
+
+    // Optional first-principles capability. Unsupported solvers return false.
+    virtual bool apply_electronic_control(Parameter&, const ElectronicControl&) { return false; }
+    virtual bool electronic_observables(const UnitCell&, const Parameter&, const PotentialWindow&,
+                                       ElectronicObservables&) const { return false; }
 
     bool conv_esolver = true; // whether esolver is converged
 

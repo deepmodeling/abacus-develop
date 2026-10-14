@@ -14,6 +14,11 @@ AddTest(
   SOURCES test_socket_frame.cpp ../socket_frame.cpp ../socket_frame_utils.cpp
 )
 
+AddTest(
+  TARGET MODULE_RELAX_socket_constant_potential_test
+  SOURCES test_socket_constant_potential.cpp ../socket_constant_potential.cpp
+)
+
 set(socket_json_sources)
 if(ENABLE_JSON)
   list(APPEND socket_json_sources
@@ -29,6 +34,7 @@ AddTest(
           ../socket_driver.cpp
           ../socket_utils.cpp
           ../socket_handlers.cpp
+          ../socket_constant_potential.cpp
           ../socket_frame_utils.cpp
           ../socket_frame.cpp
           ../socket_ipi.cpp

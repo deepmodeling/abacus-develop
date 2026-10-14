@@ -7,6 +7,7 @@
 #include "source_estate/elecstate_pw.h" // use ElecStatePW
 #include "source_estate/module_charge/charge.h" // use Charge
 #include <chrono> // for timing
+#include <stdexcept>
 
 template <typename T, typename Device>
 void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info)
@@ -127,7 +128,19 @@ double Exx_Helper<T, Device>::cal_exx_energy(void* psi_)
 template <typename T, typename Device>
 bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv)
 {
-    if (op_exx->first_iter)
+    if (strict_electronic_step && op_exx->separate_loop)
+    {
+        const auto& inp = PARAM.inp;
+        // A changed electron number must complete at least one EXX update.
+        // Reaching the outer-loop budget is not a convergence criterion.
+        const bool outer_converged = exx_iter > 0
+            && ((inp.exx_thr_type == "energy" && ene_conv)
+                || (inp.exx_thr_type == "density" && iter == 1));
+        if (outer_converged) { return true; }
+        if (exx_iter >= inp.exx_hybrid_step)
+        { throw std::runtime_error("constant-potential EXX outer loop did not converge; increase exx_hybrid_step"); }
+    }
+    else if (op_exx->first_iter)
     {
         op_exx->first_iter = false;
     }
@@ -183,4 +196,3 @@ template class Exx_Helper<std::complex<double>, base_device::DEVICE_CPU>;
 template class Exx_Helper<std::complex<float>, base_device::DEVICE_GPU>;
 template class Exx_Helper<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
-

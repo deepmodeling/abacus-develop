@@ -17,6 +17,7 @@
 
 #include "source_estate/module_charge/chg_routine.h"  // use charge mixing, mohan add 20251006
 #include "source_estate/setup_estate_pw.h"            // mohan add 20251005
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type used via general_exx_info_
 #include "source_io/module_ctrl/ctrl_output_pw.h"     // mohan add 20250927
 #include "source_pw/module_pwdft/dftu_base_io.h"      // append_ion_step_snapshot
@@ -25,6 +26,8 @@
 #include "source_pw/module_pwdft/setup_dftu_pw.h"  // mohan add 20250309
 #include "source_pw/module_pwdft/setup_pot.h"      // mohan add 20250929
 #include "source_pw/module_pwdft/update_cell_pw.h" // mohan add 20250309
+
+#include <stdexcept>
 
 namespace ModuleESolver
 {
@@ -133,6 +136,23 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
 
     //! Initialize exx pw
     this->exx_helper->init(ucell, inp, this->pelec->wg, this->general_exx_info_);
+}
+
+template <typename T, typename Device>
+bool ESolver_KS_PW<T, Device>::apply_electronic_control(Parameter& parameters, const ElectronicControl& control)
+{
+    const int functional_type = XC_Functional::get_func_type();
+    // Separate-loop SCAN0 starts as SCAN, before switching to hybrid meta-GGA.
+    // The upstream PW density path updates tau only for non-hybrid meta-GGA.
+    if (functional_type == 5 || (functional_type == 3 && this->general_exx_info_.cal_exx))
+    {
+        throw std::runtime_error(
+            "constant-potential PW hybrid meta-GGA is unsupported: "
+            "upstream kinetic-energy-density updates do not handle hybrid functionals");
+    }
+    if (!ESolver_FP::apply_electronic_control(parameters, control)) { return false; }
+    this->exx_helper->begin_electronic_step();
+    return true;
 }
 
 template <typename T, typename Device>

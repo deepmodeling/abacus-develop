@@ -34,6 +34,8 @@ class ESolver_KS_PW : public ESolver_KS
 
     Exx_HelperBase* exx_helper = nullptr;
 
+    bool apply_electronic_control(Parameter& parameters, const ElectronicControl& control) override;
+
   protected:
     virtual void before_scf(UnitCell& ucell, const int istep) override;
 

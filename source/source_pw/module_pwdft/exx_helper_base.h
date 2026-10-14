@@ -14,6 +14,9 @@ class Exx_HelperBase
     Exx_HelperBase() = default;
     virtual ~Exx_HelperBase() = default;
 
+    // Explicit boundary for an externally controlled electron-number request.
+    virtual void begin_electronic_step() = 0;
+
     virtual void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info) = 0;
 
     virtual void before_scf(void* p_hamilt, void* psi, const Input_para& inp, const General_Exx_Info& exx_info) = 0;

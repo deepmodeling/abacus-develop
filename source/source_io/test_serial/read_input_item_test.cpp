@@ -271,6 +271,14 @@ TEST_F(InputTest, Item_test)
     }
     { // symmetry
         auto it = find_label("symmetry", readinput.input_lists);
+        TestParameters::input(param).socket_driver = true;
+        TestParameters::input(param).symmetry = "default";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).symmetry, "0");
+        TestParameters::input(param).symmetry = "1";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).symmetry, "1");
+        TestParameters::input(param).socket_driver = false;
         TestParameters::input(param).symmetry = "default";
         TestParameters::input(param).gamma_only = true;
         it->second.reset_value(it->second, param);
