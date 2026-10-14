@@ -159,4 +159,3 @@ TEST(ParseCommandLineTest, MissingOrEmptyInputThrows)
         EXPECT_THROW(ModuleIO::parse_command_line(argc, storage.data()), std::runtime_error);
     }
 }
-

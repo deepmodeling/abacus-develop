@@ -40,4 +40,3 @@ void print_help(const std::string& bin_name);
 } // namespace ModuleIO
 
 #endif // ModuleIO_PARSE_COMMAND_LINE_H
-
