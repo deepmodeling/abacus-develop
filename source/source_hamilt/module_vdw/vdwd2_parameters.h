@@ -13,15 +13,12 @@
 
 #include <map>
 
-namespace vdw
-{
+namespace vdw {
 
-class Vdwd2Parameters : public VdwParameters
-{
+class Vdwd2Parameters : public VdwParameters {
 
   public:
-    Vdwd2Parameters() : VdwParameters()
-    {
+    Vdwd2Parameters() : VdwParameters() {
         C6_ = C6_default_;
         R0_ = R0_default_;
         damping_ = 0.0;
@@ -46,27 +43,12 @@ class Vdwd2Parameters : public VdwParameters
      */
     void initial_parameters(const Input_para& input, std::ofstream* plog = nullptr);
 
-    inline const std::map<std::string, double> C6() const
-    {
-        return C6_;
-    }
-    inline const std::map<std::string, double> R0() const
-    {
-        return R0_;
-    }
-    inline double damping() const
-    {
-        return damping_;
-    }
-    inline double scaling() const
-    {
-        return scaling_;
-    }
+    inline const std::map<std::string, double> C6() const { return C6_; }
+    inline const std::map<std::string, double> R0() const { return R0_; }
+    inline double damping() const { return damping_; }
+    inline double scaling() const { return scaling_; }
     /// @brief cutoff radius of the D2 summation, in Bohr
-    inline double radius() const
-    {
-        return radius_;
-    }
+    inline double radius() const { return radius_; }
 
   private:
     double scaling_;

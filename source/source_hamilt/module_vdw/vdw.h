@@ -9,31 +9,22 @@
 #include <utility>
 #include <vector>
 
-namespace vdw
-{
+namespace vdw {
 
 template <typename T, typename... Args>
-std::unique_ptr<T> make_unique_compat(Args&&... args)
-{
+std::unique_ptr<T> make_unique_compat(Args&&... args) {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-struct VdwRequest
-{
-    VdwRequest(const bool force_in, const bool stress_in) : force(force_in), stress(stress_in)
-    {
-    }
+struct VdwRequest {
+    VdwRequest(const bool force_in, const bool stress_in) : force(force_in), stress(stress_in) {}
 
     bool force;
     bool stress;
 };
 
-struct VdwResult
-{
-    VdwResult() : energy(0.0), has_force(false), has_stress(false)
-    {
-        stress.Zero();
-    }
+struct VdwResult {
+    VdwResult() : energy(0.0), has_force(false), has_stress(false) { stress.Zero(); }
 
     double energy;
     std::vector<ModuleBase::Vector3<double>> force;
@@ -42,17 +33,13 @@ struct VdwResult
     bool has_stress;
 };
 
-class Vdw
-{
+class Vdw {
   public:
-    Vdw(const UnitCell& unit_in) : ucell_(unit_in)
-    {
-    }
+    Vdw(const UnitCell& unit_in) : ucell_(unit_in) {}
 
     virtual ~Vdw() = default;
 
-    VdwResult evaluate(const VdwRequest& request)
-    {
+    VdwResult evaluate(const VdwRequest& request) {
         VdwResult result;
         evaluate_impl(request, result);
         return result;

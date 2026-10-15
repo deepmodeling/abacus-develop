@@ -7,11 +7,9 @@
 #include <string>
 #include <vector>
 
-namespace vdw
-{
+namespace vdw {
 
-class Vdwd4 : public Vdw
-{
+class Vdwd4 : public Vdw {
   public:
     Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input);
 

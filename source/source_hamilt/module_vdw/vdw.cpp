@@ -11,15 +11,12 @@
 #include "vdwd4.h"
 #endif
 
-std::string parse_xcname(const std::string& xc_input, const std::vector<std::string>& xc_psp)
-{
-    if (xc_input != "default")
-    {
+std::string parse_xcname(const std::string& xc_input, const std::vector<std::string>& xc_psp) {
+    if (xc_input != "default") {
         return xc_input;
     }
 
-    if (xc_psp.size() <= 0)
-    {
+    if (xc_psp.size() <= 0) {
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::parse_xcname",
                                  "XC name automatic inference failed: no "
                                  "pseudopotential files are found");
@@ -29,8 +26,7 @@ std::string parse_xcname(const std::string& xc_input, const std::vector<std::str
     auto last = std::unique(xc_psp_uniq.begin(), xc_psp_uniq.end());
     xc_psp_uniq.erase(last, xc_psp_uniq.end());
 
-    if (xc_psp_uniq.size() > 1)
-    {
+    if (xc_psp_uniq.size() > 1) {
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::parse_xcname",
                                  "XC name automatic inference failed: "
                                  "inconsistency in XC names is found"
@@ -42,11 +38,9 @@ std::string parse_xcname(const std::string& xc_input, const std::vector<std::str
     return xc;
 }
 
-namespace vdw
-{
+namespace vdw {
 
-std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, std::ofstream* plog)
-{
+std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, std::ofstream* plog) {
     // NOTE: the following lines are incorrect!
     // NOTE: VDW interaction exists between images even if there is only one
     // NOTE: atom in cell. See issue#5401:
@@ -56,34 +50,26 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, st
     //     ModuleBase::WARNING("VDW", "Only one atom in this system, and will
     //     not do the calculation of VDW"); return nullptr;
     // }
-    if (input.vdw_method == "d2")
-    {
+    if (input.vdw_method == "d2") {
         std::unique_ptr<Vdwd2> vdw_ptr = make_unique_compat<Vdwd2>(ucell);
         vdw_ptr->parameter().initial_parameters(input, plog);
         vdw_ptr->parameter().initset(ucell);
         return vdw_ptr;
-    }
-    else if (input.vdw_method == "d3_0" || input.vdw_method == "d3_bj")
-    {
+    } else if (input.vdw_method == "d3_0" || input.vdw_method == "d3_bj") {
         std::vector<std::string> xc_psp(ucell.ntype);
-        for (int it = 0; it < ucell.ntype; it++)
-        {
+        for (int it = 0; it < ucell.ntype; it++) {
             xc_psp[it] = ucell.atoms[it].ncpp.xc_func;
         }
         return make_unique_compat<Vdwd3>(ucell, parse_xcname(input.dft_functional, xc_psp), input, plog);
-    }
-    else if (input.vdw_method == "d4")
-    {
+    } else if (input.vdw_method == "d4") {
 #ifdef __DFTD4
         std::vector<std::string> xc_psp(ucell.ntype);
-        for (int it = 0; it < ucell.ntype; it++)
-        {
+        for (int it = 0; it < ucell.ntype; it++) {
             xc_psp[it] = ucell.atoms[it].ncpp.xc_func;
         }
 
         std::string xc_name = input.vdw_d4_xc;
-        if (xc_name == "default")
-        {
+        if (xc_name == "default") {
             xc_name = parse_xcname(input.dft_functional, xc_psp);
         }
 
@@ -93,9 +79,7 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, st
                                  "DFT-D4 support was not enabled at build time. "
                                  "Rebuild ABACUS with -DENABLE_DFTD4=ON.");
 #endif
-    }
-    else if (input.vdw_method != "none")
-    {
+    } else if (input.vdw_method != "none") {
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw",
                                  "Unrecognized Van der Waals correction method: " + input.vdw_method);
         return nullptr;

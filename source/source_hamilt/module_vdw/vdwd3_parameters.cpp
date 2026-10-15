@@ -8,15 +8,11 @@
 #include <map>
 #include <string>
 
-namespace vdw
-{
-namespace d3
-{
-namespace
-{
+namespace vdw {
+namespace d3 {
+namespace {
 
-struct DampingParameterRecord
-{
+struct DampingParameterRecord {
     const char* method_id;
     Damping damping;
     double s6;
@@ -29,8 +25,7 @@ struct DampingParameterRecord
     double alp;
 };
 
-struct MethodAlias
-{
+struct MethodAlias {
     const char* alias;
     const char* method_id;
 };
@@ -38,55 +33,46 @@ struct MethodAlias
 #include "data/d3_damping_parameters.inc"
 #include "data/d3_method_aliases.inc"
 
-std::string lower_ascii(std::string value)
-{
+std::string lower_ascii(std::string value) {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char character) {
         return static_cast<char>(std::tolower(character));
     });
     return value;
 }
 
-std::string normalized(std::string value)
-{
+std::string normalized(std::string value) {
     value = lower_ascii(value);
     std::string result;
     result.reserve(value.size());
-    for (unsigned char character: value)
-    {
-        if (std::isalnum(character) || character == '/')
-        {
+    for (unsigned char character: value) {
+        if (std::isalnum(character) || character == '/') {
             result.push_back(static_cast<char>(character));
         }
     }
     return result;
 }
 
-std::string libxc_component(const std::string& component, const std::string& marker)
-{
+std::string libxc_component(const std::string& component, const std::string& marker) {
     const std::string lower = lower_ascii(component);
     const std::size_t position = lower.find(marker);
-    if (position == std::string::npos)
-    {
+    if (position == std::string::npos) {
         return normalized(component);
     }
     return normalized(component.substr(position + marker.size()));
 }
 
-std::string canonicalize_libxc_pair(const std::string& input)
-{
+std::string canonicalize_libxc_pair(const std::string& input) {
     const std::size_t separator = input.find(':');
     std::string first = input.substr(0, separator);
     std::string second = input.substr(separator + 1);
     const std::string first_lower = lower_ascii(first);
-    if (first_lower.find("_c_") != std::string::npos)
-    {
+    if (first_lower.find("_c_") != std::string::npos) {
         std::swap(first, second);
     }
 
     const std::string exchange = libxc_component(first, "_x_");
     const std::string correlation = libxc_component(second, "_c_");
-    if (exchange == correlation)
-    {
+    if (exchange == correlation) {
         return exchange;
     }
 
@@ -112,21 +98,17 @@ std::string canonicalize_libxc_pair(const std::string& input)
 
 } // namespace
 
-std::string canonicalize_method_name(const std::string& input)
-{
+std::string canonicalize_method_name(const std::string& input) {
     const std::string xc_name = normalize_xc_name(input);
     std::string canonical;
-    if (xc_name.find(':') != std::string::npos)
-    {
+    if (xc_name.find(':') != std::string::npos) {
         const std::string pair = canonicalize_libxc_pair(xc_name);
-        if (!pair.empty())
-        {
+        if (!pair.empty()) {
             canonical = pair;
         }
     }
 
-    if (canonical.empty())
-    {
+    if (canonical.empty()) {
         const std::size_t xc = xc_name.find("_xc_");
         canonical = xc == std::string::npos ? normalized(xc_name) : normalized(xc_name.substr(xc + 4));
     }
@@ -134,8 +116,7 @@ std::string canonicalize_method_name(const std::string& input)
     // ABACUS calls its HSE06 implementation "HSE" in user input and
     // pseudopotential metadata. Keep that established spelling at the adapter
     // boundary while using s-dftd3's canonical method identifier internally.
-    if (canonical == "hse")
-    {
+    if (canonical == "hse") {
         canonical = "hse06";
     }
     return canonical;
@@ -144,8 +125,7 @@ std::string canonicalize_method_name(const std::string& input)
 bool lookup_parameters(const std::string& method,
                        Damping damping,
                        Parameters& parameters,
-                       std::string& canonical_method)
-{
+                       std::string& canonical_method) {
     canonical_method = canonicalize_method_name(method);
 
     // Preserve the two historical LibXC spellings whose D3 parameter set is
@@ -154,33 +134,25 @@ bool lookup_parameters(const std::string& method,
     // lookup key for the damping variant where the legacy ABACUS mapping was
     // defined.
     std::string lookup_method = canonical_method;
-    if (damping == Damping::Rational && lookup_method == "wb97xv")
-    {
+    if (damping == Damping::Rational && lookup_method == "wb97xv") {
         lookup_method = "wb97x";
-    }
-    else if (damping == Damping::Zero && lookup_method == "wb97xd3")
-    {
+    } else if (damping == Damping::Zero && lookup_method == "wb97xd3") {
         lookup_method = "wb97x";
     }
 
     const char* method_id = nullptr;
-    for (const MethodAlias& alias: kMethodAliases)
-    {
-        if (normalized(alias.alias) == lookup_method)
-        {
+    for (const MethodAlias& alias: kMethodAliases) {
+        if (normalized(alias.alias) == lookup_method) {
             method_id = alias.method_id;
             break;
         }
     }
-    if (method_id == nullptr)
-    {
+    if (method_id == nullptr) {
         return false;
     }
 
-    for (const DampingParameterRecord& record: kDampingParameters)
-    {
-        if (record.damping == damping && std::string(record.method_id) == method_id)
-        {
+    for (const DampingParameterRecord& record: kDampingParameters) {
+        if (record.damping == damping && std::string(record.method_id) == method_id) {
             parameters.damping = damping;
             parameters.s6 = record.s6;
             parameters.s8 = record.s8;

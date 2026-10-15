@@ -11,83 +11,61 @@
 #include <string>
 #include <vector>
 
-namespace vdw
-{
-namespace d3
-{
-namespace
-{
+namespace vdw {
+namespace d3 {
+namespace {
 
 constexpr double kCoordinationSteepness = 16.0;
 constexpr double kReferenceWeight = 4.0;
 constexpr double kAtmRadiusScale = 4.0 / 3.0;
 
-double dot(const Vec3& lhs, const Vec3& rhs)
-{
-    return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z;
-}
+double dot(const Vec3& lhs, const Vec3& rhs) { return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z; }
 
-Vec3 cross(const Vec3& lhs, const Vec3& rhs)
-{
+Vec3 cross(const Vec3& lhs, const Vec3& rhs) {
     return Vec3(lhs.y * rhs.z - rhs.y * lhs.z, lhs.z * rhs.x - rhs.z * lhs.x, lhs.x * rhs.y - rhs.x * lhs.y);
 }
 
-double norm(const Vec3& value)
-{
-    return std::sqrt(dot(value, value));
-}
+double norm(const Vec3& value) { return std::sqrt(dot(value, value)); }
 
-void add_outer(Matrix3& matrix, const Vec3& lhs, const Vec3& rhs, double scale = 1.0)
-{
+void add_outer(Matrix3& matrix, const Vec3& lhs, const Vec3& rhs, double scale = 1.0) {
     const double left[3] = {lhs.x, lhs.y, lhs.z};
     const double right[3] = {rhs.x, rhs.y, rhs.z};
-    for (int row = 0; row < 3; ++row)
-    {
-        for (int column = 0; column < 3; ++column)
-        {
+    for (int row = 0; row < 3; ++row) {
+        for (int column = 0; column < 3; ++column) {
             matrix.value[row][column] += scale * left[row] * right[column];
         }
     }
 }
 
-bool validate(const Structure& structure, const Cutoffs& cutoffs, std::string& error)
-{
-    if (structure.atomic_numbers.size() != structure.positions.size())
-    {
+bool validate(const Structure& structure, const Cutoffs& cutoffs, std::string& error) {
+    if (structure.atomic_numbers.size() != structure.positions.size()) {
         error = "atomic-number and position arrays have different sizes";
         return false;
     }
-    for (int atomic_number: structure.atomic_numbers)
-    {
-        if (atomic_number <= 0 || atomic_number > data::max_element)
-        {
+    for (int atomic_number: structure.atomic_numbers) {
+        if (atomic_number <= 0 || atomic_number > data::max_element) {
             error = "DFT-D3 supports atomic numbers 1 through 103";
             return false;
         }
     }
     if (!std::isfinite(cutoffs.disp2) || !std::isfinite(cutoffs.disp3) || !std::isfinite(cutoffs.cn)
-        || !(cutoffs.disp2 > 0.0) || !(cutoffs.disp3 > 0.0) || !(cutoffs.cn > 0.0))
-    {
+        || !(cutoffs.disp2 > 0.0) || !(cutoffs.disp3 > 0.0) || !(cutoffs.cn > 0.0)) {
         error = "DFT-D3 real-space cutoffs must be positive";
         return false;
     }
-    if (!std::isfinite(cutoffs.width2) || cutoffs.width2 < 0.0 || cutoffs.width2 > cutoffs.disp2)
-    {
+    if (!std::isfinite(cutoffs.width2) || cutoffs.width2 < 0.0 || cutoffs.width2 > cutoffs.disp2) {
         error = "two-body smooth width must satisfy 0 <= width <= cutoff";
         return false;
     }
-    if (!std::isfinite(cutoffs.width3) || cutoffs.width3 < 0.0 || cutoffs.width3 > cutoffs.disp3)
-    {
+    if (!std::isfinite(cutoffs.width3) || cutoffs.width3 < 0.0 || cutoffs.width3 > cutoffs.disp3) {
         error = "three-body smooth width must satisfy 0 <= width <= cutoff";
         return false;
     }
     return true;
 }
 
-std::vector<Vec3> lattice_points(const Structure& structure, double cutoff)
-{
-    if (!structure.periodic[0] && !structure.periodic[1] && !structure.periodic[2])
-    {
+std::vector<Vec3> lattice_points(const Structure& structure, double cutoff) {
+    if (!structure.periodic[0] && !structure.periodic[1] && !structure.periodic[2]) {
         return std::vector<Vec3>(1, Vec3());
     }
 
@@ -95,8 +73,7 @@ std::vector<Vec3> lattice_points(const Structure& structure, double cutoff)
                                    cross(structure.lattice[2], structure.lattice[0]),
                                    cross(structure.lattice[0], structure.lattice[1])}};
     std::array<int, 3> repeat;
-    for (int direction = 0; direction < 3; ++direction)
-    {
+    for (int direction = 0; direction < 3; ++direction) {
         normal[direction] = normal[direction] / norm(normal[direction]);
         repeat[direction]
             = static_cast<int>(std::ceil(std::abs(cutoff / dot(normal[direction], structure.lattice[direction]))));
@@ -104,12 +81,9 @@ std::vector<Vec3> lattice_points(const Structure& structure, double cutoff)
 
     std::vector<Vec3> translations;
     translations.reserve(static_cast<std::size_t>((2 * repeat[0] + 1) * (2 * repeat[1] + 1) * (2 * repeat[2] + 1)));
-    for (int ix = -repeat[0]; ix <= repeat[0]; ++ix)
-    {
-        for (int iy = -repeat[1]; iy <= repeat[1]; ++iy)
-        {
-            for (int iz = -repeat[2]; iz <= repeat[2]; ++iz)
-            {
+    for (int ix = -repeat[0]; ix <= repeat[0]; ++ix) {
+        for (int iy = -repeat[1]; iy <= repeat[1]; ++iy) {
+            for (int iz = -repeat[2]; iz <= repeat[2]; ++iz) {
                 translations.push_back(structure.lattice[0] * ix + structure.lattice[1] * iy
                                        + structure.lattice[2] * iz);
             }
@@ -118,73 +92,57 @@ std::vector<Vec3> lattice_points(const Structure& structure, double cutoff)
     return translations;
 }
 
-void smooth_cutoff(double distance, double cutoff, double width, double& value, double& derivative)
-{
+void smooth_cutoff(double distance, double cutoff, double width, double& value, double& derivative) {
     // Match s-dftd3 exactly: width == cutoff selects the legacy sharp path.
-    if (width <= 0.0 || width >= cutoff)
-    {
+    if (width <= 0.0 || width >= cutoff) {
         value = 1.0;
         derivative = 0.0;
         return;
     }
     const double inner = cutoff - width;
-    if (distance <= inner)
-    {
+    if (distance <= inner) {
         value = 1.0;
         derivative = 0.0;
-    }
-    else if (distance >= cutoff)
-    {
+    } else if (distance >= cutoff) {
         value = 0.0;
         derivative = 0.0;
-    }
-    else
-    {
+    } else {
         const double x = (cutoff - distance) / width;
         value = x * x * x * (10.0 + x * (-15.0 + 6.0 * x));
         derivative = -30.0 * x * x * (1.0 - x) * (1.0 - x) / width;
     }
 }
 
-double coordination_count(int atomic_number_i, int atomic_number_j, double distance)
-{
+double coordination_count(int atomic_number_i, int atomic_number_j, double distance) {
     const double radius = data::covalent_radius(atomic_number_i) + data::covalent_radius(atomic_number_j);
     return 1.0 / (1.0 + std::exp(-kCoordinationSteepness * (radius / distance - 1.0)));
 }
 
-double coordination_derivative(int atomic_number_i, int atomic_number_j, double distance)
-{
+double coordination_derivative(int atomic_number_i, int atomic_number_j, double distance) {
     const double radius = data::covalent_radius(atomic_number_i) + data::covalent_radius(atomic_number_j);
     const double exponential = std::exp(-kCoordinationSteepness * (radius / distance - 1.0));
     const double denominator = exponential + 1.0;
     return -kCoordinationSteepness * radius * exponential / (distance * distance * denominator * denominator);
 }
 
-std::vector<double> coordination_numbers(const Structure& structure,
-                                         const std::vector<Vec3>& translations,
-                                         double cutoff)
-{
+std::vector<double>
+    coordination_numbers(const Structure& structure, const std::vector<Vec3>& translations, double cutoff) {
     const std::size_t atoms = structure.positions.size();
     const double cutoff2 = cutoff * cutoff;
     std::vector<double> coordination(atoms, 0.0);
-    for (std::size_t i = 0; i < atoms; ++i)
-    {
-        for (std::size_t j = 0; j <= i; ++j)
-        {
-            for (const Vec3& translation: translations)
-            {
+    for (std::size_t i = 0; i < atoms; ++i) {
+        for (std::size_t j = 0; j <= i; ++j) {
+            for (const Vec3& translation: translations) {
                 const Vec3 vector = structure.positions[i] - (structure.positions[j] + translation);
                 const double distance2 = dot(vector, vector);
-                if (distance2 > cutoff2 || distance2 < 1.0e-12)
-                {
+                if (distance2 > cutoff2 || distance2 < 1.0e-12) {
                     continue;
                 }
                 const double count = coordination_count(structure.atomic_numbers[i],
                                                         structure.atomic_numbers[j],
                                                         std::sqrt(distance2));
                 coordination[i] += count;
-                if (i != j)
-                {
+                if (i != j) {
                     coordination[j] += count;
                 }
             }
@@ -197,23 +155,19 @@ void reference_weights(const Structure& structure,
                        const std::vector<double>& coordination,
                        bool derivatives,
                        std::vector<double>& weights,
-                       std::vector<double>& weight_derivatives)
-{
+                       std::vector<double>& weight_derivatives) {
     const std::size_t atoms = structure.positions.size();
     weights.assign(atoms * data::max_reference, 0.0);
-    if (derivatives)
-    {
+    if (derivatives) {
         weight_derivatives.assign(atoms * data::max_reference, 0.0);
     }
 
-    for (std::size_t atom = 0; atom < atoms; ++atom)
-    {
+    for (std::size_t atom = 0; atom < atoms; ++atom) {
         const int atomic_number = structure.atomic_numbers[atom];
         const int references = data::reference_count(atomic_number);
         double raw[data::max_reference];
         double max_exponent = -std::numeric_limits<double>::infinity();
-        for (int reference = 0; reference < references; ++reference)
-        {
+        for (int reference = 0; reference < references; ++reference) {
             const double delta = data::reference_cn(atomic_number, reference) - coordination[atom];
             raw[reference] = -kReferenceWeight * delta * delta;
             max_exponent = std::max(max_exponent, raw[reference]);
@@ -223,28 +177,24 @@ void reference_weights(const Structure& structure,
         // numbers.
         double weight_sum = 0.0;
         double weighted_reference_cn = 0.0;
-        for (int reference = 0; reference < references; ++reference)
-        {
+        for (int reference = 0; reference < references; ++reference) {
             // Shifting by the maximum exponent prevents all weights from
             // underflowing.
             raw[reference] = std::exp(raw[reference] - max_exponent);
             weight_sum += raw[reference];
-            if (derivatives)
-            {
+            if (derivatives) {
                 weighted_reference_cn += raw[reference] * data::reference_cn(atomic_number, reference);
             }
         }
         const double inverse_weight_sum = 1.0 / weight_sum;
         weighted_reference_cn *= inverse_weight_sum;
 
-        for (int reference = 0; reference < references; ++reference)
-        {
+        for (int reference = 0; reference < references; ++reference) {
             const std::size_t index = atom * data::max_reference + reference;
             const double weight = raw[reference] * inverse_weight_sum;
             weights[index] = weight;
 
-            if (derivatives)
-            {
+            if (derivatives) {
                 const double reference_cn = data::reference_cn(atomic_number, reference);
                 weight_derivatives[index] = 2.0 * kReferenceWeight * weight * (reference_cn - weighted_reference_cn);
             }
@@ -257,28 +207,22 @@ void atomic_c6(const Structure& structure,
                const std::vector<double>& weight_derivatives,
                bool derivatives,
                std::vector<double>& c6,
-               std::vector<double>& dc6dcn)
-{
+               std::vector<double>& dc6dcn) {
     const std::size_t atoms = structure.positions.size();
     c6.assign(atoms * atoms, 0.0);
-    if (derivatives)
-    {
+    if (derivatives) {
         dc6dcn.assign(atoms * atoms, 0.0);
     }
 
-    for (std::size_t i = 0; i < atoms; ++i)
-    {
+    for (std::size_t i = 0; i < atoms; ++i) {
         const int references_i = data::reference_count(structure.atomic_numbers[i]);
-        for (std::size_t j = 0; j <= i; ++j)
-        {
+        for (std::size_t j = 0; j <= i; ++j) {
             const int references_j = data::reference_count(structure.atomic_numbers[j]);
             double coefficient = 0.0;
             double derivative_i = 0.0;
             double derivative_j = 0.0;
-            for (int reference_i = 0; reference_i < references_i; ++reference_i)
-            {
-                for (int reference_j = 0; reference_j < references_j; ++reference_j)
-                {
+            for (int reference_i = 0; reference_i < references_i; ++reference_i) {
+                for (int reference_j = 0; reference_j < references_j; ++reference_j) {
                     const double reference_c6 = data::reference_c6(structure.atomic_numbers[i],
                                                                    reference_i,
                                                                    structure.atomic_numbers[j],
@@ -286,8 +230,7 @@ void atomic_c6(const Structure& structure,
                     const double weight_i = weights[i * data::max_reference + reference_i];
                     const double weight_j = weights[j * data::max_reference + reference_j];
                     coefficient += weight_i * weight_j * reference_c6;
-                    if (derivatives)
-                    {
+                    if (derivatives) {
                         derivative_i
                             += weight_derivatives[i * data::max_reference + reference_i] * weight_j * reference_c6;
                         derivative_j
@@ -297,8 +240,7 @@ void atomic_c6(const Structure& structure,
             }
             c6[i * atoms + j] = coefficient;
             c6[j * atoms + i] = coefficient;
-            if (derivatives)
-            {
+            if (derivatives) {
                 dc6dcn[i * atoms + j] = derivative_i;
                 dc6dcn[j * atoms + i] = derivative_j;
             }
@@ -315,17 +257,14 @@ void pairwise_dispersion(const Structure& structure,
                          bool derivatives,
                          std::vector<double>& atomic_energy,
                          std::vector<double>& dEdcn,
-                         Result& result)
-{
+                         Result& result) {
     const std::size_t atoms = structure.positions.size();
     const double cutoff2 = cutoffs.disp2 * cutoffs.disp2;
     const double epsilon = std::numeric_limits<double>::epsilon();
 
-    for (std::size_t i = 0; i < atoms; ++i)
-    {
+    for (std::size_t i = 0; i < atoms; ++i) {
         const int atomic_number_i = structure.atomic_numbers[i];
-        for (std::size_t j = 0; j <= i; ++j)
-        {
+        for (std::size_t j = 0; j <= i; ++j) {
             const int atomic_number_j = structure.atomic_numbers[j];
             const double rrij = 3.0 * data::r4r2(atomic_number_i) * data::r4r2(atomic_number_j);
             const double coefficient = c6[j * atoms + i];
@@ -333,24 +272,19 @@ void pairwise_dispersion(const Structure& structure,
             double r0 = 0.0;
             double r0_sixth = 0.0;
             double r0_eighth = 0.0;
-            if (parameters.damping == Damping::Rational)
-            {
+            if (parameters.damping == Damping::Rational) {
                 r0 = parameters.a1 * std::sqrt(rrij) + parameters.a2;
                 const double r0_squared = r0 * r0;
                 r0_sixth = r0_squared * r0_squared * r0_squared;
                 r0_eighth = r0_sixth * r0_squared;
-            }
-            else
-            {
+            } else {
                 r0 = data::vdw_radius(atomic_number_i, atomic_number_j);
             }
 
-            for (const Vec3& translation: translations)
-            {
+            for (const Vec3& translation: translations) {
                 const Vec3 vector = structure.positions[i] - (structure.positions[j] + translation);
                 const double distance2 = dot(vector, vector);
-                if (distance2 > cutoff2 || distance2 < epsilon)
-                {
+                if (distance2 > cutoff2 || distance2 < epsilon) {
                     continue;
                 }
                 const double distance = std::sqrt(distance2);
@@ -360,8 +294,7 @@ void pairwise_dispersion(const Structure& structure,
 
                 double bare_energy = 0.0;
                 double bare_radial = 0.0;
-                if (parameters.damping == Damping::Rational)
-                {
+                if (parameters.damping == Damping::Rational) {
                     const double fourth = distance2 * distance2;
                     const double inverse_sixth = 1.0 / (fourth * distance2 + r0_sixth);
                     const double inverse_eighth = 1.0 / (fourth * fourth + r0_eighth);
@@ -369,9 +302,7 @@ void pairwise_dispersion(const Structure& structure,
                     const double derivative_eighth = -8.0 * fourth * distance2 * inverse_eighth * inverse_eighth;
                     bare_energy = parameters.s6 * inverse_sixth + parameters.s8 * rrij * inverse_eighth;
                     bare_radial = parameters.s6 * derivative_sixth + parameters.s8 * rrij * derivative_eighth;
-                }
-                else
-                {
+                } else {
                     const double sixth = distance2 * distance2 * distance2;
                     const double eighth = sixth * distance2;
                     const double exponent6 = parameters.alp;
@@ -389,19 +320,16 @@ void pairwise_dispersion(const Structure& structure,
                 const double dispersion = switching * bare_energy;
                 const double energy = -coefficient * dispersion * 0.5;
                 atomic_energy[i] += energy;
-                if (i != j)
-                {
+                if (i != j) {
                     atomic_energy[j] += energy;
                 }
 
-                if (derivatives)
-                {
+                if (derivatives) {
                     const double radial = switching * bare_radial + switching_derivative * bare_energy / distance;
                     const Vec3 gradient = vector * (-coefficient * radial);
                     dEdcn[i] -= dc6dcn[i * atoms + j] * dispersion;
                     add_outer(result.virial, gradient, vector, 0.5);
-                    if (i != j)
-                    {
+                    if (i != j) {
                         dEdcn[j] -= dc6dcn[j * atoms + i] * dispersion;
                         result.gradient[i] += gradient;
                         result.gradient[j] -= gradient;
@@ -413,10 +341,8 @@ void pairwise_dispersion(const Structure& structure,
     }
 }
 
-double triple_scale(std::size_t i, std::size_t j, std::size_t k)
-{
-    if (i == j)
-    {
+double triple_scale(std::size_t i, std::size_t j, std::size_t k) {
+    if (i == j) {
         return i == k ? 1.0 / 6.0 : 0.5;
     }
     return i != k && j != k ? 1.0 : 0.5;
@@ -431,10 +357,8 @@ void atm_dispersion(const Structure& structure,
                     bool derivatives,
                     std::vector<double>& atomic_energy,
                     std::vector<double>& dEdcn,
-                    Result& result)
-{
-    if (std::abs(parameters.s9) < std::numeric_limits<double>::epsilon())
-    {
+                    Result& result) {
+    if (std::abs(parameters.s9) < std::numeric_limits<double>::epsilon()) {
         return;
     }
 
@@ -444,20 +368,16 @@ void atm_dispersion(const Structure& structure,
     const double alpha = parameters.alp + 2.0;
     const double alpha_third = alpha / 3.0;
 
-    for (std::size_t i = 0; i < atoms; ++i)
-    {
+    for (std::size_t i = 0; i < atoms; ++i) {
         const int atomic_number_i = structure.atomic_numbers[i];
-        for (std::size_t j = 0; j <= i; ++j)
-        {
+        for (std::size_t j = 0; j <= i; ++j) {
             const int atomic_number_j = structure.atomic_numbers[j];
             const double c6ij = c6[j * atoms + i];
             const double r0ij = kAtmRadiusScale * data::vdw_radius(atomic_number_j, atomic_number_i);
-            for (const Vec3& translation_j: translations)
-            {
+            for (const Vec3& translation_j: translations) {
                 const Vec3 vij = structure.positions[j] + translation_j - structure.positions[i];
                 const double r2ij = dot(vij, vij);
-                if (r2ij > cutoff2 || r2ij < epsilon)
-                {
+                if (r2ij > cutoff2 || r2ij < epsilon) {
                     continue;
                 }
                 const double rij = std::sqrt(r2ij);
@@ -465,8 +385,7 @@ void atm_dispersion(const Structure& structure,
                 double dswij = 0.0;
                 smooth_cutoff(rij, cutoffs.disp3, cutoffs.width3, swij, dswij);
 
-                for (std::size_t k = 0; k <= j; ++k)
-                {
+                for (std::size_t k = 0; k <= j; ++k) {
                     const int atomic_number_k = structure.atomic_numbers[k];
                     const double c6ik = c6[k * atoms + i];
                     const double c6jk = c6[k * atoms + j];
@@ -476,12 +395,10 @@ void atm_dispersion(const Structure& structure,
                     const double r0 = r0ij * r0ik * r0jk;
                     const double scale = triple_scale(i, j, k);
 
-                    for (const Vec3& translation_k: translations)
-                    {
+                    for (const Vec3& translation_k: translations) {
                         const Vec3 vik = structure.positions[k] + translation_k - structure.positions[i];
                         const double r2ik = dot(vik, vik);
-                        if (r2ik > cutoff2 || r2ik < epsilon)
-                        {
+                        if (r2ik > cutoff2 || r2ik < epsilon) {
                             continue;
                         }
                         const double rik = std::sqrt(r2ik);
@@ -491,8 +408,7 @@ void atm_dispersion(const Structure& structure,
 
                         const Vec3 vjk = vik - vij;
                         const double r2jk = dot(vjk, vjk);
-                        if (r2jk > cutoff2 || r2jk < epsilon)
-                        {
+                        if (r2jk > cutoff2 || r2jk < epsilon) {
                             continue;
                         }
                         const double rjk = std::sqrt(r2jk);
@@ -517,8 +433,7 @@ void atm_dispersion(const Structure& structure,
                         atomic_energy[j] -= energy / 3.0;
                         atomic_energy[k] -= energy / 3.0;
 
-                        if (!derivatives)
-                        {
+                        if (!derivatives) {
                             continue;
                         }
 
@@ -578,20 +493,15 @@ void add_coordination_derivatives(const Structure& structure,
                                   const std::vector<Vec3>& translations,
                                   double cutoff,
                                   const std::vector<double>& dEdcn,
-                                  Result& result)
-{
+                                  Result& result) {
     const std::size_t atoms = structure.positions.size();
     const double cutoff2 = cutoff * cutoff;
-    for (std::size_t i = 0; i < atoms; ++i)
-    {
-        for (std::size_t j = 0; j <= i; ++j)
-        {
-            for (const Vec3& translation: translations)
-            {
+    for (std::size_t i = 0; i < atoms; ++i) {
+        for (std::size_t j = 0; j <= i; ++j) {
+            for (const Vec3& translation: translations) {
                 const Vec3 vector = structure.positions[i] - (structure.positions[j] + translation);
                 const double distance2 = dot(vector, vector);
-                if (distance2 > cutoff2 || distance2 < 1.0e-12)
-                {
+                if (distance2 > cutoff2 || distance2 < 1.0e-12) {
                     continue;
                 }
                 const double distance = std::sqrt(distance2);
@@ -616,22 +526,18 @@ bool evaluate(const Structure& structure,
               const Cutoffs& cutoffs,
               bool derivatives,
               Result& result,
-              std::string& error)
-{
+              std::string& error) {
     error.clear();
     result = Result();
-    if (!validate(structure, cutoffs, error))
-    {
+    if (!validate(structure, cutoffs, error)) {
         return false;
     }
 
     const std::size_t atoms = structure.positions.size();
-    if (derivatives)
-    {
+    if (derivatives) {
         result.gradient.assign(atoms, Vec3());
     }
-    if (atoms == 0)
-    {
+    if (atoms == 0) {
         return true;
     }
 
@@ -672,8 +578,7 @@ bool evaluate(const Structure& structure,
                    dEdcn,
                    result);
 
-    if (derivatives)
-    {
+    if (derivatives) {
         add_coordination_derivatives(structure, cn_translations, cutoffs.cn, dEdcn, result);
     }
     result.energy = std::accumulate(atomic_energy.begin(), atomic_energy.end(), 0.0);

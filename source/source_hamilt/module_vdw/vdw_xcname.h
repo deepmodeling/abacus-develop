@@ -3,8 +3,7 @@
 
 #include <string>
 
-namespace vdw
-{
+namespace vdw {
 
 /**
  * @brief Normalize an XC-functional spelling at the ABACUS/libXC boundary.

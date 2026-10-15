@@ -5,10 +5,8 @@
 
 #include <string>
 
-namespace vdw
-{
-namespace d3
-{
+namespace vdw {
+namespace d3 {
 
 bool evaluate(const Structure& structure,
               const Parameters& parameters,

@@ -4,18 +4,14 @@
 #include <cctype>
 #include <string>
 
-namespace vdw
-{
-namespace
-{
+namespace vdw {
+namespace {
 
-std::string trim_ascii(const std::string& value)
-{
+std::string trim_ascii(const std::string& value) {
     const auto first = std::find_if_not(value.begin(), value.end(), [](unsigned char character) {
         return std::isspace(character) != 0;
     });
-    if (first == value.end())
-    {
+    if (first == value.end()) {
         return std::string();
     }
 
@@ -25,15 +21,13 @@ std::string trim_ascii(const std::string& value)
     return std::string(first, last);
 }
 
-std::string normalize_component(std::string value)
-{
+std::string normalize_component(std::string value) {
     value = trim_ascii(value);
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char character) {
         return static_cast<char>(std::tolower(character));
     });
 
-    if (value.compare(0, 3, "xc_") == 0)
-    {
+    if (value.compare(0, 3, "xc_") == 0) {
         value.erase(0, 3);
     }
     return value;
@@ -41,14 +35,12 @@ std::string normalize_component(std::string value)
 
 } // namespace
 
-std::string normalize_xc_name(const std::string& input)
-{
+std::string normalize_xc_name(const std::string& input) {
     const std::size_t plus = input.find('+');
     const std::size_t colon = input.find(':');
     const std::size_t separator = plus != std::string::npos ? plus : colon;
 
-    if (separator == std::string::npos)
-    {
+    if (separator == std::string::npos) {
         return normalize_component(input);
     }
 
