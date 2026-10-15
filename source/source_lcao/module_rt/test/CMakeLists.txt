@@ -19,6 +19,7 @@ if(NOT ENABLE_CUBLASMP)
             ../band_energy.cpp ../upsi.cpp ../solve_propagation.cpp ../propagator.cpp
             ../propagator_cn2.cpp ../propagator_taylor.cpp ../propagator_etrs.cpp
             ../../../source_basis/module_ao/parallel_orbitals.cpp
+            ../../../source_io/module_energy/td_eij_io.cpp
   )
 endif()
 
