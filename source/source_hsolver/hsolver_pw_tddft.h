@@ -94,6 +94,9 @@ class HSolverPWTDDFT
     /** @brief Evaluate band expectations after the caller restores the endpoint Hamiltonian. */
     void cal_band_energy(HSOperator<T, Device>& op, const psi::Psi<T, Device>& current, ModuleBase::matrix* energies);
 
+    /** @brief Return the pool-reduced, column-major Psi-adjoint H Psi for one local k point. */
+    std::vector<std::complex<double>> cal_eij(HSOperator<T, Device>& op, const psi::Psi<T, Device>& current, const int ik);
+
   private:
     using Real = typename GetTypeReal<T>::type;
     struct KPointState

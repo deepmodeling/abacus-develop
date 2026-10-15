@@ -457,14 +457,14 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
     {
         Input_Item item("td_print_eij");
         item.annotation = "print eij or not";
-        item.category = "Real-Time TDDFT (LCAO)";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Real";
         item.description = R"(Controls output of the propagated-state Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i | \hat{H} | \psi_j}$ to the running log. The printed band indices $i$ and $j$ are one-based global indices. Both the threshold and the printed matrix elements are in Ry.
 * $\lt 0$: Disable the output.
 * $\geqslant 0$: Print an element when either $\left|\operatorname{Re}E_{ij}\right|$ or $\left|\operatorname{Im}E_{ij}\right|$ is greater than or equal to `td_print_eij`.)";
         item.default_value = "-1";
         item.unit = "Ry";
-        item.set_availability("basis_type==lcao and esolver_type==tddft");
+        item.set_availability("basis_type in [pw, lcao] and esolver_type==tddft");
         read_sync_double(input.td_print_eij);
         this->add_item(item);
     }

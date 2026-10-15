@@ -53,7 +53,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
 #endif
     }
 
-    // Evaluate the regularized projected local-collinear graph.
+    // Evaluate the regularized mapped-density local-collinear graph.
     if (nspin == 4 && (domag || domag_z) && gga_grad == 2)
     {
         return ModuleXC::NCGGA_SF_Builtin::v_xc_ncgga_sf_builtin(nrxx, ucell->omega, ucell->tpiba, chr);

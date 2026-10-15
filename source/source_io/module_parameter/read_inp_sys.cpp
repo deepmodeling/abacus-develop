@@ -236,17 +236,17 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
         item.category = "System variables";
         item.type = "String";
         item.description = R"(Choose the energy solver.
-* ksdft: Kohn-Sham density functional theory
-* ofdft: orbital-free density functional theory
-* tdofdft: time-dependent orbital-free density functional theory
-* sdft: stochastic density functional theory
-* tddft: real-time time-dependent density functional theory (RT-TDDFT)
-* lj: Leonard Jones potential
-* dp: DeeP potential
-* nep: Neuroevolution Potential
-* ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
-* lr: LR-TDDFT with given KS orbitals (Under Development Feature)
-* dfpt: density functional perturbation theory (Under Development Feature))";
+* `ksdft`: Kohn-Sham density functional theory.
+* `ofdft`: Orbital-free density functional theory.
+* `tdofdft`: Time-dependent orbital-free density functional theory.
+* `sdft`: Stochastic density functional theory.
+* `tddft`: Real-time time-dependent density functional theory (RT-TDDFT). Requires `calculation=md`.
+* `lj`: Lennard-Jones potential.
+* `dp`: Deep Potential (DP) model.
+* `nep`: Neuroevolution potential (NEP).
+* `ks-lr`: Kohn-Sham density functional theory followed by linear-response time-dependent density functional theory (LR-TDDFT; under development).
+* `lr`: Linear-response time-dependent density functional theory (LR-TDDFT) using precomputed Kohn-Sham orbitals (under development).
+* `dfpt`: Density functional perturbation theory (DFPT; under development).)";
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -255,6 +255,10 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+            if (para.input.esolver_type == "tddft" && para.input.calculation != "md")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "esolver_type=tddft requires calculation=md.");
             }
             if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep")
             {

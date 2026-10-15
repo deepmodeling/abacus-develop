@@ -675,6 +675,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_output/cal_test.o\
     module_dos/write_dos_pw.o\
     module_energy/write_bands.o\
+    module_energy/td_eij_io.o\
     module_dos/cal_dos.o\
     module_dos/cal_pdos_gamma.o\
     module_dos/cal_pdos_multik.o\
