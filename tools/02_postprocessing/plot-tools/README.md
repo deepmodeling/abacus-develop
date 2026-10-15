@@ -94,6 +94,17 @@ Then, the following command will output parsed partial DOS to directory `PBAND*_
 abacus-plot -d -o
 ```
 
+## Testing
+
+From this directory, run the focused DOS reader, plotting and smearing regressions:
+
+```shell
+MPLBACKEND=Agg PYTHONPATH=. python3 -m unittest discover -s tests -v
+```
+
+These Python tests use the package dependencies from `setup.py` and are discovered
+by `unittest`; they do not add a dependency to the C++ CMake build.
+
 ### DOS
 
 First, prepare a file named 'config.json' in json format:

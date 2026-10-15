@@ -299,7 +299,12 @@ class TDOS(DOS):
                 raise ValueError(
                     "Each TDOS file already contains two spin channels; "
                     "do not pass two files")
-            if not np.allclose(parsed[0]["energy"], parsed[1]["energy"]):
+            energy_up = parsed[0]["energy"]
+            energy_dw = parsed[1]["energy"]
+            # ABACUS prints energies to 1e-6 eV. Keep the comparison below
+            # that precision, without a tolerance that grows with |energy|.
+            if energy_up.shape != energy_dw.shape or not np.allclose(
+                    energy_up, energy_dw, rtol=0, atol=1e-8):
                 raise ValueError(
                     "Spin-up and spin-down TDOS files have different energy "
                     f"grids: '{spin_files[0]}' vs '{spin_files[1]}'")

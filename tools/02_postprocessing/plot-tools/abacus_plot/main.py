@@ -95,8 +95,11 @@ class Show:
                 fig, ax = plt.subplots(
                     len(atom_index), 1, sharex=True, figsize=figsize)
             if species:
+                # Lists overlay components on one axes; dictionaries use
+                # one row per component for angular-momentum-resolved plots.
                 fig, ax = plt.subplots(
-                    len(species), 1, sharex=True, figsize=figsize)
+                    len(species) if isinstance(species, dict) else 1, 1,
+                    sharex=True, figsize=figsize)
             prec = text.pop("prec", 0.01)
             pdos = PDOS(pdosfile)
             pdos.plot(fig=fig, ax=ax, index=index, atom_index=atom_index, species=species, efermi=efermi, shift=shift,

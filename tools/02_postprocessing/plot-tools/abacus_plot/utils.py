@@ -257,6 +257,10 @@ def gaussian_smearing(energy: Sequence, dos: Sequence, sigma: float, chunk: int 
     :params sigma: Gaussian width parameter in eV
     :params chunk: number of output rows computed per block
     """
+    if np.ndim(sigma) != 0 or not np.isfinite(sigma) or sigma <= 0:
+        raise ValueError("sigma must be finite and positive")
+    if isinstance(chunk, (bool, np.bool_)) or not isinstance(chunk, (int, np.integer)) or chunk <= 0:
+        raise ValueError("chunk must be a positive integer")
     energy = np.asarray(energy, dtype=float).flatten()
     dos = np.asarray(dos, dtype=float)
     width = np.sqrt(2.0) * sigma
