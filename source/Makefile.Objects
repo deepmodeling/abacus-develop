@@ -334,6 +334,8 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_of_tool.o\
     esolver_dfpt_pw.o\
     pw_others.o\
+    pw_hybrid_nscf.o\
+    pw_hybrid_source.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\

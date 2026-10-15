@@ -1,0 +1,32 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix            autotest
+calculation       nscf
+nbands            3
+symmetry          -1
+
+#Parameters (2.Iteration)
+ecutwfc           10
+scf_thr           1e-9
+scf_nmax          100
+pw_diag_thr       1e-10
+pw_seed           1
+
+#Parameters (3.Basis)
+basis_type        pw
+
+#Parameters (4.Smearing)
+smearing_method   fixed
+
+#Parameters (5.ExactExchange)
+dft_functional    HSE
+exxace            false
+exx_gamma_extra   false
+
+read_file_dir     ../nscf_hse_same/
+pseudo_dir        ../../PP_ORB
+out_band          1
+out_chg           0
+out_wfc_pw        0
+cal_force         0
+cal_stress        0
