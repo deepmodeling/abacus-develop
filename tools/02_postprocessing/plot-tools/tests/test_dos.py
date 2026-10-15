@@ -59,7 +59,10 @@ class TDOSTest(unittest.TestCase):
                     np.testing.assert_array_equal(tdos.dos_smear, smeared)
                 for smearing in (True, False):
                     fig, ax = plt.subplots()
-                    tdos.plot(fig, ax, smearing=smearing)
+                    if smearing:
+                        tdos.plot(fig, ax)
+                    else:
+                        tdos.plot(fig, ax, smearing=False)
                     expected = smeared if smearing and smeared is not None else raw
                     np.testing.assert_array_equal(ax.lines[0].get_ydata(), expected[:, 0])
                     if tdos.nspin == 2:
