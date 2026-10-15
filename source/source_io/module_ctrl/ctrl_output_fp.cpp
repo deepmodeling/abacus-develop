@@ -37,25 +37,19 @@ void ctrl_output_fp(UnitCell& ucell,
     const int nspin = inp.nspin;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
 
-    // print out the 'g' index when istep_in != -1
+    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    // Print the global electronic step for TDDFT and the ionic step otherwise.
     int istep_in = -1;
-    if (inp.esolver_type != "tddft" && inp.out_freq_ion > 0) // default value of out_freq_ion is 0
+    if (output_frequency > 0)
     {
-        if (istep % inp.out_freq_ion == 0)
-        {
-            istep_in = istep;
-        }
-    }
-    else if (inp.esolver_type == "tddft" && inp.out_freq_td > 0) // default value of out_freq_td is 0
-    {
-        if (istep % inp.out_freq_td == 0)
+        if (istep % output_frequency == 0)
         {
             istep_in = istep;
         }
     }
 
     std::string geom_block;
-    bool should_output = (inp.out_freq_ion == 0);
+    bool should_output = (output_frequency == 0);
     if (istep_in >= 0)
     {
         geom_block = "g" + std::to_string(istep + 1);
@@ -197,17 +191,17 @@ void ctrl_output_fp(UnitCell& ucell,
 
         std::string out_dir = PARAM.globalv.global_out_dir;
         ModuleIO::write_elf(out_dir,
-            istep,
-            nspin,
-            chr.rho,
-            chr.kin_r,
-            pw_rhod,
-            para_grid,
-            &(ucell),
-            inp.out_elf[1],
-            geom_block,
-            PARAM.globalv.two_fermi,
-            ofs_running);
+                            istep,
+                            nspin,
+                            chr.rho,
+                            chr.kin_r,
+                            pw_rhod,
+                            para_grid,
+                            &(ucell),
+                            inp.out_elf[1],
+                            geom_block,
+                            PARAM.globalv.two_fermi,
+                            ofs_running);
     }
 
 #ifdef __LIBXC
@@ -225,8 +219,9 @@ void ctrl_output_fp(UnitCell& ucell,
     }
 #endif
 
-    // 8) write dipole moment
-    if (inp.out_dipole == 1 && should_output)
+    // RT-TDDFT response analysis requires every dipole sample, independently of snapshot output.
+    const bool output_dipole = inp.esolver_type == "tddft" || should_output;
+    if (inp.out_dipole == 1 && output_dipole)
     {
         for (int is = 0; is < nspin; ++is)
         {

@@ -10,7 +10,6 @@
 #include <xc.h>
 #include <xc_funcs.h>
 
-#include <array>
 #include <tuple>
 #include <vector>
 
@@ -30,15 +29,14 @@ namespace XC_Functional_Libxc
 
     // Complete forward data for the gga_grad=2 noncollinear Libxc graph:
     //   rho_s = N_s(x),
-    //   g_s   = sum_A (d N_s / d x_A) G_h x_A.
-    // Keeping the local map and all input gradients together lets the reverse
-    // use the exact same branch choices and radial Hessian as the forward.
+    //   g_s   = G_h N_s(x).
+    // Reverse the FFT gradient before applying the local map Jacobian;
+    // this uses the same clipping branches as the forward energy.
     struct NclSfDiscreteData
     {
         std::vector<ModuleXC::NcggaSpinMapPoint> spin_map;
         std::vector<double> rho;
         std::vector<std::vector<ModuleBase::Vector3<double>>> spin_gradient;
-        std::array<std::vector<ModuleBase::Vector3<double>>, 3> grad_m;
     };
 
 //-------------------
@@ -133,7 +131,7 @@ namespace XC_Functional_Libxc
         const Charge* const chr);
 
     // Build the exact gga_grad=2 local spin map and, when requested, its
-    // projected FFT-gradient graph.  LDA-only callers set need_gradient=false.
+    // mapped-density FFT-gradient graph.  LDA-only callers set need_gradient=false.
     extern NclSfDiscreteData make_ncl_sf_discrete_data(
         const std::size_t nrxx,
         const double tpiba,
