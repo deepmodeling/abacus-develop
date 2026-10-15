@@ -182,6 +182,24 @@ ifdef DeePMD_DIR
     endif
 endif
 
+ifdef DeePMD_DIR
+    # Keep the legacy Make build on the same DeePMD API path as CMake. These
+    # are syntax-only probes, so no temporary executable or extra link step is
+    # required during the normal build.
+    DPMD_PROBE_SOURCE = ${ABACUS_ROOT}../tools/deepmd_input_nlist_probe.cpp
+    DPMD_COMM_NLIST_13 := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_COMM_13 -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    DPMD_COMM_NLIST_12 := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_COMM_12 -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    DPMD_NLIST_MAPPING := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_MAPPING -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    ifeq ($(DPMD_COMM_NLIST_13),1)
+        HONG += -D__DPMD_COMM_NLIST_ARGS=13
+    else ifeq ($(DPMD_COMM_NLIST_12),1)
+        HONG += -D__DPMD_COMM_NLIST_ARGS=12
+    endif
+    ifeq ($(DPMD_NLIST_MAPPING),1)
+        HONG += -D__DPMD_HAS_NLIST_MAPPING
+    endif
+endif
+
 ifdef TensorFlow_DIR
     #==========================
     # TensorFlow package

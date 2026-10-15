@@ -35,6 +35,7 @@ class EvolvePsiTest : public testing::Test
     EndpointHamiltonian hamiltonian;
     std::array<Complex, 4> previous_s = {{1.0, 0.0, 0.0, 1.0}};
     std::array<Complex, 2> previous_psi = {{1.0, Complex(0.0, 0.5)}};
+    const module_rt::EijOutputInfo output_info{0.0, 0, 0, 0, 0, 0};
     std::ofstream log;
 
     void SetUp() override
@@ -83,7 +84,7 @@ class EvolvePsiTest : public testing::Test
         const bool use_lapack = true;
         module_rt::evolve_psi_tensor<base_device::DEVICE_CPU>(
             1, 2, &pv, &hamiltonian, psi, last_psi, last_h, last_s, energy, 0, log, 0,
-            use_lapack, resources);
+            use_lapack, resources, output_info);
         expect_endpoint_norm(psi.data<Complex>());
         EXPECT_NEAR(energy.data<double>()[0], 0.0, 1e-12);
     }
@@ -95,7 +96,7 @@ TEST_F(EvolvePsiTest, CpuUsesEndpointOverlap)
     std::array<Complex, 4> last_h = {{0.0, 0.0, 0.0, 0.0}};
     double energy = 0.0;
     module_rt::evolve_psi(1, 2, &pv, &hamiltonian, psi.data(), previous_psi.data(),
-                          last_h.data(), previous_s.data(), nullptr, false, &energy, 0, log, 0);
+                          last_h.data(), previous_s.data(), nullptr, false, &energy, 0, log, 0, output_info);
     expect_endpoint_norm(psi.data());
     EXPECT_NEAR(energy, 0.0, 1e-12);
 }
