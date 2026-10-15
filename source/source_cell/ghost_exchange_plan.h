@@ -1,6 +1,8 @@
 #ifndef GHOST_EXCHANGE_PLAN_H
 #define GHOST_EXCHANGE_PLAN_H
 
+#include <cstddef>
+#include <limits>
 #include <vector>
 
 struct GhostExchangePlan
@@ -18,6 +20,17 @@ struct GhostExchangePlan
     int nprocs;
 
     GhostExchangePlan() : nprocs(1) {}
+
+    bool is_valid(const std::size_t natom) const
+    {
+        const std::size_t nswap = sendnum.size();
+        const bool communication_sizes_match = recvnum.size() == nswap && firstrecv.size() == nswap
+                                                && send_atom_indices.size() == nswap
+                                                && sendproc.size() == nswap && recvproc.size() == nswap;
+        const bool nswap_fits_int = nswap <= static_cast<std::size_t>(std::numeric_limits<int>::max());
+        const bool mapping_matches_atoms = nprocs != 1 || mapping.size() == natom;
+        return communication_sizes_match && nswap_fits_int && mapping_matches_atoms;
+    }
 };
 
 #endif // GHOST_EXCHANGE_PLAN_H

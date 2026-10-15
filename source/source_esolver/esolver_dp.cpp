@@ -28,7 +28,6 @@
 
 #include <iomanip>
 #include <array>
-#include <limits>
 #include <sstream>
 #include <unordered_map>
 
@@ -155,20 +154,10 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
 
         const GhostExchangePlan& ghost_plan = mdcell.get_ghost_exchange_plan();
         const std::size_t nswap_size = ghost_plan.sendnum.size();
-        if (ghost_plan.recvnum.size() != nswap_size || ghost_plan.firstrecv.size() != nswap_size
-            || ghost_plan.send_atom_indices.size() != nswap_size
-            || ghost_plan.sendproc.size() != nswap_size || ghost_plan.recvproc.size() != nswap_size)
+        const bool use_mapping = ghost_plan.nprocs == 1;
+        if (!ghost_plan.is_valid(static_cast<std::size_t>(natom)))
         {
             ModuleBase::WARNING_QUIT("ESolver_DP", "Invalid MDCell ghost exchange plan.");
-        }
-        if (nswap_size > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        {
-            ModuleBase::WARNING_QUIT("ESolver_DP", "MDCell ghost exchange plan exceeds int range.");
-        }
-        const bool use_mapping = ghost_plan.nprocs == 1;
-        if (use_mapping && ghost_plan.mapping.size() != static_cast<std::size_t>(natom))
-        {
-            ModuleBase::WARNING_QUIT("ESolver_DP", "Invalid single-rank DeePMD atom mapping.");
         }
         const int nswap = static_cast<int>(nswap_size);
         std::vector<std::vector<int> > sendlist_storage = ghost_plan.send_atom_indices;
@@ -202,32 +191,9 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         dp_world = &dp_world_comm;
 #endif
 #if defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 13
-        DPInputNlist nlist(nowned_atoms,
-                           ilist_data,
-                           numneigh_data,
-                           firstneigh_data,
-                           nswap,
-                           sendnum,
-                           recvnum,
-                           firstrecv,
-                           sendlist_data,
-                           sendproc,
-                           recvproc,
-                           dp_world,
-                           ghost_plan.nprocs);
+        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, nswap, sendnum, recvnum, firstrecv, sendlist_data, sendproc, recvproc, dp_world, ghost_plan.nprocs);
 #elif defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 12
-        DPInputNlist nlist(nowned_atoms,
-                           ilist_data,
-                           numneigh_data,
-                           firstneigh_data,
-                           nswap,
-                           sendnum,
-                           recvnum,
-                           firstrecv,
-                           sendlist_data,
-                           sendproc,
-                           recvproc,
-                           dp_world);
+        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, nswap, sendnum, recvnum, firstrecv, sendlist_data, sendproc, recvproc, dp_world);
 #else
         DPInputNlist nlist(nowned_atoms,
                            ilist_data,
