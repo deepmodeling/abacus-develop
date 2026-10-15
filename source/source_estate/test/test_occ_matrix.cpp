@@ -24,7 +24,8 @@ Magnetism::~Magnetism()
  * Covered:
  * 1. init() layout for nspin=1, 2, 4 (channel count and matrix dims).
  * 2. init() skips uncorrelated atom types (l_channel=-1).
- * 3. init() builds corr_iwt from the first radial channel (n=0) only.
+ * 3. init() builds corr_iwt with atom offsets and spinor strides from
+ *    the first radial channel (n=0) only.
  * 4. write_save_to_flat() for nspin=1/2/4, including the empty-buffer
  *    no-op path.
  *
@@ -192,6 +193,23 @@ TEST_F(OccMatrixTest, InitBuildsCorrIwtFromFirstRadialChannel)
     for (int m = 0; m < m_size; m++)
     {
         EXPECT_EQ(occmat.corr_iwt(iat, l, m, 0), m);
+    }
+}
+
+TEST_F(OccMatrixTest, InitBuildsCorrIwtForLaterNoncollinearAtom)
+{
+    // Atom 0 contributes one s orbital with two polarizations, so atom 1
+    // starts at global index 2. Its d orbitals are interleaved by ipol.
+    make_cell({-1, 2}, {0, 2}, {{1}, {0, 0, 1}}, 2);
+    OccupationMatrix occmat;
+    occmat.init(cell, {-1, 2}, 4, 2);
+
+    const int iat = 1;
+    const int l = 2;
+    for (int m = 0; m < 5; m++)
+    {
+        EXPECT_EQ(occmat.corr_iwt(iat, l, m, 0), 2 + 2 * m);
+        EXPECT_EQ(occmat.corr_iwt(iat, l, m, 1), 2 + 2 * m + 1);
     }
 }
 
