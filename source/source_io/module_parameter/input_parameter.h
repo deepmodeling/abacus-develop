@@ -87,7 +87,7 @@ struct Input_para
     double nelec_delta = 0.0;          ///< change in the number of total electrons
     double nupdown = 0.0;
     std::string dft_functional = "default"; ///< input DFT functional.
-    int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized projected LCA.
+    int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized mapped-density LCA.
     std::string xc_nonlocal = "none";      ///< nonlocal XC correction (none; rvv10)
     double rvv10_b = 6.3;                   ///< rVV10 damping parameter b
     double rvv10_c = 0.0093;                ///< rVV10 parameter C

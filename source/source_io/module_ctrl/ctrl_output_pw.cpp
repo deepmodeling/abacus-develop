@@ -33,7 +33,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
     ModuleBase::timer::start("ModuleIO", "ctrl_iter_pw");
     //----------------------------------------------------------
     // 3) Print out electronic wavefunctions in pw basis
-    // we only print information every few ionic steps
+    // Select propagation steps in RT-TDDFT and ionic steps otherwise.
     //----------------------------------------------------------
 
     // if istep_in = -1, istep will not appear in file name
@@ -41,9 +41,10 @@ void ModuleIO::ctrl_iter_pw(const int istep,
     int istep_in = -1;
     int iter_in = -1;
     bool out_wfc_flag = false;
-    if (inp.out_freq_ion > 0) // default value of out_freq_ion is 0
+    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    if (output_frequency > 0)
     {
-        if (istep % inp.out_freq_ion == 0)
+        if (istep % output_frequency == 0)
         {
             if (iter % inp.out_freq_elec == 0 || iter == inp.scf_nmax || conv_esolver)
             {
@@ -103,6 +104,10 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_pw");
 
+    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    const bool selected_step = output_frequency == 0 || (output_frequency > 0 && istep % output_frequency == 0);
+    const bool output_td_state = inp.esolver_type != "tddft" || selected_step;
+
     // Only the following postprocessors consume the double CPU mirror.
     if (inp.calculation == "nscf" && (inp.towannier90 || (berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)))
     {
@@ -118,14 +123,13 @@ void ModuleIO::ctrl_scf_pw(const int istep,
 
         int istep_in = -1;
 
-        // default value of out_freq_ion is 0
-        if (inp.out_freq_ion == 0)
+        if (output_frequency == 0)
         {
             out_dos_tmp = true;
         }
-        else if (inp.out_freq_ion > 0)
+        else if (output_frequency > 0)
         {
-            if (istep % inp.out_freq_ion == 0)
+            if (istep % output_frequency == 0)
             {
                 out_dos_tmp = true;
                 istep_in = istep;
@@ -177,7 +181,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     // 5) Write partial charges and real-space wavefunctions
     // for the current electronic state.
     //------------------------------------------------------------------
-    if (inp.out_pchg.size() > 0)
+    if (inp.out_pchg.size() > 0 && output_td_state)
     {
         // Use the solver's native wavefunction precision for FFT and projector overlaps.
         ModuleIO::Get_pchg_pw<T, Device>
@@ -185,7 +189,7 @@ void ModuleIO::ctrl_scf_pw(const int istep,
         output.begin(&ucell, para_grid, kv, inp.out_pchg, PARAM.globalv.global_out_dir, inp.if_separate_k, inp.noncolin, ofs_running);
     }
 
-    if (inp.out_wfc_norm.size() > 0 || inp.out_wfc_re_im.size() > 0)
+    if ((inp.out_wfc_norm.size() > 0 || inp.out_wfc_re_im.size() > 0) && output_td_state)
     {
         // Use the solver's native wavefunction precision for FFT.
         ModuleIO::Get_wf_pw<T, Device> output(*stp.template get_psi_t<T, Device>(), *pw_wfc, *pw_rho, *pw_rhod, inp.nspin, inp.nbands);
