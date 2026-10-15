@@ -28,3 +28,15 @@ AddTest(
 )
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/support"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+
+AddTest(
+  TARGET MODULE_RI_hybrid_gauge_phase_test
+  LIBS parameter base device
+  SOURCES test_hybrid_gauge_phase.cpp ../mix_dmk_2d.cpp
+)
+
+AddTest(
+  TARGET MODULE_RI_exx_info_test
+  LIBS parameter base device
+  SOURCES test_exx_info.cpp ../../../source_hamilt/module_xc/exx_info.cpp
+)

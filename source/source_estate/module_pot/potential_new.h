@@ -80,6 +80,9 @@ class Potential : public PotBase
 
     PotBase* get_pot_type(const std::string& pot_type);
 
+    /// @brief Read the shared RT-TDDFT field state.
+    const TDFieldManager* td_field_manager() const { return td_field_manager_.get(); }
+
     /**
      * @brief Inject the shared RT-TDDFT field state before potential setup.
      *

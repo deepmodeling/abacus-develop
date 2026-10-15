@@ -218,6 +218,11 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
             { exx_info.info_lip.lambda = std::stod(inp.exx_fock_lambda[0]); }
 
         exx_info.info_ri.real_number = std::stoi(inp.exx_real_number);
+        if (exx_info.info_global.cal_exx && inp.basis_type == "lcao"
+            && inp.esolver_type == "tddft" && inp.td_stype == 2 && exx_info.info_ri.real_number)
+        {
+            throw std::invalid_argument("td_stype=2 EXX requires exx_real_number=0");
+        }
         exx_info.info_ri.pca_threshold = inp.exx_pca_threshold;
         exx_info.info_ri.C_threshold = inp.exx_c_threshold;
         exx_info.info_ri.V_threshold = inp.exx_v_threshold;
