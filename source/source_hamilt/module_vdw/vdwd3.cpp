@@ -1,11 +1,11 @@
 #include "vdwd3.h"
 
-#include "vdwd3_evaluator.h"
-#include "vdwd3_parameters.h"
 #include "source_base/constants.h"
 #include "source_base/element_name.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
+#include "vdwd3_evaluator.h"
+#include "vdwd3_parameters.h"
 
 #include <algorithm>
 #include <array>
@@ -60,10 +60,7 @@ const char* damping_name(d3::Damping damping)
 
 } // namespace
 
-Vdwd3::Vdwd3(const UnitCell& unit_in,
-             const std::string& xc_name,
-             const Input_para& input,
-             std::ofstream* plog)
+Vdwd3::Vdwd3(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input, std::ofstream* plog)
     : Vdw(unit_in)
 {
     if (input.vdw_cutoff_type != "radius")
@@ -86,23 +83,18 @@ Vdwd3::Vdwd3(const UnitCell& unit_in,
         ModuleBase::WARNING_QUIT("Vdwd3::Vdwd3", "Unsupported DFT-D3 method: " + input.vdw_method);
     }
 
-    const bool all_custom = input.vdw_s6 != "default"
-                            && input.vdw_s8 != "default"
-                            && input.vdw_a1 != "default"
+    const bool all_custom = input.vdw_s6 != "default" && input.vdw_s8 != "default" && input.vdw_a1 != "default"
                             && input.vdw_a2 != "default";
     if (all_custom)
     {
         canonical_method_ = d3::canonicalize_method_name(xc_name);
     }
-    else if (!d3::lookup_parameters(xc_name,
-                                    parameters_.damping,
-                                    parameters_,
-                                    canonical_method_))
+    else if (!d3::lookup_parameters(xc_name, parameters_.damping, parameters_, canonical_method_))
     {
         ModuleBase::WARNING_QUIT("Vdwd3::Vdwd3",
-                                 "No s-dftd3 damping parameters found for XC functional '"
-                                     + xc_name + "'. Define vdw_s6, vdw_s8, vdw_a1 and vdw_a2 "
-                                                 "together to use a fully custom parameter set.");
+                                 "No s-dftd3 damping parameters found for XC functional '" + xc_name
+                                     + "'. Define vdw_s6, vdw_s8, vdw_a1 and vdw_a2 "
+                                       "together to use a fully custom parameter set.");
     }
 
     if (input.vdw_s6 != "default")
@@ -169,9 +161,7 @@ void Vdwd3::write_parameters(std::ofstream* plog) const
     *plog << "\nDFT-D3 parameters (s-dftd3 v1.5.0 numerical specification)\n"
           << "XC functional: " << canonical_method_ << '\n'
           << "damping: " << damping_name(parameters_.damping) << '\n'
-          << std::setprecision(10)
-          << "s6=" << parameters_.s6 << " s8=" << parameters_.s8
-          << " s9=" << parameters_.s9;
+          << std::setprecision(10) << "s6=" << parameters_.s6 << " s8=" << parameters_.s8 << " s9=" << parameters_.s9;
     if (parameters_.damping == d3::Damping::Rational)
     {
         *plog << " a1=" << parameters_.a1 << " a2=" << parameters_.a2;
@@ -180,10 +170,8 @@ void Vdwd3::write_parameters(std::ofstream* plog) const
     {
         *plog << " rs6=" << parameters_.rs6 << " rs8=" << parameters_.rs8;
     }
-    *plog << "\ncutoffs (Bohr): disp2=" << cutoffs_.disp2
-          << " disp3=" << cutoffs_.disp3 << " CN=" << cutoffs_.cn
-          << " smooth_width_2b=" << cutoffs_.width2
-          << " smooth_width_3b=" << cutoffs_.width3 << std::endl;
+    *plog << "\ncutoffs (Bohr): disp2=" << cutoffs_.disp2 << " disp3=" << cutoffs_.disp3 << " CN=" << cutoffs_.cn
+          << " smooth_width_2b=" << cutoffs_.width2 << " smooth_width_3b=" << cutoffs_.width3 << std::endl;
 }
 
 d3::Structure Vdwd3::build_structure(std::vector<int>& atom_indices) const

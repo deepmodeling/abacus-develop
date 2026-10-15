@@ -1,4 +1,5 @@
 #include "vdwd3_parameters.h"
+
 #include "vdw_xcname.h"
 
 #include <algorithm>
@@ -50,7 +51,7 @@ std::string normalized(std::string value)
     value = lower_ascii(value);
     std::string result;
     result.reserve(value.size());
-    for (unsigned char character : value)
+    for (unsigned char character: value)
     {
         if (std::isalnum(character) || character == '/')
         {
@@ -93,11 +94,16 @@ std::string canonicalize_libxc_pair(const std::string& input)
     // libxc_component(). Only mixed exchange/correlation names need an
     // explicit mapping; identical component names are handled above.
     static const std::map<std::string, std::string> special = {
-        {"b88:p86", "bp86"},       {"b88:lyp", "blyp"},
-        {"b88:pbe", "bpbe"},       {"pber:pbe", "revpbe"},
-        {"rpbe:pbe", "rpbe"},      {"optx:lyp", "olyp"},
-        {"mpw91:pw91", "mpwpw"},  {"ms2:regtpss", "ms2"},
-        {"ms2h:regtpss", "ms2h"}, {"pbe:oppbe", "pbeop"},
+        {"b88:p86", "bp86"},
+        {"b88:lyp", "blyp"},
+        {"b88:pbe", "bpbe"},
+        {"pber:pbe", "revpbe"},
+        {"rpbe:pbe", "rpbe"},
+        {"optx:lyp", "olyp"},
+        {"mpw91:pw91", "mpwpw"},
+        {"ms2:regtpss", "ms2"},
+        {"ms2h:regtpss", "ms2h"},
+        {"pbe:oppbe", "pbeop"},
         {"b88:opb88", "bop"},
     };
     const auto found = special.find(exchange + ":" + correlation);
@@ -122,8 +128,7 @@ std::string canonicalize_method_name(const std::string& input)
     if (canonical.empty())
     {
         const std::size_t xc = xc_name.find("_xc_");
-        canonical = xc == std::string::npos ? normalized(xc_name)
-                                             : normalized(xc_name.substr(xc + 4));
+        canonical = xc == std::string::npos ? normalized(xc_name) : normalized(xc_name.substr(xc + 4));
     }
 
     // ABACUS calls its HSE06 implementation "HSE" in user input and
@@ -159,7 +164,7 @@ bool lookup_parameters(const std::string& method,
     }
 
     const char* method_id = nullptr;
-    for (const MethodAlias& alias : kMethodAliases)
+    for (const MethodAlias& alias: kMethodAliases)
     {
         if (normalized(alias.alias) == lookup_method)
         {
@@ -172,7 +177,7 @@ bool lookup_parameters(const std::string& method,
         return false;
     }
 
-    for (const DampingParameterRecord& record : kDampingParameters)
+    for (const DampingParameterRecord& record: kDampingParameters)
     {
         if (record.damping == damping && std::string(record.method_id) == method_id)
         {
