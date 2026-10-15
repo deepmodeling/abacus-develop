@@ -14,9 +14,13 @@ find_path(LIBRI_DIR
 
 if(NOT LIBRI_DIR)
     include(FetchContent)
+    set(_libri_revision b0eff7a)
+    if(ENABLE_LIBRI_GPU)
+      set(_libri_revision 6ce3c8480ae38a085746dc81cc4dbb59b8074430)
+    endif()
     FetchContent_Declare(
         LibRI
-        URL https://codeload.github.com/abacusmodeling/LibRI/tar.gz/b0eff7a
+        URL https://codeload.github.com/abacusmodeling/LibRI/tar.gz/${_libri_revision}
     )
     FetchContent_Populate(LibRI)
     set(LIBRI_DIR ${libri_SOURCE_DIR})

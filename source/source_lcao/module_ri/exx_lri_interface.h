@@ -53,6 +53,16 @@ public:
     }
     Exx_LRI_Interface() = delete;
 
+    void set_gpu(const bool use_gpu)
+    {
+#ifdef __GPU_RI
+        auto& mode = this->exx_ptr->exx_lri.lri.cal_mode;
+        mode = use_gpu ? RI::LRI_Cal_Mode::GPU : RI::LRI_Cal_Mode::CPU;
+#else
+        (void)use_gpu;
+#endif
+    }
+
     ///// read and write Hexxs using cereal
     //void write_Hexxs_cereal(const std::string& file_name) const;
     //void read_Hexxs_cereal(const std::string& file_name);

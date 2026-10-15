@@ -60,6 +60,9 @@ set(_abacus_feature_definitions
   $<$<BOOL:${ENABLE_FLOAT_FFTW}>:__FLOAT_FFTW>
   $<$<BOOL:${ENABLE_MLALGO}>:__MLALGO>
   $<$<BOOL:${ENABLE_CNPY}>:__CNPY>
+  $<$<BOOL:${ENABLE_LIBRI_GPU}>:__GPU_RI>
+  $<$<BOOL:${ENABLE_LIBRI_GPU}>:__DDLA_RI>
+  $<$<BOOL:${ENABLE_LIBRI_GPU}>:DDLA_USE_CUDA>
   $<$<BOOL:${ENABLE_LIBRI}>:__EXX>
   $<$<BOOL:${ENABLE_LIBRI}>:EXX_DM=3>
   $<$<BOOL:${ENABLE_LIBRI}>:EXX_H_COMM=2>
@@ -305,6 +308,11 @@ if(ENABLE_CNPY)
   if(cnpy_SOURCE_DIR)
     list(APPEND _abacus_feature_include_dirs ${cnpy_SOURCE_DIR})
   endif()
+endif()
+
+if(ENABLE_LIBRI_GPU)
+  list(APPEND _abacus_feature_include_dirs ${DDLA_INCLUDE_DIR})
+  list(APPEND _abacus_feature_libs ${DDLA_LIBRARY})
 endif()
 
 if(ENABLE_LIBRI)
