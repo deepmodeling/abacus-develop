@@ -780,6 +780,140 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatSocPauliRoundtrip)
     }
 }
 
+// The old token layout supports both "L=2" and split "L= 2 ORBITAL= 0".
+TEST_F(DFTUBaseTest, ReadOccMatLegacyCollinearHeaders)
+{
+    const std::vector<int> l_channel = {2};
+    const std::string dir = testing::TempDir();
+    const std::vector<std::string> headers = {
+        "Fe 1 Atom=1 L=2 0 0 0\n",
+        "Fe 1 Atom= 1 L=2 0 0 0\n",
+        "Fe 1 Atom=1 L= 2 ORBITAL= 0 0 0 0\n"
+    };
+    for (size_t variant = 0; variant < headers.size(); ++variant)
+    {
+        const std::string fn = dir + "legacy_collinear_" + std::to_string(variant) + ".txt";
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        ofs << "# legacy occupation matrix\n" << headers[variant];
+        for (int spin = 0; spin < 2; ++spin)
+        {
+            ofs << "spin= " << spin + 1 << "\n";
+            for (int m0 = 0; m0 < 5; ++m0)
+            {
+                for (int m1 = 0; m1 < 5; ++m1)
+                {
+                    ofs << " " << 100 * spin + 10 * m0 + m1;
+                }
+                ofs << "\n";
+            }
+        }
+        ofs.close();
+
+        OccupationMatrix occ;
+        occ.init(ucell, l_channel, 2, 1);
+        DFTU_BASE::read_occup_m(ucell, occ, l_channel, 2, fn, "none", 2, 1,
+                                DFTU_BASE::SOC_LAYOUT_PAULI);
+        for (int spin = 0; spin < 2; ++spin)
+        {
+            for (int m0 = 0; m0 < 5; ++m0)
+            {
+                for (int m1 = 0; m1 < 5; ++m1)
+                {
+                    EXPECT_DOUBLE_EQ(occ.get(0, 2, spin, m0, m1),
+                                     100 * spin + 10 * m0 + m1);
+                }
+            }
+        }
+    }
+}
+
+// The legacy SOC file stores the full real spin-basis matrix in interleaved rows.
+TEST_F(DFTUBaseTest, ReadOccMatLegacySoc)
+{
+    const std::vector<int> l_channel = {2};
+    const std::string fn = testing::TempDir() + "legacy_soc.txt";
+    std::ofstream ofs(fn);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "Fe 1 Atom=1 L=2 0 0 0\n";
+    for (int m0 = 0; m0 < 5; ++m0)
+    {
+        for (int ipol0 = 0; ipol0 < 2; ++ipol0)
+        {
+            for (int m1 = 0; m1 < 5; ++m1)
+            {
+                for (int ipol1 = 0; ipol1 < 2; ++ipol1)
+                {
+                    ofs << " " << 1000 * ipol0 + 100 * ipol1 + 10 * m0 + m1;
+                }
+            }
+            ofs << "\n";
+        }
+    }
+    ofs.close();
+
+    OccupationMatrix occ;
+    occ.init(ucell, l_channel, 4, 2);
+    DFTU_BASE::read_occup_m(ucell, occ, l_channel, 2, fn, "none", 4, 2,
+                            DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    for (int m0 = 0; m0 < 5; ++m0)
+    {
+        for (int ipol0 = 0; ipol0 < 2; ++ipol0)
+        {
+            for (int m1 = 0; m1 < 5; ++m1)
+            {
+                for (int ipol1 = 0; ipol1 < 2; ++ipol1)
+                {
+                    EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, m0 + 5 * ipol0, m1 + 5 * ipol1),
+                                     1000 * ipol0 + 100 * ipol1 + 10 * m0 + m1);
+                }
+            }
+        }
+    }
+}
+
+// The compact SOC path must fill both real spin-off-diagonal blocks and drop Im(n_ud).
+TEST_F(DFTUBaseTest, ReadOccMatCompactSocRealSpinBasis)
+{
+    const std::vector<int> l_channel = {2};
+    const std::string fn = testing::TempDir() + "compact_soc_real.txt";
+    std::ofstream ofs(fn);
+    ASSERT_TRUE(ofs.is_open());
+    ofs << "Fe Atom 1 L 2 mag 0\n";
+    const std::vector<std::string> labels = {
+        "spin 1 nelec 1", "spin 12 re", "spin 12 im", "spin 2 nelec 1"
+    };
+    for (int block = 0; block < 4; ++block)
+    {
+        ofs << labels[block] << "\n";
+        for (int m0 = 0; m0 < 5; ++m0)
+        {
+            for (int m1 = 0; m1 < 5; ++m1)
+            {
+                ofs << " " << 100 * block + 10 * m0 + m1;
+            }
+            ofs << "\n";
+        }
+    }
+    ofs.close();
+
+    OccupationMatrix occ;
+    occ.init(ucell, l_channel, 4, 2);
+    DFTU_BASE::read_occup_m(ucell, occ, l_channel, 2, fn, "none", 4, 2,
+                            DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    for (int m0 = 0; m0 < 5; ++m0)
+    {
+        for (int m1 = 0; m1 < 5; ++m1)
+        {
+            const int offset = 10 * m0 + m1;
+            EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, m0, m1), offset);
+            EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, m0, m1 + 5), 100 + offset);
+            EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, m0 + 5, m1), 100 + offset);
+            EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, m0 + 5, m1 + 5), 300 + offset);
+        }
+    }
+}
+
 /// For init_occ_mat=1 the file-loaded occupation matrix must seed the
 /// Hamiltonian at the first SCF step.  Before the fix the whole
 /// iter_init_dftu_pw was skipped at the first step, so pot_onsite and
