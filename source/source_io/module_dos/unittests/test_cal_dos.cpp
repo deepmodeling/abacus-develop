@@ -64,7 +64,10 @@ TEST_F(DosTest,Dos)
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str, testing::HasSubstr("4801 # number of points"));
 	EXPECT_THAT(str, testing::HasSubstr("   -5.000000     0.500000     0.500000"));
-	EXPECT_THAT(str, testing::HasSubstr("   17.995000     0.000000     8.000000"));
+	EXPECT_THAT(str, testing::HasSubstr("   18.000000     0.000000     8.000000"));
+	// node-sampled smeared DOS: Gaussian evaluated at the exact eigenvalue
+	// position, e.g. node -5.000 eV gets 0.5*G(0) = 0.5/(sqrt(2*pi)*0.07)
+	EXPECT_THAT(str, testing::HasSubstr("2.849588"));
 	ifs.close();
 	remove("doss1_pw.txt");
 #ifdef __MPI

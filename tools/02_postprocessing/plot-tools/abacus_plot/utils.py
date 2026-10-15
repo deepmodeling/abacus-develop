@@ -238,11 +238,14 @@ def energy_minus_efermi(energy: Sequence, efermi: float) -> np.ndarray:
 
 
 def gaussian_smearing(energy: Sequence, dos: Sequence, sigma: float, chunk: int = 1024) -> np.ndarray:
-    """Apply Gaussian smearing to a raw (per-bin histogram) DOS.
+    """Apply Gaussian smearing to a raw (per-bin histogram) DOS column.
 
-    Follows the same convention as the smearing ABACUS applies internally:
-    ``dos_smear[j] = sum_i dos[i] * G(E_j - E_i)`` with a normalized
-    Gaussian G of width parameter ``sigma`` (the ``dos_sigma`` input).
+    This mirrors the histogram-based convention: ``dos_smear[j] = sum_i
+    dos[i] * G(E_j - E_i)`` with a normalized Gaussian G of width parameter
+    ``sigma`` (the ``dos_sigma`` input). Note that the ``dos_smear`` column
+    written by ABACUS is instead computed by smearing the eigenvalues at
+    their exact positions; the two differ by the O(bin-width) binning
+    error of the histogram, which is expected.
 
     The result is accumulated in row chunks, so memory usage stays
     O(chunk * npoints) instead of O(npoints**2) for the dense

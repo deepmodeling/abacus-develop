@@ -104,7 +104,8 @@ TEST_F(DosPWTest,Dos1)
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str, testing::HasSubstr("4801 # number of points"));
 		EXPECT_THAT(str, testing::HasSubstr("   -5.000000     0.500000     0.500000"));
-		EXPECT_THAT(str, testing::HasSubstr("   17.995000     0.000000     8.000000"));
+		EXPECT_THAT(str, testing::HasSubstr("   18.000000     0.000000     8.000000"));
+		EXPECT_THAT(str, testing::HasSubstr("2.849588"));
 		ifs.close();
 		remove("doss1g1.txt");
 #ifdef __MPI
@@ -183,6 +184,7 @@ TEST_F(DosPWTest,Dos2)
 		EXPECT_THAT(str1, testing::HasSubstr("2526 # number of points"));
 		EXPECT_THAT(str1, testing::HasSubstr("   -5.002500     0.500000     0.500000"));
 		EXPECT_THAT(str1, testing::HasSubstr("    7.562500     0.000000     8.000000"));
+		EXPECT_THAT(str1, testing::HasSubstr("2.847771"));
 		ifs.close();
 		remove("doss1g1.txt");
 #ifdef __MPI
