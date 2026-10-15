@@ -20,7 +20,6 @@
 #include "esolver_dp.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
-#include "source_cell/domain_decomposition.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/cif_io.h"
@@ -30,7 +29,6 @@
 #include <iomanip>
 #include <array>
 #include <limits>
-#include <map>
 #include <sstream>
 #include <unordered_map>
 
@@ -168,32 +166,9 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
             ModuleBase::WARNING_QUIT("ESolver_DP", "MDCell ghost exchange plan exceeds int range.");
         }
         const bool use_mapping = ghost_plan.nprocs == 1;
-        std::vector<int> mapping;
-        if (use_mapping)
+        if (use_mapping && ghost_plan.mapping.size() != static_cast<std::size_t>(natom))
         {
-            std::map<std::pair<int, std::int64_t>, int> owned_atom_map;
-            for (int iat = 0; iat < nowned_atoms; ++iat)
-            {
-                const LocalAtom& atom = owned_atoms[static_cast<std::size_t>(iat)];
-                owned_atom_map[std::make_pair(atom.type, atom.type_index)] = iat;
-            }
-            mapping.resize(static_cast<std::size_t>(natom), 0);
-            for (int iat = 0; iat < natom; ++iat)
-            {
-                if (iat < nowned_atoms)
-                {
-                    mapping[static_cast<std::size_t>(iat)] = iat;
-                    continue;
-                }
-                const LocalAtom& atom = ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
-                const std::map<std::pair<int, std::int64_t>, int>::const_iterator owner
-                    = owned_atom_map.find(std::make_pair(atom.type, atom.type_index));
-                if (owner == owned_atom_map.end())
-                {
-                    ModuleBase::WARNING_QUIT("ESolver_DP", "Cannot match a DeePMD ghost atom to its local owner.");
-                }
-                mapping[static_cast<std::size_t>(iat)] = owner->second;
-            }
+            ModuleBase::WARNING_QUIT("ESolver_DP", "Invalid single-rank DeePMD atom mapping.");
         }
         const int nswap = static_cast<int>(nswap_size);
         std::vector<std::vector<int> > sendlist_storage = ghost_plan.send_atom_indices;
@@ -219,13 +194,14 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         int* ilist_data = nowned_atoms > 0 ? &ilist[0] : NULL;
         int* numneigh_data = nowned_atoms > 0 ? &numneigh[0] : NULL;
         int** firstneigh_data = nowned_atoms > 0 ? &firstneigh[0] : NULL;
+        std::vector<int> mapping = ghost_plan.mapping;
         int* mapping_data = use_mapping && natom > 0 ? &mapping[0] : NULL;
         void* dp_world = NULL;
 #ifdef __MPI
         MPI_Comm dp_world_comm = mdcell.communicator();
         dp_world = &dp_world_comm;
 #endif
-#ifdef __DPMD_COMM_NLIST
+#if defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 13
         DPInputNlist nlist(nowned_atoms,
                            ilist_data,
                            numneigh_data,
@@ -239,13 +215,26 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
                            recvproc,
                            dp_world,
                            ghost_plan.nprocs);
+#elif defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 12
+        DPInputNlist nlist(nowned_atoms,
+                           ilist_data,
+                           numneigh_data,
+                           firstneigh_data,
+                           nswap,
+                           sendnum,
+                           recvnum,
+                           firstrecv,
+                           sendlist_data,
+                           sendproc,
+                           recvproc,
+                           dp_world);
 #else
         DPInputNlist nlist(nowned_atoms,
                            ilist_data,
                            numneigh_data,
                            firstneigh_data);
 #endif
-#if !defined(__DPMDC) || defined(__DPMD_COMM_NLIST)
+#ifdef __DPMD_HAS_NLIST_MAPPING
         if (use_mapping)
         {
             nlist.set_mapping(mapping_data);

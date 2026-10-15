@@ -3,7 +3,6 @@
 
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
-#include "source_cell/ghost_exchange_plan.h"
 #include "source_cell/module_neighlist/local_atom.h"
 
 #include <array>
@@ -16,6 +15,7 @@
 
 class UnitCell;
 class MDCell;
+struct GhostExchangePlan;
 namespace ModuleBase
 {
 class CommunicationDomain;
@@ -48,7 +48,6 @@ public:
     void update_ghost_atom_positions(MDCell& cell);
     void accumulate_ghost_forces(MDCell& cell);
     void prepare_neighbors(MDCell& cell);
-    GhostExchangePlan build_ghost_exchange_plan(const MDCell& cell) const;
 
     int owner_rank_from_frac(const ModuleBase::Vector3<double>& frac) const;
 
@@ -119,6 +118,7 @@ private:
                                               const std::array<int, 3>& previous_image_shift,
                                               const GhostExchangeSlot& slot) const;
     void build_ghost_exchange_slots(std::vector<GhostExchangeSlot>& slots) const;
+    GhostExchangePlan build_ghost_exchange_plan(const MDCell& cell) const;
     PackedAtom pack_atom(const LocalAtom& atom, const std::array<int, 3>& image_shift) const;
     LocalAtom unpack_ghost_atom(const PackedAtom& packed) const;
     LocalAtom unpack_owned_atom(const PackedAtom& packed) const;

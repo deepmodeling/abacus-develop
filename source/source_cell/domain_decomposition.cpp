@@ -1,5 +1,6 @@
 #include "source_cell/domain_decomposition.h"
 #include "source_base/parallel_cell.h"
+#include "source_cell/ghost_exchange_plan.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
@@ -359,6 +360,30 @@ GhostExchangePlan DomainDecomposition::build_ghost_exchange_plan(const MDCell& c
         plan.send_atom_indices.push_back(slot.send_atom_indices);
         plan.sendproc.push_back(slot.send_rank);
         plan.recvproc.push_back(slot.recv_rank);
+    }
+
+    if (plan.nprocs == 1)
+    {
+        const std::size_t natom = cell.owned_atoms_.size() + cell.ghost_atoms_.size();
+        plan.mapping.resize(natom, 0);
+        std::map<std::pair<int, std::int64_t>, int> owned_lookup;
+        for (std::size_t iat = 0; iat < cell.owned_atoms_.size(); ++iat)
+        {
+            const LocalAtom& atom = cell.owned_atoms_[iat];
+            owned_lookup[std::make_pair(atom.type, atom.type_index)] = static_cast<int>(iat);
+            plan.mapping[iat] = static_cast<int>(iat);
+        }
+        for (std::size_t iat = 0; iat < cell.ghost_atoms_.size(); ++iat)
+        {
+            const LocalAtom& atom = cell.ghost_atoms_[iat];
+            const std::map<std::pair<int, std::int64_t>, int>::const_iterator owner
+                = owned_lookup.find(std::make_pair(atom.type, atom.type_index));
+            if (owner == owned_lookup.end())
+            {
+                throw std::runtime_error("Cannot match a single-rank ghost atom to an owned atom.");
+            }
+            plan.mapping[cell.owned_atoms_.size() + iat] = owner->second;
+        }
     }
 
     return plan;
