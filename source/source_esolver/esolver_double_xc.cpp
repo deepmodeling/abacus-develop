@@ -174,7 +174,8 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                                                              this->exx_nao,
                                                              this->exx_info_,
                                                              *this->inp_,
-                                                             load_exx_flag);
+                                                             load_exx_flag,
+                                                             nullptr);
     }
 
     XC_Functional::set_xc_type(this->inp_->deepks_out_base);
@@ -453,7 +454,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                        this->exx_nao,
                        &ucell.symm,
                        this->exx_info_,
-                       fs_cfg);
+                       fs_cfg, nullptr, nullptr);
 
     // restore to original xc
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);

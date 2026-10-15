@@ -105,8 +105,9 @@ void LCAO_domain::set_pot(
                        inp.device,
                        PARAM.globalv.hubbard_u,
                        PARAM.globalv.uramping,
-                       inp.occ_mat_ctrl,
-                       inp.mixing_dftu);
+                       inp.init_occ_mat,
+                       inp.mixing_dftu,
+                       DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
     }
 
     //! 4) init exact exchange calculations

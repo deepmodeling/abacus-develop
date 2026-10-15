@@ -219,8 +219,8 @@ void write_Vxc_LIP(int nspin,
             assert(e_orb.size() == kv.get_nks());
             const int nk = kv.get_nks() / nspin0;
             std::ofstream ofs;
-            const std::string out_name = (label == "") ? "out.dat" : label + "_out.dat";
-            ofs.open(global_out_dir + "vxc_" + out_name,
+            const std::string out_name = (label == "") ? ".txt" : "_" + label + ".txt";
+            ofs.open(global_out_dir + "vxc" + out_name,
                 app ? std::ios::app : std::ios::out);
             ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
             ofs << std::scientific << std::setprecision(16);

@@ -1,4 +1,8 @@
 #include "esolver_of.h"
+
+#include <cstddef>
+#include <vector>
+
 #include "source_base/formatter.h"
 #include "source_base/memory_recorder.h"
 #include "source_estate/module_pot/efield.h"
@@ -94,23 +98,36 @@ void ESolver_OF::allocate_array()
     this->ptemp_rho_->allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(),
                                this->inp_->test_charge);
 
-    this->theta_ = new double[this->inp_->nspin];
-    this->pdLdphi_ = new double*[this->inp_->nspin];
-    this->pdEdphi_ = new double*[this->inp_->nspin];
-    this->pdirect_ = new double*[this->inp_->nspin];
-    this->precip_dir_ = new std::complex<double>*[this->inp_->nspin];
-
-    for (int is = 0; is < this->inp_->nspin; ++is)
-    {
-        this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
-        this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
-        this->pdirect_[is] = new double[this->pw_rho->nrxx];
-        this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
-    }
+    this->theta_.resize(this->inp_->nspin);
+    this->resize_spin_arrays();
     ModuleBase::Memory::record("OFDFT::pdLdphi_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::pdEdphi_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::pdirect_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * this->inp_->nspin * this->pw_rho->npw);
+}
+
+void ESolver_OF::resize_spin_arrays()
+{
+    const std::size_t nspin = static_cast<std::size_t>(this->inp_->nspin);
+    const std::size_t nrxx = static_cast<std::size_t>(this->pw_rho->nrxx);
+    const std::size_t npw = static_cast<std::size_t>(this->pw_rho->npw);
+
+    this->pdirect_storage_.resize(nspin * nrxx);
+    this->pdirect_.resize(nspin);
+    this->pdEdphi_storage_.resize(nspin * nrxx);
+    this->pdEdphi_.resize(nspin);
+    this->pdLdphi_storage_.resize(nspin * nrxx);
+    this->pdLdphi_.resize(nspin);
+    this->precip_dir_storage_.resize(nspin * npw);
+    this->precip_dir_.resize(nspin);
+
+    for (std::size_t is = 0; is < nspin; ++is)
+    {
+        this->pdirect_[is] = this->pdirect_storage_.data() + is * nrxx;
+        this->pdEdphi_[is] = this->pdEdphi_storage_.data() + is * nrxx;
+        this->pdLdphi_[is] = this->pdLdphi_storage_.data() + is * nrxx;
+        this->precip_dir_[is] = this->precip_dir_storage_.data() + is * npw;
+    }
 }
 
 /**
@@ -122,12 +139,11 @@ void ESolver_OF::allocate_array()
  */
 void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& ucell)
 {
-    double** dEdtemp_phi = new double*[this->inp_->nspin];
-    double** temp_phi = new double*[this->inp_->nspin];
+    std::vector<double> dEdtemp_phi(this->pw_rho->nrxx);
+    std::vector<double*> temp_phi(this->inp_->nspin);
 
     for (int is = 0; is < this->inp_->nspin; ++is)
     {
-        dEdtemp_phi[is] = new double[this->pw_rho->nrxx];
         if (is == this->tn_spin_flag_)
         {
             temp_phi[is] = ptemp_phi;
@@ -147,24 +163,18 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& uce
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_eff_v();
 
     this->kedf_manager_->get_potential(this->ptemp_rho_->rho,
-                                       temp_phi,
+                                       temp_phi.data(),
                                        this->pw_rho,
                                        vr_eff); // KEDF potential
     for (int i = 0; i < this->pw_rho->nrxx; ++i)
     {
-        dEdtemp_phi[this->tn_spin_flag_][i] = vr_eff(this->tn_spin_flag_, i);
+        dEdtemp_phi[i] = vr_eff(this->tn_spin_flag_, i);
     }
-    double temp_mu = this->cal_mu(ptemp_phi, dEdtemp_phi[this->tn_spin_flag_], this->nelec_[this->tn_spin_flag_]);
+    double temp_mu = this->cal_mu(ptemp_phi, dEdtemp_phi.data(), this->nelec_[this->tn_spin_flag_]);
     for (int i = 0; i < this->pw_rho->nrxx; ++i)
     {
-        rdLdphi[i] = dEdtemp_phi[this->tn_spin_flag_][i] - 2. * temp_mu * ptemp_phi[i];
+        rdLdphi[i] = dEdtemp_phi[i] - 2. * temp_mu * ptemp_phi[i];
     }
-    for (int is = 0; is < this->inp_->nspin; ++is)
-    {
-        delete[] dEdtemp_phi[is];
-    }
-    delete[] dEdtemp_phi;
-    delete[] temp_phi;
 }
 
 /**
@@ -180,7 +190,7 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& uce
  */
 void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta)
 {
-    double* dphi_dtheta = new double[this->pw_rho->nrxx];
+    std::vector<double> dphi_dtheta(this->pw_rho->nrxx);
 
     unitcell::cal_ux(ucell, this->inp_->nspin);
     this->pelec->pot->update_from_charge(temp_rho, &ucell);
@@ -197,10 +207,9 @@ void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& uc
             this->pdEdphi_[is][ir] = vr_eff(is, ir);
             dphi_dtheta[ir] = -this->pphi_[is][ir] * sin(ptheta[is]) + this->pdirect_[is][ir] * cos(ptheta[is]);
         }
-        rdEdtheta[is] = this->inner_product(this->pdEdphi_[is], dphi_dtheta, this->pw_rho->nrxx, this->dV_);
+        rdEdtheta[is] = this->inner_product(this->pdEdphi_[is], dphi_dtheta.data(), this->pw_rho->nrxx, this->dV_);
         Parallel_Reduce::reduce_all(rdEdtheta[is]);
     }
-    delete[] dphi_dtheta;
 }
 
 /**
@@ -308,11 +317,10 @@ void ESolver_OF::adjust_direction(void)
 void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
 {
     assert(this->inp_->nspin > 0);
-    double* temp_theta = new double[this->inp_->nspin];
-    ModuleBase::GlobalFunc::ZEROS(temp_theta, this->inp_->nspin);
+    std::vector<double> temp_theta(this->inp_->nspin, 0.0);
 
     double max_dEdtheta = 1e5; // threshould of dEdtheta, avoid the unstable optimization
-    this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta, dEdtheta);
+    this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta.data(), dEdtheta);
 
     // Assert dEdtheta(theta = 0) < 0, otherwise line search will not work.
     for (int is = 0; is < this->inp_->nspin; ++is)
@@ -331,7 +339,7 @@ void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell&
                 this->pdirect_[is][ir] = -this->pdLdphi_[is][ir];
             }
             this->adjust_direction();
-            this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta, dEdtheta);
+            this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta.data(), dEdtheta);
             if (dEdtheta[is] > max_dEdtheta)
             {
                 std::cout << "dEdtheta    " << dEdtheta[is] << std::endl;
@@ -346,7 +354,6 @@ void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell&
             }
         }
     }
-    delete[] temp_theta;
 }
 
 /**
@@ -371,7 +378,7 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
                     = this->pphi_[0][ir] * cos(this->theta_[0]) + this->pdirect_[0][ir] * sin(this->theta_[0]);
                 ptemp_rho_->rho[0][ir] = ptemp_phi[0][ir] * ptemp_phi[0][ir];
             }
-            this->cal_dEdtheta(ptemp_phi, ptemp_rho_, ucell, this->theta_, dEdtheta);
+            this->cal_dEdtheta(ptemp_phi, ptemp_rho_, ucell, this->theta_.data(), dEdtheta);
             this->pelec->cal_energies(2,
                                       this->inp_->imp_sol,
                                       this->inp_->sc_mag_switch,

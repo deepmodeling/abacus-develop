@@ -12,10 +12,6 @@ namespace pw
 
 void check_td_input(const Input_para& input, const UnitCell& cell, const bool needs_ked, const bool cal_exx)
 {
-    if (input.init_vecpot_file)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support init_vecpot_file=true; set init_vecpot_file=false.");
-    }
     if (input.out_current != 0 && input.out_current != 1)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires out_current=0 or 1.");
@@ -30,14 +26,9 @@ void check_td_input(const Input_para& input, const UnitCell& cell, const bool ne
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT",
                                  "PW RT-TDDFT requires fixed ions; set every atom's movement flags to 0 0 0 in STRU.");
     }
-    if (input.calculation == "cell-relax" || (input.calculation == "md" && (input.mdp.md_type == "npt" || input.mdp.md_type == "msst")))
+    if (input.mdp.md_type == "npt" || input.mdp.md_type == "msst")
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires a fixed cell; cell-relax, NPT and MSST are not supported.");
-    }
-    if (input.socket_driver)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT",
-                                 "PW RT-TDDFT requires fixed ions and a fixed cell; socket_driver is not supported.");
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires a fixed cell; NPT and MSST are not supported.");
     }
     if (input.dft_plus_u != 0)
     {
@@ -54,10 +45,6 @@ void check_td_input(const Input_para& input, const UnitCell& cell, const bool ne
     if ((input.nspin != 1 && input.nspin != 2) || input.bndpar != 1 || (input.td_stype != 0 && input.td_stype != 1))
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires nspin=1 or 2, bndpar=1 and td_stype=0 or 1.");
-    }
-    if (input.estep_per_md != 1)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT currently requires estep_per_md to be 1.");
     }
     if (input.mdp.md_restart || input.restart_load)
     {

@@ -6,7 +6,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_lcao/center2orb_orb11.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/spar_hsr.h"
@@ -21,9 +20,11 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(HS_Matrix_K<TK>* hsk_in,
                                              const UnitCell* ucell_in,
                                              const std::vector<double>& orb_cutoff,
                                              const Grid_Driver* GridD_in,
-                                             const TwoCenterIntegrator* intor)
+                                             const TwoCenterIntegrator* intor,
+                                             TD_info& td_info)
     : OperatorLCAO<TK, TR>(hsk_in, kv_in->kvec_d, hR_in), orb_cutoff_(orb_cutoff), kv(kv_in), intor_(intor)
 {
+    this->td_info_ = &td_info;
     this->ucell = ucell_in;
     this->cal_type = calculation_type::lcao_tddft_periodic;
     this->Grid = GridD_in;
@@ -100,7 +101,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::calculate_HR()
                     std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                     for (int i = 0; i < 3; i++)
                     {
-                        tmp_c[i] = TD_info::td_vel_op->get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
+                        tmp_c[i] = this->td_info_->get_current_term_pointer(i)->find_matrix(iat1, iat2, R_index2)->get_pointer();
                     }
                     this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer(), tmp_c);
                 }
@@ -227,7 +228,7 @@ template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::update_td()
 {
     //std::cout<<"velocity"<<std::endl;
-    this->cart_At = TD_info::A_prop_ha;
+    this->cart_At = this->td_info_->endpoint_A();
 }
 
 template <typename TK, typename TR>
@@ -239,7 +240,7 @@ void hamilt::TDEkinetic<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* hR_tmp
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
-    if (elecstate::H_TDDFT_pw::stype != 1)
+    if (this->td_info_->field().gauge() != 1)
     {
         return;
     }
@@ -287,7 +288,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR_tmp()
 {
-    if (elecstate::H_TDDFT_pw::stype != 1)
+    if (this->td_info_->field().gauge() != 1)
     {
         return;
     }
@@ -321,7 +322,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
     ModuleBase::TITLE("TDEkinetic", "contributeHR");
     ModuleBase::timer::start("TDEkinetic", "contributeHR");
     // skip if not TDDFT velocity gauge
-    if (elecstate::H_TDDFT_pw::stype != 1)
+    if (this->td_info_->field().gauge() != 1)
     {
         return;
     }
@@ -344,11 +345,11 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
         // initialize current term if needed
         if (TD_info::out_current == 1)
         {
-            TD_info::td_vel_op->initialize_current_term(this->hR_tmp, paraV);
+            this->td_info_->initialize_current_term(this->hR_tmp, paraV);
         }
         if (TD_info::out_current==2)
         {
-           TD_info::td_vel_op->set_velocity_HR(this->hR_tmp);
+           this->td_info_->set_velocity_HR(this->hR_tmp);
         }
         // calculate the values in hR_tmp
         this->update_td();
@@ -364,7 +365,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHR()
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
-    if (PARAM.inp.td_stype != 1)
+    if (this->td_info_->field().gauge() != 1)
     {
         return;
     }
@@ -380,7 +381,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHk(int ik)
             for (int spin_now = 0; spin_now < spin_tot; spin_now++)
             {
                 sparse_format::cal_HContainer<std::complex<double>>(
-                    *(paraV), 1e-10, *hR_tmp, TD_info::td_vel_op->HR_sparse_td_vel[spin_now]);
+                    *(paraV), 1e-10, *hR_tmp, this->td_info_->HR_sparse_td_vel[spin_now]);
             }
             output_hR_done = true;
         }

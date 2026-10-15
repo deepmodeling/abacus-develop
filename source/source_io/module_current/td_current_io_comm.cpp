@@ -7,7 +7,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_base/vector3.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_rt/td_folding.h"
@@ -191,7 +190,8 @@ void ModuleIO::sum_HR(const UnitCell& ucell,
                       const hamilt::HContainer<TR>* hR,
                       hamilt::HContainer<std::complex<double>>* full_hR,
                       const Exx_NAO<std::complex<double>>& exx_nao,
-                      const Exx_Info& exx_info)
+                      const Exx_Info& exx_info,
+                      const TD_info& td_info)
 {
     ModuleBase::TITLE("ModuleIO", "sum_HR");
     ModuleBase::timer::start("ModuleIO", "sum_HR");
@@ -202,13 +202,9 @@ void ModuleIO::sum_HR(const UnitCell& ucell,
     // full_hR; rebuilding BvK cells and adding HexxR here would double count.
     add_HR(hR, full_hR);
     // add velocity complex hR
-    if (PARAM.inp.td_stype == 1)
+    if (td_info.field().gauge() == 1)
     {
-        if (TD_info::td_vel_op == nullptr)
-        {
-            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gauge infos is null!");
-        }
-        const hamilt::HContainer<std::complex<double>>* velocity_hR = TD_info::td_vel_op->get_velocity_HR_pointer();
+        const hamilt::HContainer<std::complex<double>>* velocity_hR = td_info.get_velocity_HR_pointer();
         add_HR(velocity_hR, full_hR);
     }
     ModuleBase::timer::end("ModuleIO", "sum_HR");
@@ -292,9 +288,9 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
         // 1.1 set H(k)
         ModuleBase::GlobalFunc::ZEROS(hk, pv->nloc);
         const int nrow = pv->get_row_size();
-        if (elecstate::H_TDDFT_pw::stype == 2)
+        if (td_p->field().gauge() == 2)
         {
-            module_rt::folding_HR_td(hR, hk, kv.kvec_d[ik], TD_info::A_prop_ha, td_p->get_phase_hybrid(), nrow, 1);
+            module_rt::folding_HR_td(hR, hk, kv.kvec_d[ik], td_p->endpoint_A(), td_p->get_phase_hybrid(), nrow, 1);
         }
         else
         {
@@ -302,9 +298,9 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
         }
         // 1.2 set S(k)
         ModuleBase::GlobalFunc::ZEROS(sk, pv->nloc);
-        if (elecstate::H_TDDFT_pw::stype == 2)
+        if (td_p->field().gauge() == 2)
         {
-            module_rt::folding_HR_td(sR, sk, kv.kvec_d[ik], TD_info::A_prop_ha, td_p->get_phase_hybrid(), nrow, 1);
+            module_rt::folding_HR_td(sR, sk, kv.kvec_d[ik], td_p->endpoint_A(), td_p->get_phase_hybrid(), nrow, 1);
         }
         else
         {
@@ -344,13 +340,13 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             // 3. set partial_H(k), partial_S(k) and r(k)
             // 3.1 set partial_H(k)
             ModuleBase::GlobalFunc::ZEROS(partial_hk, pv->nloc);
-            if (elecstate::H_TDDFT_pw::stype == 2)
+            if (td_p->field().gauge() == 2)
             {
                 module_rt::folding_partial_HR_td(ucell,
                                                  hR,
                                                  partial_hk,
                                                  kv.kvec_d[ik],
-                                                 TD_info::A_prop_ha,
+                                                 td_p->endpoint_A(),
                                                  td_p->get_phase_hybrid(),
                                                  i_alpha,
                                                  nrow,
@@ -362,13 +358,13 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             }
             // 3.2 set partial S(k)
             ModuleBase::GlobalFunc::ZEROS(partial_sk, pv->nloc);
-            if (elecstate::H_TDDFT_pw::stype == 2)
+            if (td_p->field().gauge() == 2)
             {
                 module_rt::folding_partial_HR_td(ucell,
                                                  sR,
                                                  partial_sk,
                                                  kv.kvec_d[ik],
-                                                 TD_info::A_prop_ha,
+                                                 td_p->endpoint_A(),
                                                  td_p->get_phase_hybrid(),
                                                  i_alpha,
                                                  nrow,
@@ -381,9 +377,9 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             // 3.3 set r(k)
             ModuleBase::GlobalFunc::ZEROS(rk, pv->nloc);
             // folding_rR(rR[i_alpha], partial_sk, rk, pv, kv.kvec_d[ik], nrow, 1);
-            if (elecstate::H_TDDFT_pw::stype == 2)
+            if (td_p->field().gauge() == 2)
             {
-                module_rt::folding_HR_td(*rR[i_alpha], rk, kv.kvec_d[ik], TD_info::A_prop_ha, td_p->get_phase_hybrid(), nrow, 1);
+                module_rt::folding_HR_td(*rR[i_alpha], rk, kv.kvec_d[ik], td_p->endpoint_A(), td_p->get_phase_hybrid(), nrow, 1);
             }
             else
             {
@@ -705,7 +701,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
     hamilt::HContainer<std::complex<double>>* full_hR;
     full_hR = new hamilt::HContainer<std::complex<double>>(pv);
     current_k.resize(kv.get_nks());
-    sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao, exx_info);
+    sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao, exx_info, *td_p);
     cal_current_comm_k(ucell, GridD, orb, pv, kv, td_p, *sR, *full_hR, psi, pelec, current_k);
     delete full_hR;
 

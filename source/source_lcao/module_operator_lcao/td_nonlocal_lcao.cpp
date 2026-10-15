@@ -3,7 +3,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/lcao_nonlocal_info.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -26,9 +25,11 @@ hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::TDNonlocal(HS_Matrix_K<TK>* hs
                                                              hamilt::HContainer<TR>* hR_in,
                                                              const UnitCell* ucell_in,
                                                              const LCAO_Orbitals& orb,
-                                                             const Grid_Driver* GridD_in)
+                                                             const Grid_Driver* GridD_in,
+                                                             TD_info& td_info)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_(orb)
 {
+    this->td_info_ = &td_info;
     this->cal_type = calculation_type::lcao_tddft_periodic;
     this->ucell = ucell_in;
     this->Grid = GridD_in;
@@ -52,13 +53,13 @@ template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::update_td()
 {
     // calculate At in cartesian coorinates.
-    this->cart_At = TD_info::A_prop_ha;
+    this->cart_At = this->td_info_->endpoint_A();
 }
 // initialize_HR()
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
-    if (elecstate::H_TDDFT_pw::stype != 1)
+    if (this->td_info_->field().gauge() != 1)
     {
         return;
     }
@@ -103,7 +104,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR_tmp(const Parallel_Orbitals* paraV)
 {
-    if (elecstate::H_TDDFT_pw::stype != 1)
+    if (this->td_info_->field().gauge() != 1)
     {
         return;
     }
@@ -297,7 +298,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                             std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                             for (int ii = 0; ii < 3; ii++)
                             {
-                                tmp_c[ii] = TD_info::td_vel_op->get_current_term_pointer(ii)
+                                tmp_c[ii] = this->td_info_->get_current_term_pointer(ii)
                                                 ->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])
                                                 ->get_pointer();
                             }
@@ -450,7 +451,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("TDNonlocal", "contributeHR");
 
-    if (elecstate::H_TDDFT_pw::stype != 1)
+    if (this->td_info_->field().gauge() != 1)
     {
         return;
     }

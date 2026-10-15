@@ -11,3 +11,9 @@ AddTest(
   LIBS parameter base device psi container planewave #for FFT
   SOURCES lr_util_algo_test.cpp ../lr_util.cpp 
 )
+
+AddTest(
+  TARGET MODULE_LR_spectrum_mo_output_test
+  LIBS parameter base device psi container planewave
+  SOURCES test_spectrum_mo_output.cpp
+)

@@ -9,6 +9,19 @@ add_library(tddft_test_lib tddft_test.cpp)
 target_link_libraries(tddft_test_lib PRIVATE Threads::Threads GTest::gtest_main GTest::gmock_main)
 #target_include_directories(tddft_test_lib PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${GTEST_INCLUDE_DIRS}>)
 
+# This regression exercises CPU and CPU Tensor-LAPACK propagation. A cuBLASMp
+# target also needs its GPU kernels and distributed-library link dependencies.
+if(NOT ENABLE_CUBLASMP)
+  AddTest(
+    TARGET MODULE_LCAO_tddft_evolve_psi_test
+    LIBS parameter base device tddft_test_lib
+    SOURCES test_evolve_psi.cpp ../evolve_psi.cpp ../middle_hamilt.cpp ../norm_psi.cpp
+            ../band_energy.cpp ../upsi.cpp ../solve_propagation.cpp ../propagator.cpp
+            ../propagator_cn2.cpp ../propagator_taylor.cpp ../propagator_etrs.cpp
+            ../../../source_basis/module_ao/parallel_orbitals.cpp
+  )
+endif()
+
 AddTest(
   TARGET MODULE_LCAO_tddft_middle_hamilt_test
   LIBS parameter base device tddft_test_lib
@@ -19,6 +32,7 @@ AddTest(
   TARGET MODULE_LCAO_tddft_band_energy_test
   LIBS parameter base device tddft_test_lib
   SOURCES band_energy_test.cpp ../band_energy.cpp ../../../source_basis/module_ao/parallel_orbitals.cpp
+          ../../../source_io/module_energy/td_eij_io.cpp
 )
 
 AddTest(
@@ -41,7 +55,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_tddft_snap_psibeta_half_test
-  LIBS parameter base device orb numerical_atomic_orbitals tddft_test_lib
+  LIBS parameter base device orb numerical_atomic_orbitals nao_smoothgen tddft_test_lib
   SOURCES snap_psb_half_tddft_test.cpp ../radial_interpolation.cpp ../snap_proj_half_tddft.cpp ../snap_psb_half_tddft.cpp
           ../../center2orb.cpp
           ../../center2orb_orb11.cpp
