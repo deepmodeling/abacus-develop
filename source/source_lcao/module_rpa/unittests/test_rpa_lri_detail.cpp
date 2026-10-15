@@ -3,7 +3,7 @@
 
 #include "../rpa_lri_bz_io.h"
 #include "../rpa_lri_coeff_v1.h"
-#include "../librpa_bz_sampling.h"
+#include "../module_librpa_io/librpa_bz_sampling.h"
 
 #include <RI/global/Tensor.h>
 #include <array>

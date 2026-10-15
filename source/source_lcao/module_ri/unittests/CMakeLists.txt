@@ -16,24 +16,5 @@ AddTest(
   LIBS parameter
   SOURCES test_abfs_vector3_order.cpp
 )
-AddTest(
-  TARGET MODULE_RI_rpa_lri_detail_test
-  LIBS parameter base device
-  SOURCES test_rpa_lri_detail.cpp
-          ../rpa_lri_detail.cpp
-          ../rpa_lri_coeff_v1.cpp
-          ../rpa_lri_bz_io.cpp
-          ../librpa_bz_sampling.cpp
-)
-AddTest(
-  TARGET MODULE_RI_rpa_lri_band_io_test
-  LIBS parameter base device
-  SOURCES test_rpa_lri_band_io.cpp ../rpa_lri_band_io.cpp
-)
-AddTest(
-  TARGET MODULE_RI_rpa_lri_symmetry_test
-  LIBS base device symmetry
-  SOURCES test_librpa_stru_symmetry.cpp ../librpa_bz_sampling.cpp ../librpa_stru_symmetry.cpp ../librpa_stru_units.cpp
-)
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/support"
      DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
