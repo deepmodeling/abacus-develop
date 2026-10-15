@@ -210,26 +210,30 @@ class FFT_Bundle
     int fft_mode = 0;
     bool float_flag = false;
     bool double_flag = false;
-    // Backends serving the device-memory ("gpu-like") 3D FFT interface for the
-    // configured device. When device == "cpu" they also serve the host-memory
-    // ("cpu-like") interface.
+    // Backends selected by `device`: an FFT_CPU instance for "cpu",
+    // FFT_CUDA/FFT_ROCM for "gpu", FFT_DSP for "dsp". They serve the
+    // device-memory ("gpu-like") 3D FFT interface; on "cpu" they also serve
+    // the host-memory ("cpu-like") interface.
     std::shared_ptr<FFT_BASE<float>> fft_float = nullptr;
     std::shared_ptr<FFT_BASE<double>> fft_double = nullptr;
-    // CPU backends serving the host-memory ("cpu-like") interface when the
-    // configured device is not "cpu" (the gpu/dsp backends implement only the
-    // 3D FFT interface). They keep host post-processing such as the Wannier90
-    // interface and Berry phase working, since those run on the CPU
-    // wavefunction mirror even in GPU calculations.
-    std::shared_ptr<FFT_BASE<float>> fft_float_cpu = nullptr;
-    std::shared_ptr<FFT_BASE<double>> fft_double_cpu = nullptr;
+    // Extra CPU backends serving the host-memory ("cpu-like") interface when
+    // the configured device is not "cpu", since the gpu/dsp backends implement
+    // only the 3D FFT interface. They keep host post-processing such as the
+    // Wannier90 interface and Berry phase working, since those run on the CPU
+    // wavefunction mirror even in GPU calculations. Null when
+    // device == "cpu", where fft_float/fft_double already serve both
+    // interfaces.
+    std::shared_ptr<FFT_BASE<float>> host_fft_float = nullptr;
+    std::shared_ptr<FFT_BASE<double>> host_fft_double = nullptr;
 
-    FFT_BASE<float>* fft_host_float() const
+    // The backend that serves the host-memory interface, whichever it is.
+    FFT_BASE<float>* get_host_fft_float() const
     {
-        return (this->device == "cpu") ? this->fft_float.get() : this->fft_float_cpu.get();
+        return (this->device == "cpu") ? this->fft_float.get() : this->host_fft_float.get();
     }
-    FFT_BASE<double>* fft_host_double() const
+    FFT_BASE<double>* get_host_fft_double() const
     {
-        return (this->device == "cpu") ? this->fft_double.get() : this->fft_double_cpu.get();
+        return (this->device == "cpu") ? this->fft_double.get() : this->host_fft_double.get();
     }
 
     std::string device = "cpu";
