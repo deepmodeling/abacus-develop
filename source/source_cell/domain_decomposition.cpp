@@ -43,6 +43,31 @@ DomainDecomposition::~DomainDecomposition()
 #endif
 }
 
+GhostExchangePlanView GhostExchangePlan::make_view()
+{
+    GhostExchangePlanView view;
+    view.nswap = static_cast<int>(sendnum.size());
+    view.sendnum = sendnum.empty() ? NULL : sendnum.data();
+    view.recvnum = recvnum.empty() ? NULL : recvnum.data();
+    view.firstrecv = firstrecv.empty() ? NULL : firstrecv.data();
+    view.sendproc = sendproc.empty() ? NULL : sendproc.data();
+    view.recvproc = recvproc.empty() ? NULL : recvproc.data();
+    view.mapping = mapping.empty() ? NULL : mapping.data();
+    view.sendlist_storage.resize(send_atom_indices.size());
+    for (std::size_t iswap = 0; iswap < send_atom_indices.size(); ++iswap)
+    {
+        if (!send_atom_indices[iswap].empty())
+        {
+            view.sendlist_storage[iswap] = send_atom_indices[iswap].data();
+        }
+        else
+        {
+            view.sendlist_storage[iswap] = NULL;
+        }
+    }
+    return view;
+}
+
 void DomainDecomposition::init(const ModuleBase::CommunicationDomain& comm_domain,
                                const ModuleBase::Matrix3& latvec,
                                double lat0,

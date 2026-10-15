@@ -52,6 +52,15 @@ const GhostExchangePlan& MDCell::get_ghost_exchange_plan() const
     return ghost_exchange_plan_;
 }
 
+GhostExchangePlan& MDCell::get_ghost_exchange_plan()
+{
+    if (!ghost_exchange_plan_valid_)
+    {
+        ModuleBase::WARNING_QUIT("MDCell", "Ghost exchange plan is not available.");
+    }
+    return ghost_exchange_plan_;
+}
+
 void MDCell::clear_ghost_exchange_plan_()
 {
     ghost_exchange_plan_ = GhostExchangePlan();

@@ -83,13 +83,27 @@ TEST_F(DomainDecompositionTest, CutoffSetterDoesNotExchangeAtoms)
 TEST_F(DomainDecompositionTest, GhostExchangePlanMatchesGhostLayout)
 {
     decomp.prepare_neighbors(cell);
-    const GhostExchangePlan& plan = cell.get_ghost_exchange_plan();
+    GhostExchangePlan& plan = cell.get_ghost_exchange_plan();
     const std::size_t exchange_count = plan.sendnum.size();
     ASSERT_EQ(plan.recvnum.size(), exchange_count);
     ASSERT_EQ(plan.firstrecv.size(), exchange_count);
     ASSERT_EQ(plan.send_atom_indices.size(), exchange_count);
     ASSERT_EQ(plan.sendproc.size(), exchange_count);
     ASSERT_EQ(plan.recvproc.size(), exchange_count);
+    GhostExchangePlanView view = plan.make_view();
+    EXPECT_EQ(view.nswap, static_cast<int>(exchange_count));
+    ASSERT_EQ(view.sendlist_storage.size(), exchange_count);
+    for (std::size_t iswap = 0; iswap < exchange_count; ++iswap)
+    {
+        if (plan.send_atom_indices[iswap].empty())
+        {
+            EXPECT_EQ(view.sendlist_storage[iswap], static_cast<int*>(NULL));
+        }
+        else
+        {
+            EXPECT_EQ(view.sendlist_storage[iswap], plan.send_atom_indices[iswap].data());
+        }
+    }
     EXPECT_EQ(plan.nprocs, domain.size());
     if (domain.size() == 1)
     {

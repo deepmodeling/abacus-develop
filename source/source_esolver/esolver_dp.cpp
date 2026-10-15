@@ -20,6 +20,7 @@
 #include "esolver_dp.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
+#include "source_cell/ghost_exchange_plan.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/cif_io.h"
@@ -152,48 +153,27 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
                       : sorted_neighbors[static_cast<std::size_t>(iat)].data();
         }
 
-        const GhostExchangePlan& ghost_plan = mdcell.get_ghost_exchange_plan();
-        const std::size_t nswap_size = ghost_plan.sendnum.size();
+        GhostExchangePlan& ghost_plan = mdcell.get_ghost_exchange_plan();
         const bool use_mapping = ghost_plan.nprocs == 1;
         if (!ghost_plan.is_valid(static_cast<std::size_t>(natom)))
         {
             ModuleBase::WARNING_QUIT("ESolver_DP", "Invalid MDCell ghost exchange plan.");
         }
-        const int nswap = static_cast<int>(nswap_size);
-        std::vector<std::vector<int> > sendlist_storage = ghost_plan.send_atom_indices;
-        std::vector<int*> sendlist(nswap_size, NULL);
-        for (std::size_t iswap = 0; iswap < nswap_size; ++iswap)
-        {
-            if (!sendlist_storage[iswap].empty())
-            {
-                sendlist[iswap] = sendlist_storage[iswap].data();
-            }
-        }
-        std::vector<int> sendnum_data = ghost_plan.sendnum;
-        std::vector<int> recvnum_data = ghost_plan.recvnum;
-        std::vector<int> firstrecv_data = ghost_plan.firstrecv;
-        std::vector<int> sendproc_data = ghost_plan.sendproc;
-        std::vector<int> recvproc_data = ghost_plan.recvproc;
-        int* sendnum = sendnum_data.empty() ? NULL : &sendnum_data[0];
-        int* recvnum = recvnum_data.empty() ? NULL : &recvnum_data[0];
-        int* firstrecv = firstrecv_data.empty() ? NULL : &firstrecv_data[0];
-        int** sendlist_data = sendlist.empty() ? NULL : &sendlist[0];
-        int* sendproc = sendproc_data.empty() ? NULL : &sendproc_data[0];
-        int* recvproc = recvproc_data.empty() ? NULL : &recvproc_data[0];
+        GhostExchangePlanView view = ghost_plan.make_view();
+        int** sendlist_data = view.sendlist_storage.empty() ? NULL : view.sendlist_storage.data();
         int* ilist_data = nowned_atoms > 0 ? &ilist[0] : NULL;
         int* numneigh_data = nowned_atoms > 0 ? &numneigh[0] : NULL;
         int** firstneigh_data = nowned_atoms > 0 ? &firstneigh[0] : NULL;
-        std::vector<int> mapping = ghost_plan.mapping;
-        int* mapping_data = use_mapping && natom > 0 ? &mapping[0] : NULL;
+        int* mapping_data = use_mapping ? view.mapping : NULL;
         void* dp_world = NULL;
 #ifdef __MPI
         MPI_Comm dp_world_comm = mdcell.communicator();
         dp_world = &dp_world_comm;
 #endif
 #if defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 13
-        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, nswap, sendnum, recvnum, firstrecv, sendlist_data, sendproc, recvproc, dp_world, ghost_plan.nprocs);
+        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, view.nswap, view.sendnum, view.recvnum, view.firstrecv, sendlist_data, view.sendproc, view.recvproc, dp_world, ghost_plan.nprocs);
 #elif defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 12
-        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, nswap, sendnum, recvnum, firstrecv, sendlist_data, sendproc, recvproc, dp_world);
+        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, view.nswap, view.sendnum, view.recvnum, view.firstrecv, sendlist_data, view.sendproc, view.recvproc, dp_world);
 #else
         DPInputNlist nlist(nowned_atoms,
                            ilist_data,

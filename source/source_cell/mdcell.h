@@ -67,6 +67,7 @@ public:
     const std::vector<double>& type_masses() const { return type_masses_; }
     const std::vector<std::int64_t>& type_atom_counts() const { return type_atom_counts_; }
     const GhostExchangePlan& get_ghost_exchange_plan() const;
+    GhostExchangePlan& get_ghost_exchange_plan();
     StruMeta& mutable_stru_meta() { return stru_meta_; }
     const StruMeta& stru_meta() const { return stru_meta_; }
     int nowned_atoms() const { return static_cast<int>(owned_atoms_.size()); }

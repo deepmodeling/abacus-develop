@@ -5,6 +5,18 @@
 #include <limits>
 #include <vector>
 
+struct GhostExchangePlanView
+{
+    int nswap;
+    int* sendnum;
+    int* recvnum;
+    int* firstrecv;
+    int* sendproc;
+    int* recvproc;
+    int* mapping;
+    std::vector<int*> sendlist_storage;
+};
+
 struct GhostExchangePlan
 {
     std::vector<int> sendnum;
@@ -20,6 +32,8 @@ struct GhostExchangePlan
     int nprocs;
 
     GhostExchangePlan() : nprocs(1) {}
+
+    GhostExchangePlanView make_view();
 
     bool is_valid(const std::size_t natom) const
     {
