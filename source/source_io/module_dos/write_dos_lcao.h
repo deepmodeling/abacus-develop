@@ -30,6 +30,15 @@ namespace ModuleIO
         const double& bcoeff,
         const bool out_app_flag,
         const int istep,
+        const int nspin,
+        const int nlocal,
+        const bool dos_setemax,
+        const double dos_emax_ev,
+        const bool dos_setemin,
+        const double dos_emin_ev,
+        const bool two_fermi,
+        const int bndpar,
+        const std::string& global_out_dir,
         std::ofstream &ofs_running);
 }
 #endif

@@ -15,6 +15,9 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     deepks_test_prep.cpp
     deepks_test.cpp
     ../../../source_cell/unitcell.cpp
+    ../../../source_cell/unitcell_index.cpp
+    ../../../source_cell/unitcell_stats.cpp
+    ../../../source_cell/unitcell_setup.cpp
     ../../../source_cell/update_cell.cpp
     ../../../source_cell/bcast_cell.cpp
     ../../../source_cell/atom_spec.cpp
@@ -71,9 +74,12 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../module_operator_lcao/deepks_lcao.cpp
     ../../module_operator_lcao/operator_lcao.cpp
     ../../../source_hamilt/operator.cpp
-    ../../../source_io/module_hs/cal_r_overlap_r.cpp
-    ../../../source_io/module_hs/single_r_io.cpp
-    ../../../source_io/module_hs/rr_sparse_writer.cpp
+    ../../../source_io/module_hs/pos_op_mat.cpp
+    ../../../source_io/module_hs/pos_op_basis.cpp
+    ../../../source_io/module_hs/pos_op_calc.cpp
+    ../../../source_io/module_hs/pos_op_writer.cpp
+    ../../../source_io/module_hs/lat_r_csr.cpp
+    ../../../source_io/module_hs/pos_op_csr.cpp
     ../../module_rt/radial_interpolation.cpp
     ../../module_rt/snap_proj_half_tddft.cpp
     ../../module_rt/snap_pha_half_tddft.cpp
@@ -102,6 +108,7 @@ set(DEEPKS_UNIT_LIBS
     orb
     gint
     numerical_atomic_orbitals
+    nao_smoothgen
     symmetry
     ${TORCH_LIBRARIES}
 )

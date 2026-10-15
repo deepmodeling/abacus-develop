@@ -105,8 +105,9 @@ void LCAO_domain::set_pot(
                        inp.device,
                        PARAM.globalv.hubbard_u,
                        PARAM.globalv.uramping,
-                       inp.occ_mat_ctrl,
-                       inp.mixing_dftu);
+                       inp.init_occ_mat,
+                       inp.mixing_dftu,
+                       DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
     }
 
     //! 4) init exact exchange calculations
@@ -132,7 +133,14 @@ void LCAO_domain::init_dm_from_file(
     const int nspin_dm = (nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin_dm; ++is)
     {
-        const std::string dmfile = readin_dir + "/dmrs" + std::to_string(is + 1) + "_nao.csr";
+        // readin_dir is normalized by to_dir() and always ends with '/'
+        const std::string dmfile = readin_dir + "dmrs" + std::to_string(is + 1) + "_nao.csr";
+        // EXX-specific: add rank guard because OperatorEXX is constructed on all MPI ranks,
+        // unlike most other places where ofs_running is only written on rank 0
+        if (GlobalV::MY_RANK == 0)
+        {
+            GlobalV::ofs_running << " Read density matrix from " << dmfile << std::endl;
+        }
         hamilt::HContainer<double>* dm_container = dmat.dm->get_dmr_vec()[is];
         hamilt::Read_HContainer<double> reader_dm(
             dm_container,

@@ -1,0 +1,22 @@
+INPUT_PARAMETERS 
+#Parameters	(System)
+suffix            autotest
+
+stru_file         STRU
+kpoint_file       KPT
+pseudo_dir        ../../PP_ORB
+pw_seed           1
+calculation       scf
+latname           hexagonal
+#Parameters (PW)
+ecutwfc           25.0 # Rydberg
+#Parameters (electronic)
+basis_type        pw
+scf_thr           1e-10
+
+cal_force         1
+cal_stress        1
+
+#Parameters (Smearing)
+smearing_method   mp
+smearing_sigma    0.002

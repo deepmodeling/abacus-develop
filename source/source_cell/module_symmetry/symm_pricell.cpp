@@ -20,7 +20,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
         }
 
         //order original atomic positions for current species
-        this->atom_ordering_new(pos + istart[it] * 3, na[it], index + istart[it]);
+        this->atom_ordering_new(pos + istart[it] * 3, na[it], index.data() + istart[it]);
         //copy pos to rotpos
         for (int j = istart[it]; j < istart[it] + na[it]; ++j)
         {
@@ -63,7 +63,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
                 this->check_boundary( rotpos[ia*3+2] );
             }
             //order translated atomic positions for current species
-            this->atom_ordering_new(rotpos + istart[it] * 3, na[it], index + istart[it]);
+            this->atom_ordering_new(rotpos.data() + istart[it] * 3, na[it], index.data() + istart[it]);
         }
 
         no_diff = true;
@@ -130,7 +130,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
         ptrans_array[i*3+1]=ptrans[i].y;
         ptrans_array[i*3+2]=ptrans[i].z;
     }
-    this->atom_ordering_new(ptrans_array, ntrans, index);
+    this->atom_ordering_new(ptrans_array, ntrans, index.data());
     // std::cout<<"final ptrans:"<<std::endl;
     for(int i=0;i<ntrans;++i)
     {

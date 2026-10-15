@@ -65,7 +65,6 @@ set(_abacus_feature_definitions
   $<$<BOOL:${ENABLE_LIBRI}>:EXX_H_COMM=2>
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_LCAO=0>
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
-  $<$<BOOL:${ENABLE_EXX_DEV}>:__EXX_DEV>
   $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
   $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
   $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
@@ -75,6 +74,12 @@ if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
 endif()
 if(DEFINED DeePMD_DIR)
   list(APPEND _abacus_feature_definitions __DPMD HIGH_PREC)
+  if(DEFINED DeePMD_INPUT_NLIST_COMM_ARGS AND DeePMD_INPUT_NLIST_COMM_ARGS GREATER 0)
+    list(APPEND _abacus_feature_definitions __DPMD_COMM_NLIST_ARGS=${DeePMD_INPUT_NLIST_COMM_ARGS})
+  endif()
+  if(DeePMD_HAS_NLIST_MAPPING)
+    list(APPEND _abacus_feature_definitions __DPMD_HAS_NLIST_MAPPING)
+  endif()
   if(DeePMDC_FOUND)
     list(APPEND _abacus_feature_definitions __DPMDC)
   endif()
@@ -147,6 +152,20 @@ target_link_libraries(abacus_link_libs INTERFACE
 
 set(_abacus_linalg_libs)
 set(_abacus_linalg_include_dirs)
+
+if(USE_DSP)
+  if(NOT MT_CPACK_DIR)
+    message(FATAL_ERROR
+      "USE_DSP requires MT_CPACK_DIR to be set to the DSP C_PACK install prefix "
+      "(the directory containing lib/libc_pack.a).")
+  endif()
+  set(_abacus_cpack_library "${MT_CPACK_DIR}/lib/libc_pack.a")
+  if(NOT EXISTS "${_abacus_cpack_library}")
+    message(FATAL_ERROR
+      "MT_CPACK_DIR is set to '${MT_CPACK_DIR}' but '${_abacus_cpack_library}' does not exist.")
+  endif()
+  list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
+endif()
 
 if(USE_KML)
   if(ENABLE_MPI)
@@ -256,7 +275,8 @@ set(_abacus_feature_libs
   $<$<BOOL:${ENABLE_CNPY}>:cnpy>
   $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
   $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
-  $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>)
+  $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
+  $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
@@ -719,6 +739,7 @@ target_link_libraries(
     elecstate
     module_pwdft
     module_proj
+    nao_smoothgen
     module_ofdft
     module_stodft
     module_dfpt
@@ -733,6 +754,7 @@ target_link_libraries(
     domain_decomposition
     neighbor
     md
+    module_plumed
     planewave
     symmetry
     cell

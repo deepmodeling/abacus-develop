@@ -1,8 +1,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
-#undef private
 #include <unistd.h>
 #include <cstdio>
 #include <iostream>
@@ -10,12 +8,26 @@
 
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
+#include "source_estate/fp_energy.h"
 #include "source_io/module_output/output_log.h"
 
 #ifdef __MPI
 #include "source_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
 #endif
+
+/// @brief Friend helper to mutate PARAM private members in unit tests.
+/// @details Parameter grants friend access to TestParameters so the test can
+/// modify input/sys fields without `#define private public`. The class must
+/// stay at global scope to match the friend declaration in parameter.h;
+/// an anonymous-namespace class would not be the friend.
+class TestParameters
+{
+  public:
+    static Input_para& input() { return PARAM.input; }
+    static System_para& sys() { return PARAM.sys; }
+};
+
 /**
  * - Tested Functions:
  *  - output_convergence_after_scf()
@@ -94,9 +106,10 @@ TEST(OutputAfterRelaxTest, TestConvergence)
 
 TEST(OutputEfermiTest, TestNotConvergence) {
     bool convergence = false;
-    double efermi = 1.0;
+    elecstate::Efermi eferm;
+    eferm.ef = 1.0;
     std::ofstream ofs_running("test_output_efermi_noconvergence.txt");
-    ModuleIO::output_efermi(convergence, efermi, ofs_running);
+    ModuleIO::output_efermi(convergence, eferm, ofs_running);
     ofs_running.close();
 
     std::ifstream ifs_running("test_output_efermi_noconvergence.txt");
@@ -113,10 +126,11 @@ TEST(OutputEfermiTest, TestNotConvergence) {
 
 TEST(OutputEfermiTest, TestMOutputLevel) {
     bool convergence = true;
-    double efermi = 1.0;
-    PARAM.input.out_level = "m"; // Setting output level to "m"
+    elecstate::Efermi eferm;
+    eferm.ef = 1.0;
+    TestParameters::input().out_level = "m"; // Setting output level to "m"
     std::ofstream ofs_running("test_output_efermi_m_outputlevel.txt");
-    ModuleIO::output_efermi(convergence, efermi, ofs_running);
+    ModuleIO::output_efermi(convergence, eferm, ofs_running);
     ofs_running.close();
 
     std::ifstream ifs_running("test_output_efermi_m_outputlevel.txt");
@@ -129,6 +143,55 @@ TEST(OutputEfermiTest, TestMOutputLevel) {
 
     EXPECT_EQ(file_content, expected_content);
     std::remove("test_output_efermi_m_outputlevel.txt");
+}
+
+TEST(OutputEfermiTest, TestSingleFermi) {
+    bool convergence = true;
+    elecstate::Efermi eferm;
+    eferm.two_efermi = false;
+    eferm.ef = 0.4; // in Ry
+    TestParameters::input().out_level = "i";
+    std::ofstream ofs_running("test_output_efermi_single.txt");
+    ModuleIO::output_efermi(convergence, eferm, ofs_running);
+    ofs_running.close();
+
+    std::ifstream ifs_running("test_output_efermi_single.txt");
+    std::stringstream ss;
+    ss << ifs_running.rdbuf();
+    std::string file_content = ss.str();
+    ifs_running.close();
+
+    EXPECT_THAT(file_content, testing::HasSubstr("#FERMI ENERGY# "));
+    EXPECT_THAT(file_content, testing::HasSubstr("eV"));
+    // 0.4 Ry * 13.605698 eV/Ry = 5.4422792 eV
+    EXPECT_THAT(file_content, testing::HasSubstr("5.4422792"));
+    std::remove("test_output_efermi_single.txt");
+}
+
+TEST(OutputEfermiTest, TestTwoFermi) {
+    bool convergence = true;
+    elecstate::Efermi eferm;
+    eferm.two_efermi = true;
+    eferm.ef_up = 0.3; // in Ry
+    eferm.ef_dw = 0.5; // in Ry
+    TestParameters::input().out_level = "i";
+    std::ofstream ofs_running("test_output_efermi_two.txt");
+    ModuleIO::output_efermi(convergence, eferm, ofs_running);
+    ofs_running.close();
+
+    std::ifstream ifs_running("test_output_efermi_two.txt");
+    std::stringstream ss;
+    ss << ifs_running.rdbuf();
+    std::string file_content = ss.str();
+    ifs_running.close();
+
+    EXPECT_THAT(file_content, testing::HasSubstr("#FERMI ENERGY# "));
+    EXPECT_THAT(file_content, testing::HasSubstr("two fermi energies (up, down)"));
+    // 0.3 Ry * 13.605698 eV/Ry = 4.0817094 eV
+    EXPECT_THAT(file_content, testing::HasSubstr("4.0817094"));
+    // 0.5 Ry * 13.605698 eV/Ry = 6.802849 eV
+    EXPECT_THAT(file_content, testing::HasSubstr("6.802849"));
+    std::remove("test_output_efermi_two.txt");
 }
 
 UnitCell::UnitCell()
@@ -184,7 +247,7 @@ Sep_Cell::~Sep_Cell() noexcept {}
 
 TEST(OutputVacuumLevelTest, OutputVacuumLevel)
 {
-    PARAM.input.nspin = 1;
+    TestParameters::input().nspin = 1;
     UnitCell ucell;
     const int nx = 50, ny = 50, nz = 50, nxyz = 125000, nrxx = 125000, nplane = 50, startz_current = 0;
 
@@ -220,7 +283,7 @@ TEST(OutputVacuumLevelTest, OutputVacuumLevel)
 TEST(PrintForce, PrintForce)
 {
     UnitCell ucell;
-    PARAM.input.test_force = 1;
+    TestParameters::input().test_force = 1;
     std::string name = "TOTAL-FORCE";
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 1.0;

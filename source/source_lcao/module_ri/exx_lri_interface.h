@@ -61,7 +61,6 @@ public:
     double &get_Eexx() const { return this->exx_ptr->Eexx; }
     ModuleBase::matrix &get_force() const { return this->exx_ptr->force_exx; }
     ModuleBase::matrix &get_stress() const { return this->exx_ptr->stress_exx; }
-    auto& get_dHexxs() const { return this->exx_ptr->dHexxs; }
     int get_two_level_step() const
     {
         return this->two_level_step;
@@ -89,22 +88,16 @@ public:
     /// @brief: in cal_exx_stress: Exx_LRI::cal_exx_stress()
     void cal_exx_stress(const double& omega, const double& lat0);
 
-    /// @brief: in cal_exx_dHs: Exx_LRI::cal_exx_dHs()
-    void cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
-        const UnitCell& ucell,
-        const Parallel_Orbitals& pv);
-
-    /// @brief build the exx-form dH (dHexxs) from the current mixed DM (for dH/dR output)
-    void cal_exx_dHs(const UnitCell& ucell, const Parallel_Orbitals& pv, const int nspin);
-
     // Processes in ESolver_KS_LCAO
-    /// @brief in before_all_runners: set symmetry according to irreducible k-points
-    /// since k-points are not reduced again after the variation of the cell and exx-symmetry must be consistent with k-points.
-    /// In the future, we will reduce k-points again during cell-relax, then this setting can be moved to `exx_beforescf`.
+    /// Initialize EXX symmetry before the first ionic step.
     void exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv);
 
+    /// Discard old atom mappings, lattice returns and rotation caches before rebuilding.
+    void refresh_symmetry(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv);
+
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
-    void exx_beforescf(const int istep, const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const LCAO_Orbitals& orb);
+    void exx_beforescf(const int istep, const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const LCAO_Orbitals& orb,
+                       const Parallel_2D& pv, const bool update_symmetry);
 
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const int istep,
@@ -177,7 +170,6 @@ private:
         bool elec = false;
         bool force = false;
         bool stress = false;
-        bool dHs = false;
     };
     Flag_Finish flag_finish;
 };

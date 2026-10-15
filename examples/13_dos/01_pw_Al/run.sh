@@ -18,9 +18,8 @@ if [[ ! -f scf.output ]] ||
    [[ ! -f nscf.output ]] ||
    [[ ! -f OUT.ABACUS/running_scf.log ]] ||
    [[ ! -f OUT.ABACUS/running_nscf.log ]] ||
-   [[ ! -f OUT.ABACUS/DOS1 ]] ||
-   [[ ! -f OUT.ABACUS/DOS1_smearing.dat ]] ||
-   [[ ! -f OUT.ABACUS/SPIN1_CHG.cube ]] ||
+   [[ ! -f OUT.ABACUS/dos.txt ]] ||
+   [[ ! -f OUT.ABACUS/chg.cube ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"* ) ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_nscf.log)" == " Total  Time  :"* ) ]]
 then

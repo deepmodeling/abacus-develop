@@ -61,33 +61,5 @@ class CurrentPW
                const std::string& out_dir,
                const int world_rank);
 };
-/**
- * @brief Calculate and write the current in a plane-wave basis.
- * @param istep Current electronic propagation step.
- * @param ucell Unit cell.
- * @param wfcpw Plane-wave basis.
- * @param psi Wavefunctions for all k points.
- * @param pelec Electronic state containing occupations.
- * @param kv K points including spin and local-to-global indices.
- * @param ppcell Nonlocal pseudopotential projectors.
- * @param gauge Electric-field gauge: zero for length, one for velocity.
- * @param vector_potential Endpoint vector potential in Hartree atomic units; zero in length gauge.
- * @param out_current_k Whether to write individual k-point contributions.
- * @param out_dir Output directory, including its trailing path separator.
- * @param world_rank Rank in the world communicator used for output ownership.
- */
-template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
-void write_current_pw(const int istep,
-                      const UnitCell& ucell,
-                      const ModulePW::PW_Basis_K* wfcpw,
-                      psi::Psi<std::complex<FPTYPE>, Device>* psi,
-                      const elecstate::ElecState* pelec,
-                      const K_Vectors& kv,
-                      pseudopot_cell_vnl* ppcell,
-                      const int gauge,
-                      const ModuleBase::Vector3<double>& vector_potential,
-                      const bool out_current_k,
-                      const std::string& out_dir,
-                      const int world_rank);
 } // namespace ModuleIO
 #endif

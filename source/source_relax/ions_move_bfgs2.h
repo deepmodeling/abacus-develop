@@ -33,7 +33,6 @@ private:
     bool sign;//check if this is the first iteration
     double alpha;//initialize H,diagonal element is alpha
     double maxstep;//every movement smaller than maxstep
-    double largest_grad;
     int size;//number of atoms
     bool is_initialized=false;
 

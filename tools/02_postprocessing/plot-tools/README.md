@@ -15,7 +15,7 @@
 
 -   [NumPy](https://numpy.org/)
 -   [Matplotlib](https://matplotlib.org/)
--   [lxml](https://lxml.de/)
+-   [lxml](https://lxml.de/) (only required for parsing the XML projected-band output)
 -   [setuptools](https://setuptools.pypa.io/en/latest/index.html)
 
 ## Installation
@@ -100,7 +100,7 @@ First, prepare a file named 'config.json' in json format:
 
 ```json
 {
-    "pdosfile": "PDOS",
+    "pdosfile": "OUT.ABACUS/pdos",
     "efermi": 6.585653952007503,
     "energy_range": [-5, 7],
     "dos_range": [0, 5],
@@ -119,7 +119,7 @@ If you only want to plot total DOS, you can modify `pdosfile` to `tdosfile` and 
 | Property | Type | Note |
 | :------------: | :-------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | _tdosfile_ | `str` | Total DOS data file output from ABACUS |
-| _pdosfile_ | `str` | Partial DOS data file output from ABACUS in xml format |
+| _pdosfile_ | `str` | Directory or path prefix containing the text PDOS files `pdoss1_*` (and `pdoss2_*` for spin-polarized runs) output from ABACUS |
 | _efermi_ | `float` | Fermi level in eV |
 | _energy_range_ | `list` | Range of energy in eV |
 | _shift_ | `bool` | If set `'true'`, it will evaluate band gap. Default: `'false'` |

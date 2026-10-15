@@ -18,11 +18,18 @@
 # -- Project information -----------------------------------------------------
 
 project = 'ABACUS'
-copyright = '2024, ABACUS'
+copyright = '%Y, ABACUS'
 author = 'ABACUS'
 
-# The full version, including alpha/beta/rc tags
-# release = '2.3.5'
+# The full version, including alpha/beta/rc tags, read from the C++ source so
+# it stays in sync with releases. The EPUB3 builder warns when it is empty,
+# which fails the Read the Docs build under fail_on_warning.
+import re
+from pathlib import Path
+
+_version_h = Path(__file__).resolve().parent.parent / 'source' / 'source_main' / 'version.h'
+release = re.search(r'#define\s+VERSION\s+"v?([^"]+)"', _version_h.read_text()).group(1)
+version = release
 
 
 # -- General configuration ---------------------------------------------------
@@ -33,7 +40,13 @@ author = 'ABACUS'
 extensions = [
         'myst_parser',
         'deepmodeling_sphinx',
+        'sphinx.ext.intersphinx',
 ]
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3" , None),
+    "numpy":  ("https://numpy.org/doc/stable/" , None),
+    "scipy":  ("https://docs.scipy.org/doc/scipy/" , None),
+}
 myst_enable_extensions = [
     "amsmath",
     "colon_fence",
@@ -58,7 +71,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ["build", "README.md"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -95,10 +108,23 @@ if os.environ.get("READTHEDOCS", "") == "True":
 html_static_path = ['_static']
 
 latex_engine = 'xelatex'
+latex_use_xindy = False
 mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js'
 # deepmodeling_current_site = 'Tutorials'
 latex_elements = {
-    'extraclassoptions':'openany,oneside'
+    'extraclassoptions':'openany,oneside',
+    # LaTeX-side shims for MathJax-dialect macros used in the markdown
+    # sources. MathJax (HTML rendering) provides these natively, which is
+    # why the gap only surfaces in the PDF build.
+    'preamble': r'''
+% Dirac notation: MathJax has \ket/\bra built in; LaTeX needs braket.
+\usepackage{braket}
+\providecommand{\bra}[1]{\langle #1\rvert}
+\providecommand{\ket}[1]{\lvert #1\rangle}
+% MathJax alias macros that plain LaTeX lacks: \lt / \gt for < / >
+\providecommand{\lt}{<}
+\providecommand{\gt}{>}
+''',
 }
 
 

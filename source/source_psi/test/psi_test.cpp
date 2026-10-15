@@ -1,6 +1,75 @@
 #include "source_psi/psi.h"
 
 #include <gtest/gtest.h>
+#include <memory>
+
+TEST(PsiLargeOffsets, ThreeDimensionalAccess)
+{
+    // No zero-initialization: the test touches only one page of this 12 GiB buffer.
+    std::unique_ptr<float[]> storage(new float[3221225472ULL]);
+    float* const data = storage.get();
+    data[2684354567ULL] = 42.0f;
+    for (const bool k_first : {true, false})
+    {
+        const int nk = k_first ? 3 : 2;
+        const int nbands = k_first ? 2 : 3;
+        const int ik = k_first ? 2 : 1;
+        const int ib = k_first ? 1 : 2;
+        psi::Psi<float> wave(data, nk, nbands, 536870912, 536870912, k_first);
+
+        if (k_first)
+        {
+            wave.fix_k(ik);
+        }
+        else
+        {
+            wave.fix_b(ib);
+        }
+        ASSERT_EQ(wave.get_psi_bias(), 2147483648ULL);
+        ASSERT_EQ(wave.get_pointer(), data + 2147483648ULL);
+        ASSERT_EQ(wave.get_pointer(1), data + 2684354560ULL);
+
+        if (k_first)
+        {
+            wave.fix_b(ib);
+        }
+        else
+        {
+            wave.fix_k(ik);
+        }
+        EXPECT_EQ(wave.get_pointer(), data + 2684354560ULL);
+
+        wave.fix_kb(ik, ib);
+        ASSERT_EQ(wave.get_psi_bias(), 2684354560ULL);
+        EXPECT_EQ(wave.get_pointer(), data + 2684354560ULL);
+        ASSERT_EQ(&wave(2, 1, 7), data + 2684354567ULL);
+        EXPECT_FLOAT_EQ(wave(2, 1, 7), 42.0f);
+        EXPECT_EQ(&wave(1, 1, 536870911), data + 2147483647ULL);
+
+        const psi::Range range(k_first, 2, 1, 1);
+        const auto result = wave.to_range(range);
+        ASSERT_EQ(std::get<0>(result), data + 2684354560ULL);
+        const psi::Range outer_range(k_first, -1, 2, 2);
+        const auto outer_result = wave.to_range(outer_range);
+        EXPECT_EQ(std::get<0>(outer_result), data + 2147483648ULL);
+    }
+}
+
+TEST(PsiLargeOffsets, TwoDimensionalAccess)
+{
+    std::unique_ptr<float[]> storage(new float[3221225472ULL]);
+    float* const data = storage.get();
+    data[2147483655ULL] = 24.0f;
+    for (const bool k_first : {true, false})
+    {
+        const int nk = k_first ? 1 : 3;
+        const int nbands = k_first ? 3 : 1;
+        psi::Psi<float> wave(data, nk, nbands, 1073741824, 1073741824, k_first);
+        ASSERT_EQ(wave.get_pointer(2), data + 2147483648ULL);
+        ASSERT_EQ(&wave(2, 7), data + 2147483655ULL);
+        EXPECT_FLOAT_EQ(wave(2, 7), 24.0f);
+    }
+}
 
 class TestPsi : public ::testing::Test
 {

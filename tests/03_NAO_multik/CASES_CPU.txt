@@ -43,6 +43,7 @@ scf_out_mul_spin4
 scf_out_mul_nupdw
 scf_out_elf
 scf_out_qo
+scf_out_hsr_spin2
 nscf_out_dos
 nscf_out_band_pband
 nscf_out_pot1

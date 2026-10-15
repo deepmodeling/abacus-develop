@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_BSE_H
+#define ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_BSE_H
+
 #include "esolver_lr_lcao_tddft.h"
 #include "source_lcao/module_bse/molecular_lri.h"
 
@@ -53,3 +55,5 @@ namespace ModuleESolver
     };
 
 }
+
+#endif // ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_BSE_H

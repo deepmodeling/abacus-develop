@@ -192,10 +192,10 @@ if bands_file:
 |------|-------------|
 | `running_scf.log` | Main calculation log |
 | `BANDS_1.dat` | Band structure data |
-| `PDOS` | Projected density of states |
-| `CHARGE.cube` | Charge density in cube format |
-| `SPIN1_CHG.cube` | Spin-up charge density |
-| `SPIN2_CHG.cube` | Spin-down charge density |
+| `pdoss1_*.txt` | Projected density of states (one file per spin channel) |
+| `chg.cube` | Charge density in cube format |
+| `chgs1.cube` | Spin-up charge density |
+| `chgs2.cube` | Spin-down charge density |
 | `istate.info` | Band eigenvalues and occupations |
 | `kpoints` | K-point information |
 

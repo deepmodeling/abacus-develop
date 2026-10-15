@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_GINT_GPU_VARS_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_GINT_GPU_VARS_H
+
 
 #include <cuda_runtime.h>
 #include "set_const_mem.cuh"
@@ -38,3 +40,5 @@ class GintGpuVars
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_GINT_GPU_VARS_H

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TAU_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TAU_H
+
 #include <memory>
 #include <vector>
 #include "source_hamilt/module_hcontainer/hcontainer.h"
@@ -36,3 +38,5 @@ class Gint_tau : public Gint
 };
 
 } // namespace ModuleGint
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_TAU_H

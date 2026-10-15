@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_HPP
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_HPP
+
 #include "lr_util.h"
 #include "source_cell/unitcell.h"
 #include "source_base/constants.h"
@@ -583,3 +585,5 @@ namespace LR_Util
 #endif
 
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_HPP

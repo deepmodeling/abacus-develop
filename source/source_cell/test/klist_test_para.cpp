@@ -178,7 +178,9 @@ TEST_F(KlistParaTest, Set)
         GlobalV::ofs_running.open("tmp_klist_5");
 }
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     // read KPT
     std::string k_file = "./support/KPT1";
     // note: do NOT pre-set kv->spin_mult here; set() takes the physical
@@ -206,6 +208,7 @@ TEST_F(KlistParaTest, Set)
     const std::string kmesh_type = "gamma";
     const double koffset[3] = {0.0, 0.0, 0.0};
     kv->set(ucell, symm, k_file, /*nspin_in*/ 1, ucell.G, ucell.latvec, GlobalV::ofs_running, GlobalV::ofs_warning, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
+    EXPECT_TRUE(kv->get_is_mp());
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_EQ(kv->get_nkstot_nospin(), 512);
     EXPECT_GT(kv->get_nkstot_nospin(), kv->get_nkstot());
@@ -302,7 +305,9 @@ TEST_F(KlistParaTest, SetAfterVC)
         GlobalV::ofs_running.open("tmp_klist_6");
 }
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     // read KPT
     std::string k_file = "./support/KPT1";
     // note: do NOT pre-set kv->spin_mult here; set() takes the physical
@@ -350,7 +355,7 @@ TEST_F(KlistParaTest, SetAfterVC)
     }
     // call set_after_vc here
     kv->kc_done = false;
-    kv->set_after_vc(ucell.G, GlobalV::ofs_running);
+    kv->set_after_vc(ucell.G, symm, true, GlobalV::ofs_running);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     // clear

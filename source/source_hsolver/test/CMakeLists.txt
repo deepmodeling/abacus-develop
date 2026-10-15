@@ -6,17 +6,21 @@ set(TD_LINEAR_TEST_SOURCES
   ../hsolver_linear.cpp
   ../linear_bicgstab.cpp
   ../linear_cgs.cpp
+  ../linear_gmres.cpp
+  ../linear_algebra.cpp
+  ../cn_subspace.cpp
+  ../linear_low_rank.cpp
   ../linear_workspace.cpp
 )
 AddTest(
   TARGET MODULE_HSOLVER_linear
   LIBS parameter base device container
-  SOURCES test_hsolver_linear.cpp ${TD_LINEAR_TEST_SOURCES}
+  SOURCES test_hsolver_linear.cpp test_cn_subspace.cpp test_linear_low_rank.cpp ${TD_LINEAR_TEST_SOURCES}
 )
 AddTest(
   TARGET MODULE_HSOLVER_pw_tddft
   LIBS parameter base device container psi planewave
-  SOURCES test_hsolver_pw_tddft.cpp ../hsolver_pw_tddft.cpp ${TD_LINEAR_TEST_SOURCES}
+  SOURCES test_hsolver_pw_tddft.cpp test_orthonormal.cpp ../hsolver_pw_tddft.cpp ../orthonormal.cpp ../orthonormal_small.cpp ${TD_LINEAR_TEST_SOURCES}
 )
 if(ENABLE_MPI)
   add_test(

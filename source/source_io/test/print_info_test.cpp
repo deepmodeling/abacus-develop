@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#define private public
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/klist.h"
 #include "source_cell/parallel_kpoints.h"
@@ -8,12 +7,23 @@
 #include "source_io/module_unk/berryphase.h"
 #include "source_io/module_output/print_info.h"
 #include "prepare_unitcell.h"
-#undef private
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 
 bool berryphase::berry_phase_flag=false;
 
+/// @brief Friend helper to mutate PARAM private members in unit tests.
+/// @details Parameter grants friend access to TestParameters so the test can
+/// modify input/sys fields without `#define private public`. The class must
+/// stay at global scope to match the friend declaration in parameter.h;
+/// an anonymous-namespace class would not be the friend.
+class TestParameters
+{
+  public:
+    static Input_para& input() { return PARAM.input; }
+    static System_para& sys() { return PARAM.sys; }
+    static MD_para& mdp() { return PARAM.input.mdp; }
+};
 
 /************************************************
  *  unit test of print_info.cpp
@@ -48,12 +58,12 @@ TEST_F(PrintInfoTest, SetupParameters)
 	UcellTestPrepare utp = UcellTestLib["Si"];
 	ucell = utp.SetUcellInfo();
 	std::string k_file = "./support/KPT";
-	kv->spin_mult = 1;
+	kv->set_spin_mult(1);
 	const bool gamma_only_local = false;
 	const double kspacing[3] = {0.0, 0.0, 0.0};
 	const std::string kmesh_type = "gamma";
 	const double koffset[3] = {0.0, 0.0, 0.0};
-	kv->read_kpoints(*ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset, GlobalV::ofs_running, GlobalV::ofs_warning, GlobalV::MY_RANK);
+	kv->read_kpoints_for_testing(*ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset, GlobalV::ofs_running, GlobalV::ofs_warning, GlobalV::MY_RANK);
 	EXPECT_EQ(kv->get_nkstot(),512);
 	std::vector<std::string> cal_type = {"scf","relax","cell-relax","md"};
 	std::vector<std::string> md_types = {"fire","nve","nvt","npt","langevin","msst"};
@@ -62,56 +72,56 @@ TEST_F(PrintInfoTest, SetupParameters)
 	{
 		if(cal_type[i] != "md")
 		{
-			PARAM.sys.gamma_only_local = false;
-			PARAM.input.calculation = cal_type[i];
+			TestParameters::sys().gamma_only_local = false;
+			TestParameters::input().calculation = cal_type[i];
 			testing::internal::CaptureStdout();
-            EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.input));
+            EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.inp));
             output = testing::internal::GetCapturedStdout();
-			if(PARAM.input.calculation == "scf")
+			if(TestParameters::input().calculation == "scf")
 			{
 				EXPECT_THAT(output,testing::HasSubstr("Self-consistent calculations"));
 			}
-			else if(PARAM.input.calculation == "relax")
+			else if(TestParameters::input().calculation == "relax")
 			{
 				EXPECT_THAT(output,testing::HasSubstr("Ion relaxation calculations"));
 			}
-			else if(PARAM.input.calculation == "cell-relax")
+			else if(TestParameters::input().calculation == "cell-relax")
 			{
 				EXPECT_THAT(output,testing::HasSubstr("Cell relaxation calculations"));
 			}
 		}
 		else
 		{
-			PARAM.sys.gamma_only_local = true;
-            PARAM.input.calculation = cal_type[i];
+			TestParameters::sys().gamma_only_local = true;
+            TestParameters::input().calculation = cal_type[i];
 			for(int j=0; j<md_types.size(); ++j)
 			{
-                PARAM.input.mdp.md_type = md_types[j];
+                TestParameters::mdp().md_type = md_types[j];
                 testing::internal::CaptureStdout();
-                EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.input));
+                EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.inp));
                 output = testing::internal::GetCapturedStdout();
                 EXPECT_THAT(output,testing::HasSubstr("Molecular Dynamics simulations"));
-                if (PARAM.mdp.md_type == "fire")
+                if (TestParameters::mdp().md_type == "fire")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("FIRE"));
                 }
-                else if (PARAM.mdp.md_type == "nve")
+                else if (TestParameters::mdp().md_type == "nve")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("NVE"));
                 }
-                else if (PARAM.mdp.md_type == "nvt")
+                else if (TestParameters::mdp().md_type == "nvt")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("NVT"));
                 }
-                else if (PARAM.mdp.md_type == "npt")
+                else if (TestParameters::mdp().md_type == "npt")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("NPT"));
                 }
-                else if (PARAM.mdp.md_type == "langevin")
+                else if (TestParameters::mdp().md_type == "langevin")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("Langevin"));
                 }
-                else if (PARAM.mdp.md_type == "msst")
+                else if (TestParameters::mdp().md_type == "msst")
                 {
                     EXPECT_THAT(output,testing::HasSubstr("MSST"));
                 }
@@ -121,19 +131,19 @@ TEST_F(PrintInfoTest, SetupParameters)
 	std::vector<std::string> basis_type = {"lcao","pw","lcao_in_pw"};
 	for(int i=0; i<basis_type.size(); ++i)
 	{
-		PARAM.input.basis_type = basis_type[i];
+		TestParameters::input().basis_type = basis_type[i];
 		testing::internal::CaptureStdout();
-        EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.input));
+        EXPECT_NO_THROW(ModuleIO::print_parameters(*ucell, *kv, PARAM.inp));
         output = testing::internal::GetCapturedStdout();
-		if(PARAM.input.basis_type == "lcao")
+		if(TestParameters::input().basis_type == "lcao")
 		{
 			EXPECT_THAT(output,testing::HasSubstr("Use Systematically Improvable Atomic bases"));
 		}
-		else if(PARAM.input.basis_type == "lcao_in_pw")
+		else if(TestParameters::input().basis_type == "lcao_in_pw")
 		{
 			EXPECT_THAT(output,testing::HasSubstr("Expand Atomic bases into plane waves"));
 		}
-		else if(PARAM.input.basis_type == "pw")
+		else if(TestParameters::input().basis_type == "pw")
 		{
 			EXPECT_THAT(output,testing::HasSubstr("Use plane wave basis"));
 		}
@@ -148,22 +158,22 @@ TEST_F(PrintInfoTest, PrintScreen)
 	std::vector<std::string> cal_type = {"scf","nscf","md","relax","cell-relax"};
 	for(int i=0; i<cal_type.size(); ++i)
 	{
-		PARAM.input.calculation = cal_type[i];
-		if(PARAM.input.calculation=="scf")
+		TestParameters::input().calculation = cal_type[i];
+		if(TestParameters::input().calculation=="scf")
 		{
 			testing::internal::CaptureStdout();
             ModuleIO::print_screen(stress_step, force_step, istep);
             output = testing::internal::GetCapturedStdout();
 			EXPECT_THAT(output,testing::HasSubstr("SELF-CONSISTENT"));
 		}
-		else if(PARAM.input.calculation=="nscf")
+		else if(TestParameters::input().calculation=="nscf")
 		{
 			testing::internal::CaptureStdout();
             ModuleIO::print_screen(stress_step, force_step, istep);
             output = testing::internal::GetCapturedStdout();
 			EXPECT_THAT(output,testing::HasSubstr("NONSELF-CONSISTENT"));
 		}
-		else if(PARAM.input.calculation=="md")
+		else if(TestParameters::input().calculation=="md")
 		{
 			testing::internal::CaptureStdout();
             ModuleIO::print_screen(stress_step, force_step, istep);
@@ -172,14 +182,14 @@ TEST_F(PrintInfoTest, PrintScreen)
 		}
 		else
 		{
-			if(PARAM.input.calculation=="relax")
+			if(TestParameters::input().calculation=="relax")
 			{
 				testing::internal::CaptureStdout();
                 ModuleIO::print_screen(stress_step, force_step, istep);
                 output = testing::internal::GetCapturedStdout();
 				EXPECT_THAT(output,testing::HasSubstr("RELAX STEP"));
 			}
-			else if(PARAM.input.calculation=="cell-relax")
+			else if(TestParameters::input().calculation=="cell-relax")
 			{
 				testing::internal::CaptureStdout();
                 ModuleIO::print_screen(stress_step, force_step, istep);

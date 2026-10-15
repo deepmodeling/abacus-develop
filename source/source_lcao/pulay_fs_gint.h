@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_PULAY_FS_GINT_H
+#define ABACUS_SOURCE_LCAO_PULAY_FS_GINT_H
+
 #include "pulay_fs.h"
 #include "source_lcao/stress_tools.h"
 #include "source_hamilt/module_xc/xc_functional.h"
@@ -41,3 +43,5 @@ namespace PulayForceStress
         if (isstress) { StressTools::stress_fill(-1.0, ucell.omega, s); }
     }
 }
+
+#endif // ABACUS_SOURCE_LCAO_PULAY_FS_GINT_H

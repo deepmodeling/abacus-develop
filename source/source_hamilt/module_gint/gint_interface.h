@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_INTERFACE_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_INTERFACE_H
+
 #include <vector>
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "gint_type.h"
@@ -83,3 +85,5 @@ void cal_dvlocal_R_sparse(
 
 
 } // namespace ModuleGint
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_INTERFACE_H

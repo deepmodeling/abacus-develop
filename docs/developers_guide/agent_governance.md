@@ -54,6 +54,8 @@ focused cleanup.
   not around isolated statements inside the function body. Use the enclosing
   function name (or constructor name) as the timer label so the timer scopes
   the whole unit of work.
+- Do not use `#pragma once` in header files; use traditional
+  `#ifndef`/`#define`/`#endif` include guards instead.
 
 AI agents have additional workflow obligations:
 
@@ -72,6 +74,7 @@ decisions.
 | Rule category | Typical rule | Phase-one status | Default executor | Severity | Default action | Detection scope | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Basic text format | LF line endings | phase-one mechanical | hook + CI | medium | block | full changed text file | `.bat` and `.cmd` keep CRLF |
+| Header include guard | New `#pragma once` in a header | phase-one mechanical | hook + CI | high | block | added header lines (`.h`/`.hh`/`.hpp`/`.hxx`/`.cuh`) | Use `#ifndef`/`#define`/`#endif` guards; no exception allowed |
 | Language baseline | C++11 compatibility | build/toolchain | CI | high | block | build/static tooling | Actual compiler/toolchain result wins |
 | Global dependency budget | Net increase of `GlobalV`/`GlobalC`/`PARAM` references in code diff | phase-one mechanical + AI review | CI + AI review | high | block on net increase, warn on non-increasing added usage | added and removed code lines | Historical untouched usage and documentation mentions are not blocked; migration-neutral moves require reviewer rationale |
 | New default parameter | Header declaration adds a default argument | phase-one mechanical + AI review | CI + AI review | high | block | header diff | High misuse risk |
@@ -120,14 +123,14 @@ Local hooks:
 CI:
 
 - Run diff-level governance checks with PR base/head SHAs.
-- Check PR body completeness and INPUT documentation linkage.
+- Check PR body completeness and INPUT metadata changes.
 - Publish Markdown summaries that humans and AI reviewers can consume.
 
 AI review:
 
 - Explain governance findings in actionable terms.
 - Add semantic review for module ownership, header dependency growth, test
-  sufficiency, documentation sync, and AI workflow discipline.
+  sufficiency, INPUT metadata consistency, and AI workflow discipline.
 - Use the output format below for actionable findings.
 
 Human review:
@@ -220,26 +223,21 @@ setup workflows and should be added only through a later governance change.
 ## INPUT Parameter Changes
 
 Changes to parameter metadata, default values, type, availability, description,
-or parsing behavior should include both:
+or parsing behavior should update the corresponding C++ `Input_Item`
+registrations. The generated YAML and Markdown documentation are build artifacts
+and should not be edited or committed.
 
-- `docs/parameters.yaml`
-- `docs/advanced/input_files/input-main.md`
-
-These files are generated artifacts, not additional sources of truth. Update
-the C++ `Input_Item` registrations and regenerate both files; do not edit the
-YAML or Markdown output by hand.
-
-If the diff touches parameter internals but does not change user-visible INPUT
-behavior, the PR should state why no documentation update is required. Missing
-documentation updates trigger a governance warning (not a block), but maintainers
-may still request documentation updates before merging.
+If the diff touches parameter internals but does not require an `Input_Item`
+metadata change, the PR should state why. Missing metadata updates trigger a
+governance warning (not a block), but maintainers may still request updates
+before merging.
 
 ## PR Self-Consistency
 
 Before requesting review, check that the PR description matches the diff:
 
-- New or changed INPUT behavior lists the changed parameters and links the YAML
-  and Markdown documentation updates.
+- New or changed INPUT behavior lists the changed parameters and any corresponding
+  `Input_Item` metadata updates.
 - Source changes list focused unit, case, or CLI verification commands with the
   observed result.
 - Header include growth, `.hpp` propagation, missing tests, or other warnings

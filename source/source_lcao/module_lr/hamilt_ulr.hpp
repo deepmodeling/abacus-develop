@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_ULR_HPP
+#define ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_ULR_HPP
+
 #include "source_hamilt/hamilt.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h"
@@ -226,3 +228,5 @@ namespace LR
         const bool tdm_sym = false;     ///< whether to symmetrize the transition density matrix
     };
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_HAMILT_ULR_HPP

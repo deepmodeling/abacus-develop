@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_DGEMM_VBATCH_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_DGEMM_VBATCH_H
+
 
 #include <cuda_runtime.h>
 
@@ -36,3 +38,5 @@ void gemm_tn_vbatch(
     double** C_array_d, const int* ldc_d,
     int batchCount, cudaStream_t stream,
     const T* alpha = nullptr);
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_DGEMM_VBATCH_H

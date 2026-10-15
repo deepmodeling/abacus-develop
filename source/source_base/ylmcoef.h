@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_BASE_YLMCOEF_H
+#define ABACUS_SOURCE_BASE_YLMCOEF_H
+
 
 #include <cmath>
 #include "constants.h"
@@ -54,3 +56,5 @@ static constexpr double ylmcoef[YLMCOEF_SIZE] = {
 };
 
 } // namespace ModuleBase
+
+#endif // ABACUS_SOURCE_BASE_YLMCOEF_H

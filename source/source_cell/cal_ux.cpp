@@ -2,6 +2,19 @@
 
 namespace unitcell {
 
+// Compute the global spin quantization axis ux_ for non-collinear (nspin=4)
+// calculations. ux_ is a single axis shared by the whole system (NOT one axis
+// per atom); it is consumed by XC_Functional::noncolin_rho to split the spin
+// density matrix into spin-up/down scalars for the LSDA/GGA kernel.
+//
+// The axis is derived from the *initial* moments m_loc_ read from STRU
+// (direction of the first atom with |m| > threshold), not from the converged
+// density. Consequently the STRU initial moments silently select the XC
+// projection axis: with all-zero initial moments lsign_ stays false and the
+// XC projection becomes direction-blind (neg = +1 everywhere in
+// noncolin_rho), which can follow a different SCF path than a run started
+// with an explicit non-zero moment even when the starting density (e.g. from
+// init_chg = wfc/file) is identical.
 void cal_ux(UnitCell& ucell, const int nspin) {
 
     if (nspin != 4)

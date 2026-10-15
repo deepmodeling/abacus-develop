@@ -71,3 +71,68 @@ RI_2D_Comm::get_ik_list(const K_Vectors &kv, const int is_k)
     return ik_list;
 }
 
+
+std::tuple<int,int,int>
+RI_2D_Comm::get_iat_iw_is_block(const UnitCell& ucell,const int& iwt)
+{
+    const int iat = ucell.iwt2iat[iwt];
+    const int iw = ucell.iwt2iw[iwt];
+    switch(PARAM.inp.nspin)
+    {
+        case 1: case 2:
+            return std::make_tuple(iat, iw, 0);
+        case 4:
+            return std::make_tuple(iat, iw/2, iw%2);
+        default:
+            throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    }
+}
+
+int RI_2D_Comm::get_is_block(const int is_k, const int is_row_b, const int is_col_b)
+{
+    switch(PARAM.inp.nspin)
+    {
+        case 1:		return 0;
+        case 2:		return is_k;
+        case 4:		return is_row_b*2+is_col_b;
+        default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    }
+}
+
+std::tuple<int,int>
+RI_2D_Comm::split_is_block(const int is_b)
+{
+    switch(PARAM.inp.nspin)
+    {
+        case 1:	case 2:
+            return std::make_tuple(0, 0);
+        case 4:
+            return std::make_tuple(is_b/2, is_b%2);
+        default:
+            throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    }
+}
+
+
+
+int RI_2D_Comm::get_iwt(const UnitCell& ucell,
+                        const int iat,
+                        const int iw_b,
+                        const int is_b)
+{
+    const int it = ucell.iat2it[iat];
+    const int ia = ucell.iat2ia[iat];
+    int iw=-1;
+    switch(PARAM.inp.nspin)
+    {
+        case 1: case 2:
+            iw = iw_b;			break;
+        case 4:
+            iw = iw_b*2+is_b;	break;
+        default:
+            throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+    }
+    const int iwt = ucell.itiaiw2iwt(it,ia,iw);
+    return iwt;
+}
+

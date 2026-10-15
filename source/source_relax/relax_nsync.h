@@ -6,6 +6,7 @@
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include <fstream>
+#include <vector>
 
 /**
  * @class IonCellOptimizer
@@ -59,6 +60,31 @@ class IonCellOptimizer
     Ions_Move_Methods IMM;       ///< Ionic movement methods for atom relaxation
     Lattice_Change_Methods LCM;  ///< Lattice change methods for cell relaxation
     const Input_para* inp_ = nullptr;
+
+    /// Largest force of each ionic step (eV/Angstrom), kept across cell changes.
+    std::vector<double> max_force_history_;
+    /// Largest stress of each cell step (kbar), only filled in cell-relax.
+    std::vector<double> max_stress_history_;
+
+    /**
+     * @brief Print the unified convergence summary to the running log.
+     *
+     * Shared by every exit path that reports a converged relaxation, so the
+     * ASE interface always finds the same set of lines (issue #6546).
+     *
+     * @param istep Total ionic steps taken.
+     * @param with_stress Whether the per-step stress history is printed
+     *                    (true for cell-relax with a movable lattice).
+     * @param ofs_running Output stream for the running log.
+     */
+    void print_converged_summary(const int istep,
+                                 const bool with_stress,
+                                 std::ofstream& ofs_running) const;
+
+  public:
+    /// Read-only observers of the per-step convergence history, for the final summary.
+    const std::vector<double>& get_max_force_history() const { return max_force_history_; }
+    const std::vector<double>& get_max_stress_history() const { return max_stress_history_; }
 };
 
 #endif

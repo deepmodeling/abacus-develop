@@ -29,7 +29,7 @@
 #include <ATen/kernels/lapack.h>
 #include <sys/time.h>
 #ifdef __LCAO
-#include "source_io/module_hs/write_vxc_lip.hpp"
+#include "source_io/module_hs/vxc_op_lip.h"
 #endif
 
 namespace ModuleESolver
@@ -212,7 +212,7 @@ namespace ModuleESolver
                 {
                     // update exx and redo scf
                     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-                    iter = 0;
+                    this->scf_rerun_ = true;
                     std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
                     this->two_level_step++;
                     conv_esolver = false;
@@ -238,7 +238,7 @@ namespace ModuleESolver
                 gettimeofday(&t_start, nullptr);
 
                 this->exx_lip->cal_exx();
-                iter = 0;
+                this->scf_rerun_ = true;
                 this->two_level_step++;
 
                 timeval t_end;
@@ -284,7 +284,7 @@ namespace ModuleESolver
             bool cal_exx = false;
             double hybrid_alpha = 0.0;
 #endif
-            ModuleIO::write_Vxc(this->inp_->nspin,
+            ModuleIO::write_Vxc_LIP(this->inp_->nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
                                 *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
@@ -298,6 +298,10 @@ namespace ModuleESolver
                                 this->chr,
                                 this->kv,
                                 this->pelec->wg,
+                                PARAM.globalv.gamma_only_local,
+                                PARAM.globalv.global_out_dir,
+                                this->inp_->out_ndigits,
+                                this->inp_->ks_solver,
                                 cal_exx,
                                 hybrid_alpha
 #ifdef __EXX

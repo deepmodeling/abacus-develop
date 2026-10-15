@@ -15,6 +15,8 @@ if(ENABLE_COVERAGE)
   add_coverage(md)
 endif()
 
+add_subdirectory(module_plumed)
+
 if(BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)

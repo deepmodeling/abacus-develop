@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HSOLVER_KERNELS_CUDA_DIAG_CUSOLVERMP_CUH
+#define ABACUS_SOURCE_HSOLVER_KERNELS_CUDA_DIAG_CUSOLVERMP_CUH
+
 #include "mpi.h"
 
 #include <complex>
@@ -72,3 +74,5 @@ class Diag_CusolverMP_gvd
     int64_t matrix_i;
     int64_t matrix_j;
 };
+
+#endif // ABACUS_SOURCE_HSOLVER_KERNELS_CUDA_DIAG_CUSOLVERMP_CUH

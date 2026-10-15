@@ -1,5 +1,7 @@
 #include "esolver_of.h"
 
+#include <cstddef>
+
 #include "source_io/module_parameter/parameter.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
@@ -30,20 +32,6 @@ ESolver_OF::~ESolver_OF()
     delete psi_;
     delete[] this->pphi_;
 
-    for (int i = 0; i < this->inp_->nspin; ++i)
-    {
-        delete[] this->pdirect_[i];
-        delete[] this->pdLdphi_[i];
-        delete[] this->pdEdphi_[i];
-        delete[] this->precip_dir_[i];
-    }
-    delete[] this->pdirect_;
-    delete[] this->pdLdphi_;
-    delete[] this->pdEdphi_;
-    delete[] this->precip_dir_;
-
-    delete[] this->nelec_;
-    delete[] this->theta_;
     delete this->ptemp_rho_;
 
     delete this->kedf_manager_;
@@ -120,7 +108,7 @@ void ESolver_OF::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     // Initialize KEDF
     // Calculate electron numbers, which will be used to initialize WT KEDF
-    this->nelec_ = new double[inp.nspin];
+    this->nelec_.resize(inp.nspin);
     if (inp.nspin == 1)
     {
         this->nelec_[0] = inp.nelec;
@@ -236,17 +224,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 		this->ptemp_rho_->allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(),
 		                           this->inp_->test_charge);
 
-        for (int is = 0; is < this->inp_->nspin; ++is)
-        {
-            delete[] this->pdLdphi_[is];
-            delete[] this->pdEdphi_[is];
-            delete[] this->pdirect_[is];
-            delete[] this->precip_dir_[is];
-            this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
-            this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
-            this->pdirect_[is] = new double[this->pw_rho->nrxx];
-            this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
-        }
+        this->resize_spin_arrays();
     }
 
     elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, PARAM.globalv.global_out_dir, *this->inp_, this->pelec);
@@ -350,10 +328,12 @@ void ESolver_OF::optimize(UnitCell& ucell)
     // (1) get |d0> with optimization algorithm
     this->get_direction(ucell);
     // initialize temp_phi and temp_rho used in line search
-    double** ptemp_phi = new double*[this->inp_->nspin];
+    std::vector<double> ptemp_phi_storage(static_cast<std::size_t>(this->inp_->nspin)
+                                          * static_cast<std::size_t>(this->pw_rho->nrxx));
+    std::vector<double*> ptemp_phi(this->inp_->nspin);
     for (int is = 0; is < this->inp_->nspin; ++is)
     {
-        ptemp_phi[is] = new double[this->pw_rho->nrxx];
+        ptemp_phi[is] = ptemp_phi_storage.data() + static_cast<std::size_t>(is) * this->pw_rho->nrxx;
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
             ptemp_phi[is][ir] = this->pphi_[is][ir];
@@ -365,21 +345,13 @@ void ESolver_OF::optimize(UnitCell& ucell)
     this->adjust_direction();
 
     // (3) make sure that dEdtheta<0 at theta = 0
-    double* dEdtheta = new double[this->inp_->nspin]; // dE/dtheta of tempPhi
-    ModuleBase::GlobalFunc::ZEROS(dEdtheta, this->inp_->nspin);
+    std::vector<double> dEdtheta(this->inp_->nspin, 0.0); // dE/dtheta of tempPhi
 
-    this->check_direction(dEdtheta, ptemp_phi, ucell);
+    this->check_direction(dEdtheta.data(), ptemp_phi.data(), ucell);
     // this->test_direction(dEdtheta, ptemp_phi, ucell);
 
     // (4) call line search to find the best theta (step length)
-    this->get_step_length(dEdtheta, ptemp_phi, ucell);
-
-    for (int is = 0; is < this->inp_->nspin; ++is)
-    {
-        delete[] ptemp_phi[is];
-    }
-    delete[] ptemp_phi;
-    delete[] dEdtheta;
+    this->get_step_length(dEdtheta.data(), ptemp_phi.data(), ucell);
 }
 
 /**

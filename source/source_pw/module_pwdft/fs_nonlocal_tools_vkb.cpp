@@ -7,7 +7,7 @@
 #include "source_base/tool_title.h"
 #include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_io/module_parameter/parameter.h"
-#include "nonlocal_maths.hpp"
+#include "nonlocal_maths.h"
 
 #include "source_base/parallel_comm.h" // different MPI worlds (POOL_WORLD)
 

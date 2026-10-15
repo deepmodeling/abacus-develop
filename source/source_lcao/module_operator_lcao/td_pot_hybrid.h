@@ -8,7 +8,7 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include <vector>
-#include "source_io/module_hs/cal_r_overlap_r.h"
+#include "source_io/module_hs/pos_op_mat.h"
 
 namespace hamilt
 {
@@ -48,7 +48,8 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       const UnitCell* ucell_in,
                                       const std::vector<double>& orb_cutoff,
                                       const Grid_Driver* GridD_in,
-                                      const TwoCenterIntegrator* intor);
+                                      const TwoCenterIntegrator* intor,
+                                      TD_info& td_info);
 
     /**
      * @brief Destroy the TD_pot_hybrid object
@@ -85,7 +86,7 @@ class TD_pot_hybrid<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     bool HR_fixed_done = false;
     //tddft part
-    cal_r_overlap_R* r_calculator;
+    Position_op* r_calculator;
     //ETD
     //std::vector<std::complex<double>> hk_hybrid;
     //ETD

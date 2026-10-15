@@ -9,6 +9,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <type_traits>
 
 namespace hsolver
 {
@@ -24,8 +25,12 @@ LinearSolveTimer::~LinearSolveTimer()
 }
 
 template <typename T, typename Device>
-LinearWorkspace<T, Device>::LinearWorkspace(const diag_comm_info& comm) : comm_(comm)
+LinearWorkspace<T, Device>::LinearWorkspace(const diag_comm_info& comm, int slots) : slots_(slots), comm_(comm)
 {
+    if (slots_ <= 0)
+    {
+        throw std::invalid_argument("Linear workspace requires a positive slot count.");
+    }
     // A default Tensor is a one-element float CPU tensor, not an empty buffer.
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
@@ -51,11 +56,13 @@ void LinearWorkspace<T, Device>::prepare(const int ld,
     {
         throw std::invalid_argument("Invalid linear-solver layout, buffers, or convergence controls.");
     }
-    const int size = std::max(1, ld * nvec);
+    const int vector_elements = ld * nvec;
+    const int size = std::max(1, vector_elements);
     if (size > capacity_)
     {
         using CtDevice = typename ct::PsiToContainer<Device>::type;
-        vectors_ = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<CtDevice>::value, {9, static_cast<int64_t>(size)});
+        const int64_t slot_elements = size;
+        vectors_ = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<CtDevice>::value, {slots_, slot_elements});
         capacity_ = size;
     }
 }
@@ -63,7 +70,8 @@ void LinearWorkspace<T, Device>::prepare(const int ld,
 template <typename T, typename Device>
 void LinearWorkspace<T, Device>::clear()
 {
-    base_device::memory::set_memory_op<T, Device>()(vectors_.template data<T>(), 0, static_cast<size_t>(9) * capacity_);
+    const size_t elements = static_cast<size_t>(slots_) * capacity_;
+    base_device::memory::set_memory_op<T, Device>()(vectors_.template data<T>(), 0, elements);
 }
 
 template <typename T, typename Device>
@@ -71,6 +79,13 @@ void LinearWorkspace<T, Device>::reset_statistics()
 {
     operator_calls_ = 0;
     operator_columns_ = 0;
+}
+
+template <typename T, typename Device>
+void LinearWorkspace<T, Device>::statistics(LinearSolveResult* result) const
+{
+    result->operator_calls = operator_calls_;
+    result->operator_columns = operator_columns_;
 }
 
 template <typename T, typename Device>
@@ -130,6 +145,7 @@ void LinearWorkspace<T, Device>::verify(const LinearOperator<T, Device>& op,
                                         LinearSolveResult* result)
 {
     residual(op, ld, dim, nvec, x, b, scratch);
+    ++result->true_checks;
     result->operator_calls = operator_calls_;
     result->operator_columns = operator_columns_;
     std::vector<T> norms(nvec);
@@ -169,14 +185,17 @@ void LinearWorkspace<T, Device>::dot_pair(int ld, int dim, int nvec, const T* x,
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
     const int count = (z ? 2 : 1) * nvec;
-    const int tiles = std::max(1, std::min(32, (dim + 2047) / 2048));
+    const int requested_tiles = (dim + 2047) / 2048;
+    const int capped_tiles = std::min(32, requested_tiles);
+    const int tiles = std::max(1, capped_tiles);
     if (dots_.NumElements() < count)
     {
         dots_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {count});
     }
-    if (partial_.NumElements() < static_cast<int64_t>(count) * tiles)
+    const int64_t partial_elements = static_cast<int64_t>(count) * tiles;
+    if (partial_.NumElements() < partial_elements)
     {
-        partial_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {static_cast<int64_t>(count) * tiles});
+        partial_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {partial_elements});
     }
     host_dots_.resize(count);
     linear_op<T, Device>().dots(ld, dim, nvec, x, y, z, w, dots_.template data<T>(), partial_.template data<T>(), tiles);
@@ -187,10 +206,11 @@ void LinearWorkspace<T, Device>::dot_pair(int ld, int dim, int nvec, const T* x,
         Parallel_Common::reduce_data(host_dots_.data(), count, comm_.comm);
     }
 #endif
-    std::copy(host_dots_.begin(), host_dots_.begin() + nvec, first);
+    const typename std::vector<T>::const_iterator second_begin = host_dots_.cbegin() + nvec;
+    std::copy(host_dots_.cbegin(), second_begin, first);
     if (z)
     {
-        std::copy(host_dots_.begin() + nvec, host_dots_.end(), second);
+        std::copy(second_begin, host_dots_.cend(), second);
     }
     ModuleBase::timer::end("LinearWorkspace", "dot_pair");
 }
@@ -216,9 +236,10 @@ void LinearWorkspace<T, Device>::batch(int ld,
     }
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
-    if (coefficients_.NumElements() < 2LL * nvec)
+    const int64_t coefficient_elements = 2 * static_cast<int64_t>(nvec);
+    if (coefficients_.NumElements() < coefficient_elements)
     {
-        coefficients_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {2LL * nvec});
+        coefficients_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {coefficient_elements});
     }
     T* coeff = coefficients_.template data<T>();
     if (ca)
@@ -227,7 +248,8 @@ void LinearWorkspace<T, Device>::batch(int ld,
     }
     if (cb)
     {
-        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(coeff + nvec, cb, nvec);
+        T* second_coefficients = coeff + nvec;
+        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(second_coefficients, cb, nvec);
     }
     const int* mask = nullptr;
     if (skip)
@@ -239,26 +261,72 @@ void LinearWorkspace<T, Device>::batch(int ld,
         base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(mask_.template data<int>(), skip, nvec);
         mask = mask_.template data<int>();
     }
-    linear_op<T, Device>().batch(ld, dim, nvec, out, x, y, a, b, ca ? coeff : nullptr, cb ? coeff + nvec : nullptr, mask);
+    const T* first_coefficients = ca ? coeff : nullptr;
+    const T* second_coefficients = cb ? coeff + nvec : nullptr;
+    linear_op<T, Device>().batch(ld, dim, nvec, out, x, y, a, b, first_coefficients, second_coefficients, mask);
     ModuleBase::timer::end("LinearWorkspace", "batch");
 }
 
 template <typename T, typename Device>
+void LinearWorkspace<T, Device>::gmres_update(int ld,
+                                              int dim,
+                                              int nvec,
+                                              T* solution,
+                                              T* residual,
+                                              const T* direction,
+                                              const T* image,
+                                              const T* coefficients,
+                                              bool has_zero_coefficients)
+{
+    ModuleBase::timer::start("LinearWorkspace", "gmres_update");
+    if (dim == 0 || nvec == 0)
+    {
+        ModuleBase::timer::end("LinearWorkspace", "gmres_update");
+        return;
+    }
+    using CtDevice = typename ct::PsiToContainer<Device>::type;
+    const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
+    if (coefficients_.NumElements() < nvec)
+    {
+        coefficients_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {nvec});
+    }
+    T* coeff = coefficients_.template data<T>();
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(coeff, coefficients, nvec);
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value && residual == nullptr && !has_zero_coefficients)
+    {
+        // Keep the existing GPU path when neither zero-column skipping nor a paired update is needed.
+        linear_op<T, Device>().batch(ld, dim, nvec, solution, solution, direction, T(1), T(1), nullptr, coeff, nullptr);
+    }
+    else
+    {
+        linear_op<T, Device>().gmres_update(ld, dim, nvec, solution, residual, direction, image, coeff);
+    }
+    ModuleBase::timer::end("LinearWorkspace", "gmres_update");
+}
+
+template <typename T, typename Device>
 void LinearWorkspace<T, Device>::swap_columns(int ld, int dim, const std::vector<int>& pairs)
+{
+    swap_vectors(ld, dim, slots_, capacity_, vectors_.template data<T>(), pairs);
+}
+
+template <typename T, typename Device>
+void LinearWorkspace<T, Device>::swap_vectors(int ld, int dim, int slots, int stride, T* vectors, const std::vector<int>& pairs)
 {
     if (pairs.empty() || dim == 0)
     {
         return;
     }
     using CtDevice = typename ct::PsiToContainer<Device>::type;
-    if (permutation_.NumElements() < static_cast<int64_t>(pairs.size()))
+    const int64_t permutation_elements = pairs.size();
+    if (permutation_.NumElements() < permutation_elements)
     {
-        permutation_
-            = ct::Tensor(ct::DataTypeToEnum<int>::value, ct::DeviceTypeToEnum<CtDevice>::value, {static_cast<int64_t>(pairs.size())});
+        permutation_ = ct::Tensor(ct::DataTypeToEnum<int>::value, ct::DeviceTypeToEnum<CtDevice>::value, {permutation_elements});
     }
     int* map = permutation_.template data<int>();
     base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(map, pairs.data(), pairs.size());
-    linear_op<T, Device>().swaps(ld, dim, 9, capacity_, pairs.size() / 2, vectors_.template data<T>(), map);
+    const int pair_count = pairs.size() / 2;
+    linear_op<T, Device>().swaps(ld, dim, slots, stride, pair_count, vectors, map);
 }
 template <typename T, typename Device>
 void LinearWorkspace<T, Device>::restore(int ld, int dim, int nvec, const std::vector<int>& order, const T* source, T* destination)
@@ -279,7 +347,8 @@ void LinearWorkspace<T, Device>::restore(int ld, int dim, int nvec, const std::v
     }
     int* map = permutation_.template data<int>();
     base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(map, inverse.data(), nvec);
-    linear_op<T, Device>().gather(ld, dim, nvec, 1, ld * nvec, source, destination, map);
+    const int stride = ld * nvec;
+    linear_op<T, Device>().gather(ld, dim, nvec, 1, stride, source, destination, map);
 }
 
 template <typename T, typename Device>
@@ -293,16 +362,23 @@ void LinearWorkspace<T,
         return;
     }
     using CtDevice = typename ct::PsiToContainer<Device>::type;
-    if (coefficients_.NumElements() < 2LL * nvec)
+    const int64_t coefficient_elements = 2 * static_cast<int64_t>(nvec);
+    if (coefficients_.NumElements() < coefficient_elements)
     {
-        coefficients_ = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<CtDevice>::value, {2LL * nvec});
+        coefficients_ = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<CtDevice>::value, {coefficient_elements});
     }
-    host_coefficients_.resize(2 * nvec);
-    std::copy(a, a + nvec, host_coefficients_.begin());
-    std::copy(b, b + nvec, host_coefficients_.begin() + nvec);
+    host_coefficients_.resize(coefficient_elements);
+    const T* a_end = a + nvec;
+    const T* b_end = b + nvec;
+    const typename std::vector<T>::iterator second_begin = host_coefficients_.begin() + nvec;
+    std::copy(a, a_end, host_coefficients_.begin());
+    std::copy(b, b_end, second_begin);
     T* coeff = coefficients_.template data<T>();
-    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(coeff, host_coefficients_.data(), 2 * nvec);
-    linear_op<T, Device>().bicg_update(ld, dim, nvec, direction, out, x, y, coeff, coeff + nvec);
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(coeff,
+                                                                                     host_coefficients_.data(),
+                                                                                     coefficient_elements);
+    const T* second_coefficients = coeff + nvec;
+    linear_op<T, Device>().bicg_update(ld, dim, nvec, direction, out, x, y, coeff, second_coefficients);
     ModuleBase::timer::end("LinearWorkspace", "bicg_update");
 }
 

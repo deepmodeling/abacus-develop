@@ -1,10 +1,14 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
-#include "../module_output/cube_io.h" // use write_vdata_palgrid
-#include "../module_dipole/dipole_io.h" // use write_dipole
-#include "source_estate/module_charge/chg_symm.h" // use module_charge::cal_rhog_symm
-#include "source_hamilt/module_xc/xc_functional.h"    // use XC_Functional
-#include "source_estate/write_elecstat_pot.h" // use write_elecstat_pot
+
+#include "source_basis/module_pw/pw_basis_big.h"   // use PW_Basis_Big
+#include "source_estate/elecstate.h"               // use elecstate::ElecState
+#include "source_estate/module_charge/charge.h"    // use Charge
+#include "source_estate/module_charge/chg_symm.h"  // use module_charge::cal_rhog_symm
+#include "source_estate/write_elecstat_pot.h"      // use write_elecstat_pot
+#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
+#include "source_io/module_dipole/dipole_io.h"     // use write_dipole
 #include "source_io/module_elf/write_elf.h"
+#include "source_io/module_output/cube_io.h"            // use write_vdata_palgrid
 #include "source_io/module_parameter/input_parameter.h" // use Input_para
 
 #ifdef __LIBXC
@@ -22,7 +26,8 @@ void ctrl_output_fp(UnitCell& ucell,
                     Charge& chr,
                     surchem& solvent,
                     Parallel_Grid& para_grid,
-                    const int istep)
+                    const int istep,
+                    std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_output_fp");
     ModuleBase::timer::start("ModuleIO", "ctrl_output_fp");
@@ -32,25 +37,19 @@ void ctrl_output_fp(UnitCell& ucell,
     const int nspin = inp.nspin;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
 
-    // print out the 'g' index when istep_in != -1
+    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    // Print the global electronic step for TDDFT and the ionic step otherwise.
     int istep_in = -1;
-    if (inp.esolver_type != "tddft" && inp.out_freq_ion > 0) // default value of out_freq_ion is 0
+    if (output_frequency > 0)
     {
-        if (istep % inp.out_freq_ion == 0)
-        {
-            istep_in = istep;
-        }
-    }
-    else if (inp.esolver_type == "tddft" && inp.out_freq_td > 0) // default value of out_freq_td is 0
-    {
-        if (istep % inp.out_freq_td == 0)
+        if (istep % output_frequency == 0)
         {
             istep_in = istep;
         }
     }
 
     std::string geom_block;
-    bool should_output = (inp.out_freq_ion == 0);
+    bool should_output = (output_frequency == 0);
     if (istep_in >= 0)
     {
         geom_block = "g" + std::to_string(istep + 1);
@@ -76,8 +75,10 @@ void ctrl_output_fp(UnitCell& ucell,
 
             fn += spin_block + geom_block + ".cube";
 
+            const std::string desc_chg = ModuleIO::make_data_desc("charge density", "magnetization density m", is, nspin);
+
             ModuleIO::write_vdata_palgrid(para_grid,
-                                          chr.rho_save[is],
+                                          chr.rho[is],
                                           is,
                                           nspin,
                                           istep, // change istep_in to istep, mohan 20260222
@@ -87,7 +88,9 @@ void ctrl_output_fp(UnitCell& ucell,
                                           inp.out_chg[1],
                                           1,
                                           PARAM.globalv.two_fermi,
-                                          false);
+                                          false,
+                                          ofs_running,
+                                          desc_chg);
 
             if (XC_Functional::get_ked_flag())
             {
@@ -95,8 +98,10 @@ void ctrl_output_fp(UnitCell& ucell,
 
                 fn += spin_block + geom_block + ".cube";
 
+                const std::string desc_tau = ModuleIO::make_data_desc("kinetic energy density", "kinetic energy density magnetization m", is, nspin);
+
                 ModuleIO::write_vdata_palgrid(para_grid,
-                                              chr.kin_r_save[is],
+                                              chr.kin_r[is],
                                               is,
                                               nspin,
                                               istep,
@@ -104,9 +109,11 @@ void ctrl_output_fp(UnitCell& ucell,
                                               pelec->eferm.get_efval(is),
                                               &(ucell),
                                               11, // default precision
-                                              1, // default out_fermi
+                                              1,  // default out_fermi
                                               PARAM.globalv.two_fermi,
-                                              false);
+                                              false,
+                                              ofs_running,
+                                              desc_tau);
             }
         }
     }
@@ -130,6 +137,8 @@ void ctrl_output_fp(UnitCell& ucell,
 
             fn += spin_block + geom_block + ".cube";
 
+            const std::string desc_pot = ModuleIO::make_data_desc("effective potential", "effective magnetic field b", is, nspin);
+
             ModuleIO::write_vdata_palgrid(para_grid,
                                           pelec->pot->get_eff_v(is),
                                           is,
@@ -138,10 +147,12 @@ void ctrl_output_fp(UnitCell& ucell,
                                           fn,
                                           0.0, // efermi
                                           &(ucell),
-                                          inp.out_pot[1],  // precision
-                                          0, // out_fermi
+                                          inp.out_pot[1], // precision
+                                          0,              // out_fermi
                                           PARAM.globalv.two_fermi,
-                                          false);
+                                          false,
+                                          ofs_running,
+                                          desc_pot);
         }
     }
     else if (inp.out_pot[0] == 2 && should_output)
@@ -149,6 +160,7 @@ void ctrl_output_fp(UnitCell& ucell,
         std::string fn = PARAM.globalv.global_out_dir + "potes";
         fn += geom_block + ".cube";
 
+        const std::vector<double>* pcc_potential = pelec->pot->pcc_electron_potential();
         ModuleIO::write_elecstat_pot(
 #ifdef __MPI
             pw_big->bz,
@@ -161,7 +173,9 @@ void ctrl_output_fp(UnitCell& ucell,
             &(ucell),
             pelec->pot->get_fixed_v(),
             solvent,
-            inp.out_pot[1]);
+            pcc_potential,
+            inp.out_pot[1],
+            ofs_running);
     }
 
     // 6) write ELF
@@ -177,16 +191,17 @@ void ctrl_output_fp(UnitCell& ucell,
 
         std::string out_dir = PARAM.globalv.global_out_dir;
         ModuleIO::write_elf(out_dir,
-            istep,
-            nspin,
-            chr.rho,
-            chr.kin_r,
-            pw_rhod,
-            para_grid,
-            &(ucell),
-            inp.out_elf[1],
-            geom_block,
-            PARAM.globalv.two_fermi);
+                            istep,
+                            nspin,
+                            chr.rho,
+                            chr.kin_r,
+                            pw_rhod,
+                            para_grid,
+                            &(ucell),
+                            inp.out_elf[1],
+                            geom_block,
+                            PARAM.globalv.two_fermi,
+                            ofs_running);
     }
 
 #ifdef __LIBXC
@@ -204,14 +219,15 @@ void ctrl_output_fp(UnitCell& ucell,
     }
 #endif
 
-    // 8) write dipole moment
-    if (inp.out_dipole == 1 && should_output)
+    // RT-TDDFT response analysis requires every dipole sample, independently of snapshot output.
+    const bool output_dipole = inp.esolver_type == "tddft" || should_output;
+    if (inp.out_dipole == 1 && output_dipole)
     {
         for (int is = 0; is < nspin; ++is)
         {
             std::stringstream ss_dipole;
             ss_dipole << global_out_dir << "dipole_s" << is + 1 << ".txt";
-            ModuleIO::write_dipole(ucell, chr.rho_save[is], pw_rhod, istep, ss_dipole.str(), GlobalV::ofs_running);
+            ModuleIO::write_dipole(ucell, chr.rho[is], pw_rhod, istep, ss_dipole.str(), ofs_running);
         }
     }
 

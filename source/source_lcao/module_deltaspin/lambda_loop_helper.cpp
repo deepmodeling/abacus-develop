@@ -40,7 +40,7 @@ namespace spinconstrain
 template <typename TK>
 void print_termination(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
 {
-    print_2d(" after-optimization spin (uB): (print in the inner loop): ", sc.get_Mi(), sc.get_nspin(), 1.0, ofs_running);
+    print_2d(" after-optimization spin (uB): (print in the inner loop): ", sc.get_mi(), sc.get_nspin(), 1.0, ofs_running);
     print_2d(" after-optimization lambda (eV/uB): (print in the inner loop): ",
              sc.get_sc_lambda(),
              sc.get_nspin(),
@@ -351,7 +351,7 @@ void print_Mi(const SpinConstrain<TK>& sc, std::ostream& ofs_running)
     sc.check_atomCounts();
     const int nat = sc.get_nat();
     const int nspin = sc.get_nspin();
-    const auto& Mi = sc.get_Mi();
+    const auto& Mi = sc.get_mi();
     const auto& atomLabel = sc.get_atomLabels();
     std::vector<std::string> atom_labels_iat(nat);
     for (const auto& it : sc.get_atomCounts())

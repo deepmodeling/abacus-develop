@@ -106,10 +106,10 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
 
 //private:
     extern std::vector<int> get_ik_list(const K_Vectors &kv, const int is_k);
-    extern inline std::tuple<int,int,int> get_iat_iw_is_block(const UnitCell& ucell,const int& iwt);
-    extern inline int get_is_block(const int is_k, const int is_row_b, const int is_col_b);
-    extern inline std::tuple<int,int> split_is_block(const int is_b);
-    extern inline int get_iwt(const UnitCell& ucell, const int iat, const int iw_b, const int is_b);
+    extern std::tuple<int,int,int> get_iat_iw_is_block(const UnitCell& ucell,const int& iwt);
+    extern int get_is_block(const int is_k, const int is_row_b, const int is_col_b);
+    extern std::tuple<int,int> split_is_block(const int is_b);
+    extern int get_iwt(const UnitCell& ucell, const int iat, const int iw_b, const int is_b);
 
     template <typename TA, typename TAC, typename T>
     extern std::map<TA, std::map<TAC, T>> comm_map2_first(const MPI_Comm& mpi_comm,

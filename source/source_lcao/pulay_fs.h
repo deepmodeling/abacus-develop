@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_PULAY_FS_H
+#define ABACUS_SOURCE_LCAO_PULAY_FS_H
+
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_cell/unitcell.h"
@@ -56,3 +58,5 @@ namespace PulayForceStress
 }
 #include "pulay_fs_temp.h"
 #include "pulay_fs_gint.h"
+
+#endif // ABACUS_SOURCE_LCAO_PULAY_FS_H

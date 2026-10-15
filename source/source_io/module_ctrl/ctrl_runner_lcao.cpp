@@ -6,9 +6,10 @@
 
 #include "../module_energy/write_proj_band_lcao.h" // projcted band structure
 #include "../module_dos/cal_ldos.h" // cal LDOS
-#include "../module_energy/write_eband_terms.hpp"
-#include "../module_hs/write_vxc.hpp"
-#include "../module_hs/write_vxc_r.hpp"
+#include "../module_energy/write_eband_terms.h"
+#include "source_io/module_hs/vxc_op_mat.h"
+#include "source_io/module_hs/vxc_op_r.h"
+#include "source_io/module_hs/vxc_op_tools.h"
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
@@ -36,7 +37,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         ModuleBase::matrix &vloc,     // local pseudopotential 
 		Exx_NAO<TK> &exx_nao,
         const Exx_Info& exx_info,
-        surchem &solvent)             // solvent model
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_runner_lcao");
@@ -51,13 +53,19 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 	if (inp.out_ldos[0])
     {
         ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(pelec->eferm, chr, dmat, kv,
-          pelec->ekb, pelec->wg, psi[0], pgrid, pv, gd, ucell);
+          pelec->ekb, pelec->wg, psi[0], pgrid, pv, gd, ucell,
+          inp.stm_bias, inp.nspin, PARAM.globalv.global_out_dir,
+          PARAM.globalv.two_fermi, inp.out_ldos[1], ofs_running);
     }
 
     // 3) print out exchange-correlation potential
     if (inp.out_mat_xc)
     {
         bool cal_exx = exx_info.info_global.cal_exx;
+#ifdef __EXX
+        auto* hexxd_ptr = exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr;
+        auto* hexxc_ptr = exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr;
+#endif
         ModuleIO::write_Vxc<TK, TR>(inp.nspin,
                                     PARAM.globalv.nlocal,
                                     GlobalV::DRANK,
@@ -74,12 +82,17 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     orb.cutoffs(),
                                     pelec->wg,
                                     gd,
+                                    inp.dft_plus_u,
+                                    PARAM.globalv.gamma_only_local,
+                                    PARAM.globalv.global_out_dir,
+                                    inp.out_ndigits,
+                                    inp.ks_solver,
                                     cal_exx,
                                     exx_info
 #ifdef __EXX
                                     ,
-                                    exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
-                                    exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
+                                    hexxd_ptr,
+                                    hexxc_ptr
 #endif
         );
     }
@@ -89,6 +102,11 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
         bool cal_exx = exx_info.info_global.cal_exx;
         double hybrid_alpha = exx_info.info_global.hybrid_alpha;
         bool real_number = exx_info.info_ri.real_number;
+        const double sparse_thr = 1e-10;
+#ifdef __EXX
+        const auto* hexxd_ptr = exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr;
+        const auto* hexxc_ptr = exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr;
+#endif
         ModuleIO::write_Vxc_R<TK, TR>(inp.nspin,
                                       &pv,
                                       ucell,
@@ -101,14 +119,18 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       kv,
                                       orb.cutoffs(),
                                       gd,
+                                      PARAM.globalv.global_out_dir,
                                       cal_exx,
                                       hybrid_alpha,
                                       real_number
 #ifdef __EXX
                                       ,
-                                      exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
-                                      exx_nao.exc ? &exx_nao.exc->get_Hexxs() : nullptr
+                                      hexxd_ptr,
+                                      hexxc_ptr
 #endif
+                                      ,
+                                      sparse_thr,
+                                      ofs_running
         );
     }
 
@@ -168,7 +190,8 @@ template void ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<double> &exx_nao,
         const Exx_Info& exx_info,
-        surchem &solvent);             // solvent model
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running);
 
 // TK: complex<double>  TR: double 
 template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,      // unitcell
@@ -190,7 +213,8 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<std::complex<double>> &exx_nao,
         const Exx_Info& exx_info,
-        surchem &solvent);             // solvent model
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running);
 
 // TK: complex<double>  TR: complex<double>
 template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell,      // unitcell
@@ -212,6 +236,7 @@ template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitC
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<std::complex<double>> &exx_nao,
         const Exx_Info& exx_info,
-        surchem &solvent);             // solvent model
+        surchem &solvent,             // solvent model
+        std::ofstream& ofs_running);
 
 } // end namespace

@@ -25,7 +25,7 @@ class HContainerTest : public ::testing::Test
         ucell.ntype = 1;
         ucell.nat = 3;
         ucell.atoms = new Atom[ucell.ntype];
-        ucell.iat2it = new int[ucell.nat];
+        ucell.iat2it.resize(ucell.nat);
         for (int iat = 0; iat < ucell.nat; iat++)
         {
             ucell.iat2it[iat] = 0;
@@ -107,6 +107,44 @@ TEST_F(HContainerTest, insert_pair)
     hamilt::HContainer<double> HR_copy(*HR);
     // test move constructor for HContainer
     hamilt::HContainer<double> HR_move(std::move(HR_copy));
+}
+
+TEST(HContainerSparseTest, InsertPairsOutOfOrder)
+{
+    hamilt::HContainer<double> container(3);
+    const int insertion_order[] = {2, 0, 1};
+    for (const int atom_j : insertion_order)
+    {
+        hamilt::AtomPair<double> pair(0, atom_j);
+        pair.set_size(1, 1);
+        for (int rz = 0; rz < 3; ++rz)
+        {
+            pair.get_HR_values(0, 0, rz).get_value(0, 0) = 10.0 * atom_j + rz;
+        }
+        container.insert_pair(pair);
+    }
+
+    EXPECT_EQ(container.size_atom_pairs(), 3);
+    EXPECT_EQ(container.get_nnr(), 9);
+    const size_t memory = container.get_memory_size();
+    EXPECT_GT(memory, sizeof(container));
+    for (int atom_j = 0; atom_j < 3; ++atom_j)
+    {
+        const hamilt::AtomPair<double>* pair = container.find_pair(0, atom_j);
+        ASSERT_NE(pair, nullptr);
+        EXPECT_EQ(pair->get_atom_i(), 0);
+        EXPECT_EQ(pair->get_atom_j(), atom_j);
+        EXPECT_EQ(pair->get_R_size(), 3);
+        for (int rz = 0; rz < 3; ++rz)
+        {
+            EXPECT_EQ(pair->find_R(0, 0, rz), rz);
+            const double expected = 10.0 * atom_j + rz;
+            const hamilt::BaseMatrix<double>* matrix = container.find_matrix(0, atom_j, 0, 0, rz);
+            ASSERT_NE(matrix, nullptr);
+            EXPECT_DOUBLE_EQ(matrix->get_value(0, 0), expected);
+        }
+        EXPECT_EQ(pair->find_R(0, 0, 3), -1);
+    }
 }
 
 // using TEST_F to test HContainer::find_pair

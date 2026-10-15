@@ -16,6 +16,20 @@
 
 namespace hamilt {
 
+template <typename TK, typename TR>
+void OperatorLCAO<TK, TR>::bind_td_info(TD_info* info)
+{
+    td_info_ = info;
+    if (this->next_op != nullptr)
+    {
+        static_cast<OperatorLCAO*>(this->next_op)->bind_td_info(info);
+    }
+    if (this->next_sub_op != nullptr)
+    {
+        static_cast<OperatorLCAO*>(this->next_sub_op)->bind_td_info(info);
+    }
+}
+
 template <>
 void OperatorLCAO<double, double>::get_hs_pointers() {
     ModuleBase::timer::start("OperatorLCAO", "get_hs_pointers");
@@ -260,9 +274,9 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
     if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
         const int nrow = this->hsk->get_pv()->get_row_size();
-        if(PARAM.inp.td_stype == 2)
+        if(this->td_info_ != nullptr && this->td_info_->field().gauge() == 2)
         {
-            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::A_prop_ha, TD_info::td_vel_op->get_phase_hybrid(), nrow, 1);
+            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], this->td_info_->endpoint_A(), this->td_info_->get_phase_hybrid(), nrow, 1);
         }
         else
         {
@@ -272,9 +286,9 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
     else
     {
         const int ncol = this->hsk->get_pv()->get_col_size();
-        if(PARAM.inp.td_stype == 2)
+        if(this->td_info_ != nullptr && this->td_info_->field().gauge() == 2)
         {
-            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], TD_info::A_prop_ha, TD_info::td_vel_op->get_phase_hybrid(), ncol, 0);
+            module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], this->td_info_->endpoint_A(), this->td_info_->get_phase_hybrid(), ncol, 0);
         }
         else
         {

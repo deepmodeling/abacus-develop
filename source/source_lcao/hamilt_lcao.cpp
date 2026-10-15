@@ -7,6 +7,7 @@
 #include "source_lcao/setup_deepks.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_pot/potential_new.h"
+#include "source_estate/module_pot/pot_pcc.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include <vector>
 #ifdef __MLALGO
@@ -63,7 +64,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                Exx_NAO<TK> &exx_nao,
                                const Exx_Info& exx_info,
                                const Input_para& inp,
-                               const bool load_exx_flag)
+                               const bool load_exx_flag,
+                               TD_info* td_info)
 {
     this->classname = "HamiltLCAO";
 
@@ -87,6 +89,13 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         if (inp.vh_in_h)   { pot_register_in.push_back("hartree"); }
         pot_register_in.push_back("xc");
         if (inp.imp_sol)     { pot_register_in.push_back("surchem"); }
+        if (inp.assume_isolated == "pcc_0d") { pot_register_in.push_back("pcc"); }
+        if (inp.assume_isolated == "pcc_2d")
+        {
+            const int count = this->kv->get_nks();
+            elecstate::PotPcc::validate_kpoints(this->kv->kvec_d, count, inp.pcc_2d_axis);
+            pot_register_in.push_back("pcc_2d");
+        }
         if (inp.efield_flag) { pot_register_in.push_back("efield"); }
         if (inp.gate_flag)   { pot_register_in.push_back("gatefield"); }
         if (inp.esolver_type == "tddft") { pot_register_in.push_back("tddft"); }
@@ -106,7 +115,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     {
         bundle = build_multik_ops<TK, TR>(ucell, grid_d, paraV, pot_in, two_center_bundle,
                                           orb, DM_in, p_dftu, deepks, inp, pot_register_in,
-                                          this->kv, this->hsk.get(), this->hR.get(), this->sR.get());
+                                          this->kv, this->hsk.get(), this->hR.get(), this->sR.get(), td_info);
     }
     this->getOperator() = bundle.ops;
 #ifdef __MLALGO
@@ -139,6 +148,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
         this->hR->allocate(this->hRS2.data(), 0);
         memory_fold = 2;
     }
+
+    // Hybrid-gauge folding runs in the final operator, so bind the complete chain after appending EXX.
+    // Sub-chain TD operators must share the same solver-owned context.
+    bundle.ops->bind_td_info(td_info);
 
     ModuleBase::Memory::record("HamiltLCAO::hR", this->hR->get_memory_size() * memory_fold);
     ModuleBase::Memory::record("HamiltLCAO::sR", this->sR->get_memory_size());

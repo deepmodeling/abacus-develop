@@ -1,5 +1,7 @@
 #include "source_base/kernels/math_ylm_op.h"
 
+#include <cstdint>
+
 #include <hip/hip_runtime.h>
 #include <base/macros/macros.h>
 
@@ -41,6 +43,7 @@ __global__ void cal_ylm_real(
     FPTYPE * p,
     FPTYPE * ylm)
 {
+    const std::int64_t stride = ng;
     int ig = blockIdx.x * blockDim.x + threadIdx.x;
     if (ig >= ng) {return;}
 
@@ -49,7 +52,7 @@ __global__ void cal_ylm_real(
     // EXPLAIN : if lmax = 1,only use Y00 , output result.
     //----------------------------------------------------------
     if (lmax == 0) {
-        ylm[0 * ng + ig] = SQRT_INVERSE_FOUR_PI;
+        ylm[0 * stride + ig] = SQRT_INVERSE_FOUR_PI;
         return;
     }
     //----------------------------------------------------------
@@ -57,17 +60,18 @@ __global__ void cal_ylm_real(
     // NAME : cost = cos(theta),theta and phi are polar angles
     // NAME : phi
     //----------------------------------------------------------
-    const FPTYPE gmod = sqrt(g[ig * 3 + 0] * g[ig * 3 + 0] + g[ig * 3 + 1] * g[ig * 3 + 1] + g[ig * 3 + 2] * g[ig * 3 + 2]);
-    cost = gmod < 1.0e-9 ? 0.0 : g[ig * 3 + 2] / gmod;
+    const std::int64_t g_offset = static_cast<std::int64_t>(ig) * 3;
+    const FPTYPE gmod = sqrt(g[g_offset + 0] * g[g_offset + 0] + g[g_offset + 1] * g[g_offset + 1] + g[g_offset + 2] * g[g_offset + 2]);
+    cost = gmod < 1.0e-9 ? 0.0 : g[g_offset + 2] / gmod;
     //  beware the arc tan, it is defined modulo pi
-    if (g[ig * 3 + 0] > 1.0e-9) {
-        phi = atan(g[ig * 3 + 1] / g[ig * 3 + 0]);
+    if (g[g_offset + 0] > 1.0e-9) {
+        phi = atan(g[g_offset + 1] / g[g_offset + 0]);
     }
-    else if (g[ig * 3 + 0] < -1.e-9) {
-        phi = atan(g[ig * 3 + 1] / g[ig * 3 + 0]) + PI;
+    else if (g[g_offset + 0] < -1.e-9) {
+        phi = atan(g[g_offset + 1] / g[g_offset + 0]) + PI;
     }
     else {
-        phi = PI_HALF * ((g[ig * 3 + 1] >= 0.0) ? 1.0 : -1.0); //HLX: modified on 10/13/2006
+        phi = PI_HALF * ((g[g_offset + 1] >= 0.0) ? 1.0 : -1.0); //HLX: modified on 10/13/2006
     } // end if
     //==========================================================
     // NAME : p(Legendre Polynomials) (0 <= m <= l)
@@ -76,12 +80,12 @@ __global__ void cal_ylm_real(
     for (int l = 0; l <= lmax; l++) {
         const FPTYPE c = sqrt((2 * l + 1) / FOUR_PI);
         if (l == 0) {
-            p[0 * (lmax + 1) * ng + 0 * ng + ig] = 1.0;
+            p[0 * (lmax + 1) * stride + 0 * stride + ig] = 1.0;
         }
         else if (l == 1) {
-            p[0 * (lmax + 1) * ng + 1 * ng + ig] = cost;
+            p[0 * (lmax + 1) * stride + 1 * stride + ig] = cost;
             FPTYPE var = (1.0 - cost * cost) > 0.0 ? (1.0 - cost * cost) : 0.0;
-            p[1 * (lmax + 1) * ng + 1 * ng + ig] = -sqrt(var);
+            p[1 * (lmax + 1) * stride + 1 * stride + ig] = -sqrt(var);
         }
         else {
             const int l1 = l - 1,
@@ -89,22 +93,22 @@ __global__ void cal_ylm_real(
                     l3 = 2 * l - 1;
             //  recursion on l for P(:,l,m)
             for (int m = 0; m <= l2; m++) {  // do m = 0, l - 2//mohan modify 2007-10-13
-                p[m * (lmax + 1) * ng + l * ng + ig] =
-                        (cost * l3 * p[m * (lmax + 1) * ng + l1 * ng + ig] -
-                         (l1 + m) * p[m * (lmax + 1) * ng + l2 * ng + ig]) / (l - m);
+                p[m * (lmax + 1) * stride + l * stride + ig] =
+                        (cost * l3 * p[m * (lmax + 1) * stride + l1 * stride + ig] -
+                         (l1 + m) * p[m * (lmax + 1) * stride + l2 * stride + ig]) / (l - m);
             } // end do
-            p[l1 * (lmax + 1) * ng + l * ng + ig] =
-                    cost * l3 * p[l1 * (lmax + 1) * ng + l1 * ng + ig];
+            p[l1 * (lmax + 1) * stride + l * stride + ig] =
+                    cost * l3 * p[l1 * (lmax + 1) * stride + l1 * stride + ig];
             FPTYPE x2 = (1.0 - cost * cost) > 0.0 ? (1.0 - cost * cost) : 0.0;
-            p[l * (lmax + 1) * ng + l * ng + ig] = __semi_fact(l3) * pow(x2, static_cast<double>(l) / 2.0);//mohan modify 2007-10-13
+            p[l * (lmax + 1) * stride + l * stride + ig] = __semi_fact(l3) * pow(x2, static_cast<double>(l) / 2.0);//mohan modify 2007-10-13
             if (l % 2 == 1) {
-                p[l * (lmax + 1) * ng + l * ng + ig] *= -1;
+                p[l * (lmax + 1) * stride + l * stride + ig] *= -1;
             }
         } // end if
 
         // Y_lm, m = 0
         ++lm;
-        ylm[lm * ng + ig] = c * p[0 * (lmax + 1) * ng + l * ng + ig];
+        ylm[lm * stride + ig] = c * p[0 * (lmax + 1) * stride + l * stride + ig];
 
         for (int m = 1; m <= l; m++) {
             // Y_lm, m > 0
@@ -113,11 +117,11 @@ __global__ void cal_ylm_real(
                              __fact<double>(l + m)) * SQRT2;
 
             ++lm;
-            ylm[lm * ng + ig] = same * p[m * (lmax + 1) * ng + l * ng + ig] * cos(m * phi);
+            ylm[lm * stride + ig] = same * p[m * (lmax + 1) * stride + l * stride + ig] * cos(m * phi);
 
             // Y_lm, m < 0
             ++lm;
-            ylm[lm * ng + ig] = same * p[m * (lmax + 1) * ng + l * ng + ig] * sin(m * phi);
+            ylm[lm * stride + ig] = same * p[m * (lmax + 1) * stride + l * stride + ig] * sin(m * phi);
         }
     }// end do
 }
@@ -135,7 +139,7 @@ void cal_ylm_real_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   FPTYPE* p,
                                                                   FPTYPE* ylm)
 {
-    int block = (ng + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    int block = ng / THREADS_PER_BLOCK + (ng % THREADS_PER_BLOCK != 0);
     hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_ylm_real<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
         ng,
         lmax,

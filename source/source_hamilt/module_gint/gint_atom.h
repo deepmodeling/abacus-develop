@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_ATOM_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_ATOM_H
+
 
 #include "source_cell/atom_spec.h"
 #include "source_basis/module_ao/orb_atomic.h"
@@ -133,3 +135,5 @@ class GintAtom
 };
 
 } // namespace ModuleGint
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_ATOM_H

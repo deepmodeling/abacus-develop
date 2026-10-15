@@ -6,7 +6,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_proj/onsite_proj_tools.h"
 #include "source_pw/module_pwdft/kernels/force_op.h"
-#include "source_pw/module_pwdft/nonlocal_maths.hpp"
+#include "source_pw/module_pwdft/nonlocal_maths.h"
 
 namespace hamilt
 {

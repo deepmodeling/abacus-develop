@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HSOLVER_TEST_HSOLVER_SUPPLEMENTARY_MOCK_H
+#define ABACUS_SOURCE_HSOLVER_TEST_HSOLVER_SUPPLEMENTARY_MOCK_H
+
 #include "source_estate/elecstate_pw.h"
 
 namespace elecstate
@@ -87,3 +89,5 @@ void Potential::cal_fixed_v(double* vl_pseudo)
 } // namespace elecstate
 
 #include "source_cell/klist.h"
+
+#endif // ABACUS_SOURCE_HSOLVER_TEST_HSOLVER_SUPPLEMENTARY_MOCK_H

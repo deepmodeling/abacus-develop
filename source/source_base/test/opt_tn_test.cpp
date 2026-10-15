@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "../opt_tn.hpp"
+#include "../opt_tn.h"
 #include "../opt_dcsrch.h"
 #include "./opt_test_tools.h"
 

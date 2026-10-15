@@ -170,7 +170,7 @@ mixing_gg0                     0 #mixing parameter in kerker
 #Parameters (8.DOS)
 dos_emin_ev                    -15 #minimal range for dos
 dos_emax_ev                    15 #maximal range for dos
-dos_edelta_ev                  0.01 #delta energy for dos
+dos_edelta_ev                  0.03 #delta energy for dos
 dos_scale                      0.01 #scale dos range by
 dos_sigma                      0.07 #gauss b coefficeinet(default=0.07)
 dos_nche                       100 #orders of Chebyshev expansions for dos
@@ -289,6 +289,7 @@ exx_v_grad_threshold           0 #
 exx_c_grad_r_threshold         0 #
 exx_v_grad_r_threshold         0 #
 exx_ccp_rmesh_times            default #
+out_librpa_ver       1 #
 exx_opt_orb_lmax               0 #
 exx_opt_orb_ecut               0 #
 exx_opt_orb_tolerence          0 #

@@ -10,7 +10,7 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_basis/module_pw/pw_basis_sup.h"
+#include "source_basis/module_pw/pw_basis_big.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"

@@ -35,7 +35,8 @@ struct Input_para
     int kpar = 1;                                 ///< ecch pool is for one k point
     int bndpar = 1;                               ///< parallel for stochastic/deterministic bands
     std::string latname = "user_defined_lattice"; ///< lattice name
-    std::string assume_isolated = "none";         ///< isolated-system correction: none or makov-payne
+    std::string assume_isolated = "none";         ///< isolated-system correction
+    int pcc_2d_axis = 2;                          ///< open lattice vector for PCC 2D
     double ecutwfc = 0;                           ///< energy cutoff for wavefunctions
     double ecutrho = 0;                           ///< energy cutoff for charge/potential
 
@@ -86,7 +87,7 @@ struct Input_para
     double nelec_delta = 0.0;          ///< change in the number of total electrons
     double nupdown = 0.0;
     std::string dft_functional = "default"; ///< input DFT functional.
-    int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized projected LCA.
+    int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized mapped-density LCA.
     double xc_temperature = 0.0;            ///< only relevant if finite temperature functional is used
     double pseudo_rcut = 15.0;              ///< cut-off radius for calculating msh
     bool pseudo_mesh = false;               ///< 0: use msh to normalize radial wave functions; 1:
@@ -316,8 +317,13 @@ struct Input_para
     // ==============   #Parameters (9.rt-tddft) ===========================
     double td_dt = -1.0;       ///< time step for propagation
     int estep_per_md = 1;      ///< number of electronic steps per MD step
-    std::string lin_solver = "bicgstab"; ///< linear solver for real-time propagation
-    std::string lin_precond = "kinetic"; ///< right preconditioner for PW propagation
+    std::string lin_solver = "gmres"; ///< linear solver for real-time propagation
+    std::string td_orthonormal = "cholesky"; ///< Orthonormalization for PW real-time propagation.
+    bool td_out_stat = false; ///< Output PW real-time conservation diagnostics.
+    int lin_gmres_restart = 20; ///< Maximum Arnoldi steps per GMRES cycle.
+    bool td_cn_init = true; ///< CN subspace initial guess and residual reuse.
+    bool lin_reconstruct = true; ///< Explicit GMRES residual reconstruction with periodic audits.
+    std::string lin_precond = "kinetic_recycle"; ///< right preconditioner for PW propagation
     double lin_thr = 0.0;               ///< zero selects the precision-dependent tolerance
     int lin_maxiter = 500;              ///< maximum iterations per linear solve
     double td_force_dt = 0.02; ///<"fs"
@@ -325,7 +331,7 @@ struct Input_para
     // std::string td_vext_dire = "1";   ///< vext direction
     std::vector<int> td_vext_dire = {1}; ///< vector of vext direction
 
-    bool init_vecpot_file = false;   ///< initialize the vector potential, though file or integral
+    bool init_vecpot = false;        ///< initialize the vector potential, though file or integral
     double td_print_eij = -1.0;      ///< threshold to output Eij elements
     int td_edm = 0;                  ///< 0: new edm method   1: old edm method
     int propagator = 0;              ///< method of propagator
@@ -436,6 +442,8 @@ struct Input_para
                                               ///< 0: output only when ion steps are finished
     int out_freq_td = 0;                      ///< output interval in RT-TDDFT
     std::vector<int> out_chg = {0, 3};        ///< output charge density. 0: no; 1: yes
+    bool out_occ_mat = true;                  ///< output DFT+U occupation matrices;
+                                              ///< frequency controlled by out_freq_ion/out_freq_elec
     std::vector<int> out_xc_r = {-1, 3};      ///< output xc(r). -1: no; >=0: output the order of xc(r)
     std::vector<int> out_pot = {0, 8};        ///< output potential
     int out_wfc_pw = 0;                       ///< 0: no; 1: txt; 2: dat
@@ -467,7 +475,6 @@ struct Input_para
     std::vector<int> out_mat_dh_vnl = {0, 8}; ///< output nonlocal pseudopotential dH/dR (dV^NL/dR) matrices
     std::vector<int> out_mat_dh_vh = {0, 8};  ///< output Hartree dH/dR (dV^H/dR) matrices
     std::vector<int> out_mat_dh_vxc = {0, 8}; ///< output XC dH/dR (dV^XC/dR) matrices
-    std::vector<int> out_mat_dh_exx = {0, 8}; ///< output exact-exchange dH/dR (dV^EXX/dR) matrices
     std::vector<int> out_mat_ds = {0, 8};     ///< output dS/dR matrices with precision
     bool out_mat_xc = false;                  ///< output exchange-correlation matrix in
                                               ///< KS-orbital representation.
@@ -504,7 +511,7 @@ struct Input_para
     // ==============   #Parameters (12.Postprocess) ===========================
     double dos_emin_ev = -15.0;
     double dos_emax_ev = 15.0;
-    double dos_edelta_ev = 0.01;
+    double dos_edelta_ev = 0.03;
     double dos_scale = 0.01;
     double dos_sigma = 0.07;                      ///< pengfei 2014-10-13
     int dos_nche = 100;                           ///< orders of Chebyshev expansions for dos
@@ -643,6 +650,7 @@ struct Input_para
     double shrink_LU_inv_thr = 1e-6; ///< threshold to get inverse of overlap matrix by LU decomposition in auxiliary basis representation
     bool out_ri_cv = false;          ///< Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V
     bool out_unshrinked_v = false;   ///< whether to output the large Vq matrix in unshrinked auxiliary basis
+    int out_librpa_ver = 0; ///< 0: legacy ABACUS LibRPA text files; 1: LibRPA reader-v1 binary files
     bool exx_coul_moment = false;    ///< whether to use moment method for Coulomb calculation
     bool exx_rotate_abfs = false;    ///< whether to rotate auxiliary basis for Coulomb calculation
     double exx_multip_moments_threshold = 1e-10; ///< threshold to screen multipole moments in Coulomb calculation
@@ -653,7 +661,10 @@ struct Input_para
     bool yukawa_potential = false;         ///< default: false
     double yukawa_lambda = -1.0;           ///< default: -1.0, which means we calculate lambda
     double uramping_eV = -1.0;             ///< U-Ramping method (eV)
-    int occ_mat_ctrl = 0;                  ///< the mode of occupation matrix control
+    int init_occ_mat = 0;                  ///< mode of occupation-matrix initialization: 0: no;
+                                           ///< 1: read the initial matrix from file, then update it in SCF;
+                                           ///< 2: read the matrix from file and keep it fixed
+    int omc = 0;                           ///< legacy alias for init_occ_mat
     double onsite_radius = 0.0;            ///< radius of the sphere for onsite projection (Bohr)
     std::vector<double> hubbard_u_eV = {}; ///< Hubbard Coulomb interaction parameter U(ev)
     std::vector<int> l_channel = {};    ///< which correlated orbitals need corrected ; d:2 ,f:3, do not
@@ -752,7 +763,7 @@ struct Input_para
     // ==============   #Parameters (22.EXX PW) =====================
     // EXX for planewave basis, rhx0820 2025-03-10
     bool exxace = true;                   // exxace, exact exchange for planewave basis, https://doi.org/10.1021/acs.jctc.6b00092
-    bool exx_gamma_extrapolation = true;  // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
+    bool exx_gamma_extra = true;  // gamma point extrapolation for exx, https://doi.org/10.1103/PhysRevB.79.205114
     std::string exx_thr_type = "density"; ///< threshold type for exx outer loop
     double exx_ene_thr = 1e-5;            ///< threshold when exx_thr_type = energy
     double ecutexx = 0.0;                 ///< energy cutoff for exx calculation, Ry

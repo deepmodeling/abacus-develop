@@ -74,7 +74,7 @@ hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* 
  *     * For nspin=1: occ is scaled by 0.5 (since only one spin channel computed)
  *   - Subsequent iterations: occ_mat is computed fresh each iteration from updated DMR
  * 
- * Case 2: Occ_mat IS ready (is_occmat_ready, i.e., read from dm_onsite.txt file)
+ * Case 2: Occ_mat IS ready (is_occmat_ready, i.e., read from occ_mat.txt file)
  *   - First electronic iteration: uses pre-read occ_mat directly without DMR calculation
  *     * Skips DMR-based occ calculation entirely
  *     * Reads occ_mat from stored data via get_occ_mat()
@@ -141,9 +141,13 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         {
             const std::array<int, 3> period{ this->kv_->nmp[0], this->kv_->nmp[1], this->kv_->nmp[2] };
             // for return_lattice to calculate Ms
-            this->symrot_.find_irreducible_sector(this->ucell->symm, this->ucell->atoms, this->ucell->st,
+            this->symrot_.find_irred_sector(this->ucell->symm, this->ucell->atoms,
+                this->ucell->nat, this->ucell->ntype, this->ucell->iat2it, this->ucell->iat2ia,
                 ModuleSymmetry::Symmetry_rotation_k::get_bvk_cells(period), period, this->ucell->lat);
-            this->symrot_.cal_Ms(*this->kv_, *this->ucell, *pv, this->nspin);
+            this->symrot_.cal_Ms(*this->kv_, this->ucell->symm, this->ucell->atoms,
+                this->ucell->latvec, this->ucell->lmax,
+                this->ucell->nat, this->ucell->iat2it, this->ucell->iat2ia,
+                *pv, this->nspin);
             this->symrot_built_ = true;
         }
         const int nspin0 = (this->nspin == 2) ? 2 : 1;

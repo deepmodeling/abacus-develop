@@ -47,7 +47,7 @@ namespace lcao
  * @details Uses the DeltaSpin operator to compute Tr(rho * mu) per atom.
  * For nspin=2, extracts only the z-component. For nspin=4, extracts
  * all three components from the interleaved 4-component spinor density matrix.
- * Results are stored in state.Mi_ (indexed by global atom index iat).
+ * Results are stored in the state's magnetic moments (indexed by global atom index iat).
  *
  * @param state  Constraint state (Mi_ written, indexing maps read)
  * @param p_operator Base pointer to DeltaSpin<OperatorLCAO<...>>; nullptr aborts

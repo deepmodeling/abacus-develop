@@ -6,7 +6,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/nonlocal_maths.hpp"
+#include "source_pw/module_pwdft/nonlocal_maths.h"
 
 // cal_becp
 // starts from vkb (nkb, ng) table

@@ -1,22 +1,13 @@
-#include "source_base/vector3.h"
-#include "source_cell/unitcell.h"
-// mock of TD_info
-class TD_info
+#include "source_lcao/module_rt/td_info.h"
+
+// These DeePKS tests do not create a TD context.
+const ModuleBase::Vector3<double>& TD_info::endpoint_A() const
 {
-  public:
-    TD_info()
-    {
-    }
-    ~TD_info()
-    {
-    }
-    const UnitCell* get_ucell()
-    {
-        return nullptr;
-    }
-    static ModuleBase::Vector3<double> A_prop_ha;
-    static TD_info* td_vel_op;
-};
-TD_info td_info;
-TD_info* TD_info::td_vel_op = &td_info;
-ModuleBase::Vector3<double> TD_info::A_prop_ha(0.0, 0.0, 0.0);
+    static const ModuleBase::Vector3<double> value(0.0, 0.0, 0.0);
+    return value;
+}
+
+int elecstate::TDFieldManager::gauge() const
+{
+    return gauge_;
+}

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_TDDFT_H
+#define ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_TDDFT_H
+
 #include "source_esolver/esolver_fp.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_cell/unitcell.h"
@@ -144,3 +146,5 @@ namespace ModuleESolver
 #endif
     };
 }
+
+#endif // ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_TDDFT_H

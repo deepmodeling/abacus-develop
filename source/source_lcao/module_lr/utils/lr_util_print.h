@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_PRINT_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_PRINT_H
+
 #include <ATen/tensor.h>
 #include "source_psi/psi.h"
 #ifdef __EXX
@@ -246,3 +248,5 @@ namespace LR_Util
     }
 #endif
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_UTILS_LR_UTIL_PRINT_H

@@ -4,14 +4,17 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <gtest/gtest.h>
+#include <limits>
 #include <sstream>
+#include <type_traits>
 
 namespace
 {
-using T = linear_test::Complex;
 using Device = base_device::DEVICE_CPU;
 
+template <typename T>
 class DenseHamiltonian final : public hsolver::HSOperator<T>
 {
   public:
@@ -80,25 +83,34 @@ void initialize_basis(const std::vector<int>& sizes, ModulePW::PW_Basis_K* basis
     }
 }
 
-void check_dense_step(const DenseHamiltonian& op, const psi::Psi<T>& previous, const psi::Psi<T>& current, const double dt)
+template <typename T>
+std::vector<linear_test::Complex> dense_cn(const std::vector<T>& h, const std::vector<T>& previous, int n, int bands, double dt)
 {
+    std::vector<T> lhs(n * n);
+    std::vector<T> rhs_matrix(n * n);
+    for (int j = 0; j < n; ++j)
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            const T identity = i == j ? T(1) : T(0);
+            lhs[j * n + i] = identity + T(0, dt / 4.0) * h[j * n + i];
+            rhs_matrix[j * n + i] = identity - T(0, dt / 4.0) * h[j * n + i];
+        }
+    }
+    const std::vector<T> rhs = linear_test::multiply(rhs_matrix, previous, n, bands);
+    return linear_test::lapack_solve(lhs, rhs, n, bands);
+}
+
+template <typename T>
+void check_dense_step(const DenseHamiltonian<T>& op, const psi::Psi<T>& previous, const psi::Psi<T>& current, const double dt)
+{
+    const double tolerance = std::is_same<T, std::complex<float>>::value ? 1e-4 : 1e-10;
     const int bands = current.get_nbands();
     for (int ik = 0; ik < current.get_nk(); ++ik)
     {
         previous.fix_k(ik);
         current.fix_k(ik);
         const int n = op.dimensions[ik];
-        std::vector<T> lhs(n * n);
-        std::vector<T> rhs_matrix(n * n);
-        for (int j = 0; j < n; ++j)
-        {
-            for (int i = 0; i < n; ++i)
-            {
-                const T identity = i == j ? T(1) : T(0);
-                lhs[j * n + i] = identity + T(0, dt / 4.0) * op.matrices[ik][j * n + i];
-                rhs_matrix[j * n + i] = identity - T(0, dt / 4.0) * op.matrices[ik][j * n + i];
-            }
-        }
         std::vector<T> packed(n * bands);
         for (int band = 0; band < bands; ++band)
         {
@@ -107,13 +119,12 @@ void check_dense_step(const DenseHamiltonian& op, const psi::Psi<T>& previous, c
                 packed[band * n + i] = previous(band, i);
             }
         }
-        const std::vector<T> rhs = linear_test::multiply(rhs_matrix, packed, n, bands);
-        const std::vector<T> reference = linear_test::lapack_solve(lhs, rhs, n, bands);
+        const std::vector<linear_test::Complex> reference = dense_cn(op.matrices[ik], packed, n, bands, dt);
         for (int band = 0; band < bands; ++band)
         {
             for (int i = 0; i < n; ++i)
             {
-                EXPECT_LT(std::abs(current(band, i) - reference[band * n + i]), 1e-10);
+                EXPECT_LT(std::abs(linear_test::Complex(current(band, i)) - reference[band * n + i]), tolerance);
             }
             for (int other = 0; other < bands; ++other)
             {
@@ -123,14 +134,66 @@ void check_dense_step(const DenseHamiltonian& op, const psi::Psi<T>& previous, c
                     overlap += std::conj(current(other, i)) * current(band, i);
                 }
                 const T expected = band == other ? T(1) : T(0);
-                EXPECT_LT(std::abs(overlap - expected), 1e-10);
+                EXPECT_LT(std::abs(overlap - expected), tolerance);
             }
         }
     }
 }
 
-TEST(PWTDDFT, DenseCNCorrectorsAndConservation)
+template <typename Real>
+class PWTDDFTTest : public testing::Test
 {
+};
+using Precisions = testing::Types<double, float>;
+TYPED_TEST_SUITE(PWTDDFTTest, Precisions);
+
+TYPED_TEST(PWTDDFTTest, ComplexEijExcludesPadding)
+{
+    using T = std::complex<TypeParam>;
+    const std::vector<int> sizes{4};
+    const int bands = 3;
+    const int ld = 6;
+    ModulePW::PW_Basis_K basis;
+    initialize_basis(sizes, &basis);
+    DenseHamiltonian<T> op(sizes);
+    hsolver::PWLinearOptions options;
+    options.global_k_indices = {0};
+#ifdef __MPI
+    const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
+#else
+    const hsolver::diag_comm_info comm(0, 1);
+#endif
+    std::ostringstream log;
+    hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
+    psi::Psi<T> current(1, bands, ld, sizes, true);
+    const T phases[]{T(1), T(0, 1), T(-1)};
+    const T padding(std::numeric_limits<TypeParam>::quiet_NaN());
+    for (int band = 0; band < bands; ++band)
+    {
+        for (int g = 0; g < ld; ++g)
+        {
+            current(band, g) = g < sizes[0] ? T(0) : padding;
+        }
+        current(band, band) = phases[band];
+    }
+    const std::vector<std::complex<double>> eij = solver.cal_eij(op, current, 0);
+    ASSERT_EQ(eij.size(), bands * bands);
+    // These orbitals select H's leading block, with an independent phase on each column.
+    for (int j = 0; j < bands; ++j)
+    {
+        for (int i = 0; i < bands; ++i)
+        {
+            const T expected = std::conj(phases[i]) * op.matrices[0][j * sizes[0] + i] * phases[j];
+            EXPECT_NEAR(std::abs(eij[j * bands + i] - std::complex<double>(expected)), 0.0, 1e-7);
+        }
+    }
+}
+
+TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
+{
+    using T = std::complex<TypeParam>;
+    const bool single_precision = std::is_same<TypeParam, float>::value;
+    const double energy_tolerance = single_precision ? 1e-4 : 1e-12;
     const std::vector<int> sizes{9, 6};
     const int bands = 3;
     const int ld = 12;
@@ -141,16 +204,37 @@ TEST(PWTDDFT, DenseCNCorrectorsAndConservation)
 #else
     const hsolver::diag_comm_info comm(0, 1);
 #endif
-    for (const std::string method: {"bicgstab", "cgs"})
+    for (const std::string method: {"bicgstab", "cgs", "gmres", "bicgstab_cn", "cgs_cn"})
     {
-        for (const std::string precond: {"none", "kinetic"})
+        for (const std::string precond: {"none", "kinetic", "kinetic_recycle", "kinetic_subspace"})
         {
+            const bool recycle = precond == "kinetic_recycle";
+            const bool cn_variant = method == "bicgstab_cn" || method == "cgs_cn";
+            if (cn_variant && precond == "none")
+            {
+                continue;
+            }
+            if (!cn_variant && method != "gmres" && (recycle || precond == "kinetic_subspace"))
+            {
+                continue;
+            }
             SCOPED_TRACE(method + "/" + precond);
             ModulePW::PW_Basis_K basis;
             initialize_basis(sizes, &basis);
-            DenseHamiltonian op(sizes);
+            DenseHamiltonian<T> op(sizes);
             std::ostringstream log;
-            hsolver::HSolverPWTDDFT<T, Device> solver(basis, method, precond, 1e-13, 100, true, comm, log);
+            hsolver::PWLinearOptions options;
+            options.global_k_indices = {0, 1};
+            const std::string solver_name = cn_variant ? method.substr(0, method.size() - 3) : method;
+            options.linear.method = hsolver::parse_linear_method(solver_name);
+            options.linear.tolerance = single_precision ? 2e-6 : 1e-13;
+            options.linear.max_iterations = 100;
+            options.preconditioner = hsolver::parse_pw_precond(precond);
+            options.kinetic_enabled = true;
+            options.linear.restart = 2;
+            options.linear.reconstruct = method == "gmres" && recycle;
+            options.cn_init = method == "gmres" || cn_variant;
+            hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
             psi::Psi<T> previous(2, bands, ld, sizes, true);
             for (int ik = 0; ik < 2; ++ik)
             {
@@ -160,15 +244,47 @@ TEST(PWTDDFT, DenseCNCorrectorsAndConservation)
                     for (int i = 0; i < ld; ++i)
                     {
                         const double phase = 2.0 * std::acos(-1.0) * i * band / sizes[ik];
-                        previous(band, i) = i < sizes[ik] ? std::polar(1.0 / std::sqrt(sizes[ik]), phase) : T(0);
+                        previous(band, i) = i < sizes[ik] ? T(std::polar(1.0 / std::sqrt(sizes[ik]), phase)) : T(0);
                     }
                 }
             }
             psi::Psi<T> current(previous);
             for (int step = 1; step <= 12; ++step)
             {
-                solver.solve(op, previous, &current, dt, shift, step, 1, false, log);
-                check_dense_step(op, previous, current, dt);
+                // A time-step change must invalidate both k-point histories before reuse.
+                const double step_dt = step < 4 ? dt : dt * 0.5;
+                log.str("");
+                log.clear();
+                solver.solve(op, previous, &current, step_dt, shift, step, 1, true);
+                check_dense_step(op, previous, current, step_dt);
+                if (recycle || precond == "kinetic_subspace")
+                {
+                    std::istringstream records(log.str());
+                    std::string line;
+                    int count = 0;
+                    while (std::getline(records, line))
+                    {
+                        const std::string key = "coarse_rank=";
+                        const std::size_t position = line.find(key);
+                        if (position == std::string::npos)
+                        {
+                            continue;
+                        }
+                        const int rank = std::stoi(line.substr(position + key.size()));
+                        if (recycle && (step == 1 || step == 4))
+                        {
+                            EXPECT_EQ(rank, 0);
+                        }
+                        else
+                        {
+                            EXPECT_GT(rank, 0);
+                        }
+                        EXPECT_NE(line.find("cn_initial=1"), std::string::npos);
+                        EXPECT_NE(line.find("kinetic_retry=0"), std::string::npos);
+                        ++count;
+                    }
+                    EXPECT_EQ(count, sizes.size());
+                }
                 if (step == 1)
                 {
                     // A corrector rebuilds the RHS from the fixed previous state, even with a changed H and guess.
@@ -188,8 +304,11 @@ TEST(PWTDDFT, DenseCNCorrectorsAndConservation)
                             }
                         }
                     }
-                    solver.solve(op, previous, &current, dt, shift, step, 2, false, log);
-                    check_dense_step(op, previous, current, dt);
+                    log.str("");
+                    log.clear();
+                    solver.solve(op, previous, &current, step_dt, shift, step, 2, true);
+                    check_dense_step(op, previous, current, step_dt);
+                    EXPECT_EQ(log.str().find("cn_initial=1"), std::string::npos);
                 }
                 previous = current;
             }
@@ -217,12 +336,110 @@ TEST(PWTDDFT, DenseCNCorrectorsAndConservation)
                             expected += std::conj(current(band, i)) * op.matrices[ik][j * n + i] * current(band, j);
                         }
                     }
-                    EXPECT_NEAR(energies(ik, band), expected.real(), 1e-12);
+                    EXPECT_NEAR(energies(ik, band), expected.real(), energy_tolerance);
                 }
             }
         }
     }
 }
+TYPED_TEST(PWTDDFTTest, UnequalOccupationsAndDiagnosticsPreservePropagation)
+{
+    using T = std::complex<TypeParam>;
+    using Wide = linear_test::Complex;
+    const bool single = std::is_same<TypeParam, float>::value;
+    const double tolerance = single ? 1e-4 : 1e-10;
+    const int n = 6;
+    const int bands = 3;
+    const int ld = 8;
+    const double dt = 0.27;
+    const std::vector<int> sizes{n};
+    const ModuleBase::Vector3<double> shift(0, 0, 0);
+    ModulePW::PW_Basis_K basis;
+    initialize_basis(sizes, &basis);
+    DenseHamiltonian<T> op(sizes);
+    const std::vector<Wide> h(op.matrices[0].begin(), op.matrices[0].end());
+#ifdef __MPI
+    const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
+#else
+    const hsolver::diag_comm_info comm(0, 1);
+#endif
+    ModuleBase::matrix occupations(1, bands);
+    occupations(0, 0) = 1.0;
+    occupations(0, 1) = 0.4;
+    occupations(0, 2) = 0.0;
+    std::vector<T> without_stat;
+    for (const bool out_stat: {false, true})
+    {
+        std::ostringstream log;
+        hsolver::PWLinearOptions options;
+        options.global_k_indices = {0};
+        options.linear.method = hsolver::LinearMethod::gmres;
+        options.linear.tolerance = single ? 2e-6 : 1e-13;
+        options.linear.max_iterations = 100;
+        options.linear.restart = n;
+        options.preconditioner = hsolver::PWPreconditioner::none;
+        options.out_stat = out_stat;
+        hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
+        psi::Psi<T> previous(1, bands, ld, sizes, true);
+        std::fill_n(previous.get_pointer(), ld * bands, T(0));
+        std::vector<Wide> reference(n * bands, Wide(0));
+        for (int band = 0; band < bands; ++band)
+        {
+            previous(band, band) = T(1);
+            reference[band * n + band] = Wide(1);
+        }
+        psi::Psi<T> initial(previous);
+        initial(0, 0) = T(1.01);
+        const psi::Psi<T> original(initial);
+        solver.check_initial(initial, 1);
+        EXPECT_EQ(std::memcmp(initial.get_pointer(), original.get_pointer(), ld * bands * sizeof(T)), 0);
+        // The finite initial defect is diagnostic; propagate the orthonormal reference state.
+        psi::Psi<T> current(previous);
+        for (int step = 1; step <= 8; ++step)
+        {
+            solver.reset_orth_stats();
+            solver.solve(op, previous, &current, dt, shift, step, 1, false);
+            reference = dense_cn(h, reference, n, bands, dt);
+            for (int band = 0; band < bands; ++band)
+            {
+                for (int i = 0; i < n; ++i)
+                {
+                    EXPECT_LT(std::abs(Wide(current(band, i)) - reference[band * n + i]), tolerance);
+                }
+            }
+            for (int j = 0; j < n; ++j)
+            {
+                for (int i = 0; i < n; ++i)
+                {
+                    Wide actual(0);
+                    Wide expected(0);
+                    for (int band = 0; band < bands; ++band)
+                    {
+                        actual += occupations(0, band) * Wide(current(band, i)) * std::conj(Wide(current(band, j)));
+                        expected += occupations(0, band) * reference[band * n + i] * std::conj(reference[band * n + j]);
+                    }
+                    // Reference columns have unit norm, hence every coefficient has magnitude <= 1.
+                    const double density_bound = 1.4 * (2.0 * tolerance + tolerance * tolerance);
+                    EXPECT_LT(std::abs(actual - expected), density_bound);
+                }
+            }
+            const double expected_electrons = out_stat ? 1.4 : 0.0;
+            EXPECT_NEAR(solver.wave_electrons(occupations), expected_electrons, tolerance);
+            const T* data = current.get_pointer();
+            if (!out_stat)
+            {
+                without_stat.insert(without_stat.end(), data, data + ld * bands);
+            }
+            else
+            {
+                const T* baseline = without_stat.data() + (step - 1) * ld * bands;
+                EXPECT_EQ(std::memcmp(data, baseline, ld * bands * sizeof(T)), 0);
+            }
+            previous = current;
+        }
+    }
+}
+
 } // namespace
 
 int main(int argc, char** argv)

@@ -2,6 +2,7 @@
 #define PW_PROJECTOR_GRADIENT_OP_H
 #include "source_base/module_device/types.h"
 #include <complex>
+#include <cstdint>
 #include <cmath>
 namespace hamilt
 {
@@ -108,16 +109,17 @@ void gradient_element(const int ig, const int projector, const int npw, const in
                       const int* metadata, const Real* q, const Real* tab, const Real* derivative,
                       const Complex* sk, Complex* out)
 {
-    const int* meta = metadata + 5*projector;
+    const int* meta = metadata + 5 * static_cast<std::int64_t>(projector);
     const int l = meta[2];
     const int lm = meta[3];
-    const Real* momentum = q+3*ig;
+    const Real* momentum = q + 3 * static_cast<std::int64_t>(ig);
     const Real radius = sqrt(momentum[0]*momentum[0]+momentum[1]*momentum[1]+momentum[2]*momentum[2]);
     const Real position = radius*tpiba/dq;
     Real harmonic[4];
     gradient_harmonic(l, lm, momentum, harmonic);
-    const Real* radial = tab + (meta[0]*nbeta+meta[1])*nq;
-    const Real* radial_d = derivative + (meta[0]*nbeta+meta[1])*nq;
+    const std::int64_t radial_offset = (static_cast<std::int64_t>(meta[0]) * nbeta + meta[1]) * nq;
+    const Real* radial = tab + radial_offset;
+    const Real* radial_d = derivative + radial_offset;
     const Real v = gradient_interpolate(radial, position);
     const Real dv = gradient_interpolate(radial_d, position);
     const int phase_index = l % 4;
@@ -135,7 +137,9 @@ void gradient_element(const int ig, const int projector, const int npw, const in
         {
             gradient = harmonic[0]*dv*momentum[d]/radius + harmonic[d+1]*v/tpiba;
         }
-        out[(d*nkb+projector)*ld+ig] = gradient * sk[meta[4]*npw+ig] * phase;
+        const std::int64_t output_index = (static_cast<std::int64_t>(d) * nkb + projector) * ld + ig;
+        const std::int64_t structure_index = static_cast<std::int64_t>(meta[4]) * npw + ig;
+        out[output_index] = gradient * sk[structure_index] * phase;
     }
 }
 } // namespace hamilt

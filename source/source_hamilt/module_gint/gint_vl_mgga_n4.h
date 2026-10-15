@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_MGGA_N4_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_MGGA_N4_H
+
 
 #include <memory>
 #include <vector>
@@ -40,3 +42,5 @@ class Gint_vl_metagga_nspin4 : public Gint
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_MGGA_N4_H

@@ -1,0 +1,1 @@
+Single-precision PW RT-TDDFT with GMRES(20), coarse-space preconditioning and CN initialization. Tests energy and current with kpar=2 and residual reconstruction subject to independent residual checks.

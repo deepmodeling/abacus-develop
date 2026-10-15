@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_SCALAPACK_H
+#define ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_SCALAPACK_H
+
 // scalapack
 int numroc_(const int *N, const int *NB, const int *IPROC, const int *ISRCPROC, const int *NPROCS);
 void descinit_(int *DESC, const int *M, const int *N, const int *MB, const int *NB, const int *IRSRC, const int *ICSRC, const int *ICTXT, const int *LLD, int *INFO);
@@ -10,3 +12,5 @@ void pdgemr2d_(int *M, int *N, double *A, int *IA, int *JA, int *DESCA,
                double *B, int *IB, int *JB, int *DESCB, int *ICTXT);			   
 void pzgemr2d_(int *M, int *N, double _Complex *A, int *IA, int *JA, int *DESCA, 
                double _Complex *B, int *IB, int *JB, int *DESCB, int *ICTXT);
+
+#endif // ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_SCALAPACK_H

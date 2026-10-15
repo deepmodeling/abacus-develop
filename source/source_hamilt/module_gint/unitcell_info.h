@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_UNITCELL_INFO_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_UNITCELL_INFO_H
+
 
 #include <memory>
 #include <cmath>
@@ -170,3 +172,5 @@ class UnitCellInfo
 };
 
 } // namespace ModuleGint
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_UNITCELL_INFO_H

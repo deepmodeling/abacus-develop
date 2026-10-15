@@ -11,12 +11,12 @@ namespace hamilt
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class TDNonlocalPW : public OperatorPW<T, Device>
 {
-  private:
-    using Real = typename GetTypeReal<T>::type;
-
   public:
     /** @brief Bind the vector potential in Hartree atomic units before init(). */
-    void set_A_ha(const ModuleBase::Vector3<double>& A) { A_ha_ = A; }
+    void set_A_ha(const ModuleBase::Vector3<double>& A)
+    {
+        A_ha_ = A;
+    }
     TDNonlocalPW(const int* isk_in, const pseudopot_cell_vnl* ppcell_in, const UnitCell* ucell_in, const ModulePW::PW_Basis_K* wfc_basis);
 
     virtual ~TDNonlocalPW();
@@ -44,7 +44,6 @@ class TDNonlocalPW : public OperatorPW<T, Device>
     Device* ctx = {};
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
-
 };
 
 } // namespace hamilt

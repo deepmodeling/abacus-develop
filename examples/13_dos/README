@@ -16,11 +16,10 @@ It requires two steps of calculation:
    - set 'out_dos' to '1'
    - set 'pw_diag_thr' to a suitable value when basis_type is 'pw'
 
-Finish! Then you can see DOS1_smearing.dat in OUT.ABACUS. The first column is energy,
-and the second is density of states. Plot it!
+Finish! Then you can see the DOS file in OUT.ABACUS (dos.txt for PW basis, doss1g{geom}_nao.txt for LCAO basis). The columns are: energy(eV), dos(1/eV), dos_int (integrated DOS), dos_smear(1/eV), dos_smear_int (integrated smeared DOS). Plot it!
 
 Note:
-1)If the "out_dos" is used, the DOS1_smearing.dat will appear in the directory.
+1)If the "out_dos" is used, the DOS file will appear in the directory.
 2)The charge density needed to be output in scf calculations and be read
 in non-self consistent calculations.
 
