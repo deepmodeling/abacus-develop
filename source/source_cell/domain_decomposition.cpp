@@ -1,5 +1,6 @@
 #include "source_cell/domain_decomposition.h"
 #include "source_base/parallel_cell.h"
+#include "source_cell/ghost_exchange_plan.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
@@ -40,6 +41,31 @@ DomainDecomposition::~DomainDecomposition()
     }
     owns_cart_comm_ = false;
 #endif
+}
+
+GhostExchangePlanView GhostExchangePlan::make_view()
+{
+    GhostExchangePlanView view;
+    view.nswap = static_cast<int>(sendnum.size());
+    view.sendnum = sendnum.empty() ? NULL : sendnum.data();
+    view.recvnum = recvnum.empty() ? NULL : recvnum.data();
+    view.firstrecv = firstrecv.empty() ? NULL : firstrecv.data();
+    view.sendproc = sendproc.empty() ? NULL : sendproc.data();
+    view.recvproc = recvproc.empty() ? NULL : recvproc.data();
+    view.mapping = mapping.empty() ? NULL : mapping.data();
+    view.sendlist_storage.resize(send_atom_indices.size());
+    for (std::size_t iswap = 0; iswap < send_atom_indices.size(); ++iswap)
+    {
+        if (!send_atom_indices[iswap].empty())
+        {
+            view.sendlist_storage[iswap] = send_atom_indices[iswap].data();
+        }
+        else
+        {
+            view.sendlist_storage[iswap] = NULL;
+        }
+    }
+    return view;
 }
 
 void DomainDecomposition::init(const ModuleBase::CommunicationDomain& comm_domain,
@@ -176,6 +202,7 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
     std::vector<LocalAtom>& ghost_atoms = cell.ghost_atoms_;
     ghost_atoms.clear();
     ghost_layout_valid_ = false;
+    cell.clear_ghost_exchange_plan_();
     ghost_slots_.clear();
     build_ghost_exchange_slots(ghost_slots_);
     std::vector<GhostExchangeSlot>& slots = ghost_slots_;
@@ -311,8 +338,80 @@ void DomainDecomposition::exchange_ghost_atoms(MDCell& cell)
         slot.ghost_count = recv_count;
     }
     ghost_layout_valid_ = true;
+    cell.set_ghost_exchange_plan_(build_ghost_exchange_plan(cell));
     cell.clear_forces_(ghost_atoms);
     cell.neighbor_layout_valid_ = false;
+}
+
+GhostExchangePlan DomainDecomposition::build_ghost_exchange_plan(const MDCell& cell) const
+{
+    if (!initialized_ || !ghost_layout_valid_)
+    {
+        throw std::runtime_error("Ghost exchange plan is not available.");
+    }
+
+    GhostExchangePlan plan;
+    plan.nprocs = size_;
+    plan.sendnum.reserve(ghost_slots_.size());
+    plan.recvnum.reserve(ghost_slots_.size());
+    plan.firstrecv.reserve(ghost_slots_.size());
+    plan.send_atom_indices.reserve(ghost_slots_.size());
+    plan.sendproc.reserve(ghost_slots_.size());
+    plan.recvproc.reserve(ghost_slots_.size());
+
+    for (const GhostExchangeSlot& slot : ghost_slots_)
+    {
+        if (slot.send_atom_indices.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        {
+            throw std::overflow_error("Ghost send list exceeds int range.");
+        }
+        if (slot.ghost_begin > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        {
+            throw std::overflow_error("Ghost receive offset exceeds int range.");
+        }
+        if (slot.ghost_count < 0)
+        {
+            throw std::runtime_error("Invalid ghost receive count.");
+        }
+
+        plan.sendnum.push_back(static_cast<int>(slot.send_atom_indices.size()));
+        plan.recvnum.push_back(slot.ghost_count);
+        const std::size_t firstrecv = cell.owned_atoms_.size() + slot.ghost_begin;
+        if (firstrecv > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        {
+            throw std::overflow_error("Ghost receive index exceeds int range.");
+        }
+        plan.firstrecv.push_back(static_cast<int>(firstrecv));
+        plan.send_atom_indices.push_back(slot.send_atom_indices);
+        plan.sendproc.push_back(slot.send_rank);
+        plan.recvproc.push_back(slot.recv_rank);
+    }
+
+    if (plan.nprocs == 1)
+    {
+        const std::size_t natom = cell.owned_atoms_.size() + cell.ghost_atoms_.size();
+        plan.mapping.resize(natom, 0);
+        std::map<std::pair<int, std::int64_t>, int> owned_lookup;
+        for (std::size_t iat = 0; iat < cell.owned_atoms_.size(); ++iat)
+        {
+            const LocalAtom& atom = cell.owned_atoms_[iat];
+            owned_lookup[std::make_pair(atom.type, atom.type_index)] = static_cast<int>(iat);
+            plan.mapping[iat] = static_cast<int>(iat);
+        }
+        for (std::size_t iat = 0; iat < cell.ghost_atoms_.size(); ++iat)
+        {
+            const LocalAtom& atom = cell.ghost_atoms_[iat];
+            const std::map<std::pair<int, std::int64_t>, int>::const_iterator owner
+                = owned_lookup.find(std::make_pair(atom.type, atom.type_index));
+            if (owner == owned_lookup.end())
+            {
+                throw std::runtime_error("Cannot match a single-rank ghost atom to an owned atom.");
+            }
+            plan.mapping[cell.owned_atoms_.size() + iat] = owner->second;
+        }
+    }
+
+    return plan;
 }
 
 void DomainDecomposition::update_ghost_atom_positions(MDCell& cell)

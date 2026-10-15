@@ -20,6 +20,7 @@
 #include "esolver_dp.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
+#include "source_cell/ghost_exchange_plan.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/cif_io.h"
@@ -32,6 +33,14 @@
 #include <unordered_map>
 
 using namespace ModuleESolver;
+
+#ifdef __DPMD
+#ifdef __DPMDC
+using DPInputNlist = deepmd::hpp::InputNlist;
+#else
+using DPInputNlist = deepmd::InputNlist;
+#endif
+#endif
 
 void ESolver_DP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
@@ -143,16 +152,39 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
                       ? NULL
                       : sorted_neighbors[static_cast<std::size_t>(iat)].data();
         }
-#ifdef __DPMDC
-        deepmd::hpp::InputNlist nlist(nowned_atoms,
-                                      nowned_atoms > 0 ? &ilist[0] : NULL,
-                                      nowned_atoms > 0 ? &numneigh[0] : NULL,
-                                      nowned_atoms > 0 ? &firstneigh[0] : NULL);
+
+        GhostExchangePlan& ghost_plan = mdcell.get_ghost_exchange_plan();
+        const bool use_mapping = ghost_plan.nprocs == 1;
+        if (!ghost_plan.is_valid(static_cast<std::size_t>(natom)))
+        {
+            ModuleBase::WARNING_QUIT("ESolver_DP", "Invalid MDCell ghost exchange plan.");
+        }
+        GhostExchangePlanView view = ghost_plan.make_view();
+        int** sendlist_data = view.sendlist_storage.empty() ? NULL : view.sendlist_storage.data();
+        int* ilist_data = nowned_atoms > 0 ? &ilist[0] : NULL;
+        int* numneigh_data = nowned_atoms > 0 ? &numneigh[0] : NULL;
+        int** firstneigh_data = nowned_atoms > 0 ? &firstneigh[0] : NULL;
+        int* mapping_data = use_mapping ? view.mapping : NULL;
+        void* dp_world = NULL;
+#ifdef __MPI
+        MPI_Comm dp_world_comm = mdcell.communicator();
+        dp_world = &dp_world_comm;
+#endif
+#if defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 13
+        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, view.nswap, view.sendnum, view.recvnum, view.firstrecv, sendlist_data, view.sendproc, view.recvproc, dp_world, ghost_plan.nprocs);
+#elif defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 12
+        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, view.nswap, view.sendnum, view.recvnum, view.firstrecv, sendlist_data, view.sendproc, view.recvproc, dp_world);
 #else
-        deepmd::InputNlist nlist(nowned_atoms,
-                                 nowned_atoms > 0 ? &ilist[0] : NULL,
-                                 nowned_atoms > 0 ? &numneigh[0] : NULL,
-                                 nowned_atoms > 0 ? &firstneigh[0] : NULL);
+        DPInputNlist nlist(nowned_atoms,
+                           ilist_data,
+                           numneigh_data,
+                           firstneigh_data);
+#endif
+#ifdef __DPMD_HAS_NLIST_MAPPING
+        if (use_mapping)
+        {
+            nlist.set_mapping(mapping_data);
+        }
 #endif
         double local_energy = 0.0;
         std::vector<double> force, virial;
