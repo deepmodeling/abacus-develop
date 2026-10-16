@@ -13,11 +13,13 @@ import subprocess
 import tempfile
 
 from librpa_wavefunctions import check_ks_nao, read_ks_wfc
+from librpa_symmetry import preserves_bvk_mesh
 from run_librpa_mpi import ignore_outputs, mpi_command, use_mpi_solver
 
 
 def check_output(case, mesh, symmetry, nspin, wfc_nspin=None,
-                 require_spin_symmetry=False, require_antiunitary=False, spinor=False):
+                 require_spin_symmetry=False, require_antiunitary=False, spinor=False,
+                 offset=(0.0, 0.0, 0.0)):
     out = case / "OUT.librpa"
     rows = [line.split() for line in (out / "bz_sample.txt").read_text().splitlines()]
     assert tuple(map(int, rows[0])) == mesh
@@ -96,11 +98,9 @@ def check_output(case, mesh, symmetry, nspin, wfc_nspin=None,
                 assert any(antiunitary), "shifted magnetic case has no antiunitary operation"
         for row_index, row in enumerate(stru[begin + 1:row_end]):
             rotation = list(map(int, row.split()[:9]))
-            for i in range(3):
-                for j in range(3):
-                    sign = -1 if antiunitary[row_index] else 1
-                    step = sign * rotation[3 * j + i] * mesh[i] / mesh[j]
-                    assert abs(step - round(step)) < 1e-12, "Operation does not preserve the BvK mesh"
+            assert preserves_bvk_mesh(rotation, mesh, offset, antiunitary[row_index]), (
+                "Operation {} does not preserve the BvK mesh: {}".format(row_index, rotation)
+            )
     return {"case": str(case), "mesh": mesh, "symmetry": symmetry,
             "nspin": nspin, "nspin_wfc": wfc_nspin, "nk_full": full, "nk_scf": nk, "nq": nq}
 
@@ -192,7 +192,8 @@ def run(args, root):
     magnetic_result = check_output(magnetic_case, (2, 3, 3), 1, 1,
                                    require_spin_symmetry=True,
                                    require_antiunitary=True,
-                                   spinor=True)
+                                   spinor=True,
+                                   offset=(0.25, 0.0, 0.0))
     results.append(magnetic_result)
     print(json.dumps(magnetic_result), flush=True)
     (root / "summary.json").write_text(json.dumps(results, indent=2) + "\n")
