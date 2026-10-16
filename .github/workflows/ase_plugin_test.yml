@@ -111,7 +111,7 @@ jobs:
         shell: bash -l {0}
         run: |
           cd interfaces/ASE_interface/tests
-          python -m unittest test_external_provenance -v
+          python -m unittest test_external_provenance test_harness_facts -v
 
       - name: Run engine-owned integration tests
         shell: bash -l {0}

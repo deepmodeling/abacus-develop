@@ -8,7 +8,8 @@ from pathlib import Path
 here = Path(__file__).parent
 from ase.atoms import Atoms
 from abacuslite import AbacusProfile, Abacus
-from common import preserved_tmpdir, test_profile_paths, assert_scf_facts
+from common import (preserved_tmpdir, test_profile_paths, assert_scf_facts,
+                    assert_collinear_magmoms)
 
 class TestMagneticSCF(unittest.TestCase):
 
@@ -47,6 +48,9 @@ class TestMagneticSCF(unittest.TestCase):
             print(f'Fe (AFM): {fe.get_potential_energy()} eV')
             assert_scf_facts(self, abacus, tmpdir, len(fe))
             self.assertEqual(np.asarray(abacus.results['magmoms']).shape, (2,))
+            assert_collinear_magmoms(self, abacus,
+                                     Path(tmpdir) / 'OUT.ABACUS' / 'running_scf.log',
+                                     len(fe))
             for ife, m in enumerate(fe.calc.results['magmoms']):
                 print(f'Fe{ife}: {m:10.6f} uB')
                 self.assertGreater(abs(m), 1e-3)

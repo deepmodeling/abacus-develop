@@ -6,7 +6,8 @@ from ase.build import bulk
 from abacuslite.io.generalio import load_pseudo, load_orbital
 from abacuslite import AbacusProfile, Abacus
 from abacuslite.utils.ksampling import kpathgen
-from common import preserved_tmpdir, test_profile_paths, assert_scf_facts
+from common import (preserved_tmpdir, test_profile_paths, assert_scf_facts,
+                    assert_band_facts)
 
 class TestSCFFollowedNSCF(unittest.TestCase):
 
@@ -62,7 +63,7 @@ class TestSCFFollowedNSCF(unittest.TestCase):
             self.assertEqual(values.shape[1], len(bandpath.kpts))
             self.assertGreater(values.shape[2], 0)
             self.assertTrue(np.all(np.isfinite(values)))
-            self.assertTrue(np.allclose(values[0], bscalc.results['eigenvalues'][0], atol=1e-5))
+            assert_band_facts(self, bands, Path(tmpdir) / 'OUT.ABACUS' / 'eig_occ.txt')
             bands.write(Path(tmpdir) / 'bandstructure.json')
             self.assertTrue((Path(tmpdir) / 'bandstructure.json').exists())
 

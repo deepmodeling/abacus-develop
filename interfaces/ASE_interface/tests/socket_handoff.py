@@ -9,7 +9,8 @@ import numpy as np
 from ase import Atoms
 from abacuslite import Abacus, AbacusProfile, AbacusSocketIO
 
-from common import assert_scf_facts, preserved_tmpdir, test_profile_paths
+from common import (assert_scf_facts, close_socket_bounded,
+                    preserved_tmpdir, test_profile_paths)
 
 
 class TestSocketHandoff(unittest.TestCase):
@@ -43,7 +44,7 @@ class TestSocketHandoff(unittest.TestCase):
                                 unixsocket=f'abacus_ci_{os.getpid()}',
                                 timeout=120, **inputs)
         client = None
-        with socket:
+        try:
             atoms.calc = socket
             for index, displacement in enumerate((0.0, 0.03)):
                 atoms.positions[1] = [1.25 + displacement] * 3
@@ -67,8 +68,12 @@ class TestSocketHandoff(unittest.TestCase):
                 self.assertTrue(np.allclose(stress, check_atoms.get_stress(), atol=1e-4))
                 assert_scf_facts(self, reference, reference_dir, 2,
                                  forces=True, stress=True)
+        finally:
+            signal.alarm(0)
+            returncode = close_socket_bounded(socket)
         self.assertIsNone(socket.server)
         self.assertIsNotNone(client)
+        self.assertEqual(returncode, 0)
         self.assertEqual(client.poll(), 0)
 
 
