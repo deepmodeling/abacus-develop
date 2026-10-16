@@ -4,11 +4,7 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 abacus_disable_feature_definitions(__LCAO)
 
-file(COPY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-configure_file(unitcell_test_pw_para.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/unitcell_test_pw_para.sh COPYONLY)
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES unitcell_test_pw_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(support unitcell_test_pw_para.sh)
 
 addtest(
   TARGET
@@ -51,4 +47,5 @@ find_program(BASH bash)
 add_test(
   NAME MODULE_CELL_unitcell_test_pw_para
   COMMAND ${BASH} unitcell_test_pw_para.sh
+          "$<TARGET_FILE:MODULE_CELL_unitcell_test_pw>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
