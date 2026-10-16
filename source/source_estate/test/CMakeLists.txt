@@ -39,10 +39,7 @@ AddTest(
   SOURCES test_pot_pcc.cpp ${pcc_test_sources}
 )
 
-# Copy at configure time so a plain `make` + `ctest` run finds the data.
-# install() only runs during `cmake --install`, which local test runs skip.
-file(COPY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(support)
 
 AddTest(
   TARGET MODULE_ESTATE_Elecstate_Op_UTs

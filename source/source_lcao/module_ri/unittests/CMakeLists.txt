@@ -26,5 +26,4 @@ AddTest(
   LIBS parameter base device
   SOURCES test_rpa_lri_band_io.cpp ../rpa_lri_band_io.cpp
 )
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/support"
-     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+abacus_copy_test_files(support)
