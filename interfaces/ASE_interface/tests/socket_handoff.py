@@ -9,7 +9,7 @@ import numpy as np
 from ase import Atoms
 from abacuslite import Abacus, AbacusProfile, AbacusSocketIO
 
-from common import (assert_scf_facts, close_socket_bounded,
+from common import (assert_scf_facts, calculate_socket_frame, close_socket_bounded,
                     preserved_tmpdir, test_profile_paths)
 
 
@@ -48,7 +48,7 @@ class TestSocketHandoff(unittest.TestCase):
             atoms.calc = socket
             for index, displacement in enumerate((0.0, 0.03)):
                 atoms.positions[1] = [1.25 + displacement] * 3
-                socket.calculate(atoms, properties=['energy', 'forces', 'stress'])
+                calculate_socket_frame(socket, atoms)
                 client = socket.server.proc
                 energy = atoms.get_potential_energy()
                 forces = atoms.get_forces().copy()

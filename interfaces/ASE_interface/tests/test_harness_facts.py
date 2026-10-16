@@ -11,13 +11,42 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import numpy as np
+from ase import Atoms
+from ase.calculators.calculator import Calculator, PropertyNotImplementedError
 from ase.calculators.socketio import SocketIOCalculator
 
 from common import (assert_band_facts, assert_collinear_magmoms,
-                    close_socket_bounded, preserved_tmpdir)
+                    calculate_socket_frame, close_socket_bounded,
+                    preserved_tmpdir)
 
 
 class HarnessFactsTest(unittest.TestCase):
+    def test_socket_requests_only_actual_changes_after_first_frame(self):
+        class RecordingCalculator(Calculator):
+            implemented_properties = ['energy', 'forces', 'stress']
+
+            def __init__(self):
+                super().__init__()
+                self.changes = []
+
+            def calculate(self, atoms=None, properties=None, system_changes=None):
+                if self.atoms is not None and any(
+                        name not in ('positions', 'cell') for name in system_changes):
+                    raise PropertyNotImplementedError('immutable socket input changed')
+                super().calculate(atoms, properties, system_changes)
+                self.changes.append(list(system_changes))
+                self.results = {'energy': 0.0, 'forces': np.zeros((2, 3)),
+                                'stress': np.zeros(6)}
+
+        atoms = Atoms('Si2', positions=[[0, 0, 0], [1, 1, 1]],
+                      cell=[5, 5, 5], pbc=True)
+        calc = RecordingCalculator()
+        calculate_socket_frame(calc, atoms)
+        atoms.positions[1, 0] += 0.03
+        calculate_socket_frame(calc, atoms)
+        self.assertIn('numbers', calc.changes[0])
+        self.assertEqual(calc.changes[1], ['positions'])
+
     def test_band_eigenvalues_reject_mutated_reader_result(self):
         raw = '''1 # ionic step
 spin=1 k-point=1/2 Cartesian=0.0 0.0 0.0 (1 plane wave)

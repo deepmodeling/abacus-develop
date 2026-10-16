@@ -21,6 +21,13 @@ def test_profile_paths(here):
     return os.environ.get('ABACUS_COMMAND', 'mpirun -np 2 abacus'), assets
 
 
+def calculate_socket_frame(calc, atoms):
+    """Request all three facts while passing ASE's actual structure changes."""
+    changes = calc.check_state(atoms)
+    calc.calculate(atoms, properties=['energy', 'forces', 'stress'],
+                   system_changes=changes)
+
+
 def assert_band_facts(testcase, bands, eig_occ_path):
     """Check ASE bands against the engine's raw eig_occ rows in eV."""
     values = np.asarray(bands.energies)
