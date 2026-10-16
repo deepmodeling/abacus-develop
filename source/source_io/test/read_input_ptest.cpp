@@ -402,6 +402,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_damp, 1);
     EXPECT_EQ(param.inp.mdp.md_dt, 1);
     EXPECT_EQ(param.inp.mdp.md_dumpfreq, 1);
+    EXPECT_EQ(param.inp.mdp.md_thermo_freq, 1);
     EXPECT_EQ(param.inp.mdp.md_nraise, 1);
     EXPECT_EQ(param.inp.cal_syns[0], 0);
     EXPECT_EQ(param.inp.cal_syns[1], 8);

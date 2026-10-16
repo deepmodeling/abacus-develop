@@ -187,6 +187,17 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         this->add_item(item);
     }
     {
+        Input_Item item("md_thermo_freq");
+        item.annotation = "The period to output MD thermodynamic information";
+        item.category = "Molecular dynamics";
+        item.type = "Integer";
+        item.description = "The output frequency of MD step, energy, temperature, and pressure information in OUT.${suffix}/running_md.log and on screen. Set to 0 to disable this output.";
+        item.default_value = "1";
+        item.unit = "";
+        read_sync_int(input.mdp.md_thermo_freq);
+        this->add_item(item);
+    }
+    {
         Input_Item item("md_neighbor_skin");
         item.annotation = "extra MDCell neighbor-list radius";
         item.category = "Molecular dynamics";
