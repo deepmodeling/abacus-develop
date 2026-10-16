@@ -13,14 +13,13 @@ find_path(LIBRI_DIR
 )
 
 if(NOT LIBRI_DIR)
-    include(FetchContent)
-    set(_libri_revision b0eff7a)
     if(ENABLE_LIBRI_GPU)
-      set(_libri_revision 6ce3c8480ae38a085746dc81cc4dbb59b8074430)
+      message(FATAL_ERROR "ENABLE_LIBRI_GPU requires an explicitly supplied, patched LIBRI_DIR; see tests/lcao_hse_gpu/README.md")
     endif()
+    include(FetchContent)
     FetchContent_Declare(
         LibRI
-        URL https://codeload.github.com/abacusmodeling/LibRI/tar.gz/${_libri_revision}
+        URL https://codeload.github.com/abacusmodeling/LibRI/tar.gz/b0eff7a
     )
     FetchContent_Populate(LibRI)
     set(LIBRI_DIR ${libri_SOURCE_DIR})
