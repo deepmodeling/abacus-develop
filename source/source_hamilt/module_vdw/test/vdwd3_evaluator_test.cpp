@@ -1,16 +1,15 @@
-#include "source_hamilt/module_vdw/vdwd3_data.h"
 #include "source_hamilt/module_vdw/vdwd3_evaluator.h"
-#include "source_hamilt/module_vdw/vdwd3_parameters.h"
+
 #include "source_hamilt/module_vdw/vdw_xcname.h"
+#include "source_hamilt/module_vdw/vdwd3_data.h"
+#include "source_hamilt/module_vdw/vdwd3_parameters.h"
 
 #include "gtest/gtest.h"
-
 #include <algorithm>
 #include <cmath>
 #include <string>
 
-namespace
-{
+namespace {
 
 using vdw::d3::Cutoffs;
 using vdw::d3::Damping;
@@ -19,42 +18,34 @@ using vdw::d3::Result;
 using vdw::d3::Structure;
 using vdw::d3::Vec3;
 
-double& coordinate(Vec3& vector, int component)
-{
-    if (component == 0)
-    {
+double& coordinate(Vec3& vector, int component) {
+    if (component == 0) {
         return vector.x;
     }
-    if (component == 1)
-    {
+    if (component == 1) {
         return vector.y;
     }
     return vector.z;
 }
 
-double coordinate(const Vec3& vector, int component)
-{
-    if (component == 0)
-    {
+double coordinate(const Vec3& vector, int component) {
+    if (component == 0) {
         return vector.x;
     }
-    if (component == 1)
-    {
+    if (component == 1) {
         return vector.y;
     }
     return vector.z;
 }
 
-double energy(const Structure& structure, const Parameters& parameters, const Cutoffs& cutoffs)
-{
+double energy(const Structure& structure, const Parameters& parameters, const Cutoffs& cutoffs) {
     Result result;
     std::string error;
     EXPECT_TRUE(vdw::d3::evaluate(structure, parameters, cutoffs, false, result, error)) << error;
     return result.energy;
 }
 
-Structure mindless01()
-{
+Structure mindless01() {
     Structure structure;
     structure.atomic_numbers = {11, 1, 8, 1, 9, 1, 1, 8, 7, 1, 1, 17, 5, 5, 7, 13};
     structure.positions = {
@@ -78,8 +69,7 @@ Structure mindless01()
     return structure;
 }
 
-Structure mindless17()
-{
+Structure mindless17() {
     Structure structure;
     structure.atomic_numbers = {12, 5, 1, 6, 14, 5, 9, 9, 1, 1, 9, 1, 1, 8, 1, 1};
     structure.positions = {
@@ -103,8 +93,7 @@ Structure mindless17()
     return structure;
 }
 
-Structure mindless09()
-{
+Structure mindless09() {
     Structure structure;
     structure.atomic_numbers = {1, 1, 1, 1, 3, 1, 6, 5, 1, 1, 14, 1, 17, 9, 1, 5};
     structure.positions = {
@@ -128,11 +117,9 @@ Structure mindless09()
     return structure;
 }
 
-Structure actinides()
-{
+Structure actinides() {
     Structure structure;
-    structure.atomic_numbers = {87, 88, 89, 90, 91, 92, 93, 94, 95,
-                                96, 97, 98, 99, 100, 101, 102, 103};
+    structure.atomic_numbers = {87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103};
     structure.positions = {
         {0.98692316414074, 6.12727238368797, -6.67861597188102},
         {3.63898862390869, 5.12109301182962, 3.01908613326278},
@@ -155,12 +142,10 @@ Structure actinides()
     return structure;
 }
 
-Structure x23_acetic()
-{
+Structure x23_acetic() {
     Structure structure;
     structure.atomic_numbers = {
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        6, 6, 6, 6, 6, 6, 6, 6, 8, 8, 8, 8, 8, 8, 8, 8,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 6, 6, 6, 6, 6, 6, 6, 6, 8, 8, 8, 8, 8, 8, 8, 8,
     };
     structure.positions = {
         {7.90377778530531, 7.12936818903081, 9.56314593193451},
@@ -196,29 +181,22 @@ Structure x23_acetic()
         {18.50211546160091, 6.44377570116260, 1.93885857925242},
         {6.36100571503078, 0.93994956853816, 7.33629315436038},
     };
-    structure.lattice = {{{24.86304558760325, 0.0, 0.0},
-                          {0.0, 7.38360999643241, 0.0},
-                          {0.0, 0.0, 10.79482606446971}}};
+    structure.lattice = {{{24.86304558760325, 0.0, 0.0}, {0.0, 7.38360999643241, 0.0}, {0.0, 0.0, 10.79482606446971}}};
     structure.periodic = {{true, true, true}};
     return structure;
 }
 
 } // namespace
 
-TEST(VdwXcName, NormalizesAbacusAndLibxcSpellings)
-{
+TEST(VdwXcName, NormalizesAbacusAndLibxcSpellings) {
     EXPECT_EQ(vdw::normalize_xc_name("PBE"), "pbe");
     EXPECT_EQ(vdw::normalize_xc_name(" XC_HYB_GGA_XC_PBEH "), "hyb_gga_xc_pbeh");
-    EXPECT_EQ(vdw::normalize_xc_name("GGA_X_PBE+GGA_C_PBE"),
-              "gga_x_pbe:gga_c_pbe");
-    EXPECT_EQ(vdw::normalize_xc_name("XC_GGA_X_PBE + XC_GGA_C_PBE"),
-              "gga_x_pbe:gga_c_pbe");
-    EXPECT_EQ(vdw::normalize_xc_name("XC_GGA_X_PBE_R:XC_GGA_C_PBE"),
-              "gga_x_pbe_r:gga_c_pbe");
+    EXPECT_EQ(vdw::normalize_xc_name("GGA_X_PBE+GGA_C_PBE"), "gga_x_pbe:gga_c_pbe");
+    EXPECT_EQ(vdw::normalize_xc_name("XC_GGA_X_PBE + XC_GGA_C_PBE"), "gga_x_pbe:gga_c_pbe");
+    EXPECT_EQ(vdw::normalize_xc_name("XC_GGA_X_PBE_R:XC_GGA_C_PBE"), "gga_x_pbe_r:gga_c_pbe");
 }
 
-TEST(D3Parameters, PbeAndLibxcAliases)
-{
+TEST(D3Parameters, PbeAndLibxcAliases) {
     Parameters zero;
     std::string canonical;
     ASSERT_TRUE(vdw::d3::lookup_parameters("pbe", Damping::Zero, zero, canonical));
@@ -229,10 +207,7 @@ TEST(D3Parameters, PbeAndLibxcAliases)
     EXPECT_DOUBLE_EQ(zero.rs8, 1.0);
 
     Parameters rational;
-    ASSERT_TRUE(vdw::d3::lookup_parameters("GGA_X_PBE+GGA_C_PBE",
-                                           Damping::Rational,
-                                           rational,
-                                           canonical));
+    ASSERT_TRUE(vdw::d3::lookup_parameters("GGA_X_PBE+GGA_C_PBE", Damping::Rational, rational, canonical));
     EXPECT_EQ(canonical, "pbe");
     EXPECT_DOUBLE_EQ(rational.s8, 0.7875);
     EXPECT_DOUBLE_EQ(rational.a1, 0.4289);
@@ -242,93 +217,62 @@ TEST(D3Parameters, PbeAndLibxcAliases)
     EXPECT_EQ(canonical, "hse06");
     EXPECT_DOUBLE_EQ(rational.a1, 0.383);
 
-    ASSERT_TRUE(vdw::d3::lookup_parameters("XC_GGA_X_B88+XC_GGA_C_OP_B88",
-                                           Damping::Rational,
-                                           rational,
-                                           canonical));
+    ASSERT_TRUE(vdw::d3::lookup_parameters("XC_GGA_X_B88+XC_GGA_C_OP_B88", Damping::Rational, rational, canonical));
     EXPECT_EQ(canonical, "bop");
     EXPECT_DOUBLE_EQ(rational.a1, 0.487);
 
-    ASSERT_TRUE(vdw::d3::lookup_parameters("XC_GGA_X_PBE_R+XC_GGA_C_PBE",
-                                           Damping::Rational,
-                                           rational,
-                                           canonical));
+    ASSERT_TRUE(vdw::d3::lookup_parameters("XC_GGA_X_PBE_R+XC_GGA_C_PBE", Damping::Rational, rational, canonical));
     EXPECT_EQ(canonical, "revpbe");
 
     // Legacy ABACUS LibXC spellings: the numerical parameter set is stored
     // under `wb97x` by s-dftd3, but only for the corresponding damping form.
-    ASSERT_TRUE(vdw::d3::lookup_parameters("XC_HYB_GGA_XC_WB97X_V",
-                                           Damping::Rational,
-                                           rational,
-                                           canonical));
+    ASSERT_TRUE(vdw::d3::lookup_parameters("XC_HYB_GGA_XC_WB97X_V", Damping::Rational, rational, canonical));
     EXPECT_EQ(canonical, "wb97xv");
     EXPECT_DOUBLE_EQ(rational.s8, 0.2641);
     EXPECT_DOUBLE_EQ(rational.a1, 0.0);
     EXPECT_DOUBLE_EQ(rational.a2, 5.4959);
 
-    ASSERT_TRUE(vdw::d3::lookup_parameters("XC_HYB_GGA_XC_WB97X_D3",
-                                           Damping::Zero,
-                                           zero,
-                                           canonical));
+    ASSERT_TRUE(vdw::d3::lookup_parameters("XC_HYB_GGA_XC_WB97X_D3", Damping::Zero, zero, canonical));
     EXPECT_EQ(canonical, "wb97xd3");
     EXPECT_DOUBLE_EQ(zero.s8, 1.0);
     EXPECT_DOUBLE_EQ(zero.rs6, 1.281);
     EXPECT_DOUBLE_EQ(zero.rs8, 1.094);
 
-    EXPECT_FALSE(vdw::d3::lookup_parameters("XC_HYB_GGA_XC_WB97X_V",
-                                            Damping::Zero,
-                                            zero,
-                                            canonical));
-    EXPECT_FALSE(vdw::d3::lookup_parameters("XC_HYB_GGA_XC_WB97X_D3",
-                                            Damping::Rational,
-                                            rational,
-                                            canonical));
+    EXPECT_FALSE(vdw::d3::lookup_parameters("XC_HYB_GGA_XC_WB97X_V", Damping::Zero, zero, canonical));
+    EXPECT_FALSE(vdw::d3::lookup_parameters("XC_HYB_GGA_XC_WB97X_D3", Damping::Rational, rational, canonical));
 
-    EXPECT_FALSE(vdw::d3::lookup_parameters("definitely-not-an-xc",
-                                            Damping::Rational,
-                                            rational,
-                                            canonical));
+    EXPECT_FALSE(vdw::d3::lookup_parameters("definitely-not-an-xc", Damping::Rational, rational, canonical));
 }
 
-TEST(D3Data, ReferencePackingAndSymmetry)
-{
+TEST(D3Data, ReferencePackingAndSymmetry) {
     EXPECT_EQ(vdw::d3::data::max_element, 103);
     EXPECT_EQ(vdw::d3::data::max_reference, 7);
 
     int maximum_reference_count = 0;
-    for (int atomic_number_i = 1; atomic_number_i <= vdw::d3::data::max_element; ++atomic_number_i)
-    {
+    for (int atomic_number_i = 1; atomic_number_i <= vdw::d3::data::max_element; ++atomic_number_i) {
         const int references_i = vdw::d3::data::reference_count(atomic_number_i);
         ASSERT_GE(references_i, 1);
         ASSERT_LE(references_i, vdw::d3::data::max_reference);
         maximum_reference_count = std::max(maximum_reference_count, references_i);
         EXPECT_TRUE(std::isfinite(vdw::d3::data::covalent_radius(atomic_number_i)));
         EXPECT_TRUE(std::isfinite(vdw::d3::data::r4r2(atomic_number_i)));
-        for (int reference_i = 0; reference_i < references_i; ++reference_i)
-        {
+        for (int reference_i = 0; reference_i < references_i; ++reference_i) {
             EXPECT_TRUE(std::isfinite(vdw::d3::data::reference_cn(atomic_number_i, reference_i)));
         }
 
-        for (int atomic_number_j = 1; atomic_number_j <= atomic_number_i; ++atomic_number_j)
-        {
+        for (int atomic_number_j = 1; atomic_number_j <= atomic_number_i; ++atomic_number_j) {
             const int references_j = vdw::d3::data::reference_count(atomic_number_j);
             EXPECT_DOUBLE_EQ(vdw::d3::data::vdw_radius(atomic_number_i, atomic_number_j),
                              vdw::d3::data::vdw_radius(atomic_number_j, atomic_number_i));
-            for (int reference_i = 0; reference_i < references_i; ++reference_i)
-            {
-                for (int reference_j = 0; reference_j < references_j; ++reference_j)
-                {
-                    const double c6 = vdw::d3::data::reference_c6(atomic_number_i,
-                                                                 reference_i,
-                                                                 atomic_number_j,
-                                                                 reference_j);
+            for (int reference_i = 0; reference_i < references_i; ++reference_i) {
+                for (int reference_j = 0; reference_j < references_j; ++reference_j) {
+                    const double c6
+                        = vdw::d3::data::reference_c6(atomic_number_i, reference_i, atomic_number_j, reference_j);
                     EXPECT_TRUE(std::isfinite(c6));
                     EXPECT_GE(c6, 0.0);
-                    EXPECT_DOUBLE_EQ(c6,
-                                     vdw::d3::data::reference_c6(atomic_number_j,
-                                                                 reference_j,
-                                                                 atomic_number_i,
-                                                                 reference_i));
+                    EXPECT_DOUBLE_EQ(
+                        c6,
+                        vdw::d3::data::reference_c6(atomic_number_j, reference_j, atomic_number_i, reference_i));
                 }
             }
         }
@@ -337,32 +281,27 @@ TEST(D3Data, ReferencePackingAndSymmetry)
     EXPECT_EQ(vdw::d3::data::reference_count(103), 7);
 }
 
-TEST(D3Evaluator, MatchesSdftd3Mindless01)
-{
+TEST(D3Evaluator, MatchesSdftd3Mindless01) {
     Parameters parameters;
     std::string canonical;
     ASSERT_TRUE(vdw::d3::lookup_parameters("pbe", Damping::Rational, parameters, canonical));
     parameters.s9 = 0.0;
 
     // Exact value from s-dftd3 v1.5.0 test/unit/test_dftd3.f90.
-    EXPECT_DOUBLE_EQ(energy(mindless01(), parameters, Cutoffs()),
-                     -1.7882220155186028e-2);
+    EXPECT_DOUBLE_EQ(energy(mindless01(), parameters, Cutoffs()), -1.7882220155186028e-2);
 }
 
-TEST(D3Evaluator, MatchesSdftd3Actinides)
-{
+TEST(D3Evaluator, MatchesSdftd3Actinides) {
     Parameters parameters;
     std::string canonical;
     ASSERT_TRUE(vdw::d3::lookup_parameters("pbe", Damping::Rational, parameters, canonical));
     parameters.s9 = 0.0;
 
     // Exact value from s-dftd3 v1.5.0 test/unit/test_dftd3.f90.
-    EXPECT_DOUBLE_EQ(energy(actinides(), parameters, Cutoffs()),
-                     -1.4131143363689097e-1);
+    EXPECT_DOUBLE_EQ(energy(actinides(), parameters, Cutoffs()), -1.4131143363689097e-1);
 }
 
-TEST(D3Evaluator, MatchesSdftd3PeriodicX23Acetic)
-{
+TEST(D3Evaluator, MatchesSdftd3PeriodicX23Acetic) {
     Parameters parameters;
     std::string canonical;
     ASSERT_TRUE(vdw::d3::lookup_parameters("pbe", Damping::Rational, parameters, canonical));
@@ -374,46 +313,36 @@ TEST(D3Evaluator, MatchesSdftd3PeriodicX23Acetic)
     cutoffs.disp3 = 15.0;
 
     // Exact value from s-dftd3 v1.5.0 test/unit/test_periodic_3d.f90.
-    EXPECT_DOUBLE_EQ(energy(x23_acetic(), parameters, cutoffs),
-                     -6.6732836815486210e-2);
+    EXPECT_DOUBLE_EQ(energy(x23_acetic(), parameters, cutoffs), -6.6732836815486210e-2);
 }
 
-TEST(D3Evaluator, MatchesSdftd3AtmMindless17)
-{
+TEST(D3Evaluator, MatchesSdftd3AtmMindless17) {
     Parameters parameters;
     std::string canonical;
-    ASSERT_TRUE(vdw::d3::lookup_parameters("dsd-blyp",
-                                           Damping::Rational,
-                                           parameters,
-                                           canonical));
+    ASSERT_TRUE(vdw::d3::lookup_parameters("dsd-blyp", Damping::Rational, parameters, canonical));
     parameters.s9 = 1.0;
 
     // Exact value from s-dftd3 v1.5.0 test/unit/test_dftd3.f90.
-    EXPECT_DOUBLE_EQ(energy(mindless17(), parameters, Cutoffs()),
-                     -1.3592755832923201e-2);
+    EXPECT_DOUBLE_EQ(energy(mindless17(), parameters, Cutoffs()), -1.3592755832923201e-2);
 }
 
-TEST(D3Evaluator, MatchesSdftd3ZeroDampingMindless09)
-{
+TEST(D3Evaluator, MatchesSdftd3ZeroDampingMindless09) {
     Parameters parameters;
     std::string canonical;
     ASSERT_TRUE(vdw::d3::lookup_parameters("rpbe", Damping::Zero, parameters, canonical));
     parameters.s9 = 0.0;
 
     // Exact value from s-dftd3 v1.5.0 test/unit/test_dftd3.f90.
-    EXPECT_DOUBLE_EQ(energy(mindless09(), parameters, Cutoffs()),
-                     -2.0178760785797962e-2);
+    EXPECT_DOUBLE_EQ(energy(mindless09(), parameters, Cutoffs()), -2.0178760785797962e-2);
 }
 
-TEST(D3Evaluator, HighCoordinationMgGradientAndVirial)
-{
-    // Two Mg atoms in a slightly distorted FCC supercell. Their D3 CN is near 12,
-    // well above the largest Mg reference CN (1.9496).
+TEST(D3Evaluator, HighCoordinationMgGradientAndVirial) {
+    // Two Mg atoms in a slightly distorted FCC supercell. Their D3 CN is near
+    // 12, well above the largest Mg reference CN (1.9496).
     const double half_diagonal = 5.3 / std::sqrt(2.0);
     Structure structure;
     structure.atomic_numbers = {12, 12};
-    structure.positions = {{0.0, 0.0, 0.0},
-                           {0.06, half_diagonal - 0.09, half_diagonal + 0.13}};
+    structure.positions = {{0.0, 0.0, 0.0}, {0.06, half_diagonal - 0.09, half_diagonal + 0.13}};
     structure.lattice = {{{0.0, 2.0 * half_diagonal, 2.0 * half_diagonal},
                           {half_diagonal, 0.0, half_diagonal},
                           {half_diagonal, half_diagonal, 0.0}}};
@@ -432,51 +361,43 @@ TEST(D3Evaluator, HighCoordinationMgGradientAndVirial)
     std::string error;
     ASSERT_TRUE(vdw::d3::evaluate(structure, parameters, cutoffs, true, analytic, error)) << error;
     ASSERT_TRUE(std::isfinite(analytic.energy));
-    for (const Vec3& gradient : analytic.gradient)
-    {
-        const double magnitude = std::sqrt(gradient.x * gradient.x
-                                           + gradient.y * gradient.y
-                                           + gradient.z * gradient.z);
+    for (const Vec3& gradient: analytic.gradient) {
+        const double magnitude = std::sqrt(gradient.x * gradient.x + gradient.y * gradient.y + gradient.z * gradient.z);
         EXPECT_TRUE(std::isfinite(magnitude));
         EXPECT_LT(magnitude, 1.0);
     }
 
     const double step = 1.0e-5;
-    for (std::size_t atom = 0; atom < structure.positions.size(); ++atom)
-    {
-        for (int component = 0; component < 3; ++component)
-        {
+    for (std::size_t atom = 0; atom < structure.positions.size(); ++atom) {
+        for (int component = 0; component < 3; ++component) {
             Structure plus = structure;
             Structure minus = structure;
             coordinate(plus.positions[atom], component) += step;
             coordinate(minus.positions[atom], component) -= step;
-            const double numerical = (energy(plus, parameters, cutoffs)
-                                      - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            const double numerical
+                = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
             EXPECT_NEAR(coordinate(analytic.gradient[atom], component), numerical, 1.0e-8);
         }
     }
 
     Structure plus = structure;
     Structure minus = structure;
-    for (std::size_t atom = 0; atom < structure.positions.size(); ++atom)
-    {
+    for (std::size_t atom = 0; atom < structure.positions.size(); ++atom) {
         const double displacement = step * structure.positions[atom].x;
         plus.positions[atom].x += displacement;
         minus.positions[atom].x -= displacement;
     }
-    for (int vector = 0; vector < 3; ++vector)
-    {
+    for (int vector = 0; vector < 3; ++vector) {
         const double displacement = step * structure.lattice[vector].x;
         plus.lattice[vector].x += displacement;
         minus.lattice[vector].x -= displacement;
     }
-    const double numerical_virial = (energy(plus, parameters, cutoffs)
-                                   - energy(minus, parameters, cutoffs)) / (2.0 * step);
+    const double numerical_virial
+        = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
     EXPECT_NEAR(analytic.virial.value[0][0], numerical_virial, 1.0e-8);
 }
 
-TEST(D3Evaluator, SmoothCutoffGradientAndVirial)
-{
+TEST(D3Evaluator, SmoothCutoffGradientAndVirial) {
     Structure structure;
     structure.atomic_numbers = {6, 8, 7};
     structure.positions = {{0.0, 0.0, 0.0}, {5.5, 0.4, 0.2}, {2.7, 4.8, -0.3}};
@@ -499,50 +420,40 @@ TEST(D3Evaluator, SmoothCutoffGradientAndVirial)
 
     const double step = 1.0e-5;
     double maximum_gradient_error = 0.0;
-    for (std::size_t atom = 0; atom < structure.positions.size(); ++atom)
-    {
-        for (int component = 0; component < 3; ++component)
-        {
+    for (std::size_t atom = 0; atom < structure.positions.size(); ++atom) {
+        for (int component = 0; component < 3; ++component) {
             Structure plus = structure;
             Structure minus = structure;
             coordinate(plus.positions[atom], component) += step;
             coordinate(minus.positions[atom], component) -= step;
-            const double numerical = (energy(plus, parameters, cutoffs)
-                                      - energy(minus, parameters, cutoffs))
-                                     / (2.0 * step);
-            maximum_gradient_error = std::max(
-                maximum_gradient_error,
-                std::abs(numerical - coordinate(analytic.gradient[atom], component)));
+            const double numerical
+                = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            maximum_gradient_error = std::max(maximum_gradient_error,
+                                              std::abs(numerical - coordinate(analytic.gradient[atom], component)));
         }
     }
     EXPECT_LT(maximum_gradient_error, 1.0e-9);
 
     double maximum_virial_error = 0.0;
-    for (int strain_row = 0; strain_row < 3; ++strain_row)
-    {
-        for (int strain_column = 0; strain_column < 3; ++strain_column)
-        {
+    for (int strain_row = 0; strain_row < 3; ++strain_row) {
+        for (int strain_column = 0; strain_column < 3; ++strain_column) {
             Structure plus = structure;
             Structure minus = structure;
-            for (std::size_t atom = 0; atom < structure.positions.size(); ++atom)
-            {
+            for (std::size_t atom = 0; atom < structure.positions.size(); ++atom) {
                 const double displacement = step * coordinate(structure.positions[atom], strain_column);
                 coordinate(plus.positions[atom], strain_row) += displacement;
                 coordinate(minus.positions[atom], strain_row) -= displacement;
             }
-            const double numerical = (energy(plus, parameters, cutoffs)
-                                      - energy(minus, parameters, cutoffs))
-                                     / (2.0 * step);
-            maximum_virial_error = std::max(
-                maximum_virial_error,
-                std::abs(numerical - analytic.virial.value[strain_row][strain_column]));
+            const double numerical
+                = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            maximum_virial_error = std::max(maximum_virial_error,
+                                            std::abs(numerical - analytic.virial.value[strain_row][strain_column]));
         }
     }
     EXPECT_LT(maximum_virial_error, 1.0e-8);
 }
 
-TEST(D3Evaluator, PeriodicSmoothCutoffVirial)
-{
+TEST(D3Evaluator, PeriodicSmoothCutoffVirial) {
     Structure structure;
     structure.atomic_numbers = {6, 8, 7};
     structure.positions = {{1.1, 1.4, 1.7}, {5.0, 1.8, 2.1}, {2.6, 5.4, 4.9}};
@@ -567,56 +478,45 @@ TEST(D3Evaluator, PeriodicSmoothCutoffVirial)
 
     const double step = 1.0e-5;
     double maximum_gradient_error = 0.0;
-    for (std::size_t atom = 0; atom < structure.positions.size(); ++atom)
-    {
-        for (int component = 0; component < 3; ++component)
-        {
+    for (std::size_t atom = 0; atom < structure.positions.size(); ++atom) {
+        for (int component = 0; component < 3; ++component) {
             Structure plus = structure;
             Structure minus = structure;
             coordinate(plus.positions[atom], component) += step;
             coordinate(minus.positions[atom], component) -= step;
-            const double numerical = (energy(plus, parameters, cutoffs)
-                                      - energy(minus, parameters, cutoffs))
-                                     / (2.0 * step);
-            maximum_gradient_error = std::max(
-                maximum_gradient_error,
-                std::abs(numerical - coordinate(analytic.gradient[atom], component)));
+            const double numerical
+                = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            maximum_gradient_error = std::max(maximum_gradient_error,
+                                              std::abs(numerical - coordinate(analytic.gradient[atom], component)));
         }
     }
     EXPECT_LT(maximum_gradient_error, 1.0e-8);
 
     double maximum_virial_error = 0.0;
-    for (int strain_row = 0; strain_row < 3; ++strain_row)
-    {
-        for (int strain_column = 0; strain_column < 3; ++strain_column)
-        {
+    for (int strain_row = 0; strain_row < 3; ++strain_row) {
+        for (int strain_column = 0; strain_column < 3; ++strain_column) {
             Structure plus = structure;
             Structure minus = structure;
-            for (std::size_t atom = 0; atom < structure.positions.size(); ++atom)
-            {
+            for (std::size_t atom = 0; atom < structure.positions.size(); ++atom) {
                 const double displacement = step * coordinate(structure.positions[atom], strain_column);
                 coordinate(plus.positions[atom], strain_row) += displacement;
                 coordinate(minus.positions[atom], strain_row) -= displacement;
             }
-            for (int vector = 0; vector < 3; ++vector)
-            {
+            for (int vector = 0; vector < 3; ++vector) {
                 const double displacement = step * coordinate(structure.lattice[vector], strain_column);
                 coordinate(plus.lattice[vector], strain_row) += displacement;
                 coordinate(minus.lattice[vector], strain_row) -= displacement;
             }
-            const double numerical = (energy(plus, parameters, cutoffs)
-                                      - energy(minus, parameters, cutoffs))
-                                     / (2.0 * step);
-            maximum_virial_error = std::max(
-                maximum_virial_error,
-                std::abs(numerical - analytic.virial.value[strain_row][strain_column]));
+            const double numerical
+                = (energy(plus, parameters, cutoffs) - energy(minus, parameters, cutoffs)) / (2.0 * step);
+            maximum_virial_error = std::max(maximum_virial_error,
+                                            std::abs(numerical - analytic.virial.value[strain_row][strain_column]));
         }
     }
     EXPECT_LT(maximum_virial_error, 1.0e-8);
 }
 
-TEST(D3Evaluator, SharpCutoffCompatibilityAndWidthValidation)
-{
+TEST(D3Evaluator, SharpCutoffCompatibilityAndWidthValidation) {
     Structure structure;
     structure.atomic_numbers = {6, 8};
     structure.positions = {{0.0, 0.0, 0.0}, {5.0, 0.0, 0.0}};
@@ -636,8 +536,7 @@ TEST(D3Evaluator, SharpCutoffCompatibilityAndWidthValidation)
     Cutoffs equal_width = sharp;
     equal_width.width2 = equal_width.disp2;
     equal_width.width3 = equal_width.disp3;
-    EXPECT_DOUBLE_EQ(energy(structure, parameters, sharp),
-                     energy(structure, parameters, equal_width));
+    EXPECT_DOUBLE_EQ(energy(structure, parameters, sharp), energy(structure, parameters, equal_width));
 
     Cutoffs invalid = sharp;
     invalid.width2 = invalid.disp2 + 1.0;

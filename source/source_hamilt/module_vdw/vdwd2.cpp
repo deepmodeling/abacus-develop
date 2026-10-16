@@ -5,27 +5,24 @@
 //==========================================================
 
 #include "vdwd2.h"
+
 #include "source_base/timer.h"
 
 #include <algorithm>
 #include <cmath>
 
-namespace vdw
-{
+namespace vdw {
 
-void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result)
-{
+void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result) {
     ModuleBase::TITLE("Vdwd2", "evaluate");
     ModuleBase::timer::start("Vdwd2", "evaluate");
 
     para_.initset(ucell_);
 
-    if (request.force)
-    {
+    if (request.force) {
         result.force.resize(ucell_.nat);
     }
-    if (request.stress)
-    {
+    if (request.stress) {
         result.stress.Zero();
     }
 
@@ -43,22 +40,18 @@ void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result)
 
         result.energy -= C6_product / pow(r_sqr, 3) / tmp_damp_recip / 2.0;
 
-        if (!need_derivatives)
-        {
+        if (!need_derivatives) {
             return;
         }
 
         const double tmp_factor = C6_product / pow(r_sqr, 3) / r / tmp_damp_recip
-                                  * (-6.0 / r
-                                     + tmp_exp / tmp_damp_recip * para_.damping() / R0_sum);
+                                  * (-6.0 / r + tmp_exp / tmp_damp_recip * para_.damping() / R0_sum);
 
-        if (request.force)
-        {
+        if (request.force) {
             result.force[ucell_.itia2iat(it1, ia1)] += tmp_factor * (tau1 - tau2);
         }
 
-        if (request.stress)
-        {
+        if (request.stress) {
             const ModuleBase::Vector3<double> dr = tau2 - tau1;
             result.stress += tmp_factor / 2.0
                              * ModuleBase::Matrix3(dr.x * dr.x,
@@ -77,16 +70,14 @@ void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result)
 
     result.energy *= para_.scaling();
 
-    if (request.force)
-    {
+    if (request.force) {
         std::for_each(result.force.begin(), result.force.end(), [&](ModuleBase::Vector3<double>& force) {
             force *= para_.scaling() / ucell_.lat0;
         });
         result.has_force = true;
     }
 
-    if (request.stress)
-    {
+    if (request.stress) {
         result.stress *= para_.scaling() / ucell_.omega;
         result.has_stress = true;
     }

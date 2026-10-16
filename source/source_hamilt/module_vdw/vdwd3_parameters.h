@@ -5,10 +5,8 @@
 
 #include <string>
 
-namespace vdw
-{
-namespace d3
-{
+namespace vdw {
+namespace d3 {
 
 std::string canonicalize_method_name(const std::string& input);
 

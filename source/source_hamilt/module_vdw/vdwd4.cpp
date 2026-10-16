@@ -1,10 +1,11 @@
 #include "vdwd4.h"
-#include "vdw_xcname.h"
 
 #include "source_base/constants.h"
 #include "source_base/element_name.h"
+#include "vdw_xcname.h"
 #ifdef __MPI
 #include "source_base/parallel_reduce.h"
+
 #include <mpi.h>
 #endif
 #include "source_base/timer.h"
@@ -22,24 +23,19 @@
 #include <dftd4.h>
 #endif
 
-namespace vdw
-{
+namespace vdw {
 
-namespace
-{
+namespace {
 
-std::string to_lower(std::string value)
-{
+std::string to_lower(std::string value) {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
         return static_cast<char>(std::tolower(c));
     });
     return value;
 }
 
-void check_dftd4_error(dftd4_error error, const std::string& where)
-{
-    if (dftd4_check_error(error))
-    {
+void check_dftd4_error(dftd4_error error, const std::string& where) {
+    if (dftd4_check_error(error)) {
         char buffer[1024];
         std::memset(buffer, 0, sizeof(buffer));
         int buffersize = static_cast<int>(sizeof(buffer));
@@ -49,12 +45,9 @@ void check_dftd4_error(dftd4_error error, const std::string& where)
     }
 }
 
-int atomic_number_from_symbol(const std::string& symbol)
-{
-    for (int i = 0; i < static_cast<int>(ModuleBase::element_name.size()); ++i)
-    {
-        if (symbol == ModuleBase::element_name[i])
-        {
+int atomic_number_from_symbol(const std::string& symbol) {
+    for (int i = 0; i < static_cast<int>(ModuleBase::element_name.size()); ++i) {
+        if (symbol == ModuleBase::element_name[i]) {
             return i + 1; // DFT-D4 expects the true atomic number.
         }
     }
@@ -63,14 +56,11 @@ int atomic_number_from_symbol(const std::string& symbol)
     return 0;
 }
 
-double length_to_bohr(double value, const std::string& unit)
-{
-    if (unit == "A")
-    {
+double length_to_bohr(double value, const std::string& unit) {
+    if (unit == "A") {
         return value / ModuleBase::BOHR_TO_A;
     }
-    if (unit == "Bohr")
-    {
+    if (unit == "Bohr") {
         return value;
     }
 
@@ -78,38 +68,30 @@ double length_to_bohr(double value, const std::string& unit)
     return value;
 }
 
-double cutoff_to_bohr(const std::string& value, const std::string& unit)
-{
+double cutoff_to_bohr(const std::string& value, const std::string& unit) {
     return length_to_bohr(std::stod(value), unit);
 }
 
 } // namespace
 
 Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input)
-    : Vdw(unit_in), xc_name_(normalize_xc_name(xc_name)), model_name_(to_lower(input.vdw_d4_model))
-{
+    : Vdw(unit_in), xc_name_(normalize_xc_name(xc_name)), model_name_(to_lower(input.vdw_d4_model)) {
     cutoff_disp2_ = cutoff_to_bohr(input.vdw_cutoff_radius, input.vdw_radius_unit);
     cutoff_disp3_ = std::min(40.0, cutoff_disp2_);
     cutoff_cn_ = length_to_bohr(input.vdw_cn_thr, input.vdw_cn_thr_unit);
     smooth_width_2b_ = input.vdw_cutoff_width2;
     smooth_width_3b_ = input.vdw_cutoff_width3;
 
-    if (smooth_width_2b_ < 0.0 || smooth_width_2b_ > cutoff_disp2_)
-    {
-        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4",
-                                 "vdw_cutoff_width2 must satisfy 0 <= width <= two-body cutoff");
+    if (smooth_width_2b_ < 0.0 || smooth_width_2b_ > cutoff_disp2_) {
+        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4", "vdw_cutoff_width2 must satisfy 0 <= width <= two-body cutoff");
     }
-    if (smooth_width_3b_ < 0.0 || smooth_width_3b_ > cutoff_disp3_)
-    {
-        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4",
-                                 "vdw_cutoff_width3 must satisfy 0 <= width <= three-body cutoff");
+    if (smooth_width_3b_ < 0.0 || smooth_width_3b_ > cutoff_disp3_) {
+        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4", "vdw_cutoff_width3 must satisfy 0 <= width <= three-body cutoff");
     }
 
     double valence_charge = 0.0;
-    for (int it = 0; it < ucell_.ntype; ++it)
-    {
-        if (ucell_.atoms[it].flag_empty_element)
-        {
+    for (int it = 0; it < ucell_.ntype; ++it) {
+        if (ucell_.atoms[it].flag_empty_element) {
             continue;
         }
         valence_charge += ucell_.atoms[it].ncpp.zv * ucell_.atoms[it].na;
@@ -121,8 +103,7 @@ void Vdwd4::build_structure(std::vector<int>& numbers,
                             std::vector<double>& positions,
                             std::vector<double>& lattice,
                             std::array<bool, 3>& periodic,
-                            std::vector<int>& atom_indices) const
-{
+                            std::vector<int>& atom_indices) const {
     numbers.clear();
     positions.clear();
     lattice.clear();
@@ -134,18 +115,15 @@ void Vdwd4::build_structure(std::vector<int>& numbers,
     atom_indices.reserve(ucell_.nat);
 
     int iat = 0;
-    for (int it = 0; it < ucell_.ntype; ++it)
-    {
-        if (ucell_.atoms[it].flag_empty_element)
-        {
+    for (int it = 0; it < ucell_.ntype; ++it) {
+        if (ucell_.atoms[it].flag_empty_element) {
             iat += ucell_.atoms[it].na;
             continue;
         }
 
         const int atomic_number = atomic_number_from_symbol(ucell_.atoms[it].ncpp.psd);
 
-        for (int ia = 0; ia < ucell_.atoms[it].na; ++ia)
-        {
+        for (int ia = 0; ia < ucell_.atoms[it].na; ++ia) {
             const ModuleBase::Vector3<double> position = ucell_.atoms[it].tau[ia] * ucell_.lat0;
 
             numbers.push_back(atomic_number);
@@ -180,8 +158,7 @@ void Vdwd4::build_structure(std::vector<int>& numbers,
 void Vdwd4::compute(double& energy_ha,
                     std::vector<double>* gradient_ha_bohr,
                     std::array<double, 9>* sigma_ha,
-                    std::vector<int>& atom_indices)
-{
+                    std::vector<int>& atom_indices) {
 #ifdef __DFTD4
     std::vector<int> numbers;
     std::vector<double> positions;
@@ -190,11 +167,8 @@ void Vdwd4::compute(double& energy_ha,
 
     build_structure(numbers, positions, lattice, periodic, atom_indices);
 
-    if (gradient_ha_bohr != nullptr
-        && gradient_ha_bohr->size() < static_cast<std::size_t>(3 * numbers.size()))
-    {
-        ModuleBase::WARNING_QUIT("Vdwd4::compute",
-                                 "gradient_ha_bohr is too small for the filtered atom set.");
+    if (gradient_ha_bohr != nullptr && gradient_ha_bohr->size() < static_cast<std::size_t>(3 * numbers.size())) {
+        ModuleBase::WARNING_QUIT("Vdwd4::compute", "gradient_ha_bohr is too small for the filtered atom set.");
     }
 
     // These vectors own all arrays passed to DFT-D4. Their data() pointers
@@ -211,18 +185,13 @@ void Vdwd4::compute(double& energy_ha,
     check_dftd4_error(error, "dftd4_new_structure");
 
     dftd4_model model = nullptr;
-    if (model_name_ == "d4")
-    {
+    if (model_name_ == "d4") {
         model = dftd4_new_d4_model(error, mol);
         check_dftd4_error(error, "dftd4_new_d4_model");
-    }
-    else if (model_name_ == "d4s")
-    {
+    } else if (model_name_ == "d4s") {
         model = dftd4_new_d4s_model(error, mol);
         check_dftd4_error(error, "dftd4_new_d4s_model");
-    }
-    else
-    {
+    } else {
         ModuleBase::WARNING_QUIT("Vdwd4::compute", "Unsupported DFT-D4 model: " + model_name_);
     }
 
@@ -248,7 +217,8 @@ void Vdwd4::compute(double& energy_ha,
     method.push_back('\0');
 
     // Use the DFT-D4 library's internal rational damping parameters.
-    // The final boolean selects the three-body-specific parameterization in the C API.
+    // The final boolean selects the three-body-specific parameterization in the
+    // C API.
     const bool atm = true;
     dftd4_param param = dftd4_load_rational_damping(error, method.data(), atm);
     check_dftd4_error(error, "dftd4_load_rational_damping");
@@ -262,12 +232,10 @@ void Vdwd4::compute(double& energy_ha,
 
 #ifdef __MPI
     Parallel_Reduce::reduce_all(energy_ha);
-    if (gradient != nullptr)
-    {
+    if (gradient != nullptr) {
         Parallel_Reduce::reduce_all(gradient, 3 * ucell_.nat);
     }
-    if (sigma != nullptr)
-    {
+    if (sigma != nullptr) {
         Parallel_Reduce::reduce_all(sigma, 9);
     }
 #endif
@@ -283,12 +251,10 @@ void Vdwd4::compute(double& energy_ha,
 
 void Vdwd4::set_force_from_gradient(const std::vector<double>& gradient_ha_bohr,
                                     const std::vector<int>& atom_indices,
-                                    VdwResult& result) const
-{
+                                    VdwResult& result) const {
     result.force.assign(ucell_.nat, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
 
-    for (std::size_t index = 0; index < atom_indices.size(); ++index)
-    {
+    for (std::size_t index = 0; index < atom_indices.size(); ++index) {
         const int iat = atom_indices[index];
         // DFT-D4 returns dE/dR in Ha/Bohr; ABACUS forces are -dE/dR in Ry/Bohr.
         result.force[iat].x = -2.0 * gradient_ha_bohr[3 * index + 0];
@@ -299,11 +265,10 @@ void Vdwd4::set_force_from_gradient(const std::vector<double>& gradient_ha_bohr,
     result.has_force = true;
 }
 
-void Vdwd4::set_stress_from_sigma(const std::array<double, 9>& sigma_ha,
-                                  VdwResult& result) const
-{
+void Vdwd4::set_stress_from_sigma(const std::array<double, 9>& sigma_ha, VdwResult& result) const {
     // Tentative mapping consistent with the current D3 convention.
-    // Confirm sign, transposition and volume normalization by finite-strain tests.
+    // Confirm sign, transposition and volume normalization by finite-strain
+    // tests.
     result.stress = ModuleBase::Matrix3(2.0 * sigma_ha[0],
                                         2.0 * sigma_ha[1],
                                         2.0 * sigma_ha[2],
@@ -317,15 +282,13 @@ void Vdwd4::set_stress_from_sigma(const std::array<double, 9>& sigma_ha,
     result.has_stress = true;
 }
 
-void Vdwd4::evaluate_impl(const VdwRequest& request, VdwResult& result)
-{
+void Vdwd4::evaluate_impl(const VdwRequest& request, VdwResult& result) {
     ModuleBase::TITLE("Vdwd4", "evaluate");
     ModuleBase::timer::start("Vdwd4", "evaluate");
 
     double energy_ha = 0.0;
     std::vector<int> atom_indices;
-    if (request.force || request.stress)
-    {
+    if (request.force || request.stress) {
         std::vector<double> gradient(3 * ucell_.nat, 0.0);
         std::array<double, 9> sigma;
         sigma.fill(0.0);
@@ -334,17 +297,13 @@ void Vdwd4::evaluate_impl(const VdwRequest& request, VdwResult& result)
         // Keep all requested quantities from this single call.
         compute(energy_ha, &gradient, &sigma, atom_indices);
 
-        if (request.force)
-        {
+        if (request.force) {
             set_force_from_gradient(gradient, atom_indices, result);
         }
-        if (request.stress)
-        {
+        if (request.stress) {
             set_stress_from_sigma(sigma, result);
         }
-    }
-    else
-    {
+    } else {
         compute(energy_ha, nullptr, nullptr, atom_indices);
     }
 

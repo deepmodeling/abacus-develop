@@ -1,22 +1,17 @@
 #ifndef VDWD3_H
 #define VDWD3_H
 
-#include "vdwd3_types.h"
 #include "vdw.h"
+#include "vdwd3_types.h"
 
 #include <fstream>
 #include <string>
 
-namespace vdw
-{
+namespace vdw {
 
-class Vdwd3 : public Vdw
-{
+class Vdwd3 : public Vdw {
   public:
-    Vdwd3(const UnitCell& unit_in,
-          const std::string& xc_name,
-          const Input_para& input,
-          std::ofstream* plog = nullptr);
+    Vdwd3(const UnitCell& unit_in, const std::string& xc_name, const Input_para& input, std::ofstream* plog = nullptr);
 
     ~Vdwd3() override = default;
 

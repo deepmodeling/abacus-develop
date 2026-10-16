@@ -10,11 +10,9 @@
 #include "vdw.h"
 #include "vdwd2_parameters.h"
 
-namespace vdw
-{
+namespace vdw {
 
-class Vdwd2 : public Vdw
-{
+class Vdwd2 : public Vdw {
 
   public:
     Vdwd2(const UnitCell& unit_in) : Vdw(unit_in) {}
@@ -30,22 +28,17 @@ class Vdwd2 : public Vdw
     void evaluate_impl(const VdwRequest& request, VdwResult& result) override;
 
     template <typename F>
-    void index_loops(F&& f)
-    {
+    void index_loops(F&& f) {
         int xidx = para_.period().x / 2;
         int yidx = para_.period().y / 2;
         int zidx = para_.period().z / 2;
 
-        for (int it1 = 0; it1 < ucell_.ntype; ++it1)
-        {
-            if (ucell_.atoms[it1].flag_empty_element)
-            {
+        for (int it1 = 0; it1 < ucell_.ntype; ++it1) {
+            if (ucell_.atoms[it1].flag_empty_element) {
                 continue;
             }
-            for (int it2 = 0; it2 < ucell_.ntype; ++it2)
-            {
-                if (ucell_.atoms[it2].flag_empty_element)
-                {
+            for (int it2 = 0; it2 < ucell_.ntype; ++it2) {
+                if (ucell_.atoms[it2].flag_empty_element) {
                     continue;
                 }
                 const double C6_product
@@ -54,25 +47,18 @@ class Vdwd2 : public Vdw
                 const double R0_sum
                     = (para_.R0().at(ucell_.atoms[it1].ncpp.psd) + para_.R0().at(ucell_.atoms[it2].ncpp.psd))
                       / ucell_.lat0;
-                if (!R0_sum)
-                {
+                if (!R0_sum) {
                     ModuleBase::WARNING_QUIT("Input", "R0_sum can not be 0");
                 }
-                for (int ia1 = 0; ia1 != ucell_.atoms[it1].na; ++ia1)
-                {
+                for (int ia1 = 0; ia1 != ucell_.atoms[it1].na; ++ia1) {
                     const ModuleBase::Vector3<double> tau1 = ucell_.atoms[it1].tau[ia1];
-                    for (int ia2 = 0; ia2 != ucell_.atoms[it2].na; ++ia2)
-                    {
+                    for (int ia2 = 0; ia2 != ucell_.atoms[it2].na; ++ia2) {
                         ModuleBase::Vector3<int> ilat_loop;
-                        for (ilat_loop.x = -xidx; ilat_loop.x <= xidx; ++ilat_loop.x)
-                        {
-                            for (ilat_loop.y = -yidx; ilat_loop.y <= yidx; ++ilat_loop.y)
-                            {
-                                for (ilat_loop.z = -zidx; ilat_loop.z <= zidx; ++ilat_loop.z)
-                                {
+                        for (ilat_loop.x = -xidx; ilat_loop.x <= xidx; ++ilat_loop.x) {
+                            for (ilat_loop.y = -yidx; ilat_loop.y <= yidx; ++ilat_loop.y) {
+                                for (ilat_loop.z = -zidx; ilat_loop.z <= zidx; ++ilat_loop.z) {
                                     if ((!(ilat_loop.x || ilat_loop.y || ilat_loop.z)) && (it1 == it2)
-                                        && (ia1 == ia2))
-                                    {
+                                        && (ia1 == ia2)) {
                                         continue;
                                     }
                                     const ModuleBase::Vector3<double> tau2

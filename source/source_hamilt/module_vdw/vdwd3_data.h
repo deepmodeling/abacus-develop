@@ -1,12 +1,9 @@
 #ifndef ABACUS_D3_DATA_H
 #define ABACUS_D3_DATA_H
 
-namespace vdw
-{
-namespace d3
-{
-namespace data
-{
+namespace vdw {
+namespace d3 {
+namespace data {
 
 constexpr int max_element = 103;
 constexpr int max_reference = 7;
