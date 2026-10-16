@@ -32,6 +32,7 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    std::ostream& warning_stream = GlobalV::ofs_warning;
 
     ModuleBase::timer::start("ESolver_OF_TDDFT", "runner");
     // get Ewald energy, initial rho and phi if necessary
@@ -61,13 +62,13 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
 
 
             // check if the job is done
-            if (this->check_exit(conv_esolver))
+            if (this->check_exit(conv_esolver, warning_stream))
             {
                 break;
             }
 
             // find the optimization direction and step lenghth theta according to the potential
-            this->optimize(ucell);
+            this->optimize(ucell, warning_stream);
 
             // update the rho and phi based on the direction and theta
             this->update_rho();
