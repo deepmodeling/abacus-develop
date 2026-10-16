@@ -7,7 +7,7 @@ on:
       plugin_ref:
         description: Reviewed QuantumMisaka/abacuslite commit or ref
         required: false
-        default: 136783baf4b6832c13d02a2542753439fbacc6df
+        default: dc020430bfa8c76edfc275b0f1eab2f12cc29d4d
 
 defaults:
   run:
@@ -37,7 +37,7 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           repository: QuantumMisaka/abacuslite
-          ref: ${{ inputs.plugin_ref || '136783baf4b6832c13d02a2542753439fbacc6df' }}
+          ref: ${{ inputs.plugin_ref || 'dc020430bfa8c76edfc275b0f1eab2f12cc29d4d' }}
           path: candidate-plugin
           persist-credentials: false
 
@@ -111,7 +111,7 @@ jobs:
         shell: bash -l {0}
         run: |
           cd interfaces/ASE_interface/tests
-          python -m unittest test_external_provenance test_harness_facts -v
+          python -m unittest test_external_provenance test_harness_facts test_native_md_fixture -v
 
       - name: Run engine-owned integration tests
         shell: bash -l {0}

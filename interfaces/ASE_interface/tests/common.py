@@ -92,6 +92,39 @@ def assert_collinear_magmoms(testcase, calc, log_path, natoms):
                                     rtol=0, atol=1e-4))
 
 
+def assert_native_md_facts(testcase, frames, dump_path, *, expected_frames):
+    """Compare ASE frames with the raw MD_dump lattice and Cartesian rows."""
+    sections = re.split(r'(?=^MDSTEP:\s*\d+\s*$)',
+                        Path(dump_path).read_text(), flags=re.M)
+    sections = [section for section in sections if section.startswith('MDSTEP:')]
+    testcase.assertEqual(len(sections), expected_frames)
+    testcase.assertEqual(len(frames), expected_frames)
+    for atoms, section in zip(frames, sections):
+        lines = section.splitlines()
+        alat = re.search(r'^LATTICE_CONSTANT:\s*([-+\d.Ee]+) Angstrom$',
+                         section, re.M)
+        testcase.assertIsNotNone(alat)
+        lattice = lines.index('LATTICE_VECTORS')
+        raw_cell = np.array([[float(value) for value in row.split()]
+                             for row in lines[lattice + 1:lattice + 4]])
+        rows = [row.split() for row in lines if re.match(r'^\s*\d+\s+[A-Z][a-z]?\s+', row)]
+        testcase.assertEqual(len(rows), len(atoms))
+        testcase.assertEqual(atoms.get_chemical_symbols(), [row[1] for row in rows])
+        testcase.assertTrue(np.allclose(atoms.cell.array, raw_cell * float(alat.group(1)),
+                                        rtol=0, atol=1e-8))
+        testcase.assertTrue(np.all(atoms.pbc))
+        testcase.assertTrue(np.allclose(atoms.positions,
+                                        [[float(value) for value in row[2:5]] for row in rows],
+                                        rtol=0, atol=1e-8))
+        testcase.assertTrue(np.isfinite(atoms.get_potential_energy()))
+        forces = atoms.get_forces()
+        testcase.assertEqual(forces.shape, (len(atoms), 3))
+        testcase.assertTrue(np.all(np.isfinite(forces)))
+        testcase.assertTrue(np.allclose(forces,
+                                        [[float(value) for value in row[5:8]] for row in rows],
+                                        rtol=0, atol=1e-4))
+
+
 def close_socket_bounded(calc, *, wait_seconds=5, terminate_seconds=5):
     """Close ASE's server without its unbounded wait, then reap only its client."""
     server = getattr(calc, 'server', None)

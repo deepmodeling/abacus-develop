@@ -437,9 +437,9 @@ def read_abacus_out(fileobj,
     # read the structure, with the cell, elem, etc. (nframe)
     # if it is MD run, the trajectories will be in the file MD_dump, instead
     # of the running log
-    trajectory = read_traj_from_running_log(abacus_lines) \
-        if fileobj.name != 'running_md.log' else \
-        read_traj_from_md_dump(fileobj.parent / 'MD_dump')
+    is_md_dump = fileobj.name == 'running_md.log'
+    trajectory = read_traj_from_md_dump(fileobj.parent / 'MD_dump') \
+        if is_md_dump else read_traj_from_running_log(abacus_lines)
 
     # read the eigenvalues (nframe, nk, nbnd)
     elecstate = read_band_from_eig_occ(fileobj.parent / 'eig_occ.txt')
@@ -492,9 +492,14 @@ def read_abacus_out(fileobj,
         trajectory, elecstate, magmom, forces, stress, energies):
         # for each frame, a structure can be defined
         ind = ind or list(range(len(frame['elem'])))
+        # MD_dump lattice vectors are multiples of alat, while its Cartesian
+        # positions and the running-log structures are already in Angstrom.
+        cell = frame['cell'] * frame['alat_in_angstrom'] \
+            if is_md_dump else frame['cell']
         atoms = Atoms(symbols=np.array(frame['elem'])[ind].tolist(), 
                       positions=frame['coords'][ind], 
-                      cell=frame['cell'],
+                      cell=cell,
+                      pbc=is_md_dump,
                       magmoms=mag[ind])
         # from result, a calculator can be assembled
         # however, sometimes the force and stress is not calculated

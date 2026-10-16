@@ -28,7 +28,7 @@ remains available while the migration is reviewed:
 
 ```bash
 git clone https://github.com/QuantumMisaka/abacuslite.git /tmp/abacuslite-candidate
-git -C /tmp/abacuslite-candidate checkout 136783baf4b6832c13d02a2542753439fbacc6df
+git -C /tmp/abacuslite-candidate checkout dc020430bfa8c76edfc275b0f1eab2f12cc29d4d
 python -m pip install build
 python -m build --wheel --outdir /tmp/abacuslite-wheel /tmp/abacuslite-candidate
 python -m pip install /tmp/abacuslite-wheel/*.whl
@@ -52,7 +52,10 @@ distribution metadata and the imported `abacuslite.__file__`, records the engine
 revision and `abacus --version`, and retains failed calculation directories.
 `workflow_dispatch` accepts a reviewed `plugin_ref` for coordinated runs.
 The scripts above require a built ABACUS executable and the curated PP/ORB
-assets; ordinary Python checks do not launch the engine.
+assets. Both lanes include a two-step ABACUS-native MD run that compares the
+assembled periodic ASE frames with the raw `MD_dump` lattice, positions and
+forces. The separate raw-output fixture regression is an offline Python check;
+ordinary Python checks do not launch the engine.
 
 ## Usage Examples
 
