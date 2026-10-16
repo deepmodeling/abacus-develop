@@ -1,11 +1,12 @@
 import unittest
+import numpy as np
 from pathlib import Path
 here = Path(__file__).parent
 from ase.build import bulk
 from abacuslite.io.generalio import load_pseudo, load_orbital
 from abacuslite import AbacusProfile, Abacus
 from abacuslite.utils.ksampling import kpathgen
-from common import preserved_tmpdir
+from common import preserved_tmpdir, test_profile_paths, assert_scf_facts
 
 class TestSCFFollowedNSCF(unittest.TestCase):
 
@@ -18,11 +19,11 @@ class TestSCFFollowedNSCF(unittest.TestCase):
         return super().setUp()
 
     def test(self):
-        pporb = here.parent.parent.parent / 'tests' / 'PP_ORB'
+        command, pporb = test_profile_paths(here)
 
         silicon = bulk('Si', 'diamond', a=5.43)
         aprof = AbacusProfile(
-            command='mpirun -np 2 abacus',
+            command=command,
             pseudo_dir=pporb,
             orbital_dir=pporb,
             omp_num_threads=1,
@@ -43,6 +44,7 @@ class TestSCFFollowedNSCF(unittest.TestCase):
 
             silicon.calc = abacus
             _ = silicon.get_potential_energy()
+            assert_scf_facts(self, abacus, tmpdir, len(silicon))
 
             # ============================================================= #
 
@@ -54,7 +56,14 @@ class TestSCFFollowedNSCF(unittest.TestCase):
             silicon.calc = bscalc
             _ = silicon.get_potential_energy()
 
-            bscalc.band_structure().write(Path(tmpdir) / 'bandstructure.json')
+            bands = bscalc.band_structure()
+            values = np.asarray(bands.energies)
+            self.assertEqual(values.ndim, 3)
+            self.assertEqual(values.shape[1], len(bandpath.kpts))
+            self.assertGreater(values.shape[2], 0)
+            self.assertTrue(np.all(np.isfinite(values)))
+            self.assertTrue(np.allclose(values[0], bscalc.results['eigenvalues'][0], atol=1e-5))
+            bands.write(Path(tmpdir) / 'bandstructure.json')
             self.assertTrue((Path(tmpdir) / 'bandstructure.json').exists())
 
 if __name__ == '__main__':

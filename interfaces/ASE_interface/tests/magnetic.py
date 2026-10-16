@@ -8,14 +8,14 @@ from pathlib import Path
 here = Path(__file__).parent
 from ase.atoms import Atoms
 from abacuslite import AbacusProfile, Abacus
-from common import preserved_tmpdir
+from common import preserved_tmpdir, test_profile_paths, assert_scf_facts
 
 class TestMagneticSCF(unittest.TestCase):
 
     def setUp(self):
-        pporb = here.parent.parent.parent / 'tests' / 'PP_ORB'
+        command, pporb = test_profile_paths(here)
         self.aprof = AbacusProfile(
-            command='mpirun -np 2 abacus',
+            command=command,
             pseudo_dir=pporb,
             orbital_dir=pporb,
             omp_num_threads=1,
@@ -45,10 +45,13 @@ class TestMagneticSCF(unittest.TestCase):
 
             fe.calc = abacus
             print(f'Fe (AFM): {fe.get_potential_energy()} eV')
+            assert_scf_facts(self, abacus, tmpdir, len(fe))
+            self.assertEqual(np.asarray(abacus.results['magmoms']).shape, (2,))
             for ife, m in enumerate(fe.calc.results['magmoms']):
                 print(f'Fe{ife}: {m:10.6f} uB')
                 self.assertGreater(abs(m), 1e-3)
             self.assertTrue(np.allclose(np.sum(fe.calc.results['magmoms']), 0.0, atol=1e-6))
+            self.assertLess(np.prod(fe.calc.results['magmoms']), 0.0)
 
     def test_ferromagnetic(self):
 
@@ -75,10 +78,13 @@ class TestMagneticSCF(unittest.TestCase):
 
             fe.calc = abacus
             print(f'Fe (FM): {fe.get_potential_energy()} eV')
+            assert_scf_facts(self, abacus, tmpdir, len(fe))
+            self.assertEqual(np.asarray(abacus.results['magmoms']).shape, (2,))
             for ife, m in enumerate(fe.calc.results['magmoms']):
                 print(f'Fe{ife}: {m:10.6f} uB')
                 self.assertGreater(abs(m), 1e-3)
             self.assertGreater(abs(np.sum(fe.calc.results['magmoms'])), 0.0)
+            self.assertGreater(np.prod(fe.calc.results['magmoms']), 0.0)
 
     # @unittest.skip('see ase/outputs.py:L154-155, the magmom cannot be set as the vector, so '
     #                'we skip this test for now')
@@ -121,6 +127,8 @@ class TestMagneticSCF(unittest.TestCase):
 
             fe.calc = abacus
             print(f'Fe (non-colinear): {fe.get_potential_energy()} eV')
+            assert_scf_facts(self, abacus, tmpdir, len(fe))
+            self.assertEqual(np.asarray(abacus.results['magmoms']).shape, (2, 3))
             for ife, m in enumerate(fe.calc.results['magmoms']):
                 print(f'Fe{ife}: ({",".join([f"{mi:10.6f}" for mi in m])}) uB')
                 self.assertGreater(np.linalg.norm(m), 1e-3)

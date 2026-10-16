@@ -2,6 +2,12 @@ name: Atomic Simulation Environment (ASE) Plugin Test
 
 on:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      plugin_ref:
+        description: Reviewed QuantumMisaka/abacuslite commit or ref
+        required: false
+        default: 136783baf4b6832c13d02a2542753439fbacc6df
 
 defaults:
   run:
@@ -9,14 +15,31 @@ defaults:
 
 jobs:
   test:
-    name: abacuslite
+    name: abacuslite (${{ matrix.package }})
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     container:
       image: ghcr.io/deepmodeling/abacus-gnu
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [bundled, external]
+    env:
+      ABACUS_COMMAND: mpirun -np 2 abacus
+      ASE_ABACUS_ASSETS: ${{ github.workspace }}/tests/PP_ORB
 
     steps:
-      - name: Checkout code
+      - name: Checkout engine PR
         uses: actions/checkout@v7.0.1
+
+      - name: Checkout reviewed candidate
+        if: matrix.package == 'external'
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: QuantumMisaka/abacuslite
+          ref: ${{ inputs.plugin_ref || '136783baf4b6832c13d02a2542753439fbacc6df' }}
+          path: candidate-plugin
+          persist-credentials: false
 
       - name: Set up Miniconda
         uses: conda-incubator/setup-miniconda@v4
@@ -31,11 +54,23 @@ jobs:
           conda install -y pip
           pip install numpy scipy matplotlib
 
-      - name: Install abacuslite
+      - name: Install bundled plugin
+        if: matrix.package == 'bundled'
         shell: bash -l {0}
         run: |
           cd interfaces/ASE_interface
           pip install .
+
+      - name: Build and install candidate wheel
+        if: matrix.package == 'external'
+        shell: bash -l {0}
+        run: |
+          python -m pip install 'build>=1.2'
+          python -m build --wheel --outdir "$RUNNER_TEMP/candidate-wheel" candidate-plugin
+          sha256sum "$RUNNER_TEMP"/candidate-wheel/*.whl
+          python -m pip install "$RUNNER_TEMP"/candidate-wheel/*.whl
+          git -C candidate-plugin rev-parse HEAD
+          python -m pip show abacuslite ase numpy seekpath
 
       - name: Install external tools from toolchain
         run: |
@@ -53,38 +88,48 @@ jobs:
           rm -rf build
           cmake -B build -G Ninja
           cmake --build build -j2
-      
+
       - name: Install and Soft Link ABACUS
         run: |
           cmake --install build
           if [ -f /usr/local/bin/abacus_2p ]; then
             ln -sf /usr/local/bin/abacus_2p /usr/local/bin/abacus
           fi
+          git rev-parse HEAD
+          abacus --version
 
-      - name: Run unit tests
+      - name: Run bundled unit tests
+        if: matrix.package == 'bundled'
         shell: bash -l {0}
         run: |
           cd interfaces/ASE_interface/abacuslite
           chmod +x xtest.sh
           ./xtest.sh
 
-      - name: Run integration tests
+      - name: Run provenance regressions
+        if: matrix.package == 'external'
         shell: bash -l {0}
         run: |
           cd interfaces/ASE_interface/tests
-          chmod +x xtest.sh
-          ./xtest.sh
+          python -m unittest test_external_provenance -v
 
-      # When a test fails, every integration test script (scf/relax/md/band/
-      # magnetic) preserves its whole ABACUS run directory under
-      # /tmp/abacus_ase_failure (see preserved_tmpdir in tests/common.py,
-      # overridable via ASE_ABACUS_KEEP_DIR). Upload it so remote-CI-only
-      # failures (e.g. issue #7794) can be root-caused without runner access.
+      - name: Run engine-owned integration tests
+        shell: bash -l {0}
+        run: |
+          mkdir -p "$RUNNER_TEMP/ase-engine-tests"
+          cp interfaces/ASE_interface/tests/*.py interfaces/ASE_interface/tests/xtest.sh "$RUNNER_TEMP/ase-engine-tests/"
+          cd "$RUNNER_TEMP/ase-engine-tests"
+          if [ "${{ matrix.package }}" = external ]; then
+            python verify_external.py --bundled-root "$GITHUB_WORKSPACE/interfaces/ASE_interface" --candidate-root "$GITHUB_WORKSPACE/candidate-plugin"
+            export ASE_ABACUS_SOCKET=1
+          fi
+          timeout 30m bash ./xtest.sh
+
       - name: Upload ASE failure artifacts
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: ase-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ase-failure-${{ matrix.package }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: /tmp/abacus_ase_failure/**
           if-no-files-found: ignore
           retention-days: 14

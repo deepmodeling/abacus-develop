@@ -21,6 +21,39 @@ cd interfaces/ASE_interface
 pip install .
 ```
 
+For coordinated testing of the independent candidate, build a wheel from the
+reviewed [QuantumMisaka/abacuslite](https://github.com/QuantumMisaka/abacuslite)
+commit and install it in a separate environment. The bundled installation above
+remains available while the migration is reviewed:
+
+```bash
+git clone https://github.com/QuantumMisaka/abacuslite.git /tmp/abacuslite-candidate
+git -C /tmp/abacuslite-candidate checkout 136783baf4b6832c13d02a2542753439fbacc6df
+python -m pip install build
+python -m build --wheel --outdir /tmp/abacuslite-wheel /tmp/abacuslite-candidate
+python -m pip install /tmp/abacuslite-wheel/*.whl
+mkdir -p /tmp/abacus-ase-engine-tests
+cp /path/to/abacus-develop/interfaces/ASE_interface/tests/*.py \
+   /path/to/abacus-develop/interfaces/ASE_interface/tests/xtest.sh \
+   /tmp/abacus-ase-engine-tests/
+cd /tmp/abacus-ase-engine-tests
+python verify_external.py \
+  --bundled-root /path/to/abacus-develop/interfaces/ASE_interface \
+  --candidate-root /tmp/abacuslite-candidate
+ABACUS_COMMAND='mpirun -np 2 /path/to/abacus' \
+ASE_ABACUS_ASSETS=/path/to/abacus-develop/tests/PP_ORB \
+ASE_ABACUS_SOCKET=1 \
+bash ./xtest.sh
+```
+
+Run the scripts from outside `interfaces/ASE_interface` so that the bundled
+source cannot shadow the installed wheel. In CI the `external` job checks
+distribution metadata and the imported `abacuslite.__file__`, records the engine
+revision and `abacus --version`, and retains failed calculation directories.
+`workflow_dispatch` accepts a reviewed `plugin_ref` for coordinated runs.
+The scripts above require a built ABACUS executable and the curated PP/ORB
+assets; ordinary Python checks do not launch the engine.
+
 ## Usage Examples
 
 Please refer to the example scripts in the `examples` folder. Recommended learning path:

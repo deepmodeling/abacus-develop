@@ -1,19 +1,20 @@
 import unittest
+import numpy as np
 from pathlib import Path
 here = Path(__file__).parent
 from ase.build import bulk
 from abacuslite.io.generalio import load_pseudo, load_orbital
 from abacuslite import AbacusProfile, Abacus
-from common import preserved_tmpdir
+from common import preserved_tmpdir, test_profile_paths, assert_scf_facts
 
 class TestSCF(unittest.TestCase):
 
     def test(self):
-        pporb = here.parent.parent.parent / 'tests' / 'PP_ORB'
+        command, pporb = test_profile_paths(here)
 
         silicon = bulk('Si', 'diamond', a=5.43)
         aprof = AbacusProfile(
-            command='mpirun -np 2 abacus',
+            command=command,
             pseudo_dir=pporb,
             orbital_dir=pporb,
             omp_num_threads=1,
@@ -31,11 +32,18 @@ class TestSCF(unittest.TestCase):
                     'basis_type': 'lcao',
                     'gamma_only': True,
                     'scf_thr': 1e-3, # fast for test, wrong for production
+                    'cal_force': True,
+                    'cal_stress': True,
                 }
             )
 
             silicon.calc = abacus
-            print('Silicon :', silicon.get_potential_energy())
+            energy = silicon.get_potential_energy()
+            print('Silicon :', energy)
+            self.assertTrue(np.isfinite(energy))
+            assert_scf_facts(self, abacus, tmpdir, len(silicon),
+                             forces=True, stress=True)
+            self.assertEqual(abacus.results['natoms'], len(silicon))
 
 if __name__ == '__main__':
     unittest.main()
