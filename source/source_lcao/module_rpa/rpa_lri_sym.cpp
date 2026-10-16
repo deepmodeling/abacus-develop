@@ -36,6 +36,13 @@ bool preserves_mesh(const ModuleBase::Matrix3& kg, const K_Vectors& kv, const Un
     }
     return true;
 }
+
+ModuleBase::Matrix3 anti_k_action(const ModuleBase::Matrix3& spatial)
+{
+    ModuleBase::Matrix3 action = spatial;
+    action *= -1.0;
+    return action;
+}
 }
 
 void RpaLriDetail::write_stru_sym(std::ostream& output, const UnitCell& cell, const K_Vectors& kv, const int nspin)
@@ -65,7 +72,9 @@ void RpaLriDetail::write_stru_sym(std::ostream& output, const UnitCell& cell, co
     {
         for (int isym = 0; isym < symm.nrotk_anti; ++isym)
         {
-            if (preserves_mesh(symm.kgmatrix_anti[isym], kv, cell))
+            // The exported row stores the spatial part g. The k-point action
+            // of Theta*g is -k*g, so the mesh test must include time reversal.
+            if (preserves_mesh(anti_k_action(symm.kgmatrix_anti[isym]), kv, cell))
             {
                 antiunitary_operations.push_back(
                     make_librpa_symmetry_operation(symm.gmatrix_anti[isym], symm.gtrans_anti[isym]));

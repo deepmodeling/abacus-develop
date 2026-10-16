@@ -1,5 +1,7 @@
 #include "librpa_stru_symmetry.h"
 
+#include "source_base/matrix3.h"
+#include "source_base/vector3.h"
 #include "source_cell/module_symmetry/symm_rot_spin.h"
 
 #include <cmath>

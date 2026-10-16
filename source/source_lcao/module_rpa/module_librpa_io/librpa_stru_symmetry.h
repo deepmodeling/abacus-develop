@@ -1,13 +1,17 @@
 #ifndef LIBRPA_STRU_SYMMETRY_H
 #define LIBRPA_STRU_SYMMETRY_H
 
-#include "source_base/matrix3.h"
-#include "source_base/vector3.h"
-
 #include <array>
 #include <iosfwd>
 #include <string>
 #include <vector>
+
+namespace ModuleBase
+{
+class Matrix3;
+template <typename T>
+class Vector3;
+}
 
 namespace RpaLriDetail
 {
