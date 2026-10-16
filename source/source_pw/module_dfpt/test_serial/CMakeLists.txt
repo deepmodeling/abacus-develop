@@ -106,3 +106,25 @@ AddTest(
   # Shared serial-side cell/basis/data fixture.
   dfpt_serial_fixture.cpp
 )
+
+# Analytic libxc first-order XC kernel (empty TU without libxc, so the test
+# only exists when the feature is compiled in)
+if(ENABLE_LIBXC)
+  AddTest(
+    TARGET MODULE_DFPT_xc_analytic_serial
+    LIBS parameter dfpt_planewave_serial device base symmetry Libxc::xc
+    SOURCES dfpt_xc_analytic_serial_test.cpp
+    ../dfpt_xc_analytic.cpp
+    ../dfpt_rho.cpp
+    ../dfpt_pw_data.cpp
+    ../dfpt_kq_basis.cpp
+    ../../../source_cell/qlist.cpp
+    ../../../source_cell/reciprocal_grid.cpp
+    ../../../source_psi/psi.cpp
+    # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
+    # (see test/dfpt_test_mocks.cpp).
+    ../test/dfpt_test_mocks.cpp
+    # Shared serial-side cell/basis/data fixture.
+    dfpt_serial_fixture.cpp
+  )
+endif()

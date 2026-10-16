@@ -50,6 +50,9 @@ void DFPT_PW::Impl::assemble_v_sc(const ModuleBase::Vector3<double>& q_cart,
     {
         return;
     }
+    // per-q context: analytic GGA kernels act with i(G + q) on the
+    // physical carrier of the q-shifted amplitude
+    xc_->set_context(q_cart);
     std::vector<std::complex<double>> a_r(nrxx);
     pw_rho_->recip2real(drho_in_g.data(), a_r.data());
     std::vector<std::complex<double>> b_r;
