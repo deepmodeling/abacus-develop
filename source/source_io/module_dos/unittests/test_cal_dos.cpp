@@ -3,6 +3,7 @@
 #include "../cal_dos.h"
 #include "source_base/global_variable.h"
 #include <string>
+#include <sstream>
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -63,8 +64,45 @@ TEST_F(DosTest,Dos)
 		ifs.open(dosp.fa.c_str());
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str, testing::HasSubstr("4801 # number of points"));
-	EXPECT_THAT(str, testing::HasSubstr("   -4.995000     0.500000     0.500000"));
+	EXPECT_THAT(str, testing::HasSubstr("   -5.000000     0.500000     0.500000"));
 	EXPECT_THAT(str, testing::HasSubstr("   18.000000     0.000000     8.000000"));
+	// node-sampled smeared DOS: Gaussian evaluated at the exact eigenvalue
+	// position, e.g. node -5.000 eV gets 0.5*G(0) = 0.5/(sqrt(2*pi)*0.07)
+	EXPECT_THAT(str, testing::HasSubstr("2.849588"));
+    std::istringstream rows(str);
+    std::string line;
+    std::getline(rows, line); // ionic step
+    std::getline(rows, line); // declared grid size
+    int declared_points = 0;
+    std::istringstream(line) >> declared_points;
+    EXPECT_EQ(declared_points, 4801);
+    std::getline(rows, line); // column names
+    int row_count = 0;
+    while (std::getline(rows, line))
+    {
+        std::istringstream fields(line);
+        double energy = 0.0;
+        double raw = 0.0;
+        double integral = 0.0;
+        double smeared = 0.0;
+        double smeared_integral = 0.0;
+        ASSERT_TRUE(fields >> energy >> raw >> integral >> smeared >> smeared_integral);
+        EXPECT_NEAR(energy, -6.0 + row_count * 0.005, 5.0e-7);
+        if (row_count == 200)
+        {
+            EXPECT_DOUBLE_EQ(energy, -5.0);
+            EXPECT_DOUBLE_EQ(raw, 0.5);
+            EXPECT_DOUBLE_EQ(integral, 0.5);
+            EXPECT_NEAR(smeared, 2.849588, 5.0e-7);
+        }
+        if (row_count == 4800)
+        {
+            EXPECT_DOUBLE_EQ(energy, 18.0);
+            EXPECT_DOUBLE_EQ(integral, 8.0);
+        }
+        ++row_count;
+    }
+    EXPECT_EQ(row_count, declared_points);
 	ifs.close();
 	remove("doss1_pw.txt");
 #ifdef __MPI

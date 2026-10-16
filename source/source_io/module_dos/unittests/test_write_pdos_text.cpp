@@ -69,7 +69,7 @@ protected:
     }
 };
 
-// Spin-unpolarized: writes pdoss1_<basis>.txt with s and 3 p columns.
+// Spin-unpolarized: writes pdoss1.txt with s and 3 p columns.
 TEST_F(WritePdosTextTest, BasicOutput)
 {
     GlobalV::ofs_running.open("test_write_pdos_text.log");
@@ -80,7 +80,6 @@ TEST_F(WritePdosTextTest, BasicOutput)
     const double emin = -1.0;
     const double dos_edelta_ev = 0.5;
     const std::string out_dir = "./";
-    const std::string basis = "lcao";
     const int istep = -1;
 
     // pdos matrix: nlocal x npoints; value = orbital * 100 + point
@@ -94,9 +93,9 @@ TEST_F(WritePdosTextTest, BasicOutput)
     }
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, out_dir, basis, istep);
+                              emin, dos_edelta_ev, out_dir, istep);
 
-    const std::string str = read_file("./pdoss1_lcao.txt");
+    const std::string str = read_file("./pdoss1.txt");
 
     // header lines
     EXPECT_THAT(str, testing::HasSubstr("# npoints: 5"));
@@ -109,7 +108,7 @@ TEST_F(WritePdosTextTest, BasicOutput)
     // last data row: energy=1.0, n=4 -> s=4, p=104,204,304
     EXPECT_THAT(str, testing::HasSubstr("    1.000000    1    Si  4.000000  104.000000  204.000000  304.000000"));
 
-    remove("./pdoss1_lcao.txt");
+    remove("./pdoss1.txt");
     GlobalV::ofs_running.close();
     remove("test_write_pdos_text.log");
 }
@@ -128,12 +127,12 @@ TEST_F(WritePdosTextTest, IstepFileName)
     pdos.zero_out();
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", "lcao", 2);
+                              emin, dos_edelta_ev, "./", 2);
 
-    const std::string str = read_file("./pdoss1g3_lcao.txt");
+    const std::string str = read_file("./pdoss1g3.txt");
     EXPECT_THAT(str, testing::HasSubstr("# istep: 3"));
 
-    remove("./pdoss1g3_lcao.txt");
+    remove("./pdoss1g3.txt");
     GlobalV::ofs_running.close();
     remove("test_write_pdos_text.log");
 }
@@ -164,17 +163,17 @@ TEST_F(WritePdosTextTest, SpinPolarized)
     }
 
     ModuleIO::write_pdos_text(*ucell, pdos_arr, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", "lcao", -1);
+                              emin, dos_edelta_ev, "./", -1);
 
-    const std::string s1 = read_file("./pdoss1_lcao.txt");
-    const std::string s2 = read_file("./pdoss2_lcao.txt");
+    const std::string s1 = read_file("./pdoss1.txt");
+    const std::string s2 = read_file("./pdoss2.txt");
     // spin 1: s orbital w=0, n=0 -> 1000
     EXPECT_THAT(s1, testing::HasSubstr("1000.000000"));
     // spin 2: s orbital w=0, n=0 -> 2000
     EXPECT_THAT(s2, testing::HasSubstr("2000.000000"));
 
-    remove("./pdoss1_lcao.txt");
-    remove("./pdoss2_lcao.txt");
+    remove("./pdoss1.txt");
+    remove("./pdoss2.txt");
     GlobalV::ofs_running.close();
     remove("test_write_pdos_text.log");
 }
