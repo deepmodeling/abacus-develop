@@ -59,12 +59,6 @@ void Exx_NAO<TK>::before_runner(
     {
         this->exc->set_gpu(use_gpu);
     }
-#ifdef __GPU_RI
-    if (exx_info.info_global.cal_exx)
-    {
-        GlobalV::ofs_running << "LibRI contractions: " << inp.device << std::endl;
-    }
-#endif
     if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
         || inp.calculation == "md")
     {
@@ -119,21 +113,6 @@ void Exx_NAO<TK>::before_scf(
         Exx_Info& exx_info)
 {
 #ifdef __EXX
-    const bool use_gpu = inp.device == "gpu";
-    if (this->exd)
-    {
-        this->exd->set_gpu(use_gpu);
-    }
-    if (this->exc)
-    {
-        this->exc->set_gpu(use_gpu);
-    }
-#ifdef __GPU_RI
-    if (exx_info.info_global.cal_exx)
-    {
-        GlobalV::ofs_running << "LibRI contractions: " << inp.device << std::endl;
-    }
-#endif
     if (inp.calculation != "nscf")
     {
         const bool update_symmetry = inp.calculation == "cell-relax"
