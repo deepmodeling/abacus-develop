@@ -302,6 +302,44 @@ exec "$@"
 EOF
 chmod +x "${test_root}/fake_bin/mpirun"
 
+# A collector can fail after writing a valid prefix of result.out.  run_check.sh
+# must propagate that failure before check_out can accept the prefix. Exercise
+# both the ordinary path and Single_job.sh's debug path, which uses the copied
+# validation_tools directory.
+for run_check_mode in normal debug; do
+    run_check_case_dir="${test_root}/tests/01_PW/run_check_${run_check_mode}"
+    mkdir -p "${run_check_case_dir}/OUT.autotest"
+    cat > "${run_check_case_dir}/INPUT" <<'EOF'
+INPUT_PARAMETERS
+calculation get_s
+towannier90 1
+EOF
+    printf 'Driver atomic_world 0.01\n' > "${run_check_case_dir}/OUT.autotest/running_get_s.log"
+    touch "${run_check_case_dir}/sr_nao.csr.ref" "${run_check_case_dir}/OUT.autotest/sr_nao.csr"
+    printf 'CompareS_pass 0\n' > "${run_check_case_dir}/result.ref"
+
+    if [ "${run_check_mode}" = debug ]; then
+        cp "${integrate_dir}/validation_tools/run_check.sh" "${run_check_case_dir}/run_check.sh"
+        cp -r "${integrate_dir}/validation_tools" "${run_check_case_dir}/validation_tools"
+        run_check_command=(bash ./run_check.sh debug)
+    else
+        run_check_command=(bash ../../integrate/validation_tools/run_check.sh)
+    fi
+
+    run_check_log="${test_root}/run-check-${run_check_mode}.log"
+    if (
+        cd "${run_check_case_dir}"
+        PATH="${test_root}/fake_bin:${PATH}" \
+            ABACUS_EXE="${test_root}/fake_abacus" \
+            "${run_check_command[@]}"
+    ) >"${run_check_log}" 2>&1; then
+        cat "${run_check_log}" >&2
+        echo "run_check.sh ${run_check_mode} path reported success after collector failure" >&2
+        exit 1
+    fi
+    grep -q 'Failed to collect validation results.' "${run_check_log}"
+done
+
 run_check_log="${test_root}/run-check.log"
 if (
     cd "${deepks_missing_case_dir}"
