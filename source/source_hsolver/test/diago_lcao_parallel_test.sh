@@ -8,9 +8,9 @@ for i in 6 3 2;do
         continue
     fi
     echo "TEST DIAGO davidson in parallel, nprocs=$i"
-    mpirun -np $i ./MODULE_HSOLVER_LCAO
-    mpirun -np $i ./MODULE_HSOLVER_dav_real
-    mpirun -np $i ./MODULE_HSOLVER_cg_real
+    mpirun -np $i "${1:-./MODULE_HSOLVER_LCAO}"
+    mpirun -np $i "${2:-./MODULE_HSOLVER_dav_real}"
+    mpirun -np $i "${3:-./MODULE_HSOLVER_cg_real}"
     if [[ $? != 0 ]];then
         echo -e "\e[1;33m [  FAILED  ] \e[0m"\
 			"execute UT with $i cores error."

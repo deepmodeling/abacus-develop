@@ -68,7 +68,6 @@ if(ENABLE_MPI)
     PRIVATE
     parameter base device MPI::MPI_CXX GTest::gtest_main GTest::gmock_main abacus::linalg_libs
   )
-  install(TARGETS MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi DESTINATION ${CMAKE_BINARY_DIR}/tests)
   add_test(NAME MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
             $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi>
@@ -107,7 +106,6 @@ if(ENABLE_MPI)
     PRIVATE
     parameter base device Threads::Threads MPI::MPI_CXX GTest::gtest GTest::gmock abacus::linalg_libs
   )
-  install(TARGETS MODULE_CELL_NEIGHBOR_mdcell_reader DESTINATION ${CMAKE_BINARY_DIR}/tests)
   add_test(NAME MODULE_CELL_NEIGHBOR_mdcell_reader_np4
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
             $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_reader>

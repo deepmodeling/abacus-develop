@@ -21,4 +21,4 @@ AddTest(
 )
 endif()
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(support)

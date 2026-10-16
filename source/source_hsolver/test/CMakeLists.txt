@@ -130,30 +130,27 @@ if (ENABLE_MPI)
   target_compile_definitions(MODULE_HSOLVER_LCAO_cusolver PRIVATE __CUDA)
   endif()
 endif()
-install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES S-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES S-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES H-KPoints-Si64.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES H-GammaOnly-Si64.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES S-KPoints-Si64.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES S-GammaOnly-Si64.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-install(FILES GammaOnly-Si2-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES GammaOnly-Si64-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES KPoints-Si2-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES KPoints-Si64-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-install(FILES diago_cg_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES diago_david_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES diago_lcao_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-install(FILES PEXSI-H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES PEXSI-S-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES PEXSI-DM-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES diago_pexsi_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES parallel_k2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
+abacus_copy_test_files(
+  H-KPoints-Si2.dat
+  H-GammaOnly-Si2.dat
+  S-KPoints-Si2.dat
+  S-GammaOnly-Si2.dat
+  H-KPoints-Si64.dat
+  H-GammaOnly-Si64.dat
+  S-KPoints-Si64.dat
+  S-GammaOnly-Si64.dat
+  GammaOnly-Si2-Solution.dat
+  GammaOnly-Si64-Solution.dat
+  KPoints-Si2-Solution.dat
+  KPoints-Si64-Solution.dat
+  diago_cg_parallel_test.sh
+  diago_david_parallel_test.sh
+  diago_lcao_parallel_test.sh
+  PEXSI-H-GammaOnly-Si2.dat
+  PEXSI-S-GammaOnly-Si2.dat
+  PEXSI-DM-GammaOnly-Si2.dat
+  diago_pexsi_parallel_test.sh
+  parallel_k2d_test.sh)
 
 if(ENABLE_MPI)
   if(TARGET ELPA::ELPA)
@@ -187,7 +184,7 @@ if(ENABLE_MPI)
 
   add_test(
     NAME MODULE_HSOLVER_para_linear_trans
-    COMMAND mpirun -np 4 ./MODULE_HSOLVER_linear_trans
+    COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_HSOLVER_linear_trans>"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 endif()
@@ -196,24 +193,31 @@ find_program(BASH bash)
 if (ENABLE_MPI)
   add_test(NAME MODULE_HSOLVER_cg_parallel
         COMMAND ${BASH} diago_cg_parallel_test.sh
+          "$<TARGET_FILE:MODULE_HSOLVER_cg>"
+          "$<TARGET_FILE:MODULE_HSOLVER_cg_float>"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
   add_test(NAME MODULE_HSOLVER_parak2d_test_parallel
-        COMMAND ${BASH} parallel_k2d_test.sh
+        COMMAND ${BASH} parallel_k2d_test.sh "$<TARGET_FILE:MODULE_HSOLVER_parak2d_test>"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
   add_test(NAME MODULE_HSOLVER_dav_parallel
         COMMAND ${BASH} diago_david_parallel_test.sh
+          "$<TARGET_FILE:MODULE_HSOLVER_dav>"
+          "$<TARGET_FILE:MODULE_HSOLVER_dav_float>"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       ) 
   if(ENABLE_LCAO)
     add_test(NAME MODULE_HSOLVER_LCAO_parallel
           COMMAND ${BASH} diago_lcao_parallel_test.sh
+            "$<TARGET_FILE:MODULE_HSOLVER_LCAO>"
+            "$<TARGET_FILE:MODULE_HSOLVER_dav_real>"
+            "$<TARGET_FILE:MODULE_HSOLVER_cg_real>"
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
     if(ENABLE_PEXSI)
       add_test(NAME MODULE_HSOLVER_LCAO_PEXSI_parallel
-            COMMAND ${BASH} diago_pexsi_parallel_test.sh
+            COMMAND ${BASH} diago_pexsi_parallel_test.sh "$<TARGET_FILE:MODULE_HSOLVER_LCAO_PEXSI>"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
     endif()
