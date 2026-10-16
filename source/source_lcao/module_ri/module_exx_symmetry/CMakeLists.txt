@@ -1,8 +1,6 @@
 if (ENABLE_LIBRI)
 
     list(APPEND objects
-        irreducible_sector.cpp
-        irred_sec_bvk.cpp
         symm_rotation.cpp
         symm_rot_out.cpp
     )

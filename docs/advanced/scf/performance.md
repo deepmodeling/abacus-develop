@@ -20,7 +20,7 @@ Inclusion of k-point symmetry helps increasing the efficiency of calculations by
 
 For LCAO calculation, the matrix elements of the local potential is evaluated using grid integration. In grid integration, we group real-space FFT grid points into boxes of dimension bx * by * bz, and then proceed with the boxes as the basis unit of calculation.
 
-Setting [bx, by, bz](../input_files/input-main.md#bx-by-bz) to be values other than default might help with the efficiency of grid integration.
+Setting [bx](../input_files/input-main.md#bx), [by](../input_files/input-main.md#by), and [bz](../input_files/input-main.md#bz) to values other than default might help with the efficiency of grid integration.
 
 > Note: the choice of bx, by, bz should be integer factors of the dimension of the real space FFT grid in each direction.
 

@@ -1,15 +1,17 @@
 #include "esolver_fp.h"
 
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_base/tool_quit.h"
 #include "source_cell/cal_ux.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_atomic.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_cell/read_pp_ucell.h"
 #include "source_estate/param_update.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
-#include "source_estate/rhog_io.h"
+#include "source_estate/module_charge/chg_rhog_io.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_pw/module_pwdft/setup_pwrho.h" // mohan 20251005
@@ -20,7 +22,6 @@
 #include "source_base/module_parallel/para_world.h"
 #include "source_base/module_parallel/para_tag.h"
 #include "source_base/module_parallel/para_bridge.h"
-
 namespace ModuleESolver
 {
 
@@ -117,7 +118,9 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
-        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
+        ucell.symm.analy_sys(ucell.lat, ucell.atoms,
+                             ucell.nat, ucell.ntype, ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                             GlobalV::ofs_running,
                              this->inp_->symmetry_prec, inp.nspin, this->inp_->calculation, cal_symm_repr);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
@@ -142,13 +145,13 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
             nprocgroup);
 
     //! 10) calculate the structure factor
-    this->sf.setup(&ucell, Pgrid, this->pw_rhod);
+    this->sf.setup(&ucell, Pgrid, this->pw_rhod, PARAM.globalv.has_float_data);
 
     //! 11) initialize the charge density, we need to first set xc_type,
     // then we can call chr.allocate()
 	this->chr.set_rhopw(this->pw_rhod); // mohan add 20251130
-    const bool kin_den = this->chr.kin_density(); // mohan add 20251202
-	this->chr.allocate(inp.nspin, kin_den); // mohan move this from setup_estate_pw, 20251128
+    const bool kin_den = XC_Functional::get_ked_flag() || (inp.out_elf[0] > 0); // mohan add 20251202
+	this->chr.allocate(inp.nspin, kin_den, XC_Functional::get_ked_flag(), inp.test_charge); // mohan move this from setup_estate_pw, 20251128
 
 
     return;
@@ -159,17 +162,23 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     ModuleBase::TITLE("ESolver_FP", "after_scf");
 
     //! Output convergence information
-    ModuleIO::output_convergence_after_scf(conv_esolver, this->pelec->f_en.etot);
+    ModuleIO::output_convergence_after_scf(conv_esolver, this->pelec->f_en.etot, GlobalV::ofs_running);
 
     //! Write Fermi energy
-    ModuleIO::output_efermi(conv_esolver, this->pelec->eferm.ef);
+    ModuleIO::output_efermi(conv_esolver, this->pelec->eferm, GlobalV::ofs_running);
 
     //! Update delta_rho for charge extrapolation
-    CE.update_delta_rho(ucell, &(this->chr), &(this->sf));
+    const module_charge::AtomicRhoCfg atomic_rho_cfg_after{
+        PARAM.inp.nelec,
+        PARAM.inp.test_charge,
+        PARAM.globalv.domag,
+        PARAM.globalv.domag_z,
+        GlobalV::ofs_warning};
+    CE.update_delta_rho(ucell, &(this->chr), *this->pw_rhod, &(this->sf), atomic_rho_cfg_after);
 
     //! print out charge density, potential, elf, etc.
 	ModuleIO::ctrl_output_fp(ucell, *this->inp_, this->pelec, this->pw_big, this->pw_rhod, 
-			this->chr, this->solvent, this->Pgrid, istep); 
+			this->chr, this->solvent, this->Pgrid, istep, GlobalV::ofs_running); 
 
 }
 
@@ -201,16 +210,19 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
         // perform symmetry analysis
-        if (ModuleSymmetry::Symmetry::symm_flag == 1)
+        const bool update_symmetry = ModuleSymmetry::Symmetry::symm_flag == 1;
+        if (update_symmetry)
         {
             const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
-            ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
+            ucell.symm.analy_sys(ucell.lat, ucell.atoms,
+                                 ucell.nat, ucell.ntype, ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                                 GlobalV::ofs_running,
                                  this->inp_->symmetry_prec, this->inp_->nspin, this->inp_->calculation, cal_symm_repr);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
         // reset k-points
-        kv.set_after_vc(ucell.G, GlobalV::ofs_running);
+        kv.set_after_vc(ucell.G, ucell.symm, update_symmetry, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
@@ -218,8 +230,15 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     if (ucell.ionic_position_updated)
     {
         this->CE.update_all_dis(ucell);
-        this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, &this->sf,
-                                    GlobalV::ofs_running, GlobalV::ofs_warning);
+        const module_charge::AtomicRhoCfg atomic_rho_cfg_before{
+            PARAM.inp.nelec,
+            PARAM.inp.test_charge,
+            PARAM.globalv.domag,
+            PARAM.globalv.domag_z,
+            GlobalV::ofs_warning};
+        this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, *this->pw_rhod,
+                                    &this->sf, GlobalV::ofs_running, GlobalV::ofs_warning,
+                                    atomic_rho_cfg_before, PARAM.globalv.has_float_data);
     }
 
     //! Evaluate the vdW correction once for this ionic configuration.
@@ -247,7 +266,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 
     //! output the initial charge density
     ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep,
-                             PARAM.globalv.global_out_dir, *this->inp_, PARAM.globalv.two_fermi);
+                             PARAM.globalv.global_out_dir, *this->inp_, PARAM.globalv.two_fermi, GlobalV::ofs_running);
 
     return;
 }
@@ -268,7 +287,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
             // Only pool 0 writes the rhog file (rhog is identical across pools).
             if (GlobalV::MY_POOL == 0)
             {
-                elecstate::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart",
+                module_charge::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart",
                                      PARAM.globalv.gamma_only_pw,
                                      this->pw_rhod,
                                      this->inp_->nspin,
@@ -289,7 +308,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
                 }
                 if (GlobalV::MY_POOL == 0)
                 {
-                    elecstate::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-TAU-DENSITY.restart",
+                    module_charge::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-TAU-DENSITY.restart",
                                          PARAM.globalv.gamma_only_pw,
                                          this->pw_rhod,
                                          this->inp_->nspin,

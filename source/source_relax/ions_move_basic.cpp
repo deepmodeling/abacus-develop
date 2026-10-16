@@ -148,12 +148,8 @@ bool Ions_Move_Basic::check_converged(const UnitCell &ucell,
         const double ediff = etot_info[0] - etot_info[1];
         std::cout << " ETOT DIFF (eV)       : " << ediff * ModuleBase::Ry_to_eV << std::endl;
         std::cout << " LARGEST GRAD (eV/Angstrom)  : " 
-		<< Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
+        << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                 << std::endl;
-
-        ofs << "\n Largest force is " << largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
-        << " eV/Angstrom while threshold is " 
-        << force_thr_ev << " eV/Angstrom" << std::endl;
     }
 
     const double etot_diff = std::abs(etot_info[0] - etot_info[1]);
@@ -162,22 +158,17 @@ bool Ions_Move_Basic::check_converged(const UnitCell &ucell,
 
     if (Ions_Move_Basic::largest_grad == 0.0)
     {
-        ofs << " largest force is 0, no movement is possible." << std::endl;
+        ofs << "\n largest force is 0, no movement is possible." << std::endl;
         ofs << " it may converged, otherwise no movement of atom is allowed." << std::endl;
         return true;
     }
     else if (etot_diff < etot_thr && Ions_Move_Basic::largest_grad < force_thr )
     {
-        ofs << "\n Ion relaxation is converged!" << std::endl;
-        ofs << "\n Energy difference (Ry) = " << etot_diff << std::endl;
-
         ++update_iter;
         return true;
     }
     else
     {
-        ofs << "\n Ion relaxation is not converged yet (threshold is "
-                             << force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << ")" << std::endl;
         return false;
     }
 }
@@ -206,6 +197,7 @@ void Ions_Move_Basic::terminate(const bool converged, const int update_iter, con
     else
     {
         ofs << " the maximum number of steps has been reached." << std::endl;
+        ofs << " Relaxation is not converged after reaching relax_nmax!" << std::endl;
         ofs << " end of geometry optimization." << std::endl;
     }
 

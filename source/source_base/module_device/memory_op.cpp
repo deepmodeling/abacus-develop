@@ -1,7 +1,6 @@
 #include "memory_op.h"
 
 #include "source_base/memory_recorder.h"
-#include "source_base/tool_quit.h"
 #include "source_base/tool_threading.h"
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
@@ -526,107 +525,6 @@ template struct delete_memory_op_mt<double, base_device::DEVICE_CPU>;
 template struct delete_memory_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
 template struct delete_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 #endif
-
-template <typename FPTYPE>
-void resize_memory(FPTYPE* arr, const size_t size, base_device::AbacusDevice_t device_type)
-{
-    if (device_type == base_device::AbacusDevice_t::CpuDevice){
-        resize_memory_op<FPTYPE, base_device::DEVICE_CPU>()(arr, size);
-    }
-    else if (device_type == base_device::AbacusDevice_t::GpuDevice){
-        resize_memory_op<FPTYPE, base_device::DEVICE_GPU>()(arr, size);
-    }
-}
-
-template <typename FPTYPE>
-void set_memory(FPTYPE* arr, const int var, const size_t size, base_device::AbacusDevice_t device_type){
-    if (device_type == base_device::AbacusDevice_t::CpuDevice){
-        set_memory_op<FPTYPE, base_device::DEVICE_CPU>()(arr, var, size);
-    }
-    else if (device_type == base_device::AbacusDevice_t::GpuDevice){
-        set_memory_op<FPTYPE, base_device::DEVICE_GPU>()(arr, var, size);
-    }
-}
-
-template <typename FPTYPE>
-void synchronize_memory(FPTYPE* arr_out, const FPTYPE* arr_in, const size_t size, base_device::AbacusDevice_t device_type_out, base_device::AbacusDevice_t device_type_in){
-    // The four source/destination combinations are mutually exclusive, so each
-    // branch must test BOTH devices. Using `||` here made the first branch match
-    // whenever either side was the CPU, which routed host<->device transfers to
-    // the host-to-host specialization.
-    if (device_type_out == base_device::AbacusDevice_t::CpuDevice && device_type_in == base_device::AbacusDevice_t::CpuDevice){
-        synchronize_memory_op<FPTYPE, DEVICE_CPU, DEVICE_CPU>()(arr_out, arr_in, size);
-    }
-#if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-    else if (device_type_out == base_device::AbacusDevice_t::CpuDevice && device_type_in == base_device::AbacusDevice_t::GpuDevice){
-        synchronize_memory_op<FPTYPE, DEVICE_CPU, DEVICE_GPU>()(arr_out, arr_in, size);
-    }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice && device_type_in == base_device::AbacusDevice_t::CpuDevice){
-        synchronize_memory_op<FPTYPE, DEVICE_GPU, DEVICE_CPU>()(arr_out, arr_in, size);
-    }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice && device_type_in == base_device::AbacusDevice_t::GpuDevice){
-        synchronize_memory_op<FPTYPE, DEVICE_GPU, DEVICE_GPU>()(arr_out, arr_in, size);
-    }
-#endif
-    else {
-        ModuleBase::WARNING_QUIT("base_device::memory::synchronize_memory",
-                                 "unsupported source/destination device combination");
-    }
-}
-
-template <typename FPTYPE_out, typename FPTYPE_in>
-void cast_memory(FPTYPE_out* arr_out, const FPTYPE_in* arr_in, const size_t size, base_device::AbacusDevice_t device_type_out, base_device::AbacusDevice_t device_type_in)
-{
-    // See synchronize_memory() above: dispatch on the exact (out, in) device pair.
-    if (device_type_out == base_device::AbacusDevice_t::CpuDevice && device_type_in == base_device::AbacusDevice_t::CpuDevice){
-        cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_CPU, DEVICE_CPU>()(arr_out, arr_in, size);
-    }
-#if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-    else if (device_type_out == base_device::AbacusDevice_t::CpuDevice && device_type_in == base_device::AbacusDevice_t::GpuDevice){
-        cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_CPU, DEVICE_GPU>()(arr_out, arr_in, size);
-    }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice && device_type_in == base_device::AbacusDevice_t::CpuDevice){
-        cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_GPU, DEVICE_CPU>()(arr_out, arr_in, size);
-    }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice && device_type_in == base_device::AbacusDevice_t::GpuDevice){
-        cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_GPU, DEVICE_GPU>()(arr_out, arr_in, size);
-    }
-#endif
-    else {
-        ModuleBase::WARNING_QUIT("base_device::memory::cast_memory",
-                                 "unsupported source/destination device combination");
-    }
-}
-
-template <typename FPTYPE>
-void delete_memory(FPTYPE* arr, base_device::AbacusDevice_t device_type)
-{
-    if (device_type == base_device::AbacusDevice_t::CpuDevice){
-        delete_memory_op<FPTYPE, DEVICE_CPU>()(arr);
-    }
-    else if (device_type == base_device::AbacusDevice_t::GpuDevice){
-        delete_memory_op<FPTYPE, DEVICE_GPU>()(arr);
-    }
-}
-
-// Explicit instantiations of the runtime-dispatch wrappers, so that the
-// declarations in memory_op.h can actually be linked from another translation
-// unit (and covered by unit tests). cast_memory is instantiated only for the
-// type pairs that cast_memory_op provides for all four device combinations.
-template void synchronize_memory<int>(int*, const int*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void synchronize_memory<float>(float*, const float*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void synchronize_memory<double>(double*, const double*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void synchronize_memory<std::complex<float>>(std::complex<float>*, const std::complex<float>*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void synchronize_memory<std::complex<double>>(std::complex<double>*, const std::complex<double>*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-
-template void cast_memory<float, float>(float*, const float*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void cast_memory<double, double>(double*, const double*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void cast_memory<float, double>(float*, const double*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void cast_memory<double, float>(double*, const float*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void cast_memory<std::complex<float>, std::complex<float>>(std::complex<float>*, const std::complex<float>*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void cast_memory<std::complex<double>, std::complex<double>>(std::complex<double>*, const std::complex<double>*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void cast_memory<std::complex<float>, std::complex<double>>(std::complex<float>*, const std::complex<double>*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
-template void cast_memory<std::complex<double>, std::complex<float>>(std::complex<double>*, const std::complex<float>*, const size_t, base_device::AbacusDevice_t, base_device::AbacusDevice_t);
 
 } // namespace memory
 } // namespace base_device

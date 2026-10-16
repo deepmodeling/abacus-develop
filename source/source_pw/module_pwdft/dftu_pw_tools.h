@@ -34,7 +34,7 @@ void pauli_to_spin_basis(std::complex<double>* pot_onsite, int m_size);
 /// to convert pot_onsite to spin basis in-place.
 ///
 /// pot_onsite:  pointer to uterm_mat[uterm_mat_index[iat]]
-/// occ: pointer to occ_mat[iat][target_l][0][0].c (4 Pauli blocks packed)
+/// occ: pointer to occ_mat[iat][target_l][0].c (4 Pauli blocks packed)
 double compute_pot_onsite_spinor(
     std::complex<double>* pot_onsite,
     const double* occ,
@@ -47,7 +47,7 @@ double compute_pot_onsite_spinor(
 /// (nspin==1 or nspin==2). Returns the energy_u increment.
 ///
 /// pot_onsite:  pointer to the spin channel's pot_onsite block (size m_size * m_size)
-/// occ: pointer to occ_mat[iat][target_l][0][is].c for this channel
+/// occ: pointer to occ_mat[iat][target_l][is].c for this channel
 double compute_pot_onsite_scalar(
     std::complex<double>* pot_onsite,
     const double* occ,
@@ -58,7 +58,7 @@ double compute_pot_onsite_scalar(
 
 /// accumulate occ_mat from becp for one atom, one k-point (nspin==4, spinor).
 ///
-/// occ_mat_out points to occ_mat[iat][target_l][0][0].c, which packs 4
+/// occ_mat_out points to occ_mat[iat][target_l][0].c, which packs 4
 /// Pauli blocks contiguously (each of size tlp1*tlp1). The function adds
 /// the contributions from all nbands bands for the given k-point.
 ///
@@ -82,7 +82,7 @@ void accumulate_occ_spinor(
 
 /// accumulate occ_mat from becp for one atom, one k-point (nspin==1 or 2).
 ///
-/// occ_mat_out points to occ_mat[iat][target_l][0][is].c, a single channel
+/// occ_mat_out points to occ_mat[iat][target_l][is].c, a single channel
 /// of size tlp1*tlp1. The caller selects the spin channel by passing the
 /// corresponding occ_mat pointer; this function does not need is.
 /// Adds contributions from all nbands bands.

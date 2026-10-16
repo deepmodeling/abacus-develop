@@ -9,14 +9,13 @@ namespace DFTU_LCAO {
 
 /**
  * @brief Accumulate the DFT+U energy term (0.5 * U * (n - n^2)) for one
- *        (T, iat, l, n=0) channel in the collinear case (nspin=1 or 2).
+ *        (T, iat, l) channel in the collinear case (nspin=1 or 2).
  *        Returns the per-atom contribution to energy_u.
  */
 double calc_energy_u_collinear(const Plus_U_Base& dftu,
                                int T,
                                int iat,
-                               int l,
-                               int n)
+                               int l)
 {
     double energy_u_local = 0.0;
     const int m_tot = 2 * l + 1;
@@ -27,16 +26,16 @@ double calc_energy_u_collinear(const Plus_U_Base& dftu,
 
         for (int m0 = 0; m0 < m_tot; m0++)
         {
-            nm_trace += dftu.occmat().get(iat, l, n, spin, m0, m0);
+            nm_trace += dftu.occmat().get(iat, l, spin, m0, m0);
             for (int m1 = 0; m1 < m_tot; m1++)
             {
-                nm2_trace += dftu.occmat().get(iat, l, n, spin, m0, m1)
-                             * dftu.occmat().get(iat, l, n, spin, m1, m0);
+                nm2_trace += dftu.occmat().get(iat, l, spin, m0, m1)
+                             * dftu.occmat().get(iat, l, spin, m1, m0);
             }
         }
         if (dftu.use_yukawa())
         {
-            energy_u_local += 0.5 * (dftu.yukawa().get_U(T, l, n) - dftu.yukawa().get_J(T, l, n))
+            energy_u_local += 0.5 * (dftu.yukawa().get_U(T, l) - dftu.yukawa().get_J(T, l))
                               * (nm_trace - nm2_trace);
         }
         else
@@ -48,15 +47,14 @@ double calc_energy_u_collinear(const Plus_U_Base& dftu,
 }
 
 /**
- * @brief Accumulate the DFT+U energy term for one (T, iat, l, n=0) channel
+ * @brief Accumulate the DFT+U energy term for one (T, iat, l) channel
  *        in the noncollinear case (nspin=4). Returns the per-atom
  *        contribution to energy_u.
  */
 double calc_energy_u_noncollinear(const Plus_U_Base& dftu,
                                   int T,
                                   int iat,
-                                  int l,
-                                  int n)
+                                  int l)
 {
     double energy_u_local = 0.0;
     const int m_tot = 2 * l + 1;
@@ -68,22 +66,22 @@ double calc_energy_u_noncollinear(const Plus_U_Base& dftu,
         for (int ipol0 = 0; ipol0 < 2; ipol0++)
         {
             const int m0_all = m0 + m_tot * ipol0;
-            nm_trace += dftu.occmat().get(iat, l, n, 0, m0_all, m0_all);
+            nm_trace += dftu.occmat().get(iat, l, 0, m0_all, m0_all);
 
             for (int m1 = 0; m1 < m_tot; m1++)
             {
                 for (int ipol1 = 0; ipol1 < 2; ipol1++)
                 {
                     const int m1_all = m1 + m_tot * ipol1;
-                    nm2_trace += dftu.occmat().get(iat, l, n, 0, m0_all, m1_all)
-                                 * dftu.occmat().get(iat, l, n, 0, m1_all, m0_all);
+                    nm2_trace += dftu.occmat().get(iat, l, 0, m0_all, m1_all)
+                                 * dftu.occmat().get(iat, l, 0, m1_all, m0_all);
                 }
             }
         }
     }
     if (dftu.use_yukawa())
     {
-        energy_u_local += 0.5 * (dftu.yukawa().get_U(T, l, n) - dftu.yukawa().get_J(T, l, n))
+        energy_u_local += 0.5 * (dftu.yukawa().get_U(T, l) - dftu.yukawa().get_J(T, l))
                           * (nm_trace - nm2_trace);
     }
     else
@@ -95,7 +93,7 @@ double calc_energy_u_noncollinear(const Plus_U_Base& dftu,
 
 /**
  * @brief Accumulate the double-counting correction energy_dc for one
- *        (T, iat, l, n=0) channel by summing onsite_pot * occ over the
+ *        (T, iat, l) channel by summing onsite_pot * occ over the
  *        (m1, ipol1, m2, ipol2) grid. Dispatches on nspin to choose the
  *        spin loop count. Returns the per-atom contribution to energy_dc.
  */
@@ -103,7 +101,6 @@ double calc_energy_dc_block(const Plus_U_Base& dftu,
                             int T,
                             int iat,
                             int l,
-                            int n,
                             int nspin)
 {
     double energy_dc_local = 0.0;
@@ -124,14 +121,14 @@ double calc_energy_dc_block(const Plus_U_Base& dftu,
                     {
                         for (int is = 0; is < 2; is++)
                         {
-                            const double pot_onsite = get_onsite_pot(dftu, T, iat, l, n, is, m1_all, m2_all, false);
-                            energy_dc_local += pot_onsite * dftu.occmat().get(iat, l, n, is, m1_all, m2_all);
+                            const double pot_onsite = get_onsite_pot(dftu, T, iat, l, is, m1_all, m2_all, false);
+                            energy_dc_local += pot_onsite * dftu.occmat().get(iat, l, is, m1_all, m2_all);
                         }
                     }
                     else if (nspin == 4)
                     {
-                        const double pot_onsite = get_onsite_pot(dftu, T, iat, l, n, 0, m1_all, m2_all, false);
-                        energy_dc_local += pot_onsite * dftu.occmat().get(iat, l, n, 0, m1_all, m2_all);
+                        const double pot_onsite = get_onsite_pot(dftu, T, iat, l, 0, m1_all, m2_all, false);
+                        energy_dc_local += pot_onsite * dftu.occmat().get(iat, l, 0, m1_all, m2_all);
                     }
                 }
             }
@@ -176,27 +173,18 @@ void cal_energy_correction(Plus_U_Base& dftu,
                     continue;
                 }
 
-                const int N = ucell.atoms[T].l_nchi[l];
-                for (int n = 0; n < N; n++)
+                // part 1: U-term contribution
+                if (nspin == 1 || nspin == 2)
                 {
-                    if (n != 0)
-                    {
-                        continue;
-                    }
+                    energy_u += calc_energy_u_collinear(dftu, T, iat, l);
+                }
+                else if (nspin == 4)
+                {
+                    energy_u += calc_energy_u_noncollinear(dftu, T, iat, l);
+                }
 
-                    // part 1: U-term contribution
-                    if (nspin == 1 || nspin == 2)
-                    {
-                        energy_u += calc_energy_u_collinear(dftu, T, iat, l, n);
-                    }
-                    else if (nspin == 4)
-                    {
-                        energy_u += calc_energy_u_noncollinear(dftu, T, iat, l, n);
-                    }
-
-                    // part 2: double-counting correction
-                    energy_dc += calc_energy_dc_block(dftu, T, iat, l, n, nspin);
-                } // end n
+                // part 2: double-counting correction
+                energy_dc += calc_energy_dc_block(dftu, T, iat, l, nspin);
             }     // end L
         }         // end I
     }             // end T

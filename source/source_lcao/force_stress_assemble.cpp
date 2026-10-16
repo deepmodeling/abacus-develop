@@ -38,6 +38,10 @@ void sum_force_terms(const int iat,
                    + parts.fcc(iat, i)     // nonlinear core correction force (pw)
                    + parts.fscc(iat, i)    // self consistent corretion force (pw)
                    + parts.fpothybrid(iat, i); // pulay force for hybrid gauge rt-tddft
+    if (parts.fpcc.nr != 0)
+    {
+        fcs(iat, i) += parts.fpcc(iat, i);
+    }
 
     // Force contribution from DFT+U, Quxin add on 20201029
     if (PARAM.inp.dft_plus_u)

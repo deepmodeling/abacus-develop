@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_BIG_GRID_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_BIG_GRID_H
+
 
 #include <vector>
 #include <memory>
@@ -93,3 +95,5 @@ class BigGrid
 };
 
 } // namespace ModuleGint
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_BIG_GRID_H

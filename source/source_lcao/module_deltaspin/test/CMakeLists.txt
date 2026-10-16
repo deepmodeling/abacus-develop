@@ -45,6 +45,8 @@ AddTest(
   TARGET deltaspin_core_test
   LIBS base device
   SOURCES deltaspin_core_test.cpp
+    ../mi_tools.cpp
+    ../../../source_estate/occ_comput.cpp
 )
 
 AddTest(
@@ -58,6 +60,13 @@ AddTest(
     ../../../source_cell/klist.cpp ../../../source_cell/klist_io.cpp
     ../../../source_cell/parallel_kpoints.cpp
     ../../../source_cell/reciprocal_grid.cpp
+)
+
+AddTest(
+  TARGET MODULE_LCAO_deltaspin_state_test
+  LIBS base device
+  SOURCES test_deltaspin_state.cpp
+    ../deltaspin_state.cpp
 )
 
 endif()

@@ -3,6 +3,7 @@ scf_pp_upf201
 scf_pp_sg15
 scf_pp_gth
 scf_angle_spin4
+scf_gga_grad2_spin4
 scf_u_spin1
 scf_u_spin2
 scf_u_spin4
@@ -42,6 +43,7 @@ scf_out_mul_spin4
 scf_out_mul_nupdw
 scf_out_elf
 scf_out_qo
+scf_out_hsr_spin2
 nscf_out_dos
 nscf_out_band_pband
 nscf_out_pot1

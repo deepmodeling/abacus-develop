@@ -11,6 +11,7 @@ if(ENABLE_LCAO)
         dftu_nao_op.cpp
         dftu_nao_adj.cpp
         dftu_nao_fs_r.cpp
+        dftu_nao_fs_reduce.cpp
         dftu_nao_for_r.cpp
         dftu_nao_str_r.cpp
         dftu_nao_op_legacy.cpp
@@ -26,6 +27,6 @@ if(ENABLE_LCAO)
   endif()
 
   if(BUILD_TESTING)
-    add_subdirectory(test)
+    add_subdirectory(unittests)
   endif()
 endif()

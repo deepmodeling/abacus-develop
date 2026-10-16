@@ -120,7 +120,9 @@ class LittleGroupTest : public testing::Test
         }
         std::ofstream ofs_running("tmp_little_group");
         const int cal_symm_repr[2] = {0, 6};
-        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+        symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                       ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                       ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     }
 
     void TearDown() override

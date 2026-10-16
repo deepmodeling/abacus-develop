@@ -115,8 +115,7 @@ DiagoDavid<T, Device>::~DiagoDavid()
 }
 
 template <typename T, typename Device>
-int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
-                                     const SPsiFunc& spsi_func,
+int DiagoDavid<T, Device>::diag_once(const HSOperator<T, Device>& op,
                                      const int dim,
                                      const int nband,
                                      const int ld_psi,
@@ -157,7 +156,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     {
         {
             // phm_in->sPsi(psi_in + m*ld_psi, &this->spsi[m * dim], dim, dim, 1);
-            spsi_func(psi_in + m*ld_psi,&this->spsi[m*dim],dim, 1);
+            op.spsi(psi_in + m*ld_psi,&this->spsi[m*dim],dim, 1);
         }
     }
     // begin SchmidtOrth
@@ -174,7 +173,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                          pre_matrix_mv_m[m]);
         {
             // phm_in->sPsi(basis + dim*m, &this->spsi[m * dim], dim, dim, 1);
-            spsi_func(basis + dim*m, &this->spsi[m * dim], dim, 1);
+            op.spsi(basis + dim*m, &this->spsi[m * dim], dim, 1);
         }
     }
 
@@ -183,7 +182,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     // phm_in->ops->hPsi(dav_hpsi_in);
     // hpsi[:, 0:nband] = H basis[:, 0:nband]
     // slice index in this piece of code is in C manner. i.e. 0:id stands for [0,id)
-    hpsi_func(basis, hpsi, dim, nband);
+    op.hpsi(basis, hpsi, dim, nband);
 
     this->cal_elem(dim, nbase, nbase_x, this->notconv, this->hpsi, this->spsi, this->hcc);
 
@@ -201,8 +200,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     {
         dav_iter++;
 
-        this->cal_grad(hpsi_func,
-                       spsi_func,
+        this->cal_grad(op,
                        dim,
                        nbase,
                        nbase_x,
@@ -292,8 +290,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
-                                        const SPsiFunc& spsi_func,
+void DiagoDavid<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                                         const int& dim,
                                         const int& nbase,   // current dimension of the reduced basis
                                         const int nbase_x,  // maximum dimension of the reduced basis set
@@ -509,7 +506,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     {
         {
             // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
-            spsi_func(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);
+            op.spsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);
         }
     }
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
@@ -558,7 +555,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          pre_matrix_mv_m[m]);
         {
             // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
-            spsi_func(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);
+            op.spsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);
         }
     }
     // calculate H|psi> for not convergence bands
@@ -567,7 +564,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //                       &hpsi[nbase * dim]); // &hp(nbase, 0)
     // phm_in->ops->hPsi(dav_hpsi_in);
     // hpsi[:, nbase:nbase+notcnv] = H basis[:, nbase:nbase+notcnv]
-    hpsi_func(basis + nbase * dim, hpsi + nbase * dim, dim, notconv);
+    op.hpsi(basis + nbase * dim, hpsi + nbase * dim, dim, notconv);
 
     delmem_complex_op()(lagrange);
     delmem_complex_op()(vc_ev_vector);
@@ -1006,8 +1003,7 @@ void DiagoDavid<T, Device>::planSchmidtOrth(const int nband, std::vector<int>& p
 
 
 template <typename T, typename Device>
-int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
-                                const SPsiFunc& spsi_func,
+int DiagoDavid<T, Device>::diag(const HSOperator<T, Device>& op,
                                 const int ld_psi,
                                 T *psi_in,
                                 Real* eigenvalue_in,
@@ -1023,7 +1019,7 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
     int sum_dav_iter = 0;
     do
     {
-        sum_dav_iter += this->diag_once(hpsi_func, spsi_func, dim, nband, ld_psi, psi_in, eigenvalue_in, ethr_band, david_maxiter);
+        sum_dav_iter += this->diag_once(op, dim, nband, ld_psi, psi_in, eigenvalue_in, ethr_band, david_maxiter);
         ++ntry;
     } while (!check_block_conv(ntry, this->notconv, ntry_max, notconv_max));
 

@@ -237,7 +237,12 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
     //  ABSTOL, M, W, Z, LDZ, WORK, LWORK, RWORK, IWORK, IFAIL, INFO)
     int n = this->nlocal;
     int lda = n, ldb = n, ldz = n;
-    zhegvx_(&itype,
+#ifdef __DSP
+    cpack_zhegvx_driver(
+#else
+    zhegvx_(
+#endif
+        &itype,
         &jobz,
         &range,
         &uplo,
@@ -277,7 +282,12 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
     liwork = std::max(1, 5 * n);
     iwork.resize(liwork, 0);
 
-    zhegvx_(&itype,
+#ifdef __DSP
+    cpack_zhegvx_driver(
+#else
+    zhegvx_(
+#endif
+            &itype,
             &jobz,
             &range,
             &uplo,

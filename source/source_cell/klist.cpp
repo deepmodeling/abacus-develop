@@ -7,6 +7,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_cell/module_symmetry/symmetry.h"
 
+
 void K_Vectors::set(const UnitCell& ucell,
                     const ModuleSymmetry::Symmetry& symm,
                     const std::string& k_file_name,
@@ -86,6 +87,13 @@ void K_Vectors::set(const UnitCell& ucell,
                             this->kvec_c_full);
 
 
+    // initialize ibz_index
+    this->ibz_index.resize(this->nkstot_nospin);
+    for (int ik = 0; ik < this->nkstot_nospin; ik++)
+    {
+        this->ibz_index[ik] = ik;
+    }
+
     // (2)
     // reduce kpoints to IBZ according to symmetry operations
     if (use_ibz)
@@ -139,13 +147,6 @@ void K_Vectors::set(const UnitCell& ucell,
     // set the k vectors for the up and down spin
     this->set_kup_and_kdw(ofs);
 
-    // initialize ibz_index
-    this->ibz_index.resize(this->nkstot_nospin);
-    for (int ik = 0; ik < this->nkstot_nospin; ik++)
-    {
-        this->ibz_index[ik] = ik;
-    }
-    
     // get ik2iktot: map local k indices to global indices in the pool
     KListIO::build_ik2iktot(this->para_k.my_pool,
                             this->para_k.startk_pool,
@@ -200,6 +201,24 @@ void K_Vectors::renew(const int& kpoint_number)
     isk.resize(kpoint_number);
 
     return;
+}
+
+bool K_Vectors::is_uniform_mp() const
+{
+    if (!this->is_mp || this->nkstot_nospin <= 0)
+    {
+        return false;
+    }
+    long long full_kpoints = 1;
+    for (const int size : this->nmp)
+    {
+        if (size <= 0 || full_kpoints > this->nkstot_nospin / size)
+        {
+            return false;
+        }
+        full_kpoints *= size;
+    }
+    return full_kpoints == this->nkstot_nospin;
 }
 
 // Read the KPT file, which contains K-point coordinates, weights, and grid size information
@@ -421,8 +440,9 @@ void K_Vectors::update_use_ibz(const int& nkstot_ibz,
 
     ModuleBase::GlobalFunc::OUT(ofs_running, "nkstot now", nkstot);
 
-    // qianrui fix a bug 2021-7-13: size for the spin_mult=2 doubling in set_kup_and_kdw()
-    this->kvec_d.resize(this->nkstot * this->spin_mult);
+    // qianrui fix a bug 2021-7-13: shrink kvec_d to the (now smaller) ibz count;
+    // the spin_mult=2 doubling for set_kup_and_kdw() is reserved there, on demand.
+    this->kvec_d.resize(this->nkstot);
 
     for (int i = 0; i < this->nkstot; ++i)
     {
@@ -444,6 +464,18 @@ void K_Vectors::update_use_ibz(const int& nkstot_ibz,
 void K_Vectors::set_kup_and_kdw(std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("K_Vectors", "setup_kup_and_kdw");
+
+    // grow the containers expand_spin_kpoints() is about to append the down-spin
+    // copy into (indices [nkstot, 2*nkstot)). Resize only these; NOT via renew(),
+    // which would also resize kvec_c_full -- that one must keep holding the
+    // original, un-doubled, un-symmetry-reduced full-BZ mesh for later consumers
+    // (e.g. Ewald_Vq) regardless of what nkstot has become by this point.
+    const int nkstot_spin = this->nkstot * this->spin_mult;
+    this->kvec_c.resize(nkstot_spin);
+    this->kvec_d.resize(nkstot_spin);
+    this->wk.resize(nkstot_spin);
+    this->ngk.resize(nkstot_spin);
+    this->isk.resize(nkstot_spin);
 
     KListIO::expand_spin_kpoints(this->spin_mult,
                                  this->kvec_c,
@@ -523,8 +555,9 @@ void K_Vectors::reduce_by_symmetry(const UnitCell& ucell,
                      ibz2bz);
     const int nkstot_ibz = kvec_d_ibz.size();
 
-#ifdef __EXX
     // setup kstars according to the final (max-norm) kvec_d_ibz
+    // (used by both EXX and DFT+U's crystal-symmetry density-matrix restoration;
+    // no LibRI dependency, so this must not be gated behind __EXX)
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         KListIO::build_kstars(this->kvec_d,
@@ -532,10 +565,8 @@ void K_Vectors::reduce_by_symmetry(const UnitCell& ucell,
                               nrotkm,
                               kvec_d_ibz,
                               symm.epsilon,
-                              [&symm](double a, double b) { return symm.equal(a, b); },
                               this->kstars);
     }
-#endif
 
     // output in kpoints file
     skpt = KListIO::ibz_kpt_table(this->nkstot, this->kvec_d, this->ibz_index, kvec_d_ibz);
@@ -552,9 +583,63 @@ void K_Vectors::reduce_by_symmetry(const UnitCell& ucell,
     return;
 }
 
-void K_Vectors::set_after_vc(const ModuleBase::Matrix3& G, std::ofstream& ofs_running)
+void K_Vectors::set_after_vc(const ModuleBase::Matrix3& G,
+                             const ModuleSymmetry::Symmetry& symm,
+                             const bool update_symmetry,
+                             std::ofstream& ofs_running)
 {
     ofs_running << "\n SETUP K-POINTS" << std::endl;
+
+    // Every pool holds the complete stars. Their identity entries retain the
+    // global IBZ representatives even when kvec_d contains only local points.
+    // Reassign operation indices without changing the density-matrix ordering.
+    if (update_symmetry && !this->kstars.empty())
+    {
+        const int operation_capacity = 2 * symm.nrotk + symm.nrotk_anti;
+        std::vector<ModuleBase::Matrix3> operations(operation_capacity);
+        for (int operation = 0; operation < symm.nrotk; ++operation)
+        {
+            operations[operation] = symm.kgmatrix[operation];
+        }
+        const int operation_count = KListIO::append_time_reversal_ops(symm, operations, symm.nrotk);
+        typedef std::map<int, ModuleBase::Vector3<double>> KStar;
+        std::vector<KStar> updated_stars(this->kstars.size());
+        for (std::size_t ik = 0; ik < this->kstars.size(); ++ik)
+        {
+            const KStar& star = this->kstars[ik];
+            const KStar::const_iterator identity = star.find(0);
+            if (identity == star.end())
+            {
+                ModuleBase::WARNING_QUIT("K_Vectors::set_after_vc", "Missing k-star IBZ representative.");
+            }
+            const ModuleBase::Vector3<double>& representative = identity->second;
+            for (const KStar::value_type& member : star)
+            {
+                bool matched = false;
+                for (int operation = 0; operation < operation_count; ++operation)
+                {
+                    const ModuleBase::Vector3<double> rotated = member.second * operations[operation];
+                    // Representatives may retain the boundary convention of an older tolerance.
+                    if (ModuleCell::kpoints_equivalent(rotated, representative, symm.epsilon))
+                    {
+                        updated_stars[ik].emplace(operation, member.second);
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched)
+                {
+                    ModuleBase::WARNING_QUIT("K_Vectors::set_after_vc",
+                                            "New cell symmetry cannot preserve the existing k-star.");
+                }
+            }
+            if (updated_stars[ik].size() != star.size())
+            {
+                ModuleBase::WARNING_QUIT("K_Vectors::set_after_vc", "New cell symmetry changed the k-star size.");
+            }
+        }
+        this->kstars.swap(updated_stars);
+    }
 
     // set cartesian k vectors.
     this->kvec_d2c(G);
@@ -595,6 +680,9 @@ void K_Vectors::mpi_k(std::ofstream& ofs_running, const int my_rank, const int m
     Parallel_Common::bcast_int(this->nkstot_nospin);
 
     Parallel_Common::bcast_int(this->nmp, 3);
+
+    // The MP flag is set while rank 0 reads KPT and is consumed on every rank.
+    Parallel_Common::bcast_bool(this->is_mp);
 
     this->kl_segids.resize(this->nkstot);
     Parallel_Common::bcast_int(this->kl_segids.data(), this->nkstot);
@@ -665,12 +753,12 @@ void K_Vectors::mpi_k(std::ofstream& ofs_running, const int my_rank, const int m
                          this->kvec_d,
                          this->kvec_c_full);
 
-#ifdef __EXX
     // bcast kstars (rank 0 holds the filled maps; other ranks rebuild them)
+    // (no LibRI dependency; needed by DFT+U's symmetry restoration too, so this
+    // must not be gated behind __EXX)
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         KListIO::bcast_kstars(this->kstars, this->nkstot, my_rank);
     }
-#endif
 } // END SUBROUTINE mpi_k
 #endif

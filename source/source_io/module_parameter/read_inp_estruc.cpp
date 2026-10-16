@@ -472,7 +472,9 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.description = R"(The number of spin components of wave functions.
 * 1: Spin degeneracy
 * 2: Collinear spin polarized.
-* 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.)";
+* 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.
+* Note: With nspin=2 and no initial magnetization in STRU, a moment of 1.0 is autoset for every atom, unless symmetry is 1.
+* Note: With nspin=4 no moment is ever autoset. The calculation starts from zero magnetic moment and a warning is printed; set 'mag' explicitly in STRU for the magnetic atoms if a magnetic ground state is expected.)";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.nspin);
@@ -484,6 +486,27 @@ The other way is only available when compiling with LIBXC, and it allows for sup
             if ((para.input.noncolin || para.input.lspinorb) && para.input.nspin != 4)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 4 when noncolin or lspinorb is enabled.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("gga_grad");
+        item.annotation = "Noncollinear GGA gradient method: 0 original, 1 local axis, 2 regularized mapped-density LCA";
+        item.category = "Electronic structure";
+        item.type = "Integer";
+        item.description = R"(Selects the local spin mapping for LDA/GGA functionals in magnetic nspin=4 calculations.
+* 0: preserves the original algorithm (default).
+* 1: uses the local magnetization magnitude instead of the global quantization axis in the built-in GGA gradient correction. For LIBXC functionals, 0 and 1 are equivalent.
+* 2: uses a C2-regularized magnetization magnitude with eta = 1e-3 in atomic density units. The spin densities are (abs(n + rho_core) +/- min(S_eta(m), abs(n + rho_core)))/2. GGA gradients are the FFT gradients of these mapped spin densities. The potential reverses this same discrete energy graph: apply the FFT divergence to each spin-channel flux, then apply the local-map Jacobian. Density/sigma clipping branches and the GGA metric stress derivative use the same mapped densities. This changes the finite-grid functional relative to projecting the four density-channel gradients; converged energies can therefore change.
+For r = |m| and x = r/eta, S_eta = eta*x^3*(3*x^2 - 8*x + 6) for r < eta, and S_eta = r otherwise. The regularization is part of the functional definition, including its first and second derivatives.
+Mode 2 also uses this local map for the LDA contribution. Other spin configurations retain their existing behavior.)";
+        item.default_value = "0";
+        read_sync_int(input.gga_grad);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.gga_grad < 0 || para.input.gga_grad > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "gga_grad must be 0, 1, or 2.");
             }
         };
         this->add_item(item);
@@ -985,7 +1008,9 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
 * Relationship with lspinorb:
   * noncolin=0, lspinorb=1: SOC with z-axis magnetism only (for non-magnetic materials with SOC)
   * noncolin=1, lspinorb=0: Non-collinear magnetism without SOC
-  * noncolin=1, lspinorb=1: Both non-collinear magnetism and SOC)";
+  * noncolin=1, lspinorb=1: Both non-collinear magnetism and SOC
+* Note: When nspin=4 and noncolin=0, only the z component of the initial magnetization in STRU is used; x/y components are ignored and a warning is printed.
+* Note: When nspin=4 and no initial magnetization is set in STRU, the calculation starts from zero magnetic moment; no automatic magnetization is assigned.)";
         item.default_value = "False";
         item.unit = "";
         read_sync_bool(input.noncolin);

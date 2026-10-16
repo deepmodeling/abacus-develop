@@ -21,49 +21,49 @@ class Numerical_Nonlocal
 {
 public:
 
-	Numerical_Nonlocal();
-	~Numerical_Nonlocal();
+    Numerical_Nonlocal();
+    ~Numerical_Nonlocal();
 
-	// This class owns the raw Proj array; copying it would alias the buffer
-	// and cause double free, so copy semantics are explicitly forbidden.
-	Numerical_Nonlocal(const Numerical_Nonlocal&) = delete;
-	Numerical_Nonlocal& operator=(const Numerical_Nonlocal&) = delete;
+    // This class owns the raw Proj array; copying it would alias the buffer
+    // and cause double free, so copy semantics are explicitly forbidden.
+    Numerical_Nonlocal(const Numerical_Nonlocal&) = delete;
+    Numerical_Nonlocal& operator=(const Numerical_Nonlocal&) = delete;
 
-	const int& getLmax() const { return this->lmax; }
+    const int& getLmax() const { return this->lmax; }
 
-   	const int& getType() const { return this->type; }
+    const int& getType() const { return this->type; }
 
-	const std::string& getLabel() const { return this->label; }
+    const std::string& getLabel() const { return this->label; }
 
-	const std::string& getType_ps() const { return this->type_ps; }
+    const std::string& getType_ps() const { return this->type_ps; }
 
 
-	void set_type_info(
-			const int& type_in,
-			const std::string& label_in,
-			const std::string& type_ps_in,
-			const int& lmax_in,
-			const int& nproj_in,
-			const Numerical_Nonlocal_Lm* ps_orbital_in);
+    void set_type_info(
+            const int& type_in,
+            const std::string& label_in,
+            const std::string& type_ps_in,
+            const int& lmax_in,
+            const int& nproj_in,
+            const Numerical_Nonlocal_Lm* ps_orbital_in);
 
-	Numerical_Nonlocal_Lm* Proj = nullptr; ///< length: nproj(only store radial function )
+    Numerical_Nonlocal_Lm* Proj = nullptr; ///< length: nproj(only store radial function )
 
-	const double& get_rcut_max() const { return rcut_max; }
+    const double& get_rcut_max() const { return rcut_max; }
     const int& get_nproj() const { return nproj; }
 
-	private:
-	
-	std::string label=""; /// <element label
+    private:
+    
+    std::string label=""; /// <element label
 
-	int type; ///< element index
+    int type; ///< element index
 
-	int lmax; ///< max value of L angular momentum
+    int lmax; ///< max value of L angular momentum
 
-	double rcut_max=0.0;
+    double rcut_max=0.0;
 
-	std::string type_ps=""; ///<local or nonlocal
+    std::string type_ps=""; ///<local or nonlocal
 
-	int nproj;
+    int nproj;
 
 };
 

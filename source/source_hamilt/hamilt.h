@@ -31,13 +31,13 @@ class Hamilt : public HamiltBase
     void* get_ops() override { return static_cast<void*>(ops); }
 
     /// core function: for solving eigenvalues of Hamiltonian with iterative method
-	virtual void hPsi(
-			const T* psi_in, 
-			T* hpsi, 
-			const size_t size) const
-	{
-		return;
-	}
+    virtual void hPsi(
+            const T* psi_in, 
+            T* hpsi, 
+            const size_t size) const
+    {
+        return;
+    }
 
     virtual void sPsi(const T* psi_in, // psi
                       T* spsi,         // spsi
@@ -49,14 +49,14 @@ class Hamilt : public HamiltBase
         syncmem_op()(spsi, psi_in, static_cast<size_t>(nbands * nrow));
     }
 
-	/// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
-	virtual void matrix(
-			MatrixBlock<std::complex<double>> &hk_in, 
-			MatrixBlock<std::complex<double>> &sk_in){return;}
+    /// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
+    virtual void matrix(
+            MatrixBlock<std::complex<double>> &hk_in, 
+            MatrixBlock<std::complex<double>> &sk_in){return;}
 
-	virtual void matrix(
-			MatrixBlock<double> &hk_in, 
-			MatrixBlock<double> &sk_in){return;}
+    virtual void matrix(
+            MatrixBlock<double> &hk_in, 
+            MatrixBlock<double> &sk_in){return;}
 
     virtual std::vector<T> matrix() { return std::vector<T>(); }
 

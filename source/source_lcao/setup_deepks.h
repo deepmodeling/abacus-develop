@@ -32,30 +32,30 @@ class Setup_DeePKS
 
     std::string dpks_out_type;
 
-	void before_runner(
-			const UnitCell &ucell, // unitcell
-			const int nks, // k points
+    void before_runner(
+            const UnitCell &ucell, // unitcell
+            const int nks, // k points
             const LCAO_Orbitals &orb, // orbital info
-			Parallel_Orbitals &pv, // parallel orbitals
-			const Input_para &inp);
+            Parallel_Orbitals &pv, // parallel orbitals
+            const Input_para &inp);
 
     void build_overlap(
-		const UnitCell &ucell,
-		const LCAO_Orbitals &orb,
-		const Parallel_Orbitals &pv,
-		const Grid_Driver &gd,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        const Parallel_Orbitals &pv,
+        const Grid_Driver &gd,
         TwoCenterIntegrator &overlap_orb_alpha,
-		const Input_para &inp);
+        const Input_para &inp);
 
     void delta_e(
-		const UnitCell& ucell,
+        const UnitCell& ucell,
         const K_Vectors &kv,
-		const LCAO_Orbitals& orb,
-	    const Parallel_Orbitals &pv, // parallel orbitals
-		const Grid_Driver &gd,
-		const std::vector<std::vector<TK>>& dm_vec,
+        const LCAO_Orbitals& orb,
+        const Parallel_Orbitals &pv, // parallel orbitals
+        const Grid_Driver &gd,
+        const std::vector<std::vector<TK>>& dm_vec,
         elecstate::fenergy &f_en,
-		const Input_para &inp);
+        const Input_para &inp);
 
 };
 
@@ -66,17 +66,17 @@ namespace DeePKS_domain
 {
 
 void write_forces(
-	const ModuleBase::matrix &fcs,
-	const ModuleBase::matrix &fvnl_dalpha,
-	const std::string &dpks_out_type,
-	const Input_para &inp);
+    const ModuleBase::matrix &fcs,
+    const ModuleBase::matrix &fvnl_dalpha,
+    const std::string &dpks_out_type,
+    const Input_para &inp);
 
 void write_stress(
-	const ModuleBase::matrix &scs,
-	const ModuleBase::matrix &svnl_dalpha,
-	const double &omega,
-	const std::string &dpks_out_type,
-	const Input_para &inp);
+    const ModuleBase::matrix &scs,
+    const ModuleBase::matrix &svnl_dalpha,
+    const double &omega,
+    const std::string &dpks_out_type,
+    const Input_para &inp);
 
 } // namespace DeePKS_domain
 

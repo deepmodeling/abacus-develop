@@ -1,15 +1,16 @@
 #include "source_base/formatter.h"
 #include "source_base/timer.h"
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_cell/cal_ux.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/module_charge/symm_rho.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_charge/chg_symm.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_hamilt/module_gint/gint.h"
 #include "source_io/module_chgpot/get_pchg_lcao.h"
-#include "source_io/module_hs/write_hs_r.h"
+#include "source_io/module_hs/hsr_legacy.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_io/module_wf/get_wf_lcao.h"
@@ -151,7 +152,8 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                                         this->exx_nao,
                                                         this->exx_info_,
                                                         *this->inp_,
-                                                        load_exx_flag);
+                                                        load_exx_flag,
+                                                        this->get_td_info());
     }
 
     // for each ionic step, the overlap <phi|alpha> must be rebuilt

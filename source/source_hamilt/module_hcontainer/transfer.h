@@ -10,6 +10,18 @@
 namespace hamilt
 {
 
+// MPI tags for the HContainer serial<->parallel transfer (transfer.cpp) and
+// Read_HContainer::read() (read_hcontainer.cpp). They must match between the
+// send and the recv side, so they live here to be shared. Deliberately odd,
+// high values: the transfer previously used fixed tags 0/1/2 on
+// MPI_COMM_WORLD, which collide with unrelated p2p traffic (write_eig_occ,
+// output_log, func_transfer, ...) on any other call path and cause
+// MPI_ERR_TRUNCATE races or deadlocks. Moving to these uncommon tags removes
+// the need for the masking MPI_Barrier calls in op_exx_lcao.cpp.
+constexpr int kHctTagSize = 14431;   // payload size (MPI_LONG)
+constexpr int kHctTagIndex = 14471;  // atom/orbital index array (MPI_INT)
+constexpr int kHctTagValue = 14533;  // matrix values (T)
+
 template <typename T>
 class HTransPara
 {

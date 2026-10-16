@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_GINT_HELPER_CUH
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_GINT_HELPER_CUH
+
 #include <cstdio>
 
 // if exponent is an integer between 0 and 5 (the most common cases in gint) and
@@ -85,3 +87,4 @@ template <> struct gemm_vec_traits<double>
     }
 };
 
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_GINT_HELPER_CUH

@@ -2,7 +2,7 @@ FROM intel/oneapi-hpckit:2025.2.2-0-devel-ubuntu22.04
 
 RUN apt-get update && apt-get install -y \
     bc cmake git gnupg gcc g++ python3-numpy sudo wget vim unzip \
-    libcereal-dev libxc-dev libgtest-dev libgmock-dev libbenchmark-dev \
+    libcereal-dev libxc-dev libgtest-dev libgmock-dev libbenchmark-dev nlohmann-json3-dev \
     pkg-config build-essential autoconf automake libtool ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
@@ -22,14 +22,6 @@ RUN cd /tmp && \
     ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
     cd /tmp && rm -rf elpa-$ELPA_VER
 
-# RapidJSON
-RUN cd /tmp && \
-    wget --quiet https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a -O rapidjson-24b5e7a.tar.gz && \
-    tar -xzf rapidjson-24b5e7a.tar.gz && cd rapidjson-24b5e7a && \
-    cmake -B build -DRAPIDJSON_BUILD_DOC=OFF -DRAPIDJSON_BUILD_EXAMPLES=OFF -DRAPIDJSON_BUILD_TESTS=OFF && \
-    cmake --build build --target install && \
-    cd /tmp && rm -r rapidjson-24b5e7a rapidjson-24b5e7a.tar.gz
-
 # LibTorch (Note: Using pre-built Torch library with MKL might cause issues)
 RUN wget -q https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip -O /tmp/libtorch.zip && \
     unzip -q /tmp/libtorch.zip -d /opt && rm -f /tmp/libtorch.zip
@@ -43,7 +35,7 @@ RUN cd /tmp && git clone https://github.com/deepmodeling/abacus-develop.git --de
         -DENABLE_MLALGO=ON \
         -DENABLE_LIBXC=ON \
         -DENABLE_LIBRI=ON \
-        -DENABLE_RAPIDJSON=ON \
+        -DENABLE_JSON=ON \
         -DCMAKE_BUILD_TYPE=Release && \
     cmake --build build -j $(nproc) && \
     cmake --install build && \

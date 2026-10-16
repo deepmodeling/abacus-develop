@@ -19,6 +19,150 @@
 namespace DFTU_LCAO
 {
 
+namespace
+{
+
+/// @brief build the <psi|beta> two-center integral table for one Hubbard
+///        atom iat0. Returns nlm_tot indexed by adjacent atom slot.
+std::vector<std::unordered_map<int, std::vector<double>>> build_nlm(
+    const UnitCell* ucell,
+    const TwoCenterIntegrator* intor,
+    const Parallel_Orbitals* pv,
+    const int iat0,
+    const int T0,
+    const int target_L,
+    const AdjacentAtomInfo& adjs)
+{
+    const int tlp1 = 2 * target_L + 1;
+    const int npol = ucell->get_npol();
+    const ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
+    std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
+    nlm_tot.resize(adjs.adj_num + 1);
+
+    for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+    {
+        const int T1 = adjs.ntype[ad];
+        const int I1 = adjs.natom[ad];
+        const int iat1 = ucell->itia2iat(T1, I1);
+        const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
+        const Atom* atom1 = &ucell->atoms[T1];
+
+        std::vector<int> all_indexes = pv->get_indexes_row(iat1);
+        std::vector<int> col_indexes = pv->get_indexes_col(iat1);
+        // insert col_indexes into all_indexes to get universal set with no repeat elements
+        all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+        std::sort(all_indexes.begin(), all_indexes.end());
+        all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
+        for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
+        {
+            const int iw1 = all_indexes[iw1l] / npol;
+            std::vector<std::vector<double>> nlm;
+            // nlm is a vector of vectors, but size of outer vector is only 1 here
+            // If we are calculating force, we need also to store the gradient
+            // and size of outer vector is then 4
+            // inner loop : all projectors (L0,M0)
+            int L1 = atom1->iw2l[iw1];
+            int N1 = atom1->iw2n[iw1];
+            int m1 = atom1->iw2m[iw1];
+
+            // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+            int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
+
+            ModuleBase::Vector3<double> dtau = tau0 - tau1;
+            intor->snap(T1, L1, N1, M1, T0, dtau * ucell->lat0,
+                        1 /*cal_deri*/, nlm);
+
+            // select the elements of nlm with target_L
+            std::vector<double> nlm_target(tlp1 * 4);
+            const Atom* atom0 = &ucell->atoms[T0];
+            for (int iw = 0; iw < atom0->nw; iw++)
+            {
+                if (atom0->iw2l[iw] == target_L)
+                {
+                    for (int n = 0; n < 4; n++) // value, deri_x, deri_y, deri_z
+                    {
+                        std::copy(nlm[n].begin() + iw, nlm[n].begin() + iw + tlp1,
+                                  nlm_target.begin() + n * tlp1);
+                    }
+                    break;
+                }
+            }
+            nlm_tot[ad].insert({all_indexes[iw1l], nlm_target});
+        }
+    }
+    return nlm_tot;
+}
+
+/// @brief accumulate force and stress contributions from all (ad1, ad2)
+///        adjacent-atom pairs of one Hubbard atom iat0.
+void acc_fs_pairs(const UnitCell* ucell,
+                  const Parallel_Orbitals* pv,
+                  const int iat0,
+                  const int T0,
+                  const AdjacentAtomInfo& adjs,
+                  const std::vector<std::unordered_map<int, std::vector<double>>>& nlm_tot,
+                  const std::vector<double>& pot_onsite,
+                  const std::vector<const hamilt::HContainer<double>*>& dmR,
+                  const int nspin,
+                  bool cal_force,
+                  bool cal_stress,
+                  ModuleBase::matrix& force_local,
+                  std::vector<double>& stress_local)
+{
+    const ModuleBase::Vector3<double> tau0 = ucell->get_tau(iat0);
+
+    for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
+    {
+        const int T1 = adjs.ntype[ad1];
+        const int I1 = adjs.natom[ad1];
+        const int iat1 = ucell->itia2iat(T1, I1);
+        double* force_tmp1 = (cal_force) ? &force_local(iat1, 0) : nullptr;
+        double* force_tmp2 = (cal_force) ? &force_local(iat0, 0) : nullptr;
+        const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
+        ModuleBase::Vector3<double> dis1 = adjs.adjacent_tau[ad1] - tau0;
+        for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
+        {
+            const int T2 = adjs.ntype[ad2];
+            const int I2 = adjs.natom[ad2];
+            const int iat2 = ucell->itia2iat(T2, I2);
+            const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
+            ModuleBase::Vector3<double> dis2 = adjs.adjacent_tau[ad2] - tau0;
+            ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
+                                              R_index2[1] - R_index1[1],
+                                              R_index2[2] - R_index1[2]);
+            std::vector<const hamilt::BaseMatrix<double>*> tmp(nspin, nullptr);
+            tmp[0] = dmR[0]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+            if (nspin == 2)
+            {
+                tmp[1] = dmR[1]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+            }
+            // if not found , skip this pair of atoms
+            if (tmp[0] != nullptr)
+            {
+                // calculate force
+                if (cal_force)
+                {
+                    cal_for_IJR_nao_r(iat1, iat2, pv,
+                                    nlm_tot[ad1], nlm_tot[ad2],
+                                    pot_onsite, tmp.data(), nspin,
+                                    force_tmp1, force_tmp2);
+                }
+
+                // calculate stress
+                if (cal_stress)
+                {
+                    cal_str_IJR_nao_r(iat1, iat2, pv,
+                                     nlm_tot[ad1], nlm_tot[ad2],
+                                     pot_onsite, tmp.data(), nspin,
+                                     dis1, dis2, stress_local.data());
+                }
+            }
+        }
+    }
+}
+
+} // namespace
+
 void cal_fs_nao_r_impl(const UnitCell* ucell,
                        Plus_U_Base* dftu,
                        const TwoCenterIntegrator* intor,
@@ -30,10 +174,9 @@ void cal_fs_nao_r_impl(const UnitCell* ucell,
                        ModuleBase::matrix& force,
                        ModuleBase::matrix& stress)
 {
-    ModuleBase::timer::start("DFTU", "cal_fs_nao_r");
+    ModuleBase::timer::start("DFTU_LCAO", "cal_fs_nao_r");
 
     const Parallel_Orbitals* pv = dmR[0]->get_paraV();
-    const int npol = ucell->get_npol();
     std::vector<double> stress_tmp;
     if (cal_stress)
     {
@@ -89,60 +232,8 @@ void cal_fs_nao_r_impl(const UnitCell* ucell,
             const int tlp1 = 2 * target_L + 1;
             const AdjacentAtomInfo& adjs = adjs_all[atom_index_all[iat0]];
 
-            std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
-            nlm_tot.resize(adjs.adj_num + 1);
+            auto nlm_tot = build_nlm(ucell, intor, pv, iat0, T0, target_L, adjs);
 
-            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
-            {
-                const int T1 = adjs.ntype[ad];
-                const int I1 = adjs.natom[ad];
-                const int iat1 = ucell->itia2iat(T1, I1);
-                const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
-                const Atom* atom1 = &ucell->atoms[T1];
-
-                std::vector<int> all_indexes = pv->get_indexes_row(iat1);
-                std::vector<int> col_indexes = pv->get_indexes_col(iat1);
-                // insert col_indexes into all_indexes to get universal set with no repeat elements
-                all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
-                std::sort(all_indexes.begin(), all_indexes.end());
-                all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
-                for (int iw1l = 0; iw1l < all_indexes.size(); iw1l += npol)
-                {
-                    const int iw1 = all_indexes[iw1l] / npol;
-                    std::vector<std::vector<double>> nlm;
-                    // nlm is a vector of vectors, but size of outer vector is only 1 here
-                    // If we are calculating force, we need also to store the gradient
-                    // and size of outer vector is then 4
-                    // inner loop : all projectors (L0,M0)
-                    int L1 = atom1->iw2l[iw1];
-                    int N1 = atom1->iw2n[iw1];
-                    int m1 = atom1->iw2m[iw1];
-
-                    // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-                    int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
-
-                    ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                    intor->snap(T1, L1, N1, M1, T0, dtau * ucell->lat0,
-                                1 /*cal_deri*/, nlm);
-
-                    // select the elements of nlm with target_L
-                    std::vector<double> nlm_target(tlp1 * 4);
-                    const Atom* atom0 = &ucell->atoms[T0];
-                    for (int iw = 0; iw < atom0->nw; iw++)
-                    {
-                        if (atom0->iw2l[iw] == target_L)
-                        {
-                            for (int n = 0; n < 4; n++) // value, deri_x, deri_y, deri_z
-                            {
-                                std::copy(nlm[n].begin() + iw, nlm[n].begin() + iw + tlp1,
-                                          nlm_target.begin() + n * tlp1);
-                            }
-                            break;
-                        }
-                    }
-                    nlm_tot[ad].insert({all_indexes[iw1l], nlm_target});
-                }
-            }
             // first iteration to calculate occupation matrix
             std::vector<double> occ(tlp1 * tlp1 * nspin, 0);
             dftu->occmat().get_flat(iat0, target_L, occ);
@@ -162,54 +253,8 @@ void cal_fs_nao_r_impl(const UnitCell* ucell,
             //     U*(1/2*delta(m, m')-occ(m, m'))<chi_m'|phi_{J,R'}>
             //   + <phi_{I,R}|chi_m> U*(1/2*delta(m, m')-occ(m, m'))
             //     d<chi_m'|phi_{J,R'}>/d tau_{J,alpha} * tau_{J,beta} ] for each pair of <IJR> atoms
-            for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-            {
-                const int T1 = adjs.ntype[ad1];
-                const int I1 = adjs.natom[ad1];
-                const int iat1 = ucell->itia2iat(T1, I1);
-                double* force_tmp1 = (cal_force) ? &force_local(iat1, 0) : nullptr;
-                double* force_tmp2 = (cal_force) ? &force_local(iat0, 0) : nullptr;
-                const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-                ModuleBase::Vector3<double> dis1 = adjs.adjacent_tau[ad1] - tau0;
-                for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
-                {
-                    const int T2 = adjs.ntype[ad2];
-                    const int I2 = adjs.natom[ad2];
-                    const int iat2 = ucell->itia2iat(T2, I2);
-                    const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                    ModuleBase::Vector3<double> dis2 = adjs.adjacent_tau[ad2] - tau0;
-                    ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
-                                                      R_index2[1] - R_index1[1],
-                                                      R_index2[2] - R_index1[2]);
-                    std::vector<const hamilt::BaseMatrix<double>*> tmp(nspin, nullptr);
-                    tmp[0] = dmR[0]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
-                    if (nspin == 2)
-                    {
-                        tmp[1] = dmR[1]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
-                    }
-                    // if not found , skip this pair of atoms
-                    if (tmp[0] != nullptr)
-                    {
-                        // calculate force
-                        if (cal_force)
-                        {
-                            cal_for_IJR_nao_r(iat1, iat2, pv,
-                                            nlm_tot[ad1], nlm_tot[ad2],
-                                            pot_onsite, tmp.data(), nspin,
-                                            force_tmp1, force_tmp2);
-                        }
-
-                        // calculate stress
-                        if (cal_stress)
-                        {
-                            cal_str_IJR_nao_r(iat1, iat2, pv,
-                                             nlm_tot[ad1], nlm_tot[ad2],
-                                             pot_onsite, tmp.data(), nspin,
-                                             dis1, dis2, stress_local.data());
-                        }
-                    }
-                }
-            }
+            acc_fs_pairs(ucell, pv, iat0, T0, adjs, nlm_tot, pot_onsite,
+                         dmR, nspin, cal_force, cal_stress, force_local, stress_local);
         }
 #pragma omp critical
         {
@@ -229,34 +274,16 @@ void cal_fs_nao_r_impl(const UnitCell* ucell,
 
     if (cal_force)
     {
-        Parallel_Reduce::reduce_all(force.c, force.nr * force.nc);
-        if (nspin != 4)
-        {
-            for (int i = 0; i < force.nr * force.nc; i++)
-            {
-                force.c[i] *= 2.0;
-            }
-        }
+        reduce_force_impl(force, nspin);
     }
 
     // stress renormalization
     if (cal_stress)
     {
-        Parallel_Reduce::reduce_all(stress_tmp.data(), 6);
-        const double weight = ucell->lat0 / ucell->omega;
-        for (int i = 0; i < 6; i++)
-        {
-            stress.c[i] = stress_tmp[i] * weight;
-        }
-        stress.c[8] = stress.c[5]; // stress(2,2)
-        stress.c[7] = stress.c[4]; // stress(2,1)
-        stress.c[6] = stress.c[2]; // stress(2,0)
-        stress.c[5] = stress.c[4]; // stress(1,2)
-        stress.c[4] = stress.c[3]; // stress(1,1)
-        stress.c[3] = stress.c[1]; // stress(1,0)
+        reduce_stress_impl(ucell, stress_tmp, stress);
     }
 
-    ModuleBase::timer::end("DFTU", "cal_fs_nao_r");
+    ModuleBase::timer::end("DFTU_LCAO", "cal_fs_nao_r");
 }
 
 void cal_fs_nao_r(const UnitCell* ucell,

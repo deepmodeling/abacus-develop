@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_COMMON_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_COMMON_H
+
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "gint_info.h"
 
@@ -31,3 +33,5 @@ namespace ModuleGint
     template<typename T>
     void wfc_2d_to_gint(const T* wfc_2d, int nbands, int nlocal, const Parallel_Orbitals& pv, T* wfc_grid, const GintInfo& gint_info);
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_COMMON_H

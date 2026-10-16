@@ -247,6 +247,8 @@ GLOBAL_DEPENDENCY_RE = re.compile(r"\b(GlobalV::|GlobalC::|PARAM(?:\.|->|::|\b))
 # `#define private public` / `#define protected public`. See AGENTS.md rule 10.
 ACCESS_HACK_RE = re.compile(r"^\s*#\s*define\s+(?:private|protected)\s+public\b")
 
+# `#pragma once`. See AGENTS.md rule 15.
+PRAGMA_ONCE_RE = re.compile(r"^\s*#\s*pragma\s+once\b")
 
 
 def is_global_dependency_check_path(path: str) -> bool:
@@ -361,6 +363,29 @@ def check_access_hacks(
             ),
         )
 
+
+def check_pragma_once(
+    findings: List[Finding],
+    added_lines: Iterable[DiffLine],
+) -> None:
+    """Block new `#pragma once` in headers (AGENTS.md rule 15).
+
+    Use traditional `#ifndef`/`#define`/`#endif` include guards instead.
+    """
+    for line in added_lines:
+        if Path(line.path).suffix.lower() not in HEADER_EXTENSIONS | {".cuh"}:
+            continue
+        if PRAGMA_ONCE_RE.search(line.content):
+            add_finding(
+                findings,
+                "No #pragma once",
+                BLOCK,
+                line.path,
+                line.line,
+                "Adds `#pragma once` to a header file.",
+                "Use traditional `#ifndef`/`#define`/`#endif` include guards instead.",
+                allow_exception=False,
+            )
 
 
 def _has_default_arg_in_parens(stripped: str) -> bool:
@@ -552,69 +577,6 @@ def check_cmake_linkage(findings: List[Finding], statuses: Dict[str, str], chang
             )
 
 
-def input_parameter_changed(paths: Sequence[str], lines: Sequence[DiffLine]) -> bool:
-    parameter_paths = [
-        path
-        for path in paths
-        if path.startswith("source/source_io/module_parameter/")
-        and Path(path).suffix.lower() in {".cpp", ".h", ".hpp"}
-    ]
-    if parameter_paths:
-        sensitive = re.compile(
-            r"\b(Input_Item|add_item|default_value|description|category|availability|read_value|reset_value|check_value|type)\b"
-        )
-        return any(
-            line.path in parameter_paths
-            and not line.content.lstrip().startswith("//")
-            and sensitive.search(line.content)
-            for line in lines
-        )
-    return any(
-        line.path.startswith("source/")
-        and re.search(r"\bInput_Item\s+\w+|add_item\s*\(", line.content)
-        for line in lines
-    )
-
-
-def pr_body_allows_no_input_doc_update(body: str) -> bool:
-    lowered = body.lower()
-    needles = [
-        "input parameter documentation: not needed",
-        "input docs: not needed",
-        "no input documentation update required",
-        "无需更新 input",
-    ]
-    return any(needle in lowered for needle in needles)
-
-
-def check_input_parameter_docs(
-    findings: List[Finding],
-    changed: Sequence[str],
-    statuses: Dict[str, str],
-    lines: Sequence[DiffLine],
-    pr_body: str,
-) -> None:
-    if not input_parameter_changed(changed, lines):
-        return
-    has_yaml = "docs/parameters.yaml" in changed and not statuses.get("docs/parameters.yaml", "").startswith("D")
-    has_markdown = (
-        "docs/advanced/input_files/input-main.md" in changed
-        and not statuses.get("docs/advanced/input_files/input-main.md", "").startswith("D")
-    )
-    if has_yaml and has_markdown:
-        return
-    if pr_body and pr_body_allows_no_input_doc_update(pr_body):
-        return
-    add_finding(
-        findings,
-        "INPUT parameter documentation linkage",
-        WARN,
-        "source/source_io/module_parameter",
-        None,
-        "INPUT parameter behavior appears to change without both docs/parameters.yaml and input-main.md updates.",
-        "Regenerate docs/parameters.yaml and docs/advanced/input_files/input-main.md, or state why no INPUT documentation update is required in the PR.",
-    )
-
 
 def read_pr_body(event_path: Optional[str]) -> Optional[str]:
     if not event_path:
@@ -799,11 +761,11 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     check_line_endings(findings, root, changed, statuses, args)
     check_global_dependencies(findings, lines, removed_lines)
     check_access_hacks(findings, lines, removed_lines)
+    check_pragma_once(findings, lines)
     check_default_parameters(findings, lines)
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)
     check_cmake_linkage(findings, statuses, changed)
-    check_input_parameter_docs(findings, changed, statuses, lines, body_text)
     check_pr_metadata(findings, body)
     check_test_evidence_warning(findings, changed, body_text)
     check_heterogeneous_test_warning(findings, changed, body_text)

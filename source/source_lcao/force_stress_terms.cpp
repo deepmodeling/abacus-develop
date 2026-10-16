@@ -68,7 +68,8 @@ void cal_external_field_forces(UnitCell& ucell,
                                surchem& solvent,
                                ModulePW::PW_Basis* rhopw,
                                const pseudopot_cell_vl& locpp,
-                               LCAOForceParts& parts)
+                               LCAOForceParts& parts,
+                               const elecstate::TDFieldManager* td_field)
 {
     //! forces from E-field
     if (PARAM.inp.efield_flag)
@@ -78,10 +79,10 @@ void cal_external_field_forces(UnitCell& ucell,
     }
 
     //! atomic forces from E-field of rt-TDDFT
-    if (PARAM.inp.esolver_type == "tddft")
+    if (td_field != nullptr)
     {
         parts.fefield_tddft.create(ucell.nat, 3);
-        elecstate::H_TDDFT_pw::compute_force(ucell, parts.fefield_tddft);
+        elecstate::H_TDDFT_pw::compute_force(ucell, *td_field, parts.fefield_tddft);
     }
 
     //! atomic forces from gate field
@@ -108,7 +109,8 @@ void cal_vdw_fields_fs(const vdw::VdwResult* vdw_result,
                        const bool isforce,
                        const bool isstress,
                        LCAOForceParts& parts,
-                       LCAOStressParts& sparts)
+                       LCAOStressParts& sparts,
+                       const elecstate::TDFieldManager* td_field)
 {
     //! forces and stress from vdw
     //  Peize Lin add 2014-04-04, update 2021-03-09
@@ -118,7 +120,7 @@ void cal_vdw_fields_fs(const vdw::VdwResult* vdw_result,
     //! external-field forces
     if (isforce)
     {
-        cal_external_field_forces(ucell, solvent, rhopw, locpp, parts);
+        cal_external_field_forces(ucell, solvent, rhopw, locpp, parts, td_field);
     }
 }
 
@@ -178,7 +180,7 @@ void cal_dftu_fs(UnitCell& ucell,
                  Parallel_Orbitals& pv,
                  const LCAO_Orbitals& orb,
                  const K_Vectors& kv,
-                 LCAO_domain::Setup_DM<T>& dmat,
+                 module_dm::Setup_DM<T>& dmat,
                  const TwoCenterBundle& two_center_bundle,
                  Plus_U_Base& dftu,
                  const bool isforce,
@@ -245,13 +247,13 @@ void cal_dftu_fs(UnitCell& ucell,
 
             // The DensityMatrix holds nspin_dm = (nspin==2 ? 2 : 1) real-space DMR
             // channels: nspin=4 (non-collinear) packs all four Pauli components
-            // into a single complex DMR, so only one channel exists (cf. setup_dm.cpp
+            // into a single complex DMR, so only one channel exists (cf. allocate_dm.cpp
             // and the is0 = nspin==2 ? is : 0 indexing in cal_for/str_IJR_nao_r).
             const int nspin_dm = (PARAM.inp.nspin == 2) ? 2 : 1;
             std::vector<const hamilt::HContainer<double>*> dmR_tmp(nspin_dm, nullptr);
             for (int is = 0; is < nspin_dm; ++is)
             {
-                dmR_tmp[is] = dmat.dm->get_DMR_pointer(is + 1);
+                dmR_tmp[is] = dmat.dm->get_dmr_ptr(is + 1);
             }
 
             DFTU_LCAO::cal_fs_nao_r(&ucell, &dftu,
@@ -338,11 +340,11 @@ template void cal_exx_fs<std::complex<double>>(const UnitCell&, const bool, cons
                                                Exx_NAO<std::complex<double>>&, LCAOForceParts&, LCAOStressParts&);
 
 template void cal_dftu_fs<double>(UnitCell&, const Grid_Driver&, Parallel_Orbitals&, const LCAO_Orbitals&,
-                                  const K_Vectors&, LCAO_domain::Setup_DM<double>&, const TwoCenterBundle&,
+                                  const K_Vectors&, module_dm::Setup_DM<double>&, const TwoCenterBundle&,
                                   Plus_U_Base&, const bool, const bool, LCAOForceParts&, LCAOStressParts&);
 template void cal_dftu_fs<std::complex<double>>(UnitCell&, const Grid_Driver&, Parallel_Orbitals&,
                                                 const LCAO_Orbitals&, const K_Vectors&,
-                                                LCAO_domain::Setup_DM<std::complex<double>>&, const TwoCenterBundle&,
+                                                module_dm::Setup_DM<std::complex<double>>&, const TwoCenterBundle&,
                                                 Plus_U_Base&, const bool, const bool, LCAOForceParts&,
                                                 LCAOStressParts&);
 

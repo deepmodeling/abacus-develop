@@ -6,6 +6,29 @@
 
 namespace unitcell
 {
+    std::vector<AtomData> get_atom_data(const Atom* atoms, const int ntype, const double lattice_scale)
+    {
+        int nat = 0;
+        for (int it = 0; it < ntype; ++it)
+        {
+            nat += atoms[it].na;
+        }
+        std::vector<AtomData> data;
+        data.reserve(nat);
+        for (int it = 0; it < ntype; ++it)
+        {
+            for (int ia = 0; ia < atoms[it].na; ++ia)
+            {
+                AtomData atom;
+                atom.position = atoms[it].tau[ia] * lattice_scale;
+                atom.mass = atoms[it].mass;
+                atom.valence_charge = atoms[it].ncpp.zv;
+                data.push_back(atom);
+            }
+        }
+        return data;
+    }
+
     std::vector<std::string> get_atomLabels(const Atom* atoms, const int ntype)
     {
         std::vector<std::string> atomLabels(ntype);

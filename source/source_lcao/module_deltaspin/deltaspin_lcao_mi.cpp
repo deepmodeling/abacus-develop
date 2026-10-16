@@ -39,7 +39,7 @@ namespace lcao
 
 void cal_mi_lcao(ScState& state,
                  hamilt::Operator<std::complex<double>>* p_operator,
-                 elecstate::DensityMatrix<std::complex<double>, double>* dm,
+                 module_dm::DensityMatrix<std::complex<double>, double>* dm,
                  const int& step,
                  bool print)
 {
@@ -47,7 +47,7 @@ void cal_mi_lcao(ScState& state,
     ModuleBase::timer::start("spinconstrain::SpinConstrain", "cal_mi_lcao");
     // Reset Mi before calculation
     state.zero_Mi();
-    const hamilt::HContainer<double>* dmr = dm->get_DMR_pointer(1);
+    const hamilt::HContainer<double>* dmr = dm->get_dmr_ptr(1);
     std::vector<double> moments;
     if (state.nspin_ == 2)
     {
@@ -61,22 +61,22 @@ void cal_mi_lcao(ScState& state,
         dm->switch_dmr(0);
 
         // For nspin=2, only z-component is meaningful
-        for (int iat = 0; iat < state.Mi_.size(); iat++)
+        for (int iat = 0; iat < state.get_mi().size(); iat++)
         {
-            state.Mi_[iat].x = 0.0;
-            state.Mi_[iat].y = 0.0;
-            state.Mi_[iat].z = moments[iat];
+            state.get_mi()[iat].x = 0.0;
+            state.get_mi()[iat].y = 0.0;
+            state.get_mi()[iat].z = moments[iat];
         }
     }
     else if (state.nspin_ == 4)
     {
         // For nspin=4, moments array contains interleaved [Mx, My, Mz] per atom
         moments = static_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>*>(p_operator)->cal_moment(dmr, state.get_constrain());
-        for (int iat = 0; iat < state.Mi_.size(); iat++)
+        for (int iat = 0; iat < state.get_mi().size(); iat++)
         {
-            state.Mi_[iat].x = moments[iat * 3];
-            state.Mi_[iat].y = moments[iat * 3 + 1];
-            state.Mi_[iat].z = moments[iat * 3 + 2];
+            state.get_mi()[iat].x = moments[iat * 3];
+            state.get_mi()[iat].y = moments[iat * 3 + 1];
+            state.get_mi()[iat].z = moments[iat * 3 + 2];
         }
     }
 
@@ -167,15 +167,15 @@ void calculate_mw_from_orbitals(const std::vector<std::vector<std::vector<double
             }
             if (state.nspin_ == 2)
             {
-                state.Mi_[iat].x = 0.0;
-                state.Mi_[iat].y = 0.0;
-                state.Mi_[iat].z = atom_mag;
+                state.get_mi()[iat].x = 0.0;
+                state.get_mi()[iat].y = 0.0;
+                state.get_mi()[iat].z = atom_mag;
             }
             else if (state.nspin_ == 4)
             {
-                state.Mi_[iat].x = (std::abs(total_charge_soc[1]) < state.sc_thr_)? 0.0 : total_charge_soc[1];
-                state.Mi_[iat].y = (std::abs(total_charge_soc[2]) < state.sc_thr_)? 0.0 : total_charge_soc[2];
-                state.Mi_[iat].z = (std::abs(total_charge_soc[3]) < state.sc_thr_)? 0.0 : total_charge_soc[3];
+                state.get_mi()[iat].x = (std::abs(total_charge_soc[1]) < state.sc_thr_)? 0.0 : total_charge_soc[1];
+                state.get_mi()[iat].y = (std::abs(total_charge_soc[2]) < state.sc_thr_)? 0.0 : total_charge_soc[2];
+                state.get_mi()[iat].z = (std::abs(total_charge_soc[3]) < state.sc_thr_)? 0.0 : total_charge_soc[3];
             }
         }
     }

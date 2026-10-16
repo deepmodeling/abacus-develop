@@ -154,6 +154,11 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_BASE_opt_dcsrch
+  SOURCES test_opt_dcsrch.cpp ../opt_dcsrch.cpp
+)
+
+AddTest(
   TARGET MODULE_BASE_opt_tn
   LIBS parameter  base device
   SOURCES opt_tn_test.cpp opt_test_tools.cpp mpi_test_main.cpp
@@ -210,12 +215,6 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_math_lib_info
   SOURCES math_lib_info_test.cpp
-  LIBS parameter base device
-)
-
-AddTest(
-  TARGET MODULE_BASE_projgen
-  SOURCES projgen_test.cpp
   LIBS parameter base device
 )
 

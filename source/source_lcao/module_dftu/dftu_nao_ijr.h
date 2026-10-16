@@ -47,7 +47,7 @@ inline void load_occ_from_file(const Plus_U_Base& dftu,
     {
         for (int i = 0; i < static_cast<int>(occ.size()); i++)
         {
-            occ[i] = dftu.occmat().get(iat0, target_L, 0, current_spin,
+            occ[i] = dftu.occmat().get(iat0, target_L, current_spin,
                                        i / (2 * target_L + 1), i % (2 * target_L + 1));
         }
     }
@@ -198,6 +198,55 @@ inline void cal_occ_ijr(const int iat1,
 }
 
 /**
+ * @brief walk all (ad1, ad2) adjacent-atom pairs of one Hubbard atom iat0
+ *        and invoke @p body for each pair that has a matching matrix block.
+ *
+ * This is the common iteration skeleton shared by the HR accumulation
+ * (accumulate_hr_for_iat0), occupation-matrix computation
+ * (compute_occ_from_dmr), and the force/stress real-space implementation
+ * (cal_fs_nao_r_impl). The body receives (iat1, iat2, R_vector, nlm1, nlm2)
+ * and is responsible for the actual physics.
+ *
+ * @param ucell   [in] unit cell (atom index maps)
+ * @param iat0    [in] global atom index of the Hubbard atom
+ * @param adjs    [in] adjacent atom info of the Hubbard atom
+ * @param nlm_tot [in] <phi|alpha^I> overlap table for all atoms
+ * @param body    [in] callable with signature
+ *        void(int iat1, int iat2,
+ *             const ModuleBase::Vector3<int>& R_vector,
+ *             const std::unordered_map<int, std::vector<double>>& nlm1,
+ *             const std::unordered_map<int, std::vector<double>>& nlm2)
+ */
+template <typename Body>
+inline void for_adj_pair(const UnitCell& ucell,
+                         const int iat0,
+                         const AdjacentAtomInfo& adjs,
+                         const NlmTot& nlm_tot,
+                         Body&& body)
+{
+    for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
+    {
+        const int T1 = adjs.ntype[ad1];
+        const int I1 = adjs.natom[ad1];
+        const int iat1 = ucell.itia2iat(T1, I1);
+        const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
+        const std::unordered_map<int, std::vector<double>>& nlm1 = nlm_tot[iat0][ad1];
+        for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
+        {
+            const int T2 = adjs.ntype[ad2];
+            const int I2 = adjs.natom[ad2];
+            const int iat2 = ucell.itia2iat(T2, I2);
+            const std::unordered_map<int, std::vector<double>>& nlm2 = nlm_tot[iat0][ad2];
+            const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
+            ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
+                                              R_index2[1] - R_index1[1],
+                                              R_index2[2] - R_index1[2]);
+            body(iat1, iat2, R_vector, nlm1, nlm2);
+        }
+    }
+}
+
+/**
  * @brief accumulate the real-space HR contributions of one Hubbard atom
  *        (iat0) from the precomputed pot_onsite:
  *        HR(I,J,R) += <phi_I|chi_m> pot_onsite(m,m') <chi_m'|phi_{J,R}>
@@ -222,23 +271,12 @@ void accumulate_hr_for_iat0(const UnitCell& ucell,
                             const Parallel_Orbitals& pv,
                             const std::vector<TR>& pot_onsite)
 {
-    for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-    {
-        const int T1 = adjs.ntype[ad1];
-        const int I1 = adjs.natom[ad1];
-        const int iat1 = ucell.itia2iat(T1, I1);
-        const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-        const std::unordered_map<int, std::vector<double>>& nlm1 = nlm_tot[iat0][ad1];
-        for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
+    for_adj_pair(ucell, iat0, adjs, nlm_tot,
+        [&](int iat1, int iat2,
+            const ModuleBase::Vector3<int>& R_vector,
+            const std::unordered_map<int, std::vector<double>>& nlm1,
+            const std::unordered_map<int, std::vector<double>>& nlm2)
         {
-            const int T2 = adjs.ntype[ad2];
-            const int I2 = adjs.natom[ad2];
-            const int iat2 = ucell.itia2iat(T2, I2);
-            const std::unordered_map<int, std::vector<double>>& nlm2 = nlm_tot[iat0][ad2];
-            const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-            ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
-                                              R_index2[1] - R_index1[1],
-                                              R_index2[2] - R_index1[2]);
             hamilt::BaseMatrix<TR>* tmp = hR->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
             if (tmp != nullptr)
             {
@@ -246,18 +284,11 @@ void accumulate_hr_for_iat0(const UnitCell& ucell,
 #pragma omp critical(dftu_hr_update)
 #endif
                 {
-                    cal_hr_ijr<TR>(iat1,
-                                   iat2,
-                                   ucell.get_npol(),
-                                   pv,
-                                   nlm1,
-                                   nlm2,
-                                   pot_onsite,
-                                   tmp->get_pointer());
+                    cal_hr_ijr<TR>(iat1, iat2, ucell.get_npol(), pv,
+                                   nlm1, nlm2, pot_onsite, tmp->get_pointer());
                 }
             }
-        }
-    }
+        });
 }
 
 /**
@@ -290,38 +321,20 @@ inline void compute_occ_from_dmr(const UnitCell& ucell,
                                  const hamilt::HContainer<double>& dmR_current,
                                  std::vector<double>& occ)
 {
-    for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-    {
-        const int T1 = adjs.ntype[ad1];
-        const int I1 = adjs.natom[ad1];
-        const int iat1 = ucell.itia2iat(T1, I1);
-        const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-        const std::unordered_map<int, std::vector<double>>& nlm1 = nlm_tot[iat0][ad1];
-        for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
+    for_adj_pair(ucell, iat0, adjs, nlm_tot,
+        [&](int iat1, int iat2,
+            const ModuleBase::Vector3<int>& R_vector,
+            const std::unordered_map<int, std::vector<double>>& nlm1,
+            const std::unordered_map<int, std::vector<double>>& nlm2)
         {
-            const int T2 = adjs.ntype[ad2];
-            const int I2 = adjs.natom[ad2];
-            const int iat2 = ucell.itia2iat(T2, I2);
-            const std::unordered_map<int, std::vector<double>>& nlm2 = nlm_tot[iat0][ad2];
-            const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-            ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
-                                              R_index2[1] - R_index1[1],
-                                              R_index2[2] - R_index1[2]);
             const hamilt::BaseMatrix<double>* tmp
                 = dmR_current.find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
             if (tmp != nullptr)
             {
-                cal_occ_ijr(iat1,
-                            iat2,
-                            ucell.get_npol(),
-                            pv,
-                            nlm1,
-                            nlm2,
-                            tmp->get_pointer(),
-                            occ);
+                cal_occ_ijr(iat1, iat2, ucell.get_npol(), pv,
+                            nlm1, nlm2, tmp->get_pointer(), occ);
             }
-        }
-    }
+        });
     Parallel_Reduce::reduce_all(occ.data(), occ.size());
     if (nspin == 1)
     {

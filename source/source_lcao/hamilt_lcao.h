@@ -5,6 +5,7 @@
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/hamilt.h"
+#include "source_lcao/module_rt/td_info.h"
 #include "source_hamilt/hs_matrix_k.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
@@ -14,8 +15,8 @@
 // elecstate::Potential forward declaration, full definition in potential_new.h (moved to .cpp)
 namespace elecstate { class Potential; }
 
-// elecstate::DensityMatrix forward declaration, full definition in density_matrix.h (moved to .cpp)
-namespace elecstate { template <typename TK, typename TR> class DensityMatrix; }
+// module_dm::DensityMatrix forward declaration, full definition in density_matrix.h (moved to .cpp)
+namespace module_dm { template <typename TK, typename TR> class DensityMatrix; }
 
 // Setup_DeePKS forward declaration, full definition in setup_deepks.h (moved to .cpp)
 template <typename TK> class Setup_DeePKS;
@@ -58,14 +59,15 @@ class HamiltLCAO : public Hamilt<TK>
                const K_Vectors& kv_in,
                const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
-               elecstate::DensityMatrix<TK, double>* DM_in,
+               module_dm::DensityMatrix<TK, double>* DM_in,
                Plus_U_Base* p_dftu, // mohan add 2025-11-05
                Setup_DeePKS<TK> &deepks,
                const int istep,
                Exx_NAO<TK> &exx_nao,
                const Exx_Info& exx_info,
                const Input_para& inp,
-               const bool load_exx_flag);
+               const bool load_exx_flag,
+               TD_info* td_info);
 
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer

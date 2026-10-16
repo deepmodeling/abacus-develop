@@ -16,7 +16,11 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 
 template <typename FPTYPE, typename Device>
-void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
+void Sto_Forces<FPTYPE, Device>::cal_stoforce(const int nspin,
+                                              const bool domag,
+                                              const bool domag_z,
+                                              const int gga_grad,
+                                              ModuleBase::matrix& force,
                                               const elecstate::ElecState& elec,
                                               ModulePW::PW_Basis* rho_basis,
                                               ModuleSymmetry::Symmetry* p_symm,
@@ -44,7 +48,8 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
     this->cal_force_loc(ucell, forcelc, rho_basis, locpp.vloc, chr);
     this->cal_force_ew(ucell,forceion, rho_basis, p_sf);
     this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, p_sf, nlpp, ucell, psi, stowf);
-    this->cal_force_cc(forcecc, rho_basis, chr, locpp.numeric, ucell);
+    this->cal_force_cc(forcecc, rho_basis, chr, locpp.numeric, ucell,
+        nspin, domag, domag_z, gga_grad);
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp.numeric, ucell);
 
     // impose total force = 0

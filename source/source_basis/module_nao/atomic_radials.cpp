@@ -7,7 +7,7 @@
 // FIXME: should update with pyabacus
 // #include "source_io/orb_io.h"
 
-#include "source_base/projgen.h"
+#include "source_basis/module_nao/smoothgen.h"
 
 #include <cmath>
 #include <fstream>
@@ -102,7 +102,6 @@ void AtomicRadials::build(RadialSet* const other, const int itype, const double 
             std::vector<double> rvalue_new;
             smoothgen(ngrid, rgrid, rvalue, rcut, rvalue_new);
             ngrid = rvalue_new.size();
-            // projgen(l, ngrid, rgrid, rvalue, rcut, 20, rvalue_new);
             // build the new on-site orbitals
             this->chi_[ichi].build(l, true, ngrid, rgrid, rvalue_new.data(), 0, izeta, symbol_, itype, false);
         }

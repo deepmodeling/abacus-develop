@@ -127,9 +127,16 @@ Before running the toolchain, please make sure you have loaded the related envir
   - [LibComm](https://github.com/abacusmodeling/LibComm) - Communication library
   - [NEP](https://github.com/brucefan1983/NEP_CPU) - Neuroevolution Potential
   - [Cereal](https://github.com/USCiLab/cereal) - C++ serialization library
-  - [RapidJSON](https://github.com/Tencent/rapidjson) - Fast JSON parser/generator
+  - [nlohmann-json](https://github.com/nlohmann/json) - Fast JSON parser/generator
 - **Reference mirror:** [CP2K static downloads](https://www.cp2k.org/static/downloads)
-- All package from GitHub will be downloaded by `wget` from `codeload.github.com`, which bypass the difficulty of CN Internet in some extent. 
+- Most GitHub source archives are downloaded from `codeload.github.com`. nlohmann-json uses the official `json.tar.xz` release asset.
+
+JSON output is enabled with `-DENABLE_JSON=ON`. `ENABLE_RAPIDJSON` is no longer
+supported because the JSON backend has been replaced by nlohmann-json. The
+toolchain package option is `--with-json=install|system|/prefix|no`. In `system`
+mode, ABACUS uses CMake's normal package search; the installation must provide
+`nlohmann_jsonConfig.cmake`, not just the headers. Release archives are cached as
+`build/json-<version>.tar.xz` for offline installation.
 
 ### Offline Installation
 
@@ -200,7 +207,7 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 | ELPA | 2026.02.001 / 2024.05.001 | Eigenvalue solver | LGPL-3.0-only | Install |
 | **Advanced Features** |||||
 | Cereal | pinned commit | C++ Serialization | BSD | Install |
-| RapidJSON | pinned commit | JSON parsing | MIT | Install |
+| nlohmann-json | 3.12.0 | JSON parsing | MIT | Install |
 | LibRI | pinned commit | EXX calculations | GPL-3.0 | Install |
 | LibComm | pinned commit | EXX calculations | GPL-3.0 | Install |
 | LibTorch | 2.1.2 / 1.12.1 | MLALGO support | BSD-3-Clause | Optional |

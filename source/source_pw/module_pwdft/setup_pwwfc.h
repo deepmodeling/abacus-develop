@@ -14,10 +14,10 @@ namespace pw
 void teardown_pwwfc(ModulePW::PW_Basis_K* &pw_wfc);
 
 void setup_pwwfc(const Input_para& inp,
-		const UnitCell& ucell, 
-		const ModulePW::PW_Basis& pw_rho,
-		K_Vectors& kv,
-		ModulePW::PW_Basis_K* &pw_wfc);
+        const UnitCell& ucell, 
+        const ModulePW::PW_Basis& pw_rho,
+        K_Vectors& kv,
+        ModulePW::PW_Basis_K* &pw_wfc);
 
 }
 

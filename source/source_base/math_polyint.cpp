@@ -19,11 +19,11 @@ void PolyInt::Polynomial_Interpolation
     assert(table_interval>0.0);
     const double position = x / table_interval;
     const int iq = static_cast<int>(position);
-	if(iq>=table_length-4)
-	{
-		std::cout << "\n x = " << x;
-		std::cout << "\n iq = " << iq << " table_length = " << table_length << std::endl;
-	}	
+    if(iq>=table_length-4)
+    {
+        std::cout << "\n x = " << x;
+        std::cout << "\n iq = " << iq << " table_length = " << table_length << std::endl;
+    }	
     assert(iq < table_length-4);
 
     const double x0 = position - static_cast<double>(iq);
@@ -86,7 +86,7 @@ double PolyInt::Polynomial_Interpolation            // pengfei Li 2018-3-23
     const ModuleBase::realArray &table,
     const int &dim1,
     const int &dim2,
-	const int &dim3,
+    const int &dim3,
     const int &table_length,
     const double &table_interval,
     const double &x				// input value
@@ -97,13 +97,13 @@ double PolyInt::Polynomial_Interpolation            // pengfei Li 2018-3-23
     const double position = x / table_interval;
     const int iq = static_cast<int>(position);
     
-	if(iq>table_length-4)
-	{
-		std::cout << "\n x = " << x;
-		std::cout << "\n table_interval = " << table_interval;
-		std::cout << "\n iq=" << iq << " table_length = " << table_length << std::endl;
-	}
-	assert(iq < table_length-4);
+    if(iq>table_length-4)
+    {
+        std::cout << "\n x = " << x;
+        std::cout << "\n table_interval = " << table_interval;
+        std::cout << "\n iq=" << iq << " table_length = " << table_length << std::endl;
+    }
+    assert(iq < table_length-4);
     const double x0 = position - static_cast<double>(iq);
     const double x1 = 1.0 - x0;
     const double x2 = 2.0 - x0;
@@ -144,11 +144,11 @@ double PolyInt::Polynomial_Interpolation
 
     /*
     const double y=
-    	table[iq]   * x1 * x2 * x3 / 6.0 +
-    	table[iq+1] * x0 * x2 * x3 / 2.0 -
-    	table[iq+2] * x1 * x0 * x3 / 2.0 +
-    	table[iq+3] * x1 * x2 * x0 / 6.0 ;
-    	*/
+        table[iq]   * x1 * x2 * x3 / 6.0 +
+        table[iq+1] * x0 * x2 * x3 / 2.0 -
+        table[iq+2] * x1 * x0 * x3 / 2.0 +
+        table[iq+3] * x1 * x2 * x0 / 6.0 ;
+        */
 
     return x1*x2*(table[iq]*x3+table[iq+3]*x0)/6.0
          + x0*x3*(table[iq+1]*x2-table[iq+2]*x1)/2.0;

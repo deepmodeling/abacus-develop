@@ -7,6 +7,7 @@
 #include "source_cell/unitcell.h"
 #include "source_cell/cal_nelec_nband.h"
 #include "source_cell/read_pp_ucell.h"
+#include <cstdio>
 #include <valarray>
 #include <vector>
 #include "string.h"
@@ -83,6 +84,10 @@ Magnetism::~Magnetism() { }
  *     - calculate the total number of valence electrons from psp files
  *   - CalNbands: unitcell::cal_nbands()
  *     - calculate the number of bands
+ *   - CompareAatomLabel
+ *     - compare_atom_labels(): accept equivalent element names and quit on mismatch
+ *   - PrintUnitcellPseudo
+ *     - print_unitcell_pseudo(): print basic cell and atom info to a pseudo log
  */
 
 class UcellTest : public ::testing::Test {
@@ -761,6 +766,52 @@ TEST_F(UcellTest, CalNbandsGaussWarning)
     EXPECT_EXIT(unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("for smearing, num. of bands > num. of occupied bands"));
+}
+
+TEST_F(UcellDeathTest, CompareAatomLabel)
+{
+    std::string stru_label[]
+        = {"Ag", "Ag", "Ag", "47", "47", "47", "Silver", "Silver", "Silver", "Ag", "Ag", "Ag", "Ag_empty"};
+    std::string pseudo_label[]
+        = {"Ag", "47", "Silver", "Ag", "47", "Silver", "Ag", "47", "Silver", "Ag1", "ag", "ag_locpsp", "Ag"};
+    for (int it = 0; it < 12; it++)
+    {
+        unitcell::compare_atom_labels(stru_label[it], pseudo_label[it]);
+    }
+    stru_label[0] = "Fe";
+    pseudo_label[0] = "O";
+    std::string atom_label_in_orbtial = "atom label in orbital file ";
+    std::string mismatch_with_pseudo = " mismatch with pseudo file of ";
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(unitcell::compare_atom_labels(stru_label[0], pseudo_label[0]), ::testing::ExitedWithCode(1), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,
+                testing::HasSubstr(atom_label_in_orbtial + stru_label[0] + mismatch_with_pseudo + pseudo_label[0]));
+}
+
+TEST_F(UcellTest, PrintUnitcellPseudo)
+{
+    // The fixture builds the C1H2-Read cell in SetUp; this test needs the
+    // C1H2-Index variant, so rebuild the cell here.
+    UcellTestPrepare utp_index = UcellTestLib["C1H2-Index"];
+    ucell = utp_index.SetUcellInfo();
+    std::string fn = "printcell.log";
+    unitcell::print_unitcell_pseudo(fn, *ucell);
+    std::ifstream ifs;
+    ifs.open("printcell.log");
+    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("latName = bcc"));
+    EXPECT_THAT(str, testing::HasSubstr("ntype = 2"));
+    EXPECT_THAT(str, testing::HasSubstr("nat = 3"));
+    EXPECT_THAT(str, testing::HasSubstr("GGT :"));
+    EXPECT_THAT(str, testing::HasSubstr("omega = 6748.33"));
+    EXPECT_THAT(str, testing::HasSubstr("label = C"));
+    EXPECT_THAT(str, testing::HasSubstr("mass = 12"));
+    EXPECT_THAT(str, testing::HasSubstr("atom_position(cartesian) Dimension = 1"));
+    EXPECT_THAT(str, testing::HasSubstr("label = H"));
+    EXPECT_THAT(str, testing::HasSubstr("mass = 1"));
+    EXPECT_THAT(str, testing::HasSubstr("atom_position(cartesian) Dimension = 2"));
+    remove("printcell.log");
 }
 
 #ifdef __MPI

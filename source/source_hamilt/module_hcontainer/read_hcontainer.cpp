@@ -3,6 +3,7 @@
 #include "source_base/module_out/sparse_matrix.h"
 #include "source_base/module_out/csr_reader.h"
 #include "hcontainer_funcs.h"
+#include "transfer.h"
 
 #include <fstream>
 
@@ -131,13 +132,13 @@ void Read_HContainer<T>::read()
         std::vector<int> tmp_ijrs;
         MPI_Status status;
         long tmp_size = 0;
-        MPI_Recv(&tmp_size, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(&tmp_size, 1, MPI_LONG, 0, kHctTagSize, MPI_COMM_WORLD, &status);
         tmp_ijrs.resize(tmp_size);
         MPI_Recv(tmp_ijrs.data(),
                     tmp_ijrs.size(),
                     MPI_INT,
                     0,
-                    1,
+                    kHctTagIndex,
                     MPI_COMM_WORLD,
                     &status);
         this->_hcontainer->insert_ijrs(&tmp_ijrs);
@@ -148,8 +149,8 @@ void Read_HContainer<T>::read()
         for (int i = 1; i < size; ++i)
         {
             long tmp_size = para_ijrs.size();
-            MPI_Send(&tmp_size, 1, MPI_LONG, i, 0, MPI_COMM_WORLD);
-            MPI_Send(para_ijrs.data(), para_ijrs.size(), MPI_INT, i, 1, MPI_COMM_WORLD);
+            MPI_Send(&tmp_size, 1, MPI_LONG, i, kHctTagSize, MPI_COMM_WORLD);
+            MPI_Send(para_ijrs.data(), para_ijrs.size(), MPI_INT, i, kHctTagIndex, MPI_COMM_WORLD);
         }
     }
     // gather values from serial_rank to Parallels

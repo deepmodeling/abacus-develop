@@ -5,6 +5,9 @@ list(APPEND depend_files
   ../md_func.cpp
   ../../source_cell/basecell.cpp
   ../../source_cell/unitcell.cpp
+  ../../source_cell/unitcell_index.cpp
+  ../../source_cell/unitcell_stats.cpp
+  ../../source_cell/unitcell_setup.cpp
   ../../source_cell/update_cell.cpp
   ../../source_cell/bcast_cell.cpp
   ../../source_cell/print_cell.cpp
@@ -50,7 +53,7 @@ list(APPEND depend_files
   ../../source_cell/module_neighlist/neighbor_search.cpp
   ../../source_cell/module_neighlist/bin_manager.cpp
   ../../source_cell/module_neighlist/page_allocator.cpp
-  ../../source_cell/module_neighlist/domain_decomposition.cpp
+  ../../source_cell/domain_decomposition.cpp
   ../../source_cell/mdcell.cpp
   ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp
@@ -85,11 +88,20 @@ AddTest(
   ${depend_files}
 )
 
+set(md_run_json_sources)
+if(ENABLE_JSON)
+  list(APPEND md_run_json_sources
+    ../../source_io/module_json/abacusjson.cpp
+    ../../source_io/module_json/output_info.cpp
+  )
+endif()
+
 AddTest(
   TARGET MODULE_MD_run
   LIBS parameter psi device
   SOURCES run_md_test.cpp
   ../run_md.cpp
+  ../module_plumed/plumed_interface.cpp
   ../md_base.cpp
   ../fire.cpp
   ../langevin.cpp
@@ -98,6 +110,7 @@ AddTest(
   ../verlet.cpp
   ../../source_cell/mdcell_reader.cpp
   ../../source_cell/magnetism.cpp
+  ${md_run_json_sources}
   ${depend_files}
 )
 

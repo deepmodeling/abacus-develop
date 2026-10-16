@@ -67,8 +67,6 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
     std::fill(pot_onsite, pot_onsite + pv->nloc, T(0));
 
     const int npol = dftu.occmat().npol();
-    const std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& iatlnmipol2iwt
-        = dftu.occmat().iatlnmipol2iwt();
 
     for (int it = 0; it < ucell.ntype; ++it)
     {
@@ -86,43 +84,35 @@ void DFTU_LCAO::cal_pot_onsite(const Plus_U_Base& dftu,
                     continue;
                 }
 
-                for (int n = 0; n < ucell.atoms[it].l_nchi[L]; n++)
+                for (int m1 = 0; m1 < 2 * L + 1; m1++)
                 {
-                    if (n != 0)
+                    for (int ipol1 = 0; ipol1 < npol; ipol1++)
                     {
-                        continue;
-                    }
-
-                    for (int m1 = 0; m1 < 2 * L + 1; m1++)
-                    {
-                        for (int ipol1 = 0; ipol1 < npol; ipol1++)
+                        const int mu = pv->global2local_row(dftu.occmat().corr_iwt(iat, L, m1, ipol1));
+                        if (mu < 0)
                         {
-                            const int mu = pv->global2local_row(iatlnmipol2iwt[iat][L][n][m1][ipol1]);
-                            if (mu < 0)
-                            {
-                                continue;
-                            }
+                            continue;
+                        }
 
-                            for (int m2 = 0; m2 < 2 * L + 1; m2++)
+                        for (int m2 = 0; m2 < 2 * L + 1; m2++)
+                        {
+                            for (int ipol2 = 0; ipol2 < npol; ipol2++)
                             {
-                                for (int ipol2 = 0; ipol2 < npol; ipol2++)
+                                const int nu
+                                    = pv->global2local_col(dftu.occmat().corr_iwt(iat, L, m2, ipol2));
+                                if (nu < 0)
                                 {
-                                    const int nu
-                                        = pv->global2local_col(iatlnmipol2iwt[iat][L][n][m2][ipol2]);
-                                    if (nu < 0)
-                                    {
-                                        continue;
-                                    }
-                                    int m1_all = m1 + (2 * L + 1) * ipol1;
-                                    int m2_all = m2 + (2 * L + 1) * ipol2;
-                                    double val = get_onsite_pot(dftu, it, iat, L, n, spin,
-                                                                m1_all, m2_all, new_occ_mat);
-                                    pot_onsite[nu * pv->nrow + mu] = static_cast<T>(val);
-                                } // ipol2
-                            } // m2
-                        } // ipol1
-                    } // m1
-                } // n
+                                    continue;
+                                }
+                                int m1_all = m1 + (2 * L + 1) * ipol1;
+                                int m2_all = m2 + (2 * L + 1) * ipol2;
+                                double val = get_onsite_pot(dftu, it, iat, L, spin,
+                                                            m1_all, m2_all, new_occ_mat);
+                                pot_onsite[nu * pv->nrow + mu] = static_cast<T>(val);
+                            } // ipol2
+                        } // m2
+                    } // ipol1
+                } // m1
             } // l
         } // ia
     } // it
@@ -161,7 +151,8 @@ void DFTU_LCAO::cal_pot_uterm(Plus_U_Base& dftu,
     //=============================================================
     //   PART2: call pblas to calculate effective potential matrix
     //=============================================================
-    const char transN = 'N', transT = 'T';
+    const char transN = 'N';
+    const char transT = 'T';
     const int one_int = 1;
     const T half = static_cast<T>(0.5);
     const T one = static_cast<T>(1.0);
@@ -215,7 +206,6 @@ double DFTU_LCAO::get_onsite_pot(const Plus_U_Base& dftu,
                                  const int T,
                                  const int iat,
                                  const int L,
-                                 const int N,
                                  const int spin,
                                  const int m0,
                                  const int m1,
@@ -240,13 +230,13 @@ double DFTU_LCAO::get_onsite_pot(const Plus_U_Base& dftu,
             {
                 if (m0 == m1)
                 {
-                    pot_onsite = (dftu.yukawa().get_U(T, L, N) - dftu.yukawa().get_J(T, L, N))
-                                 * (0.5 - dftu.occmat().get(iat, L, N, spin, m0, m1));
+                    pot_onsite = (dftu.yukawa().get_U(T, L) - dftu.yukawa().get_J(T, L))
+                                 * (0.5 - dftu.occmat().get(iat, L, spin, m0, m1));
                 }
                 else
                 {
-                    pot_onsite = -(dftu.yukawa().get_U(T, L, N) - dftu.yukawa().get_J(T, L, N))
-                                 * dftu.occmat().get(iat, L, N, spin, m0, m1);
+                    pot_onsite = -(dftu.yukawa().get_U(T, L) - dftu.yukawa().get_J(T, L))
+                                 * dftu.occmat().get(iat, L, spin, m0, m1);
                 }
             }
             else
@@ -254,12 +244,12 @@ double DFTU_LCAO::get_onsite_pot(const Plus_U_Base& dftu,
                 if (m0 == m1)
                 {
                     pot_onsite = dftu.get_u_current(T)
-                                 * (0.5 - dftu.occmat().get(iat, L, N, spin, m0, m1));
+                                 * (0.5 - dftu.occmat().get(iat, L, spin, m0, m1));
                 }
                 else
                 {
                     pot_onsite = -dftu.get_u_current(T)
-                                 * dftu.occmat().get(iat, L, N, spin, m0, m1);
+                                 * dftu.occmat().get(iat, L, spin, m0, m1);
                 }
             }
         }
@@ -269,13 +259,13 @@ double DFTU_LCAO::get_onsite_pot(const Plus_U_Base& dftu,
             {
                 if (m0 == m1)
                 {
-                    pot_onsite = (dftu.yukawa().get_U(T, L, N) - dftu.yukawa().get_J(T, L, N))
-                                 * (0.5 - dftu.occmat().get_save(iat, L, N, spin, m0, m1));
+                    pot_onsite = (dftu.yukawa().get_U(T, L) - dftu.yukawa().get_J(T, L))
+                                 * (0.5 - dftu.occmat().get_save(iat, L, spin, m0, m1));
                 }
                 else
                 {
-                    pot_onsite = -(dftu.yukawa().get_U(T, L, N) - dftu.yukawa().get_J(T, L, N))
-                                 * dftu.occmat().get_save(iat, L, N, spin, m0, m1);
+                    pot_onsite = -(dftu.yukawa().get_U(T, L) - dftu.yukawa().get_J(T, L))
+                                 * dftu.occmat().get_save(iat, L, spin, m0, m1);
                 }
             }
             else
@@ -283,12 +273,12 @@ double DFTU_LCAO::get_onsite_pot(const Plus_U_Base& dftu,
                 if (m0 == m1)
                 {
                     pot_onsite = dftu.get_u_current(T)
-                                 * (0.5 - dftu.occmat().get_save(iat, L, N, spin, m0, m1));
+                                 * (0.5 - dftu.occmat().get_save(iat, L, spin, m0, m1));
                 }
                 else
                 {
                     pot_onsite = -dftu.get_u_current(T)
-                                 * dftu.occmat().get_save(iat, L, N, spin, m0, m1);
+                                 * dftu.occmat().get_save(iat, L, spin, m0, m1);
                 }
             }
         }

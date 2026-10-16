@@ -154,10 +154,6 @@ void diago_hs_para(T* h,
 
     // gather wfc
     Cpxgemr2d(lda, lda, wfc_2d.data(), 1, 1, para2d_local.desc, wfc, 1, 1, para2d_global.desc, para2d_local.blacs_ctxt);
-
-    // free the context
-    Cblacs_gridexit(para2d_local.blacs_ctxt);
-    Cblacs_gridexit(para2d_global.blacs_ctxt);
 }
 
 // template instantiation

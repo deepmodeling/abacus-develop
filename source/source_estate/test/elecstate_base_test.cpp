@@ -10,6 +10,7 @@
 #include "source_estate/elecstate.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_estate/occupy.h"
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_io/module_parameter/parameter.h"
 
 #ifdef __MPI
@@ -100,24 +101,19 @@ void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, int, int, int)
 void ModulePW::PW_Basis::distribute_r()
 {
 }
-void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
-{
-}
 void Charge::init_rho(const UnitCell&,
                       const Parallel_Grid&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
                       const void*,
-                      const void*)
+                      const void*,
+                      const module_charge::InitRhoCfg&)
 {
 }
 void Charge::set_rhopw(ModulePW::PW_Basis*)
 {
 }
-void Charge::renormalize_rho()
-{
-}
-void Charge::check_rho()
+void Charge::renormalize_rho(const double, const double)
 {
 }
 

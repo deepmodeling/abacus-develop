@@ -32,10 +32,10 @@ void ModuleIO::write_wfc_pw(
 {
     ModuleBase::TITLE("ModuleIO", "write_wfc_pw");
 
-	if(out_wfc_pw!=1 && out_wfc_pw!=2)
-	{
-		return;
-	}
+    if(out_wfc_pw!=1 && out_wfc_pw!=2)
+    {
+        return;
+    }
 
     const int nkstot = kv.get_nkstot();
     const int nks = kv.get_nks();
@@ -61,23 +61,23 @@ void ModuleIO::write_wfc_pw(
             ofs_running << " Write G-space wave functions to file: "
                 << fn << std::endl;
 
-			wfilename[ik_local] = fn;
+            wfilename[ik_local] = fn;
 
-			if (rank_in_pool == 0)
-			{
-				if (out_wfc_pw == 1)
-				{
-					std::ofstream ofs(fn.c_str()); // clear all wavefunc files.
-					ofs.close();
-				}
-				else if (out_wfc_pw == 2)
-				{
-					Binstream wfs(fn, "w");
-					wfs.close();
-				}
-			}
-		}
-	}
+            if (rank_in_pool == 0)
+            {
+                if (out_wfc_pw == 1)
+                {
+                    std::ofstream ofs(fn.c_str()); // clear all wavefunc files.
+                    ofs.close();
+                }
+                else if (out_wfc_pw == 2)
+                {
+                    Binstream wfs(fn, "w");
+                    wfs.close();
+                }
+            }
+        }
+    }
 
 
 #ifdef __MPI

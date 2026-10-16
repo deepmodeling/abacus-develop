@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <string>
+#include <vector>
 
 /**
  * @brief Sep Potential for DFT-1/2 etc.
@@ -23,8 +24,8 @@ class SepPot
     std::string orbital;         ///< atomic angular moment s,p,d,f
     int mesh = 0;                ///< number of points in radial mesh
     int strip_elec = 0;          ///< strip electron amount 1->0.01 50->0.5
-    double* r = nullptr;         ///< radial mesh
-    double* rv = nullptr;        ///< sep potential, but rV, unit: Ry
+    std::vector<double> r;       ///< radial mesh
+    std::vector<double> rv;      ///< sep potential, but rV, unit: Ry
 
     /**
      * @brief Read sep potential from file.

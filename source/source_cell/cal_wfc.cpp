@@ -53,10 +53,8 @@ namespace unitcell
         // This assertion ensures consistency between the two calculation paths.
         assert(nlocal_tmp > 0);
         assert(nlocal_tmp == nlocal);
-        delete[] ucell.iwt2iat;
-        delete[] ucell.iwt2iw;
-        ucell.iwt2iat = new int[nlocal_tmp];
-        ucell.iwt2iw = new int[nlocal_tmp];
+        ucell.iwt2iat.resize(nlocal_tmp);
+        ucell.iwt2iw.resize(nlocal_tmp);
 
         ucell.itia2iat.create(ntype, ucell.namax);
         ucell.set_iat2iwt(npol);
@@ -133,38 +131,38 @@ namespace unitcell
     void cal_natomwfc(std::ofstream& log,int& natomwfc,const int ntype,const Atom* atoms,const int nspin) 
 {
     natomwfc = 0;
-	for (int it = 0; it < ntype; it++) 
-	{
-		//============================
-		// Use pseudo-atomic orbitals
-		//============================
-		int tmp = 0;
-		for (int l = 0; l < atoms[it].ncpp.nchi; l++) 
-		{
-			if (atoms[it].ncpp.oc[l] >= 0) 
-			{
-				if (nspin == 4) 
-				{
-					if (atoms[it].ncpp.has_so) 
-					{
-						tmp += 2 * atoms[it].ncpp.lchi[l];
-						if (fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l] - 0.5)< 1e-6) 
-						{
-							tmp += 2;
-						}
-					} else 
-					{
-						tmp += 2 * (2 * atoms[it].ncpp.lchi[l] + 1);
-					}
-				} else 
-				{
-					tmp += 2 * atoms[it].ncpp.lchi[l] + 1;
-				}
-			}
-		}
-		natomwfc += tmp * atoms[it].na;
-	}
-	ModuleBase::GlobalFunc::OUT(log, "Number of pseudo atomic orbitals", natomwfc);
-	return;
+    for (int it = 0; it < ntype; it++) 
+    {
+        //============================
+        // Use pseudo-atomic orbitals
+        //============================
+        int tmp = 0;
+        for (int l = 0; l < atoms[it].ncpp.nchi; l++) 
+        {
+            if (atoms[it].ncpp.oc[l] >= 0) 
+            {
+                if (nspin == 4) 
+                {
+                    if (atoms[it].ncpp.has_so) 
+                    {
+                        tmp += 2 * atoms[it].ncpp.lchi[l];
+                        if (fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l] - 0.5)< 1e-6) 
+                        {
+                            tmp += 2;
+                        }
+                    } else 
+                    {
+                        tmp += 2 * (2 * atoms[it].ncpp.lchi[l] + 1);
+                    }
+                } else 
+                {
+                    tmp += 2 * atoms[it].ncpp.lchi[l] + 1;
+                }
+            }
+        }
+        natomwfc += tmp * atoms[it].na;
+    }
+    ModuleBase::GlobalFunc::OUT(log, "Number of pseudo atomic orbitals", natomwfc);
+    return;
 }
 }

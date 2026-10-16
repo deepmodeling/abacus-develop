@@ -3,10 +3,11 @@
 #include "source_base/global_variable.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/parallel_comm.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_stodft/sto_hsolver_pw.h"
 #include "source_pw/module_stodft/sto_dos.h"
 #include "source_pw/module_stodft/sto_elecond.h"
 #include "source_pw/module_stodft/sto_forces.h"
@@ -100,15 +101,15 @@ void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     ESolver_KS_PW<T, Device>::before_scf(ucell, istep);
     delete reinterpret_cast<hamilt::HamiltPW<double>*>(this->p_hamilt);
-    this->p_hamilt = new hamilt::HamiltSdftPW<T, Device>(this->pelec->pot,
-                                                         this->pw_wfc,
-                                                         &this->kv,
-                                                         &this->ppcell,
-                                                         &ucell,
-                                                         PARAM.globalv.npol,
-                                                         &this->stoche.emin_sto,
-                                                         &this->stoche.emax_sto);
-    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<T, Device>*>(this->p_hamilt);
+    this->p_hamilt = new StoHamiltPW<T, Device>(this->pelec->pot,
+                                                this->pw_wfc,
+                                                &this->kv,
+                                                &this->ppcell,
+                                                &ucell,
+                                                PARAM.globalv.npol,
+                                                &this->stoche.emin_sto,
+                                                &this->stoche.emax_sto);
+    this->p_hamilt_sto = static_cast<StoHamiltPW<T, Device>*>(this->p_hamilt);
 
     if (istep > 0 && this->inp_->nbands_sto != 0 && this->inp_->initsto_freq > 0 && istep % this->inp_->initsto_freq == 0)
     {
@@ -153,47 +154,47 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
     bool skip_charge = this->inp_->calculation == "nscf" ? true : false;
 
     // hsolver only exists in this function
-    hsolver::HSolverPW_SDFT<T, Device> hsolver_pw_sdft_obj(&this->kv,
-                                                           this->pw_wfc,
-                                                           this->stowf,
-                                                           this->stoche,
-                                                           this->p_hamilt_sto,
-                                                           this->inp_->calculation,
-                                                           this->inp_->basis_type,
-                                                           this->inp_->ks_solver,
-                                                           PARAM.globalv.use_uspp,
-                                                           this->inp_->nspin,
-                                                           hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                                                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                                                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                           hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                                                           this->inp_->nbands,
-                                                           this->inp_->diago_smooth_ethr,
-                                                           this->inp_->pw_diag_ndim,
-                                                           this->inp_->diag_subspace,
-                                                           this->inp_->nb2d,
-                                                           PARAM.globalv.ks_run,
-                                                           PARAM.globalv.all_ks_run,
-                                                           this->inp_->bndpar);
+    StoHSolverPW<T, Device> sto_hsolver_pw_obj(&this->kv,
+                                               this->pw_wfc,
+                                               this->stowf,
+                                               this->stoche,
+                                               this->p_hamilt_sto,
+                                               this->inp_->calculation,
+                                               this->inp_->basis_type,
+                                               this->inp_->ks_solver,
+                                               PARAM.globalv.use_uspp,
+                                               this->inp_->nspin,
+                                               hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                               hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                               hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                               hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                               this->inp_->nbands,
+                                               this->inp_->diago_smooth_ethr,
+                                               this->inp_->pw_diag_ndim,
+                                               this->inp_->diag_subspace,
+                                               this->inp_->nb2d,
+                                               PARAM.globalv.ks_run,
+                                               PARAM.globalv.all_ks_run,
+                                               this->inp_->bndpar);
 
-    hsolver_pw_sdft_obj.solve(ucell,
-                              static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
-                              *this->stp.template get_psi_t<T, Device>(),
-                              this->stp.psi_cpu[0],
-                              this->pelec,
-                              this->pw_wfc,
-                              this->stowf,
-                              istep,
-                              iter,
-                              GlobalV::ofs_running,
-                              skip_charge);
+    sto_hsolver_pw_obj.solve(ucell,
+                             static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
+                             *this->stp.template get_psi_t<T, Device>(),
+                             this->stp.psi_cpu[0],
+                             this->pelec,
+                             this->pw_wfc,
+                             this->stowf,
+                             istep,
+                             iter,
+                             GlobalV::ofs_running,
+                             skip_charge);
 
     // set_diagethr need it
-    this->esolver_KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;
+    this->esolver_KS_ne = sto_hsolver_pw_obj.stoiter.KS_ne;
 
     if (PARAM.globalv.ks_run)
     {
-        Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rho, ucell.symm);
+        module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rho, ucell.symm);
         this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
     }
     else
@@ -225,7 +226,8 @@ void ESolver_SDFT_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matri
 
     Sto_Forces<double, Device> ff(ucell.nat);
 
-    ff.cal_stoforce(force,
+    ff.cal_stoforce(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+                 force,
                     *this->pelec,
                     this->pw_rho,
                     &ucell.symm,
@@ -246,7 +248,9 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matr
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     Sto_Stress_PW<double, Device> ss;
-    ss.cal_stress(stress,
+    ss.cal_stress(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
+                       this->inp_->gga_grad, PARAM.globalv.gamma_only_pw,
+                       stress,
                   *this->pelec,
                   this->pw_rho,
                   &ucell.symm,

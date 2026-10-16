@@ -8,13 +8,13 @@
  * and write the components of the total energy into running_log.
  */
 void OFDFT::print_info(const int iter,
-	ModuleBase::TimePoint &iter_time,
-	const double &energy_current,
-	const double &energy_last,
-	const double &normdLdphi,
-	const elecstate::ElecState *pelec,
-	KEDF_Manager *kedf_manager,
-	const bool conv_esolver)
+    ModuleBase::TimePoint &iter_time,
+    const double &energy_current,
+    const double &energy_last,
+    const double &normdLdphi,
+    const elecstate::ElecState *pelec,
+    KEDF_Manager *kedf_manager,
+    const bool conv_esolver)
 {
     if (iter == 0)
     {
@@ -47,11 +47,11 @@ void OFDFT::print_info(const int iter,
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-	if ((PARAM.inp.out_band[0] > 0 && 
-				((iter + 1) % PARAM.inp.out_band[0] == 0 || 
-				 conv_esolver || 
-				 iter == PARAM.inp.scf_nmax)) || 
-			PARAM.inp.init_chg == "file")
+    if ((PARAM.inp.out_band[0] > 0 && 
+                ((iter + 1) % PARAM.inp.out_band[0] == 0 || 
+                 conv_esolver || 
+                 iter == PARAM.inp.scf_nmax)) || 
+            PARAM.inp.init_chg == "file")
     {
         titles.push_back("E_Total");
         energies_Ry.push_back(pelec->f_en.etot);

@@ -26,6 +26,7 @@ list(APPEND objects
     unitcell_info.cpp
     gint_common.cpp
     gint_interface.cpp
+    gint_prec_ctrl.cpp
     )
 if(USE_CUDA)
   list(APPEND objects

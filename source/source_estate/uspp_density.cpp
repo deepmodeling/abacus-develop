@@ -81,7 +81,7 @@ void UsppProjector<T, Device>::accumulate(const int ik,
     assert(spin >= 0 && static_cast<int>(becsum->size()) >= (spin + 1) * ucell_.nat * nh_tot);
     // Build beta_i(G+k) for this k point before projecting the pseudo-wavefunctions.
     T* vkb = ppcell_.template get_vkb_data<Real>();
-    ppcell_.getvnl(static_cast<Device*>(nullptr), ucell_, ik, vkb);
+    ppcell_.getvnl(static_cast<Device*>(nullptr), ucell_, ik, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), vkb);
     // Each rank forms its PW contribution to <beta|psi>; the pool sum completes the overlap.
     // BLAS 'C' conjugate-transposes the projector matrix; stride includes any padding between states.
     T* overlaps = work.overlaps.template data<T>();

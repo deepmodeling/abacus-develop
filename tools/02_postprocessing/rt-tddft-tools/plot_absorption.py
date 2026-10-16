@@ -122,8 +122,8 @@ def load_efield(file_groups: List[List[str]], step_start: int, step_end: int, dt
             fields = arr[:, 1]
 
             # Map absolute physical time to a 0-based global step index
-            # E.g., t = 0.006 fs with dt = 0.002 fs -> global_step = 2
-            abs_step_indices = np.round(times_fs / dt).astype(int) - 1
+            # E.g., t = 0.006 fs with dt = 0.002 fs -> global_step = 3
+            abs_step_indices = np.round(times_fs / dt).astype(int)
 
             # Calculate relative indices within the current analysis window [step_start, step_end)
             rel_indices = abs_step_indices - step_start

@@ -17,6 +17,7 @@
 #include "source_pw/module_pwdft/stru_fac.h"   // use Structure_Factor
 
 #include <complex>
+#include <fstream>
 
 namespace ModuleIO
 {
@@ -26,7 +27,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
                    const Input_para& inp,
                    K_Vectors& kv,
                    elecstate::ElecState* pelec,
-                   elecstate::DensityMatrix<TK, double>* dm, // mohan add 2025-11-04
+                   module_dm::DensityMatrix<TK, double>* dm, // mohan add 2025-11-04
                    Parallel_Orbitals& pv,
                    Grid_Driver& gd,
                    psi::Psi<TK>* psi,
@@ -47,6 +48,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
                    const Exx_Info& exx_info,
                    const bool conv_esolver,
                    const bool scf_nmax_flag,
-                   const int istep);
+                   const int istep,
+                   std::ofstream& ofs_running);
 } // namespace ModuleIO
 #endif

@@ -314,7 +314,12 @@ void Stress_Func<FPTYPE, Device>::stress_pw_terms(UnitCell& ucell,
                                                   const Charge* const chr,
                                                   ModulePW::PW_Basis* rhopw,
                                                   const pseudopot_cell_vl& locpp,
-                                                  const Structure_Factor& sf)
+                                                  const Structure_Factor& sf,
+                         const int nspin,
+                         const bool domag,
+                         const bool domag_z,
+                         const int gga_grad,
+                         const bool gamma_only_pw)
 {
     ModuleBase::TITLE("Stress", "stress_pw_terms");
 
@@ -328,7 +333,8 @@ void Stress_Func<FPTYPE, Device>::stress_pw_terms(UnitCell& ucell,
     this->stress_ewa(ucell, sigmaewa, rhopw, 0); // remain problem
 
     // stress due to core correlation.
-    this->stress_cc(sigmacc, rhopw, ucell, &sf, 0, locpp.numeric, chr);
+    this->stress_cc(sigmacc, rhopw, ucell, &sf, 0, locpp.numeric, chr,
+                    nspin, domag, domag_z, gga_grad, gamma_only_pw);
 
     // stress due to self-consistent charge.
     for (int i = 0; i < 3; i++)
@@ -336,7 +342,7 @@ void Stress_Func<FPTYPE, Device>::stress_pw_terms(UnitCell& ucell,
         sigmaxc(i, i) = -etxc / ucell.omega;
     }
     // Exchange-correlation for PBE
-    this->stress_gga(ucell, sigmaxc, rhopw, chr);
+    this->stress_gga(ucell, sigmaxc, rhopw, chr, nspin, domag, domag_z, gga_grad);
 
     return;
 }

@@ -39,7 +39,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                  const TwoCenterIntegrator* intor_orb_alpha,
                                  const LCAO_Orbitals* ptr_orb,
                                  const int& nks_in,
-                                 elecstate::DensityMatrix<TK, double>* DM_in
+                                 module_dm::DensityMatrix<TK, double>* DM_in
 #ifdef __MLALGO
                                  ,
                                  LCAO_Deepks<TK>* ld_in
@@ -67,7 +67,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 #endif
 
   private:
-    elecstate::DensityMatrix<TK, double>* DM;
+    module_dm::DensityMatrix<TK, double>* DM;
 
     const UnitCell* ucell = nullptr;
     Grid_Driver* gridD = nullptr;

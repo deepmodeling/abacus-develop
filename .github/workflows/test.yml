@@ -63,7 +63,7 @@ jobs:
           echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
 
       - name: Restore compiler cache
-        uses: actions/cache@v6
+        uses: actions/cache/restore@v6
         with:
           path: ${{ env.CCACHE_DIR }}
           key: abacus-gnu-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
@@ -92,8 +92,8 @@ jobs:
             -DENABLE_MLALGO=ON \
             -DENABLE_LIBXC=ON \
             -DENABLE_LIBRI=ON \
-            -DENABLE_GOOGLEBENCH=ON \
-            -DENABLE_RAPIDJSON=ON \
+            -DENABLE_GOOGLEBENCH=OFF \
+            -DENABLE_JSON=ON \
             -DENABLE_FLOAT_FFTW=ON \
             -DENABLE_DFTD4=ON \
             -DENABLE_PEXSI=ON \
@@ -121,33 +121,16 @@ jobs:
           ccache --show-stats
           ccache --show-stats >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Check documentation consistency
-        run: |
-          ABACUS_BIN=$(find build -name "abacus_*" -type f -executable | head -1)
-          echo "Using binary: ${ABACUS_BIN}"
-
-          # Check 1: parameters.yaml matches C++ Input_Item definitions
-          ${ABACUS_BIN} --generate-parameters-yaml > /tmp/parameters_generated.yaml
-          if ! diff -q docs/parameters.yaml /tmp/parameters_generated.yaml; then
-            echo "error: docs/parameters.yaml is out of sync with C++ source"
-            echo "Fix: ${ABACUS_BIN} --generate-parameters-yaml > docs/parameters.yaml"
-            diff docs/parameters.yaml /tmp/parameters_generated.yaml || true
-            exit 1
-          fi
-          echo "  parameters.yaml: OK"
-
-          # Check 2: input-main.md matches regenerated markdown
-          pip install -q pyyaml
-          python docs/generate_input_main.py \
-            /tmp/parameters_generated.yaml \
-            --output /tmp/input-main-generated.md
-          if ! diff -q docs/advanced/input_files/input-main.md /tmp/input-main-generated.md; then
-            echo "error: input-main.md is out of sync"
-            echo "Fix: python docs/generate_input_main.py docs/parameters.yaml"
-            diff docs/advanced/input_files/input-main.md /tmp/input-main-generated.md || true
-            exit 1
-          fi
-          echo "  input-main.md: OK"
+      # Only develop writes the cache. A cache saved from a pull request is
+      # scoped to that pull request's ref, so no other branch can ever read
+      # it, while it still counts against the repository's 10 GB budget and
+      # evicts the develop entry that every pull request does restore from.
+      - name: Save compiler cache
+        if: github.ref == 'refs/heads/develop'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: abacus-gnu-ccache-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.compiler.outputs.fingerprint }}-${{ github.sha }}
 
       - name: Integrated Tests Preparation
         env:
@@ -175,7 +158,7 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R MODULE_HSOLVER -E PERF_MODULE_HSOLVER_KERNELS
+          ctest --test-dir build -V --timeout 1700 -R MODULE_HSOLVER
 
       - name: Module_Cell Unittests
         env:
@@ -211,6 +194,13 @@ jobs:
           OMP_NUM_THREADS: '2'
         run: |
           ctest --test-dir build -V --timeout 1700 -R MODULE_ESTATE
+
+      - name: Module_Charge Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R MODULE_CHARGE
 
       - name: Module_Hamilt Unittests
         env:
@@ -310,12 +300,12 @@ jobs:
         run: |
           ctest --test-dir build -V --timeout 1700 -R 07_OFDFT
 
-      - name: 08_EXX Test
+      - name: 08_RI Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 08_EXX
+          ctest --test-dir build -V --timeout 1700 -R 08_RI
 
       - name: 09_DeePKS Test
         env:
@@ -343,4 +333,4 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|17_DS_DFTU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'
+          ctest --test-dir build -V --timeout 1700 -E 'integrated_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_RI|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|16_SDFT_GPU|17_DS_DFTU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_CHARGE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'

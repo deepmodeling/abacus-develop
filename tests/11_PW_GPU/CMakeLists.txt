@@ -10,7 +10,7 @@ if(ENABLE_ASAN)
 else()
     add_test(
         NAME 11_PW_GPU
-        COMMAND ${BASH} ../integrate/Autotest.sh -f CASES_GPU.txt -a ${ABACUS_BIN_PATH} -n 4
+        COMMAND ${BASH} ../integrate/Autotest.sh -f CASES_GPU.txt -a ${ABACUS_BIN_PATH} -n 4 -j auto
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/11_PW_GPU
     )
 endif()

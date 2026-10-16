@@ -1,8 +1,8 @@
 #include "source_pw/module_pwdft/setup_pot.h"
 
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_pw/module_pwdft/onsite_proj.h"
+#include "source_pw/module_proj/onsite_proj.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/dftu_base.h" // mohan add 2025-11-06
 #include "source_pw/module_pwdft/vsep_pw.h"
@@ -47,13 +47,12 @@ void pw::setup_pot(const int istep,
     //! 2) Symmetrize the charge density (rho)
     //----------------------------------------------------------
 
-    //! Symmetry_rho should behind init_scf, because charge should be
-    //! initialized first. liuyu comment: Symmetry_rho should be
+    //! Density symmetrization should be behind init_scf, because charge should be
+    //! initialized first. liuyu comment: it should be
     //! located between init_rho and v_of_rho?
-    Symmetry_rho srho;
     for (int is = 0; is < inp.nspin; is++)
     {
-        srho.begin(is, chr, pw_rhod, ucell.symm);
+        module_charge::cal_rhog_symm(is, chr, pw_rhod, ucell.symm);
     }
 
     //----------------------------------------------------------
@@ -131,8 +130,9 @@ void pw::setup_pot(const int istep,
                   inp.device,
                   PARAM.globalv.hubbard_u,
                   PARAM.globalv.uramping,
-                  inp.occ_mat_ctrl,
-                  inp.mixing_dftu);
+                  inp.init_occ_mat,
+                  inp.mixing_dftu,
+                  DFTU_BASE::SOC_LAYOUT_PAULI);
     }
 
     return;

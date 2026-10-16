@@ -5,7 +5,7 @@ calculation       relax
 nspin             2
 
 nbands            8
-symmetry          1
+symmetry          0
 pseudo_dir        ../../PP_ORB
 orbital_dir       ../../PP_ORB
 
@@ -33,3 +33,4 @@ mixing_beta       0.5
 gamma_only        1
 out_mat_hs        1 5
 out_app_flag      1
+out_stru          1

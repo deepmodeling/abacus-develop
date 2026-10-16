@@ -8,7 +8,7 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     const int& pol,
     const int& npw,
     const int& npwx,
-	const Real& tpiba,
+    const Real& tpiba,
     const Real * gcar,
     const Real * kvec_c,
     const T * rhog,
@@ -18,14 +18,14 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
 #pragma omp parallel for schedule(static, 1024)
 #endif
     for(int ig = 0; ig < npw; ig++) {
-		// the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
-		// double kplusg = wfc_basis->getgpluskcar(ik,ig)[ipol] * tpiba;
+        // the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
+        // double kplusg = wfc_basis->getgpluskcar(ik,ig)[ipol] * tpiba;
         Real kplusg = (gcar[(ik * npwx + ig) * 3 + pol] +
                        kvec_c[ik * 3 + pol]) * tpiba;
                        
-		// calculate the charge density gradient in reciprocal space.
-		porter[ig] = T(0.0, kplusg) * rhog[ig];
-	}
+        // calculate the charge density gradient in reciprocal space.
+        porter[ig] = T(0.0, kplusg) * rhog[ig];
+    }
 }
 
 template <typename T, typename Device>
@@ -40,7 +40,7 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
 #endif
     for (int ir = 0; ir < nrxx; ++ir) {
         grad[ipol * nrxx + ir] = porter[ir];
-	}
+    }
 }
 
 template struct xc_functional_grad_wfc_op<std::complex<float>, base_device::DEVICE_CPU>;

@@ -5,7 +5,10 @@
 #include "source_io/module_json/output_info.h"
 
 #include "source_estate/update_pot.h" // mohan add 20251016
-#include "source_estate/module_charge/chgmixing.h" // mohan add 20251018
+#include "source_estate/module_charge/chg_routine.h" // mohan add 20251018
+#include "source_estate/module_charge/chg_drho.h" // module_charge::cal_drho/cal_dkin
+#include "source_estate/module_charge/chg_init.h" // module_charge::InitRhoCfg
+#include "source_estate/module_charge/chg_tools.h" // module_charge::check_rho
 #include "source_pw/module_pwdft/setup_pwwfc.h" // mohan add 20251018
 #include "source_hsolver/hsolver.h"
 #include "source_io/module_energy/write_eig_occ.h"
@@ -64,10 +67,32 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     //! 3) setup charge mixing
     p_chgmix = new Charge_Mixing();
-    p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
-    p_chgmix->set_mixing(inp.mixing_mode, inp.mixing_beta, inp.mixing_ndim,
-      inp.mixing_gg0, inp.mixing_tau, inp.mixing_beta_mag, inp.mixing_gg0_mag,
-      inp.mixing_gg0_min, inp.mixing_angle, inp.mixing_dmr, ucell.omega, ucell.tpiba);
+    // Aggregate-initialize MixingConfig so that adding a field without
+    // updating this list is a compile error (-Wmissing-field-initializers
+    // promoted to error via pragma). Fields are in declaration order.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic error "-Wmissing-field-initializers"
+    MixingConfig mix_cfg{
+        inp.mixing_mode,                                  // mixing_mode
+        inp.mixing_beta,                                  // mixing_beta
+        inp.mixing_ndim,                                  // mixing_ndim
+        inp.mixing_gg0,                                   // mixing_gg0
+        inp.mixing_tau && XC_Functional::get_ked_flag(),  // mixing_tau
+        inp.mixing_beta_mag,                              // mixing_beta_mag
+        inp.mixing_gg0_mag,                               // mixing_gg0_mag
+        inp.mixing_gg0_min,                               // mixing_gg0_min
+        inp.mixing_angle,                                 // mixing_angle
+        inp.mixing_dmr,                                   // mixing_dmr
+        inp.nspin,                                        // nspin
+        inp.scf_thr_type,                                 // scf_thr_type
+        PARAM.globalv.double_grid,                        // double_grid
+        PARAM.globalv.gamma_only_pw,                      // gamma_only_pw
+        PARAM.globalv.domag,                              // domag
+        PARAM.globalv.domag_z,                            // domag_z
+        inp.scf_nmax                                      // scf_nmax
+    };
+#pragma GCC diagnostic pop
+    p_chgmix->set_mixing(mix_cfg, this->pw_rho, this->pw_rhod, ucell.omega, ucell.tpiba);
     p_chgmix->init_mixing();
 
     //! 4) setup plane wave for electronic wave functions
@@ -75,16 +100,35 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     //! 5) read in charge density, mohan add 2025-11-28
     //! Inititlize the charge density.
-    this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, this->pw_wfc);
-    this->chr.check_rho(); // check the rho
+    module_charge::InitRhoCfg init_rho_cfg;
+    init_rho_cfg.init_chg = inp.init_chg;
+    init_rho_cfg.suffix = inp.suffix;
+    init_rho_cfg.esolver_type = inp.esolver_type;
+    init_rho_cfg.global_readin_dir = PARAM.globalv.global_readin_dir;
+    init_rho_cfg.nelec = inp.nelec;
+    init_rho_cfg.nbands = inp.nbands;
+    init_rho_cfg.test_charge = inp.test_charge;
+    init_rho_cfg.domag = PARAM.globalv.domag;
+    init_rho_cfg.domag_z = PARAM.globalv.domag_z;
+    init_rho_cfg.npol = PARAM.globalv.npol;
+    init_rho_cfg.meta_gga = XC_Functional::get_ked_flag();
+    this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, this->pw_wfc, init_rho_cfg);
+    module_charge::check_rho(this->chr.rho, this->chr.nspin, this->chr.rhopw->nrxx, ucell.omega,
+                             this->chr.rhopw->nxyz, inp.nelec); // check the rho
   
 }
 
 void ESolver_KS::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {}
 
+std::string ESolver_KS::diag_policy(const int istep) const
+{
+    return this->inp_->esolver_type;
+}
+
 void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
+    const std::string policy = this->diag_policy(istep);
     // 1) use Hamiltonian to obtain charge density
     this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
@@ -97,27 +141,29 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
     // example wavefunctions uses 20 processors while density uses 10.
     if (PARAM.globalv.ks_run)
     {
-        drho = p_chgmix->get_drho(&this->chr, this->inp_->nelec);
+        drho = module_charge::cal_drho(&this->chr, this->inp_->nelec, *this->pw_rho,
+                                       p_chgmix->get_mixing_config(), ucell.omega, ucell.tpiba);
         hsolver_error = 0.0;
         if (iter == 1 && this->inp_->calculation != "nscf")
         {
             hsolver_error
-                = hsolver::cal_hsolve_error(this->inp_->basis_type, this->inp_->esolver_type, diag_ethr, this->inp_->nelec);
+                = hsolver::cal_hsolve_error(this->inp_->basis_type, policy, diag_ethr, this->inp_->nelec);
 
             // The error of HSolver is larger than drho,
             // so a more precise HSolver should be executed.
             if (hsolver_error > drho)
             {
                 diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running, this->inp_->basis_type,
-                            this->inp_->esolver_type, this->inp_->precision, hsolver_error,
+                            policy, this->inp_->precision, hsolver_error,
                             drho, diag_ethr, this->inp_->nelec);
 
                 this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
-                drho = p_chgmix->get_drho(&this->chr, this->inp_->nelec);
+                drho = module_charge::cal_drho(&this->chr, this->inp_->nelec, *this->pw_rho,
+                                               p_chgmix->get_mixing_config(), ucell.omega, ucell.tpiba);
 
                 hsolver_error = hsolver::cal_hsolve_error(this->inp_->basis_type,
-                                this->inp_->esolver_type, diag_ethr, this->inp_->nelec);
+                                policy, diag_ethr, this->inp_->nelec);
             }
         }
     }
@@ -140,7 +186,12 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
     this->niter = this->maxniter;
     this->diag_ethr = this->inp_->pw_diag_thr;
     this->scf_nmax_flag = false; // mohan add 2025-09-21
-    for (int iter = 1; iter <= this->maxniter; ++iter)
+    this->scf_rerun_ = false;         // clear any stale rerun request before the loop
+    this->oscillate_esolver = false;  // clear any stale oscillation flag before the loop
+    int iter = 1;
+    int rerun_count = 0;
+    const int max_rerun = 100;  // safety net: EXX rerun should never exceed this
+    while (iter <= this->maxniter)
     {
         if(iter == this->maxniter)
         {
@@ -166,6 +217,29 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
             }
             break;
         }
+
+        // 7) SCF rerun hook. A subclass (e.g. ESolver_KS_PW via EXX) may set
+        //    scf_rerun_ to request a brand-new SCF run starting at iter=1,
+        //    typically after SCF converged but a post-SCF step (EXX exact
+        //    exchange) needs another full SCF. When set, clear the flag and
+        //    restart the loop with iter=1 so every iter-based guard
+        //    (DFT+U occupation-matrix writers, frequency-gated IO, etc.) sees
+        //    a valid 1-based iter. This replaces the old "iter=0 restart
+        //    signal" trick that wrote 0 into the iter reference.
+        if (this->scf_rerun_)
+        {
+            if (++rerun_count > max_rerun)
+            {
+                std::cout << " WARNING: SCF rerun limit (" << max_rerun
+                          << ") reached, stopping." << std::endl;
+                break;
+            }
+            this->scf_rerun_ = false;
+            iter = 1;
+            continue;
+        }
+
+        ++iter;
     } // end scf iterations
 
     // 7) after scf
@@ -195,15 +269,16 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
     // (meaning "lambda loop not yet run this iteration"); otherwise -1 (no RMS column).
     this->ds_rms_ = this->inp_->sc_mag_switch ? 0.0 : -1.0;
 
-    if (this->inp_->esolver_type == "ksdft")
+    const std::string policy = this->diag_policy(istep);
+    if (policy == "ksdft")
     {
-        diag_ethr = hsolver::set_diagethr_ks(this->inp_->basis_type, this->inp_->esolver_type,
+        diag_ethr = hsolver::set_diagethr_ks(this->inp_->basis_type, policy,
           this->inp_->calculation, this->inp_->init_chg, this->inp_->precision, istep, iter,
           drho, this->inp_->pw_diag_thr, diag_ethr, this->inp_->nelec, this->inp_->scf_thr);
     }
-    else if (this->inp_->esolver_type == "sdft")
+    else if (policy == "sdft")
     {
-        diag_ethr = hsolver::set_diagethr_sdft(this->inp_->basis_type, this->inp_->esolver_type,
+        diag_ethr = hsolver::set_diagethr_sdft(this->inp_->basis_type, policy,
           this->inp_->calculation, this->inp_->init_chg, istep, iter, drho,
           this->inp_->pw_diag_thr, diag_ethr, this->inp_->nbands, esolver_KS_ne,
           this->inp_->nelec, this->inp_->scf_thr);
@@ -211,6 +286,11 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
 
     // save input charge density (rho)
     this->chr.save_rho_before_sum_band();
+}
+
+ESolver_KS::DensityStage ESolver_KS::density_stage(const int istep, const int iter) const
+{
+    return DensityStage::standard;
 }
 
 void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
@@ -255,16 +335,46 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     }
 #endif
 
-    module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr, this->p_chgmix, 
-      this->pw_rhod->nrxx, this->drho, this->oscillate_esolver, conv_esolver, hsolver_error, 
-      this->scf_thr, this->scf_ene_thr, converged_u, *this->inp_);
+    module_charge::ScfMixingCtx ctx;
+    ctx.hsolver_error = hsolver_error;
+    ctx.scf_thr = this->scf_thr;
+    ctx.scf_ene_thr = this->scf_ene_thr;
+    ctx.converged_u = converged_u;
+    ctx.ks_run = PARAM.globalv.ks_run;
+    ctx.drho = this->drho;
+    ctx.oscillate_esolver = this->oscillate_esolver;
+    ctx.conv_esolver = conv_esolver;
+    const DensityStage stage = this->density_stage(istep, iter);
+    if (stage == DensityStage::predictor)
+    {
+        // Build the endpoint potential from the full predicted density, including tau.
+        // Mixing it with the old endpoint would spoil the subsequent midpoint estimate.
+        ctx.conv_esolver = false;
+        ctx.oscillate_esolver = false;
+    }
+    else
+    {
+        module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr,
+            *this->chr.rhopw, this->p_chgmix, ctx, *this->inp_);
+    }
+    this->drho = ctx.drho;
+    this->oscillate_esolver = ctx.oscillate_esolver;
+    conv_esolver = ctx.conv_esolver;
 
     // 2.3) Update potentials (should be done every SF iter)
     elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
 
     // 3.1) calculate energies
-    this->pelec->cal_energies(1); // Harris-Foulkes functional
-    this->pelec->cal_energies(2); // Kohn-Sham functional
+    this->pelec->cal_energies(1,
+                              this->inp_->imp_sol,
+                              this->inp_->sc_mag_switch,
+                              this->inp_->dft_plus_u,
+                              this->inp_->assume_isolated); // Harris-Foulkes functional
+    this->pelec->cal_energies(2,
+                              this->inp_->imp_sol,
+                              this->inp_->sc_mag_switch,
+                              this->inp_->dft_plus_u,
+                              this->inp_->assume_isolated); // Kohn-Sham functional
 
     if (iter == 1)
     {
@@ -277,7 +387,8 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     double dkin = 0.0; // for meta-GGA
     if (XC_Functional::get_ked_flag())
     {
-        dkin = p_chgmix->get_dkin(&this->chr, this->inp_->nelec);
+        dkin = module_charge::cal_dkin(&this->chr, this->inp_->nelec, *this->pw_rho,
+                                       p_chgmix->get_mixing_config(), ucell.omega);
     }
 
     // Iter finish 
@@ -289,16 +400,16 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // print energies
     elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho,
-    dkin, duration, diag_ethr, 0, true, this->ds_rms_);
+    dkin, duration, *this->inp_, PARAM.globalv.two_fermi, diag_ethr, 0, true, this->ds_rms_);
 
 
-#ifdef __RAPIDJSON
+#ifdef __JSON
     // add Json of scf mag
     Json::add_output_scf_mag(ucell.magnet.tot_mag, ucell.magnet.abs_mag,
                              this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
                              this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
                              drho, duration);
-#endif //__RAPIDJSON
+#endif //__JSON
 
 }
 
@@ -329,7 +440,7 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
                              istep);
 
     // 4) write band information to band.txt
-    ModuleIO::write_bands(*this->inp_, this->pelec->ekb, this->kv);
+    ModuleIO::write_bands(*this->inp_, this->pelec->ekb, this->kv, GlobalV::ofs_running);
 
 }
 

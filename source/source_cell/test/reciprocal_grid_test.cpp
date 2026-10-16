@@ -319,3 +319,18 @@ TEST_F(ReciprocalGridTest, ReduceIbzMpKLattice)
     }
     EXPECT_NEAR(sum, 1.0, 1e-12);
 }
+
+TEST(ReciprocalGrid, KpointsEquivalentModuloReciprocalVectors)
+{
+    const ModuleBase::Vector3<double> first(-0.499999, 0.125, -0.25);
+    const ModuleBase::Vector3<double> translated(0.500001, -1.875, 2.75);
+    const ModuleBase::Vector3<double> near(0.5000012, -1.875, 2.75);
+    const ModuleBase::Vector3<double> different(0.500011, -1.875, 2.75);
+    const double epsilon = 1e-6;
+    EXPECT_TRUE(ModuleCell::kpoints_equivalent(first, translated, epsilon));
+    EXPECT_TRUE(ModuleCell::kpoints_equivalent(translated, first, epsilon));
+    EXPECT_TRUE(ModuleCell::kpoints_equivalent(first, near, epsilon));
+    EXPECT_FALSE(ModuleCell::kpoints_equivalent(first, different, epsilon));
+    EXPECT_DOUBLE_EQ(first.x, -0.499999);
+    EXPECT_DOUBLE_EQ(translated.x, 0.500001);
+}

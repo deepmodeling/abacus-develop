@@ -279,5 +279,3 @@ private:
 }
 #endif //PlaneWave_K class
 
-#include "./pw_basis_k_big.h" //temporary it will be removed
-

@@ -9,6 +9,10 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "source_base/parallel_reduce.h"
+#include "source_cell/klist.h"
+#include "source_cell/module_symmetry/symmetry.h"
+
+#include <memory>
 
 #include "dftu_nao_adj.h"
 #include "dftu_nao_fs_r.h"
@@ -26,7 +30,7 @@ hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* 
                                                  Plus_U_Base* p_dftu,
                                                  const int nspin_in,
                                                  const double onsite_radius,
-                                                 const elecstate::DensityMatrix<TK, double>* dm_in)
+                                                 const module_dm::DensityMatrix<TK, double>* dm_in)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
       ucell(&ucell_in),
       dftu(p_dftu),
@@ -63,14 +67,14 @@ hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::DFTU_onsite(HS_Matrix_K<TK>* 
  * 
  * Case 1: Occ_mat NOT ready (!is_occmat_ready)
  *   - First electronic iteration: calculates occupation matrix from density matrix (DMR)
- *     * Fetches the real-space DMR via dm_->get_DMR_pointer()
+ *     * Fetches the real-space DMR via dm_->get_dmr_ptr()
  *     * Accumulates contributions from all atom pairs via DFTU_LCAO::cal_occ_ijr()
  *     * Performs MPI reduction to sum occ across processes
  *     * Stores result via set_occ_mat_flat() for use in pot_onsite calculation
  *     * For nspin=1: occ is scaled by 0.5 (since only one spin channel computed)
  *   - Subsequent iterations: occ_mat is computed fresh each iteration from updated DMR
  * 
- * Case 2: Occ_mat IS ready (is_occmat_ready, i.e., read from dm_onsite.txt file)
+ * Case 2: Occ_mat IS ready (is_occmat_ready, i.e., read from occ_mat.txt file)
  *   - First electronic iteration: uses pre-read occ_mat directly without DMR calculation
  *     * Skips DMR-based occ calculation entirely
  *     * Reads occ_mat from stored data via get_occ_mat()
@@ -124,6 +128,50 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     const Parallel_Orbitals* pv = this->hR->get_atom_pair(0).get_paraV();
     // nlm_tot is precomputed in the constructor (structure snapshot)
 
+    // (symmetry) when crystal symmetry reduces the k-mesh, dm_->get_dmr_ptr()
+    // was Fourier-transformed from the irreducible k-points only and is not
+    // actually symmetric; reconstruct the full-BZ DMR once here (reused by every
+    // atom below) via the same D(k) restoration EXX already uses for its own
+    // real-space density matrix (ModuleSymmetry::Symmetry_rotation::restore_dm).
+    std::unique_ptr<module_dm::DensityMatrix<TK, double>> dmr_sym;
+    if (!this->dftu->is_occmat_ready() && this->kv_ != nullptr && ModuleSymmetry::Symmetry::symm_flag == 1
+        && !this->kv_->kstars.empty())
+    {
+        if (!this->symrot_built_)
+        {
+            const std::array<int, 3> period{ this->kv_->nmp[0], this->kv_->nmp[1], this->kv_->nmp[2] };
+            // for return_lattice to calculate Ms
+            this->symrot_.find_irred_sector(this->ucell->symm, this->ucell->atoms,
+                this->ucell->nat, this->ucell->ntype, this->ucell->iat2it, this->ucell->iat2ia,
+                ModuleSymmetry::Symmetry_rotation_k::get_bvk_cells(period), period, this->ucell->lat);
+            this->symrot_.cal_Ms(*this->kv_, this->ucell->symm, this->ucell->atoms,
+                this->ucell->latvec, this->ucell->lmax,
+                this->ucell->nat, this->ucell->iat2it, this->ucell->iat2ia,
+                *pv, this->nspin);
+            this->symrot_built_ = true;
+        }
+        const int nspin0 = (this->nspin == 2) ? 2 : 1;
+        // (k-point pools, KPAR>1) restore_dm() now returns only the stars of THIS pool's own
+        // local irreducible k-points (see its definition for why that's enough); kvec_d_full
+        // must be built the same way -- one entry per star member of each local ibz-k,
+        // enumerated in the same order restore_dm uses for its spin-0 block (kv.ik2iktot maps
+        // the spin-0 and spin-1 blocks to the same sequence of global ibz indices, so a single
+        // list built from the spin-0 mapping is valid for the whole nspin0-block DensityMatrix).
+        const int nk_local = this->kv_->get_nks() / nspin0;
+        const int nks_ibz_global = static_cast<int>(this->kv_->kstars.size());
+        std::vector<ModuleBase::Vector3<double>> kvec_d_full;
+        for (int ik_local = 0; ik_local < nk_local; ++ik_local)
+        {
+            const int ik_ibz = this->kv_->ik2iktot[ik_local] % nks_ibz_global;
+            for (const std::pair<const int, ModuleBase::Vector3<double>>& isym_kvd : this->kv_->kstars[ik_ibz]) { kvec_d_full.push_back(isym_kvd.second); }
+        }
+        const std::vector<std::vector<TK>> dmk_full = this->symrot_.restore_dm(*this->kv_, this->dm_->get_dmk_vec(), *pv);
+        dmr_sym.reset(new module_dm::DensityMatrix<TK, double>(pv, nspin0, kvec_d_full, static_cast<int>(kvec_d_full.size())));
+        dmr_sym->init_dmr(*this->dm_->get_dmr_ptr(1));
+        dmr_sym->get_dmk_vec() = dmk_full;
+        dmr_sym->cal_dmr(-1);
+    }
+
     // loop over all Hubbard-projector center atoms (iat0)
     int atom_index = 0;
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
@@ -147,7 +195,8 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         {
             // DMR is guaranteed ready here: otherwise the early exit above
             // would have returned. DMR index is 1-based, hence +1.
-            const hamilt::HContainer<double>* dmr = this->dm_->get_DMR_pointer(this->current_spin + 1);
+            const hamilt::HContainer<double>* dmr = this->dm_->get_dmr_ptr(this->current_spin + 1);
+            if (dmr_sym) { dmr = dmr_sym->get_dmr_ptr(this->current_spin + 1); }
             DFTU_LCAO::compute_occ_from_dmr(*this->ucell,
                                             *this->dftu,
                                             iat0,

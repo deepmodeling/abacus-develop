@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_CUDA_MEM_WRAPPER_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_CUDA_MEM_WRAPPER_H
+
 #include <cuda_runtime.h>
 #include "source_base/tool_quit.h"
 #include "source_base/module_device/device_check.h"
@@ -169,3 +171,5 @@ class CudaMemWrapper
     bool malloc_host_ = false;
     cudaStream_t stream_ = 0;
 };
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_KERNEL_CUDA_MEM_WRAPPER_H

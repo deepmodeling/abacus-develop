@@ -3,6 +3,10 @@
 
 #include "source_base/constants.h"
 #include "source_base/element_name.h"
+#ifdef __MPI
+#include "source_base/parallel_reduce.h"
+#include <mpi.h>
+#endif
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 
@@ -231,6 +235,15 @@ void Vdwd4::compute(double& energy_ha,
                                             smooth_width_3b_);
     check_dftd4_error(error, "dftd4_set_model_realspace_cutoff_smooth");
 
+#ifdef __MPI
+    int rank = 0;
+    int nranks = 1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nranks);
+    dftd4_set_model_work_partition(error, model, rank, nranks);
+    check_dftd4_error(error, "dftd4_set_model_work_partition");
+#endif
+
     std::vector<char> method(xc_name_.begin(), xc_name_.end());
     method.push_back('\0');
 
@@ -246,6 +259,18 @@ void Vdwd4::compute(double& energy_ha,
 
     dftd4_get_dispersion(error, mol, model, param, &energy_ha, gradient, sigma);
     check_dftd4_error(error, "dftd4_get_dispersion");
+
+#ifdef __MPI
+    Parallel_Reduce::reduce_all(energy_ha);
+    if (gradient != nullptr)
+    {
+        Parallel_Reduce::reduce_all(gradient, 3 * ucell_.nat);
+    }
+    if (sigma != nullptr)
+    {
+        Parallel_Reduce::reduce_all(sigma, 9);
+    }
+#endif
 
     dftd4_delete_param(&param);
     dftd4_delete_model(&model);

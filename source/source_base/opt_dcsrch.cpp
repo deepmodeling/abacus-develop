@@ -1,10 +1,10 @@
 #include "opt_dcsrch.h"
 
 #include <math.h>
-#include <string.h>
 
 // This file is translated from fortran codes dcstep.f of scipy.
-// The structure and all annotation of the original file have been retained.
+// The numerical algorithm and original Fortran annotations are retained;
+// status storage uses std::string.
 // See original source at https://github.com/scipy/scipy/blob/main/scipy/optimize/minpack2/dcstep.f.
 // sunliang 2022-05-30
 
@@ -16,7 +16,7 @@ int dcsrch(double& stp,
            double& ftol,
            double& gtol,
            double& xtol,
-           char* task,
+           std::string& task,
            double& stpmin,
            double& stpmax,
            int* isave,
@@ -115,7 +115,7 @@ int dcsrch(double& stp,
     // c            is less than xtol.
     // c         On exit xtol is unchanged.
     // c
-    // c       task is a character variable of length at least 60.
+    // c       task is a status string updated in place.
     // c         On initial entry task must be set to 'START'.
     // c         On exit task indicates the required action:
     // c
@@ -184,45 +184,45 @@ int dcsrch(double& stp,
                                         double&,
                                         double&);
     // c     Initialization block.
-    if (strncmp(task, "START", 5) == 0)
+    if (task.compare(0, 5, "START") == 0)
     {
         // c        Check the input arguments for errors.
         if (stp < stpmin)
         {
-            strcpy(task, "ERROR: STP .LT. STPMIN");
+            task = "ERROR: STP .LT. STPMIN";
         }
         if (stp > stpmax)
         {
-            strcpy(task, "ERROR: STP .GT. STPMAX");
+            task = "ERROR: STP .GT. STPMAX";
         }
         if (g >= 0.)
         {
-            strcpy(task, "ERROR: INITIAL G .GE. ZERO");
+            task = "ERROR: INITIAL G .GE. ZERO";
         }
         if (ftol < 0.)
         {
-            strcpy(task, "ERROR: FTOL .LT. ZERO");
+            task = "ERROR: FTOL .LT. ZERO";
         }
         if (gtol < 0.)
         {
-            strcpy(task, "ERROR: GTOL .LT. ZERO");
+            task = "ERROR: GTOL .LT. ZERO";
         }
         if (xtol < 0.)
         {
-            strcpy(task, "ERROR: XTOL .LT. ZERO");
+            task = "ERROR: XTOL .LT. ZERO";
         }
         if (stpmin < 0.)
         {
-            strcpy(task, "ERROR: STPMIN .LT. ZERO");
+            task = "ERROR: STPMIN .LT. ZERO";
         }
         if (stpmax < stpmin)
         {
-            strcpy(task, "ERROR: STPMAX .LT. STPMIN");
+            task = "ERROR: STPMAX .LT. STPMIN";
         }
 
         // c        Exit if there are errors on input.
 
-        if (strncmp(task, "ERROR", 5) == 0)
+        if (task.compare(0, 5, "ERROR") == 0)
         {
             return 0;
         }
@@ -250,7 +250,7 @@ int dcsrch(double& stp,
         gy = ginit;
         stmin = zero;
         stmax = stp + stp * xtrapu;
-        strcpy(task, "FG");
+        task = "FG";
         goto L10;
     }
     else
@@ -293,32 +293,31 @@ int dcsrch(double& stp,
 
     if (brackt && (stp <= stmin || stp >= stmax))
     {
-        strcpy(task, "WARNING: ROUNDING ERRORS PREVENT PROGRESS");
+        task = "WARNING: ROUNDING ERRORS PREVENT PROGRESS";
     }
     if (brackt && stmax - stmin <= xtol * stmax)
     {
-        strcpy(task, "WARNING: XTOL TEST SATISFIED");
+        task = "WARNING: XTOL TEST SATISFIED";
     }
     if (stp == stpmax && f <= ftest && g <= gtest)
     {
-        strcpy(task, "WARNING: STP = STPMAX");
+        task = "WARNING: STP = STPMAX";
     }
     if (stp == stpmin && (f > ftest || g >= gtest))
     {
-        strcpy(task, "WARNING: STP = STPMIN");
+        task = "WARNING: STP = STPMIN";
     }
 
     // c     Test for convergence.
 
     if (f <= ftest && std::abs(g) <= gtol * (-ginit))
     {
-        strcpy(task, "CONVERGENCE");
-        // strcpy(task, "CONVERGENCE", 11);
+        task = "CONVERGENCE";
     }
 
     // c     Test for termination.
 
-    if (strncmp(task, "WARN", 4) == 0 || strncmp(task, "CONV", 4) == 0)
+    if (task.compare(0, 4, "WARN") == 0 || task.compare(0, 4, "CONV") == 0)
     {
         goto L10;
     }
@@ -389,7 +388,7 @@ int dcsrch(double& stp,
     }
     // c     Obtain another function and derivative.
 
-    strcpy(task, "FG");
+    task = "FG";
 L10:
     // c     Save local variables.
     if (brackt)
@@ -715,7 +714,7 @@ L10:
     stp = stpf;
 }
 
-void Opt_DCsrch::dcSrch(double& f, double& g, double& rstp, char* rtask)
+void Opt_DCsrch::dcSrch(double& f, double& g, double& rstp, std::string& rtask)
 {
     dcsrch(rstp,
            f,

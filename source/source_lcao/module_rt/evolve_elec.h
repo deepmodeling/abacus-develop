@@ -3,10 +3,11 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_base/module_container/ATen/core/tensor.h"     // ct::Tensor
-#include "source_base/module_device/device.h"                  // base_device
-#include "source_base/module_device/memory_op.h"               // memory operations
+#include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
+#include "source_base/module_device/device.h"              // base_device
+#include "source_base/module_device/memory_op.h"           // memory operations
 #include "source_hamilt/hamilt.h"
+#include "source_lcao/module_rt/band_energy.h"
 #include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 #include "source_lcao/module_rt/td_moving_gauge.h"
@@ -149,7 +150,7 @@ class Evolve_elec
     ~Evolve_elec();
 
   private:
-    static void solve_psi(const int& istep,
+    static void solve_psi(const std::vector<EijOutputInfo>& eij_output,
                           const int nband,
                           const int nlocal,
                           const int& nks,
@@ -177,10 +178,8 @@ class Evolve_elec
     // Memory operations
     using syncmem_double_h2d_op = base_device::memory::synchronize_memory_op<double, Device, base_device::DEVICE_CPU>;
     using syncmem_double_d2h_op = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, Device>;
-    using syncmem_complex_h2d_op
-        = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
-    using syncmem_complex_d2h_op
-        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>;
 };
 } // namespace module_rt
 #endif

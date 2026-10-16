@@ -19,10 +19,6 @@ SepPot::SepPot()
 
 SepPot::~SepPot()
 {
-    delete[] r;
-    r = nullptr;
-    delete[] rv;
-    rv = nullptr;
 }
 
 int SepPot::read_sep(std::ifstream& ifs)
@@ -49,10 +45,8 @@ int SepPot::read_sep(std::ifstream& ifs)
         else if (key == "Sep.Points")
         {
             iss >> mesh;
-            delete[] r;
-            r = new double[mesh];
-            delete[] rv;
-            rv = new double[mesh];
+            r.resize(mesh);
+            rv.resize(mesh);
         }
         else if (key == "Sep.StripAmount")
         {
@@ -91,8 +85,8 @@ void SepPot::print_sep_info(std::ofstream& ofs) const
 void SepPot::print_sep_vsep(std::ofstream& ofs) const
 {
     ofs << "\n mesh  " << mesh;
-    output::printr1_d(ofs, " r : ", r, mesh);
-    output::printr1_d(ofs, " vsep : ", rv, mesh);
+    output::printr1_d(ofs, " r : ", r.data(), mesh);
+    output::printr1_d(ofs, " vsep : ", rv.data(), mesh);
     ofs << "\n -----------------------------";
 }
 
@@ -114,12 +108,12 @@ void SepPot::bcast_sep()
 
     if (GlobalV::MY_RANK != 0 && mesh > 0)
     {
-        r = new double[mesh];
-        rv = new double[mesh];
+        r.resize(mesh);
+        rv.resize(mesh);
     }
 
-    Parallel_Common::bcast_double(r, mesh);
-    Parallel_Common::bcast_double(rv, mesh);
+    Parallel_Common::bcast_double(r.data(), mesh);
+    Parallel_Common::bcast_double(rv.data(), mesh);
 
     return;
 }

@@ -8,7 +8,7 @@ md_msst
 md_msst2
 md_out_hk_syns
 md_out_hk_spin2
-relax_bfgs2
+relax_lbfgs
 relax_cell
 relax_old_cg
 relax_out_hk

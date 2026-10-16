@@ -64,7 +64,7 @@ NlmTot cal_nlm_all(const UnitCell& ucell,
                    const Parallel_Orbitals& pv)
 {
     ModuleBase::TITLE("DFTU", "cal_nlm_all");
-    ModuleBase::timer::start("DFTU", "cal_nlm_all");
+    ModuleBase::timer::start("DFTU_LCAO", "cal_nlm_all");
 
     NlmTot nlm_tot(ucell.nat);
     const int npol = ucell.get_npol();
@@ -136,7 +136,7 @@ NlmTot cal_nlm_all(const UnitCell& ucell,
             }
         }
     }
-    ModuleBase::timer::end("DFTU", "cal_nlm_all");
+    ModuleBase::timer::end("DFTU_LCAO", "cal_nlm_all");
     return nlm_tot;
 }
 

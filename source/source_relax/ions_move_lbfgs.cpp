@@ -1,14 +1,14 @@
 #include "ions_move_lbfgs.h"
 #include "matrix_methods.h"
-#include "source_io/module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h" // mohan add 2025-06-19  
 
-void Ions_Move_LBFGS::allocate(const int _size) // initialize H0、H、pos0、force0、force
+void Ions_Move_LBFGS::allocate(const int _size, const double relax_bfgs_rmax, const std::string& out_level) // initialize H0、H、pos0、force0、force
 {
     alpha=70;//default value in ase is 70
-    maxstep=PARAM.inp.relax_bfgs_rmax;
+    maxstep=relax_bfgs_rmax;
+    this->out_level=out_level;
     size=_size;
     memory=100;
     iteration=0;
@@ -25,7 +25,7 @@ void Ions_Move_LBFGS::allocate(const int _size) // initialize H0、H、pos0、fo
     //l_search.init_line_search();
 }
 
-bool Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const double &etot, std::ofstream& ofs_running)
+bool Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const double &etot, std::ofstream& ofs_running, const Relax_Criteria& criteria)
 {
     get_pos(ucell,pos);  
     get_pos_taud(ucell,pos_taud);
@@ -62,7 +62,7 @@ bool Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell
     this->determine_step(steplength,dpos,maxstep);
     this->update_pos(ucell);
     this->calculate_largest_grad(_force,ucell);
-    bool converged = this->is_restrain();  
+    bool converged = this->is_restrain(criteria);
     // mohan add 2025-06-22
     unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
     return converged;
@@ -251,9 +251,9 @@ void Ions_Move_LBFGS::update_pos(UnitCell& ucell)
     unitcell::update_pos_tau(ucell.lat,a.data(),ucell.ntype,ucell.nat,ucell.atoms);
 }
 
-bool Ions_Move_LBFGS::is_restrain()
+bool Ions_Move_LBFGS::is_restrain(const Relax_Criteria& criteria)
 {
-    return Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < PARAM.inp.force_thr_ev;
+    return Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < criteria.force_thr_ev;
 }
 
 void Ions_Move_LBFGS::calculate_largest_grad(const ModuleBase::matrix& _force,UnitCell& ucell)
@@ -284,7 +284,7 @@ void Ions_Move_LBFGS::calculate_largest_grad(const ModuleBase::matrix& _force,Un
         }
     }
     Ions_Move_Basic::largest_grad /= ucell.lat0;
-    if (PARAM.inp.out_level == "ie")
+    if (out_level == "ie")
     {
         std::cout << " LARGEST GRAD (eV/Angstrom)  : " 
                   << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A

@@ -11,6 +11,7 @@
 #include "source_cell/mdcell.h"
 #include "source_base/formatter.h"
 #include "source_base/tool_title.h"
+#include "source_base/tool_quit.h"
 #include "source_base/global_variable.h"
 #include "source_base/output.h"
 
@@ -94,12 +95,13 @@ namespace unitcell
                          const std::string& fn,
                          const std::string& header,
                          const int& nspin,
-                         const bool& direct,
                          const bool& vel,
                          const bool& magmom,
                          const bool& orb,
                          const bool& dpks_desc,
-                         const int& iproc)
+                         const int& iproc,
+                         const ModuleBase::matrix& force,
+                         const bool& has_force)
     {
         ModuleBase::TITLE("UnitCell","print_stru_file");
         if (iproc != 0)
@@ -136,45 +138,98 @@ namespace unitcell
         { 
             str += "\nNUMERICAL_DESCRIPTOR\n" + ucell.descriptor_file + "\n"; 
         }
-        // LATTICE_CONSTANT
-        str += "\nLATTICE_CONSTANT\n" + FmtCore::format("%-.10f", ucell.lat0) + "  # in Bohr\n";
-        // LATTICE_VECTORS
-        str += "\nLATTICE_VECTORS  # in units of lat0\n";
-        str += FmtCore::format("%24.16f%24.16f%24.16f\n", latvec.e11, latvec.e12, latvec.e13);
-        str += FmtCore::format("%24.16f%24.16f%24.16f\n", latvec.e21, latvec.e22, latvec.e23);
-        str += FmtCore::format("%24.16f%24.16f%24.16f\n", latvec.e31, latvec.e32, latvec.e33);
+        // LATTICE_CONSTANT: fixed to one Angstrom expressed in Bohr, so that the
+        // lattice vectors below can be written directly in Angstrom.
+        const double lat0_angstrom = 1.0 / ModuleBase::BOHR_TO_A;
+        str += "\nLATTICE_CONSTANT\n"
+             + FmtCore::format("%-.10f", lat0_angstrom)
+             + " # in Bohr (= 1 Angstrom); lattice vectors below are in Angstrom\n";
+        // LATTICE_VECTORS: internal vectors are dimensionless multiples of ucell.lat0;
+        // multiply by ucell.lat0 * BOHR_TO_A to get the physical vectors in Angstrom.
+        const double lat_scale = ucell.lat0 * ModuleBase::BOHR_TO_A;
+        str += "\nLATTICE_VECTORS # in Angstrom\n";
+        str += FmtCore::format("%.16f %.16f %.16f\n",
+                               latvec.e11 * lat_scale, latvec.e12 * lat_scale, latvec.e13 * lat_scale);
+        str += FmtCore::format("%.16f %.16f %.16f\n",
+                               latvec.e21 * lat_scale, latvec.e22 * lat_scale, latvec.e23 * lat_scale);
+        str += FmtCore::format("%.16f %.16f %.16f\n",
+                               latvec.e31 * lat_scale, latvec.e32 * lat_scale, latvec.e33 * lat_scale);
         // ATOMIC_POSITIONS
         str += "\nATOMIC_POSITIONS\n";
-        const std::string scale = direct? "Direct": "Cartesian";
         int nat_ = 0; // counter iat, for printing out Mulliken magmom who is indexed by iat
-        str += scale + "\n";
+        // Force output is controlled by the explicit has_force flag rather than
+        // inferred from matrix dimensions, so a zero-allocated matrix is not
+        // mistaken for computed forces.
+        if (has_force && (force.nr != ucell.nat || force.nc != 3))
+        {
+            ModuleBase::WARNING_QUIT("print_stru_file",
+                                     "has_force is true but force matrix dimensions do not match nat x 3");
+        }
+        // Positions are always written as Cartesian_angstrom so that the
+        // coordinate format is independent of force availability; has_force
+        // only controls the per-atom f fields and the unit annotation.
+        const std::string unit_note = has_force ? " # positions in Angstrom, forces in eV/Angstrom\n"
+                                                : " # positions in Angstrom\n";
+        str += "Cartesian_angstrom" + unit_note;
+        // Internal Cartesian tau is in units of lat0 (Bohr); convert to Angstrom.
+        const double pos_conv = ucell.lat0 * ModuleBase::BOHR_TO_A;
+        const double force_conv = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; // Ry/Bohr to eV/Angstrom
         for(int it = 0; it < ucell.ntype; it++)
         {
             str += "\n" + ucell.atoms[it].label + " #label\n";
-            str += FmtCore::format("%-8.4f #magnetism\n", ucell.magnet.start_mag[it]);
+            // Output real initial magnetism: for nspin=2 use mag[0], for nspin=4 use norm of m_loc_[0]
+            double start_mag = ucell.magnet.start_mag[it];
+            if (atoms[it].na > 0) {
+                if (nspin == 2) {
+                    start_mag = atoms[it].mag[0];
+                } else if (nspin == 4) {
+                    start_mag = std::sqrt(std::pow(atoms[it].m_loc_[0].x, 2)
+                                        + std::pow(atoms[it].m_loc_[0].y, 2)
+                                        + std::pow(atoms[it].m_loc_[0].z, 2));
+                }
+            }
+            str += FmtCore::format("%.4f #magnetism (default, overridden by per-atom mag below)\n", start_mag);
             str += FmtCore::format("%d #number of atoms\n", atoms[it].na);
             for(int ia = 0; ia < atoms[it].na; ia++)
             {
                 // output position
-                const double& x = direct? atoms[it].taud[ia].x: atoms[it].tau[ia].x;
-                const double& y = direct? atoms[it].taud[ia].y: atoms[it].tau[ia].y;
-                const double& z = direct? atoms[it].taud[ia].z: atoms[it].tau[ia].z;
-                str += FmtCore::format("%20.10f%20.10f%20.10f", x, y, z);
+                const double& x = atoms[it].tau[ia].x;
+                const double& y = atoms[it].tau[ia].y;
+                const double& z = atoms[it].tau[ia].z;
+                str += FmtCore::format("%.10f %.10f %.10f", x*pos_conv, y*pos_conv, z*pos_conv);
                 str += FmtCore::format(" m%2d%2d%2d", atoms[it].mbl[ia].x, atoms[it].mbl[ia].y, atoms[it].mbl[ia].z);
                 if (vel) // output velocity
                 {
-                    str += FmtCore::format(" v%20.10f%20.10f%20.10f", atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z);
+                    str += FmtCore::format(" v %.10f %.10f %.10f", atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z);
                 }
-                if (nspin == 2 && magmom) // output magnetic information
+                if (has_force) // output force
                 {
-                    str += FmtCore::format(" mag%8.4f", ucell.atom_mulliken[nat_][1]);
+                    str += FmtCore::format(" f %.6f %.6f %.6f",
+                                           force(nat_, 0)*force_conv,
+                                           force(nat_, 1)*force_conv,
+                                           force(nat_, 2)*force_conv);
                 }
-                else if (nspin == 4 && magmom) // output magnetic information
+                if (nspin == 2) // output magnetic information
                 {
-                    str += FmtCore::format(" mag%8.4f%8.4f%8.4f", 
-                                            ucell.atom_mulliken[nat_][1], 
-                                            ucell.atom_mulliken[nat_][2], 
-                                            ucell.atom_mulliken[nat_][3]);
+                    if (magmom && !ucell.atom_mulliken.empty()) {
+                        str += FmtCore::format(" mag %.4f", ucell.atom_mulliken[nat_][1]);
+                    } else {
+                        str += FmtCore::format(" mag %.4f", atoms[it].mag[ia]);
+                    }
+                }
+                else if (nspin == 4) // output magnetic information
+                {
+                    if (magmom && !ucell.atom_mulliken.empty()) {
+                        str += FmtCore::format(" mag %.4f %.4f %.4f",
+                                                ucell.atom_mulliken[nat_][1],
+                                                ucell.atom_mulliken[nat_][2],
+                                                ucell.atom_mulliken[nat_][3]);
+                    } else {
+                        str += FmtCore::format(" mag %.4f %.4f %.4f",
+                                                atoms[it].m_loc_[ia].x,
+                                                atoms[it].m_loc_[ia].y,
+                                                atoms[it].m_loc_[ia].z);
+                    }
                 }
                 str += "\n";
                 nat_++;

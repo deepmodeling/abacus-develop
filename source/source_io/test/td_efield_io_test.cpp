@@ -40,6 +40,7 @@ class TDEFieldIOTest : public testing::Test
             std::remove(output_path(field_index).c_str());
         }
         std::remove(blocking_path_.c_str());
+        std::remove((output_prefix_ + "efield_total.txt").c_str());
     }
 
     std::shared_ptr<elecstate::TDFieldManager> create_manager(const std::vector<double>& amplitudes) const
@@ -95,9 +96,9 @@ TEST_F(TDEFieldIOTest, FreshCalculationTruncatesAndUsesOneBasedFiles)
     EXPECT_TRUE(read_samples(1).empty());
     EXPECT_TRUE(read_samples(2).empty());
 
-    manager->advance_length_gauge();
+    manager->prepare_sample(0);
     ModuleIO::write_td_field_values(*manager, output_prefix_);
-    manager->advance_length_gauge();
+    manager->prepare_sample(1);
     ModuleIO::write_td_field_values(*manager, output_prefix_);
 
     const std::vector<std::pair<double, double>> samples_1 = read_samples(1);
@@ -124,7 +125,8 @@ TEST_F(TDEFieldIOTest, RestartPreservesExistingSamples)
 
     std::shared_ptr<elecstate::TDFieldManager> manager = create_manager({4.0});
     ModuleIO::prepare_td_field_output(output_prefix_, manager->fields().size(), true);
-    manager->advance_length_gauge();
+    const int next_step = manager->current_step() + 1;
+    manager->prepare_sample(next_step);
     ModuleIO::write_td_field_values(*manager, output_prefix_);
 
     const std::vector<std::pair<double, double>> samples = read_samples(1);
@@ -146,7 +148,8 @@ TEST_F(TDEFieldIOTest, ReportsOutputOpenFailures)
 
     EXPECT_EXIT(ModuleIO::prepare_td_field_output(invalid_directory, manager->fields().size(), false), testing::ExitedWithCode(1), "");
 
-    manager->advance_length_gauge();
+    const int next_step = manager->current_step() + 1;
+    manager->prepare_sample(next_step);
     EXPECT_EXIT(ModuleIO::write_td_field_values(*manager, invalid_directory), testing::ExitedWithCode(1), "");
 }
 

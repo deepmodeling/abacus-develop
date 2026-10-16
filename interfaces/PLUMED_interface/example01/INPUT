@@ -1,0 +1,48 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix                 ethane_plumed
+calculation            md
+symmetry               0
+gamma_only             1
+precision              double
+pseudo_dir             ../../../tests/PP_ORB
+orbital_dir            ../../../tests/PP_ORB
+
+#Parameters (2.Plane waves)
+ecutwfc                40
+
+#Parameters (3.Basis)
+basis_type             lcao
+ks_solver              genelpa
+
+#Parameters (4.Smearing)
+smearing_method        gaussian
+smearing_sigma         0.01
+
+#Parameters (5.Mixing)
+mixing_type            broyden
+mixing_beta            0.8
+
+#Parameters (6.Iteration)
+scf_nmax               100
+scf_thr                1e-5
+
+#Parameters (7.MD)
+md_type                nvt
+md_nstep               200
+md_dt                  0.6
+md_tfirst              600
+md_tlast               600
+md_thermostat          nhc
+md_dumpfreq            100
+md_restartfreq         100
+
+#Parameters (8.PLUMED)
+# Set plumed to 1 and point plumed_file to the PLUMED input file to enable
+# collective variables and biasing potentials (see plumed.dat and README).
+plumed                 1
+plumed_file            plumed.dat
+
+#Parameters (9.Output)
+out_level              m
+vdw_method             d3_0

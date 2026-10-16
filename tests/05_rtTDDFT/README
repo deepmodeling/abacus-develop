@@ -1,4 +1,9 @@
-In order to run these tests, you need to read ../integrate/Autotest.sh
-and set abacus directory in the file.
-To start running these rt-TDDFT (in LCAO basis) you just need to type:  
-../integrate/Autotest.sh
+These LCAO and PW rt-TDDFT cases share input files and reference values between CPU and GPU runs. Ordinary cases omit ks_solver so ABACUS selects the default solver for the basis, device, and build configuration.
+
+From this directory, run CPU cases with:
+bash ../integrate/Autotest.sh -a /absolute/path/to/abacus -n 4 -f CASES_CPU.txt
+
+For GPU runs, first replace or append device gpu in each INPUT in a separate working copy, then run:
+bash ../integrate/Autotest.sh -a /absolute/path/to/abacus -n 2 -f CASES_GPU.txt
+
+Selecting CASES_GPU.txt alone does not change the device. The CUDA workflow performs the device conversion before running these shared cases.

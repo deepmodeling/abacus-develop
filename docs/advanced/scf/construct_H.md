@@ -4,9 +4,9 @@
 
 In our package, the XC functional can be set explicitly using the `dft_functional` keyword in `INPUT` file. If `dft_functional` is not specified, ABACUS will use the xc functional indicated in the pseudopotential file. 
 
-Several common functionals are implemented in ABACUS, such as PZ and PBE. Users can check out this [file](../../../source/source_hamilt/module_xc/xc_funcs.h) for a complete list of functionals implemented in ABACUS. Furthermore, if ABACUS is compiled with LIBXC, we also support all the LDA, GGA and meta-GGA functionals provided therein.
+Several common functionals are implemented in ABACUS, such as PZ and PBE. Users can check out this [file](https://github.com/deepmodeling/abacus-develop/blob/develop/source/source_hamilt/module_xc/xc_funcs.h) for a complete list of functionals implemented in ABACUS. Furthermore, if ABACUS is compiled with LIBXC, we also support all the LDA, GGA and meta-GGA functionals provided therein.
 
-Here, we use a simple [example calculation](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/scf/lcao_Si2) for illustration.
+Here, we use a simple [example calculation](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/02_scf/02_lcao_Si2) for illustration.
 
 1. **Default setting:**
 
@@ -69,9 +69,9 @@ Here, we use a simple [example calculation](https://github.com/deepmodeling/abac
 
     ABACUS supports functionals with exact Hartree-Fock exchange in LCAO basis set only. The old INPUT parameter exx_hybrid_type for hybrid functionals has been absorbed into `dft_functional`. Options are `hf` (pure Hartree-Fock), `pbe0`(PBE0), `hse`, and `scan0`(SCAN0) (Note: in order to use HSE or SCAN0 functional, LIBXC is required). Note also that only HSE has been tested while other hybrid functionals have NOT been fully tested yet, and the maximum parallel cpus for running exx is N^4, with N being the number of atoms.
 
-    More information on the hybrid functional can be found from the section [Exact Exchange](../input_files/input-main.md#exact-exchange) in the list of input variables for more information.
+    More information on the hybrid functional can be found from the section [Exact Exchange](../input_files/input-main.md#exact-exchange-common) in the list of input variables for more information.
 
-    An example HSE calculation is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/hse/lcao_Si2). Apart from the input files (`INPUT`, `STRU`, `KPT`), we further provide two files: running_scf.log_ref and log_ref, which contains reference for running_scf.log and standard output from the program, respectively.
+    An example HSE calculation is provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/20_hybrid/02_lcao_Si2). Apart from the input files (`INPUT`, `STRU`, `KPT`), we further provide two files: running_scf.log_ref and log_ref, which contains reference for running_scf.log and standard output from the program, respectively.
     
 ## DFT+*U*
 
@@ -79,4 +79,4 @@ Conventional functionals, e.g., L(S)DA and GGAs, encounter failures in strongly 
 
 Now the DFT+*U* method is accessible in ABACUS. The details of the DFT+*U* method could be found in this [paper](https://doi.org/10.1063/5.0090122). It should be noted that the DFT+*U* works only within the NAO scheme, which means that the value of the keyword `basis_type` must be lcao when DFT+*U* is called. To turn on DFT+*U*, users need to set the value of the `dft_plus_u` keyword in the `INPUT` file to be 1. All relevant parmeters used in DFT+*U* calculations are listed in the [DFT+*U* correction](../input_files/input-main.md#dftu-correction) part of the [list of keywords](../input_files/input-main.md).
 
-Examples of DFT+*U* calculations are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/dft_plus_u).
+Examples of DFT+*U* calculations are provided in this [directory](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/19_dftu).

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_PULAY_FS_TEMP_H
+#define ABACUS_SOURCE_LCAO_PULAY_FS_TEMP_H
+
 #include <omp.h>
 #include "pulay_fs.h"
 #include "source_base/timer.h"
@@ -15,7 +17,7 @@ namespace PulayForceStress
     inline void cal_pulay_fs(
         ModuleBase::matrix& f,
         ModuleBase::matrix& s,
-        const elecstate::DensityMatrix<TK, TR>& dm,
+        const module_dm::DensityMatrix<TK, TR>& dm,
         const UnitCell& ucell,
         const Parallel_Orbitals& pv,
         const double** dHSx,
@@ -79,7 +81,7 @@ namespace PulayForceStress
                     std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
                     for (int is = 0; is < nspin_DMR; ++is)
                     {
-                        tmp_matrix.push_back(dm.get_DMR_pointer(is + 1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
+                        tmp_matrix.push_back(dm.get_dmr_ptr(is + 1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
                     }
                     for (int mu = 0; mu < pv.get_nrow_atom(iat1); ++mu)
                     {
@@ -132,3 +134,5 @@ namespace PulayForceStress
         ModuleBase::timer::end("Force_LCAO", "cal_pulay_fs_center2");
     }
 }
+
+#endif // ABACUS_SOURCE_LCAO_PULAY_FS_TEMP_H

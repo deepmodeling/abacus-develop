@@ -4,18 +4,18 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
-#ifdef __RAPIDJSON
+#ifdef __JSON
+#include "source_io/module_parameter/parameter.h"
 #include "abacusjson.h"
 #include "general_info.h"
 #include "init_info.h"
-#include "readin_info.h"
-#endif // __RAPIDJSON
+#endif // __JSON
 
 namespace Json
 {
 
 // void create_Json(ModuleSymmetry::Symmetry *symm,Atom *atoms,Input *input){
-// #ifdef __RAPIDJSON
+// #ifdef __JSON
 //     gen_general_info(input);
 //     gen_init(symm,atoms);
 // #endif
@@ -23,19 +23,19 @@ namespace Json
 
 void json_output()
 {
-#ifdef __RAPIDJSON
+#ifdef __JSON
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
         AbacusJson::write_to_json("abacus.json");
 #else
     AbacusJson::write_to_json("abacus.json");
 #endif
-#endif // __RAPIDJSON
+#endif // __JSON
 }
 
 void create_Json(UnitCell* ucell, const Parameter& param)
 {
-#ifdef __RAPIDJSON
+#ifdef __JSON
     gen_general_info(param);
     gen_init(ucell, param.inp);
     // gen_stru(ucell, param.inp);
@@ -45,7 +45,7 @@ void create_Json(UnitCell* ucell, const Parameter& param)
 
 void gen_stru_wrapper(UnitCell* ucell, const Input_para& inp)
 {
-#ifdef __RAPIDJSON
+#ifdef __JSON
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
         gen_stru(ucell, inp);

@@ -6,6 +6,38 @@
 #include <RI/physics/symmetry/Symmetry_Rotation.h>
 namespace ModuleSymmetry
 {
+    /// rotmat_Slm_ (inherited from Symmetry_rotation_k, shared with the LibRI-free k-space
+    /// restoration) is stored as ModuleBase::ComplexMatrix; convert to RI::Tensor here, at the
+    /// boundary of the real-space (RI::Tensor atom-pair) rotation code that needs that type.
+    inline RI::Tensor<std::complex<double>> rotmat_Slm_to_tensor(const ModuleBase::ComplexMatrix& block)
+    {
+        RI::Tensor<std::complex<double>> t({ static_cast<size_t>(block.nr), static_cast<size_t>(block.nc) });
+        for (int i = 0; i < block.nr; ++i) {
+            for (int j = 0; j < block.nc; ++j) {
+                t(i, j) = block(i, j);
+        } }
+        return t;
+    }
+
+    /// Cached (isym, l) lookup into rotmat_Slm_tensor_: rebuilt only when rotmat_Slm_version_
+    /// (bumped by cal_rotmat_Slm, i.e. once per ion step) changes, instead of reconverting the
+    /// same block on every set_rotation_matrix/set_rotation_matrix_abf call (once per atom pair).
+    inline const RI::Tensor<std::complex<double>>& Symmetry_rotation::get_rotmat_Slm_tensor(const int isym, const int l)const
+    {
+        if (this->rotmat_Slm_tensor_version_ != this->rotmat_Slm_version_)
+        {
+            this->rotmat_Slm_tensor_.resize(this->rotmat_Slm_.size());
+            for (size_t is = 0; is < this->rotmat_Slm_.size(); ++is)
+            {
+                this->rotmat_Slm_tensor_[is].resize(this->rotmat_Slm_[is].size());
+                for (size_t il = 0; il < this->rotmat_Slm_[is].size(); ++il) {
+                    this->rotmat_Slm_tensor_[is][il] = rotmat_Slm_to_tensor(this->rotmat_Slm_[is][il]);
+            } }
+            this->rotmat_Slm_tensor_version_ = this->rotmat_Slm_version_;
+        }
+        return this->rotmat_Slm_tensor_[isym][l];
+    }
+
     /// Elementwise complex conjugation used by the time-reversal branch of restore_HR_nspin4.
     /// Overloaded (not specialized) so a real Tdata compiles to the identity.
     inline float conj_elem(const float v) { return v; }
@@ -45,7 +77,7 @@ namespace ModuleSymmetry
 
     template<typename Tdata>
     std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>> Symmetry_rotation::restore_HR(
-        const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
+        const Symmetry& symm, const Atom* atoms, const std::vector<int>& iat2it, const char mode,
         const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_irreducible) const
     {
         ModuleBase::TITLE("Symmetry_rotation", "restore_HR");
@@ -70,7 +102,7 @@ namespace ModuleSymmetry
                         const int& ap1 = apR.first.first;
                         const int& ap2 = apR.first.second;
                         const TC& R = apR.second;
-                        HR_full[ap1][{ap2, R}] = rotate_atompair_serial(tmp2.second, isym, atoms[st.iat2it[irap1]], atoms[st.iat2it[irap2]], mode);
+                        HR_full[ap1][{ap2, R}] = rotate_atompair_serial(tmp2.second, isym, atoms[iat2it[irap1]], atoms[iat2it[irap2]], mode);
                     }
                 }
                 else { std::cout << "Warning: not found: irreducible atom pair =(" << irap1 << "," << irap2 << "), irR=(" << irR[0] << "," << irR[1] << "," << irR[2] << ")\n";}
@@ -89,7 +121,7 @@ namespace ModuleSymmetry
         //     // H_12(R)=T^\dagger(V)H_1'2'(VR+O_1-O_2)T(V)
         //     if (HR_irreducible.find(irap.first) != HR_irreducible.end() && HR_irreducible.at(irap.first).find({ irap.second, irR }) != HR_irreducible.at(irap.first).end())
         //         HR_full[ap.first][{ap.second, R}] = rotate_atompair_serial(HR_irreducible.at(irap.first).at({ irap.second, irR }),
-        //             isym, atoms[st.iat2it[irap.first]], atoms[st.iat2it[irap.second]], mode);
+        //             isym, atoms[ucell.iat2it[irap.first]], atoms[ucell.iat2it[irap.second]], mode);
         //     else
         //         std::cout << "not found: current atom pair =(" << ap.first << "," << ap.second << "), R=(" << R[0] << "," << R[1] << "," << R[2] << "), irreducible atom pair =(" << irap.first << "," << irap.second << "), irR=(" << irR[0] << "," << irR[1] << "," << irR[2] << ")\n";
         // }
@@ -139,7 +171,7 @@ namespace ModuleSymmetry
     // when it is applied in either direction.
     template<typename Tdata>
     std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4> Symmetry_rotation::restore_HR_nspin4(
-        const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
+        const Symmetry& symm, const Atom* atoms, const std::vector<int>& iat2it, const char mode,
         const std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4>& HR_irreducible_soc)const
     {
         ModuleBase::TITLE("Symmetry_rotation", "restore_HR_nspin4");
@@ -171,8 +203,8 @@ namespace ModuleSymmetry
                     std::cout << "Warning: not found: irreducible atom pair =(" << irap1 << "," << irap2 << "), irR=(" << irR[0] << "," << irR[1] << "," << irR[2] << ")\n";
                     continue;
                 }
-                const Atom& a1 = atoms[st.iat2it[irap1]];
-                const Atom& a2 = atoms[st.iat2it[irap2]];
+                const Atom& a1 = atoms[iat2it[irap1]];
+                const Atom& a2 = atoms[iat2it[irap2]];
                 // gather the 4 irreducible spin-channel blocks (zero-filled when absent)
                 std::array<RI::Tensor<Tdata>, 4> Hir;
                 for (int is = 0;is < 4;++is)
@@ -268,7 +300,7 @@ namespace ModuleSymmetry
         {
             int l = a.iw2l[iw];
             int nm = 2 * l + 1;
-            set_block(iw, iw, this->rotmat_Slm_[isym][l], T);
+            set_block(iw, iw, this->get_rotmat_Slm_tensor(isym, l), T);
             iw += nm;
         }
         return T;
@@ -328,7 +360,7 @@ namespace ModuleSymmetry
             int nm = 2 * L + 1;
             for (int N = 0;N < this->abfs_l_nchi_[type][L];++N)
             {
-                set_block(iw, iw, this->rotmat_Slm_[isym][L], T);
+                set_block(iw, iw, this->get_rotmat_Slm_tensor(isym, L), T);
                 iw += nm;
                 // std::cout << "L=" << L << ", N=" << N << ", iw=" << iw << "\n";
             }
@@ -371,79 +403,6 @@ namespace ModuleSymmetry
                 print_tensor(HR_tensor, name, threshold);
             }
         }
-    }
-
-    template<typename Tdata>
-    void Symmetry_rotation::test_HR_rotation(const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
-        const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_full)
-    {
-        ModuleBase::TITLE("Symmetry_rotation", "test_HR_rotation");
-
-        // 1. pick out H(R) in the irreducible sector from full H(R)
-        std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>> HR_irreducible;
-        for (auto& irap_Rs : this->irs_.irreducible_sector_)
-        {
-            const Tap& irap = irap_Rs.first;
-            for (auto& irR : irap_Rs.second)
-            {
-                const std::pair<int, TC> a2_irR = { irap.second, irR };
-                HR_irreducible[irap.first][a2_irR] = (HR_full.at(irap.first).count(a2_irR) != 0) ?
-                    HR_full.at(irap.first).at(a2_irR)
-                    : RI::Tensor<Tdata>(HR_full.at(irap.first).begin()->second.shape);
-            }
-        }
-        // 2. rotate
-        std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>> HR_rotated = restore_HR(symm, atoms, st, mode, HR_irreducible);
-        // 3. compare
-        for (auto& HR_ia1 : HR_rotated)
-        {
-            int iat1 = HR_ia1.first;
-            for (auto& HR_ia12R : HR_ia1.second)
-            {
-                int iat2 = HR_ia12R.first.first;
-                TC R = HR_ia12R.first.second;
-                const RI::Tensor<Tdata>& HR_rot = HR_ia12R.second;
-                if (HR_full.at(iat1).count({ iat2, R }) == 0)// rot back but not found
-                {
-                    std::cout << "R_rot not found in atom pair (" << iat1 << ", " << iat2 << "):  R=(" << R[0] << "," << R[1] << "," << R[2] << "):\n";
-                    continue;
-                }
-                const RI::Tensor<Tdata>& HR_ref = HR_full.at(iat1).at({ iat2, R });
-                assert(HR_rot.shape[0] == HR_ref.shape[0]);
-                assert(HR_rot.shape[1] == HR_ref.shape[1]);
-                // output 
-                std::cout << "atom pair (" << iat1 << ", " << iat2 << "), R=(" << R[0] << "," << R[1] << "," << R[2] << "):\n";
-                print_tensor(HR_rot, std::string("R_rot").insert(0, 1, mode));
-                print_tensor(HR_ref, std::string("R_ref").insert(0, 1, mode));
-            }
-        }
-    }
-
-    template<typename Tdata>
-    void Symmetry_rotation::test_Cs_rotation(const Symmetry& symm, const Atom* atoms, const Statistics& st,
-        const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& Cs_full)const
-    {
-        for (auto& sector_pair : this->irs_.full_map_to_irreducible_sector_)
-        {
-            const TapR& apR = sector_pair.first;
-            const int& isym = sector_pair.second.first;
-            const TapR& irapR = sector_pair.second.second;
-            // if (apR.first != irapR.first || apR.second != irapR.second)
-            if (apR.first != irapR.first)
-            {
-                std::cout << "irapR=(" << irapR.first.first << "," << irapR.first.second << "), (" << irapR.second[0] << "," << irapR.second[1] << "," << irapR.second[2] << "):\n";
-                std::cout << "apR=(" << apR.first.first << "," << apR.first.second << "), (" << apR.second[0] << "," << apR.second[1] << "," << apR.second[2] << "):\n";
-                const RI::Tensor<Tdata>& Cs_ir = Cs_full.at(irapR.first.first).at({ irapR.first.second,irapR.second });
-                const RI::Tensor<Tdata>& Cs_ref = Cs_full.at(apR.first.first).at({ apR.first.second,apR.second });
-                const RI::Tensor<Tdata>& Cs_rot = this->rotate_singleC_serial(Cs_ir, isym,
-                    atoms[st.iat2it[irapR.first.first]], atoms[st.iat2it[irapR.first.second]], irapR.first.first);
-                print_tensor3(Cs_rot, "Cs_rot");
-                print_tensor3(Cs_ref, "Cs_ref");
-                print_tensor3(Cs_ir, "Cs_irreducible");
-                exit(0);
-            }
-        }
-
     }
 
 }

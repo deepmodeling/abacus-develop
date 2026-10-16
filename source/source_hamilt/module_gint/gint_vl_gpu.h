@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_GPU_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_GPU_H
+
 
 #include <memory>
 #include <vector>
@@ -35,3 +37,5 @@ class Gint_vl_gpu : public Gint
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_VL_GPU_H

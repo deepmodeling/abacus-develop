@@ -7,10 +7,9 @@
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_base/vector3.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_estate/module_pot/h_tddft_pw.h"
-#include "source_lcao/lcao_domain.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/lcao_domain.h"
 
 #ifdef __LCAO
 template <typename TR>
@@ -29,8 +28,12 @@ void ModuleIO::write_current(const UnitCell& ucell,
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
+    if (td_p == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::write_current", "RT-TDDFT current requires an explicit TD context.");
+    }
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
-    if (PARAM.inp.td_stype!=1)
+    if (td_p->field().gauge() != 1)
     {
         for (int dir = 0; dir < 3; dir++)
         {
@@ -39,38 +42,34 @@ void ModuleIO::write_current(const UnitCell& ucell,
     }
     else
     {
-        if (TD_info::td_vel_op == nullptr)
-        {
-            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gauge infos is null!");
-        }
         for (int dir = 0; dir < 3; dir++)
         {
-            current_term[dir] = TD_info::td_vel_op->get_current_term_pointer(dir);
+            current_term[dir] = td_p->get_current_term_pointer(dir);
         }
     }
-    double omega=ucell.omega;
+    double omega = ucell.omega;
     // construct a DensityMatrix object
-    // Since the function cal_dm_psi do not suport DMR in complex type, I replace it with two DMR in double type. Should
+    // Since the function dm_from_psi do not suport DMR in complex type, I replace it with two DMR in double type. Should
     // be refactored in the future.
     const int nspin0 = PARAM.inp.nspin;
-    const int nspin_dm = std::map<int, int>({ {1,1},{2,2},{4,1} })[nspin0];
-    elecstate::DensityMatrix<std::complex<double>, std::complex<double>> tmp_dm(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
+    const int nspin_dm = std::map<int, int>({{1, 1}, {2, 2}, {4, 1}})[nspin0];
+    module_dm::DensityMatrix<std::complex<double>, std::complex<double>> tmp_dm(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
     // calculate DMK
-    elecstate::cal_dm_psi(pv, pelec->wg, psi[0], tmp_dm);
+    module_dm::dm_from_psi(pv, pelec->wg, psi[0], tmp_dm);
 
     // init DMR
-    tmp_dm.init_DMR(ra, &ucell);
+    tmp_dm.init_dmr(ra, &ucell);
 
-    if(PARAM.inp.td_stype!=2)
+    if (td_p->field().gauge() != 2)
     {
-        tmp_dm.cal_DMR();
+        tmp_dm.cal_dmr(-1);
     }
     else
     {
-        tmp_dm.cal_DMR_td(td_p->get_phase_hybrid(),TD_info::cart_At);
+        tmp_dm.cal_dmr_td(td_p->get_phase_hybrid(), td_p->endpoint_A(), -1);
     }
-    //DM_real.sum_DMR_spin();
-    //DM_imag.sum_DMR_spin();
+    // DM_real.sum_DMR_spin();
+    // DM_imag.sum_DMR_spin();
 
     double current_total[3] = {0.0, 0.0, 0.0};
 #ifdef _OPENMP
@@ -78,8 +77,8 @@ void ModuleIO::write_current(const UnitCell& ucell,
     {
         double local_current[3] = {0.0, 0.0, 0.0};
 #else
-        // ModuleBase::matrix& local_soverlap = soverlap;
-        double* local_current = current_total;
+    // ModuleBase::matrix& local_soverlap = soverlap;
+    double* local_current = current_total;
 #endif
         ModuleBase::Vector3<double> tau1, dtau, tau2;
 
@@ -108,17 +107,13 @@ void ModuleIO::write_current(const UnitCell& ucell,
                 double Rx = ra.get_info(iat, cb)[0];
                 double Ry = ra.get_info(iat, cb)[1];
                 double Rz = ra.get_info(iat, cb)[2];
-                //std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:" << Rz << std::endl;
-                //  get BaseMatrix
-                hamilt::BaseMatrix<std::complex<double>>* tmp_matrix
-                    = tmp_dm.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                // std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:" << Rz << std::endl;
+                //   get BaseMatrix
+                hamilt::BaseMatrix<std::complex<double>>* tmp_matrix = tmp_dm.get_dmr_ptr(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
                 // refactor
-                hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvx
-                    = current_term[0]->find_matrix(iat1, iat2, Rx, Ry, Rz);
-                hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvy
-                    = current_term[1]->find_matrix(iat1, iat2, Rx, Ry, Rz);
-                hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvz
-                    = current_term[2]->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvx = current_term[0]->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvy = current_term[1]->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvz = current_term[2]->find_matrix(iat1, iat2, Rx, Ry, Rz);
                 if (tmp_matrix == nullptr)
                 {
                     continue;
@@ -142,10 +137,10 @@ void ModuleIO::write_current(const UnitCell& ucell,
                             rvy = tmp_m_rvy->get_value(mu, nu);
                             rvz = tmp_m_rvz->get_value(mu, nu);
                         }
-                        //std::cout<<"mu: "<< mu <<" nu: "<< nu << std::endl;
-                        // std::cout<<"dm2d1_real: "<< dm2d1_real << " dm2d1_imag: "<< dm2d1_imag << std::endl;
-                        //std::cout<<"rvz: "<< rvz.real() << " " << rvz.imag() << std::endl;
-                        local_current[0] -= dm2d1.real() * rvx.real() - dm2d1.imag() * rvx.imag();    
+                        // std::cout<<"mu: "<< mu <<" nu: "<< nu << std::endl;
+                        //  std::cout<<"dm2d1_real: "<< dm2d1_real << " dm2d1_imag: "<< dm2d1_imag << std::endl;
+                        // std::cout<<"rvz: "<< rvz.real() << " " << rvz.imag() << std::endl;
+                        local_current[0] -= dm2d1.real() * rvx.real() - dm2d1.imag() * rvx.imag();
                         local_current[1] -= dm2d1.real() * rvy.real() - dm2d1.imag() * rvy.imag();
                         local_current[2] -= dm2d1.real() * rvz.real() - dm2d1.imag() * rvz.imag();
                     } // end kk
@@ -171,9 +166,8 @@ void ModuleIO::write_current(const UnitCell& ucell,
         fout.open(filename, std::ios::app);
         fout << std::setprecision(16);
         fout << std::scientific;
-        fout << istep+1 << " " << current_total[0]/omega 
-             << " " << current_total[1]/omega 
-             << " " << current_total[2]/omega << std::endl;
+        fout << istep + 1 << " " << current_total[0] / omega << " " << current_total[1] / omega << " " << current_total[2] / omega
+             << std::endl;
         fout.close();
     }
 
@@ -182,22 +176,26 @@ void ModuleIO::write_current(const UnitCell& ucell,
 }
 template <typename TR>
 void ModuleIO::write_current_eachk(const UnitCell& ucell,
-                             const int istep,
-                             const psi::Psi<std::complex<double>>* psi,
-                             const elecstate::ElecState* pelec,
-                             const K_Vectors& kv,
-                             const TwoCenterIntegrator* intor,
-                             const Parallel_Orbitals* pv,
-                             const LCAO_Orbitals& orb,
-                             const Velocity_op<TR>* cal_current,
-                             TD_info* td_p,
-                             Record_adj& ra)
+                                   const int istep,
+                                   const psi::Psi<std::complex<double>>* psi,
+                                   const elecstate::ElecState* pelec,
+                                   const K_Vectors& kv,
+                                   const TwoCenterIntegrator* intor,
+                                   const Parallel_Orbitals* pv,
+                                   const LCAO_Orbitals& orb,
+                                   const Velocity_op<TR>* cal_current,
+                                   TD_info* td_p,
+                                   Record_adj& ra)
 {
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
+    if (td_p == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::write_current", "RT-TDDFT current requires an explicit TD context.");
+    }
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
-    if (PARAM.inp.td_stype != 1)
+    if (td_p->field().gauge() != 1)
     {
         for (int dir = 0; dir < 3; dir++)
         {
@@ -206,47 +204,43 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
     }
     else
     {
-        if (TD_info::td_vel_op == nullptr)
-        {
-            ModuleBase::WARNING_QUIT("ModuleIO::write_current", "velocity gauge infos is null!");
-        }
         for (int dir = 0; dir < 3; dir++)
         {
-            current_term[dir] = TD_info::td_vel_op->get_current_term_pointer(dir);
+            current_term[dir] = td_p->get_current_term_pointer(dir);
         }
     }
-    double omega=ucell.omega;
+    double omega = ucell.omega;
     // construct a DensityMatrix object
-    // Since the function cal_dm_psi do not suport DMR in complex type, 
+    // Since the function dm_from_psi do not suport DMR in complex type,
     // I replace it with two DMR in double type.
     // Should be refactored in the future.
 
     const int nspin0 = PARAM.inp.nspin;
-    const int nspin_dm = std::map<int, int>({ {1,1},{2,2},{4,1} })[nspin0];
-    elecstate::DensityMatrix<std::complex<double>, std::complex<double>> tmp_dm(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
-    //elecstate::DensityMatrix<std::complex<double>, double> DM_real(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
-    //elecstate::DensityMatrix<std::complex<double>, double> DM_imag(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
-    // calculate DMK
-    elecstate::cal_dm_psi(pv, pelec->wg, psi[0], tmp_dm);
+    const int nspin_dm = std::map<int, int>({{1, 1}, {2, 2}, {4, 1}})[nspin0];
+    module_dm::DensityMatrix<std::complex<double>, std::complex<double>> tmp_dm(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
+    // module_dm::DensityMatrix<std::complex<double>, double> DM_real(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
+    // module_dm::DensityMatrix<std::complex<double>, double> DM_imag(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
+    //  calculate DMK
+    module_dm::dm_from_psi(pv, pelec->wg, psi[0], tmp_dm);
 
     // init DMR
-    tmp_dm.init_DMR(ra, &ucell);
+    tmp_dm.init_dmr(ra, &ucell);
 
-    int nks = tmp_dm.get_DMK_nks() / nspin_dm;
+    int nks = tmp_dm.get_dmk_nks() / nspin_dm;
     double current_total[3] = {0.0, 0.0, 0.0};
     for (int is = 1; is <= nspin_dm; ++is)
     {
         for (int ik = 0; ik < nks; ++ik)
         {
-            if(PARAM.inp.td_stype!=2)
+            if (td_p->field().gauge() != 2)
             {
-                tmp_dm.cal_DMR(ik);
+                tmp_dm.cal_dmr(ik);
             }
             else
             {
-                tmp_dm.cal_DMR_td(td_p->get_phase_hybrid(),TD_info::cart_At,ik);
+                tmp_dm.cal_dmr_td(td_p->get_phase_hybrid(), td_p->endpoint_A(), ik);
             }
-            
+
             // check later
             double current_ik[3] = {0.0, 0.0, 0.0};
 #ifdef _OPENMP
@@ -286,17 +280,13 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
                         double Rx = ra.get_info(iat, cb)[0];
                         double Ry = ra.get_info(iat, cb)[1];
                         double Rz = ra.get_info(iat, cb)[2];
-                        //std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:" << Rz << std::endl;
-                        //  get BaseMatrix
-                        hamilt::BaseMatrix<std::complex<double>>* tmp_matrix
-                            = tmp_dm.get_DMR_pointer(is)->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                        // std::cout<< "iat1: " << iat1 << " iat2: " << iat2 << " Rx: " << Rx << " Ry: " << Ry << " Rz:" << Rz << std::endl;
+                        //   get BaseMatrix
+                        hamilt::BaseMatrix<std::complex<double>>* tmp_matrix = tmp_dm.get_dmr_ptr(is)->find_matrix(iat1, iat2, Rx, Ry, Rz);
                         // refactor
-                        hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvx
-                            = current_term[0]->find_matrix(iat1, iat2, Rx, Ry, Rz);
-                        hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvy
-                            = current_term[1]->find_matrix(iat1, iat2, Rx, Ry, Rz);
-                        hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvz
-                            = current_term[2]->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                        hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvx = current_term[0]->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                        hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvy = current_term[1]->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                        hamilt::BaseMatrix<std::complex<double>>* tmp_m_rvz = current_term[2]->find_matrix(iat1, iat2, Rx, Ry, Rz);
                         if (tmp_matrix == nullptr)
                         {
                             continue;
@@ -323,7 +313,7 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
                                 // std::cout<<"mu: "<< mu <<" nu: "<< nu << std::endl;
                                 // std::cout<<"dm2d1_real: "<< dm2d1_real << " dm2d1_imag: "<< dm2d1_imag << std::endl;
                                 // std::cout<<"rvz: "<< rvz.real() << " " << rvz.imag() << std::endl;
-                                local_current_ik[0] -= dm2d1.real() * rvx.real() - dm2d1.imag() * rvx.imag();    
+                                local_current_ik[0] -= dm2d1.real() * rvx.real() - dm2d1.imag() * rvx.imag();
                                 local_current_ik[1] -= dm2d1.real() * rvy.real() - dm2d1.imag() * rvy.imag();
                                 local_current_ik[2] -= dm2d1.real() * rvz.real() - dm2d1.imag() * rvz.imag();
                             } // end kk
@@ -348,15 +338,14 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
             // MPI_Reduce(local_current_ik, current_ik, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             if (GlobalV::MY_RANK == 0 && TD_info::out_current_k)
             {
-                std::string filename = PARAM.globalv.global_out_dir + "current_s" + std::to_string(is) + "k"
-                                       + std::to_string(ik+1) + ".txt";
+                std::string filename
+                    = PARAM.globalv.global_out_dir + "current_s" + std::to_string(is) + "k" + std::to_string(ik + 1) + ".txt";
                 std::ofstream fout;
                 fout.open(filename, std::ios::app);
                 fout << std::setprecision(16);
                 fout << std::scientific;
-                fout << istep+1 << " " << current_ik[0]/omega 
-                     << " " << current_ik[1]/omega 
-                     << " " << current_ik[2]/omega << std::endl;
+                fout << istep + 1 << " " << current_ik[0] / omega << " " << current_ik[1] / omega << " " << current_ik[2] / omega
+                     << std::endl;
                 fout.close();
             }
             // write end
@@ -369,63 +358,56 @@ void ModuleIO::write_current_eachk(const UnitCell& ucell,
         fout.open(filename, std::ios::app);
         fout << std::setprecision(16);
         fout << std::scientific;
-        fout << istep+1 << " " << current_total[0]/omega 
-                        << " " << current_total[1]/omega 
-                        << " " << current_total[2]/omega << std::endl;
+        fout << istep + 1 << " " << current_total[0] / omega << " " << current_total[1] / omega << " " << current_total[2] / omega
+             << std::endl;
         fout.close();
     }
 
     ModuleBase::timer::end("ModuleIO", "write_current");
     return;
 }
-template 
-void ModuleIO::write_current_eachk<double>(
-                        const UnitCell& ucell,
-                        const int istep,
-                        const psi::Psi<std::complex<double>>* psi,
-                        const elecstate::ElecState* pelec,
-                        const K_Vectors& kv,
-                        const TwoCenterIntegrator* intor,
-                        const Parallel_Orbitals* pv,
-                        const LCAO_Orbitals& orb,
-                        const Velocity_op<double>* cal_current,
-                        TD_info* td_p,
-                        Record_adj& ra);
-template 
-void ModuleIO::write_current_eachk<std::complex<double>>(const UnitCell& ucell,
-                        const int istep,
-                        const psi::Psi<std::complex<double>>* psi,
-                        const elecstate::ElecState* pelec,
-                        const K_Vectors& kv,
-                        const TwoCenterIntegrator* intor,
-                        const Parallel_Orbitals* pv,
-                        const LCAO_Orbitals& orb,
-                        const Velocity_op<std::complex<double>>* cal_current,
-                        TD_info* td_p,
-                        Record_adj& ra);
-template 
-void ModuleIO::write_current<double>(const UnitCell& ucell,
-                const int istep,
-                const psi::Psi<std::complex<double>>* psi,
-                const elecstate::ElecState* pelec,
-                const K_Vectors& kv,
-                const TwoCenterIntegrator* intor,
-                const Parallel_Orbitals* pv,
-                const LCAO_Orbitals& orb,
-                const Velocity_op<double>* cal_current,
-                TD_info* td_p,
-                Record_adj& ra);
-template 
-void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucell,
-                const int istep,
-                const psi::Psi<std::complex<double>>* psi,
-                const elecstate::ElecState* pelec,
-                const K_Vectors& kv,
-                const TwoCenterIntegrator* intor,
-                const Parallel_Orbitals* pv,
-                const LCAO_Orbitals& orb,
-                const Velocity_op<std::complex<double>>* cal_current,
-                TD_info* td_p,
-                Record_adj& ra);
+template void ModuleIO::write_current_eachk<double>(const UnitCell& ucell,
+                                                    const int istep,
+                                                    const psi::Psi<std::complex<double>>* psi,
+                                                    const elecstate::ElecState* pelec,
+                                                    const K_Vectors& kv,
+                                                    const TwoCenterIntegrator* intor,
+                                                    const Parallel_Orbitals* pv,
+                                                    const LCAO_Orbitals& orb,
+                                                    const Velocity_op<double>* cal_current,
+                                                    TD_info* td_p,
+                                                    Record_adj& ra);
+template void ModuleIO::write_current_eachk<std::complex<double>>(const UnitCell& ucell,
+                                                                  const int istep,
+                                                                  const psi::Psi<std::complex<double>>* psi,
+                                                                  const elecstate::ElecState* pelec,
+                                                                  const K_Vectors& kv,
+                                                                  const TwoCenterIntegrator* intor,
+                                                                  const Parallel_Orbitals* pv,
+                                                                  const LCAO_Orbitals& orb,
+                                                                  const Velocity_op<std::complex<double>>* cal_current,
+                                                                  TD_info* td_p,
+                                                                  Record_adj& ra);
+template void ModuleIO::write_current<double>(const UnitCell& ucell,
+                                              const int istep,
+                                              const psi::Psi<std::complex<double>>* psi,
+                                              const elecstate::ElecState* pelec,
+                                              const K_Vectors& kv,
+                                              const TwoCenterIntegrator* intor,
+                                              const Parallel_Orbitals* pv,
+                                              const LCAO_Orbitals& orb,
+                                              const Velocity_op<double>* cal_current,
+                                              TD_info* td_p,
+                                              Record_adj& ra);
+template void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucell,
+                                                            const int istep,
+                                                            const psi::Psi<std::complex<double>>* psi,
+                                                            const elecstate::ElecState* pelec,
+                                                            const K_Vectors& kv,
+                                                            const TwoCenterIntegrator* intor,
+                                                            const Parallel_Orbitals* pv,
+                                                            const LCAO_Orbitals& orb,
+                                                            const Velocity_op<std::complex<double>>* cal_current,
+                                                            TD_info* td_p,
+                                                            Record_adj& ra);
 #endif //__LCAO
-

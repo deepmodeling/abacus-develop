@@ -1,7 +1,7 @@
 #ifndef STO_DOS
 #define STO_DOS
 #include "source_estate/elecstate.h"
-#include "source_pw/module_stodft/hamilt_sdft_pw.h"
+#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_che.h"
 #include "source_pw/module_stodft/sto_func.h"
 #include "source_pw/module_stodft/sto_wf.h"
@@ -65,7 +65,7 @@ class Sto_DOS
         = nullptr;            ///< pointer to the stochastic wavefunctions
     Sto_Func<double> stofunc; ///< functions
 
-    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
+    StoHamiltPW<std::complex<double>>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
 };
 
 #endif // STO_DOS

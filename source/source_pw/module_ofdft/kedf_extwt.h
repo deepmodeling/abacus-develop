@@ -2,6 +2,7 @@
 #define KEDF_EXTWT_H
 #include <cmath>
 #include <cstdio>
+#include <vector>
 
 #include "source_base/global_function.h"
 #include "source_base/matrix.h"
@@ -20,11 +21,7 @@ class KEDF_ExtWT
     {
         this->stress.create(3, 3);
     }
-    ~KEDF_ExtWT()
-    {
-        delete[] this->kernel_;
-        delete[] this->dkernel_deta_;
-    }
+    ~KEDF_ExtWT() = default;
 
     void set_para(double dV,
                   double alpha,
@@ -70,8 +67,8 @@ class KEDF_ExtWT
         = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
           * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
     double wt_coef_ = 0.; // coefficient of WT kernel
-    double* kernel_ = nullptr;
-    double* dkernel_deta_ = nullptr; // \partial w/ \partial rho0 = coef * ((alpha + beta - 5/3)F(eta) + 1/3 eta F'(eta))
+    std::vector<double> kernel_;
+    std::vector<double> dkernel_deta_; // \partial w/ \partial rho0 = coef * ((alpha + beta - 5/3)F(eta) + 1/3 eta F'(eta))
     double sum_rho_kappa_ = 0.;
     double sum_rho_kappa_plus_one_ = 0.;
     double kappa_ = 1.0 / (2.0 * std::pow(4./3., 1./3.) - 1.0);

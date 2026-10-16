@@ -27,7 +27,12 @@
 
 
 template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
+void Forces<FPTYPE, Device>::cal_force(const int nspin,
+                                       const bool domag,
+                                       const bool domag_z,
+                                       const int gga_grad,
+                   const bool use_onsite_projection,
+                                       UnitCell& ucell,
                                        ModuleBase::matrix& force,
                                        const vdw::VdwResult* vdw_result,
                                        const elecstate::ElecState& elec,
@@ -77,14 +82,15 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
 
         // DFT+U and DeltaSpin
         // here maybe a bug when OFDFT calls +U, mohan add 20251107
-        if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        if(use_onsite_projection)
         {
             this->cal_force_onsite(forceonsite, wg, wfc_basis, ucell, *p_dftu, psi_in);
         }
     }
 
     // non-linear core correction
-    Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell);
+    Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell,
+        nspin, domag, domag_z, gga_grad);
 
     // force due to core charge
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp->numeric, ucell);
@@ -132,10 +138,12 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     }
 
     ModuleBase::matrix forcesol;
+    ModuleBase::matrix forcepcc(this->nat, 3);
+    elec.pot->add_pcc_force(ucell, forcepcc);
     if (PARAM.inp.imp_sol)
     {
         forcesol.create(this->nat, 3);
-        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, PARAM.inp.nspin, forcesol);
+        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, nspin, forcesol);
         if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);
@@ -152,7 +160,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
             for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
                 force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol)
-                                   + forcescc(iat, ipol);
+                                   + forcescc(iat, ipol) + forcepcc(iat, ipol);
 
                 if (vdw_result != nullptr) // linpz and jiyy added vdw force, modified by zhengdy
                 {
@@ -174,7 +182,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                     force(iat, ipol) = force(iat, ipol) + forcesol(iat, ipol);
                 }
 
-                if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+                if(use_onsite_projection)
                 {
                     force(iat, ipol) += forceonsite(iat, ipol);
                 }
@@ -261,7 +269,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                                   forcesol,
                                   false);
         }
-        if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        if (use_onsite_projection)
         {
             ModuleIO::print_force(GlobalV::ofs_running,
                                   ucell,
@@ -361,7 +369,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
         resmem_var_op()(forcelc_d, this->nat * 3);
         resmem_var_op()(vloc_d, vloc.nr * vloc.nc);
 
-        syncmem_int_h2d_op()(iat2it_d, ucell.iat2it, this->nat);
+        syncmem_int_h2d_op()(iat2it_d, ucell.iat2it.data(), this->nat);
         syncmem_int_h2d_op()(ig2gg_d, rho_basis->ig2igg, rho_basis->npw);
         syncmem_var_h2d_op()(gcar_d, gcar_h.data(), rho_basis->npw * 3);
         syncmem_var_h2d_op()(tau_d, tau_h.data(), this->nat * 3);
@@ -548,7 +556,7 @@ void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
         resmem_complex_op()(aux_d, rho_basis->npw);
         resmem_var_op()(forceion_d, this->nat * 3);
 
-        syncmem_int_h2d_op()(iat2it_d, ucell.iat2it, this->nat);
+        syncmem_int_h2d_op()(iat2it_d, ucell.iat2it.data(), this->nat);
         syncmem_var_h2d_op()(gcar_d, gcar_h.data(), rho_basis->npw * 3);
         syncmem_var_h2d_op()(tau_d, tau_h.data(), this->nat * 3);
         syncmem_var_h2d_op()(it_fact_d, it_fact_h.data(), ucell.ntype);

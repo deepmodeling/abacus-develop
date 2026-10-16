@@ -310,6 +310,30 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
         item.default_value = "1.0";
         item.unit = "";
         read_sync_double(input.ref_cell_factor);
+        // Disable the reference cell feature for now, because the PW_Basis
+        // internal lat0/tpiba/G/GGT/omega members become stale when
+        // ref_cell_factor > 1, leading to wrong charge/energy integration
+        // (sum_rho, get_local_pp_energy, cal_delta_escf, makov_payne)
+        // in NPT and other variable-cell calculations. The reference cell
+        // mechanism leaks into external code (wfc IO, DFPT, OFDFT) in
+        // ways that are mathematically incorrect.
+        // TODO(liuyu): re-enable after PW_Basis is refactored to separate
+        // the reference-cell grid (FFT dims nx/ny/nz) from the physical-cell
+        // lattice quantities (lat0/tpiba/G/GGT/omega). Until then, refuse
+        // any non-1.0 value so users get a clear error instead of silently
+        // wrong results.
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.ref_cell_factor != 1.0)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "ref_cell_factor != 1.0 is currently disabled because the "
+                    "reference-cell mechanism produces wrong charge/energy "
+                    "integration in variable-cell calculations. Set "
+                    "ref_cell_factor = 1.0 (the default) or remove the line. "
+                    "See input_parameter.h ref_cell_factor comment.");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -695,7 +719,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         Input_Item item("cal_syns");
         item.annotation = "calculate asynchronous overlap matrix to output for Hefei-NAMD";
         item.category = "Molecular dynamics";
-        item.type = R"(Boolean [Integer](optional))";
+        item.type = R"(Boolean \[Integer\](optional))";
         item.description = R"(Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates <phi(t-1)|phi(t)> by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
 
 * 0 or false: disable
@@ -727,6 +751,35 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.default_value = "0.01";
         item.unit = "bohr";
         read_sync_double(input.dmax);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("plumed");
+        item.annotation = "use PLUMED for collective variables and enhanced sampling";
+        item.category = "Molecular dynamics";
+        item.type = "Boolean";
+        item.description = "Whether to use PLUMED (https://www.plumed.org) to compute collective "
+                           "variables, biasing potentials and free-energy methods during an MD run. "
+                           "ABACUS must be compiled with -DENABLE_PLUMED=ON and linked against a "
+                           "PLUMED installation (discovered through pkg-config or PLUMED_ROOT) to "
+                           "enable this feature. The PLUMED interface currently supports a single "
+                           "MPI rank only.";
+        item.default_value = "False";
+        item.unit = "";
+        read_sync_bool(input.mdp.plumed);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("plumed_file");
+        item.annotation = "input file of PLUMED";
+        item.category = "Molecular dynamics";
+        item.type = "String";
+        item.description = "The input file of PLUMED, read when `plumed` is enabled. Relative paths "
+                           "are resolved against the working directory of the run.";
+        item.default_value = "plumed.dat";
+        item.unit = "";
+        item.set_availability("plumed==true");
+        read_sync_string(input.mdp.plumed_file);
         this->add_item(item);
     }
 }

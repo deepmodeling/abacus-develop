@@ -4,7 +4,7 @@
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_parallel/para_bridge.h"
 #include "source_base/tool_quit.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/uspp_density.h"
 #include "source_io/module_output/cube_io.h"
 
@@ -116,7 +116,8 @@ void Get_pchg_pw<T, Device>::begin(UnitCell* ucell,
                                    const std::vector<int>& out_pchg,
                                    const std::string& global_out_dir,
                                    const bool if_separate_k,
-                                   const bool noncolin) const
+                                   const bool noncolin,
+                                   std::ofstream& ofs_running) const
 {
     // Resolve global band ownership collectively before validating the selection.
     const Parallel::ParaBandOutput band_output(psi_.get_nbands(), global_nbands_, Parallel::make_band_world());
@@ -141,11 +142,11 @@ void Get_pchg_pw<T, Device>::begin(UnitCell* ucell,
         std::fill(work.becsum.begin(), work.becsum.end(), 0.0);
         if (if_separate_k)
         {
-            write_separate(band, *ucell, pgrid, kv, global_out_dir, noncolin, band_output, &work);
+            write_separate(band, *ucell, pgrid, kv, global_out_dir, noncolin, band_output, ofs_running, &work);
         }
         else
         {
-            write_summed(band, ucell, pgrid, kv, global_out_dir, noncolin, band_output, &work);
+            write_summed(band, ucell, pgrid, kv, global_out_dir, noncolin, band_output, ofs_running, &work);
         }
     }
 }
@@ -236,6 +237,7 @@ void Get_pchg_pw<T, Device>::write_separate(const int band,
                                             const std::string& out_dir,
                                             const bool noncolin,
                                             const Parallel::ParaBandOutput& band_output,
+                                            std::ofstream& ofs_running,
                                             Workspace* work) const
 {
     // Collinear spin channels share the same physical k-point numbering in file names.
@@ -258,7 +260,7 @@ void Get_pchg_pw<T, Device>::write_separate(const int band,
         const int component_end = work->is_spinor ? 4 : spin_index + 1;
         for (int component = component_begin; component < component_end; ++component)
         {
-            write_cube(band, component, k_number, ucell, pgrid, out_dir, true, work->density[component]);
+            write_cube(band, component, k_number, ucell, pgrid, out_dir, true, work->density[component], ofs_running);
         }
     }
 }
@@ -271,6 +273,7 @@ void Get_pchg_pw<T, Device>::write_summed(const int band,
                                           const std::string& out_dir,
                                           const bool noncolin,
                                           const Parallel::ParaBandOutput& band_output,
+                                          std::ofstream& ofs_running,
                                           Workspace* work) const
 {
     for (int ik = 0; ik < kv.get_nks(); ++ik)
@@ -288,7 +291,7 @@ void Get_pchg_pw<T, Device>::write_summed(const int band,
     symmetrize(ucell, work);
     for (int is = 0; is < nspin_; ++is)
     {
-        write_cube(band, is, 0, *ucell, pgrid, out_dir, false, work->density[is]);
+        write_cube(band, is, 0, *ucell, pgrid, out_dir, false, work->density[is], ofs_running);
     }
 }
 
@@ -427,7 +430,6 @@ void Get_pchg_pw<T, Device>::sum_pools(const Parallel_Grid& pgrid, Workspace* wo
 template <typename T, typename Device>
 void Get_pchg_pw<T, Device>::symmetrize(UnitCell* ucell, Workspace* work) const
 {
-    Symmetry_rho srho;
     std::vector<double*> rho_pointers(nspin_);
     std::vector<std::vector<std::complex<double>>> rhog(nspin_, std::vector<std::complex<double>>(pw_rhod_.npw));
     std::vector<std::complex<double>*> rhog_pointers(nspin_);
@@ -441,14 +443,14 @@ void Get_pchg_pw<T, Device>::symmetrize(UnitCell* ucell, Workspace* work) const
     if (work->is_spinor)
     {
         // Charge and magnetization obey different spinor symmetry transformations.
-        srho.begin(0, rho_pointers.data(), rhog_pointers.data(), pw_rhod_.npw, nullptr, &pw_rhod_, ucell->symm);
-        srho.begin_soc(rho_pointers.data(), rhog_pointers.data(), &pw_rhod_, ucell->symm);
+        module_charge::cal_rhog_symm(0, rho_pointers.data(), rhog_pointers.data(), pw_rhod_.npw, nullptr, &pw_rhod_, ucell->symm);
+        module_charge::cal_rhog_symm_soc(rho_pointers.data(), rhog_pointers.data(), &pw_rhod_, ucell->symm);
     }
     else
     {
         for (int is = 0; is < nspin_; ++is)
         {
-            srho.begin(is, rho_pointers.data(), rhog_pointers.data(), pw_rhod_.npw, nullptr, &pw_rhod_, ucell->symm);
+            module_charge::cal_rhog_symm(is, rho_pointers.data(), rhog_pointers.data(), pw_rhod_.npw, nullptr, &pw_rhod_, ucell->symm);
         }
     }
 }
@@ -461,7 +463,8 @@ void Get_pchg_pw<T, Device>::write_cube(const int band,
                                         const Parallel_Grid& pgrid,
                                         const std::string& out_dir,
                                         const bool separate_k,
-                                        const std::vector<double>& values) const
+                                        const std::vector<double>& values,
+                                        std::ofstream& ofs_running) const
 {
     std::stringstream filename;
     filename << out_dir << "pchgi" << band + 1 << "s" << component + 1;
@@ -470,7 +473,8 @@ void Get_pchg_pw<T, Device>::write_cube(const int band,
         filename << "k" << k_number;
     }
     filename << ".cube";
-    ModuleIO::write_vdata_palgrid(pgrid, values.data(), component, nspin_, 0, filename.str(), 0.0, &ucell, 11, 0, false, separate_k);
+    const std::string desc_pchg = ModuleIO::make_data_desc("partial charge", "partial magnetization m", component, nspin_);
+    ModuleIO::write_vdata_palgrid(pgrid, values.data(), component, nspin_, 0, filename.str(), 0.0, &ucell, 11, 0, false, separate_k, ofs_running, desc_pchg);
 }
 
 // Explicit instantiation emits both precisions for each supported device from this .cpp file.

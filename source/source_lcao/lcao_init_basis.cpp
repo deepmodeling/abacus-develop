@@ -13,7 +13,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
         const double &lcao_dk,
         const double &lcao_dr,
         const double &lcao_rmax,
-		UnitCell& ucell,
+        UnitCell& ucell,
         TwoCenterBundle& two_center_bundle,
         LCAO_Orbitals& orb
 )

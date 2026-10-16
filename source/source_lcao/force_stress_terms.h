@@ -2,6 +2,7 @@
 #define FORCE_STRESS_TERMS_H
 
 #include "force_stress_lcao.h"
+#include "source_estate/module_pot/td_field_manager.h"
 
 // Free functions for the individual LCAO force/stress correction terms
 // (vdW + external fields, EXX, DFT+U, DeePKS). They are kept outside the
@@ -38,7 +39,8 @@ void cal_vdw_fields_fs(const vdw::VdwResult* vdw_result,
                        const bool isforce,
                        const bool isstress,
                        LCAOForceParts& parts,
-                       LCAOStressParts& sparts);
+                       LCAOStressParts& sparts,
+                       const elecstate::TDFieldManager* td_field);
 
 // EXX force/stress (only active under __EXX).
 template <typename T>
@@ -57,7 +59,7 @@ void cal_dftu_fs(UnitCell& ucell,
                  Parallel_Orbitals& pv,
                  const LCAO_Orbitals& orb,
                  const K_Vectors& kv,
-                 LCAO_domain::Setup_DM<T>& dmat,
+                 module_dm::Setup_DM<T>& dmat,
                  const TwoCenterBundle& two_center_bundle,
                  Plus_U_Base& dftu,
                  const bool isforce,

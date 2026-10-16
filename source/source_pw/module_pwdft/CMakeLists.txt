@@ -2,9 +2,16 @@
 
 list(APPEND objects
     hamilt_pw.cpp
+    td_history_pw.cpp
+    td_pw.cpp
     op_pw_ekin.cpp
+    op_pw_ekin_td.cpp
     op_pw_veff.cpp
+    projector_gradient.cpp
+    velocity_workspace.cpp
+    nonlocal_workspace.cpp
     op_pw_nl.cpp
+    op_pw_nl_td.cpp
     op_pw_meta.cpp
     op_pw_vel.cpp
     op_pw.cpp
@@ -12,6 +19,16 @@ list(APPEND objects
     op_pw_exx.cpp
     op_pw_exx_ace.cpp
     op_pw_exx_pot.cpp
+    kernels/exx_batch_op.cpp
+)
+
+if(ENABLE_FLOAT_FFTW)
+    list(APPEND objects kernels/exx_batch_op_float.cpp)
+else()
+    list(APPEND objects kernels/exx_batch_op_float_stub.cpp)
+endif()
+
+list(APPEND objects
     dftu_base.cpp
     dftu_base_io.cpp
     dftu_pw.cpp
@@ -50,6 +67,7 @@ list(APPEND objects
     vnl_pw_grad.cpp
     vnl_pw_init_vnl.cpp
     vnl_pw_qrad.cpp
+  vnl_pw_table.cpp
     stru_fac.cpp
     stru_fac_k.cpp
     soc.cpp
@@ -59,17 +77,8 @@ list(APPEND objects
     fs_nonlocal_tools_stress.cpp
     fs_nonlocal_tools_force.cpp
     fs_kin_tools.cpp
-    radial_proj.cpp
-    onsite_proj.cpp
-    onsite_proj_init.cpp
-    onsite_proj_overlap.cpp
+    nonlocal_maths.cpp
     onsite_proj_force_stress.cpp
-    onsite_proj_tools.cpp
-    onsite_proj_tools_becp.cpp
-    onsite_proj_tools_dbecp.cpp
-    onsite_proj_tools_force.cpp
-    onsite_proj_tools_stress.cpp
-    onsite_proj_print.cpp
     vsep_pw.cpp
 )
 

@@ -1,14 +1,16 @@
 #ifndef GENERAL_INFO_H
 #define GENERAL_INFO_H
-#include "source_io/module_parameter/parameter.h"
+
+class Parameter;
 
 /**
-* @brief In this part of the code to complete the general_info part of the json tree.
-*/
+ * @brief Generate the general_info section of the JSON tree.
+ */
 namespace Json
 {
-#ifdef __RAPIDJSON
+#ifdef __JSON
 void gen_general_info(const Parameter& param);
 #endif
-}
+} // namespace Json
+
 #endif

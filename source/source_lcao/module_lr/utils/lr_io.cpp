@@ -749,7 +749,7 @@ TLRI<Tdata> read_Ws(const TLRI<TVs>& Vs, const std::vector<TC>& Rlist)
         const std::string filename = "librpa.d/Wc_iR_" + std::to_string(iR) + "_ifreq_0.mtx";
         std::ifstream infileW(filename);
         if(!infileW) throw std::runtime_error(filename + " not found!");
-        if(GlobalV::MY_RANK == 0) std::cout << "reading Wc file: " << filename << std::endl;
+        // if(GlobalV::MY_RANK == 0) std::cout << "reading Wc file: " << filename << std::endl;
 
         TC R{}; // iR of Wc file is not equal to iR in Rlist !!!
         bool R_is_found = false;

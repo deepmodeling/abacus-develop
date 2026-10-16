@@ -2,8 +2,9 @@
 #include "efield.h"
 #include "gatefield.h"
 #include "pot_local.h"
+#include "pot_pcc.h"
 #include "pot_sep.h"
-#include "pot_surchem.hpp"
+#include "pot_surchem.h"
 #include "pot_xc.h"
 #include "potential_new.h"
 #include "source_base/global_function.h"
@@ -33,7 +34,18 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "xc")
     {
-        return new PotXC(this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
+        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
+    }
+    else if (pot_type == "pcc" || pot_type == "pcc_2d")
+    {
+        const Input_para& input = PARAM.inp;
+        const double electron_count = input.nelec;
+        if (pot_type == "pcc")
+        {
+            return new PotPcc(this->rho_basis_, electron_count);
+        }
+        const int open_axis = input.pcc_2d_axis;
+        return new PotPcc(this->rho_basis_, PotPcc::Dimension::slab, open_axis, electron_count);
     }
     else if (pot_type == "surchem")
     {

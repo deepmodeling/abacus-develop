@@ -52,7 +52,7 @@ LcaoOpsBundle<TK, TR> build_gamma_ops(const UnitCell& ucell,
                                       elecstate::Potential* pot_in,
                                       const TwoCenterBundle& two_center_bundle,
                                       const LCAO_Orbitals& orb,
-                                      elecstate::DensityMatrix<TK, double>* DM_in,
+                                      module_dm::DensityMatrix<TK, double>* DM_in,
                                       Plus_U_Base* p_dftu,
                                       Setup_DeePKS<TK>& deepks,
                                       const Input_para& inp,
@@ -81,7 +81,7 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
                                        elecstate::Potential* pot_in,
                                        const TwoCenterBundle& two_center_bundle,
                                        const LCAO_Orbitals& orb,
-                                       elecstate::DensityMatrix<TK, double>* DM_in,
+                                       module_dm::DensityMatrix<TK, double>* DM_in,
                                        Plus_U_Base* p_dftu,
                                        Setup_DeePKS<TK>& deepks,
                                        const Input_para& inp,
@@ -89,7 +89,8 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
                                        const K_Vectors* kv,
                                        HS_Matrix_K<TK>* hsk,
                                        HContainer<TR>* hR,
-                                       HContainer<TR>* sR);
+                                       HContainer<TR>* sR,
+                                       TD_info* td_info);
 
 } // namespace hamilt
 

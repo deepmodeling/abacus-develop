@@ -1,6 +1,8 @@
 #ifndef SPARSE_FORMAT_HSR_H
 #define SPARSE_FORMAT_HSR_H
 
+#include "source_lcao/module_rt/td_info.h"
+
 #include "source_lcao/lcao_hs_arrays.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_hamilt/hamilt.h"
@@ -47,7 +49,7 @@ void cal_HContainer(const Parallel_Orbitals& pv,
                     const hamilt::HContainer<TI>& hR,
                     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, TO>>>& target);
 
-void clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& current_spin, const double& sparse_thr);
+void clear_zero_elements(LCAO_HS_Arrays& HS_Arrays, const int& current_spin, const double& sparse_thr, TD_info* td_info);
 
 void destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays);
 

@@ -23,7 +23,7 @@ class Ewald_Vq
 {
   public:
     Ewald_Vq();
-	~Ewald_Vq();
+    ~Ewald_Vq();
     /**
      * @brief The Ewald summation decomposes the bare Coulomb interaction into two components: 
      *   the short-range contribution, evaluated in real space, and the long-range contribution, 
