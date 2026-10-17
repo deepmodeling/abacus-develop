@@ -630,6 +630,7 @@ struct Input_para
     bool exx_separate_loop = true;                          ///< if 1, a two-step method is employed, else it will start
                                                             ///< with a GGA-Loop, and then Hybrid-Loop
     std::string exx_singularity_correction = "default";     ///< set the scheme of Coulomb singularity correction
+    int exx_ewald_dimension = 3;                             ///< dimensionality used by Ewald Coulomb singularity correction
     int exx_hybrid_step = 100;                              ///< the maximal electronic iteration number in
                                                             ///< the evaluation of Fock exchange
     double exx_mixing_beta = 1.0;                           ///< mixing_beta for outer-loop when exx_separate_loop=1
@@ -637,6 +638,10 @@ struct Input_para
     double exx_pca_threshold = 0.0001;                      ///< threshold to screen on-site ABFs in exx
     double exx_c_threshold = 0.0001;                        ///< threshold to screen C matrix in exx
     double exx_v_threshold = 0.1;                           ///< threshold to screen C matrix in exx
+    double exx_v_threshold_long = 0.0;                      ///< threshold to screen long-range V matrix in exx
+    double exx_vcd_threshold = -1.0;                        ///< dynamic C/D-weighted threshold for merged-short EXX paths
+    bool exx_vcd_stats_only = false;                        ///< collect weighted short-screen stats without skipping paths
+    bool exx_vcd_short_only = true;                         ///< apply weighted short-screening only to the split short channel
     double exx_dm_threshold = 0.0001;                       ///< threshold to screen density matrix in exx
     double exx_c_grad_threshold = 0.0001;                   ///< threshold to screen nabla C matrix in exx
     double exx_v_grad_threshold = 0.1;                      ///< threshold to screen nabla V matrix in exx
@@ -644,6 +649,13 @@ struct Input_para
     double exx_v_grad_r_threshold = 0.1;                    ///< threshold to screen nabla V * R matrix in exx
     std::string exx_ccp_rmesh_times = "default";            ///< how many times larger the radial mesh required for
                                                             ///< calculating Columb potential is to that of atomic orbitals
+    double exx_ewald_lambda = 1.0;                          ///< Gaussian decay coefficient for Ewald full Coulomb in RI-EXX
+    std::string exx_ewald_tail_check = "warn";              ///< off, warn, enlarge, or strict short-range tail handling
+    double exx_ewald_tail_abs_tol = 1e-12;                  ///< absolute Frobenius-norm tolerance for one guard-shell block
+    double exx_ewald_tail_rel_tol = 1e-10;                  ///< relative Frobenius-norm tolerance for one guard-shell block
+    double exx_ewald_tail_sum_rel_tol = 1e-8;               ///< relative sum-of-block-norm tolerance for the guard shell
+    int exx_ewald_tail_guard_cells = 1;                     ///< lattice-cell layers added in every periodic direction
+    int exx_ewald_tail_max_expansions = 3;                  ///< maximum adaptive real-space range expansions
     int exx_opt_orb_lmax = 0;                               ///< the maximum l of the spherical Bessel functions for opt ABFs
     double exx_opt_orb_ecut = 0.0;                          ///< the cut-off of plane wave expansion for opt ABFs
     double exx_opt_orb_tolerence = 0.0;                     ///< the threshold when solving for the zeros of spherical Bessel
@@ -651,12 +663,21 @@ struct Input_para
     bool exx_symmetry_realspace = true; ///< whether to reduce the real-space sector in when using symmetry=1 in EXX calculation
     double rpa_ccp_rmesh_times = 10.0;  ///< how many times larger the radial mesh required for
                                         ///< calculating Columb potential is to that of atomic orbitals
+    std::string rpa_abfs_preorth = "none";  ///< on-site auxiliary Coulomb preorthogonalization for RPA output
+    double rpa_abfs_preorth_threshold = 1.0e-2;  ///< residual Coulomb-norm threshold for RPA ABFS preorthogonalization
     double exx_cs_inv_thr = -1;         ///< threshold to inverse Vq in abfs for generating Cs
     double shrink_abfs_pca_thr = -1;    ///< threshold to shrink auxiliary basis for GW/RPA
     double shrink_LU_inv_thr = 1e-6; ///< threshold to get inverse of overlap matrix by LU decomposition in auxiliary basis representation
     bool out_ri_cv = false;          ///< Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V
     bool out_unshrinked_v = false;   ///< whether to output the large Vq matrix in unshrinked auxiliary basis
     int out_librpa_ver = 0; ///< 0: legacy ABACUS LibRPA text files; 1: LibRPA reader-v1 binary files
+    std::string out_librpa_2d_coulomb_method = "ewald";  ///< ewald or direct_mixed_fourier for reader-v1 full V
+    double out_librpa_2d_direct_ecut = 0.0;  ///< reciprocal cutoff in Ry for direct mixed-Fourier 2D Coulomb
+    int out_librpa_2d_direct_kz_order = 0;   ///< positive kz quadrature order for direct mixed-Fourier 2D Coulomb
+    int out_librpa_2d_direct_gamma_order = 8;  ///< positive even Gamma-plane quadrature order
+    std::string out_librpa_3d_coulomb_method = "ewald";  ///< ewald or direct_reciprocal for reader-v1 full V
+    double out_librpa_3d_direct_ecut = 0.0;  ///< reciprocal cutoff in Ry for direct 3D Coulomb
+    bool out_librpa_abf_overlap = false;  ///< output raw active-ABF overlap for LibRPA v1 PSD diagnostics
     bool exx_coul_moment = false;    ///< whether to use moment method for Coulomb calculation
     bool exx_rotate_abfs = false;    ///< whether to rotate auxiliary basis for Coulomb calculation
     double exx_multip_moments_threshold = 1e-10; ///< threshold to screen multipole moments in Coulomb calculation

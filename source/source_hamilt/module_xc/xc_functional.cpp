@@ -2,7 +2,11 @@
 #include "source_base/global_function.h"
 #include "source_base/tool_title.h"
 #include "source_base/constants.h"
+#include "source_io/module_parameter/parameter.h"
 #include <cmath>
+
+#include <algorithm>
+#include <cctype>
 
 #ifdef __LIBXC
 #include "libxc_abacus.h"
@@ -75,6 +79,23 @@ void XC_Functional::set_hse_omega(const double omega_in)
 void XC_Functional::set_runtime_parameters(const XCFunctionalParameters& parameters)
 {
     runtime_parameters = parameters;
+}
+
+std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_xc_func,
+                                                   const std::string& pseudo_xc_func)
+{
+    std::string input_xc = input_xc_func;
+    std::transform(input_xc.begin(), input_xc.end(), input_xc.begin(), (::toupper));
+    if (!input_xc.empty() && input_xc != "DEFAULT" && input_xc != "NONE")
+    {
+        return input_xc_func;
+    }
+    return pseudo_xc_func;
+}
+
+std::string XC_Functional::resolve_runtime_xc_type(const UnitCell& ucell)
+{
+    return resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell.atoms[0].ncpp.xc_func);
 }
 
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
