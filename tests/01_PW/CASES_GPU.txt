@@ -84,7 +84,7 @@ scf_pbe0_spin1
 scf_pbe0_spin2
 099_PW_15_SO_avg
 #100_PW_DJ_SO
-#101_PW_W90
+101_PW_W90
 102_PW_MD_1O
 103_PW_MD_2O
 #104_PW_Gene_Descriptors

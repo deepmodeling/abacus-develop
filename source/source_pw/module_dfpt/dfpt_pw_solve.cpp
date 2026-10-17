@@ -17,6 +17,7 @@
 #include <cmath>
 #include <complex>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <vector>
 
@@ -50,6 +51,9 @@ void DFPT_PW::Impl::assemble_v_sc(const ModuleBase::Vector3<double>& q_cart,
     {
         return;
     }
+    // per-q context: analytic GGA kernels act with i(G + q) on the
+    // physical carrier of the q-shifted amplitude
+    xc_->set_context(q_cart);
     std::vector<std::complex<double>> a_r(nrxx);
     pw_rho_->recip2real(drho_in_g.data(), a_r.data());
     std::vector<std::complex<double>> b_r;
@@ -207,6 +211,7 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
 
     bool converged = false;
     double residual = 0.0;
+    int n_iter_done = 0;
     std::vector<std::complex<double>> v_sc_r_last;
     for (int iter = 0; iter < max_iter_ && !converged; ++iter)
     {
@@ -251,12 +256,27 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
         rho_.compute_drho(gs_psi_, wg_, q_idx, data_);
         rho_.mix_drho(q_idx, data_);
         residual = rho_.get_residual(q_idx, data_);
+        // default iteration trace (GS-SCF style); the DFPT_DEBUG snapshots
+        // above stay opt-in diagnostics
+        std::cout << "  DFPT mix iter=" << std::setw(3) << std::right << iter + 1 << "/" << max_iter_
+                  << " residual=" << std::setprecision(3) << std::scientific << residual
+                  << " (thr " << std::setprecision(1) << std::scientific << conv_thr_ << ")"
+                  << std::endl;
         if (dbg)
         {
             std::cout << "DBG iter=" << iter << " residual=" << residual << " conv_thr=" << conv_thr_ << std::endl;
         }
         converged = (residual < conv_thr_);
+        ++n_iter_done;
     }
+    // convergence summary in the efield-solve style; names the state
+    // explicitly instead of failing silently at max_iter
+    std::cout << std::defaultfloat << std::setprecision(4);
+    std::cout << "DFPT disp q=(" << q_frac.x << "," << q_frac.y << "," << q_frac.z << ") atom=" << iat + 1 << "("
+              << ucell_->atoms[ucell_->iat2it[iat]].label << ") dir=" << static_cast<char>('x' + idir) << " "
+              << (converged ? "converged" : "NOT converged (max_iter reached)") << ", residual=" << std::scientific
+              << std::setprecision(6) << residual << " (iter=" << n_iter_done << ")" << std::defaultfloat
+              << std::endl;
     stash_converged_disp_response(q_idx, iat, idir, v_sc_r_last, nk, nbands);
 
     ModuleBase::timer::end("DFPT_PW", "solve_displacement");

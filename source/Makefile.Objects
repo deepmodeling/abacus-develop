@@ -434,7 +434,8 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_q0.o\
     dfpt_q0_pos.o\
     dfpt_rho.o\
-    dfpt_stern.o
+    dfpt_stern.o\
+    dfpt_xc_analytic.o
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
     hamilt_lcao_factory.o\
