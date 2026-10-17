@@ -138,3 +138,37 @@ unchanged to ABACUS.
 - Missing GPU LibRI dependency produces the expected CMake diagnostic; this
   guard was checked remotely with CMake 3.31.6.
 - Final staged whitespace check passed.
+
+## Single-node multi-GPU memory scaling
+
+Follow-up Slurm job 1832072 passed on node 16v100n48. The same saved GPU RI
+binary and Si32 DZP input ran sequentially with 1, 2 and 4 MPI ranks, one rank
+per GPU, OMP_NUM_THREADS=1, GPU cuSOLVER. All runs used 7 outer iterations.
+One measurement per configuration, on the same four-V100 allocation:
+
+| Active GPUs / ranks | Per-process sampled peak MiB | Wall seconds |
+| --- | --- | ---: |
+| 1 | 2756 | 63.78 |
+| 2 | 1682, 1682 | 57.23 |
+| 4 | 1158, 1106, 1106, 1158 | 52.71 |
+
+A live nvidia-smi UUID/PID snapshot confirmed the four listed processes were
+on four distinct GPUs; a separate live query confirmed distinct GPUs for the
+two-rank run. Peaks are sampled at 100 ms, not allocator-level bounds.
+Maximum total-energy difference from one rank: 5.10e-11 eV. Forces agree at
+printed precision; maximum stress-component difference: 1.30e-7 kbar.
+
+Thus distributing RI work *does* lower per-card memory in this tested case:
+39% reduction with two cards and 58% with four. Total replicated memory grows,
+and the slowest card does not follow ideal 1/N scaling. Performance improved
+only 1.21x from one to four cards on this small system. These measurements
+support using more GPUs to relieve capacity pressure, but do not establish
+large-system or multi-node scaling or guarantee arbitrary capacity growth.
+The CPU-RI baseline's small GPU footprint is not an appropriate standalone
+rejection criterion for GPU offload; the relevant capacity metric is maximum
+per-card memory as system size and GPU count increase.
+
+Controls, full input/output, per-PID memory traces and UUID mapping snapshot:
+`/mnt/g/work/agent/abacus/lcao-hse-results/multigpu/`.
+Remote archive: `archives/lcao-hse/lcao-multigpu-20261017-1.tar.gz` beneath the
+experiment project root. No runtime code was changed for this test.
