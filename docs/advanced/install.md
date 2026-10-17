@@ -133,9 +133,10 @@ Enable the correction with `xc_nonlocal rvv10` and explicitly select
 The first adapter supports CPU double-precision, full-complex PW, one process,
 `nspin=1`, a single density grid, a right-handed cell and norm-conserving
 pseudopotentials for SCF energy/potential evaluation. Other spin/layout modes,
-forces, stress, relaxation and pairwise D2/D3/D4 combinations are rejected.
+forces, stress, relaxation, non-SCF runs such as `nscf` band structures and
+pairwise D2/D3/D4 combinations are rejected.
 The legacy Makefile does not build this backend. See `tests/rvv10/README.md`
-for the numerical tests and host/backend accounting.
+for how to run the dependency-free and backend tests.
 
 ## Build with JSON support
 
