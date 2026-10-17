@@ -5,6 +5,7 @@ endif()
 add_subdirectory(module_librpa_io)
 
 add_library(rpa OBJECT
+  rpa_abfs_preorthogonalization.cpp
   rpa_lri.cpp
   rpa_lri_detail.cpp
   rpa_lri_band_io.cpp
