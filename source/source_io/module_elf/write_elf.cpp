@@ -46,7 +46,7 @@ void write_elf(
     for (int is = 0; is < nspin_eff; ++is)
     {
 #pragma omp parallel for schedule(static) \
-    default(none) firstprivate(nrxx) shared(phi, rho, is)
+    default(none) firstprivate(nrxx) shared(phi, rho, rho_basis, is)
         for (int ir = 0; ir < nrxx; ++ir)
         {
             phi[ir] = std::sqrt(std::abs(rho[is][ir]));
@@ -63,7 +63,7 @@ void write_elf(
         {
 #pragma omp parallel for schedule(static) \
     default(none) firstprivate(img, npw) \
-    shared(recip_gradient_phi, recip_phi, j)
+    shared(recip_gradient_phi, rho_basis, recip_phi, j)
             for (int ip = 0; ip < npw; ++ip)
             {
                 recip_gradient_phi[ip]
@@ -75,7 +75,7 @@ void write_elf(
 
 #pragma omp parallel for schedule(static) \
     default(none) firstprivate(nrxx) \
-    shared(tau_vw, gradient_phi, is, j)
+    shared(tau_vw, gradient_phi, is, j, rho_basis)
             for (int ir = 0; ir < nrxx; ++ir)
             {
                 tau_vw[is][ir] += gradient_phi[j][ir]
@@ -94,7 +94,7 @@ void write_elf(
     {
 #pragma omp parallel for schedule(static) \
     default(none) firstprivate(c_tf, nrxx) \
-    shared(rho, tau_TF)
+    shared(rho, tau_TF, rho_basis)
         for (int ir = 0; ir < nrxx; ++ir)
         {
             if (rho[0][ir] > 0.0)
@@ -115,7 +115,7 @@ void write_elf(
         {
 #pragma omp parallel for schedule(static) \
     default(none) firstprivate(c_tf, nrxx) \
-    shared(rho, tau_TF, is)
+    shared(rho, tau_TF, is, rho_basis)
             for (int ir = 0; ir < nrxx; ++ir)
             {
                 if (rho[is][ir] > 0.0)
@@ -138,7 +138,7 @@ void write_elf(
     {
 #pragma omp parallel for schedule(static) \
     default(none) firstprivate(eps, nrxx) \
-    shared(elf, tau, tau_vw, tau_TF, is)
+    shared(elf, tau, tau_vw, tau_TF, is, rho_basis)
         for (int ir = 0; ir < nrxx; ++ir)
         {
             if (tau_TF[is][ir] > 1.0e-12)
@@ -207,7 +207,7 @@ void write_elf(
         std::vector<double> elf_tot(nrxx, 0.0);
 #pragma omp parallel for schedule(static) \
     default(none) firstprivate(eps, nrxx) \
-    shared(elf_tot, tau, tau_vw, tau_TF)
+    shared(elf_tot, tau, tau_vw, tau_TF, rho_basis)
         for (int ir = 0; ir < nrxx; ++ir)
         {
             if (tau_TF[0][ir] + tau_TF[1][ir] > 1.0e-12)
