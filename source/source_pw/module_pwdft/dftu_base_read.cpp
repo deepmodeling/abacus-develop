@@ -358,7 +358,7 @@ static void read_occup_soc_atom(OccMatReadState& state,
     read_occup_spin_nelec_label(state, 2);
     blocks[3] = read_occup_matrix(state, size);
 
-    if (soc_layout == SOC_LAYOUT_PAULI)
+    if (soc_layout == DFTU_BASE::SOC_LAYOUT_PAULI)
     {
         read_occup_store_soc_pauli(occ, iat, l, blocks);
     }
@@ -396,8 +396,8 @@ static void read_occup_validate_configuration(
     {
         read_occup_fail(state, "npol is inconsistent with nspin");
     }
-    if (soc_layout != SOC_LAYOUT_PAULI
-        && soc_layout != SOC_LAYOUT_SPIN_BASIS_REAL)
+    if (soc_layout != DFTU_BASE::SOC_LAYOUT_PAULI
+        && soc_layout != DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL)
     {
         read_occup_fail(state, "unknown SOC occupation-matrix storage layout");
     }
