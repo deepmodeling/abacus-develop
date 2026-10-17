@@ -6,8 +6,11 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
+#include <iterator>
 #include <stdexcept>
+#include <unistd.h>
 
 // mock
 namespace GlobalV
@@ -76,6 +79,18 @@ class InputTest : public testing::Test
     void set_nproc(const int nproc)
     {
         GlobalV::NPROC = nproc;
+    }
+
+    std::string temporary_file(const std::string& name)
+    {
+        std::string filename = testing::TempDir() + name + ".XXXXXX";
+        const int fd = mkstemp(&filename[0]);
+        if (fd == -1)
+        {
+            throw std::runtime_error("Cannot create temporary INPUT test file");
+        }
+        EXPECT_EQ(close(fd), 0);
+        return filename;
     }
 
     void write_input(const std::string& filename, const std::string& parameters)
@@ -210,6 +225,142 @@ TEST_F(InputTest, RejectAutoDevice)
     Parameter param;
     EXPECT_THROW(readinput.read_parameters(param, "./auto_device_INPUT"), std::runtime_error);
     EXPECT_TRUE(std::remove("./auto_device_INPUT") == 0);
+}
+
+TEST_F(InputTest, NonlocalXcDefaultsToNone)
+{
+    Parameter param;
+    const std::string filename = temporary_file("abacus_nonlocal_default.INPUT");
+    EXPECT_NO_THROW(read_parameters(filename, "", param));
+    EXPECT_EQ(param.inp.xc_nonlocal, "none");
+}
+
+TEST_F(InputTest, NonlocalXcDisabledPreservesSemilocalInput)
+{
+    Parameter param;
+    const std::string filename = temporary_file("abacus_nonlocal_disabled.INPUT");
+    EXPECT_NO_THROW(read_parameters(filename, "xc_nonlocal NoNe\ndft_functional PBE\nnspin 2\ncal_force 1\n", param));
+    EXPECT_EQ(param.inp.xc_nonlocal, "none");
+    EXPECT_EQ(param.inp.dft_functional, "PBE");
+    EXPECT_EQ(param.inp.nspin, 2);
+    EXPECT_TRUE(param.inp.cal_force);
+}
+
+TEST_F(InputTest, NonlocalXcRejectsUnknownMethod)
+{
+    const std::string filename = temporary_file("abacus_nonlocal_unknown.INPUT");
+    expect_invalid_input(filename, "xc_nonlocal Unknown\n", "xc_nonlocal must be either none or rvv10");
+}
+
+TEST_F(InputTest, NonlocalXcRejectsCombinedFunctionalAlias)
+{
+    const std::string filename = temporary_file("abacus_nonlocal_alias.INPUT");
+    expect_invalid_input(filename, "dft_functional rVv10\n", "Use xc_nonlocal=rvv10");
+}
+
+#if defined(__LIBXC) && defined(__LIBVDWXC)
+TEST_F(InputTest, NonlocalXcAcceptsSupportedMixedCaseInput)
+{
+    Parameter param;
+    const std::string filename = temporary_file("abacus_nonlocal_enabled.INPUT");
+    EXPECT_NO_THROW(read_parameters(filename, "xc_nonlocal rVv10\ndft_functional gga_x_rpw86+gga_c_pbe\n", param));
+    EXPECT_EQ(param.inp.xc_nonlocal, "rvv10");
+}
+
+TEST_F(InputTest, NonlocalXcRejectsIncorrectFunctional)
+{
+    const std::string filename = temporary_file("abacus_nonlocal_functional.INPUT");
+    expect_invalid_input(filename, "xc_nonlocal rvv10\n", "requires an explicit semilocal dft_functional");
+    expect_invalid_input(filename,
+                         "xc_nonlocal rvv10\ndft_functional PBE\n",
+                         "requires dft_functional=GGA_X_RPW86+GGA_C_PBE");
+}
+
+TEST_F(InputTest, NonlocalXcRejectsInvalidOrUnsupportedParameters)
+{
+    const std::string filename = temporary_file("abacus_nonlocal_parameters.INPUT");
+    const std::string base = "xc_nonlocal rvv10\ndft_functional GGA_X_RPW86+GGA_C_PBE\n";
+    const std::vector<std::pair<std::string, std::string>> cases = {
+        {"rvv10_b 0\n", "must be finite and positive"},
+        {"rvv10_b nan\n", "must be finite and positive"},
+        {"rvv10_c -0.1\n", "must be finite and non-negative"},
+        {"rvv10_c inf\n", "must be finite and non-negative"},
+        {"rvv10_b 7.0\n", "uses fixed parameters"},
+        {"rvv10_c 0.01\n", "uses fixed parameters"},
+    };
+    for (const auto& entry: cases)
+    {
+        SCOPED_TRACE(entry.first);
+        const std::string parameters = base + entry.first;
+        expect_invalid_input(filename, parameters, entry.second);
+    }
+}
+
+TEST_F(InputTest, NonlocalXcRejectsUnsupportedInputCombinations)
+{
+    const std::string filename = temporary_file("abacus_nonlocal_scope.INPUT");
+    const std::string base = "xc_nonlocal rvv10\ndft_functional GGA_X_RPW86+GGA_C_PBE\n";
+    const std::vector<std::string> cases = {
+        "nspin 2\n",
+        "cal_force 1\n",
+        "cal_stress 1\n",
+        "basis_type lcao\nks_solver lapack\n",
+        "calculation nscf\n",
+        "esolver_type sdft\n",
+        "ecutwfc 50\necutrho 240\n",
+        "vdw_method d2\n",
+        "vl_in_h 0\n",
+    };
+    for (const auto& entry: cases)
+    {
+        SCOPED_TRACE(entry);
+        const std::string parameters = base + entry;
+        expect_invalid_input(filename, parameters, "xc_nonlocal=rvv10 supports only");
+    }
+}
+
+TEST_F(InputTest, NonlocalXcRejectsMultipleProcesses)
+{
+    set_nproc(2);
+    Parameter param;
+    param.set_pal_param(0, 2, 1);
+    const std::string filename = temporary_file("abacus_nonlocal_parallel.INPUT");
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(read_parameters(filename, "xc_nonlocal rvv10\ndft_functional GGA_X_RPW86+GGA_C_PBE\n", param),
+                 std::runtime_error);
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("xc_nonlocal=rvv10 supports only one MPI rank"));
+}
+#else
+TEST_F(InputTest, NonlocalXcRequiresEnabledBackend)
+{
+    const std::string filename = temporary_file("abacus_nonlocal_backend.INPUT");
+    expect_invalid_input(filename,
+                         "xc_nonlocal rVv10\ndft_functional GGA_X_RPW86+GGA_C_PBE\n",
+                         "requires Libxc and libvdwxc-enabled CMake builds");
+}
+#endif
+
+TEST_F(InputTest, NonlocalXcRejectsGammaBeforeOverwritingKpoints)
+{
+    const std::string filename = temporary_file("abacus_nonlocal_gamma.INPUT");
+    const std::string kpoint_file = temporary_file("abacus_nonlocal_gamma.KPT");
+    const std::string original = "K_POINTS\n2\nDirect\n0.0 0.0 0.0 0.5\n0.25 0.0 0.0 0.5\n";
+    {
+        std::ofstream kpoints(kpoint_file.c_str(), std::ios::binary);
+        ASSERT_TRUE(kpoints.is_open());
+        kpoints << original;
+        kpoints.close();
+        ASSERT_FALSE(kpoints.fail());
+    }
+    const std::string parameters = "xc_nonlocal rVv10\ngamma_only 1\nkpoint_file " + kpoint_file + "\n";
+    expect_invalid_input(filename, parameters, "gamma_only");
+    std::ifstream kpoints(kpoint_file.c_str(), std::ios::binary);
+    ASSERT_TRUE(kpoints.is_open());
+    const std::string actual((std::istreambuf_iterator<char>(kpoints)), std::istreambuf_iterator<char>());
+    EXPECT_EQ(actual, original);
+    kpoints.close();
+    EXPECT_EQ(std::remove(kpoint_file.c_str()), 0);
 }
 
 TEST_F(InputTest, ValidateRelaxMethodVariants)
