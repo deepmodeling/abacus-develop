@@ -2,7 +2,7 @@
 
 Fork-only experiment; not production-ready. ABACUS base: 8ae37fcd6.
 Runtime selection uses the existing `device cpu/gpu`. Build with
-`ENABLE_LIBRI=ON`, `USE_CUDA=ON`, `ENABLE_LIBRI_GPU=ON`, and explicit
+`ENABLE_LIBRI=ON`, `USE_CUDA=ON`, `ENABLE_LIBRI_GPU=ON`, an explicit
 `LIBRI_DIR`, and a CUDA DDLA installation selected with `DDLA_ROOT` or
 `CMAKE_PREFIX_PATH`. Explicit `DDLA_INCLUDE_DIR` and `DDLA_LIBRARY` overrides
 remain supported.
@@ -91,6 +91,8 @@ The small consumer below links only `LibRI::LibRI`, without ABACUS's common
 include paths or link flags. It checks headers, backend macros, the CPU default
 in GPU-enabled LibRI, and transitive BLAS linkage. Run with GPU support OFF
 and ON; the ON variant requires CUDA and the patched dependencies above.
+Pass `MKL_ROOT` and optionally `MKL_LINK=static` or `dynamic` to exercise
+ABACUS's MKL adapter instead of the default BLAS/LAPACK discovery.
 
 ```bash
 cmake -S tests/lcao_hse_gpu/cmake -B /path/to/consumer-build \
