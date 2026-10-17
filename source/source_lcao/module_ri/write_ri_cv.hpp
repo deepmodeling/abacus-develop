@@ -92,7 +92,7 @@ namespace LRI_CV_Tools
     }
 
     template<typename T>
-    TLRI<T> read_Cs_ao_all(const std::string& path, const double& threshold)
+    TLRI<T> read_Cs_ao_all(const std::string& path, const double& threshold = 0.0)
     {
         IZ(natom) IZ(ncell) IZ(ia1) IZ(ia2) IZ(ic_1) IZ(ic_2) IZ(ic_3)
         SZ(nw1) SZ(nw2) SZ(nabf)

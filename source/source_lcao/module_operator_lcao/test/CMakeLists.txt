@@ -93,6 +93,26 @@ AddTest(
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
 )
 
+if(ENABLE_LIBRI)
+AddTest(
+  TARGET MODULE_LCAO_operator_exx_nscf_cell_nearest_test
+  LIBS parameter psi base device container cereal::cereal
+  SOURCES test_op_exx_nscf_cell_nearest.cpp ../op_exx_lcao.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
+  ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+  ../../../source_hamilt/module_hcontainer/read_hcontainer.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp
+  ../../../source_basis/module_ao/orb_atomic_lm.cpp
+  ../../../source_basis/module_ao/orb_gaunt_table.cpp
+  ../../module_ri/ri_2d_comm.cpp
+  ../../../lcao_set_mat2d.cpp
+  ../../../source_io/module_restart/restart_exx_csr.cpp
+  ../../../source_base/element_basis_index.cpp
+  ../../../source_base/module_out/file_reader.cpp ../../../source_base/module_out/csr_reader.cpp
+  ../../../source_base/module_out/sparse_matrix.cpp
+  tmp_mocks.cpp ../../../source_hamilt/operator.cpp
+)
+endif()
+
 install(FILES parallel_operator_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 find_program(BASH bash)
 add_test(NAME MODULE_LCAO_operators_para_test

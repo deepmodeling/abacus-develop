@@ -7,6 +7,8 @@
 #define EWALD_VQ_H
 
 #include "lri_cv.h"
+#include "direct_2d_coulomb.h"
+#include "ewald_tail_utils.h"
 #include "gaussian_abfs.h"
 #include "source_base/element_basis_index.h"
 #include "source_cell/klist.h"
@@ -15,8 +17,10 @@
 
 #include <RI/global/Tensor.h>
 #include <array>
+#include <functional>
 #include <map>
 #include <mpi.h>
+#include <utility>
 
 template <typename Tdata>
 class Ewald_Vq
@@ -47,6 +51,8 @@ class Ewald_Vq
     using TAK = std::pair<TA, TK>;
 
   public:
+    void set_info_ri(const Exx_Info_RI* p) { p_info_ri = p; }
+
     void init(const UnitCell& ucell,
               const LCAO_Orbitals& orb,
               const MPI_Comm& mpi_comm_in,
@@ -56,12 +62,23 @@ class Ewald_Vq
               const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param_in,
               std::shared_ptr<ORB_gaunt_table> MGT_in,
               const double &ccp_rmesh_times_in,
+              const double &exact_ccp_rmesh_times_in,
+              const double &ewald_lambda_in,
               const double &kmesh_times_in,
-              const int abfs_Lmax_in);
+              const int& ewald_dimension_in = 3,
+              const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new = {});
 
     void init_ions(const UnitCell& ucell, const std::array<Tcell, Ndim>& period_Vs_NAO);
 
+    inline double get_exact_ccp_rmesh_times() const { return this->exact_ccp_rmesh_times; }
+
     double get_singular_chi(const UnitCell& ucell, const std::vector<std::map<std::string,std::string>>& param_list, const double& qdiv);
+
+    void output_direct_2d_coulomb(const UnitCell& ucell,
+                                  double ecut_ry,
+                                  int kz_order,
+                                  int gamma_order);
+    void output_direct_3d_coulomb(const UnitCell& ucell, double ecut_ry);
 
     inline std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>> cal_Vq(
         const UnitCell& ucell,
@@ -75,14 +92,58 @@ class Ewald_Vq
     inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_Vs(const UnitCell& ucell,
                                                                  const double& chi,
                                                                  std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in);
+    inline std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
+                     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
+    cal_Vs_split(const UnitCell& ucell,
+                 const double& chi,
+                 std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_Vs_serial_full(
+        const UnitCell& ucell,
+        const double& chi,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in_full,
+        const std::array<Tcell, Ndim>& period_Vs_NAO);
     inline std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> cal_dVs(
         const UnitCell& ucell,
         const double& chi,
         std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>& dVs_in);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_short_range_Vs(
+        const UnitCell& ucell,
+        const std::vector<TA>& list_A0,
+        const std::vector<TAC>& list_A1,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_bare_periodic_Vs(
+        const UnitCell& ucell,
+        const std::vector<TA>& list_A0,
+        const std::vector<TAC>& list_A1,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_short_range_Vs_serial_full(
+        const UnitCell& ucell,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in_full,
+        const std::array<Tcell, Ndim>& period_Vs_NAO);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_long_range_Vs_gauss(
+        const UnitCell& ucell,
+        const double& chi);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_long_range_Vs_gauss_serial_full(
+        const UnitCell& ucell,
+        const double& chi,
+        const std::array<Tcell, Ndim>& period_Vs_NAO);
+
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_realspace_difference(
+        const UnitCell& ucell,
+        const std::vector<TA>& list_A0,
+        const std::vector<TAC>& list_A1,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in,
+        bool truncate_analytic_tail);
+    inline EwaldVqDetail::TailStats cal_short_range_tail_stats(
+        const UnitCell& ucell,
+        const std::vector<EwaldVqDetail::TailKey>& local_keys,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_bare,
+        std::size_t local_production_blocks,
+        double local_reference_norm);
 
   private:
     double ccp_rmesh_times;
-    int abfs_Lmax = 0;
+    double exact_ccp_rmesh_times;
     LRI_CV<Tdata> cv;
     Gaussian_Abfs gaussian_abfs;
     const K_Vectors* p_kv = nullptr;
@@ -91,13 +152,20 @@ class Ewald_Vq
     MPI_Comm mpi_comm;
     ModuleBase::realArray gaunt;
     std::array<Tcell, Ndim> nmp;
-    const double ewald_lambda = 1.0;
+    double ewald_lambda = 1.0;
+    int ewald_dimension = 3;
+    int abfs_Lmax = 0;
 
     std::vector<std::vector<std::vector<double>>> multipole;
     ModuleBase::Element_Basis_Index::IndexLNM index_abfs;
+    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
+    ModuleBase::Element_Basis_Index::IndexPermutation abfs_old_to_new;
+    double bare_multipole_scale = 1.0;
 
     std::vector<double> lcaos_rcut;
+    std::vector<double> abfs_rcut;
     std::vector<double> g_lcaos_rcut;
+    std::vector<double> g_abfs_rcut;
     std::vector<double> g_abfs_ccp_rcut;
 
     std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
@@ -107,6 +175,7 @@ class Ewald_Vq
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> g_lcaos;
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> g_abfs;
     std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> g_abfs_ccp;
+    EwaldVqDetail::TailMode tail_mode = EwaldVqDetail::TailMode::Warn;
 
     /*
   MPI distribute
@@ -146,12 +215,28 @@ class Ewald_Vq
         const UnitCell& ucell,
         const std::vector<TA>& list_A0,
         const std::vector<TAC>& list_A1,
-        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in);
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in,
+        const bool truncate_analytic_tail = false);
     inline std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> cal_dVs_minus_gauss(
         const UnitCell& ucell,
         const std::vector<TA>& list_A0,
         const std::vector<TAC>& list_A1,
         std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>& dVs_in);
+    template <typename Tresult>
+    std::map<TA, std::map<TAC, Tresult>> project_Vs_dVs_gauss(
+        const UnitCell& ucell,
+        const std::vector<TA>& list_A0,
+        const std::vector<TAC>& list_A1,
+        std::map<TA, std::map<TAC, Tresult>>& Vs_dVs_gauss_in);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> cal_analytic_multipole_Vs(
+        const UnitCell& ucell,
+        const std::vector<EwaldVqDetail::TailKey>& keys);
+    inline std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> set_Vs_minus_gauss_common_candidates(
+        const UnitCell& ucell,
+        const std::vector<TA>& list_A0,
+        const std::vector<TAC>& list_A1,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in,
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_gauss_in);
     template <typename Tresult>
     std::map<TA, std::map<TAC, Tresult>> set_Vs_dVs_minus_gauss(const UnitCell& ucell,
                                                                 const std::vector<TA>& list_A0,
@@ -225,6 +310,7 @@ class Ewald_Vq
 
     inline double cal_V_Rcut(const int it0, const int it1);
     inline double get_Rcut_max(const int it0, const int it1);
+    const Exx_Info_RI* p_info_ri = nullptr;
 };
 #include "ewald_vq.hpp"
 

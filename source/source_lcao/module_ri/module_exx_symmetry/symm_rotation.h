@@ -10,6 +10,8 @@ class UnitCell;
 
 namespace ModuleSymmetry
 {
+    class SymmetryRotationTestAccess;
+
     /// Real-space (RI::Tensor / HContainer) H(R) and RI-coefficient symmetry restoration for
     /// EXX/RPA, built on top of the LibRI-independent k-space restoration in
     /// ModuleSymmetry::Symmetry_rotation_k (source_cell/module_symmetry/symm_rotation_k.h),
@@ -37,6 +39,13 @@ namespace ModuleSymmetry
             const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_irreduceble)const;
         /// @param iat2it map from global atom index to its species index
         /// @param iat2ia map from global atom index to its index within the species
+        /// Restore scalar auxiliary-basis H(R) blocks from the irreducible sector.
+        /// The ABF rotation is independent of the AO rotation and also applies complex
+        /// conjugation for antiunitary magnetic operations.
+        template<typename Tdata>
+        std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>> restore_HR_abf(
+            const Symmetry& symm, const Atom* atoms, const std::vector<int>& iat2it,
+            const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_irreducible)const;
         template<typename TR>   // HContainer type
         void restore_HR(
             const Symmetry& symm, const Atom* atoms,
@@ -61,6 +70,8 @@ namespace ModuleSymmetry
         //--------------------------------------------------------------------------------
 
     private:
+        friend class SymmetryRotationTestAccess;
+
         //--------------------------------------------------------------------------------
 
         //--------------------------------------------------------------------------------
@@ -88,6 +99,9 @@ namespace ModuleSymmetry
         RI::Tensor<Tdata> set_rotation_matrix(const Atom& a, const int& isym)const;
         template<typename Tdata>
         RI::Tensor<Tdata> set_rotation_matrix_abf(const int& type, const int& isym)const;
+        template<typename Tdata>
+        RI::Tensor<Tdata> rotate_atompair_serial_abf(const RI::Tensor<Tdata>& A, const int isym,
+            const int& type1, const int& type2, bool output = false)const;
 
         /// RI::Tensor mirror of rotmat_Slm_ (which is stored as ModuleBase::ComplexMatrix, shared
         /// with the LibRI-free k-space code), rebuilt lazily and cached across the many

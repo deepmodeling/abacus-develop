@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <numeric>
 
 namespace Singular_Value
@@ -232,6 +233,91 @@ double cal_massidda(const UnitCell& ucell,
         ModuleBase::WARNING_QUIT("Singular_Value::cal_massidda", "not converged!");
 
     ModuleBase::timer::end("Singular_Value", "cal_massidda");
+    return val_extra;
+}
+
+double fq_massidda_2d(const UnitCell& ucell, const std::array<int, 3>& nmp, const double& eta)
+{
+    ModuleBase::Vector3<double> b1(ucell.G.e11 / nmp[0], ucell.G.e12 / nmp[0], ucell.G.e13 / nmp[0]);
+    ModuleBase::Vector3<double> b2(ucell.G.e21 / nmp[1], ucell.G.e22 / nmp[1], ucell.G.e23 / nmp[1]);
+    b1 = b1 * ucell.tpiba;
+    b2 = b2 * ucell.tpiba;
+
+    const double cutoff = std::sqrt(35.0 / eta);
+    const int n0 = static_cast<int>(std::ceil(cutoff / b1.norm()));
+    const int n1 = static_cast<int>(std::ceil(cutoff / b2.norm()));
+
+    double fq = 0.0;
+    for (int i0 = -n0; i0 <= n0; ++i0)
+    {
+        for (int i1 = -n1; i1 <= n1; ++i1)
+        {
+            if (i0 == 0 && i1 == 0)
+            {
+                continue;
+            }
+            const ModuleBase::Vector3<double> qg = b1 * static_cast<double>(i0) + b2 * static_cast<double>(i1);
+            const double q = std::sqrt(qg.x * qg.x + qg.y * qg.y);
+            fq += std::exp(-eta * q * q) / q;
+        }
+    }
+
+    return fq;
+}
+
+double cal_massidda_2d(const UnitCell& ucell,
+                       const std::array<int, 3>& nmp,
+                       const double& eta,
+                       const int& niter,
+                       const double& eps)
+{
+    ModuleBase::TITLE("Singular_Value", "cal_massidda_2d");
+    ModuleBase::timer::start("Singular_Value", "cal_massidda_2d");
+
+    if (nmp[2] != 1)
+    {
+        ModuleBase::WARNING_QUIT("Singular_Value::cal_massidda_2d", "2D Ewald requires a single k point along z");
+    }
+
+    const ModuleBase::Vector3<double> a1_bohr = ucell.a1 * ucell.lat0;
+    const ModuleBase::Vector3<double> a2_bohr = ucell.a2 * ucell.lat0;
+    const double area_parallel = (a1_bohr ^ a2_bohr).norm();
+    const int nks = nmp[0] * nmp[1];
+
+    auto cal_chi = [&ucell, &nmp, &area_parallel, &nks](const double& eta_now) {
+        const double fq_sum = fq_massidda_2d(ucell, nmp, eta_now);
+        const double fq_int = area_parallel / (4.0 * std::sqrt(ModuleBase::PI * eta_now));
+        return fq_int * nks - fq_sum;
+    };
+
+    const int max_iter = std::max(niter, 16);
+    int tot_iter = 0;
+    double val_extra_old = 0.5 * std::numeric_limits<double>::max();
+    double eta_old = eta;
+    double val_old = cal_chi(eta_old);
+    double val_extra = val_old;
+    for (int iter = 0; iter != max_iter; ++iter)
+    {
+        const double eta_new = eta_old * 0.5;
+        const double val_new = cal_chi(eta_new);
+        const double dval = (val_new - val_old) / (eta_new - eta_old);
+        val_extra = val_new + dval * (0.0 - eta_new);
+        if (std::abs(val_extra - val_extra_old) < eps)
+        {
+            break;
+        }
+        eta_old = eta_new;
+        val_old = val_new;
+        val_extra_old = val_extra;
+        tot_iter += 1;
+    }
+
+    if (tot_iter == max_iter)
+    {
+        ModuleBase::WARNING_QUIT("Singular_Value::cal_massidda_2d", "not converged!");
+    }
+
+    ModuleBase::timer::end("Singular_Value", "cal_massidda_2d");
     return val_extra;
 }
 

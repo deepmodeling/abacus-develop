@@ -294,3 +294,21 @@ int elecstate::TDFieldManager::gauge() const
 {
     return gauge_;
 }
+
+// The operator tests reference the global restart context through headers;
+// provide the definition without pulling module_io's restart.cpp.
+#include "source_io/module_restart/restart.h"
+namespace GlobalC
+{
+Restart restart;
+}
+
+// op_exx_lcao.cpp reads the global XC functional type inside OperatorEXX
+// member functions that the cell-nearest test never enters; satisfy the
+// linker without module_xc's PW-dependent objects.
+#include "source_hamilt/module_xc/xc_functional.h"
+int XC_Functional::func_type = 0;
+void XC_Functional::set_xc_type(const std::string xc_func_in)
+{
+    (void)xc_func_in;
+}
