@@ -414,45 +414,4 @@ void DFPT_Pert::d2vloc_r(int atom_idx, int da, int db, std::vector<std::complex<
     ModuleBase::timer::end("DFPT_Pert", "d2vloc_r");
 }
 
-void DFPT_Pert::build_efield(const ModuleBase::Vector3<double>& field, DFPT_PW_Data& data)
-{
-    ModuleBase::TITLE("DFPT_Pert", "build_efield");
-    ModuleBase::timer::start("DFPT_Pert", "build_efield");
-    // first-order electric-field potential: delta V(r) = - r . E (q=0 limit,
-    // position operator in the periodic cell). Computed directly on the shared
-    // real-space grid. Only relevant for the Q0 dielectric response (C6).
-    if (pw_rho_ == nullptr)
-    {
-        ModuleBase::timer::end("DFPT_Pert", "build_efield");
-        return;
-    }
-    if (pw_rho_->gamma_only)
-    {
-        ModuleBase::WARNING_QUIT("DFPT_Pert::build_efield",
-                                 "DFPT requires a complex (gamma_only=false) real-space basis.");
-    }
-    std::vector<std::complex<double>> dv_real(pw_rho_->nrxx, std::complex<double>(0.0, 0.0));
-    const ModuleBase::Matrix3& latvec = ucell_->latvec;
-    const double lat0 = ucell_->lat0;
-    // shared real-space grid layout (serial pool): ir = (ix*ny + iy)*nz + iz,
-    // i.e. z runs fastest (verified against the impulse response of the FFT).
-    for (int ir = 0; ir < pw_rho_->nrxx; ++ir)
-    {
-        const int iz = ir % pw_rho_->nz;
-        const int rem = ir / pw_rho_->nz;
-        const int iy = rem % pw_rho_->ny;
-        const int ix = rem / pw_rho_->ny;
-        const double fx = ix / static_cast<double>(pw_rho_->nx);
-        const double fy = iy / static_cast<double>(pw_rho_->ny);
-        const double fz = iz / static_cast<double>(pw_rho_->nz);
-        ModuleBase::Vector3<double> r;
-        r.x = (fx * latvec.e11 + fy * latvec.e12 + fz * latvec.e13) * lat0;
-        r.y = (fx * latvec.e21 + fy * latvec.e22 + fz * latvec.e23) * lat0;
-        r.z = (fx * latvec.e31 + fy * latvec.e32 + fz * latvec.e33) * lat0;
-        dv_real[ir] = -(field * r); // -e r.E (e absorbed in field convention)
-    }
-    data.set_dv_rc(0, 0, dv_real);
-    ModuleBase::timer::end("DFPT_Pert", "build_efield");
-}
-
 } // namespace ModuleDFPT
