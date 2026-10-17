@@ -5,9 +5,9 @@ on:
   workflow_dispatch:
     inputs:
       plugin_ref:
-        description: Reviewed QuantumMisaka/abacuslite commit or ref
+        description: Optional reviewed QuantumMisaka/abacuslite ref; empty uses published 1.1.0
         required: false
-        default: dc020430bfa8c76edfc275b0f1eab2f12cc29d4d
+        default: ''
 
 defaults:
   run:
@@ -27,17 +27,18 @@ jobs:
     env:
       ABACUS_COMMAND: mpirun -np 2 abacus
       ASE_ABACUS_ASSETS: ${{ github.workspace }}/tests/PP_ORB
+      ASE_ABACUS_SOCKET: '1'
 
     steps:
       - name: Checkout engine PR
         uses: actions/checkout@v7.0.1
 
       - name: Checkout reviewed candidate
-        if: matrix.package == 'external'
+        if: matrix.package == 'external' && inputs.plugin_ref != ''
         uses: actions/checkout@v7.0.1
         with:
           repository: QuantumMisaka/abacuslite
-          ref: ${{ inputs.plugin_ref || 'dc020430bfa8c76edfc275b0f1eab2f12cc29d4d' }}
+          ref: ${{ inputs.plugin_ref }}
           path: candidate-plugin
           persist-credentials: false
 
@@ -58,18 +59,35 @@ jobs:
         if: matrix.package == 'bundled'
         shell: bash -l {0}
         run: |
-          cd interfaces/ASE_interface
-          pip install .
+          mkdir -p "$RUNNER_TEMP/bundled-wheel"
+          python -m pip wheel --no-deps --wheel-dir "$RUNNER_TEMP/bundled-wheel" \
+            interfaces/ASE_interface
+          sha256sum "$RUNNER_TEMP"/bundled-wheel/*.whl
+          python -m pip install "$RUNNER_TEMP"/bundled-wheel/*.whl
 
       - name: Build and install candidate wheel
         if: matrix.package == 'external'
         shell: bash -l {0}
+        env:
+          PLUGIN_REF: ${{ inputs.plugin_ref }}
         run: |
-          python -m pip install 'build>=1.2'
-          python -m build --wheel --outdir "$RUNNER_TEMP/candidate-wheel" candidate-plugin
-          sha256sum "$RUNNER_TEMP"/candidate-wheel/*.whl
-          python -m pip install "$RUNNER_TEMP"/candidate-wheel/*.whl
-          git -C candidate-plugin rev-parse HEAD
+          mkdir -p "$RUNNER_TEMP/candidate-wheel"
+          if [ -n "$PLUGIN_REF" ]; then
+            python -m pip install 'build>=1.2'
+            python -m build --wheel --outdir "$RUNNER_TEMP/candidate-wheel" candidate-plugin
+            git -C candidate-plugin rev-parse HEAD
+          else
+            python -m pip download --only-binary=:all: --no-deps \
+              --dest "$RUNNER_TEMP/candidate-wheel" 'abacuslite==1.1.0'
+          fi
+          wheels=("$RUNNER_TEMP"/candidate-wheel/*.whl)
+          test "${#wheels[@]}" -eq 1
+          sha256sum "${wheels[0]}"
+          if [ -z "$PLUGIN_REF" ]; then
+            actual="$(sha256sum "${wheels[0]}")"
+            test "${actual%% *}" = c3e4504e9c9f5bceb69f70c79290e7843037ca72f625c5f66258e14d110f0ff3
+          fi
+          python -m pip install "${wheels[0]}"
           python -m pip show abacuslite ase numpy seekpath
 
       - name: Install external tools from toolchain
@@ -111,25 +129,34 @@ jobs:
         shell: bash -l {0}
         run: |
           cd interfaces/ASE_interface/tests
-          python -m unittest test_external_provenance test_harness_facts test_native_md_fixture -v
+          python -m unittest test_external_provenance test_harness_facts \
+            test_native_md_fixture test_portable_runner -v
 
       - name: Run engine-owned integration tests
         shell: bash -l {0}
         run: |
-          mkdir -p "$RUNNER_TEMP/ase-engine-tests"
-          cp interfaces/ASE_interface/tests/*.py interfaces/ASE_interface/tests/xtest.sh "$RUNNER_TEMP/ase-engine-tests/"
-          cd "$RUNNER_TEMP/ase-engine-tests"
+          ENGINE_REF="$(git rev-parse HEAD)"
           if [ "${{ matrix.package }}" = external ]; then
-            python verify_external.py --bundled-root "$GITHUB_WORKSPACE/interfaces/ASE_interface" --candidate-root "$GITHUB_WORKSPACE/candidate-plugin"
-            export ASE_ABACUS_SOCKET=1
+            WHEEL_DIR="$RUNNER_TEMP/candidate-wheel"
+          else
+            WHEEL_DIR="$RUNNER_TEMP/bundled-wheel"
           fi
-          timeout 30m bash ./xtest.sh
+          python interfaces/ASE_interface/tests/run_engine_compatibility.py \
+            --engine /usr/local/bin/abacus \
+            --mpi-command 'mpirun -np 2' \
+            --assets "$GITHUB_WORKSPACE/tests/PP_ORB" \
+            --format latest \
+            --wheel "$WHEEL_DIR"/*.whl \
+            --report-dir "$RUNNER_TEMP/ase-engine-tests" \
+            --engine-ref "$ENGINE_REF" \
+            --python "$(command -v python)"
 
       - name: Upload ASE failure artifacts
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: ase-failure-${{ matrix.package }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: /tmp/abacus_ase_failure/**
+          path: |
+            ${{ runner.temp }}/ase-engine-tests/**
           if-no-files-found: ignore
           retention-days: 14

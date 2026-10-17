@@ -18,6 +18,7 @@ from ase.calculators.socketio import SocketIOCalculator
 from common import (assert_band_facts, assert_collinear_magmoms,
                     calculate_socket_frame, close_socket_bounded,
                     preserved_tmpdir)
+from legacy_facts import assert_band_facts as assert_legacy_band_facts
 
 
 class HarnessFactsTest(unittest.TestCase):
@@ -64,6 +65,23 @@ spin=1 k-point=2/2 Cartesian=0.5 0.0 0.0 (1 plane wave)
             bands.energies[0, 1, 1] += 0.1
             with self.assertRaises(AssertionError):
                 assert_band_facts(self, bands, path)
+
+    def test_legacy_band_oracle_rejects_mutated_reader_result(self):
+        raw = '''1/2 kpoint (Cartesian) = 0.0 0.0 0.0 (1 pws)
+1 -2.5000 1.0
+2 1.2500 0.0
+2/2 kpoint (Cartesian) = 0.5 0.0 0.0 (1 pws)
+1 -2.2500 1.0
+2 1.5000 0.0
+'''
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / 'running_nscf.log'
+            path.write_text(raw)
+            bands = SimpleNamespace(energies=np.array([[[-2.5, 1.25], [-2.25, 1.5]]]))
+            assert_legacy_band_facts(self, bands, path)
+            bands.energies[0, 1, 1] += 0.1
+            with self.assertRaises(AssertionError):
+                assert_legacy_band_facts(self, bands, path)
 
     def test_per_atom_magnetic_moment_rejects_swap(self):
         raw = '''Total Magnetism (uB)

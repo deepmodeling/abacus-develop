@@ -21,41 +21,36 @@ cd interfaces/ASE_interface
 pip install .
 ```
 
-For coordinated testing of the independent candidate, build a wheel from the
-reviewed [QuantumMisaka/abacuslite](https://github.com/QuantumMisaka/abacuslite)
-commit and install it in a separate environment. The bundled installation above
-remains available while the migration is reviewed:
+The independent [abacuslite](https://pypi.org/project/abacuslite/1.1.0/) 1.1.0
+release can be installed in a separate environment. The engine compatibility
+runner requires the same wheel file that was installed in that environment:
 
 ```bash
-git clone https://github.com/QuantumMisaka/abacuslite.git /tmp/abacuslite-candidate
-git -C /tmp/abacuslite-candidate checkout dc020430bfa8c76edfc275b0f1eab2f12cc29d4d
-python -m pip install build
-python -m build --wheel --outdir /tmp/abacuslite-wheel /tmp/abacuslite-candidate
+python -m pip download --only-binary=:all: --no-deps \
+  --dest /tmp/abacuslite-wheel 'abacuslite==1.1.0'
 python -m pip install /tmp/abacuslite-wheel/*.whl
-mkdir -p /tmp/abacus-ase-engine-tests
-cp /path/to/abacus-develop/interfaces/ASE_interface/tests/*.py \
-   /path/to/abacus-develop/interfaces/ASE_interface/tests/xtest.sh \
-   /tmp/abacus-ase-engine-tests/
-cd /tmp/abacus-ase-engine-tests
-python verify_external.py \
-  --bundled-root /path/to/abacus-develop/interfaces/ASE_interface \
-  --candidate-root /tmp/abacuslite-candidate
-ABACUS_COMMAND='mpirun -np 2 /path/to/abacus' \
-ASE_ABACUS_ASSETS=/path/to/abacus-develop/tests/PP_ORB \
-ASE_ABACUS_SOCKET=1 \
-bash ./xtest.sh
+python /path/to/abacus-develop/interfaces/ASE_interface/tests/run_engine_compatibility.py \
+  --engine /absolute/path/to/abacus --mpi-command 'mpirun -np 2' \
+  --assets /path/to/abacus-develop/tests/PP_ORB --format latest \
+  --wheel /tmp/abacuslite-wheel/abacuslite-1.1.0-py3-none-any.whl \
+  --report-dir /tmp/abacus-ase-engine-tests --engine-ref FULL_ENGINE_COMMIT_SHA
 ```
 
-Run the scripts from outside `interfaces/ASE_interface` so that the bundled
-source cannot shadow the installed wheel. In CI the `external` job checks
-distribution metadata and the imported `abacuslite.__file__`, records the engine
-revision and `abacus --version`, and retains failed calculation directories.
-`workflow_dispatch` accepts a reviewed `plugin_ref` for coordinated runs.
-The scripts above require a built ABACUS executable and the curated PP/ORB
-assets. Both lanes include a two-step ABACUS-native MD run that compares the
-assembled periodic ASE frames with the raw `MD_dump` lattice, positions and
-forces. The separate raw-output fixture regression is an offline Python check;
-ordinary Python checks do not launch the engine.
+The runner copies the required scripts outside the checkout, verifies installed
+runtime bytes against the supplied wheel, records the executable hash and
+actual version/reader, and preserves every raw run and per-script log. It
+rejects omitted or skipped required cases. The ordinary external CI lane pins
+the published 1.1.0 wheel by SHA256
+`c3e4504e9c9f5bceb69f70c79290e7843037ca72f625c5f66258e14d110f0ff3`.
+The bundled transition lane builds a wheel from this engine PR and runs the
+same develop suite. Both develop lanes require all nine checks, including
+fixed-cell socket and real native MD. Use `--format legacy` with an LTS
+executable for eight interface checks plus the seeded initial-velocity case.
+The LTS engine source has no bundled interface or socket driver; the shared
+runner supplies its legacy-format oracle for plugin CI.
+`workflow_dispatch` can select a reviewed plugin source ref instead of the
+published release. Engine tests run only through this explicit runner or the
+opt-in `xtest.sh`, not ordinary offline unit checks.
 
 ## Usage Examples
 

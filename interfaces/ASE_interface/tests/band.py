@@ -1,3 +1,4 @@
+import os
 import unittest
 import numpy as np
 from pathlib import Path
@@ -63,7 +64,10 @@ class TestSCFFollowedNSCF(unittest.TestCase):
             self.assertEqual(values.shape[1], len(bandpath.kpts))
             self.assertGreater(values.shape[2], 0)
             self.assertTrue(np.all(np.isfinite(values)))
-            assert_band_facts(self, bands, Path(tmpdir) / 'OUT.ABACUS' / 'eig_occ.txt')
+            output = Path(tmpdir) / 'OUT.ABACUS'
+            raw_bands = output / ('running_nscf.log' if os.environ.get('ASE_ABACUS_FORMAT') == 'legacy'
+                                  else 'eig_occ.txt')
+            assert_band_facts(self, bands, raw_bands)
             bands.write(Path(tmpdir) / 'bandstructure.json')
             self.assertTrue((Path(tmpdir) / 'bandstructure.json').exists())
 

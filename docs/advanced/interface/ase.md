@@ -22,17 +22,15 @@ cd interfaces/ASE_interface
 pip install .
 ```
 
-For the independent candidate package, use a separate environment and build a
-wheel from the reviewed `QuantumMisaka/abacuslite` commit
-`dc020430bfa8c76edfc275b0f1eab2f12cc29d4d`. The ABACUS PR CI has
-parallel `bundled` and `external` jobs; the latter installs this wheel and runs
-the engine-owned tests from outside the bundled source tree. The local command
-and PP/ORB asset location are selected with `ABACUS_COMMAND` and
-`ASE_ABACUS_ASSETS`. Set `ASE_ABACUS_SOCKET=1` to include the bounded fixed-cell
-socket case. See [the ASE interface README](../../../interfaces/ASE_interface/README.md)
-for the exact candidate installation and test commands. Both lanes also run a
-short ABACUS-native MD case and compare its periodic ASE trajectory with the
-raw MD dump.
+For the independent package, install the published `abacuslite==1.1.0` wheel
+in a separate environment. The ABACUS PR CI retains parallel `bundled` and
+`external` jobs; the external lane verifies its installed modules against the
+wheel and runs the engine-owned harness outside the bundled source tree. The
+portable runner accepts an explicit executable, MPI launcher, curated PP/ORB
+assets, output format, wheel and report directory. Its develop lane includes
+the bounded fixed-cell socket case and native MD; LTS runs the supported cases
+plus seeded native MD. See [the ASE interface README](../../../interfaces/ASE_interface/README.md)
+for the exact command. Manual CI dispatch can select a reviewed source ref.
 
 ## ABACUS Calculator
 
