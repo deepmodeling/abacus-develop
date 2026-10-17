@@ -26,6 +26,7 @@
 #include <complex>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 namespace {
@@ -298,6 +299,21 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     for (int ir = 0; ir < veff_smooth.nc; ++ir)
     {
         veff_r[ir] = veff_smooth(0, ir);
+    }
+
+    // input guard: the first-order XC kernel supports LDA (1) and GGA (2)
+    // only. Meta-GGA needs the tau channel (absent in both kernel paths),
+    // and hybrid functionals need the exact-exchange response -- neither
+    // exists yet, so reject them explicitly instead of producing silently
+    // wrong frequencies.
+    const int xc_func_type = XC_Functional::get_func_type();
+    if (xc_func_type != 1 && xc_func_type != 2)
+    {
+        std::stringstream msg;
+        msg << "DFPT supports LDA/GGA functionals only; the ground-state functional '"
+            << ucell.atoms[0].ncpp.xc_func << "' (func_type " << xc_func_type
+            << ") needs response channels that are not implemented";
+        ModuleBase::WARNING_QUIT("ESolver_DFPT_PW::init_dfpt", msg.str());
     }
 
     // first-order XC kernel around the converged ground-state density:
