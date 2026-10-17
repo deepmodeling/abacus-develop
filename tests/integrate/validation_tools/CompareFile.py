@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import math
 import sys
 
 usage = '''
@@ -46,6 +47,8 @@ def ReadParam():
     return file1,file2,epsilon,useAbsoluteVal,compareAbsoluteDiff
 
 def is_two_data_diff(data1,data2,epsilon,compareAbsoluteDiff):
+    if not math.isfinite(data1) or not math.isfinite(data2):
+        return True
     if compareAbsoluteDiff:
         if abs(data1-data2) > epsilon: return True
     else:
@@ -60,6 +63,11 @@ def ReadFile(file1,lines):
     try:
         with open(file1) as f1:
             for line in f1.readlines(): lines.append(line)
+        # A final blank line carries no numerical information and varies among
+        # otherwise equivalent output writers. Keep interior blank lines so a
+        # missing or shifted data row is still detected below.
+        while lines and not lines[-1].strip():
+            lines.pop()
     except OSError:
         print("Error: can not find file %s" % file1)
         sys.exit(1)
@@ -86,6 +94,16 @@ def IsComplex(x):
         return False
     return [realp,imagp]
 
+def HasNonFiniteNumber(line):
+    for token in line.split():
+        complex_value = IsComplex(token)
+        if complex_value:
+            if not math.isfinite(complex_value[0]) or not math.isfinite(complex_value[1]):
+                return True
+        elif IsFloat(token) and not math.isfinite(float(token)):
+            return True
+    return False
+
 def ExitError(iline,line1,line2,jnumber=-1):
     if jnumber < 0:
         print('Compare Error: line %d\n %s:%s %s:%s'%(iline+1,file1,line1,file2,line2))
@@ -102,7 +120,9 @@ if __name__ == "__main__":
     ReadFile(file2,lines2)
    
     for i in range(min(len(lines1),len(lines2))):
-        if lines1[i].strip() == lines2[i].strip():continue
+        if lines1[i].strip() == lines2[i].strip():
+            if HasNonFiniteNumber(lines1[i]): ExitError(i,lines1[i],lines2[i])
+            continue
         elif '' in [lines1[i].strip(),lines2[i].strip()]: ExitError(i,lines1[i],lines2[i])
         elif len(lines1[i].split()) != len(lines2[i].split()): ExitError(i,lines1[i],lines2[i])
         else:
@@ -128,3 +148,9 @@ if __name__ == "__main__":
                         if is_two_data_diff(float(sline1[j]), float(sline2[j]), epsilon, compareAbsoluteDiff):
                             ExitError(i,sline1[j],sline2[j],j)
                 elif sline1[j] != sline2[j]: ExitError(i,sline1[j],sline2[j],j)
+
+    if len(lines1) != len(lines2):
+        i = min(len(lines1),len(lines2))
+        line1 = lines1[i] if i < len(lines1) else '<missing>'
+        line2 = lines2[i] if i < len(lines2) else '<missing>'
+        ExitError(i,line1,line2)
