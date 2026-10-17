@@ -125,12 +125,12 @@ void FFT_Bundle::initfft(int nx_in,
                 nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
 #endif
         }
-        if (this->double_flag)
-        {
-            this->host_fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
-            this->host_fft_double->initfft(
-                nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
-        }
+        // The double host backend is needed regardless of the compute precision:
+        // post-processing (e.g. the Wannier90 output path) always reads the
+        // std::complex<double> CPU wavefunction mirror, even for precision=single.
+        this->host_fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
+        this->host_fft_double->initfft(
+            nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
     }
 }
 
@@ -139,10 +139,10 @@ void FFT_Bundle::setupFFT()
     if (double_flag)
     {
         fft_double->setupFFT();
-        if (host_fft_double != nullptr)
-        {
-            host_fft_double->setupFFT();
-        }
+    }
+    if (host_fft_double != nullptr)
+    {
+        host_fft_double->setupFFT();
     }
     if (float_flag)
     {
@@ -159,10 +159,10 @@ void FFT_Bundle::clearFFT()
     if (double_flag)
     {
         fft_double->cleanFFT();
-        if (host_fft_double != nullptr)
-        {
-            host_fft_double->cleanFFT();
-        }
+    }
+    if (host_fft_double != nullptr)
+    {
+        host_fft_double->cleanFFT();
     }
     if (float_flag)
     {
@@ -179,10 +179,10 @@ void FFT_Bundle::clear()
     if (double_flag)
     {
         fft_double->clear();
-        if (host_fft_double != nullptr)
-        {
-            host_fft_double->clear();
-        }
+    }
+    if (host_fft_double != nullptr)
+    {
+        host_fft_double->clear();
     }
     if (float_flag)
     {
