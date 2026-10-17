@@ -91,9 +91,9 @@ void append_ion_step_snapshot(const Plus_U_Base& dftu,
 
 /// Read the local occupation number matrix from file (rank 0 only).
 ///
-/// The file format matches the output of write_occup_m(). When the file can
-/// not be opened, the run quits with an error message that depends on
-/// init_occ_mat and init_chg.
+/// Only the current compact format written to occ_mat.txt is accepted. Legacy
+/// Atom=/L=/spin= layouts and malformed or incomplete matrices terminate the
+/// run with a diagnostic containing the filename and input line.
 ///
 /// @param soc_layout storage layout of the nspin == 4 occupation matrix;
 ///        the PW path stores 4 contiguous Pauli blocks (b0, b1, b2, b3) and

@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
-#include <cstring>
 #include <ctime>
 #include <fstream>
 #include <iomanip>

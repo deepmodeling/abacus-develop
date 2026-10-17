@@ -4,47 +4,325 @@
 #include "source_base/global_variable.h"
 #include "source_cell/unitcell.h"
 
-#include <cstring>
+#include <cmath>
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <vector>
 
 namespace
 {
 
-// Consume the label of one SOC block in the compact layout, e.g.
-// "spin 1 nelec 1.07922327" or "spin 12 re". The optional
-// "nelec <value>" token pair is skipped when present.
-void skip_compact_soc_label(std::ifstream& ifs, char* word)
+const char* const READ_CONTEXT = "DFTU_BASE::read_occup_m";
+
+struct ReaderState
 {
-    ifs >> word; // "spin"
-    ifs >> word; // block index: "1", "2" or "12"
-    ifs >> word; // "nelec", "re" or "im"
-    if (strcmp(word, "nelec") == 0)
+    ReaderState(std::ifstream& input, const std::string& filename)
+        : input(input), filename(filename), line_number(0)
     {
-        double nelec = 0.0;
-        ifs >> nelec;
+    }
+
+    std::ifstream& input;
+    const std::string& filename;
+    int line_number;
+};
+
+[[noreturn]] void fail(const ReaderState& state, const std::string& message)
+{
+    std::ostringstream os;
+    os << "invalid compact occupation-matrix file " << state.filename;
+    if (state.line_number > 0)
+    {
+        os << " at line " << state.line_number;
+    }
+    os << ": " << message;
+    ModuleBase::WARNING_QUIT(READ_CONTEXT, os.str());
+}
+
+bool next_data_line(ReaderState& state, std::string& line)
+{
+    while (std::getline(state.input, line))
+    {
+        ++state.line_number;
+        const std::string::size_type first = line.find_first_not_of(" \t\r");
+        if (first == std::string::npos || line[first] == '#')
+        {
+            continue;
+        }
+        return true;
+    }
+    return false;
+}
+
+std::string require_data_line(ReaderState& state, const std::string& expected)
+{
+    std::string line;
+    if (!next_data_line(state, line))
+    {
+        fail(state, "unexpected end of file while reading " + expected);
+    }
+    return line;
+}
+
+void require_line_end(ReaderState& state,
+                      std::istringstream& line_stream,
+                      const std::string& expected)
+{
+    std::string extra;
+    if (line_stream >> extra)
+    {
+        fail(state, "unexpected token '" + extra + "' after " + expected);
     }
 }
 
-// Read n*n doubles of one compact matrix block row by row. When out is
-// non-null the values are stored, otherwise they are read and discarded.
-void read_matrix_block(std::ifstream& ifs, const int n, double* out)
+double read_finite_double(ReaderState& state,
+                          std::istringstream& line_stream,
+                          const std::string& expected)
 {
-    for (int i = 0; i < n * n; ++i)
+    double value = 0.0;
+    if (!(line_stream >> value) || !std::isfinite(value))
     {
-        double value = 0.0;
-        ifs >> value;
-        if (ifs.fail())
+        fail(state, "expected a finite number for " + expected);
+    }
+    return value;
+}
+
+void parse_atom_header(ReaderState& state,
+                       const UnitCell& ucell,
+                       const int expected_type,
+                       const int expected_iat,
+                       const int expected_l,
+                       const int nspin)
+{
+    const std::string line = require_data_line(state, "an atom header");
+    std::istringstream line_stream(line);
+    std::string element;
+    std::string atom_keyword;
+    std::string l_keyword;
+    std::string mag_keyword;
+    int atom_index = 0;
+    int l = -1;
+    if (!(line_stream >> element >> atom_keyword >> atom_index >> l_keyword >> l
+          >> mag_keyword))
+    {
+        fail(state, "expected compact header '<element> Atom <index> L <l> mag ...'");
+    }
+    if (atom_keyword != "Atom" || l_keyword != "L" || mag_keyword != "mag")
+    {
+        fail(state, "only the compact 'Atom <index> L <l> mag ...' header is supported");
+    }
+    if (element != ucell.atoms[expected_type].label)
+    {
+        fail(state, "element label '" + element + "' does not match the unit cell");
+    }
+    if (atom_index != expected_iat + 1)
+    {
+        fail(state, "atom index does not match the unit-cell order");
+    }
+    if (l != expected_l)
+    {
+        fail(state, "L does not match the configured DFT+U channel");
+    }
+
+    const int magnetization_components = (nspin == 4) ? 3 : 1;
+    for (int component = 0; component < magnetization_components; ++component)
+    {
+        read_finite_double(state, line_stream, "magnetization");
+    }
+    require_line_end(state, line_stream, "the compact atom header");
+}
+
+void parse_spin_nelec_label(ReaderState& state, const int expected_spin)
+{
+    const std::string line = require_data_line(state, "a spin block label");
+    std::istringstream line_stream(line);
+    std::string spin_keyword;
+    std::string nelec_keyword;
+    int spin = 0;
+    if (!(line_stream >> spin_keyword >> spin >> nelec_keyword)
+        || spin_keyword != "spin" || spin != expected_spin
+        || nelec_keyword != "nelec")
+    {
+        fail(state, "expected compact label 'spin "
+                    + std::to_string(expected_spin) + " nelec <value>'");
+    }
+    read_finite_double(state, line_stream, "nelec");
+    require_line_end(state, line_stream, "the spin block label");
+}
+
+void parse_soc_offdiagonal_label(ReaderState& state, const std::string& component)
+{
+    const std::string line = require_data_line(state, "the spin 12 " + component + " label");
+    std::istringstream line_stream(line);
+    std::string spin_keyword;
+    std::string block;
+    std::string actual_component;
+    if (!(line_stream >> spin_keyword >> block >> actual_component)
+        || spin_keyword != "spin" || block != "12"
+        || actual_component != component)
+    {
+        fail(state, "expected compact label 'spin 12 " + component + "'");
+    }
+    require_line_end(state, line_stream, "the spin 12 " + component + " label");
+}
+
+std::vector<double> parse_matrix(ReaderState& state, const int size)
+{
+    std::vector<double> matrix(size * size, 0.0);
+    for (int row = 0; row < size; ++row)
+    {
+        const std::string line = require_data_line(state, "matrix row");
+        std::istringstream line_stream(line);
+        for (int column = 0; column < size; ++column)
         {
-            ModuleBase::WARNING_QUIT("read_matrix_block",
-                                     "failed to read a matrix element from the occupation matrix file");
+            const int index = row * size + column;
+            matrix[index] = read_finite_double(state, line_stream, "matrix element");
         }
-        if (out != nullptr)
+        require_line_end(state, line_stream, "a matrix row");
+    }
+    return matrix;
+}
+
+void read_collinear_atom(ReaderState& state,
+                         OccupationMatrix& occ,
+                         const int iat,
+                         const int l)
+{
+    const int size = 2 * l + 1;
+    std::vector<std::vector<double>> spin_matrices(2);
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        parse_spin_nelec_label(state, spin + 1);
+        spin_matrices[spin] = parse_matrix(state, size);
+    }
+
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        for (int row = 0; row < size; ++row)
         {
-            out[i] = value;
+            for (int column = 0; column < size; ++column)
+            {
+                const int index = row * size + column;
+                occ.set(iat, l, spin, row, column, spin_matrices[spin][index]);
+            }
         }
     }
+}
+
+void store_soc_pauli(OccupationMatrix& occ,
+                     const int iat,
+                     const int l,
+                     const std::vector<std::vector<double>>& blocks)
+{
+    ModuleBase::matrix& matrix = occ.mat(iat, l, 0);
+    const int block_size = static_cast<int>(blocks[0].size());
+    for (int index = 0; index < block_size; ++index)
+    {
+        matrix.c[0 * block_size + index] = blocks[0][index] + blocks[3][index];
+        matrix.c[1 * block_size + index] = 2.0 * blocks[1][index];
+        matrix.c[2 * block_size + index] = 2.0 * blocks[2][index];
+        matrix.c[3 * block_size + index] = blocks[0][index] - blocks[3][index];
+    }
+}
+
+void store_soc_spin_basis(OccupationMatrix& occ,
+                          const int iat,
+                          const int l,
+                          const std::vector<std::vector<double>>& blocks)
+{
+    const int size = 2 * l + 1;
+    for (int row = 0; row < size; ++row)
+    {
+        for (int column = 0; column < size; ++column)
+        {
+            const int index = row * size + column;
+            occ.set(iat, l, 0, row, column, blocks[0][index]);
+            occ.set(iat, l, 0, row, size + column, blocks[1][index]);
+            occ.set(iat, l, 0, size + row, column, blocks[1][index]);
+            occ.set(iat, l, 0, size + row, size + column, blocks[3][index]);
+        }
+    }
+}
+
+void read_soc_atom(ReaderState& state,
+                   OccupationMatrix& occ,
+                   const int iat,
+                   const int l,
+                   const DFTU_BASE::OccmatSocLayout soc_layout)
+{
+    const int size = 2 * l + 1;
+    std::vector<std::vector<double>> blocks(4);
+    parse_spin_nelec_label(state, 1);
+    blocks[0] = parse_matrix(state, size);
+    parse_soc_offdiagonal_label(state, "re");
+    blocks[1] = parse_matrix(state, size);
+    parse_soc_offdiagonal_label(state, "im");
+    blocks[2] = parse_matrix(state, size);
+    parse_spin_nelec_label(state, 2);
+    blocks[3] = parse_matrix(state, size);
+
+    if (soc_layout == DFTU_BASE::SOC_LAYOUT_PAULI)
+    {
+        store_soc_pauli(occ, iat, l, blocks);
+    }
+    else
+    {
+        store_soc_spin_basis(occ, iat, l, blocks);
+    }
+}
+
+void validate_reader_configuration(const ReaderState& state,
+                                   const UnitCell& ucell,
+                                   const std::vector<int>& l_channel,
+                                   const int nspin,
+                                   const int npol,
+                                   const DFTU_BASE::OccmatSocLayout soc_layout)
+{
+    if (static_cast<int>(l_channel.size()) != ucell.ntype)
+    {
+        fail(state, "l_channel size does not match the number of atom types");
+    }
+    for (int type = 0; type < ucell.ntype; ++type)
+    {
+        if (l_channel[type] < -1 || l_channel[type] > ucell.atoms[type].nwl)
+        {
+            fail(state, "a configured DFT+U channel is outside the unit-cell range");
+        }
+    }
+    if (nspin != 1 && nspin != 2 && nspin != 4)
+    {
+        fail(state, "nspin must be 1, 2 or 4");
+    }
+    const int expected_npol = (nspin == 4) ? 2 : 1;
+    if (npol != expected_npol)
+    {
+        fail(state, "npol is inconsistent with nspin");
+    }
+    if (soc_layout != DFTU_BASE::SOC_LAYOUT_PAULI
+        && soc_layout != DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL)
+    {
+        fail(state, "unknown SOC occupation-matrix storage layout");
+    }
+}
+
+void report_open_error(const int init_occ_mat,
+                       const std::string& filename,
+                       const std::string& init_chg)
+{
+    if (init_occ_mat > 0)
+    {
+        ModuleBase::WARNING_QUIT(READ_CONTEXT,
+                                 "Can not open compact occupation-matrix file " + filename);
+    }
+    if (init_chg == "file")
+    {
+        ModuleBase::WARNING_QUIT(READ_CONTEXT,
+                                 "Can not find the compact occupation-matrix file "
+                                 + filename + ". Please do scf calculation first");
+    }
+    ModuleBase::WARNING_QUIT(READ_CONTEXT,
+                             "Can not open compact occupation-matrix file " + filename);
 }
 
 } // namespace
@@ -63,305 +341,57 @@ void read_occup_m(const UnitCell& ucell,
                   OccmatSocLayout soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "read_occup_m");
-
     if (GlobalV::MY_RANK != 0)
     {
         return;
     }
 
-    std::ifstream ifdftu(fn.c_str(), std::ios::in);
-
-    if (!ifdftu)
+    std::ifstream input(fn.c_str());
+    if (!input)
     {
-        if (init_occ_mat > 0)
-        {
-            ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "Can not find the file dm_onsite_ini.txt. Please check your dm_onsite_ini.txt");
-        }
-        else
-        {
-            if (init_chg == "file")
-            {
-                const std::string not_found_msg = "Can not find the file " + fn
-                                                  + ". Please do scf calculation first";
-                ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", not_found_msg);
-            }
-        }
-        const std::string open_failed_msg = "Can not open " + fn + " file";
-        ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", open_failed_msg);
+        report_open_error(init_occ_mat, fn, init_chg);
     }
 
     GlobalV::ofs_running << " DFT+U: read occupation matrix from " << fn << std::endl;
     std::cout << " DFT+U: read occupation matrix from " << fn << std::endl;
 
-    ifdftu.clear();
-    ifdftu.seekg(0);
+    ReaderState state(input, fn);
+    validate_reader_configuration(state, ucell, l_channel, nspin, npol, soc_layout);
 
-    char word[20];
-
-    int T = 0;
-    int iat = 0;
-    int spin = 0;
-    int L = 0;
-    int zeta = 0;
-
-    while (true)
+    int atom_count = 0;
+    for (int type = 0; type < ucell.ntype; ++type)
     {
-        if (!(ifdftu >> word))
-        {
-            break;
-        }
-
-        // Comment lines ("# ...") carry the provenance header and the
-        // electronic-step marker in the compact layout; skip the line.
-        if (word[0] == '#')
-        {
-            ifdftu.ignore(150, '\n');
-            continue;
-        }
-
-        // The legacy "Atom=" token and the compact "Atom" label both
-        // start one atom block; every other token (element prefix, log
-        // sentences) is ignored.
-        const bool legacy_atom = (strcmp(word, "Atom=") == 0);
-        const bool compact_atom = (strcmp(word, "Atom") == 0);
-        if (!legacy_atom && !compact_atom)
+        const int l = l_channel[type];
+        if (l < 0)
         {
             continue;
         }
-        const bool legacy_layout = legacy_atom;
-
-        ifdftu >> iat;
-        iat -= 1;
-
-        if (legacy_layout)
+        for (int atom = 0; atom < ucell.atoms[type].na; ++atom)
         {
-            ifdftu >> word;
-
-            // Accept both the compact "L=2" and the legacy split "L= 2".
-            if (strncmp("L=", word, 2) != 0)
+            const int iat = ucell.itia2iat(type, atom);
+            parse_atom_header(state, ucell, type, iat, l, nspin);
+            if (nspin == 4)
             {
-                ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
-            }
-            if (strlen(word) > 2)
-            {
-                L = atoi(word + 2);
+                read_soc_atom(state, occ, iat, l, soc_layout);
             }
             else
             {
-                ifdftu >> L;
+                read_collinear_atom(state, occ, iat, l);
             }
-            ifdftu >> word;
-
-            // The ORBITAL= token is optional in newly written files; when
-            // absent the radial channel defaults to 0.
-            if (strncmp("ORBITAL=", word, 8) == 0)
-            {
-                if (strlen(word) > 8)
-                {
-                    zeta = atoi(word + 8);
-                }
-                else
-                {
-                    ifdftu >> zeta;
-                }
-            }
-            else
-            {
-                zeta = 0;
-            }
-            ifdftu.ignore(150, '\n');
-
-            if (zeta != 0)
-            {
-                ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m",
-                                         "only the first radial channel (ORBITAL=0) is supported");
-            }
-        }
-        else
-        {
-            // Compact header, e.g. " Fe Atom 1 L 2 mag 0.03..."
-            ifdftu >> word;
-            if (strcmp(word, "L") != 0)
-            {
-                ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
-            }
-            ifdftu >> L;
-            // The optional "mag ..." tail is redundant for a restart.
-            ifdftu.ignore(150, '\n');
-            zeta = 0;
-        }
-
-        T = ucell.iat2it[iat];
-        const int NL = ucell.atoms[T].nwl + 1;
-
-        for (int l = 0; l < NL; l++)
-        {
-            if (l != l_channel[T])
-            {
-                continue;
-            }
-
-            const int nm = 2 * L + 1;
-
-            if (nspin == 1 || nspin == 2)
-            {
-                for (int is = 0; is < 2; is++)
-                {
-                    if (legacy_layout)
-                    {
-                        ifdftu >> word;
-                        if (strcmp("spin=", word) != 0)
-                        {
-                            ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
-                        }
-                        ifdftu >> spin;
-                        spin -= 1;
-                        ifdftu.ignore(150, '\n');
-
-                        double value = 0.0;
-                        for (int m0 = 0; m0 < nm; m0++)
-                        {
-                            for (int m1 = 0; m1 < nm; m1++)
-                            {
-                                ifdftu >> value;
-                                occ.set(iat, L, spin, m0, m1, value);
-                            }
-                            ifdftu.ignore(150, '\n');
-                        }
-                    }
-                    else
-                    {
-                        // Compact label: "spin 1 nelec 0.468..."
-                        ifdftu >> word;
-                        if (strcmp("spin", word) != 0)
-                        {
-                            ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
-                        }
-                        int spin_idx = 0;
-                        ifdftu >> spin_idx;
-                        if (spin_idx != is + 1)
-                        {
-                            ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "WRONG SPIN INDEX IN Plus_U FILE");
-                        }
-                        ifdftu >> word;
-                        if (strcmp("nelec", word) != 0)
-                        {
-                            ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
-                        }
-                        double nelec = 0.0;
-                        ifdftu >> nelec;
-
-                        double value = 0.0;
-                        for (int m0 = 0; m0 < nm; m0++)
-                        {
-                            for (int m1 = 0; m1 < nm; m1++)
-                            {
-                                ifdftu >> value;
-                                occ.set(iat, L, is, m0, m1, value);
-                            }
-                        }
-                    }
-                }
-            }
-            else if (nspin == 4) // SOC
-            {
-                if (legacy_layout)
-                {
-                    double value = 0.0;
-                    for (int m0 = 0; m0 < nm; m0++)
-                    {
-                        for (int ipol0 = 0; ipol0 < npol; ipol0++)
-                        {
-                            const int m0_all = m0 + nm * ipol0;
-
-                            for (int m1 = 0; m1 < nm; m1++)
-                            {
-                                for (int ipol1 = 0; ipol1 < npol; ipol1++)
-                                {
-                                    int m1_all = m1 + nm * ipol1;
-                                    ifdftu >> value;
-                                    occ.set(iat, L, 0, m0_all, m1_all, value);
-                                }
-                            }
-                            ifdftu.ignore(150, '\n');
-                        }
-                    }
-                }
-                else
-                {
-                    // Four labeled blocks, in the same order they are
-                    // written: up/up, up/down Re, up/down Im, down/down.
-                    std::vector<double> uu(nm * nm);
-                    std::vector<double> re(nm * nm);
-                    std::vector<double> im(nm * nm);
-                    std::vector<double> dd(nm * nm);
-
-                    skip_compact_soc_label(ifdftu, word);
-                    read_matrix_block(ifdftu, nm, uu.data());
-
-                    skip_compact_soc_label(ifdftu, word);
-                    read_matrix_block(ifdftu, nm, re.data());
-
-                    // The imaginary block is needed by the PW (Pauli)
-                    // path to reconstruct b2 = 2*Im(n_ud); the LCAO
-                    // (real spin-basis) path discards it because its
-                    // storage can not represent Im(n_ud).
-                    skip_compact_soc_label(ifdftu, word);
-                    read_matrix_block(ifdftu, nm, im.data());
-
-                    skip_compact_soc_label(ifdftu, word);
-                    read_matrix_block(ifdftu, nm, dd.data());
-
-                    if (soc_layout == SOC_LAYOUT_PAULI)
-                    {
-                        // Reconstruct the 4 contiguous Pauli blocks
-                        // [b0, b1, b2, b3] in the 2m x 2m flat buffer
-                        // from the file's (n_uu, Re(n_ud), Im(n_ud),
-                        // n_dd) representation. The writer prints
-                        //   n_uu     = (b0 + b3)/2
-                        //   Re(n_ud) = b1/2
-                        //   Im(n_ud) = b2/2
-                        //   n_dd     = (b0 - b3)/2
-                        // so the inverse is
-                        //   b0 = n_uu + n_dd
-                        //   b1 = 2 * Re(n_ud)
-                        //   b2 = 2 * Im(n_ud)
-                        //   b3 = n_uu - n_dd.
-                        ModuleBase::matrix& occ0 = occ.mat(iat, L, 0);
-                        const int m2 = nm * nm;
-                        for (int k = 0; k < m2; ++k)
-                        {
-                            occ0.c[0 * m2 + k] = uu[k] + dd[k];
-                            occ0.c[1 * m2 + k] = 2.0 * re[k];
-                            occ0.c[2 * m2 + k] = 2.0 * im[k];
-                            occ0.c[3 * m2 + k] = uu[k] - dd[k];
-                        }
-                    }
-                    else // SOC_LAYOUT_SPIN_BASIS_REAL
-                    {
-                        // Reconstruct the real 2m x 2m spin-basis matrix.
-                        // Mirror the legacy writer: the Re block fills both
-                        // (up, down) and (down, up) at the same (m0, m1).
-                        // Im(n_ud) is dropped because the storage can not
-                        // represent it.
-                        for (int m0 = 0; m0 < nm; m0++)
-                        {
-                            for (int m1 = 0; m1 < nm; m1++)
-                            {
-                                const int k = m0 * nm + m1;
-                                occ.set(iat, L, 0, m0, m1, uu[k]);
-                                occ.set(iat, L, 0, m0, nm + m1, re[k]);
-                                occ.set(iat, L, 0, nm + m0, m1, re[k]);
-                                occ.set(iat, L, 0, nm + m0, nm + m1, dd[k]);
-                            }
-                        }
-                    }
-                }
-            }
+            ++atom_count;
         }
     }
 
-    return;
+    if (atom_count == 0)
+    {
+        fail(state, "the unit cell has no configured DFT+U atom blocks");
+    }
+
+    std::string extra_line;
+    if (next_data_line(state, extra_line))
+    {
+        fail(state, "unexpected content after the final atom block");
+    }
 }
 
 } // namespace DFTU_BASE
