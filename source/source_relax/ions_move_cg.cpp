@@ -37,7 +37,7 @@ void Ions_Move_CG::allocate(const int dim)
     this->fmax = 0.0;
 }
 
-bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, std::vector<std::string>& relax_method, const Relax_Criteria& criteria)
+bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, std::string& relax_method, const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(Ions_Move_Basic::dim > 0);
@@ -106,13 +106,12 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
             this->fmax = this->fa;
             this->sd = false;
 
-            if (relax_method[0] == "cg_bfgs")
+            if (relax_method == "cg_bfgs")
             {
                 if (Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                     < RELAX_CG_THR)
                 {
-                    relax_method[0] = "bfgs";
-                    relax_method[1] = "1";
+                    relax_method = "bfgs_traditional";
                 }
                 Ions_Move_Basic::best_xxx = this->steplength;
             }

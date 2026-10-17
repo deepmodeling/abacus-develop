@@ -119,7 +119,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.fixed_axes, "None");
     EXPECT_FALSE(param.inp.fixed_ibrav);
     EXPECT_FALSE(param.inp.fixed_atoms);
-    EXPECT_EQ(param.inp.relax_method[0], "cg");
+    EXPECT_EQ(param.inp.relax_method, "cg");
     EXPECT_DOUBLE_EQ(param.inp.relax_cg_thr, 0.5);
     EXPECT_EQ(param.inp.out_level, "ie");
     EXPECT_TRUE(param.globalv.out_md_control);
@@ -573,6 +573,9 @@ TEST_F(InputParaTest, TypedTDFieldLists)
     readinput.check_ntype_flag = false;
     Parameter param;
     readinput.read_parameters(param, "./support/INPUT.td_field_mixed");
+
+    EXPECT_EQ(param.inp.relax_method, "cg_nested");
+    EXPECT_FALSE(param.inp.uses_simultaneous_relaxation());
 
     EXPECT_THAT(param.inp.td_ttype, testing::ElementsAre(4, 0, 1, 2, 3, 0, 4, 1, 2, 3));
     EXPECT_THAT(param.inp.td_vext_dire, testing::ElementsAre(1, 2, 3, 1, 2, 3, 1, 2, 3, 1));

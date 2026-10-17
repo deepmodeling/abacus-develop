@@ -297,7 +297,7 @@ void Relax::print_gradient_summary(bool force_converged, std::ofstream& ofs_runn
         // setup_gradient runs before istep is incremented at the end of
         // relax_step, so the step that just converged is istep + 1.
         const int converged_step = istep + 1;
-        const std::string method = inp_->relax_method.empty() ? "unknown" : inp_->relax_method[0];
+        const std::string method = inp_->relax_method.empty() ? "unknown" : inp_->relax_method;
         ofs_running << " Relaxation method: " << method << std::endl;
         ofs_running << " Relaxation converged in " << converged_step << " step(s)." << std::endl;
         ofs_running << " Largest force per step (eV/Angstrom):" << format_relax_history(max_force_history_);

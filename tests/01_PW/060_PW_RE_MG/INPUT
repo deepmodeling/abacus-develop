@@ -17,7 +17,7 @@ cal_force         1
 #Parameters (3.Relaxation)
 relax_nmax        2
 force_thr_ev      0.01
-relax_method      cg 1
+relax_method      cg_nested
 
 #Parameters (4.Basis)
 basis_type        pw

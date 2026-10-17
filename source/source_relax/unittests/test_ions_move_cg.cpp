@@ -123,7 +123,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     ModuleBase::matrix force(2, 3);
     double etot = 0.0;
     std::vector<double> etot_info(2, 0.0);
-    std::vector<std::string> relax_method = {"cg", "1"};
+    std::string relax_method = "cg_nested";
 
     // call function
     std::ofstream ofs("TestStartConverged.log");
@@ -155,7 +155,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
 {
     // setup data
     const int istep = 1;
-    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
+    std::string relax_method = "cg_bfgs";
     Ions_Move_CG::RELAX_CG_THR = 100.0;
     UnitCell ucell;
     setupucell(ucell);
@@ -179,7 +179,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method[0], "bfgs");
+    EXPECT_EQ(relax_method, "bfgs_traditional");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 1.0);
@@ -197,7 +197,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     force(0, 0) = 0.1;
     double etot = 0.0;
     std::vector<double> etot_info(2, 0.0);
-    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
+    std::string relax_method = "cg_bfgs";
 
     // call function
     set_move0(0, 1.0);
@@ -208,7 +208,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     int istep_2 = 2;
     set_move0(0, 10.0);
     force(0, 0) = 0.001;
-    relax_method = {"cg_bfgs", "1"};
+    relax_method = "cg_bfgs";
     std::ofstream ofs("TestStartTrialGoto.log");
     im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
@@ -223,7 +223,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method[0], "bfgs");
+    EXPECT_EQ(relax_method, "bfgs_traditional");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 10.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 10.0);
@@ -240,7 +240,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     force(0, 0) = 0.01;
     double etot = 0.0;
     std::vector<double> etot_info(2, 0.0);
-    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
+    std::string relax_method = "cg_bfgs";
 
     // call function
     set_move0(0, 1.0);
@@ -264,7 +264,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method[0], "bfgs");
+    EXPECT_EQ(relax_method, "bfgs_traditional");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 10.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 70.0);
@@ -282,7 +282,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     force(0, 0) = 0.1;
     double etot = 0.0;
     std::vector<double> etot_info(2, 0.0);
-    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
+    std::string relax_method = "cg_bfgs";
 
     // call function
     set_move0(0, 1.0);
@@ -297,7 +297,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     std::remove("TestStartNoTrialGotoCase1_temp2.log");
     set_move0(0, 1.0);
     force(0, 0) = 0.001;
-    relax_method = {"cg_bfgs", "1"};
+    relax_method = "cg_bfgs";
     std::ofstream ofs("TestStartNoTrialGotoCase1.log");
     im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
@@ -312,7 +312,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method[0], "bfgs");
+    EXPECT_EQ(relax_method, "bfgs_traditional");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 490.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 490.0);
@@ -330,7 +330,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     force(0, 0) = 0.01;
     double etot = 0.0;
     std::vector<double> etot_info(2, 0.0);
-    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
+    std::string relax_method = "cg_bfgs";
     Ions_Move_Basic::best_xxx = 1.0;
     Ions_Move_Basic::relax_bfgs_init = 1.0;
 
@@ -346,7 +346,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     im_cg.start(ucell, force, etot, istep_2, update_iter, ofs2, etot_info, relax_method, criteria);
     ofs2.close();
     std::remove("TestStartNoTrialGotoCase2_temp2.log");
-    relax_method = {"cg_bfgs", "1"};
+    relax_method = "cg_bfgs";
     std::ofstream ofs("TestStartNoTrialGotoCase2.log");
     im_cg.start(ucell, force, etot, istep_2, update_iter, ofs, etot_info, relax_method, criteria);
     ofs.close();
@@ -361,7 +361,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method[0], "bfgs");
+    EXPECT_EQ(relax_method, "bfgs_traditional");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 70.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 70.0);
@@ -379,7 +379,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     force(0, 0) = 0.01;
     double etot = 0.0;
     std::vector<double> etot_info(2, 0.0);
-    std::vector<std::string> relax_method = {"cg_bfgs", "1"};
+    std::string relax_method = "cg_bfgs";
     Ions_Move_Basic::best_xxx = 1.0;
     Ions_Move_Basic::relax_bfgs_init = 1.0;
 
@@ -410,7 +410,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method[0], "bfgs");
+    EXPECT_EQ(relax_method, "bfgs_traditional");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 1.0);
     EXPECT_NEAR(Ions_Move_Basic::relax_bfgs_init, 1.2345679012345678, 1e-12);

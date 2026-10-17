@@ -110,16 +110,16 @@ class IonsMoveMethodsTest : public ::testing::Test
 // Test the allocate() function
 TEST_F(IonsMoveMethodsTest, Allocate)
 {
-    imm.allocate(natom, "bfgs", "1");
+    imm.allocate(natom, "bfgs_traditional");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    imm.allocate(natom, "sd", "1");
+    imm.allocate(natom, "sd");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    imm.allocate(natom, "cg", "1");
+    imm.allocate(natom, "cg_nested");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    imm.allocate(natom, "cg_bfgs", "1");
+    imm.allocate(natom, "cg_bfgs");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 }
 
@@ -127,7 +127,7 @@ TEST_F(IonsMoveMethodsTest, Allocate)
 TEST_F(IonsMoveMethodsTest, AllocateWarningQuit)
 {
     GlobalV::ofs_warning.open("log");
-    imm.allocate(natom, "none", "1");
+    imm.allocate(natom, "none");
     GlobalV::ofs_warning.close();
 
     std::ifstream ifs("log");
@@ -149,22 +149,22 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
     UnitCell ucell;
     std::ofstream ofs;
 
-    std::vector<std::string> relax_method;
+    std::string relax_method;
 
-    relax_method = {"bfgs", "1"};
-    imm.allocate(natom, "bfgs", "1");
+    relax_method = "bfgs_traditional";
+    imm.allocate(natom, "bfgs_traditional");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
-    relax_method = {"sd", "1"};
-    imm.allocate(natom, "sd", "1");
+    relax_method = "sd";
+    imm.allocate(natom, "sd");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
-    relax_method = {"cg", "1"};
-    imm.allocate(natom, "cg", "1");
+    relax_method = "cg_nested";
+    imm.allocate(natom, "cg_nested");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
-    relax_method = {"cg_bfgs", "1"};
-    imm.allocate(natom, "cg_bfgs", "1");
+    relax_method = "cg_bfgs";
+    imm.allocate(natom, "cg_bfgs");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 }
 
@@ -177,8 +177,8 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     const double etot = 0.0;
     UnitCell ucell;
     std::ofstream ofs;
-    std::vector<std::string> relax_method = {"none", "1"};
-    imm.allocate(natom, "none", "1");
+    std::string relax_method = "none";
+    imm.allocate(natom, "none");
 
     GlobalV::ofs_warning.open("log");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
@@ -229,7 +229,7 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     const std::string log_file = "reset_after_cell_change.log";
     std::ofstream ofs(log_file);
 
-    imm.allocate(natom, "bfgs", "2");
+    imm.allocate(natom, "bfgs");
     imm.set_converged(true);
     imm.set_update_iter(4);
     imm.get_etot_info() = {-1.0, -2.0};
@@ -246,7 +246,7 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     Ions_Move_Basic::trust_radius = 0.3;
     Ions_Move_Basic::trust_radius_old = 0.2;
 
-    imm.reset_after_cell_change({"bfgs", "2"}, ofs);
+    imm.reset_after_cell_change("bfgs", ofs);
 
     EXPECT_FALSE(imm.get_converged());
     EXPECT_EQ(imm.get_update_iter(), 0);
@@ -270,13 +270,13 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, 0.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius_old, 0.0);
 
-    imm.allocate(natom, "bfgs", "1");
+    imm.allocate(natom, "bfgs_traditional");
     imm.set_converged(true);
     imm.set_update_iter(3);
     imm.get_etot_info() = {-3.0, -4.0};
     ASSERT_TRUE(imm.get_bfgs_trad().get_is_initialized());
 
-    imm.reset_after_cell_change({"bfgs", "1"}, ofs);
+    imm.reset_after_cell_change("bfgs_traditional", ofs);
     ofs.close();
 
     EXPECT_FALSE(imm.get_converged());

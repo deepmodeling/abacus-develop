@@ -18,16 +18,16 @@ class Ions_Move_Methods
     Ions_Move_Methods();
     ~Ions_Move_Methods();
 
-    void allocate(const int &natom, const std::string& relax_method_0, const std::string& relax_method_1);
+    void allocate(const int &natom, const std::string& relax_method);
     void cal_movement(const int &istep,
                       const int &force_step,
                       const ModuleBase::matrix &f,
                       const double &etot,
                       UnitCell &ucell,
                       std::ofstream& ofs,
-                      std::vector<std::string>& relax_method,
+                      std::string& relax_method,
                       const Relax_Criteria& criteria);
-    void reset_after_cell_change(const std::vector<std::string>& relax_method, std::ofstream& ofs);
+    void reset_after_cell_change(const std::string& relax_method, std::ofstream& ofs);
 
     bool get_converged() const
     {
@@ -80,7 +80,7 @@ class Ions_Move_Methods
     {
         return bfgs;
     }
-    /// @brief the traditional BFGS optimiser used by relax_method "bfgs_trad"
+    /// @brief the traditional BFGS optimiser used by relax_method "bfgs_traditional"
     Ions_Move_BFGS2& get_bfgs_trad()
     {
         return bfgs_trad;

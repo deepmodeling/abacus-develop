@@ -35,3 +35,5 @@ td_supsine_phase        0.2 -0.5
 td_supsine_sigma        0.75 1.20
 td_supsine_tstart       default 2
 td_supsine_tend         5 default
+
+relax_method cg_nested # exercise non-default scalar broadcast

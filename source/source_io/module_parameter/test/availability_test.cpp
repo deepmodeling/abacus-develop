@@ -49,11 +49,11 @@ TEST(AvailabilityParser, VectorContainmentSemantics)
 
 TEST(AvailabilityParser, QuotedMultiTokenValueRoundTrip)
 {
-    const AvailabilityExpr e = parse_availability("relax_method==\"cg 2\"");
+    const AvailabilityExpr e = parse_availability("example_option==\"two words\"");
     EXPECT_TRUE(e.is_leaf());
     EXPECT_EQ(e.condition.op, "==");
-    EXPECT_EQ(e.condition.values, (std::vector<std::string>{"cg 2"}));
-    EXPECT_EQ(e.to_string(), "relax_method==\"cg 2\"");
+    EXPECT_EQ(e.condition.values, (std::vector<std::string>{"two words"}));
+    EXPECT_EQ(e.to_string(), "example_option==\"two words\"");
 }
 
 TEST(AvailabilityParser, AndGroup)
@@ -95,10 +95,10 @@ TEST(AvailabilityParser, InvalidExpressionsAreRejected)
         " and basis_type==pw",
         "basis_type==lcao and esolver_type==tddft or ",
         "basis_type==pw==lcao",
-        "relax_method in [cg 2]",
-        "relax_method in [cg 2, bfgs]",
-        "relax_method in [\"cg 2\"]",
-        "relax_method==\"cg 2",
+        "example_option in [two words]",
+        "example_option in [two words, other]",
+        "example_option in [\"two words\"]",
+        "example_option==\"two words",
         "2 in td_ttype",
         "basis_type==pw)",
         "(basis_type==pw",
@@ -145,7 +145,7 @@ TEST(AvailabilityValidator, AcceptsKnownTypedReferences)
         {"basis_type", AvailabilityValueKind::String},
         {"mixing_restart", AvailabilityValueKind::Real},
         {"td_ttype", AvailabilityValueKind::IntegerVector},
-        {"relax_method", AvailabilityValueKind::StringVector},
+        {"relax_method", AvailabilityValueKind::String},
     };
     EXPECT_NO_THROW(validate_availability_expr(
         "example",
@@ -157,7 +157,11 @@ TEST(AvailabilityValidator, AcceptsKnownTypedReferences)
                      "example", parse_availability("td_ttype contains two"), types),
                  std::invalid_argument);
     EXPECT_NO_THROW(validate_availability_expr(
-        "example", parse_availability("relax_method==\"cg 2\""), types));
+        "example", parse_availability("relax_method==cg"), types));
+    const AvailabilityExpr scalar_selection = parse_availability("relax_method in [cg, cg_nested]");
+    EXPECT_NO_THROW(validate_availability_expr("example", scalar_selection, types));
+    const AvailabilityExpr vector_selection = parse_availability("relax_method contains cg");
+    EXPECT_THROW(validate_availability_expr("example", vector_selection, types), std::invalid_argument);
 }
 
 TEST(AvailabilityValidator, InfersDocumentedTypes)

@@ -13,7 +13,7 @@ ecutwfc           20
 scf_nmax          20
 kpar              2
 
-relax_method      cg 1
+relax_method      cg_nested
 relax_nmax        2
 
 cal_stress        1
