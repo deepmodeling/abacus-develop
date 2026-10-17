@@ -44,9 +44,9 @@ void write_dh_perI(WriteDHParams& params,
     const int nks = params.kv->get_nks() / nspin_k;
     const int nlocal = PARAM.globalv.nlocal;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    const bool out_app_flag = PARAM.inp.out_app_flag;
+    const int out_app_flag = PARAM.inp.out_app_flag;
     const std::string r_dir
-        = (PARAM.inp.calculation == "md" && !out_app_flag) ? PARAM.globalv.global_matrix_dir : global_out_dir;
+        = (PARAM.inp.calculation == "md" && (out_app_flag != 1)) ? PARAM.globalv.global_matrix_dir : global_out_dir;
 
 #ifdef __MPI
     Parallel_Orbitals serialV;
@@ -129,7 +129,7 @@ void write_dh_perI(WriteDHParams& params,
                                    false,
                                    8,
                                    false,
-                                   out_app_flag,
+                                   (out_app_flag == 1),
                                    fk,
                                    pv,
                                    GlobalV::DRANK,

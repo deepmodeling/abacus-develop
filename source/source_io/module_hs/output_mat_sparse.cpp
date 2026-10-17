@@ -25,7 +25,7 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
     const std::string& global_out_dir = PARAM.globalv.global_out_dir;
     const std::string& global_matrix_dir = PARAM.globalv.global_matrix_dir;
     const std::string& calculation = PARAM.inp.calculation;
-    const bool out_app_flag = PARAM.inp.out_app_flag;
+    const int out_app_flag = PARAM.inp.out_app_flag;
     const int nspin = PARAM.inp.nspin;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
     const int npol = PARAM.globalv.npol;

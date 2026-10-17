@@ -202,7 +202,7 @@ void wfc_nao_write2file_complex(const std::string& name,
 
 template <typename T>
 void write_wfc_nao(const int out_type,
-        const bool out_app_flag,
+        const int out_app_flag,
         const psi::Psi<T>& psi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
@@ -270,7 +270,7 @@ void write_wfc_nao(const int out_type,
         if (myid == 0)
         {
             std::string wfc_dir;
-            if(out_app_flag)
+            if(out_app_flag == 1)
             {
                 wfc_dir = PARAM.globalv.global_out_dir;
             }
@@ -281,7 +281,7 @@ void write_wfc_nao(const int out_type,
             std::string fn = filename_output(wfc_dir,"wf","nao",ik,ik2iktot,nspin,nkstot,
               out_type,out_app_flag,gamma_only,istep);
 
-            bool append_flag = (istep > 0 && out_app_flag);
+            bool append_flag = (istep > 0 && out_app_flag == 1);
             if (std::is_same<double, T>::value)
             {
                 wfc_nao_write2file(fn,
@@ -311,7 +311,7 @@ void write_wfc_nao(const int out_type,
 }
 
 template void write_wfc_nao<double>(const int out_type,
-        const bool out_app_flag,
+        const int out_app_flag,
         const psi::Psi<double>& psi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,
@@ -323,7 +323,7 @@ template void write_wfc_nao<double>(const int out_type,
         const int istep);
 
 template void write_wfc_nao<std::complex<double>>(const int out_type,
-        const bool out_app_flag,
+        const int out_app_flag,
         const psi::Psi<std::complex<double>>& psi,
         const ModuleBase::matrix& ekb,
         const ModuleBase::matrix& wg,

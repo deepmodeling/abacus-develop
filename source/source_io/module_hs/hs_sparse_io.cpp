@@ -33,7 +33,7 @@ void open_sparse_file(std::ofstream& ofs, const ModuleIO::SparseWriteOptions& op
     {
         mode |= std::ios::binary;
     }
-    const bool append_on_restart = (options.calculation == "md") && options.out_app_flag && options.istep >= 0;
+    const bool append_on_restart = (options.calculation == "md") && (options.out_app_flag == 1) && options.istep >= 0;
     if (append_on_restart)
     {
         mode |= std::ios::app;

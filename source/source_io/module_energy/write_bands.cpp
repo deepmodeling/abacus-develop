@@ -89,7 +89,7 @@ void ModuleIO::nscf_bands(const int& is,
     const int band_group = Parallel::make_band_world().rank();
     if (GlobalV::MY_RANK == 0)
     {
-        if (PARAM.inp.out_app_flag == true)
+        if (PARAM.inp.out_app_flag == 1)
         {
             // do nothing
         }
@@ -149,7 +149,7 @@ void ModuleIO::nscf_bands(const int& is,
 
     if (GlobalV::MY_RANK == 0)
     {
-        if (PARAM.inp.out_app_flag == true)
+        if (PARAM.inp.out_app_flag == 1)
         {
             ofs.open(eig_file.c_str(), std::ios::app);
         }

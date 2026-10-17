@@ -43,7 +43,7 @@ void ModuleIO::write_wfc_pw(
     assert(nkstot>0);
     assert(nks>0);
 
-    bool out_app_flag = false; // need to modify later, mohan 2025-05-17
+    int out_app_flag = 0; // need to modify later, mohan 2025-05-17
     bool gamma_only = false; // need to modify later, mohan 2025-05-17
 
     std::string* wfilename = new std::string[nks];

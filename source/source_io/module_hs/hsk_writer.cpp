@@ -14,7 +14,7 @@ void ModuleIO::write_hsk(
         hamilt::Hamilt<T>* p_hamilt,
         const Parallel_Orbitals &pv,
         const bool gamma_only,
-        const bool out_app_flag,
+        const int out_app_flag,
         const int istep,
         const int out_type,
         const int precision,
@@ -96,11 +96,11 @@ template void ModuleIO::write_hsk<double>(
     const std::string&, const int, const int, const int,
     const std::vector<int>&, const std::vector<int>&,
     hamilt::Hamilt<double>*, const Parallel_Orbitals&,
-    const bool, const bool, const int, const int, const int,
+    const bool, const int, const int, const int, const int,
     const int, const std::string&, const int, std::ofstream&);
 template void ModuleIO::write_hsk<std::complex<double>>(
     const std::string&, const int, const int, const int,
     const std::vector<int>&, const std::vector<int>&,
     hamilt::Hamilt<std::complex<double>>*, const Parallel_Orbitals&,
-    const bool, const bool, const int, const int, const int,
+    const bool, const int, const int, const int, const int,
     const int, const std::string&, const int, std::ofstream&);

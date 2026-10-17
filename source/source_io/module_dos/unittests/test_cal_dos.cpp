@@ -37,7 +37,7 @@ TEST_F(DosTest,Dos)
 	EXPECT_EQ(dosp.is,0);
 
     const int istep = 1;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const int bndpar = 1;
 	ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -124,7 +124,7 @@ TEST_F(DosTest,DosW1)
 	GlobalV::ofs_warning.open("warning1.log");
 
     const int istep = 1;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const int bndpar = 1;
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,
@@ -171,7 +171,7 @@ TEST_F(DosTest,DosW2)
 	GlobalV::ofs_warning.open("warning2.log");
 
     const int istep = 1;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const int bndpar = 1;
 	EXPECT_NO_THROW(ModuleIO::cal_dos(dosp.is,
 			dosp.fa,

@@ -25,7 +25,7 @@ namespace ModuleIO
  */
 template <typename T>
 void write_wfc_nao(const int out_type,
-            const bool out_app_flag,
+            const int out_app_flag,
             const psi::Psi<T>& psi,
             const ModuleBase::matrix& ekb,
             const ModuleBase::matrix& wg,

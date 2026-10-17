@@ -79,7 +79,7 @@ static void gather_and_write(const std::string& prefix,
                              const int* iat2iwt,
                              const int nat,
                              const std::string& calculation,
-                             const bool out_app_flag,
+                             const int out_app_flag,
                              const std::string& global_out_dir,
                              const std::string& global_matrix_dir,
                              std::ofstream* ofs_running)
@@ -94,7 +94,7 @@ static void gather_and_write(const std::string& prefix,
     if (GlobalV::MY_RANK == 0)
 #endif
     {
-        const bool md_no_append = (calculation == "md") && !out_app_flag;
+        const bool md_no_append = (calculation == "md") && (out_app_flag != 1);
         const std::string& out_dir = md_no_append ? global_matrix_dir : global_out_dir;
         const std::string fname = out_dir + hsr_gen_fname(prefix, ispin, append, istep);
         // H(R) component terms (T, V^NL, V^L, V^H, V^XC, V^EXX) are parts of
@@ -127,7 +127,7 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                             const int nlocal,
                             const bool gamma_only,
                             const std::string& global_out_dir,
-                            const bool out_app_flag,
+                            const int out_app_flag,
                             const std::string& ks_solver,
                             const int drank)
 {
@@ -200,7 +200,7 @@ static void write_h_term(WriteHParams& params, const HTermSpec& spec)
     const int nlocal = params.nlocal;
     const bool gamma_only = params.gamma_only_local;
     const std::string& global_out_dir = params.global_out_dir;
-    const bool out_app_flag = params.out_app_flag;
+    const int out_app_flag = params.out_app_flag;
 
     const int nspin_out = (nspin == 2 ? 2 : 1);
 
@@ -378,7 +378,7 @@ static void write_h_exx_impl(const UnitCell& ucell,
                              const std::string& global_out_dir,
                              const std::string& global_matrix_dir,
                              const std::string& calculation,
-                             const bool out_app_flag,
+                             const int out_app_flag,
                              const std::string& ks_solver,
                              const int drank,
                              const Exx_Info& exx_info,

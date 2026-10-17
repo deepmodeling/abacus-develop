@@ -46,7 +46,7 @@ struct WriteHParams
     bool domag = false;
     bool domag_z = false;
     int gga_grad = 0; // used by the XC term
-    bool out_app_flag = false;
+    int out_app_flag = 0;
     std::string calculation;
     std::string global_out_dir;
     std::string global_matrix_dir;

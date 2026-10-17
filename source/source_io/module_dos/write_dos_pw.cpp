@@ -20,7 +20,7 @@ void ModuleIO::write_dos_pw(
         const bool dos_setemin,
         const double dos_emin_ev,
         const bool two_fermi,
-        const bool out_app_flag,
+        const int out_app_flag,
         const int bndpar,
         const std::string& global_out_dir,
         std::ofstream& ofs_running)

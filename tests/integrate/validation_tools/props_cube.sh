@@ -154,7 +154,7 @@ if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ]; then
 	else  # multi-k point case
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
 			wfc_name=wfk1g3_nao
-			input_file=WFC/wfk1g3_nao
+			input_file=wfk1g3_nao
 		else
 			wfc_name=wfk2_nao
 			input_file=wfk2_nao

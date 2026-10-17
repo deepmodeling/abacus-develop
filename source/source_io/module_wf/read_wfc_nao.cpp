@@ -296,7 +296,7 @@ bool ModuleIO::read_wfc_nao(
     {
         if (myrank == 0)
         {
-            const bool out_app_flag = false;
+            const int out_app_flag = 0;
             std::stringstream error_message;
             std::string readin_dir = global_readin_dir;
             if(istep >= 0)

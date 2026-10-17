@@ -34,7 +34,6 @@ out_dmr              1
 out_dos              1
 out_band             1
 out_stru             1
-out_app_flag         0
 
 out_mat_l 1
 out_mat_r 1
@@ -42,3 +41,5 @@ out_mat_t 1
 #out_mat_dh 1
 
 out_freq_ion         2
+
+out_app_flag         2

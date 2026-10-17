@@ -39,7 +39,7 @@ The output filenames depend on the k-point algorithm and `nspin`:
 
 Here `${k}` is the one-based k-point index. For `nspin = 2`, the overlap matrix is spin-independent, so only one overlap file is written for each physical k point. The gamma-only algorithm does not support `nspin = 4`; use the multi-k algorithm with an explicit Gamma-only `KPT` file for a noncollinear calculation at Gamma.
 
-When `out_app_flag` is false, `g${step}` is inserted before `_nao`, where `${step}` is the one-based ionic-step index. For example, the first spin channel at the first k point and first ionic step is written to `hk1s1g1_nao.txt`.
+When `out_app_flag` is not 1, `g${step}` is inserted before `_nao`, where `${step}` is the one-based ionic-step index. For example, the first spin channel at the first k point and first ionic step is written to `hk1s1g1_nao.txt`.
 
 Each output block starts with a comment header containing the one-based ionic-step index, filename, `gamma only` flag, and matrix dimensions. It is followed by `Row 1`, `Row 2`, and so on. Each row contains the matrix elements from the diagonal through the upper triangle.
 
@@ -57,7 +57,7 @@ For `out_hsk 2`, the filenames in the table above use `.dat` instead of `.txt`. 
 
 The file therefore contains `sizeof(int) + N(N+1)/2 * sizeof(double)` bytes for a gamma-only record and `sizeof(int) + N(N+1) * sizeof(double)` bytes for a multi-k or spinor record. The format uses the host integer representation and byte order and is intended for readers using a compatible ABI.
 
-When `out_app_flag` is true, the first ionic step truncates the shared file and every later step appends another complete record. When it is false, each ionic step has a separate filename containing `g${step}` before `_nao`.
+When `out_app_flag` is 1, the first ionic step truncates the shared file and every later step appends another complete record. When it is not 1, each ionic step has a separate filename containing `g${step}` before `_nao`.
 
 ## out_hsr
 
@@ -95,7 +95,7 @@ In gamma-only mode, every generated file reports one Bravais lattice vector and 
 
 ### Native Binary CSR Format
 
-Set `out_hsr 2` to write the same H(R) and S(R) matrix sets with a `.dat` suffix. For example, an `nspin = 2` calculation writes `hrs1_nao.dat`, `hrs2_nao.dat`, and `sr_nao.dat`. When `out_app_flag` is false, the one-based ionic step is included before `_nao`, for example `hrs1g1_nao.dat` and `srg1_nao.dat`.
+Set `out_hsr 2` to write the same H(R) and S(R) matrix sets with a `.dat` suffix. For example, an `nspin = 2` calculation writes `hrs1_nao.dat`, `hrs2_nao.dat`, and `sr_nao.dat`. When `out_app_flag` is not 1, the one-based ionic step is included before `_nao`, for example `hrs1g1_nao.dat` and `srg1_nao.dat`.
 
 Each ionic step is a complete record with no padding or self-describing header:
 
@@ -107,7 +107,7 @@ Each ionic step is a complete record with no padding or self-describing header:
 
 All R blocks stored by the internal HContainer are present, including blocks with zero nonzero values. The sparse threshold is `1e-10`, matching text CSR output. The format uses the host integer representation and byte order and therefore requires a compatible ABI. It does not contain unit-cell, spin, or matrix-label metadata; those are determined by the calculation input and filename.
 
-When `out_app_flag` is true, the first ionic step truncates the shared file and later ionic steps append complete records. Otherwise every ionic step is written to its own file.
+When `out_app_flag` is 1, the first ionic step truncates the shared file and later ionic steps append complete records. Otherwise every ionic step is written to its own file.
 
 ### NPZ Format
 

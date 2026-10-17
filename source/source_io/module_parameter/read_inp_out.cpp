@@ -1394,12 +1394,22 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.annotation = "whether output r(R), H(R), S(R), T(R), and dH(R) "
                           "matrices in an append manner during MD";
         item.category = "Output information";
-        item.type = "Boolean";
-        item.description = "Whether to output r(R), H(R), S(R), T(R), dH(R), dS(R), and wfc matrices in an append manner during molecular dynamics calculations. Check input parameters out_mat_r, out_hsr, out_mat_t, out_mat_dh, out_hsk and out_wfc_lcao for more information.";
-        item.default_value = "true";
+        item.type = "Integer";
+        item.description = R"(Controls output file organization during multi-step calculations (MD, relax, RT-TDDFT).
+* 0: Write to OUT directory directly, no append (files overwritten each step)
+* 1: Append to same file (default, backward compatible)
+* 2: Write to subdirectory (PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/)
+For more information, refer to the documentation of out_mat_r, out_hsr, out_mat_t, out_mat_dh, out_hsk, out_wfc_lcao, out_chg, out_pot, out_elf, out_dos, out_dipole.)";
+        item.default_value = "1";
         item.unit = "";
         item.set_availability("basis_type==lcao and gamma_only==0");
-        read_sync_bool(input.out_app_flag);
+        read_sync_int(input.out_app_flag);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_app_flag < 0 || para.input.out_app_flag > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_app_flag should be 0, 1, or 2");
+            }
+        };
         this->add_item(item);
     }
     {

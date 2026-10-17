@@ -129,7 +129,7 @@ void ModuleIO::read_wf2rho_pw_impl(const ModulePW::PW_Basis_K* pw_wfc,
         // mohan add 2025-05-17
         // .dat file
         const int out_type = 2;
-        const bool out_app_flag = false;
+        const int out_app_flag = 0;
         const bool gamma_only = false;
         const int istep = -1;
 

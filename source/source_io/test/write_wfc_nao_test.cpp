@@ -35,9 +35,9 @@ TEST(GenWfcLcaoFnameTest, OutType1GammaOnlyOutAppFlagTrue)
     const int nspin = 1;
     const int nkstot = 1;
     const int out_type = 1;
-    const bool out_app_flag = true;
+    const int out_app_flag = 1;
     const bool gamma_only = true;
-    // if out_app_flag = true, then the 'g' label will not show up
+    // if out_app_flag = 1 (append), then the 'g' label will not show up
     const int istep = 0;
 
 	std::string result = ModuleIO::filename_output(
@@ -60,9 +60,9 @@ TEST(GenWfcLcaoFnameTest, OutType2GammaOnlyOutAppFlagFalse)
     const int nspin = 2;
     const int nkstot = 2;
     const int out_type = 2;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const bool gamma_only = true;
-    // if out_app_flag = false, then the 'g' label appears
+    // if out_app_flag = 0 (no append), then the 'g' label appears
     const int istep = 2;
 
 	std::string result = ModuleIO::filename_output(
@@ -84,7 +84,7 @@ TEST(GenWfcLcaoFnameTest, OutTypeInvalid)
     const int nspin = 1;
     const int nkstot = 3;
     const int out_type = 3;
-    const bool out_app_flag = true;
+    const int out_app_flag = 1;
     const bool gamma_only = false;
     const int istep = 3;
 
@@ -151,7 +151,7 @@ class WriteWfcLcaoTest : public testing::Test
     // mohan add 2025-05-11
     std::vector<int> ik2iktot = {0,1};
     int nkstot = 2;
-    bool out_app_flag = true;
+    int out_app_flag = 1;
 
     void SetUp() override
     {

@@ -32,10 +32,14 @@ void ctrl_output_fp(UnitCell& ucell,
     ModuleBase::TITLE("ModuleIO", "ctrl_output_fp");
     ModuleBase::timer::start("ModuleIO", "ctrl_output_fp");
 
-    const bool out_app_flag = inp.out_app_flag;
+    const int out_app_flag = inp.out_app_flag;
     const bool gamma_only = PARAM.globalv.gamma_only_local;
     const int nspin = inp.nspin;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    const std::string global_chg_dir = PARAM.globalv.global_chg_dir;
+    const std::string global_pot_dir = PARAM.globalv.global_pot_dir;
+    const std::string global_elf_dir = PARAM.globalv.global_elf_dir;
+    const std::string global_dip_dir = PARAM.globalv.global_dip_dir;
 
     const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
     // Print the global electronic step for TDDFT and the ionic step otherwise.
@@ -61,7 +65,7 @@ void ctrl_output_fp(UnitCell& ucell,
     {
         for (int is = 0; is < nspin; ++is)
         {
-            std::string fn = PARAM.globalv.global_out_dir + "chg";
+            std::string fn = global_chg_dir + "chg";
 
             std::string spin_block;
             if (nspin == 2 || nspin == 4)
@@ -94,7 +98,7 @@ void ctrl_output_fp(UnitCell& ucell,
 
             if (XC_Functional::get_ked_flag())
             {
-                fn = PARAM.globalv.global_out_dir + "tau";
+                fn = global_chg_dir + "tau";
 
                 fn += spin_block + geom_block + ".cube";
 
@@ -123,7 +127,7 @@ void ctrl_output_fp(UnitCell& ucell,
     {
         for (int is = 0; is < nspin; is++)
         {
-            std::string fn = PARAM.globalv.global_out_dir + "pot";
+            std::string fn = global_pot_dir + "pot";
 
             std::string spin_block;
             if (nspin == 2 || nspin == 4)
@@ -157,7 +161,7 @@ void ctrl_output_fp(UnitCell& ucell,
     }
     else if (inp.out_pot[0] == 2 && should_output)
     {
-        std::string fn = PARAM.globalv.global_out_dir + "potes";
+        std::string fn = global_pot_dir + "potes";
         fn += geom_block + ".cube";
 
         const std::vector<double>* pcc_potential = pelec->pot->pcc_electron_potential();
@@ -189,7 +193,7 @@ void ctrl_output_fp(UnitCell& ucell,
             module_charge::cal_rhog_symm(is, chr, pw_rhod, ucell.symm);
         }
 
-        std::string out_dir = PARAM.globalv.global_out_dir;
+        std::string out_dir = global_elf_dir;
         ModuleIO::write_elf(out_dir,
                             istep,
                             nspin,
@@ -226,7 +230,7 @@ void ctrl_output_fp(UnitCell& ucell,
         for (int is = 0; is < nspin; ++is)
         {
             std::stringstream ss_dipole;
-            ss_dipole << global_out_dir << "dipole_s" << is + 1 << ".txt";
+            ss_dipole << global_dip_dir << "dipole_s" << is + 1 << ".txt";
             ModuleIO::write_dipole(ucell, chr.rho[is], pw_rhod, istep, ss_dipole.str(), ofs_running);
         }
     }

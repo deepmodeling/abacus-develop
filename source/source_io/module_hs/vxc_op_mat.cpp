@@ -115,7 +115,7 @@ void write_Vxc(const int nspin,
         // write
         const int istep = -1;
         const int out_label = 1; // 1 means .txt while 2 means .dat
-        const bool out_app_flag = 0;
+        const int out_app_flag = 0;
         std::string vxc_file = ModuleIO::filename_output(
                 global_out_dir,
                 "vxc", "nao", ik, kv.ik2iktot, nspin, kv.get_nkstot(),

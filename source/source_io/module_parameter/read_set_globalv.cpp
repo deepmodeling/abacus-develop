@@ -97,6 +97,35 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     sys.global_wfc_dir = sys.global_out_dir + "WFC/";
     sys.global_wfc_dir = to_dir(sys.global_wfc_dir);
 
+    /// Set subdirectories based on out_app_flag
+    /// out_app_flag == 2: use unified uppercase subdirectories
+    /// otherwise: keep backward-compatible behavior (all point to global_out_dir)
+    if (inp.out_app_flag == 2)
+    {
+        sys.global_psi_dir = sys.global_out_dir + "PSI/";
+        sys.global_chg_dir = sys.global_out_dir + "CHG/";
+        sys.global_pot_dir = sys.global_out_dir + "POT/";
+        sys.global_elf_dir = sys.global_out_dir + "ELF/";
+        sys.global_dos_dir = sys.global_out_dir + "DOS/";
+        sys.global_dip_dir = sys.global_out_dir + "DIP/";
+        sys.global_mat_dir = sys.global_out_dir + "MAT/";
+    }
+    else
+    {
+        sys.global_psi_dir = sys.global_out_dir;
+        sys.global_chg_dir = sys.global_out_dir;
+        sys.global_pot_dir = sys.global_out_dir;
+        sys.global_elf_dir = sys.global_out_dir;
+        sys.global_dos_dir = sys.global_out_dir;
+        sys.global_dip_dir = sys.global_out_dir;
+        sys.global_mat_dir = sys.global_out_dir;
+    }
+
+    /// Map legacy directory names to new unified names
+    /// WFC -> PSI, matrix -> MAT
+    sys.global_wfc_dir = sys.global_psi_dir;
+    sys.global_matrix_dir = sys.global_mat_dir;
+
     /// get the global ML KEDF descriptor directory
     sys.global_mlkedf_descriptor_dir = sys.global_out_dir + "MLKEDF_Descriptors/";
     sys.global_mlkedf_descriptor_dir = to_dir(sys.global_mlkedf_descriptor_dir);
@@ -154,6 +183,13 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     Parallel_Common::bcast_string(sys.global_stru_dir);
     Parallel_Common::bcast_string(sys.global_matrix_dir);
     Parallel_Common::bcast_string(sys.global_wfc_dir);
+    Parallel_Common::bcast_string(sys.global_psi_dir);
+    Parallel_Common::bcast_string(sys.global_chg_dir);
+    Parallel_Common::bcast_string(sys.global_pot_dir);
+    Parallel_Common::bcast_string(sys.global_elf_dir);
+    Parallel_Common::bcast_string(sys.global_dos_dir);
+    Parallel_Common::bcast_string(sys.global_dip_dir);
+    Parallel_Common::bcast_string(sys.global_mat_dir);
     Parallel_Common::bcast_string(sys.global_in_stru);
 #endif
 }

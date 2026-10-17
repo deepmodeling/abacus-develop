@@ -29,7 +29,7 @@ struct MatROutputOptions
     std::string global_out_dir;
     std::string global_matrix_dir;
     std::string calculation;
-    bool out_app_flag = false;
+    int out_app_flag = 0;
     int nspin = 1;
 };
 
@@ -82,7 +82,7 @@ void output_SR(Parallel_Orbitals& pv,
                const std::string& global_out_dir,
                const std::string& global_matrix_dir,
                const std::string& calculation,
-               const bool out_app_flag,
+               const int out_app_flag,
                const int nspin,
                std::ofstream& ofs_running);
 

@@ -483,8 +483,9 @@ struct Input_para
     bool out_hr_npz = false;                  ///< output H(R) matrix in npz format
     bool out_hsr_npz = false;                 ///< output H(R) and S(R) matrices in npz format
     bool out_dm_npz = false;                  ///< output DM(R) matrix in npz format
-    bool out_app_flag = true;                ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
-                                             ///< in an append manner during MD liuyu 2023-03-20
+    int out_app_flag = 1;                   ///< 0: no append, no subdirectory; 1: append to same file;
+                                            ///< 2: write to subdirectory (PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/)
+                                            ///< liuyu 2023-03-20, modified 2025-10-16
     int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output
     std::vector<int> out_mat_t = {0, 8};     ///< output T(R) matrix with precision
     bool out_element_info = false;           ///< output information of all elements
