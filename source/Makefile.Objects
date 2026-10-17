@@ -76,6 +76,8 @@ VPATH=./src_global:\
 ./src_ri:\
 ./source_lcao/module_ri:\
 ./source_lcao/module_ri/module_exx_symmetry:\
+./source_lcao/module_rpa:\
+./source_lcao/module_rpa/module_librpa_io:\
 ./source_lcao/module_bse:\
 ./source_io/module_parameter:\
 ./source_io/module_efield:\
@@ -857,9 +859,12 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       gaussian_abfs.o\
       exx_lri_detail.o\
       ri_util.o\
-      rpa_lri.o\
+      singular_value.o\
+
+OBJS_MODULE_RPA=rpa_lri.o\
       rpa_lri_detail.o\
       rpa_lri_band_io.o\
+      rpa_lri_coeff_v1.o\
       rpa_lri_mpi_layout.o\
       rpa_lri_wfc_mpi.o\
       rpa_lri_bz_io.o\
@@ -870,12 +875,14 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       rpa_lri_output.o\
       rpa_lri_bz.o\
       rpa_lri_sym.o\
+      librpa_bz_sampling.o\
+      librpa_stru_symmetry.o\
+      librpa_stru_units.o\
       rpa_lri_coeff_io.o\
       rpa_lri_velocity.o\
       rpa_lri_basis.o\
       rpa_lri_eigenvector_v1.o\
       rpa_lri_eigenvector.o\
-      singular_value.o\
 
 OBJS_BSE=esolver_lr_lcao_bse.o\
     hamilt_bse.o\
