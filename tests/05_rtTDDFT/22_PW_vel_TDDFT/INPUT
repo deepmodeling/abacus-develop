@@ -25,8 +25,9 @@ smearing_method     gauss
 smearing_sigma      0.002
 md_type             nve
 init_vel            1
-md_dt               0.01
-md_nstep            9
+td_dt               0.01
+md_nstep            3
+estep_per_md        4
 cal_force           0
 cal_stress          0
 td_stype            1

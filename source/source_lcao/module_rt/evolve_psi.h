@@ -6,9 +6,10 @@
 #ifndef ELEC_PSI_H
 #define ELEC_PSI_H
 
-#include "source_base/module_container/ATen/core/tensor.h"     // ct::Tensor
+#include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hamilt/hamilt.h"
+#include "source_lcao/module_rt/band_energy.h"
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 namespace module_rt
@@ -26,7 +27,8 @@ void evolve_psi(const int nband,
                 double* ekb,
                 int propagator,
                 std::ofstream& ofs_running,
-                const int print_matrix);
+                const int print_matrix,
+                const EijOutputInfo& output_info);
 
 template <typename Device>
 void evolve_psi_tensor(const int nband,
@@ -42,7 +44,8 @@ void evolve_psi_tensor(const int nband,
                        std::ofstream& ofs_running,
                        const int print_matrix,
                        const bool use_lapack,
-                       CublasMpResources& cublas_res);
+                       CublasMpResources& cublas_res,
+                       const EijOutputInfo& output_info);
 } // namespace module_rt
 
 #endif

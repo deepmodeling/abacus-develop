@@ -2,6 +2,7 @@
 #include "rpa_lri.h"
 #include "rpa_lri_band_io.h"
 #include "rpa_lri_detail.h"
+#include "librpa_stru_units.h"
 #include "source_base/global_function.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_estate/elecstate_lcao.h"
@@ -34,8 +35,9 @@ try
     }
     ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
     const int nks_tot = this->runtime.input.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
-    const ModuleBase::Matrix3 lat = ucell.latvec * ucell.lat0;                     // in unit of Bohr
-    const ModuleBase::Matrix3 G_RPA = ucell.G * (ModuleBase::TWO_PI / ucell.lat0); // in unit of 1/Bohr
+    const auto unit_scales = RpaLriDetail::librpa_stru_unit_scales(ucell.lat0);
+    const ModuleBase::Matrix3 lat = ucell.latvec * unit_scales.real_space_bohr;
+    const ModuleBase::Matrix3 G_RPA = ucell.G * unit_scales.reciprocal_space_bohr_inv;
     std::ofstream ofs;
     ofs.open(this->runtime.input.rpa_outdir + "stru_out.txt", std::ios::out);
     if (!ofs.good()) throw std::runtime_error("Failed to open stru_out.txt");
@@ -53,7 +55,7 @@ try
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            const ModuleBase::Vector3<double> position = ucell.atoms[it].tau[ia] * ucell.lat0; // in unit of Bohr
+            const ModuleBase::Vector3<double> position = ucell.atoms[it].tau[ia] * unit_scales.real_space_bohr;
             ofs << std::setw(15) << position.x << std::setw(15) << position.y << std::setw(15) << position.z
                 << std::setw(15) << it + 1 << std::endl;
         }
@@ -84,10 +86,9 @@ try
     // the operations in the input cell's fractional row-vector convention.
     // This block belongs only to the reader-v1 structure contract; v0 keeps
     // the historical stru_out layout unchanged.
-    if (this->runtime.input.out_librpa_ver == 1 && this->runtime.input.symmetry == "1"
-        && this->runtime.input.nspin != 4)
+    if (this->runtime.input.out_librpa_ver == 1 && this->runtime.input.symmetry == "1")
     {
-        RpaLriDetail::write_stru_sym(ofs, ucell, *p_kv);
+        RpaLriDetail::write_stru_sym(ofs, ucell, *p_kv, this->runtime.input.nspin);
     }
     ofs.close();
     if (!ofs.good()) throw std::runtime_error("Failed to write stru_out.txt");
