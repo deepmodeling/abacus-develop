@@ -234,7 +234,8 @@ def write_stru(stru: Atoms,
     '''
     from ase.units import (
         Bohr as __BOHR__, 
-        Angstrom as __ANGSTROM__
+        Angstrom as __ANGSTROM__,
+        AUT as __AUT__,
     )
     assert isinstance(stru, Atoms)
     pp_file = pp_file or {} # can be None, for those non-ESolver_KS cases
@@ -246,6 +247,10 @@ def write_stru(stru: Atoms,
     ind = species_group_indices(elem)
     coords = stru.get_positions()[ind]
     mobility = _constraint_mobility(stru)[ind]
+    # ASE Angstrom / ASE-time to ABACUS Bohr / atomic-time. Keep the same
+    # species ordering used for coordinates, mobility and magnetic moments.
+    velocities = (stru.get_velocities()[ind] * __AUT__ / __BOHR__
+                  if stru.has('momenta') else np.zeros((len(stru), 3)))
     elem = [elem[i] for i in ind]
 
     # handle the atomic magnetic moment (issue #6516)
@@ -273,7 +278,7 @@ def write_stru(stru: Atoms,
                     magmoms[j] | {
                         'coord': coords[j].tolist(), # coordinate
                         'm': mobility[j].tolist(), # mobility
-                        'v': [0.0, 0.0, 0.0], # velocity
+                        'v': velocities[j].tolist(), # atomic-unit velocity
                     } for j in range(np.sum(nat[:i]), np.sum(nat[:i+1]))
                 ]
             }
@@ -780,6 +785,25 @@ class TestAbacusCalculatorIOUtil(unittest.TestCase):
 
         self.assertEqual([s['symbol'] for s in stru['species']], ['C', 'Pt', 'H'])
         self.assertEqual([s['natom'] for s in stru['species']], [2, 1, 2])
+
+    def test_stru_velocities_keep_physical_units_and_species_order(self):
+        from ase.units import fs
+
+        atoms = Atoms('HOH', positions=[[0, 0, 0], [1, 0, 0], [2, 0, 0]],
+                      cell=[8, 8, 8], pbc=True)
+        atoms.set_velocities(np.array([[1, 0, 0], [0, 2, 0], [0, 0, -0.5]]) / fs)
+        # ABACUS writes MD_dump Angstrom/fs from STRU atomic-unit velocity.
+        au_per_angstrom_fs = 1.8897270 * 2.418884326505e-2
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = write_stru(atoms, tmpdir, {'H': 'H.upf', 'O': 'O.upf'})
+            species = read_stru(path)['species']
+        self.assertEqual([entry['symbol'] for entry in species], ['H', 'O'])
+        self.assertEqual([entry['natom'] for entry in species], [2, 1])
+        np.testing.assert_allclose([entry['v'] for entry in species[0]['atom']],
+                                   np.array([[1, 0, 0], [0, 0, -0.5]]) * au_per_angstrom_fs,
+                                   rtol=0, atol=1e-7)
+        np.testing.assert_allclose(species[1]['atom'][0]['v'],
+                                   [0, 2 * au_per_angstrom_fs, 0], rtol=0, atol=1e-7)
 
     def test_write_stru_uses_ase_constraints_for_mobility(self):
         atoms = Atoms(
