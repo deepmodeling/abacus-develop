@@ -144,6 +144,9 @@ endif
 ifdef LIBRI_DIR
     INCLUDES += -I${LIBRI_DIR}/include
     INCLUDES += -I${LIBCOMM_DIR}/include
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_ri
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_rpa
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_rpa/module_librpa_io
     HONG                += -DUSE_LIBRI
     HONG += -D__EXX -DEXX_H_COMM=2 -DEXX_DM=3 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
 endif
@@ -241,7 +244,7 @@ HONG += -D__SELINV -DMETIS
 
 ifeq ($(MPI), ON)
     ifdef LIBRI_DIR
-        OBJS_ABACUS += $(OBJS_MODULE_RI) $(OBJS_BSE) ${OBJS_SRC_RI}
+        OBJS_ABACUS += $(OBJS_MODULE_RI) $(OBJS_MODULE_RPA) $(OBJS_BSE) ${OBJS_SRC_RI}
     endif
 endif
 

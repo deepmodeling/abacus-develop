@@ -1,7 +1,9 @@
 #include "../rpa_lri_detail.h"
+#include "source_base/constants.h"
 
 #include "../rpa_lri_bz_io.h"
 #include "../rpa_lri_coeff_v1.h"
+#include "../module_librpa_io/librpa_bz_sampling.h"
 
 #include <RI/global/Tensor.h>
 #include <array>
@@ -33,6 +35,17 @@ using RpaLriDetail::real_as_double;
 using RpaLriDetail::sum_int_vector;
 using RpaLriDetail::write_bz_sample;
 using RpaLriDetail::write_lri_coef_v1;
+}
+
+TEST(RpaLriDetail, BzSamplingConvertsCartesianVectorsToInverseBohr)
+{
+    const auto cartesian
+        = RpaLriDetail::librpa_cartesian_kvec(ModuleBase::Vector3<double>(0.25, -0.5, 0.0), 2.0);
+    const double scale = ModuleBase::TWO_PI / 2.0;
+    EXPECT_DOUBLE_EQ(cartesian.x, 0.25 * scale);
+    EXPECT_DOUBLE_EQ(cartesian.y, -0.5 * scale);
+    EXPECT_DOUBLE_EQ(cartesian.z, 0.0);
+    EXPECT_THROW(RpaLriDetail::librpa_cartesian_kvec(ModuleBase::Vector3<double>(), 0.0), std::invalid_argument);
 }
 
 TEST(RpaLriDetail, CoulombAtomPairIndexUsesUpperTriangleOrder)
