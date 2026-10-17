@@ -57,6 +57,7 @@ void print_scf_iterinfo(const std::string& ks_solver,
            {"scalapack_gvx", "GV"},
            {"cusolver", "CU"},
            {"bpcg", "BP"},
+           {"ppcg", "PP"},
            {"pexsi", "PE"},
            {"cusolvermp", "CM"},
            {"sdft", "CT"}}; // CT = Chebyshev Trace, for pure SDFT (nbands=0) where no H diagonalization is performed

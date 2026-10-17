@@ -121,6 +121,10 @@ scf_brav_bco_smear_mv
 814_PW_LT_triclinic
 relax_dftu_spin2
 relax_dftu_spin4
+817_PW_PPCG
+818_PW_PPCG_Si
+819_PW_PPCG_Al
+820_PW_PPCG_Cutoff
 scf_deltaspin2
 scf_deltaspin4
 221_PW_PCC0D_H3O

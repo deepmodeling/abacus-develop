@@ -44,6 +44,7 @@ class HSolverPW
               const int nbands_in,
               const bool diago_smooth_ethr_in,
               const int pw_diag_ndim_in,
+              const int pw_diag_rr_step_in,
               const int diag_subspace_in,
               const int nb2d_in,
               const bool use_k_continuity_in = false)
@@ -51,6 +52,7 @@ class HSolverPW
           use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
           diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
           nbands(nbands_in), diago_smooth_ethr(diago_smooth_ethr_in), pw_diag_ndim(pw_diag_ndim_in),
+          pw_diag_rr_step(pw_diag_rr_step_in),
           diag_subspace(diag_subspace_in), nb2d(nb2d_in),
           use_k_continuity(use_k_continuity_in) {};
 
@@ -69,12 +71,23 @@ class HSolverPW
                const bool skip_charge);
 
   protected:
+    struct DiagonalizationStatus
+    {
+        bool converged = true;
+        bool iteration_limit_reached = false;
+        int active_band_count = 0;
+        double max_residual = 0.0;
+    };
+
     // diago caller
-    void hamiltSolvePsiK(const HSOperator<T, Device>& op,
+    DiagonalizationStatus hamiltSolvePsiK(const HSOperator<T, Device>& op,
                          psi::Psi<T, Device>& psi,
                          std::vector<Real>& pre_condition,
                          Real* eigenvalue,
                          const int& nk_nums);
+
+    void report_ppcg_convergence(const std::vector<DiagonalizationStatus>& status,
+                                 std::ostream& log) const;
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
@@ -98,6 +111,7 @@ class HSolverPW
     const int nbands;              // global number of bands, may differ from psi.get_nbands() under band parallelism
     const bool diago_smooth_ethr;  // use a band-wise smoothed threshold for all iter methods
     const int pw_diag_ndim;        // dimension of the workspace for Davidson-type methods
+    const int pw_diag_rr_step;     // interval between full PPCG Rayleigh-Ritz steps
     const int diag_subspace;       // subspace eigensolver for dav_subspace: 0 Lapack, 1 elpa, 2 scalapack
     const int nb2d;                // 2d block size used by the dav_subspace scalapack path
 

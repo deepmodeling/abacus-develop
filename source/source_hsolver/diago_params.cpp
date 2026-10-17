@@ -15,7 +15,6 @@ void setup_diago_params_pw(const int istep,
     DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
     DiagoIterAssist<T, Device>::SCF_ITER = iter;
     DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
-
     if (inp.calculation != "nscf")
     {
         DiagoIterAssist<T, Device>::PW_DIAG_NMAX = inp.pw_diag_nmax;

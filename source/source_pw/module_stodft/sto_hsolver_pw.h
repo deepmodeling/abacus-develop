@@ -27,6 +27,7 @@ class StoHSolverPW : public hsolver::HSolverPW<T, Device>
                  const int nbands_in,
                  const bool diago_smooth_ethr_in,
                  const int pw_diag_ndim_in,
+                 const int pw_diag_rr_step_in,
                  const int diag_subspace_in,
                  const int nb2d_in,
                  const bool ks_run_in,
@@ -45,6 +46,7 @@ class StoHSolverPW : public hsolver::HSolverPW<T, Device>
                                         nbands_in,
                                         diago_smooth_ethr_in,
                                         pw_diag_ndim_in,
+                                        pw_diag_rr_step_in,
                                         diag_subspace_in,
                                         nb2d_in),
           ks_run(ks_run_in), all_ks_run(all_ks_run_in), bndpar(bndpar_in)
