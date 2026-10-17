@@ -109,6 +109,9 @@ void DFPT_PW::Impl::run_assemble(int q_idx)
 {
     phon_.assemble(q_idx, data_);
     phon_.diagonalize(q_idx, data_);
+    // translational sum-rule audit of the raw Gamma matrix (acoustic-branch
+    // diagnostics; the loto-corrected matrix is audited separately below)
+    phon_.audit_asr("raw", q_idx, data_);
     if (q_idx != 0 || !data_.get_loto())
     {
         return;
@@ -118,6 +121,7 @@ void DFPT_PW::Impl::run_assemble(int q_idx)
     // set_loto_dir overrides, e.g. per irrep direction in stage A)
     phon_.add_loto(data_.get_loto_dir(), data_);
     phon_.diagonalize_loto(data_);
+    phon_.audit_asr("loto", q_idx, data_);
 }
 
 void DFPT_PW::run()

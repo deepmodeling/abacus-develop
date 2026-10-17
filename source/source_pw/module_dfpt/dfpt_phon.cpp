@@ -163,6 +163,65 @@ void DFPT_Phon::diagonalize(int q_idx, DFPT_PW_Data& data)
     ModuleBase::timer::end("DFPT_Phon", "diagonalize");
 }
 
+void DFPT_Phon::audit_asr(const std::string& label, int q_idx, const DFPT_PW_Data& data) const
+{
+    ModuleBase::TITLE("DFPT_Phon", "audit_asr");
+    ModuleBase::timer::start("DFPT_Phon", "audit_asr");
+    const double gamma_tol = 1.0e-8; ///< empirical parameter: fractional-q Gamma tolerance
+    const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
+    const bool at_gamma = std::abs(q_frac.x) <= gamma_tol && std::abs(q_frac.y) <= gamma_tol
+                          && std::abs(q_frac.z) <= gamma_tol;
+    const int nat = ucell_->nat;
+    const int nat3 = 3 * nat;
+    const ModuleBase::ComplexMatrix dyn = data.get_dynmat(q_idx);
+    if (!at_gamma || dyn.nr != nat3)
+    {
+        ModuleBase::timer::end("DFPT_Phon", "audit_asr");
+        return;
+    }
+    double max_elem = 0.0;
+    for (int i = 0; i < nat3; ++i)
+    {
+        for (int j = 0; j < nat3; ++j)
+        {
+            max_elem = std::max(max_elem, std::abs(dyn(i, j)));
+        }
+    }
+    // per-atom translational row sums s(ia)[da] = sum_ib,db D_{ia da, ib db}
+    std::cout << "DFPT ASR audit (" << label << "):";
+    double worst = 0.0;
+    int worst_atom = -1;
+    for (int ia = 0; ia < nat; ++ia)
+    {
+        double s2 = 0.0;
+        for (int da = 0; da < 3; ++da)
+        {
+            std::complex<double> s(0.0, 0.0);
+            for (int jb = 0; jb < nat3; ++jb)
+            {
+                s += dyn(3 * ia + da, jb);
+            }
+            s2 += std::norm(s);
+        }
+        const double snorm = std::sqrt(s2);
+        std::cout << " atom" << ia + 1 << "(" << ucell_->atoms[ucell_->iat2it[ia]].label << ")="
+                  << std::setprecision(3) << std::scientific << snorm;
+        if (snorm > worst)
+        {
+            worst = snorm;
+            worst_atom = ia;
+        }
+    }
+    std::cout << std::defaultfloat << std::setprecision(6);
+    if (max_elem > 0.0 && worst_atom >= 0)
+    {
+        std::cout << " | worst rel = " << std::setprecision(3) << std::scientific << worst / max_elem
+                  << std::defaultfloat << std::setprecision(6);
+    }
+    std::cout << std::endl;
+    ModuleBase::timer::end("DFPT_Phon", "audit_asr");
+}
+
 void DFPT_Phon::add_loto(const ModuleBase::Vector3<double>& qhat, DFPT_PW_Data& data)
 {
     ModuleBase::TITLE("DFPT_Phon", "add_loto");

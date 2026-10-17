@@ -87,6 +87,13 @@ class DFPT_Phon
     /// from Gamma, where the rule does not apply).
     bool check_sum_rule(int q_idx, DFPT_PW_Data& data) const;
 
+    /// translational sum-rule audit of the Gamma dynamical matrix
+    /// (per-atom 3-vector row sums, relative to the matrix scale);
+    /// diagnostics for the acoustic-branch investigation: the raw matrix
+    /// and the LO-TO-corrected one are audited separately because the
+    /// nonanalytic term carries its own Z* sum rule
+    void audit_asr(const std::string& label, int q_idx, const DFPT_PW_Data& data) const;
+
     /// Ewald ion-ion force constants C^ewald_ab(q) (G-space + real-space +
     /// Gaussian self term), mass-reduced by 1/sqrt(M_a M_b). A stateless
     /// building block exposed publicly so the serial analytic tests can
