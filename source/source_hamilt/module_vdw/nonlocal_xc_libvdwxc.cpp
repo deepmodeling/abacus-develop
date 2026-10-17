@@ -2,6 +2,15 @@
 
 #ifdef __LIBVDWXC
 
+// libvdwxc's public C header includes <complex.h> inside an extern "C"
+// block. Pre-include the standard header so libc++ does not parse its C++
+// templates with C linkage, then drop the I macro that complex.h defines.
+#include <complex.h>
+#include <vdwxc.h>
+#ifdef I
+#undef I
+#endif
+
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_base/tool_quit.h"
 #include "source_hamilt/module_xc/xc_functional.h"
@@ -167,7 +176,6 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
     for (int r = 0; r < pw.nrxx; ++r)
     {
         sigma[r] = gradient[r].x * gradient[r].x + gradient[r].y * gradient[r].y + gradient[r].z * gradient[r].z;
-        field[r] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
     }
 
     std::vector<double> density = total_density;
@@ -194,6 +202,9 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
     }
     XC_Functional::grad_dot(field.data(), divergence.data(), &pw, pw.tpiba);
 
+    // v = 2 * (dE/dn - div(2 * dE/dsigma * grad n)) converts the Hartree
+    // derivatives to Ry; vtxc contracts v with the valence density only, matching
+    // the PotXC bookkeeping. The library already includes the beta term.
     const double energy_ry = 2.0 * energy_ha;
     std::vector<double> potential(pw.nrxx, 0.0);
     NonlocalXCResult result{energy_ry, 0.0, potential};

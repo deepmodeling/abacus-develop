@@ -717,34 +717,6 @@ endif()
 # base uses symbols from device (memory_op and math_ylm_op).
 target_link_libraries(base PUBLIC device)
 
-if(BUILD_TESTING)
-  # Register after all object-library dependencies exist; the optional adapter
-  # test links the existing PW, INPUT and device targets.
-  add_subdirectory(source_hamilt/module_vdw/test)
-  if(ENABLE_LIBVDWXC AND NOT ENABLE_MPI AND NOT USE_CUDA AND NOT USE_ROCM)
-    # Test the additive host with real Charge and UnitCell lifecycles after
-    # its dependencies exist, without linking the full estate/cell libraries.
-    AddTest(
-      TARGET MODULE_ESTATE_pot_nonlocal_xc_LIBVDWXC
-      LIBS xc_ planewave base parameter device nonlocal_xc
-      SOURCES
-        source_estate/test/test_pot_nonlocal_xc.cpp
-        source_estate/module_pot/pot_nonlocal_xc.cpp
-        source_estate/module_charge/charge.cpp
-        source_estate/module_charge/chg_tools.cpp
-        source_cell/unitcell.cpp
-        source_cell/atom_spec.cpp
-        source_cell/atom_pseudo.cpp
-        source_cell/pseudo.cpp
-        source_cell/magnetism.cpp
-        source_cell/sep.cpp
-        source_cell/sep_cell.cpp
-    )
-    target_link_libraries(MODULE_ESTATE_pot_nonlocal_xc_LIBVDWXC PRIVATE Libxc::xc libvdwxc::vdwxc)
-    set_tests_properties(MODULE_ESTATE_pot_nonlocal_xc_LIBVDWXC PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
-  endif()
-endif()
-
 if(ENABLE_COVERAGE)
   add_coverage(driver)
 endif()

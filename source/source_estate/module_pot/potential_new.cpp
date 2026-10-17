@@ -33,8 +33,8 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                 etxc_in,
                 vtxc_in,
                 vsep_cell_in,
-                6.3,
-                0.0093,
+                0.0,
+                0.0,
                 "none")
 {
 }

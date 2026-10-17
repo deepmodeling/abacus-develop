@@ -12,7 +12,8 @@ class NonlocalXC;
 
 namespace elecstate
 {
-// Independent rVV10 nonlocal correction for the CPU/PW SCF path.
+// Additive density-grid nonlocal XC correction, registered after PotXC on the
+// CPU/PW SCF path. The numerical method lives behind vdw::NonlocalXC.
 class PotNonlocalXC final : public PotBase
 {
   public:

@@ -29,13 +29,6 @@ if(ENABLE_LIBVDWXC AND NOT ENABLE_MPI AND NOT USE_CUDA AND NOT USE_ROCM)
     LIBS xc_ planewave base parameter device nonlocal_xc
     SOURCES test_nonlocal_xc_libvdwxc.cpp
   )
-  if(ENABLE_LIBXC)
-    target_link_libraries(MODULE_HAMILT_vdwTest_LIBVDWXC PRIVATE Libxc::xc)
-  endif()
-  target_link_libraries(MODULE_HAMILT_vdwTest_LIBVDWXC PRIVATE libvdwxc::vdwxc)
+  target_link_libraries(MODULE_HAMILT_vdwTest_LIBVDWXC PRIVATE Libxc::xc libvdwxc::vdwxc)
   set_tests_properties(MODULE_HAMILT_vdwTest_LIBVDWXC PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
-endif()
-
-if(ENABLE_DFTD4 AND ENABLE_MPI)
-  target_link_libraries(MODULE_HAMILT_vdwTest PRIVATE dftd4::dftd4)
 endif()

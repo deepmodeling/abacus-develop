@@ -32,15 +32,15 @@ void PotNonlocalXC::cal_v_eff(const Charge* chg, const UnitCell* cell, ModuleBas
         || chg->nrxx != rho_basis_->nrxx || !chg->rho || !chg->rho_core || v_eff.nr != chg->nspin
         || v_eff.nc != chg->nrxx)
     {
-        ModuleBase::WARNING_QUIT("PotNonlocalXC", "the first rVV10 interface requires a consistent nspin=1 density basis");
+        ModuleBase::WARNING_QUIT("PotNonlocalXC", "nonlocal XC requires a consistent nspin=1 density basis");
     }
-    std::vector<double> valence(chg->nrxx, 0.0);
-    for (int is = 0; is < chg->nspin; ++is)
-        for (int r = 0; r < chg->nrxx; ++r)
-            valence[r] += chg->rho[is][r];
-    std::vector<double> total = valence;
+    // nspin=1 is enforced above, so the valence density is the single channel.
+    const std::vector<double> valence(chg->rho[0], chg->rho[0] + chg->nrxx);
+    std::vector<double> total(chg->nrxx, 0.0);
     for (int r = 0; r < chg->nrxx; ++r)
-        total[r] += chg->rho_core[r];
+    {
+        total[r] = valence[r] + chg->rho_core[r];
+    }
     const vdw::NonlocalXCResult nl = backend_->evaluate(*rho_basis_, total, valence);
     if (nl.potential.size() != static_cast<std::size_t>(chg->nrxx))
     {
@@ -51,9 +51,10 @@ void PotNonlocalXC::cal_v_eff(const Charge* chg, const UnitCell* cell, ModuleBas
     // contribution. This component only adds the selected nonlocal correction.
     *etxc_ += nl.energy;
     *vtxc_ += nl.vtxc;
-    for (int is = 0; is < chg->nspin; ++is)
-        for (int r = 0; r < chg->nrxx; ++r)
-            v_eff(is, r) += nl.potential[r];
+    for (int r = 0; r < chg->nrxx; ++r)
+    {
+        v_eff(0, r) += nl.potential[r];
+    }
     ModuleBase::timer::end("PotNonlocalXC", "cal_v_eff");
 }
 } // namespace elecstate

@@ -10,6 +10,16 @@
 #include <type_traits>
 #include <vector>
 
+#ifdef __LIBVDWXC
+// Direct library calls provide the API-parity reference. Include the C header
+// after the C++ headers and drop the I macro that complex.h defines.
+#include <complex.h>
+#include <vdwxc.h>
+#ifdef I
+#undef I
+#endif
+#endif
+
 namespace
 {
 const double pi = std::acos(-1.0);

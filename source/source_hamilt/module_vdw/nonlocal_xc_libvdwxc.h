@@ -5,18 +5,9 @@
 
 #include <array>
 
-#ifdef __LIBVDWXC
-// libvdwxc's public C header includes <complex.h> inside an extern "C"
-// block. Pre-include the standard header here so libc++ does not parse its
-// C++ templates with C linkage.
-#include <complex.h>
-#include <vdwxc.h>
-// complex.h defines I as a macro; it collides with template identifiers in
-// GoogleTest and other C++ headers, but is not needed after vdwxc.h parsing.
-#ifdef I
-#undef I
-#endif
-#endif
+// Opaque libvdwxc handle; vdwxc_data is a pointer to this struct. The C header
+// is included only by the implementation file.
+struct vdwxc_data_obj;
 
 namespace vdw
 {
@@ -43,7 +34,7 @@ class LibvdwxcNonlocalXC final : public NonlocalXC
                               const std::vector<double>& valence_density) const override;
 
   private:
-    vdwxc_data data_ = nullptr;
+    vdwxc_data_obj* data_ = nullptr;
     int nx_ = 0;
     int ny_ = 0;
     int nz_ = 0;

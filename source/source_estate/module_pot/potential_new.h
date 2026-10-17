@@ -281,8 +281,9 @@ class Potential : public PotBase
     Structure_Factor* structure_factors_ = nullptr;
     surchem* solvent_ = nullptr;
     VSep* vsep_cell = nullptr;
-    double nonlocal_xc_b_ = 6.3;
-    double nonlocal_xc_c_ = 0.0093;
+    // Nonlocal XC selection; the parameters are only read when a method is set.
+    double nonlocal_xc_b_ = 0.0;
+    double nonlocal_xc_c_ = 0.0;
     std::string nonlocal_xc_ = "none";
     bool use_gpu_ = false;
     std::shared_ptr<TDFieldManager> td_field_manager_;
