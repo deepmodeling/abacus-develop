@@ -37,6 +37,18 @@ class XC_First_Order
   public:
     virtual ~XC_First_Order() = default;
 
+    /// Optional per-q context before the first apply of a new phonon q
+    /// (cartesian, ucell::G units). Analytic GGA kernels need the phonon q
+    /// so the gradient operator acts as i(G + q) on the physical carrier;
+    /// amplitude-grid implementations ignore it (their gradient of the
+    /// carrier-free amplitude is only exact at q = 0). Const like apply:
+    /// the kernel is held as pointer-to-const by the solver, and context
+    /// injection between solves is the sanctioned state change.
+    virtual void set_context(const ModuleBase::Vector3<double>& q_cart) const
+    {
+        (void)q_cart;
+    }
+
     /// dvxc_r(r) = delta V_xc[drho_r](r), complex q-shifted amplitude on
     /// the shared real-space grid. Implementations must not resize or
     /// alias drho_r; dvxc_r is resized to drho_r.size() and fully
