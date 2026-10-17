@@ -381,6 +381,8 @@ OBJS_HAMILT=hamilt_pw.o\
     pw_hybrid_nscf.o\
     pw_hybrid_source.o\
     td_history_pw.o\
+    td_vel_pw.o\
+    td_spin_pw.o\
     td_pw.o\
     hs_matrix_k.o\
     sto_hamilt_pw.o\
@@ -741,8 +743,9 @@ OBJS_IO=module_parameter/input_conv.o\
     module_current/td_current_io.o\
     module_current/td_current_io_comm.o\
     module_current/td_current_pw.o\
+    module_current/td_spin_pw_io.o\
     td_efield_io.o\
-    td_vector_pot_io.o\
+    td_vecpot_io.o\
     module_chgpot/write_libxc_r.o\
     module_chgpot/get_pchg_pw.o\
     module_output/output_log.o\

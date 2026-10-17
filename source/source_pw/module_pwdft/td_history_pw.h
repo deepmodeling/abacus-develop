@@ -10,29 +10,19 @@
 namespace pw
 {
 
-/** @brief Non-owning device pointers to the smooth local potentials. */
-template <typename Real>
-struct TDPotentialView
-{
-    const Real* veff;
-    const Real* vofk;
-};
-
 /** @brief Converged time-step history and predictor-corrector potential storage. */
 template <typename T, typename Device>
 class TDHistoryPW
 {
   public:
     /** @brief Prepare storage after the potential grids have been updated. */
-    void prepare(const elecstate::Potential& potential, const bool needs_ked);
+    void prepare(const elecstate::Potential& potential);
 
     /** @brief Use the current potential for the predictor, then average with the saved potential. */
-    TDPotentialView<typename GetTypeReal<T>::type> prop_pot(elecstate::Potential& potential,
-                                                          const bool needs_ked,
-                                                          const bool corrector);
+    const typename GetTypeReal<T>::type* prop_pot(elecstate::Potential& potential, const bool corrector);
 
     /** @brief Save the converged state; the caller owns the convergence decision. */
-    void save(const psi::Psi<T, Device>& current, elecstate::Potential& potential, const bool needs_ked);
+    void save(const psi::Psi<T, Device>& current, elecstate::Potential& potential);
 
     /** @brief Access the fixed origin of every corrector solve in the next step. */
     const psi::Psi<T, Device>& previous() const;
@@ -42,8 +32,6 @@ class TDHistoryPW
     std::unique_ptr<psi::Psi<T, Device>> previous_;
     ct::Tensor veff_prev_;
     ct::Tensor veff_mid_;
-    ct::Tensor vofk_prev_;
-    ct::Tensor vofk_mid_;
 };
 
 } // namespace pw

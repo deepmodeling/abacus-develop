@@ -151,12 +151,10 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
                                  this->deeq_nc.ptr,
                                  PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         }
-        if (PARAM.globalv.has_double_data)
-        {
-            syncmem_z2z_h2d_op()(this->z_deeq_nc,
-                                 this->deeq_nc.ptr,
-                                 PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
-        }
+        // Keep the double-precision force view current in single-precision runs.
+        syncmem_z2z_h2d_op()(this->z_deeq_nc,
+                             this->deeq_nc.ptr,
+                             PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         syncmem_d2d_h2d_op()(this->d_deeq,
                              this->deeq.ptr,
                              PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);

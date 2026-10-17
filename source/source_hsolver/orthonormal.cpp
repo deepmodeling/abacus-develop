@@ -254,7 +254,7 @@ OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int 
             if (result.failure != OrthFailure::none)
             {
                 result.status = OrthStatus::failed;
-                result.reason = "band=" + std::to_string(band);
+                result.reason = "band=" + std::to_string(band + 1);
             }
         }
     }

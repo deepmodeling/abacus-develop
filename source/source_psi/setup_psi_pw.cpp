@@ -116,14 +116,27 @@ void Setup_Psi_pw::before_runner(const UnitCell& ucell,
 template <typename T, typename Device>
 void Setup_Psi_pw::update_psi_d_impl()
 {
-    if (this->psi_d != nullptr && this->precision_type_ == PrecisionType::ComplexFloat)
-    {
-        delete this->get_psi_d<T, Device>();
-    }
-
     if (this->precision_type_ == PrecisionType::ComplexFloat)
     {
-        this->psi_d = static_cast<void*>(new psi::Psi<std::complex<double>, Device>(*this->get_psi_t<T, Device>()));
+        const auto* native = this->get_psi_t<T, Device>();
+        auto* mirror = this->get_psi_d<T, Device>();
+        if (mirror == nullptr)
+        {
+            this->psi_d = new psi::Psi<std::complex<double>, Device>(*native);
+        }
+        else if (mirror->get_nk() != native->get_nk() || mirror->get_nbands() != native->get_nbands()
+                 || mirror->get_nbasis() != native->get_nbasis() || mirror->get_ngk_pointer() != native->get_ngk_pointer())
+        {
+            // Preserve the object address borrowed by onsite projectors even when storage changes.
+            *mirror = psi::Psi<std::complex<double>, Device>(*native);
+        }
+        else
+        {
+            const T* source = native->get_pointer() - native->get_psi_bias();
+            std::complex<double>* destination = mirror->get_pointer() - mirror->get_psi_bias();
+            base_device::memory::cast_memory_op<std::complex<double>, T, Device, Device>()(destination, source, native->size());
+            mirror->fix_k(native->get_current_k());
+        }
     }
     else
     {

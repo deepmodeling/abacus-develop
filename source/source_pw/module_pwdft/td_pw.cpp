@@ -9,8 +9,7 @@
 
 namespace pw
 {
-
-void check_td_input(const Input_para& input, const UnitCell& cell, const bool needs_ked, const bool cal_exx)
+void check_td_input(const Input_para& input, const UnitCell& cell, int xc_type, bool cal_exx)
 {
     if (input.out_current != 0 && input.out_current != 1)
     {
@@ -38,23 +37,29 @@ void check_td_input(const Input_para& input, const UnitCell& cell, const bool ne
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support spin constraints; set sc_mag_switch=false.");
     }
+    if (xc_type == 3 || xc_type == 5)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support meta-GGA.");
+    }
     if (cal_exx)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support exact exchange (EXX); use a non-hybrid functional.");
     }
-    if ((input.nspin != 1 && input.nspin != 2) || input.bndpar != 1 || (input.td_stype != 0 && input.td_stype != 1))
+    if ((input.nspin != 1 && input.nspin != 2 && input.nspin != 4) || input.bndpar != 1 || (input.td_stype != 0 && input.td_stype != 1))
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires nspin=1 or 2, bndpar=1 and td_stype=0 or 1.");
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires nspin=1, 2 or 4, bndpar=1 and td_stype=0 or 1.");
+    }
+    if (input.nspin == 4 && !input.noncolin)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "nspin=4 PW RT-TDDFT requires noncolin=true.");
+    }
+    if (input.out_elf[0] > 0)
+    {
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT does not support ELF.");
     }
     if (input.mdp.md_restart || input.restart_load)
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT restart is not supported yet.");
-    }
-    if (input.td_stype == 1 && needs_ked)
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT",
-                                 "PW RT-TDDFT with a kinetic-energy-density functional requires td_stype=0; "
-                                 "the velocity-gauge coupling of the functional is not implemented.");
     }
 }
 

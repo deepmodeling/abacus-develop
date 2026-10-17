@@ -235,6 +235,68 @@ void ReadInput::item_rt_tddft()
         this->add_item(item);
     }
     {
+        Input_Item item("td_out_mag");
+        item.annotation = "RT-TDDFT spinor magnetic moment output";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "String";
+        item.description = R"(Write total and atomic magnetic moments to `mag_tot.txt` and `mag_atom.txt` at every step.
+* `voronoi`: Integrate magnetization over periodic nearest-atom regions, including vacuum.
+* `onsite`: Project onto the smoothed single-zeta numerical atomic orbitals. `onsite_radius` controls their cutoff.
+* `none`: Disable these two files.
+
+Total moments always come from the magnetization density. Atomic onsite moments need not sum to the total. Moments follow the ABACUS Pauli convention in Bohr magnetons.)";
+        item.default_value = "voronoi";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and nspin==4");
+        read_sync_string(input.td_out_mag);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const std::string& method = para.inp.td_out_mag;
+            if (method != "voronoi" && method != "onsite" && method != "none")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "td_out_mag must be voronoi, onsite or none.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_out_torque");
+        item.annotation = "output PW spin angular momentum torques";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Boolean";
+        item.description = R"(Write total exchange-correlation and SOC torques to `torque_tot.txt` and the atomic SOC contributions to `torque_atom.txt` at every step. In Hartree atomic units,
+
+$$\boldsymbol{\tau}_{\mathrm{xc}}=\mathrm{i}\sum_{n\boldsymbol{k}}f_{n\boldsymbol{k}}\Braket{\psi_{n\boldsymbol{k}}|\left[\hat{V}_{\mathrm{xc}},\hat{\boldsymbol{S}}\right]|\psi_{n\boldsymbol{k}}},$$
+
+$$\boldsymbol{\tau}_{\mathrm{SOC}}=\mathrm{i}\sum_{n\boldsymbol{k}}f_{n\boldsymbol{k}}\Braket{\psi_{n\boldsymbol{k}}|\left[\hat{V}_{\mathrm{SOC}},\hat{\boldsymbol{S}}\right]|\psi_{n\boldsymbol{k}}}.$$
+
+Here $\hat{\boldsymbol{S}}=\boldsymbol{\sigma}/2$, with $\boldsymbol{\sigma}$ the Pauli matrices, and $f_{n\boldsymbol{k}}$ includes occupations and k-point weights. $\hat{V}_{\mathrm{xc}}$ is the spin-dependent exchange-correlation potential, and $\hat{V}_{\mathrm{SOC}}$ is the SOC part of the nonlocal pseudopotential.
+
+The torques describe changes in spin angular momentum $\boldsymbol{S}=\boldsymbol{M}/2$, where $\boldsymbol{M}$ follows the ABACUS Pauli convention. Atomic SOC contributions use the corresponding atomic pseudopotential terms.)";
+        item.default_value = "false";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and nspin==4");
+        read_sync_bool(input.td_out_torque);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_out_spincur");
+        item.annotation = "output PW spin angular momentum current";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Boolean";
+        item.description = R"(Write the nine macroscopic spin angular momentum current components to `spincur_tot.txt` at every step. In Hartree atomic units,
+
+$$J_i^a=\frac{1}{2\Omega}\sum_{n\boldsymbol{k}}f_{n\boldsymbol{k}}\Braket{\psi_{n\boldsymbol{k}}|\left\{\hat{v}_i,\hat{S}_a\right\}|\psi_{n\boldsymbol{k}}},\qquad \hat{S}_a=\frac{\sigma_a}{2}.$$
+
+Here $\Omega$ is the cell volume, $f_{n\boldsymbol{k}}$ includes occupations and k-point weights, $\sigma_a$ is a Pauli matrix, and $\hat{v}_i$ is the velocity operator including the nonlocal pseudopotential contribution.
+
+Components are ordered $xx,xy,xz,yx,yy,yz,zx,zy,zz$, with flow direction first and spin polarization second.)";
+        item.default_value = "false";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and nspin==4");
+        read_sync_bool(input.td_out_spincur);
+        this->add_item(item);
+    }
+    {
         Input_Item item("lin_solver");
         item.annotation = "linear solver for real-time propagation";
         item.category = "Real-Time TDDFT (PW)";
@@ -450,7 +512,7 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
         item.annotation = "print eij or not";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Real";
-        item.description = R"(Controls output of the propagated-state Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i | \hat{H} | \psi_j}$ to the running log. The printed band indices $i$ and $j$ are one-based global indices. Both the threshold and the printed matrix elements are in Ry.
+        item.description = R"(Controls output of the propagated-state Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i | \hat{H} | \psi_j}$ to the running log. The printed band indices $i$ and $j$ are global indices. Both the threshold and the printed matrix elements are in Ry.
 * $\lt 0$: Disable the output.
 * $\geqslant 0$: Print an element when either $\left|\operatorname{Re}E_{ij}\right|$ or $\left|\operatorname{Im}E_{ij}\right|$ is greater than or equal to `td_print_eij`.)";
         item.default_value = "-1";
@@ -699,7 +761,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.annotation = "t1 of Trapezoid type electric field";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
-        item.description = R"(Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy `td_trape_t1 <= td_trape_t2 <= td_trape_t3`. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
+        item.description = R"(Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy $\mathtt{td\_trape\_t1}\leqslant\mathtt{td\_trape\_t2}\leqslant\mathtt{td\_trape\_t3}$. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
         item.default_value = "1875";
         item.unit = "";
         item.set_availability("td_ttype contains 1");
@@ -714,7 +776,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.annotation = "t2 of Trapezoid type electric field";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
-        item.description = R"(Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy `td_trape_t1 <= td_trape_t2 <= td_trape_t3`. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
+        item.description = R"(Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy $\mathtt{td\_trape\_t1}\leqslant\mathtt{td\_trape\_t2}\leqslant\mathtt{td\_trape\_t3}$. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
         item.default_value = "5625";
         item.unit = "";
         item.set_availability("td_ttype contains 1");
@@ -729,7 +791,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.annotation = "t3 of Trapezoid type electric field";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
-        item.description = R"(Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy `td_trape_t1 <= td_trape_t2 <= td_trape_t3`. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
+        item.description = R"(Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy $\mathtt{td\_trape\_t1}\leqslant\mathtt{td\_trape\_t2}\leqslant\mathtt{td\_trape\_t3}$. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
         item.default_value = "7500";
         item.unit = "";
         item.set_availability("td_ttype contains 1");

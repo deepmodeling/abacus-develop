@@ -16,6 +16,42 @@ namespace hsolver
 namespace
 {
 
+template <typename T, typename Device>
+void clear_padding(T* data, int ld, int npw, int bands, int npol)
+{
+    if (npol != 2)
+    {
+        return;
+    }
+    const int stride = ld / npol;
+    if (stride > npw && bands > 0)
+    {
+        // Clear all spin-component tails together, including any NaNs in padding.
+        T* tail = data + npw;
+        const size_t width = stride - npw;
+        const size_t columns = static_cast<size_t>(bands) * npol;
+        base_device::memory::set_memory_2d_op<T, Device>()(tail, stride, 0, width, columns);
+    }
+}
+
+template <typename T, typename Device>
+const T* clean_input(const T* input, int ld, int npw, int bands, int npol, ct::Tensor* scratch)
+{
+    if (npol == 1)
+    {
+        return input;
+    }
+    T* data = scratch->template data<T>();
+    const size_t count = static_cast<size_t>(ld) * bands;
+    if (count > 0)
+    {
+        // History and other borrowed inputs remain unchanged while the solver uses a clean scratch copy.
+        base_device::memory::synchronize_memory_op<T, Device, Device>()(data, input, count);
+    }
+    clear_padding<T, Device>(data, ld, npw, bands, npol);
+    return data;
+}
+
 struct LinearMethodName
 {
     const char* name;
@@ -40,12 +76,15 @@ template <typename T, typename Device>
 class ShiftedHOperator final : public LinearOperator<T, Device>
 {
   public:
-    ShiftedHOperator(const HSOperator<T, Device>& op, const T coefficient, const int dim) : op_(op), coefficient_(coefficient), dim_(dim)
+    ShiftedHOperator(const HSOperator<T, Device>& op, const T coefficient, const int dim, const int npw, const int npol)
+        : op_(op), coefficient_(coefficient), dim_(dim), npw_(npw), npol_(npol)
     {
     }
     void apply(const T* x, T* y, const int ld, const int nvec) const override
     {
         op_.hpsi(x, y, ld, nvec);
+        // Keep H zero on padding so the shifted operator retains only its identity term there.
+        clear_padding<T, Device>(y, ld, npw_, nvec, npol_);
         linear_op<T, Device>().batch(ld, dim_, nvec, y, x, y, T(1), coefficient_, nullptr, nullptr, nullptr);
     }
 
@@ -53,6 +92,8 @@ class ShiftedHOperator final : public LinearOperator<T, Device>
     const HSOperator<T, Device>& op_;
     const T coefficient_;
     const int dim_;
+    const int npw_;
+    const int npol_;
 };
 
 } // namespace
@@ -154,6 +195,7 @@ void HSolverPWTDDFT<T, Device>::prepare_buffers(const int nbands, const int nbas
     {
         rhs_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {size});
         hpsi_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {size});
+        clean_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {size});
     }
     ModuleBase::timer::end("HSolverPWTDDFT", "prepare_buffers");
 }
@@ -173,10 +215,16 @@ void HSolverPWTDDFT<T, Device>::update_precond(const int ik,
     {
         inverse_kinetic_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {elements});
     }
-    std::vector<T> inverse(dim);
+    std::vector<T> inverse(dim, T(1));
     for (int ig = 0; ig < dim; ++ig)
     {
-        const double kinetic = options_.kinetic_enabled ? ModulePW::shifted_kinetic(basis_, ik, ig, momentum_shift) : 0.0;
+        // The two spin components share the same kinetic diagonal; padding keeps an identity preconditioner.
+        const int physical_g = options_.npol == 2 ? ig % basis_.npwk_max : ig;
+        if (physical_g >= basis_.npwk[ik])
+        {
+            continue;
+        }
+        const double kinetic = options_.kinetic_enabled ? ModulePW::shifted_kinetic(basis_, ik, physical_g, momentum_shift) : 0.0;
         inverse[ig] = T(1) / (T(1) + coefficient * static_cast<Real>(kinetic));
     }
     if (dim > 0)
@@ -347,7 +395,7 @@ void HSolverPWTDDFT<T, Device>::report_solve(const SolveDetails& details, int ik
     const int evolution_step = step + 1;
     std::ostringstream record;
     record << std::scientific << std::setprecision(6) << " PW RT-TDDFT linear solve: evolution_step=" << evolution_step
-           << " scf_iter=" << iteration << " global_k=" << options_.global_k_indices.at(ik) << '\n'
+           << " scf_iter=" << iteration << " global_k=" << options_.global_k_indices.at(ik) + 1 << '\n'
            << "   iterations=" << result.iterations << " restarts=" << result.restarts << " operator_calls=" << result.operator_calls
            << " operator_columns=" << result.operator_columns << " pre_orth_residual=" << result.max_residual
            << " residual_kind=" << (result.reconstructed ? "reconstructed" : "independent") << " true_checks=" << result.true_checks << '\n'
@@ -385,12 +433,15 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
         op.update_k(ik);
         current->fix_k(ik);
         previous.fix_k(ik);
-        const int dim = current->get_ngk(ik);
+        const int npw = current->get_ngk(ik);
+        // A spinor spans both npwx-strided blocks, including their explicitly zeroed padding.
+        const int dim = options_.npol == 2 ? ld : npw;
         KPointState* state = tracks_state() ? &states_[ik] : nullptr;
-        const ShiftedHOperator<T, Device> rhs_op(op, rhs_coefficient, dim);
-        const ShiftedHOperator<T, Device> lhs_op(op, coefficient, dim);
-        const T* previous_data = previous.get_pointer();
+        const ShiftedHOperator<T, Device> rhs_op(op, rhs_coefficient, dim, npw, options_.npol);
+        const ShiftedHOperator<T, Device> lhs_op(op, coefficient, dim, npw, options_.npol);
+        const T* previous_data = clean_input<T, Device>(previous.get_pointer(), ld, npw, bands, options_.npol, &clean_);
         T* current_data = current->get_pointer();
+        clear_padding<T, Device>(current_data, ld, npw, bands, options_.npol);
         rhs_op.apply(previous_data, rhs, ld, bands);
         if (options_.preconditioner != PWPreconditioner::none)
         {
@@ -407,8 +458,13 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
             const LinearSolveResult& result = details.linear;
             std::ostringstream message;
             const int evolution_step = istep + 1;
+            std::string band_label = "unknown";
+            if (result.failed_band >= 0)
+            {
+                band_label = std::to_string(result.failed_band + 1);
+            }
             message << "PW RT-TDDFT linear solve failed at electronic evolution step " << evolution_step << ", SCF iteration " << iter
-                    << ", global_k=" << options_.global_k_indices.at(ik) << ", band " << result.failed_band << ", after "
+                    << ", global_k=" << options_.global_k_indices.at(ik) + 1 << ", band " << band_label << ", after "
                     << result.iterations << " iterations: " << linear_status_name(result.status) << "; residual = " << result.max_residual;
             ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message.str());
         }
@@ -430,8 +486,12 @@ void HSolverPWTDDFT<T, Device>::cal_band_energy(HSOperator<T, Device>& op, const
     {
         op.update_k(ik);
         current.fix_k(ik);
-        op.hpsi(current.get_pointer(), hpsi, ld, nband);
-        band_products_.dot(ld, current.get_ngk(ik), nband, current.get_pointer(), hpsi, expectations.data());
+        const int npw = current.get_ngk(ik);
+        const int dim = options_.npol == 2 ? ld : npw;
+        const T* data = clean_input<T, Device>(current.get_pointer(), ld, npw, nband, options_.npol, &clean_);
+        op.hpsi(data, hpsi, ld, nband);
+        clear_padding<T, Device>(hpsi, ld, npw, nband, options_.npol);
+        band_products_.dot(ld, dim, nband, data, hpsi, expectations.data());
         for (int band = 0; band < nband; ++band)
         {
             (*energies)(ik, band) = std::real(expectations[band]);
@@ -448,13 +508,15 @@ std::vector<std::complex<double>> HSolverPWTDDFT<T, Device>::cal_eij(HSOperator<
     ModuleBase::timer::start("HSolverPWTDDFT", "cal_eij");
     const int nband = current.get_nbands();
     const int ld = current.get_nbasis();
-    const int dim = current.get_ngk(ik);
+    const int npw = current.get_ngk(ik);
+    const int dim = options_.npol == 2 ? ld : npw;
     prepare_buffers(nband, ld);
     op.update_k(ik);
     current.fix_k(ik);
-    const T* psi = current.get_pointer();
+    const T* psi = clean_input<T, Device>(current.get_pointer(), ld, npw, nband, options_.npol, &clean_);
     T* hpsi = hpsi_.template data<T>();
     op.hpsi(psi, hpsi, ld, nband);
+    clear_padding<T, Device>(hpsi, ld, npw, nband, options_.npol);
     std::vector<std::complex<double>> result = algebra_.cross(ld, dim, nband, nband, psi, hpsi);
     ModuleBase::timer::end("HSolverPWTDDFT", "cal_eij");
     return result;
@@ -481,7 +543,7 @@ void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, in
         const int evolution_step = istep + 1;
         std::ostringstream record;
         record << std::scientific << std::setprecision(6) << " PW RT-TDDFT orth: evolution_step=" << evolution_step << " scf_iter=" << iter
-               << " global_k=" << options_.global_k_indices.at(ik) << " requested=" << orth_method_name(options_.orthonormal)
+               << " global_k=" << options_.global_k_indices.at(ik) + 1 << " requested=" << orth_method_name(options_.orthonormal)
                << " orth_before=" << result.before << " orth_after=" << result.after << '\n';
         log_ << record.str();
     }
@@ -497,7 +559,7 @@ void HSolverPWTDDFT<T, Device>::record_orth(const OrthResult& result, int ik, in
         std::ostringstream message;
         const int evolution_step = istep + 1;
         message << std::setprecision(16) << " PW RT-TDDFT orbital validation failed (" << stage << "): evolution_step=" << evolution_step
-                << " scf_iter=" << iter << " global_k=" << options_.global_k_indices.at(ik)
+                << " scf_iter=" << iter << " global_k=" << options_.global_k_indices.at(ik) + 1
                 << " requested=" << orth_method_name(options_.orthonormal) << '\n'
                 << "   last_attempted=" << orth_method_name(result.actual) << " passes=" << result.passes
                 << " fallbacks=" << result.fallbacks << '\n'
@@ -555,7 +617,7 @@ void HSolverPWTDDFT<T, Device>::report_orth_warning(const OrthResult& result, in
     const int evolution_step = istep + 1;
     std::ostringstream message;
     message << std::setprecision(16) << " PW RT-TDDFT orbital warning: evolution_step=" << evolution_step << " scf_iter=" << iter;
-    message << " global_k=" << options_.global_k_indices.at(ik);
+    message << " global_k=" << options_.global_k_indices.at(ik) + 1;
     message << " requested=" << orth_method_name(options_.orthonormal) << '\n'
             << "   before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>() << '\n'
             << "   ";
@@ -580,9 +642,31 @@ void HSolverPWTDDFT<T, Device>::report_orth_warning(const OrthResult& result, in
 }
 
 template <typename T, typename Device>
-bool HSolverPWTDDFT<T, Device>::correct_initial(psi::Psi<T, Device>* current, int iter)
+void HSolverPWTDDFT<T, Device>::zero_padding(psi::Psi<T, Device>* current)
 {
-    ModuleBase::timer::start("HSolverPWTDDFT", "correct_initial");
+    ModuleBase::timer::start("HSolverPWTDDFT", "zero_padding");
+    if (options_.npol != 2)
+    {
+        ModuleBase::timer::end("HSolverPWTDDFT", "zero_padding");
+        return;
+    }
+    const int old_k = current->get_current_k();
+    for (int ik = 0; ik < current->get_nk(); ++ik)
+    {
+        current->fix_k(ik);
+        const int npw = current->get_ngk(ik);
+        const int ld = current->get_nbasis();
+        const int bands = current->get_nbands();
+        clear_padding<T, Device>(current->get_pointer(), ld, npw, bands, options_.npol);
+    }
+    current->fix_k(old_k);
+    ModuleBase::timer::end("HSolverPWTDDFT", "zero_padding");
+}
+
+template <typename T, typename Device>
+bool HSolverPWTDDFT<T, Device>::orth_initial(psi::Psi<T, Device>* current, int iter)
+{
+    ModuleBase::timer::start("HSolverPWTDDFT", "orth_initial");
     bool changed = false;
     if (options_.orthonormal != OrthMethod::none)
     {
@@ -595,9 +679,10 @@ bool HSolverPWTDDFT<T, Device>::correct_initial(psi::Psi<T, Device>* current, in
         for (int ik = 0; ik < current->get_nk(); ++ik)
         {
             current->fix_k(ik);
+            const int dim = options_.npol == 2 ? current->get_nbasis() : current->get_ngk(ik);
             const OrthResult result = orthonormal_.apply(current->get_pointer(),
                                                          current->get_nbasis(),
-                                                         current->get_ngk(ik),
+                                                         dim,
                                                          current->get_nbands(),
                                                          options_.orthonormal,
                                                          options_.out_stat);
@@ -605,7 +690,7 @@ bool HSolverPWTDDFT<T, Device>::correct_initial(psi::Psi<T, Device>* current, in
             changed = changed || result.status == OrthStatus::accepted;
         }
     }
-    ModuleBase::timer::end("HSolverPWTDDFT", "correct_initial");
+    ModuleBase::timer::end("HSolverPWTDDFT", "orth_initial");
     return changed;
 }
 
@@ -614,6 +699,9 @@ void HSolverPWTDDFT<T, Device>::check_initial(const psi::Psi<T, Device>& current
 {
     ModuleBase::timer::start("HSolverPWTDDFT", "check_initial");
     const bool full_gram = options_.orthonormal != OrthMethod::none;
+    const int ld = current.get_nbasis();
+    const int bands = current.get_nbands();
+    prepare_buffers(bands, ld);
     if (options_.out_stat)
     {
         orth_norms_.resize(current.get_nk());
@@ -621,12 +709,10 @@ void HSolverPWTDDFT<T, Device>::check_initial(const psi::Psi<T, Device>& current
     for (int ik = 0; ik < current.get_nk(); ++ik)
     {
         current.fix_k(ik);
-        const OrthResult result = orthonormal_.inspect(current.get_pointer(),
-                                                       current.get_nbasis(),
-                                                       current.get_ngk(ik),
-                                                       current.get_nbands(),
-                                                       full_gram,
-                                                       options_.out_stat);
+        const int npw = current.get_ngk(ik);
+        const int dim = options_.npol == 2 ? ld : npw;
+        const T* data = clean_input<T, Device>(current.get_pointer(), ld, npw, bands, options_.npol, &clean_);
+        const OrthResult result = orthonormal_.inspect(data, current.get_nbasis(), dim, current.get_nbands(), full_gram, options_.out_stat);
         record_orth(result, ik, 0, iter);
     }
     ModuleBase::timer::end("HSolverPWTDDFT", "check_initial");

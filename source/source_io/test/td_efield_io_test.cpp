@@ -92,14 +92,14 @@ TEST_F(TDEFieldIOTest, FreshCalculationTruncatesAndUsesOneBasedFiles)
     }
 
     std::shared_ptr<elecstate::TDFieldManager> manager = create_manager({2.0, 3.0});
-    ModuleIO::prepare_td_field_output(output_prefix_, manager->fields().size(), false);
+    ModuleIO::prep_td_field_out(output_prefix_, manager->fields().size(), false);
     EXPECT_TRUE(read_samples(1).empty());
     EXPECT_TRUE(read_samples(2).empty());
 
     manager->prepare_sample(0);
-    ModuleIO::write_td_field_values(*manager, output_prefix_);
+    ModuleIO::write_td_field(*manager, output_prefix_);
     manager->prepare_sample(1);
-    ModuleIO::write_td_field_values(*manager, output_prefix_);
+    ModuleIO::write_td_field(*manager, output_prefix_);
 
     const std::vector<std::pair<double, double>> samples_1 = read_samples(1);
     const std::vector<std::pair<double, double>> samples_2 = read_samples(2);
@@ -109,8 +109,9 @@ TEST_F(TDEFieldIOTest, FreshCalculationTruncatesAndUsesOneBasedFiles)
     EXPECT_DOUBLE_EQ(samples_2[0].first, 0.0);
     EXPECT_NEAR(samples_1[0].second, 2.0, 1.0e-12);
     EXPECT_NEAR(samples_2[0].second, 3.0, 1.0e-12);
-    EXPECT_NEAR(samples_1[1].first, ModuleBase::AU_to_FS, 1.0e-7);
-    EXPECT_NEAR(samples_2[1].first, ModuleBase::AU_to_FS, 1.0e-7);
+    // One atomic time unit is rounded to six decimal places in fs.
+    EXPECT_DOUBLE_EQ(samples_1[1].first, 0.024189);
+    EXPECT_DOUBLE_EQ(samples_2[1].first, 0.024189);
 
     std::ifstream zero_based_file(output_path(0).c_str());
     EXPECT_FALSE(zero_based_file.good());
@@ -124,10 +125,10 @@ TEST_F(TDEFieldIOTest, RestartPreservesExistingSamples)
     }
 
     std::shared_ptr<elecstate::TDFieldManager> manager = create_manager({4.0});
-    ModuleIO::prepare_td_field_output(output_prefix_, manager->fields().size(), true);
+    ModuleIO::prep_td_field_out(output_prefix_, manager->fields().size(), true);
     const int next_step = manager->current_step() + 1;
     manager->prepare_sample(next_step);
-    ModuleIO::write_td_field_values(*manager, output_prefix_);
+    ModuleIO::write_td_field(*manager, output_prefix_);
 
     const std::vector<std::pair<double, double>> samples = read_samples(1);
     ASSERT_EQ(samples.size(), 2U);
@@ -146,11 +147,11 @@ TEST_F(TDEFieldIOTest, ReportsOutputOpenFailures)
     const std::string invalid_directory = blocking_path_ + "/";
     std::shared_ptr<elecstate::TDFieldManager> manager = create_manager({4.0});
 
-    EXPECT_EXIT(ModuleIO::prepare_td_field_output(invalid_directory, manager->fields().size(), false), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(ModuleIO::prep_td_field_out(invalid_directory, manager->fields().size(), false), testing::ExitedWithCode(1), "");
 
     const int next_step = manager->current_step() + 1;
     manager->prepare_sample(next_step);
-    EXPECT_EXIT(ModuleIO::write_td_field_values(*manager, invalid_directory), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(ModuleIO::write_td_field(*manager, invalid_directory), testing::ExitedWithCode(1), "");
 }
 
 } // namespace

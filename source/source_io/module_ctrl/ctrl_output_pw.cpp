@@ -246,10 +246,13 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //------------------------------------------------------------------
     // 9) write onsite occupations for charge and magnetizations
     //------------------------------------------------------------------
-    if (inp.onsite_radius > 0)
-    { // float type has not been implemented
+    const bool spinor_rt = inp.esolver_type == "tddft" && inp.nspin == 4;
+    // RT writes endpoint magnetic series instead of this static occupation report.
+    if (inp.onsite_radius > 0 && !spinor_rt)
+    {
+        stp.update_psi_d();
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
-        onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(stp.template get_psi_t<T, Device>()),
+        onsite_p->cal_occupations(stp.template get_psi_d<T, Device>(),
                                   pelec->wg,
                                   inp.nspin);
     }

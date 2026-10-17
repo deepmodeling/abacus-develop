@@ -89,9 +89,9 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_IO_td_vector_pot_io_test
+  TARGET MODULE_IO_td_vecpot_io_test
   LIBS parameter base device
-  SOURCES td_vector_pot_io_test.cpp ../module_efield/td_vector_pot_io.cpp
+  SOURCES test_vecpot_io.cpp ../module_efield/td_vecpot_io.cpp
 )
 
 AddTest(

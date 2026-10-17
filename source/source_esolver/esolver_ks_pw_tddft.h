@@ -4,8 +4,9 @@
 #include "source_esolver/esolver_ks_pw.h"
 #include "source_estate/module_pot/td_field_manager.h"
 #include "source_hsolver/hsolver_pw_tddft.h"
-#include "source_io/module_current/td_current_pw.h"
 #include "source_pw/module_pwdft/td_history_pw.h"
+#include "source_pw/module_pwdft/td_spin_pw.h"
+#include "source_pw/module_pwdft/td_vel_pw.h"
 
 #include <iosfwd>
 #include <memory>
@@ -56,7 +57,10 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     std::unique_ptr<hsolver::HSolverPWTDDFT<T, Device>> td_solver_;
 
     std::shared_ptr<elecstate::TDFieldManager> td_field_manager_;
-    ModuleIO::CurrentPW<Real, Device> current_output_;
+    pw::TDVelPW<Real, Device> vel_;
+    pw::TDSpinPW<Real, Device> spin_;
+    pw::TDVelRequestPW vel_request_;
+    pw::TDSpinOptsPW spin_options_;
 
     pw::TDHistoryPW<T, Device> history_;
     double initial_wave_electrons_ = 0.0;
@@ -66,7 +70,8 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     /** @brief Print Eij from the converged density, collecting all k-point pools on the main rank. */
     void print_eij(const int istep);
     void report_orth(const UnitCell& ucell, int istep);
-    void prepare_td_step(const int istep);
+    void prep_td_step(const int istep);
+    void sample_endpoint(UnitCell& cell, int step);
 };
 
 } // namespace ModuleESolver

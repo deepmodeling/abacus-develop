@@ -7,7 +7,7 @@
 #include "source_base/global_variable.h"
 #include "source_io/module_ctrl/ctrl_output_td.h"
 #include "source_io/module_efield/td_efield_io.h"
-#include "source_io/module_efield/td_vector_pot_io.h"
+#include "source_io/module_efield/td_vecpot_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_wf/read_wfc_nao.h"
@@ -88,7 +88,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
     if (inp.init_vecpot)
     {
         // An empty directory selects the calculation working directory, not OUT.<suffix>.
-        const std::vector<ModuleBase::Vector3<double>> samples = ModuleIO::read_td_vector_pot("");
+        const std::vector<ModuleBase::Vector3<double>> samples = ModuleIO::read_td_vecpot("");
         td_field_manager_->set_A_samples(samples);
     }
     if (inp.mdp.md_restart)
@@ -97,15 +97,16 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
     }
     if (inp.out_efield && GlobalV::MY_RANK == 0)
     {
-        ModuleIO::prepare_td_field_output(output_dir, *td_field_manager_, inp.mdp.md_restart);
+        ModuleIO::prep_td_field_out(output_dir, *td_field_manager_, inp.mdp.md_restart);
     }
     if (inp.out_vecpot && GlobalV::MY_RANK == 0)
     {
         if (inp.init_vecpot)
         {
-            ModuleIO::check_td_vector_pot_paths("", output_dir);
+            // Reject output that aliases the input file before truncating it.
+            ModuleIO::check_td_vecpot_paths("", output_dir);
         }
-        ModuleIO::prepare_td_vector_pot_output(output_dir, inp.mdp.md_restart);
+        ModuleIO::prep_td_vecpot_out(output_dir, inp.mdp.md_restart);
     }
 
     // Run before_all_runners in ESolver_KS_LCAO
@@ -227,7 +228,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
             const bool replay_restart = this->inp_->mdp.md_restart && !restart_done;
             if (this->inp_->out_vecpot && GlobalV::MY_RANK == 0 && !replay_restart)
             {
-                ModuleIO::write_td_vector_pot(PARAM.globalv.global_out_dir, this->totstep, td_field_manager_->A_right_ha());
+                ModuleIO::write_td_vecpot(PARAM.globalv.global_out_dir, this->totstep, td_field_manager_->A_right_ha());
             }
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", td_p->endpoint_A()[0]);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ay(t)", td_p->endpoint_A()[1]);
@@ -242,7 +243,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
         const bool replay_restart = this->inp_->mdp.md_restart && !restart_done;
         if (this->inp_->out_efield && GlobalV::MY_RANK == 0 && !replay_restart)
         {
-            ModuleIO::write_td_field_values(*td_field_manager_, PARAM.globalv.global_out_dir);
+            ModuleIO::write_td_field(*td_field_manager_, PARAM.globalv.global_out_dir);
         }
 
         if (estep != 0)

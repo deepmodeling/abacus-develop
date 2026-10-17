@@ -320,6 +320,9 @@ struct Input_para
     std::string lin_solver = "gmres"; ///< linear solver for real-time propagation
     std::string td_orthonormal = "cholesky"; ///< Orthonormalization for PW real-time propagation.
     bool td_out_stat = false; ///< Output PW real-time conservation diagnostics.
+    std::string td_out_mag = "voronoi"; ///< RT-TDDFT spinor magnetic moment partition.
+    bool td_out_torque = false; ///< Output XC and SOC spin angular momentum torques.
+    bool td_out_spincur = false; ///< Output the macroscopic spin angular momentum current.
     int lin_gmres_restart = 20; ///< Maximum Arnoldi steps per GMRES cycle.
     bool td_cn_init = true; ///< CN subspace initial guess and residual reuse.
     bool lin_reconstruct = true; ///< Explicit GMRES residual reconstruction with periodic audits.

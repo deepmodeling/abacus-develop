@@ -214,7 +214,7 @@ HamiltPW<T, Device>::~HamiltPW()
 }
 
 template <typename T, typename Device>
-void HamiltPW<T, Device>::bind_td_state(const Real* veff, const Real* vofk, const ModuleBase::Vector3<double>& A_ha)
+void HamiltPW<T, Device>::bind_td_state(const Real* veff, const ModuleBase::Vector3<double>& A_ha)
 {
     Operator<T, Device>* op = this->ops;
     while (op != nullptr)
@@ -222,10 +222,6 @@ void HamiltPW<T, Device>::bind_td_state(const Real* veff, const Real* vofk, cons
         if (op->get_cal_type() == calculation_type::pw_veff)
         {
             static_cast<Veff<OperatorPW<T, Device>>*>(op)->set_veff(veff);
-        }
-        else if (op->get_cal_type() == calculation_type::pw_meta)
-        {
-            static_cast<Meta<OperatorPW<T, Device>>*>(op)->set_vk(vofk);
         }
         else if (op->get_cal_type() == calculation_type::pw_ekinetic_td)
         {

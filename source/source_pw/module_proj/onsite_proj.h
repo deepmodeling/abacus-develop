@@ -18,6 +18,14 @@ namespace projectors
     {
         public:
 
+        /** @brief Own an independent projector and its workspaces. */
+        OnsiteProjector() = default;
+        ~OnsiteProjector();
+        OnsiteProjector(const OnsiteProjector&) = delete;
+        OnsiteProjector& operator=(const OnsiteProjector&) = delete;
+        OnsiteProjector(OnsiteProjector&&) = delete;
+        OnsiteProjector& operator=(OnsiteProjector&&) = delete;
+
         /**
          * @brief initialize the radial projector for real-space projection involving operators
          * 
@@ -71,6 +79,13 @@ namespace projectors
                              const int nspin_in);
 
         int get_size_becp() const { return size_becp; }
+        /** @brief Extend this projector's radial table to cover shifted momenta. */
+        void ensure_range(double momentum, double dq);
+        /** @brief Invalidate position-dependent overlap projectors without changing radial channels. */
+        void invalidate_proj();
+        /** @brief Project endpoint spin-component columns without printing static occupations. */
+        void overlap_td(int ik, int columns, const std::complex<double>* psi, int stride,
+                        const ModuleBase::Vector3<double>& vector_potential);
         std::complex<double>* get_becp() const { return becp; }
         std::complex<double>* get_h_becp() const { return h_becp; }
         std::complex<double>* get_tab_atomic() const { return tab_atomic_; }
@@ -102,20 +117,19 @@ namespace projectors
                                        const double* wg_ik) const;
 
         private:
-        OnsiteProjector(){};
-        ~OnsiteProjector();
+        void overlap_impl(int columns, const std::complex<double>* psi, int stride,
+                          const ModuleBase::Vector3<double>& vector_potential);
 
         Device* ctx = {};
         base_device::DEVICE_CPU* cpu_ctx = {};
         base_device::AbacusDevice_t device = {};
-        static OnsiteProjector<T, Device> *instance;
 
         hamilt::Onsite_Proj_tools<T, Device>* fs_tools = nullptr;
 
         std::complex<double>* tab_atomic_ = nullptr;
         std::complex<double>* becp = nullptr;  // nbands * nkb
         // save becp in CPU memory, only used when Device is GPU
-        std::complex<double>* h_becp;
+        std::complex<double>* h_becp = nullptr;
 
         int size_becp = 0;
         int size_vproj = 0;

@@ -28,6 +28,7 @@ enum class PWPreconditioner
 /** @brief Numerical and propagation options, resolved once at the input boundary. */
 struct PWLinearOptions
 {
+    int npol = 1; ///< Spin components per orbital; fixed throughout propagation.
     OrthMethod orthonormal = OrthMethod::cholesky;
     LinearSolveOptions linear;
     PWPreconditioner preconditioner = PWPreconditioner::kinetic;
@@ -65,8 +66,10 @@ class HSolverPWTDDFT
     void invalidate_basis();
     /** @brief Reset diagnostics without invalidating preconditioner history. */
     void reset_orth_stats();
-    /** @brief Correct initial orbitals when needed; return whether this pool changed any orbital. */
-    bool correct_initial(psi::Psi<T, Device>* current, int iter);
+    /** @brief Clear spinor padding without changing physical coefficients or the k-point cursor; no communication. */
+    void zero_padding(psi::Psi<T, Device>* current);
+    /** @brief Orthogonalize initial orbitals with clean padding; return whether this pool changed any physical orbital. */
+    bool orth_initial(psi::Psi<T, Device>* current, int iter);
     /** @brief Check the converged initial state once; finite orthogonality errors are diagnostic only. */
     void check_initial(const psi::Psi<T, Device>& current, int iter);
     /** @brief Occupation-weighted electron count for the local k-point pool. */
@@ -130,6 +133,7 @@ class HSolverPWTDDFT
     const ModulePW::PW_Basis_K& basis_;
     const diag_comm_info comm_;
     PWLinearOptions options_;
+    ct::Tensor clean_;
     LinearAlgebra<T, Device> algebra_;
     Orthonormal<T, Device> orthonormal_;
     TDOrthStats orth_stats_;

@@ -51,38 +51,28 @@ void save_potential(const ModuleBase::matrix& shape, const Real* current, ct::Te
 } // namespace
 
 template <typename T, typename Device>
-void TDHistoryPW<T, Device>::prepare(const elecstate::Potential& potential, const bool needs_ked)
+void TDHistoryPW<T, Device>::prepare(const elecstate::Potential& potential)
 {
     ModuleBase::timer::start("TDHistoryPW", "prepare");
     prepare_pair<Real, Device>(potential.get_veff_smooth(), &veff_prev_, &veff_mid_);
-    if (needs_ked)
-    {
-        prepare_pair<Real, Device>(potential.get_vofk_smooth(), &vofk_prev_, &vofk_mid_);
-    }
     ModuleBase::timer::end("TDHistoryPW", "prepare");
 }
 
 template <typename T, typename Device>
-TDPotentialView<typename GetTypeReal<T>::type> TDHistoryPW<T, Device>::prop_pot(elecstate::Potential& potential,
-                                                                                const bool needs_ked,
-                                                                                const bool corrector)
+const typename GetTypeReal<T>::type* TDHistoryPW<T, Device>::prop_pot(elecstate::Potential& potential, const bool corrector)
 {
     ModuleBase::timer::start("TDHistoryPW", "prop_pot");
-    TDPotentialView<Real> view{potential.template get_veff_smooth_data<Real>(), potential.template get_vofk_smooth_data<Real>()};
+    const Real* view = potential.template get_veff_smooth_data<Real>();
     if (corrector)
     {
-        view.veff = average_potential<Real, Device>(potential.get_veff_smooth(), view.veff, veff_prev_, &veff_mid_);
-        if (needs_ked)
-        {
-            view.vofk = average_potential<Real, Device>(potential.get_vofk_smooth(), view.vofk, vofk_prev_, &vofk_mid_);
-        }
+        view = average_potential<Real, Device>(potential.get_veff_smooth(), view, veff_prev_, &veff_mid_);
     }
     ModuleBase::timer::end("TDHistoryPW", "prop_pot");
     return view;
 }
 
 template <typename T, typename Device>
-void TDHistoryPW<T, Device>::save(const psi::Psi<T, Device>& current, elecstate::Potential& potential, const bool needs_ked)
+void TDHistoryPW<T, Device>::save(const psi::Psi<T, Device>& current, elecstate::Potential& potential)
 {
     ModuleBase::timer::start("TDHistoryPW", "save");
     if (!previous_)
@@ -91,10 +81,6 @@ void TDHistoryPW<T, Device>::save(const psi::Psi<T, Device>& current, elecstate:
     }
     *previous_ = current;
     save_potential<Real, Device>(potential.get_veff_smooth(), potential.template get_veff_smooth_data<Real>(), &veff_prev_);
-    if (needs_ked)
-    {
-        save_potential<Real, Device>(potential.get_vofk_smooth(), potential.template get_vofk_smooth_data<Real>(), &vofk_prev_);
-    }
     ModuleBase::timer::end("TDHistoryPW", "save");
 }
 

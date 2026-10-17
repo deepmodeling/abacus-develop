@@ -188,6 +188,13 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->allocate_hamilt(ucell);
 
     //! Setup potentials (local, non-local, spin constraint, DFT-1/2)
+    psi::Psi<std::complex<double>, Device>* onsite_psi = nullptr;
+    const bool spinor_rt = this->inp_->esolver_type == "tddft" && this->inp_->nspin == 4;
+    if (this->inp_->onsite_radius > 0 && !spinor_rt)
+    {
+        this->stp.update_psi_d();
+        onsite_psi = this->stp.template get_psi_d<T, Device>();
+    }
     pw::setup_pot(istep,
                   ucell,
                   this->kv,
@@ -199,6 +206,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
                   this->ppcell,
                   this->vsep_cell,
                   this->stp.template get_psi_t<T, Device>(),
+                  onsite_psi,
                   this->p_hamilt,
                   this->pw_wfc,
                   this->pw_rhod,
