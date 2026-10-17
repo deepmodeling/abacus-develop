@@ -37,6 +37,10 @@ int main(int argc, char** argv)
 // Mock functions for testing elecstate.cpp
 namespace elecstate
 {
+void Potential::add_solvation_force(const UnitCell&, ModuleBase::matrix&) const {}
+void Potential::get_solvation_energy(double& el, double& cav) const { el = 0.0; cav = 0.0; }
+const std::vector<double>* Potential::solvent_electrostatic_potential() const { return nullptr; }
+
 void Potential::init_pot(Charge const*)
 {
 }

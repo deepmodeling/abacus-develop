@@ -2,6 +2,7 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "read_inp_sccs.h"
 namespace ModuleIO
 {
 void ReadInput::item_model()
@@ -181,16 +182,25 @@ void ReadInput::item_model()
         this->add_item(item);
     }
 
-    // imlicit_solvation
+    // Implicit solvation: imp_sol, the original model, then SCCS.
     {
         Input_Item item("imp_sol");
-        item.annotation = "calculate implicit solvation correction or not";
+        item.annotation = "implicit solvent model";
         item.category = "Implicit solvation model";
-        item.type = "Boolean";
-        item.description = "Calculate implicit solvation correction";
-        item.default_value = "False";
-        item.unit = "";
-        read_sync_bool(input.imp_sol);
+        item.type = "Integer";
+        item.description = "Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS.";
+        item.default_value = "0";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            std::string error;
+            const bool valid = parse_solvation_model(item.str_values[0], para.input.imp_sol, error);
+            if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
+        };
+        sync_int(input.imp_sol);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            std::string error;
+            const bool valid = validate_sccs_input(para.input, error);
+            if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
+        };
         this->add_item(item);
     }
     {
@@ -201,7 +211,7 @@ void ReadInput::item_model()
         item.description = "The relative permittivity of the bulk solvent, 80 for water";
         item.default_value = "80";
         item.unit = "";
-        item.set_availability("imp_sol==true");
+        item.set_availability("imp_sol==1");
         read_sync_double(input.eb_k);
         this->add_item(item);
     }
@@ -238,6 +248,7 @@ void ReadInput::item_model()
         read_sync_double(input.nc_k);
         this->add_item(item);
     }
+    this->item_sccs();
 
     // vdW Correction
     {

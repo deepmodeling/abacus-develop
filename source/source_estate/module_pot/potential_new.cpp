@@ -63,6 +63,11 @@ Potential::~Potential()
 
 void Potential::pot_register(const std::vector<std::string>& components_list)
 {
+    this->pot_register(components_list, PARAM.inp);
+}
+
+void Potential::pot_register(const std::vector<std::string>& components_list, const Input_para& input)
+{
     ModuleBase::TITLE("Potential", "pot_register");
     // delete old components first.
     if (this->components.size() > 0)
@@ -80,7 +85,7 @@ void Potential::pot_register(const std::vector<std::string>& components_list)
     //---------------------------
     for (auto comp: components_list)
     {
-        PotBase* tmp = this->get_pot_type(comp);
+        PotBase* tmp = this->get_pot_type(comp, input);
         this->components.push_back(tmp);
     }
 
@@ -396,6 +401,38 @@ void Potential::add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) c
     {
         pcc->add_force(cell, force);
     }
+}
+
+void Potential::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+    for (const PotBase* component : this->components)
+    {
+        component->add_solvation_force(cell, force);
+    }
+}
+
+void Potential::get_solvation_energy(double& electrostatic, double& non_electrostatic) const
+{
+    electrostatic = 0.0;
+    non_electrostatic = 0.0;
+    for (const PotBase* component : this->components)
+    {
+        double el = 0.0;
+        double nonel = 0.0;
+        component->get_solvation_energy(el, nonel);
+        electrostatic += el;
+        non_electrostatic += nonel;
+    }
+}
+
+const std::vector<double>* Potential::solvent_electrostatic_potential() const
+{
+    for (const PotBase* component : this->components)
+    {
+        const std::vector<double>* value = component->solvent_electrostatic_potential();
+        if (value != nullptr) { return value; }
+    }
+    return nullptr;
 }
 
 } // namespace elecstate

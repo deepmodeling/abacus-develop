@@ -86,6 +86,21 @@ void Potential::cal_fixed_v(double* vl_pseudo)
 {
 }
 
+void Potential::get_solvation_energy(double& electrostatic, double& non_electrostatic) const
+{
+    electrostatic = 0.0;
+    non_electrostatic = 0.0;
+}
+
+void Potential::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+}
+
+const std::vector<double>* Potential::solvent_electrostatic_potential() const
+{
+    return nullptr;
+}
+
 } // namespace elecstate
 
 #include "source_cell/klist.h"

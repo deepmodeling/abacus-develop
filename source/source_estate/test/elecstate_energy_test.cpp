@@ -12,6 +12,18 @@ int XC_Functional::func_type = 1;
 bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
+Potential::~Potential() {}
+void Potential::add_solvation_force(const UnitCell&, ModuleBase::matrix&) const {}
+void Potential::cal_v_eff(const Charge*, const UnitCell*, ModuleBase::matrix&) {}
+void Potential::cal_fixed_v(double*) {}
+const std::vector<double>* Potential::solvent_electrostatic_potential() const { return nullptr; }
+
+void Potential::get_solvation_energy(double& el, double& cav) const
+{
+    el = 0.8;
+    cav = 0.9;
+}
+
 double Potential::pcc_energy_rydberg() const
 {
     return 0.0;
@@ -80,7 +92,7 @@ class ElecStateEnergyTest : public ::testing::Test
     /// explicitly, so the fixture owns them instead of staging them in the
     /// global parameter singleton. The values mirror the Input_para defaults,
     /// except sc_mag_switch, which the original fixture turned on.
-    bool imp_sol = false;
+    int imp_sol = 0;
     bool sc_mag_switch = true;
     int dft_plus_u = 0;
     std::string assume_isolated = "none";
@@ -270,4 +282,22 @@ TEST_F(ElecStateEnergyTest, CalBandgapUpDwBoundaryConditions)
     // dw: Only CBM found, VBM is set to eferm.ef_dw, so gap should be cbm_dw - eferm.ef_dw
     EXPECT_DOUBLE_EQ(elecstate->bandgap_up, 5.0);
     EXPECT_DOUBLE_EQ(elecstate->bandgap_dw, 5.0);
+}
+
+TEST_F(ElecStateEnergyTest, AddsSccsEnergyOnceAndResetsVacuum)
+{
+    elecstate::Potential potential;
+    elecstate->pot = &potential;
+    elecstate->f_en.deband = 0.1;
+    imp_sol = 2;
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.esol_el, 0.8);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.esol_cav, 0.9);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 2.4);
+    imp_sol = 0;
+    elecstate->cal_energies(2, imp_sol, sc_mag_switch, dft_plus_u, assume_isolated);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.esol_el, 0.0);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.esol_cav, 0.0);
+    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.7);
+    elecstate->pot = nullptr;
 }
