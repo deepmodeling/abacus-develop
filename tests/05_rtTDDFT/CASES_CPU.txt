@@ -26,3 +26,5 @@
 26_PW_single_TDDFT
 27_PW_gmres_recycle_TDDFT
 28_PW_gmres_subspace_TDDFT
+29_PW_soc_len_TDDFT
+30_PW_soc_onsite_TDDFT

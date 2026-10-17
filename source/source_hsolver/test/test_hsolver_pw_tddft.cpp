@@ -1,6 +1,7 @@
 #include "source_base/parallel_global.h"
 #include "source_hsolver/hsolver_pw_tddft.h"
 #include "source_hsolver/test/linear_test_utils.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
 #include <cmath>
@@ -9,6 +10,22 @@
 #include <limits>
 #include <sstream>
 #include <type_traits>
+
+class TestParameters
+{
+  public:
+    TestParameters() : saved_spin_(PARAM.inp.nspin)
+    {
+        PARAM.input.nspin = 4;
+    }
+    ~TestParameters()
+    {
+        PARAM.input.nspin = saved_spin_;
+    }
+
+  private:
+    int saved_spin_;
+};
 
 namespace
 {
@@ -20,6 +37,7 @@ class DenseHamiltonian final : public hsolver::HSOperator<T>
   public:
     std::vector<std::vector<T>> matrices;
     std::vector<int> dimensions;
+    bool spinor = false;
 
     explicit DenseHamiltonian(const std::vector<int>& sizes) : dimensions(sizes)
     {
@@ -38,12 +56,14 @@ class DenseHamiltonian final : public hsolver::HSOperator<T>
         const std::vector<T>& h = matrices.at(current_k_);
         for (int band = 0; band < nvec; ++band)
         {
+            std::fill_n(y + band * ld, ld, T(0));
             for (int i = 0; i < n; ++i)
             {
-                y[band * ld + i] = T(0);
+                const int row = spinor ? (i / (n / 2)) * (ld / 2) + i % (n / 2) : i;
                 for (int j = 0; j < n; ++j)
                 {
-                    y[band * ld + i] += h[j * n + i] * x[band * ld + j];
+                    const int col = spinor ? (j / (n / 2)) * (ld / 2) + j % (n / 2) : j;
+                    y[band * ld + row] += h[j * n + i] * x[band * ld + col];
                 }
             }
         }
@@ -146,6 +166,106 @@ class PWTDDFTTest : public testing::Test
 };
 using Precisions = testing::Types<double, float>;
 TYPED_TEST_SUITE(PWTDDFTTest, Precisions);
+
+TYPED_TEST(PWTDDFTTest, SpinorCNMatchesDenseSolve)
+{
+    using T = std::complex<TypeParam>;
+    using Wide = linear_test::Complex;
+    TestParameters spinor_parameters;
+    const bool single = std::is_same<TypeParam, float>::value;
+    const double tolerance = single ? 1e-4 : 1e-10;
+    const std::vector<int> sizes{5, 3};
+    const int npwx = 5;
+    const int bands = 3;
+    const double dt = 0.27;
+    ModulePW::PW_Basis_K basis;
+    initialize_basis(sizes, &basis);
+    const std::vector<int> dimensions{2 * sizes[0], 2 * sizes[1]};
+    DenseHamiltonian<T> op(dimensions);
+    op.spinor = true;
+    hsolver::PWLinearOptions options;
+    options.npol = 2;
+    options.global_k_indices = {0, 1};
+    options.linear.method = hsolver::LinearMethod::bicgstab;
+    options.linear.tolerance = single ? 2e-6 : 1e-13;
+    options.linear.max_iterations = 100;
+    options.kinetic_enabled = true;
+#ifdef __MPI
+    const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
+#else
+    const hsolver::diag_comm_info comm(0, 1);
+#endif
+    std::ostringstream log;
+    hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
+    const int ld = 2 * npwx;
+    psi::Psi<T> previous(2, bands, ld, sizes, true);
+    std::vector<std::vector<T>> packed(2);
+    const T padding(std::numeric_limits<TypeParam>::quiet_NaN());
+    for (int ik = 0; ik < 2; ++ik)
+    {
+        previous.fix_k(ik);
+        const int n = dimensions[ik];
+        packed[ik].resize(n * bands);
+        std::fill_n(previous.get_pointer(), ld * bands, padding);
+        for (int band = 0; band < bands; ++band)
+        {
+            for (int i = 0; i < n; ++i)
+            {
+                const double phase = 2 * std::acos(-1.0) * i * band / n;
+                const T value = T(std::polar(1.0 / std::sqrt(n), phase));
+                const int row = (i / sizes[ik]) * npwx + i % sizes[ik];
+                previous(band, row) = value;
+                packed[ik][band * n + i] = value;
+            }
+        }
+    }
+    psi::Psi<T> current(previous);
+    const ModuleBase::Vector3<double> shift(0.13, -0.07, 0.02);
+    solver.solve(op, previous, &current, dt, shift, 1, 1, false);
+    for (int ik = 0; ik < 2; ++ik)
+    {
+        current.fix_k(ik);
+        const int n = dimensions[ik];
+        const auto reference = dense_cn(op.matrices[ik], packed[ik], n, bands, dt);
+        const auto eij = solver.cal_eij(op, current, ik);
+        for (int band = 0; band < bands; ++band)
+        {
+            for (int spin = 0; spin < 2; ++spin)
+            {
+                for (int g = 0; g < npwx; ++g)
+                {
+                    const int row = spin * npwx + g;
+                    if (g < sizes[ik])
+                    {
+                        const Wide expected = reference[band * n + spin * sizes[ik] + g];
+                        EXPECT_NEAR(std::abs(Wide(current(band, row)) - expected), 0.0, tolerance);
+                    }
+                    else
+                    {
+                        EXPECT_EQ(current(band, row), T(0));
+                    }
+                }
+            }
+            for (int other = 0; other < bands; ++other)
+            {
+                Wide overlap(0);
+                Wide expectation(0);
+                for (int i = 0; i < n; ++i)
+                {
+                    const int row = (i / sizes[ik]) * npwx + i % sizes[ik];
+                    overlap += std::conj(Wide(current(other, row))) * Wide(current(band, row));
+                    for (int j = 0; j < n; ++j)
+                    {
+                        expectation += std::conj(reference[other * n + i]) * Wide(op.matrices[ik][j * n + i]) * reference[band * n + j];
+                    }
+                }
+                const Wide identity = band == other ? Wide(1) : Wide(0);
+                EXPECT_NEAR(std::abs(overlap - identity), 0.0, tolerance);
+                EXPECT_NEAR(std::abs(eij[band * bands + other] - expectation), 0.0, tolerance);
+            }
+        }
+    }
+}
 
 TYPED_TEST(PWTDDFTTest, ComplexEijExcludesPadding)
 {
