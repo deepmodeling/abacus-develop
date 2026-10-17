@@ -83,6 +83,11 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         }
         // no variable can choose xc, maybe it is necessary
         pot_register_in.push_back("xc");
+        // Keep the selected nonlocal XC backend after the canonical semilocal XC.
+        if (pot_in->has_nonlocal_xc())
+        {
+            pot_register_in.push_back("xc_nonlocal");
+        }
         if (input.imp_sol)
         {
             pot_register_in.push_back("surchem");

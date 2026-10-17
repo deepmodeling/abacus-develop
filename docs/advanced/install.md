@@ -99,6 +99,44 @@ vdw_d4_model d4    # or d4s for the smooth D4S model
 
 If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `dft_functional` or pseudopotential metadata and pass it to the DFT-D4 library. The `vdw_d4_model` keyword selects the dispersion model inside the DFT-D4 library; the default is `d4`, while `d4s` enables the smooth D4S model.
 
+## Build with libvdwxc-backed rVV10 support
+
+The first rVV10 integration uses the external [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) library for the nonlocal kernel. The current rVV10 API is under review in Draft MR !32, so this option is intended for development and reproducible integration testing rather than a stable release build.
+
+Build and install the pinned libvdwxc development branch first (MR !32,
+`rvv10-cmake`, commit
+`94410ebdf3dc9615a40f40c3a5b59dbe20a433d2`), then pass its CMake prefix to
+ABACUS together with Libxc. This revision fixes Hermitian symmetry on stored
+FFT boundary planes in oblique cells. With GCC 11.2.1, its eight library tests
+pass using either FFTW 3.3.11 or the MKL 2022.2.1 compatibility backend.
+The ABACUS adapter is tested with standalone FFTW for both programs; the
+library's MKL tests alone do not validate an MKL-based ABACUS build. Do not
+mix the two FFT providers in one process. To use the validated serial
+configuration, leave `MKLROOT`/`MKL_ROOT` unset and select OpenBLAS/LAPACK plus
+FFTW through ABACUS's existing dependency options:
+
+```bash
+cmake -B build-libvdwxc -DBUILD_TESTING=ON \
+  -DENABLE_MPI=OFF -DENABLE_LCAO=OFF \
+  -DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON \
+  -DCMAKE_PREFIX_PATH="/path/to/libvdwxc-prefix;/path/to/libxc-prefix" \
+  -DFFTW3_DIR=/path/to/fftw-prefix \
+  -DBLA_VENDOR=OpenBLAS \
+  -DBLAS_DIR=/path/to/openblas-prefix \
+  -DLAPACK_DIR=/path/to/openblas-prefix
+```
+
+Enable the correction with `xc_nonlocal rvv10` and explicitly select
+`dft_functional GGA_X_RPW86+GGA_C_PBE`; this first parameterization uses
+`rvv10_b 6.3` and `rvv10_c 0.0093`.
+
+The first adapter supports CPU double-precision, full-complex PW, one process,
+`nspin=1`, a single density grid, a right-handed cell and norm-conserving
+pseudopotentials for SCF energy/potential evaluation. Other spin/layout modes,
+forces, stress, relaxation and pairwise D2/D3/D4 combinations are rejected.
+The legacy Makefile does not build this backend. See `tests/rvv10/README.md`
+for the numerical tests and host/backend accounting.
+
 ## Build with JSON support
 
 ABACUS uses [nlohmann-json](https://github.com/nlohmann/json) for optional JSON output. To build ABACUS with JSON support, pass `-DENABLE_JSON=ON` to CMake.

@@ -165,6 +165,12 @@ if [ "${USE_CUDA}" == "ON" ]; then
     fi
 fi
 
+# 6b. libvdwxc
+#
+# The legacy Makefile does not compile the adapter, even if an environment
+# variable requests it. Report the compiled feature, not a discovered library.
+LIBVDWXC_VERSION="no"
+
 # 7. ROCm/HIP
 ROCM_VERSION="no"
 if [ "${USE_ROCM}" == "ON" ]; then
@@ -279,6 +285,7 @@ sed \
     -e "s#@ABACUS_OPENMP_VERSION@#$OPENMP_VERSION#g" \
     -e "s#@ABACUS_MKL_SUPPORT@#$MKL_SUPPORT#g" \
     -e "s#@ABACUS_LIBXC_VERSION@#$LIBXC_VERSION#g" \
+    -e "s#@ABACUS_LIBVDWXC_VERSION@#$LIBVDWXC_VERSION#g" \
     -e "s#@ABACUS_FFTW_VERSION@#$FFTW3_VERSION#g" \
     -e "s#@ABACUS_CUDA_VERSION@#$CUDA_VERSION#g" \
     -e "s#@ABACUS_ROCM_VERSION@#$ROCM_VERSION#g" \
