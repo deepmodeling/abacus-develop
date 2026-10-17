@@ -111,7 +111,7 @@ bool Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
                 if (Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A
                     < RELAX_CG_THR)
                 {
-                    relax_method = "bfgs_traditional";
+                    relax_method = "bfgs_trad";
                 }
                 Ions_Move_Basic::best_xxx = this->steplength;
             }

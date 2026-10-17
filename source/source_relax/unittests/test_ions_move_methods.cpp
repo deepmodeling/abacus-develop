@@ -110,13 +110,13 @@ class IonsMoveMethodsTest : public ::testing::Test
 // Test the allocate() function
 TEST_F(IonsMoveMethodsTest, Allocate)
 {
-    imm.allocate(natom, "bfgs_traditional");
+    imm.allocate(natom, "bfgs_trad");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
     imm.allocate(natom, "sd");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    imm.allocate(natom, "cg_nested");
+    imm.allocate(natom, "cg_trad");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
     imm.allocate(natom, "cg_bfgs");
@@ -151,16 +151,16 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
 
     std::string relax_method;
 
-    relax_method = "bfgs_traditional";
-    imm.allocate(natom, "bfgs_traditional");
+    relax_method = "bfgs_trad";
+    imm.allocate(natom, "bfgs_trad");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
     relax_method = "sd";
     imm.allocate(natom, "sd");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
-    relax_method = "cg_nested";
-    imm.allocate(natom, "cg_nested");
+    relax_method = "cg_trad";
+    imm.allocate(natom, "cg_trad");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
     relax_method = "cg_bfgs";
@@ -270,13 +270,13 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, 0.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius_old, 0.0);
 
-    imm.allocate(natom, "bfgs_traditional");
+    imm.allocate(natom, "bfgs_trad");
     imm.set_converged(true);
     imm.set_update_iter(3);
     imm.get_etot_info() = {-3.0, -4.0};
     ASSERT_TRUE(imm.get_bfgs_trad().get_is_initialized());
 
-    imm.reset_after_cell_change("bfgs_traditional", ofs);
+    imm.reset_after_cell_change("bfgs_trad", ofs);
     ofs.close();
 
     EXPECT_FALSE(imm.get_converged());

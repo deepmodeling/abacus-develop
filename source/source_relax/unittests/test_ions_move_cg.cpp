@@ -123,7 +123,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     ModuleBase::matrix force(2, 3);
     double etot = 0.0;
     std::vector<double> etot_info(2, 0.0);
-    std::string relax_method = "cg_nested";
+    std::string relax_method = "cg_trad";
 
     // call function
     std::ofstream ofs("TestStartConverged.log");
@@ -179,7 +179,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method, "bfgs_traditional");
+    EXPECT_EQ(relax_method, "bfgs_trad");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, -1.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 1.0);
@@ -223,7 +223,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method, "bfgs_traditional");
+    EXPECT_EQ(relax_method, "bfgs_trad");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 10.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 10.0);
@@ -264,7 +264,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method, "bfgs_traditional");
+    EXPECT_EQ(relax_method, "bfgs_trad");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 10.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 70.0);
@@ -312,7 +312,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method, "bfgs_traditional");
+    EXPECT_EQ(relax_method, "bfgs_trad");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 490.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 490.0);
@@ -361,7 +361,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method, "bfgs_traditional");
+    EXPECT_EQ(relax_method, "bfgs_trad");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.01);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 70.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::relax_bfgs_init, 70.0);
@@ -410,7 +410,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
 
     EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(update_iter, 5);
-    EXPECT_EQ(relax_method, "bfgs_traditional");
+    EXPECT_EQ(relax_method, "bfgs_trad");
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.001);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::best_xxx, 1.0);
     EXPECT_NEAR(Ions_Move_Basic::relax_bfgs_init, 1.2345679012345678, 1e-12);

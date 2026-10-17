@@ -31,7 +31,7 @@ void Ions_Move_Methods::allocate(const int &natom, const std::string& relax_meth
     {
         this->sd.allocate();
     }
-    else if (relax_method == "cg_nested")
+    else if (relax_method == "cg_trad")
     {
         this->cg.allocate(Ions_Move_Basic::dim);
     }
@@ -40,7 +40,7 @@ void Ions_Move_Methods::allocate(const int &natom, const std::string& relax_meth
         this->cg.allocate(Ions_Move_Basic::dim);
         this->bfgs.allocate();
     }
-    else if(relax_method == "bfgs_traditional")
+    else if(relax_method == "bfgs_trad")
     {
         this->bfgs_trad.allocate(natom);       
     }
@@ -74,7 +74,7 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     {
         converged_ = sd.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, criteria);
     }
-    else if (relax_method == "cg_nested")
+    else if (relax_method == "cg_trad")
     {
         converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method, criteria);
     }
@@ -82,7 +82,7 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     {
         converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method, criteria);
     }
-    else if (relax_method == "bfgs_traditional")
+    else if (relax_method == "bfgs_trad")
     {
         converged_ = bfgs_trad.relax_step(f, ucell, ofs);        
     }
@@ -119,7 +119,7 @@ void Ions_Move_Methods::reset_after_cell_change(const std::string& relax_method,
         this->bfgs.reset();
         ofs << " Reset ionic BFGS history after cell change." << std::endl;
     }
-    else if (relax_method == "bfgs_traditional")
+    else if (relax_method == "bfgs_trad")
     {
         reset_common_state();
         this->bfgs_trad.reset();

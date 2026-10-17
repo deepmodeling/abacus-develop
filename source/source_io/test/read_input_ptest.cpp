@@ -574,7 +574,7 @@ TEST_F(InputParaTest, TypedTDFieldLists)
     Parameter param;
     readinput.read_parameters(param, "./support/INPUT.td_field_mixed");
 
-    EXPECT_EQ(param.inp.relax_method, "cg_nested");
+    EXPECT_EQ(param.inp.relax_method, "cg_trad");
     EXPECT_FALSE(param.inp.uses_simultaneous_relaxation());
 
     EXPECT_THAT(param.inp.td_ttype, testing::ElementsAre(4, 0, 1, 2, 3, 0, 4, 1, 2, 3));

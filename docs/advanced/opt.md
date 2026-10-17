@@ -6,7 +6,7 @@ ABACUS provides two CG implementations for variable-cell relaxation, selected by
 
 - **Simultaneous CG** (`relax_method = cg`, default since v3.8): Uses simultaneous conjugate gradient (CG) optimization for both ionic positions and cell parameters. Both degrees of freedom are optimized together in each step.
 
-- **Nested CG** (`relax_method = cg_nested`): Follows a nested procedure where fixed-cell structural relaxation is performed first, followed by an update of the cell parameters, and the process is repeated until convergence is achieved.
+- **Nested CG** (`relax_method = cg_trad`): Follows a nested procedure where fixed-cell structural relaxation is performed first, followed by an update of the cell parameters, and the process is repeated until convergence is achieved.
 
 An example of the variable cell relaxation can be found in our [repository](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/17_relax/01_pw_cell_relax_BFGS_Al), which is provided with the reference output file log.ref. When using Nested CG, each ionic step is labelled in the following manner:
 ```
@@ -25,7 +25,7 @@ ABACUS offers multiple optimization algorithms for structural relaxation, which 
 
 ### Available Algorithms
 
-- **CG (Conjugate Gradient)**: `cg_nested` optimizes ionic positions and cell parameters in separate stages; `cg` optimizes them simultaneously with line search.
+- **CG (Conjugate Gradient)**: `cg_trad` optimizes ionic positions and cell parameters in separate stages; `cg` optimizes them simultaneously with line search.
 - **BFGS**: Quasi-Newton method for ionic relaxation.
 - **LBFGS**: Limited-memory BFGS for ionic relaxation.
 - **SD (Steepest Descent)**: Simple gradient descent for ionic relaxation.
@@ -41,7 +41,7 @@ ABACUS provides two BFGS implementations, selected by [relax_method](./input_fil
 
 - **Default BFGS** (`relax_method = bfgs`): Updates the inverse of the approximate Hessian matrix B directly. This is the recommended implementation.
 
-- **Traditional BFGS** (`relax_method = bfgs_traditional`): Updates the approximate Hessian matrix B itself, then obtains the inverse by solving matrix eigenvalues and taking their reciprocals. Both methods are mathematically equivalent, but in some cases the traditional variant may perform better.
+- **Traditional BFGS** (`relax_method = bfgs_trad`): Updates the approximate Hessian matrix B itself, then obtains the inverse by solving matrix eigenvalues and taking their reciprocals. Both methods are mathematically equivalent, but in some cases the traditional variant may perform better.
 
 ### LBFGS method
 
@@ -63,7 +63,7 @@ ABACUS provides two implementations of the CG method:
 
 - **Simultaneous CG** (`relax_method = cg`, default): Performs simultaneous optimization of both ionic positions and cell parameters using a line search algorithm. This implementation is more efficient for `cell-relax` calculations as it optimizes all degrees of freedom together. The step size can be controlled by [relax_scale_force](./input_files/input-main.md#relax_scale_force).
 
-- **Nested CG** (`relax_method = cg_nested`): Uses a nested procedure where ionic positions are optimized first using CG, followed by cell parameter optimization (also using CG) in `cell-relax` calculations. This is the traditional approach where the two optimization steps are separated.
+- **Nested CG** (`relax_method = cg_trad`): Uses a nested procedure where ionic positions are optimized first using CG, followed by cell parameter optimization (also using CG) in `cell-relax` calculations. This is the traditional approach where the two optimization steps are separated.
 
 ## Constrained Optimization
 
@@ -109,7 +109,7 @@ Sometimes we want to do variable-cell relaxation with some of the cell degrees o
   - `fixed_axes = "a"`, `"b"`, `"c"`, `"ab"`, `"ac"`, `"bc"`, or `"abc"`: Fix specific lattice vectors or combinations
   - `fixed_ibrav = True`: Maintain the Bravais lattice type during relaxation
 
-- **`relax_method = cg_nested`, `bfgs`, `bfgs_traditional`, `lbfgs`, `sd`, or `cg_bfgs`**:
+- **`relax_method = cg_trad`, `bfgs`, `bfgs_trad`, `lbfgs`, `sd`, or `cg_bfgs`**:
   - `fixed_axes = "a"`, `"b"`, `"c"`, `"ab"`, `"ac"`, `"bc"`, or `"abc"`: Fix specific lattice vectors or combinations
   - `fixed_axes = "shape"`, `"volume"` and `fixed_ibrav = True` are not available
 

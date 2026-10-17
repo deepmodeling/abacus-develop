@@ -214,7 +214,7 @@ TEST_F(InputTest, RejectAutoDevice)
 
 TEST_F(InputTest, ValidateRelaxMethodScalar)
 {
-    for (const std::string method : {"cg", "cg_nested", "bfgs", "bfgs_traditional", "sd", "cg_bfgs", "lbfgs"})
+    for (const std::string method : {"cg", "cg_trad", "bfgs", "bfgs_trad", "sd", "cg_bfgs", "lbfgs"})
     {
         Parameter param;
         EXPECT_NO_THROW(read_parameters("relax_scalar_INPUT", "relax_method " + method + " # comment\n", param));
@@ -233,8 +233,8 @@ TEST_F(InputTest, ValidateRelaxMethodScalar)
     }
     const std::string invalid_method_message
         = "relax_method requires exactly one scalar option. "
-          "The parameter relax_method must be 'cg', 'cg_nested', 'bfgs', 'bfgs_traditional', 'sd', 'cg_bfgs' or 'lbfgs'!";
-    for (const std::string invalid : {"", "none", "cg 1", "cg 2", "bfgs 1", "bfgs 2", "sd 1", "cg_nested 1", "cg 2 extra"})
+          "The parameter relax_method must be 'cg', 'cg_trad', 'bfgs', 'bfgs_trad', 'sd', 'cg_bfgs' or 'lbfgs'!";
+    for (const std::string invalid : {"", "none", "cg 1", "cg 2", "bfgs 1", "bfgs 2", "sd 1", "cg_trad 1", "cg 2 extra"})
     {
         expect_invalid_input("relax_invalid_INPUT", "relax_method " + invalid + "\n",
                              invalid_method_message);

@@ -59,7 +59,7 @@ TEST_F(InputTest, RelaxMethod)
     EXPECT_EQ(TestParameters::input(param).relax_method, "cg");
     EXPECT_EQ(it->second.type, "String");
     EXPECT_EQ(it->second.default_value, "cg");
-    for (const std::string method : {"cg", "cg_nested", "bfgs", "bfgs_traditional", "sd", "cg_bfgs", "lbfgs"})
+    for (const std::string method : {"cg", "cg_trad", "bfgs", "bfgs_trad", "sd", "cg_bfgs", "lbfgs"})
     {
         it->second.str_values = {method};
         it->second.read_value(it->second, param);
@@ -78,7 +78,7 @@ TEST_F(InputTest, RelaxMethod)
              std::vector<std::string>{"bfgs", "1"},
              std::vector<std::string>{"bfgs", "2"},
              std::vector<std::string>{"sd", "1"},
-             std::vector<std::string>{"cg_nested", "1"},
+             std::vector<std::string>{"cg_trad", "1"},
              std::vector<std::string>{"cg", "2", "extra"}})
     {
         it->second.str_values = invalid;
@@ -978,14 +978,14 @@ TEST_F(InputTest, Item_test)
     { // fixed_axes
         auto it = find_label("fixed_axes", readinput.input_lists);
         TestParameters::input(param).fixed_axes = "shape";
-        TestParameters::input(param).relax_method = "cg_nested";
+        TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).fixed_axes = "volume";
-        TestParameters::input(param).relax_method = "cg_nested";
+        TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -994,7 +994,7 @@ TEST_F(InputTest, Item_test)
     { // fixed_ibrav
         auto it = find_label("fixed_ibrav", readinput.input_lists);
         TestParameters::input(param).fixed_ibrav = true;
-        TestParameters::input(param).relax_method = "cg_nested";
+        TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();

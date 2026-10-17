@@ -18,7 +18,7 @@
 /**
  * The running-log convergence reporting is centralized in
  * IonCellOptimizer::relax_step. These tests lock the unified format shared by
- * every relax method (sd/cg_nested/bfgs/bfgs_traditional/lbfgs) and by cell-relax:
+ * every relax method (sd/cg_trad/bfgs/bfgs_trad/lbfgs) and by cell-relax:
  *   Largest force is ... eV/Angstrom while threshold is ... eV/Angstrom
  *   Largest stress is ... kbar while threshold is ... kbar
  *   Relaxation is converged!

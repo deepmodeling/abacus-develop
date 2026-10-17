@@ -80,7 +80,7 @@ class Ions_Move_Methods
     {
         return bfgs;
     }
-    /// @brief the traditional BFGS optimiser used by relax_method "bfgs_traditional"
+    /// @brief the traditional BFGS optimiser used by relax_method "bfgs_trad"
     Ions_Move_BFGS2& get_bfgs_trad()
     {
         return bfgs_trad;

@@ -158,7 +158,7 @@ TEST(AvailabilityValidator, AcceptsKnownTypedReferences)
                  std::invalid_argument);
     EXPECT_NO_THROW(validate_availability_expr(
         "example", parse_availability("relax_method==cg"), types));
-    const AvailabilityExpr scalar_selection = parse_availability("relax_method in [cg, cg_nested]");
+    const AvailabilityExpr scalar_selection = parse_availability("relax_method in [cg, cg_trad]");
     EXPECT_NO_THROW(validate_availability_expr("example", scalar_selection, types));
     const AvailabilityExpr vector_selection = parse_availability("relax_method contains cg");
     EXPECT_THROW(validate_availability_expr("example", vector_selection, types), std::invalid_argument);
