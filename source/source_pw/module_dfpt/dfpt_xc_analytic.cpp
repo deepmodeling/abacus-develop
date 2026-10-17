@@ -62,7 +62,9 @@ void XC_First_Order_Analytic::init_gradient_(const std::vector<double>& rho0_r)
     {
         for (int ig = 0; ig < npw; ++ig)
         {
-            const double g = pw_rho_->gcar[ig][ipol];
+            // pw gcar is dimensionless (2 pi not folded in): the physical
+            // wavevector is tpiba * gcar, in 1/lat0
+            const double g = pw_rho_->tpiba * pw_rho_->gcar[ig][ipol];
             g_g[ig] = std::complex<double>(0.0, g) * rho0_g[ig];
         }
         std::vector<std::complex<double>> g_r(nrxx);
@@ -176,7 +178,8 @@ void XC_First_Order_Analytic::apply(const std::vector<std::complex<double>>& drh
     std::vector<std::complex<double>> a_g(npw);
     pw_rho_->real2recip(drho_r.data(), a_g.data());
 
-    // gdrho(ipol, r) = F^-1[ i (G + q)_ipol A(G) ]
+    // gdrho(ipol, r) = F^-1[ i tpiba (G + q)_ipol A(G) ]: physical
+    // gradient of the carrier-carrying field, 1/lat0 units
     std::vector<std::vector<std::complex<double>>> gdrho(3, std::vector<std::complex<double>>(nrxx, std::complex<double>(0.0, 0.0)));
     std::vector<std::complex<double>> g_g(npw);
     for (int ipol = 0; ipol < 3; ++ipol)
@@ -184,7 +187,7 @@ void XC_First_Order_Analytic::apply(const std::vector<std::complex<double>>& drh
         const double q_ipol = ipol == 0 ? qx : (ipol == 1 ? qy : qz);
         for (int ig = 0; ig < npw; ++ig)
         {
-            const double w = pw_rho_->gcar[ig][ipol] + q_ipol;
+            const double w = pw_rho_->tpiba * (pw_rho_->gcar[ig][ipol] + q_ipol);
             g_g[ig] = std::complex<double>(0.0, w) * a_g[ig];
         }
         pw_rho_->recip2real(g_g.data(), gdrho[ipol].data());
@@ -212,7 +215,7 @@ void XC_First_Order_Analytic::apply(const std::vector<std::complex<double>>& drh
         }
     }
 
-    // dvxc -= F^-1[ i (G + q) . h(G) ]
+    // dvxc -= F^-1[ i tpiba (G + q) . h(G) ]
     std::vector<std::complex<double>> dh_g(npw, std::complex<double>(0.0, 0.0));
     std::vector<std::complex<double>> h_g(npw);
     for (int ipol = 0; ipol < 3; ++ipol)
@@ -221,7 +224,7 @@ void XC_First_Order_Analytic::apply(const std::vector<std::complex<double>>& drh
         pw_rho_->real2recip(h[ipol].data(), h_g.data());
         for (int ig = 0; ig < npw; ++ig)
         {
-            const double w = pw_rho_->gcar[ig][ipol] + q_ipol;
+            const double w = pw_rho_->tpiba * (pw_rho_->gcar[ig][ipol] + q_ipol);
             dh_g[ig] += std::complex<double>(0.0, w) * h_g[ig];
         }
     }

@@ -69,7 +69,8 @@ std::vector<double> cosine_amplitude(const ModulePW::PW_Basis& pw, const double 
     return a;
 }
 
-// FFT gradient of a real field on the rho grid
+// FFT gradient of a real field on the rho grid (physical units: pw gcar is
+// dimensionless, the physical wavevector is tpiba * gcar)
 void fft_gradient(const ModulePW::PW_Basis& pw, const std::vector<double>& f, std::vector<std::vector<double>>& grad)
 {
     const int npw = pw.npw;
@@ -81,7 +82,7 @@ void fft_gradient(const ModulePW::PW_Basis& pw, const std::vector<double>& f, st
     {
         for (int ig = 0; ig < npw; ++ig)
         {
-            g_g[ig] = std::complex<double>(0.0, pw.gcar[ig][ipol]) * f_g[ig];
+            g_g[ig] = std::complex<double>(0.0, pw.tpiba * pw.gcar[ig][ipol]) * f_g[ig];
         }
         std::vector<std::complex<double>> g_r(pw.nrxx);
         pw.recip2real(g_g.data(), g_r.data());
@@ -92,7 +93,7 @@ void fft_gradient(const ModulePW::PW_Basis& pw, const std::vector<double>& f, st
     }
 }
 
-// divergence of a real vector field on the rho grid
+// divergence of a real vector field on the rho grid (physical units)
 void fft_divergence(const ModulePW::PW_Basis& pw,
                     const std::vector<std::vector<double>>& h,
                     std::vector<double>& div)
@@ -105,7 +106,7 @@ void fft_divergence(const ModulePW::PW_Basis& pw,
         pw.real2recip(h[ipol].data(), h_g.data());
         for (int ig = 0; ig < npw; ++ig)
         {
-            dh_g[ig] += std::complex<double>(0.0, pw.gcar[ig][ipol]) * h_g[ig];
+            dh_g[ig] += std::complex<double>(0.0, pw.tpiba * pw.gcar[ig][ipol]) * h_g[ig];
         }
     }
     div.resize(pw.nrxx);
