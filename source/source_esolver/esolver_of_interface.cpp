@@ -98,7 +98,10 @@ void ESolver_OF::get_direction(UnitCell& ucell)
  * @param ptemp_phi
  * @param ucell
  */
-void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
+void ESolver_OF::get_step_length(double* dEdtheta,
+                                 double** ptemp_phi,
+                                 UnitCell& ucell,
+                                 std::ostream& warning_stream)
 {
     double temp_energy = 0.0;      // energy of temp_phi and temp_rho
     double kinetic_energy = 0.0;   // kinetic energy
@@ -145,7 +148,7 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
 
                 if (numDC > this->max_dcsrch_)
                 {
-                    GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING "
+                    warning_stream << "ESolver_OF linesearch: WARNING "
                                          << "excedd the max iter number." << std::endl;
                     break;
                 }
@@ -156,13 +159,13 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
             }
             else if (this->task_.compare(0, 2, "WA") == 0) // warning of line search
             {
-                GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task_ << std::endl;
+                warning_stream << "ESolver_OF linesearch: WARNING " << this->task_ << std::endl;
                 std::cout << this->task_ << std::endl;
                 break;
             }
             else if (this->task_.compare(0, 2, "ER") == 0) // ERROR in line search
             {
-                GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task_ << std::endl;
+                warning_stream << "ESolver_OF linesearch: ERROR " << this->task_ << std::endl;
                 std::cout << this->task_ << std::endl;
                 break;
             }

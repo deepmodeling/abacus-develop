@@ -49,6 +49,14 @@ void ESolver_OF::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     ESolver_FP::before_all_runners(ucell, inp);
 
+    // Snapshot the global settings needed by OFDFT at the solver boundary.
+    this->of_runtime_config_.global_readin_dir = PARAM.globalv.global_readin_dir;
+    this->of_runtime_config_.global_out_dir = PARAM.globalv.global_out_dir;
+    this->of_runtime_config_.domag = PARAM.globalv.domag;
+    this->of_runtime_config_.domag_z = PARAM.globalv.domag_z;
+    this->of_runtime_config_.npol = PARAM.globalv.npol;
+    this->of_runtime_config_.gamma_only_pw = PARAM.globalv.gamma_only_pw;
+
     // save necessary parameters
     this->of_kinetic_ = inp.of_kinetic;
     this->of_method_ = inp.of_method;
@@ -73,13 +81,13 @@ void ESolver_OF::before_all_runners(BaseCell& basecell, const Input_para& inp)
     init_rho_cfg.init_chg = inp.init_chg;
     init_rho_cfg.suffix = inp.suffix;
     init_rho_cfg.esolver_type = inp.esolver_type;
-    init_rho_cfg.global_readin_dir = PARAM.globalv.global_readin_dir;
+    init_rho_cfg.global_readin_dir = this->of_runtime_config_.global_readin_dir;
     init_rho_cfg.nelec = inp.nelec;
     init_rho_cfg.nbands = inp.nbands;
     init_rho_cfg.test_charge = inp.test_charge;
-    init_rho_cfg.domag = PARAM.globalv.domag;
-    init_rho_cfg.domag_z = PARAM.globalv.domag_z;
-    init_rho_cfg.npol = PARAM.globalv.npol;
+    init_rho_cfg.domag = this->of_runtime_config_.domag;
+    init_rho_cfg.domag_z = this->of_runtime_config_.domag_z;
+    init_rho_cfg.npol = this->of_runtime_config_.npol;
     init_rho_cfg.meta_gga = XC_Functional::get_ked_flag();
     this->chr.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, nullptr, init_rho_cfg);
     module_charge::check_rho(this->chr.rho, this->chr.nspin, this->chr.rhopw->nrxx, ucell.omega,
@@ -87,7 +95,7 @@ void ESolver_OF::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     // initialize local pseudopotential
     this->locpp.init_vloc(ucell,pw_rho);
-    this->locpp.print_vloc(ucell, pw_rho, inp.out_element_info, PARAM.globalv.global_out_dir);
+    this->locpp.print_vloc(ucell, pw_rho, inp.out_element_info, this->of_runtime_config_.global_out_dir);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
 
@@ -96,8 +104,8 @@ void ESolver_OF::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     // calculate the total local pseudopotential in real space
     const int istep=0;
-    elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, 
-		    PARAM.globalv.global_out_dir, *this->inp_, this->pelec);
+    elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep,
+                        this->of_runtime_config_.global_out_dir, *this->inp_, this->pelec);
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
@@ -136,6 +144,7 @@ void ESolver_OF::runner(BaseCell& basecell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    std::ostream& warning_stream = GlobalV::ofs_warning;
 
     ModuleBase::timer::start("ESolver_OF", "runner");
     // get Ewald energy, initial rho and phi if necessary
@@ -157,13 +166,13 @@ void ESolver_OF::runner(BaseCell& basecell, const int istep)
 
 
         // check if the job is done
-        if (this->check_exit(conv_esolver))
+        if (this->check_exit(conv_esolver, warning_stream))
         {
             break;
         }
 
         // find the optimization direction and step lenghth theta according to the potential
-        this->optimize(ucell);
+        this->optimize(ucell, warning_stream);
 
         // update the rho and phi based on the direction and theta
         this->update_rho();
@@ -227,7 +236,8 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         this->resize_spin_arrays();
     }
 
-    elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, PARAM.globalv.global_out_dir, *this->inp_, this->pelec);
+    elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep,
+                        this->of_runtime_config_.global_out_dir, *this->inp_, this->pelec);
 
     const int nspin = this->inp_->nspin;
     if (this->inp_->init_chg == "file")
@@ -323,7 +333,7 @@ void ESolver_OF::update_potential(UnitCell& ucell)
  *
  * @param ucell
  */
-void ESolver_OF::optimize(UnitCell& ucell)
+void ESolver_OF::optimize(UnitCell& ucell, std::ostream& warning_stream)
 {
     // (1) get |d0> with optimization algorithm
     this->get_direction(ucell);
@@ -347,11 +357,11 @@ void ESolver_OF::optimize(UnitCell& ucell)
     // (3) make sure that dEdtheta<0 at theta = 0
     std::vector<double> dEdtheta(this->inp_->nspin, 0.0); // dE/dtheta of tempPhi
 
-    this->check_direction(dEdtheta.data(), ptemp_phi.data(), ucell);
-    // this->test_direction(dEdtheta, ptemp_phi, ucell);
+    this->check_direction(dEdtheta.data(), ptemp_phi.data(), ucell, warning_stream);
+    // this->test_direction(dEdtheta, ptemp_phi, ucell, warning_stream);
 
     // (4) call line search to find the best theta (step length)
-    this->get_step_length(dEdtheta.data(), ptemp_phi.data(), ucell);
+    this->get_step_length(dEdtheta.data(), ptemp_phi.data(), ucell, warning_stream);
 }
 
 /**
@@ -379,7 +389,7 @@ void ESolver_OF::update_rho()
  *
  * @return exit or not
  */
-bool ESolver_OF::check_exit(bool& conv_esolver)
+bool ESolver_OF::check_exit(bool& conv_esolver, std::ostream& warning_stream)
 {
     conv_esolver = false;
     bool potConv = false;
@@ -415,7 +425,7 @@ bool ESolver_OF::check_exit(bool& conv_esolver)
     // ============ temporary solution of potential convergence ===========
     else if (this->of_conv_ == "potential" && potHold)
     {
-        GlobalV::ofs_warning << "ESolver_OF WARNING: "
+        warning_stream << "ESolver_OF WARNING: "
                              << "The convergence of potential has not been reached, but the norm of potential nearly "
                                 "remains unchanged, set of_full_pw = 1 may work."
                              << std::endl;
@@ -540,7 +550,8 @@ void ESolver_OF::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
  
     // here nullptr is for DFT+U, which may cause bugs, mohan note 2025-11-07
     // solvent can be used? mohan ask 2025-11-07
-    ff.cal_force(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+    ff.cal_force(this->inp_->nspin, this->of_runtime_config_.domag, this->of_runtime_config_.domag_z,
+                 this->inp_->gga_grad,
                  this->inp_->dft_plus_u || this->inp_->sc_mag_switch,
                  ucell, force, this->get_vdw_result(), *pelec, this->pw_rho, &ucell.symm, &sf,
                  this->solvent, nullptr, &this->locpp);
@@ -562,8 +573,8 @@ void ESolver_OF::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
                          this->pphi_, this->pw_rho, kinetic_stress_); // kinetic stress
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
-    ss.cal_stress(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
-                       this->inp_->gga_grad, PARAM.globalv.gamma_only_pw,
+    ss.cal_stress(this->inp_->nspin, this->of_runtime_config_.domag, this->of_runtime_config_.domag_z,
+                       this->inp_->gga_grad, this->of_runtime_config_.gamma_only_pw,
                        stress, kinetic_stress_, ucell, this->get_vdw_result(), &ucell.symm, this->locpp, &sf, &kv);
 }
 } // namespace ModuleESolver

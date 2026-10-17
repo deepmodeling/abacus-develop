@@ -2,6 +2,7 @@
 #define ESOLVER_OF_H
 
 #include <string>
+#include <ostream>
 #include <vector>
 
 #include "esolver_fp.h"
@@ -12,6 +13,22 @@
 
 namespace ModuleESolver
 {
+/**
+ * @brief Runtime settings owned by PARAM but needed by the OFDFT solver.
+ *
+ * ESolver_OF snapshots these values at its initialization boundary so later
+ * OFDFT stages do not read PARAM directly.
+ */
+struct OFDFTRuntimeConfig
+{
+    std::string global_readin_dir;
+    std::string global_out_dir;
+    bool domag = false;
+    bool domag_z = false;
+    int npol = 1;
+    bool gamma_only_pw = false;
+};
+
 class ESolver_OF : public ESolver_FP
 {
   public:
@@ -50,6 +67,7 @@ class ESolver_OF : public ESolver_FP
     int max_iter_ = 50;     // scf_nmax
 
     // ------------------ parameters from other module --------------
+    OFDFTRuntimeConfig of_runtime_config_;
     double dV_ = 0;           // volume of one grid point in real space
     std::vector<double> nelec_; // number of electrons with each spin
 
@@ -83,9 +101,9 @@ class ESolver_OF : public ESolver_FP
     // ==================== main process of OFDFT ======================
     void before_opt(const int istep, UnitCell& ucell);
     void update_potential(UnitCell& ucell);
-    void optimize(UnitCell& ucell);
+    void optimize(UnitCell& ucell, std::ostream& warning_stream);
     void update_rho();
-    bool check_exit(bool& conv_esolver);
+    bool check_exit(bool& conv_esolver, std::ostream& warning_stream);
     void after_opt(const int istep, UnitCell& ucell, const bool conv_esolver);
 
     // ============================ tools ===============================
@@ -103,8 +121,8 @@ class ESolver_OF : public ESolver_FP
 
     // --------------------- determine the optimization direction -------
     void adjust_direction();
-    void check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
-    void test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
+    void check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell, std::ostream& warning_stream);
+    void test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell, std::ostream& warning_stream);
 
     // --------------------- interface to blas --------------------------
     double inner_product(double* pa, double* pb, int length, double dV = 1) const
@@ -117,7 +135,7 @@ class ESolver_OF : public ESolver_FP
     // ---------------------- interfaces to optimization methods --------
     void init_opt();
     void get_direction(UnitCell& ucell);
-    void get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
+    void get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell& ucell, std::ostream& warning_stream);
 };
 } // namespace ModuleESolver
 

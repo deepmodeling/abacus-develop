@@ -314,7 +314,10 @@ void ESolver_OF::adjust_direction(void)
  * @param ptemp_phi
  * @param ucell
  */
-void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
+void ESolver_OF::check_direction(double* dEdtheta,
+                                 double** ptemp_phi,
+                                 UnitCell& ucell,
+                                 std::ostream& warning_stream)
 {
     assert(this->inp_->nspin > 0);
     std::vector<double> temp_theta(this->inp_->nspin, 0.0);
@@ -332,7 +335,7 @@ void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell&
         }
         else if (dEdtheta[is] > 0)
         {
-            GlobalV::ofs_warning << "ESolver_OF: WARNING "
+            warning_stream << "ESolver_OF: WARNING "
                                  << "dEdphi > 0, replace direct with steepest descent method." << std::endl;
             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
@@ -347,7 +350,7 @@ void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell&
             }
             else if (dEdtheta[is] > 0)
             {
-                GlobalV::ofs_warning << "ESolver_OF: WARNING "
+                warning_stream << "ESolver_OF: WARNING "
                                      << "when use steepest dencent method, "
                                         "dEdphi > 0, so we might get minimum."
                                      << std::endl;
@@ -364,7 +367,10 @@ void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell&
  * @param ptemp_phi
  * @param ucell
  */
-void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
+void ESolver_OF::test_direction(double* dEdtheta,
+                                double** ptemp_phi,
+                                UnitCell& ucell,
+                                std::ostream& warning_stream)
 {
     double temp_energy = 0.;
     if (this->iter_ == 0)
@@ -394,7 +400,7 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
                                                    this->dV_);
             Parallel_Reduce::reduce_all(pseudopot_energy);
             temp_energy += kinetic_energy + pseudopot_energy;
-            GlobalV::ofs_warning << i << "    " << dEdtheta[0] << "    " << temp_energy << std::endl;
+            warning_stream << i << "    " << dEdtheta[0] << "    " << temp_energy << std::endl;
 			if (this->theta_[0] == 0) 
 			{
 				std::cout << "dEdtheta    " << dEdtheta[0] << std::endl;
