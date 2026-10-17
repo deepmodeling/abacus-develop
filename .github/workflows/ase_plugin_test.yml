@@ -52,6 +52,7 @@ jobs:
       - name: Install dependencies
         shell: bash -l {0}
         run: |
+          set -euo pipefail
           conda install -y pip
           pip install numpy scipy matplotlib
 
@@ -59,6 +60,7 @@ jobs:
         if: matrix.package == 'bundled'
         shell: bash -l {0}
         run: |
+          set -euo pipefail
           mkdir -p "$RUNNER_TEMP/bundled-wheel"
           python -m pip wheel --no-deps --wheel-dir "$RUNNER_TEMP/bundled-wheel" \
             interfaces/ASE_interface
@@ -71,6 +73,7 @@ jobs:
         env:
           PLUGIN_REF: ${{ inputs.plugin_ref }}
         run: |
+          set -euo pipefail
           mkdir -p "$RUNNER_TEMP/candidate-wheel"
           if [ -n "$PLUGIN_REF" ]; then
             python -m pip install 'build>=1.2'
@@ -107,12 +110,18 @@ jobs:
           cmake -B build -G Ninja
           cmake --build build -j2
 
-      - name: Install and Soft Link ABACUS
+      - name: Install and attest the built ABACUS executable
         run: |
+          built="$GITHUB_WORKSPACE/build/abacus_basic_para"
+          test -x "$built"
           cmake --install build
-          if [ -f /usr/local/bin/abacus_2p ]; then
-            ln -sf /usr/local/bin/abacus_2p /usr/local/bin/abacus
-          fi
+          installed="$(command -v abacus)"
+          test -x "$installed"
+          built_sha="$(sha256sum "$built")"
+          installed_sha="$(sha256sum "$installed")"
+          test "${built_sha%% *}" = "${installed_sha%% *}"
+          printf 'Built ABACUS: %s %s\n' "$built" "${built_sha%% *}"
+          printf 'Installed ABACUS: %s %s\n' "$installed" "${installed_sha%% *}"
           git rev-parse HEAD
           abacus --version
 
@@ -120,6 +129,7 @@ jobs:
         if: matrix.package == 'bundled'
         shell: bash -l {0}
         run: |
+          set -euo pipefail
           cd interfaces/ASE_interface/abacuslite
           chmod +x xtest.sh
           ./xtest.sh
@@ -128,6 +138,7 @@ jobs:
         if: matrix.package == 'external'
         shell: bash -l {0}
         run: |
+          set -euo pipefail
           cd interfaces/ASE_interface/tests
           python -m unittest test_external_provenance test_harness_facts \
             test_native_md_fixture test_portable_runner -v
@@ -135,6 +146,7 @@ jobs:
       - name: Run engine-owned integration tests
         shell: bash -l {0}
         run: |
+          set -euo pipefail
           ENGINE_REF="$(git rev-parse HEAD)"
           if [ "${{ matrix.package }}" = external ]; then
             WHEEL_DIR="$RUNNER_TEMP/candidate-wheel"
@@ -142,7 +154,7 @@ jobs:
             WHEEL_DIR="$RUNNER_TEMP/bundled-wheel"
           fi
           python interfaces/ASE_interface/tests/run_engine_compatibility.py \
-            --engine /usr/local/bin/abacus \
+            --engine "$GITHUB_WORKSPACE/build/abacus_basic_para" \
             --mpi-command 'mpirun -np 2' \
             --assets "$GITHUB_WORKSPACE/tests/PP_ORB" \
             --format latest \

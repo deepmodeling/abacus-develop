@@ -1,6 +1,10 @@
 """Offline contract checks for the portable real-engine lane."""
 
+import os
+import signal
+import sys
 import tempfile
+import time
 import unittest
 import zipfile
 from pathlib import Path
@@ -66,6 +70,50 @@ class PortableRunnerTest(unittest.TestCase):
             self.assertTrue(result['timed_out'])
             self.assertNotEqual(result['returncode'], 0)
             self.assertLess(result['seconds'], 3)
+
+    def test_timeout_kills_sigterm_ignoring_child_after_leader_exits(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pid_file = root / 'child.pid'
+            child_code = ('import os,signal,sys,time; '
+                          'signal.signal(signal.SIGTERM, signal.SIG_IGN); '
+                          'open(sys.argv[1], "w").write(str(os.getpid())); '
+                          'time.sleep(60)')
+            leader_code = ('import subprocess,sys,time; '
+                           'subprocess.Popen([sys.executable, "-c", '
+                           'sys.argv[1], sys.argv[2]]); time.sleep(60)')
+            child_pid = None
+            try:
+                result = capture([sys.executable, '-c', leader_code,
+                                  child_code, str(pid_file)],
+                                 cwd=root, env=None, log=root / 'hung-group.log',
+                                 timeout=1)
+                self.assertTrue(pid_file.is_file(), 'child probe did not start')
+                child_pid = int(pid_file.read_text())
+                self.assertTrue(result['timed_out'])
+                self.assertLess(result['seconds'], 4)
+                for _ in range(50):
+                    try:
+                        state = Path(f'/proc/{child_pid}/stat').read_text().split()[2]
+                    except FileNotFoundError:
+                        break
+                    if state == 'Z':
+                        break
+                    time.sleep(0.02)
+                else:
+                    self.fail(f'timeout left SIGTERM-ignoring child {child_pid} alive')
+            finally:
+                if child_pid is None and pid_file.is_file():
+                    child_pid = int(pid_file.read_text())
+                if child_pid is not None:
+                    try:
+                        child_group = os.getpgid(child_pid)
+                        if child_group != os.getpgrp():
+                            os.killpg(child_group, signal.SIGKILL)
+                        else:
+                            os.kill(child_pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
 
 
 if __name__ == '__main__':

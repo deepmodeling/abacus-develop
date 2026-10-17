@@ -79,12 +79,22 @@ def capture(command, *, cwd, env, log, timeout):
             process.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             timed_out = True
-            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
             try:
                 process.wait(timeout=10)
             except subprocess.TimeoutExpired:
+                pass
+            # The leader can exit on SIGTERM while a child ignores it. The
+            # process group remains alive, so always finish the timeout with
+            # SIGKILL rather than treating leader exit as group shutdown.
+            try:
                 os.killpg(process.pid, signal.SIGKILL)
-                process.wait(timeout=10)
+            except ProcessLookupError:
+                pass
+            process.wait(timeout=10)
     return {'returncode': process.returncode, 'timed_out': timed_out,
             'seconds': round(time.monotonic() - start, 3)}
 
