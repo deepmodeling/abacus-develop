@@ -3,7 +3,21 @@
 Fork-only experiment; not production-ready. ABACUS base: 8ae37fcd6.
 Runtime selection uses the existing `device cpu/gpu`. Build with
 `ENABLE_LIBRI=ON`, `USE_CUDA=ON`, `ENABLE_LIBRI_GPU=ON`, and explicit
-`LIBRI_DIR`, `DDLA_INCLUDE_DIR`, `DDLA_LIBRARY`.
+`LIBRI_DIR`, and a CUDA DDLA installation selected with `DDLA_ROOT` or
+`CMAKE_PREFIX_PATH`. Explicit `DDLA_INCLUDE_DIR` and `DDLA_LIBRARY` overrides
+remain supported.
+
+ABACUS's Find modules provide `LibRI::LibRI` and `DDLA::DDLA`; no CMake changes
+in either dependency are needed. The LibRI target carries its headers, C++
+requirements, LibComm/cereal and available MPI/OpenMP/math targets. GPU builds
+add DDLA and the backend macros through those targets. ABACUS's existing
+compile-requirements collector keeps these header-only definitions consistent
+across its translation units, with final linking in `source/CMakeLists.txt`.
+CPU builds do not discover or link DDLA. Enabling GPU RI without LibRI/CUDA
+is an error. A configure-time compile/link probe instantiates real and complex
+GPU contractions to reject incompatible dependency APIs; it does not execute
+GPU code or verify numerical correctness. The dependency patches below are
+still required.
 
 Dependencies used in the SAI experiment:
 
@@ -70,3 +84,19 @@ The automatic download still uses ABACUS's original CPU dependency. Downloading
 an unpatched newer revision is insufficient to reproduce the working build.
 The build option defaults to OFF; the HSE approximation is unchanged.
 See RESULTS.md for measured outcomes and remaining validation limits.
+
+## Checking the CMake dependency interface
+
+The small consumer below links only `LibRI::LibRI`, without ABACUS's common
+include paths or link flags. It checks headers, backend macros, the CPU default
+in GPU-enabled LibRI, and transitive BLAS linkage. Run with GPU support OFF
+and ON; the ON variant requires CUDA and the patched dependencies above.
+
+```bash
+cmake -S tests/lcao_hse_gpu/cmake -B /path/to/consumer-build \
+  -DLIBRI_DIR=/path/to/libri -DLIBCOMM_DIR=/path/to/libcomm \
+  -Dcereal_DIR=/path/to/cereal/lib/cmake/cereal \
+  -DENABLE_LIBRI_GPU=ON -DDDLA_ROOT=/path/to/ddla
+cmake --build /path/to/consumer-build
+ctest --test-dir /path/to/consumer-build --output-on-failure
+```

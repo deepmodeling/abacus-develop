@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.18)
+project(libri_consumer_check LANGUAGES CXX)
+
+# Exercise the dependency target without ABACUS's global includes or link flags.
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../../cmake/modules")
+option(ENABLE_OPENMP "Enable OpenMP" ON)
+option(ENABLE_LIBRI_GPU "Check the LibRI CUDA dependency interface" OFF)
+find_package(MPI REQUIRED COMPONENTS CXX)
+if(ENABLE_OPENMP)
+  find_package(OpenMP REQUIRED COMPONENTS CXX)
+endif()
+find_package(Lapack REQUIRED)
+if(ENABLE_LIBRI_GPU)
+  find_package(CUDAToolkit REQUIRED)
+endif()
+find_package(LibRI REQUIRED)
+
+add_executable(libri_consumer test_libri_consumer.cpp)
+target_link_libraries(libri_consumer PRIVATE LibRI::LibRI)
+target_compile_definitions(libri_consumer PRIVATE
+  $<$<BOOL:${ENABLE_LIBRI_GPU}>:EXPECT_LIBRI_GPU>)
+enable_testing()
+add_test(NAME libri_consumer COMMAND libri_consumer)

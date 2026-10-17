@@ -60,9 +60,6 @@ set(_abacus_feature_definitions
   $<$<BOOL:${ENABLE_FLOAT_FFTW}>:__FLOAT_FFTW>
   $<$<BOOL:${ENABLE_MLALGO}>:__MLALGO>
   $<$<BOOL:${ENABLE_CNPY}>:__CNPY>
-  $<$<BOOL:${ENABLE_LIBRI_GPU}>:__GPU_RI>
-  $<$<BOOL:${ENABLE_LIBRI_GPU}>:__DDLA_RI>
-  $<$<BOOL:${ENABLE_LIBRI_GPU}>:DDLA_USE_CUDA>
   $<$<BOOL:${ENABLE_LIBRI}>:__EXX>
   $<$<BOOL:${ENABLE_LIBRI}>:EXX_DM=3>
   $<$<BOOL:${ENABLE_LIBRI}>:EXX_H_COMM=2>
@@ -277,7 +274,7 @@ set(_abacus_feature_libs
   $<$<BOOL:${ENABLE_PEXSI}>:PEXSI::PEXSI>
   $<$<BOOL:${ENABLE_CNPY}>:cnpy>
   $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
-  $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
+  $<$<BOOL:${ENABLE_LIBRI}>:LibRI::LibRI>
   $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
   $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>)
 set(_abacus_feature_include_dirs)
@@ -308,17 +305,6 @@ if(ENABLE_CNPY)
   if(cnpy_SOURCE_DIR)
     list(APPEND _abacus_feature_include_dirs ${cnpy_SOURCE_DIR})
   endif()
-endif()
-
-if(ENABLE_LIBRI_GPU)
-  list(APPEND _abacus_feature_include_dirs ${DDLA_INCLUDE_DIR})
-  list(APPEND _abacus_feature_libs ${DDLA_LIBRARY})
-endif()
-
-if(ENABLE_LIBRI)
-  list(APPEND _abacus_feature_include_dirs
-    ${LIBRI_DIR}/include
-    ${LIBCOMM_DIR}/include)
 endif()
 
 if(DEFINED DeePMD_DIR)
@@ -403,6 +389,8 @@ target_compile_options(abacus_compile_requirements INTERFACE
 
 foreach(_abacus_feature_target IN ITEMS
     nlohmann_json::nlohmann_json
+    LibRI::LibRI
+    DDLA::DDLA
     cereal::cereal
     ELPA::ELPA
     Libxc::xc
