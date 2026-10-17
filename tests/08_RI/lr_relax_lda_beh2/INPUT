@@ -1,0 +1,37 @@
+INPUT_PARAMETERS
+pseudo_dir ../../../tests/PP_ORB
+orbital_dir ../../../tests/PP_ORB
+symmetry                -1
+nspin                   2
+ecutwfc 20
+scf_thr                 1e-8
+scf_nmax                200
+basis_type              lcao
+gamma_only              1
+smearing_method         gaussian
+smearing_sigma          0.01
+mixing_type             pulay
+mixing_beta             0.7
+mixing_gg0              0
+nbands                  17
+dft_functional lda
+calculation relax
+esolver_type ks-lr
+xc_kernel lda
+lr_solver               lapack
+lr_thr                  1e-6
+lr_nstates              6
+nvirt                   14
+abs_wavelen_range       15 90
+abs_gauge               velocity
+cal_force               1
+
+relax_nmax 2
+force_thr_ev 1e-12
+lr_target_state 0
+lr_degen_mode average
+lr_degen_thr 1e-6
+lr_grad_solver lapack
+relax_scale_force 0.01
+
+suffix autotest

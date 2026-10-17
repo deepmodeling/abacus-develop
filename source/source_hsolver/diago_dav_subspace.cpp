@@ -20,6 +20,7 @@
 #ifdef __MPI
 #include <mpi.h>
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_device.h"
 #endif
 
 using namespace hsolver;
@@ -714,9 +715,10 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         // vcc: nbase * nband
         for (int i = 0; i < nband; i++)
         {
-            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, this->diag_comm.comm);
+            // fix a bug here when vcc is real: bcast according to the true type
+            Parallel_Common::bcast_data(&vcc[i * this->nbase_x], nbase, this->diag_comm.comm, 0);
         }
-        MPI_Bcast((*eigenvalue_iter).data(), nband, MPI_DOUBLE, 0, this->diag_comm.comm);
+        Parallel_Common::bcast_data((*eigenvalue_iter).data(), nband, this->diag_comm.comm, 0);
     }
 #endif
 

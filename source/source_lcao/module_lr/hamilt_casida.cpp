@@ -1,4 +1,6 @@
 #include "hamilt_casida.h"
+#include <fstream>
+#include <cstdlib>
 #include "source_lcao/module_lr/utils/lr_util_print.h"
 namespace LR
 {
@@ -56,9 +58,6 @@ namespace LR
                 }
 }
 }
-        // output Amat
-        std::cout << "Full A matrix: (elements < 1e-10 is set to 0)" << std::endl;
-        LR_Util::print_value(Amat_full.data(), nk * npairs, nk * npairs);
         return Amat_full;
     }
 

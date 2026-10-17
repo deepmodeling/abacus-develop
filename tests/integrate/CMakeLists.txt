@@ -14,3 +14,15 @@ else()
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/integrate
     )
 endif()
+
+# Cheap collector regressions; no ABACUS calculation or finite differences.
+find_program(LR_FORCE_TEST_PYTHON python3)
+if(LR_FORCE_TEST_PYTHON)
+    add_test(
+        NAME lr_force_collector
+        COMMAND ${LR_FORCE_TEST_PYTHON} -m unittest discover
+                -s ${CMAKE_CURRENT_SOURCE_DIR}/validation_tools
+                -p test_lr_force_check.py
+    )
+    set_tests_properties(lr_force_collector PROPERTIES TIMEOUT 30)
+endif()

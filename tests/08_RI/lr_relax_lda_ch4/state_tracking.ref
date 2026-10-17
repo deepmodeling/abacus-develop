@@ -1,0 +1,9 @@
+{
+  "steps": 2,
+  "dimensions": [
+    3,
+    1
+  ],
+  "reference_first": true,
+  "min_overlap": 0.99
+}

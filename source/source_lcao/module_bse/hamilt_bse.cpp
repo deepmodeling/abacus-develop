@@ -582,7 +582,7 @@ void HamiltBSE<std::complex<double>>::grid_calculation(hamilt::HContainer<std::c
 
     auto dmR_to_hR = [&, this](const char& type) -> void
         {
-            LR_Util::get_DMR_real_imag_part(*this->DM_trans, DM_trans_real_imag, ucell.nat, type);
+            LR_Util::get_DMR_real_imag_part(*this->DM_trans, DM_trans_real_imag, type);
             // if (this->first_print)LR_Util::print_DMR(DM_trans_real_imag, ucell.nat, "DMR(2d, real)");
 
             // 4.1. transition density rho on grid
@@ -603,7 +603,7 @@ void HamiltBSE<std::complex<double>>::grid_calculation(hamilt::HContainer<std::c
             HR_real_imag.set_zero();
             ModuleGint::cal_gint_vl(vr_hxc.c, &HR_real_imag);
             // LR_Util::print_HR(HR_real_imag, this->ucell.nat, "VR(real, 2d)");
-            LR_Util::set_HR_real_imag_part(HR_real_imag, VR, ucell.nat, type);
+            LR_Util::set_HR_real_imag_part(HR_real_imag, VR, type);
         };
     VR.set_zero();
     dmR_to_hR('R');   //real

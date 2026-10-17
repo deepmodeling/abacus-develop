@@ -1,0 +1,1 @@
+Two-step LDA BeH2 degenerate-subspace average (2 -> 2). Checks dimensions, projection weight, singular values and finite energies/forces; requires LibXC KXC.
