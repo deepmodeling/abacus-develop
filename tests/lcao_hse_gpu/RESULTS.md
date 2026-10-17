@@ -177,3 +177,64 @@ Further size-dependent memory and multi-GPU checks (Si16/Si64, job 1832165)
 are documented in [SCALING.md](SCALING.md). They reveal a memory plateau
 between one and two cards for Si64; do not extrapolate the Si32 reduction
 as a universal 1/P law.
+
+## ABACUS-side CMake integration — 2026-10-18
+
+The dependency adapter now lives in ABACUS's Find modules. `LibRI::LibRI`
+and `DDLA::DDLA` carry headers, language requirements, backend definitions
+and link dependencies. These are ABACUS-provided targets, not upstream
+LibRI package exports. `ENABLE_LIBRI_GPU` remains OFF by default; runtime
+selection, numerical kernels, memory allocation and dependency patches are
+unchanged by this CMake work.
+
+Full CPU/GPU builds used source `33d400fd6012262c781697716f1a0e19950843d0`,
+GNU 13.3.0, CMake 3.31.6 and CUDA 12.9.86 on SAI. The MKL follow-up used
+`8dd69254063302fb70b08b01b08cc284a2d9e37e` and oneMKL 2024.2. It changes
+the MKL adapters to named imported interfaces so CMake can export their
+transitive requirements into a compile/link probe. Existing target names
+and numerical link ordering are retained. No runtime C++ changed.
+
+| Verification | Result |
+| --- | --- |
+| Job 1833459: standalone CPU/GPU consumers linking only `LibRI::LibRI` | Both built; both CTest runs passed |
+| Job 1833459: real/complex GPU contraction compile/link probe | Passed with patched dependencies; rejected unpatched LibRI as expected |
+| Job 1833459: full CPU build, CUDA OFF, DDLA discovery disabled | Built; three HSE cases passed all 10 existing reference checks |
+| Job 1833459: full GPU build, GPU RI ON | Built; all dynamic dependencies resolved |
+| Jobs 1833493_0/1/2: GPU HSE Gamma, complex multi-k and spin-polarized Gamma | All three passed, with 10 existing reference checks in total |
+| Job 1833601: MKL static/dynamic, CPU/GPU standalone consumers | All four configure/build/CTest combinations passed |
+| Job 1833601: original CPU LibRI `b0eff7a`, DDLA discovery disabled | Configure, build and CTest passed |
+| Job 1833601: previous MKL adapter with the new GPU probe | Reproduced the missing-target error; corrected adapter passed |
+
+HSE cases use the repository's unchanged references. Gamma and spin-polarized
+Gamma check energy, force and stress; the complex multi-k reference checks
+energy. Copied CPU inputs use ScaLAPACK where GenELPA was explicitly selected;
+copied GPU inputs use cuSOLVER. All runtime tests use one MPI rank and
+`OMP_NUM_THREADS=1`. This is build/regression validation, not a timing
+comparison or a new test of multi-GPU scaling.
+
+The CPU executable's `ldd` has no DDLA/CUDA libraries. The RI and base object
+compile flags contain the three GPU RI definitions only in the GPU build.
+MKL consumer link lines select the requested static/shared MKL libraries;
+CPU consumers do not link DDLA. The MKL checks validate dependency interfaces,
+not a full MKL ABACUS build. The configure-time probe cannot detect numerical
+errors such as the force-accumulation issue; the existing LibRI patches and
+numerical regressions remain necessary.
+
+Three local invalid configurations (GPU RI with LibRI OFF, CUDA OFF or MPI
+OFF) fail with the intended diagnostic. The repository command
+`python3 -m unittest discover -s .ci/slurm -p 'test_runner.py' -q` passed all
+45 tests. Governance and whitespace checks passed.
+
+Two experiment-control issues are retained in the raw evidence: job 1833432
+stopped before compilation because its DDLA reuse path was wrong; the corrected
+run passed. Result collection then rejected two resource-directory symlinks
+introduced by the local CPU test control. Only those symlink entries were
+omitted from a copy of the archive, which passed the original safe extractor;
+calculation logs and numerical outputs were retained. No reference or runner
+safety check was relaxed.
+
+Controls and logs: `/mnt/g/work/agent/abacus/lcao-hse-results/cmake-integration2/`
+and `/mnt/g/work/agent/abacus/lcao-hse-results/cmake-mkl/`.
+Full-build remote archive:
+`archives/lcao-hse/cmake-targets-20261018b-1.tar.gz` under the experiment root.
+MKL controls and results are under `checks/cmake-mkl-20261018/` there.
