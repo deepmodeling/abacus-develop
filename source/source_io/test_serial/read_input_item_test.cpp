@@ -56,45 +56,34 @@ TEST_F(InputTest, RelaxMethod)
     Parameter param;
     auto it = find_label("relax_method", readinput.input_lists);
 
-    it->second.str_values = {"cg"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"cg", "2"}));
-    EXPECT_TRUE(TestParameters::input(param).uses_simultaneous_relaxation());
-
-    it->second.str_values = {"cg", "1"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"cg", "1"}));
-    EXPECT_FALSE(TestParameters::input(param).uses_simultaneous_relaxation());
-
-    it->second.str_values = {"cg", "2"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"cg", "2"}));
-    EXPECT_TRUE(TestParameters::input(param).uses_simultaneous_relaxation());
-
-    it->second.str_values = {"bfgs"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"bfgs", "2"}));
-    EXPECT_FALSE(TestParameters::input(param).uses_simultaneous_relaxation());
-
-    it->second.str_values = {"bfgs", "1"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"bfgs", "1"}));
-
-    it->second.str_values = {"bfgs", "2"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"bfgs", "2"}));
+    EXPECT_EQ(TestParameters::input(param).relax_method, "cg");
+    EXPECT_EQ(it->second.type, "String");
+    EXPECT_EQ(it->second.default_value, "cg");
+    for (const std::string method : {"cg", "cg_trad", "bfgs", "bfgs_trad", "sd", "cg_bfgs", "lbfgs"})
+    {
+        it->second.str_values = {method};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).relax_method, method);
+        EXPECT_EQ(param.inp.uses_simultaneous_relaxation(), method == "cg");
+        it->second.final_value.str("");
+        it->second.get_final_value(it->second, param);
+        EXPECT_EQ(it->second.final_value.str(), method);
+    }
 
     for (const std::vector<std::string>& invalid : {
-             std::vector<std::string>{"cg", "3"},
-             std::vector<std::string>{"bfgs", "3"},
-             std::vector<std::string>{"sd", "1"},
+             std::vector<std::string>{},
              std::vector<std::string>{"none"},
+             std::vector<std::string>{"cg", "1"},
+             std::vector<std::string>{"cg", "2"},
+             std::vector<std::string>{"bfgs", "1"},
+             std::vector<std::string>{"bfgs", "2"},
+             std::vector<std::string>{"sd", "1"},
+             std::vector<std::string>{"cg_trad", "1"},
              std::vector<std::string>{"cg", "2", "extra"}})
     {
         it->second.str_values = invalid;
         EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
     }
-
     EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
 }
 
@@ -989,14 +978,14 @@ TEST_F(InputTest, Item_test)
     { // fixed_axes
         auto it = find_label("fixed_axes", readinput.input_lists);
         TestParameters::input(param).fixed_axes = "shape";
-        TestParameters::input(param).relax_method = {"cg", "1"};
+        TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).fixed_axes = "volume";
-        TestParameters::input(param).relax_method = {"cg", "1"};
+        TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -1005,7 +994,7 @@ TEST_F(InputTest, Item_test)
     { // fixed_ibrav
         auto it = find_label("fixed_ibrav", readinput.input_lists);
         TestParameters::input(param).fixed_ibrav = true;
-        TestParameters::input(param).relax_method = {"cg", "1"};
+        TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
