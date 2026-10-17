@@ -29,6 +29,94 @@ struct OccMatReadState
 };
 
 [[noreturn]] static void read_occup_fail(const OccMatReadState& state,
+                                         const std::string& message);
+static bool read_occup_next_data_line(OccMatReadState& state, std::string& line);
+static void read_occup_atom_header(OccMatReadState& state,
+                                   const UnitCell& ucell,
+                                   int expected_type,
+                                   int expected_iat,
+                                   int expected_l,
+                                   int nspin);
+static void read_occup_collinear_atom(OccMatReadState& state,
+                                      OccupationMatrix& occ,
+                                      int iat,
+                                      int l);
+static void read_occup_soc_atom(OccMatReadState& state,
+                                OccupationMatrix& occ,
+                                int iat,
+                                int l,
+                                OccmatSocLayout soc_layout);
+static void read_occup_validate_configuration(const OccMatReadState& state,
+                                               const UnitCell& ucell,
+                                               const std::vector<int>& l_channel,
+                                               int nspin,
+                                               int npol,
+                                               OccmatSocLayout soc_layout);
+static void read_occup_report_open_error(const std::string& filename);
+
+void read_occup_m(const UnitCell& ucell,
+                  OccupationMatrix& occ,
+                  const std::vector<int>& l_channel,
+                  const std::string& fn,
+                  int nspin,
+                  int npol,
+                  OccmatSocLayout soc_layout)
+{
+    ModuleBase::TITLE("DFTU_BASE", "read_occup_m");
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
+
+    std::ifstream input(fn.c_str());
+    if (!input)
+    {
+        read_occup_report_open_error(fn);
+    }
+
+    GlobalV::ofs_running << " DFT+U: read occupation matrix from " << fn << std::endl;
+    std::cout << " DFT+U: read occupation matrix from " << fn << std::endl;
+
+    OccMatReadState state(input, fn);
+    read_occup_validate_configuration(state, ucell, l_channel, nspin, npol, soc_layout);
+
+    int atom_count = 0;
+    for (int type = 0; type < ucell.ntype; ++type)
+    {
+        const int l = l_channel[type];
+        if (l < 0)
+        {
+            continue;
+        }
+        for (int atom = 0; atom < ucell.atoms[type].na; ++atom)
+        {
+            const int iat = ucell.itia2iat(type, atom);
+            read_occup_atom_header(state, ucell, type, iat, l, nspin);
+            if (nspin == 4)
+            {
+                read_occup_soc_atom(state, occ, iat, l, soc_layout);
+            }
+            else
+            {
+                read_occup_collinear_atom(state, occ, iat, l);
+            }
+            ++atom_count;
+        }
+    }
+
+    if (atom_count == 0)
+    {
+        read_occup_fail(state, "the unit cell has no configured DFT+U atom blocks");
+    }
+
+    std::string extra_line;
+    if (read_occup_next_data_line(state, extra_line))
+    {
+        read_occup_fail(state, "unexpected content after the final atom block");
+    }
+}
+
+[[noreturn]] static void read_occup_fail(const OccMatReadState& state,
                                          const std::string& message)
 {
     std::ostringstream os;
@@ -319,68 +407,6 @@ static void read_occup_report_open_error(const std::string& filename)
 {
     ModuleBase::WARNING_QUIT(read_occup_context,
                              "Can not open compact occupation-matrix file " + filename);
-}
-
-void read_occup_m(const UnitCell& ucell,
-                  OccupationMatrix& occ,
-                  const std::vector<int>& l_channel,
-                  const std::string& fn,
-                  int nspin,
-                  int npol,
-                  OccmatSocLayout soc_layout)
-{
-    ModuleBase::TITLE("DFTU_BASE", "read_occup_m");
-    if (GlobalV::MY_RANK != 0)
-    {
-        return;
-    }
-
-    std::ifstream input(fn.c_str());
-    if (!input)
-    {
-        read_occup_report_open_error(fn);
-    }
-
-    GlobalV::ofs_running << " DFT+U: read occupation matrix from " << fn << std::endl;
-    std::cout << " DFT+U: read occupation matrix from " << fn << std::endl;
-
-    OccMatReadState state(input, fn);
-    read_occup_validate_configuration(state, ucell, l_channel, nspin, npol, soc_layout);
-
-    int atom_count = 0;
-    for (int type = 0; type < ucell.ntype; ++type)
-    {
-        const int l = l_channel[type];
-        if (l < 0)
-        {
-            continue;
-        }
-        for (int atom = 0; atom < ucell.atoms[type].na; ++atom)
-        {
-            const int iat = ucell.itia2iat(type, atom);
-            read_occup_atom_header(state, ucell, type, iat, l, nspin);
-            if (nspin == 4)
-            {
-                read_occup_soc_atom(state, occ, iat, l, soc_layout);
-            }
-            else
-            {
-                read_occup_collinear_atom(state, occ, iat, l);
-            }
-            ++atom_count;
-        }
-    }
-
-    if (atom_count == 0)
-    {
-        read_occup_fail(state, "the unit cell has no configured DFT+U atom blocks");
-    }
-
-    std::string extra_line;
-    if (read_occup_next_data_line(state, extra_line))
-    {
-        read_occup_fail(state, "unexpected content after the final atom block");
-    }
 }
 
 } // namespace DFTU_BASE
