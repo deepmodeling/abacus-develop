@@ -14,7 +14,7 @@
 namespace
 {
 
-const char* const READ_CONTEXT = "DFTU_BASE::read_occup_m";
+const char* const read_context = "DFTU_BASE::read_occup_m";
 
 struct ReaderState
 {
@@ -37,7 +37,7 @@ struct ReaderState
         os << " at line " << state.line_number;
     }
     os << ": " << message;
-    ModuleBase::WARNING_QUIT(READ_CONTEXT, os.str());
+    ModuleBase::WARNING_QUIT(read_context, os.str());
 }
 
 bool next_data_line(ReaderState& state, std::string& line)
@@ -306,22 +306,9 @@ void validate_reader_configuration(const ReaderState& state,
     }
 }
 
-void report_open_error(const int init_occ_mat,
-                       const std::string& filename,
-                       const std::string& init_chg)
+void report_open_error(const std::string& filename)
 {
-    if (init_occ_mat > 0)
-    {
-        ModuleBase::WARNING_QUIT(READ_CONTEXT,
-                                 "Can not open compact occupation-matrix file " + filename);
-    }
-    if (init_chg == "file")
-    {
-        ModuleBase::WARNING_QUIT(READ_CONTEXT,
-                                 "Can not find the compact occupation-matrix file "
-                                 + filename + ". Please do scf calculation first");
-    }
-    ModuleBase::WARNING_QUIT(READ_CONTEXT,
+    ModuleBase::WARNING_QUIT(read_context,
                              "Can not open compact occupation-matrix file " + filename);
 }
 
@@ -333,9 +320,7 @@ namespace DFTU_BASE
 void read_occup_m(const UnitCell& ucell,
                   OccupationMatrix& occ,
                   const std::vector<int>& l_channel,
-                  const int init_occ_mat,
                   const std::string& fn,
-                  const std::string& init_chg,
                   int nspin,
                   int npol,
                   OccmatSocLayout soc_layout)
@@ -349,7 +334,7 @@ void read_occup_m(const UnitCell& ucell,
     std::ifstream input(fn.c_str());
     if (!input)
     {
-        report_open_error(init_occ_mat, fn, init_chg);
+        report_open_error(fn);
     }
 
     GlobalV::ofs_running << " DFT+U: read occupation matrix from " << fn << std::endl;

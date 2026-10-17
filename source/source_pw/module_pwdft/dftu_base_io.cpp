@@ -425,8 +425,8 @@ void write_snapshot_section(std::ostream& os,
 
     // The PW path has no occupation matrix at istep 0 / iter 1 unless it was
     // loaded from file; record an explicit placeholder instead of a silent
-    // zero matrix. read_occup_m() skips the token like any other non-atom
-    // word, so the file stays parseable on restart.
+    // zero matrix. Such an incomplete snapshot is diagnostic output and is
+    // intentionally rejected by the strict restart reader.
     if (!occmat_ready)
     {
         os << "\n N/A\n";
@@ -637,9 +637,8 @@ void write_occup_m(const Plus_U_Base& dftu,
                     }
                     else
                     {
-                        // Legacy token layout parsed by read_occup_m(); the
-                        // "<Element> <index>" prefix is skipped when scanning
-                        // for "Atom=".
+                        // Legacy diagnostic layout. The compact-only restart
+                        // reader intentionally rejects this representation.
                         ofs << "\n" << elem_label << " " << index_in_type;
                         ofs << " Atom=" << iat + 1;
                         ofs << " L=" << l;
@@ -951,8 +950,8 @@ void write_occup_m(const Plus_U_Base& dftu,
                     }
                     else
                     {
-                        // Real 2m x 2m matrix in spin basis; this is the
-                        // layout parsed by read_occup_m() on restart.
+                        // Legacy real 2m x 2m matrix in spin basis; retained
+                        // for diagnostic output only.
                         for (int m0 = 0; m0 < m; ++m0)
                         {
                             for (int ipol0 = 0; ipol0 < npol; ++ipol0)

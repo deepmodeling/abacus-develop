@@ -181,8 +181,8 @@ void Plus_U_Base::init_base(UnitCell& cell,
                                          + global_readin_dir
                                          + ". Tried: dm_onsite_ini.txt, occ_mat.txt");
             }
-            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel, this->init_occ_mat,
-                                    readin_fn, init_chg, nspin, npol, soc_layout);
+            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
+                                    readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
             DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel, nspin, npol);
 #endif
@@ -213,8 +213,8 @@ void Plus_U_Base::init_base(UnitCell& cell,
                                          + ". Tried: occ_mat.txt. Please do an scf "
                                            "calculation first.");
             }
-            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel, this->init_occ_mat,
-                                    readin_fn, init_chg, nspin, npol, soc_layout);
+            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
+                                    readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
             DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel, nspin, npol);
 #endif
