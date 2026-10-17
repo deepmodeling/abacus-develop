@@ -15,7 +15,7 @@ find_path(LIBRI_DIR
 
 if(NOT LIBRI_DIR)
     if(ENABLE_LIBRI_GPU)
-      message(FATAL_ERROR "ENABLE_LIBRI_GPU requires an explicitly supplied, patched LIBRI_DIR; see tests/lcao_hse_gpu/README.md")
+      message(FATAL_ERROR "ENABLE_LIBRI_GPU requires an explicitly supplied, patched LIBRI_DIR; see docs/advanced/install.md")
     endif()
     include(FetchContent)
     FetchContent_Declare(
@@ -82,7 +82,7 @@ if(LibRI_FOUND AND NOT TARGET LibRI::LibRI)
         if(NOT LIBRI_GPU_API_WORKS)
             message(FATAL_ERROR
                 "LibRI/DDLA GPU compile/link check failed. Supply compatible, patched "
-                "LibRI and CUDA DDLA installations; see tests/lcao_hse_gpu/README.md "
+                "LibRI and CUDA DDLA installations; see docs/advanced/install.md "
                 "and the CMake configure log.")
         endif()
     endif()

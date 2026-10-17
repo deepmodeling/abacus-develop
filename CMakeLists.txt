@@ -72,10 +72,8 @@ option(ENABLE_CNPY "Enable cnpy usage" OFF)
 cmake_dependent_option(ENABLE_ELPA "Enable ELPA eigensolver" ON "ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
-option(ENABLE_LIBRI_GPU "Enable experimental LibRI CUDA contractions through DDLA" OFF)
-if(ENABLE_LIBRI_GPU AND (NOT ENABLE_LIBRI OR NOT USE_CUDA))
-  message(FATAL_ERROR "ENABLE_LIBRI_GPU requires ENABLE_LIBRI and USE_CUDA")
-endif()
+cmake_dependent_option(ENABLE_LIBRI_GPU "Enable experimental LibRI CUDA contractions through DDLA"
+                       OFF "ENABLE_LIBRI;USE_CUDA" OFF)
 cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)

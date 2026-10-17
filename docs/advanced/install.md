@@ -81,6 +81,31 @@ The new EXX implementation directly depends on [LibRI](https://github.com/abacus
 `ENABLE_LIBCOMM` is deprecated because LibComm is not a standalone ABACUS feature. CMake locates it automatically as a dependency of LibRI. If you prefer using manually downloaded libraries, enable LibRI and provide their locations via `-DLIBRI_DIR=/path/to/LibRI` and `-DLIBCOMM_DIR=/path/to/LibComm`.
 ```
 
+Experimental LCAO GPU contractions additionally require `ENABLE_LIBRI_GPU=ON`
+(default OFF), `USE_CUDA=ON`, and a CUDA build of DDLA. Like other dependent
+options, GPU RI is disabled when its LibRI/CUDA prerequisites are disabled.
+With GPU RI compiled in, INPUT `device gpu` selects GPU contractions and
+`device cpu` retains CPU contractions. Otherwise, RI contractions remain on CPU.
+
+The tested combination is LibRI `6ce3c8480ae38a085746dc81cc4dbb59b8074430`
+and DDLA `9c404ac65148ec1b48977b846f38ba6ef9e134f7`. LibRI requires the
+compatibility and force-accumulation fixes in `tests/lcao_hse_gpu/libri-compat.patch`:
+normalize `include/RI/global/gpu/GPU_Backend.h` and
+`include/RI/ri/LRI-cal_loop3_GPU.hpp` to LF, then run
+`git apply --unidiff-zero /path/to/abacus/tests/lcao_hse_gpu/libri-compat.patch`
+from the LibRI source directory. GPU mode requires this explicitly supplied
+LibRI tree; the default CPU dependency download is unchanged.
+
+```bash
+cmake -B build -DENABLE_LIBRI=ON -DUSE_CUDA=ON -DENABLE_LIBRI_GPU=ON \
+  -DLIBRI_DIR=/path/to/patched/LibRI -DDDLA_ROOT=/path/to/DDLA
+```
+
+`CMAKE_PREFIX_PATH` can also locate DDLA. A configure-time compile/link check
+rejects incompatible GPU APIs, but does not validate numerical correctness.
+This experimental backend has additional GPU memory requirements; its temporary
+buffer limit is not a bound on total GPU memory.
+
 ## Build with DFT-D4 support
 
 ABACUS can use the external [DFT-D4](https://github.com/dftd4/dftd4) library for Grimme's DFT-D4 dispersion correction. DFT-D4 support is optional and disabled by default.

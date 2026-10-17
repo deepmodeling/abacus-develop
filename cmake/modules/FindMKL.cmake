@@ -251,19 +251,20 @@ if(MKL_FOUND)
   target_link_libraries(abacus::mkl INTERFACE ${_mkl_base} ${_mkl_runtime})
 
   if(ENABLE_MPI)
-    add_library(abacus::mkl_scalapack INTERFACE IMPORTED GLOBAL)
+    add_library(abacus_mkl_scalapack INTERFACE)
+    add_library(abacus::mkl_scalapack ALIAS abacus_mkl_scalapack)
     target_include_directories(
-      abacus::mkl_scalapack
+      abacus_mkl_scalapack
       INTERFACE
         "${MKL_INCLUDE}"
         "${MKL_FFTW_INCLUDE}")
     if(_mkl_all_static AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
       _mkl_link_group(_mkl_cluster ${MKL_SCALAPACK} ${MKL_BLACS} ${_mkl_base_archives})
       target_link_libraries(
-        abacus::mkl_scalapack INTERFACE ${_mkl_cluster} MPI::MPI_CXX ${_mkl_runtime})
+        abacus_mkl_scalapack INTERFACE ${_mkl_cluster} MPI::MPI_CXX ${_mkl_runtime})
     else()
       target_link_libraries(
-        abacus::mkl_scalapack INTERFACE
+        abacus_mkl_scalapack INTERFACE
           ${MKL_SCALAPACK} ${MKL_BLACS} abacus::mkl MPI::MPI_CXX)
     endif()
     set(MKL_LIBRARIES abacus::mkl_scalapack)
