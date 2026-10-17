@@ -308,7 +308,17 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     // LDA; at q != 0 the GGA response lacks the i(q . f_grad) A carrier
     // term).
 #ifdef __LIBXC
-    const std::vector<double> rho0_r(this->pelec->charge->rho[0], this->pelec->charge->rho[0] + this->pw_rho->nrxx);
+    // kernel linearization point: the ground-state XC density, i.e. valence
+    // plus the nonlinear core correction density when the pseudopotentials
+    // carry one (PotXC_FDM adds chg->rho_core the same way); the first-order
+    // density itself stays valence-only (a frozen core does not respond)
+    const Charge* chg0 = this->pelec->charge;
+    const bool has_core = chg0->rho_core != nullptr;
+    std::vector<double> rho0_r(this->pw_rho->nrxx, 0.0);
+    for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+    {
+        rho0_r[ir] = chg0->rho[0][ir] + (has_core ? chg0->rho_core[ir] : 0.0);
+    }
     xc_adapter_ = new ModuleDFPT::XC_First_Order_Analytic(XC_Functional::get_func_id(),
                                                           XC_Functional::get_func_type(),
                                                           rho0_r,
