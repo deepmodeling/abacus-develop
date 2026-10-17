@@ -172,3 +172,8 @@ Controls, full input/output, per-PID memory traces and UUID mapping snapshot:
 `/mnt/g/work/agent/abacus/lcao-hse-results/multigpu/`.
 Remote archive: `archives/lcao-hse/lcao-multigpu-20261017-1.tar.gz` beneath the
 experiment project root. No runtime code was changed for this test.
+
+Further size-dependent memory and multi-GPU checks (Si16/Si64, job 1832165)
+are documented in [SCALING.md](SCALING.md). They reveal a memory plateau
+between one and two cards for Si64; do not extrapolate the Si32 reduction
+as a universal 1/P law.
