@@ -1,15 +1,15 @@
-#include <fstream>
-#include <iterator>
-#include <string>
-#include <vector>
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "source_base/global_variable.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/relax_nsync.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <fstream>
+#include <iterator>
+#include <string>
+#include <vector>
 
 /************************************************
  *  unit tests of class IonCellOptimizer (relax_nsync.cpp)
@@ -154,9 +154,9 @@ class IonCellOptimizerTest : public ::testing::Test
         inp.calculation = "relax";
         inp.relax_method = "lbfgs";
         inp.relax_nmax = 50;
-        inp.force_thr = 0.1;                          // Ry/Bohr
-        inp.force_thr_ev = 0.1 * 13.6058 / 0.529177;  // eV/Angstrom
-        inp.stress_thr = 0.5;                         // kbar
+        inp.force_thr = 0.1;                         // Ry/Bohr
+        inp.force_thr_ev = 0.1 * 13.6058 / 0.529177; // eV/Angstrom
+        inp.stress_thr = 0.5;                        // kbar
         inp.cal_force = 1;
         inp.cal_stress = 1;
         inp.out_level = "m";
