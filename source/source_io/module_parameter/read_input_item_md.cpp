@@ -212,18 +212,6 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         this->add_item(item);
     }
     {
-        Input_Item item("md_out_force");
-        item.annotation = "output all atomic forces into running_md.log or not";
-        item.category = "Molecular dynamics";
-        item.type = "Boolean";
-        item.description = "Whether to output the TOTAL-FORCE table in OUT.${suffix}/running_md.log for MDCell molecular dynamics. This does not affect force calculation or molecular dynamics integration.";
-        item.default_value = "True";
-        item.unit = "";
-        item.set_availability("");
-        read_sync_bool(input.mdp.md_out_force);
-        this->add_item(item);
-    }
-    {
         Input_Item item("dump_force");
         item.annotation = "output atomic forces into the file MD_dump or not";
         item.category = "Molecular dynamics";

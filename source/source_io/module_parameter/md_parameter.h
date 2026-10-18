@@ -22,7 +22,6 @@ struct MD_para
     int md_thermo_freq = 1;            ///< The period to output MD thermodynamic information
     double md_neighbor_skin = 0.0;     ///< Extra neighbor-list radius in Angstrom for MDCell solvers
     int md_restartfreq = 5;            ///< The period to output MD restart information
-    bool md_out_force = false;         ///< output all atomic forces into running_md.log
     int md_seed = -1;                  ///< random seed for MD
     int md_prec_level = 0;             ///< precision level for vc-md
 

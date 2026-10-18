@@ -416,7 +416,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_pmode, "iso");
     EXPECT_EQ(param.inp.mdp.md_restart, 0);
     EXPECT_EQ(param.inp.mdp.md_restartfreq, 5);
-    EXPECT_FALSE(param.inp.mdp.md_out_force);
     EXPECT_FALSE(param.inp.mdp.plumed);
     EXPECT_EQ(param.inp.mdp.plumed_file, "plumed.dat");
     EXPECT_EQ(param.inp.mdp.md_seed, -1);

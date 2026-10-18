@@ -2236,7 +2236,6 @@ TEST_F(InputTest, Item_test2)
         it->second.str_values = {"100"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).mdp.md_thermo_freq, 100);
-        EXPECT_FALSE(TestParameters::input(param).mdp.md_out_force);
     }
     { // md_prec_level
         auto it = find_label("md_prec_level", readinput.input_lists);

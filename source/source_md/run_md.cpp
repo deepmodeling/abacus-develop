@@ -253,8 +253,7 @@ void md_line(MDCell& mdcell,
                                   decomp,
                                   mdrun->potential,
                                   param_in.inp.cal_stress,
-                                  mdrun->virial,
-                                  param_in.mdp.md_out_force);
+                                  mdrun->virial);
 
             if (plumed.active())
             {
