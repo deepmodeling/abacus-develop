@@ -64,4 +64,71 @@ endif()
 
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${DeePMD_INCLUDE_DIR})
 
+include(CheckCXXSourceCompiles)
+if(DeePMD_FOUND)
+    # The communication constructor is inline and calls into the DeePMD
+    # library, so the feature probe must link against the selected API library.
+    set(_abacus_saved_required_libraries ${CMAKE_REQUIRED_LIBRARIES})
+    if(DeePMDC_FOUND)
+        set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${deepmd_c})
+    else()
+        set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${deepmd_cc})
+    endif()
+    if(DeePMDC_FOUND)
+        set(_abacus_dp_nlist_type "deepmd::hpp::InputNlist")
+        set(_abacus_dp_nlist_header "#include <deepmd/deepmd.hpp>")
+    else()
+        set(_abacus_dp_nlist_type "deepmd::InputNlist")
+        set(_abacus_dp_nlist_header "#include <deepmd/DeepPot.h>")
+    endif()
+    check_cxx_source_compiles(
+        "${_abacus_dp_nlist_header}
+         int main()
+         {
+             ${_abacus_dp_nlist_type} nlist(0, nullptr, nullptr, nullptr,
+                                            0, nullptr, nullptr, nullptr,
+                                            nullptr, nullptr, nullptr, nullptr, 1);
+             return 0;
+         }"
+        DeePMD_HAS_COMM_NLIST_13)
+    if(DeePMD_HAS_COMM_NLIST_13)
+        set(DeePMD_INPUT_NLIST_COMM_ARGS 13)
+    else()
+        check_cxx_source_compiles(
+            "${_abacus_dp_nlist_header}
+             int main()
+             {
+                 ${_abacus_dp_nlist_type} nlist(0, nullptr, nullptr, nullptr,
+                                                0, nullptr, nullptr, nullptr,
+                                                nullptr, nullptr, nullptr, nullptr);
+                 return 0;
+             }"
+            DeePMD_HAS_COMM_NLIST_12)
+        if(DeePMD_HAS_COMM_NLIST_12)
+            set(DeePMD_INPUT_NLIST_COMM_ARGS 12)
+        else()
+            set(DeePMD_INPUT_NLIST_COMM_ARGS 0)
+        endif()
+    endif()
+    check_cxx_source_compiles(
+        "${_abacus_dp_nlist_header}
+         int main()
+         {
+             ${_abacus_dp_nlist_type} nlist(0, nullptr, nullptr, nullptr);
+             nlist.set_mapping(nullptr);
+             return 0;
+         }"
+        DeePMD_HAS_NLIST_MAPPING)
+    set(CMAKE_REQUIRED_LIBRARIES ${_abacus_saved_required_libraries})
+    unset(_abacus_saved_required_libraries)
+    unset(_abacus_dp_nlist_type)
+    unset(_abacus_dp_nlist_header)
+endif()
+
+if(DeePMD_FOUND AND DEFINED DeePMD_INPUT_NLIST_COMM_ARGS AND DeePMD_INPUT_NLIST_COMM_ARGS EQUAL 0)
+    message(WARNING
+        "The installed DeePMD API has no communication-capable InputNlist constructor; "
+        "message-passing MDCell support requires a newer DeePMD-kit API.")
+endif()
+
 mark_as_advanced(DeePMD_INCLUDE_DIR deepmd_c deepmd_cc)

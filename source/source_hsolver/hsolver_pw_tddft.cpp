@@ -441,6 +441,26 @@ void HSolverPWTDDFT<T, Device>::cal_band_energy(HSOperator<T, Device>& op, const
 }
 
 template <typename T, typename Device>
+std::vector<std::complex<double>> HSolverPWTDDFT<T, Device>::cal_eij(HSOperator<T, Device>& op,
+                                                                     const psi::Psi<T, Device>& current,
+                                                                     const int ik)
+{
+    ModuleBase::timer::start("HSolverPWTDDFT", "cal_eij");
+    const int nband = current.get_nbands();
+    const int ld = current.get_nbasis();
+    const int dim = current.get_ngk(ik);
+    prepare_buffers(nband, ld);
+    op.update_k(ik);
+    current.fix_k(ik);
+    const T* psi = current.get_pointer();
+    T* hpsi = hpsi_.template data<T>();
+    op.hpsi(psi, hpsi, ld, nband);
+    std::vector<std::complex<double>> result = algebra_.cross(ld, dim, nband, nband, psi, hpsi);
+    ModuleBase::timer::end("HSolverPWTDDFT", "cal_eij");
+    return result;
+}
+
+template <typename T, typename Device>
 void HSolverPWTDDFT<T, Device>::reset_orth_stats()
 {
     if (options_.out_stat)
