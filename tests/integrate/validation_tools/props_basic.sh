@@ -51,8 +51,55 @@ fi
 #----------------------------
 if ! test -z "$has_force" && [ $has_force == 1 ]; then
 	nn3=`echo "$natom + 3" |bc`
-    # check the last step result
-    grep -A$nn3 "TOTAL-FORCE" $running_path |awk 'NF==4{print $2,$3,$4}' | tail -$natom > force.txt
+    # MD atomic forces are stored in the last MD_dump frame.  They are no
+    # longer printed in running_md.log, which is reserved for scalar
+    # thermodynamic information.  Keep the running-log path for non-MD
+    # calculations and for legacy outputs that have no trajectory dump.
+    if [ "$calculation" == "md" ] && [ -f OUT.autotest/MD_dump ]; then
+        awk -v natom="$natom" '
+            function reset_frame() {
+                in_atoms = 0
+                atom_count = 0
+                last_count = 0
+                delete force_x
+                delete force_y
+                delete force_z
+            }
+            /^MDSTEP:/ {
+                reset_frame()
+                next
+            }
+            /^INDEX[[:space:]]+LABEL[[:space:]]+POSITION.*FORCE/ {
+                in_atoms = 1
+                atom_count = 0
+                delete force_x
+                delete force_y
+                delete force_z
+                next
+            }
+            in_atoms && $1 ~ /^[0-9]+$/ && NF >= 8 {
+                atom_count++
+                force_x[atom_count] = $6
+                force_y[atom_count] = $7
+                force_z[atom_count] = $8
+                if (atom_count == natom) {
+                    last_count = atom_count
+                    in_atoms = 0
+                }
+            }
+            END {
+                if (last_count != natom) {
+                    exit 1
+                }
+                for (iat = 1; iat <= last_count; ++iat) {
+                    print force_x[iat], force_y[iat], force_z[iat]
+                }
+            }
+        ' OUT.autotest/MD_dump > force.txt
+    else
+        # Check the last step result for non-MD calculations.
+        grep -A$nn3 "TOTAL-FORCE" $running_path | awk 'NF==4{print $2,$3,$4}' | tail -$natom > force.txt
+    fi
 	total_force=`sum_file force.txt`
     rm force.txt
 	echo "totalforceref $total_force" >>$props_result_file
