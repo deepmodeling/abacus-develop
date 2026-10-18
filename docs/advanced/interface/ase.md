@@ -27,7 +27,8 @@ python -m pip install abacuslite
 
 `abacuslite` owns the Python calculator, ABACUS input/output readers and user
 examples. The ABACUS repository keeps only the engine-side compatibility
-harness in [`interfaces/ASE_interface/tests`](../../../interfaces/ASE_interface/README.md).
+harness in
+[`interfaces/ASE_interface/tests`](https://github.com/deepmodeling/abacus-develop/tree/develop/interfaces/ASE_interface/tests).
 ABACUS CI installs the published plugin, or a reviewed candidate ref, and runs
 that harness against the executable built from the current source. Manual CI
 dispatch can select the candidate ref.
