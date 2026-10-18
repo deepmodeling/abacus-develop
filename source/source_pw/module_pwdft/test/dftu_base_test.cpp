@@ -909,6 +909,8 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsShortMatrixRow)
         ofs << "Fe Atom 1 L 2 mag 0.0\n";
         ofs << "spin 1 nelec 0.5\n";
         write_constant_matrix(ofs, 5, 0.1, 4);
+        ofs << "spin 2 nelec 0.5\n";
+        write_constant_matrix(ofs, 5, 0.2, 5);
     }
     const std::vector<int> l_channel = {2};
     OccupationMatrix occ;
@@ -933,6 +935,8 @@ TEST_F(DFTUBaseTest, ReadOccMatRejectsLongMatrixRow)
         ofs << "Fe Atom 1 L 2 mag 0.0\n";
         ofs << "spin 1 nelec 0.5\n";
         write_constant_matrix(ofs, 5, 0.1, 6);
+        ofs << "spin 2 nelec 0.5\n";
+        write_constant_matrix(ofs, 5, 0.2, 5);
     }
     const std::vector<int> l_channel = {2};
     OccupationMatrix occ;
