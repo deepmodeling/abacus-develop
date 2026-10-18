@@ -61,8 +61,8 @@ source data produces an error.
 With MPI and LibXC enabled, substitute your configured executable/build paths:
 
 ```bash
-cmake --build build --target MODULE_ESOLVER_pw_hybrid_source
-OMP_NUM_THREADS=1 ctest --test-dir build -R '^MODULE_ESOLVER_pw_hybrid_source$'
+cmake --build build --target MODULE_PW_pw_hybrid_source
+OMP_NUM_THREADS=1 ctest --test-dir build -R '^MODULE_PW_pw_hybrid_source$'
 # Frozen-source band regressions: tests/01_PW/nscf_hse_same and nscf_hse_path
 cd tests/01_PW
 OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a <abacus> -r '^nscf_hse'

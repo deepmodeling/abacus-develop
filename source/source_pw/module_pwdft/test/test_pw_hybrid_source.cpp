@@ -1,4 +1,4 @@
-#include "source_esolver/pw_hybrid_source.h"
+#include "source_pw/module_pwdft/pw_hybrid_source.h"
 #include "source_base/matrix.h"
 
 #include "gtest/gtest.h"
@@ -10,10 +10,10 @@
 
 namespace
 {
-std::vector<ModuleESolver::ExxSourceHeader> source_headers(int nspin)
+std::vector<pw::ExxSourceHeader> source_headers(int nspin)
 {
     const int nks = nspin == 2 ? 4 : 2;
-    std::vector<ModuleESolver::ExxSourceHeader> headers(nks);
+    std::vector<pw::ExxSourceHeader> headers(nks);
     for (int iq = 0; iq < nks; ++iq)
     {
         auto& header = headers[iq];
@@ -51,7 +51,7 @@ TEST(PWHybridSource, ReadsExistingWeightedOccupationsForBothSpins)
         const auto headers = source_headers(nspin);
         std::istringstream in(eig_occ(nspin));
         ModuleBase::matrix weights;
-        ModuleESolver::read_exx_source_occupations(in, headers, nspin, weights);
+        pw::read_exx_source_occupations(in, headers, nspin, weights);
         EXPECT_EQ(weights.nr, headers.size());
         EXPECT_EQ(weights.nc, 3);
         EXPECT_DOUBLE_EQ(weights(1, 1), headers[1].weight * 0.125);
@@ -64,15 +64,15 @@ TEST(PWHybridSource, RejectsInvalidExistingOccupationFiles)
     ModuleBase::matrix weights;
     const std::string saved = eig_occ(1);
     std::istringstream truncated(saved.substr(0, saved.size() - 6));
-    EXPECT_THROW(ModuleESolver::read_exx_source_occupations(truncated, headers, 1, weights), std::runtime_error);
+    EXPECT_THROW(pw::read_exx_source_occupations(truncated, headers, 1, weights), std::runtime_error);
     std::istringstream trailing(saved + saved);
-    EXPECT_THROW(ModuleESolver::read_exx_source_occupations(trailing, headers, 1, weights), std::runtime_error);
+    EXPECT_THROW(pw::read_exx_source_occupations(trailing, headers, 1, weights), std::runtime_error);
     std::istringstream wrong_spin(saved);
-    EXPECT_THROW(ModuleESolver::read_exx_source_occupations(wrong_spin, headers, 2, weights), std::runtime_error);
+    EXPECT_THROW(pw::read_exx_source_occupations(wrong_spin, headers, 2, weights), std::runtime_error);
     auto changed = headers;
     changed[1].kvec_c[0] += 0.1;
     std::istringstream wrong_coordinates(saved);
-    EXPECT_THROW(ModuleESolver::read_exx_source_occupations(wrong_coordinates, changed, 1, weights), std::runtime_error);
+    EXPECT_THROW(pw::read_exx_source_occupations(wrong_coordinates, changed, 1, weights), std::runtime_error);
     std::string invalid = saved;
     invalid.replace(invalid.find("0.125"), 5, "-0.25");
     std::istringstream negative(invalid);
@@ -80,7 +80,7 @@ TEST(PWHybridSource, RejectsInvalidExistingOccupationFiles)
     {
         // A negative occupation is what a Methfessel-Paxton source can produce; the
         // diagnostic must name the unsupported smearing rather than report invalid data.
-        ModuleESolver::read_exx_source_occupations(negative, headers, 1, weights);
+        pw::read_exx_source_occupations(negative, headers, 1, weights);
         FAIL() << "Expected std::runtime_error";
     }
     catch (const std::runtime_error& error)
@@ -101,7 +101,7 @@ TEST(PWHybridSource, RejectsDifferentMeshesInSpinChannels)
     saved.replace(location, original.size(), "spin=2 k-point=1/2 Cartesian=0.2");
     std::istringstream in(saved);
     ModuleBase::matrix weights;
-    EXPECT_THROW(ModuleESolver::read_exx_source_occupations(in, headers, 2, weights), std::runtime_error);
+    EXPECT_THROW(pw::read_exx_source_occupations(in, headers, 2, weights), std::runtime_error);
 }
 
 TEST(PWHybridSource, ReadsExistingBinaryWavefunctionHeader)
@@ -135,13 +135,13 @@ TEST(PWHybridSource, ReadsExistingBinaryWavefunctionHeader)
     std::string saved = out.str();
     saved.resize(160 + 8 + 12 * npw + nbands * (8 + 16 * npw), '\0');
     std::istringstream in(saved, std::ios::binary);
-    const auto header = ModuleESolver::read_exx_source_header(in);
+    const auto header = pw::read_exx_source_header(in);
     EXPECT_EQ(header.nbands, 3);
     EXPECT_DOUBLE_EQ(header.kvec_c[0], coordinate);
     EXPECT_DOUBLE_EQ(header.weight, weight);
     std::istringstream truncated(saved.substr(0, saved.size() - 1), std::ios::binary);
-    EXPECT_THROW(ModuleESolver::read_exx_source_header(truncated), std::runtime_error);
+    EXPECT_THROW(pw::read_exx_source_header(truncated), std::runtime_error);
     saved[0] = 0;
     std::istringstream invalid(saved, std::ios::binary);
-    EXPECT_THROW(ModuleESolver::read_exx_source_header(invalid), std::runtime_error);
+    EXPECT_THROW(pw::read_exx_source_header(invalid), std::runtime_error);
 }

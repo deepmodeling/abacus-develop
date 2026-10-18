@@ -22,7 +22,7 @@ void read_binary(std::istream& in, T& value)
 }
 }
 
-ModuleESolver::ExxSourceHeader ModuleESolver::read_exx_source_header(std::istream& in)
+pw::ExxSourceHeader pw::read_exx_source_header(std::istream& in)
 {
     ExxSourceHeader header{};
     int record = 0;
@@ -68,7 +68,7 @@ ModuleESolver::ExxSourceHeader ModuleESolver::read_exx_source_header(std::istrea
     return header;
 }
 
-void ModuleESolver::read_exx_source_occupations(std::istream& in,
+void pw::read_exx_source_occupations(std::istream& in,
                                               const std::vector<ExxSourceHeader>& headers,
                                               int nspin,
                                               ModuleBase::matrix& weights)

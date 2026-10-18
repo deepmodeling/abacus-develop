@@ -336,8 +336,6 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_of_tool.o\
     esolver_dfpt_pw.o\
     pw_others.o\
-    pw_hybrid_nscf.o\
-    pw_hybrid_source.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
@@ -374,6 +372,8 @@ OBJS_GINT=batch_biggrid.o\
       unitcell_info.o\
 
 OBJS_HAMILT=hamilt_pw.o\
+    pw_hybrid_nscf.o\
+    pw_hybrid_source.o\
     td_history_pw.o\
     td_pw.o\
     hs_matrix_k.o\

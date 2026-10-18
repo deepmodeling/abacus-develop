@@ -92,3 +92,9 @@ AddTest(
 	../../../source_cell/cal_nelec_nband.cpp
 	../../../source_cell/read_orb.cpp
 )
+
+AddTest(
+  TARGET MODULE_PW_pw_hybrid_source
+  LIBS base device
+  SOURCES test_pw_hybrid_source.cpp ../pw_hybrid_source.cpp
+)

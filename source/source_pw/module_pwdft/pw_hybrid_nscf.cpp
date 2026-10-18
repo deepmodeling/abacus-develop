@@ -1,10 +1,14 @@
 #include "pw_hybrid_nscf.h"
-#include "esolver_ks_pw.h"
 #include "pw_hybrid_source.h"
 #include "source_io/module_wf/read_wfc_pw.h"
 #include "source_base/module_out/filename.h"
 #include "source_hamilt/module_xc/general_exx_info.h"
-#include "source_pw/module_pwdft/exx_helper.h"
+#include "source_pw/module_pwdft/op_pw_exx.h"
+#include "source_cell/unitcell.h"
+#include "source_io/module_parameter/input_parameter.h"
+#include "source_base/parallel_device.h"
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 
 #include <algorithm>
 #include <cctype>
@@ -15,7 +19,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace ModuleESolver
+namespace pw
 {
 namespace
 {
@@ -131,7 +135,7 @@ void warn_source_configuration(const Input_para& inp, const std::string& readin_
     {
         if (!saved.count(item.first))
         {
-            ModuleBase::WARNING("ESolver_KS_PW", "EXX source configuration is incomplete or unavailable in INPUT.info; "
+            ModuleBase::WARNING("PW_Hybrid_NSCF", "EXX source configuration is incomplete or unavailable in INPUT.info; "
                 "continuing with existing wavefunctions and eig_occ.txt. Verify the source SCF settings.");
             return;
         }
@@ -166,7 +170,7 @@ void warn_source_configuration(const Input_para& inp, const std::string& readin_
             const std::string message = "EXX source configuration differs for " + item.first
                 + "; continuing with the frozen SCF source and current NSCF exchange settings. "
                   "Use matching settings for consistent SCF/NSCF bands.";
-            ModuleBase::WARNING("ESolver_KS_PW", message);
+            ModuleBase::WARNING("PW_Hybrid_NSCF", message);
         }
     }
 }
@@ -202,7 +206,7 @@ void validate_hybrid_nscf(const Input_para& inp, const General_Exx_Info& info)
     const bool compatible_targets = inp.symmetry != "1" && inp.init_wfc != "file" && !inp.cal_force && !inp.cal_stress;
     if (!compatible_execution || !compatible_exchange || !compatible_targets)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW",
+        ModuleBase::WARNING_QUIT("PW_Hybrid_NSCF",
             "Hybrid NSCF currently requires CPU or CUDA GPU, kpar=bndpar=1, nspin=1/2, symmetry=-1/0, "
             "exxace=false, exx_gamma_extra=false, screened exchange, "
             "cal_force=cal_stress=false and fresh target wavefunctions");
@@ -213,10 +217,10 @@ template <typename T, typename Device>
 void prepare_exx_nscf(const Input_para& inp,
                       const UnitCell& ucell,
                       const ModulePW::PW_Basis_K* pw_wfc,
-                      Exx_HelperBase* exx_helper,
+                      hamilt::OperatorEXXPW<T, Device>& op_exx,
                       const std::string& readin_dir)
 {
-    ModuleBase::timer::start("ESolver_KS_PW", "prepare_exx_nscf");
+    ModuleBase::timer::start("PW_Hybrid_NSCF", "prepare_exx_nscf");
     std::unique_ptr<K_Vectors> source_points(new K_Vectors);
     ModuleBase::matrix source_weights;
     warn_source_configuration(inp, readin_dir);
@@ -274,7 +278,7 @@ void prepare_exx_nscf(const Input_para& inp,
     }
     catch (const std::exception& error)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW", error.what());
+        ModuleBase::WARNING_QUIT("PW_Hybrid_NSCF", error.what());
     }
     const int nqs = source_points->get_nks();
     int nq = source_points->get_nkstot_nospin();
@@ -313,7 +317,7 @@ void prepare_exx_nscf(const Input_para& inp,
         }
         catch (const std::exception& error)
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_PW", error.what());
+            ModuleBase::WARNING_QUIT("PW_Hybrid_NSCF", error.what());
         }
         ModuleBase::ComplexMatrix wfc(nbands, nbasis);
         ModuleIO::read_wfc_pw(wfc_filename, source_basis.get(), pw_wfc->poolrank,
@@ -330,21 +334,24 @@ void prepare_exx_nscf(const Input_para& inp,
         base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
             source_psi->get_pointer(), coefficients.data(), coefficients.size());
     }
-    auto* helper = static_cast<Exx_Helper<T, Device>*>(exx_helper);
-    helper->op_exx->set_source(std::move(source_basis), std::move(source_points),
+    op_exx.set_source(std::move(source_basis), std::move(source_points),
         *source_psi, std::move(source_weights));
-    ModuleBase::timer::end("ESolver_KS_PW", "prepare_exx_nscf");
+    ModuleBase::timer::end("PW_Hybrid_NSCF", "prepare_exx_nscf");
 }
 
 
 template void prepare_exx_nscf<std::complex<float>, base_device::DEVICE_CPU>(
-    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*, Exx_HelperBase*, const std::string&);
+    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*,
+    hamilt::OperatorEXXPW<std::complex<float>, base_device::DEVICE_CPU>&, const std::string&);
 template void prepare_exx_nscf<std::complex<double>, base_device::DEVICE_CPU>(
-    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*, Exx_HelperBase*, const std::string&);
+    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*,
+    hamilt::OperatorEXXPW<std::complex<double>, base_device::DEVICE_CPU>&, const std::string&);
 #if defined(__CUDA) || defined(__ROCM)
 template void prepare_exx_nscf<std::complex<float>, base_device::DEVICE_GPU>(
-    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*, Exx_HelperBase*, const std::string&);
+    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*,
+    hamilt::OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>&, const std::string&);
 template void prepare_exx_nscf<std::complex<double>, base_device::DEVICE_GPU>(
-    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*, Exx_HelperBase*, const std::string&);
+    const Input_para&, const UnitCell&, const ModulePW::PW_Basis_K*,
+    hamilt::OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>&, const std::string&);
 #endif
-} // namespace ModuleESolver
+} // namespace pw

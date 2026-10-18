@@ -9,7 +9,7 @@ namespace ModuleBase
 class matrix;
 }
 
-namespace ModuleESolver
+namespace pw
 {
 // Metadata already present in the existing binary PW wavefunction format.
 struct ExxSourceHeader

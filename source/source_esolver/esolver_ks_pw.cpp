@@ -1,5 +1,5 @@
 #include "esolver_ks_pw.h"
-#include "pw_hybrid_nscf.h"
+#include "source_pw/module_pwdft/pw_hybrid_nscf.h"
 
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/module_charge/chg_symm.h"
@@ -83,7 +83,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
 
     ESolver_KS::before_all_runners(ucell, inp);
 
-    validate_hybrid_nscf(inp, this->general_exx_info_);
+    pw::validate_hybrid_nscf(inp, this->general_exx_info_);
 
     //! setup and allocation for pelec, potentials, etc.
     elecstate::setup_estate_pw(ucell,
@@ -200,7 +200,8 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     {
         const Input_para& inp = *this->inp_;
         const std::string& readin_dir = PARAM.globalv.global_readin_dir;
-        ModuleESolver::prepare_exx_nscf<T, Device>(inp, ucell, this->pw_wfc, this->exx_helper, readin_dir);
+        auto* helper = static_cast<Exx_Helper<T, Device>*>(this->exx_helper);
+        pw::prepare_exx_nscf<T, Device>(inp, ucell, this->pw_wfc, *helper->op_exx, readin_dir);
     }
 
     ModuleBase::timer::end("ESolver_KS_PW", "before_scf");

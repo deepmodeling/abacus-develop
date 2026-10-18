@@ -2,6 +2,8 @@
 
 list(APPEND objects
     hamilt_pw.cpp
+    pw_hybrid_nscf.cpp
+    pw_hybrid_source.cpp
     td_history_pw.cpp
     td_pw.cpp
     op_pw_ekin.cpp
