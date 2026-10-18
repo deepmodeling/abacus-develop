@@ -124,6 +124,11 @@ static bool read_occup_data_line(OccMatReadState& state, std::string& line)
         {
             continue;
         }
+        const std::string::size_type comment = line.find('#', first);
+        if (comment != std::string::npos)
+        {
+            line.erase(comment);
+        }
         return true;
     }
     return false;

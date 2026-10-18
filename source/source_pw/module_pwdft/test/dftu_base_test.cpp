@@ -113,7 +113,8 @@ namespace
 void write_constant_matrix(std::ostream& os,
                            const int size,
                            const double value,
-                           const int first_row_columns)
+                           const int first_row_columns,
+                           const bool inline_comment = false)
 {
     for (int row = 0; row < size; ++row)
     {
@@ -123,6 +124,10 @@ void write_constant_matrix(std::ostream& os,
         for (int column = 0; column < columns; ++column)
         {
             os << " " << value;
+        }
+        if (inline_comment)
+        {
+            os << " # matrix row";
         }
         os << "\n";
     }
@@ -819,7 +824,11 @@ TEST_F(DFTUBaseTest, ReadOccMatCompactHandlesLongComment)
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());
         ofs << "# " << std::string(300, 'x') << "\n";
-        write_compact_collinear_body(ofs);
+        ofs << "Fe Atom 1 L 2 mag 0.0 # atom header\n";
+        ofs << "spin 1 nelec 0.5 # spin header\n";
+        write_constant_matrix(ofs, 5, 0.1, 5, true);
+        ofs << "spin 2 nelec 0.5 # spin header\n";
+        write_constant_matrix(ofs, 5, 0.2, 5, true);
     }
 
     const std::vector<int> l_channel = {2};
