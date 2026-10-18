@@ -77,6 +77,7 @@
 @@ -2681 +2681 @@
 -					rDs_output.download(Ds_result, queue);
 +					rDs_output.download(Ds_result_thread, queue);
-@@ -2693 +2693 @@
+@@ -2693 +2693,2 @@
 -	LRI_Cal_Aux::destroy_lock_result(lock_Ds_result_add_map, Ds_result);
-+	LRI_Cal_Aux::destroy_lock(lock_Ds_result_add_map); LRI_Cal_Aux::destroy_Ds_result(Ds_result);
++	LRI_Cal_Aux::destroy_lock(lock_Ds_result_add_map);
++	LRI_Cal_Aux::destroy_Ds_result(Ds_result);

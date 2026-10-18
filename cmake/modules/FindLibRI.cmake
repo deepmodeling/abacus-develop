@@ -15,7 +15,9 @@ find_path(LIBRI_DIR
 
 if(NOT LIBRI_DIR)
     if(ENABLE_LIBRI_GPU)
-      message(FATAL_ERROR "ENABLE_LIBRI_GPU requires an explicitly supplied, patched LIBRI_DIR; see docs/advanced/install.md")
+        message(FATAL_ERROR
+            "ENABLE_LIBRI_GPU requires an explicitly supplied, patched LIBRI_DIR; "
+            "see docs/advanced/install.md")
     endif()
     include(FetchContent)
     FetchContent_Declare(
