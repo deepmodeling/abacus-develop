@@ -193,6 +193,15 @@ class XC_Functional
     public:
     static std::vector<int> get_func_id() { return func_id; }
 
+    /// signed combination weight of a functional component id (1.0 when
+    /// the functional is not in the scaling table), e.g. BLYP_LR
+    /// subtracts its short-range components
+    static double get_weight(const int id)
+    {
+        const auto it = scaling_factor_xc.find(id);
+        return it != scaling_factor_xc.end() ? it->second : 1.0;
+    }
+
 //-------------------
 //  xc_lda_wrap.cpp
 //-------------------
