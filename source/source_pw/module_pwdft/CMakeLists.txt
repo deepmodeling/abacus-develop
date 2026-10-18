@@ -31,7 +31,7 @@ endif()
 list(APPEND objects
     dftu_base.cpp
     dftu_base_io.cpp
-    dftu_base_read.cpp
+    dftu_base_io_read.cpp
     dftu_pw.cpp
     dftu_pw_tools.cpp
     yukawa_screening.cpp
