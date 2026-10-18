@@ -13,15 +13,20 @@
 #include "source_base/macros.h"
 #include "source_base/math_polyint.h"
 #include "source_base/tool_quit.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
+#ifdef __LIBXC
+#include "source_pw/module_dfpt/dfpt_xc_analytic.h"
+#endif
 
 #include <cmath>
 #include <complex>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 namespace {
@@ -296,9 +301,52 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
         veff_r[ir] = veff_smooth(0, ir);
     }
 
-    // first-order XC kernel adapter around the converged ground-state density
+    // input guard: the first-order XC kernel supports LDA (1) and GGA (2)
+    // only. Meta-GGA needs the tau channel (absent in both kernel paths),
+    // and hybrid functionals need the exact-exchange response -- neither
+    // exists yet, so reject them explicitly instead of producing silently
+    // wrong frequencies.
+    const int xc_func_type = XC_Functional::get_func_type();
+    if (xc_func_type != 1 && xc_func_type != 2)
+    {
+        std::stringstream msg;
+        msg << "DFPT supports LDA/GGA functionals only; the ground-state functional '"
+            << ucell.atoms[0].ncpp.xc_func << "' (func_type " << xc_func_type
+            << ") needs response channels that are not implemented";
+        ModuleBase::WARNING_QUIT("ESolver_DFPT_PW::init_dfpt", msg.str());
+    }
+
+    // first-order XC kernel around the converged ground-state density:
+    // with libxc use the analytic kernel (libxc second derivatives in the
+    // dgradcorr form; the gradient operator acts as i(G + q) on the
+    // physical carrier, so the GGA response is exact at any q); without
+    // libxc fall back to the amplitude-grid finite differences (exact for
+    // LDA; at q != 0 the GGA response lacks the i(q . f_grad) A carrier
+    // term).
+#ifdef __LIBXC
+    // kernel linearization point: the ground-state XC density, i.e. valence
+    // plus the nonlinear core correction density when the pseudopotentials
+    // carry one (PotXC_FDM adds chg->rho_core the same way); the first-order
+    // density itself stays valence-only (a frozen core does not respond)
+    const Charge* chg0 = this->pelec->charge;
+    const bool has_core = chg0->rho_core != nullptr;
+    std::vector<double> rho0_r(this->pw_rho->nrxx, 0.0);
+    for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+    {
+        rho0_r[ir] = chg0->rho[0][ir] + (has_core ? chg0->rho_core[ir] : 0.0);
+    }
+    xc_adapter_ = new ModuleDFPT::XC_First_Order_Analytic(XC_Functional::get_func_id(),
+                                                          XC_Functional::get_func_type(),
+                                                          rho0_r,
+                                                          this->pw_rho);
+#else
+    ModuleBase::WARNING("ESolver_DFPT_PW::init_dfpt",
+                        "built without libxc: the DFPT XC kernel falls back to the finite-difference "
+                        "amplitude path (LDA-only support; the GGA response at q != 0 lacks the "
+                        "i(q.f_grad)A carrier term)");
     xc_adapter_ = new XC_First_Order_FDM(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
                  this->inp_->out_elf[0] > 0, this->inp_->test_charge, this->pw_rho, this->pelec->charge, &ucell);
+#endif
 
     if (getenv("DFPT_VKB") != nullptr)
     {
