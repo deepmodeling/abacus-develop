@@ -1,0 +1,4 @@
+Two-step LDA BeH2 degenerate-subspace average (2 -> 2); requires LibXC KXC.
+Checks dimensions, projection weight, singular values and finite energies/forces.
+The coarse 5 Ry grid and SCF threshold 1e-6 test state following, not converged
+energies or gradients. abs_gauge=none skips optical postprocessing.

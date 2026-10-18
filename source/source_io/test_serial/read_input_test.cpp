@@ -212,26 +212,33 @@ TEST_F(InputTest, RejectAutoDevice)
     EXPECT_TRUE(std::remove("./auto_device_INPUT") == 0);
 }
 
-TEST_F(InputTest, ValidateRelaxMethodVariants)
+TEST_F(InputTest, ValidateRelaxMethodScalar)
 {
-    Parameter cg_param;
-    EXPECT_NO_THROW(read_parameters("relax_cg_INPUT", "relax_method cg\n", cg_param));
-    EXPECT_EQ(cg_param.inp.relax_method, (std::vector<std::string>{"cg", "2"}));
-    EXPECT_TRUE(cg_param.inp.uses_simultaneous_relaxation());
+    for (const std::string method : {"cg", "cg_trad", "bfgs", "bfgs_trad", "sd", "cg_bfgs", "lbfgs"})
+    {
+        Parameter param;
+        EXPECT_NO_THROW(read_parameters("relax_scalar_INPUT", "relax_method " + method + " # comment\n", param));
+        EXPECT_EQ(param.inp.relax_method, method);
+        EXPECT_EQ(param.inp.uses_simultaneous_relaxation(), method == "cg");
 
-    Parameter bfgs_default_param;
-    EXPECT_NO_THROW(read_parameters("relax_bfgs_default_INPUT", "relax_method bfgs\n", bfgs_default_param));
-    EXPECT_EQ(bfgs_default_param.inp.relax_method, (std::vector<std::string>{"bfgs", "2"}));
-    EXPECT_FALSE(bfgs_default_param.inp.uses_simultaneous_relaxation());
-
-    Parameter bfgs_one_param;
-    EXPECT_NO_THROW(read_parameters("relax_bfgs_one_INPUT", "relax_method bfgs 1\n", bfgs_one_param));
-    EXPECT_EQ(bfgs_one_param.inp.relax_method, (std::vector<std::string>{"bfgs", "1"}));
-
-    expect_invalid_input("relax_bad_variant_INPUT", "relax_method cg 3\n", "the CG variant must be 1 or 2");
-    expect_invalid_input("relax_irrelevant_variant_INPUT",
-                         "relax_method sd 1\n",
-                         "relax_method sd does not accept a second value");
+        const std::string output = testing::TempDir() + "relax_scalar_roundtrip_INPUT";
+        ModuleIO::ReadInput writer(0);
+        writer.write_parameters(param, output);
+        ModuleIO::ReadInput reader(0);
+        reader.check_ntype_flag = false;
+        Parameter restored;
+        EXPECT_NO_THROW(reader.read_parameters(restored, output));
+        EXPECT_EQ(restored.inp.relax_method, method);
+        EXPECT_EQ(std::remove(output.c_str()), 0);
+    }
+    const std::string invalid_method_message
+        = "relax_method requires exactly one scalar option. "
+          "The parameter relax_method must be 'cg', 'cg_trad', 'bfgs', 'bfgs_trad', 'sd', 'cg_bfgs' or 'lbfgs'!";
+    for (const std::string invalid : {"", "none", "cg 1", "cg 2", "bfgs 1", "bfgs 2", "sd 1", "cg_trad 1", "cg 2 extra"})
+    {
+        expect_invalid_input("relax_invalid_INPUT", "relax_method " + invalid + "\n",
+                             invalid_method_message);
+    }
     expect_invalid_input("relax_new_removed_INPUT", "relax_new 1\n", "THE PARAMETER NAME 'relax_new' IS INCORRECT");
 }
 
@@ -325,6 +332,24 @@ TEST_F(InputTest, ValidateLrRequiresNscf)
     EXPECT_EQ(valid_param.inp.calculation, "nscf");
 }
 
+TEST_F(InputTest, RejectComplexLrForcesBeforeSCF)
+{
+    const std::string base = "basis_type lcao\nesolver_type ks-lr\ngamma_only 0\n";
+    const std::string reason = "currently require gamma_only=1";
+    const std::string cg = base + "cal_force 1\nlr_grad_solver cg\n";
+    const std::string lapack = base + "cal_force 1\nlr_grad_solver lapack\n";
+    const std::string relax = base + "calculation relax\ncal_force 0\n";
+    expect_invalid_input("complex_force_cg_INPUT", cg, reason);
+    expect_invalid_input("complex_force_lapack_INPUT", lapack, reason);
+    expect_invalid_input("complex_relax_INPUT", relax, reason);
+
+    Parameter valid;
+    const std::string spectra = base + "cal_force 0\n";
+    EXPECT_NO_THROW(read_parameters("complex_spectra_INPUT", spectra, valid));
+    EXPECT_FALSE(valid.inp.gamma_only);
+    EXPECT_FALSE(valid.inp.cal_force);
+}
+
 TEST_F(InputTest, ValidateDeepksOutputFrequency)
 {
     Parameter default_param;
@@ -396,4 +421,13 @@ TEST_F(InputTest, Check)
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
     EXPECT_TRUE(std::remove("./INPUT.ref") == 0);
+}
+
+TEST_F(InputTest, ExplicitNoccSurvivesUnresolvedElectronNumber)
+{
+    Parameter parameters;
+    read_parameters("nocc_window_INPUT", "basis_type lcao\nesolver_type ks-lr\nnocc 4\n", parameters);
+    EXPECT_EQ(parameters.inp.nelec, 0.0);
+    EXPECT_EQ(parameters.inp.nbands, 0);
+    EXPECT_EQ(parameters.inp.nocc, 4);
 }

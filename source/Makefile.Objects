@@ -131,6 +131,7 @@ ${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
 ${OBJS_HSOLVER_PEXSI}\
 ${OBJS_LR}\
+${OBJS_LR_GRAD}\
 ${OBJS_RDMFT}
 
 OBJS_MAIN=main.o\
@@ -447,6 +448,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     nonlocal_dh.o\
     nonlocal_fs.o\
     overlap.o\
+    ovlp_block.o\
     overlap_fs.o\
     td_ekinetic_lcao.o\
     td_nonlocal_lcao.o\
@@ -859,6 +861,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       symm_rot_out.o\
       gaussian_abfs.o\
       exx_lri_detail.o\
+      exx_workspace.o\
       ri_util.o\
       singular_value.o\
 
@@ -1072,8 +1075,8 @@ OBJS_TENSOR=tensor.o\
     refcount.o
 
     OBJS_LR=lr_util.o\
-    lr_util_hcontainer.o\
     utils/lr_io.o\
+    utils/lr_sparse.o\
     utils/exciton_plotter.o\
     ao_to_mo_parallel.o\
     ao_to_mo_serial.o\
@@ -1083,10 +1086,44 @@ OBJS_TENSOR=tensor.o\
     operator_lr_exx.o\
     xc_kernel.o\
     pot_hxc_lrtd.o\
+    kernel_pots.o\
+    init_helpers.o\
+    hsolver_lrtd.o\
+    zeq_solver.o\
+    zeq_cg.o\
+    hamilt_ulr.o\
+    lr_density.o\
+    spectrum_mo.o\
+    spectrum_out.o\
+    dm_diff_ser.o\
+    dm_diff_par.o\
     lr_spectrum.o\
     lr_spectrum_velocity.o\
     hamilt_casida.o\
+    esolver_lr_orb.o\
+    esolver_lr_init.o\
+    esolver_lr_cfg.o\
     esolver_lr_lcao_tddft.o\
+
+OBJS_LR_GRAD=lr_force.o\
+    xc_kxc.o\
+    lr_force_aux.o\
+    grad_degen.o\
+    state_group.o\
+    state_track.o\
+    state_ovlp.o\
+    grad_jt.o\
+    gradient_output.o\
+    lr_grad_cs.o\
+    lr_grad_os.o\
+    exx_proj.o\
+    cvcx_serial.o\
+    cvcx_par.o\
+    cal_edm.o\
+    zeqlin_solv.o\
+    pot_grad_xc.o\
+    esolver_lr_grad.o\
+    esolver_lr_rlx.o\
 
 OBJS_RDMFT=rdmft.o\
         rdmft_tools.o\

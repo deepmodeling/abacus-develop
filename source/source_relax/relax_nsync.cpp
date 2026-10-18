@@ -9,7 +9,7 @@ void IonCellOptimizer::print_converged_summary(const int istep,
                                                const bool with_stress,
                                                std::ofstream& ofs_running) const
 {
-    ofs_running << " Relaxation method: " << inp_->relax_method[0] << std::endl;
+    ofs_running << " Relaxation method: " << inp_->relax_method << std::endl;
     ofs_running << " Relaxation converged in " << istep << " step(s)." << std::endl;
     if (!max_force_history_.empty())
     {
@@ -40,11 +40,11 @@ void IonCellOptimizer::init_relax(const int& natom, const Input_para& inp)
 
     if (inp_->calculation == "relax")
     {
-        IMM.allocate(natom, inp_->relax_method[0], inp_->relax_method[1]);
+        IMM.allocate(natom, inp_->relax_method);
     }
     if (inp_->calculation == "cell-relax")
     {
-        IMM.allocate(natom, inp_->relax_method[0], inp_->relax_method[1]);
+        IMM.allocate(natom, inp_->relax_method);
         LCM.allocate();
     }
 }
@@ -100,7 +100,7 @@ bool IonCellOptimizer::relax_step(const int& istep,
         // This step never ran cal_movement, so no force was recorded for it;
         // the actual number of ionic steps taken is the history length.
         const int ionic_steps = static_cast<int>(max_force_history_.size());
-        ofs_running << " Relaxation method: " << inp_->relax_method[0] << std::endl;
+        ofs_running << " Relaxation method: " << inp_->relax_method << std::endl;
         ofs_running << " Relaxation stopped after " << ionic_steps << " ionic step(s) (relax_nmax = "
                     << inp_->relax_nmax << " reached)." << std::endl;
         if (!max_force_history_.empty())
@@ -140,7 +140,7 @@ bool IonCellOptimizer::relax_step(const int& istep,
         assert(inp_->cal_force == 1);
         
         // Calculate and apply atomic movement
-        std::vector<std::string> relax_method = inp_->relax_method;
+        std::string relax_method = inp_->relax_method;
 
         Relax_Criteria criteria;
         criteria.force_thr = inp_->force_thr;

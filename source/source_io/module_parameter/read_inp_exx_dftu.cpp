@@ -286,7 +286,7 @@ void ReadInput::item_exx()
         item.annotation = "threshold to screen density matrix in exx";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
-        item.description = "The Fock exchange can be expressed as where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.";
+        item.description = "The Fock exchange can be expressed as where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4. LR-TDDFT exchange operators and excited-state force contractions retain all density blocks to preserve linearity; this threshold still applies to the ground-state SCF.";
         item.default_value = "1E-4";
         item.unit = "";
         read_sync_double(input.exx_dm_threshold);

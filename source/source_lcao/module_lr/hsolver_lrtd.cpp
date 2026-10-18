@@ -1,6 +1,6 @@
-#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_HSOLVER_LRTD_HPP
-#define ABACUS_SOURCE_LCAO_MODULE_LR_HSOLVER_LRTD_HPP
-
+#include "hsolver_lrtd.h"
+#include "hamilt_casida.h"
+#include "hamilt_ulr.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_david.h"
@@ -14,7 +14,7 @@
 
 namespace LR
 {
-    template<typename T> using Real = typename GetTypeReal<T>::type;
+
 
     namespace HSolver
     {
@@ -38,9 +38,11 @@ namespace LR
         template<typename T>
         inline void print_eigs(const std::vector<T>& eigs, const std::string& label = "", const double factor = 1.0)
         {
-            std::cout << label << std::endl;
+            std::streamsize old = std::cout.precision();
+            std::cout << label << std::setprecision(8) << std::endl;
             for (auto& e : eigs) { std::cout << e * factor << " "; }
             std::cout << std::endl;
+            std::cout.precision(old);
         }
 
         /// eigensolver for common Hamilt
@@ -57,9 +59,10 @@ namespace LR
             const std::string method,
             const Real<T>& diag_ethr, ///< threshold for diagonalization
             const std::vector<Real<T>>& precondition,
-            const bool hermitian = true)
+            const bool hermitian)
         {
             ModuleBase::TITLE("HSolverLR", "solve");
+            ModuleBase::timer::start("HSolverLR", "solve");
             const std::vector<std::string> spin_types = { "singlet", "triplet" };
             // note: if not TDA, the eigenvalues will be complex
             // then we will need a new constructor of DiagoDavid
@@ -89,7 +92,7 @@ namespace LR
                 bool openshell = std::is_same<THamilt, HamiltULR<T>>::value;
                 // copy eigenvectors
 #ifdef __MPI
-                LR_Util::global2local_X(psi, Amat_full.data(), nband, nk, 
+                LR_Util::global2local_X(psi, Amat_full.data(), nband, nk,
                                         nocc, nvirt, pX, openshell);
 #else
                 std::memcpy(psi, Amat_full.data(), sizeof(T) * nband * gdim);
@@ -100,19 +103,17 @@ namespace LR
                 // 3. set maxiter and the operator
                 const int maxiter = hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX;
                 const LRHSOperator<T, THamilt> op(hm);
+                const int davidson_dimension = PARAM.inp.pw_diag_ndim;
 
                 if (method == "dav")
                 {
                     // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
                     const int ntry_max = 5;
-                    // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT
-                    // converged.
-                    const int notconv_max = ("nscf" == PARAM.inp.calculation) ? 0 : 5;
                     // do diag and add davidson iteration counts up to avg_iter
                     hsolver::DiagoDavid<T> david(precondition.data(),
                                                  nband,
                                                  dim,
-                                                 PARAM.inp.pw_diag_ndim,
+                                                 davidson_dimension,
                                                  comm_info);
                     std::vector<double> ethr_band(nband, diag_ethr);
                     hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(david.diag(op,
@@ -123,7 +124,7 @@ namespace LR
                     hsolver::Diago_DavSubspace<T> dav_subspace(precondition,
                         nband,
                         dim,
-                        PARAM.inp.pw_diag_ndim,
+                        davidson_dimension,
                         diag_ethr,
                         maxiter,
                         comm_info,
@@ -178,8 +179,12 @@ namespace LR
             // output iters
             std::cout << " Average iterative diagonalization steps: " << hsolver::DiagoIterAssist<T>::avg_iter
                 << "; current threshold: " << diag_ethr << std::endl;
+            ModuleBase::timer::end("HSolverLR", "solve");
         }
+template void solve<double, HamiltLR<double>>(const HamiltLR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_2D>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<double, HamiltULR<double>>(const HamiltULR<double>&, double*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_2D>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<std::complex<double>, HamiltLR<std::complex<double>>>(const HamiltLR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_2D>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+template void solve<std::complex<double>, HamiltULR<std::complex<double>>>(const HamiltULR<std::complex<double>>&, std::complex<double>*, const int&, const int&, const int&, const std::vector<int>&, const std::vector<int>&, const std::vector<Parallel_2D>&, double*, const std::string, const double&, const std::vector<double>&, const bool);
+
     }
 }
-
-#endif // ABACUS_SOURCE_LCAO_MODULE_LR_HSOLVER_LRTD_HPP

@@ -402,7 +402,7 @@ TEST(RelaxSyncSummary, ConvergedPrintsSummary)
     const int nat = 1;
     Input_para inp;
     inp.calculation = "relax";
-    inp.relax_method = {"cg", "2"};
+    inp.relax_method = "cg";
     inp.force_thr = 0.001;   // force_thr_eva ~ 0.0257 eV/Angstrom
     inp.force_thr_ev = inp.force_thr * 13.6058 / 0.529177;
 
@@ -465,7 +465,7 @@ TEST(RelaxSyncSummary, TwoStepConvergence)
     const int nat = 1;
     Input_para inp;
     inp.calculation = "relax";
-    inp.relax_method = {"cg", "2"};
+    inp.relax_method = "cg";
     inp.force_thr = 0.001;   // force_thr_eva ~ 0.0257 eV/Angstrom
     inp.force_thr_ev = inp.force_thr * 13.6058 / 0.529177;
 
@@ -534,7 +534,7 @@ TEST(RelaxSyncSummary, CellRelaxConvergedPrintsStressHistory)
     const int nat = 1;
     Input_para inp;
     inp.calculation = "cell-relax";
-    inp.relax_method = {"cg", "2"};
+    inp.relax_method = "cg";
     inp.force_thr = 0.001;
     inp.force_thr_ev = inp.force_thr * 13.6058 / 0.529177;
     inp.stress_thr = 0.5; // kbar
@@ -711,7 +711,7 @@ TEST(RelaxSyncMaxStep, GeometryMovedAndNotConverged)
     const int nat = 1;
     Input_para inp;
     inp.calculation = "relax";
-    inp.relax_method = {"cg", "2"};
+    inp.relax_method = "cg";
     inp.force_thr = 0.0;      // never converged -> always take the move
     inp.force_thr_ev = 0.0;
     inp.fixed_axes = "None";
