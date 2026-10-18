@@ -203,6 +203,20 @@ Calling `atoms.get_potential_energy()` does not force a force or stress calculat
 
 The ABACUS metadata extension is required to expose force/stress presence safely. If a legacy client returns an empty extras field, the adapter accepts only an energy-only response and refuses to infer forces or stress from the fixed-wire padding. Generic i-PI/ASE clients that ignore ABACUS extras cannot distinguish mandatory padding from a computed zero; use `AbacusSocketIO` or another metadata-aware client when requesting optional properties. When launching ABACUS with a generic client, explicitly set `cal_force=1` for force-driven workflows and `cal_stress=1` for stress evaluation; an omitted switch defaults to disabled. Such clients also need their own policy for unconverged SCF results.
 
+#### Socket protocol compatibility
+
+The socket metadata extension uses the schema `abacus.socket.properties.v1`.
+The `present` list distinguishes computed properties from protocol padding, and
+`scf_converged` reports the SCF state for the returned frame. Additive metadata
+fields may be added within v1; a breaking change requires a new schema version
+and a transition period in both ABACUS and abacuslite.
+
+The ASE-side adapter contract is documented in the abacuslite repository:
+https://github.com/QuantumMisaka/abacuslite/blob/main/docs/socket-contract.md
+
+Engine and adapter changes that alter this contract should be linked and tested
+together.
+
 A socket calculator owns one ABACUS process initialized from one fixed `INPUT`/`STRU` setup. Reuse the same `AbacusSocketIO` instance only for position updates under the same electronic-structure settings and the same cell. Do not change `kpts`, `kspacing`, `nspin`, `basis_type`, `basissets`, pseudopotentials, species, atom count, cell, or other core `INPUT`/`STRU` parameters through an existing socket calculator; create a new `AbacusSocketIO` instance and a new ABACUS client process for those changes. `AbacusSocketIO` rejects cell changes before sending them to ABACUS, and the ABACUS socket driver also checks incoming POSDATA cells against the initial `STRU` cell and exits if they differ.
 
 In socket mode, ABACUS keeps one client process alive. All SCF evaluations produced by the same `AbacusSocketIO` instance are appended to the same `OUT.ABACUS/running_scf.log`, because the ABACUS calculation type remains `scf`. The authoritative per-step energy and force results are returned through the i-PI socket to ASE. Use ASE trajectory and optimizer log files, such as `BFGS(atoms, trajectory="opt.traj", logfile="opt.log")`, when each optimizer or MD step should be saved separately. Treat `running_scf.log` mainly as the ABACUS diagnostic log for the socket client, not as one independent FileIO result per structure.
