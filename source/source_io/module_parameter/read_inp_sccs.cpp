@@ -5,6 +5,8 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
+#include <utility>
 
 namespace ModuleIO
 {
@@ -52,6 +54,26 @@ std::string sccs_context_error(const Input_para& input)
     return error;
 }
 
+// The shared real parser (std::stod) accepts nan and inf, which pass the
+// ordered comparisons below; signed values stay allowed for gamma/pressure.
+std::string sccs_nonfinite_error(const Input_para& input)
+{
+    const std::vector<std::pair<const char*, double>> values = {
+        {"sccs_epsilon", input.sccs_epsilon},
+        {"sccs_rho_min", input.sccs_rho_min},
+        {"sccs_rho_max", input.sccs_rho_max},
+        {"sccs_gamma", input.sccs_gamma},
+        {"sccs_pressure", input.sccs_pressure},
+        {"sccs_tol_rms", input.sccs_tol_rms},
+        {"sccs_tol_max", input.sccs_tol_max},
+        {"sccs_surface_eta", input.sccs_surface_eta}};
+    for (const std::pair<const char*, double>& value : values)
+    {
+        if (!std::isfinite(value.second)) { return std::string(value.first) + " must be finite"; }
+    }
+    return std::string();
+}
+
 // Cavity and surface model parameters, starting with the preset.
 std::string sccs_model_error(const Input_para& input)
 {
@@ -89,6 +111,7 @@ bool validate_sccs_input(const Input_para& input, std::string& error)
     }
     if (input.imp_sol != 2) { return true; }
     error = sccs_context_error(input);
+    if (error.empty()) { error = sccs_nonfinite_error(input); }
     if (error.empty()) { error = sccs_model_error(input); }
     if (error.empty()) { error = sccs_solver_error(input); }
     return error.empty();

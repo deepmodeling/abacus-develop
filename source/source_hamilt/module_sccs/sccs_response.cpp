@@ -265,6 +265,11 @@ void finish_response(const ModulePW::PW_Basis& basis,
     polarization.gradient.resize(size);
     XC_Functional::grad_rho(potential_g.data(), polarization.gradient.data(), &basis, tpiba);
     polarization.potential.swap(potential);
+    // Continuum derivative of the reaction energy, as in Environ. It is not the
+    // exact derivative of the discrete energy: at uniform density that is
+    // eps'/(16 pi) (2 v L v - L v^2) with the spectral Laplacian L, and v^2
+    // aliases on the FFT grid. The two agree once v^2 is resolved by the grid
+    // (test CavityDerivativeConvergesWithGridRefinement).
     response.cavity_potential.resize(size);
     for (std::size_t i = 0; i < size; ++i)
     {

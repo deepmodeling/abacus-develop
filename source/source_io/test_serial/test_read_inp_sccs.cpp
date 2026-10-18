@@ -2,6 +2,10 @@
 #include "source_io/module_parameter/input_parameter.h"
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <limits>
+#include <string>
+
 TEST(ReadInpSccs, LegacyBooleansAndModelSelection)
 {
     std::string error;
@@ -53,4 +57,38 @@ TEST(ReadInpSccs, SupportedScopeAndNumericalValidation)
     input.imp_sol = 1;
     input.sccs_preset = "unused";
     EXPECT_TRUE(ModuleIO::validate_sccs_input(input, error));
+}
+
+TEST(ReadInpSccs, RejectsNonfiniteReals)
+{
+    Input_para input;
+    input.imp_sol = 2;
+    input.device = "cpu";
+    input.basis_type = "pw";
+    std::string error;
+    // Signed surface and volume coefficients remain valid.
+    input.sccs_gamma = -1.0;
+    input.sccs_pressure = -0.36;
+    ASSERT_TRUE(ModuleIO::validate_sccs_input(input, error)) << error;
+
+    double* const reals[] = {&input.sccs_epsilon, &input.sccs_rho_min, &input.sccs_rho_max,
+                             &input.sccs_gamma,   &input.sccs_pressure, &input.sccs_tol_rms,
+                             &input.sccs_tol_max, &input.sccs_surface_eta};
+    const double nonfinite[] = {std::nan(""), std::numeric_limits<double>::infinity(),
+                                -std::numeric_limits<double>::infinity()};
+    for (double* value : reals)
+    {
+        const double saved = *value;
+        for (double bad : nonfinite)
+        {
+            *value = bad;
+            EXPECT_FALSE(ModuleIO::validate_sccs_input(input, error));
+            const std::size_t position = error.find("must be finite");
+            EXPECT_NE(position, std::string::npos) << error;
+        }
+        *value = saved;
+    }
+    // The parser path: std::stod accepts "nan".
+    input.sccs_surface_eta = std::stod("nan");
+    EXPECT_FALSE(ModuleIO::validate_sccs_input(input, error));
 }

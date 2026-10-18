@@ -40,4 +40,3 @@ TEST(SccsParameters, PresetValues)
     EXPECT_DOUBLE_EQ(vacuum.surface_tension, 0.0);
     EXPECT_DOUBLE_EQ(vacuum.pressure, 0.0);
 }
-

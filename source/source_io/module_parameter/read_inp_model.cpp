@@ -188,7 +188,16 @@ void ReadInput::item_model()
         item.annotation = "implicit solvent model";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Select 0 for vacuum, 1 for the original ABACUS implicit solvation model, or 2 for SCCS.";
+        item.description = "Implicit solvation model:\n"
+                           "* 0: no implicit solvent.\n"
+                           "* 1: the original ABACUS implicit solvation model.\n"
+                           "* 2: the self-consistent continuum solvation model (SCCS). Supported scope: CPU KS-DFT "
+                           "(esolver_type ksdft, device cpu) with basis_type pw or lcao; calculation scf energies and "
+                           "forces, no stress (cal_stress is rejected); nspin 1 or 2; periodic cells with "
+                           "assume_isolated none; no electric/gate field, DFT-1/2, DeePKS or dm_to_rho. SCCS is meant "
+                           "for neutral cells: a charged cell only prints a warning and runs, and its energy then "
+                           "depends on the cell size because the periodic Poisson solver drops the G = 0 net charge.\n\n"
+                           "Legacy Boolean values (true/false) are read as 1/0.";
         item.default_value = "0";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             std::string error;

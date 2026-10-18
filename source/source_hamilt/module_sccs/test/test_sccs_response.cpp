@@ -1,10 +1,13 @@
 #include "sccs_test.h"
+#include "../sccs_functional.h"
 #include "../sccs_response.h"
 #include "../sccs_parameters.h"
 
 #include "source_base/parallel_reduce.h"
 
 #include <algorithm>
+#include <cmath>
+#include <vector>
 
 using SccsResponseTest = SccsTest::PwTest;
 
@@ -147,3 +150,106 @@ TEST_F(SccsResponseTest, ConvergenceFailureBothTolerancesAndExplicitWarmStart)
     EXPECT_GT(tight_rms.polarization.iterations, loose.polarization.iterations);
 }
 
+namespace
+{
+// cos(2 pi harmonic x / L) on a basis' local real-space grid.
+std::vector<double> x_harmonic(const ModulePW::PW_Basis& basis, int harmonic)
+{
+    std::vector<double> values(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const int ix = ir / (basis.ny * basis.nplane);
+        const double angle = ModuleBase::TWO_PI * harmonic * ix / basis.nx;
+        values[ir] = std::cos(angle);
+    }
+    return values;
+}
+
+// Relative difference between the analytic cavity potential and a central
+// finite difference of the discrete reaction energy along a varying cavity
+// density, on the grid set by gridecut. The base density is uniform inside the
+// switching interval, so v = 0.1 cos(6 g x) solves the base response exactly.
+double cavity_derivative_mismatch(double gridecut)
+{
+    ModulePW::PW_Basis basis("cpu", "double");
+#ifdef __MPI
+    basis.initmpi(SccsTest::pool_size, SccsTest::pool_rank, POOL_WORLD);
+#endif
+    const double length = 10.0;
+    const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
+                                      0.0, 1.0, 0.0,
+                                      0.0, 0.0, 1.0);
+    basis.initgrids(length, lattice, gridecut);
+    basis.initparameters(false, gridecut, 1, false);
+    basis.setuptransform();
+    basis.collect_local_pw();
+    const double tpiba = ModuleBase::TWO_PI / length;
+
+    ModuleSccs::SccsConfig config;
+    config.cavity.density_min = 1e-4;
+    config.cavity.density_max = 5e-3;
+    config.cavity.epsilon_bulk = 78.3;
+    config.surface_regularization = 1e-8;
+    // On the perturbed cavity the CG stalls at a uniform residual (~2e-9 here)
+    // that the zero-mean Coulomb preconditioner cannot reduce; a uniform
+    // residual does not change the zero-mean potential or the energy, so 1e-8
+    // is tight enough and the mismatches below are unchanged by it.
+    ModuleSccs::PolarizationSolverParameters solver;
+    solver.tolerance_rms = 1e-8;
+    solver.tolerance_max = 1e-8;
+    const double base_density = 7e-4;
+    const double base_epsilon = ModuleSccs::evaluate_cavity(base_density, config.cavity).epsilon;
+    const double wavevector = 6.0 * tpiba;
+    const std::vector<double> mode6 = x_harmonic(basis, 6);
+    const std::vector<double> mode3 = x_harmonic(basis, 3);
+    std::vector<double> charge(basis.nrxx);
+    std::vector<double> direction(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        charge[ir] = 0.1 * base_epsilon * wavevector * wavevector * mode6[ir] / ModuleBase::FOUR_PI;
+        direction[ir] = 1.0 + mode3[ir];
+    }
+    const std::vector<double> cold_start;
+    auto reaction_energy = [&](double step, ModuleSccs::SccsResponse& response) -> double {
+        std::vector<double> density(basis.nrxx);
+        for (int ir = 0; ir < basis.nrxx; ++ir)
+        {
+            density[ir] = base_density + step * direction[ir];
+        }
+        ModuleSccs::solve_sccs_response(density, charge, config.cavity, solver, cold_start, basis, tpiba, response);
+        ModuleSccs::FunctionalResult functional;
+        ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, functional);
+        return functional.reaction_energy;
+    };
+    ModuleSccs::SccsResponse center;
+    ModuleSccs::SccsResponse plus;
+    ModuleSccs::SccsResponse minus;
+    reaction_energy(0.0, center);
+    const double step = 1e-7;
+    const double backward_step = -step;
+    const double energy_plus = reaction_energy(step, plus);
+    const double energy_minus = reaction_energy(backward_step, minus);
+    const double finite_difference = (energy_plus - energy_minus) / (2.0 * step);
+    double analytic = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        analytic += center.cavity_potential[ir] * direction[ir];
+    }
+    Parallel_Reduce::reduce_pool(analytic);
+    analytic *= basis.omega / basis.nxyz;
+    const double difference = finite_difference - analytic;
+    return std::abs(difference) / std::abs(finite_difference);
+}
+} // namespace
+
+// The cavity potential is the continuum derivative -eps'|grad v|^2/(8 pi). On
+// the 15^3 grid (gridecut 20 Ry) v^2 = cos^2(6 g x) aliases, and the discrete
+// reaction energy differs from it by about 65% along 1 + cos(3 g x); on the
+// 30^3 grid (gridecut 80 Ry) v^2 is resolved and the two agree to O(step^2).
+TEST(SccsResponseRefinement, CavityDerivativeConvergesWithGridRefinement)
+{
+    const double coarse = cavity_derivative_mismatch(20.0);
+    const double fine = cavity_derivative_mismatch(80.0);
+    EXPECT_GT(coarse, 0.1);
+    EXPECT_LT(fine, 1e-6);
+}
