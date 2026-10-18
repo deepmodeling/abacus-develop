@@ -4,6 +4,7 @@
 #include "source_base/global_variable.h"
 #include "source_cell/unitcell.h"
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -280,47 +281,44 @@ static void read_occup_store_blocks(OccMatReadState& state,
     {
         for (int spin = 0; spin < 2; ++spin)
         {
-            for (int row = 0; row < size; ++row)
-            {
-                for (int column = 0; column < size; ++column)
-                {
-                    state.occ.set(iat,
-                                  l,
-                                  spin,
-                                  row,
-                                  column,
-                                  blocks[spin][row * size + column]);
-                }
-            }
+            state.occ.set_flat(iat, l, spin, blocks[spin]);
         }
         return;
     }
 
+    const int block_size = size * size;
+    std::vector<double> matrix(4 * block_size, 0.0);
     if (state.soc_layout == DFTU_BASE::SOC_LAYOUT_PAULI)
     {
-        ModuleBase::matrix& matrix = state.occ.mat(iat, l, 0);
-        const int block_size = size * size;
         for (int index = 0; index < block_size; ++index)
         {
-            matrix.c[0 * block_size + index] = blocks[0][index] + blocks[3][index];
-            matrix.c[1 * block_size + index] = 2.0 * blocks[1][index];
-            matrix.c[2 * block_size + index] = 2.0 * blocks[2][index];
-            matrix.c[3 * block_size + index] = blocks[0][index] - blocks[3][index];
+            matrix[0 * block_size + index] = blocks[0][index] + blocks[3][index];
+            matrix[1 * block_size + index] = 2.0 * blocks[1][index];
+            matrix[2 * block_size + index] = 2.0 * blocks[2][index];
+            matrix[3 * block_size + index] = blocks[0][index] - blocks[3][index];
         }
-        return;
     }
-
-    for (int row = 0; row < size; ++row)
+    else
     {
-        for (int column = 0; column < size; ++column)
+        const int matrix_size = 2 * size;
+        for (int row = 0; row < size; ++row)
         {
-            const int index = row * size + column;
-            state.occ.set(iat, l, 0, row, column, blocks[0][index]);
-            state.occ.set(iat, l, 0, row, size + column, blocks[1][index]);
-            state.occ.set(iat, l, 0, size + row, column, blocks[1][index]);
-            state.occ.set(iat, l, 0, size + row, size + column, blocks[3][index]);
+            const int block_offset = row * size;
+            std::copy_n(blocks[0].begin() + block_offset,
+                        size,
+                        matrix.begin() + row * matrix_size);
+            std::copy_n(blocks[1].begin() + block_offset,
+                        size,
+                        matrix.begin() + row * matrix_size + size);
+            std::copy_n(blocks[1].begin() + block_offset,
+                        size,
+                        matrix.begin() + (size + row) * matrix_size);
+            std::copy_n(blocks[3].begin() + block_offset,
+                        size,
+                        matrix.begin() + (size + row) * matrix_size + size);
         }
     }
+    state.occ.set_flat(iat, l, 0, matrix);
 }
 
 static void read_occup_atom_block(OccMatReadState& state,
