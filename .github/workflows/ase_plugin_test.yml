@@ -1,7 +1,9 @@
-name: Atomic Simulation Environment (ASE) Plugin Test
+name: Atomic Simulation Environment (ASE) Interface Test
 
 on:
   pull_request:
+  schedule:
+    - cron: '41 3 * * 1'
   workflow_dispatch:
     inputs:
       plugin_ref:
@@ -15,15 +17,11 @@ defaults:
 
 jobs:
   test:
-    name: abacuslite (${{ matrix.package }})
+    name: abacuslite external
     runs-on: ubuntu-latest
     timeout-minutes: 120
     container:
       image: ghcr.io/deepmodeling/abacus-gnu
-    strategy:
-      fail-fast: false
-      matrix:
-        package: [bundled, external]
     env:
       ABACUS_COMMAND: mpirun -np 2 abacus
       ASE_ABACUS_ASSETS: ${{ github.workspace }}/tests/PP_ORB
@@ -33,8 +31,8 @@ jobs:
       - name: Checkout engine PR
         uses: actions/checkout@v7.0.1
 
-      - name: Checkout reviewed candidate
-        if: matrix.package == 'external' && inputs.plugin_ref != ''
+      - name: Checkout reviewed plugin candidate
+        if: github.event_name == 'workflow_dispatch' && inputs.plugin_ref != ''
         uses: actions/checkout@v7.0.1
         with:
           repository: QuantumMisaka/abacuslite
@@ -49,41 +47,29 @@ jobs:
           activate-environment: abacuslite
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         shell: bash -l {0}
         run: |
           set -euo pipefail
           conda install -y pip
           pip install numpy scipy matplotlib
 
-      - name: Install bundled plugin
-        if: matrix.package == 'bundled'
-        shell: bash -l {0}
-        run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/bundled-wheel"
-          python -m pip wheel --no-deps --wheel-dir "$RUNNER_TEMP/bundled-wheel" \
-            interfaces/ASE_interface
-          sha256sum "$RUNNER_TEMP"/bundled-wheel/*.whl
-          python -m pip install "$RUNNER_TEMP"/bundled-wheel/*.whl
-
-      - name: Build and install candidate wheel
-        if: matrix.package == 'external'
+      - name: Install abacuslite
         shell: bash -l {0}
         env:
           PLUGIN_REF: ${{ inputs.plugin_ref }}
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/candidate-wheel"
+          mkdir -p "$RUNNER_TEMP/plugin-wheel"
           if [ -n "$PLUGIN_REF" ]; then
             python -m pip install 'build>=1.2'
-            python -m build --wheel --outdir "$RUNNER_TEMP/candidate-wheel" candidate-plugin
+            python -m build --wheel --outdir "$RUNNER_TEMP/plugin-wheel" candidate-plugin
             git -C candidate-plugin rev-parse HEAD
           else
             python -m pip download --only-binary=:all: --no-deps \
-              --dest "$RUNNER_TEMP/candidate-wheel" 'abacuslite==1.1.0'
+              --dest "$RUNNER_TEMP/plugin-wheel" 'abacuslite==1.1.0'
           fi
-          wheels=("$RUNNER_TEMP"/candidate-wheel/*.whl)
+          wheels=("$RUNNER_TEMP"/plugin-wheel/*.whl)
           test "${#wheels[@]}" -eq 1
           sha256sum "${wheels[0]}"
           if [ -z "$PLUGIN_REF" ]; then
@@ -92,6 +78,8 @@ jobs:
           fi
           python -m pip install "${wheels[0]}"
           python -m pip show abacuslite ase numpy seekpath
+          python interfaces/ASE_interface/tests/verify_external.py \
+            --checkout-root "$GITHUB_WORKSPACE"
 
       - name: Install external tools from toolchain
         run: |
@@ -101,9 +89,9 @@ jobs:
           ./scripts/stage4/install_stage4.sh
           cd ..
 
-      - name: Configure & Build ABACUS (GNU)
+      - name: Configure & build ABACUS (GNU)
         run: |
-          git config --global --add safe.directory `pwd`
+          git config --global --add safe.directory "$(pwd)"
           source toolchain/install/setup
           prepend_path CMAKE_PREFIX_PATH ${PEXSI32_ROOT}:${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}
           rm -rf build
@@ -125,17 +113,7 @@ jobs:
           git rev-parse HEAD
           abacus --version
 
-      - name: Run bundled unit tests
-        if: matrix.package == 'bundled'
-        shell: bash -l {0}
-        run: |
-          set -euo pipefail
-          cd interfaces/ASE_interface/abacuslite
-          chmod +x xtest.sh
-          ./xtest.sh
-
-      - name: Run provenance regressions
-        if: matrix.package == 'external'
+      - name: Run offline harness contracts
         shell: bash -l {0}
         run: |
           set -euo pipefail
@@ -147,27 +125,21 @@ jobs:
         shell: bash -l {0}
         run: |
           set -euo pipefail
-          ENGINE_REF="$(git rev-parse HEAD)"
-          if [ "${{ matrix.package }}" = external ]; then
-            WHEEL_DIR="$RUNNER_TEMP/candidate-wheel"
-          else
-            WHEEL_DIR="$RUNNER_TEMP/bundled-wheel"
-          fi
           python interfaces/ASE_interface/tests/run_engine_compatibility.py \
             --engine "$GITHUB_WORKSPACE/build/abacus_basic_para" \
             --mpi-command 'mpirun -np 2' \
             --assets "$GITHUB_WORKSPACE/tests/PP_ORB" \
             --format latest \
-            --wheel "$WHEEL_DIR"/*.whl \
+            --wheel "$RUNNER_TEMP"/plugin-wheel/*.whl \
             --report-dir "$RUNNER_TEMP/ase-engine-tests" \
-            --engine-ref "$ENGINE_REF" \
+            --engine-ref "$(git rev-parse HEAD)" \
             --python "$(command -v python)"
 
       - name: Upload ASE failure artifacts
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ase-failure-${{ matrix.package }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: ase-failure-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/ase-engine-tests/**
           if-no-files-found: ignore

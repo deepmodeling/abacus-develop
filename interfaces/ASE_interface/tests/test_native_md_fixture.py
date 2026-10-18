@@ -11,15 +11,15 @@ from common import assert_native_md_facts
 
 class NativeMDOutputTest(unittest.TestCase):
     def setUp(self):
-        # Reuse ABACUS' existing two-frame raw output fixture as data only.
-        source = Path(__file__).resolve().parents[1] / 'abacuslite' / 'io' / 'testfiles'
+        # Engine-owned copy of a two-frame raw output fixture.
+        source = Path(__file__).resolve().parent / 'fixtures' / 'native_md'
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.fixture = Path(temporary.name)
         for name, target in (
-            ('pw-symm0-nspin4-gamma-md', 'running_md.log'),
-            ('nspin4-gamma-eigocc', 'eig_occ.txt'),
-            ('nspin4-gamma-mddump', 'MD_dump'),
+            ('running_md.log.txt', 'running_md.log'),
+            ('eig_occ.txt', 'eig_occ.txt'),
+            ('MD_dump', 'MD_dump'),
         ):
             shutil.copyfile(source / name, self.fixture / target)
 

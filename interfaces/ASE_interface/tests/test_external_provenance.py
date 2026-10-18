@@ -27,7 +27,7 @@ class ExternalProvenanceTest(unittest.TestCase):
             shadow.touch()
             installed.touch()
             with self.assertRaisesRegex(AssertionError, 'source shadow'):
-                verify_locations(shadow, installed, source)
+                verify_locations(shadow, installed, root / 'checkout')
 
     def test_wrong_distribution_is_rejected(self):
         with tempfile.TemporaryDirectory() as root:

@@ -1,4 +1,5 @@
 #include "source_relax/socket_driver.h"
+#include "source_relax/socket_utils.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -486,6 +487,17 @@ TEST(SocketDriverTest, NonconvergedFrameIsPublishedWithMetadata)
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
     EXPECT_THAT(response.extra, testing::HasSubstr("\"scf_converged\":false"));
+}
+
+TEST(SocketDriverTest, PropertiesMetadataDeclaresVersionedSchema)
+{
+    SocketUtils::ComputedFrame frame;
+    const std::string extra = SocketUtils::properties_extra(frame);
+
+    // A breaking schema change must introduce a new version in both ABACUS and
+    // abacuslite; the adapter rejects unknown schemas.
+    EXPECT_THAT(extra, testing::HasSubstr(
+                           "\"schema\":\"abacus.socket.properties.v1\""));
 }
 
 TEST(SocketDriverTest, EnergyOnlyFrameMarksForceAndStressAbsent)

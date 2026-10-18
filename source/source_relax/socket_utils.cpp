@@ -73,7 +73,7 @@ void throw_if_any_rank_failed(int local_failed, std::string local_message)
 std::string properties_extra(const ComputedFrame& frame)
 {
     std::ostringstream extra;
-    extra << "{\"schema\":\"abacus.socket.properties.v1\",\"present\":[\"energy\"";
+    extra << "{\"schema\":\"" << kPropertiesSchema << "\",\"present\":[\"energy\"";
     if (frame.forces_present)
     {
         extra << ",\"forces\"";
