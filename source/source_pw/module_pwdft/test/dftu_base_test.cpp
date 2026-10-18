@@ -142,6 +142,18 @@ void write_compact_collinear_body(std::ostream& os)
     write_constant_matrix(os, 5, 0.2, 5);
 }
 
+void write_compact_collinear_atom(std::ostream& os,
+                                  const int atom_index,
+                                  const double spin_up,
+                                  const double spin_down)
+{
+    os << "Fe Atom " << atom_index << " L 2 mag 0.0\n";
+    os << "spin 1 nelec 0.5\n";
+    write_constant_matrix(os, 5, spin_up, 5);
+    os << "spin 2 nelec 0.5\n";
+    write_constant_matrix(os, 5, spin_down, 5);
+}
+
 } // namespace
 
 /// After a true -> false re-initialization the Yukawa object must be
@@ -843,6 +855,72 @@ TEST_F(DFTUBaseTest, ReadOccMatCompactHandlesLongComment)
                             DFTU_BASE::SOC_LAYOUT_PAULI);
     EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, 0, 0), 0.1);
     EXPECT_DOUBLE_EQ(occ.get(0, 2, 1, 4, 4), 0.2);
+}
+
+TEST_F(DFTUBaseTest, ReadOccMatCompactMultipleAtomsSkipsUncorrelatedSpecies)
+{
+    UnitCell multi_cell;
+    multi_cell.ntype = 2;
+    multi_cell.nat = 4;
+    multi_cell.atoms = new Atom[multi_cell.ntype];
+    multi_cell.set_atom_flag = true;
+
+    multi_cell.atoms[0].label = "O";
+    multi_cell.atoms[0].na = 2;
+    multi_cell.atoms[0].nwl = 1;
+    multi_cell.atoms[0].nw = 4;
+
+    Atom& fe = multi_cell.atoms[1];
+    fe.label = "Fe";
+    fe.na = 2;
+    fe.nwl = 2;
+    fe.nw = 9;
+    fe.iw2l.resize(fe.nw);
+    fe.iw2n.resize(fe.nw);
+    fe.iw2m.resize(fe.nw);
+    int iw = 0;
+    for (int l = 0; l <= fe.nwl; ++l)
+    {
+        for (int m = 0; m < 2 * l + 1; ++m)
+        {
+            fe.iw2l[iw] = l;
+            fe.iw2n[iw] = 0;
+            fe.iw2m[iw] = m;
+            ++iw;
+        }
+    }
+
+    multi_cell.set_iat2itia();
+    multi_cell.itia2iat.create(multi_cell.ntype, 2);
+    multi_cell.itia2iat(0, 0) = 0;
+    multi_cell.itia2iat(0, 1) = 1;
+    multi_cell.itia2iat(1, 0) = 2;
+    multi_cell.itia2iat(1, 1) = 3;
+    multi_cell.set_iat2iwt(1);
+
+    const std::string fn = testing::TempDir() + "compact_multi_atom.txt";
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        write_compact_collinear_atom(ofs, 3, 0.1, 0.2);
+        write_compact_collinear_atom(ofs, 4, 0.3, 0.4);
+    }
+
+    const std::vector<int> l_channel = {-1, 2};
+    OccupationMatrix occ;
+    occ.init(multi_cell, l_channel, 2, 1);
+    DFTU_BASE::read_occup_m(multi_cell,
+                            occ,
+                            l_channel,
+                            fn,
+                            2,
+                            1,
+                            DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    EXPECT_DOUBLE_EQ(occ.get(2, 2, 0, 0, 0), 0.1);
+    EXPECT_DOUBLE_EQ(occ.get(2, 2, 1, 4, 4), 0.2);
+    EXPECT_DOUBLE_EQ(occ.get(3, 2, 0, 0, 0), 0.3);
+    EXPECT_DOUBLE_EQ(occ.get(3, 2, 1, 4, 4), 0.4);
 }
 
 TEST_F(DFTUBaseTest, ReadOccMatCompactSocRealSpinBasis)
