@@ -380,4 +380,52 @@ TEST(DFPTXcAnalytic, CarrierTermAppearsAtFiniteQOnlyForGga)
     EXPECT_EQ(ldiff, 0.0);
 }
 
+TEST(DFPTXcAnalytic, UniformDensityKeepsLocalGgaResponse)
+{
+    // regression guard of the flat-gradient limit: with sigma = 0 everywhere
+    // the GGA response must reduce to the local (rho-rho) kernel v2rho2 --
+    // finite and NONZERO -- not vanish under the gradient-cutoff guard
+    ModulePW::PW_Basis pw;
+    make_basis(pw, 1.8897261255, 6.0, 20.0);
+    const std::vector<double> rho0(pw.nrxx, 0.1);
+    const std::vector<double> amp = cosine_amplitude(pw, 0.02);
+    const std::vector<int> func_id = {XC_GGA_X_PBE, XC_GGA_C_PBE};
+    ModuleDFPT::XC_First_Order_Analytic kernel(func_id, 2, rho0, &pw);
+    const ModuleBase::Vector3<double> q0(0.0, 0.0, 0.0);
+    kernel.set_context(q0);
+
+    std::vector<std::complex<double>> a(pw.nrxx);
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        a[ir] = std::complex<double>(amp[ir], 0.3 * amp[ir]);
+    }
+    std::vector<std::complex<double>> dvxc;
+    kernel.apply(a, dvxc);
+
+    // expected local kernel: sum over functional components, Ha -> Ry (x2)
+    double k_rr = 0.0;
+    for (size_t ifunc = 0; ifunc < func_id.size(); ++ifunc)
+    {
+        xc_func_type func;
+        ASSERT_EQ(xc_func_init(&func, func_id[ifunc], XC_UNPOLARIZED), 0);
+        double rho = 0.1;
+        double sig = 0.0;
+        double v2rho2 = 0.0;
+        double v2rhosigma = 0.0;
+        double v2sigma2 = 0.0;
+        xc_gga_fxc(&func, 1, &rho, &sig, &v2rho2, &v2rhosigma, &v2sigma2);
+        k_rr += 2.0 * v2rho2;
+        xc_func_end(&func);
+    }
+    ASSERT_GT(std::abs(k_rr), 1.0e-3); // a vanishing local kernel is the bug
+
+    double max_err = 0.0;
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        const std::complex<double> expect = k_rr * a[ir];
+        max_err = std::max(max_err, std::abs(dvxc[ir] - expect));
+    }
+    EXPECT_LT(max_err / std::abs(k_rr), 1.0e-10);
+}
+
 #endif // __LIBXC

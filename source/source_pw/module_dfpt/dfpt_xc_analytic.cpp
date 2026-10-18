@@ -123,9 +123,9 @@ void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double>& rho
             {
                 const double rho = rho0_r[ir];
                 const double sig = sigma[ir];
-                if (std::abs(rho) <= epsr || sig <= epsg)
+                if (std::abs(rho) <= epsr)
                 {
-                    continue; // QE dgradcorr guard: no kernel response here
+                    continue; // no XC response where the density vanishes
                 }
                 double zk = 0.0;
                 double vrho = 0.0;
@@ -135,13 +135,21 @@ void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double>& rho
                 double v2rhosigma = 0.0;
                 double v2sigma2 = 0.0;
                 xc_gga_fxc(&func, 1, &rho, &sig, &v2rho2, &v2rhosigma, &v2sigma2);
+                // the local (rho-rho) response is finite in the zero-gradient
+                // limit (the LDA-like term of the GGA functional), so only
+                // the density guard applies; QE retains it through the
+                // separately accumulated local term of dv_of_drho
+                k_rr_[ir] += ha_to_ry * v2rho2;
+                if (sig <= epsg)
+                {
+                    continue; // gradient kernel vanishes in the flat limit
+                }
                 // sigma = |grad rho0|^2 chain factors of the dgradcorr
                 // algebra: s1 = grho.gdrho = d sigma / 2, so the response
                 // e_rho_sigma d(sigma) carries the factor 2 and the
                 // e_sigma_sigma term the factor 4 (QE xc_wrapper_d_gga
                 // convention; no rho renormalization, the potential-form
                 // kernel cancels it)
-                k_rr_[ir] += ha_to_ry * v2rho2;
                 k_sr_[ir] += ha_to_ry * (2.0 * v2rhosigma);
                 k_ss_[ir] += ha_to_ry * (4.0 * v2sigma2);
                 k_s_[ir] += ha_to_ry * (2.0 * vsigma);
