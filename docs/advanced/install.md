@@ -84,11 +84,14 @@ The new EXX implementation directly depends on [LibRI](https://github.com/abacus
 Experimental LCAO GPU contractions additionally require `ENABLE_LIBRI_GPU=ON`
 (default OFF), `USE_CUDA=ON`, and a CUDA build of DDLA. Like other dependent
 options, GPU RI is disabled when its LibRI/CUDA prerequisites are disabled.
-With GPU RI compiled in, INPUT `device gpu` selects GPU contractions and
-`device cpu` retains CPU contractions. Otherwise, RI contractions remain on CPU.
+INPUT `exx_device` defaults to `cpu`, retaining CPU contractions even with
+`device gpu`. To use GPU contractions, set both `device gpu` and `exx_device gpu`.
+The latter requires GPU RI to be compiled in. Real-space EXX symmetry reduction
+is unsupported by this backend: with `symmetry 1`, use `exx_device cpu` or
+`exx_symmetry_realspace 0`.
 
 The tested combination is LibRI `6ce3c8480ae38a085746dc81cc4dbb59b8074430`
-and DDLA `9c404ac65148ec1b48977b846f38ba6ef9e134f7`. LibRI requires the
+and DDLA `v0.0.4` (`9c404ac65148ec1b48977b846f38ba6ef9e134f7`). LibRI requires the
 compatibility and force-accumulation fixes in `tests/lcao_hse_gpu/libri-compat.patch`:
 normalize `include/RI/global/gpu/GPU_Backend.h` and
 `include/RI/ri/LRI-cal_loop3_GPU.hpp` to LF, then run

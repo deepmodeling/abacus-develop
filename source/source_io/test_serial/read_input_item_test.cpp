@@ -145,6 +145,64 @@ TEST_F(InputTest, PccSelectionAndUnsupportedCombinations)
     EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
 }
 
+TEST_F(InputTest, ExxDevice)
+{
+    ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    auto it = find_label("exx_device", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    EXPECT_EQ(param.inp.exx_device, "cpu");
+    EXPECT_EQ(it->second.default_value, "cpu");
+
+    auto& input = TestParameters::input(param);
+    input.basis_type = "lcao";
+    input.device = "gpu";
+    input.symmetry = "1";
+    input.exx_symmetry_realspace = true;
+    it->second.check_value(it->second, param);
+    it->second.get_final_value(it->second, param);
+    EXPECT_EQ(it->second.final_value.str(), "cpu");
+
+    const auto expect_rejected = [&](const std::string& message) {
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        const std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr(message));
+    };
+
+    it->second.str_values = {"ddla"};
+    it->second.read_value(it->second, param);
+    expect_rejected("exx_device must be cpu or gpu");
+
+    it->second.str_values = {"gpu"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.inp.exx_device, "gpu");
+    input.basis_type = "pw";
+    expect_rejected("exx_device=gpu requires basis_type=lcao and device=gpu");
+    input.basis_type = "lcao";
+    input.device = "cpu";
+    expect_rejected("exx_device=gpu requires basis_type=lcao and device=gpu");
+    input.device = "gpu";
+
+#ifdef __GPU_RI
+    expect_rejected("LibRI GPU contractions do not support real-space EXX symmetry");
+    input.exx_symmetry_realspace = false;
+    it->second.check_value(it->second, param);
+    input.exx_symmetry_realspace = true;
+    input.symmetry = "0";
+    it->second.check_value(it->second, param);
+#else
+    expect_rejected("exx_device=gpu requires a build with ENABLE_LIBRI_GPU=ON");
+#endif
+
+    it->second.str_values = {"cpu"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.inp.exx_device, "cpu");
+    input.symmetry = "1";
+    input.exx_symmetry_realspace = true;
+    it->second.check_value(it->second, param);
+}
+
 TEST_F(InputTest, Item_test)
 {
     ModuleIO::ReadInput readinput(0);

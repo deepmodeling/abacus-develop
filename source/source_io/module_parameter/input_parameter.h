@@ -628,6 +628,7 @@ struct Input_para
                                                             ///< the evaluation of Fock exchange
     double exx_mixing_beta = 1.0;                           ///< mixing_beta for outer-loop when exx_separate_loop=1
     std::string exx_real_number = "default";                ///< exx calculated in real or complex
+    std::string exx_device = "cpu";                        ///< computing device for LCAO EXX tensor contractions
     double exx_pca_threshold = 0.0001;                      ///< threshold to screen on-site ABFs in exx
     double exx_c_threshold = 0.0001;                        ///< threshold to screen C matrix in exx
     double exx_v_threshold = 0.1;                           ///< threshold to screen C matrix in exx

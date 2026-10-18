@@ -238,6 +238,43 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_device");
+        item.annotation = "computing device for LCAO EXX tensor contractions";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = R"(Selects the LibRI tensor-contraction device for LCAO exact exchange.
+* cpu: retain CPU contractions, including when device=gpu.
+* gpu: use the experimental GPU backend; requires ENABLE_LIBRI_GPU=ON and device=gpu.
+GPU contractions do not support real-space EXX symmetry reduction. With symmetry=1,
+use exx_device=cpu or disable exx_symmetry_realspace.)";
+        item.default_value = "cpu";
+        item.set_availability("basis_type==lcao");
+        read_sync_string(input.exx_device);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_device != "cpu" && para.input.exx_device != "gpu")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_device must be cpu or gpu");
+            }
+            if (para.input.exx_device == "gpu")
+            {
+                if (para.input.basis_type != "lcao" || para.input.device != "gpu")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "exx_device=gpu requires basis_type=lcao and device=gpu");
+                }
+#ifndef __GPU_RI
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_device=gpu requires a build with ENABLE_LIBRI_GPU=ON");
+#endif
+                if (para.input.symmetry == "1" && para.input.exx_symmetry_realspace)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "LibRI GPU contractions do not support real-space EXX symmetry; "
+                                             "set exx_device=cpu or exx_symmetry_realspace=0");
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_pca_threshold");
         item.annotation = "threshold to screen on-site ABFs in exx";
         item.category = "Exact Exchange (LCAO)";
