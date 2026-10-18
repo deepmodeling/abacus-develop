@@ -90,6 +90,19 @@ The latter requires GPU RI to be compiled in. Real-space EXX symmetry reduction
 is unsupported by this backend: with `symmetry 1`, use `exx_device cpu` or
 `exx_symmetry_realspace 0`.
 
+The selector applies to the LCAO Kohn-Sham exchange engine. Independent LR and
+RDMFT exchange engines retain CPU contractions; LR inherits the selected backend
+only when it reuses the Kohn-Sham exchange object.
+
+With the LibRI version below, all MPI ranks on a node must see the same allocated
+GPU list, with at least as many visible GPUs as local ranks. Giving each rank its
+own single-GPU `CUDA_VISIBLE_DEVICES` list fails LibRI's GPU-count check when
+multiple ranks share a node. For example, on one node allocated GPUs 0 and 1:
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1 mpirun -np 2 abacus
+```
+
 The tested combination is LibRI `6ce3c8480ae38a085746dc81cc4dbb59b8074430`
 and DDLA `v0.0.4` (`9c404ac65148ec1b48977b846f38ba6ef9e134f7`). LibRI requires the
 compatibility and force-accumulation fixes in `tests/lcao_hse_gpu/libri-compat.patch`:
@@ -106,6 +119,9 @@ cmake -B build -DENABLE_LIBRI=ON -DUSE_CUDA=ON -DENABLE_LIBRI_GPU=ON \
 
 `CMAKE_PREFIX_PATH` can also locate DDLA. A configure-time compile/link check
 rejects incompatible GPU APIs, but does not validate numerical correctness.
+The standalone tests in `tests/lcao_hse_gpu/cmake` additionally accept
+`ENABLE_LIBRI_GPU_TESTS=ON` with `ENABLE_LIBRI_GPU=ON` to check real and complex
+GPU contractions with signed accumulation. This optional CTest requires one GPU.
 This experimental backend has additional GPU memory requirements; its temporary
 buffer limit is not a bound on total GPU memory.
 
