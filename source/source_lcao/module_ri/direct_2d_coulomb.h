@@ -12,6 +12,7 @@
 
 namespace Direct2dCoulomb
 {
+// One reciprocal sample k = q + G in Cartesian bohr^-1 units.
 struct ReciprocalPoint
 {
     std::array<int, 3> g_direct{};
@@ -19,12 +20,16 @@ struct ReciprocalPoint
     double k_bohr = 0.0;
 };
 
+// A Gauss-Legendre node in a generic abscissa/weight pair (units of the
+// mapped variable, not necessarily bohr).
 struct QuadratureNode
 {
     double coordinate_bohr = 0.0;
     double weight_bohr = 0.0;
 };
 
+// One in-plane momentum line q+G_parallel of the mixed-Fourier 2D route; the
+// continuous kz integral on this line is truncated at +/- kz_max_bohr.
 struct ReciprocalLine2D
 {
     std::array<int, 2> g_direct{};
@@ -33,12 +38,16 @@ struct ReciprocalLine2D
     double kz_max_bohr = 0.0;
 };
 
+// A kz quadrature node on one line: the 3D momentum and the node weight that
+// already includes the tan-mapping Jacobian.
 struct MixedFourierPoint
 {
     ReciprocalPoint point;
     double kz_weight_bohr = 0.0;
 };
 
+// A node of the Gamma-line in-plane cell quadrature (the replacement for the
+// singular q=0 line, rescaled to the Massidda 1/q cell average).
 struct InPlaneQuadraturePoint
 {
     ModuleBase::Vector3<double> q_parallel_cart;
@@ -46,6 +55,8 @@ struct InPlaneQuadraturePoint
     double weight = 0.0;
 };
 
+// The tabulated l-resolved radial part R_l(k) of one auxiliary function on a
+// uniform dk grid; the table is borrowed, not owned.
 struct RadialTable
 {
     int l = 0;
@@ -54,6 +65,8 @@ struct RadialTable
     std::size_t size = 0;
 };
 
+// One auxiliary basis function: radial table, magnetic number, global matrix
+// index, and the atom center tau for the Fourier phase.
 struct BasisFunction
 {
     RadialTable radial;

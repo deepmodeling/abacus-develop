@@ -12,10 +12,23 @@
 #include <tuple>
 #include <vector>
 
+// Shared machinery of the Ewald short-range tail check.
+//
+// The split Ewald real-space term is a difference of two compact-support
+// lattice sums, bare Coulomb minus Gaussian compensation. Inside the supports
+// both blocks must exist as numerical tensors; beyond BOTH supports the two
+// sums are described by the same analytic multipole expansion of the pair,
+// so their difference cancels analytically and no block is needed. The tail
+// check probes a guard shell of lattice cells around the production range,
+// classifies every (I, J, R) block by that logic, and reduces the norm of
+// the residual difference against tolerances. The verdict drives the
+// exx_ewald_tail_check modes: warn reports and fails, enlarge adaptively
+// expands the real-space range, strict fails without expansion budget.
 namespace EwaldVqDetail
 {
 using TailCell = std::array<int, 3>;
 
+// Behavior of the tail check (INPUT exx_ewald_tail_check).
 enum class TailMode
 {
     Off,
@@ -24,6 +37,8 @@ enum class TailMode
     Strict
 };
 
+// Verdict after one probe round: accepted within tolerance, warn-only,
+// expand the real-space range and reprobe, or hard failure.
 enum class TailDecision
 {
     Accept,
@@ -32,6 +47,14 @@ enum class TailDecision
     Fail
 };
 
+// Classification of one guard-shell block:
+//   Common                 - both tensors exist (or one is replaced by its
+//                            multipole beyond its own support); numerical
+//                            difference is formed.
+//   AnalyticCancellation   - both supports exceeded: the bare and Gaussian
+//                            multipoles coincide, difference is exactly zero.
+//   Incomplete             - a tensor is missing inside its own support;
+//                            the production range does not cover the shell.
 enum class TailBlockCoverage
 {
     Common,
@@ -263,6 +286,9 @@ inline TailKey canonical_hermitian_key(const TailKey& key)
     return partner < key ? partner : key;
 }
 
+// FNV-1a hash of the canonical (Hermitian-symmetrized) key, so that the I,J
+// and J,I^-R partners always land on the same owner rank and the residual
+// hermitian check never needs cross-rank pairing.
 inline std::uint64_t stable_tail_key_hash(const TailKey& key)
 {
     const TailKey canonical = canonical_hermitian_key(key);
@@ -312,6 +338,9 @@ inline bool tail_passes(const TailStats& stats, const TailTolerances& tolerances
            && stats.hermitian_residual <= tolerances.abs_tol + tolerances.rel_tol * reference;
 }
 
+// Policy mapping one round of shell statistics to a decision. A broken
+// Hermitian residual always fails; incomplete coverage fails immediately in
+// warn mode or after the expansion budget is spent, and expands otherwise.
 inline TailDecision decide_tail(const TailStats& stats,
                                 const TailTolerances& tolerances,
                                 const TailMode mode,
@@ -351,6 +380,10 @@ inline TailBlockCoverage classify_tail_block(const bool has_bare,
     return TailBlockCoverage::Incomplete;
 }
 
+// Decision table for one guard-shell block. A tensor that is absent beyond
+// its own support is fine (the multipole replaces it); absent inside its
+// support makes the block Incomplete. When both supports are exceeded the
+// plan flags analytic cancellation so no numerical difference is formed.
 inline TailBlockPlan plan_tail_block(const bool has_bare,
                                      const bool has_gaussian,
                                      const double distance,

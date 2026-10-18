@@ -7,6 +7,16 @@
 #include <string>
 #include <vector>
 
+// Strict-2D Coulomb head normalization for the reader-v1 output.
+//
+// In a strict 2D (slab) cell the q_parallel -> 0 limit of the full Coulomb
+// does not vanish: the auxiliary monopoles form a charged sheet whose
+// interaction is the "head" of the separable Coulomb representation. With
+// s_multipoles the per-type s-channel (l=0) moments, the head coefficient is
+//     8 pi^2 * ||s||^2 / A_parallel,   ||s||^2 = sum_I nat_I * sum_n s_{I,n}^2,
+// and the sheet-to-raw scale sqrt(coefficient / 2 pi) converts between the
+// sheet representation LibRPA consumes and the raw coefficient. Both are
+// written to the librpa_2d_coulomb_head.txt sidecar next to the V files.
 namespace RpaLriDetail
 {
 struct Strict2dCoulombHeadNormalization

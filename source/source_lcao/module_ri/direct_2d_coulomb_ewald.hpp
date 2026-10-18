@@ -8,6 +8,13 @@
 #include <stdexcept>
 #include <vector>
 
+// Driver for the direct mixed-Fourier 2D Coulomb output (see
+// direct_2d_coulomb.h for the construction). It walks the complete full-q
+// Cartesian mesh, reuses the Ewald Fock alpha and the Massidda chi so that
+// the direct route evaluates the same physical operator as the split Ewald
+// route, assembles the auxiliary basis from the ABFS radial tables, and
+// writes the reader-v1 V_full files plus method metadata. Opt-in through
+// out_librpa_2d_coulomb_method = direct_mixed_fourier.
 template <typename Tdata>
 void Ewald_Vq<Tdata>::output_direct_2d_coulomb(const UnitCell& ucell,
                                                const double ecut_ry,

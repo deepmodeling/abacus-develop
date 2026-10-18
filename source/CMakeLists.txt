@@ -706,11 +706,6 @@ endif()
 
 add_library(device OBJECT ${device_srcs})
 
-# Device object files use OpenMP and must publish its runtime to consumers.
-if(ENABLE_OPENMP)
-  target_link_libraries(device INTERFACE OpenMP::OpenMP_CXX)
-endif()
-
 if(USE_CUDA)
   target_link_libraries(device PRIVATE cusolver cublas cufft)
 elseif(USE_ROCM)

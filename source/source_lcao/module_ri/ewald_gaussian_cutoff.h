@@ -5,6 +5,15 @@
 #include <cmath>
 #include <stdexcept>
 
+// Gaussian decay exponents that make the Ewald real-space and reciprocal
+// tails negligible (1e-14) for a given auxiliary angular momentum.
+//
+// The historical defaults (17.5 real / 35.0 reciprocal at l=0) are kept as
+// starting points for compatibility; for higher l the multipole tail
+// erfc(sqrt(x)) + sum_k x^{k/2} e^{-x} / Gamma(k/2+1) decays more slowly, so
+// the exponent is enlarged by bisection until the tail bound is met. This
+// keeps the truncated Gaussian compensation accurate at every l instead of
+// silently reusing the l=0 cutoffs.
 namespace EwaldGaussianCutoff
 {
 constexpr double historical_real_space_exponent = 17.5;

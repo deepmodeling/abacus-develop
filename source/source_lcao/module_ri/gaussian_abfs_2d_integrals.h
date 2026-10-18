@@ -6,10 +6,25 @@
 #include <stdexcept>
 #include <vector>
 
+// Closed-form in-plane momentum integrals of the 2D Ewald Gaussian
+// compensation for auxiliary functions.
+//
+// In the mixed representation (in-plane momentum q, real z) every needed
+// integral reduces to z moments of a shifted Gaussian, which are analytic
+// (physicists' Hermite polynomials), times in-plane factors that are
+// polynomials in q arranged by real solid harmonics. The base Coulomb
+// integrals i2/di2_dtau carry the erfc form of the z integration. Only even
+// in-plane kernel powers q^p with p >= -2 occur; p = -2 (the Coulomb
+// singularity) is handled by synthetic division onto the base integrals.
 namespace GaussianAbfs2D
 {
 constexpr double pi = 3.141592653589793238462643383279502884;
 
+// Base integral: the z integration of the Gaussian-compensated Coulomb at
+// in-plane momentum q and center offset tau_z,
+//     i2 = (pi/2q) e^{beta q^2} [ e^{q|tau_z|} erfc(sqrt(beta) q + |tau_z|/2 sqrt(beta))
+//                                + e^{-q|tau_z|} erfc(sqrt(beta) q - |tau_z|/2 sqrt(beta)) ],
+// which reduces to (pi/q) e^{beta q^2} erfc(sqrt(beta) q) at tau_z = 0.
 inline double i2(const double q, const double tau_z, const double beta)
 {
     if (q < 1.0e-12)
@@ -104,6 +119,9 @@ inline std::complex<double> i_power(const int degree)
     }
 }
 
+// z moment of the shifted Gaussian, <(z)^degree exp(-beta (z-tau_z)^2)>,
+// expressed through physicists' Hermite polynomials; i^degree carries the
+// Fourier convention of the mixed representation.
 inline std::complex<double> gaussian_fourier_moment(const int degree,
                                                     const double tau_z,
                                                     const double beta)
@@ -178,6 +196,14 @@ inline std::vector<double> real_solid_harmonic_coefficients(const int L,
 }
 } // namespace detail
 
+// Master integral: in-plane kernel q^power times the (L,M) real solid
+// harmonic of the auxiliary function, with the z dependence of the Gaussian
+// integrated analytically. The solid harmonic is first expanded into
+// coefficients indexed by z degree; then either
+//   power = -2: synthetic division of the polynomial by q^2 maps everything
+//               onto the Coulomb base integrals i2 / di2_dtau, or
+//   power >= 0 (even): binomial expansion of (q_parallel^2 + qz^2)^{p/2}
+//               maps onto the Gaussian z moments.
 inline std::complex<double> integral_lm(const int L,
                                         const int M,
                                         const double power,

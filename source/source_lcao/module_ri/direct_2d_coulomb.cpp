@@ -13,6 +13,25 @@
 #include <sstream>
 #include <stdexcept>
 
+// Direct mixed-Fourier construction of the strict-2D full Coulomb matrix.
+//
+// The established Ewald route builds V as (real space) - (Gaussian
+// compensation) + (reciprocal) + (tail), several large terms whose difference
+// is the small physical matrix; imperfect cancellation can then leave a
+// strongly indefinite result for diffuse or high-l auxiliary functions. This
+// file instead evaluates one positive representation: for every in-plane
+// momentum line q+G_parallel the continuous kz integral becomes a quadrature
+//
+//     V_PQ(q) = sum_n w_n * alpha * 4*pi * Lz/(2*pi) / k_n^2
+//               * rho_P(k_n)^* rho_Q(k_n),     k_n = (q+G_parallel, kz_n),
+//
+// whose weights w_n are non-negative, so V is a Hermitian positive-
+// semidefinite Gram matrix by construction (accumulated through ZHERK). The
+// kz nodes come from a tan-mapped Gauss-Legendre rule; the singular Gamma
+// line is replaced by an in-plane cell quadrature constrained to the Massidda
+// 1/q cell average. The route is opt-in
+// (out_librpa_2d_coulomb_method = direct_mixed_fourier) and converges in the
+// reciprocal cutoff plus two quadrature orders rather than cutoff alone.
 namespace Direct2dCoulomb
 {
 namespace
@@ -60,6 +79,10 @@ std::complex<double> minus_i_to_power(const int l)
     }
 }
 
+// Four-point cubic interpolation of the auxiliary radial table on its
+// uniform dk grid. Requests outside the tabulated range are rejected
+// (fail-closed) because the direct route must not silently truncate the
+// basis transform at the cutoff sphere boundary.
 double interpolate_radial(const RadialTable& radial, const double k_bohr)
 {
     if (radial.l < 0 || radial.dk <= 0.0 || radial.values == nullptr || radial.size < 4)
@@ -119,6 +142,9 @@ double associated_legendre(const int l, const int m, const double x)
     return pll;
 }
 
+// Real spherical harmonics Y_lm(k_hat) in the same convention as the RI
+// auxiliary basis (m>0 pairs stored as cos/sin at l^2+2m-1 / l^2+2m). The
+// normalization uses lgamma ratios so high l does not overflow factorials.
 std::vector<double> real_spherical_harmonics(const int lmax,
                                               const ModuleBase::Vector3<double>& vector)
 {
@@ -359,6 +385,11 @@ std::vector<MixedFourierPoint> expand_mixed_fourier_points(
             throw std::invalid_argument(
                 "Direct mixed-2D regular quadrature requires separate treatment of the Gamma G_parallel=0 line.");
         }
+        // Map the truncated kz integral (-kz_max, +kz_max) onto a compact
+        // angle interval through kz = k_parallel * tan(theta): the Coulomb
+        // kernel 1/(k_parallel^2 + kz^2) is then smooth in theta, and the
+        // Jacobian k_parallel*(1+tan^2) is folded into the Gauss-Legendre
+        // weights. This keeps every quadrature weight positive.
         const double theta_max = std::atan(line.kz_max_bohr / line.k_parallel_bohr);
         const auto quadrature = gauss_legendre_interval(kz_order, -theta_max, theta_max);
         for (const auto& node: quadrature)
@@ -486,6 +517,12 @@ std::vector<MixedFourierPoint> expand_gamma_zero_line(
     return result;
 }
 
+// Fourier transform of one auxiliary basis function at momentum k,
+//     rho_mu(k) = sqrt((2*pi)^3/omega) * (-i)^l * Y_lm(k_hat)
+//                 * R_l(k) * exp(-2*pi*i k.tau),
+// from the tabulated radial part (cubic interpolation) and the real
+// spherical harmonic of the direction. At k=0 only l=0 survives with
+// Y_00 = 1/sqrt(4*pi).
 std::vector<std::complex<double>> fourier_coefficients(
     const std::vector<BasisFunction>& basis,
     const ReciprocalPoint& point,
@@ -535,6 +572,11 @@ std::vector<std::complex<double>> fourier_coefficients(
     return coefficients;
 }
 
+// 3D direct G-sum route: V_munu = alpha * sum_G 4*pi/k^2 * rho_mu(G)^*
+// rho_nu(G), accumulated as a Hermitian rank-ng positive Gram matrix via
+// ZHERK on rows sqrt(alpha*4*pi/k^2)*rho^*. The Gamma point adds the rank-one
+// Massidda cell-average term alpha*4*pi*chi*rho_0^* rho_0 instead of the
+// singular 1/k^2 value.
 Result build_coulomb_matrix(const std::vector<BasisFunction>& basis,
                             const std::vector<ReciprocalPoint>& points,
                             const double omega,
@@ -666,6 +708,12 @@ Result build_coulomb_matrix(const std::vector<BasisFunction>& basis,
     return result;
 }
 
+// 2D mixed-Fourier route (see the file header): each quadrature node carries
+// the continuum measure w_n*Lz/(2*pi), and the Gram rows are scaled by
+// sqrt(alpha*4*pi*w_n*Lz/(2*pi)/k_n^2) so that the ZHERK outer-product sum
+// reproduces V_PQ(q) with strictly non-negative weights. The residual
+// against the exactly conjugate-symmetric result is recorded for the
+// reader-v1 metadata.
 Result build_gram_matrix(const std::vector<BasisFunction>& basis,
                                const std::vector<MixedFourierPoint>& points,
                                const double omega,
