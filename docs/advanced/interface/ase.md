@@ -113,7 +113,17 @@ with tempfile.TemporaryDirectory() as tmpdir:
 
 ## Perform Calculations
 
-In the new implementation, we limit the range of functionalties supported to mainly include the necessary ones, such as the SCF calculation, the energy and force/stress evaluation. The other features, such as starting the molecule dynamics directly in ABACUS from Python, is not supported anymore. Instead, it is encouraged to use the ASE tools to perform the molecule dynamics.
+In the new implementation, the supported surface is the one the external plugin
+exposes: SCF calculations, energy and force/stress evaluation, ASE-driven
+relaxation and molecular dynamics through the ASE optimizers and integrators,
+and ABACUS native MD, in which the engine runs its own MD integrator and the
+plugin reads the resulting trajectory. Both molecular-dynamics paths are
+validated rather than assumed: the engine-side harness runs the ASE-driven
+Langevin case (`md.py`) and the native-MD case (`native_md.py`) as required
+compatibility cases in both the develop and the legacy output-format lanes.
+Calculation types the plugin does not expose remain outside the supported
+surface, and for simulations whose integrator you control the ASE tools remain
+the recommended path.
 
 See the [abacuslite examples](https://github.com/QuantumMisaka/abacuslite/tree/main/examples)
 for complete scripts.
