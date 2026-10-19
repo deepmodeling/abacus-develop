@@ -190,6 +190,7 @@ void Matrix_Orbs21::init_radial_table(const std::map<size_t, std::map<size_t, st
                         radials.insert(iq + i);
                     }
                 }
+                std::vector<Center2_Orb::Orb21*> orbitals;
                 for (auto& coC: *center2_orb21_sAB)
                 {
                     for (auto& coD: coC.second)
@@ -202,13 +203,14 @@ void Matrix_Orbs21::init_radial_table(const std::map<size_t, std::map<size_t, st
                                 {
                                     for (auto& coH: coG.second)
                                     {
-                                        coH.second.init_radial_table(radials);
+                                        orbitals.push_back(&coH.second);
                                     }
                                 }
                             }
                         }
                     }
                 }
+                Center2_Orb::Orb21::init_radial_table(orbitals, radials);
             }
         }
     }

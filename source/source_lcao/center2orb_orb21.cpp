@@ -88,6 +88,21 @@ void Center2_Orb::Orb21::init_radial_table(const std::set<size_t>& radials)
 
 void Center2_Orb::Orb21::init_radial_table(const std::vector<Orb21*>& orbitals, const bool use_gpu)
 {
+    const auto pairs = prepare_radial_tables(orbitals);
+    Orb11::init_radial_table(pairs, use_gpu);
+}
+
+void Center2_Orb::Orb21::init_radial_table(const std::vector<Orb21*>& orbitals, const std::set<size_t>& radials)
+{
+    const auto pairs = prepare_radial_tables(orbitals);
+    for (Orb11* pair: pairs)
+    {
+        pair->init_radial_table(radials);
+    }
+}
+
+std::vector<Center2_Orb::Orb11*> Center2_Orb::Orb21::prepare_radial_tables(const std::vector<Orb21*>& orbitals)
+{
     std::vector<Orb11*> pairs;
     // A product depends on its two orbitals on center A, not the orbital on
     // center B. Share it within this build and retain ownership with each user.
@@ -112,7 +127,7 @@ void Center2_Orb::Orb21::init_radial_table(const std::vector<Orb21*>& orbitals, 
             pairs.push_back(&pair.second);
         }
     }
-    Orb11::init_radial_table(pairs, use_gpu);
+    return pairs;
 }
 
 double Center2_Orb::Orb21::cal_overlap(const ModuleBase::Vector3<double>& RA,

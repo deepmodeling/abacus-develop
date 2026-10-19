@@ -120,15 +120,28 @@ void compare_products(const bool use_gpu)
     bessel.cal_jlx(7, 405, 65);
     std::vector<std::unique_ptr<Center2_Orb::Orb21>> reference;
     std::vector<std::unique_ptr<Center2_Orb::Orb21>> candidate;
+    std::vector<std::unique_ptr<Center2_Orb::Orb21>> selective;
     std::vector<Center2_Orb::Orb21*> tasks;
+    std::vector<Center2_Orb::Orb21*> selective_tasks;
     for (int i = 0; i < 4; ++i)
     {
         reference.emplace_back(new Center2_Orb::Orb21(basis[1], basis[2], basis[i], &bessel, gaunt));
         candidate.emplace_back(new Center2_Orb::Orb21(basis[1], basis[2], basis[i], &bessel, gaunt));
+        selective.emplace_back(new Center2_Orb::Orb21(basis[1], basis[2], basis[i], &bessel, gaunt));
         reference.back()->init_radial_table();
         tasks.push_back(candidate.back().get());
+        selective_tasks.push_back(selective.back().get());
     }
     Center2_Orb::Orb21::init_radial_table(tasks, use_gpu);
+    std::set<size_t> radials{10000};
+    for (size_t first: {0, 3, 72, 190, 386})
+    {
+        for (size_t offset = 0; offset < 6; ++offset)
+        {
+            radials.insert(first + offset);
+        }
+    }
+    Center2_Orb::Orb21::init_radial_table(selective_tasks, radials);
     const ModuleBase::Vector3<double> origin(0.0, 0.0, 0.0);
     for (int i = 0; i < 4; ++i)
     {
@@ -142,11 +155,16 @@ void compare_products(const bool use_gpu)
             const double actual = candidate[i]->cal_overlap(origin, position, 1, 2, i);
             const double tolerance = 2e-11 * (1.0 + std::abs(expected));
             EXPECT_NEAR(actual, expected, tolerance);
+            const double selective_actual = selective[i]->cal_overlap(origin, position, 1, 2, i);
+            EXPECT_NEAR(selective_actual, expected, tolerance);
             const auto grad_expected = reference[i]->cal_grad_overlap(origin, position, 1, 2, i);
             const auto grad_actual = candidate[i]->cal_grad_overlap(origin, position, 1, 2, i);
             const double error = (grad_actual - grad_expected).norm();
             const double grad_tolerance = 2e-10 * (1.0 + grad_expected.norm());
             EXPECT_LT(error, grad_tolerance);
+            const auto selective_grad = selective[i]->cal_grad_overlap(origin, position, 1, 2, i);
+            const double selective_error = (selective_grad - grad_expected).norm();
+            EXPECT_LT(selective_error, grad_tolerance);
         }
     }
 }

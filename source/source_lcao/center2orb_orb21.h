@@ -30,6 +30,7 @@ class Center2_Orb::Orb21
     void init_radial_table(const std::set<size_t>& radials); // unit: Bohr/MOT.dr
 
     static void init_radial_table(const std::vector<Orb21*>& orbitals, const bool use_gpu);
+    static void init_radial_table(const std::vector<Orb21*>& orbitals, const std::set<size_t>& radials);
 
     double cal_overlap(const ModuleBase::Vector3<double>& RA,
                        const ModuleBase::Vector3<double>& RB, // unit: Bohr
@@ -46,6 +47,7 @@ class Center2_Orb::Orb21
   private:
     void prepare_radial_table();
     void bind_product_orbitals();
+    static std::vector<Orb11*> prepare_radial_tables(const std::vector<Orb21*>& orbitals);
 
     const Numerical_Orbital_Lm& nA1;
     const Numerical_Orbital_Lm& nA2;
