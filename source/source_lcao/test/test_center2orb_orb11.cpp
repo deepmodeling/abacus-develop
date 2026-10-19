@@ -9,7 +9,7 @@
 
 namespace
 {
-Numerical_Orbital_Lm make_orbital(const int l, const int index, const int nr)
+Numerical_Orbital_Lm make_orbital(const int l, const int index, const int nr, const int nk)
 {
     const double dr = 0.02;
     const double cutoff = (nr - 1) * dr;
@@ -35,7 +35,7 @@ Numerical_Orbital_Lm make_orbital(const int l, const int index, const int nr)
                              radial_ptr,
                              Numerical_Orbital_Lm::Psi_Type::Psi,
                              values_ptr,
-                             65,
+                             nk,
                              0.1,
                              0.01,
                              false,
@@ -50,9 +50,9 @@ void compare_pairs(const bool use_gpu)
     std::vector<Numerical_Orbital_Lm> basis;
     for (int l = 0; l <= 3; ++l)
     {
-        basis.push_back(make_orbital(l, l, 101));
+        basis.push_back(make_orbital(l, l, 101, 65));
     }
-    basis.push_back(make_orbital(2, 4, 81));
+    basis.push_back(make_orbital(2, 4, 81, 65));
     ORB_gaunt_table gaunt;
     gaunt.init_Gaunt_CH(3);
     gaunt.init_Gaunt(3);
@@ -110,7 +110,7 @@ void compare_products(const bool use_gpu)
     std::vector<Numerical_Orbital_Lm> basis;
     for (int l = 0; l <= 3; ++l)
     {
-        basis.push_back(make_orbital(l, l, 101));
+        basis.push_back(make_orbital(l, l, 101, 65));
     }
     ORB_gaunt_table gaunt;
     gaunt.init_Gaunt_CH(3);
@@ -150,19 +150,99 @@ void compare_products(const bool use_gpu)
         }
     }
 }
+
+void compare_high_l_products(const bool use_gpu)
+{
+    // Heavy-element auxiliary bases include l=6; multiplying by an f orbital
+    // requires product angular momenta up to 9 and Bessel functions up to 13.
+    const auto left = make_orbital(6, 0, 101, 65);
+    const auto middle = make_orbital(3, 1, 101, 65);
+    const auto right = make_orbital(3, 2, 81, 65);
+    ORB_gaunt_table gaunt;
+    gaunt.init_Gaunt_CH(9);
+    gaunt.init_Gaunt(9);
+    ModuleBase::Sph_Bessel_Recursive::D2 bessel;
+    bessel.set_dx(0.001);
+    bessel.cal_jlx(13, 405, 65);
+    Center2_Orb::Orb21 reference(left, middle, right, &bessel, gaunt);
+    Center2_Orb::Orb21 candidate(left, middle, right, &bessel, gaunt);
+    reference.init_radial_table();
+    const std::vector<Center2_Orb::Orb21*> tasks{&candidate};
+    Center2_Orb::Orb21::init_radial_table(tasks, use_gpu);
+    const ModuleBase::Vector3<double> origin(0.0, 0.0, 0.0);
+    for (double distance: {0.0, 0.037, 0.73, 1.91, 3.57, 3.8})
+    {
+        const double x = 0.8 * distance;
+        const double y = 0.36 * distance;
+        const double z = 0.48 * distance;
+        const ModuleBase::Vector3<double> position(x, y, z);
+        for (int ma: {0, 6, 12})
+        {
+            for (int mb: {0, 3, 6})
+            {
+                for (int mc: {0, 3, 6})
+                {
+                    const double expected = reference.cal_overlap(origin, position, ma, mb, mc);
+                    const double actual = candidate.cal_overlap(origin, position, ma, mb, mc);
+                    const double tolerance = 2e-11 * (1.0 + std::abs(expected));
+                    EXPECT_NEAR(actual, expected, tolerance);
+                    const auto grad_expected = reference.cal_grad_overlap(origin, position, ma, mb, mc);
+                    const auto grad_actual = candidate.cal_grad_overlap(origin, position, ma, mb, mc);
+                    const double error = (grad_actual - grad_expected).norm();
+                    const double grad_tolerance = 2e-10 * (1.0 + grad_expected.norm());
+                    EXPECT_LT(error, grad_tolerance);
+                }
+            }
+        }
+    }
+}
+
+void compare_radial_tiles(const bool use_gpu)
+{
+    // The paired value/derivative Bessel matrix exceeds the 128 MiB workspace
+    // limit. Check interpolation across its radial tile boundary and tail.
+    const auto orbital = make_orbital(0, 0, 527, 4097);
+    ORB_gaunt_table gaunt;
+    gaunt.init_Gaunt_CH(0);
+    gaunt.init_Gaunt(0);
+    ModuleBase::Sph_Bessel_Recursive::D2 bessel;
+    bessel.set_dx(0.001);
+    bessel.cal_jlx(1, 2109, 4097);
+    Center2_Orb::Orb11 reference(orbital, orbital, &bessel, gaunt);
+    Center2_Orb::Orb11 candidate(orbital, orbital, &bessel, gaunt);
+    reference.init_radial_table();
+    const std::vector<Center2_Orb::Orb11*> tasks{&candidate};
+    Center2_Orb::Orb11::init_radial_table(tasks, use_gpu);
+    const ModuleBase::Vector3<double> origin(0.0, 0.0, 0.0);
+    for (double distance: {0.0, 0.037, 1.91, 20.465, 20.475, 21.035, 21.1})
+    {
+        const ModuleBase::Vector3<double> position(distance, 0.0, 0.0);
+        const double expected = reference.cal_overlap(origin, position, 0, 0);
+        const double actual = candidate.cal_overlap(origin, position, 0, 0);
+        const double tolerance = 2e-11 * (1.0 + std::abs(expected));
+        EXPECT_NEAR(actual, expected, tolerance);
+        const auto grad_expected = reference.cal_grad_overlap(origin, position, 0, 0);
+        const auto grad_actual = candidate.cal_grad_overlap(origin, position, 0, 0);
+        const double error = (grad_actual - grad_expected).norm();
+        const double grad_tolerance = 2e-10 * (1.0 + grad_expected.norm());
+        EXPECT_LT(error, grad_tolerance);
+    }
+}
 } // namespace
 
 TEST(Center2Orb11, BatchedCpuMatchesIndividualTables)
 {
     compare_pairs(false);
     compare_products(false);
+    compare_high_l_products(false);
+    compare_radial_tiles(false);
 }
 
 TEST(Center2Orb21, ProductGradientMatchesFiniteDifference)
 {
-    const auto left = make_orbital(2, 0, 101);
-    const auto middle = make_orbital(1, 1, 101);
-    const auto right = make_orbital(3, 2, 101);
+    const auto left = make_orbital(2, 0, 101, 65);
+    const auto middle = make_orbital(1, 1, 101, 65);
+    const auto right = make_orbital(3, 2, 101, 65);
     ORB_gaunt_table gaunt;
     gaunt.init_Gaunt_CH(3);
     gaunt.init_Gaunt(3);
@@ -205,5 +285,7 @@ TEST(Center2Orb11, BatchedGpuMatchesIndividualTables)
     }
     compare_pairs(true);
     compare_products(true);
+    compare_high_l_products(true);
+    compare_radial_tiles(true);
 }
 #endif
