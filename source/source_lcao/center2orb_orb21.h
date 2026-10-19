@@ -13,6 +13,7 @@
 #include "source_basis/module_ao/orb_gaunt_table.h"
 
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -44,6 +45,7 @@ class Center2_Orb::Orb21
 
   private:
     void prepare_radial_table();
+    void bind_product_orbitals();
 
     const Numerical_Orbital_Lm& nA1;
     const Numerical_Orbital_Lm& nA2;
@@ -52,7 +54,8 @@ class Center2_Orb::Orb21
     const ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     const ORB_gaunt_table& MGT;
 
-    std::map<int, Numerical_Orbital_Lm> nA;
+    using ProductOrbitals = std::map<int, Numerical_Orbital_Lm>;
+    std::shared_ptr<const ProductOrbitals> nA;
     std::map<int, Center2_Orb::Orb11> orb11s;
 };
 

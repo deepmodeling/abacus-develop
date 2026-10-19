@@ -104,11 +104,58 @@ void compare_pairs(const bool use_gpu)
         }
     }
 }
+
+void compare_products(const bool use_gpu)
+{
+    std::vector<Numerical_Orbital_Lm> basis;
+    for (int l = 0; l <= 3; ++l)
+    {
+        basis.push_back(make_orbital(l, l, 101));
+    }
+    ORB_gaunt_table gaunt;
+    gaunt.init_Gaunt_CH(3);
+    gaunt.init_Gaunt(3);
+    ModuleBase::Sph_Bessel_Recursive::D2 bessel;
+    bessel.set_dx(0.001);
+    bessel.cal_jlx(7, 405, 65);
+    std::vector<std::unique_ptr<Center2_Orb::Orb21>> reference;
+    std::vector<std::unique_ptr<Center2_Orb::Orb21>> candidate;
+    std::vector<Center2_Orb::Orb21*> tasks;
+    for (int i = 0; i < 4; ++i)
+    {
+        reference.emplace_back(new Center2_Orb::Orb21(basis[1], basis[2], basis[i], &bessel, gaunt));
+        candidate.emplace_back(new Center2_Orb::Orb21(basis[1], basis[2], basis[i], &bessel, gaunt));
+        reference.back()->init_radial_table();
+        tasks.push_back(candidate.back().get());
+    }
+    Center2_Orb::Orb21::init_radial_table(tasks, use_gpu);
+    const ModuleBase::Vector3<double> origin(0.0, 0.0, 0.0);
+    for (int i = 0; i < 4; ++i)
+    {
+        for (double distance: {0.0, 0.037, 0.73, 1.91, 3.87})
+        {
+            const double x = 0.8 * distance;
+            const double y = 0.36 * distance;
+            const double z = 0.48 * distance;
+            const ModuleBase::Vector3<double> position(x, y, z);
+            const double expected = reference[i]->cal_overlap(origin, position, 1, 2, i);
+            const double actual = candidate[i]->cal_overlap(origin, position, 1, 2, i);
+            const double tolerance = 2e-11 * (1.0 + std::abs(expected));
+            EXPECT_NEAR(actual, expected, tolerance);
+            const auto grad_expected = reference[i]->cal_grad_overlap(origin, position, 1, 2, i);
+            const auto grad_actual = candidate[i]->cal_grad_overlap(origin, position, 1, 2, i);
+            const double error = (grad_actual - grad_expected).norm();
+            const double grad_tolerance = 2e-10 * (1.0 + grad_expected.norm());
+            EXPECT_LT(error, grad_tolerance);
+        }
+    }
+}
 } // namespace
 
 TEST(Center2Orb11, BatchedCpuMatchesIndividualTables)
 {
     compare_pairs(false);
+    compare_products(false);
 }
 
 TEST(Center2Orb21, ProductGradientMatchesFiniteDifference)
@@ -157,5 +204,6 @@ TEST(Center2Orb11, BatchedGpuMatchesIndividualTables)
         GTEST_SKIP() << "A CUDA device is required";
     }
     compare_pairs(true);
+    compare_products(true);
 }
 #endif

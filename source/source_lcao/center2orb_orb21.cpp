@@ -21,6 +21,7 @@ Center2_Orb::Orb21::Orb21(const Numerical_Orbital_Lm& nA1_in,
 
 void Center2_Orb::Orb21::prepare_radial_table()
 {
+    auto products = std::make_shared<ProductOrbitals>();
     const Numerical_Orbital_Lm& nA_short = (this->nA1.getNr() <= this->nA2.getNr()) ? this->nA1 : this->nA2;
 
     std::vector<double> nA_tmp(nA_short.getNr());
@@ -38,24 +39,32 @@ void Center2_Orb::Orb21::prepare_radial_table()
             continue;
         }
 
-        this->nA[LA].set_orbital_info(nA_short.getLabel(),
-                                      nA_short.getType(),
-                                      LA,
-                                      1, // N?
-                                      nA_short.getNr(),
-                                      nA_short.getRab(),
-                                      nA_short.getRadial(),
-                                      Numerical_Orbital_Lm::Psi_Type::Psi,
-                                      nA_tmp.data(),
-                                      nA_short.getNk(),
-                                      nA_short.getDk(),
-                                      nA_short.getDruniform(),
-                                      false,
-                                      true,
-                                      false); // Product orbitals use reciprocal-space gradients, not zty.
+        (*products)[LA].set_orbital_info(nA_short.getLabel(),
+                                         nA_short.getType(),
+                                         LA,
+                                         1, // N?
+                                         nA_short.getNr(),
+                                         nA_short.getRab(),
+                                         nA_short.getRadial(),
+                                         Numerical_Orbital_Lm::Psi_Type::Psi,
+                                         nA_tmp.data(),
+                                         nA_short.getNk(),
+                                         nA_short.getDk(),
+                                         nA_short.getDruniform(),
+                                         false,
+                                         true,
+                                         false); // Product orbitals use reciprocal-space gradients, not zty.
+    }
+    this->nA = std::move(products);
+    this->bind_product_orbitals();
+}
 
-        this->orb11s.insert(std::make_pair(LA, Center2_Orb::Orb11(this->nA[LA], nB, psb_, this->MGT)));
-
+void Center2_Orb::Orb21::bind_product_orbitals()
+{
+    this->orb11s.clear();
+    for (const auto& product: *this->nA)
+    {
+        this->orb11s.emplace(product.first, Orb11(product.second, this->nB, this->psb_, this->MGT));
     }
 }
 
@@ -80,10 +89,24 @@ void Center2_Orb::Orb21::init_radial_table(const std::set<size_t>& radials)
 void Center2_Orb::Orb21::init_radial_table(const std::vector<Orb21*>& orbitals, const bool use_gpu)
 {
     std::vector<Orb11*> pairs;
+    // A product depends on its two orbitals on center A, not the orbital on
+    // center B. Share it within this build and retain ownership with each user.
+    std::map<const Numerical_Orbital_Lm*, std::map<const Numerical_Orbital_Lm*, std::shared_ptr<const ProductOrbitals>>>
+        products;
     for (Orb21* orbital: orbitals)
     {
         // Orbital transforms grow the shared Bessel cache, so prepare them serially.
-        orbital->prepare_radial_table();
+        auto& product = products[&orbital->nA1][&orbital->nA2];
+        if (!product)
+        {
+            orbital->prepare_radial_table();
+            product = orbital->nA;
+        }
+        else
+        {
+            orbital->nA = product;
+            orbital->bind_product_orbitals();
+        }
         for (auto& pair: orbital->orb11s)
         {
             pairs.push_back(&pair.second);
