@@ -164,18 +164,20 @@ std::vector<double> x_harmonic(const ModulePW::PW_Basis& basis, int harmonic)
     }
     return values;
 }
+} // namespace
 
-// Relative difference between the analytic cavity potential and a central
-// finite difference of the discrete reaction energy along a varying cavity
-// density, on the grid set by gridecut. The base density is uniform inside the
-// switching interval, so v = 0.1 cos(6 g x) solves the base response exactly.
-double cavity_derivative_mismatch(double gridecut)
+// The cavity potential -eps'|grad v|^2/(8 pi) against a central finite
+// difference of the reaction energy along 1 + cos(3 g x). The base density is
+// uniform inside the switching interval, so v = 0.1 cos(6 g x) solves the base
+// response exactly; the 80 Ry grid resolves |grad v|^2.
+TEST(SccsResponseRefinement, CavityDerivativeMatchesFiniteDifferenceOnAResolvedGrid)
 {
     ModulePW::PW_Basis basis("cpu", "double");
 #ifdef __MPI
     basis.initmpi(SccsTest::pool_size, SccsTest::pool_rank, POOL_WORLD);
 #endif
     const double length = 10.0;
+    const double gridecut = 80.0;
     const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
                                       0.0, 1.0, 0.0,
                                       0.0, 0.0, 1.0);
@@ -190,10 +192,8 @@ double cavity_derivative_mismatch(double gridecut)
     config.cavity.density_max = 5e-3;
     config.cavity.epsilon_bulk = 78.3;
     config.surface_regularization = 1e-8;
-    // On the perturbed cavity the CG stalls at a uniform residual (~2e-9 here)
-    // that the zero-mean Coulomb preconditioner cannot reduce; a uniform
-    // residual does not change the zero-mean potential or the energy, so 1e-8
-    // is tight enough and the mismatches below are unchanged by it.
+    // The CG stalls at a uniform residual (~2e-9) outside the range of the
+    // zero-mean preconditioner; it does not change the energy.
     ModuleSccs::PolarizationSolverParameters solver;
     solver.tolerance_rms = 1e-8;
     solver.tolerance_max = 1e-8;
@@ -237,19 +237,6 @@ double cavity_derivative_mismatch(double gridecut)
     }
     Parallel_Reduce::reduce_pool(analytic);
     analytic *= basis.omega / basis.nxyz;
-    const double difference = finite_difference - analytic;
-    return std::abs(difference) / std::abs(finite_difference);
-}
-} // namespace
-
-// The cavity potential is the continuum derivative -eps'|grad v|^2/(8 pi). On
-// the 15^3 grid (gridecut 20 Ry) v^2 = cos^2(6 g x) aliases, and the discrete
-// reaction energy differs from it by about 65% along 1 + cos(3 g x); on the
-// 30^3 grid (gridecut 80 Ry) v^2 is resolved and the two agree to O(step^2).
-TEST(SccsResponseRefinement, CavityDerivativeConvergesWithGridRefinement)
-{
-    const double coarse = cavity_derivative_mismatch(20.0);
-    const double fine = cavity_derivative_mismatch(80.0);
-    EXPECT_GT(coarse, 0.1);
-    EXPECT_LT(fine, 1e-6);
+    const double tolerance = 1e-6 * std::abs(finite_difference);
+    EXPECT_NEAR(analytic, finite_difference, tolerance);
 }

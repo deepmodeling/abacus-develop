@@ -33,9 +33,7 @@ struct SccsResponse
     std::vector<double> depsilon_drho;
     std::vector<ModuleBase::Vector3<double>> grad_log_epsilon;
     PolarizationResult polarization;
-    // -epsilon' |grad v|^2/(8 pi), Hartree: the continuum derivative, exact only
-    // when v^2 is resolved by the grid (see finish_response).
-    std::vector<double> cavity_potential;
+    std::vector<double> cavity_potential; // -epsilon' |grad v|^2/(8 pi), Hartree
     std::vector<double> restart_potential; // unshifted solution for explicit warm starts
 };
 
