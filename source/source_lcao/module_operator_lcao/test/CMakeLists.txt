@@ -96,19 +96,26 @@ AddTest(
 if(ENABLE_LIBRI)
 AddTest(
   TARGET MODULE_LCAO_operator_exx_nscf_cell_nearest_test
-  LIBS parameter psi base device container cereal::cereal
+  LIBS parameter psi base device container cereal::cereal ri
   SOURCES test_op_exx_nscf_cell_nearest.cpp ../op_exx_lcao.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
   ../../../source_hamilt/module_hcontainer/read_hcontainer.cpp
   ../../../source_basis/module_ao/parallel_orbitals.cpp
   ../../../source_basis/module_ao/orb_atomic_lm.cpp
   ../../../source_basis/module_ao/orb_gaunt_table.cpp
-  ../../module_ri/ri_2d_comm.cpp
   ../../lcao_set_mat2d.cpp
+  ../../center2orb.cpp
+  ../../center2orb_orb11.cpp
+  ../../center2orb_orb21.cpp
+  ../../center2orb_orb22.cpp
+  ../../../source_basis/module_ao/orb_read.cpp
+  ../../../source_basis/module_ao/elem_basis_idx_orb.cpp
+  ../../../source_io/module_hs/hs_sparse_io.cpp
+  ../../../source_io/module_hs/lat_r_csr.cpp
+  ../../../source_hamilt/module_hcontainer/func_transfer.cpp
+  ../../../source_hamilt/module_hcontainer/transfer.cpp
+  ../../../source_io/module_restart/restart.cpp
   ../../../source_io/module_restart/restart_exx_csr.cpp
-  ../../../source_base/element_basis_index.cpp
-  ../../../source_base/module_out/file_reader.cpp ../../../source_base/module_out/csr_reader.cpp
-  ../../../source_base/module_out/sparse_matrix.cpp
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
 )
 endif()

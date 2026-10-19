@@ -193,15 +193,8 @@ void TwoCenterIntegrator::snap(const int itype1,
     }
 }
 
-#include "source_basis/module_ao/orb_read.h"
-LCAO_Orbitals::LCAO_Orbitals()
-{
-    this->Phi = new Numerical_Orbital[1];
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-    delete[] Phi;
-}
+// LCAO_Orbitals ctor/dtor/cutoffs come from the real orb_read.cpp, which is
+// in this target's source list; do not stub them here.
 
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 // mock find_atom() function
@@ -295,13 +288,9 @@ int elecstate::TDFieldManager::gauge() const
     return gauge_;
 }
 
-// The operator tests reference the global restart context through headers;
-// provide the definition without pulling module_io's restart.cpp.
-#include "source_io/module_restart/restart.h"
-namespace GlobalC
-{
-Restart restart;
-}
+// Restart (including the GlobalC::restart instance and the out-of-line
+// read_file2) comes from the real module_io restart.cpp, which is in this
+// target's source list; do not stub it here.
 
 // op_exx_lcao.cpp reads the global XC functional type inside OperatorEXX
 // member functions that the cell-nearest test never enters; satisfy the

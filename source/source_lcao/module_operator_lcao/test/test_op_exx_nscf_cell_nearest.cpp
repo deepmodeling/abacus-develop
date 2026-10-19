@@ -19,41 +19,55 @@ std::string make_test_dir()
     return dir;
 }
 
+// The csrFileReader on develop expects the full sparse-file header (title,
+// spin lines, dimension and R counts, lattice block) before the CSR blocks,
+// in the shape produced by the SR.csr fixture of source_base tests.
+void write_csr_header(std::ofstream& ofs)
+{
+    ofs << " --- Ionic Step 0 ---\n";
+    ofs << " # minimal HexxR fixture for the cell-nearest operator test\n";
+    ofs << " 1 # number of spin directions\n";
+    ofs << " 1 # spin index\n";
+    ofs << " 2 # number of localized basis\n";
+    ofs << " 2 # number of Bravais lattice vector R\n";
+    ofs << "\n";
+    ofs << " user_defined_lattice\n";
+    ofs << " 1\n";
+    ofs << " 1 0 0\n";
+    ofs << " 0 1 0\n";
+    ofs << " 0 0 1\n";
+    ofs << " X\n";
+    ofs << " 2\n";
+    ofs << " Direct\n";
+    ofs << " 0 0 0\n";
+    ofs << " 0.9 0 0\n";
+}
+
+void write_csr_r_block(std::ofstream& ofs, const int rx, const int ry, const int rz, const double value)
+{
+    ofs << " " << rx << " " << ry << " " << rz << " 1\n";
+    ofs << " # CSR values\n " << value << "\n";
+    ofs << " # CSR column indices\n 1\n";
+    ofs << " # CSR row pointers\n 0 1 1\n";
+    ofs << "\n";
+}
+
 void write_minimal_hexx_csr(const std::string& dir)
 {
+    std::system(("mkdir -p " + dir).c_str());
     std::ofstream ofs(dir + "/HexxR0_0.csr");
-    ofs << "STEP: 0\n";
-    ofs << "Matrix Dimension of Hexxs_0(R): 2\n";
-    ofs << "Matrix number of Hexxs_0(R): 2\n";
-
-    ofs << "0 0 0 1\n";
-    ofs << "1.0\n";
-    ofs << "1\n";
-    ofs << "0 1 1\n";
-
-    ofs << "1 0 0 1\n";
-    ofs << "2.0\n";
-    ofs << "1\n";
-    ofs << "0 1 1\n";
+    write_csr_header(ofs);
+    write_csr_r_block(ofs, 0, 0, 0, 1.0);
+    write_csr_r_block(ofs, 1, 0, 0, 2.0);
 }
 
 void write_centered_hexx_csr(const std::string& dir)
 {
     std::system(("mkdir -p " + dir).c_str());
     std::ofstream ofs(dir + "/HexxR0_0.csr");
-    ofs << "STEP: 0\n";
-    ofs << "Matrix Dimension of Hexxs_0(R): 2\n";
-    ofs << "Matrix number of Hexxs_0(R): 2\n";
-
-    ofs << "-1 0 0 1\n";
-    ofs << "1.0\n";
-    ofs << "1\n";
-    ofs << "0 1 1\n";
-
-    ofs << "0 0 0 1\n";
-    ofs << "2.0\n";
-    ofs << "1\n";
-    ofs << "0 1 1\n";
+    write_csr_header(ofs);
+    write_csr_r_block(ofs, -1, 0, 0, 1.0);
+    write_csr_r_block(ofs, 0, 0, 0, 2.0);
 }
 
 } // namespace
