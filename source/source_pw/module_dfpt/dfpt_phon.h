@@ -94,6 +94,20 @@ class DFPT_Phon
     /// nonanalytic term carries its own Z* sum rule
     void audit_asr(const std::string& label, int q_idx, const DFPT_PW_Data& data) const;
 
+    /// enforce the translational acoustic sum rule on the Gamma dynamical
+    /// matrix (and, in every enforcing mode, the Z* sum rule
+    /// sum_a Z*_a = 0 on the stored Born charges, like QE dynmat's
+    /// set_asr). "simple": the legacy fix, each row's total sum is
+    /// subtracted from its diagonal element (QE 'simple'). "crystal":
+    /// the optimized minimal-norm fix -- with the three orthonormal
+    /// translation vectors u_i(3a+alpha) = delta(alpha,i)/sqrt(nat), the
+    /// symmetric projection D -> (1-P) D (1-P), P = sum_i u_i u_i^T,
+    /// which zeroes every row AND column sum, preserves Hermiticity and
+    /// keeps symmetry-equivalent atoms equivalent (QE 'crystal' for the
+    /// translational part). Both apply to the RAW matrix, before the
+    /// LO-TO nonanalytic term; away from Gamma the call is a no-op.
+    void apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& data);
+
     /// Ewald ion-ion force constants C^ewald_ab(q) (G-space + real-space +
     /// Gaussian self term), mass-reduced by 1/sqrt(M_a M_b). A stateless
     /// building block exposed publicly so the serial analytic tests can

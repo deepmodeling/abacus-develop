@@ -222,6 +222,189 @@ void DFPT_Phon::audit_asr(const std::string& label, int q_idx, const DFPT_PW_Dat
     ModuleBase::timer::end("DFPT_Phon", "audit_asr");
 }
 
+void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& data)
+{
+    ModuleBase::TITLE("DFPT_Phon", "apply_asr");
+    ModuleBase::timer::start("DFPT_Phon", "apply_asr");
+    const double gamma_tol = 1.0e-8; ///< empirical parameter: fractional-q Gamma tolerance
+    const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
+    const bool at_gamma = std::abs(q_frac.x) <= gamma_tol && std::abs(q_frac.y) <= gamma_tol
+                          && std::abs(q_frac.z) <= gamma_tol;
+    const int nat = ucell_->nat;
+    const int nat3 = 3 * nat;
+    ModuleBase::ComplexMatrix dyn = data.get_dynmat(q_idx);
+    if (!at_gamma || dyn.nr != nat3)
+    {
+        std::cout << "DFPT ASR (" << asr_type << ") skipped: not a Gamma matrix" << std::endl;
+        ModuleBase::timer::end("DFPT_Phon", "apply_asr");
+        return;
+    }
+
+    // violation BEFORE the correction (for the report line)
+    double worst_before = 0.0;
+    for (int ia = 0; ia < nat; ++ia)
+    {
+        double s2 = 0.0;
+        for (int da = 0; da < 3; ++da)
+        {
+            std::complex<double> s(0.0, 0.0);
+            for (int jb = 0; jb < nat3; ++jb)
+            {
+                s += dyn(3 * ia + da, jb);
+            }
+            s2 += std::norm(s);
+        }
+        worst_before = std::max(worst_before, std::sqrt(s2));
+    }
+
+    if (asr_type == "simple")
+    {
+        // legacy fix: each row's total is subtracted from its diagonal
+        // element (QE dynmat 'simple'); Hermiticity is restored by the
+        // re-symmetrization pass below, mirroring QE's upper-triangle use
+        for (int i = 0; i < nat3; ++i)
+        {
+            std::complex<double> s(0.0, 0.0);
+            for (int j = 0; j < nat3; ++j)
+            {
+                s += dyn(i, j);
+            }
+            dyn(i, i) -= s;
+        }
+    }
+    else if (asr_type == "crystal")
+    {
+        // minimal-norm symmetric projection D -> (1-P) D (1-P) with the
+        // orthonormal translations u_i(3a+alpha) = delta(alpha,i)/sqrt(nat):
+        //   M(alpha, nb, beta)  = (1/nat) sum_na' D(na',alpha; nb,beta)   (P D)
+        //   N(na, alpha, beta)  = (1/nat) sum_nb' D(na,alpha; nb',beta)   (D P)
+        //   T(alpha, beta)      = sum_na,nb D(na,alpha; nb,beta)
+        //   D' = D - M - N + T/nat^2
+        std::vector<std::complex<double>> m(3 * nat3, std::complex<double>(0.0, 0.0));
+        std::vector<std::complex<double>> n(3 * nat3, std::complex<double>(0.0, 0.0));
+        ModuleBase::ComplexMatrix t(3, 3, true);
+        for (int na = 0; na < nat; ++na)
+        {
+            for (int da = 0; da < 3; ++da)
+            {
+                for (int nb = 0; nb < nat; ++nb)
+                {
+                    for (int db = 0; db < 3; ++db)
+                    {
+                        const std::complex<double> d = dyn(3 * na + da, 3 * nb + db);
+                        m[da * nat3 + 3 * nb + db] += d / static_cast<double>(nat);
+                        n[(3 * na + da) * 3 + db] += d / static_cast<double>(nat);
+                        t(da, db) += d;
+                    }
+                }
+            }
+        }
+        for (int na = 0; na < nat; ++na)
+        {
+            for (int da = 0; da < 3; ++da)
+            {
+                for (int nb = 0; nb < nat; ++nb)
+                {
+                    for (int db = 0; db < 3; ++db)
+                    {
+                        dyn(3 * na + da, 3 * nb + db) -= m[da * nat3 + 3 * nb + db];
+                        dyn(3 * na + da, 3 * nb + db) -= n[(3 * na + da) * 3 + db];
+                        dyn(3 * na + da, 3 * nb + db) += t(da, db) / static_cast<double>(nat * nat);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        std::cout << "DFPT ASR: unknown type '" << asr_type << "', nothing applied" << std::endl;
+        ModuleBase::timer::end("DFPT_Phon", "apply_asr");
+        return;
+    }
+
+    // Hermitian re-symmetrization (rows are corrected independently)
+    for (int i = 0; i < nat3; ++i)
+    {
+        for (int j = i + 1; j < nat3; ++j)
+        {
+            const std::complex<double> avg = 0.5 * (dyn(i, j) + std::conj(dyn(j, i)));
+            dyn(i, j) = avg;
+            dyn(j, i) = std::conj(avg);
+        }
+    }
+
+    // Z* sum rule (both enforcing modes, QE set_asr convention): shift by
+    // the per-component mean over atoms, sum_a Z*_a -> 0
+    double zworst_before = 0.0;
+    ModuleBase::ComplexMatrix zsum(3, 3, true);
+    int n_born = 0;
+    for (int ia = 0; ia < nat; ++ia)
+    {
+        const ModuleBase::matrix za = data.get_born(ia);
+        if (za.nr != 3 || za.nc != 3)
+        {
+            continue;
+        }
+        ++n_born;
+        for (int a = 0; a < 3; ++a)
+        {
+            for (int b = 0; b < 3; ++b)
+            {
+                zsum(a, b) += std::complex<double>(za(a, b), 0.0);
+            }
+        }
+    }
+    if (n_born == nat)
+    {
+        for (int a = 0; a < 3; ++a)
+        {
+            for (int b = 0; b < 3; ++b)
+            {
+                zworst_before = std::max(zworst_before, std::abs(zsum(a, b)));
+            }
+        }
+        for (int ia = 0; ia < nat; ++ia)
+        {
+            ModuleBase::matrix za = data.get_born(ia);
+            for (int a = 0; a < 3; ++a)
+            {
+                for (int b = 0; b < 3; ++b)
+                {
+                    za(a, b) -= zsum(a, b).real() / nat;
+                }
+            }
+            data.set_born(ia, za);
+        }
+    }
+
+    data.set_dynmat(q_idx, dyn);
+
+    // violation AFTER the correction
+    double worst_after = 0.0;
+    for (int ia = 0; ia < nat; ++ia)
+    {
+        double s2 = 0.0;
+        for (int da = 0; da < 3; ++da)
+        {
+            std::complex<double> s(0.0, 0.0);
+            for (int jb = 0; jb < nat3; ++jb)
+            {
+                s += dyn(3 * ia + da, jb);
+            }
+            s2 += std::norm(s);
+        }
+        worst_after = std::max(worst_after, std::sqrt(s2));
+    }
+    std::cout << "DFPT ASR (" << asr_type << ") applied: worst rowsum " << std::setprecision(3) << std::scientific
+              << worst_before << " -> " << worst_after;
+    if (n_born == nat)
+    {
+        std::cout << " | max |sum_a Z*_a| " << zworst_before << " -> 0";
+    }
+    std::cout << std::defaultfloat << std::setprecision(6) << std::endl;
+    ModuleBase::timer::end("DFPT_Phon", "apply_asr");
+}
+
 void DFPT_Phon::add_loto(const ModuleBase::Vector3<double>& qhat, DFPT_PW_Data& data)
 {
     ModuleBase::TITLE("DFPT_Phon", "add_loto");

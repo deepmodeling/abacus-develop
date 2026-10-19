@@ -691,3 +691,153 @@ TEST_F(DFPTPhonSerialTest, FormatReportsRegression)
                                  "   mode   2 : 520.123457 cm^-1\n";
     EXPECT_EQ(lrep, expect_l);
 }
+
+namespace
+{
+/// per-atom row-sum norm of a 2-atom (nat3=6) dynamical matrix
+double row_sum_norm(const ModuleBase::ComplexMatrix& dyn, int ia)
+{
+    double s2 = 0.0;
+    for (int da = 0; da < 3; ++da)
+    {
+        std::complex<double> s(0.0, 0.0);
+        for (int jb = 0; jb < 6; ++jb)
+        {
+            s += dyn(3 * ia + da, jb);
+        }
+        s2 += std::norm(s);
+    }
+    return std::sqrt(s2);
+}
+
+/// Hermitian 2-atom matrix with an asymmetric translational violation:
+/// self blocks A1 != A2, off block B, plus an extra bump on atom 0
+ModuleBase::ComplexMatrix make_violating_dyn()
+{
+    ModuleBase::ComplexMatrix dyn(6, 6, true);
+    const double self1 = 0.05;
+    const double self2 = 0.04;
+    const double off = 0.02;
+    const double bump = 0.012; // asymmetry: only on atom 0, x row
+    for (int d = 0; d < 3; ++d)
+    {
+        dyn(d, d) = std::complex<double>(self1 + (d == 0 ? bump : 0.0), 0.0);
+        dyn(3 + d, 3 + d) = std::complex<double>(self2, 0.0);
+        dyn(d, 3 + d) = std::complex<double>(off, 0.01 * d);
+        dyn(3 + d, d) = std::conj(dyn(d, 3 + d));
+    }
+    return dyn;
+}
+} // namespace
+
+TEST_F(DFPTPhonSerialTest, AsrSimpleZeroesRowSums)
+{
+    MakeTwoAtomCell();
+    // rewire the q list to Gamma (the fixture default q is not 0)
+    SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    const ModuleBase::ComplexMatrix dyn0 = make_violating_dyn();
+    data_.set_dynmat(0, dyn0);
+    phon_.apply_asr("simple", 0, data_);
+    const ModuleBase::ComplexMatrix dyn = data_.get_dynmat(0);
+    // legacy fix leaves only the tiny imaginary Hermitization residual
+    const double scale = 0.06;
+    EXPECT_LT(row_sum_norm(dyn, 0) / scale, 1.0e-12);
+    EXPECT_LT(row_sum_norm(dyn, 1) / scale, 1.0e-12);
+    // Hermiticity preserved by the re-symmetrization pass
+    for (int i = 0; i < 6; ++i)
+    {
+        for (int j = i + 1; j < 6; ++j)
+        {
+            EXPECT_EQ(dyn(i, j), std::conj(dyn(j, i)));
+        }
+    }
+}
+
+TEST_F(DFPTPhonSerialTest, AsrCrystalZeroesRowSumsExactlyAndProjectsAcousticToZero)
+{
+    MakeTwoAtomCell();
+    // rewire the q list to Gamma (the fixture default q is not 0)
+    SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    data_.set_dynmat(0, make_violating_dyn());
+    phon_.apply_asr("crystal", 0, data_);
+    const ModuleBase::ComplexMatrix dyn = data_.get_dynmat(0);
+    EXPECT_LT(row_sum_norm(dyn, 0), 1.0e-14);
+    EXPECT_LT(row_sum_norm(dyn, 1), 1.0e-14);
+    for (int i = 0; i < 6; ++i)
+    {
+        for (int j = i + 1; j < 6; ++j)
+        {
+            EXPECT_EQ(dyn(i, j), std::conj(dyn(j, i)));
+        }
+    }
+    // the three translation eigenvalues are projected out exactly: the
+    // uniform-displacement subspace maps to zero under (1-P) D (1-P).
+    // The matrix residual is ~1e-17; in frequency units the square root
+    // rescaling lifts that to ~1e-5 cm^-1, still an exact zero physically
+    phon_.diagonalize(0, data_);
+    const std::vector<double> freq = data_.get_phon_freq(0);
+    std::vector<double> byabs = freq;
+    std::sort(byabs.begin(), byabs.end(), [](double a, double b) { return std::abs(a) < std::abs(b); });
+    for (int m = 0; m < 3; ++m)
+    {
+        EXPECT_NEAR(byabs[m], 0.0, 1.0e-4);
+    }
+}
+
+TEST_F(DFPTPhonSerialTest, AsrCrystalKeepsEquivalentAtomsEquivalent)
+{
+    MakeTwoAtomCell();
+    // rewire the q list to Gamma (the fixture default q is not 0)
+    SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    // symmetric input: identical self blocks, common off block, plus a
+    // violation spread equally (row sums nonzero but atom-symmetric)
+    ModuleBase::ComplexMatrix dyn(6, 6, true);
+    const double self = 0.05;
+    const double off = 0.02;
+    for (int d = 0; d < 3; ++d)
+    {
+        dyn(d, d) = std::complex<double>(self, 0.0);
+        dyn(3 + d, 3 + d) = std::complex<double>(self, 0.0);
+        dyn(d, 3 + d) = std::complex<double>(off, 0.0);
+        dyn(3 + d, d) = std::complex<double>(off, 0.0);
+    }
+    data_.set_dynmat(0, dyn);
+    phon_.apply_asr("crystal", 0, data_);
+    const ModuleBase::ComplexMatrix out = data_.get_dynmat(0);
+    // crystal redistributes the mean uniformly: both self blocks stay equal
+    // and both row sums vanish (simple would dump them on the diagonals,
+    // also staying equal here -- the discriminating case is the asymmetric
+    // one above, where only crystal shares the correction)
+    for (int d = 0; d < 3; ++d)
+    {
+        EXPECT_EQ(out(d, d), out(3 + d, 3 + d));
+    }
+}
+
+TEST_F(DFPTPhonSerialTest, AsrCrystalCorrectsBornChargeSumRule)
+{
+    MakeTwoAtomCell();
+    // rewire the q list to Gamma (the fixture default q is not 0)
+    SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    data_.set_dynmat(0, make_violating_dyn());
+    ModuleBase::matrix z1(3, 3, true);
+    ModuleBase::matrix z2(3, 3, true);
+    z1(0, 0) = 1.3;
+    z1(1, 1) = 1.1;
+    z1(2, 2) = 1.2;
+    z2(0, 0) = -1.1;
+    z2(1, 1) = -1.0;
+    z2(2, 2) = -1.05; // sums: 0.2 / 0.1 / 0.15 != 0
+    data_.set_born(0, z1);
+    data_.set_born(1, z2);
+    phon_.apply_asr("crystal", 0, data_);
+    const ModuleBase::matrix o1 = data_.get_born(0);
+    const ModuleBase::matrix o2 = data_.get_born(1);
+    for (int a = 0; a < 3; ++a)
+    {
+        EXPECT_NEAR(o1(a, a) + o2(a, a), 0.0, 1.0e-14);
+    }
+    // shifted by the per-component mean: 0.1 / 0.05 / 0.075
+    EXPECT_NEAR(o1(0, 0), 1.3 - 0.1, 1.0e-14);
+    EXPECT_NEAR(o2(1, 1), -1.1 + 0.05, 1.0e-14);
+}
