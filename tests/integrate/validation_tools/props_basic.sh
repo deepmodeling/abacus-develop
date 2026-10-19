@@ -49,7 +49,7 @@ fi
 #----------------------------
 # force information
 #----------------------------
-if ! test -z "$has_force" && [ $has_force == 1 ]; then
+if ! test -z "$has_force" && [ $has_force == 1 ] && [ $is_lr == 0 ]; then
 	nn3=`echo "$natom + 3" |bc`
     # check the last step result
     grep -A$nn3 "TOTAL-FORCE" $running_path |awk 'NF==4{print $2,$3,$4}' | tail -$natom > force.txt

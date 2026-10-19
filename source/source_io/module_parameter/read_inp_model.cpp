@@ -17,9 +17,21 @@ void ReadInput::item_model()
         item.type = "Boolean";
         item.description = R"(Added the electric field.
 * True: A saw-like potential simulating an electric field is added to the bare ionic potential.
-* False: Not added the electric field.)";
+* False: Not added the electric field.
+[NOTE] LR-TDDFT excited-state forces and relaxation do not support this external field: the moving-AO correction is not implemented.)";
         item.default_value = "False";
         item.unit = "";
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const auto& input = para.input;
+            const bool lr = input.esolver_type == "lr" || input.esolver_type == "ks-lr";
+            const bool forces = input.cal_force || input.calculation == "relax";
+            if (lr && forces && input.efield_flag)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "LR-TDDFT forces and relaxation with efield_flag are not supported: moving-AO correction is missing");
+            }
+        };
         read_sync_bool(input.efield_flag);
         this->add_item(item);
     }

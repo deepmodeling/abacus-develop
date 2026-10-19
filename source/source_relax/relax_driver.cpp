@@ -316,7 +316,7 @@ void Relax_Driver::print_not_converged_summary(const Input_para& inp, std::ofstr
         ? rl.get_max_stress_history()
         : rl_old.get_max_stress_history();
     const int ionic_steps = static_cast<int>(force_hist.size());
-    const std::string method = inp.relax_method.empty() ? "unknown" : inp.relax_method[0];
+    const std::string method = inp.relax_method.empty() ? "unknown" : inp.relax_method;
     ofs_running << " Relaxation method: " << method << std::endl;
     ofs_running << " Relaxation stopped after " << ionic_steps << " ionic step(s) (relax_nmax = "
                 << inp.relax_nmax << " reached)." << std::endl;
