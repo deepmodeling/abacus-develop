@@ -1,6 +1,5 @@
 //=========================================================
 // AUTHOR : Peize Lin
-#include "source_io/module_parameter/parameter.h"
 // DATE : 2016-01-24
 //=========================================================
 
@@ -53,7 +52,7 @@ void Center2_Orb::Orb21::prepare_radial_table()
                                       nA_short.getDruniform(),
                                       false,
                                       true,
-                                      PARAM.inp.cal_force); // mohan add 2021-05-07
+                                      false); // Product orbitals use reciprocal-space gradients, not zty.
 
         this->orb11s.insert(std::make_pair(LA, Center2_Orb::Orb11(this->nA[LA], nB, psb_, this->MGT)));
 

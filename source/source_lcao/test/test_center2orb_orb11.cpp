@@ -1,5 +1,6 @@
 #include "source_base/module_device/device.h"
 #include "source_lcao/center2orb_orb11.h"
+#include "source_lcao/center2orb_orb21.h"
 
 #include "gtest/gtest.h"
 #include <cmath>
@@ -108,6 +109,43 @@ void compare_pairs(const bool use_gpu)
 TEST(Center2Orb11, BatchedCpuMatchesIndividualTables)
 {
     compare_pairs(false);
+}
+
+TEST(Center2Orb21, ProductGradientMatchesFiniteDifference)
+{
+    const auto left = make_orbital(2, 0, 101);
+    const auto middle = make_orbital(1, 1, 101);
+    const auto right = make_orbital(3, 2, 101);
+    ORB_gaunt_table gaunt;
+    gaunt.init_Gaunt_CH(3);
+    gaunt.init_Gaunt(3);
+    ModuleBase::Sph_Bessel_Recursive::D2 bessel;
+    bessel.set_dx(0.001);
+    bessel.cal_jlx(7, 405, 65);
+    Center2_Orb::Orb21 orbital(left, middle, right, &bessel, gaunt);
+    orbital.init_radial_table();
+    const ModuleBase::Vector3<double> origin(0.0, 0.0, 0.0);
+    const ModuleBase::Vector3<double> position(0.813, 0.321, 0.473);
+    const double step = 1e-5;
+    for (int ma: {0, 2, 4})
+    {
+        for (int mb: {0, 1, 2})
+        {
+            for (int mc: {0, 3, 6})
+            {
+                const auto gradient = orbital.cal_grad_overlap(origin, position, ma, mb, mc);
+                auto plus = position;
+                auto minus = position;
+                plus.x += step;
+                minus.x -= step;
+                const double upper = orbital.cal_overlap(origin, plus, ma, mb, mc);
+                const double lower = orbital.cal_overlap(origin, minus, ma, mb, mc);
+                const double finite_difference = (upper - lower) / (2 * step);
+                const double tolerance = 2e-7 * (1.0 + std::abs(finite_difference));
+                EXPECT_NEAR(gradient.x, finite_difference, tolerance);
+            }
+        }
+    }
 }
 
 #ifdef __CUDA

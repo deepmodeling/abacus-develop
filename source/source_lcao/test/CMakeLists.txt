@@ -6,7 +6,7 @@ if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_LCAO_center2orb_table
   LIBS parameter base device container
-  SOURCES test_center2orb_orb11.cpp ../center2orb.cpp ../center2orb_orb11.cpp
+  SOURCES test_center2orb_orb11.cpp ../center2orb.cpp ../center2orb_orb11.cpp ../center2orb_orb21.cpp
     ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_atomic_lm.cpp
     ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_gaunt_table.cpp
 )
@@ -15,7 +15,7 @@ if(USE_CUDA AND ENABLE_LIBRI_GPU)
     TARGET MODULE_LCAO_center2orb_table_gpu
     KEEP_FEATURE_DEFINITIONS __CUDA
     LIBS parameter base device container
-    SOURCES test_center2orb_orb11.cpp ../center2orb.cpp ../center2orb_orb11.cpp
+    SOURCES test_center2orb_orb11.cpp ../center2orb.cpp ../center2orb_orb11.cpp ../center2orb_orb21.cpp
       ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_atomic_lm.cpp
       ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_gaunt_table.cpp
   )
