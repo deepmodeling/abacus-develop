@@ -123,7 +123,7 @@ double radial_product(const Numerical_Orbital_Lm& left, const Numerical_Orbital_
 
 void Center2_Orb::Orb11::init_radial_table(const std::vector<Orb11*>& orbitals, const bool use_gpu)
 {
-    ModuleBase::timer::start("Center2_Orb", "init_radial_table_batch");
+    ModuleBase::timer::start("Center2_Orb", "init_radial_table");
 #ifndef __CUDA
     if (use_gpu)
     {
@@ -328,7 +328,7 @@ void Center2_Orb::Orb11::init_radial_table(const std::vector<Orb11*>& orbitals, 
             }
         }
     }
-    ModuleBase::timer::end("Center2_Orb", "init_radial_table_batch");
+    ModuleBase::timer::end("Center2_Orb", "init_radial_table");
 }
 
 double Center2_Orb::Orb11::cal_overlap(const ModuleBase::Vector3<double>& RA,
