@@ -3,6 +3,7 @@
 #include "gatefield.h"
 #include "pot_local.h"
 #include "pot_pcc.h"
+#include "pot_nonlocal_xc.h"
 #include "pot_sep.h"
 #include "pot_surchem.h"
 #include "pot_xc.h"
@@ -14,6 +15,7 @@
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
 #include "h_tddft_pw.h"
+
 #ifdef __MLALGO
 #include "pot_ml_exx.h"
 #endif
@@ -46,6 +48,28 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
         }
         const int open_axis = input.pcc_2d_axis;
         return new PotPcc(this->rho_basis_, PotPcc::Dimension::slab, open_axis, electron_count);
+    }
+    else if (pot_type == "xc_nonlocal")
+    {
+        // USPP can use a single density grid, so pointer equality does not
+        // determine the pseudopotential type.
+        for (int it = 0; it < this->ucell_->ntype; ++it)
+        {
+            if (this->ucell_->atoms[it].ncpp.tvanp)
+            {
+                ModuleBase::WARNING_QUIT("Potential", "nonlocal XC currently supports norm-conserving pseudopotentials only");
+            }
+        }
+        if (this->rho_basis_ != this->rho_basis_smooth_)
+        {
+            ModuleBase::WARNING_QUIT("Potential", "nonlocal XC currently requires the same smooth and dense density basis");
+        }
+        return new PotNonlocalXC(this->rho_basis_,
+                                 this->etxc_,
+                                 this->vtxc_,
+                                 this->nonlocal_xc_,
+                                 this->nonlocal_xc_b_,
+                                 this->nonlocal_xc_c_);
     }
     else if (pot_type == "surchem")
     {

@@ -140,6 +140,7 @@ void print_build_info()
     print_info("ELPA Support", ABACUS_ELPA_VERSION);
     print_info("MKL Support", ABACUS_MKL_SUPPORT);
     print_info("LibXC Support", ABACUS_LIBXC_VERSION);
+    print_info("libvdwxc Support", ABACUS_LIBVDWXC_VERSION);
     print_info("FFTW Support", ABACUS_FFTW_VERSION);
 
     // --- 8. Accelerators & Specific Hardware ---

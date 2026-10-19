@@ -46,6 +46,7 @@ option(USE_SW "Enable SW Architecture" OFF)
 
 option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
+option(ENABLE_LIBVDWXC "Enable libvdwxc-backed nonlocal XC" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
@@ -616,6 +617,17 @@ if(ENABLE_LIBXC)
   if(Libxc_VERSION VERSION_LESS "5.1.7")
     message(FATAL_ERROR "Libxc >= 5.1.7 is required; found version ${Libxc_VERSION}")
   endif()
+endif()
+
+if(ENABLE_LIBVDWXC)
+  if(NOT ENABLE_LIBXC)
+    message(FATAL_ERROR
+      "ENABLE_LIBVDWXC currently requires ENABLE_LIBXC=ON because the first "
+      "rVV10 interface uses Libxc for the semilocal RPW86+PBE part.")
+  endif()
+  # The config target supplies headers and transitive FFT dependencies.
+  # rVV10 currently requires the development revision documented in install.md.
+  find_package(libvdwxc CONFIG REQUIRED)
 endif()
 
 if(DEFINED DeePMD_DIR)

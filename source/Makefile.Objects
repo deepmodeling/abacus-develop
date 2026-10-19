@@ -292,6 +292,7 @@ OBJS_ELECSTAT=elecstate.o\
     h_hartree_pw.o\
     h_tddft_pw.o\
     pot_xc.o\
+    pot_nonlocal_xc.o\
     pot_ml_exx.o\
     pot_ml_exx_label.o\
     pot_xc_fdm.o\
@@ -1026,6 +1027,7 @@ OBJS_SRCPW=h_ewald_pw.o\
     vsep_pw.o
 
 OBJS_VDW=vdw.o\
+    nonlocal_xc.o\
     vdwd2_parameters.o\
     vdwd3_parameters.o\
     vdwd2.o\

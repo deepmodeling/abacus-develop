@@ -55,3 +55,11 @@ The following references are required to be cited when using ABACUS. Specificall
     Eike Caldeweyher, Jan-Michael Mewes, Sebastian Ehlert, and Stefan Grimme. "Extension and evaluation of the D4 London-dispersion model for periodic systems." Physical Chemistry Chemical Physics 22, 8499-8512 (2020). DOI: 10.1039/D0CP00502A.
 
     Nikolay V. Tkachenko, Linus B. Dittmer, Rebecca Tomann, and Martin Head-Gordon. "Smooth D4S model." The Journal of Physical Chemistry Letters 15, 10629-10637 (2024). DOI: 10.1021/acs.jpclett.4c02653.
+
+- **If the libvdwxc-backed rVV10 nonlocal correction is used:**
+
+    O. A. Vydrov and T. Van Voorhis. "Nonlocal van der Waals density functional: The simpler the better." The Journal of Chemical Physics 133, 244103 (2010). DOI: 10.1063/1.3521275.
+
+    P. Sabatini, T. Gorni, and S. de Gironcoli. "Nonlocal van der Waals density functional made simple and efficient." Physical Review B 87, 041108(R) (2013). DOI: 10.1103/PhysRevB.87.041108.
+
+    Cite the exact [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) revision used for the calculation, because the rVV10 CMake interface is version-dependent during development.

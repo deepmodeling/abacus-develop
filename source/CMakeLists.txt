@@ -66,6 +66,7 @@ set(_abacus_feature_definitions
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_LCAO=0>
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
   $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
+  $<$<BOOL:${ENABLE_LIBVDWXC}>:__LIBVDWXC>
   $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
   $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
@@ -276,7 +277,8 @@ set(_abacus_feature_libs
   $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
   $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
   $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
-  $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>)
+  $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>
+  $<$<BOOL:${ENABLE_LIBVDWXC}>:libvdwxc::vdwxc>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
@@ -398,6 +400,7 @@ foreach(_abacus_feature_target IN ITEMS
     cereal::cereal
     ELPA::ELPA
     Libxc::xc
+    libvdwxc::vdwxc
     dftd4::dftd4
     DeePMD::deepmd_c
     DeePMD::deepmd_cc
@@ -721,6 +724,34 @@ endif()
 # base uses symbols from device (memory_op and math_ylm_op).
 target_link_libraries(base PUBLIC device)
 
+if(BUILD_TESTING)
+  # Register after all object-library dependencies exist; the optional adapter
+  # test links the existing PW, INPUT and device targets.
+  add_subdirectory(source_hamilt/module_vdw/test)
+  if(ENABLE_LIBVDWXC AND NOT ENABLE_MPI AND NOT USE_CUDA AND NOT USE_ROCM)
+    # Test the additive host with real Charge and UnitCell lifecycles after
+    # its dependencies exist, without linking the full estate/cell libraries.
+    AddTest(
+      TARGET MODULE_ESTATE_pot_nonlocal_xc_LIBVDWXC
+      LIBS xc_ planewave base parameter device nonlocal_xc
+      SOURCES
+        source_estate/test/test_pot_nonlocal_xc.cpp
+        source_estate/module_pot/pot_nonlocal_xc.cpp
+        source_estate/module_charge/charge.cpp
+        source_estate/module_charge/chg_tools.cpp
+        source_cell/unitcell.cpp
+        source_cell/atom_spec.cpp
+        source_cell/atom_pseudo.cpp
+        source_cell/pseudo.cpp
+        source_cell/magnetism.cpp
+        source_cell/sep.cpp
+        source_cell/sep_cell.cpp
+    )
+    target_link_libraries(MODULE_ESTATE_pot_nonlocal_xc_LIBVDWXC PRIVATE Libxc::xc libvdwxc::vdwxc)
+    set_tests_properties(MODULE_ESTATE_pot_nonlocal_xc_LIBVDWXC PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+  endif()
+endif()
+
 if(ENABLE_COVERAGE)
   add_coverage(driver)
 endif()
@@ -745,6 +776,7 @@ target_link_libraries(
     module_stodft
     module_dfpt
     xc_
+    nonlocal_xc
     vdw
     relax
     io_advanced
