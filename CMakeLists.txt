@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 
 # Require out-of-source builds
 file(TO_CMAKE_PATH "${CMAKE_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
@@ -10,6 +10,8 @@ if(EXISTS "${LOC_PATH}")
 endif()
 
 include(CMakeDependentOption)
+# TODO: Drop this warning; it shouldn't be there as cmake_dependent_option is a
+# widely-used built-in feature
 message(
   WARNING
     "The build system now uses cmake_dependent_option extensively.\n"
@@ -425,8 +427,6 @@ else() # CUDA not found
 endif()
 
 if(USE_CUDA)
-  cmake_minimum_required(VERSION 3.18) # required by `CUDA_ARCHITECTURES` below
-
   # Always find CUDAToolkit to get CUDAToolkit_VERSION
   find_package(CUDAToolkit REQUIRED)
 
@@ -514,7 +514,6 @@ if(USE_ROCM)
   message(
     DEPRECATION
       "Option USE_ROCM is deprecated and will be ignored in a future release. ")
-  cmake_minimum_required(VERSION 3.18)
   if(NOT DEFINED ROCM_PATH)
     set(ROCM_PATH
         "/opt/rocm"
