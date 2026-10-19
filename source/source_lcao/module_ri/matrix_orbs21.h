@@ -29,6 +29,7 @@ class Matrix_Orbs21
         const double kmesh_times);       // extend Kcut, keep dK
 
     void init_radial_table();
+    void init_radial_table(const bool use_gpu);
     void init_radial_table(const std::map<size_t, std::map<size_t, std::set<double>>>& Rs); // unit: ucell.lat0
 
     enum class Matrix_Order

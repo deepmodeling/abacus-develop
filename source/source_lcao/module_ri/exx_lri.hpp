@@ -96,6 +96,11 @@ void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
             ++object;
         }
     }
+#ifdef __GPU_RI
+    const bool use_gpu = this->exx_lri.lri.cal_mode == RI::LRI_Cal_Mode::GPU;
+#else
+    const bool use_gpu = false;
+#endif
     for (const auto& settings_list : settings)
     {
         const auto previous = this->coulomb_settings.find(settings_list.first);
@@ -113,7 +118,7 @@ void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
         object.abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(
             this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
         object.cv.set_orbitals(ucell, orb, this->lcaos, this->abfs, object.abfs_ccp,
-                               this->info.kmesh_times, this->MGT, settings_list.second.first);
+                               this->info.kmesh_times, this->MGT, settings_list.second.first, use_gpu);
         object.cv.set_info_ri(&this->info);
         if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
         {
@@ -190,7 +195,7 @@ void Exx_LRI<Tdata>::init_spencer(
         this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
         this->info.kmesh_times,
         this->MGT,
-        center2_settings->second.first);
+        center2_settings->second.first, false);
     this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_info_ri(&this->info);
 
     ModuleBase::timer::end("Exx_LRI", "init_spencer");

@@ -7,11 +7,26 @@
 
 #include "center2orb.h"
 #include "source_base/constants.h"
+#include "source_base/math_integral.h"
+#include "source_base/mathzone_add1.h"
+#include "source_base/module_external/blas_connector.h"
+#include "source_base/timer.h"
+
+#ifdef __CUDA
+#include "source_base/module_device/memory_op.h"
+
+#include <ATen/core/tensor.h>
+#include <ATen/kernels/blas.h>
+#endif
 #include "source_base/math_polyint.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/ylm.h"
 
+#include <algorithm>
 #include <cmath>
+#include <memory>
+#include <stdexcept>
+#include <tuple>
 
 Center2_Orb::Orb11::Orb11(const Numerical_Orbital_Lm& nA_in,
                           const Numerical_Orbital_Lm& nB_in,
@@ -84,6 +99,235 @@ void Center2_Orb::Orb11::init_radial_table(const std::set<size_t>& radials)
                                     this->Table_dr[LAB],
                                     psb_);
     }
+}
+
+namespace
+{
+double radial_product(const Numerical_Orbital_Lm& left, const Numerical_Orbital_Lm& right, const int ik)
+{
+    if (!left.get_psif().empty() && !right.get_psi_k2().empty())
+    {
+        return left.getPsif(ik) * right.getPsi_k2(ik);
+    }
+    if (!left.get_psi_k().empty() && !right.get_psi_k().empty())
+    {
+        return left.getPsi_k(ik) * right.getPsi_k(ik);
+    }
+    if (!left.get_psi_k2().empty() && !right.get_psif().empty())
+    {
+        return left.getPsi_k2(ik) * right.getPsif(ik);
+    }
+    return 0.0;
+}
+} // namespace
+
+void Center2_Orb::Orb11::init_radial_table(const std::vector<Orb11*>& orbitals, const bool use_gpu)
+{
+    ModuleBase::timer::start("Center2_Orb", "init_radial_table_batch");
+#ifndef __CUDA
+    if (use_gpu)
+    {
+        throw std::invalid_argument("GPU radial tables require a CUDA build");
+    }
+#else
+    if (use_gpu)
+    {
+        container::kernels::createGpuBlasHandle();
+    }
+#endif
+    // Group by quadrature grid and angular momentum. All orbitals in a batch
+    // belong to one Matrix_Orbs object and share its immutable Bessel table.
+    using Grid = std::tuple<int, int, int, double>;
+    std::map<Grid, std::vector<Orb11*>> groups;
+    for (Orb11* orbital: orbitals)
+    {
+        if (orbital->psb_ != orbitals.front()->psb_)
+        {
+            throw std::invalid_argument("A radial batch must share its Bessel table");
+        }
+        const int rmesh = Center2_Orb::get_rmesh(orbital->nA.getRcut(), orbital->nB.getRcut(), orbital->dr_);
+        const int kmesh = orbital->nA.getNk();
+        const double dk = orbital->nA.getDk();
+        const int first_l = std::abs(orbital->nA.getL() - orbital->nB.getL());
+        const int last_l = orbital->nA.getL() + orbital->nB.getL();
+        for (int l = first_l; l <= last_l; l += 2)
+        {
+            orbital->Table_r[l].resize(rmesh);
+            orbital->Table_dr[l].resize(rmesh);
+            const Grid grid(l, kmesh, rmesh, dk);
+            groups[grid].push_back(orbital);
+        }
+    }
+    for (const auto& group: groups)
+    {
+        const int l = std::get<0>(group.first);
+        const int kmesh = std::get<1>(group.first);
+        const int rmesh = std::get<2>(group.first);
+        const double dk = std::get<3>(group.first);
+        const auto& tasks = group.second;
+        const auto& bessel = tasks.front()->psb_->get_jlx();
+        const double* kpoint = tasks.front()->nA.getKpoint();
+        // Bound all three device buffers together: at most 160 MiB, released
+        // before returning to the SCF/LibRI contraction stages.
+        constexpr std::size_t input_limit = 16 * 1024 * 1024 / sizeof(double);
+        constexpr std::size_t table_limit = 128 * 1024 * 1024 / sizeof(double);
+        constexpr std::size_t output_limit = 16 * 1024 * 1024 / sizeof(double);
+        if (kmesh < 3 || kmesh % 2 == 0 || static_cast<std::size_t>(kmesh) > input_limit)
+        {
+            throw std::invalid_argument("Unsupported radial quadrature grid for batched tables");
+        }
+        const int radial_block = std::min<std::size_t>(rmesh, table_limit / (2 * kmesh));
+        const std::size_t batch_limit = std::min(input_limit / kmesh, output_limit / (2 * radial_block));
+        const int batch_size = std::min<std::size_t>(tasks.size(), std::min<std::size_t>(128, batch_limit));
+        const std::size_t input_size = static_cast<std::size_t>(batch_size) * kmesh;
+        const std::size_t table_size = static_cast<std::size_t>(2 * radial_block) * kmesh;
+        const std::size_t output_size = static_cast<std::size_t>(batch_size) * 2 * radial_block;
+        std::vector<double> input(input_size);
+        std::vector<double> table(table_size);
+        std::vector<double> output(output_size);
+        double* input_ptr = input.data();
+        double* table_ptr = table.data();
+        double* output_ptr = output.data();
+#ifdef __CUDA
+        std::unique_ptr<container::Tensor> workspace;
+        if (use_gpu)
+        {
+            const int64_t workspace_size = input_size + table_size + output_size;
+            const container::TensorShape shape({workspace_size});
+            workspace.reset(
+                new container::Tensor(container::DataType::DT_DOUBLE, container::DeviceType::GpuDevice, shape));
+            input_ptr = workspace->data<double>();
+            table_ptr = input_ptr + input_size;
+            output_ptr = table_ptr + table_size;
+        }
+#endif
+        for (int radial_start = 0; radial_start < rmesh; radial_start += radial_block)
+        {
+            const int rows = std::min(radial_block, rmesh - radial_start);
+            const int columns = 2 * rows;
+            const double derivative_factor = -(l + 1.0) / (2 * l + 1.0);
+            const double lower_factor = l / (l + 1.0);
+            for (int ir = 0; ir < rows; ++ir)
+            {
+                const int radial = radial_start + ir;
+                for (int ik = 0; ik < kmesh; ++ik)
+                {
+                    const double lower = l == 0 ? 0.0 : bessel[l - 1][radial][ik];
+                    table[(2 * ir) * kmesh + ik] = bessel[l][radial][ik];
+                    table[(2 * ir + 1) * kmesh + ik]
+                        = derivative_factor * kpoint[ik] * (bessel[l + 1][radial][ik] - lower_factor * lower);
+                }
+            }
+#ifdef __CUDA
+            if (use_gpu)
+            {
+                const std::size_t count = static_cast<std::size_t>(columns) * kmesh;
+                base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+                    table_ptr,
+                    table.data(),
+                    count);
+            }
+#endif
+            for (std::size_t start = 0; start < tasks.size(); start += batch_size)
+            {
+                const int count = std::min<std::size_t>(batch_size, tasks.size() - start);
+                for (int it = 0; it < count; ++it)
+                {
+                    const Orb11& orbital = *tasks[start + it];
+                    for (int ik = 0; ik < kmesh; ++ik)
+                    {
+                        const int weight = (ik == 0 || ik == kmesh - 1) ? 1 : (ik % 2 == 1 ? 4 : 2);
+                        const double product = radial_product(orbital.nA, orbital.nB, ik);
+                        input[it * kmesh + ik] = product * weight * dk * ModuleBase::FOUR_PI / 3.0;
+                    }
+                }
+#ifdef __CUDA
+                if (use_gpu)
+                {
+                    const std::size_t size = static_cast<std::size_t>(count) * kmesh;
+                    base_device::memory::
+                        synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(input_ptr,
+                                                                                                          input.data(),
+                                                                                                          size);
+                }
+#endif
+#ifdef __CUDA
+                if (use_gpu)
+                {
+                    const double one = 1.0;
+                    const double zero = 0.0;
+                    container::kernels::blas_gemm<double, container::DEVICE_GPU>()('T',
+                                                                                   'N',
+                                                                                   columns,
+                                                                                   count,
+                                                                                   kmesh,
+                                                                                   &one,
+                                                                                   table_ptr,
+                                                                                   kmesh,
+                                                                                   input_ptr,
+                                                                                   kmesh,
+                                                                                   &zero,
+                                                                                   output_ptr,
+                                                                                   columns);
+                }
+                else
+#endif
+                {
+                    BlasConnector::gemm_cm('T',
+                                           'N',
+                                           columns,
+                                           count,
+                                           kmesh,
+                                           1.0,
+                                           table_ptr,
+                                           kmesh,
+                                           input_ptr,
+                                           kmesh,
+                                           0.0,
+                                           output_ptr,
+                                           columns,
+                                           base_device::AbacusDevice_t::CpuDevice);
+                }
+#ifdef __CUDA
+                if (use_gpu)
+                {
+                    const std::size_t size = static_cast<std::size_t>(count) * columns;
+                    base_device::memory::
+                        synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(output.data(),
+                                                                                                          output_ptr,
+                                                                                                          size);
+                }
+#endif
+                for (int it = 0; it < count; ++it)
+                {
+                    auto& values = tasks[start + it]->Table_r.at(l);
+                    auto& derivatives = tasks[start + it]->Table_dr.at(l);
+                    for (int ir = 0; ir < rows; ++ir)
+                    {
+                        values[radial_start + ir] = output[it * columns + 2 * ir];
+                        derivatives[radial_start + ir] = output[it * columns + 2 * ir + 1];
+                    }
+                }
+            }
+        }
+        // Preserve the analytic R=0 convention used by cal_overlap.
+        if (l > 0)
+        {
+            std::vector<double> integrand(kmesh);
+            for (Orb11* orbital: tasks)
+            {
+                for (int ik = 0; ik < kmesh; ++ik)
+                {
+                    integrand[ik] = radial_product(orbital->nA, orbital->nB, ik) * std::pow(kpoint[ik], l);
+                }
+                double integral = 0.0;
+                ModuleBase::Integral::Simpson_Integral(kmesh, integrand.data(), dk, integral);
+                orbital->Table_r.at(l)[0]
+                    = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac(2 * l + 1) * integral;
+            }
+        }
+    }
+    ModuleBase::timer::end("Center2_Orb", "init_radial_table_batch");
 }
 
 double Center2_Orb::Orb11::cal_overlap(const ModuleBase::Vector3<double>& RA,

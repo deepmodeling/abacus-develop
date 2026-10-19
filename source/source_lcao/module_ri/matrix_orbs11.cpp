@@ -92,20 +92,37 @@ void Matrix_Orbs11::init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals&
 
 void Matrix_Orbs11::init_radial_table()
 {
+    this->init_radial_table(false);
+}
+
+void Matrix_Orbs11::init_radial_table(const bool use_gpu)
+{
     ModuleBase::TITLE("Matrix_Orbs11", "init_radial_table");
     ModuleBase::timer::start("Matrix_Orbs11", "init_radial_table");
+    std::vector<Center2_Orb::Orb11*> orbitals;
     for (auto& coA: center2_orb11_s) {
         for (auto& coB: coA.second) {
             for (auto& coC: coB.second) {
                 for (auto& coD: coC.second) {
                     for (auto& coE: coD.second) {
                         for (auto& coF: coE.second) {
-                            coF.second.init_radial_table();
+                            if (use_gpu)
+                            {
+                                orbitals.push_back(&coF.second);
+                            }
+                            else
+                            {
+                                coF.second.init_radial_table();
+                            }
                         }
                     }
                 }
             }
         }
+    }
+    if (use_gpu)
+    {
+        Center2_Orb::Orb11::init_radial_table(orbitals, true);
     }
     ModuleBase::timer::end("Matrix_Orbs11", "init_radial_table");
 }

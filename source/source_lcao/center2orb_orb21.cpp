@@ -20,7 +20,7 @@ Center2_Orb::Orb21::Orb21(const Numerical_Orbital_Lm& nA1_in,
 {
 }
 
-void Center2_Orb::Orb21::init_radial_table()
+void Center2_Orb::Orb21::prepare_radial_table()
 {
     const Numerical_Orbital_Lm& nA_short = (this->nA1.getNr() <= this->nA2.getNr()) ? this->nA1 : this->nA2;
 
@@ -57,49 +57,40 @@ void Center2_Orb::Orb21::init_radial_table()
 
         this->orb11s.insert(std::make_pair(LA, Center2_Orb::Orb11(this->nA[LA], nB, psb_, this->MGT)));
 
-        this->orb11s.at(LA).init_radial_table();
+    }
+}
+
+void Center2_Orb::Orb21::init_radial_table()
+{
+    this->prepare_radial_table();
+    for (auto& orbital: this->orb11s)
+    {
+        orbital.second.init_radial_table();
     }
 }
 
 void Center2_Orb::Orb21::init_radial_table(const std::set<size_t>& radials)
 {
-    const Numerical_Orbital_Lm& nA_short = (this->nA1.getNr() <= this->nA2.getNr()) ? this->nA1 : this->nA2;
-
-    std::vector<double> nA_tmp(nA_short.getNr());
-    for (size_t ir = 0; ir != nA_tmp.size(); ++ir)
+    this->prepare_radial_table();
+    for (auto& orbital: this->orb11s)
     {
-        nA_tmp[ir] = this->nA1.getPsi(ir) * this->nA2.getPsi(ir);
+        orbital.second.init_radial_table(radials);
     }
+}
 
-    const int LA1 = this->nA1.getL();
-    const int LA2 = this->nA2.getL();
-    for (int LA = std::abs(LA1 - LA2); LA <= LA1 + LA2; ++LA)
+void Center2_Orb::Orb21::init_radial_table(const std::vector<Orb21*>& orbitals, const bool use_gpu)
+{
+    std::vector<Orb11*> pairs;
+    for (Orb21* orbital: orbitals)
     {
-        if ((LA - std::abs(LA1 - LA2)) % 2 == 1) // if LA+LB-LAB == odd, then Gaunt_Coefficients = 0
+        // Orbital transforms grow the shared Bessel cache, so prepare them serially.
+        orbital->prepare_radial_table();
+        for (auto& pair: orbital->orb11s)
         {
-            continue;
+            pairs.push_back(&pair.second);
         }
-
-        this->nA[LA].set_orbital_info(nA_short.getLabel(),
-                                      nA_short.getType(),
-                                      LA,
-                                      1, // N?
-                                      nA_short.getNr(),
-                                      nA_short.getRab(),
-                                      nA_short.getRadial(),
-                                      Numerical_Orbital_Lm::Psi_Type::Psi,
-                                      nA_tmp.data(),
-                                      nA_short.getNk(),
-                                      nA_short.getDk(),
-                                      nA_short.getDruniform(),
-                                      false,
-                                      true,
-                                      PARAM.inp.cal_force); // mohan add 2021-05-07
-
-        this->orb11s.insert(std::make_pair(LA, Center2_Orb::Orb11(this->nA[LA], nB, psb_, this->MGT)));
-
-        this->orb11s.at(LA).init_radial_table(radials);
     }
+    Orb11::init_radial_table(pairs, use_gpu);
 }
 
 double Center2_Orb::Orb21::cal_overlap(const ModuleBase::Vector3<double>& RA,

@@ -68,7 +68,7 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
     this->index_abfs = ModuleBase::Element_Basis_Index::construct_index(range_abfs);
 
     this->cv
-        .set_orbitals(ucell, orb, this->g_lcaos, this->g_abfs, this->g_abfs_ccp, kmesh_times_in, MGT_in, false);
+        .set_orbitals(ucell, orb, this->g_lcaos, this->g_abfs, this->g_abfs_ccp, kmesh_times_in, MGT_in, false, false);
     this->gaunt.create(MGT_in->Gaunt_Coefficients.getBound1(),
                        MGT_in->Gaunt_Coefficients.getBound2(),
                        MGT_in->Gaunt_Coefficients.getBound3());

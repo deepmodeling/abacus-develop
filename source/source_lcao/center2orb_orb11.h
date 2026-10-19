@@ -27,6 +27,9 @@ class Center2_Orb::Orb11
     void init_radial_table();
     void init_radial_table(const std::set<size_t>& radials); // unit: Bohr/MOT.dr
 
+    /// Build full tables in bounded batches, using the same Simpson quadrature.
+    static void init_radial_table(const std::vector<Orb11*>& orbitals, const bool use_gpu);
+
     double cal_overlap(const ModuleBase::Vector3<double>& RA,
                        const ModuleBase::Vector3<double>& RB, // unit: Bohr
                        const int& mA,

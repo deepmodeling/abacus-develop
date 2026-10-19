@@ -64,7 +64,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
                                            center2_obj_it->second.abfs_ccp,
                                            this->info.kmesh_times,
                                            this->MGT, // get MGT from exx_cut_coulomb and used in `cal_abfs_overlap`
-                                           true);
+                                           true, false);
 
     const std::array<Tcell, Ndim> period_Vs
         = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_cut, ucell, orb_cutoff_);
