@@ -286,7 +286,7 @@ void ReadInput::item_exx()
         item.annotation = "threshold to screen density matrix in exx";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
-        item.description = "The Fock exchange can be expressed as where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.";
+        item.description = "The Fock exchange can be expressed as where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4. LR-TDDFT exchange operators and excited-state force contractions retain all density blocks to preserve linearity; this threshold still applies to the ground-state SCF.";
         item.default_value = "1E-4";
         item.unit = "";
         read_sync_double(input.exx_dm_threshold);
@@ -866,7 +866,7 @@ void ReadInput::item_dftu()
 * 1: The first SCF step will use an initial density matrix read from a file, but for later steps, the onsite density matrix will be updated.
 * 2: The same onsite density matrix read from the file will be used throughout the entire calculation.
 
-[NOTE] The occupation-matrix file is read from the directory specified by read_file_dir. The search order is dm_onsite_ini.txt -> occ_mat.txt -> dm_onsite.txt, so a previously output occ_mat.txt can be reused directly without renaming. The easiest way to obtain such a file is to run a DFT+U calculation with out_occ_mat=1 (the default); the resulting occ_mat.txt in the OUT.prefix directory (which always holds the occupation matrix of the latest electronic step) can be placed in read_file_dir as-is. When out_freq_ion is positive, separate occ_matg{geom_step}.txt files are also written, one per output ionic step; they may contain several electronic-step sections separated by comment headers. The format of the file is rather straight-forward.)";
+[NOTE] The occupation-matrix file is read from the directory specified by read_file_dir. The search order is dm_onsite_ini.txt -> occ_mat.txt. Input must use the current compact format written by ABACUS; legacy Atom=/L=/spin= files such as dm_onsite.txt are not supported. The easiest way to obtain a valid file is to run a DFT+U calculation with out_occ_mat=1 (the default); the resulting occ_mat.txt in the OUT.prefix directory (which always holds the occupation matrix of the latest electronic step) can be placed in read_file_dir as-is. When out_freq_ion is positive, separate occ_matg{geom_step}.txt files are also written, one per output ionic step; they may contain several electronic-step sections separated by comment headers.)";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.init_occ_mat);

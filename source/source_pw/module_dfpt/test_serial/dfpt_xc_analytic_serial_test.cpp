@@ -8,6 +8,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 
 #include <xc.h>
+#include <xc_funcs.h>
 
 #include <cmath>
 #include <complex>

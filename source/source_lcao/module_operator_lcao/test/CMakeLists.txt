@@ -2,9 +2,22 @@ if(ENABLE_LCAO)
 abacus_disable_feature_definitions(__FFT_TWO_CENTER)
 
 AddTest(
+  TARGET MODULE_LCAO_ovlp_block
+  LIBS parameter psi base device container
+  SOURCES test_ovlp_block.cpp ../ovlp_block.cpp tmp_mocks.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp
+  ../../../source_basis/module_ao/orb_atomic_lm.cpp
+  ../../../source_hamilt/operator.cpp
+  ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+  ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+  ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+  ../../../source_hamilt/module_hcontainer/func_folding.cpp
+)
+
+AddTest(
   TARGET MODULE_LCAO_operator_overlap_test
   LIBS parameter psi base device container
-  SOURCES test_overlap.cpp ../overlap.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
+  SOURCES test_overlap.cpp ../overlap.cpp ../ovlp_block.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
   ../../../source_hamilt/module_hcontainer/func_transfer.cpp ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp ../../../source_hamilt/module_hcontainer/transfer.cpp
 
@@ -17,7 +30,7 @@ AddTest(
 AddTest(
   TARGET MODULE_LCAO_operator_overlap_serial_test
   LIBS parameter psi base device container
-  SOURCES test_overlap_serial.cpp ../overlap.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
+  SOURCES test_overlap_serial.cpp ../overlap.cpp ../ovlp_block.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
   ../../../source_hamilt/module_hcontainer/func_transfer.cpp ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp ../../../source_hamilt/module_hcontainer/transfer.cpp
 
@@ -30,7 +43,7 @@ AddTest(
 AddTest(
   TARGET MODULE_LCAO_operator_overlap_cd_test
   LIBS parameter psi base device container
-  SOURCES test_overlap_cd.cpp ../overlap.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
+  SOURCES test_overlap_cd.cpp ../overlap.cpp ../ovlp_block.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
   ../../../source_hamilt/module_hcontainer/func_transfer.cpp ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp ../../../source_hamilt/module_hcontainer/transfer.cpp
 

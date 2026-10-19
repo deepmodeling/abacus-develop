@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "diago_iter_assist.h"
 
 #include "source_base/constants.h"
@@ -35,6 +36,8 @@ void DiagoIterAssist<T, Device>::diag_subspace(const HSOperator<T, Device>& op,
     ModuleBase::timer::start("DiagoIterAssist", "diag_subspace");
 
     assert(n_band <= nstart);
+    const int matrix_ld = std::max(dmax, 1);
+    const int rotated_ld = std::max(dmin, 1);
 
     // scc is overlap (optional, only needed if input is not s-orthogonal)
     T *hcc = nullptr, *scc = nullptr, *vcc = nullptr;
@@ -56,7 +59,8 @@ void DiagoIterAssist<T, Device>::diag_subspace(const HSOperator<T, Device>& op,
     // temp holds H|psi>, then S|psi>, then the rotated vectors; it is separate
     // from evc so that evc may alias psi
     T* temp = nullptr;
-    resmem_complex_op()(temp, nstart * dmax, "DiagSub::temp");
+    const int local_storage = std::max(nstart * dmax, 1);
+    resmem_complex_op()(temp, local_storage, "DiagSub::temp");
     setmem_complex_op()(temp, 0, nstart * dmax);
 
     { // code block to calculate hcc and scc
@@ -70,9 +74,9 @@ void DiagoIterAssist<T, Device>::diag_subspace(const HSOperator<T, Device>& op,
                                          dmin,
                                          &one,
                                          psi,
-                                         dmax,
+                                         matrix_ld,
                                          hpsi,
-                                         dmax,
+                                         matrix_ld,
                                          &zero,
                                          hcc,
                                          nstart);
@@ -89,9 +93,9 @@ void DiagoIterAssist<T, Device>::diag_subspace(const HSOperator<T, Device>& op,
                                             dmin,
                                             &one,
                                             psi,
-                                            dmax,
+                                            matrix_ld,
                                             spsi,
-                                            dmax,
+                                            matrix_ld,
                                             &zero,
                                             scc,
                                             nstart);
@@ -125,12 +129,12 @@ void DiagoIterAssist<T, Device>::diag_subspace(const HSOperator<T, Device>& op,
                                          nstart,
                                          &one,
                                          psi, // dmin * nstart
-                                         dmax,
+                                         matrix_ld,
                                          vcc, // nstart * n_band
                                          nstart,
                                          &zero,
                                          temp,
-                                         dmin);
+                                         rotated_ld);
     }
 
     ModuleBase::matrixCopy<T, Device>()(n_band, dmin, temp, dmin, evc, dmax);

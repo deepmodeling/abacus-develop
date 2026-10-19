@@ -15,7 +15,7 @@ Ions_Move_Methods::~Ions_Move_Methods()
 {
 }
 
-void Ions_Move_Methods::allocate(const int &natom, const std::string& relax_method_0, const std::string& relax_method_1)
+void Ions_Move_Methods::allocate(const int &natom, const std::string& relax_method)
 {
     if (natom <= 0)
     {
@@ -23,28 +23,28 @@ void Ions_Move_Methods::allocate(const int &natom, const std::string& relax_meth
     }
     Ions_Move_Basic::dim = natom * 3;
 
-    if (relax_method_0 == "bfgs" && relax_method_1 != "1")
+    if (relax_method == "bfgs")
     {
         this->bfgs.allocate();
     }
-    else if (relax_method_0 == "sd")
+    else if (relax_method == "sd")
     {
         this->sd.allocate();
     }
-    else if (relax_method_0 == "cg")
+    else if (relax_method == "cg_trad")
     {
         this->cg.allocate(Ions_Move_Basic::dim);
     }
-    else if (relax_method_0 == "cg_bfgs")
+    else if (relax_method == "cg_bfgs")
     {
         this->cg.allocate(Ions_Move_Basic::dim);
         this->bfgs.allocate();
     }
-    else if(relax_method_0 == "bfgs" && relax_method_1 == "1")
+    else if(relax_method == "bfgs_trad")
     {
         this->bfgs_trad.allocate(natom);       
     }
-    else if(relax_method_0 == "lbfgs")
+    else if(relax_method == "lbfgs")
     {
         this->lbfgs.allocate(natom, PARAM.inp.relax_bfgs_rmax, PARAM.inp.out_level);       
     }
@@ -62,31 +62,31 @@ void Ions_Move_Methods::cal_movement(const int &istep,
                                      const double &etot,
                                      UnitCell &ucell,
                                      std::ofstream& ofs,
-                                     std::vector<std::string>& relax_method,
+                                     std::string& relax_method,
                                     const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
-    if (relax_method[0] == "bfgs" && relax_method[1] != "1")
+    if (relax_method == "bfgs")
     {
         converged_ = bfgs.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, criteria);
     }
-    else if (relax_method[0] == "sd")
+    else if (relax_method == "sd")
     {
         converged_ = sd.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, criteria);
     }
-    else if (relax_method[0] == "cg")
+    else if (relax_method == "cg_trad")
     {
         converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method, criteria);
     }
-    else if (relax_method[0] == "cg_bfgs")
+    else if (relax_method == "cg_bfgs")
     {
         converged_ = cg.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, relax_method, criteria);
     }
-    else if (relax_method[0] == "bfgs" && relax_method[1] == "1")
+    else if (relax_method == "bfgs_trad")
     {
         converged_ = bfgs_trad.relax_step(f, ucell, ofs);        
     }
-    else if (relax_method[0] == "lbfgs")
+    else if (relax_method == "lbfgs")
     {
         converged_ = lbfgs.relax_step(f, ucell, etot, ofs, criteria);
     }
@@ -98,7 +98,7 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     return;
 }
 
-void Ions_Move_Methods::reset_after_cell_change(const std::vector<std::string>& relax_method, std::ofstream& ofs)
+void Ions_Move_Methods::reset_after_cell_change(const std::string& relax_method, std::ofstream& ofs)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "reset_after_cell_change");
 
@@ -107,21 +107,19 @@ void Ions_Move_Methods::reset_after_cell_change(const std::vector<std::string>& 
         return;
     }
 
-    const std::string method = relax_method[0];
-    const std::string method_arg = relax_method.size() > 1 ? relax_method[1] : "";
     const auto reset_common_state = [this]() {
         this->converged_ = false;
         this->update_iter_ = 0;
         std::fill(this->etot_info_.begin(), this->etot_info_.end(), 0.0);
     };
 
-    if (method == "bfgs" && method_arg != "1")
+    if (relax_method == "bfgs")
     {
         reset_common_state();
         this->bfgs.reset();
         ofs << " Reset ionic BFGS history after cell change." << std::endl;
     }
-    else if (method == "bfgs" && method_arg == "1")
+    else if (relax_method == "bfgs_trad")
     {
         reset_common_state();
         this->bfgs_trad.reset();
