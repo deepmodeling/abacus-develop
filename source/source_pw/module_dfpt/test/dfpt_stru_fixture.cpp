@@ -64,6 +64,21 @@ void DFPTStruTestFixture::construct_ucell(stru_& stru)
         }
         ucell.nat += ucell.atoms[i].na;
     }
+    // atom-index tables: real cells always carry them (iat2it/iat2ia map the
+    // running atom index to type and in-type index); populate them so any
+    // consumer (e.g. DFPT_Phon::apply_asr mass lookup) works on this fixture
+    ucell.iat2it.resize(ucell.nat);
+    ucell.iat2ia.resize(ucell.nat);
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            ucell.iat2it[iat] = it;
+            ucell.iat2ia[iat] = ia;
+            ++iat;
+        }
+    }
 }
 
 void DFPTStruTestFixture::ClearUcell()

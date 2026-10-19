@@ -212,8 +212,7 @@ void DFPT_Phon::audit_asr(const std::string& label, int q_idx, const DFPT_PW_Dat
             s2 += std::norm(s);
         }
         const double snorm = std::sqrt(s2);
-        std::cout << " atom" << ia + 1 << "(" << ucell_->atoms[ucell_->iat2it[ia]].label << ")="
-                  << std::setprecision(3) << std::scientific << snorm;
+        std::cout << " atom" << ia + 1 << "=" << std::setprecision(3) << std::scientific << snorm;
         if (snorm > worst)
         {
             worst = snorm;
