@@ -197,3 +197,71 @@ ModuleBase::Vector3<double> Center2_Orb::Orb21::cal_grad_overlap(const ModuleBas
 
     return grad_overlap;
 }
+
+template <typename T>
+std::vector<T> Center2_Orb::Orb21::cal_magnetic_components(
+    const ModuleBase::Vector3<double>& RA,
+    const ModuleBase::Vector3<double>& RB,
+    T (Orb11::*evaluate)(const ModuleBase::Vector3<double>&, const ModuleBase::Vector3<double>&, const int&, const int&)
+        const) const
+{
+    const int LA1 = this->nA1.getL();
+    const int LA2 = this->nA2.getL();
+    const int count_A1 = 2 * LA1 + 1;
+    const int count_A2 = 2 * LA2 + 1;
+    const int count_B = 2 * this->nB.getL() + 1;
+    const int count = count_A1 * count_A2 * count_B;
+    std::vector<T> result(count);
+    for (const auto& orbital: this->orb11s)
+    {
+        const int LA = orbital.first;
+        const int count_A = 2 * LA + 1;
+        const int pair_count = count_A * count_B;
+        std::vector<T> overlaps(pair_count);
+        // These two-center overlaps are shared by all ways to couple the
+        // magnetic components of the two original orbitals on center A.
+        for (int ma = 0; ma < count_A; ++ma)
+        {
+            for (int mb = 0; mb < count_B; ++mb)
+            {
+                overlaps[ma * count_B + mb] = (orbital.second.*evaluate)(RA, RB, ma, mb);
+            }
+        }
+        for (int ma1 = 0; ma1 < count_A1; ++ma1)
+        {
+            const int idx1 = this->MGT.get_lm_index(LA1, ma1);
+            for (int ma2 = 0; ma2 < count_A2; ++ma2)
+            {
+                const int idx2 = this->MGT.get_lm_index(LA2, ma2);
+                const int offset = (ma1 * count_A2 + ma2) * count_B;
+                for (int ma = 0; ma < count_A; ++ma)
+                {
+                    const int idx = this->MGT.get_lm_index(LA, ma);
+                    const double coefficient = this->MGT.Gaunt_Coefficients(idx1, idx2, idx);
+                    if (coefficient == 0.0)
+                    {
+                        continue;
+                    }
+                    for (int mb = 0; mb < count_B; ++mb)
+                    {
+                        result[offset + mb] += coefficient * overlaps[ma * count_B + mb];
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
+
+std::vector<double> Center2_Orb::Orb21::cal_overlap(const ModuleBase::Vector3<double>& RA,
+                                                    const ModuleBase::Vector3<double>& RB) const
+{
+    return this->cal_magnetic_components(RA, RB, &Orb11::cal_overlap);
+}
+
+std::vector<ModuleBase::Vector3<double>> Center2_Orb::Orb21::cal_grad_overlap(
+    const ModuleBase::Vector3<double>& RA,
+    const ModuleBase::Vector3<double>& RB) const
+{
+    return this->cal_magnetic_components(RA, RB, &Orb11::cal_grad_overlap);
+}

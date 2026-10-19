@@ -44,10 +44,23 @@ class Center2_Orb::Orb21
                                                  const int& mA2,
                                                  const int& mB) const;
 
+    /// All magnetic components, ordered as [mA1][mA2][mB].
+    std::vector<double> cal_overlap(const ModuleBase::Vector3<double>& RA, const ModuleBase::Vector3<double>& RB) const;
+    std::vector<ModuleBase::Vector3<double>> cal_grad_overlap(const ModuleBase::Vector3<double>& RA,
+                                                              const ModuleBase::Vector3<double>& RB) const;
+
   private:
     void prepare_radial_table();
     void bind_product_orbitals();
     static std::vector<Orb11*> prepare_radial_tables(const std::vector<Orb21*>& orbitals);
+
+    template <typename T>
+    std::vector<T> cal_magnetic_components(const ModuleBase::Vector3<double>& RA,
+                                           const ModuleBase::Vector3<double>& RB,
+                                           T (Orb11::*evaluate)(const ModuleBase::Vector3<double>&,
+                                                                const ModuleBase::Vector3<double>&,
+                                                                const int&,
+                                                                const int&) const) const;
 
     const Numerical_Orbital_Lm& nA1;
     const Numerical_Orbital_Lm& nA2;

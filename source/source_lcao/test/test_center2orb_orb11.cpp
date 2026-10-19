@@ -165,6 +165,25 @@ void compare_products(const bool use_gpu)
             const auto selective_grad = selective[i]->cal_grad_overlap(origin, position, 1, 2, i);
             const double selective_error = (selective_grad - grad_expected).norm();
             EXPECT_LT(selective_error, grad_tolerance);
+            const auto overlaps = candidate[i]->cal_overlap(origin, position);
+            const auto gradients = candidate[i]->cal_grad_overlap(origin, position);
+            for (int ma = 0; ma < 3; ++ma)
+            {
+                for (int mb = 0; mb < 5; ++mb)
+                {
+                    for (int mc = 0; mc < 2 * i + 1; ++mc)
+                    {
+                        const int offset = (ma * 5 + mb) * (2 * i + 1) + mc;
+                        const double value = reference[i]->cal_overlap(origin, position, ma, mb, mc);
+                        const double value_tolerance = 2e-11 * (1.0 + std::abs(value));
+                        EXPECT_NEAR(overlaps[offset], value, value_tolerance);
+                        const auto gradient = reference[i]->cal_grad_overlap(origin, position, ma, mb, mc);
+                        const double component_error = (gradients[offset] - gradient).norm();
+                        const double component_tolerance = 2e-10 * (1.0 + gradient.norm());
+                        EXPECT_LT(component_error, component_tolerance);
+                    }
+                }
+            }
         }
     }
 }
@@ -194,6 +213,8 @@ void compare_high_l_products(const bool use_gpu)
         const double y = 0.36 * distance;
         const double z = 0.48 * distance;
         const ModuleBase::Vector3<double> position(x, y, z);
+        const auto overlaps = candidate.cal_overlap(origin, position);
+        const auto gradients = candidate.cal_grad_overlap(origin, position);
         for (int ma: {0, 6, 12})
         {
             for (int mb: {0, 3, 6})
@@ -204,11 +225,15 @@ void compare_high_l_products(const bool use_gpu)
                     const double actual = candidate.cal_overlap(origin, position, ma, mb, mc);
                     const double tolerance = 2e-11 * (1.0 + std::abs(expected));
                     EXPECT_NEAR(actual, expected, tolerance);
+                    const int offset = (ma * 7 + mb) * 7 + mc;
+                    EXPECT_NEAR(overlaps[offset], expected, tolerance);
                     const auto grad_expected = reference.cal_grad_overlap(origin, position, ma, mb, mc);
                     const auto grad_actual = candidate.cal_grad_overlap(origin, position, ma, mb, mc);
                     const double error = (grad_actual - grad_expected).norm();
                     const double grad_tolerance = 2e-10 * (1.0 + grad_expected.norm());
                     EXPECT_LT(error, grad_tolerance);
+                    const double component_error = (gradients[offset] - grad_expected).norm();
+                    EXPECT_LT(component_error, grad_tolerance);
                 }
             }
         }
