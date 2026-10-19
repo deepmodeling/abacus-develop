@@ -69,6 +69,26 @@ def validate_cases(fmt, results):
             raise ValueError(f"required case failed: {item['script']}: {item}")
 
 
+def group_members_alive(pid):
+    """Report whether the isolated process group still has live members."""
+    try:
+        os.killpg(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def signal_group(pid, sig):
+    """Signal the whole isolated group; missing groups are not an error."""
+    try:
+        os.killpg(pid, sig)
+    except ProcessLookupError:
+        return False
+    return True
+
+
 def capture(command, *, cwd, env, log, timeout):
     start = time.monotonic()
     timed_out = False
@@ -79,21 +99,26 @@ def capture(command, *, cwd, env, log, timeout):
             process.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
             timed_out = True
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
+            signal_group(process.pid, signal.SIGTERM)
             try:
                 process.wait(timeout=10)
             except subprocess.TimeoutExpired:
                 pass
-            # The leader can exit on SIGTERM while a child ignores it. The
-            # process group remains alive, so always finish the timeout with
-            # SIGKILL rather than treating leader exit as group shutdown.
+        # The leader can exit normally, with a nonzero status, or on SIGTERM
+        # while a descendant still runs in the isolated group. Reclaim the
+        # whole group whenever members remain, not only when the leader timed
+        # out; otherwise the next case would start alongside the leftover.
+        if group_members_alive(process.pid):
+            signal_group(process.pid, signal.SIGTERM)
             try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
                 pass
+            # A child that ignores SIGTERM keeps the group alive after the
+            # leader is gone, so finish with SIGKILL instead of treating
+            # leader exit as group shutdown.
+            if group_members_alive(process.pid):
+                signal_group(process.pid, signal.SIGKILL)
             process.wait(timeout=10)
     return {'returncode': process.returncode, 'timed_out': timed_out,
             'seconds': round(time.monotonic() - start, 3)}

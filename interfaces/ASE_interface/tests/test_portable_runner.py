@@ -115,6 +115,56 @@ class PortableRunnerTest(unittest.TestCase):
                     except ProcessLookupError:
                         pass
 
+    def test_nonzero_leader_exit_reclaims_remaining_child(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pid_file = root / 'child.pid'
+            child_code = ('import os,signal,sys,time; '
+                          'signal.signal(signal.SIGTERM, signal.SIG_IGN); '
+                          'open(sys.argv[1], "w").write(str(os.getpid())); '
+                          'time.sleep(60)')
+            leader_code = ('import os,sys,time,subprocess; '
+                           'subprocess.Popen([sys.executable, "-c", '
+                           'sys.argv[1], sys.argv[2]]); '
+                           'deadline=time.time()+10\n'
+                           'while not os.path.exists(sys.argv[2]) and '
+                           'time.time()<deadline:\n'
+                           '    time.sleep(0.01)\n'
+                           'sys.exit(3)')
+            child_pid = None
+            try:
+                result = capture([sys.executable, '-c', leader_code,
+                                  child_code, str(pid_file)],
+                                 cwd=root, env=None,
+                                 log=root / 'nonzero-leader.log', timeout=30)
+                self.assertFalse(result['timed_out'])
+                self.assertEqual(result['returncode'], 3)
+                self.assertTrue(pid_file.is_file(), 'child probe did not start')
+                child_pid = int(pid_file.read_text())
+                self.assertLess(result['seconds'], 5)
+                for _ in range(50):
+                    try:
+                        state = Path(f'/proc/{child_pid}/stat').read_text().split()[2]
+                    except FileNotFoundError:
+                        break
+                    if state == 'Z':
+                        break
+                    time.sleep(0.02)
+                else:
+                    self.fail(f'nonzero leader exit left child {child_pid} alive')
+            finally:
+                if child_pid is None and pid_file.is_file():
+                    child_pid = int(pid_file.read_text())
+                if child_pid is not None:
+                    try:
+                        child_group = os.getpgid(child_pid)
+                        if child_group != os.getpgrp():
+                            os.killpg(child_group, signal.SIGKILL)
+                        else:
+                            os.kill(child_pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+
 
 if __name__ == '__main__':
     unittest.main()
