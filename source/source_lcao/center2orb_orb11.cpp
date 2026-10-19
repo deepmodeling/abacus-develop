@@ -176,7 +176,8 @@ void Center2_Orb::Orb11::init_radial_table(const std::vector<Orb11*>& orbitals, 
         {
             throw std::invalid_argument("Unsupported radial quadrature grid for batched tables");
         }
-        const int radial_block = std::min<std::size_t>(rmesh, table_limit / (2 * kmesh));
+        const std::size_t radial_limit = std::min(table_limit / (2 * kmesh), output_limit / 2);
+        const int radial_block = std::min<std::size_t>(rmesh, radial_limit);
         const std::size_t batch_limit = std::min(input_limit / kmesh, output_limit / (2 * radial_block));
         const int batch_size = std::min<std::size_t>(tasks.size(), std::min<std::size_t>(128, batch_limit));
         const std::size_t input_size = static_cast<std::size_t>(batch_size) * kmesh;
