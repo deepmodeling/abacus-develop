@@ -166,6 +166,37 @@ TEST_F(OperatorExxNscfCellNearestTest, InfersPeriodFromCenteredCompleteRsSet)
     EXPECT_EQ(expected_period, inferred.second);
 }
 
+TEST_F(OperatorExxNscfCellNearestTest, WriteHexxsCsrRoundTripsThroughReader)
+{
+    // read_Hexxs_csr and write_Hexxs_csr must agree on the file layout; the
+    // reader parses the sparse-file format with the lattice block, so the
+    // writer has to emit that layout, not the bare save_sparse header.
+    std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>> Hexxd;
+    ModuleIO::read_Hexxs_csr(dir_ + "/HexxR0", ucell_, 1, 2, Hexxd);
+
+    // fields only touched by the writer's lattice block
+    ucell_.latName = "user_defined_lattice";
+    ucell_.lat0 = 1.0;
+    ucell_.latvec = ModuleBase::Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    ucell_.atoms[0].label = "X";
+    ucell_.atoms[0].stapos_wf = 0;
+    ucell_.atoms[0].taud.resize(ucell_.nat);
+    ucell_.atoms[0].taud[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
+    ucell_.atoms[0].taud[1] = ModuleBase::Vector3<double>(0.9, 0.0, 0.0);
+
+    const std::string out_dir = dir_ + "/roundtrip";
+    std::system(("mkdir -p " + out_dir).c_str());
+    ModuleIO::write_Hexxs_csr(out_dir + "/HexxR0", ucell_, Hexxd);
+
+    std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>> Hexxd2;
+    ModuleIO::read_Hexxs_csr(out_dir + "/HexxR0", ucell_, 1, 2, Hexxd2);
+
+    ASSERT_EQ(1u, Hexxd2.size());
+    ASSERT_EQ(1u, Hexxd2[0].count(0));
+    EXPECT_DOUBLE_EQ(1.0, Hexxd2[0].at(0).at({1, {0, 0, 0}})(0, 0));
+    EXPECT_DOUBLE_EQ(2.0, Hexxd2[0].at(0).at({1, {1, 0, 0}})(0, 0));
+}
+
 TEST(OperatorExxNscfCellNearestPolicyTest, UsesInferredPeriodIndependentlyOfPathOffset)
 {
     EXPECT_TRUE(hamilt::can_remap_wigner_seitz_for_nscf(hamilt::Add_Hexx_Type::R, false, false));

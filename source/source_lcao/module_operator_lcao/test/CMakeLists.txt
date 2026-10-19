@@ -116,6 +116,7 @@ AddTest(
   ../../../source_hamilt/module_hcontainer/transfer.cpp
   ../../../source_io/module_restart/restart.cpp
   ../../../source_io/module_restart/restart_exx_csr.cpp
+  ../../../source_cell/ucell_io.cpp
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
 )
 endif()
