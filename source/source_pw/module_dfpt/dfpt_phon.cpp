@@ -187,7 +187,15 @@ void DFPT_Phon::audit_asr(const std::string& label, int q_idx, const DFPT_PW_Dat
             max_elem = std::max(max_elem, std::abs(dyn(i, j)));
         }
     }
-    // per-atom translational row sums s(ia)[da] = sum_ib,db D_{ia da, ib db}
+    // per-atom PHYSICAL translational row sums: the stored matrix is
+    // mass-reduced (D = Phi/sqrt(m_a m_b)), so the Phi row sums read
+    // s(ia)[da] = sum_jb sqrt(m_jb) D(3ia+da, jb) -- the same quantity
+    // QE's unreduced dyn rows sum to
+    std::vector<double> sqm(nat, 0.0);
+    for (int ia = 0; ia < nat; ++ia)
+    {
+        sqm[ia] = std::sqrt(ucell_->atoms[ucell_->iat2it[ia]].mass);
+    }
     std::cout << "DFPT ASR audit (" << label << "):";
     double worst = 0.0;
     int worst_atom = -1;
@@ -199,7 +207,7 @@ void DFPT_Phon::audit_asr(const std::string& label, int q_idx, const DFPT_PW_Dat
             std::complex<double> s(0.0, 0.0);
             for (int jb = 0; jb < nat3; ++jb)
             {
-                s += dyn(3 * ia + da, jb);
+                s += sqm[jb / 3] * dyn(3 * ia + da, jb);
             }
             s2 += std::norm(s);
         }
@@ -240,49 +248,81 @@ void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& 
         return;
     }
 
-    // violation BEFORE the correction (for the report line)
+    // The stored matrix is mass-reduced, D = Phi / sqrt(m_a m_b) (amu masses
+    // from the cell); the PHYSICAL sum rule acts on Phi rows,
+    // sum_b sqrt(m_b) D(3a+da, 3b+db) = 0, and the acoustic eigenvectors of
+    // D are v(3a+da) = sqrt(m_a) e_da (uniform physical displacement). QE
+    // dynmat works on the unreduced Phi, so its unweighted rows are this
+    // same rule; here the constraint vectors carry the sqrt(m) weights.
+    std::vector<double> sqm(nat, 0.0);
+    double mtot = 0.0;
+    for (int ia = 0; ia < nat; ++ia)
+    {
+        sqm[ia] = std::sqrt(ucell_->atoms[ucell_->iat2it[ia]].mass);
+        mtot += ucell_->atoms[ucell_->iat2it[ia]].mass;
+    }
+    const auto physical_row_sum = [&](int ia, int da) {
+        std::complex<double> s(0.0, 0.0);
+        for (int jb = 0; jb < nat3; ++jb)
+        {
+            s += sqm[jb / 3] * dyn(3 * ia + da, jb);
+        }
+        return s;
+    };
+
+    // violation BEFORE the correction (physical row sums)
     double worst_before = 0.0;
     for (int ia = 0; ia < nat; ++ia)
     {
         double s2 = 0.0;
         for (int da = 0; da < 3; ++da)
         {
-            std::complex<double> s(0.0, 0.0);
-            for (int jb = 0; jb < nat3; ++jb)
-            {
-                s += dyn(3 * ia + da, jb);
-            }
-            s2 += std::norm(s);
+            s2 += std::norm(physical_row_sum(ia, da));
         }
         worst_before = std::max(worst_before, std::sqrt(s2));
     }
 
     if (asr_type == "simple")
     {
-        // legacy fix: each row's total is subtracted from its diagonal
-        // element (QE dynmat 'simple'); Hermiticity is restored by the
-        // re-symmetrization pass below, mirroring QE's upper-triangle use
-        for (int i = 0; i < nat3; ++i)
+        // legacy fix, QE 'simple' translated to the reduced matrix:
+        // D(a,a) = -sum_{b!=a} sqrt(m_b/m_a) D(a,b), zeroes the physical
+        // row sums; Hermiticity is restored by the re-symmetrization below
+        for (int na = 0; na < nat; ++na)
         {
-            std::complex<double> s(0.0, 0.0);
-            for (int j = 0; j < nat3; ++j)
+            for (int da = 0; da < 3; ++da)
             {
-                s += dyn(i, j);
+                for (int db = 0; db < 3; ++db)
+                {
+                    std::complex<double> s(0.0, 0.0);
+                    for (int nb = 0; nb < nat; ++nb)
+                    {
+                        if (nb != na)
+                        {
+                            s += sqm[nb] * dyn(3 * na + da, 3 * nb + db);
+                        }
+                    }
+                    dyn(3 * na + da, 3 * na + db) = -s / sqm[na];
+                }
             }
-            dyn(i, i) -= s;
         }
     }
     else if (asr_type == "crystal")
     {
         // minimal-norm symmetric projection D -> (1-P) D (1-P) with the
-        // orthonormal translations u_i(3a+alpha) = delta(alpha,i)/sqrt(nat):
-        //   M(alpha, nb, beta)  = (1/nat) sum_na' D(na',alpha; nb,beta)   (P D)
-        //   N(na, alpha, beta)  = (1/nat) sum_nb' D(na,alpha; nb',beta)   (D P)
-        //   T(alpha, beta)      = sum_na,nb D(na,alpha; nb,beta)
-        //   D' = D - M - N + T/nat^2
-        std::vector<std::complex<double>> m(3 * nat3, std::complex<double>(0.0, 0.0));
-        std::vector<std::complex<double>> n(3 * nat3, std::complex<double>(0.0, 0.0));
-        ModuleBase::ComplexMatrix t(3, 3, true);
+        // orthonormal physical translations w_i(3a+da) = sqrt(m_a)
+        // delta(da,i)/sqrt(sum m): zeroes every physical row AND column sum,
+        // keeps Hermiticity and symmetry-equivalent atoms equivalent, and
+        // leaves the acoustic eigenvectors in the null space so the LO-TO
+        // term (which decouples from them through sum_a Z*_a = 0) cannot
+        // lift the acoustic frequencies
+        //   S(da, nb, db) = sum_na' sqrt(m_a') D(na',da; nb,db)
+        //   T(na, da, db) = sum_nb' sqrt(m_b') D(na,da; nb',db)
+        //   U(da, db)     = sum_na,nb sqrt(m_a) sqrt(m_b) D(na,da; nb,db)
+        //   D' = D - (sqrt(m_na)/M) S - (sqrt(m_nb)/M) T + (sqrt(m_na m_nb)/M^2) U
+        // with M = sum_a m_a
+        std::vector<std::complex<double>> s(3 * nat3, std::complex<double>(0.0, 0.0));
+        std::vector<std::complex<double>> t(3 * nat3, std::complex<double>(0.0, 0.0));
+        ModuleBase::ComplexMatrix u(3, 3, true);
         for (int na = 0; na < nat; ++na)
         {
             for (int da = 0; da < 3; ++da)
@@ -292,9 +332,9 @@ void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& 
                     for (int db = 0; db < 3; ++db)
                     {
                         const std::complex<double> d = dyn(3 * na + da, 3 * nb + db);
-                        m[da * nat3 + 3 * nb + db] += d / static_cast<double>(nat);
-                        n[(3 * na + da) * 3 + db] += d / static_cast<double>(nat);
-                        t(da, db) += d;
+                        s[da * nat3 + 3 * nb + db] += sqm[na] * d;
+                        t[(3 * na + da) * 3 + db] += sqm[nb] * d;
+                        u(da, db) += sqm[na] * sqm[nb] * d;
                     }
                 }
             }
@@ -307,9 +347,11 @@ void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& 
                 {
                     for (int db = 0; db < 3; ++db)
                     {
-                        dyn(3 * na + da, 3 * nb + db) -= m[da * nat3 + 3 * nb + db];
-                        dyn(3 * na + da, 3 * nb + db) -= n[(3 * na + da) * 3 + db];
-                        dyn(3 * na + da, 3 * nb + db) += t(da, db) / static_cast<double>(nat * nat);
+                        std::complex<double> d = dyn(3 * na + da, 3 * nb + db);
+                        d -= sqm[na] / mtot * s[da * nat3 + 3 * nb + db];
+                        d -= sqm[nb] / mtot * t[(3 * na + da) * 3 + db];
+                        d += sqm[na] * sqm[nb] / (mtot * mtot) * u(da, db);
+                        dyn(3 * na + da, 3 * nb + db) = d;
                     }
                 }
             }
@@ -379,24 +421,19 @@ void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& 
 
     data.set_dynmat(q_idx, dyn);
 
-    // violation AFTER the correction
+    // violation AFTER the correction (physical row sums)
     double worst_after = 0.0;
     for (int ia = 0; ia < nat; ++ia)
     {
         double s2 = 0.0;
         for (int da = 0; da < 3; ++da)
         {
-            std::complex<double> s(0.0, 0.0);
-            for (int jb = 0; jb < nat3; ++jb)
-            {
-                s += dyn(3 * ia + da, jb);
-            }
-            s2 += std::norm(s);
+            s2 += std::norm(physical_row_sum(ia, da));
         }
         worst_after = std::max(worst_after, std::sqrt(s2));
     }
-    std::cout << "DFPT ASR (" << asr_type << ") applied: worst rowsum " << std::setprecision(3) << std::scientific
-              << worst_before << " -> " << worst_after;
+    std::cout << "DFPT ASR (" << asr_type << ") applied: worst physical rowsum " << std::setprecision(3)
+              << std::scientific << worst_before << " -> " << worst_after;
     if (n_born == nat)
     {
         std::cout << " | max |sum_a Z*_a| " << zworst_before << " -> 0";

@@ -694,16 +694,19 @@ TEST_F(DFPTPhonSerialTest, FormatReportsRegression)
 
 namespace
 {
-/// per-atom row-sum norm of a 2-atom (nat3=6) dynamical matrix
-double row_sum_norm(const ModuleBase::ComplexMatrix& dyn, int ia)
+/// per-atom PHYSICAL row-sum norm of a 2-atom (nat3=6) mass-reduced
+/// dynamical matrix: sum_jb sqrt(m_jb) D(3ia+da, jb), masses from the cell
+double row_sum_norm(const UnitCell& ucell, const ModuleBase::ComplexMatrix& dyn, int ia)
 {
+    double sqm[2] = {std::sqrt(ucell.atoms[ucell.iat2it[0]].mass),
+                     std::sqrt(ucell.atoms[ucell.iat2it[1]].mass)};
     double s2 = 0.0;
     for (int da = 0; da < 3; ++da)
     {
         std::complex<double> s(0.0, 0.0);
         for (int jb = 0; jb < 6; ++jb)
         {
-            s += dyn(3 * ia + da, jb);
+            s += sqm[jb / 3] * dyn(3 * ia + da, jb);
         }
         s2 += std::norm(s);
     }
@@ -741,8 +744,8 @@ TEST_F(DFPTPhonSerialTest, AsrSimpleZeroesRowSums)
     const ModuleBase::ComplexMatrix dyn = data_.get_dynmat(0);
     // legacy fix leaves only the tiny imaginary Hermitization residual
     const double scale = 0.06;
-    EXPECT_LT(row_sum_norm(dyn, 0) / scale, 1.0e-12);
-    EXPECT_LT(row_sum_norm(dyn, 1) / scale, 1.0e-12);
+    EXPECT_LT(row_sum_norm(ucell_, dyn, 0) / scale, 1.0e-12);
+    EXPECT_LT(row_sum_norm(ucell_, dyn, 1) / scale, 1.0e-12);
     // Hermiticity preserved by the re-symmetrization pass
     for (int i = 0; i < 6; ++i)
     {
@@ -761,8 +764,8 @@ TEST_F(DFPTPhonSerialTest, AsrCrystalZeroesRowSumsExactlyAndProjectsAcousticToZe
     data_.set_dynmat(0, make_violating_dyn());
     phon_.apply_asr("crystal", 0, data_);
     const ModuleBase::ComplexMatrix dyn = data_.get_dynmat(0);
-    EXPECT_LT(row_sum_norm(dyn, 0), 1.0e-14);
-    EXPECT_LT(row_sum_norm(dyn, 1), 1.0e-14);
+    EXPECT_LT(row_sum_norm(ucell_, dyn, 0), 1.0e-14);
+    EXPECT_LT(row_sum_norm(ucell_, dyn, 1), 1.0e-14);
     for (int i = 0; i < 6; ++i)
     {
         for (int j = i + 1; j < 6; ++j)
@@ -787,6 +790,9 @@ TEST_F(DFPTPhonSerialTest, AsrCrystalZeroesRowSumsExactlyAndProjectsAcousticToZe
 TEST_F(DFPTPhonSerialTest, AsrCrystalKeepsEquivalentAtomsEquivalent)
 {
     MakeTwoAtomCell();
+    // symmetry-equivalent atoms carry equal masses; make the two fixture
+    // species mass-equal so the equivalence assertion is meaningful
+    ucell_.atoms[1].mass = ucell_.atoms[0].mass;
     // rewire the q list to Gamma (the fixture default q is not 0)
     SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     // symmetric input: identical self blocks, common off block, plus a
@@ -840,4 +846,41 @@ TEST_F(DFPTPhonSerialTest, AsrCrystalCorrectsBornChargeSumRule)
     // shifted by the per-component mean: 0.1 / 0.05 / 0.075
     EXPECT_NEAR(o1(0, 0), 1.3 - 0.1, 1.0e-14);
     EXPECT_NEAR(o2(1, 1), -1.1 + 0.05, 1.0e-14);
+}
+
+TEST_F(DFPTPhonSerialTest, AsrCrystalPlusLotoKeepsAcousticExactlyZero)
+{
+    // regression of the mass-weighting bug: with UNequal masses the
+    // translation constraints must live on the physical (sqrt(m)-weighted)
+    // vectors, otherwise the LO-TO nonanalytic term -- which decouples from
+    // the physical acoustic subspace only through sum_a Z*_a = 0 -- mixes
+    // into the projected null space and lifts one acoustic frequency (the
+    // bn_cubic Gamma run showed +36 cm^-1 before the fix)
+    MakeTwoAtomCell(); // masses 12 / 4: unequal, the trigger
+    SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    data_.set_dynmat(0, make_violating_dyn());
+    ModuleBase::matrix eps(3, 3, true);
+    for (int d = 0; d < 3; ++d)
+    {
+        eps(d, d) = 3.0;
+    }
+    data_.set_dielectric(eps);
+    ModuleBase::matrix z1(3, 3, true);
+    ModuleBase::matrix z2(3, 3, true);
+    z1(0, 0) = z1(1, 1) = z1(2, 2) = 1.3;
+    z2(0, 0) = z2(1, 1) = z2(2, 2) = -1.1; // sums 0.2 / 0.2 / 0.2 != 0
+    data_.set_born(0, z1);
+    data_.set_born(1, z2);
+    phon_.apply_asr("crystal", 0, data_);
+    // LO-TO along (1,1,1)/sqrt(3): the acoustic triplet must stay at zero
+    phon_.add_loto(ModuleBase::Vector3<double>(1.0, 1.0, 1.0), data_);
+    phon_.diagonalize_loto(data_);
+    const std::vector<double> freq = data_.get_phon_freq_loto();
+    ASSERT_EQ(freq.size(), 6u);
+    std::vector<double> byabs = freq;
+    std::sort(byabs.begin(), byabs.end(), [](double a, double b) { return std::abs(a) < std::abs(b); });
+    for (int m = 0; m < 3; ++m)
+    {
+        EXPECT_NEAR(byabs[m], 0.0, 1.0e-4);
+    }
 }
