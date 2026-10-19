@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LIBRPA_2D_COULOMB_HEAD_H
+#define LIBRPA_2D_COULOMB_HEAD_H
 
 #include <cmath>
 #include <iomanip>
@@ -85,3 +86,4 @@ inline std::string format_strict_2d_coulomb_head_sidecar(
     return output.str();
 }
 } // namespace RpaLriDetail
+#endif

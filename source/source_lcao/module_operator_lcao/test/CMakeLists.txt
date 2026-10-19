@@ -104,7 +104,7 @@ AddTest(
   ../../../source_basis/module_ao/orb_atomic_lm.cpp
   ../../../source_basis/module_ao/orb_gaunt_table.cpp
   ../../module_ri/ri_2d_comm.cpp
-  ../../../lcao_set_mat2d.cpp
+  ../../lcao_set_mat2d.cpp
   ../../../source_io/module_restart/restart_exx_csr.cpp
   ../../../source_base/element_basis_index.cpp
   ../../../source_base/module_out/file_reader.cpp ../../../source_base/module_out/csr_reader.cpp

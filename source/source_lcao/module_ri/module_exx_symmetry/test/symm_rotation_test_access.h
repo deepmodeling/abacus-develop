@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_RI_MODULE_EXX_SYMMETRY_TEST_SYMM_ROTATION_TEST_ACCESS_H
+#define ABACUS_SOURCE_LCAO_MODULE_RI_MODULE_EXX_SYMMETRY_TEST_SYMM_ROTATION_TEST_ACCESS_H
 
 #include "../symm_rotation.h"
 
@@ -35,3 +36,4 @@ namespace ModuleSymmetry
         }
     };
 }
+#endif
