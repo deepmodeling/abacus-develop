@@ -1,4 +1,5 @@
 #include "relax_nsync.h"
+
 #include "relax_history.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -27,9 +28,9 @@ void IonCellOptimizer::print_converged_summary(const int istep,
  *
  * Allocates memory and initializes the appropriate relaxation methods:
  * - For "relax" calculation: only initializes Ions_Move_Methods
- * - For "cell-relax" calculation: initializes both Ions_Move_Methods and 
+ * - For "cell-relax" calculation: initializes both Ions_Move_Methods and
  *   Lattice_Change_Methods
- * 
+ *
  * @param natom Number of atoms in the system
  */
 void IonCellOptimizer::init_relax(const int& natom, const Input_para& inp)
@@ -51,17 +52,17 @@ void IonCellOptimizer::init_relax(const int& natom, const Input_para& inp)
 
 /**
  * @brief Perform one step of relaxation (atomic and/or cell).
- * 
+ *
  * Main relaxation loop that coordinates atomic and cell relaxation:
  * 1. Check for maximum iteration limit
  * 2. Determine calculation mode (relax vs cell-relax)
  * 3. Perform atomic relaxation if needed and atoms can move
  * 4. If in cell-relax mode and atomic relaxation converged, perform cell relaxation
- * 
+ *
  * Convergence behavior:
  * - Returns false if relaxation is still in progress
  * - Returns true if relaxation has converged or maximum iterations reached
- * 
+ *
  * @param istep Current total iteration step
  * @param energy Total energy of the system
  * @param ucell Unit cell containing atomic positions and lattice vectors
@@ -72,13 +73,13 @@ void IonCellOptimizer::init_relax(const int& natom, const Input_para& inp)
  * @return true if relaxation is converged, false otherwise
  */
 bool IonCellOptimizer::relax_step(const int& istep,
-                           const double& energy,
-                           UnitCell& ucell,
-                           ModuleBase::matrix force,
-                           ModuleBase::matrix stress,
-                           int& force_step,
-                           int& stress_step,
-                           std::ofstream& ofs_running)
+                                  const double& energy,
+                                  UnitCell& ucell,
+                                  ModuleBase::matrix force,
+                                  ModuleBase::matrix stress,
+                                  int& force_step,
+                                  int& stress_step,
+                                  std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("IonCellOptimizer", "relax_step");
 
@@ -101,8 +102,8 @@ bool IonCellOptimizer::relax_step(const int& istep,
         // the actual number of ionic steps taken is the history length.
         const int ionic_steps = static_cast<int>(max_force_history_.size());
         ofs_running << " Relaxation method: " << inp_->relax_method << std::endl;
-        ofs_running << " Relaxation stopped after " << ionic_steps << " ionic step(s) (relax_nmax = "
-                    << inp_->relax_nmax << " reached)." << std::endl;
+        ofs_running << " Relaxation stopped after " << ionic_steps
+                    << " ionic step(s) (relax_nmax = " << inp_->relax_nmax << " reached)." << std::endl;
         if (!max_force_history_.empty())
         {
             ofs_running << " Largest force per step (eV/Angstrom):" << format_relax_history(max_force_history_);
@@ -138,7 +139,7 @@ bool IonCellOptimizer::relax_step(const int& istep,
     if (need_atom_relax)
     {
         assert(inp_->cal_force == 1);
-        
+
         // Calculate and apply atomic movement
         std::string relax_method = inp_->relax_method;
 
@@ -157,8 +158,8 @@ bool IonCellOptimizer::relax_step(const int& istep,
 
         const double max_force_ev = IMM.get_largest_grad() * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
         max_force_history_.push_back(max_force_ev);
-        ofs_running << " Largest force is " << max_force_ev
-                    << " eV/Angstrom while threshold is " << inp_->force_thr_ev << " eV/Angstrom" << std::endl;
+        ofs_running << " Largest force is " << max_force_ev << " eV/Angstrom while threshold is " << inp_->force_thr_ev
+                    << " eV/Angstrom" << std::endl;
         if (!atom_converged)
         {
             ofs_running << "\n Relaxation is not converged yet!" << std::endl;
@@ -193,7 +194,7 @@ bool IonCellOptimizer::relax_step(const int& istep,
     if (need_cell_relax)
     {
         assert(inp_->cal_stress == 1);
-        
+
         // Calculate and apply lattice change
         Relax_Criteria criteria;
         criteria.force_thr = inp_->force_thr;
@@ -208,8 +209,8 @@ bool IonCellOptimizer::relax_step(const int& istep,
 
         const double max_stress_kbar = LCM.get_largest_grad();
         max_stress_history_.push_back(max_stress_kbar);
-        ofs_running << " Largest stress is " << max_stress_kbar
-                    << " kbar while threshold is " << inp_->stress_thr << " kbar" << std::endl;
+        ofs_running << " Largest stress is " << max_stress_kbar << " kbar while threshold is " << inp_->stress_thr
+                    << " kbar" << std::endl;
         if (converged)
         {
             print_converged_summary(istep, true, ofs_running);
@@ -222,12 +223,12 @@ bool IonCellOptimizer::relax_step(const int& istep,
             stress_step++;
             IMM.reset_after_cell_change(inp_->relax_method, ofs_running);
             ucell.cell_parameter_updated = true;
-            
+
             // Update cell-related parameters after volume change
             unitcell::setup_cell_after_vc(ucell, ofs_running, inp_->nspin);
             ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
         }
-        
+
         return converged;
     }
     else if (is_cell_relax && !unitcell::if_cell_can_change(ucell.lat_axis_free))

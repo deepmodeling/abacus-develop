@@ -1,12 +1,13 @@
 #ifndef IONS_MOVE_CG_H
 #define IONS_MOVE_CG_H
 
+#include "cg_base.h"
 #include "relax_criteria.h"
-#include <fstream>
-#include <iostream>
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
-#include "cg_base.h"
+
+#include <fstream>
+#include <iostream>
 #include <vector>
 
 class Ions_Move_CG : public CG_Base
@@ -16,7 +17,15 @@ class Ions_Move_CG : public CG_Base
     ~Ions_Move_CG() = default;
 
     void allocate(const int dim);
-    bool start(UnitCell &ucell, const ModuleBase::matrix &force, const double &etot, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, std::string& relax_method, const Relax_Criteria& criteria);
+    bool start(UnitCell& ucell,
+               const ModuleBase::matrix& force,
+               const double& etot,
+               const int istep,
+               int& update_iter,
+               std::ofstream& ofs,
+               std::vector<double>& etot_info,
+               std::string& relax_method,
+               const Relax_Criteria& criteria);
 
     static double RELAX_CG_THR;
 

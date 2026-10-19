@@ -1,12 +1,11 @@
 #include "ions_move_methods.h"
 
-#include <algorithm>
-
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <algorithm>
 
 Ions_Move_Methods::Ions_Move_Methods()
 {
@@ -15,7 +14,7 @@ Ions_Move_Methods::~Ions_Move_Methods()
 {
 }
 
-void Ions_Move_Methods::allocate(const int &natom, const std::string& relax_method)
+void Ions_Move_Methods::allocate(const int& natom, const std::string& relax_method)
 {
     if (natom <= 0)
     {
@@ -40,13 +39,13 @@ void Ions_Move_Methods::allocate(const int &natom, const std::string& relax_meth
         this->cg.allocate(Ions_Move_Basic::dim);
         this->bfgs.allocate();
     }
-    else if(relax_method == "bfgs_trad")
+    else if (relax_method == "bfgs_trad")
     {
-        this->bfgs_trad.allocate(natom);       
+        this->bfgs_trad.allocate(natom);
     }
-    else if(relax_method == "lbfgs")
+    else if (relax_method == "lbfgs")
     {
-        this->lbfgs.allocate(natom, PARAM.inp.relax_bfgs_rmax, PARAM.inp.out_level);       
+        this->lbfgs.allocate(natom, PARAM.inp.relax_bfgs_rmax, PARAM.inp.out_level);
     }
     else
     {
@@ -56,14 +55,14 @@ void Ions_Move_Methods::allocate(const int &natom, const std::string& relax_meth
 }
 
 // void Ions_Move_Methods::cal_movement(const int &istep, const ModuleBase::matrix &f, const double &etot)
-void Ions_Move_Methods::cal_movement(const int &istep,
-                                     const int &force_step,
-                                     const ModuleBase::matrix &f,
-                                     const double &etot,
-                                     UnitCell &ucell,
+void Ions_Move_Methods::cal_movement(const int& istep,
+                                     const int& force_step,
+                                     const ModuleBase::matrix& f,
+                                     const double& etot,
+                                     UnitCell& ucell,
                                      std::ofstream& ofs,
                                      std::string& relax_method,
-                                    const Relax_Criteria& criteria)
+                                     const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
     if (relax_method == "bfgs")
@@ -84,7 +83,7 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     }
     else if (relax_method == "bfgs_trad")
     {
-        converged_ = bfgs_trad.relax_step(f, ucell, ofs);        
+        converged_ = bfgs_trad.relax_step(f, ucell, ofs);
     }
     else if (relax_method == "lbfgs")
     {

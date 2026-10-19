@@ -1,10 +1,11 @@
-#include "source_relax/relax_criteria.h"
-#include <regex>
 #include "for_test.h"
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_cg.h"
+#include "source_relax/relax_criteria.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <regex>
 
 /************************************************
  *  unit tests of class Ions_Move_CG
@@ -24,7 +25,7 @@ class IonsMoveCGTest : public ::testing::Test
         im_cg.allocate(Ions_Move_Basic::dim);
         criteria.force_thr = 0.001;
 
-        // ban the 'cout' 
+        // ban the 'cout'
         // mohan add 2025-05-02
         std::cout.rdbuf(NULL);
     }
@@ -38,10 +39,10 @@ class IonsMoveCGTest : public ::testing::Test
         for (int it = 0; it < ucell.ntype; it++)
         {
             Atom* atom = &ucell.atoms[it];
-            atom->label="test";
+            atom->label = "test";
             for (int ia = 0; ia < atom->na; ia++)
             {
-                atom->mag[ia]= 1;
+                atom->mag[ia] = 1;
                 for (int ik = 0; ik < 3; ++ik)
                 {
                     atom->tau[ia][ik] = 1;
@@ -141,7 +142,6 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
     std::remove("TestStartConverged.log");
-
 
     std::regex pattern(R"(==> .*::.*\t[\d\.]+ GB\t\d+ s\n )");
     output = std::regex_replace(output, pattern, "");
