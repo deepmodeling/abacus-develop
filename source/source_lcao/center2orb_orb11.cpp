@@ -363,9 +363,17 @@ double Center2_Orb::Orb11::cal_overlap(const ModuleBase::Vector3<double>& RA,
     const int idx2 = this->MGT.get_lm_index(LB, mB);
     const double* Gaunt_Coefficients_ptr = &(this->MGT.Gaunt_Coefficients(idx1, idx2, 0));
 
+    const int rmesh = Center2_Orb::get_rmesh(RcutA, RcutB, dr_);
     for (const auto& tb_r: this->Table_r)
     {
         const int LAB = tb_r.first;
+        const double distance_power = std::pow(distance, LAB);
+        const int phase = (LA - LB - LAB) / 2;
+        const double i_exp = std::pow(-1.0, phase);
+        const double Interp_Tlm
+            = (distance > tiny2)
+                  ? ModuleBase::PolyInt::Polynomial_Interpolation(tb_r.second.data(), rmesh, dr_, distance)
+                  : tb_r.second.at(0);
 
         for (int mAB = 0; mAB != 2 * LAB + 1; ++mAB)
         // const int mAB = mA + mB;
@@ -382,17 +390,7 @@ double Center2_Orb::Orb11::cal_overlap(const ModuleBase::Vector3<double>& RA,
             {
                 continue;
             }
-            const double ylm_real = (distance > tiny2) ? ylm_solid / pow(distance, LAB) : ylm_solid;
-
-            const double i_exp = std::pow(-1.0, (LA - LB - LAB) / 2);
-
-            const double Interp_Tlm
-                = (distance > tiny2)
-                      ? ModuleBase::PolyInt::Polynomial_Interpolation(tb_r.second.data(),
-                                                                      Center2_Orb::get_rmesh(RcutA, RcutB, dr_),
-                                                                      dr_,
-                                                                      distance)
-                      : tb_r.second.at(0);
+            const double ylm_real = (distance > tiny2) ? ylm_solid / distance_power : ylm_solid;
 
             overlap +=
                 //			pow(2*PI,1.5)
@@ -441,9 +439,22 @@ ModuleBase::Vector3<double> Center2_Orb::Orb11::cal_grad_overlap( // caoyu add 2
 
     ModuleBase::Vector3<double> grad_overlap(0.0, 0.0, 0.0);
 
+    const int rmesh = Center2_Orb::get_rmesh(RcutA, RcutB, dr_);
     for (const auto& tb_r: this->Table_r)
     {
         const int LAB = tb_r.first;
+        const double distance_power = std::pow(distance, LAB);
+        const int phase = (LA - LB - LAB) / 2;
+        const double i_exp = std::pow(-1.0, phase);
+        const double Interp_Tlm
+            = (distance > tiny2)
+                  ? ModuleBase::PolyInt::Polynomial_Interpolation(tb_r.second.data(), rmesh, dr_, distance)
+                  : tb_r.second.at(0);
+        const double grad_Interp_Tlm
+            = (distance > tiny2)
+                  ? ModuleBase::PolyInt::Polynomial_Interpolation(this->Table_dr.at(LAB).data(), rmesh, dr_, distance)
+                        - Interp_Tlm * LAB / distance
+                  : 0.0;
         for (int mAB = 0; mAB != 2 * LAB + 1; ++mAB)
         // const int mAB = mA + mB;
         {
@@ -455,30 +466,10 @@ ModuleBase::Vector3<double> Center2_Orb::Orb11::cal_grad_overlap( // caoyu add 2
             }
 
             const double ylm_solid = rly[idx3];
-            const double ylm_real = (distance > tiny2) ? ylm_solid / pow(distance, LAB) : ylm_solid;
+            const double ylm_real = (distance > tiny2) ? ylm_solid / distance_power : ylm_solid;
 
             const ModuleBase::Vector3<double> gylm_solid = grly[idx3];
-            const ModuleBase::Vector3<double> gylm_real
-                = (distance > tiny2) ? gylm_solid / pow(distance, LAB) : gylm_solid;
-
-            const double i_exp = std::pow(-1.0, (LA - LB - LAB) / 2);
-
-            const double Interp_Tlm
-                = (distance > tiny2)
-                      ? ModuleBase::PolyInt::Polynomial_Interpolation(tb_r.second.data(),
-                                                                      Center2_Orb::get_rmesh(RcutA, RcutB, dr_),
-                                                                      dr_,
-                                                                      distance)
-                      : tb_r.second.at(0);
-
-            const double grad_Interp_Tlm
-                = (distance > tiny2)
-                      ? ModuleBase::PolyInt::Polynomial_Interpolation(this->Table_dr.at(LAB).data(),
-                                                                      Center2_Orb::get_rmesh(RcutA, RcutB, dr_),
-                                                                      dr_,
-                                                                      distance) // Interp(Table_dr)
-                            - Interp_Tlm * LAB / distance
-                      : 0.0;
+            const ModuleBase::Vector3<double> gylm_real = (distance > tiny2) ? gylm_solid / distance_power : gylm_solid;
 
             grad_overlap += i_exp //			pow(2*PI,1.5)
                             * Gaunt_real_A_B_AB
