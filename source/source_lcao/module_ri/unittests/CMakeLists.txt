@@ -62,6 +62,7 @@ add_executable(
 target_include_directories(MODULE_RI_gaussian_abfs_gamma_dipole_test PRIVATE ${CMAKE_SOURCE_DIR}/source)
 target_link_libraries(
   MODULE_RI_gaussian_abfs_gamma_dipole_test PRIVATE base device parameter cell symmetry
+  neighbor_search domain_decomposition neighbor
   abacus::linalg_libs
 )
 install(TARGETS MODULE_RI_gaussian_abfs_gamma_dipole_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
