@@ -1,7 +1,9 @@
 abacus_disable_feature_definitions(__MPI __LCAO)
 abacus_add_local_feature_definitions(__NORMAL)
 
-list(APPEND depend_files
+list(
+  APPEND
+  depend_files
   ../md_func.cpp
   ../../source_cell/basecell.cpp
   ../../source_cell/unitcell.cpp
@@ -69,37 +71,47 @@ list(APPEND depend_files
   ../../source_cell/cal_nelec_nband.cpp
   ../../source_cell/read_orb.cpp
   ../../source_cell/sep.cpp
-  ../../source_cell/sep_cell.cpp
-)
+  ../../source_cell/sep_cell.cpp)
 
-AddTest(
-  TARGET MODULE_MD_LJ_pot
-  LIBS parameter psi device
-  SOURCES lj_pot_test.cpp
+addtest(
+  TARGET
+  MODULE_MD_LJ_pot
+  LIBS
+  parameter
+  psi
+  device
+  SOURCES
+  lj_pot_test.cpp
   ../../source_cell/module_neighlist/test/test_domain_decomposition.cpp
-  ${depend_files}
-)
+  ${depend_files})
 
-AddTest(
-  TARGET MODULE_MD_func
-  LIBS parameter psi device
-  SOURCES md_func_test.cpp
+addtest(
+  TARGET
+  MODULE_MD_func
+  LIBS
+  parameter
+  psi
+  device
+  SOURCES
+  md_func_test.cpp
   test_md_func.cpp
-  ${depend_files}
-)
+  ${depend_files})
 
 set(md_run_json_sources)
 if(ENABLE_JSON)
-  list(APPEND md_run_json_sources
-    ../../source_io/module_json/abacusjson.cpp
-    ../../source_io/module_json/output_info.cpp
-  )
+  list(APPEND md_run_json_sources ../../source_io/module_json/abacusjson.cpp
+       ../../source_io/module_json/output_info.cpp)
 endif()
 
-AddTest(
-  TARGET MODULE_MD_run
-  LIBS parameter psi device
-  SOURCES run_md_test.cpp
+addtest(
+  TARGET
+  MODULE_MD_run
+  LIBS
+  parameter
+  psi
+  device
+  SOURCES
+  run_md_test.cpp
   ../run_md.cpp
   ../module_plumed/plumed_interface.cpp
   ../md_base.cpp
@@ -111,53 +123,72 @@ AddTest(
   ../../source_cell/mdcell_reader.cpp
   ../../source_cell/magnetism.cpp
   ${md_run_json_sources}
-  ${depend_files}
-)
+  ${depend_files})
 
-AddTest(
-  TARGET MODULE_MD_fire
-  LIBS parameter psi device
-  SOURCES fire_test.cpp
+addtest(
+  TARGET
+  MODULE_MD_fire
+  LIBS
+  parameter
+  psi
+  device
+  SOURCES
+  fire_test.cpp
   ../md_base.cpp
   ../fire.cpp
-  ${depend_files}
-)
+  ${depend_files})
 
-AddTest(
-  TARGET MODULE_MD_verlet
-  LIBS parameter psi device
-  SOURCES verlet_test.cpp
+addtest(
+  TARGET
+  MODULE_MD_verlet
+  LIBS
+  parameter
+  psi
+  device
+  SOURCES
+  verlet_test.cpp
   ../md_base.cpp
   ../verlet.cpp
-  ${depend_files}
-)
+  ${depend_files})
 
-AddTest(
-  TARGET MODULE_MD_nhc
-  LIBS parameter psi device
-  SOURCES nhchain_test.cpp
+addtest(
+  TARGET
+  MODULE_MD_nhc
+  LIBS
+  parameter
+  psi
+  device
+  SOURCES
+  nhchain_test.cpp
   ../md_base.cpp
   ../nhchain.cpp
   ../../source_base/output.cpp
-  ${depend_files}
-)
+  ${depend_files})
 
-AddTest(
-  TARGET MODULE_MD_msst
-  LIBS parameter psi device
-  SOURCES msst_test.cpp
+addtest(
+  TARGET
+  MODULE_MD_msst
+  LIBS
+  parameter
+  psi
+  device
+  SOURCES
+  msst_test.cpp
   ../md_base.cpp
   ../msst.cpp
   ../../source_cell/update_cell.cpp
   ../../source_base/output.cpp
-  ${depend_files}
-)
+  ${depend_files})
 
-AddTest(
-  TARGET MODULE_MD_lgv
-  LIBS parameter psi device
-  SOURCES langevin_test.cpp
+addtest(
+  TARGET
+  MODULE_MD_lgv
+  LIBS
+  parameter
+  psi
+  device
+  SOURCES
+  langevin_test.cpp
   ../md_base.cpp
   ../langevin.cpp
-  ${depend_files}
-)
+  ${depend_files})
