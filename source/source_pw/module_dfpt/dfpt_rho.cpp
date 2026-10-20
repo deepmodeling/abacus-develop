@@ -6,6 +6,9 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_base/module_mixing/plain_mixing.h"
+#include "source_base/math_integral.h"
+#include "source_base/math_sphbes.h"
+#include "source_estate/module_charge/chg_tools.h"
 
 #include <algorithm>
 #include <cmath>
@@ -240,6 +243,103 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
     }
     drho_out_[q_idx].assign(1, drho_g);
     ModuleBase::timer::end("DFPT_Rho", "compute_drho");
+}
+
+void DFPT_Rho::compute_drhoc(const UnitCell& ucell,
+                              int iat,
+                              int dir,
+                              int q_idx,
+                              DFPT_PW_Data& data)
+{
+    ModuleBase::TITLE("DFPT_Rho", "compute_drhoc");
+    ModuleBase::timer::start("DFPT_Rho", "compute_drhoc");
+    const int npw = pw_rho_ ? pw_rho_->npw : 0;
+    if (pw_rho_ == nullptr || npw == 0 || iat < 0 || iat >= ucell.nat || dir < 0 || dir > 2)
+    {
+        data.set_drhoc_g(q_idx, {});
+        ModuleBase::timer::end("DFPT_Rho", "compute_drhoc");
+        return;
+    }
+    const int it = ucell.iat2it[iat];
+    if (!ucell.atoms[it].ncpp.nlcc)
+    {
+        data.set_drhoc_g(q_idx, {});
+        ModuleBase::timer::end("DFPT_Rho", "compute_drhoc");
+        return;
+    }
+
+    // q-shifted |G+q|^2 in tpiba^2 units, and the q-shifted structure
+    // factor phase exp(i (G+q) tau_iat) for the displaced atom
+    const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
+    const ModuleBase::Vector3<double> q_cart = q_frac * recip_matrix_;
+    // tau in cartesian bohr (lat0-scaled: tau is in direct units of latvec)
+    const ModuleBase::Vector3<double> tau_cart = ucell.atoms[it].tau[ucell.iat2ia[iat]] * ucell.lat0;
+
+    // build the |G+q|^2 shell values and evaluate the radial core FT
+    // on them (non_linear_core_correction works on unique gg shells)
+    std::vector<double> w2_all(npw);
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        const ModuleBase::Vector3<double> w = pw_rho_->gcar[ig] + q_cart;
+        w2_all[ig] = w * w; // dimensionless (1/lat0)^2
+    }
+
+    // use the existing radial FT machinery: pass the |G+q|^2 values as
+    // pseudo-unique shells (the function just needs matching arrays;
+    // we can call it per-shell or build a shell lookup)
+    // Simpler: directly evaluate the spherical Bessel integral here
+    // for each ig (no shell deduplication -- the cost is O(npw * mesh)
+    // and only runs once per displacement for nlcc atoms)
+    const pseudo& p = ucell.atoms[it].ncpp;
+    const int mesh = p.msh;
+
+    std::vector<std::complex<double>> drhoc_g(npw, std::complex<double>(0.0, 0.0));
+    std::vector<double> aux(mesh);
+
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        const ModuleBase::Vector3<double> w = pw_rho_->gcar[ig] + q_cart;
+        const double w2 = w * w;
+        // skip the |G+q| = 0 shell (dropped by compute_drho, zero density there)
+        if (w2 < 1.0e-12)
+        {
+            continue;
+        }
+        const double g = std::sqrt(w2) * ucell.tpiba; // physical 1/bohr
+        // radial FT: rho_core~(|G+q|) = 4pi/Omega * Int r^2 rho_atc(r) j0(gr) dr
+        ModuleBase::Sphbes::Spherical_Bessel(mesh, p.r.data(), g, 0, aux.data());
+        double rhocg = 0.0;
+        for (int ir = 0; ir < mesh; ++ir)
+        {
+            aux[ir] = p.r[ir] * p.r[ir] * p.rho_atc[ir] * aux[ir];
+        }
+        ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), p.rab.data(), rhocg);
+        rhocg *= ModuleBase::FOUR_PI / ucell.omega;
+
+        // structure factor phase: exp(i (G+q) . tau_iat)
+        const double phase = ModuleBase::TWO_PI * (w * tau_cart) / ucell.lat0;
+        const std::complex<double> gtau(std::cos(phase), std::sin(phase));
+
+        // direction derivative: -i * tpiba * (G+q)_dir
+        const double wdir = ucell.tpiba * w[dir];
+
+        drhoc_g[ig] = std::complex<double>(0.0, -wdir) * rhocg * gtau;
+    }
+
+    data.set_drhoc_g(q_idx, drhoc_g);
+
+    // report magnitude for diagnostics
+    double norm2 = 0.0;
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        norm2 += std::norm(drhoc_g[ig]);
+    }
+    std::cout << "  DFPT nlcc core derivative: atom " << iat + 1 << "("
+              << ucell.atoms[it].label << ") dir " << static_cast<char>('x' + dir)
+              << " |drhoc_g| = " << std::setprecision(3) << std::scientific << std::sqrt(norm2)
+              << std::defaultfloat << std::setprecision(6) << std::endl;
+
+    ModuleBase::timer::end("DFPT_Rho", "compute_drhoc");
 }
 
 void DFPT_Rho::cal_docc(const psi::Psi<std::complex<double>>& psi,
