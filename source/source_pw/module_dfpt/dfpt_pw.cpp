@@ -159,6 +159,14 @@ void DFPT_PW::set_kerker_a2(double a2)
     }
 }
 
+void DFPT_PW::set_broyden_ndim(int ndim)
+{
+    if (ndim >= 1)
+    {
+        pimpl_->broyden_ndim_ = ndim;
+    }
+}
+
 void DFPT_PW::set_compute_q0(bool flag)
 {
     pimpl_->data_.set_compute_q0(flag);

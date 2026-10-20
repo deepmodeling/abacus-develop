@@ -196,7 +196,7 @@ void ReadInput::item_dfpt()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_asr must be no, simple or crystal.");
         Input_Item item("dfpt_mix_type");
-        item.annotation = "mixing scheme of the DFPT first-order density: plain or kerker";
+        item.annotation = "mixing scheme of the DFPT first-order density: plain, kerker or broyden";
         item.category = category;
         item.type = "String";
         item.description = "Set the mixing scheme of the first-order density in the "
@@ -218,9 +218,10 @@ void ReadInput::item_dfpt()
         };
         sync_string(input.dfpt_mix_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.dfpt_mix_type != "plain" && para.input.dfpt_mix_type != "kerker")
+            if (para.input.dfpt_mix_type != "plain" && para.input.dfpt_mix_type != "kerker"
+                && para.input.dfpt_mix_type != "broyden")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_mix_type must be plain or kerker.");
+                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_mix_type must be plain, kerker or broyden.");
             }
         };
         this->add_item(item);
@@ -240,6 +241,25 @@ void ReadInput::item_dfpt()
             if (para.input.dfpt_kerker_a2 <= 0.0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_kerker_a2 must be > 0.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dfpt_broyden_ndim");
+        item.annotation = "Broyden history depth for dfpt_mix_type = broyden";
+        item.category = category;
+        item.type = "Integer";
+        item.description = "Set the number of history steps used by the "
+                           "Modified Broyden mixing (Johnson 1988) when "
+                           "dfpt_mix_type = broyden. More history generally "
+                           "accelerates convergence at the cost of memory.";
+        item.default_value = "8";
+        read_sync_int(input.dfpt_broyden_ndim);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.dfpt_broyden_ndim < 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_broyden_ndim must be >= 1.");
             }
         };
         this->add_item(item);

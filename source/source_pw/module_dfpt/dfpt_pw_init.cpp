@@ -95,7 +95,7 @@ void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
     const double mix_beta = mix_beta_;
     const std::string mix_type = mix_type_;
     const double kerker_a2 = kerker_a2_;
-    rho_.init({nspin, nrxx, ctx.pw_rho, ctx.pw_wfc, ctx.ucell->G, mix_type, mix_beta, kerker_a2});
+    rho_.init({nspin, nrxx, ctx.pw_rho, ctx.pw_wfc, ctx.ucell->G, mix_type, mix_beta, kerker_a2, broyden_ndim_});
     phon_.init(*ctx.ucell, ctx.pw_rho, &pert_);
     q0_.init(*ctx.ucell, ctx.pw_rho, ctx.pw_wfc, &pert_);
     hamilt_.reset(new DFPT_HamiltShift(*ctx.ucell, ctx.pw_rho, ctx.pw_wfc, *ctx.veff_r, &pert_));

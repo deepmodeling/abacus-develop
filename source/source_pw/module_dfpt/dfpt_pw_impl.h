@@ -180,6 +180,7 @@ class DFPT_PW::Impl
     std::string asr_type_ = "no"; ///< acoustic sum rule mode on the Gamma matrix
     std::string mix_type_ = "plain"; ///< first-order density mixing scheme
     double kerker_a2_ = 1.0;         ///< Kerker screening a^2, 1/lat0^2 (kerker only)
+    int broyden_ndim_ = 8;           ///< Broyden history depth (broyden only)
 };
 
 } // namespace ModuleDFPT

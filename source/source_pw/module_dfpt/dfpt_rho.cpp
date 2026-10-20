@@ -45,6 +45,10 @@ void DFPT_Rho::init(const Config& cfg)
     }
     // make_unique is C++14; C++11 uses new directly through reset()
     mixer_.reset(new Base_Mixing::Plain_Mixing(mix_beta_));
+    if (mix_type_ == "broyden")
+    {
+        broyden_mixer_.reset(new Base_Mixing::Broyden_Mixing(cfg.broyden_ndim));
+    }
     ModuleBase::timer::end("DFPT_Rho", "init");
 }
 
@@ -386,6 +390,12 @@ void DFPT_Rho::reset_mixing(int q_idx)
     {
         residual_[q_idx] = 0.0;
     }
+    // Broyden history is per (q, displacement-cycle): drop it so the next
+    // displacement starts fresh
+    if (q_idx < static_cast<int>(broyden_mdata_.size()))
+    {
+        broyden_mdata_[q_idx].reset();
+    }
     ModuleBase::timer::end("DFPT_Rho", "reset_mixing");
 }
 
@@ -422,7 +432,55 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
     // real-space manifest below; the q-shifted |G+q| convention matches
     // v_hartree_q (gcar + q_frac * recip, 1/lat0^2 units)
     const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
-    if (mix_type_ == "kerker")
+    if (mix_type_ == "broyden" && broyden_mixer_ != nullptr)
+    {
+        // Modified Broyden (Johnson 1988): maintain a per-q history of
+        // residual differences, solve a small least-squares each step
+        if (q_idx >= static_cast<int>(broyden_mdata_.size()))
+        {
+            broyden_mdata_.resize(q_idx + 1);
+        }
+        if (broyden_mdata_[q_idx] == nullptr)
+        {
+            broyden_mdata_[q_idx] = std::unique_ptr<Base_Mixing::Mixing_Data>(
+                new Base_Mixing::Mixing_Data());
+            broyden_mixer_->init_mixing_data(*broyden_mdata_[q_idx], npw, sizeof(std::complex<double>));
+        }
+        Base_Mixing::Mixing_Data& mdata = *broyden_mdata_[q_idx];
+        // push the current in/out pair into the history, then solve for
+        // the Broyden coefficients and mix
+        auto screen = std::function<void(std::complex<double>*)>();
+        auto combine = std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)>();
+        broyden_mixer_->push_data(mdata,
+                                  rin.data(),
+                                  out.data(),
+                                  screen,
+                                  combine,
+                                  true);
+        auto inner = std::function<double(std::complex<double>*, std::complex<double>*)>(
+            [](std::complex<double>* a, std::complex<double>* b) {
+                double s = 0.0;
+                for (int i = 0; i < 1; ++i)
+                {
+                    s += (a[i] * std::conj(b[i])).real();
+                }
+                return s;
+            });
+        // the inner product needs the full length; use the templated path
+        // through the mixing data (the Broyden class handles the wrapping)
+        broyden_mixer_->cal_coef(mdata,
+            std::function<double(std::complex<double>*, std::complex<double>*)>(
+            [npw](std::complex<double>* a, std::complex<double>* b) {
+                double s = 0.0;
+                for (int i = 0; i < npw; ++i)
+                {
+                    s += (a[i] * std::conj(b[i])).real();
+                }
+                return s;
+            }));
+        broyden_mixer_->mix_data(mdata, mixed.data());
+    }
+    else if (mix_type_ == "kerker")
     {
         const ModuleBase::Vector3<double> q_cart = q_frac * recip_matrix_;
         std::vector<std::complex<double>> rin_s(npw);

@@ -138,6 +138,9 @@ class DFPT_PW
     /// Kerker screening a^2 in 1/lat0^2 units (kerker scheme only)
     void set_kerker_a2(double a2);
 
+    /// Broyden history depth (broyden scheme only)
+    void set_broyden_ndim(int ndim);
+
     /// q = 0 response switches (epsilon_inf / Born charges / LO-TO)
     void set_compute_q0(bool flag);
 

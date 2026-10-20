@@ -8,6 +8,10 @@
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 
+#include "source_base/module_mixing/mixing.h"
+#include "source_base/module_mixing/plain_mixing.h"
+#include "source_base/module_mixing/broyden_mixing.h"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -100,9 +104,10 @@ class DFPT_Rho
         ModulePW::PW_Basis* pw_rho;
         ModulePW::PW_Basis_K* pw_wfc;
         ModuleBase::Matrix3 recip_matrix;
-        std::string mix_type; // "plain" or "kerker"
+        std::string mix_type; // "plain", "kerker", "broyden", or "v_sc"
         double mix_beta;
         double kerker_a2; // Kerker screen a^2, 1/lat0^2 (kerker only)
+        int broyden_ndim; // Broyden history depth (broyden only, default 8)
     };
 
     DFPT_Rho();
@@ -192,6 +197,12 @@ class DFPT_Rho
     double kerker_a2_ = 0.0;
 
     std::unique_ptr<Base_Mixing::Plain_Mixing> mixer_;
+    ///< Broyden mixer for the broyden mix_type (separate from the plain
+    /// mixer because their interfaces differ: Broyden needs push_data +
+    /// cal_coef before each mix, with internal history state)
+    std::unique_ptr<Base_Mixing::Broyden_Mixing> broyden_mixer_;
+    ///< Broyden mixing data (per q, reset by reset_mixing)
+    std::vector<std::unique_ptr<Base_Mixing::Mixing_Data>> broyden_mdata_;
 
     /// mixing state, q-shifted coefficients on the rho grid, [q][spin]
     std::vector<std::vector<std::vector<std::complex<double>>>> drho_in_;
