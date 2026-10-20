@@ -134,13 +134,13 @@ TEST_F(InputTest, PccSelectionAndUnsupportedCombinations)
     EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
 }
 
-TEST_F(InputTest, ExxDevice)
+TEST_F(InputTest, DeviceExx)
 {
     ModuleIO::ReadInput readinput(0);
     Parameter param;
-    auto it = find_label("exx_device", readinput.input_lists);
+    auto it = find_label("device_exx", readinput.input_lists);
     ASSERT_NE(it, readinput.input_lists.end());
-    EXPECT_EQ(param.inp.exx_device, "cpu");
+    EXPECT_EQ(param.inp.device_exx, "cpu");
     EXPECT_EQ(it->second.default_value, "cpu");
 
     auto& input = TestParameters::input(param);
@@ -161,16 +161,16 @@ TEST_F(InputTest, ExxDevice)
 
     it->second.str_values = {"ddla"};
     it->second.read_value(it->second, param);
-    expect_rejected("exx_device must be cpu or gpu");
+    expect_rejected("device_exx must be cpu or gpu");
 
     it->second.str_values = {"gpu"};
     it->second.read_value(it->second, param);
-    EXPECT_EQ(param.inp.exx_device, "gpu");
+    EXPECT_EQ(param.inp.device_exx, "gpu");
     input.basis_type = "pw";
-    expect_rejected("exx_device=gpu requires basis_type=lcao and device=gpu");
+    expect_rejected("device_exx=gpu requires basis_type=lcao and device=gpu");
     input.basis_type = "lcao";
     input.device = "cpu";
-    expect_rejected("exx_device=gpu requires basis_type=lcao and device=gpu");
+    expect_rejected("device_exx=gpu requires basis_type=lcao and device=gpu");
     input.device = "gpu";
 
 #ifdef __GPU_RI
@@ -181,12 +181,12 @@ TEST_F(InputTest, ExxDevice)
     input.symmetry = "0";
     it->second.check_value(it->second, param);
 #else
-    expect_rejected("exx_device=gpu requires a build with ENABLE_LIBRI_GPU=ON");
+    expect_rejected("device_exx=gpu requires a build with ENABLE_LIBRI_GPU=ON");
 #endif
 
     it->second.str_values = {"cpu"};
     it->second.read_value(it->second, param);
-    EXPECT_EQ(param.inp.exx_device, "cpu");
+    EXPECT_EQ(param.inp.device_exx, "cpu");
     input.symmetry = "1";
     input.exx_symmetry_realspace = true;
     it->second.check_value(it->second, param);
