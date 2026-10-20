@@ -133,6 +133,7 @@ add_library(
     module_parameter/read_inp_deepks.cpp
     module_parameter/read_inp_model.cpp
     module_parameter/read_inp_sccs.cpp
+    module_parameter/sccs_inp_check.cpp
     module_parameter/read_inp_postproc.cpp  
     module_parameter/read_inp_exx_dftu.cpp
     module_parameter/read_inp_other.cpp   

@@ -635,6 +635,7 @@ OBJS_SURCHEM=surchem.o\
 OBJS_SCCS=sccs_cavity.o\
     sccs_cav_deriv.o\
     sccs_functional.o\
+    sccs_lowpass.o\
     sccs_parameters.o\
     sccs_ion_charge.o\
     sccs_ion_force.o\
@@ -773,6 +774,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_deepks.o\
     module_parameter/read_inp_model.o\
     module_parameter/read_inp_sccs.o\
+    module_parameter/sccs_inp_check.o\
     module_parameter/read_inp_postproc.o\
     module_parameter/read_inp_exx_dftu.o\
     module_parameter/read_inp_dfpt.o\

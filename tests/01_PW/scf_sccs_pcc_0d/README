@@ -1,1 +1,1 @@
-PW neutral water with SCCS (water-neutral preset) and 0D PCC, ecutwfc 20 and ecutrho 240
+PW neutral water with SCCS (water-neutral preset), 0D PCC and the cavity low-pass filter (p1 10, p2 5), ecutwfc 20 and ecutrho 240

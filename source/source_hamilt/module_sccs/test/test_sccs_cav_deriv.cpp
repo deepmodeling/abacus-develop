@@ -40,9 +40,10 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
     }
     const bool open_boundary = true;
     ModuleSccs::SccsResponse response;
-    std::vector<double> coefficient;
+    ModuleSccs::CavityDerivatives derivatives;
+    const std::vector<double>& coefficient = derivatives.coefficient;
     ModuleSccs::make_cav_derivs(density, cavity, basis, tpiba, open_boundary,
-                                response, coefficient);
+                                response, derivatives);
     const double log_bulk = std::log(cavity.epsilon_bulk);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -65,9 +66,10 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
     }
     const bool periodic_boundary = false;
     ModuleSccs::SccsResponse periodic;
-    std::vector<double> periodic_coefficient;
+    ModuleSccs::CavityDerivatives periodic_derivatives;
+    const std::vector<double>& periodic_coefficient = periodic_derivatives.coefficient;
     ModuleSccs::make_cav_derivs(density, cavity, basis, tpiba, periodic_boundary,
-                                periodic, periodic_coefficient);
+                                periodic, periodic_derivatives);
     double difference = 0.0;
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -81,4 +83,21 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
     Parallel_Reduce::reduce_max_pool(basis.poolnproc, difference);
     EXPECT_GT(difference, 1e-8);
 
+    cavity.lowpass_p1 = basis.ggecut;
+    cavity.lowpass_p2 = 0.5;
+    ModuleSccs::make_cav_derivs(density, cavity, basis, tpiba, open_boundary,
+                                response, derivatives);
+    const double weight = 0.5 * std::erfc(0.5);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const int ix = ir / (basis.ny * basis.nplane);
+        const double angle = ModuleBase::TWO_PI * ix / basis.nx;
+        const double gradient = -amplitude * tpiba * std::sin(angle) * weight;
+        const double laplacian = -amplitude * tpiba * tpiba * mode[ir] * weight;
+        const double expected = response.epsilon[ir] * (-0.5 * log_bulk * laplacian
+                                      + 0.25 * log_bulk * log_bulk * gradient * gradient)
+                                / ModuleBase::FOUR_PI;
+        EXPECT_NEAR(coefficient[ir], expected, 1e-12);
+        EXPECT_NEAR(derivatives.gradient[ir].x, gradient, 1e-12);
+    }
 }

@@ -24,6 +24,7 @@ struct FunctionalResult
     double volume = 0.0; // Bohr^3
     std::vector<double> reaction_potential; // dielectric minus vacuum, Hartree
     std::vector<double> electron_potential; // derivative of all three energy terms
+    std::vector<double> cavity_potential; // derivative w.r.t. cavity density, Hartree
 };
 
 // Collective over the PW pool.

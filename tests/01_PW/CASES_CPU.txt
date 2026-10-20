@@ -130,3 +130,4 @@ scf_pcc_2d
 scf_sccs
 scf_sccs_pcc_2d
 scf_sccs_pcc_0d
+scf_sccs_full
