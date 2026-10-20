@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <fstream>
 #include <functional>
+#include <map>
 
 // #ifdef __MPI
 #include "mpi.h"
@@ -119,7 +120,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.fixed_axes, "None");
     EXPECT_FALSE(param.inp.fixed_ibrav);
     EXPECT_FALSE(param.inp.fixed_atoms);
-    EXPECT_EQ(param.inp.relax_method[0], "cg");
+    EXPECT_EQ(param.inp.relax_method, "cg");
     EXPECT_DOUBLE_EQ(param.inp.relax_cg_thr, 0.5);
     EXPECT_EQ(param.inp.out_level, "ie");
     EXPECT_TRUE(param.globalv.out_md_control);
@@ -454,12 +455,15 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.sc_scf_thr, 1e-3);
     EXPECT_EQ(param.inp.sc_drop_thr, 1e-3);
     EXPECT_EQ(param.inp.lr_nstates, 1);
-    EXPECT_EQ(param.inp.nocc, param.inp.nbands);
+    // nocc is resolved from ground-state spin populations after SCF (see esolver_lr_lcao_tddft.cpp),
+    // not at INPUT-parse time, so a run with no explicit `nocc` keeps its raw unresolved default here.
+    EXPECT_EQ(param.inp.nocc, -1);
     EXPECT_EQ(param.inp.nvirt, 1);
     EXPECT_EQ(param.inp.xc_kernel, "LDA");
     EXPECT_EQ(param.inp.lr_init_xc_kernel[0], "default");
     EXPECT_EQ(param.inp.lr_solver, "dav");
     EXPECT_DOUBLE_EQ(param.inp.lr_thr, 1e-2);
+    EXPECT_EQ(param.inp.lr_grad_solver, "cg");
     EXPECT_FALSE(param.inp.lr_unrestricted);
     EXPECT_FALSE(param.inp.out_wfc_lr);
     EXPECT_EQ(param.inp.abs_wavelen_range.size(), 2);
@@ -573,6 +577,9 @@ TEST_F(InputParaTest, TypedTDFieldLists)
     readinput.check_ntype_flag = false;
     Parameter param;
     readinput.read_parameters(param, "./support/INPUT.td_field_mixed");
+
+    EXPECT_EQ(param.inp.relax_method, "cg_trad");
+    EXPECT_FALSE(param.inp.uses_simultaneous_relaxation());
 
     EXPECT_THAT(param.inp.td_ttype, testing::ElementsAre(4, 0, 1, 2, 3, 0, 4, 1, 2, 3));
     EXPECT_THAT(param.inp.td_vext_dire, testing::ElementsAre(1, 2, 3, 1, 2, 3, 1, 2, 3, 1));
@@ -705,4 +712,89 @@ int main(int argc, char** argv)
     int result = RUN_ALL_TESTS();
     MPI_Finalize();
     return result;
+}
+
+TEST_F(InputParaTest, ExternalLRKernelRejectsForces)
+{
+    ModuleIO::ReadInput readinput(0);
+    std::map<std::string, ModuleIO::Input_Item> lists;
+    for (const auto& entry: readinput.get_input_lists())
+    {
+        lists.emplace(entry.first, entry.second);
+    }
+    const ModuleIO::Input_Item item = lists.at("lr_init_xc_kernel");
+    const auto set = [&lists](Parameter& param, const std::string& key,
+                             const std::vector<std::string>& values) {
+        ModuleIO::Input_Item input = lists.at(key);
+        input.str_values = values;
+        input.read_value(input, param);
+    };
+    Parameter param;
+    set(param, "esolver_type", {"ks-lr"});
+    set(param, "lr_init_xc_kernel", {"file", "kernel.cube"});
+    set(param, "calculation", {"scf"});
+    set(param, "cal_force", {"0"});
+    item.check_value(item, param);
+    set(param, "cal_force", {"1"});
+    EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+    set(param, "cal_force", {"0"});
+    set(param, "calculation", {"relax"});
+    EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+    Parameter charge;
+    set(charge, "esolver_type", {"ks-lr"});
+    set(charge, "calculation", {"relax"});
+    set(charge, "lr_init_xc_kernel", {"from_charge_file", "rho.cube"});
+    EXPECT_EXIT(item.check_value(item, charge), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(InputParaTest, RemovedElpaZSolverIsRejected)
+{
+    ModuleIO::ReadInput readinput(0);
+    std::map<std::string, ModuleIO::Input_Item> lists;
+    for (const auto& entry: readinput.get_input_lists())
+    {
+        lists.emplace(entry.first, entry.second);
+    }
+    ModuleIO::Input_Item item = lists.at("lr_grad_solver");
+    Parameter param;
+    for (const auto& solver : {"cg", "lapack"})
+    {
+        item.str_values = {solver};
+        item.read_value(item, param);
+        item.check_value(item, param);
+    }
+#ifdef __MPI
+    for (const auto& solver : {"scalapack", "scalapack_chol"})
+    {
+        item.str_values = {solver};
+        item.read_value(item, param);
+        item.check_value(item, param);
+    }
+#endif
+    item.str_values = {"elpa"};
+    item.read_value(item, param);
+    EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+}
+
+
+TEST_F(InputParaTest, OpticalGaugeCanDisableSpectrum)
+{
+    ModuleIO::ReadInput readinput(0);
+    std::map<std::string, ModuleIO::Input_Item> lists;
+    for (const auto& entry : readinput.get_input_lists())
+    {
+        lists.emplace(entry.first, entry.second);
+    }
+    ModuleIO::Input_Item item = lists.at("abs_gauge");
+    Parameter param;
+    for (const auto& gauge : {"velocity", "length", "none"})
+    {
+        item.str_values = {gauge};
+        item.read_value(item, param);
+        item.check_value(item, param);
+        EXPECT_EQ(param.inp.abs_gauge, gauge);
+    }
+    item.str_values = {"invalid"};
+    item.read_value(item, param);
+    EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
 }

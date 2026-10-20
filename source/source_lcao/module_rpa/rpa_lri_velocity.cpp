@@ -5,7 +5,8 @@
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/input_parameter.h"
-#include "source_lcao/module_lr/utils/spectrum_mo.hpp"
+#include "source_lcao/module_lr/utils/spectrum_mo.h"
+#include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
 #include <algorithm>

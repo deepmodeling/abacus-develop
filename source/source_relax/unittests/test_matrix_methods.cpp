@@ -1,7 +1,6 @@
 #include "../matrix_methods.h"
 
 #include <gtest/gtest.h>
-
 #include <vector>
 
 // Unit tests for the free matrix/vector helpers in matrix_methods.cpp.

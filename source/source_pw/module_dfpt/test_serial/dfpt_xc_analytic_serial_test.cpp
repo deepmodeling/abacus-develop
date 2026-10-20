@@ -8,6 +8,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 
 #include <xc.h>
+#include <xc_funcs.h>
 
 #include <cmath>
 #include <complex>
@@ -377,6 +378,167 @@ TEST(DFPTXcAnalytic, CarrierTermAppearsAtFiniteQOnlyForGga)
         ldiff = std::max(ldiff, std::abs(lq[ir] - l0[ir]));
     }
     EXPECT_EQ(ldiff, 0.0);
+}
+
+TEST(DFPTXcAnalytic, UniformDensityKeepsLocalGgaResponse)
+{
+    // regression guard of the flat-gradient limit: with sigma = 0 everywhere
+    // the GGA response must reduce to the local (rho-rho) kernel v2rho2 --
+    // finite and NONZERO -- not vanish under the gradient-cutoff guard
+    ModulePW::PW_Basis pw;
+    make_basis(pw, 1.8897261255, 6.0, 20.0);
+    const std::vector<double> rho0(pw.nrxx, 0.1);
+    const std::vector<double> amp = cosine_amplitude(pw, 0.02);
+    const std::vector<int> func_id = {XC_GGA_X_PBE, XC_GGA_C_PBE};
+    ModuleDFPT::XC_First_Order_Analytic kernel(func_id, 2, rho0, &pw);
+    const ModuleBase::Vector3<double> q0(0.0, 0.0, 0.0);
+    kernel.set_context(q0);
+
+    std::vector<std::complex<double>> a(pw.nrxx);
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        a[ir] = std::complex<double>(amp[ir], 0.3 * amp[ir]);
+    }
+    std::vector<std::complex<double>> dvxc;
+    kernel.apply(a, dvxc);
+
+    // expected local kernel: sum over functional components, Ha -> Ry (x2)
+    double k_rr = 0.0;
+    for (size_t ifunc = 0; ifunc < func_id.size(); ++ifunc)
+    {
+        xc_func_type func;
+        ASSERT_EQ(xc_func_init(&func, func_id[ifunc], XC_UNPOLARIZED), 0);
+        double rho = 0.1;
+        double sig = 0.0;
+        double v2rho2 = 0.0;
+        double v2rhosigma = 0.0;
+        double v2sigma2 = 0.0;
+        xc_gga_fxc(&func, 1, &rho, &sig, &v2rho2, &v2rhosigma, &v2sigma2);
+        k_rr += 2.0 * v2rho2;
+        xc_func_end(&func);
+    }
+    ASSERT_GT(std::abs(k_rr), 1.0e-3); // a vanishing local kernel is the bug
+
+    double max_err = 0.0;
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        const std::complex<double> expect = k_rr * a[ir];
+        max_err = std::max(max_err, std::abs(dvxc[ir] - expect));
+    }
+    EXPECT_LT(max_err / std::abs(k_rr), 1.0e-10);
+}
+
+TEST(DFPTXcAnalytic, ConfiguredExtParamsDifferentiateTheConfiguredFunctional)
+{
+    // nondefault external parameters must reach the kernel: a finite-T
+    // LDA (KSDT) differentiated at theta = 0.007 must equal the manually
+    // parameterized libxc second derivative, not the default-parameter one
+    ModulePW::PW_Basis pw;
+    make_basis(pw, 1.8897261255, 6.0, 20.0);
+    const std::vector<double> rho0(pw.nrxx, 0.1);
+    const std::vector<int> func_id = {XC_LDA_XC_KSDT};
+    const std::vector<std::vector<double>> ext_params = {{0.007}};
+    const std::vector<double> weights = {1.0};
+    ModuleDFPT::XC_First_Order_Analytic kernel(func_id, 1, rho0, &pw, ext_params, weights);
+
+    std::vector<std::complex<double>> a(pw.nrxx, std::complex<double>(0.05, 0.0));
+    std::vector<std::complex<double>> dvxc;
+    kernel.apply(a, dvxc);
+
+    xc_func_type func;
+    ASSERT_EQ(xc_func_init(&func, XC_LDA_XC_KSDT, XC_UNPOLARIZED), 0);
+    const double theta = 0.007;
+    xc_func_set_ext_params(&func, &theta);
+    double rho = 0.1;
+    double v2rho2 = 0.0;
+    xc_lda_fxc(&func, 1, &rho, &v2rho2);
+    xc_func_end(&func);
+    const double k_rr = 2.0 * v2rho2;
+
+    double max_err = 0.0;
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        max_err = std::max(max_err, std::abs(dvxc[ir] - k_rr * a[ir]));
+    }
+    ASSERT_GT(std::abs(k_rr), 1.0e-6);
+    EXPECT_LT(max_err / std::abs(k_rr), 1.0e-12);
+}
+
+TEST(DFPTXcAnalytic, SignedComponentWeightsEnterEveryKernelField)
+{
+    // signed combination factors (the BLYP_LR pattern subtracts components)
+    // must scale every derivative field; with a uniform density only the
+    // local field is visible, so check k_rr against the weighted sum
+    ModulePW::PW_Basis pw;
+    make_basis(pw, 1.8897261255, 6.0, 20.0);
+    const std::vector<double> rho0(pw.nrxx, 0.1);
+    const std::vector<int> func_id = {XC_GGA_X_PBE, XC_LDA_C_PZ};
+    const std::vector<std::vector<double>> ext_params = {{}, {}};
+    const std::vector<double> weights = {-2.0, 3.0};
+    ModuleDFPT::XC_First_Order_Analytic kernel(func_id, 2, rho0, &pw, ext_params, weights);
+
+    std::vector<std::complex<double>> a(pw.nrxx, std::complex<double>(0.05, 0.0));
+    std::vector<std::complex<double>> dvxc;
+    kernel.apply(a, dvxc);
+
+    double k_rr = 0.0;
+    const double weights_ref[] = {-2.0, 3.0};
+    const int ids_ref[] = {XC_GGA_X_PBE, XC_LDA_C_PZ};
+    for (int i = 0; i < 2; ++i)
+    {
+        xc_func_type func;
+        ASSERT_EQ(xc_func_init(&func, ids_ref[i], XC_UNPOLARIZED), 0);
+        double rho = 0.1;
+        if (ids_ref[i] == XC_GGA_X_PBE)
+        {
+            double sig = 0.0;
+            double v2rho2 = 0.0;
+            double v2rhosigma = 0.0;
+            double v2sigma2 = 0.0;
+            xc_gga_fxc(&func, 1, &rho, &sig, &v2rho2, &v2rhosigma, &v2sigma2);
+            k_rr += weights_ref[i] * 2.0 * v2rho2;
+        }
+        else
+        {
+            double v2rho2 = 0.0;
+            xc_lda_fxc(&func, 1, &rho, &v2rho2);
+            k_rr += weights_ref[i] * 2.0 * v2rho2;
+        }
+        xc_func_end(&func);
+    }
+    ASSERT_GT(std::abs(k_rr), 1.0e-6);
+    double max_err = 0.0;
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        max_err = std::max(max_err, std::abs(dvxc[ir] - k_rr * a[ir]));
+    }
+    EXPECT_LT(max_err / std::abs(k_rr), 1.0e-12);
+
+    // configured ctor with neutral configuration must reproduce the
+    // plain ctor bit-for-bit
+    const std::vector<int> plain_id = {XC_GGA_X_PBE, XC_GGA_C_PBE};
+    const std::vector<double> rho_g = gaussian_rho(pw, 0.3);
+    const std::vector<std::vector<double>> no_params = {{}, {}};
+    const std::vector<double> unit_weights = {1.0, 1.0};
+    ModuleDFPT::XC_First_Order_Analytic plain(plain_id, 2, rho_g, &pw);
+    ModuleDFPT::XC_First_Order_Analytic configured(plain_id, 2, rho_g, &pw, no_params, unit_weights);
+    const ModuleBase::Vector3<double> q0(0.0, 0.0, 0.0);
+    plain.set_context(q0);
+    configured.set_context(q0);
+    const std::vector<double> amp = cosine_amplitude(pw, 0.02);
+    std::vector<std::complex<double>> aa(pw.nrxx);
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        aa[ir] = std::complex<double>(amp[ir], 0.3 * amp[ir]);
+    }
+    std::vector<std::complex<double>> d_plain;
+    std::vector<std::complex<double>> d_conf;
+    plain.apply(aa, d_plain);
+    configured.apply(aa, d_conf);
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        EXPECT_EQ(d_plain[ir], d_conf[ir]) << "ir=" << ir;
+    }
 }
 
 #endif // __LIBXC

@@ -30,52 +30,54 @@ add_library(abacus::compile_requirements ALIAS abacus_compile_requirements)
 include(CompilerConfiguration)
 
 set(_abacus_feature_definitions
-  __FFTW3
-  $<$<BOOL:${ENABLE_JSON}>:__JSON>
-  $<$<BOOL:${USE_CUDA_ON_DCU}>:__CUDA_ON_DCU>
-  $<$<BOOL:${USE_CUDA_MPI}>:__CUDA_MPI>
-  $<$<BOOL:${ENABLE_ABACUS_LIBM}>:__ABACUS_LIBM>
-  $<$<BOOL:${WIN32}>:_USE_MATH_DEFINES>
-  $<$<BOOL:${WIN32}>:NOMINMAX>
-  $<$<BOOL:${WIN32}>:_CRT_SECURE_NO_WARNINGS>
-  $<$<BOOL:${ENABLE_LCAO}>:__LCAO>
-  $<$<BOOL:${ENABLE_ELPA}>:__ELPA>
-  $<$<BOOL:${ENABLE_FFT_TWO_CENTER}>:__FFT_TWO_CENTER>
-  $<$<BOOL:${ENABLE_PEXSI}>:__PEXSI>
-  $<$<BOOL:${DEBUG_INFO}>:__DEBUG>
-  $<$<BOOL:${ENABLE_MPI}>:__MPI>
-  $<$<BOOL:${USE_DSP}>:__DSP>
-  $<$<BOOL:${USE_SW}>:__SW>
-  $<$<BOOL:${USE_KML}>:__KML>
-  $<$<AND:$<NOT:$<BOOL:${USE_KML}>>,$<BOOL:${MKL_FOUND}>>:__MKL>
-  $<$<BOOL:${USE_CUDA}>:__CUDA>
-  $<$<BOOL:${USE_CUDA}>:__UT_USE_CUDA>
-  $<$<BOOL:${ENABLE_NCCL_PARALLEL_DEVICE}>:__NCCL_PARALLEL_DEVICE>
-  $<$<BOOL:${ENABLE_CUSOLVERMP}>:__CUSOLVERMP>
-  $<$<BOOL:${ENABLE_CUBLASMP}>:__CUBLASMP>
-  $<$<BOOL:${_use_cal}>:__USE_CAL>
-  $<$<BOOL:${USE_ROCM}>:__ROCM>
-  $<$<BOOL:${USE_ROCM}>:__UT_USE_ROCM>
-  $<$<BOOL:${USE_ROCM}>:__HIP_PLATFORM_HCC__>
-  $<$<BOOL:${ENABLE_FLOAT_FFTW}>:__FLOAT_FFTW>
-  $<$<BOOL:${ENABLE_MLALGO}>:__MLALGO>
-  $<$<BOOL:${ENABLE_CNPY}>:__CNPY>
-  $<$<BOOL:${ENABLE_LIBRI}>:__EXX>
-  $<$<BOOL:${ENABLE_LIBRI}>:EXX_DM=3>
-  $<$<BOOL:${ENABLE_LIBRI}>:EXX_H_COMM=2>
-  $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_LCAO=0>
-  $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
-  $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
-  $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
-  $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
+    __FFTW3
+    $<$<BOOL:${ENABLE_JSON}>:__JSON>
+    $<$<BOOL:${USE_CUDA_ON_DCU}>:__CUDA_ON_DCU>
+    $<$<BOOL:${USE_CUDA_MPI}>:__CUDA_MPI>
+    $<$<BOOL:${ENABLE_ABACUS_LIBM}>:__ABACUS_LIBM>
+    $<$<BOOL:${WIN32}>:_USE_MATH_DEFINES>
+    $<$<BOOL:${WIN32}>:NOMINMAX>
+    $<$<BOOL:${WIN32}>:_CRT_SECURE_NO_WARNINGS>
+    $<$<BOOL:${ENABLE_LCAO}>:__LCAO>
+    $<$<BOOL:${ENABLE_ELPA}>:__ELPA>
+    $<$<BOOL:${ENABLE_FFT_TWO_CENTER}>:__FFT_TWO_CENTER>
+    $<$<BOOL:${ENABLE_PEXSI}>:__PEXSI>
+    $<$<BOOL:${DEBUG_INFO}>:__DEBUG>
+    $<$<BOOL:${ENABLE_MPI}>:__MPI>
+    $<$<BOOL:${USE_DSP}>:__DSP>
+    $<$<BOOL:${USE_SW}>:__SW>
+    $<$<BOOL:${USE_KML}>:__KML>
+    $<$<AND:$<NOT:$<BOOL:${USE_KML}>>,$<BOOL:${MKL_FOUND}>>:__MKL>
+    $<$<BOOL:${USE_CUDA}>:__CUDA>
+    $<$<BOOL:${USE_CUDA}>:__UT_USE_CUDA>
+    $<$<BOOL:${ENABLE_NCCL_PARALLEL_DEVICE}>:__NCCL_PARALLEL_DEVICE>
+    $<$<BOOL:${ENABLE_CUSOLVERMP}>:__CUSOLVERMP>
+    $<$<BOOL:${ENABLE_CUBLASMP}>:__CUBLASMP>
+    $<$<BOOL:${_use_cal}>:__USE_CAL>
+    $<$<BOOL:${USE_ROCM}>:__ROCM>
+    $<$<BOOL:${USE_ROCM}>:__UT_USE_ROCM>
+    $<$<BOOL:${USE_ROCM}>:__HIP_PLATFORM_HCC__>
+    $<$<BOOL:${ENABLE_FLOAT_FFTW}>:__FLOAT_FFTW>
+    $<$<BOOL:${ENABLE_MLALGO}>:__MLALGO>
+    $<$<BOOL:${ENABLE_CNPY}>:__CNPY>
+    $<$<BOOL:${ENABLE_LIBRI}>:__EXX>
+    $<$<BOOL:${ENABLE_LIBRI}>:EXX_DM=3>
+    $<$<BOOL:${ENABLE_LIBRI}>:EXX_H_COMM=2>
+    $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_LCAO=0>
+    $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
+    $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
+    $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
+    $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
   list(APPEND _abacus_feature_definitions COMMIT_INFO)
 endif()
 if(DEFINED DeePMD_DIR)
   list(APPEND _abacus_feature_definitions __DPMD HIGH_PREC)
-  if(DEFINED DeePMD_INPUT_NLIST_COMM_ARGS AND DeePMD_INPUT_NLIST_COMM_ARGS GREATER 0)
-    list(APPEND _abacus_feature_definitions __DPMD_COMM_NLIST_ARGS=${DeePMD_INPUT_NLIST_COMM_ARGS})
+  if(DEFINED DeePMD_INPUT_NLIST_COMM_ARGS AND DeePMD_INPUT_NLIST_COMM_ARGS
+                                              GREATER 0)
+    list(APPEND _abacus_feature_definitions
+         __DPMD_COMM_NLIST_ARGS=${DeePMD_INPUT_NLIST_COMM_ARGS})
   endif()
   if(DeePMD_HAS_NLIST_MAPPING)
     list(APPEND _abacus_feature_definitions __DPMD_HAS_NLIST_MAPPING)
@@ -88,13 +90,14 @@ if(DEFINED NEP_DIR AND NEP_FOUND)
   list(APPEND _abacus_feature_definitions __NEP)
 endif()
 
-target_include_directories(abacus_compile_requirements INTERFACE
-  ${ABACUS_SOURCE_DIR}
-  ${ABACUS_SOURCE_DIR}/source_base/module_container)
+target_include_directories(
+  abacus_compile_requirements
+  INTERFACE ${ABACUS_SOURCE_DIR}
+            ${ABACUS_SOURCE_DIR}/source_base/module_container)
 
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
-  target_include_directories(abacus_compile_requirements INTERFACE
-    ${ABACUS_COMMIT_INFO_INCLUDE_DIR})
+  target_include_directories(abacus_compile_requirements
+                             INTERFACE ${ABACUS_COMMIT_INFO_INCLUDE_DIR})
 endif()
 
 function(abacus_add_target_compile_requirements target)
@@ -104,32 +107,34 @@ function(abacus_add_target_compile_requirements target)
 
   get_target_property(_include_dirs "${target}" INTERFACE_INCLUDE_DIRECTORIES)
   if(_include_dirs)
-    target_include_directories(abacus_compile_requirements INTERFACE
-      ${_include_dirs})
+    target_include_directories(abacus_compile_requirements
+                               INTERFACE ${_include_dirs})
   endif()
 
-  get_target_property(_system_include_dirs "${target}" INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+  get_target_property(_system_include_dirs "${target}"
+                      INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
   if(_system_include_dirs)
-    target_include_directories(abacus_compile_requirements SYSTEM INTERFACE
-      ${_system_include_dirs})
+    target_include_directories(abacus_compile_requirements SYSTEM
+                               INTERFACE ${_system_include_dirs})
   endif()
 
-  get_target_property(_compile_definitions "${target}" INTERFACE_COMPILE_DEFINITIONS)
+  get_target_property(_compile_definitions "${target}"
+                      INTERFACE_COMPILE_DEFINITIONS)
   if(_compile_definitions)
-    target_compile_definitions(abacus_compile_requirements INTERFACE
-      ${_compile_definitions})
+    target_compile_definitions(abacus_compile_requirements
+                               INTERFACE ${_compile_definitions})
   endif()
 
   get_target_property(_compile_options "${target}" INTERFACE_COMPILE_OPTIONS)
   if(_compile_options)
-    target_compile_options(abacus_compile_requirements INTERFACE
-      ${_compile_options})
+    target_compile_options(abacus_compile_requirements
+                           INTERFACE ${_compile_options})
   endif()
 
   get_target_property(_compile_features "${target}" INTERFACE_COMPILE_FEATURES)
   if(_compile_features)
-    target_compile_features(abacus_compile_requirements INTERFACE
-      ${_compile_features})
+    target_compile_features(abacus_compile_requirements
+                            INTERFACE ${_compile_features})
   endif()
 endfunction()
 
@@ -142,9 +147,8 @@ add_library(abacus::feature_libs ALIAS abacus_feature_libs)
 add_library(abacus_link_libs INTERFACE)
 add_library(abacus::link_libs ALIAS abacus_link_libs)
 
-target_link_libraries(abacus_link_libs INTERFACE
-  abacus::feature_libs
-  abacus::linalg_libs)
+target_link_libraries(abacus_link_libs INTERFACE abacus::feature_libs
+                                                 abacus::linalg_libs)
 
 # ------------------------------------------------------------------------------
 # Ordered numerical backends and runtime closure
@@ -155,14 +159,17 @@ set(_abacus_linalg_include_dirs)
 
 if(USE_DSP)
   if(NOT MT_CPACK_DIR)
-    message(FATAL_ERROR
-      "USE_DSP requires MT_CPACK_DIR to be set to the DSP C_PACK install prefix "
-      "(the directory containing lib/libc_pack.a).")
+    message(
+      FATAL_ERROR
+        "USE_DSP requires MT_CPACK_DIR to be set to the DSP C_PACK install prefix "
+        "(the directory containing lib/libc_pack.a).")
   endif()
   set(_abacus_cpack_library "${MT_CPACK_DIR}/lib/libc_pack.a")
   if(NOT EXISTS "${_abacus_cpack_library}")
-    message(FATAL_ERROR
-      "MT_CPACK_DIR is set to '${MT_CPACK_DIR}' but '${_abacus_cpack_library}' does not exist.")
+    message(
+      FATAL_ERROR
+        "MT_CPACK_DIR is set to '${MT_CPACK_DIR}' but '${_abacus_cpack_library}' does not exist."
+    )
   endif()
   list(APPEND _abacus_linalg_libs ${_abacus_cpack_library})
 endif()
@@ -184,10 +191,10 @@ elseif(MKL_FOUND)
     list(APPEND _abacus_linalg_libs ifcore)
   endif()
 elseif(USE_SW)
-  list(APPEND _abacus_linalg_include_dirs
-    ${SW_MATH}/include
-    ${SW_FFT}/include)
-  list(APPEND _abacus_linalg_libs
+  list(APPEND _abacus_linalg_include_dirs ${SW_MATH}/include ${SW_FFT}/include)
+  list(
+    APPEND
+    _abacus_linalg_libs
     ${SW_FFT}/lib/libfftw3.a
     ${SW_MATH}/libswfft.a
     ${SW_MATH}/libswscalapack.a
@@ -201,10 +208,7 @@ else()
   if(ENABLE_OPENMP)
     list(APPEND _abacus_linalg_libs FFTW3::FFTW3_OMP)
   endif()
-  list(APPEND _abacus_linalg_libs
-    FFTW3::FFTW3
-    LAPACK::LAPACK
-    BLAS::BLAS)
+  list(APPEND _abacus_linalg_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
   list(APPEND _abacus_linalg_include_dirs ${FFTW3_INCLUDE_DIRS})
   if(ENABLE_FLOAT_FFTW)
     list(APPEND _abacus_linalg_libs FFTW3::FFTW3_FLOAT)
@@ -234,29 +238,30 @@ endif()
 # the standalone BLAS/LAPACK/ScaLAPACK above so that the linker resolves the
 # BLAS symbols from the standalone BLAS instead of the bundled copy.
 if(USE_DSP)
-  list(APPEND _abacus_linalg_libs
-    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a
-    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a
-    ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtfft.a)
+  list(APPEND _abacus_linalg_libs ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a
+       ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a
+       ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtfft.a)
 endif()
 
 target_link_libraries(abacus_linalg_libs INTERFACE ${_abacus_linalg_libs})
-target_include_directories(abacus_linalg_libs INTERFACE ${_abacus_linalg_include_dirs})
+target_include_directories(abacus_linalg_libs
+                           INTERFACE ${_abacus_linalg_include_dirs})
 
-target_include_directories(abacus_compile_requirements INTERFACE
-  ${_abacus_linalg_include_dirs})
+target_include_directories(abacus_compile_requirements
+                           INTERFACE ${_abacus_linalg_include_dirs})
 
-foreach(_abacus_linalg_target IN ITEMS
-    Threads::Threads
-    MPI::MPI_CXX
-    OpenMP::OpenMP_CXX
-    FFTW3::FFTW3
-    FFTW3::FFTW3_OMP
-    FFTW3::FFTW3_FLOAT
-    KML::LAPACK
-    KML::ScaLAPACK
-    KML::FFTW3
-    KML::FFTW3_FLOAT)
+foreach(
+  _abacus_linalg_target IN
+  ITEMS Threads::Threads
+        MPI::MPI_CXX
+        OpenMP::OpenMP_CXX
+        FFTW3::FFTW3
+        FFTW3::FFTW3_OMP
+        FFTW3::FFTW3_FLOAT
+        KML::LAPACK
+        KML::ScaLAPACK
+        KML::FFTW3
+        KML::FFTW3_FLOAT)
   abacus_add_target_compile_requirements(${_abacus_linalg_target})
 endforeach()
 
@@ -269,14 +274,14 @@ endif()
 # ------------------------------------------------------------------------------
 
 set(_abacus_feature_libs
-  $<$<BOOL:${ENABLE_JSON}>:nlohmann_json::nlohmann_json>
-  $<$<BOOL:${ENABLE_ELPA}>:ELPA::ELPA>
-  $<$<BOOL:${ENABLE_PEXSI}>:PEXSI::PEXSI>
-  $<$<BOOL:${ENABLE_CNPY}>:cnpy>
-  $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
-  $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
-  $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
-  $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>)
+    $<$<BOOL:${ENABLE_JSON}>:nlohmann_json::nlohmann_json>
+    $<$<BOOL:${ENABLE_ELPA}>:ELPA::ELPA>
+    $<$<BOOL:${ENABLE_PEXSI}>:PEXSI::PEXSI>
+    $<$<BOOL:${ENABLE_CNPY}>:cnpy>
+    $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
+    $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
+    $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
+    $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
@@ -308,9 +313,8 @@ if(ENABLE_CNPY)
 endif()
 
 if(ENABLE_LIBRI)
-  list(APPEND _abacus_feature_include_dirs
-    ${LIBRI_DIR}/include
-    ${LIBCOMM_DIR}/include)
+  list(APPEND _abacus_feature_include_dirs ${LIBRI_DIR}/include
+       ${LIBCOMM_DIR}/include)
 endif()
 
 if(DEFINED DeePMD_DIR)
@@ -332,13 +336,11 @@ if(DEFINED TensorFlow_DIR AND TensorFlow_FOUND)
 endif()
 
 if(USE_DSP)
-  list(APPEND _abacus_feature_libs
-    ${OMPI_LIBRARY1}
-    ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a
-    ${MT_HOST_DIR}/hthreads/lib/libhthread_host.a)
-  list(APPEND _abacus_feature_include_dirs
-    ${MTBLAS_FFT_DIR}/libmtblas/include
-    ${MT_HOST_DIR}/include)
+  list(APPEND _abacus_feature_libs ${OMPI_LIBRARY1}
+       ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a
+       ${MT_HOST_DIR}/hthreads/lib/libhthread_host.a)
+  list(APPEND _abacus_feature_include_dirs ${MTBLAS_FFT_DIR}/libmtblas/include
+       ${MT_HOST_DIR}/include)
 endif()
 
 if(USE_CUDA)
@@ -347,7 +349,8 @@ if(USE_CUDA)
   else()
     list(APPEND _abacus_feature_libs cudart nvToolsExt)
   endif()
-  list(APPEND _abacus_feature_include_dirs ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+  list(APPEND _abacus_feature_include_dirs
+       ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
   if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL 13.0
      AND EXISTS "${CUDAToolkit_ROOT}/include/cccl")
     list(APPEND _abacus_feature_include_dirs "${CUDAToolkit_ROOT}/include/cccl")
@@ -369,7 +372,9 @@ if(USE_CUDA)
 endif()
 
 if(USE_ROCM)
-  list(APPEND _abacus_feature_libs
+  list(
+    APPEND
+    _abacus_feature_libs
     hip::host
     hip::device
     hip::hipfft
@@ -384,36 +389,39 @@ endif()
 
 target_link_libraries(abacus_feature_libs INTERFACE ${_abacus_feature_libs})
 
-if(DEFINED DeePMD_DIR AND UNIX AND NOT APPLE)
+if(DEFINED DeePMD_DIR
+   AND UNIX
+   AND NOT APPLE)
   target_link_options(abacus_feature_libs INTERFACE "LINKER:--no-as-needed")
 endif()
 
-target_include_directories(abacus_compile_requirements INTERFACE
-  ${_abacus_feature_include_dirs})
-target_compile_options(abacus_compile_requirements INTERFACE
-  ${_abacus_feature_compile_options})
+target_include_directories(abacus_compile_requirements
+                           INTERFACE ${_abacus_feature_include_dirs})
+target_compile_options(abacus_compile_requirements
+                       INTERFACE ${_abacus_feature_compile_options})
 
-foreach(_abacus_feature_target IN ITEMS
-    nlohmann_json::nlohmann_json
-    cereal::cereal
-    ELPA::ELPA
-    Libxc::xc
-    dftd4::dftd4
-    DeePMD::deepmd_c
-    DeePMD::deepmd_cc
-    NEP::nep
-    TensorFlow::tensorflow_cc
-    ZLIB::ZLIB
-    PEXSI::PEXSI
-    NCCL::NCCL
-    CAL::CAL
-    cusolverMp::cusolverMp
-    cublasMp::cublasMp
-    hip::host
-    hip::device
-    hip::hipfft
-    roc::hipblas
-    roc::hipsolver)
+foreach(
+  _abacus_feature_target IN
+  ITEMS nlohmann_json::nlohmann_json
+        cereal::cereal
+        ELPA::ELPA
+        Libxc::xc
+        dftd4::dftd4
+        DeePMD::deepmd_c
+        DeePMD::deepmd_cc
+        NEP::nep
+        TensorFlow::tensorflow_cc
+        ZLIB::ZLIB
+        PEXSI::PEXSI
+        NCCL::NCCL
+        CAL::CAL
+        cusolverMp::cusolverMp
+        cublasMp::cublasMp
+        hip::host
+        hip::device
+        hip::hipfft
+        roc::hipblas
+        roc::hipsolver)
   abacus_add_target_compile_requirements(${_abacus_feature_target})
 endforeach()
 
@@ -430,7 +438,9 @@ function(abacus_normalize_definitions out_var)
       list(APPEND _defs "${_def}")
     endif()
   endforeach()
-  set(${out_var} ${_defs} PARENT_SCOPE)
+  set(${out_var}
+      ${_defs}
+      PARENT_SCOPE)
 endfunction()
 
 define_property(
@@ -438,34 +448,43 @@ define_property(
   PROPERTY ABACUS_DISABLED_FEATURE_DEFINITIONS
   INHERITED
   BRIEF_DOCS "ABACUS feature definitions disabled for targets in this directory"
-  FULL_DOCS "Feature definitions disabled for targets created in this directory.")
+  FULL_DOCS
+    "Feature definitions disabled for targets created in this directory.")
 
 define_property(
   DIRECTORY
   PROPERTY ABACUS_LOCAL_FEATURE_DEFINITIONS
   INHERITED
-  BRIEF_DOCS "Additional ABACUS feature definitions for targets in this directory"
-  FULL_DOCS "Additional feature definitions for targets created in this directory.")
+  BRIEF_DOCS
+    "Additional ABACUS feature definitions for targets in this directory"
+  FULL_DOCS
+    "Additional feature definitions for targets created in this directory.")
 
 define_property(
   TARGET
   PROPERTY ABACUS_KEPT_FEATURE_DEFINITIONS
-  BRIEF_DOCS "Feature definitions this target keeps despite a directory-level disable"
-  FULL_DOCS "Feature definitions that must not be stripped from this target even "
+  BRIEF_DOCS
+    "Feature definitions this target keeps despite a directory-level disable"
+  FULL_DOCS
+    "Feature definitions that must not be stripped from this target even "
     "when its source directory disables them via "
     "abacus_disable_feature_definitions(). Used by tests that genuinely need a "
     "feature (e.g. __MPI) inside a directory that otherwise disables it.")
 
 function(abacus_disable_feature_definitions)
   abacus_normalize_definitions(_defs ${ARGN})
-  set_property(DIRECTORY APPEND PROPERTY
-    ABACUS_DISABLED_FEATURE_DEFINITIONS ${_defs})
+  set_property(
+    DIRECTORY
+    APPEND
+    PROPERTY ABACUS_DISABLED_FEATURE_DEFINITIONS ${_defs})
 endfunction()
 
 function(abacus_add_local_feature_definitions)
   abacus_normalize_definitions(_defs ${ARGN})
-  set_property(DIRECTORY APPEND PROPERTY
-    ABACUS_LOCAL_FEATURE_DEFINITIONS ${_defs})
+  set_property(
+    DIRECTORY
+    APPEND
+    PROPERTY ABACUS_LOCAL_FEATURE_DEFINITIONS ${_defs})
 endfunction()
 
 function(abacus_apply_build_options target)
@@ -485,8 +504,14 @@ function(abacus_apply_build_options target)
 
   get_target_property(_source_dir "${target}" SOURCE_DIR)
   set(_defs "${_abacus_feature_definitions}")
-  get_property(_disabled DIRECTORY "${_source_dir}" PROPERTY ABACUS_DISABLED_FEATURE_DEFINITIONS)
-  get_property(_local DIRECTORY "${_source_dir}" PROPERTY ABACUS_LOCAL_FEATURE_DEFINITIONS)
+  get_property(
+    _disabled
+    DIRECTORY "${_source_dir}"
+    PROPERTY ABACUS_DISABLED_FEATURE_DEFINITIONS)
+  get_property(
+    _local
+    DIRECTORY "${_source_dir}"
+    PROPERTY ABACUS_LOCAL_FEATURE_DEFINITIONS)
   get_target_property(_kept "${target}" ABACUS_KEPT_FEATURE_DEFINITIONS)
 
   if(_kept)
@@ -502,8 +527,8 @@ function(abacus_apply_build_options target)
     list(APPEND _defs ${_local})
   endif()
   if(_defs)
-    target_compile_definitions("${target}" PRIVATE
-      "$<REMOVE_DUPLICATES:${_defs}>")
+    target_compile_definitions("${target}"
+                               PRIVATE "$<REMOVE_DUPLICATES:${_defs}>")
   endif()
 
   target_link_libraries("${target}" PRIVATE abacus::compile_requirements)
@@ -519,12 +544,18 @@ function(abacus_apply_build_options_to_dir dir)
     return()
   endif()
 
-  get_property(_targets DIRECTORY "${dir}" PROPERTY BUILDSYSTEM_TARGETS)
+  get_property(
+    _targets
+    DIRECTORY "${dir}"
+    PROPERTY BUILDSYSTEM_TARGETS)
   foreach(_target IN LISTS _targets)
     abacus_apply_build_options("${_target}")
   endforeach()
 
-  get_property(_subdirs DIRECTORY "${dir}" PROPERTY SUBDIRECTORIES)
+  get_property(
+    _subdirs
+    DIRECTORY "${dir}"
+    PROPERTY SUBDIRECTORIES)
   foreach(_subdir IN LISTS _subdirs)
     abacus_apply_build_options_to_dir("${_subdir}")
   endforeach()
@@ -538,15 +569,13 @@ set(ABACUS_TEST_DIR "${PROJECT_SOURCE_DIR}/tests")
 include(${PROJECT_SOURCE_DIR}/cmake/Testing.cmake)
 
 add_executable(${ABACUS_BIN_NAME} source_main/main.cpp)
-set_target_properties(
-  ${ABACUS_BIN_NAME}
-  PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set_target_properties(${ABACUS_BIN_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                                                    "${PROJECT_BINARY_DIR}")
 set(ABACUS_BIN_PATH ${PROJECT_BINARY_DIR}/${ABACUS_BIN_NAME})
 
 if(USE_CUDA)
-  set_property(TARGET ${ABACUS_BIN_NAME}
-    PROPERTY CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
+  set_property(TARGET ${ABACUS_BIN_NAME} PROPERTY CUDA_ARCHITECTURES
+                                                  ${CMAKE_CUDA_ARCHITECTURES})
 endif()
 
 if(ENABLE_COVERAGE)
@@ -577,11 +606,7 @@ add_subdirectory(source_io/module_parameter)
 add_subdirectory(source_lcao/module_lr)
 add_subdirectory(source_lcao/module_rdmft) # add by jghan
 
-add_library(
-  driver
-  OBJECT
-  source_main/driver.cpp
-  source_main/driver_run.cpp)
+add_library(driver OBJECT source_main/driver.cpp source_main/driver_run.cpp)
 
 # __USE_NVTX gates the NVTX code in source_base/timer.cpp (target base) and
 # source_main/driver.cpp (target driver), so it must be defined on those
@@ -604,7 +629,9 @@ if(USE_CUDA)
   endif()
 endif()
 
-list(APPEND device_srcs
+list(
+  APPEND
+  device_srcs
   source_pw/module_pwdft/kernels/projector_gradient_op.cpp
   source_pw/module_pwdft/kernels/nonlocal_op.cpp
   source_pw/module_pwdft/kernels/veff_op.cpp
@@ -616,14 +643,12 @@ list(APPEND device_srcs
   source_hsolver/kernels/bpcg_kernel_op.cpp
   source_hsolver/kernels/linear_op.cpp
   source_estate/kernels/elecstate_op.cpp
-
   source_base/module_device/device.cpp
   source_base/module_device/device_helpers.cpp
   source_base/module_device/output_device.cpp
   source_base/module_device/memory_op.cpp
   source_base/kernels/math_kernel_op.cpp
   source_base/kernels/math_kernel_op_vec.cpp
-
   source_pw/module_pwdft/kernels/force_op.cpp
   source_pw/module_pwdft/kernels/stress_op.cpp
   source_pw/module_pwdft/kernels/onsite_op.cpp
@@ -637,7 +662,9 @@ list(APPEND device_srcs
   source_pw/module_pwdft/kernels/exx_cal_energy_op.cpp)
 
 if(USE_CUDA)
-  list(APPEND device_srcs
+  list(
+    APPEND
+    device_srcs
     source_pw/module_pwdft/kernels/cuda/projector_gradient_op.cu
     source_pw/module_pwdft/kernels/cuda/nonlocal_op.cu
     source_pw/module_pwdft/kernels/cuda/veff_op.cu
@@ -667,15 +694,16 @@ if(USE_CUDA)
     source_pw/module_pwdft/kernels/cuda/exx_cal_energy_op.cu
     source_pw/module_pwdft/kernels/cuda/exx_batch_op.cu)
   if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
-    list(APPEND device_srcs
-      source_cell/kernels/cuda/gpu_neighlist_kernels.cu
-      source_cell/kernels/cuda/gpu_neighlist_host.cu
-      source_cell/kernels/cuda/gpu_neighlist_device.cu)
+    list(APPEND device_srcs source_cell/kernels/cuda/gpu_neighlist_kernels.cu
+         source_cell/kernels/cuda/gpu_neighlist_host.cu
+         source_cell/kernels/cuda/gpu_neighlist_device.cu)
   endif()
 endif()
 
 if(USE_ROCM)
-  hip_add_library(device_rocm STATIC
+  hip_add_library(
+    device_rocm
+    STATIC
     source_pw/module_pwdft/kernels/rocm/projector_gradient_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/nonlocal_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/veff_op.hip.cu
@@ -700,8 +728,7 @@ if(USE_ROCM)
 endif()
 
 if(USE_DSP)
-  list(APPEND device_srcs
-    source_base/kernels/dsp/dsp_connector.cpp)
+  list(APPEND device_srcs source_base/kernels/dsp/dsp_connector.cpp)
 endif()
 
 add_library(device OBJECT ${device_srcs})
@@ -709,13 +736,8 @@ add_library(device OBJECT ${device_srcs})
 if(USE_CUDA)
   target_link_libraries(device PRIVATE cusolver cublas cufft)
 elseif(USE_ROCM)
-  target_link_libraries(device PRIVATE
-    device_rocm
-    hip::host
-    hip::device
-    hip::hipfft
-    roc::hipblas
-    roc::hipsolver)
+  target_link_libraries(device PRIVATE device_rocm hip::host hip::device
+                                       hip::hipfft roc::hipblas roc::hipsolver)
 endif()
 
 # base uses symbols from device (memory_op and math_ylm_op).
@@ -731,42 +753,41 @@ endif()
 
 target_link_libraries(
   ${ABACUS_BIN_NAME}
-  PRIVATE
-    # Internal ABACUS targets: consumers before providers.
-    driver
-    esolver
-    hsolver
-    hamilt_general
-    elecstate
-    module_pwdft
-    module_proj
-    nao_smoothgen
-    module_ofdft
-    module_stodft
-    module_dfpt
-    xc_
-    vdw
-    relax
-    io_advanced
-    io_basic
-    io_input
-    surchem
-    neighbor_search
-    domain_decomposition
-    neighbor
-    md
-    module_plumed
-    planewave
-    symmetry
-    cell
-    parameter
-    psi_overall_init
-    psi_init
-    psi
-    deltaspin
-    container
-    device
-    base)
+  PRIVATE # Internal ABACUS targets: consumers before providers.
+          driver
+          esolver
+          hsolver
+          hamilt_general
+          elecstate
+          module_pwdft
+          module_proj
+          nao_smoothgen
+          module_ofdft
+          module_stodft
+          module_dfpt
+          xc_
+          vdw
+          relax
+          io_advanced
+          io_basic
+          io_input
+          surchem
+          neighbor_search
+          domain_decomposition
+          neighbor
+          md
+          module_plumed
+          planewave
+          symmetry
+          cell
+          parameter
+          psi_overall_init
+          psi_init
+          psi
+          deltaspin
+          container
+          device
+          base)
 
 if(ENABLE_ELPA)
   target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
@@ -775,16 +796,15 @@ endif()
 if(ENABLE_LCAO)
   target_link_libraries(
     ${ABACUS_BIN_NAME}
-    PRIVATE
-      hamilt_lcao
-      tddft
-      dftu
-      orb
-      gint
-      hcontainer
-      numerical_atomic_orbitals
-      lr
-      rdmft)
+    PRIVATE hamilt_lcao
+            tddft
+            dftu
+            orb
+            gint
+            hcontainer
+            numerical_atomic_orbitals
+            lr
+            rdmft)
   if(ENABLE_LIBRI)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE bse)
   endif()

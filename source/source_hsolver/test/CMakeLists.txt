@@ -219,3 +219,36 @@ if (ENABLE_MPI)
     endif()
   endif()
 endif()
+
+if(ENABLE_LCAO)
+  set(DAVIDSON_OWNERSHIP_SOURCES
+    test_diago_david.cpp
+    ../diago_david.cpp
+    ../diago_dav_subspace.cpp
+    ../diago_cg.cpp
+    ../diago_iter_assist.cpp
+    ../diag_const_nums.cpp
+  )
+  set(DAVIDSON_OWNERSHIP_LIBS parameter base psi device container)
+  if(ENABLE_MPI)
+    list(APPEND DAVIDSON_OWNERSHIP_SOURCES
+      ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp)
+    if(TARGET ELPA::ELPA)
+      list(APPEND DAVIDSON_OWNERSHIP_SOURCES ../diago_elpa.cpp)
+      list(APPEND DAVIDSON_OWNERSHIP_LIBS ELPA::ELPA genelpa)
+    endif()
+  endif()
+  AddTest(
+    TARGET MODULE_HSOLVER_empty_blocks
+    LIBS ${DAVIDSON_OWNERSHIP_LIBS}
+    SOURCES ${DAVIDSON_OWNERSHIP_SOURCES}
+  )
+  set_tests_properties(MODULE_HSOLVER_empty_blocks PROPERTIES
+    TIMEOUT 120 ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
+  if(ENABLE_MPI)
+    add_test(NAME MODULE_HSOLVER_empty_blocks_mpi
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 $<TARGET_FILE:MODULE_HSOLVER_empty_blocks>)
+    set_tests_properties(MODULE_HSOLVER_empty_blocks_mpi PROPERTIES PROCESSORS 4 TIMEOUT 120
+      ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
+  endif()
+endif()

@@ -43,6 +43,19 @@ class XC_First_Order_Analytic : public XC_First_Order
                             const std::vector<double>& rho0_r,
                             ModulePW::PW_Basis* pw_rho);
 
+    /// Configured instantiation: ext_params_per_func carries the same
+    /// external parameter lists the ground-state init_func would apply
+    /// (XC_Functional_Libxc::ext_params_for; empty entry = libxc
+    /// defaults), weights the signed per-component combination factors
+    /// (e.g. BLYP_LR subtracts its short-range components; empty or
+    /// 1.0 = plain addition). Both must match func_id elementwise.
+    XC_First_Order_Analytic(const std::vector<int>& func_id,
+                            const int func_type,
+                            const std::vector<double>& rho0_r,
+                            ModulePW::PW_Basis* pw_rho,
+                            const std::vector<std::vector<double>>& ext_params_per_func,
+                            const std::vector<double>& weights);
+
     void set_context(const ModuleBase::Vector3<double>& q_cart) const override;
 
     void apply(const std::vector<std::complex<double>>& drho_r,
@@ -57,6 +70,8 @@ class XC_First_Order_Analytic : public XC_First_Order
 
     int func_type_ = 1; ///< 1 = LDA, 2 = GGA (XC_Functional convention)
     std::vector<int> func_id_; ///< libxc ids, exchange first (XC_Functional order)
+    std::vector<std::vector<double>> ext_params_; ///< per-id set_ext_params lists
+    std::vector<double> weights_; ///< signed per-id combination factors
     ModulePW::PW_Basis* pw_rho_ = nullptr;
 
     mutable ModuleBase::Vector3<double> q_cart_; ///< phonon q, ucell::G units (1/lat0)

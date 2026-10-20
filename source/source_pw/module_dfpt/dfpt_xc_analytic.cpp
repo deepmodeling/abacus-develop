@@ -44,6 +44,27 @@ XC_First_Order_Analytic::XC_First_Order_Analytic(const std::vector<int>& func_id
     this->init_kernel_fields_(rho0_r);
 }
 
+XC_First_Order_Analytic::XC_First_Order_Analytic(const std::vector<int>& func_id,
+                                                 const int func_type,
+                                                 const std::vector<double>& rho0_r,
+                                                 ModulePW::PW_Basis* pw_rho,
+                                                 const std::vector<std::vector<double>>& ext_params_per_func,
+                                                 const std::vector<double>& weights)
+    : XC_First_Order_Analytic(func_id, func_type, rho0_r, pw_rho)
+{
+    // delegating ctor already built the default kernel fields; the
+    // configured factors require rebuilding them with the parameters
+    // applied, so validate first and reconstruct
+    if (ext_params_per_func.size() != func_id.size() || weights.size() != func_id.size())
+    {
+        ModuleBase::WARNING_QUIT("XC_First_Order_Analytic",
+                                 "ext_params_per_func / weights must match func_id elementwise");
+    }
+    ext_params_ = ext_params_per_func;
+    weights_ = weights;
+    this->init_kernel_fields_(rho0_r);
+}
+
 void XC_First_Order_Analytic::set_context(const ModuleBase::Vector3<double>& q_cart) const
 {
     q_cart_ = q_cart;
@@ -105,7 +126,29 @@ void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double>& rho
         {
             ModuleBase::WARNING_QUIT("XC_First_Order_Analytic", "xc_func_init failed");
         }
-        if (func_type_ == 1)
+        // apply the ground-state effective parameters (external override
+        // in-built; empty = libxc defaults) so the kernel differentiates
+        // the SAME functional the GS run used
+        if (ifunc < ext_params_.size() && !ext_params_[ifunc].empty())
+        {
+            const xc_func_info_type* info = xc_func_get_info(&func);
+            const int nref = xc_func_info_get_n_ext_params(info);
+            if (static_cast<int>(ext_params_[ifunc].size()) != nref)
+            {
+                ModuleBase::WARNING_QUIT("XC_First_Order_Analytic",
+                                         "invalid number of external parameters for libxc functional id "
+                                             + std::to_string(func_id_[ifunc]));
+            }
+            xc_func_set_ext_params(&func, ext_params_[ifunc].data());
+        }
+        // signed per-component combination factor (e.g. BLYP_LR subtracts
+        // its short-range components)
+        const double w = ifunc < weights_.size() ? weights_[ifunc] : 1.0;
+        // dispatch per COMPONENT family: a functional combination may mix
+        // LDA and GGA members (func_type_ only reflects the overall type),
+        // and the LDA entry points must be used for LDA-family components
+        const int family = xc_func_info_get_family(xc_func_get_info(&func));
+        if (family == XC_FAMILY_LDA)
         {
             for (int ir = 0; ir < nrxx; ++ir)
             {
@@ -114,7 +157,7 @@ void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double>& rho
                 xc_lda_fxc(&func, 1, &rho, &v2rho2);
                 // libxc vrho is already the potential d(rho e)/d rho, so
                 // the kernel is its plain derivative (QE dmuxc convention)
-                k_rr_[ir] += ha_to_ry * v2rho2;
+                k_rr_[ir] += ha_to_ry * w * v2rho2;
             }
         }
         else
@@ -123,9 +166,9 @@ void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double>& rho
             {
                 const double rho = rho0_r[ir];
                 const double sig = sigma[ir];
-                if (std::abs(rho) <= epsr || sig <= epsg)
+                if (std::abs(rho) <= epsr)
                 {
-                    continue; // QE dgradcorr guard: no kernel response here
+                    continue; // no XC response where the density vanishes
                 }
                 double zk = 0.0;
                 double vrho = 0.0;
@@ -135,16 +178,24 @@ void XC_First_Order_Analytic::init_kernel_fields_(const std::vector<double>& rho
                 double v2rhosigma = 0.0;
                 double v2sigma2 = 0.0;
                 xc_gga_fxc(&func, 1, &rho, &sig, &v2rho2, &v2rhosigma, &v2sigma2);
+                // the local (rho-rho) response is finite in the zero-gradient
+                // limit (the LDA-like term of the GGA functional), so only
+                // the density guard applies; QE retains it through the
+                // separately accumulated local term of dv_of_drho
+                k_rr_[ir] += ha_to_ry * w * v2rho2;
+                if (sig <= epsg)
+                {
+                    continue; // gradient kernel vanishes in the flat limit
+                }
                 // sigma = |grad rho0|^2 chain factors of the dgradcorr
                 // algebra: s1 = grho.gdrho = d sigma / 2, so the response
                 // e_rho_sigma d(sigma) carries the factor 2 and the
                 // e_sigma_sigma term the factor 4 (QE xc_wrapper_d_gga
                 // convention; no rho renormalization, the potential-form
                 // kernel cancels it)
-                k_rr_[ir] += ha_to_ry * v2rho2;
-                k_sr_[ir] += ha_to_ry * (2.0 * v2rhosigma);
-                k_ss_[ir] += ha_to_ry * (4.0 * v2sigma2);
-                k_s_[ir] += ha_to_ry * (2.0 * vsigma);
+                k_sr_[ir] += ha_to_ry * w * (2.0 * v2rhosigma);
+                k_ss_[ir] += ha_to_ry * w * (4.0 * v2sigma2);
+                k_s_[ir] += ha_to_ry * w * (2.0 * vsigma);
             }
         }
         xc_func_end(&func);

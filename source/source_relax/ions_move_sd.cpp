@@ -1,9 +1,10 @@
 #include "ions_move_sd.h"
 
-#include <algorithm>
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+
+#include <algorithm>
 
 using namespace Ions_Move_Basic;
 
@@ -19,7 +20,14 @@ void Ions_Move_SD::allocate()
     pos_saved.resize(dim, 0.0);
 }
 
-bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& etot_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, const Relax_Criteria& criteria)
+bool Ions_Move_SD::start(UnitCell& ucell,
+                         const ModuleBase::matrix& force,
+                         const double& etot_in,
+                         const int istep,
+                         int& update_iter,
+                         std::ofstream& ofs,
+                         std::vector<double>& etot_info,
+                         const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
@@ -39,7 +47,7 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         printf("in cheak_converged");
         printf("pos[0]: %f\n", pos[0]);
         energy_saved = etot_in;
-        for (int i = 0; i < dim; i++) 
+        for (int i = 0; i < dim; i++)
         {
             pos_saved[i] = pos[i];
         }
@@ -55,7 +63,15 @@ bool Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         }
     }
 
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad.data(), update_iter, ofs, etot_info, criteria.force_thr, criteria.force_thr_ev, criteria.out_level, criteria.test_relax_method);
+    bool converged = Ions_Move_Basic::check_converged(ucell,
+                                                      grad.data(),
+                                                      update_iter,
+                                                      ofs,
+                                                      etot_info,
+                                                      criteria.force_thr,
+                                                      criteria.force_thr_ev,
+                                                      criteria.out_level,
+                                                      criteria.test_relax_method);
     if (converged)
     {
         Ions_Move_Basic::terminate(converged, update_iter, ucell, istep, ofs);

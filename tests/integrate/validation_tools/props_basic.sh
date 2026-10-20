@@ -49,7 +49,7 @@ fi
 #----------------------------
 # force information
 #----------------------------
-if ! test -z "$has_force" && [ $has_force == 1 ]; then
+if ! test -z "$has_force" && [ $has_force == 1 ] && [ $is_lr == 0 ]; then
 	nn3=`echo "$natom + 3" |bc`
     # MD atomic forces are stored in the last MD_dump frame.  They are no
     # longer printed in running_md.log, which is reserved for scalar

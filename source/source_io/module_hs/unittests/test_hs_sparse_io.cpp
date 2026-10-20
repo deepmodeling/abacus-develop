@@ -21,7 +21,6 @@ TEST(HsSparseIo, SparseHeaderKeepsStepStyle)
     const std::string filename = "write_hs_r_legacy_s.csr";
     std::remove(filename.c_str());
 
-    GlobalV::DRANK = 0;
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -55,7 +54,6 @@ TEST(HsSparseIo, SparseTextCountsOnlyValuesAboveThreshold)
     const std::string filename = "write_hs_r_threshold_s.csr";
     std::remove(filename.c_str());
 
-    GlobalV::DRANK = 0;
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -120,7 +118,6 @@ TEST(HsSparseIo, SparseBinaryHeaderWritesConcreteStep)
     const std::string filename = "write_hs_r_legacy_binary_s.csr";
     std::remove(filename.c_str());
 
-    GlobalV::DRANK = 0;
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -151,7 +148,6 @@ TEST(HsSparseIo, SparseBinaryCountsOnlyValuesAboveThreshold)
     const std::string filename = "write_hs_r_threshold_binary_s.csr";
     std::remove(filename.c_str());
 
-    GlobalV::DRANK = 0;
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
