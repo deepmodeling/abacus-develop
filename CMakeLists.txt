@@ -76,6 +76,9 @@ cmake_dependent_option(ENABLE_ELPA "Enable ELPA eigensolver" ON "ENABLE_MPI"
                        OFF)
 cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF
                        "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(
+  ENABLE_LIBRI_GPU "Enable experimental LibRI CUDA contractions through DDLA"
+  OFF "ENABLE_LIBRI;USE_CUDA" OFF)
 cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF
                        "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
@@ -631,9 +634,10 @@ endfunction()
 
 if(ENABLE_LIBRI)
   set_if_higher(CMAKE_CXX_STANDARD 14)
+  if(ENABLE_LIBRI_GPU)
+    set_if_higher(CMAKE_CXX_STANDARD 17)
+  endif()
   find_package(LibRI REQUIRED)
-  find_package(LibComm REQUIRED)
-  find_package(cereal REQUIRED CONFIG)
 endif()
 
 if(ENABLE_LIBXC)

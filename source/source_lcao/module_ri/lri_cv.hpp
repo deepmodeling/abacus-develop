@@ -45,7 +45,8 @@ void LRI_CV<Tdata>::set_orbitals(
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
     const double &kmesh_times,
     std::shared_ptr<ORB_gaunt_table> MGT,
-    const bool& init_C)
+    const bool& init_C,
+    const bool use_gpu)
 {
     ModuleBase::TITLE("LRI_CV", "set_orbitals");
     ModuleBase::timer::start("LRI_CV", "set_orbitals");
@@ -74,9 +75,9 @@ void LRI_CV<Tdata>::set_orbitals(
             this->abfs_ccp, this->lcaos, this->lcaos,
             ucell, orb, kmesh_times);
 
-    this->m_abfs_abfs.init_radial_table();
+    this->m_abfs_abfs.init_radial_table(use_gpu);
     if (init_C) {
-        this->m_abfslcaos_lcaos.init_radial_table();
+        this->m_abfslcaos_lcaos.init_radial_table(use_gpu);
     }
 
     ModuleBase::timer::end("LRI_CV", "set_orbitals");

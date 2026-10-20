@@ -36,31 +36,35 @@ RI::Tensor<Tdata> Matrix_Orbs21::cal_overlap_matrix(
         default:	throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
     }
 
+    const ModuleBase::Vector3<double> position_A = tauA * lat0;
+    const ModuleBase::Vector3<double> position_B = tauB * lat0;
     for( const auto &co3 : center2_orb21_s.at(TA).at(TB) )
     {
         const int LA1 = co3.first;
         for( const auto &co4 : co3.second )
         {
             const size_t NA1 = co4.first;
-            for( size_t MA1=0; MA1!=2*LA1+1; ++MA1 )
+            for (const auto& co5: co4.second)
             {
-                for( const auto &co5 : co4.second )
+                const int LA2 = co5.first;
+                for (const auto& co6: co5.second)
                 {
-                    const int LA2 = co5.first;
-                    for( const auto &co6 : co5.second )
+                    const size_t NA2 = co6.first;
+                    for (const auto& co7: co6.second)
                     {
-                        const size_t NA2 = co6.first;
-                        for( size_t MA2=0; MA2!=2*LA2+1; ++MA2 )
+                        const int LB = co7.first;
+                        for (const auto& co8: co7.second)
                         {
-                            for( const auto &co7 : co6.second )
+                            const size_t NB = co8.first;
+                            const auto overlaps = co8.second.cal_overlap(position_A, position_B);
+                            for (size_t MA1 = 0; MA1 != 2 * LA1 + 1; ++MA1)
                             {
-                                const int LB = co7.first;
-                                for( const auto &co8 : co7.second )
+                                for (size_t MA2 = 0; MA2 != 2 * LA2 + 1; ++MA2)
                                 {
-                                    const size_t NB = co8.first;
                                     for( size_t MB=0; MB!=2*LB+1; ++MB )
                                     {
-                                        const Tdata overlap = co8.second.cal_overlap( tauA*lat0, tauB*lat0, MA1, MA2, MB );
+                                        const size_t offset = (MA1 * (2 * LA2 + 1) + MA2) * (2 * LB + 1) + MB;
+                                        const Tdata overlap = overlaps[offset];
                                         const size_t iA1 = index_A1[TA][LA1][NA1][MA1];
                                         const size_t iA2 = index_A2[TA][LA2][NA2][MA2];
                                         const size_t iB = index_B[TB][LB][NB][MB];
@@ -116,31 +120,36 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs21::cal_grad_overlap_matrix(
         }
     }
 
+    const ModuleBase::Vector3<double> position_A = tauA * lat0;
+    const ModuleBase::Vector3<double> position_B = tauB * lat0;
     for( const auto &co3 : center2_orb21_s.at(TA).at(TB) )
     {
         const int LA1 = co3.first;
         for( const auto &co4 : co3.second )
         {
             const size_t NA1 = co4.first;
-            for( size_t MA1=0; MA1!=2*LA1+1; ++MA1 )
+            for (const auto& co5: co4.second)
             {
-                for( const auto &co5 : co4.second )
+                const int LA2 = co5.first;
+                for (const auto& co6: co5.second)
                 {
-                    const int LA2 = co5.first;
-                    for( const auto &co6 : co5.second )
+                    const size_t NA2 = co6.first;
+                    for (const auto& co7: co6.second)
                     {
-                        const size_t NA2 = co6.first;
-                        for( size_t MA2=0; MA2!=2*LA2+1; ++MA2 )
+                        const int LB = co7.first;
+                        for (const auto& co8: co7.second)
                         {
-                            for( const auto &co7 : co6.second )
+                            const size_t NB = co8.first;
+                            const auto overlaps = co8.second.cal_grad_overlap(position_A, position_B);
+                            for (size_t MA1 = 0; MA1 != 2 * LA1 + 1; ++MA1)
                             {
-                                const int LB = co7.first;
-                                for( const auto &co8 : co7.second )
+                                for (size_t MA2 = 0; MA2 != 2 * LA2 + 1; ++MA2)
                                 {
-                                    const size_t NB = co8.first;
                                     for( size_t MB=0; MB!=2*LB+1; ++MB )
                                     {
-                                        const std::array<double,3> grad_overlap = RI_Util::Vector3_to_array3(co8.second.cal_grad_overlap( tauA*lat0, tauB*lat0, MA1, MA2, MB ));
+                                        const size_t offset = (MA1 * (2 * LA2 + 1) + MA2) * (2 * LB + 1) + MB;
+                                        const std::array<double, 3> grad_overlap
+                                            = RI_Util::Vector3_to_array3(overlaps[offset]);
                                         const size_t iA1 = index_A1[TA][LA1][NA1][MA1];
                                         const size_t iA2 = index_A2[TA][LA2][NA2][MA2];
                                         const size_t iB = index_B[TB][LB][NB][MB];

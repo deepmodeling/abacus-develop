@@ -4,6 +4,24 @@ abacus_disable_feature_definitions(__ROCM)
 
 if(ENABLE_LCAO)
 AddTest(
+  TARGET MODULE_LCAO_center2orb_table
+  LIBS parameter base device container
+  SOURCES test_center2orb_orb11.cpp ../center2orb.cpp ../center2orb_orb11.cpp ../center2orb_orb21.cpp
+    ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_atomic_lm.cpp
+    ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_gaunt_table.cpp
+)
+if(USE_CUDA AND ENABLE_LIBRI_GPU)
+  AddTest(
+    TARGET MODULE_LCAO_center2orb_table_gpu
+    KEEP_FEATURE_DEFINITIONS __CUDA
+    LIBS parameter base device container
+    SOURCES test_center2orb_orb11.cpp ../center2orb.cpp ../center2orb_orb11.cpp ../center2orb_orb21.cpp
+      ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_atomic_lm.cpp
+      ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_gaunt_table.cpp
+  )
+  set_tests_properties(MODULE_LCAO_center2orb_table_gpu PROPERTIES LABELS gpu)
+endif()
+AddTest(
   TARGET MODULE_LCAO_init_dm_from_file_test
   LIBS parameter base device symmetry
   SOURCES test_init_dm_from_file.cpp tmp_mocks.cpp
