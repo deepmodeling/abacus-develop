@@ -193,11 +193,20 @@ void Charge_Mixing::mix_reset()
 {
     this->mixing->reset();
     this->rho_mdata.reset();
+    // mix_dmr reuses the Pulay coefficients of the rho history, so the
+    // density-matrix history must restart with it.
+    this->dmr_mdata.reset();
     // initailize tau_mdata
     if (cfg_.mixing_tau)
     {
         this->tau_mdata.reset();
     }
+}
+
+void Charge_Mixing::restart_for_new_model(const int iter)
+{
+    this->mix_reset();
+    this->mixing_restart_last = iter;
 }
 
 bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho,

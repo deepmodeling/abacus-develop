@@ -295,9 +295,12 @@ ESolver_KS::DensityStage ESolver_KS::density_stage(const int istep, const int it
 
 void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
 {
+    const bool two_fermi = PARAM.globalv.two_fermi;
+    const bool model_changed
+        = module_charge::update_pot_model(iter, this->drho, this->kv, *this->pelec->pot, this->p_chgmix);
 
     // 1.1) print out band gap 
-    if (!PARAM.globalv.two_fermi)
+    if (!two_fermi)
     {
         this->pelec->cal_bandgap();
     }
@@ -321,7 +324,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // 2.1) compute magnetization, only for spin==2
     ucell.magnet.compute_mag(ucell.omega, this->chr.nrxx, this->chr.nxyz, this->chr.rho,
-                                       this->inp_->nspin, PARAM.globalv.two_fermi, this->inp_->nelec,
+                                       this->inp_->nspin, two_fermi, this->inp_->nelec,
                                        this->pelec->nelec_spin.data());
 
     // 2.2) charge mixing
@@ -338,6 +341,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     module_charge::ScfMixingCtx ctx;
     ctx.hsolver_error = hsolver_error;
     ctx.scf_thr = this->scf_thr;
+    ctx.model_changed = model_changed;
     ctx.scf_ene_thr = this->scf_ene_thr;
     ctx.converged_u = converged_u;
     ctx.ks_run = PARAM.globalv.ks_run;
@@ -400,7 +404,9 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // print energies
     elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho,
-    dkin, duration, *this->inp_, PARAM.globalv.two_fermi, diag_ethr, 0, true, this->ds_rms_);
+    dkin, duration, *this->inp_, two_fermi, diag_ethr, 0, true, this->ds_rms_);
+
+    module_charge::print_corr_iter(this->kv, this->inp_->sccs_debug, this->drho, *this->pelec->pot);
 
 
 #ifdef __JSON

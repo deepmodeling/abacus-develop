@@ -74,7 +74,15 @@ class Charge_Mixing
      * @brief reset mixing, actually we only call init_mixing() to reset mixing instead of this function
      */
     void mix_reset();
-    
+
+    /**
+     * @brief restart mixing after the potential model changed during the SCF (SCCS delayed start)
+     *
+     * The drho of earlier iterations belongs to the old model, so the window of
+     * if_scf_oscillate also restarts at iteration iter, as after a mixing restart.
+     */
+    void restart_for_new_model(const int iter);
+
     // extracting parameters normally these parameters will not be used outside charge mixing
     // while Exx is using them as well as some other places
     const std::string& get_mixing_mode() const {return cfg_.mixing_mode;}

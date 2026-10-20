@@ -83,9 +83,9 @@ std::string context_error(const Input_para& input)
     {
         error = "SCCS requires basis_type pw or lcao";
     }
-    else if (input.calculation != "scf" || input.cal_stress)
+    else if ((input.calculation != "scf" && input.calculation != "relax") || input.cal_stress)
     {
-        error = "SCCS currently supports SCF energies and forces without stress";
+        error = "SCCS supports calculation scf or fixed-cell relax without stress";
     }
     else if (input.nspin != 1 && input.nspin != 2)
     {
@@ -120,7 +120,8 @@ std::string nonfinite_error(const Input_para& input)
         {"sccs_tol_max", input.sccs_tol_max},
         {"sccs_surface_eta", input.sccs_surface_eta},
         {"sccs_lowpass_p1", input.sccs_lowpass_p1},
-        {"sccs_lowpass_p2", input.sccs_lowpass_p2}};
+        {"sccs_lowpass_p2", input.sccs_lowpass_p2},
+        {"sccs_start_drho", input.sccs_start_drho}};
     for (const std::pair<const char*, double>& value : values)
     {
         if (!std::isfinite(value.second))
@@ -174,9 +175,10 @@ std::string model_error(const Input_para& input)
     return error;
 }
 
-// sqrt-CG solver controls.
+// sqrt-CG solver controls and the delayed start.
 std::string solver_error(const Input_para& input)
 {
+    const bool delayed_start = input.sccs_start_drho > 0.0;
     std::string error;
     if (input.sccs_maxiter <= 0)
     {
@@ -189,6 +191,18 @@ std::string solver_error(const Input_para& input)
     else if (input.sccs_tol_max <= 0.0)
     {
         error = "sccs_tol_max must be positive";
+    }
+    else if (input.sccs_start_drho < 0.0)
+    {
+        error = "sccs_start_drho must be non-negative";
+    }
+    else if (delayed_start && input.sccs_start_drho <= input.scf_thr)
+    {
+        error = "sccs_start_drho must be zero or larger than scf_thr";
+    }
+    else if (input.sccs_start_nmax <= 0 || (delayed_start && input.sccs_start_nmax >= input.scf_nmax))
+    {
+        error = "sccs_start_nmax must be positive and smaller than scf_nmax when delayed start is enabled";
     }
     return error;
 }

@@ -453,6 +453,7 @@ struct Input_para
                                               ///< frequency controlled by out_freq_ion/out_freq_elec
     std::vector<int> out_xc_r = {-1, 3};      ///< output xc(r). -1: no; >=0: output the order of xc(r)
     std::vector<int> out_pot = {0, 8};        ///< output potential
+    std::vector<int> out_sol = {0, 8};        ///< output the implicit-solvent dielectric function and cavity
     int out_wfc_pw = 0;                       ///< 0: no; 1: txt; 2: dat
     std::vector<int> out_band = {0, 8};       ///< band calculation pengfei 2014-10-13
     int out_dos = 0;                          ///< dos calculation. mohan add 20090909
@@ -600,6 +601,9 @@ struct Input_para
     double sccs_surface_eta = 1e-8; // Bohr^-1
     double sccs_lowpass_p1 = -1.0; // PCC switching-derivative filter slope
     double sccs_lowpass_p2 = -1.0; // PCC switching-derivative filter offset
+    double sccs_start_drho = 0.0;
+    int sccs_start_nmax = 30;
+    int sccs_debug = 0; // 0: silent, 1: iteration summary, 2: full diagnostics
     std::string sccs_solvent_mode = "electronic";
     std::vector<double> sccs_corespread = {0.5}; // Bohr: one value or one per atom
 

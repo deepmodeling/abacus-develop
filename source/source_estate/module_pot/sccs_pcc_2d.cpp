@@ -2,7 +2,6 @@
 
 #include "source_base/tool_quit.h"
 #include "source_basis/module_pw/pw_basis.h"
-#include "source_basis/module_pw/pw_grid_geometry.h"
 #include "source_cell/cell_geometry.h"
 #include "source_cell/cell_tools.h"
 #include "source_cell/unitcell.h"
@@ -51,13 +50,13 @@ void pcc_2d_operator(const UnitCell& cell,
                      const ModulePW::PW_Basis& basis,
                      const std::vector<unitcell::AtomData>& atoms,
                      int open_axis,
+                     const std::vector<ModuleBase::Vector3<double>>& grid_positions,
                      std::unique_ptr<ModuleSccs::CoulombOperator>& coulomb)
 {
     unitcell::SlabCell geometry;
     Pcc2dParameters parameters;
     pcc_2d_geometry(cell, atoms, open_axis, geometry, parameters);
-    std::vector<ModuleBase::Vector3<double>> projected_positions;
-    ModulePW::grid_positions(basis, cell.latvec, cell.lat0, projected_positions);
+    std::vector<ModuleBase::Vector3<double>> projected_positions = grid_positions;
     pcc_2d_project(geometry, projected_positions);
     coulomb.reset(new ModuleSccs::Pcc2dCoulombOperator(basis, cell.tpiba, projected_positions, geometry.normal,
                                                        parameters));

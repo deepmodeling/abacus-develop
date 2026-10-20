@@ -101,6 +101,13 @@ if ! test -z "$imp_sol" && { [ "$imp_sol" = 1 ] || [ "$imp_sol" = 2 ]; }; then
 	echo "esolcavref $esol_cav" >>$props_result_file
 fi
 
+# out_sol 1: the cavity volume int s dV of sol_cavity.cube. sol_eps.cube is
+# skipped: its integral is dominated by the bulk permittivity times the volume.
+if [[ "$out_sol" == "1" && -f "OUT.autotest/sol_cavity.cube" ]]; then
+	integral=$(python3 "$CUBE_TOOL" integrate "OUT.autotest/sol_cavity.cube")
+	echo "sol_cavity_integralref $integral" >>$props_result_file
+fi
+
 #--------------------------------------------
 # vacuum point-countercharge correction
 #--------------------------------------------
