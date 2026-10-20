@@ -1,4 +1,5 @@
 #include "esolver_ks_pw.h"
+#include "source_pw/module_pwdft/pw_hybrid_nscf.h"
 
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/module_charge/chg_symm.h"
@@ -81,6 +82,8 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ESolver_KS::before_all_runners(ucell, inp);
+
+    pw::validate_hybrid_nscf(inp, this->general_exx_info_);
 
     //! setup and allocation for pelec, potentials, etc.
     elecstate::setup_estate_pw(ucell,
@@ -192,6 +195,14 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     //! Setup EXX helper for Hamiltonian and psi
     exx_helper->before_scf(this->p_hamilt, this->stp.template get_psi_t<T, Device>(), *this->inp_, this->general_exx_info_);
+
+    if (this->inp_->calculation == "nscf" && this->general_exx_info_.cal_exx)
+    {
+        const Input_para& inp = *this->inp_;
+        const std::string& readin_dir = PARAM.globalv.global_readin_dir;
+        auto* helper = static_cast<Exx_Helper<T, Device>*>(this->exx_helper);
+        pw::prepare_exx_nscf<T, Device>(inp, ucell, this->pw_wfc, *helper->op_exx, readin_dir);
+    }
 
     ModuleBase::timer::end("ESolver_KS_PW", "before_scf");
 }
@@ -315,7 +326,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // Related to EXX
     bool cal_exx = general_exx_info_.cal_exx;
     double hybrid_alpha = general_exx_info_.hybrid_alpha;
-    if (cal_exx && !exx_helper->get_op_first_iter())
+    if (cal_exx && this->inp_->calculation != "nscf" && !exx_helper->get_op_first_iter())
     {
         this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()), cal_exx, hybrid_alpha);
     }

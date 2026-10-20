@@ -23,29 +23,29 @@ if(PLUMED_PKG_FOUND)
   set(PLUMED_VERSION ${PLUMED_PKG_VERSION})
 else()
   # Fallback: manual discovery, e.g. -DPLUMED_ROOT=/path/to/prefix
-  find_path(PLUMED_INCLUDE_DIRS
-    plumed/wrapper/Plumed.h
+  find_path(
+    PLUMED_INCLUDE_DIRS plumed/wrapper/Plumed.h
     HINTS ${PLUMED_ROOT}
-    PATH_SUFFIXES "include"
-  )
-  find_library(PLUMED_LIBRARIES
+    PATH_SUFFIXES "include")
+  find_library(
+    PLUMED_LIBRARIES
     NAMES plumed
     HINTS ${PLUMED_ROOT}
-    PATH_SUFFIXES "lib"
-  )
+    PATH_SUFFIXES "lib")
 endif()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PLUMED
+find_package_handle_standard_args(
+  PLUMED
   REQUIRED_VARS PLUMED_LIBRARIES PLUMED_INCLUDE_DIRS
   VERSION_VAR PLUMED_VERSION)
 
 if(PLUMED_FOUND AND NOT TARGET PLUMED::plumed)
   add_library(PLUMED::plumed UNKNOWN IMPORTED)
-  set_target_properties(PLUMED::plumed PROPERTIES
-    IMPORTED_LOCATION "${PLUMED_LIBRARIES}"
-    INTERFACE_INCLUDE_DIRECTORIES "${PLUMED_INCLUDE_DIRS}"
-  )
+  set_target_properties(
+    PLUMED::plumed
+    PROPERTIES IMPORTED_LOCATION "${PLUMED_LIBRARIES}"
+               INTERFACE_INCLUDE_DIRECTORIES "${PLUMED_INCLUDE_DIRS}")
 endif()
 
 mark_as_advanced(PLUMED_INCLUDE_DIRS PLUMED_LIBRARIES)

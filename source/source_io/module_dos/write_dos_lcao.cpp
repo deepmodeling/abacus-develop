@@ -67,7 +67,7 @@ void write_dos_lcao(
             ss << "g" << istep+1;
         }
 
-        ss << "_nao.txt";
+        ss << ".txt";
 
         ModuleIO::cal_dos(is,
                 ss.str(),

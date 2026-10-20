@@ -3,6 +3,7 @@
 #include "lattice_change_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+
 #include <vector>
 
 using namespace Lattice_Change_Basic;
@@ -38,7 +39,12 @@ void Lattice_Change_CG::allocate(void)
     this->fmax = 0.0;
 }
 
-bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs, std::vector<double>& etot_info, const Relax_Criteria& criteria)
+bool Lattice_Change_CG::start(UnitCell& ucell,
+                              const ModuleBase::matrix& stress_in,
+                              const double& etot_in,
+                              std::ofstream& ofs,
+                              std::vector<double>& etot_info,
+                              const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Lattice_Change_CG", "start");
 
@@ -94,7 +100,13 @@ bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
         if (this->sd)
         {
             e0 = etot_in;
-            CG_Base::setup_cg_grad(dim, grad.data(), grad0.data(), cg_grad.data(), cg_grad0.data(), this->ncggrad, flag);
+            CG_Base::setup_cg_grad(dim,
+                                   grad.data(),
+                                   grad0.data(),
+                                   cg_grad.data(),
+                                   cg_grad0.data(),
+                                   this->ncggrad,
+                                   flag);
             this->ncggrad++;
 
             CG_Base::normalize(dim, cg_gradn.data(), cg_grad.data());

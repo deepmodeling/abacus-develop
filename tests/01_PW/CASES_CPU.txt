@@ -123,5 +123,7 @@ relax_dftu_spin2
 relax_dftu_spin4
 scf_deltaspin2
 scf_deltaspin4
+nscf_hse_same
+nscf_hse_path
 221_PW_PCC0D_H3O
 222_PW_PCC2D_H3O

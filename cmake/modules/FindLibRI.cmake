@@ -6,26 +6,24 @@
 #  LIBRI_DIR - Where to find LibRI files.
 #  LibRI::LibRI - Header-only target, including optional DDLA requirements.
 
-find_path(LIBRI_DIR
-    include/RI/version.h
-    HINTS ${LIBRI_DIR}
-    HINTS ${LibRI_DIR}
-    HINTS ${libri_DIR}
-)
+find_path(
+  LIBRI_DIR include/RI/version.h
+  HINTS ${LIBRI_DIR}
+  HINTS ${LibRI_DIR}
+  HINTS ${libri_DIR})
 
 if(NOT LIBRI_DIR)
-    if(ENABLE_LIBRI_GPU)
-        message(FATAL_ERROR
-            "ENABLE_LIBRI_GPU requires an explicitly supplied, patched LIBRI_DIR; "
-            "see docs/advanced/install.md")
-    endif()
-    include(FetchContent)
-    FetchContent_Declare(
-        LibRI
-        URL https://codeload.github.com/abacusmodeling/LibRI/tar.gz/b0eff7a
-    )
-    FetchContent_Populate(LibRI)
-    set(LIBRI_DIR ${libri_SOURCE_DIR})
+  if(ENABLE_LIBRI_GPU)
+    message(
+      FATAL_ERROR
+        "ENABLE_LIBRI_GPU requires an explicitly supplied, patched LIBRI_DIR; "
+        "see docs/advanced/install.md")
+  endif()
+  include(FetchContent)
+  FetchContent_Declare(
+    LibRI URL https://codeload.github.com/abacusmodeling/LibRI/tar.gz/b0eff7a)
+  FetchContent_Populate(LibRI)
+  set(LIBRI_DIR ${libri_SOURCE_DIR})
 endif()
 # Handle the QUIET and REQUIRED arguments and
 # set LIBRI_FOUND to TRUE if all variables are non-zero.

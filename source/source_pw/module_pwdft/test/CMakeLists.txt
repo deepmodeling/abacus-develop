@@ -28,6 +28,7 @@ AddTest(
 	SOURCES dftu_base_test.cpp
 	../dftu_base.cpp
 	../dftu_base_io.cpp
+	../dftu_base_io_read.cpp
 	../dftu_pw_tools.cpp
 	../yukawa_screening.cpp
 	../../../source_estate/occ_matrix.cpp
@@ -91,4 +92,10 @@ AddTest(
 	../../../source_cell/cal_wfc.cpp
 	../../../source_cell/cal_nelec_nband.cpp
 	../../../source_cell/read_orb.cpp
+)
+
+AddTest(
+  TARGET MODULE_PW_pw_hybrid_source
+  LIBS base device
+  SOURCES test_pw_hybrid_source.cpp ../pw_hybrid_source.cpp
 )

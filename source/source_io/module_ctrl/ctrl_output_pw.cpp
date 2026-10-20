@@ -121,7 +121,9 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     {
         bool out_dos_tmp = false;
 
-        int istep_in = -1;
+        // always tag the DOS file with the geometry index, so that PW and
+        // LCAO share the same doss{spin}g{geom}.txt naming
+        int istep_in = istep;
 
         if (output_frequency == 0)
         {

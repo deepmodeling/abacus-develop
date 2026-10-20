@@ -6,42 +6,6 @@
 namespace ModuleIO
 {
 
-namespace
-{
-std::vector<std::string> parse_relax_method(const std::vector<std::string>& values)
-{
-    if (values.empty() || values.size() > 2)
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", "relax_method accepts one or two values");
-    }
-
-    const std::string& method = values[0];
-    const std::vector<std::string> valid_methods = {"cg", "sd", "cg_bfgs", "lbfgs", "bfgs"};
-    if (std::find(valid_methods.begin(), valid_methods.end(), method) == valid_methods.end())
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", nofound_str(valid_methods, "relax_method"));
-    }
-
-    if (method == "cg" || method == "bfgs")
-    {
-        const std::string variant = values.size() == 1 ? "2" : values[1];
-        if (variant != "1" && variant != "2")
-        {
-            const std::string algorithm = method == "cg" ? "CG" : "BFGS";
-            ModuleBase::WARNING_QUIT("ReadInput", "the " + algorithm + " variant must be 1 or 2");
-        }
-        return {method, variant};
-    }
-
-    if (values.size() == 2)
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", "relax_method " + method + " does not accept a second value");
-    }
-    return {method, ""};
-}
-} // namespace
-
-
 void ReadInput::item_relax()
 {
     // NOTE: The order of add_item() calls below determines the parameter order
@@ -49,44 +13,43 @@ void ReadInput::item_relax()
     // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("relax_method");
-        item.annotation = "cg; bfgs; sd; cg_bfgs; lbfgs";
+        item.annotation = "cg; cg_trad; bfgs; bfgs_trad; sd; cg_bfgs; lbfgs";
         item.category = "Geometry relaxation";
-        item.type = "Vector of string";
-        item.description = R"(The method used for geometry optimization.
+        item.type = "String";
+        item.description = R"(The method used for geometry optimization. Select exactly one option:
 
-First element (algorithm selection):
-* cg: Conjugate gradient (CG) algorithm.
-* bfgs: Broyden–Fletcher–Goldfarb–Shanno (BFGS) quasi-Newton algorithm.
+* cg: Simultaneously optimize ionic positions and cell parameters with conjugate gradient and line search (recommended default).
+* cg_trad: First optimize ionic positions at fixed cell, then update the cell, and repeat.
+* bfgs: Default BFGS that directly updates the inverse Hessian (recommended).
+* bfgs_trad: Traditional BFGS that updates the Hessian matrix B and then inverts it.
 * lbfgs: Limited-memory BFGS algorithm, suitable for large systems.
 * cg_bfgs: Mixed method starting with CG and switching to BFGS when force convergence reaches relax_cg_thr.
-* sd: Steepest descent algorithm. Not recommended for production use.
-
-Optional second element:
-* cg 1: First optimize ionic positions at fixed cell, then update the cell, and repeat.
-* cg 2 or omitted: Simultaneously optimize ionic positions and cell parameters with line search (recommended).
-* bfgs 1: Traditional BFGS that updates the Hessian matrix B and then inverts it.
-* bfgs 2 or omitted: Default BFGS that directly updates the inverse Hessian (recommended).
-
-The second element is not accepted by other methods.
-
-[NOTE] In the 3.10-LTS version, the type of this parameter is std::string. It can be set to "cg", "bfgs", "cg_bfgs", "bfgs_trad", "lbfgs", "sd", "fire".)";
-        item.default_value = "cg 2";
+* sd: Steepest descent algorithm. Not recommended for production use.)";
+        item.default_value = "cg";
         item.unit = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.relax_method = parse_relax_method(item.str_values);
+            const std::vector<std::string> methods
+                = {"cg", "cg_trad", "bfgs", "bfgs_trad", "sd", "cg_bfgs", "lbfgs"};
+            if (item.str_values.size() != 1 || std::find(methods.begin(), methods.end(), strvalue) == methods.end())
+            {
+                const std::string message = "relax_method requires exactly one scalar option. "
+                                            + nofound_str(methods, "relax_method");
+                ModuleBase::WARNING_QUIT("ReadInput", message);
+            }
+            para.input.relax_method = strvalue;
         };
-        sync_stringvec(input.relax_method, para.input.relax_method.size(), "");
+        sync_string(input.relax_method);
         this->add_item(item);
     }
     {
         Input_Item item("relax_scale_force");
-        item.annotation = "controls the size of the first CG 2 step";
+        item.annotation = "controls the size of the first simultaneous CG step";
         item.category = "Geometry relaxation";
         item.type = "Real";
         item.description = "The paramether controls the size of the first conjugate gradient step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.";
         item.default_value = "0.5";
         item.unit = "";
-        item.set_availability("relax_method==\"cg 2\"");
+        item.set_availability("relax_method==cg");
         read_sync_double(input.relax_scale_force);
         this->add_item(item);
     }
@@ -193,7 +156,7 @@ The second element is not accepted by other methods.
         item.description = "Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the sufficient decrease condition (c1 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.";
         item.default_value = "0.01";
         item.unit = "";
-        item.set_availability("relax_method in [bfgs, cg_bfgs]");
+        item.set_availability("relax_method in [bfgs, bfgs_trad, cg_bfgs]");
         read_sync_double(input.relax_bfgs_w1);
         this->add_item(item);
     }
@@ -205,7 +168,7 @@ The second element is not accepted by other methods.
         item.description = "Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the curvature condition (c2 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.";
         item.default_value = "0.5";
         item.unit = "";
-        item.set_availability("relax_method in [bfgs, cg_bfgs]");
+        item.set_availability("relax_method in [bfgs, bfgs_trad, cg_bfgs]");
         read_sync_double(input.relax_bfgs_w2);
         this->add_item(item);
     }
@@ -217,7 +180,7 @@ The second element is not accepted by other methods.
         item.description = "Maximum allowed total displacement of all atoms during geometry optimization. The sum of atomic displacements can increase during optimization steps but cannot exceed this value.";
         item.default_value = "0.8";
         item.unit = "Bohr";
-        item.set_availability("relax_method in [bfgs, cg_bfgs]");
+        item.set_availability("relax_method in [bfgs, bfgs_trad, cg_bfgs]");
         read_sync_double(input.relax_bfgs_rmax);
         this->add_item(item);
     }
@@ -226,10 +189,10 @@ The second element is not accepted by other methods.
         item.annotation = "minimal trust radius, unit: Bohr";
         item.category = "Geometry relaxation";
         item.type = "Real";
-        item.description = "Minimum allowed total displacement of all atoms. When the total atomic displacement falls below this value and force convergence is not achieved, the calculation will terminate. Note: This parameter is not used in the default BFGS algorithm (relax_method = bfgs 2 or bfgs).";
+        item.description = "Minimum allowed total displacement of all atoms. When the total atomic displacement falls below this value and force convergence is not achieved, the calculation will terminate. Note: This parameter is not used in the default BFGS algorithm (relax_method = bfgs).";
         item.default_value = "1e-5";
         item.unit = "Bohr";
-        item.set_availability("relax_method==\"bfgs 1\"");
+        item.set_availability("relax_method==bfgs_trad");
         read_sync_double(input.relax_bfgs_rmin);
         this->add_item(item);
     }
@@ -241,7 +204,7 @@ The second element is not accepted by other methods.
         item.description = "Initial total displacement of all atoms in the first BFGS step. This sets the scale for the initial movement.";
         item.default_value = "0.5";
         item.unit = "Bohr";
-        item.set_availability("relax_method in [bfgs, cg_bfgs]");
+        item.set_availability("relax_method in [bfgs, bfgs_trad, cg_bfgs]");
         read_sync_double(input.relax_bfgs_init);
         this->add_item(item);
     }
@@ -296,7 +259,7 @@ The second element is not accepted by other methods.
         item.type = "String";
         item.description = R"(Specifies which cell degrees of freedom are fixed during variable-cell relaxation. The available options depend on relax_method:
 
-With relax_method = cg 2 (default), all options are available:
+With relax_method = cg (default), all options are available:
 * None: Default; all cell parameters can relax freely
 * volume: Relaxation with fixed volume (allows shape changes)
 * shape: Fix shape but allow volume changes (hydrostatic pressure only)
@@ -308,7 +271,7 @@ With relax_method = cg 2 (default), all options are available:
 * bc: Fix both b and c axes during relaxation
 * abc: Fix all three lattice vectors during relaxation
 
-With relax_method set to cg 1, bfgs, lbfgs, sd, or cg_bfgs, None and a, b, c, ab, ac, bc, abc are available. The shape and volume options require cg 2.
+With relax_method set to cg_trad, bfgs, bfgs_trad, lbfgs, sd, or cg_bfgs, None and a, b, c, ab, ac, bc, abc are available. The shape and volume options require cg.
 
 [NOTE] For VASP users, see the ISIF correspondence table in the geometry optimization documentation.)";
         item.default_value = "None";
@@ -319,7 +282,7 @@ With relax_method set to cg 1, bfgs, lbfgs, sd, or cg_bfgs, None and a, b, c, ab
             if ((para.input.fixed_axes == "shape" || para.input.fixed_axes == "volume")
                 && !para.input.uses_simultaneous_relaxation())
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "fixed shape and fixed volume require relax_method = cg 2");
+                ModuleBase::WARNING_QUIT("ReadInput", "fixed shape and fixed volume require relax_method = cg");
             }
         };
         this->add_item(item);
@@ -335,12 +298,12 @@ With relax_method set to cg 1, bfgs, lbfgs, sd, or cg_bfgs, None and a, b, c, ab
 [NOTE] Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges. When both are used, fixed_ibrav is applied first, then fixed_axes = "volume" rescaling is applied.)";
         item.default_value = "False";
         item.unit = "";
-        item.set_availability("relax_method==\"cg 2\" and latname!=none");
+        item.set_availability("relax_method==cg and latname!=none");
         read_sync_bool(input.fixed_ibrav);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.fixed_ibrav && !para.input.uses_simultaneous_relaxation())
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "fixed_ibrav requires relax_method = cg 2");
+                ModuleBase::WARNING_QUIT("ReadInput", "fixed_ibrav requires relax_method = cg");
             }
             if (para.input.latname == "none" && para.input.fixed_ibrav)
             {
