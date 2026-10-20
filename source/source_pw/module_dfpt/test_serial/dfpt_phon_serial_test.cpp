@@ -694,8 +694,10 @@ TEST_F(DFPTPhonSerialTest, FormatReportsRegression)
 
 namespace
 {
-/// per-atom PHYSICAL row-sum norm of a 2-atom (nat3=6) mass-reduced
-/// dynamical matrix: sum_jb sqrt(m_jb) D(3ia+da, jb), masses from the cell
+/// per-atom PHYSICAL residual norm of a 2-atom (nat3=6) mass-reduced
+/// dynamical matrix: R(a,alpha,beta) = sum_b sqrt(m_b) D(3a+alpha, 3b+beta)
+/// at a FIXED direction beta, then combined -- opposite x/y residuals
+/// cannot cancel
 double row_sum_norm(const UnitCell& ucell, const ModuleBase::ComplexMatrix& dyn, int ia)
 {
     double sqm[2] = {std::sqrt(ucell.atoms[ucell.iat2it[0]].mass),
@@ -703,12 +705,15 @@ double row_sum_norm(const UnitCell& ucell, const ModuleBase::ComplexMatrix& dyn,
     double s2 = 0.0;
     for (int da = 0; da < 3; ++da)
     {
-        std::complex<double> s(0.0, 0.0);
-        for (int jb = 0; jb < 6; ++jb)
+        for (int db = 0; db < 3; ++db)
         {
-            s += sqm[jb / 3] * dyn(3 * ia + da, jb);
+            std::complex<double> s(0.0, 0.0);
+            for (int ib = 0; ib < 2; ++ib)
+            {
+                s += sqm[ib] * dyn(3 * ia + da, 3 * ib + db);
+            }
+            s2 += std::norm(s);
         }
-        s2 += std::norm(s);
     }
     return std::sqrt(s2);
 }
@@ -882,5 +887,80 @@ TEST_F(DFPTPhonSerialTest, AsrCrystalPlusLotoKeepsAcousticExactlyZero)
     for (int m = 0; m < 3; ++m)
     {
         EXPECT_NEAR(byabs[m], 0.0, 1.0e-4);
+    }
+}
+
+TEST_F(DFPTPhonSerialTest, AsrDirectionalCancellationDetected)
+{
+    // regression of the audit-metric fix: the block [[1,-1,0],[-1,1,0]]
+    // has zero row sums (sum over ALL columns) but a NONZERO per-direction
+    // residual D*t_x; the audit and apply_asr report must not miss it
+    MakeTwoAtomCell();
+    SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    ModuleBase::ComplexMatrix dyn(6, 6, true);
+    // atom0 self-block with the cancellation pattern
+    dyn(0, 0) = std::complex<double>(1.0, 0.0);
+    dyn(0, 1) = std::complex<double>(-1.0, 0.0);
+    dyn(1, 0) = std::complex<double>(-1.0, 0.0);
+    dyn(1, 1) = std::complex<double>(1.0, 0.0);
+    // atom1 self-block mirrors it (keeps total charge-conservation flavor)
+    dyn(3, 3) = std::complex<double>(1.0, 0.0);
+    dyn(3, 4) = std::complex<double>(-1.0, 0.0);
+    dyn(4, 3) = std::complex<double>(-1.0, 0.0);
+    dyn(4, 4) = std::complex<double>(1.0, 0.0);
+    data_.set_dynmat(0, dyn);
+
+    // per-direction residual BEFORE any correction is nonzero
+    const double residual_before = row_sum_norm(ucell_, dyn, 0);
+    EXPECT_GT(residual_before, 0.1);
+
+    // crystal ASR zeroes it
+    ModuleBase::ComplexMatrix dyn_copy = dyn;
+    data_.set_dynmat(0, dyn_copy);
+    phon_.apply_asr("crystal", 0, data_);
+    const ModuleBase::ComplexMatrix out = data_.get_dynmat(0);
+    EXPECT_LT(row_sum_norm(ucell_, out, 0), 1.0e-14);
+    EXPECT_LT(row_sum_norm(ucell_, out, 1), 1.0e-14);
+}
+
+TEST_F(DFPTPhonSerialTest, AsrSimpleCrossCartesianRegression)
+{
+    // regression of the simple-mode Hermitian fix: the cross-Cartesian
+    // coupling D(0,4) = D(4,0) = delta (atom0-x <-> atom1-y) has no exact
+    // Hermitian onsite-only fix; simple must still produce a final matrix
+    // that is Hermitian, satisfies all three translation constraints
+    // exactly, and has a real diagonal
+    MakeTwoAtomCell(); // masses 12/4 (unequal)
+    SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    ModuleBase::ComplexMatrix dyn(6, 6, true);
+    const double delta = 0.07;
+    dyn(0, 4) = std::complex<double>(delta, 0.0);
+    dyn(4, 0) = std::complex<double>(delta, 0.0);
+    // also a diagonal self term so the matrix is not purely offsite
+    dyn(0, 0) = std::complex<double>(0.05, 0.0);
+    dyn(4, 4) = std::complex<double>(0.04, 0.0);
+    dyn(2, 2) = std::complex<double>(0.03, 0.0);
+    dyn(5, 5) = std::complex<double>(0.06, 0.0);
+    data_.set_dynmat(0, dyn);
+    phon_.apply_asr("simple", 0, data_);
+    const ModuleBase::ComplexMatrix out = data_.get_dynmat(0);
+
+    // translation constraints hold exactly (per-direction residuals)
+    EXPECT_LT(row_sum_norm(ucell_, out, 0), 1.0e-14);
+    EXPECT_LT(row_sum_norm(ucell_, out, 1), 1.0e-14);
+
+    // Hermiticity
+    for (int i = 0; i < 6; ++i)
+    {
+        for (int j = i + 1; j < 6; ++j)
+        {
+            EXPECT_EQ(out(i, j), std::conj(out(j, i))) << "i=" << i << " j=" << j;
+        }
+    }
+
+    // diagonal is real
+    for (int i = 0; i < 6; ++i)
+    {
+        EXPECT_EQ(out(i, i).imag(), 0.0) << "i=" << i;
     }
 }

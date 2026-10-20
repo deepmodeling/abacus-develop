@@ -97,15 +97,28 @@ class DFPT_Phon
     /// enforce the translational acoustic sum rule on the Gamma dynamical
     /// matrix (and, in every enforcing mode, the Z* sum rule
     /// sum_a Z*_a = 0 on the stored Born charges, like QE dynmat's
-    /// set_asr). "simple": the legacy fix, each row's total sum is
-    /// subtracted from its diagonal element (QE 'simple'). "crystal":
-    /// the optimized minimal-norm fix -- with the three orthonormal
-    /// translation vectors u_i(3a+alpha) = delta(alpha,i)/sqrt(nat), the
-    /// symmetric projection D -> (1-P) D (1-P), P = sum_i u_i u_i^T,
-    /// which zeroes every row AND column sum, preserves Hermiticity and
-    /// keeps symmetry-equivalent atoms equivalent (QE 'crystal' for the
-    /// translational part). Both apply to the RAW matrix, before the
-    /// LO-TO nonanalytic term; away from Gamma the call is a no-op.
+    /// set_asr). Both modes operate on the mass-reduced matrix D =
+    /// Phi/sqrt(m_a m_b); the physical rule reads sum_b sqrt(m_b)
+    /// D(3a+alpha, 3b+beta) = 0 for each translation direction beta
+    /// independently.
+    ///
+    /// Both modes finish with the exact Hermitian projection D ->
+    /// (1-P) D (1-P), P = sum_i w_i w_i^T, with the orthonormal physical
+    /// translations w_i(3a+alpha) = sqrt(m_a) delta(alpha,i) /
+    /// sqrt(sum m): the final matrix satisfies all three mass-weighted
+    /// translation constraints exactly and is Hermitian.
+    ///
+    /// "simple": the QE legacy flavor -- the residual is first dumped
+    /// onto the onsite 3x3 blocks, D(a,a)[alpha][beta] =
+    /// -sum_{b!=a} sqrt(m_b/m_a) D(a,alpha; b,beta), then the projection
+    /// absorbs whatever onsite-only correction could not (a purely
+    /// onsite Hermitian fix does not exist when the residual has a
+    /// cross-Cartesian antisymmetric part).
+    ///
+    /// "crystal": the optimized minimal-norm fix -- the projection alone,
+    /// which also keeps symmetry-equivalent atoms equivalent.
+    ///
+    /// Away from Gamma the call is a no-op.
     void apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& data);
 
     /// Ewald ion-ion force constants C^ewald_ab(q) (G-space + real-space +

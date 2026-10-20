@@ -201,15 +201,21 @@ void DFPT_Phon::audit_asr(const std::string& label, int q_idx, const DFPT_PW_Dat
     int worst_atom = -1;
     for (int ia = 0; ia < nat; ++ia)
     {
+        // per-DIRECTION residuals R(a,alpha,i) = sum_b sqrt(m_b) D(3a+alpha,
+        // 3b+i): summing over atoms at a FIXED translation direction i
+        // before combining norms, so opposite x/y residuals cannot cancel
         double s2 = 0.0;
         for (int da = 0; da < 3; ++da)
         {
-            std::complex<double> s(0.0, 0.0);
-            for (int jb = 0; jb < nat3; ++jb)
+            for (int db = 0; db < 3; ++db)
             {
-                s += sqm[jb / 3] * dyn(3 * ia + da, jb);
+                std::complex<double> s(0.0, 0.0);
+                for (int ib = 0; ib < nat; ++ib)
+                {
+                    s += sqm[ib] * dyn(3 * ia + da, 3 * ib + db);
+                }
+                s2 += std::norm(s);
             }
-            s2 += std::norm(s);
         }
         const double snorm = std::sqrt(s2);
         std::cout << " atom" << ia + 1 << "=" << std::setprecision(3) << std::scientific << snorm;
@@ -260,65 +266,45 @@ void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& 
         sqm[ia] = std::sqrt(ucell_->atoms[ucell_->iat2it[ia]].mass);
         mtot += ucell_->atoms[ucell_->iat2it[ia]].mass;
     }
-    const auto physical_row_sum = [&](int ia, int da) {
-        std::complex<double> s(0.0, 0.0);
-        for (int jb = 0; jb < nat3; ++jb)
-        {
-            s += sqm[jb / 3] * dyn(3 * ia + da, jb);
-        }
-        return s;
-    };
-
-    // violation BEFORE the correction (physical row sums)
-    double worst_before = 0.0;
-    for (int ia = 0; ia < nat; ++ia)
-    {
+    // per-DIRECTION physical residual R(a,alpha,i) = sum_b sqrt(m_b)
+    // D(3a+alpha, 3b+i): summing over atoms at a fixed translation
+    // direction i so opposite x/y residuals cannot cancel
+    const auto physical_residual_norm = [&](int ia) {
         double s2 = 0.0;
         for (int da = 0; da < 3; ++da)
         {
-            s2 += std::norm(physical_row_sum(ia, da));
-        }
-        worst_before = std::max(worst_before, std::sqrt(s2));
-    }
-
-    if (asr_type == "simple")
-    {
-        // legacy fix, QE 'simple' translated to the reduced matrix:
-        // D(a,a) = -sum_{b!=a} sqrt(m_b/m_a) D(a,b), zeroes the physical
-        // row sums; Hermiticity is restored by the re-symmetrization below
-        for (int na = 0; na < nat; ++na)
-        {
-            for (int da = 0; da < 3; ++da)
+            for (int db = 0; db < 3; ++db)
             {
-                for (int db = 0; db < 3; ++db)
+                std::complex<double> s(0.0, 0.0);
+                for (int ib = 0; ib < nat; ++ib)
                 {
-                    std::complex<double> s(0.0, 0.0);
-                    for (int nb = 0; nb < nat; ++nb)
-                    {
-                        if (nb != na)
-                        {
-                            s += sqm[nb] * dyn(3 * na + da, 3 * nb + db);
-                        }
-                    }
-                    dyn(3 * na + da, 3 * na + db) = -s / sqm[na];
+                    s += sqm[ib] * dyn(3 * ia + da, 3 * ib + db);
                 }
+                s2 += std::norm(s);
             }
         }
-    }
-    else if (asr_type == "crystal")
+        return std::sqrt(s2);
+    };
+
+    // violation BEFORE the correction (physical residuals)
+    double worst_before = 0.0;
+    for (int ia = 0; ia < nat; ++ia)
     {
-        // minimal-norm symmetric projection D -> (1-P) D (1-P) with the
-        // orthonormal physical translations w_i(3a+da) = sqrt(m_a)
-        // delta(da,i)/sqrt(sum m): zeroes every physical row AND column sum,
-        // keeps Hermiticity and symmetry-equivalent atoms equivalent, and
-        // leaves the acoustic eigenvectors in the null space so the LO-TO
-        // term (which decouples from them through sum_a Z*_a = 0) cannot
-        // lift the acoustic frequencies
-        //   S(da, nb, db) = sum_na' sqrt(m_a') D(na',da; nb,db)
-        //   T(na, da, db) = sum_nb' sqrt(m_b') D(na,da; nb',db)
-        //   U(da, db)     = sum_na,nb sqrt(m_a) sqrt(m_b) D(na,da; nb,db)
-        //   D' = D - (sqrt(m_na)/M) S - (sqrt(m_nb)/M) T + (sqrt(m_na m_nb)/M^2) U
-        // with M = sum_a m_a
+        worst_before = std::max(worst_before, physical_residual_norm(ia));
+    }
+
+    // the crystal projection D -> (1-P) D (1-P) with the orthonormal
+    // physical translations w_i(3a+da) = sqrt(m_a) delta(da,i)/sqrt(sum m):
+    // zeroes every per-direction physical residual exactly, keeps
+    // Hermiticity and symmetry-equivalent atoms equivalent, and leaves the
+    // acoustic eigenvectors in the null space so the LO-TO term (which
+    // decouples from them through sum_a Z*_a = 0) cannot lift the acoustic
+    // frequencies. Both 'simple' and 'crystal' finish with this projection:
+    // 'simple' first dumps the residual onto the onsite blocks (the QE
+    // legacy flavor), then the projection restores Hermiticity and removes
+    // whatever onsite-only correction could not absorb (cross-Cartesian
+    // antisymmetric residuals have no exact Hermitian onsite-only fix)
+    const auto apply_crystal_projection = [&]() {
         std::vector<std::complex<double>> s(3 * nat3, std::complex<double>(0.0, 0.0));
         std::vector<std::complex<double>> t(3 * nat3, std::complex<double>(0.0, 0.0));
         ModuleBase::ComplexMatrix u(3, 3, true);
@@ -355,6 +341,56 @@ void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& 
                 }
             }
         }
+    };
+
+    if (asr_type == "simple")
+    {
+        // legacy QE 'simple' translated to the reduced matrix: dump the
+        // per-direction residual onto the onsite 3x3 block,
+        // D(a,a)[da][db] = -sum_{b!=a} sqrt(m_b/m_a) D(a,da; b,db);
+        // the onsite dump may break Hermiticity (cross-Cartesian parts),
+        // so symmetrize, then the crystal projection below removes the
+        // residual the symmetrization reintroduced (at most half the
+        // anti-Hermitian part) and guarantees the final matrix is
+        // Hermitian and exactly satisfies all three translation constraints
+        for (int na = 0; na < nat; ++na)
+        {
+            for (int da = 0; da < 3; ++da)
+            {
+                for (int db = 0; db < 3; ++db)
+                {
+                    std::complex<double> s(0.0, 0.0);
+                    for (int nb = 0; nb < nat; ++nb)
+                    {
+                        if (nb != na)
+                        {
+                            s += sqm[nb] * dyn(3 * na + da, 3 * nb + db);
+                        }
+                    }
+                    dyn(3 * na + da, 3 * na + db) = -s / sqm[na];
+                }
+            }
+        }
+        // Hermitian re-symmetrization of the onsite dump (the projection
+        // is Hermitian-preserving only on Hermitian input); the j > i loop
+        // alone leaves the diagonal untouched, and the onsite dump may
+        // have written complex values there -- take the real part so the
+        // matrix is genuinely Hermitian before the projection
+        for (int i = 0; i < nat3; ++i)
+        {
+            for (int j = i + 1; j < nat3; ++j)
+            {
+                const std::complex<double> avg = 0.5 * (dyn(i, j) + std::conj(dyn(j, i)));
+                dyn(i, j) = avg;
+                dyn(j, i) = std::conj(avg);
+            }
+            dyn(i, i) = std::complex<double>(dyn(i, i).real(), 0.0);
+        }
+        apply_crystal_projection();
+    }
+    else if (asr_type == "crystal")
+    {
+        apply_crystal_projection();
     }
     else
     {
@@ -420,18 +456,13 @@ void DFPT_Phon::apply_asr(const std::string& asr_type, int q_idx, DFPT_PW_Data& 
 
     data.set_dynmat(q_idx, dyn);
 
-    // violation AFTER the correction (physical row sums)
+    // violation AFTER the correction (physical residuals)
     double worst_after = 0.0;
     for (int ia = 0; ia < nat; ++ia)
     {
-        double s2 = 0.0;
-        for (int da = 0; da < 3; ++da)
-        {
-            s2 += std::norm(physical_row_sum(ia, da));
-        }
-        worst_after = std::max(worst_after, std::sqrt(s2));
+        worst_after = std::max(worst_after, physical_residual_norm(ia));
     }
-    std::cout << "DFPT ASR (" << asr_type << ") applied: worst physical rowsum " << std::setprecision(3)
+    std::cout << "DFPT ASR (" << asr_type << ") applied: worst physical residual " << std::setprecision(3)
               << std::scientific << worst_before << " -> " << worst_after;
     if (n_born == nat)
     {
