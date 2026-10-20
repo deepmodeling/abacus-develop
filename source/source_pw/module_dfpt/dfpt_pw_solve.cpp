@@ -12,12 +12,14 @@
 
 #include "dfpt_pw_data.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 
 #include <cmath>
 #include <complex>
 #include <cstdlib>
 #include <iomanip>
+#include <sstream>
 #include <iostream>
 #include <vector>
 
@@ -301,6 +303,15 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
                 << (converged ? "converged" : "NOT converged (max_iter reached)") << ", residual=" << std::scientific
                 << std::setprecision(6) << residual << " (iter=" << n_iter_done << ")" << std::endl;
         std::cout << summary.str();
+    }
+    if (!converged)
+    {
+        std::ostringstream oss;
+        oss << "the displacement response (atom " << iat + 1 << " dir " << static_cast<char>('x' + idir)
+            << ") did not converge within dfpt_max_iter=" << max_iter_ << ": final residual " << std::scientific
+            << std::setprecision(3) << residual << " vs threshold " << std::setprecision(1) << conv_thr_
+            << std::defaultfloat << ". Phonon frequencies involving this displacement are unreliable";
+        ModuleBase::WARNING("DFPT_PW::solve_displacement", oss.str());
     }
     stash_converged_disp_response(q_idx, iat, idir, v_sc_r_last, nk, nbands);
 

@@ -143,6 +143,19 @@ void DFPT_PW::set_asr(const std::string& asr_type)
     if (asr_type == "no" || asr_type == "simple" || asr_type == "crystal")
     {
         pimpl_->asr_type_ = asr_type;
+void DFPT_PW::set_mix_type(const std::string& mix_type)
+{
+    if (mix_type == "plain" || mix_type == "kerker")
+    {
+        pimpl_->mix_type_ = mix_type;
+    }
+}
+
+void DFPT_PW::set_kerker_a2(double a2)
+{
+    if (a2 > 0.0)
+    {
+        pimpl_->kerker_a2_ = a2;
     }
 }
 

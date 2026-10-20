@@ -195,6 +195,51 @@ void ReadInput::item_dfpt()
             if (para.input.dfpt_asr != "no" && para.input.dfpt_asr != "simple" && para.input.dfpt_asr != "crystal")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_asr must be no, simple or crystal.");
+        Input_Item item("dfpt_mix_type");
+        item.annotation = "mixing scheme of the DFPT first-order density: plain or kerker";
+        item.category = category;
+        item.type = "String";
+        item.description = "Set the mixing scheme of the first-order density in the "
+                           "self-consistent DFPT cycle. plain: the same coefficient "
+                           "dfpt_mix_beta on every shell. kerker: the Kerker screen "
+                           "f_g = |G+q|^2 / (|G+q|^2 + a^2) damps the Coulomb-stiff "
+                           "smallest shells, stabilizing polar / small-gap systems at "
+                           "beta up to 1; a^2 is set by dfpt_kerker_a2.";
+        item.default_value = "plain";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            if (item.get_size() == 0)
+            {
+                para.input.dfpt_mix_type = "plain";
+            }
+            else
+            {
+                para.input.dfpt_mix_type = strvalue;
+            }
+        };
+        sync_string(input.dfpt_mix_type);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.dfpt_mix_type != "plain" && para.input.dfpt_mix_type != "kerker")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_mix_type must be plain or kerker.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dfpt_kerker_a2");
+        item.annotation = "Kerker screening parameter a^2 in 1/lat0^2 (dfpt_mix_type kerker only)";
+        item.category = category;
+        item.type = "Real";
+        item.description = "Set the Kerker screening parameter a^2 (in 1/lat0^2 units) used "
+                           "by dfpt_mix_type = kerker. The screen f_g = |G+q|^2 / "
+                           "(|G+q|^2 + a^2) freezes the stiff long-wavelength shells; "
+                           "larger a^2 damps more shells. Ignored by the plain scheme.";
+        item.default_value = "1.0";
+        read_sync_double(input.dfpt_kerker_a2);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.dfpt_kerker_a2 <= 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_kerker_a2 must be > 0.");
             }
         };
         this->add_item(item);
