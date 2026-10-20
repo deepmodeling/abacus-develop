@@ -438,7 +438,10 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
     // the output quantities
-    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp, this->kv, this->pw_wfc, *this->inp_, GlobalV::ofs_running);
+    if (!this->defer_iter_output(istep))
+    {
+        ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp, this->kv, this->pw_wfc, *this->inp_, false, GlobalV::ofs_running);
+    }
 }
 
 template <typename T, typename Device>

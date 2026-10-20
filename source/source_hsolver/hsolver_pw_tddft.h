@@ -66,6 +66,11 @@ class HSolverPWTDDFT
     void invalidate_basis();
     /** @brief Reset diagnostics without invalidating preconditioner history. */
     void reset_orth_stats();
+    /** @brief Publish diagnostics accumulated over accepted trial intervals only. */
+    void set_orth_stats(const TDOrthStats& stats)
+    {
+        orth_stats_ = stats;
+    }
     /** @brief Clear spinor padding without changing physical coefficients or the k-point cursor; no communication. */
     void zero_padding(psi::Psi<T, Device>* current);
     /** @brief Orthogonalize initial orbitals with clean padding; return whether this pool changed any physical orbital. */

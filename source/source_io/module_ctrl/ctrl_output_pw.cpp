@@ -27,6 +27,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
                             const K_Vectors& kv,
                             const ModulePW::PW_Basis_K* pw_wfc,
                             const Input_para& inp,
+                            bool final_output,
                             std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_pw");
@@ -46,7 +47,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
     {
         if (istep % output_frequency == 0)
         {
-            if (iter % inp.out_freq_elec == 0 || iter == inp.scf_nmax || conv_esolver)
+            if (iter % inp.out_freq_elec == 0 || iter == inp.scf_nmax || conv_esolver || final_output)
             {
                 istep_in = istep;
                 iter_in = iter;
@@ -54,7 +55,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
             }
         }
     }
-    else if (iter == inp.scf_nmax || conv_esolver)
+    else if (iter == inp.scf_nmax || conv_esolver || final_output)
     {
         out_wfc_flag = true;
     }

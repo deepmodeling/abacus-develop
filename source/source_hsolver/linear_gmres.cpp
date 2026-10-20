@@ -9,8 +9,8 @@ template <typename T, typename Device>
 LinearGMRES<T, Device>::LinearGMRES(double tolerance, const LinearSolveOptions& options, const diag_comm_info& comm)
     : tolerance_(tolerance), restart_(0), work_(comm, 2), algebra_(comm)
 {
-    const int iteration_limit = std::max(1, options.max_iterations);
-    restart_ = std::min(options.restart, iteration_limit);
+    const int iter_limit = std::max(1, options.max_iterations);
+    restart_ = std::min(options.restart, iter_limit);
     if (restart_ <= 0 || restart_ > (std::numeric_limits<int>::max() - 1) / 3)
     {
         throw std::invalid_argument("Invalid GMRES restart dimension.");

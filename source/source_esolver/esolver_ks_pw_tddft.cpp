@@ -12,6 +12,7 @@
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#include "source_io/module_ctrl/ctrl_output_pw.h"
 #include "source_io/module_current/td_current_pw.h"
 #include "source_io/module_current/td_spin_pw_io.h"
 #include "source_io/module_efield/td_efield_io.h"
@@ -26,6 +27,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <sstream>
 
 namespace ModuleESolver
 {
@@ -45,6 +47,17 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
     const std::string& output_dir = PARAM.globalv.global_out_dir;
 
     this->td_field_manager_ = elecstate::create_td_field_manager(inp);
+    if (inp.td_max_halvings > 0)
+    {
+        const int parts = 1 << inp.td_max_halvings;
+        for (const elecstate::TDField& field: this->td_field_manager_->fields())
+        {
+            if (field.subdivisions() > std::numeric_limits<int>::max() / parts)
+            {
+                ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "td_max_halvings exceeds the field sampling integer range.");
+            }
+        }
+    }
     if (inp.init_vecpot)
     {
         // An empty directory selects the calculation working directory, not OUT.<suffix>.
@@ -126,8 +139,152 @@ void ESolver_KS_PW_TDDFT<T, Device>::runner(BaseCell& basecell, const int istep)
     }
     for (int electronic_step = first_step; electronic_step <= last_step; ++electronic_step)
     {
-        ESolver_KS::runner(basecell, electronic_step);
+        if (this->retry_enabled(electronic_step))
+        {
+            basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
+            UnitCell& cell = static_cast<UnitCell&>(basecell);
+            this->run_with_retries(cell, electronic_step);
+        }
+        else
+        {
+            ESolver_KS::runner(basecell, electronic_step);
+        }
     }
+}
+
+template <typename T, typename Device>
+bool ESolver_KS_PW_TDDFT<T, Device>::defer_iter_output(const int istep) const
+{
+    return this->retry_enabled(istep);
+}
+
+template <typename T, typename Device>
+bool ESolver_KS_PW_TDDFT<T, Device>::retry_enabled(int istep) const
+{
+    return istep > 0 && this->inp_->td_max_halvings > 0;
+}
+
+template <typename T, typename Device>
+typename ESolver_KS_PW_TDDFT<T, Device>::AcceptedState ESolver_KS_PW_TDDFT<T, Device>::capture_state() const
+{
+    AcceptedState state;
+    state.energy = this->pelec->f_en;
+    state.eigenvalues = this->pelec->ekb;
+    state.density.resize(this->chr.nspin * this->chr.nrxx);
+    for (int spin = 0; spin < this->chr.nspin; ++spin)
+    {
+        std::copy(this->chr.rho[spin], this->chr.rho[spin] + this->chr.nrxx, state.density.begin() + spin * this->chr.nrxx);
+    }
+    return state;
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::restore_state(const AcceptedState& state)
+{
+    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "restore_state");
+    *this->stp.template get_psi_t<T, Device>() = this->history_.previous();
+    this->pelec->f_en = state.energy;
+    this->pelec->ekb = state.eigenvalues;
+    this->pelec->vnew_exist = false;
+    for (int spin = 0; spin < this->chr.nspin; ++spin)
+    {
+        const double* density = state.density.data() + spin * this->chr.nrxx;
+        std::copy(density, density + this->chr.nrxx, this->chr.rho[spin]);
+    }
+    this->chr.save_rho_before_sum_band();
+    // The caller binds the trial field and rebuilds the endpoint potential. The saved
+    // left-endpoint potential used by the corrector is already held in history_.
+    this->td_solver_->invalidate_basis();
+    this->td_solver_->reset_orth_stats();
+    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "restore_state");
+}
+
+template <typename T, typename Device>
+bool ESolver_KS_PW_TDDFT<T, Device>::advance_interval(UnitCell& cell,
+                                                      int step,
+                                                      int index,
+                                                      int depth,
+                                                      const elecstate::TDFieldState& full,
+                                                      AcceptedState& accepted,
+                                                      hsolver::TDOrthStats& stats)
+{
+    const int parts = 1 << depth;
+    if (depth > 0)
+    {
+        this->restore_state(accepted);
+        const elecstate::TDFieldState trial = this->td_field_manager_->subinterval(full, index, parts);
+        this->td_field_manager_->bind_field(trial);
+        // Length-gauge fields are fixed potential components and must be rebuilt
+        // at the trial endpoint, just as before_scf does for an original step.
+        this->pelec->pot->init_pot(&this->chr);
+        this->prepare_init_hamilt(cell);
+    }
+    const double left_time = (step - 1 + static_cast<double>(index) / parts) * full.dt * ModuleBase::AU_to_FS;
+    const double right_time = (step - 1 + static_cast<double>(index + 1) / parts) * full.dt * ModuleBase::AU_to_FS;
+    const std::streamsize precision = log_.precision();
+    log_ << " TD trial: [" << std::setprecision(12) << left_time << ", " << right_time << "] fs, depth=" << depth << '\n';
+    log_.precision(precision);
+    std::ostringstream interval;
+    interval << std::setprecision(12) << "[" << left_time << ", " << right_time << "] fs";
+    const std::string interval_text = interval.str();
+    if (depth > 0)
+    {
+        std::cout << " TD substep: " << interval_text << std::endl;
+    }
+    const bool converged = this->scf_loop(cell, step, this->inp_->td_retry_nmax);
+    const bool accept_trial = converged || depth == this->inp_->td_max_halvings;
+    log_ << " TD trial result: iterations=" << this->niter << ", residual=" << this->drho << ", converged=" << converged
+         << ", accepted=" << accept_trial << '\n';
+    if (!converged && depth < this->inp_->td_max_halvings)
+    {
+        std::cout << " TD retry: SCF not converged; splitting " << interval_text << " into two half steps." << std::endl;
+        const int next_depth = depth + 1;
+        const int left_index = 2 * index;
+        const int right_index = left_index + 1;
+        const bool left_converged = advance_interval(cell, step, left_index, next_depth, full, accepted, stats);
+        const bool right_converged = advance_interval(cell, step, right_index, next_depth, full, accepted, stats);
+        return left_converged && right_converged;
+    }
+    if (!converged)
+    {
+        this->finalize_endpoint(cell);
+    }
+    const hsolver::TDOrthStats& trial_stats = this->td_solver_->orth_stats();
+    stats.before = std::max(stats.before, trial_stats.before);
+    stats.after = std::max(stats.after, trial_stats.after);
+    const psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
+    this->history_.save(*current, *this->pelec->pot);
+    accepted = this->capture_state();
+    return converged;
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::run_with_retries(UnitCell& cell, int step)
+{
+    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "run_with_retries");
+    const ModuleBase::TimePoint started = ModuleBase::get_time();
+    AcceptedState accepted = this->capture_state();
+    this->before_scf(cell, step);
+    ModuleBase::GlobalFunc::DONE(log_, "INIT SCF");
+    const elecstate::TDFieldState full = this->td_field_manager_->field_state();
+    hsolver::TDOrthStats stats;
+    const bool converged = advance_interval(cell, step, 0, 0, full, accepted, stats);
+    // Restore original-grid sampling metadata without altering the accepted endpoint.
+    this->td_field_manager_->bind_field(full);
+    this->td_solver_->set_orth_stats(stats);
+    this->chr.save_rho_before_sum_band();
+    // Taoni add 2026-10-20: ESolver_FP::iter_finish currently only writes density backups.
+    // Revisit this call if the base hook gains responsibilities beyond output.
+    bool force_output = true;
+    ESolver_FP::iter_finish(cell, step, this->niter, force_output);
+    this->write_iter_bands();
+    ModuleIO::ctrl_iter_pw(step, this->niter, converged, this->stp, this->kv, this->pw_wfc, *this->inp_, true, log_);
+    const double duration = ModuleBase::get_duration(started, ModuleBase::get_time());
+    this->record_iteration(cell, duration);
+    this->output_field(step);
+    this->after_scf(cell, step, converged);
+    this->conv_esolver = converged;
+    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "run_with_retries");
 }
 
 template <typename T, typename Device>
@@ -195,6 +352,16 @@ void ESolver_KS_PW_TDDFT<T, Device>::prep_td_step(const int istep)
         ModuleBase::GlobalFunc::OUT(log_, "Cartesian vector potential Ay(t)", A_right_ha[1]);
         ModuleBase::GlobalFunc::OUT(log_, "Cartesian vector potential Az(t)", A_right_ha[2]);
     }
+    if (!this->defer_iter_output(istep))
+    {
+        this->output_field(istep);
+    }
+    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "prep_td_step");
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::output_field(int istep) const
+{
     if (GlobalV::MY_RANK == 0)
     {
         if (this->inp_->out_vecpot)
@@ -206,7 +373,6 @@ void ESolver_KS_PW_TDDFT<T, Device>::prep_td_step(const int istep)
             ModuleIO::write_td_field(*this->td_field_manager_, PARAM.globalv.global_out_dir);
         }
     }
-    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "prep_td_step");
 }
 
 template <typename T, typename Device>
@@ -229,6 +395,11 @@ void ESolver_KS_PW_TDDFT<T, Device>::iter_init(UnitCell& ucell, const int istep,
     }
     ModuleIO::write_head_td(GlobalV::ofs_running, ionic_step, istep, iter, this->basisname);
     ESolver_KS_PW<T, Device>::iter_init(ucell, istep, iter);
+    if (this->retry_enabled(istep) && iter == 1)
+    {
+        // Apply the trial limit after the parent initializes the mixing machinery.
+        this->p_chgmix->reset_scf_history(this->inp_->td_retry_nmax);
+    }
 }
 
 template <typename T, typename Device>
@@ -300,7 +471,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
     this->td_solver_->solve(op,
                             this->history_.previous(),
                             current,
-                            this->td_field_manager_->dt_ha(),
+                            this->td_field_manager_->interval_dt_ha(),
                             momentum_shift,
                             istep,
                             iter,
@@ -323,7 +494,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
 template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
-    if (!conv_esolver && this->niter < this->maxniter)
+    if (!conv_esolver && this->niter < this->maxniter && !this->retry_enabled(istep))
     {
         const int evolution_step = istep + 1;
         const std::string message
@@ -335,7 +506,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
         const psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
         this->td_solver_->check_initial(*current, this->niter);
     }
-    if (!conv_esolver)
+    if (!conv_esolver && !this->retry_enabled(istep))
     {
         finalize_endpoint(ucell);
     }
@@ -353,8 +524,12 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     std::cout.precision(original_precision);
     if (istep >= 0)
     {
-        psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
-        this->history_.save(*current, *this->pelec->pot);
+        // Retry intervals already saved their accepted endpoint before reaching this hook.
+        if (!this->retry_enabled(istep))
+        {
+            psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
+            this->history_.save(*current, *this->pelec->pot);
+        }
 
         sample_endpoint(ucell, istep);
     }

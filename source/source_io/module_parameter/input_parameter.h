@@ -316,6 +316,8 @@ struct Input_para
 
     // ==============   #Parameters (9.rt-tddft) ===========================
     double td_dt = -1.0;       ///< time step for propagation
+    int td_max_halvings = 0;   ///< Maximum depth of PW real-time interval bisection; zero disables retries.
+    int td_retry_nmax = 20;    ///< SCF limit per trial interval when PW real-time retries are enabled.
     int estep_per_md = 1;      ///< number of electronic steps per MD step
     std::string lin_solver = "gmres"; ///< linear solver for real-time propagation
     std::string td_orthonormal = "cholesky"; ///< Orthonormalization for PW real-time propagation.

@@ -10,6 +10,7 @@
 
 #include <iosfwd>
 #include <memory>
+#include <vector>
 
 namespace ModuleESolver
 {
@@ -33,6 +34,7 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
 
     /** @brief Require an unmixed endpoint prediction before accepting a corrected step. */
     ESolver_KS::DensityStage density_stage(const int istep, const int iter) const override;
+    bool defer_iter_output(const int istep) const override;
 
     void before_scf(UnitCell& ucell, const int istep) override;
 
@@ -62,6 +64,26 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     pw::TDHistoryPW<T, Device> history_;
     double initial_wave_electrons_ = 0.0;
     double initial_rho_electrons_ = 0.0;
+    /** @brief Small endpoint data; the accepted wavefunctions remain owned by history_. */
+    struct AcceptedState
+    {
+        elecstate::fenergy energy;
+        ModuleBase::matrix eigenvalues;
+        std::vector<double> density;
+    };
+    /** @brief Whether the current electronic step uses half-step retries. */
+    bool retry_enabled(int istep) const;
+    AcceptedState capture_state() const;
+    void restore_state(const AcceptedState& state);
+    void run_with_retries(UnitCell& cell, int step);
+    bool advance_interval(UnitCell& cell,
+                          int step,
+                          int index,
+                          int depth,
+                          const elecstate::TDFieldState& full,
+                          AcceptedState& accepted,
+                          hsolver::TDOrthStats& stats);
+    void output_field(int step) const;
     /** @brief Print the one-based electronic step header. */
     void print_step(const int istep) const;
     /** @brief Rebuild an iteration-limited endpoint from its final orbitals without changing occupations. */
