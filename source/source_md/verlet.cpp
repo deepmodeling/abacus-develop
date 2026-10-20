@@ -20,7 +20,6 @@ Verlet::~Verlet()
 {
 }
 
-
 void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("Verlet", "setup");
@@ -30,7 +29,6 @@ void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_
 
     ModuleBase::timer::end("Verlet", "setup");
 }
-
 
 void Verlet::first_half(std::ofstream& ofs)
 {
@@ -43,7 +41,6 @@ void Verlet::first_half(std::ofstream& ofs)
     ModuleBase::timer::end("Verlet", "first_half");
 }
 
-
 void Verlet::second_half()
 {
     ModuleBase::TITLE("Verlet", "second_half");
@@ -54,7 +51,6 @@ void Verlet::second_half()
 
     ModuleBase::timer::end("Verlet", "second_half");
 }
-
 
 void Verlet::apply_thermostat(void)
 {
@@ -82,7 +78,7 @@ void Verlet::apply_thermostat(void)
     }
     else if (mdp.md_thermostat == "anderson")
     {
-        for (LocalAtom& atom : mdcell.owned_atoms())
+        for (LocalAtom& atom: mdcell.owned_atoms())
         {
             if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
             {
@@ -113,7 +109,6 @@ void Verlet::apply_thermostat(void)
     }
 }
 
-
 void Verlet::thermalize(const int& nraise, const double& current_temp, const double& target_temp)
 {
     double fac = 0.0;
@@ -126,9 +121,9 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
         fac = sqrt(target_temp / current_temp);
     }
 
-    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= fac;
+    for (LocalAtom& atom: mdcell.owned_atoms())
+        atom.vel *= fac;
 }
-
 
 void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
 {
@@ -144,8 +139,8 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
     std::int64_t ndeg = MD_func::global_dof(mdcell);
 
     // Calculate kinetic energies
-    double kin_energy = current_temp * static_cast<double>(ndeg) * 0.5;  // in Hartree
-    double kin_target = target_temp * ndeg * 0.5;   // in Hartree
+    double kin_energy = current_temp * static_cast<double>(ndeg) * 0.5; // in Hartree
+    double kin_target = target_temp * ndeg * 0.5;                       // in Hartree
 
     // Calculate tau parameter (characteristic time scale / dt)
     double taut = mdp.md_csvr_tau / mdp.md_dt;
@@ -171,9 +166,8 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
                 sumnoises += random_value * random_value;
             }
             const double factor2 = (1.0 - factor) * kin_target / kin_energy / ndeg;
-            const double resample = std::max(0.0,
-                                             factor + factor2 * (rr * rr + sumnoises)
-                                                 + 2.0 * rr * sqrt(factor * factor2));
+            const double resample
+                = std::max(0.0, factor + factor2 * (rr * rr + sumnoises) + 2.0 * rr * sqrt(factor * factor2));
             scale = sqrt(resample);
         }
         MPI_Bcast(&scale, 1, MPI_DOUBLE, 0, mdcell.communicator());
@@ -189,16 +183,15 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
             sumnoises += random_value * random_value;
         }
         const double factor2 = (1.0 - factor) * kin_target / kin_energy / ndeg;
-        const double resample = std::max(0.0,
-                                         factor + factor2 * (rr * rr + sumnoises)
-                                             + 2.0 * rr * sqrt(factor * factor2));
+        const double resample
+            = std::max(0.0, factor + factor2 * (rr * rr + sumnoises) + 2.0 * rr * sqrt(factor * factor2));
         scale = sqrt(resample);
     }
 
     // Apply velocity scaling
-    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= scale;
+    for (LocalAtom& atom: mdcell.owned_atoms())
+        atom.vel *= scale;
 }
-
 
 void Verlet::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
@@ -206,13 +199,11 @@ void Verlet::print_md(std::ofstream& ofs, const bool& cal_stress)
     return;
 }
 
-
 void Verlet::write_restart(const std::string& global_out_dir)
 {
     MD_base::write_restart(global_out_dir);
     return;
 }
-
 
 void Verlet::restart(const std::string& global_readin_dir)
 {

@@ -17,7 +17,7 @@ Nose_Hoover::Nose_Hoover(const MD_para& mdp_in,
 
     md_tfreq = mdp.md_tfreq * ModuleBase::AU_to_FS;
 
-    assert(unit_transform>0.0);
+    assert(unit_transform > 0.0);
 
     md_pfirst = mdp.md_pfirst / unit_transform;
     md_plast = mdp.md_plast / unit_transform;
@@ -95,7 +95,7 @@ Nose_Hoover::Nose_Hoover(const MD_para& mdp_in,
 
     tdof = MD_func::global_dof(mdcell);
 
-    assert(mdp.md_tchain>0);
+    assert(mdp.md_tchain > 0);
 
     /// allocate thermostats coupled with particles
     mass_eta = new double[mdp.md_tchain];
@@ -159,7 +159,9 @@ Nose_Hoover::~Nose_Hoover()
     }
 }
 
-void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
+void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver,
+                        const std::string& global_readin_dir,
+                        DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("Nose_Hoover", "setup");
     ModuleBase::timer::start("Nose_Hoover", "setup");
@@ -273,7 +275,6 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     return;
 }
 
-
 void Nose_Hoover::second_half()
 {
     ModuleBase::TITLE("Nose_Hoover", "second_half");
@@ -316,7 +317,6 @@ void Nose_Hoover::second_half()
 
     return;
 }
-
 
 void Nose_Hoover::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
@@ -555,7 +555,8 @@ void Nose_Hoover::particle_thermo()
     }
 
     /// rescale velocity due to thermostats
-    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= scale;
+    for (LocalAtom& atom: mdcell.owned_atoms())
+        atom.vel *= scale;
 }
 
 void Nose_Hoover::baro_thermo()
@@ -649,7 +650,7 @@ void Nose_Hoover::update_baro()
     else
     {
         ModuleBase::matrix t_vector(3, 3);
-        for (const LocalAtom& atom : mdcell.owned_atoms())
+        for (const LocalAtom& atom: mdcell.owned_atoms())
             for (int i = 0; i < 3; ++i)
                 for (int j = 0; j < 3; ++j)
                     t_vector(i, j) += atom.mass * atom.vel[i] * atom.vel[j];
@@ -700,7 +701,7 @@ void Nose_Hoover::vel_baro()
         factor[i] = exp(-(v_omega[i] + mtk_term) * md_dt / 4);
     }
 
-    for (LocalAtom& atom : mdcell.owned_atoms())
+    for (LocalAtom& atom: mdcell.owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {

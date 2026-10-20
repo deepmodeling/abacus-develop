@@ -1,15 +1,14 @@
 #include "md_func.h"
-#include "source_cell/domain_decomposition.h"
 
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
+#include "source_cell/domain_decomposition.h"
 #include "source_io/module_output/output_log.h"
 
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
-
 
 namespace MD_func
 {
@@ -21,23 +20,24 @@ bool write_dump_at(const int file, const std::string& data, const MPI_Offset off
     std::size_t written = 0;
     while (written < data.size())
     {
-        const ssize_t count = pwrite(file, data.data() + written, data.size() - written,
-                                     static_cast<off_t>(offset + written));
-        if (count <= 0) return false;
+        const ssize_t count
+            = pwrite(file, data.data() + written, data.size() - written, static_cast<off_t>(offset + written));
+        if (count <= 0)
+            return false;
         written += static_cast<std::size_t>(count);
     }
     return true;
 }
-}
+} // namespace
 #endif
 
 double gaussrand()
 {
-    static double v1=0.0;
-    static double v2=0.0;
-    static double S=0.0;
+    static double v1 = 0.0;
+    static double v2 = 0.0;
+    static double S = 0.0;
     static int phase = 0;
-    double xx=0.0;
+    double xx = 0.0;
 
     if (phase == 0)
     {
@@ -67,7 +67,7 @@ double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, 
 {
     double ke = 0;
 
-#pragma omp parallel for reduction(+:ke) schedule(static) if (natom >= 256)
+#pragma omp parallel for reduction(+ : ke) schedule(static) if (natom >= 256)
     for (int ion = 0; ion < natom; ++ion)
     {
         ke += 0.5 * allmass[ion] * vel[ion].norm2();
@@ -81,19 +81,22 @@ void compute_stress(const MDCell& mdcell,
                     const ModuleBase::matrix& virial,
                     ModuleBase::matrix& stress)
 {
-    if (!cal_stress) return;
+    if (!cal_stress)
+        return;
     ModuleBase::matrix t_vector(3, 3);
     for (std::size_t i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[i];
-        for (int a = 0; a < 3; ++a) for (int b = 0; b < 3; ++b)
-            t_vector(a, b) += atom.mass * atom.vel[a] * atom.vel[b];
+        for (int a = 0; a < 3; ++a)
+            for (int b = 0; b < 3; ++b)
+                t_vector(a, b) += atom.mass * atom.vel[a] * atom.vel[b];
     }
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, t_vector.c, 9, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
-    for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j)
-        stress(i, j) = virial(i, j) + t_vector(i, j) / mdcell.omega();
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            stress(i, j) = virial(i, j) + t_vector(i, j) / mdcell.omega();
 }
 
 void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
@@ -214,14 +217,17 @@ void init_vel(MDCell& mdcell,
     {
         const UnitCell& unit = mdcell.backing_unitcell();
         std::vector<double> masses(static_cast<std::size_t>(unit.nat), 0.0);
-        std::vector<ModuleBase::Vector3<int> > mobile(static_cast<std::size_t>(unit.nat));
-        std::vector<ModuleBase::Vector3<double> > velocities(static_cast<std::size_t>(unit.nat));
+        std::vector<ModuleBase::Vector3<int>> mobile(static_cast<std::size_t>(unit.nat));
+        std::vector<ModuleBase::Vector3<double>> velocities(static_cast<std::size_t>(unit.nat));
         ModuleBase::Vector3<int> frozen;
         get_mass_mbl(unit, masses.data(), frozen, mobile.data());
         frozen_freedom = frozen.x + frozen.y + frozen.z;
-        if (frozen.x == 0) ++frozen_freedom;
-        if (frozen.y == 0) ++frozen_freedom;
-        if (frozen.z == 0) ++frozen_freedom;
+        if (frozen.x == 0)
+            ++frozen_freedom;
+        if (frozen.y == 0)
+            ++frozen_freedom;
+        if (frozen.z == 0)
+            ++frozen_freedom;
 
         if (init_vel)
         {
@@ -259,9 +265,10 @@ void init_vel(MDCell& mdcell,
         {
             offsets[static_cast<std::size_t>(it + 1)] = offsets[static_cast<std::size_t>(it)] + unit.atoms[it].na;
         }
-        for (LocalAtom& atom : mdcell.owned_atoms())
+        for (LocalAtom& atom: mdcell.owned_atoms())
         {
-            atom.vel = velocities[static_cast<std::size_t>(offsets[static_cast<std::size_t>(atom.type)] + atom.type_index)];
+            atom.vel
+                = velocities[static_cast<std::size_t>(offsets[static_cast<std::size_t>(atom.type)] + atom.type_index)];
         }
         return;
     }
@@ -269,7 +276,9 @@ void init_vel(MDCell& mdcell,
     std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
     ModuleBase::Vector3<std::int64_t> frozen(0, 0, 0);
     for (std::size_t i = 0; i < atoms.size(); ++i)
-        for (int k = 0; k < 3; ++k) if (!atoms[i].mbl[k]) ++frozen[k];
+        for (int k = 0; k < 3; ++k)
+            if (!atoms[i].mbl[k])
+                ++frozen[k];
 #ifdef __MPI
     if (mdcell.mpi_size() > 1)
     {
@@ -277,9 +286,12 @@ void init_vel(MDCell& mdcell,
     }
 #endif
     frozen_freedom = frozen.x + frozen.y + frozen.z;
-    if (!frozen.x) ++frozen_freedom;
-    if (!frozen.y) ++frozen_freedom;
-    if (!frozen.z) ++frozen_freedom;
+    if (!frozen.x)
+        ++frozen_freedom;
+    if (!frozen.y)
+        ++frozen_freedom;
+    if (!frozen.z)
+        ++frozen_freedom;
     if (init_vel)
     {
         double kinetic = 0.0;
@@ -287,20 +299,22 @@ void init_vel(MDCell& mdcell,
         if (!restart && current > 0.0 && temperature > 0.0)
         {
             const double factor = sqrt(temperature / current);
-            for (LocalAtom& atom : atoms) atom.vel *= factor;
+            for (LocalAtom& atom: atoms)
+                atom.vel *= factor;
         }
         return;
     }
 
     double local_mass = 0.0;
     ModuleBase::Vector3<double> momentum(0.0, 0.0, 0.0);
-    for (LocalAtom& atom : atoms)
+    for (LocalAtom& atom: atoms)
     {
         local_mass += atom.mass;
         for (int k = 0; k < 3; ++k)
         {
             atom.vel[k] = atom.mbl[k] ? gaussrand() * sqrt(temperature / atom.mass) : 0.0;
-            if (frozen[k] == 0) momentum[k] += atom.mass * atom.vel[k];
+            if (frozen[k] == 0)
+                momentum[k] += atom.mass * atom.vel[k];
         }
     }
 #ifdef __MPI
@@ -311,7 +325,8 @@ void init_vel(MDCell& mdcell,
     {
         if (frozen[k] == 0 && local_mass > 0.0)
         {
-            for (LocalAtom& atom : atoms) atom.vel[k] -= momentum[k] / local_mass;
+            for (LocalAtom& atom: atoms)
+                atom.vel[k] -= momentum[k] / local_mass;
         }
     }
     double kinetic = 0.0;
@@ -319,7 +334,8 @@ void init_vel(MDCell& mdcell,
     if (current > 0.0 && temperature > 0.0)
     {
         const double factor = sqrt(temperature / current);
-        for (LocalAtom& atom : atoms) atom.vel *= factor;
+        for (LocalAtom& atom: atoms)
+            atom.vel *= factor;
     }
 }
 
@@ -340,18 +356,22 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         p_esolver->runner(static_cast<BaseCell&>(mdcell), istep);
         decomp.accumulate_ghost_forces(mdcell);
         potential = 0.5 * p_esolver->cal_energy();
-        for (LocalAtom& atom : mdcell.owned_atoms()) atom.force *= 0.5;
+        for (LocalAtom& atom: mdcell.owned_atoms())
+            atom.force *= 0.5;
         if (md_out_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, mdcell, "TOTAL-FORCE (eV/Angstrom)");
         }
-        if (cal_stress) { p_esolver->cal_stress(static_cast<BaseCell&>(mdcell), virial); virial *= 0.5; }
+        if (cal_stress)
+        {
+            p_esolver->cal_stress(static_cast<BaseCell&>(mdcell), virial);
+            virial *= 0.5;
+        }
     }
     else
     {
         UnitCell& ucell = mdcell.backing_unitcell();
-        std::vector<std::vector<ModuleBase::Vector3<double>>> backing_velocities(
-            static_cast<std::size_t>(ucell.ntype));
+        std::vector<std::vector<ModuleBase::Vector3<double>>> backing_velocities(static_cast<std::size_t>(ucell.ntype));
         for (int it = 0; it < ucell.ntype; ++it)
         {
             backing_velocities[static_cast<std::size_t>(it)] = ucell.atoms[it].vel;
@@ -363,15 +383,27 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
                       backing_velocities[static_cast<std::size_t>(it)].end(),
                       ucell.atoms[it].vel.begin());
         }
-        p_esolver->runner(ucell, istep); potential = 0.5 * p_esolver->cal_energy();
-        ModuleBase::matrix full_force(ucell.nat, 3); p_esolver->cal_force(ucell, full_force); full_force *= 0.5;
-        if (cal_stress) { p_esolver->cal_stress(ucell, virial); virial *= 0.5; }
-        std::vector<int> offsets(ucell.ntype + 1, 0); for (int it=0; it<ucell.ntype; ++it) offsets[it+1]=offsets[it]+ucell.atoms[it].na;
-        for (LocalAtom& atom : mdcell.owned_atoms()) { const int iat=offsets[atom.type]+atom.type_index; atom.force.set(full_force(iat,0),full_force(iat,1),full_force(iat,2)); }
+        p_esolver->runner(ucell, istep);
+        potential = 0.5 * p_esolver->cal_energy();
+        ModuleBase::matrix full_force(ucell.nat, 3);
+        p_esolver->cal_force(ucell, full_force);
+        full_force *= 0.5;
+        if (cal_stress)
+        {
+            p_esolver->cal_stress(ucell, virial);
+            virial *= 0.5;
+        }
+        std::vector<int> offsets(ucell.ntype + 1, 0);
+        for (int it = 0; it < ucell.ntype; ++it)
+            offsets[it + 1] = offsets[it] + ucell.atoms[it].na;
+        for (LocalAtom& atom: mdcell.owned_atoms())
+        {
+            const int iat = offsets[atom.type] + atom.type_index;
+            atom.force.set(full_force(iat, 0), full_force(iat, 1), full_force(iat, 2));
+        }
     }
     ModuleBase::timer::end("MD_func", "force_virial");
 }
-
 
 void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const ModuleBase::matrix& stress)
 {
@@ -386,23 +418,23 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
 
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
 
-    
     ofs << " ELECTRONIC      PART OF STRESS: " << virial_scalar * unit_transform << " kbar" << std::endl;
-    ofs << " IONIC (KINETIC) PART OF STRESS: " << (stress_scalar - virial_scalar) * unit_transform << " kbar" << std::endl;
+    ofs << " IONIC (KINETIC) PART OF STRESS: " << (stress_scalar - virial_scalar) * unit_transform << " kbar"
+        << std::endl;
     ofs << " MD PRESSURE (ELECTRONS+IONS)  : " << stress_scalar * unit_transform << " kbar" << std::endl;
 
     // one should use 'print_stress' function in ../source/source_io/output_log.cpp
-/*
-    ofs.unsetf(std::ios::fixed);
-    ofs << std::setprecision(8) << std::endl;
-    ModuleBase::GlobalFunc::NEW_PART("MD STRESS (kbar)");
-    for (int i = 0; i < 3; i++)
-    {
-        ofs << std::setw(15) << stress(i, 0) * unit_transform << std::setw(15) << stress(i, 1) * unit_transform
-            << std::setw(15) << stress(i, 2) * unit_transform << std::endl;
-    }
-    ofs << std::setiosflags(std::ios::left);
-*/
+    /*
+        ofs.unsetf(std::ios::fixed);
+        ofs << std::setprecision(8) << std::endl;
+        ModuleBase::GlobalFunc::NEW_PART("MD STRESS (kbar)");
+        for (int i = 0; i < 3; i++)
+        {
+            ofs << std::setw(15) << stress(i, 0) * unit_transform << std::setw(15) << stress(i, 1) * unit_transform
+                << std::setw(15) << stress(i, 2) * unit_transform << std::endl;
+        }
+        ofs << std::setiosflags(std::ios::left);
+    */
 
     return;
 }
@@ -430,11 +462,14 @@ void dump_info(const int& step,
     {
         header << "VIRIAL (kbar)\n";
         for (int i = 0; i < 3; ++i)
-            header << "  " << virial(i, 0) * unit_virial << "  " << virial(i, 1) * unit_virial << "  " << virial(i, 2) * unit_virial << "\n";
+            header << "  " << virial(i, 0) * unit_virial << "  " << virial(i, 1) * unit_virial << "  "
+                   << virial(i, 2) * unit_virial << "\n";
     }
     header << "INDEX    LABEL    POSITION (Angstrom)";
-    if (mdp.dump_force) header << "    FORCE (eV/Angstrom)";
-    if (mdp.dump_vel) header << "    VELOCITY (Angstrom/fs)";
+    if (mdp.dump_force)
+        header << "    FORCE (eV/Angstrom)";
+    if (mdp.dump_vel)
+        header << "    VELOCITY (Angstrom/fs)";
     header << "\n";
     std::vector<std::int64_t> type_offsets(mdcell.type_atom_counts().size() + 1, 0);
     for (std::size_t it = 0; it < mdcell.type_atom_counts().size(); ++it)
@@ -446,11 +481,12 @@ void dump_info(const int& step,
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
-        local << "  " << type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index
-              << "  " << mdcell.type_labels()[static_cast<std::size_t>(atom.type)]
-              << "  " << atom.cart.x * unit_pos << "  " << atom.cart.y * unit_pos << "  " << atom.cart.z * unit_pos;
+        local << "  " << type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index << "  "
+              << mdcell.type_labels()[static_cast<std::size_t>(atom.type)] << "  " << atom.cart.x * unit_pos << "  "
+              << atom.cart.y * unit_pos << "  " << atom.cart.z * unit_pos;
         if (mdp.dump_force)
-            local << "  " << atom.force.x * unit_force << "  " << atom.force.y * unit_force << "  " << atom.force.z * unit_force;
+            local << "  " << atom.force.x * unit_force << "  " << atom.force.y * unit_force << "  "
+                  << atom.force.z * unit_force;
         if (mdp.dump_vel)
             local << "  " << atom.vel.x * unit_vel << "  " << atom.vel.y * unit_vel << "  " << atom.vel.z * unit_vel;
         local << "\n";
@@ -458,23 +494,30 @@ void dump_info(const int& step,
     local << "\n\n";
 #ifdef __MPI
     const MPI_Comm comm = mdcell.communicator();
-    int rank = 0; MPI_Comm_rank(comm, &rank);
+    int rank = 0;
+    MPI_Comm_rank(comm, &rank);
     MPI_Offset base = 0;
     if (rank == 0)
     {
-        const int file_descriptor = open(file.str().c_str(), O_CREAT | O_WRONLY | (step == 0 ? O_TRUNC : O_APPEND), 0666);
-        if (file_descriptor < 0) ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot open MD_dump.");
+        const int file_descriptor
+            = open(file.str().c_str(), O_CREAT | O_WRONLY | (step == 0 ? O_TRUNC : O_APPEND), 0666);
+        if (file_descriptor < 0)
+            ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot open MD_dump.");
         base = lseek(file_descriptor, 0, SEEK_END);
-        if (!write_dump_at(file_descriptor, header.str(), base) || close(file_descriptor) != 0) ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump header.");
+        if (!write_dump_at(file_descriptor, header.str(), base) || close(file_descriptor) != 0)
+            ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump header.");
     }
     MPI_Bcast(&base, 1, MPI_OFFSET, 0, comm);
     const MPI_Offset atom_offset = base + static_cast<MPI_Offset>(header.str().size());
     const MPI_Offset local_size = static_cast<MPI_Offset>(local.str().size());
     MPI_Offset rank_offset = 0;
     MPI_Exscan(&local_size, &rank_offset, 1, MPI_OFFSET, MPI_SUM, comm);
-    if (rank == 0) rank_offset = 0;
+    if (rank == 0)
+        rank_offset = 0;
     const int file_descriptor = open(file.str().c_str(), O_WRONLY);
-    if (file_descriptor < 0 || !write_dump_at(file_descriptor, local.str(), atom_offset + rank_offset) || close(file_descriptor) != 0) ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump atoms.");
+    if (file_descriptor < 0 || !write_dump_at(file_descriptor, local.str(), atom_offset + rank_offset)
+        || close(file_descriptor) != 0)
+        ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump atoms.");
 #else
     std::ofstream ofs(file.str().c_str(), step == 0 ? std::ios::trunc : std::ios::app);
     ofs << header.str() << local.str();
@@ -494,15 +537,18 @@ void get_mass_mbl(const UnitCell& unit_in,
         {
             allmass[ion] = unit_in.atoms[it].mass / ModuleBase::AU_to_MASS;
             ionmbl[ion] = unit_in.atoms[it].mbl[i];
-            if (ionmbl[ion].x == 0) {
+            if (ionmbl[ion].x == 0)
+            {
                 ++frozen.x;
-}
-            if (ionmbl[ion].y == 0) {
+            }
+            if (ionmbl[ion].y == 0)
+            {
                 ++frozen.y;
-}
-            if (ionmbl[ion].z == 0) {
+            }
+            if (ionmbl[ion].z == 0)
+            {
                 ++frozen.z;
-}
+            }
 
             ion++;
         }
@@ -513,7 +559,7 @@ void get_mass_mbl(const UnitCell& unit_in,
 
 double target_temp(const int& istep, const int& nstep, const double& tfirst, const double& tlast)
 {
-    assert(nstep>0);
+    assert(nstep > 0);
     double delta = static_cast<double>(istep) / nstep;
     return tfirst + delta * (tlast - tfirst);
 }
@@ -533,9 +579,7 @@ double current_temp(double& kinetic,
     return 2 * kinetic / (3 * natom - frozen_freedom);
 }
 
-double current_temp(double& kinetic,
-                    const MDCell& mdcell,
-                    const std::int64_t& frozen_freedom)
+double current_temp(double& kinetic, const MDCell& mdcell, const std::int64_t& frozen_freedom)
 {
     kinetic = 0.0;
     for (std::size_t i = 0; i < mdcell.owned_atoms().size(); ++i)
@@ -547,7 +591,8 @@ double current_temp(double& kinetic,
     MPI_Allreduce(MPI_IN_PLACE, &kinetic, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
     const std::int64_t dof = 3 * mdcell.nat() - frozen_freedom;
-    if (dof == 0) return 0.0;
+    if (dof == 0)
+        return 0.0;
     return 2.0 * kinetic / static_cast<double>(dof);
 }
 
@@ -557,18 +602,24 @@ std::int64_t global_dof(const MDCell& mdcell)
     for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
     {
         const ModuleBase::Vector3<int>& mbl = mdcell.owned_atoms()[static_cast<std::size_t>(i)].mbl;
-        if (mbl.x == 0) ++local_frozen[0];
-        if (mbl.y == 0) ++local_frozen[1];
-        if (mbl.z == 0) ++local_frozen[2];
+        if (mbl.x == 0)
+            ++local_frozen[0];
+        if (mbl.y == 0)
+            ++local_frozen[1];
+        if (mbl.z == 0)
+            ++local_frozen[2];
     }
     std::int64_t global_frozen[3] = {local_frozen[0], local_frozen[1], local_frozen[2]};
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, global_frozen, 3, MPI_INT64_T, MPI_SUM, mdcell.communicator());
 #endif
     std::int64_t total_frozen = global_frozen[0] + global_frozen[1] + global_frozen[2];
-    if (global_frozen[0] == 0) ++total_frozen;
-    if (global_frozen[1] == 0) ++total_frozen;
-    if (global_frozen[2] == 0) ++total_frozen;
+    if (global_frozen[0] == 0)
+        ++total_frozen;
+    if (global_frozen[1] == 0)
+        ++total_frozen;
+    if (global_frozen[2] == 0)
+        ++total_frozen;
     return 3 * mdcell.nat() - total_frozen;
 }
 

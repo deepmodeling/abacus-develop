@@ -1,8 +1,8 @@
 #include "langevin.h"
 
 #include "md_func.h"
-#include "source_cell/unitcell.h"
 #include "source_base/timer.h"
+#include "source_cell/unitcell.h"
 
 Langevin::Langevin(const MD_para& mdp_in,
                    const bool cal_stress_in,
@@ -12,15 +12,16 @@ Langevin::Langevin(const MD_para& mdp_in,
     : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
     /// convert to a.u. unit
-    assert(ModuleBase::AU_to_FS!=0.0);
+    assert(ModuleBase::AU_to_FS != 0.0);
 
     md_damp = mdp.md_damp / ModuleBase::AU_to_FS;
 
     total_force.resize(static_cast<std::size_t>(mdcell.owned_atoms().size()));
 }
 
-
-void Langevin::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
+void Langevin::setup(ModuleESolver::ESolver* p_esolver,
+                     const std::string& global_readin_dir,
+                     DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("Langevin", "setup");
     ModuleBase::timer::start("Langevin", "setup");
@@ -33,7 +34,6 @@ void Langevin::setup(ModuleESolver::ESolver* p_esolver, const std::string& globa
     return;
 }
 
-
 void Langevin::first_half(std::ofstream& ofs)
 {
     ModuleBase::TITLE("Langevin", "first_half");
@@ -44,7 +44,8 @@ void Langevin::first_half(std::ofstream& ofs)
         LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
         for (int k = 0; k < 3; ++k)
         {
-            if (atom.mbl[k]) atom.vel[k] += 0.5 * total_force[i][k] * md_dt / atom.mass;
+            if (atom.mbl[k])
+                atom.vel[k] += 0.5 * total_force[i][k] * md_dt / atom.mass;
         }
     }
     MD_base::update_pos();
@@ -52,7 +53,6 @@ void Langevin::first_half(std::ofstream& ofs)
     ModuleBase::timer::end("Langevin", "first_half");
     return;
 }
-
 
 void Langevin::second_half()
 {
@@ -65,7 +65,8 @@ void Langevin::second_half()
         LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
         for (int k = 0; k < 3; ++k)
         {
-            if (atom.mbl[k]) atom.vel[k] += 0.5 * total_force[i][k] * md_dt / atom.mass;
+            if (atom.mbl[k])
+                atom.vel[k] += 0.5 * total_force[i][k] * md_dt / atom.mass;
         }
     }
 
@@ -73,13 +74,11 @@ void Langevin::second_half()
     return;
 }
 
-
 void Langevin::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
     return;
 }
-
 
 void Langevin::write_restart(const std::string& global_out_dir)
 {
@@ -87,13 +86,11 @@ void Langevin::write_restart(const std::string& global_out_dir)
     return;
 }
 
-
 void Langevin::restart(const std::string& global_readin_dir)
 {
     MD_base::restart(global_readin_dir);
     return;
 }
-
 
 void Langevin::post_force()
 {
@@ -111,8 +108,7 @@ void Langevin::post_force()
         ModuleBase::Vector3<double> fictitious_force = -atom.mass * atom.vel / md_damp;
         for (int j = 0; j < 3; ++j)
         {
-            fictitious_force[j] += sqrt(24.0 * t_target * atom.mass / md_damp / md_dt)
-                                   * random_value[j];
+            fictitious_force[j] += sqrt(24.0 * t_target * atom.mass / md_damp / md_dt) * random_value[j];
         }
         total_force[i] = atom.force + fictitious_force;
     }

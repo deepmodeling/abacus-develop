@@ -1,8 +1,8 @@
 #include "plumed_interface.h"
 
-#include <cmath>
-
 #include "source_base/tool_quit.h"
+
+#include <cmath>
 
 #ifdef USE_PLUMED
 // C API of the PLUMED wrapper library, matching <plumed/wrapper/Plumed.h> in a
@@ -36,10 +36,7 @@ PlumedInterface::~PlumedInterface()
     this->finalize();
 }
 
-bool PlumedInterface::init(const std::string& plumed_file,
-                           const int nat,
-                           const double dt_au,
-                           const double* masses_au)
+bool PlumedInterface::init(const std::string& plumed_file, const int nat, const double dt_au, const double* masses_au)
 {
 #ifdef USE_PLUMED
     this->active_run_ = true;
@@ -136,8 +133,7 @@ void PlumedInterface::compute_forces_(const int istep,
     plumed_cmd(this->plumed_, "setStep", &step);
     // Vector3<double> is a plain {double x, y, z} structure, so the arrays can
     // be handed to PLUMED as contiguous [nat][3] buffers
-    plumed_cmd(this->plumed_, "setPositions",
-               reinterpret_cast<double*>(const_cast<ModuleBase::Vector3<double>*>(pos)));
+    plumed_cmd(this->plumed_, "setPositions", reinterpret_cast<double*>(const_cast<ModuleBase::Vector3<double>*>(pos)));
     plumed_cmd(this->plumed_, "setMasses", this->masses_amu_.data());
     plumed_cmd(this->plumed_, "setBox", cell);
     plumed_cmd(this->plumed_, "setEnergy", &energy);
