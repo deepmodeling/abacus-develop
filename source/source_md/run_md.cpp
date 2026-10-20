@@ -191,10 +191,10 @@ void md_line(MDCell& mdcell,
     /// md cycle, mohan update 2026-01-04, change '<=' to '<'
     while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
     {
-        const int md_step = mdrun->step_ + mdrun->step_rst_;
-        const int thermo_step = mdrun->step_ == 0 ? md_step : md_step + 1;
-        const bool print_thermo = param_in.mdp.md_thermo_freq > 0
-                                  && thermo_step % param_in.mdp.md_thermo_freq == 0;
+        int md_step = mdrun->step_ + mdrun->step_rst_;
+        int thermo_step = mdrun->step_ == 0 ? md_step : md_step + 1;
+        bool print_thermo = param_in.mdp.md_thermo_freq > 0
+                            && thermo_step % param_in.mdp.md_thermo_freq == 0;
 #ifdef __JSON
         // JSON output currently follows the UnitCell-backed electronic-structure path.
         // Start one output record before the solver appends SCF information for this MD step.
@@ -207,6 +207,20 @@ void md_line(MDCell& mdcell,
         if (mdrun->step_ == 0)
         {
             mdrun->setup(p_esolver, param_in.globalv.global_readin_dir, decomp);
+
+            // setup() may load step_rst_ from Restart_md.txt.
+            md_step = mdrun->step_ + mdrun->step_rst_;
+            thermo_step = md_step;
+            print_thermo = param_in.mdp.md_thermo_freq > 0
+                           && thermo_step % param_in.mdp.md_thermo_freq == 0;
+
+            if (print_thermo)
+            {
+                const int stress_step = 0;
+                const int force_step = 0;
+                const int istep_print = md_step + 1;
+                ModuleIO::print_screen(stress_step, force_step, istep_print);
+            }
 
             if (param_in.mdp.plumed)
             {

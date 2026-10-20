@@ -4,7 +4,6 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "source_io/module_output/print_info.h"
 #include <algorithm>
 #include <iomanip>
 
@@ -53,13 +52,6 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
     {
         restart(global_readin_dir);
     }
-
-    // mohan add 2026-01-04
-    const int stress_step = 0;
-    const int force_step = 0;
-    const int istep_print = step_ + step_rst_ + 1;
-
-	ModuleIO::print_screen(stress_step, force_step, istep_print);
 
     MD_func::force_virial(p_esolver, step_, mdcell, decomp, potential, cal_stress, virial);
     MD_func::compute_stress(mdcell, cal_stress, virial, stress);

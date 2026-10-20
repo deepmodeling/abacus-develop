@@ -56,7 +56,7 @@ if ! test -z "$has_force" && [ $has_force == 1 ]; then
     # thermodynamic information.  Keep the running-log path for non-MD
     # calculations and for legacy outputs that have no trajectory dump.
     if [ "$calculation" == "md" ] && [ -f OUT.autotest/MD_dump ]; then
-        awk -v natom="$natom" '
+        if ! awk -v natom="$natom" '
             function reset_frame() {
                 in_atoms = 0
                 atom_count = 0
@@ -95,7 +95,11 @@ if ! test -z "$has_force" && [ $has_force == 1 ]; then
                     print force_x[iat], force_y[iat], force_z[iat]
                 }
             }
-        ' OUT.autotest/MD_dump > force.txt
+        ' OUT.autotest/MD_dump > force.txt; then
+            echo "[ERROR] Failed to extract a complete force frame from OUT.autotest/MD_dump" >&2
+            rm -f force.txt
+            return 1
+        fi
     else
         # Check the last step result for non-MD calculations.
         grep -A$nn3 "TOTAL-FORCE" $running_path | awk 'NF==4{print $2,$3,$4}' | tail -$natom > force.txt
