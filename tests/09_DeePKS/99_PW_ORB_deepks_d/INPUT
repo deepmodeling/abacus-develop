@@ -13,7 +13,7 @@ scf_nmax          50
 
 #Parameters (3.Basis)
 basis_type        pw
-gamma_only        1
+gamma_only        0 # Gamma-point sampling is specified in KPT.
 
 #Parameters (4.Smearing)
 smearing_method   gaussian

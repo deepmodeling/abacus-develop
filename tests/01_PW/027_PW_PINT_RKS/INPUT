@@ -10,7 +10,7 @@ ecutwfc           50
 scf_nmax          20
 
 basis_type        pw
-gamma_only        1
+gamma_only        0 # Gamma-point sampling is specified in KPT.
 
 init_wfc          nao
 

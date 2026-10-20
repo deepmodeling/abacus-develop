@@ -16,7 +16,7 @@ mixing_beta_mag   0.4
 
 ks_solver         cg
 basis_type        pw
-gamma_only        1
+gamma_only        0 # Gamma-point sampling is specified in KPT.
 nspin             2
 pseudo_dir        ../../../tests/PP_ORB
 orbital_dir       ../../../tests/PP_ORB
