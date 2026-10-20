@@ -371,6 +371,7 @@ void ParameterHelp::build_registry() {
         meta.default_value = item.default_value;
         meta.unit = item.unit;
         meta.availability = item.get_availability();
+        meta.allowed_values = item.domain.format_choices();
 
         // Pre-compute lowercase name for fast fuzzy matching
         meta.name_lowercase = to_lowercase(item.label);
@@ -398,6 +399,10 @@ bool ParameterHelp::show_parameter_help(const std::string& key, std::ostream& os
     os << "\n";
     os << "Parameter: " << meta.name << "\n";
     os << "Type:      " << meta.type << "\n";
+
+    if (!meta.allowed_values.empty()) {
+        os << "Allowed values: " << meta.allowed_values << "\n";
+    }
 
     if (!meta.default_value.empty()) {
         os << "Default:   " << meta.default_value << "\n";
@@ -494,6 +499,10 @@ void ParameterHelp::generate_yaml(std::ostream& os) {
         os << "  - name: " << yaml_quote_if_needed(item.label) << "\n";
         os << "    category: " << yaml_quote_if_needed(item.category) << "\n";
         os << "    type: " << yaml_quote_if_needed(item.type) << "\n";
+
+        if (!item.domain.empty()) {
+            os << "    allowed_values: [" << item.domain.format_choices() << "]\n";
+        }
 
         // Description uses block scalar
         os << "    description: ";

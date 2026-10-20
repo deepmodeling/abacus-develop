@@ -49,6 +49,25 @@ class InputTest : public testing::Test
     }
 };
 
+TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
+{
+    ModuleIO::ReadInput reader(0);
+    auto item = find_label("nspin", reader.input_lists);
+    ASSERT_NE(item, reader.input_lists.end());
+    item->second.str_values = {"3"};
+    bool reset_called = false;
+    item->second.reset_value = [&reset_called](const ModuleIO::Input_Item&, Parameter& input) {
+        reset_called = true;
+        TestParameters::input(input).nspin = 1;
+    };
+    reader.readvalue_items.push_back(&item->second);
+    Parameter input;
+    const std::string error = reader.prepare_input(input);
+    EXPECT_THAT(error, testing::HasSubstr("supplied '3'"));
+    EXPECT_EQ(input.inp.nspin, 1);
+    EXPECT_FALSE(reset_called);
+}
+
 TEST_F(InputTest, RelaxMethod)
 {
     ModuleIO::ReadInput readinput(0);
@@ -212,10 +231,8 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("nspin", readinput.input_lists);
         TestParameters::input(param).noncolin = false;
         TestParameters::input(param).nspin = 3;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        output = it->second.domain.validate_resolved(it->first, param.inp);
+        EXPECT_THAT(output, testing::HasSubstr("Expected one Integer from {1, 2, 4}"));
     }
     { // smearing_method
         auto it = find_label("smearing_method", readinput.input_lists);

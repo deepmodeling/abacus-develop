@@ -477,12 +477,9 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 * Note: With nspin=4 no moment is ever autoset. The calculation starts from zero magnetic moment and a warning is printed; set 'mag' explicitly in STRU for the magnetic atoms if a magnetic ground state is expected.)";
         item.default_value = "1";
         item.unit = "";
+        item.domain = InputDomain(&Input_para::nspin, {1, 2, 4});
         read_sync_int(input.nspin);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nspin != 1 && para.input.nspin != 2 && para.input.nspin != 4)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "nspin should be 1, 2 or 4.");
-            }
             if ((para.input.noncolin || para.input.lspinorb) && para.input.nspin != 4)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 4 when noncolin or lspinorb is enabled.");
@@ -502,13 +499,8 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 For r = |m| and x = r/eta, S_eta = eta*x^3*(3*x^2 - 8*x + 6) for r < eta, and S_eta = r otherwise. The regularization is part of the functional definition, including its first and second derivatives.
 Mode 2 also uses this local map for the LDA contribution. Other spin configurations retain their existing behavior.)";
         item.default_value = "0";
+        item.domain = InputDomain(&Input_para::gga_grad, {0, 1, 2});
         read_sync_int(input.gga_grad);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.gga_grad < 0 || para.input.gga_grad > 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "gga_grad must be 0, 1, or 2.");
-            }
-        };
         this->add_item(item);
     }
     {

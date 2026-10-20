@@ -25,6 +25,7 @@ add_library(
     ../module_parameter/read_set_globalv.cpp
     ../module_parameter/availability.cpp
     ../module_parameter/availability_validator.cpp
+    ../module_parameter/input_domain.cpp
 )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -41,6 +42,12 @@ AddTest(
   TARGET MODULE_IO_read_item_serial
   LIBS parameter base device io_input_serial
   SOURCES read_input_item_test.cpp
+)
+
+AddTest(
+  TARGET MODULE_IO_input_domain_reader
+  LIBS parameter base device io_input_serial
+  SOURCES test_read_input.cpp ../input_help.cpp
 )
 
 AddTest(

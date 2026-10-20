@@ -1,5 +1,8 @@
 #include "read_input.h"
 #include "availability_validator.h"
+#ifdef __MPI
+#include "source_base/parallel_common.h"
+#endif
 
 
 #include <algorithm>
@@ -12,6 +15,7 @@
 #include <cassert>
 #include <cctype>
 #include <limits>
+#include <stdexcept>
 #include "source_base/formatter.h"
 #include "source_base/global_file.h"
 #include "source_base/global_function.h"
@@ -209,10 +213,21 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     ModuleBase::TITLE("ReadInput", "read_parameters");
 
     // 1. only rank 0 read the input file
+    std::string input_error;
     if (this->rank == 0)
     {
         // We can also easily add other input file formats here
-        this->read_txt_input(param, filename_in);
+        input_error = this->read_txt_input(param, filename_in);
+    }
+#ifdef __MPI
+    // All ranks must leave together before the parameter broadcasts below.
+    Parallel_Common::bcast_string(input_error);
+#endif
+    if (!input_error.empty())
+    {
+        const std::string message = "Invalid parameters in " + filename_in + ":\n" + input_error;
+        ModuleBase::WARNING_QUIT("ReadInput", message);
+        return;
     }
 
     // 2. check the number of atom types from STRU file
@@ -323,7 +338,7 @@ void ReadInput::write_parameters(const Parameter& param, const std::string& file
     }
 }
 
-void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
+std::string ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 {
     ModuleBase::TITLE("ReadInput", "read_txt_input");
 
@@ -373,20 +388,19 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     while (ascii_stream.good())
     {
         std::string word; // temporary variable to store the keyword read-in
-        ascii_stream >> word;
-        if (ascii_stream.eof()) { break; }
+        if (!(ascii_stream >> word)) { break; }
         word = FmtCore::lower(word); // the lowercase of the keyword
         auto it = std::find_if(input_lists.begin(), input_lists.end(),
             [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
         if (it != this->input_lists.end()) // find the keyword
         {
             Input_Item* p_item = &(it->second);
-            this->readvalue_items.push_back(p_item);
-            if(p_item->is_read())
+            if (std::find(readvalue_items.begin(), readvalue_items.end(), p_item) != readvalue_items.end())
             {
                 std::string warningstr = "The parameter " + p_item->label + " has been read twice.";
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
+            this->readvalue_items.push_back(p_item);
             // qianrui delete '/' 2024-07-10, because path has '/' head.
             read_information(ascii_stream, p_item->str_values, "#!");
         }
@@ -422,6 +436,30 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         }
     }
 
+    return this->prepare_input(param);
+}
+
+std::string ReadInput::prepare_input(Parameter& param)
+{
+    // Validate original tokens before any reader or default hook can discard
+    // an invalid value. In particular, std::stoi alone accepts numeric prefixes.
+    std::string errors;
+    for (const auto* item : this->readvalue_items)
+    {
+        if (item->str_values.empty() && item->domain.empty())
+        {
+            errors += "Invalid INPUT parameter '" + item->label + "': missing value (" + item->type + ").\n";
+        }
+        else
+        {
+            errors += item->domain.validate_explicit(item->label, item->str_values);
+        }
+    }
+    if (!errors.empty())
+    {
+        return errors;
+    }
+
     // 1) read the value of the parameters
     for (auto& readvalue_item: this->readvalue_items)
     {
@@ -441,6 +479,13 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 
     this->normalize_hs_output_options(param);
     this->normalize_occ_mat_options(param);
+
+    // Check effective values, including defaults, through the same domains.
+    for (const auto& entry : this->input_lists)
+    {
+        errors += entry.second.domain.validate_resolved(entry.first, param.inp);
+    }
+    return errors;
 }
 
 void ReadInput::normalize_occ_mat_options(Parameter& param)
@@ -692,6 +737,10 @@ int ReadInput::current_md_step(const std::string& file_dir)
 
 void ReadInput::add_item(const Input_Item& item)
 {
+    if (!item.domain.empty() && item.type != "Integer")
+    {
+        throw std::invalid_argument("Integer domain attached to non-Integer INPUT parameter: " + item.label);
+    }
     // Normally only rank 0 reads the input file
     // But rank -1 is used for help system mode where items should also be added
     if (this->rank == 0 || this->rank == -1)
