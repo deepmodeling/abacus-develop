@@ -90,16 +90,9 @@ class TestMagneticSCF(unittest.TestCase):
             self.assertGreater(abs(np.sum(fe.calc.results['magmoms'])), 0.0)
             self.assertGreater(np.prod(fe.calc.results['magmoms']), 0.0)
 
-    # @unittest.skip('see ase/outputs.py:L154-155, the magmom cannot be set as the vector, so '
-    #                'we skip this test for now')
     def test_noncolinear(self):
-        from ase.outputs import _defineprop, all_outputs
-        # refresh the definition of magmom and magmoms
-        del all_outputs['magmom']
-        del all_outputs['magmoms']
-        _defineprop('magmom', float, shape=3)
-        _defineprop('magmoms', float, shape=('natoms', 3))
-
+        # Vector moments must survive the public calculator handoff without
+        # changing ASE's global property definitions in the caller.
         fe = Atoms(symbols=['Fe'] * 2,
                    scaled_positions=[[0., 0., 0.], [0.5, 0.5, 0.5]],
                    magmoms=np.array([[1, 0, 0], [0, 1, 0]]),

@@ -8,7 +8,6 @@ import numpy as np
 from ase.build import bulk
 
 from abacuslite import Abacus, AbacusProfile
-from abacuslite.io.generalio import load_orbital, load_pseudo
 from common import (assert_native_md_facts, assert_stru_velocity_facts,
                     preserved_tmpdir, test_profile_paths)
 
@@ -31,8 +30,8 @@ class TestNativeMD(unittest.TestCase):
             calculator = Abacus(
                 profile=profile,
                 directory=run,
-                pseudopotentials=load_pseudo(pporb),
-                basissets=load_orbital(pporb, efficiency=True),
+                pseudopotentials={'Si': 'Si_ONCV_PBE-1.0.upf'},
+                basissets={'Si': 'Si_gga_8au_100Ry_2s2p1d.orb'},
                 inp={
                     'calculation': 'md',
                     'basis_type': 'lcao',

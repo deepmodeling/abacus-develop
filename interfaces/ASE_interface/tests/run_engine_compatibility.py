@@ -35,18 +35,21 @@ PROBE = r'''import json, sys
 from importlib import metadata
 from pathlib import Path
 import abacuslite
-import abacuslite.core as core
-from abacuslite import Abacus, AbacusProfile
+from abacuslite import AbacusProfile
 d = metadata.distribution('abacuslite')
 p = AbacusProfile(command=sys.argv[1])
-c = Abacus(profile=p)
 print(json.dumps({'python': sys.executable, 'prefix': sys.prefix,
                   'module': str(Path(abacuslite.__file__).resolve()),
                   'installed': str(Path(d.locate_file('abacuslite/__init__.py')).resolve()),
-                  'version': d.version, 'engine_version': p.version(),
-                  'reader_selection': ('instance' if hasattr(c.template, '_legacyio')
-                                       else 'global'),
-                  'legacyio': getattr(c.template, '_legacyio', core.__LEGACYIO__)}))'''
+                  'version': d.version, 'engine_version': p.version()}))'''
+
+
+def validate_engine_format(version, fmt):
+    """Keep the tested 3.10/LTS and 3.11/develop oracle lanes explicit."""
+    match = re.match(r'^v3\.(10|11)\.\d+(?:[.+-].*)?$', version)
+    expected_minor = '10' if fmt == 'legacy' else '11'
+    if match is None or match.group(1) != expected_minor:
+        raise ValueError(f'engine version {version!r} does not match {fmt} lane')
 
 
 def sha256(path):
@@ -226,7 +229,7 @@ def main(argv=None):
                ASE_ABACUS_ASSETS=str(assets), ASE_ABACUS_FORMAT=args.format,
                ASE_ABACUS_KEEP_DIR=str(report / 'failed-runs'),
                OMP_NUM_THREADS='1', OPENBLAS_NUM_THREADS='1')
-    record = {'schema': 'abacuslite-engine-compatibility-v1', 'format': args.format,
+    record = {'schema': 'abacuslite-engine-compatibility-v2', 'format': args.format,
               'engine': str(engine), 'engine_ref_asserted': args.engine_ref,
               'engine_sha256': sha256(engine), 'mpi_command': mpi,
               'harness_checkout': harness_revision(REPO),
@@ -257,8 +260,7 @@ def main(argv=None):
         probe = json.loads((report / 'package-probe.log').read_text().splitlines()[-1])
         record['package_probe'] = probe
         record['wheel_runtime'] = attest_install(probe, wheel, REPO)
-        if probe['legacyio'] is not (args.format == 'legacy'):
-            raise ValueError(f'wrong calculator reader for {args.format}: {probe}')
+        validate_engine_format(probe['engine_version'], args.format)
         save()
         for script, expected in CASES[args.format].items():
             name = script.removesuffix('.py')

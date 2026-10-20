@@ -4,7 +4,6 @@ from pathlib import Path
 here = Path(__file__).parent
 from ase.build import bulk
 from ase.optimize import BFGS
-from abacuslite.io.generalio import load_pseudo, load_orbital
 from abacuslite import AbacusProfile, Abacus
 from common import preserved_tmpdir, test_profile_paths, assert_scf_facts
 
@@ -26,8 +25,8 @@ class TestIonicRelaxationWithStress(unittest.TestCase):
             abacus = Abacus(
                 profile=aprof,
                 directory=tmpdir,
-                pseudopotentials=load_pseudo(pporb),
-                basissets=load_orbital(pporb, efficiency=True),
+                pseudopotentials={'Si': 'Si_ONCV_PBE-1.0.upf'},
+                basissets={'Si': 'Si_gga_8au_100Ry_2s2p1d.orb'},
                 inp={
                     'basis_type': 'lcao',
                     'gamma_only': True,

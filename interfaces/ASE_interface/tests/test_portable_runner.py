@@ -1,19 +1,61 @@
 """Offline contract checks for the portable real-engine lane."""
 
 import os
+import io
+import json
 import signal
 import sys
 import tempfile
 import time
 import unittest
 import zipfile
+from contextlib import redirect_stdout
 from pathlib import Path
+from types import ModuleType, SimpleNamespace
+from unittest.mock import patch
 
-from run_engine_compatibility import (CASES, attest_install, capture,
-                                      required_path, validate_cases)
+from run_engine_compatibility import (CASES, PROBE, attest_install, capture,
+                                      required_path, validate_cases,
+                                      validate_engine_format)
 
 
 class PortableRunnerTest(unittest.TestCase):
+    def test_mismatched_or_untested_engine_version_cannot_select_an_oracle_lane(self):
+        validate_engine_format('v3.10.1', 'legacy')
+        validate_engine_format('v3.11.0-beta11', 'latest')
+        for version, fmt in [('v3.10.1', 'latest'), ('v3.11.0', 'legacy'),
+                             ('v4.0.0', 'latest'), ('garbage', 'legacy')]:
+            with self.subTest(version=version, fmt=fmt):
+                with self.assertRaisesRegex(ValueError, 'does not match'):
+                    validate_engine_format(version, fmt)
+
+    def test_package_probe_accepts_public_profile_without_core_internals(self):
+        package = ModuleType('abacuslite')
+        package.__path__ = []
+        package.__file__ = '/venv/site-packages/abacuslite/__init__.py'
+
+        class PublicProfile:
+            def __init__(self, command):
+                self.command = command
+
+            def version(self):
+                self_test.assertEqual(self.command, '/engine/abacus')
+                return 'v3.10.1'
+
+        self_test = self
+        package.AbacusProfile = PublicProfile
+        distribution = SimpleNamespace(
+            version='1.2.1', locate_file=lambda name: Path('/venv/site-packages') / name)
+        output = io.StringIO()
+        # A legitimate implementation may have no core module or template.
+        # The runner only needs the public version probe and package identity.
+        with patch.dict(sys.modules, {'abacuslite': package, 'abacuslite.core': None}), \
+                patch('importlib.metadata.distribution', return_value=distribution), \
+                patch.object(sys, 'argv', ['probe', '/engine/abacus']), \
+                redirect_stdout(output):
+            exec(PROBE, {})
+        self.assertEqual(json.loads(output.getvalue())['engine_version'], 'v3.10.1')
+
     def test_venv_python_symlink_is_not_resolved_to_base_interpreter(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

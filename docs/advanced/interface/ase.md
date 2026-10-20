@@ -113,6 +113,20 @@ with tempfile.TemporaryDirectory() as tmpdir:
 
 ## Perform Calculations
 
+### Parser and API contract
+
+The [abacuslite public API contract](https://github.com/QuantumMisaka/abacuslite/blob/main/docs/public-api.md)
+defines supported calculator and I/O entry points, result units, atom ordering,
+missing-value behavior and compatibility rules. Use the documented readers
+for completed output and the calculator/ASE API for execution; no ABACUS-side
+parser wrapper is required. Pure file I/O does not need an ABACUS executable.
+
+ABACUS owns its output formats and real-engine compatibility tests; abacuslite
+owns parsing and ASE result assembly. An engine format change must be checked
+against the installed plugin using independent raw-output assertions.
+Internal parser helpers, template flags and ASE server process handles are
+not external integration interfaces.
+
 In the new implementation, the supported surface is the one the external plugin
 exposes: SCF calculations, energy and force/stress evaluation, ASE-driven
 relaxation and molecular dynamics through the ASE optimizers and integrators,

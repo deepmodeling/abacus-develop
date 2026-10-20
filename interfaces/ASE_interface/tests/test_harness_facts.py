@@ -1,27 +1,38 @@
 """Offline checks for independent engine facts and bounded socket cleanup."""
 
-import os
 import subprocess
 import sys
 import tempfile
-import time
 import unittest
+import warnings
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
 
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator, PropertyNotImplementedError
-from ase.calculators.socketio import SocketIOCalculator
 
 from common import (assert_band_facts, assert_collinear_magmoms,
-                    calculate_socket_frame, close_socket_bounded,
-                    preserved_tmpdir)
+                    calculate_socket_frame, close_socket_checked)
+from run_engine_compatibility import capture
 from legacy_facts import assert_band_facts as assert_legacy_band_facts
 
 
 class HarnessFactsTest(unittest.TestCase):
+    def test_public_socket_close_rejects_nonzero_client_exit_warning(self):
+        class PublicSocket:
+            def close(self):
+                warnings.warn('Subprocess exited with status 7', UserWarning)
+
+        with self.assertRaisesRegex(UserWarning, 'status 7'):
+            close_socket_checked(PublicSocket())
+
+    def test_public_socket_close_accepts_clean_shutdown(self):
+        closed = []
+        socket = SimpleNamespace(close=lambda: closed.append(True))
+        close_socket_checked(socket)
+        self.assertEqual(closed, [True])
+
     def test_socket_requests_only_actual_changes_after_first_frame(self):
         class RecordingCalculator(Calculator):
             implemented_properties = ['energy', 'forces', 'stress']
@@ -99,31 +110,36 @@ spin=1 k-point=2/2 Cartesian=0.5 0.0 0.0 (1 plane wave)
             with self.assertRaises(AssertionError):
                 assert_collinear_magmoms(self, calc, path, 2)
 
-    def test_hung_socket_client_is_stopped_and_artifacts_retained(self):
-        with tempfile.TemporaryDirectory() as root:
-            keep = Path(root) / 'kept'
-            client = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])
+    def test_hung_public_close_is_stopped_without_touching_unrelated_process(self):
+        # Model a client's public close() waiting forever. The runner owns the
+        # process group; it must retain diagnostics and stop that group only.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            script = root / 'hung_close.py'
+            script.write_text("""import subprocess, sys
+from pathlib import Path
+class Socket:
+    def __init__(self):
+        self.client = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])
+        Path('client.pid').write_text(str(self.client.pid))
+    def close(self):
+        self.client.wait()
+Path('raw-output.txt').write_text('retained engine output')
+Socket().close()
+""")
             unrelated = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])
             try:
-                start = time.monotonic()
-                with patch.dict(os.environ, ASE_ABACUS_KEEP_DIR=str(keep)):
-                    with self.assertRaisesRegex(TimeoutError, 'socket client'):
-                        with preserved_tmpdir('abacus_ase_socket_') as run:
-                            Path(run, 'sentinel.txt').write_text('diagnostic')
-                            calc = SocketIOCalculator(
-                                unixsocket=f'abacus_harness_{os.getpid()}',
-                                timeout=1, launch_client=lambda *args, **kwargs: None)
-                            calc.server = calc.launch_server()
-                            calc.server.proc = client
-                            close_socket_bounded(calc, wait_seconds=0.1,
-                                                 terminate_seconds=0.1)
-                self.assertLess(time.monotonic() - start, 3.0)
-                self.assertIsNotNone(client.poll())
+                result = capture([sys.executable, str(script)], cwd=root,
+                                 env=None, log=root / 'case.log', timeout=1)
+                self.assertTrue(result['timed_out'])
+                self.assertNotEqual(result['returncode'], 0)
+                self.assertLess(result['seconds'], 4)
                 self.assertIsNone(unrelated.poll())
-                self.assertEqual([p.read_text() for p in keep.glob('*/sentinel.txt')],
-                                 ['diagnostic'])
+                self.assertEqual((root / 'raw-output.txt').read_text(), 'retained engine output')
+                child = int((root / 'client.pid').read_text())
+                stat = Path(f'/proc/{child}/stat')
+                if stat.exists():
+                    self.assertEqual(stat.read_text().split()[2], 'Z')
             finally:
-                for proc in (client, unrelated):
-                    if proc.poll() is None:
-                        proc.terminate()
-                    proc.wait(timeout=3)
+                unrelated.terminate()
+                unrelated.wait(timeout=3)

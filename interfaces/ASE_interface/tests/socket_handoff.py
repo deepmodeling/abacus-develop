@@ -9,7 +9,7 @@ import numpy as np
 from ase import Atoms
 from abacuslite import Abacus, AbacusProfile, AbacusSocketIO
 
-from common import (assert_scf_facts, calculate_socket_frame, close_socket_bounded,
+from common import (assert_scf_facts, calculate_socket_frame, close_socket_checked,
                     preserved_tmpdir, test_profile_paths)
 
 
@@ -43,13 +43,11 @@ class TestSocketHandoff(unittest.TestCase):
         socket = AbacusSocketIO(profile=profile, directory=root / 'socket',
                                 unixsocket=f'abacus_ci_{os.getpid()}',
                                 timeout=120, **inputs)
-        client = None
         try:
             atoms.calc = socket
             for index, displacement in enumerate((0.0, 0.03)):
                 atoms.positions[1] = [1.25 + displacement] * 3
                 calculate_socket_frame(socket, atoms)
-                client = socket.server.proc
                 energy = atoms.get_potential_energy()
                 forces = atoms.get_forces().copy()
                 stress = atoms.get_stress().copy()
@@ -69,12 +67,10 @@ class TestSocketHandoff(unittest.TestCase):
                 assert_scf_facts(self, reference, reference_dir, 2,
                                  forces=True, stress=True)
         finally:
-            signal.alarm(0)
-            returncode = close_socket_bounded(socket)
-        self.assertIsNone(socket.server)
-        self.assertIsNotNone(client)
-        self.assertEqual(returncode, 0)
-        self.assertEqual(client.poll(), 0)
+            # Use the public lifecycle API. The outer runner bounds the whole
+            # case (including close), kills its process group on failure and
+            # retains raw files; no ASE server/process internals are inspected.
+            close_socket_checked(socket)
 
 
 if __name__ == '__main__':

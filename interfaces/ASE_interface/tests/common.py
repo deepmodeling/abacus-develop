@@ -4,8 +4,8 @@ import contextlib
 import os
 import re
 import shutil
-import subprocess
 import tempfile
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -26,6 +26,14 @@ def calculate_socket_frame(calc, atoms):
     changes = calc.check_state(atoms)
     calc.calculate(atoms, properties=['energy', 'forces', 'stress'],
                    system_changes=changes)
+
+
+def close_socket_checked(calc):
+    """Close through ASE's public lifecycle and reject client-exit warnings."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings('error', message=r'Subprocess exited with status .*',
+                                category=UserWarning)
+        calc.close()
 
 
 def assert_band_facts(testcase, bands, eig_occ_path):
@@ -164,29 +172,6 @@ def assert_stru_velocity_facts(testcase, stru_path, ase_velocities):
     testcase.assertGreater(np.max(np.abs(expected)), 1e-8)
     testcase.assertTrue(np.allclose(actual, expected, rtol=2e-6, atol=1e-12),
                         f'STRU v unit mismatch: actual={actual}, expected={expected}')
-
-
-def close_socket_bounded(calc, *, wait_seconds=5, terminate_seconds=5):
-    """Close ASE's server without its unbounded wait, then reap only its client."""
-    server = getattr(calc, 'server', None)
-    client = getattr(server, 'proc', None)
-    if server is not None:
-        server.proc = None  # ASE SocketServer.close otherwise calls wait() forever.
-    try:
-        calc.close()
-    finally:
-        if client is not None:
-            try:
-                returncode = client.wait(timeout=wait_seconds)
-            except subprocess.TimeoutExpired:
-                client.terminate()
-                try:
-                    client.wait(timeout=terminate_seconds)
-                except subprocess.TimeoutExpired:
-                    client.kill()
-                    client.wait(timeout=terminate_seconds)
-                raise TimeoutError('socket client did not exit after server close')
-    return returncode if client is not None else None
 
 
 def assert_scf_facts(testcase, calc, directory, natoms, *, forces=False, stress=False):
