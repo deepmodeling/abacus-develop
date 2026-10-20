@@ -161,11 +161,11 @@ struct Input_para
     //  int		bessel_nao_lmax;		///< lmax used in descriptor
 
     // ==============   #Parameters (4.Relaxation) ===========================
-    std::vector<std::string> relax_method = {"cg", "2"}; ///< relaxation algorithm and optional variant
+    std::string relax_method = "cg"; ///< geometry optimization method
 
     bool uses_simultaneous_relaxation() const
     {
-        return relax_method.size() == 2 && relax_method[0] == "cg" && relax_method[1] == "2";
+        return relax_method == "cg";
     }
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;
@@ -392,6 +392,12 @@ struct Input_para
 
     // ==============   #Parameters (10.lr-tddft) ===========================
     int lr_nstates = 1;                              ///< the number of 2-particle states to be solved
+    int lr_target_state = 0;                         ///< which excited state the geometry relaxation follows (0-based)
+    std::string lr_target_spin = "singlet";          ///< spin channel of that state: singlet / triplet / updown
+    double lr_degen_thr
+        = 0.0; ///< max excitation-energy spread of a degenerate multiplet whose gradient matrix is computed (Ry); 0 disables
+    std::string lr_degen_mode = "state";       ///< what a relaxation follows when the target state sits in a degenerate multiplet: state / average
+    std::string lr_grad_solver = "cg";               ///< the linear solver of the Z-vector equation for LR-TDDFT gradients: cg / lapack / scalapack / scalapack_chol / elpa
     std::vector<std::string> lr_init_xc_kernel = {}; ///< The method to initalize the xc kernel
     int nocc = -1;                                   ///< the number of occupied orbitals to form the 2-particle basis
     int nvirt = 1;                              ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)
@@ -402,7 +408,7 @@ struct Input_para
     bool lr_unrestricted = false;               ///< whether to use the unrestricted construction for LR-TDDFT
     std::vector<double> abs_wavelen_range = {}; ///< the range of wavelength(nm) to output the absorption spectrum
     double abs_broadening = 0.01;               ///< the broadening (eta) for LR-TDDFT absorption spectrum
-    std::string abs_gauge = "velocity"; ///< whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT
+    std::string abs_gauge = "velocity"; ///< optical gauge: length, velocity, or none to skip the spectrum
     std::string ri_hartree_benchmark = "none"; ///< whether to use the RI approximation for the Hartree potential in
                                                ///< LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)
     std::vector<int> aims_nbasis = {}; ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)

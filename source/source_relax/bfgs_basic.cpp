@@ -1,8 +1,10 @@
 #include "bfgs_basic.h"
-#include <algorithm>
+
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+
+#include <algorithm>
 
 using namespace Ions_Move_Basic;
 
@@ -31,7 +33,7 @@ void BFGS_Basic::allocate_basic(void)
     return;
 }
 
-void BFGS_Basic::update_inverse_hessian(const double &lat0, std::ofstream& ofs)
+void BFGS_Basic::update_inverse_hessian(const double& lat0, std::ofstream& ofs)
 {
     //  ModuleBase::TITLE("Ions_Move_BFGS","update_inverse_hessian");
     assert(dim > 0);
@@ -157,7 +159,11 @@ void BFGS_Basic::save_bfgs(void)
 // a new bfgs step is done
 // we have already done well in the previous direction
 // we should get a new direction in this case
-void BFGS_Basic::new_step(const double &lat0, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info, const int test_relax_method)
+void BFGS_Basic::new_step(const double& lat0,
+                          int& update_iter,
+                          std::ofstream& ofs,
+                          std::vector<double>& etot_info,
+                          const int test_relax_method)
 {
     ModuleBase::TITLE("BFGS_Basic", "new_step");
 
@@ -341,7 +347,7 @@ void BFGS_Basic::compute_trust_radius(std::ofstream& ofs, std::vector<double>& e
     return;
 }
 
-double BFGS_Basic::check_move(const double &lat0, const double &pos, const double &pos_p)
+double BFGS_Basic::check_move(const double& lat0, const double& pos, const double& pos_p)
 {
     // this must be careful.
     // unit is ucell.lat0.

@@ -1,1 +1,4 @@
 LR-TDDFT HF on H2O, gamma_only, nspin=2, lr_unrestricted=1, lr_nstates=3, lr_solver=lapack.
+Uses direct LU for the small Z equation and skips optical postprocessing with
+abs_gauge=none. Energy and signed force references are unchanged;
+the closed-shell HF case retains Z-CG coverage.

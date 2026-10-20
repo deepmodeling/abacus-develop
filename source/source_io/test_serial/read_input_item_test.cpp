@@ -56,45 +56,34 @@ TEST_F(InputTest, RelaxMethod)
     Parameter param;
     auto it = find_label("relax_method", readinput.input_lists);
 
-    it->second.str_values = {"cg"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"cg", "2"}));
-    EXPECT_TRUE(TestParameters::input(param).uses_simultaneous_relaxation());
-
-    it->second.str_values = {"cg", "1"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"cg", "1"}));
-    EXPECT_FALSE(TestParameters::input(param).uses_simultaneous_relaxation());
-
-    it->second.str_values = {"cg", "2"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"cg", "2"}));
-    EXPECT_TRUE(TestParameters::input(param).uses_simultaneous_relaxation());
-
-    it->second.str_values = {"bfgs"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"bfgs", "2"}));
-    EXPECT_FALSE(TestParameters::input(param).uses_simultaneous_relaxation());
-
-    it->second.str_values = {"bfgs", "1"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"bfgs", "1"}));
-
-    it->second.str_values = {"bfgs", "2"};
-    it->second.read_value(it->second, param);
-    EXPECT_EQ(TestParameters::input(param).relax_method, (std::vector<std::string>{"bfgs", "2"}));
+    EXPECT_EQ(TestParameters::input(param).relax_method, "cg");
+    EXPECT_EQ(it->second.type, "String");
+    EXPECT_EQ(it->second.default_value, "cg");
+    for (const std::string method : {"cg", "cg_trad", "bfgs", "bfgs_trad", "sd", "cg_bfgs", "lbfgs"})
+    {
+        it->second.str_values = {method};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).relax_method, method);
+        EXPECT_EQ(param.inp.uses_simultaneous_relaxation(), method == "cg");
+        it->second.final_value.str("");
+        it->second.get_final_value(it->second, param);
+        EXPECT_EQ(it->second.final_value.str(), method);
+    }
 
     for (const std::vector<std::string>& invalid : {
-             std::vector<std::string>{"cg", "3"},
-             std::vector<std::string>{"bfgs", "3"},
-             std::vector<std::string>{"sd", "1"},
+             std::vector<std::string>{},
              std::vector<std::string>{"none"},
+             std::vector<std::string>{"cg", "1"},
+             std::vector<std::string>{"cg", "2"},
+             std::vector<std::string>{"bfgs", "1"},
+             std::vector<std::string>{"bfgs", "2"},
+             std::vector<std::string>{"sd", "1"},
+             std::vector<std::string>{"cg_trad", "1"},
              std::vector<std::string>{"cg", "2", "extra"}})
     {
         it->second.str_values = invalid;
         EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
     }
-
     EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
 }
 
@@ -989,14 +978,14 @@ TEST_F(InputTest, Item_test)
     { // fixed_axes
         auto it = find_label("fixed_axes", readinput.input_lists);
         TestParameters::input(param).fixed_axes = "shape";
-        TestParameters::input(param).relax_method = {"cg", "1"};
+        TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).fixed_axes = "volume";
-        TestParameters::input(param).relax_method = {"cg", "1"};
+        TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -1005,7 +994,7 @@ TEST_F(InputTest, Item_test)
     { // fixed_ibrav
         auto it = find_label("fixed_ibrav", readinput.input_lists);
         TestParameters::input(param).fixed_ibrav = true;
-        TestParameters::input(param).relax_method = {"cg", "1"};
+        TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -1787,6 +1776,7 @@ TEST_F(InputTest, Item_test2)
     }
     { // exx_singluarity_correction
         auto it = find_label("exx_singularity_correction", readinput.input_lists);
+        TestParameters::input(param).basis_type = "lcao";
         TestParameters::input(param).exx_singularity_correction = "default";
         TestParameters::input(param).dft_functional = "HF";
         it->second.reset_value(it->second, param);
@@ -1801,6 +1791,27 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).dft_functional = "HSE";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).exx_singularity_correction, "limits");
+
+        TestParameters::input(param).basis_type = "pw";
+        TestParameters::input(param).dft_functional = "PBE0";
+        TestParameters::input(param).exx_singularity_correction = "default";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).exx_singularity_correction, "gygi");
+
+        TestParameters::input(param).dft_functional = "HSE";
+        TestParameters::input(param).exx_singularity_correction = "default";
+        TestParameters::input(param).exx_gamma_extra = true;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).exx_singularity_correction, "limits");
+        EXPECT_FALSE(TestParameters::input(param).exx_gamma_extra);
+
+        auto gamma = find_label("exx_gamma_extra", readinput.input_lists);
+        gamma->second.str_values = {"true"};
+        TestParameters::input(param).exx_gamma_extra = true;
+        it->second.reset_value(it->second, param);
+        EXPECT_TRUE(TestParameters::input(param).exx_gamma_extra);
+        gamma->second.str_values.clear();
+        TestParameters::input(param).exx_gamma_extra = false;
     }
     { // exx_ccp_rmesh_times
         auto it = find_label("exx_ccp_rmesh_times", readinput.input_lists);
@@ -2309,16 +2320,38 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // nocc 
-        auto it = find_label("nocc", readinput.input_lists);
-        TestParameters::input(param).nocc = 5;
-        TestParameters::input(param).nbands = 4;
-        TestParameters::input(param).nelec = 0.0;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(TestParameters::input(param).nocc, 4);
-        TestParameters::input(param).nocc = 0;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(TestParameters::input(param).nocc, 4);
+    // nocc no longer has a reset_value here: it's resolved from ground-state spin populations
+    // after SCF (see esolver_lr_lcao_tddft.cpp), not at INPUT-parse time.
+    { // lr_grad_solver
+        auto it = find_label("lr_grad_solver", readinput.input_lists);
+        for (const std::string solver : { "cg", "lapack" })
+        {
+            TestParameters::input(param).lr_grad_solver = solver;
+            it->second.check_value(it->second, param);   // accepted in every build
+        }
+        TestParameters::input(param).lr_grad_solver = "gmres";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("lr_grad_solver must be cg, lapack, scalapack or scalapack_chol"));
+        for (const std::string solver : { "scalapack", "scalapack_chol" })
+        {
+            TestParameters::input(param).lr_grad_solver = solver;
+#ifdef __MPI
+            it->second.check_value(it->second, param);
+#else
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+            output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(output, testing::HasSubstr("needs an MPI build"));
+#endif
+        }
+        // Removed solver names are rejected independently of MPI/ELPA build options.
+        TestParameters::input(param).lr_grad_solver = "elpa";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("elpa has been removed"));
     }
 }
 
@@ -2526,5 +2559,61 @@ TEST_F(InputTest, OutStru)
             it->second.str_values = {s};
             EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
         }
+    }
+}
+
+
+TEST_F(InputTest, LRExternalKernelSupportsSpectraOnly)
+{
+    ModuleIO::ReadInput readinput(0);
+    const auto it = find_label("lr_init_xc_kernel", readinput.input_lists);
+    for (const auto& solver : {"lr", "ks-lr"})
+    {
+        for (const auto& mode : {"file", "from_charge_file"})
+        {
+            Parameter param;
+            auto& input = TestParameters::input(param);
+            input.esolver_type = solver;
+            input.lr_init_xc_kernel = {mode, "external.cube"};
+            input.calculation = "scf";
+            input.cal_force = false;
+            it->second.check_value(it->second, param);
+            input.cal_force = true;
+            EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+            input.cal_force = false;
+            input.calculation = "relax";
+            EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+            input.lr_init_xc_kernel = {"default"};
+            it->second.check_value(it->second, param);
+            input.esolver_type = "ksdft";
+            input.lr_init_xc_kernel = {mode, "external.cube"};
+            it->second.check_value(it->second, param);
+        }
+    }
+}
+
+TEST_F(InputTest, LRFixedFieldRejectsForcesAndRelaxation)
+{
+    ModuleIO::ReadInput readinput(0);
+    const auto it = find_label("efield_flag", readinput.input_lists);
+    for (const auto& solver : {"lr", "ks-lr"})
+    {
+        Parameter param;
+        auto& input = TestParameters::input(param);
+        input.esolver_type = solver;
+        input.efield_flag = true;
+        input.calculation = "scf";
+        input.cal_force = false;
+        it->second.check_value(it->second, param);
+        input.cal_force = true;
+        EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+        input.cal_force = false;
+        input.calculation = "relax";
+        EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+        input.efield_flag = false;
+        it->second.check_value(it->second, param);
+        input.esolver_type = "ksdft";
+        input.efield_flag = true;
+        it->second.check_value(it->second, param);
     }
 }

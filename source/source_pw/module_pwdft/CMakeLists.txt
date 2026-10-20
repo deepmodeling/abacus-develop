@@ -2,6 +2,8 @@
 
 list(APPEND objects
     hamilt_pw.cpp
+    pw_hybrid_nscf.cpp
+    pw_hybrid_source.cpp
     td_history_pw.cpp
     td_pw.cpp
     op_pw_ekin.cpp
@@ -31,6 +33,7 @@ endif()
 list(APPEND objects
     dftu_base.cpp
     dftu_base_io.cpp
+    dftu_base_io_read.cpp
     dftu_pw.cpp
     dftu_pw_tools.cpp
     yukawa_screening.cpp

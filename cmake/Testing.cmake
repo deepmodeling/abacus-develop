@@ -30,48 +30,47 @@ if(BUILD_TESTING AND ENABLE_GOOGLEBENCH)
   endif()
 endif()
 
- function(AddTest) # function for UT
-    cmake_parse_arguments(UT "DYN" "TARGET"
-                          "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS;KEEP_FEATURE_DEFINITIONS" ${ARGN})
-    add_executable(${UT_TARGET} ${UT_SOURCES})
+function(AddTest) # function for UT
+  cmake_parse_arguments(
+    UT "DYN" "TARGET"
+    "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS;KEEP_FEATURE_DEFINITIONS"
+    ${ARGN})
+  add_executable(${UT_TARGET} ${UT_SOURCES})
 
-    # Let this target keep feature definitions (e.g. __MPI) that its source
-    # directory disables via abacus_disable_feature_definitions(). Needed by
-    # tests that genuinely exercise the feature.
-    if(UT_KEEP_FEATURE_DEFINITIONS)
-      set_property(TARGET ${UT_TARGET} PROPERTY
-        ABACUS_KEPT_FEATURE_DEFINITIONS ${UT_KEEP_FEATURE_DEFINITIONS})
-    endif()
+  # Let this target keep feature definitions (e.g. __MPI) that its source
+  # directory disables via abacus_disable_feature_definitions(). Needed by
+  # tests that genuinely exercise the feature.
+  if(UT_KEEP_FEATURE_DEFINITIONS)
+    set_property(TARGET ${UT_TARGET} PROPERTY ABACUS_KEPT_FEATURE_DEFINITIONS
+                                              ${UT_KEEP_FEATURE_DEFINITIONS})
+  endif()
 
-    if(ENABLE_COVERAGE)
-      add_coverage(${UT_TARGET})
-    endif()
+  if(ENABLE_COVERAGE)
+    add_coverage(${UT_TARGET})
+  endif()
 
-    # Dependencies & link library
-    # Share the numerical/MPI/OpenMP runtime closure but not
-    # the optional feature closure of the final binary
-    target_link_libraries(${UT_TARGET} PRIVATE
-      ${UT_LIBS}
-      GTest::gtest_main
-      GTest::gmock_main
-      abacus::linalg_libs)
-    if(BUILD_TESTING AND ENABLE_GOOGLEBENCH)
-      target_link_libraries(
-        ${UT_TARGET} PRIVATE benchmark::benchmark)
-    endif()
+  # Dependencies & link library
+  # Share the numerical/MPI/OpenMP runtime closure but not
+  # the optional feature closure of the final binary
+  target_link_libraries(
+    ${UT_TARGET} PRIVATE ${UT_LIBS} GTest::gtest_main GTest::gmock_main
+                         abacus::linalg_libs)
+  if(BUILD_TESTING AND ENABLE_GOOGLEBENCH)
+    target_link_libraries(${UT_TARGET} PRIVATE benchmark::benchmark)
+  endif()
 
+  # Link to build info if needed
+  if("${UT_SOURCES}" MATCHES "parse_args.cpp")
+    target_include_directories(${UT_TARGET}
+                               PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
+  endif()
 
-    # Link to build info if needed
-    if("${UT_SOURCES}" MATCHES "parse_args.cpp")
-        target_include_directories(${UT_TARGET} PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
-    endif()
-        
-    install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
-    add_test(
-      NAME ${UT_TARGET}
-      COMMAND ${UT_TARGET}
-      WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
-  endfunction(AddTest)
+  install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
+  add_test(
+    NAME ${UT_TARGET}
+    COMMAND ${UT_TARGET}
+    WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
+endfunction(AddTest)
 
 if(BUILD_TESTING)
   set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital

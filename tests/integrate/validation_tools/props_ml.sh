@@ -62,7 +62,10 @@ run_ml_lr_props(){
 if [ $is_lr == 1 ]; then
 	shopt -s nullglob
 	lr_files=(OUT.autotest/trans_analysis_*_tda.dat)
-	if [ ${#lr_files[@]} -gt 0 ]; then
+	if grep -q '^ LR excitation energies:' "$running_path"; then
+		# abs_gauge=none retains an energy-only report; ignore stale optical files.
+		awk '/^ LR excitation energies:/{p=1; next} /End LR excitation energies/{p=0} p && /^[[:space:]]*[0-9]+[[:space:]]/{printf "excitationenergyref%d %.6f\n", ++n, $2}' "$running_path" >> "$props_result_file"
+	elif [ ${#lr_files[@]} -gt 0 ]; then
 		cat "${lr_files[@]}" | awk '/Excitation Energy/{p=1; next} p && /^[[:space:]]*[0-9]+[[:space:]]/{printf "excitationenergyref%d %.6f\n", ++n, $2} /Occupied orbital/{p=0}' >>$props_result_file
 	fi
 	shopt -u nullglob
