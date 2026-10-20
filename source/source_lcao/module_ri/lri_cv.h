@@ -45,7 +45,7 @@ public:
         const double &kmesh_times,
         std::shared_ptr<ORB_gaunt_table> MGT,
         const bool& init_C,
-        const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new = {});
+        const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new);
     inline std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
     cal_Vs(
         const UnitCell &ucell,

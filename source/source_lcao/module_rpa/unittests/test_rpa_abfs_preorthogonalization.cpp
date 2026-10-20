@@ -197,3 +197,19 @@ TEST(RpaAbfsPreorthogonalization, InputAdapterUsesOnlyPublicInputs)
     ModuleRI::finalize_rpa_abfs_from_input(stable, input, false);
     EXPECT_EQ(stable[0][0].size(), 1U);
 }
+
+TEST(RpaAbfsPreorthogonalization, InputAdapterSupportsForceDerivatives)
+{
+    // cal_postSCF_exx forwards input.cal_force as the rebuild flag, so the
+    // force path must reduce the basis identically.
+    const auto radial = radial_exp(0.0);
+    Input_para input;
+    input.rpa_abfs_preorth = "onsite_coulomb";
+    input.rpa_abfs_preorth_threshold = 1.0e-2;
+    input.cal_force = true;
+    auto forced = make_set(0, {radial, radial});
+    const auto report = ModuleRI::finalize_rpa_abfs_from_input(forced, input, input.cal_force);
+    EXPECT_EQ(forced[0][0].size(), 1U);
+    EXPECT_EQ(report.output_expanded_size, 1);
+    EXPECT_TRUE(std::isfinite(report.channels.front().maximum_identity_error));
+}

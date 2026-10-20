@@ -518,7 +518,10 @@ void ReadInput::item_exx()
         item.annotation = "dimensionality used by the Ewald Coulomb singularity correction";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Integer";
-        item.description = "Use 3 for periodic three-dimensional Coulomb and 2 for isolated-layer Coulomb.";
+        item.description = "Use 3 for periodic three-dimensional Coulomb and 2 for isolated-layer Coulomb. "
+                           "The strict-2D kernel requires a slab cell with the non-periodic direction along "
+                           "the third lattice vector, a k mesh with a single layer along that direction and no "
+                           "out-of-plane k-point offset, and forces and stresses are not implemented for it.";
         item.default_value = "3";
         item.unit = "";
         read_sync_int(input.exx_ewald_dimension);
@@ -553,7 +556,11 @@ void ReadInput::item_exx()
         item.annotation = "Ewald short-range Gaussian-tail handling mode";
         item.category = "Exact Exchange (LCAO)";
         item.type = "String";
-        item.description = "Check the outer real-space shell of Vbare-Vgauss. off disables the probe, warn reports without changing the production range, enlarge expands until converged, and strict also aborts on incomplete or unconverged coverage.";
+        item.description = "Check the outer real-space shell of Vbare-Vgauss. off disables the probe, warn "
+                           "reports without changing the production range, enlarge expands until converged, "
+                           "and strict also aborts on unconverged coverage. In every mode except off, "
+                           "incomplete guard-shell coverage or a Hermitian residual above tolerance aborts "
+                           "the run.";
         item.default_value = "warn";
         read_sync_string(input.exx_ewald_tail_check);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -570,6 +577,7 @@ void ReadInput::item_exx()
         item.annotation = "absolute Ewald short-range guard-shell tolerance";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
+        item.description = "Absolute tolerance of the Ewald short-range guard-shell probe; together with the relative tolerance it bounds the allowed per-block and Hermitian residuals.";
         item.default_value = "1e-12";
         read_sync_double(input.exx_ewald_tail_abs_tol);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -585,6 +593,7 @@ void ReadInput::item_exx()
         item.annotation = "relative Ewald short-range guard-shell maximum tolerance";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
+        item.description = "Relative tolerance of the Ewald short-range guard-shell probe, scaled by the production-shell reference norm; it bounds the maximum per-block residual and the Hermitian residual.";
         item.default_value = "1e-10";
         read_sync_double(input.exx_ewald_tail_rel_tol);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -600,6 +609,7 @@ void ReadInput::item_exx()
         item.annotation = "relative Ewald short-range guard-shell summed tolerance";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
+        item.description = "Relative tolerance on the summed guard-shell residual, i.e. the total discarded tail norm relative to the production reference norm.";
         item.default_value = "1e-8";
         read_sync_double(input.exx_ewald_tail_sum_rel_tol);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -615,6 +625,7 @@ void ReadInput::item_exx()
         item.annotation = "number of lattice-cell layers in the Ewald tail probe";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Integer";
+        item.description = "Thickness in lattice-cell layers of the guard shell probed around the production real-space range.";
         item.default_value = "1";
         read_sync_int(input.exx_ewald_tail_guard_cells);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -630,6 +641,7 @@ void ReadInput::item_exx()
         item.annotation = "maximum adaptive Ewald real-space range expansions";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Integer";
+        item.description = "Maximum number of adaptive real-space range expansions in the enlarge and strict modes; the run aborts when the tail is still unconverged after this many expansions.";
         item.default_value = "3";
         read_sync_int(input.exx_ewald_tail_max_expansions);
         item.check_value = [](const Input_Item& item, const Parameter& para) {

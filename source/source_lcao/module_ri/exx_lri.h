@@ -89,10 +89,6 @@ public:
 
     Exx_LRI(const Exx_Info_RI& info_in, const ExxLriRuntime& runtime_in)
         : info(info_in), runtime(runtime_in) {}
-    // Split RPA_LRI sources construct cut/full-coulomb helpers from a local
-    // Exx_Info_RI copy; default the runtime the same way the esolver path does.
-    Exx_LRI(const Exx_Info_RI& info_in)
-        : Exx_LRI(info_in, make_exx_lri_runtime()) {}
     Exx_LRI operator=(const Exx_LRI&) = delete;
     Exx_LRI operator=(Exx_LRI&&);
 
@@ -139,10 +135,10 @@ public:
 		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full_IJR,
 		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
 		const UnitCell& ucell,
-		const bool write_cv = false,
-		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_short_IJR = nullptr,
-		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_long_IJR = nullptr,
-		EwaldCoulombComponents* components = nullptr);
+		const bool write_cv,
+		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_short_IJR,
+		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_long_IJR,
+		EwaldCoulombComponents* components);
 	void cal_exx_elec(
 		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
 		const UnitCell& ucell,
@@ -173,7 +169,9 @@ public:
 
 	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
 	std::array<std::vector<std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>>, 3> dHexxs;
-	double Eexx;
+	// Deterministic default: the NSCF HexxR-loading branch never computes Eexx,
+	// while the energy report still reads get_Eexx() on that path.
+	double Eexx = 0.0;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
 

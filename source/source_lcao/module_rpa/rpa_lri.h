@@ -9,7 +9,6 @@
 #include "source_lcao/module_ri/lri_cv.h"
 #include "source_hamilt/module_xc/exx_info_ri.h"
 #include "source_psi/psi.h"
-#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 // #include "module_xc/exx_info.h"
 // #include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_base/matrix.h"
@@ -138,9 +137,9 @@ template <typename T, typename Tdata> class RPA_LRI
                           Exx_LRI<double>* exx_lri);
     void out_librpa_basis_v1(const UnitCell& ucell,
                              Exx_LRI<double>* exx_lri,
-                             const std::string& aux_filename = "basis_aux_out",
-                             const std::string& legacy_filename = "basis_out",
-                             const bool write_wfc_basis = true);
+                             const std::string& aux_filename,
+                             const std::string& legacy_filename,
+                             const bool write_wfc_basis);
     // void print_matrix(char *desc, const ModuleBase::matrix &mat);
     // void print_complex_matrix(char *desc, const ModuleBase::ComplexMatrix &mat);
     // void init(const MPI_Comm &mpi_comm_in);
@@ -177,8 +176,6 @@ template <typename T, typename Tdata> class RPA_LRI
 
     // Tdata post_process_Erpa( const Tdata &Erpa_in ) const;
 
-    ModuleSymmetry::Symmetry_rotation symmetry_rotation_;
-    bool use_spacegroup_symmetry_ = false;
     std::unique_ptr<Exx_LRI<double>> exx_cut_coulomb;
     std::unique_ptr<Exx_LRI<double>> exx_full_coulomb;
 };

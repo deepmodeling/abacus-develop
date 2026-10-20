@@ -243,9 +243,31 @@ double fq_massidda_2d(const UnitCell& ucell, const std::array<int, 3>& nmp, cons
     b1 = b1 * ucell.tpiba;
     b2 = b2 * ucell.tpiba;
 
+    // Include every integer combination with |i0*b1 + i1*b2| <= cutoff.
+    // Per-axis bounds ceil(cutoff/|b_j|) miss near-cancelling combinations in
+    // skew cells: unit b1/b2 ten degrees apart at eta = 1 stop at 6 but omit
+    // (7,-7), whose norm is about 1.22 and well inside sqrt(35). Bound the
+    // integer coordinates through the dual (inverse-metric) basis instead:
+    // for q = i0*b1 + i1*b2, i_j = q . b_j*, hence |i_j| <= cutoff*|b_j*|
+    // with |b1*|^2 = g22/det and |b2*|^2 = g11/det for the in-plane Gram
+    // matrix [[g11, g12], [g12, g22]].
     const double cutoff = std::sqrt(35.0 / eta);
-    const int n0 = static_cast<int>(std::ceil(cutoff / b1.norm()));
-    const int n1 = static_cast<int>(std::ceil(cutoff / b2.norm()));
+    const double g11 = b1 * b1;
+    const double g12 = b1 * b2;
+    const double g22 = b2 * b2;
+    const double det = g11 * g22 - g12 * g12;
+    if (!(det > 0.0))
+    {
+        ModuleBase::WARNING_QUIT("Singular_Value::fq_massidda_2d",
+                                 "degenerate in-plane reciprocal lattice in Massidda sum!");
+    }
+    const int n0 = static_cast<int>(std::floor(cutoff * std::sqrt(g22 / det)));
+    const int n1 = static_cast<int>(std::floor(cutoff * std::sqrt(g11 / det)));
+    if (static_cast<long>(n0 + 1) * (n1 + 1) > 4096)
+    {
+        ModuleBase::WARNING("Singular_Value::fq_massidda_2d",
+                             "strongly skew in-plane lattice; large Massidda summation bounds");
+    }
 
     double fq = 0.0;
     for (int i0 = -n0; i0 <= n0; ++i0)

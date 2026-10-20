@@ -1,4 +1,6 @@
 #include "rpa_lri_detail.h"
+#include "source_base/parallel_common.h"
+#include "source_base/parallel_reduce.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
 #include <algorithm>
@@ -33,45 +35,26 @@ std::string mpi_error_string(const int error_code)
 
 void collective_mpi_check(const MPI_Comm mpi_comm, const int local_error, const std::string& context)
 {
-    int mpi_rank = 0;
-    MPI_Comm_rank(mpi_comm, &mpi_rank);
+    const int mpi_rank = Parallel_Common::my_rank(mpi_comm);
     const int no_failure = std::numeric_limits<int>::max();
-    const int local_failed_rank = local_error == MPI_SUCCESS ? no_failure : mpi_rank;
-    int first_failed_rank = no_failure;
-    const int reduce_error = MPI_Allreduce(&local_failed_rank, &first_failed_rank, 1, MPI_INT, MPI_MIN, mpi_comm);
-    if (reduce_error != MPI_SUCCESS)
-    {
-        throw std::runtime_error(context
-                                 + ": failed to synchronize MPI error status: " + mpi_error_string(reduce_error));
-    }
+    int first_failed_rank = local_error == MPI_SUCCESS ? no_failure : mpi_rank;
+    Parallel_Reduce::reduce_min(mpi_comm, first_failed_rank);
     if (first_failed_rank == no_failure)
     {
         return;
     }
 
     int shared_error = mpi_rank == first_failed_rank ? local_error : MPI_SUCCESS;
-    const int broadcast_error = MPI_Bcast(&shared_error, 1, MPI_INT, first_failed_rank, mpi_comm);
-    if (broadcast_error != MPI_SUCCESS)
-    {
-        throw std::runtime_error(context
-                                 + ": failed to broadcast MPI error status: " + mpi_error_string(broadcast_error));
-    }
+    Parallel_Common::bcast_int(&shared_error, 1, mpi_comm, first_failed_rank);
     throw std::runtime_error(context + ": " + mpi_error_string(shared_error));
 }
 
 void collective_require(const MPI_Comm mpi_comm, const bool local_condition, const std::string& context)
 {
-    int mpi_rank = 0;
-    MPI_Comm_rank(mpi_comm, &mpi_rank);
+    const int mpi_rank = Parallel_Common::my_rank(mpi_comm);
     const int no_failure = std::numeric_limits<int>::max();
-    const int local_failed_rank = local_condition ? no_failure : mpi_rank;
-    int first_failed_rank = no_failure;
-    const int reduce_error = MPI_Allreduce(&local_failed_rank, &first_failed_rank, 1, MPI_INT, MPI_MIN, mpi_comm);
-    if (reduce_error != MPI_SUCCESS)
-    {
-        throw std::runtime_error(context
-                                 + ": failed to synchronize validation status: " + mpi_error_string(reduce_error));
-    }
+    int first_failed_rank = local_condition ? no_failure : mpi_rank;
+    Parallel_Reduce::reduce_min(mpi_comm, first_failed_rank);
     if (first_failed_rank != no_failure)
     {
         throw std::runtime_error(context + " (first failing MPI rank " + std::to_string(first_failed_rank) + ").");
@@ -184,11 +167,8 @@ KSEigenvectorMpiLayout make_ks_eigenvector_mpi_layout(const MPI_Comm mpi_comm,
     local_valid = local_valid && block_lengths.size() <= static_cast<std::size_t>(std::numeric_limits<int>::max());
     collective_require(mpi_comm, local_valid, "Invalid local KS eigenvector MPI layout");
 
-    unsigned long long global_count = 0;
-    collective_mpi_check(
-        mpi_comm,
-        MPI_Allreduce(&layout.local_count, &global_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, mpi_comm),
-        "Failed to validate KS eigenvector MPI ownership");
+    unsigned long long global_count = layout.local_count;
+    Parallel_Reduce::reduce_all(mpi_comm, global_count);
     const unsigned long long expected_count = checked_mul_u64(static_cast<unsigned long long>(nbands),
                                                               static_cast<unsigned long long>(spatial_basis),
                                                               "Global KS eigenvector MPI element count");
@@ -196,10 +176,8 @@ KSEigenvectorMpiLayout make_ks_eigenvector_mpi_layout(const MPI_Comm mpi_comm,
                        global_count == expected_count,
                        "KS eigenvector MPI ownership does not cover the global matrix exactly");
 
-    collective_mpi_check(
-        mpi_comm,
-        MPI_Allreduce(&layout.local_count, &layout.max_local_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, mpi_comm),
-        "Failed to determine the KS eigenvector MPI chunk count");
+    layout.max_local_count = layout.local_count;
+    Parallel_Reduce::reduce_max(mpi_comm, layout.max_local_count);
 
     int type_create_error = MPI_SUCCESS;
     if (layout.local_count > 0)

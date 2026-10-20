@@ -864,7 +864,8 @@ void write_reader_v1(const DenseMatrix& matrix,
                      const std::vector<int>& atom_naux,
                      const int iq_one_based,
                      const int mpi_rank,
-                     const std::string& prefix)
+                     const std::string& prefix,
+                     const std::string& output_directory)
 {
     constexpr std::int32_t marker = -20129433;
     constexpr std::int32_t complex_flag = 1;
@@ -956,7 +957,7 @@ void write_reader_v1(const DenseMatrix& matrix,
     }
 
     std::ostringstream name;
-    name << prefix << iq_one_based << "_rank" << mpi_rank << ".dat";
+    name << output_directory << prefix << iq_one_based << "_r" << mpi_rank << ".dat";
     const std::string path = name.str();
     std::ofstream stream(path, std::ios::out | std::ios::binary | std::ios::trunc);
     if (!stream.good())

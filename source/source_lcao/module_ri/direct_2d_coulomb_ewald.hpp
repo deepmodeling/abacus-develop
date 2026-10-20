@@ -19,7 +19,8 @@ template <typename Tdata>
 void Ewald_Vq<Tdata>::output_direct_2d_coulomb(const UnitCell& ucell,
                                                const double ecut_ry,
                                                const int kz_order,
-                                               const int gamma_order)
+                                               const int gamma_order,
+                                               const std::string& rpa_outdir)
 {
     if (this->ewald_dimension != 2)
     {
@@ -109,10 +110,8 @@ void Ewald_Vq<Tdata>::output_direct_2d_coulomb(const UnitCell& ucell,
             = static_cast<int>(type_traversal_to_local[static_cast<std::size_t>(ucell.iat2it[atom])].size());
     }
 
-    int mpi_rank = 0;
-    int mpi_size = 1;
-    MPI_Comm_rank(this->mpi_comm, &mpi_rank);
-    MPI_Comm_size(this->mpi_comm, &mpi_size);
+    const int mpi_rank = Parallel_Common::my_rank(this->mpi_comm);
+    const int mpi_size = Parallel_Common::nproc(this->mpi_comm);
 
     struct DirectQOutput
     {
@@ -194,10 +193,13 @@ void Ewald_Vq<Tdata>::output_direct_2d_coulomb(const UnitCell& ucell,
         const double lz_bohr = ucell.a3.norm() * ucell.lat0;
         result = Direct2dCoulomb::build_gram_matrix(
             basis, points, ucell.omega, lz_bohr, alpha);
-        std::ostringstream stem;
-        stem << "direct_2d_coulomb_iq" << iq;
+        // Same reader-v1 file name and directory the split route's
+        // out_coulomb_k_v1 writes, so downstream LibRPA readers consume the
+        // direct output without any path special case.
         Direct2dCoulomb::write_reader_v1(
-            result.matrix, atom_naux, iq + 1, mpi_rank, "v1_coulomb_full_iq_");
+            result.matrix, atom_naux, iq + 1, mpi_rank, "V_full_", rpa_outdir);
+        std::ostringstream stem;
+        stem << rpa_outdir << "direct_2d_coulomb_iq" << iq;
 #ifdef VERSION
         const std::string build_version = VERSION;
 #else
@@ -225,7 +227,7 @@ void Ewald_Vq<Tdata>::output_direct_2d_coulomb(const UnitCell& ucell,
                   << " elapsed_seconds=" << result.elapsed_seconds
                   << std::endl;
     }
-    MPI_Barrier(this->mpi_comm);
+    Parallel_Common::barrier(this->mpi_comm);
     if (mpi_rank == 0)
     {
 #ifdef VERSION
@@ -241,7 +243,7 @@ void Ewald_Vq<Tdata>::output_direct_2d_coulomb(const UnitCell& ucell,
             static_cast<int>(q_outputs.size()),
             basis.size(),
             source_revision};
-        const std::string filename = "librpa_2d_coulomb_method.dat";
+        const std::string filename = rpa_outdir + "librpa_2d_coulomb_method.dat";
         std::ofstream output(filename, std::ios::out | std::ios::trunc);
         if (!output.good())
         {

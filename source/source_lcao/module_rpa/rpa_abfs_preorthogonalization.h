@@ -2,10 +2,13 @@
 #define MODULE_RI_RPA_ABFS_PREORTHOGONALIZATION_H
 
 #include "source_basis/module_ao/orb_atomic_lm.h"
-#include "source_io/module_parameter/input_parameter.h"
 
 #include <string>
 #include <vector>
+
+// Only a const reference is used in the declarations below; the full
+// Input_para definition is included by the implementation.
+struct Input_para;
 
 namespace ModuleRI
 {

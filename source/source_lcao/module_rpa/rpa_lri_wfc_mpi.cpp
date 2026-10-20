@@ -1,4 +1,5 @@
 #include "rpa_lri_detail.h"
+#include "source_base/parallel_common.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 
 #include <algorithm>
@@ -160,10 +161,7 @@ void write_ks_eigenvector_v1_mpi(const MPI_Comm mpi_comm,
     }
     try
     {
-        int mpi_rank = 0;
-        collective_mpi_check(mpi_comm,
-                             MPI_Comm_rank(mpi_comm, &mpi_rank),
-                             "Failed to query the KS eigenvector MPI rank");
+        const int mpi_rank = Parallel_Common::my_rank(mpi_comm);
 
         const bool is_soc = nspin_abacus == 4;
         const int ncomponents = is_soc ? 2 : nspins;

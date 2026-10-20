@@ -17,7 +17,8 @@
 // files. Opt-in through out_librpa_3d_coulomb_method = direct_reciprocal.
 template <typename Tdata>
 void Ewald_Vq<Tdata>::output_direct_3d_coulomb(const UnitCell& ucell,
-                                               const double ecut_ry)
+                                               const double ecut_ry,
+                                               const std::string& rpa_outdir)
 {
     if (this->ewald_dimension != 3)
     {
@@ -37,6 +38,15 @@ void Ewald_Vq<Tdata>::output_direct_3d_coulomb(const UnitCell& ucell,
     if (fock_params == this->coulomb_param.end() || fock_params->second.empty())
     {
         throw std::runtime_error("Direct reciprocal Coulomb could not find the Ewald Fock parameters.");
+    }
+    // The carrier singularity correction inside get_singular_chi consumes the
+    // full q mesh through Ewald_Vq::kvec_c, which the split route fills in
+    // init_ions; the direct branch never reaches that stage, so populate it
+    // here before chi. Otherwise the Gamma carrier correction would see only
+    // zero vectors and drop every nonzero-q summand.
+    for (std::size_t ik = 0; ik != this->kvec_c.size(); ++ik)
+    {
+        this->kvec_c[ik] = this->p_kv->kvec_c_full[ik];
     }
     const double chi = this->get_singular_chi(ucell, fock_params->second, 2.0);
     const double alpha = this->bare_multipole_scale;
@@ -106,10 +116,8 @@ void Ewald_Vq<Tdata>::output_direct_3d_coulomb(const UnitCell& ucell,
             = static_cast<int>(type_traversal_to_local[static_cast<std::size_t>(ucell.iat2it[atom])].size());
     }
 
-    int mpi_rank = 0;
-    int mpi_size = 1;
-    MPI_Comm_rank(this->mpi_comm, &mpi_rank);
-    MPI_Comm_size(this->mpi_comm, &mpi_size);
+    const int mpi_rank = Parallel_Common::my_rank(this->mpi_comm);
+    const int mpi_size = Parallel_Common::nproc(this->mpi_comm);
 
     struct DirectQOutput
     {
@@ -173,10 +181,13 @@ void Ewald_Vq<Tdata>::output_direct_3d_coulomb(const UnitCell& ucell,
         const auto result = Direct2dCoulomb::build_coulomb_matrix(
             basis, points, ucell.omega, alpha, chi, is_gamma);
 
+        // Same reader-v1 file name and directory the split route's
+        // out_coulomb_k_v1 writes, so downstream LibRPA readers consume the
+        // direct output without any path special case.
         Direct2dCoulomb::write_reader_v1(
-            result.matrix, atom_naux, iq + 1, mpi_rank, "v1_coulomb_full_iq_");
+            result.matrix, atom_naux, iq + 1, mpi_rank, "V_full_", rpa_outdir);
         std::ostringstream stem;
-        stem << "direct_3d_coulomb_iq" << iq;
+        stem << rpa_outdir << "direct_3d_coulomb_iq" << iq;
 #ifdef VERSION
         const std::string build_version = VERSION;
 #else
@@ -202,7 +213,7 @@ void Ewald_Vq<Tdata>::output_direct_3d_coulomb(const UnitCell& ucell,
                   << " elapsed_seconds=" << result.elapsed_seconds
                   << std::endl;
     }
-    MPI_Barrier(this->mpi_comm);
+    Parallel_Common::barrier(this->mpi_comm);
     if (mpi_rank == 0)
     {
 #ifdef VERSION
@@ -216,7 +227,7 @@ void Ewald_Vq<Tdata>::output_direct_3d_coulomb(const UnitCell& ucell,
             static_cast<int>(q_outputs.size()),
             basis.size(),
             source_revision};
-        const std::string filename = "librpa_3d_coulomb_method.dat";
+        const std::string filename = rpa_outdir + "librpa_3d_coulomb_method.dat";
         std::ofstream output(filename, std::ios::out | std::ios::trunc);
         if (!output.good())
         {

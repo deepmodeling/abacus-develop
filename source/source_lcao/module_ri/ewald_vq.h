@@ -20,6 +20,7 @@
 #include <functional>
 #include <map>
 #include <mpi.h>
+#include <string>
 #include <utility>
 
 template <typename Tdata>
@@ -65,8 +66,8 @@ class Ewald_Vq
               const double &exact_ccp_rmesh_times_in,
               const double &ewald_lambda_in,
               const double &kmesh_times_in,
-              const int& ewald_dimension_in = 3,
-              const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new = {});
+              const int& ewald_dimension_in,
+              const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new);
 
     void init_ions(const UnitCell& ucell, const std::array<Tcell, Ndim>& period_Vs_NAO);
 
@@ -77,8 +78,9 @@ class Ewald_Vq
     void output_direct_2d_coulomb(const UnitCell& ucell,
                                   double ecut_ry,
                                   int kz_order,
-                                  int gamma_order);
-    void output_direct_3d_coulomb(const UnitCell& ucell, double ecut_ry);
+                                  int gamma_order,
+                                  const std::string& rpa_outdir);
+    void output_direct_3d_coulomb(const UnitCell& ucell, double ecut_ry, const std::string& rpa_outdir);
 
     inline std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>> cal_Vq(
         const UnitCell& ucell,

@@ -20,6 +20,51 @@ namespace GaussianAbfs2D
 {
 constexpr double pi = 3.141592653589793238462643383279502884;
 
+// Scaled complementary error function erfcx(x) = e^{x^2} erfc(x) for
+// non-negative arguments. The direct product overflows once
+// x^2 > log(DBL_MAX) while erfc simultaneously underflows, although the
+// scaled value stays finite; large arguments use the asymptotic expansion.
+inline double erfcx_nonneg(const double x)
+{
+    if (x * x < 709.0)
+    {
+        return std::exp(x * x) * std::erfc(x);
+    }
+    const double x2 = x * x;
+    return (1.0 / (std::sqrt(pi) * x))
+           * (1.0 - 0.5 / x2 + 0.75 / (x2 * x2) - 1.875 / (x2 * x2 * x2)
+              + 6.5625 / (x2 * x2 * x2 * x2));
+}
+
+// The z-shifted erfc products of the base integral, each premultiplied by
+// e^{beta q^2 +- q a} so the cancellation between that exponential and the
+// erfc argument is carried analytically:
+//     plus  = e^{-a^2/(4 beta)} erfcx(sqrt(beta) q + a/(2 sqrt(beta))),
+//     minus = e^{-a^2/(4 beta)} erfcx(sqrt(beta) q - a/(2 sqrt(beta))).
+// The minus argument can be negative; erfcx(-v) = 2 e^{v^2} - erfcx(v) then
+// keeps the a^2/(4 beta) cancellation inside the exponent as well.
+inline void scaled_erfc_pair(const double q,
+                             const double a,
+                             const double beta,
+                             double& plus,
+                             double& minus)
+{
+    const double sqrt_beta = std::sqrt(beta);
+    const double x = sqrt_beta * q;
+    const double half_shift = a / (2.0 * sqrt_beta);
+    const double decay = std::exp(-half_shift * half_shift);
+    plus = decay * erfcx_nonneg(x + half_shift);
+    if (x >= half_shift)
+    {
+        minus = decay * erfcx_nonneg(x - half_shift);
+    }
+    else
+    {
+        const double v = half_shift - x;
+        minus = 2.0 * std::exp(beta * q * q - q * a) - decay * erfcx_nonneg(v);
+    }
+}
+
 // Base integral: the z integration of the Gaussian-compensated Coulomb at
 // in-plane momentum q and center offset tau_z,
 //     i2 = (pi/2q) e^{beta q^2} [ e^{q|tau_z|} erfc(sqrt(beta) q + |tau_z|/2 sqrt(beta))
@@ -29,6 +74,9 @@ inline double i2(const double q, const double tau_z, const double beta)
 {
     if (q < 1.0e-12)
     {
+        // Diverges like pi/q as q->0; the Gamma sample of this channel is
+        // dropped by the lattice sum and restored analytically by the
+        // callers together with the chi correction.
         return 0.0;
     }
 
@@ -36,29 +84,47 @@ inline double i2(const double q, const double tau_z, const double beta)
     const double x = sqrt_beta * q;
     if (std::abs(tau_z) < 1.0e-14)
     {
-        return pi / q * std::exp(x * x) * std::erfc(x);
+        return pi / q * erfcx_nonneg(x);
     }
 
     const double a = std::abs(tau_z);
-    const double term_plus = std::exp(q * a) * std::erfc(x + a / (2.0 * sqrt_beta));
-    const double term_minus = std::exp(-q * a) * std::erfc(x - a / (2.0 * sqrt_beta));
-    return pi / (2.0 * q) * std::exp(x * x) * (term_plus + term_minus);
+    double plus = 0.0;
+    double minus = 0.0;
+    scaled_erfc_pair(q, a, beta, plus, minus);
+    const double result = pi / (2.0 * q) * (plus + minus);
+    if (!std::isfinite(result))
+    {
+        throw std::runtime_error("GaussianAbfs2D::i2 produced a nonfinite base integral");
+    }
+    return result;
 }
 
 inline double di2_dtau(const double q, const double tau_z, const double beta)
 {
-    if (q < 1.0e-12 || std::abs(tau_z) < 1.0e-14)
+    if (q < 1.0e-12)
+    {
+        // Unique q->0 limit, independent of the in-plane direction: the
+        // normal-dipole (s-pz) channel of the Gamma term. At tau_z = 0 this
+        // reduces to zero, consistent with the odd symmetry below.
+        return -pi * std::erf(tau_z / (2.0 * std::sqrt(beta)));
+    }
+
+    if (std::abs(tau_z) < 1.0e-14)
     {
         return 0.0;
     }
 
     const double a = std::abs(tau_z);
-    const double sqrt_beta = std::sqrt(beta);
-    const double x = sqrt_beta * q;
-    const double term_plus = std::exp(q * a) * std::erfc(x + a / (2.0 * sqrt_beta));
-    const double term_minus = std::exp(-q * a) * std::erfc(x - a / (2.0 * sqrt_beta));
-    const double derivative_a = 0.5 * pi * std::exp(x * x) * (term_plus - term_minus);
-    return tau_z < 0.0 ? -derivative_a : derivative_a;
+    double plus = 0.0;
+    double minus = 0.0;
+    scaled_erfc_pair(q, a, beta, plus, minus);
+    const double derivative_a = 0.5 * pi * (plus - minus);
+    const double result = tau_z < 0.0 ? -derivative_a : derivative_a;
+    if (!std::isfinite(result))
+    {
+        throw std::runtime_error("GaussianAbfs2D::di2_dtau produced a nonfinite derivative");
+    }
+    return result;
 }
 
 inline std::complex<double> coulomb_l1(const int m,
@@ -147,8 +213,14 @@ inline std::vector<std::complex<double>> complex_solid_harmonic_coefficients(con
         = std::sqrt(static_cast<double>(2 * L + 1) / (4.0 * pi)
                     * factorial(L - m) / factorial(L + m));
     const double condon_shortley = (m % 2 == 0) ? 1.0 : -1.0;
-    const std::complex<double> angular_prefactor
-        = normalization * condon_shortley * std::pow(std::complex<double>(qx, qy), m);
+    // std::pow of the zero in-plane vector with exponent zero is not
+    // portable (exp(0*log(0)) is NaN on some standard libraries but exactly
+    // one on others); spell out the m=0 factor. The q=0 evaluation point of
+    // the Gamma term hits this on every call.
+    const std::complex<double> in_plane_power
+        = m == 0 ? std::complex<double>(1.0, 0.0)
+                 : std::pow(std::complex<double>(qx, qy), static_cast<double>(m));
+    const std::complex<double> angular_prefactor = normalization * condon_shortley * in_plane_power;
     const double q_sq = qx * qx + qy * qy;
     for (int k = 0; k <= L / 2; ++k)
     {

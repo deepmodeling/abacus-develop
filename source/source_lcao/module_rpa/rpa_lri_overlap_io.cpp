@@ -2,6 +2,8 @@
 #include "rpa_lri.h"
 #include "rpa_lri_detail.h"
 #include "source_base/global_function.h"
+#include "source_base/parallel_common.h"
+#include "source_base/parallel_reduce.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/input_parameter.h"
@@ -456,20 +458,20 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
     const double hermitian_tol = 1e-10;
     const double rank_tol = 1e-12;
     const int natom_metadata = natom;
-    int natom_min = 0;
-    int natom_max = 0;
-    MPI_Allreduce(&natom_metadata, &natom_min, 1, MPI_INT, MPI_MIN, mpi_comm);
-    MPI_Allreduce(&natom_metadata, &natom_max, 1, MPI_INT, MPI_MAX, mpi_comm);
+    int natom_min = natom_metadata;
+    int natom_max = natom_metadata;
+    Parallel_Reduce::reduce_min(mpi_comm, natom_min);
+    Parallel_Reduce::reduce_max(mpi_comm, natom_max);
     if (natom_min != natom_metadata || natom_max != natom_metadata)
     {
         throw std::runtime_error("raw active-ABF overlap writer found rank-inconsistent atom metadata.");
     }
     for (const int count: atom_naux)
     {
-        int min_count = 0;
-        int max_count = 0;
-        MPI_Allreduce(&count, &min_count, 1, MPI_INT, MPI_MIN, mpi_comm);
-        MPI_Allreduce(&count, &max_count, 1, MPI_INT, MPI_MAX, mpi_comm);
+        int min_count = count;
+        int max_count = count;
+        Parallel_Reduce::reduce_min(mpi_comm, min_count);
+        Parallel_Reduce::reduce_max(mpi_comm, max_count);
         if (min_count != count || max_count != count)
         {
             throw std::runtime_error("raw active-ABF overlap writer found rank-inconsistent active basis metadata.");
@@ -530,8 +532,8 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
                             + static_cast<std::size_t>(J)] = 1;
         }
     }
-    int global_invalid_metadata = 0;
-    MPI_Allreduce(&local_invalid_metadata, &global_invalid_metadata, 1, MPI_INT, MPI_MAX, mpi_comm);
+    int global_invalid_metadata = local_invalid_metadata;
+    Parallel_Reduce::reduce_max(mpi_comm, global_invalid_metadata);
     if (global_invalid_metadata != 0)
     {
         throw std::runtime_error(local_metadata_error.empty()
@@ -540,9 +542,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
     }
     for (int& seen: local_pair_seen)
     {
-        int global_seen = 0;
-        MPI_Allreduce(&seen, &global_seen, 1, MPI_INT, MPI_MAX, mpi_comm);
-        seen = global_seen;
+        Parallel_Reduce::reduce_max(mpi_comm, seen);
     }
     for (std::size_t pair_index = 0; pair_index < local_pair_seen.size(); ++pair_index)
     {
@@ -557,20 +557,19 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
     // local and cross-rank repeats and reports the same concrete key on all ranks.
     std::sort(local_keys.begin(), local_keys.end());
     const bool local_duplicate = std::adjacent_find(local_keys.begin(), local_keys.end()) != local_keys.end();
-    int global_duplicate_flag = 0;
-    int mpi_size = 1;
-    MPI_Comm_size(mpi_comm, &mpi_size);
     const std::size_t key_width = 5;
-    const bool local_count_overflow = local_keys.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()) / key_width;
-    int any_count_overflow = local_count_overflow ? 1 : 0;
-    MPI_Allreduce(&any_count_overflow, &global_duplicate_flag, 1, MPI_INT, MPI_MAX, mpi_comm);
+    const bool local_count_overflow
+        = local_keys.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()) / key_width;
+    int global_duplicate_flag = local_count_overflow ? 1 : 0;
+    const int mpi_size = Parallel_Common::nproc(mpi_comm);
+    Parallel_Reduce::reduce_max(mpi_comm, global_duplicate_flag);
     if (global_duplicate_flag != 0)
     {
         throw std::runtime_error("raw active-ABF overlap writer cannot represent MPI key count.");
     }
-    const int local_int_count = static_cast<int>(local_keys.size() * key_width);
+    int local_int_count = static_cast<int>(local_keys.size() * key_width);
     std::vector<int> recv_counts(static_cast<std::size_t>(mpi_size), 0);
-    MPI_Allgather(&local_int_count, 1, MPI_INT, recv_counts.data(), 1, MPI_INT, mpi_comm);
+    Parallel_Reduce::gather_int_all(mpi_comm, local_int_count, recv_counts.data());
     std::vector<int> displacements(static_cast<std::size_t>(mpi_size), 0);
     int total_int_count = 0;
     for (int rank = 0; rank < mpi_size; ++rank)
@@ -590,6 +589,8 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
         local_packed.insert(local_packed.end(), key.begin(), key.end());
     }
     std::vector<int> gathered(static_cast<std::size_t>(total_int_count));
+    // Allgatherv has no counterpart in Parallel_Reduce (the per-rank counts
+    // are data dependent); this is the only raw collective in this writer.
     MPI_Allgatherv(local_packed.data(), local_int_count, MPI_INT, gathered.data(), recv_counts.data(),
                    displacements.data(), MPI_INT, mpi_comm);
     std::vector<std::array<int, 5>> gathered_keys(static_cast<std::size_t>(total_int_count) / key_width);
@@ -618,10 +619,10 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
         }
         for (const double coordinate: q)
         {
-            double min_coordinate = 0.0;
-            double max_coordinate = 0.0;
-            MPI_Allreduce(&coordinate, &min_coordinate, 1, MPI_DOUBLE, MPI_MIN, mpi_comm);
-            MPI_Allreduce(&coordinate, &max_coordinate, 1, MPI_DOUBLE, MPI_MAX, mpi_comm);
+            double min_coordinate = coordinate;
+            double max_coordinate = coordinate;
+            Parallel_Reduce::reduce_min(mpi_comm, min_coordinate);
+            Parallel_Reduce::reduce_max(mpi_comm, max_coordinate);
             if (max_coordinate - min_coordinate > rank_tol * std::max(1.0, std::abs(coordinate)))
             {
                 throw std::runtime_error("raw active-ABF overlap writer found rank-inconsistent q coordinates.");
@@ -678,9 +679,10 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
             }
         }
 
-        double min_weight = 0.0, max_weight = 0.0;
-        MPI_Allreduce(&q_weight, &min_weight, 1, MPI_DOUBLE, MPI_MIN, mpi_comm);
-        MPI_Allreduce(&q_weight, &max_weight, 1, MPI_DOUBLE, MPI_MAX, mpi_comm);
+        double min_weight = q_weight;
+        double max_weight = q_weight;
+        Parallel_Reduce::reduce_min(mpi_comm, min_weight);
+        Parallel_Reduce::reduce_max(mpi_comm, max_weight);
         if (max_weight - min_weight > rank_tol * std::max(1.0, std::abs(q_weight)))
         {
             throw std::runtime_error("raw active-ABF overlap writer found rank-inconsistent q weight.");

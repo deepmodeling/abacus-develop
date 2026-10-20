@@ -1586,7 +1586,9 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "Gamma-plane quadrature order for direct mixed-Fourier strict-2D Coulomb output";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Positive even in-plane quadrature order for the Gamma-cell Coulomb average.";
+        item.description = "Positive even in-plane quadrature order for the Gamma-cell Coulomb average. "
+                           "Like the kz order, this quadrature order must be converged independently of the "
+                           "reciprocal cutoff.";
         item.default_value = "8";
         item.unit = "";
         item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2 and out_librpa_2d_coulomb_method==direct_mixed_fourier");

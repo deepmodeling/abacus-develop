@@ -193,11 +193,15 @@ std::vector<std::size_t> atom_global_indices(
     const std::vector<std::vector<std::size_t>>& type_traversal_to_local);
 
 void write_matrix_market(const DenseMatrix& matrix, const std::string& path);
+// Writes <output_directory><prefix><iq_one_based>_r<mpi_rank>.dat, matching
+// the reader-v1 naming RPA_LRI::out_coulomb_k_v1 established for the split
+// route (for example <rpa_outdir>V_full_1_r0.dat).
 void write_reader_v1(const DenseMatrix& matrix,
                      const std::vector<int>& atom_naux,
                      int iq_one_based,
                      int mpi_rank,
-                     const std::string& prefix);
+                     const std::string& prefix,
+                     const std::string& output_directory);
 std::string format_method_metadata(const MethodMetadata& metadata);
 std::string format_3d_method_metadata(const MethodMetadata3D& metadata);
 void write_metadata(const Result& result, const Metadata& metadata, const std::string& path);

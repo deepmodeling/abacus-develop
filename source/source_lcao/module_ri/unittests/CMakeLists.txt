@@ -54,6 +54,23 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_executable(
+  MODULE_RI_gaussian_abfs_gamma_dipole_test
+  test_gaussian_abfs_gamma_dipole.cpp
+  ../gaussian_abfs.cpp
+  ../../../source_basis/module_ao/orb_atomic_lm.cpp
+)
+target_include_directories(MODULE_RI_gaussian_abfs_gamma_dipole_test PRIVATE ${CMAKE_SOURCE_DIR}/source)
+target_link_libraries(
+  MODULE_RI_gaussian_abfs_gamma_dipole_test PRIVATE base device parameter cell symmetry
+  abacus::linalg_libs
+)
+install(TARGETS MODULE_RI_gaussian_abfs_gamma_dipole_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
+add_test(
+  NAME MODULE_RI_gaussian_abfs_gamma_dipole_test
+  COMMAND ./MODULE_RI_gaussian_abfs_gamma_dipole_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+add_executable(
   MODULE_RI_direct_2d_coulomb_test
   test_direct_2d_coulomb.cpp
   ../direct_2d_coulomb.cpp
@@ -81,7 +98,9 @@ add_test(
 )
 if(ENABLE_MPI)
   add_executable(MODULE_RI_ewald_mpi_distribution_test test_ewald_mpi_distribution.cpp)
-  target_link_libraries(MODULE_RI_ewald_mpi_distribution_test PRIVATE MPI::MPI_CXX)
+  target_link_libraries(
+    MODULE_RI_ewald_mpi_distribution_test PRIVATE MPI::MPI_CXX base device parameter abacus::linalg_libs
+  )
   install(TARGETS MODULE_RI_ewald_mpi_distribution_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
   add_test(
     NAME MODULE_RI_ewald_mpi_distribution_parallel_test

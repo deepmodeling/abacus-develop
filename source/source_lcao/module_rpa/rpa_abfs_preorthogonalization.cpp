@@ -1,6 +1,7 @@
 #include "rpa_abfs_preorthogonalization.h"
 
 #include "source_base/constants.h"
+#include "source_io/module_parameter/input_parameter.h"
 
 #include <algorithm>
 #include <cmath>

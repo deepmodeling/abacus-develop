@@ -4,10 +4,14 @@
 #include <cmath>
 #include <complex>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include <sys/stat.h>
+#include <sys/types.h>
 
 namespace
 {
@@ -169,6 +173,51 @@ int main()
                 "metadata omits q count");
         require(formatted.find("naux = 807") != std::string::npos,
                 "metadata omits auxiliary dimension");
+
+        // The direct route must write its reader-v1 files into the requested
+        // output directory with the same V_full_<iq>_r<rank>.dat naming the
+        // split route's out_coulomb_k_v1 uses, so downstream LibRPA readers
+        // need no path special case. Exercise it with a non-default
+        // directory.
+        const std::string nondefault_directory = "nondefault_rpa_outdir/";
+        require(mkdir(nondefault_directory.c_str(), 0755) == 0,
+                "could not create the non-default output directory");
+        Direct2dCoulomb::DenseMatrix produced;
+        produced.dimension = 2;
+        produced.values = {{1.0, 0.0}, {0.25, -0.5}, {0.25, 0.5}, {2.0, 0.0}};
+        Direct2dCoulomb::write_reader_v1(
+            produced, {1, 1}, 1, 0, "V_full_", nondefault_directory);
+        const std::string produced_path = nondefault_directory + "V_full_1_r0.dat";
+        {
+            std::ifstream probe(produced_path, std::ios::in | std::ios::binary);
+            require(probe.good(), "reader-v1 output is not in the requested non-default directory");
+            std::int32_t marker = 0;
+            std::int32_t iq = 0;
+            std::int32_t naux = 0;
+            std::int32_t value_flag = 0;
+            std::int32_t natoms = 0;
+            std::int32_t nblocks = 0;
+            probe.read(reinterpret_cast<char*>(&marker), sizeof(marker));
+            probe.read(reinterpret_cast<char*>(&iq), sizeof(iq));
+            probe.read(reinterpret_cast<char*>(&naux), sizeof(naux));
+            probe.read(reinterpret_cast<char*>(&value_flag), sizeof(value_flag));
+            probe.read(reinterpret_cast<char*>(&natoms), sizeof(natoms));
+            probe.read(reinterpret_cast<char*>(&nblocks), sizeof(nblocks));
+            require(marker == -20129433, "reader-v1 output lost its marker");
+            require(iq == 1, "reader-v1 output lost its q index");
+            require(naux == 2, "reader-v1 output lost its auxiliary dimension");
+            require(value_flag == 1, "reader-v1 output lost its complex flag");
+            require(natoms == 2, "reader-v1 output lost its atom count");
+            require(nblocks == 3, "reader-v1 output lost its atom-pair block count");
+        }
+        for (const std::string& stray : {"V_full_1_r0.dat",
+                                         "v1_coulomb_full_iq_1_rank0.dat",
+                                         "v1_coulomb_full_iq_1_r0.dat"})
+        {
+            std::ifstream probe(stray, std::ios::in | std::ios::binary);
+            require(!probe.good(),
+                    ("reader-v1 output leaked into the working directory: " + stray).c_str());
+        }
 
         std::cout << "direct strict-2D Coulomb tests passed" << std::endl;
     }

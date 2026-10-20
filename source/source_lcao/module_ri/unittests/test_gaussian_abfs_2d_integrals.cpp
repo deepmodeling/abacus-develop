@@ -49,6 +49,30 @@ int main()
                 < 2.0e-9,
             "out-of-plane L=1 analytic Coulomb integral mismatch");
 
+    // The q->0 normal-dipole limit dI2/dtau_z -> -pi*erf(tau_z/(2*sqrt(beta)))
+    // is unique (independent of the in-plane direction), so the Gamma s-pz
+    // coupling is retained by the 2D lattice sum instead of being dropped
+    // together with the singular L=0 and direction-ambiguous in-plane
+    // channels.
+    const double tau_separated = 0.8;
+    const double expected_gamma_limit
+        = -GaussianAbfs2D::pi * std::erf(tau_separated / 2.0);
+    require(std::abs(GaussianAbfs2D::di2_dtau(0.0, tau_separated, 1.0) - expected_gamma_limit)
+                < 1.0e-14 * std::abs(expected_gamma_limit),
+            "di2_dtau Gamma limit is not the analytic normal-dipole value");
+    require(std::abs(GaussianAbfs2D::di2_dtau(0.0, -tau_separated, 1.0) + expected_gamma_limit)
+                < 1.0e-14 * std::abs(expected_gamma_limit),
+            "di2_dtau Gamma limit must be odd in tau_z");
+    require(std::abs(GaussianAbfs2D::di2_dtau(1.0e-5, tau_separated, 1.0) - expected_gamma_limit)
+                < 1.0e-3 * std::abs(expected_gamma_limit),
+            "di2_dtau must approach its Gamma limit continuously");
+    const std::complex<double> gamma_dipole
+        = GaussianAbfs2D::coulomb_l1(0, 0.0, 0.0, tau_separated, 1.0);
+    require(std::abs(gamma_dipole.real()) < 1.0e-15
+                && std::abs(gamma_dipole.imag() + coefficient * expected_gamma_limit)
+                       < 1.0e-14 * std::abs(coefficient * expected_gamma_limit),
+            "Gamma normal-dipole channel of coulomb_l1 mismatch");
+
     const double small_q_value
         = GaussianAbfs2D::coulomb_l1(1, 1.0e-8, 0.0, 0.0, 1.0).real();
     require(std::abs(small_q_value + coefficient * GaussianAbfs2D::pi) < 2.0e-8,

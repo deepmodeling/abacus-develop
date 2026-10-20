@@ -54,6 +54,19 @@ inline ExxLriRuntime make_exx_lri_runtime()
 
 namespace ExxLriDetail
 {
+// C++14-compatible void_t: std::void_t requires C++17, but the ENABLE_LIBRI
+// CPU configuration builds with CMAKE_CXX_STANDARD 14.
+template <typename... Ts>
+struct make_void
+{
+    using type = void;
+};
+template <typename... Ts>
+using void_t = typename make_void<Ts...>::type;
+} // namespace ExxLriDetail
+
+namespace ExxLriDetail
+{
 using CoulombParam
     = std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>;
 
@@ -157,7 +170,7 @@ struct has_weighted_short_config : std::false_type
 };
 
 template <typename T>
-struct has_weighted_short_config<T, std::void_t<typename T::Weighted_Short_Config>> : std::true_type
+struct has_weighted_short_config<T, ExxLriDetail::void_t<typename T::Weighted_Short_Config>> : std::true_type
 {
 };
 
@@ -169,7 +182,7 @@ struct has_set_weighted_short_config : std::false_type
 template <typename T>
 struct has_set_weighted_short_config<
     T,
-    std::void_t<decltype(std::declval<T&>().set_weighted_short_config(
+    ExxLriDetail::void_t<decltype(std::declval<T&>().set_weighted_short_config(
         std::declval<const typename T::Weighted_Short_Config&>()))>> : std::true_type
 {
 };
@@ -180,7 +193,7 @@ struct has_weighted_short_stats_member : std::false_type
 };
 
 template <typename T>
-struct has_weighted_short_stats_member<T, std::void_t<decltype(std::declval<const T&>().weighted_short_stats)>>
+struct has_weighted_short_stats_member<T, ExxLriDetail::void_t<decltype(std::declval<const T&>().weighted_short_stats)>>
     : std::true_type
 {
 };
@@ -938,7 +951,22 @@ inline EwaldRealspaceRange<Tdata> select_ewald_realspace_range(
     const ExxLriRuntime& runtime)
 {
     EwaldRealspaceRange<Tdata> selected;
+    const std::array<bool, 3> periodic
+        = info.ewald_dimension == 2 ? std::array<bool, 3>{true, true, false}
+                                    : std::array<bool, 3>{true, true, true};
     selected.period = requested_period;
+    // The generic cal_latvec_range supplies at least three cells on every axis
+    // and the periodic mask above only blocks shell expansion. In strict 2D the
+    // nonperiodic axis must instead carry exactly the zero image: Rz != 0
+    // short-range terms would enter the production sum at kz = 0 while the
+    // reciprocal Gaussian term assumes isolated-z boundary conditions.
+    for (std::size_t axis = 0; axis != selected.period.size(); ++axis)
+    {
+        if (!periodic[axis])
+        {
+            selected.period[axis] = 1;
+        }
+    }
     const auto tail_mode = EwaldVqDetail::parse_tail_mode(info.ewald_tail_check);
     if (EwaldVqDetail::uses_adaptive_realspace_range(tail_mode)
         && (runtime.cal_force || runtime.cal_stress))
@@ -950,9 +978,6 @@ inline EwaldRealspaceRange<Tdata> select_ewald_realspace_range(
     const EwaldVqDetail::TailTolerances tolerances{info.ewald_tail_abs_tol,
                                                    info.ewald_tail_rel_tol,
                                                    info.ewald_tail_sum_rel_tol};
-    const std::array<bool, 3> periodic
-        = info.ewald_dimension == 2 ? std::array<bool, 3>{true, true, false}
-                                    : std::array<bool, 3>{true, true, true};
     int mpi_rank = 0;
     int mpi_size = 1;
     MPI_Comm_rank(mpi_comm, &mpi_rank);
@@ -1272,7 +1297,8 @@ void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
         this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
         this->info.kmesh_times,
         this->MGT,
-        center2_settings->second.first);
+        center2_settings->second.first,
+        ModuleBase::Element_Basis_Index::IndexPermutation{});
     this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_info_ri(&this->info);
 
     ModuleBase::timer::end("Exx_LRI", "init_spencer");

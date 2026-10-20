@@ -138,7 +138,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     local_info.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
     if (!exx_full_coulomb)
     {
-        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info, make_exx_lri_runtime());
         exx_full_coulomb.reset(new_exx);
     }
 
@@ -223,13 +223,14 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
                 ucell,
                 this->runtime.input.out_librpa_2d_direct_ecut,
                 this->runtime.input.out_librpa_2d_direct_kz_order,
-                this->runtime.input.out_librpa_2d_direct_gamma_order);
+                this->runtime.input.out_librpa_2d_direct_gamma_order,
+                this->runtime.input.rpa_outdir);
             write_strict_2d_coulomb_head_sidecar();
         }
         else
         {
             ewald_object->second.evq.output_direct_3d_coulomb(
-                ucell, this->runtime.input.out_librpa_3d_direct_ecut);
+                ucell, this->runtime.input.out_librpa_3d_direct_ecut, this->runtime.input.rpa_outdir);
         }
 
         exx_full_coulomb.reset();
@@ -241,7 +242,8 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_full_IJR;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
-    exx_full_coulomb->cal_ewald_coulomb(Vs_full_IJR, Cs, ucell, this->runtime.input.out_ri_cv);
+    exx_full_coulomb->cal_ewald_coulomb(Vs_full_IJR, Cs, ucell, this->runtime.input.out_ri_cv,
+                                        nullptr, nullptr, nullptr);
     // MPI: {ia0, {ia1, R}} to {ia0, ia1}
     std::vector<TA> atoms(ucell.nat);
     for (int iat = 0; iat < ucell.nat; ++iat)

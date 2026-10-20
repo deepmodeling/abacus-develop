@@ -462,14 +462,23 @@ auto Gaussian_Abfs::get_lattice_sum_2d(const double& tpiba,
 
             for (int L = 0; L != lmax + 1; ++L)
             {
-                // Only L=0 is singular and L=1 has a direction-dependent q->0
-                // limit. The L>=2 Coulomb channels have finite Gamma limits.
-                if (excluded_gamma_term && (std::abs(power + 2.0) >= 1e-12 || L < 2))
-                {
-                    continue;
-                }
                 for (int m = 0; m != 2 * L + 1; ++m)
                 {
+                    // At the excluded Gamma term of the Coulomb kernel only
+                    // the singular and direction-ambiguous channels are
+                    // dropped: the L=0 channel diverges as pi/q (DPcal_Vq_2d
+                    // restores it analytically together with the chi2d
+                    // correction) and the L=1 in-plane channels depend on the
+                    // direction of the q->0 approach. The L=1,M=0
+                    // normal-dipole channel instead has the unique finite
+                    // Gamma limit -pi*erf(tau_z/(2*sqrt(beta))) carried by
+                    // di2_dtau, and the L>=2 channels are regular, so both
+                    // are retained.
+                    if (excluded_gamma_term
+                        && (std::abs(power + 2.0) >= 1e-12 || L == 0 || (L == 1 && m != 0)))
+                    {
+                        continue;
+                    }
                     const int lm = L * L + m;
                     const std::complex<double> k_lm = this->K_LM_2d(
                         L,

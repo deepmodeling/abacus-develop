@@ -584,13 +584,12 @@ auto Ewald_Vq<Tdata>::set_Vs_minus_gauss_common_candidates(
         }
     }
     int complete = local_complete ? 1 : 0;
-    MPI_Allreduce(MPI_IN_PLACE, &complete, 1, MPI_INT, MPI_MIN, this->mpi_comm);
+    Parallel_Reduce::reduce_min(this->mpi_comm, complete);
     if (complete == 0)
     {
         if (!local_complete)
         {
-            int mpi_rank = 0;
-            MPI_Comm_rank(this->mpi_comm, &mpi_rank);
+            const int mpi_rank = Parallel_Common::my_rank(this->mpi_comm);
             std::cerr << "Ewald candidate coverage failure on rank " << mpi_rank << ": I,J,R="
                       << first_incomplete_key.atom_i << ' ' << first_incomplete_key.atom_j << ' '
                       << first_incomplete_key.cell[0] << ' ' << first_incomplete_key.cell[1] << ' '
