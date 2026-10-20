@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       plugin_ref:
-        description: Optional reviewed QuantumMisaka/abacuslite ref; empty uses published 1.1.0
+        description: Optional reviewed QuantumMisaka/abacuslite ref; empty uses published 1.2.2
         required: false
         default: ''
 
@@ -67,14 +67,14 @@ jobs:
             git -C candidate-plugin rev-parse HEAD
           else
             python -m pip download --only-binary=:all: --no-deps \
-              --dest "$RUNNER_TEMP/plugin-wheel" 'abacuslite==1.1.0'
+              --dest "$RUNNER_TEMP/plugin-wheel" 'abacuslite==1.2.2'
           fi
           wheels=("$RUNNER_TEMP"/plugin-wheel/*.whl)
           test "${#wheels[@]}" -eq 1
           sha256sum "${wheels[0]}"
           if [ -z "$PLUGIN_REF" ]; then
             actual="$(sha256sum "${wheels[0]}")"
-            test "${actual%% *}" = c3e4504e9c9f5bceb69f70c79290e7843037ca72f625c5f66258e14d110f0ff3
+            test "${actual%% *}" = d4675aae2f70b99a6e18882e2c4ecf7f67f57eae10f5ba3e01622e879c6b8caf
           fi
           python -m pip install "${wheels[0]}"
           python -m pip show abacuslite ase numpy seekpath

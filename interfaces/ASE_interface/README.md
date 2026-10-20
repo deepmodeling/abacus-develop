@@ -90,18 +90,18 @@ python -m unittest test_external_provenance test_harness_facts \
 ## CI and cross-repository changes
 
 The ASE workflow installs the published, tested `abacuslite` wheel (currently
-1.1.0) by default. A manual `workflow_dispatch` run can build a reviewed
+1.2.2) by default, with its published wheel SHA256 checked before installation.
+A manual `workflow_dispatch` run can build a reviewed
 `abacuslite` ref for a coordinated change. The `abacuslite` repository
 separately builds pinned ABACUS develop/LTS snapshots and runs the same engine
 harness on a schedule.
 
-This public-interface follow-up needs the paired abacuslite candidate
-`1.2.2.dev0` (or its subsequent reviewed release) for noncollinear result
-projection without an ASE registry patch. The published 1.1.0 workflow default
-does not include that fix. Validate the candidate pair with `plugin_ref` after
-the plugin commit is public; before integrating this follow-up, publish the
-reviewed plugin and update the workflow's stable version/hash together.
-Do not report the old stable-default CI as acceptance of this candidate.
+Version 1.2.2 contains the noncollinear result-projection fix required to run
+these tests without an ASE registry patch. Its
+[release record](https://github.com/QuantumMisaka/abacuslite/blob/main/docs/superpowers/plans/2026-10-20-1.2.2-release.md)
+identifies the published artifacts and develop/LTS evidence. Future paired
+changes can use `plugin_ref` after the candidate commit is publicly available;
+update the stable version and wheel hash together after its reviewed release.
 
 ABACUS owns the engine, output formats and socket wire protocol. `abacuslite`
 owns the Python adapter and parser. Parser or calculator fixes belong in
