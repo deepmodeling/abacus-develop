@@ -132,7 +132,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
             || (istep > 0)
             || (PARAM.inp.init_wfc == "file"))
         {
-            XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(ucell));
+            XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell));
         }
         else
         {
@@ -401,7 +401,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         else
         {
             // update exx and redo scf
-            XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(ucell));
+            XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell));
             iter = 0;
             std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
             this->two_level_step++;
@@ -426,7 +426,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             this->etot_last_outer_loop = etot;
             // update exx and redo scf
             if (this->two_level_step == 0)
-                { XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(ucell)); }
+                { XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell)); }
 
             std::cout << " Updating EXX " << std::flush;
             timeval t_start;       gettimeofday(&t_start, nullptr);

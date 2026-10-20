@@ -2,7 +2,6 @@
 #include "source_base/global_function.h"
 #include "source_base/tool_title.h"
 #include "source_base/constants.h"
-#include "source_io/module_parameter/parameter.h"
 #include <cmath>
 
 #include <algorithm>
@@ -93,9 +92,10 @@ std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_xc_f
     return pseudo_xc_func;
 }
 
-std::string XC_Functional::resolve_runtime_xc_type(const UnitCell& ucell)
+std::string XC_Functional::resolve_runtime_xc_type(const std::string& input_functional,
+                                                   const UnitCell& ucell)
 {
-    return resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell.atoms[0].ncpp.xc_func);
+    return resolve_runtime_xc_type(input_functional, ucell.atoms[0].ncpp.xc_func);
 }
 
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
