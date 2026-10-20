@@ -124,6 +124,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_ESTATE_occ_matrix
+  LIBS parameter base device cell_info
+  SOURCES test_occ_matrix.cpp ../occ_matrix.cpp
+)
+
+AddTest(
   TARGET MODULE_ESTATE_occ_comput
   LIBS parameter base device
   SOURCES test_occ_comput.cpp ../occ_comput.cpp

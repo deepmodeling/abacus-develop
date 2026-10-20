@@ -6,7 +6,7 @@
 #ifndef RPA_LRI_H
 #define RPA_LRI_H
 
-#include "lri_cv.h"
+#include "source_lcao/module_ri/lri_cv.h"
 #include "source_hamilt/module_xc/exx_info_ri.h"
 #include "source_psi/psi.h"
 // #include "module_xc/exx_info.h"
