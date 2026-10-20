@@ -1,4 +1,5 @@
 #include "source_estate/module_pot/electrostatic_potential.h"
+#include "source_estate/module_pot/potential_new.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_base/parallel_global.h"
@@ -29,6 +30,11 @@ ModuleBase::matrix elecstate::Efield::add_efield(
     const UnitCell&, const ModulePW::PW_Basis*, const int&, const double* const* const, const surchem&)
 {
     throw std::logic_error("unexpected dipole construction in averaging test");
+}
+
+const std::vector<double>* elecstate::Potential::pcc_electron_potential() const
+{
+    throw std::logic_error("unexpected PCC construction in averaging test");
 }
 
 namespace

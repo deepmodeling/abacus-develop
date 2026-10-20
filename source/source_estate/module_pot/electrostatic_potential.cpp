@@ -1,4 +1,6 @@
 #include "electrostatic_potential.h"
+#include "potential_new.h"
+#include "source_estate/electronic_control.h"
 #include "h_hartree_pw.h"
 #include "efield.h"
 #include "source_base/module_parallel/para_mpi_func.h"
@@ -12,6 +14,17 @@
 
 namespace elecstate
 {
+double electrostatic_reference(const UnitCell& cell, ModulePW::PW_Basis& basis,
+                               const Charge& charge, const Potential& pot,
+                               const surchem& solvent, const Input_para& input,
+                               const PotentialWindow& window)
+{
+    const double* fixed = basis.nrxx > 0 ? pot.get_fixed_v() : nullptr;
+    const auto* pcc_potential = pot.pcc_electron_potential();
+    const auto potential = electrostatic_potential(cell, basis, charge, fixed, solvent, input, pcc_potential);
+    return planar_potential_average(cell, basis, potential, window.axis, window.minimum_A, window.maximum_A);
+}
+
 std::vector<double> electrostatic_potential(const UnitCell& cell, ModulePW::PW_Basis& basis,
                                            const Charge& charge, const double* fixed,
                                            const surchem& solvent, const Input_para& input,

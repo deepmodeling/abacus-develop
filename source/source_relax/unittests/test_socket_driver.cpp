@@ -1,4 +1,6 @@
 #include "source_relax/socket_driver.h"
+#include "source_relax/electronic_control.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_relax/socket_handlers.h"
 #include "source_relax/socket_utils.h"
 
@@ -30,6 +32,8 @@
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+int XC_Functional::func_type = 2;
 
 class TestParameters
 {
@@ -566,6 +570,13 @@ DriverResult run_constant_potential_session(const std::function<void(int)>& peer
         input.cal_force = true;
         input.cal_stress = false;
         input.symmetry = "0";
+        input.esolver_type = "ksdft";
+        input.basis_type = "pw";
+        input.device = "cpu";
+        input.precision = "double";
+        input.nspin = 1;
+        input.nbands = 8;
+        input.smearing_method = "gaussian";
         ControlledESolver solver;
         std::ofstream running("/dev/null");
         Socket_Driver driver;
@@ -587,6 +598,53 @@ DriverResult run_constant_potential_session(const std::function<void(int)>& peer
     });
 }
 } // namespace
+
+TEST(SocketDriverTest, RejectedElectronicStepLeavesSolverUntouched)
+{
+    UnitCell cell;
+    initialize_one_atom_cell(cell);
+    Parameter parameters;
+    auto& input = TestParameters::input(parameters);
+    input.esolver_type = "ksdft";
+    input.basis_type = "pw";
+    input.device = "cpu";
+    input.precision = "double";
+    input.nspin = 1;
+    input.nbands = 8;
+    input.smearing_method = "gaussian";
+    ControlledESolver solver;
+    elecstate::ElectronicControl request;
+    request.nelect = 8.25;
+
+    input.assume_isolated = "makov-payne";
+    try
+    {
+        relax::run_electronic_step(solver, cell, parameters, request, 0);
+        FAIL() << "Makov-Payne request reached the solver";
+    }
+    catch (const std::runtime_error& error)
+    {
+        EXPECT_THAT(error.what(), testing::HasSubstr("energy-only Makov-Payne"));
+    }
+    input.assume_isolated = "none";
+    input.nbands = 4;
+    EXPECT_THROW(relax::run_electronic_step(solver, cell, parameters, request, 0), std::runtime_error);
+    input.nbands = 8;
+    input.smearing_method = "fixed";
+    EXPECT_THROW(relax::run_electronic_step(solver, cell, parameters, request, 0), std::runtime_error);
+    EXPECT_EQ(0, solver.control_count);
+    EXPECT_EQ(0, solver.runner_count);
+    EXPECT_DOUBLE_EQ(0.0, solver.nelect);
+
+    input.smearing_method = "gaussian";
+    relax::run_electronic_step(solver, cell, parameters, request, 0);
+    EXPECT_EQ(1, solver.control_count);
+    EXPECT_EQ(1, solver.runner_count);
+    EXPECT_DOUBLE_EQ(8.25, solver.nelect);
+
+    FakeESolver unsupported(true);
+    EXPECT_THROW(relax::run_electronic_step(unsupported, cell, parameters, request, 0), std::runtime_error);
+}
 
 TEST(SocketDriverTest, ConstantPotentialFramesApplyChargeBeforeEvaluation)
 {

@@ -1,6 +1,10 @@
 #include "elecstate_tools.h"
 
 #include "occupy.h"
+#include "param_update.h"
+
+#include <cmath>
+#include <stdexcept>
 #include "source_base/module_parallel/para_band_output.h"
 #include "source_base/module_parallel/para_bridge.h"
 #include "source_base/parallel_reduce.h"
@@ -9,6 +13,26 @@
 
 namespace elecstate
 {
+void update_electron_count(ElecState& state, Parameter& parameters, double nelect)
+{
+    ParamUpdater::update_electron_count(nelect, parameters);
+    state.eferm.two_efermi = parameters.globalv.two_fermi;
+    state.init_nelec_spin();
+}
+
+double electronic_chemical_potential(const Efermi& fermi, bool two_fermi)
+{
+    double chemical_potential = fermi.ef;
+    if (two_fermi)
+    {
+        // Total-N derivative at fixed N_up-N_down.
+        chemical_potential = 0.5 * (fermi.ef_up + fermi.ef_dw);
+    }
+    if (!std::isfinite(chemical_potential))
+    { throw std::runtime_error("non-finite SCF chemical potential"); }
+    return chemical_potential;
+}
+
 void calEBand(const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, fenergy& f_en)
 {
     ModuleBase::TITLE("ElecState", "calEBand");

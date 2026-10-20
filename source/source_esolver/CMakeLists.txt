@@ -2,7 +2,6 @@ list(APPEND objects
     esolver_factory.cpp
     esolver_ks.cpp
     esolver_fp.cpp
-    esolver_fp_electronic.cpp
     esolver_ks_pw.cpp
     esolver_ks_pw_tddft.cpp
     esolver_ks_lcaopw.cpp

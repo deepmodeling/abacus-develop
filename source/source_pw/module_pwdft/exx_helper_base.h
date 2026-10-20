@@ -8,6 +8,8 @@ class UnitCell;
 struct Input_para;
 struct General_Exx_Info;
 
+void validate_electronic_step_exx(int functional_type, bool cal_exx);
+
 class Exx_HelperBase
 {
   public:

@@ -9,6 +9,18 @@
 #include <chrono> // for timing
 #include <stdexcept>
 
+void validate_electronic_step_exx(int functional_type, bool cal_exx)
+{
+    // Separate-loop SCAN0 starts as SCAN, before switching to hybrid meta-GGA.
+    // The upstream PW density path updates tau only for non-hybrid meta-GGA.
+    if (functional_type == 5 || (functional_type == 3 && cal_exx))
+    {
+        throw std::runtime_error(
+            "constant-potential PW hybrid meta-GGA is unsupported: "
+            "upstream kinetic-energy-density updates do not handle hybrid functionals");
+    }
+}
+
 template <typename T, typename Device>
 void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info)
 {

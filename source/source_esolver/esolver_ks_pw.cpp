@@ -142,14 +142,7 @@ template <typename T, typename Device>
 bool ESolver_KS_PW<T, Device>::apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control)
 {
     const int functional_type = XC_Functional::get_func_type();
-    // Separate-loop SCAN0 starts as SCAN, before switching to hybrid meta-GGA.
-    // The upstream PW density path updates tau only for non-hybrid meta-GGA.
-    if (functional_type == 5 || (functional_type == 3 && this->general_exx_info_.cal_exx))
-    {
-        throw std::runtime_error(
-            "constant-potential PW hybrid meta-GGA is unsupported: "
-            "upstream kinetic-energy-density updates do not handle hybrid functionals");
-    }
+    validate_electronic_step_exx(functional_type, this->general_exx_info_.cal_exx);
     if (!ESolver_FP::apply_electronic_control(parameters, control)) { return false; }
     this->exx_helper->begin_electronic_step();
     return true;

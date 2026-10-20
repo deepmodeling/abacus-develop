@@ -1,17 +1,17 @@
-#include "esolver_fp.h"
+#include "electronic_control.h"
+#include "source_esolver/esolver.h"
 #include "source_estate/electronic_control.h"
-#include "source_estate/electronic_occupations.h"
-#include "source_estate/param_update.h"
-#include "source_estate/module_pot/electrostatic_potential.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
 #include <cmath>
 #include <stdexcept>
 
-namespace ModuleESolver
+namespace relax
 {
-bool ESolver_FP::apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control)
+void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
+                         Parameter& parameters, const elecstate::ElectronicControl& control,
+                         int istep)
 {
     const auto& inp = parameters.inp;
     if (inp.assume_isolated == "makov-payne")
@@ -68,39 +68,10 @@ bool ESolver_FP::apply_electronic_control(Parameter& parameters, const elecstate
         && (std::abs(control.nelect - std::round(control.nelect)) > 1.0e-8
             || (two_fermi && (std::abs(up-std::round(up)) > 1.0e-8 || std::abs(down-std::round(down)) > 1.0e-8))))
     { throw std::runtime_error("fractional electron populations require a smearing occupation method"); }
-    if (!pelec || !pelec->charge || !pelec->pot)
-    { throw std::runtime_error("electronic state is not initialized for electron control"); }
-
-    elecstate::ParamUpdater::update_electron_count(control.nelect, parameters);
-    pelec->eferm.two_efermi = two_fermi;
-    pelec->init_nelec_spin();
-    return true;
-}
-
-bool ESolver_FP::electronic_observables(const UnitCell& ucell, const Parameter& parameters,
-                                       const elecstate::PotentialWindow& window, elecstate::ElectronicObservables& result) const
-{
-    if (!this->conv_esolver || !pelec || !pelec->charge || !pelec->pot)
-    { throw std::runtime_error("electronic observables require a converged SCF state"); }
-    const int npool = parameters.inp.kpar * parameters.inp.bndpar;
-    result.nelect = elecstate::checked_occupation_electron_count(pelec->wg, parameters.inp.nelec,
-                                                      npool, pw_rhod->poolnproc);
-    result.fermi_ry = pelec->eferm.ef;
-    if (parameters.globalv.two_fermi)
+    if (!solver.apply_electronic_control(parameters, control))
     {
-        // The total-N derivative at fixed N_up-N_down is the mean spin chemical potential.
-        result.fermi_ry = 0.5 * (pelec->eferm.ef_up + pelec->eferm.ef_dw);
+        throw std::runtime_error("selected ESolver does not support constant-potential electron control");
     }
-    if (!std::isfinite(result.fermi_ry)) { throw std::runtime_error("non-finite SCF chemical potential"); }
-    if (window.axis >= 0)
-    {
-        const double* fixed = pw_rhod->nrxx > 0 ? pelec->pot->get_fixed_v() : nullptr;
-        const auto* pcc_potential = pelec->pot->pcc_electron_potential();
-        const auto potential = elecstate::electrostatic_potential(ucell, *pw_rhod, *pelec->charge,
-                                                                 fixed, solvent, parameters.inp, pcc_potential);
-        result.reference_ry = elecstate::planar_potential_average(ucell, *pw_rhod, potential, window.axis,
-                                                                 window.minimum_A, window.maximum_A);
-    }
-    return true;
+    solver.runner(cell, istep);
 }
 }

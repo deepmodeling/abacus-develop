@@ -1,4 +1,5 @@
 #include "socket_handlers.h"
+#include "electronic_control.h"
 
 #include "source_relax/socket_frame.h"
 #include "source_base/global_function.h"
@@ -388,12 +389,13 @@ void run_esolver_for_positions(DriverContext& context, const std::vector<double>
         if (context.cp.enabled)
         {
             context.charge_pending = false;
-            if (!context.esolver->apply_electronic_control(*context.parameters, context.pending_control))
-            {
-                throw std::runtime_error("selected ESolver does not support constant-potential electron control");
-            }
+            relax::run_electronic_step(*context.esolver, *context.ucell, *context.parameters,
+                                       context.pending_control, context.istep);
         }
-        context.esolver->runner(*context.ucell, context.istep);
+        else
+        {
+            context.esolver->runner(*context.ucell, context.istep);
+        }
     }
     catch (const std::exception& exc)
     {

@@ -10,6 +10,13 @@ namespace ModulePW { class PW_Basis; }
 
 namespace elecstate
 {
+class Potential;
+struct PotentialWindow;
+double electrostatic_reference(const UnitCell& cell, ModulePW::PW_Basis& basis,
+                               const Charge& charge, const Potential& pot,
+                               const surchem& solvent, const Input_para& input,
+                               const PotentialWindow& window);
+
 // Same local electrostatic reference for cube output and electronic observables.
 std::vector<double> electrostatic_potential(const UnitCell& cell, ModulePW::PW_Basis& basis,
                                            const Charge& charge, const double* fixed,
