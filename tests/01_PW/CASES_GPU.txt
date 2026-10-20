@@ -115,3 +115,6 @@ scf_brav_bco_smear_mv
 #relax_dftu_spin4
 scf_deltaspin2
 scf_deltaspin4
+# Disabled until the CUDA CI build provides libxc.
+#nscf_hse_same
+#nscf_hse_path

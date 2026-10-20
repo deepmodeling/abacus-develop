@@ -169,21 +169,20 @@ void Plus_U_Base::init_base(UnitCell& cell,
         else
         {
             // Try the user-prepared dm_onsite_ini.txt first, then fall back to
-            // the occupation-matrix snapshot written by a previous run
-            // (occ_mat.txt), and finally to the legacy dm_onsite.txt name.
+            // the compact occupation-matrix snapshot written by a previous
+            // run (occ_mat.txt). Legacy dm_onsite.txt input is not supported.
             const std::vector<std::string> candidates = {"dm_onsite_ini.txt",
-                                                          "occ_mat.txt",
-                                                          "dm_onsite.txt"};
+                                                          "occ_mat.txt"};
             const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
             if (readin_fn.empty())
             {
                 ModuleBase::WARNING_QUIT("Plus_U_Base::init_base",
                                          "init_occ_mat is set but no occupation-matrix file found in "
                                          + global_readin_dir
-                                         + ". Tried: dm_onsite_ini.txt, occ_mat.txt, dm_onsite.txt");
+                                         + ". Tried: dm_onsite_ini.txt, occ_mat.txt");
             }
-            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel, this->init_occ_mat,
-                                    readin_fn, init_chg, nspin, npol, soc_layout);
+            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
+                                    readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
             DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel, nspin, npol);
 #endif
@@ -202,10 +201,8 @@ void Plus_U_Base::init_base(UnitCell& cell,
     {
         if (init_chg == "file")
         {
-            // occ_mat.txt is the current output name; fall back to the
-            // legacy dm_onsite.txt so that output directories written by
-            // older versions can still be used for restarts.
-            const std::vector<std::string> candidates = {"occ_mat.txt", "dm_onsite.txt"};
+            // Only the current compact restart output is supported.
+            const std::vector<std::string> candidates = {"occ_mat.txt"};
             const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
             if (readin_fn.empty())
             {
@@ -213,11 +210,11 @@ void Plus_U_Base::init_base(UnitCell& cell,
                                          "init_chg is set to file but no occupation-matrix file "
                                          "found in "
                                          + global_readin_dir
-                                         + ". Tried: occ_mat.txt, dm_onsite.txt. Please do an scf "
+                                         + ". Tried: occ_mat.txt. Please do an scf "
                                            "calculation first.");
             }
-            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel, this->init_occ_mat,
-                                    readin_fn, init_chg, nspin, npol, soc_layout);
+            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
+                                    readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
             DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel, nspin, npol);
 #endif

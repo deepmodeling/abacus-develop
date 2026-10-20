@@ -13,6 +13,7 @@
 #include "source_base/macros.h"
 #include "source_base/math_polyint.h"
 #include "source_base/tool_quit.h"
+#include "source_hamilt/module_xc/libxc_abacus.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
@@ -335,10 +336,24 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     {
         rho0_r[ir] = chg0->rho[0][ir] + (has_core ? chg0->rho_core[ir] : 0.0);
     }
-    xc_adapter_ = new ModuleDFPT::XC_First_Order_Analytic(XC_Functional::get_func_id(),
+    // the kernel must differentiate the SAME effective functional the
+    // ground state used: external/in-built libxc parameters (finite-T
+    // LDA, tuned fractions) and the signed per-component combination
+    // factors (e.g. BLYP_LR subtracts its short-range components)
+    const std::vector<int> xc_func_id = XC_Functional::get_func_id();
+    const std::vector<std::vector<double>> xc_ext_params
+        = XC_Functional_Libxc::ext_params_for(xc_func_id, XC_Functional::get_hybrid_alpha(), XC_Functional::get_hse_omega());
+    std::vector<double> xc_weights(xc_func_id.size(), 1.0);
+    for (size_t i = 0; i < xc_func_id.size(); ++i)
+    {
+        xc_weights[i] = XC_Functional::get_weight(xc_func_id[i]);
+    }
+    xc_adapter_ = new ModuleDFPT::XC_First_Order_Analytic(xc_func_id,
                                                           XC_Functional::get_func_type(),
                                                           rho0_r,
-                                                          this->pw_rho);
+                                                          this->pw_rho,
+                                                          xc_ext_params,
+                                                          xc_weights);
 #else
     ModuleBase::WARNING("ESolver_DFPT_PW::init_dfpt",
                         "built without libxc: the DFPT XC kernel falls back to the finite-difference "

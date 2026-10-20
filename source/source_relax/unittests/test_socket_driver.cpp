@@ -1,13 +1,12 @@
-#include "source_relax/socket_driver.h"
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "for_test.h"
 #include "mpi.h"
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
 #include "source_io/module_parameter/input_parameter.h"
-#include "for_test.h"
+#include "source_relax/socket_driver.h"
 
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include <cerrno>
 #include <cmath>
 #include <cstdint>
@@ -277,9 +276,7 @@ void initialize_one_atom_cell(UnitCell& ucell)
 
 void send_positions(const int fd, const double x)
 {
-    const double identity[9] = {1.0, 0.0, 0.0,
-                                0.0, 1.0, 0.0,
-                                0.0, 0.0, 1.0};
+    const double identity[9] = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
     const std::int32_t nat = 1;
     const double position[3] = {x, 0.0, 0.0};
     send_header(fd, "POSDATA");
@@ -343,8 +340,7 @@ ForceResponse read_force_response(const int fd)
     }
     response.energy_hartree = read_value<double>(fd);
     response.nat = read_value<std::int32_t>(fd);
-    response.forces_hartree_per_bohr
-        = read_doubles(fd, static_cast<std::size_t>(3 * response.nat));
+    response.forces_hartree_per_bohr = read_doubles(fd, static_cast<std::size_t>(3 * response.nat));
     response.virial_wire_hartree = read_doubles(fd, 9);
     const std::int32_t extra_bytes = read_value<std::int32_t>(fd);
     if (extra_bytes < 0)
@@ -476,12 +472,10 @@ DriverResult run_driver_frame(const bool converged,
 TEST(SocketDriverTest, NonconvergedFrameIsPublishedWithMetadata)
 {
     ForceResponse response;
-    const DriverResult result = run_driver_frame(
-        false, true, false,
-        [&](const int fd) {
-            send_header(fd, "GETFORCE");
-            response = read_force_response(fd);
-        });
+    const DriverResult result = run_driver_frame(false, true, false, [&](const int fd) {
+        send_header(fd, "GETFORCE");
+        response = read_force_response(fd);
+    });
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
@@ -491,35 +485,27 @@ TEST(SocketDriverTest, NonconvergedFrameIsPublishedWithMetadata)
 TEST(SocketDriverTest, EnergyOnlyFrameMarksForceAndStressAbsent)
 {
     ForceResponse response;
-    const DriverResult result = run_driver_frame(
-        true, false, false,
-        [&](const int fd) {
-            send_header(fd, "GETFORCE");
-            response = read_force_response(fd);
-        });
+    const DriverResult result = run_driver_frame(true, false, false, [&](const int fd) {
+        send_header(fd, "GETFORCE");
+        response = read_force_response(fd);
+    });
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
     EXPECT_THAT(response.extra, testing::HasSubstr("\"present\":[\"energy\"]"));
     EXPECT_THAT(response.extra, testing::Not(testing::HasSubstr("\"forces\"")));
     EXPECT_THAT(response.extra, testing::Not(testing::HasSubstr("\"stress\"")));
-    EXPECT_THAT(response.forces_hartree_per_bohr,
-                testing::ElementsAre(0.0, 0.0, 0.0));
-    EXPECT_THAT(response.virial_wire_hartree,
-                testing::ElementsAre(0.0, 0.0, 0.0,
-                                     0.0, 0.0, 0.0,
-                                     0.0, 0.0, 0.0));
+    EXPECT_THAT(response.forces_hartree_per_bohr, testing::ElementsAre(0.0, 0.0, 0.0));
+    EXPECT_THAT(response.virial_wire_hartree, testing::ElementsAre(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
 }
 
 TEST(SocketDriverTest, EnergyAndStressFrameDoesNotAdvertiseForce)
 {
     ForceResponse response;
-    const DriverResult result = run_driver_frame(
-        true, false, true,
-        [&](const int fd) {
-            send_header(fd, "GETFORCE");
-            response = read_force_response(fd);
-        });
+    const DriverResult result = run_driver_frame(true, false, true, [&](const int fd) {
+        send_header(fd, "GETFORCE");
+        response = read_force_response(fd);
+    });
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
@@ -531,42 +517,32 @@ TEST(SocketDriverTest, EnergyAndStressFrameDoesNotAdvertiseForce)
 TEST(SocketDriverTest, EnergyAndForceFrameAdvertisesOnlyForce)
 {
     ForceResponse response;
-    const DriverResult result = run_driver_frame(
-        true, true, false,
-        [&](const int fd) {
-            send_header(fd, "GETFORCE");
-            response = read_force_response(fd);
-        });
+    const DriverResult result = run_driver_frame(true, true, false, [&](const int fd) {
+        send_header(fd, "GETFORCE");
+        response = read_force_response(fd);
+    });
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
     EXPECT_THAT(response.extra, testing::HasSubstr("\"present\":[\"energy\",\"forces\"]"));
     EXPECT_THAT(response.extra, testing::Not(testing::HasSubstr("\"stress\"")));
-    EXPECT_THAT(response.forces_hartree_per_bohr,
-                testing::ElementsAre(2.0, 0.0, 0.0));
-    EXPECT_THAT(response.virial_wire_hartree,
-                testing::ElementsAre(0.0, 0.0, 0.0,
-                                     0.0, 0.0, 0.0,
-                                     0.0, 0.0, 0.0));
+    EXPECT_THAT(response.forces_hartree_per_bohr, testing::ElementsAre(2.0, 0.0, 0.0));
+    EXPECT_THAT(response.virial_wire_hartree, testing::ElementsAre(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
 }
 
 TEST(SocketDriverTest, EnergyForceAndStressFrameAdvertisesBothDerivatives)
 {
     ForceResponse response;
-    const DriverResult result = run_driver_frame(
-        true, true, true,
-        [&](const int fd) {
-            send_header(fd, "GETFORCE");
-            response = read_force_response(fd);
-        });
+    const DriverResult result = run_driver_frame(true, true, true, [&](const int fd) {
+        send_header(fd, "GETFORCE");
+        response = read_force_response(fd);
+    });
 
     EXPECT_EQ("FORCEREADY", response.header);
     EXPECT_EQ(0, result.exit_code);
-    EXPECT_THAT(response.extra,
-                testing::HasSubstr("\"present\":[\"energy\",\"forces\",\"stress\"]"));
+    EXPECT_THAT(response.extra, testing::HasSubstr("\"present\":[\"energy\",\"forces\",\"stress\"]"));
     EXPECT_EQ(3u, response.forces_hartree_per_bohr.size());
-    EXPECT_THAT(response.forces_hartree_per_bohr,
-                testing::ElementsAre(2.0, 0.0, 0.0));
+    EXPECT_THAT(response.forces_hartree_per_bohr, testing::ElementsAre(2.0, 0.0, 0.0));
     EXPECT_NE(0.0, response.virial_wire_hartree[0]);
 }
 

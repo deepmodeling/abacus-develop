@@ -161,11 +161,11 @@ struct Input_para
     //  int		bessel_nao_lmax;		///< lmax used in descriptor
 
     // ==============   #Parameters (4.Relaxation) ===========================
-    std::vector<std::string> relax_method = {"cg", "2"}; ///< relaxation algorithm and optional variant
+    std::string relax_method = "cg"; ///< geometry optimization method
 
     bool uses_simultaneous_relaxation() const
     {
-        return relax_method.size() == 2 && relax_method[0] == "cg" && relax_method[1] == "2";
+        return relax_method == "cg";
     }
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;

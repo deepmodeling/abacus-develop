@@ -8,6 +8,7 @@
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"
+
 #include <fstream>
 #include <vector>
 
@@ -33,21 +34,28 @@ class Relax
     // constraints are considered here
     // also check if relaxation has converged
     // based on threshold in force & stress
-    bool setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress, std::ofstream& ofs_running);
+    bool setup_gradient(const UnitCell& ucell,
+                        const ModuleBase::matrix& force,
+                        const ModuleBase::matrix& stress,
+                        std::ofstream& ofs_running);
 
     // Compute the ionic gradient from the force (in eV/Angstrom), honoring
     // per-atom move flags, and return the largest component. Records the value
     // in the force history and the running log, prints the optional out_level
     // diagnostics, and updates force_converged.
-    double setup_ion_gradient(const UnitCell& ucell, const ModuleBase::matrix& force,
-                              bool& force_converged, std::ofstream& ofs_running);
+    double setup_ion_gradient(const UnitCell& ucell,
+                              const ModuleBase::matrix& force,
+                              bool& force_converged,
+                              std::ofstream& ofs_running);
 
     // Compute the cell gradient from the stress, applying the fixed_axes
     // constraints (shape / volume / per-axis), and update force_converged.
     // Records the largest stress in the history and the running log. Only runs
     // when if_cell_moves is true.
-    void setup_cell_gradient(const UnitCell& ucell, const ModuleBase::matrix& stress,
-                             bool& force_converged, std::ofstream& ofs_running);
+    void setup_cell_gradient(const UnitCell& ucell,
+                             const ModuleBase::matrix& stress,
+                             bool& force_converged,
+                             std::ofstream& ofs_running);
 
     // Print the converged / not-converged summary to the running log. On
     // convergence, reports the method, the converged step (istep + 1, since
@@ -152,8 +160,14 @@ class Relax
 
   public:
     /// Read-only observers of the per-step convergence history, for the final summary.
-    const std::vector<double>& get_max_force_history() const { return max_force_history_; }
-    const std::vector<double>& get_max_stress_history() const { return max_stress_history_; }
+    const std::vector<double>& get_max_force_history() const
+    {
+        return max_force_history_;
+    }
+    const std::vector<double>& get_max_stress_history() const
+    {
+        return max_stress_history_;
+    }
 };
 
 #endif

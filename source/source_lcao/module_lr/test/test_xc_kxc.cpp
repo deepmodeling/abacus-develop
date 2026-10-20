@@ -1,5 +1,6 @@
 #include "../potentials/xc_kxc.h"
 #include <xc.h>
+#include <xc_funcs.h>
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <string>

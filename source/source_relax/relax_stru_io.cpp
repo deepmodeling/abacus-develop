@@ -49,10 +49,9 @@ std::string build_stru_header(const int istep,
     // stress in kbar: Ry/Bohr^3 -> kbar, always exactly 3 lines for
     // downstream parsers. N/A marks uncomputed stress; no inline comment is
     // appended so that every stress line has the same token count.
-    const double stress_transform = ModuleBase::RYDBERG_SI
-                                    / (ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI
-                                       * ModuleBase::BOHR_RADIUS_SI)
-                                    * 1.0e-8;
+    const double stress_transform
+        = ModuleBase::RYDBERG_SI
+          / (ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI) * 1.0e-8;
     const bool stress_valid = inp.cal_stress && geometry_evaluated;
     if (stress_valid)
     {
@@ -81,7 +80,8 @@ std::string build_stru_header(const int istep,
     }
     else if (!inp.cal_stress && !inp.cal_force)
     {
-        note = "# NOTE: stress not computed (cal_stress=0); forces not computed (cal_force=0); per-atom f fields omitted intentionally";
+        note = "# NOTE: stress not computed (cal_stress=0); forces not computed (cal_force=0); per-atom f fields "
+               "omitted intentionally";
     }
     else if (!inp.cal_stress)
     {

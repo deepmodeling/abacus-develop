@@ -69,6 +69,22 @@ namespace XC_Functional_Libxc
         const double hybrid_alpha,
         const double hse_omega);
 
+    /**
+     * @brief Per-component external parameters that init_func would apply.
+     *
+     * Returns, for every functional id in func_id, the parameter list the
+     * ground-state init_func would pass to xc_func_set_ext_params (external
+     * xc_exch_ext/xc_corr_ext parameters take precedence over the in-built
+     * ones; empty vector = libxc defaults). Consumers that instantiate
+     * libxc handles themselves -- e.g. the DFPT first-order kernel, which
+     * needs the SAME effective functional as the ground state -- use this
+     * to configure their own handles without duplicating the parameter
+     * tables.
+     */
+    extern std::vector<std::vector<double>> ext_params_for(const std::vector<int>& func_id,
+                                                           const double hybrid_alpha,
+                                                           const double hse_omega);
+
     extern void finish_func(std::vector<xc_func_type> &funcs);
 
 //-------------------

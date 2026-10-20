@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 
 # Require out-of-source builds
 file(TO_CMAKE_PATH "${CMAKE_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
@@ -10,12 +10,15 @@ if(EXISTS "${LOC_PATH}")
 endif()
 
 include(CMakeDependentOption)
-message(WARNING
-  "The build system now uses cmake_dependent_option extensively.\n"
-  "Many advanced options are now conditionally enabled based on their dependencies; "
-  "when dependency conditions are not met, the corresponding options will be"
-  "automatically turned OFF and hidden in cmake-gui/ccmake.\n"
-  "Please review your configuration if you previously set these options manually."
+# TODO: Drop this warning; it shouldn't be there as cmake_dependent_option is a
+# widely-used built-in feature
+message(
+  WARNING
+    "The build system now uses cmake_dependent_option extensively.\n"
+    "Many advanced options are now conditionally enabled based on their dependencies; "
+    "when dependency conditions are not met, the corresponding options will be"
+    "automatically turned OFF and hidden in cmake-gui/ccmake.\n"
+    "Please review your configuration if you previously set these options manually."
 )
 
 if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
@@ -35,9 +38,9 @@ project(
 option(ENABLE_MPI "Enable MPI" ON)
 option(ENABLE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
-cmake_dependent_option(ENABLE_GPU_NEIGHBOR_LIST
-                       "Enable the CUDA GPU neighbor-list implementation"
-                       OFF "USE_CUDA" OFF)
+cmake_dependent_option(
+  ENABLE_GPU_NEIGHBOR_LIST "Enable the CUDA GPU neighbor-list implementation"
+  OFF "USE_CUDA" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
@@ -69,42 +72,60 @@ option(ENABLE_JSON "Enable JSON output" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 
 # Options requiring MPI and LCAO
-cmake_dependent_option(ENABLE_ELPA "Enable ELPA eigensolver" ON "ENABLE_MPI" OFF)
-cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional"
-                       OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
-cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_ELPA "Enable ELPA eigensolver" ON "ENABLE_MPI"
+                       OFF)
+cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF
+                       "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF
+                       "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
 
 # Two-center FFT is only used in LCAO
-cmake_dependent_option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method"
-                       ON "ENABLE_LCAO" OFF)
+cmake_dependent_option(
+  ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method" ON
+  "ENABLE_LCAO" OFF)
 
 # Benchmark requires BUILD_TESTING
-cmake_dependent_option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage"
-                       OFF "BUILD_TESTING" OFF)
+cmake_dependent_option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF
+                       "BUILD_TESTING" OFF)
 
 # Options requiring CUDA
-cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF "USE_CUDA;ENABLE_MPI" OFF)
-cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cuSOLVERMp"
-                       OFF "USE_CUDA;ENABLE_MPI;ENABLE_LCAO" OFF)
-cmake_dependent_option(ENABLE_CUBLASMP "Enable cuBLASMp" OFF "ENABLE_CUSOLVERMP" OFF)
-cmake_dependent_option(ENABLE_NCCL_PARALLEL_DEVICE
-                       "Enable NCCL-backed collectives in parallel_device; requires MPI"
-                       OFF "USE_CUDA;ENABLE_MPI" OFF)
+cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF
+                       "USE_CUDA;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cuSOLVERMp" OFF
+                       "USE_CUDA;ENABLE_MPI;ENABLE_LCAO" OFF)
+cmake_dependent_option(ENABLE_CUBLASMP "Enable cuBLASMp" OFF
+                       "ENABLE_CUSOLVERMP" OFF)
+cmake_dependent_option(
+  ENABLE_NCCL_PARALLEL_DEVICE
+  "Enable NCCL-backed collectives in parallel_device; requires MPI" OFF
+  "USE_CUDA;ENABLE_MPI" OFF)
 
 # ==============================================================================
 # Deprecated options (TODO: Remove this section in the future release)
 # ==============================================================================
 function(abacus_rename_option old_name new_name)
-  get_property(_old_defined CACHE "${old_name}" PROPERTY TYPE SET)
+  get_property(
+    _old_defined
+    CACHE "${old_name}"
+    PROPERTY TYPE
+    SET)
   if(NOT _old_defined)
     return()
   endif()
   message(DEPRECATION "${old_name} has been renamed to ${new_name}.")
-  get_property(_type CACHE "${new_name}" PROPERTY TYPE)
-  get_property(_help CACHE "${new_name}" PROPERTY HELPSTRING)
-  set("${new_name}" "${${old_name}}" CACHE "${_type}" "${_help}" FORCE)
+  get_property(
+    _type
+    CACHE "${new_name}"
+    PROPERTY TYPE)
+  get_property(
+    _help
+    CACHE "${new_name}"
+    PROPERTY HELPSTRING)
+  set("${new_name}"
+      "${${old_name}}"
+      CACHE "${_type}" "${_help}" FORCE)
   unset("${old_name}" CACHE)
 endfunction()
 abacus_rename_option(USE_OPENMP ENABLE_OPENMP)
@@ -124,14 +145,12 @@ if(DEFINED CACHE{ENABLE_LIBCOMM})
     DEPRECATION
       "Option ENABLE_LIBCOMM is deprecated and will be ignored in a future release. "
       "LibComm is now treated as an implementation dependency of LibRI; "
-      "please use -DENABLE_LIBRI=ON instead."
-  )
+      "please use -DENABLE_LIBRI=ON instead.")
   if(ENABLE_LIBCOMM AND NOT ENABLE_LIBRI)
     message(
       FATAL_ERROR
         "ENABLE_LIBCOMM was set, but LibComm is not a standalone ABACUS feature. "
-        "Please use -DENABLE_LIBRI=ON instead."
-    )
+        "Please use -DENABLE_LIBRI=ON instead.")
   endif()
   unset(ENABLE_LIBCOMM CACHE)
 endif()
@@ -189,12 +208,12 @@ endif()
 # Determine the ABACUS executable name.
 if(NOT ENABLE_LCAO)
   set(_abacus_bin_level "pw")
-# TODO: Not well-defined now.
+  # TODO: Not well-defined now.
 elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
   set(_abacus_bin_level "max")
 elseif(ENABLE_LIBRI)
   set(_abacus_bin_level "std")
-# TODO: Not well-defined now.
+  # TODO: Not well-defined now.
 elseif(ENABLE_MLALGO)
   set(_abacus_bin_level "ml")
 else()
@@ -234,8 +253,7 @@ if(USE_DSP AND ENABLE_ELPA)
   message(FATAL_ERROR "USE_DSP is incompatible with ELPA.")
 endif()
 
-list(APPEND CMAKE_MODULE_PATH
-     "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
      "${PROJECT_SOURCE_DIR}/cmake/modules")
 
 if(ENABLE_COVERAGE)
@@ -247,11 +265,11 @@ if(ENABLE_COVERAGE)
       GIT_REPOSITORY https://github.com/RWTH-HPC/CMake-codecov.git
       GIT_TAG master
       GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE
-    )
+      GIT_PROGRESS TRUE)
     FetchContent_Populate(cmakecodecov)
     list(APPEND CMAKE_MODULE_PATH ${cmakecodecov_SOURCE_DIR}/cmake)
-    set(CMAKE_MODULE_PATH "${cmakecodecov_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+    set(CMAKE_MODULE_PATH "${cmakecodecov_SOURCE_DIR}/cmake"
+                          ${CMAKE_MODULE_PATH})
     find_package(codecov REQUIRED)
   endif()
 endif()
@@ -302,7 +320,10 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
   # Force turn off ENABLE_ABACUS_LIBM on Intel Compiler
-  message(WARNING "ENABLE_ABACUS_LIBM is not available with Intel compilers; switching it off")
+  message(
+    WARNING
+      "ENABLE_ABACUS_LIBM is not available with Intel compilers; switching it off"
+  )
   set(ENABLE_ABACUS_LIBM OFF)
 endif()
 
@@ -312,7 +333,8 @@ endif()
 if(ENABLE_PEXSI)
   find_package(PEXSI REQUIRED CONFIG)
   if(PEXSI_VERSION VERSION_LESS "2.0.0")
-    message(FATAL_ERROR "PEXSI >= 2.0.0 is required; found version ${PEXSI_VERSION}")
+    message(
+      FATAL_ERROR "PEXSI >= 2.0.0 is required; found version ${PEXSI_VERSION}")
   endif()
   set(CMAKE_CXX_STANDARD 14)
 endif()
@@ -324,7 +346,10 @@ if(ENABLE_MPI)
     # When cross compiling, assume users know what they are doing.
     set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
   endif()
-  find_package(MPI COMPONENTS CXX REQUIRED)
+  find_package(
+    MPI
+    COMPONENTS CXX
+    REQUIRED)
 endif()
 
 if(USE_SW)
@@ -365,14 +390,17 @@ elseif(NOT USE_SW)
   endif()
 endif()
 
-if(NOT USE_KML AND NOT MKL_FOUND AND NOT USE_SW)
+if(NOT USE_KML
+   AND NOT MKL_FOUND
+   AND NOT USE_SW)
   find_package(FFTW3 REQUIRED)
 endif()
 
 if(ENABLE_DFTD4)
   find_package(dftd4 REQUIRED)
   if(dftd4_VERSION VERSION_LESS "4.3.0")
-    message(FATAL_ERROR "dftd4 >= 4.3.0 is required; found version ${dftd4_VERSION}")
+    message(
+      FATAL_ERROR "dftd4 >= 4.3.0 is required; found version ${dftd4_VERSION}")
   endif()
 endif()
 
@@ -394,21 +422,20 @@ if(CMAKE_CUDA_COMPILER)
   endif()
 else() # CUDA not found
   if(USE_CUDA)
-    message(
-      FATAL_ERROR
-        "USE_CUDA is set but no CUDA components found.")
+    message(FATAL_ERROR "USE_CUDA is set but no CUDA components found.")
   endif()
 endif()
 
 if(USE_CUDA)
-  cmake_minimum_required(VERSION 3.18) # required by `CUDA_ARCHITECTURES` below
-  
   # Always find CUDAToolkit to get CUDAToolkit_VERSION
   find_package(CUDAToolkit REQUIRED)
-  
+
   set_if_higher(CMAKE_CXX_STANDARD 14)
   if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL "13.0")
-    message(STATUS "CUDA ${CUDAToolkit_VERSION} detected. Setting CMAKE_CUDA_STANDARD to 17.")
+    message(
+      STATUS
+        "CUDA ${CUDAToolkit_VERSION} detected. Setting CMAKE_CUDA_STANDARD to 17."
+    )
     set_if_higher(CMAKE_CXX_STANDARD 17)
   endif()
   set(CMAKE_CXX_EXTENSIONS ON)
@@ -419,21 +446,20 @@ if(USE_CUDA)
     # check
     # https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/Internal/CMakeCUDAArchitecturesAll.cmake
     # for available architectures in different CUDA versions
-    
+
     # CUDA 13.0+ dropped support for architectures below 75
     if(CUDAToolkit_VERSION VERSION_LESS "13.0")
-      set(CMAKE_CUDA_ARCHITECTURES
-          60 # P100
-          70 # V100
+      set(CMAKE_CUDA_ARCHITECTURES 60 # P100
+                                   70 # V100
       )
     else()
       # Start with empty list; architectures 75+ will be added below
       set(CMAKE_CUDA_ARCHITECTURES)
     endif()
-    
+
     # Add your CUDA arch here Check the Compute Capability version of your
     # GPU at: https://en.wikipedia.org/wiki/CUDA#GPUs_supported
-    
+
     if(CUDAToolkit_VERSION VERSION_GREATER_EQUAL 10.0)
       list(APPEND CMAKE_CUDA_ARCHITECTURES 75) # T4
     endif()
@@ -449,29 +475,31 @@ if(USE_CUDA)
   endif()
   enable_language(CUDA)
   if(USE_CUDA)
-    if (ENABLE_NCCL_PARALLEL_DEVICE)
+    if(ENABLE_NCCL_PARALLEL_DEVICE)
       include(cmake/modules/SetupNccl.cmake)
       abacus_setup_nccl()
     endif()
-    if (ENABLE_CUSOLVERMP)
+    if(ENABLE_CUSOLVERMP)
       # Keep cuSOLVERMp discovery/linking logic in a dedicated module.
       include(cmake/modules/SetupCuSolverMp.cmake)
       abacus_setup_cusolvermp()
     endif()
-    if (ENABLE_CUBLASMP)
+    if(ENABLE_CUBLASMP)
       # Enforcement 1: cuBLASMp requires cuSOLVERMp to be enabled
-      if (NOT ENABLE_CUSOLVERMP)
-        message(FATAL_ERROR 
-          "ENABLE_CUBLASMP is set to ON, but ENABLE_CUSOLVERMP is OFF."
-          "In ABACUS, cuBLASMp support requires cuSOLVERMp to be enabled simultaneously."
-          "Please set -DENABLE_CUSOLVERMP=ON.")
+      if(NOT ENABLE_CUSOLVERMP)
+        message(
+          FATAL_ERROR
+            "ENABLE_CUBLASMP is set to ON, but ENABLE_CUSOLVERMP is OFF."
+            "In ABACUS, cuBLASMp support requires cuSOLVERMp to be enabled simultaneously."
+            "Please set -DENABLE_CUSOLVERMP=ON.")
       endif()
       # Enforcement 2: cuBLASMp 0.8.0+ is incompatible with CAL backend
       # Note: _use_cal is defined inside abacus_setup_cusolvermp
-      if (_use_cal)
-        message(FATAL_ERROR 
-          "cuBLASMp 0.8.0+ requires NCCL Symmetric Memory, but cuSOLVERMp is using CAL backend."
-          "Please upgrade cuSOLVERMp to >= 0.7.0 to use NCCL for both.")
+      if(_use_cal)
+        message(
+          FATAL_ERROR
+            "cuBLASMp 0.8.0+ requires NCCL Symmetric Memory, but cuSOLVERMp is using CAL backend."
+            "Please upgrade cuSOLVERMp to >= 0.7.0 to use NCCL for both.")
       endif()
       include(cmake/modules/SetupCuBlasMp.cmake)
       abacus_setup_cublasmp()
@@ -485,8 +513,7 @@ endif()
 if(USE_ROCM)
   message(
     DEPRECATION
-    "Option USE_ROCM is deprecated and will be ignored in a future release. ")
-  cmake_minimum_required(VERSION 3.18)
+      "Option USE_ROCM is deprecated and will be ignored in a future release. ")
   if(NOT DEFINED ROCM_PATH)
     set(ROCM_PATH
         "/opt/rocm"
@@ -545,6 +572,7 @@ if(ENABLE_MLALGO)
       GIT_PROGRESS TRUE)
     FetchContent_MakeAvailable(libnpy)
   else()
+
   endif()
 endif()
 
@@ -561,20 +589,17 @@ if(ENABLE_MLALGO OR DEFINED Torch_DIR)
   set(ABACUS_TORCH_CXX_FLAGS "${TORCH_CXX_FLAGS}")
 endif()
 
-if (ENABLE_CNPY)
-  find_path(cnpy_SOURCE_DIR
-    cnpy.h
-    HINTS ${libnpy_INCLUDE_DIR}
-  )
+if(ENABLE_CNPY)
+  find_path(cnpy_SOURCE_DIR cnpy.h HINTS ${libnpy_INCLUDE_DIR})
   if(NOT cnpy_SOURCE_DIR)
     include(FetchContent)
     FetchContent_Declare(
       cnpy
       GIT_REPOSITORY https://github.com/rogersce/cnpy.git
-      GIT_PROGRESS TRUE
-    )
+      GIT_PROGRESS TRUE)
     FetchContent_MakeAvailable(cnpy)
   else()
+
   endif()
 
   # find ZLIB and link
@@ -614,7 +639,8 @@ endif()
 if(ENABLE_LIBXC)
   find_package(Libxc CONFIG REQUIRED)
   if(Libxc_VERSION VERSION_LESS "5.1.7")
-    message(FATAL_ERROR "Libxc >= 5.1.7 is required; found version ${Libxc_VERSION}")
+    message(
+      FATAL_ERROR "Libxc >= 5.1.7 is required; found version ${Libxc_VERSION}")
   endif()
 endif()
 
@@ -636,7 +662,10 @@ if(ENABLE_PLUMED)
   # FindPLUMED.cmake, which prefers pkg-config (plumed.pc) and falls back to
   # a manual -DPLUMED_ROOT=<prefix> hint.
   find_package(PLUMED REQUIRED)
-  message(STATUS "PLUMED support is enabled: version ${PLUMED_VERSION}, include ${PLUMED_INCLUDE_DIRS}")
+  message(
+    STATUS
+      "PLUMED support is enabled: version ${PLUMED_VERSION}, include ${PLUMED_INCLUDE_DIRS}"
+  )
 endif()
 
 if(MATH_INFO)
