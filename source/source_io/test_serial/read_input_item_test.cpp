@@ -1145,20 +1145,18 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("gamma_only", readinput.input_lists);
         TestParameters::input(param).basis_type = "pw";
         TestParameters::input(param).gamma_only = true;
-        std::string filename = TestParameters::input(param).kpoint_file;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(TestParameters::input(param).gamma_only, false);
-        std::ifstream ifs(filename);
-        std::string line;
-        std::getline(ifs, line);
-        ifs.close();
-        EXPECT_EQ(line, "K_POINTS");
+        it->second.str_values = {"1"};
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_TRUE(TestParameters::input(param).gamma_only);
+
+        TestParameters::input(param).gamma_only = false;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
 
         TestParameters::input(param).basis_type = "lcao";
         TestParameters::input(param).gamma_only = true;
         TestParameters::input(param).nspin = 4;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.reset_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
@@ -1268,6 +1266,71 @@ TEST_F(InputTest, Item_test)
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_dm_npz, true);
+    }
+}
+
+TEST_F(InputTest, RejectPwGammaOnlyWithoutChangingKpt)
+{
+    const std::string filename = testing::TempDir() + "abacus_pw_gamma_INPUT";
+    const std::string kpt = testing::TempDir() + "abacus_pw_gamma_KPT";
+    const std::string content = "K_POINTS\n0\nGamma\n2 3 4 0 0 0\n";
+    for (const bool existing_kpt : {false, true})
+    {
+        SCOPED_TRACE(existing_kpt);
+        if (existing_kpt)
+        {
+            std::ofstream output(kpt.c_str());
+            output << content;
+        }
+        {
+            std::ofstream input(filename.c_str());
+            input << "INPUT_PARAMETERS\nbasis_type pw\ngamma_only 1\nkpoint_file " << kpt << "\n";
+        }
+        ModuleIO::ReadInput reader(0);
+        reader.check_ntype_flag = false;
+        Parameter param;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(reader.read_parameters(param, filename), testing::ExitedWithCode(1), "");
+        const std::string diagnostic = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(diagnostic, testing::HasSubstr("Invalid INPUT gamma_only=1"));
+        EXPECT_THAT(diagnostic, testing::HasSubstr("PW requires gamma_only=0"));
+        EXPECT_THAT(diagnostic, testing::HasSubstr("1 1 1 0 0 0 Gamma mesh"));
+        EXPECT_THAT(diagnostic, testing::HasSubstr("input-main.html#gamma-only"));
+        std::ifstream actual(kpt.c_str());
+        if (existing_kpt)
+        {
+            std::stringstream buffer;
+            buffer << actual.rdbuf();
+            EXPECT_EQ(buffer.str(), content);
+            actual.close();
+            EXPECT_EQ(std::remove(kpt.c_str()), 0);
+        }
+        else
+        {
+            EXPECT_FALSE(actual.is_open());
+        }
+        EXPECT_EQ(std::remove(filename.c_str()), 0);
+    }
+}
+
+TEST_F(InputTest, AcceptSupportedGammaOnlyInputs)
+{
+    const std::string filename = testing::TempDir() + "abacus_supported_gamma_INPUT";
+    for (const std::string parameters : {"basis_type pw\ngamma_only 0\n",
+                                         "basis_type lcao\ngamma_only 1\nnspin 1\n",
+                                         "basis_type lcao\ngamma_only 1\nnspin 2\n"})
+    {
+        SCOPED_TRACE(parameters);
+        {
+            std::ofstream input(filename.c_str());
+            input << "INPUT_PARAMETERS\n" << parameters;
+        }
+        ModuleIO::ReadInput reader(0);
+        reader.check_ntype_flag = false;
+        Parameter param;
+        reader.read_parameters(param, filename);
+        EXPECT_EQ(param.inp.gamma_only, param.inp.basis_type == "lcao");
+        EXPECT_EQ(std::remove(filename.c_str()), 0);
     }
 }
 

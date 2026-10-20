@@ -793,30 +793,24 @@ This setting takes effect only when the selected exchange-correlation functional
                           "set to 1, a fast algorithm is used";
         item.category = "Electronic structure";
         item.type = "Boolean";
-        item.description = R"(Whether to use gamma_only algorithm.
-* 0: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
-* 1: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
+        item.description = R"(Whether to use the optimized Gamma-only algorithm.
+* 0: use the general k-point algorithm, including for a single Gamma point.
+* 1: use the optimized algorithm for localized orbitals with nspin=1 or 2; no KPT file is needed.
 
-Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.)";
+PW calculations require gamma_only=0. For Gamma-point sampling in PW, specify a 1 1 1 0 0 0 Gamma mesh in KPT. An explicit gamma_only=1 with basis_type=pw is an input error; the input reader does not create or overwrite KPT.)";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type==lcao");
         read_sync_bool(input.gamma_only);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "pw" && para.input.gamma_only)
             {
-                para.input.gamma_only = false;
-                GlobalV::ofs_warning << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
-                GlobalV::ofs_warning << "gamma_only is not supported in the pw model" << std::endl;
-                GlobalV::ofs_warning << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
-                GlobalV::ofs_warning << " and a new KPT is generated with gamma point as the only k point"<< std::endl;
-                GlobalV::ofs_warning << " Auto generating k-points file: " << para.input.kpoint_file << std::endl;
-                std::ofstream ofs(para.input.kpoint_file.c_str());
-                ofs << "K_POINTS" << std::endl;
-                ofs << "0" << std::endl;
-                ofs << "Gamma" << std::endl;
-                ofs << "1 1 1 0 0 0" << std::endl;
-                ofs.close();
+                const std::string message
+                    = "Invalid INPUT gamma_only=" + longstring(item.str_values)
+                      + " with basis_type=pw. PW requires gamma_only=0; for Gamma-point sampling, "
+                        "use a 1 1 1 0 0 0 Gamma mesh in KPT. KPT is not modified.\n"
+                        "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#gamma-only";
+                ModuleBase::WARNING_QUIT("ReadInput", message);
             }
             if (para.input.basis_type == "lcao" && para.input.gamma_only)
             {
