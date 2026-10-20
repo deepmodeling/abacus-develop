@@ -10,7 +10,7 @@
 namespace pw
 {
 
-/** @brief Converged time-step history and predictor-corrector potential storage. */
+/** @brief Accepted time-step history and predictor-corrector potential storage. */
 template <typename T, typename Device>
 class TDHistoryPW
 {
@@ -21,7 +21,7 @@ class TDHistoryPW
     /** @brief Use the current potential for the predictor, then average with the saved potential. */
     const typename GetTypeReal<T>::type* prop_pot(elecstate::Potential& potential, const bool corrector);
 
-    /** @brief Save the converged state; the caller owns the convergence decision. */
+    /** @brief Save the accepted endpoint; the caller owns the convergence decision. */
     void save(const psi::Psi<T, Device>& current, elecstate::Potential& potential);
 
     /** @brief Access the fixed origin of every corrector solve in the next step. */

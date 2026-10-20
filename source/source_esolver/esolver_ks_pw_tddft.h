@@ -45,10 +45,7 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     /** @brief Switch between ground-state diagonalization and real-time propagation. */
     void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
-    /** @brief Apply the convergence policy appropriate to the current stage. */
-    void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
-
-    /** @brief Save the converged state as the origin of the next propagation step. */
+    /** @brief Save the converged or iteration-limited endpoint for the next propagation step. */
     void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
   private:
@@ -67,7 +64,9 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     double initial_rho_electrons_ = 0.0;
     /** @brief Print the one-based electronic step header. */
     void print_step(const int istep) const;
-    /** @brief Print Eij from the converged density, collecting all k-point pools on the main rank. */
+    /** @brief Rebuild an iteration-limited endpoint from its final orbitals without changing occupations. */
+    void finalize_endpoint(UnitCell& cell);
+    /** @brief Print Eij from the accepted endpoint, collecting all k-point pools on the main rank. */
     void print_eij(const int istep);
     void report_orth(const UnitCell& ucell, int istep);
     void prep_td_step(const int istep);

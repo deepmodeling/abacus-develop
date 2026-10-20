@@ -15,10 +15,9 @@ void check_td_input(const Input_para& input, const UnitCell& cell, int xc_type, 
     {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires out_current=0 or 1.");
     }
-    if (input.scf_nmax < 2)
+    if (input.scf_nmax < 1)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT",
-                                 "PW RT-TDDFT requires scf_nmax >= 2: one predictor and at least one corrector iteration.");
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "PW RT-TDDFT requires scf_nmax >= 1.");
     }
     if (unitcell::if_atoms_can_move(cell.atoms, cell.ntype))
     {

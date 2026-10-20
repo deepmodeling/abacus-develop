@@ -321,22 +321,9 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW_TDDFT<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
-{
-    ESolver_KS_PW<T, Device>::iter_finish(ucell, istep, iter, conv_esolver);
-    if (istep > 0 && !conv_esolver && iter >= this->inp_->scf_nmax)
-    {
-        const int evolution_step = istep + 1;
-        const std::string message = "The time-dependent SCF step did not converge. Electronic evolution step: "
-                                    + std::to_string(evolution_step) + ", SCF iteration: " + std::to_string(iter) + ".";
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", message);
-    }
-}
-
-template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
-    if (!conv_esolver)
+    if (!conv_esolver && this->niter < this->maxniter)
     {
         const int evolution_step = istep + 1;
         const std::string message
@@ -348,7 +335,11 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
         const psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
         this->td_solver_->check_initial(*current, this->niter);
     }
-    // Endpoint diagnostics must see the converged potential and endpoint A, not the propagation midpoint state.
+    if (!conv_esolver)
+    {
+        finalize_endpoint(ucell);
+    }
+    // Endpoint diagnostics use the accepted endpoint, not the propagation midpoint or a mixed trial density.
     auto* endpoint_hamilt = static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
     const Real* endpoint_veff = this->pelec->pot->template get_veff_smooth_data<Real>();
     endpoint_hamilt->bind_td_state(endpoint_veff, this->td_field_manager_->A_right_ha());
@@ -371,6 +362,32 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     {
         report_orth(ucell, istep);
     }
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::finalize_endpoint(UnitCell& cell)
+{
+    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "finalize_endpoint");
+    psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
+    auto* estate = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
+    // The last SCF iteration may have mixed the density. Keep the actual orbitals and their occupations.
+    estate->psiToRho(*current);
+    module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, cell.symm);
+    this->chr.save_rho_before_sum_band();
+    this->pelec->pot->update_from_charge(&this->chr, &cell);
+
+    auto* hamiltonian = static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+    const Real* veff = this->pelec->pot->template get_veff_smooth_data<Real>();
+    hamiltonian->bind_td_state(veff, this->td_field_manager_->A_right_ha());
+    hamilt::HamiltHSOperator<T, Device> op(hamiltonian, this->pw_wfc);
+    this->td_solver_->cal_band_energy(op, *current, &this->pelec->ekb);
+    elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
+    this->pelec->f_en.deband = this->pelec->cal_delta_eband(cell);
+    this->pelec->f_en.descf = 0.0;
+    // Do not reuse a self-consistency force correction from an earlier endpoint.
+    this->pelec->vnew_exist = false;
+    this->pelec->cal_energies(2, this->inp_->imp_sol, this->inp_->sc_mag_switch, this->inp_->dft_plus_u, this->inp_->assume_isolated);
+    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "finalize_endpoint");
 }
 
 template <typename T, typename Device>

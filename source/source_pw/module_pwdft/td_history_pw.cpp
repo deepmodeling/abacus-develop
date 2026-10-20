@@ -89,7 +89,7 @@ const psi::Psi<T, Device>& TDHistoryPW<T, Device>::previous() const
 {
     if (!previous_)
     {
-        ModuleBase::WARNING_QUIT("TDHistoryPW", "No converged state has been saved for propagation.");
+        ModuleBase::WARNING_QUIT("TDHistoryPW", "No endpoint state has been saved for propagation.");
     }
     return *previous_;
 }
