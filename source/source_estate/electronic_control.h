@@ -1,7 +1,7 @@
 #ifndef ABACUS_ELECTRONIC_CONTROL_H
 #define ABACUS_ELECTRONIC_CONTROL_H
 
-namespace ModuleESolver
+namespace elecstate
 {
 // Physical requests and results; no socket or serialization dependencies.
 struct ElectronicControl

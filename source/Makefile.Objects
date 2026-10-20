@@ -262,6 +262,7 @@ OBJS_DEEPKS=lcao_deepks.o\
 
 
 OBJS_ELECSTAT=elecstate.o\
+    electronic_occupations.o\
     init_scf.o\
     param_update.o\
     estate_e_terms.o\
@@ -323,7 +324,6 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_ks.o\
     esolver_fp.o\
     esolver_fp_electronic.o\
-    electronic_occupations.o\
     esolver_ks_pw.o\
     esolver_ks_pw_tddft.o\
     esolver_ks_lcaopw.o\

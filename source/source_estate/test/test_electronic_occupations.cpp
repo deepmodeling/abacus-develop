@@ -26,14 +26,14 @@ ModuleBase::matrix fractional_weights()
 TEST(ElectronicOccupations, FractionalPopulationIncludesEveryLocalRowAndBand)
 {
     const ModuleBase::matrix weights = fractional_weights();
-    EXPECT_NEAR(8.2, ModuleESolver::checked_occupation_electron_count(weights, 8.2, 1, process_count), 1e-14);
+    EXPECT_NEAR(8.2, elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count), 1e-14);
 }
 
 TEST(ElectronicOccupations, ReturnsOccupationSumInsteadOfEchoingNearbyRequest)
 {
     const ModuleBase::matrix weights = fractional_weights();
     const double requested = 8.2 + 5e-9;
-    const double actual = ModuleESolver::checked_occupation_electron_count(weights, requested, 1, process_count);
+    const double actual = elecstate::checked_occupation_electron_count(weights, requested, 1, process_count);
     EXPECT_NEAR(8.2, actual, 1e-14);
     EXPECT_GT(requested - actual, 4e-9);
 }
@@ -41,9 +41,9 @@ TEST(ElectronicOccupations, ReturnsOccupationSumInsteadOfEchoingNearbyRequest)
 TEST(ElectronicOccupations, RejectsPopulationMismatchOnEitherSide)
 {
     const ModuleBase::matrix weights = fractional_weights();
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 8.2 + 2e-8, 1, process_count),
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2 + 2e-8, 1, process_count),
                  std::runtime_error);
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 8.2 - 2e-8, 1, process_count),
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2 - 2e-8, 1, process_count),
                  std::runtime_error);
 }
 
@@ -51,7 +51,7 @@ TEST(ElectronicOccupations, ToleranceIsAbsoluteEvenForLargeElectronCounts)
 {
     ModuleBase::matrix weights(1, 1);
     weights(0, 0) = 1e6;
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 1e6 + 1e-6, 1, process_count),
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 1e6 + 1e-6, 1, process_count),
                  std::runtime_error);
 }
 
@@ -61,7 +61,7 @@ TEST(ElectronicOccupations, GeneralizedSmearingCanContainNegativeWeights)
     weights(0, 0) = 2.125;
     weights(0, 1) = -0.25;
     weights(0, 2) = 0.125;
-    EXPECT_DOUBLE_EQ(2.0, ModuleESolver::checked_occupation_electron_count(weights, 2.0, 1, process_count));
+    EXPECT_DOUBLE_EQ(2.0, elecstate::checked_occupation_electron_count(weights, 2.0, 1, process_count));
 }
 
 TEST(ElectronicOccupations, RejectsNaNOnLastRankTogether)
@@ -71,7 +71,7 @@ TEST(ElectronicOccupations, RejectsNaNOnLastRankTogether)
     {
         weights(1, 2) = std::numeric_limits<double>::quiet_NaN();
     }
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 8.2, 1, process_count),
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count),
                  std::runtime_error);
 }
 
@@ -82,7 +82,7 @@ TEST(ElectronicOccupations, RejectsInfinityOnLastRankTogether)
     {
         weights(1, 2) = std::numeric_limits<double>::infinity();
     }
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 8.2, 1, process_count),
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count),
                  std::runtime_error);
 }
 
@@ -91,7 +91,7 @@ TEST(ElectronicOccupations, RejectsLocalOverflowBeforePoolReduction)
     ModuleBase::matrix weights(1, 2);
     weights(0, 0) = std::numeric_limits<double>::max();
     weights(0, 1) = std::numeric_limits<double>::max();
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 8.2, process_count, 1),
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1),
                  std::runtime_error);
 }
 
@@ -99,7 +99,7 @@ TEST(ElectronicOccupations, RejectsInvalidRequestOnLastRankTogether)
 {
     const ModuleBase::matrix weights = fractional_weights();
     const double requested = process_rank == process_count - 1 ? std::numeric_limits<double>::quiet_NaN() : 8.2;
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, requested, 1, process_count),
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, requested, 1, process_count),
                  std::runtime_error);
 }
 
@@ -107,14 +107,14 @@ TEST(ElectronicOccupations, RejectsInvalidPartitionOnLastRankTogether)
 {
     const ModuleBase::matrix weights = fractional_weights();
     const int local_size = process_rank == process_count - 1 ? 0 : process_count;
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 8.2, 1, local_size), std::runtime_error);
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 8.2, 0, process_count), std::runtime_error);
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 1, local_size), std::runtime_error);
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 0, process_count), std::runtime_error);
 }
 
 TEST(ElectronicOccupations, SinglePoolDoesNotMultiplyReplicatedPopulationByRankCount)
 {
     const ModuleBase::matrix weights = fractional_weights();
-    EXPECT_NEAR(8.2, ModuleESolver::checked_occupation_electron_count(weights, 8.2, 1, process_count), 1e-14);
+    EXPECT_NEAR(8.2, elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count), 1e-14);
 }
 
 TEST(ElectronicOccupations, SinglePoolMismatchOnOneReplicaFailsEveryRank)
@@ -124,7 +124,7 @@ TEST(ElectronicOccupations, SinglePoolMismatchOnOneReplicaFailsEveryRank)
     {
         weights(1, 1) += 0.125;
     }
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 8.2, 1, process_count),
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, 1, process_count),
                  std::runtime_error);
 }
 
@@ -137,7 +137,7 @@ TEST(ElectronicOccupations, KPointPoolsCombineDistinctRowsAndRemovePoolReplicas)
     const double population = pools == 1 ? 8.2 : (pool == 0 ? 2.2 : 6.0);
     weights(0, 0) = 0.25 * population;
     weights(0, 1) = 0.75 * population;
-    EXPECT_NEAR(8.2, ModuleESolver::checked_occupation_electron_count(weights, 8.2, pools, ranks_per_pool), 1e-14);
+    EXPECT_NEAR(8.2, elecstate::checked_occupation_electron_count(weights, 8.2, pools, ranks_per_pool), 1e-14);
 }
 
 TEST(ElectronicOccupations, BandShardsUseLocalColumnCount)
@@ -151,7 +151,7 @@ TEST(ElectronicOccupations, BandShardsUseLocalColumnCount)
         weights(0, band) = 3.0 / total_bands;
         weights(1, band) = 5.2 / total_bands;
     }
-    EXPECT_NEAR(8.2, ModuleESolver::checked_occupation_electron_count(weights, 8.2, process_count, 1), 1e-14);
+    EXPECT_NEAR(8.2, elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1), 1e-14);
 }
 
 TEST(ElectronicOccupations, EmptyLocalBlocksStillParticipateInCollectives)
@@ -161,13 +161,13 @@ TEST(ElectronicOccupations, EmptyLocalBlocksStillParticipateInCollectives)
     {
         weights = fractional_weights();
     }
-    EXPECT_NEAR(8.2, ModuleESolver::checked_occupation_electron_count(weights, 8.2, process_count, 1), 1e-14);
+    EXPECT_NEAR(8.2, elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1), 1e-14);
 }
 
 TEST(ElectronicOccupations, EmptyPopulationCannotSatisfyPositiveRequest)
 {
     const ModuleBase::matrix weights;
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 8.2, process_count, 1),
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1),
                  std::runtime_error);
 }
 
@@ -178,7 +178,7 @@ TEST(ElectronicOccupations, UnequalPoolSizesRemoveTheirOwnReplicaCounts)
     const int ranks_per_pool = process_rank == 0 ? 1 : process_count - 1;
     ModuleBase::matrix weights(1, 1);
     weights(0, 0) = pools == 1 ? 8.2 : (process_rank == 0 ? 2.2 : 6.0);
-    EXPECT_NEAR(8.2, ModuleESolver::checked_occupation_electron_count(weights, 8.2, pools, ranks_per_pool), 1e-14);
+    EXPECT_NEAR(8.2, elecstate::checked_occupation_electron_count(weights, 8.2, pools, ranks_per_pool), 1e-14);
 }
 
 TEST(ElectronicOccupations, RemoteInvalidEntryCannotBeHiddenByAnEmptyRootBlock)
@@ -189,7 +189,7 @@ TEST(ElectronicOccupations, RemoteInvalidEntryCannotBeHiddenByAnEmptyRootBlock)
         weights.create(1, 1);
         weights(0, 0) = -std::numeric_limits<double>::infinity();
     }
-    EXPECT_THROW(ModuleESolver::checked_occupation_electron_count(weights, 8.2, process_count, 1),
+    EXPECT_THROW(elecstate::checked_occupation_electron_count(weights, 8.2, process_count, 1),
                  std::runtime_error);
 }
 } // namespace

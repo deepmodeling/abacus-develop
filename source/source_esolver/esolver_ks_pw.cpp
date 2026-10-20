@@ -139,7 +139,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
 }
 
 template <typename T, typename Device>
-bool ESolver_KS_PW<T, Device>::apply_electronic_control(Parameter& parameters, const ElectronicControl& control)
+bool ESolver_KS_PW<T, Device>::apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control)
 {
     const int functional_type = XC_Functional::get_func_type();
     // Separate-loop SCAN0 starts as SCAN, before switching to hybrid meta-GGA.

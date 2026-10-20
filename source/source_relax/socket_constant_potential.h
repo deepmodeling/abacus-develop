@@ -1,7 +1,7 @@
 #ifndef ABACUS_SOCKET_CONSTANT_POTENTIAL_H
 #define ABACUS_SOCKET_CONSTANT_POTENTIAL_H
 
-#include "source_esolver/electronic_control.h"
+#include "source_estate/electronic_control.h"
 #include <string>
 
 class Parameter;
@@ -13,7 +13,7 @@ namespace SocketCP
 struct Configuration
 {
     bool enabled = false;
-    ModuleESolver::PotentialWindow window;
+    elecstate::PotentialWindow window;
 };
 
 struct Observables
@@ -26,7 +26,7 @@ struct Observables
 };
 
 Configuration parse_init(const std::string& parameters);
-ModuleESolver::ElectronicControl make_control(const Configuration& config, double nelect, int flags);
+elecstate::ElectronicControl make_control(const Configuration& config, double nelect, int flags);
 // Called on every rank while evaluating POSDATA; the solver may use collectives.
 Observables collect_observables(const Configuration& config, const ModuleESolver::ESolver& solver,
                                const UnitCell& cell, const Parameter& parameters);

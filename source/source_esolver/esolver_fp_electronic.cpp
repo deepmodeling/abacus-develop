@@ -1,6 +1,6 @@
 #include "esolver_fp.h"
-#include "electronic_control.h"
-#include "electronic_occupations.h"
+#include "source_estate/electronic_control.h"
+#include "source_estate/electronic_occupations.h"
 #include "source_estate/param_update.h"
 #include "source_estate/module_pot/electrostatic_potential.h"
 #include "source_io/module_parameter/parameter.h"
@@ -11,7 +11,7 @@
 
 namespace ModuleESolver
 {
-bool ESolver_FP::apply_electronic_control(Parameter& parameters, const ElectronicControl& control)
+bool ESolver_FP::apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control)
 {
     const auto& inp = parameters.inp;
     if (inp.assume_isolated == "makov-payne")
@@ -78,12 +78,12 @@ bool ESolver_FP::apply_electronic_control(Parameter& parameters, const Electroni
 }
 
 bool ESolver_FP::electronic_observables(const UnitCell& ucell, const Parameter& parameters,
-                                       const PotentialWindow& window, ElectronicObservables& result) const
+                                       const elecstate::PotentialWindow& window, elecstate::ElectronicObservables& result) const
 {
     if (!this->conv_esolver || !pelec || !pelec->charge || !pelec->pot)
     { throw std::runtime_error("electronic observables require a converged SCF state"); }
     const int npool = parameters.inp.kpar * parameters.inp.bndpar;
-    result.nelect = checked_occupation_electron_count(pelec->wg, parameters.inp.nelec,
+    result.nelect = elecstate::checked_occupation_electron_count(pelec->wg, parameters.inp.nelec,
                                                       npool, pw_rhod->poolnproc);
     result.fermi_ry = pelec->eferm.ef;
     if (parameters.globalv.two_fermi)

@@ -32,7 +32,7 @@ struct DriverContext
     std::vector<double> reference_cell;
     bool checked_initial_positions = false;
     SocketCP::Configuration cp;
-    ModuleESolver::ElectronicControl pending_control;
+    elecstate::ElectronicControl pending_control;
     bool charge_pending = false;
     std::vector<double> cp_wire_cell;
 };

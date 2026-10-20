@@ -28,6 +28,23 @@ AddTest(
 if (ENABLE_MPI)
 
 AddTest(
+  TARGET MODULE_ESTATE_electronic_occupations_test
+  LIBS base device MPI::MPI_CXX
+  KEEP_FEATURE_DEFINITIONS __MPI
+  SOURCES test_electronic_occupations.cpp ../electronic_occupations.cpp
+)
+set_tests_properties(MODULE_ESTATE_electronic_occupations_test
+  PROPERTIES TIMEOUT 30 ENVIRONMENT "OMP_NUM_THREADS=1")
+add_test(
+  NAME MODULE_ESTATE_electronic_occupations_mpi4_test
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+          $<TARGET_FILE:MODULE_ESTATE_electronic_occupations_test> ${MPIEXEC_POSTFLAGS}
+)
+set_tests_properties(MODULE_ESTATE_electronic_occupations_mpi4_test
+  PROPERTIES TIMEOUT 30 PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
+
+
+AddTest(
   TARGET MODULE_ESTATE_electrostatic_potential_test
   LIBS parameter base device planewave MPI::MPI_CXX
   KEEP_FEATURE_DEFINITIONS __MPI

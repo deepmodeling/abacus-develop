@@ -32,7 +32,7 @@ class ESolver_KS_LCAO : public ESolver_KS
     ESolver_KS_LCAO();
     ~ESolver_KS_LCAO();
 
-    bool apply_electronic_control(Parameter& parameters, const ElectronicControl& control) override;
+    bool apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control) override;
 
     void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 

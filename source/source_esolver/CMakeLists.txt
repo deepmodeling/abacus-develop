@@ -3,7 +3,6 @@ list(APPEND objects
     esolver_ks.cpp
     esolver_fp.cpp
     esolver_fp_electronic.cpp
-    electronic_occupations.cpp
     esolver_ks_pw.cpp
     esolver_ks_pw_tddft.cpp
     esolver_ks_lcaopw.cpp

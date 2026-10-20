@@ -8,11 +8,15 @@
 struct Input_para;
 class Parameter;
 
-namespace ModuleESolver
+namespace elecstate
 {
 struct ElectronicControl;
 struct PotentialWindow;
 struct ElectronicObservables;
+}
+
+namespace ModuleESolver
+{
 class ESolver
 {
   public:
@@ -51,9 +55,9 @@ class ESolver
     virtual void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) = 0;
 
     // Optional first-principles capability. Unsupported solvers return false.
-    virtual bool apply_electronic_control(Parameter&, const ElectronicControl&) { return false; }
-    virtual bool electronic_observables(const UnitCell&, const Parameter&, const PotentialWindow&,
-                                       ElectronicObservables&) const { return false; }
+    virtual bool apply_electronic_control(Parameter&, const elecstate::ElectronicControl&) { return false; }
+    virtual bool electronic_observables(const UnitCell&, const Parameter&, const elecstate::PotentialWindow&,
+                                       elecstate::ElectronicObservables&) const { return false; }
 
     bool conv_esolver = true; // whether esolver is converged
 

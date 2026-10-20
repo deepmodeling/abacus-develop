@@ -143,7 +143,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
 
 
 template <typename TK, typename TR>
-bool ESolver_KS_LCAO<TK, TR>::apply_electronic_control(Parameter& parameters, const ElectronicControl& control)
+bool ESolver_KS_LCAO<TK, TR>::apply_electronic_control(Parameter& parameters, const elecstate::ElectronicControl& control)
 {
     if (!ESolver_FP::apply_electronic_control(parameters, control)) { return false; }
 #ifdef __EXX

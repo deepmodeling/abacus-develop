@@ -6,7 +6,7 @@ namespace ModuleBase
 class matrix;
 }
 
-namespace ModuleESolver
+namespace elecstate
 {
 // weights already include k-point weights and spin degeneracy. Rows/bands are
 // partitioned across npool groups and replicated on ranks_per_pool ranks.

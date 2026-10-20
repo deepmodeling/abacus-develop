@@ -80,7 +80,7 @@ Configuration parse_init(const std::string& parameters)
     return config;
 }
 
-ModuleESolver::ElectronicControl make_control(const Configuration& config, double nelect, int flags)
+elecstate::ElectronicControl make_control(const Configuration& config, double nelect, int flags)
 {
     if (!config.enabled) { throw std::runtime_error("CHGDATA requires constant-potential INIT metadata"); }
     if (!std::isfinite(nelect) || nelect <= 0.0)
@@ -88,7 +88,7 @@ ModuleESolver::ElectronicControl make_control(const Configuration& config, doubl
     if (flags != 0 && flags != 2)
     { throw std::runtime_error("CHGDATA flags must be 0 or 2; bit 0 is reserved"); }
     if (flags & 2) { throw std::runtime_error("ABACUS Ne-electrode CHGDATA is not supported"); }
-    ModuleESolver::ElectronicControl control;
+    elecstate::ElectronicControl control;
     control.nelect = nelect;
     return control;
 }
@@ -97,7 +97,7 @@ Observables collect_observables(const Configuration& config, const ModuleESolver
                                const UnitCell& cell, const Parameter& parameters)
 {
     if (!config.enabled) { throw std::runtime_error("electronic observables require constant-potential INIT"); }
-    ModuleESolver::ElectronicObservables physical;
+    elecstate::ElectronicObservables physical;
     if (!solver.electronic_observables(cell, parameters, config.window, physical))
     { throw std::runtime_error("ESolver cannot provide constant-potential electronic observables"); }
     Observables result;

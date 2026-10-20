@@ -7,7 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace ModuleESolver
+namespace elecstate
 {
 double checked_occupation_electron_count(const ModuleBase::matrix& weights,
                                          double requested_nelect,

@@ -1,5 +1,6 @@
 list(APPEND objects
     elecstate.cpp
+    electronic_occupations.cpp
     init_scf.cpp
     estate_e_terms.cpp
     elecstate_energy.cpp

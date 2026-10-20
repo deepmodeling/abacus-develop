@@ -263,8 +263,8 @@ class ElectronicObservablesSolver : public FakeESolver
     ElectronicObservablesSolver() : FakeESolver(true) {}
 
     bool electronic_observables(const UnitCell&, const Parameter&,
-                               const ModuleESolver::PotentialWindow& window,
-                               ModuleESolver::ElectronicObservables& result) const override
+                               const elecstate::PotentialWindow& window,
+                               elecstate::ElectronicObservables& result) const override
     {
         ++collection_count;
         last_window = window;
@@ -272,10 +272,10 @@ class ElectronicObservablesSolver : public FakeESolver
         return supported;
     }
 
-    ModuleESolver::ElectronicObservables physical;
+    elecstate::ElectronicObservables physical;
     bool supported = true;
     mutable int collection_count = 0;
-    mutable ModuleESolver::PotentialWindow last_window;
+    mutable elecstate::PotentialWindow last_window;
 };
 
 class ControlledESolver : public FakeESolver
@@ -283,7 +283,7 @@ class ControlledESolver : public FakeESolver
   public:
     ControlledESolver() : FakeESolver(true) {}
 
-    bool apply_electronic_control(Parameter&, const ModuleESolver::ElectronicControl& control) override
+    bool apply_electronic_control(Parameter&, const elecstate::ElectronicControl& control) override
     {
         nelect = control.nelect;
         ++control_count;
@@ -304,8 +304,8 @@ class ControlledESolver : public FakeESolver
     double cal_energy() override { return FakeESolver::cal_energy() + nelect; }
 
     bool electronic_observables(const UnitCell&, const Parameter&,
-                               const ModuleESolver::PotentialWindow&,
-                               ModuleESolver::ElectronicObservables& result) const override
+                               const elecstate::PotentialWindow&,
+                               elecstate::ElectronicObservables& result) const override
     {
         ++collection_count;
         result.nelect = nelect;
