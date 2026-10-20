@@ -229,12 +229,10 @@ TEST_F(SccsSolventFieldTest, SolventFieldsFollowTheLastActiveEvaluation)
 class PotSccsEmptyPartitionTest : public SccsTest::EmptyPartitionTest
 {
 protected:
-    // One active evaluation, then the out_sol field list. The pool sum over the
-    // field count is collective, so a rank with a different list hangs.
-    void evaluate_and_collect(const ModuleSccs::SccsConfig& config,
-                            double& energy,
-                            std::vector<std::string>& names,
-                            std::vector<double>& sums)
+    // One active evaluation, then the out_sol field list of this rank.
+    void evaluate_fields(const ModuleSccs::SccsConfig& config,
+                         double& energy,
+                         std::vector<elecstate::SolventGridField>& fields)
     {
         double empty_ranks = basis.nrxx == 0 ? 1.0 : 0.0;
         Parallel_Reduce::reduce_pool(empty_ranks);
@@ -272,9 +270,19 @@ protected:
         ModuleBase::matrix potential(1, basis.nrxx);
         component.cal_v_eff(&charge, &cell, potential);
         energy = component.get_energy();
-
-        std::vector<elecstate::SolventGridField> fields;
+        fields.clear();
         component.add_sol_fields(fields);
+    }
+
+    // The pool sum over the field count is collective, so a rank with a
+    // different list hangs.
+    void evaluate_and_collect(const ModuleSccs::SccsConfig& config,
+                            double& energy,
+                            std::vector<std::string>& names,
+                            std::vector<double>& sums)
+    {
+        std::vector<elecstate::SolventGridField> fields;
+        evaluate_fields(config, energy, fields);
         const std::size_t field_count = fields.size();
         names.clear();
         sums.assign(field_count, 0.0);
@@ -319,4 +327,45 @@ TEST_F(PotSccsEmptyPartitionTest, SolventOutputIsCollectiveOnEmptyGridPartitions
     EXPECT_NEAR(energy, -0.748979082383938, 1e-10);
     EXPECT_NEAR(sums[0], 795.834560078087, 1e-8);
     EXPECT_NEAR(sums[1], 154.256465345260, 1e-8);
+}
+
+// The solvent-aware cavity adds cavity_local and filled_fraction on every rank,
+// including one without grid points. The probe has unit integral, so the
+// probe solute fraction has the same sum as the local boundary; the sums of
+// squares tell the two fields apart. Serial reference values.
+TEST_F(PotSccsEmptyPartitionTest, FilledSolventOutputIsCollectiveOnEmptyGridPartitions)
+{
+    ModuleSccs::SccsConfig config = active_config();
+    config.cavity.solvent_aware.solvent_radius = 0.5;
+    config.cavity.solvent_aware.radial_spread = 0.3;
+    config.cavity.solvent_aware.filling_threshold = 0.6;
+    config.cavity.solvent_aware.filling_spread = 0.1;
+    double energy = 0.0;
+    std::vector<elecstate::SolventGridField> fields;
+    evaluate_fields(config, energy, fields);
+    const std::size_t field_count = fields.size();
+    std::vector<std::string> names;
+    std::vector<double> sums(field_count, 0.0);
+    std::vector<double> squares(field_count, 0.0);
+    for (std::size_t field = 0; field < field_count; ++field)
+    {
+        names.push_back(fields[field].name);
+        ASSERT_EQ(fields[field].values.size(), static_cast<std::size_t>(basis.nrxx));
+        for (double value : fields[field].values)
+        {
+            sums[field] += value;
+            squares[field] += value * value;
+        }
+    }
+    Parallel_Reduce::reduce_pool(sums.data(), static_cast<int>(field_count));
+    Parallel_Reduce::reduce_pool(squares.data(), static_cast<int>(field_count));
+    const std::vector<std::string> expected_names = {"eps", "cavity", "cavity_local", "filled_fraction"};
+    ASSERT_EQ(names, expected_names);
+    EXPECT_NEAR(energy, -0.931004969822491, 1e-10);
+    EXPECT_NEAR(sums[0], 781.635153985345, 1e-8);
+    EXPECT_NEAR(sums[1], 160.406546243018, 1e-8);
+    EXPECT_NEAR(sums[2], 154.256465345260, 1e-8);
+    EXPECT_NEAR(sums[3], 154.256465345260, 1e-8);
+    EXPECT_NEAR(squares[2], 144.378502438537, 1e-8);
+    EXPECT_NEAR(squares[3], 133.256718776487, 1e-8);
 }

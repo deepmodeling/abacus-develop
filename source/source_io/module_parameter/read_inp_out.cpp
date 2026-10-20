@@ -188,7 +188,8 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.description = R"(* 0: No output.
 * 1: Output the implicit-solvent fields of the last solvent correction on real space grids into files in the folder OUT.{suffix}, for imp_sol 1 (the original implicit solvation model) and imp_sol 2 (SCCS):
  * `sol_eps.cube`: the dielectric function epsilon(r), 1 in the solute and the bulk permittivity in the solvent.
- * `sol_cavity.cube`: the solute boundary s(r), 1 in the solute and 0 in the solvent; for imp_sol 1 it is 1 minus the solvent shape function (written only when eb_k > 1).
+ * `sol_cavity.cube`: the solute boundary s(r), 1 in the solute and 0 in the solvent; for imp_sol 1 it is 1 minus the solvent shape function (written only when eb_k > 1). With the solvent-aware cavity (sccs_solvent_radius > 0) it is the filled boundary.
+ * `sol_cavity_local.cube` and `sol_filled_fraction.cube`: only with the solvent-aware cavity, the boundary before the filling and the solute fraction of the probe sphere around each point; points where this fraction exceeds sccs_filling_threshold are filled.
  With out_freq_ion > 0 the files are written every out_freq_ion ionic steps with the geometry index in the name, e.g. `sol_epsg1.cube`; with out_freq_ion = 0 they are overwritten at every step. Nothing is written while SCCS waits for its delayed start (sccs_start_drho).
 
 The optional second integer controls the output precision. If not provided, the default precision is 8.)";

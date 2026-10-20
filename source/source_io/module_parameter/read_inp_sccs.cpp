@@ -184,6 +184,66 @@ void ReadInput::item_sccs()
         this->add_item(item);
     }
     {
+        Input_Item item("sccs_solvent_radius");
+        item.annotation = "solvent radius of the solvent-aware SCCS cavity";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Solvent radius in bohr of the solvent-aware SCCS cavity, as Environ solvent_radius (Andreussi et al., J. Chem. Theory Comput. 15, 1996 (2019)). A positive value fills the parts of the cavity that a probe sphere of radius sccs_radial_scale * sccs_solvent_radius cannot reach, for example small voids between atoms. Unlike Environ, the probe sums all periodic images within its cutoff, so cells narrower than the probe are not truncated. Non-negative; default 0 (off).";
+        item.default_value = "0.0";
+        item.unit = "bohr";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_solvent_radius);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_radial_scale");
+        item.annotation = "solvent-aware probe radius over sccs_solvent_radius";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Probe radius of the solvent-aware SCCS cavity in units of sccs_solvent_radius, as Environ radial_scale; at least 1, default 2. Used only when sccs_solvent_radius is positive.";
+        item.default_value = "2.0";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_radial_scale);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_radial_spread");
+        item.annotation = "erfc spread of the solvent-aware probe";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "erfc spread of the solvent-aware probe sphere, as Environ radial_spread; positive, default 0.5 bohr. Used only when sccs_solvent_radius is positive.";
+        item.default_value = "0.5";
+        item.unit = "bohr";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_radial_spread);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_filling_threshold");
+        item.annotation = "probe solute fraction that fills a point";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Solute fraction of the solvent-aware probe sphere above which a point is filled, as Environ filling_threshold; between 0 and 1 (exclusive), default 0.825. Used only when sccs_solvent_radius is positive.";
+        item.default_value = "0.825";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_filling_threshold);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_filling_spread");
+        item.annotation = "erfc width of the solvent-aware filling";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Width of the erfc step of the solvent-aware filling in the probe solute fraction, as Environ filling_spread; positive, default 0.02. Used only when sccs_solvent_radius is positive.";
+        item.default_value = "0.02";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_filling_spread);
+        this->add_item(item);
+    }
+    {
         Input_Item item("sccs_start_drho");
         item.annotation = "SCCS delayed-start density threshold";
         item.category = "Implicit solvation model";
@@ -212,7 +272,7 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS report level";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Level of the SCCS reports, written to the running log (running_*.log in OUT.{suffix}): 0 (default) writes none; 1 writes the sqrt-CG iteration count and the correction energies of every SCF iteration; 2 also writes the residuals, warm start, cavity volume and surface, the FFT counts of the Coulomb operator in the sqrt-CG solve and the count of reused fixed sources, and with PCC the Gauss-law check (far-field polarization charge and its expected value), the charge moments and the energy components.";
+        item.description = "Level of the SCCS reports, written to the running log (running_*.log in OUT.{suffix}): 0 (default) writes none; 1 writes the sqrt-CG iteration count and the correction energies of every SCF iteration; 2 also writes the residuals, warm start, cavity volume and surface (with the solvent-aware filled volume), the FFT counts of the Coulomb operator in the sqrt-CG solve and the count of reused fixed sources, and with PCC the Gauss-law check (far-field polarization charge and its expected value), the charge moments and the energy components.";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.sccs_debug);

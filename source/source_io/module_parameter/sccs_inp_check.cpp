@@ -121,7 +121,12 @@ std::string nonfinite_error(const Input_para& input)
         {"sccs_surface_eta", input.sccs_surface_eta},
         {"sccs_lowpass_p1", input.sccs_lowpass_p1},
         {"sccs_lowpass_p2", input.sccs_lowpass_p2},
-        {"sccs_start_drho", input.sccs_start_drho}};
+        {"sccs_start_drho", input.sccs_start_drho},
+        {"sccs_solvent_radius", input.sccs_solvent_radius},
+        {"sccs_radial_scale", input.sccs_radial_scale},
+        {"sccs_radial_spread", input.sccs_radial_spread},
+        {"sccs_filling_threshold", input.sccs_filling_threshold},
+        {"sccs_filling_spread", input.sccs_filling_spread}};
     for (const std::pair<const char*, double>& value : values)
     {
         if (!std::isfinite(value.second))
@@ -171,6 +176,35 @@ std::string model_error(const Input_para& input)
     else if (input.sccs_corespread.empty())
     {
         error = "sccs_corespread must contain one value or exactly nat values";
+    }
+    return error;
+}
+
+// Solvent-aware probe and filling; a zero radius turns the filling off.
+std::string sa_error(const Input_para& input)
+{
+    std::string error;
+    if (input.sccs_solvent_radius < 0.0)
+    {
+        error = "sccs_solvent_radius must be non-negative";
+    }
+    else if (input.sccs_radial_scale < 1.0)
+    {
+        error = "sccs_radial_scale must be at least 1";
+    }
+    else if (input.sccs_radial_spread <= 0.0)
+    {
+        error = "sccs_radial_spread must be positive";
+    }
+    // The probe solute fraction never exceeds one, so a threshold of one or
+    // more would fill nothing.
+    else if (input.sccs_filling_threshold <= 0.0 || input.sccs_filling_threshold >= 1.0)
+    {
+        error = "sccs_filling_threshold must lie between 0 and 1";
+    }
+    else if (input.sccs_filling_spread <= 0.0)
+    {
+        error = "sccs_filling_spread must be positive";
     }
     return error;
 }
@@ -228,6 +262,10 @@ bool check_sccs_inp(const Input_para& input, std::string& error)
     if (error.empty())
     {
         error = model_error(input);
+    }
+    if (error.empty())
+    {
+        error = sa_error(input);
     }
     if (error.empty())
     {

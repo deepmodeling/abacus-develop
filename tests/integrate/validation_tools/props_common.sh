@@ -128,6 +128,8 @@ props_init(){
 	gamma_only=$(get_input_key_value "gamma_only" "INPUT")
 	imp_sol=$(get_input_key_value "imp_sol" "INPUT")
 	out_sol=$(get_input_key_value "out_sol" "INPUT")
+	sccs_solvent_radius=$(get_input_key_value "sccs_solvent_radius" "INPUT")
+	sccs_debug=$(get_input_key_value "sccs_debug" "INPUT")
 	assume_isolated=$(get_input_key_value "assume_isolated" "INPUT")
 	run_rpa=$(get_input_key_value "rpa" "INPUT")
 	out_pot=$(get_input_key_value "out_pot" "INPUT")

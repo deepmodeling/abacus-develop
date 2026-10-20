@@ -101,12 +101,34 @@ if ! test -z "$imp_sol" && { [ "$imp_sol" = 1 ] || [ "$imp_sol" = 2 ]; }; then
 	echo "esolcavref $esol_cav" >>$props_result_file
 fi
 
-# out_sol 1: both cubes must exist (the cases set imp_sol 2, or imp_sol 1 with
-# eb_k > 1, so sol_cavity.cube is written). The cavity volume int s dV of
-# sol_cavity.cube is compared; sol_eps.cube is only checked for presence, since
-# its integral is dominated by the bulk permittivity times the volume.
+# Solvent-aware SCCS (imp_sol 2, sccs_solvent_radius > 0). With sccs_debug 2
+# the running log must report the filled volume int(s_sa - s) dV of the last
+# evaluation, which is compared.
+solvent_aware=0
+if [ "$imp_sol" = 2 ] && awk -v radius="$sccs_solvent_radius" 'BEGIN {exit !(radius + 0 > 0)}'; then
+	solvent_aware=1
+fi
+if [ "$solvent_aware" = 1 ] && [ "$sccs_debug" = 2 ]; then
+	filled_volume=$(grep "V_FILLED/Bohr3" "$running_path" | tail -1 \
+		| awk '{for (i = 1; i < NF; ++i) if ($i == "V_FILLED/Bohr3") print $(i + 1)}')
+	if [ -z "$filled_volume" ]; then
+		echo "Error: solvent-aware SCCS with sccs_debug 2 but no V_FILLED/Bohr3 in $running_path"
+		exit 1
+	fi
+	echo "sccs_filled_volumeref $filled_volume" >>$props_result_file
+fi
+
+# out_sol 1: the cubes must exist (the cases set imp_sol 2, or imp_sol 1 with
+# eb_k > 1, so sol_cavity.cube is written; the solvent-aware cavity adds two).
+# The cavity volume int s dV of sol_cavity.cube is compared; the other cubes
+# are only checked for presence: the sol_eps.cube integral is dominated by the
+# bulk permittivity times the volume, and eps follows from the cavity.
 if [[ "$out_sol" == "1" ]]; then
-	for cube in sol_eps.cube sol_cavity.cube; do
+	sol_cubes="sol_eps.cube sol_cavity.cube"
+	if [ "$solvent_aware" = 1 ]; then
+		sol_cubes="$sol_cubes sol_cavity_local.cube sol_filled_fraction.cube"
+	fi
+	for cube in $sol_cubes; do
 		if [ ! -f "OUT.autotest/$cube" ]; then
 			echo "Error: out_sol 1 but OUT.autotest/$cube is missing"
 			exit 1

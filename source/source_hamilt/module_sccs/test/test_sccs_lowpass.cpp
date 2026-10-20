@@ -6,6 +6,7 @@
 #include "../sccs_coul_0d.h"
 #include "../sccs_coul_2d.h"
 #include "../sccs_response.h"
+#include "../sccs_sa.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/pw_grid_geometry.h"
@@ -16,6 +17,13 @@ class SccsLowpassTest : public SccsTest::PwTest
 protected:
     void check_electron_derivative(ModuleSccs::CoulombOperator& coulomb, ModuleSccs::Boundary boundary)
     {
+        const bool filled = false;
+        check_derivative(coulomb, boundary, filled);
+    }
+
+    // A filled cavity puts the solvent-aware adjoint between dE/ds_sa and dE/dn.
+    void check_derivative(ModuleSccs::CoulombOperator& coulomb, ModuleSccs::Boundary boundary, bool filled)
+    {
         ModuleSccs::SccsConfig config = ModuleSccs::preset_config(ModuleSccs::Preset::WaterNeutral);
         config.boundary = boundary;
         config.cavity.epsilon_bulk = 5.0;
@@ -25,6 +33,16 @@ protected:
         config.cavity.lowpass_p2 = 0.5;
         config.surface_tension = 0.0;
         config.pressure = 0.0;
+        std::vector<double> probe_kernel;
+        if (filled)
+        {
+            // The probe solute fraction is about 0.67 everywhere, inside the filling step.
+            config.cavity.solvent_aware.solvent_radius = 1.5;
+            config.cavity.solvent_aware.filling_threshold = 0.67;
+            config.cavity.solvent_aware.filling_spread = 0.05;
+            const ModuleBase::Matrix3 lattice;
+            probe_kernel = ModuleSccs::sa_probe_kernel(basis, lattice, length, config.cavity.solvent_aware);
+        }
         ModuleSccs::PolarizationSolverParameters solver;
         solver.tolerance_rms = 1e-13;
         solver.tolerance_max = 1e-13;
@@ -40,11 +58,15 @@ protected:
         }
         const std::vector<double> cold;
         ModuleSccs::SccsResponse center_response;
-        ModuleSccs::solve_response(density, charge, config.cavity, solver, cold,
+        ModuleSccs::solve_response(density, charge, config.cavity, probe_kernel, solver, cold,
                                    basis, tpiba, coulomb, center_response);
         EXPECT_TRUE(center_response.polarization.gradient.empty());
+        if (filled)
+        {
+            EXPECT_GT(center_response.solvent_aware.volume, 50.0);
+        }
         ModuleSccs::FunctionalResult center;
-        ModuleSccs::eval_functional(charge, center_response, config, basis,
+        ModuleSccs::eval_functional(charge, center_response, config, probe_kernel, basis,
                                     tpiba, coulomb, center);
         double predicted = 0.0;
         for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -70,9 +92,10 @@ protected:
                 }
                 ModuleSccs::SccsResponse response;
                 ModuleSccs::solve_response(displaced_density, displaced_charge,
-                                           config.cavity, solver, cold, basis, tpiba, coulomb, response);
+                                           config.cavity, probe_kernel, solver, cold, basis, tpiba, coulomb,
+                                           response);
                 ModuleSccs::FunctionalResult functional;
-                ModuleSccs::eval_functional(displaced_charge, response, config,
+                ModuleSccs::eval_functional(displaced_charge, response, config, probe_kernel,
                                             basis, tpiba, coulomb, functional);
                 energies[side] = functional.reaction_energy;
             }
@@ -116,6 +139,17 @@ TEST_F(SccsLowpassTest, PccElectronPotentialDifferentiatesDiscreteEnergy)
     const ModuleBase::Vector3<double> normal(0.0, 0.0, 1.0);
     ModuleSccs::Pcc2dCoulombOperator slab_coulomb(basis, tpiba, projected, normal, slab);
     check_electron_derivative(slab_coulomb, ModuleSccs::Boundary::Pcc2d);
+}
+
+// PCC 0D with the solvent-aware filling.
+TEST_F(SccsLowpassTest, FilledPccElectronPotentialDifferentiatesDiscreteEnergy)
+{
+    elecstate::Pcc0dParameters molecule;
+    molecule.length = length;
+    const std::vector<ModuleBase::Vector3<double>> positions = centered_positions();
+    ModuleSccs::Pcc0dCoulombOperator coulomb(basis, tpiba, positions, molecule);
+    const bool filled = true;
+    check_derivative(coulomb, ModuleSccs::Boundary::Pcc0d, filled);
 }
 
 TEST_F(SccsLowpassTest, FilterUsesDensityCutoff)

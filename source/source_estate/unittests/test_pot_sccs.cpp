@@ -214,6 +214,19 @@ TEST_F(PotSccsTest, InputMapsCavityModelKeys)
     EXPECT_EQ(config.core_spreads, input.sccs_corespread);
     // The cavity model keys leave the preset dielectric unchanged.
     EXPECT_DOUBLE_EQ(config.cavity.epsilon_bulk, 78.3);
+    EXPECT_FALSE(ModuleSccs::uses_sa(config.cavity.solvent_aware));
+    input.sccs_solvent_radius = 3.0;
+    input.sccs_radial_scale = 1.5;
+    input.sccs_radial_spread = 0.4;
+    input.sccs_filling_threshold = 0.6;
+    input.sccs_filling_spread = 0.05;
+    elecstate::sccs_cfg_input(input, config, solver);
+    const ModuleSccs::SolventAwareParameters& filling = config.cavity.solvent_aware;
+    EXPECT_DOUBLE_EQ(filling.solvent_radius, 3.0);
+    EXPECT_DOUBLE_EQ(filling.radial_scale, 1.5);
+    EXPECT_DOUBLE_EQ(filling.radial_spread, 0.4);
+    EXPECT_DOUBLE_EQ(filling.filling_threshold, 0.6);
+    EXPECT_DOUBLE_EQ(filling.filling_spread, 0.05);
     EXPECT_DOUBLE_EQ(config.start_drho, 0.0);
     EXPECT_FALSE(config.collect_report);
     input.sccs_start_drho = 1e-3;
@@ -289,6 +302,56 @@ TEST_F(PotSccsTest, DelayedActivationHasOneIrreversibleTransitionAndResumes)
     EXPECT_DOUBLE_EQ(next_ionic_step.get_energy(), 0.0);
     const std::vector<double>* potential = next_ionic_step.sol_elec_pot();
     EXPECT_TRUE(potential->empty());
+}
+
+// The probe kernel of the fixed cell and grid is handed to the next ionic
+// step instead of being rebuilt: a seeded identity kernel (c = s) survives the
+// evaluation unchanged.
+TEST_F(PotSccsTest, ResumeCarriesTheSolventAwareProbeKernel)
+{
+    UnitCell cell;
+    Atom atom;
+    cell.lat0 = length;
+    cell.tpiba = tpiba;
+    cell.omega = basis.omega;
+    cell.ntype = 1;
+    cell.nat = 1;
+    cell.atoms = &atom;
+    atom.na = 1;
+    atom.ncpp.zv = 1.0;
+    atom.tau = {ModuleBase::Vector3<double>(0.25, 0.25, 0.25)};
+    const double density_value = 1.0 / basis.omega;
+    std::vector<double> density(basis.nrxx, density_value);
+    double* channels[] = {density.data()};
+    Charge charge;
+    charge.nspin = 1;
+    charge.rho = channels;
+    Input_para input;
+    input.sccs_epsilon = 5.0;
+    input.sccs_tol_rms = 1e-13;
+    input.sccs_tol_max = 1e-12;
+    input.sccs_solvent_radius = 0.5;
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    elecstate::sccs_cfg_input(input, config, solver);
+    elecstate::PotSccs first(&basis, config, solver, 1.0, no_resume);
+    EXPECT_FALSE(first.resume_state().probe_ready);
+    ModuleBase::matrix potential(1, basis.nrxx);
+    first.cal_v_eff(&charge, &cell, potential);
+    const elecstate::SccsResume resume = first.resume_state();
+    EXPECT_TRUE(resume.probe_ready);
+    EXPECT_EQ(resume.probe_kernel.size(), static_cast<std::size_t>(basis.npw));
+    elecstate::PotSccs next(&basis, config, solver, 1.0, resume);
+    potential.zero_out();
+    next.cal_v_eff(&charge, &cell, potential);
+    EXPECT_NEAR(next.get_energy(), first.get_energy(), 1e-10);
+    elecstate::SccsResume seeded = resume;
+    seeded.probe_kernel.assign(basis.npw, 1.0);
+    elecstate::PotSccs identity(&basis, config, solver, 1.0, seeded);
+    potential.zero_out();
+    identity.cal_v_eff(&charge, &cell, potential);
+    const std::vector<double> kept = identity.resume_state().probe_kernel;
+    EXPECT_EQ(kept, seeded.probe_kernel);
 }
 
 TEST_F(PotSccsTest, WaitingSccsContributesNoPotentialEnergyOrForce)
