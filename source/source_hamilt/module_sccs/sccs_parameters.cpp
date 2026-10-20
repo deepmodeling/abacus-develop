@@ -6,13 +6,13 @@
 namespace ModuleSccs
 {
 
-double dyn_per_cm_to_hartree_per_bohr2(double value)
+double dyn_cm_to_au(double value)
 {
     const double joule_per_square_metre = value * 1e-3;
     return joule_per_square_metre * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI / ModuleBase::HARTREE_SI;
 }
 
-double gpa_to_hartree_per_bohr3(double value)
+double gpa_to_au(double value)
 {
     const double pascal = value * 1e9;
     return pascal * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI
@@ -30,11 +30,11 @@ Preset parse_preset(const std::string& name)
     ModuleBase::WARNING_QUIT("ModuleSccs::parse_preset", message);
 }
 
-SccsConfig make_sccs_config(Preset preset)
+SccsConfig preset_config(Preset preset)
 {
     if (preset == Preset::Custom)
     {
-        ModuleBase::WARNING_QUIT("ModuleSccs::make_sccs_config",
+        ModuleBase::WARNING_QUIT("ModuleSccs::preset_config",
                                  "SCCS custom configurations must be supplied explicitly");
     }
     SccsConfig config;
@@ -50,22 +50,22 @@ SccsConfig make_sccs_config(Preset preset)
         }
         else
         {
-            config.surface_tension = dyn_per_cm_to_hartree_per_bohr2(47.9);
-            config.pressure = gpa_to_hartree_per_bohr3(-0.36);
+            config.surface_tension = dyn_cm_to_au(47.9);
+            config.pressure = gpa_to_au(-0.36);
         }
     }
     else if (preset == Preset::WaterCation)
     {
         config.cavity.density_min = 2e-4;
         config.cavity.density_max = 3.5e-3;
-        config.surface_tension = dyn_per_cm_to_hartree_per_bohr2(5.0);
-        config.pressure = gpa_to_hartree_per_bohr3(0.125);
+        config.surface_tension = dyn_cm_to_au(5.0);
+        config.pressure = gpa_to_au(0.125);
     }
     else
     {
         config.cavity.density_min = 2.4e-3;
         config.cavity.density_max = 1.55e-2;
-        config.pressure = gpa_to_hartree_per_bohr3(0.45);
+        config.pressure = gpa_to_au(0.45);
     }
     return config;
 }

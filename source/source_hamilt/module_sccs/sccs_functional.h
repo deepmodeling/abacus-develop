@@ -25,12 +25,12 @@ struct FunctionalResult
 };
 
 // Collective over the PW pool.
-void evaluate_functional(const std::vector<double>& charge,
-                          const SccsResponse& response,
-                          const SccsConfig& config,
-                          const ModulePW::PW_Basis& basis,
-                          double tpiba,
-                          FunctionalResult& result);
+void eval_functional(const std::vector<double>& charge,
+                      const SccsResponse& response,
+                      const SccsConfig& config,
+                      const ModulePW::PW_Basis& basis,
+                      double tpiba,
+                      FunctionalResult& result);
 } // namespace ModuleSccs
 
 #endif

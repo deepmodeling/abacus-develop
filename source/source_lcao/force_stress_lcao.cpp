@@ -194,7 +194,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (cfg.imp_sol == 2)
         {
             parts.fsol.create(ucell.nat, 3);
-            pelec->pot->add_component_solvation_force(ucell, parts.fsol);
+            pelec->pot->sum_sol_force(ucell, parts.fsol);
         }
     }
 

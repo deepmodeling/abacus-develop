@@ -1,4 +1,4 @@
-#include "sccs_ionic_force.h"
+#include "sccs_ion_force.h"
 
 #include "source_base/constants.h"
 #include "source_base/parallel_reduce.h"
@@ -10,12 +10,12 @@
 
 namespace ModuleSccs
 {
-void gaussian_ionic_force(const std::vector<unitcell::AtomData>& atoms,
-                          const std::vector<double>& reaction_potential,
-                          const ModulePW::PW_Basis& basis,
-                          double tpiba,
-                          double spread,
-                          std::vector<ModuleBase::Vector3<double>>& forces)
+void gauss_ion_force(const std::vector<unitcell::AtomData>& atoms,
+                     const std::vector<double>& reaction_potential,
+                     const ModulePW::PW_Basis& basis,
+                     double tpiba,
+                     double spread,
+                     std::vector<ModuleBase::Vector3<double>>& forces)
 {
     std::vector<std::complex<double>> potential_g(basis.npw);
     basis.real2recip(reaction_potential.data(), potential_g.data());

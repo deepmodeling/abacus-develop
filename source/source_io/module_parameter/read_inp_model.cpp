@@ -213,13 +213,13 @@ void ReadInput::item_model()
         item.default_value = "0";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             std::string error;
-            const bool valid = parse_solvation_model(item.str_values[0], para.input.imp_sol, error);
+            const bool valid = parse_imp_sol(item.str_values[0], para.input.imp_sol, error);
             if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
         };
         sync_int(input.imp_sol);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             std::string error;
-            const bool valid = validate_sccs_input(para.input, error);
+            const bool valid = check_sccs_inp(para.input, error);
             if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
         };
         this->add_item(item);

@@ -10,15 +10,15 @@ struct Input_para;
 namespace elecstate
 {
 // Map INPUT values, already validated by the INPUT reader, onto the solver.
-void make_sccs_config_from_input(const Input_para& input,
-                                 ModuleSccs::SccsConfig& config,
-                                 ModuleSccs::PolarizationSolverParameters& solver);
+void sccs_cfg_input(const Input_para& input,
+                    ModuleSccs::SccsConfig& config,
+                    ModuleSccs::PolarizationSolverParameters& solver);
 
 // Returns a warning (empty if none) for a charged cell in a dielectric: the
 // periodic Poisson solver drops the G = 0 component of the net charge, so the
 // energy depends on the cell size. electron_count is the resolved nelec (the
 // INPUT value, or the valence count when it is not set).
-std::string check_sccs_charge(const ModuleSccs::SccsConfig& config, const UnitCell& cell, double electron_count);
+std::string check_charge(const ModuleSccs::SccsConfig& config, const UnitCell& cell, double electron_count);
 
 class PotSccs : public PotBase
 {
@@ -32,9 +32,9 @@ public:
             double electron_count);
     void cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::matrix& potential) override;
     double get_energy() const override;
-    void add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const override;
-    void get_solvation_energy(double& electrostatic, double& non_electrostatic) const override;
-    const std::vector<double>* solvent_electrostatic_potential() const override;
+    void add_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const override;
+    void sol_energy(double& electrostatic, double& non_electrostatic) const override;
+    const std::vector<double>* sol_elec_pot() const override;
 
 private:
     const ModuleSccs::SccsConfig config_;

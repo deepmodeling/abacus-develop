@@ -403,15 +403,15 @@ void Potential::add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) c
     }
 }
 
-void Potential::add_component_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
+void Potential::sum_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const
 {
     for (const PotBase* component : this->components)
     {
-        component->add_solvation_force(cell, force);
+        component->add_sol_force(cell, force);
     }
 }
 
-void Potential::component_solvation_energy(double& electrostatic, double& non_electrostatic) const
+void Potential::sum_sol_energy(double& electrostatic, double& non_electrostatic) const
 {
     electrostatic = 0.0;
     non_electrostatic = 0.0;
@@ -419,17 +419,17 @@ void Potential::component_solvation_energy(double& electrostatic, double& non_el
     {
         double el = 0.0;
         double nonel = 0.0;
-        component->get_solvation_energy(el, nonel);
+        component->sol_energy(el, nonel);
         electrostatic += el;
         non_electrostatic += nonel;
     }
 }
 
-const std::vector<double>* Potential::component_solvent_electrostatic_potential() const
+const std::vector<double>* Potential::find_sol_pot() const
 {
     for (const PotBase* component : this->components)
     {
-        const std::vector<double>* value = component->solvent_electrostatic_potential();
+        const std::vector<double>* value = component->sol_elec_pot();
         if (value != nullptr) { return value; }
     }
     return nullptr;

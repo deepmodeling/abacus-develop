@@ -85,9 +85,9 @@ class Potential : public PotBase
 
     // Solvation terms of the registered components; not PotBase overrides, so
     // modules that stub Potential need not know about solvation.
-    void component_solvation_energy(double& electrostatic, double& non_electrostatic) const;
-    void add_component_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const;
-    const std::vector<double>* component_solvent_electrostatic_potential() const;
+    void sum_sol_energy(double& electrostatic, double& non_electrostatic) const;
+    void sum_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const;
+    const std::vector<double>* find_sol_pot() const;
 
     /**
      * @brief Inject the shared RT-TDDFT field state before potential setup.
@@ -237,7 +237,7 @@ class Potential : public PotBase
 
     // the registered PCC component, or nullptr when PCC is off
     const PotPcc* pcc_component() const;
-    PotBase* make_sccs_potential(const Input_para& input);
+    PotBase* make_sccs_pot(const Input_para& input);
 
     std::vector<double> v_eff_fixed;
     ModuleBase::matrix v_eff;

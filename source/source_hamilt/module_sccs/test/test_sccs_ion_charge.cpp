@@ -1,5 +1,5 @@
 #include "sccs_test.h"
-#include "../sccs_ionic_charge.h"
+#include "../sccs_ion_charge.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_cell/cell_tools.h"
@@ -14,7 +14,7 @@ TEST_F(SccsIonicChargeTest, ValenceNormalizationAndFourierPhase)
     atoms[1].valence_charge = 1.0;
     const double spread = ModuleSccs::gaussian_ion_spread;
     std::vector<double> density;
-    ModuleSccs::gaussian_ionic_density(atoms, basis, tpiba, spread, density);
+    ModuleSccs::gauss_ion_rho(atoms, basis, tpiba, spread, density);
     double integral = 0.0;
     for (double value : density)
     {
@@ -45,7 +45,7 @@ TEST_F(SccsIonicChargeTest, ValenceNormalizationAndFourierPhase)
     EXPECT_DOUBLE_EQ(selected, 1.0);
     atoms[0].position.x += length;
     std::vector<double> translated;
-    ModuleSccs::gaussian_ionic_density(atoms, basis, tpiba, spread, translated);
+    ModuleSccs::gauss_ion_rho(atoms, basis, tpiba, spread, translated);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
         EXPECT_NEAR(translated[ir], density[ir], 1e-13);

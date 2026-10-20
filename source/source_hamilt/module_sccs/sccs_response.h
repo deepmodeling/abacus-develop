@@ -43,14 +43,14 @@ struct SccsResponse
 // initial_potential is empty on all ranks for a cold start, otherwise a local grid.
 // A solver breakdown or missed tolerance stops the run with WARNING_QUIT.
 // No state or INPUT globals are read or retained.
-void solve_sccs_response(const std::vector<double>& cavity_density,
-                         const std::vector<double>& solute_charge,
-                         const CavityParameters& cavity,
-                         const PolarizationSolverParameters& solver,
-                         const std::vector<double>& initial_potential,
-                         const ModulePW::PW_Basis& basis,
-                         double tpiba,
-                         SccsResponse& result);
+void solve_response(const std::vector<double>& cavity_density,
+                    const std::vector<double>& solute_charge,
+                    const CavityParameters& cavity,
+                    const PolarizationSolverParameters& solver,
+                    const std::vector<double>& initial_potential,
+                    const ModulePW::PW_Basis& basis,
+                    double tpiba,
+                    SccsResponse& result);
 } // namespace ModuleSccs
 
 #endif

@@ -10,7 +10,7 @@
 
 namespace ModuleIO
 {
-bool parse_solvation_model(const std::string& value, int& model, std::string& error)
+bool parse_imp_sol(const std::string& value, int& model, std::string& error)
 {
     error.clear();
     std::string normalized = value;
@@ -36,7 +36,7 @@ bool parse_solvation_model(const std::string& value, int& model, std::string& er
 namespace
 {
 // Calculation settings that SCCS supports; empty when all are supported.
-std::string sccs_context_error(const Input_para& input)
+std::string context_error(const Input_para& input)
 {
     std::string error;
     if (input.assume_isolated != "none") { error = "SCCS currently requires assume_isolated none"; }
@@ -56,7 +56,7 @@ std::string sccs_context_error(const Input_para& input)
 
 // The shared real parser (std::stod) accepts nan and inf, which pass the
 // ordered comparisons below; signed values stay allowed for gamma/pressure.
-std::string sccs_nonfinite_error(const Input_para& input)
+std::string nonfinite_error(const Input_para& input)
 {
     const std::vector<std::pair<const char*, double>> values = {
         {"sccs_epsilon", input.sccs_epsilon},
@@ -75,7 +75,7 @@ std::string sccs_nonfinite_error(const Input_para& input)
 }
 
 // Cavity and surface model parameters, starting with the preset.
-std::string sccs_model_error(const Input_para& input)
+std::string model_error(const Input_para& input)
 {
     const std::vector<std::string> presets = {"custom", "vacuum", "water-neutral", "water-cation", "water-anion"};
     if (std::find(presets.begin(), presets.end(), input.sccs_preset) == presets.end())
@@ -91,7 +91,7 @@ std::string sccs_model_error(const Input_para& input)
 }
 
 // sqrt-CG solver controls.
-std::string sccs_solver_error(const Input_para& input)
+std::string solver_error(const Input_para& input)
 {
     std::string error;
     if (input.sccs_maxiter <= 0) { error = "sccs_maxiter must be positive"; }
@@ -101,7 +101,7 @@ std::string sccs_solver_error(const Input_para& input)
 }
 } // namespace
 
-bool validate_sccs_input(const Input_para& input, std::string& error)
+bool check_sccs_inp(const Input_para& input, std::string& error)
 {
     error.clear();
     if (input.imp_sol < 0 || input.imp_sol > 2)
@@ -110,10 +110,10 @@ bool validate_sccs_input(const Input_para& input, std::string& error)
         return false;
     }
     if (input.imp_sol != 2) { return true; }
-    error = sccs_context_error(input);
-    if (error.empty()) { error = sccs_nonfinite_error(input); }
-    if (error.empty()) { error = sccs_model_error(input); }
-    if (error.empty()) { error = sccs_solver_error(input); }
+    error = context_error(input);
+    if (error.empty()) { error = nonfinite_error(input); }
+    if (error.empty()) { error = model_error(input); }
+    if (error.empty()) { error = solver_error(input); }
     return error.empty();
 }
 

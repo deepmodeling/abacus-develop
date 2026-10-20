@@ -13,12 +13,12 @@
 
 namespace ModuleSccs
 {
-void evaluate_functional(const std::vector<double>& charge,
-                          const SccsResponse& response,
-                          const SccsConfig& config,
-                          const ModulePW::PW_Basis& basis,
-                          double tpiba,
-                          FunctionalResult& result)
+void eval_functional(const std::vector<double>& charge,
+                      const SccsResponse& response,
+                      const SccsConfig& config,
+                      const ModulePW::PW_Basis& basis,
+                      double tpiba,
+                      FunctionalResult& result)
 {
     const std::size_t size = charge.size();
     const double dv = basis.omega / basis.nxyz;

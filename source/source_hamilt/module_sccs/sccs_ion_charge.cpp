@@ -1,4 +1,4 @@
-#include "sccs_ionic_charge.h"
+#include "sccs_ion_charge.h"
 
 #include "source_base/constants.h"
 #include "source_basis/module_pw/pw_basis.h"
@@ -9,11 +9,11 @@
 
 namespace ModuleSccs
 {
-void gaussian_ionic_density(const std::vector<unitcell::AtomData>& atoms,
-                            const ModulePW::PW_Basis& basis,
-                            double tpiba,
-                            double spread,
-                            std::vector<double>& density)
+void gauss_ion_rho(const std::vector<unitcell::AtomData>& atoms,
+                   const ModulePW::PW_Basis& basis,
+                   double tpiba,
+                   double spread,
+                   std::vector<double>& density)
 {
     std::vector<std::complex<double>> charge(basis.npw, 0.0);
     const double tpiba2 = tpiba * tpiba;

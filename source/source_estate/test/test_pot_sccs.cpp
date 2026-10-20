@@ -52,7 +52,7 @@ protected:
         ModuleBase::matrix potential(1, basis.nrxx);
         component.cal_v_eff(&charge, &cell, potential);
         ModuleBase::matrix force(2, 3);
-        component.add_solvation_force(cell, force);
+        component.add_sol_force(cell, force);
         const double step = 1e-4;
         for (int ia = 0; ia < 2; ++ia)
         {
@@ -79,7 +79,7 @@ protected:
         {
             for (int axis = 0; axis < 3; ++axis) { accumulated(ia, axis) = 7.0; }
         }
-        component.add_solvation_force(cell, accumulated);
+        component.add_sol_force(cell, accumulated);
         for (int ia = 0; ia < 2; ++ia)
         {
             for (int axis = 0; axis < 3; ++axis)
@@ -113,7 +113,7 @@ TEST_F(PotSccsTest, IndependentInstancesAndSpinChannels)
     Input_para input;
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
-    elecstate::make_sccs_config_from_input(input, config, solver);
+    elecstate::sccs_cfg_input(input, config, solver);
     config.cavity.epsilon_bulk = 5.0;
     elecstate::PotSccs first(&basis, config, solver, 1.0);
     config.cavity.epsilon_bulk = 1.0;
@@ -125,7 +125,7 @@ TEST_F(PotSccsTest, IndependentInstancesAndSpinChannels)
     EXPECT_LT(first_energy, 0.0);
     double el = 0.0;
     double cav = 0.0;
-    first.get_solvation_energy(el, cav);
+    first.sol_energy(el, cav);
     EXPECT_DOUBLE_EQ(el, first_energy);
     EXPECT_DOUBLE_EQ(cav, 0.0);
     ModuleBase::matrix zero(1, basis.nrxx);
@@ -153,7 +153,7 @@ TEST_F(PotSccsTest, InputMapsOntoSccsConfig)
     Input_para input;
     ModuleSccs::SccsConfig defaults;
     ModuleSccs::PolarizationSolverParameters default_solver;
-    elecstate::make_sccs_config_from_input(input, defaults, default_solver);
+    elecstate::sccs_cfg_input(input, defaults, default_solver);
     EXPECT_EQ(input.sccs_preset, "custom");
     EXPECT_DOUBLE_EQ(defaults.cavity.epsilon_bulk, 1.0);
     EXPECT_DOUBLE_EQ(defaults.cavity.density_min, 1e-4);
@@ -167,7 +167,7 @@ TEST_F(PotSccsTest, InputMapsOntoSccsConfig)
     input.sccs_surface_eta = 1e-6;
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
-    elecstate::make_sccs_config_from_input(input, config, solver);
+    elecstate::sccs_cfg_input(input, config, solver);
     EXPECT_DOUBLE_EQ(config.cavity.epsilon_bulk, 78.3);
     EXPECT_DOUBLE_EQ(config.cavity.density_min, 1e-4);
     EXPECT_LT(config.pressure, 0.0);
@@ -183,7 +183,7 @@ TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
     input.sccs_tol_max = 1e-12;
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
-    elecstate::make_sccs_config_from_input(input, config, solver);
+    elecstate::sccs_cfg_input(input, config, solver);
     check_solvation_force(config, solver);
 }
 
@@ -203,13 +203,13 @@ TEST_F(PotSccsTest, ChargedDielectricCellWarnsAndRuns)
     Input_para input;
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
-    elecstate::make_sccs_config_from_input(input, config, solver);
+    elecstate::sccs_cfg_input(input, config, solver);
     config.cavity.epsilon_bulk = 5.0;
-    EXPECT_TRUE(elecstate::check_sccs_charge(config, cell, 1.0).empty());
-    EXPECT_NE(elecstate::check_sccs_charge(config, cell, 0.5).find("G = 0"), std::string::npos);
+    EXPECT_TRUE(elecstate::check_charge(config, cell, 1.0).empty());
+    EXPECT_NE(elecstate::check_charge(config, cell, 0.5).find("G = 0"), std::string::npos);
     ModuleSccs::SccsConfig vacuum_config = config;
     vacuum_config.cavity.epsilon_bulk = 1.0;
-    EXPECT_TRUE(elecstate::check_sccs_charge(vacuum_config, cell, 0.5).empty());
+    EXPECT_TRUE(elecstate::check_charge(vacuum_config, cell, 0.5).empty());
 
     const double density_value = 0.5 / basis.omega;
     std::vector<double> density(basis.nrxx, density_value);

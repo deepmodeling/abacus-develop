@@ -130,7 +130,7 @@ class MockPotComponent : public PotBase
         }
     }
 
-    void add_solvation_force(const UnitCell&, ModuleBase::matrix& force) const override
+    void add_sol_force(const UnitCell&, ModuleBase::matrix& force) const override
     {
         if (type_ != "solvation") { return; }
         for (int ia = 0; ia < force.nr; ++ia)
@@ -431,13 +431,13 @@ TEST_F(PotentialNewTest, SolvationForcesUseRegisteredComponentsOnce)
     {
         for (int axis = 0; axis < 3; ++axis) { force(ia, axis) = 7.0; }
     }
-    potential->add_component_solvation_force(*ucell, force);
+    potential->sum_sol_force(*ucell, force);
     for (int ia = 0; ia < 2; ++ia)
     {
         for (int axis = 0; axis < 3; ++axis) { EXPECT_DOUBLE_EQ(force(ia, axis), 8.25); }
     }
     potential->pot_register({"fixed"});
-    potential->add_component_solvation_force(*ucell, force);
+    potential->sum_sol_force(*ucell, force);
     for (int ia = 0; ia < 2; ++ia)
     {
         for (int axis = 0; axis < 3; ++axis) { EXPECT_DOUBLE_EQ(force(ia, axis), 8.25); }

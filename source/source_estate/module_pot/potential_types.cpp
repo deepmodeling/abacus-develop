@@ -22,15 +22,15 @@
 namespace elecstate
 {
 
-PotBase* Potential::make_sccs_potential(const Input_para& input)
+PotBase* Potential::make_sccs_pot(const Input_para& input)
 {
     ModuleSccs::SccsConfig config;
     ModuleSccs::PolarizationSolverParameters solver;
-    make_sccs_config_from_input(input, config, solver);
+    sccs_cfg_input(input, config, solver);
     if (this->ucell_ != nullptr)
     {
-        const std::string warning = check_sccs_charge(config, *this->ucell_, input.nelec);
-        if (!warning.empty()) { ModuleBase::WARNING("Potential::make_sccs_potential", warning); }
+        const std::string warning = check_charge(config, *this->ucell_, input.nelec);
+        if (!warning.empty()) { ModuleBase::WARNING("Potential::make_sccs_pot", warning); }
     }
     return new PotSccs(this->rho_basis_, config, solver, input.nelec);
 }
@@ -62,7 +62,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& 
     }
     else if (pot_type == "sccs")
     {
-        return this->make_sccs_potential(input);
+        return this->make_sccs_pot(input);
     }
     else if (pot_type == "surchem")
     {

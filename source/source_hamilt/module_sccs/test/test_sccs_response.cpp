@@ -27,8 +27,8 @@ TEST_F(SccsResponseTest, VacuumAndUniformDielectricAnalyticLimits)
     {
         cavity.epsilon_bulk = epsilon;
         ModuleSccs::SccsResponse response;
-        ModuleSccs::solve_sccs_response(density, charge, cavity, solver, cold_start,
-                                        basis, tpiba, response);
+        ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
+                                   basis, tpiba, response);
         const double kernel = ModuleBase::FOUR_PI / (epsilon * tpiba * tpiba);
         EXPECT_EQ(response.polarization.iterations, 1);
         for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -62,8 +62,8 @@ TEST_F(SccsResponseTest, ManufacturedNonuniformDielectricSolution)
     solver.tolerance_max = 1e-12;
     const std::vector<double> cold_start;
     ModuleSccs::SccsResponse response;
-    ModuleSccs::solve_sccs_response(density, charge, cavity, solver, cold_start,
-                                    basis, tpiba, response);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
+                               basis, tpiba, response);
     double maximum_error = 0.0;
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -103,13 +103,13 @@ TEST_F(SccsResponseTest, ConvergenceFailureBothTolerancesAndExplicitWarmStart)
     {
         solver.max_iterations = 1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(ModuleSccs::solve_sccs_response(density, charge, cavity, solver, cold_start, basis, tpiba,
-                                                    response),
+        EXPECT_EXIT(ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba,
+                                               response),
                     ::testing::ExitedWithCode(1), "");
         testing::internal::GetCapturedStdout();
     }
     solver.max_iterations = 200;
-    ModuleSccs::solve_sccs_response(density, charge, cavity, solver, cold_start, basis, tpiba, response);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start, basis, tpiba, response);
     EXPECT_LE(response.polarization.residual_rms, solver.tolerance_rms);
     EXPECT_LE(response.polarization.residual_max, solver.tolerance_max);
     for (double& value : density)
@@ -118,10 +118,10 @@ TEST_F(SccsResponseTest, ConvergenceFailureBothTolerancesAndExplicitWarmStart)
     }
     ModuleSccs::SccsResponse cold;
     ModuleSccs::SccsResponse warm;
-    ModuleSccs::solve_sccs_response(density, charge, cavity, solver, cold_start,
-                                    basis, tpiba, cold);
-    ModuleSccs::solve_sccs_response(density, charge, cavity, solver, response.restart_potential,
-                                    basis, tpiba, warm);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
+                               basis, tpiba, cold);
+    ModuleSccs::solve_response(density, charge, cavity, solver, response.restart_potential,
+                               basis, tpiba, warm);
     EXPECT_TRUE(warm.polarization.warm_started);
     EXPECT_LT(warm.polarization.iterations, cold.polarization.iterations);
     for (int ir = 0; ir < basis.nrxx; ++ir)
@@ -135,15 +135,15 @@ TEST_F(SccsResponseTest, ConvergenceFailureBothTolerancesAndExplicitWarmStart)
     ModuleSccs::SccsResponse loose;
     ModuleSccs::SccsResponse tight_maximum;
     ModuleSccs::SccsResponse tight_rms;
-    ModuleSccs::solve_sccs_response(density, charge, cavity, solver, cold_start,
-                                    basis, tpiba, loose);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
+                               basis, tpiba, loose);
     solver.tolerance_max = 1e-11;
-    ModuleSccs::solve_sccs_response(density, charge, cavity, solver, cold_start,
-                                    basis, tpiba, tight_maximum);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
+                               basis, tpiba, tight_maximum);
     solver.tolerance_rms = 1e-11;
     solver.tolerance_max = 1.0;
-    ModuleSccs::solve_sccs_response(density, charge, cavity, solver, cold_start,
-                                    basis, tpiba, tight_rms);
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold_start,
+                               basis, tpiba, tight_rms);
     EXPECT_LE(tight_maximum.polarization.residual_max, 1e-11);
     EXPECT_LE(tight_rms.polarization.residual_rms, 1e-11);
     EXPECT_GT(tight_maximum.polarization.iterations, loose.polarization.iterations);
@@ -216,9 +216,9 @@ TEST(SccsResponseRefinement, CavityDerivativeMatchesFiniteDifferenceOnAResolvedG
         {
             density[ir] = base_density + step * direction[ir];
         }
-        ModuleSccs::solve_sccs_response(density, charge, config.cavity, solver, cold_start, basis, tpiba, response);
+        ModuleSccs::solve_response(density, charge, config.cavity, solver, cold_start, basis, tpiba, response);
         ModuleSccs::FunctionalResult functional;
-        ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, functional);
+        ModuleSccs::eval_functional(charge, response, config, basis, tpiba, functional);
         return functional.reaction_energy;
     };
     ModuleSccs::SccsResponse center;

@@ -1,5 +1,5 @@
-#ifndef SCCS_IONIC_CHARGE_H
-#define SCCS_IONIC_CHARGE_H
+#ifndef SCCS_ION_CHARGE_H
+#define SCCS_ION_CHARGE_H
 
 #include <vector>
 
@@ -19,11 +19,11 @@ const double gaussian_ion_spread = 0.5;
 
 // AtomData is extracted by source_cell; positions are Cartesian Bohr.
 // Collective over the PW pool.
-void gaussian_ionic_density(const std::vector<unitcell::AtomData>& atoms,
-                            const ModulePW::PW_Basis& basis,
-                            double tpiba,
-                            double spread,
-                            std::vector<double>& density);
+void gauss_ion_rho(const std::vector<unitcell::AtomData>& atoms,
+                   const ModulePW::PW_Basis& basis,
+                   double tpiba,
+                   double spread,
+                   std::vector<double>& density);
 } // namespace ModuleSccs
 
 #endif

@@ -5,8 +5,8 @@
 #include "source_base/tool_quit.h"
 #include "source_cell/cell_tools.h"
 #include "source_hamilt/module_sccs/sccs_functional.h"
-#include "source_hamilt/module_sccs/sccs_ionic_charge.h"
-#include "source_hamilt/module_sccs/sccs_ionic_force.h"
+#include "source_hamilt/module_sccs/sccs_ion_charge.h"
+#include "source_hamilt/module_sccs/sccs_ion_force.h"
 #include "source_hamilt/module_sccs/sccs_response.h"
 #include "source_io/module_parameter/input_parameter.h"
 
@@ -16,9 +16,9 @@
 
 namespace elecstate
 {
-void make_sccs_config_from_input(const Input_para& input,
-                                 ModuleSccs::SccsConfig& config,
-                                 ModuleSccs::PolarizationSolverParameters& solver)
+void sccs_cfg_input(const Input_para& input,
+                    ModuleSccs::SccsConfig& config,
+                    ModuleSccs::PolarizationSolverParameters& solver)
 {
     const ModuleSccs::Preset preset = ModuleSccs::parse_preset(input.sccs_preset);
     if (preset == ModuleSccs::Preset::Custom)
@@ -27,12 +27,12 @@ void make_sccs_config_from_input(const Input_para& input,
         config.cavity.density_min = input.sccs_rho_min;
         config.cavity.density_max = input.sccs_rho_max;
         config.cavity.epsilon_bulk = input.sccs_epsilon;
-        config.surface_tension = ModuleSccs::dyn_per_cm_to_hartree_per_bohr2(input.sccs_gamma);
-        config.pressure = ModuleSccs::gpa_to_hartree_per_bohr3(input.sccs_pressure);
+        config.surface_tension = ModuleSccs::dyn_cm_to_au(input.sccs_gamma);
+        config.pressure = ModuleSccs::gpa_to_au(input.sccs_pressure);
     }
     else
     {
-        config = ModuleSccs::make_sccs_config(preset);
+        config = ModuleSccs::preset_config(preset);
     }
     config.surface_regularization = input.sccs_surface_eta;
     solver.max_iterations = input.sccs_maxiter;
@@ -40,7 +40,7 @@ void make_sccs_config_from_input(const Input_para& input,
     solver.tolerance_max = input.sccs_tol_max;
 }
 
-std::string check_sccs_charge(const ModuleSccs::SccsConfig& config, const UnitCell& cell, double electron_count)
+std::string check_charge(const ModuleSccs::SccsConfig& config, const UnitCell& cell, double electron_count)
 {
     double ionic_charge = 0.0;
     for (int it = 0; it < cell.ntype; ++it)
@@ -69,7 +69,7 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     const ModulePW::PW_Basis& basis = *this->rho_basis_;
     const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell->atoms, cell->ntype, cell->lat0);
     std::vector<double> ions;
-    ModuleSccs::gaussian_ionic_density(atoms, basis, cell->tpiba, ModuleSccs::gaussian_ion_spread, ions);
+    ModuleSccs::gauss_ion_rho(atoms, basis, cell->tpiba, ModuleSccs::gaussian_ion_spread, ions);
     std::vector<double> density(basis.nrxx, 0.0);
     std::vector<double> solute_charge(basis.nrxx);
     double grid_charges[2] = {0.0, 0.0}; // electrons, ions
@@ -99,10 +99,10 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
         ModuleBase::WARNING("PotSccs::cal_v_eff", message.str());
     }
     ModuleSccs::SccsResponse response;
-    ModuleSccs::solve_sccs_response(density, solute_charge, config_.cavity, solver_, restart_potential_, basis,
-                                    cell->tpiba, response);
+    ModuleSccs::solve_response(density, solute_charge, config_.cavity, solver_, restart_potential_, basis,
+                               cell->tpiba, response);
     ModuleSccs::FunctionalResult functional;
-    ModuleSccs::evaluate_functional(solute_charge, response, config_, basis, cell->tpiba, functional);
+    ModuleSccs::eval_functional(solute_charge, response, config_, basis, cell->tpiba, functional);
     electrostatic_rydberg_ = 2.0 * functional.reaction_energy;
     non_electrostatic_rydberg_ = 2.0 * (functional.surface_energy + functional.volume_energy);
     electrostatic_potential_.resize(basis.nrxx);
@@ -116,9 +116,9 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     ModuleBase::timer::end("PotSccs", "cal_v_eff");
 }
 
-void PotSccs::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
+void PotSccs::add_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const
 {
-    ModuleBase::timer::start("PotSccs", "add_solvation_force");
+    ModuleBase::timer::start("PotSccs", "add_sol_force");
     const ModulePW::PW_Basis& basis = *this->rho_basis_;
     const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell.atoms, cell.ntype, cell.lat0);
     std::vector<double> reaction(basis.nrxx);
@@ -127,8 +127,8 @@ void PotSccs::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& forc
         reaction[ir] = -0.5 * electrostatic_potential_[ir];
     }
     std::vector<ModuleBase::Vector3<double>> ionic_force;
-    ModuleSccs::gaussian_ionic_force(atoms, reaction, basis, cell.tpiba, ModuleSccs::gaussian_ion_spread,
-                                     ionic_force);
+    ModuleSccs::gauss_ion_force(atoms, reaction, basis, cell.tpiba, ModuleSccs::gaussian_ion_spread,
+                                ionic_force);
     for (int ia = 0; ia < cell.nat; ++ia)
     {
         for (int axis = 0; axis < 3; ++axis)
@@ -136,7 +136,7 @@ void PotSccs::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& forc
             force(ia, axis) += 2.0 * ionic_force[ia][axis];
         }
     }
-    ModuleBase::timer::end("PotSccs", "add_solvation_force");
+    ModuleBase::timer::end("PotSccs", "add_sol_force");
 }
 
 double PotSccs::get_energy() const
@@ -144,13 +144,13 @@ double PotSccs::get_energy() const
     return electrostatic_rydberg_ + non_electrostatic_rydberg_;
 }
 
-void PotSccs::get_solvation_energy(double& electrostatic, double& non_electrostatic) const
+void PotSccs::sol_energy(double& electrostatic, double& non_electrostatic) const
 {
     electrostatic = electrostatic_rydberg_;
     non_electrostatic = non_electrostatic_rydberg_;
 }
 
-const std::vector<double>* PotSccs::solvent_electrostatic_potential() const
+const std::vector<double>* PotSccs::sol_elec_pot() const
 {
     return &electrostatic_potential_;
 }

@@ -16,7 +16,7 @@ Potential::~Potential() {}
 void Potential::cal_v_eff(const Charge*, const UnitCell*, ModuleBase::matrix&) {}
 void Potential::cal_fixed_v(double*) {}
 
-void Potential::component_solvation_energy(double& el, double& cav) const
+void Potential::sum_sol_energy(double& el, double& cav) const
 {
     el = 0.8;
     cav = 0.9;

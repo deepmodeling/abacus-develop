@@ -112,11 +112,11 @@ double grid_dot(const std::vector<double>& left,
 }
 
 // P r = eps^-1/2 G eps^-1/2 r; only FFT scratch survives an application.
-void apply_preconditioner(const std::vector<double>& rhs,
-                          const std::vector<double>& invsqrt,
-                          PeriodicCoulombOperator& coulomb,
-                          std::vector<double>& weighted,
-                          std::vector<double>& value)
+void apply_precond(const std::vector<double>& rhs,
+                   const std::vector<double>& invsqrt,
+                   PeriodicCoulombOperator& coulomb,
+                   std::vector<double>& weighted,
+                   std::vector<double>& value)
 {
     const std::size_t size = rhs.size();
     weighted.resize(size);
@@ -165,7 +165,7 @@ void try_warm_start(const SqrtCgOperator& system,
     {
         guess_residual[i] = charge[i] - coefficient[i] * initial_potential[i];
     }
-    apply_preconditioner(guess_residual, system.invsqrt, system.coulomb, state.weighted, z);
+    apply_precond(guess_residual, system.invsqrt, system.coulomb, state.weighted, z);
     for (std::size_t i = 0; i < size; ++i)
     {
         guess_residual[i] = coefficient[i] * (initial_potential[i] - z[i]);
@@ -201,11 +201,11 @@ void iterate_sqrt_cg(const SqrtCgOperator& system,
     double old_rz = 0.0;
     for (int iteration = 1; !converged(polarization, solver) && iteration <= solver.max_iterations; ++iteration)
     {
-        apply_preconditioner(residual, system.invsqrt, system.coulomb, state.weighted, z);
+        apply_precond(residual, system.invsqrt, system.coulomb, state.weighted, z);
         const double rz = grid_dot(residual, z, basis);
         if (!std::isfinite(rz) || std::abs(rz) < 1e-30)
         {
-            ModuleBase::WARNING_QUIT("ModuleSccs::solve_sccs_response",
+            ModuleBase::WARNING_QUIT("ModuleSccs::solve_response",
                                      "SCCS sqrt-CG has a null or nonfinite preconditioned residual");
         }
         const double beta = std::abs(old_rz) > 1e-30 ? rz / old_rz : 0.0;
@@ -218,7 +218,7 @@ void iterate_sqrt_cg(const SqrtCgOperator& system,
         const double curvature = grid_dot(direction, image, basis);
         if (!std::isfinite(curvature) || curvature == 0.0)
         {
-            ModuleBase::WARNING_QUIT("ModuleSccs::solve_sccs_response", "SCCS sqrt-CG has invalid curvature");
+            ModuleBase::WARNING_QUIT("ModuleSccs::solve_response", "SCCS sqrt-CG has invalid curvature");
         }
         const double alpha = rz / curvature;
         for (std::size_t i = 0; i < size; ++i)
@@ -235,7 +235,7 @@ void iterate_sqrt_cg(const SqrtCgOperator& system,
         message << "SCCS sqrt-CG did not reach both residual tolerances within sccs_maxiter = "
                 << solver.max_iterations << " iterations (RMS " << polarization.residual_rms << ", MAX "
                 << polarization.residual_max << ")";
-        ModuleBase::WARNING_QUIT("ModuleSccs::solve_sccs_response", message.str());
+        ModuleBase::WARNING_QUIT("ModuleSccs::solve_response", message.str());
     }
 }
 
@@ -277,14 +277,14 @@ void finish_response(const ModulePW::PW_Basis& basis,
 }
 } // namespace
 
-void solve_sccs_response(const std::vector<double>& density,
-                         const std::vector<double>& charge,
-                         const CavityParameters& cavity,
-                         const PolarizationSolverParameters& solver,
-                         const std::vector<double>& initial_potential,
-                         const ModulePW::PW_Basis& basis,
-                         double tpiba,
-                         SccsResponse& result)
+void solve_response(const std::vector<double>& density,
+                    const std::vector<double>& charge,
+                    const CavityParameters& cavity,
+                    const PolarizationSolverParameters& solver,
+                    const std::vector<double>& initial_potential,
+                    const ModulePW::PW_Basis& basis,
+                    double tpiba,
+                    SccsResponse& result)
 {
     // Determine start mode collectively, including ranks with no real-space points.
     double initial_count = initial_potential.size();

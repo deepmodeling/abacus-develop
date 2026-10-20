@@ -4,7 +4,7 @@
 struct Input_para;
 namespace ModuleIO
 {
-bool parse_solvation_model(const std::string& value, int& model, std::string& error);
-bool validate_sccs_input(const Input_para& input, std::string& error);
+bool parse_imp_sol(const std::string& value, int& model, std::string& error);
+bool check_sccs_inp(const Input_para& input, std::string& error);
 }
 #endif

@@ -27,7 +27,7 @@ TEST(SccsParameters, PresetValues)
     const double pressures[] = {-1.223613888352364e-5, 4.248659334556821e-6, 1.529517360440455e-5};
     for (int index = 0; index < 3; ++index)
     {
-        const ModuleSccs::SccsConfig config = ModuleSccs::make_sccs_config(presets[index]);
+        const ModuleSccs::SccsConfig config = ModuleSccs::preset_config(presets[index]);
         EXPECT_DOUBLE_EQ(config.cavity.density_min, minima[index]);
         EXPECT_DOUBLE_EQ(config.cavity.density_max, maxima[index]);
         EXPECT_DOUBLE_EQ(config.cavity.epsilon_bulk, 78.3);
@@ -35,7 +35,7 @@ TEST(SccsParameters, PresetValues)
         EXPECT_NEAR(config.surface_tension, tensions[index], 1e-18);
         EXPECT_NEAR(config.pressure, pressures[index], 1e-18);
     }
-    const ModuleSccs::SccsConfig vacuum = ModuleSccs::make_sccs_config(ModuleSccs::Preset::Vacuum);
+    const ModuleSccs::SccsConfig vacuum = ModuleSccs::preset_config(ModuleSccs::Preset::Vacuum);
     EXPECT_DOUBLE_EQ(vacuum.cavity.epsilon_bulk, 1.0);
     EXPECT_DOUBLE_EQ(vacuum.surface_tension, 0.0);
     EXPECT_DOUBLE_EQ(vacuum.pressure, 0.0);

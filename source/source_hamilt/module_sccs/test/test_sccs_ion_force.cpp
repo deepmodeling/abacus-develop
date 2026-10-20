@@ -1,6 +1,6 @@
 #include "sccs_test.h"
-#include "../sccs_ionic_force.h"
-#include "../sccs_ionic_charge.h"
+#include "../sccs_ion_force.h"
+#include "../sccs_ion_charge.h"
 #include "../sccs_response.h"
 #include "../sccs_parameters.h"
 #include "../sccs_functional.h"
@@ -17,7 +17,7 @@ TEST_F(SccsIonicForceTest, AnalyticFourierForceAndGaugeInvariance)
     std::vector<double> potential = cosine_mode(0);
     const double spread = ModuleSccs::gaussian_ion_spread;
     std::vector<ModuleBase::Vector3<double>> forces;
-    ModuleSccs::gaussian_ionic_force(atoms, potential, basis, tpiba, spread, forces);
+    ModuleSccs::gauss_ion_force(atoms, potential, basis, tpiba, spread, forces);
     const double exponent = -0.25 * spread * spread * tpiba * tpiba;
     const double expected = 2.0 * tpiba * std::exp(exponent);
     EXPECT_NEAR(forces[0].x, expected, 1e-12);
@@ -25,10 +25,10 @@ TEST_F(SccsIonicForceTest, AnalyticFourierForceAndGaugeInvariance)
     EXPECT_NEAR(forces[0].z, 0.0, 1e-12);
     atoms[0].position.x += length;
     for (double& value : potential) { value += 4.0; }
-    ModuleSccs::gaussian_ionic_force(atoms, potential, basis, tpiba, spread, forces);
+    ModuleSccs::gauss_ion_force(atoms, potential, basis, tpiba, spread, forces);
     EXPECT_NEAR(forces[0].x, expected, 1e-12);
     potential.assign(basis.nrxx, 3.0);
-    ModuleSccs::gaussian_ionic_force(atoms, potential, basis, tpiba, spread, forces);
+    ModuleSccs::gauss_ion_force(atoms, potential, basis, tpiba, spread, forces);
     EXPECT_NEAR(forces[0].x, 0.0, 1e-12);
     EXPECT_NEAR(forces[0].y, 0.0, 1e-12);
     EXPECT_NEAR(forces[0].z, 0.0, 1e-12);
@@ -56,17 +56,17 @@ TEST_F(SccsIonicForceTest, ReactionEnergyFiniteDifferenceAtFixedNonuniformCavity
     auto evaluate = [&](const std::vector<unitcell::AtomData>& displaced,
                         ModuleSccs::FunctionalResult& functional) {
         std::vector<double> charge;
-        ModuleSccs::gaussian_ionic_density(displaced, basis, tpiba, spread, charge);
+        ModuleSccs::gauss_ion_rho(displaced, basis, tpiba, spread, charge);
         for (int ir = 0; ir < basis.nrxx; ++ir) { charge[ir] -= density[ir]; }
         ModuleSccs::SccsResponse response;
-        ModuleSccs::solve_sccs_response(density, charge, config.cavity, solver, cold_start, basis, tpiba, response);
-        ModuleSccs::evaluate_functional(charge, response, config, basis, tpiba, functional);
+        ModuleSccs::solve_response(density, charge, config.cavity, solver, cold_start, basis, tpiba, response);
+        ModuleSccs::eval_functional(charge, response, config, basis, tpiba, functional);
     };
     ModuleSccs::FunctionalResult baseline;
     evaluate(atoms, baseline);
     std::vector<ModuleBase::Vector3<double>> forces;
-    ModuleSccs::gaussian_ionic_force(atoms, baseline.reaction_potential, basis,
-                                     tpiba, spread, forces);
+    ModuleSccs::gauss_ion_force(atoms, baseline.reaction_potential, basis,
+                                tpiba, spread, forces);
     const double step = 1e-4;
     for (std::size_t ia = 0; ia < atoms.size(); ++ia)
     {
@@ -86,8 +86,8 @@ TEST_F(SccsIonicForceTest, ReactionEnergyFiniteDifferenceAtFixedNonuniformCavity
     }
     config.cavity.epsilon_bulk = 1.0;
     evaluate(atoms, baseline);
-    ModuleSccs::gaussian_ionic_force(atoms, baseline.reaction_potential, basis,
-                                     tpiba, spread, forces);
+    ModuleSccs::gauss_ion_force(atoms, baseline.reaction_potential, basis,
+                                tpiba, spread, forces);
     for (const ModuleBase::Vector3<double>& force : forces)
     {
         EXPECT_NEAR(force.x, 0.0, 1e-12);

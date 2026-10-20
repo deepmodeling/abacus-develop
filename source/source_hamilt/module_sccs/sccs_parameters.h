@@ -28,9 +28,9 @@ struct PolarizationSolverParameters
 // stops the run.
 Preset parse_preset(const std::string& name);
 // Published presets only; custom configurations are supplied by callers.
-SccsConfig make_sccs_config(Preset preset);
-double dyn_per_cm_to_hartree_per_bohr2(double value);
-double gpa_to_hartree_per_bohr3(double value);
+SccsConfig preset_config(Preset preset);
+double dyn_cm_to_au(double value);
+double gpa_to_au(double value);
 } // namespace ModuleSccs
 
 #endif
