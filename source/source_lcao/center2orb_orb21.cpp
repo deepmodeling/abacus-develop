@@ -202,8 +202,8 @@ template <typename T>
 std::vector<T> Center2_Orb::Orb21::cal_magnetic_components(
     const ModuleBase::Vector3<double>& RA,
     const ModuleBase::Vector3<double>& RB,
-    T (Orb11::*evaluate)(const ModuleBase::Vector3<double>&, const ModuleBase::Vector3<double>&, const int&, const int&)
-        const) const
+    std::vector<T> (Orb11::*evaluate)(const ModuleBase::Vector3<double>&,
+                                    const ModuleBase::Vector3<double>&) const) const
 {
     const int LA1 = this->nA1.getL();
     const int LA2 = this->nA2.getL();
@@ -216,17 +216,9 @@ std::vector<T> Center2_Orb::Orb21::cal_magnetic_components(
     {
         const int LA = orbital.first;
         const int count_A = 2 * LA + 1;
-        const int pair_count = count_A * count_B;
-        std::vector<T> overlaps(pair_count);
         // These two-center overlaps are shared by all ways to couple the
         // magnetic components of the two original orbitals on center A.
-        for (int ma = 0; ma < count_A; ++ma)
-        {
-            for (int mb = 0; mb < count_B; ++mb)
-            {
-                overlaps[ma * count_B + mb] = (orbital.second.*evaluate)(RA, RB, ma, mb);
-            }
-        }
+        const std::vector<T> overlaps = (orbital.second.*evaluate)(RA, RB);
         for (int ma1 = 0; ma1 < count_A1; ++ma1)
         {
             const int idx1 = this->MGT.get_lm_index(LA1, ma1);
@@ -256,12 +248,12 @@ std::vector<T> Center2_Orb::Orb21::cal_magnetic_components(
 std::vector<double> Center2_Orb::Orb21::cal_overlap(const ModuleBase::Vector3<double>& RA,
                                                     const ModuleBase::Vector3<double>& RB) const
 {
-    return this->cal_magnetic_components(RA, RB, &Orb11::cal_overlap);
+    return this->cal_magnetic_components<double>(RA, RB, &Orb11::cal_overlap);
 }
 
 std::vector<ModuleBase::Vector3<double>> Center2_Orb::Orb21::cal_grad_overlap(
     const ModuleBase::Vector3<double>& RA,
     const ModuleBase::Vector3<double>& RB) const
 {
-    return this->cal_magnetic_components(RA, RB, &Orb11::cal_grad_overlap);
+    return this->cal_magnetic_components<ModuleBase::Vector3<double>>(RA, RB, &Orb11::cal_grad_overlap);
 }

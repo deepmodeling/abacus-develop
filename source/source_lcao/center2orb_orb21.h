@@ -55,12 +55,11 @@ class Center2_Orb::Orb21
     static std::vector<Orb11*> prepare_radial_tables(const std::vector<Orb21*>& orbitals);
 
     template <typename T>
-    std::vector<T> cal_magnetic_components(const ModuleBase::Vector3<double>& RA,
-                                           const ModuleBase::Vector3<double>& RB,
-                                           T (Orb11::*evaluate)(const ModuleBase::Vector3<double>&,
-                                                                const ModuleBase::Vector3<double>&,
-                                                                const int&,
-                                                                const int&) const) const;
+    std::vector<T> cal_magnetic_components(
+        const ModuleBase::Vector3<double>& RA,
+        const ModuleBase::Vector3<double>& RB,
+        std::vector<T> (Orb11::*evaluate)(const ModuleBase::Vector3<double>&,
+                                        const ModuleBase::Vector3<double>&) const) const;
 
     const Numerical_Orbital_Lm& nA1;
     const Numerical_Orbital_Lm& nA2;

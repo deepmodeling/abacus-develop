@@ -480,3 +480,141 @@ ModuleBase::Vector3<double> Center2_Orb::Orb11::cal_grad_overlap( // caoyu add 2
 
     return grad_overlap;
 }
+
+template <typename T>
+std::vector<T> Center2_Orb::Orb11::contract_angular(const std::vector<T>& components) const
+{
+    const int LA = this->nA.getL();
+    const int LB = this->nB.getL();
+    const int count_A = 2 * LA + 1;
+    const int count_B = 2 * LB + 1;
+    const int count = count_A * count_B;
+    std::vector<T> result(count);
+    for (int ma = 0; ma < count_A; ++ma)
+    {
+        const int idx_A = this->MGT.get_lm_index(LA, ma);
+        for (int mb = 0; mb < count_B; ++mb)
+        {
+            const int idx_B = this->MGT.get_lm_index(LB, mb);
+            const double* coefficients = &this->MGT.Gaunt_Coefficients(idx_A, idx_B, 0);
+            T& value = result[ma * count_B + mb];
+            // Keep the scalar path's angular-momentum accumulation order.
+            for (const std::pair<const int, std::vector<double>>& table: this->Table_r)
+            {
+                const int l = table.first;
+                for (int m = 0; m <= 2 * l; ++m)
+                {
+                    const int idx = this->MGT.get_lm_index(l, m);
+                    if (coefficients[idx] != 0.0)
+                    {
+                        value += coefficients[idx] * components[idx];
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
+
+std::vector<double> Center2_Orb::Orb11::cal_overlap(const ModuleBase::Vector3<double>& RA,
+                                                 const ModuleBase::Vector3<double>& RB) const
+{
+    const double tiny1 = 1e-12;
+    const double tiny2 = 1e-10;
+    const ModuleBase::Vector3<double> delta_R = RB - RA;
+    const double distance_true = delta_R.norm();
+    const double distance = distance_true >= tiny1 ? distance_true : distance_true + tiny1;
+    const int LA = this->nA.getL();
+    const int LB = this->nB.getL();
+    const double RcutA = this->nA.getRcut();
+    const double RcutB = this->nB.getRcut();
+    if (distance > RcutA + RcutB)
+    {
+        const int count = (2 * LA + 1) * (2 * LB + 1);
+        return std::vector<double>(count);
+    }
+
+    const int lmax = LA + LB;
+    std::vector<double> rly;
+    ModuleBase::Ylm::rl_sph_harm(lmax, delta_R.x, delta_R.y, delta_R.z, rly);
+    const int angular_count = (lmax + 1) * (lmax + 1);
+    std::vector<double> components(angular_count);
+    const int rmesh = Center2_Orb::get_rmesh(RcutA, RcutB, this->dr_);
+    for (const std::pair<const int, std::vector<double>>& table: this->Table_r)
+    {
+        const int l = table.first;
+        const double distance_power = std::pow(distance, l);
+        const int phase = (LA - LB - l) / 2;
+        const double i_exp = std::pow(-1.0, phase);
+        const double radial
+            = distance > tiny2
+                  ? ModuleBase::PolyInt::Polynomial_Interpolation(table.second.data(), rmesh, dr_, distance)
+                  : table.second.at(0);
+        for (int m = 0; m <= 2 * l; ++m)
+        {
+            const int idx = this->MGT.get_lm_index(l, m);
+            const double angular = distance > tiny2 ? rly[idx] / distance_power : rly[idx];
+            components[idx] = i_exp * radial * angular;
+        }
+    }
+    return this->contract_angular(components);
+}
+
+std::vector<ModuleBase::Vector3<double>> Center2_Orb::Orb11::cal_grad_overlap(
+    const ModuleBase::Vector3<double>& RA,
+    const ModuleBase::Vector3<double>& RB) const
+{
+    const double tiny1 = 1e-12;
+    const double tiny2 = 1e-10;
+    const ModuleBase::Vector3<double> delta_R = RB - RA;
+    const double distance_true = delta_R.norm();
+    const double distance = distance_true >= tiny1 ? distance_true : distance_true + tiny1;
+    const int LA = this->nA.getL();
+    const int LB = this->nB.getL();
+    const double RcutA = this->nA.getRcut();
+    const double RcutB = this->nB.getRcut();
+    if (distance > RcutA + RcutB)
+    {
+        const int count = (2 * LA + 1) * (2 * LB + 1);
+        return std::vector<ModuleBase::Vector3<double>>(count);
+    }
+
+    const int lmax = LA + LB;
+    const int angular_count = (lmax + 1) * (lmax + 1);
+    const int gradient_count = 3 * angular_count;
+    std::vector<double> rly(angular_count);
+    std::vector<double> grly(gradient_count);
+    ModuleBase::Ylm::grad_rl_sph_harm(lmax, delta_R.x, delta_R.y, delta_R.z, rly.data(), grly.data());
+    std::vector<ModuleBase::Vector3<double>> components(angular_count);
+    const int rmesh = Center2_Orb::get_rmesh(RcutA, RcutB, this->dr_);
+    for (const std::pair<const int, std::vector<double>>& table: this->Table_r)
+    {
+        const int l = table.first;
+        const double distance_power = std::pow(distance, l);
+        const int phase = (LA - LB - l) / 2;
+        const double i_exp = std::pow(-1.0, phase);
+        const double radial
+            = distance > tiny2
+                  ? ModuleBase::PolyInt::Polynomial_Interpolation(table.second.data(), rmesh, dr_, distance)
+                  : table.second.at(0);
+        const double derivative
+            = distance > tiny2
+                  ? ModuleBase::PolyInt::Polynomial_Interpolation(this->Table_dr.at(l).data(), rmesh, dr_, distance)
+                        - radial * l / distance
+                  : 0.0;
+        for (int m = 0; m <= 2 * l; ++m)
+        {
+            const int idx = this->MGT.get_lm_index(l, m);
+            const double angular = distance > tiny2 ? rly[idx] / distance_power : rly[idx];
+            const int offset = 3 * idx;
+            const double gx = grly[offset];
+            const double gy = grly[offset + 1];
+            const double gz = grly[offset + 2];
+            const ModuleBase::Vector3<double> solid_gradient(gx, gy, gz);
+            const ModuleBase::Vector3<double> angular_gradient
+                = distance > tiny2 ? solid_gradient / distance_power : solid_gradient;
+            components[idx] = i_exp * (radial * angular_gradient + derivative * angular * delta_R / distance);
+        }
+    }
+    return this->contract_angular(components);
+}

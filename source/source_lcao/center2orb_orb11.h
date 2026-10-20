@@ -41,7 +41,16 @@ class Center2_Orb::Orb11
         const int& mA,
         const int& mB) const;
 
+    /// All magnetic components, ordered as [mA][mB].
+    std::vector<double> cal_overlap(const ModuleBase::Vector3<double>& RA,
+                                   const ModuleBase::Vector3<double>& RB) const;
+    std::vector<ModuleBase::Vector3<double>> cal_grad_overlap(const ModuleBase::Vector3<double>& RA,
+                                                           const ModuleBase::Vector3<double>& RB) const;
+
   private:
+    template <typename T>
+    std::vector<T> contract_angular(const std::vector<T>& components) const;
+
     const Numerical_Orbital_Lm& nA;
     const Numerical_Orbital_Lm& nB;
 

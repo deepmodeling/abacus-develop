@@ -80,25 +80,34 @@ void compare_pairs(const bool use_gpu)
         const int right = i < 130 ? 2 : (i + 2) % 5;
         const int last_left = 2 * basis[left].getL();
         const int last_right = 2 * basis[right].getL();
-        for (double distance: {0.0, 0.037, 0.73, 1.91, 3.87, 4.2})
+        for (double distance: {0.0, 1e-12, 5e-11, 2e-10, 0.037, 0.73, 1.91, 3.87, 4.0, 4.2})
         {
             const double x = 0.8 * distance;
             const double y = 0.36 * distance;
             const double z = 0.48 * distance;
             const ModuleBase::Vector3<double> position(x, y, z);
-            for (int ma: {0, last_left})
+            const auto all_values = candidate[i]->cal_overlap(origin, position);
+            const auto all_gradients = candidate[i]->cal_grad_overlap(origin, position);
+            const int count = (last_left + 1) * (last_right + 1);
+            ASSERT_EQ(all_values.size(), count);
+            ASSERT_EQ(all_gradients.size(), count);
+            for (int ma = 0; ma <= last_left; ++ma)
             {
-                for (int mb: {0, last_right})
+                for (int mb = 0; mb <= last_right; ++mb)
                 {
                     const double expected = reference[i]->cal_overlap(origin, position, ma, mb);
                     const double actual = candidate[i]->cal_overlap(origin, position, ma, mb);
                     const double tolerance = 2e-11 * (1.0 + std::abs(expected));
                     EXPECT_NEAR(actual, expected, tolerance);
+                    const int offset = ma * (last_right + 1) + mb;
+                    EXPECT_NEAR(all_values[offset], expected, tolerance);
                     const auto grad_expected = reference[i]->cal_grad_overlap(origin, position, ma, mb);
                     const auto grad_actual = candidate[i]->cal_grad_overlap(origin, position, ma, mb);
                     const double error = (grad_actual - grad_expected).norm();
                     const double grad_tolerance = 2e-10 * (1.0 + grad_expected.norm());
                     EXPECT_LT(error, grad_tolerance);
+                    const double component_error = (all_gradients[offset] - grad_expected).norm();
+                    EXPECT_LT(component_error, grad_tolerance);
                 }
             }
         }
@@ -297,23 +306,22 @@ TEST(Center2Orb21, ProductGradientMatchesFiniteDifference)
     const ModuleBase::Vector3<double> origin(0.0, 0.0, 0.0);
     const ModuleBase::Vector3<double> position(0.813, 0.321, 0.473);
     const double step = 1e-5;
-    for (int ma: {0, 2, 4})
+    const auto gradients = orbital.cal_grad_overlap(origin, position);
+    for (int axis = 0; axis < 3; ++axis)
     {
-        for (int mb: {0, 1, 2})
+        auto plus = position;
+        auto minus = position;
+        plus[axis] += step;
+        minus[axis] -= step;
+        const auto upper = orbital.cal_overlap(origin, plus);
+        const auto lower = orbital.cal_overlap(origin, minus);
+        ASSERT_EQ(upper.size(), gradients.size());
+        ASSERT_EQ(lower.size(), gradients.size());
+        for (std::size_t i = 0; i < gradients.size(); ++i)
         {
-            for (int mc: {0, 3, 6})
-            {
-                const auto gradient = orbital.cal_grad_overlap(origin, position, ma, mb, mc);
-                auto plus = position;
-                auto minus = position;
-                plus.x += step;
-                minus.x -= step;
-                const double upper = orbital.cal_overlap(origin, plus, ma, mb, mc);
-                const double lower = orbital.cal_overlap(origin, minus, ma, mb, mc);
-                const double finite_difference = (upper - lower) / (2 * step);
-                const double tolerance = 2e-7 * (1.0 + std::abs(finite_difference));
-                EXPECT_NEAR(gradient.x, finite_difference, tolerance);
-            }
+            const double finite_difference = (upper[i] - lower[i]) / (2 * step);
+            const double tolerance = 2e-7 * (1.0 + std::abs(finite_difference));
+            EXPECT_NEAR(gradients[i][axis], finite_difference, tolerance);
         }
     }
 }
