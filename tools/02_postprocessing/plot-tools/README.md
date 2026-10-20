@@ -94,6 +94,17 @@ Then, the following command will output parsed partial DOS to directory `PBAND*_
 abacus-plot -d -o
 ```
 
+## Testing
+
+From this directory, run the focused DOS reader, plotting and smearing regressions:
+
+```shell
+MPLBACKEND=Agg PYTHONPATH=. python3 -m unittest discover -s tests -v
+```
+
+These Python tests use the package dependencies from `setup.py` and are discovered
+by `unittest`; they do not add a dependency to the C++ CMake build.
+
 ### DOS
 
 First, prepare a file named 'config.json' in json format:
@@ -118,11 +129,12 @@ First, prepare a file named 'config.json' in json format:
 If you only want to plot total DOS, you can modify `pdosfile` to `tdosfile` and do not set `species` and `pdosfig`.
 | Property | Type | Note |
 | :------------: | :-------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| _tdosfile_ | `str` | Total DOS data file output from ABACUS |
-| _pdosfile_ | `str` | Directory or path prefix containing the text PDOS files `pdoss1_*` (and `pdoss2_*` for spin-polarized runs) output from ABACUS |
+| _tdosfile_ | `str` or `List[str]` | Total DOS data file(s) output from ABACUS. For `nspin=2`, pass one spin-channel file (`doss1*` or `doss2*`; the counterpart is paired automatically), a directory containing them, or a list of both files. For `nspin=4`, ABACUS writes a single spinor-summed file |
+| _pdosfile_ | `str` | Directory or path prefix containing the text PDOS files `pdoss1*` (and `pdoss2*` for spin-polarized runs), e.g. `pdoss1g1.txt`, output from ABACUS |
 | _efermi_ | `float` | Fermi level in eV |
 | _energy_range_ | `list` | Range of energy in eV |
 | _shift_ | `bool` | If set `'true'`, it will evaluate band gap. Default: `'false'` |
+| _smearing_ | `bool` | If `'true'` (default), plot the Gaussian-smeared DOS column (`dos_smear`, unit 1/eV); if `'false'`, plot the raw per-bin histogram column. The raw column is also accessible as `TDOS(...).dos` for custom smearing, e.g. with `abacus_plot.utils.gaussian_smearing`. This switch also selects the data used by the `shift=true` band-gap estimate; with the smeared column, Gaussian tails can narrow small apparent gaps, so the reported gap is a threshold-based estimate that depends on `dos_sigma` and `prec` |
 | _index_ | `List[int]` or `Dict[str, List[int]]` or `Dict[str, Dict[str, List[int]]]]` | Extract PDOS of each atom e.g. [index_0, index_1...] or {index*0:[l_0, l_1, ...], ...}, [index_0:{l_0:[m_0, m_1, ...], ...}, ...] |
 | \_atom_index* | `List[int]` or `Dict[str, List[int]]` or `Dict[str, Dict[str, List[int]]]]` | Extract PDOS of each atom with same atom*index e.g. [atom_index_0, atom_index_1...] or {atom_index_0:[l_0, l_1, ...], ...}, [atom_index_0:{l_0:[m_0, m_1, ...], ...}, ...] |
 | \_species* | `List[str]` or `Dict[str, List[int]]` or `Dict[str, Dict[str, List[int]]]]` | Extract PDOS of each atom with same species e.g. [elem_0, elem_1...] or {elem*0:[l_0, l_1, ...], ...}, [elem_0:{l_0:[m_0, m_1, ...], ...}, ...] |

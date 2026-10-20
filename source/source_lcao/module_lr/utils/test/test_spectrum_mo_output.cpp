@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "../spectrum_mo.hpp"
+#include "../spectrum_mo.h"
+#include "source_base/constants.h"
 
 #include <complex>
 #include <cstdio>
@@ -11,7 +12,7 @@
 
 TEST(SpectrumMoOutput, WritesLibRpaVelocityMatrixContract)
 {
-    const std::string filename = "spectrum_mo_librpa_test.txt";
+    const std::string filename = testing::TempDir() + "spectrum_mo_librpa_test.txt";
     std::remove(filename.c_str());
 
     const int nk = 1;

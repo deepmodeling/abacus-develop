@@ -26,7 +26,7 @@ struct OccmatOutputCfg
 /// Text format used by write_occup_m().
 enum OccmatTextFormat
 {
-    OCMAT_FMT_LEGACY,   ///< whitespace-token layout parsed by read_occup_m()
+    OCMAT_FMT_LEGACY,   ///< legacy diagnostic layout; not accepted on input
     OCMAT_FMT_READABLE  ///< compact human-readable layout for snapshot files
 };
 

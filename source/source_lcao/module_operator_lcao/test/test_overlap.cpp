@@ -1,6 +1,7 @@
 #include "../overlap.h"
 
 #include "gtest/gtest.h"
+#include <memory>
 
 //---------------------------------------
 // Unit test of Overlap class
@@ -169,6 +170,33 @@ TEST_F(OverlapTest, constructHRd2cd)
     {
         EXPECT_NEAR(sk[i].real(), -0.80901699437494723, 1e-10);
         EXPECT_NEAR(sk[i].imag(), -0.58778525229247336, 1e-10);
+    }
+}
+
+TEST_F(OverlapTest, AsyncOverlapKeepsSeparateContainer)
+{
+    ucell.lat0 = 1.0;
+    const ModuleBase::Vector3<double> velocity(0.001, 0.0, 0.0);
+    ucell.atoms[0].vel.assign(ucell.nat, velocity);
+    const ModuleBase::Vector3<double> gamma(0.0, 0.0, 0.0);
+    const std::vector<ModuleBase::Vector3<double>> kpoints{gamma};
+    const std::vector<double> cutoff{1.0};
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    Grid_Driver neighbors(0, 0);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>> op(
+        &hsk, kpoints, nullptr, SR, &ucell, cutoff, &neighbors, &intor_);
+    auto* const async_container = op.calculate_SR_async(ucell, 0.1, paraV);
+    std::unique_ptr<hamilt::HContainer<double>> async(async_container);
+    ASSERT_EQ(async->size_atom_pairs(), SR->size_atom_pairs());
+    for (int i = 0; i < async->size_atom_pairs(); ++i)
+    {
+        const auto& pair = async->get_atom_pair(i);
+        const int count = pair.get_row_size() * pair.get_col_size();
+        for (int j = 0; j < count; ++j)
+        {
+            EXPECT_DOUBLE_EQ(pair.get_pointer(0)[j], 1.0);
+            EXPECT_DOUBLE_EQ(SR->get_atom_pair(i).get_pointer(0)[j], 0.0);
+        }
     }
 }
 

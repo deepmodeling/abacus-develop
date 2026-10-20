@@ -50,7 +50,7 @@ void Exx_NAO<TK>::before_runner(
         Exx_Info& exx_info)
 {
 #ifdef __EXX
-    const bool use_gpu = inp.exx_device == "gpu";
+    const bool use_gpu = inp.device_exx == "gpu";
     if (this->exd)
     {
         this->exd->set_gpu(use_gpu);

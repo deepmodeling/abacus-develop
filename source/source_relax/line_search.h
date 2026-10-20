@@ -9,12 +9,12 @@ class Line_Search
     Line_Search() {};
     ~Line_Search() {};
 
-    bool line_search(const bool restart,     // whether to restart line search (when cg direction has changed)
-                     const double x,         // position for function at x
-                     const double y,         // value of function at x
-                     const double f,         // gradient of function at x
-                     double& xnew,           // postion where function has to be evaluated
-                     const double conv_thr,  // predicted change of function value of function at xnew
+    bool line_search(const bool restart,    // whether to restart line search (when cg direction has changed)
+                     const double x,        // position for function at x
+                     const double y,        // value of function at x
+                     const double f,        // gradient of function at x
+                     double& xnew,          // postion where function has to be evaluated
+                     const double conv_thr, // predicted change of function value of function at xnew
                      std::ofstream& ofs_running);
 
     bool first_order(const double x, const double y, const double f, double& xnew);
@@ -25,7 +25,12 @@ class Line_Search
 
     void update_brent(const double x, const double y, const double f);
 
-    bool brent(const double x, const double y, const double f, double& xnew, const double conv_thr, std::ofstream& ofs_running);
+    bool brent(const double x,
+               const double y,
+               const double f,
+               double& xnew,
+               const double conv_thr,
+               std::ofstream& ofs_running);
 
   private:
     int ls_step = 0;      // step of line search

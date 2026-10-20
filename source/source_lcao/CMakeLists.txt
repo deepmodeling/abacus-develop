@@ -19,6 +19,7 @@ if(ENABLE_LCAO)
         module_operator_lcao/deepks_lcao.cpp
         module_operator_lcao/op_exx_lcao.cpp
         module_operator_lcao/overlap.cpp
+        module_operator_lcao/ovlp_block.cpp
         module_operator_lcao/overlap_fs.cpp
         module_operator_lcao/ekinetic.cpp
         module_operator_lcao/ekinetic_fs.cpp

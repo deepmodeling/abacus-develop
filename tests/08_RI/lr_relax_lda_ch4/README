@@ -1,0 +1,4 @@
+Two-step LDA CH4 JT mixed-state following after splitting (3 -> 1); requires LibXC KXC.
+Checks dimensions, projection weight, singular values and finite energies/forces.
+The coarse 5 Ry grid and SCF threshold 1e-6 test state following, not converged
+energies or gradients. abs_gauge=none skips optical postprocessing.
