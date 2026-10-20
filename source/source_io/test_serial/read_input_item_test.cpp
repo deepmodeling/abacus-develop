@@ -1357,6 +1357,62 @@ TEST_F(InputTest, HsOutputAliases)
         EXPECT_EQ(TestParameters::input(param).out_hsk[0], 1);
     }
 }
+TEST_F(InputTest, PreserveExplicitMagneticMixing)
+{
+    const std::string filename = testing::TempDir() + "abacus_magnetic_mixing_INPUT";
+    for (const int nspin : {1, 2, 4})
+    {
+        const double expected_beta = nspin == 1 ? 0.8 : 0.4;
+        for (const bool explicit_beta : {false, true})
+        {
+            SCOPED_TRACE(nspin);
+            SCOPED_TRACE(explicit_beta);
+            {
+                std::ofstream input(filename.c_str());
+                input << "INPUT_PARAMETERS\nnspin " << nspin
+                      << "\nmixing_beta_mag 0.2\nmixing_gg0_mag 0.7\n";
+                if (explicit_beta)
+                {
+                    input << "mixing_beta " << expected_beta << "\n";
+                }
+            }
+            ModuleIO::ReadInput reader(0);
+            reader.check_ntype_flag = false;
+            Parameter param;
+            reader.read_parameters(param, filename);
+            EXPECT_DOUBLE_EQ(param.inp.mixing_beta, expected_beta);
+            EXPECT_DOUBLE_EQ(param.inp.mixing_beta_mag, 0.2);
+            EXPECT_DOUBLE_EQ(param.inp.mixing_gg0_mag, 0.7);
+            EXPECT_EQ(std::remove(filename.c_str()), 0);
+        }
+    }
+}
+
+TEST_F(InputTest, DefaultMagneticMixing)
+{
+    const std::string filename = testing::TempDir() + "abacus_default_mixing_INPUT";
+    for (const int nspin : {1, 2, 4})
+    {
+        SCOPED_TRACE(nspin);
+        {
+            std::ofstream input(filename.c_str());
+            input << "INPUT_PARAMETERS\nnspin " << nspin << "\n";
+        }
+        ModuleIO::ReadInput reader(0);
+        reader.check_ntype_flag = false;
+        Parameter param;
+        reader.read_parameters(param, filename);
+        const double expected_beta = nspin == 1 ? 0.8 : 0.4;
+        EXPECT_DOUBLE_EQ(param.inp.mixing_beta, expected_beta);
+        EXPECT_DOUBLE_EQ(param.inp.mixing_gg0_mag, 0.0);
+        if (nspin != 1)
+        {
+            EXPECT_DOUBLE_EQ(param.inp.mixing_beta_mag, 1.6);
+        }
+        EXPECT_EQ(std::remove(filename.c_str()), 0);
+    }
+}
+
 TEST_F(InputTest, Item_test2)
 {
     ModuleIO::ReadInput readinput(0);
@@ -1452,6 +1508,8 @@ TEST_F(InputTest, Item_test2)
     }
     { // mixing_beta
         auto it = find_label("mixing_beta", readinput.input_lists);
+        TestParameters::input(param).mixing_beta_mag = 0.2;
+        TestParameters::input(param).mixing_gg0_mag = 0.7;
         TestParameters::input(param).mixing_beta = -1;
         TestParameters::input(param).nspin = 1;
         it->second.reset_value(it->second, param);
@@ -1461,15 +1519,15 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).nspin = 2;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).mixing_beta, 0.4);
-        EXPECT_EQ(TestParameters::input(param).mixing_beta_mag, 1.6);
-        EXPECT_EQ(TestParameters::input(param).mixing_gg0_mag, 0.0);
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).mixing_beta_mag, 0.2);
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).mixing_gg0_mag, 0.7);
 
         TestParameters::input(param).mixing_beta = -1;
         TestParameters::input(param).nspin = 4;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).mixing_beta, 0.4);
-        EXPECT_EQ(TestParameters::input(param).mixing_beta_mag, 1.6);
-        EXPECT_EQ(TestParameters::input(param).mixing_gg0_mag, 0.0);
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).mixing_beta_mag, 0.2);
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).mixing_gg0_mag, 0.7);
     }
     { // mixing_beta_mag
         auto it = find_label("mixing_beta_mag", readinput.input_lists);
