@@ -39,7 +39,9 @@ namespace
 std::string context_error(const Input_para& input)
 {
     std::string error;
-    if (input.assume_isolated != "none") { error = "SCCS currently requires assume_isolated none"; }
+    if (input.assume_isolated != "none" && input.assume_isolated != "pcc_0d"
+        && input.assume_isolated != "pcc_2d")
+    { error = "SCCS currently supports assume_isolated none, pcc_0d or pcc_2d"; }
     else if (input.device != "cpu" || input.esolver_type != "ksdft") { error = "SCCS requires CPU KS-DFT"; }
     else if (input.basis_type != "pw" && input.basis_type != "lcao") { error = "SCCS requires basis_type pw or lcao"; }
     else if (input.calculation != "scf" || input.cal_stress)

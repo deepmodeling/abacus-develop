@@ -21,12 +21,18 @@ protected:
 
     void SetUp() override
     {
-#ifdef __MPI
-        basis.initmpi(pool_size, pool_rank, POOL_WORLD);
-#endif
         const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
                                           0.0, 1.0, 0.0,
                                           0.0, 0.0, 1.0);
+        set_up_basis(lattice);
+    }
+
+    // Rows of lattice in units of length; ecut 20 Ry.
+    void set_up_basis(const ModuleBase::Matrix3& lattice)
+    {
+#ifdef __MPI
+        basis.initmpi(pool_size, pool_rank, POOL_WORLD);
+#endif
         basis.initgrids(length, lattice, 20.0);
         basis.initparameters(false, 20.0, 1, false);
         basis.setuptransform();

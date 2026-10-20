@@ -4,14 +4,19 @@
 #include "sccs_cavity.h"
 
 #include <string>
+#include <vector>
 
 namespace ModuleSccs
 {
+enum class Boundary { Periodic, Pcc0d, Pcc2d };
+
 enum class Preset { Custom, Vacuum, WaterNeutral, WaterCation, WaterAnion };
 
 struct SccsConfig
 {
     CavityParameters cavity;
+    Boundary boundary = Boundary::Periodic;
+    int pcc_2d_axis = 2;
     double surface_tension = 0.0; // Hartree/Bohr^2
     double pressure = 0.0; // Hartree/Bohr^3
     double surface_regularization = 0.0;

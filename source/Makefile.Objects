@@ -284,6 +284,8 @@ OBJS_ELECSTAT=elecstate.o\
     pcc_2d.o\
     pot_pcc.o\
     pot_sccs.o\
+    sccs_pcc_0d.o\
+    sccs_pcc_2d.o\
     elecstate_op.o\
     efield.o\
     gatefield.o\
@@ -631,10 +633,14 @@ OBJS_SURCHEM=surchem.o\
     sol_force.o\
 
 OBJS_SCCS=sccs_cavity.o\
+    sccs_cav_deriv.o\
     sccs_functional.o\
     sccs_parameters.o\
     sccs_ion_charge.o\
     sccs_ion_force.o\
+    sccs_coul_0d.o\
+    sccs_coul_2d.o\
+    sccs_moments.o\
     sccs_pw_coulomb.o\
     sccs_response.o
 

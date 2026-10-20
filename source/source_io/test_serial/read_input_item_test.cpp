@@ -105,6 +105,16 @@ TEST_F(InputTest, PccSelectionAndUnsupportedCombinations)
     input.basis_type = "lcao";
     input.calculation = "relax";
     it->second.check_value(it->second, param);
+    input.imp_sol = 1;
+    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    input.imp_sol = 2;
+    input.calculation = "scf";
+    input.cal_force = false;
+    it->second.check_value(it->second, param);
+    input.assume_isolated = "pcc_2d";
+    it->second.check_value(it->second, param);
+    input.imp_sol = 0;
+    input.assume_isolated = "pcc_0d";
     const Input_para valid = input;
 
     input.nspin = 4;

@@ -69,3 +69,4 @@ get_pchg_k
 get_s
 scf_deltaspin2
 scf_deltaspin4
+scf_sccs_pcc2d

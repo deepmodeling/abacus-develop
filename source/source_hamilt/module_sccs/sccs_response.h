@@ -13,6 +13,8 @@ class PW_Basis;
 
 namespace ModuleSccs
 {
+class CoulombOperator;
+
 struct PolarizationSolverParameters;
 
 struct PolarizationResult
@@ -21,7 +23,7 @@ struct PolarizationResult
     double residual_rms = 0.0;
     double residual_max = 0.0;
     bool warm_started = false;
-    std::vector<double> potential; // Hartree, shifted to periodic zero mean
+    std::vector<double> potential; // Hartree; zero mean only for periodic cells
     std::vector<ModuleBase::Vector3<double>> gradient; // Hartree/Bohr
 };
 
@@ -35,6 +37,7 @@ struct SccsResponse
     PolarizationResult polarization;
     std::vector<double> cavity_potential; // -epsilon' |grad v|^2/(8 pi), Hartree
     std::vector<double> restart_potential; // unshifted solution for explicit warm starts
+    double far_field_polarization_charge = 0.0; // open-boundary screened charge minus solute charge
 };
 
 // Periodic sqrt-CG response with chain-rule cavity derivatives, as Environ's
@@ -50,6 +53,17 @@ void solve_response(const std::vector<double>& cavity_density,
                     const std::vector<double>& initial_potential,
                     const ModulePW::PW_Basis& basis,
                     double tpiba,
+                    SccsResponse& result);
+
+// Use the same operator for the dielectric response and vacuum subtraction.
+void solve_response(const std::vector<double>& cavity_density,
+                    const std::vector<double>& solute_charge,
+                    const CavityParameters& cavity,
+                    const PolarizationSolverParameters& solver,
+                    const std::vector<double>& initial_potential,
+                    const ModulePW::PW_Basis& basis,
+                    double tpiba,
+                    CoulombOperator& coulomb,
                     SccsResponse& result);
 } // namespace ModuleSccs
 
