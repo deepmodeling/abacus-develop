@@ -22,6 +22,8 @@ class InputDomainReaderTest : public testing::Test
     void TearDown() override
     {
         std::remove(filename.c_str());
+        const std::string written = filename + ".written";
+        std::remove(written.c_str());
     }
 
     void write_input(const std::string& values)
@@ -103,8 +105,50 @@ TEST_F(InputDomainReaderTest, RejectsMissingValuesIncludingLastLineWithoutNewlin
     }
     const std::string output = reject_input("nspin\nnspin 2\n");
     EXPECT_NE(output.find("has been read twice"), std::string::npos);
-    const std::string legacy_output = reject_input("calculation");
-    EXPECT_NE(legacy_output.find("'calculation': missing value (String)"), std::string::npos);
+}
+
+TEST_F(InputDomainReaderTest, PreservesLegacyEmptyValues)
+{
+    write_input("pseudo_dir\norbital_dir\ndfpt_qfile\nout_pchg\n");
+    ModuleIO::ReadInput reader(0);
+    reader.check_ntype_flag = false;
+    Parameter input;
+    reader.read_parameters(input, filename);
+    EXPECT_TRUE(input.inp.pseudo_dir.empty());
+    EXPECT_TRUE(input.inp.orbital_dir.empty());
+    EXPECT_TRUE(input.inp.dfpt_qfile.empty());
+    EXPECT_TRUE(input.inp.out_pchg.empty());
+}
+
+TEST_F(InputDomainReaderTest, ReadsWriterOutputWithEmptyOptionalValues)
+{
+    write_input("nspin 2\ngga_grad 0\n");
+    ModuleIO::ReadInput reader(0);
+    reader.check_ntype_flag = false;
+    Parameter input;
+    reader.read_parameters(input, filename);
+    const std::string written = filename + ".written";
+    reader.write_parameters(input, written);
+
+    ModuleIO::ReadInput roundtrip_reader(0);
+    roundtrip_reader.check_ntype_flag = false;
+    Parameter roundtrip;
+    roundtrip_reader.read_parameters(roundtrip, written);
+    EXPECT_EQ(roundtrip.inp.nspin, 2);
+    EXPECT_EQ(roundtrip.inp.gga_grad, 0);
+    EXPECT_EQ(roundtrip.inp.pseudo_dir, input.inp.pseudo_dir);
+    EXPECT_EQ(roundtrip.inp.dfpt_qfile, input.inp.dfpt_qfile);
+    EXPECT_EQ(roundtrip.inp.out_pchg, input.inp.out_pchg);
+}
+
+TEST_F(InputDomainReaderTest, PreservesUnmigratedEndOfFileHandling)
+{
+    write_input("calculation");
+    ModuleIO::ReadInput reader(0);
+    reader.check_ntype_flag = false;
+    Parameter input;
+    reader.read_parameters(input, filename);
+    EXPECT_EQ(input.inp.calculation, "scf");
 }
 
 TEST_F(InputDomainReaderTest, RetainsExistingSpinDependencyCheck)

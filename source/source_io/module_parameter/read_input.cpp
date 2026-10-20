@@ -395,6 +395,12 @@ std::string ReadInput::read_txt_input(Parameter& param, const std::string& filen
         if (it != this->input_lists.end()) // find the keyword
         {
             Input_Item* p_item = &(it->second);
+            // Preserve the legacy EOF handling until a domain declares the
+            // required token count. Some legacy readers accept empty values.
+            if (ascii_stream.eof() && p_item->domain.empty())
+            {
+                break;
+            }
             if (std::find(readvalue_items.begin(), readvalue_items.end(), p_item) != readvalue_items.end())
             {
                 std::string warningstr = "The parameter " + p_item->label + " has been read twice.";
@@ -446,14 +452,7 @@ std::string ReadInput::prepare_input(Parameter& param)
     std::string errors;
     for (const auto* item : this->readvalue_items)
     {
-        if (item->str_values.empty() && item->domain.empty())
-        {
-            errors += "Invalid INPUT parameter '" + item->label + "': missing value (" + item->type + ").\n";
-        }
-        else
-        {
-            errors += item->domain.validate_explicit(item->label, item->str_values);
-        }
+        errors += item->domain.validate_explicit(item->label, item->str_values);
     }
     if (!errors.empty())
     {

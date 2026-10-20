@@ -414,10 +414,15 @@ TEST_F(InputTest, Check)
         readinput.clear();
     }
 
-    ModuleIO::ReadInput::check_mode = true;
     Parameter param;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(readinput.read_parameters(param, "./INPUT.ref"), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(
+        {
+            ModuleIO::ReadInput::check_mode = true;
+            readinput.read_parameters(param, "./INPUT.ref");
+        },
+        ::testing::ExitedWithCode(0),
+        "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
     EXPECT_TRUE(std::remove("./INPUT.ref") == 0);

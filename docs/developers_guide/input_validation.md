@@ -19,8 +19,8 @@ no duplicate choices and matching `Integer` metadata.
 
 After collecting INPUT tokens, the reader calls `prepare_input` once:
 
-1. Reject missing values for supplied keywords. Validate all explicitly supplied
-   domains, including complete integer tokens and exactly one value. Collect
+1. Validate explicitly supplied parameters that have a declared domain,
+   including complete integer tokens and exactly one value. Collect
    independent errors before running any value reader or default/reset hook.
 2. Run the existing readers, contextual default/reset hooks and alias
    normalization.
@@ -54,7 +54,9 @@ checking their documented meaning.
 
 This first slice establishes shared domain checks, not a replacement for all
 existing input processing. Parameters without a declared domain retain their
-existing behavior. Legacy cross-parameter checks, including the requirement
+existing reader and EOF behavior. Their empty strings or vectors can be valid;
+the shared checker does not reject empty values without a domain that requires
+a value. Legacy cross-parameter checks, including the requirement
 for `nspin=4` with `noncolin` or `lspinorb`, still run after the required context
 is available. [Availability](input_availability.md) describes applicability;
 it is not automatically a hard runtime constraint.
