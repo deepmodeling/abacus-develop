@@ -150,7 +150,7 @@ void Forces<FPTYPE, Device>::cal_force(const int nspin,
         }
         else
         {
-            elec.pot->add_solvation_force(ucell, forcesol);
+            elec.pot->add_component_solvation_force(ucell, forcesol);
         }
         if (PARAM.inp.test_force)
         {

@@ -338,7 +338,7 @@ void ElecState::cal_energies(const int type,
     }
     else if (imp_sol == 2)
     {
-        this->pot->get_solvation_energy(this->f_en.esol_el, this->f_en.esol_cav);
+        this->pot->component_solvation_energy(this->f_en.esol_el, this->f_en.esol_cav);
     }
     else
     {

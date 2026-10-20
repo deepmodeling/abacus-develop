@@ -83,9 +83,11 @@ class Potential : public PotBase
 
     PotBase* get_pot_type(const std::string& pot_type, const Input_para& input);
 
-    void get_solvation_energy(double& electrostatic, double& non_electrostatic) const override;
-    void add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const override;
-    const std::vector<double>* solvent_electrostatic_potential() const override;
+    // Solvation terms of the registered components; not PotBase overrides, so
+    // modules that stub Potential need not know about solvation.
+    void component_solvation_energy(double& electrostatic, double& non_electrostatic) const;
+    void add_component_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const;
+    const std::vector<double>* component_solvent_electrostatic_potential() const;
 
     /**
      * @brief Inject the shared RT-TDDFT field state before potential setup.

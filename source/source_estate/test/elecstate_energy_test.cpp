@@ -13,12 +13,10 @@ bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
 Potential::~Potential() {}
-void Potential::add_solvation_force(const UnitCell&, ModuleBase::matrix&) const {}
 void Potential::cal_v_eff(const Charge*, const UnitCell*, ModuleBase::matrix&) {}
 void Potential::cal_fixed_v(double*) {}
-const std::vector<double>* Potential::solvent_electrostatic_potential() const { return nullptr; }
 
-void Potential::get_solvation_energy(double& el, double& cav) const
+void Potential::component_solvation_energy(double& el, double& cav) const
 {
     el = 0.8;
     cav = 0.9;

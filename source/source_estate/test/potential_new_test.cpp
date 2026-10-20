@@ -431,13 +431,13 @@ TEST_F(PotentialNewTest, SolvationForcesUseRegisteredComponentsOnce)
     {
         for (int axis = 0; axis < 3; ++axis) { force(ia, axis) = 7.0; }
     }
-    potential->add_solvation_force(*ucell, force);
+    potential->add_component_solvation_force(*ucell, force);
     for (int ia = 0; ia < 2; ++ia)
     {
         for (int axis = 0; axis < 3; ++axis) { EXPECT_DOUBLE_EQ(force(ia, axis), 8.25); }
     }
     potential->pot_register({"fixed"});
-    potential->add_solvation_force(*ucell, force);
+    potential->add_component_solvation_force(*ucell, force);
     for (int ia = 0; ia < 2; ++ia)
     {
         for (int axis = 0; axis < 3; ++axis) { EXPECT_DOUBLE_EQ(force(ia, axis), 8.25); }

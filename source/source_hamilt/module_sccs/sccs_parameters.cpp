@@ -1,29 +1,22 @@
 #include "sccs_parameters.h"
 
+#include "source_base/constants.h"
 #include "source_base/tool_quit.h"
-
 
 namespace ModuleSccs
 {
-namespace
-{
-// CODATA 2018 SI values. Environ 3.1.1 converts with 4.35974394e-18 J and
-// 0.52917720859e-10 m, so the surface tension and pressure differ from its
-// values by about 2e-7 (relative). ModuleBase's SI values differ from both.
-const double hartree_joule = 4.3597447222071e-18;
-const double bohr_metre = 5.29177210903e-11;
-}
 
 double dyn_per_cm_to_hartree_per_bohr2(double value)
 {
     const double joule_per_square_metre = value * 1e-3;
-    return joule_per_square_metre * bohr_metre * bohr_metre / hartree_joule;
+    return joule_per_square_metre * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI / ModuleBase::HARTREE_SI;
 }
 
 double gpa_to_hartree_per_bohr3(double value)
 {
     const double pascal = value * 1e9;
-    return pascal * bohr_metre * bohr_metre * bohr_metre / hartree_joule;
+    return pascal * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI
+           / ModuleBase::HARTREE_SI;
 }
 
 Preset parse_preset(const std::string& name)

@@ -23,8 +23,8 @@ TEST(SccsParameters, PresetValues)
                                          ModuleSccs::Preset::WaterAnion};
     const double minima[] = {1e-4, 2e-4, 2.4e-3};
     const double maxima[] = {5e-3, 3.5e-3, 1.55e-2};
-    const double tensions[] = {3.076640259577260e-5, 3.211524279308205e-6, 0.0};
-    const double pressures[] = {-1.223615131827540e-5, 4.248663652178958e-6, 1.529518914784425e-5};
+    const double tensions[] = {3.076638359192053e-5, 3.211522295607572e-6, 0.0};
+    const double pressures[] = {-1.223613888352364e-5, 4.248659334556821e-6, 1.529517360440455e-5};
     for (int index = 0; index < 3; ++index)
     {
         const ModuleSccs::SccsConfig config = ModuleSccs::make_sccs_config(presets[index]);

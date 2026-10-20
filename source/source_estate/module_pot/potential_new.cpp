@@ -403,7 +403,7 @@ void Potential::add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) c
     }
 }
 
-void Potential::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
+void Potential::add_component_solvation_force(const UnitCell& cell, ModuleBase::matrix& force) const
 {
     for (const PotBase* component : this->components)
     {
@@ -411,7 +411,7 @@ void Potential::add_solvation_force(const UnitCell& cell, ModuleBase::matrix& fo
     }
 }
 
-void Potential::get_solvation_energy(double& electrostatic, double& non_electrostatic) const
+void Potential::component_solvation_energy(double& electrostatic, double& non_electrostatic) const
 {
     electrostatic = 0.0;
     non_electrostatic = 0.0;
@@ -425,7 +425,7 @@ void Potential::get_solvation_energy(double& electrostatic, double& non_electros
     }
 }
 
-const std::vector<double>* Potential::solvent_electrostatic_potential() const
+const std::vector<double>* Potential::component_solvent_electrostatic_potential() const
 {
     for (const PotBase* component : this->components)
     {
