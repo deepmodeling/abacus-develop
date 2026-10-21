@@ -938,6 +938,58 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
     }
 }
 
+TEST_F(DFTUBaseTest, CompactWriterReaderSocRealSpinBasisRoundtrip)
+{
+    Plus_U_Base source;
+    init_dftu_for_spin(source, false, 4, 2, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    const int orbital_size = 5;
+    for (int row = 0; row < orbital_size; ++row)
+    {
+        for (int column = 0; column < orbital_size; ++column)
+        {
+            const double up_up = 0.1 + 0.01 * row + 0.001 * column;
+            const double up_down = 0.2 + 0.01 * row + 0.001 * column;
+            const double down_down = 0.3 + 0.01 * row + 0.001 * column;
+            source.occmat().set(0, 2, 0, row, column, up_up);
+            source.occmat().set(0, 2, 0, row, column + orbital_size, up_down);
+            source.occmat().set(0, 2, 0, row + orbital_size, column, up_down);
+            source.occmat().set(0, 2, 0, row + orbital_size, column + orbital_size, down_down);
+        }
+    }
+
+    const std::string filename = testing::TempDir() + "compact_writer_soc_real.txt";
+    {
+        std::ofstream output(filename.c_str());
+        ASSERT_TRUE(output.is_open());
+        DFTU_BASE::write_occup_m(source,
+                                 ucell,
+                                 output,
+                                 4,
+                                 DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    }
+
+    OccupationMatrix restored;
+    const std::vector<int> l_channel = {2};
+    restored.init(ucell, l_channel, 4, 2);
+    DFTU_BASE::read_occup_m(ucell,
+                            restored,
+                            l_channel,
+                            filename,
+                            4,
+                            2,
+                            DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+
+    for (int row = 0; row < 2 * orbital_size; ++row)
+    {
+        for (int column = 0; column < 2 * orbital_size; ++column)
+        {
+            EXPECT_NEAR(restored.get(0, 2, 0, row, column),
+                        source.occmat().get(0, 2, 0, row, column),
+                        1e-8);
+        }
+    }
+}
+
 TEST_F(DFTUBaseTest, ReadOccMatCompactHandlesLongComment)
 {
     const std::string fn = testing::TempDir() + "compact_long_comment.txt";
