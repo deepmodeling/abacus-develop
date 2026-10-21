@@ -134,6 +134,71 @@ TEST_F(InputTest, PccSelectionAndUnsupportedCombinations)
     EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
 }
 
+TEST_F(InputTest, RejectInvalidMemSaver)
+{
+    const std::string filename = testing::TempDir() + "abacus_invalid_mem_saver_INPUT";
+    for (const std::string calculation : {"scf", "relax", "nscf"})
+    {
+        for (const int value : {-1, 1, 2})
+        {
+            if (calculation == "nscf" && value == 1)
+            {
+                continue;
+            }
+            SCOPED_TRACE(calculation);
+            SCOPED_TRACE(value);
+            {
+                std::ofstream input(filename.c_str());
+                input << "INPUT_PARAMETERS\ncalculation " << calculation << "\nmem_saver " << value << "\n";
+            }
+            ModuleIO::ReadInput reader(0);
+            reader.check_ntype_flag = false;
+            Parameter param;
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(reader.read_parameters(param, filename), testing::ExitedWithCode(1), "");
+            const std::string diagnostic = testing::internal::GetCapturedStdout();
+            const std::string invalid_value = "Invalid INPUT mem_saver=" + std::to_string(value);
+            EXPECT_THAT(diagnostic, testing::HasSubstr(invalid_value));
+            EXPECT_THAT(diagnostic, testing::HasSubstr("input-main.html#mem-saver"));
+            if (value == 1)
+            {
+                const std::string invalid_mode = "calculation=" + calculation;
+                EXPECT_THAT(diagnostic, testing::HasSubstr(invalid_mode));
+                EXPECT_THAT(diagnostic, testing::HasSubstr("mem_saver=0"));
+            }
+            else
+            {
+                EXPECT_THAT(diagnostic, testing::HasSubstr("0 or 1"));
+            }
+            EXPECT_EQ(std::remove(filename.c_str()), 0);
+        }
+    }
+}
+
+TEST_F(InputTest, AcceptSupportedMemSaverInputs)
+{
+    const std::string filename = testing::TempDir() + "abacus_valid_mem_saver_INPUT";
+    for (const std::string parameters : {"",
+                                         "mem_saver 0\n",
+                                         "calculation relax\nmem_saver 0\n",
+                                         "calculation nscf\nmem_saver 1\n",
+                                         "basis_type lcao\ncalculation nscf\nmem_saver 1\n"})
+    {
+        SCOPED_TRACE(parameters);
+        {
+            std::ofstream input(filename.c_str());
+            input << "INPUT_PARAMETERS\n" << parameters;
+        }
+        ModuleIO::ReadInput reader(0);
+        reader.check_ntype_flag = false;
+        Parameter param;
+        reader.read_parameters(param, filename);
+        const int expected_value = param.inp.calculation == "nscf" ? 1 : 0;
+        EXPECT_EQ(param.inp.mem_saver, expected_value);
+        EXPECT_EQ(std::remove(filename.c_str()), 0);
+    }
+}
+
 TEST_F(InputTest, Item_test)
 {
     ModuleIO::ReadInput readinput(0);
@@ -322,14 +387,13 @@ TEST_F(InputTest, Item_test)
     { // mem_saver
         auto it = find_label("mem_saver", readinput.input_lists);
         TestParameters::input(param).mem_saver = 1;
+        it->second.str_values = {"1"};
         TestParameters::input(param).calculation = "scf";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(TestParameters::input(param).mem_saver, 0);
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
 
-        TestParameters::input(param).mem_saver = 1;
         TestParameters::input(param).calculation = "relax";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(TestParameters::input(param).mem_saver, 0);
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EQ(TestParameters::input(param).mem_saver, 1);
     }
     { // gint_precision
         auto it = find_label("gint_precision", readinput.input_lists);
@@ -1357,6 +1421,62 @@ TEST_F(InputTest, HsOutputAliases)
         EXPECT_EQ(TestParameters::input(param).out_hsk[0], 1);
     }
 }
+TEST_F(InputTest, PreserveExplicitMagneticMixing)
+{
+    const std::string filename = testing::TempDir() + "abacus_magnetic_mixing_INPUT";
+    for (const int nspin : {1, 2, 4})
+    {
+        const double expected_beta = nspin == 1 ? 0.8 : 0.4;
+        for (const bool explicit_beta : {false, true})
+        {
+            SCOPED_TRACE(nspin);
+            SCOPED_TRACE(explicit_beta);
+            {
+                std::ofstream input(filename.c_str());
+                input << "INPUT_PARAMETERS\nnspin " << nspin
+                      << "\nmixing_beta_mag 0.2\nmixing_gg0_mag 0.7\n";
+                if (explicit_beta)
+                {
+                    input << "mixing_beta " << expected_beta << "\n";
+                }
+            }
+            ModuleIO::ReadInput reader(0);
+            reader.check_ntype_flag = false;
+            Parameter param;
+            reader.read_parameters(param, filename);
+            EXPECT_DOUBLE_EQ(param.inp.mixing_beta, expected_beta);
+            EXPECT_DOUBLE_EQ(param.inp.mixing_beta_mag, 0.2);
+            EXPECT_DOUBLE_EQ(param.inp.mixing_gg0_mag, 0.7);
+            EXPECT_EQ(std::remove(filename.c_str()), 0);
+        }
+    }
+}
+
+TEST_F(InputTest, DefaultMagneticMixing)
+{
+    const std::string filename = testing::TempDir() + "abacus_default_mixing_INPUT";
+    for (const int nspin : {1, 2, 4})
+    {
+        SCOPED_TRACE(nspin);
+        {
+            std::ofstream input(filename.c_str());
+            input << "INPUT_PARAMETERS\nnspin " << nspin << "\n";
+        }
+        ModuleIO::ReadInput reader(0);
+        reader.check_ntype_flag = false;
+        Parameter param;
+        reader.read_parameters(param, filename);
+        const double expected_beta = nspin == 1 ? 0.8 : 0.4;
+        EXPECT_DOUBLE_EQ(param.inp.mixing_beta, expected_beta);
+        EXPECT_DOUBLE_EQ(param.inp.mixing_gg0_mag, 0.0);
+        if (nspin != 1)
+        {
+            EXPECT_DOUBLE_EQ(param.inp.mixing_beta_mag, 1.6);
+        }
+        EXPECT_EQ(std::remove(filename.c_str()), 0);
+    }
+}
+
 TEST_F(InputTest, Item_test2)
 {
     ModuleIO::ReadInput readinput(0);
@@ -1452,6 +1572,8 @@ TEST_F(InputTest, Item_test2)
     }
     { // mixing_beta
         auto it = find_label("mixing_beta", readinput.input_lists);
+        TestParameters::input(param).mixing_beta_mag = 0.2;
+        TestParameters::input(param).mixing_gg0_mag = 0.7;
         TestParameters::input(param).mixing_beta = -1;
         TestParameters::input(param).nspin = 1;
         it->second.reset_value(it->second, param);
@@ -1461,15 +1583,15 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).nspin = 2;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).mixing_beta, 0.4);
-        EXPECT_EQ(TestParameters::input(param).mixing_beta_mag, 1.6);
-        EXPECT_EQ(TestParameters::input(param).mixing_gg0_mag, 0.0);
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).mixing_beta_mag, 0.2);
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).mixing_gg0_mag, 0.7);
 
         TestParameters::input(param).mixing_beta = -1;
         TestParameters::input(param).nspin = 4;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).mixing_beta, 0.4);
-        EXPECT_EQ(TestParameters::input(param).mixing_beta_mag, 1.6);
-        EXPECT_EQ(TestParameters::input(param).mixing_gg0_mag, 0.0);
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).mixing_beta_mag, 0.2);
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).mixing_gg0_mag, 0.7);
     }
     { // mixing_beta_mag
         auto it = find_label("mixing_beta_mag", readinput.input_lists);

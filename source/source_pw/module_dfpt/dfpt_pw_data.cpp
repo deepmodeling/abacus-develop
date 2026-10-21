@@ -646,4 +646,34 @@ void DFPT_PW_Data::deallocate_memory()
     ModuleBase::timer::end("DFPT_PW_Data", "deallocate_memory");
 }
 
+void DFPT_PW_Data::set_drhoc_g(int q_idx, const std::vector<std::complex<double>>& rho_c)
+{
+    ModuleBase::TITLE("DFPT_PW_Data", "set_drhoc_g");
+    ModuleBase::timer::start("DFPT_PW_Data", "set_drhoc_g");
+    if (q_idx < 0)
+    {
+        ModuleBase::timer::end("DFPT_PW_Data", "set_drhoc_g");
+        return;
+    }
+    if (q_idx >= static_cast<int>(drhoc_g_.size()))
+    {
+        drhoc_g_.resize(q_idx + 1);
+    }
+    drhoc_g_[q_idx] = rho_c;
+    ModuleBase::timer::end("DFPT_PW_Data", "set_drhoc_g");
+}
+
+std::vector<std::complex<double>> DFPT_PW_Data::get_drhoc_g(int q_idx) const
+{
+    ModuleBase::TITLE("DFPT_PW_Data", "get_drhoc_g");
+    ModuleBase::timer::start("DFPT_PW_Data", "get_drhoc_g");
+    if (q_idx >= 0 && q_idx < static_cast<int>(drhoc_g_.size()))
+    {
+        ModuleBase::timer::end("DFPT_PW_Data", "get_drhoc_g");
+        return drhoc_g_[q_idx];
+    }
+    ModuleBase::timer::end("DFPT_PW_Data", "get_drhoc_g");
+    return {};
+}
+
 } // namespace ModuleDFPT

@@ -1,0 +1,2 @@
+PW neutral water with periodic SCCS (water-neutral preset), ecutwfc 20 and ecutrho 240.
+Checks total energy, forces and electrostatic, surface and volume solvation terms.

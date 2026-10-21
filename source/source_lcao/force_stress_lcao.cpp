@@ -190,6 +190,12 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     {
         parts.fpcc.create(ucell.nat, 3);
         pelec->pot->add_pcc_force(ucell, parts.fpcc);
+        // imp_sol 1 fills fsol in cal_vdw_fields_fs; only SCCS uses the component hook.
+        if (cfg.imp_sol == 2)
+        {
+            parts.fsol.create(ucell.nat, 3);
+            pelec->pot->sum_sol_force(ucell, parts.fsol);
+        }
     }
 
     // DFT+U force/stress
