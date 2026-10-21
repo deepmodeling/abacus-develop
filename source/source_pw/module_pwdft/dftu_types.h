@@ -23,6 +23,15 @@ struct OccmatOutputCfg
     int dft_plus_u;
 };
 
+/// Electronic-step metadata recorded in an occupation-matrix snapshot.
+struct OccmatStepInfo
+{
+    int istep;
+    int iter;
+    double scf_thr;
+    double drho;
+};
+
 /// Storage layout of the real (2l+1)*npol matrix when nspin == 4.
 enum OccmatSocLayout
 {

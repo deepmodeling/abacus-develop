@@ -300,10 +300,10 @@ static void write_soc_atom(const Plus_U_Base& dftu,
 void write_occup_m(const Plus_U_Base& dftu,
                    const UnitCell& ucell,
                    std::ostream& os,
-                   const int nspin,
                    const OccmatSocLayout soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "write_occup_m");
+    const int nspin = dftu.occmat().nspin();
     for (int type = 0; type < ucell.ntype; ++type)
     {
         if (!dftu.has_l_channel(type))

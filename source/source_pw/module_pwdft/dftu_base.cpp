@@ -184,7 +184,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
             DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
                                     readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
-            DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel, nspin, npol);
+            DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
 #endif
 
             this->set_occmat_ready();
@@ -216,7 +216,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
             DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
                                     readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
-            DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel, nspin, npol);
+            DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
 #endif
             this->set_occmat_ready();
         }

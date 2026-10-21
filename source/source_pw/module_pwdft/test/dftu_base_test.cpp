@@ -462,20 +462,17 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
 
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, true, 1};
     const std::string out_dir = testing::TempDir();
+    const DFTU_BASE::OccmatStepInfo first_step = {0, 1, 1e-6, 0.5};
+    const DFTU_BASE::OccmatStepInfo second_step = {1, 2, 1e-6, 0.5};
 
     // fresh run: no occupation matrix has been computed or loaded
     ASSERT_FALSE(dftu.is_occmat_ready());
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
                                         out_dir,
-                                        2, // nspin
-                                        1, // npol
-                                        0, // istep -> occ_matg1.txt
-                                        1, // iter
+                                        first_step,
                                         false,
                                         false, // occmat_ready
-                                        1e-6,
-                                        0.5,
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -496,14 +493,9 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
                                         out_dir,
-                                        2, // nspin
-                                        1, // npol
-                                        1, // istep -> occ_matg2.txt
-                                        2, // iter
+                                        second_step,
                                         false,
                                         true, // occmat_ready
-                                        1e-6,
-                                        0.5,
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -532,6 +524,7 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
 
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, false, 1};
     const std::string out_dir = testing::TempDir();
+    const DFTU_BASE::OccmatStepInfo step = {0, 1, 1e-6, 0.5};
 
     // Remove stale files from previous test binary runs so the
     // "file not written" assertions are meaningful.
@@ -541,14 +534,9 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
                                         out_dir,
-                                        2, // nspin
-                                        1, // npol
-                                        0, // istep (an output ionic step)
-                                        1, // iter
+                                        step,
                                         false,
                                         true, // occmat_ready
-                                        1e-6,
-                                        0.5,
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -559,12 +547,7 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
     DFTU_BASE::write_latest_occmat(dftu,
                                    ucell,
                                    out_dir,
-                                   2, // nspin
-                                   1, // npol
-                                   0, // istep
-                                   2, // iter
-                                   1e-6,
-                                   0.5,
+                                   step,
                                    cfg,
                                    DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -589,18 +572,14 @@ TEST_F(DFTUBaseTest, DftPlusUDisabledWritesNothing)
 
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, true, 0};
     const std::string out_dir = testing::TempDir() + "guard_test/";
+    const DFTU_BASE::OccmatStepInfo step = {0, 1, 1e-6, 0.5};
 
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
                                         out_dir,
-                                        2, // nspin
-                                        1, // npol
-                                        0, // istep (an output ionic step)
-                                        1, // iter
+                                        step,
                                         false,
                                         true, // occmat_ready
-                                        1e-6,
-                                        0.5,
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -611,12 +590,7 @@ TEST_F(DFTUBaseTest, DftPlusUDisabledWritesNothing)
     DFTU_BASE::write_latest_occmat(dftu,
                                    ucell,
                                    out_dir,
-                                   2, // nspin
-                                   1, // npol
-                                   0, // istep
-                                   2, // iter
-                                   1e-6,
-                                   0.5,
+                                   step,
                                    cfg,
                                    DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -865,7 +839,6 @@ TEST_F(DFTUBaseTest, CompactWriterReaderCollinearRoundtrip)
         DFTU_BASE::write_occup_m(source,
                                  ucell,
                                  output,
-                                 2,
                                  DFTU_BASE::SOC_LAYOUT_PAULI);
     }
 
@@ -915,7 +888,6 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
         DFTU_BASE::write_occup_m(source,
                                  ucell,
                                  output,
-                                 4,
                                  DFTU_BASE::SOC_LAYOUT_PAULI);
     }
 
@@ -964,7 +936,6 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocRealSpinBasisRoundtrip)
         DFTU_BASE::write_occup_m(source,
                                  ucell,
                                  output,
-                                 4,
                                  DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
     }
 
@@ -1458,6 +1429,7 @@ TEST_F(DFTUBaseTest, AppendSnapshotGuardDftuOffBeforeIterValidation)
     // out_occ_mat=true but dft_plus_u=0: the guard must catch dft_plus_u
     // and return before the iter < 1 check fires.
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, true, 0};
+    const DFTU_BASE::OccmatStepInfo step = {0, 0, 1e-6, 0.5};
 
     // Use a unique subdirectory so files from other tests in the same
     // binary do not cause false positives.
@@ -1468,14 +1440,9 @@ TEST_F(DFTUBaseTest, AppendSnapshotGuardDftuOffBeforeIterValidation)
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
                                         out_dir,
-                                        2, // nspin
-                                        1, // npol
-                                        0, // istep
-                                        0, // iter — invalid, but DFT+U is off
+                                        step,
                                         false,
                                         false,
-                                        1e-6,
-                                        0.5,
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
