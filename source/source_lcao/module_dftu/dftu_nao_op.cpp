@@ -129,12 +129,11 @@ void hamilt::DFTU_onsite<hamilt::OperatorLCAO<TK, TR>>::contribute_from_symmetri
     const int nspin0 = (this->nspin == 2) ? 2 : 1;
     const std::vector<ModuleBase::Vector3<double>> kvec_d_full
         = this->build_full_bz_kvectors(nspin0);
-    const std::vector<std::vector<TK>> dmk_full
-        = this->symrot_.restore_dm(*this->kv_, this->dm_->get_dmk_vec(), pv);
     const int nks_full = static_cast<int>(kvec_d_full.size());
     module_dm::DensityMatrix<TK, double> dmr_sym(&pv, nspin0, kvec_d_full, nks_full);
     dmr_sym.init_dmr(*this->dm_->get_dmr_ptr(1));
-    dmr_sym.get_dmk_vec() = dmk_full;
+    dmr_sym.get_dmk_vec()
+        = this->symrot_.restore_dm(*this->kv_, this->dm_->get_dmk_vec(), pv);
     dmr_sym.cal_dmr(-1);
 
     const hamilt::HContainer<double>* dmr = dmr_sym.get_dmr_ptr(this->current_spin + 1);
