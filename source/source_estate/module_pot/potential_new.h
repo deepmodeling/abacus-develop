@@ -89,6 +89,9 @@ class Potential : public PotBase
     void sum_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const;
     const std::vector<double>* find_sol_pot() const;
 
+    /// @brief Read the shared RT-TDDFT field state.
+    const TDFieldManager* td_field_manager() const { return td_field_manager_.get(); }
+
     /**
      * @brief Inject the shared RT-TDDFT field state before potential setup.
      *
