@@ -87,11 +87,24 @@ class DFTUBaseTest : public testing::Test
     /// Call init_base with the given Yukawa switch on a fresh d orbital
     void init_dftu(Plus_U_Base& dftu, const bool yukawa_potential)
     {
+        init_dftu_for_spin(dftu,
+                           yukawa_potential,
+                           2,
+                           1,
+                           DFTU_BASE::SOC_LAYOUT_PAULI);
+    }
+
+    void init_dftu_for_spin(Plus_U_Base& dftu,
+                            const bool yukawa_potential,
+                            const int nspin,
+                            const int npol,
+                            const DFTU_BASE::OccmatSocLayout soc_layout)
+    {
         const std::vector<int> l_channel = {2};
         const std::vector<double> hubbard_u = {0.0};
         dftu.init_base(ucell,
-                       1,                      // npol
-                       2,                      // nspin
+                       npol,
+                       nspin,
                        l_channel,
                        yukawa_potential,
                        0.5,                    // yukawa_lambda
@@ -103,7 +116,7 @@ class DFTUBaseTest : public testing::Test
                        0.0,                    // uramping
                        0,                      // init_occ_mat
                        0,                      // mixing_dftu
-                       DFTU_BASE::SOC_LAYOUT_PAULI);
+                       soc_layout);
     }
 };
 
@@ -826,6 +839,108 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatSocPauliRoundtrip)
             << "Pauli block b2 mismatch at k=" << k;
         EXPECT_NEAR(occ0.c[3 * m2 + k], uu[k] - dd[k], 1e-12)    // b3
             << "Pauli block b3 mismatch at k=" << k;
+    }
+}
+
+TEST_F(DFTUBaseTest, CompactWriterReaderCollinearRoundtrip)
+{
+    Plus_U_Base source;
+    init_dftu_for_spin(source, false, 2, 1, DFTU_BASE::SOC_LAYOUT_PAULI);
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        for (int row = 0; row < 5; ++row)
+        {
+            for (int column = 0; column < 5; ++column)
+            {
+                const double value = 0.1 * (spin + 1) + 0.01 * row + 0.001 * column;
+                source.occmat().set(0, 2, spin, row, column, value);
+            }
+        }
+    }
+
+    const std::string filename = testing::TempDir() + "compact_writer_collinear.txt";
+    {
+        std::ofstream output(filename.c_str());
+        ASSERT_TRUE(output.is_open());
+        DFTU_BASE::write_occup_m(source,
+                                 ucell,
+                                 output,
+                                 true,
+                                 2,
+                                 1,
+                                 DFTU_BASE::OCMAT_FMT_READABLE,
+                                 DFTU_BASE::SOC_LAYOUT_PAULI);
+    }
+
+    OccupationMatrix restored;
+    const std::vector<int> l_channel = {2};
+    restored.init(ucell, l_channel, 2, 1);
+    DFTU_BASE::read_occup_m(ucell,
+                            restored,
+                            l_channel,
+                            filename,
+                            2,
+                            1,
+                            DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        for (int row = 0; row < 5; ++row)
+        {
+            for (int column = 0; column < 5; ++column)
+            {
+                EXPECT_NEAR(restored.get(0, 2, spin, row, column),
+                            source.occmat().get(0, 2, spin, row, column),
+                            1e-8);
+            }
+        }
+    }
+}
+
+TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
+{
+    Plus_U_Base source;
+    init_dftu_for_spin(source, false, 4, 2, DFTU_BASE::SOC_LAYOUT_PAULI);
+    const int block_size = 25;
+    for (int block = 0; block < 4; ++block)
+    {
+        for (int index = 0; index < block_size; ++index)
+        {
+            source.occmat().mat(0, 2, 0).c[block * block_size + index]
+                = 0.1 * (block + 1) + 0.001 * index;
+        }
+    }
+
+    const std::string filename = testing::TempDir() + "compact_writer_soc_pauli.txt";
+    {
+        std::ofstream output(filename.c_str());
+        ASSERT_TRUE(output.is_open());
+        DFTU_BASE::write_occup_m(source,
+                                 ucell,
+                                 output,
+                                 true,
+                                 4,
+                                 2,
+                                 DFTU_BASE::OCMAT_FMT_READABLE,
+                                 DFTU_BASE::SOC_LAYOUT_PAULI);
+    }
+
+    OccupationMatrix restored;
+    const std::vector<int> l_channel = {2};
+    restored.init(ucell, l_channel, 4, 2);
+    DFTU_BASE::read_occup_m(ucell,
+                            restored,
+                            l_channel,
+                            filename,
+                            4,
+                            2,
+                            DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    for (int index = 0; index < 4 * block_size; ++index)
+    {
+        EXPECT_NEAR(restored.mat(0, 2, 0).c[index],
+                    source.occmat().mat(0, 2, 0).c[index],
+                    1e-8);
     }
 }
 
