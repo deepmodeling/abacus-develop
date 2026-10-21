@@ -17,6 +17,7 @@ add_library(
     ../module_parameter/read_inp_dfpt.cpp
     ../module_parameter/read_inp_deepks.cpp
     ../module_parameter/read_inp_model.cpp
+    ../module_parameter/read_inp_sccs.cpp
     ../module_parameter/read_inp_postproc.cpp  
     ../module_parameter/read_inp_exx_dftu.cpp
     ../module_parameter/read_inp_other.cpp   
@@ -40,7 +41,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_read_item_serial
   LIBS parameter base device io_input_serial
-  SOURCES read_input_item_test.cpp
+  SOURCES read_input_item_test.cpp test_read_inp_sccs.cpp
 )
 
 AddTest(

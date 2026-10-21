@@ -56,6 +56,19 @@ void DFPT_PW::Impl::assemble_v_sc(const ModuleBase::Vector3<double>& q_cart,
     xc_->set_context(q_cart);
     std::vector<std::complex<double>> a_r(nrxx);
     pw_rho_->recip2real(drho_in_g.data(), a_r.data());
+    // nlcc: the first-order core density enters the XC channel only (the
+    // core Coulomb is already in the ionic pseudopotential, so the Hartree
+    // above correctly uses the valence density alone)
+    const std::vector<std::complex<double>> drhoc_g = data_.get_drhoc_g(last_q_);
+    if (static_cast<int>(drhoc_g.size()) == pw_rho_->npw)
+    {
+        std::vector<std::complex<double>> drhoc_r(nrxx);
+        pw_rho_->recip2real(drhoc_g.data(), drhoc_r.data());
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            a_r[ir] += drhoc_r[ir];
+        }
+    }
     std::vector<std::complex<double>> b_r;
     xc_->apply(a_r, b_r);
     if (static_cast<int>(b_r.size()) != nrxx)
@@ -203,6 +216,9 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
     const bool dbg = (getenv("DFPT_DEBUG") != nullptr);
 
     pert_.build_dv(q_idx, iat, idir, data_);
+    // nlcc: q-shifted core-density derivative for the displaced atom
+    // (fixed per displacement, consumed by assemble_v_sc's XC channel)
+    rho_.compute_drhoc(*ucell_, iat, idir, q_idx, data_);
     rho_.reset_mixing(q_idx);
     data_.set_drho_g(q_idx, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
 
