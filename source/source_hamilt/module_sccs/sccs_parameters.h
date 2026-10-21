@@ -4,7 +4,6 @@
 #include "sccs_cavity.h"
 
 #include <string>
-#include <vector>
 
 namespace ModuleSccs
 {
