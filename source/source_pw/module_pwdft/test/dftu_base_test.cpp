@@ -865,10 +865,7 @@ TEST_F(DFTUBaseTest, CompactWriterReaderCollinearRoundtrip)
         DFTU_BASE::write_occup_m(source,
                                  ucell,
                                  output,
-                                 true,
                                  2,
-                                 1,
-                                 DFTU_BASE::OCMAT_FMT_READABLE,
                                  DFTU_BASE::SOC_LAYOUT_PAULI);
     }
 
@@ -918,10 +915,7 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
         DFTU_BASE::write_occup_m(source,
                                  ucell,
                                  output,
-                                 true,
                                  4,
-                                 2,
-                                 DFTU_BASE::OCMAT_FMT_READABLE,
                                  DFTU_BASE::SOC_LAYOUT_PAULI);
     }
 

@@ -189,19 +189,15 @@ void write_latest_occmat(const Plus_U_Base& dftu,
 
 /// Write local occupation matrices to the given stream.
 ///
-/// When diag is true, eigenvalues and magnetism are also printed; otherwise
-/// only raw matrix elements. fmt selects between the legacy token layout
-/// (used for running log) and the readable snapshot layout of
-/// occ_mat.txt and occ_matg{#}.txt. soc_layout tells how the nspin == 4
-/// storage is arranged (PW Pauli blocks or LCAO real spin-basis matrix).
+/// Writes the compact snapshot layout accepted by read_occup_m(). The output
+/// includes per-atom magnetism, electron counts and the full matrix blocks.
+/// soc_layout tells how the nspin == 4 storage is arranged (PW Pauli blocks
+/// or LCAO real spin-basis matrix).
 /// Caller is responsible for opening/closing the stream.
 void write_occup_m(const Plus_U_Base& dftu,
                    const UnitCell& ucell,
                    std::ostream& ofs,
-                   bool diag,
                    int nspin,
-                   int npol,
-                   OccmatTextFormat fmt,
                    OccmatSocLayout soc_layout);
 
 } // namespace DFTU_BASE

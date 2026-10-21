@@ -23,13 +23,6 @@ struct OccmatOutputCfg
     int dft_plus_u;
 };
 
-/// Text format used by write_occup_m().
-enum OccmatTextFormat
-{
-    OCMAT_FMT_LEGACY,   ///< legacy diagnostic layout; not accepted on input
-    OCMAT_FMT_READABLE  ///< compact human-readable layout for snapshot files
-};
-
 /// Storage layout of the real (2l+1)*npol matrix when nspin == 4.
 enum OccmatSocLayout
 {

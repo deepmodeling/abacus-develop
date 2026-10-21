@@ -2,7 +2,6 @@
 
 #include "source_cell/unitcell.h"
 #include "source_pw/module_pwdft/dftu_base.h"
-#include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_external/lapack_connector.h"
@@ -20,11 +19,12 @@
 #include <sstream>
 #include <vector>
 
-// local helpers for eigenvalue calculation
-// migrated from dftu_base.cpp, mohan 2025-11-08
 namespace
 {
 
+// Retained for the follow-up occupation-eigensystem output refactor. The
+// compact writer does not currently call these helpers: this PR only removes
+// the legacy text format and separates the writer from file orchestration.
 inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int n)
 {
     if (std::abs(A[p][q]) > 1e-10)
@@ -147,16 +147,6 @@ inline void extract_soc_pauli_blocks(const Plus_U_Base& dftu,
     }
 }
 
-/// @brief Diagonalize the SOC occupation matrix reconstructed in spinor space.
-///
-/// The Hermitian spinor matrix is built from the Pauli blocks as
-///   n_upup   = (b0 + b3)/2, n_dndn = (b0 - b3)/2,
-///   n_updown = (b1 + i*b2)/2.
-/// Its 2*(2l+1) real eigenvalues are computed with LAPACK zheev.
-///
-/// @param blocks four Pauli-component blocks
-/// @param m 2l+1
-/// @return eigenvalues sorted ascending by zheev
 inline std::vector<double> calculate_spinor_eigenvalues(
     const std::vector<std::vector<double>>& blocks,
     const int m)
@@ -434,8 +424,7 @@ void write_snapshot_section(std::ostream& os,
     }
 
     // Full occupation matrices together with per-atom magnetism.
-    write_occup_m(dftu, ucell, os, true, nspin, npol,
-                  OCMAT_FMT_READABLE, soc_layout);
+    write_occup_m(dftu, ucell, os, nspin, soc_layout);
 }
 
 void append_ion_step_snapshot(const Plus_U_Base& dftu,
@@ -581,10 +570,7 @@ void write_latest_occmat(const Plus_U_Base& dftu,
 void write_occup_m(const Plus_U_Base& dftu,
                    const UnitCell& ucell,
                    std::ostream& ofs,
-                   bool diag,
                    int nspin,
-                   int npol,
-                   OccmatTextFormat fmt,
                    OccmatSocLayout soc_layout)
 {
     ModuleBase::TITLE("DFTU_BASE", "write_occup_m");
@@ -600,170 +586,53 @@ void write_occup_m(const Plus_U_Base& dftu,
         {
             continue;
         }
-        const int NL = ucell.atoms[T].nwl + 1;
-        const int LC = dftu.get_l_channel(T);
+        const int l = dftu.get_l_channel(T);
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
+            const std::string& elem_label = ucell.atoms[T].label;
 
-            for (int l = 0; l < NL; l++)
+            if (nspin == 1 || nspin == 2)
             {
-                if (l != dftu.get_l_channel(T))
+                const int nm = 2 * l + 1;
+                double electron_count[2] = {0.0, 0.0};
+                for (int spin = 0; spin < 2; ++spin)
                 {
-                    continue;
-                }
-
-                const std::string& elem_label = ucell.atoms[T].label;
-                const int index_in_type = I + 1;
-                const ModuleBase::Vector3<double>& tau = ucell.atoms[T].tau[I];
-                const bool readable = (fmt == OCMAT_FMT_READABLE);
-
-                // In the compact collinear/SOC layout the header carries the
-                // per-atom magnetism, which is only known after the Pauli
-                // block traces; that header is written in the spin branches.
-                const bool defer_header = readable
-                                          && (nspin == 1 || nspin == 2 || nspin == 4);
-                if (!defer_header)
-                {
-                    if (readable)
+                    for (int m = 0; m < nm; ++m)
                     {
-                        // Readable header, e.g. " Fe Atom 1 L 2".
-                        // The position is not repeated: it is recorded in
-                        // STRU and constant within one ionic (g) step.
-                        ofs << "\n " << elem_label;
-                        ofs << " Atom " << iat + 1;
-                        ofs << " L " << l << std::endl;
-                    }
-                    else
-                    {
-                        // Legacy diagnostic layout. The compact-only restart
-                        // reader intentionally rejects this representation.
-                        ofs << "\n" << elem_label << " " << index_in_type;
-                        ofs << " Atom=" << iat + 1;
-                        ofs << " L=" << l;
-                        ofs << std::setprecision(8) << std::fixed
-                            << std::setw(14) << tau.x
-                            << std::setw(14) << tau.y
-                            << std::setw(14) << tau.z << std::endl;
+                        electron_count[spin] += dftu.occmat().get(iat, l, spin, m, m);
                     }
                 }
 
-                if (nspin == 1 || nspin == 2)
-                {
-                    const int nm = 2 * l + 1;
-                    double sum0[2] = {0.0, 0.0};
+                ofs << "\n " << elem_label;
+                ofs << " Atom " << iat + 1;
+                ofs << " L " << l;
+                ofs << " mag " << std::fixed << std::setprecision(8)
+                    << electron_count[0] - electron_count[1] << std::endl;
 
-                    if (readable)
+                ofs << std::fixed << std::setprecision(8);
+                for (int spin = 0; spin < 2; ++spin)
+                {
+                    ofs << " spin " << spin + 1;
+                    ofs << " nelec " << electron_count[spin] << std::endl;
+                    for (int m0 = 0; m0 < nm; ++m0)
                     {
-                        // Compact snapshot layout, e.g.
-                        // " Fe Atom 1 L 2 mag 0.84215429"
-                        // " spin 1 nelec 1.76153075"
-                        // followed by the matrix rows.
-                        if (diag)
+                        for (int m1 = 0; m1 < nm; ++m1)
                         {
-                            for (int is = 0; is < 2; is++)
-                            {
-                                for (int m0 = 0; m0 < nm; m0++)
-                                {
-                                    sum0[is] += dftu.occmat().get(iat, l, is, m0, m0);
-                                }
-                            }
-                        }
-                        ofs << "\n " << elem_label;
-                        ofs << " Atom " << iat + 1;
-                        ofs << " L " << l;
-                        if (diag)
-                        {
-                            ofs << " mag " << std::fixed << std::setprecision(8)
-                                << sum0[0] - sum0[1];
+                            ofs << " " << std::setw(10)
+                                << dftu.occmat().get(iat, l, spin, m0, m1);
                         }
                         ofs << std::endl;
-
-                        ofs << std::fixed << std::setprecision(8);
-                        for (int is = 0; is < 2; is++)
-                        {
-                            ofs << " spin " << is + 1;
-                            if (diag)
-                            {
-                                ofs << " nelec " << sum0[is];
-                            }
-                            ofs << std::endl;
-                            for (int m0 = 0; m0 < nm; m0++)
-                            {
-                                for (int m1 = 0; m1 < nm; m1++)
-                                {
-                                    // One separating space before every
-                                    // value; positive values are 10 chars,
-                                    // negative ones 11.
-                                    ofs << " " << std::setw(10)
-                                        << dftu.occmat().get(iat, l, is, m0, m1);
-                                }
-                                ofs << std::endl;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        const std::string trace_label = " Trace (electrons) ";
-                        const std::string matrix_label = " spin= ";
-                        for (int is = 0; is < 2; is++)
-                        {
-                            if (diag)
-                            {
-                                std::vector<std::vector<double>> A(nm,
-                                                                   std::vector<double>(nm));
-                                for (int m0 = 0; m0 < nm; m0++)
-                                {
-                                    for (int m1 = 0; m1 < nm; m1++)
-                                    {
-                                        A[m0][m1] = dftu.occmat().get(iat, l, is, m0, m1);
-                                    }
-                                }
-                                std::vector<double> eigenvalues = CalculateEigenvalues(A, nm);
-                                sum0[is] = 0.0;
-                                ofs << " Eigenvalues for spin=" << is + 1 << std::endl;
-                                ofs << std::setprecision(8) << std::fixed;
-                                for (int i = 0; i < nm; i++)
-                                {
-                                    ofs << std::setw(12) << eigenvalues[i];
-                                    sum0[is] += eigenvalues[i];
-                                }
-                                ofs << std::endl;
-                                ofs << std::fixed << std::setprecision(8);
-                                ofs << trace_label << sum0[is] << std::endl;
-                            }
-                            ofs << matrix_label << is + 1 << std::endl;
-                            // Matrix elements use fixed-point notation with 8
-                            // fractional digits (~1e-8 absolute precision).
-                            ofs << std::fixed << std::setprecision(8);
-                            for (int m0 = 0; m0 < nm; m0++)
-                            {
-                                for (int m1 = 0; m1 < nm; m1++)
-                                {
-                                    // Legacy keeps its historical
-                                    // 12-character column alignment.
-                                    ofs << " " << std::setw(11)
-                                        << dftu.occmat().get(iat, l, is, m0, m1);
-                                }
-                                ofs << std::endl;
-                            }
-                        }
-                        if (diag)
-                        {
-                            ofs << " mag " << std::fixed << std::setprecision(8)
-                                << sum0[0] - sum0[1] << std::endl;
-                        }
                     }
                 }
-                else if (nspin == 4) // SOC
-                {
+            }
+            else if (nspin == 4) // SOC
+            {
                     const int m = 2 * l + 1;
                     std::vector<std::vector<double>> blocks;
                     extract_soc_pauli_blocks(dftu, iat, l, soc_layout, blocks);
 
-                    if (readable)
-                    {
                         // Compact snapshot layout aligned with the
                         // nspin == 2 style, e.g.
                         // " Fe Atom 1 L 2 mag mx my mz"
@@ -793,22 +662,14 @@ void write_occup_m(const Plus_U_Base& dftu,
                         ofs << "\n " << elem_label;
                         ofs << " Atom " << iat + 1;
                         ofs << " L " << l;
-                        if (diag)
-                        {
-                            ofs << " mag " << std::fixed << std::setprecision(8)
-                                << mag_x << " " << mag_y << " " << mag_z;
-                        }
+                        ofs << " mag " << std::fixed << std::setprecision(8)
+                            << mag_x << " " << mag_y << " " << mag_z;
                         ofs << std::endl;
 
                         ofs << std::fixed << std::setprecision(8);
 
                         // spin 1: spin up/up block (Re).
-                        ofs << " spin 1";
-                        if (diag)
-                        {
-                            ofs << " nelec " << n_up;
-                        }
-                        ofs << std::endl;
+                        ofs << " spin 1 nelec " << n_up << std::endl;
                         for (int m0 = 0; m0 < m; ++m0)
                         {
                             for (int m1 = 0; m1 < m; ++m1)
@@ -847,12 +708,7 @@ void write_occup_m(const Plus_U_Base& dftu,
                         }
 
                         // spin 2: spin down/down block (Re).
-                        ofs << " spin 2";
-                        if (diag)
-                        {
-                            ofs << " nelec " << n_down;
-                        }
-                        ofs << std::endl;
+                        ofs << " spin 2 nelec " << n_down << std::endl;
                         for (int m0 = 0; m0 < m; ++m0)
                         {
                             for (int m1 = 0; m1 < m; ++m1)
@@ -863,130 +719,9 @@ void write_occup_m(const Plus_U_Base& dftu,
                             }
                             ofs << std::endl;
                         }
-                    }
-                    else if (diag)
-                    {
-                        // Occupation numbers of the correlated spinor shell.
-                        std::vector<double> eigenvalues = calculate_spinor_eigenvalues(blocks, m);
-                        ofs << " Eigenvalues in spinor space:" << std::endl;
-                        ofs << std::setprecision(8) << std::fixed;
-                        for (int i = 0; i < 2 * m; ++i)
-                        {
-                            ofs << std::setw(12) << eigenvalues[i];
-                            if ((i + 1) % m == 0)
-                            {
-                                ofs << std::endl;
-                            }
-                        }
-
-                        // Per-atom charge and spin-moment traces of the shell.
-                        double n_tot = 0.0;
-                        double mag_x = 0.0;
-                        double mag_y = 0.0;
-                        double mag_z = 0.0;
-                        for (int mm = 0; mm < m; ++mm)
-                        {
-                            const int k = mm * m + mm;
-                            n_tot += blocks[0][k];
-                            mag_x += blocks[1][k];
-                            mag_y += blocks[2][k];
-                            mag_z += blocks[3][k];
-                        }
-                        ofs << std::fixed << std::setprecision(8);
-                        ofs << " Trace (electrons) " << n_tot << std::endl;
-                        ofs << " Magnetism for atom " << iat + 1 << " (mx, my, mz):"
-                            << std::setw(12) << mag_x << std::setw(12) << mag_y
-                            << std::setw(12) << mag_z << std::endl;
-
-                        // Matrix elements use fixed-point notation with 8
-                        // fractional digits (~1e-8 absolute precision).
-                        ofs << std::fixed << std::setprecision(8);
-
-                        // Hermitian occupation matrix shown spin block by spin block.
-                        ofs << " Occupation matrix, spin up/up (Re):" << std::endl;
-                        for (int m0 = 0; m0 < m; ++m0)
-                        {
-                            for (int m1 = 0; m1 < m; ++m1)
-                            {
-                                const int k = m0 * m + m1;
-                                const double val = 0.5 * (blocks[0][k] + blocks[3][k]);
-                                ofs << " " << std::setw(10) << val;
-                            }
-                            ofs << std::endl;
-                        }
-                        ofs << " Occupation matrix, spin up/down (Re):" << std::endl;
-                        for (int m0 = 0; m0 < m; ++m0)
-                        {
-                            for (int m1 = 0; m1 < m; ++m1)
-                            {
-                                const int k = m0 * m + m1;
-                                const double val = 0.5 * blocks[1][k];
-                                ofs << " " << std::setw(10) << val;
-                            }
-                            ofs << std::endl;
-                        }
-                        ofs << " Occupation matrix, spin up/down (Im):" << std::endl;
-                        for (int m0 = 0; m0 < m; ++m0)
-                        {
-                            for (int m1 = 0; m1 < m; ++m1)
-                            {
-                                const int k = m0 * m + m1;
-                                const double val = 0.5 * blocks[2][k];
-                                ofs << " " << std::setw(10) << val;
-                            }
-                            ofs << std::endl;
-                        }
-                        ofs << " Occupation matrix, spin down/down (Re):" << std::endl;
-                        for (int m0 = 0; m0 < m; ++m0)
-                        {
-                            for (int m1 = 0; m1 < m; ++m1)
-                            {
-                                const int k = m0 * m + m1;
-                                const double val = 0.5 * (blocks[0][k] - blocks[3][k]);
-                                ofs << " " << std::setw(10) << val;
-                            }
-                            ofs << std::endl;
-                        }
-                    }
-                    else
-                    {
-                        // Legacy real 2m x 2m matrix in spin basis; retained
-                        // for diagnostic output only.
-                        for (int m0 = 0; m0 < m; ++m0)
-                        {
-                            for (int ipol0 = 0; ipol0 < npol; ++ipol0)
-                            {
-                                for (int m1 = 0; m1 < m; ++m1)
-                                {
-                                    for (int ipol1 = 0; ipol1 < npol; ++ipol1)
-                                    {
-                                        const int k = m0 * m + m1;
-                                        double val = 0.0;
-                                        if (ipol0 == 0 && ipol1 == 0)
-                                        {
-                                            val = 0.5 * (blocks[0][k] + blocks[3][k]);
-                                        }
-                                        else if (ipol0 == 1 && ipol1 == 1)
-                                        {
-                                            val = 0.5 * (blocks[0][k] - blocks[3][k]);
-                                        }
-                                        else
-                                        {
-                                            val = 0.5 * blocks[1][k];
-                                        }
-                                        ofs << " " << std::setw(10)
-                                            << std::setprecision(8)
-                                            << std::fixed << val;
-                                    }
-                                }
-                                ofs << std::endl;
-                            }
-                        }
-                    }
-                }
-            }     // l
-        }         // I
-    }             // T
+            }
+        }
+    }
 
     return;
 }
