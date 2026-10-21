@@ -137,6 +137,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
 }
 
 template <typename TR, typename Device>
+int ESolver_KS_LCAO_TDDFT<TR, Device>::scf_iter_limit(const int istep) const
+{
+    const int initial_step = this->inp_->init_wfc == "file" ? restart_step_ : 0;
+    return istep > initial_step ? this->inp_->td_scf_nmax : this->inp_->scf_nmax;
+}
+
+template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
@@ -291,10 +298,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
         // 2) SCF iterations
         //----------------------------------------------------------------
         bool conv_esolver = false;
-        this->niter = this->maxniter;
+        const int iter_limit = this->scf_iter_limit(totstep);
+        this->niter = iter_limit;
+        this->scf_nmax_flag = false;
         this->diag_ethr = this->inp_->pw_diag_thr;
-        for (int iter = 1; iter <= this->maxniter; ++iter)
+        for (int iter = 1; iter <= iter_limit; ++iter)
         {
+            this->scf_nmax_flag = iter == iter_limit;
             ModuleIO::write_head_td(GlobalV::ofs_running, istep, totstep, iter, this->basisname);
 
             // 2.1) Initialization of the SCF iteration
@@ -507,13 +517,19 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
 
     ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
 
-    // Store wave functions, Hamiltonian and overlap matrix, to be used in the next electronic step
-    // Store when converged or when the maximum iteration count is reached
-    bool force_save = conv_esolver || (iter == this->maxniter);
-    this->store_h_s_psi(ucell, istep, iter, force_save);
+    // Save the endpoint at convergence or the iteration limit for the next electronic step.
+    const int iter_limit = this->scf_iter_limit(istep);
+    const bool accept_state = conv_esolver || iter == iter_limit;
+    this->store_h_s_psi(ucell, istep, iter, accept_state);
 
-    // Calculate the RT-TDDFT energy-density matrix at the last converged substep when required by td_edm and the gauge
-    if (conv_esolver && estep == estep_max - 1 && istep >= (this->inp_->init_wfc == "file" ? 0 : 1) && this->inp_->td_edm == 0
+    // At an ionic-step boundary, runner exits immediately after replaying the restart endpoint.
+    // Refresh EDM here before that early exit leads to force and stress calculations.
+    const bool replay_endpoint = this->inp_->mdp.md_restart && !restart_done && estep == 0
+                                 && restart_step_ % this->inp_->estep_per_md == 0;
+    const bool last_endpoint = estep == estep_max - 1 || replay_endpoint;
+
+    // Refresh the energy-density matrix at convergence or the iteration limit for forces and stress.
+    if (accept_state && last_endpoint && istep >= (this->inp_->init_wfc == "file" ? 0 : 1) && this->inp_->td_edm == 0
         && this->inp_->td_stype != 2)
     {
         if (use_tensor && use_lapack)

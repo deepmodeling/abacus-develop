@@ -139,11 +139,11 @@ void ESolver_KS_PW_TDDFT<T, Device>::runner(BaseCell& basecell, const int istep)
     }
     for (int electronic_step = first_step; electronic_step <= last_step; ++electronic_step)
     {
-        if (this->retry_enabled(electronic_step))
+        if (electronic_step > 0)
         {
             basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
             UnitCell& cell = static_cast<UnitCell&>(basecell);
-            this->run_with_retries(cell, electronic_step);
+            this->run_propagation(cell, electronic_step);
         }
         else
         {
@@ -155,13 +155,13 @@ void ESolver_KS_PW_TDDFT<T, Device>::runner(BaseCell& basecell, const int istep)
 template <typename T, typename Device>
 bool ESolver_KS_PW_TDDFT<T, Device>::defer_iter_output(const int istep) const
 {
-    return this->retry_enabled(istep);
+    return istep > 0;
 }
 
 template <typename T, typename Device>
-bool ESolver_KS_PW_TDDFT<T, Device>::retry_enabled(int istep) const
+int ESolver_KS_PW_TDDFT<T, Device>::scf_iter_limit(const int istep) const
 {
-    return istep > 0 && this->inp_->td_max_halvings > 0;
+    return istep > 0 ? this->inp_->td_scf_nmax : this->inp_->scf_nmax;
 }
 
 template <typename T, typename Device>
@@ -231,7 +231,8 @@ bool ESolver_KS_PW_TDDFT<T, Device>::advance_interval(UnitCell& cell,
     {
         std::cout << " TD substep: " << interval_text << std::endl;
     }
-    const bool converged = this->scf_loop(cell, step, this->inp_->td_retry_nmax);
+    const int iter_limit = this->scf_iter_limit(step);
+    const bool converged = this->scf_loop(cell, step, iter_limit);
     const bool accept_trial = converged || depth == this->inp_->td_max_halvings;
     log_ << " TD trial result: iterations=" << this->niter << ", residual=" << this->drho << ", converged=" << converged
          << ", accepted=" << accept_trial << '\n';
@@ -254,16 +255,23 @@ bool ESolver_KS_PW_TDDFT<T, Device>::advance_interval(UnitCell& cell,
     stats.after = std::max(stats.after, trial_stats.after);
     const psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
     this->history_.save(*current, *this->pelec->pot);
-    accepted = this->capture_state();
+    if (this->inp_->td_max_halvings > 0)
+    {
+        accepted = this->capture_state();
+    }
     return converged;
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW_TDDFT<T, Device>::run_with_retries(UnitCell& cell, int step)
+void ESolver_KS_PW_TDDFT<T, Device>::run_propagation(UnitCell& cell, int step)
 {
-    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "run_with_retries");
+    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "run_propagation");
     const ModuleBase::TimePoint started = ModuleBase::get_time();
-    AcceptedState accepted = this->capture_state();
+    AcceptedState accepted;
+    if (this->inp_->td_max_halvings > 0)
+    {
+        accepted = this->capture_state();
+    }
     this->before_scf(cell, step);
     ModuleBase::GlobalFunc::DONE(log_, "INIT SCF");
     const elecstate::TDFieldState full = this->td_field_manager_->field_state();
@@ -284,7 +292,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::run_with_retries(UnitCell& cell, int step)
     this->output_field(step);
     this->after_scf(cell, step, converged);
     this->conv_esolver = converged;
-    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "run_with_retries");
+    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "run_propagation");
 }
 
 template <typename T, typename Device>
@@ -395,11 +403,6 @@ void ESolver_KS_PW_TDDFT<T, Device>::iter_init(UnitCell& ucell, const int istep,
     }
     ModuleIO::write_head_td(GlobalV::ofs_running, ionic_step, istep, iter, this->basisname);
     ESolver_KS_PW<T, Device>::iter_init(ucell, istep, iter);
-    if (this->retry_enabled(istep) && iter == 1)
-    {
-        // Apply the trial limit after the parent initializes the mixing machinery.
-        this->p_chgmix->reset_scf_history(this->inp_->td_retry_nmax);
-    }
 }
 
 template <typename T, typename Device>
@@ -494,7 +497,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
 template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
-    if (!conv_esolver && this->niter < this->maxniter && !this->retry_enabled(istep))
+    if (!conv_esolver && this->niter < this->maxniter && istep == 0)
     {
         const int evolution_step = istep + 1;
         const std::string message
@@ -506,7 +509,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
         const psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
         this->td_solver_->check_initial(*current, this->niter);
     }
-    if (!conv_esolver && !this->retry_enabled(istep))
+    if (!conv_esolver && istep == 0)
     {
         finalize_endpoint(ucell);
     }
@@ -524,8 +527,8 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     std::cout.precision(original_precision);
     if (istep >= 0)
     {
-        // Retry intervals already saved their accepted endpoint before reaching this hook.
-        if (!this->retry_enabled(istep))
+        // Propagation intervals already saved their accepted endpoint before reaching this hook.
+        if (istep == 0)
         {
             psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
             this->history_.save(*current, *this->pelec->pot);

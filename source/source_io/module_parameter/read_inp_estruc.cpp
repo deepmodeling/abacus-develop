@@ -787,7 +787,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.annotation = "number of electron iterations";
         item.category = "Electronic structure";
         item.type = "Integer";
-        item.description = "This variable indicates the maximal iteration number for electronic iterations.";
+        item.description = "Maximum number of electronic self-consistency iterations. In PW and LCAO RT-TDDFT, this controls initial-state calculations; real-time propagation uses the independent `td_scf_nmax` limit.";
         item.default_value = "100";
         item.unit = "";
         read_sync_int(input.scf_nmax);

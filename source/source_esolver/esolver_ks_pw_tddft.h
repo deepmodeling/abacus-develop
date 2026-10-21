@@ -29,6 +29,8 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     void runner(BaseCell& basecell, const int istep) override;
 
   protected:
+    /** @brief Use independent iteration limits for initial-state SCF and propagation. */
+    int scf_iter_limit(const int istep) const override;
     /** @brief Use ground-state diagonalization for the initial electronic step. */
     std::string diag_policy(const int istep) const override;
 
@@ -71,11 +73,9 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
         ModuleBase::matrix eigenvalues;
         std::vector<double> density;
     };
-    /** @brief Whether the current electronic step uses half-step retries. */
-    bool retry_enabled(int istep) const;
     AcceptedState capture_state() const;
     void restore_state(const AcceptedState& state);
-    void run_with_retries(UnitCell& cell, int step);
+    void run_propagation(UnitCell& cell, int step);
     bool advance_interval(UnitCell& cell,
                           int step,
                           int index,

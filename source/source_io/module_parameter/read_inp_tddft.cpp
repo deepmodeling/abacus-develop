@@ -240,7 +240,7 @@ void ReadInput::item_rt_tddft()
         item.annotation = "maximum depth of PW real-time half-step retries";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Integer";
-        item.description = R"(Maximum number of recursive halvings of an electronic propagation interval when self-consistency fails. Zero disables retries and retains the `scf_nmax` policy. A positive value enables trials with at most `td_retry_nmax` iterations each. The smallest internal time step is `td_dt / 2^td_max_halvings`; output times and the physical field profile retain the original `td_dt` grid. A value of 3 allows internal steps down to `td_dt / 8`.)";
+        item.description = R"(Maximum number of recursive halvings of an electronic propagation interval when self-consistency fails. Zero disables retries. Each full-step or subdivided trial uses at most `td_scf_nmax` iterations. The smallest internal time step is `td_dt / 2^td_max_halvings`; output times and the physical field profile retain the original `td_dt` grid. A value of 3 allows internal steps down to `td_dt / 8`.)";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
@@ -257,24 +257,22 @@ void ReadInput::item_rt_tddft()
         this->add_item(item);
     }
     {
-        Input_Item item("td_retry_nmax");
-        item.annotation = "SCF iteration limit per PW real-time trial interval";
-        item.category = "Real-Time TDDFT (PW)";
+        Input_Item item("td_scf_nmax");
+        item.annotation = "SCF iteration limit per real-time propagation attempt";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
-        item.description = R"(Maximum number of self-consistency iterations for each full-step or subdivided trial when `td_max_halvings` is positive. This includes the initial predictor and must be at least 2 when retries are enabled.
-
-Initial-state SCF still uses `scf_nmax`. This parameter has no effect when `td_max_halvings=0`.)";
-        item.default_value = "20";
+        item.description = R"(Maximum number of self-consistency iterations for each real-time propagation step in PW and LCAO calculations. Must be an integer of at least 2. Convergence can end the iterations early. In PW calculations, when `td_max_halvings` is positive, the limit applies independently to each full-step or subdivided trial. This parameter is independent of `scf_nmax`.)";
+        item.default_value = "100";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
+        item.set_availability("esolver_type==tddft and basis_type in [pw, lcao]");
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_retry_nmax = parse_td_integer(item);
+            para.input.td_scf_nmax = parse_td_integer(item);
         };
-        sync_int(input.td_retry_nmax);
+        sync_int(input.td_scf_nmax);
         item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.td_retry_nmax < 1 || (para.inp.td_max_halvings > 0 && para.inp.td_retry_nmax < 2))
+            if (para.inp.td_scf_nmax < 2)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_retry_nmax must be positive, and at least 2 when retries are enabled.");
+                ModuleBase::WARNING_QUIT("ReadInput", "td_scf_nmax must be an integer of at least 2.");
             }
         };
         this->add_item(item);
@@ -435,7 +433,7 @@ All methods check the residual at the end of the linear solve, before orthonorma
         item.annotation = "maximum iterations per linear solve";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Integer";
-        item.description = "Positive maximum number of iterations for each PW real-time linear solve. Failure to converge stops the calculation. Self-consistency uses `scf_nmax`, or `td_retry_nmax` for real-time trials when `td_max_halvings` is positive.";
+        item.description = "Positive maximum number of iterations for each PW real-time linear solve. Failure to converge stops the calculation. Initial-state self-consistency uses `scf_nmax`; real-time self-consistency uses `td_scf_nmax`.";
         item.default_value = "500";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");

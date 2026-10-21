@@ -181,10 +181,16 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
     this->before_scf(ucell, istep);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
-    const bool converged = this->scf_loop(ucell, istep, this->maxniter);
+    const int iter_limit = this->scf_iter_limit(istep);
+    const bool converged = this->scf_loop(ucell, istep, iter_limit);
     this->after_scf(ucell, istep, converged);
     this->conv_esolver = converged;
     ModuleBase::timer::end(this->classname, "runner");
+}
+
+int ESolver_KS::scf_iter_limit(const int istep) const
+{
+    return this->maxniter;
 }
 
 bool ESolver_KS::scf_loop(UnitCell& ucell, int istep, int iter_limit)
@@ -305,6 +311,7 @@ bool ESolver_KS::defer_iter_output(const int istep) const
 
 void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
 {
+    const int iter_limit = this->scf_iter_limit(istep);
 
     // 1.1) print out band gap 
     if (!PARAM.globalv.two_fermi)
@@ -319,7 +326,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     // 1.2) print out eigenvalues and occupations
     if (this->inp_->out_band[0] && !this->defer_iter_output(istep))
     {
-        if (iter % this->inp_->out_freq_elec == 0 || iter == this->inp_->scf_nmax || conv_esolver)
+        if (iter % this->inp_->out_freq_elec == 0 || iter == iter_limit || conv_esolver)
         {
             this->write_iter_bands();
         }
@@ -342,6 +349,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 #endif
 
     module_charge::ScfMixingCtx ctx;
+    ctx.iter_limit = iter_limit;
     ctx.hsolver_error = hsolver_error;
     ctx.scf_thr = this->scf_thr;
     ctx.scf_ene_thr = this->scf_ene_thr;
@@ -398,16 +406,22 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     }
 
     // Iter finish 
-    if (!this->defer_iter_output(istep))
+    const bool output_charge = iter % this->inp_->out_freq_elec == 0 || conv_esolver || iter == iter_limit;
+    if (!this->defer_iter_output(istep) && output_charge)
     {
-        ESolver_FP::iter_finish(ucell, istep, iter, conv_esolver);
+        // The FP hook only writes density backups. Select output here using the
+        // active limit so its legacy scf_nmax check cannot trigger extra writes.
+        // This local flag forces output without changing actual convergence.
+        // Revisit this call if the base hook gains responsibilities beyond output.
+        bool force_output = true;
+        ESolver_FP::iter_finish(ucell, istep, iter, force_output);
     }
 
     // the end, print time
     double duration = ModuleBase::get_duration(iter_time, ModuleBase::get_time());
 
     // print energies
-    elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho,
+    elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, iter_limit, drho,
     dkin, duration, *this->inp_, PARAM.globalv.two_fermi, diag_ethr, 0, true, this->ds_rms_);
 
 

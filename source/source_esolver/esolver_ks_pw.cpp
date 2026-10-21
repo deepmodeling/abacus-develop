@@ -251,7 +251,8 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
         mag_converged = sc.mag_converged();
     }
 
-    module_charge::chgmixing_ks_pw(iter, this->p_chgmix, *this->dftu_, mag_converged, *this->inp_);
+    const int iter_limit = this->scf_iter_limit(istep);
+    module_charge::chgmixing_ks_pw(iter, iter_limit, this->p_chgmix, *this->dftu_, mag_converged, *this->inp_);
 
     // mohan move harris functional here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
@@ -261,7 +262,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     // should before lambda loop in DeltaSpin
     const DFTU_BASE::OccmatOutputCfg init_occmat_cfg{this->inp_->out_freq_ion,
                                                      this->inp_->out_freq_elec,
-                                                     this->inp_->scf_nmax,
+                                                     iter_limit,
                                                      this->inp_->out_occ_mat,
                                                      this->inp_->dft_plus_u};
     DFTU_BASE::iter_init_dftu_pw(iter,
@@ -400,9 +401,10 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // first step (istep 0, iter 1) the PW occupation matrix does not exist
     // yet (iter_init_dftu_pw returns before calculating it), so skip it and
     // keep the previous behavior where occ_mat.txt first appears at iter 2.
+    const int iter_limit = this->scf_iter_limit(istep);
     const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion,
                                                 this->inp_->out_freq_elec,
-                                                this->inp_->scf_nmax,
+                                                iter_limit,
                                                 this->inp_->out_occ_mat,
                                                 this->inp_->dft_plus_u};
     const DFTU_BASE::OccmatStepInfo occmat_step{istep,

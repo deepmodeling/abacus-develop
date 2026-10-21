@@ -32,6 +32,9 @@ class ESolver_KS : public ESolver_FP
     virtual void after_all_runners(BaseCell& basecell) override;
 
   protected:
+    //! Maximum SCF iterations for the current electronic step.
+    virtual int scf_iter_limit(const int istep) const;
+
     /** @brief Run SCF iterations without preparing or committing a physical endpoint. */
     bool scf_loop(UnitCell& ucell, int istep, int iter_limit);
     /** @brief Record an accepted iteration in JSON without changing its convergence status. */
