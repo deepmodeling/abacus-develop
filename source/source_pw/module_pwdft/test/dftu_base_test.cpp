@@ -865,6 +865,46 @@ TEST_F(DFTUBaseTest, CompactWriterReaderCollinearRoundtrip)
             }
         }
     }
+
+    // Assert the diagnostic header values that read_occup_m only validates
+    // for finiteness: per-spin nelec (trace) and collinear mag (up - down).
+    double expected_nelec[2] = {0.0, 0.0};
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        for (int m = 0; m < 5; ++m)
+        {
+            expected_nelec[spin] += source.occmat().get(0, 2, spin, m, m);
+        }
+    }
+    const double expected_mag = expected_nelec[0] - expected_nelec[1];
+
+    std::ifstream input(filename.c_str());
+    ASSERT_TRUE(input.is_open());
+    std::string token;
+    double parsed_mag = 0.0;
+    double parsed_nelec[2] = {0.0, 0.0};
+    int spin_index = -1;
+    while (input >> token)
+    {
+        if (token == "mag")
+        {
+            ASSERT_TRUE(input >> parsed_mag);
+        }
+        else if (token == "spin")
+        {
+            ASSERT_TRUE(input >> spin_index);
+            ASSERT_GE(spin_index, 1);
+            ASSERT_LE(spin_index, 2);
+        }
+        else if (token == "nelec")
+        {
+            ASSERT_EQ(spin_index == 1 || spin_index == 2, true);
+            ASSERT_TRUE(input >> parsed_nelec[spin_index - 1]);
+        }
+    }
+    EXPECT_NEAR(parsed_mag, expected_mag, 1e-7);
+    EXPECT_NEAR(parsed_nelec[0], expected_nelec[0], 1e-7);
+    EXPECT_NEAR(parsed_nelec[1], expected_nelec[1], 1e-7);
 }
 
 TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
@@ -908,6 +948,54 @@ TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
                     source.occmat().mat(0, 2, 0).c[index],
                     1e-8);
     }
+
+    // Assert the SOC diagnostic header: mag x/y/z and per-spin nelec.
+    // Pauli blocks are charge/spin_x/spin_y/spin_z, so the writer reports
+    // mag_x = sum(spin_x diag), mag_y = sum(spin_y diag), mag_z = sum(spin_z diag)
+    // and nelec = 0.5 * sum(charge +/- spin_z) on the diagonal.
+    const ModuleBase::matrix& occ = source.occmat().mat(0, 2, 0);
+    double expected_mag[3] = {0.0, 0.0, 0.0};
+    double expected_nelec_soc[2] = {0.0, 0.0};
+    for (int m = 0; m < 5; ++m)
+    {
+        const int diag = m * 5 + m;
+        expected_mag[0] += occ.c[1 * block_size + diag];
+        expected_mag[1] += occ.c[2 * block_size + diag];
+        expected_mag[2] += occ.c[3 * block_size + diag];
+        expected_nelec_soc[0] += 0.5 * (occ.c[0 * block_size + diag] + occ.c[3 * block_size + diag]);
+        expected_nelec_soc[1] += 0.5 * (occ.c[0 * block_size + diag] - occ.c[3 * block_size + diag]);
+    }
+    // The fixture fills every block entry, including a nonzero spin_y block,
+    // so mag_y must be nonzero for this assertion to be meaningful.
+    EXPECT_NE(expected_mag[1], 0.0);
+
+    std::ifstream soc_input(filename.c_str());
+    ASSERT_TRUE(soc_input.is_open());
+    std::string token;
+    double parsed_mag_soc[3] = {0.0, 0.0, 0.0};
+    double parsed_nelec_soc[2] = {0.0, 0.0};
+    int spin_index = -1;
+    while (soc_input >> token)
+    {
+        if (token == "mag")
+        {
+            ASSERT_TRUE(soc_input >> parsed_mag_soc[0] >> parsed_mag_soc[1] >> parsed_mag_soc[2]);
+        }
+        else if (token == "spin")
+        {
+            ASSERT_TRUE(soc_input >> spin_index);
+        }
+        else if (token == "nelec")
+        {
+            ASSERT_EQ(spin_index == 1 || spin_index == 2, true);
+            ASSERT_TRUE(soc_input >> parsed_nelec_soc[spin_index - 1]);
+        }
+    }
+    EXPECT_NEAR(parsed_mag_soc[0], expected_mag[0], 1e-7);
+    EXPECT_NEAR(parsed_mag_soc[1], expected_mag[1], 1e-7);
+    EXPECT_NEAR(parsed_mag_soc[2], expected_mag[2], 1e-7);
+    EXPECT_NEAR(parsed_nelec_soc[0], expected_nelec_soc[0], 1e-7);
+    EXPECT_NEAR(parsed_nelec_soc[1], expected_nelec_soc[1], 1e-7);
 }
 
 TEST_F(DFTUBaseTest, CompactWriterReaderSocRealSpinBasisRoundtrip)

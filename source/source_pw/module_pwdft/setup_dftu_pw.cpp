@@ -66,13 +66,6 @@ void iter_init_dftu_pw(const int iter,
                               dftu.get_uterm_mat(), dftu.energy_ref());
     }
 
-    // Keep the historical output cadence: output() is skipped at the very
-    // first electronic step.
-    if (first_scf_step)
-    {
-        return;
-    }
-
 }
 
 }
