@@ -16,11 +16,12 @@
  * @date 2025-10-10
  */
 #include "esolver_nep.h"
+
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
+#include "source_cell/cif_io.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
-#include "source_cell/cif_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -41,8 +42,7 @@ void ESolver_NEP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     {
         MDCell& mdcell = static_cast<MDCell&>(basecell);
 #ifdef __NEP
-        const double cutoff = std::max(nep.paramb.rc_radial_max, nep.paramb.rc_angular_max)
-                              * ModuleBase::ANGSTROM_AU;
+        const double cutoff = std::max(nep.paramb.rc_radial_max, nep.paramb.rc_angular_max) * ModuleBase::ANGSTROM_AU;
         mdcell.set_neighbor_cutoff(cutoff);
         initialize_type_map_(mdcell.type_labels());
 #else
@@ -96,14 +96,14 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
         const std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms();
         const std::vector<LocalAtom>& ghost_atoms = mdcell.ghost_atoms();
         std::vector<int> local_type(static_cast<std::size_t>(natom), 0);
-        std::vector<std::array<double, 3> > position(static_cast<std::size_t>(natom));
-        std::vector<std::array<double, 3> > force(static_cast<std::size_t>(natom));
+        std::vector<std::array<double, 3>> position(static_cast<std::size_t>(natom));
+        std::vector<std::array<double, 3>> force(static_cast<std::size_t>(natom));
         std::vector<double*> position_ptrs(static_cast<std::size_t>(natom), NULL);
         std::vector<double*> force_ptrs(static_cast<std::size_t>(natom), NULL);
         for (int iat = 0; iat < natom; ++iat)
         {
             const LocalAtom& atom = iat < nowned_atoms ? owned_atoms[static_cast<std::size_t>(iat)]
-                                                  : ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
+                                                       : ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
             if (atom.type < 0 || static_cast<std::size_t>(atom.type) >= md_type_to_nep_type_.size())
             {
                 ModuleBase::WARNING_QUIT("ESolver_NEP", "MDCell atom type is outside the NEP type map.");
@@ -151,14 +151,15 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             mutable_owned_atoms[static_cast<std::size_t>(iat)].force.set(force[static_cast<std::size_t>(iat)][0],
-                                                                           force[static_cast<std::size_t>(iat)][1],
-                                                                           force[static_cast<std::size_t>(iat)][2]);
+                                                                         force[static_cast<std::size_t>(iat)][1],
+                                                                         force[static_cast<std::size_t>(iat)][2]);
         }
         for (int iat = 0; iat < nghost; ++iat)
         {
-            mutable_ghost_atoms[static_cast<std::size_t>(iat)].force.set(force[static_cast<std::size_t>(nowned_atoms + iat)][0],
-                                                                           force[static_cast<std::size_t>(nowned_atoms + iat)][1],
-                                                                           force[static_cast<std::size_t>(nowned_atoms + iat)][2]);
+            mutable_ghost_atoms[static_cast<std::size_t>(iat)].force.set(
+                force[static_cast<std::size_t>(nowned_atoms + iat)][0],
+                force[static_cast<std::size_t>(nowned_atoms + iat)][1],
+                force[static_cast<std::size_t>(nowned_atoms + iat)][2]);
         }
 
 #ifdef __MPI
@@ -174,7 +175,7 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
             LocalAtom& atom = mutable_owned_atoms[static_cast<std::size_t>(iat)];
             atom.force *= fact_f;
         }
-        for (LocalAtom& atom : mutable_ghost_atoms)
+        for (LocalAtom& atom: mutable_ghost_atoms)
         {
             atom.force *= fact_f;
         }
@@ -385,8 +386,7 @@ void ESolver_NEP::initialize_type_map_(const std::vector<std::string>& type_labe
         const std::unordered_map<std::string, int>::const_iterator found = label.find(type_labels[it]);
         if (found == label.end())
         {
-            ModuleBase::WARNING_QUIT("ESolver_NEP",
-                                     "The label " + type_labels[it] + " is not found in the type map.");
+            ModuleBase::WARNING_QUIT("ESolver_NEP", "The label " + type_labels[it] + " is not found in the type map.");
         }
         md_type_to_nep_type_[it] = found->second;
     }

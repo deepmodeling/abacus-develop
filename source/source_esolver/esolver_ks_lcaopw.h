@@ -1,8 +1,8 @@
 #ifndef ESOLVER_KS_LIP_H
 #define ESOLVER_KS_LIP_H
 #include "source_esolver/esolver_ks_pw.h"
-#include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hamilt/module_xc/exx_info_lip.h"
+#include "source_hsolver/hsolver_lcaopw.h"
 
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lip.h"

@@ -3,9 +3,9 @@
 #include "source_io/module_parameter/parameter.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
+#include "source_cell/cal_ux.h"
 #include "source_estate/module_charge/chg_symm.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
-#include "source_cell/cal_ux.h"
 //-----force-------------------
 #include "source_pw/module_pwdft/force_pw.h"
 //-----stress------------------
@@ -19,14 +19,13 @@ namespace ModuleESolver
 ESolver_OF_TDDFT::ESolver_OF_TDDFT()
 {
     this->classname = "ESolver_OF_TDDFT";
-    this->evolve_ofdft=new Evolve_OFDFT();
+    this->evolve_ofdft = new Evolve_OFDFT();
 }
 
 ESolver_OF_TDDFT::~ESolver_OF_TDDFT()
 {
     delete this->evolve_ofdft;
 }
-
 
 void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
 {
@@ -38,7 +37,7 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
     this->before_opt(istep, ucell);
     this->iter_ = 0;
 
-    bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
+    bool conv_esolver = false; // this conv_esolver is added by mohan 20250302
     this->iter_time = ModuleBase::get_time();
 
     if (this->phi_td.empty())
@@ -47,7 +46,7 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
         this->phi_td.resize(size, std::complex<double>(0.0, 0.0));
     }
 
-    if ((istep==0) && this->inp_->init_chg != "file")
+    if ((istep == 0) && this->inp_->init_chg != "file")
     {
         while (true)
         {
@@ -58,7 +57,6 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
             this->energy_llast_ = this->energy_last_;
             this->energy_last_ = this->energy_current_;
             this->energy_current_ = this->cal_energy();
-
 
             // check if the job is done
             if (this->check_exit(conv_esolver))
@@ -84,11 +82,11 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
         {
             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
-                phi_td[is*this->pw_rho->nrxx+ir]=pphi_[is][ir];
+                phi_td[is * this->pw_rho->nrxx + ir] = pphi_[is][ir];
             }
         }
     }
-    else if ((istep==0) && this->inp_->init_chg == "file")
+    else if ((istep == 0) && this->inp_->init_chg == "file")
     {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
@@ -97,10 +95,10 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
         {
             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
-                phi_td[is*this->pw_rho->nrxx+ir]=pphi_[is][ir];
+                phi_td[is * this->pw_rho->nrxx + ir] = pphi_[is][ir];
             }
-        } 
-        conv_esolver=true;
+        }
+        conv_esolver = true;
     }
     else
     {
@@ -112,10 +110,10 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
         {
             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
-                pphi_[is][ir]=std::abs(phi_td[is*this->pw_rho->nrxx+ir]);
+                pphi_[is][ir] = std::abs(phi_td[is * this->pw_rho->nrxx + ir]);
             }
         }
-        conv_esolver=true;
+        conv_esolver = true;
     }
 
     this->after_opt(istep, ucell, conv_esolver);

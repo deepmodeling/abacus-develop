@@ -1,12 +1,12 @@
 #include "esolver_lj.h"
 
 #include "source_base/global_variable.h"
+#include "source_cell/cif_io.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/module_neighlist/neighbor_types.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_cell/cif_io.h"
 #include "source_io/module_output/output_log.h"
+#include "source_io/module_parameter/parameter.h"
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -34,7 +34,10 @@ void ESolver_LJ::before_all_runners(BaseCell& cell, const Input_para& inp)
         }
         mdcell.set_neighbor_cutoff(cutoff);
         rcut_search_radius(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_rcut);
-        set_c6_c12(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_rule, inp.mdp.lj_epsilon, inp.mdp.lj_sigma);
+        set_c6_c12(static_cast<int>(mdcell.type_labels().size()),
+                   inp.mdp.lj_rule,
+                   inp.mdp.lj_epsilon,
+                   inp.mdp.lj_sigma);
         cal_en_shift(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_eshift);
         return;
     }
@@ -82,35 +85,37 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
             const int ia = center_atom.atom_index;
             const int iat = atom_offsets[it] + ia;
             const ModuleBase::Vector3<double> tau1(center_atom.position_x,
-                                                    center_atom.position_y,
-                                                    center_atom.position_z);
+                                                   center_atom.position_y,
+                                                   center_atom.position_z);
             for (int ad = 0; ad < neighbor_list.get_numneigh(local_i); ++ad)
             {
                 const NeighborAtom& neighbor_atom = all_atoms[neighbor_list.get_firstneigh(local_i)[ad]];
                 const ModuleBase::Vector3<double> tau2(neighbor_atom.position_x,
-                                                        neighbor_atom.position_y,
-                                                        neighbor_atom.position_z);
+                                                       neighbor_atom.position_y,
+                                                       neighbor_atom.position_z);
                 const ModuleBase::Vector3<double> dtau = (tau1 - tau2) * ucell.lat0;
                 const double distance = dtau.norm();
                 if (distance < lj_rcut(it, neighbor_atom.atom_type))
                 {
-                    lj_potential += LJ_energy(distance, it, neighbor_atom.atom_type)
-                                    - en_shift(it, neighbor_atom.atom_type);
+                    lj_potential
+                        += LJ_energy(distance, it, neighbor_atom.atom_type) - en_shift(it, neighbor_atom.atom_type);
                     const ModuleBase::Vector3<double> f_ij = LJ_force(dtau, it, neighbor_atom.atom_type);
                     lj_force(iat, 0) += f_ij.x;
                     lj_force(iat, 1) += f_ij.y;
                     lj_force(iat, 2) += f_ij.z;
                     for (int i = 0; i < 3; ++i)
-                        for (int j = 0; j < 3; ++j) virial[i * 3 + j] += dtau[i] * f_ij[j];
+                        for (int j = 0; j < 3; ++j)
+                            virial[i * 3 + j] += dtau[i] * f_ij[j];
                 }
             }
         }
 
         lj_potential *= 0.5;
         for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j) lj_virial(i, j) = virial[i * 3 + j] / (2.0 * ucell.omega);
-        GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11)
-                             << lj_potential * ModuleBase::Ry_to_eV << " eV" << std::endl;
+            for (int j = 0; j < 3; ++j)
+                lj_virial(i, j) = virial[i * 3 + j] / (2.0 * ucell.omega);
+        GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << lj_potential * ModuleBase::Ry_to_eV
+                             << " eV" << std::endl;
         return;
     }
 

@@ -1,23 +1,23 @@
+#include "source_base/parallel_reduce.h"
 #include "source_esolver/esolver_lr_lcao_tddft.h"
-#include "source_lcao/module_lr/zeq_solver.h"
+#include "source_estate/module_dm/dm_from_psi.h"
+#include "source_io/module_output/output_log.h"
 #include "source_lcao/module_lr/cal_edm.h"
-#include "source_lcao/module_lr/lr_force.h"
+#include "source_lcao/module_lr/grad_degen.h"
 #include "source_lcao/module_lr/gradient_inputs.h"
 #include "source_lcao/module_lr/gradient_output.h"
 #include "source_lcao/module_lr/lr_amp.h"
-#include "source_lcao/module_lr/grad_degen.h"
-#include "source_base/parallel_reduce.h"
+#include "source_lcao/module_lr/lr_force.h"
+#include "source_lcao/module_lr/zeq_solver.h"
+
 #include <algorithm>
 #include <complex>
-#include "source_estate/module_dm/dm_from_psi.h"
-#include "source_io/module_output/output_log.h"
 
 using namespace LR;
 
-
 ///========================= excited-state geometry relaxation =========================
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge& chg_gs)
 {
     ModuleBase::TITLE("ESolver_LR", "init_pot_gs");
@@ -25,7 +25,7 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge& chg_gs
     if (this->inp_->vl_in_h)
     {
         if (!this->ks_)
-        {   // on the `ks-lr` path `sfac()`/`vloc()` alias the ground-state solver's, which
+        { // on the `ks-lr` path `sfac()`/`vloc()` alias the ground-state solver's, which
             // `ESolver_FP::before_scf` already refreshed for the current geometry
             //! 11) calculate the structure factor
             // the has_float_data flag below is read the same way core ABACUS reads it at the
@@ -36,42 +36,61 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot_groundstate(const Charge& chg_gs
         }
         pot_register.push_back("local");
     }
-    if(this->inp_->vh_in_h)
+    if (this->inp_->vh_in_h)
     {
         pot_register.push_back("hartree");
     }
     pot_register.push_back("xc");
 
     // initialize the ground state potential
-    this->pot_gs = LR_Util::make_unique<elecstate::Potential>(this->pw_rhod, this->pw_rho,
-        &(*this->ucell_), &this->vloc().vloc, &this->sfac(), &this->solvent,
-       &this->etxc_gs, &this->vtxc_gs);
+    this->pot_gs = LR_Util::make_unique<elecstate::Potential>(this->pw_rhod,
+                                                              this->pw_rho,
+                                                              &(*this->ucell_),
+                                                              &this->vloc().vloc,
+                                                              &this->sfac(),
+                                                              &this->solvent,
+                                                              &this->etxc_gs,
+                                                              &this->vtxc_gs);
     this->pot_gs.get()->pot_register(pot_register);
-    XC_Functional::set_xc_type((*this->ucell_).atoms[0].ncpp.xc_func);    // set XC type of the ground state
-    this->pot_gs->init_pot(&chg_gs);  // call update_from_charge inside
+    XC_Functional::set_xc_type((*this->ucell_).atoms[0].ncpp.xc_func); // set XC type of the ground state
+    this->pot_gs->init_pot(&chg_gs);                                   // call update_from_charge inside
     if (LR_Util::has_local_xc(this->xc_kernel))
     {
-        XC_Functional::set_xc_type(this->xc_kernel);    // recover the excited state xc kernel type
+        XC_Functional::set_xc_type(this->xc_kernel); // recover the excited state xc kernel type
     }
     if (this->inp_->test_force)
     {
-        this->pot_gs_hartree = LR_Util::make_unique<elecstate::Potential>(this->pw_rhod, this->pw_rho,
-            &(*this->ucell_), &this->vloc().vloc, &this->sfac(), &this->solvent,
-            &this->etxc_gs, &this->vtxc_gs);
-        this->pot_gs_hartree->pot_register({ "hartree" });
-        this->pot_gs_hartree->init_pot(&chg_gs);  // call update_from_charge inside
+        this->pot_gs_hartree = LR_Util::make_unique<elecstate::Potential>(this->pw_rhod,
+                                                                          this->pw_rho,
+                                                                          &(*this->ucell_),
+                                                                          &this->vloc().vloc,
+                                                                          &this->sfac(),
+                                                                          &this->solvent,
+                                                                          &this->etxc_gs,
+                                                                          &this->vtxc_gs);
+        this->pot_gs_hartree->pot_register({"hartree"});
+        this->pot_gs_hartree->init_pot(&chg_gs); // call update_from_charge inside
     }
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 ct::Tensor ModuleESolver::ESolver_LR<T, TR>::pad_X_to_z_(const int ispin, const int istate_begin, const int nst) const
 {
-    return LR::pad_amplitudes<T>(this->X, this->openshell, this->paraX_, this->paraX_z_,
-        this->nocc, this->nvirt, this->nk, this->nloc_per_state, this->nloc_per_state_z_,
-        ispin, istate_begin, nst);
+    return LR::pad_amplitudes<T>(this->X,
+                                 this->openshell,
+                                 this->paraX_,
+                                 this->paraX_z_,
+                                 this->nocc,
+                                 this->nvirt,
+                                 this->nk,
+                                 this->nloc_per_state,
+                                 this->nloc_per_state_z_,
+                                 ispin,
+                                 istate_begin,
+                                 nst);
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int ispin, const int nst, const ct::Tensor& Xz)
 {
     ModuleBase::TITLE("ESolver_LR", "cal_force");
@@ -84,19 +103,26 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int isp
     // condition the Z-vector enforces holds in EVERY occupied-virtual rotation. The padded
     // entries are zero, so every X-derived quantity (D^X, T) is unchanged; only the space Z is
     // solved in grows. Both the closed- and the open-shell path go through here.
-    ct::Tensor Z = LR_Util::newTensor<T>({ nst, this->nloc_per_state_z_ });
+    ct::Tensor Z = LR_Util::newTensor<T>({nst, this->nloc_per_state_z_});
     // construct and solve the Z-vector equation
     const LR::GradientInputs<T> inputs = this->gradient_inputs_();
     const T* const x_data = Xz.template data<T>();
     T* const z_data = Z.template data<T>();
     std::weak_ptr<PotHxcLR> pot_weak = inputs.pot[ispin];
-    Z_vector_equation(inputs, x_data, z_data, nst, pot_weak,
-        this->spin_types[ispin], this->in_dir, this->openshell, this->inp_->lr_grad_solver);
+    Z_vector_equation(inputs,
+                      x_data,
+                      z_data,
+                      nst,
+                      pot_weak,
+                      this->spin_types[ispin],
+                      this->in_dir,
+                      this->openshell,
+                      this->inp_->lr_grad_solver);
     ModuleBase::timer::end("ESolver_LR", "solve_zvector_eqation");
     return Z;
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(const int ispin, const int istate_only)
 {
     if (this->inp_->test_force && ispin == 0)
@@ -124,24 +150,48 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
     return this->cal_force_Xz(ispin, Xz, omega, ist_begin);
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 LR::GradientInputs<T> ModuleESolver::ESolver_LR<T, TR>::gradient_inputs_() const
 {
-    return { *this->ucell_, this->kv, this->gd(), this->orb_cutoff_, this->paraMat_,
-        this->paraC_z_, this->paraX_z_, *this->psi_ks_z_, this->eig_ks_z_, this->nocc,
-        this->nvirt_z_, this->nspin, this->nk, this->nbasis, this->nloc_per_state_z_,
-        this->xc_kernel, this->inp_->dft_functional, this->inp_->ks_solver,
-        this->inp_->test_force, this->excited_relax_, this->out_dir, this->my_rank_,
-        this->spin_types, this->pot, this->pot_hxc_gs, this->ofs_running_
+    return {*this->ucell_,
+            this->kv,
+            this->gd(),
+            this->orb_cutoff_,
+            this->paraMat_,
+            this->paraC_z_,
+            this->paraX_z_,
+            *this->psi_ks_z_,
+            this->eig_ks_z_,
+            this->nocc,
+            this->nvirt_z_,
+            this->nspin,
+            this->nk,
+            this->nbasis,
+            this->nloc_per_state_z_,
+            this->xc_kernel,
+            this->inp_->dft_functional,
+            this->inp_->ks_solver,
+            this->inp_->test_force,
+            this->excited_relax_,
+            this->out_dir,
+            this->my_rank_,
+            this->spin_types,
+            this->pot,
+            this->pot_hxc_gs,
+            this->ofs_running_
 #ifdef __EXX
-        , this->exx_lri, this->exx_info.info_global.hybrid_alpha
+            ,
+            this->exx_lri,
+            this->exx_info.info_global.hybrid_alpha
 #endif
     };
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(const int ispin,
-    const ct::Tensor& Xz, const std::vector<double>& omega, const int label_begin)
+                                                                               const ct::Tensor& Xz,
+                                                                               const std::vector<double>& omega,
+                                                                               const int label_begin)
 {
     ModuleBase::timer::start("ESolver_LR", "cal_force_Xz");
     const int nst = static_cast<int>(omega.size());
@@ -149,12 +199,26 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
     const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz);
     const auto dm_gs = this->cal_dm_gs();
     const LR::GradientInputs<T> inputs = this->gradient_inputs_();
-    const LR::ForceSettings force_settings{this->nspin, this->inp_->test_force,
-        this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
-    LR_Force<T> force_terms(*this->ucell_, this->kv.kvec_d, this->paraMat_,
-        *this->pw_rhod, *this->pw_rho, this->vloc(), this->sfac(), this->gd(), this->tcb(), force_settings, this->ofs_running_
+    const LR::ForceSettings force_settings{this->nspin,
+                                           this->inp_->test_force,
+                                           this->inp_->vl_in_h,
+                                           this->inp_->vh_in_h,
+                                           this->inp_->dft_functional};
+    LR_Force<T> force_terms(*this->ucell_,
+                            this->kv.kvec_d,
+                            this->paraMat_,
+                            *this->pw_rhod,
+                            *this->pw_rho,
+                            this->vloc(),
+                            this->sfac(),
+                            this->gd(),
+                            this->tcb(),
+                            force_settings,
+                            this->ofs_running_
 #ifdef __EXX
-        , inputs.exx_lri, inputs.hybrid_alpha
+                            ,
+                            inputs.exx_lri,
+                            inputs.hybrid_alpha
 #endif
     );
     const auto forces = LR::evaluate_closed_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, ispin);
@@ -162,7 +226,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
     return forces;
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::cal_force_and_grad_matrix_(const int ispin, std::ofstream& ofs)
 {
     const std::vector<ModuleBase::matrix> forces = this->cal_force(ispin);
@@ -174,9 +238,7 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force_and_grad_matrix_(const int ispi
     // stale multiplet from the previous geometry must not survive into the next one.
     this->multiplet_lvc_.erase(std::remove_if(this->multiplet_lvc_.begin(),
                                               this->multiplet_lvc_.end(),
-                                              [ispin](const MultipletLVC& m) {
-                                                  return m.ispin == ispin;
-                                              }),
+                                              [ispin](const MultipletLVC& m) { return m.ispin == ispin; }),
                                this->multiplet_lvc_.end());
     // The per-state gradients above are the diagonal of the degenerate-subspace gradient matrix in
     // whatever basis the eigensolver returned, so inside a multiplet only their trace means
@@ -188,9 +250,8 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force_and_grad_matrix_(const int ispi
     {
         omega[ist] = this->pelec->ekb.c[ekb_off + ist];
     }
-    const std::vector<std::vector<int>> groups
-        = LR::group_degenerate_states(omega, this->inp_->lr_degen_thr);
-    for (const std::vector<int>& group : groups)
+    const std::vector<std::vector<int>> groups = LR::group_degenerate_states(omega, this->inp_->lr_degen_thr);
+    for (const std::vector<int>& group: groups)
     {
         if (group.size() < 2)
         {
@@ -207,7 +268,7 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force_and_grad_matrix_(const int ispi
         double lo = omega[group.front()];
         double hi = omega[group.front()];
         double sum = 0.0;
-        for (const int ist : group)
+        for (const int ist: group)
         {
             lo = std::min(lo, omega[ist]);
             hi = std::max(hi, omega[ist]);
@@ -220,10 +281,12 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force_and_grad_matrix_(const int ispi
     }
 }
 
-template<typename T, typename TR>
-std::vector<std::vector<ModuleBase::matrix>>
-ModuleESolver::ESolver_LR<T, TR>::cal_grad_matrix_degenerate(const int ispin,
-    const std::vector<int>& group, const std::vector<ModuleBase::matrix>& diag, std::ofstream& ofs)
+template <typename T, typename TR>
+std::vector<std::vector<ModuleBase::matrix>> ModuleESolver::ESolver_LR<T, TR>::cal_grad_matrix_degenerate(
+    const int ispin,
+    const std::vector<int>& group,
+    const std::vector<ModuleBase::matrix>& diag,
+    std::ofstream& ofs)
 {
     ModuleBase::TITLE("ESolver_LR", "cal_grad_matrix_degenerate");
     ModuleBase::timer::start("ESolver_LR", "cal_grad_matrix_degenerate");
@@ -269,14 +332,13 @@ ModuleESolver::ESolver_LR<T, TR>::cal_grad_matrix_degenerate(const int ispin,
     // one $\Omega$ for every combination: the members share it up to `omega_spread`, and the mean
     // is the neutral choice for a vector that belongs to no single member
     double omega_sum = 0.0;
-    for (const double omega : omega_member)
+    for (const double omega: omega_member)
     {
         omega_sum += omega;
     }
     const double omega_mean = omega_sum / static_cast<double>(d);
-    ofs << " Degenerate multiplet of " << d << " states, Omega = " << omega_mean
-        << " Ry, spread = " << omega_spread << " Ry, max |<X_k|X_l> - delta_kl| = " << max_ovlp_err
-        << std::endl;
+    ofs << " Degenerate multiplet of " << d << " states, Omega = " << omega_mean << " Ry, spread = " << omega_spread
+        << " Ry, max |<X_k|X_l> - delta_kl| = " << max_ovlp_err << std::endl;
     // Dimensionless diagnostic tolerance for the orthonormality needed by X_plus.
     // This warning does not change the multiplet or the computed gradient.
     const double orthonormality_warn_tol = 1e-6;
@@ -285,36 +347,33 @@ ModuleESolver::ESolver_LR<T, TR>::cal_grad_matrix_degenerate(const int ispin,
         ofs << " WARNING: this multiplet's eigenvectors are not orthonormal to"
             << " tolerance " << orthonormality_warn_tol
             << " (dimensionless overlap error); (X_k+X_l)/sqrt(2) may not be normalized"
-            << " and the assembled gradient matrix may consequently be inaccurate."
-            << std::endl;
+            << " and the assembled gradient matrix may consequently be inaccurate." << std::endl;
     }
 
     // 3. the $d(d-1)/2$ combinations $X_+=(X_k+X_l)/\sqrt2$, all in one Z-vector solve
     const int npair = static_cast<int>(pairs.size());
-    ct::Tensor Xp = LR_Util::newTensor<T>({ npair, nloc_g });
+    ct::Tensor Xp = LR_Util::newTensor<T>({npair, nloc_g});
     Xp.zero();
     for (int ip = 0; ip < npair; ++ip)
     {
-        LR::combine_normalized(
-            Xz.template data<T>() + static_cast<size_t>(pairs[ip].first) * nloc_g,
-            Xz.template data<T>() + static_cast<size_t>(pairs[ip].second) * nloc_g,
-            static_cast<size_t>(nloc_g),
-            Xp.template data<T>() + static_cast<size_t>(ip) * nloc_g);
+        LR::combine_normalized(Xz.template data<T>() + static_cast<size_t>(pairs[ip].first) * nloc_g,
+                               Xz.template data<T>() + static_cast<size_t>(pairs[ip].second) * nloc_g,
+                               static_cast<size_t>(nloc_g),
+                               Xp.template data<T>() + static_cast<size_t>(ip) * nloc_g);
     }
     const std::vector<double> omega_pair(npair, omega_mean);
     const std::vector<ModuleBase::matrix> plus = this->openshell
-        ? this->cal_force_openshell_Xz(Xp, omega_pair, group[0])
-        : this->cal_force_Xz(ispin, Xp, omega_pair, group[0]);
+                                                     ? this->cal_force_openshell_Xz(Xp, omega_pair, group[0])
+                                                     : this->cal_force_Xz(ispin, Xp, omega_pair, group[0]);
 
     // 4. $G_{kl}=\mathcal F[X_+]-\tfrac12(G_{kk}+G_{ll})$
-    const std::vector<std::vector<ModuleBase::matrix>> g
-        = LR::assemble_grad_matrix(diag, plus, pairs);
+    const std::vector<std::vector<ModuleBase::matrix>> g = LR::assemble_grad_matrix(diag, plus, pairs);
     print_grad_matrix(g, group, (*this->ucell_), ofs);
     ModuleBase::timer::end("ESolver_LR", "cal_grad_matrix_degenerate");
     return g;
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_openshell(const int istate_only)
 {
     ModuleBase::TITLE("ESolver_LR", "cal_force_openshell");
@@ -338,9 +397,11 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     return this->cal_force_openshell_Xz(Xz, omega_, ist_begin_);
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_openshell_Xz(
-    const ct::Tensor& Xz, const std::vector<double>& omega, const int label_begin)
+    const ct::Tensor& Xz,
+    const std::vector<double>& omega,
+    const int label_begin)
 {
     ModuleBase::timer::start("ESolver_LR", "cal_force_openshell_Xz");
     const int nst = static_cast<int>(omega.size());
@@ -348,12 +409,26 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz);
     const auto dm_gs = this->cal_dm_gs();
     const LR::GradientInputs<T> inputs = this->gradient_inputs_();
-    const LR::ForceSettings force_settings{this->nspin, this->inp_->test_force,
-        this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
-    LR_Force<T> force_terms(*this->ucell_, this->kv.kvec_d, this->paraMat_,
-        *this->pw_rhod, *this->pw_rho, this->vloc(), this->sfac(), this->gd(), this->tcb(), force_settings, this->ofs_running_
+    const LR::ForceSettings force_settings{this->nspin,
+                                           this->inp_->test_force,
+                                           this->inp_->vl_in_h,
+                                           this->inp_->vh_in_h,
+                                           this->inp_->dft_functional};
+    LR_Force<T> force_terms(*this->ucell_,
+                            this->kv.kvec_d,
+                            this->paraMat_,
+                            *this->pw_rhod,
+                            *this->pw_rho,
+                            this->vloc(),
+                            this->sfac(),
+                            this->gd(),
+                            this->tcb(),
+                            force_settings,
+                            this->ofs_running_
 #ifdef __EXX
-        , inputs.exx_lri, inputs.hybrid_alpha
+                            ,
+                            inputs.exx_lri,
+                            inputs.hybrid_alpha
 #endif
     );
     const auto forces = LR::evaluate_open_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin);
@@ -361,7 +436,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     return forces;
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 module_dm::DensityMatrix<T, double> ModuleESolver::ESolver_LR<T, TR>::cal_dm_gs()
 {
     module_dm::DensityMatrix<T, double> dm_gs(&this->paraMat_, this->nspin, this->kv.kvec_d, this->nk);
@@ -373,21 +448,39 @@ module_dm::DensityMatrix<T, double> ModuleESolver::ESolver_LR<T, TR>::cal_dm_gs(
     // silently wrong at nprocs>1. `refresh_from_ks_`/`fill_z_window_` already make this same
     // distinction for their `Cpxgemr2d` source descriptor; this mirrors it.
     const Parallel_Orbitals* const pv_all = this->ks_ ? &this->ks_->pv : &this->paraMat_all_;
-    module_dm::dm_from_psi(pv_all, this->wg_ks_all, *this->psi_ks_all_, dm_gs);   // nbands is important here
-    LR_Util::initialize_DMR(dm_gs, this->paraMat_, (*this->ucell_), this->gd(), this->orb_cutoff_);   // nbands is not important here
+    module_dm::dm_from_psi(pv_all, this->wg_ks_all, *this->psi_ks_all_, dm_gs); // nbands is important here
+    LR_Util::initialize_DMR(dm_gs,
+                            this->paraMat_,
+                            (*this->ucell_),
+                            this->gd(),
+                            this->orb_cutoff_); // nbands is not important here
     dm_gs.cal_dmr(-1);
     return dm_gs;
 }
 
-template<typename T, typename TR>
+template <typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::test_force()
 {
-    const LR::ForceSettings force_settings{this->nspin, this->inp_->test_force,
-        this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
-    LR_Force<T> lr_force((*this->ucell_), this->kv.kvec_d, this->paraMat_, *this->pw_rhod, *this->pw_rho,
-        this->vloc(), this->sfac(), this->gd(), this->tcb(), force_settings, this->ofs_running_
+    const LR::ForceSettings force_settings{this->nspin,
+                                           this->inp_->test_force,
+                                           this->inp_->vl_in_h,
+                                           this->inp_->vh_in_h,
+                                           this->inp_->dft_functional};
+    LR_Force<T> lr_force((*this->ucell_),
+                         this->kv.kvec_d,
+                         this->paraMat_,
+                         *this->pw_rhod,
+                         *this->pw_rho,
+                         this->vloc(),
+                         this->sfac(),
+                         this->gd(),
+                         this->tcb(),
+                         force_settings,
+                         this->ofs_running_
 #ifdef __EXX
-        , std::weak_ptr<Exx_LRI<T>>(this->exx_lri), this->exx_info.info_global.hybrid_alpha
+                         ,
+                         std::weak_ptr<Exx_LRI<T>>(this->exx_lri),
+                         this->exx_info.info_global.hybrid_alpha
 #endif
     );
 
@@ -395,7 +488,7 @@ void ModuleESolver::ESolver_LR<T, TR>::test_force()
     // LR_Util::print_DMR(dm_gs, "DM(R) of ground state");
     ///========================== test 1: reproduce the force of ground state =========================
     // energy density matrix of the ground state
-    module_dm::DensityMatrix<T, double> edm_gs(&this->paraMat_, this->nspin, this->kv.kvec_d, this->nk);   //DX
+    module_dm::DensityMatrix<T, double> edm_gs(&this->paraMat_, this->nspin, this->kv.kvec_d, this->nk); // DX
     ModuleBase::matrix wg_ekb_ks_all(nspin, this->inp_->nbands);
     const int occupation_count = nspin * this->inp_->nbands;
     for (int index = 0; index < occupation_count; ++index)
@@ -414,13 +507,20 @@ void ModuleESolver::ESolver_LR<T, TR>::test_force()
     /// ======================================= END test 1 =========================================
     ///========================== test 2: reproduce the DX Hartree term =========================
     ModuleBase::matrix f_hxc_potgs = lr_force.reproduce_force_gs_loc(dm_gs, *this->pot_gs_hartree);
-    ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "GS Hartree force calculated by 'cal_pulay_fs' from potential (eV/Angstrom)", f_hxc_potgs, false);
+    ModuleIO::print_force(this->ofs_running_,
+                          (*this->ucell_),
+                          "GS Hartree force calculated by 'cal_pulay_fs' from potential (eV/Angstrom)",
+                          f_hxc_potgs,
+                          false);
     ModuleBase::matrix f_hxc_potlr = lr_force.cal_force_hxc_dmtrans(dm_gs, *this->pot[0]);
-    ModuleIO::print_force(this->ofs_running_, (*this->ucell_), "GS Hxc force calculated by 'LR_Force' from kernel (eV/Angstrom)", f_hxc_potlr, false);
+    ModuleIO::print_force(this->ofs_running_,
+                          (*this->ucell_),
+                          "GS Hxc force calculated by 'LR_Force' from kernel (eV/Angstrom)",
+                          f_hxc_potlr,
+                          false);
     // `cal_force_hxc_dmtrans` now includes the Pulay -> Pulay+Hellmann-Feynman factor 2 itself,
     // so this must match the ground-state Hartree force directly (dm_gs is already symmetric).
     /// ======================================= END test 2 =========================================
-
 }
 
 template class ModuleESolver::ESolver_LR<double, double>;

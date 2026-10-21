@@ -143,7 +143,11 @@ void ESolver_KS_PW_TDDFT<T, Device>::prepare_init_hamilt(const UnitCell& ucell)
     {
         // The updated basis and endpoint A determine the required nonlocal projector range.
         const double q_unshifted = pw::td_momentum_bound(*this->pw_wfc, ucell.tpiba);
-        pw::ensure_td_vnl(ucell, q_unshifted, this->td_field_manager_->A_right_ha(), this->td_field_manager_->A_prop_ha(), &this->ppcell);
+        pw::ensure_td_vnl(ucell,
+                          q_unshifted,
+                          this->td_field_manager_->A_right_ha(),
+                          this->td_field_manager_->A_prop_ha(),
+                          &this->ppcell);
         elecstate::Potential& potential = *this->pelec->pot;
         const Real* veff = potential.template get_veff_smooth_data<Real>();
         const Real* vofk = potential.template get_vofk_smooth_data<Real>();
@@ -225,7 +229,10 @@ ESolver_KS::DensityStage ESolver_KS_PW_TDDFT<T, Device>::density_stage(const int
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
+void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell,
+                                                       const int istep,
+                                                       const int iter,
+                                                       const double ethr)
 {
     ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "hamilt2rho_single");
     if (istep == 0)
@@ -251,7 +258,8 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
                                              this->inp_->nbands,
                                              this->pelec->skip_weights);
                 elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
-                elecstate::ElecStatePW<T, Device>* estate = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
+                elecstate::ElecStatePW<T, Device>* estate
+                    = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
                 estate->psiToRho(*current);
                 module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
             }
@@ -271,7 +279,8 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
     const Real* endpoint_vofk = potential.template get_vofk_smooth_data<Real>();
     const ESolver_KS::DensityStage stage = this->density_stage(istep, iter);
     const bool corrector = stage != ESolver_KS::DensityStage::predictor;
-    const pw::TDPotentialView<Real> propagation = this->history_.prop_pot(potential, XC_Functional::get_ked_flag(), corrector);
+    const pw::TDPotentialView<Real> propagation
+        = this->history_.prop_pot(potential, XC_Functional::get_ked_flag(), corrector);
     ModuleBase::Vector3<double> momentum_shift(0.0, 0.0, 0.0);
     if (this->td_field_manager_->gauge() == 1)
     {
@@ -321,8 +330,8 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     if (!conv_esolver)
     {
         const int evolution_step = istep + 1;
-        const std::string message
-            = "Cannot propagate an unconverged electronic state. Electronic evolution step: " + std::to_string(evolution_step) + ".";
+        const std::string message = "Cannot propagate an unconverged electronic state. Electronic evolution step: "
+                                    + std::to_string(evolution_step) + ".";
         ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", message);
     }
     if (istep == 0 && this->inp_->td_orthonormal == "none")
@@ -426,7 +435,12 @@ void ESolver_KS_PW_TDDFT<T, Device>::print_eij(const int istep)
 #endif
         if (main_rank)
         {
-            const ModuleIO::EijOutputInfo info{this->inp_->td_print_eij, istep + 1, this->niter, physical_k + 1, nspin, spin + 1};
+            const ModuleIO::EijOutputInfo info{this->inp_->td_print_eij,
+                                               istep + 1,
+                                               this->niter,
+                                               physical_k + 1,
+                                               nspin,
+                                               spin + 1};
             ModuleIO::print_eij(eij.data(), nband, nband, info, log_);
         }
     }
@@ -480,7 +494,8 @@ void ESolver_KS_PW_TDDFT<T, Device>::report_orth(const UnitCell& ucell, int iste
     const double delta_rho = rho_electrons - initial_rho_electrons_;
     const std::ios::fmtflags saved_flags = log_.flags();
     const std::streamsize saved_precision = log_.precision();
-    log_ << " PW RT-TDDFT conservation: evolution step " << evolution_step << ", " << stage << ", " << this->inp_->td_orthonormal << '\n';
+    log_ << " PW RT-TDDFT conservation: evolution step " << evolution_step << ", " << stage << ", "
+         << this->inp_->td_orthonormal << '\n';
     log_ << std::right << std::fixed << std::setprecision(10);
     ModuleBase::GlobalFunc::OUT(log_, "Npsi", electrons);
     ModuleBase::GlobalFunc::OUT(log_, "Nrho", rho_electrons);
