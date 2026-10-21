@@ -776,18 +776,30 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
         item.type = "Integer";
         item.description = R"(Save memory when performing nscf calculations.
 * 0: no memory saving techniques are used.
-* 1: a memory saving technique will be used for many k point calculations.)";
+* 1: a memory saving technique will be used for many k point calculations.
+
+Legal values are 0 and 1. For calculation=scf or relax, mem_saver must be 0; setting it to 1 is an input error rather than being reset to 0.)";
         item.default_value = "0";
         item.set_availability("calculation==nscf and basis_type==pw");
         read_sync_int(input.mem_saver);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mem_saver == 1)
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.mem_saver != 0 && para.input.mem_saver != 1)
             {
-                if (para.input.calculation == "scf" || para.input.calculation == "relax")
-                {
-                    para.input.mem_saver = 0;
-                    ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
-                }
+                const std::string message
+                    = "Invalid INPUT mem_saver=" + longstring(item.str_values)
+                      + ". Legal values are 0 or 1.\n"
+                        "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#mem-saver";
+                ModuleBase::WARNING_QUIT("ReadInput", message);
+            }
+            if (para.input.mem_saver == 1
+                && (para.input.calculation == "scf" || para.input.calculation == "relax"))
+            {
+                const std::string message
+                    = "Invalid INPUT mem_saver=" + longstring(item.str_values)
+                      + " with calculation=" + para.input.calculation
+                      + ". Use mem_saver=0 for this calculation; memory saving with mem_saver=1 is intended for nscf.\n"
+                        "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#mem-saver";
+                ModuleBase::WARNING_QUIT("ReadInput", message);
             }
         };
         this->add_item(item);
