@@ -2,60 +2,54 @@ add_subdirectory(module_symmetry)
 add_subdirectory(module_neighbor)
 add_subdirectory(module_neighlist)
 
-add_library(
-    domain_decomposition
-    OBJECT
-    domain_decomposition.cpp
-)
+add_library(domain_decomposition OBJECT domain_decomposition.cpp)
 
 add_library(
-    cell
-    OBJECT
-    basecell.cpp
-    atom_pseudo.cpp
-    atom_spec.cpp
-    pseudo.cpp
-    read_pp.cpp
-    read_pp_complete.cpp
-    read_pp_upf100.cpp
-    read_pp_upf201.cpp
-    read_pp_blps.cpp
-    read_pp_vwr.cpp
-    mdcell_reader.cpp
-    mdcell.cpp
-    unitcell.cpp
-    unitcell_index.cpp
-    unitcell_stats.cpp
-    unitcell_setup.cpp
-    read_atoms.cpp
-    read_atoms_helper.cpp
-    read_orb.cpp
-    klist.cpp
-    klist_io.cpp
-    reciprocal_grid.cpp
-    parallel_kpoints.cpp
-    cell_index.cpp
-    cell_tools.cpp
-    cell_geometry.cpp
-    record_adj.cpp
-    check_atomic_stru.cpp
-    update_cell.cpp
-    magnetism.cpp
-    bcast_cell.cpp
-    read_stru.cpp
-    print_cell.cpp
-    read_atom_species.cpp
-    sep.cpp
-    sep_cell.cpp
-    qlist.cpp
-    qlist.h
-    cal_nelec_nband.cpp
-    read_pp_ucell.cpp
-    cal_wfc.cpp
-    cal_ux.cpp
-    cif_io.cpp
-    ucell_io.cpp
-)
+  cell OBJECT
+  basecell.cpp
+  atom_pseudo.cpp
+  atom_spec.cpp
+  pseudo.cpp
+  read_pp.cpp
+  read_pp_complete.cpp
+  read_pp_upf100.cpp
+  read_pp_upf201.cpp
+  read_pp_blps.cpp
+  read_pp_vwr.cpp
+  mdcell_reader.cpp
+  mdcell.cpp
+  unitcell.cpp
+  unitcell_index.cpp
+  unitcell_stats.cpp
+  unitcell_setup.cpp
+  read_atoms.cpp
+  read_atoms_helper.cpp
+  read_orb.cpp
+  klist.cpp
+  klist_io.cpp
+  reciprocal_grid.cpp
+  parallel_kpoints.cpp
+  cell_index.cpp
+  cell_tools.cpp
+  cell_geometry.cpp
+  record_adj.cpp
+  check_atomic_stru.cpp
+  update_cell.cpp
+  magnetism.cpp
+  bcast_cell.cpp
+  read_stru.cpp
+  print_cell.cpp
+  read_atom_species.cpp
+  sep.cpp
+  sep_cell.cpp
+  qlist.cpp
+  qlist.h
+  cal_nelec_nband.cpp
+  read_pp_ucell.cpp
+  cal_wfc.cpp
+  cal_ux.cpp
+  cif_io.cpp
+  ucell_io.cpp)
 
 if(ENABLE_COVERAGE)
   add_coverage(cell)

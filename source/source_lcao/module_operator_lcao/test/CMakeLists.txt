@@ -1,131 +1,257 @@
 if(ENABLE_LCAO)
-abacus_disable_feature_definitions(__FFT_TWO_CENTER)
+  abacus_disable_feature_definitions(__FFT_TWO_CENTER)
 
-AddTest(
-  TARGET MODULE_LCAO_ovlp_block
-  LIBS parameter psi base device container
-  SOURCES test_ovlp_block.cpp ../ovlp_block.cpp tmp_mocks.cpp
-  ../../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../../source_basis/module_ao/orb_atomic_lm.cpp
-  ../../../source_hamilt/operator.cpp
-  ../../../source_hamilt/module_hcontainer/base_matrix.cpp
-  ../../../source_hamilt/module_hcontainer/hcontainer.cpp
-  ../../../source_hamilt/module_hcontainer/atom_pair.cpp
-  ../../../source_hamilt/module_hcontainer/func_folding.cpp
-)
+  addtest(
+    TARGET
+    MODULE_LCAO_ovlp_block
+    LIBS
+    parameter
+    psi
+    base
+    device
+    container
+    SOURCES
+    test_ovlp_block.cpp
+    ../ovlp_block.cpp
+    tmp_mocks.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    ../../../source_basis/module_ao/orb_atomic_lm.cpp
+    ../../../source_hamilt/operator.cpp
+    ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+    ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+    ../../../source_hamilt/module_hcontainer/func_folding.cpp)
 
-AddTest(
-  TARGET MODULE_LCAO_operator_overlap_test
-  LIBS parameter psi base device container
-  SOURCES test_overlap.cpp ../overlap.cpp ../ovlp_block.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
-  ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
-  ../../../source_hamilt/module_hcontainer/func_transfer.cpp ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp ../../../source_hamilt/module_hcontainer/transfer.cpp
+  addtest(
+    TARGET
+    MODULE_LCAO_operator_overlap_test
+    LIBS
+    parameter
+    psi
+    base
+    device
+    container
+    SOURCES
+    test_overlap.cpp
+    ../overlap.cpp
+    ../ovlp_block.cpp
+    ../overlap_fs.cpp
+    ../operator_fs_utils.cpp
+    ../../../source_hamilt/module_hcontainer/func_folding.cpp
+    ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+    ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+    ../../../source_hamilt/module_hcontainer/func_transfer.cpp
+    ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/transfer.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    ../../../source_basis/module_ao/orb_atomic_lm.cpp
+    tmp_mocks.cpp
+    ../../../source_hamilt/operator.cpp
+    ../../module_rt/td_folding.cpp)
 
-  ../../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../../source_basis/module_ao/orb_atomic_lm.cpp
-  tmp_mocks.cpp ../../../source_hamilt/operator.cpp
-  ../../module_rt/td_folding.cpp
-)
+  addtest(
+    TARGET
+    MODULE_LCAO_operator_overlap_serial_test
+    LIBS
+    parameter
+    psi
+    base
+    device
+    container
+    SOURCES
+    test_overlap_serial.cpp
+    ../overlap.cpp
+    ../ovlp_block.cpp
+    ../overlap_fs.cpp
+    ../operator_fs_utils.cpp
+    ../../../source_hamilt/module_hcontainer/func_folding.cpp
+    ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+    ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+    ../../../source_hamilt/module_hcontainer/func_transfer.cpp
+    ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/transfer.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    ../../../source_basis/module_ao/orb_atomic_lm.cpp
+    tmp_mocks.cpp
+    ../../../source_hamilt/operator.cpp
+    ../../module_rt/td_folding.cpp)
 
-AddTest(
-  TARGET MODULE_LCAO_operator_overlap_serial_test
-  LIBS parameter psi base device container
-  SOURCES test_overlap_serial.cpp ../overlap.cpp ../ovlp_block.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
-  ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
-  ../../../source_hamilt/module_hcontainer/func_transfer.cpp ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp ../../../source_hamilt/module_hcontainer/transfer.cpp
+  addtest(
+    TARGET
+    MODULE_LCAO_operator_overlap_cd_test
+    LIBS
+    parameter
+    psi
+    base
+    device
+    container
+    SOURCES
+    test_overlap_cd.cpp
+    ../overlap.cpp
+    ../ovlp_block.cpp
+    ../overlap_fs.cpp
+    ../operator_fs_utils.cpp
+    ../../../source_hamilt/module_hcontainer/func_folding.cpp
+    ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+    ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+    ../../../source_hamilt/module_hcontainer/func_transfer.cpp
+    ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/transfer.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    ../../../source_basis/module_ao/orb_atomic_lm.cpp
+    tmp_mocks.cpp
+    ../../../source_hamilt/operator.cpp
+    ../../module_rt/td_folding.cpp)
 
-  ../../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../../source_basis/module_ao/orb_atomic_lm.cpp
-  tmp_mocks.cpp ../../../source_hamilt/operator.cpp
-  ../../module_rt/td_folding.cpp
-)
+  addtest(
+    TARGET
+    MODULE_LCAO_operator_ekinetic_test
+    LIBS
+    parameter
+    psi
+    base
+    device
+    container
+    SOURCES
+    test_ekinetic.cpp
+    ../ekinetic.cpp
+    ../ekinetic_fs.cpp
+    ../ekinetic_dh.cpp
+    ../operator_fs_utils.cpp
+    ../../../source_hamilt/module_hcontainer/func_folding.cpp
+    ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+    ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    ../../../source_basis/module_ao/orb_atomic_lm.cpp
+    tmp_mocks.cpp
+    ../../../source_hamilt/operator.cpp)
 
-AddTest(
-  TARGET MODULE_LCAO_operator_overlap_cd_test
-  LIBS parameter psi base device container
-  SOURCES test_overlap_cd.cpp ../overlap.cpp ../ovlp_block.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
-  ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
-  ../../../source_hamilt/module_hcontainer/func_transfer.cpp ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp ../../../source_hamilt/module_hcontainer/transfer.cpp
+  addtest(
+    TARGET
+    MODULE_LCAO_operator_ekinetic_serial_test
+    LIBS
+    parameter
+    psi
+    base
+    device
+    container
+    SOURCES
+    test_ekinetic_serial.cpp
+    ../ekinetic.cpp
+    ../ekinetic_fs.cpp
+    ../ekinetic_dh.cpp
+    ../operator_fs_utils.cpp
+    ../../../source_hamilt/module_hcontainer/func_folding.cpp
+    ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+    ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    ../../../source_basis/module_ao/orb_atomic_lm.cpp
+    tmp_mocks.cpp
+    ../../../source_hamilt/operator.cpp)
 
-  ../../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../../source_basis/module_ao/orb_atomic_lm.cpp
-  tmp_mocks.cpp ../../../source_hamilt/operator.cpp
-  ../../module_rt/td_folding.cpp
-)
+  addtest(
+    TARGET
+    MODULE_LCAO_operator_nonlocal_test
+    LIBS
+    parameter
+    psi
+    base
+    device
+    container
+    SOURCES
+    test_nonlocal.cpp
+    ../nonlocal.cpp
+    ../nonlocal_fs.cpp
+    ../nonlocal_dh.cpp
+    ../operator_fs_utils.cpp
+    ../../../source_hamilt/module_hcontainer/func_folding.cpp
+    ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+    ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    ../../../source_basis/module_ao/orb_atomic_lm.cpp
+    tmp_mocks.cpp
+    ../../../source_hamilt/operator.cpp)
 
-AddTest(
-  TARGET MODULE_LCAO_operator_ekinetic_test
-  LIBS parameter psi base device container
-  SOURCES test_ekinetic.cpp ../ekinetic.cpp ../ekinetic_fs.cpp ../ekinetic_dh.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
-  ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
-  ../../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../../source_basis/module_ao/orb_atomic_lm.cpp
-  tmp_mocks.cpp ../../../source_hamilt/operator.cpp
-)
+  addtest(
+    TARGET
+    MODULE_LCAO_operator_T_NL_cd_test
+    LIBS
+    parameter
+    psi
+    base
+    device
+    container
+    SOURCES
+    test_t_nl_cd.cpp
+    ../nonlocal.cpp
+    ../nonlocal_fs.cpp
+    ../nonlocal_dh.cpp
+    ../ekinetic.cpp
+    ../ekinetic_fs.cpp
+    ../ekinetic_dh.cpp
+    ../operator_fs_utils.cpp
+    ../../../source_hamilt/module_hcontainer/func_folding.cpp
+    ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+    ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+    ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+    ../../../source_basis/module_ao/parallel_orbitals.cpp
+    ../../../source_basis/module_ao/orb_atomic_lm.cpp
+    tmp_mocks.cpp
+    ../../../source_hamilt/operator.cpp)
 
-AddTest(
-  TARGET MODULE_LCAO_operator_ekinetic_serial_test
-  LIBS parameter psi base device container
-  SOURCES test_ekinetic_serial.cpp ../ekinetic.cpp ../ekinetic_fs.cpp ../ekinetic_dh.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
-  ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
-  ../../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../../source_basis/module_ao/orb_atomic_lm.cpp
-  tmp_mocks.cpp ../../../source_hamilt/operator.cpp
-)
+  if(ENABLE_LIBRI)
+    addtest(
+      TARGET
+      MODULE_LCAO_operator_exx_nscf_cell_nearest_test
+      LIBS
+      parameter
+      psi
+      base
+      device
+      container
+      cereal::cereal
+      ri
+      SOURCES
+      test_op_exx_nscf_cell_nearest.cpp
+      ../op_exx_lcao.cpp
+      ../../../source_hamilt/module_hcontainer/func_folding.cpp
+      ../../../source_hamilt/module_hcontainer/base_matrix.cpp
+      ../../../source_hamilt/module_hcontainer/hcontainer.cpp
+      ../../../source_hamilt/module_hcontainer/atom_pair.cpp
+      ../../../source_hamilt/module_hcontainer/read_hcontainer.cpp
+      ../../../source_basis/module_ao/parallel_orbitals.cpp
+      ../../../source_basis/module_ao/orb_atomic_lm.cpp
+      ../../../source_basis/module_ao/orb_gaunt_table.cpp
+      ../../lcao_set_mat2d.cpp
+      ../../center2orb.cpp
+      ../../center2orb_orb11.cpp
+      ../../center2orb_orb21.cpp
+      ../../center2orb_orb22.cpp
+      ../../../source_basis/module_ao/orb_read.cpp
+      ../../../source_basis/module_ao/elem_basis_idx_orb.cpp
+      ../../../source_io/module_hs/hs_sparse_io.cpp
+      ../../../source_io/module_hs/lat_r_csr.cpp
+      ../../../source_hamilt/module_hcontainer/func_transfer.cpp
+      ../../../source_hamilt/module_hcontainer/transfer.cpp
+      ../../../source_io/module_restart/restart.cpp
+      ../../../source_io/module_restart/restart_exx_csr.cpp
+      ../../../source_cell/ucell_io.cpp
+      tmp_mocks.cpp
+      ../../../source_hamilt/operator.cpp)
+  endif()
 
-AddTest(
-  TARGET MODULE_LCAO_operator_nonlocal_test
-  LIBS parameter psi base device container
-  SOURCES test_nonlocal.cpp ../nonlocal.cpp ../nonlocal_fs.cpp ../nonlocal_dh.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
-  ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
-  ../../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../../source_basis/module_ao/orb_atomic_lm.cpp
-  tmp_mocks.cpp ../../../source_hamilt/operator.cpp
-)
+  install(FILES parallel_operator_tests.sh
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  find_program(BASH bash)
+  add_test(
+    NAME MODULE_LCAO_operators_para_test
+    COMMAND ${BASH} parallel_operator_tests.sh
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-AddTest(
-  TARGET MODULE_LCAO_operator_T_NL_cd_test
-  LIBS parameter psi base device container
-  SOURCES test_t_nl_cd.cpp ../nonlocal.cpp ../nonlocal_fs.cpp ../nonlocal_dh.cpp ../ekinetic.cpp ../ekinetic_fs.cpp ../ekinetic_dh.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
-  ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
-  ../../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../../source_basis/module_ao/orb_atomic_lm.cpp
-  tmp_mocks.cpp ../../../source_hamilt/operator.cpp
-)
-
-if(ENABLE_LIBRI)
-AddTest(
-  TARGET MODULE_LCAO_operator_exx_nscf_cell_nearest_test
-  LIBS parameter psi base device container cereal::cereal ri
-  SOURCES test_op_exx_nscf_cell_nearest.cpp ../op_exx_lcao.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
-  ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
-  ../../../source_hamilt/module_hcontainer/read_hcontainer.cpp
-  ../../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../../source_basis/module_ao/orb_atomic_lm.cpp
-  ../../../source_basis/module_ao/orb_gaunt_table.cpp
-  ../../lcao_set_mat2d.cpp
-  ../../center2orb.cpp
-  ../../center2orb_orb11.cpp
-  ../../center2orb_orb21.cpp
-  ../../center2orb_orb22.cpp
-  ../../../source_basis/module_ao/orb_read.cpp
-  ../../../source_basis/module_ao/elem_basis_idx_orb.cpp
-  ../../../source_io/module_hs/hs_sparse_io.cpp
-  ../../../source_io/module_hs/lat_r_csr.cpp
-  ../../../source_hamilt/module_hcontainer/func_transfer.cpp
-  ../../../source_hamilt/module_hcontainer/transfer.cpp
-  ../../../source_io/module_restart/restart.cpp
-  ../../../source_io/module_restart/restart_exx_csr.cpp
-  ../../../source_cell/ucell_io.cpp
-  tmp_mocks.cpp ../../../source_hamilt/operator.cpp
-)
 endif()
-
-install(FILES parallel_operator_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
-add_test(NAME MODULE_LCAO_operators_para_test
-      COMMAND ${BASH} parallel_operator_tests.sh
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-endif() 
