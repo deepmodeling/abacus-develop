@@ -7,7 +7,9 @@ if(ENABLE_LCAO)
     add_subdirectory(test)
   endif()
 
-  list(APPEND objects
+  list(
+    APPEND
+    objects
     utils/lr_util.cpp
     utils/lr_sparse.cpp
     utils/lr_io.cpp
@@ -57,10 +59,6 @@ if(ENABLE_LCAO)
     list(APPEND objects utils/lr_io_krlist.cpp)
   endif()
 
-add_library(
-    lr
-    OBJECT
-    ${objects}
-)
+  add_library(lr OBJECT ${objects})
 
 endif()

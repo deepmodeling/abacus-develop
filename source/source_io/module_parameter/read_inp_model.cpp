@@ -2,6 +2,7 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "read_inp_sccs.h"
 namespace ModuleIO
 {
 void ReadInput::item_model()
@@ -193,16 +194,34 @@ void ReadInput::item_model()
         this->add_item(item);
     }
 
-    // imlicit_solvation
+    // Implicit solvation: imp_sol, the original model, then SCCS.
     {
         Input_Item item("imp_sol");
-        item.annotation = "calculate implicit solvation correction or not";
+        item.annotation = "implicit solvent model";
         item.category = "Implicit solvation model";
-        item.type = "Boolean";
-        item.description = "Calculate implicit solvation correction";
-        item.default_value = "False";
-        item.unit = "";
-        read_sync_bool(input.imp_sol);
+        item.type = "Integer";
+        item.description = "Implicit solvation model:\n"
+                           "* 0: no implicit solvent.\n"
+                           "* 1: the original ABACUS implicit solvation model.\n"
+                           "* 2: the self-consistent continuum solvation model (SCCS). Supported scope: CPU KS-DFT "
+                           "(esolver_type ksdft, device cpu) with basis_type pw or lcao; calculation scf energies and "
+                           "forces, no stress (cal_stress is rejected); nspin 1 or 2; periodic cells with "
+                           "assume_isolated none; no electric/gate field, DFT-1/2, DeePKS or dm_to_rho. SCCS is meant "
+                           "for neutral cells: a charged cell only prints a warning and runs, and its energy then "
+                           "depends on the cell size because the periodic Poisson solver drops the G = 0 net charge.\n\n"
+                           "Legacy Boolean values (true/false) are read as 1/0.";
+        item.default_value = "0";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            std::string error;
+            const bool valid = parse_imp_sol(item.str_values[0], para.input.imp_sol, error);
+            if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
+        };
+        sync_int(input.imp_sol);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            std::string error;
+            const bool valid = check_sccs_inp(para.input, error);
+            if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
+        };
         this->add_item(item);
     }
     {
@@ -213,7 +232,7 @@ void ReadInput::item_model()
         item.description = "The relative permittivity of the bulk solvent, 80 for water";
         item.default_value = "80";
         item.unit = "";
-        item.set_availability("imp_sol==true");
+        item.set_availability("imp_sol==1");
         read_sync_double(input.eb_k);
         this->add_item(item);
     }
@@ -250,6 +269,7 @@ void ReadInput::item_model()
         read_sync_double(input.nc_k);
         this->add_item(item);
     }
+    this->item_sccs();
 
     // vdW Correction
     {

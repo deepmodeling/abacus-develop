@@ -362,7 +362,8 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
                               PARAM.globalv.domag,
                               PARAM.globalv.domag_z,
                               this->inp_->gga_grad,
-                              PARAM.globalv.gamma_only_pw};
+                              PARAM.globalv.gamma_only_pw,
+                              this->inp_->imp_sol};
 
     fsl.getForceStress(ucell,
                        this->get_vdw_result(),
