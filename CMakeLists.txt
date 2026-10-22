@@ -65,12 +65,9 @@ option(BUILD_TESTING "Build unittests" OFF)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(ENABLE_COVERAGE "Enable coverage build" OFF)
 
-option(GIT_SUBMODULE "Check submodules during build" ON)
-
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION
        "Enable compilation optimization for the native machine's CPU type" OFF)
-
 
 # Options requiring MPI and LCAO
 cmake_dependent_option(ENABLE_ELPA "Enable ELPA eigensolver" ON "ENABLE_MPI"
