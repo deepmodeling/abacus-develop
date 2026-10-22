@@ -55,25 +55,33 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Notice: if you are compiling with AMD-CPU or GPU-version ABACUS, then `icpc` and `mpiicpc` compilers are needed
-cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
-  -DCMAKE_CXX_COMPILER=icpx \
-  -DMPI_CXX_COMPILER=mpiicpx \
-  -DMKLROOT=$MKLROOT \
-  -DENABLE_FLOAT_FFTW=ON \
-  -DENABLE_LCAO=ON \
-  -DENABLE_LIBXC=ON \
-  -DENABLE_OPENMP=ON \
-  -DENABLE_ELPA=ON \
-  -DENABLE_DFTD4=ON \
-  -DENABLE_JSON=ON \
-  -DENABLE_LIBRI=ON \
-  -DLIBRI_DIR=$LIBRI \
-  -DLIBCOMM_DIR=$LIBCOMM \
-  -DUSE_CUDA=$USE_CUDA# -DTorch_DIR=$LIBTORCH# -DENABLE_MLALGO=1 # -DNEP_DIR=$NEP_DIR \
-# -DDeePMD_DIR=$DEEPMD \
-# -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc \
-# -Dlibnpy_INCLUDE_DIR=$LIBNPY \
-# -DENABLE_CUSOLVERMP=ON \
+cmake_args=(
+  -B "$BUILD_DIR"
+  -DCMAKE_INSTALL_PREFIX="$PREFIX"
+  -DCMAKE_CXX_COMPILER=icpx
+  -DMPI_CXX_COMPILER=mpiicpx
+  -DMKLROOT="$MKLROOT"
+  -DENABLE_FLOAT_FFTW=ON
+  -DENABLE_LCAO=ON
+  -DENABLE_LIBXC=ON
+  -DENABLE_OPENMP=ON
+  -DENABLE_ELPA=ON
+  -DENABLE_DFTD4=ON
+  -DENABLE_JSON=ON
+  -DENABLE_LIBRI=ON
+  -DLIBRI_DIR="$LIBRI"
+  -DLIBCOMM_DIR="$LIBCOMM"
+  -DUSE_CUDA="$USE_CUDA"
+  # -DNEP_DIR="$NEP_DIR"
+  # -DTorch_DIR="$LIBTORCH"
+  # -DDeePMD_DIR="$DEEPMD"
+  # -DENABLE_MLALGO=1
+  # -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc
+  # -Dlibnpy_INCLUDE_DIR="$LIBNPY"
+  # -DENABLE_CUSOLVERMP=ON
+)
+
+cmake "${cmake_args[@]}"
 
 cmake --build $BUILD_DIR --target install -j "${NUM_JOBS}"
 
