@@ -403,11 +403,19 @@ bool ParameterHelp::show_parameter_help(const std::string& key, std::ostream& os
     os << "Type:      " << meta.type << "\n";
 
     if (!meta.allowed_values.empty()) {
-        os << "Allowed values: " << meta.allowed_values << "\n";
+        const std::string allowed_values = "Allowed values: " + meta.allowed_values;
+        os << word_wrap(allowed_values, MAX_WIDTH, INDENT_SIZE, 0) << "\n";
     }
 
-    if (!meta.value_rule.empty()) { os << "Legal range: " << meta.value_rule << "\n"; }
-    if (!meta.requirements.empty()) { os << "Requirements: " << meta.requirements << "\n"; }
+    if (!meta.value_rule.empty()) {
+        const std::string value_rule = "Legal range: " + meta.value_rule;
+        os << word_wrap(value_rule, MAX_WIDTH, INDENT_SIZE, 0) << "\n";
+    }
+
+    if (!meta.requirements.empty()) {
+        const std::string requirements = "Requirements: " + meta.requirements;
+        os << word_wrap(requirements, MAX_WIDTH, INDENT_SIZE, 0) << "\n";
+    }
 
     if (!meta.default_value.empty()) {
         os << "Default:   " << meta.default_value << "\n";
