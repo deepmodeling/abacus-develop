@@ -506,7 +506,18 @@ void ParameterHelp::generate_yaml(std::ostream& os) {
         os << "    type: " << yaml_quote_if_needed(item.type) << "\n";
 
         if (!item.domain.choices().empty()) {
-            os << "    allowed_values: [" << item.domain.format_choices() << "]\n";
+            os << "    allowed_values: [";
+            const auto& choices = item.domain.choices();
+            for (size_t i = 0; i < choices.size(); ++i)
+            {
+                if (i != 0) { os << ", "; }
+                if (item.domain.kind() == AvailabilityValueKind::String)
+                {
+                    os << yaml_quote_if_needed(choices[i]);
+                }
+                else { os << choices[i]; }
+            }
+            os << "]\n";
         }
 
         if (!item.domain.format_rule().empty()) {

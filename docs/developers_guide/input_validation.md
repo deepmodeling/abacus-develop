@@ -50,6 +50,15 @@ explicit supplied values are still checked.
 
 ## Documentation and defaults
 
+The normal numeric/Boolean reader registrations enforce scalar type contracts
+automatically. Explicit choice/range/requirement declarations cover system,
+electronic, relaxation, MD, vdW, output, DeePKS, DFPT and TDDFT inputs, including
+`scf_thr_type`, `symmetry`, `mem_saver` and the spin dependency.
+
+When writing reusable INPUT, an inactive value outside its public domain is
+omitted: internal unset markers must not be presented as legal explicit input.
+The value in memory is not changed.
+
 Choices, value predicates and conditional requirements are exported to built-in
 help, generated YAML and the INPUT manual from these declarations. Generated
 YAML and Markdown are build artifacts and must not be committed. Recommended

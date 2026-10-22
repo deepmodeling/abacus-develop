@@ -12,6 +12,16 @@ class InputDomainDocumentationTest(unittest.TestCase):
         )
         self.assertIn("- **Allowed values**: 0, 1, 2", rendered)
 
+    def test_ranges_and_requirements_share_reference_links(self):
+        rendered = generate_parameter_markdown(
+            {"name": "mixing_beta", "type": "Real", "value_rule": "value>=0",
+             "requirements": "When noncolin==true: require nspin==4"},
+            {"noncolin": "#noncolin", "nspin": "#nspin"},
+        )
+        self.assertIn("**Legal range**", rendered)
+        self.assertIn("**Requirements**", rendered)
+        self.assertIn("[`nspin`](#nspin)", rendered)
+
     def test_undeclared_domain_is_not_an_empty_restriction(self):
         rendered = generate_parameter_markdown({"name": "legacy", "type": "Real"}, {})
         self.assertNotIn("Allowed values", rendered)

@@ -55,6 +55,7 @@ class InputDomain
 
     bool empty() const;
     bool bound() const;
+    bool can_write(const Parameter& input) const;
     AvailabilityValueKind kind() const;
     InputValue value(const Parameter& input) const;
     std::string format_choices() const;

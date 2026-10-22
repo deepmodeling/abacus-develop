@@ -128,3 +128,17 @@ TEST(InputDomain, InternalUnsetValueIsNotAPublicChoice)
     EXPECT_FALSE(domain.validate_resolved("criterion", unset).empty());
     EXPECT_TRUE(domain.validate_resolved("criterion", resolved).empty());
 }
+
+TEST(InputDomain, RejectsNonfiniteRuleLiteralsAndVectorScalarComparisons)
+{
+    ModuleIO::InputDomain domain;
+    domain.add_requirement("threshold>nan", "flag==true");
+    const std::map<std::string, ModuleIO::AvailabilityValueKind> types = {
+        {"threshold", ModuleIO::AvailabilityValueKind::Real},
+        {"flag", ModuleIO::AvailabilityValueKind::Boolean},
+        {"axes", ModuleIO::AvailabilityValueKind::IntegerVector}};
+    EXPECT_THROW(domain.validate_schema("bad_threshold", types), std::invalid_argument);
+    ModuleIO::InputDomain vector_domain;
+    vector_domain.add_requirement("axes==1", "flag==true");
+    EXPECT_THROW(vector_domain.validate_schema("bad_vector", types), std::invalid_argument);
+}

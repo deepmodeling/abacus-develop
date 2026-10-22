@@ -324,6 +324,7 @@ All methods check the residual at the end of the linear solve, before orthonorma
     }
     {
         Input_Item item("lin_maxiter");
+        item.domain.set_rule("value>0");
         item.annotation = "maximum iterations per linear solve";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Integer";
@@ -335,16 +336,11 @@ All methods check the residual at the end of the linear solve, before orthonorma
             para.input.lin_maxiter = parse_td_integer(item);
         };
         sync_int(input.lin_maxiter);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.lin_maxiter <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_maxiter must be a positive integer.");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("lin_gmres_restart");
+        item.domain.set_rule("value>0");
         item.annotation = "Arnoldi dimension of restarted GMRES";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Integer";
@@ -356,12 +352,6 @@ All methods check the residual at the end of the linear solve, before orthonorma
             para.input.lin_gmres_restart = parse_td_integer(item);
         };
         sync_int(input.lin_gmres_restart);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.lin_gmres_restart <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_gmres_restart must be positive.");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -413,6 +403,7 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
     // real time TDDFT
     {
         Input_Item item("td_dt");
+        item.domain.set_rule("value>0");
         item.annotation = "time step for evolving wavefunction";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Real";

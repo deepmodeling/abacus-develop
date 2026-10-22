@@ -89,7 +89,7 @@ void read_information(std::stringstream& ifs, std::vector<std::string>& output, 
     std::string word;
     while (iss >> word)
     {
-        if (delimiters.find(word[0]) != std::string::npos)
+        if (delimiters.find(word[0]) != std::string::npos || (word == "//" && !output.empty()))
         {
             break;
         }
@@ -509,6 +509,10 @@ std::string ReadInput::prepare_input(Parameter& param)
     for (const auto& entry : this->input_lists)
     {
         errors += entry.second.domain.validate_resolved(entry.first, values);
+    }
+    if (!errors.empty()) { return errors; }
+    for (const auto& entry : this->input_lists)
+    {
         errors += entry.second.domain.validate_requirements(entry.first, values);
     }
     return errors;
@@ -607,6 +611,8 @@ void ReadInput::write_txt_input(const Parameter& param, const std::string& filen
     for (auto& item: this->input_lists)
     {
         Input_Item* p_item = &(item.second);
+        // Do not serialize an inactive internal marker as a public INPUT value.
+        if (!p_item->domain.can_write(param)) { continue; }
         if (p_item->get_final_value == nullptr) {
             continue;
 }

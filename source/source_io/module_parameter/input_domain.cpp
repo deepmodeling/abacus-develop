@@ -88,6 +88,25 @@ bool compare(const InputValue& actual, const std::string& op, const std::string&
     return number == wanted;
 }
 
+void validate_runtime_condition(const std::string& owner, const AvailabilityExpr& expression,
+                                const std::map<std::string, Kind>& types)
+{
+    validate_availability_expr(owner, expression, types);
+    if (expression.is_leaf())
+    {
+        const auto& condition = expression.condition;
+        if (condition.param.empty()) { return; }
+        const Kind kind = types.at(condition.param);
+        const Kind scalar_kind = element_kind(kind);
+        if (kind != scalar_kind && condition.op != "contains")
+        {
+            throw std::invalid_argument("Runtime INPUT vector conditions require contains: " + owner);
+        }
+        for (const auto& literal : condition.values) { parse_scalar(scalar_kind, literal); }
+    }
+    for (const auto& child : expression.children) { validate_runtime_condition(owner, child, types); }
+}
+
 void collect_references(const AvailabilityExpr& expression, std::set<std::string>& references)
 {
     if (expression.is_leaf() && !expression.condition.param.empty())
@@ -206,6 +225,12 @@ void InputDomain::add_requirement(const std::string& when, const std::string& re
 }
 bool InputDomain::empty() const { return !scalar_; }
 bool InputDomain::bound() const { return static_cast<bool>(getter_); }
+bool InputDomain::can_write(const Parameter& input) const
+{
+    if (empty() || !bound()) { return true; }
+    const InputValue resolved = value(input);
+    return accepts(resolved);
+}
 Kind InputDomain::kind() const { return kind_; }
 InputValue InputDomain::value(const Parameter& input) const { return getter_(input); }
 std::string InputDomain::format_choices() const { return join(choices_, ", "); }
@@ -234,13 +259,13 @@ void InputDomain::validate_schema(const std::string& label, const std::map<std::
         }
         for (const auto& choice : choices_) { parse_scalar(kind_, choice); }
         const std::map<std::string, Kind> domain_types = {{"value", kind_}};
-        validate_availability_expr(label, rule_, domain_types);
+        validate_runtime_condition(label, rule_, domain_types);
     }
-    validate_availability_expr(label, active_when_, types);
+    validate_runtime_condition(label, active_when_, types);
     for (const auto& rule : requirements_)
     {
-        validate_availability_expr(label, rule.when, types);
-        validate_availability_expr(label, rule.require, types);
+        validate_runtime_condition(label, rule.when, types);
+        validate_runtime_condition(label, rule.require, types);
     }
 }
 
