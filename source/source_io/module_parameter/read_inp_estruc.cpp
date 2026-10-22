@@ -449,15 +449,15 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 * `1`: Always uses the unsigned local magnetization magnitude in the built-in GGA gradient correction, independent of the global quantization axis. For Libxc functionals, `0` and `1` are equivalent.
 * `2`: Uses the regularized spin densities $\rho_{\pm}=\frac{|n+\rho_{\mathrm{core}}|\pm\min(S_{\eta}(r),|n+\rho_{\mathrm{core}}|)}{2}$, where $n$ is the valence electron density, $\rho_{\mathrm{core}}$ is the NLCC core density, and $r=|\boldsymbol{m}|$. With $x=r/\eta$ and fixed $\eta=10^{-3}\,\mathrm{electrons}/\mathrm{bohr}^{3}$, the $C^2$ mapping is $S_{\eta}(r)=\eta x^3(3x^2-8x+6)$ for $r\lt\eta$, and $S_{\eta}(r)=r$ otherwise. GGA gradients use these mapped densities. This regularization affects both LDA and GGA and can change energies and magnetic responses.
 
-When omitted, the value is `1` for `esolver_type=tddft` and `0` otherwise. Explicit values are preserved.)";
-        item.default_value = "`1` for `esolver_type=tddft`; `0` otherwise";
+When omitted, the value is `2` for `esolver_type=tddft` and `0` otherwise. Explicit values are preserved.)";
+        item.default_value = "`2` for `esolver_type=tddft`; `0` otherwise";
         item.unit = "";
         item.domain.set_choices({"0", "1", "2"});
         read_sync_int(input.gga_grad);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (!item.is_read() && para.inp.esolver_type == "tddft")
             {
-                para.input.gga_grad = 1;
+                para.input.gga_grad = 2;
             }
         };
         this->add_item(item);
