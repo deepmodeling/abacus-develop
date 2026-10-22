@@ -17,9 +17,9 @@
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/lcao_domain.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 
 #ifdef __EXX
 #endif
@@ -84,7 +84,12 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                                    ucell.infoNL->get_rcutmax_Beta(),
                                                    gamma_only_local);
 
-    atom_arrange::search(PARAM.globalv.search_pbc, GlobalV::ofs_running, this->gd, ucell, search_radius, this->inp_->test_atom_input);
+    atom_arrange::search(PARAM.globalv.search_pbc,
+                         GlobalV::ofs_running,
+                         this->gd,
+                         ucell,
+                         search_radius,
+                         this->inp_->test_atom_input);
 
     // (3) Periodic condition search for each grid.
     gint_info_.reset(new ModuleGint::GintInfo(this->pw_big->nbx,
@@ -136,8 +141,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     }
     if (this->p_hamilt == nullptr)
     {
-        const bool load_exx_flag = !GlobalC::restart.info_load.restart_exx
-                                   && GlobalC::restart.info_load.load_H;
+        const bool load_exx_flag = !GlobalC::restart.info_load.restart_exx && GlobalC::restart.info_load.load_H;
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(ucell,
                                                         this->gd,
                                                         &this->pv,
@@ -187,7 +191,14 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     unitcell::cal_ux(ucell, this->inp_->nspin);
 
     // pelec should be initialized before these calculations
-    elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, istep, global_out_dir, *this->inp_, this->pelec);
+    elecstate::init_scf(ucell,
+                        this->Pgrid,
+                        this->sf.strucFac,
+                        this->locpp.numeric,
+                        istep,
+                        global_out_dir,
+                        *this->inp_,
+                        this->pelec);
 
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
@@ -196,12 +207,8 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         Get_pchg_lcao get_pchg(*this->psi, this->pv, this->inp_->nspin);
         if (gamma_only_local)
         {
-            get_pchg.begin_gamma(ucell,
-                                 this->Pgrid,
-                                 this->gd,
-                                 this->inp_->out_pchg,
-                                 global_out_dir,
-                                 GlobalV::ofs_running);
+            get_pchg
+                .begin_gamma(ucell, this->Pgrid, this->gd, this->inp_->out_pchg, global_out_dir, GlobalV::ofs_running);
         }
         else
         {

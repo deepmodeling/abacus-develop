@@ -1,15 +1,14 @@
 #include "esolver_of.h"
+#include "source_base/formatter.h"
+#include "source_base/memory_recorder.h"
+#include "source_cell/cal_ux.h"
+#include "source_estate/module_pot/efield.h"
+#include "source_estate/module_pot/gatefield.h"
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <cstddef>
 #include <vector>
-
-#include "source_base/formatter.h"
-#include "source_base/memory_recorder.h"
-#include "source_estate/module_pot/efield.h"
-#include "source_estate/module_pot/gatefield.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_cell/cal_ux.h"
-#include "source_hamilt/module_xc/xc_functional.h"
 
 namespace ModuleESolver
 {
@@ -77,11 +76,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
 void ESolver_OF::allocate_array()
 {
     // Initialize the "wavefunction", which is sqrt(rho)
-    this->psi_ = new psi::Psi<double>(1, 
-                                      this->inp_->nspin, 
-                                      this->pw_rho->nrxx,
-                                      this->pw_rho->nrxx,
-                                      true);
+    this->psi_ = new psi::Psi<double>(1, this->inp_->nspin, this->pw_rho->nrxx, this->pw_rho->nrxx, true);
     ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
     this->pphi_ = new double*[this->inp_->nspin];
     for (int is = 0; is < this->inp_->nspin; ++is)
@@ -95,15 +90,15 @@ void ESolver_OF::allocate_array()
     this->ptemp_rho_ = new Charge();
     this->ptemp_rho_->set_rhopw(this->pw_rho);
     const bool kin_den = XC_Functional::get_ked_flag() || (this->inp_->out_elf[0] > 0); // mohan add 20251202
-    this->ptemp_rho_->allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(),
-                               this->inp_->test_charge);
+    this->ptemp_rho_->allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(), this->inp_->test_charge);
 
     this->theta_.resize(this->inp_->nspin);
     this->resize_spin_arrays();
     ModuleBase::Memory::record("OFDFT::pdLdphi_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::pdEdphi_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
     ModuleBase::Memory::record("OFDFT::pdirect_", sizeof(double) * this->inp_->nspin * this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * this->inp_->nspin * this->pw_rho->npw);
+    ModuleBase::Memory::record("OFDFT::precip_dir_",
+                               sizeof(std::complex<double>) * this->inp_->nspin * this->pw_rho->npw);
 }
 
 void ESolver_OF::resize_spin_arrays()
@@ -162,9 +157,7 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& uce
     this->pelec->pot->update_from_charge(this->ptemp_rho_, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_eff_v();
 
-    this->kedf_manager_->get_potential(this->ptemp_rho_->rho,
-                                       temp_phi.data(),
-                                       this->pw_rho,
+    this->kedf_manager_->get_potential(this->ptemp_rho_->rho, temp_phi.data(), this->pw_rho,
                                        vr_eff); // KEDF potential
     for (int i = 0; i < this->pw_rho->nrxx; ++i)
     {
@@ -196,9 +189,7 @@ void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& uc
     this->pelec->pot->update_from_charge(temp_rho, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_eff_v();
 
-    this->kedf_manager_->get_potential(temp_rho->rho,
-                                       ptemp_phi,
-                                       this->pw_rho,
+    this->kedf_manager_->get_potential(temp_rho->rho, ptemp_phi, this->pw_rho,
                                        vr_eff); // KEDF potential
     for (int is = 0; is < this->inp_->nspin; ++is)
     {
@@ -395,11 +386,11 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
             Parallel_Reduce::reduce_all(pseudopot_energy);
             temp_energy += kinetic_energy + pseudopot_energy;
             GlobalV::ofs_warning << i << "    " << dEdtheta[0] << "    " << temp_energy << std::endl;
-			if (this->theta_[0] == 0) 
-			{
-				std::cout << "dEdtheta    " << dEdtheta[0] << std::endl;
-			}
-		}
+            if (this->theta_[0] == 0)
+            {
+                std::cout << "dEdtheta    " << dEdtheta[0] << std::endl;
+            }
+        }
         exit(0);
     }
 }

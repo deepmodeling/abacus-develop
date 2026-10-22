@@ -49,7 +49,8 @@ void validate_librpa_v1_kpoints(const Input_para& input, const K_Vectors& kv)
     // Reader-v1 writes the complete Monkhorst-Pack mesh for LibRPA.
     if (input.rpa && input.out_librpa_ver == 1 && !kv.is_uniform_mp())
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_all_runners", "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid.");
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_all_runners",
+                                 "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid.");
     }
 }
 } // namespace
@@ -186,7 +187,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep, const
                                                    PARAM.globalv.gamma_only_local);
 
     //! 3) use search_radius to search adj atoms
-    atom_arrange::search(PARAM.globalv.search_pbc, GlobalV::ofs_running, this->gd, ucell, search_radius, this->inp_->test_atom_input);
+    atom_arrange::search(PARAM.globalv.search_pbc,
+                         GlobalV::ofs_running,
+                         this->gd,
+                         ucell,
+                         search_radius,
+                         this->inp_->test_atom_input);
 
     //! 4) initialize grid-integration information
     // The unique pointer owns the grid-integration information.
@@ -259,7 +265,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep, const
     }
 
     // 8) prepare the DeltaSpin spin-constrained calculation
-    init_deltaspin_lcao<TK>(ucell, *this->inp_, &(this->pv), this->kv, this->p_hamilt, this->psi, this->dmat.dm, this->pelec);
+    init_deltaspin_lcao<TK>(ucell,
+                            *this->inp_,
+                            &(this->pv),
+                            this->kv,
+                            this->p_hamilt,
+                            this->psi,
+                            this->dmat.dm,
+                            this->pelec);
 
     // 9) set the XC type before the first XC calculation in elecstate::init_scf, Peize Lin add 2016-12-03
     this->exx_nao.before_scf(ucell, this->kv, orb_, this->pv, this->p_chgmix, istep, *this->inp_, this->exx_info_);
@@ -474,7 +487,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // call iter_init() of ESolver_KS
     ESolver_KS::iter_init(ucell, istep, iter);
 
-    module_charge::chgmixing_ks_lcao(iter, this->p_chgmix, *this->dftu_, this->dmat.dm->get_dmr_ptr(1)->get_nnr(), *this->inp_);
+    module_charge::chgmixing_ks_lcao(iter,
+                                     this->p_chgmix,
+                                     *this->dftu_,
+                                     this->dmat.dm->get_dmr_ptr(1)->get_nnr(),
+                                     *this->inp_);
 
     if (iter == 1)
     {
@@ -490,7 +507,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         else if (this->inp_->gint_precision == "single")
         {
             GlobalV::ofs_running << "\n >> Gint single-precision mode: using fp32 throughout SCF" << std::endl;
-            std::cout << " >> NOTICE: Gint grid-integration uses fp32 throughout SCF (single-precision mode)" << std::endl;
+            std::cout << " >> NOTICE: Gint grid-integration uses fp32 throughout SCF (single-precision mode)"
+                      << std::endl;
         }
     }
 
@@ -504,7 +522,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         if (exx_info_.info_global.cal_exx)
         {
             // init_dm initializes the density only in the first iteration of the first outer EXX loop.
-            exx_two_level_step = exx_info_.info_ri.real_number ? this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
+            exx_two_level_step
+                = exx_info_.info_ri.real_number ? this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
         }
 #endif
         module_dm::Init_DM_Config init_dm_cfg;
@@ -513,12 +532,22 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         init_dm_cfg.td_stype = td_info != nullptr ? td_info->field().gauge() : 0;
         init_dm_cfg.nspin = PARAM.inp.nspin;
         init_dm_cfg.nelec = PARAM.inp.nelec;
-        init_dm_cfg.td_phase_hybrid
-            = (init_dm_cfg.td_stype == 2 && init_dm_cfg.esolver_type != "tddft") ? &td_info->get_phase_hybrid() : nullptr;
-        init_dm_cfg.td_cart_At
-            = (init_dm_cfg.td_stype == 2 && init_dm_cfg.esolver_type != "tddft") ? td_info->endpoint_A() : ModuleBase::Vector3<double>();
+        init_dm_cfg.td_phase_hybrid = (init_dm_cfg.td_stype == 2 && init_dm_cfg.esolver_type != "tddft")
+                                          ? &td_info->get_phase_hybrid()
+                                          : nullptr;
+        init_dm_cfg.td_cart_At = (init_dm_cfg.td_stype == 2 && init_dm_cfg.esolver_type != "tddft")
+                                     ? td_info->endpoint_A()
+                                     : ModuleBase::Vector3<double>();
         init_dm_cfg.dm2rho_func = &LCAO_domain::dm2rho;
-        module_dm::init_dm<TK>(ucell, this->pelec, this->dmat, this->psi, this->chr, this->pv, iter, exx_two_level_step, init_dm_cfg);
+        module_dm::init_dm<TK>(ucell,
+                               this->pelec,
+                               this->dmat,
+                               this->psi,
+                               this->chr,
+                               this->pv,
+                               iter,
+                               exx_two_level_step,
+                               init_dm_cfg);
     }
 
 #ifdef __EXX
@@ -611,13 +640,25 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                                                   GlobalV::MY_RANK);
         // the eigensolvers only ever ask the Hamiltonian for H(k) and S(k)
         hamilt::HamiltHSMatrix<TK> hs(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
-        hsolver_lcao_obj.solve(hs, this->psi[0], this->pelec, *this->dmat.dm, this->chr, this->inp_->nspin, ucell.omega, skip_charge);
+        hsolver_lcao_obj.solve(hs,
+                               this->psi[0],
+                               this->pelec,
+                               *this->dmat.dm,
+                               this->chr,
+                               this->inp_->nspin,
+                               ucell.omega,
+                               skip_charge);
     }
     else
     {
         // Lambda loop updated the density matrix (DM) but not the real-space charge density.
         // HSolver was skipped, so we need to sync rho from DM manually.
-        LCAO_domain::dm2rho(this->dmat.dm->get_dmr_vec(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
+        LCAO_domain::dm2rho(this->dmat.dm->get_dmr_vec(),
+                            this->inp_->nspin,
+                            &this->chr,
+                            this->inp_->nelec,
+                            ucell.omega,
+                            false);
     }
 
     // 4) EXX
@@ -639,11 +680,15 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         // Sync the energy to f_en.exx so that the output prints the correct E_exx.
         if (exx_info_.info_ri.real_number)
         {
-            this->pelec->set_exx(this->exx_nao.exd->get_Eexx(), exx_info_.info_global.cal_exx, exx_info_.info_global.hybrid_alpha);
+            this->pelec->set_exx(this->exx_nao.exd->get_Eexx(),
+                                 exx_info_.info_global.cal_exx,
+                                 exx_info_.info_global.hybrid_alpha);
         }
         else
         {
-            this->pelec->set_exx(this->exx_nao.exc->get_Eexx(), exx_info_.info_global.cal_exx, exx_info_.info_global.hybrid_alpha);
+            this->pelec->set_exx(this->exx_nao.exc->get_Eexx(),
+                                 exx_info_.info_global.cal_exx,
+                                 exx_info_.info_global.hybrid_alpha);
         }
     }
 #endif
@@ -753,7 +798,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
     if (precision_switched)
     {
-        GlobalV::ofs_running << "\n >> Gint precision switched: fp32 -> fp64 (drho = " << this->drho << ")" << std::endl;
+        GlobalV::ofs_running << "\n >> Gint precision switched: fp32 -> fp64 (drho = " << this->drho << ")"
+                             << std::endl;
         std::cout << " >> NOTICE: Gint grid-integration precision switched from fp32 to fp64" << std::endl;
     }
 

@@ -8,11 +8,11 @@
 
 #include "esolver_dfpt_pw.h"
 
-#include "source_estate/module_charge/charge.h"
-#include "source_estate/module_pot/pot_xc_fdm.h"
 #include "source_base/macros.h"
 #include "source_base/math_polyint.h"
 #include "source_base/tool_quit.h"
+#include "source_estate/module_charge/charge.h"
+#include "source_estate/module_pot/pot_xc_fdm.h"
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
@@ -30,7 +30,8 @@
 #include <sstream>
 #include <vector>
 
-namespace {
+namespace
+{
 
 /**
  * @brief Re/Im-split finite-difference adapter over elecstate::PotXC_FDM.
@@ -44,12 +45,12 @@ class XC_First_Order_FDM : public ModuleDFPT::XC_First_Order
 {
   public:
     XC_First_Order_FDM(const int nspin,
-                        const bool domag,
-                        const bool domag_z,
-                        const int gga_grad,
-                        const bool out_elf,
-                        const int test_charge,
-                        ModulePW::PW_Basis* rho_basis,
+                       const bool domag,
+                       const bool domag_z,
+                       const int gga_grad,
+                       const bool out_elf,
+                       const int test_charge,
+                       ModulePW::PW_Basis* rho_basis,
                        const Charge* chg0,
                        const UnitCell* ucell)
         : ucell_(ucell)
@@ -130,12 +131,10 @@ class XC_First_Order_FDM : public ModuleDFPT::XC_First_Order
                         imax = ir;
                     }
                 }
-                std::cout << "XCDBG call=" << call
-                          << " <drho|dvxc>/|drho|^2=" << (dp_dv / dp_dp)
+                std::cout << "XCDBG call=" << call << " <drho|dvxc>/|drho|^2=" << (dp_dv / dp_dp)
                           << " |dvxc|/|drho|=" << (std::sqrt(dv_dv) / std::sqrt(dp_dp))
                           << " ratio@max=" << (dvxc_r[imax].real() / drho_r[imax].real())
-                          << " drho@max=" << drho_r[imax].real()
-                          << std::endl;
+                          << " drho@max=" << drho_r[imax].real() << std::endl;
             }
             ++call;
         }
@@ -158,8 +157,7 @@ class XC_First_Order_FDM : public ModuleDFPT::XC_First_Order
         fdm_->cal_v_eff(chg1_, ucell_, veff_1_);
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            dvxc_r[ir] += std::complex<double>(0.0, 1.0)
-                          * (v_plus[ir] - veff_1_(0, ir)) / (2.0 * eta);
+            dvxc_r[ir] += std::complex<double>(0.0, 1.0) * (v_plus[ir] - veff_1_(0, ir)) / (2.0 * eta);
         }
     }
 
@@ -287,8 +285,7 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     }
     if (this->pelec->charge->nrxx != this->pw_rho->nrxx)
     {
-        ModuleBase::WARNING_QUIT("ESolver_DFPT_PW::init_dfpt",
-                                 "charge is not on the rho grid (DFPT supports NCPP)");
+        ModuleBase::WARNING_QUIT("ESolver_DFPT_PW::init_dfpt", "charge is not on the rho grid (DFPT supports NCPP)");
     }
 
     // converged effective potential on the shared rho grid (row 0: nspin = 1)
@@ -312,9 +309,8 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     if (xc_func_type != 1 && xc_func_type != 2)
     {
         std::stringstream msg;
-        msg << "DFPT supports LDA/GGA functionals only; the ground-state functional '"
-            << ucell.atoms[0].ncpp.xc_func << "' (func_type " << xc_func_type
-            << ") needs response channels that are not implemented";
+        msg << "DFPT supports LDA/GGA functionals only; the ground-state functional '" << ucell.atoms[0].ncpp.xc_func
+            << "' (func_type " << xc_func_type << ") needs response channels that are not implemented";
         ModuleBase::WARNING_QUIT("ESolver_DFPT_PW::init_dfpt", msg.str());
     }
 
@@ -343,7 +339,9 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     // factors (e.g. BLYP_LR subtracts its short-range components)
     const std::vector<int> xc_func_id = XC_Functional::get_func_id();
     const std::vector<std::vector<double>> xc_ext_params
-        = XC_Functional_Libxc::ext_params_for(xc_func_id, XC_Functional::get_hybrid_alpha(), XC_Functional::get_hse_omega());
+        = XC_Functional_Libxc::ext_params_for(xc_func_id,
+                                              XC_Functional::get_hybrid_alpha(),
+                                              XC_Functional::get_hse_omega());
     std::vector<double> xc_weights(xc_func_id.size(), 1.0);
     for (size_t i = 0; i < xc_func_id.size(); ++i)
     {
@@ -360,8 +358,15 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
                         "built without libxc: the DFPT XC kernel falls back to the finite-difference "
                         "amplitude path (LDA-only support; the GGA response at q != 0 lacks the "
                         "i(q.f_grad)A carrier term)");
-    xc_adapter_ = new XC_First_Order_FDM(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
-                 this->inp_->out_elf[0] > 0, this->inp_->test_charge, this->pw_rho, this->pelec->charge, &ucell);
+    xc_adapter_ = new XC_First_Order_FDM(this->inp_->nspin,
+                                         PARAM.globalv.domag,
+                                         PARAM.globalv.domag_z,
+                                         this->inp_->gga_grad,
+                                         this->inp_->out_elf[0] > 0,
+                                         this->inp_->test_charge,
+                                         this->pw_rho,
+                                         this->pelec->charge,
+                                         &ucell);
 #endif
 
     if (getenv("DFPT_VKB") != nullptr)
@@ -383,8 +388,7 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
         pert.build_vkb(0, 1, gk, vkb1);
         const int nh = ucell.atoms[0].ncpp.nh;
         const std::complex<double>* gsvkb = this->ppcell.get_vkb_data<double>();
-        std::cout << "VKBCHK npw=" << npw << " nh=" << nh
-                  << " nkb=" << this->ppcell.nkb << std::endl;
+        std::cout << "VKBCHK npw=" << npw << " nh=" << nh << " nkb=" << this->ppcell.nkb << std::endl;
         for (int mu = 0; mu < nh; ++mu)
         {
             std::complex<double> dot(0.0, 0.0);
@@ -397,8 +401,8 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
                 nrm_mine += std::norm(vkb[mu][ig]);
                 nrm_gs += std::norm(gs);
             }
-            std::cout << "VKBCHK mu=" << mu << " <mine|gs>=" << dot
-                      << " |mine|^2=" << nrm_mine << " |gs|^2=" << nrm_gs << std::endl;
+            std::cout << "VKBCHK mu=" << mu << " <mine|gs>=" << dot << " |mine|^2=" << nrm_mine << " |gs|^2=" << nrm_gs
+                      << std::endl;
         }
         for (int mu = 0; mu < nh; ++mu)
         {
@@ -412,20 +416,29 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
                 nrm_mine += std::norm(vkb1[mu][ig]);
                 nrm_gs += std::norm(gs);
             }
-            std::cout << "VKBCHK a1 mu=" << mu << " <mine|gs>=" << dot
-                      << " |mine|^2=" << nrm_mine << " |gs|^2=" << nrm_gs << std::endl;
+            std::cout << "VKBCHK a1 mu=" << mu << " <mine|gs>=" << dot << " |mine|^2=" << nrm_mine
+                      << " |gs|^2=" << nrm_gs << std::endl;
         }
         for (int ig = 0; ig < 6; ++ig)
         {
             std::cout << "VKBEL a1 mu=0 ig=" << ig << " mine=" << vkb1[0][ig]
-                      << " gs=" << gsvkb[4 * this->pw_wfc->npwk_max + ig]
-                      << " gcar=" << gk[ig].x << "," << gk[ig].y << "," << gk[ig].z << std::endl;
+                      << " gs=" << gsvkb[4 * this->pw_wfc->npwk_max + ig] << " gcar=" << gk[ig].x << "," << gk[ig].y
+                      << "," << gk[ig].z << std::endl;
         }
     }
 
     this->stp.sync_cpu();
-    dfpt_->init(ucell, *this->stp.psi_cpu, this->pw_rho, this->pw_wfc, &this->sf, veff_r,
-                this->pelec->wg, this->pelec->ekb, xc_adapter_, nelec_, ecutwfc_,
+    dfpt_->init(ucell,
+                *this->stp.psi_cpu,
+                this->pw_rho,
+                this->pw_wfc,
+                &this->sf,
+                veff_r,
+                this->pelec->wg,
+                this->pelec->ekb,
+                xc_adapter_,
+                nelec_,
+                ecutwfc_,
                 dft_plus_u_ ? this->dftu_.get() : nullptr);
 }
 

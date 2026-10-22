@@ -18,17 +18,18 @@
  * @date 2023-05-15
  */
 #include "esolver_dp.h"
+
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
+#include "source_cell/cif_io.h"
 #include "source_cell/ghost_exchange_plan.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
-#include "source_cell/cif_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include <iomanip>
 #include <array>
+#include <iomanip>
 #include <sstream>
 #include <unordered_map>
 
@@ -117,7 +118,7 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         for (int iat = 0; iat < natom; ++iat)
         {
             const LocalAtom& atom = iat < nowned_atoms ? owned_atoms[static_cast<std::size_t>(iat)]
-                                                  : ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
+                                                       : ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
             coord[3 * iat] = atom.cart.x * mdcell.lat0() * ModuleBase::BOHR_TO_A;
             coord[3 * iat + 1] = atom.cart.y * mdcell.lat0() * ModuleBase::BOHR_TO_A;
             coord[3 * iat + 2] = atom.cart.z * mdcell.lat0() * ModuleBase::BOHR_TO_A;
@@ -139,7 +140,7 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         std::vector<int> ilist(static_cast<std::size_t>(nowned_atoms), 0);
         std::vector<int> numneigh(static_cast<std::size_t>(nowned_atoms), 0);
         std::vector<int*> firstneigh(static_cast<std::size_t>(nowned_atoms), NULL);
-        std::vector<std::vector<int> > sorted_neighbors(static_cast<std::size_t>(nowned_atoms));
+        std::vector<std::vector<int>> sorted_neighbors(static_cast<std::size_t>(nowned_atoms));
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             ilist[static_cast<std::size_t>(iat)] = iat;
@@ -147,10 +148,9 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
                 = neighbor_list.get_neighbors_sorted_by_distance(iat, coord);
             numneigh[static_cast<std::size_t>(iat)]
                 = static_cast<int>(sorted_neighbors[static_cast<std::size_t>(iat)].size());
-            firstneigh[static_cast<std::size_t>(iat)]
-                = sorted_neighbors[static_cast<std::size_t>(iat)].empty()
-                      ? NULL
-                      : sorted_neighbors[static_cast<std::size_t>(iat)].data();
+            firstneigh[static_cast<std::size_t>(iat)] = sorted_neighbors[static_cast<std::size_t>(iat)].empty()
+                                                            ? NULL
+                                                            : sorted_neighbors[static_cast<std::size_t>(iat)].data();
         }
 
         GhostExchangePlan& ghost_plan = mdcell.get_ghost_exchange_plan();
@@ -171,14 +171,34 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         dp_world = &dp_world_comm;
 #endif
 #if defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 13
-        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, view.nswap, view.sendnum, view.recvnum, view.firstrecv, sendlist_data, view.sendproc, view.recvproc, dp_world, ghost_plan.nprocs);
-#elif defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 12
-        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, view.nswap, view.sendnum, view.recvnum, view.firstrecv, sendlist_data, view.sendproc, view.recvproc, dp_world);
-#else
         DPInputNlist nlist(nowned_atoms,
                            ilist_data,
                            numneigh_data,
-                           firstneigh_data);
+                           firstneigh_data,
+                           view.nswap,
+                           view.sendnum,
+                           view.recvnum,
+                           view.firstrecv,
+                           sendlist_data,
+                           view.sendproc,
+                           view.recvproc,
+                           dp_world,
+                           ghost_plan.nprocs);
+#elif defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 12
+        DPInputNlist nlist(nowned_atoms,
+                           ilist_data,
+                           numneigh_data,
+                           firstneigh_data,
+                           view.nswap,
+                           view.sendnum,
+                           view.recvnum,
+                           view.firstrecv,
+                           sendlist_data,
+                           view.sendproc,
+                           view.recvproc,
+                           dp_world);
+#else
+        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data);
 #endif
 #ifdef __DPMD_HAS_NLIST_MAPPING
         if (use_mapping)
@@ -200,13 +220,15 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.ghost_atoms();
         for (int iat = 0; iat < nowned_atoms; ++iat)
         {
-            mutable_owned_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * iat], force[3 * iat + 1], force[3 * iat + 2]);
+            mutable_owned_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * iat],
+                                                                         force[3 * iat + 1],
+                                                                         force[3 * iat + 2]);
         }
         for (int iat = 0; iat < nghost; ++iat)
         {
             mutable_ghost_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * (nowned_atoms + iat)],
-                                                                           force[3 * (nowned_atoms + iat) + 1],
-                                                                           force[3 * (nowned_atoms + iat) + 2]);
+                                                                         force[3 * (nowned_atoms + iat) + 1],
+                                                                         force[3 * (nowned_atoms + iat) + 2]);
         }
 
         if (virial.size() != 9)
@@ -229,7 +251,7 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
             LocalAtom& atom = mutable_owned_atoms[static_cast<std::size_t>(iat)];
             atom.force *= fact_f;
         }
-        for (LocalAtom& atom : mutable_ghost_atoms)
+        for (LocalAtom& atom: mutable_ghost_atoms)
         {
             atom.force *= fact_f;
         }
@@ -328,7 +350,9 @@ void ESolver_DP::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
     force = dp_force;
     ModuleIO::print_force(GlobalV::ofs_running,
                           static_cast<UnitCell&>(basecell),
-                          "TOTAL-FORCE (eV/Angstrom)", force, false);
+                          "TOTAL-FORCE (eV/Angstrom)",
+                          force,
+                          false);
 }
 
 void ESolver_DP::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
@@ -425,8 +449,7 @@ void ESolver_DP::initialize_type_map_(const std::vector<std::string>& type_label
         const std::unordered_map<std::string, int>::const_iterator found = label.find(type_labels[it]);
         if (found == label.end())
         {
-            ModuleBase::WARNING_QUIT("ESolver_DP",
-                                     "The label " + type_labels[it] + " is not found in the type map.");
+            ModuleBase::WARNING_QUIT("ESolver_DP", "The label " + type_labels[it] + " is not found in the type map.");
         }
         md_type_to_dp_type_[it] = found->second;
     }

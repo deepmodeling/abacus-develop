@@ -49,7 +49,8 @@ class ESolver_KS_PW : public ESolver_KS
 
     virtual void allocate_hamilt(const UnitCell& ucell);
 
-    /** @brief Let RT-TDDFT bind its endpoint field before wavefunction initialization uses H; ordinary DFT does nothing. */
+    /** @brief Let RT-TDDFT bind its endpoint field before wavefunction initialization uses H; ordinary DFT does
+     * nothing. */
     virtual void prepare_init_hamilt(const UnitCell& ucell);
 
     // Electronic wave function psi

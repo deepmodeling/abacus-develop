@@ -94,8 +94,8 @@ class ESolver_NEP : public ESolver
     NEP nep; ///< NEP object for NEP calculations
 #endif
 
-    std::string nep_file;          ///< directory of NEP model file
-    std::vector<int> atype = {};   ///< atom type mapping for NEP model
+    std::string nep_file;        ///< directory of NEP model file
+    std::vector<int> atype = {}; ///< atom type mapping for NEP model
     std::vector<int> md_type_to_nep_type_;
     double nep_potential;          ///< computed potential energy
     ModuleBase::matrix nep_force;  ///< computed atomic forces

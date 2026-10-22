@@ -31,9 +31,9 @@ class ESolver_LJ : public ESolver
 
     void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) override;
 
-        void after_all_runners(BaseCell& cell) override;
+    void after_all_runners(BaseCell& cell) override;
 
-        void others(BaseCell& cell, const int istep) override;
+    void others(BaseCell& cell, const int istep) override;
 
     //====================================================================
     // Test seam.

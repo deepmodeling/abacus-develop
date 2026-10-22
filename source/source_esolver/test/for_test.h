@@ -69,8 +69,16 @@ pseudo::pseudo()
 pseudo::~pseudo()
 {
 }
-SepPot::SepPot(){}
-SepPot::~SepPot(){}
-Sep_Cell::Sep_Cell() noexcept {}
-Sep_Cell::~Sep_Cell() noexcept {}
+SepPot::SepPot()
+{
+}
+SepPot::~SepPot()
+{
+}
+Sep_Cell::Sep_Cell() noexcept
+{
+}
+Sep_Cell::~Sep_Cell() noexcept
+{
+}
 #endif

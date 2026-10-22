@@ -139,8 +139,8 @@ class ESolver_DP : public ESolver
      *
      */
 
-    std::string dp_file;             ///< directory of DP model file
-    std::vector<int> atype = {};     ///< atom type corresponding to DP model
+    std::string dp_file;         ///< directory of DP model file
+    std::vector<int> atype = {}; ///< atom type corresponding to DP model
     std::vector<int> md_type_to_dp_type_;
     std::vector<double> fparam = {}; ///< frame parameter for dp potential: dim_fparam
     std::vector<double> aparam = {}; ///< atomic parameter for dp potential: natoms x dim_aparam

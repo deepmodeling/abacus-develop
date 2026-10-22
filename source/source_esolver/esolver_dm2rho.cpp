@@ -6,8 +6,8 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_ml/io_npz.h"
 #include "source_io/module_output/cube_io.h"
-#include "source_lcao/lcao_domain.h"
 #include "source_lcao/hamilt_lcao.h"
+#include "source_lcao/lcao_domain.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
 
@@ -66,7 +66,12 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
 
     // it's dangerous to design psiToRho function like this, mohan note 20251024
     // this->pelec->psiToRho(*this->psi);
-    LCAO_domain::dm2rho(this->dmat.dm->get_dmr_vec(), this->inp_->nspin, &this->chr, this->inp_->nelec, ucell.omega, false);
+    LCAO_domain::dm2rho(this->dmat.dm->get_dmr_vec(),
+                        this->inp_->nspin,
+                        &this->chr,
+                        this->inp_->nelec,
+                        ucell.omega,
+                        false);
 
     // Write every density channel (rho[0..3] for nspin=4) so the file set
     // matches ctrl_output_fp: the init_chg=file reader reads chgs1..chgs<nspin>

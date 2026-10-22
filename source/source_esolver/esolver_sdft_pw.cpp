@@ -7,10 +7,10 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_stodft/sto_hsolver_pw.h"
 #include "source_pw/module_stodft/sto_dos.h"
 #include "source_pw/module_stodft/sto_elecond.h"
 #include "source_pw/module_stodft/sto_forces.h"
+#include "source_pw/module_stodft/sto_hsolver_pw.h"
 #include "source_pw/module_stodft/sto_stress_pw.h"
 
 #include <algorithm>
@@ -111,7 +111,8 @@ void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
                                                 &this->stoche.emax_sto);
     this->p_hamilt_sto = static_cast<StoHamiltPW<T, Device>*>(this->p_hamilt);
 
-    if (istep > 0 && this->inp_->nbands_sto != 0 && this->inp_->initsto_freq > 0 && istep % this->inp_->initsto_freq == 0)
+    if (istep > 0 && this->inp_->nbands_sto != 0 && this->inp_->initsto_freq > 0
+        && istep % this->inp_->initsto_freq == 0)
     {
         this->stowf.update_sto_orbitals(this->inp_->seed_sto);
     }
@@ -226,8 +227,11 @@ void ESolver_SDFT_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matri
 
     Sto_Forces<double, Device> ff(ucell.nat);
 
-    ff.cal_stoforce(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
-                 force,
+    ff.cal_stoforce(this->inp_->nspin,
+                    PARAM.globalv.domag,
+                    PARAM.globalv.domag_z,
+                    this->inp_->gga_grad,
+                    force,
                     *this->pelec,
                     this->pw_rho,
                     &ucell.symm,
@@ -248,9 +252,12 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matr
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     Sto_Stress_PW<double, Device> ss;
-    ss.cal_stress(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
-                       this->inp_->gga_grad, PARAM.globalv.gamma_only_pw,
-                       stress,
+    ss.cal_stress(this->inp_->nspin,
+                  PARAM.globalv.domag,
+                  PARAM.globalv.domag_z,
+                  this->inp_->gga_grad,
+                  PARAM.globalv.gamma_only_pw,
+                  stress,
                   *this->pelec,
                   this->pw_rho,
                   &ucell.symm,
