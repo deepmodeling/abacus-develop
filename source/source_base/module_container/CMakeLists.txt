@@ -21,8 +21,9 @@ endif()
 
 add_library(container STATIC ${ATen_CPU_SRCS} ${ATen_CUDA_SRCS})
 
-target_link_libraries(container PUBLIC
-  ${ATen_CPU_DEPENDENCY_LIBS} ${ATen_CUDA_DEPENDENCY_LIBS} ${ATen_ROCM_DEPENDENCY_LIBS})
+target_link_libraries(
+  container PUBLIC ${ATen_CPU_DEPENDENCY_LIBS} ${ATen_CUDA_DEPENDENCY_LIBS}
+                   ${ATen_ROCM_DEPENDENCY_LIBS})
 
 if(ENABLE_COVERAGE)
   add_coverage(container)

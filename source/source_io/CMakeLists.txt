@@ -1,166 +1,154 @@
 # Note: Help data is embedded in Input_Item registrations under module_parameter.
 # The old input_help_data.h generation has been removed.
 
-list(APPEND objects
-    module_parameter/input_conv.cpp
-    module_ctrl/ctrl_output_fp.cpp
-    module_ctrl/ctrl_output_pw.cpp
-    module_ctrl/ctrl_output_td.cpp
-    module_bessel/bessel_basis.cpp
-    module_output/cal_test.cpp
-    module_dos/cal_dos.cpp
-    module_dos/cal_ldos.cpp
-    module_ml/cal_mlkedf_desc.cpp
-    module_dos/write_dos_pw.cpp
-    module_energy/write_bands.cpp
-    module_energy/write_eig_occ.cpp
-    module_energy/td_eij_io.cpp
-    module_bessel/numerical_basis.cpp
-    module_bessel/numerical_basis_overlap.cpp
-    module_bessel/numerical_basis_output.cpp
-    module_bessel/numerical_basis_jyjy.cpp
-    module_bessel/numerical_descriptor.cpp
-    module_output/print_info.cpp
-    module_output/read_cube.cpp
-    module_wf/read_wfc_pw.cpp
-    module_wf/read_wf2rho_pw.cpp
-    module_restart/restart.cpp
-    module_wf/write_wfc_pw.cpp
-    module_output/write_pao.cpp
-    module_output/write_cube.cpp
-    module_elf/write_elf.cpp
-    module_dipole/write_dipole.cpp
-    module_ml/write_mlkedf_desc.cpp
-    module_current/td_current_io.cpp
-    module_current/td_current_io_comm.cpp
-    module_current/td_current_pw.cpp
-    module_efield/td_efield_io.cpp
-    module_efield/td_vector_pot_io.cpp
-    module_chgpot/write_libxc_r.cpp
-    module_output/output_log.cpp
-    module_json/para_json.cpp
-    parse_args.cpp
-    input_help.cpp
-    module_chgpot/get_pchg_pw.cpp
-    module_wf/get_wf_pw.cpp
-)
+list(
+  APPEND
+  objects
+  module_parameter/input_conv.cpp
+  module_ctrl/ctrl_output_fp.cpp
+  module_ctrl/ctrl_output_pw.cpp
+  module_ctrl/ctrl_output_td.cpp
+  module_bessel/bessel_basis.cpp
+  module_output/cal_test.cpp
+  module_dos/cal_dos.cpp
+  module_dos/cal_ldos.cpp
+  module_ml/cal_mlkedf_desc.cpp
+  module_dos/write_dos_pw.cpp
+  module_energy/write_bands.cpp
+  module_energy/write_eig_occ.cpp
+  module_energy/td_eij_io.cpp
+  module_bessel/numerical_basis.cpp
+  module_bessel/numerical_basis_overlap.cpp
+  module_bessel/numerical_basis_output.cpp
+  module_bessel/numerical_basis_jyjy.cpp
+  module_bessel/numerical_descriptor.cpp
+  module_output/print_info.cpp
+  module_output/read_cube.cpp
+  module_wf/read_wfc_pw.cpp
+  module_wf/read_wf2rho_pw.cpp
+  module_restart/restart.cpp
+  module_wf/write_wfc_pw.cpp
+  module_output/write_pao.cpp
+  module_output/write_cube.cpp
+  module_elf/write_elf.cpp
+  module_dipole/write_dipole.cpp
+  module_ml/write_mlkedf_desc.cpp
+  module_current/td_current_io.cpp
+  module_current/td_current_io_comm.cpp
+  module_current/td_current_pw.cpp
+  module_efield/td_efield_io.cpp
+  module_efield/td_vector_pot_io.cpp
+  module_chgpot/write_libxc_r.cpp
+  module_output/output_log.cpp
+  module_json/para_json.cpp
+  parse_args.cpp
+  input_help.cpp
+  module_chgpot/get_pchg_pw.cpp
+  module_wf/get_wf_pw.cpp)
 
-list(APPEND objects_advanced
-    module_unk/unk_overlap_pw.cpp
-    module_unk/berryphase.cpp
-    module_wannier/to_w90.cpp
-    module_wannier/to_w90_pw.cpp
-    module_wannier/to_w90_pw_io.cpp
-    module_wannier/to_w90_pw_setup.cpp
-    module_wannier/to_w90_pw_overlap.cpp
-    module_wannier/to_w90_lcao_pw.cpp
-    module_wannier/to_w90_lcao.cpp
-    module_wannier/to_w90_lcao_io.cpp
-    module_wannier/to_w90_lcao_setup.cpp
-    module_wannier/to_w90_lcao_overlap.cpp
-    module_wannier/fr_overlap.cpp
-)
+list(
+  APPEND
+  objects_advanced
+  module_unk/unk_overlap_pw.cpp
+  module_unk/berryphase.cpp
+  module_wannier/to_w90.cpp
+  module_wannier/to_w90_pw.cpp
+  module_wannier/to_w90_pw_io.cpp
+  module_wannier/to_w90_pw_setup.cpp
+  module_wannier/to_w90_pw_overlap.cpp
+  module_wannier/to_w90_lcao_pw.cpp
+  module_wannier/to_w90_lcao.cpp
+  module_wannier/to_w90_lcao_io.cpp
+  module_wannier/to_w90_lcao_setup.cpp
+  module_wannier/to_w90_lcao_overlap.cpp
+  module_wannier/fr_overlap.cpp)
 
 if(ENABLE_LCAO)
-  list(APPEND objects
-      module_dos/write_dos_lcao.cpp
-      module_dos/cal_pdos_gamma.cpp
-      module_dos/cal_pdos_multik.cpp
-      module_dos/write_pdos_text.cpp
-      module_output/write_orb_info.cpp
-      module_energy/write_proj_band_lcao.cpp
-      module_chgpot/get_pchg_lcao.cpp
-      module_wf/get_wf_lcao.cpp
-      module_wf/read_wfc_nao.cpp
-      module_wf/write_wfc_nao.cpp
-      module_dm/write_dmk.cpp
-      module_dm/write_dmr.cpp
-      module_qo/to_qo_kernel.cpp
-      module_qo/to_qo_mpi.cpp
-      module_qo/to_qo_structures.cpp
-      module_mulliken/output_sk.cpp
-      module_mulliken/output_dmk.cpp
-      module_mulliken/output_mulliken.cpp
-      module_ml/io_npz.cpp
-      module_hs/angmom_op_mat.cpp
-      module_dhs/write_dh.cpp
-      module_dhs/write_dh_terms.cpp
-  )
-  list(APPEND objects_advanced	   
-      module_unk/unk_overlap_lcao.cpp
-      module_hs/hs_dense_io.cpp
-      module_hs/hs_sparse_io.cpp
-      module_hs/dhs_sparse_writer.cpp
-      module_hs/hsk_writer.cpp
-      module_hs/hsr_writer.cpp
-      module_hs/hsr_legacy.cpp
-      module_hs/hterm_writer.cpp
-      module_hs/lat_r_csr.cpp
-      module_hs/pos_op_csr.cpp
-      module_hs/pos_op_basis.cpp
-      module_hs/pos_op_calc.cpp
-      module_hs/pos_op_writer.cpp
-      module_hs/pos_op_mat.cpp
-      module_hs/vxc_op_tools.cpp
-      module_hs/vxc_op_mat.cpp
-      module_hs/vxc_op_r.cpp
-      module_hs/vxc_op_lip.cpp
-      module_hs/output_mat_sparse.cpp
-      module_energy/write_eband_terms.cpp
-      module_ctrl/ctrl_scf_lcao.cpp
-      module_ctrl/ctrl_runner_lcao.cpp
-      module_ctrl/ctrl_iter_lcao.cpp
-  )
+  list(
+    APPEND
+    objects
+    module_dos/write_dos_lcao.cpp
+    module_dos/cal_pdos_gamma.cpp
+    module_dos/cal_pdos_multik.cpp
+    module_dos/write_pdos_text.cpp
+    module_output/write_orb_info.cpp
+    module_energy/write_proj_band_lcao.cpp
+    module_chgpot/get_pchg_lcao.cpp
+    module_wf/get_wf_lcao.cpp
+    module_wf/read_wfc_nao.cpp
+    module_wf/write_wfc_nao.cpp
+    module_dm/write_dmk.cpp
+    module_dm/write_dmr.cpp
+    module_qo/to_qo_kernel.cpp
+    module_qo/to_qo_mpi.cpp
+    module_qo/to_qo_structures.cpp
+    module_mulliken/output_sk.cpp
+    module_mulliken/output_dmk.cpp
+    module_mulliken/output_mulliken.cpp
+    module_ml/io_npz.cpp
+    module_hs/angmom_op_mat.cpp
+    module_dhs/write_dh.cpp
+    module_dhs/write_dh_terms.cpp)
+  list(
+    APPEND
+    objects_advanced
+    module_unk/unk_overlap_lcao.cpp
+    module_hs/hs_dense_io.cpp
+    module_hs/hs_sparse_io.cpp
+    module_hs/dhs_sparse_writer.cpp
+    module_hs/hsk_writer.cpp
+    module_hs/hsr_writer.cpp
+    module_hs/hsr_legacy.cpp
+    module_hs/hterm_writer.cpp
+    module_hs/lat_r_csr.cpp
+    module_hs/pos_op_csr.cpp
+    module_hs/pos_op_basis.cpp
+    module_hs/pos_op_calc.cpp
+    module_hs/pos_op_writer.cpp
+    module_hs/pos_op_mat.cpp
+    module_hs/vxc_op_tools.cpp
+    module_hs/vxc_op_mat.cpp
+    module_hs/vxc_op_r.cpp
+    module_hs/vxc_op_lip.cpp
+    module_hs/output_mat_sparse.cpp
+    module_energy/write_eband_terms.cpp
+    module_ctrl/ctrl_scf_lcao.cpp
+    module_ctrl/ctrl_runner_lcao.cpp
+    module_ctrl/ctrl_iter_lcao.cpp)
   if(ENABLE_LIBRI)
-    list(APPEND objects
-      module_restart/restart_exx_csr.cpp
-    )
+    list(APPEND objects module_restart/restart_exx_csr.cpp)
   endif()
 endif()
 
 add_library(
-    io_input
-    OBJECT
-    module_parameter/read_inp_sys.cpp
-    module_parameter/read_inp_estruc.cpp
-    module_parameter/read_inp_relax.cpp
-    module_parameter/read_input_item_md.cpp
-    module_parameter/read_inp_ofdft.cpp
-    module_parameter/read_input_item_sdft.cpp
-    module_parameter/read_inp_tddft.cpp
-    module_parameter/read_inp_bse.cpp
-    module_parameter/read_inp_dfpt.cpp
-    module_parameter/read_inp_deepks.cpp
-    module_parameter/read_inp_model.cpp
-    module_parameter/read_inp_sccs.cpp
-    module_parameter/read_inp_postproc.cpp  
-    module_parameter/read_inp_exx_dftu.cpp
-    module_parameter/read_inp_other.cpp   
-    module_parameter/read_inp_out.cpp  
-    module_parameter/availability.cpp
-    module_parameter/availability_validator.cpp
-    module_parameter/read_input.cpp
-    module_parameter/read_set_globalv.cpp
-)
+  io_input OBJECT
+  module_parameter/read_inp_sys.cpp
+  module_parameter/read_inp_estruc.cpp
+  module_parameter/read_inp_relax.cpp
+  module_parameter/read_input_item_md.cpp
+  module_parameter/read_inp_ofdft.cpp
+  module_parameter/read_input_item_sdft.cpp
+  module_parameter/read_inp_tddft.cpp
+  module_parameter/read_inp_bse.cpp
+  module_parameter/read_inp_dfpt.cpp
+  module_parameter/read_inp_deepks.cpp
+  module_parameter/read_inp_model.cpp
+  module_parameter/read_inp_sccs.cpp
+  module_parameter/read_inp_postproc.cpp
+  module_parameter/read_inp_exx_dftu.cpp
+  module_parameter/read_inp_other.cpp
+  module_parameter/read_inp_out.cpp
+  module_parameter/availability.cpp
+  module_parameter/availability_validator.cpp
+  module_parameter/read_input.cpp
+  module_parameter/read_set_globalv.cpp)
 
-add_library(
-    io_basic
-    OBJECT
-    ${objects}
-)
+add_library(io_basic OBJECT ${objects})
 
 # Include directory for build_info.h (generated at build time)
-target_include_directories(
-    io_basic
-    PUBLIC
-    ${CMAKE_BINARY_DIR}/source/source_io
-)
+target_include_directories(io_basic PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
 
-add_library(
-    io_advanced
-    OBJECT
-    ${objects_advanced}
-)
+add_library(io_advanced OBJECT ${objects_advanced})
 
 if(ENABLE_COVERAGE)
   add_coverage(io_basic)

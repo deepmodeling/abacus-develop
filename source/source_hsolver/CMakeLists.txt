@@ -1,89 +1,63 @@
-list(APPEND objects
-    diag_const_nums.cpp
-    diago_cg.cpp
-    diago_david.cpp
-    diago_dav_subspace.cpp
-    diago_bpcg.cpp
-    para_lin_tf.cpp
-    hsolver_pw.cpp
-    hsolver_pw_tddft.cpp
-    hsolver_lcaopw.cpp
-    diago_iter_assist.cpp
-    hsolver.cpp
-    diago_pxxxgvx.cpp
-    diag_hs_para.cpp
-    diago_params.cpp
-    linear_bicgstab.cpp
-    linear_cgs.cpp
-    linear_gmres.cpp
-    linear_algebra.cpp
-    orthonormal.cpp
-    orthonormal_small.cpp
-    cn_subspace.cpp
-    linear_low_rank.cpp
-    linear_workspace.cpp
-    hsolver_linear.cpp
-)
+list(
+  APPEND
+  objects
+  diag_const_nums.cpp
+  diago_cg.cpp
+  diago_david.cpp
+  diago_dav_subspace.cpp
+  diago_bpcg.cpp
+  para_lin_tf.cpp
+  hsolver_pw.cpp
+  hsolver_pw_tddft.cpp
+  hsolver_lcaopw.cpp
+  diago_iter_assist.cpp
+  hsolver.cpp
+  diago_pxxxgvx.cpp
+  diag_hs_para.cpp
+  diago_params.cpp
+  linear_bicgstab.cpp
+  linear_cgs.cpp
+  linear_gmres.cpp
+  linear_algebra.cpp
+  orthonormal.cpp
+  orthonormal_small.cpp
+  cn_subspace.cpp
+  linear_low_rank.cpp
+  linear_workspace.cpp
+  hsolver_linear.cpp)
 
 if(ENABLE_LCAO)
-  if (ENABLE_MPI)
-    list(APPEND objects
-        hsolver_lcao.cpp
-        diago_scalapack.cpp
-        parallel_k2d.cpp
-        diago_lapack.cpp
-    )
-  else ()
-    list(APPEND objects
-        hsolver_lcao.cpp
-        diago_lapack.cpp
-    )
-  endif ()
-  if (ENABLE_ELPA)
-    list(APPEND objects
-        diago_elpa.cpp
-        diago_elpa_native.cpp
-    )
-  endif ()
+  if(ENABLE_MPI)
+    list(APPEND objects hsolver_lcao.cpp diago_scalapack.cpp parallel_k2d.cpp
+         diago_lapack.cpp)
+  else()
+    list(APPEND objects hsolver_lcao.cpp diago_lapack.cpp)
+  endif()
+  if(ENABLE_ELPA)
+    list(APPEND objects diago_elpa.cpp diago_elpa_native.cpp)
+  endif()
 
   if(USE_CUDA)
-      set(cuda_objects
-          ./kernels/hegvd_op.cpp
-          ./kernels/cuda/diag_cusolver.cu
-          diago_cusolver.cpp
-          diago_cusolver.h
-      )
-      if(ENABLE_CUSOLVERMP)
-        list(APPEND cuda_objects
-            ./kernels/cuda/diag_cusolvermp.cu
-            diago_cusolvermp.cpp
-            diago_cusolvermp.h
-        )
-      endif()
-    add_library(
-        diag_cusolver
-        OBJECT
-        ${cuda_objects}
-    )
+    set(cuda_objects ./kernels/hegvd_op.cpp ./kernels/cuda/diag_cusolver.cu
+                     diago_cusolver.cpp diago_cusolver.h)
+    if(ENABLE_CUSOLVERMP)
+      list(APPEND cuda_objects ./kernels/cuda/diag_cusolvermp.cu
+           diago_cusolvermp.cpp diago_cusolvermp.h)
+    endif()
+    add_library(diag_cusolver OBJECT ${cuda_objects})
     if(ENABLE_COVERAGE)
       add_coverage(diag_cusolver)
     endif()
   endif()
 
   if(ENABLE_PEXSI)
-  list(APPEND objects
-      diago_pexsi.cpp
-    )
+    list(APPEND objects diago_pexsi.cpp)
     add_subdirectory(module_pexsi)
   endif()
 
 endif()
 
-add_library(
-    hsolver
-    OBJECT
-    ${objects}
-)
+add_library(hsolver OBJECT ${objects})
 
 if(ENABLE_COVERAGE)
   add_coverage(hsolver)

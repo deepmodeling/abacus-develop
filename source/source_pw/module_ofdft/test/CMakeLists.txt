@@ -22,5 +22,7 @@ if(ENABLE_MPI)
   list(APPEND ofdft_test_libs MPI::MPI_CXX)
 endif()
 
-addtest(TARGET MODULE_PW_OfDFT LIBS ${ofdft_test_libs} SOURCES
-        ${ofdft_test_sources})
+addtest(
+  TARGET MODULE_PW_OfDFT
+  LIBS ${ofdft_test_libs}
+  SOURCES ${ofdft_test_sources})
