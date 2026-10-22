@@ -18,8 +18,10 @@ namespace ModuleDFPT
  *
  * The shifted Hamiltonian action is injected through LinearOperator so the
  * solver core stays decoupled from the ground-state operator chain: the
- * production adapter reuses hamilt::Hamilt::ops->hPsi at the k+q point
- * (wired in C7), while unit tests supply analytic operators.
+ * production adapter (DFPT_HamiltShift, dfpt_hamilt_shift.h) builds the
+ * (H(k+q) - eps) action itself on the k+q basis rather than reusing
+ * hamilt::Hamilt::ops->hPsi (a potential future refactor to shrink the
+ * reimplementation surface); unit tests supply analytic operators.
  */
 class DFPT_Stern
 {

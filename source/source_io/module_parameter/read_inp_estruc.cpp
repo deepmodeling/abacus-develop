@@ -493,13 +493,13 @@ The other way is only available when compiling with LIBXC, and it allows for sup
     }
     {
         Input_Item item("gga_grad");
-        item.annotation = "Noncollinear GGA gradient method: 0 original, 1 local axis, 2 regularized projected LCA";
+        item.annotation = "Noncollinear GGA gradient method: 0 original, 1 local axis, 2 regularized mapped-density LCA";
         item.category = "Electronic structure";
         item.type = "Integer";
         item.description = R"(Selects the local spin mapping for LDA/GGA functionals in magnetic nspin=4 calculations.
 * 0: preserves the original algorithm (default).
 * 1: uses the local magnetization magnitude instead of the global quantization axis in the built-in GGA gradient correction. For LIBXC functionals, 0 and 1 are equivalent.
-* 2: uses a C2-regularized magnetization magnitude with eta = 1e-3 in atomic density units. The spin densities are (abs(n + rho_core) +/- min(S_eta(m), abs(n + rho_core)))/2. GGA gradients are the local-map Jacobian applied to the FFT gradients of the four density channels. The potential reverses this same discrete energy graph, including the radial Hessian and density/sigma clipping branches; the GGA stress uses the corresponding metric derivative.
+* 2: uses a C2-regularized magnetization magnitude with eta = 1e-3 in atomic density units. The spin densities are (abs(n + rho_core) +/- min(S_eta(m), abs(n + rho_core)))/2. GGA gradients are the FFT gradients of these mapped spin densities. The potential reverses this same discrete energy graph: apply the FFT divergence to each spin-channel flux, then apply the local-map Jacobian. Density/sigma clipping branches and the GGA metric stress derivative use the same mapped densities. This changes the finite-grid functional relative to projecting the four density-channel gradients; converged energies can therefore change.
 For r = |m| and x = r/eta, S_eta = eta*x^3*(3*x^2 - 8*x + 6) for r < eta, and S_eta = r otherwise. The regularization is part of the functional definition, including its first and second derivatives.
 Mode 2 also uses this local map for the LDA contribution. Other spin configurations retain their existing behavior.)";
         item.default_value = "0";
@@ -612,14 +612,10 @@ For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to conve
                 else if (para.input.nspin == 2)
                 {
                     para.input.mixing_beta = 0.4;
-                    para.input.mixing_beta_mag = 1.6;
-                    para.input.mixing_gg0_mag = 0.0;
                 }
                 else if (para.input.nspin == 4) // I will add this
                 {
                     para.input.mixing_beta = 0.4;
-                    para.input.mixing_beta_mag = 1.6;
-                    para.input.mixing_gg0_mag = 0.0;
                 }
             }
         };
@@ -631,6 +627,8 @@ For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to conve
         item.category = "Electronic structure";
         item.type = "Real";
         item.description = R"(Mixing parameter of magnetic density.
+
+An explicit nonnegative value is preserved even when mixing_beta is omitted.
 
 If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
 
@@ -725,6 +723,8 @@ For systems that are difficult to converge, particularly metallic systems, enabl
         item.category = "Electronic structure";
         item.type = "Real";
         item.description = R"(Controls the Kerker preconditioner for magnetic-density mixing. It is disabled by default and is generally only recommended for systems whose magnetic density is difficult to converge.
+
+An explicit value is preserved even when mixing_beta is omitted.
 
 The magnetic-density Kerker preconditioner is bypassed when mixing_beta_mag <= 0.1, so mixing_gg0_mag has no effect in that regime. It is also unavailable when the charge-density Kerker preconditioner itself is bypassed.)";
         item.default_value = "0.0";

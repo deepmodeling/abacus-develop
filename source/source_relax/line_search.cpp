@@ -2,6 +2,7 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+
 #include <algorithm>
 #include <cmath>
 #include <ostream>
@@ -107,7 +108,7 @@ bool Line_Search::third_order(const double x, const double y, const double f, do
         {
             dmoveh = 4.0;
         }
- 
+
         if (dmove > 2.0 * dmoveh || dmoveh > 2.0 * dmove || (fa * fb > 0 && dmove < 1.0)
             || (fa * fb < 0 && dmove > 1.0))
         {
@@ -195,7 +196,12 @@ void Line_Search::update_brent(const double x, const double y, const double f)
     }
 }
 
-bool Line_Search::brent(const double x, const double y, const double f, double& xnew, const double conv_thr, std::ofstream& ofs_running)
+bool Line_Search::brent(const double x,
+                        const double y,
+                        const double f,
+                        double& xnew,
+                        const double conv_thr,
+                        std::ofstream& ofs_running)
 {
     ls_step++;
 

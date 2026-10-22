@@ -1,8 +1,10 @@
+#include <algorithm>
 #include "diago_dav_subspace.h"
 
 #include "diago_iter_assist.h"
 
 #include "source_base/module_device/device.h"
+#include "source_base/parallel_cell.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/kernels/math_kernel_op.h"
@@ -20,6 +22,7 @@
 #ifdef __MPI
 #include <mpi.h>
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_device.h"
 #endif
 
 using namespace hsolver;
@@ -45,21 +48,28 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     this->neg_one = &neg_one_;
 
     assert(david_ndim_in > 1);
-    assert(david_ndim_in * nband_in < nbasis_in * this->diag_comm.nproc);
+    // Block ownership can be empty or uneven; use the actual communicator sum.
+    ModuleBase::CommunicationDomain domain;
+#ifdef __MPI
+    domain.initialize(this->diag_comm.comm);
+#endif
+    const int global_dimension = domain.sum(this->dim);
+    assert(this->nbase_x < global_dimension);
     assert(diag_subspace >= 0 && diag_subspace < 3);
 
     // TODO: Added memory usage statistics
 
+    const int local_storage = std::max(this->nbase_x * this->dim, 1);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    resmem_complex_op()(this->psi_in_iter, this->nbase_x * this->dim, "DAV::psi_in_iter");
+    resmem_complex_op()(this->psi_in_iter, local_storage, "DAV::psi_in_iter");
     setmem_complex_op()(this->psi_in_iter, 0, this->nbase_x * this->dim);
 
     // the product of H and psi in the reduced psi set
-    resmem_complex_op()(this->hpsi, this->nbase_x * this->dim, "DAV::hpsi");
+    resmem_complex_op()(this->hpsi, local_storage, "DAV::hpsi");
     setmem_complex_op()(this->hpsi, 0, this->nbase_x * this->dim);
 
     // the product of S and psi in the reduced psi set
-    resmem_complex_op()(this->spsi, this->nbase_x * this->dim, "DAV::spsi");
+    resmem_complex_op()(this->spsi, local_storage, "DAV::spsi");
     setmem_complex_op()(this->spsi, 0, this->nbase_x * this->dim);
 
     // Hamiltonian on the reduced psi set
@@ -115,6 +125,8 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                                             const std::vector<double>& ethr_band)
 {
     ModuleBase::timer::start("Diago_DavSubspace", "diag_once");
+    const int matrix_ld = std::max(this->dim, 1);
+    const int psi_ld = std::max(psi_in_dmax, 1);
 
     // the eigenvalues in dav iter
     std::vector<Real> eigenvalue_iter(this->nbase_x, 0.0);
@@ -226,12 +238,12 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                  nbase,
                  this->one,
                  this->psi_in_iter,
-                 this->dim,
+                 matrix_ld,
                  this->vcc,
                  this->nbase_x,
                  this->zero,
                  psi_in,
-                 psi_in_dmax);
+                 psi_ld);
 
             if (!this->notconv || (dav_iter == this->iter_nmax))
             {
@@ -284,6 +296,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                                             std::vector<Real>* eigenvalue_iter)
 {
     ModuleBase::timer::start("Diago_DavSubspace", "cal_grad");
+    const int matrix_ld = std::max(this->dim, 1);
 
     for (size_t i = 0; i < notconv; i++)
     {
@@ -308,12 +321,12 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                          nbase,
                          this->one,
                          hpsi,
-                         this->dim,
+                         matrix_ld,
                          vcc,
                          this->nbase_x,
                          this->zero,
                          psi_iter + (nbase) * this->dim,
-                         this->dim);
+                         matrix_ld);
     } else
     {
 
@@ -327,7 +340,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                          nbase,         // n: col of A
                          this->one,     // alpha
                          hpsi,          // A dim * nbase
-                         this->dim,     // LDA: if(N) max(1,m)
+                         matrix_ld,     // LDA: if(N) max(1,m)
                          vcc,           // X nbase
                          1,             // incx
                          this->zero,    // beta
@@ -362,12 +375,12 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
          nbase,
          this->one,
          spsi,
-         this->dim,
+         matrix_ld,
          vcc,
          this->nbase_x,
          this->one,
          psi_iter + nbase * this->dim,
-         this->dim);
+         matrix_ld);
     } else
     {
 #ifdef __DSP
@@ -380,7 +393,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
          nbase,         // n: col of A
          this->one,     // alpha
          spsi,          // A dim * nbase
-         this->dim,     // LDA: if(N) max(1,m)
+         matrix_ld,     // LDA: if(N) max(1,m)
          vcc,           // X nbase
          1,             // incx
          this->one,    // beta
@@ -494,6 +507,17 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                                             T* scc)
 {
     ModuleBase::timer::start("Diago_DavSubspace", "cal_elem");
+    const int matrix_ld = std::max(this->dim, 1);
+
+    if (this->dim == 0)
+    {
+        const int contribution_size = this->nbase_x * notconv;
+        T* const h_contribution = hcc + nbase * this->nbase_x;
+        T* const s_contribution = scc + nbase * this->nbase_x;
+        // GEMV does not overwrite its output when the local row count is zero.
+        setmem_complex_op()(h_contribution, 0, contribution_size);
+        setmem_complex_op()(s_contribution, 0, contribution_size);
+    }
 
     if (notconv > 1){
 #ifdef __DSP
@@ -508,9 +532,9 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
          this->dim,
          this->one,
          psi_iter,
-         this->dim,
+         matrix_ld,
          &hpsi[nbase * this->dim],
-         this->dim,
+         matrix_ld,
          this->zero,
          &hcc[nbase * this->nbase_x],
          this->nbase_x);
@@ -527,9 +551,9 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
          this->dim,
          this->one,
          psi_iter,
-         this->dim,
+         matrix_ld,
          spsi + nbase * this->dim,
-         this->dim,
+         matrix_ld,
          this->zero,
          &scc[nbase * this->nbase_x],
          this->nbase_x);
@@ -546,7 +570,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
          nbase + notconv,          // n: col of A
          this->one,                // alpha
          psi_iter,                 // A dim * nbase
-         this->dim,                // LDA: if(N) max(1,m)
+         matrix_ld,                // LDA: if(N) max(1,m)
          &hpsi[nbase * this->dim], // X nbase
          1,                        // incx
          this->zero,               // beta
@@ -563,7 +587,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
          nbase + notconv,          // n: col of A
          this->one,                // alpha
          psi_iter,                 // A dim * nbase
-         this->dim,                // LDA: if(N) max(1,m)
+         matrix_ld,                // LDA: if(N) max(1,m)
          spsi + nbase * this->dim, // X nbase
          1,                        // incx
          this->zero,               // beta
@@ -714,9 +738,10 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         // vcc: nbase * nband
         for (int i = 0; i < nband; i++)
         {
-            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, this->diag_comm.comm);
+            // fix a bug here when vcc is real: bcast according to the true type
+            Parallel_Common::bcast_data(&vcc[i * this->nbase_x], nbase, this->diag_comm.comm, 0);
         }
-        MPI_Bcast((*eigenvalue_iter).data(), nband, MPI_DOUBLE, 0, this->diag_comm.comm);
+        Parallel_Common::bcast_data((*eigenvalue_iter).data(), nband, this->diag_comm.comm, 0);
     }
 #endif
 
@@ -738,6 +763,7 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
                                            T* vcc)
 {
     ModuleBase::timer::start("Diago_DavSubspace", "refresh");
+    const int matrix_ld = std::max(this->dim, 1);
 
 #ifdef __DSP
     ModuleBase::gemm_op_mt<T, Device>()
@@ -751,12 +777,12 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
                          nbase,
                          this->one,
                          this->hpsi,
-                         this->dim,
+                         matrix_ld,
                          this->vcc,
                          this->nbase_x,
                          this->zero,
                          psi_iter + nband * this->dim,
-                         this->dim);
+                         matrix_ld);
 
     // update hpsi
     syncmem_complex_op()(hpsi, psi_iter + nband * this->dim, this->dim * nband);
@@ -773,12 +799,12 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
          nbase,
          this->one,
          this->spsi,
-         this->dim,
+         matrix_ld,
          this->vcc,
          this->nbase_x,
          this->zero,
          psi_iter + nband * this->dim,
-         this->dim);
+         matrix_ld);
 
     // update spsi
     syncmem_complex_op()(spsi, psi_iter + nband * this->dim, this->dim * nband);

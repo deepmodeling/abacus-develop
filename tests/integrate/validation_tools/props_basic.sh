@@ -49,7 +49,7 @@ fi
 #----------------------------
 # force information
 #----------------------------
-if ! test -z "$has_force" && [ $has_force == 1 ]; then
+if ! test -z "$has_force" && [ $has_force == 1 ] && [ $is_lr == 0 ]; then
 	nn3=`echo "$natom + 3" |bc`
     # check the last step result
     grep -A$nn3 "TOTAL-FORCE" $running_path |awk 'NF==4{print $2,$3,$4}' | tail -$natom > force.txt
@@ -94,7 +94,7 @@ run_basic_props_post_ml(){
 #--------------------------------------------
 # implicit solvation model
 #--------------------------------------------
-if ! test -z "$imp_sol" && [ $imp_sol == 1 ]; then
+if ! test -z "$imp_sol" && { [ "$imp_sol" = 1 ] || [ "$imp_sol" = 2 ]; }; then
 	esol_el=`grep E_sol_el $running_path | awk '{print $3}'`
 	esol_cav=`grep E_sol_cav $running_path | awk '{print $3}'`
 	echo "esolelref $esol_el" >>$props_result_file

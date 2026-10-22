@@ -1,100 +1,100 @@
 
-
-list(APPEND objects
-    hamilt_pw.cpp
-    td_history_pw.cpp
-    td_pw.cpp
-    op_pw_ekin.cpp
-    op_pw_ekin_td.cpp
-    op_pw_veff.cpp
-    projector_gradient.cpp
-    velocity_workspace.cpp
-    nonlocal_workspace.cpp
-    op_pw_nl.cpp
-    op_pw_nl_td.cpp
-    op_pw_meta.cpp
-    op_pw_vel.cpp
-    op_pw.cpp
-    op_pw_proj.cpp
-    op_pw_exx.cpp
-    op_pw_exx_ace.cpp
-    op_pw_exx_pot.cpp
-    kernels/exx_batch_op.cpp
-)
+list(
+  APPEND
+  objects
+  hamilt_pw.cpp
+  pw_hybrid_nscf.cpp
+  pw_hybrid_source.cpp
+  td_history_pw.cpp
+  td_pw.cpp
+  op_pw_ekin.cpp
+  op_pw_ekin_td.cpp
+  op_pw_veff.cpp
+  projector_gradient.cpp
+  velocity_workspace.cpp
+  nonlocal_workspace.cpp
+  op_pw_nl.cpp
+  op_pw_nl_td.cpp
+  op_pw_meta.cpp
+  op_pw_vel.cpp
+  op_pw.cpp
+  op_pw_proj.cpp
+  op_pw_exx.cpp
+  op_pw_exx_ace.cpp
+  op_pw_exx_pot.cpp
+  kernels/exx_batch_op.cpp)
 
 if(ENABLE_FLOAT_FFTW)
-    list(APPEND objects kernels/exx_batch_op_float.cpp)
+  list(APPEND objects kernels/exx_batch_op_float.cpp)
 else()
-    list(APPEND objects kernels/exx_batch_op_float_stub.cpp)
+  list(APPEND objects kernels/exx_batch_op_float_stub.cpp)
 endif()
 
-list(APPEND objects
-    dftu_base.cpp
-    dftu_base_io.cpp
-    dftu_pw.cpp
-    dftu_pw_tools.cpp
-    yukawa_screening.cpp
-    setup_pot.cpp
-    setup_pwrho.cpp
-    setup_pwwfc.cpp
-    uspp_support.cpp
-    update_cell_pw.cpp
-    setup_dftu_pw.cpp
-    deltaspin_pw.cpp
-    force_pw_nl.cpp
-    force_pw_cc.cpp
-    force_pw_scc.cpp
-    force_pw.cpp
-    force_pw_us.cpp
-    force_pw_onsite.cpp
-    stress_cc.cpp
-    stress_ewa.cpp
-    stress_gga.cpp
-    stress_mgga.cpp
-    stress_har.cpp
-    stress_kin.cpp
-    stress_loc.cpp
-    stress_nl.cpp
-    stress_us.cpp
-    stress_onsite.cpp
-    stress_exx.cpp
-    stress_pw.cpp
-    vl_pw.cpp
-    vnl_pw.cpp
-    vnl_pw_alpha.cpp
-    vnl_pw_deeq.cpp
-    vnl_pw_getvnl.cpp
-    vnl_pw_grad.cpp
-    vnl_pw_init_vnl.cpp
-    vnl_pw_qrad.cpp
+list(
+  APPEND
+  objects
+  dftu_base.cpp
+  dftu_base_io.cpp
+  dftu_base_io_read.cpp
+  dftu_pw.cpp
+  dftu_pw_tools.cpp
+  yukawa_screening.cpp
+  setup_pot.cpp
+  setup_pwrho.cpp
+  setup_pwwfc.cpp
+  uspp_support.cpp
+  update_cell_pw.cpp
+  setup_dftu_pw.cpp
+  deltaspin_pw.cpp
+  force_pw_nl.cpp
+  force_pw_cc.cpp
+  force_pw_scc.cpp
+  force_pw.cpp
+  force_pw_us.cpp
+  force_pw_onsite.cpp
+  stress_cc.cpp
+  stress_ewa.cpp
+  stress_gga.cpp
+  stress_mgga.cpp
+  stress_har.cpp
+  stress_kin.cpp
+  stress_loc.cpp
+  stress_nl.cpp
+  stress_us.cpp
+  stress_onsite.cpp
+  stress_exx.cpp
+  stress_pw.cpp
+  vl_pw.cpp
+  vnl_pw.cpp
+  vnl_pw_alpha.cpp
+  vnl_pw_deeq.cpp
+  vnl_pw_getvnl.cpp
+  vnl_pw_grad.cpp
+  vnl_pw_init_vnl.cpp
+  vnl_pw_qrad.cpp
   vnl_pw_table.cpp
-    stru_fac.cpp
-    stru_fac_k.cpp
-    soc.cpp
-    elecond.cpp
-    fs_nonlocal_tools.cpp
-    fs_nonlocal_tools_vkb.cpp
-    fs_nonlocal_tools_stress.cpp
-    fs_nonlocal_tools_force.cpp
-    fs_kin_tools.cpp
-    nonlocal_maths.cpp
-    onsite_proj_force_stress.cpp
-    vsep_pw.cpp
-)
+  stru_fac.cpp
+  stru_fac_k.cpp
+  soc.cpp
+  elecond.cpp
+  fs_nonlocal_tools.cpp
+  fs_nonlocal_tools_vkb.cpp
+  fs_nonlocal_tools_stress.cpp
+  fs_nonlocal_tools_force.cpp
+  fs_kin_tools.cpp
+  nonlocal_maths.cpp
+  onsite_proj_force_stress.cpp
+  vsep_pw.cpp)
 
-add_library(
-    module_pwdft
-    OBJECT
-    ${objects}
-)
+add_library(module_pwdft OBJECT ${objects})
 
 if(ENABLE_COVERAGE)
   add_coverage(module_pwdft)
 endif()
 
-if (BUILD_TESTING)
-    if(ENABLE_MPI)
-        add_subdirectory(test)
-        add_subdirectory(kernels/test)
-    endif()
+if(BUILD_TESTING)
+  if(ENABLE_MPI)
+    add_subdirectory(test)
+    add_subdirectory(kernels/test)
+  endif()
 endif()

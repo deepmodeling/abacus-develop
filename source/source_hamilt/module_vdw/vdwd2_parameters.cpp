@@ -9,7 +9,7 @@
 namespace vdw
 {
 
-void Vdwd2Parameters::initial_parameters(const Input_para &input, std::ofstream* plog)
+void Vdwd2Parameters::initial_parameters(const Input_para& input, std::ofstream* plog)
 {
     scaling_ = std::stod(input.vdw_s6);
     damping_ = input.vdw_d;
@@ -30,7 +30,7 @@ void Vdwd2Parameters::initial_parameters(const Input_para &input, std::ofstream*
     }
 }
 
-void Vdwd2Parameters::initset(const UnitCell &ucell)
+void Vdwd2Parameters::initset(const UnitCell& ucell)
 {
     if (model_ == "radius")
     {
@@ -40,7 +40,7 @@ void Vdwd2Parameters::initset(const UnitCell &ucell)
     }
 }
 
-void Vdwd2Parameters::C6_input(const std::string &file, const std::string &unit)
+void Vdwd2Parameters::C6_input(const std::string& file, const std::string& unit)
 {
     C6_ = C6_default_;
     if (file != "default")
@@ -55,7 +55,7 @@ void Vdwd2Parameters::C6_input(const std::string &file, const std::string &unit)
             C6_[element] = value;
         ifs.close();
     }
-    for (auto &c6: C6_)
+    for (auto& c6: C6_)
     {
         if (unit == "Jnm6/mol")
             c6.second *= 1e6 / (ModuleBase::ELECTRONVOLT_SI * ModuleBase::NA) / pow(ModuleBase::BOHR_TO_A, 6)
@@ -67,7 +67,7 @@ void Vdwd2Parameters::C6_input(const std::string &file, const std::string &unit)
     }
 }
 
-void Vdwd2Parameters::R0_input(const std::string &file, const std::string &unit)
+void Vdwd2Parameters::R0_input(const std::string& file, const std::string& unit)
 {
     R0_ = R0_default_;
     if (file != "default")
@@ -82,7 +82,7 @@ void Vdwd2Parameters::R0_input(const std::string &file, const std::string &unit)
             R0_[element] = value;
         ifs.close();
     }
-    for (auto &r0: R0_)
+    for (auto& r0: R0_)
     {
         if (unit == "A")
             r0.second /= ModuleBase::BOHR_TO_A;

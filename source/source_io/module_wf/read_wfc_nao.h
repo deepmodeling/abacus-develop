@@ -8,6 +8,17 @@
 // mohan add 2010-09-09
 namespace ModuleIO
 {
+/** Read spin populations from all bands, without allocating wavefunction matrices.
+ * File occupations are already weighted by their k-point weights.
+ */
+bool read_wfc_nao_spin_populations(const std::string& readin_dir,
+                                  int nkstot,
+                                  int nspin,
+                                  bool gamma_only,
+                                  bool binary,
+                                  int my_rank,
+                                  std::vector<double>& populations);
+
 /**
  * @brief Reads a single data value from an input file stream.
  * 

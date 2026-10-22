@@ -6,26 +6,26 @@
  * enabling Python-controlled SCF workflows with breakpoint support.
  */
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
-#include <pybind11/complex.h>
-#include <pybind11/functional.h>
-
 #include "py_esolver_lcao.hpp"
 
+#include <pybind11/complex.h>
+#include <pybind11/functional.h>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
 // ABACUS headers for actual implementation
-#include "source_estate/module_charge/charge.h"
-#include "source_estate/fp_energy.h"
-#include "source_estate/elecstate.h"
-#include "source_estate/module_dm/density_matrix.h"
-#include "source_lcao/hamilt_lcao.h"
-#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_estate/elecstate.h"
+#include "source_estate/fp_energy.h"
+#include "source_estate/module_charge/charge.h"
+#include "source_estate/module_dm/density_matrix.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_lcao/hamilt_lcao.h"
 
 #include <complex>
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
 
 namespace py = pybind11;
 using namespace pybind11::literals;
@@ -50,7 +50,7 @@ void PyChargeAccessor::set_from_charge(const Charge* chr)
     }
 
     chr_ptr_ = chr;
-    rho_ptr_ = nullptr;  // Use chr_ptr_ instead
+    rho_ptr_ = nullptr; // Use chr_ptr_ instead
     nspin_ = chr->nspin;
     nrxx_ = chr->nrxx;
     ngmc_ = chr->ngmc;
@@ -58,7 +58,7 @@ void PyChargeAccessor::set_from_charge(const Charge* chr)
 
 void PyChargeAccessor::set_data(const double* rho_ptr, int nspin, int nrxx)
 {
-    chr_ptr_ = nullptr;  // Not using Charge object
+    chr_ptr_ = nullptr; // Not using Charge object
     rho_ptr_ = rho_ptr;
     nspin_ = nspin;
     nrxx_ = nrxx;
@@ -178,9 +178,14 @@ void PyEnergyAccessor::set_from_fenergy(const elecstate::fenergy* f_en)
     evdw_ = f_en->evdw;
 }
 
-void PyEnergyAccessor::set_energies(double etot, double eband, double hartree,
-                                     double etxc, double ewald, double demet,
-                                     double exx, double evdw)
+void PyEnergyAccessor::set_energies(double etot,
+                                    double eband,
+                                    double hartree,
+                                    double etxc,
+                                    double ewald,
+                                    double demet,
+                                    double exx,
+                                    double evdw)
 {
     etot_ = etot;
     eband_ = eband;
@@ -211,7 +216,9 @@ py::dict PyEnergyAccessor::get_all_energies() const
 // ============================================================================
 
 template <typename TK, typename TR>
-void PyHamiltonianAccessor<TK, TR>::set_from_hamilt(hamilt::HamiltLCAO<TK, TR>* hamilt_lcao, int nks, const Parallel_Orbitals* pv)
+void PyHamiltonianAccessor<TK, TR>::set_from_hamilt(hamilt::HamiltLCAO<TK, TR>* hamilt_lcao,
+                                                    int nks,
+                                                    const Parallel_Orbitals* pv)
 {
     hamilt_ptr_ = hamilt_lcao;
     pv_ = pv;
@@ -649,15 +656,17 @@ template class PyESolverLCAO<std::complex<double>, double>;
 
 void bind_charge_accessor(py::module& m)
 {
-    py::class_<py_esolver::PyChargeAccessor>(m, "ChargeAccessor",
-        R"pbdoc(
+    py::class_<py_esolver::PyChargeAccessor>(m,
+                                             "ChargeAccessor",
+                                             R"pbdoc(
         Accessor for charge density data.
 
         Provides access to real-space charge density (rho) and related quantities.
         )pbdoc")
         .def(py::init<>())
-        .def("get_rho", &py_esolver::PyChargeAccessor::get_rho,
-            R"pbdoc(
+        .def("get_rho",
+             &py_esolver::PyChargeAccessor::get_rho,
+             R"pbdoc(
             Get real-space charge density as numpy array.
 
             Returns
@@ -665,8 +674,9 @@ void bind_charge_accessor(py::module& m)
             numpy.ndarray
                 Charge density with shape (nspin, nrxx)
             )pbdoc")
-        .def("get_rhog", &py_esolver::PyChargeAccessor::get_rhog,
-            R"pbdoc(
+        .def("get_rhog",
+             &py_esolver::PyChargeAccessor::get_rhog,
+             R"pbdoc(
             Get reciprocal-space charge density as numpy array.
 
             Returns
@@ -674,8 +684,9 @@ void bind_charge_accessor(py::module& m)
             numpy.ndarray
                 Charge density in G-space with shape (nspin, ngmc)
             )pbdoc")
-        .def("get_rho_core", &py_esolver::PyChargeAccessor::get_rho_core,
-            R"pbdoc(
+        .def("get_rho_core",
+             &py_esolver::PyChargeAccessor::get_rho_core,
+             R"pbdoc(
             Get core charge density as numpy array.
 
             Returns
@@ -683,44 +694,36 @@ void bind_charge_accessor(py::module& m)
             numpy.ndarray
                 Core charge density with shape (nrxx,)
             )pbdoc")
-        .def_property_readonly("nspin", &py_esolver::PyChargeAccessor::get_nspin,
-            "Number of spin channels")
-        .def_property_readonly("nrxx", &py_esolver::PyChargeAccessor::get_nrxx,
-            "Number of real-space grid points")
-        .def_property_readonly("ngmc", &py_esolver::PyChargeAccessor::get_ngmc,
-            "Number of G-vectors for charge density")
-        .def("is_valid", &py_esolver::PyChargeAccessor::is_valid,
-            "Check if charge data is available");
+        .def_property_readonly("nspin", &py_esolver::PyChargeAccessor::get_nspin, "Number of spin channels")
+        .def_property_readonly("nrxx", &py_esolver::PyChargeAccessor::get_nrxx, "Number of real-space grid points")
+        .def_property_readonly("ngmc",
+                               &py_esolver::PyChargeAccessor::get_ngmc,
+                               "Number of G-vectors for charge density")
+        .def("is_valid", &py_esolver::PyChargeAccessor::is_valid, "Check if charge data is available");
 }
 
 void bind_energy_accessor(py::module& m)
 {
-    py::class_<py_esolver::PyEnergyAccessor>(m, "EnergyAccessor",
-        R"pbdoc(
+    py::class_<py_esolver::PyEnergyAccessor>(m,
+                                             "EnergyAccessor",
+                                             R"pbdoc(
         Accessor for energy data.
 
         Provides access to various energy components from the calculation.
         All energies are in Rydberg units.
         )pbdoc")
         .def(py::init<>())
-        .def_property_readonly("etot", &py_esolver::PyEnergyAccessor::get_etot,
-            "Total energy (Ry)")
-        .def_property_readonly("eband", &py_esolver::PyEnergyAccessor::get_eband,
-            "Band energy (Ry)")
-        .def_property_readonly("hartree_energy", &py_esolver::PyEnergyAccessor::get_hartree_energy,
-            "Hartree energy (Ry)")
-        .def_property_readonly("etxc", &py_esolver::PyEnergyAccessor::get_etxc,
-            "Exchange-correlation energy (Ry)")
-        .def_property_readonly("ewald_energy", &py_esolver::PyEnergyAccessor::get_ewald_energy,
-            "Ewald energy (Ry)")
-        .def_property_readonly("demet", &py_esolver::PyEnergyAccessor::get_demet,
-            "-TS term for metals (Ry)")
-        .def_property_readonly("exx", &py_esolver::PyEnergyAccessor::get_exx,
-            "Exact exchange energy (Ry)")
-        .def_property_readonly("evdw", &py_esolver::PyEnergyAccessor::get_evdw,
-            "van der Waals energy (Ry)")
-        .def("get_all_energies", &py_esolver::PyEnergyAccessor::get_all_energies,
-            "Get all energies as a dictionary");
+        .def_property_readonly("etot", &py_esolver::PyEnergyAccessor::get_etot, "Total energy (Ry)")
+        .def_property_readonly("eband", &py_esolver::PyEnergyAccessor::get_eband, "Band energy (Ry)")
+        .def_property_readonly("hartree_energy",
+                               &py_esolver::PyEnergyAccessor::get_hartree_energy,
+                               "Hartree energy (Ry)")
+        .def_property_readonly("etxc", &py_esolver::PyEnergyAccessor::get_etxc, "Exchange-correlation energy (Ry)")
+        .def_property_readonly("ewald_energy", &py_esolver::PyEnergyAccessor::get_ewald_energy, "Ewald energy (Ry)")
+        .def_property_readonly("demet", &py_esolver::PyEnergyAccessor::get_demet, "-TS term for metals (Ry)")
+        .def_property_readonly("exx", &py_esolver::PyEnergyAccessor::get_exx, "Exact exchange energy (Ry)")
+        .def_property_readonly("evdw", &py_esolver::PyEnergyAccessor::get_evdw, "van der Waals energy (Ry)")
+        .def("get_all_energies", &py_esolver::PyEnergyAccessor::get_all_energies, "Get all energies as a dictionary");
 }
 
 template <typename TK>
@@ -730,19 +733,19 @@ void bind_hamiltonian_accessor(py::module& m, const std::string& suffix)
 
     std::string class_name = "HamiltonianAccessor" + suffix;
 
-    py::class_<HamiltAccessor>(m, class_name.c_str(),
-        R"pbdoc(
+    py::class_<HamiltAccessor>(m,
+                               class_name.c_str(),
+                               R"pbdoc(
         Accessor for Hamiltonian matrix data.
 
         Provides access to H(k), S(k), H(R), and S(R) matrices.
         )pbdoc")
         .def(py::init<>())
-        .def_property_readonly("nbasis", &HamiltAccessor::get_nbasis,
-            "Number of basis functions")
-        .def_property_readonly("nks", &HamiltAccessor::get_nks,
-            "Number of k-points")
-        .def("get_Hk", &HamiltAccessor::get_Hk,
-            R"pbdoc(
+        .def_property_readonly("nbasis", &HamiltAccessor::get_nbasis, "Number of basis functions")
+        .def_property_readonly("nks", &HamiltAccessor::get_nks, "Number of k-points")
+        .def("get_Hk",
+             &HamiltAccessor::get_Hk,
+             R"pbdoc(
             Get H(k) matrix for specific k-point.
 
             Parameters
@@ -754,9 +757,11 @@ void bind_hamiltonian_accessor(py::module& m, const std::string& suffix)
             -------
             numpy.ndarray
                 Hamiltonian matrix at k-point ik
-            )pbdoc", "ik"_a)
-        .def("get_Sk", &HamiltAccessor::get_Sk,
-            R"pbdoc(
+            )pbdoc",
+             "ik"_a)
+        .def("get_Sk",
+             &HamiltAccessor::get_Sk,
+             R"pbdoc(
             Get S(k) overlap matrix for specific k-point.
 
             Parameters
@@ -768,13 +773,11 @@ void bind_hamiltonian_accessor(py::module& m, const std::string& suffix)
             -------
             numpy.ndarray
                 Overlap matrix at k-point ik
-            )pbdoc", "ik"_a)
-        .def("get_HR", &HamiltAccessor::get_HR,
-            "Get H(R) in sparse format")
-        .def("get_SR", &HamiltAccessor::get_SR,
-            "Get S(R) in sparse format")
-        .def("is_valid", &HamiltAccessor::is_valid,
-            "Check if Hamiltonian data is available");
+            )pbdoc",
+             "ik"_a)
+        .def("get_HR", &HamiltAccessor::get_HR, "Get H(R) in sparse format")
+        .def("get_SR", &HamiltAccessor::get_SR, "Get S(R) in sparse format")
+        .def("is_valid", &HamiltAccessor::is_valid, "Check if Hamiltonian data is available");
 }
 
 template <typename TK>
@@ -784,21 +787,20 @@ void bind_density_matrix_accessor(py::module& m, const std::string& suffix)
 
     std::string class_name = "DensityMatrixAccessor" + suffix;
 
-    py::class_<DMAccessor>(m, class_name.c_str(),
-        R"pbdoc(
+    py::class_<DMAccessor>(m,
+                           class_name.c_str(),
+                           R"pbdoc(
         Accessor for density matrix data.
 
         Provides access to DM(k) and DM(R) matrices.
         )pbdoc")
         .def(py::init<>())
-        .def_property_readonly("nks", &DMAccessor::get_nks,
-            "Number of k-points")
-        .def_property_readonly("nrow", &DMAccessor::get_nrow,
-            "Number of rows in density matrix")
-        .def_property_readonly("ncol", &DMAccessor::get_ncol,
-            "Number of columns in density matrix")
-        .def("get_dmk", &DMAccessor::get_dmk,
-            R"pbdoc(
+        .def_property_readonly("nks", &DMAccessor::get_nks, "Number of k-points")
+        .def_property_readonly("nrow", &DMAccessor::get_nrow, "Number of rows in density matrix")
+        .def_property_readonly("ncol", &DMAccessor::get_ncol, "Number of columns in density matrix")
+        .def("get_dmk",
+             &DMAccessor::get_dmk,
+             R"pbdoc(
             Get DM(k) for specific k-point.
 
             Parameters
@@ -810,13 +812,11 @@ void bind_density_matrix_accessor(py::module& m, const std::string& suffix)
             -------
             numpy.ndarray
                 Density matrix at k-point ik
-            )pbdoc", "ik"_a)
-        .def("get_DMK_all", &DMAccessor::get_DMK_all,
-            "Get all DM(k) matrices as a list")
-        .def("get_DMR", &DMAccessor::get_DMR,
-            "Get DM(R) in sparse format")
-        .def("is_valid", &DMAccessor::is_valid,
-            "Check if density matrix data is available");
+            )pbdoc",
+             "ik"_a)
+        .def("get_DMK_all", &DMAccessor::get_DMK_all, "Get all DM(k) matrices as a list")
+        .def("get_DMR", &DMAccessor::get_DMR, "Get DM(R) in sparse format")
+        .def("is_valid", &DMAccessor::is_valid, "Check if density matrix data is available");
 }
 
 template <typename TK, typename TR>
@@ -826,8 +826,9 @@ void bind_esolver_lcao(py::module& m, const std::string& suffix)
 
     std::string class_name = "ESolverLCAO" + suffix;
 
-    py::class_<ESolver>(m, class_name.c_str(),
-        R"pbdoc(
+    py::class_<ESolver>(m,
+                        class_name.c_str(),
+                        R"pbdoc(
         Python wrapper for ESolver_KS_LCAO.
 
         This class provides a Python interface for LCAO calculations
@@ -853,101 +854,92 @@ void bind_esolver_lcao(py::module& m, const std::string& suffix)
         .def(py::init<>())
 
         // Initialization
-        .def("initialize", &ESolver::initialize,
-            R"pbdoc(
+        .def("initialize",
+             &ESolver::initialize,
+             R"pbdoc(
             Initialize ESolver from INPUT file.
 
             Parameters
             ----------
             input_dir : str
                 Directory containing INPUT, STRU, and other input files
-            )pbdoc", "input_dir"_a)
-        .def("before_all_runners", &ESolver::before_all_runners,
-            "Initialize calculation environment")
+            )pbdoc",
+             "input_dir"_a)
+        .def("before_all_runners", &ESolver::before_all_runners, "Initialize calculation environment")
 
         // SCF Control
-        .def("before_scf", &ESolver::before_scf,
-            R"pbdoc(
+        .def("before_scf",
+             &ESolver::before_scf,
+             R"pbdoc(
             Prepare for SCF calculation.
 
             Parameters
             ----------
             istep : int, optional
                 Ion step index (default: 0)
-            )pbdoc", "istep"_a = 0)
-        .def("run_scf_iteration", &ESolver::run_scf_iteration,
-            R"pbdoc(
+            )pbdoc",
+             "istep"_a = 0)
+        .def("run_scf_iteration",
+             &ESolver::run_scf_iteration,
+             R"pbdoc(
             Run a single SCF iteration.
 
             Parameters
             ----------
             iter : int
                 Iteration number (1-based)
-            )pbdoc", "iter"_a)
-        .def("run_scf", &ESolver::run_scf,
-            R"pbdoc(
+            )pbdoc",
+             "iter"_a)
+        .def("run_scf",
+             &ESolver::run_scf,
+             R"pbdoc(
             Run complete SCF loop.
 
             Parameters
             ----------
             max_iter : int, optional
                 Maximum number of iterations (default: 100)
-            )pbdoc", "max_iter"_a = 100)
-        .def("after_scf", &ESolver::after_scf,
-            R"pbdoc(
+            )pbdoc",
+             "max_iter"_a = 100)
+        .def("after_scf",
+             &ESolver::after_scf,
+             R"pbdoc(
             Finalize SCF calculation.
 
             Parameters
             ----------
             istep : int, optional
                 Ion step index (default: 0)
-            )pbdoc", "istep"_a = 0)
+            )pbdoc",
+             "istep"_a = 0)
 
         // Status
-        .def("is_converged", &ESolver::is_converged,
-            "Check if SCF is converged")
-        .def_property_readonly("niter", &ESolver::get_niter,
-            "Current iteration number")
-        .def_property_readonly("drho", &ESolver::get_drho,
-            "Charge density difference")
-        .def_property_readonly("istep", &ESolver::get_istep,
-            "Current ion step")
+        .def("is_converged", &ESolver::is_converged, "Check if SCF is converged")
+        .def_property_readonly("niter", &ESolver::get_niter, "Current iteration number")
+        .def_property_readonly("drho", &ESolver::get_drho, "Charge density difference")
+        .def_property_readonly("istep", &ESolver::get_istep, "Current ion step")
 
         // Data Accessors
-        .def("get_charge", &ESolver::get_charge,
-            "Get charge density accessor")
-        .def("get_energy", &ESolver::get_energy,
-            "Get energy accessor")
-        .def("get_hamiltonian", &ESolver::get_hamiltonian,
-            "Get Hamiltonian accessor")
-        .def("get_density_matrix", &ESolver::get_density_matrix,
-            "Get density matrix accessor")
+        .def("get_charge", &ESolver::get_charge, "Get charge density accessor")
+        .def("get_energy", &ESolver::get_energy, "Get energy accessor")
+        .def("get_hamiltonian", &ESolver::get_hamiltonian, "Get Hamiltonian accessor")
+        .def("get_density_matrix", &ESolver::get_density_matrix, "Get density matrix accessor")
 
         // Wave functions
-        .def("get_psi", &ESolver::get_psi,
-            "Get wave function coefficients for k-point ik", "ik"_a)
-        .def("get_eigenvalues", &ESolver::get_eigenvalues,
-            "Get eigenvalues for k-point ik", "ik"_a)
-        .def("get_occupations", &ESolver::get_occupations,
-            "Get occupation numbers for k-point ik", "ik"_a)
+        .def("get_psi", &ESolver::get_psi, "Get wave function coefficients for k-point ik", "ik"_a)
+        .def("get_eigenvalues", &ESolver::get_eigenvalues, "Get eigenvalues for k-point ik", "ik"_a)
+        .def("get_occupations", &ESolver::get_occupations, "Get occupation numbers for k-point ik", "ik"_a)
 
         // K-points
-        .def_property_readonly("nks", &ESolver::get_nks,
-            "Number of k-points")
-        .def("get_kvec_d", &ESolver::get_kvec_d,
-            "Get k-vector in direct coordinates", "ik"_a)
-        .def("get_wk", &ESolver::get_wk,
-            "Get k-point weights")
+        .def_property_readonly("nks", &ESolver::get_nks, "Number of k-points")
+        .def("get_kvec_d", &ESolver::get_kvec_d, "Get k-vector in direct coordinates", "ik"_a)
+        .def("get_wk", &ESolver::get_wk, "Get k-point weights")
 
         // System info
-        .def_property_readonly("nbasis", &ESolver::get_nbasis,
-            "Number of basis functions")
-        .def_property_readonly("nbands", &ESolver::get_nbands,
-            "Number of bands")
-        .def_property_readonly("nspin", &ESolver::get_nspin,
-            "Number of spin channels")
-        .def_property_readonly("nat", &ESolver::get_nat,
-            "Number of atoms");
+        .def_property_readonly("nbasis", &ESolver::get_nbasis, "Number of basis functions")
+        .def_property_readonly("nbands", &ESolver::get_nbands, "Number of bands")
+        .def_property_readonly("nspin", &ESolver::get_nspin, "Number of spin channels")
+        .def_property_readonly("nat", &ESolver::get_nat, "Number of atoms");
 }
 
 PYBIND11_MODULE(_esolver_pack, m)

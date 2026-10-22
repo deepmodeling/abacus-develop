@@ -1,0 +1,10 @@
+PW HSE NSCF on the frozen SCF source committed in this directory (binary
+wavefunctions, eig_occ.txt, chg.cube). Same k mesh with more target
+bands; an explicit zero exx_fock_alpha is accepted like an omitted Fock term.
+
+The charge density is standard SCF output generated with out_chg 1 12.
+To regenerate the source, use the same STRU/KPT and INPUT with calculation scf,
+nbands 3, out_chg 1 12, and out_wfc_pw 2.
+The cube-based band references differ from the former binary-restart references
+by at most 1.12e-4 eV: out_chg writes rho, while the binary restart writes rho_save.
+INPUT.info retains only the seven source SCF parameters checked by hybrid NSCF.

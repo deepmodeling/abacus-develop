@@ -341,7 +341,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.description = R"(Whether to output the density of states (DOS) and projected density of states (PDOS). For more information, refer to the dos.md.
 * 0: no output
 * 1: output the density of states (DOS) and projected density of states (PDOS, LCAO only)
- * nspin=1 or 4: doss1g{geom}_{basis}.txt and pdoss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
+ * nspin=1 or 4: doss1g{geom}.txt and pdoss1g{geom}.txt (PDOS is LCAO only), where geom is the geometry index when cell changes or ions move. PW and LCAO calculations use the same naming.
  * nspin=2: doss1/doss2 and pdoss1/pdoss2 files for two spin channels.
 Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will raise an error.)";
         item.default_value = "0";

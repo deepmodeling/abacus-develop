@@ -177,6 +177,7 @@ class DFPT_PW::Impl
     double conv_thr_ = 1e-8;
     int max_iter_ = 100;
     double mix_beta_ = 0.4;
+    std::string asr_type_ = "no"; ///< acoustic sum rule mode on the Gamma matrix
 };
 
 } // namespace ModuleDFPT

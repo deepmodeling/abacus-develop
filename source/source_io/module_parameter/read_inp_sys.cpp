@@ -151,7 +151,7 @@ void ReadInput::item_system()
         item.description = R"(Specify the type of calculation.
 
 * scf: perform self-consistent electronic structure calculations
-* nscf: perform non-self-consistent electronic structure calculations. A charge density file is required
+* nscf: perform non-self-consistent electronic structure calculations using a saved charge density. PW screened hybrids also require SCF binary wavefunctions and eig_occ.txt; see [hybrid NSCF](../elec_properties/hybrid_nscf.md).
 * relax: perform structure relaxation calculations, the relax_nmax parameter depicts the maximal number of ionic iterations
 * cell-relax: perform cell relaxation calculations
 * md: perform molecular dynamics simulations
@@ -236,17 +236,19 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
         item.category = "System variables";
         item.type = "String";
         item.description = R"(Choose the energy solver.
-* ksdft: Kohn-Sham density functional theory
-* ofdft: orbital-free density functional theory
-* tdofdft: time-dependent orbital-free density functional theory
-* sdft: stochastic density functional theory
-* tddft: real-time time-dependent density functional theory (RT-TDDFT)
-* lj: Leonard Jones potential
-* dp: DeeP potential
-* nep: Neuroevolution Potential
-* ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
-* lr: LR-TDDFT with given KS orbitals (Under Development Feature)
-* dfpt: density functional perturbation theory (Under Development Feature))";
+* `ksdft`: Kohn-Sham density functional theory.
+* `ofdft`: Orbital-free density functional theory.
+* `tdofdft`: Time-dependent orbital-free density functional theory.
+* `sdft`: Stochastic density functional theory.
+* `tddft`: Real-time time-dependent density functional theory (RT-TDDFT). Requires `calculation=md`.
+* `lj`: Lennard-Jones potential.
+* `dp`: Deep Potential (DP) model.
+* `nep`: Neuroevolution potential (NEP).
+* `ks-lr`: Kohn-Sham density functional theory followed by linear-response time-dependent density functional theory (LR-TDDFT; under development).
+* `lr`: Linear-response time-dependent density functional theory (LR-TDDFT) using precomputed Kohn-Sham orbitals (under development).
+* `dfpt`: Density functional perturbation theory (DFPT; under development).
+
+[NOTE] Excited-state forces (`cal_force = 1`) and atomic relaxation with `ks-lr` or `lr` currently require `gamma_only = 1` and pseudopotentials without nonlinear core correction (NLCC). NLCC core-density response-force and XC-kernel derivative terms are not implemented; these force requests are rejected after reading the pseudopotentials, before force evaluation. Multi-k spectra and spectra with NLCC pseudopotentials remain available with `cal_force = 0`. Ground-state forces are unaffected by this LR restriction.)";
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -255,6 +257,10 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+            if (para.input.esolver_type == "tddft" && para.input.calculation != "md")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "esolver_type=tddft requires calculation=md.");
             }
             if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep")
             {
@@ -270,6 +276,42 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
                 ModuleBase::WARNING_QUIT("ReadInput",
                     "esolver_type=lr requires calculation=nscf (it reads the ground state "
                     "wave function computed by a separate SCF run); please set calculation=nscf.");
+            }
+            const bool is_lr = (para.input.esolver_type == "lr" || para.input.esolver_type == "ks-lr");
+            const bool requests_lr_force = para.input.cal_force || para.input.calculation == "relax";
+            if (is_lr && requests_lr_force && !para.input.gamma_only)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "LR-TDDFT excited-state forces and relaxation currently require gamma_only=1; "
+                    "complex/multi-k gradients are not implemented. Use cal_force=0 for multi-k spectra.");
+            }
+            if (is_lr && para.input.calculation == "cell-relax")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "LR-TDDFT has no excited-state stress, so calculation=cell-relax cannot be driven by it. "
+                    "Use calculation=relax to relax the atomic positions at fixed cell.");
+            }
+            if (is_lr && para.input.calculation == "md")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "excited-state MD is not supported: the non-adiabatic couplings between excited states "
+                    "are not implemented, so a trajectory cannot switch surfaces at a crossing, and a "
+                    "single-surface run would silently follow a fixed state index straight through one. "
+                    "Use calculation=relax instead.");
+            }
+            if (para.input.esolver_type == "lr" && para.input.calculation == "relax")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "esolver_type=lr reads a ground state from disk that belongs to one fixed geometry, "
+                    "so it cannot follow moving ions. Use esolver_type=ks-lr, which runs the SCF itself "
+                    "at every ionic step.");
+            }
+            if (para.input.esolver_type == "ks-lr" && para.input.calculation == "relax"
+                && para.input.lr_solver == "spectrum")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_solver=spectrum only reads previously written excitation amplitudes; it solves "
+                    "nothing, so it cannot produce gradients for a relaxation.");
             }
         };
         this->add_item(item);
@@ -734,18 +776,30 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
         item.type = "Integer";
         item.description = R"(Save memory when performing nscf calculations.
 * 0: no memory saving techniques are used.
-* 1: a memory saving technique will be used for many k point calculations.)";
+* 1: a memory saving technique will be used for many k point calculations.
+
+Legal values are 0 and 1. For calculation=scf or relax, mem_saver must be 0; setting it to 1 is an input error rather than being reset to 0.)";
         item.default_value = "0";
         item.set_availability("calculation==nscf and basis_type==pw");
         read_sync_int(input.mem_saver);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mem_saver == 1)
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.mem_saver != 0 && para.input.mem_saver != 1)
             {
-                if (para.input.calculation == "scf" || para.input.calculation == "relax")
-                {
-                    para.input.mem_saver = 0;
-                    ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
-                }
+                const std::string message
+                    = "Invalid INPUT mem_saver=" + longstring(item.str_values)
+                      + ". Legal values are 0 or 1.\n"
+                        "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#mem-saver";
+                ModuleBase::WARNING_QUIT("ReadInput", message);
+            }
+            if (para.input.mem_saver == 1
+                && (para.input.calculation == "scf" || para.input.calculation == "relax"))
+            {
+                const std::string message
+                    = "Invalid INPUT mem_saver=" + longstring(item.str_values)
+                      + " with calculation=" + para.input.calculation
+                      + ". Use mem_saver=0 for this calculation; memory saving with mem_saver=1 is intended for nscf.\n"
+                        "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#mem-saver";
+                ModuleBase::WARNING_QUIT("ReadInput", message);
             }
         };
         this->add_item(item);

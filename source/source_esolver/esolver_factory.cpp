@@ -143,6 +143,9 @@ ESolver* init_esolver(const Input_para& inp)
     // determine type of esolver based on INPUT information
     const std::string esolver_type = determine_type(inp);
     const bool gamma_only = PARAM.globalv.gamma_only_local;
+#ifdef __LCAO
+    const LRRuntime lr_runtime{GlobalV::ofs_running, GlobalV::ofs_warning, GlobalV::MY_RANK};
+#endif
 
     // initialize the corresponding Esolver child class
     if (esolver_type == "ksdft_pw")
@@ -329,11 +332,11 @@ ESolver* init_esolver(const Input_para& inp)
         {
             if (gamma_only)
             {
-                return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir);
+                return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir, lr_runtime);
             }
             else
             {
-                return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir);
+                return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
             }
         }
         else
@@ -341,11 +344,11 @@ ESolver* init_esolver(const Input_para& inp)
 #ifdef __EXX
             if (gamma_only)
             {
-                return new ModuleESolver::ESolver_BSE<double, double>(inp, in_dir, out_dir);
+                return new ModuleESolver::ESolver_BSE<double, double>(inp, in_dir, out_dir, lr_runtime);
             }
             else
             {
-                return new ModuleESolver::ESolver_BSE<std::complex<double>, double>(inp, in_dir, out_dir);
+                return new ModuleESolver::ESolver_BSE<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
             }
 #else
             ModuleBase::WARNING_QUIT("ESolver", "BSE requires ENABLE_LIBRI=ON");
@@ -359,11 +362,11 @@ ESolver* init_esolver(const Input_para& inp)
         const std::string& out_dir = PARAM.globalv.global_out_dir;
         if (gamma_only)
         {
-            return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir);
+            return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir, lr_runtime);
         }
         else
         {
-            return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir);
+            return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
         }
     }
 #endif

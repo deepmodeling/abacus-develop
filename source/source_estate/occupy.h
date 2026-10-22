@@ -36,7 +36,12 @@ double sumkg(const ModuleBase::matrix& ekb,
              const int& is,
              const std::vector<int>& isk);
 
-/// @brief find the Fermi level by bisection on sumkg()
+/// @brief Find the Fermi level using a compensated, energy-centered electron count.
+/// @note ef is the rounded absolute chemical potential. Re-evaluating sumkg(ef)
+///       can lose precision for a large energy offset; gweights retains the
+///       centered chemical potential internally when forming occupations.
+///       The electron-count target is 16*epsilon*max(1,abs(nelec)). Unresolved
+///       floating-point stagnation remains an error; there is no relaxed fallback.
 void efermig(const ModuleBase::matrix& ekb,
              const int nbnd,
              const int nks,
