@@ -23,34 +23,16 @@ add_library(
   ../pw_transform_k.cpp)
 
 addtest(
-  TARGET
-  MODULE_PW_grid_geometry
-  LIBS
-  parameter
-  planewave_serial
-  device
-  base
-  SOURCES
-  test_pw_grid_geometry.cpp)
+  TARGET MODULE_PW_grid_geometry
+  LIBS parameter planewave_serial device base
+  SOURCES test_pw_grid_geometry.cpp)
 
 addtest(
-  TARGET
-  MODULE_PW_basis_pw_serial
-  LIBS
-  parameter
-  planewave_serial
-  device
-  base
-  SOURCES
-  pw_basis_test.cpp)
+  TARGET MODULE_PW_basis_pw_serial
+  LIBS parameter planewave_serial device base
+  SOURCES pw_basis_test.cpp)
 
 addtest(
-  TARGET
-  MODULE_PW_basis_pw_k_serial
-  LIBS
-  parameter
-  planewave_serial
-  device
-  base
-  SOURCES
-  pw_basis_k_test.cpp)
+  TARGET MODULE_PW_basis_pw_k_serial
+  LIBS parameter planewave_serial device base
+  SOURCES pw_basis_k_test.cpp)

@@ -5,12 +5,6 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__MLALGO)
 
 addtest(
-  TARGET
-  Elecstate_Kernels_UTs
-  LIBS
-  parameter
-  psi
-  base
-  device
-  SOURCES
-  elecstate_op_test.cpp)
+  TARGET Elecstate_Kernels_UTs
+  LIBS parameter psi base device
+  SOURCES elecstate_op_test.cpp)

@@ -14,14 +14,11 @@ endif()
 abacus_copy_test_files(support)
 
 addtest(
-  TARGET
-  MODULE_ESOLVER_esolver_dp_test
-  LIBS
-  ${_esolver_dp_test_libs}
-  SOURCES
-  esolver_dp_test.cpp
-  ../esolver_dp.cpp
-  ../../source_cell/basecell.cpp
-  ../../source_cell/cif_io.cpp
-  ../../source_cell/module_neighlist/neighbor_list.cpp
-  ../../source_io/module_output/output_log.cpp)
+  TARGET MODULE_ESOLVER_esolver_dp_test
+  LIBS ${_esolver_dp_test_libs}
+  SOURCES esolver_dp_test.cpp
+          ../esolver_dp.cpp
+          ../../source_cell/basecell.cpp
+          ../../source_cell/cif_io.cpp
+          ../../source_cell/module_neighlist/neighbor_list.cpp
+          ../../source_io/module_output/output_log.cpp)

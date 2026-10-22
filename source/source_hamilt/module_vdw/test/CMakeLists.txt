@@ -5,16 +5,9 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_copy_test_files(c6.txt r0.txt r0_zero.txt)
 
 addtest(
-  TARGET
-  MODULE_HAMILT_vdwTest
-  LIBS
-  parameter
-  base
-  device
-  vdw
-  SOURCES
-  vdw_test.cpp
-  vdwd3_evaluator_test.cpp)
+  TARGET MODULE_HAMILT_vdwTest
+  LIBS parameter base device vdw
+  SOURCES vdw_test.cpp vdwd3_evaluator_test.cpp)
 
 if(ENABLE_DFTD4 AND ENABLE_MPI)
   add_test(

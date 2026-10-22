@@ -29,63 +29,31 @@ add_library(
 abacus_copy_test_files(support)
 
 addtest(
-  TARGET
-  MODULE_IO_read_input_serial
-  LIBS
-  parameter
-  io_input_serial
-  SOURCES
-  read_input_test.cpp
-  ../../source_base/test/tool_quit_no_exit.cpp
-  ../../source_base/module_device/device.cpp
-  ../../source_base/module_device/output_device.cpp)
+  TARGET MODULE_IO_read_input_serial
+  LIBS parameter io_input_serial
+  SOURCES read_input_test.cpp ../../source_base/test/tool_quit_no_exit.cpp
+          ../../source_base/module_device/device.cpp
+          ../../source_base/module_device/output_device.cpp)
 
 addtest(
-  TARGET
-  MODULE_IO_read_item_serial
-  LIBS
-  parameter
-  base
-  device
-  io_input_serial
-  SOURCES
-  read_input_item_test.cpp
-  test_read_inp_sccs.cpp)
+  TARGET MODULE_IO_read_item_serial
+  LIBS parameter base device io_input_serial
+  SOURCES read_input_item_test.cpp test_read_inp_sccs.cpp)
 
 addtest(TARGET MODULE_IO_read_input_tool SOURCES read_input_tool_test.cpp)
 
 addtest(
-  TARGET
-  MODULE_IO_rho_io
-  LIBS
-  parameter
-  base
-  device
-  cell_info
-  SOURCES
-  rho_io_test.cpp
-  ../module_output/read_cube.cpp
-  ../module_output/write_cube.cpp)
+  TARGET MODULE_IO_rho_io
+  LIBS parameter base device cell_info
+  SOURCES rho_io_test.cpp ../module_output/read_cube.cpp
+          ../module_output/write_cube.cpp)
 
 addtest(
-  TARGET
-  MODULE_IO_read_cube
-  LIBS
-  parameter
-  base
-  device
-  cell_info
-  SOURCES
-  test_read_cube.cpp
-  ../module_output/read_cube.cpp)
+  TARGET MODULE_IO_read_cube
+  LIBS parameter base device cell_info
+  SOURCES test_read_cube.cpp ../module_output/read_cube.cpp)
 
 addtest(
-  TARGET
-  MODULE_IO_system_variable_test
-  LIBS
-  parameter
-  base
-  device
-  io_input_serial
-  SOURCES
-  io_sys_var_test.cpp)
+  TARGET MODULE_IO_system_variable_test
+  LIBS parameter base device io_input_serial
+  SOURCES io_sys_var_test.cpp)

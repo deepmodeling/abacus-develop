@@ -45,63 +45,30 @@ list(
 abacus_copy_test_files(GaAs)
 
 addtest(
-  TARGET
-  MODULE_AO_ORB_nonlocal_test
-  SOURCES
-  orb_nonlocal_test.cpp
-  ../orb_nonlocal.cpp
-  ../orb_nonlocal_lm.cpp
-  LIBS
-  parameter
-  device
-  base)
+  TARGET MODULE_AO_ORB_nonlocal_test
+  SOURCES orb_nonlocal_test.cpp ../orb_nonlocal.cpp ../orb_nonlocal_lm.cpp
+  LIBS parameter device base)
 
 addtest(
-  TARGET
-  MODULE_AO_ORB_nonlocal_lm_test
-  SOURCES
-  orb_nonlocal_lm_test.cpp
-  ../orb_nonlocal_lm.cpp
-  LIBS
-  parameter
-  device
-  base)
+  TARGET MODULE_AO_ORB_nonlocal_lm_test
+  SOURCES orb_nonlocal_lm_test.cpp ../orb_nonlocal_lm.cpp
+  LIBS parameter device base)
 
 addtest(
-  TARGET
-  MODULE_AO_ORB_atomic_lm_test
-  SOURCES
-  orb_atomic_lm_test.cpp
-  test_orb_atomic_lm.cpp
-  ../orb_atomic_lm.cpp
-  LIBS
-  parameter
-  device
-  base)
+  TARGET MODULE_AO_ORB_atomic_lm_test
+  SOURCES orb_atomic_lm_test.cpp test_orb_atomic_lm.cpp ../orb_atomic_lm.cpp
+  LIBS parameter device base)
 
 addtest(
-  TARGET
-  MODULE_AO_ORB_read_test
-  SOURCES
-  orb_read_test.cpp
-  ../orb_read.cpp
-  ../orb_atomic.cpp
-  ../orb_atomic_lm.cpp
-  LIBS
-  parameter
-  device
-  base)
+  TARGET MODULE_AO_ORB_read_test
+  SOURCES orb_read_test.cpp ../orb_read.cpp ../orb_atomic.cpp
+          ../orb_atomic_lm.cpp
+  LIBS parameter device base)
 
 addtest(
-  TARGET
-  MODULE_AO_parallel_orbitals_test
-  SOURCES
-  parallel_orbitals_test.cpp
-  ../parallel_orbitals.cpp
-  LIBS
-  parameter
-  device
-  base)
+  TARGET MODULE_AO_parallel_orbitals_test
+  SOURCES parallel_orbitals_test.cpp ../parallel_orbitals.cpp
+  LIBS parameter device base)
 
 abacus_copy_test_files(parallel_orbitals_test.sh)
 find_program(BASH bash)
