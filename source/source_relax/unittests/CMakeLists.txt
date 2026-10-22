@@ -34,7 +34,6 @@ AddTest(
           ../socket_driver.cpp
           ../socket_utils.cpp
           ../socket_handlers.cpp
-          ../electronic_control.cpp
           ../socket_constant_potential.cpp
           ../socket_frame_utils.cpp
           ../socket_frame.cpp

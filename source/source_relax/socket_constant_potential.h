@@ -6,6 +6,8 @@
 
 class Parameter;
 class UnitCell;
+struct Input_para;
+struct System_para;
 namespace ModuleESolver { class ESolver; }
 
 namespace SocketCP
@@ -24,6 +26,11 @@ struct Observables
     double reference_eV = 0.0;
     double workfunction_eV = 0.0;
 };
+
+// Apply one external electron-number request and evaluate the current geometry.
+void run_electronic_step(ModuleESolver::ESolver& solver, UnitCell& cell,
+                         Parameter& parameters, const Input_para& input, const System_para& system,
+                         const elecstate::ElectronicControl& control, int functional_type, int istep);
 
 Configuration parse_init(const std::string& parameters);
 elecstate::ElectronicControl make_control(const Configuration& config, double nelect, int flags);

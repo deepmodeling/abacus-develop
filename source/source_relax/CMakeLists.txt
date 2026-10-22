@@ -8,7 +8,6 @@ add_library(
     socket_utils.cpp
     socket_handlers.cpp
     socket_constant_potential.cpp
-    electronic_control.cpp
     socket_driver.cpp
     cg_base.cpp
     relax_driver.cpp

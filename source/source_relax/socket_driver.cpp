@@ -5,8 +5,6 @@
 #include "source_base/timer.h"
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
-#include "source_io/module_parameter/input_parameter.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <exception>
 #include <fstream>
@@ -56,6 +54,7 @@ static bool run_socket_driver(ModuleESolver::ESolver* p_esolver,
                               UnitCell& ucell,
                               const Input_para& inp,
                               Parameter* parameters,
+                              const System_para* system,
                               std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Socket_Driver", "socket_driver");
@@ -76,6 +75,7 @@ static bool run_socket_driver(ModuleESolver::ESolver* p_esolver,
         context.ucell = &ucell;
         context.inp = &inp;
         context.parameters = parameters;
+        context.system = system;
         context.state = DriverState::NeedInit;
         context.nat_return = ucell.nat;
         context.reference_cell = ipi_cell_bohr_from_unitcell(ucell);
@@ -138,11 +138,12 @@ static bool run_socket_driver(ModuleESolver::ESolver* p_esolver,
 bool Socket_Driver::socket_driver(ModuleESolver::ESolver* solver, UnitCell& cell,
                                  const Input_para& input, std::ofstream& log)
 {
-    return run_socket_driver(solver, cell, input, nullptr, log);
+    return run_socket_driver(solver, cell, input, nullptr, nullptr, log);
 }
 
 bool Socket_Driver::socket_driver(ModuleESolver::ESolver* solver, UnitCell& cell,
-                                 Parameter& parameters, std::ofstream& log)
+                                 Parameter& parameters, const Input_para& input,
+                                 const System_para& system, std::ofstream& log)
 {
-    return run_socket_driver(solver, cell, parameters.inp, &parameters, log);
+    return run_socket_driver(solver, cell, input, &parameters, &system, log);
 }

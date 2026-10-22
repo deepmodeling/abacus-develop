@@ -6,6 +6,7 @@
 class UnitCell;
 class Parameter;
 struct Input_para;
+struct System_para;
 
 namespace ModuleESolver
 {
@@ -19,7 +20,8 @@ class Socket_Driver
     ~Socket_Driver() = default;
 
     bool socket_driver(ModuleESolver::ESolver* solver, UnitCell& cell,
-                       Parameter& parameters, std::ofstream& log);
+                       Parameter& parameters, const Input_para& input,
+                       const System_para& system, std::ofstream& log);
 
     bool socket_driver(ModuleESolver::ESolver* p_esolver,
                        UnitCell& ucell,

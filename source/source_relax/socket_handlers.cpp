@@ -1,10 +1,10 @@
 #include "socket_handlers.h"
-#include "electronic_control.h"
 
 #include "source_relax/socket_frame.h"
 #include "source_base/global_function.h"
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
+#include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/input_parameter.h"
 #ifdef __JSON
 #include "source_io/module_json/output_info.h"
@@ -165,7 +165,7 @@ void handle_init(IpiSocket& socket,
     try
     {
         context.cp = SocketCP::parse_init(params);
-        if (context.cp.enabled && (context.parameters == nullptr || !context.inp->cal_force
+        if (context.cp.enabled && (context.parameters == nullptr || context.system == nullptr || !context.inp->cal_force
             || context.inp->cal_stress || (context.inp->symmetry != "0" && context.inp->symmetry != "-1")))
         {
             throw std::runtime_error("constant-potential socket requires runtime parameters, "
@@ -389,8 +389,10 @@ void run_esolver_for_positions(DriverContext& context, const std::vector<double>
         if (context.cp.enabled)
         {
             context.charge_pending = false;
-            relax::run_electronic_step(*context.esolver, *context.ucell, *context.parameters,
-                                       context.pending_control, context.istep);
+            const int functional_type = XC_Functional::get_func_type();
+            SocketCP::run_electronic_step(*context.esolver, *context.ucell, *context.parameters,
+                                          *context.inp, *context.system, context.pending_control,
+                                          functional_type, context.istep);
         }
         else
         {

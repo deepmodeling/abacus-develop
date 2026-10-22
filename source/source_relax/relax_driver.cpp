@@ -17,6 +17,7 @@ bool Relax_Driver::relax_driver(
         std::ofstream& ofs_running)
 {
     const Input_para& inp = parameters.inp;
+    const System_para& system = parameters.globalv;
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
     ModuleBase::timer::start("Relax_Driver", "relax_driver");
 
@@ -29,7 +30,7 @@ bool Relax_Driver::relax_driver(
     if (inp.socket_driver)
     {
         Socket_Driver socket_driver;
-        const bool ran_frame = socket_driver.socket_driver(p_esolver, ucell, parameters, ofs_running);
+        const bool ran_frame = socket_driver.socket_driver(p_esolver, ucell, parameters, inp, system, ofs_running);
         ModuleBase::timer::end("Relax_Driver", "relax_driver");
         return ran_frame;
     }

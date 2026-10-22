@@ -10,6 +10,7 @@
 
 class UnitCell;
 class Parameter;
+struct System_para;
 
 namespace ModuleESolver
 {
@@ -25,6 +26,7 @@ struct DriverContext
     UnitCell* ucell = nullptr;
     const Input_para* inp = nullptr;
     Parameter* parameters = nullptr;
+    const System_para* system = nullptr;
     SocketUtils::DriverState state = SocketUtils::DriverState::NeedInit;
     int istep = 0;
     int nat_return = 0;

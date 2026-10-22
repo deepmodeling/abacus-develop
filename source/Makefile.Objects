@@ -593,7 +593,6 @@ OBJS_RELAXATION=relax_data.o\
     socket_utils.o\
     socket_handlers.o\
     socket_constant_potential.o\
-    electronic_control.o\
     cg_base.o\
     bfgs_basic.o\
     relax_driver.o\
