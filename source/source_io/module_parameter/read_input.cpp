@@ -191,13 +191,16 @@ ReadInput::ReadInput(const int& rank)
     {
         std::map<std::string, AvailabilityValueKind> parameter_types;
         std::map<std::string, AvailabilityExpr> expressions;
+        std::map<std::string, AvailabilityValueKind> bound_types;
         for (const auto& entry : this->input_lists)
         {
             parameter_types[entry.first] = availability_value_kind(entry.second.type);
             expressions[entry.first] = entry.second.get_availability_expr();
+            if (entry.second.domain.bound()) { bound_types[entry.first] = entry.second.domain.kind(); }
         }
         for (const auto& entry : this->input_lists)
         {
+            entry.second.domain.validate_schema(entry.first, bound_types);
             validate_availability_expr(entry.first,
                                        entry.second.get_availability_expr(),
                                        parameter_types);
@@ -465,6 +468,12 @@ std::string ReadInput::prepare_input(Parameter& param)
         readvalue_item->read_value(*readvalue_item, param);
     }
 
+    InputValues supplied_values;
+    for (const auto* item : this->readvalue_items)
+    {
+        if (item->domain.bound()) { supplied_values[item->label] = item->domain.value(param); }
+    }
+
     // 2) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
     for (auto& input_item: this->input_lists)
@@ -479,10 +488,28 @@ std::string ReadInput::prepare_input(Parameter& param)
     this->normalize_hs_output_options(param);
     this->normalize_occ_mat_options(param);
 
+    // Snapshot typed effective values once for shared domain and dependency checks.
+    InputValues values;
+    for (const auto& entry : this->input_lists)
+    {
+        if (entry.second.domain.bound()) { values[entry.first] = entry.second.domain.value(param); }
+    }
+
+    // Evaluate requirements with explicit values taking precedence over defaults,
+    // so a reset cannot hide a conflicting user request.
+    InputValues requested_values = values;
+    for (const auto& supplied : supplied_values) { requested_values[supplied.first] = supplied.second; }
+    for (const auto& entry : this->input_lists)
+    {
+        errors += entry.second.domain.validate_requirements(entry.first, requested_values);
+    }
+    if (!errors.empty()) { return errors; }
+
     // Check effective values, including defaults, through the same domains.
     for (const auto& entry : this->input_lists)
     {
-        errors += entry.second.domain.validate_resolved(entry.first, param.inp);
+        errors += entry.second.domain.validate_resolved(entry.first, values);
+        errors += entry.second.domain.validate_requirements(entry.first, values);
     }
     return errors;
 }
@@ -736,10 +763,6 @@ int ReadInput::current_md_step(const std::string& file_dir)
 
 void ReadInput::add_item(const Input_Item& item)
 {
-    if (!item.domain.empty() && item.type != "Integer")
-    {
-        throw std::invalid_argument("Integer domain attached to non-Integer INPUT parameter: " + item.label);
-    }
     // Normally only rank 0 reads the input file
     // But rank -1 is used for help system mode where items should also be added
     if (this->rank == 0 || this->rank == -1)

@@ -179,6 +179,10 @@ def generate_parameter_markdown(param: Dict[str, str],
         choices = ', '.join(escape_md_text(value) for value in param['allowed_values'])
         lines.append(f"- **Allowed values**: {choices}")
 
+    for key, title in [('value_rule', 'Legal range'), ('requirements', 'Requirements')]:
+        if param.get(key):
+            lines.append(f"- **{title}**: " + link_availability(str(param[key]), name_anchors))
+
     # Availability (before description, as in original format)
     if param.get('availability', '') != '':
         lines.append("- **Availability**: *"

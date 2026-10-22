@@ -296,7 +296,7 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("nspin", readinput.input_lists);
         TestParameters::input(param).noncolin = false;
         TestParameters::input(param).nspin = 3;
-        output = it->second.domain.validate_resolved(it->first, param.inp);
+        output = it->second.domain.validate_resolved(it->first, {{it->first, it->second.domain.value(param)}});
         EXPECT_THAT(output, testing::HasSubstr("Expected one Integer from {1, 2, 4}"));
     }
     { // smearing_method

@@ -1,71 +1,63 @@
-# Shared INPUT domain validation
+# Shared INPUT validation
 
-`Input_Item::domain` declares legal values once for runtime checks, built-in
-help and the generated INPUT reference. The initial operator supports scalar
-integer choices. For example:
+INPUT contracts are declared on `Input_Item::domain`. The common engine checks
+scalar integer, real, Boolean and string values, finite real numbers, choices,
+numerical bounds, and conditional requirements. It never branches on parameter
+names. For example:
 
 ```cpp
-item.type = "Integer";
-item.domain = InputDomain(&Input_para::nspin, {1, 2, 4});
+item.domain.set_choices({"1", "2"});
+item.domain.set_rule("value>0 and value<=1");
+item.domain.add_requirement("noncolin==true or lspinorb==true", "nspin==4");
 ```
 
-The field binding is typed and read-only. The validator does not branch on
-parameter names and does not format final values and parse them back. Adding
-another integer-choice parameter requires its binding and choices, not a new
-validation callback. A domain must have a non-null binding, at least one choice,
-no duplicate choices and matching `Integer` metadata.
+These are independent examples of declarations. Scalar readers register their
+actual numeric/Boolean type automatically. The existing `sync_*` registrations
+supply typed, read-only value access, including nested MD fields and vectors.
+The checker does not infer token cardinality from a prose documentation type,
+or format final values and parse them back. Custom input grammars remain in
+their readers until their contracts are declared; legal empty strings and
+vectors must remain accepted.
+
+Conditions reuse the parsed availability grammar (`and`, `or`, comparisons,
+`in`, `contains`). Runtime requirements are explicit declarations: descriptive
+availability alone does not imply that a disabled switch is an error.
+References and operand types are checked when registrations are assembled.
 
 ## Preparation order
 
-After collecting INPUT tokens, the reader calls `prepare_input` once:
+1. Check all explicit domains before readers or reset hooks can hide invalid
+   input. Complete tokens and scalar cardinality are checked; real numbers
+   must be finite. Independent errors are collected.
+2. Read typed values, retain snapshots of supplied values, and run existing
+   default/reset hooks and canonicalization.
+3. Evaluate conditional requirements with supplied values taking precedence
+   over prepared defaults, so reset hooks cannot hide a conflicting request.
+4. Check resolved values and requirements using the same engine.
 
-1. Validate explicitly supplied parameters that have a declared domain,
-   including complete integer tokens and exactly one value. Collect
-   independent errors before running any value reader or default/reset hook.
-2. Run the existing readers, contextual default/reset hooks and alias
-   normalization.
-3. Validate the effective values, including omitted parameters' defaults,
-   through the same domains.
+Errors identify the file, parameter, offending value, legal choices/rules, and
+its manual URL. All ranks receive the error before parameter broadcasts.
+Normal execution and `--check-input` share this preparation boundary. Existing
+checks needing structure, build capabilities or calculation context continue
+at their existing boundary.
 
-Errors identify the file, parameter, supplied or resolved value, legal choices
-and manual section. An invalid explicit value cannot be made acceptable by a
-later reset. The domain validator never changes values. Domain errors are
-broadcast before all ranks stop, ahead of parameter broadcasts. Normal startup
-and `--check-input` use this same path.
+A private unset initializer does not belong to the public domain. For example,
+a `{1, 2}` domain rejects explicit `-1` before defaults; omission skips the
+first check and the derived value must satisfy the same domain. A documented
+negative disabled mode or negative physical value has different semantics.
+An effective domain can have an activation condition for unused defaults;
+explicit supplied values are still checked.
 
-`nspin` and `gga_grad` are the first migrated parameters. Their legal choices
-and defaults are unchanged. Inputs such as `nspin 2abc`, `nspin 2 4` and a bare
-`nspin` are now rejected instead of accepting a numeric prefix, ignoring extra
-tokens or overlooking a final keyword without a value. Legal explicit zero
-remains a value, not a request for a default.
+## Documentation and defaults
 
-## Documentation
+Choices, value predicates and conditional requirements are exported to built-in
+help, generated YAML and the INPUT manual from these declarations. Generated
+YAML and Markdown are build artifacts and must not be committed. Recommended
+values and bounds in a default formula are not automatically legal limits.
 
-The C++ registration is the source of truth. `--generate-parameters-yaml`
-exports a typed `allowed_values` sequence, and `generate_input_main.py` renders
-it as **Allowed values**. `abacus -h <parameter>` uses the same domain. Generated
-YAML and Markdown must not be committed.
-
-Only hard legal values belong in the domain. Recommended values and bounds
-appearing in default formulas must not be converted into restrictions without
-checking their documented meaning.
-
-## Incremental scope
-
-This first slice establishes shared domain checks, not a replacement for all
-existing input processing. Parameters without a declared domain retain their
-existing reader and EOF behavior. Their empty strings or vectors can be valid;
-the shared checker does not reject empty values without a domain that requires
-a value. Legacy cross-parameter checks, including the requirement
-for `nspin=4` with `noncolin` or `lspinorb`, still run after the required context
-is available. [Availability](input_availability.md) describes applicability;
-it is not automatically a hard runtime constraint.
-
-Further migrations should extend common domain/condition operators and add
-rule data. They should also separate explicit inputs from computed defaults so
-that defaults can only fill omitted fields; the existing reset callbacks are
-not yet restricted by this PR. In particular, this initial domain check does
-not detect a legacy reset changing one legal value into a different legal value.
-Ranges, conditional requirements, vector lengths and structured source-line
-diagnostics are subsequent extensions of the shared engine, not reasons to
-introduce parameter-specific validators.
+Validation does not itself resolve defaults or make every legacy reset safe.
+Default resolution should distinguish presence from numerical value, and fill
+only omitted inputs. In particular `0`, `false` and a legal negative value are
+explicit values. Defaults requiring structure/orbitals must be resolved when
+those dependencies exist. Runtime numeric fields need not become nullable:
+a separate input-preparation state can represent missing and pending values.

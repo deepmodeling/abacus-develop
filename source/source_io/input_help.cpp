@@ -372,6 +372,8 @@ void ParameterHelp::build_registry() {
         meta.unit = item.unit;
         meta.availability = item.get_availability();
         meta.allowed_values = item.domain.format_choices();
+        meta.value_rule = item.domain.format_rule();
+        meta.requirements = item.domain.format_requirements();
 
         // Pre-compute lowercase name for fast fuzzy matching
         meta.name_lowercase = to_lowercase(item.label);
@@ -403,6 +405,9 @@ bool ParameterHelp::show_parameter_help(const std::string& key, std::ostream& os
     if (!meta.allowed_values.empty()) {
         os << "Allowed values: " << meta.allowed_values << "\n";
     }
+
+    if (!meta.value_rule.empty()) { os << "Legal range: " << meta.value_rule << "\n"; }
+    if (!meta.requirements.empty()) { os << "Requirements: " << meta.requirements << "\n"; }
 
     if (!meta.default_value.empty()) {
         os << "Default:   " << meta.default_value << "\n";
@@ -500,8 +505,15 @@ void ParameterHelp::generate_yaml(std::ostream& os) {
         os << "    category: " << yaml_quote_if_needed(item.category) << "\n";
         os << "    type: " << yaml_quote_if_needed(item.type) << "\n";
 
-        if (!item.domain.empty()) {
+        if (!item.domain.choices().empty()) {
             os << "    allowed_values: [" << item.domain.format_choices() << "]\n";
+        }
+
+        if (!item.domain.format_rule().empty()) {
+            os << "    value_rule: " << yaml_quote_if_needed(item.domain.format_rule()) << "\n";
+        }
+        if (!item.domain.format_requirements().empty()) {
+            os << "    requirements: " << yaml_quote_if_needed(item.domain.format_requirements()) << "\n";
         }
 
         // Description uses block scalar
