@@ -1,9 +1,8 @@
 # PW screened hybrid NSCF
 
-Hybrid NSCF reads the charge density, binary `wfk*_pw.dat` wavefunctions and
-weighted occupations in `eig_occ.txt` from a converged SCF calculation. It keeps
-that source fixed while solving a new K-point list or additional target bands.
-No new file format is required.
+Hybrid NSCF reads the charge density, binary `wfk*_pw.dat` wavefunctions and weighted occupations in
+`eig_occ.txt` from a converged SCF calculation. It keeps that source fixed while solving a new
+K-point list or additional target bands. No new file format is required.
 
 ## SCF
 
@@ -29,9 +28,8 @@ cal_stress 0
 
 ## NSCF
 
-Keep the same structure, pseudopotentials and cutoffs. In a separate output
-directory, retain the shared settings above, replace `KPT` with the target
-points, and change:
+Keep the same structure, pseudopotentials and cutoffs. In a separate output directory, retain the
+shared settings above, replace `KPT` with the target points, and change:
 
 ```text
 calculation nscf
@@ -43,18 +41,16 @@ out_wfc_pw 0
 out_chg 0
 ```
 
-Supports CPU/CUDA and `nspin 1/2`; use one MPI rank for CUDA. ACE, SOC,
-unscreened exchange, forces and stress are unsupported in this workflow.
-Set `symmetry -1`: input `0` is accepted but PW EXX resets it to `-1` at runtime.
+Supports CPU/CUDA and `nspin 1/2`; use one MPI rank for CUDA. ACE, SOC, unscreened exchange, forces
+and stress are unsupported in this workflow. Set `symmetry -1`: input `0` is accepted but PW EXX
+resets it to `-1` at runtime.
 
-HSE defaults to `exx_singularity_correction limits`, as in LCAO. Set `gygi` to
-retain the historical PW correction, which can produce jumps at source K points.
-Use matching SCF/NSCF settings for consistent bands. Do not use Methfessel-Paxton
-smearing (`mp`/`mp2`/`mp3`) for the source: it can write occupations outside
-`[0, k-point weight]`, which hybrid NSCF rejects; the non-negative schemes
-(`fixed`, `gauss`, `mv`, `fd`) are accepted. Configuration differences
-or missing `INPUT.info` produce warnings; missing or incompatible numerical
-source data produces an error.
+HSE defaults to `exx_singularity_correction limits`, as in LCAO. Set `gygi` to retain the historical
+PW correction, which can produce jumps at source K points. Use matching SCF/NSCF settings for
+consistent bands. Do not use Methfessel-Paxton smearing (`mp`/`mp2`/`mp3`) for the source: it can
+write occupations outside `[0, k-point weight]`, which hybrid NSCF rejects; the non-negative schemes
+(`fixed`, `gauss`, `mv`, `fd`) are accepted. Configuration differences or missing `INPUT.info`
+produce warnings; missing or incompatible numerical source data produces an error.
 
 ## Verification
 

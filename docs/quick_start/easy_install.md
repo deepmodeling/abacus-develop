@@ -1,20 +1,37 @@
 # Easy Installation
 
-This guide helps you install ABACUS with basic features. **For DeePKS, DeePMD and Libxc support, or building with `make`, please refer to [the advanced installation guide](../advanced/install.md)** after going through this page. We recommend building ABACUS with `cmake` to avoid dependency issues. We recommend compiling ABACUS (and possibly its requirements) from the source code using the latest compiler for the best performace. You can use [toolchain](#install-by-toolchain) to install ABACUS and dependencies in a source-code compilation way with convience. You can also deploy ABACUS **without building** by [Docker](#container-deployment) or [conda](#install-by-conda). Please note that ABACUS only supports Linux; for Windows users, please consider using [WSL](https://learn.microsoft.com/en-us/windows/wsl/) or docker. For a scripted one-click setup that provisions WSL2 and installs ABACUS inside it automatically, see [Windows One-Click Installer](../advanced/windows_installer.md).
+This guide helps you install ABACUS with basic features. **For DeePKS, DeePMD and Libxc support, or
+building with `make`, please refer to [the advanced installation guide](../advanced/install.md)**
+after going through this page. We recommend building ABACUS with `cmake` to avoid dependency issues.
+We recommend compiling ABACUS (and possibly its requirements) from the source code using the latest
+compiler for the best performace. You can use [toolchain](#install-by-toolchain) to install ABACUS
+and dependencies in a source-code compilation way with convience. You can also deploy ABACUS
+**without building** by [Docker](#container-deployment) or [conda](#install-by-conda). Please note
+that ABACUS only supports Linux; for Windows users, please consider using
+[WSL](https://learn.microsoft.com/en-us/windows/wsl/) or docker. For a scripted one-click setup that
+provisions WSL2 and installs ABACUS inside it automatically, see
+[Windows One-Click Installer](../advanced/windows_installer.md).
 
 ## Get ABACUS source code
 
 ABACUS source code can be obtained via one of the following choices:
 
 - Clone the whole repo with git: `git clone https://github.com/deepmodeling/abacus-develop.git`
-- Clone the minimum required part of repo: `git clone https://github.com/deepmodeling/abacus-develop.git --depth=1`
-- Download the latest source code without git: `wget https://github.com/deepmodeling/abacus-develop/archive/refs/heads/develop.zip`
-- Get the source code of a stable version [here](https://github.com/deepmodeling/abacus-develop/releases)
-- If you have connection issues accessing GitHub, please try out our official [Gitee repo](https://gitee.com/deepmodeling/abacus-develop/): e.g. `git clone https://gitee.com/deepmodeling/abacus-develop.git`. This Gitee repo is updated synchronously with GitHub.
+- Clone the minimum required part of repo:
+  `git clone https://github.com/deepmodeling/abacus-develop.git --depth=1`
+- Download the latest source code without git:
+  `wget https://github.com/deepmodeling/abacus-develop/archive/refs/heads/develop.zip`
+- Get the source code of a stable version
+  [here](https://github.com/deepmodeling/abacus-develop/releases)
+- If you have connection issues accessing GitHub, please try out our official
+  [Gitee repo](https://gitee.com/deepmodeling/abacus-develop/): e.g.
+  `git clone https://gitee.com/deepmodeling/abacus-develop.git`. This Gitee repo is updated
+  synchronously with GitHub.
 
 ## Update to latest release by git
 
-Please check the [release page](https://github.com/deepmodeling/abacus-develop/releases) for the release note of a new version.
+Please check the [release page](https://github.com/deepmodeling/abacus-develop/releases) for the
+release note of a new version.
 
 It is OK to download the new source code from beginning following the previous step.
 
@@ -32,7 +49,8 @@ git checkout v3.x.x # Replace the tag with the latest version, like v3.10.0
 git describe --tags # Verify if the tag has been successfully checked out
 ```
 
-Then proceed to the [Build and Install](#build-and-install) part. If you encountered errors, try remove the `build` directory first and reconfigure.
+Then proceed to the [Build and Install](#build-and-install) part. If you encountered errors, try
+remove the `build` directory first and reconfigure.
 
 To use the codes under active development:
 
@@ -46,33 +64,51 @@ git pull
 To compile ABACUS, please make sure that the following prerequisites are present:
 
 - [CMake](https://cmake.org/) >= 3.16 .
-- C++ compiler, supporting C++11. You can use [Intel® C++ compiler](https://software.intel.com/enus/c-compilers) or [GCC](https://gcc.gnu.org/).
+- C++ compiler, supporting C++11. You can use
+  [Intel® C++ compiler](https://software.intel.com/enus/c-compilers) or [GCC](https://gcc.gnu.org/).
 
-> GCC version 5 or later is always required. Intel compilers also use GCC headers and libraries[(ref)](https://www.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compatibility-and-portability/gcc-compatibility-and-interoperability.html#gcc-compatibility-and-interoperability_GUID-52CB6FE0-83DA-4028-9EF4-0DFAF1652736).
+> GCC version 5 or later is always required. Intel compilers also use GCC headers and
+> libraries[(ref)](https://www.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compatibility-and-portability/gcc-compatibility-and-interoperability.html#gcc-compatibility-and-interoperability_GUID-52CB6FE0-83DA-4028-9EF4-0DFAF1652736).
 
-- Fortran compiler if you are building dependencies written by Fortran, such as `BLAS`, `LAPACK`, `ScaLAPACK`, and `ELPA`, from source file. You can use [Intel® Fortran Compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html) or [GFortran](https://gcc.gnu.org/fortran/).
+- Fortran compiler if you are building dependencies written by Fortran, such as `BLAS`, `LAPACK`,
+  `ScaLAPACK`, and `ELPA`, from source file. You can use
+  [Intel® Fortran Compiler](https://www.intel.com/content/www/us/en/developer/tools/oneapi/fortran-compiler.html)
+  or [GFortran](https://gcc.gnu.org/fortran/).
 - [BLAS](http://www.netlib.org/blas/). You can use [OpenBLAS](https://www.openblas.net/).
 - [LAPACK](http://www.netlib.org/lapack/).
 - [FFTW3](http://www.fftw.org/).
 
 If you are building ABACUS with MPI parallel support, you'll also need at least:
 
-- MPI library. The recommended implementations include [Intel MPI](https://software.intel.com/enus/mpi-library), [MPICH](https://www.mpich.org/), and [Open MPI](https://www.open-mpi.org/).
+- MPI library. The recommended implementations include
+  [Intel MPI](https://software.intel.com/enus/mpi-library), [MPICH](https://www.mpich.org/), and
+  [Open MPI](https://www.open-mpi.org/).
 - [ScaLAPACK](http://www.netlib.org/scalapack/).
 
 ## Install by toolchain
 
 We offer a set of [toolchain](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain)
-scripts to compile and install all the requirements and ABACUS itself
-automatically and suitable for machine characteristic in an online or offline way. 
-The toolchain can be downloaded with ABACUS repo, and users can easily compile the requirements by running `toolchain_[gnu,gcc-mkl,intel,gcc-aocl,aocc-aocl].sh` and ABACUS itself by running `build_abacus_[gnu,gcc-mkl,intel,gcc-aocl,aocc-aocl].sh` script in the toolchain directory in `GNU`, `Intel-oneAPI` , `GCC-AMD AOCL` and `AMD AOCC-AOCL` toolchain.
-Sometimes, ABACUS by toolchain installation may have better efficient performance due to the suitable compiled dependencies. One should read the [README in toolchain](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain/README.md) for most of the information before use, and related tutorials can be accessed via ABACUS WeChat platform.
+scripts to compile and install all the requirements and ABACUS itself automatically and suitable for
+machine characteristic in an online or offline way. The toolchain can be downloaded with ABACUS
+repo, and users can easily compile the requirements by running
+`toolchain_[gnu,gcc-mkl,intel,gcc-aocl,aocc-aocl].sh` and ABACUS itself by running
+`build_abacus_[gnu,gcc-mkl,intel,gcc-aocl,aocc-aocl].sh` script in the toolchain directory in `GNU`,
+`Intel-oneAPI` , `GCC-AMD AOCL` and `AMD AOCC-AOCL` toolchain. Sometimes, ABACUS by toolchain
+installation may have better efficient performance due to the suitable compiled dependencies. One
+should read the
+[README in toolchain](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain/README.md)
+for most of the information before use, and related tutorials can be accessed via ABACUS WeChat
+platform.
 
 ## Install by conda
 
 Conda is a package management system with a separated environment, not requiring system privileges.
-You can refer to [DeepModeling conda FAQ](https://docs.deepmodeling.com/faq/conda.html) for how to setup a conda environment.
-A pre-built ABACUS binary with all requirements is available at [conda-forge](https://anaconda.org/conda-forge/abacus). It supports advanced features including Libxc, LibRI, and DeePKS. Conda will install the GPU-supported version of ABACUS if a valid GPU driver is present. Please refer to [the advanced installation guide](../advanced/install.md) for more details.
+You can refer to [DeepModeling conda FAQ](https://docs.deepmodeling.com/faq/conda.html) for how to
+setup a conda environment. A pre-built ABACUS binary with all requirements is available at
+[conda-forge](https://anaconda.org/conda-forge/abacus). It supports advanced features including
+Libxc, LibRI, and DeePKS. Conda will install the GPU-supported version of ABACUS if a valid GPU
+driver is present. Please refer to [the advanced installation guide](../advanced/install.md) for
+more details.
 
 ```bash
 # Install
@@ -87,13 +123,18 @@ OMP_NUM_THREADS=1 mpirun -n 4 abacus
 conda update -n abacus_env abacus -c conda-forge
 ```
 
-> If OpenBLAS gives warning about OpenMP threads, please install conda package `"openblas=*=openmp*"` or `"libblas=*=*mkl"`. See [switching BLAS implementation in conda](https://conda-forge.org/docs/maintainer/knowledge_base.html#switching-blas-implementation).
+> If OpenBLAS gives warning about OpenMP threads, please install conda package
+> `"openblas=*=openmp*"` or `"libblas=*=*mkl"`. See
+> [switching BLAS implementation in conda](https://conda-forge.org/docs/maintainer/knowledge_base.html#switching-blas-implementation).
 
-> ABACUS supports `OpenMPI` and `MPICH` variant. Install `mpich` or `openmpi` package to switch MPI library if required.
+> ABACUS supports `OpenMPI` and `MPICH` variant. Install `mpich` or `openmpi` package to switch MPI
+> library if required.
 
-For more details on building a conda package of ABACUS locally, please refer to the [conda recipe file](https://github.com/deepmodeling/abacus-develop/blob/develop/conda/meta.yaml).
+For more details on building a conda package of ABACUS locally, please refer to the
+[conda recipe file](https://github.com/deepmodeling/abacus-develop/blob/develop/conda/meta.yaml).
 
-> Note: The [deepmodeling conda channel](https://anaconda.org/deepmodeling/abacus) offers historical versions of ABACUS.
+> Note: The [deepmodeling conda channel](https://anaconda.org/deepmodeling/abacus) offers historical
+> versions of ABACUS.
 
 ### Developing with conda
 
@@ -111,33 +152,44 @@ export CMAKE_PREFIX_PATH=`python -c 'import torch;print(torch.utils.cmake_prefix
 # usually expands to `$CONDA_PREFIX/lib/python3.1/site-packages/torch/share/cmake`
 ```
 
-And, follow the instructions in [Build and Install](#build-and-install) part above withou manually setting paths to dependencies.
-See [the advanced installation guide](../advanced/install.md) for more features.
-Make sure the environment variables are set before running `cmake`.
-Possible command: `cmake -B build -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON`.
-
+And, follow the instructions in [Build and Install](#build-and-install) part above withou manually
+setting paths to dependencies. See [the advanced installation guide](../advanced/install.md) for
+more features. Make sure the environment variables are set before running `cmake`. Possible command:
+`cmake -B build -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON`.
 
 ## Install ABACUS manually
 
 ### Install requirements
 
-Some of these packages can be installed with popular package management system via root permission if you have, such as `apt` and `yum`. For example:
+Some of these packages can be installed with popular package management system via root permission
+if you have, such as `apt` and `yum`. For example:
 
 ```bash
 sudo apt update && sudo apt install -y libopenmpi-dev libopenblas-openmp-dev libscalapack-openmpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev nlohmann-json3-dev g++ make cmake bc git pkgconf
 ```
 
-> Installing ELPA by apt only matches requirements on Ubuntu 22.04. For earlier linux distributions, you should build ELPA from source.
+> Installing ELPA by apt only matches requirements on Ubuntu 22.04. For earlier linux distributions,
+> you should build ELPA from source.
 
-You can also use [Intel® oneAPI toolkit](https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit.html) (former Intel® Parallel Studio) as toolchain. The [Intel® oneAPI Base Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#base-kit) contains Intel® oneAPI Math Kernel Library (aka `MKL`), including `BLAS`, `LAPACK`, `ScaLAPACK` and `FFTW3`. The [Intel® oneAPI HPC Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#hpc-kit) contains Intel® MPI Library, and C++ compiler (including MPI compiler). (Note: Since version 2026.0.0, the two toolkits has been merged into a single [Intel® oneAPI toolkits](https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit.html))
+You can also use
+[Intel® oneAPI toolkit](https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit.html)
+(former Intel® Parallel Studio) as toolchain. The
+[Intel® oneAPI Base Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#base-kit)
+contains Intel® oneAPI Math Kernel Library (aka `MKL`), including `BLAS`, `LAPACK`, `ScaLAPACK` and
+`FFTW3`. The
+[Intel® oneAPI HPC Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/all-toolkits.html#hpc-kit)
+contains Intel® MPI Library, and C++ compiler (including MPI compiler). (Note: Since version
+2026.0.0, the two toolkits has been merged into a single
+[Intel® oneAPI toolkits](https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit.html))
 
 ```{note}
 - Please note that building `elpa` with a different MPI library may cause conflict. Don't forget to [set environment variables](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-intel-oneapi-render-linux/top/configure-your-system.html) before you start!
 - `cmake` will use Intel MKL if the environment variable `MKLROOT` is set.
 ```
 
-Please refer to our [guide](https://github.com/deepmodeling/abacus-develop/wiki/Building-and-Running-ABACUS) on installing requirements.
-
+Please refer to our
+[guide](https://github.com/deepmodeling/abacus-develop/wiki/Building-and-Running-ABACUS) on
+installing requirements.
 
 ### Configure
 
@@ -148,15 +200,23 @@ cd abacus-develop
 cmake -B build [-D <var>=<value>] ...
 ```
 
-Here, 'build' is the path for building ABACUS; and '-D' is used for setting up some variables for CMake indicating optional components or requirement positions.
+Here, 'build' is the path for building ABACUS; and '-D' is used for setting up some variables for
+CMake indicating optional components or requirement positions.
 
 - `CMAKE_INSTALL_PREFIX`: the path of ABACUS binary to install; `/usr/local/bin/abacus` by default
+
 - Compilers
-  - `CMAKE_CXX_COMPILER`: C++ compiler; usually `g++`(GNU C++ compiler) or `icpx`(Intel C++ compiler). Can also set from environment variable `CXX`. It is OK to use MPI compiler here.
-  - `MPI_CXX_COMPILER`: MPI wrapper for C++ compiler; usually `mpicxx` or `mpiicpx`(for Intel toolkits) or `mpiicpc`(for classic Intel Compiler Classic MPI before 2024.0).
+
+  - `CMAKE_CXX_COMPILER`: C++ compiler; usually `g++`(GNU C++ compiler) or `icpx`(Intel C++
+    compiler). Can also set from environment variable `CXX`. It is OK to use MPI compiler here.
+  - `MPI_CXX_COMPILER`: MPI wrapper for C++ compiler; usually `mpicxx` or `mpiicpx`(for Intel
+    toolkits) or `mpiicpc`(for classic Intel Compiler Classic MPI before 2024.0).
 
 - Requirements: Unless indicated, CMake will try to find under default paths.
-  - `MKLROOT`: If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e. not using `LAPACK`, `ScaLAPACK` and `FFTW`. To disable MKL, unset environment variable `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
+
+  - `MKLROOT`: If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e.
+    not using `LAPACK`, `ScaLAPACK` and `FFTW`. To disable MKL, unset environment variable
+    `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
   - `LAPACK_DIR`: Path to OpenBLAS library `libopenblas.so`(including BLAS and LAPACK)
   - `SCALAPACK_DIR`: Path to ScaLAPACK library `libscalapack.so`
   - `FFTW3_DIR`: Path to FFTW3.
@@ -164,21 +224,37 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `LIBCOMM_DIR`: (Optional) Path to LibComm when `ENABLE_LIBRI=ON`.
 
 ```{important}
-For some dependencies built with CMake, such as Libxc, dftd4, cereal, and nlohmann-json, you'll have to add their prefix paths to the environment variable `CMAKE_PREFIX_PATH` so that CMake can correctly find and use their CMake configuration files. A non-general variable such as `PKG_DIR` is discouraged for these packages.
+For some dependencies built with CMake, such as Libxc, dftd4, cereal, and nlohmann-json, you'll have
+to add their prefix paths to the environment variable `CMAKE_PREFIX_PATH` so that CMake can
+correctly find and use their CMake configuration files. A non-general variable such as `PKG_DIR` is
+discouraged for these packages.
 ```
 
-- Components: The values of these variables should be 'ON', '1' or 'OFF', '0'. The default values are given below.
-  - `ENABLE_LCAO=ON`: Enable LCAO calculation. If SCALAPACK, ELPA or CEREAL is absent and only require plane-wave calculations, the feature of calculating LCAO basis can be turned off.
-  - `ENABLE_LIBXC=OFF`: [Enable Libxc](../advanced/install.md#add-libxc-support) to suppport variety of functionals.
-  - `ENABLE_LIBRI=OFF`: [Enable LibRI](../advanced/install.md#add-libri-support) and its LibComm dependency for hybrid-functional calculations. Set `LIBRI_DIR` and `LIBCOMM_DIR` to use manually installed libraries.
-  - `ENABLE_JSON=OFF`: [Enable JSON output](../advanced/install.md#build-with-json-support) through nlohmann-json.
-  - `ENABLE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested yet.
+- Components: The values of these variables should be 'ON', '1' or 'OFF', '0'. The default values
+  are given below.
+  - `ENABLE_LCAO=ON`: Enable LCAO calculation. If SCALAPACK, ELPA or CEREAL is absent and only
+    require plane-wave calculations, the feature of calculating LCAO basis can be turned off.
+  - `ENABLE_LIBXC=OFF`: [Enable Libxc](../advanced/install.md#add-libxc-support) to suppport variety
+    of functionals.
+  - `ENABLE_LIBRI=OFF`: [Enable LibRI](../advanced/install.md#add-libri-support) and its LibComm
+    dependency for hybrid-functional calculations. Set `LIBRI_DIR` and `LIBCOMM_DIR` to use manually
+    installed libraries.
+  - `ENABLE_JSON=OFF`: [Enable JSON output](../advanced/install.md#build-with-json-support) through
+    nlohmann-json.
+  - `ENABLE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested
+    yet.
   - `BUILD_TESTING=OFF`: [Build unit tests](../advanced/install.md#build-unit-tests).
-  - `ENABLE_GOOGLEBENCH=OFF`: [Build performance tests](../advanced/install.md#build-performance-tests)
-  - `ENABLE_MPI=ON`: Enable MPI parallel compilation. If set to `OFF`, a serial version of ABACUS will be compiled. It now supports both PW and LCAO.
-  - `ENABLE_COVERAGE=OFF`: Build ABACUS executable supporting [coverage analysis](../CONTRIBUTING.md#generating-code-coverage-report). This feature has a drastic impact on performance.
-  - `ENABLE_ASAN=OFF`: Build with Address Sanitizer. This feature would help detecting memory problems.
-  - `ENABLE_ELPA=ON`: Use ELPA library in LCAO calculations. If this value is set to OFF, ABACUS can be compiled without ELPA library.
+  - `ENABLE_GOOGLEBENCH=OFF`:
+    [Build performance tests](../advanced/install.md#build-performance-tests)
+  - `ENABLE_MPI=ON`: Enable MPI parallel compilation. If set to `OFF`, a serial version of ABACUS
+    will be compiled. It now supports both PW and LCAO.
+  - `ENABLE_COVERAGE=OFF`: Build ABACUS executable supporting
+    [coverage analysis](../CONTRIBUTING.md#generating-code-coverage-report). This feature has a
+    drastic impact on performance.
+  - `ENABLE_ASAN=OFF`: Build with Address Sanitizer. This feature would help detecting memory
+    problems.
+  - `ENABLE_ELPA=ON`: Use ELPA library in LCAO calculations. If this value is set to OFF, ABACUS can
+    be compiled without ELPA library.
 
 Here is an example:
 
@@ -200,26 +276,30 @@ cmake --build build -j`nproc`
 cmake --install build
 ```
 
-You can change the number after `-j` on your need: set to the number of CPU cores(`nproc`) to reduce compilation time.
+You can change the number after `-j` on your need: set to the number of CPU cores(`nproc`) to reduce
+compilation time.
 
 ## Run ABACUS
 
 ### Load ABACUS
 
-If ABACUS is installed into a custom directory using `CMAKE_INSTALL_PREFIX`, please add it to your environment variable `PATH` to locate the correct executable.
-*(Note: `my-install-dir` should be changed to the location of your installed abacus:`/home/your-path/abacus/bin/`.)*
+If ABACUS is installed into a custom directory using `CMAKE_INSTALL_PREFIX`, please add it to your
+environment variable `PATH` to locate the correct executable. *(Note: `my-install-dir` should be
+changed to the location of your installed abacus:`/home/your-path/abacus/bin/`.)*
 
 ```bash
 export PATH=/my-install-dir/:$PATH
 ```
 
-If ABACUS is installed by toolchain, there will be an environment script in the toolchain directory named as *abacus_env.sh*. You can source it to set the environment variables.
+If ABACUS is installed by toolchain, there will be an environment script in the toolchain directory
+named as *abacus_env.sh*. You can source it to set the environment variables.
 
 ```bash
 source /path/to/abacus/toolchain/abacus_env.sh
 ```
 
-If ABACUS is installed by conda, please make sure the conda environment is activated before running ABACUS.
+If ABACUS is installed by conda, please make sure the conda environment is activated before running
+ABACUS.
 
 ```bash
 conda activate abacus_env
@@ -233,7 +313,8 @@ Please set OpenMP threads by setting environment variable:
 export OMP_NUM_THREADS=1
 ```
 
-Enter a directory containing a `INPUT` file. Please make sure structure, pseudo potential, or orbital files indicated by `INPUT` is at the correct location.
+Enter a directory containing a `INPUT` file. Please make sure structure, pseudo potential, or
+orbital files indicated by `INPUT` is at the correct location.
 
 ```bash
 cd abacus-develop/examples/force/pw_Si2
@@ -245,8 +326,9 @@ Use 4 MPI processes to run, for example:
 mpirun -n 4 abacus
 ```
 
-The total thread count (i.e. OpenMP per-process thread count * MPI process count) should not exceed the number of cores in your machine.
-To use 4 threads and 4 MPI processes, set the environment variable `OMP_NUM_THREADS` before running `mpirun`:
+The total thread count (i.e. OpenMP per-process thread count * MPI process count) should not exceed
+the number of cores in your machine. To use 4 threads and 4 MPI processes, set the environment
+variable `OMP_NUM_THREADS` before running `mpirun`:
 
 ```bash
 OMP_NUM_THREADS=4 mpirun -n 4 abacus
@@ -255,41 +337,71 @@ OMP_NUM_THREADS=4 mpirun -n 4 abacus
 In this case, the total thread count is 16.
 
 ```{note}
-**Open MPI applies process binding by default.** This can affect hybrid MPI+OpenMP runs because the launcher does not infer the number of OpenMP threads required by each MPI rank. A binding that is appropriate for an MPI-only calculation can therefore leave each rank with too few CPUs for its OpenMP threads.
+**Open MPI applies process binding by default.** This can affect hybrid MPI+OpenMP runs because the
+launcher does not infer the number of OpenMP threads required by each MPI rank. A binding that is
+appropriate for an MPI-only calculation can therefore leave each rank with too few CPUs for its
+OpenMP threads.
 
-For hybrid runs using OpenMPI, either disable binding with `--bind-to none` (recommended for common users) or explicitly allocate the required number of cores per rank, for example with `--map-by slot:PE=<OMP_NUM_THREADS> --bind-to core`. For example: `OMP_NUM_THREADS=6 mpirun --bind-to none -n 1 abacus`. See https://docs.open-mpi.org/en/v5.0.x/man-openmpi/man1/mpirun.1.html#quick-summary.
+For hybrid runs using OpenMPI, either disable binding with `--bind-to none` (recommended for common
+users) or explicitly allocate the required number of cores per rank, for example with
+`--map-by slot:PE=<OMP_NUM_THREADS> --bind-to core`. For example:
+`OMP_NUM_THREADS=6 mpirun --bind-to none -n 1 abacus`.
+See https://docs.open-mpi.org/en/v5.0.x/man-openmpi/man1/mpirun.1.html#quick-summary.
 ```
 
-ABACUS will try to determine the number of threads used by each process if `OMP_NUM_THREADS` is not set. However, it is **required** to set `OMP_NUM_THREADS` before running `mpirun` to avoid potential performance issues.
+ABACUS will try to determine the number of threads used by each process if `OMP_NUM_THREADS` is not
+set. However, it is **required** to set `OMP_NUM_THREADS` before running `mpirun` to avoid potential
+performance issues.
 
 Please refer to [hands-on guide](./hands_on.md) for more instructions.
 
 ```{note}
-Usually a CPU has a feature named Hyper-Threading(HT). This feature enables one physical core switch fastly between two logical threads. It would benefits from I/O bound tasks: when a thread is blocked by I/O, the CPU core can work on another thread. However, it helps little on CPU bound tasks, like ABACUS and many other scientific computing softwares. **We recommend using the physical CPU core number.** To determine if HT is turned on, execute `lscpu | grep 'per core'` and see if `Thread(s) per core` is 2.
+Usually a CPU has a feature named Hyper-Threading(HT). This feature enables one physical core switch
+fastly between two logical threads. It would benefits from I/O bound tasks: when a thread is blocked
+by I/O, the CPU core can work on another thread. However, it helps little on CPU bound tasks, like
+ABACUS and many other scientific computing softwares. **We recommend using the physical CPU core
+number.** To determine if HT is turned on, execute
+`lscpu | grep 'per core'` and see if `Thread(s) per core` is 2.
 ```
 
 ## Container Deployment
 
-> Please note that containers target at developing and testing, but not massively parallel computing for production. Docker has a bad support to MPI, which may cause performance degradation.
+> Please note that containers target at developing and testing, but not massively parallel computing
+> for production. Docker has a bad support to MPI, which may cause performance degradation.
 
-We've built a ready-for-use version of ABACUS with docker [here](https://github.com/deepmodeling/abacus-develop/pkgs/container/abacus). For a quick start: pull the image, prepare the data, run container. Instructions on using the image can be accessed in [Dockerfile](https://github.com/deepmodeling/abacus-develop/blob/develop/Dockerfile). A mirror is available by `docker pull registry.dp.tech/deepmodeling/abacus`.
+We've built a ready-for-use version of ABACUS with docker
+[here](https://github.com/deepmodeling/abacus-develop/pkgs/container/abacus). For a quick start:
+pull the image, prepare the data, run container. Instructions on using the image can be accessed in
+[Dockerfile](https://github.com/deepmodeling/abacus-develop/blob/develop/Dockerfile). A mirror is
+available by `docker pull registry.dp.tech/deepmodeling/abacus`.
 
-We also offer a pre-built docker image containing all the requirements for development. Please refer to our [Package Page](https://github.com/orgs/deepmodeling/packages?repo_name=abacus-develop).
+We also offer a pre-built docker image containing all the requirements for development. Please refer
+to our [Package Page](https://github.com/orgs/deepmodeling/packages?repo_name=abacus-develop).
 
-The project is ready for VS Code development container. Please refer to [Developing inside a Container](https://code.visualstudio.com/docs/remote/containers#_quick-start-try-a-development-container). Choose `Open a Remote Window -> Clone a Repository in Container Volume` in VS Code command palette, and put the [git address](https://github.com/deepmodeling/abacus-develop.git) of `ABACUS` when prompted.
+The project is ready for VS Code development container. Please refer to
+[Developing inside a Container](https://code.visualstudio.com/docs/remote/containers#_quick-start-try-a-development-container).
+Choose `Open a Remote Window -> Clone a Repository in Container Volume` in VS Code command palette,
+and put the [git address](https://github.com/deepmodeling/abacus-develop.git) of `ABACUS` when
+prompted.
 
-For online development environment, we support [GitHub Codespaces](https://github.com/codespaces): [Create a new Codespace](https://github.com/codespaces/new?machine=basicLinux32gb&repo=334825694&ref=develop&devcontainer_path=.devcontainer%2Fdevcontainer.json&location=SouthEastAsia)
+For online development environment, we support [GitHub Codespaces](https://github.com/codespaces):
+[Create a new Codespace](https://github.com/codespaces/new?machine=basicLinux32gb&repo=334825694&ref=develop&devcontainer_path=.devcontainer%2Fdevcontainer.json&location=SouthEastAsia)
 
-We also support [Gitpod](https://www.gitpod.io/): [Open in Gitpod](https://gitpod.io/#https://github.com/deepmodeling/abacus-develop)
+We also support [Gitpod](https://www.gitpod.io/):
+[Open in Gitpod](https://gitpod.io/#https://github.com/deepmodeling/abacus-develop)
 
 ## Command line options
 
-Users can check the version of ABACUS by running the command `abacus --version`, the result will be like:
+Users can check the version of ABACUS by running the command `abacus --version`, the result will be
+like:
+
 ```
 ABACUS version v3.9.0.2
 ```
 
-Users may check the correctness of the setting of parameters in the `INPUT` file by running the command `abacus --check-input`, the result will be like:
+Users may check the correctness of the setting of parameters in the `INPUT` file by running the
+command `abacus --check-input`, the result will be like:
+
 ```
                               ABACUS v3.9.0.2
 

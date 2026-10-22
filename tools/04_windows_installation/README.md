@@ -1,78 +1,73 @@
 # ABACUS Windows Installer
 
-A lightweight one-click installer that brings ABACUS to Windows via WSL2 and
-conda-forge. No C++ toolchain, no MPI build, no manual dependency juggling —
-run `install-abacus.bat` once and type `abacus` from any Windows terminal.
+A lightweight one-click installer that brings ABACUS to Windows via WSL2 and conda-forge. No C++
+toolchain, no MPI build, no manual dependency juggling — run `install-abacus.bat` once and type
+`abacus` from any Windows terminal.
 
 ## How it works
 
-ABACUS depends on a heavy Linux-native scientific stack (OpenMPI, ScaLAPACK,
-ELPA, FFTW, libxc, OpenBLAS, …) that is painful to build natively on Windows.
-Instead of porting, this installer provisions a standard Linux environment
-inside WSL2 and exposes it through thin Windows launchers.
+ABACUS depends on a heavy Linux-native scientific stack (OpenMPI, ScaLAPACK, ELPA, FFTW, libxc,
+OpenBLAS, …) that is painful to build natively on Windows. Instead of porting, this installer
+provisions a standard Linux environment inside WSL2 and exposes it through thin Windows launchers.
 
 The pipeline, end to end:
 
 1. **`install-abacus.bat`** (runs on Windows, requires admin)
-   - Checks the Windows build (≥ 19041) and whether WSL is installed; if not,
-     runs `wsl --install --no-launch` and asks the user to reboot once.
+
+   - Checks the Windows build (≥ 19041) and whether WSL is installed; if not, runs
+     `wsl --install --no-launch` and asks the user to reboot once.
    - Optionally enables TUNA (Tsinghua) mirrors for users in Mainland China.
-   - Prompts for an ABACUS version (blank = latest on conda-forge; an exact
-     version like `3.7.4` is pinned; a match-spec like `>=3.7,<3.8` is passed
-     through to conda).
-   - Detects the target distribution (`Ubuntu-22.04`) by querying the WSL
-     registry key `HKCU\Software\Microsoft\Windows\CurrentVersion\Lxss`. This
-     is immune to UTF-16 parsing pitfalls and to Store appx leftovers that
-     can make `wsl -d <name> -- true` falsely report success.
-   - Calls `wsl --install -d Ubuntu-22.04 --no-launch` if the distro is
-     missing, then verifies the registry entry appeared.
-   - Invokes `provision.sh` inside the distribution, stripping any `\r`
-     bytes on the fly (`sed 's/\r$//' script | bash`) so Windows line
-     endings don't break shell parsing.
-   - Writes two small launcher `.cmd` files and adds them to the user PATH
-     via PowerShell (avoiding `setx`'s 1024-character truncation).
+   - Prompts for an ABACUS version (blank = latest on conda-forge; an exact version like `3.7.4` is
+     pinned; a match-spec like `>=3.7,<3.8` is passed through to conda).
+   - Detects the target distribution (`Ubuntu-22.04`) by querying the WSL registry key
+     `HKCU\Software\Microsoft\Windows\CurrentVersion\Lxss`. This is immune to UTF-16 parsing
+     pitfalls and to Store appx leftovers that can make `wsl -d <name> -- true` falsely report
+     success.
+   - Calls `wsl --install -d Ubuntu-22.04 --no-launch` if the distro is missing, then verifies the
+     registry entry appeared.
+   - Invokes `provision.sh` inside the distribution, stripping any `\r` bytes on the fly
+     (`sed 's/\r$//' script | bash`) so Windows line endings don't break shell parsing.
+   - Writes two small launcher `.cmd` files and adds them to the user PATH via PowerShell (avoiding
+     `setx`'s 1024-character truncation).
 
-2. **`provision.sh`** (runs as root inside the WSL distribution)
+1. **`provision.sh`** (runs as root inside the WSL distribution)
+
    - Optionally rewrites `/etc/apt/sources.list` to TUNA.
-   - `apt-get install`s a minimal set of prerequisites (curl, ca-certificates,
-     bzip2).
-   - Downloads the Miniforge installer (from GitHub or TUNA's GitHub-releases
-     mirror) and installs it to `/opt/abacus-miniforge`.
-   - `conda create -n abacus_env -c conda-forge abacus` (or the TUNA
-     conda-forge channel) — a single package pulls in the entire scientific
-     runtime. conda-forge ships `abacus` for `linux-64` and `linux-aarch64`,
-     which is exactly what WSL2 provides.
-   - Writes two system-wide launchers, `/usr/local/bin/abacus` and
-     `/usr/local/bin/abacus-mpi`, that activate the env and exec the real
-     binary. Both set `OMP_NUM_THREADS=1` by default to avoid thread
-     oversubscription. `abacus-mpi` additionally sets OpenMPI 4/5 + PRRTE
-     "allow run as root" environment variables and passes
-     `--allow-run-as-root` to `mpirun`, so the default WSL root user can
-     launch parallel jobs without creating a non-root user.
+   - `apt-get install`s a minimal set of prerequisites (curl, ca-certificates, bzip2).
+   - Downloads the Miniforge installer (from GitHub or TUNA's GitHub-releases mirror) and installs
+     it to `/opt/abacus-miniforge`.
+   - `conda create -n abacus_env -c conda-forge abacus` (or the TUNA conda-forge channel) — a single
+     package pulls in the entire scientific runtime. conda-forge ships `abacus` for `linux-64` and
+     `linux-aarch64`, which is exactly what WSL2 provides.
+   - Writes two system-wide launchers, `/usr/local/bin/abacus` and `/usr/local/bin/abacus-mpi`, that
+     activate the env and exec the real binary. Both set `OMP_NUM_THREADS=1` by default to avoid
+     thread oversubscription. `abacus-mpi` additionally sets OpenMPI 4/5 + PRRTE "allow run as root"
+     environment variables and passes `--allow-run-as-root` to `mpirun`, so the default WSL root
+     user can launch parallel jobs without creating a non-root user.
 
-3. **Windows launchers** (`abacus.cmd`, `abacus-mpi.cmd`)
+1. **Windows launchers** (`abacus.cmd`, `abacus-mpi.cmd`)
+
    - Added to `%LOCALAPPDATA%\ABACUS\bin` and the user PATH.
-   - Each launcher sets `WSLENV=OMP_NUM_THREADS:MKL_NUM_THREADS:OPENBLAS_NUM_THREADS:...`
-     so thread-count overrides set on the Windows side are visible inside WSL.
+   - Each launcher sets `WSLENV=OMP_NUM_THREADS:MKL_NUM_THREADS:OPENBLAS_NUM_THREADS:...` so
+     thread-count overrides set on the Windows side are visible inside WSL.
    - Body is just:
      ```
      wsl -d Ubuntu-22.04 --cd "%CD%" -- abacus %*
      ```
-     `--cd "%CD%"` maps the current Windows directory (`C:\…\case`) to its
-     WSL path (`/mnt/c/…/case`), so users can `cd` into a case directory in
-     `cmd`/PowerShell/Terminal and just type `abacus`.
+     `--cd "%CD%"` maps the current Windows directory (`C:\…\case`) to its WSL path
+     (`/mnt/c/…/case`), so users can `cd` into a case directory in `cmd`/PowerShell/Terminal and
+     just type `abacus`.
 
-4. **`uninstall-abacus.bat`**
-   - Reads `install-state.txt` (written by the installer) to learn whether
-     the Ubuntu-22.04 distribution was pre-existing or added by us.
-   - If it was added by us, prompts whether to `wsl --unregister` the entire
-     distribution, or to only wipe `/opt/abacus-miniforge` and the launchers.
+1. **`uninstall-abacus.bat`**
+
+   - Reads `install-state.txt` (written by the installer) to learn whether the Ubuntu-22.04
+     distribution was pre-existing or added by us.
+   - If it was added by us, prompts whether to `wsl --unregister` the entire distribution, or to
+     only wipe `/opt/abacus-miniforge` and the launchers.
    - If it was pre-existing, only the ABACUS files inside are removed.
-   - Cleans Windows-side launchers and removes the bin directory from the
-     user PATH.
-   - Does **not** touch WSL itself (runtime, Windows optional features, or
-     other distributions). See *Uninstallation* below for how to fully
-     remove WSL if you want to.
+   - Cleans Windows-side launchers and removes the bin directory from the user PATH.
+   - Does **not** touch WSL itself (runtime, Windows optional features, or other distributions). See
+     *Uninstallation* below for how to fully remove WSL if you want to.
 
 ## Requirements
 
@@ -80,22 +75,21 @@ The pipeline, end to end:
 - Administrator privileges for the first run (to enable WSL features).
 - Virtualization enabled in BIOS/UEFI.
 - ~2 GB free disk space (Ubuntu + conda env).
-- Network access to GitHub and conda-forge, or to TUNA if you choose the
-  China mirror option.
+- Network access to GitHub and conda-forge, or to TUNA if you choose the China mirror option.
 
 ## Installation
 
 1. Clone or download this repository.
-2. Right-click `install-abacus.bat` → **Run as administrator**.
-3. Answer the China-mirror prompt (`y` recommended inside Mainland China).
-   Then pick an ABACUS version when prompted (leave blank for the latest on
-   conda-forge; for a pinned install, type an exact version such as `3.7.4`).
-4. If this is the first time WSL is installed on the machine, the script
-   will ask you to reboot and run it again.
-5. Wait for `[*] Provisioning ABACUS …` to finish (5–15 minutes on first
-   run; most of it is the conda-forge download).
-6. When you see `Installation complete!`, **open a new terminal window**
-   (so the updated PATH takes effect) and verify:
+1. Right-click `install-abacus.bat` → **Run as administrator**.
+1. Answer the China-mirror prompt (`y` recommended inside Mainland China). Then pick an ABACUS
+   version when prompted (leave blank for the latest on conda-forge; for a pinned install, type an
+   exact version such as `3.7.4`).
+1. If this is the first time WSL is installed on the machine, the script will ask you to reboot and
+   run it again.
+1. Wait for `[*] Provisioning ABACUS …` to finish (5–15 minutes on first run; most of it is the
+   conda-forge download).
+1. When you see `Installation complete!`, **open a new terminal window** (so the updated PATH takes
+   effect) and verify:
    ```
    abacus --version
    ```
@@ -122,19 +116,18 @@ set OMP_NUM_THREADS=2
 abacus-mpi -n 4
 ```
 
-Set `OMP_NUM_THREADS` (and/or `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS`) in
-your Windows shell and the launcher will forward the value into WSL through
-`WSLENV`. Unset, it defaults to 1 — a safe choice when running pure MPI.
+Set `OMP_NUM_THREADS` (and/or `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS`) in your Windows shell and
+the launcher will forward the value into WSL through `WSLENV`. Unset, it defaults to 1 — a safe
+choice when running pure MPI.
 
-Interactive Linux shell (for advanced debugging, manually running
-`mpirun`, inspecting logs, etc.):
+Interactive Linux shell (for advanced debugging, manually running `mpirun`, inspecting logs, etc.):
 
 ```
 wsl -d Ubuntu-22.04
 ```
 
-Inside the shell you can `conda activate abacus_env` to get access to
-`mpirun`, `mpiexec`, and other tools from the conda environment.
+Inside the shell you can `conda activate abacus_env` to get access to `mpirun`, `mpiexec`, and other
+tools from the conda environment.
 
 ## Uninstallation
 
@@ -142,24 +135,21 @@ Inside the shell you can `conda activate abacus_env` to get access to
 
 Run `uninstall-abacus.bat`. This handles the common case:
 
-- Removes `/opt/abacus-miniforge` and the `abacus` / `abacus-mpi` launchers
-  inside WSL.
-- If the installer added the `Ubuntu-22.04` distribution, asks whether you
-  also want to `wsl --unregister` it (pick `y` to reclaim the disk space,
-  `n` to keep the Linux environment for other uses).
-- Deletes `%LOCALAPPDATA%\ABACUS\` and removes its `bin\` directory from
-  your user PATH.
+- Removes `/opt/abacus-miniforge` and the `abacus` / `abacus-mpi` launchers inside WSL.
+- If the installer added the `Ubuntu-22.04` distribution, asks whether you also want to
+  `wsl --unregister` it (pick `y` to reclaim the disk space, `n` to keep the Linux environment for
+  other uses).
+- Deletes `%LOCALAPPDATA%\ABACUS\` and removes its `bin\` directory from your user PATH.
 
-This is enough for almost every user. WSL itself and any *other* WSL
-distributions you have stay untouched — important because WSL is commonly
-shared with Docker Desktop, VS Code Remote, and other toolchains.
+This is enough for almost every user. WSL itself and any *other* WSL distributions you have stay
+untouched — important because WSL is commonly shared with Docker Desktop, VS Code Remote, and other
+toolchains.
 
 ### Nuclear: remove WSL itself
 
-Only do this if you truly have no other use for WSL on this machine.
-Removing WSL will break Docker Desktop, VS Code Remote-WSL, any other
-Linux distros you have, and so on. Run the following in an elevated
-PowerShell:
+Only do this if you truly have no other use for WSL on this machine. Removing WSL will break Docker
+Desktop, VS Code Remote-WSL, any other Linux distros you have, and so on. Run the following in an
+elevated PowerShell:
 
 ```powershell
 # 1. Unregister every WSL distribution (this wipes all their files).
@@ -188,19 +178,17 @@ Remove-Item "$env:UserProfile\.wslconfig" -ErrorAction SilentlyContinue
 Restart-Computer
 ```
 
-After the reboot `wsl.exe` no longer exists. If you also ran step 4, the
-Hyper-V virtualization layer used by WSL2 is disabled.
+After the reboot `wsl.exe` no longer exists. If you also ran step 4, the Hyper-V virtualization
+layer used by WSL2 is disabled.
 
-> On older Windows builds where `wsl --uninstall` is not available (WSL
-> shipped via the in-box `wsl.exe` rather than the Store package), use
-> `Get-AppxPackage *WindowsSubsystemForLinux* | Remove-AppxPackage` as a
-> fallback for step 2.
+> On older Windows builds where `wsl --uninstall` is not available (WSL shipped via the in-box
+> `wsl.exe` rather than the Store package), use
+> `Get-AppxPackage *WindowsSubsystemForLinux* | Remove-AppxPackage` as a fallback for step 2.
 
 ## Performance notes
 
-- Files under `/mnt/c/...` are served through the 9P protocol and are
-  noticeably slower than native ext4. For heavy I/O (large SCF, MD
-  trajectories), run the case from inside the WSL filesystem:
+- Files under `/mnt/c/...` are served through the 9P protocol and are noticeably slower than native
+  ext4. For heavy I/O (large SCF, MD trajectories), run the case from inside the WSL filesystem:
   ```
   wsl -d Ubuntu-22.04
   cp -r /mnt/c/path/to/case ~/case
@@ -208,8 +196,8 @@ Hyper-V virtualization layer used by WSL2 is disabled.
   abacus
   ```
 - The first `wsl` invocation after a boot triggers a 10–30 s VM cold start.
-- OpenMPI runs all ranks inside a single WSL2 VM, so there is no network
-  overhead between ranks — you get near-native parallel performance.
+- OpenMPI runs all ranks inside a single WSL2 VM, so there is no network overhead between ranks —
+  you get near-native parallel performance.
 
 ## File layout
 
@@ -239,20 +227,16 @@ Inside WSL (Ubuntu-22.04):
 
 ## Design choices and trade-offs
 
-- **Why WSL2 + conda-forge instead of a native Windows build?** ABACUS's
-  MPI + ScaLAPACK + ELPA stack has no reliable native Windows build. Going
-  through WSL2 lets us reuse the Linux binaries conda-forge already ships,
-  turning a multi-week porting problem into a 200-line shell script.
-- **Why a dedicated `Ubuntu-22.04` distribution?** conda-forge ABACUS is
-  built against glibc from 22.04-era Ubuntu. Using `Ubuntu` (rolling) risks
-  mismatches; pinning the version keeps the install reproducible.
-- **Why put conda under `/opt/abacus-miniforge` rather than `/root`?**
-  Clean uninstall path, clear ownership, and doesn't interfere with a
-  user's personal conda install if they later add one inside the same
-  distribution.
-- **Why not ship a pre-built WSL rootfs?** Would cut first-run time from
-  ~10 min to ~1 min, but balloons the installer from a few KB of scripts
-  to 300–500 MB, requires CI infrastructure, and needs code signing to
-  avoid SmartScreen warnings. A scripted online installer is the
-  lowest-maintenance starting point; the pre-built rootfs path remains
-  open for a future v1.
+- **Why WSL2 + conda-forge instead of a native Windows build?** ABACUS's MPI + ScaLAPACK + ELPA
+  stack has no reliable native Windows build. Going through WSL2 lets us reuse the Linux binaries
+  conda-forge already ships, turning a multi-week porting problem into a 200-line shell script.
+- **Why a dedicated `Ubuntu-22.04` distribution?** conda-forge ABACUS is built against glibc from
+  22.04-era Ubuntu. Using `Ubuntu` (rolling) risks mismatches; pinning the version keeps the install
+  reproducible.
+- **Why put conda under `/opt/abacus-miniforge` rather than `/root`?** Clean uninstall path, clear
+  ownership, and doesn't interfere with a user's personal conda install if they later add one inside
+  the same distribution.
+- **Why not ship a pre-built WSL rootfs?** Would cut first-run time from ~10 min to ~1 min, but
+  balloons the installer from a few KB of scripts to 300–500 MB, requires CI infrastructure, and
+  needs code signing to avoid SmartScreen warnings. A scripted online installer is the
+  lowest-maintenance starting point; the pre-built rootfs path remains open for a future v1.

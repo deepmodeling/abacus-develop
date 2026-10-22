@@ -15,6 +15,13 @@ repos:
     hooks:
       - id: cmake-format
         additional_dependencies: [pyyaml]
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 1.0.0
+    hooks:
+      - id: mdformat
+        args: [--wrap, "100"]
+        additional_dependencies:
+          - mdformat-gfm
   - repo: local
     hooks:
       - id: abacus-agent-governance

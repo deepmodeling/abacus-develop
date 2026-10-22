@@ -2,22 +2,31 @@
 
 ## Introduction
 
-`runstruct_abacus` is a lightweight interface script connecting **ATAT (Alloy Theoretic Automated Toolkit)** with **ABACUS** (Atomic-orbital Based Ab-initio Computation at UStc). It automatically converts ATAT's `str.out` structure files into ABACUS `INPUT`/`STRU` input files, runs the DFT calculation, and extracts results back into ATAT-compatible formats (`energy`, `str_relax.out`).
+`runstruct_abacus` is a lightweight interface script connecting **ATAT (Alloy Theoretic Automated
+Toolkit)** with **ABACUS** (Atomic-orbital Based Ab-initio Computation at UStc). It automatically
+converts ATAT's `str.out` structure files into ABACUS `INPUT`/`STRU` input files, runs the DFT
+calculation, and extracts results back into ATAT-compatible formats (`energy`, `str_relax.out`).
 
 ### Key Features
 
-- **Seamless ATAT Integration**: Works within ATAT's multi-directory enumeration workflow (`1/`, `2/`, `3/`...)
-- **Template-Based Input**: Uses `abacus.wrap` as a template—nearly a native ABACUS `INPUT` file with minimal script-specific annotations
-- **Automatic File Discovery**: Searches `abacus.wrap` upward through parent directories (`./` → `../` → `../../`...)
-- **Smart Pseudopotential/Orbital Matching**: Auto-detects files in `pseudo_dir`/`orbital_dir` by element prefix; explicit override available for ambiguous cases
-- **Flexible Execution Modes**: Supports full pipeline, input-only generation, and post-calculation extraction
+- **Seamless ATAT Integration**: Works within ATAT's multi-directory enumeration workflow (`1/`,
+  `2/`, `3/`...)
+- **Template-Based Input**: Uses `abacus.wrap` as a template—nearly a native ABACUS `INPUT` file
+  with minimal script-specific annotations
+- **Automatic File Discovery**: Searches `abacus.wrap` upward through parent directories (`./` →
+  `../` → `../../`...)
+- **Smart Pseudopotential/Orbital Matching**: Auto-detects files in `pseudo_dir`/`orbital_dir` by
+  element prefix; explicit override available for ambiguous cases
+- **Flexible Execution Modes**: Supports full pipeline, input-only generation, and post-calculation
+  extraction
 - **Parallel Ready**: Accepts `mpirun`/`srun` prefixes for HPC environments
 
----
+______________________________________________________________________
 
 ## Installation
 
-No installation is required. Simply place `runstruct_abacus` in your `$PATH` (or in the same directory as other ATAT `runstruct_*` scripts) and ensure it is executable:
+No installation is required. Simply place `runstruct_abacus` in your `$PATH` (or in the same
+directory as other ATAT `runstruct_*` scripts) and ensure it is executable:
 
 ```bash
 chmod +x runstruct_abacus
@@ -28,7 +37,7 @@ chmod +x runstruct_abacus
 - ATAT toolkit (`cellcvrt`, `kmesh` etc.) must be in `$PATH`
 - ABACUS executable path must be set in `~/.abacus.rc`
 
----
+______________________________________________________________________
 
 ## Configuration
 
@@ -43,11 +52,13 @@ ABACUSCMD="abacus"                    # or "mpirun -np 4 abacus"
 
 The script will auto-generate a template if this file does not exist.
 
----
+______________________________________________________________________
 
 ## Template File: `abacus.wrap`
 
-`abacus.wrap` is **almost** a standard ABACUS `INPUT` file. The script copies nearly every line verbatim into `INPUT`, except for `species` lines which are consumed by the script to build the `STRU` file.
+`abacus.wrap` is **almost** a standard ABACUS `INPUT` file. The script copies nearly every line
+verbatim into `INPUT`, except for `species` lines which are consumed by the script to build the
+`STRU` file.
 
 ### Minimal Example
 
@@ -70,16 +81,17 @@ species  Fe  55.845  Fe_ONCV_PBE-1.0.upf  Fe_gga_8au_100Ry_2s2p2d1f.orb
 species  <Element>  <Mass>  <PP_File>  [<Orb_File>]
 ```
 
-| Field      | Description                                                  |
-| ---------- | ------------------------------------------------------------ |
-| `Element`  | Chemical symbol (e.g., `Al`, `Fe`)                           |
-| `Mass`     | Atomic mass. Use `-` to look up from the built-in table      |
-| `PP_File`  | Pseudopotential filename. Use `-` to auto-search in `pseudo_dir` |
+| Field      | Description                                                                             |
+| ---------- | --------------------------------------------------------------------------------------- |
+| `Element`  | Chemical symbol (e.g., `Al`, `Fe`)                                                      |
+| `Mass`     | Atomic mass. Use `-` to look up from the built-in table                                 |
+| `PP_File`  | Pseudopotential filename. Use `-` to auto-search in `pseudo_dir`                        |
 | `Orb_File` | Numerical orbital filename (required for LCAO). Use `-` to auto-search in `orbital_dir` |
 
-If auto-search finds **zero** or **more than one** match for an element, the script aborts and prints a helpful message asking you to add an explicit `species` line.
+If auto-search finds **zero** or **more than one** match for an element, the script aborts and
+prints a helpful message asking you to add an explicit `species` line.
 
----
+______________________________________________________________________
 
 ## Command Line Options
 
@@ -89,12 +101,12 @@ runstruct_abacus [-w file] [-nr] [-ex] [-clean] [cmdprefix]
 
 ### Execution Modes
 
-| Command                   | Behavior                                                     |
-| ------------------------- | ------------------------------------------------------------ |
-| `runstruct_abacus`        | **Full pipeline**: Generate `INPUT` + `STRU` → Run ABACUS → Extract `energy`, `str_relax.out` |
-| `runstruct_abacus -nr`    | **No-Run**: Generate `INPUT` + `STRU` only. Useful for manual inspection or external job schedulers. |
+| Command                   | Behavior                                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `runstruct_abacus`        | **Full pipeline**: Generate `INPUT` + `STRU` → Run ABACUS → Extract `energy`, `str_relax.out`           |
+| `runstruct_abacus -nr`    | **No-Run**: Generate `INPUT` + `STRU` only. Useful for manual inspection or external job schedulers.    |
 | `runstruct_abacus -ex`    | **Extract-Only**: Skip generation and execution. Extract results from existing `OUT.suffix/` directory. |
-| `runstruct_abacus -clean` | **Cleanup**: Delete all output files (`OUT.*/`, `running_*.log`, `energy`, `str_relax.out`) and exit. |
+| `runstruct_abacus -clean` | **Cleanup**: Delete all output files (`OUT.*/`, `running_*.log`, `energy`, `str_relax.out`) and exit.   |
 
 ### `cmdprefix`: Running in Parallel
 
@@ -123,9 +135,10 @@ $CMDPREFIX $ABACUSCMD > log.out 2>&1
 runstruct_abacus -w my_custom.wrap
 ```
 
-If the specified file is not found in the current directory, the script searches upward (`../`, `../../`, `../../../`) exactly like the default `abacus.wrap`.
+If the specified file is not found in the current directory, the script searches upward (`../`,
+`../../`, `../../../`) exactly like the default `abacus.wrap`.
 
----
+______________________________________________________________________
 
 ## Workflow Example
 
@@ -158,7 +171,7 @@ runstruct_abacus
 | `str_relax.out` | Relaxed structure in ATAT `str.out` format              |
 | `log.out`       | Raw ABACUS stdout/stderr                                |
 
----
+______________________________________________________________________
 
 ## File Search Hierarchy
 
@@ -169,9 +182,10 @@ Both `abacus.wrap` and `str.out` follow ATAT's upward-search convention:
 | `abacus.wrap` | `./` → `../` → `../../` → `../../../`  |
 | `str.out`     | `str_hint.out` (preferred) → `str.out` |
 
-This allows a single `abacus.wrap` (and optionally a shared `~/.abacus.rc`) to serve an entire ATAT enumeration tree.
+This allows a single `abacus.wrap` (and optionally a shared `~/.abacus.rc`) to serve an entire ATAT
+enumeration tree.
 
----
+______________________________________________________________________
 
 ## Authors
 
@@ -184,4 +198,5 @@ This allows a single `abacus.wrap` (and optionally a shared `~/.abacus.rc`) to s
 ## Contact
 
 For issues related to the ABACUS engine itself, please visit:
+
 - GitHub: [deepmodeling/abacus-develop](https://github.com/deepmodeling/abacus-develop)

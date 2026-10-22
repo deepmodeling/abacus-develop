@@ -1,131 +1,156 @@
 # Wannier90
 
-[Wannier90](http://www.wannier.org/) is a useful package to generating the maximally-localized Wannier functions (MLWFs), which can be used to compute advanced electronic properties. Some post-processing tools (such as WannierTools, etc.) will use MLWFs for further analysis and calculations. 
+[Wannier90](http://www.wannier.org/) is a useful package to generating the maximally-localized
+Wannier functions (MLWFs), which can be used to compute advanced electronic properties. Some
+post-processing tools (such as WannierTools, etc.) will use MLWFs for further analysis and
+calculations.
 
-Currently ABACUS provides an interface to Wannier90 package. The users are assumed to be familiar with the use of Wannier90. The ABACUS-Wannier90 interface is suitable for nspin=1, 2, 4 (including lspinorb=1).
+Currently ABACUS provides an interface to Wannier90 package. The users are assumed to be familiar
+with the use of Wannier90. The ABACUS-Wannier90 interface is suitable for nspin=1, 2, 4 (including
+lspinorb=1).
 
-To construct the MLWFs using the wave functions of ABACUS generally requires four steps. Here we use the diamond as an example which can be found in [examples/interface_wannier90/](https://github.com/abacusmodeling/abacus-develop/tree/develop/examples/interface_wannier90).
+To construct the MLWFs using the wave functions of ABACUS generally requires four steps. Here we use
+the diamond as an example which can be found in
+[examples/interface_wannier90/](https://github.com/abacusmodeling/abacus-develop/tree/develop/examples/interface_wannier90).
 
-1. Enter the `ABACUS_towannier90_pw/` folder, prepare a Wannier90 input file `diamond.win`, which is the main input file for Wannier90. Then To generate `diamond.nnkp` file by running Wannier90,  which ABACUS will read later: 
+1. Enter the `ABACUS_towannier90_pw/` folder, prepare a Wannier90 input file `diamond.win`, which is
+   the main input file for Wannier90. Then To generate `diamond.nnkp` file by running Wannier90,
+   which ABACUS will read later:
 
-    ```
-    wannier90 -pp diamond.win
-    ```
+   ```
+   wannier90 -pp diamond.win
+   ```
 
-    The content of `diamond.win` is as follows:
+   The content of `diamond.win` is as follows:
 
-    ```
-    num_wann        =  4
-    num_iter        = 20
-    
-    wannier_plot=.true.
-    wannier_plot_supercell = 3
-    wvfn_formatted = .true.
+   ```
+   num_wann        =  4
+   num_iter        = 20
 
-    begin atoms_frac
-    C   -0.12500  -0.1250    -0.125000
-    C    0.12500   0.1250     0.125000
-    end atoms_frac
+   wannier_plot=.true.
+   wannier_plot_supercell = 3
+   wvfn_formatted = .true.
 
-    begin projections
-    f=0.0,0.0,0.0:s
-    f=0.0,0.0,0.5:s
-    f=0.0,0.5,0.0:s
-    f=0.5,0.0,0.0:s
-    end projections
+   begin atoms_frac
+   C   -0.12500  -0.1250    -0.125000
+   C    0.12500   0.1250     0.125000
+   end atoms_frac
 
-    begin unit_cell_cart
-    -1.613990   0.000000   1.613990
-     0.000000   1.613990   1.613990
-    -1.613990   1.613990   0.000000
-    end unit_cell_cart
+   begin projections
+   f=0.0,0.0,0.0:s
+   f=0.0,0.0,0.5:s
+   f=0.0,0.5,0.0:s
+   f=0.5,0.0,0.0:s
+   end projections
 
-    mp_grid : 4 4 4
+   begin unit_cell_cart
+   -1.613990   0.000000   1.613990
+    0.000000   1.613990   1.613990
+   -1.613990   1.613990   0.000000
+   end unit_cell_cart
 
-    begin kpoints
-    0.0000  0.0000     0.0000
-    0.0000  0.2500     0.0000
-    0.0000  0.5000     0.0000
-    0.0000  0.7500     0.0000
-    ...
-    end kpoints
-    ```
+   mp_grid : 4 4 4
 
-2. Do a self-consistent calculation and get the converged charge density:
+   begin kpoints
+   0.0000  0.0000     0.0000
+   0.0000  0.2500     0.0000
+   0.0000  0.5000     0.0000
+   0.0000  0.7500     0.0000
+   ...
+   end kpoints
+   ```
 
-    ```
-    cp INPUT-scf INPUT
-    cp KPT-scf KPT
-    mpirun -np 4 abacus
-    ```
+1. Do a self-consistent calculation and get the converged charge density:
 
+   ```
+   cp INPUT-scf INPUT
+   cp KPT-scf KPT
+   mpirun -np 4 abacus
+   ```
 
-3. Do a non-self-consistent calculation: 
+1. Do a non-self-consistent calculation:
 
-    ```
-    cp INPUT-nscf INPUT
-    cp KPT-nscf KPT
-    mpirun -np 4 abacus
-    ```
+   ```
+   cp INPUT-nscf INPUT
+   cp KPT-nscf KPT
+   mpirun -np 4 abacus
+   ```
 
-    below are the INPUT file (nscf):
+   below are the INPUT file (nscf):
 
-    ```
-    INPUT_PARAMETERS
+   ```
+   INPUT_PARAMETERS
 
-    pseudo_dir              ../../../tests/PP_ORB
-    orbital_dir             ../../../tests/PP_ORB
-    ntype                   1
-    ecutwfc                 50
-    nbands                  4
-    smearing_method         fixed
-    calculation             nscf
-    scf_nmax                50
-    pw_diag_thr             1.0e-12
-    scf_thr                 1.0e-13
-    init_chg                file
-    symmetry                -1
-    towannier90             1
-    nnkpfile                diamond.nnkp
-    basis_type              pw
-    out_wannier_unk         0
-    ```
+   pseudo_dir              ../../../tests/PP_ORB
+   orbital_dir             ../../../tests/PP_ORB
+   ntype                   1
+   ecutwfc                 50
+   nbands                  4
+   smearing_method         fixed
+   calculation             nscf
+   scf_nmax                50
+   pw_diag_thr             1.0e-12
+   scf_thr                 1.0e-13
+   init_chg                file
+   symmetry                -1
+   towannier90             1
+   nnkpfile                diamond.nnkp
+   basis_type              pw
+   out_wannier_unk         0
+   ```
 
-    There are seven interface-related parameters in the `INPUT` file:
+   There are seven interface-related parameters in the `INPUT` file:
 
-    - [towannier90](../input_files/input-main.md#towannier90): `1`, generate files for wannier90 code; `0`, do not generate.
-    - [nnkpfile](../input_files/input-main.md#nnkpfile) : the name of the file generated by running "wannier90 -pp ...".
-    - [wannier_spin](../input_files/input-main.md#wannier_spin): If you use nspin=2, `up`: calculate the Wannier functions for the spin up components ; `down`: calculate the Wannier functions spin down components.
-    - [out_wannier_mmn](../input_files/input-main.md#out_wannier_mmn): control whether to output the "*.mmn" file.
-    - [out_wannier_amn](../input_files/input-main.md#out_wannier_amn): control whether to output the "*.amn" file.
-    - [out_wannier_eig](../input_files/input-main.md#out_wannier_eig): control whether to output the "*.eig" file.
-    - [out_wannier_unk](../input_files/input-main.md#out_wannier_unk): control whether to output the "UNK.*" file.
-    - [out_wannier_wvfn_formatted](../input_files/input-main.md#out_wannier_wvfn_formatted): control what format of the Wannier function file to output, `true`: output the formatted text file; `false`: output the binary file. Note that the `wvfn_formatted` option in `*.win` file (input file of Wannier90) has to be set accordingly with this option.
+   - [towannier90](../input_files/input-main.md#towannier90): `1`, generate files for wannier90
+     code; `0`, do not generate.
+   - [nnkpfile](../input_files/input-main.md#nnkpfile) : the name of the file generated by running
+     "wannier90 -pp ...".
+   - [wannier_spin](../input_files/input-main.md#wannier_spin): If you use nspin=2, `up`: calculate
+     the Wannier functions for the spin up components ; `down`: calculate the Wannier functions spin
+     down components.
+   - [out_wannier_mmn](../input_files/input-main.md#out_wannier_mmn): control whether to output the
+     "\*.mmn" file.
+   - [out_wannier_amn](../input_files/input-main.md#out_wannier_amn): control whether to output the
+     "\*.amn" file.
+   - [out_wannier_eig](../input_files/input-main.md#out_wannier_eig): control whether to output the
+     "\*.eig" file.
+   - [out_wannier_unk](../input_files/input-main.md#out_wannier_unk): control whether to output the
+     "UNK.\*" file.
+   - [out_wannier_wvfn_formatted](../input_files/input-main.md#out_wannier_wvfn_formatted): control
+     what format of the Wannier function file to output, `true`: output the formatted text file;
+     `false`: output the binary file. Note that the `wvfn_formatted` option in `*.win` file (input
+     file of Wannier90) has to be set accordingly with this option.
 
-    **Note: You need to turn off the symmetry during the entire nscf calculation.**
+   **Note: You need to turn off the symmetry during the entire nscf calculation.**
 
-    To setup the `KPT` file according to the `diamond.win` file, which is similar to "begin kpoints ..." in the `diamond.win` file: 
+   To setup the `KPT` file according to the `diamond.win` file, which is similar to "begin kpoints
+   ..." in the `diamond.win` file:
 
-    ```
-    K_POINTS
-    64
-    Direct
-    0.0000 0.0000 0.0000 0.0156250
-    0.0000 0.2500 0.0000 0.0156250
-    0.0000 0.5000 0.0000 0.0156250
-    0.0000 0.7500 0.0000 0.0156250
-    ...
-    ```
+   ```
+   K_POINTS
+   64
+   Direct
+   0.0000 0.0000 0.0000 0.0156250
+   0.0000 0.2500 0.0000 0.0156250
+   0.0000 0.5000 0.0000 0.0156250
+   0.0000 0.7500 0.0000 0.0156250
+   ...
+   ```
 
-    After the nscf calculation, ABACUS will generate `diamond.amn`, `diamond.mmn`, `diamond.eig`, `UNK` files in the `OUT.` folder which are input files needed by Wannier90 code. 
+   After the nscf calculation, ABACUS will generate `diamond.amn`, `diamond.mmn`, `diamond.eig`,
+   `UNK` files in the `OUT.` folder which are input files needed by Wannier90 code.
 
-4. Copy `.amn`, `.mmn`, `.eig`, `UNK` file to `wannier/` folder, to get the MLWFs by running Wannier90: 
+1. Copy `.amn`, `.mmn`, `.eig`, `UNK` file to `wannier/` folder, to get the MLWFs by running
+   Wannier90:
 
-    ```
-    wannier90 diamond.win
-    ```
+   ```
+   wannier90 diamond.win
+   ```
 
 Notes:
 
 - The ABACUS-wannier90 interface can be used in both PW and LCAO basis.
-- If you want to plot the Wannier function, you must set `wvfn_formatted = .true.` in `diamond.win`, otherwise Wannier90 code cannot read files generated by ABACUS because these files are not binary files. You also have to generate the `diamond.amn` and `UNK` files for the plot. Otherwise, the two types of file are not necessary.
+- If you want to plot the Wannier function, you must set `wvfn_formatted = .true.` in `diamond.win`,
+  otherwise Wannier90 code cannot read files generated by ABACUS because these files are not binary
+  files. You also have to generate the `diamond.amn` and `UNK` files for the plot. Otherwise, the
+  two types of file are not necessary.

@@ -44,8 +44,8 @@ directory:
 >
 > The "optional but recommended" steps above are used to generate the
 > [Full List of INPUT Keywords](https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html)
-> page. If you've modified input parameters in the source code and want to preview the changes,
-> you should complete these steps.
+> page. If you've modified input parameters in the source code and want to preview the changes, you
+> should complete these steps.
 
 ______________________________________________________________________
 

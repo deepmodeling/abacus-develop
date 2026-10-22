@@ -19,22 +19,25 @@ This feature is available for all types of DFT calculations that use charge dens
 
 ## Input Parameters
 
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `out_dipole` | Integer | Whether to output dipole moment | 0 |
+| Parameter    | Type    | Description                     | Default |
+| ------------ | ------- | ------------------------------- | ------- |
+| `out_dipole` | Integer | Whether to output dipole moment | 0       |
 
 - `out_dipole = 0`: Disable dipole output
 - `out_dipole = 1`: Enable dipole output
 
 ## Output Files
 
-When `out_dipole` is set to 1, ABACUS will generate files named `dipole_s${spin}.txt` for each spin channel in the output directory.
+When `out_dipole` is set to 1, ABACUS will generate files named `dipole_s${spin}.txt` for each spin
+channel in the output directory.
 
 For spin-polarized calculation (nspin=2):
+
 - `dipole_s1.txt`
 - `dipole_s2.txt`
 
 For non-spin-polarized calculation (nspin=1):
+
 - `dipole_s1.txt`
 
 ## Output Format
@@ -46,9 +49,12 @@ step_index dipole_x dipole_y dipole_z
 ```
 
 - `step_index`: The current step number (starts from 1)
-- `dipole_x, dipole_y, dipole_z`: The Cartesian x, y, z components of the electronic dipole moment for the corresponding spin channel, in units of elementary charge times Bohr ($e a_0$).
+- `dipole_x, dipole_y, dipole_z`: The Cartesian x, y, z components of the electronic dipole moment
+  for the corresponding spin channel, in units of elementary charge times Bohr ($e a_0$).
 
-These components refer to the Cartesian axes, including for nonorthogonal or rotated cells; they are not components along the lattice vectors. The electronic dipole includes the negative sign of the electron charge.
+These components refer to the Cartesian axes, including for nonorthogonal or rotated cells; they are
+not components along the lattice vectors. The electronic dipole includes the negative sign of the
+electron charge.
 
 Example output:
 
@@ -61,9 +67,12 @@ Example output:
 ## Additional Information
 
 During the calculation, the dipole moment is also printed in the `running_*.log` file, including:
+
 - Electronic dipole moment
 - Ionic dipole moment
 - Total dipole moment
 - Total dipole moment norm
 
-The log reports Cartesian components in the same units. The total dipole moment is the sum of the electronic and ionic dipoles, and its norm is calculated from these Cartesian components. The `dipole_s${spin}.txt` files contain only the electronic contribution.
+The log reports Cartesian components in the same units. The total dipole moment is the sum of the
+electronic and ionic dipoles, and its norm is calculated from these Cartesian components. The
+`dipole_s${spin}.txt` files contain only the electronic contribution.

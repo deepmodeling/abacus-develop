@@ -2,22 +2,31 @@
 
 ## Contribution Process
 
-We welcome contributions from the open source community. The technical guide is provided in [Contributing to ABACUS](../CONTRIBUTING.md). Here is the basic contribution process:
+We welcome contributions from the open source community. The technical guide is provided in
+[Contributing to ABACUS](../CONTRIBUTING.md). Here is the basic contribution process:
 
-- **Find out issues to work on.**
-We assume you already have a good idea on what to do, otherwise the [issue tracker](https://github.com/deepmodeling/abacus-develop/issues) and [discussion](https://github.com/deepmodeling/abacus-develop/discussions) panel provide good starting points to find out what to work on and to get familiar with the project.
+- **Find out issues to work on.** We assume you already have a good idea on what to do, otherwise
+  the [issue tracker](https://github.com/deepmodeling/abacus-develop/issues) and
+  [discussion](https://github.com/deepmodeling/abacus-develop/discussions) panel provide good
+  starting points to find out what to work on and to get familiar with the project.
 
-- **Approach the issue.**
-It is suggested to [submit new issues](https://github.com/deepmodeling/abacus-develop/issues/new/choose) before coding out changes to involve more discussions and suggestions from development team. Refer to the technical guide in [Contributing to ABACUS](../CONTRIBUTING.md) when needed.
+- **Approach the issue.** It is suggested to
+  [submit new issues](https://github.com/deepmodeling/abacus-develop/issues/new/choose) before
+  coding out changes to involve more discussions and suggestions from development team. Refer to the
+  technical guide in [Contributing to ABACUS](../CONTRIBUTING.md) when needed.
 
-- **Follow governance rules.**
-Before implementation and review, read [`AGENTS.md`](https://github.com/deepmodeling/abacus-develop/blob/develop/AGENTS.md) and the
-[ABACUS Agent Governance](../developers_guide/agent_governance.md) guide. New
-code is reviewed against the shared rules for global dependencies, default
-parameters, header dependencies, tests, INPUT metadata changes, LF line
-endings, C++11 compatibility, and exception handling.
+- **Follow governance rules.** Before implementation and review, read
+  [`AGENTS.md`](https://github.com/deepmodeling/abacus-develop/blob/develop/AGENTS.md) and the
+  [ABACUS Agent Governance](../developers_guide/agent_governance.md) guide. New code is reviewed
+  against the shared rules for global dependencies, default parameters, header dependencies, tests,
+  INPUT metadata changes, LF line endings, C++11 compatibility, and exception handling.
 
-- **Open a pull request.** The ABACUS developers review the pull request (PR) list regularly. If the work is not ready, convert it to draft until finished, then you can mark it as "Ready for review". It is suggested to open a new PR through forking a repo and creating a new branch on you Github account. A new PR should include as much information as possible in `description` when submmited. Unittests or CI tests are required for new PRs.
+- **Open a pull request.** The ABACUS developers review the pull request (PR) list regularly. If the
+  work is not ready, convert it to draft until finished, then you can mark it as "Ready for review".
+  It is suggested to open a new PR through forking a repo and creating a new branch on you Github
+  account. A new PR should include as much information as possible in `description` when submmited.
+  Unittests or CI tests are required for new PRs.
 
-- **Iterate the pull request.**
-All pull requests need to be tested through CI before reviewing. A pull request might need to be iterated several times before accepted, so splitting a long PR into parts reduces reviewing difficulty for us.
+- **Iterate the pull request.** All pull requests need to be tested through CI before reviewing. A
+  pull request might need to be iterated several times before accepted, so splitting a long PR into
+  parts reduces reviewing difficulty for us.

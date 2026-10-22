@@ -1,10 +1,14 @@
 # pyabacus: a Python interface for the ABACUS package
 
-`pyabacus` is a Python interface for the ABACUS package, which provides a high-level Python API for interacting with the `ABACUS` library.
+`pyabacus` is a Python interface for the ABACUS package, which provides a high-level Python API for
+interacting with the `ABACUS` library.
 
-This project is built using [pybind11](http://github.com/pybind/pybind11) and [scikit-build-core](https://scikit-build-core.readthedocs.io/), so you can easily build the project and use it in your Python environment.
+This project is built using [pybind11](http://github.com/pybind/pybind11) and
+[scikit-build-core](https://scikit-build-core.readthedocs.io/), so you can easily build the project
+and use it in your Python environment.
 
 Now, `pyabacus` provides the following modules:
+
 - `io`: a module for input/output in pyabacus.
 - `Cell`: a module for the cell structure to bridge `ModuleNAO` in python module with users' input.
 - `ModuleBase`: a module for basic math functions.
@@ -22,15 +26,17 @@ Now, `pyabacus` provides the following modules:
 
 ## Installation
 
-- Create and activate a new conda env, e.g. `conda create -n myenv python=3.8 & conda activate myenv`.
+- Create and activate a new conda env, e.g.
+  `conda create -n myenv python=3.8 & conda activate myenv`.
 - Clone ABACUS main repository and `cd abacus-develop/python/pyabacus`.
-- Build pyabacus by `pip install -v .` or install test dependencies & build  pyabacus by `pip install .[test]`. (Use `pip install -v .[test] -i https://pypi.tuna.tsinghua.edu.cn/simple` to accelerate installation process.)
+- Build pyabacus by `pip install -v .` or install test dependencies & build pyabacus by
+  `pip install .[test]`. (Use `pip install -v .[test] -i https://pypi.tuna.tsinghua.edu.cn/simple`
+  to accelerate installation process.)
 
 ## CI Examples
 
-There are examples for CI in `.github/workflows`. A simple way to produces
-binary "wheels" for all platforms is illustrated in the "wheels.yml" file,
-using .
+There are examples for CI in `.github/workflows`. A simple way to produces binary "wheels" for all
+platforms is illustrated in the "wheels.yml" file, using .
 
 Use `pytest -v` to run all the unit tests for pyabacus in the local machine.
 
@@ -86,9 +92,9 @@ eigenvalues difference:
 
 ## License
 
-pybind11 is provided under a BSD-style license that can be found in the LICENSE
-file. By using, distributing, or contributing to this project, you agree to the
-terms and conditions of this license.
+pybind11 is provided under a BSD-style license that can be found in the LICENSE file. By using,
+distributing, or contributing to this project, you agree to the terms and conditions of this
+license.
 
 ## Test call
 
@@ -98,5 +104,3 @@ s = m.ModuleBase.Sphbes()
 s.sphbesj(1, 0.0)
 0.0
 ```
-
-[`cibuildwheel`]: https://cibuildwheel.readthedocs.io

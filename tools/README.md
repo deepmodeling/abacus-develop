@@ -72,6 +72,7 @@ python aveElecStatPot.py --help
 ### Windows Installation
 
 Run as administrator:
+
 ```bash
 04_windows_installation/install-abacus.bat
 ```
@@ -79,6 +80,7 @@ Run as administrator:
 ## Tool Descriptions
 
 ### 01_NAO_generation/
+
 - **SIAB/** - Simulated Annealing method for NAO optimization (C++)
 - **pytorch/** - PyTorch gradient method V1 for NAO optimization
 - **pytorch_dpsi/** - PyTorch gradient method V2 with dpsi calculation
@@ -89,6 +91,7 @@ Run as administrator:
 - **examples/** - Example input files and test cases
 
 ### 02_postprocessing/
+
 - **rt-tddft-tools/** - Tools for real-time time-dependent density functional theory analysis
 - **stm/** - Tools for generating STM images from LDOS cube files
 - **average_pot/** - Python script to calculate and plot average electrostatic potential
@@ -96,7 +99,9 @@ Run as administrator:
 - **plot-tools/** - Band structure, DOS, dipole and absorption plotting tools
 
 ### 03_code_analysis/
+
 - **generate_include_analysis.py** - Header file dependency depth analysis tool
 
 ### 04_windows_installation/
+
 - Windows one-click installer via WSL2 + conda-forge
