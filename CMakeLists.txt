@@ -37,38 +37,40 @@ project(
 
 option(ENABLE_MPI "Enable MPI" ON)
 option(ENABLE_OPENMP "Enable OpenMP" ON)
+
 option(USE_CUDA "Enable CUDA" OFF)
-cmake_dependent_option(
-  ENABLE_GPU_NEIGHBOR_LIST "Enable the CUDA GPU neighbor-list implementation"
-  OFF "USE_CUDA" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
-option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
-option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
+option(ENABLE_LCAO "Enable LCAO algorithm" ON)
+
+option(ENABLE_ABACUS_LIBM "Build libmath from source for old systems" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
-option(ENABLE_LCAO "Enable LCAO algorithm" ON)
+option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 option(ENABLE_PLUMED "Enable using the PLUMED enhanced-sampling library" OFF)
+option(ENABLE_JSON "Enable JSON output" OFF)
+option(ENABLE_CNPY "Enable cnpy usage" OFF)
+
+option(DEBUG_INFO "Print message to debug" OFF)
+option(COMMIT_INFO "Print commit information in log" ON)
+option(MATH_INFO "Enable gathering math library information" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
-option(DEBUG_INFO "Print message to debug" OFF)
+
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
-option(MATH_INFO "Enable gathering math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build" OFF)
+
 option(GIT_SUBMODULE "Check submodules during build" ON)
 
 # Do not enable it if generated code will run on different CPUs
 option(ENABLE_NATIVE_OPTIMIZATION
        "Enable compilation optimization for the native machine's CPU type" OFF)
 
-option(COMMIT_INFO "Print commit information in log" ON)
-option(ENABLE_JSON "Enable JSON output" OFF)
-option(ENABLE_CNPY "Enable cnpy usage" OFF)
 
 # Options requiring MPI and LCAO
 cmake_dependent_option(ENABLE_ELPA "Enable ELPA eigensolver" ON "ENABLE_MPI"
@@ -100,6 +102,9 @@ cmake_dependent_option(
   ENABLE_NCCL_PARALLEL_DEVICE
   "Enable NCCL-backed collectives in parallel_device; requires MPI" OFF
   "USE_CUDA;ENABLE_MPI" OFF)
+cmake_dependent_option(
+  ENABLE_GPU_NEIGHBOR_LIST "Enable the CUDA GPU neighbor-list implementation"
+  OFF "USE_CUDA" OFF)
 
 # CTest defines BUILD_TESTING when it is first included. Include it only after
 # ABACUS has declared its OFF-by-default option above.
@@ -153,12 +158,12 @@ endif()
 # Determine the ABACUS executable name.
 if(NOT ENABLE_LCAO)
   set(_abacus_bin_level "pw")
-  # TODO: Not well-defined now.
 elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
+  # TODO: Not well-defined now.
   set(_abacus_bin_level "max")
 elseif(ENABLE_LIBRI)
-  set(_abacus_bin_level "std")
   # TODO: Not well-defined now.
+  set(_abacus_bin_level "std")
 elseif(ENABLE_MLALGO)
   set(_abacus_bin_level "ml")
 else()
