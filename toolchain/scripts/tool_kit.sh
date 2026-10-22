@@ -31,7 +31,7 @@ report_timing_enhanced() {
   local start_time="$2"
   local end_time="${3:-$(date +%s)}"
   local duration=$((end_time - start_time))
-  
+
   if [[ $duration -gt 3600 ]]; then
     printf "Step '%s' completed in %d hours, %d minutes, %d seconds.\n" \
       "$step_name" $((duration / 3600)) $(((duration % 3600) / 60)) $((duration % 60))
@@ -77,32 +77,32 @@ report_error_enhanced() {
   local error_message="$2"
   local context="${3:-}"
   local lineno="${4:-}"
-  
+
   local location=""
   if [[ -n "$lineno" ]]; then
     location=", line $lineno"
   fi
-  
+
   echo "ERROR [$error_code]: (${SCRIPT_NAME}${location}) $error_message" >&2
   if [[ -n "$context" ]]; then
     echo "Context: $context" >&2
   fi
-  
+
   return $error_code
 }
 
 # Enhanced warning reporting with severity levels
 report_warning_enhanced() {
-  local severity="${1:-INFO}"  # INFO, WARNING, CRITICAL
+  local severity="${1:-INFO}" # INFO, WARNING, CRITICAL
   local message="$2"
   local context="${3:-}"
   local lineno="${4:-}"
-  
+
   local location=""
   if [[ -n "$lineno" ]]; then
     location=", line $lineno"
   fi
-  
+
   echo "$severity: (${SCRIPT_NAME}${location}) $message" >&2
   if [[ -n "$context" ]]; then
     echo "Context: $context" >&2
@@ -111,10 +111,10 @@ report_warning_enhanced() {
 
 # recommend users to use offline installation when download failed
 # zhaoqing in 2025.10.15
-recommend_offline_installation(){
+recommend_offline_installation() {
   __filename=$1
   __url=$2
-  cat << EOF
+  cat <<EOF
 ========================== NOTICE =========================
 You can use OFFLINE installation method manually
 By download $__filename from $__url, 
@@ -232,9 +232,9 @@ reverse() (
 get_nprocs() {
   if [ -n "${NPROCS_OVERWRITE}" ]; then
     echo ${NPROCS_OVERWRITE} | sed 's/^0*//'
-  elif $(command -v nproc > /dev/null 2>&1); then
+  elif $(command -v nproc >/dev/null 2>&1); then
     echo $(nproc)
-  elif $(command -v sysctl > /dev/null 2>&1); then
+  elif $(command -v sysctl >/dev/null 2>&1); then
     echo $(sysctl -n hw.ncpu)
   else
     echo 1
@@ -421,32 +421,32 @@ require_env() {
 validate_env_vars() {
   local required_vars=("$@")
   local missing_vars=()
-  
+
   for var in "${required_vars[@]}"; do
     if [[ -z "${!var:-}" ]]; then
       missing_vars+=("$var")
     fi
   done
-  
+
   if [[ ${#missing_vars[@]} -gt 0 ]]; then
     report_error_enhanced 1 "Missing required environment variables" "$(printf '%s ' "${missing_vars[@]}")"
     return 1
   fi
-  
+
   return 0
 }
 
 # Check system requirements
 check_system_requirements() {
-  local min_disk_space_gb="${1:-10}"  # Default 10GB
+  local min_disk_space_gb="${1:-10}" # Default 10GB
   local required_commands=("${@:2}")
-  
+
   # Check disk space
   local available_space=$(df . | awk 'NR==2 {print int($4/1024/1024)}')
   if [[ $available_space -lt $min_disk_space_gb ]]; then
     report_warning_enhanced "WARNING" "Low disk space: ${available_space}GB available, ${min_disk_space_gb}GB recommended"
   fi
-  
+
   # Check required commands
   for cmd in "${required_commands[@]}"; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -454,7 +454,7 @@ check_system_requirements() {
       return 1
     fi
   done
-  
+
   return 0
 }
 
@@ -467,7 +467,7 @@ resolve_string() {
   shift
   local __flags=$@
 
-  echo $("${SCRIPTDIR}/parse_if.py" $__flags <<< "${__to_resolve}")
+  echo $("${SCRIPTDIR}/parse_if.py" $__flags <<<"${__to_resolve}")
 }
 
 # Enhanced string processing with validation
@@ -475,26 +475,26 @@ resolve_string_safe() {
   local __to_resolve="$1"
   shift
   local __flags=("$@")
-  
+
   if [[ -z "$__to_resolve" ]]; then
     report_error_enhanced 1 "Empty string provided for resolution"
     return 1
   fi
-  
+
   if [[ ! -f "${SCRIPTDIR}/parse_if.py" ]]; then
     report_error_enhanced 1 "Parser script not found" "${SCRIPTDIR}/parse_if.py"
     return 1
   fi
-  
+
   local result
-  result=$("${SCRIPTDIR}/parse_if.py" "${__flags[@]}" <<< "${__to_resolve}" 2>/dev/null)
+  result=$("${SCRIPTDIR}/parse_if.py" "${__flags[@]}" <<<"${__to_resolve}" 2>/dev/null)
   local exit_code=$?
-  
+
   if [[ $exit_code -ne 0 ]]; then
     report_error_enhanced $exit_code "String resolution failed" "$__to_resolve"
     return $exit_code
   fi
-  
+
   echo "$result"
   return 0
 }
@@ -511,7 +511,7 @@ check_command() {
   elif [ $# -gt 1 ]; then
     local __package=${2}
   fi
-  if $(command -v ${__command} > /dev/null 2>&1); then
+  if $(command -v ${__command} >/dev/null 2>&1); then
     echo "path to ${__command} is $(realpath $(command -v ${__command}))"
   else
     report_error "Cannot find ${__command}, please check if the package ${__package} is installed or in system search path"
@@ -524,22 +524,22 @@ check_command_version() {
   local command_name="$1"
   local min_version="$2"
   local package_name="${3:-$command_name}"
-  
+
   if ! command -v "$command_name" >/dev/null 2>&1; then
     report_error_enhanced 1 "Command not found: $command_name" "Package: $package_name"
     return 1
   fi
-  
+
   local command_path
   command_path=$(command -v "$command_name")
   echo "Found $command_name at: $(realpath "$command_path")"
-  
+
   if [[ -n "$min_version" ]]; then
     # This is a placeholder for version checking logic
     # Different commands have different version output formats
     echo "Version check for $command_name (minimum: $min_version) - implement as needed"
   fi
-  
+
   return 0
 }
 
@@ -547,7 +547,7 @@ check_command_version() {
 check_commands_batch() {
   local commands=("$@")
   local failed_commands=()
-  
+
   for cmd in "${commands[@]}"; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
       failed_commands+=("$cmd")
@@ -555,12 +555,12 @@ check_commands_batch() {
       echo "✓ Found: $cmd at $(command -v "$cmd")"
     fi
   done
-  
+
   if [[ ${#failed_commands[@]} -gt 0 ]]; then
     report_error_enhanced 1 "Missing commands" "$(printf '%s ' "${failed_commands[@]}")"
     return 1
   fi
-  
+
   return 0
 }
 
@@ -584,7 +584,7 @@ check_install() {
   elif [ $# -gt 1 ]; then
     local __package=${2}
   fi
-  if $(command -v ${__command} > /dev/null 2>&1); then
+  if $(command -v ${__command} >/dev/null 2>&1); then
     echo "$(basename ${__command}) is installed as $(command -v ${__command})"
   else
     report_error "cannot find ${__command}, please check if the package ${__package} has been installed correctly"
@@ -637,7 +637,7 @@ check_lib() {
 check_gfortran_module() {
   local __module_name=$1
   local __FC=${FC:-gfortran}
-  cat << EOF | $__FC -c -o /dev/null -xf95 -ffree-form - > /dev/null 2>&1
+  cat <<EOF | $__FC -c -o /dev/null -xf95 -ffree-form - >/dev/null 2>&1
 PROGRAM check_gfortran_module
 USE ${__module_name}
 IMPLICIT NONE
@@ -653,7 +653,7 @@ check_gfortran_flag() {
   local __FC=${FC:-gfortran}
   # no need to do a full compilation, just -E -cpp would do for
   # checking flags
-  cat << EOF | $__FC -E -cpp $__flag -xf95 -ffree-form - > /dev/null 2>&1
+  cat <<EOF | $__FC -E -cpp $__flag -xf95 -ffree-form - >/dev/null 2>&1
 PROGRAM test_code
   IMPLICIT NONE
   PRINT *, "PASS"
@@ -668,7 +668,7 @@ check_gcc_flag() {
   local __CC=${CC:-gcc}
   # no need to do a full compilation, just -E -cpp would do for
   # checking flags
-  cat << EOF | $__CC -E -cpp $__flag -xc - > /dev/null 2>&1
+  cat <<EOF | $__CC -E -cpp $__flag -xc - >/dev/null 2>&1
 #include <stdio.h>
 int main() {
   printf("PASS\n");
@@ -683,7 +683,7 @@ check_gxx_flag() {
   local __CXX=${CXX:-g++}
   # no need to do a full compilation, just -E -cpp would do for
   # checking flags
-  cat << EOF | $__CXX -E -cpp $__flag -xc - > /dev/null 2>&1
+  cat <<EOF | $__CXX -E -cpp $__flag -xc - >/dev/null 2>&1
 #include <stdio.h>
 int main() {
   printf("PASS\n");
@@ -781,19 +781,19 @@ append_path() {
 read_enable() {
   local __input_var="${1#*=}"
   case $__input_var in
-    "$1")
-      # if there is no "=" then treat as "yes"
-      echo "__TRUE__"
-      ;;
-    yes)
-      echo "__TRUE__"
-      ;;
-    no)
-      echo "__FALSE__"
-      ;;
-    *)
-      echo "__INVALID__"
-      ;;
+  "$1")
+    # if there is no "=" then treat as "yes"
+    echo "__TRUE__"
+    ;;
+  yes)
+    echo "__TRUE__"
+    ;;
+  no)
+    echo "__FALSE__"
+    ;;
+  *)
+    echo "__INVALID__"
+    ;;
   esac
 }
 
@@ -801,26 +801,26 @@ read_enable() {
 read_with() {
   local __input_var="${1#--with*=}"
   case $__input_var in
-    "${1}")
-      # if there is no "=" then treat as "install"
-      if [ ${#} -gt 1 ]; then
-        echo "${2}"
-      else
-        echo "__INSTALL__"
-      fi
-      ;;
-    install)
+  "${1}")
+    # if there is no "=" then treat as "install"
+    if [ ${#} -gt 1 ]; then
+      echo "${2}"
+    else
       echo "__INSTALL__"
-      ;;
-    system)
-      echo "__SYSTEM__"
-      ;;
-    no)
-      echo "__DONTUSE__"
-      ;;
-    *)
-      echo "${__input_var//\~/$HOME}"
-      ;;
+    fi
+    ;;
+  install)
+    echo "__INSTALL__"
+    ;;
+  system)
+    echo "__SYSTEM__"
+    ;;
+  no)
+    echo "__DONTUSE__"
+    ;;
+  *)
+    echo "${__input_var//\~/$HOME}"
+    ;;
   esac
 }
 
@@ -828,8 +828,8 @@ read_with() {
 parse_config_option() {
   local option="$1"
   local default_value="${2:-}"
-  local valid_values="${3:-}"  # Space-separated list of valid values
-  
+  local valid_values="${3:-}" # Space-separated list of valid values
+
   local parsed_value
   if [[ "$option" =~ ^--enable ]]; then
     parsed_value=$(read_enable "$option")
@@ -838,7 +838,7 @@ parse_config_option() {
   else
     parsed_value="$option"
   fi
-  
+
   # Validate against allowed values if provided
   if [[ -n "$valid_values" && "$parsed_value" != "__INVALID__" ]]; then
     local is_valid=false
@@ -848,13 +848,13 @@ parse_config_option() {
         break
       fi
     done
-    
+
     if [[ "$is_valid" == false ]]; then
       report_warning_enhanced "WARNING" "Invalid configuration value: $parsed_value" "Valid options: $valid_values"
       parsed_value="__INVALID__"
     fi
   fi
-  
+
   echo "$parsed_value"
 }
 
@@ -869,7 +869,7 @@ checksum() {
   local __shasum_command='sha256sum'
   # check if we have sha256sum command, Mac OS X does not have
   # sha256sum, but has an equivalent with shasum -a 256
-  command -v "$__shasum_command" > /dev/null 2>&1 ||
+  command -v "$__shasum_command" >/dev/null 2>&1 ||
     __shasum_command="shasum -a 256"
   echo "$__sha256  $__filename" | ${__shasum_command} --check
 }
@@ -878,36 +878,36 @@ checksum() {
 verify_file_integrity() {
   local filename="$1"
   local expected_hash="$2"
-  local hash_type="${3:-sha256}"  # Default to SHA256
-  
+  local hash_type="${3:-sha256}" # Default to SHA256
+
   if [[ ! -f "$filename" ]]; then
     report_error_enhanced 1 "File not found for integrity check" "$filename"
     return 1
   fi
-  
+
   local hash_command
   case "$hash_type" in
-    sha256)
-      hash_command="sha256sum"
-      command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 256"
-      ;;
-    sha1)
-      hash_command="sha1sum"
-      command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 1"
-      ;;
-    md5)
-      hash_command="md5sum"
-      command -v "$hash_command" >/dev/null 2>&1 || hash_command="md5"
-      ;;
-    *)
-      report_error_enhanced 1 "Unsupported hash type" "$hash_type"
-      return 1
-      ;;
+  sha256)
+    hash_command="sha256sum"
+    command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 256"
+    ;;
+  sha1)
+    hash_command="sha1sum"
+    command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 1"
+    ;;
+  md5)
+    hash_command="md5sum"
+    command -v "$hash_command" >/dev/null 2>&1 || hash_command="md5"
+    ;;
+  *)
+    report_error_enhanced 1 "Unsupported hash type" "$hash_type"
+    return 1
+    ;;
   esac
-  
+
   local computed_hash
   computed_hash=$($hash_command "$filename" | cut -d' ' -f1)
-  
+
   if [[ "$computed_hash" == "$expected_hash" ]]; then
     echo "✓ Integrity check passed for $filename ($hash_type)"
     return 0
@@ -930,52 +930,52 @@ download_pkg_from_url() {
   else
     DOWNLOADER_FLAGS="--quiet --show-progress"
   fi
-  
+
   # Smart certificate validation strategy
   case "${DOWNLOAD_CERT_POLICY:-smart}" in
-    "strict")
-      echo "Downloading with strict certificate validation: $__url"
-      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
-        rm -f "$__filename"
-        report_error "failed to download $__url (strict certificate validation)"
-        recommend_offline_installation "$__filename" "$__url"
-        if [ "${PACK_RUN}" != "__TRUE__" ]; then
-          return 1
-        fi
+  "strict")
+    echo "Downloading with strict certificate validation: $__url"
+    if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      rm -f "$__filename"
+      report_error "failed to download $__url (strict certificate validation)"
+      recommend_offline_installation "$__filename" "$__url"
+      if [ "${PACK_RUN}" != "__TRUE__" ]; then
+        return 1
       fi
-      ;;
-    "skip")
-      echo "Downloading with certificate validation disabled: $__url"
+    fi
+    ;;
+  "skip")
+    echo "Downloading with certificate validation disabled: $__url"
+    if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
+      rm -f "$__filename"
+      report_error "failed to download $__url"
+      recommend_offline_installation "$__filename" "$__url"
+      if [ "${PACK_RUN}" != "__TRUE__" ]; then
+        return 1
+      fi
+    fi
+    ;;
+  "smart" | *)
+    # Smart fallback: try with certificate validation first, then without
+    echo "Attempting secure download: $__url"
+    if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      echo "Download successful with certificate validation"
+    else
+      echo "Certificate validation failed, retrying without certificate check..."
       if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
         rm -f "$__filename"
-        report_error "failed to download $__url"
+        report_error "failed to download $__url (both secure and insecure attempts failed)"
         recommend_offline_installation "$__filename" "$__url"
         if [ "${PACK_RUN}" != "__TRUE__" ]; then
           return 1
         fi
-      fi
-      ;;
-    "smart"|*)
-      # Smart fallback: try with certificate validation first, then without
-      echo "Attempting secure download: $__url"
-      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
-        echo "Download successful with certificate validation"
       else
-        echo "Certificate validation failed, retrying without certificate check..."
-        if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
-          rm -f "$__filename"
-          report_error "failed to download $__url (both secure and insecure attempts failed)"
-          recommend_offline_installation "$__filename" "$__url"
-          if [ "${PACK_RUN}" != "__TRUE__" ]; then
-            return 1
-          fi
-        else
-          echo "Download successful without certificate validation"
-        fi
+        echo "Download successful without certificate validation"
       fi
-      ;;
+    fi
+    ;;
   esac
-  
+
   # checksum
   if checksum "$__filename" "$__sha256"; then
     echo "Checksum of $__filename OK"
@@ -1014,10 +1014,10 @@ verify_checksums() {
 
   # check if we have sha256sum command, Mac OS X does not have
   # sha256sum, but has an equivalent with shasum -a 256
-  command -v "$__shasum_command" > /dev/null 2>&1 ||
+  command -v "$__shasum_command" >/dev/null 2>&1 ||
     __shasum_command="shasum -a 256"
 
-  ${__shasum_command} --check "${__checksum_file}" > /dev/null 2>&1
+  ${__shasum_command} --check "${__checksum_file}" >/dev/null 2>&1
 }
 
 # write a checksum file $1 containing checksums for each given file $2, $3, ... (plus the $VERSION_FILE)
@@ -1028,10 +1028,10 @@ write_checksums() {
 
   # check if we have sha256sum command, Mac OS X does not have
   # sha256sum, but has an equivalent with shasum -a 256
-  command -v "$__shasum_command" > /dev/null 2>&1 ||
+  command -v "$__shasum_command" >/dev/null 2>&1 ||
     __shasum_command="shasum -a 256"
 
-  ${__shasum_command} "${VERSION_FILE}" "$@" > "${__checksum_file}"
+  ${__shasum_command} "${VERSION_FILE}" "$@" >"${__checksum_file}"
 }
 
 # generate a filtered toolchain.env
@@ -1055,7 +1055,7 @@ write_toolchain_env() {
     unset DBUS_SESSION_BUS_ADDRESS
 
     export -p
-  ) > "${__installdir}/toolchain.env"
+  ) >"${__installdir}/toolchain.env"
 }
 
 # Write a setup file without containing flags unnecessay for building and running ABACUS
@@ -1070,6 +1070,6 @@ filter_setup() {
   fi
 
   local filename=$(basename "$source_file")
-  echo "# ==================== Setup for ${filename#*_} ==================== #" >> "$target_file"
-  sed '/if[[:space:]]/,/^[[:space:]]*fi$/d' "$source_file" | grep -v -E '# For|# Other|with_|FLAGS|LIBS|INCLUDES' >> "$target_file"
+  echo "# ==================== Setup for ${filename#*_} ==================== #" >>"$target_file"
+  sed '/if[[:space:]]/,/^[[:space:]]*fi$/d' "$source_file" | grep -v -E '# For|# Other|with_|FLAGS|LIBS|INCLUDES' >>"$target_file"
 }

@@ -15,6 +15,11 @@ repos:
     hooks:
       - id: cmake-format
         additional_dependencies: [pyyaml]
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.14.1-1
+    hooks:
+      - id: shfmt
+        args: [--write, --language-dialect=bash, --indent=2]
   - repo: local
     hooks:
       - id: abacus-agent-governance

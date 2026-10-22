@@ -17,16 +17,16 @@ source "${SCRIPT_DIR}"/package_versions.sh
 # Check for version configuration from environment or individual package setting
 version_suffix=""
 if [[ -n "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" ]]; then
-    # Check for individual package version override
-    if echo "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" | grep -q "cereal:alt"; then
-        version_suffix="alt"
-    elif echo "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" | grep -q "cereal:main"; then
-        version_suffix="main"
-    fi
+  # Check for individual package version override
+  if echo "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" | grep -q "cereal:alt"; then
+    version_suffix="alt"
+  elif echo "${ABACUS_TOOLCHAIN_PACKAGE_VERSIONS}" | grep -q "cereal:main"; then
+    version_suffix="main"
+  fi
 fi
 # Fall back to global version suffix if no individual setting
 if [[ -z "$version_suffix" && -n "${ABACUS_TOOLCHAIN_VERSION_SUFFIX}" ]]; then
-    version_suffix="${ABACUS_TOOLCHAIN_VERSION_SUFFIX}"
+  version_suffix="${ABACUS_TOOLCHAIN_VERSION_SUFFIX}"
 fi
 # Load package variables with appropriate version
 load_package_vars "cereal" "$version_suffix"
@@ -42,89 +42,89 @@ CEREAL_CFLAGS=""
 cd "${BUILDDIR}"
 
 case "$with_cereal" in
-    __INSTALL__)
-        echo "==================== Installing CEREAL ===================="
-        pkg_install_dir="${INSTALLDIR}/$dirname"
-        #pkg_install_dir="${HOME}/lib/cereal/${cereal_ver}"
-        install_lock_file="${pkg_install_dir}/install_successful"
-        # url construction rules:
-        # - Branch names (master, main, develop) without v prefix
-        # - Version tags (e.g., 1.0.0) with v prefix
-        if [[ "${cereal_ver}" =~ ^([0-9a-f]{7}|[0-9a-f]{40})$ ]]; then
-            url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}"
-        else
-            url="https://codeload.github.com/USCiLab/cereal/tar.gz/v${cereal_ver}"
-        fi
-        if verify_checksums "${install_lock_file}"; then
-            echo "$dirname is already installed, skipping it."
-        else
-            retrieve_package "${cereal_sha256}" "${filename}" "${url}"
-            if [ "${PACK_RUN}" = "__TRUE__" ]; then
-                echo "--pack-run mode specified, skip installation"
-                exit 0
-            fi
-            echo "Installing from scratch into ${pkg_install_dir}"
-            [ -d $dirname ] && rm -rf $dirname
-            tar -xzf $filename
-            cd "${dirname}"
-            # 
-            mkdir build && cd build
-            cmake \
-              -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
-              -DCMAKE_INSTALL_LIBDIR="lib" \
-              -DCMAKE_VERBOSE_MAKEFILE=ON \
-              -DBUILD_DOC=OFF \
-              -DBUILD_SANDBOX=OFF \
-              -DBUILD_TESTS=OFF \
-              -DTHREAD_SAFE=ON \
-              -DSKIP_PORTABILITY_TEST=ON \
-              -DSKIP_PERFORMANCE_COMPARISON=ON \
-              .. > cmake.log 2>&1 || tail -n ${LOG_LINES} cmake.log
-            make install -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
-            write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
-        fi
-        CEREAL_CFLAGS="-I'${pkg_install_dir}/include'"
-        ;;
-    __SYSTEM__)
-        echo "==================== Finding CEREAL from system paths ===================="
-        if [ "${PACK_RUN}" = "__TRUE__" ]; then
-            echo "--pack-run mode specified, skip system check"
-            exit 0
-        fi
-        # Find cereal header file and derive package root directory
-        cereal_header_path="$(find_in_paths "cereal/cereal.hpp" $INCLUDE_PATHS)"
-        if [ "$cereal_header_path" != "__FALSE__" ]; then
-            # Derive pkg_install_dir from found header path
-            # cereal/cereal.hpp -> remove /cereal/cereal.hpp -> get include dir -> get parent dir
-            cereal_include_dir="$(dirname "$(dirname "$cereal_header_path")")"
-            pkg_install_dir="$(dirname "$cereal_include_dir")"
-            echo "Found cereal at: ${pkg_install_dir}"
-            CEREAL_CFLAGS="-I'${cereal_include_dir}'"
-        else
-            report_error "Cannot find cereal/cereal.hpp in system paths"
-            exit 1
-        fi
-        ;;
-    __DONTUSE__) ;;
-    
-    *)
-        echo "==================== Linking CEREAL to user paths ===================="
-        pkg_install_dir="${with_cereal}"
-        check_dir "${pkg_install_dir}"
-        CEREAL_CFLAGS="-I'${pkg_install_dir}/include'"
-        ;;
+__INSTALL__)
+  echo "==================== Installing CEREAL ===================="
+  pkg_install_dir="${INSTALLDIR}/$dirname"
+  #pkg_install_dir="${HOME}/lib/cereal/${cereal_ver}"
+  install_lock_file="${pkg_install_dir}/install_successful"
+  # url construction rules:
+  # - Branch names (master, main, develop) without v prefix
+  # - Version tags (e.g., 1.0.0) with v prefix
+  if [[ "${cereal_ver}" =~ ^([0-9a-f]{7}|[0-9a-f]{40})$ ]]; then
+    url="https://codeload.github.com/USCiLab/cereal/tar.gz/${cereal_ver}"
+  else
+    url="https://codeload.github.com/USCiLab/cereal/tar.gz/v${cereal_ver}"
+  fi
+  if verify_checksums "${install_lock_file}"; then
+    echo "$dirname is already installed, skipping it."
+  else
+    retrieve_package "${cereal_sha256}" "${filename}" "${url}"
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip installation"
+      exit 0
+    fi
+    echo "Installing from scratch into ${pkg_install_dir}"
+    [ -d $dirname ] && rm -rf $dirname
+    tar -xzf $filename
+    cd "${dirname}"
+    #
+    mkdir build && cd build
+    cmake \
+      -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
+      -DCMAKE_INSTALL_LIBDIR="lib" \
+      -DCMAKE_VERBOSE_MAKEFILE=ON \
+      -DBUILD_DOC=OFF \
+      -DBUILD_SANDBOX=OFF \
+      -DBUILD_TESTS=OFF \
+      -DTHREAD_SAFE=ON \
+      -DSKIP_PORTABILITY_TEST=ON \
+      -DSKIP_PERFORMANCE_COMPARISON=ON \
+      .. >cmake.log 2>&1 || tail -n ${LOG_LINES} cmake.log
+    make install -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
+    write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
+  fi
+  CEREAL_CFLAGS="-I'${pkg_install_dir}/include'"
+  ;;
+__SYSTEM__)
+  echo "==================== Finding CEREAL from system paths ===================="
+  if [ "${PACK_RUN}" = "__TRUE__" ]; then
+    echo "--pack-run mode specified, skip system check"
+    exit 0
+  fi
+  # Find cereal header file and derive package root directory
+  cereal_header_path="$(find_in_paths "cereal/cereal.hpp" $INCLUDE_PATHS)"
+  if [ "$cereal_header_path" != "__FALSE__" ]; then
+    # Derive pkg_install_dir from found header path
+    # cereal/cereal.hpp -> remove /cereal/cereal.hpp -> get include dir -> get parent dir
+    cereal_include_dir="$(dirname "$(dirname "$cereal_header_path")")"
+    pkg_install_dir="$(dirname "$cereal_include_dir")"
+    echo "Found cereal at: ${pkg_install_dir}"
+    CEREAL_CFLAGS="-I'${cereal_include_dir}'"
+  else
+    report_error "Cannot find cereal/cereal.hpp in system paths"
+    exit 1
+  fi
+  ;;
+__DONTUSE__) ;;
+
+*)
+  echo "==================== Linking CEREAL to user paths ===================="
+  pkg_install_dir="${with_cereal}"
+  check_dir "${pkg_install_dir}"
+  CEREAL_CFLAGS="-I'${pkg_install_dir}/include'"
+  ;;
 esac
 if [ "$with_cereal" != "__DONTUSE__" ]; then
-    if [ "$with_cereal" != "__SYSTEM__" ]; then
-        cat << EOF > "${BUILDDIR}/setup_cereal"
+  if [ "$with_cereal" != "__SYSTEM__" ]; then
+    cat <<EOF >"${BUILDDIR}/setup_cereal"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
-    fi
-    cat << EOF >> "${BUILDDIR}/setup_cereal"
+  fi
+  cat <<EOF >>"${BUILDDIR}/setup_cereal"
 export CEREAL_ROOT="${pkg_install_dir}"
 export CEREAL_VERSION="${cereal_ver}"
 EOF
-    filter_setup "${BUILDDIR}/setup_cereal" $SETUPFILE
+  filter_setup "${BUILDDIR}/setup_cereal" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_cereal"

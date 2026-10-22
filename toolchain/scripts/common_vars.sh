@@ -16,18 +16,18 @@ VERSION_FILE=${VERSION_FILE:-"${SCRIPTDIR}/VERSION"}
 # host architecture
 SYSTEM_ARCH=${SYSTEM_ARCH:-"$(uname -m)"}
 case "${SYSTEM_ARCH}" in
-  x86_64 | amd64)
-    SYSTEM_ARCH="x86_64"
-    ;;
-  aarch64 | arm64)
-    SYSTEM_ARCH="arm64"
-    ;;
-  i?86)
-    SYSTEM_ARCH="i386"
-    ;;
-  *)
-    # Keep other architectures as reported by uname.
-    ;;
+x86_64 | amd64)
+  SYSTEM_ARCH="x86_64"
+  ;;
+aarch64 | arm64)
+  SYSTEM_ARCH="arm64"
+  ;;
+i?86)
+  SYSTEM_ARCH="i386"
+  ;;
+*)
+  # Keep other architectures as reported by uname.
+  ;;
 esac
 export SYSTEM_ARCH
 
@@ -49,6 +49,6 @@ MATH_MODE=${MATH_MODE:-openblas}
 export LOG_LINES="200"
 
 # download configuration
-DOWNLOAD_CERT_POLICY=${DOWNLOAD_CERT_POLICY:-"smart"}  # strict|smart|skip
+DOWNLOAD_CERT_POLICY=${DOWNLOAD_CERT_POLICY:-"smart"} # strict|smart|skip
 
 export NVCC=${NVCC:-nvcc}

@@ -28,7 +28,7 @@ SCALAPACK=$AOCLhome/lib
 FFTW3=$AOCLhome
 LIBRI=${LIBRI_ROOT}
 LIBCOMM=${LIBCOMM_ROOT}
-USE_CUDA=OFF  # set ON to enable gpu-abacus
+USE_CUDA=OFF # set ON to enable gpu-abacus
 # NEP_DIR=$INSTALL_DIR/NEP_CPU-main
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
@@ -37,64 +37,61 @@ USE_CUDA=OFF  # set ON to enable gpu-abacus
 NUM_JOBS="$(nproc)"
 while [[ $# -gt 0 ]]; do
   case $1 in
-    -j)
-      if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
-        NUM_JOBS="${2}"
-        shift 2
-      else
-        echo "ERROR: -j requires a number argument"
-        exit 1
-      fi
-      ;;
-    -j[0-9]*)
-      NUM_JOBS="${1#-j}"
-      shift
-      ;;
-    *)
-      echo "ERROR: Unsupported argument: $1" >&2
-      echo "Usage: $0 [-j N|-jN]" >&2
+  -j)
+    if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+      NUM_JOBS="${2}"
+      shift 2
+    else
+      echo "ERROR: -j requires a number argument"
       exit 1
-      ;;
+    fi
+    ;;
+  -j[0-9]*)
+    NUM_JOBS="${1#-j}"
+    shift
+    ;;
+  *)
+    echo "ERROR: Unsupported argument: $1" >&2
+    echo "Usage: $0 [-j N|-jN]" >&2
+    exit 1
+    ;;
   esac
 done
 
 # if clang++ have problem, switch back to g++
 
 cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
-        -DCMAKE_CXX_COMPILER=clang++ \
-        -DMPI_CXX_COMPILER=mpicxx \
-        -DLAPACK_DIR=$LAPACK \
-        -DSCALAPACK_DIR=$SCALAPACK \
-        -DFFTW3_DIR=$FFTW3 \
-        -DCEREAL_INCLUDE_DIR=$CEREAL \
-        -DENABLE_LCAO=ON \
-        -DENABLE_LIBXC=ON \
-        -DENABLE_OPENMP=ON \
-        -DENABLE_ELPA=ON \
-        -DENABLE_JSON=ON \
-        -DENABLE_LIBRI=ON \
-        -DLIBRI_DIR=$LIBRI \
-        -DLIBCOMM_DIR=$LIBCOMM \
-        -DUSE_CUDA=$USE_CUDA \
-#        -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc \
-#        -DNEP_DIR=$NEP_DIR \
-#         -DENABLE_MLALGO=1 \
-#         -DTorch_DIR=$LIBTORCH \
-#         -Dlibnpy_INCLUDE_DIR=$LIBNPY \
-# 	      -DDeePMD_DIR=$DEEPMD \
-#         -DENABLE_CUSOLVERMP=ON \
+  -DCMAKE_CXX_COMPILER=clang++ \
+  -DMPI_CXX_COMPILER=mpicxx \
+  -DLAPACK_DIR=$LAPACK \
+  -DSCALAPACK_DIR=$SCALAPACK \
+  -DFFTW3_DIR=$FFTW3 \
+  -DCEREAL_INCLUDE_DIR=$CEREAL \
+  -DENABLE_LCAO=ON \
+  -DENABLE_LIBXC=ON \
+  -DENABLE_OPENMP=ON \
+  -DENABLE_ELPA=ON \
+  -DENABLE_JSON=ON \
+  -DENABLE_LIBRI=ON \
+  -DLIBRI_DIR=$LIBRI \
+  -DLIBCOMM_DIR=$LIBCOMM \
+  -DUSE_CUDA=$USE_CUDA# -DTorch_DIR=$LIBTORCH# -DENABLE_MLALGO=1 # -DNEP_DIR=$NEP_DIR \
+# -DDeePMD_DIR=$DEEPMD \
+# -DCMAKE_CUDA_COMPILER=/path/to/cuda/bin/nvcc \
+# -Dlibnpy_INCLUDE_DIR=$LIBNPY \
+# -DENABLE_CUSOLVERMP=ON \
 
 cmake --build $BUILD_DIR --target install -j "${NUM_JOBS}"
 
 # generate abacus_env.sh
-cat << EOF > "${TOOL}/abacus_env.sh"
+cat <<EOF >"${TOOL}/abacus_env.sh"
 #!/bin/bash
 source $INSTALL_DIR/setup
 export PATH="${PREFIX}/bin":\${PATH}
 EOF
 
 # generate information
-cat << EOF
+cat <<EOF
 ========================== usage =========================
 Done!
 To use the installed ABACUS version

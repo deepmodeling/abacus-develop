@@ -28,7 +28,7 @@ BUILD_DIR=build_abacus_windows
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-LAPACK=${OPENBLAS_ROOT:-$MINGW_PREFIX}/lib   # OpenBLAS supplies both BLAS and LAPACK
+LAPACK=${OPENBLAS_ROOT:-$MINGW_PREFIX}/lib # OpenBLAS supplies both BLAS and LAPACK
 FFTW3=${FFTW_ROOT:-$MINGW_PREFIX}
 
 NUM_JOBS="$(nproc)"
@@ -41,17 +41,31 @@ NUM_JOBS="$(nproc)"
 if [ -r /proc/meminfo ]; then
   mem_gb=$(awk '/^MemTotal:/ {printf "%d", $2/1024/1024}' /proc/meminfo)
   if [ -n "$mem_gb" ] && [ "$mem_gb" -ge 1 ]; then
-    mem_jobs=$(( mem_gb / 3 )); [ "$mem_jobs" -lt 1 ] && mem_jobs=1
+    mem_jobs=$((mem_gb / 3))
+    [ "$mem_jobs" -lt 1 ] && mem_jobs=1
     [ "$mem_jobs" -lt "$NUM_JOBS" ] && NUM_JOBS=$mem_jobs
   fi
 fi
 while [[ $# -gt 0 ]]; do
   case $1 in
-    -j)
-      if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then NUM_JOBS="${2}"; shift 2
-      else echo "ERROR: -j requires a number argument"; exit 1; fi ;;
-    -j[0-9]*) NUM_JOBS="${1#-j}"; shift ;;
-    *) echo "ERROR: Unsupported argument: $1" >&2; echo "Usage: $0 [-j N|-jN]" >&2; exit 1 ;;
+  -j)
+    if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+      NUM_JOBS="${2}"
+      shift 2
+    else
+      echo "ERROR: -j requires a number argument"
+      exit 1
+    fi
+    ;;
+  -j[0-9]*)
+    NUM_JOBS="${1#-j}"
+    shift
+    ;;
+  *)
+    echo "ERROR: Unsupported argument: $1" >&2
+    echo "Usage: $0 [-j N|-jN]" >&2
+    exit 1
+    ;;
   esac
 done
 echo "Building with -j ${NUM_JOBS} (override with -j N; lower it if cc1plus runs out of memory)."
@@ -60,7 +74,7 @@ echo "Building with -j ${NUM_JOBS} (override with -j N; lower it if cc1plus runs
 MPI_ARGS=()
 if [ "$ENABLE_MPI" = "ON" ]; then
   MPI_ARGS=(-DMPI_CXX_INCLUDE_PATH=$MINGW_PREFIX/include
-            -DMPI_CXX_LIBRARIES=$MINGW_PREFIX/lib/libmsmpi.dll.a)
+    -DMPI_CXX_LIBRARIES=$MINGW_PREFIX/lib/libmsmpi.dll.a)
 fi
 
 # Notes on the non-default options:
@@ -74,26 +88,26 @@ fi
 #      dropped transitive standard headers; force-include the common ones so the
 #      existing sources build unchanged. (Not Windows-specific; tied to GCC>=15.)
 cmake -B $BUILD_DIR -G Ninja -DCMAKE_INSTALL_PREFIX=$PREFIX \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_C_COMPILER=gcc \
-        -DCMAKE_CXX_COMPILER=g++ \
-        -DENABLE_MPI=$ENABLE_MPI \
-        -DENABLE_LCAO=$ENABLE_LCAO \
-        -DENABLE_OPENMP=ON \
-        -DENABLE_ELPA=ON \
-        -DENABLE_PEXSI=OFF \
-        -DENABLE_LIBRI=OFF \
-        -DENABLE_MLALGO=OFF \
-        -DUSE_CUDA=OFF \
-        -DBUILD_TESTING=OFF \
-        -DCOMMIT_INFO=OFF \
-        -DBLA_VENDOR=OpenBLAS \
-        -DENABLE_FLOAT_FFTW=ON \
-        -DLAPACK_DIR=$LAPACK \
-        -DFFTW3_DIR=$FFTW3 \
-        -DCMAKE_PREFIX_PATH=$MINGW_PREFIX \
-        "${MPI_ARGS[@]}" \
-        -DCMAKE_CXX_FLAGS="-include cstdint -include cstring -include algorithm"
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=gcc \
+  -DCMAKE_CXX_COMPILER=g++ \
+  -DENABLE_MPI=$ENABLE_MPI \
+  -DENABLE_LCAO=$ENABLE_LCAO \
+  -DENABLE_OPENMP=ON \
+  -DENABLE_ELPA=ON \
+  -DENABLE_PEXSI=OFF \
+  -DENABLE_LIBRI=OFF \
+  -DENABLE_MLALGO=OFF \
+  -DUSE_CUDA=OFF \
+  -DBUILD_TESTING=OFF \
+  -DCOMMIT_INFO=OFF \
+  -DBLA_VENDOR=OpenBLAS \
+  -DENABLE_FLOAT_FFTW=ON \
+  -DLAPACK_DIR=$LAPACK \
+  -DFFTW3_DIR=$FFTW3 \
+  -DCMAKE_PREFIX_PATH=$MINGW_PREFIX \
+  "${MPI_ARGS[@]}" \
+  -DCMAKE_CXX_FLAGS="-include cstdint -include cstring -include algorithm"
 
 cmake --build $BUILD_DIR -j "${NUM_JOBS}"
 
@@ -105,10 +119,10 @@ cmake --build $BUILD_DIR -j "${NUM_JOBS}"
 # but not the abacus.exe copy itself (no underscore).
 built_exe=$(ls "${ABACUS_DIR}/${BUILD_DIR}"/abacus_*.exe 2>/dev/null | head -n 1)
 if [ -n "$built_exe" ]; then
-    cp -f "$built_exe" "${ABACUS_DIR}/${BUILD_DIR}/abacus.exe"
-    echo "Created generic launcher: ${ABACUS_DIR}/${BUILD_DIR}/abacus.exe -> $(basename "$built_exe")"
+  cp -f "$built_exe" "${ABACUS_DIR}/${BUILD_DIR}/abacus.exe"
+  echo "Created generic launcher: ${ABACUS_DIR}/${BUILD_DIR}/abacus.exe -> $(basename "$built_exe")"
 else
-    echo "WARNING: no abacus_*.exe found in ${BUILD_DIR}; 'abacus' command not created."
+  echo "WARNING: no abacus_*.exe found in ${BUILD_DIR}; 'abacus' command not created."
 fi
 
 # Bundle the dependent MinGW / OpenBLAS / FFTW / ScaLAPACK runtime DLLs next to
@@ -119,10 +133,10 @@ fi
 # stdout to a file ("error while loading shared libraries"). System DLLs
 # (msmpi.dll in System32, kernel32, ...) resolve on their own and are skipped.
 if [ -n "$built_exe" ]; then
-    echo "Bundling dependent DLLs into ${BUILD_DIR}/ ..."
-    ldd "${ABACUS_DIR}/${BUILD_DIR}/abacus.exe" 2>/dev/null \
-        | awk -v p="$MINGW_PREFIX" '$3 ~ p {print $3}' | sort -u \
-        | while read -r dll; do cp -f "$dll" "${ABACUS_DIR}/${BUILD_DIR}/"; done
+  echo "Bundling dependent DLLs into ${BUILD_DIR}/ ..."
+  ldd "${ABACUS_DIR}/${BUILD_DIR}/abacus.exe" 2>/dev/null |
+    awk -v p="$MINGW_PREFIX" '$3 ~ p {print $3}' | sort -u |
+    while read -r dll; do cp -f "$dll" "${ABACUS_DIR}/${BUILD_DIR}/"; done
 fi
 
 # When MPI is on, drop an `mpirun` shim next to the binary so the shared test
@@ -131,15 +145,15 @@ fi
 # one thread per rank -- otherwise each rank's multithreaded OpenBLAS
 # oversubscribes the cores and its buffer allocator fails under several ranks.
 if [ "$ENABLE_MPI" = "ON" ]; then
-    cat << 'SHIM' > "${ABACUS_DIR}/${BUILD_DIR}/mpirun"
+  cat <<'SHIM' >"${ABACUS_DIR}/${BUILD_DIR}/mpirun"
 #!/bin/bash
 # mpirun -> mpiexec shim for native Windows (MS-MPI). See build_abacus_windows.sh.
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 exec mpiexec "$@"
 SHIM
-    chmod +x "${ABACUS_DIR}/${BUILD_DIR}/mpirun"
-    echo "Created mpirun->mpiexec shim: ${ABACUS_DIR}/${BUILD_DIR}/mpirun"
+  chmod +x "${ABACUS_DIR}/${BUILD_DIR}/mpirun"
+  echo "Created mpirun->mpiexec shim: ${ABACUS_DIR}/${BUILD_DIR}/mpirun"
 fi
 
 # generate abacus_env.sh: sourcing it puts the MinGW runtime DLLs (via the
@@ -148,7 +162,7 @@ fi
 # OPENBLAS_NUM_THREADS) is what actually caps its threads; pin it to 1 so that
 # `mpiexec -n N abacus` doesn't oversubscribe and trip OpenBLAS's buffer
 # allocator. (Both are set; OPENBLAS_NUM_THREADS alone has no effect here.)
-cat << EOF > "${TOOL}/abacus_env.sh"
+cat <<EOF >"${TOOL}/abacus_env.sh"
 #!/bin/bash
 [ -f "${INSTALL_DIR}/setup" ] && source "${INSTALL_DIR}/setup"
 export PATH="${ABACUS_DIR}/${BUILD_DIR}":\${PATH}
@@ -159,7 +173,7 @@ export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 EOF
 
-cat << EOF
+cat <<EOF
 ========================== usage =========================
 Done! Binary: $(basename "$built_exe") in ${ABACUS_DIR}/${BUILD_DIR}/
 Run it from a MinGW bash shell:

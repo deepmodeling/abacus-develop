@@ -17,7 +17,7 @@ copy_toolchain() {
   while IFS= read -r -d '' entry; do
     name="${entry##*/}"
     case "$name" in
-      build|install) continue ;;
+    build | install) continue ;;
     esac
     cp -a "$entry" "${tmpdir}/toolchain/"
   done < <(find "${TOOLCHAIN_DIR}" -mindepth 1 -maxdepth 1 -print0)
