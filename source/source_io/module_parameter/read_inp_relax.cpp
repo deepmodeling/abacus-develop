@@ -28,18 +28,7 @@ void ReadInput::item_relax()
 * sd: Steepest descent algorithm. Not recommended for production use.)";
         item.default_value = "cg";
         item.unit = "";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const std::vector<std::string> methods
-                = {"cg", "cg_trad", "bfgs", "bfgs_trad", "sd", "cg_bfgs", "lbfgs"};
-            if (item.str_values.size() != 1 || std::find(methods.begin(), methods.end(), strvalue) == methods.end())
-            {
-                const std::string message = "relax_method requires exactly one scalar option. "
-                                            + nofound_str(methods, "relax_method");
-                ModuleBase::WARNING_QUIT("ReadInput", message);
-            }
-            para.input.relax_method = strvalue;
-        };
-        sync_string(input.relax_method);
+        read_sync_string(input.relax_method);
         this->add_item(item);
     }
     {

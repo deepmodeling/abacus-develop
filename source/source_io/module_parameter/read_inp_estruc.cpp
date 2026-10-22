@@ -126,41 +126,10 @@ Then the user has to correct the input file and restart the calculation.)";
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& ks_solver = para.input.ks_solver;
-            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace"};
-            const std::vector<std::string> lcao_solvers = {
-                "genelpa",
-                "elpa",
-                "lapack",
-                "scalapack_gvx",
-                "cusolver",
-                "cusolvermp",
-                "pexsi",
-            };
-
-            if (para.input.basis_type == "pw")
+            if (para.input.basis_type == "lcao")
             {
-                if (std::find(pw_solvers.begin(), pw_solvers.end(), ks_solver) == pw_solvers.end())
-                {
-                    const std::string warningstr = "For PW basis: " + nofound_str(pw_solvers, "ks_solver");
-                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-                }
-            }
-            else if (para.input.basis_type == "lcao")
-            {
-                if (std::find(lcao_solvers.begin(), lcao_solvers.end(), ks_solver) == lcao_solvers.end())
-                {
-                    const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
-                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-                }
                 if (ks_solver == "genelpa")
                 {
-                    if (para.input.device == "gpu")
-                    {
-                        ModuleBase::WARNING_QUIT(
-                            "ReadInput",
-                            "ks_solver = genelpa does not support GPU acceleration. "
-                            "Please use ks_solver = elpa with device = gpu.");
-                    }
 #ifndef __ELPA
                     ModuleBase::WARNING_QUIT("Input",
                                              "Can not use genelpa if abacus is not compiled with "

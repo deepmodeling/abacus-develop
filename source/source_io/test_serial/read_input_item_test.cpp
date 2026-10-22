@@ -103,6 +103,8 @@ TEST_F(InputTest, RelaxMethod)
         EXPECT_EQ(it->second.final_value.str(), method);
     }
 
+    readinput.readvalue_items.push_back(&it->second);
+    const std::string previous_method = param.inp.relax_method;
     for (const std::vector<std::string>& invalid : {
              std::vector<std::string>{},
              std::vector<std::string>{"none"},
@@ -115,7 +117,11 @@ TEST_F(InputTest, RelaxMethod)
              std::vector<std::string>{"cg", "2", "extra"}})
     {
         it->second.str_values = invalid;
-        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        const std::string error = readinput.prepare_input(param);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'relax_method'"));
+        EXPECT_THAT(error, testing::HasSubstr("Expected one String from {cg, cg_trad, bfgs, bfgs_trad, sd, cg_bfgs, lbfgs}"));
+        EXPECT_THAT(error, testing::HasSubstr("input-main.html#relax-method"));
+        EXPECT_EQ(param.inp.relax_method, previous_method);
     }
     EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
 }
