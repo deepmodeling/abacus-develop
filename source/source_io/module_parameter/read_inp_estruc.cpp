@@ -54,6 +54,7 @@ For plane-wave basis,
 * cg: The conjugate-gradient (CG) method.
 * dav: The Davidson algorithm.
 * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
+* ppcg: The projection preconditioned conjugate-gradient method. It is optimized and validated for CPU plane-wave calculations; non-CPU devices use a transitional host/device bridge.
 * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 
 For numerical atomic orbitals basis,
@@ -129,7 +130,7 @@ Then the user has to correct the input file and restart the calculation.)";
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& ks_solver = para.input.ks_solver;
-            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace"};
+            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace", "ppcg"};
             const std::vector<std::string> lcao_solvers = {
                 "genelpa",
                 "elpa",
@@ -1048,10 +1049,10 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_thr");
-        item.annotation = "threshold for eigenvalues is cg electron iterations";
+        item.annotation = "threshold for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
+        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. The stopping criterion is solver-dependent: CG and Davidson methods compare eigenvalue changes against the threshold, whereas PPCG requires the norm of H psi - epsilon S psi to be at most max(ethr_band, ethr, 1e-14). The same numerical threshold therefore does not imply the same accuracy or cost across these methods. PPCG keeps the direct residual tolerance because an energy-only or square-root residual tolerance can leave forces and stresses insufficiently converged. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
         item.default_value = "0.01";
         item.unit = "";
         read_sync_double(input.pw_diag_thr);
@@ -1108,25 +1109,44 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_nmax");
-        item.annotation = "max iteration number for cg";
+        item.annotation = "maximum iteration count for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
+        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg/ppcg method. The shared PW NSCF setup retains the existing iteration limit (30 in a fresh run) for all solvers instead of updating it from this input.";
         item.default_value = "50";
         item.unit = "";
-        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg]");
+        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, ppcg]");
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }
     {
         Input_Item item("pw_diag_ndim");
-        item.annotation = "dimension of workspace for Davidson diagonalization";
+        item.annotation = "dimension of workspace for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
+        item.description = "Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the block size for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
         item.default_value = "4";
         item.unit = "";
+        item.set_availability("basis_type==pw and ks_solver in [dav, dav_subspace, ppcg]");
         read_sync_int(input.pw_diag_ndim);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pw_diag_rr_step");
+        item.annotation = "full Rayleigh-Ritz interval for PPCG";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = "Only useful when you use ks_solver = ppcg. It must be a positive integer and sets the interval, in subspace iterations, between full Rayleigh-Ritz diagonalizations. The conservative default of 1 preserves the established every-iteration Rayleigh-Ritz cadence. The solver also performs a full Rayleigh-Ritz step at initialization, after the startup global correction, at final validation or tentative convergence, or when overlap orthogonalization fails. Between these steps it maintains S-orthogonality without diagonalizing the full projected Hamiltonian. H and S images are refreshed independently every 16 iterations, with additional refreshes when search-direction projection loses precision or residuals approach a floating-point cancellation scale. Convergence and final residuals are checked using freshly applied operators. Larger Rayleigh-Ritz intervals reduce full projected eigensolves but can change the SCF trajectory or require more diagonalization iterations; validate energies, forces, stresses, and the iteration budget for the intended calculation.";
+        item.default_value = "1";
+        item.unit = "";
+        item.set_availability("basis_type==pw and ks_solver==ppcg");
+        read_sync_int(input.pw_diag_rr_step);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.pw_diag_rr_step <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pw_diag_rr_step must be greater than 0");
+            }
+        };
         this->add_item(item);
     }
     {

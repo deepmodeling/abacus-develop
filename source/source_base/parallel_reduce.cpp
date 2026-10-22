@@ -13,6 +13,31 @@ const MPI_Datatype Parallel_Reduce::MPI_Type<std::complex<float>>::value = MPI_C
 const MPI_Datatype Parallel_Reduce::MPI_Type<long long>::value = MPI_LONG_LONG;
 #endif
 
+bool Parallel_Reduce::is_world_root()
+{
+#ifdef __MPI
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (!initialized)
+    {
+        return true;
+    }
+
+    int finalized = 0;
+    MPI_Finalized(&finalized);
+    if (finalized)
+    {
+        return false;
+    }
+
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    return rank == 0;
+#else
+    return true;
+#endif
+}
+
 template <typename T>
 void Parallel_Reduce::reduce_all(T& object)
 {
@@ -111,6 +136,7 @@ template void Parallel_Reduce::reduce_pool<double>(double&);
 template void Parallel_Reduce::reduce_pool<std::complex<double>>(std::complex<double>&);
 
 template void Parallel_Reduce::reduce_pool<int>(int*, const int);
+template void Parallel_Reduce::reduce_pool<float>(float*, const int);
 template void Parallel_Reduce::reduce_pool<double>(double*, const int);
 template void Parallel_Reduce::reduce_pool<std::complex<float>>(std::complex<float>*, const int);
 template void Parallel_Reduce::reduce_pool<std::complex<double>>(std::complex<double>*, const int);
