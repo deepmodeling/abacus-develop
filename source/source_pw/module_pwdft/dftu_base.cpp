@@ -66,17 +66,6 @@ void Plus_U_Base::init_base(UnitCell& cell,
 
     this->energy_u = 0.0;
 
-    // The occupation-matrix file is read only once for the whole run.
-    // occmat_.init() below reallocates and clears the storage on every
-    // ionic step, so preserve the current in-memory matrix first and
-    // restore it after init() when the file has already been loaded.
-    OccupationMatrix occmat_kept;
-    const bool restore_occmat = (init_occ_mat != 0 && this->occmat_file_loaded_);
-    if (restore_occmat)
-    {
-        occmat_kept = this->occmat_;
-    }
-
     this->occmat_.init(cell, l_channel, nspin, npol);
 
     this->uterm_mat_index.resize(cell.nat);
@@ -141,60 +130,33 @@ void Plus_U_Base::init_base(UnitCell& cell,
         this->yukawa_.reset(new YukawaScreening());
         this->yukawa_->init(cell, l_channel, yukawa_lambda);
     }
-    else
-    {
-        // Clear any stale object from a previous init_base() call with
-        // yukawa_potential == true, preserving the old explicit-flag semantics.
-        this->yukawa_.reset();
-    }
-
     if (init_occ_mat != 0)
     {
-        if (this->occmat_file_loaded_)
+        // Try the user-prepared dm_onsite_ini.txt first, then fall back to
+        // the compact occupation-matrix snapshot written by a previous
+        // run (occ_mat.txt). Legacy dm_onsite.txt input is not supported.
+        const std::vector<std::string> candidates = {"dm_onsite_ini.txt",
+                                                      "occ_mat.txt"};
+        const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
+        if (readin_fn.empty())
         {
-            // The file was read at the first ionic step; keep using the
-            // in-memory occupation matrix instead of reading the file
-            // again. For init_occ_mat=2 this matrix never changes; for
-            // init_occ_mat=1 it carries the result of the previous
-            // ionic step.
-            this->occmat_ = occmat_kept;
-            this->set_occmat_ready();
-            this->occmat_.copy_to_save(cell, this->l_channel);
-            if (this->has_occ_mixer())
-            {
-                // seed the freshly rebuilt mixer with the current matrix
-                this->occ_mixer().seed_save(this->occmat_);
-            }
+            ModuleBase::WARNING_QUIT("Plus_U_Base::init_base",
+                                     "init_occ_mat is set but no occupation-matrix file found in "
+                                     + global_readin_dir
+                                     + ". Tried: dm_onsite_ini.txt, occ_mat.txt");
         }
-        else
-        {
-            // Try the user-prepared dm_onsite_ini.txt first, then fall back to
-            // the compact occupation-matrix snapshot written by a previous
-            // run (occ_mat.txt). Legacy dm_onsite.txt input is not supported.
-            const std::vector<std::string> candidates = {"dm_onsite_ini.txt",
-                                                          "occ_mat.txt"};
-            const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
-            if (readin_fn.empty())
-            {
-                ModuleBase::WARNING_QUIT("Plus_U_Base::init_base",
-                                         "init_occ_mat is set but no occupation-matrix file found in "
-                                         + global_readin_dir
-                                         + ". Tried: dm_onsite_ini.txt, occ_mat.txt");
-            }
-            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
-                                    readin_fn, nspin, npol, soc_layout);
+        DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
+                                readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
-            DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
+        DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
 #endif
 
-            this->set_occmat_ready();
-            this->occmat_.copy_to_save(cell, this->l_channel);
-            if (this->has_occ_mixer())
-            {
-                // seed the mixing history with the file-loaded occupation matrix
-                this->occ_mixer().seed_save(this->occmat_);
-            }
-            this->occmat_file_loaded_ = true;
+        this->set_occmat_ready();
+        this->occmat_.copy_to_save(cell, this->l_channel);
+        if (this->has_occ_mixer())
+        {
+            // seed the mixing history with the file-loaded occupation matrix
+            this->occ_mixer().seed_save(this->occmat_);
         }
     }
     else
