@@ -3,8 +3,6 @@
 #include "elpa_new.h"
 #include "source_base/tool_quit.h"
 
-#include <mpi.h>
-
 #include <algorithm>
 #include <cmath>
 #include <complex>
@@ -12,6 +10,7 @@
 #include <iomanip>
 #include <limits>
 #include <map>
+#include <mpi.h>
 #include <random>
 #include <sstream>
 #include <utility>
@@ -57,8 +56,7 @@ std::pair<std::vector<Complex>, std::vector<Complex>> generate_hs()
             const double h_imag = distribution(generator);
 
             h[static_cast<std::size_t>(i) * kN + j] = {h_real, h_imag};
-            h[static_cast<std::size_t>(j) * kN + i]
-                = i == j ? Complex{h_real, 0.0} : Complex{h_real, -h_imag};
+            h[static_cast<std::size_t>(j) * kN + i] = i == j ? Complex{h_real, 0.0} : Complex{h_real, -h_imag};
 
             const double s_real = distribution(generator);
             const double s_imag = distribution(generator);
@@ -203,7 +201,7 @@ bool generate_a_tilde(std::vector<Complex>& result)
 double frobenius_norm(const std::vector<Complex>& matrix)
 {
     double norm_squared = 0.0;
-    for (const Complex value : matrix)
+    for (const Complex value: matrix)
     {
         norm_squared += std::norm(value);
     }
@@ -239,8 +237,7 @@ double relative_residual(const std::vector<Complex>& matrix,
 
     const double eigenvector_norm = vector_norm(eigenvector, kN);
     const double denominator = (matrix_norm + std::abs(eigenvalue)) * eigenvector_norm;
-    return denominator > 0.0 ? vector_norm(residual.data(), kN) / denominator
-                             : vector_norm(residual.data(), kN);
+    return denominator > 0.0 ? vector_norm(residual.data(), kN) / denominator : vector_norm(residual.data(), kN);
 }
 
 double orthogonality_error(const std::vector<Complex>& eigenvectors)
@@ -281,8 +278,7 @@ ElpaRuntimeCheckResult failed_result()
 
 bool needs_runtime_check(const int kernel)
 {
-    return kernel == ELPA_2STAGE_COMPLEX_AVX_BLOCK2
-           || kernel == ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
+    return kernel == ELPA_2STAGE_COMPLEX_AVX_BLOCK2 || kernel == ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
            || kernel == ELPA_2STAGE_COMPLEX_AVX512_BLOCK2;
 }
 
@@ -322,22 +318,18 @@ ElpaRuntimeCheckResult check_complex_block2_kernel(const int kernel)
     }
 #endif
 
-    if (!set_integer(handle, "na", kN, status)
-        || !set_integer(handle, "nev", kNev, status)
-        || !set_integer(handle, "local_nrows", kN, status)
-        || !set_integer(handle, "local_ncols", kN, status)
+    if (!set_integer(handle, "na", kN, status) || !set_integer(handle, "nev", kNev, status)
+        || !set_integer(handle, "local_nrows", kN, status) || !set_integer(handle, "local_ncols", kN, status)
         || !set_integer(handle, "nblk", kNblk, status)
         || !set_integer(handle, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_SELF), status)
-        || !set_integer(handle, "process_row", 0, status)
-        || !set_integer(handle, "process_col", 0, status))
+        || !set_integer(handle, "process_row", 0, status) || !set_integer(handle, "process_col", 0, status))
     {
         deallocate(status);
         return failed_result();
     }
 
     status = elpa_setup(handle);
-    if (status != ELPA_OK
-        || !set_integer(handle, "solver", ELPA_SOLVER_2STAGE, status)
+    if (status != ELPA_OK || !set_integer(handle, "solver", ELPA_SOLVER_2STAGE, status)
         || !set_integer(handle, "complex_kernel", kernel, status))
     {
         deallocate(status);
@@ -355,12 +347,9 @@ ElpaRuntimeCheckResult check_complex_block2_kernel(const int kernel)
     double maximum_residual = 0.0;
     for (int band = 0; band < kNev; ++band)
     {
-        maximum_residual
-            = std::max(maximum_residual,
-                       relative_residual(original_matrix,
-                                         &eigenvectors[index(0, band, kN)],
-                                         eigenvalues[band],
-                                         matrix_norm));
+        maximum_residual = std::max(
+            maximum_residual,
+            relative_residual(original_matrix, &eigenvectors[index(0, band, kN)], eigenvalues[band], matrix_norm));
     }
 
     const double orthogonality = orthogonality_error(eigenvectors);

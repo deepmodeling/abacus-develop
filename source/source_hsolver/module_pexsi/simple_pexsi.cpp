@@ -3,15 +3,6 @@
 // the Density Matrix and Energy Density Matrix calculated by PEXSI are transformed to 2D block cyclic distribution
 // #include "mpi.h"
 #ifdef __PEXSI
-#include <mpi.h>
-
-#include <cfloat>
-#include <cmath>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <memory>
-
 #include "c_pexsi_interface.h"
 #include "dist_bcd_matrix.h"
 #include "dist_ccs_matrix.h"
@@ -20,6 +11,14 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/diago_pexsi.h"
+
+#include <cfloat>
+#include <cmath>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <mpi.h>
 
 namespace pexsi
 {
@@ -246,7 +245,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
         plan = PPEXSIPlanInitialize(comm_PEXSI, pexsi_prow, pexsi_pcol, outputFileIndex, &info);
     }
     ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSIPlanInit");
-    
+
     ModuleBase::timer::end("Diago_LCAO_Matrix", "setup_PEXSI_plan");
 
     // create compressed column storage distribution matrix parameter
@@ -255,7 +254,6 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     DistCCSMatrix DST_Matrix(comm_PEXSI, numProcessPerPole, size);
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
     // DONE(ofs_running,"create compressed column storage distribution matrix parameter, finish");
-
 
     // create block cyclic distribution matrix parameter
     DistBCDMatrix SRC_Matrix(comm_2D, group_2D, blacs_ctxt, size, nblk, nrow, ncol, layout);
@@ -296,16 +294,16 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
         int numTotalInertiaIter = 0; // Number of total inertia[out]
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::start("Diago_LCAO_Matrix", "PEXSIDFT");
-        PPEXSIDFTDriver2(plan,                 // PEXSI plan[in]
-                        &options,              // PEXSI Options[in]
-                        numElectronExact,     // exact electron number[in]
-                        &mu,                  // chemical potential[out]
-                        &nelec,               // number of electrons[out]
-                        // &muMinInertia,        // Lower bound for mu after the last inertia[out]
-                        // &muMaxInertia,        // Upper bound for mu after the last inertia[out]
-                        &numTotalInertiaIter, // Number of total inertia[out]
-                        // &numTotalPEXSIIter,   // number of total pexsi evaluation procedure[out]
-                        &info);               // 0: successful; otherwise: unsuccessful
+        PPEXSIDFTDriver2(plan,             // PEXSI plan[in]
+                         &options,         // PEXSI Options[in]
+                         numElectronExact, // exact electron number[in]
+                         &mu,              // chemical potential[out]
+                         &nelec,           // number of electrons[out]
+                         // &muMinInertia,        // Lower bound for mu after the last inertia[out]
+                         // &muMaxInertia,        // Upper bound for mu after the last inertia[out]
+                         &numTotalInertiaIter, // Number of total inertia[out]
+                         // &numTotalPEXSIIter,   // number of total pexsi evaluation procedure[out]
+                         &info); // 0: successful; otherwise: unsuccessful
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::end("Diago_LCAO_Matrix", "PEXSIDFT");
 

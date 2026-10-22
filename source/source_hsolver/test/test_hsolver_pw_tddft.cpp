@@ -84,7 +84,11 @@ void initialize_basis(const std::vector<int>& sizes, ModulePW::PW_Basis_K* basis
 }
 
 template <typename T>
-std::vector<linear_test::Complex> dense_cn(const std::vector<T>& h, const std::vector<T>& previous, int n, int bands, double dt)
+std::vector<linear_test::Complex> dense_cn(const std::vector<T>& h,
+                                           const std::vector<T>& previous,
+                                           int n,
+                                           int bands,
+                                           double dt)
 {
     std::vector<T> lhs(n * n);
     std::vector<T> rhs_matrix(n * n);
@@ -102,7 +106,10 @@ std::vector<linear_test::Complex> dense_cn(const std::vector<T>& h, const std::v
 }
 
 template <typename T>
-void check_dense_step(const DenseHamiltonian<T>& op, const psi::Psi<T>& previous, const psi::Psi<T>& current, const double dt)
+void check_dense_step(const DenseHamiltonian<T>& op,
+                      const psi::Psi<T>& previous,
+                      const psi::Psi<T>& current,
+                      const double dt)
 {
     const double tolerance = std::is_same<T, std::complex<float>>::value ? 1e-4 : 1e-10;
     const int bands = current.get_nbands();

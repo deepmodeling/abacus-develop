@@ -1,5 +1,6 @@
 #ifdef __PEXSI
 #include "dist_bcd_matrix.h"
+
 #include <cctype>
 #include <mpi.h>
 extern "C"

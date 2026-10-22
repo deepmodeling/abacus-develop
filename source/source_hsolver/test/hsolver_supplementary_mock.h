@@ -13,13 +13,10 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
-
 void ElecState::init_nelec_spin()
 {
     return;
 }
-
-
 
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,

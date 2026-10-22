@@ -73,7 +73,11 @@ TYPED_TEST(LinearLowRankTest, CoarseAndHistoryCorrectionsMatchDenseReference)
         hsolver::LinearLowRank<T, Device> preconditioner(algebra, local_d.data(), dim);
         if (history)
         {
-            preconditioner.prepare_response(ld, response.rank(), response.directions(), response.images(), &correction_workspace);
+            preconditioner.prepare_response(ld,
+                                            response.rank(),
+                                            response.directions(),
+                                            response.images(),
+                                            &correction_workspace);
         }
         else
         {

@@ -1,7 +1,7 @@
 #ifdef __PEXSI
-#include "source_base/matrix_block.h"
 #include "source_hsolver/diago_pexsi.h"
 
+#include "source_base/matrix_block.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_global.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -382,8 +382,7 @@ class PexsiGammaOnlyTest : public ::testing::TestWithParam<PexsiTestCase>
 TEST_P(PexsiGammaOnlyTest, LCAO)
 {
     const auto& test_case = GetParam();
-    PexsiPrepare<double> dp(
-        0, 0, test_case.nb2d, 0, test_case.hfname, test_case.sfname, test_case.dmname);
+    PexsiPrepare<double> dp(0, 0, test_case.nb2d, 0, test_case.hfname, test_case.sfname, test_case.dmname);
 
     std::stringstream out_info;
     if (DETAILINFO && dp.myrank == 0)
@@ -417,14 +416,8 @@ INSTANTIATE_TEST_SUITE_P(
     DiagoTest,
     PexsiGammaOnlyTest,
     ::testing::Values(
-        PexsiTestCase{2,
-                      "PEXSI-H-GammaOnly-Si2.dat",
-                      "PEXSI-S-GammaOnly-Si2.dat",
-                      "PEXSI-DM-GammaOnly-Si2.dat"},
-        PexsiTestCase{1,
-                      "PEXSI-H-GammaOnly-Si2.dat",
-                      "PEXSI-S-GammaOnly-Si2.dat",
-                      "PEXSI-DM-GammaOnly-Si2.dat"}));
+        PexsiTestCase{2, "PEXSI-H-GammaOnly-Si2.dat", "PEXSI-S-GammaOnly-Si2.dat", "PEXSI-DM-GammaOnly-Si2.dat"},
+        PexsiTestCase{1, "PEXSI-H-GammaOnly-Si2.dat", "PEXSI-S-GammaOnly-Si2.dat", "PEXSI-DM-GammaOnly-Si2.dat"}));
 
 int main(int argc, char** argv)
 {

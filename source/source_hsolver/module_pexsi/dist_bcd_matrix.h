@@ -1,9 +1,9 @@
 #ifndef DISTBCDMATRIX_H
 #define DISTBCDMATRIX_H
 
-#include <mpi.h>
-
 #include "source_hsolver/module_pexsi/dist_mat_tf.h"
+
+#include <mpi.h>
 // a Block Cyclic Data Distribution matrix
 // http://www.netlib.org/utk/papers/factor/node3.html
 // local matrix elements is stored in column major

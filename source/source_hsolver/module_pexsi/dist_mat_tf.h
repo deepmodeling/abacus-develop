@@ -1,8 +1,8 @@
 #ifndef DIST_MAT_TF_H
 #define DIST_MAT_TF_H
 
-#include <mpi.h>
 #include <map>
+#include <mpi.h>
 #include <vector>
 // transform a sparse matrix from block cyclic distribution (BCD) to Compressed Column Storage (CCS) distribution
 // they should have same MPI communicator

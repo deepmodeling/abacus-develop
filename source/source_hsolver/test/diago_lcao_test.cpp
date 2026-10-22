@@ -1,8 +1,8 @@
-#include "source_base/matrix_block.h"
-#include "source_hsolver/diago_scalapack.h"
-#include "source_hsolver/diago_lapack.h"
-#include "source_hsolver/test/diago_elpa_utils.h"
 #include "mpi.h"
+#include "source_base/matrix_block.h"
+#include "source_hsolver/diago_lapack.h"
+#include "source_hsolver/diago_scalapack.h"
+#include "source_hsolver/test/diago_elpa_utils.h"
 #include "string.h"
 
 #include "gtest/gtest.h"
@@ -69,7 +69,7 @@ class DiagoPrepare
 
         if (ks_solver == "scalapack_gvx")
             ;
-//             dh = new hsolver::DiagoScalapack<T>;
+        //             dh = new hsolver::DiagoScalapack<T>;
         else if (ks_solver == "lapack")
             ;
 #ifdef __ELPA
@@ -269,13 +269,13 @@ class DiagoPrepare
                 hsolver::DiagoLapack<T> la(nlocal, nbands);
                 la.diag(h_mat, s_mat, psi, e_solver.data());
             }
-    #ifdef __ELPA
+#ifdef __ELPA
             else if (ks_solver == "genelpa")
             {
                 hsolver::DiagoElpa<T> dh(nlocal, nbands);
                 dh.diag(h_mat, s_mat, psi, e_solver.data());
             }
-    #endif
+#endif
             // dh.diag(&hmtest, psi, e_solver.data());
         }
         endtime = MPI_Wtime();
@@ -371,7 +371,7 @@ INSTANTIATE_TEST_SUITE_P(
         // DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"),
         DiagoPrepare<double>(0, 0, 1, 0, "lapack", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat")
         // DiagoPrepare<double>(0, 0, 32, 0, "lapack", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat")
-    ));
+        ));
 
 class DiagoKPointsTest : public ::testing::TestWithParam<DiagoPrepare<std::complex<double>>>
 {
@@ -419,8 +419,7 @@ class DiagoElpaNativeUpperTest : public ::testing::TestWithParam<int>
 
 TEST_P(DiagoElpaNativeUpperTest, PreservesInputsAndIgnoresLowerTriangle)
 {
-    DiagoPrepare<std::complex<double>> dp(0, 0, GetParam(), 0, "genelpa",
-                                          "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
+    DiagoPrepare<std::complex<double>> dp(0, 0, GetParam(), 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
     ASSERT_TRUE(dp.produce_HS());
     dp.diago_native_with_poisoned_lower();
     if (dp.myrank == 0)
@@ -498,12 +497,7 @@ TEST(DiagoElpaComplexTest, FallbackUsesAuthoritativeUpperTriangle)
     dp.pb2d();
     dp.distribute_data();
     int decomposed_state = 3;
-    ELPA_Solver solver(false,
-                       MPI_COMM_WORLD,
-                       dp.nbands,
-                       dp.hmtest.nrow,
-                       dp.hmtest.ncol,
-                       dp.hmtest.desc);
+    ELPA_Solver solver(false, MPI_COMM_WORLD, dp.nbands, dp.hmtest.nrow, dp.hmtest.ncol, dp.hmtest.desc);
     solver.generalized_eigenvector(dp.h_local.data(),
                                    dp.s_local.data(),
                                    decomposed_state,

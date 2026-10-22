@@ -1,7 +1,7 @@
+#include "mpi.h"
 #include "source_base/matrix_block.h"
 #include "source_hsolver/diago_scalapack.h"
 #include "source_hsolver/test/diago_elpa_utils.h"
-#include "mpi.h"
 #include "string.h"
 
 #include "gtest/gtest.h"
@@ -68,10 +68,10 @@ class DiagoPrepare
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
         if (ks_solver == "scalapack_gvx")
-            ;//dh = new hsolver::DiagoScalapack<T>;
+            ; // dh = new hsolver::DiagoScalapack<T>;
 #ifdef __CUDA
         else if (ks_solver == "cusolver")
-            ;//dh = new hsolver::DiagoCusolver<T>;
+            ; // dh = new hsolver::DiagoCusolver<T>;
 #endif
         else
         {
@@ -239,13 +239,13 @@ class DiagoPrepare
                 hsolver::DiagoScalapack<T> dh(nlocal, nbands);
                 dh.diag(h_mat, s_mat, psi, e_solver.data());
             }
-    #ifdef __CUDA
+#ifdef __CUDA
             else if (ks_solver == "cusolver")
-                {
-                    hsolver::DiagoCusolver<T> dh(nlocal, nbands);
-                    dh.diag(h_mat, s_mat, psi, e_solver.data());
-                }
-    #endif
+            {
+                hsolver::DiagoCusolver<T> dh(nlocal, nbands);
+                dh.diag(h_mat, s_mat, psi, e_solver.data());
+            }
+#endif
             // dh->diag(&hmtest, psi, e_solver.data());
         }
         endtime = MPI_Wtime();

@@ -66,7 +66,7 @@ class DistCCSMatrix
 
     // total number of processes and the processes with data in
     int nprocs = 0;
-    int nproc_data =0;
+    int nproc_data = 0;
     MPI_Group group_data;
     MPI_Comm comm_data;
 
@@ -83,7 +83,7 @@ class DistCCSMatrix
     int numColLocal;
 
     // the first column index in current process
-    int firstCol=0;
+    int firstCol = 0;
 
     // Array stores the indices to the nonzero row indices in rowptrLocal and nzvalLocal
     int* colptrLocal = nullptr;

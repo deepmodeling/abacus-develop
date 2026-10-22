@@ -1,5 +1,4 @@
 #include "../para_lin_tf.h"
-
 #include "source_base/kernels/math_kernel_op.h"
 
 #include <gtest/gtest.h>

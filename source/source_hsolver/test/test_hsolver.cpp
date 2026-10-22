@@ -1,11 +1,10 @@
-#include <gtest/gtest.h>
+#include "source_hsolver/hsolver.h"
 
 #include <cstdio>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <sstream>
 #include <string>
-
-#include "source_hsolver/hsolver.h"
 
 /************************************************
  *  unit test of the free functions in hsolver.h
