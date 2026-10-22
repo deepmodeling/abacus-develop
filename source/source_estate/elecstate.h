@@ -116,6 +116,7 @@ class ElecState
     // if nupdown is not 0(TWO_EFERMI case),
     // nelec_spin will be fixed and weights will be constrained
     void init_nelec_spin();
+    void init_nelec_spin(int nspin, double nelect, double nupdown);
     // used to record number of electrons per spin index
     // for NSPIN=2, it will record number of spin up and number of spin down
     // for NSPIN=4, it will record total number, magnetization for x, y, z direction

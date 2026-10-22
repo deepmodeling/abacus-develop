@@ -34,7 +34,9 @@ bool ESolver_FP::apply_electronic_control(Parameter& parameters, const elecstate
 {
     if (!pelec || !pelec->charge || !pelec->pot)
     { throw std::runtime_error("electronic state is not initialized for electron control"); }
-    elecstate::update_electron_count(*pelec, parameters, control.nelect);
+    elecstate::ParamUpdater::update_electron_count(control.nelect, parameters);
+    elecstate::update_electron_count(*pelec, control.nelect, parameters.inp.nspin,
+                                   parameters.inp.nupdown, parameters.globalv.two_fermi);
     return true;
 }
 

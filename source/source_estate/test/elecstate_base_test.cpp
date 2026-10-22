@@ -213,6 +213,32 @@ TEST_F(ElecStateTest, InitNelecSpin)
     EXPECT_EQ(elecstate->nelec_spin[1], 5.0);
 }
 
+TEST_F(ElecStateTest, ElectronicRequestUsesExplicitSpinState)
+{
+    // The fixture uses global N=10, nspin=1 and two_fermi=false.
+    elecstate::update_electron_count(*elecstate, 8.2, 2, 0.2, true);
+    ASSERT_EQ(elecstate->nelec_spin.size(), 2u);
+    EXPECT_NEAR(elecstate->nelec_spin[0], 4.2, 1e-14);
+    EXPECT_NEAR(elecstate->nelec_spin[1], 4.0, 1e-14);
+    EXPECT_TRUE(elecstate->eferm.two_efermi);
+
+    elecstate::update_electron_count(*elecstate, 7.8, 2, -0.2, false);
+    EXPECT_NEAR(elecstate->nelec_spin[0], 3.8, 1e-14);
+    EXPECT_NEAR(elecstate->nelec_spin[1], 4.0, 1e-14);
+    EXPECT_FALSE(elecstate->eferm.two_efermi);
+
+    elecstate::update_electron_count(*elecstate, 8.0, 2, 0.0, true);
+    EXPECT_DOUBLE_EQ(elecstate->nelec_spin[0], 4.0);
+    EXPECT_DOUBLE_EQ(elecstate->nelec_spin[1], 4.0);
+    EXPECT_TRUE(elecstate->eferm.two_efermi);
+
+    // The explicit path must leave the native parameter source unchanged.
+    TestParameters::set_nspin(2);
+    elecstate->init_nelec_spin();
+    EXPECT_DOUBLE_EQ(elecstate->nelec_spin[0], 5.0);
+    EXPECT_DOUBLE_EQ(elecstate->nelec_spin[1], 5.0);
+}
+
 TEST_F(ElecStateTest, Constructor)
 {
     Charge* charge = new Charge;

@@ -1,7 +1,6 @@
 #include "elecstate_tools.h"
 
 #include "occupy.h"
-#include "param_update.h"
 
 #include <cmath>
 #include <stdexcept>
@@ -13,11 +12,10 @@
 
 namespace elecstate
 {
-void update_electron_count(ElecState& state, Parameter& parameters, double nelect)
+void update_electron_count(ElecState& state, double nelect, int nspin, double nupdown, bool two_fermi)
 {
-    ParamUpdater::update_electron_count(nelect, parameters);
-    state.eferm.two_efermi = parameters.globalv.two_fermi;
-    state.init_nelec_spin();
+    state.eferm.two_efermi = two_fermi;
+    state.init_nelec_spin(nspin, nelect, nupdown);
 }
 
 double electronic_chemical_potential(const Efermi& fermi, bool two_fermi)

@@ -3,11 +3,9 @@
 #include "elecstate.h"
 #include "source_base/matrix.h"
 
-class Parameter;
-
 namespace elecstate
 {
-void update_electron_count(ElecState& state, Parameter& parameters, double nelect);
+void update_electron_count(ElecState& state, double nelect, int nspin, double nupdown, bool two_fermi);
 double electronic_chemical_potential(const Efermi& fermi, bool two_fermi);
 
 void calEBand(const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, fenergy& f_en);
