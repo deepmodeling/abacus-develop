@@ -26,13 +26,13 @@
 #include "diago_pexsi.h"
 #endif
 
-#include "source_base/module_device/device.h"
-#include "source_estate/elecstate_tools.h"
 #include "source_base/memory_recorder.h"
+#include "source_base/module_device/device.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/module_dm/dm_from_psi.h"
+#include "source_estate/elecstate_tools.h"
 #include "source_estate/module_dm/density_matrix.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_hsolver/parallel_k2d.h"
 
 namespace hsolver
@@ -40,33 +40,36 @@ namespace hsolver
 
 template <typename TK>
 void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
-                                   psi::Psi<TK>& psi,
-								   elecstate::ElecState* pes,
-								   module_dm::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
-								   Charge &chr,
-                                   const int nspin,
-                                   const double omega,
-                                   const bool skip_charge)
+                            psi::Psi<TK>& psi,
+                            elecstate::ElecState* pes,
+                            module_dm::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
+                            Charge& chr,
+                            const int nspin,
+                            const double omega,
+                            const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
     ModuleBase::timer::start("HSolverLCAO", "solve");
 
     if (this->method != "pexsi")
     {
-    #ifdef __MPI
-    #ifdef __CUDA
+#ifdef __MPI
+#ifdef __CUDA
         if (this->method == "cusolver" && this->world_nproc > 1)
         {
             this->parakSolve_cusolver(hs, psi, pes);
-        }else 
-    #endif
-        if (this->kpar_lcao > 1
-            && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx" || this->method == "lapack"))
+        }
+        else
+#endif
+            if (this->kpar_lcao > 1
+                && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"
+                    || this->method == "lapack"))
         {
             this->parakSolve(hs, psi, pes, this->kpar_lcao, nspin);
-        } else
-    #endif
-        if (this->kpar_lcao == 1)
+        }
+        else
+#endif
+            if (this->kpar_lcao == 1)
         {
             /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
             for (int ik = 0; ik < psi.get_nk(); ++ik)
@@ -194,10 +197,10 @@ void HSolverLCAO<T>::hamiltSolvePsiK(ModuleBase::MatrixBlock<T>& hk,
 
 template <typename T>
 void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
-                                        psi::Psi<T>& psi,
-                                        elecstate::ElecState* pes,
-                                        const int kpar,
-                                        const int nspin)
+                                psi::Psi<T>& psi,
+                                elecstate::ElecState* pes,
+                                const int kpar,
+                                const int nspin)
 {
 #ifdef __MPI
     ModuleBase::timer::start("HSolverLCAO", "parakSolve");
@@ -211,8 +214,7 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
     /// set psi_pool
     const int zero = 0;
     int coord_col = k2d.get_p2D_pool()->get_coord_col();
-    int ncol_bands_pool
-        = numroc_(&(nbands), &(nb2d), &coord_col, &zero, &(k2d.get_p2D_pool()->dim1));
+    int ncol_bands_pool = numroc_(&(nbands), &(nb2d), &coord_col, &zero, &(k2d.get_p2D_pool()->dim1));
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < k2d.get_pKpoints()->get_max_nks_pool(); ++ik)
     {
@@ -317,11 +319,9 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
 #endif
 }
 
-#if defined (__MPI) && defined (__CUDA)
+#if defined(__MPI) && defined(__CUDA)
 template <typename T>
-void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
-                                            psi::Psi<T>& psi,
-                                            elecstate::ElecState* pes)
+void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs, psi::Psi<T>& psi, elecstate::ElecState* pes)
 {
     ModuleBase::timer::start("HSolverLCAO", "parakSolve");
     // GPU device is already bound by DeviceContext::init() in read_input.cpp
@@ -340,17 +340,18 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
     std::vector<int> all_local_ranks(world_size);
     std::vector<int> all_is_active(world_size);
 
-    MPI_Allgather(&local_rank, 1, MPI_INT, 
-                  all_local_ranks.data(), 1, MPI_INT, MPI_COMM_WORLD);
-    MPI_Allgather(&is_active_int, 1, MPI_INT, 
-                  all_is_active.data(), 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Allgather(&local_rank, 1, MPI_INT, all_local_ranks.data(), 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Allgather(&is_active_int, 1, MPI_INT, all_is_active.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
     int total_active_ranks = 0;
     int max_local_rank = 0;
-    for (int i = 0; i < world_size; ++i) {
-        if (all_is_active[i]) {
+    for (int i = 0; i < world_size; ++i)
+    {
+        if (all_is_active[i])
+        {
             total_active_ranks++;
-            if(all_local_ranks[i] > max_local_rank) max_local_rank = all_local_ranks[i];
+            if (all_local_ranks[i] > max_local_rank)
+                max_local_rank = all_local_ranks[i];
         }
     }
 
@@ -359,30 +360,30 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
     // The k-points will be distributed among these ranks in a round-robin fashion.
     // The purpose of setting the order is to ensure load balancing among nodes as much as possible
     std::vector<int> active_ranks;
-    for(int r = 0; r <= max_local_rank; r++)
+    for (int r = 0; r <= max_local_rank; r++)
     {
-        for(int j = 0; j < world_size; j++)
+        for (int j = 0; j < world_size; j++)
         {
-            if(all_is_active[j] && all_local_ranks[j] == r)
+            if (all_is_active[j] && all_local_ranks[j] == r)
             {
                 active_ranks.push_back(j);
             }
         }
     }
-    
-    const int nks = psi.get_nk();  // total number of k points
+
+    const int nks = psi.get_nk(); // total number of k points
     const int nbands = this->ParaV->get_nbands();
     // Set the parallel storage scheme for the matrix and psi
-    Parallel_2D mat_para_global;    // store the info about how the origin matrix is distributed in parallel
-    Parallel_2D mat_para_local;     // store the info about how the matrix is distributed after collected from all processes
-    Parallel_2D psi_para_global;    // store the info about how the psi is distributed in parallel
-    Parallel_2D psi_para_local;     // store the info about how the psi is distributed before distributing to all processes
+    Parallel_2D mat_para_global; // store the info about how the origin matrix is distributed in parallel
+    Parallel_2D mat_para_local; // store the info about how the matrix is distributed after collected from all processes
+    Parallel_2D psi_para_global; // store the info about how the psi is distributed in parallel
+    Parallel_2D psi_para_local;  // store the info about how the psi is distributed before distributing to all processes
 
-    MPI_Comm self_comm;  // the communicator that only contains the current process itself
+    MPI_Comm self_comm; // the communicator that only contains the current process itself
     MPI_Comm_split(MPI_COMM_WORLD, world_rank, 0, &self_comm);
     int nrow = this->ParaV->get_global_row_size(); // number of rows in the global matrix
     int ncol = nrow;
-    int nb2d = this->ParaV->get_block_size();      // block size for the 2D matrix distribution
+    int nb2d = this->ParaV->get_block_size(); // block size for the 2D matrix distribution
     mat_para_global.init(nrow, ncol, nb2d, MPI_COMM_WORLD);
     psi_para_global.init(nrow, nbands, nb2d, MPI_COMM_WORLD);
     mat_para_local.init(nrow, ncol, nb2d, self_comm);
@@ -391,12 +392,12 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
     std::vector<T> hk_mat; // temporary storage for H(k) matrix collected from all processes
     std::vector<T> sk_mat; // temporary storage for S(k) matrix collected from all processes
     // In each iteration, we process total_active_ranks k-points.
-    for(int ik_start = 0; ik_start < nks; ik_start += total_active_ranks)
+    for (int ik_start = 0; ik_start < nks; ik_start += total_active_ranks)
     {
         int kpt_assigned = -1; // the k-point assigned to the current MPI process in this iteration
         // Compute and gather the hk and sk matrices distributed across different processes in parallel,
         // preparing for subsequent transfer to the GPU for computation.
-        for(int ik = ik_start; ik < ik_start + total_active_ranks && ik < nks; ik++)
+        for (int ik = ik_start; ik < ik_start + total_active_ranks && ik < nks; ik++)
         {
             // `is_active` indicates whether this MPI process is assigned to compute the current k-point
             bool is_active = world_rank == active_ranks[ik % total_active_ranks];
@@ -412,36 +413,50 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
             T* hk_local_ptr = hk_mat.data();
             T* sk_local_ptr = sk_mat.data();
             std::copy(mat_para_local.desc, mat_para_local.desc + 9, desc_tmp);
-            if( !is_active)
+            if (!is_active)
             {
                 desc_tmp[1] = -1;
             }
 
-            Cpxgemr2d(nrow, ncol, hk_2D.p, 1, 1, mat_para_global.desc,
-                      hk_local_ptr, 1, 1, desc_tmp,
+            Cpxgemr2d(nrow,
+                      ncol,
+                      hk_2D.p,
+                      1,
+                      1,
+                      mat_para_global.desc,
+                      hk_local_ptr,
+                      1,
+                      1,
+                      desc_tmp,
                       mat_para_global.blacs_ctxt);
-            Cpxgemr2d(nrow, ncol, sk_2D.p, 1, 1, mat_para_global.desc,
-                      sk_local_ptr, 1, 1, desc_tmp,
+            Cpxgemr2d(nrow,
+                      ncol,
+                      sk_2D.p,
+                      1,
+                      1,
+                      mat_para_global.desc,
+                      sk_local_ptr,
+                      1,
+                      1,
+                      desc_tmp,
                       mat_para_global.blacs_ctxt);
         }
 
         // diagonalize the Hamiltonian matrix using cusolver
         psi::Psi<T> psi_local{};
-        if(kpt_assigned != -1)
+        if (kpt_assigned != -1)
         {
             psi_local.resize(1, ncol, nrow);
             DiagoCusolver<T> cu(this->nlocal, this->nbands);
-            ModuleBase::MatrixBlock<T> hk_local = ModuleBase::MatrixBlock<T>{
-                    hk_mat.data(), (size_t)nrow, (size_t)ncol,
-                    mat_para_local.desc};
-            ModuleBase::MatrixBlock<T> sk_local = ModuleBase::MatrixBlock<T>{
-                    sk_mat.data(), (size_t)nrow, (size_t)ncol,
-                    mat_para_local.desc};
+            ModuleBase::MatrixBlock<T> hk_local
+                = ModuleBase::MatrixBlock<T>{hk_mat.data(), (size_t)nrow, (size_t)ncol, mat_para_local.desc};
+            ModuleBase::MatrixBlock<T> sk_local
+                = ModuleBase::MatrixBlock<T>{sk_mat.data(), (size_t)nrow, (size_t)ncol, mat_para_local.desc};
             cu.diag(hk_local, sk_local, psi_local, &(pes->ekb(kpt_assigned, 0)));
         }
 
         // transfer the eigenvectors and eigenvalues to all processes
-        for(int ik = ik_start; ik < ik_start + total_active_ranks && ik < nks; ik++)
+        for (int ik = ik_start; ik < ik_start + total_active_ranks && ik < nks; ik++)
         {
             int root = active_ranks[ik % total_active_ranks];
             MPI_Bcast(&(pes->ekb(ik, 0)), nbands, MPI_DOUBLE, root, MPI_COMM_WORLD);
@@ -451,7 +466,8 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
             if (world_rank != root)
             {
                 desc_pool[1] = -1;
-            }else
+            }
+            else
             {
                 psi_local_ptr = psi_local.get_pointer();
             }
@@ -474,7 +490,6 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
     ModuleBase::timer::end("HSolverLCAO", "parakSolve");
 }
 #endif
-
 
 template class HSolverLCAO<double>;
 template class HSolverLCAO<std::complex<double>>;

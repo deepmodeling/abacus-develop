@@ -34,7 +34,6 @@ double set_diagethr_sdft(const std::string basis_type,
                          const double nelec_in,
                          const double scf_thr_in);
 
-
 // reset diagethr according to drho and hsolver_error
 double reset_diag_ethr(std::ofstream& ofs_running,
                        const std::string basis_type,

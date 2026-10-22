@@ -1,7 +1,7 @@
 #ifndef DIAGOCUSOLVER_H
 #define DIAGOCUSOLVER_H
 
-#include "source_base/macros.h"   // GetRealType
+#include "source_base/macros.h" // GetRealType
 #include "source_base/matrix_block.h"
 #include "source_hsolver/kernels/cuda/diag_cusolver.cuh"
 #include "source_psi/psi.h"
@@ -18,18 +18,16 @@ class DiagoCusolver
     using Real = typename GetTypeReal<T>::type;
 
   public:
-
     /// @param nlocal_in global dimension of the NAO Hamiltonian
     /// @param nbands_in number of lowest eigenpairs to compute
     DiagoCusolver(const int nlocal_in, const int nbands_in);
     ~DiagoCusolver();
 
     // Override the diag function for CUSOLVER diagonalization
-    void diag(
-      ModuleBase::MatrixBlock<T>& h_mat,
-      ModuleBase::MatrixBlock<T>& s_mat,
-      psi::Psi<T>& psi,
-      Real* eigenvalue_in);
+    void diag(ModuleBase::MatrixBlock<T>& h_mat,
+              ModuleBase::MatrixBlock<T>& s_mat,
+              psi::Psi<T>& psi,
+              Real* eigenvalue_in);
 
     // Static variable to keep track of the decomposition state
     static int DecomposedState;

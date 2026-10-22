@@ -58,7 +58,8 @@ class LinearLowRank final : public LinearOperator<T, Device>
     const T* correction_ = nullptr;
 
   public:
-    LinearLowRank(LinearAlgebra<T, Device>& algebra, const T* diagonal, int dim) : algebra_(algebra), diagonal_(diagonal), dim_(dim)
+    LinearLowRank(LinearAlgebra<T, Device>& algebra, const T* diagonal, int dim)
+        : algebra_(algebra), diagonal_(diagonal), dim_(dim)
     {
     }
     bool is_identity() const override
@@ -80,13 +81,24 @@ class LinearLowRank final : public LinearOperator<T, Device>
      *  @param factor Borrowed factorization of basis^H*images; keep it valid and unchanged until the last apply.
      *  @param workspace Caller-owned correction storage; do not modify or resize it until the last apply.
      */
-    void prepare_subspace(int ld, int rank, const T* basis, const T* images, const LinearSmallLU& factor, ct::Tensor* workspace);
+    void prepare_subspace(int ld,
+                          int rank,
+                          const T* basis,
+                          const T* images,
+                          const LinearSmallLU& factor,
+                          ct::Tensor* workspace);
     /** @brief Apply the fixed correction; throw LinearPreconditionerError if the coarse solve fails. */
     void apply(const T* x, T* y, int ld, int nvec) const override;
 
   private:
     /** @brief Form Z-D*W and retain the projection data for subsequent applications. */
-    void prepare(int ld, int rank, const T* z, const T* w, const T* test, const LinearSmallLU* factor, ct::Tensor* workspace);
+    void prepare(int ld,
+                 int rank,
+                 const T* z,
+                 const T* w,
+                 const T* test,
+                 const LinearSmallLU* factor,
+                 ct::Tensor* workspace);
 };
 } // namespace hsolver
 #endif

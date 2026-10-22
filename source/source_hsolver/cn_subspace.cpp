@@ -6,7 +6,12 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-bool CNSubspace<T, Device>::prepare(LinearAlgebra<T, Device>& algebra, int ld, int dim, int bands, const T* u, const T* b)
+bool CNSubspace<T, Device>::prepare(LinearAlgebra<T, Device>& algebra,
+                                    int ld,
+                                    int dim,
+                                    int bands,
+                                    const T* u,
+                                    const T* b)
 {
     const int64_t elements = static_cast<int64_t>(ld) * bands;
     linear_buffer<T, Device>(&image_, elements);

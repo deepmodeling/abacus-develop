@@ -27,7 +27,19 @@ void multiply(const std::vector<Wide>& a, const std::vector<Wide>& b, int n, std
 {
     const Wide one(1);
     const Wide zero(0);
-    ModuleBase::gemm_op<Wide, base_device::DEVICE_CPU>()('N', 'N', n, n, n, &one, a.data(), n, b.data(), n, &zero, result->data(), n);
+    ModuleBase::gemm_op<Wide, base_device::DEVICE_CPU>()('N',
+                                                         'N',
+                                                         n,
+                                                         n,
+                                                         n,
+                                                         &one,
+                                                         a.data(),
+                                                         n,
+                                                         b.data(),
+                                                         n,
+                                                         &zero,
+                                                         result->data(),
+                                                         n);
 }
 
 bool cholesky(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
@@ -67,7 +79,19 @@ bool lowdin(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
     std::vector<double> rwork(lrwork);
     std::vector<int> iwork(liwork);
     int info = 0;
-    zheevd_(&vectors, &upper, &n, u.data(), &n, values.data(), work.data(), &lwork, rwork.data(), &lrwork, iwork.data(), &liwork, &info);
+    zheevd_(&vectors,
+            &upper,
+            &n,
+            u.data(),
+            &n,
+            values.data(),
+            work.data(),
+            &lwork,
+            rwork.data(),
+            &lrwork,
+            iwork.data(),
+            &liwork,
+            &info);
     bool valid = info == 0;
     for (double value: values)
     {
@@ -86,7 +110,19 @@ bool lowdin(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
         c->resize(n * n);
         const Wide one(1);
         const Wide zero(0);
-        ModuleBase::gemm_op<Wide, base_device::DEVICE_CPU>()('N', 'C', n, n, n, &one, scaled.data(), n, u.data(), n, &zero, c->data(), n);
+        ModuleBase::gemm_op<Wide, base_device::DEVICE_CPU>()('N',
+                                                             'C',
+                                                             n,
+                                                             n,
+                                                             n,
+                                                             &one,
+                                                             scaled.data(),
+                                                             n,
+                                                             u.data(),
+                                                             n,
+                                                             &zero,
+                                                             c->data(),
+                                                             n);
     }
     ModuleBase::timer::end("Orthonormal", "lowdin");
     return valid;

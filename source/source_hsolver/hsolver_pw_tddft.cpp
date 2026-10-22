@@ -40,7 +40,8 @@ template <typename T, typename Device>
 class ShiftedHOperator final : public LinearOperator<T, Device>
 {
   public:
-    ShiftedHOperator(const HSOperator<T, Device>& op, const T coefficient, const int dim) : op_(op), coefficient_(coefficient), dim_(dim)
+    ShiftedHOperator(const HSOperator<T, Device>& op, const T coefficient, const int dim)
+        : op_(op), coefficient_(coefficient), dim_(dim)
     {
     }
     void apply(const T* x, T* y, const int ld, const int nvec) const override
@@ -90,7 +91,8 @@ HSolverPWTDDFT<T, Device>::HSolverPWTDDFT(const ModulePW::PW_Basis_K& basis,
                                           const PWLinearOptions& options,
                                           const diag_comm_info& comm,
                                           std::ostream& log)
-    : basis_(basis), comm_(comm), options_(options), algebra_(comm), orthonormal_(comm, algebra_), log_(log), band_products_(comm, 9)
+    : basis_(basis), comm_(comm), options_(options), algebra_(comm), orthonormal_(comm, algebra_), log_(log),
+      band_products_(comm, 9)
 {
     initialize();
     log_ << " PW RT-TDDFT orthonormalization: " << orth_method_name(options_.orthonormal) << '\n';
@@ -176,14 +178,16 @@ void HSolverPWTDDFT<T, Device>::update_precond(const int ik,
     std::vector<T> inverse(dim);
     for (int ig = 0; ig < dim; ++ig)
     {
-        const double kinetic = options_.kinetic_enabled ? ModulePW::shifted_kinetic(basis_, ik, ig, momentum_shift) : 0.0;
+        const double kinetic
+            = options_.kinetic_enabled ? ModulePW::shifted_kinetic(basis_, ik, ig, momentum_shift) : 0.0;
         inverse[ig] = T(1) / (T(1) + coefficient * static_cast<Real>(kinetic));
     }
     if (dim > 0)
     {
-        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(inverse_kinetic_.template data<T>(),
-                                                                                         inverse.data(),
-                                                                                         dim);
+        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+            inverse_kinetic_.template data<T>(),
+            inverse.data(),
+            dim);
     }
     ModuleBase::timer::end("HSolverPWTDDFT", "update_precond");
 }
@@ -201,8 +205,9 @@ void HSolverPWTDDFT<T, Device>::prepare_sequence(int nk, int ld, int bands, doub
     {
         return;
     }
-    const bool reset = states_.size() != static_cast<size_t>(nk) || dt != sequence_.dt || ld != sequence_.ld || bands != sequence_.bands
-                       || step < sequence_.step || (step == sequence_.step && iteration <= sequence_.iteration);
+    const bool reset = states_.size() != static_cast<size_t>(nk) || dt != sequence_.dt || ld != sequence_.ld
+                       || bands != sequence_.bands || step < sequence_.step
+                       || (step == sequence_.step && iteration <= sequence_.iteration);
     if (reset)
     {
         states_.clear();
@@ -250,7 +255,8 @@ void HSolverPWTDDFT<T, Device>::retry_kinetic(const LinearOperator<T, Device>& o
     const T* inverse = inverse_kinetic_.template data<T>();
     const LinearLowRank<T, Device> diagonal(algebra_, inverse, batch.dim);
     const T* rhs = rhs_.template data<T>();
-    LinearSolveResult retry = linear_solver_->solve(op, diagonal, batch.ld, batch.bands, batch.dim, current, rhs, nullptr, true, control);
+    LinearSolveResult retry
+        = linear_solver_->solve(op, diagonal, batch.ld, batch.bands, batch.dim, current, rhs, nullptr, true, control);
     retry.iterations += result->iterations;
     retry.restarts += result->restarts;
     retry.operator_calls += result->operator_calls;
@@ -280,29 +286,41 @@ void HSolverPWTDDFT<T, Device>::update_state(KPointState* state,
         state->independent_step = step;
     }
     if (options_.preconditioner == PWPreconditioner::kinetic_recycle && details.projected
-        && details.linear.status == LinearSolveStatus::converged && details.linear.reconstruction_fallbacks == 0 && !details.retried)
+        && details.linear.status == LinearSolveStatus::converged && details.linear.reconstruction_fallbacks == 0
+        && !details.retried)
     {
         const T* seed = projection_.seed();
         const T* residual = projection_.residual();
         const double tolerance = linear_solver_->tolerance();
-        state->response.update(algebra_, batch.ld, batch.dim, batch.bands, current, seed, residual, tolerance, &response_workspace_);
+        state->response.update(algebra_,
+                               batch.ld,
+                               batch.dim,
+                               batch.bands,
+                               current,
+                               seed,
+                               residual,
+                               tolerance,
+                               &response_workspace_);
     }
 }
 
 template <typename T, typename Device>
-typename HSolverPWTDDFT<T, Device>::SolveDetails HSolverPWTDDFT<T, Device>::solve_kpoint(const LinearOperator<T, Device>& op,
-                                                                                         const T* previous,
-                                                                                         T* current,
-                                                                                         const SolveBatch& batch,
-                                                                                         int step,
-                                                                                         int iteration,
-                                                                                         KPointState* state)
+typename HSolverPWTDDFT<T, Device>::SolveDetails HSolverPWTDDFT<T, Device>::solve_kpoint(
+    const LinearOperator<T, Device>& op,
+    const T* previous,
+    T* current,
+    const SolveBatch& batch,
+    int step,
+    int iteration,
+    KPointState* state)
 {
     SolveDetails details;
     const T* rhs = rhs_.template data<T>();
-    const bool need_projection = (options_.cn_init && iteration == 1) || options_.preconditioner == PWPreconditioner::kinetic_recycle
+    const bool need_projection = (options_.cn_init && iteration == 1)
+                                 || options_.preconditioner == PWPreconditioner::kinetic_recycle
                                  || options_.preconditioner == PWPreconditioner::kinetic_subspace;
-    details.projected = need_projection && projection_.prepare(algebra_, batch.ld, batch.dim, batch.bands, previous, rhs);
+    details.projected
+        = need_projection && projection_.prepare(algebra_, batch.ld, batch.dim, batch.bands, previous, rhs);
     const T* initial_residual = nullptr;
     if (options_.cn_init && iteration == 1 && details.projected)
     {
@@ -312,7 +330,8 @@ typename HSolverPWTDDFT<T, Device>::SolveDetails HSolverPWTDDFT<T, Device>::solv
         details.cn_initial = true;
     }
     const bool force_check = require_audit(step, state);
-    const T* inverse = options_.preconditioner == PWPreconditioner::none ? nullptr : inverse_kinetic_.template data<T>();
+    const T* inverse
+        = options_.preconditioner == PWPreconditioner::none ? nullptr : inverse_kinetic_.template data<T>();
     LinearLowRank<T, Device> preconditioner(algebra_, inverse, batch.dim);
     if (options_.preconditioner == PWPreconditioner::kinetic_subspace && details.projected)
     {
@@ -328,8 +347,15 @@ typename HSolverPWTDDFT<T, Device>::SolveDetails HSolverPWTDDFT<T, Device>::solv
         preconditioner.prepare_response(batch.ld, rank, directions, images, &correction_workspace_);
     }
     details.coarse_rank = preconditioner.rank();
-    details.linear
-        = linear_solver_->solve(op, preconditioner, batch.ld, batch.bands, batch.dim, current, rhs, initial_residual, force_check);
+    details.linear = linear_solver_->solve(op,
+                                           preconditioner,
+                                           batch.ld,
+                                           batch.bands,
+                                           batch.dim,
+                                           current,
+                                           rhs,
+                                           initial_residual,
+                                           force_check);
     if (details.linear.status != LinearSolveStatus::converged && details.coarse_rank > 0
         && details.linear.iterations < options_.linear.max_iterations)
     {
@@ -348,11 +374,14 @@ void HSolverPWTDDFT<T, Device>::report_solve(const SolveDetails& details, int ik
     std::ostringstream record;
     record << std::scientific << std::setprecision(6) << " PW RT-TDDFT linear solve: evolution_step=" << evolution_step
            << " scf_iter=" << iteration << " global_k=" << options_.global_k_indices.at(ik) << '\n'
-           << "   iterations=" << result.iterations << " restarts=" << result.restarts << " operator_calls=" << result.operator_calls
-           << " operator_columns=" << result.operator_columns << " pre_orth_residual=" << result.max_residual
-           << " residual_kind=" << (result.reconstructed ? "reconstructed" : "independent") << " true_checks=" << result.true_checks << '\n'
-           << "   reconstruction_fallbacks=" << result.reconstruction_fallbacks << " coarse_rank=" << details.coarse_rank
-           << " kinetic_retry=" << details.retried << " cn_projected=" << details.projected << " cn_initial=" << details.cn_initial << '\n';
+           << "   iterations=" << result.iterations << " restarts=" << result.restarts
+           << " operator_calls=" << result.operator_calls << " operator_columns=" << result.operator_columns
+           << " pre_orth_residual=" << result.max_residual
+           << " residual_kind=" << (result.reconstructed ? "reconstructed" : "independent")
+           << " true_checks=" << result.true_checks << '\n'
+           << "   reconstruction_fallbacks=" << result.reconstruction_fallbacks
+           << " coarse_rank=" << details.coarse_rank << " kinetic_retry=" << details.retried
+           << " cn_projected=" << details.projected << " cn_initial=" << details.cn_initial << '\n';
     log_ << record.str();
 }
 
@@ -407,9 +436,10 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
             const LinearSolveResult& result = details.linear;
             std::ostringstream message;
             const int evolution_step = istep + 1;
-            message << "PW RT-TDDFT linear solve failed at electronic evolution step " << evolution_step << ", SCF iteration " << iter
-                    << ", global_k=" << options_.global_k_indices.at(ik) << ", band " << result.failed_band << ", after "
-                    << result.iterations << " iterations: " << linear_status_name(result.status) << "; residual = " << result.max_residual;
+            message << "PW RT-TDDFT linear solve failed at electronic evolution step " << evolution_step
+                    << ", SCF iteration " << iter << ", global_k=" << options_.global_k_indices.at(ik) << ", band "
+                    << result.failed_band << ", after " << result.iterations
+                    << " iterations: " << linear_status_name(result.status) << "; residual = " << result.max_residual;
             ModuleBase::WARNING_QUIT("HSolverPWTDDFT", message.str());
         }
         correct_orbitals(current_data, ld, dim, bands, ik, istep, iter, detailed_output);
@@ -418,7 +448,9 @@ void HSolverPWTDDFT<T, Device>::solve(HSOperator<T, Device>& op,
 }
 
 template <typename T, typename Device>
-void HSolverPWTDDFT<T, Device>::cal_band_energy(HSOperator<T, Device>& op, const psi::Psi<T, Device>& current, ModuleBase::matrix* energies)
+void HSolverPWTDDFT<T, Device>::cal_band_energy(HSOperator<T, Device>& op,
+                                                const psi::Psi<T, Device>& current,
+                                                ModuleBase::matrix* energies)
 {
     ModuleBase::timer::start("HSolverPWTDDFT", "cal_band_energy");
     const int nband = current.get_nbands();
@@ -471,7 +503,14 @@ void HSolverPWTDDFT<T, Device>::reset_orth_stats()
 }
 
 template <typename T, typename Device>
-void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter, bool detailed_output)
+void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current,
+                                                 int ld,
+                                                 int dim,
+                                                 int bands,
+                                                 int ik,
+                                                 int istep,
+                                                 int iter,
+                                                 bool detailed_output)
 {
     ModuleBase::timer::start("HSolverPWTDDFT", "correct_orbitals");
     const OrthResult result = orthonormal_.apply(current, ld, dim, bands, options_.orthonormal, options_.out_stat);
@@ -480,9 +519,10 @@ void HSolverPWTDDFT<T, Device>::correct_orbitals(T* current, int ld, int dim, in
     {
         const int evolution_step = istep + 1;
         std::ostringstream record;
-        record << std::scientific << std::setprecision(6) << " PW RT-TDDFT orth: evolution_step=" << evolution_step << " scf_iter=" << iter
-               << " global_k=" << options_.global_k_indices.at(ik) << " requested=" << orth_method_name(options_.orthonormal)
-               << " orth_before=" << result.before << " orth_after=" << result.after << '\n';
+        record << std::scientific << std::setprecision(6) << " PW RT-TDDFT orth: evolution_step=" << evolution_step
+               << " scf_iter=" << iter << " global_k=" << options_.global_k_indices.at(ik)
+               << " requested=" << orth_method_name(options_.orthonormal) << " orth_before=" << result.before
+               << " orth_after=" << result.after << '\n';
         log_ << record.str();
     }
     ModuleBase::timer::end("HSolverPWTDDFT", "correct_orbitals");
@@ -496,15 +536,18 @@ void HSolverPWTDDFT<T, Device>::record_orth(const OrthResult& result, int ik, in
         const char* stage = istep == 0 ? "initialization" : "propagation";
         std::ostringstream message;
         const int evolution_step = istep + 1;
-        message << std::setprecision(16) << " PW RT-TDDFT orbital validation failed (" << stage << "): evolution_step=" << evolution_step
-                << " scf_iter=" << iter << " global_k=" << options_.global_k_indices.at(ik)
+        message << std::setprecision(16) << " PW RT-TDDFT orbital validation failed (" << stage
+                << "): evolution_step=" << evolution_step << " scf_iter=" << iter
+                << " global_k=" << options_.global_k_indices.at(ik)
                 << " requested=" << orth_method_name(options_.orthonormal) << '\n'
                 << "   last_attempted=" << orth_method_name(result.actual) << " passes=" << result.passes
                 << " fallbacks=" << result.fallbacks << '\n'
                 << "   " << orth_failure_name(result.failure) << "; " << result.reason;
         if (result.gram_checked)
         {
-            message << '\n' << "   before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>();
+            message << '\n'
+                    << "   before=" << result.before << " after=" << result.after
+                    << " tolerance=" << orth_tolerance<T>();
         }
         // stdout is disabled on non-world-root ranks; a failing pool must still report its error.
         if (comm_.rank == 0)
@@ -554,10 +597,12 @@ void HSolverPWTDDFT<T, Device>::report_orth_warning(const OrthResult& result, in
     warned_events_ |= events;
     const int evolution_step = istep + 1;
     std::ostringstream message;
-    message << std::setprecision(16) << " PW RT-TDDFT orbital warning: evolution_step=" << evolution_step << " scf_iter=" << iter;
+    message << std::setprecision(16) << " PW RT-TDDFT orbital warning: evolution_step=" << evolution_step
+            << " scf_iter=" << iter;
     message << " global_k=" << options_.global_k_indices.at(ik);
     message << " requested=" << orth_method_name(options_.orthonormal) << '\n'
-            << "   before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>() << '\n'
+            << "   before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>()
+            << '\n'
             << "   ";
     message << "last_attempted=" << orth_method_name(result.actual) << ". ";
     if (fresh_events & 1)

@@ -33,7 +33,10 @@ class LinearOperator
     virtual ~LinearOperator() = default;
     virtual void apply(const T* x, T* y, const int ld, const int nvec) const = 0;
     /** @brief Allow solvers to bypass identity preconditioner copies. */
-    virtual bool is_identity() const { return false; }
+    virtual bool is_identity() const
+    {
+        return false;
+    }
 };
 
 } // namespace hsolver

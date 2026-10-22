@@ -1,7 +1,7 @@
 #ifdef __CUSOLVERMP
 #include "diag_cusolvermp.cuh"
-#include "source_base/module_device/device_check.h"
 #include "source_base/global_function.h"
+#include "source_base/module_device/device_check.h"
 
 #include <assert.h>
 
@@ -9,10 +9,11 @@ extern "C"
 {
 #include "source_hsolver/module_genelpa/cblacs.h"
 }
-#include <iostream>
-#include <cstdint>
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/device_check.h"
+
+#include <cstdint>
+#include <iostream>
 
 #ifdef __USE_CAL
 // ============================================================================
@@ -94,7 +95,8 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
 #else
     // Initialize NCCL communicator
     ncclUniqueId ncclId;
-    if (this->globalMpiRank == 0) {
+    if (this->globalMpiRank == 0)
+    {
         CHECK_NCCL(ncclGetUniqueId(&ncclId));
     }
     MPI_Bcast(&ncclId, sizeof(ncclId), MPI_BYTE, 0, mpi_comm);
@@ -131,30 +133,30 @@ Diag_CusolverMP_gvd<inputT>::Diag_CusolverMP_gvd(const MPI_Comm mpi_comm,
     // In a sense, the MPI usage strategy of ABACUS must be subject to the cusolvermp.
     // Use ROW_MAJOR to match BLACS grid initialization (order='R' in parallel_2d.cpp)
     CHECK_CUSOLVER(cusolverMpCreateDeviceGrid(cusolverMpHandle,
-                                                   &this->grid,
+                                              &this->grid,
 #ifdef __USE_CAL
-                                                   this->cusolverCalComm,
+                                              this->cusolverCalComm,
 #else
-                                                   this->ncclComm,
+                                              this->ncclComm,
 #endif
-                                                   this->nprows,
-                                                   this->npcols,
-                                                   CUSOLVERMP_GRID_MAPPING_ROW_MAJOR));
+                                              this->nprows,
+                                              this->npcols,
+                                              CUSOLVERMP_GRID_MAPPING_ROW_MAJOR));
 
     // 20240529 zhanghaochong
     // Actually, there should be three matrix descriptors, A matrix, B matrix, and output eigenvector matrix.
     // But in ABACUS the three matrices descriptors are the same.
     // So, I only create one matrix descriptor and use it for the three matrices.
     CHECK_CUSOLVER(cusolverMpCreateMatrixDesc(&this->desc_for_cusolvermp,
-                               this->grid,
-                               this->datatype,
-                               nFull,
-                               nFull,
-                               mb,
-                               nb,
-                               rsrc,
-                               csrc,
-                               this->lda));
+                                              this->grid,
+                                              this->datatype,
+                                              nFull,
+                                              nFull,
+                                              mb,
+                                              nb,
+                                              rsrc,
+                                              csrc,
+                                              this->lda));
 }
 
 template <typename inputT>
@@ -178,46 +180,43 @@ Diag_CusolverMP_gvd<inputT>::~Diag_CusolverMP_gvd()
 #endif
 }
 
-
 template <typename inputT>
 int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, outputT* EigenValue, inputT* EigenVector)
 {
-    void *d_A = NULL;
-    void *d_B = NULL;
-    void *d_D = NULL;
-    void *d_Z = NULL;
+    void* d_A = NULL;
+    void* d_B = NULL;
+    void* d_D = NULL;
+    void* d_Z = NULL;
 
     CHECK_CUDA(cudaMalloc((void**)&d_A, this->n_local * this->m_local * sizeof(inputT)));
     CHECK_CUDA(cudaMalloc((void**)&d_B, this->n_local * this->m_local * sizeof(inputT)));
     CHECK_CUDA(cudaMalloc((void**)&d_D, this->nFull * sizeof(outputT)));
     CHECK_CUDA(cudaMalloc((void**)&d_Z, this->n_local * this->m_local * sizeof(inputT)));
 
-    CHECK_CUDA(
-        cudaMemcpy(d_A, (void*)A, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
-    CHECK_CUDA(
-        cudaMemcpy(d_B, (void*)B, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(d_A, (void*)A, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
+    CHECK_CUDA(cudaMemcpy(d_B, (void*)B, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyHostToDevice));
     CHECK_CUDA(cudaStreamSynchronize(this->localStream));
 
     size_t sygvdWorkspaceInBytesOnDevice = 0;
     size_t sygvdWorkspaceInBytesOnHost = 0;
 
     CHECK_CUSOLVER(cusolverMpSygvd_bufferSize(cusolverMpHandle,
-                               CUSOLVER_EIG_TYPE_1,
-                               CUSOLVER_EIG_MODE_VECTOR,
-                               CUBLAS_FILL_MODE_LOWER,
-                               this->nFull,
-                               this->matrix_i,
-                               this->matrix_j,
-                               this->desc_for_cusolvermp,
-                               this->matrix_i,
-                               this->matrix_j,
-                               this->desc_for_cusolvermp,
-                               this->matrix_i,
-                               this->matrix_j,
-                               this->desc_for_cusolvermp,
-                               this->datatype,
-                               &sygvdWorkspaceInBytesOnDevice,
-                               &sygvdWorkspaceInBytesOnHost));
+                                              CUSOLVER_EIG_TYPE_1,
+                                              CUSOLVER_EIG_MODE_VECTOR,
+                                              CUBLAS_FILL_MODE_LOWER,
+                                              this->nFull,
+                                              this->matrix_i,
+                                              this->matrix_j,
+                                              this->desc_for_cusolvermp,
+                                              this->matrix_i,
+                                              this->matrix_j,
+                                              this->desc_for_cusolvermp,
+                                              this->matrix_i,
+                                              this->matrix_j,
+                                              this->desc_for_cusolvermp,
+                                              this->datatype,
+                                              &sygvdWorkspaceInBytesOnDevice,
+                                              &sygvdWorkspaceInBytesOnHost));
 
     /* Distributed host workspace */
     void* h_sygvdWork = NULL;
@@ -236,29 +235,29 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
     CHECK_CUDA(cudaStreamSynchronize(this->localStream));
 
     CHECK_CUSOLVER(cusolverMpSygvd(cusolverMpHandle,
-                    CUSOLVER_EIG_TYPE_1,
-                    CUSOLVER_EIG_MODE_VECTOR,
-                    CUBLAS_FILL_MODE_LOWER,
-                    this->nFull,
-                    d_A,
-                    this->matrix_i,
-                    this->matrix_j,
-                    this->desc_for_cusolvermp,
-                    d_B,
-                    this->matrix_i,
-                    this->matrix_j,
-                    this->desc_for_cusolvermp,
-                    d_D,
-                    d_Z,
-                    this->matrix_i,
-                    this->matrix_j,
-                    this->desc_for_cusolvermp,
-                    this->datatype,
-                    d_sygvdWork,
-                    sygvdWorkspaceInBytesOnDevice,
-                    h_sygvdWork,
-                    sygvdWorkspaceInBytesOnHost,
-                    d_sygvdInfo));
+                                   CUSOLVER_EIG_TYPE_1,
+                                   CUSOLVER_EIG_MODE_VECTOR,
+                                   CUBLAS_FILL_MODE_LOWER,
+                                   this->nFull,
+                                   d_A,
+                                   this->matrix_i,
+                                   this->matrix_j,
+                                   this->desc_for_cusolvermp,
+                                   d_B,
+                                   this->matrix_i,
+                                   this->matrix_j,
+                                   this->desc_for_cusolvermp,
+                                   d_D,
+                                   d_Z,
+                                   this->matrix_i,
+                                   this->matrix_j,
+                                   this->desc_for_cusolvermp,
+                                   this->datatype,
+                                   d_sygvdWork,
+                                   sygvdWorkspaceInBytesOnDevice,
+                                   h_sygvdWork,
+                                   sygvdWorkspaceInBytesOnHost,
+                                   d_sygvdInfo));
 
     int h_sygvdInfo = 0;
     CHECK_CUDA(cudaMemcpyAsync(&h_sygvdInfo, d_sygvdInfo, sizeof(int), cudaMemcpyDeviceToHost, this->localStream));
@@ -276,10 +275,8 @@ int Diag_CusolverMP_gvd<inputT>::generalized_eigenvector(inputT* A, inputT* B, o
     free(h_sygvdWork);
 
     CHECK_CUDA(cudaMemcpy((void*)EigenValue, d_D, this->nFull * sizeof(outputT), cudaMemcpyDeviceToHost));
-    CHECK_CUDA(cudaMemcpy((void*)EigenVector,
-                               d_Z,
-                               this->n_local * this->m_local * sizeof(inputT),
-                               cudaMemcpyDeviceToHost));
+    CHECK_CUDA(
+        cudaMemcpy((void*)EigenVector, d_Z, this->n_local * this->m_local * sizeof(inputT), cudaMemcpyDeviceToHost));
     // 20240529 zhanghaochong
     // I move the free operations from destructor to here.
     // Because I think it is more reasonable to free the memory in the function where it is allocated.

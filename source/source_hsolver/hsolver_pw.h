@@ -48,11 +48,10 @@ class HSolverPW
               const int nb2d_in,
               const bool use_k_continuity_in = false)
         : wfc_basis(wfc_basis_in), calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
-          use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
-          diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
-          nbands(nbands_in), diago_smooth_ethr(diago_smooth_ethr_in), pw_diag_ndim(pw_diag_ndim_in),
-          diag_subspace(diag_subspace_in), nb2d(nb2d_in),
-          use_k_continuity(use_k_continuity_in) {};
+          use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in), diag_iter_max(diag_iter_max_in),
+          diag_thr(diag_thr_in), need_subspace(need_subspace_in), nbands(nbands_in),
+          diago_smooth_ethr(diago_smooth_ethr_in), pw_diag_ndim(pw_diag_ndim_in), diag_subspace(diag_subspace_in),
+          nb2d(nb2d_in), use_k_continuity(use_k_continuity_in) {};
 
     /// @brief solve function for pw
     /// @param op the H and S operator of the Hamiltonian, switched to each k point in turn
@@ -95,11 +94,11 @@ class HSolverPW
 
     const bool need_subspace; // for cg or dav_subspace
 
-    const int nbands;              // global number of bands, may differ from psi.get_nbands() under band parallelism
-    const bool diago_smooth_ethr;  // use a band-wise smoothed threshold for all iter methods
-    const int pw_diag_ndim;        // dimension of the workspace for Davidson-type methods
-    const int diag_subspace;       // subspace eigensolver for dav_subspace: 0 Lapack, 1 elpa, 2 scalapack
-    const int nb2d;                // 2d block size used by the dav_subspace scalapack path
+    const int nbands;             // global number of bands, may differ from psi.get_nbands() under band parallelism
+    const bool diago_smooth_ethr; // use a band-wise smoothed threshold for all iter methods
+    const int pw_diag_ndim;       // dimension of the workspace for Davidson-type methods
+    const int diag_subspace;      // subspace eigensolver for dav_subspace: 0 Lapack, 1 elpa, 2 scalapack
+    const int nb2d;               // 2d block size used by the dav_subspace scalapack path
 
     const bool use_k_continuity;
 
@@ -115,13 +114,11 @@ class HSolverPW
     /// @brief calculate the threshold for iterative-diagonalization for each band
     void cal_smooth_ethr(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
 
-
-
     // K-point continuity related members
     std::vector<int> k_order;
     std::unordered_map<int, int> k_parent;
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    
+
     void build_k_neighbors();
     void propagate_psi(psi::Psi<T, Device>& psi, const int from_ik, const int to_ik);
 };

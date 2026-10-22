@@ -55,7 +55,10 @@ class HSolverPWTDDFT
 {
   public:
     /** @brief Configure propagation using typed, explicit solver options. */
-    HSolverPWTDDFT(const ModulePW::PW_Basis_K& basis, const PWLinearOptions& options, const diag_comm_info& comm, std::ostream& log);
+    HSolverPWTDDFT(const ModulePW::PW_Basis_K& basis,
+                   const PWLinearOptions& options,
+                   const diag_comm_info& comm,
+                   std::ostream& log);
 
     /** @brief Invalidate basis-dependent history and restart independent residual checks without releasing buffers.
      *  Call on every rank in the pool after changing the basis or its distribution, including
@@ -95,7 +98,9 @@ class HSolverPWTDDFT
     void cal_band_energy(HSOperator<T, Device>& op, const psi::Psi<T, Device>& current, ModuleBase::matrix* energies);
 
     /** @brief Return the pool-reduced, column-major Psi-adjoint H Psi for one local k point. */
-    std::vector<std::complex<double>> cal_eij(HSOperator<T, Device>& op, const psi::Psi<T, Device>& current, const int ik);
+    std::vector<std::complex<double>> cal_eij(HSOperator<T, Device>& op,
+                                              const psi::Psi<T, Device>& current,
+                                              const int ik);
 
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -158,11 +163,21 @@ class HSolverPWTDDFT
                               int step,
                               int iteration,
                               KPointState* state);
-    void retry_kinetic(const LinearOperator<T, Device>& op, T* current, const SolveBatch& batch, LinearSolveResult* result);
-    void update_state(KPointState* state, const SolveDetails& details, int step, const SolveBatch& batch, const T* current);
+    void retry_kinetic(const LinearOperator<T, Device>& op,
+                       T* current,
+                       const SolveBatch& batch,
+                       LinearSolveResult* result);
+    void update_state(KPointState* state,
+                      const SolveDetails& details,
+                      int step,
+                      const SolveBatch& batch,
+                      const T* current);
     void report_solve(const SolveDetails& details, int ik, int step, int iteration) const;
     void prepare_buffers(const int nbands, const int nbasis);
-    void update_precond(const int ik, const int dim, const T coefficient, const ModuleBase::Vector3<double>& momentum_shift);
+    void update_precond(const int ik,
+                        const int dim,
+                        const T coefficient,
+                        const ModuleBase::Vector3<double>& momentum_shift);
     void correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter, bool detailed_output);
     void record_orth(const OrthResult& result, int ik, int istep, int iter);
     void report_orth_warning(const OrthResult& result, int ik, int istep, int iter);

@@ -155,19 +155,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
     else
 #endif
     {
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         nrowA,
-                                         ncolB,
-                                         ncolA,
-                                         &alpha,
-                                         A,
-                                         LDA,
-                                         U,
-                                         ncolA,
-                                         &beta,
-                                         B,
-                                         LDA);
+        ModuleBase::gemm_op<T, Device>()('N', 'N', nrowA, ncolB, ncolA, &alpha, A, LDA, U, ncolA, &beta, B, LDA);
     }
     ModuleBase::timer::end("PLinearTransform", "act");
 };

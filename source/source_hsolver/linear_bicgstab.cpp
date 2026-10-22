@@ -7,7 +7,8 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-LinearBiCGSTAB<T, Device>::LinearBiCGSTAB(const double tolerance, const diag_comm_info& comm) : tolerance_(tolerance), work_(comm, 9)
+LinearBiCGSTAB<T, Device>::LinearBiCGSTAB(const double tolerance, const diag_comm_info& comm)
+    : tolerance_(tolerance), work_(comm, 9)
 {
 }
 
@@ -51,7 +52,15 @@ void LinearBiCGSTAB<T, Device>::retire_converged(const bool alpha_step, const bo
     }
     else
     {
-        work_.dot_pair(ld_, dim_, active_, residual, residual, work_.data(shadow_slot), residual, norm_.data(), rho_.data());
+        work_.dot_pair(ld_,
+                       dim_,
+                       active_,
+                       residual,
+                       residual,
+                       work_.data(shadow_slot),
+                       residual,
+                       norm_.data(),
+                       rho_.data());
     }
     swaps_.clear();
     skip_.assign(active_, 1);
@@ -113,7 +122,8 @@ bool LinearBiCGSTAB<T, Device>::iterate(const LinearOperator<T, Device>& op,
 
     for (int band = 0; band < active_; ++band)
     {
-        if (breakdown(rho_[band], band, result) || breakdown(rho_prev_[band], band, result) || breakdown(omega_[band], band, result))
+        if (breakdown(rho_[band], band, result) || breakdown(rho_prev_[band], band, result)
+            || breakdown(omega_[band], band, result))
         {
             return false;
         }
@@ -247,8 +257,8 @@ LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Devic
             result.status = LinearSolveStatus::residual_mismatch;
         }
         work_.verify(op, ld, dim, nband, x, b, original_threshold, work_.data(residual_slot), &result);
-        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iterations || result.iterations == cycle_start
-            || !std::isfinite(result.max_residual))
+        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iterations
+            || result.iterations == cycle_start || !std::isfinite(result.max_residual))
         {
             return result;
         }

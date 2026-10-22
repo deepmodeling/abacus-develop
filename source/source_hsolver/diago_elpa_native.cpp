@@ -1,13 +1,13 @@
 #include "diago_elpa_native.h"
 
+#include "omp.h"
 #include "source_base/global_function.h"
-#include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/blacs_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/module_genelpa/elpa_new.h"
-#include "omp.h"
 
 namespace hsolver
 {
@@ -119,19 +119,16 @@ void DiagoElpaNative<T>::diag_pool(ModuleBase::MatrixBlock<T>& h_mat,
             {
                 return local_index;
             }
-            const int process_offset
-                = (process_coordinate - source_coordinate + process_count) % process_count;
+            const int process_offset = (process_coordinate - source_coordinate + process_count) % process_count;
             return ((local_index / block_size) * process_count + process_offset) * block_size
                    + local_index % block_size;
         };
         for (int local_col = 0; local_col < nacols; ++local_col)
         {
-            const int global_col
-                = local_to_global(local_col, h_mat.desc[5], mypcol, h_mat.desc[7], npcols);
+            const int global_col = local_to_global(local_col, h_mat.desc[5], mypcol, h_mat.desc[7], npcols);
             for (int local_row = 0; local_row < narows; ++local_row)
             {
-                const int global_row
-                    = local_to_global(local_row, h_mat.desc[4], myprow, h_mat.desc[6], nprows);
+                const int global_row = local_to_global(local_row, h_mat.desc[4], myprow, h_mat.desc[6], nprows);
                 if (global_row <= global_col)
                 {
                     const int local_index = local_row + local_col * narows;

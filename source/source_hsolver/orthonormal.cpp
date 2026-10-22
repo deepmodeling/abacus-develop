@@ -23,7 +23,8 @@ bool positive_norms(const std::vector<std::complex<double>>& gram, int bands)
 } // namespace
 
 template <typename T, typename Device>
-Orthonormal<T, Device>::Orthonormal(const diag_comm_info& comm, LinearAlgebra<T, Device>& algebra) : comm_(comm), algebra_(algebra)
+Orthonormal<T, Device>::Orthonormal(const diag_comm_info& comm, LinearAlgebra<T, Device>& algebra)
+    : comm_(comm), algebra_(algebra)
 {
 }
 
@@ -124,7 +125,8 @@ bool Orthonormal<T, Device>::try_candidate(T* input,
     else if (!valid || result->after > orth_tolerance<T>())
     {
         result->failure = valid ? OrthFailure::no_improvement : OrthFailure::invalid_candidate;
-        result->reason += std::string(orth_method_name(result->actual)) + ": " + orth_failure_name(result->failure) + "; ";
+        result->reason
+            += std::string(orth_method_name(result->actual)) + ": " + orth_failure_name(result->failure) + "; ";
         ++result->rejected;
     }
     ModuleBase::timer::end("Orthonormal", "try_candidate");
@@ -172,7 +174,8 @@ void Orthonormal<T, Device>::correct(T* input,
             else
             {
                 result->failure = OrthFailure::factorization_failed;
-                result->reason += std::string(orth_method_name(result->actual)) + ": " + orth_failure_name(result->failure) + "; ";
+                result->reason
+                    += std::string(orth_method_name(result->actual)) + ": " + orth_failure_name(result->failure) + "; ";
             }
             if (improved || result->after <= orth_tolerance<T>())
             {
@@ -196,7 +199,12 @@ void Orthonormal<T, Device>::correct(T* input,
 }
 
 template <typename T, typename Device>
-OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int bands, bool full_gram, bool collect_norms)
+OrthResult Orthonormal<T, Device>::inspect(const T* input,
+                                           int ld,
+                                           int dim,
+                                           int bands,
+                                           bool full_gram,
+                                           bool collect_norms)
 {
     ModuleBase::timer::start("Orthonormal", "inspect");
     OrthResult result;

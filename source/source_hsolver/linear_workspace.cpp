@@ -51,8 +51,8 @@ void LinearWorkspace<T, Device>::prepare(const int ld,
                                          const int max_iter)
 {
     if (dim < 0 || ld < dim || nvec <= 0 || !std::isfinite(tolerance) || tolerance <= 0.0 || max_iter < 0
-        || ld > std::numeric_limits<int>::max() / nvec || (ld > 0 && (x == nullptr || b == nullptr)) || (ld > 0 && x == b)
-        || comm_.nproc < 1)
+        || ld > std::numeric_limits<int>::max() / nvec || (ld > 0 && (x == nullptr || b == nullptr))
+        || (ld > 0 && x == b) || comm_.nproc < 1)
     {
         throw std::invalid_argument("Invalid linear-solver layout, buffers, or convergence controls.");
     }
@@ -62,7 +62,8 @@ void LinearWorkspace<T, Device>::prepare(const int ld,
     {
         using CtDevice = typename ct::PsiToContainer<Device>::type;
         const int64_t slot_elements = size;
-        vectors_ = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<CtDevice>::value, {slots_, slot_elements});
+        vectors_
+            = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<CtDevice>::value, {slots_, slot_elements});
         capacity_ = size;
     }
 }
@@ -156,7 +157,8 @@ void LinearWorkspace<T, Device>::verify(const LinearOperator<T, Device>& op,
     for (int band = 0; band < nvec; ++band)
     {
         const double error = linear_norm(norms[band]);
-        result->max_residual = std::isfinite(error) ? std::max(result->max_residual, error) : std::numeric_limits<double>::infinity();
+        result->max_residual
+            = std::isfinite(error) ? std::max(result->max_residual, error) : std::numeric_limits<double>::infinity();
         if (!std::isfinite(error) || !std::isfinite(threshold[band]) || error > threshold[band])
         {
             if (result->failed_band < 0)
@@ -174,7 +176,15 @@ void LinearWorkspace<T, Device>::verify(const LinearOperator<T, Device>& op,
 }
 
 template <typename T, typename Device>
-void LinearWorkspace<T, Device>::dot_pair(int ld, int dim, int nvec, const T* x, const T* y, const T* z, const T* w, T* first, T* second)
+void LinearWorkspace<T, Device>::dot_pair(int ld,
+                                          int dim,
+                                          int nvec,
+                                          const T* x,
+                                          const T* y,
+                                          const T* z,
+                                          const T* w,
+                                          T* first,
+                                          T* second)
 {
     ModuleBase::timer::start("LinearWorkspace", "dot_pair");
     if (nvec == 0)
@@ -198,8 +208,11 @@ void LinearWorkspace<T, Device>::dot_pair(int ld, int dim, int nvec, const T* x,
         partial_ = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {partial_elements});
     }
     host_dots_.resize(count);
-    linear_op<T, Device>().dots(ld, dim, nvec, x, y, z, w, dots_.template data<T>(), partial_.template data<T>(), tiles);
-    base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(host_dots_.data(), dots_.template data<T>(), count);
+    linear_op<T, Device>()
+        .dots(ld, dim, nvec, x, y, z, w, dots_.template data<T>(), partial_.template data<T>(), tiles);
+    base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(host_dots_.data(),
+                                                                                     dots_.template data<T>(),
+                                                                                     count);
 #ifdef __MPI
     if (comm_.nproc > 1)
     {
@@ -258,7 +271,9 @@ void LinearWorkspace<T, Device>::batch(int ld,
         {
             mask_ = ct::Tensor(ct::DataTypeToEnum<int>::value, device, {nvec});
         }
-        base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(mask_.template data<int>(), skip, nvec);
+        base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(mask_.template data<int>(),
+                                                                                           skip,
+                                                                                           nvec);
         mask = mask_.template data<int>();
     }
     const T* first_coefficients = ca ? coeff : nullptr;
@@ -311,7 +326,12 @@ void LinearWorkspace<T, Device>::swap_columns(int ld, int dim, const std::vector
 }
 
 template <typename T, typename Device>
-void LinearWorkspace<T, Device>::swap_vectors(int ld, int dim, int slots, int stride, T* vectors, const std::vector<int>& pairs)
+void LinearWorkspace<T, Device>::swap_vectors(int ld,
+                                              int dim,
+                                              int slots,
+                                              int stride,
+                                              T* vectors,
+                                              const std::vector<int>& pairs)
 {
     if (pairs.empty() || dim == 0)
     {
@@ -321,7 +341,8 @@ void LinearWorkspace<T, Device>::swap_vectors(int ld, int dim, int slots, int st
     const int64_t permutation_elements = pairs.size();
     if (permutation_.NumElements() < permutation_elements)
     {
-        permutation_ = ct::Tensor(ct::DataTypeToEnum<int>::value, ct::DeviceTypeToEnum<CtDevice>::value, {permutation_elements});
+        permutation_
+            = ct::Tensor(ct::DataTypeToEnum<int>::value, ct::DeviceTypeToEnum<CtDevice>::value, {permutation_elements});
     }
     int* map = permutation_.template data<int>();
     base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(map, pairs.data(), pairs.size());
@@ -329,7 +350,12 @@ void LinearWorkspace<T, Device>::swap_vectors(int ld, int dim, int slots, int st
     linear_op<T, Device>().swaps(ld, dim, slots, stride, pair_count, vectors, map);
 }
 template <typename T, typename Device>
-void LinearWorkspace<T, Device>::restore(int ld, int dim, int nvec, const std::vector<int>& order, const T* source, T* destination)
+void LinearWorkspace<T, Device>::restore(int ld,
+                                         int dim,
+                                         int nvec,
+                                         const std::vector<int>& order,
+                                         const T* source,
+                                         T* destination)
 {
     if (dim == 0)
     {
@@ -352,8 +378,15 @@ void LinearWorkspace<T, Device>::restore(int ld, int dim, int nvec, const std::v
 }
 
 template <typename T, typename Device>
-void LinearWorkspace<T,
-                     Device>::bicg_update(int ld, int dim, int nvec, bool direction, T* out, const T* x, const T* y, const T* a, const T* b)
+void LinearWorkspace<T, Device>::bicg_update(int ld,
+                                             int dim,
+                                             int nvec,
+                                             bool direction,
+                                             T* out,
+                                             const T* x,
+                                             const T* y,
+                                             const T* a,
+                                             const T* b)
 {
     ModuleBase::timer::start("LinearWorkspace", "bicg_update");
     if (dim == 0 || nvec == 0)
@@ -365,7 +398,8 @@ void LinearWorkspace<T,
     const int64_t coefficient_elements = 2 * static_cast<int64_t>(nvec);
     if (coefficients_.NumElements() < coefficient_elements)
     {
-        coefficients_ = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<CtDevice>::value, {coefficient_elements});
+        coefficients_
+            = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<CtDevice>::value, {coefficient_elements});
     }
     host_coefficients_.resize(coefficient_elements);
     const T* a_end = a + nvec;
@@ -383,7 +417,14 @@ void LinearWorkspace<T,
 }
 
 template <typename T, typename Device>
-void LinearWorkspace<T, Device>::cgs_direction(int ld, int dim, int nvec, T* p, T* u, const T* r, const T* q, const T* beta)
+void LinearWorkspace<T, Device>::cgs_direction(int ld,
+                                               int dim,
+                                               int nvec,
+                                               T* p,
+                                               T* u,
+                                               const T* r,
+                                               const T* q,
+                                               const T* beta)
 {
     ModuleBase::timer::start("LinearWorkspace", "cgs_direction");
     if (dim == 0 || nvec == 0)
@@ -403,7 +444,14 @@ void LinearWorkspace<T, Device>::cgs_direction(int ld, int dim, int nvec, T* p, 
 }
 
 template <typename T, typename Device>
-void LinearWorkspace<T, Device>::cgs_alpha(int ld, int dim, int nvec, T* q, T* direction, const T* u, const T* v, const T* alpha)
+void LinearWorkspace<T, Device>::cgs_alpha(int ld,
+                                           int dim,
+                                           int nvec,
+                                           T* q,
+                                           T* direction,
+                                           const T* u,
+                                           const T* v,
+                                           const T* alpha)
 {
     ModuleBase::timer::start("LinearWorkspace", "cgs_alpha");
     if (dim == 0 || nvec == 0)
