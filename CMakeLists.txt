@@ -101,60 +101,6 @@ cmake_dependent_option(
   "Enable NCCL-backed collectives in parallel_device; requires MPI" OFF
   "USE_CUDA;ENABLE_MPI" OFF)
 
-# ==============================================================================
-# Deprecated options (TODO: Remove this section in the future release)
-# ==============================================================================
-function(abacus_rename_option old_name new_name)
-  get_property(
-    _old_defined
-    CACHE "${old_name}"
-    PROPERTY TYPE
-    SET)
-  if(NOT _old_defined)
-    return()
-  endif()
-  message(DEPRECATION "${old_name} has been renamed to ${new_name}.")
-  get_property(
-    _type
-    CACHE "${new_name}"
-    PROPERTY TYPE)
-  get_property(
-    _help
-    CACHE "${new_name}"
-    PROPERTY HELPSTRING)
-  set("${new_name}"
-      "${${old_name}}"
-      CACHE "${_type}" "${_help}" FORCE)
-  unset("${old_name}" CACHE)
-endfunction()
-abacus_rename_option(USE_OPENMP ENABLE_OPENMP)
-abacus_rename_option(USE_ABACUS_LIBM ENABLE_ABACUS_LIBM)
-abacus_rename_option(INFO MATH_INFO)
-
-if(DEFINED CACHE{ENABLE_RAPIDJSON})
-  message(
-    FATAL_ERROR
-      "ENABLE_RAPIDJSON is no longer supported. "
-      "ABACUS now uses nlohmann-json as its JSON backend; "
-      "please use -DENABLE_JSON=ON instead.")
-endif()
-
-if(DEFINED CACHE{ENABLE_LIBCOMM})
-  message(
-    DEPRECATION
-      "Option ENABLE_LIBCOMM is deprecated and will be ignored in a future release. "
-      "LibComm is now treated as an implementation dependency of LibRI; "
-      "please use -DENABLE_LIBRI=ON instead.")
-  if(ENABLE_LIBCOMM AND NOT ENABLE_LIBRI)
-    message(
-      FATAL_ERROR
-        "ENABLE_LIBCOMM was set, but LibComm is not a standalone ABACUS feature. "
-        "Please use -DENABLE_LIBRI=ON instead.")
-  endif()
-  unset(ENABLE_LIBCOMM CACHE)
-endif()
-# ==============================================================================
-
 # CTest defines BUILD_TESTING when it is first included. Include it only after
 # ABACUS has declared its OFF-by-default option above.
 include(CTest)
