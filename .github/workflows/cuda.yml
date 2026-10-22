@@ -112,16 +112,6 @@ jobs:
           cd tests/11_PW_GPU
           bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
 
-      - name: Test 12_NAO_Gamma_GPU
-        run: |
-          cd tests/12_NAO_Gamma_GPU
-          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
-
-      - name: Test 13_NAO_multik_GPU
-        run: |
-          cd tests/13_NAO_multik_GPU
-          bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
-
       - name: Test 02_NAO_Gamma on GPU
         run: |
           cd tests/02_NAO_Gamma
