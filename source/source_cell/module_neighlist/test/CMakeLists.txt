@@ -2,96 +2,123 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
-
-
 # Split tests: create one test target per test source to keep failures isolated.
 
-AddTest(
-  TARGET MODULE_CELL_NEIGHBOR_neighbor_search
-  LIBS parameter base device cell neighbor symmetry
+addtest(
+  TARGET
+  MODULE_CELL_NEIGHBOR_neighbor_search
+  LIBS
+  parameter
+  base
+  device
+  cell
+  neighbor
+  symmetry
   SOURCES
-    test_neighbor_search.cpp
+  test_neighbor_search.cpp
   ../neighbor_search.cpp
   ../../domain_decomposition.cpp
   ../bin_manager.cpp
-  ../page_allocator.cpp
-)
+  ../page_allocator.cpp)
 
-AddTest(
-  TARGET MODULE_CELL_NEIGHBOR_bin_manager
-  LIBS parameter base device
+addtest(
+  TARGET
+  MODULE_CELL_NEIGHBOR_bin_manager
+  LIBS
+  parameter
+  base
+  device
   SOURCES
-    test_bin_manager.cpp
-    ../bin_manager.cpp
-    ../page_allocator.cpp
-)
+  test_bin_manager.cpp
+  ../bin_manager.cpp
+  ../page_allocator.cpp)
 
-AddTest(
-  TARGET MODULE_CELL_NEIGHBOR_allocator_and_list
-  LIBS parameter base device
+addtest(
+  TARGET
+  MODULE_CELL_NEIGHBOR_allocator_and_list
+  LIBS
+  parameter
+  base
+  device
   SOURCES
   test_neighbor_list.cpp
   ../neighbor_list.cpp
-  ../page_allocator.cpp
-)
+  ../page_allocator.cpp)
 
-AddTest(
-  TARGET MODULE_CELL_NEIGHBOR_page_allocator
-  LIBS parameter base device
+addtest(
+  TARGET
+  MODULE_CELL_NEIGHBOR_page_allocator
+  LIBS
+  parameter
+  base
+  device
   SOURCES
-    test_page_allocator.cpp
-    ../page_allocator.cpp
-)
+  test_page_allocator.cpp
+  ../page_allocator.cpp)
 
 if(USE_CUDA AND ENABLE_GPU_NEIGHBOR_LIST)
-  AddTest(
-    TARGET MODULE_CELL_NEIGHBOR_gpu_neighbor_list
-    LIBS parameter base device
+  addtest(
+    TARGET
+    MODULE_CELL_NEIGHBOR_gpu_neighbor_list
+    LIBS
+    parameter
+    base
+    device
     SOURCES
-      test_gpu_neighbor_list.cpp
-      ../gpu_neighbor_list.cpp
-  )
-  target_compile_definitions(MODULE_CELL_NEIGHBOR_gpu_neighbor_list PRIVATE __CUDA)
+    test_gpu_neighbor_list.cpp
+    ../gpu_neighbor_list.cpp)
+  target_compile_definitions(MODULE_CELL_NEIGHBOR_gpu_neighbor_list
+                             PRIVATE __CUDA)
 endif()
 
 if(ENABLE_MPI)
-  add_executable(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
+  add_executable(
+    MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     test_mdcell_migrate_mpi.cpp
     test_domain_decomposition.cpp
     ../../mdcell.cpp
     ../../domain_decomposition.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
-    ../page_allocator.cpp
-  )
-  target_link_libraries(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
-    PRIVATE
-    parameter base device MPI::MPI_CXX GTest::gtest_main GTest::gmock_main abacus::linalg_libs
-  )
-  install(TARGETS MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi DESTINATION ${CMAKE_BINARY_DIR}/tests)
-  add_test(NAME MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
+    ../page_allocator.cpp)
+  target_link_libraries(
+    MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
+    PRIVATE parameter
+            base
+            device
+            MPI::MPI_CXX
+            GTest::gtest_main
+            GTest::gmock_main
+            abacus::linalg_libs)
+  install(TARGETS MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
+          DESTINATION ${CMAKE_BINARY_DIR}/tests)
+  add_test(
+    NAME MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
             $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi>
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
-  add_test(NAME MODULE_CELL_NEIGHBOR_domain_decomposition_np1
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1
-            $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi>
-            --gtest_filter=DomainDecompositionTest.*
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
-  add_test(NAME MODULE_CELL_NEIGHBOR_domain_decomposition_np4
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
-            $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi>
-            --gtest_filter=DomainDecompositionTest.*
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
-  set_tests_properties(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  add_test(
+    NAME MODULE_CELL_NEIGHBOR_domain_decomposition_np1
+    COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1
+      $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi>
+      --gtest_filter=DomainDecompositionTest.*
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  add_test(
+    NAME MODULE_CELL_NEIGHBOR_domain_decomposition_np4
+    COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
+      $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi>
+      --gtest_filter=DomainDecompositionTest.*
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  set_tests_properties(
+    MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     MODULE_CELL_NEIGHBOR_domain_decomposition_np1
     MODULE_CELL_NEIGHBOR_domain_decomposition_np4
     PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60)
 
-  add_executable(MODULE_CELL_NEIGHBOR_mdcell_reader
+  add_executable(
+    MODULE_CELL_NEIGHBOR_mdcell_reader
     test_mdcell_reader.cpp
     ../../mdcell_reader.cpp
     ../../mdcell.cpp
@@ -99,19 +126,27 @@ if(ENABLE_MPI)
     ../../domain_decomposition.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
-    ../page_allocator.cpp
-  )
-  target_include_directories(MODULE_CELL_NEIGHBOR_mdcell_reader PRIVATE ${ABACUS_SOURCE_DIR})
-  target_compile_definitions(MODULE_CELL_NEIGHBOR_mdcell_reader PRIVATE __NORMAL)
-  target_link_libraries(MODULE_CELL_NEIGHBOR_mdcell_reader
-    PRIVATE
-    parameter base device Threads::Threads MPI::MPI_CXX GTest::gtest GTest::gmock abacus::linalg_libs
-  )
-  install(TARGETS MODULE_CELL_NEIGHBOR_mdcell_reader DESTINATION ${CMAKE_BINARY_DIR}/tests)
-  add_test(NAME MODULE_CELL_NEIGHBOR_mdcell_reader_np4
+    ../page_allocator.cpp)
+  target_include_directories(MODULE_CELL_NEIGHBOR_mdcell_reader
+                             PRIVATE ${ABACUS_SOURCE_DIR})
+  target_compile_definitions(MODULE_CELL_NEIGHBOR_mdcell_reader
+                             PRIVATE __NORMAL)
+  target_link_libraries(
+    MODULE_CELL_NEIGHBOR_mdcell_reader
+    PRIVATE parameter
+            base
+            device
+            Threads::Threads
+            MPI::MPI_CXX
+            GTest::gtest
+            GTest::gmock
+            abacus::linalg_libs)
+  install(TARGETS MODULE_CELL_NEIGHBOR_mdcell_reader
+          DESTINATION ${CMAKE_BINARY_DIR}/tests)
+  add_test(
+    NAME MODULE_CELL_NEIGHBOR_mdcell_reader_np4
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
             $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_reader>
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 endif()

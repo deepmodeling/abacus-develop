@@ -224,6 +224,7 @@ void ESolver_DFPT_PW::before_all_runners(BaseCell& basecell, const Input_para& i
     dfpt_->set_conv_thr(inp.dfpt_conv_thr);
     dfpt_->set_max_iter(inp.dfpt_max_iter);
     dfpt_->set_mix_beta(inp.dfpt_mix_beta);
+    dfpt_->set_asr(inp.dfpt_asr);
     dfpt_->set_compute_q0(inp.dfpt_compute_q0);
     dfpt_->set_loto(inp.dfpt_loto);
 }

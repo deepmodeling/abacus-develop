@@ -5,6 +5,7 @@
 #include "source_base/matrix3.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 
 #include <memory>
@@ -113,6 +114,22 @@ class DFPT_Rho
                       const ModuleBase::matrix& wg,
                       int q_idx,
                       DFPT_PW_Data& data);
+
+    /// q-shifted first-order core-density amplitude for an nlcc
+    /// pseudopotential atom displaced along (iat, dir), in G space:
+    ///   d rho_core/d tau_dir (G+q) = -i tpiba (G+q)_dir
+    ///       * rho_core~(|G+q|) * exp(i (G+q) tau_iat)
+    /// where rho_core~ is the radial spherical-Bessel FT of the core
+    /// charge (the same non_linear_core_correction used by the ground
+    /// state). Non-nlcc atoms / types give zero. The result enters the
+    /// XC channel of assemble_v_sc only (the core Coulomb is already in
+    /// the ionic pseudopotential, so no Hartree contribution).
+    /// ucell is passed explicitly (DFPT_Rho does not own it).
+    void compute_drhoc(const UnitCell& ucell,
+                       int iat,
+                       int dir,
+                       int q_idx,
+                       DFPT_PW_Data& data);
 
     /// first-order occupation matrix (docc) for DFT+U (U0 reservation).
     void cal_docc(const psi::Psi<std::complex<double>>& psi,
