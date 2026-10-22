@@ -129,7 +129,7 @@ jobs:
               if grep -qE '^[[:space:]]*device[[:space:]]+' "$f"; then
                   sed -i -E 's/^[[:space:]]*device[[:space:]]+.*/device    gpu/' "$f"
               else
-                  echo "device    gpu" >> "$f"
+                  printf '\ndevice    gpu\n' >> "$f"
               fi
           done
           bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
@@ -141,7 +141,7 @@ jobs:
               if grep -qE '^[[:space:]]*device[[:space:]]+' "$f"; then
                   sed -i -E 's/^[[:space:]]*device[[:space:]]+.*/device    gpu/' "$f"
               else
-                  echo "device    gpu" >> "$f"
+                  printf '\ndevice    gpu\n' >> "$f"
               fi
           done
           bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
@@ -153,7 +153,7 @@ jobs:
               if grep -qE '^[[:space:]]*device[[:space:]]+' "$f"; then
                   sed -i -E 's/^[[:space:]]*device[[:space:]]+.*/device    gpu/' "$f"
               else
-                  echo "device    gpu" >> "$f"
+                  printf '\ndevice    gpu\n' >> "$f"
               fi
           done
           bash ../integrate/Autotest.sh -n 2 -j "$GPU_TEST_JOBS" -f CASES_GPU.txt
@@ -170,7 +170,7 @@ jobs:
               if grep -q "^device" "$f"; then
                   sed -i 's/^device.*/device    gpu/' "$f"
               else
-                  echo "device    gpu" >> "$f"
+                  printf '\ndevice    gpu\n' >> "$f"
               fi
           done
           bash ../integrate/Autotest.sh -n 1 -j "$GPU_TEST_JOBS" -a abacus -f CASES_GPU.txt
