@@ -1,4 +1,5 @@
-add_library(sccs OBJECT
+add_library(
+  sccs OBJECT
   sccs_cavity.cpp
   sccs_parameters.cpp
   sccs_functional.cpp

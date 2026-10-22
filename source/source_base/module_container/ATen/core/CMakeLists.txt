@@ -1,2 +1,4 @@
 file(GLOB ATen_CORE_SRCS "*.cpp")
-set(ATen_CPU_SRCS ${ATen_CPU_SRCS} ${ATen_CORE_SRCS} PARENT_SCOPE)
+set(ATen_CPU_SRCS
+    ${ATen_CPU_SRCS} ${ATen_CORE_SRCS}
+    PARENT_SCOPE)

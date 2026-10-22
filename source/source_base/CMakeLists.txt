@@ -1,91 +1,85 @@
-if (ENABLE_ABACUS_LIBM)
-list (APPEND LIBM_SRC
-  libm/branred.cpp
-  libm/cexp.cpp
-  libm/exp.cpp
-  libm/sincos.cpp
-)
+if(ENABLE_ABACUS_LIBM)
+  list(APPEND LIBM_SRC libm/branred.cpp libm/cexp.cpp libm/exp.cpp
+       libm/sincos.cpp)
 endif()
 add_library(
-    base
-    OBJECT
-    assoc_laguerre.cpp
-    module_external/blas_connector_base.cpp
-    module_external/blas_connector_vector.cpp
-    module_external/blas_connector_matrix.cpp
-    clebsch_gordan_coeff.cpp
-    complexarray.cpp
-    complexmatrix.cpp
-    element_basis_index.cpp
-    inverse_matrix.cpp
-    gather_math_lib_info.cpp
-    global_file.cpp
-    global_function.cpp
-    glob_fn_ddotreal.cpp
-    global_variable.cpp
-    intarray.cpp
-    math_integral.cpp
-    math_lebedev_laikov.cpp
-    math_polyint.cpp
-    math_sphbes.cpp
-    math_erf_complex.cpp
-    math_ylmreal.cpp
-    math_bspline.cpp
-    math_chebyshev.cpp
-    mathzone_add1.cpp
-    matrix.cpp
-    matrix3.cpp
-    memory_recorder.cpp
-    mymath.cpp
-    opt_cg.cpp
-    opt_dcsrch.cpp
-    opt_tn.cpp
-    output.cpp
-    para_gemm.cpp
-    realarray.cpp
-    sph_bessel_rec_d1.cpp
-    sph_bessel_rec_d2.cpp
-    timer.cpp
-    tool_check.cpp
-    tool_quit.cpp
-    tool_title.cpp
-    ylm.cpp
-    parallel_common.cpp
-    parallel_cell.cpp
-    parallel_global.cpp
-    parallel_comm.cpp
-    parallel_reduce.cpp
-    parallel_device.cpp
-    parallel_grid.cpp
-    sph_bessel_tf.cpp
-    cubic_spline.cpp
-    parallel_2d.cpp
-    module_out/binstream.cpp
-    module_out/filename.cpp
-    module_out/sparse_matrix.cpp
-    module_out/file_reader.cpp
-    module_out/csr_reader.cpp
-    module_out/read_exit_file.cpp
-    module_out/orb_io.cpp
-    module_mixing/mixing_data.cpp
-    module_mixing/mixing.cpp
-    module_mixing/plain_mixing.cpp
-    module_mixing/pulay_mixing.cpp
-    module_mixing/broyden_mixing.cpp
-    module_parallel/para_world.cpp
-    module_parallel/para_band_output.cpp
-    module_parallel/para_collection.cpp
-    module_parallel/para_kmesh_world.cpp
-    module_parallel/para_pw_world.cpp
-    module_parallel/para_diag_world.cpp
-    module_parallel/para_rgrid_world.cpp
-    module_parallel/para_bgroup_world.cpp
-    module_parallel/para_matrix_world.cpp
-    module_parallel/para_mpi_func.cpp
-    module_parallel/para_setup.cpp
-    module_parallel/para_bridge.cpp
-    ${LIBM_SRC}
-)
+  base OBJECT
+  assoc_laguerre.cpp
+  module_external/blas_connector_base.cpp
+  module_external/blas_connector_vector.cpp
+  module_external/blas_connector_matrix.cpp
+  clebsch_gordan_coeff.cpp
+  complexarray.cpp
+  complexmatrix.cpp
+  element_basis_index.cpp
+  inverse_matrix.cpp
+  gather_math_lib_info.cpp
+  global_file.cpp
+  global_function.cpp
+  glob_fn_ddotreal.cpp
+  global_variable.cpp
+  intarray.cpp
+  math_integral.cpp
+  math_lebedev_laikov.cpp
+  math_polyint.cpp
+  math_sphbes.cpp
+  math_erf_complex.cpp
+  math_ylmreal.cpp
+  math_bspline.cpp
+  math_chebyshev.cpp
+  mathzone_add1.cpp
+  matrix.cpp
+  matrix3.cpp
+  memory_recorder.cpp
+  mymath.cpp
+  opt_cg.cpp
+  opt_dcsrch.cpp
+  opt_tn.cpp
+  output.cpp
+  para_gemm.cpp
+  realarray.cpp
+  sph_bessel_rec_d1.cpp
+  sph_bessel_rec_d2.cpp
+  timer.cpp
+  tool_check.cpp
+  tool_quit.cpp
+  tool_title.cpp
+  ylm.cpp
+  parallel_common.cpp
+  parallel_cell.cpp
+  parallel_global.cpp
+  parallel_comm.cpp
+  parallel_reduce.cpp
+  parallel_device.cpp
+  parallel_grid.cpp
+  sph_bessel_tf.cpp
+  cubic_spline.cpp
+  parallel_2d.cpp
+  module_out/binstream.cpp
+  module_out/filename.cpp
+  module_out/sparse_matrix.cpp
+  module_out/file_reader.cpp
+  module_out/csr_reader.cpp
+  module_out/read_exit_file.cpp
+  module_out/orb_io.cpp
+  module_mixing/mixing_data.cpp
+  module_mixing/mixing.cpp
+  module_mixing/plain_mixing.cpp
+  module_mixing/pulay_mixing.cpp
+  module_mixing/broyden_mixing.cpp
+  module_parallel/para_world.cpp
+  module_parallel/para_band_output.cpp
+  module_parallel/para_collection.cpp
+  module_parallel/para_kmesh_world.cpp
+  module_parallel/para_pw_world.cpp
+  module_parallel/para_diag_world.cpp
+  module_parallel/para_rgrid_world.cpp
+  module_parallel/para_bgroup_world.cpp
+  module_parallel/para_matrix_world.cpp
+  module_parallel/para_mpi_func.cpp
+  module_parallel/para_setup.cpp
+  module_parallel/para_bridge.cpp
+  ${LIBM_SRC})
 
 target_link_libraries(base PUBLIC container)
 add_subdirectory(module_container)
@@ -95,7 +89,9 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
-  if(ENABLE_MPI) #Zhang Xiaoyang: A temporary solution. Please classify the serial and parrallel tests later. 2024-7-8
+  if(ENABLE_MPI)
+
+  #Zhang Xiaoyang: A temporary solution. Please classify the serial and parrallel tests later. 2024-7-8
     add_subdirectory(test)
     add_subdirectory(test_parallel)
     add_subdirectory(kernels/test)
@@ -103,7 +99,7 @@ if(BUILD_TESTING)
     add_subdirectory(module_device/test)
     add_subdirectory(module_grid/test)
     add_subdirectory(module_parallel/test)
-    if (ENABLE_ABACUS_LIBM)
+    if(ENABLE_ABACUS_LIBM)
       add_subdirectory(libm/test)
     endif()
   endif()
