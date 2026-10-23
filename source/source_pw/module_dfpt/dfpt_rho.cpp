@@ -39,9 +39,11 @@ void DFPT_Rho::init(const Config& cfg)
     mix_beta_ = cfg.mix_beta;
     mix_type_ = cfg.mix_type;
     kerker_a2_ = cfg.kerker_a2;
-    if (cfg.mix_type != "plain" && cfg.mix_type != "kerker")
+    if (cfg.mix_type != "plain" && cfg.mix_type != "kerker" && cfg.mix_type != "broyden"
+        && cfg.mix_type != "v_sc")
     {
-        ModuleBase::WARNING_QUIT("DFPT_Rho", "unsupported mix_type, expected plain or kerker");
+        ModuleBase::WARNING_QUIT("DFPT_Rho",
+                                 "unsupported mix_type, expected plain, kerker, broyden or v_sc");
     }
     // make_unique is C++14; C++11 uses new directly through reset()
     mixer_.reset(new Base_Mixing::Plain_Mixing(mix_beta_));
