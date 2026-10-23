@@ -103,18 +103,33 @@ multiple ranks share a node. For example, on one node allocated GPUs 0 and 1:
 CUDA_VISIBLE_DEVICES=0,1 mpirun -np 2 abacus
 ```
 
-The tested combination is LibRI `6ce3c8480ae38a085746dc81cc4dbb59b8074430`
-and DDLA `v0.0.4` (`9c404ac65148ec1b48977b846f38ba6ef9e134f7`). LibRI requires the
-compatibility and force-accumulation fixes in `tests/lcao_hse_gpu/libri-compat.patch`:
-normalize `include/RI/global/gpu/GPU_Backend.h` and
-`include/RI/ri/LRI-cal_loop3_GPU.hpp` to LF, then run
-`git apply --unidiff-zero /path/to/abacus/tests/lcao_hse_gpu/libri-compat.patch`
-from the LibRI source directory. GPU mode requires this explicitly supplied
-LibRI tree; the default CPU dependency download is unchanged.
+The tested combination is LibRI's
+[`fac_add_Ds` branch](https://gitee.com/linpeize/LibRI/tree/fac_add_Ds) at
+`f68342122e4d23007142028bf2d017ce026835eb` and DDLA `v0.0.4`
+(`9c404ac65148ec1b48977b846f38ba6ef9e134f7`). This LibRI revision includes the
+required DDLA interfaces and signed GPU accumulation.
+
+For GCC 13.3/OpenMP, this revision also needs the
+[OpenMP loop declaration fix](https://github.com/Stardust0831/LibRI/blob/fdc95815fb69f7fd98efd3c5a0657c868ba302d5/abacus-collapse-fixed/move-declarations.patch).
+It moves declarations inside the innermost collapsed loops in two LibRI
+`LRI_k` headers. Without it, ABACUS's BSE module fails to compile with
+`not enough for loops to collapse`, including when building for HSE calculations.
+Prepare the tested LibRI source as follows:
+
+```bash
+git clone --branch fac_add_Ds https://gitee.com/linpeize/LibRI.git
+git -C LibRI checkout f68342122e4d23007142028bf2d017ce026835eb
+curl -fL -o libri-openmp-collapse.patch \
+  https://raw.githubusercontent.com/Stardust0831/LibRI/fdc95815fb69f7fd98efd3c5a0657c868ba302d5/abacus-collapse-fixed/move-declarations.patch
+git -C LibRI apply ../libri-openmp-collapse.patch
+```
+
+GPU mode requires this explicitly supplied LibRI tree; the default CPU
+dependency download is unchanged.
 
 ```bash
 cmake -B build -DENABLE_LIBRI=ON -DUSE_CUDA=ON -DENABLE_LIBRI_GPU=ON \
-  -DLIBRI_DIR=/path/to/patched/LibRI -DDDLA_ROOT=/path/to/DDLA
+  -DLIBRI_DIR=/path/to/LibRI -DDDLA_ROOT=/path/to/DDLA
 ```
 
 `CMAKE_PREFIX_PATH` can also locate DDLA. A configure-time compile/link check
