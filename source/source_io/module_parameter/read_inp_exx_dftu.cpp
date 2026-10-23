@@ -657,7 +657,7 @@ void ReadInput::item_exx()
         item.annotation = "on-site Coulomb-metric preorthogonalization for RPA auxiliary bases";
         item.category = "Exact Exchange (LCAO)";
         item.type = "String";
-        item.description = "Select none for the legacy RPA auxiliary basis or onsite_coulomb to Coulomb-orthonormalize each atom-type and angular-momentum radial channel before RPA producer output.";
+        item.description = "Select none for the legacy RPA auxiliary basis or onsite_coulomb to Coulomb-orthonormalize each atom-type and angular-momentum radial channel before RPA producer output. The orthonormalization applies to the active (possibly shrunk) auxiliary basis only: with shrink_abfs_pca_thr set, the larger fitting basis rebuilt by cal_large_Cs is not preorthogonalized.";
         item.default_value = "none";
         item.unit = "";
         item.set_availability("basis_type==lcao");

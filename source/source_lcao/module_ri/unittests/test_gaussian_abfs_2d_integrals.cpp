@@ -195,5 +195,35 @@ int main()
         }
     }
 
+    // Regression: the scaled-erfc helpers must stay accurate across the
+    // asymptotic crossover at x^2 ~ log(DBL_MAX) and must not overflow when a
+    // large layer separation makes the naive exp(q*a)*erfc product infinite.
+    const double erfcx_below_crossover = 0.02168358485056290661617;
+    require(std::abs(GaussianAbfs2D::erfcx_nonneg(26.0) - erfcx_below_crossover)
+                < 1.0e-12 * erfcx_below_crossover,
+            "erfcx below the asymptotic crossover mismatch");
+    const double erfcx_above_crossover = 0.02088160799042094067409;
+    require(std::abs(GaussianAbfs2D::erfcx_nonneg(27.0) - erfcx_above_crossover)
+                < 1.0e-9 * erfcx_above_crossover,
+            "erfcx past the asymptotic crossover mismatch");
+    {
+        const double beta_separated = 0.5;
+        const double q_separated = 20.0;
+        const double a_separated = 40.0;
+        require(q_separated * a_separated > 709.0,
+                "the large-separation regression must exceed the naive overflow threshold");
+        double plus_separated = 0.0;
+        double minus_separated = 0.0;
+        GaussianAbfs2D::scaled_erfc_pair(q_separated, a_separated, beta_separated, plus_separated,
+                                         minus_separated);
+        require(std::isfinite(plus_separated) && std::isfinite(minus_separated),
+                "large-separation erfc product produced a non-finite value");
+        require(std::abs(plus_separated) < 1.0e-300,
+                "large-separation plus branch should underflow to zero");
+        const double minus_reference = 5.30079310601e-261;
+        require(std::abs(minus_separated - minus_reference) < 1.0e-12 * minus_reference,
+                "large-separation negative-shift branch mismatch");
+    }
+
     return EXIT_SUCCESS;
 }

@@ -213,3 +213,21 @@ TEST(RpaAbfsPreorthogonalization, InputAdapterSupportsForceDerivatives)
     EXPECT_EQ(report.output_expanded_size, 1);
     EXPECT_TRUE(std::isfinite(report.channels.front().maximum_identity_error));
 }
+
+TEST(RpaAbfsPreorthogonalization, ShrinkEnabledInputActsOnActiveBasisOnly)
+{
+    // With shrink_abfs_pca_thr set, cal_large_Cs rebuilds the larger fitting
+    // basis without preorthogonalization, so the adapter must reduce the
+    // active basis it is handed and leave any separate large basis untouched.
+    const auto radial = radial_exp(0.0);
+    Input_para input;
+    input.rpa_abfs_preorth = "onsite_coulomb";
+    input.rpa_abfs_preorth_threshold = 1.0e-2;
+    input.shrink_abfs_pca_thr = 1.0e-6;
+    auto active = make_set(0, {radial, radial});
+    auto large = make_set(0, {radial, radial, radial});
+    const auto report = ModuleRI::finalize_rpa_abfs_from_input(active, input, false);
+    EXPECT_EQ(active[0][0].size(), 1U);
+    EXPECT_EQ(report.output_expanded_size, 1);
+    EXPECT_EQ(large[0][0].size(), 3U);
+}

@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <complex>
+#include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -12,6 +13,7 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 namespace
 {
@@ -177,11 +179,22 @@ int main()
         // The direct route must write its reader-v1 files into the requested
         // output directory with the same V_full_<iq>_r<rank>.dat naming the
         // split route's out_coulomb_k_v1 uses, so downstream LibRPA readers
-        // need no path special case. Exercise it with a non-default
-        // directory.
-        const std::string nondefault_directory = "nondefault_rpa_outdir/";
-        require(mkdir(nondefault_directory.c_str(), 0755) == 0,
-                "could not create the non-default output directory");
+        // need no path special case. Exercise it in a per-run temporary
+        // directory so repeated CTest runs never collide.
+        char temporary_directory[] = "nondefault_rpa_outdir_XXXXXX";
+        require(mkdtemp(temporary_directory) != nullptr,
+                "could not create the temporary output directory");
+        const std::string nondefault_directory = std::string(temporary_directory) + "/";
+        struct DirectoryCleanup
+        {
+            const char* path;
+            ~DirectoryCleanup()
+            {
+                std::remove((std::string(path) + "/V_full_1_r0.dat").c_str());
+                rmdir(path);
+            }
+        };
+        DirectoryCleanup cleanup{temporary_directory};
         Direct2dCoulomb::DenseMatrix produced;
         produced.dimension = 2;
         produced.values = {{1.0, 0.0}, {0.25, -0.5}, {0.25, 0.5}, {2.0, 0.0}};

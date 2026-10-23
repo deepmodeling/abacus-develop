@@ -158,7 +158,9 @@ void Parallel_Reduce::reduce_max_loc(const MPI_Comm mpi_comm, double& value, int
     {
         double value;
         int rank;
-    } local{value, rank}, global{};
+    };
+    MaxLoc local{value, rank};
+    MaxLoc global{};
     MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, mpi_comm);
     value = global.value;
     rank = global.rank;
@@ -168,6 +170,18 @@ void Parallel_Reduce::gather_int_all(const MPI_Comm mpi_comm, int& v, int* all)
 {
     assert(all != nullptr);
     MPI_Allgather(&v, 1, MPI_INT, all, 1, MPI_INT, mpi_comm);
+}
+
+void Parallel_Reduce::gatherv_int_all(const MPI_Comm mpi_comm,
+                                      const int* send_buffer,
+                                      const int send_count,
+                                      int* receive_buffer,
+                                      const int* receive_counts,
+                                      const int* receive_displacements)
+{
+    assert(receive_buffer != nullptr);
+    MPI_Allgatherv(send_buffer, send_count, MPI_INT, receive_buffer, receive_counts, receive_displacements,
+                   MPI_INT, mpi_comm);
 }
 
 template void Parallel_Reduce::reduce_all<int>(const MPI_Comm, int&);

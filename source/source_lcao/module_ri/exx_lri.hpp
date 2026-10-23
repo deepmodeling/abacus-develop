@@ -7,6 +7,7 @@
 #define EXX_LRI_HPP
 
 #include "exx_lri.h"
+#include "source_base/parallel_common.h"
 #include "source_cell/unitcell.h"
 #include "ri_2d_comm.h"
 #include "ri_util.h"
@@ -978,10 +979,8 @@ inline EwaldRealspaceRange<Tdata> select_ewald_realspace_range(
     const EwaldVqDetail::TailTolerances tolerances{info.ewald_tail_abs_tol,
                                                    info.ewald_tail_rel_tol,
                                                    info.ewald_tail_sum_rel_tol};
-    int mpi_rank = 0;
-    int mpi_size = 1;
-    MPI_Comm_rank(mpi_comm, &mpi_rank);
-    MPI_Comm_size(mpi_comm, &mpi_size);
+    const int mpi_rank = Parallel_Common::my_rank(mpi_comm);
+    const int mpi_size = Parallel_Common::nproc(mpi_comm);
 
     int expansions = 0;
     while (true)
@@ -1324,8 +1323,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     {
         all_atoms.insert(iat);
     }
-    int mpi_size = 1;
-    MPI_Comm_size(this->mpi_comm, &mpi_size);
+    const int mpi_size = Parallel_Common::nproc(this->mpi_comm);
     std::map<TA,TatomR> atoms_pos;
     for(int iat=0; iat<ucell.nat; ++iat)
         { atoms_pos[iat] = RI_Util::Vector3_to_array3( ucell.atoms[ ucell.iat2it[iat] ].tau[ ucell.iat2ia[iat] ] ); }
@@ -1405,10 +1403,10 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
                                 std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long_temp;
                             if (mpi_size > 1)
                             {
-                                MPI_Barrier(this->mpi_comm);
+                                Parallel_Common::barrier(this->mpi_comm);
                                 auto Vs_bare_root
                                     = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_temp, all_atoms, all_atoms);
-                                MPI_Barrier(this->mpi_comm);
+                                Parallel_Common::barrier(this->mpi_comm);
                                 if (this->runtime.rank == 0)
                                 {
                                     Vs_ewald_temp
@@ -1442,10 +1440,10 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
                         {
                             if (mpi_size > 1)
                             {
-                                MPI_Barrier(this->mpi_comm);
+                                Parallel_Common::barrier(this->mpi_comm);
                                 auto Vs_bare_root
                                     = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_temp, all_atoms, all_atoms);
-                                MPI_Barrier(this->mpi_comm);
+                                Parallel_Common::barrier(this->mpi_comm);
                                 if (this->runtime.rank == 0)
                                 {
                                     Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs_serial_full(
@@ -1501,9 +1499,9 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     if (mpi_size > 1
         && this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald) != this->coulomb_settings.end())
     {
-        MPI_Barrier(this->mpi_comm);
+        Parallel_Common::barrier(this->mpi_comm);
         auto Vs_root = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs, all_atoms, all_atoms);
-        MPI_Barrier(this->mpi_comm);
+        Parallel_Common::barrier(this->mpi_comm);
         if (this->runtime.rank != 0)
         {
             Vs_root.clear();
@@ -1511,9 +1509,9 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
         Vs = std::move(Vs_root);
         if (this->use_rotated_n0_long_range)
         {
-            MPI_Barrier(this->mpi_comm);
+            Parallel_Common::barrier(this->mpi_comm);
             auto Vs_long_root = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_long, all_atoms, all_atoms);
-            MPI_Barrier(this->mpi_comm);
+            Parallel_Common::barrier(this->mpi_comm);
             if (this->runtime.rank != 0)
             {
                 Vs_long_root.clear();

@@ -589,10 +589,8 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap_raw_v1(
         local_packed.insert(local_packed.end(), key.begin(), key.end());
     }
     std::vector<int> gathered(static_cast<std::size_t>(total_int_count));
-    // Allgatherv has no counterpart in Parallel_Reduce (the per-rank counts
-    // are data dependent); this is the only raw collective in this writer.
-    MPI_Allgatherv(local_packed.data(), local_int_count, MPI_INT, gathered.data(), recv_counts.data(),
-                   displacements.data(), MPI_INT, mpi_comm);
+    Parallel_Reduce::gatherv_int_all(mpi_comm, local_packed.data(), local_int_count, gathered.data(),
+                                     recv_counts.data(), displacements.data());
     std::vector<std::array<int, 5>> gathered_keys(static_cast<std::size_t>(total_int_count) / key_width);
     for (std::size_t index = 0; index < gathered_keys.size(); ++index)
     {

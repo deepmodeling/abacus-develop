@@ -105,6 +105,13 @@ void reduce_min(const MPI_Comm mpi_comm, T& object);
 void reduce_max_loc(const MPI_Comm mpi_comm, double& value, int& rank);
 /// @brief Allgather one int per rank on an arbitrary communicator.
 void gather_int_all(const MPI_Comm mpi_comm, int& v, int* all);
+/// @brief Allgatherv with per-rank counts and displacements on an arbitrary communicator.
+void gatherv_int_all(const MPI_Comm mpi_comm,
+                     const int* send_buffer,
+                     const int send_count,
+                     int* receive_buffer,
+                     const int* receive_counts,
+                     const int* receive_displacements);
 #endif
 
 } // namespace Parallel_Reduce
