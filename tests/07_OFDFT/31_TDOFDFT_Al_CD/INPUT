@@ -31,7 +31,7 @@ md_type           nve
 md_nstep          3
 md_dt             0.25
 md_tfirst         58022.52706
-md_dumpfreq       10
+md_dumpfreq       1
 md_tfreq          1.08
 md_tchain         1
 nbspline          10 # be sure fft dimension is odd

@@ -2364,6 +2364,12 @@ TEST_F(InputTest, Item_test2)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).mdp.md_nstep, 50);
     }
+    { // md_thermo_freq
+        auto it = find_label("md_thermo_freq", readinput.input_lists);
+        it->second.str_values = {"100"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).mdp.md_thermo_freq, 100);
+    }
     { // md_prec_level
         auto it = find_label("md_prec_level", readinput.input_lists);
         TestParameters::input(param).mdp.md_prec_level = 1;

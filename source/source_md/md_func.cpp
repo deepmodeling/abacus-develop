@@ -329,8 +329,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
                   DomainDecomposition& decomp,
                   double& potential,
                   const bool& cal_stress,
-                  ModuleBase::matrix& virial,
-                  const bool& md_out_force)
+                  ModuleBase::matrix& virial)
 {
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::start("MD_func", "force_virial");
@@ -341,10 +340,6 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         decomp.accumulate_ghost_forces(mdcell);
         potential = 0.5 * p_esolver->cal_energy();
         for (LocalAtom& atom : mdcell.owned_atoms()) atom.force *= 0.5;
-        if (md_out_force)
-        {
-            ModuleIO::print_force(GlobalV::ofs_running, mdcell, "TOTAL-FORCE (eV/Angstrom)");
-        }
         if (cal_stress) { p_esolver->cal_stress(static_cast<BaseCell&>(mdcell), virial); virial *= 0.5; }
     }
     else
