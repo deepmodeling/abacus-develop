@@ -66,3 +66,4 @@ get_wf0
 get_pchg
 get_pchg_k
 get_s
+scf_bisecuo_gpu

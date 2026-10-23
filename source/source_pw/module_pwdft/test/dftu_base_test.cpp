@@ -1,11 +1,8 @@
 /**********************************************
  *  Unit tests for Plus_U_Base::init_base.
  *
- *  Focus: the Yukawa state must follow the
- *  yukawa_potential argument on every call,
- *  including a true -> false re-initialization
- *  (before_scf() -> setup_pot() may call
- *  init_base() repeatedly on the same object).
+ *  Focus: initialize base DFT+U state before
+ *  electronic and ionic iterations begin.
  ***********************************************/
 
 #include "source_pw/module_pwdft/dftu_base.h"
@@ -169,29 +166,54 @@ void write_compact_collinear_atom(std::ostream& os,
 
 } // namespace
 
-/// After a true -> false re-initialization the Yukawa object must be
-/// released so that use_yukawa() reflects the latest argument.
-TEST_F(DFTUBaseTest, InitBaseYukawaTrueThenFalseClearsState)
+/// Enabling Yukawa screening constructs its run-lifetime state.
+TEST_F(DFTUBaseTest, InitBaseYukawaEnabledCreatesObject)
 {
     Plus_U_Base dftu;
 
     init_dftu(dftu, true);
     EXPECT_TRUE(dftu.use_yukawa());
+}
+
+/// Disabling Yukawa screening leaves its optional state empty.
+TEST_F(DFTUBaseTest, InitBaseYukawaDisabledLeavesObjectEmpty)
+{
+    Plus_U_Base dftu;
 
     init_dftu(dftu, false);
     EXPECT_FALSE(dftu.use_yukawa());
 }
 
-/// A false -> true re-initialization must create the Yukawa object.
-TEST_F(DFTUBaseTest, InitBaseYukawaFalseThenTrueCreatesObject)
+/// U-ramping starts from zero and advances toward the configured target.
+TEST_F(DFTUBaseTest, InitBaseSeedsURampingState)
 {
     Plus_U_Base dftu;
+    const std::vector<int> l_channel = {2};
+    const std::vector<double> hubbard_u = {5.0};
 
-    init_dftu(dftu, false);
-    EXPECT_FALSE(dftu.use_yukawa());
+    dftu.init_base(ucell,
+                   1,
+                   2,
+                   l_channel,
+                   false,
+                   0.5,
+                   "",
+                   "",
+                   "none",
+                   "cpu",
+                   hubbard_u,
+                   0.5,
+                   0,
+                   0,
+                   DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    init_dftu(dftu, true);
-    EXPECT_TRUE(dftu.use_yukawa());
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 0.0);
+    dftu.uramping_update();
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 0.5);
+    EXPECT_FALSE(dftu.u_converged());
+    dftu.uramping_update();
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 1.0);
+    EXPECT_FALSE(dftu.u_converged());
 }
 
 // =====================================================================
@@ -639,11 +661,8 @@ TEST(FindFirstExistingFileTest, ReturnsFirstExistingCandidate)
     }
 }
 
-/// For init_occ_mat=2 the occupation-matrix file is read exactly once.
-/// Later init_base() calls (one per ionic step in a relax run) must keep
-/// the in-memory matrix instead of reading the file again, so pointing
-/// the second call at a non-existent readin dir must not abort the run.
-TEST_F(DFTUBaseTest, InitBaseReadsOccMatFileOnlyOnce)
+/// init_occ_mat=2 loads the fixed occupation matrix during run initialization.
+TEST_F(DFTUBaseTest, InitBaseReadsFixedOccMat)
 {
     // Use the gtest-managed temporary directory so the test never creates
     // or deletes directories itself (see AGENTS.md rule 17).
@@ -651,8 +670,7 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatFileOnlyOnce)
     const std::string fn = dir + "occ_mat.txt";
 
     // One Fe atom, L=2, two spin channels of 5x5, filled with distinct
-    // constants so a re-read would be easy to distinguish from a
-    // preserved in-memory matrix.
+    // constants.
     {
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());
@@ -681,35 +699,23 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatFileOnlyOnce)
     Plus_U_Base dftu;
     const std::vector<int> l_channel = {2};
     const std::vector<double> hubbard_u = {0.0};
-    auto call_init = [&](const std::string& readin_dir)
-    {
-        dftu.init_base(ucell,
-                       1,                // npol
-                       2,                // nspin
-                       l_channel,
-                       false,            // yukawa_potential
-                       0.5,              // yukawa_lambda
-                       readin_dir,       // global_readin_dir
-                       "",               // global_out_dir
-                       "none",           // init_chg
-                       "cpu",            // device
-                       hubbard_u,
-                       0.0,              // uramping
-                       2,                // init_occ_mat
-                       0,                // mixing_dftu
-                       DFTU_BASE::SOC_LAYOUT_PAULI);
-    };
+    dftu.init_base(ucell,
+                   1,                // npol
+                   2,                // nspin
+                   l_channel,
+                   false,            // yukawa_potential
+                   0.5,              // yukawa_lambda
+                   dir,              // global_readin_dir
+                   "",               // global_out_dir
+                   "none",           // init_chg
+                   "cpu",            // device
+                   hubbard_u,
+                   0.0,              // uramping
+                   2,                // init_occ_mat
+                   0,                // mixing_dftu
+                   DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    // First ionic step: the file is read.
-    call_init(dir);
     ASSERT_TRUE(dftu.is_occmat_ready());
-    EXPECT_NEAR(dftu.occmat().get(0, 2, 0, 0, 0), 0.1, 1e-12);
-    EXPECT_NEAR(dftu.occmat().get(0, 2, 1, 4, 4), 0.2, 1e-12);
-
-    // Simulate a later ionic step: the in-memory matrix is preserved and
-    // the file is not consulted again, so a non-existent readin dir is fine.
-    call_init(dir + "does_not_exist/");
-    EXPECT_TRUE(dftu.is_occmat_ready());
     EXPECT_NEAR(dftu.occmat().get(0, 2, 0, 0, 0), 0.1, 1e-12);
     EXPECT_NEAR(dftu.occmat().get(0, 2, 1, 4, 4), 0.2, 1e-12);
 }

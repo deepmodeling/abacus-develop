@@ -754,6 +754,7 @@ OBJS_IO=module_parameter/input_conv.o\
     parse_args.o\
     module_parameter/availability.o\
     module_parameter/availability_validator.o\
+    module_parameter/input_domain.o\
     module_parameter/read_input.o\
     module_parameter/read_inp_sys.o\
     module_parameter/read_inp_estruc.o\

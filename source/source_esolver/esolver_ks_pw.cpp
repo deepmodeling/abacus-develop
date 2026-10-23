@@ -20,6 +20,7 @@
 #include "source_estate/setup_estate_pw.h"            // mohan add 20251005
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type used via general_exx_info_
 #include "source_io/module_ctrl/ctrl_output_pw.h"     // mohan add 20250927
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_pw/module_pwdft/dftu_base_io.h"      // append_ion_step_snapshot
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/deltaspin_pw.h"   // mohan add 20250309
@@ -101,6 +102,26 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
                                this->solvent,
                                inp);
 
+    if (inp.dft_plus_u)
+    {
+        const System_para& sys = PARAM.globalv;
+        this->dftu_->init_base(ucell,
+                               sys.npol,
+                               inp.nspin,
+                               inp.l_channel,
+                               inp.yukawa_potential,
+                               inp.yukawa_lambda,
+                               sys.global_readin_dir,
+                               sys.global_out_dir,
+                               inp.init_chg,
+                               inp.device,
+                               sys.hubbard_u,
+                               sys.uramping,
+                               inp.init_occ_mat,
+                               inp.mixing_dftu,
+                               DFTU_BASE::SOC_LAYOUT_PAULI);
+    }
+
     this->stp.before_runner(ucell, this->kv, this->sf, *this->pw_wfc, this->ppcell.lmaxkb, *this->inp_);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
@@ -166,9 +187,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     //! Allocate HamiltPW
     this->allocate_hamilt(ucell);
 
-    //! Setup potentials (local, non-local, sc, +U, DFT-1/2)
-    // note: init DFT+U is done here for pw basis for every scf iteration, however,
-    // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
+    //! Setup potentials (local, non-local, spin constraint, DFT-1/2)
     pw::setup_pot(istep,
                   ucell,
                   this->kv,
@@ -178,7 +197,6 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
                   this->chr,
                   this->locpp,
                   this->ppcell,
-                  *this->dftu_,
                   this->vsep_cell,
                   this->stp.template get_psi_t<T, Device>(),
                   this->p_hamilt,
