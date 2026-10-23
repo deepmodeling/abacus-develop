@@ -151,9 +151,23 @@ namespace XC_Functional_Libxc
         const double &rho, const double &grho,
         double &sxc, double &v1xc, double &v2xc);
 
+    // overload accepting an already-initialized functional vector; the caller
+    // owns init_func/finish_func (used for per-thread reuse)
+    extern void gcxc_libxc(
+        const std::vector<xc_func_type> &funcs,
+        const double &rho, const double &grho,
+        double &sxc, double &v1xc, double &v2xc);
+
     // the entire GGA functional, for nspin=2 case
     extern void gcxc_spin_libxc(
         const std::vector<int> &func_id,
+        const double rhoup, const double rhodw,
+        const ModuleBase::Vector3<double> gdr1, const ModuleBase::Vector3<double> gdr2,
+        double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud);
+
+    // overload accepting an already-initialized functional vector
+    extern void gcxc_spin_libxc(
+        const std::vector<xc_func_type> &funcs,
         const double rhoup, const double rhodw,
         const ModuleBase::Vector3<double> gdr1, const ModuleBase::Vector3<double> gdr2,
         double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud);
@@ -169,8 +183,23 @@ namespace XC_Functional_Libxc
         const double &rho, const double &grho, const double &atau, double &sxc,
         double &v1xc, double &v2xc, double &v3xc);
 
+    // overload accepting an already-initialized functional vector
+    extern void tau_xc(
+        const std::vector<xc_func_type> &funcs,
+        const double &rho, const double &grho, const double &atau, double &sxc,
+        double &v1xc, double &v2xc, double &v3xc);
+
     extern void tau_xc_spin(
         const std::vector<int> &func_id,
+        double rhoup, double rhodw,
+        ModuleBase::Vector3<double> gdr1, ModuleBase::Vector3<double> gdr2,
+        double tauup, double taudw,
+        double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud,
+        double &v3xcup, double &v3xcdw);
+
+    // overload accepting an already-initialized functional vector
+    extern void tau_xc_spin(
+        const std::vector<xc_func_type> &funcs,
         double rhoup, double rhodw,
         ModuleBase::Vector3<double> gdr1, ModuleBase::Vector3<double> gdr2,
         double tauup, double taudw,

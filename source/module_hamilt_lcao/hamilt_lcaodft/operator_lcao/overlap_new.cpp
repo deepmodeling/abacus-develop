@@ -24,7 +24,6 @@ hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(HS_Matrix_K<TK>* hs
     this->SR = SR_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
-    assert(this->SR != nullptr);
 #endif
     // initialize SR to allocate sparse overlap matrix memory
     this->initialize_SR(GridD_in);

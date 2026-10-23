@@ -38,8 +38,9 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
     while(upperbound>1e-7);
 
     //G-space sum here
-    //Determine if this processor contains G=0 and set the constant term 
-    FPTYPE sdewald;
+    //Determine if this processor contains G=0 and set the constant term
+    // Long reciprocal-space sums need double accumulation in both precision modes.
+    double sdewald;
 	const int ig0 = rho_basis->ig_gge0;
     if( ig0 >= 0)
 	{
@@ -62,12 +63,12 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
     int num_threads = omp_get_num_threads();
     int thread_id = omp_get_thread_num();
 	ModuleBase::matrix local_sigma(3, 3);
-	FPTYPE local_sdewald = 0.0;
+	double local_sdewald = 0.0;
 #else
     int num_threads = 1;
     int thread_id = 0;
 	ModuleBase::matrix& local_sigma = sigma;
-	FPTYPE& local_sdewald = sdewald;
+	double& local_sdewald = sdewald;
 #endif
 
 	// Calculate ig range of this thread, avoid thread sync

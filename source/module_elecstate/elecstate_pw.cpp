@@ -1,4 +1,8 @@
 #include "elecstate_pw.h"
+
+#include <type_traits>
+#include <vector>
+
 #include "module_parameter/parameter.h"
 #include "elecstate_getters.h"
 #include "module_base/constants.h"
@@ -130,15 +134,43 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         }
     }
 
+    // Keep the FFTs in single precision, but sum k-point densities in double.
+    // USPP/double-grid paths are excluded because add_usrho() transforms the
+    // device density buffer after the k-point loop.
+    const bool sum_k_in_double = std::is_same<Real, float>::value
+                                 && std::is_same<Device, base_device::DEVICE_GPU>::value
+                                 && !PARAM.globalv.double_grid && !PARAM.globalv.use_uspp;
+    std::vector<double> buffer(sum_k_in_double ? this->charge->nrxx : 0);
+    const auto accumulate_k = [&](Real** source, double** target, const bool first)
+    {
+        for (int is = 0; is < this->charge->nspin; ++is)
+        {
+            castmem_var_d2h_op()(cpu_ctx, this->ctx, buffer.data(), source[is], this->charge->nrxx);
+            for (int ir = 0; ir < this->charge->nrxx; ++ir)
+            {
+                target[is][ir] = first ? buffer[ir] : target[is][ir] + buffer[ir];
+            }
+            setmem_var_op()(this->ctx, source[is], 0, this->charge->nrxx);
+        }
+    };
+
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
         psi.fix_k(ik);
         this->updateRhoK(psi);
+        if (sum_k_in_double)
+        {
+            accumulate_k(this->rho, this->charge->rho, ik == 0);
+            if (get_xc_func_type() == 3)
+            {
+                accumulate_k(this->kin_r, this->charge->kin_r, ik == 0);
+            }
+        }
     }
 
     this->add_usrho(psi);
 
-    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
+    if (!sum_k_in_double && (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"))
     {
         for (int ii = 0; ii < PARAM.inp.nspin; ii++)
         {

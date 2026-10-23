@@ -4,6 +4,15 @@
 
 #include <vector>
 
+#ifdef __MPI
+const MPI_Datatype Parallel_Reduce::MPI_Type<int>::value = MPI_INT;
+const MPI_Datatype Parallel_Reduce::MPI_Type<double>::value = MPI_DOUBLE;
+const MPI_Datatype Parallel_Reduce::MPI_Type<float>::value = MPI_FLOAT;
+const MPI_Datatype Parallel_Reduce::MPI_Type<std::complex<double>>::value = MPI_DOUBLE_COMPLEX;
+const MPI_Datatype Parallel_Reduce::MPI_Type<std::complex<float>>::value = MPI_C_FLOAT_COMPLEX;
+const MPI_Datatype Parallel_Reduce::MPI_Type<long long>::value = MPI_LONG_LONG;
+#endif
+
 template <>
 void Parallel_Reduce::reduce_all<int>(int& object)
 {

@@ -218,6 +218,16 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	double &local_etxcgc = etxcgc;
 #endif
 
+#ifdef USE_LIBXC
+	// Initialize the LibXC functionals once per OpenMP thread instead of
+	// once per real-space grid point, then reuse them in the loops below.
+	std::vector<xc_func_type> tls_funcs;
+	if(use_libxc)
+	{
+		tls_funcs = XC_Functional_Libxc::init_func(func_id, (nspin0 == 1) ? XC_UNPOLARIZED : XC_POLARIZED);
+	}
+#endif
+
 	double grho2a = 0.0;
 	double grho2b = 0.0;
 	double sxc = 0.0;
@@ -251,11 +261,11 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					{
 						double v3xc;
 						double atau = chr->kin_r[0][ir]/2.0;
-						XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, atau, sxc, v1xc, v2xc, v3xc);
+						XC_Functional_Libxc::tau_xc( tls_funcs, arho, grho2a, atau, sxc, v1xc, v2xc, v3xc);
 					}
 					else
 					{
-						XC_Functional_Libxc::gcxc_libxc( func_id, arho, grho2a, sxc, v1xc, v2xc);
+						XC_Functional_Libxc::gcxc_libxc( tls_funcs, arho, grho2a, sxc, v1xc, v2xc);
 					}
 #endif 
 				} // end use_libxc
@@ -312,14 +322,14 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					double atau1 = chr->kin_r[0][ir]/2.0;
 					double atau2 = chr->kin_r[1][ir]/2.0;
 					XC_Functional_Libxc::tau_xc_spin(
-						func_id,
+						tls_funcs,
 						rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir], 
 						atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw);
 				}
 				else
 				{
 					XC_Functional_Libxc::gcxc_spin_libxc(
-						func_id,
+						tls_funcs,
 						rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir], 
 						sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud);
 				}
@@ -456,6 +466,12 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		}// end ir
 
 	}
+#ifdef USE_LIBXC
+	if(use_libxc)
+	{
+		XC_Functional_Libxc::finish_func(tls_funcs);
+	}
+#endif
 #ifdef _OPENMP
 	#pragma omp critical(xc_functional_gradcorr_reduce)
 	{
@@ -627,11 +643,36 @@ void XC_Functional::grad_wfc(
 	
 	auto porter = std::move(ct::Tensor(
         ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {wfc_basis->nmaxgr}));
-	auto gcar = ct::TensorMap(
-		&wfc_basis->gcar[0][0], ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, {wfc_basis->nks * wfc_basis->npwk_max, 3}).to_device<ct_Device>();
-	auto kvec_c = ct::TensorMap(
-		&wfc_basis->kvec_c[0][0],ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, {wfc_basis->nks, 3}).to_device<ct_Device>();
-	
+	// gcar/kvec_c are stored as Vector3<double> on the host. Build
+	// precision-matched host buffers and upload them, so single precision
+	// never reinterprets a double tensor and does not depend on the
+	// device-only PW_Basis_K caches being populated in the stress path.
+	const int gcar_size = wfc_basis->nks * wfc_basis->npwk_max;
+	std::vector<Real> gcar_host(3 * gcar_size);
+	for (int i = 0; i < gcar_size; ++i)
+	{
+		gcar_host[3 * i] = static_cast<Real>(wfc_basis->gcar[i].x);
+		gcar_host[3 * i + 1] = static_cast<Real>(wfc_basis->gcar[i].y);
+		gcar_host[3 * i + 2] = static_cast<Real>(wfc_basis->gcar[i].z);
+	}
+	std::vector<Real> kvec_host(3 * wfc_basis->nks);
+	for (int i = 0; i < wfc_basis->nks; ++i)
+	{
+		kvec_host[3 * i] = static_cast<Real>(wfc_basis->kvec_c[i].x);
+		kvec_host[3 * i + 1] = static_cast<Real>(wfc_basis->kvec_c[i].y);
+		kvec_host[3 * i + 2] = static_cast<Real>(wfc_basis->kvec_c[i].z);
+	}
+	auto gcar = ct::TensorMap(gcar_host.data(),
+	                          ct::DataTypeToEnum<Real>::value,
+	                          ct::DeviceType::CpuDevice,
+	                          {gcar_size, 3})
+	                .to_device<ct_Device>();
+	auto kvec_c = ct::TensorMap(kvec_host.data(),
+	                            ct::DataTypeToEnum<Real>::value,
+	                            ct::DeviceType::CpuDevice,
+	                            {wfc_basis->nks, 3})
+	                  .to_device<ct_Device>();
+
 	auto xc_functional_grad_wfc_solver 
 		= hamilt::xc_functional_grad_wfc_op<T, Device>();
 
@@ -640,7 +681,7 @@ void XC_Functional::grad_wfc(
             ik, ipol, npw_k, wfc_basis->npwk_max, // Integers
 			tpiba,	// Double
             gcar.template data<Real>(),   // Array of Real
-            kvec_c.template data<Real>(), // Array of double
+            kvec_c.template data<Real>(), // Array of Real
 			rhog, porter.data<T>());    // Array of std::complex<double>
 
 		// bring the gdr from G --> R
@@ -791,4 +832,10 @@ template void XC_Functional::grad_wfc<std::complex<double>, base_device::DEVICE_
     const ModulePW::PW_Basis_K* wfc_basis,
     const std::complex<double>* rhog,
     std::complex<double>* grad);
+template void XC_Functional::grad_wfc<std::complex<float>, base_device::DEVICE_GPU, float>(
+    const int ik,
+    const float tpiba,
+    const ModulePW::PW_Basis_K* wfc_basis,
+    const std::complex<float>* rhog,
+    std::complex<float>* grad);
 #endif // __CUDA || __ROCM

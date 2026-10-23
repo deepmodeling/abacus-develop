@@ -255,7 +255,7 @@ T* Psi<T, Device>::get_pointer(const int& ikb) const
 {
     assert(ikb >= 0);
     assert(this->k_first ? ikb < this->nbands : ikb < this->nk);
-    return this->psi_current + ikb * this->nbasis;
+    return this->psi_current + static_cast<std::size_t>(ikb) * this->nbasis;
 }
 
 template <typename T, typename Device>
@@ -277,7 +277,7 @@ const Device* Psi<T, Device>::get_device() const
 }
 
 template <typename T, typename Device>
-const int& Psi<T, Device>::get_psi_bias() const
+const std::size_t& Psi<T, Device>::get_psi_bias() const
 {
     return this->psi_bias;
 }
@@ -328,7 +328,7 @@ void Psi<T, Device>::fix_k(const int ik) const
     {
         this->current_b = 0;
     }
-    int base = this->current_b * this->nk * this->nbasis;
+    std::size_t base = static_cast<std::size_t>(this->current_b) * this->nk * this->nbasis;
     if (ik >= this->nk)
     {
         // mem_saver: fix to base
@@ -337,7 +337,8 @@ void Psi<T, Device>::fix_k(const int ik) const
     }
     else
     {
-        this->psi_bias = k_first ? ik * this->nbands * this->nbasis : base + ik * this->nbasis;
+        this->psi_bias = k_first ? static_cast<std::size_t>(ik) * this->nbands * this->nbasis
+                                 : base + static_cast<std::size_t>(ik) * this->nbasis;
         this->psi_current = const_cast<T*>(&(this->psi[psi_bias]));
     }
 }
@@ -351,7 +352,7 @@ void Psi<T, Device>::fix_b(const int ib) const
     {
         this->current_k = 0;
     }
-    int base = this->current_k * this->nbands * this->nbasis;
+    std::size_t base = static_cast<std::size_t>(this->current_k) * this->nbands * this->nbasis;
     if (ib >= this->nbands)
     {
         // mem_saver: fix to base
@@ -360,7 +361,8 @@ void Psi<T, Device>::fix_b(const int ib) const
     }
     else
     {
-        this->psi_bias = k_first ? base + ib * this->nbasis : ib * this->nk * this->nbasis;
+        this->psi_bias = k_first ? base + static_cast<std::size_t>(ib) * this->nbasis
+                                 : static_cast<std::size_t>(ib) * this->nk * this->nbasis;
         this->psi_current = const_cast<T*>(&(this->psi[psi_bias]));
     }
 }
@@ -378,7 +380,9 @@ void Psi<T, Device>::fix_kb(const int ik, const int ib) const
     }
     else
     {
-        this->psi_bias = k_first ? (ik * this->nbands + ib) * this->nbasis : (ib * this->nk + ik) * this->nbasis;
+        this->psi_bias = k_first
+                             ? (static_cast<std::size_t>(ik) * this->nbands + ib) * this->nbasis
+                             : (static_cast<std::size_t>(ib) * this->nk + ik) * this->nbasis;
         this->psi_current = const_cast<T*>(&(this->psi[psi_bias]));
     }
 }
@@ -388,8 +392,9 @@ T& Psi<T, Device>::operator()(const int ikb1, const int ikb2, const int ibasis) 
 {
     assert(ikb1 >= 0 && ikb2 >= 0 && ibasis >= 0);
     assert(this->k_first ? ikb1 < this->nk && ikb2 < this->nbands : ikb1 < this->nbands && ikb2 < this->nk);
-    return this->k_first ? this->psi[(ikb1 * this->nbands + ikb2) * this->nbasis + ibasis]
-                         : this->psi[(ikb1 * this->nk + ikb2) * this->nbasis + ibasis];
+    return this->k_first
+               ? this->psi[(static_cast<std::size_t>(ikb1) * this->nbands + ikb2) * this->nbasis + ibasis]
+               : this->psi[(static_cast<std::size_t>(ikb1) * this->nk + ikb2) * this->nbasis + ibasis];
 }
 
 template <typename T, typename Device>
@@ -398,7 +403,7 @@ T& Psi<T, Device>::operator()(const int ikb2, const int ibasis) const
     assert(this->k_first ? this->current_b == 0 : this->current_k == 0);
     assert(this->k_first ? ikb2 >= 0 && ikb2 < this->nbands : ikb2 >= 0 && ikb2 < this->nk);
     assert(ibasis >= 0 && ibasis < this->nbasis);
-    return this->psi_current[ikb2 * this->nbasis + ibasis];
+    return this->psi_current[static_cast<std::size_t>(ikb2) * this->nbasis + ibasis];
 }
 
 template <typename T, typename Device>

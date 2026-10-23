@@ -11,18 +11,17 @@
 //tau_xc and tau_xc_spin: interface for calling xc_mgga_exc_vxc from LIBXC
 //XC_POLARIZED, XC_UNPOLARIZED: internal flags used in LIBXC, denote the polarized(nspin=1) or unpolarized(nspin=2) calculations, definition can be found in xc.h from LIBXC
 void XC_Functional_Libxc::tau_xc(
-            const std::vector<int> &func_id,
+            const std::vector<xc_func_type> &funcs,
     const double &rho, const double &grho, const double &atau, double &sxc,
           double &v1xc, double &v2xc, double &v3xc)
 {
     double s, v1, v2, v3;
 	double lapl_rho, vlapl_rho;
     lapl_rho = grho;
-    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED);
 
     sxc = 0.0; v1xc = 0.0; v2xc = 0.0; v3xc = 0.0;
 
-    for(xc_func_type &func : funcs)
+    for(const xc_func_type &func : funcs)
     {
         xc_mgga_exc_vxc(&func,1,&rho,&grho,&lapl_rho,&atau,&s,&v1,&v2,&vlapl_rho,&v3);
 #ifdef __EXX
@@ -39,14 +38,23 @@ void XC_Functional_Libxc::tau_xc(
         v1xc += v1;
         v3xc += v3;
     }
-    XC_Functional_Libxc::finish_func(funcs);
 
 	return;
 }
 
+void XC_Functional_Libxc::tau_xc(
+            const std::vector<int> &func_id,
+    const double &rho, const double &grho, const double &atau, double &sxc,
+          double &v1xc, double &v2xc, double &v3xc)
+{
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED);
+    tau_xc(funcs, rho, grho, atau, sxc, v1xc, v2xc, v3xc);
+    XC_Functional_Libxc::finish_func(funcs);
+}
+
 
 void XC_Functional_Libxc::tau_xc_spin(
-        const std::vector<int> &func_id,
+        const std::vector<xc_func_type> &funcs,
         double rhoup, double rhodw,
         ModuleBase::Vector3<double> gdr1, ModuleBase::Vector3<double> gdr2,
         double tauup, double taudw,
@@ -61,9 +69,7 @@ void XC_Functional_Libxc::tau_xc_spin(
     const std::array<double,3> grho = {gdr1.norm2(), gdr1 * gdr2, gdr2.norm2()};
     const std::array<double,2> tau = {tauup, taudw};
 
-	std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_POLARIZED);
-
-    for(xc_func_type &func : funcs)
+    for(const xc_func_type &func : funcs)
     {
         if( func.info->family == XC_FAMILY_MGGA || func.info->family == XC_FAMILY_HYB_MGGA)
         {
@@ -94,7 +100,19 @@ void XC_Functional_Libxc::tau_xc_spin(
             v3xcdw += v3xc[1] * sgn[1];
         }
     }
+}
 
+void XC_Functional_Libxc::tau_xc_spin(
+        const std::vector<int> &func_id,
+        double rhoup, double rhodw,
+        ModuleBase::Vector3<double> gdr1, ModuleBase::Vector3<double> gdr2,
+        double tauup, double taudw,
+        double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud,
+        double &v3xcup, double &v3xcdw)
+{
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_POLARIZED);
+    tau_xc_spin(funcs, rhoup, rhodw, gdr1, gdr2, tauup, taudw,
+                sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw);
     XC_Functional_Libxc::finish_func(funcs);
 }
 

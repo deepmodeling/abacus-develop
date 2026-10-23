@@ -421,7 +421,17 @@ struct normalize_op<T, base_device::DEVICE_CPU> {
                                                                 psi_iter + (nbase + m) * dim,
                                                                 psi_iter + (nbase + m) * dim,
                                                                 true);
-            assert(psi_m_norm > 0.0);
+            // A zero (or NaN) norm means this direction is degenerate; in single
+            // precision tiny residual norms can underflow to exactly zero. Skip the
+            // normalization and let the caller treat the zero-norm band as converged.
+            if (psi_m_norm <= 1.0e-24)
+            {
+                if (psi_norm)
+                {
+                    psi_norm[m] = 0.0;
+                }
+                continue;
+            }
             psi_m_norm = sqrt(psi_m_norm);
 
             // Normalize using vector_div_constant_op

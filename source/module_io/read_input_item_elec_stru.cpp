@@ -259,7 +259,7 @@ void ReadInput::item_elec_stru()
                           "and spin-down";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nupdown = doublevalue;
-            para.sys.two_fermi = true;
+            para.sys.two_fermi = (doublevalue != 0.0);
         };
         item.reset_value = [](const Input_Item&, Parameter& para) {
             if (para.input.nspin == 1)

@@ -478,9 +478,14 @@ void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double
             index[3] = m2 * m_size + m1 + m_size2 * 3;
             vu[index[0]] = 0.5 * (vu_tmp[index[0]] + vu_tmp[index[3]]);
             vu[index[3]] = 0.5 * (vu_tmp[index[0]] - vu_tmp[index[3]]);
-            // vu should be complex<double> type, but here we use double type for test
-            vu[index[1]] = 0.5 * (vu_tmp[index[1]] + std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
-            vu[index[2]] = 0.5 * (vu_tmp[index[1]] - std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
+            // Pauli-to-spinor conversion for DFT+U potential:
+            //   V_{up,up}     = 0.5*(V_0 + V_z)
+            //   V_{down,down} = 0.5*(V_0 - V_z)
+            //   V_{up,down}   = 0.5*(V_x - i*V_y)
+            //   V_{down,up}   = 0.5*(V_x + i*V_y)
+            // consistent with the sigma_y convention in gint_k_pvpr.cpp
+            vu[index[1]] = 0.5 * (vu_tmp[index[1]] - std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
+            vu[index[2]] = 0.5 * (vu_tmp[index[1]] + std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
         }
     }
 }

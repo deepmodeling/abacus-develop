@@ -129,7 +129,7 @@ class Psi
     // return device type of psi
     const Device* get_device() const;
     // return psi_bias
-    const int& get_psi_bias() const;
+    const std::size_t& get_psi_bias() const;
 
     // mark
     void zero_out();
@@ -156,7 +156,7 @@ class Psi
     // current pointer for getting the psi
     mutable T* psi_current = nullptr;
     // psi_current = psi + psi_bias;
-    mutable int psi_bias = 0;
+    mutable std::size_t psi_bias = 0;
 
     const int* ngk = nullptr;
 

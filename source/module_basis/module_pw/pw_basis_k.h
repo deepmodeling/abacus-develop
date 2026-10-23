@@ -183,6 +183,23 @@ private:
 
 };
 
+// Trivial accessors are kept inline so that unit tests and other small
+// translation units that call grad_wfc do not need to link pw_basis_k.cpp.
+template <>
+inline float* PW_Basis_K::get_gcar_data() const { return this->s_gcar; }
+template <>
+inline double* PW_Basis_K::get_gcar_data() const
+{
+    return this->d_gcar != nullptr ? this->d_gcar : reinterpret_cast<double*>(&this->gcar[0][0]);
+}
+template <>
+inline float* PW_Basis_K::get_kvec_c_data() const { return this->s_kvec_c; }
+template <>
+inline double* PW_Basis_K::get_kvec_c_data() const
+{
+    return this->d_kvec_c != nullptr ? this->d_kvec_c : reinterpret_cast<double*>(&this->kvec_c[0][0]);
+}
+
 }
 #endif //PlaneWave_K class
 
