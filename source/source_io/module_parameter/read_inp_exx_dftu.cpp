@@ -2,7 +2,6 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-#include <cmath>
 namespace ModuleIO
 {
 void ReadInput::item_exx()
@@ -575,16 +574,11 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
         item.annotation = "post-SCF truncated Coulomb kernel for RPA/GW export";
         item.category = "Exact Exchange (LCAO)";
         item.type = "String";
-        item.description = "Post-SCF cut-Coulomb kernel: hard preserves Spencer truncation; log_erfc uses erfc(log(r/Rc)/log(rpa_cut_width))/2r. Applies to compressed and uncompressed cut exports; full Coulomb is unchanged. Forces and stresses for log_erfc are not validated.";
+        item.description = "Post-SCF cut-Coulomb kernel: hard preserves Spencer truncation; log_erfc uses erfc(log(r/Rc)/log(rpa_cut_width))/2r. Applies to Fock components in compressed and uncompressed cut exports; Erfc components retain their existing kernel. Non-default kernel/radius requests require a Fock component. Full Coulomb is unchanged. Forces and stresses for log_erfc are not validated.";
         item.default_value = "hard";
         item.unit = "";
         read_sync_string(input.rpa_cut_coulomb);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.rpa_cut_coulomb != "hard" && para.input.rpa_cut_coulomb != "log_erfc")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "rpa_cut_coulomb must be hard or log_erfc");
-            }
-        };
+        item.domain.set_choices({"hard", "log_erfc"});
         this->add_item(item);
     }
     {
@@ -592,16 +586,11 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
         item.annotation = "radius convention for post-SCF cut Coulomb";
         item.category = "Exact Exchange (LCAO)";
         item.type = "String";
-        item.description = "legacy preserves the existing cutoff radius. inscribed uses half the shortest nonzero BvK superlattice vector, including the lattice scale in Bohr. Independent of rpa_cut_coulomb; intended for controlled radius-versus-smoothing comparisons.";
+        item.description = "legacy preserves the existing cutoff radius. inscribed uses half the shortest nonzero BvK superlattice vector, including the lattice scale in Bohr. Applies only to Fock components; inscribed is rejected if the RPA Coulomb configuration has no Fock component. Independent of rpa_cut_coulomb; intended for controlled radius-versus-smoothing comparisons.";
         item.default_value = "legacy";
         item.unit = "";
         read_sync_string(input.rpa_cut_radius);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.rpa_cut_radius != "legacy" && para.input.rpa_cut_radius != "inscribed")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "rpa_cut_radius must be legacy or inscribed");
-            }
-        };
+        item.domain.set_choices({"legacy", "inscribed"});
         this->add_item(item);
     }
     {
@@ -613,12 +602,7 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
         item.default_value = "1.091868692359";
         item.unit = "";
         read_sync_double(input.rpa_cut_width);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!std::isfinite(para.input.rpa_cut_width) || para.input.rpa_cut_width <= 1.0 || para.input.rpa_cut_width > 1.25)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "rpa_cut_width must be finite and 1 < width <= 1.25");
-            }
-        };
+        item.domain.set_rule("value>1 and value<=1.25");
         this->add_item(item);
     }
     {

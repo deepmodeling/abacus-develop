@@ -9,6 +9,7 @@
 #include <cassert>
 #include <string>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 //----------------------------------------------------------
@@ -249,6 +250,14 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
         // tags, so the full-Coulomb/ground-state exchange kernel is unchanged.
         if (inp.rpa)
         {
+            const bool cut_nondefault = inp.rpa_cut_coulomb != "hard" || inp.rpa_cut_radius != "legacy";
+            if (cut_nondefault
+                && exx_info.info_ri.coulomb_param.count(Conv_Coulomb_Pot_K::Coulomb_Type::Fock) == 0)
+            {
+                throw std::invalid_argument(
+                    "Non-default rpa_cut_coulomb/rpa_cut_radius requires a Fock Coulomb component; "
+                    "Erfc-only configurations such as default HSE are unsupported.");
+            }
             for (auto& cut_family : exx_info.info_ri.coulomb_param)
             {
                 if (cut_family.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock) { continue; }
