@@ -1,0 +1,1 @@
+Test OFDFT with Cardinal B-spline structure factor at low order, *nbspline 2. Regression test for the bsplinecoef off-by-one: pre-fix the total electron number is scaled by (1-1/n!)^-3 (x8 at nbspline=2) and the energy is completely wrong.
