@@ -132,7 +132,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
             || (istep > 0)
             || (PARAM.inp.init_wfc == "file"))
         {
-            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+            XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell));
         }
         else
         {
@@ -209,7 +209,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
             {
                 const void* cur_mixing = static_cast<const void*>(this->p_chgmix_->get_mixing());
                 if (this->last_borrowed_mixing_ != nullptr && cur_mixing != this->last_borrowed_mixing_)
-                    { flag_restart = true; }   
+                    { flag_restart = true; }
                 this->last_borrowed_mixing_ = cur_mixing;
                 this->mix_DMk_2D.set_mixing(this->p_chgmix_->get_mixing());
             }
@@ -234,10 +234,12 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                     { this->cal_exx_elec(Ds, ucell, pv); }
             };
 
-            if(istep > 0 && flag_restart)
-                { cal(*this->dm_last_step); }
-            else
-                { cal(dm); }
+            const module_dm::DensityMatrix<T, double>* dm_for_exx = &dm;
+            if (istep > 0 && flag_restart && this->dm_last_step != nullptr)
+            {
+                dm_for_exx = this->dm_last_step;
+            }
+            cal(*dm_for_exx);
         }
     }
 }
@@ -399,7 +401,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         else
         {
             // update exx and redo scf
-            XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
+            XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell));
             iter = 0;
             std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
             this->two_level_step++;
@@ -424,7 +426,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             this->etot_last_outer_loop = etot;
             // update exx and redo scf
             if (this->two_level_step == 0)
-                { XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func); }
+                { XC_Functional::set_xc_type(XC_Functional::resolve_runtime_xc_type(PARAM.inp.dft_functional, ucell)); }
 
             std::cout << " Updating EXX " << std::flush;
             timeval t_start;       gettimeofday(&t_start, nullptr);

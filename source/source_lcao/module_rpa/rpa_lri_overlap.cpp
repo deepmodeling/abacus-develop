@@ -32,7 +32,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     {
         Exx_Info_RI local_info = this->info;
         local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
-        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info, make_exx_lri_runtime());
         exx_cut_coulomb.reset(new_exx);
     }
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb);
@@ -64,7 +64,8 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
                                            center2_obj_it->second.abfs_ccp,
                                            this->info.kmesh_times,
                                            this->MGT, // get MGT from exx_cut_coulomb and used in `cal_abfs_overlap`
-                                           true);
+                                           true,
+                                           ModuleBase::Element_Basis_Index::IndexPermutation{});
 
     const std::array<Tcell, Ndim> period_Vs
         = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times_cut, ucell, orb_cutoff_);

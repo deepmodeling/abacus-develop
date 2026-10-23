@@ -1,6 +1,7 @@
 #include "rpa_lri.h"
 
 #include "exx_lri.h"
+#include "rpa_abfs_preorthogonalization.h"
 #include "rpa_lri_detail.h"
 #include "source_base/global_function.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
@@ -45,7 +46,14 @@ try
     ModuleBase::timer::start("RPA_LRI", "postSCF");
     ModuleBase::GlobalFunc::MAKE_DIR(this->runtime.input.rpa_outdir);
     this->ccp_rmesh_times_cut = this->runtime.input.rpa_ccp_rmesh_times;
-    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times; // should be `exx_ccp_rmesh_times`
+    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
+    if (this->runtime.input.out_librpa_abf_overlap
+        && (!this->runtime.input.rpa || this->runtime.input.out_librpa_ver != 1
+            || this->info.shrink_abfs_pca_thr < 0.0))
+    {
+        throw std::runtime_error("out_librpa_abf_overlap requires rpa=true, "
+                                 "out_librpa_ver=1, and shrink ABFs.");
+    } // should be `exx_ccp_rmesh_times`
 
     this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb, parav);
     this->init(mpi_comm_in, kv, orb.cutoffs());
@@ -180,6 +188,17 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
         }
     }
 
+    // Coulomb-metric preorthogonalization of the auxiliary basis before any
+    // consumer: the symmetry-rotation Lmax below, the cut-Coulomb C/V through
+    // init_spencer, and every later RPA producer output all reuse
+    // abfs_for_lmax. mode=none (the default) leaves the basis untouched.
+    const ModuleRI::RpaAbfsPreorthReport preorth_report = ModuleRI::finalize_rpa_abfs_from_input(
+        abfs_for_lmax, this->runtime.input, this->runtime.input.cal_force);
+    if (this->runtime.rank == 0 && preorth_report.mode != "none")
+    {
+        std::cout << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
+    }
+
     ModuleSymmetry::Symmetry_rotation symrot;
     if (exx_spacegroup_symmetry)
     {
@@ -232,7 +251,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     {
         Exx_Info_RI local_info = this->info;
         local_info.ccp_rmesh_times = this->ccp_rmesh_times_cut;
-        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info);
+        Exx_LRI<double>* new_exx = new Exx_LRI<double>(local_info, make_exx_lri_runtime());
         exx_cut_coulomb.reset(new_exx);
     }
 

@@ -133,11 +133,7 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
     assert(jl.size()>=rmesh);
     assert(jlp1.size()>=rmesh);
 
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-    for (int ir = 0; ir < rmesh; ir++)
-    {
+    auto accumulate_radial = [&](const int ir) {
         std::vector<double> integrated_func(kmesh);
         const std::vector<double>& jl_r = jl[ir];
         assert(jl_r.size()>=kmesh);
@@ -174,6 +170,14 @@ void Center2_Orb::cal_ST_Phi12_R(const int& job,
 
         ModuleBase::Integral::Simpson_Integral(kmesh, integrated_func.data(), dk, temp);
         drs[ir] = -ModuleBase::FOUR_PI * (l + 1) / (2.0 * l + 1) * temp;
+    };
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+    for (int ir = 0; ir < rmesh; ir++)
+    {
+        accumulate_radial(ir);
     }
 
     // liaochen modify on 2010/4/22

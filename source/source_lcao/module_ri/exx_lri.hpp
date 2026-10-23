@@ -7,15 +7,17 @@
 #define EXX_LRI_HPP
 
 #include "exx_lri.h"
+#include "source_base/parallel_common.h"
 #include "source_cell/unitcell.h"
 #include "ri_2d_comm.h"
 #include "ri_util.h"
-#include "exx_lri_detail.h"
+#include "source_lcao/module_ri/exx_rotate_abfs.h"
 #include "source_lcao/module_ri/exx_abfs_ctor_orbs.h"
 #include "source_lcao/module_ri/exx_abfs_io.h"
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
+#include "source_lcao/module_ri/serialization_cereal.h"
 #include "source_lcao/module_ri/mix_dmk_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_parameter/parameter.h"
@@ -24,12 +26,1075 @@
 #include <RI/global/Map_Operator-3.h>
 
 #include <fstream>
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <numeric>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
+#include <utility>
 
 #if defined(__GLIBC__)
 #include <malloc.h>
 #endif
+
+inline ExxLriRuntime make_exx_lri_runtime()
+{
+    return {PARAM.inp.cal_force,
+            PARAM.inp.cal_stress,
+            PARAM.inp.esolver_type == "tddft",
+            PARAM.inp.nspin,
+            GlobalV::MY_RANK,
+            PARAM.globalv.global_out_dir,
+            GlobalV::ofs_running};
+}
+
+namespace ExxLriDetail
+{
+// C++14-compatible void_t: std::void_t requires C++17, but the ENABLE_LIBRI
+// CPU configuration builds with CMAKE_CXX_STANDARD 14.
+template <typename... Ts>
+struct make_void
+{
+    using type = void;
+};
+template <typename... Ts>
+using void_t = typename make_void<Ts...>::type;
+} // namespace ExxLriDetail
+
+namespace ExxLriDetail
+{
+using CoulombParam
+    = std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>;
+
+inline void trim_malloc_cache()
+{
+#if defined(__GLIBC__)
+	malloc_trim(0);
+#endif
+}
+
+inline double default_spencer_rcut(const UnitCell& ucell, const K_Vectors& kv)
+{
+    return std::pow(0.75 * kv.get_nkstot_nospin() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
+}
+
+inline bool rotate_abfs_in_place_for_current_full_matrix(const Exx_Info_RI&)
+{
+    // The rotated-basis Ewald split uses the full rotated ABFS for the
+    // short-range channel and a separate N=0 truncation only for the
+    // Gaussian long-range channel.
+    return true;
+}
+
+inline bool should_rotate_abfs_for_init(const Exx_Info_RI& info)
+{
+    return info.rotate_abfs && rotate_abfs_in_place_for_current_full_matrix(info);
+}
+
+inline bool allow_rt_tddft_ewald_force_stress_bypass(const ExxLriRuntime& runtime)
+{
+    return runtime.realtime_tddft;
+}
+
+inline void print_rt_tddft_ewald_force_stress_warning_once(const ExxLriRuntime& runtime)
+{
+    static bool warning_printed = false;
+    if (!warning_printed && runtime.rank == 0)
+    {
+        std::cout << "RT-TDDFT Ewald moment/split skips long-range EXX force/stress construction."
+                  << std::endl;
+        warning_printed = true;
+    }
+}
+
+inline CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
+                                                    const UnitCell& ucell,
+                                                    const K_Vectors& kv,
+                                                    bool* synthesized_rcut = nullptr)
+{
+    CoulombParam center2_param = RI_Util::update_coulomb_param(coulomb_param, ucell, &kv);
+    const double fallback_rcut = default_spencer_rcut(ucell, kv);
+    bool used_fallback_rcut = false;
+
+    for (auto& param_list: center2_param)
+    {
+        if (param_list.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock)
+        {
+            continue;
+        }
+        for (auto& param: param_list.second)
+        {
+            auto rcut_it = param.find("Rcut");
+            if (rcut_it == param.end() || rcut_it->second.empty())
+            {
+                param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(fallback_rcut);
+                used_fallback_rcut = true;
+            }
+        }
+    }
+
+    if (synthesized_rcut != nullptr)
+    {
+        *synthesized_rcut = used_fallback_rcut;
+    }
+    return center2_param;
+}
+
+inline double get_total_fock_alpha(const CoulombParam& coulomb_param)
+{
+    double alpha_sum = 0.0;
+    const auto fock_it = coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
+    if (fock_it == coulomb_param.end())
+    {
+        return alpha_sum;
+    }
+    for (const auto& param: fock_it->second)
+    {
+        const auto alpha_it = param.find("alpha");
+        if (alpha_it == param.end() || alpha_it->second.empty())
+        {
+            continue;
+        }
+        alpha_sum += std::stod(alpha_it->second);
+    }
+    return alpha_sum;
+}
+
+template <typename T, typename = void>
+struct has_weighted_short_config : std::false_type
+{
+};
+
+template <typename T>
+struct has_weighted_short_config<T, ExxLriDetail::void_t<typename T::Weighted_Short_Config>> : std::true_type
+{
+};
+
+template <typename T, typename = void>
+struct has_set_weighted_short_config : std::false_type
+{
+};
+
+template <typename T>
+struct has_set_weighted_short_config<
+    T,
+    ExxLriDetail::void_t<decltype(std::declval<T&>().set_weighted_short_config(
+        std::declval<const typename T::Weighted_Short_Config&>()))>> : std::true_type
+{
+};
+
+template <typename T, typename = void>
+struct has_weighted_short_stats_member : std::false_type
+{
+};
+
+template <typename T>
+struct has_weighted_short_stats_member<T, ExxLriDetail::void_t<decltype(std::declval<const T&>().weighted_short_stats)>>
+    : std::true_type
+{
+};
+
+template <typename Texx>
+constexpr bool supports_weighted_short_v
+    = has_weighted_short_config<Texx>::value && has_set_weighted_short_config<Texx>::value
+      && has_weighted_short_stats_member<Texx>::value;
+
+inline void print_weighted_short_old_libri_warning_once(const double threshold, const int rank)
+{
+    static bool warning_printed = false;
+    if (!warning_printed && rank == 0)
+    {
+        std::cout << "EXX weighted short requested with exx_vcd_threshold=" << threshold
+                  << ", but the linked LibRI does not provide weighted-short screening. "
+                  << "Falling back to the legacy unscreened EXX path." << std::endl;
+        warning_printed = true;
+    }
+}
+
+template <typename Texx>
+typename std::enable_if<supports_weighted_short_v<Texx>, void>::type maybe_set_weighted_short_config(
+    Texx& exx,
+    const Exx_Info_RI& info,
+    const int)
+{
+    typename Texx::Weighted_Short_Config weighted_short_cfg;
+    weighted_short_cfg.weighted_short_threshold = info.V_cd_threshold;
+    weighted_short_cfg.weighted_short_stats_only = info.V_cd_stats_only;
+    weighted_short_cfg.weighted_short_only = info.V_cd_short_only;
+    exx.set_weighted_short_config(weighted_short_cfg);
+}
+
+template <typename Texx>
+typename std::enable_if<!supports_weighted_short_v<Texx>, void>::type maybe_set_weighted_short_config(
+    Texx&,
+    const Exx_Info_RI& info,
+    const int rank)
+{
+    if (info.V_cd_threshold > 0.0)
+    {
+        print_weighted_short_old_libri_warning_once(info.V_cd_threshold, rank);
+    }
+}
+
+template <typename Texx>
+typename std::enable_if<supports_weighted_short_v<Texx>, void>::type maybe_print_weighted_short_stats(
+    const Texx& exx_channel,
+    const Exx_Info_RI& info,
+    const std::string& ds_suffix,
+    const std::string& v_suffix,
+    const int rank)
+{
+    if (rank == 0 && info.V_cd_threshold > 0.0)
+    {
+        const auto& vcd_stats = exx_channel.weighted_short_stats;
+        const double skip_pct = (vcd_stats.weighted_short_candidates == 0)
+            ? 0.0
+            : 100.0 * static_cast<double>(vcd_stats.weighted_short_skips)
+                / static_cast<double>(vcd_stats.weighted_short_candidates);
+        std::cout << "EXX weighted short[" << ds_suffix << "|" << v_suffix << "] "
+                  << "thr=" << info.V_cd_threshold
+                  << ", stats_only=" << static_cast<int>(info.V_cd_stats_only)
+                  << ", candidates=" << vcd_stats.weighted_short_candidates
+                  << ", skips=" << vcd_stats.weighted_short_skips
+                  << ", skip_pct=" << skip_pct
+                  << ", max_score=" << vcd_stats.weighted_short_max_score
+                  << std::endl;
+    }
+}
+
+template <typename Texx>
+typename std::enable_if<!supports_weighted_short_v<Texx>, void>::type maybe_print_weighted_short_stats(
+    const Texx&,
+    const Exx_Info_RI&,
+    const std::string&,
+    const std::string&,
+    const int)
+{
+}
+
+inline std::vector<std::vector<double>> build_rotation_rows(const std::vector<double>& moments,
+                                                            const double threshold)
+{
+    const std::size_t n = moments.size();
+    std::vector<std::vector<double>> rows;
+    rows.reserve(n);
+
+    if (n == 0)
+    {
+        return rows;
+    }
+
+    const double norm2 = std::inner_product(moments.begin(), moments.end(), moments.begin(), 0.0);
+    const double norm = std::sqrt(norm2);
+    const double ortho_tol = std::max(threshold, 10.0 * std::numeric_limits<double>::epsilon());
+    if (norm <= threshold)
+    {
+        rows.assign(n, std::vector<double>(n, 0.0));
+        for (std::size_t i = 0; i != n; ++i)
+        {
+            rows[i][i] = 1.0;
+        }
+        return rows;
+    }
+
+    rows.emplace_back(n, 0.0);
+    for (std::size_t i = 0; i != n; ++i)
+    {
+        rows[0][i] = moments[i] / norm;
+    }
+
+    for (std::size_t basis = 0; basis != n && rows.size() != n; ++basis)
+    {
+        std::vector<double> candidate(n, 0.0);
+        candidate[basis] = 1.0;
+
+        for (const auto& row: rows)
+        {
+            const double dot = std::inner_product(candidate.begin(), candidate.end(), row.begin(), 0.0);
+            for (std::size_t i = 0; i != n; ++i)
+            {
+                candidate[i] -= dot * row[i];
+            }
+        }
+
+        const double candidate_norm2
+            = std::inner_product(candidate.begin(), candidate.end(), candidate.begin(), 0.0);
+        if (candidate_norm2 <= ortho_tol * ortho_tol)
+        {
+            continue;
+        }
+
+        const double candidate_norm = std::sqrt(candidate_norm2);
+        for (double& value: candidate)
+        {
+            value /= candidate_norm;
+        }
+        rows.push_back(std::move(candidate));
+    }
+
+    if (rows.size() != n)
+    {
+        throw std::runtime_error("Failed to build a complete ABFS rotation basis.");
+    }
+    return rows;
+}
+
+inline Numerical_Orbital_Lm combine_orbital_block(
+    const std::vector<Numerical_Orbital_Lm>& original_block,
+    const std::vector<double>& coeffs,
+    const int output_index,
+    const bool cal_force)
+{
+    if (original_block.empty())
+    {
+        throw std::runtime_error("Cannot combine an empty ABFS block.");
+    }
+    if (original_block.size() != coeffs.size())
+    {
+        throw std::runtime_error("ABFS rotation coefficients do not match the orbital block size.");
+    }
+
+    const Numerical_Orbital_Lm& ref = original_block.front();
+    const int nr = ref.getNr();
+    std::vector<double> psi(nr, 0.0);
+    for (std::size_t iorb = 0; iorb != original_block.size(); ++iorb)
+    {
+        const Numerical_Orbital_Lm& orb = original_block[iorb];
+        if (orb.getNr() != nr || orb.getL() != ref.getL() || orb.getType() != ref.getType())
+        {
+            throw std::runtime_error("ABFS rotation requires a consistent radial grid within each (T, L) block.");
+        }
+        for (int ir = 0; ir != nr; ++ir)
+        {
+            psi[ir] += coeffs[iorb] * orb.getPsi(ir);
+        }
+    }
+
+    const Numerical_Orbital_Lm& out_ref = original_block.at(output_index);
+    Numerical_Orbital_Lm rotated;
+    rotated.set_orbital_info(out_ref.getLabel(),
+                             out_ref.getType(),
+                             out_ref.getL(),
+                             out_ref.getChi(),
+                             nr,
+                             ref.getRab(),
+                             ref.getRadial(),
+                             Numerical_Orbital_Lm::Psi_Type::Psi,
+                             ModuleBase::GlobalFunc::VECTOR_TO_PTR(psi),
+                             out_ref.getNk(),
+                             out_ref.getDk(),
+                             out_ref.getDruniform(),
+                             false,
+                             true,
+                             cal_force);
+    return rotated;
+}
+
+inline void rotate_abfs_by_multipole(std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
+                                     const double threshold,
+                                     const ExxLriRuntime& runtime)
+{
+    const auto multipole = Exx_Abfs::Construct_Orbs::get_multipole(abfs);
+    if (runtime.rank == 0)
+    {
+        std::cout << "\nRotated ABFS multipole summary" << std::endl;
+        std::cout << "threshold for displayed zero moments = " << threshold << std::endl;
+        std::cout << std::setprecision(16);
+    }
+    for (std::size_t T = 0; T != abfs.size(); ++T)
+    {
+        for (std::size_t L = 0; L != abfs[T].size(); ++L)
+        {
+            if (abfs[T][L].empty())
+            {
+                continue;
+            }
+
+            if (abfs[T][L].size() <= 1)
+            {
+                if (runtime.rank == 0)
+                {
+                    std::cout << "Atom type " << T << ", L " << L << ", N 0"
+                              << ", multipole before rotation: " << multipole[T][L][0]
+                              << ", multipole after rotation: " << multipole[T][L][0] << std::endl;
+                }
+                continue;
+            }
+
+            const std::vector<std::vector<double>> rows = build_rotation_rows(multipole[T][L], threshold);
+            const std::vector<Numerical_Orbital_Lm> original_block = abfs[T][L];
+            for (std::size_t N = 0; N != abfs[T][L].size(); ++N)
+            {
+                const double rotated_moment_raw
+                    = std::inner_product(rows[N].begin(), rows[N].end(), multipole[T][L].begin(), 0.0);
+                const double rotated_moment
+                    = (std::abs(rotated_moment_raw) <= threshold) ? 0.0 : rotated_moment_raw;
+                if (runtime.rank == 0)
+                {
+                    std::cout << "Atom type " << T << ", L " << L << ", N " << N
+                              << ", multipole before rotation: " << multipole[T][L][N]
+                              << ", multipole after rotation: " << rotated_moment << std::endl;
+                }
+                abfs[T][L][N] = combine_orbital_block(original_block, rows[N], N, runtime.cal_force);
+            }
+        }
+    }
+}
+
+inline std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> prepare_abfs(
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& lcaos,
+    const Exx_Info_RI& info,
+    const double pca_threshold,
+    const std::vector<std::string>& files_abfs,
+    const ExxLriRuntime& runtime)
+{
+    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs
+        = Exx_Abfs::Construct_Orbs::abfs_same_atom(
+            ucell,
+            orb,
+            lcaos,
+            info.kmesh_times,
+            pca_threshold);
+    if (!files_abfs.empty())
+    {
+        abfs = Exx_Abfs::IO::construct_abfs(abfs, orb, files_abfs, info.kmesh_times);
+    }
+    Exx_Abfs::Construct_Orbs::filter_empty_orbs(abfs);
+    if (should_rotate_abfs_for_init(info))
+    {
+        rotate_abfs_by_multipole(abfs, info.multip_moments_threshold, runtime);
+    }
+    return abfs;
+}
+
+struct AuxLongPrefixPermutation
+{
+    std::vector<std::vector<std::size_t>> old_to_new_by_type;
+    std::vector<std::size_t> long_prefix_size_by_type;
+};
+
+inline AuxLongPrefixPermutation build_long_prefix_permutation(
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
+    const double multipole_threshold)
+{
+    const ModuleBase::Element_Basis_Index::Range range = ModuleBase::Element_Basis_Index::construct_range(abfs);
+    const ModuleBase::Element_Basis_Index::IndexLNM index = ModuleBase::Element_Basis_Index::construct_index(range);
+    const auto multipoles = Exx_Abfs::Construct_Orbs::get_multipole(abfs);
+
+    AuxLongPrefixPermutation permutation;
+    permutation.old_to_new_by_type.resize(abfs.size());
+    permutation.long_prefix_size_by_type.resize(abfs.size(), 0);
+
+    for (std::size_t T = 0; T != abfs.size(); ++T)
+    {
+        const std::size_t full_size = index[T].count_size;
+        permutation.old_to_new_by_type[T].assign(full_size, 0);
+
+        std::vector<std::size_t> old_order;
+        old_order.reserve(full_size);
+        std::vector<bool> pushed(full_size, false);
+
+        for (std::size_t L = 0; L != abfs[T].size(); ++L)
+        {
+            if (abfs[T][L].empty())
+            {
+                continue;
+            }
+            for (std::size_t N = 0; N != abfs[T][L].size(); ++N)
+            {
+                if (std::abs(multipoles[T][L][N]) <= multipole_threshold)
+                {
+                    continue;
+                }
+                for (std::size_t M = 0; M != 2 * L + 1; ++M)
+                {
+                    const std::size_t old_index = index[T][L][N][M];
+                    old_order.push_back(old_index);
+                    pushed[old_index] = true;
+                }
+            }
+        }
+        permutation.long_prefix_size_by_type[T] = old_order.size();
+
+        for (std::size_t L = 0; L != abfs[T].size(); ++L)
+        {
+            for (std::size_t N = 0; N != abfs[T][L].size(); ++N)
+            {
+                for (std::size_t M = 0; M != 2 * L + 1; ++M)
+                {
+                    const std::size_t old_index = index[T][L][N][M];
+                    if (!pushed[old_index])
+                    {
+                        old_order.push_back(old_index);
+                    }
+                }
+            }
+        }
+
+        if (old_order.size() != full_size)
+        {
+            throw std::runtime_error("Failed to construct the rotated-ABFS long-prefix permutation.");
+        }
+
+        for (std::size_t new_index = 0; new_index != old_order.size(); ++new_index)
+        {
+            permutation.old_to_new_by_type[T][old_order[new_index]] = new_index;
+        }
+    }
+
+    return permutation;
+}
+
+template<typename Tdata>
+inline RI::Tensor<Tdata> permute_aux_tensor_rows(
+    const RI::Tensor<Tdata>& tensor_in,
+    const std::vector<std::size_t>& old_to_new)
+{
+    if (tensor_in.empty())
+    {
+        return tensor_in;
+    }
+    if (tensor_in.shape.empty() || tensor_in.shape[0] != old_to_new.size())
+    {
+        throw std::runtime_error("Auxiliary-row permutation does not match tensor shape.");
+    }
+
+    auto shape_out = tensor_in.shape;
+    RI::Tensor<Tdata> tensor_out(shape_out);
+    const std::size_t slice_size = tensor_in.get_shape_all() / tensor_in.shape[0];
+    for (std::size_t old_index = 0; old_index != old_to_new.size(); ++old_index)
+    {
+        std::copy_n(tensor_in.ptr() + old_index * slice_size,
+                    slice_size,
+                    tensor_out.ptr() + old_to_new[old_index] * slice_size);
+    }
+    return tensor_out;
+}
+
+template<typename Tdata>
+inline RI::Tensor<Tdata> permute_aux_tensor_matrix(
+    const RI::Tensor<Tdata>& tensor_in,
+    const std::vector<std::size_t>& row_old_to_new,
+    const std::vector<std::size_t>& col_old_to_new)
+{
+    if (tensor_in.empty())
+    {
+        return tensor_in;
+    }
+    if (tensor_in.shape.size() != 2
+        || tensor_in.shape[0] != row_old_to_new.size()
+        || tensor_in.shape[1] != col_old_to_new.size())
+    {
+        throw std::runtime_error("Auxiliary-matrix permutation does not match tensor shape.");
+    }
+
+    RI::Tensor<Tdata> tensor_out({tensor_in.shape[0], tensor_in.shape[1]});
+    for (std::size_t old_row = 0; old_row != row_old_to_new.size(); ++old_row)
+    {
+        const std::size_t new_row = row_old_to_new[old_row];
+        for (std::size_t old_col = 0; old_col != col_old_to_new.size(); ++old_col)
+        {
+            tensor_out(new_row, col_old_to_new[old_col]) = tensor_in(old_row, old_col);
+        }
+    }
+    return tensor_out;
+}
+
+template<typename Tdata>
+inline void permute_aux_tensor_map_rows_by_type(
+    const UnitCell& ucell,
+    const std::vector<std::vector<std::size_t>>& old_to_new_per_type,
+    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensors_io)
+{
+    for (auto& tensors_I: tensors_io)
+    {
+        const int type_I = ucell.iat2it[tensors_I.first];
+        const auto& permutation = old_to_new_per_type.at(type_I);
+        for (auto& tensors_JR: tensors_I.second)
+        {
+            tensors_JR.second = permute_aux_tensor_rows(tensors_JR.second, permutation);
+        }
+    }
+}
+
+template<typename Tdata>
+inline void permute_aux_tensor_map_matrices_by_type(
+    const UnitCell& ucell,
+    const std::vector<std::vector<std::size_t>>& old_to_new_per_type,
+    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensors_io)
+{
+    for (auto& tensors_I: tensors_io)
+    {
+        const int type_I = ucell.iat2it[tensors_I.first];
+        const auto& row_permutation = old_to_new_per_type.at(type_I);
+        for (auto& tensors_JR: tensors_I.second)
+        {
+            const int type_J = ucell.iat2it[tensors_JR.first.first];
+            const auto& col_permutation = old_to_new_per_type.at(type_J);
+            tensors_JR.second = permute_aux_tensor_matrix(tensors_JR.second, row_permutation, col_permutation);
+        }
+    }
+}
+
+template<typename Tdata>
+inline RI::Tensor<Tdata> extract_aux_tensor_row_prefix(
+    const RI::Tensor<Tdata>& tensor_in,
+    const std::size_t prefix_size)
+{
+    if (tensor_in.empty())
+    {
+        return tensor_in;
+    }
+    if (tensor_in.shape.empty() || tensor_in.shape[0] < prefix_size)
+    {
+        throw std::runtime_error("Auxiliary-row prefix does not match tensor shape.");
+    }
+
+    auto shape_out = tensor_in.shape;
+    shape_out[0] = prefix_size;
+    RI::Tensor<Tdata> tensor_out(shape_out);
+    const std::size_t slice_size = tensor_in.get_shape_all() / tensor_in.shape[0];
+    std::copy_n(tensor_in.ptr(), prefix_size * slice_size, tensor_out.ptr());
+    return tensor_out;
+}
+
+template<typename Tdata>
+inline RI::Tensor<Tdata> extract_aux_tensor_matrix_prefix(
+    const RI::Tensor<Tdata>& tensor_in,
+    const std::size_t row_prefix_size,
+    const std::size_t col_prefix_size)
+{
+    if (tensor_in.empty())
+    {
+        return tensor_in;
+    }
+    if (tensor_in.shape.size() != 2
+        || tensor_in.shape[0] < row_prefix_size
+        || tensor_in.shape[1] < col_prefix_size)
+    {
+        throw std::runtime_error("Auxiliary-matrix prefix does not match tensor shape.");
+    }
+
+    RI::Tensor<Tdata> tensor_out({row_prefix_size, col_prefix_size});
+    for (std::size_t row = 0; row != row_prefix_size; ++row)
+    {
+        std::copy_n(tensor_in.ptr() + row * tensor_in.shape[1],
+                    col_prefix_size,
+                    tensor_out.ptr() + row * col_prefix_size);
+    }
+    return tensor_out;
+}
+
+template<typename Tdata>
+inline std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>
+extract_aux_tensor_map_rows_prefix_by_type(
+    const UnitCell& ucell,
+    const std::vector<std::size_t>& prefix_size_per_type,
+    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensors_in)
+{
+    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>> tensors_out;
+    for (const auto& tensors_I: tensors_in)
+    {
+        const int type_I = ucell.iat2it[tensors_I.first];
+        const std::size_t prefix_size = prefix_size_per_type.at(type_I);
+        for (const auto& tensors_JR: tensors_I.second)
+        {
+            tensors_out[tensors_I.first][tensors_JR.first]
+                = extract_aux_tensor_row_prefix(tensors_JR.second, prefix_size);
+        }
+    }
+    return tensors_out;
+}
+
+template<typename Tdata>
+inline std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>
+extract_aux_tensor_map_matrices_prefix_by_type(
+    const UnitCell& ucell,
+    const std::vector<std::size_t>& prefix_size_per_type,
+    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensors_in)
+{
+    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>> tensors_out;
+    for (const auto& tensors_I: tensors_in)
+    {
+        const int type_I = ucell.iat2it[tensors_I.first];
+        const std::size_t row_prefix_size = prefix_size_per_type.at(type_I);
+        for (const auto& tensors_JR: tensors_I.second)
+        {
+            const int type_J = ucell.iat2it[tensors_JR.first.first];
+            const std::size_t col_prefix_size = prefix_size_per_type.at(type_J);
+            tensors_out[tensors_I.first][tensors_JR.first]
+                = extract_aux_tensor_matrix_prefix(tensors_JR.second, row_prefix_size, col_prefix_size);
+        }
+    }
+    return tensors_out;
+}
+
+template<typename Tdata>
+inline std::vector<std::pair<int, std::array<int, 3>>> filter_ewald_exact_near_pairs_for_atom(
+    const UnitCell& ucell,
+    const int iat0,
+    const std::vector<std::pair<int, std::array<int, 3>>>& list_A1_full,
+    const std::vector<double>& abfs_cutoff)
+{
+    std::vector<std::pair<int, std::array<int, 3>>> list_A1_near;
+    const int it0 = ucell.iat2it[iat0];
+    const int ia0 = ucell.iat2ia[iat0];
+    const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+
+    for (const auto& jr: list_A1_full)
+    {
+        const int iat1 = jr.first;
+        const int it1 = ucell.iat2it[iat1];
+        const int ia1 = ucell.iat2ia[iat1];
+        const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
+        const auto delta_R = -tau0 + tau1 + (RI_Util::array3_to_Vector3(jr.second) * ucell.latvec);
+        const double exact_near_rcut = abfs_cutoff[it0] + abfs_cutoff[it1];
+        if (delta_R.norm() * ucell.lat0 < exact_near_rcut)
+        {
+            list_A1_near.push_back(jr);
+        }
+    }
+    return list_A1_near;
+}
+
+template<typename Tdata>
+inline std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>
+build_ewald_bare_coulomb_with_moment(
+    const Exx_Info_RI& info,
+    const CoulombParam& ewald_coulomb_param,
+    const UnitCell& ucell,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
+    const ModuleBase::Element_Basis_Index::IndexPermutation& abfs_old_to_new,
+    const std::pair<std::vector<int>, std::vector<std::vector<std::pair<int, std::array<int, 3>>>>>& list_As_Vs,
+    LRI_CV<Tdata>& cv,
+    const ExxLriRuntime& runtime,
+    const bool ignore_upper_coulomb_cutoff = false,
+    const bool force_moment_far_field = false,
+    const bool diagnostic_only = false)
+{
+    if (!info.coul_moment && !force_moment_far_field)
+    {
+        auto Vs_full = cv.cal_Vs(ucell,
+                                 list_As_Vs.first,
+                                 list_As_Vs.second[0],
+                                 {{"writable_Vws", true}});
+        cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_full);
+        return Vs_full;
+    }
+    if (!diagnostic_only
+        && (runtime.cal_force || runtime.cal_stress)
+        && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass(runtime))
+    {
+        throw std::invalid_argument("exx_coul_moment for Ewald currently supports energy/SCF only.");
+    }
+    if (runtime.cal_force || runtime.cal_stress)
+    {
+        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once(runtime);
+    }
+    const double moment_value_scale = ExxLriDetail::get_total_fock_alpha(ewald_coulomb_param);
+    if (std::abs(moment_value_scale) <= std::numeric_limits<double>::epsilon())
+    {
+        throw std::invalid_argument("Failed to determine the Ewald Fock alpha for moment bare Coulomb construction.");
+    }
+
+    Moment_abfs<Tdata> moment_abfs(info);
+    moment_abfs.cal_multipole(abfs);
+    const std::vector<double> abfs_cutoff = Exx_Abfs::Construct_Orbs::get_Rcut(abfs);
+    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>> Vs_direct;
+    cv.Vws.clear();
+
+    for (const int iat0: list_As_Vs.first)
+    {
+        const auto list_A1_near = filter_ewald_exact_near_pairs_for_atom<Tdata>(
+            ucell,
+            iat0,
+            list_As_Vs.second[0],
+            abfs_cutoff);
+        if (list_A1_near.empty())
+        {
+            continue;
+        }
+        auto Vs_near = cv.cal_Vs(ucell,
+                                 std::vector<int>{iat0},
+                                 list_A1_near,
+                                 {{"writable_Vws", false}});
+        Vs_direct = Vs_direct.empty() ? std::move(Vs_near) : LRI_CV_Tools::add(Vs_direct, Vs_near);
+    }
+
+    moment_abfs.cal_VR(ucell,
+                       abfs,
+                       list_As_Vs,
+                       abfs_cutoff,
+                       0.0,
+                       cv,
+                       Vs_direct,
+                       abfs_old_to_new,
+                       false,
+                       false,
+                       false,
+                       true,
+                       moment_value_scale,
+                       ignore_upper_coulomb_cutoff);
+    cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_direct);
+    return Vs_direct;
+}
+
+template<typename Tdata>
+inline std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>
+build_explicit_ewald_bare_coulomb(
+    const UnitCell& ucell,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
+    const std::vector<EwaldVqDetail::TailKey>& keys,
+    LRI_CV<Tdata>& cv)
+{
+    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>> result;
+    const std::vector<double> abfs_cutoff = Exx_Abfs::Construct_Orbs::get_Rcut(abfs);
+    const auto grouped = EwaldVqDetail::group_tail_keys_by_atom(keys);
+    for (typename std::map<int, std::vector<std::pair<int, std::array<int, 3>>>>::const_iterator grouped_it
+             = grouped.begin();
+         grouped_it != grouped.end();
+         ++grouped_it)
+    {
+        const int iat0 = grouped_it->first;
+        const auto list_A1 = filter_ewald_exact_near_pairs_for_atom<Tdata>(
+            ucell,
+            iat0,
+            grouped_it->second,
+            abfs_cutoff);
+        if (list_A1.empty()) continue;
+        const auto part = cv.cal_Vs(ucell,
+                                    std::vector<int>{iat0},
+                                    list_A1,
+                                    {{"writable_Vws", false}});
+        for (typename std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>::const_iterator
+                 part_it = part.begin();
+             part_it != part.end();
+             ++part_it)
+        {
+            result[part_it->first].insert(part_it->second.begin(), part_it->second.end());
+        }
+    }
+    return result;
+}
+
+template<typename Tdata>
+struct EwaldRealspaceRange
+{
+    using TailDistribution
+        = std::pair<std::vector<int>, std::vector<std::vector<std::pair<int, std::array<int, 3>>>>>;
+    using TensorMap
+        = std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>;
+
+    std::array<int, 3> period{};
+    TailDistribution distribution;
+    TensorMap bare_coulomb;
+};
+
+inline void print_ewald_tail_report(const Exx_Info_RI& info,
+                                    const EwaldVqDetail::TailMode mode,
+                                    const std::array<int, 3>& production_period,
+                                    const std::array<int, 3>& probe_period,
+                                    const EwaldVqDetail::TailStats& stats,
+                                    const EwaldVqDetail::TailDecision decision,
+                                    const int expansion,
+                                    const double exact_ccp_rmesh_times)
+{
+    const std::ios::fmtflags saved_flags = std::cout.flags();
+    const std::streamsize saved_precision = std::cout.precision();
+    std::cout << std::scientific << std::setprecision(12)
+              << "Ewald short-range tail:\n"
+              << "  mode: " << EwaldVqDetail::tail_mode_name(mode) << '\n'
+              << "  lambda: " << info.ewald_lambda << '\n'
+              << "  full-range source: exx_ccp_rmesh_times=" << info.ccp_rmesh_times << '\n'
+              << "  exact radial mesh factor: " << exact_ccp_rmesh_times << '\n'
+              << "  production period: " << production_period[0] << ' ' << production_period[1] << ' '
+              << production_period[2] << '\n'
+              << "  probe period: " << probe_period[0] << ' ' << probe_period[1] << ' '
+              << probe_period[2] << '\n'
+              << "  production blocks: " << stats.production_blocks << '\n'
+              << "  shell blocks: " << stats.shell_blocks << '\n'
+              << "  max |Vbare-Vgauss|_F: " << stats.max_norm << '\n'
+              << "  sum |Vbare-Vgauss|_F: " << stats.sum_norm << '\n'
+              << "  relative max: " << EwaldVqDetail::relative_tail_max(stats) << '\n'
+              << "  relative sum: " << EwaldVqDetail::relative_tail_sum(stats) << '\n'
+              << "  max Hermitian residual: " << stats.hermitian_residual << '\n'
+              << "  worst I,J,R: " << stats.worst_key.atom_i << ' ' << stats.worst_key.atom_j << ' '
+              << stats.worst_key.cell[0] << ' ' << stats.worst_key.cell[1] << ' '
+              << stats.worst_key.cell[2] << '\n'
+              << "  worst distance/bare/Gaussian: " << stats.worst_distance << ' '
+              << stats.worst_bare_norm << ' ' << stats.worst_gaussian_norm << '\n'
+              << "  coverage complete: " << (stats.coverage_complete ? "true" : "false") << '\n'
+              << "  expansion: " << expansion << '\n'
+              << "  decision: " << EwaldVqDetail::tail_decision_name(decision) << std::endl;
+    std::cout.flags(saved_flags);
+    std::cout.precision(saved_precision);
+}
+
+template<typename Tdata>
+inline EwaldRealspaceRange<Tdata> select_ewald_realspace_range(
+    const Exx_Info_RI& info,
+    const CoulombParam& ewald_coulomb_param,
+    const UnitCell& ucell,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
+    const ModuleBase::Element_Basis_Index::IndexPermutation& abfs_old_to_new,
+    const std::vector<int>& atoms,
+    const std::array<int, 3>& requested_period,
+    const MPI_Comm mpi_comm,
+    LRI_CV<Tdata>& cv,
+    Ewald_Vq<Tdata>& evq,
+    const ExxLriRuntime& runtime)
+{
+    EwaldRealspaceRange<Tdata> selected;
+    const std::array<bool, 3> periodic
+        = info.ewald_dimension == 2 ? std::array<bool, 3>{true, true, false}
+                                    : std::array<bool, 3>{true, true, true};
+    selected.period = requested_period;
+    // The generic cal_latvec_range supplies at least three cells on every axis
+    // and the periodic mask above only blocks shell expansion. In strict 2D the
+    // nonperiodic axis must instead carry exactly the zero image: Rz != 0
+    // short-range terms would enter the production sum at kz = 0 while the
+    // reciprocal Gaussian term assumes isolated-z boundary conditions.
+    for (std::size_t axis = 0; axis != selected.period.size(); ++axis)
+    {
+        if (!periodic[axis])
+        {
+            selected.period[axis] = 1;
+        }
+    }
+    const auto tail_mode = EwaldVqDetail::parse_tail_mode(info.ewald_tail_check);
+    if (EwaldVqDetail::uses_adaptive_realspace_range(tail_mode)
+        && (runtime.cal_force || runtime.cal_stress))
+    {
+        throw std::invalid_argument(
+            "Adaptive Ewald tail enlargement currently supports energy/SCF only; "
+            "use exx_ewald_tail_check=warn for force or stress calculations.");
+    }
+    const EwaldVqDetail::TailTolerances tolerances{info.ewald_tail_abs_tol,
+                                                   info.ewald_tail_rel_tol,
+                                                   info.ewald_tail_sum_rel_tol};
+    const int mpi_rank = Parallel_Common::my_rank(mpi_comm);
+    const int mpi_size = Parallel_Common::nproc(mpi_comm);
+
+    int expansions = 0;
+    while (true)
+    {
+        selected.distribution = RI::Distribute_Equally::distribute_atoms_periods(
+            mpi_comm,
+            atoms,
+            selected.period,
+            2,
+            false);
+        selected.bare_coulomb = build_ewald_bare_coulomb_with_moment(
+            info,
+            ewald_coulomb_param,
+            ucell,
+            abfs,
+            abfs_old_to_new,
+            selected.distribution,
+            cv,
+            runtime);
+        evq.init_ions(ucell, selected.period);
+
+        if (tail_mode == EwaldVqDetail::TailMode::Off)
+        {
+            break;
+        }
+
+        const bool truncate_analytic_tail = tail_mode == EwaldVqDetail::TailMode::Enlarge
+                                            || tail_mode == EwaldVqDetail::TailMode::Strict;
+        const auto production_difference = evq.cal_realspace_difference(
+            ucell,
+            selected.distribution.first,
+            selected.distribution.second[0],
+            selected.bare_coulomb,
+            truncate_analytic_tail);
+        std::size_t local_production_blocks = 0;
+        double local_reference_norm = 0.0;
+        for (const auto& blocks_i : production_difference)
+        {
+            local_production_blocks += blocks_i.second.size();
+            for (const auto& block : blocks_i.second)
+            {
+                local_reference_norm = std::max(local_reference_norm, block.second.norm(2.0));
+            }
+        }
+
+        const auto probe_period = EwaldVqDetail::expand_odd_period(
+            selected.period,
+            periodic,
+            info.ewald_tail_guard_cells);
+        const auto local_shell_keys = EwaldVqDetail::distribute_tail_shell_keys(
+            atoms,
+            selected.period,
+            probe_period,
+            mpi_rank,
+            mpi_size);
+        auto shell_bare = build_explicit_ewald_bare_coulomb(
+            ucell,
+            abfs,
+            local_shell_keys,
+            cv);
+        const auto stats = evq.cal_short_range_tail_stats(
+            ucell,
+            local_shell_keys,
+            shell_bare,
+            local_production_blocks,
+            local_reference_norm);
+        const auto decision = EwaldVqDetail::decide_tail(
+            stats,
+            tolerances,
+            tail_mode,
+            expansions,
+            info.ewald_tail_max_expansions);
+        if (mpi_rank == 0)
+        {
+            print_ewald_tail_report(info,
+                                    tail_mode,
+                                    selected.period,
+                                    probe_period,
+                                    stats,
+                                    decision,
+                                    expansions,
+                                    evq.get_exact_ccp_rmesh_times());
+        }
+
+        if (decision == EwaldVqDetail::TailDecision::Expand)
+        {
+            selected.period = probe_period;
+            ++expansions;
+            continue;
+        }
+        if (decision == EwaldVqDetail::TailDecision::Fail)
+        {
+            throw std::runtime_error(
+                "Ewald short-range tail did not converge within the configured expansion limit");
+        }
+        break;
+    }
+    return selected;
+}
+
+template<typename Tdata>
+inline std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>
+filter_tensor_map_by_max_abs_threshold(
+    const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& tensor_map,
+    const RI::Global_Func::To_Real_t<Tdata>& threshold)
+{
+    typename RI::RI_Tools::T_filter_func<Tdata> filter_func
+        = [](const RI::Tensor<Tdata>& tensor, const RI::Global_Func::To_Real_t<Tdata>& threshold_in) -> bool
+    {
+        return tensor.norm(std::numeric_limits<double>::max()) > threshold_in;
+    };
+    return RI::RI_Tools::filter(tensor_map, filter_func, threshold);
+}
+}
 
 template<typename Tdata>
 void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
@@ -48,21 +1113,17 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
     this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs( orb, this->info.kmesh_times );
     Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
 
-    if(abfs_in.empty())
+    if (abfs_in.empty())
     {
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-            abfs_same_atom = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold );
-        if(this->info.files_abfs.empty())
-            { this->abfs = abfs_same_atom;}
-        else
-            { this->abfs = Exx_Abfs::IO::construct_abfs( abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times ); 	}
+        this->abfs = ExxLriDetail::prepare_abfs(
+            ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs, this->runtime);
     }
     else
     {
         this->abfs = abfs_in;
+        Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
     }
-    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-    Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
+    Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, this->runtime.log);
 
     for( size_t T=0; T!=this->abfs.size(); ++T )
     {
@@ -70,7 +1131,41 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
     }
 
     this->exx_objs.clear();
+    this->abfs_old_to_new_per_type.clear();
+    this->abfs_long_prefix_size_per_type.clear();
     const auto settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
+    const bool rotated_n0_requested
+        = this->info.rotate_abfs
+      && this->info.coul_moment
+      && settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald) != settings.end();
+    this->use_rotated_n0_long_range = rotated_n0_requested;
+    if (this->use_rotated_n0_long_range)
+    {
+        if ((this->runtime.cal_force || this->runtime.cal_stress)
+            && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass(this->runtime))
+        {
+            throw std::invalid_argument(
+                "Rotated-ABFS split Ewald currently supports energy/SCF only.");
+        }
+        if (this->runtime.cal_force || this->runtime.cal_stress)
+        {
+            ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once(this->runtime);
+        }
+        const auto permutation = ExxLriDetail::build_long_prefix_permutation(this->abfs,
+                                                                             this->info.multip_moments_threshold);
+        this->abfs_old_to_new_per_type = permutation.old_to_new_by_type;
+        this->abfs_long_prefix_size_per_type = permutation.long_prefix_size_by_type;
+        if (this->runtime.rank == 0)
+        {
+            std::cout << "Rotated ABFS long-prefix sizes by type:";
+            for (std::size_t T = 0; T != this->abfs_long_prefix_size_per_type.size(); ++T)
+            {
+                std::cout << " T" << T << "=" << this->abfs_long_prefix_size_per_type[T];
+            }
+            std::cout << std::endl;
+        }
+    }
+
     this->MGT = std::make_shared<ORB_gaunt_table>();
     this->refresh_coulomb(ucell, orb, settings);
 
@@ -110,17 +1205,28 @@ void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
         // In particular, reusing Matrix_Orbs maps would retain old entries inserted by init().
         this->exx_objs.erase(settings_list.first);
         auto& object = this->exx_objs[settings_list.first];
+        const auto tail_mode = EwaldVqDetail::parse_tail_mode(this->info.ewald_tail_check);
+        const double exact_ccp_rmesh_times
+            = settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald
+                  && EwaldVqDetail::uses_adaptive_realspace_range(tail_mode)
+              ? EwaldVqDetail::adaptive_exact_rmesh_times(
+                  this->info.ccp_rmesh_times,
+                  Exx_Abfs::Construct_Orbs::get_Rcut(this->lcaos),
+                  Exx_Abfs::Construct_Orbs::get_Rcut(this->abfs))
+              : this->info.ccp_rmesh_times;
         object.abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(
-            this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
+            this->abfs, settings_list.second.second, exact_ccp_rmesh_times);
         object.cv.set_orbitals(ucell, orb, this->lcaos, this->abfs, object.abfs_ccp,
-                               this->info.kmesh_times, this->MGT, settings_list.second.first);
+                               this->info.kmesh_times, this->MGT, settings_list.second.first,
+                               this->abfs_old_to_new_per_type);
         object.cv.set_info_ri(&this->info);
         if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
         {
-            const int evq_abfs_Lmax = this->abfs_Lmax_;
+            object.evq.set_info_ri(&this->info);
             object.evq.init(ucell, orb, this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
                             settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
-                            this->info.kmesh_times, evq_abfs_Lmax);
+                            exact_ccp_rmesh_times, this->info.ewald_lambda, this->info.kmesh_times,
+                            this->info.ewald_dimension, this->abfs_old_to_new_per_type);
         }
     }
     this->coulomb_settings = settings;
@@ -129,12 +1235,11 @@ void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
 }
 
 template <typename Tdata>
-void Exx_LRI<Tdata>::init_spencer(
-    const MPI_Comm& mpi_comm_in,
-    const UnitCell& ucell,
-    const K_Vectors& kv_in,
-    const LCAO_Orbitals& orb,
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in)
+void Exx_LRI<Tdata>::init_spencer(const MPI_Comm& mpi_comm_in,
+                                  const UnitCell& ucell,
+                                  const K_Vectors& kv_in,
+                                  const LCAO_Orbitals& orb,
+                                  const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in)
 {
     ModuleBase::TITLE("Exx_LRI", "init_spencer");
     ModuleBase::timer::start("Exx_LRI", "init_spencer");
@@ -148,36 +1253,37 @@ void Exx_LRI<Tdata>::init_spencer(
 
     if (abfs_in.empty())
     {
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom
-            = Exx_Abfs::Construct_Orbs::abfs_same_atom(
-                ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold);
-        if (this->info.files_abfs.empty())
-            { this->abfs = abfs_same_atom; }
-        else
-            { this->abfs = Exx_Abfs::IO::construct_abfs(abfs_same_atom, orb, this->info.files_abfs, this->info.kmesh_times); }
+        this->abfs = ExxLriDetail::prepare_abfs(
+            ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs, this->runtime);
     }
     else
     {
         this->abfs = abfs_in;
+        Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
     }
-    Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->abfs);
-    Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
+    Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, this->runtime.log);
 
     for (size_t T = 0; T != this->abfs.size(); ++T)
     {
         this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size()) - 1);
     }
 
-    this->exx_objs.clear();
+	    this->exx_objs.clear();
+	    this->abfs_old_to_new_per_type.clear();
+	    this->abfs_long_prefix_size_per_type.clear();
+	    this->use_rotated_n0_long_range = false;
     this->coulomb_settings.clear();
-    this->coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2] = std::make_pair(
-            true, ExxLriDetail::build_center2_cut_coulomb_param(this->info.coulomb_param, ucell, kv_in));
+    this->coulomb_settings[Conv_Coulomb_Pot_K::Coulomb_Method::Center2]
+        = std::make_pair(true,
+                         ExxLriDetail::build_center2_cut_coulomb_param(
+                             this->info.coulomb_param, ucell, kv_in));
 
     this->MGT = std::make_shared<ORB_gaunt_table>();
     const auto center2_settings = this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Center2);
     if (center2_settings == this->coulomb_settings.end())
-        { throw std::invalid_argument("Exx_LRI::init_spencer failed to prepare Center2 settings."); }
-
+    {
+        throw std::invalid_argument("Exx_LRI::init_spencer failed to prepare Center2 settings.");
+    }
     this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp_spencer(
         this->abfs,
         center2_settings->second.second,
@@ -190,12 +1296,12 @@ void Exx_LRI<Tdata>::init_spencer(
         this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
         this->info.kmesh_times,
         this->MGT,
-        center2_settings->second.first);
+        center2_settings->second.first,
+        ModuleBase::Element_Basis_Index::IndexPermutation{});
     this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_info_ri(&this->info);
 
     ModuleBase::timer::end("Exx_LRI", "init_spencer");
 }
-
 
 template<typename Tdata>
 void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
@@ -212,6 +1318,12 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     std::vector<TA> atoms(ucell.nat);
     for(int iat=0; iat<ucell.nat; ++iat)
         { atoms[iat] = iat; }
+    std::set<TA> all_atoms;
+    for (int iat = 0; iat < ucell.nat; ++iat)
+    {
+        all_atoms.insert(iat);
+    }
+    const int mpi_size = Parallel_Common::nproc(this->mpi_comm);
     std::map<TA,TatomR> atoms_pos;
     for(int iat=0; iat<ucell.nat; ++iat)
         { atoms_pos[iat] = RI_Util::Vector3_to_array3( ucell.atoms[ ucell.iat2it[iat] ].tau[ ucell.iat2ia[iat] ] ); }
@@ -224,68 +1336,208 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
     // std::max(3) for gamma_only, list_A2 should contain cell {-1,0,1}. In the future distribute will be neighbour.
-    const std::array<Tcell,Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times, ucell, orb_cutoff_);
-    const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
+    std::array<Tcell,Ndim> period_Vs
+        = LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times, ucell, orb_cutoff_);
+    std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
         list_As_Vs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
+    std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> selected_ewald_bare;
+    const auto ewald_settings = this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald);
+    if (ewald_settings != this->coulomb_settings.end())
+    {
+        auto selected_range = ExxLriDetail::select_ewald_realspace_range(
+            this->info,
+            ewald_settings->second.second,
+            ucell,
+            this->abfs,
+            this->abfs_old_to_new_per_type,
+            atoms,
+            period_Vs,
+            this->mpi_comm,
+            this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald].cv,
+            this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald].evq,
+            this->runtime);
+        period_Vs = selected_range.period;
+        list_As_Vs = std::move(selected_range.distribution);
+        selected_ewald_bare = std::move(selected_range.bare_coulomb);
+    }
 
     std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;
+    std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_long;
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
-    const bool cal_dCV = PARAM.inp.cal_force || PARAM.inp.cal_stress;
-    for(const auto &settings_list : this->coulomb_settings)
+    for (const auto& settings_list : this->coulomb_settings)
     {
-        std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
-            Vs_temp = this->exx_objs[settings_list.first].cv.cal_Vs(ucell,
-                list_As_Vs.first, list_As_Vs.second[0],
+        auto Vs_temp = (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+            ? selected_ewald_bare
+            : this->exx_objs[settings_list.first].cv.cal_Vs(
+                ucell,
+                list_As_Vs.first,
+                list_As_Vs.second[0],
                 {{"writable_Vws",true}});
-        this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell,Vs_temp);
+        if (settings_list.first != Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+        {
+            this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_temp);
+        }
+
         if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
         {
-            this->exx_objs[settings_list.first].evq.init_ions(ucell, period_Vs);
-            const auto &coulomb_param = settings_list.second.second;
+            if (this->info.coul_moment && this->runtime.rank == 0)
+            {
+                std::cout << "Construct Ewald bare Coulomb blocks directly in the current ABFS basis:"
+                          << " near-field exact + far-field moment."
+                          << std::endl;
+            }
+
             std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald;
-            for(const auto &param_list : coulomb_param)
+            std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long;
+            for (const auto& param_list : settings_list.second.second)
             {
                 std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_temp;
-                switch(param_list.first)
+                switch (param_list.first)
                 {
                     case Conv_Coulomb_Pot_K::Coulomb_Type::Fock:
                     {
-                        double chi = this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
-                        Vs_ewald_temp =  this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
+                        const double chi
+                            = this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
+                            if (this->use_rotated_n0_long_range)
+                            {
+                                std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long_temp;
+                            if (mpi_size > 1)
+                            {
+                                Parallel_Common::barrier(this->mpi_comm);
+                                auto Vs_bare_root
+                                    = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_temp, all_atoms, all_atoms);
+                                Parallel_Common::barrier(this->mpi_comm);
+                                if (this->runtime.rank == 0)
+                                {
+                                    Vs_ewald_temp
+                                        = this->exx_objs[settings_list.first].evq.cal_short_range_Vs_serial_full(
+                                            ucell,
+                                            Vs_bare_root,
+                                            period_Vs);
+                                    Vs_ewald_long_temp
+                                        = this->exx_objs[settings_list.first].evq.cal_long_range_Vs_gauss_serial_full(
+                                            ucell,
+                                            chi,
+                                            period_Vs);
+                                }
+                            }
+                            else
+                            {
+                                Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_short_range_Vs(
+                                    ucell,
+                                    list_As_Vs.first,
+                                    list_As_Vs.second[0],
+                                    Vs_temp);
+                                Vs_ewald_long_temp
+                                    = this->exx_objs[settings_list.first].evq.cal_long_range_Vs_gauss(
+                                        ucell,
+                                        chi);
+                            }
+                            Vs_ewald_long = Vs_ewald_long.empty() ? std::move(Vs_ewald_long_temp)
+                                                                  : LRI_CV_Tools::add(Vs_ewald_long, Vs_ewald_long_temp);
+                        }
+                        else
+                        {
+                            if (mpi_size > 1)
+                            {
+                                Parallel_Common::barrier(this->mpi_comm);
+                                auto Vs_bare_root
+                                    = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_temp, all_atoms, all_atoms);
+                                Parallel_Common::barrier(this->mpi_comm);
+                                if (this->runtime.rank == 0)
+                                {
+                                    Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs_serial_full(
+                                        ucell,
+                                        chi,
+                                        Vs_bare_root,
+                                        period_Vs);
+                                }
+                            }
+                            else
+                            {
+                                Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
+                            }
+                        }
                         break;
                     }
                     default:
-                    {
-                        throw std::invalid_argument( std::string(__FILE__) + " line " + std::to_string(__LINE__) );
-                    }
+                        throw std::invalid_argument(std::string(__FILE__) + " line " + std::to_string(__LINE__));
                 }
-                // Vs_temp cannot be covered here
-                Vs_ewald = Vs_ewald.empty() ? Vs_ewald_temp : LRI_CV_Tools::add(Vs_ewald, Vs_ewald_temp);
-            }
-            Vs_temp = Vs_ewald;
-        }
-        Vs = Vs.empty() ? Vs_temp : LRI_CV_Tools::add(Vs, Vs_temp);
 
-        if (cal_dCV)
+                Vs_ewald = Vs_ewald.empty() ? std::move(Vs_ewald_temp) : LRI_CV_Tools::add(Vs_ewald, Vs_ewald_temp);
+            }
+
+            Vs_temp = std::move(Vs_ewald);
+            if (this->use_rotated_n0_long_range)
+            {
+                Vs_long = Vs_long.empty() ? std::move(Vs_ewald_long) : LRI_CV_Tools::add(Vs_long, Vs_ewald_long);
+            }
+        }
+
+        Vs = Vs.empty() ? std::move(Vs_temp) : LRI_CV_Tools::add(Vs, Vs_temp);
+
+        if (this->runtime.cal_force || this->runtime.cal_stress)
         {
-            std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>
-                dVs_temp = this->exx_objs[settings_list.first].cv.cal_dVs(ucell,
-                    list_As_Vs.first, list_As_Vs.second[0],
-                    {{"writable_dVws",true}});
-            this->exx_objs[settings_list.first].cv.dVws = LRI_CV_Tools::get_dCVws(ucell,dVs_temp);
-            dVs = dVs.empty() ? dVs_temp : LRI_CV_Tools::add(dVs, dVs_temp);
+            auto dVs_temp = this->exx_objs[settings_list.first].cv.cal_dVs(
+                ucell,
+                list_As_Vs.first,
+                list_As_Vs.second[0],
+                {{"writable_dVws",true}});
+            this->exx_objs[settings_list.first].cv.dVws = LRI_CV_Tools::get_dCVws(ucell, dVs_temp);
+            dVs = dVs.empty() ? std::move(dVs_temp) : LRI_CV_Tools::add(dVs, dVs_temp);
         }
     }
-    if (write_cv && GlobalV::MY_RANK == 0)
-        { LRI_CV_Tools::write_Vs_abf(Vs, PARAM.globalv.global_out_dir + "Vs"); }
-    this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
 
-    if (cal_dCV)
+    if (write_cv && this->runtime.rank == 0)
+    {
+        LRI_CV_Tools::write_Vs_abf(Vs, this->runtime.output_dir + "Vs");
+        if (this->use_rotated_n0_long_range)
+        {
+            LRI_CV_Tools::write_Vs_abf(Vs_long, this->runtime.output_dir + "Vs_long_n0");
+        }
+    }
+    if (mpi_size > 1
+        && this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald) != this->coulomb_settings.end())
+    {
+        Parallel_Common::barrier(this->mpi_comm);
+        auto Vs_root = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs, all_atoms, all_atoms);
+        Parallel_Common::barrier(this->mpi_comm);
+        if (this->runtime.rank != 0)
+        {
+            Vs_root.clear();
+        }
+        Vs = std::move(Vs_root);
+        if (this->use_rotated_n0_long_range)
+        {
+            Parallel_Common::barrier(this->mpi_comm);
+            auto Vs_long_root = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_long, all_atoms, all_atoms);
+            Parallel_Common::barrier(this->mpi_comm);
+            if (this->runtime.rank != 0)
+            {
+                Vs_long_root.clear();
+            }
+            Vs_long = std::move(Vs_long_root);
+        }
+    }
+    if (this->use_rotated_n0_long_range)
+    {
+        Vs_long = ExxLriDetail::extract_aux_tensor_map_matrices_prefix_by_type(
+            ucell,
+            this->abfs_long_prefix_size_per_type,
+            Vs_long);
+    }
+    const double V_threshold_short = this->info.V_threshold;
+    this->exx_lri.set_Vs(std::move(Vs), V_threshold_short, this->use_rotated_n0_long_range ? "short" : "");
+    if (this->use_rotated_n0_long_range)
+    {
+        this->exx_lri.set_Vs(std::move(Vs_long), this->info.V_threshold_long, "long");
+    }
+    if(this->runtime.cal_force || this->runtime.cal_stress)
     {
         std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
             dVs_order = LRI_CV_Tools::change_order(std::move(dVs));
         this->exx_lri.set_dVs(std::move(dVs_order), this->info.V_grad_threshold);
-        if(PARAM.inp.cal_stress)
+        if(this->runtime.cal_stress)
         {
             std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dVRs = LRI_CV_Tools::cal_dMRs(ucell,dVs_order);
             this->exx_lri.set_dVRs(std::move(dVRs), this->info.V_grad_R_threshold);
@@ -297,40 +1549,72 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
         list_As_Cs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Cs, 2, false);
 
     std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Cs;
+    std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Cs_long;
     std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> dCs;
-    for(const auto &settings_list : this->coulomb_settings)
+    for (const auto& settings_list : this->coulomb_settings)
     {
-        if(settings_list.second.first)
+        if (settings_list.second.first)
         {
-            std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>,
-                std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>>
-                    Cs_dCs = this->exx_objs[settings_list.first].cv.cal_Cs_dCs(
-                        ucell,
-                        list_As_Cs.first, list_As_Cs.second[0],
-                        { {"cal_dC",cal_dCV},
-                        {"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
-            std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs_temp = std::get<0>(Cs_dCs);
-            this->exx_objs[settings_list.first].cv.Cws = LRI_CV_Tools::get_CVws(ucell,Cs_temp);
+            auto Cs_dCs = this->exx_objs[settings_list.first].cv.cal_Cs_dCs(
+                ucell,
+                list_As_Cs.first,
+                list_As_Cs.second[0],
+                {{"cal_dC",this->runtime.cal_force || this->runtime.cal_stress},
+                 {"writable_Cws",true},
+                 {"writable_dCws",true},
+                 {"writable_Vws",false},
+                 {"writable_dVws",false}});
+            auto& Cs_temp = std::get<0>(Cs_dCs);
+            this->exx_objs[settings_list.first].cv.Cws = LRI_CV_Tools::get_CVws(ucell, Cs_temp);
             Cs = Cs.empty() ? Cs_temp : LRI_CV_Tools::add(Cs, Cs_temp);
 
-            if (cal_dCV)
+            if (this->runtime.cal_force || this->runtime.cal_stress)
             {
-                std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> &dCs_temp = std::get<1>(Cs_dCs);
-                this->exx_objs[settings_list.first].cv.dCws = LRI_CV_Tools::get_dCVws(ucell,dCs_temp);
+                auto& dCs_temp = std::get<1>(Cs_dCs);
+                this->exx_objs[settings_list.first].cv.dCws = LRI_CV_Tools::get_dCVws(ucell, dCs_temp);
                 dCs = dCs.empty() ? dCs_temp : LRI_CV_Tools::add(dCs, dCs_temp);
             }
         }
     }
-    if (write_cv && GlobalV::MY_RANK == 0)
-        { LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs"); }
-    this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
+    if (this->use_rotated_n0_long_range)
+    {
+        auto Cs_screened_by_full_mask = RI::RI_Tools::cal_period(Cs, period);
+        if (mpi_size > 1)
+        {
+            Cs_screened_by_full_mask = this->exx_lri.lri.parallel->comm_tensors_map2(
+                {RI::Label::ab::a, RI::Label::ab::b},
+                std::move(Cs_screened_by_full_mask));
+        }
+        Cs_screened_by_full_mask = ExxLriDetail::filter_tensor_map_by_max_abs_threshold(
+            Cs_screened_by_full_mask,
+            this->info.C_threshold);
+        Cs_long = ExxLriDetail::extract_aux_tensor_map_rows_prefix_by_type(
+            ucell,
+            this->abfs_long_prefix_size_per_type,
+            Cs_screened_by_full_mask);
+    }
+    if (write_cv && this->runtime.rank == 0)
+    {
+        LRI_CV_Tools::write_Cs_ao(Cs, this->runtime.output_dir + "Cs");
+    }
+    if (this->use_rotated_n0_long_range)
+    {
+        this->exx_lri.lri.set_tensors_map2(
+            Cs_long,
+            {RI::Label::ab::a, RI::Label::ab::b},
+            {{"flag_period", false}, {"flag_comm", false}, {"flag_filter", false}},
+            "Cs_long");
+        this->exx_lri.flag_finish.Cs = true;
+    }
+    this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold, this->use_rotated_n0_long_range ? "short" : "");
+    ExxLriDetail::maybe_set_weighted_short_config(this->exx_lri, this->info, this->runtime.rank);
 
-    if (cal_dCV)
+    if(this->runtime.cal_force || this->runtime.cal_stress)
     {
         std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
             dCs_order = LRI_CV_Tools::change_order(std::move(dCs));
         this->exx_lri.set_dCs(std::move(dCs_order), this->info.C_grad_threshold);
-        if(PARAM.inp.cal_stress)
+        if(this->runtime.cal_stress)
         {
             std::array<std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>,3> dCRs = LRI_CV_Tools::cal_dMRs(ucell,dCs_order);
             this->exx_lri.set_dCRs(std::move(dCRs), this->info.C_grad_R_threshold);
@@ -443,9 +1727,9 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
         }
     }
 
-    if (write_cv && GlobalV::MY_RANK == 0)
+    if (write_cv && this->runtime.rank == 0)
     {
-        LRI_CV_Tools::write_Vs_abf(Vs_cut, PARAM.globalv.global_out_dir + "Vs_cut");
+        LRI_CV_Tools::write_Vs_abf(Vs_cut, this->runtime.output_dir + "Vs_cut");
     }
     this->exx_lri.set_Vs(std::move(Vs_cut), this->info.V_threshold);
 
@@ -627,9 +1911,9 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(
         Vs_full = Vs.empty() ? Vs_temp : LRI_CV_Tools::add(Vs_full, Vs_temp);
     }
 
-    if (write_cv && GlobalV::MY_RANK == 0)
+    if (write_cv && this->runtime.rank == 0)
     {
-        LRI_CV_Tools::write_Vs_abf(Vs_full, PARAM.globalv.global_out_dir + "Vs_full");
+        LRI_CV_Tools::write_Vs_abf(Vs_full, this->runtime.output_dir + "Vs_full");
     }
     // this->exx_lri.set_Vs(std::move(Vs_full), this->info.V_threshold);
 
@@ -702,9 +1986,9 @@ void Exx_LRI<Tdata>::cal_cut_coulomb_cs(
         list_As_Vs.second[0],
         {{"writable_Vws", true}});
     center2_obj_it->second.cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_cut);
-    if (write_cv && GlobalV::MY_RANK == 0)
+    if (write_cv && this->runtime.rank == 0)
     {
-        LRI_CV_Tools::write_Vs_abf(Vs_cut, PARAM.globalv.global_out_dir + "Vs_cut");
+        LRI_CV_Tools::write_Vs_abf(Vs_cut, this->runtime.output_dir + "Vs_cut");
     }
     this->exx_lri.set_Vs(Vs_cut, this->info.V_threshold);
 
@@ -724,9 +2008,9 @@ void Exx_LRI<Tdata>::cal_cut_coulomb_cs(
              {"writable_dVws", false}});
     Cs = std::get<0>(Cs_dCs);
     center2_obj_it->second.cv.Cws = LRI_CV_Tools::get_CVws(ucell, Cs);
-    if (write_cv && GlobalV::MY_RANK == 0)
+    if (write_cv && this->runtime.rank == 0)
     {
-        LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs");
+        LRI_CV_Tools::write_Cs_ao(Cs, this->runtime.output_dir + "Cs");
     }
     this->exx_lri.set_Cs(Cs, this->info.C_threshold);
 
@@ -734,11 +2018,13 @@ void Exx_LRI<Tdata>::cal_cut_coulomb_cs(
 }
 
 template <typename Tdata>
-void Exx_LRI<Tdata>::cal_ewald_coulomb(
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full,
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
-    const UnitCell& ucell,
-    const bool write_cv)
+void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_full,
+                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
+                                       const UnitCell& ucell,
+                                       const bool write_cv,
+                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_short_IJR,
+                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_long_IJR,
+                                       EwaldCoulombComponents* components)
 {
     ModuleBase::TITLE("Exx_LRI", "cal_ewald_coulomb");
     ModuleBase::timer::start("Exx_LRI", "cal_ewald_coulomb");
@@ -760,35 +2046,108 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(
     const std::array<Tcell, Ndim> period = {this->p_kv->nmp[0], this->p_kv->nmp[1], this->p_kv->nmp[2]};
 
     this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
+    if (components != nullptr)
+    {
+        components->bare_periodic.clear();
+        components->gaussian_real.clear();
+        components->short_range.clear();
+        components->long_range.clear();
+    }
 
-    const std::array<Tcell, Ndim> period_Vs
+    const std::array<Tcell, Ndim> period_Vs_requested
         = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
+    // Keep the complete real-space image set together so the later atom-pair
+    // gather preserves V(q) Hermiticity.
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
-        = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
+        = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs_requested, 2, false);
 
     for (const auto& settings_list : this->coulomb_settings)
     {
-        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_temp
-            = this->exx_objs[settings_list.first].cv.cal_Vs(
+        std::array<Tcell, Ndim> period_Vs = period_Vs_requested;
+        auto list_As_Vs
+            = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
+        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_temp;
+        if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+        {
+            auto selected_range = ExxLriDetail::select_ewald_realspace_range(
+                this->info,
+                settings_list.second.second,
+                ucell,
+                this->abfs,
+                this->abfs_old_to_new_per_type,
+                atoms,
+                period_Vs_requested,
+                this->mpi_comm,
+                this->exx_objs[settings_list.first].cv,
+                this->exx_objs[settings_list.first].evq,
+                this->runtime);
+            period_Vs = selected_range.period;
+            list_As_Vs = std::move(selected_range.distribution);
+            Vs_temp = std::move(selected_range.bare_coulomb);
+        }
+        else
+        {
+            Vs_temp = this->exx_objs[settings_list.first].cv.cal_Vs(
                 ucell,
                 list_As_Vs.first,
                 list_As_Vs.second[0],
                 {{"writable_Vws", true}});
-        this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_temp);
+        }
+        if (settings_list.first != Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+        {
+            this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_temp);
+        }
 
         if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
         {
-            this->exx_objs[settings_list.first].evq.init_ions(ucell, period_Vs);
             std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald;
+            std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_short;
+            std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long;
             for (const auto& param_list : settings_list.second.second)
             {
                 std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_temp;
                 switch (param_list.first)
                 {
                 case Conv_Coulomb_Pot_K::Coulomb_Type::Fock:
-                {
-                    double chi = this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
-                    Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
+                    {
+                        double chi = this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
+                        Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
+                        if (Vs_short_IJR != nullptr || Vs_long_IJR != nullptr)
+                        {
+                            auto Vs_split = this->exx_objs[settings_list.first].evq.cal_Vs_split(ucell, chi, Vs_temp);
+                            Vs_ewald_short = Vs_ewald_short.empty() ? Vs_split.first
+                                                                  : LRI_CV_Tools::add(Vs_ewald_short, Vs_split.first);
+                            Vs_ewald_long = Vs_ewald_long.empty() ? Vs_split.second
+                                                                 : LRI_CV_Tools::add(Vs_ewald_long, Vs_split.second);
+                        }
+                    if (components != nullptr)
+                    {
+                        auto bare_periodic = this->exx_objs[settings_list.first].evq.cal_bare_periodic_Vs(
+                            ucell,
+                            list_As_Vs.first,
+                            list_As_Vs.second[0],
+                            Vs_temp);
+                        auto short_range = this->exx_objs[settings_list.first].evq.cal_short_range_Vs(
+                            ucell,
+                            list_As_Vs.first,
+                            list_As_Vs.second[0],
+                            Vs_temp);
+                        auto long_range
+                            = this->exx_objs[settings_list.first].evq.cal_long_range_Vs_gauss(ucell, chi);
+                        auto gaussian_real = LRI_CV_Tools::minus(bare_periodic, short_range);
+                        components->bare_periodic = components->bare_periodic.empty()
+                            ? std::move(bare_periodic)
+                            : LRI_CV_Tools::add(components->bare_periodic, bare_periodic);
+                        components->gaussian_real = components->gaussian_real.empty()
+                            ? std::move(gaussian_real)
+                            : LRI_CV_Tools::add(components->gaussian_real, gaussian_real);
+                        components->short_range = components->short_range.empty()
+                            ? std::move(short_range)
+                            : LRI_CV_Tools::add(components->short_range, short_range);
+                        components->long_range = components->long_range.empty()
+                            ? std::move(long_range)
+                            : LRI_CV_Tools::add(components->long_range, long_range);
+                    }
                     break;
                 }
                 default:
@@ -798,15 +2157,23 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(
                 }
                 Vs_ewald = Vs_ewald.empty() ? Vs_ewald_temp : LRI_CV_Tools::add(Vs_ewald, Vs_ewald_temp);
             }
+            if (Vs_short_IJR != nullptr)
+            {
+                *Vs_short_IJR = Vs_short_IJR->empty() ? Vs_ewald_short : LRI_CV_Tools::add(*Vs_short_IJR, Vs_ewald_short);
+            }
+            if (Vs_long_IJR != nullptr)
+            {
+                *Vs_long_IJR = Vs_long_IJR->empty() ? Vs_ewald_long : LRI_CV_Tools::add(*Vs_long_IJR, Vs_ewald_long);
+            }
             Vs_temp = Vs_ewald;
         }
 
         Vs_full = Vs_full.empty() ? Vs_temp : LRI_CV_Tools::add(Vs_full, Vs_temp);
     }
 
-    if (write_cv && GlobalV::MY_RANK == 0)
+    if (write_cv && this->runtime.rank == 0)
     {
-        LRI_CV_Tools::write_Vs_abf(Vs_full, PARAM.globalv.global_out_dir + "Vs_full");
+        LRI_CV_Tools::write_Vs_abf(Vs_full, this->runtime.output_dir + "Vs_full");
     }
 
     Cs.clear();
@@ -825,13 +2192,62 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
     const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell,pv);
 
     if(p_symrot)
-        { this->exx_lri.set_symmetry(true, p_symrot->get_irred_sector()); }
+        {
+            this->exx_lri.set_symmetry(true, p_symrot->get_irred_sector());
+        }
     else
-        { this->exx_lri.set_symmetry(false, {}); }
+    {
+            this->exx_lri.set_symmetry(false, {});
+        }
+
+    double full_cal_hs_time = 0.0;
+    double short_cal_hs_time = 0.0;
+    double long_cal_hs_time = 0.0;
+
+    auto run_exx_channel =
+        [&](RI::Exx<TA, Tcell, Ndim, Tdata>& exx_channel,
+            const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& D_in,
+            const int spin_index,
+            const std::string& ds_suffix,
+            const std::string& c_suffix,
+            const std::string& v_suffix,
+            double& cal_hs_time_acc) -> std::pair<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, double>
+    {
+        exx_channel.set_Ds(D_in, this->info.dm_threshold, ds_suffix);
+        const auto cal_hs_t0 = std::chrono::steady_clock::now();
+        exx_channel.cal_Hs({c_suffix, v_suffix, ds_suffix});
+        const auto cal_hs_t1 = std::chrono::steady_clock::now();
+        cal_hs_time_acc += std::chrono::duration<double>(cal_hs_t1 - cal_hs_t0).count();
+        ExxLriDetail::maybe_print_weighted_short_stats(
+            exx_channel, this->info, ds_suffix, v_suffix, this->runtime.rank);
+
+        if (!p_symrot)
+        {
+            return std::make_pair(
+                RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                    this->mpi_comm,
+                    std::move(exx_channel.Hs),
+                    std::get<0>(judge[spin_index]),
+                    std::get<1>(judge[spin_index])),
+                std::real(exx_channel.energy));
+        }
+
+        auto Hs_a2D = exx_channel.post_2D.set_tensors_map2(exx_channel.Hs);
+        Hs_a2D = p_symrot->restore_HR(ucell.symm, ucell.atoms, ucell.iat2it, 'H', Hs_a2D);
+        exx_channel.energy = exx_channel.post_2D.cal_energy(exx_channel.post_2D.saves["Ds_" + ds_suffix],
+                                                            exx_channel.post_2D.set_tensors_map2(Hs_a2D));
+        return std::make_pair(
+            RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                this->mpi_comm,
+                std::move(Hs_a2D),
+                std::get<0>(judge[spin_index]),
+                std::get<1>(judge[spin_index])),
+            std::real(exx_channel.energy));
+    };
 
     // (nspin=4) the spinor H(R) rotation mixes the 4 spin channels, so they cannot be rotated
     // independently in the per-spin loop below; hand off to the SOC implementation.
-    if (p_symrot && PARAM.inp.nspin == 4)
+    if (p_symrot && this->runtime.nspin == 4)
     {
         this->cal_exx_elec_soc(Ds, ucell, judge, p_symrot);
         this->exx_lri.set_symmetry(false, {});
@@ -839,39 +2255,53 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
         return;
     }
 
-    this->Hexxs.resize(PARAM.inp.nspin);
+    this->Hexxs.resize(this->runtime.nspin);
     this->Eexx = 0;
-    for(int is=0; is<PARAM.inp.nspin; ++is)
+    for(int is=0; is<this->runtime.nspin; ++is)
     {
-        const std::string suffix = ((PARAM.inp.cal_force || PARAM.inp.cal_stress) ? std::to_string(is) : "");
-
-        this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, suffix);
-        this->exx_lri.cal_Hs({ "","",suffix });
-
-        if (!p_symrot)
+        const std::string suffix = ((this->runtime.cal_force || this->runtime.cal_stress) ? std::to_string(is) : "");
+        auto short_channel = run_exx_channel(this->exx_lri,
+                                             Ds[is],
+                                             is,
+                                             suffix,
+                                             this->use_rotated_n0_long_range ? "short" : "",
+                                             this->use_rotated_n0_long_range ? "short" : "",
+                                             this->use_rotated_n0_long_range ? short_cal_hs_time : full_cal_hs_time);
+        if (this->use_rotated_n0_long_range)
         {
-            this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
-                this->mpi_comm, std::move(this->exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
+            auto long_channel = run_exx_channel(this->exx_lri,
+                                                Ds[is],
+                                                is,
+                                                suffix + "_lr",
+                                                "long",
+                                                "long",
+                                                long_cal_hs_time);
+            this->Hexxs[is] = LRI_CV_Tools::add(short_channel.first, long_channel.first);
+            this->Eexx += short_channel.second + long_channel.second;
         }
         else
         {
-            // reduce but not repeat
-            auto Hs_a2D = this->exx_lri.post_2D.set_tensors_map2(this->exx_lri.Hs);
-            // rotate locally without repeat
-            Hs_a2D = p_symrot->restore_HR(ucell.symm, ucell.atoms, ucell.iat2it, 'H', Hs_a2D);
-            // cal energy using full Hs without repeat
-            this->exx_lri.energy = this->exx_lri.post_2D.cal_energy(
-                this->exx_lri.post_2D.saves["Ds_" + suffix],
-                this->exx_lri.post_2D.set_tensors_map2(Hs_a2D));
-            // get repeated full Hs for abacus
-            this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
-                this->mpi_comm, std::move(Hs_a2D), std::get<0>(judge[is]), std::get<1>(judge[is]));
+            this->Hexxs[is] = std::move(short_channel.first);
+            this->Eexx += short_channel.second;
         }
-        this->Eexx += std::real(this->exx_lri.energy);
         post_process_Hexx(this->Hexxs[is]);
     }
     this->Eexx = post_process_Eexx(this->Eexx);
     this->exx_lri.set_symmetry(false, {});
+    if (this->runtime.rank == 0)
+    {
+        if (this->use_rotated_n0_long_range)
+        {
+            const double total_cal_hs_time = short_cal_hs_time + long_cal_hs_time;
+            std::cout << "EXX cal_Hs timing summary: short = " << short_cal_hs_time
+                      << " s, long = " << long_cal_hs_time
+                      << " s, total = " << total_cal_hs_time << " s" << std::endl;
+        }
+        else
+        {
+            std::cout << "EXX cal_Hs timing summary: full = " << full_cal_hs_time << " s" << std::endl;
+        }
+    }
     ModuleBase::timer::end("Exx_LRI", "cal_exx_elec");
 }
 
@@ -883,37 +2313,64 @@ void Exx_LRI<Tdata>::cal_exx_elec_soc(
     const ModuleSymmetry::Symmetry_rotation* p_symrot)
 {
     ModuleBase::TITLE("Exx_LRI", "cal_exx_elec_soc");
-    this->Hexxs.resize(PARAM.inp.nspin);   // nspin==4
-    this->Eexx = 0;
-
-    // pass 1: compute the irreducible-sector Hs of all 4 spin channels.
-    // distinct suffix per channel keeps all 4 "Ds_*" saves alive for the energy in pass 3.
-    std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_irr;
-    std::array<std::string, 4> suffix;
-    for (int is = 0; is < 4; ++is)
+    if (Ds.size() != 4 || p_symrot == nullptr)
     {
-        suffix[is] = std::to_string(is);
-        this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, suffix[is]);
-        this->exx_lri.cal_Hs({ "","",suffix[is] });
-        Hs_irr[is] = this->exx_lri.post_2D.set_tensors_map2(this->exx_lri.Hs);
+        throw std::invalid_argument("Exx_LRI::cal_exx_elec_soc requires four spinor channels and symmetry metadata.");
     }
 
-    // pass 2: spinor-coupled rotation of the 4 channels from the irreducible sector to the full BZ
-    std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_full =
-        p_symrot->restore_HR_nspin4(ucell.symm, ucell.atoms, ucell.iat2it, 'H', Hs_irr);
+    this->Hexxs.assign(4, {});
+    this->Eexx = 0.0;
 
-    // pass 3: per-channel energy (full Hs, no repeat), then gather the repeated full Hs for abacus
-    for (int is = 0; is < 4; ++is)
+    struct ChannelSpec
     {
-        this->exx_lri.energy = this->exx_lri.post_2D.cal_energy(
-            this->exx_lri.post_2D.saves["Ds_" + suffix[is]],
-            this->exx_lri.post_2D.set_tensors_map2(Hs_full[is]));
-        this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
-            this->mpi_comm, std::move(Hs_full[is]), std::get<0>(judge[is]), std::get<1>(judge[is]));
-        this->Eexx += std::real(this->exx_lri.energy);
-        post_process_Hexx(this->Hexxs[is]);
+        std::string cv_suffix;
+        std::string ds_tail;
+    };
+    std::vector<ChannelSpec> channels;
+    channels.push_back({this->use_rotated_n0_long_range ? "short" : "", ""});
+    if (this->use_rotated_n0_long_range)
+    {
+        channels.push_back({"long", "_lr"});
     }
-    this->Eexx = post_process_Eexx(this->Eexx);
+
+    for (const ChannelSpec& channel : channels)
+    {
+        std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_irreducible;
+        std::array<std::string, 4> ds_suffix;
+        for (int is = 0; is < 4; ++is)
+        {
+            ds_suffix[is] = std::to_string(is) + channel.ds_tail;
+            this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, ds_suffix[is]);
+            this->exx_lri.cal_Hs({channel.cv_suffix, channel.cv_suffix, ds_suffix[is]});
+            ExxLriDetail::maybe_print_weighted_short_stats(
+                this->exx_lri, this->info, ds_suffix[is], channel.cv_suffix, this->runtime.rank);
+            Hs_irreducible[is] = this->exx_lri.post_2D.set_tensors_map2(this->exx_lri.Hs);
+        }
+
+        auto Hs_full = p_symrot->restore_HR_nspin4(
+            ucell.symm, ucell.atoms, ucell.iat2it, 'H', Hs_irreducible);
+        for (int is = 0; is < 4; ++is)
+        {
+            this->exx_lri.energy = this->exx_lri.post_2D.cal_energy(
+                this->exx_lri.post_2D.saves["Ds_" + ds_suffix[is]],
+                this->exx_lri.post_2D.set_tensors_map2(Hs_full[is]));
+            auto Hs_channel = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                this->mpi_comm,
+                std::move(Hs_full[is]),
+                std::get<0>(judge[is]),
+                std::get<1>(judge[is]));
+            this->Hexxs[is] = this->Hexxs[is].empty()
+                ? std::move(Hs_channel)
+                : LRI_CV_Tools::add(this->Hexxs[is], Hs_channel);
+            this->Eexx += std::real(this->exx_lri.energy);
+        }
+    }
+
+    for (auto& Hexx : this->Hexxs)
+    {
+        this->post_process_Hexx(Hexx);
+    }
+    this->Eexx = this->post_process_Eexx(this->Eexx);
 }
 
 template<typename Tdata>
@@ -931,7 +2388,7 @@ template<typename Tdata>
 double Exx_LRI<Tdata>::post_process_Eexx(const double& Eexx_in) const
 {
     ModuleBase::TITLE("Exx_LRI","post_process_Eexx");
-    const double SPIN_multiple = std::map<int, double>{ {1,2}, {2,1}, {4,1} }.at(PARAM.inp.nspin);				// why?
+    const double SPIN_multiple = std::map<int, double>{ {1,2}, {2,1}, {4,1} }.at(this->runtime.nspin);                // why?
     const double frac = -SPIN_multiple;
     return frac * Eexx_in;
 }
@@ -960,14 +2417,21 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
     ModuleBase::timer::start("Exx_LRI", "cal_exx_force");
 
     this->force_exx.create(nat, Ndim);
-    const int& nspin = PARAM.inp.nspin;
+    if (this->runtime.realtime_tddft && this->use_rotated_n0_long_range)
+    {
+        this->force_exx.zero_out();
+        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once(this->runtime);
+        ModuleBase::timer::end("Exx_LRI", "cal_exx_force");
+        return;
+    }
+    const int& nspin = this->runtime.nspin;
     for(int is=0; is<nspin; ++is)
     {
         this->exx_lri.cal_force({"","",std::to_string(is),"",""});
         for(std::size_t idim=0; idim<Ndim; ++idim) {
             for(const auto &force_item : this->exx_lri.force[idim]) {
                 this->force_exx(force_item.first, idim) += std::real(force_item.second);
-                    } 		}
+                    }         }
     }
     // SPIN_multiple cancels the one in `split_m2D_ktoR`, which are 0.5*0.5 at nspin=1.
     // but only u-u and d-d pairs of Ds has contribution, so here's 2 instead of 4.
@@ -986,24 +2450,68 @@ void Exx_LRI<Tdata>::cal_exx_stress(const double& omega, const double& lat0)
     ModuleBase::timer::start("Exx_LRI", "cal_exx_stress");
 
     this->stress_exx.create(Ndim, Ndim);
-    for(int is=0; is<PARAM.inp.nspin; ++is)
+    if (this->runtime.realtime_tddft && this->use_rotated_n0_long_range)
+    {
+        this->stress_exx.zero_out();
+        ExxLriDetail::print_rt_tddft_ewald_force_stress_warning_once(this->runtime);
+        ModuleBase::timer::end("Exx_LRI", "cal_exx_stress");
+        return;
+    }
+    for(int is=0; is<this->runtime.nspin; ++is)
     {
         this->exx_lri.cal_stress({"","",std::to_string(is),"",""});
         for(std::size_t idim0=0; idim0<Ndim; ++idim0) {
             for(std::size_t idim1=0; idim1<Ndim; ++idim1) {
                 this->stress_exx(idim0,idim1) += std::real(this->exx_lri.stress(idim0,idim1));
-                } 	}
+                }     }
     }
 
-    const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(PARAM.inp.nspin);				// why?
-    const double frac = 2 * SPIN_multiple / omega * lat0;		// why?
+    const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(this->runtime.nspin);                // why?
+    const double frac = 2 * SPIN_multiple / omega * lat0;        // why?
     this->stress_exx *= frac;
 
     ModuleBase::timer::end("Exx_LRI", "cal_exx_stress");
 }
 
+template<typename Tdata>
+void Exx_LRI<Tdata>::cal_exx_dHs(
+    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+    const UnitCell& ucell,
+    const Parallel_Orbitals& pv)
+{
+    ModuleBase::TITLE("Exx_LRI", "cal_exx_dHs");
+    ModuleBase::timer::start("Exx_LRI", "cal_exx_dHs");
+#ifdef __EXX_DEV
+    const auto judge = RI_2D_Comm::get_2D_judge(ucell, pv);
+    for (int is = 0; is < this->runtime.nspin; ++is)
+    {
+        this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, std::to_string(is));
+        this->exx_lri.cal_dHs({"", "", std::to_string(is), "", ""});
+        for (int ipos = 0; ipos < 3; ++ipos)
+        {
+            if (this->dHexxs[ipos].size() != static_cast<std::size_t>(ucell.nat))
+                this->dHexxs[ipos].resize(ucell.nat);
+            for (int iat = 0; iat < ucell.nat; ++iat)
+            {
+                if (this->dHexxs[ipos][iat].size() != static_cast<std::size_t>(this->runtime.nspin))
+                    this->dHexxs[ipos][iat].resize(this->runtime.nspin);
+                auto dH = this->exx_lri.dHs[ipos][0][iat];
+                dH = dH + this->exx_lri.dHs_HF[ipos][iat];
+                this->dHexxs[ipos][iat][is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                    this->mpi_comm, std::move(dH), std::get<0>(judge[is]), std::get<1>(judge[is]));
+                this->post_process_Hexx(this->dHexxs[ipos][iat][is]);
+            }
+        }
+    }
+#else
+    (void)Ds;
+    (void)ucell;
+    (void)pv;
+    ModuleBase::WARNING("Exx_LRI", "cal_exx_dHs requires LibRI with EXX_DEV; leaving dHexxs empty.");
+#endif
+    ModuleBase::timer::end("Exx_LRI", "cal_exx_dHs");
+}
 
-/*
 template<typename Tdata>
 std::vector<std::vector<int>> Exx_LRI<Tdata>::get_abfs_nchis() const
 {
@@ -1017,6 +2525,5 @@ std::vector<std::vector<int>> Exx_LRI<Tdata>::get_abfs_nchis() const
     }
     return abfs_nchis;
 }
-*/
 
 #endif

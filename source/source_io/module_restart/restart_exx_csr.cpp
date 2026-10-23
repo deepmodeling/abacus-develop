@@ -3,6 +3,8 @@
 #include "source_base/global_function.h"
 #include "source_cell/unitcell.h"
 #include "source_base/module_out/csr_reader.h"
+#include "source_base/module_out/sparse_matrix.h"
+#include "source_cell/ucell_io.h"
 #include "source_io/module_hs/hs_sparse_io.h"
 #include "source_lcao/module_ri/serialization_cereal.h"
 #include <cereal/types/utility.hpp>
@@ -120,8 +122,7 @@ namespace ModuleIO
         const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
     {
         ModuleBase::TITLE("ModuleIO", "write_Hexxs_csr");
-        std::set<Abfs::Vector3_Order<int>> all_R_coor;
-        double sparse_threshold = 1e-10;
+        const double sparse_threshold = 1e-10;
         int matrix_dimension = 0;
         for (int it = 0; it < ucell.ntype; ++it)
         {
@@ -132,32 +133,58 @@ namespace ModuleIO
             ModuleBase::WARNING_QUIT("ModuleIO::write_Hexxs_csr",
                                      "LCAO matrix dimension must be positive.");
         }
-        Parallel_Orbitals pv;
-        pv.set_serial(matrix_dimension, matrix_dimension);
+        // The Hexx restart files must round-trip through read_Hexxs_csr, whose
+        // csrFileReader parses the sparse-file layout shared with the DM(R)
+        // restart files: header, lattice block, then CSR blocks per R. The
+        // bare save_sparse header cannot be read back.
         for (int is = 0;is < Hexxs.size();++is)
         {
+            std::set<Abfs::Vector3_Order<int>> all_R_coor;
             for (const auto& HexxA : Hexxs[is])
             {
-                const int iat0 = HexxA.first;
                 for (const auto& HexxB : HexxA.second)
                 {
-                    const int iat1 = HexxB.first.first;
-                    const Abfs::Vector3_Order<int> R = RI_Util::array3_to_Vector3(HexxB.first.second);
-                    all_R_coor.insert(R);
+                    all_R_coor.insert(RI_Util::array3_to_Vector3(HexxB.first.second));
                 }
             }
-            ModuleIO::SparseWriteOptions options;
-            options.filename = file_name + "_" + std::to_string(is) + ".csr";
-            options.label = "Hexxs_" + std::to_string(is);
-            options.threshold = sparse_threshold;
-            options.binary = false;
-            options.istep = -1;
-            options.reduce = false;
-            ModuleIO::save_sparse(
-                calculate_RI_Tensor_sparse(sparse_threshold, Hexxs[is], ucell),
-                all_R_coor,
-                pv,
-                options);
+            std::ofstream ofs(file_name + "_" + std::to_string(is) + ".csr");
+            if (!ofs.is_open())
+            {
+                ModuleBase::WARNING_QUIT("ModuleIO::write_Hexxs_csr",
+                                         "cannot open " + file_name + "_" + std::to_string(is) + ".csr");
+            }
+            ofs << " --- Ionic Step 1 ---" << std::endl;
+            ofs << " # print exact exchange matrix in real space Hexxs_" << is << "(R)" << std::endl;
+            ofs << " " << Hexxs.size() << " # number of spin directions" << std::endl;
+            ofs << " " << is + 1 << " # spin index" << std::endl;
+            ofs << " " << matrix_dimension << " # number of localized basis" << std::endl;
+            ofs << " " << all_R_coor.size() << " # number of Bravais lattice vector R" << std::endl;
+            ofs << std::endl;
+            ModuleIO::UcellIO::write_ucell(ofs, &ucell);
+            ofs << std::endl;
+
+            const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>> sparse_by_R
+                = calculate_RI_Tensor_sparse(sparse_threshold, Hexxs[is], ucell);
+            for (const auto& R : all_R_coor)
+            {
+                ModuleIO::SparseMatrix<Tdata> sparse_matrix(matrix_dimension, matrix_dimension);
+                sparse_matrix.setSparseThreshold(sparse_threshold);
+                const auto itR = sparse_by_R.find(R);
+                if (itR != sparse_by_R.end())
+                {
+                    for (const auto& row_cols : itR->second)
+                    {
+                        for (const auto& col_val : row_cols.second)
+                        {
+                            sparse_matrix.insert(row_cols.first, col_val.first, col_val.second);
+                        }
+                    }
+                }
+                ofs << " " << R.x << " " << R.y << " " << R.z << " "
+                    << sparse_matrix.getNNZ() << std::endl;
+                sparse_matrix.printToCSR(ofs, 8);
+            }
+            ofs.close();
         }
     }
 

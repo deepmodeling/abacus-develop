@@ -9,7 +9,9 @@ if(ENABLE_LIBRI)
     matrix_orbs21.cpp
     matrix_orbs22.cpp
     ri_2d_comm.cpp
-    mix_dmk_2d.cpp)
+    mix_dmk_2d.cpp
+    mix_matrix.cpp
+    direct_2d_coulomb.cpp)
 
   if(ENABLE_LCAO)
     list(

@@ -22,6 +22,12 @@ hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::EKinetic(
     this->ucell = ucell_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
+    assert(this->intor_ != nullptr);
+    // Force/stress code paths construct EKinetic without k-space matrices.
+    if (hR_in != nullptr)
+    {
+        assert(this->hR != nullptr);
+    }
 #endif
     // initialize HR to allocate sparse Ekinetic matrix memory
     // Only initialize if hR_in is not nullptr (for force calculation, hR_in can be nullptr)

@@ -11,6 +11,7 @@ const MPI_Datatype Parallel_Reduce::MPI_Type<float>::value = MPI_FLOAT;
 const MPI_Datatype Parallel_Reduce::MPI_Type<std::complex<double>>::value = MPI_DOUBLE_COMPLEX;
 const MPI_Datatype Parallel_Reduce::MPI_Type<std::complex<float>>::value = MPI_C_FLOAT_COMPLEX;
 const MPI_Datatype Parallel_Reduce::MPI_Type<long long>::value = MPI_LONG_LONG;
+const MPI_Datatype Parallel_Reduce::MPI_Type<unsigned long long>::value = MPI_UNSIGNED_LONG_LONG;
 #endif
 
 template <typename T>
@@ -125,6 +126,81 @@ template void Parallel_Reduce::reduce_max<double>(double&);
 
 template void Parallel_Reduce::reduce_min_pool<double>(const int&, double&);
 template void Parallel_Reduce::reduce_max_pool<double>(const int&, double&);
+
+#ifdef __MPI
+template <typename T>
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, T& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<T>::value, MPI_SUM, mpi_comm);
+}
+
+template <typename T>
+void Parallel_Reduce::reduce_all(const MPI_Comm mpi_comm, T* object, const int n)
+{
+    MPI_Allreduce(MPI_IN_PLACE, object, n, MPI_Type<T>::value, MPI_SUM, mpi_comm);
+}
+
+template <typename T>
+void Parallel_Reduce::reduce_max(const MPI_Comm mpi_comm, T& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<T>::value, MPI_MAX, mpi_comm);
+}
+
+template <typename T>
+void Parallel_Reduce::reduce_min(const MPI_Comm mpi_comm, T& object)
+{
+    MPI_Allreduce(MPI_IN_PLACE, &object, 1, MPI_Type<T>::value, MPI_MIN, mpi_comm);
+}
+
+void Parallel_Reduce::reduce_max_loc(const MPI_Comm mpi_comm, double& value, int& rank)
+{
+    struct MaxLoc
+    {
+        double value;
+        int rank;
+    };
+    MaxLoc local{value, rank};
+    MaxLoc global{};
+    MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, mpi_comm);
+    value = global.value;
+    rank = global.rank;
+}
+
+void Parallel_Reduce::gather_int_all(const MPI_Comm mpi_comm, int& v, int* all)
+{
+    assert(all != nullptr);
+    MPI_Allgather(&v, 1, MPI_INT, all, 1, MPI_INT, mpi_comm);
+}
+
+void Parallel_Reduce::gatherv_int_all(const MPI_Comm mpi_comm,
+                                      const int* send_buffer,
+                                      const int send_count,
+                                      int* receive_buffer,
+                                      const int* receive_counts,
+                                      const int* receive_displacements)
+{
+    assert(receive_buffer != nullptr);
+    MPI_Allgatherv(send_buffer, send_count, MPI_INT, receive_buffer, receive_counts, receive_displacements,
+                   MPI_INT, mpi_comm);
+}
+
+template void Parallel_Reduce::reduce_all<int>(const MPI_Comm, int&);
+template void Parallel_Reduce::reduce_all<double>(const MPI_Comm, double&);
+template void Parallel_Reduce::reduce_all<unsigned long long>(const MPI_Comm, unsigned long long&);
+
+template void Parallel_Reduce::reduce_all<int>(const MPI_Comm, int*, const int);
+template void Parallel_Reduce::reduce_all<double>(const MPI_Comm, double*, const int);
+template void Parallel_Reduce::reduce_all<unsigned long long>(const MPI_Comm, unsigned long long*, const int);
+
+template void Parallel_Reduce::reduce_max<int>(const MPI_Comm, int&);
+template void Parallel_Reduce::reduce_max<double>(const MPI_Comm, double&);
+template void Parallel_Reduce::reduce_max<unsigned long long>(const MPI_Comm, unsigned long long&);
+
+template void Parallel_Reduce::reduce_min<int>(const MPI_Comm, int&);
+template void Parallel_Reduce::reduce_min<double>(const MPI_Comm, double&);
+template void Parallel_Reduce::reduce_min<unsigned long long>(const MPI_Comm, unsigned long long&);
+#endif
+
 
 void Parallel_Reduce::reduce_double_grid(double* object, const int n)
 {

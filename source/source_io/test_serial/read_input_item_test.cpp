@@ -2062,6 +2062,109 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // rpa_abfs_preorth
+        EXPECT_EQ(TestParameters::input(param).rpa_abfs_preorth, "none");
+        auto it = find_label("rpa_abfs_preorth", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        it->second.str_values = {"onsite_coulomb"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).rpa_abfs_preorth, "onsite_coulomb");
+
+        TestParameters::input(param).rpa_abfs_preorth = "invalid";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("rpa_abfs_preorth"));
+        TestParameters::input(param).rpa_abfs_preorth = "none";
+    }
+    { // rpa_abfs_preorth_threshold
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).rpa_abfs_preorth_threshold, 1.0e-2);
+        auto it = find_label("rpa_abfs_preorth_threshold", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        for (const double invalid : {0.0, 1.0, -1.0, std::numeric_limits<double>::infinity()})
+        {
+            TestParameters::input(param).rpa_abfs_preorth_threshold = invalid;
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+            output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(output, testing::HasSubstr("rpa_abfs_preorth_threshold"));
+        }
+        TestParameters::input(param).rpa_abfs_preorth_threshold = 1.0e-2;
+    }
+    { // out_librpa_2d_coulomb_method and direct quadrature controls
+        auto method = find_label("out_librpa_2d_coulomb_method", readinput.input_lists);
+        auto ecut = find_label("out_librpa_2d_direct_ecut", readinput.input_lists);
+        auto kz_order = find_label("out_librpa_2d_direct_kz_order", readinput.input_lists);
+        auto gamma_order = find_label("out_librpa_2d_direct_gamma_order", readinput.input_lists);
+        ASSERT_NE(method, readinput.input_lists.end());
+        ASSERT_NE(ecut, readinput.input_lists.end());
+        ASSERT_NE(kz_order, readinput.input_lists.end());
+        ASSERT_NE(gamma_order, readinput.input_lists.end());
+        EXPECT_EQ(TestParameters::input(param).out_librpa_2d_coulomb_method, "ewald");
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).out_librpa_2d_direct_ecut, 0.0);
+        EXPECT_EQ(TestParameters::input(param).out_librpa_2d_direct_kz_order, 0);
+        EXPECT_EQ(TestParameters::input(param).out_librpa_2d_direct_gamma_order, 8);
+
+        method->second.str_values = {"direct_mixed_fourier"};
+        method->second.read_value(method->second, param);
+        ecut->second.str_values = {"110"};
+        ecut->second.read_value(ecut->second, param);
+        kz_order->second.str_values = {"64"};
+        kz_order->second.read_value(kz_order->second, param);
+        gamma_order->second.str_values = {"8"};
+        gamma_order->second.read_value(gamma_order->second, param);
+        TestParameters::input(param).rpa = true;
+        TestParameters::input(param).out_librpa_ver = 1;
+        TestParameters::input(param).exx_ewald_dimension = 2;
+        method->second.check_value(method->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_librpa_2d_coulomb_method, "direct_mixed_fourier");
+        EXPECT_DOUBLE_EQ(TestParameters::input(param).out_librpa_2d_direct_ecut, 110.0);
+        EXPECT_EQ(TestParameters::input(param).out_librpa_2d_direct_kz_order, 64);
+        EXPECT_EQ(TestParameters::input(param).out_librpa_2d_direct_gamma_order, 8);
+
+        const auto expect_direct_failure = [&]() {
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(method->second.check_value(method->second, param), ::testing::ExitedWithCode(1), "");
+            output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        };
+        TestParameters::input(param).out_librpa_2d_coulomb_method = "unknown";
+        expect_direct_failure();
+        TestParameters::input(param).out_librpa_2d_coulomb_method = "direct_mixed_fourier";
+        TestParameters::input(param).out_librpa_2d_direct_ecut = 0.0;
+        expect_direct_failure();
+        TestParameters::input(param).out_librpa_2d_direct_ecut = 110.0;
+        TestParameters::input(param).out_librpa_2d_direct_kz_order = 0;
+        expect_direct_failure();
+        TestParameters::input(param).out_librpa_2d_direct_kz_order = 64;
+        TestParameters::input(param).out_librpa_2d_direct_gamma_order = 7;
+        expect_direct_failure();
+        TestParameters::input(param).out_librpa_2d_direct_gamma_order = 8;
+        TestParameters::input(param).exx_ewald_dimension = 3;
+        expect_direct_failure();
+        TestParameters::input(param).exx_ewald_dimension = 2;
+        TestParameters::input(param).out_librpa_ver = 0;
+        expect_direct_failure();
+        TestParameters::input(param).out_librpa_ver = 1;
+        TestParameters::input(param).rpa = false;
+        expect_direct_failure();
+    }
+    { // out_librpa_abf_overlap
+        auto it = find_label("out_librpa_abf_overlap", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_FALSE(TestParameters::input(param).out_librpa_abf_overlap);
+        it->second.str_values = {"true"};
+        it->second.read_value(it->second, param);
+        EXPECT_TRUE(TestParameters::input(param).out_librpa_abf_overlap);
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("requires rpa=true"));
+        TestParameters::input(param).rpa = true;
+        TestParameters::input(param).out_librpa_ver = 1;
+        TestParameters::input(param).shrink_abfs_pca_thr = 0.0;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+    }
     { // berry_phase
         auto it = find_label("berry_phase", readinput.input_lists);
         TestParameters::input(param).berry_phase = true;

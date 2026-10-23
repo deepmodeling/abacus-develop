@@ -110,6 +110,9 @@ template <typename T, typename Tdata> class RPA_LRI
                              std::string filename,
                              const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s,
                              const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs);
+    void out_abfs_overlap_raw_v1(const UnitCell& ucell,
+                                 const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& overlap_abfs_abfs,
+                                 const ModuleBase::Element_Basis_Index::IndexLNM& index_abfs_s);
     void out_eigen_vector(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
     void out_struc(const UnitCell& ucell);
     void out_bz_sampling(const UnitCell& ucell);
@@ -117,9 +120,10 @@ template <typename T, typename Tdata> class RPA_LRI
     void out_velocity(const UnitCell& ucell,
         const Grid_Driver& gd,
         const TwoCenterBundle& two_center_bundle,
-        const Parallel_Orbitals& parav,/*nbasis×nbasis*/
+        const Parallel_Orbitals& parav,
         const psi::Psi<T>& psi,
         const elecstate::ElecState* pelec);
+
     void output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<double>* exx_lri_rpa);
     void out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in, std::string filename);
     void out_Cs_v1(const UnitCell& ucell, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in, std::string filename);
@@ -135,7 +139,7 @@ template <typename T, typename Tdata> class RPA_LRI
                              Exx_LRI<double>* exx_lri,
                              const std::string& aux_filename,
                              const std::string& legacy_filename,
-                             bool write_wfc_basis);
+                             const bool write_wfc_basis);
     // void print_matrix(char *desc, const ModuleBase::matrix &mat);
     // void print_complex_matrix(char *desc, const ModuleBase::ComplexMatrix &mat);
     // void init(const MPI_Comm &mpi_comm_in);
@@ -150,7 +154,7 @@ template <typename T, typename Tdata> class RPA_LRI
     std::vector<int> collect_atom_naux_(const UnitCell& ucell, Exx_LRI<double>* exx_lri) const;
 
     const ModuleRI::RpaLriRuntime runtime;
-    Exx_Info_RI info;
+    const Exx_Info_RI &info;
     const K_Vectors *p_kv=nullptr;
     MPI_Comm mpi_comm;
     std::vector<double> orb_cutoff_;

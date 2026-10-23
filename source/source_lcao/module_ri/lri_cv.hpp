@@ -10,10 +10,10 @@
 #include "lri_cv_tools.h"
 #include "exx_abfs_ctor_orbs.h"
 #include "ri_util.h"
-#include "source_basis/module_ao/elem_basis_idx_orb.h"
-#include "source_base/tool_title.h"
-#include "source_base/timer.h"
-#include "source_hamilt/module_xc/exx_info_ri.h"
+#include "../../source_basis/module_ao/elem_basis_idx_orb.h"
+#include "../../source_base/tool_title.h"
+#include "../../source_base/timer.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include <RI/global/Global_Func-1.h>
 #include <omp.h>
 
@@ -45,7 +45,8 @@ void LRI_CV<Tdata>::set_orbitals(
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
     const double &kmesh_times,
     std::shared_ptr<ORB_gaunt_table> MGT,
-    const bool& init_C)
+    const bool& init_C,
+    const ModuleBase::Element_Basis_Index::IndexPermutation &abfs_old_to_new)
 {
     ModuleBase::TITLE("LRI_CV", "set_orbitals");
     ModuleBase::timer::start("LRI_CV", "set_orbitals");
@@ -63,7 +64,7 @@ void LRI_CV<Tdata>::set_orbitals(
 
     const ModuleBase::Element_Basis_Index::Range
         range_abfs = ModuleBase::Element_Basis_Index::construct_range( abfs );
-    this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
+    this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs, abfs_old_to_new );
 
     this->m_abfs_abfs.MGT = this->m_abfslcaos_lcaos.MGT = MGT;
     this->m_abfs_abfs.init(
@@ -75,9 +76,9 @@ void LRI_CV<Tdata>::set_orbitals(
             ucell, orb, kmesh_times);
 
     this->m_abfs_abfs.init_radial_table();
-    if (init_C) {
-        this->m_abfslcaos_lcaos.init_radial_table();
-    }
+	    if (init_C) {
+	        this->m_abfslcaos_lcaos.init_radial_table();
+	    }
 
     ModuleBase::timer::end("LRI_CV", "set_orbitals");
 }
