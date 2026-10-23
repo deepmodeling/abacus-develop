@@ -81,6 +81,65 @@ The new EXX implementation directly depends on [LibRI](https://github.com/abacus
 `ENABLE_LIBCOMM` is deprecated because LibComm is not a standalone ABACUS feature. CMake locates it automatically as a dependency of LibRI. If you prefer using manually downloaded libraries, enable LibRI and provide their locations via `-DLIBRI_DIR=/path/to/LibRI` and `-DLIBCOMM_DIR=/path/to/LibComm`.
 ```
 
+Experimental LCAO GPU contractions additionally require `ENABLE_LIBRI_GPU=ON`
+(default OFF), `USE_CUDA=ON`, and a CUDA build of DDLA. Like other dependent
+options, GPU RI is disabled when its LibRI/CUDA prerequisites are disabled.
+INPUT `device_exx` defaults to `cpu`, retaining CPU contractions even with
+`device gpu`. To use GPU contractions, set both `device gpu` and `device_exx gpu`.
+The latter requires GPU RI to be compiled in. Real-space EXX symmetry reduction
+is unsupported by this backend: with `symmetry 1`, use `device_exx cpu` or
+`exx_symmetry_realspace 0`.
+
+The selector applies to the LCAO Kohn-Sham exchange engine. Independent LR and
+RDMFT exchange engines retain CPU contractions; LR inherits the selected backend
+only when it reuses the Kohn-Sham exchange object.
+
+With the LibRI version below, all MPI ranks on a node must see the same allocated
+GPU list, with at least as many visible GPUs as local ranks. Giving each rank its
+own single-GPU `CUDA_VISIBLE_DEVICES` list fails LibRI's GPU-count check when
+multiple ranks share a node. For example, on one node allocated GPUs 0 and 1:
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1 mpirun -np 2 abacus
+```
+
+The tested combination is LibRI's
+[`fac_add_Ds` branch](https://gitee.com/linpeize/LibRI/tree/fac_add_Ds) at
+`f68342122e4d23007142028bf2d017ce026835eb` and DDLA `v0.0.4`
+(`9c404ac65148ec1b48977b846f38ba6ef9e134f7`). This LibRI revision includes the
+required DDLA interfaces and signed GPU accumulation.
+
+For GCC 13.3/OpenMP, this revision also needs the
+[OpenMP loop declaration fix](https://github.com/Stardust0831/LibRI/blob/fdc95815fb69f7fd98efd3c5a0657c868ba302d5/abacus-collapse-fixed/move-declarations.patch).
+It moves declarations inside the innermost collapsed loops in two LibRI
+`LRI_k` headers. Without it, ABACUS's BSE module fails to compile with
+`not enough for loops to collapse`, including when building for HSE calculations.
+Prepare the tested LibRI source as follows:
+
+```bash
+git clone --branch fac_add_Ds https://gitee.com/linpeize/LibRI.git
+git -C LibRI checkout f68342122e4d23007142028bf2d017ce026835eb
+curl -fL -o libri-openmp-collapse.patch \
+  https://raw.githubusercontent.com/Stardust0831/LibRI/fdc95815fb69f7fd98efd3c5a0657c868ba302d5/abacus-collapse-fixed/move-declarations.patch
+git -C LibRI apply ../libri-openmp-collapse.patch
+```
+
+GPU mode requires this explicitly supplied LibRI tree; the default CPU
+dependency download is unchanged.
+
+```bash
+cmake -B build -DENABLE_LIBRI=ON -DUSE_CUDA=ON -DENABLE_LIBRI_GPU=ON \
+  -DLIBRI_DIR=/path/to/LibRI -DDDLA_ROOT=/path/to/DDLA
+```
+
+`CMAKE_PREFIX_PATH` can also locate DDLA. A configure-time compile/link check
+rejects incompatible GPU APIs, but does not validate numerical correctness.
+The standalone tests in `tests/lcao_hse_gpu/cmake` additionally accept
+`ENABLE_LIBRI_GPU_TESTS=ON` with `ENABLE_LIBRI_GPU=ON` to check real and complex
+GPU contractions with signed accumulation. This optional CTest requires one GPU.
+This experimental backend has additional GPU memory requirements; its temporary
+buffer limit is not a bound on total GPU memory.
+
 ## Build with DFT-D4 support
 
 ABACUS can use the external [DFT-D4](https://github.com/dftd4/dftd4) library for Grimme's DFT-D4 dispersion correction. DFT-D4 support is optional and disabled by default.
