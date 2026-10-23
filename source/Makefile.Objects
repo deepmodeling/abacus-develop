@@ -860,6 +860,7 @@ OBJS_LCAO=evolve_elec.o\
       center2orb_orb22.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
+      smooth_cut_coulomb.o\
       exx_abfs_jle.o\
       module_restart/restart_exx_csr.o\
       exx_abfs_io.o\
