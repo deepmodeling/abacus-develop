@@ -38,8 +38,18 @@ class Vdwd2 : public Vdw
 
         for (int it1 = 0; it1 != ucell_.ntype; ++it1)
         {
+            // Empty atoms are used for BSSE correction only and must not
+            // contribute to the dispersion correction.
+            if (ucell_.atoms[it1].flag_empty_element)
+            {
+                continue;
+            }
             for (int it2 = 0; it2 != ucell_.ntype; ++it2)
             {
+                if (ucell_.atoms[it2].flag_empty_element)
+                {
+                    continue;
+                }
                 const double C6_product
                     = sqrt(para_.C6().at(ucell_.atoms[it1].ncpp.psd) * para_.C6().at(ucell_.atoms[it2].ncpp.psd))
                       / pow(ucell_.lat0, 6);
