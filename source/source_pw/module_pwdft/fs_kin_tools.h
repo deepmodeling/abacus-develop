@@ -48,7 +48,7 @@ class FS_Kin_tools
     std::vector<FPTYPE> gk3_;
     std::vector<FPTYPE*> gk;
     std::vector<FPTYPE> kfac;
-    std::vector<FPTYPE> s_kin;
+    std::vector<double> s_kin;
     FPTYPE* d_gk = nullptr;
     FPTYPE* d_kfac = nullptr;
     const FPTYPE* wg = nullptr;

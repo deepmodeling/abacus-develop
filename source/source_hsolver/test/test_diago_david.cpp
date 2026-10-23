@@ -124,7 +124,7 @@ TYPED_TEST(DavidsonOwnershipTest, PhysicalEmptyAndUnevenBlocks)
             DiagonalOperator<T> op(offset, local_size);
             if (method == 0)
             {
-                hsolver::DiagoDavid<T> solver(precondition.data(), bands, local_size, 3, comm);
+                hsolver::DiagoDavid<T> solver(precondition.data(), bands, local_size, 3, false, comm);
                 solver.diag(op, local_size, vectors.data(), energies, thresholds, 300, 5, 0);
             }
             else if (method == 1)
@@ -167,6 +167,93 @@ TYPED_TEST(DavidsonOwnershipTest, PhysicalEmptyAndUnevenBlocks)
         }
     }
 }
+
+TYPED_TEST(DavidsonOwnershipTest, ExactAndApproximateWarmStart)
+{
+    using T = TypeParam;
+    const auto domain = ModuleBase::world_comm_domain();
+    const int rank = domain.rank();
+    const int processes = domain.size();
+    const int bands = 2;
+    const int dimension = std::max(4, 2 * processes);
+#ifdef __MPI
+    const hsolver::diag_comm_info comm = {POOL_WORLD, rank, processes};
+#else
+    const hsolver::diag_comm_info comm = {rank, processes};
+#endif
+
+    std::vector<int> sizes(processes, 0);
+    for (int process = 0; process < processes; ++process)
+    {
+        sizes[process] = dimension / processes;
+        if (process < dimension % processes)
+        {
+            ++sizes[process];
+        }
+    }
+    int offset = 0;
+    for (int process = 0; process < rank; ++process)
+    {
+        offset += sizes[process];
+    }
+    const int local_size = sizes[rank];
+    const int storage_size = std::max(local_size * bands, 1);
+
+    std::vector<double> precondition(std::max(local_size, 1), 1.0);
+    for (int method = 0; method < 2; ++method)
+    {
+        SCOPED_TRACE(::testing::Message() << "method=" << method << " rank=" << rank);
+        std::vector<T> vectors(storage_size, T(0));
+        for (int band = 0; band < bands; ++band)
+        {
+            for (int row = 0; row < local_size; ++row)
+            {
+                const int global_row = offset + row;
+                if (band == 0 && global_row == 0)
+                {
+                    vectors[band * local_size + row] = T(1);
+                }
+                if (band == 1 && (global_row == 1 || global_row == 2))
+                {
+                    vectors[band * local_size + row] = T(1.0 / std::sqrt(2.0));
+                }
+            }
+        }
+
+        double energies[bands] = {};
+        const std::vector<double> thresholds(bands, 1e-8);
+        DiagonalOperator<T> op(offset, local_size);
+        if (method == 0)
+        {
+            hsolver::DiagoDavid<T> solver(precondition.data(), bands, local_size, 3, false, comm);
+            solver.diag(op, local_size, vectors.data(), energies, thresholds, 100, 5, 0);
+        }
+        else
+        {
+            hsolver::Diago_DavSubspace<T> solver(precondition, bands, local_size, 3, 1e-8, 100, comm, 0, 1);
+            solver.diag(op, vectors.data(), local_size, energies, thresholds, false);
+        }
+
+        for (int band = 0; band < bands; ++band)
+        {
+            EXPECT_NEAR(energies[band], band + 1.0, 1e-5);
+            double residual = 0.0;
+            double norm = 0.0;
+            for (int row = 0; row < local_size; ++row)
+            {
+                const double amplitude = std::abs(vectors[band * local_size + row]);
+                const double error = (offset + row + 1.0 - energies[band]) * amplitude;
+                residual += error * error;
+                norm += amplitude * amplitude;
+            }
+            Parallel_Reduce::reduce_pool(residual);
+            Parallel_Reduce::reduce_pool(norm);
+            EXPECT_LT(std::sqrt(residual), 1e-4);
+            EXPECT_NEAR(norm, 1.0, 1e-6);
+        }
+    }
+}
+
 } // namespace
 
 int main(int argc, char** argv)

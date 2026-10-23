@@ -7,6 +7,8 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
+#include <ATen/core/tensor_map.h>
+#include "source_basis/module_pw/pw_basis_k.h"
 
 // calculate the Pulay term of mGGA stress correction in PW
 template <typename FPTYPE, typename Device>
@@ -31,9 +33,36 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
 
     std::complex<FPTYPE>* psi;
     int ipol2xy[3][3] = {{0, 1, 3}, {1, 2, 4}, {3, 4, 5}};
-    FPTYPE sigma_mgga[3][3];
+    double sigma_mgga[3][3];
 
     using ct_Device = typename ct::PsiToContainer<Device>::type;
+
+    // gcar/kvec_c are constant over bands: prepare device buffers once.
+    const int gcar_size = wfc_basis->nks * wfc_basis->npwk_max;
+    std::vector<FPTYPE> gcar_host(3 * gcar_size);
+    std::vector<FPTYPE> kvec_host(3 * wfc_basis->nks);
+    for (int i = 0; i < gcar_size; ++i)
+    {
+        gcar_host[3 * i] = static_cast<FPTYPE>(wfc_basis->gcar[i].x);
+        gcar_host[3 * i + 1] = static_cast<FPTYPE>(wfc_basis->gcar[i].y);
+        gcar_host[3 * i + 2] = static_cast<FPTYPE>(wfc_basis->gcar[i].z);
+    }
+    for (int i = 0; i < wfc_basis->nks; ++i)
+    {
+        kvec_host[3 * i] = static_cast<FPTYPE>(wfc_basis->kvec_c[i].x);
+        kvec_host[3 * i + 1] = static_cast<FPTYPE>(wfc_basis->kvec_c[i].y);
+        kvec_host[3 * i + 2] = static_cast<FPTYPE>(wfc_basis->kvec_c[i].z);
+    }
+    auto gcar_device = ct::TensorMap(gcar_host.data(),
+                                     ct::DataTypeToEnum<FPTYPE>::value,
+                                     ct::DeviceType::CpuDevice,
+                                     {gcar_size, 3})
+                           .to_device<ct_Device>();
+    auto kvec_device = ct::TensorMap(kvec_host.data(),
+                                     ct::DataTypeToEnum<FPTYPE>::value,
+                                     ct::DeviceType::CpuDevice,
+                                     {wfc_basis->nks, 3})
+                           .to_device<ct_Device>();
 
     auto gradwfc = ct::Tensor(
         ct::DataTypeToEnum<std::complex<FPTYPE>>::value,
@@ -59,10 +88,13 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
         {
             const FPTYPE w1 = wg(ik, ibnd) / ucell.omega;
             const std::complex<FPTYPE>* psi = &psi_in[0](ik, ibnd, 0);
-            XC_Functional::grad_wfc<std::complex<FPTYPE>, Device>(ik, 
-                    ucell.tpiba, 
-                    wfc_basis, 
-                    psi, 
+            XC_Functional::grad_wfc<std::complex<FPTYPE>, Device>(
+                    ik,
+                    ucell.tpiba,
+                    wfc_basis,
+                    gcar_device.template data<FPTYPE>(),
+                    kvec_device.template data<FPTYPE>(),
+                    psi,
                     gradwfc.data<std::complex<FPTYPE>>());
 
             cal_stress_mgga_solver(

@@ -356,9 +356,14 @@ __global__ void normalize_kernel(
     Real l2_sq = blockReduceSum(local_sum, shared);
     Real norm = sqrt(l2_sq);
 
-    // Normalize the vector
-    for (int i = tid; i < dim; i += thread_per_block) {
-        psi_iter[(nbase + m) * dim + i] /= norm;
+    // Guard against zero/denormal norm (degenerate direction, e.g. single-precision
+    // underflow): skip normalization and leave psi_norm[m] = 0 so the caller treats
+    // it as converged.
+    if (norm > 1.0e-12) {
+        // Normalize the vector
+        for (int i = tid; i < dim; i += thread_per_block) {
+            psi_iter[(nbase + m) * dim + i] /= norm;
+        }
     }
 
     // Store the norm if needed

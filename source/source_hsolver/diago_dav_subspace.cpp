@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include "diago_dav_subspace.h"
 
 #include "diago_iter_assist.h"
@@ -442,18 +443,36 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
         Real* psi_norm_host = nullptr;
         resmem_real_h_op()(psi_norm_host, notconv);
         syncmem_var_d2h_op()(psi_norm_host, psi_norm, notconv);
+        std::vector<int> valid_indices;
         for (int i = 0; i < notconv; i++)
         {
-            if (psi_norm_host[i] <= 1.0e-12)
+            const bool finite = std::isfinite(psi_norm_host[i]);
+            if (!finite || psi_norm_host[i] <= 1.0e-12)
             {
-                std::cout << "Diago_DavSubspace::cal_grad: psi_norm <= 0 for band " << i << std::endl;
-                std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
-                std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
-                std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
-                delmem_real_h_op()(psi_norm_host);
-                delmem_real_op()(psi_norm);
-                ModuleBase::WARNING_QUIT("cal_grad", "psi_norm <= 0");
+                std::cout << "Diago_DavSubspace::cal_grad: norm of new direction for band " << i
+                          << (finite ? " is too small" : " is not finite")
+                          << ", treating as converged." << std::endl;
+                continue;
             }
+            valid_indices.push_back(i);
+        }
+        if (valid_indices.empty())
+        {
+            this->notconv = 0;
+        }
+        else if (static_cast<int>(valid_indices.size()) < notconv)
+        {
+            for (int k = 0; k < static_cast<int>(valid_indices.size()); ++k)
+            {
+                const int src = valid_indices[k];
+                if (src != k)
+                {
+                    syncmem_complex_op()(psi_iter + (nbase + k) * this->dim,
+                                         psi_iter + (nbase + src) * this->dim,
+                                         this->dim);
+                }
+            }
+            this->notconv = static_cast<int>(valid_indices.size());
         }
         delmem_real_h_op()(psi_norm_host);
         delmem_real_op()(psi_norm);
@@ -472,25 +491,44 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                                 psi_norm);
 
         // Check for zero norms (CPU path)
+        std::vector<int> valid_indices;
         for (int i = 0; i < notconv; i++)
         {
-            if (psi_norm[i] <= 1.0e-12)
+            const bool finite = std::isfinite(psi_norm[i]);
+            if (!finite || psi_norm[i] <= 1.0e-12)
             {
-                std::cout << "Diago_DavSubspace::cal_grad: psi_norm <= 0 for band " << i << std::endl;
-                std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
-                std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
-                std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
-                delmem_real_h_op()(psi_norm);
-                ModuleBase::WARNING_QUIT("cal_grad", "psi_norm <= 0");
+                std::cout << "Diago_DavSubspace::cal_grad: norm of new direction for band " << i
+                          << (finite ? " is too small" : " is not finite")
+                          << ", treating as converged." << std::endl;
+                continue;
             }
+            valid_indices.push_back(i);
+        }
+        if (valid_indices.empty())
+        {
+            this->notconv = 0;
+        }
+        else if (static_cast<int>(valid_indices.size()) < notconv)
+        {
+            for (int k = 0; k < static_cast<int>(valid_indices.size()); ++k)
+            {
+                const int src = valid_indices[k];
+                if (src != k)
+                {
+                    syncmem_complex_op()(psi_iter + (nbase + k) * this->dim,
+                                         psi_iter + (nbase + src) * this->dim,
+                                         this->dim);
+                }
+            }
+            this->notconv = static_cast<int>(valid_indices.size());
         }
         delmem_real_h_op()(psi_norm);
     }
 
     // update hpsi[:, nbase:nbase+notconv]
     // hpsi[:, nbase:nbase+notconv] = H * psi_iter[:, nbase:nbase+notconv]
-    op.hpsi(psi_iter + nbase * dim, hpsi + nbase * this->dim, this->dim, notconv);
-    op.spsi(psi_iter + nbase * dim, spsi + nbase * this->dim, this->dim, notconv);
+    op.hpsi(psi_iter + nbase * dim, hpsi + nbase * this->dim, this->dim, this->notconv);
+    op.spsi(psi_iter + nbase * dim, spsi + nbase * this->dim, this->dim, this->notconv);
 
     ModuleBase::timer::end("Diago_DavSubspace", "cal_grad");
     return;

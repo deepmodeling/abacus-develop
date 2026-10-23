@@ -256,9 +256,14 @@ __global__ void normalize_kernel(
 
     Real norm = sqrt(sum[0]);
 
-    // Normalize the vector
-    for (int i = tid; i < dim; i += THREAD_PER_BLOCK) {
-        psi_iter[(nbase + m) * dim + i] /= norm;
+    // Guard against zero/denormal norm (degenerate direction, e.g. single-precision
+    // underflow): skip normalization and leave psi_norm[m] = 0 so the caller treats
+    // it as converged.
+    if (norm > 1.0e-12) {
+        // Normalize the vector
+        for (int i = tid; i < dim; i += THREAD_PER_BLOCK) {
+            psi_iter[(nbase + m) * dim + i] /= norm;
+        }
     }
 
     // Store the norm if needed

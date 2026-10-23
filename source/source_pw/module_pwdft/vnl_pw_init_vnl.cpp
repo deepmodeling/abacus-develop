@@ -329,7 +329,8 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
                 castmem_z2c_h2d_op()(this->c_qq_so, this->qq_so.ptr, this->qq_so.getSize());
             }
         }
-        if (PARAM.globalv.has_double_data && this->nhm > 0)
+        // Always keep the double buffer in sync for force/stress.
+        if (this->nhm > 0)
         {
             syncmem_z2z_h2d_op()(this->z_qq_so, this->qq_so.ptr, this->qq_so.getSize());
         }

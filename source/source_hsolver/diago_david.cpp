@@ -1,9 +1,16 @@
 #include <algorithm>
 #include "diago_david.h"
+#include <ATen/core/tensor_map.h>
+#include <type_traits>
+#include <atomic>
+#include <cmath>
+#include <string>
 
 #include "source_base/parallel_cell.h"
+#include "source_base/parallel_device.h"
 #include "source_base/timer.h"                  // ModuleBase::timer::tick
-#include "source_base/tool_title.h"             // ModuleBase::TITLE
+#include "source_base/tool_title.h"
+#include "source_base/tool_quit.h"             // ModuleBase::TITLE
 #include "source_base/module_device/device.h"
 
 #include "source_hsolver/kernels/hegvd_op.h"
@@ -13,14 +20,32 @@
 
 using namespace hsolver;
 
+namespace
+{
+void warn_skip_degenerate_direction(const int band)
+{
+    static std::atomic<bool> warned(false);
+    bool expected = false;
+    if (warned.compare_exchange_strong(expected, true))
+    {
+        ModuleBase::WARNING("DiagoDavid::SchmidtOrth",
+                            "Skipping a degenerate residual direction (band "
+                                + std::to_string(band)
+                                + ") with non-positive norm; treating it as converged.");
+    }
+}
+} // namespace
+
 
 template <typename T, typename Device>
 DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const int nband_in,
                                   const int dim_in,
                                   const int david_ndim_in,
+                                  const bool use_uspp_in,
                                   const diag_comm_info& diag_comm_in)
-    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), diag_comm(diag_comm_in)
+    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in),
+      use_uspp(use_uspp_in), diag_comm(diag_comm_in)
 {
     this->device = base_device::get_device_type(this->ctx);
     this->precondition = precondition_in;
@@ -159,6 +184,19 @@ int DiagoDavid<T, Device>::diag_once(const HSOperator<T, Device>& op,
     std::vector<int> pre_matrix_mv_m(nband, 1);
     this->planSchmidtOrth(nband, pre_matrix_mm_m, pre_matrix_mv_m);
 
+#if defined(__CUDA)
+    const bool block_qr = this->use_block_qr();
+    if (block_qr)
+    {
+        for (int m = 0; m < nband; ++m)
+            syncmem_complex_op()(basis + dim*m, psi_in + m*ld_psi, dim);
+        // Form the basis without subtracting nearly equal norm estimates.
+        ct::kernels::lapack_geqrf_inplace<T, ct_Device>()(dim, nband, basis, dim);
+        op.spsi(basis, spsi, dim, nband);
+    }
+    else
+#endif
+    {
     for (int m = 0; m < nband; m++)
     {
         {
@@ -171,17 +209,24 @@ int DiagoDavid<T, Device>::diag_once(const HSOperator<T, Device>& op,
     {
         syncmem_complex_op()(basis + dim*m, psi_in + m*ld_psi, dim);
 
-        this->SchmidtOrth(dim,
-                         nband,
-                         m,
-                         this->spsi,
-                         &this->lagrange_matrix[m * nband],
-                         pre_matrix_mm_m[m],
-                         pre_matrix_mv_m[m]);
+        if (!this->SchmidtOrth(dim,
+                               nband,
+                               m,
+                               this->spsi,
+                               &this->lagrange_matrix[m * nband],
+                               pre_matrix_mm_m[m],
+                               pre_matrix_mv_m[m]))
+        {
+            ModuleBase::WARNING_QUIT("DiagoDavid",
+                                     "initial trial wavefunction is linearly dependent; "
+                                     "cannot construct an orthonormal Davidson basis.");
+        }
         {
             // phm_in->sPsi(basis + dim*m, &this->spsi[m * dim], dim, dim, 1);
             op.spsi(basis + dim*m, &this->spsi[m * dim], dim, 1);
         }
+    }
+
     }
 
     // end of SchmidtOrth and calculate H|psi>
@@ -552,27 +597,109 @@ void DiagoDavid<T, Device>::cal_grad(const HSOperator<T, Device>& op,
         );
     }
 
-    for (int m = 0; m < notconv; m++)
+#if defined(__CUDA)
+    bool qr_used = false;
+    const bool block_qr = this->use_block_qr();
+    if (block_qr)
     {
-        this->SchmidtOrth(dim,
-                         nbase + notconv,
-                         nbase + m,
-                         spsi,
-                         &lagrange[m * (nbase + notconv)],
-                         pre_matrix_mm_m[m],
-                         pre_matrix_mv_m[m]);
+        // Keep a copy of the unprojected block so a rank-deficient QR can
+        // restore it and fall back to the regular Schmidt path.
+        T* qr_backup = nullptr;
+        resmem_complex_op()(qr_backup, dim * notconv);
+        syncmem_complex_op()(qr_backup, basis + dim * nbase, dim * notconv);
+
+        // Project the new block once and orthogonalize its columns together.
+        ModuleBase::gemm_op<T, Device>()('N', 'N', dim, notconv, nbase,
+            this->neg_one, basis, dim, lagrange, nbase + notconv,
+            this->one, basis + dim*nbase, dim);
+
+        ct::kernels::lapack_geqrf_inplace<T, ct_Device>()(
+            dim, notconv, basis + dim * nbase, dim);
+
+        bool full_rank = true;
+        double max_diag = 0.0;
+        std::vector<T> rdiag(notconv);
+        for (int j = 0; j < notconv; ++j)
         {
-            // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
-            op.spsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);
+            syncmem_d2h_op()(&rdiag[j], basis + (nbase + j) * dim + j, 1);
+            const double abs_diag = std::abs(rdiag[j]);
+            if (!std::isfinite(abs_diag))
+            {
+                full_rank = false;
+            }
+            if (abs_diag > max_diag)
+            {
+                max_diag = abs_diag;
+            }
+        }
+        const double rank_tol = 1e-6 * max_diag;
+        for (int j = 0; j < notconv && full_rank; ++j)
+        {
+            if (std::abs(rdiag[j]) <= rank_tol)
+            {
+                full_rank = false;
+            }
+        }
+
+        if (full_rank)
+        {
+            op.spsi(basis + dim * nbase, spsi + dim * nbase, dim, notconv);
+            qr_used = true;
+        }
+        else
+        {
+            syncmem_complex_op()(basis + dim * nbase, qr_backup, dim * notconv);
+            ModuleBase::WARNING("DiagoDavid::cal_grad",
+                                "CUDA float QR block is rank deficient; falling back to "
+                                "Schmidt orthogonalization.");
+        }
+        delmem_complex_op()(qr_backup);
+    }
+    if (!qr_used)
+#endif
+    {
+        std::vector<int> valid_indices;
+        valid_indices.reserve(notconv);
+        for (int m = 0; m < notconv; m++)
+        {
+            if (this->SchmidtOrth(dim,
+                                  nbase + notconv,
+                                  nbase + m,
+                                  spsi,
+                                  &lagrange[m * (nbase + notconv)],
+                                  pre_matrix_mm_m[m],
+                                  pre_matrix_mv_m[m]))
+            {
+                valid_indices.push_back(m);
+                // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
+                op.spsi(basis + dim * (nbase + m), &spsi[(nbase + m) * dim], dim, 1);
+            }
+        }
+
+        // Drop rejected directions and compact the remaining columns so that
+        // cal_elem() does not see zero columns or enlarge the basis with them.
+        if (static_cast<int>(valid_indices.size()) < notconv)
+        {
+            for (int k = 0; k < static_cast<int>(valid_indices.size()); ++k)
+            {
+                const int src = valid_indices[k];
+                if (src != k)
+                {
+                    syncmem_complex_op()(basis + dim * (nbase + k), basis + dim * (nbase + src), dim);
+                    syncmem_complex_op()(spsi + (nbase + k) * dim, spsi + (nbase + src) * dim, dim);
+                }
+            }
+            this->notconv = static_cast<int>(valid_indices.size());
         }
     }
+
     // calculate H|psi> for not convergence bands
     // hpsi_info dav_hpsi_in(&basis,
     //                       psi::Range(true, 0, nbase, nbase + notconv - 1),
     //                       &hpsi[nbase * dim]); // &hp(nbase, 0)
     // phm_in->ops->hPsi(dav_hpsi_in);
     // hpsi[:, nbase:nbase+notcnv] = H basis[:, nbase:nbase+notcnv]
-    op.hpsi(basis + nbase * dim, hpsi + nbase * dim, dim, notconv);
+    op.hpsi(basis + nbase * dim, hpsi + nbase * dim, dim, this->notconv);
 
     delmem_complex_op()(lagrange);
     delmem_complex_op()(vc_ev_vector);
@@ -666,7 +793,23 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
             syncmem_var_h2d_op()(eigenvalue_gpu, this->eigenvalue, nbase_x);
 
             // heevx_op<T, Device>()(this->ctx, nbase, nbase_x, hcc, nband, eigenvalue_gpu, vcc);
-            ct::kernels::lapack_heevx<T, ct_Device>()(nbase, nbase_x, hcc, nband, eigenvalue_gpu, vcc);
+            if (std::is_same<Real, float>::value && !this->use_uspp)
+            {
+                // Use double only for this single reduced eigensolve.
+                auto h64 = ct::TensorMap(const_cast<T*>(hcc), ct::DataTypeToEnum<T>::value,
+                                        ct::DeviceType::GpuDevice, {nbase, nbase_x}).cast<std::complex<double>>();
+                ct::Tensor v64(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, {nbase, nbase_x});
+                ct::Tensor e64(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {nbase_x});
+                ct::kernels::lapack_heevx<std::complex<double>, ct_Device>()(
+                    nbase, nbase_x, h64.data<std::complex<double>>(), nband, e64.data<double>(), v64.data<std::complex<double>>());
+                base_device::memory::cast_memory_op<T, std::complex<double>, Device, Device>()(
+                    vcc, v64.data<std::complex<double>>(), static_cast<size_t>(nband) * nbase_x);
+                base_device::memory::cast_memory_op<Real, double, Device, Device>()(eigenvalue_gpu, e64.data<double>(), nband);
+            }
+            else
+            {
+                ct::kernels::lapack_heevx<T, ct_Device>()(nbase, nbase_x, hcc, nband, eigenvalue_gpu, vcc);
+            }
 
             syncmem_var_d2h_op()(this->eigenvalue, eigenvalue_gpu, nbase_x);
             delmem_var_op()(eigenvalue_gpu);
@@ -685,9 +828,9 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
         // vcc: nbase * nband
         for (int i = 0; i < nband; i++)
         {
-            MPI_Bcast(&vcc[i * nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, diag_comm.comm);
+            Parallel_Common::bcast_data(&vcc[i * nbase_x], nbase, diag_comm.comm, 0);
         }
-        MPI_Bcast(this->eigenvalue, nband, MPI_DOUBLE, 0, diag_comm.comm);
+        Parallel_Common::bcast_data(this->eigenvalue, nband, diag_comm.comm, 0);
     }
 #endif
 
@@ -820,7 +963,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
 
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
+bool DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                                             const int nband,
                                             const int m,
                                             const T* spsi,
@@ -845,6 +988,8 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     if (dim == 0)
     {
         // GEMV quick-returns on zero rows without overwriting the projection.
+        // Do not return early: every rank, including empty local blocks, must
+        // reach the pool reduction below with the same collective sequence.
         const int projection_size = m + 1;
         setmem_complex_op()(lagrange_m, 0, projection_size);
     }
@@ -896,7 +1041,16 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     syncmem_d2h_op()(&var, lagrange_m + m, 1);
     double psi_norm = get_real(var);
 
-    assert(psi_norm > 0.0);
+    if (psi_norm <= 0.0)
+    {
+        // The residual direction has a zero (or negative) S-norm: in single
+        // precision the residual H*c - lambda*S*c suffers catastrophic
+        // cancellation and collapses to numerical noise. Treat it as converged
+        // and leave the (near-zero) direction untouched instead of aborting.
+        warn_skip_degenerate_direction(m);
+        ModuleBase::timer::end("DiagoDavid", "SchmidtOrth");
+        return false;
+    }
 
     // / psi_m = psi_m - \sum_{i < m} \langle psi(i)|S|psi(m) \rangle psi(i)
     // psi_m = psi_m - basis * lagrange_m
@@ -915,44 +1069,30 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     // psi_norm = psi_norm - lagrange_m · lagrange_m
     psi_norm -= ModuleBase::dot_real_op<T, Device>()(m, lagrange_m, lagrange_m, false);
 
-    // for (int j = 0; j < m; j++)
-    // {
-    //     const std::complex<double> alpha = std::complex<double>(-1, 0) * lagrange_m[j];
-    //     zaxpy_(&npw, &alpha, &psi(j,0), &inc, psi_m, &inc);
-    //     /*for (int ig = 0; ig < npw; ig++)
-    //     {
-    //         psi_m[ig] -= lagrange[j] * psi(j, ig);
-    //     }*/
-    //     psi_norm -= (conj(lagrange_m[j]) * lagrange_m[j]).real();
-    // }
-
-    assert(psi_norm > 0.0);
+    if (psi_norm <= 0.0)
+    {
+        // Nearly rank-deficient direction after orthogonalization: skip it.
+        warn_skip_degenerate_direction(m);
+        ModuleBase::timer::end("DiagoDavid", "SchmidtOrth");
+        return false;
+    }
 
     psi_norm = sqrt(psi_norm);
 
     if (psi_norm < 1.0e-12)
     {
-        std::cout << "DiagoDavid::SchmidtOrth:aborted for psi_norm <1.0e-12" << std::endl;
-        std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
-        std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
-        std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
-        std::cout << "nband = " << nband << std::endl;
-        std::cout << "m = " << m << std::endl;
-        exit(0);
+        // Nearly rank-deficient direction: skip instead of aborting.
+        warn_skip_degenerate_direction(m);
+        ModuleBase::timer::end("DiagoDavid", "SchmidtOrth");
+        return false;
     }
-    else
-    {
-        // psi_m = psi_m / psi_norm
-        ModuleBase::vector_mul_real_op<T, Device>()(dim, psi_m, psi_m, Real(1.0 / psi_norm));
-        // for (int i = 0; i < npw; i++)
-        // {
-        //     psi_m[i] /= psi_norm;
-        // }
-    }
+
+    // psi_m = psi_m / psi_norm
+    ModuleBase::vector_mul_real_op<T, Device>()(dim, psi_m, psi_m, Real(1.0 / psi_norm));
 
     // delete[] lagrange;
     ModuleBase::timer::end("DiagoDavid", "SchmidtOrth");
-    return;
+    return true;
 }
 
 
@@ -1049,6 +1189,15 @@ int DiagoDavid<T, Device>::diag(const HSOperator<T, Device>& op,
     return sum_dav_iter;
 }
 
+
+template <typename T, typename Device>
+inline bool DiagoDavid<T, Device>::use_block_qr() const
+{
+    return this->device == base_device::GpuDevice
+           && std::is_same<Real, float>::value
+           && !this->use_uspp
+           && this->diag_comm.nproc == 1;
+}
 
 template <typename T, typename Device>
 inline bool DiagoDavid<T, Device>::check_block_conv(const int& ntry,

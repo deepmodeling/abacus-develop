@@ -995,7 +995,7 @@ __global__ void cal_stress_onsite(
         const int *atom_nh,
         const int *atom_na,
         const FPTYPE *d_wg,
-        const double* lambda,
+        const FPTYPE* lambda,
         const thrust::complex<FPTYPE> *becp,
         const thrust::complex<FPTYPE> *dbecp,
         FPTYPE *stress)
@@ -1116,7 +1116,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
-                    const double* lambda,
+                    const FPTYPE* lambda,
                     const int* isk,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
