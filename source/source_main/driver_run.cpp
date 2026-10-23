@@ -1,8 +1,8 @@
 #include "source_base/global_variable.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_cell/check_atomic_stru.h"
-#include "source_cell/mdcell.h"
 #include "source_cell/domain_decomposition.h"
+#include "source_cell/mdcell.h"
 #include "source_esolver/esolver_factory.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_json/para_json.h"
@@ -55,18 +55,13 @@ void Driver::driver_run()
     const bool direct_mdcell = input.esolver_type == "lj" || input.esolver_type == "dp" || input.esolver_type == "nep";
     UnitCell ucell;
     bool ucell_initialized = false;
-    const auto initialize_ucell = [&ucell, &ucell_initialized, &input]()
-    {
+    const auto initialize_ucell = [&ucell, &ucell_initialized, &input]() {
         if (ucell_initialized)
         {
             return;
         }
 
-        ucell.setup_from_input(input.latname,
-                               input.ntype,
-                               input.lmaxmax,
-                               input.init_vel,
-                               input.fixed_axes);
+        ucell.setup_from_input(input.latname, input.ntype, input.lmaxmax, input.init_vel, input.fixed_axes);
         ucell.setup_cell(PARAM.globalv.global_in_stru,
                          GlobalV::ofs_running,
                          input.symmetry_prec,

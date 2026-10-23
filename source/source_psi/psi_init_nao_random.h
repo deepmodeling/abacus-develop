@@ -17,7 +17,7 @@ class psi_init_nao_random : public psi_init_nao<T>
         this->method_ = "nao+random";
         this->mixing_coef_ = 0.05;
     };
-    ~psi_init_nao_random(){};
+    ~psi_init_nao_random() {};
 
     virtual void init_psig(T* psig, const int& ik) override;
 };

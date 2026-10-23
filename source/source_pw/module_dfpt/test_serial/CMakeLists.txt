@@ -12,45 +12,56 @@ abacus_disable_feature_definitions(__MLALGO)
 # here must be compiled without __MPI in the same translation-unit ABI as the
 # dfpt sources (mirrors module_pw/test_serial).
 add_library(
-    dfpt_planewave_serial
-    OBJECT
-    ../../../source_base/module_fft/fft_bundle.cpp
-    ../../../source_base/module_fft/fft_cpu.cpp
-    ../../../source_basis/module_pw/pw_basis.cpp
-    ../../../source_basis/module_pw/pw_basis_k.cpp
-    ../../../source_basis/module_pw/pw_basis_sup.cpp
-    ../../../source_basis/module_pw/pw_distributeg.cpp
-    ../../../source_basis/module_pw/pw_distg_method1.cpp
-    ../../../source_basis/module_pw/pw_distg_method2.cpp
-    ../../../source_basis/module_pw/pw_distributer.cpp
-    ../../../source_basis/module_pw/pw_init.cpp
-    ../../../source_basis/module_pw/pw_transform.cpp
-    ../../../source_basis/module_pw/pw_transform_k.cpp
-)
+  dfpt_planewave_serial OBJECT
+  ../../../source_base/module_fft/fft_bundle.cpp
+  ../../../source_base/module_fft/fft_cpu.cpp
+  ../../../source_basis/module_pw/pw_basis.cpp
+  ../../../source_basis/module_pw/pw_basis_k.cpp
+  ../../../source_basis/module_pw/pw_basis_sup.cpp
+  ../../../source_basis/module_pw/pw_distributeg.cpp
+  ../../../source_basis/module_pw/pw_distg_method1.cpp
+  ../../../source_basis/module_pw/pw_distg_method2.cpp
+  ../../../source_basis/module_pw/pw_distributer.cpp
+  ../../../source_basis/module_pw/pw_init.cpp
+  ../../../source_basis/module_pw/pw_transform.cpp
+  ../../../source_basis/module_pw/pw_transform_k.cpp)
 
-AddTest(
-  TARGET MODULE_DFPT_pert_serial
-  LIBS parameter dfpt_planewave_serial device base symmetry
-  SOURCES dfpt_pert_serial_test.cpp
-	../dfpt_pert.cpp
-	../dfpt_pert_vkb.cpp
-	../dfpt_pert_nl.cpp
-	../dfpt_pw_data.cpp
-	../dfpt_kq_basis.cpp
-	../../../source_cell/qlist.cpp
-	../../../source_cell/reciprocal_grid.cpp
-	../../../source_psi/psi.cpp
-	# Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
+addtest(
+  TARGET
+  MODULE_DFPT_pert_serial
+  LIBS
+  parameter
+  dfpt_planewave_serial
+  device
+  base
+  symmetry
+  SOURCES
+  dfpt_pert_serial_test.cpp
+  ../dfpt_pert.cpp
+  ../dfpt_pert_vkb.cpp
+  ../dfpt_pert_nl.cpp
+  ../dfpt_pw_data.cpp
+  ../dfpt_kq_basis.cpp
+  ../../../source_cell/qlist.cpp
+  ../../../source_cell/reciprocal_grid.cpp
+  ../../../source_psi/psi.cpp
+  # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
   # (see test/dfpt_test_mocks.cpp).
-	../test/dfpt_test_mocks.cpp
-	# Shared serial-side cell/basis/data fixture.
-	dfpt_serial_fixture.cpp
-)
+  ../test/dfpt_test_mocks.cpp
+  # Shared serial-side cell/basis/data fixture.
+  dfpt_serial_fixture.cpp)
 
-AddTest(
-  TARGET MODULE_DFPT_rho_serial
-  LIBS parameter dfpt_planewave_serial device base symmetry
-  SOURCES dfpt_rho_serial_test.cpp
+addtest(
+  TARGET
+  MODULE_DFPT_rho_serial
+  LIBS
+  parameter
+  dfpt_planewave_serial
+  device
+  base
+  symmetry
+  SOURCES
+  dfpt_rho_serial_test.cpp
   ../dfpt_rho.cpp
   ../dfpt_pw_data.cpp
   ../dfpt_kq_basis.cpp
@@ -61,13 +72,19 @@ AddTest(
   # (see test/dfpt_test_mocks.cpp).
   ../test/dfpt_test_mocks.cpp
   # Shared serial-side cell/basis/data fixture.
-  dfpt_serial_fixture.cpp
-)
+  dfpt_serial_fixture.cpp)
 
-AddTest(
-  TARGET MODULE_DFPT_phon_serial
-  LIBS parameter dfpt_planewave_serial device base symmetry
-  SOURCES dfpt_phon_serial_test.cpp
+addtest(
+  TARGET
+  MODULE_DFPT_phon_serial
+  LIBS
+  parameter
+  dfpt_planewave_serial
+  device
+  base
+  symmetry
+  SOURCES
+  dfpt_phon_serial_test.cpp
   ../dfpt_phon.cpp
   ../dfpt_phon_ewald.cpp
   ../dfpt_phon_elec.cpp
@@ -83,13 +100,19 @@ AddTest(
   # (see test/dfpt_test_mocks.cpp).
   ../test/dfpt_test_mocks.cpp
   # Shared serial-side cell/basis/data fixture.
-  dfpt_serial_fixture.cpp
-)
+  dfpt_serial_fixture.cpp)
 
-AddTest(
-  TARGET MODULE_DFPT_q0_serial
-  LIBS parameter dfpt_planewave_serial device base symmetry
-  SOURCES dfpt_q0_serial_test.cpp
+addtest(
+  TARGET
+  MODULE_DFPT_q0_serial
+  LIBS
+  parameter
+  dfpt_planewave_serial
+  device
+  base
+  symmetry
+  SOURCES
+  dfpt_q0_serial_test.cpp
   ../dfpt_q0.cpp
   ../dfpt_q0_pos.cpp
   ../dfpt_pert.cpp
@@ -104,16 +127,23 @@ AddTest(
   # (see test/dfpt_test_mocks.cpp).
   ../test/dfpt_test_mocks.cpp
   # Shared serial-side cell/basis/data fixture.
-  dfpt_serial_fixture.cpp
-)
+  dfpt_serial_fixture.cpp)
 
 # Analytic libxc first-order XC kernel (empty TU without libxc, so the test
 # only exists when the feature is compiled in)
 if(ENABLE_LIBXC)
-  AddTest(
-    TARGET MODULE_DFPT_xc_analytic_serial
-    LIBS parameter dfpt_planewave_serial device base symmetry Libxc::xc
-    SOURCES dfpt_xc_analytic_serial_test.cpp
+  addtest(
+    TARGET
+    MODULE_DFPT_xc_analytic_serial
+    LIBS
+    parameter
+    dfpt_planewave_serial
+    device
+    base
+    symmetry
+    Libxc::xc
+    SOURCES
+    dfpt_xc_analytic_serial_test.cpp
     ../dfpt_xc_analytic.cpp
     ../dfpt_rho.cpp
     ../dfpt_pw_data.cpp
@@ -125,6 +155,5 @@ if(ENABLE_LIBXC)
     # (see test/dfpt_test_mocks.cpp).
     ../test/dfpt_test_mocks.cpp
     # Shared serial-side cell/basis/data fixture.
-    dfpt_serial_fixture.cpp
-  )
+    dfpt_serial_fixture.cpp)
 endif()

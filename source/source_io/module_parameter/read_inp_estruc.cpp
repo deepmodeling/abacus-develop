@@ -611,14 +611,10 @@ For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to conve
                 else if (para.input.nspin == 2)
                 {
                     para.input.mixing_beta = 0.4;
-                    para.input.mixing_beta_mag = 1.6;
-                    para.input.mixing_gg0_mag = 0.0;
                 }
                 else if (para.input.nspin == 4) // I will add this
                 {
                     para.input.mixing_beta = 0.4;
-                    para.input.mixing_beta_mag = 1.6;
-                    para.input.mixing_gg0_mag = 0.0;
                 }
             }
         };
@@ -630,6 +626,8 @@ For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to conve
         item.category = "Electronic structure";
         item.type = "Real";
         item.description = R"(Mixing parameter of magnetic density.
+
+An explicit nonnegative value is preserved even when mixing_beta is omitted.
 
 If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
 
@@ -724,6 +722,8 @@ For systems that are difficult to converge, particularly metallic systems, enabl
         item.category = "Electronic structure";
         item.type = "Real";
         item.description = R"(Controls the Kerker preconditioner for magnetic-density mixing. It is disabled by default and is generally only recommended for systems whose magnetic density is difficult to converge.
+
+An explicit value is preserved even when mixing_beta is omitted.
 
 The magnetic-density Kerker preconditioner is bypassed when mixing_beta_mag <= 0.1, so mixing_gg0_mag has no effect in that regime. It is also unavailable when the charge-density Kerker preconditioner itself is bypassed.)";
         item.default_value = "0.0";

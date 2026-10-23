@@ -28,7 +28,8 @@ add_library(
     ../module_parameter/availability_validator.cpp
 )
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(support)
+
 AddTest(
   TARGET MODULE_IO_read_input_serial
   LIBS parameter io_input_serial

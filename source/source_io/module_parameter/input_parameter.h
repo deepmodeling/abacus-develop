@@ -439,6 +439,7 @@ struct Input_para
     double dfpt_conv_thr = 1.0e-8;            ///< convergence threshold of the DFPT first-order density
     int dfpt_max_iter = 100;                  ///< max iterations of the DFPT first-order density mixing
     double dfpt_mix_beta = 0.4;               ///< mixing coefficient of the DFPT first-order density
+    std::string dfpt_asr = "no";              ///< acoustic sum rule on the Gamma dynamical matrix: no | simple | crystal
 
     // ==============   #Parameters (11.Output) ===========================
     int out_stru = 1;                         ///< output stru file each ion step

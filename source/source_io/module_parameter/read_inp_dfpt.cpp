@@ -168,5 +168,41 @@ void ReadInput::item_dfpt()
         };
         this->add_item(item);
     }
+    {
+        Input_Item item("dfpt_asr");
+        item.annotation = "acoustic sum rule on the Gamma dynamical matrix: no, simple or crystal";
+        item.category = category;
+        item.type = "String";
+        item.description = "Enforce the translational acoustic sum rule (sum over atoms of the "
+                           "Gamma force-constant rows = 0) on the RAW Gamma dynamical matrix, "
+                           "before the LO-TO nonanalytic term, together with the Z* sum rule "
+                           "sum_a Z*_a = 0 on the Born effective charges. Unconstrained "
+                           "linear-response self-consistency violates both at the percent to "
+                           "tens-of-percent level (QE ph.x shows the same), and the reference "
+                           "workflow post-processes with asr='crystal'. simple: subtract each "
+                           "row sum from its diagonal element. crystal: the optimized "
+                           "minimal-norm symmetric projection (keeps Hermiticity and "
+                           "symmetry-equivalent atoms equivalent). no: leave the matrix as "
+                           "computed.";
+        item.default_value = "no";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            if (item.get_size() == 0)
+            {
+                para.input.dfpt_asr = "no";
+            }
+            else
+            {
+                para.input.dfpt_asr = strvalue;
+            }
+        };
+        sync_string(input.dfpt_asr);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.dfpt_asr != "no" && para.input.dfpt_asr != "simple" && para.input.dfpt_asr != "crystal")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_asr must be no, simple or crystal.");
+            }
+        };
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO

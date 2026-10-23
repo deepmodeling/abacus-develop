@@ -2,7 +2,7 @@ abacus_disable_feature_definitions(__MLALGO)
 abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(support)
 
 if(ENABLE_MPI)
 AddTest(
