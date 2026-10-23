@@ -37,17 +37,21 @@ void DFPT_Rho::init(const Config& cfg)
     pw_wfc_ = cfg.pw_wfc;
     recip_matrix_ = cfg.recip_matrix;
     mix_beta_ = cfg.mix_beta;
-    mix_type_ = cfg.mix_type;
+    mix_type_ = cfg.mix_type; // internal: rho_plain|rho_kerker|rho_broyden (v_sc handled at solver)
     kerker_a2_ = cfg.kerker_a2;
-    if (cfg.mix_type != "plain" && cfg.mix_type != "kerker" && cfg.mix_type != "broyden"
-        && cfg.mix_type != "v_sc")
+    if (cfg.mix_type != "rho_plain" && cfg.mix_type != "rho_kerker" && cfg.mix_type != "rho_broyden")
     {
-        ModuleBase::WARNING_QUIT("DFPT_Rho",
-                                 "unsupported mix_type, expected plain, kerker, broyden or v_sc");
+        // v_sc_* modes are handled in solve_displacement, not in DFPT_Rho
+        if (cfg.mix_type != "v_sc_plain" && cfg.mix_type != "v_sc_broyden")
+        {
+            ModuleBase::WARNING_QUIT(
+                "DFPT_Rho",
+                "unsupported mix_type, expected rho_plain, rho_kerker, rho_broyden, v_sc_plain or v_sc_broyden");
+        }
     }
     // make_unique is C++14; C++11 uses new directly through reset()
     mixer_.reset(new Base_Mixing::Plain_Mixing(mix_beta_));
-    if (mix_type_ == "broyden")
+    if (mix_type_ == "rho_broyden")
     {
         broyden_mixer_.reset(new Base_Mixing::Broyden_Mixing(cfg.broyden_ndim));
     }
@@ -439,7 +443,7 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
     // real-space manifest below; the q-shifted |G+q| convention matches
     // v_hartree_q (gcar + q_frac * recip, 1/lat0^2 units)
     const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
-    if (mix_type_ == "broyden" && broyden_mixer_ != nullptr)
+    if (mix_type_ == "rho_broyden" && broyden_mixer_ != nullptr)
     {
         // Modified Broyden (Johnson 1988): maintain a per-q history of
         // residual differences, solve a small least-squares each step

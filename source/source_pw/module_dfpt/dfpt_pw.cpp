@@ -145,7 +145,8 @@ void DFPT_PW::set_asr(const std::string& asr_type)
         pimpl_->asr_type_ = asr_type;
 void DFPT_PW::set_mix_type(const std::string& mix_type)
 {
-    if (mix_type == "plain" || mix_type == "kerker" || mix_type == "broyden" || mix_type == "v_sc")
+    if (mix_type == "rho_plain" || mix_type == "rho_kerker" || mix_type == "rho_broyden"
+        || mix_type == "v_sc_plain" || mix_type == "v_sc_broyden")
     {
         pimpl_->mix_type_ = mix_type;
     }

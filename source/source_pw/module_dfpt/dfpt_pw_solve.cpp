@@ -236,8 +236,22 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
     // preconditioning (the Hartree+XC kernel's inverse), flattening the
     // Coulomb-stiff smallest-G shells that destabilize plain density
     // mixing (see MIXING_20261020.md §8)
-    const bool vsc_mode = (mix_type_ == "v_sc");
+    const bool vsc_mode = (mix_type_ == "v_sc_plain" || mix_type_ == "v_sc_broyden");
     std::vector<std::complex<double>> v_sc_in_r(nrxx, std::complex<double>(0.0, 0.0));
+    // v_sc Broyden: a separate instance from the density Broyden because
+    // the array length differs (nrxx real-space potential vs npw G-space
+    // density); init and bind the Mixing_Data once per displacement cycle
+    const bool vsc_broyden = (mix_type_ == "v_sc_broyden");
+    if (vsc_broyden && !vsc_broyden_)
+    {
+        vsc_broyden_.reset(new Base_Mixing::Broyden_Mixing(broyden_ndim_));
+    }
+    if (vsc_broyden)
+    {
+        vsc_broyden_->reset();
+        vsc_broyden_mdata_.reset(new Base_Mixing::Mixing_Data());
+        vsc_broyden_->init_mixing_data(*vsc_broyden_mdata_, nrxx, sizeof(std::complex<double>));
+    }
     for (int iter = 0; iter < max_iter_ && !converged; ++iter)
     {
         std::vector<std::complex<double>> v_sc_r;
@@ -296,17 +310,63 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
             std::vector<std::complex<double>> v_sc_out_r;
             const std::vector<std::complex<double>> drho_out_g = data_.get_drho_g(q_idx, 0);
             assemble_v_sc(q_cart, drho_out_g, v_sc_out_r);
-            // plain beta mix on the real-space potential
-            double dn2 = 0.0;
-            double o2 = 0.0;
-            for (int ir = 0; ir < nrxx; ++ir)
+            if (vsc_broyden)
             {
-                const std::complex<double> delta = v_sc_out_r[ir] - v_sc_in_r[ir];
-                dn2 += std::norm(delta);
-                o2 += std::norm(v_sc_out_r[ir]);
-                v_sc_in_r[ir] += mix_beta_ * delta;
+                // Broyden on the real-space potential: push, cal_coef, mix
+                auto screen = std::function<void(std::complex<double>*)>();
+                const double beta = mix_beta_;
+                auto mix_cb =
+                    std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)>(
+                        [nrxx, beta](std::complex<double>* out,
+                                     const std::complex<double>* in,
+                                     const std::complex<double>* F) {
+                            for (int i = 0; i < nrxx; ++i)
+                            {
+                                out[i] = in[i] + beta * F[i];
+                            }
+                        });
+                vsc_broyden_->push_data(*vsc_broyden_mdata_,
+                                        v_sc_in_r.data(),
+                                        v_sc_out_r.data(),
+                                        screen,
+                                        mix_cb,
+                                        true);
+                vsc_broyden_->cal_coef(
+                    *vsc_broyden_mdata_,
+                    std::function<double(std::complex<double>*, std::complex<double>*)>(
+                        [nrxx](std::complex<double>* a, std::complex<double>* b) {
+                            double s = 0.0;
+                            for (int i = 0; i < nrxx; ++i)
+                            {
+                                s += (a[i] * std::conj(b[i])).real();
+                            }
+                            return s;
+                        }));
+                // residual from the unmixed in/out difference
+                double dn2 = 0.0;
+                double o2 = 0.0;
+                for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    dn2 += std::norm(v_sc_out_r[ir] - v_sc_in_r[ir]);
+                    o2 += std::norm(v_sc_out_r[ir]);
+                }
+                residual = (o2 > 0.0) ? std::sqrt(dn2 / o2) : 0.0;
+                vsc_broyden_->mix_data(*vsc_broyden_mdata_, v_sc_in_r.data());
             }
-            residual = (o2 > 0.0) ? std::sqrt(dn2 / o2) : 0.0;
+            else
+            {
+                // plain beta mix on the real-space potential
+                double dn2 = 0.0;
+                double o2 = 0.0;
+                for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    const std::complex<double> delta = v_sc_out_r[ir] - v_sc_in_r[ir];
+                    dn2 += std::norm(delta);
+                    o2 += std::norm(v_sc_out_r[ir]);
+                    v_sc_in_r[ir] += mix_beta_ * delta;
+                }
+                residual = (o2 > 0.0) ? std::sqrt(dn2 / o2) : 0.0;
+            }
             // store the mixed density for the 2n+1 accumulation path:
             // rebuild the G-space coefficients from the Sternheimer output
             // (the density is NOT what we mix, but the 2n+1 needs the

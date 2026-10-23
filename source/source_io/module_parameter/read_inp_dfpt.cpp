@@ -196,7 +196,7 @@ void ReadInput::item_dfpt()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_asr must be no, simple or crystal.");
         Input_Item item("dfpt_mix_type");
-        item.annotation = "mixing scheme of the DFPT response SCF: plain, kerker, broyden or v_sc";
+        item.annotation = "mixing scheme of the DFPT response SCF: rho_plain, rho_kerker, rho_broyden, v_sc_plain or v_sc_broyden";
         item.category = category;
         item.type = "String";
         item.description = "Set the mixing scheme of the first-order density in the "
@@ -205,7 +205,7 @@ void ReadInput::item_dfpt()
                            "f_g = |G+q|^2 / (|G+q|^2 + a^2) damps the Coulomb-stiff "
                            "smallest shells, stabilizing polar / small-gap systems at "
                            "beta up to 1; a^2 is set by dfpt_kerker_a2.";
-        item.default_value = "plain";
+        item.default_value = "rho_plain";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             if (item.get_size() == 0)
             {
@@ -218,10 +218,12 @@ void ReadInput::item_dfpt()
         };
         sync_string(input.dfpt_mix_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.dfpt_mix_type != "plain" && para.input.dfpt_mix_type != "kerker"
-                && para.input.dfpt_mix_type != "broyden" && para.input.dfpt_mix_type != "v_sc")
+            const std::string& mt = para.input.dfpt_mix_type;
+            if (mt != "rho_plain" && mt != "rho_kerker" && mt != "rho_broyden"
+                && mt != "v_sc_plain" && mt != "v_sc_broyden")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_mix_type must be plain, kerker, broyden or v_sc.");
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "dfpt_mix_type must be rho_plain, rho_kerker, rho_broyden, v_sc_plain or v_sc_broyden.");
             }
         };
         this->add_item(item);
