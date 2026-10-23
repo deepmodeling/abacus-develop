@@ -1,10 +1,10 @@
-#include "source_hsolver/diago_david.h"
-#include "source_hsolver/diago_dav_subspace.h"
-#include "source_hsolver/diago_cg.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
+#include "source_hsolver/diago_cg.h"
+#include "source_hsolver/diago_dav_subspace.h"
+#include "source_hsolver/diago_david.h"
 
 #include <algorithm>
 #include <cmath>
@@ -20,8 +20,12 @@ template <typename T>
 class DiagonalOperator final : public hsolver::HSOperator<T>
 {
   public:
-    DiagonalOperator(const int offset, const int size) : offset_(offset), size_(size) {}
-    void update_k(const int ik) override {}
+    DiagonalOperator(const int offset, const int size) : offset_(offset), size_(size)
+    {
+    }
+    void update_k(const int ik) override
+    {
+    }
     void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
     {
         EXPECT_EQ(ld, size_);
@@ -61,7 +65,9 @@ std::complex<double> initial_value(const int row, const int band)
 }
 
 template <typename T>
-class DavidsonOwnershipTest : public ::testing::Test {};
+class DavidsonOwnershipTest : public ::testing::Test
+{
+};
 using ScalarTypes = ::testing::Types<double, std::complex<double>>;
 TYPED_TEST_SUITE(DavidsonOwnershipTest, ScalarTypes);
 

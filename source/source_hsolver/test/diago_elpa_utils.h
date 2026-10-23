@@ -1,6 +1,6 @@
+#include "mpi.h"
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/module_external/lapack_connector.h"
-#include "mpi.h"
 
 #include <complex>
 #include <fstream>
@@ -17,7 +17,7 @@
 
 namespace LCAO_DIAGO_TEST
 {
-void process_2d(int &nprows, int &npcols, int &myprow, int &mypcol, int &icontxt) // map the processes to 2D matrix
+void process_2d(int& nprows, int& npcols, int& myprow, int& mypcol, int& icontxt) // map the processes to 2D matrix
 {
     int nprocs, mypnum;
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -30,7 +30,7 @@ void process_2d(int &nprows, int &npcols, int &myprow, int &mypcol, int &icontxt
     }
     nprows = nprocs / npcols;
 
-    int *usermap = new int[nprocs];
+    int* usermap = new int[nprocs];
     for (int i = 0; i < nprows; i++)
     {
         for (int j = 0; j < npcols; j++)
@@ -57,7 +57,7 @@ inline int na_rc(int n, int nblk, int nprows, int myprow) // calculate the row/c
 // distribute hmatrix to each process
 // hmatrix is row-first, and new_matrix is column-first
 template <class T>
-void distribute_data(T *hmatrix, T *new_matrix, int &nFull, int &nblk, int &na_rows, int &na_cols, int &icontxt)
+void distribute_data(T* hmatrix, T* new_matrix, int& nFull, int& nblk, int& na_rows, int& na_cols, int& icontxt)
 {
     int mypnum;
     MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
@@ -65,12 +65,12 @@ void distribute_data(T *hmatrix, T *new_matrix, int &nFull, int &nblk, int &na_r
     Cblacs_gridinfo(icontxt, &nprows, &npcols, &myprow, &mypcol);
 
     int SENDPROW = 0, SENDPCOL = 0, tag = 0;
-    T *tmp = new T[nblk];
+    T* tmp = new T[nblk];
 
     // do iteration for matrix, distribute old_matrix to each process, pass a block each time
     for (int row = 0; row < nFull; row++)
     {
-        int recv_prow = (row / nblk) % nprows; // the row number of recive process
+        int recv_prow = (row / nblk) % nprows;                    // the row number of recive process
         int nm_row = ((row / nblk) / nprows) * nblk + row % nblk; // row number of block in new_matrix
         for (int col = 0; col < nFull; col += nblk)
         {
@@ -121,7 +121,8 @@ void distribute_data(T *hmatrix, T *new_matrix, int &nFull, int &nblk, int &na_r
     delete[] tmp;
 }
 
-template <class T> inline void print_matrix(std::ofstream &fp, T *matrix, int &nrow, int &ncol, bool row_first)
+template <class T>
+inline void print_matrix(std::ofstream& fp, T* matrix, int& nrow, int& ncol, bool row_first)
 {
     int coef_row = row_first ? ncol : 1;
     int coef_col = row_first ? 1 : nrow;
@@ -135,17 +136,18 @@ template <class T> inline void print_matrix(std::ofstream &fp, T *matrix, int &n
     }
 }
 
-template <class T> bool read_hs(std::string fname, T &matrix)
+template <class T>
+bool read_hs(std::string fname, T& matrix)
 {
     int ndim;
     std::ifstream inf(fname);
-    if(! inf.is_open())
+    if (!inf.is_open())
     {
         std::cout << "Error: open file " << fname << " failed, skip!" << std::endl;
         return false;
     }
     inf >> ndim;
-    matrix.resize(ndim*ndim);
+    matrix.resize(ndim * ndim);
     for (int i = 0; i < ndim; i++)
     {
         for (int j = i; j < ndim; j++)
@@ -161,16 +163,16 @@ template <class T> bool read_hs(std::string fname, T &matrix)
     return true;
 }
 
-void lapack_diago(double *hmatrix, double *smatrix, double *e, int &nFull)
+void lapack_diago(double* hmatrix, double* smatrix, double* e, int& nFull)
 {
-    const int itype = 1; // solve A*X=(lambda)*B*X
+    const int itype = 1;   // solve A*X=(lambda)*B*X
     const char jobz = 'V'; // 'N':only calc eigenvalue, 'V': eigenvalues and eigenvectors
     const char uplo = 'U'; // Upper triangles
     int lwork = (nFull + 2) * nFull, info = 0;
-    double *ev = new double[lwork];
+    double* ev = new double[lwork];
 
-    double *a = new double[nFull * nFull];
-    double *b = new double[nFull * nFull];
+    double* a = new double[nFull * nFull];
+    double* b = new double[nFull * nFull];
     for (int i = 0; i < nFull * nFull; i++)
     {
         a[i] = hmatrix[i];
@@ -189,17 +191,17 @@ void lapack_diago(double *hmatrix, double *smatrix, double *e, int &nFull)
     delete[] ev;
 }
 
-void lapack_diago(std::complex<double> *hmatrix, std::complex<double> *smatrix, double *e, int &nFull)
+void lapack_diago(std::complex<double>* hmatrix, std::complex<double>* smatrix, double* e, int& nFull)
 {
-    const int itype = 1; // solve A*X=(lambda)*B*X
+    const int itype = 1;   // solve A*X=(lambda)*B*X
     const char jobz = 'V'; // 'N':only calc eigenvalue, 'V': eigenvalues and eigenvectors
     const char uplo = 'U'; // Upper triangles
     int lwork = (nFull + 1) * nFull, info = 0;
-    double *rwork = new double[3 * nFull - 2];
-    std::complex<double> *ev = new std::complex<double>[lwork];
+    double* rwork = new double[3 * nFull - 2];
+    std::complex<double>* ev = new std::complex<double>[lwork];
 
-    std::complex<double> *a = new std::complex<double>[nFull * nFull];
-    std::complex<double> *b = new std::complex<double>[nFull * nFull];
+    std::complex<double>* a = new std::complex<double>[nFull * nFull];
+    std::complex<double>* b = new std::complex<double>[nFull * nFull];
     for (int i = 0; i < nFull * nFull; i++)
     {
         a[i] = hmatrix[i];

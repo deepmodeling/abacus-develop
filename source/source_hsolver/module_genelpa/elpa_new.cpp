@@ -1,13 +1,13 @@
 #include "elpa_new.h"
 
 #include "elpa_runtime_check.h"
-
 #include "elpa_solver.h"
 extern "C"
 {
 #include "cblacs.h"
 }
 #include "utils.h"
+
 #include <cfloat>
 #include <complex>
 #include <cstring>
@@ -73,8 +73,8 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
 
     handle_id = ++total_handle;
 
-    //delete the old elpa_handle and reuse the handle_id=0
-    if(reuse_handle_0 && total_handle>0)
+    // delete the old elpa_handle and reuse the handle_id=0
+    if (reuse_handle_0 && total_handle > 0)
     {
         NEW_ELPA_HANDLE_POOL.erase(0);
         handle_id = 0;
@@ -463,7 +463,7 @@ int ELPA_Solver::read_complex_kernel()
 int ELPA_Solver::allocate_work()
 {
     unsigned long nloc = static_cast<unsigned long>(narows) * nacols; // local size
-    unsigned long maxloc = 0; // maximum local size
+    unsigned long maxloc = 0;                                         // maximum local size
     MPI_Allreduce(&nloc, &maxloc, 1, MPI_UNSIGNED_LONG, MPI_MAX, comm);
     maxloc = nloc;
 
@@ -480,13 +480,13 @@ void ELPA_Solver::timer(int myid, const char function[], const char step[], doub
     if (t0 < 0) // t0 < 0 means this is the init call before the function
     {
         t0 = MPI_Wtime();
-        t0 = (double)clock()/CLOCKS_PER_SEC;
+        t0 = (double)clock() / CLOCKS_PER_SEC;
         logfile << "DEBUG: Process " << myid << " Call " << function << std::endl;
     }
     else
     {
         t1 = MPI_Wtime();
-        t1 = (double)clock()/CLOCKS_PER_SEC;
+        t1 = (double)clock() / CLOCKS_PER_SEC;
         logfile << "DEBUG: Process " << myid << " Step " << step << " " << function << " time: " << t1 - t0 << " s"
                 << std::endl;
     }

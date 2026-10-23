@@ -1,30 +1,34 @@
 #include "source_basis/module_pw/pw_basis_k.h"
 
-namespace ModulePW {
+namespace ModulePW
+{
 
-PW_Basis::PW_Basis(){};
-PW_Basis::~PW_Basis(){};
-void PW_Basis::initgrids(
-    const double lat0_in, // unit length (unit in bohr)
-    const ModuleBase::Matrix3
-        latvec_in,        // Unitcell lattice vectors (unit in lat0)
-    const double gridecut // unit in Ry, ecut to set up grids
-) {
+PW_Basis::PW_Basis() {};
+PW_Basis::~PW_Basis() {};
+void PW_Basis::initgrids(const double lat0_in,                // unit length (unit in bohr)
+                         const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors (unit in lat0)
+                         const double gridecut                // unit in Ry, ecut to set up grids
+)
+{
     return;
 }
 
-void PW_Basis::initgrids(
-    const double lat0_in,
-    const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors
-    const int nx_in,
-    int ny_in,
-    int nz_in) {
+void PW_Basis::initgrids(const double lat0_in,
+                         const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors
+                         const int nx_in,
+                         int ny_in,
+                         int nz_in)
+{
     return;
 }
 
-void PW_Basis::distribute_r() { return; }
+void PW_Basis::distribute_r()
+{
+    return;
+}
 
-PW_Basis_K::PW_Basis_K() {
+PW_Basis_K::PW_Basis_K()
+{
     this->nks = 1;
     this->npwk_max = 3;
     // used for update_precondition
@@ -34,30 +38,30 @@ PW_Basis_K::PW_Basis_K() {
     this->tpiba2 = 1.0;
 }
 
-PW_Basis_K::~PW_Basis_K() {
+PW_Basis_K::~PW_Basis_K()
+{
     delete[] this->gk2;
     delete[] this->npwk;
 }
 
-double& PW_Basis_K::getgk2(const int ik, const int igl) const {
+double& PW_Basis_K::getgk2(const int ik, const int igl) const
+{
     this->gk2[igl] = (ik + igl) * 1.5;
     return this->gk2[igl];
 }
 
-
 } // namespace ModulePW
 
+#include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_david.h"
-#include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_iter_assist.h"
 
-
-namespace hsolver {
+namespace hsolver
+{
 
 template <typename T, typename Device>
-DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
-                            const std::string& calculation)
+DiagoCG<T, Device>::DiagoCG(const std::string& basis_type, const std::string& calculation)
 #ifdef __MPI
     : diag_comm_(MPI_COMM_SELF, 0, 1)
 #else
@@ -78,7 +82,8 @@ DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const diag_comm_info& diag_comm,
                             const Real& pw_diag_thr,
                             const int& pw_diag_nmax)
-    : diag_comm_(diag_comm) {
+    : diag_comm_(diag_comm)
+{
     basis_type_ = basis_type;
     calculation_ = calculation;
     need_subspace_ = need_subspace;
@@ -90,7 +95,8 @@ DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
 }
 
 template <typename T, typename Device>
-DiagoCG<T, Device>::~DiagoCG() {
+DiagoCG<T, Device>::~DiagoCG()
+{
     delete this->one_;
     delete this->zero_;
     delete this->neg_one_;
@@ -104,12 +110,15 @@ double DiagoCG<T, Device>::diag(const HSOperator<T, Device>& op,
                                 T* psi_in,
                                 Real* eigenvalue_in,
                                 const std::vector<double>& ethr_band,
-                                const Real* prec) {
+                                const Real* prec)
+{
     // do something
-    for (int ib = 0; ib < nband; ib++) {
+    for (int ib = 0; ib < nband; ib++)
+    {
         eigenvalue_in[ib] = 0.0;
         T* psi_band = psi_in + static_cast<size_t>(ib) * static_cast<size_t>(ld_psi);
-        for (int ig = 0; ig < ld_psi; ig++) {
+        for (int ig = 0; ig < ld_psi; ig++)
+        {
             psi_band[ig] += T(2.0, 0.0);
             eigenvalue_in[ib] += psi_band[ig].real();
         }
@@ -128,7 +137,9 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
                                   const int dim_in,
                                   const int david_ndim_in,
                                   const diag_comm_info& diag_comm_in)
-    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), diag_comm(diag_comm_in) {
+    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in),
+      diag_comm(diag_comm_in)
+{
     this->device = base_device::get_device_type(this->ctx);
     this->precondition = precondition_in;
 
@@ -140,7 +151,8 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
 }
 
 template <typename T, typename Device>
-DiagoDavid<T, Device>::~DiagoDavid() {
+DiagoDavid<T, Device>::~DiagoDavid()
+{
     delmem_complex_op()(this->hpsi);
     delmem_complex_op()(this->spsi);
     delmem_complex_op()(this->hcc);
@@ -157,7 +169,8 @@ int DiagoDavid<T, Device>::diag(const HSOperator<T, Device>& op,
                                 const std::vector<double>& ethr_band,
                                 const int david_maxiter,
                                 const int ntry_max,
-                                const int notconv_max) {
+                                const int notconv_max)
+{
     // do nothing, we dont need it
     // do something
     // for (int ib = 0; ib < psi.get_nbands(); ib++) {

@@ -1,17 +1,16 @@
 #ifdef __PEXSI
 #include "dist_mat_tf.h"
 
-#include <mpi.h>
+#include "dist_bcd_matrix.h"
+#include "dist_ccs_matrix.h"
 
 #include <climits>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <mpi.h>
 #include <vector>
-
-#include "dist_bcd_matrix.h"
-#include "dist_ccs_matrix.h"
 
 namespace pexsi
 {
@@ -397,7 +396,7 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
                                 receiver_size_process,
                                 receiver_displacement_process,
                                 buffer2ccsIndex);
-// Do transformation
+        // Do transformation
         std::vector<double> sender_buffer(sender_size);
         std::vector<double> receiver_buffer(receiver_size);
         // put H to sender buffer
@@ -425,7 +424,7 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
                       &receiver_displacement_process[0],
                       MPI_DOUBLE,
                       COMM_TRANS);
-// collect H from receiver buffer
+        // collect H from receiver buffer
         delete[] H_ccs;
         H_ccs = new double[receiver_size];
         buffer2CCSvalue(receiver_size, &buffer2ccsIndex[0], &receiver_buffer[0], H_ccs);
@@ -455,7 +454,7 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
                       &receiver_displacement_process[0],
                       MPI_DOUBLE,
                       COMM_TRANS);
-// collect S from receiver buffer
+        // collect S from receiver buffer
         delete[] S_ccs;
         S_ccs = new double[receiver_size];
         buffer2CCSvalue(receiver_size, &buffer2ccsIndex[0], &receiver_buffer[0], S_ccs);
@@ -524,8 +523,10 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
             int g_col = SRC_Matrix.globalCol(icol);
             int recv_pcol_bcd;
             int recv_col = DST_Matrix.localCol(g_col, recv_pcol_bcd);
-    
-            for (int rowidx = SRC_Matrix.get_colptr_local()[icol] - 1; rowidx < SRC_Matrix.get_colptr_local()[icol + 1] - 1; ++rowidx)
+
+            for (int rowidx = SRC_Matrix.get_colptr_local()[icol] - 1;
+                 rowidx < SRC_Matrix.get_colptr_local()[icol + 1] - 1;
+                 ++rowidx)
             {
                 int g_row = SRC_Matrix.get_rowind_local()[rowidx] - 1;
                 int recv_prow_bcd;
@@ -621,7 +622,9 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
             int g_col = SRC_Matrix.globalCol(icol);
             int recv_pcol_bcd;
             int recv_col = DST_Matrix.localCol(g_col, recv_pcol_bcd);
-            for (int rowidx = SRC_Matrix.get_colptr_local()[icol] - 1; rowidx < SRC_Matrix.get_colptr_local()[icol + 1] - 1; ++rowidx)
+            for (int rowidx = SRC_Matrix.get_colptr_local()[icol] - 1;
+                 rowidx < SRC_Matrix.get_colptr_local()[icol + 1] - 1;
+                 ++rowidx)
             {
                 int g_row = SRC_Matrix.get_rowind_local()[rowidx] - 1;
                 int recv_prow_bcd;
@@ -755,7 +758,6 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         delete[] dst_index;
         delete[] receiver_index;
         delete[] receiver_buffer;
-
     }
     deleteGroupCommTrans(GROUP_TRANS, COMM_TRANS);
     return 0;

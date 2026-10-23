@@ -85,7 +85,8 @@ TYPED_TEST(OrthonormalTest, CorrectsComplexOverlapsWithoutFallback)
     const hsolver::diag_comm_info comm = self_comm();
     hsolver::LinearAlgebra<T, Device> algebra(comm);
     hsolver::Orthonormal<T, Device> orth(comm, algebra);
-    for (const hsolver::OrthMethod method: {hsolver::OrthMethod::cholesky, hsolver::OrthMethod::lowdin, hsolver::OrthMethod::newton_schulz})
+    for (const hsolver::OrthMethod method:
+         {hsolver::OrthMethod::cholesky, hsolver::OrthMethod::lowdin, hsolver::OrthMethod::newton_schulz})
     {
         SCOPED_TRACE(hsolver::orth_method_name(method));
         std::vector<T> psi = orbitals<T>();
@@ -113,7 +114,8 @@ TYPED_TEST(OrthonormalTest, NewtonSchulzFallsBackOutsideItsRange)
     std::vector<T> psi(ld * bands, T(0));
     psi[0] = T(2);
     psi[ld + 1] = T(2);
-    const hsolver::OrthResult result = orth.apply(psi.data(), ld, dim, bands, hsolver::OrthMethod::newton_schulz, false);
+    const hsolver::OrthResult result
+        = orth.apply(psi.data(), ld, dim, bands, hsolver::OrthMethod::newton_schulz, false);
     ASSERT_EQ(result.status, hsolver::OrthStatus::accepted);
     EXPECT_EQ(result.actual, hsolver::OrthMethod::cholesky);
     EXPECT_EQ(result.fallbacks, 1);
@@ -141,8 +143,9 @@ TYPED_TEST(OrthonormalTest, RejectsInvalidOrbitalsWithoutOverwritingThem)
             const std::vector<T> original(psi);
             const hsolver::OrthResult result = orth.apply(psi.data(), ld, dim, bands, method, false);
             EXPECT_EQ(result.status, hsolver::OrthStatus::failed);
-            const hsolver::OrthFailure nonfinite
-                = method == hsolver::OrthMethod::none ? hsolver::OrthFailure::nonfinite_norm : hsolver::OrthFailure::nonfinite_gram;
+            const hsolver::OrthFailure nonfinite = method == hsolver::OrthMethod::none
+                                                       ? hsolver::OrthFailure::nonfinite_norm
+                                                       : hsolver::OrthFailure::nonfinite_gram;
             const hsolver::OrthFailure expected = value == 0.0 ? hsolver::OrthFailure::nonpositive_norm : nonfinite;
             EXPECT_EQ(result.failure, expected);
             EXPECT_EQ(std::memcmp(psi.data(), original.data(), psi.size() * sizeof(T)), 0);
@@ -152,7 +155,8 @@ TYPED_TEST(OrthonormalTest, RejectsInvalidOrbitalsWithoutOverwritingThem)
     duplicate[0] = T(1);
     duplicate[ld] = T(1);
     const std::vector<T> original(duplicate);
-    const hsolver::OrthResult result = orth.apply(duplicate.data(), ld, dim, bands, hsolver::OrthMethod::cholesky, false);
+    const hsolver::OrthResult result
+        = orth.apply(duplicate.data(), ld, dim, bands, hsolver::OrthMethod::cholesky, false);
     EXPECT_EQ(result.status, hsolver::OrthStatus::failed);
     EXPECT_EQ(result.failure, hsolver::OrthFailure::factorization_failed);
     EXPECT_EQ(std::memcmp(duplicate.data(), original.data(), duplicate.size() * sizeof(T)), 0);
