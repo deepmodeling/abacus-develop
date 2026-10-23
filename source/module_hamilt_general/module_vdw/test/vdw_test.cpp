@@ -139,6 +139,55 @@ void ClearUcell(UnitCell &ucell)
     delete[] ucell.atoms;
 }
 
+void construct_two_si_with_ghost(UnitCell &ucell)
+{
+    stru_ structure{std::vector<double>{0.5, 0.5, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 0.5},
+                    std::vector<atomtype_>{atomtype_{"Si",
+                                                     std::vector<std::vector<double>>{{0., 0., 0.},
+                                                                                       {0.3, 0.25, 0.25}}},
+                                           atomtype_{"Si_empty",
+                                                     std::vector<std::vector<double>>{{0.1, 0.1, 0.1}}}}};
+    construct_ucell(structure, ucell);
+    ucell.atoms[0].ncpp.zv = 4.0;
+    ucell.atoms[1].flag_empty_element = true;
+    ucell.atoms[1].ncpp.psd = "Si";
+    ucell.atoms[1].ncpp.zv = 4.0;
+}
+
+void expect_empty_atoms_excluded(vdw::Vdw &reference, vdw::Vdw &ghost, int reference_nat)
+{
+    EXPECT_NEAR(ghost.get_energy(), reference.get_energy(), 1E-12);
+
+    const std::vector<ModuleBase::Vector3<double>> &reference_force = reference.get_force();
+    const std::vector<ModuleBase::Vector3<double>> &ghost_force = ghost.get_force();
+    EXPECT_EQ(ghost_force.size(), static_cast<std::size_t>(reference_nat + 1));
+    if (ghost_force.size() == static_cast<std::size_t>(reference_nat + 1)
+        && reference_force.size() == static_cast<std::size_t>(reference_nat))
+    {
+        for (int iat = 0; iat < reference_nat; ++iat)
+        {
+            EXPECT_NEAR(ghost_force[iat].x, reference_force[iat].x, 1E-12);
+            EXPECT_NEAR(ghost_force[iat].y, reference_force[iat].y, 1E-12);
+            EXPECT_NEAR(ghost_force[iat].z, reference_force[iat].z, 1E-12);
+        }
+        EXPECT_DOUBLE_EQ(ghost_force[reference_nat].x, 0.0);
+        EXPECT_DOUBLE_EQ(ghost_force[reference_nat].y, 0.0);
+        EXPECT_DOUBLE_EQ(ghost_force[reference_nat].z, 0.0);
+    }
+
+    const ModuleBase::Matrix3 &reference_stress = reference.get_stress();
+    const ModuleBase::Matrix3 &ghost_stress = ghost.get_stress();
+    EXPECT_NEAR(ghost_stress.e11, reference_stress.e11, 1E-12);
+    EXPECT_NEAR(ghost_stress.e12, reference_stress.e12, 1E-12);
+    EXPECT_NEAR(ghost_stress.e13, reference_stress.e13, 1E-12);
+    EXPECT_NEAR(ghost_stress.e21, reference_stress.e21, 1E-12);
+    EXPECT_NEAR(ghost_stress.e22, reference_stress.e22, 1E-12);
+    EXPECT_NEAR(ghost_stress.e23, reference_stress.e23, 1E-12);
+    EXPECT_NEAR(ghost_stress.e31, reference_stress.e31, 1E-12);
+    EXPECT_NEAR(ghost_stress.e32, reference_stress.e32, 1E-12);
+    EXPECT_NEAR(ghost_stress.e33, reference_stress.e33, 1E-12);
+}
+
 class vdwd2Test: public testing::Test
 {
     protected:
@@ -338,6 +387,20 @@ TEST_F(vdwd2Test, D2GetStress)
     EXPECT_NEAR(stress.e33, -0.00020491799872060734,1e-12);
 }
 
+TEST_F(vdwd2Test, EmptyAtomsAreExcluded)
+{
+    auto reference = vdw::make_vdw(ucell, input);
+
+    UnitCell ghost_ucell;
+    construct_two_si_with_ghost(ghost_ucell);
+    auto ghost = vdw::make_vdw(ghost_ucell, input);
+
+    ASSERT_NE(reference, nullptr);
+    ASSERT_NE(ghost, nullptr);
+    expect_empty_atoms_excluded(*reference, *ghost, ucell.nat);
+    ClearUcell(ghost_ucell);
+}
+
 
 
 class vdwd3Test: public testing::Test
@@ -449,6 +512,20 @@ TEST_F(vdwd3Test, D30GetStress)
     EXPECT_NEAR(stress.e31, 0.0,1e-12);
     EXPECT_NEAR(stress.e32, 0.00049503596239307496,1e-12);
     EXPECT_NEAR(stress.e33, -0.0012740017248971936,1e-12);
+}
+
+TEST_F(vdwd3Test, EmptyAtomsAreExcluded)
+{
+    auto reference = vdw::make_vdw(ucell, input);
+
+    UnitCell ghost_ucell;
+    construct_two_si_with_ghost(ghost_ucell);
+    auto ghost = vdw::make_vdw(ghost_ucell, input);
+
+    ASSERT_NE(reference, nullptr);
+    ASSERT_NE(ghost, nullptr);
+    expect_empty_atoms_excluded(*reference, *ghost, ucell.nat);
+    ClearUcell(ghost_ucell);
 }
 
 TEST_F(vdwd3Test, D3bjGetEnergy)
@@ -591,6 +668,33 @@ TEST_F(vdwd3abcTest, D3bjGetStress)
     EXPECT_NEAR(stress.e31, 5.1291622417145914e-06,1e-12);
     EXPECT_NEAR(stress.e32, 4.3904235877576833e-06,1e-12);
     EXPECT_NEAR(stress.e33, -3.4278442125590892e-05,1e-12);
+}
+
+TEST_F(vdwd3abcTest, EmptyAtomsAreExcludedWithThreeBodyTerm)
+{
+    const std::vector<std::string> methods{"d3_0", "d3_bj"};
+    for (const std::string &method : methods)
+    {
+        input.vdw_method = method;
+        auto reference = vdw::make_vdw(ucell, input);
+
+        UnitCell ghost_ucell;
+        stru_ structure{
+            std::vector<double>{0.75, 0.75, 0.0, 0.75, 0.0, 0.75, 0.0, 0.75, 0.75},
+            std::vector<atomtype_>{atomtype_{"Si", std::vector<std::vector<double>>{{0., 0., 0.}, {0.3, 0.25, 0.25}}},
+                                   atomtype_{"C", std::vector<std::vector<double>>{{0.5, 0.5, 0.5}}},
+                                   atomtype_{"C_empty", std::vector<std::vector<double>>{{0.2, 0.2, 0.2}}}}};
+        construct_ucell(structure, ghost_ucell);
+        ghost_ucell.atoms[2].flag_empty_element = true;
+        ghost_ucell.atoms[2].ncpp.psd = "C";
+
+        auto ghost = vdw::make_vdw(ghost_ucell, input);
+
+        ASSERT_NE(reference, nullptr);
+        ASSERT_NE(ghost, nullptr);
+        expect_empty_atoms_excluded(*reference, *ghost, ucell.nat);
+        ClearUcell(ghost_ucell);
+    }
 }
 
 int main(int argc, char **argv)

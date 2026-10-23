@@ -22,15 +22,30 @@ void Vdwd3::init()
     lat_[2] = ucell_.a3 * ucell_.lat0;
 
     std::vector<double> at_kind = atom_kind();
+    iz_.clear();
+    xyz_.clear();
+    atom_indices_.clear();
     iz_.reserve(ucell_.nat);
     xyz_.reserve(ucell_.nat);
+    atom_indices_.reserve(ucell_.nat);
+    int iat = 0;
     for (size_t it = 0; it != ucell_.ntype; it++) {
+        // Empty atoms are used for BSSE correction only and must not
+        // contribute to the dispersion correction.
+        if (ucell_.atoms[it].flag_empty_element)
+        {
+            iat += ucell_.atoms[it].na;
+            continue;
+        }
         for (size_t ia = 0; ia != ucell_.atoms[it].na; ia++)
         {
             iz_.emplace_back(at_kind[it]);
             xyz_.emplace_back(ucell_.atoms[it].tau[ia] * ucell_.lat0);
+            atom_indices_.emplace_back(iat);
+            ++iat;
         }
 }
+    nat_d3_ = static_cast<int>(atom_indices_.size());
 
     std::vector<double> tau_max(3);
     if (para_.model() == "radius")
@@ -91,14 +106,14 @@ void Vdwd3::cal_energy()
     int ij;
     double c6 = 0.0, c8 = 0.0, r2 = 0.0, r6 = 0.0, r8 = 0.0, rr = 0.0, damp6 = 0.0, damp8 = 0.0;
     double e6 = 0.0, e8 = 0.0, eabc = 0.0;
-    std::vector<double> cc6ab(ucell_.nat * ucell_.nat), cn(ucell_.nat);
+    std::vector<double> cc6ab(nat_d3_ * nat_d3_), cn(nat_d3_);
     pbc_ncoord(cn);
     ModuleBase::Vector3<double> tau;
     if (para_.version() == "d3_0") // DFT-D3(zero-damping)
     {
         double tmp;
-        for (int iat = 0; iat != ucell_.nat - 1; iat++) {
-            for (int jat = iat + 1; jat != ucell_.nat; jat++)
+        for (int iat = 0; iat < nat_d3_ - 1; iat++) {
+            for (int jat = iat + 1; jat < nat_d3_; jat++)
             {
                 get_c6(iz_[iat], iz_[jat], cn[iat], cn[jat], c6);
                 if (para_.abc()) // three-body term
@@ -135,7 +150,7 @@ void Vdwd3::cal_energy()
             } // end jat
 }
 
-        for (int iat = 0; iat != ucell_.nat; iat++)
+        for (int iat = 0; iat < nat_d3_; iat++)
         {
             int jat = iat;
             get_c6(iz_[iat], iz_[jat], cn[iat], cn[jat], c6);
@@ -179,9 +194,9 @@ void Vdwd3::cal_energy()
     else if (para_.version() == "d3_bj") // DFT-D3(BJ-damping)
     {
         double r42;
-        for (int iat = 0; iat != ucell_.nat; iat++)
+        for (int iat = 0; iat < nat_d3_; iat++)
         {
-            for (int jat = iat + 1; jat != ucell_.nat; jat++)
+            for (int jat = iat + 1; jat < nat_d3_; jat++)
             {
                 get_c6(iz_[iat], iz_[jat], cn[iat], cn[jat], c6);
                 if (para_.abc())
@@ -268,17 +283,17 @@ void Vdwd3::cal_force()
     init();
 
     force_.clear();
-    force_.resize(ucell_.nat);
+    force_.assign(ucell_.nat, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
 
     std::vector<ModuleBase::Vector3<double>> g;
     g.clear();
-    g.resize(ucell_.nat);
+    g.resize(nat_d3_);
     ModuleBase::matrix smearing_sigma(3, 3);
 
     pbc_gdisp(g, smearing_sigma);
 
-    for (size_t iat = 0; iat != ucell_.nat; iat++) {
-        force_[iat] = -2.0 * g[iat];
+    for (int iat = 0; iat < nat_d3_; iat++) {
+        force_[atom_indices_[iat]] = -2.0 * g[iat];
 }
 
     ModuleBase::timer::tick("Vdwd3", "cal_force");
@@ -292,7 +307,7 @@ void Vdwd3::cal_stress()
 
     std::vector<ModuleBase::Vector3<double>> g;
     g.clear();
-    g.resize(ucell_.nat);
+    g.resize(nat_d3_);
     ModuleBase::matrix smearing_sigma(3, 3);
 
     pbc_gdisp(g, smearing_sigma);
@@ -333,12 +348,12 @@ void Vdwd3::get_c6(int iat, int jat, double nci, double ncj, double &c6)
 
 void Vdwd3::pbc_ncoord(std::vector<double> &cn)
 {
-    for (size_t i = 0; i != ucell_.nat; i++)
+    for (int i = 0; i < nat_d3_; i++)
     {
         double xn = 0.0;
         ModuleBase::Vector3<double> tau;
         double r2, rr;
-        for (size_t iat = 0; iat != ucell_.nat; iat++) {
+        for (int iat = 0; iat < nat_d3_; iat++) {
             for (int taux = -rep_cn_[0]; taux <= rep_cn_[0]; taux++) {
                 for (int tauy = -rep_cn_[1]; tauy <= rep_cn_[1]; tauy++) {
                     for (int tauz = -rep_cn_[2]; tauz <= rep_cn_[2]; tauz++)
@@ -374,7 +389,7 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
     double r0ij, r0ik, r0jk, c9, rij2, rik2, rjk2, rr0ij, rr0ik, rr0jk, geomean, fdamp, tmp1, tmp2, tmp3, tmp4, ang;
     ModuleBase::Vector3<double> ijvec, ikvec, jkvec, jtau, ktau;
     std::vector<double> repmin(3), repmax(3);
-    for (int iat = 2; iat != ucell_.nat; iat++) {
+    for (int iat = 2; iat < nat_d3_; iat++) {
         for (int jat = 1; jat != iat; jat++)
         {
             ijvec = xyz_[jat] - xyz_[iat];
@@ -451,7 +466,7 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
 }
     // end iat
 
-    for (int iat = 1; iat != ucell_.nat; iat++)
+    for (int iat = 1; iat < nat_d3_; iat++)
     {
         int jat = iat;
         ij = lin(iat, jat);
@@ -527,7 +542,7 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
         } // end kat
     } // end iat
 
-    for (int iat = 1; iat != ucell_.nat; iat++) {
+    for (int iat = 1; iat < nat_d3_; iat++) {
         for (int jat = 0; jat != iat; jat++)
         {
             int kat = jat;
@@ -604,7 +619,7 @@ void Vdwd3::pbc_three_body(const std::vector<int> &iz,
 }
     // end iat
 
-    for (int iat = 0; iat != ucell_.nat; iat++)
+    for (int iat = 0; iat < nat_d3_; iat++)
     {
         int jat = iat;
         int kat = iat;
@@ -737,24 +752,24 @@ void Vdwd3::get_dc6_dcnij(int mxci, int mxcj, double cni, double cnj, int izi, i
 
 void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::matrix &smearing_sigma)
 {
-    std::vector<double> c6save(ucell_.nat * (ucell_.nat + 1)), dc6_rest_sum(ucell_.nat * (ucell_.nat + 1) / 2),
-        dc6i(ucell_.nat), cn(ucell_.nat);
+    std::vector<double> c6save(nat_d3_ * (nat_d3_ + 1)), dc6_rest_sum(nat_d3_ * (nat_d3_ + 1) / 2),
+        dc6i(nat_d3_), cn(nat_d3_);
     pbc_ncoord(cn);
-    std::vector<std::vector<double>> dc6ij(ucell_.nat, std::vector<double>(ucell_.nat));
+    std::vector<std::vector<double>> dc6ij(nat_d3_, std::vector<double>(nat_d3_));
     double c6 = 0.0, dc6iji = 0.0, dc6ijj = 0.0;
     double r = 0.0, r0 = 0.0, r2 = 0.0, r6 = 0.0, r7 = 0.0, r8 = 0.0, r9 = 0.0;
     double r42 = 0.0, rcovij = 0.0, t6 = 0.0, t8 = 0.0, dc6_rest = 0.0;
     int linii = 0, linij = 0;
     ModuleBase::Vector3<double> tau;
     std::vector<std::vector<std::vector<std::vector<double>>>> drij(
-        ucell_.nat * (ucell_.nat + 1) / 2,
+        nat_d3_ * (nat_d3_ + 1) / 2,
         std::vector<std::vector<std::vector<double>>>(
             2 * rep_vdw_[0] + 1,
             std::vector<std::vector<double>>(2 * rep_vdw_[1] + 1, std::vector<double>(2 * rep_vdw_[2] + 1))));
     if (para_.version() == "d3_0")
     {
         double damp6 = 0.0, damp8 = 0.0;
-        for (int iat = 0; iat != ucell_.nat; iat++)
+        for (int iat = 0; iat < nat_d3_; iat++)
         {
             get_dc6_dcnij(para_.mxc()[iz_[iat]], para_.mxc()[iz_[iat]], cn[iat], cn[iat],
                           iz_[iat], iz_[iat], iat, iat, c6, dc6iji, dc6ijj);
@@ -861,7 +876,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
     else if (para_.version() == "d3_bj")
     {
         double r4;
-        for (int iat = 0; iat != ucell_.nat; iat++)
+        for (int iat = 0; iat < nat_d3_; iat++)
         {
             get_dc6_dcnij(para_.mxc()[iz_[iat]], para_.mxc()[iz_[iat]], cn[iat], cn[iat],
                           iz_[iat], iz_[iat], iat, iat, c6, dc6iji, dc6ijj);
@@ -961,7 +976,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
         double sr9 = 0.75, alp9 = -16.0;
         double linik, linjk, rij2, rik2, rjk2, rr0ij, rr0ik, rr0jk, geomean2, geomean, geomean3, r0av, r;
         double c6ij, c6ik, c6jk, c9, damp9, ang, dfdmp, dang, tmp1, dc9;
-        for (int iat = 2; iat < ucell_.nat; iat++)
+        for (int iat = 2; iat < nat_d3_; iat++)
         {
             for (int jat = 1; jat != iat; jat++)
             {
@@ -1081,7 +1096,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                 } // end kat
             } // end jat
         }
-        for (int iat = 1; iat != ucell_.nat; iat++)
+        for (int iat = 1; iat < nat_d3_; iat++)
         {
             int jat = iat;
             linij = lin(iat, jat);
@@ -1203,7 +1218,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
             } // end kat
         } // end iat
 
-        for (int iat = 1; iat != ucell_.nat; iat++) {
+        for (int iat = 1; iat < nat_d3_; iat++) {
             for (int jat = 0; jat != iat; jat++)
             {
                 int kat = jat;
@@ -1324,7 +1339,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
 }
         // end iat
 
-        for (int iat = 0; iat != ucell_.nat; iat++)
+        for (int iat = 0; iat < nat_d3_; iat++)
         {
             int jat = iat;
             int kat = iat;
@@ -1451,7 +1466,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
     // dE/dr_ij * dr_ij/dxyz_i
     double expterm, dcnn, x1;
     ModuleBase::Vector3<double> rij, vec3;
-    for (int iat = 1; iat != ucell_.nat; iat++) {
+    for (int iat = 1; iat < nat_d3_; iat++) {
         for (int jat = 0; jat != iat; jat++)
         {
             linij = lin(iat, jat);
@@ -1495,7 +1510,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
 }
         } // end iat, jat
 }
-    for (int iat = 0; iat != ucell_.nat; iat++)
+    for (int iat = 0; iat < nat_d3_; iat++)
     {
         linii = lin(iat, iat);
         rcovij = para_.rcov()[iz_[iat]] + para_.rcov()[iz_[iat]];

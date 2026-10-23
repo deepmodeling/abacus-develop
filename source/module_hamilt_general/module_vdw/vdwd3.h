@@ -31,6 +31,11 @@ class Vdwd3 : public Vdw
     std::vector<ModuleBase::Vector3<double>> xyz_;
     std::vector<int> rep_vdw_;
     std::vector<int> rep_cn_;
+    // Number of atoms passed to the DFT-D3 algorithm, i.e. ucell_.nat minus
+    // the empty atoms used for BSSE correction.
+    int nat_d3_ = 0;
+    // Maps a DFT-D3 atom index to the corresponding index in UnitCell.
+    std::vector<int> atom_indices_;
 
     void cal_energy() override;
     void cal_force() override;
