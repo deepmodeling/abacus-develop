@@ -18,7 +18,9 @@ void pcc_2d_geometry(const UnitCell& cell,
 {
     // Same alignment tolerance as PotPcc, loose enough for lattice vectors
     // typed with rounded digits.
-    const bool perpendicular = unitcell::make_slab_cell(cell.latvec, cell.lat0, open_axis, 1e-6, geometry);
+    const double alignment_tolerance = 1e-6;
+    const bool perpendicular = unitcell::make_slab_cell(cell.latvec, cell.lat0, open_axis, alignment_tolerance,
+                                                        geometry);
     if (!perpendicular)
     {
         ModuleBase::WARNING_QUIT("pcc_2d_geometry",
@@ -38,7 +40,7 @@ void pcc_2d_geometry(const UnitCell& cell,
 void pcc_2d_project(const unitcell::SlabCell& geometry,
                     std::vector<ModuleBase::Vector3<double>>& positions)
 {
-    for (auto& position : positions)
+    for (ModuleBase::Vector3<double>& position : positions)
     {
         const double coordinate = unitcell::relative_coordinate(position, geometry);
         position = geometry.normal * coordinate;

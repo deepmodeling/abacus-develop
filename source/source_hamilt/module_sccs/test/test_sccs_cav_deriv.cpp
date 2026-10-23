@@ -27,8 +27,14 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
         {
             const double middle = 0.5 * (lower + upper);
             const ModuleSccs::CavityPoint point = ModuleSccs::evaluate_cavity(middle, cavity);
-            if (point.solute < solute) { lower = middle; }
-            else { upper = middle; }
+            if (point.solute < solute)
+            {
+                lower = middle;
+            }
+            else
+            {
+                upper = middle;
+            }
         }
         density[ir] = 0.5 * (lower + upper);
     }
@@ -67,7 +73,10 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
     {
         const double coefficient_difference = coefficient[ir] - periodic_coefficient[ir];
         const double local_difference = std::abs(coefficient_difference);
-        if (local_difference > difference) { difference = local_difference; }
+        if (local_difference > difference)
+        {
+            difference = local_difference;
+        }
     }
     Parallel_Reduce::reduce_max_pool(basis.poolnproc, difference);
     EXPECT_GT(difference, 1e-8);

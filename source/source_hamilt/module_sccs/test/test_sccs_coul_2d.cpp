@@ -26,7 +26,7 @@ protected:
         normal = cell.normal;
         parameters = elecstate::make_pcc_2d_parameters(cell);
         ModulePW::grid_positions(basis, lattice, length, positions);
-        for (auto& position : positions)
+        for (ModuleBase::Vector3<double>& position : positions)
         {
             const double coordinate = unitcell::relative_coordinate(position, cell);
             position = normal * coordinate;
@@ -36,7 +36,10 @@ protected:
     double integrate_product(const std::vector<double>& left, const std::vector<double>& right) const
     {
         double value = 0.0;
-        for (int ir = 0; ir < basis.nrxx; ++ir) { value += left[ir] * right[ir]; }
+        for (int ir = 0; ir < basis.nrxx; ++ir)
+        {
+            value += left[ir] * right[ir];
+        }
         Parallel_Reduce::reduce_pool(value);
         return value * basis.omega / basis.nxyz;
     }
@@ -48,8 +51,11 @@ protected:
 
 TEST_F(SccsPcc2dCoulombTest, ChargedPlanarModeMatchesAnalyticGauge)
 {
-    const double density_mean = 1e-3;
-    const double amplitude = 2e-4;
+    // One cosine mode along the open axis on a uniform part: the mode has the
+    // analytic potential 4 pi amplitude / k^2 and the uniform part carries the
+    // monopole, so the charged gauge -pi L Q / (3 A) is tested as well.
+    const double density_mean = SccsTest::charge_mean;
+    const double amplitude = SccsTest::charge_amplitude;
     double monopole = 0.0;
     double dipole = 0.0;
     double second = 0.0;
@@ -85,10 +91,14 @@ TEST_F(SccsPcc2dCoulombTest, ChargedPlanarModeMatchesAnalyticGauge)
         const double coordinate = positions[ir] * normal;
         const double multipole = monopole * coordinate * coordinate - 2.0 * dipole * coordinate + second;
         const double expected = mode_factor * std::cos(angle) + constant * monopole + factor * multipole;
+        // The operator is exact for this charge; the tolerance is round-off.
         EXPECT_NEAR(potential[ir], expected, 1e-12);
     }
     std::vector<double> direction = cosine_mode(0);
-    for (double& value : direction) { value = 3e-4 + 1e-4 * value; }
+    for (double& value : direction)
+    {
+        value = SccsTest::probe_mean + SccsTest::probe_amplitude * value;
+    }
     std::vector<double> direction_potential;
     coulomb.apply_potential(direction, direction_potential);
     const double left = integrate_product(charge, direction_potential);
@@ -99,7 +109,10 @@ TEST_F(SccsPcc2dCoulombTest, ChargedPlanarModeMatchesAnalyticGauge)
 TEST_F(SccsPcc2dCoulombTest, UniformDielectricRetainsChargedGaugeAndReactionEnergy)
 {
     std::vector<double> charge = cosine_mode(0);
-    for (double& value : charge) { value = 1e-3 + 2e-4 * value; }
+    for (double& value : charge)
+    {
+        value = SccsTest::charge_mean + SccsTest::charge_amplitude * value;
+    }
     ModuleSccs::Pcc2dCoulombOperator coulomb(basis, tpiba, positions, normal, parameters);
     std::vector<double> vacuum;
     coulomb.apply_potential(charge, vacuum);
@@ -142,10 +155,11 @@ TEST_F(SccsPcc2dCoulombTest, NonuniformResponseSatisfiesFixedPointAndWarmStart)
     std::vector<double> charge(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
-        density[ir] = 1e-3 + 2e-5 * mode[ir];
-        charge[ir] = 1e-3 + 2e-4 * mode[ir];
+        density[ir] = SccsTest::cavity_mean + SccsTest::cavity_amplitude * mode[ir];
+        charge[ir] = SccsTest::charge_mean + SccsTest::charge_amplitude * mode[ir];
     }
     ModuleSccs::CavityParameters cavity;
+    // Water-neutral switching range.
     cavity.density_min = 1e-4;
     cavity.density_max = 5e-3;
     cavity.epsilon_bulk = 5.0;

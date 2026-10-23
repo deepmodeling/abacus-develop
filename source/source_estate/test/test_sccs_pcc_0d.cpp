@@ -40,7 +40,10 @@ TEST_F(SccsPcc0dTest, SolventAddsOnlyReactionAndCavityTermsToThePointIonPcc)
         ModuleSccs::gauss_ion_rho(atoms, basis, tpiba,
                                   ModuleSccs::gaussian_ion_spread, ions);
         std::vector<double> solute_charge(basis.nrxx);
-        for (int ir = 0; ir < basis.nrxx; ++ir) { solute_charge[ir] = ions[ir] - density[ir]; }
+        for (int ir = 0; ir < basis.nrxx; ++ir)
+        {
+            solute_charge[ir] = ions[ir] - density[ir];
+        }
         const std::vector<double> cold;
         ModuleSccs::SccsResponse response;
         ModuleSccs::solve_response(density, solute_charge, config.cavity, solver, cold,
@@ -72,7 +75,7 @@ TEST_F(SccsPcc0dTest, SolventAddsOnlyReactionAndCavityTermsToThePointIonPcc)
             const double expected = point_force(0, axis) + 2.0 * reaction_force[0][axis];
             EXPECT_NEAR(combined_force(0, axis), expected, 1e-12);
         }
-        const auto* electrostatic = solvent.sol_elec_pot();
+        const std::vector<double>* electrostatic = solvent.sol_elec_pot();
         ASSERT_NE(electrostatic, nullptr);
         for (int ir = 0; ir < basis.nrxx; ++ir)
         {

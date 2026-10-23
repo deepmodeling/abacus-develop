@@ -18,12 +18,13 @@ protected:
         SccsTest::PwTest::SetUp();
         const ModuleBase::Matrix3 lattice;
         unitcell::OrthogonalCell cell;
+        // Same cell tolerance as PotPcc.
         ASSERT_TRUE(unitcell::make_orthogonal_cell(lattice, length, 1e-10, cell));
         ASSERT_TRUE(elecstate::make_pcc_0d_parameters(cell, 1e-10, parameters));
         const double half_length = 0.5 * length;
         cell.origin = ModuleBase::Vector3<double>(half_length, half_length, half_length);
         ModulePW::grid_positions(basis, lattice, length, positions);
-        for (auto& position : positions)
+        for (ModuleBase::Vector3<double>& position : positions)
         {
             position = unitcell::relative_position(position, cell);
         }
@@ -50,8 +51,8 @@ TEST_F(SccsPcc0dCoulombTest, CorrectionMatchesExistingPccEnergyAndIsSymmetric)
     std::vector<double> direction = cosine_mode(1);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
-        charge[ir] = 1e-3 + 2e-4 * charge[ir];
-        direction[ir] = 3e-4 + 1e-4 * direction[ir];
+        charge[ir] = SccsTest::charge_mean + SccsTest::charge_amplitude * charge[ir];
+        direction[ir] = SccsTest::probe_mean + SccsTest::probe_amplitude * direction[ir];
     }
     ModuleSccs::PeriodicCoulombOperator periodic(basis, tpiba);
     ModuleSccs::Pcc0dCoulombOperator corrected(basis, tpiba, positions, parameters);
@@ -93,7 +94,8 @@ TEST_F(SccsPcc0dCoulombTest, ChargedUniformDielectricPreservesGaugeAndVacuumSubt
     std::vector<double> direction = cosine_mode(1);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
-        charge[ir] = 1e-3 + 2e-4 * charge[ir];
+        charge[ir] = SccsTest::charge_mean + SccsTest::charge_amplitude * charge[ir];
+        // Perturbation direction for the finite-difference check, not proportional to charge.
         direction[ir] = 1e-3 + 3e-4 * direction[ir];
     }
     ModuleSccs::Pcc0dCoulombOperator coulomb(basis, tpiba, positions, parameters);
@@ -133,6 +135,7 @@ TEST_F(SccsPcc0dCoulombTest, ChargedUniformDielectricPreservesGaugeAndVacuumSubt
         EXPECT_NEAR(result.reaction_energy, expected_energy, 1e-13);
         // Electron potential carries the opposite sign to signed solute charge.
         const double predicted = -integrate_product(result.electron_potential, direction);
+        // Relative perturbation of 1e-4 x 1e-3: the central difference error is below 1e-10.
         const double step = 1e-4;
         const double signs[] = {-1.0, 1.0};
         double energy[2];
@@ -160,6 +163,7 @@ TEST_F(SccsPcc0dCoulombTest, ChargedUniformDielectricPreservesGaugeAndVacuumSubt
 TEST_F(SccsPcc0dCoulombTest, NonuniformResponseSatisfiesFixedPointAndFarFieldCharge)
 {
     ModuleSccs::CavityParameters cavity;
+    // Water-neutral switching range.
     cavity.density_min = 1e-4;
     cavity.density_max = 5e-3;
     cavity.epsilon_bulk = 5.0;
@@ -168,8 +172,8 @@ TEST_F(SccsPcc0dCoulombTest, NonuniformResponseSatisfiesFixedPointAndFarFieldCha
     std::vector<double> charge(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
-        density[ir] = 1e-3 + 2e-5 * mode[ir];
-        charge[ir] = 1e-3 + 2e-4 * mode[ir];
+        density[ir] = SccsTest::cavity_mean + SccsTest::cavity_amplitude * mode[ir];
+        charge[ir] = SccsTest::charge_mean + SccsTest::charge_amplitude * mode[ir];
     }
     ModuleSccs::Pcc0dCoulombOperator coulomb(basis, tpiba, positions, parameters);
     ModuleSccs::PolarizationSolverParameters solver;

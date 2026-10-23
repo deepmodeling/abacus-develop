@@ -15,9 +15,14 @@ void pcc_0d_geometry(const UnitCell& cell,
                      unitcell::OrthogonalCell& geometry,
                      Pcc0dParameters& parameters)
 {
-    const bool orthogonal = unitcell::make_orthogonal_cell(cell.latvec, cell.lat0, 1e-10, geometry);
-    const bool cubic = orthogonal && make_pcc_0d_parameters(geometry, 1e-10, parameters);
-    if (!cubic) { ModuleBase::WARNING_QUIT("pcc_0d_geometry", "PCC 0D requires an equal-edge cubic cell"); }
+    // Same orthogonality and equal-edge tolerance as PotPcc.
+    const double cell_tolerance = 1e-10;
+    const bool orthogonal = unitcell::make_orthogonal_cell(cell.latvec, cell.lat0, cell_tolerance, geometry);
+    const bool cubic = orthogonal && make_pcc_0d_parameters(geometry, cell_tolerance, parameters);
+    if (!cubic)
+    {
+        ModuleBase::WARNING_QUIT("pcc_0d_geometry", "PCC 0D requires an equal-edge cubic cell");
+    }
     std::vector<ModuleBase::Vector3<double>> positions;
     std::vector<double> masses;
     for (const unitcell::AtomData& atom : atoms)
@@ -31,7 +36,7 @@ void pcc_0d_geometry(const UnitCell& cell,
 void pcc_0d_relative(const unitcell::OrthogonalCell& geometry,
                      std::vector<ModuleBase::Vector3<double>>& positions)
 {
-    for (auto& position : positions)
+    for (ModuleBase::Vector3<double>& position : positions)
     {
         position = unitcell::relative_position(position, geometry);
     }
