@@ -1,6 +1,5 @@
 #include "source_base/parallel_cell.h"
 
-#include <limits>
 #include <stdexcept>
 #include <vector>
 
@@ -73,17 +72,21 @@ double CommunicationDomain::max(double value) const
     return value;
 }
 
-std::string CommunicationDomain::gather_text(const std::string& value) const
+std::string CommunicationDomain::gather_text(const std::string& value, int maximum_count) const
 {
+    if (maximum_count <= 0)
+    {
+        throw std::invalid_argument("CommunicationDomain text batch limit must be positive.");
+    }
+    const std::size_t count_limit = static_cast<std::size_t>(maximum_count);
+    const int local_overflow = value.size() > count_limit;
+    if (max(local_overflow) != 0)
+    {
+        throw std::length_error("CommunicationDomain text exceeds the batch limit.");
+    }
 #ifdef __MPI
     if (communicator_ != MPI_COMM_NULL)
     {
-        const std::size_t maximum_count = std::numeric_limits<int>::max();
-        const int local_overflow = value.size() > maximum_count;
-        if (max(local_overflow) != 0)
-        {
-            throw std::length_error("CommunicationDomain text exceeds the MPI count range.");
-        }
         const int local_size = static_cast<int>(value.size());
         const int process_count = size();
         std::vector<int> lengths(process_count, 0);
@@ -95,7 +98,7 @@ std::string CommunicationDomain::gather_text(const std::string& value) const
         {
             for (int rank = 0; rank < process_count; ++rank)
             {
-                if (total_size + lengths[rank] > maximum_count)
+                if (total_size + lengths[rank] > count_limit)
                 {
                     total_overflow = 1;
                     break;
@@ -107,7 +110,7 @@ std::string CommunicationDomain::gather_text(const std::string& value) const
         MPI_Bcast(&total_overflow, 1, MPI_INT, 0, communicator_);
         if (total_overflow != 0)
         {
-            throw std::length_error("CommunicationDomain gathered text exceeds the MPI count range.");
+            throw std::length_error("CommunicationDomain gathered text exceeds the batch limit.");
         }
         std::string gathered;
         if (rank_ == 0)

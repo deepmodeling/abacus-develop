@@ -6,9 +6,13 @@
 #include "source_base/timer.h"
 #include "source_io/module_output/output_log.h"
 
+#include <algorithm>
 #include <fstream>
+#include <limits>
 #include <map>
 #include <sstream>
+#include <stdexcept>
+#include <utility>
 
 
 namespace MD_func
@@ -390,6 +394,43 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
     return;
 }
 
+namespace
+{
+void write_dump_rows(std::ostream& output,
+                     const std::string& text,
+                     const std::int64_t begin,
+                     const std::int64_t end)
+{
+    // Spatial ownership is unrelated to the stable type-major atom index.
+    std::map<std::int64_t, std::string> rows;
+    std::istringstream input(text);
+    std::string line;
+    while (std::getline(input, line))
+    {
+        std::istringstream record(line);
+        std::int64_t index = 0;
+        if (!(record >> index) || index < begin || index >= end)
+        {
+            ModuleBase::WARNING_QUIT("MD_func::dump_info", "invalid MD_dump atom index.");
+        }
+        const bool inserted = rows.emplace(index, line).second;
+        if (!inserted)
+        {
+            ModuleBase::WARNING_QUIT("MD_func::dump_info", "duplicate MD_dump atom index.");
+        }
+    }
+    const std::size_t expected_count = static_cast<std::size_t>(end - begin);
+    if (rows.size() != expected_count)
+    {
+        ModuleBase::WARNING_QUIT("MD_func::dump_info", "missing MD_dump atoms.");
+    }
+    for (const auto& row : rows)
+    {
+        output << row.second << "\n";
+    }
+}
+} // namespace
+
 void dump_info(const int& step,
                const std::string& global_out_dir,
                const MDCell& mdcell,
@@ -397,6 +438,22 @@ void dump_info(const int& step,
                const bool cal_stress,
                const ModuleBase::matrix& virial)
 {
+    const int max_batch_bytes = 1024 * 1024;
+    dump_info(step, global_out_dir, mdcell, mdp, cal_stress, virial, max_batch_bytes);
+}
+
+void dump_info(const int& step,
+               const std::string& global_out_dir,
+               const MDCell& mdcell,
+               const MD_para& mdp,
+               const bool cal_stress,
+               const ModuleBase::matrix& virial,
+               const int max_batch_bytes)
+{
+    if (max_batch_bytes <= 0)
+    {
+        throw std::invalid_argument("MD_dump batch budget must be positive.");
+    }
     std::stringstream file;
     file << global_out_dir << "MD_dump";
     const double unit_pos = mdcell.lat0() / ModuleBase::ANGSTROM_AU;
@@ -424,70 +481,101 @@ void dump_info(const int& step,
     {
         type_offsets[it + 1] = type_offsets[it] + mdcell.type_atom_counts()[it];
     }
-    std::ostringstream local;
-    local << std::fixed << std::setprecision(12);
-    for (int i = 0; i < mdcell.owned_atoms().size(); ++i)
+    const auto format_atom = [&](const LocalAtom& atom) -> std::string
     {
-        const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
-        local << "  " << type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index
-              << "  " << mdcell.type_labels()[static_cast<std::size_t>(atom.type)]
-              << "  " << atom.cart.x * unit_pos << "  " << atom.cart.y * unit_pos << "  " << atom.cart.z * unit_pos;
+        std::ostringstream row;
+        row << std::fixed << std::setprecision(12);
+        row << "  " << type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index
+            << "  " << mdcell.type_labels()[static_cast<std::size_t>(atom.type)]
+            << "  " << atom.cart.x * unit_pos << "  " << atom.cart.y * unit_pos << "  " << atom.cart.z * unit_pos;
         if (mdp.dump_force)
-            local << "  " << atom.force.x * unit_force << "  " << atom.force.y * unit_force << "  " << atom.force.z * unit_force;
+            row << "  " << atom.force.x * unit_force << "  " << atom.force.y * unit_force << "  " << atom.force.z * unit_force;
         if (mdp.dump_vel)
-            local << "  " << atom.vel.x * unit_vel << "  " << atom.vel.y * unit_vel << "  " << atom.vel.z * unit_vel;
-        local << "\n";
+            row << "  " << atom.vel.x * unit_vel << "  " << atom.vel.y * unit_vel << "  " << atom.vel.z * unit_vel;
+        row << "\n";
+        return row.str();
+    };
+    std::vector<std::pair<std::int64_t, const LocalAtom*>> ordered_atoms;
+    const std::size_t local_atom_count = mdcell.owned_atoms().size();
+    ordered_atoms.reserve(local_atom_count);
+    int local_row_bytes = 0;
+    int local_overflow = 0;
+    const std::size_t maximum_count = std::numeric_limits<int>::max();
+    for (const LocalAtom& atom : mdcell.owned_atoms())
+    {
+        const std::int64_t index = type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index;
+        const LocalAtom* atom_pointer = &atom;
+        ordered_atoms.emplace_back(index, atom_pointer);
+        const std::string row = format_atom(atom);
+        if (row.size() > maximum_count)
+        {
+            local_overflow = 1;
+        }
+        else
+        {
+            const int row_bytes = static_cast<int>(row.size());
+            local_row_bytes = std::max(local_row_bytes, row_bytes);
+        }
     }
+    std::sort(ordered_atoms.begin(), ordered_atoms.end(),
+              [](const std::pair<std::int64_t, const LocalAtom*>& left,
+                 const std::pair<std::int64_t, const LocalAtom*>& right)
+              { return left.first < right.first; });
     ModuleBase::CommunicationDomain domain;
 #ifdef __MPI
     domain.initialize(mdcell.communicator());
 #endif
-    const std::string local_text = local.str();
-    const std::string gathered = domain.gather_text(local_text);
-    if (domain.rank() != 0)
+    if (domain.max(local_overflow) != 0)
     {
-        return;
+        throw std::length_error("A single MD_dump row exceeds the MPI count range.");
     }
-
-    // Spatial ownership is unrelated to the stable type-major atom index.
-    std::map<std::int64_t, std::string> rows;
-    std::istringstream input(gathered);
-    std::string line;
-    while (std::getline(input, line))
+    const int maximum_row_bytes = domain.max(local_row_bytes);
+    const int row_bytes = std::max(maximum_row_bytes, 1);
+    const int batch_bytes = std::max(max_batch_bytes, row_bytes);
+    const std::int64_t batch_atoms = batch_bytes / row_bytes;
+    std::ofstream ofs;
+    if (domain.rank() == 0)
     {
-        std::istringstream record(line);
-        std::int64_t index = 0;
-        if (!(record >> index) || index < 0 || index >= type_offsets.back())
+        const std::string filename = file.str();
+        const std::ios_base::openmode mode = step == 0 ? std::ios::trunc : std::ios::app;
+        ofs.open(filename.c_str(), mode);
+        if (!ofs)
         {
-            ModuleBase::WARNING_QUIT("MD_func::dump_info", "invalid MD_dump atom index.");
+            ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot open MD_dump.");
         }
-        const bool inserted = rows.emplace(index, line).second;
-        if (!inserted)
+        ofs << header.str();
+    }
+    std::size_t local_index = 0;
+    for (std::int64_t begin = 0; begin < type_offsets.back();)
+    {
+        // Each global-index range contains at most batch_atoms rows across all ranks.
+        // Counts and displacements are bounded per batch, independent of frame size.
+        const std::int64_t remaining = type_offsets.back() - begin;
+        const std::int64_t count = std::min(batch_atoms, remaining);
+        const std::int64_t end = begin + count;
+        std::ostringstream local;
+        while (local_index < ordered_atoms.size() && ordered_atoms[local_index].first < end)
         {
-            ModuleBase::WARNING_QUIT("MD_func::dump_info", "duplicate MD_dump atom index.");
+            const LocalAtom& atom = *ordered_atoms[local_index].second;
+            local << format_atom(atom);
+            ++local_index;
         }
+        const std::string local_text = local.str();
+        const std::string gathered = domain.gather_text(local_text, batch_bytes);
+        if (domain.rank() == 0)
+        {
+            write_dump_rows(ofs, gathered, begin, end);
+        }
+        begin = end;
     }
-    if (rows.size() != static_cast<std::size_t>(type_offsets.back()))
+    if (domain.rank() == 0)
     {
-        ModuleBase::WARNING_QUIT("MD_func::dump_info", "missing MD_dump atoms.");
-    }
-    const std::string filename = file.str();
-    const std::ios_base::openmode mode = step == 0 ? std::ios::trunc : std::ios::app;
-    std::ofstream ofs(filename.c_str(), mode);
-    if (!ofs)
-    {
-        ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot open MD_dump.");
-    }
-    ofs << header.str();
-    for (const auto& row : rows)
-    {
-        ofs << row.second << "\n";
-    }
-    ofs << "\n\n";
-    ofs.close();
-    if (!ofs)
-    {
-        ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump.");
+        ofs << "\n\n";
+        ofs.close();
+        if (!ofs)
+        {
+            ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump.");
+        }
     }
 }
 

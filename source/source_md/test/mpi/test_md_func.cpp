@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -33,7 +34,11 @@ std::string make_dump_directory(const ModuleBase::CommunicationDomain& domain)
     return directory;
 }
 
-TEST(MdDumpMpiTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
+class MdDumpBatchTest : public testing::TestWithParam<int>
+{
+};
+
+TEST_P(MdDumpBatchTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
 {
     const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
     ModuleBase::Matrix3 lattice;
@@ -43,7 +48,8 @@ TEST(MdDumpMpiTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
     const ModuleBase::Matrix3 inverse = lattice.Inverse();
     const int owner_count = std::min(domain.size(), 3);
     std::vector<LocalAtom> atoms;
-    for (int index = 3; index >= 0; --index)
+    const int total_atoms = 13;
+    for (int index = total_atoms - 1; index >= 0; --index)
     {
         const int owner = (2 * index + 1) % owner_count;
         if (owner != domain.rank())
@@ -51,24 +57,25 @@ TEST(MdDumpMpiTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
             continue;
         }
         LocalAtom atom;
-        atom.type = index / 2;
-        atom.type_index = index % 2;
-        const double x = 0.1 * (index + 1);
+        atom.type = index < 6 ? 0 : 1;
+        atom.type_index = index - 6 * atom.type;
+        const double x = 0.01 * (index + 1);
         atom.frac.set(x, 0.5, 0.5);
         atom.cart = atom.frac;
         atoms.push_back(atom);
     }
     const std::vector<std::string> labels = {"A", "B"};
     const std::vector<double> masses(2, 1.0);
-    const std::vector<std::int64_t> counts(2, 2);
+    const std::vector<std::int64_t> counts = {6, 7};
     MDCell cell;
-    cell.initialize_from_owned_atoms(lattice, inverse, 1.0, 1.0, 4, atoms, labels, masses, counts, 0.0, domain);
+    cell.initialize_from_owned_atoms(lattice, inverse, 1.0, 1.0, total_atoms, atoms, labels, masses, counts, 0.0, domain);
     const std::string directory = make_dump_directory(domain);
     ASSERT_FALSE(directory.empty());
     MD_para parameters;
     ModuleBase::matrix virial(3, 3);
     MD_func::dump_info(0, directory, cell, parameters, false, virial);
-    MD_func::dump_info(1, directory, cell, parameters, false, virial);
+    const int batch_bytes = GetParam();
+    MD_func::dump_info(1, directory, cell, parameters, false, virial, batch_bytes);
     if (domain.rank() == 0)
     {
         const std::string filename = directory + "MD_dump";
@@ -77,6 +84,9 @@ TEST(MdDumpMpiTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
         std::string line;
         int frame_count = 0;
         int atom_count = 0;
+        std::size_t frame_bytes = 0;
+        std::vector<std::size_t> rank_bytes(domain.size(), 0);
+        std::vector<std::string> first_frame;
         bool reading_atoms = false;
         while (std::getline(input, line))
         {
@@ -84,10 +94,12 @@ TEST(MdDumpMpiTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
             {
                 if (frame_count > 0)
                 {
-                    EXPECT_EQ(atom_count, 4);
+                    EXPECT_EQ(atom_count, total_atoms);
                 }
                 ++frame_count;
                 atom_count = 0;
+                frame_bytes = 0;
+                std::fill(rank_bytes.begin(), rank_bytes.end(), 0);
                 reading_atoms = false;
             }
             else if (line.find("INDEX") == 0)
@@ -96,7 +108,24 @@ TEST(MdDumpMpiTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
             }
             else if (reading_atoms && line.empty())
             {
-                EXPECT_EQ(atom_count, 4);
+                EXPECT_EQ(atom_count, total_atoms);
+                if (batch_bytes == 512)
+                {
+                    // The whole frame exceeds the injected collective count limit.
+                    EXPECT_GT(frame_bytes, 512u);
+                }
+                if (batch_bytes == 1024)
+                {
+                    EXPECT_GT(frame_bytes, 1024u);
+                    if (domain.size() > 2)
+                    {
+                        // Reproduce the aggregate-only overflow: each rank fits on its own.
+                        for (const std::size_t bytes : rank_bytes)
+                        {
+                            EXPECT_LE(bytes, 1024u);
+                        }
+                    }
+                }
                 reading_atoms = false;
             }
             else if (reading_atoms)
@@ -108,19 +137,51 @@ TEST(MdDumpMpiTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
                 row >> index >> label >> x;
                 ASSERT_TRUE(row);
                 EXPECT_EQ(index, atom_count);
-                const std::string expected_label = atom_count < 2 ? "A" : "B";
+                const std::string expected_label = atom_count < 6 ? "A" : "B";
                 EXPECT_EQ(label, expected_label);
-                const double expected_x = 0.1 * (atom_count + 1) / ModuleBase::ANGSTROM_AU;
+                const double expected_x = 0.01 * (atom_count + 1) / ModuleBase::ANGSTROM_AU;
                 EXPECT_NEAR(x, expected_x, 1.0e-12);
+                if (frame_count == 1)
+                {
+                    first_frame.push_back(line);
+                }
+                else
+                {
+                    ASSERT_LT(atom_count, first_frame.size());
+                    EXPECT_EQ(line, first_frame[atom_count]);
+                }
+                frame_bytes += line.size() + 1;
+                const int owner = (2 * index + 1) % owner_count;
+                rank_bytes[owner] += line.size() + 1;
                 ++atom_count;
             }
         }
         EXPECT_EQ(frame_count, 2);
-        EXPECT_EQ(atom_count, 4);
+        EXPECT_EQ(atom_count, total_atoms);
         input.close();
         std::remove(filename.c_str());
         rmdir(directory.c_str());
     }
+}
+
+// One-row, several-row, and normal budgets must produce identical complete frames.
+INSTANTIATE_TEST_SUITE_P(BufferBudgets, MdDumpBatchTest, testing::Values(1, 512, 1024, 1048576));
+
+TEST(MdDumpMpiTest, BoundedGatherRejectsOversizedBatchesCollectively)
+{
+    const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
+    const int local_bytes = domain.rank() == 0 ? 17 : 0;
+    const std::string oversized(local_bytes, 'x');
+    EXPECT_THROW(domain.gather_text(oversized, 16), std::length_error);
+    if (domain.size() > 2)
+    {
+        // Every rank fits individually; their aggregate must also be checked on all ranks.
+        const std::string local(8, 'x');
+        EXPECT_THROW(domain.gather_text(local, 16), std::length_error);
+    }
+    const std::string empty;
+    const std::string gathered = domain.gather_text(empty, 1);
+    EXPECT_TRUE(gathered.empty());
 }
 
 TEST(MdDumpMpiTest, EmptyRanksCanWriteAnEmptyFrame)
