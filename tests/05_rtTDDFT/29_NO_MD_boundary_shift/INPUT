@@ -11,7 +11,7 @@ nbands            2
 ecutwfc           20
 
 scf_thr           1e-8
-scf_nmax          8
+scf_nmax          100
 mixing_type       broyden
 mixing_beta       0.7
 mixing_gg0        0.0

@@ -6,7 +6,6 @@ obj
 OUT.*
 log.txt
 result.out
-md_scf.out
 test.sum
 *.dat
 .DS_Store
