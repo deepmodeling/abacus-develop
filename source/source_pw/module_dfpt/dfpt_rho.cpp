@@ -393,10 +393,15 @@ void DFPT_Rho::reset_mixing(int q_idx)
         residual_[q_idx] = 0.0;
     }
     // Broyden history is per (q, displacement-cycle): drop it so the next
-    // displacement starts fresh
+    // displacement starts fresh; also reset the Broyden mixer's internal
+    // address binding (it must not point to the destroyed Mixing_Data)
     if (q_idx < static_cast<int>(broyden_mdata_.size()))
     {
         broyden_mdata_[q_idx].reset();
+        if (broyden_mixer_ != nullptr)
+        {
+            broyden_mixer_->reset();
+        }
     }
     ModuleBase::timer::end("DFPT_Rho", "reset_mixing");
 }
