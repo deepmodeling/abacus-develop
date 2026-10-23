@@ -19,4 +19,3 @@ Interfaces to Other Softwares
    ShengBTE
    candela
    TB2J
-   librpa-coulomb-cutoff
