@@ -199,12 +199,12 @@ if(ENABLE_MPI)
     TARGET MODULE_MD_dump_mpi
     KEEP_FEATURE_DEFINITIONS __MPI
     LIBS parameter psi device
-    SOURCES test_md_func_mpi.cpp ../../source_base/parallel_common.cpp
+    SOURCES mpi/test_md_func.cpp ../../source_base/parallel_common.cpp
             ../../source_cell/magnetism.cpp ${depend_files})
   add_test(
     NAME MODULE_MD_dump_mpi_np4
-    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
-            $<TARGET_FILE:MODULE_MD_dump_mpi>
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+            $<TARGET_FILE:MODULE_MD_dump_mpi> ${MPIEXEC_POSTFLAGS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   set_tests_properties(
     MODULE_MD_dump_mpi MODULE_MD_dump_mpi_np4
