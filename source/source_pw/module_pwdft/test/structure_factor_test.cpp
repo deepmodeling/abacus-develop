@@ -3,6 +3,7 @@
 #include <string>
 #include <cmath>
 #include <complex>
+#include <vector>
 #include "source_cell/unitcell.h"
 #include "source_estate/module_dm/unittests/prepare_unitcell.h"
 #include "source_io/module_parameter/parameter.h"
@@ -111,6 +112,34 @@ TEST_F(StructureFactorTest, setup_structure_factor_float)
     {
        EXPECT_EQ(SF.get_eigts3_data<float>()[i].real(),1);
        EXPECT_EQ(SF.get_eigts3_data<float>()[i].imag(),0);
+    }
+}
+
+TEST_F(StructureFactorTest, bsplinecoef_zero_g_component)
+{
+    // The deconvolution factor at G = 0 must be exactly 1 for any spline
+    // order: its denominator sums the Cardinal B-spline values at integer
+    // points, which is a partition of unity.
+    // Regression test for a missing last term M_{n+1}(n) = 1/n! in that
+    // sum, which scaled S(G = 0) -- and hence the integrated electron
+    // number -- by (1 - 1/n!)^-3.
+    const int nx = 8;
+    const int ny = 12;
+    const int nz = 16;
+    std::vector<std::complex<double>> b1(nx);
+    std::vector<std::complex<double>> b2(ny);
+    std::vector<std::complex<double>> b3(nz);
+    // norder must be even: Bspline::init asserts norder % 2 == 0, and the
+    // production call site rounds odd nbspline values up to even.
+    for (const int norder : {2, 4, 6, 10, 20})
+    {
+        SF.bsplinecoef(b1.data(), b2.data(), b3.data(), nx, ny, nz, norder);
+        EXPECT_NEAR(b1[0].real(), 1.0, 1e-14);
+        EXPECT_NEAR(b1[0].imag(), 0.0, 1e-14);
+        EXPECT_NEAR(b2[0].real(), 1.0, 1e-14);
+        EXPECT_NEAR(b2[0].imag(), 0.0, 1e-14);
+        EXPECT_NEAR(b3[0].real(), 1.0, 1e-14);
+        EXPECT_NEAR(b3[0].imag(), 0.0, 1e-14);
     }
 }
 
