@@ -311,7 +311,7 @@ void Structure_Factor::bsplinecoef(std::complex<double> *b1, std::complex<double
     for(int ix = 0 ; ix < nx ; ++ix)
     {
         std::complex<double> fracx=0;
-        for(int io = 0 ; io < norder - 1 ; ++io)
+        for(int io = 0 ; io < norder ; ++io)
         {
             fracx += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(ix)/double(nx)*double(io));
         }
@@ -323,7 +323,7 @@ void Structure_Factor::bsplinecoef(std::complex<double> *b1, std::complex<double
     for(int iy = 0 ; iy < ny ; ++iy)
     {
         std::complex<double> fracy=0;
-        for(int io = 0 ; io < norder - 1 ; ++io)
+        for(int io = 0 ; io < norder ; ++io)
         {
             fracy += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(iy)/double(ny)*double(io));
         }
@@ -335,7 +335,7 @@ void Structure_Factor::bsplinecoef(std::complex<double> *b1, std::complex<double
     for(int iz = 0 ; iz < nz ; ++iz)
     {
         std::complex<double> fracz=0;
-        for(int io = 0 ; io < norder - 1 ; ++io)
+        for(int io = 0 ; io < norder ; ++io)
         {
             fracz += bsp.bezier_ele(io)*ModuleBase::libm::exp(ci_tpi*double(iz)/double(nz)*double(io));
         }

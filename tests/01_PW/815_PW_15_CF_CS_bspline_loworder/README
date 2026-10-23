@@ -1,0 +1,1 @@
+Test B-spline interpolation for structure factor at low order, *nbspline 2. Regression test: with the pre-fix bsplinecoef the G=0 deconvolution factor is wrong by 2x per direction (total electron number x8), so this case fails loudly; post-fix it matches the converged nbspline result.
