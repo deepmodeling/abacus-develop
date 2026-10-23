@@ -129,7 +129,9 @@ TEST_F(StructureFactorTest, bsplinecoef_zero_g_component)
     std::vector<std::complex<double>> b1(nx);
     std::vector<std::complex<double>> b2(ny);
     std::vector<std::complex<double>> b3(nz);
-    for (const int norder : {2, 3, 4, 10, 20})
+    // norder must be even: Bspline::init asserts norder % 2 == 0, and the
+    // production call site rounds odd nbspline values up to even.
+    for (const int norder : {2, 4, 6, 10, 20})
     {
         SF.bsplinecoef(b1.data(), b2.data(), b3.data(), nx, ny, nz, norder);
         EXPECT_NEAR(b1[0].real(), 1.0, 1e-14);
