@@ -558,14 +558,14 @@ TEST_F(InputParaTest, GgaGradAcceptedRange)
             item.str_values = {std::to_string(mode)};
             item.read_value(item, param);
             EXPECT_EQ(param.inp.gga_grad, mode);
-            item.check_value(item, param);
+            EXPECT_TRUE(item.domain.validate_resolved(item.label, {{item.label, item.domain.value(param)}}).empty());
         }
         for (const int mode: {-1, 3})
         {
             Parameter param;
             item.str_values = {std::to_string(mode)};
             item.read_value(item, param);
-            EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+            EXPECT_FALSE(item.domain.validate_resolved(item.label, {{item.label, item.domain.value(param)}}).empty());
         }
     }
     EXPECT_TRUE(found);

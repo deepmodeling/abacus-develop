@@ -36,5 +36,4 @@ addtest(
   test_write_ri_cv.cpp)
 addtest(TARGET MODULE_RI_abfs_vector3_order LIBS parameter SOURCES
         test_abfs_vector3_order.cpp)
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/support"
-     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+abacus_copy_test_files(support)

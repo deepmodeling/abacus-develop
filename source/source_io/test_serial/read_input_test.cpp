@@ -232,8 +232,7 @@ TEST_F(InputTest, ValidateRelaxMethodScalar)
         EXPECT_EQ(std::remove(output.c_str()), 0);
     }
     const std::string invalid_method_message
-        = "relax_method requires exactly one scalar option. "
-          "The parameter relax_method must be 'cg', 'cg_trad', 'bfgs', 'bfgs_trad', 'sd', 'cg_bfgs' or 'lbfgs'!";
+        = "Expected one String from {cg, cg_trad, bfgs, bfgs_trad, sd, cg_bfgs, lbfgs}.";
     for (const std::string invalid : {"", "none", "cg 1", "cg 2", "bfgs 1", "bfgs 2", "sd 1", "cg_trad 1", "cg 2 extra"})
     {
         expect_invalid_input("relax_invalid_INPUT", "relax_method " + invalid + "\n",
@@ -249,13 +248,13 @@ TEST_F(InputTest, ValidateNoncollinearSpin)
 
     expect_invalid_input("noncolin_missing_nspin_INPUT",
                          "noncolin 1\n",
-                         "nspin must be 4 when noncolin or lspinorb is enabled");
+                         "Requires nspin==4");
     expect_invalid_input("noncolin_invalid_nspin_INPUT",
                          "noncolin 1\nnspin 2\n",
-                         "nspin must be 4 when noncolin or lspinorb is enabled");
+                         "Requires nspin==4");
     expect_invalid_input("soc_missing_nspin_INPUT",
                          "lspinorb 1\n",
-                         "nspin must be 4 when noncolin or lspinorb is enabled");
+                         "Requires nspin==4");
 }
 
 TEST_F(InputTest, ValidateSdftStochasticBands)
@@ -362,10 +361,10 @@ TEST_F(InputTest, ValidateDeepksOutputFrequency)
 
     expect_invalid_input("deepks_freq_negative_INPUT",
                          "deepks_out_freq_elec -1\n",
-                         "deepks_out_freq_elec must not be negative");
+                         "Invalid INPUT parameter 'deepks_out_freq_elec': supplied '-1'. Expected one Integer satisfying value>=0.");
     expect_invalid_input("deepks_freq_missing_base_INPUT",
                          "deepks_out_freq_elec 2\n",
-                         "to use deepks_out_freq_elec, please set deepks_out_base");
+                         "Requires deepks_out_base!=none");
 
     Parameter enabled_param;
     testing::internal::CaptureStdout();
@@ -414,10 +413,15 @@ TEST_F(InputTest, Check)
         readinput.clear();
     }
 
-    ModuleIO::ReadInput::check_mode = true;
     Parameter param;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(readinput.read_parameters(param, "./INPUT.ref"), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(
+        {
+            ModuleIO::ReadInput::check_mode = true;
+            readinput.read_parameters(param, "./INPUT.ref");
+        },
+        ::testing::ExitedWithCode(0),
+        "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
     EXPECT_TRUE(std::remove("./INPUT.ref") == 0);

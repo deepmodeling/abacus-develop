@@ -111,7 +111,7 @@ To build tests for ABACUS, define `BUILD_TESTING` flag. You can also specify pat
 cmake -B build -DBUILD_TESTING=1
 ```
 
-After building and installing, unit tests can be performed with `ctest`.
+After building, unit tests can be performed with `ctest`.
 
 To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tests with name matched by given pattern.
 

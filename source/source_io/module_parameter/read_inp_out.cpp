@@ -259,6 +259,8 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
     }
     {
         Input_Item item("out_wfc_pw");
+        item.domain.set_choices({"0", "1", "2"});
+        item.domain.add_requirement("out_wfc_pw!=0", "basis_type==pw");
         item.annotation = "output wave functions";
         item.category = "Output information";
         item.type = "Integer";
@@ -280,20 +282,12 @@ With `init_wfc file binary`, ABACUS reads only unindexed binary `wf*_pw.dat` fil
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==ksdft");
         read_sync_int(input.out_wfc_pw);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_wfc_pw < 0 || para.input.out_wfc_pw > 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_pw should be 0, 1, or 2");
-            }
-            if (para.input.basis_type != "pw" && para.input.out_wfc_pw != 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_pw is only available for basis_type = pw");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("out_wfc_lcao");
+        item.domain.set_choices({"0", "1", "2"});
+        item.domain.add_requirement("out_wfc_lcao!=0", "basis_type==lcao");
         item.annotation = "ouput LCAO wave functions, 0, no output 1: text, 2: binary";
         item.category = "Output information";
         item.type = "Integer";
@@ -319,16 +313,6 @@ Also controled by out_freq_ion and out_app_flag.
             if (para.input.qo_switch)
             {
                 para.input.out_wfc_lcao = 1;
-            }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_wfc_lcao < 0 || para.input.out_wfc_lcao > 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao should be 0, 1, or 2");
-            }
-            if (para.input.basis_type != "lcao" && para.input.out_wfc_lcao != 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao is only available for basis_type = lcao");
             }
         };
         this->add_item(item);
@@ -1485,6 +1469,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
     }
     {
         Input_Item item("out_librpa_ver");
+        item.domain.set_choices({"0", "1"});
         item.annotation = "LibRPA output reader version";
         item.category = "Output information";
         item.type = "Integer";
@@ -1493,13 +1478,6 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.unit = "";
         item.set_availability("basis_type==lcao");
         read_sync_int(input.out_librpa_ver);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            const int value = para.input.out_librpa_ver;
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT("INPUT", "out_librpa_ver must be 0 or 1.");
-            }
-        };
         this->add_item(item);
     }
     {

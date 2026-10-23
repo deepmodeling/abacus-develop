@@ -678,7 +678,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // Read globalv values once into locals so the repeated DFT+U call sites
     // below do not each re-enter the global dependency surface.
     const std::string& global_out_dir = PARAM.globalv.global_out_dir;
-    const int npol = PARAM.globalv.npol;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
     finish_dftu_lcao<TK>(conv_esolver,
                          this->inp_->dft_plus_u,
@@ -690,7 +689,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                          hamilt_lcao,
                          global_out_dir,
                          this->inp_->nspin,
-                         npol,
                          gamma_only_local,
                          istep,
                          iter,
@@ -720,15 +718,14 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // overwrite occ_mat.txt with the latest occupation matrix and the
     // actual charge-density residual; ESolver_KS::iter_finish() above has
     // computed drho for this electronic step.
+    const DFTU_BASE::OccmatStepInfo occmat_step{istep,
+                                                iter,
+                                                this->scf_thr,
+                                                this->drho};
     DFTU_BASE::write_latest_occmat(*this->dftu_,
                                    ucell,
                                    global_out_dir,
-                                   this->inp_->nspin,
-                                   npol,
-                                   istep,
-                                   iter,
-                                   this->scf_thr,
-                                   this->drho,
+                                   occmat_step,
                                    occmat_cfg,
                                    DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
 
@@ -738,14 +735,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     DFTU_BASE::append_ion_step_snapshot(*this->dftu_,
                                         ucell,
                                         global_out_dir,
-                                        this->inp_->nspin,
-                                        npol,
-                                        istep,
-                                        iter,
+                                        occmat_step,
                                         conv_esolver,
                                         true,
-                                        this->scf_thr,
-                                        this->drho,
                                         occmat_cfg,
                                         DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
 

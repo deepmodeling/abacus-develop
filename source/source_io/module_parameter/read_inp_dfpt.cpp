@@ -132,6 +132,7 @@ void ReadInput::item_dfpt()
     }
     {
         Input_Item item("dfpt_max_iter");
+        item.domain.set_rule("value>=1");
         item.annotation = "max number of the DFPT first-order density mixing iterations";
         item.category = category;
         item.type = "Integer";
@@ -139,12 +140,6 @@ void ReadInput::item_dfpt()
                            "each atomic displacement.";
         item.default_value = "100";
         read_sync_int(input.dfpt_max_iter);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.dfpt_max_iter < 1)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_max_iter must be >= 1.");
-            }
-        };
         this->add_item(item);
     }
     {
