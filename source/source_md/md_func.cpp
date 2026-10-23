@@ -2,34 +2,17 @@
 #include "source_cell/domain_decomposition.h"
 
 #include "source_base/global_variable.h"
+#include "source_base/parallel_cell.h"
 #include "source_base/timer.h"
 #include "source_io/module_output/output_log.h"
 
-#include <cerrno>
-#include <cstring>
-#include <fcntl.h>
-#include <unistd.h>
+#include <fstream>
+#include <map>
+#include <sstream>
 
 
 namespace MD_func
 {
-#ifdef __MPI
-namespace
-{
-bool write_dump_at(const int file, const std::string& data, const MPI_Offset offset)
-{
-    std::size_t written = 0;
-    while (written < data.size())
-    {
-        const ssize_t count = pwrite(file, data.data() + written, data.size() - written,
-                                     static_cast<off_t>(offset + written));
-        if (count <= 0) return false;
-        written += static_cast<std::size_t>(count);
-    }
-    return true;
-}
-}
-#endif
 
 double gaussrand()
 {
@@ -455,30 +438,57 @@ void dump_info(const int& step,
             local << "  " << atom.vel.x * unit_vel << "  " << atom.vel.y * unit_vel << "  " << atom.vel.z * unit_vel;
         local << "\n";
     }
-    local << "\n\n";
+    ModuleBase::CommunicationDomain domain;
 #ifdef __MPI
-    const MPI_Comm comm = mdcell.communicator();
-    int rank = 0; MPI_Comm_rank(comm, &rank);
-    MPI_Offset base = 0;
-    if (rank == 0)
-    {
-        const int file_descriptor = open(file.str().c_str(), O_CREAT | O_WRONLY | (step == 0 ? O_TRUNC : O_APPEND), 0666);
-        if (file_descriptor < 0) ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot open MD_dump.");
-        base = lseek(file_descriptor, 0, SEEK_END);
-        if (!write_dump_at(file_descriptor, header.str(), base) || close(file_descriptor) != 0) ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump header.");
-    }
-    MPI_Bcast(&base, 1, MPI_OFFSET, 0, comm);
-    const MPI_Offset atom_offset = base + static_cast<MPI_Offset>(header.str().size());
-    const MPI_Offset local_size = static_cast<MPI_Offset>(local.str().size());
-    MPI_Offset rank_offset = 0;
-    MPI_Exscan(&local_size, &rank_offset, 1, MPI_OFFSET, MPI_SUM, comm);
-    if (rank == 0) rank_offset = 0;
-    const int file_descriptor = open(file.str().c_str(), O_WRONLY);
-    if (file_descriptor < 0 || !write_dump_at(file_descriptor, local.str(), atom_offset + rank_offset) || close(file_descriptor) != 0) ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump atoms.");
-#else
-    std::ofstream ofs(file.str().c_str(), step == 0 ? std::ios::trunc : std::ios::app);
-    ofs << header.str() << local.str();
+    domain.initialize(mdcell.communicator());
 #endif
+    const std::string local_text = local.str();
+    const std::string gathered = domain.gather_text(local_text);
+    if (domain.rank() != 0)
+    {
+        return;
+    }
+
+    // Spatial ownership is unrelated to the stable type-major atom index.
+    std::map<std::int64_t, std::string> rows;
+    std::istringstream input(gathered);
+    std::string line;
+    while (std::getline(input, line))
+    {
+        std::istringstream record(line);
+        std::int64_t index = 0;
+        if (!(record >> index) || index < 0 || index >= type_offsets.back())
+        {
+            ModuleBase::WARNING_QUIT("MD_func::dump_info", "invalid MD_dump atom index.");
+        }
+        const bool inserted = rows.emplace(index, line).second;
+        if (!inserted)
+        {
+            ModuleBase::WARNING_QUIT("MD_func::dump_info", "duplicate MD_dump atom index.");
+        }
+    }
+    if (rows.size() != static_cast<std::size_t>(type_offsets.back()))
+    {
+        ModuleBase::WARNING_QUIT("MD_func::dump_info", "missing MD_dump atoms.");
+    }
+    const std::string filename = file.str();
+    const std::ios_base::openmode mode = step == 0 ? std::ios::trunc : std::ios::app;
+    std::ofstream ofs(filename.c_str(), mode);
+    if (!ofs)
+    {
+        ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot open MD_dump.");
+    }
+    ofs << header.str();
+    for (const auto& row : rows)
+    {
+        ofs << row.second << "\n";
+    }
+    ofs << "\n\n";
+    ofs.close();
+    if (!ofs)
+    {
+        ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump.");
+    }
 }
 
 void get_mass_mbl(const UnitCell& unit_in,

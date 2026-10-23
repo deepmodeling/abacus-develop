@@ -1,6 +1,8 @@
 #ifndef PARALLEL_CELL_H
 #define PARALLEL_CELL_H
 
+#include <string>
+
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -20,6 +22,8 @@ public:
     int max(int value) const;
     int sum(int value) const;
     double max(double value) const;
+    /// Concatenate text on rank zero; other ranks receive an empty string.
+    std::string gather_text(const std::string& value) const;
 
 private:
 #ifdef __MPI

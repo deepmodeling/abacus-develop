@@ -193,3 +193,20 @@ addtest(
   ../md_base.cpp
   ../langevin.cpp
   ${depend_files})
+
+if(ENABLE_MPI)
+  addtest(
+    TARGET MODULE_MD_dump_mpi
+    KEEP_FEATURE_DEFINITIONS __MPI
+    LIBS parameter psi device
+    SOURCES test_md_func_mpi.cpp ../../source_base/parallel_common.cpp
+            ../../source_cell/magnetism.cpp ${depend_files})
+  add_test(
+    NAME MODULE_MD_dump_mpi_np4
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
+            $<TARGET_FILE:MODULE_MD_dump_mpi>
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  set_tests_properties(
+    MODULE_MD_dump_mpi MODULE_MD_dump_mpi_np4
+    PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;I_MPI_PIN=0" TIMEOUT 60)
+endif()
