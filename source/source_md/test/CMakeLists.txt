@@ -147,6 +147,7 @@ addtest(
   device
   SOURCES
   verlet_test.cpp
+  test_md_base.cpp
   ../md_base.cpp
   ../verlet.cpp
   ${depend_files})
