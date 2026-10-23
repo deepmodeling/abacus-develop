@@ -165,3 +165,25 @@ if(USE_CUDA)
     rad_interp_cuda_test.cu
     ../radial_interpolation.cpp)
 endif()
+
+addtest(
+  TARGET MODULE_LCAO_tddft_boundary_fix_test
+  LIBS parameter base device container cell symmetry neighbor neighbor_search
+       domain_decomposition psi
+  SOURCES
+  test_boundary_fix.cpp
+  ../boundary_fix.cpp
+  ../../../source_base/test/mpi_test_main.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp
+  ../../../source_md/md_base.cpp
+  ../../../source_md/md_func.cpp
+  ../../../source_io/module_output/output_log.cpp
+  ../../../source_io/module_output/print_info.cpp)
+add_test(
+  NAME MODULE_LCAO_tddft_boundary_fix_test_np4
+  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
+          $<TARGET_FILE:MODULE_LCAO_tddft_boundary_fix_test>
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+set_tests_properties(
+  MODULE_LCAO_tddft_boundary_fix_test MODULE_LCAO_tddft_boundary_fix_test_np4
+  PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;I_MPI_PIN=0" TIMEOUT 60)
