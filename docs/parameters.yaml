@@ -4641,6 +4641,30 @@ parameters:
     default_value: "10"
     unit: ""
     availability: ""
+  - name: rpa_cut_coulomb
+    category: Exact Exchange (LCAO)
+    type: String
+    description: |
+      Post-SCF cut-Coulomb kernel: hard preserves Spencer truncation; log_erfc uses erfc(log(r/Rc)/log(rpa_cut_width))/2r. Applies to compressed and uncompressed cut exports; full Coulomb is unchanged. Forces and stresses for log_erfc are not validated.
+    default_value: hard
+    unit: ""
+    availability: ""
+  - name: rpa_cut_radius
+    category: Exact Exchange (LCAO)
+    type: String
+    description: |
+      legacy preserves the existing cutoff radius. inscribed uses half the shortest nonzero BvK superlattice vector, including the lattice scale in Bohr. Independent of rpa_cut_coulomb; intended for controlled radius-versus-smoothing comparisons.
+    default_value: legacy
+    unit: ""
+    availability: ""
+  - name: rpa_cut_width
+    category: Exact Exchange (LCAO)
+    type: Real
+    description: |
+      Width factor for log_erfc. Must be finite and greater than 1 and at most 1.25. The default matches the logged Si FHI-aims width; it is not a universal FHI-aims constant. The finite radial integration range must resolve the smooth tail.
+    default_value: "1.091868692359"
+    unit: ""
+    availability: ""
   - name: exx_symmetry_realspace
     category: Exact Exchange (LCAO)
     type: Boolean

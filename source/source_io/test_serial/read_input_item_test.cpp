@@ -1674,6 +1674,30 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // independent smoothing and radius switches
+        const auto cut_mode_item = find_label("rpa_cut_coulomb", readinput.input_lists);
+        const auto cut_radius_item = find_label("rpa_cut_radius", readinput.input_lists);
+        const auto cut_width_item = find_label("rpa_cut_width", readinput.input_lists);
+        ASSERT_NE(cut_mode_item, readinput.input_lists.end());
+        ASSERT_NE(cut_radius_item, readinput.input_lists.end());
+        ASSERT_NE(cut_width_item, readinput.input_lists.end());
+        EXPECT_EQ(param.input.rpa_cut_coulomb, "hard");
+        EXPECT_EQ(param.input.rpa_cut_radius, "legacy");
+        param.input.rpa_cut_coulomb = "log_erfc";
+        param.input.rpa_cut_radius = "inscribed";
+        cut_mode_item->second.check_value(cut_mode_item->second, param);
+        cut_radius_item->second.check_value(cut_radius_item->second, param);
+        cut_width_item->second.check_value(cut_width_item->second, param);
+        param.input.rpa_cut_coulomb = "invalid";
+        EXPECT_EXIT(cut_mode_item->second.check_value(cut_mode_item->second, param), ::testing::ExitedWithCode(1), "");
+        param.input.rpa_cut_radius = "invalid";
+        EXPECT_EXIT(cut_radius_item->second.check_value(cut_radius_item->second, param), ::testing::ExitedWithCode(1), "");
+        param.input.rpa_cut_width = 1.0;
+        EXPECT_EXIT(cut_width_item->second.check_value(cut_width_item->second, param), ::testing::ExitedWithCode(1), "");
+        param.input.rpa_cut_coulomb = "hard";
+        param.input.rpa_cut_radius = "legacy";
+        param.input.rpa_cut_width = 1.091868692359;
+    }
     { // berry_phase
         auto it = find_label("berry_phase", readinput.input_lists);
         param.input.berry_phase = true;

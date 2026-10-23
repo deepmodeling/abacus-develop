@@ -13,6 +13,7 @@ if (ENABLE_LIBRI)
   if(ENABLE_LCAO)
     list(APPEND objects
         conv_coulomb_pot_k.cpp
+        smooth_cut_coulomb.cpp
         exx_abfs_ctor_orbs.cpp
         exx_abfs_io.cpp
         exx_abfs_jle.cpp

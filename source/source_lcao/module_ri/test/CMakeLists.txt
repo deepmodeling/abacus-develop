@@ -2,6 +2,10 @@ abacus_disable_feature_definitions(__MLALGO)
 abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 AddTest(
+  TARGET MODULE_RI_smooth_cut_coulomb
+  SOURCES smooth_cut_coulomb_test.cpp ../smooth_cut_coulomb.cpp
+)
+AddTest(
   TARGET MODULE_RI_dm_mixing_test
   LIBS parameter base device
   SOURCES dm_mixing_test.cpp ../mix_dmk_2d.cpp

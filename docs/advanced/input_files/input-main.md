@@ -338,6 +338,9 @@
     - [exx\_real\_number](#exx_real_number)
     - [exx\_singularity\_correction](#exx_singularity_correction)
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
+    - [rpa\_cut\_coulomb](#rpa_cut_coulomb)
+    - [rpa\_cut\_radius](#rpa_cut_radius)
+    - [rpa\_cut\_width](#rpa_cut_width)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
   - [Exact Exchange (PW)](#exact-exchange-pw)
@@ -3377,6 +3380,24 @@
 - **Type**: Real
 - **Description**: How many times larger the radial mesh required is to that of atomic orbitals in the postprocess calculation of the bare Coulomb matrix for RPA, GW, etc.
 - **Default**: 10
+
+### rpa_cut_coulomb
+
+- **Type**: String
+- **Description**: Post-SCF cut-Coulomb kernel: hard preserves Spencer truncation; log_erfc uses erfc(log(r/Rc)/log(rpa_cut_width))/2r. Applies to compressed and uncompressed cut exports; full Coulomb is unchanged. Forces and stresses for log_erfc are not validated.
+- **Default**: hard
+
+### rpa_cut_radius
+
+- **Type**: String
+- **Description**: legacy preserves the existing cutoff radius. inscribed uses half the shortest nonzero BvK superlattice vector, including the lattice scale in Bohr. Independent of rpa_cut_coulomb; intended for controlled radius-versus-smoothing comparisons.
+- **Default**: legacy
+
+### rpa_cut_width
+
+- **Type**: Real
+- **Description**: Width factor for log_erfc. Must be finite and greater than 1 and at most 1.25. The default matches the logged Si FHI-aims width; it is not a universal FHI-aims constant. The finite radial integration range must resolve the smooth tail.
+- **Default**: 1.091868692359
 
 ### exx_symmetry_realspace
 

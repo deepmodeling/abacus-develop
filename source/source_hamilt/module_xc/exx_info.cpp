@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cassert>
 #include <string>
+#include <sstream>
 #include <vector>
 
 //----------------------------------------------------------
@@ -228,6 +229,24 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
         // nspin=4/SOC via restore_dm + restore_HR_nspin4), so symmetry=1 is honored here.
 
         exx_info.sync_from_global();
+        // Explicit INPUT -> RI configuration; only init_spencer consumes these
+        // tags, so the full-Coulomb/ground-state exchange kernel is unchanged.
+        if (inp.rpa)
+        {
+            for (auto& cut_family : exx_info.info_ri.coulomb_param)
+            {
+                if (cut_family.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock) { continue; }
+                for (auto& cut_parameter : cut_family.second)
+                {
+                    cut_parameter["rpa_cut_coulomb"] = inp.rpa_cut_coulomb;
+                    cut_parameter["rpa_cut_radius"] = inp.rpa_cut_radius;
+                    std::ostringstream cut_width_text;
+                    cut_width_text.precision(17);
+                    cut_width_text << inp.rpa_cut_width;
+                    cut_parameter["rpa_cut_width"] = cut_width_text.str();
+                }
+            }
+        }
     }
 
     return generate_opt_orb;
