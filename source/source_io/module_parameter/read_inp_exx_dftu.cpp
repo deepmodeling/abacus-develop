@@ -2,7 +2,6 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
-#include <cmath>
 namespace ModuleIO
 {
 void ReadInput::item_exx()
@@ -889,6 +888,8 @@ void ReadInput::item_dftu()
     }
     {
         Input_Item item("onsite_radius");
+        item.domain.set_rule("value>0");
+        item.domain.set_active_when("onsite_radius!=0");
         item.annotation = "cutoff radius of onsite projection orbitals (Bohr)";
         item.category = "DFT+U correction";
         item.type = "Real";
@@ -911,12 +912,6 @@ Provide numerical atomic orbital files through `NUMERICAL_ORBITAL` in `STRU`, wi
                                        && para.inp.nspin == 4 && para.inp.td_out_mag == "onsite";
                 const bool use_onsite = para.inp.dft_plus_u == 1 || para.inp.sc_mag_switch || rt_onsite;
                 para.input.onsite_radius = use_onsite ? 3.0 : 0.0;
-            }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (item.is_read() && (!(para.inp.onsite_radius > 0.0) || !std::isfinite(para.inp.onsite_radius)))
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "Explicit onsite_radius must be finite and positive.");
             }
         };
         this->add_item(item);

@@ -1,7 +1,7 @@
-#include "source_hsolver/cn_subspace.h"
+#include "source_hsolver/module_rt_pw/cn_subspace.h"
 
-#include "source_hsolver/kernels/linear_op.h"
-#include "source_hsolver/linear_workspace.h"
+#include "source_hsolver/module_rt_pw/kernels/linear_op.h"
+#include "source_hsolver/module_rt_pw/linear_workspace.h"
 
 namespace hsolver
 {

@@ -8,55 +8,11 @@
 #include <array>
 #include <cmath>
 #include <limits>
-#include <stdexcept>
 
 namespace ModuleIO
 {
 namespace
 {
-
-int parse_td_integer(const Input_Item& item)
-{
-    std::size_t consumed = 0;
-    try
-    {
-        if (item.str_values.size() == 1)
-        {
-            const int value = std::stoi(item.str_values[0], &consumed);
-            if (consumed == item.str_values[0].size())
-            {
-                return value;
-            }
-        }
-    }
-    catch (const std::exception&)
-    {
-    }
-    const std::string message = item.label + " must be a positive integer.";
-    ModuleBase::WARNING_QUIT("ReadInput", message);
-    return 0;
-}
-
-std::vector<int> parse_supersine_steps(const Input_Item& item, const int default_step)
-{
-    const std::vector<std::string> tokens
-        = item.is_read() ? item.str_values : std::vector<std::string>(1, "default");
-    std::vector<int> values;
-    for (const std::string& token: tokens)
-    {
-        if (token == "default")
-        {
-            values.push_back(default_step);
-        }
-        else
-        {
-            std::vector<int> parsed;
-            parse_expression(std::vector<std::string>(1, token), parsed);
-            values.insert(values.end(), parsed.begin(), parsed.end());
-        }
-    }
-    return values;
-}
 
 struct FieldParameterRule
 {
@@ -207,7 +163,7 @@ void ReadInput::item_rt_tddft()
 * `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
 * `none`: Disable orthonormalization.
 
-[NOTE] Orthonormalization is applied after the Crank-Nicolson linear solve and uses an orthogonality tolerance independent of `lin_thr`. With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. Wavefunctions within this tolerance are left unchanged. Nonfinite or nonpositive orbital norms are rejected even with `none`.)";
+[NOTE] Orthonormalization is applied after each wavefunction propagation. With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. Wavefunctions within this tolerance are left unchanged. Nonfinite or nonpositive orbital norms are rejected even with `none`.)";
         item.default_value = "cholesky";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
@@ -244,10 +200,7 @@ void ReadInput::item_rt_tddft()
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_max_halvings = parse_td_integer(item);
-        };
-        sync_int(input.td_max_halvings);
+        read_sync_int(input.td_max_halvings);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             if (para.inp.td_max_halvings < 0 || para.inp.td_max_halvings >= std::numeric_limits<int>::digits)
             {
@@ -265,10 +218,7 @@ void ReadInput::item_rt_tddft()
         item.default_value = "100";
         item.unit = "";
         item.set_availability("esolver_type==tddft and basis_type in [pw, lcao]");
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_scf_nmax = parse_td_integer(item);
-        };
-        sync_int(input.td_scf_nmax);
+        read_sync_int(input.td_scf_nmax);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             if (para.inp.td_scf_nmax < 2)
             {
@@ -352,7 +302,7 @@ Components are ordered $xx,xy,xz,yx,yy,yz,zx,zy,zz$, with flow direction first a
 The initial ground-state diagonalization is controlled by `ks_solver`.)";
         item.default_value = "gmres";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
         read_sync_string(input.lin_solver);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             if (para.inp.lin_solver != "bicgstab" && para.inp.lin_solver != "cgs" && para.inp.lin_solver != "gmres")
@@ -376,7 +326,7 @@ The initial ground-state diagonalization is controlled by `ks_solver`.)";
 Preconditioning changes the convergence rate, while `lin_thr` still controls the residual of the original equation.)";
         item.default_value = "kinetic_recycle";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
         read_sync_string(input.lin_precond);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             if (para.inp.lin_precond != "kinetic" && para.inp.lin_precond != "none"
@@ -399,26 +349,8 @@ Preconditioning changes the convergence rate, while `lin_thr` still controls the
 All methods check the residual at the end of the linear solve, before orthonormalization. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled. Subsequent orthonormalization uses a separate orthogonality tolerance and does not guarantee that the corrected wavefunctions satisfy the same linear residual tolerance.)";
         item.default_value = "0";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            std::size_t consumed = 0;
-            try
-            {
-                if (item.str_values.size() == 1)
-                {
-                    para.input.lin_thr = std::stod(item.str_values[0], &consumed);
-                    if (consumed == item.str_values[0].size())
-                    {
-                        return;
-                    }
-                }
-            }
-            catch (const std::exception&)
-            {
-            }
-            ModuleBase::WARNING_QUIT("ReadInput", "lin_thr must be a nonnegative finite real number.");
-        };
-        sync_double(input.lin_thr);
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
+        read_sync_double(input.lin_thr);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             if (!std::isfinite(para.inp.lin_thr) || para.inp.lin_thr < 0.0)
             {
@@ -436,11 +368,8 @@ All methods check the residual at the end of the linear solve, before orthonorma
         item.description = "Positive maximum number of iterations for each PW real-time linear solve. Failure to converge stops the calculation. Initial-state self-consistency uses `scf_nmax`; real-time self-consistency uses `td_scf_nmax`.";
         item.default_value = "500";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.lin_maxiter = parse_td_integer(item);
-        };
-        sync_int(input.lin_maxiter);
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
+        read_sync_int(input.lin_maxiter);
         this->add_item(item);
     }
     {
@@ -452,11 +381,8 @@ All methods check the residual at the end of the linear solve, before orthonorma
         item.description = "Positive maximum Arnoldi dimension per GMRES cycle. `lin_maxiter` limits the total iterations across all cycles.";
         item.default_value = "20";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft and lin_solver==gmres");
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.lin_gmres_restart = parse_td_integer(item);
-        };
-        sync_int(input.lin_gmres_restart);
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0 and lin_solver==gmres");
+        read_sync_int(input.lin_gmres_restart);
         this->add_item(item);
     }
     {
@@ -467,7 +393,7 @@ All methods check the residual at the end of the linear solve, before orthonorma
         item.description = R"(Project the Crank-Nicolson equation $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$ onto the previous-time wavefunction subspace to initialize the first propagation solve of each time step. With those wavefunctions as the columns of $\boldsymbol{U}$, the projected initial guess is $\boldsymbol{x}_0=\boldsymbol{U}(\boldsymbol{U}^{\dagger}\boldsymbol{L}\boldsymbol{U})^{-1}\boldsymbol{U}^{\dagger}\boldsymbol{b}$. Evaluate and reuse the initial residual $\boldsymbol{r}_0=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}_0$ using the stored subspace operator images $\boldsymbol{L}\boldsymbol{U}$, without an additional Hamiltonian application. Available with all linear solvers and preconditioners; later self-consistency iterations retain their current wavefunction guess.)";
         item.default_value = "true";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
         read_sync_bool(input.td_cn_init);
         this->add_item(item);
     }
@@ -483,7 +409,7 @@ Use an internal tolerance of 0.8 times the effective `lin_thr` and independently
 Only effective for `lin_solver=gmres`; ignored otherwise.)";
         item.default_value = "true";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft and lin_solver==gmres");
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0 and lin_solver==gmres");
         read_sync_bool(input.lin_reconstruct);
         this->add_item(item);
     }
@@ -495,14 +421,13 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
         item.description = "The number of electronic propagation steps between two ionic steps.";
         item.default_value = "1";
         item.unit = "";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.estep_per_md = parse_td_integer(item);
+        read_sync_int(input.estep_per_md);
+        item.reset_value = [](const Input_Item&, Parameter& para) {
             if (para.input.estep_per_md <= 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "estep_per_md must be a positive integer.");
             }
         };
-        sync_int(input.estep_per_md);
         this->add_item(item);
     }
     // real time TDDFT
@@ -567,19 +492,100 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
     {
         Input_Item item("td_propagator");
         item.annotation = "method of propagator";
-        item.category = "Real-Time TDDFT (LCAO)";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
-        item.description = R"(Method used to propagate the electronic states in a nonorthogonal LCAO basis. The formulas below use Hartree atomic units, with $S$, $H$, and $\Delta t=\mathtt{td\_dt}$ evaluated as required by each approximation.
-* `0`: Crank-Nicolson through an explicitly constructed evolution matrix, $U=\left[S+\mathrm{i}H\Delta t/2\right]^{-1}\left[S-\mathrm{i}H\Delta t/2\right]$.
-* `1`: Fourth-order Taylor approximation to the exponential. With $\mathcal{A}=-\mathrm{i}S^{-1}H\Delta t$, $U=I+\mathcal{A}+\mathcal{A}^2/2+\mathcal{A}^3/6+\mathcal{A}^4/24$.
-* `2`: Enforced time-reversal symmetry (ETRS), $U(t+\Delta t,t)=\exp\left[-\mathrm{i}S^{-1}H(t+\Delta t)\Delta t/2\right]\exp\left[-\mathrm{i}S^{-1}H(t)\Delta t/2\right]$. In the implementation, each exponential is replaced by the fourth-order Taylor polynomial from method `1` evaluated with a half time step.
-* `3`: Crank-Nicolson by directly solving $\left[S+\mathrm{i}H\Delta t/2\right]\psi(t+\Delta t)=\left[S-\mathrm{i}H\Delta t/2\right]\psi(t)$.
+        item.description = R"(Method used to propagate the electronic states. The formulas below use Hartree atomic units, with $\Delta t$ denoting the electronic propagation time step and $S$ the LCAO overlap matrix. The Hamiltonian $H$ and overlap matrix $S$ are evaluated as required by each approximation.
 
-[NOTE] GPU execution currently supports only method `0` in both single-GPU and multi-GPU solver configurations. CPU execution supports methods `0` through `3`.)";
+For a plane-wave (PW) basis:
+* `0`: Crank-Nicolson, $\left[I+\mathrm{i}H\Delta t/2\right]\psi(t+\Delta t)=\left[I-\mathrm{i}H\Delta t/2\right]\psi(t)$. The linear system uses the same midpoint Hamiltonian on both sides.
+* `2`: Enforced time-reversal symmetry (ETRS), $U(t+\Delta t,t)=\exp\left[-\mathrm{i}H(t+\Delta t)\Delta t/2\right]\exp\left[-\mathrm{i}H(t)\Delta t/2\right]$. Select the exponential algorithm with `td_exp_method`.
+
+For a nonorthogonal LCAO basis:
+* `0`: Crank-Nicolson, $U=\left[S+\mathrm{i}H\Delta t/2\right]^{-1}\left[S-\mathrm{i}H\Delta t/2\right]$. The evolution matrix is constructed explicitly and applied to the wavefunctions.
+* `1`: Fourth-order Taylor approximation to the exponential. With $\mathcal{A}=-\mathrm{i}S^{-1}H\Delta t$, $U=I+\mathcal{A}+\mathcal{A}^2/2+\mathcal{A}^3/6+\mathcal{A}^4/24$.
+* `2`: Enforced time-reversal symmetry (ETRS), $U(t+\Delta t,t)=\exp\left[-\mathrm{i}S^{-1}H(t+\Delta t)\Delta t/2\right]\exp\left[-\mathrm{i}S^{-1}H(t)\Delta t/2\right]$. Each exponential uses the fourth-order Taylor approximation from method `1` with a half time step.
+* `3`: Crank-Nicolson, $\left[S+\mathrm{i}H\Delta t/2\right]\psi(t+\Delta t)=\left[S-\mathrm{i}H\Delta t/2\right]\psi(t)$. The linear system is solved directly.
+
+[NOTE] PW supports methods `0` and `2` on CPU and GPU. LCAO supports methods `0` through `3` on CPU and only method `0` on GPU.)";
         item.default_value = "0";
         item.unit = "";
-        item.set_availability("basis_type==lcao and esolver_type==tddft");
+        item.set_availability("(basis_type==pw or basis_type==lcao) and esolver_type==tddft");
         read_sync_int(input.propagator);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.inp.basis_type == "pw" && para.inp.esolver_type == "tddft"
+                && para.inp.propagator != 0 && para.inp.propagator != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "PW td_propagator must be 0 (CN) or 2 (ETRS).");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_exp_method");
+        item.annotation = "exponential algorithm for PW ETRS";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "String";
+        item.description = R"(Algorithm used to evaluate $\exp(-\mathrm{i}\tau\boldsymbol{H})\boldsymbol{\psi}$ for Enforced time-reversal symmetry (ETRS) propagation with a plane-wave basis. The Hamiltonian $\boldsymbol{H}$ is held fixed over the evolution interval $\tau$. The formulas below use Hartree atomic units.
+* `lanczos`: Lanczos method with full reorthogonalization, $\exp(-\mathrm{i}\tau\boldsymbol{H})\boldsymbol{\psi}\approx\lVert\boldsymbol{\psi}\rVert\boldsymbol{Q}_m\exp(-\mathrm{i}\tau\boldsymbol{H}_m)\boldsymbol{e}_1$, where $\boldsymbol{Q}_m$ contains the orthonormal Krylov basis vectors, $\boldsymbol{H}_m=\boldsymbol{Q}_m^\dagger\boldsymbol{H}\boldsymbol{Q}_m$, and $\boldsymbol{e}_1$ is the first unit vector. The estimated relative error is controlled by `td_exp_thr`, and the maximum Krylov dimension by `td_exp_krylov_dim`.
+* `taylor`: Fixed-order Taylor approximation, $\exp(-\mathrm{i}\tau\boldsymbol{H})\boldsymbol{\psi}\approx\sum_{k=0}^{p}(-\mathrm{i}\tau\boldsymbol{H})^k\boldsymbol{\psi}/k!$, where the order $p$ is specified by `td_exp_order`.)";
+        item.default_value = "lanczos";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2");
+        read_sync_string(input.td_exp_method);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.inp.td_exp_method != "taylor" && para.inp.td_exp_method != "lanczos")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "td_exp_method must be taylor or lanczos.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_exp_order");
+        item.annotation = "Taylor polynomial order for PW ETRS";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Integer";
+        item.description = "Taylor polynomial order $p$ used by `td_exp_method=taylor`. Must be an integer of at least 2.";
+        item.default_value = "4";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2 and td_exp_method==taylor");
+        read_sync_int(input.td_exp_order);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.inp.td_exp_order < 2) { ModuleBase::WARNING_QUIT("ReadInput", "td_exp_order must be at least 2."); }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_exp_thr");
+        item.annotation = "relative exponential error target for PW Lanczos";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Real";
+        item.description = R"(Target for the estimated error in each Lanczos exponential calculation, relative to the input wavefunction norm. Must be nonnegative and finite. Zero selects $\max(10^{-10},100\epsilon)$, where $\epsilon$ is machine epsilon for the wavefunction precision, giving `1e-10` in double precision and approximately `1.19209e-5` in single precision. A positive value specifies the target directly.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2 and td_exp_method==lanczos");
+        read_sync_double(input.td_exp_thr);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (!std::isfinite(para.inp.td_exp_thr) || para.inp.td_exp_thr < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "td_exp_thr must be a nonnegative finite real number.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_exp_krylov_dim");
+        item.annotation = "maximum Lanczos dimension for PW ETRS";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Integer";
+        item.description = "Maximum number of Krylov basis vectors used in each Lanczos exponential calculation. Must be an integer of at least 2. Larger values increase wavefunction storage and orthogonalization work.";
+        item.default_value = "32";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2 and td_exp_method==lanczos");
+        read_sync_int(input.td_exp_krylov_dim);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.inp.td_exp_krylov_dim < 2) { ModuleBase::WARNING_QUIT("ReadInput", "td_exp_krylov_dim must be at least 2."); }
+        };
         this->add_item(item);
     }
     {
@@ -1034,7 +1040,15 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.unit = "";
         item.set_availability("td_ttype contains 4");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_supsine_tstart = parse_supersine_steps(item, para.input.td_tstart);
+            std::vector<std::string> tokens = item.is_read() ? item.str_values : std::vector<std::string>(1, "default");
+            for (std::string& token: tokens)
+            {
+                if (token == "default")
+                {
+                    token = std::to_string(para.input.td_tstart);
+                }
+            }
+            parse_expression(tokens, para.input.td_supsine_tstart);
         };
         item.get_final_value = [](Input_Item& item, const Parameter&) {
             item.final_value << (item.is_read() ? longstring(item.str_values) : "default");
@@ -1052,7 +1066,15 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.unit = "";
         item.set_availability("td_ttype contains 4");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_supsine_tend = parse_supersine_steps(item, para.input.td_tend);
+            std::vector<std::string> tokens = item.is_read() ? item.str_values : std::vector<std::string>(1, "default");
+            for (std::string& token: tokens)
+            {
+                if (token == "default")
+                {
+                    token = std::to_string(para.input.td_tend);
+                }
+            }
+            parse_expression(tokens, para.input.td_supsine_tend);
         };
         item.get_final_value = [](Input_Item& item, const Parameter&) {
             item.final_value << (item.is_read() ? longstring(item.str_values) : "default");

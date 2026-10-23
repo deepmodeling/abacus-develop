@@ -3,10 +3,10 @@
 
 #include "source_esolver/esolver_ks_pw.h"
 #include "source_estate/module_pot/td_field_manager.h"
-#include "source_hsolver/hsolver_pw_tddft.h"
-#include "source_pw/module_pwdft/td_history_pw.h"
-#include "source_pw/module_pwdft/td_spin_pw.h"
-#include "source_pw/module_pwdft/td_vel_pw.h"
+#include "source_pw/module_rt/td_history_pw.h"
+#include "source_pw/module_rt/td_prop_pw.h"
+#include "source_pw/module_rt/td_spin_pw.h"
+#include "source_pw/module_rt/td_vel_pw.h"
 
 #include <iosfwd>
 #include <memory>
@@ -55,7 +55,7 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
   private:
     using Real = typename GetTypeReal<T>::type;
     std::ofstream& log_;
-    std::unique_ptr<hsolver::HSolverPWTDDFT<T, Device>> td_solver_;
+    std::unique_ptr<pw::TDPropPW<T, Device>> td_prop_;
 
     std::shared_ptr<elecstate::TDFieldManager> td_field_manager_;
     pw::TDVelPW<Real, Device> vel_;

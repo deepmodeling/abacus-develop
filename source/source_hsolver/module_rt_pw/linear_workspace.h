@@ -4,8 +4,8 @@
 #include "source_base/macros.h"
 #include "source_base/module_container/ATen/core/tensor.h"
 #include "source_hsolver/diag_comm_info.h"
-#include "source_hsolver/linear_operator.h"
-#include "source_hsolver/linear_solver_types.h"
+#include "source_hsolver/module_rt_pw/linear_operator.h"
+#include "source_hsolver/module_rt_pw/linear_solver_types.h"
 
 #include <algorithm>
 #include <cmath>

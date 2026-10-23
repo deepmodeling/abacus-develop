@@ -1,6 +1,6 @@
-#include "source_hsolver/linear_bicgstab.h"
+#include "source_hsolver/module_rt_pw/linear_bicgstab.h"
 
-#include "source_hsolver/kernels/linear_op.h"
+#include "source_hsolver/module_rt_pw/kernels/linear_op.h"
 
 #include <numeric>
 

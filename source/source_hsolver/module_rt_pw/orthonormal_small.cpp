@@ -1,7 +1,7 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_container/base/third_party/lapack.h"
 #include "source_base/timer.h"
-#include "source_hsolver/orthonormal.h"
+#include "source_hsolver/module_rt_pw/orthonormal.h"
 
 #include <cmath>
 #include <limits>

@@ -1,7 +1,7 @@
 #ifndef HSOLVER_LINEAR_GMRES_H
 #define HSOLVER_LINEAR_GMRES_H
-#include "source_hsolver/linear_algebra.h"
-#include "source_hsolver/linear_workspace.h"
+#include "source_hsolver/module_rt_pw/linear_algebra.h"
+#include "source_hsolver/module_rt_pw/linear_workspace.h"
 
 namespace hsolver
 {

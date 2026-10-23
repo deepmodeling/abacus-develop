@@ -1,8 +1,8 @@
 #ifndef TD_TEST_UTILS_H
 #define TD_TEST_UTILS_H
 
-#include "source_pw/module_pwdft/td_spin_pw.h"
-#include "source_pw/module_pwdft/td_vel_pw.h"
+#include "source_pw/module_rt/td_spin_pw.h"
+#include "source_pw/module_rt/td_vel_pw.h"
 
 #include <gtest/gtest.h>
 

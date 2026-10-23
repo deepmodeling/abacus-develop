@@ -36,6 +36,8 @@ VPATH=./src_global:\
 ./source_base/module_fft:\
 ./source_esolver:\
 ./source_hsolver:\
+./source_hsolver/module_rt_pw:\
+./source_hsolver/module_rt_pw/kernels:\
 ./source_hsolver/kernels:\
 ./source_hsolver/module_genelpa:\
 ./source_hsolver/module_pexsi:\
@@ -54,6 +56,7 @@ VPATH=./src_global:\
 ./source_hamilt/module_xc/kernels:\
 ./source_pw/module_proj:\
 ./source_pw/module_pwdft:\
+./source_pw/module_rt:\
 ./source_pw/module_ofdft:\
 ./source_pw/module_stodft:\
 ./source_pw/module_pwdft/kernels:\
@@ -380,6 +383,10 @@ OBJS_GINT=batch_biggrid.o\
 OBJS_HAMILT=hamilt_pw.o\
     pw_hybrid_nscf.o\
     pw_hybrid_source.o\
+    td_prop_pw.o\
+    td_hamilt_pw.o\
+    prop_cn_pw.o\
+    prop_etrs_pw.o\
     td_history_pw.o\
     td_vel_pw.o\
     td_spin_pw.o\
@@ -491,7 +498,12 @@ OBJS_HSOLVER=diago_cg.o\
     para_lin_tf.o\
     hsolver.o\
     hsolver_pw.o\
-    hsolver_pw_tddft.o\
+    cn_solver_pw.o\
+    td_orbital_ops.o\
+    orb_buffer.o\
+    exp_action.o\
+    exp_taylor.o\
+    exp_lanczos.o\
     orthonormal.o\
     orthonormal_small.o\
     hsolver_lcaopw.o\

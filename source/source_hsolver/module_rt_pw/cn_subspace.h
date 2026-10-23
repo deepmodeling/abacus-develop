@@ -1,6 +1,6 @@
 #ifndef HSOLVER_CN_SUBSPACE_H
 #define HSOLVER_CN_SUBSPACE_H
-#include "source_hsolver/linear_algebra.h"
+#include "source_hsolver/module_rt_pw/linear_algebra.h"
 
 namespace hsolver
 {

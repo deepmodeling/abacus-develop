@@ -1,6 +1,6 @@
 #ifndef TD_SPIN_PW_IO_H
 #define TD_SPIN_PW_IO_H
-#include "source_pw/module_pwdft/td_obs_pw.h"
+#include "source_pw/module_rt/td_obs_pw.h"
 
 #include <iosfwd>
 namespace ModuleIO

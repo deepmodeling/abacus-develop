@@ -1,7 +1,7 @@
 #ifndef HSOLVER_LINEAR_LOW_RANK_H
 #define HSOLVER_LINEAR_LOW_RANK_H
-#include "source_hsolver/linear_algebra.h"
-#include "source_hsolver/linear_operator.h"
+#include "source_hsolver/module_rt_pw/linear_algebra.h"
+#include "source_hsolver/module_rt_pw/linear_operator.h"
 
 namespace hsolver
 {

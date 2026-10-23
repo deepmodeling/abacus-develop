@@ -1,7 +1,7 @@
-#include "source_hsolver/linear_low_rank.h"
+#include "source_hsolver/module_rt_pw/linear_low_rank.h"
 
-#include "source_hsolver/kernels/linear_op.h"
-#include "source_hsolver/linear_workspace.h"
+#include "source_hsolver/module_rt_pw/kernels/linear_op.h"
+#include "source_hsolver/module_rt_pw/linear_workspace.h"
 
 namespace hsolver
 {
@@ -83,23 +83,23 @@ void LinearLowRank<T, Device>::prepare_response(int ld, int rank, const T* direc
 
 template <typename T, typename Device>
 void LinearLowRank<T, Device>::prepare_subspace(int ld,
-                                               int rank,
-                                               const T* basis,
-                                               const T* images,
-                                               const LinearSmallLU& factor,
-                                               ct::Tensor* workspace)
+                                                int rank,
+                                                const T* basis,
+                                                const T* images,
+                                                const LinearSmallLU& factor,
+                                                ct::Tensor* workspace)
 {
     prepare(ld, rank, basis, images, basis, &factor, workspace);
 }
 
 template <typename T, typename Device>
 void LinearLowRank<T, Device>::prepare(int ld,
-                                      int rank,
-                                      const T* z,
-                                      const T* w,
-                                      const T* test,
-                                      const LinearSmallLU* factor,
-                                      ct::Tensor* workspace)
+                                       int rank,
+                                       const T* z,
+                                       const T* w,
+                                       const T* test,
+                                       const LinearSmallLU* factor,
+                                       ct::Tensor* workspace)
 {
     rank_ = rank;
     test_ = rank > 0 ? test : nullptr;

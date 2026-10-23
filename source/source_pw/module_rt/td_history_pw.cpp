@@ -1,4 +1,4 @@
-#include "source_pw/module_pwdft/td_history_pw.h"
+#include "source_pw/module_rt/td_history_pw.h"
 
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/memory_op.h"
@@ -13,7 +13,7 @@ namespace
 {
 
 template <typename Real, typename Device>
-void prepare_pair(const ModuleBase::matrix& potential, ct::Tensor* previous, ct::Tensor* midpoint)
+void prepare_potential(const ModuleBase::matrix& potential, ct::Tensor* previous)
 {
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
@@ -21,21 +21,7 @@ void prepare_pair(const ModuleBase::matrix& potential, ct::Tensor* previous, ct:
     if (previous->NumElements() < size || previous->data_type() != ct::DataTypeToEnum<Real>::value || previous->device_type() != device)
     {
         *previous = ct::Tensor(ct::DataTypeToEnum<Real>::value, device, {size});
-        *midpoint = ct::Tensor(ct::DataTypeToEnum<Real>::value, device, {size});
     }
-}
-
-template <typename Real, typename Device>
-const Real* average_potential(const ModuleBase::matrix& shape, const Real* current, const ct::Tensor& previous, ct::Tensor* midpoint)
-{
-    const int size = shape.nr * shape.nc;
-    if (size == 0)
-    {
-        return current;
-    }
-    Real* buffer = midpoint->template data<Real>();
-    ModuleBase::vector_add_vector_op<Real, Device, Real>()(size, buffer, previous.template data<Real>(), Real(0.5), current, Real(0.5));
-    return buffer;
 }
 
 template <typename Real, typename Device>
@@ -54,21 +40,14 @@ template <typename T, typename Device>
 void TDHistoryPW<T, Device>::prepare(const elecstate::Potential& potential)
 {
     ModuleBase::timer::start("TDHistoryPW", "prepare");
-    prepare_pair<Real, Device>(potential.get_veff_smooth(), &veff_prev_, &veff_mid_);
+    prepare_potential<Real, Device>(potential.get_veff_smooth(), &veff_prev_);
     ModuleBase::timer::end("TDHistoryPW", "prepare");
 }
 
 template <typename T, typename Device>
-const typename GetTypeReal<T>::type* TDHistoryPW<T, Device>::prop_pot(elecstate::Potential& potential, const bool corrector)
+const typename GetTypeReal<T>::type* TDHistoryPW<T, Device>::left_potential() const
 {
-    ModuleBase::timer::start("TDHistoryPW", "prop_pot");
-    const Real* view = potential.template get_veff_smooth_data<Real>();
-    if (corrector)
-    {
-        view = average_potential<Real, Device>(potential.get_veff_smooth(), view, veff_prev_, &veff_mid_);
-    }
-    ModuleBase::timer::end("TDHistoryPW", "prop_pot");
-    return view;
+    return veff_prev_.template data<Real>();
 }
 
 template <typename T, typename Device>
@@ -80,6 +59,7 @@ void TDHistoryPW<T, Device>::save(const psi::Psi<T, Device>& current, elecstate:
         previous_.reset(new psi::Psi<T, Device>(current));
     }
     *previous_ = current;
+    ++generation_;
     save_potential<Real, Device>(potential.get_veff_smooth(), potential.template get_veff_smooth_data<Real>(), &veff_prev_);
     ModuleBase::timer::end("TDHistoryPW", "save");
 }

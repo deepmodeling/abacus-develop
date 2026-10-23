@@ -10,7 +10,7 @@
 namespace pw
 {
 
-/** @brief Accepted time-step history and predictor-corrector potential storage. */
+/** @brief Accepted endpoint wavefunctions and potential snapshots. */
 template <typename T, typename Device>
 class TDHistoryPW
 {
@@ -18,8 +18,12 @@ class TDHistoryPW
     /** @brief Prepare storage after the potential grids have been updated. */
     void prepare(const elecstate::Potential& potential);
 
-    /** @brief Use the current potential for the predictor, then average with the saved potential. */
-    const typename GetTypeReal<T>::type* prop_pot(elecstate::Potential& potential, const bool corrector);
+    /** @brief Borrow the immutable accepted left-endpoint potential. */
+    const typename GetTypeReal<T>::type* left_potential() const;
+    unsigned long long generation() const
+    {
+        return generation_;
+    }
 
     /** @brief Save the accepted endpoint; the caller owns the convergence decision. */
     void save(const psi::Psi<T, Device>& current, elecstate::Potential& potential);
@@ -31,7 +35,7 @@ class TDHistoryPW
     using Real = typename GetTypeReal<T>::type;
     std::unique_ptr<psi::Psi<T, Device>> previous_;
     ct::Tensor veff_prev_;
-    ct::Tensor veff_mid_;
+    unsigned long long generation_ = 0;
 };
 
 } // namespace pw

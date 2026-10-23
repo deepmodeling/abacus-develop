@@ -340,6 +340,10 @@ struct Input_para
     double td_print_eij = -1.0;      ///< threshold to output Eij elements
     int td_edm = 0;                  ///< 0: new edm method   1: old edm method
     int propagator = 0;              ///< method of propagator
+    std::string td_exp_method = "lanczos"; ///< PW ETRS exponential backend.
+    int td_exp_order = 4; ///< Fixed Taylor polynomial order.
+    double td_exp_thr = 0.0; ///< Zero selects the precision-dependent exponential tolerance.
+    int td_exp_krylov_dim = 32; ///< Maximum Lanczos dimension before frozen-operator subdivision.
     int td_stype = 0;                ///< type of space domain  0 : length gauge  1: velocity gauge
     std::vector<int> td_ttype = {0}; ///< type of time domain
     ///<  0  Gauss type function.

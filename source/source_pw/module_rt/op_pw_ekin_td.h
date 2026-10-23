@@ -1,9 +1,9 @@
 #ifndef OP_PW_EKIN_TD_H
 #define OP_PW_EKIN_TD_H
 
-#include "op_pw.h"
 #include "source_base/module_container/ATen/core/tensor.h"
 #include "source_basis/module_pw/pw_basis_k.h"
+#include "source_pw/module_pwdft/op_pw.h"
 
 namespace hamilt
 {
@@ -16,7 +16,10 @@ class TDEkineticPW : public OperatorPW<T, Device>
 
   public:
     /** @brief Bind the vector potential in Hartree atomic units before init(). */
-    void set_A_ha(const ModuleBase::Vector3<double>& A) { A_ha_ = A; }
+    void set_A_ha(const ModuleBase::Vector3<double>& A)
+    {
+        A_ha_ = A;
+    }
     TDEkineticPW(const ModulePW::PW_Basis_K* wfc_basis_in);
 
     virtual ~TDEkineticPW();

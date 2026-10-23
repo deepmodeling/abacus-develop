@@ -1,6 +1,6 @@
 #ifndef MODULE_HSOLVER_LINEAR_BICGSTAB_H_
 #define MODULE_HSOLVER_LINEAR_BICGSTAB_H_
-#include "source_hsolver/linear_workspace.h"
+#include "source_hsolver/module_rt_pw/linear_workspace.h"
 namespace hsolver
 {
 /** @brief Right-preconditioned BiCGSTAB for independent complex right-hand sides. */

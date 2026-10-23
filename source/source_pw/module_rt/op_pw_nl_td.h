@@ -1,8 +1,8 @@
 #ifndef OP_PW_NL_TD_H
 #define OP_PW_NL_TD_H
 
-#include "op_pw.h"
 #include "source_pw/module_pwdft/nonlocal_workspace.h"
+#include "source_pw/module_pwdft/op_pw.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace hamilt

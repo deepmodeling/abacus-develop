@@ -1,8 +1,8 @@
-#include "source_pw/module_pwdft/td_vel_pw.h"
+#include "source_pw/module_rt/td_vel_pw.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_hsolver/kernels/linear_op.h"
+#include "source_hsolver/module_rt_pw/kernels/linear_op.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -11,10 +11,7 @@
 namespace pw
 {
 template <typename Real, typename Device>
-void TDVelPW<Real, Device>::initialize(const UnitCell& cell,
-                                       const ModulePW::PW_Basis_K& basis,
-                                       const K_Vectors& kv,
-                                       pseudopot_cell_vnl& pp)
+void TDVelPW<Real, Device>::initialize(const UnitCell& cell, const ModulePW::PW_Basis_K& basis, const K_Vectors& kv, pseudopot_cell_vnl& pp)
 {
     if (cell_ != nullptr)
     {

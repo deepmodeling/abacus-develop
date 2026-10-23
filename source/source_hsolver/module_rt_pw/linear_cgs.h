@@ -1,6 +1,6 @@
 #ifndef HSOLVER_LINEAR_CGS_H
 #define HSOLVER_LINEAR_CGS_H
-#include "source_hsolver/linear_workspace.h"
+#include "source_hsolver/module_rt_pw/linear_workspace.h"
 
 namespace hsolver
 {

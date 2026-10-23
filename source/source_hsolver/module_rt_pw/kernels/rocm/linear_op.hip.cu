@@ -1,4 +1,4 @@
-#include "source_hsolver/kernels/linear_op.h"
+#include "source_hsolver/module_rt_pw/kernels/linear_op.h"
 
 #include <hip/hip_runtime.h>
 #include <thrust/complex.h>

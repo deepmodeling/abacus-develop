@@ -1,8 +1,8 @@
 #ifndef HSOLVER_LINEAR_H
 #define HSOLVER_LINEAR_H
-#include "source_hsolver/linear_bicgstab.h"
-#include "source_hsolver/linear_cgs.h"
-#include "source_hsolver/linear_gmres.h"
+#include "source_hsolver/module_rt_pw/linear_bicgstab.h"
+#include "source_hsolver/module_rt_pw/linear_cgs.h"
+#include "source_hsolver/module_rt_pw/linear_gmres.h"
 
 #include <memory>
 

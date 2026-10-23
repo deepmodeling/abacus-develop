@@ -1,7 +1,7 @@
 #ifndef HSOLVER_ORTHONORMAL_H
 #define HSOLVER_ORTHONORMAL_H
 
-#include "source_hsolver/linear_algebra.h"
+#include "source_hsolver/module_rt_pw/linear_algebra.h"
 
 #include <limits>
 #include <string>

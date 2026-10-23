@@ -1,7 +1,7 @@
 #ifndef TD_CURRENT_PW_H
 #define TD_CURRENT_PW_H
 
-#include "source_pw/module_pwdft/td_obs_pw.h"
+#include "source_pw/module_rt/td_obs_pw.h"
 
 #include <string>
 

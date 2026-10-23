@@ -1,13 +1,12 @@
-#ifndef HSOLVER_PW_TDDFT_H
-#define HSOLVER_PW_TDDFT_H
+#ifndef HSOLVER_CN_SOLVER_PW_H
+#define HSOLVER_CN_SOLVER_PW_H
 
 #include "source_base/matrix.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_hsolver/cn_subspace.h"
 #include "source_hsolver/hs_operator.h"
-#include "source_hsolver/hsolver_linear.h"
-#include "source_hsolver/linear_low_rank.h"
-#include "source_hsolver/orthonormal.h"
+#include "source_hsolver/module_rt_pw/cn_subspace.h"
+#include "source_hsolver/module_rt_pw/hsolver_linear.h"
+#include "source_hsolver/module_rt_pw/linear_low_rank.h"
 #include "source_psi/psi.h"
 
 #include <iosfwd>
@@ -29,34 +28,23 @@ enum class PWPreconditioner
 struct PWLinearOptions
 {
     int npol = 1; ///< Spin components per orbital; fixed throughout propagation.
-    OrthMethod orthonormal = OrthMethod::cholesky;
     LinearSolveOptions linear;
     PWPreconditioner preconditioner = PWPreconditioner::kinetic;
     bool cn_init = false;
     bool kinetic_enabled = true;
-    bool out_stat = false;
     std::vector<int> global_k_indices; ///< Required zero-based global index for every local k point.
 };
 
 LinearMethod parse_linear_method(const std::string& name);
-/** @brief Independent maxima over all SCF iterations and local k points in one electronic step.
- * Values are replicated within each pool and reduced across pools for step-end output.
- * The before and after maxima need not come from the same correction.
- */
-struct TDOrthStats
-{
-    double before = 0.0;
-    double after = 0.0;
-};
 PWPreconditioner parse_pw_precond(const std::string& name);
 
-/** @brief PW Crank-Nicolson solves and endpoint Hamiltonian expectations. */
+/** @brief PW Crank-Nicolson numerical solves with fixed previous-step orbitals. */
 template <typename T, typename Device>
-class HSolverPWTDDFT
+class CNSolverPW
 {
   public:
     /** @brief Configure propagation using typed, explicit solver options. */
-    HSolverPWTDDFT(const ModulePW::PW_Basis_K& basis, const PWLinearOptions& options, const diag_comm_info& comm, std::ostream& log);
+    CNSolverPW(const ModulePW::PW_Basis_K& basis, const PWLinearOptions& options, const diag_comm_info& comm, std::ostream& log);
 
     /** @brief Invalidate basis-dependent history and restart independent residual checks without releasing buffers.
      *  Call on every rank in the pool after changing the basis or its distribution, including
@@ -64,26 +52,6 @@ class HSolverPWTDDFT
      *  updates and ionic motion at fixed basis do not require this notification.
      */
     void invalidate_basis();
-    /** @brief Reset diagnostics without invalidating preconditioner history. */
-    void reset_orth_stats();
-    /** @brief Publish diagnostics accumulated over accepted trial intervals only. */
-    void set_orth_stats(const TDOrthStats& stats)
-    {
-        orth_stats_ = stats;
-    }
-    /** @brief Clear spinor padding without changing physical coefficients or the k-point cursor; no communication. */
-    void zero_padding(psi::Psi<T, Device>* current);
-    /** @brief Orthogonalize initial orbitals with clean padding; return whether this pool changed any physical orbital. */
-    bool orth_initial(psi::Psi<T, Device>* current, int iter);
-    /** @brief Check the converged initial state once; finite orthogonality errors are diagnostic only. */
-    void check_initial(const psi::Psi<T, Device>& current, int iter);
-    /** @brief Occupation-weighted electron count for the local k-point pool. */
-    double wave_electrons(const ModuleBase::matrix& occupations) const;
-    const TDOrthStats& orth_stats() const
-    {
-        return orth_stats_;
-    }
-
     /** @brief Propagate from the fixed previous step, retaining the current iterate as the initial guess.
      *  @param dt Electronic time step in Hartree atomic units.
      *  @param momentum_shift Propagation vector potential in Hartree atomic units (inverse Bohr).
@@ -98,12 +66,6 @@ class HSolverPWTDDFT
                const int istep,
                const int iter,
                const bool detailed_output);
-
-    /** @brief Evaluate band expectations after the caller restores the endpoint Hamiltonian. */
-    void cal_band_energy(HSOperator<T, Device>& op, const psi::Psi<T, Device>& current, ModuleBase::matrix* energies);
-
-    /** @brief Return the pool-reduced, column-major Psi-adjoint H Psi for one local k point. */
-    std::vector<std::complex<double>> cal_eij(HSOperator<T, Device>& op, const psi::Psi<T, Device>& current, const int ik);
 
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -140,18 +102,13 @@ class HSolverPWTDDFT
     PWLinearOptions options_;
     ct::Tensor clean_;
     LinearAlgebra<T, Device> algebra_;
-    Orthonormal<T, Device> orthonormal_;
-    TDOrthStats orth_stats_;
-    std::vector<std::vector<double>> orth_norms_;
     std::ostream& log_;
-    unsigned int warned_events_ = 0;
     CNSubspace<T, Device> projection_;
     std::vector<KPointState> states_;
     SequenceState sequence_;
     std::unique_ptr<HSolverLinear<T, Device>> linear_solver_;
     LinearWorkspace<T, Device> band_products_;
     ct::Tensor rhs_;
-    ct::Tensor hpsi_;
     ct::Tensor inverse_kinetic_;
     ct::Tensor response_workspace_;
     ct::Tensor correction_workspace_;
@@ -172,9 +129,6 @@ class HSolverPWTDDFT
     void report_solve(const SolveDetails& details, int ik, int step, int iteration) const;
     void prepare_buffers(const int nbands, const int nbasis);
     void update_precond(const int ik, const int dim, const T coefficient, const ModuleBase::Vector3<double>& momentum_shift);
-    void correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter, bool detailed_output);
-    void record_orth(const OrthResult& result, int ik, int istep, int iter);
-    void report_orth_warning(const OrthResult& result, int ik, int istep, int iter);
 };
 
 } // namespace hsolver

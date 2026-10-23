@@ -1,6 +1,6 @@
 #include "source_base/parallel_device.h"
-#include "source_hsolver/cn_subspace.h"
-#include "source_hsolver/test/linear_test_utils.h"
+#include "source_hsolver/module_rt_pw/cn_subspace.h"
+#include "source_hsolver/module_rt_pw/test/linear_test_utils.h"
 
 #include <cmath>
 #include <gtest/gtest.h>

@@ -5,7 +5,7 @@
 #include "source_estate/elecstate.h"
 #include "source_pw/module_proj/onsite_proj.h"
 #include "source_pw/module_pwdft/nonlocal_workspace.h"
-#include "source_pw/module_pwdft/td_obs_pw.h"
+#include "source_pw/module_rt/td_obs_pw.h"
 
 #include <complex>
 #include <memory>

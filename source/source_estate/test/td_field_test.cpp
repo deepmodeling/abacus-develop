@@ -4,6 +4,7 @@
 #include "source_io/module_parameter/input_parameter.h"
 
 #include "gtest/gtest.h"
+#include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <string>
@@ -96,6 +97,67 @@ TEST(TDFieldManagerTest, MixedFieldsSumAndAccumulate)
     ASSERT_EQ(oscillatory_manager->fields().size(), 2U);
     EXPECT_EQ(oscillatory_manager->fields()[0].subdivisions(), 12);
     EXPECT_EQ(oscillatory_manager->fields()[1].subdivisions(), 12);
+}
+
+TEST(TDFieldManagerTest, SubintervalsPreserveFieldAndOriginalGrid)
+{
+    Input_para input;
+    input.td_vext = true;
+    input.td_stype = 1;
+    input.td_dt = ModuleBase::AU_to_FS;
+    input.td_tstart = 0;
+    input.td_tend = 10;
+    input.td_ttype = std::vector<int>{2};
+    input.td_vext_dire = std::vector<int>{1};
+    const double omega = 0.02;
+    input.td_trigo_freq1 = {omega / (2 * ModuleBase::PI * ModuleBase::AU_to_FS)};
+    input.td_trigo_freq2 = {0.0};
+    input.td_trigo_phase1 = {0.0};
+    input.td_trigo_phase2 = {ModuleBase::PI / 2};
+    input.td_trigo_amp = {1.0};
+    const double amp = ModuleBase::BOHR_TO_A / ModuleBase::Hartree_to_eV;
+
+    for (bool from_file: {false, true})
+    {
+        SCOPED_TRACE(from_file);
+        auto manager = elecstate::create_td_field_manager(input);
+        if (from_file)
+        {
+            const std::vector<ModuleBase::Vector3<double>> samples = {{0, 0, 0}, {2, 0, 0}, {5, 0, 0}};
+            manager->set_A_samples(samples);
+        }
+        manager->prepare_sample(0);
+        manager->prepare_interval(0, 1);
+        const auto full = manager->field_state();
+        const auto left = manager->subinterval(full, 0, 2);
+        manager->bind_field(left);
+        const auto right = manager->subinterval(full, 1, 2);
+        EXPECT_DOUBLE_EQ(left.dt, 0.5);
+        EXPECT_DOUBLE_EQ(right.dt, 0.5);
+        EXPECT_DOUBLE_EQ(left.left.x, full.left.x);
+        EXPECT_DOUBLE_EQ(left.right.x, right.left.x);
+        EXPECT_DOUBLE_EQ(right.right.x, full.right.x);
+        const double mid_a = from_file ? 1.0 : -amp * std::sin(omega * 0.5) / omega;
+        const double mid_e = from_file ? -2.0 : amp * std::cos(omega * 0.5);
+        EXPECT_NEAR(left.right.x, mid_a, 1e-11);
+        EXPECT_NEAR(left.electric.x, mid_e, 1e-14);
+        EXPECT_DOUBLE_EQ(left.propagation.x, (left.left.x + left.right.x) * 0.5);
+        EXPECT_DOUBLE_EQ(right.propagation.x, (right.left.x + right.right.x) * 0.5);
+        manager->bind_field(right);
+        EXPECT_EQ(manager->current_step(), 1);
+        EXPECT_DOUBLE_EQ(manager->interval_dt_ha(), 0.5);
+        manager->bind_field(full);
+        manager->prepare_interval(0, 1);
+        EXPECT_EQ(manager->current_step(), 1);
+        EXPECT_DOUBLE_EQ(manager->interval_dt_ha(), 1.0);
+        EXPECT_DOUBLE_EQ(manager->A_right_ha().x, full.right.x);
+        EXPECT_DOUBLE_EQ(manager->efield_ha().x, full.electric.x);
+        manager->prepare_interval(1, 2);
+        const double end_a = from_file ? 5.0 : -amp * std::sin(2 * omega) / omega;
+        EXPECT_EQ(manager->current_step(), 2);
+        EXPECT_DOUBLE_EQ(manager->A_left_ha().x, full.right.x);
+        EXPECT_NEAR(manager->A_right_ha().x, end_a, 1e-10);
+    }
 }
 
 TEST(TDFieldManagerTest, RestartRequiresCompleteState)

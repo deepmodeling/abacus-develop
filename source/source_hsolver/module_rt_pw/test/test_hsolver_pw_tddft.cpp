@@ -1,6 +1,7 @@
 #include "source_base/parallel_global.h"
-#include "source_hsolver/hsolver_pw_tddft.h"
-#include "source_hsolver/test/linear_test_utils.h"
+#include "source_hsolver/module_rt_pw/cn_solver_pw.h"
+#include "source_hsolver/module_rt_pw/td_orbital_ops.h"
+#include "source_hsolver/module_rt_pw/test/linear_test_utils.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
@@ -184,8 +185,9 @@ TYPED_TEST(PWTDDFTTest, SpinorCNMatchesDenseSolve)
     DenseHamiltonian<T> op(dimensions);
     op.spinor = true;
     hsolver::PWLinearOptions options;
+    hsolver::TDOrbOpts orb_opts;
     options.npol = 2;
-    options.global_k_indices = {0, 1};
+    options.global_k_indices = std::vector<int>{0, 1};
     options.linear.method = hsolver::LinearMethod::bicgstab;
     options.linear.tolerance = single ? 2e-6 : 1e-13;
     options.linear.max_iterations = 100;
@@ -196,7 +198,10 @@ TYPED_TEST(PWTDDFTTest, SpinorCNMatchesDenseSolve)
     const hsolver::diag_comm_info comm(0, 1);
 #endif
     std::ostringstream log;
-    hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
+    orb_opts.npol = options.npol;
+    orb_opts.global_k_indices = options.global_k_indices;
+    hsolver::TDOrbOps<T, Device> orbitals(orb_opts, comm, log);
+    hsolver::CNSolverPW<T, Device> solver(basis, options, comm, log);
     const int ld = 2 * npwx;
     psi::Psi<T> previous(2, bands, ld, sizes, true);
     std::vector<std::vector<T>> packed(2);
@@ -222,12 +227,13 @@ TYPED_TEST(PWTDDFTTest, SpinorCNMatchesDenseSolve)
     psi::Psi<T> current(previous);
     const ModuleBase::Vector3<double> shift(0.13, -0.07, 0.02);
     solver.solve(op, previous, &current, dt, shift, 1, 1, false);
+    orbitals.correct(&current, 1, 1, false);
     for (int ik = 0; ik < 2; ++ik)
     {
         current.fix_k(ik);
         const int n = dimensions[ik];
         const auto reference = dense_cn(op.matrices[ik], packed[ik], n, bands, dt);
-        const auto eij = solver.cal_eij(op, current, ik);
+        const auto eij = orbitals.cal_eij(op, current, ik);
         for (int band = 0; band < bands; ++band)
         {
             for (int spin = 0; spin < 2; ++spin)
@@ -277,14 +283,18 @@ TYPED_TEST(PWTDDFTTest, ComplexEijExcludesPadding)
     initialize_basis(sizes, &basis);
     DenseHamiltonian<T> op(sizes);
     hsolver::PWLinearOptions options;
-    options.global_k_indices = {0};
+    hsolver::TDOrbOpts orb_opts;
+    options.global_k_indices = std::vector<int>{0};
 #ifdef __MPI
     const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
 #else
     const hsolver::diag_comm_info comm(0, 1);
 #endif
     std::ostringstream log;
-    hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
+    orb_opts.npol = options.npol;
+    orb_opts.global_k_indices = options.global_k_indices;
+    hsolver::TDOrbOps<T, Device> orbitals(orb_opts, comm, log);
+    hsolver::CNSolverPW<T, Device> solver(basis, options, comm, log);
     psi::Psi<T> current(1, bands, ld, sizes, true);
     const T phases[]{T(1), T(0, 1), T(-1)};
     const T padding(std::numeric_limits<TypeParam>::quiet_NaN());
@@ -296,7 +306,7 @@ TYPED_TEST(PWTDDFTTest, ComplexEijExcludesPadding)
         }
         current(band, band) = phases[band];
     }
-    const std::vector<std::complex<double>> eij = solver.cal_eij(op, current, 0);
+    const std::vector<std::complex<double>> eij = orbitals.cal_eij(op, current, 0);
     ASSERT_EQ(eij.size(), bands * bands);
     // These orbitals select H's leading block, with an independent phase on each column.
     for (int j = 0; j < bands; ++j)
@@ -344,7 +354,8 @@ TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
             DenseHamiltonian<T> op(sizes);
             std::ostringstream log;
             hsolver::PWLinearOptions options;
-            options.global_k_indices = {0, 1};
+            hsolver::TDOrbOpts orb_opts;
+            options.global_k_indices = std::vector<int>{0, 1};
             const std::string solver_name = cn_variant ? method.substr(0, method.size() - 3) : method;
             options.linear.method = hsolver::parse_linear_method(solver_name);
             options.linear.tolerance = single_precision ? 2e-6 : 1e-13;
@@ -354,7 +365,10 @@ TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
             options.linear.restart = 2;
             options.linear.reconstruct = method == "gmres" && recycle;
             options.cn_init = method == "gmres" || cn_variant;
-            hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
+            orb_opts.npol = options.npol;
+            orb_opts.global_k_indices = options.global_k_indices;
+            hsolver::TDOrbOps<T, Device> orbitals(orb_opts, comm, log);
+            hsolver::CNSolverPW<T, Device> solver(basis, options, comm, log);
             psi::Psi<T> previous(2, bands, ld, sizes, true);
             for (int ik = 0; ik < 2; ++ik)
             {
@@ -376,6 +390,7 @@ TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
                 log.str("");
                 log.clear();
                 solver.solve(op, previous, &current, step_dt, shift, step, 1, true);
+                orbitals.correct(&current, step, 1, true);
                 check_dense_step(op, previous, current, step_dt);
                 if (recycle || precond == "kinetic_subspace")
                 {
@@ -427,6 +442,7 @@ TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
                     log.str("");
                     log.clear();
                     solver.solve(op, previous, &current, step_dt, shift, step, 2, true);
+                    orbitals.correct(&current, step, 2, true);
                     check_dense_step(op, previous, current, step_dt);
                     EXPECT_EQ(log.str().find("cn_initial=1"), std::string::npos);
                 }
@@ -441,7 +457,7 @@ TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
                 }
             }
             ModuleBase::matrix energies(2, bands);
-            solver.cal_band_energy(op, current, &energies);
+            orbitals.cal_band_energy(op, current, &energies);
             for (int ik = 0; ik < 2; ++ik)
             {
                 current.fix_k(ik);
@@ -492,14 +508,18 @@ TYPED_TEST(PWTDDFTTest, UnequalOccupationsAndDiagnosticsPreservePropagation)
     {
         std::ostringstream log;
         hsolver::PWLinearOptions options;
-        options.global_k_indices = {0};
+        hsolver::TDOrbOpts orb_opts;
+        options.global_k_indices = std::vector<int>{0};
         options.linear.method = hsolver::LinearMethod::gmres;
         options.linear.tolerance = single ? 2e-6 : 1e-13;
         options.linear.max_iterations = 100;
         options.linear.restart = n;
         options.preconditioner = hsolver::PWPreconditioner::none;
-        options.out_stat = out_stat;
-        hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
+        orb_opts.out_stat = out_stat;
+        orb_opts.npol = options.npol;
+        orb_opts.global_k_indices = options.global_k_indices;
+        hsolver::TDOrbOps<T, Device> orbitals(orb_opts, comm, log);
+        hsolver::CNSolverPW<T, Device> solver(basis, options, comm, log);
         psi::Psi<T> previous(1, bands, ld, sizes, true);
         std::fill_n(previous.get_pointer(), ld * bands, T(0));
         std::vector<Wide> reference(n * bands, Wide(0));
@@ -511,14 +531,15 @@ TYPED_TEST(PWTDDFTTest, UnequalOccupationsAndDiagnosticsPreservePropagation)
         psi::Psi<T> initial(previous);
         initial(0, 0) = T(1.01);
         const psi::Psi<T> original(initial);
-        solver.check_initial(initial, 1);
+        orbitals.check_initial(initial, 1);
         EXPECT_EQ(std::memcmp(initial.get_pointer(), original.get_pointer(), ld * bands * sizeof(T)), 0);
         // The finite initial defect is diagnostic; propagate the orthonormal reference state.
         psi::Psi<T> current(previous);
         for (int step = 1; step <= 8; ++step)
         {
-            solver.reset_orth_stats();
+            orbitals.reset_orth_stats();
             solver.solve(op, previous, &current, dt, shift, step, 1, false);
+            orbitals.correct(&current, step, 1, false);
             reference = dense_cn(h, reference, n, bands, dt);
             for (int band = 0; band < bands; ++band)
             {
@@ -544,7 +565,7 @@ TYPED_TEST(PWTDDFTTest, UnequalOccupationsAndDiagnosticsPreservePropagation)
                 }
             }
             const double expected_electrons = out_stat ? 1.4 : 0.0;
-            EXPECT_NEAR(solver.wave_electrons(occupations), expected_electrons, tolerance);
+            EXPECT_NEAR(orbitals.wave_electrons(occupations), expected_electrons, tolerance);
             const T* data = current.get_pointer();
             if (!out_stat)
             {
