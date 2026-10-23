@@ -196,7 +196,7 @@ void ReadInput::item_dfpt()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_asr must be no, simple or crystal.");
         Input_Item item("dfpt_mix_type");
-        item.annotation = "mixing scheme of the DFPT first-order density: plain, kerker or broyden";
+        item.annotation = "mixing scheme of the DFPT response SCF: plain, kerker, broyden or v_sc";
         item.category = category;
         item.type = "String";
         item.description = "Set the mixing scheme of the first-order density in the "
@@ -219,9 +219,9 @@ void ReadInput::item_dfpt()
         sync_string(input.dfpt_mix_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.dfpt_mix_type != "plain" && para.input.dfpt_mix_type != "kerker"
-                && para.input.dfpt_mix_type != "broyden")
+                && para.input.dfpt_mix_type != "broyden" && para.input.dfpt_mix_type != "v_sc")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_mix_type must be plain, kerker or broyden.");
+                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_mix_type must be plain, kerker, broyden or v_sc.");
             }
         };
         this->add_item(item);
