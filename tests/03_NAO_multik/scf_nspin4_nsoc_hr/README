@@ -1,8 +1,0 @@
-Self-consistent nspin=4 O2 H(R)/S(R) regression, without SOC.
-Two O atoms separated by 2.3 bohr along z in a 20-bohr cubic cell.
-Existing fully relativistic O PP and minimal 6-bohr 1s1p orbitals; PBE, 20 Ry, Gamma 1x1x1.
-Both initial moments are (1/sqrt(2),1/sqrt(2),0) muB; no DeltaSpin constraint.
-Full SCF reaches 1e-6 within 50 steps and retains a finite y magnetization.
-Complete raw complex references cover the nspin=4 interatomic H(R) export fix.
-The pre-fix build converges but fails the H comparison against the fixed-build reference.
-Only R=0 is present. This tests the export convention, not material convergence or intercell Bloch phases.
