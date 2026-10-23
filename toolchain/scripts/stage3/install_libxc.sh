@@ -43,65 +43,65 @@ LIBXC_LIBS=""
 cd "${BUILDDIR}"
 
 case "$with_libxc" in
-__INSTALL__)
-  echo "==================== Installing LIBXC ===================="
-  pkg_install_dir="${INSTALLDIR}/libxc-${libxc_ver}"
-  #pkg_install_dir="${HOME}/lib/libxc/${libxc_ver}-gcc8"
-  install_lock_file="${pkg_install_dir}/install_successful"
-  if verify_checksums "${install_lock_file}"; then
-    echo "libxc-${libxc_ver} is already installed, skipping it."
-  else
-    libxc_url="https://gitlab.com/libxc/libxc/-/archive/${libxc_ver}/${libxc_pkg}"
-    retrieve_package "${libxc_sha256}" "${libxc_pkg}" "${libxc_url}"
+  __INSTALL__)
+    echo "==================== Installing LIBXC ===================="
+    pkg_install_dir="${INSTALLDIR}/libxc-${libxc_ver}"
+    #pkg_install_dir="${HOME}/lib/libxc/${libxc_ver}-gcc8"
+    install_lock_file="${pkg_install_dir}/install_successful"
+    if verify_checksums "${install_lock_file}"; then
+      echo "libxc-${libxc_ver} is already installed, skipping it."
+    else
+      libxc_url="https://gitlab.com/libxc/libxc/-/archive/${libxc_ver}/${libxc_pkg}"
+      retrieve_package "${libxc_sha256}" "${libxc_pkg}" "${libxc_url}"
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip installation"
+        exit 0
+      fi
+      echo "Installing from scratch into ${pkg_install_dir}"
+      [ -d libxc-${libxc_ver} ] && rm -rf libxc-${libxc_ver}
+      tar -xjf ${libxc_pkg}
+      cd libxc-${libxc_ver}
+      mkdir build
+      cd build
+      cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=${pkg_install_dir} \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_INSTALL_LIBDIR=lib \
+        -DCMAKE_VERBOSE_MAKEFILE=ON \
+        -DENABLE_FORTRAN=ON \
+        -DENABLE_PYTHON=OFF \
+        -DBUILD_TESTING=OFF .. \
+        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+      cd ../..
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
+    fi
+    LIBXC_CFLAGS="-I'${pkg_install_dir}/include'"
+    LIBXC_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    ;;
+  __SYSTEM__)
+    echo "==================== Finding LIBXC from system paths ===================="
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
-      echo "--pack-run mode specified, skip installation"
+      echo "--pack-run mode specified, skip system check"
       exit 0
     fi
-    echo "Installing from scratch into ${pkg_install_dir}"
-    [ -d libxc-${libxc_ver} ] && rm -rf libxc-${libxc_ver}
-    tar -xjf ${libxc_pkg}
-    cd libxc-${libxc_ver}
-    mkdir build
-    cd build
-    cmake \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_INSTALL_PREFIX=${pkg_install_dir} \
-      -DBUILD_SHARED_LIBS=ON \
-      -DCMAKE_INSTALL_LIBDIR=lib \
-      -DCMAKE_VERBOSE_MAKEFILE=ON \
-      -DENABLE_FORTRAN=ON \
-      -DENABLE_PYTHON=OFF \
-      -DBUILD_TESTING=OFF .. \
-      >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-    make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-    make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
-    cd ../..
-    write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
-  fi
-  LIBXC_CFLAGS="-I'${pkg_install_dir}/include'"
-  LIBXC_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  ;;
-__SYSTEM__)
-  echo "==================== Finding LIBXC from system paths ===================="
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  check_lib -lxcf03 "libxc"
-  check_lib -lxc "libxc"
-  add_include_from_paths LIBXC_CFLAGS "xc.h" $INCLUDE_PATHS
-  add_lib_from_paths LIBXC_LDFLAGS "libxc.*" $LIB_PATHS
-  ;;
-__DONTUSE__) ;;
+    check_lib -lxcf03 "libxc"
+    check_lib -lxc "libxc"
+    add_include_from_paths LIBXC_CFLAGS "xc.h" $INCLUDE_PATHS
+    add_lib_from_paths LIBXC_LDFLAGS "libxc.*" $LIB_PATHS
+    ;;
+  __DONTUSE__) ;;
 
-*)
-  echo "==================== Linking LIBXC to user paths ===================="
-  pkg_install_dir="$with_libxc"
-  check_dir "${pkg_install_dir}/lib"
-  check_dir "${pkg_install_dir}/include"
-  LIBXC_CFLAGS="-I'${pkg_install_dir}/include'"
-  LIBXC_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  ;;
+  *)
+    echo "==================== Linking LIBXC to user paths ===================="
+    pkg_install_dir="$with_libxc"
+    check_dir "${pkg_install_dir}/lib"
+    check_dir "${pkg_install_dir}/include"
+    LIBXC_CFLAGS="-I'${pkg_install_dir}/include'"
+    LIBXC_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    ;;
 esac
 if [ "$with_libxc" != "__DONTUSE__" ]; then
   LIBXC_LIBS="-lxcf03 -lxc"

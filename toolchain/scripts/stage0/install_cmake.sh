@@ -40,75 +40,75 @@ source "${INSTALLDIR}"/toolchain.env
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 case "${with_cmake}" in
-__INSTALL__)
-  echo "==================== Installing CMake ===================="
-  case "$(uname -s):${SYSTEM_ARCH}" in
-  Darwin:x86_64 | Darwin:arm64)
-    cmake_arch="macos-universal"
-    cmake_checksum_arch="macos"
-    ;;
-  Linux:x86_64)
-    cmake_arch="linux-x86_64"
-    cmake_checksum_arch="x86_64"
-    ;;
-  Linux:arm64)
-    cmake_arch="linux-aarch64"
-    cmake_checksum_arch="aarch64"
-    ;;
-  *)
-    report_error ${LINENO} \
-      "cmake installation for ARCH=${SYSTEM_ARCH} under $(uname -s) is not supported. You can try to use the system installation using the flag \"--with-cmake=system\" instead."
-    exit 1
-    ;;
-  esac
+  __INSTALL__)
+    echo "==================== Installing CMake ===================="
+    case "$(uname -s):${SYSTEM_ARCH}" in
+      Darwin:x86_64 | Darwin:arm64)
+        cmake_arch="macos-universal"
+        cmake_checksum_arch="macos"
+        ;;
+      Linux:x86_64)
+        cmake_arch="linux-x86_64"
+        cmake_checksum_arch="x86_64"
+        ;;
+      Linux:arm64)
+        cmake_arch="linux-aarch64"
+        cmake_checksum_arch="aarch64"
+        ;;
+      *)
+        report_error ${LINENO} \
+          "cmake installation for ARCH=${SYSTEM_ARCH} under $(uname -s) is not supported. You can try to use the system installation using the flag \"--with-cmake=system\" instead."
+        exit 1
+        ;;
+    esac
 
-  if [ "${version_suffix}" = "alt" ]; then
-    cmake_checksum_var="cmake_alt_sha256_${cmake_checksum_arch}"
-  else
-    cmake_checksum_var="cmake_main_sha256_${cmake_checksum_arch}"
-  fi
-  cmake_sha256="${!cmake_checksum_var}"
+    if [ "${version_suffix}" = "alt" ]; then
+      cmake_checksum_var="cmake_alt_sha256_${cmake_checksum_arch}"
+    else
+      cmake_checksum_var="cmake_main_sha256_${cmake_checksum_arch}"
+    fi
+    cmake_sha256="${!cmake_checksum_var}"
 
-  pkg_install_dir="${INSTALLDIR}/cmake-${cmake_ver}"
-  #pkg_install_dir="${HOME}/apps/cmake/${cmake_ver}"
-  install_lock_file="${pkg_install_dir}/install_successful"
-  cmake_pkg="cmake-${cmake_ver}-${cmake_arch}.tar.gz"
-  if verify_checksums "${install_lock_file}"; then
-    echo "cmake-${cmake_ver} is already installed, skipping it."
-  else
-    url="https://cmake.org/files/v${cmake_ver%.*}/${cmake_pkg}"
-    retrieve_package "${cmake_sha256}" "${cmake_pkg}" "${url}"
+    pkg_install_dir="${INSTALLDIR}/cmake-${cmake_ver}"
+    #pkg_install_dir="${HOME}/apps/cmake/${cmake_ver}"
+    install_lock_file="${pkg_install_dir}/install_successful"
+    cmake_pkg="cmake-${cmake_ver}-${cmake_arch}.tar.gz"
+    if verify_checksums "${install_lock_file}"; then
+      echo "cmake-${cmake_ver} is already installed, skipping it."
+    else
+      url="https://cmake.org/files/v${cmake_ver%.*}/${cmake_pkg}"
+      retrieve_package "${cmake_sha256}" "${cmake_pkg}" "${url}"
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip installation"
+        exit 0
+      fi
+      echo "Installing from scratch into ${pkg_install_dir}"
+      mkdir -p ${pkg_install_dir}
+      if [ "${cmake_arch}" = "macos-universal" ]; then
+        strip_components=3
+      else
+        strip_components=1
+      fi
+      tar --strip-components=${strip_components} -xvf ${cmake_pkg} -C ${pkg_install_dir} >install.log 2>&1 || tail_excerpt install.log
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage0/$(basename ${SCRIPT_NAME})"
+    fi
+    ;;
+  __SYSTEM__)
+    echo "==================== Finding CMake from system paths ===================="
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
-      echo "--pack-run mode specified, skip installation"
+      echo "--pack-run mode specified, skip system check"
       exit 0
     fi
-    echo "Installing from scratch into ${pkg_install_dir}"
-    mkdir -p ${pkg_install_dir}
-    if [ "${cmake_arch}" = "macos-universal" ]; then
-      strip_components=3
-    else
-      strip_components=1
-    fi
-    tar --strip-components=${strip_components} -xvf ${cmake_pkg} -C ${pkg_install_dir} >install.log 2>&1 || tail_excerpt install.log
-    write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage0/$(basename ${SCRIPT_NAME})"
-  fi
-  ;;
-__SYSTEM__)
-  echo "==================== Finding CMake from system paths ===================="
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  check_command cmake "cmake"
-  ;;
-__DONTUSE__)
-  # Nothing to do
-  ;;
-*)
-  echo "==================== Linking CMake to user paths ===================="
-  pkg_install_dir="$with_cmake"
-  check_dir "${with_cmake}/bin"
-  ;;
+    check_command cmake "cmake"
+    ;;
+  __DONTUSE__)
+    # Nothing to do
+    ;;
+  *)
+    echo "==================== Linking CMake to user paths ===================="
+    pkg_install_dir="$with_cmake"
+    check_dir "${with_cmake}/bin"
+    ;;
 esac
 if [ "${with_cmake}" != "__DONTUSE__" ]; then
   if [ "${with_cmake}" != "__SYSTEM__" ]; then

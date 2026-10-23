@@ -781,19 +781,19 @@ append_path() {
 read_enable() {
   local __input_var="${1#*=}"
   case $__input_var in
-  "$1")
-    # if there is no "=" then treat as "yes"
-    echo "__TRUE__"
-    ;;
-  yes)
-    echo "__TRUE__"
-    ;;
-  no)
-    echo "__FALSE__"
-    ;;
-  *)
-    echo "__INVALID__"
-    ;;
+    "$1")
+      # if there is no "=" then treat as "yes"
+      echo "__TRUE__"
+      ;;
+    yes)
+      echo "__TRUE__"
+      ;;
+    no)
+      echo "__FALSE__"
+      ;;
+    *)
+      echo "__INVALID__"
+      ;;
   esac
 }
 
@@ -801,26 +801,26 @@ read_enable() {
 read_with() {
   local __input_var="${1#--with*=}"
   case $__input_var in
-  "${1}")
-    # if there is no "=" then treat as "install"
-    if [ ${#} -gt 1 ]; then
-      echo "${2}"
-    else
+    "${1}")
+      # if there is no "=" then treat as "install"
+      if [ ${#} -gt 1 ]; then
+        echo "${2}"
+      else
+        echo "__INSTALL__"
+      fi
+      ;;
+    install)
       echo "__INSTALL__"
-    fi
-    ;;
-  install)
-    echo "__INSTALL__"
-    ;;
-  system)
-    echo "__SYSTEM__"
-    ;;
-  no)
-    echo "__DONTUSE__"
-    ;;
-  *)
-    echo "${__input_var//\~/$HOME}"
-    ;;
+      ;;
+    system)
+      echo "__SYSTEM__"
+      ;;
+    no)
+      echo "__DONTUSE__"
+      ;;
+    *)
+      echo "${__input_var//\~/$HOME}"
+      ;;
   esac
 }
 
@@ -887,22 +887,22 @@ verify_file_integrity() {
 
   local hash_command
   case "$hash_type" in
-  sha256)
-    hash_command="sha256sum"
-    command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 256"
-    ;;
-  sha1)
-    hash_command="sha1sum"
-    command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 1"
-    ;;
-  md5)
-    hash_command="md5sum"
-    command -v "$hash_command" >/dev/null 2>&1 || hash_command="md5"
-    ;;
-  *)
-    report_error_enhanced 1 "Unsupported hash type" "$hash_type"
-    return 1
-    ;;
+    sha256)
+      hash_command="sha256sum"
+      command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 256"
+      ;;
+    sha1)
+      hash_command="sha1sum"
+      command -v "$hash_command" >/dev/null 2>&1 || hash_command="shasum -a 1"
+      ;;
+    md5)
+      hash_command="md5sum"
+      command -v "$hash_command" >/dev/null 2>&1 || hash_command="md5"
+      ;;
+    *)
+      report_error_enhanced 1 "Unsupported hash type" "$hash_type"
+      return 1
+      ;;
   esac
 
   local computed_hash
@@ -933,47 +933,47 @@ download_pkg_from_url() {
 
   # Smart certificate validation strategy
   case "${DOWNLOAD_CERT_POLICY:-smart}" in
-  "strict")
-    echo "Downloading with strict certificate validation: $__url"
-    if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
-      rm -f "$__filename"
-      report_error "failed to download $__url (strict certificate validation)"
-      recommend_offline_installation "$__filename" "$__url"
-      if [ "${PACK_RUN}" != "__TRUE__" ]; then
-        return 1
-      fi
-    fi
-    ;;
-  "skip")
-    echo "Downloading with certificate validation disabled: $__url"
-    if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
-      rm -f "$__filename"
-      report_error "failed to download $__url"
-      recommend_offline_installation "$__filename" "$__url"
-      if [ "${PACK_RUN}" != "__TRUE__" ]; then
-        return 1
-      fi
-    fi
-    ;;
-  "smart" | *)
-    # Smart fallback: try with certificate validation first, then without
-    echo "Attempting secure download: $__url"
-    if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
-      echo "Download successful with certificate validation"
-    else
-      echo "Certificate validation failed, retrying without certificate check..."
-      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
+    "strict")
+      echo "Downloading with strict certificate validation: $__url"
+      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
         rm -f "$__filename"
-        report_error "failed to download $__url (both secure and insecure attempts failed)"
+        report_error "failed to download $__url (strict certificate validation)"
         recommend_offline_installation "$__filename" "$__url"
         if [ "${PACK_RUN}" != "__TRUE__" ]; then
           return 1
         fi
-      else
-        echo "Download successful without certificate validation"
       fi
-    fi
-    ;;
+      ;;
+    "skip")
+      echo "Downloading with certificate validation disabled: $__url"
+      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
+        rm -f "$__filename"
+        report_error "failed to download $__url"
+        recommend_offline_installation "$__filename" "$__url"
+        if [ "${PACK_RUN}" != "__TRUE__" ]; then
+          return 1
+        fi
+      fi
+      ;;
+    "smart" | *)
+      # Smart fallback: try with certificate validation first, then without
+      echo "Attempting secure download: $__url"
+      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+        echo "Download successful with certificate validation"
+      else
+        echo "Certificate validation failed, retrying without certificate check..."
+        if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
+          rm -f "$__filename"
+          report_error "failed to download $__url (both secure and insecure attempts failed)"
+          recommend_offline_installation "$__filename" "$__url"
+          if [ "${PACK_RUN}" != "__TRUE__" ]; then
+            return 1
+          fi
+        else
+          echo "Download successful without certificate validation"
+        fi
+      fi
+      ;;
   esac
 
   # checksum

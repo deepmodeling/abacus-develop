@@ -43,162 +43,162 @@ TSANFLAGS=""
 cd "${BUILDDIR}"
 
 case "${with_gcc}" in
-__INSTALL__)
-  echo "==================== Installing GCC ===================="
-  pkg_install_dir="${INSTALLDIR}/gcc-${gcc_ver}"
-  repack_filename="gcc-${gcc_ver}-with-prereq.tar.gz"
-  repkg_install_dir="${INSTALLDIR}/${repack_filename}"
-  #pkg_install_dir="${HOME}/apps/gcc/${gcc_ver}"
-  install_lock_file="${pkg_install_dir}/install_successful"
-  if verify_checksums "${install_lock_file}"; then
-    echo "gcc-${gcc_ver} is already installed, skipping it."
-  else
-    # Check if repackaged tarball exists for offline installation
-    if [ -f "${repack_filename}" ]; then
-      echo "${repack_filename} is found, extracting it..."
-      tar -xzf "${repack_filename}"
-      echo "Successfully extracted ${repack_filename}"
+  __INSTALL__)
+    echo "==================== Installing GCC ===================="
+    pkg_install_dir="${INSTALLDIR}/gcc-${gcc_ver}"
+    repack_filename="gcc-${gcc_ver}-with-prereq.tar.gz"
+    repkg_install_dir="${INSTALLDIR}/${repack_filename}"
+    #pkg_install_dir="${HOME}/apps/gcc/${gcc_ver}"
+    install_lock_file="${pkg_install_dir}/install_successful"
+    if verify_checksums "${install_lock_file}"; then
+      echo "gcc-${gcc_ver} is already installed, skipping it."
     else
-      url=https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/gcc-${gcc_ver}/gcc-${gcc_ver}.tar.gz
-      retrieve_package "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz" "${url}"
-    fi
-    [ -d gcc-${gcc_ver} ] && rm -rf gcc-${gcc_ver}
-    tar -xzf gcc-${gcc_ver}.tar.gz
-
-    echo "Installing GCC from scratch into ${pkg_install_dir}"
-    cd gcc-${gcc_ver}
-
-    # Check network connectivity before downloading prerequisites
-    if curl -s --connect-timeout 5 https://gcc.gnu.org >/dev/null 2>&1; then
-      echo "Downloading prerequisites from official GCC site..."
-      # Try official site first
-      if ./contrib/download_prerequisites >prereq.log 2>&1; then
-        echo "Prerequisites downloaded successfully from official site"
+      # Check if repackaged tarball exists for offline installation
+      if [ -f "${repack_filename}" ]; then
+        echo "${repack_filename} is found, extracting it..."
+        tar -xzf "${repack_filename}"
+        echo "Successfully extracted ${repack_filename}"
       else
-        echo "Official site failed, trying mirror site..."
-        # Fallback to cp2k.org mirror
-        sed -i 's|http://gcc.gnu.org/pub/gcc/infrastructure/|https://cp2k.org/static/downloads/|' ./contrib/download_prerequisites
-        ./contrib/download_prerequisites >prereq.log 2>&1 || tail -n ${LOG_LINES} prereq.log
+        url=https://mirrors.tuna.tsinghua.edu.cn/gnu/gcc/gcc-${gcc_ver}/gcc-${gcc_ver}.tar.gz
+        retrieve_package "${gcc_sha256}" "gcc-${gcc_ver}.tar.gz" "${url}"
       fi
-    else
-      echo "Network unavailable, skipping prerequisites download (offline mode)"
-    fi
+      [ -d gcc-${gcc_ver} ] && rm -rf gcc-${gcc_ver}
+      tar -xzf gcc-${gcc_ver}.tar.gz
 
+      echo "Installing GCC from scratch into ${pkg_install_dir}"
+      cd gcc-${gcc_ver}
+
+      # Check network connectivity before downloading prerequisites
+      if curl -s --connect-timeout 5 https://gcc.gnu.org >/dev/null 2>&1; then
+        echo "Downloading prerequisites from official GCC site..."
+        # Try official site first
+        if ./contrib/download_prerequisites >prereq.log 2>&1; then
+          echo "Prerequisites downloaded successfully from official site"
+        else
+          echo "Official site failed, trying mirror site..."
+          # Fallback to cp2k.org mirror
+          sed -i 's|http://gcc.gnu.org/pub/gcc/infrastructure/|https://cp2k.org/static/downloads/|' ./contrib/download_prerequisites
+          ./contrib/download_prerequisites >prereq.log 2>&1 || tail -n ${LOG_LINES} prereq.log
+        fi
+      else
+        echo "Network unavailable, skipping prerequisites download (offline mode)"
+      fi
+
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode: repackaging GCC with prerequisites for offline installation"
+        cd ..
+        # Create a new tarball with prerequisites included
+        repack_filename="gcc-${gcc_ver}-with-prereq.tar.gz"
+        echo "Creating ${repack_filename}..."
+        tar -czf "${repack_filename}" gcc-${gcc_ver}/
+        echo "Successfully created ${repack_filename} for offline installation"
+        echo "This package contains GCC source code with all prerequisites ready for offline build"
+        exit 0
+      fi
+      GCCROOT=${PWD}
+      mkdir obj
+      cd obj
+      # TODO: Maybe use --disable-libquadmath-support to improve static linking:
+      # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=46539
+      #
+      # TODO: Maybe use --disable-gnu-unique-object to improve static linking:
+      # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=60348#c13
+      # https://stackoverflow.com/questions/11931420
+      #
+      # TODO: Unfortunately, we can not simply use --disable-shared, because
+      # it would break OpenBLAS build and probably others too.
+      COMMON_FLAGS="-O2 -fPIC -fno-omit-frame-pointer -fopenmp -g"
+      CFLAGS="${COMMON_FLAGS}"
+      CXXFLAGS="${CFLAGS}"
+      FCFLAGS="${COMMON_FLAGS} -fbacktrace"
+      ${GCCROOT}/configure --prefix="${pkg_install_dir}" \
+        --libdir="${pkg_install_dir}/lib" \
+        --enable-languages=c,c++,fortran \
+        --disable-multilib --disable-bootstrap \
+        --enable-lto \
+        --enable-plugins \
+        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) \
+        CFLAGS="${CFLAGS}" \
+        CXXFLAGS="${CXXFLAGS}" \
+        FCFLAGS="${FCFLAGS}" \
+        >make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make -j $(get_nprocs) install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+      # thread sanitizer
+      if [ "${ENABLE_TSAN}" = "__TRUE__" ]; then
+        # now the tricky bit... we need to recompile in particular
+        # libgomp with -fsanitize=thread.. there is not configure
+        # option for this (as far as I know).  we need to go in
+        # the build tree and recompile / reinstall with proper
+        # options...  this is likely to break for later version of
+        # gcc, tested with 5.1.0 based on
+        # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55374#c10
+        cd x86_64*/libgfortran
+        make clean >clean.log 2>&1 || tail -n ${LOG_LINES} clean.log
+        CFLAGS="${CFLAGS} -fsanitize=thread"
+        CXXFLAGS="${CXXFLAGS} -fsanitize=thread"
+        FCFLAGS="${FCFLAGS} -fsanitize=thread"
+        make -j $(get_nprocs) \
+          CFLAGS="${CFLAGS}" \
+          CXXFLAGS="${CXXFLAGS}" \
+          FCFLAGS="${FCFLAGS}" \
+          LDFLAGS="-B$(pwd)/../libsanitizer/tsan/.libs/ -Wl,-rpath,$(pwd)/../libsanitizer/tsan/.libs/ -fsanitize=thread" \
+          >make.log 2>&1 || tail -n ${LOG_LINES} make.log
+        make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+        cd ../libgomp
+        make clean >clean.log 2>&1 || tail -n ${LOG_LINES} clean.log
+        make -j $(get_nprocs) \
+          CFLAGS="${CFLAGS}" \
+          CXXFLAGS="${CXXFLAGS}" \
+          FCFLAGS="${FCFLAGS}" \
+          LDFLAGS="-B$(pwd)/../libsanitizer/tsan/.libs/ -Wl,-rpath,$(pwd)/../libsanitizer/tsan/.libs/ -fsanitize=thread" \
+          >make.log 2>&1 || tail -n ${LOG_LINES} make.log
+        make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+        cd ${GCCROOT}/obj/
+      fi
+      cd ../..
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage0/$(basename ${SCRIPT_NAME})"
+    fi
+    check_install ${pkg_install_dir}/bin/gcc "gcc" && CC="${pkg_install_dir}/bin/gcc" || exit 1
+    check_install ${pkg_install_dir}/bin/g++ "gcc" && CXX="${pkg_install_dir}/bin/g++" || exit 1
+    check_install ${pkg_install_dir}/bin/gfortran "gcc" && FC="${pkg_install_dir}/bin/gfortran" || exit 1
+    F90="${FC}"
+    F77="${FC}"
+    GCC_CFLAGS="-I'${pkg_install_dir}/include'"
+    GCC_LDFLAGS="-L'${pkg_install_dir}/lib64' -L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib64' -Wl,-rpath,'${pkg_install_dir}/lib64'"
+    ;;
+  __SYSTEM__)
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
-      echo "--pack-run mode: repackaging GCC with prerequisites for offline installation"
-      cd ..
-      # Create a new tarball with prerequisites included
-      repack_filename="gcc-${gcc_ver}-with-prereq.tar.gz"
-      echo "Creating ${repack_filename}..."
-      tar -czf "${repack_filename}" gcc-${gcc_ver}/
-      echo "Successfully created ${repack_filename} for offline installation"
-      echo "This package contains GCC source code with all prerequisites ready for offline build"
+      echo "--pack-run mode specified, skip system check"
       exit 0
     fi
-    GCCROOT=${PWD}
-    mkdir obj
-    cd obj
-    # TODO: Maybe use --disable-libquadmath-support to improve static linking:
-    # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=46539
-    #
-    # TODO: Maybe use --disable-gnu-unique-object to improve static linking:
-    # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=60348#c13
-    # https://stackoverflow.com/questions/11931420
-    #
-    # TODO: Unfortunately, we can not simply use --disable-shared, because
-    # it would break OpenBLAS build and probably others too.
-    COMMON_FLAGS="-O2 -fPIC -fno-omit-frame-pointer -fopenmp -g"
-    CFLAGS="${COMMON_FLAGS}"
-    CXXFLAGS="${CFLAGS}"
-    FCFLAGS="${COMMON_FLAGS} -fbacktrace"
-    ${GCCROOT}/configure --prefix="${pkg_install_dir}" \
-      --libdir="${pkg_install_dir}/lib" \
-      --enable-languages=c,c++,fortran \
-      --disable-multilib --disable-bootstrap \
-      --enable-lto \
-      --enable-plugins \
-      >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-    make -j $(get_nprocs) \
-      CFLAGS="${CFLAGS}" \
-      CXXFLAGS="${CXXFLAGS}" \
-      FCFLAGS="${FCFLAGS}" \
-      >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-    make -j $(get_nprocs) install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
-    # thread sanitizer
-    if [ "${ENABLE_TSAN}" = "__TRUE__" ]; then
-      # now the tricky bit... we need to recompile in particular
-      # libgomp with -fsanitize=thread.. there is not configure
-      # option for this (as far as I know).  we need to go in
-      # the build tree and recompile / reinstall with proper
-      # options...  this is likely to break for later version of
-      # gcc, tested with 5.1.0 based on
-      # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=55374#c10
-      cd x86_64*/libgfortran
-      make clean >clean.log 2>&1 || tail -n ${LOG_LINES} clean.log
-      CFLAGS="${CFLAGS} -fsanitize=thread"
-      CXXFLAGS="${CXXFLAGS} -fsanitize=thread"
-      FCFLAGS="${FCFLAGS} -fsanitize=thread"
-      make -j $(get_nprocs) \
-        CFLAGS="${CFLAGS}" \
-        CXXFLAGS="${CXXFLAGS}" \
-        FCFLAGS="${FCFLAGS}" \
-        LDFLAGS="-B$(pwd)/../libsanitizer/tsan/.libs/ -Wl,-rpath,$(pwd)/../libsanitizer/tsan/.libs/ -fsanitize=thread" \
-        >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
-      cd ../libgomp
-      make clean >clean.log 2>&1 || tail -n ${LOG_LINES} clean.log
-      make -j $(get_nprocs) \
-        CFLAGS="${CFLAGS}" \
-        CXXFLAGS="${CXXFLAGS}" \
-        FCFLAGS="${FCFLAGS}" \
-        LDFLAGS="-B$(pwd)/../libsanitizer/tsan/.libs/ -Wl,-rpath,$(pwd)/../libsanitizer/tsan/.libs/ -fsanitize=thread" \
-        >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-      make install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
-      cd ${GCCROOT}/obj/
-    fi
-    cd ../..
-    write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage0/$(basename ${SCRIPT_NAME})"
-  fi
-  check_install ${pkg_install_dir}/bin/gcc "gcc" && CC="${pkg_install_dir}/bin/gcc" || exit 1
-  check_install ${pkg_install_dir}/bin/g++ "gcc" && CXX="${pkg_install_dir}/bin/g++" || exit 1
-  check_install ${pkg_install_dir}/bin/gfortran "gcc" && FC="${pkg_install_dir}/bin/gfortran" || exit 1
-  F90="${FC}"
-  F77="${FC}"
-  GCC_CFLAGS="-I'${pkg_install_dir}/include'"
-  GCC_LDFLAGS="-L'${pkg_install_dir}/lib64' -L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib64' -Wl,-rpath,'${pkg_install_dir}/lib64'"
-  ;;
-__SYSTEM__)
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  echo "==================== Finding GCC from system paths ===================="
-  check_command gcc "gcc" && CC="$(command -v gcc)" || exit 1
-  check_command g++ "gcc" && CXX="$(command -v g++)" || exit 1
-  check_command gfortran "gcc" && FC="$(command -v gfortran)" || exit 1
-  F90="${FC}"
-  F77="${FC}"
-  add_include_from_paths -p GCC_CFLAGS "c++" ${INCLUDE_PATHS}
-  add_lib_from_paths GCC_LDFLAGS "libgfortran.*" ${LIB_PATHS}
-  ;;
-__DONTUSE__)
-  # Nothing to do
-  ;;
-*)
-  echo "==================== Linking GCC to user paths ===================="
-  pkg_install_dir="${with_gcc}"
-  check_dir "${pkg_install_dir}/bin"
-  check_dir "${pkg_install_dir}/lib"
-  check_dir "${pkg_install_dir}/lib64"
-  check_dir "${pkg_install_dir}/include"
-  check_command ${pkg_install_dir}/bin/gcc "gcc" && CC="${pkg_install_dir}/bin/gcc" || exit 1
-  check_command ${pkg_install_dir}/bin/g++ "gcc" && CXX="${pkg_install_dir}/bin/g++" || exit 1
-  check_command ${pkg_install_dir}/bin/gfortran "gcc" && FC="${pkg_install_dir}/bin/gfortran" || exit 1
-  F90="${FC}"
-  F77="${FC}"
-  GCC_CFLAGS="-I'${pkg_install_dir}/include'"
-  GCC_LDFLAGS="-L'${pkg_install_dir}/lib64' -L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib64' -Wl,-rpath,'${pkg_install_dir}/lib64'"
-  ;;
+    echo "==================== Finding GCC from system paths ===================="
+    check_command gcc "gcc" && CC="$(command -v gcc)" || exit 1
+    check_command g++ "gcc" && CXX="$(command -v g++)" || exit 1
+    check_command gfortran "gcc" && FC="$(command -v gfortran)" || exit 1
+    F90="${FC}"
+    F77="${FC}"
+    add_include_from_paths -p GCC_CFLAGS "c++" ${INCLUDE_PATHS}
+    add_lib_from_paths GCC_LDFLAGS "libgfortran.*" ${LIB_PATHS}
+    ;;
+  __DONTUSE__)
+    # Nothing to do
+    ;;
+  *)
+    echo "==================== Linking GCC to user paths ===================="
+    pkg_install_dir="${with_gcc}"
+    check_dir "${pkg_install_dir}/bin"
+    check_dir "${pkg_install_dir}/lib"
+    check_dir "${pkg_install_dir}/lib64"
+    check_dir "${pkg_install_dir}/include"
+    check_command ${pkg_install_dir}/bin/gcc "gcc" && CC="${pkg_install_dir}/bin/gcc" || exit 1
+    check_command ${pkg_install_dir}/bin/g++ "gcc" && CXX="${pkg_install_dir}/bin/g++" || exit 1
+    check_command ${pkg_install_dir}/bin/gfortran "gcc" && FC="${pkg_install_dir}/bin/gfortran" || exit 1
+    F90="${FC}"
+    F77="${FC}"
+    GCC_CFLAGS="-I'${pkg_install_dir}/include'"
+    GCC_LDFLAGS="-L'${pkg_install_dir}/lib64' -L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib64' -Wl,-rpath,'${pkg_install_dir}/lib64'"
+    ;;
 esac
 if [ "${ENABLE_TSAN}" = "__TRUE__" ]; then
   TSANFLAGS="-fsanitize=thread"

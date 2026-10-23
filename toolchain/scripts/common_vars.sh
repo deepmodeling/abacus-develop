@@ -16,18 +16,18 @@ VERSION_FILE=${VERSION_FILE:-"${SCRIPTDIR}/VERSION"}
 # host architecture
 SYSTEM_ARCH=${SYSTEM_ARCH:-"$(uname -m)"}
 case "${SYSTEM_ARCH}" in
-x86_64 | amd64)
-  SYSTEM_ARCH="x86_64"
-  ;;
-aarch64 | arm64)
-  SYSTEM_ARCH="arm64"
-  ;;
-i?86)
-  SYSTEM_ARCH="i386"
-  ;;
-*)
-  # Keep other architectures as reported by uname.
-  ;;
+  x86_64 | amd64)
+    SYSTEM_ARCH="x86_64"
+    ;;
+  aarch64 | arm64)
+    SYSTEM_ARCH="arm64"
+    ;;
+  i?86)
+    SYSTEM_ARCH="i386"
+    ;;
+  *)
+    # Keep other architectures as reported by uname.
+    ;;
 esac
 export SYSTEM_ARCH
 

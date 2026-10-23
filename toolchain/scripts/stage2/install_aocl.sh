@@ -21,40 +21,40 @@ AOCL_ROOT=""
 cd "${BUILDDIR}"
 
 case "${with_aocl}" in
-__INSTALL__)
-  echo "==================== Installing AOCL ===================="
-  report_error ${LINENO} "To install AOCL, please contact your system administrator."
-  exit 1
-  ;;
-__SYSTEM__)
-  echo "==================== Finding AOCL from system paths ===================="
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  check_lib -lblis "AOCL"
-  check_lib -lflame "AOCL"
-  AOCL_LIBS="-lblis -lflame"
-  add_include_from_paths AOCL_CFLAGS "blis.h" $INCLUDE_PATHS
-  add_lib_from_paths AOCL_LDFLAGS "libblis.*" $LIB_PATHS
-  add_include_from_paths AOCL_CFLAGS "lapack.h" $INCLUDE_PATHS
-  add_lib_from_paths AOCL_LDFLAGS "libflame.*" $LIB_PATHS
-  ;;
-__DONTUSE__)
-  ;;
-*)
-  echo "==================== Linking AOCL to user paths ===================="
-  pkg_install_dir="$with_aocl"
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  check_dir "${pkg_install_dir}/include"
-  check_dir "${pkg_install_dir}/lib"
-  AOCL_CFLAGS="-I'${pkg_install_dir}/include'"
-  AOCL_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  AOCL_LIBS="-lblis -lflame"
-  ;;
+  __INSTALL__)
+    echo "==================== Installing AOCL ===================="
+    report_error ${LINENO} "To install AOCL, please contact your system administrator."
+    exit 1
+    ;;
+  __SYSTEM__)
+    echo "==================== Finding AOCL from system paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip system check"
+      exit 0
+    fi
+    check_lib -lblis "AOCL"
+    check_lib -lflame "AOCL"
+    AOCL_LIBS="-lblis -lflame"
+    add_include_from_paths AOCL_CFLAGS "blis.h" $INCLUDE_PATHS
+    add_lib_from_paths AOCL_LDFLAGS "libblis.*" $LIB_PATHS
+    add_include_from_paths AOCL_CFLAGS "lapack.h" $INCLUDE_PATHS
+    add_lib_from_paths AOCL_LDFLAGS "libflame.*" $LIB_PATHS
+    ;;
+  __DONTUSE__)
+    ;;
+  *)
+    echo "==================== Linking AOCL to user paths ===================="
+    pkg_install_dir="$with_aocl"
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip system check"
+      exit 0
+    fi
+    check_dir "${pkg_install_dir}/include"
+    check_dir "${pkg_install_dir}/lib"
+    AOCL_CFLAGS="-I'${pkg_install_dir}/include'"
+    AOCL_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    AOCL_LIBS="-lblis -lflame"
+    ;;
 esac
 if [ "$with_aocl" != "__DONTUSE__" ]; then
   cat <<EOF >>"${BUILDDIR}/setup_aocl"

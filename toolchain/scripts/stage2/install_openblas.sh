@@ -43,111 +43,111 @@ OPENBLAS_ROOT=""
 cd "${BUILDDIR}"
 
 case "${with_openblas}" in
-__INSTALL__)
-  echo "==================== Installing OpenBLAS ===================="
-  pkg_install_dir="${INSTALLDIR}/openblas-${openblas_ver}"
-  install_lock_file="${pkg_install_dir}/install_successful"
-  if verify_checksums "${install_lock_file}"; then
-    echo "openblas-${openblas_ver} is already installed, skipping it."
-  else
-    url="https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/v${openblas_ver}"
-    retrieve_package "${openblas_sha256}" "${openblas_pkg}" "${url}"
-    if [ "${PACK_RUN}" = "__TRUE__" ]; then
-      echo "--pack-run mode specified, skip installation"
-      exit 0
-    fi
-    echo "Installing from scratch into ${pkg_install_dir}"
-    [ -d OpenBLAS-${openblas_ver} ] && rm -rf OpenBLAS-${openblas_ver}
-    tar -zxf ${openblas_pkg}
-    cd OpenBLAS-${openblas_ver}
-    # Build OpenBLAS with DYNAMIC_ARCH unless native architecture is requested.
-    # If the latter fails, then build with DYNAMIC_ARCH.
-    #
-    # wrt NUM_THREADS=64: this is what the most common Linux distros seem to choose atm
-    #                     for a good compromise between memory usage and scalability
-    #
-    # Unfortunately, NO_SHARED=1 breaks ScaLAPACK build.
-    BUILD_DYNAMIC=0
-    if [ "native" != "${TARGET_CPU}" ]; then
-      BUILD_DYNAMIC=1
-    fi
-    if [ "${BUILD_DYNAMIC}" = "0" ]; then
-      echo "Installing OpenBLAS library for native target"
-      if ! make -j "$(get_nprocs)" \
-        MAKE_NB_JOBS=0 \
-        NUM_THREADS=64 \
-        USE_THREAD=1 \
-        USE_OPENMP=1 \
-        NO_AFFINITY=1 \
-        CC="${CC}" \
-        FC="${FC}" \
-        PREFIX="${pkg_install_dir}" \
-        >make.log 2>&1; then
-        tail -n "${LOG_LINES}" make.log
-        make clean
+  __INSTALL__)
+    echo "==================== Installing OpenBLAS ===================="
+    pkg_install_dir="${INSTALLDIR}/openblas-${openblas_ver}"
+    install_lock_file="${pkg_install_dir}/install_successful"
+    if verify_checksums "${install_lock_file}"; then
+      echo "openblas-${openblas_ver} is already installed, skipping it."
+    else
+      url="https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/v${openblas_ver}"
+      retrieve_package "${openblas_sha256}" "${openblas_pkg}" "${url}"
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip installation"
+        exit 0
+      fi
+      echo "Installing from scratch into ${pkg_install_dir}"
+      [ -d OpenBLAS-${openblas_ver} ] && rm -rf OpenBLAS-${openblas_ver}
+      tar -zxf ${openblas_pkg}
+      cd OpenBLAS-${openblas_ver}
+      # Build OpenBLAS with DYNAMIC_ARCH unless native architecture is requested.
+      # If the latter fails, then build with DYNAMIC_ARCH.
+      #
+      # wrt NUM_THREADS=64: this is what the most common Linux distros seem to choose atm
+      #                     for a good compromise between memory usage and scalability
+      #
+      # Unfortunately, NO_SHARED=1 breaks ScaLAPACK build.
+      BUILD_DYNAMIC=0
+      if [ "native" != "${TARGET_CPU}" ]; then
         BUILD_DYNAMIC=1
       fi
-    fi
-    if [ "${BUILD_DYNAMIC}" != "0" ]; then
-      echo "Installing OpenBLAS library for dynamic target"
-      if ! make -j "$(get_nprocs)" \
-        MAKE_NB_JOBS=0 \
-        DYNAMIC_ARCH=1 \
-        NUM_THREADS=64 \
-        USE_THREAD=1 \
-        USE_OPENMP=1 \
-        NO_AFFINITY=1 \
-        CC="${CC}" \
-        FC="${FC}" \
-        PREFIX="${pkg_install_dir}" \
-        >make.log 2>&1; then
-        tail -n "${LOG_LINES}" make.log
+      if [ "${BUILD_DYNAMIC}" = "0" ]; then
+        echo "Installing OpenBLAS library for native target"
+        if ! make -j "$(get_nprocs)" \
+          MAKE_NB_JOBS=0 \
+          NUM_THREADS=64 \
+          USE_THREAD=1 \
+          USE_OPENMP=1 \
+          NO_AFFINITY=1 \
+          CC="${CC}" \
+          FC="${FC}" \
+          PREFIX="${pkg_install_dir}" \
+          >make.log 2>&1; then
+          tail -n "${LOG_LINES}" make.log
+          make clean
+          BUILD_DYNAMIC=1
+        fi
+      fi
+      if [ "${BUILD_DYNAMIC}" != "0" ]; then
+        echo "Installing OpenBLAS library for dynamic target"
+        if ! make -j "$(get_nprocs)" \
+          MAKE_NB_JOBS=0 \
+          DYNAMIC_ARCH=1 \
+          NUM_THREADS=64 \
+          USE_THREAD=1 \
+          USE_OPENMP=1 \
+          NO_AFFINITY=1 \
+          CC="${CC}" \
+          FC="${FC}" \
+          PREFIX="${pkg_install_dir}" \
+          >make.log 2>&1; then
+          tail -n "${LOG_LINES}" make.log
+          exit 1
+        fi
+      fi
+      if ! make MAKE_NB_JOBS=0 PREFIX="${pkg_install_dir}" install \
+        >install.log 2>&1; then
+        tail -n "${LOG_LINES}" install.log
         exit 1
       fi
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage2/$(basename ${SCRIPT_NAME})"
     fi
-    if ! make MAKE_NB_JOBS=0 PREFIX="${pkg_install_dir}" install \
-      >install.log 2>&1; then
-      tail -n "${LOG_LINES}" install.log
-      exit 1
+    OPENBLAS_CFLAGS="-I'${pkg_install_dir}/include'"
+    OPENBLAS_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    OPENBLAS_ROOT="${pkg_install_dir}"
+    OPENBLAS_LIBS="-lopenblas"
+    ;;
+  __SYSTEM__)
+    echo "==================== Finding OpenBLAS/LAPACK from system paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip system check"
+      exit 0
     fi
-    write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage2/$(basename ${SCRIPT_NAME})"
-  fi
-  OPENBLAS_CFLAGS="-I'${pkg_install_dir}/include'"
-  OPENBLAS_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  OPENBLAS_ROOT="${pkg_install_dir}"
-  OPENBLAS_LIBS="-lopenblas"
-  ;;
-__SYSTEM__)
-  echo "==================== Finding OpenBLAS/LAPACK from system paths ===================="
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  # assume that system openblas is threaded
-  check_lib -lopenblas "OpenBLAS"
-  OPENBLAS_LIBS="-lopenblas"
-  # detect separate omp builds
-  check_lib -lopenblas_openmp 2>/dev/null && OPENBLAS_LIBS="-lopenblas_openmp"
-  check_lib -lopenblas_omp 2>/dev/null && OPENBLAS_LIBS="-lopenblas_omp"
-  add_include_from_paths OPENBLAS_CFLAGS "openblas_config.h" $INCLUDE_PATHS
-  add_lib_from_paths OPENBLAS_LDFLAGS "libopenblas.*" $LIB_PATHS
-  ;;
-__DONTUSE__) ;;
+    # assume that system openblas is threaded
+    check_lib -lopenblas "OpenBLAS"
+    OPENBLAS_LIBS="-lopenblas"
+    # detect separate omp builds
+    check_lib -lopenblas_openmp 2>/dev/null && OPENBLAS_LIBS="-lopenblas_openmp"
+    check_lib -lopenblas_omp 2>/dev/null && OPENBLAS_LIBS="-lopenblas_omp"
+    add_include_from_paths OPENBLAS_CFLAGS "openblas_config.h" $INCLUDE_PATHS
+    add_lib_from_paths OPENBLAS_LDFLAGS "libopenblas.*" $LIB_PATHS
+    ;;
+  __DONTUSE__) ;;
 
-*)
-  echo "==================== Linking OpenBLAS/LAPACK to user paths ===================="
-  pkg_install_dir="$with_openblas"
-  check_dir "${pkg_install_dir}/include"
-  check_dir "${pkg_install_dir}/lib"
-  OPENBLAS_CFLAGS="-I'${pkg_install_dir}/include'"
-  OPENBLAS_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  OPENBLAS_LIBS="-lopenblas"
-  # detect separate omp builds
-  (__libdir="${pkg_install_dir}/lib" LIB_PATHS="__libdir" check_lib -lopenblas_openmp 2>/dev/null) &&
-    OPENBLAS_LIBS="-lopenblas_openmp"
-  (__libdir="${pkg_install_dir}/lib" LIB_PATHS="__libdir" check_lib -lopenblas_omp 2>/dev/null) &&
-    OPENBLAS_LIBS="-lopenblas_omp"
-  ;;
+  *)
+    echo "==================== Linking OpenBLAS/LAPACK to user paths ===================="
+    pkg_install_dir="$with_openblas"
+    check_dir "${pkg_install_dir}/include"
+    check_dir "${pkg_install_dir}/lib"
+    OPENBLAS_CFLAGS="-I'${pkg_install_dir}/include'"
+    OPENBLAS_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    OPENBLAS_LIBS="-lopenblas"
+    # detect separate omp builds
+    (__libdir="${pkg_install_dir}/lib" LIB_PATHS="__libdir" check_lib -lopenblas_openmp 2>/dev/null) &&
+      OPENBLAS_LIBS="-lopenblas_openmp"
+    (__libdir="${pkg_install_dir}/lib" LIB_PATHS="__libdir" check_lib -lopenblas_omp 2>/dev/null) &&
+      OPENBLAS_LIBS="-lopenblas_omp"
+    ;;
 esac
 if [ "$with_openblas" != "__DONTUSE__" ]; then
   if [ "$with_openblas" != "__SYSTEM__" ]; then

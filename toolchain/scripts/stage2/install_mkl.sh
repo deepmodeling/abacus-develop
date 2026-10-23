@@ -23,53 +23,53 @@ MKL_FFTW="yes"
 cd "${BUILDDIR}"
 
 case "${with_mkl}" in
-__INSTALL__)
-  echo "==================== Installing MKL ===================="
-  report_error ${LINENO} "To install MKL, please contact your system administrator."
-  exit 1
-  ;;
-__SYSTEM__)
-  echo "==================== Finding MKL from system paths ===================="
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  if ! [ -z "${MKLROOT}" ]; then
-    echo "MKLROOT is found to be ${MKLROOT}"
-  else
-    report_error ${LINENO} "Cannot find env variable MKLROOT, the script relies on it being set. Please check in MKL installation and use --with-mkl=<location> to pass the path to MKL root directory to this script."
+  __INSTALL__)
+    echo "==================== Installing MKL ===================="
+    report_error ${LINENO} "To install MKL, please contact your system administrator."
     exit 1
-  fi
-  check_lib -lm
-  check_lib -ldl
-  ;;
-__DONTUSE__)
-  # Nothing to do
-  ;;
-*)
-  echo "==================== Linking MKL to user paths ===================="
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  check_dir "${with_mkl}"
-  MKLROOT="${with_mkl}"
-  ;;
+    ;;
+  __SYSTEM__)
+    echo "==================== Finding MKL from system paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip system check"
+      exit 0
+    fi
+    if ! [ -z "${MKLROOT}" ]; then
+      echo "MKLROOT is found to be ${MKLROOT}"
+    else
+      report_error ${LINENO} "Cannot find env variable MKLROOT, the script relies on it being set. Please check in MKL installation and use --with-mkl=<location> to pass the path to MKL root directory to this script."
+      exit 1
+    fi
+    check_lib -lm
+    check_lib -ldl
+    ;;
+  __DONTUSE__)
+    # Nothing to do
+    ;;
+  *)
+    echo "==================== Linking MKL to user paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip system check"
+      exit 0
+    fi
+    check_dir "${with_mkl}"
+    MKLROOT="${with_mkl}"
+    ;;
 esac
 if [ "${with_mkl}" != "__DONTUSE__" ]; then
   case "${SYSTEM_ARCH}" in
-  x86_64)
-    mkl_arch_dir="intel64"
-    MKL_CFLAGS="-m64"
-    ;;
-  i386)
-    mkl_arch_dir="ia32"
-    MKL_CFLAGS="-m32"
-    ;;
-  *)
-    report_error $LINENO "MKL only supports intel64 (x86_64) and ia32 (i386) at the moment, but the detected architecture is ${SYSTEM_ARCH}"
-    exit 1
-    ;;
+    x86_64)
+      mkl_arch_dir="intel64"
+      MKL_CFLAGS="-m64"
+      ;;
+    i386)
+      mkl_arch_dir="ia32"
+      MKL_CFLAGS="-m32"
+      ;;
+    *)
+      report_error $LINENO "MKL only supports intel64 (x86_64) and ia32 (i386) at the moment, but the detected architecture is ${SYSTEM_ARCH}"
+      exit 1
+      ;;
   esac
   mkl_lib_dir="${MKLROOT}/lib/${mkl_arch_dir}"
   # check we have required libraries
@@ -82,19 +82,19 @@ if [ "${with_mkl}" != "__DONTUSE__" ]; then
   done
 
   case ${MPI_MODE} in
-  intelmpi | mpich)
-    mkl_scalapack_lib="IF_MPI(-lmkl_scalapack_lp64|)"
-    mkl_blacs_lib="IF_MPI(-lmkl_blacs_intelmpi_lp64|)"
-    ;;
-  openmpi)
-    mkl_scalapack_lib="IF_MPI(-lmkl_scalapack_lp64|)"
-    mkl_blacs_lib="IF_MPI(-lmkl_blacs_openmpi_lp64|)"
-    ;;
-  *)
-    echo "Not using MKL provided ScaLAPACK and BLACS"
-    mkl_scalapack_lib=""
-    mkl_blacs_lib=""
-    ;;
+    intelmpi | mpich)
+      mkl_scalapack_lib="IF_MPI(-lmkl_scalapack_lp64|)"
+      mkl_blacs_lib="IF_MPI(-lmkl_blacs_intelmpi_lp64|)"
+      ;;
+    openmpi)
+      mkl_scalapack_lib="IF_MPI(-lmkl_scalapack_lp64|)"
+      mkl_blacs_lib="IF_MPI(-lmkl_blacs_openmpi_lp64|)"
+      ;;
+    *)
+      echo "Not using MKL provided ScaLAPACK and BLACS"
+      mkl_scalapack_lib=""
+      mkl_blacs_lib=""
+      ;;
   esac
 
   # added by trae

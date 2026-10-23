@@ -71,111 +71,111 @@ config_load_from_file() {
 
       # Validate and store configuration
       case "$var_name" in
-      # Basic configuration
-      INSTALL_PREFIX | BUILD_PREFIX)
-        CONFIG_CACHE["$var_name"]="$var_value"
-        ;;
-      NPROCS)
-        if [[ "$var_value" =~ ^[0-9]+$ ]]; then
-          CONFIG_CACHE["NPROCS_OVERWRITE"]="$var_value"
-        else
-          echo "Warning: Invalid NPROCS value '$var_value' in config file line $line_num"
-        fi
-        ;;
-
-      # Mode selections
-      MPI_MODE)
-        case "$var_value" in
-        mpich | openmpi | intelmpi | none)
-          CONFIG_CACHE["MPI_MODE"]="$var_value"
-          ;;
-        *)
-          echo "Warning: Invalid MPI_MODE value '$var_value' in config file line $line_num"
-          ;;
-        esac
-        ;;
-      MATH_MODE)
-        case "$var_value" in
-        mkl | aocl | openblas | none)
-          CONFIG_CACHE["MATH_MODE"]="$var_value"
-          ;;
-        *)
-          echo "Warning: Invalid MATH_MODE value '$var_value' in config file line $line_num"
-          ;;
-        esac
-        ;;
-
-      # Package configurations
-      WITH_*)
-        local package_name=$(echo "${var_name#WITH_}" | tr '[:upper:]' '[:lower:]')
-        # Handle special case for 4th-openmpi (convert to OPENMPI_4TH)
-        if [[ "$package_name" == "4th-openmpi" ]]; then
-          case "$var_value" in
-          yes | no | __DONTUSE__)
-            # Map __DONTUSE__ to "no" for OPENMPI_4TH
-            if [[ "$var_value" == "__DONTUSE__" ]]; then
-              CONFIG_CACHE["OPENMPI_4TH"]="no"
-            else
-              CONFIG_CACHE["OPENMPI_4TH"]="$var_value"
-            fi
-            ;;
-          *)
-            echo "Warning: Invalid value '$var_value' for WITH_4TH_OPENMPI in config file line $line_num"
-            ;;
-          esac
-        else
-          case "$var_value" in
-          __SYSTEM__ | __INSTALL__ | __DONTUSE__)
-            CONFIG_CACHE["with_${package_name}"]="$var_value"
-            ;;
-          *)
-            # Allow custom paths for some packages
-            CONFIG_CACHE["with_${package_name}"]="$var_value"
-            ;;
-          esac
-        fi
-        ;;
-
-      # Version strategy options (NEW)
-      VERSION_STRATEGY)
-        case "$var_value" in
-        main | alt)
-          CONFIG_CACHE["VERSION_STRATEGY"]="$var_value"
-          ;;
-        *)
-          echo "Warning: Invalid VERSION_STRATEGY value '$var_value' in config file line $line_num. Valid options: main, alt"
-          ;;
-        esac
-        ;;
-      PACKAGE_VERSION_*)
-        # Extract package name from PACKAGE_VERSION_PACKAGENAME
-        local pkg_name="${var_name#PACKAGE_VERSION_}"
-        case "$var_value" in
-        main | alt)
-          CONFIG_CACHE["PACKAGE_VERSION_${pkg_name}"]="$var_value"
-          ;;
-        *)
-          echo "Warning: Invalid package version value '$var_value' for $var_name in config file line $line_num. Valid options: main, alt"
-          ;;
-        esac
-        ;;
-
-      # Advanced options
-      # Not in use, leave it for future
-      DEBUG_MODE | VERBOSE_MODE | SKIP_SYSTEM_CHECKS | FORCE_REINSTALL)
-        case "$var_value" in
-        true | false)
+        # Basic configuration
+        INSTALL_PREFIX | BUILD_PREFIX)
           CONFIG_CACHE["$var_name"]="$var_value"
           ;;
-        *)
-          echo "Warning: Invalid boolean value '$var_value' for $var_name in config file line $line_num"
+        NPROCS)
+          if [[ "$var_value" =~ ^[0-9]+$ ]]; then
+            CONFIG_CACHE["NPROCS_OVERWRITE"]="$var_value"
+          else
+            echo "Warning: Invalid NPROCS value '$var_value' in config file line $line_num"
+          fi
           ;;
-        esac
-        ;;
 
-      *)
-        echo "Warning: Unknown configuration option '$var_name' in config file line $line_num"
-        ;;
+        # Mode selections
+        MPI_MODE)
+          case "$var_value" in
+            mpich | openmpi | intelmpi | none)
+              CONFIG_CACHE["MPI_MODE"]="$var_value"
+              ;;
+            *)
+              echo "Warning: Invalid MPI_MODE value '$var_value' in config file line $line_num"
+              ;;
+          esac
+          ;;
+        MATH_MODE)
+          case "$var_value" in
+            mkl | aocl | openblas | none)
+              CONFIG_CACHE["MATH_MODE"]="$var_value"
+              ;;
+            *)
+              echo "Warning: Invalid MATH_MODE value '$var_value' in config file line $line_num"
+              ;;
+          esac
+          ;;
+
+        # Package configurations
+        WITH_*)
+          local package_name=$(echo "${var_name#WITH_}" | tr '[:upper:]' '[:lower:]')
+          # Handle special case for 4th-openmpi (convert to OPENMPI_4TH)
+          if [[ "$package_name" == "4th-openmpi" ]]; then
+            case "$var_value" in
+              yes | no | __DONTUSE__)
+                # Map __DONTUSE__ to "no" for OPENMPI_4TH
+                if [[ "$var_value" == "__DONTUSE__" ]]; then
+                  CONFIG_CACHE["OPENMPI_4TH"]="no"
+                else
+                  CONFIG_CACHE["OPENMPI_4TH"]="$var_value"
+                fi
+                ;;
+              *)
+                echo "Warning: Invalid value '$var_value' for WITH_4TH_OPENMPI in config file line $line_num"
+                ;;
+            esac
+          else
+            case "$var_value" in
+              __SYSTEM__ | __INSTALL__ | __DONTUSE__)
+                CONFIG_CACHE["with_${package_name}"]="$var_value"
+                ;;
+              *)
+                # Allow custom paths for some packages
+                CONFIG_CACHE["with_${package_name}"]="$var_value"
+                ;;
+            esac
+          fi
+          ;;
+
+        # Version strategy options (NEW)
+        VERSION_STRATEGY)
+          case "$var_value" in
+            main | alt)
+              CONFIG_CACHE["VERSION_STRATEGY"]="$var_value"
+              ;;
+            *)
+              echo "Warning: Invalid VERSION_STRATEGY value '$var_value' in config file line $line_num. Valid options: main, alt"
+              ;;
+          esac
+          ;;
+        PACKAGE_VERSION_*)
+          # Extract package name from PACKAGE_VERSION_PACKAGENAME
+          local pkg_name="${var_name#PACKAGE_VERSION_}"
+          case "$var_value" in
+            main | alt)
+              CONFIG_CACHE["PACKAGE_VERSION_${pkg_name}"]="$var_value"
+              ;;
+            *)
+              echo "Warning: Invalid package version value '$var_value' for $var_name in config file line $line_num. Valid options: main, alt"
+              ;;
+          esac
+          ;;
+
+        # Advanced options
+        # Not in use, leave it for future
+        DEBUG_MODE | VERBOSE_MODE | SKIP_SYSTEM_CHECKS | FORCE_REINSTALL)
+          case "$var_value" in
+            true | false)
+              CONFIG_CACHE["$var_name"]="$var_value"
+              ;;
+            *)
+              echo "Warning: Invalid boolean value '$var_value' for $var_name in config file line $line_num"
+              ;;
+          esac
+          ;;
+
+        *)
+          echo "Warning: Unknown configuration option '$var_name' in config file line $line_num"
+          ;;
       esac
     elif [[ -n "$line" ]]; then
       echo "Warning: Invalid configuration syntax in config file line $line_num: $line"
@@ -193,55 +193,55 @@ config_apply_modes_from_file() {
   # Apply MPI mode if set in config file (silent mode to avoid duplicate output)
   if [[ -n "${CONFIG_CACHE[MPI_MODE]}" ]]; then
     case "${CONFIG_CACHE[MPI_MODE]}" in
-    mpich)
-      CONFIG_CACHE["with_mpich"]="__INSTALL__"
-      CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-      CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
-      ;;
-    openmpi)
-      CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-      CONFIG_CACHE["with_openmpi"]="__INSTALL__"
-      CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
-      ;;
-    intelmpi)
-      CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-      CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-      CONFIG_CACHE["with_intelmpi"]="__INSTALL__"
-      ;;
-    none)
-      CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-      CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-      CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
-      ;;
+      mpich)
+        CONFIG_CACHE["with_mpich"]="__INSTALL__"
+        CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+        CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+        ;;
+      openmpi)
+        CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+        CONFIG_CACHE["with_openmpi"]="__INSTALL__"
+        CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+        ;;
+      intelmpi)
+        CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+        CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+        CONFIG_CACHE["with_intelmpi"]="__INSTALL__"
+        ;;
+      none)
+        CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+        CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+        CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+        ;;
     esac
   fi
 
   # Apply Math mode if set in config file (silent mode to avoid duplicate output)
   if [[ -n "${CONFIG_CACHE[MATH_MODE]}" ]]; then
     case "${CONFIG_CACHE[MATH_MODE]}" in
-    mkl)
-      CONFIG_CACHE["with_mkl"]="__SYSTEM__"
-      CONFIG_CACHE["with_aocl"]="__DONTUSE__"
-      CONFIG_CACHE["with_openblas"]="__DONTUSE__"
-      # MKL provides FFTW and ScaLAPACK, so disable them (original logic)
-      CONFIG_CACHE["with_fftw"]="__DONTUSE__"
-      CONFIG_CACHE["with_scalapack"]="__DONTUSE__"
-      ;;
-    aocl)
-      CONFIG_CACHE["with_mkl"]="__DONTUSE__"
-      CONFIG_CACHE["with_aocl"]="__INSTALL__"
-      CONFIG_CACHE["with_openblas"]="__DONTUSE__"
-      ;;
-    openblas)
-      CONFIG_CACHE["with_mkl"]="__DONTUSE__"
-      CONFIG_CACHE["with_aocl"]="__DONTUSE__"
-      CONFIG_CACHE["with_openblas"]="__INSTALL__"
-      ;;
-    none)
-      CONFIG_CACHE["with_mkl"]="__DONTUSE__"
-      CONFIG_CACHE["with_aocl"]="__DONTUSE__"
-      CONFIG_CACHE["with_openblas"]="__DONTUSE__"
-      ;;
+      mkl)
+        CONFIG_CACHE["with_mkl"]="__SYSTEM__"
+        CONFIG_CACHE["with_aocl"]="__DONTUSE__"
+        CONFIG_CACHE["with_openblas"]="__DONTUSE__"
+        # MKL provides FFTW and ScaLAPACK, so disable them (original logic)
+        CONFIG_CACHE["with_fftw"]="__DONTUSE__"
+        CONFIG_CACHE["with_scalapack"]="__DONTUSE__"
+        ;;
+      aocl)
+        CONFIG_CACHE["with_mkl"]="__DONTUSE__"
+        CONFIG_CACHE["with_aocl"]="__INSTALL__"
+        CONFIG_CACHE["with_openblas"]="__DONTUSE__"
+        ;;
+      openblas)
+        CONFIG_CACHE["with_mkl"]="__DONTUSE__"
+        CONFIG_CACHE["with_aocl"]="__DONTUSE__"
+        CONFIG_CACHE["with_openblas"]="__INSTALL__"
+        ;;
+      none)
+        CONFIG_CACHE["with_mkl"]="__DONTUSE__"
+        CONFIG_CACHE["with_aocl"]="__DONTUSE__"
+        CONFIG_CACHE["with_openblas"]="__DONTUSE__"
+        ;;
     esac
   fi
 }
@@ -300,15 +300,15 @@ config_set_defaults() {
 
   # Set math library defaults based on MATH_MODE (before user input processing)
   case "${CONFIG_CACHE[MATH_MODE]}" in
-  mkl)
-    CONFIG_CACHE["with_mkl"]="__SYSTEM__"
-    ;;
-  aocl)
-    CONFIG_CACHE["with_aocl"]="__SYSTEM__"
-    ;;
-  openblas)
-    CONFIG_CACHE["with_openblas"]="__INSTALL__"
-    ;;
+    mkl)
+      CONFIG_CACHE["with_mkl"]="__SYSTEM__"
+      ;;
+    aocl)
+      CONFIG_CACHE["with_aocl"]="__SYSTEM__"
+      ;;
+    openblas)
+      CONFIG_CACHE["with_openblas"]="__INSTALL__"
+      ;;
   esac
 
   # For MPI, we try to detect system MPI variant (following original script logic)
@@ -422,9 +422,9 @@ read_enable_option() {
   if [[ "$arg" == *"="* ]]; then
     local value="${arg#*=}"
     case "$value" in
-    yes | true | 1) echo "__TRUE__" ;;
-    no | false | 0) echo "__FALSE__" ;;
-    *) echo "__INVALID__" ;;
+      yes | true | 1) echo "__TRUE__" ;;
+      no | false | 0) echo "__FALSE__" ;;
+      *) echo "__INVALID__" ;;
     esac
   else
     echo "__TRUE__"
@@ -438,10 +438,10 @@ read_with_option() {
   if [[ "$arg" == *"="* ]]; then
     local value="${arg#*=}"
     case "$value" in
-    install) echo "__INSTALL__" ;;
-    system) echo "__SYSTEM__" ;;
-    no) echo "__DONTUSE__" ;;
-    *) echo "$value" ;; # Allow custom paths
+      install) echo "__INSTALL__" ;;
+      system) echo "__SYSTEM__" ;;
+      no) echo "__DONTUSE__" ;;
+      *) echo "$value" ;; # Allow custom paths
     esac
   else
     echo "__INSTALL__"
@@ -521,14 +521,14 @@ config_apply_env_logic() {
     if [ "${CONFIG_CACHE[with_gcc]}" = "__INSTALL__" ]; then
       echo "You have chosen to install the GNU compiler, therefore MPI libraries have to be installed too"
       case ${CONFIG_CACHE[MPI_MODE]} in
-      mpich)
-        CONFIG_CACHE["with_mpich"]="__INSTALL__"
-        CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-        ;;
-      openmpi)
-        CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-        CONFIG_CACHE["with_openmpi"]="__INSTALL__"
-        ;;
+        mpich)
+          CONFIG_CACHE["with_mpich"]="__INSTALL__"
+          CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+          ;;
+        openmpi)
+          CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+          CONFIG_CACHE["with_openmpi"]="__INSTALL__"
+          ;;
       esac
       echo "and the use of the Intel compiler and Intel MPI will be disabled."
       CONFIG_CACHE["with_intel"]="__DONTUSE__"
@@ -536,18 +536,18 @@ config_apply_env_logic() {
     fi
     # Enable only one MPI implementation
     case ${CONFIG_CACHE[MPI_MODE]} in
-    mpich)
-      CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-      CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
-      ;;
-    openmpi)
-      CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-      CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
-      ;;
-    intelmpi)
-      CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-      CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-      ;;
+      mpich)
+        CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+        CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+        ;;
+      openmpi)
+        CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+        CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+        ;;
+      intelmpi)
+        CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+        CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+        ;;
     esac
   fi
 
@@ -615,8 +615,8 @@ config_export_to_env() {
   # Export all configuration values as environment variables
   for key in "${!CONFIG_CACHE[@]}"; do
     case "$key" in
-    enable_*) ;;
-    *) export "$key"="${CONFIG_CACHE[$key]}" ;;
+      enable_*) ;;
+      *) export "$key"="${CONFIG_CACHE[$key]}" ;;
     esac
   done
 
@@ -687,462 +687,462 @@ config_parse_arguments() {
 
   while [[ $# -gt 0 ]]; do
     case $1 in
-    # Help and version
-    -h | --help)
-      show_help=true
-      shift
-      ;;
-    --version)
-      show_version=true
-      shift
-      ;;
-    --version-info)
-      if [[ -n "$2" && "$2" != -* ]]; then
-        CONFIG_CACHE["show_version_info"]="$2"
-        shift 2
-      else
-        CONFIG_CACHE["show_version_info"]="all"
+      # Help and version
+      -h | --help)
+        show_help=true
         shift
-      fi
-      ;;
-
-    # Build options
-    -j)
-      if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
-        CONFIG_CACHE["NPROCS_OVERWRITE"]="$2"
-        shift 2
-      else
-        report_error $LINENO "-j requires a number argument"
-        return 1
-      fi
-      ;;
-    -j[0-9]*)
-      local nprocs_overwrite="${1#-j}"
-      if [[ -n "$nprocs_overwrite" && "$nprocs_overwrite" =~ ^[0-9]+$ ]]; then
-        CONFIG_CACHE["NPROCS_OVERWRITE"]="$nprocs_overwrite"
+        ;;
+      --version)
+        show_version=true
         shift
-      else
-        report_error $LINENO "-j requires a number argument"
-        return 1
-      fi
-      ;;
-    --dry-run)
-      CONFIG_CACHE["dry_run"]="__TRUE__"
-      shift
-      ;;
-    --pack-run)
-      CONFIG_CACHE["PACK_RUN"]="__TRUE__"
-      shift
-      ;;
-
-    # Package version selection - Support multiple package:version pairs
-    --package-version)
-      local package_version_args=""
-      local processed_count=0
-
-      # Handle --package-version=value format
-      if [[ "$1" =~ ^--package-version=(.+)$ ]]; then
-        package_version_args="${BASH_REMATCH[1]}"
-        shift
-        processed_count=1
-      else
-        # Collect all consecutive non-option arguments
-        shift # Skip --package-version
-        while [[ $# -gt 0 && "$1" != -* ]]; do
-          if [[ -n "$package_version_args" ]]; then
-            package_version_args="$package_version_args $1"
-          else
-            package_version_args="$1"
-          fi
-          shift
-          ((processed_count++))
-        done
-      fi
-
-      # Validate we have at least one argument
-      if [[ -z "$package_version_args" ]]; then
-        report_error $LINENO "--package-version requires at least one package:version argument"
-        return 1
-      fi
-
-      # Process each package:version pair
-      local pair_count=0
-      for pair in $package_version_args; do
-        if [[ "$pair" =~ ^([a-zA-Z0-9_]+):(main|alt)$ ]]; then
-          local pkg="${BASH_REMATCH[1]}"
-          local ver="${BASH_REMATCH[2]}"
-          CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="$ver"
-          ((pair_count++))
+        ;;
+      --version-info)
+        if [[ -n "$2" && "$2" != -* ]]; then
+          CONFIG_CACHE["show_version_info"]="$2"
+          shift 2
         else
-          report_error $LINENO "Invalid package version format: '$pair'. Use format 'package:version' (e.g., openmpi:alt, openblas:main)"
+          CONFIG_CACHE["show_version_info"]="all"
+          shift
+        fi
+        ;;
+
+      # Build options
+      -j)
+        if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+          CONFIG_CACHE["NPROCS_OVERWRITE"]="$2"
+          shift 2
+        else
+          report_error $LINENO "-j requires a number argument"
           return 1
         fi
-      done
-
-      # Report successful processing
-      if [[ $pair_count -gt 1 ]]; then
-        echo "INFO: Processed $pair_count package version overrides"
-      fi
-      ;;
-
-    # Configuration file
-    --config-file)
-      if [[ -n "$2" && "$2" != -* ]]; then
-        config_load_from_file "$2"
-        shift 2
-      else
-        report_error $LINENO "--config-file requires an argument"
-        return 1
-      fi
-      ;;
-
-    # Mode selections - Support both --mode=value and --mode value formats
-    --mpi-mode | --mpi-mode=*)
-      local mpi_value=""
-      # Handle --mpi-mode=value format
-      if [[ "$1" =~ ^--mpi-mode=(.+)$ ]]; then
-        mpi_value="${BASH_REMATCH[1]}"
-        shift
-      elif [[ -n "$2" && "$2" != -* ]]; then
-        mpi_value="$2"
-        shift 2
-      else
-        report_error $LINENO "--mpi-mode requires an argument"
-        return 1
-      fi
-
-      case "$mpi_value" in
-      mpich | openmpi | intelmpi | no)
-        CONFIG_CACHE["MPI_MODE"]="$mpi_value"
         ;;
-      *)
-        report_error $LINENO "Invalid MPI mode: $mpi_value. Valid options: mpich, openmpi, intelmpi, no"
-        return 1
+      -j[0-9]*)
+        local nprocs_overwrite="${1#-j}"
+        if [[ -n "$nprocs_overwrite" && "$nprocs_overwrite" =~ ^[0-9]+$ ]]; then
+          CONFIG_CACHE["NPROCS_OVERWRITE"]="$nprocs_overwrite"
+          shift
+        else
+          report_error $LINENO "-j requires a number argument"
+          return 1
+        fi
         ;;
-      esac
-      ;;
-    --math-mode | --math-mode=*)
-      local math_value=""
-      # Handle --math-mode=value format
-      if [[ "$1" =~ ^--math-mode=(.+)$ ]]; then
-        math_value="${BASH_REMATCH[1]}"
+      --dry-run)
+        CONFIG_CACHE["dry_run"]="__TRUE__"
         shift
-      elif [[ -n "$2" && "$2" != -* ]]; then
-        math_value="$2"
-        shift 2
-      else
-        report_error $LINENO "--math-mode requires an argument"
-        return 1
-      fi
+        ;;
+      --pack-run)
+        CONFIG_CACHE["PACK_RUN"]="__TRUE__"
+        shift
+        ;;
 
-      case "$math_value" in
-      mkl | aocl | openblas | cray | no)
-        CONFIG_CACHE["MATH_MODE"]="$math_value"
-        # Apply automatic parameter settings for specific math modes
+      # Package version selection - Support multiple package:version pairs
+      --package-version)
+        local package_version_args=""
+        local processed_count=0
+
+        # Handle --package-version=value format
+        if [[ "$1" =~ ^--package-version=(.+)$ ]]; then
+          package_version_args="${BASH_REMATCH[1]}"
+          shift
+          processed_count=1
+        else
+          # Collect all consecutive non-option arguments
+          shift # Skip --package-version
+          while [[ $# -gt 0 && "$1" != -* ]]; do
+            if [[ -n "$package_version_args" ]]; then
+              package_version_args="$package_version_args $1"
+            else
+              package_version_args="$1"
+            fi
+            shift
+            ((processed_count++))
+          done
+        fi
+
+        # Validate we have at least one argument
+        if [[ -z "$package_version_args" ]]; then
+          report_error $LINENO "--package-version requires at least one package:version argument"
+          return 1
+        fi
+
+        # Process each package:version pair
+        local pair_count=0
+        for pair in $package_version_args; do
+          if [[ "$pair" =~ ^([a-zA-Z0-9_]+):(main|alt)$ ]]; then
+            local pkg="${BASH_REMATCH[1]}"
+            local ver="${BASH_REMATCH[2]}"
+            CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="$ver"
+            ((pair_count++))
+          else
+            report_error $LINENO "Invalid package version format: '$pair'. Use format 'package:version' (e.g., openmpi:alt, openblas:main)"
+            return 1
+          fi
+        done
+
+        # Report successful processing
+        if [[ $pair_count -gt 1 ]]; then
+          echo "INFO: Processed $pair_count package version overrides"
+        fi
+        ;;
+
+      # Configuration file
+      --config-file)
+        if [[ -n "$2" && "$2" != -* ]]; then
+          config_load_from_file "$2"
+          shift 2
+        else
+          report_error $LINENO "--config-file requires an argument"
+          return 1
+        fi
+        ;;
+
+      # Mode selections - Support both --mode=value and --mode value formats
+      --mpi-mode | --mpi-mode=*)
+        local mpi_value=""
+        # Handle --mpi-mode=value format
+        if [[ "$1" =~ ^--mpi-mode=(.+)$ ]]; then
+          mpi_value="${BASH_REMATCH[1]}"
+          shift
+        elif [[ -n "$2" && "$2" != -* ]]; then
+          mpi_value="$2"
+          shift 2
+        else
+          report_error $LINENO "--mpi-mode requires an argument"
+          return 1
+        fi
+
+        case "$mpi_value" in
+          mpich | openmpi | intelmpi | no)
+            CONFIG_CACHE["MPI_MODE"]="$mpi_value"
+            ;;
+          *)
+            report_error $LINENO "Invalid MPI mode: $mpi_value. Valid options: mpich, openmpi, intelmpi, no"
+            return 1
+            ;;
+        esac
+        ;;
+      --math-mode | --math-mode=*)
+        local math_value=""
+        # Handle --math-mode=value format
+        if [[ "$1" =~ ^--math-mode=(.+)$ ]]; then
+          math_value="${BASH_REMATCH[1]}"
+          shift
+        elif [[ -n "$2" && "$2" != -* ]]; then
+          math_value="$2"
+          shift 2
+        else
+          report_error $LINENO "--math-mode requires an argument"
+          return 1
+        fi
+
         case "$math_value" in
-        aocl)
-          CONFIG_CACHE["with_aocl"]="__SYSTEM__"
-          CONFIG_CACHE["with_fftw"]="__SYSTEM__"
-          CONFIG_CACHE["with_scalapack"]="__SYSTEM__"
-          ;;
+          mkl | aocl | openblas | cray | no)
+            CONFIG_CACHE["MATH_MODE"]="$math_value"
+            # Apply automatic parameter settings for specific math modes
+            case "$math_value" in
+              aocl)
+                CONFIG_CACHE["with_aocl"]="__SYSTEM__"
+                CONFIG_CACHE["with_fftw"]="__SYSTEM__"
+                CONFIG_CACHE["with_scalapack"]="__SYSTEM__"
+                ;;
+            esac
+            ;;
+          *)
+            report_error $LINENO "Invalid math mode: $math_value. Valid options: mkl, aocl, openblas, cray, no"
+            return 1
+            ;;
         esac
         ;;
-      *)
-        report_error $LINENO "Invalid math mode: $math_value. Valid options: mkl, aocl, openblas, cray, no"
-        return 1
-        ;;
-      esac
-      ;;
 
-    # Package options
-    --with-*)
-      local option="${1#--with-}"
-      local value="__INSTALL__"
+      # Package options
+      --with-*)
+        local option="${1#--with-}"
+        local value="__INSTALL__"
 
-      # Handle --with-package=value format
-      if [[ "$option" =~ ^(.+)=(.+)$ ]]; then
-        option="${BASH_REMATCH[1]}"
-        value="${BASH_REMATCH[2]}"
-      fi
+        # Handle --with-package=value format
+        if [[ "$option" =~ ^(.+)=(.+)$ ]]; then
+          option="${BASH_REMATCH[1]}"
+          value="${BASH_REMATCH[2]}"
+        fi
 
-      # Special handling for --with-mpich-device=* (must be handled before general mpich)
-      if [[ "$option" == "mpich-device" ]]; then
-        CONFIG_CACHE["MPICH_DEVICE"]="$value"
-        CONFIG_CACHE["MPI_MODE"]="mpich"
-        shift
-        continue
-      fi
-
-      # Convert value to internal format (matching original read_with function)
-      case "$value" in
-      system)
-        value="__SYSTEM__"
-        ;;
-      install)
-        value="__INSTALL__"
-        ;;
-      no)
-        value="__DONTUSE__"
-        ;;
-      __SYSTEM__ | __INSTALL__ | __DONTUSE__)
-        # Already in internal format, keep as is
-        ;;
-      *)
-        # For custom paths, expand ~ to $HOME (matching original behavior)
-        value="${value//\~/$HOME}"
-        ;;
-      esac
-
-      # Handle special cases with specific processing logic
-      case "$option" in
-      4th-openmpi)
-        # Handle --with-4th-openmpi parameter (only yes/no options)
-        case "$value" in
-        "yes" | "install" | "__INSTALL__")
-          CONFIG_CACHE["OPENMPI_4TH"]="yes"
-          ;;
-        "no" | "__DONTUSE__")
-          CONFIG_CACHE["OPENMPI_4TH"]="no"
-          ;;
-        *)
-          # Default to "no" for any other values
-          CONFIG_CACHE["OPENMPI_4TH"]="no"
-          ;;
-        esac
-        ;;
-      mpich)
-        CONFIG_CACHE["with_mpich"]="$value"
-        USER_EXPLICIT_MPI["with_mpich"]="true" # Mark as explicitly set by user
-        # Set MPI_MODE if not disabled
-        if [ "$value" != "__DONTUSE__" ]; then
+        # Special handling for --with-mpich-device=* (must be handled before general mpich)
+        if [[ "$option" == "mpich-device" ]]; then
+          CONFIG_CACHE["MPICH_DEVICE"]="$value"
           CONFIG_CACHE["MPI_MODE"]="mpich"
+          shift
+          continue
         fi
-        ;;
-      openmpi)
-        CONFIG_CACHE["with_openmpi"]="$value"
-        USER_EXPLICIT_MPI["with_openmpi"]="true" # Mark as explicitly set by user
-        # Set MPI_MODE if not disabled
-        if [ "$value" != "__DONTUSE__" ]; then
-          CONFIG_CACHE["MPI_MODE"]="openmpi"
-        fi
-        ;;
-      intelmpi)
-        CONFIG_CACHE["with_intelmpi"]="$value"
-        USER_EXPLICIT_MPI["with_intelmpi"]="true" # Mark as explicitly set by user
-        # Set MPI_MODE if not disabled
-        if [ "$value" != "__DONTUSE__" ]; then
-          CONFIG_CACHE["MPI_MODE"]="intelmpi"
-        fi
-        ;;
-      intel-classic)
-        # Special handling for intel-classic: only accepts yes/no values
+
+        # Convert value to internal format (matching original read_with function)
         case "$value" in
-        "__INSTALL__" | "" | "__DONTUSE__")
-          value="no" # Default to "no"
-          ;;
-        "yes")
-          value="yes"
-          ;;
-        "no")
-          value="no"
-          ;;
-        *)
-          report_error $LINENO "Invalid value '$value' for --with-intel-classic. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
-          return 1
-          ;;
+          system)
+            value="__SYSTEM__"
+            ;;
+          install)
+            value="__INSTALL__"
+            ;;
+          no)
+            value="__DONTUSE__"
+            ;;
+          __SYSTEM__ | __INSTALL__ | __DONTUSE__)
+            # Already in internal format, keep as is
+            ;;
+          *)
+            # For custom paths, expand ~ to $HOME (matching original behavior)
+            value="${value//\~/$HOME}"
+            ;;
         esac
-        CONFIG_CACHE["intel_classic"]="$value"
-        ;;
-      intel-mpi-clas*)
-        # Special handling for intel-mpi-classic: only accepts yes/no values
-        case "$value" in
-        "__INSTALL__" | "" | "__DONTUSE__")
-          value="no" # Default to "no"
-          ;;
-        "yes")
-          value="yes"
-          ;;
-        "no")
-          value="no"
-          ;;
-        *)
-          report_error $LINENO "Invalid value '$value' for --with-intel-mpi-classic. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
-          return 1
-          ;;
+
+        # Handle special cases with specific processing logic
+        case "$option" in
+          4th-openmpi)
+            # Handle --with-4th-openmpi parameter (only yes/no options)
+            case "$value" in
+              "yes" | "install" | "__INSTALL__")
+                CONFIG_CACHE["OPENMPI_4TH"]="yes"
+                ;;
+              "no" | "__DONTUSE__")
+                CONFIG_CACHE["OPENMPI_4TH"]="no"
+                ;;
+              *)
+                # Default to "no" for any other values
+                CONFIG_CACHE["OPENMPI_4TH"]="no"
+                ;;
+            esac
+            ;;
+          mpich)
+            CONFIG_CACHE["with_mpich"]="$value"
+            USER_EXPLICIT_MPI["with_mpich"]="true" # Mark as explicitly set by user
+            # Set MPI_MODE if not disabled
+            if [ "$value" != "__DONTUSE__" ]; then
+              CONFIG_CACHE["MPI_MODE"]="mpich"
+            fi
+            ;;
+          openmpi)
+            CONFIG_CACHE["with_openmpi"]="$value"
+            USER_EXPLICIT_MPI["with_openmpi"]="true" # Mark as explicitly set by user
+            # Set MPI_MODE if not disabled
+            if [ "$value" != "__DONTUSE__" ]; then
+              CONFIG_CACHE["MPI_MODE"]="openmpi"
+            fi
+            ;;
+          intelmpi)
+            CONFIG_CACHE["with_intelmpi"]="$value"
+            USER_EXPLICIT_MPI["with_intelmpi"]="true" # Mark as explicitly set by user
+            # Set MPI_MODE if not disabled
+            if [ "$value" != "__DONTUSE__" ]; then
+              CONFIG_CACHE["MPI_MODE"]="intelmpi"
+            fi
+            ;;
+          intel-classic)
+            # Special handling for intel-classic: only accepts yes/no values
+            case "$value" in
+              "__INSTALL__" | "" | "__DONTUSE__")
+                value="no" # Default to "no"
+                ;;
+              "yes")
+                value="yes"
+                ;;
+              "no")
+                value="no"
+                ;;
+              *)
+                report_error $LINENO "Invalid value '$value' for --with-intel-classic. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
+                return 1
+                ;;
+            esac
+            CONFIG_CACHE["intel_classic"]="$value"
+            ;;
+          intel-mpi-clas*)
+            # Special handling for intel-mpi-classic: only accepts yes/no values
+            case "$value" in
+              "__INSTALL__" | "" | "__DONTUSE__")
+                value="no" # Default to "no"
+                ;;
+              "yes")
+                value="yes"
+                ;;
+              "no")
+                value="no"
+                ;;
+              *)
+                report_error $LINENO "Invalid value '$value' for --with-intel-mpi-classic. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
+                return 1
+                ;;
+            esac
+            CONFIG_CACHE["INTELMPI_CLASSIC"]="$value"
+            ;;
+          intel)
+            CONFIG_CACHE["with_intel"]="$value"
+            ;;
+          ifx)
+            # Special handling for ifx: only accepts yes/no values
+            case "$value" in
+              "__INSTALL__" | "" | "__DONTUSE__")
+                value="no" # Default to "no"
+                ;;
+              "yes")
+                value="yes"
+                ;;
+              "no")
+                value="no"
+                ;;
+              *)
+                report_error $LINENO "Invalid value '$value' for --with-ifx. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
+                return 1
+                ;;
+            esac
+            CONFIG_CACHE["WITH_IFX"]="$value"
+            ;;
+          amd)
+            CONFIG_CACHE["with_amd"]="$value"
+            ;;
+          flang)
+            # Special handling for flang: only accepts yes/no values
+            case "$value" in
+              "__INSTALL__" | "" | "__DONTUSE__")
+                value="no" # Default to "no"
+                ;;
+              "yes")
+                value="yes"
+                ;;
+              "no")
+                value="no"
+                ;;
+              *)
+                report_error $LINENO "Invalid value '$value' for --with-flang. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
+                return 1
+                ;;
+            esac
+            CONFIG_CACHE["WITH_FLANG"]="$value"
+            ;;
+          aocl)
+            CONFIG_CACHE["with_aocl"]="$value"
+            USER_EXPLICIT_MATH["with_aocl"]="true" # Mark as explicitly set by user
+            ;;
+          mkl)
+            CONFIG_CACHE["with_mkl"]="$value"
+            USER_EXPLICIT_MATH["with_mkl"]="true" # Mark as explicitly set by user
+            # Set MATH_MODE if not disabled
+            if [ "$value" != "__DONTUSE__" ]; then
+              CONFIG_CACHE["MATH_MODE"]="mkl"
+            fi
+            ;;
+          openblas)
+            CONFIG_CACHE["with_openblas"]="$value"
+            USER_EXPLICIT_MATH["with_openblas"]="true" # Mark as explicitly set by user
+            # Set MATH_MODE if not disabled
+            if [ "$value" != "__DONTUSE__" ]; then
+              CONFIG_CACHE["MATH_MODE"]="openblas"
+            fi
+            ;;
+          fftw)
+            CONFIG_CACHE["with_fftw"]="$value"
+            USER_EXPLICIT_MATH["with_fftw"]="true" # Mark as explicitly set by user
+            ;;
+          scalapack)
+            CONFIG_CACHE["with_scalapack"]="$value"
+            USER_EXPLICIT_MATH["with_scalapack"]="true" # Mark as explicitly set by user
+            ;;
+          *)
+            # Convert to standard format for all other options
+            option="${option,,}" # Convert to lowercase
+            CONFIG_CACHE["with_${option}"]="$value"
+            ;;
         esac
-        CONFIG_CACHE["INTELMPI_CLASSIC"]="$value"
+        shift
         ;;
-      intel)
-        CONFIG_CACHE["with_intel"]="$value"
+
+      # Enable options
+      --enable-*)
+        local option="${1#--enable-}"
+        local value="__TRUE__"
+
+        # Handle --enable-feature=value format
+        if [[ "$option" =~ ^(.+)=(.+)$ ]]; then
+          option="${BASH_REMATCH[1]}"
+          value="${BASH_REMATCH[2]}"
+          case "$value" in
+            yes | true | 1) value="__TRUE__" ;;
+            no | false | 0) value="__FALSE__" ;;
+            *)
+              report_error $LINENO "Invalid value for --enable-${option}: $value. Use yes/no"
+              return 1
+              ;;
+          esac
+        fi
+
+        CONFIG_CACHE["enable_${option}"]="$value"
+        shift
         ;;
-      ifx)
-        # Special handling for ifx: only accepts yes/no values
-        case "$value" in
-        "__INSTALL__" | "" | "__DONTUSE__")
-          value="no" # Default to "no"
-          ;;
-        "yes")
-          value="yes"
-          ;;
-        "no")
-          value="no"
-          ;;
-        *)
-          report_error $LINENO "Invalid value '$value' for --with-ifx. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
+
+      # GPU version
+      --gpu-ver | --gpu-ver=*)
+        local gpu_value=""
+        # Handle --gpu-ver=value format
+        if [[ "$1" =~ ^--gpu-ver=(.+)$ ]]; then
+          gpu_value="${BASH_REMATCH[1]}"
+          shift
+        elif [[ -n "$2" && "$2" != -* ]]; then
+          gpu_value="$2"
+          shift 2
+        else
+          report_error $LINENO "--gpu-ver requires an argument"
           return 1
-          ;;
-        esac
-        CONFIG_CACHE["WITH_IFX"]="$value"
+        fi
+        CONFIG_CACHE["GPUVER"]="$gpu_value"
         ;;
-      amd)
-        CONFIG_CACHE["with_amd"]="$value"
-        ;;
-      flang)
-        # Special handling for flang: only accepts yes/no values
-        case "$value" in
-        "__INSTALL__" | "" | "__DONTUSE__")
-          value="no" # Default to "no"
-          ;;
-        "yes")
-          value="yes"
-          ;;
-        "no")
-          value="no"
-          ;;
-        *)
-          report_error $LINENO "Invalid value '$value' for --with-flang. Only 'yes' or 'no' are allowed." "CONFIG_ERROR"
+
+      # Target CPU
+      --target-cpu | --target-cpu=*)
+        local cpu_value=""
+        # Handle --target-cpu=value format
+        if [[ "$1" =~ ^--target-cpu=(.+)$ ]]; then
+          cpu_value="${BASH_REMATCH[1]}"
+          shift
+        elif [[ -n "$2" && "$2" != -* ]]; then
+          cpu_value="$2"
+          shift 2
+        else
+          report_error $LINENO "--target-cpu requires an argument"
           return 1
-          ;;
-        esac
-        CONFIG_CACHE["WITH_FLANG"]="$value"
+        fi
+        CONFIG_CACHE["TARGET_CPU"]="$cpu_value"
         ;;
-      aocl)
-        CONFIG_CACHE["with_aocl"]="$value"
-        USER_EXPLICIT_MATH["with_aocl"]="true" # Mark as explicitly set by user
-        ;;
-      mkl)
-        CONFIG_CACHE["with_mkl"]="$value"
-        USER_EXPLICIT_MATH["with_mkl"]="true" # Mark as explicitly set by user
-        # Set MATH_MODE if not disabled
-        if [ "$value" != "__DONTUSE__" ]; then
-          CONFIG_CACHE["MATH_MODE"]="mkl"
+
+      # Log lines
+      --log-lines | --log-lines=*)
+        local log_value=""
+        # Handle --log-lines=value format
+        if [[ "$1" =~ ^--log-lines=(.+)$ ]]; then
+          log_value="${BASH_REMATCH[1]}"
+          shift
+        elif [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+          log_value="$2"
+          shift 2
+        else
+          report_error $LINENO "--log-lines requires a number argument"
+          return 1
+        fi
+
+        if [[ "$log_value" =~ ^[0-9]+$ ]]; then
+          CONFIG_CACHE["LOG_LINES"]="$log_value"
+        else
+          report_error $LINENO "--log-lines requires a number argument"
+          return 1
         fi
         ;;
-      openblas)
-        CONFIG_CACHE["with_openblas"]="$value"
-        USER_EXPLICIT_MATH["with_openblas"]="true" # Mark as explicitly set by user
-        # Set MATH_MODE if not disabled
-        if [ "$value" != "__DONTUSE__" ]; then
-          CONFIG_CACHE["MATH_MODE"]="openblas"
-        fi
+
+      # Skip system checks
+      --skip-system-checks)
+        CONFIG_CACHE["skip_system_checks"]="__TRUE__"
+        shift
         ;;
-      fftw)
-        CONFIG_CACHE["with_fftw"]="$value"
-        USER_EXPLICIT_MATH["with_fftw"]="true" # Mark as explicitly set by user
-        ;;
-      scalapack)
-        CONFIG_CACHE["with_scalapack"]="$value"
-        USER_EXPLICIT_MATH["with_scalapack"]="true" # Mark as explicitly set by user
-        ;;
+
+      # Positional arguments (ignored for now)
       *)
-        # Convert to standard format for all other options
-        option="${option,,}" # Convert to lowercase
-        CONFIG_CACHE["with_${option}"]="$value"
+        shift
         ;;
-      esac
-      shift
-      ;;
-
-    # Enable options
-    --enable-*)
-      local option="${1#--enable-}"
-      local value="__TRUE__"
-
-      # Handle --enable-feature=value format
-      if [[ "$option" =~ ^(.+)=(.+)$ ]]; then
-        option="${BASH_REMATCH[1]}"
-        value="${BASH_REMATCH[2]}"
-        case "$value" in
-        yes | true | 1) value="__TRUE__" ;;
-        no | false | 0) value="__FALSE__" ;;
-        *)
-          report_error $LINENO "Invalid value for --enable-${option}: $value. Use yes/no"
-          return 1
-          ;;
-        esac
-      fi
-
-      CONFIG_CACHE["enable_${option}"]="$value"
-      shift
-      ;;
-
-    # GPU version
-    --gpu-ver | --gpu-ver=*)
-      local gpu_value=""
-      # Handle --gpu-ver=value format
-      if [[ "$1" =~ ^--gpu-ver=(.+)$ ]]; then
-        gpu_value="${BASH_REMATCH[1]}"
-        shift
-      elif [[ -n "$2" && "$2" != -* ]]; then
-        gpu_value="$2"
-        shift 2
-      else
-        report_error $LINENO "--gpu-ver requires an argument"
-        return 1
-      fi
-      CONFIG_CACHE["GPUVER"]="$gpu_value"
-      ;;
-
-    # Target CPU
-    --target-cpu | --target-cpu=*)
-      local cpu_value=""
-      # Handle --target-cpu=value format
-      if [[ "$1" =~ ^--target-cpu=(.+)$ ]]; then
-        cpu_value="${BASH_REMATCH[1]}"
-        shift
-      elif [[ -n "$2" && "$2" != -* ]]; then
-        cpu_value="$2"
-        shift 2
-      else
-        report_error $LINENO "--target-cpu requires an argument"
-        return 1
-      fi
-      CONFIG_CACHE["TARGET_CPU"]="$cpu_value"
-      ;;
-
-    # Log lines
-    --log-lines | --log-lines=*)
-      local log_value=""
-      # Handle --log-lines=value format
-      if [[ "$1" =~ ^--log-lines=(.+)$ ]]; then
-        log_value="${BASH_REMATCH[1]}"
-        shift
-      elif [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
-        log_value="$2"
-        shift 2
-      else
-        report_error $LINENO "--log-lines requires a number argument"
-        return 1
-      fi
-
-      if [[ "$log_value" =~ ^[0-9]+$ ]]; then
-        CONFIG_CACHE["LOG_LINES"]="$log_value"
-      else
-        report_error $LINENO "--log-lines requires a number argument"
-        return 1
-      fi
-      ;;
-
-    # Skip system checks
-    --skip-system-checks)
-      CONFIG_CACHE["skip_system_checks"]="__TRUE__"
-      shift
-      ;;
-
-    # Positional arguments (ignored for now)
-    *)
-      shift
-      ;;
     esac
   done
 
@@ -1211,27 +1211,27 @@ config_apply_modes() {
       echo "Applying MPI mode: $mpi_mode"
     fi
     case "$mpi_mode" in
-    mpich)
-      # Only override if user hasn't explicitly set these values via command line
-      [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__INSTALL__"
-      [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
-      ;;
-    openmpi)
-      [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__INSTALL__"
-      [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
-      ;;
-    intelmpi)
-      [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__INSTALL__"
-      ;;
-    no)
-      [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
-      ;;
+      mpich)
+        # Only override if user hasn't explicitly set these values via command line
+        [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__INSTALL__"
+        [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+        ;;
+      openmpi)
+        [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__INSTALL__"
+        [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+        ;;
+      intelmpi)
+        [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__INSTALL__"
+        ;;
+      no)
+        [[ -z "${USER_EXPLICIT_MPI[with_mpich]}" ]] && CONFIG_CACHE["with_mpich"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MPI[with_openmpi]}" ]] && CONFIG_CACHE["with_openmpi"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MPI[with_intelmpi]}" ]] && CONFIG_CACHE["with_intelmpi"]="__DONTUSE__"
+        ;;
     esac
   fi
 
@@ -1244,31 +1244,31 @@ config_apply_modes() {
       echo "Applying Math mode: $math_mode"
     fi
     case "$math_mode" in
-    mkl)
-      [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__SYSTEM__"
-      [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__DONTUSE__"
-      # MKL provides FFTW and ScaLAPACK, so disable them (original logic)
-      [[ -z "${USER_EXPLICIT_MATH[with_fftw]}" ]] && CONFIG_CACHE["with_fftw"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MATH[with_scalapack]}" ]] && CONFIG_CACHE["with_scalapack"]="__DONTUSE__"
-      ;;
-    aocl)
-      [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__SYSTEM__"
-      [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MATH[with_fftw]}" ]] && CONFIG_CACHE["with_fftw"]="__SYSTEM__"
-      [[ -z "${USER_EXPLICIT_MATH[with_scalapack]}" ]] && CONFIG_CACHE["with_scalapack"]="__SYSTEM__"
-      ;;
-    openblas)
-      [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__INSTALL__"
-      ;;
-    cray)
-      [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__DONTUSE__"
-      [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__DONTUSE__"
-      ;;
+      mkl)
+        [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__SYSTEM__"
+        [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__DONTUSE__"
+        # MKL provides FFTW and ScaLAPACK, so disable them (original logic)
+        [[ -z "${USER_EXPLICIT_MATH[with_fftw]}" ]] && CONFIG_CACHE["with_fftw"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MATH[with_scalapack]}" ]] && CONFIG_CACHE["with_scalapack"]="__DONTUSE__"
+        ;;
+      aocl)
+        [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__SYSTEM__"
+        [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MATH[with_fftw]}" ]] && CONFIG_CACHE["with_fftw"]="__SYSTEM__"
+        [[ -z "${USER_EXPLICIT_MATH[with_scalapack]}" ]] && CONFIG_CACHE["with_scalapack"]="__SYSTEM__"
+        ;;
+      openblas)
+        [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__INSTALL__"
+        ;;
+      cray)
+        [[ -z "${USER_EXPLICIT_MATH[with_mkl]}" ]] && CONFIG_CACHE["with_mkl"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MATH[with_aocl]}" ]] && CONFIG_CACHE["with_aocl"]="__DONTUSE__"
+        [[ -z "${USER_EXPLICIT_MATH[with_openblas]}" ]] && CONFIG_CACHE["with_openblas"]="__DONTUSE__"
+        ;;
     esac
   fi
 

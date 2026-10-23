@@ -41,61 +41,61 @@ source "${INSTALLDIR}"/toolchain.env
 cd "${BUILDDIR}"
 
 case "${with_libtorch}" in
-__INSTALL__)
-  echo "==================== Installing libtorch ===================="
-  dirname="libtorch-${libtorch_ver}"
-  pkg_install_dir="${INSTALLDIR}/${dirname}"
-  #pkg_install_dir="${HOME}/lib/libtorch/${libtorch_ver}"
-  install_lock_file="${pkg_install_dir}/install_successful"
-  archive_file="libtorch-cxx11-abi-shared-with-deps-${libtorch_ver}%2Bcpu.zip"
-  filename="${dirname}.zip"
+  __INSTALL__)
+    echo "==================== Installing libtorch ===================="
+    dirname="libtorch-${libtorch_ver}"
+    pkg_install_dir="${INSTALLDIR}/${dirname}"
+    #pkg_install_dir="${HOME}/lib/libtorch/${libtorch_ver}"
+    install_lock_file="${pkg_install_dir}/install_successful"
+    archive_file="libtorch-cxx11-abi-shared-with-deps-${libtorch_ver}%2Bcpu.zip"
+    filename="${dirname}.zip"
 
-  if verify_checksums "${install_lock_file}"; then
-    echo "${dirname} is already installed, skipping it."
-  else
-    url=https://download.pytorch.org/libtorch/cpu/${archive_file}
-    retrieve_package "${libtorch_sha256}" "${filename}" "${url}"
+    if verify_checksums "${install_lock_file}"; then
+      echo "${dirname} is already installed, skipping it."
+    else
+      url=https://download.pytorch.org/libtorch/cpu/${archive_file}
+      retrieve_package "${libtorch_sha256}" "${filename}" "${url}"
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip installation"
+        exit 0
+      fi
+      echo "Installing from scratch into ${pkg_install_dir}"
+      unzip -q $filename
+      mkdir -p "${pkg_install_dir}"
+      mv libtorch/* "${pkg_install_dir}/"
+
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
+    fi
+    LIBTORCH_CXXFLAGS="-I${pkg_install_dir}/include"
+    LIBTORCH_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath='${pkg_install_dir}/lib'"
+    ;;
+  __SYSTEM__)
+    echo "==================== Finding libtorch from system paths ===================="
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
-      echo "--pack-run mode specified, skip installation"
+      echo "--pack-run mode specified, skip system check"
       exit 0
     fi
-    echo "Installing from scratch into ${pkg_install_dir}"
-    unzip -q $filename
-    mkdir -p "${pkg_install_dir}"
-    mv libtorch/* "${pkg_install_dir}/"
+    check_lib -ltorch "libtorch"
+    add_include_from_paths LIBTORCH_CXXFLAGS "libtorch.h" $INCLUDE_PATHS
+    add_lib_from_paths LIBTORCH_LDFLAGS "libtorch.*" "$LIB_PATHS"
+    ;;
+  __DONTUSE__) ;;
 
-    write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
-  fi
-  LIBTORCH_CXXFLAGS="-I${pkg_install_dir}/include"
-  LIBTORCH_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath='${pkg_install_dir}/lib'"
-  ;;
-__SYSTEM__)
-  echo "==================== Finding libtorch from system paths ===================="
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  check_lib -ltorch "libtorch"
-  add_include_from_paths LIBTORCH_CXXFLAGS "libtorch.h" $INCLUDE_PATHS
-  add_lib_from_paths LIBTORCH_LDFLAGS "libtorch.*" "$LIB_PATHS"
-  ;;
-__DONTUSE__) ;;
+  *)
+    echo "==================== Linking libtorch to user paths ===================="
+    pkg_install_dir="${with_libtorch}"
 
-*)
-  echo "==================== Linking libtorch to user paths ===================="
-  pkg_install_dir="${with_libtorch}"
+    # use the lib64 directory if present (multi-abi distros may link lib/ to lib32/ instead)
+    LIBTORCH_LIBDIR="${pkg_install_dir}/lib"
+    [ -d "${pkg_install_dir}/lib64" ] && LIBTORCH_LIBDIR="${pkg_install_dir}/lib64"
 
-  # use the lib64 directory if present (multi-abi distros may link lib/ to lib32/ instead)
-  LIBTORCH_LIBDIR="${pkg_install_dir}/lib"
-  [ -d "${pkg_install_dir}/lib64" ] && LIBTORCH_LIBDIR="${pkg_install_dir}/lib64"
-
-  check_dir "${LIBTORCH_LIBDIR}"
-  LIBTORCH_CXXFLAGS="-I${pkg_install_dir}/include"
-  if [ "$ENABLE_CUDA" = "__TRUE__" ]; then
-    LIBTORCH_LDFLAGS="-Wl,--no-as-needed,-L'${LIBTORCH_LIBDIR}' -Wl,--no-as-needed,-rpath='${LIBTORCH_LIBDIR}'"
-    LIBTORCH_LDFLAGS="-L'${LIBTORCH_LIBDIR}' -Wl,-rpath='${LIBTORCH_LIBDIR}'"
-  fi
-  ;;
+    check_dir "${LIBTORCH_LIBDIR}"
+    LIBTORCH_CXXFLAGS="-I${pkg_install_dir}/include"
+    if [ "$ENABLE_CUDA" = "__TRUE__" ]; then
+      LIBTORCH_LDFLAGS="-Wl,--no-as-needed,-L'${LIBTORCH_LIBDIR}' -Wl,--no-as-needed,-rpath='${LIBTORCH_LIBDIR}'"
+      LIBTORCH_LDFLAGS="-L'${LIBTORCH_LIBDIR}' -Wl,-rpath='${LIBTORCH_LIBDIR}'"
+    fi
+    ;;
 esac
 
 if [ "$with_libtorch" != "__DONTUSE__" ]; then

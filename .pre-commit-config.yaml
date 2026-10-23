@@ -19,7 +19,7 @@ repos:
     rev: v3.14.1-1
     hooks:
       - id: shfmt
-        args: [--write, --language-dialect=bash, --indent=2]
+        args: [--write, --language-dialect=bash, --indent=2, --case-indent]
   - repo: local
     hooks:
       - id: abacus-agent-governance

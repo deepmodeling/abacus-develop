@@ -45,57 +45,57 @@ LIBNPY_CFLAGS=""
 cd "${BUILDDIR}"
 
 case "$with_libnpy" in
-__INSTALL__)
-  echo "==================== Installing LIBNPY ===================="
-  pkg_install_dir="${INSTALLDIR}/$dirname"
-  #pkg_install_dir="${HOME}/lib/libnpy/${libnpy_ver}"
-  install_lock_file="${pkg_install_dir}/install_successful"
-  url="https://codeload.github.com/llohse/libnpy/tar.gz/v${libnpy_ver}"
-  if verify_checksums "${install_lock_file}"; then
-    echo "$dirname is already installed, skipping it."
-  else
-    retrieve_package "${libnpy_sha256}" "${filename}" "${url}"
+  __INSTALL__)
+    echo "==================== Installing LIBNPY ===================="
+    pkg_install_dir="${INSTALLDIR}/$dirname"
+    #pkg_install_dir="${HOME}/lib/libnpy/${libnpy_ver}"
+    install_lock_file="${pkg_install_dir}/install_successful"
+    url="https://codeload.github.com/llohse/libnpy/tar.gz/v${libnpy_ver}"
+    if verify_checksums "${install_lock_file}"; then
+      echo "$dirname is already installed, skipping it."
+    else
+      retrieve_package "${libnpy_sha256}" "${filename}" "${url}"
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip installation"
+        exit 0
+      fi
+      echo "Installing from scratch into ${pkg_install_dir}"
+      [ -d $dirname ] && rm -rf $dirname
+      tar -xzf $filename
+      mkdir -p "${pkg_install_dir}"
+      cp -r $dirname/* "${pkg_install_dir}/"
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
+    fi
+    LIBNPY_CFLAGS="-I'${pkg_install_dir}/include'"
+    ;;
+  __SYSTEM__)
+    echo "==================== Finding LIBNPY from system paths ===================="
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
-      echo "--pack-run mode specified, skip installation"
+      echo "--pack-run mode specified, skip system check"
       exit 0
     fi
-    echo "Installing from scratch into ${pkg_install_dir}"
-    [ -d $dirname ] && rm -rf $dirname
-    tar -xzf $filename
-    mkdir -p "${pkg_install_dir}"
-    cp -r $dirname/* "${pkg_install_dir}/"
-    write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
-  fi
-  LIBNPY_CFLAGS="-I'${pkg_install_dir}/include'"
-  ;;
-__SYSTEM__)
-  echo "==================== Finding LIBNPY from system paths ===================="
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  # Find libnpy header file and derive package root directory
-  libnpy_header_path="$(find_in_paths "npy.hpp" $INCLUDE_PATHS)"
-  if [ "$libnpy_header_path" != "__FALSE__" ]; then
-    # Derive pkg_install_dir from found header path
-    # npy.hpp -> get include dir -> get parent dir
-    libnpy_include_dir="$(dirname "$libnpy_header_path")"
-    pkg_install_dir="$(dirname "$libnpy_include_dir")"
-    echo "Found libnpy at: ${pkg_install_dir}"
-    LIBNPY_CFLAGS="-I'${libnpy_include_dir}'"
-  else
-    report_error "Cannot find npy.hpp in system paths"
-    exit 1
-  fi
-  ;;
-__DONTUSE__) ;;
+    # Find libnpy header file and derive package root directory
+    libnpy_header_path="$(find_in_paths "npy.hpp" $INCLUDE_PATHS)"
+    if [ "$libnpy_header_path" != "__FALSE__" ]; then
+      # Derive pkg_install_dir from found header path
+      # npy.hpp -> get include dir -> get parent dir
+      libnpy_include_dir="$(dirname "$libnpy_header_path")"
+      pkg_install_dir="$(dirname "$libnpy_include_dir")"
+      echo "Found libnpy at: ${pkg_install_dir}"
+      LIBNPY_CFLAGS="-I'${libnpy_include_dir}'"
+    else
+      report_error "Cannot find npy.hpp in system paths"
+      exit 1
+    fi
+    ;;
+  __DONTUSE__) ;;
 
-*)
-  echo "==================== Linking LIBNPY to user paths ===================="
-  pkg_install_dir="${with_libnpy}"
-  check_dir "${pkg_install_dir}"
-  LIBNPY_CFLAGS="-I'${pkg_install_dir}/include'"
-  ;;
+  *)
+    echo "==================== Linking LIBNPY to user paths ===================="
+    pkg_install_dir="${with_libnpy}"
+    check_dir "${pkg_install_dir}"
+    LIBNPY_CFLAGS="-I'${pkg_install_dir}/include'"
+    ;;
 esac
 if [ "$with_libnpy" != "__DONTUSE__" ]; then
   if [ "$with_libnpy" != "__SYSTEM__" ]; then

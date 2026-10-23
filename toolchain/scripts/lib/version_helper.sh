@@ -158,27 +158,27 @@ version_interactive_select() {
 
     # Set user choice or default to main
     case "$user_choice" in
-    alt | alternative)
-      if [[ -n "${!alt_var}" ]]; then
-        CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="alt"
-        echo "  → Selected: alt (${!alt_var})"
-      else
-        echo "  → Alternative version not available, using main"
+      alt | alternative)
+        if [[ -n "${!alt_var}" ]]; then
+          CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="alt"
+          echo "  → Selected: alt (${!alt_var})"
+        else
+          echo "  → Alternative version not available, using main"
+          CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="main"
+        fi
+        ;;
+      main | "")
         CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="main"
-      fi
-      ;;
-    main | "")
-      CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="main"
-      if [[ -n "${!main_var}" ]]; then
-        echo "  → Selected: main (${!main_var})"
-      else
-        echo "  → Main version not available"
-      fi
-      ;;
-    *)
-      echo "  → Invalid choice, using main"
-      CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="main"
-      ;;
+        if [[ -n "${!main_var}" ]]; then
+          echo "  → Selected: main (${!main_var})"
+        else
+          echo "  → Main version not available"
+        fi
+        ;;
+      *)
+        echo "  → Invalid choice, using main"
+        CONFIG_CACHE["PACKAGE_VERSION_${pkg^^}"]="main"
+        ;;
     esac
     echo ""
   done

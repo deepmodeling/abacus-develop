@@ -41,69 +41,69 @@ SCALAPACK_LIBS=""
 cd "${BUILDDIR}"
 
 case "${with_scalapack}" in
-__INSTALL__)
-  echo "==================== Installing ScaLAPACK ===================="
-  pkg_install_dir="${INSTALLDIR}/scalapack-${scalapack_ver}"
-  install_lock_file="${pkg_install_dir}/install_successful"
-  if verify_checksums "${install_lock_file}"; then
-    echo "scalapack-${scalapack_ver} is already installed, skipping it."
-  else
-    require_env MATH_LIBS
-    url="https://codeload.github.com/Reference-ScaLAPACK/scalapack/tar.gz/v${scalapack_ver}"
-    retrieve_package "${scalapack_sha256}" "${scalapack_pkg}" "${url}"
+  __INSTALL__)
+    echo "==================== Installing ScaLAPACK ===================="
+    pkg_install_dir="${INSTALLDIR}/scalapack-${scalapack_ver}"
+    install_lock_file="${pkg_install_dir}/install_successful"
+    if verify_checksums "${install_lock_file}"; then
+      echo "scalapack-${scalapack_ver} is already installed, skipping it."
+    else
+      require_env MATH_LIBS
+      url="https://codeload.github.com/Reference-ScaLAPACK/scalapack/tar.gz/v${scalapack_ver}"
+      retrieve_package "${scalapack_sha256}" "${scalapack_pkg}" "${url}"
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip installation"
+        exit 0
+      fi
+      echo "Installing from scratch into ${pkg_install_dir}"
+      [ -d scalapack-${scalapack_ver} ] && rm -rf scalapack-${scalapack_ver}
+      tar -xzf ${scalapack_pkg}
+
+      mkdir -p "scalapack-${scalapack_ver}/build"
+      pushd "scalapack-${scalapack_ver}/build" >/dev/null
+
+      cflags=""
+      fflags=""
+      if ("${FC}" --version | grep -q 'GNU'); then
+        cflags="-fpermissive"
+        fflags=$(allowed_gfortran_flags "-fallow-argument-mismatch")
+      fi
+      CFLAGS=${cflags} FFLAGS=${fflags} \
+        cmake -DCMAKE_FIND_ROOT_PATH="$ROOTDIR" \
+        -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
+        -DCMAKE_INSTALL_LIBDIR="lib" \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        -DCMAKE_VERBOSE_MAKEFILE=ON \
+        -DBUILD_SHARED_LIBS=YES \
+        -DCMAKE_BUILD_TYPE=Release .. \
+        -DBUILD_TESTING=NO \
+        -DSCALAPACK_BUILD_TESTS=NO \
+        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make install >>make.log 2>&1 || tail -n ${LOG_LINES} make.log
+
+      popd >/dev/null
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
+    fi
+    SCALAPACK_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    ;;
+  __SYSTEM__)
+    echo "==================== Finding ScaLAPACK from system paths ===================="
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
-      echo "--pack-run mode specified, skip installation"
+      echo "--pack-run mode specified, skip system check"
       exit 0
     fi
-    echo "Installing from scratch into ${pkg_install_dir}"
-    [ -d scalapack-${scalapack_ver} ] && rm -rf scalapack-${scalapack_ver}
-    tar -xzf ${scalapack_pkg}
+    check_lib -lscalapack "ScaLAPACK"
+    add_lib_from_paths SCALAPACK_LDFLAGS "libscalapack.*" $LIB_PATHS
+    ;;
+  __DONTUSE__) ;;
 
-    mkdir -p "scalapack-${scalapack_ver}/build"
-    pushd "scalapack-${scalapack_ver}/build" >/dev/null
-
-    cflags=""
-    fflags=""
-    if ("${FC}" --version | grep -q 'GNU'); then
-      cflags="-fpermissive"
-      fflags=$(allowed_gfortran_flags "-fallow-argument-mismatch")
-    fi
-    CFLAGS=${cflags} FFLAGS=${fflags} \
-      cmake -DCMAKE_FIND_ROOT_PATH="$ROOTDIR" \
-      -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
-      -DCMAKE_INSTALL_LIBDIR="lib" \
-      -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-      -DCMAKE_VERBOSE_MAKEFILE=ON \
-      -DBUILD_SHARED_LIBS=YES \
-      -DCMAKE_BUILD_TYPE=Release .. \
-      -DBUILD_TESTING=NO \
-      -DSCALAPACK_BUILD_TESTS=NO \
-      >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-    make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-    make install >>make.log 2>&1 || tail -n ${LOG_LINES} make.log
-
-    popd >/dev/null
-    write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage3/$(basename ${SCRIPT_NAME})"
-  fi
-  SCALAPACK_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  ;;
-__SYSTEM__)
-  echo "==================== Finding ScaLAPACK from system paths ===================="
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  check_lib -lscalapack "ScaLAPACK"
-  add_lib_from_paths SCALAPACK_LDFLAGS "libscalapack.*" $LIB_PATHS
-  ;;
-__DONTUSE__) ;;
-
-*)
-  echo "==================== Linking ScaLAPACK to user paths ===================="
-  pkg_install_dir="$with_scalapack"
-  check_dir "${pkg_install_dir}/lib"
-  SCALAPACK_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  ;;
+  *)
+    echo "==================== Linking ScaLAPACK to user paths ===================="
+    pkg_install_dir="$with_scalapack"
+    check_dir "${pkg_install_dir}/lib"
+    SCALAPACK_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    ;;
 esac
 if [ "$with_scalapack" != "__DONTUSE__" ]; then
   SCALAPACK_LIBS="-lscalapack"

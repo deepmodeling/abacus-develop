@@ -44,112 +44,112 @@ OPENMPI_LIBS=""
 cd "${BUILDDIR}"
 
 case "${with_openmpi}" in
-__INSTALL__)
-  echo "==================== Installing OpenMPI ===================="
-  pkg_install_dir="${INSTALLDIR}/openmpi-${openmpi_ver}"
-  install_lock_file="${pkg_install_dir}/install_successful"
-  url="https://download.open-mpi.org/release/open-mpi/v${openmpi_ver%.*}/${openmpi_pkg}"
-  if verify_checksums "${install_lock_file}"; then
-    echo "openmpi-${openmpi_ver} is already installed, skipping it."
-  else
-    retrieve_package "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
+  __INSTALL__)
+    echo "==================== Installing OpenMPI ===================="
+    pkg_install_dir="${INSTALLDIR}/openmpi-${openmpi_ver}"
+    install_lock_file="${pkg_install_dir}/install_successful"
+    url="https://download.open-mpi.org/release/open-mpi/v${openmpi_ver%.*}/${openmpi_pkg}"
+    if verify_checksums "${install_lock_file}"; then
+      echo "openmpi-${openmpi_ver} is already installed, skipping it."
+    else
+      retrieve_package "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip installation"
+        exit 0
+      fi
+      echo "Installing from scratch into ${pkg_install_dir}"
+      [ -d openmpi-${openmpi_ver} ] && rm -rf openmpi-${openmpi_ver}
+      tar -xjf ${openmpi_pkg}
+      cd openmpi-${openmpi_ver}
+      if [ "${SYSTEM_ARCH}" = "x86_64" ]; then
+        # can have issue with older glibc libraries, in which case
+        # we need to add the -fgnu89-inline to CFLAGS. We can check
+        # the version of glibc using ldd --version, as ldd is part of
+        # glibc package
+        glibc_version=$(ldd --version | awk '/ldd/{print $NF}')
+        glibc_major_ver=${glibc_version%%.*}
+        glibc_minor_ver=${glibc_version##*.}
+        if [ $glibc_major_ver -lt 2 ] ||
+          [ $glibc_major_ver -eq 2 -a $glibc_minor_ver -lt 12 ]; then
+          CFLAGS="${CFLAGS} -fgnu89-inline"
+        fi
+      fi
+
+      # Notice for RHEL8 refer https://github.com/open-mpi/ompi/issues/13103
+
+      # OpenMPI 5.0 only supports PMIx
+      # PMI support is required for Slurm, but not for other schedulers
+      # default not use
+      # for OpenMPI 4.1 with pmi slurm, we can open this setting manually
+      #   if [ $(command -v srun) ]; then
+      #     echo "Slurm installation found. OpenMPI will be configured with --with-pmi."
+      #     EXTRA_CONFIGURE_FLAGS="--with-pmi"
+      #   else
+      #     EXTRA_CONFIGURE_FLAGS=""
+      #   fi
+      ./configure \
+        CC=gcc \
+        CXX=g++ \
+        FC=gfortran \
+        F77=gfortran \
+        CFLAGS="${CFLAGS}" \
+        --prefix=${pkg_install_dir} \
+        --libdir="${pkg_install_dir}/lib" \
+        --with-libevent=internal \
+        ${EXTRA_CONFIGURE_FLAGS} \
+        >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+      make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make -j $(get_nprocs) install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+      cd ..
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage1/$(basename ${SCRIPT_NAME})"
+    fi
     if [ "${PACK_RUN}" = "__TRUE__" ]; then
-      echo "--pack-run mode specified, skip installation"
+      echo "--pack-run mode specified, skip system check"
+    else
+      check_dir "${pkg_install_dir}/bin"
+      check_dir "${pkg_install_dir}/lib"
+      check_dir "${pkg_install_dir}/include"
+      check_install ${pkg_install_dir}/bin/mpiexec "openmpi" && MPIRUN="${pkg_install_dir}/bin/mpiexec" || exit 1
+      check_install ${pkg_install_dir}/bin/mpicc "openmpi" && MPICC="${pkg_install_dir}/bin/mpicc" || exit 1
+      check_install ${pkg_install_dir}/bin/mpicxx "openmpi" && MPICXX="${pkg_install_dir}/bin/mpicxx" || exit 1
+      check_install ${pkg_install_dir}/bin/mpifort "openmpi" && MPIFC="${pkg_install_dir}/bin/mpifort" || exit 1
+      MPIFORT="${MPIFC}"
+      MPIF77="${MPIFC}"
+      OPENMPI_CFLAGS="-I'${pkg_install_dir}/include'"
+      OPENMPI_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    fi
+    ;;
+  __SYSTEM__)
+    echo "==================== Finding OpenMPI from system paths ===================="
+    if [ "${PACK_RUN}" = "__TRUE__" ]; then
+      echo "--pack-run mode specified, skip system check"
       exit 0
     fi
-    echo "Installing from scratch into ${pkg_install_dir}"
-    [ -d openmpi-${openmpi_ver} ] && rm -rf openmpi-${openmpi_ver}
-    tar -xjf ${openmpi_pkg}
-    cd openmpi-${openmpi_ver}
-    if [ "${SYSTEM_ARCH}" = "x86_64" ]; then
-      # can have issue with older glibc libraries, in which case
-      # we need to add the -fgnu89-inline to CFLAGS. We can check
-      # the version of glibc using ldd --version, as ldd is part of
-      # glibc package
-      glibc_version=$(ldd --version | awk '/ldd/{print $NF}')
-      glibc_major_ver=${glibc_version%%.*}
-      glibc_minor_ver=${glibc_version##*.}
-      if [ $glibc_major_ver -lt 2 ] ||
-        [ $glibc_major_ver -eq 2 -a $glibc_minor_ver -lt 12 ]; then
-        CFLAGS="${CFLAGS} -fgnu89-inline"
-      fi
-    fi
-
-    # Notice for RHEL8 refer https://github.com/open-mpi/ompi/issues/13103
-
-    # OpenMPI 5.0 only supports PMIx
-    # PMI support is required for Slurm, but not for other schedulers
-    # default not use
-    # for OpenMPI 4.1 with pmi slurm, we can open this setting manually
-    #   if [ $(command -v srun) ]; then
-    #     echo "Slurm installation found. OpenMPI will be configured with --with-pmi."
-    #     EXTRA_CONFIGURE_FLAGS="--with-pmi"
-    #   else
-    #     EXTRA_CONFIGURE_FLAGS=""
-    #   fi
-    ./configure \
-      CC=gcc \
-      CXX=g++ \
-      FC=gfortran \
-      F77=gfortran \
-      CFLAGS="${CFLAGS}" \
-      --prefix=${pkg_install_dir} \
-      --libdir="${pkg_install_dir}/lib" \
-      --with-libevent=internal \
-      ${EXTRA_CONFIGURE_FLAGS} \
-      >configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
-    make -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-    make -j $(get_nprocs) install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
-    cd ..
-    write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage1/$(basename ${SCRIPT_NAME})"
-  fi
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-  else
+    check_command mpiexec "openmpi" && MPIRUN="$(command -v mpiexec)"
+    check_command mpicc "openmpi" && MPICC="$(command -v mpicc)" || exit 1
+    check_command mpicxx "openmpi" && MPICXX="$(command -v mpicxx)" || exit 1
+    check_command mpifort "openmpi" && MPIFC="$(command -v mpifort)" || exit 1
+    MPIFORT="${MPIFC}"
+    MPIF77="${MPIFC}"
+    ;;
+  __DONTUSE__)
+    # Nothing to do
+    ;;
+  *)
+    echo "==================== Linking OpenMPI to user paths ===================="
+    pkg_install_dir="${with_openmpi}"
     check_dir "${pkg_install_dir}/bin"
     check_dir "${pkg_install_dir}/lib"
     check_dir "${pkg_install_dir}/include"
-    check_install ${pkg_install_dir}/bin/mpiexec "openmpi" && MPIRUN="${pkg_install_dir}/bin/mpiexec" || exit 1
-    check_install ${pkg_install_dir}/bin/mpicc "openmpi" && MPICC="${pkg_install_dir}/bin/mpicc" || exit 1
-    check_install ${pkg_install_dir}/bin/mpicxx "openmpi" && MPICXX="${pkg_install_dir}/bin/mpicxx" || exit 1
-    check_install ${pkg_install_dir}/bin/mpifort "openmpi" && MPIFC="${pkg_install_dir}/bin/mpifort" || exit 1
+    check_command ${pkg_install_dir}/bin/mpiexec "openmpi" && MPIRUN="${pkg_install_dir}/bin/mpiexec" || exit 1
+    check_command ${pkg_install_dir}/bin/mpicc "openmpi" && MPICC="${pkg_install_dir}/bin/mpicc" || exit 1
+    check_command ${pkg_install_dir}/bin/mpicxx "openmpi" && MPICXX="${pkg_install_dir}/bin/mpicxx" || exit 1
+    check_command ${pkg_install_dir}/bin/mpifort "openmpi" && MPIFC="${pkg_install_dir}/bin/mpifort" || exit 1
     MPIFORT="${MPIFC}"
     MPIF77="${MPIFC}"
     OPENMPI_CFLAGS="-I'${pkg_install_dir}/include'"
     OPENMPI_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  fi
-  ;;
-__SYSTEM__)
-  echo "==================== Finding OpenMPI from system paths ===================="
-  if [ "${PACK_RUN}" = "__TRUE__" ]; then
-    echo "--pack-run mode specified, skip system check"
-    exit 0
-  fi
-  check_command mpiexec "openmpi" && MPIRUN="$(command -v mpiexec)"
-  check_command mpicc "openmpi" && MPICC="$(command -v mpicc)" || exit 1
-  check_command mpicxx "openmpi" && MPICXX="$(command -v mpicxx)" || exit 1
-  check_command mpifort "openmpi" && MPIFC="$(command -v mpifort)" || exit 1
-  MPIFORT="${MPIFC}"
-  MPIF77="${MPIFC}"
-  ;;
-__DONTUSE__)
-  # Nothing to do
-  ;;
-*)
-  echo "==================== Linking OpenMPI to user paths ===================="
-  pkg_install_dir="${with_openmpi}"
-  check_dir "${pkg_install_dir}/bin"
-  check_dir "${pkg_install_dir}/lib"
-  check_dir "${pkg_install_dir}/include"
-  check_command ${pkg_install_dir}/bin/mpiexec "openmpi" && MPIRUN="${pkg_install_dir}/bin/mpiexec" || exit 1
-  check_command ${pkg_install_dir}/bin/mpicc "openmpi" && MPICC="${pkg_install_dir}/bin/mpicc" || exit 1
-  check_command ${pkg_install_dir}/bin/mpicxx "openmpi" && MPICXX="${pkg_install_dir}/bin/mpicxx" || exit 1
-  check_command ${pkg_install_dir}/bin/mpifort "openmpi" && MPIFC="${pkg_install_dir}/bin/mpifort" || exit 1
-  MPIFORT="${MPIFC}"
-  MPIF77="${MPIFC}"
-  OPENMPI_CFLAGS="-I'${pkg_install_dir}/include'"
-  OPENMPI_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  ;;
+    ;;
 esac
 if [ "${PACK_RUN}" = "__TRUE__" ]; then
   echo "--pack-run mode specified, skip env setting"

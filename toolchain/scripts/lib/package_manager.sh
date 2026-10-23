@@ -77,12 +77,12 @@ package_is_enabled() {
   local status=$(config_get "with_${package}")
 
   case "$status" in
-  "__INSTALL__" | "__SYSTEM__")
-    return 0
-    ;;
-  *)
-    return 1
-    ;;
+    "__INSTALL__" | "__SYSTEM__")
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
   esac
 }
 
@@ -205,21 +205,21 @@ package_check_system_requirements() {
   # Check for compiler availability
   local compiler_mode=$(config_get MATH_MODE)
   case "$compiler_mode" in
-  gcc)
-    if ! command -v gcc &>/dev/null; then
-      report_warning ${LINENO} "GCC compiler not found in system PATH"
-    fi
-    ;;
-  intel)
-    if ! command -v icc &>/dev/null && ! command -v icx &>/dev/null; then
-      report_warning ${LINENO} "Intel compiler not found in system PATH"
-    fi
-    ;;
-  amd)
-    if ! command -v clang &>/dev/null; then
-      report_warning ${LINENO} "AMD/Clang compiler not found in system PATH"
-    fi
-    ;;
+    gcc)
+      if ! command -v gcc &>/dev/null; then
+        report_warning ${LINENO} "GCC compiler not found in system PATH"
+      fi
+      ;;
+    intel)
+      if ! command -v icc &>/dev/null && ! command -v icx &>/dev/null; then
+        report_warning ${LINENO} "Intel compiler not found in system PATH"
+      fi
+      ;;
+    amd)
+      if ! command -v clang &>/dev/null; then
+        report_warning ${LINENO} "AMD/Clang compiler not found in system PATH"
+      fi
+      ;;
   esac
 
   echo "System requirements check completed"

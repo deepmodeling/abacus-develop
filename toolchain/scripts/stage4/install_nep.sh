@@ -26,29 +26,29 @@ NEP_LIBS=""
 cd "${BUILDDIR}"
 
 case "$with_nep" in
-__INSTALL__)
-  echo "==================== Installing NEP (CPU version) ===================="
-  dirname="NEP_CPU-${nep_ver}"
-  pkg_install_dir="${INSTALLDIR}/${dirname}"
-  install_lock_file="${pkg_install_dir}/install_successful"
-  filename="nep-${nep_ver}.tar.gz"
-  url="https://codeload.github.com/brucefan1983/NEP_CPU/tar.gz/${nep_ver}"
+  __INSTALL__)
+    echo "==================== Installing NEP (CPU version) ===================="
+    dirname="NEP_CPU-${nep_ver}"
+    pkg_install_dir="${INSTALLDIR}/${dirname}"
+    install_lock_file="${pkg_install_dir}/install_successful"
+    filename="nep-${nep_ver}.tar.gz"
+    url="https://codeload.github.com/brucefan1983/NEP_CPU/tar.gz/${nep_ver}"
 
-  if verify_checksums "${install_lock_file}"; then
-    echo "$dirname is already installed, skipping it."
-  else
-    retrieve_package "${nep_sha256}" "${filename}" "${url}"
+    if verify_checksums "${install_lock_file}"; then
+      echo "$dirname is already installed, skipping it."
+    else
+      retrieve_package "${nep_sha256}" "${filename}" "${url}"
 
-    if [ "${PACK_RUN}" = "__TRUE__" ]; then
-      echo "--pack-run mode specified, skip installation"
-      exit 0
-    fi
-    echo "Installing from scratch into ${pkg_install_dir}"
-    [ -d $dirname ] && rm -rf $dirname
-    tar -xzf $filename
-    cd $dirname
+      if [ "${PACK_RUN}" = "__TRUE__" ]; then
+        echo "--pack-run mode specified, skip installation"
+        exit 0
+      fi
+      echo "Installing from scratch into ${pkg_install_dir}"
+      [ -d $dirname ] && rm -rf $dirname
+      tar -xzf $filename
+      cd $dirname
 
-    cat <<EOF >Makefile
+      cat <<EOF >Makefile
 CXX ?= g++
 
 # Compiler flags
@@ -89,31 +89,31 @@ install:
 	cp src/*.h \$(PREFIX)/include/
 EOF
 
-    make >make.log 2>&1 || tail -n ${LOG_LINES} make.log
-    make PREFIX="${pkg_install_dir}" install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
+      make >make.log 2>&1 || tail -n ${LOG_LINES} make.log
+      make PREFIX="${pkg_install_dir}" install >install.log 2>&1 || tail -n ${LOG_LINES} install.log
 
-    cd ..
-    write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
-  fi
-  NEP_CFLAGS="-I'${pkg_install_dir}/include'"
-  NEP_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  ;;
+      cd ..
+      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
+    fi
+    NEP_CFLAGS="-I'${pkg_install_dir}/include'"
+    NEP_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    ;;
 
-__SYSTEM__)
-  echo "==================== Finding NEP_CPU from system paths ===================="
-  check_lib -lnep "nep"
-  add_include_from_paths NEP_CFLAGS "nep.h" $INCLUDE_PATHS
-  add_lib_from_paths NEP_LDFLAGS "libnep.*" $LIB_PATHS
-  ;;
-__DONTUSE__) ;;
-*)
-  echo "==================== Linking NEP_CPU to user paths ===================="
-  pkg_install_dir="$with_nep"
-  check_dir "${pkg_install_dir}/lib"
-  check_dir "${pkg_install_dir}/include"
-  NEP_CFLAGS="-I'${pkg_install_dir}/include'"
-  NEP_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
-  ;;
+  __SYSTEM__)
+    echo "==================== Finding NEP_CPU from system paths ===================="
+    check_lib -lnep "nep"
+    add_include_from_paths NEP_CFLAGS "nep.h" $INCLUDE_PATHS
+    add_lib_from_paths NEP_LDFLAGS "libnep.*" $LIB_PATHS
+    ;;
+  __DONTUSE__) ;;
+  *)
+    echo "==================== Linking NEP_CPU to user paths ===================="
+    pkg_install_dir="$with_nep"
+    check_dir "${pkg_install_dir}/lib"
+    check_dir "${pkg_install_dir}/include"
+    NEP_CFLAGS="-I'${pkg_install_dir}/include'"
+    NEP_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
+    ;;
 esac
 
 if [ "$with_nep" != "__DONTUSE__" ]; then

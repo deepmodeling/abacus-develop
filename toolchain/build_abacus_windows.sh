@@ -48,24 +48,24 @@ if [ -r /proc/meminfo ]; then
 fi
 while [[ $# -gt 0 ]]; do
   case $1 in
-  -j)
-    if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
-      NUM_JOBS="${2}"
-      shift 2
-    else
-      echo "ERROR: -j requires a number argument"
+    -j)
+      if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+        NUM_JOBS="${2}"
+        shift 2
+      else
+        echo "ERROR: -j requires a number argument"
+        exit 1
+      fi
+      ;;
+    -j[0-9]*)
+      NUM_JOBS="${1#-j}"
+      shift
+      ;;
+    *)
+      echo "ERROR: Unsupported argument: $1" >&2
+      echo "Usage: $0 [-j N|-jN]" >&2
       exit 1
-    fi
-    ;;
-  -j[0-9]*)
-    NUM_JOBS="${1#-j}"
-    shift
-    ;;
-  *)
-    echo "ERROR: Unsupported argument: $1" >&2
-    echo "Usage: $0 [-j N|-jN]" >&2
-    exit 1
-    ;;
+      ;;
   esac
 done
 echo "Building with -j ${NUM_JOBS} (override with -j N; lower it if cc1plus runs out of memory)."

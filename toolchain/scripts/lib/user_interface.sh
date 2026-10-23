@@ -120,32 +120,32 @@ ui_detect_unicode_support() {
   # Check terminal type and capabilities
   local term_support="none"
   case "${TERM:-}" in
-  xterm* | screen* | tmux* | rxvt* | gnome* | konsole* | alacritty* | kitty* | iterm*)
-    if [[ "$locale_utf8" == "true" ]]; then
-      term_support="full"
-    else
-      term_support="basic"
-    fi
-    ;;
-  linux | vt*)
-    # Linux console - basic Unicode support
-    if [[ "$locale_utf8" == "true" ]]; then
-      term_support="basic"
-    else
+    xterm* | screen* | tmux* | rxvt* | gnome* | konsole* | alacritty* | kitty* | iterm*)
+      if [[ "$locale_utf8" == "true" ]]; then
+        term_support="full"
+      else
+        term_support="basic"
+      fi
+      ;;
+    linux | vt*)
+      # Linux console - basic Unicode support
+      if [[ "$locale_utf8" == "true" ]]; then
+        term_support="basic"
+      else
+        term_support="none"
+      fi
+      ;;
+    dumb | unknown)
       term_support="none"
-    fi
-    ;;
-  dumb | unknown)
-    term_support="none"
-    ;;
-  *)
-    # Unknown terminal - be conservative
-    if [[ "$locale_utf8" == "true" ]]; then
-      term_support="basic"
-    else
-      term_support="none"
-    fi
-    ;;
+      ;;
+    *)
+      # Unknown terminal - be conservative
+      if [[ "$locale_utf8" == "true" ]]; then
+        term_support="basic"
+      else
+        term_support="none"
+      fi
+      ;;
   esac
 
   # Final validation - ensure we have both locale and terminal support
@@ -187,75 +187,75 @@ ui_init_icons() {
   local support=$(ui_detect_unicode_support)
 
   case "$support" in
-  "full")
-    # Full Unicode support - use emoji and special symbols
-    readonly UI_ICON_SUCCESS="✅"
-    readonly UI_ICON_ERROR="❌"
-    readonly UI_ICON_WARNING="⚠️"
-    readonly UI_ICON_INFO="ℹ️"
-    readonly UI_ICON_PROGRESS="🔄"
-    readonly UI_ICON_ROCKET="🚀"
-    readonly UI_ICON_GEAR="⚙️"
-    readonly UI_ICON_PACKAGE="📦"
-    readonly UI_ICON_DOWNLOAD="⬇️"
-    readonly UI_ICON_BUILD="🔨"
-    readonly UI_ICON_INSTALL="📥"
-    readonly UI_ICON_CHECK="✓"
-    readonly UI_ICON_CROSS="✗"
-    readonly UI_ICON_ARROW="→"
-    readonly UI_ICON_STAR="⭐"
-    # Full Unicode progress bar
-    readonly UI_PROGRESS_FULL="█"
-    readonly UI_PROGRESS_PARTIAL1="▓"
-    readonly UI_PROGRESS_PARTIAL2="▒"
-    readonly UI_PROGRESS_EMPTY="░"
-    ;;
-  "basic")
-    # Basic Unicode support - use simple Unicode symbols
-    readonly UI_ICON_SUCCESS="✓"
-    readonly UI_ICON_ERROR="✗"
-    readonly UI_ICON_WARNING="!"
-    readonly UI_ICON_INFO="i"
-    readonly UI_ICON_PROGRESS="*"
-    readonly UI_ICON_ROCKET="^"
-    readonly UI_ICON_GEAR="*"
-    readonly UI_ICON_PACKAGE="+"
-    readonly UI_ICON_DOWNLOAD="v"
-    readonly UI_ICON_BUILD="#"
-    readonly UI_ICON_INSTALL="+"
-    readonly UI_ICON_CHECK="✓"
-    readonly UI_ICON_CROSS="✗"
-    readonly UI_ICON_ARROW="→"
-    readonly UI_ICON_STAR="*"
-    # Basic Unicode progress bar
-    readonly UI_PROGRESS_FULL="█"
-    readonly UI_PROGRESS_PARTIAL1="▓"
-    readonly UI_PROGRESS_PARTIAL2="▒"
-    readonly UI_PROGRESS_EMPTY="░"
-    ;;
-  *)
-    # ASCII fallback - maximum compatibility
-    readonly UI_ICON_SUCCESS="[OK]"
-    readonly UI_ICON_ERROR="[ERR]"
-    readonly UI_ICON_WARNING="[WARN]"
-    readonly UI_ICON_INFO="[INFO]"
-    readonly UI_ICON_PROGRESS="[*]"
-    readonly UI_ICON_ROCKET="[^]"
-    readonly UI_ICON_GEAR="[*]"
-    readonly UI_ICON_PACKAGE="[+]"
-    readonly UI_ICON_DOWNLOAD="[v]"
-    readonly UI_ICON_BUILD="[#]"
-    readonly UI_ICON_INSTALL="[+]"
-    readonly UI_ICON_CHECK="[+]"
-    readonly UI_ICON_CROSS="[-]"
-    readonly UI_ICON_ARROW="->"
-    readonly UI_ICON_STAR="[*]"
-    # ASCII progress bar
-    readonly UI_PROGRESS_FULL="#"
-    readonly UI_PROGRESS_PARTIAL1="#"
-    readonly UI_PROGRESS_PARTIAL2="-"
-    readonly UI_PROGRESS_EMPTY="."
-    ;;
+    "full")
+      # Full Unicode support - use emoji and special symbols
+      readonly UI_ICON_SUCCESS="✅"
+      readonly UI_ICON_ERROR="❌"
+      readonly UI_ICON_WARNING="⚠️"
+      readonly UI_ICON_INFO="ℹ️"
+      readonly UI_ICON_PROGRESS="🔄"
+      readonly UI_ICON_ROCKET="🚀"
+      readonly UI_ICON_GEAR="⚙️"
+      readonly UI_ICON_PACKAGE="📦"
+      readonly UI_ICON_DOWNLOAD="⬇️"
+      readonly UI_ICON_BUILD="🔨"
+      readonly UI_ICON_INSTALL="📥"
+      readonly UI_ICON_CHECK="✓"
+      readonly UI_ICON_CROSS="✗"
+      readonly UI_ICON_ARROW="→"
+      readonly UI_ICON_STAR="⭐"
+      # Full Unicode progress bar
+      readonly UI_PROGRESS_FULL="█"
+      readonly UI_PROGRESS_PARTIAL1="▓"
+      readonly UI_PROGRESS_PARTIAL2="▒"
+      readonly UI_PROGRESS_EMPTY="░"
+      ;;
+    "basic")
+      # Basic Unicode support - use simple Unicode symbols
+      readonly UI_ICON_SUCCESS="✓"
+      readonly UI_ICON_ERROR="✗"
+      readonly UI_ICON_WARNING="!"
+      readonly UI_ICON_INFO="i"
+      readonly UI_ICON_PROGRESS="*"
+      readonly UI_ICON_ROCKET="^"
+      readonly UI_ICON_GEAR="*"
+      readonly UI_ICON_PACKAGE="+"
+      readonly UI_ICON_DOWNLOAD="v"
+      readonly UI_ICON_BUILD="#"
+      readonly UI_ICON_INSTALL="+"
+      readonly UI_ICON_CHECK="✓"
+      readonly UI_ICON_CROSS="✗"
+      readonly UI_ICON_ARROW="→"
+      readonly UI_ICON_STAR="*"
+      # Basic Unicode progress bar
+      readonly UI_PROGRESS_FULL="█"
+      readonly UI_PROGRESS_PARTIAL1="▓"
+      readonly UI_PROGRESS_PARTIAL2="▒"
+      readonly UI_PROGRESS_EMPTY="░"
+      ;;
+    *)
+      # ASCII fallback - maximum compatibility
+      readonly UI_ICON_SUCCESS="[OK]"
+      readonly UI_ICON_ERROR="[ERR]"
+      readonly UI_ICON_WARNING="[WARN]"
+      readonly UI_ICON_INFO="[INFO]"
+      readonly UI_ICON_PROGRESS="[*]"
+      readonly UI_ICON_ROCKET="[^]"
+      readonly UI_ICON_GEAR="[*]"
+      readonly UI_ICON_PACKAGE="[+]"
+      readonly UI_ICON_DOWNLOAD="[v]"
+      readonly UI_ICON_BUILD="[#]"
+      readonly UI_ICON_INSTALL="[+]"
+      readonly UI_ICON_CHECK="[+]"
+      readonly UI_ICON_CROSS="[-]"
+      readonly UI_ICON_ARROW="->"
+      readonly UI_ICON_STAR="[*]"
+      # ASCII progress bar
+      readonly UI_PROGRESS_FULL="#"
+      readonly UI_PROGRESS_PARTIAL1="#"
+      readonly UI_PROGRESS_PARTIAL2="-"
+      readonly UI_PROGRESS_EMPTY="."
+      ;;
   esac
 }
 
@@ -269,19 +269,19 @@ ui_init() {
   # Parse options
   while [[ $# -gt 0 ]]; do
     case "$1" in
-    verbose)
-      UI_VERBOSE=true
-      ;;
-    quiet)
-      UI_QUIET=true
-      ;;
-    --log-file=*)
-      UI_LOG_FILE="${1#*=}"
-      ;;
-    *)
-      # Assume it's a log file path
-      UI_LOG_FILE="$1"
-      ;;
+      verbose)
+        UI_VERBOSE=true
+        ;;
+      quiet)
+        UI_QUIET=true
+        ;;
+      --log-file=*)
+        UI_LOG_FILE="${1#*=}"
+        ;;
+      *)
+        # Assume it's a log file path
+        UI_LOG_FILE="$1"
+        ;;
     esac
     shift
   done
@@ -825,22 +825,22 @@ ui_show_summary() {
       local display_status="$status"
       local status_icon=""
       case "$status" in
-      "__INSTALL__")
-        display_status="${UI_GREEN}install${UI_NC}"
-        status_icon="📥"
-        ;;
-      "__SYSTEM__")
-        display_status="${UI_BLUE}system${UI_NC}"
-        status_icon="🔗"
-        ;;
-      "__DONTUSE__")
-        display_status="${UI_GRAY}disabled${UI_NC}"
-        status_icon="❌"
-        ;;
-      *)
-        display_status="${UI_ORANGE}${status}${UI_NC}"
-        status_icon="📁"
-        ;;
+        "__INSTALL__")
+          display_status="${UI_GREEN}install${UI_NC}"
+          status_icon="📥"
+          ;;
+        "__SYSTEM__")
+          display_status="${UI_BLUE}system${UI_NC}"
+          status_icon="🔗"
+          ;;
+        "__DONTUSE__")
+          display_status="${UI_GRAY}disabled${UI_NC}"
+          status_icon="❌"
+          ;;
+        *)
+          display_status="${UI_ORANGE}${status}${UI_NC}"
+          status_icon="📁"
+          ;;
       esac
       printf "   ├─ %s %-12s %b %b\n" "$status_icon" "$pkg:" "$UI_ARROW" "$display_status"
     fi
@@ -900,13 +900,13 @@ ui_confirm_installation() {
   read -r response
 
   case "$response" in
-  [yY] | [yY][eE][sS])
-    return 0
-    ;;
-  *)
-    ui_info "Installation cancelled"
-    return 1
-    ;;
+    [yY] | [yY][eE][sS])
+      return 0
+      ;;
+    *)
+      ui_info "Installation cancelled"
+      return 1
+      ;;
   esac
 }
 
@@ -927,33 +927,33 @@ ui_package_progress() {
   local action="$2"
 
   case "$action" in
-  start)
-    ui_print_color "${UI_BLUE}${UI_BOLD}" "${UI_ICON_BUILD} Building $package..."
-    ;;
-  download)
-    ui_debug "${UI_ICON_DOWNLOAD} Downloading $package..."
-    ;;
-  extract)
-    ui_debug "${UI_ICON_PACKAGE} Extracting $package..."
-    ;;
-  configure)
-    ui_debug "${UI_ICON_GEAR} Configuring $package..."
-    ;;
-  compile)
-    ui_debug "${UI_ICON_BUILD} Compiling $package..."
-    ;;
-  install)
-    ui_debug "${UI_ICON_INSTALL} Installing $package..."
-    ;;
-  success)
-    ui_success "Successfully built $package"
-    ;;
-  skip)
-    ui_print_color "${UI_GRAY}${UI_BOLD}" "${UI_ICON_INFO} Skipping $package (already built or disabled)"
-    ;;
-  error)
-    ui_error "Failed to build $package"
-    ;;
+    start)
+      ui_print_color "${UI_BLUE}${UI_BOLD}" "${UI_ICON_BUILD} Building $package..."
+      ;;
+    download)
+      ui_debug "${UI_ICON_DOWNLOAD} Downloading $package..."
+      ;;
+    extract)
+      ui_debug "${UI_ICON_PACKAGE} Extracting $package..."
+      ;;
+    configure)
+      ui_debug "${UI_ICON_GEAR} Configuring $package..."
+      ;;
+    compile)
+      ui_debug "${UI_ICON_BUILD} Compiling $package..."
+      ;;
+    install)
+      ui_debug "${UI_ICON_INSTALL} Installing $package..."
+      ;;
+    success)
+      ui_success "Successfully built $package"
+      ;;
+    skip)
+      ui_print_color "${UI_GRAY}${UI_BOLD}" "${UI_ICON_INFO} Skipping $package (already built or disabled)"
+      ;;
+    error)
+      ui_error "Failed to build $package"
+      ;;
   esac
 }
 
@@ -1048,86 +1048,86 @@ ui_validate_input() {
   local type="$2"
 
   case "$type" in
-  number)
-    if [[ ! "$input" =~ ^[0-9]+$ ]]; then
-      ui_error "Invalid number: $input"
-      ui_info "Please provide a positive integer"
+    number)
+      if [[ ! "$input" =~ ^[0-9]+$ ]]; then
+        ui_error "Invalid number: $input"
+        ui_info "Please provide a positive integer"
+        return 1
+      fi
+      ;;
+    path)
+      if [[ ! -d "$input" ]]; then
+        ui_error "Directory does not exist: $input"
+        ui_info "Please provide a valid directory path"
+        return 1
+      fi
+      ;;
+    file)
+      if [[ ! -f "$input" ]]; then
+        ui_error "File does not exist: $input"
+        ui_info "Please provide a valid file path"
+        return 1
+      fi
+      ;;
+    mpi_mode)
+      case "$input" in
+        mpich | openmpi | intelmpi | no)
+          return 0
+          ;;
+        *)
+          ui_error "Invalid MPI mode: $input"
+          ui_print_color "${UI_BLUE}${UI_BOLD}" "📋 Valid options:"
+          ui_print_color "${UI_GREEN}" "   • mpich    - MPICH implementation (recommended)"
+          ui_print_color "${UI_GREEN}" "   • openmpi  - Open MPI implementation"
+          ui_print_color "${UI_GREEN}" "   • intelmpi - Intel MPI (requires Intel compiler)"
+          ui_print_color "${UI_GREEN}" "   • no       - Disable MPI support"
+          return 1
+          ;;
+      esac
+      ;;
+    math_mode)
+      case "$input" in
+        cray | mkl | openblas | aocl)
+          return 0
+          ;;
+        *)
+          ui_error "Invalid math mode: $input"
+          ui_print_color "${UI_BLUE}${UI_BOLD}" "📋 Valid options:"
+          ui_print_color "${UI_GREEN}" "   • openblas - OpenBLAS (open source, recommended)"
+          ui_print_color "${UI_GREEN}" "   • mkl      - Intel Math Kernel Library (high performance)"
+          ui_print_color "${UI_GREEN}" "   • aocl     - AMD Optimizing CPU Libraries"
+          ui_print_color "${UI_GREEN}" "   • cray     - Cray LibSci (for Cray systems)"
+          return 1
+          ;;
+      esac
+      ;;
+    gpu_version)
+      # Support only numeric formats for GPU versions
+      if [[ "$input" == "no" ]]; then
+        return 0
+      fi
+
+      # Check if it's a valid numeric format (like 8.0, 70, 80, etc.)
+      local arch_num="${input//./}"
+      if [[ "$arch_num" =~ ^[1-9][0-9]*$ ]]; then
+        return 0
+      fi
+
+      # Invalid format - show enhanced error message
+      ui_error "Invalid GPU version: $input"
+      ui_print_color "${UI_BLUE}${UI_BOLD}" "📋 Valid formats:"
+      ui_print_color "${UI_GREEN}" "   • Decimal format: 6.0, 7.0, 8.0, 8.9, etc. (CUDA compute capability)"
+      ui_print_color "${UI_GREEN}" "   • Integer format: 60, 70, 80, 89, etc."
+      ui_print_color "${UI_GREEN}" "   • Disable GPU: no"
+      ui_print_color "${UI_ORANGE}${UI_BOLD}" "💡 Examples:"
+      ui_print_color "${UI_WHITE}" "   • 8.0 or 80 for compute capability 8.0 (RTX 30xx series)"
+      ui_print_color "${UI_WHITE}" "   • 7.5 or 75 for compute capability 7.5 (RTX 20xx series)"
       return 1
-    fi
-    ;;
-  path)
-    if [[ ! -d "$input" ]]; then
-      ui_error "Directory does not exist: $input"
-      ui_info "Please provide a valid directory path"
-      return 1
-    fi
-    ;;
-  file)
-    if [[ ! -f "$input" ]]; then
-      ui_error "File does not exist: $input"
-      ui_info "Please provide a valid file path"
-      return 1
-    fi
-    ;;
-  mpi_mode)
-    case "$input" in
-    mpich | openmpi | intelmpi | no)
-      return 0
       ;;
     *)
-      ui_error "Invalid MPI mode: $input"
-      ui_print_color "${UI_BLUE}${UI_BOLD}" "📋 Valid options:"
-      ui_print_color "${UI_GREEN}" "   • mpich    - MPICH implementation (recommended)"
-      ui_print_color "${UI_GREEN}" "   • openmpi  - Open MPI implementation"
-      ui_print_color "${UI_GREEN}" "   • intelmpi - Intel MPI (requires Intel compiler)"
-      ui_print_color "${UI_GREEN}" "   • no       - Disable MPI support"
+      ui_error "Unknown validation type: $type"
       return 1
       ;;
-    esac
-    ;;
-  math_mode)
-    case "$input" in
-    cray | mkl | openblas | aocl)
-      return 0
-      ;;
-    *)
-      ui_error "Invalid math mode: $input"
-      ui_print_color "${UI_BLUE}${UI_BOLD}" "📋 Valid options:"
-      ui_print_color "${UI_GREEN}" "   • openblas - OpenBLAS (open source, recommended)"
-      ui_print_color "${UI_GREEN}" "   • mkl      - Intel Math Kernel Library (high performance)"
-      ui_print_color "${UI_GREEN}" "   • aocl     - AMD Optimizing CPU Libraries"
-      ui_print_color "${UI_GREEN}" "   • cray     - Cray LibSci (for Cray systems)"
-      return 1
-      ;;
-    esac
-    ;;
-  gpu_version)
-    # Support only numeric formats for GPU versions
-    if [[ "$input" == "no" ]]; then
-      return 0
-    fi
-
-    # Check if it's a valid numeric format (like 8.0, 70, 80, etc.)
-    local arch_num="${input//./}"
-    if [[ "$arch_num" =~ ^[1-9][0-9]*$ ]]; then
-      return 0
-    fi
-
-    # Invalid format - show enhanced error message
-    ui_error "Invalid GPU version: $input"
-    ui_print_color "${UI_BLUE}${UI_BOLD}" "📋 Valid formats:"
-    ui_print_color "${UI_GREEN}" "   • Decimal format: 6.0, 7.0, 8.0, 8.9, etc. (CUDA compute capability)"
-    ui_print_color "${UI_GREEN}" "   • Integer format: 60, 70, 80, 89, etc."
-    ui_print_color "${UI_GREEN}" "   • Disable GPU: no"
-    ui_print_color "${UI_ORANGE}${UI_BOLD}" "💡 Examples:"
-    ui_print_color "${UI_WHITE}" "   • 8.0 or 80 for compute capability 8.0 (RTX 30xx series)"
-    ui_print_color "${UI_WHITE}" "   • 7.5 or 75 for compute capability 7.5 (RTX 20xx series)"
-    return 1
-    ;;
-  *)
-    ui_error "Unknown validation type: $type"
-    return 1
-    ;;
   esac
 
   return 0
