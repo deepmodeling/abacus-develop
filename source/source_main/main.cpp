@@ -3,11 +3,11 @@
 // DATE : 2008-11-10
 //==========================================================
 
-#include "source_main/driver.h"
 #include "fftw3.h"
 #include "source_base/parallel_global.h"
-#include "source_io/parse_args.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/parse_args.h"
+#include "source_main/driver.h"
 #include "source_main/version.h"
 #ifdef _OPENMP
 #include <omp.h>
@@ -36,21 +36,15 @@ void print_welcome_banner()
               << "                     ██▄▄██ ██▄▄██ ██▄▄██ ██     ██  ██ ▀▀▀▄▄▄ " << std::endl
               << "                     ██  ██ ██▄▄█▀ ██  ██ ▀█████ ▀████▀ █████▀ " << std::endl
               << std::endl;
-    std::cout << "                                                                                     "
-              << std::endl
+    std::cout << "                                                                                     " << std::endl
               << "                                " << version << std::endl
               << std::endl
-              << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
+              << "               Atomic-orbital Based Ab-initio Computation at UStc                    " << std::endl
               << std::endl
-              << std::endl
-              << "                     Website: http://abacus.ustc.edu.cn/                             "
-              << std::endl
-              << "               Documentation: https://abacus.deepmodeling.com/                       "
-              << std::endl
-              << "                  Repository: https://github.com/abacusmodeling/abacus-develop       "
-              << std::endl
-              << "                              https://github.com/deepmodeling/abacus-develop         "
-              << std::endl
+              << "                     Website: http://abacus.ustc.edu.cn/                             " << std::endl
+              << "               Documentation: https://abacus.deepmodeling.com/                       " << std::endl
+              << "                  Repository: https://github.com/abacusmodeling/abacus-develop       " << std::endl
+              << "                              https://github.com/deepmodeling/abacus-develop         " << std::endl
               << "                      Commit: " << commit << std::endl
               << std::endl;
     time_t time_now = time(nullptr);

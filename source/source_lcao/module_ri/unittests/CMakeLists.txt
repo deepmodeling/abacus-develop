@@ -36,8 +36,8 @@ addtest(
   test_write_ri_cv.cpp)
 addtest(TARGET MODULE_RI_abfs_vector3_order LIBS parameter SOURCES
         test_abfs_vector3_order.cpp)
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/support"
-     DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+abacus_copy_test_files(support)
+
 add_executable(MODULE_RI_ewald_tail_utils_test test_ewald_tail_utils.cpp)
 install(TARGETS MODULE_RI_ewald_tail_utils_test
         DESTINATION ${CMAKE_BINARY_DIR}/tests)
@@ -45,6 +45,7 @@ add_test(
   NAME MODULE_RI_ewald_tail_utils_test
   COMMAND ./MODULE_RI_ewald_tail_utils_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(MODULE_RI_gaussian_abfs_cutoff_test
                test_gaussian_abfs_cutoff.cpp)
 install(TARGETS MODULE_RI_gaussian_abfs_cutoff_test
@@ -53,6 +54,7 @@ add_test(
   NAME MODULE_RI_gaussian_abfs_cutoff_test
   COMMAND ./MODULE_RI_gaussian_abfs_cutoff_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(MODULE_RI_gaussian_abfs_2d_integrals_test
                test_gaussian_abfs_2d_integrals.cpp)
 install(TARGETS MODULE_RI_gaussian_abfs_2d_integrals_test
@@ -61,6 +63,7 @@ add_test(
   NAME MODULE_RI_gaussian_abfs_2d_integrals_test
   COMMAND ./MODULE_RI_gaussian_abfs_2d_integrals_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(MODULE_RI_ewald_gaussian_cutoff_test
                test_ewald_gaussian_cutoff.cpp)
 install(TARGETS MODULE_RI_ewald_gaussian_cutoff_test
@@ -69,6 +72,7 @@ add_test(
   NAME MODULE_RI_ewald_gaussian_cutoff_test
   COMMAND ./MODULE_RI_ewald_gaussian_cutoff_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(
   MODULE_RI_gaussian_abfs_gamma_dipole_test
   test_gaussian_abfs_gamma_dipole.cpp ../gaussian_abfs.cpp
@@ -92,6 +96,7 @@ add_test(
   NAME MODULE_RI_gaussian_abfs_gamma_dipole_test
   COMMAND ./MODULE_RI_gaussian_abfs_gamma_dipole_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(MODULE_RI_direct_2d_coulomb_test test_direct_2d_coulomb.cpp
                                                 ../direct_2d_coulomb.cpp)
 target_include_directories(MODULE_RI_direct_2d_coulomb_test
@@ -104,6 +109,7 @@ add_test(
   NAME MODULE_RI_direct_2d_coulomb_test
   COMMAND ./MODULE_RI_direct_2d_coulomb_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
 add_executable(MODULE_RI_direct_3d_coulomb_test test_direct_3d_coulomb.cpp
                                                 ../direct_2d_coulomb.cpp)
 target_include_directories(MODULE_RI_direct_3d_coulomb_test
@@ -116,6 +122,7 @@ add_test(
   NAME MODULE_RI_direct_3d_coulomb_test
   COMMAND ./MODULE_RI_direct_3d_coulomb_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
 if(ENABLE_MPI)
   add_executable(MODULE_RI_ewald_mpi_distribution_test
                  test_ewald_mpi_distribution.cpp)
@@ -126,6 +133,6 @@ if(ENABLE_MPI)
           DESTINATION ${CMAKE_BINARY_DIR}/tests)
   add_test(
     NAME MODULE_RI_ewald_mpi_distribution_parallel_test
-    COMMAND mpirun -np 4 ./MODULE_RI_ewald_mpi_distribution_test
+    COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_RI_ewald_mpi_distribution_test>"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif()

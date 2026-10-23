@@ -11,6 +11,26 @@ macro(set_if_higher VARIABLE VALUE)
   endif()
 endmacro()
 
+# Prepare runtime inputs in the test working directory without installation.
+# configure_file tracks content changes; CONFIGURE_DEPENDS tracks directory entries.
+function(abacus_copy_test_files)
+  foreach(path IN LISTS ARGN)
+    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${path}")
+      file(
+        GLOB_RECURSE test_files CONFIGURE_DEPENDS
+        LIST_DIRECTORIES false
+        RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${path}/*")
+      file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${path}")
+    else()
+      set(test_files "${path}")
+    endif()
+    foreach(test_file IN LISTS test_files)
+      configure_file("${test_file}" "${test_file}" COPYONLY)
+    endforeach()
+  endforeach()
+endfunction()
+
 # Add performance test in abacus
 # Benchmarks are test targets; do not make them implicitly enable the full
 # unit-test tree for ordinary builds.
@@ -65,11 +85,10 @@ function(AddTest) # function for UT
                                PUBLIC ${CMAKE_BINARY_DIR}/source/source_io)
   endif()
 
-  install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests)
   add_test(
     NAME ${UT_TARGET}
     COMMAND ${UT_TARGET}
-    WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>)
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 endfunction(AddTest)
 
 if(BUILD_TESTING)

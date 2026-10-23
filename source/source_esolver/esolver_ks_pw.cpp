@@ -249,8 +249,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
                                  init_occmat_cfg,
                                  this->kv.isk.data(),
                                  this->inp_->nspin,
-                                 this->inp_->kpar,
-                                 PARAM.globalv.npol);
+                                 this->inp_->kpar);
 
     // mohan add 2025-11: push DFT+U energy from Plus_U instance to ElecState
     if (this->inp_->dft_plus_u)
@@ -380,22 +379,20 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
                                                 this->inp_->scf_nmax,
                                                 this->inp_->out_occ_mat,
                                                 this->inp_->dft_plus_u};
+    const DFTU_BASE::OccmatStepInfo occmat_step{istep,
+                                                iter,
+                                                this->scf_thr,
+                                                this->drho};
     // Read globalv values once into locals so the repeated DFT+U call sites
     // below do not each re-enter the global dependency surface.
     const std::string& global_out_dir = PARAM.globalv.global_out_dir;
-    const int npol = PARAM.globalv.npol;
     const bool latest_ready = (iter > 1 || istep > 0);
     if (latest_ready)
     {
         DFTU_BASE::write_latest_occmat(*this->dftu_,
                                       ucell,
                                       global_out_dir,
-                                      this->inp_->nspin,
-                                      npol,
-                                      istep,
-                                      iter,
-                                      this->scf_thr,
-                                      this->drho,
+                                      occmat_step,
                                       occmat_cfg,
                                       DFTU_BASE::SOC_LAYOUT_PAULI);
     }
@@ -408,14 +405,9 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     DFTU_BASE::append_ion_step_snapshot(*this->dftu_,
                                         ucell,
                                         global_out_dir,
-                                        this->inp_->nspin,
-                                        npol,
-                                        istep,
-                                        iter,
+                                        occmat_step,
                                         conv_esolver,
                                         occmat_ready,
-                                        this->scf_thr,
-                                        this->drho,
                                         occmat_cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 

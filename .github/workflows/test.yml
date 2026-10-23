@@ -138,7 +138,6 @@ jobs:
       - name: Build
         run: |
           cmake --build build -j8
-          cmake --install build
 
       - name: Report compiler cache
         if: always()
