@@ -8,6 +8,39 @@
 
 run_tddft_props(){
 
+# Opt-in continuity check for MD cases with one electronic step per MD step.
+# md_scf.ref lists post-initial steps as: step, iterations, converged solves.
+# Also require the initial ground-state SCF to converge, without fixing its
+# iteration count across different numerical backends.
+if [ "$calculation" = md ] && [ "$esolver_type" = tddft ] && [ -f md_scf.ref ]; then
+    md_scf_status=1
+    if awk '
+        function emit_step() {
+            if (step == 1) initial_steps++
+            if (step > 0 && converged != 1) invalid = 1
+            if (step > 1) {
+                print step, iterations, converged
+                emitted++
+            }
+        }
+        /STEP OF MOLECULAR DYNAMICS:/ {
+            emit_step()
+            step = $NF
+            iterations = 0
+            converged = 0
+        }
+        /#ELEC ITER#/ { iterations = $NF }
+        /#SCF IS CONVERGED#/ { converged++ }
+        END {
+            emit_step()
+            if (emitted == 0 || initial_steps != 1 || invalid) exit 1
+        }
+    ' "$running_path" > md_scf.out && cmp -s md_scf.ref md_scf.out; then
+        md_scf_status=0
+    fi
+    echo "CompareMdScf_pass $md_scf_status" >> "$props_result_file"
+fi
+
 #--------------------------------------------
 # check currents in rt-TDDFT
 #--------------------------------------------

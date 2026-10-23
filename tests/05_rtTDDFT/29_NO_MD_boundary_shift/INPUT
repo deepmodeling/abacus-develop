@@ -1,0 +1,29 @@
+INPUT_PARAMETERS
+suffix            autotest
+pseudo_dir        ../../PP_ORB
+orbital_dir       ../../PP_ORB
+calculation       md
+esolver_type      tddft
+basis_type        lcao
+gamma_only        0
+symmetry          -1
+nbands            2
+ecutwfc           20
+
+scf_thr           1e-8
+scf_nmax          8
+mixing_type       broyden
+mixing_beta       0.7
+mixing_gg0        0.0
+
+md_type           nve
+md_nstep          2
+estep_per_md      1
+md_dt             0.05
+td_dt             0.05
+init_vel          1
+# Keep the supplied sub-roundoff velocity rather than rescaling to zero.
+md_tfirst         -1
+md_dumpfreq       1
+md_restartfreq    1
+td_vext           0
