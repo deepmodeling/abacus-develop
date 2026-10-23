@@ -20,7 +20,7 @@ void ModuleIO::write_dos_pw(
         const bool dos_setemin,
         const double dos_emin_ev,
         const bool two_fermi,
-        const bool out_app_flag,
+        const int out_app_flag,
         const int bndpar,
         const std::string& global_out_dir,
         std::ofstream& ofs_running)
@@ -54,7 +54,9 @@ void ModuleIO::write_dos_pw(
         std::stringstream ss;
         ss << global_out_dir << "doss" << is + 1;
 
-        if(istep_in>=0)
+        // In append mode (out_app_flag == 1) the fixed name is reused and
+        // each ionic step appends a new DOS block; modes 0 and 2 keep g{N}.
+        if(istep_in>=0 && out_app_flag!=1)
         {
             ss << "g" << istep_in+1;
         }

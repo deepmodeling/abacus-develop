@@ -300,7 +300,8 @@ TEST(HsrWriterIo, HContainerBinaryWritesSortedAndEmptyRBlocks)
     std::ifstream ifs(filename.c_str(), std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
     const NativeDoubleRecord record = read_native_double_record(ifs);
-    EXPECT_EQ(record.step, 0);
+    // istep = -1 (single-point SCF) maps to one-based step 1
+    EXPECT_EQ(record.step, 1);
     EXPECT_EQ(record.nbasis, 2);
     ASSERT_EQ(record.blocks.size(), 2);
     EXPECT_EQ(record.blocks[0].rx, -1);
@@ -340,7 +341,8 @@ TEST(HsrWriterIo, HContainerBinaryWritesComplexValuesAsDoublePairs)
 
     std::ifstream ifs(filename.c_str(), std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
-    EXPECT_EQ(read_binary_value<int>(ifs), 4);
+    // istep = 4 -> one-based step 5 in the binary header
+    EXPECT_EQ(read_binary_value<int>(ifs), 5);
     EXPECT_EQ(read_binary_value<int>(ifs), 2);
     EXPECT_EQ(read_binary_value<int>(ifs), 1);
     EXPECT_EQ(read_binary_value<int>(ifs), 0);
@@ -377,15 +379,16 @@ TEST(HsrWriterIo, HContainerBinaryAppendsAndCanOverwrite)
 
     std::ifstream appended(filename.c_str(), std::ios::binary);
     ASSERT_TRUE(appended.is_open());
-    EXPECT_EQ(read_native_double_record(appended).step, 0);
+    // istep 0/1/2 -> one-based steps 1/2/3
     EXPECT_EQ(read_native_double_record(appended).step, 1);
+    EXPECT_EQ(read_native_double_record(appended).step, 2);
     EXPECT_EQ(appended.peek(), std::ifstream::traits_type::eof());
     appended.close();
 
     ModuleIO::write_hcontainer_csr_binary(filename, &matrix, 2, false);
     std::ifstream replaced(filename.c_str(), std::ios::binary);
     ASSERT_TRUE(replaced.is_open());
-    EXPECT_EQ(read_native_double_record(replaced).step, 2);
+    EXPECT_EQ(read_native_double_record(replaced).step, 3);
     EXPECT_EQ(replaced.peek(), std::ifstream::traits_type::eof());
 
     std::remove(filename.c_str());

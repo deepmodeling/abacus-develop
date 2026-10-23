@@ -1,8 +1,11 @@
 #include "vxc_op_tools.h"
 
+#include "source_base/formatter.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/module_out/filename.h"
+#include "source_main/version.h"
 
+#include <ctime>
 #include <fstream>
 #include <iomanip>
 
@@ -102,19 +105,21 @@ void write_orb_energy(const K_Vectors& kv,
                       const int nspin0,
                       const int nbands,
                       const std::vector<std::vector<double>>& e_orb,
-                      const std::string& term,
-                      const std::string& label,
+                      const std::string& out_name,
+                      const std::string& header,
                       const std::string& global_out_dir,
                       const bool app)
 {
     assert(e_orb.size() == kv.get_nks());
+    assert(!out_name.empty());
     const int nk = kv.get_nks() / nspin0;
     std::ofstream ofs;
-    const std::string out_name = term == "vxc"
-        ? (label.empty() ? "vxc.txt" : "vxc_" + label + ".txt")
-        : term + "_" + (label.empty() ? "out.dat" : label + "_out.dat");
     ofs.open(global_out_dir + out_name,
         app ? std::ios::app : std::ios::out);
+    if (!header.empty())
+    {
+        ofs << header;
+    }
     ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
     ofs << std::scientific << std::setprecision(16);
     for (int ik = 0; ik < nk; ++ik)
@@ -127,6 +132,36 @@ void write_orb_energy(const K_Vectors& kv,
             }
         }
     }
+}
+
+std::string local_time_stamp()
+{
+    const std::time_t now = std::time(nullptr);
+    std::tm tm_now;
+    localtime_r(&now, &tm_now);
+    char buffer[32];
+    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_now);
+    return std::string(buffer);
+}
+
+std::string build_eband_header(const int istep,
+                               const double etot_eV,
+                               const std::string& term_symbol,
+                               const std::string& time_stamp)
+{
+    const int istep_one_based = istep + 1;
+    const std::string header = FmtCore::format(
+        "# ABACUS version: %s\n"
+        "# Written at %s\n"
+        "# RELAX STEP %d, Energy: %.8f eV\n"
+        "# e_{ikn} = <psi_{ikn} | %s | psi_{ikn}> in the KS orbital basis\n"
+        "# units: columns are e/2 in Hartree and e in eV; data rows follow nk, nspin0, nbands\n",
+        VERSION,
+        time_stamp.c_str(),
+        istep_one_based,
+        etot_eV,
+        term_symbol.c_str());
+    return header;
 }
 
 // Explicit template instantiations

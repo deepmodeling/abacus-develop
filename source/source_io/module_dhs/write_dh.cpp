@@ -43,10 +43,12 @@ void write_dh_perI(WriteDHParams& params,
     const int nspin_k = (nspin == 2 ? 2 : 1);
     const int nks = params.kv->get_nks() / nspin_k;
     const int nlocal = PARAM.globalv.nlocal;
-    const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    const bool out_app_flag = PARAM.inp.out_app_flag;
-    const std::string r_dir
-        = (PARAM.inp.calculation == "md" && !out_app_flag) ? PARAM.globalv.global_matrix_dir : global_out_dir;
+    // All dH component outputs (CSR dH/dR, dense dH/dk) belong to the unified
+    // matrix directory: global_mat_dir is set to OUT.root in modes 0/1 and to
+    // OUT.root/MAT/ in mode 2 by ReadInput::set_global_dir, so no caller-side
+    // calculation or out_app_flag branching is needed here.
+    const std::string mat_dir = PARAM.globalv.global_mat_dir;
+    const int out_app_flag = PARAM.inp.out_app_flag;
 
 #ifdef __MPI
     Parallel_Orbitals serialV;
@@ -79,7 +81,7 @@ void write_dh_perI(WriteDHParams& params,
             if (GlobalV::MY_RANK == 0)
 #endif
             {
-                std::string fr = r_dir + ModuleIO::dhr_gen_fname(rprefix + tag, ispin, params.append, params.istep);
+                std::string fr = mat_dir + ModuleIO::dhr_gen_fname(rprefix + tag, ispin, params.append, params.istep);
                 // dH/dR is not a Hamiltonian: no Fermi energy annotation in the header
                 const double no_efermi = 0.0;
 #ifdef __MPI
@@ -117,19 +119,20 @@ void write_dh_perI(WriteDHParams& params,
 #else
                 hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], nlocal, 0);
 #endif
-                std::string fk = global_out_dir + kprefix + tag;
+                std::string fk = mat_dir + kprefix + tag;
                 if (nks > 1)
                 {
                     fk += "_ik" + std::to_string(params.kv->ik2iktot[ik]);
                 }
                 fk += "_nao.txt";
+                const bool append_fk = (out_app_flag == 1);
                 ModuleIO::save_mat(params.istep,
                                    hk.data(),
                                    nlocal,
                                    false,
                                    8,
                                    false,
-                                   out_app_flag,
+                                   append_fk,
                                    fk,
                                    pv,
                                    GlobalV::DRANK,

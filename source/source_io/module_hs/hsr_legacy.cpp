@@ -40,7 +40,7 @@ void ModuleIO::output_dSR(const int& istep,
     // mohan update 2024-04-01
     const std::string fileflag_s = "s";
     ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, options.sparse_threshold, options.binary,
-                             fileflag_s, options.precision, options.global_out_dir,
+                             fileflag_s, options.precision,
                              options.global_matrix_dir, options.calculation, options.out_app_flag,
                              options.nspin, nlocal, ofs_running);
 
@@ -86,7 +86,7 @@ void ModuleIO::output_dHR(const int& istep,
     // mohan update 2024-04-01
     const std::string fileflag_h = "h";
     ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, options.sparse_threshold, options.binary,
-                             fileflag_h, options.precision, options.global_out_dir,
+                             fileflag_h, options.precision,
                              options.global_matrix_dir, options.calculation, options.out_app_flag,
                              options.nspin, nlocal, ofs_running);
 
@@ -107,7 +107,7 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                          const std::string& global_out_dir,
                          const std::string& global_matrix_dir,
                          const std::string& calculation,
-                         const bool out_app_flag,
+                         const int out_app_flag,
                          const int nspin,
                          std::ofstream& ofs_running)
 {
@@ -174,17 +174,18 @@ void ModuleIO::output_TR(const int istep,
     ModuleBase::timer::start("ModuleIO", "output_TR");
 
     std::stringstream sst;
-    const bool md_no_append = (options.calculation == "md") && !options.out_app_flag;
-    if (istep >= 0)
+    // In append mode (out_app_flag == 1) the file keeps the fixed name so
+    // the MD append logic in save_sparse can accumulate all ionic steps.
+    if (istep >= 0 && options.out_app_flag != 1)
     {
         // insert the 1-indexed ionic-step suffix right after the "tr" prefix,
         // i.e. tr_nao.csr -> trg{step+1}_nao.csr (aligned with lxg/rrg naming)
         const std::string base = TR_filename.substr(0, TR_filename.size() - std::string("_nao.csr").size());
-        sst << (md_no_append ? options.global_matrix_dir : options.global_out_dir) << base << "g" << (istep + 1) << "_nao.csr";
+        sst << options.global_matrix_dir << base << "g" << (istep + 1) << "_nao.csr";
     }
     else
     {
-        sst << options.global_out_dir << TR_filename;
+        sst << options.global_matrix_dir << TR_filename;
     }
     ofs_running << " Write T(R) matrix in NAO basis to file: " << sst.str() << std::endl;
     sparse_format::cal_TR(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, options.sparse_threshold);
@@ -220,7 +221,7 @@ template void ModuleIO::output_SR<double>(Parallel_Orbitals& pv,
                                           const std::string& global_out_dir,
                                           const std::string& global_matrix_dir,
                                           const std::string& calculation,
-                                          const bool out_app_flag,
+                                          const int out_app_flag,
                                           const int nspin,
                                           std::ofstream& ofs_running);
 template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
@@ -233,6 +234,6 @@ template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
                                                         const std::string& global_out_dir,
                                                         const std::string& global_matrix_dir,
                                                         const std::string& calculation,
-                                                        const bool out_app_flag,
+                                                        const int out_app_flag,
                                                         const int nspin,
                                                         std::ofstream& ofs_running);

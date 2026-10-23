@@ -17,24 +17,35 @@ void ModuleIO::write_pdos_text(
         const double& emin,
         const double& dos_edelta_ev,
         const std::string& out_dir,
-        const int istep)
+        const int istep,
+        const int out_app_flag)
 {
     ModuleBase::TITLE("ModuleIO", "write_pdos_text");
 
     // number of spin channels to write
     const int nspin0 = (nspin == 2) ? 2 : 1;
 
+    // In append mode (out_app_flag == 1) reuse the fixed filename and append
+    // each ionic step; single-point SCF passes istep = -1 and truncates.
+    const int istep_file = (out_app_flag == 1) ? -1 : istep;
+    const bool append_step = (out_app_flag == 1) && (istep >= 0);
+
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
         ss << out_dir << "pdoss" << is + 1;
-        if (istep >= 0)
+        if (istep_file >= 0)
         {
-            ss << "g" << istep + 1;
+            ss << "g" << istep_file + 1;
         }
         ss << ".txt";
 
-        std::ofstream ofs(ss.str().c_str());
+        std::ios_base::openmode mode = std::ios::out;
+        if (append_step)
+        {
+            mode |= std::ios::app;
+        }
+        std::ofstream ofs(ss.str().c_str(), mode);
 
         // iw2m stores m as 0..2l, mapping to physical m values:
         // 0->0, 1->+1, 2->-1, 3->+2, 4->-2, 5->+3, 6->-3

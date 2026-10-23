@@ -22,7 +22,7 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
                              const std::string& global_out_dir,
                              const std::string& global_matrix_dir,
                              const std::string& calculation,
-                             bool out_app_flag,
+                             int out_app_flag,
                              int nlocal,
                              int npol,
                              double sparse_threshold,
@@ -216,19 +216,23 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
     if (GlobalV::DRANK == 0)
     {
         std::stringstream ssr;
-        const bool md_no_append = (calculation == "md") && !out_app_flag;
-        if (step >= 0)
+        // In append mode (out_app_flag == 1) keep the fixed filename so
+        // the append branch below can accumulate all ionic steps.
+        if (step >= 0 && out_app_flag != 1)
         {
-            ssr << (md_no_append ? global_matrix_dir : global_out_dir) << "rrg" << (step + 1) << "_nao.txt";
+            ssr << global_matrix_dir << "rrg" << (step + 1) << "_nao.txt";
         }
         else
         {
-            ssr << global_out_dir << "rr_nao.txt";
+            ssr << global_matrix_dir << "rr_nao.txt";
         }
 
         ofs_tem1.close();
-        const bool open_in_append = (calculation == "md") && out_app_flag && step >= 0;
-        const int header_step = std::max(step, 0);
+        // Append for any multi-step run (MD or relax) in append mode;
+        // single-point SCF passes step = -1 and starts a fresh file.
+        const bool open_in_append = (out_app_flag == 1) && step >= 0;
+        // ionic step printed one-based per governance rule 22
+        const int header_step = std::max(step, 0) + 1;
         ModuleIO::detail::assemble_csr(ssr.str(),
                                        tem1.str(),
                                        header_step,

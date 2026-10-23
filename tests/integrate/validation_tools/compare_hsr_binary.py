@@ -20,8 +20,10 @@ def read_native(stream, fmt, description):
 def read_binary(filename, value_type):
     with open(filename, "rb") as stream:
         step, nbasis, nr = read_native(stream, "@iii", "record header")
-        if step != 0:
-            raise ValueError("expected zero-based ionic step 0, found {}".format(step))
+        # The binary step field follows governance rule 22: the first ionic
+        # step is printed one-based as 1.
+        if step != 1:
+            raise ValueError("expected one-based ionic step 1, found {}".format(step))
         if nbasis <= 0 or nr < 0:
             raise ValueError("invalid matrix dimensions nbasis={} nr={}".format(nbasis, nr))
 

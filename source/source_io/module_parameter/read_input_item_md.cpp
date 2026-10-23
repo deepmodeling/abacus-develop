@@ -169,7 +169,9 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "The period to output MD restart information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The output frequency of OUT.{suffix}/STRU_MD_*, which are used to restart molecular dynamics calculations, see md_restart in detail. Set to 0 to disable MD restart output.";
+        item.description = "Deprecated: use out_freq_ion to control MD output frequency instead. "
+                           "This parameter is kept for backward compatibility as a fallback when "
+                           "out_freq_ion is not set (0).";
         item.default_value = "5";
         item.unit = "";
         read_sync_int(input.mdp.md_restartfreq);

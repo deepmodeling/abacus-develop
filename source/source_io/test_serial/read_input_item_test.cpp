@@ -1421,6 +1421,66 @@ TEST_F(InputTest, HsOutputAliases)
         EXPECT_EQ(TestParameters::input(param).out_hsk[0], 1);
     }
 }
+
+// The out_mat_h_* keywords are legacy aliases for the canonical k-space names
+// (out_mat_tk and out_mat_{vnl,vl,vh,vxc,exx}k). Verify that each alias feeds
+// the canonical value and that the canonical name wins when both are present.
+TEST_F(InputTest, HkComponentAliases)
+{
+    // alias alone populates the canonical name
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_h_t", readinput.input_lists);
+        legacy->second.str_values = {"1", "5"};
+        legacy->second.read_value(legacy->second, param);
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[1], 5);
+    }
+    // canonical name takes precedence over the alias
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_h_t", readinput.input_lists);
+        auto primary = find_label("out_mat_tk", readinput.input_lists);
+        legacy->second.str_values = {"1", "5"};
+        primary->second.str_values = {"1", "3"};
+        legacy->second.read_value(legacy->second, param);
+        primary->second.read_value(primary->second, param);
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[1], 3);
+    }
+    // the five renamed terms: legacy alias -> canonical k-space name
+    const std::vector<std::pair<std::string, std::string>> aliases = {
+        {"out_mat_h_vnl", "out_mat_vnlk"},
+        {"out_mat_h_vl", "out_mat_vlk"},
+        {"out_mat_h_vh", "out_mat_vhk"},
+        {"out_mat_h_vxc", "out_mat_vxck"},
+        {"out_mat_h_exx", "out_mat_exxk"},
+    };
+    for (const auto& pair : aliases)
+    {
+        SCOPED_TRACE(pair.first);
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label(pair.first, readinput.input_lists);
+        auto primary = find_label(pair.second, readinput.input_lists);
+        legacy->second.str_values = {"1", "6"};
+        legacy->second.read_value(legacy->second, param);
+        readinput.normalize_hs_output_options(param);
+        const auto& canon = TestParameters::input(param);
+        const std::vector<int>* value = nullptr;
+        if (pair.second == "out_mat_vnlk") { value = &canon.out_mat_vnlk; }
+        else if (pair.second == "out_mat_vlk") { value = &canon.out_mat_vlk; }
+        else if (pair.second == "out_mat_vhk") { value = &canon.out_mat_vhk; }
+        else if (pair.second == "out_mat_vxck") { value = &canon.out_mat_vxck; }
+        else { value = &canon.out_mat_exxk; }
+        EXPECT_EQ((*value)[0], 1);
+        EXPECT_EQ((*value)[1], 6);
+    }
+}
 TEST_F(InputTest, PreserveExplicitMagneticMixing)
 {
     const std::string filename = testing::TempDir() + "abacus_magnetic_mixing_INPUT";

@@ -3,6 +3,35 @@
 #include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
+
+namespace
+{
+/// @brief Find the structure file for restarting a molecular dynamics run.
+/// @param stru_dir directory where the previous run wrote its structure files
+/// @param istep number of completed ionic steps recorded in Restart_md.txt
+/// @return path of the first existing structure file, empty if none exists
+/// @details Two naming schemes are accepted, in order:
+/// - "STRU{istep + 1}": written by run_md since the ionic-step numbering
+///   was unified with relax (1-based);
+/// - "STRU_MD_{istep}": written by older ABACUS versions.
+std::string find_md_restart_stru(const std::string& stru_dir, const int istep)
+{
+    const std::string stru_new = stru_dir + "STRU" + std::to_string(istep + 1);
+    std::ifstream file_new(stru_new.c_str());
+    if (file_new.good())
+    {
+        return stru_new;
+    }
+    const std::string stru_old = stru_dir + "STRU_MD_" + std::to_string(istep);
+    std::ifstream file_old(stru_old.c_str());
+    if (file_old.good())
+    {
+        return stru_old;
+    }
+    return "";
+}
+} // namespace
+
 namespace ModuleIO
 {
 /// @note Here para.inp has been synchronized of all ranks.
@@ -85,17 +114,36 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     sys.global_out_dir = prefix + inp.suffix + "/";
     sys.global_out_dir = to_dir(sys.global_out_dir);
 
-    /// get the global output directory
-    sys.global_stru_dir = sys.global_out_dir + "STRU/";
-    sys.global_stru_dir = to_dir(sys.global_stru_dir);
+    /// Set subdirectories based on out_app_flag
+    /// out_app_flag == 2: use unified uppercase subdirectories
+    /// otherwise: keep backward-compatible behavior (all point to global_out_dir)
+    if (inp.out_app_flag == 2)
+    {
+        sys.global_stru_dir = sys.global_out_dir + "STRU/";
+        sys.global_psi_dir = sys.global_out_dir + "PSI/";
+        sys.global_chg_dir = sys.global_out_dir + "CHG/";
+        sys.global_pot_dir = sys.global_out_dir + "POT/";
+        sys.global_elf_dir = sys.global_out_dir + "ELF/";
+        sys.global_dos_dir = sys.global_out_dir + "DOS/";
+        sys.global_dip_dir = sys.global_out_dir + "DIP/";
+        sys.global_mat_dir = sys.global_out_dir + "MAT/";
+    }
+    else
+    {
+        sys.global_stru_dir = sys.global_out_dir;
+        sys.global_psi_dir = sys.global_out_dir;
+        sys.global_chg_dir = sys.global_out_dir;
+        sys.global_pot_dir = sys.global_out_dir;
+        sys.global_elf_dir = sys.global_out_dir;
+        sys.global_dos_dir = sys.global_out_dir;
+        sys.global_dip_dir = sys.global_out_dir;
+        sys.global_mat_dir = sys.global_out_dir;
+    }
 
-    /// get the global output directory
-    sys.global_matrix_dir = sys.global_out_dir + "matrix/";
-    sys.global_matrix_dir = to_dir(sys.global_matrix_dir);
-
-    /// get the global output directory
-    sys.global_wfc_dir = sys.global_out_dir + "WFC/";
-    sys.global_wfc_dir = to_dir(sys.global_wfc_dir);
+    /// Map legacy directory names to new unified names
+    /// WFC -> PSI, matrix -> MAT
+    sys.global_wfc_dir = sys.global_psi_dir;
+    sys.global_matrix_dir = sys.global_mat_dir;
 
     /// get the global ML KEDF descriptor directory
     sys.global_mlkedf_descriptor_dir = sys.global_out_dir + "MLKEDF_Descriptors/";
@@ -112,15 +160,36 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     /// get the stru file for md restart case
     if (inp.calculation == "md" && inp.mdp.md_restart)
     {
-        int istep = current_md_step(sys.global_readin_dir);
+        const int istep = current_md_step(sys.global_readin_dir);
 
         if (inp.read_file_dir == to_dir("OUT." + inp.suffix))
         {
-            sys.global_in_stru = sys.global_stru_dir + "STRU_MD_" + std::to_string(istep);
+            // Restart from the default output directory: search the current
+            // STRU output directory, which follows out_app_flag.
+            const std::string stru_dir = sys.global_stru_dir;
+            sys.global_in_stru = find_md_restart_stru(stru_dir, istep);
+            if (sys.global_in_stru.empty())
+            {
+                // Releases before the out_app_flag rework always wrote
+                // STRU_MD_{istep} into a fixed STRU/ subdirectory of the
+                // output directory; keep those outputs restartable.
+                const std::string legacy_dir = sys.global_out_dir + "STRU/";
+                sys.global_in_stru = find_md_restart_stru(legacy_dir, istep);
+            }
         }
         else
         {
-            sys.global_in_stru = inp.read_file_dir + "STRU_MD_" + std::to_string(istep);
+            // Restart from a user-provided directory: the previous run may
+            // have written either naming scheme there.
+            const std::string stru_dir = inp.read_file_dir;
+            sys.global_in_stru = find_md_restart_stru(stru_dir, istep);
+        }
+
+        if (sys.global_in_stru.empty())
+        {
+            const std::string message = "no STRU file found for MD restart in " + sys.global_readin_dir
+                                        + "; expected STRU_MD_{step} or STRU{step+1}";
+            ModuleBase::WARNING_QUIT("ReadInput::set_global_dir", message);
         }
     }
     else
@@ -154,6 +223,13 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     Parallel_Common::bcast_string(sys.global_stru_dir);
     Parallel_Common::bcast_string(sys.global_matrix_dir);
     Parallel_Common::bcast_string(sys.global_wfc_dir);
+    Parallel_Common::bcast_string(sys.global_psi_dir);
+    Parallel_Common::bcast_string(sys.global_chg_dir);
+    Parallel_Common::bcast_string(sys.global_pot_dir);
+    Parallel_Common::bcast_string(sys.global_elf_dir);
+    Parallel_Common::bcast_string(sys.global_dos_dir);
+    Parallel_Common::bcast_string(sys.global_dip_dir);
+    Parallel_Common::bcast_string(sys.global_mat_dir);
     Parallel_Common::bcast_string(sys.global_in_stru);
 #endif
 }

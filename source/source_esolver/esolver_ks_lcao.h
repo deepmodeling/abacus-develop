@@ -60,6 +60,11 @@ class ESolver_KS_LCAO : public ESolver_KS
     //! Prepare an ionic step with a separate index for initial charge and potential output.
     void before_scf(UnitCell& ucell, const int istep, const int output_step);
 
+    /// Ionic step index of the most recent ionic step, recorded in before_scf().
+    /// Read by after_all_runners() when labelling provenance headers of files
+    /// written once at the end of a run.
+    int istep_ = 0;
+
     //! Prepare charge mixing and Hamiltonian updates for an SCF iteration.
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
 

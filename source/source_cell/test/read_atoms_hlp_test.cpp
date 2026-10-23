@@ -684,7 +684,7 @@ TEST_F(ReadAtomsHelperTest, RoundTripMultiAtomMixedFields)
 
     const std::string filename = "test_stru_roundtrip.tmp";
     unitcell::print_stru_file(ucell, ucell.atoms, ucell.latvec, filename, "",
-                              2, false, false, false, false, 0, force, true);
+                              2, false, false, false, false, 0, force, true, false);
 
     std::ifstream ifpos(filename.c_str());
 

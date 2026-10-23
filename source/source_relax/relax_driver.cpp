@@ -21,7 +21,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
 
     // Cache global configuration once so downstream helpers do not each reach
     // into PARAM / GlobalV.
-    out_dir_ = PARAM.globalv.global_out_dir;
+    out_dir_ = PARAM.globalv.global_stru_dir;
     deepks_setorb_ = PARAM.globalv.deepks_setorb;
     my_rank_ = GlobalV::MY_RANK;
 
@@ -188,7 +188,7 @@ void Relax_Driver::stru_out(const int istep,
                             const ModuleBase::matrix& stress,
                             const ModuleBase::matrix& force)
 {
-    // out_stru is effective for scf/nscf/relax/cell-relax (md writes STRU_MD_* via md_restartfreq)
+    // out_stru is effective for scf/nscf/relax/cell-relax; md handles STRU output in run_md.cpp
     if (inp.calculation != "relax" && inp.calculation != "cell-relax" && inp.calculation != "scf"
         && inp.calculation != "nscf")
     {
@@ -225,13 +225,20 @@ void Relax_Driver::stru_out(const int istep,
                                   need_orb,
                                   deepks_setorb_,
                                   my_rank_,
-                                  inp.cal_force);
+                                  inp.cal_force,
+                                  false);
     }
 
     // Numbered files per out_freq_ion: only meaningful for relaxation calculations
     if (is_relax && freq_ok)
     {
-        const std::string step_file = out_dir_ + "STRU" + std::to_string(istep + 1) + (inp.out_stru == 1 ? "" : ".cif");
+        // out_app_flag == 1: single fixed-name STRU accumulates one block per
+        // step (CIF format truncates to the latest frame instead); modes 0/2
+        // keep the numbered STRU{istep+1} files.
+        const bool append_stru = (inp.out_app_flag == 1) && (inp.out_stru == 1);
+        const std::string step_file = (inp.out_app_flag == 1)
+            ? out_dir_ + (inp.out_stru == 1 ? "STRU" : "STRU.cif")
+            : out_dir_ + "STRU" + std::to_string(istep + 1) + (inp.out_stru == 1 ? "" : ".cif");
         relax_stru_io::write_stru(ucell,
                                   inp,
                                   step_file,
@@ -240,7 +247,8 @@ void Relax_Driver::stru_out(const int istep,
                                   need_orb,
                                   deepks_setorb_,
                                   my_rank_,
-                                  inp.cal_force);
+                                  inp.cal_force,
+                                  append_stru);
     }
 }
 
@@ -291,7 +299,8 @@ void Relax_Driver::final_out(const int istep,
                                   need_orb,
                                   deepks_setorb_,
                                   my_rank_,
-                                  write_force);
+                                  write_force,
+                                  false);
     }
 
     // relax_nmax == 0 is a valid dry-run mode: no relaxation step was ever

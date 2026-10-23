@@ -165,6 +165,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 {
+    this->istep_ = istep;
     this->before_scf(ucell, istep, istep);
 }
 
@@ -443,6 +444,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
 
     ModuleIO::ctrl_runner_lcao<TK, TR>(ucell,
                                        *this->inp_,
+                                       this->istep_,
                                        this->kv,
                                        this->pelec,
                                        this->dmat,

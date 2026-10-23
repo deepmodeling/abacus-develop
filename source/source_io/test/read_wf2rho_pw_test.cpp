@@ -298,6 +298,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
                            GlobalV::RANK_IN_POOL,
                            GlobalV::NPROC_IN_POOL,
                            TestParameters::input().out_wfc_pw,
+                           0,
                            ecutwfc,
                            out_dir,
                            *psi,

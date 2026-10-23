@@ -51,6 +51,8 @@ namespace unitcell
      * @param iproc GlobalV::MY_RANK [in]
      * @param force atomic forces in Ry/Bohr, used only when has_force is true [in]
      * @param has_force true to emit per-atom f fields; force matrix must match nat [in]
+     * @param append true to append the structure block to an existing file
+     *        (out_app_flag == 1 multi-step runs); false truncates [in]
      */
     void print_stru_file(const UnitCell& ucell,
                          const Atom*     atoms,
@@ -64,7 +66,8 @@ namespace unitcell
                          const bool& dpks_desc,
                          const int& iproc,
                          const ModuleBase::matrix& force,
-                         const bool& has_force);
+                         const bool& has_force,
+                         const bool  append);
 
     /**
      * @brief Print basic unitcell information to output stream.
@@ -79,9 +82,22 @@ namespace unitcell
 
 namespace mdcell
 {
+/**
+ * @brief Write an MDCell structure file in STRU format.
+ *
+ * @param mdcell distributed MD cell data [in]
+ * @param stru_meta species/orbital metadata used for the header [in]
+ * @param fn output file path [in]
+ * @param frame_comment comment block prepended before the structure header
+ *        (e.g. "# MD step N\n\n"); pass an empty string for no marker [in]
+ * @param append true to append the frame to an existing file
+ *        (out_app_flag == 1 multi-step runs); false truncates [in]
+ */
 void print_stru_file(const MDCell& mdcell,
                      const StruMeta& stru_meta,
-                     const std::string& fn);
+                     const std::string& fn,
+                     const std::string& frame_comment,
+                     const bool append);
 }
 
 #endif

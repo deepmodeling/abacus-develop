@@ -25,6 +25,7 @@
 #include "source_md/module_plumed/plumed_interface.h"
 
 #include <vector>
+#include <sys/stat.h>
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -188,6 +189,32 @@ void md_line(MDCell& mdcell,
         apply_plumed_forces(mdcell, plumed_forces);
     };
 
+    /// Effective ionic-step output frequency.
+    /// Prefer out_freq_ion; fall back to md_restartfreq for backward
+    /// compatibility when out_freq_ion is not set.
+    const int eff_output_freq = (param_in.inp.out_freq_ion > 0)
+                                    ? param_in.inp.out_freq_ion
+                                    : param_in.mdp.md_restartfreq;
+
+    /// out_app_flag == 1 writes one fixed-name "STRU" file. A previous
+    /// release kept per-step STRU_MD_{step} files inside a STRU/
+    /// subdirectory of the output directory, so an MD restarted from those
+    /// files still sees that directory. Writing the fixed name on top of a
+    /// directory aborts the run, therefore the legacy numbered layout is
+    /// kept whenever such a directory is present.
+    const bool append_stru_allowed = (param_in.inp.out_app_flag == 1);
+    bool has_legacy_stru_dir = false;
+    std::string stru_out_dir = PARAM.globalv.global_stru_dir;
+    if (append_stru_allowed)
+    {
+        struct stat stru_path;
+        if (stat((stru_out_dir + "STRU").c_str(), &stru_path) == 0 && S_ISDIR(stru_path.st_mode))
+        {
+            has_legacy_stru_dir = true;
+            stru_out_dir += "STRU/";
+        }
+    }
+
     /// md cycle, mohan update 2026-01-04, change '<=' to '<'
     while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
     {
@@ -280,16 +307,33 @@ void md_line(MDCell& mdcell,
                                mdrun->virial);
         }
 
-        if (param_in.mdp.md_restartfreq > 0
-            && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)
+        const int current_step = mdrun->step_ + mdrun->step_rst_;
+        const bool do_output_step = eff_output_freq > 0
+            && current_step % eff_output_freq == 0;
+        if (do_output_step)
         {
             if (mdcell.has_backing_unitcell())
             {
                 mdcell.sync_backing_unitcell();
             }
-            std::stringstream file;
-            file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
-            mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str());
+            if (param_in.inp.out_stru > 0)
+            {
+                const int stru_step = current_step + 1;
+                // out_app_flag == 1: single fixed-name STRU accumulates one
+                // frame per step with a one-based "# MD step N" comment;
+                // modes 0/2 keep the numbered STRU{stru_step} files.
+                const bool append_stru = append_stru_allowed && !has_legacy_stru_dir;
+                const std::string frame_comment = append_stru
+                    ? "# MD step " + std::to_string(stru_step) + "\n\n"
+                    : "";
+                std::stringstream file;
+                file << stru_out_dir << "STRU";
+                if (!append_stru)
+                {
+                    file << stru_step;
+                }
+                mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str(), frame_comment, append_stru);
+            }
             mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
 

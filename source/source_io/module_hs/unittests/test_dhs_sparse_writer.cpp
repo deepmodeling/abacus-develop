@@ -40,11 +40,12 @@ TEST(DhsSparseWriter, TextCountsOnlyValuesAboveThreshold)
     arrays.dHRx_sparse[0][r_vector][1][0] = 0.0;
     arrays.dHRx_sparse[0][r_vector][1][1] = -2.0;
 
-    ModuleIO::save_dH_sparse(5, pv, arrays, 1e-10, false, "h", 8, "./", "./", "scf", false, 1, 2, ofs_running);
+    ModuleIO::save_dH_sparse(5, pv, arrays, 1e-10, false, "h", 8, "./", "scf", false, 1, 2, ofs_running);
 
     const std::vector<std::string> lines = read_lines("dhrxs1g6_nao.csr");
     ASSERT_GE(lines.size(), 7);
-    EXPECT_EQ(lines[0], "STEP: 5");
+    // istep = 5 is the sixth ionic step, printed one-based as 6
+    EXPECT_EQ(lines[0], "STEP: 6");
     EXPECT_EQ(lines[1], "Matrix Dimension of dHx(R): 2");
     EXPECT_EQ(lines[2], "Matrix number of dHx(R): 1");
     EXPECT_EQ(lines[3], "0 0 0 2");
@@ -91,11 +92,12 @@ TEST(DhsSparseWriter, BinaryCountsOnlyValuesAboveThreshold)
     arrays.dHRx_sparse[0][r_vector][1][0] = 0.0;
     arrays.dHRx_sparse[0][r_vector][1][1] = -2.0;
 
-    ModuleIO::save_dH_sparse(6, pv, arrays, 1e-10, true, "h", 8, "./", "./", "scf", false, 1, 2, ofs_running);
+    ModuleIO::save_dH_sparse(6, pv, arrays, 1e-10, true, "h", 8, "./", "scf", false, 1, 2, ofs_running);
 
     std::ifstream ifs("dhrxs1g7_nao.csr", std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
-    EXPECT_EQ(read_binary_value<int>(ifs), 6);
+    // istep = 6 -> one-based step 7 in the binary header
+    EXPECT_EQ(read_binary_value<int>(ifs), 7);
     EXPECT_EQ(read_binary_value<int>(ifs), 2);
     EXPECT_EQ(read_binary_value<int>(ifs), 1);
     EXPECT_EQ(read_binary_value<int>(ifs), 0);
@@ -127,7 +129,7 @@ TEST(DhsSparseWriter, SocWritesAllDirections)
     arrays.dHRy_soc_sparse[r_vector][0][1] = std::complex<double>(2.0, -1.0);
     arrays.dHRz_soc_sparse[r_vector][1][1] = std::complex<double>(-3.0, 0.5);
 
-    ModuleIO::save_dH_sparse(7, pv, arrays, 1e-10, false, "s", 8, "./", "./", "scf", false, 4, 2, ofs_running);
+    ModuleIO::save_dH_sparse(7, pv, arrays, 1e-10, false, "s", 8, "./", "scf", false, 4, 2, ofs_running);
 
     const std::string x_output = read_file("dsrxs1g8_nao.csr");
     const std::string y_output = read_file("dsrys1g8_nao.csr");
@@ -140,6 +142,43 @@ TEST(DhsSparseWriter, SocWritesAllDirections)
     EXPECT_THAT(z_output, testing::HasSubstr("(-3.00000000e+00,5.00000000e-01)"));
 
     remove_derivative_files("s", 7);
+}
+
+TEST(DhsSparseWriter, AppendModeReusesFixedFilename)
+{
+    remove_derivative_files("s");
+    init_sparse_output_globals();
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    LCAO_HS_Arrays arrays;
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    arrays.all_R_coor.insert(r_vector);
+    arrays.dHRx_sparse[0][r_vector][0][0] = 1.0;
+
+    // out_app_flag = 1 reuses the fixed filename without a g{N} suffix; the
+    // first written ionic step (istep == 0) truncates it.
+    ModuleIO::save_dH_sparse(0, pv, arrays, 1e-10, false, "s", 8, "./", "md", 1, 1, 2, ofs_running);
+    const std::string first_frame = read_file("dsrxs1_nao.csr");
+    ASSERT_FALSE(first_frame.empty());
+    EXPECT_EQ(count_substr(first_frame, "STEP: "), 1);
+    EXPECT_EQ(count_substr(first_frame, "STEP: 1"), 1);
+
+    // The next ionic step appends a second frame to the same file.
+    ModuleIO::save_dH_sparse(1, pv, arrays, 1e-10, false, "s", 8, "./", "md", 1, 1, 2, ofs_running);
+    const std::string two_frames = read_file("dsrxs1_nao.csr");
+    EXPECT_EQ(count_substr(two_frames, "STEP: "), 2);
+    EXPECT_EQ(count_substr(two_frames, "STEP: 1"), 1);
+    EXPECT_EQ(count_substr(two_frames, "STEP: 2"), 1);
+
+    // Modes 0 and 2 keep one suffixed file per ionic step and never append.
+    ModuleIO::save_dH_sparse(0, pv, arrays, 1e-10, false, "s", 8, "./", "md", 2, 1, 2, ofs_running);
+    const std::vector<std::string> mode2_lines = read_lines("dsrxs1g1_nao.csr");
+    ASSERT_FALSE(mode2_lines.empty());
+    EXPECT_EQ(mode2_lines[0], "STEP: 1");
+
+    remove_derivative_files("s");
+    remove_derivative_files("s", 0);
 }
 
 int main(int argc, char** argv)

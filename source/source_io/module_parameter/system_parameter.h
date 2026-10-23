@@ -53,8 +53,16 @@ struct System_para
     std::string global_stru_dir = "";       ///< global structure directory
     std::string global_matrix_dir = "";     ///< global matrix directory
     std::string global_wfc_dir = "";        ///< global wavefunction directory
+    // Subdirectories used when out_app_flag == 2
+    std::string global_psi_dir = "";        ///< wavefunction directory (PSI/)
+    std::string global_chg_dir = "";        ///< charge density directory (CHG/)
+    std::string global_pot_dir = "";        ///< potential directory (POT/)
+    std::string global_elf_dir = "";        ///< ELF directory (ELF/)
+    std::string global_dos_dir = "";        ///< DOS directory (DOS/)
+    std::string global_dip_dir = "";        ///< dipole directory (DIP/)
+    std::string global_mat_dir = "";        ///< matrix directory (MAT/)
     std::string global_mlkedf_descriptor_dir = ""; ///< global ML KEDF descriptor directory
-    std::string global_deepks_label_elec_dir = ""; ///< global directory for DeePKS labels during electronic steps 
+    std::string global_deepks_label_elec_dir = ""; ///< global directory for DeePKS labels during electronic steps
     std::string log_file = "log";           ///< log file name
 
     bool deepks_setorb = false;             ///< true if "deepks" is set

@@ -67,7 +67,7 @@ TEST_F(DosPWTest,Dos1)
     const bool dos_setemax = true;
     const bool dos_setemin = true;
     const bool two_fermi = false;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const int bndpar = 1;
     const std::string global_out_dir = "./";
 
@@ -144,7 +144,7 @@ TEST_F(DosPWTest,Dos2)
     const int nspin = 1;
     const int out_dos = 1;
     const bool two_fermi = false;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const int bndpar = 1;
     const std::string global_out_dir = "./";
     const bool dos_setemax = false;

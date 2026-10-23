@@ -67,10 +67,13 @@ void write_dipole(const UnitCell& ucell,
 
     ofs_running << " Write dipole data to file: " << fn << std::endl;
 
-    // Validate grid dimensions to prevent division by zero
-    if (rhopw->nx == 0 || rhopw->ny == 0 || rhopw->nz == 0 || rhopw->nxyz == 0 || rhopw->nplane == 0)
+    // Validate global grid dimensions to prevent division by zero.
+    // Do NOT reject nplane == 0: some MPI ranks legitimately hold zero
+    // z-planes (empty partition), in which case nrxx is also 0 and the
+    // accumulation loop below is a harmless no-op.
+    if (rhopw->nx == 0 || rhopw->ny == 0 || rhopw->nz == 0 || rhopw->nxyz == 0)
     {
-        ModuleBase::WARNING_QUIT("ModuleIO::write_dipole", "Invalid grid parameters: nx, ny, nz, nxyz, or nplane is zero");
+        ModuleBase::WARNING_QUIT("ModuleIO::write_dipole", "Invalid grid parameters: nx, ny, nz, or nxyz is zero");
     }
 
     // Accumulate the electronic first moment in fractional coordinates.
@@ -117,9 +120,12 @@ void write_dipole(const UnitCell& ucell,
     // Output electronic dipole moment
     print_dipole_moment(ofs_running, "Electronic dipole moment", dipole_elec[0], dipole_elec[1], dipole_elec[2]);
 
-    // Write to file: step index and three dipole components
-    ofs << std::setprecision(precision) << istep + 1 << " " << dipole_elec[0] << " " << dipole_elec[1] << " " << dipole_elec[2]
-        << std::endl;
+    // Write to file on master process only; ofs is opened only there.
+    if (GlobalV::MY_RANK == 0)
+    {
+        ofs << std::setprecision(precision) << istep + 1 << " " << dipole_elec[0] << " " << dipole_elec[1] << " "
+            << dipole_elec[2] << std::endl;
+    }
 
     // Calculate ionic dipole moment
     // Accumulate Z_v * taud, then transform to Cartesian coordinates.

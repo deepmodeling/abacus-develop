@@ -144,6 +144,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
     ModuleBase::TITLE("ESolver_KS_LCAO_TDDFT", "runner");
     ModuleBase::timer::start(this->classname, "runner");
 
+    // Record the ionic step for provenance headers written in after_all_runners.
+    this->istep_ = istep;
+
     //----------------------------------------------------------------
     // 1) before_scf (preparation before the electronic-step loop)
     //----------------------------------------------------------------

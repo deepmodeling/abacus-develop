@@ -188,10 +188,20 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
         const Parallel_2D& pv,
         const std::string& dmk_dir,
         const int istep,
+        const int out_app_flag,
         std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_dmk");
     ModuleBase::timer::start("ModuleIO", "write_dmk");
+
+    // In append mode (out_app_flag == 1) DM(k) reuses a fixed filename,
+    // so each ionic step overwrites the previous snapshot; the file body
+    // still records the real ionic step via istep.
+    const int istep_file = (out_app_flag == 1) ? -1 : istep;
+    // Each multi-step run (MD or relax) appends a new record to the fixed
+    // file, mirroring the open_sparse_file convention; single-point SCF
+    // passes istep = -1 and starts a fresh file.
+    const bool append_on_restart = (out_app_flag == 1) && (istep >= 0);
 
     int my_rank = 0;
 #ifdef __MPI
@@ -239,9 +249,15 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
             if (my_rank == 0)
             {
                 std::string fn = dmk_dir
-                    + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep);
+                    + dmk_gen_fname(gamma_only, ispin, nspin, ik, istep_file);
 
-                std::ofstream ofs(fn.c_str());
+                std::ofstream ofs;
+                std::ios_base::openmode mode = std::ios::out;
+                if (append_on_restart)
+                {
+                    mode |= std::ios::app;
+                }
+                ofs.open(fn.c_str(), mode);
 
                 ofs << " --- Ionic Step " << istep+1 << " ---" << std::endl;
 
@@ -315,6 +331,10 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
                         }
                     }
                 }
+                // Terminate the matrix body with a newline so that the next
+                // appended record (out_app_flag == 1) starts on a fresh line
+                // instead of being glued to the last value of this step.
+                ofs << std::endl;
                 ofs.close();
             } // rank0
         }     // ik
@@ -347,6 +367,7 @@ template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>
         const Parallel_2D& pv,
         const std::string& dmk_dir,
         const int istep,
+        const int out_app_flag,
         std::ofstream& ofs_running);
 
 template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dmk,
@@ -357,5 +378,6 @@ template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::v
         const Parallel_2D& pv,
         const std::string& dmk_dir,
         const int istep,
+        const int out_app_flag,
         std::ofstream& ofs_running);
 

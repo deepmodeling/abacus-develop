@@ -380,7 +380,8 @@ void ModuleIO::Angmom_op::calculate(
     const UnitCell& ucell,
     const int precision,
     const int rank,
-    const int istep)
+    const int istep,
+    const int out_app_flag)
 {
     ModuleBase::TITLE("Angmom_op", "calculate");
     ModuleBase::timer::start("Angmom_op", "calculate");
@@ -392,9 +393,11 @@ void ModuleIO::Angmom_op::calculate(
     }
     std::ofstream ofout;
     const std::string dir = "xyz";
-    /// @brief Filename suffix: if istep >= 0, append "g{istep+1}" (e.g., "g1")
-    ///        to follow the out_freq_ion convention; otherwise no suffix.
-    const std::string step_suffix = (istep >= 0) ? "g" + std::to_string(istep + 1) : "";
+    /// @brief Filename suffix: in append mode (out_app_flag == 1) the fixed
+    ///        name is reused and each ionic step appends; modes 0 and 2 carry
+    ///        "g{istep+1}" (e.g., "g1") following the out_freq_ion convention.
+    const std::string step_suffix = (istep >= 0 && out_app_flag != 1) ? "g" + std::to_string(istep + 1) : "";
+    const bool append_step = (out_app_flag == 1) && (istep >= 0);
     const std::string title = "# it ia il iz im iRx iRy iRz jt ja jl jz jm Re[<a|L|b>] Im[<a|L|b>]\n"
                               "# it: atomtype index of the first atom\n"
                               "# ia: atomic index of the first atom within the atomtype\n"
@@ -413,7 +416,12 @@ void ModuleIO::Angmom_op::calculate(
     for (char d : dir)
     {
         std::string fn = outdir + "l" + d + step_suffix + "_nao.txt";
-        ofout.open(fn, std::ios::out);
+        std::ios_base::openmode mode = std::ios::out;
+        if (append_step)
+        {
+            mode |= std::ios::app;
+        }
+        ofout.open(fn, mode);
         ofout << title;
         this->kernel(&ofout, ucell, d, precision);
         ofout.close();

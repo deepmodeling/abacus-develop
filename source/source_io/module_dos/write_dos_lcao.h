@@ -28,7 +28,7 @@ namespace ModuleIO
         const double& dos_edelta_ev,            // Delta energy
         const double& dos_scale,                
         const double& bcoeff,
-        const bool out_app_flag,
+        const int out_app_flag,
         const int istep,
         const int nspin,
         const int nlocal,

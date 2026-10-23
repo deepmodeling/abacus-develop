@@ -21,6 +21,7 @@ void write_elf(
     const int& precision,
     const std::string& geom_block,
     const bool two_fermi,
+    const bool append,
     std::ofstream& ofs_running);
 }
 

@@ -52,7 +52,7 @@ void psi_init_file<T>::init_psig(T* psig, const int& ik)
 
     // mohan update, this is for plane wave, 2025-05-17
     const int out_type = 2;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const bool gamma_only = false;
     const int istep = -1;
 

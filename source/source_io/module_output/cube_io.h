@@ -52,6 +52,9 @@ bool read_vdata_palgrid(const Parallel_Grid& pgrid,
                         const int nat);
 
 /// write volumetric data on the parallized grid into a .cube file
+/// @param append append a complete frame to an existing cube file instead of
+///     truncating it. Used by out_app_flag == 1, where successive ionic steps
+///     reuse a fixed filename and each written step contributes one frame.
 void write_vdata_palgrid(const Parallel_Grid& pgrid,
                          const double* const data,
                          const int is,
@@ -64,6 +67,7 @@ void write_vdata_palgrid(const Parallel_Grid& pgrid,
                          const int out_fermi,
                          const bool two_fermi,
                          const bool reduce_all_pool,
+                         const bool append,
                          std::ofstream& ofs_running,
                          const std::string& data_desc);
 
@@ -84,6 +88,8 @@ bool read_cube(const std::string& file,
                std::vector<double>& data);
 
 /// write a cube file
+/// @param append append a complete frame to an existing file instead of
+///     truncating it (out_app_flag == 1 multi-step trajectories).
 void write_cube(const std::string& file,
                 const std::vector<std::string>& comment,
                 const int& natom,
@@ -99,6 +105,7 @@ void write_cube(const std::string& file,
                 const std::vector<std::vector<double>>& atom_pos,
                 const std::vector<double>& data,
                 const int precision,
+                const bool append,
                 const int ndata_line = 6);
 
 /**

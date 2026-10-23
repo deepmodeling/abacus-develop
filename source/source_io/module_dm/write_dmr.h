@@ -54,6 +54,7 @@ void write_dmr_csr(std::string& fname,
  * @param ispin The spin index, starting from 0.
  * @param append Whether to append the data to an existing file or create a new file. The file name is related to this
  * flag.
+ * @param dmr_dir The directory the DM(R) files are written into.
  * @param istep The ION step, starting from 0.
  */
 void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
@@ -63,6 +64,7 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const bool append,
                const int* iat2iwt,
                const int nat,
+               const std::string& dmr_dir,
                const int istep,
                std::ofstream& ofs_running);
 } // namespace ModuleIO

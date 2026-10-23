@@ -19,6 +19,7 @@ void write_wfc_pw(
         const int rank_in_pool,
         const int nproc_in_pool,
         const int out_wfc_pw,
+        const int out_app_flag,
         const double& ecutwfc,
         const std::string& global_out_dir,
         const psi::Psi<std::complex<double>>& psi,

@@ -1,4 +1,5 @@
 #include "source_cell/domain_decomposition.h"
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include "source_cell/mdcell_reader.h"
@@ -227,7 +228,7 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     StruMeta metadata;
     metadata.species.resize(2);
     const std::string output_file = "distributed_mdcell_restart.STRU";
-    mdcell::print_stru_file(mdcell, metadata, output_file);
+    mdcell::print_stru_file(mdcell, metadata, output_file, "", false);
 
     DomainDecomposition reader_decomp;
     MDCell round_trip = MDCellReader::read_stru(output_file,
@@ -317,6 +318,71 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
     }
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) std::remove(output_file.c_str());
+}
+
+// ---------------------------------------------------------------------------
+// mdcell::print_stru_file append + frame_comment.
+// ---------------------------------------------------------------------------
+TEST(MDCellReaderTest, STRUAppendWithFrameComment)
+{
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    std::vector<LocalAtom> owned_atoms;
+    owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<int>(1, 0, 1),
+                                    1.0,
+                                    0,
+                                    0,
+                                    rank));
+
+    ModuleBase::Matrix3 lattice = make_lattice();
+    MDCell mdcell;
+    mdcell.initialize_from_owned_atoms(lattice,
+                  lattice.Inverse(),
+                  1.0,
+                  1.0,
+                  1,
+                  owned_atoms,
+                  std::vector<std::string>{"A"},
+                  std::vector<double>{1.0},
+                  std::vector<std::int64_t>{1},
+                  0.0,
+                  ModuleBase::world_comm_domain());
+    StruMeta metadata;
+    metadata.species.resize(1);
+    const std::string output_file = "mdcell_append_test.STRU";
+
+    // First frame: append=false, frame comment set.
+    mdcell::print_stru_file(mdcell, metadata, output_file,
+                            "# MD step 1\n\n", /*append=*/false);
+    // Second frame: append=true with a different comment.
+    mdcell::print_stru_file(mdcell, metadata, output_file,
+                            "# MD step 2\n\n", /*append=*/true);
+
+    if (rank == 0)
+    {
+        std::ifstream ifs(output_file.c_str());
+        std::string str((std::istreambuf_iterator<char>(ifs)),
+                        std::istreambuf_iterator<char>());
+        ifs.close();
+        // Both frame markers must be present.
+        EXPECT_THAT(str, testing::HasSubstr("# MD step 1"));
+        EXPECT_THAT(str, testing::HasSubstr("# MD step 2"));
+        // Two STRU blocks -> two ATOMIC_SPECIES markers.
+        int occurrences = 0;
+        size_t pos = 0;
+        while ((pos = str.find("ATOMIC_SPECIES", pos)) != std::string::npos)
+        {
+            ++occurrences;
+            pos += 14;
+        }
+        EXPECT_EQ(occurrences, 2);
+        std::remove(output_file.c_str());
+    }
 }
 
 int main(int argc, char** argv)

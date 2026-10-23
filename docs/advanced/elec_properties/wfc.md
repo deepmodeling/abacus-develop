@@ -18,7 +18,7 @@ The [`init_wfc file binary`](../scf/initialization.md#wavefunction) path reads o
 
 For `basis_type=lcao`, [`out_wfc_lcao`](https://abacus-rtd.readthedocs.io/en/latest/advanced/input_files/input-main.html#out-wfc-lcao) controls the output of numerical-atomic-orbital coefficients: `1` writes text files with the `.txt` suffix and `2` writes binary files with the `.dat` suffix. Multi-k calculations generate `wfs{spin}k{k-point}_nao.txt` or `.dat`, while Gamma-only calculations generate `wfs{spin}_nao.txt` or `.dat`.
 
-To reuse LCAO coefficients, point `read_file_dir` to the coefficient files and set `init_wfc file txt` for text input or `init_wfc file binary` for binary input. The selected extension is required; there is no automatic format fallback. Only independent files without geometry-step indices are supported, not files accumulated with `out_app_flag`.
+To reuse LCAO coefficients, point `read_file_dir` to the coefficient files and set `init_wfc file txt` for text input or `init_wfc file binary` for binary input. The selected extension is required; there is no automatic format fallback. Only independent files without geometry-step indices are supported, not files accumulated with `out_app_flag=1`.
 
 ## Wave Function in Real Space
 

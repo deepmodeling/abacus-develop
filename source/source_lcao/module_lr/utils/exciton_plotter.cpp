@@ -510,6 +510,7 @@ void ExcitonPlotter<T>::plot_average_density(const int istate, const std::string
                                       0,
                                       false, /*two_fermi*/
                                       false,
+                                      false,
                                       GlobalV::ofs_running,
                                       "exciton density");
     }

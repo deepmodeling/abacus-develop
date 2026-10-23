@@ -440,7 +440,7 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
                              istep);
 
     // 4) write band information to band.txt
-    ModuleIO::write_bands(*this->inp_, this->pelec->ekb, this->kv, GlobalV::ofs_running);
+    ModuleIO::write_bands(*this->inp_, this->pelec->ekb, this->kv, GlobalV::ofs_running, istep);
 
 }
 

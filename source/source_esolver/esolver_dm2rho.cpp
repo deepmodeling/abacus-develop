@@ -99,6 +99,7 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
                                       1,
                                       PARAM.globalv.two_fermi,
                                       false,
+                                      false,
                                       GlobalV::ofs_running,
                                       desc_chg);
     }

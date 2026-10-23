@@ -41,7 +41,8 @@ TEST(HsSparseIo, SparseHeaderKeepsStepStyle)
     ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
 
     const std::string output = read_file(filename);
-    EXPECT_TRUE(starts_with(output, "STEP: 0\n"));
+    // istep = 0 is the first ionic step, printed one-based as 1
+    EXPECT_TRUE(starts_with(output, "STEP: 1\n"));
     EXPECT_THAT(output, testing::HasSubstr("Matrix Dimension of S(R): 2\n"));
     EXPECT_THAT(output, testing::HasSubstr("Matrix number of S(R): 1\n"));
     EXPECT_THAT(output, testing::HasSubstr("0 0 0 2\n"));
@@ -77,7 +78,8 @@ TEST(HsSparseIo, SparseTextCountsOnlyValuesAboveThreshold)
 
     const std::vector<std::string> lines = read_lines(filename);
     ASSERT_GE(lines.size(), 6);
-    EXPECT_EQ(lines[0], "STEP: 2");
+    // istep = 2 is the third ionic step, printed one-based as 3
+    EXPECT_EQ(lines[0], "STEP: 3");
     EXPECT_EQ(lines[1], "Matrix Dimension of S(R): 2");
     EXPECT_EQ(lines[2], "Matrix number of S(R): 1");
     EXPECT_EQ(lines[3], "0 0 0 2");
@@ -137,8 +139,9 @@ TEST(HsSparseIo, SparseBinaryHeaderWritesConcreteStep)
     options.reduce = false;
     ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
 
+    // istep = 3 -> one-based step 4 in the binary header
     const std::vector<int> header_and_r = read_binary_ints(filename, 7);
-    EXPECT_THAT(header_and_r, testing::ElementsAre(3, 2, 1, 0, 0, 0, 2));
+    EXPECT_THAT(header_and_r, testing::ElementsAre(4, 2, 1, 0, 0, 0, 2));
 
     std::remove(filename.c_str());
 }
@@ -171,7 +174,8 @@ TEST(HsSparseIo, SparseBinaryCountsOnlyValuesAboveThreshold)
 
     std::ifstream ifs(filename.c_str(), std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
-    EXPECT_EQ(read_binary_value<int>(ifs), 4);
+    // istep = 4 -> one-based step 5 in the binary header
+    EXPECT_EQ(read_binary_value<int>(ifs), 5);
     EXPECT_EQ(read_binary_value<int>(ifs), 2);
     EXPECT_EQ(read_binary_value<int>(ifs), 1);
     EXPECT_EQ(read_binary_value<int>(ifs), 0);

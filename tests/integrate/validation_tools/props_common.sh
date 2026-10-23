@@ -118,7 +118,7 @@ props_init(){
 	fi
 	has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
 	has_xc2=$(get_input_key_value "out_mat_xc2" "INPUT")
-	has_eband_separate=$(get_input_key_value "out_eband_terms" "INPUT")
+	has_eband_separate=$(get_input_key_value "out_eband" "INPUT")
 	has_lowf=$(get_input_key_value "out_wfc_lcao" "INPUT")
 	out_app_flag=$(get_input_key_value "out_app_flag" "INPUT")
 	has_wfc_r=$(get_input_key_value "out_wfc_r" "INPUT")

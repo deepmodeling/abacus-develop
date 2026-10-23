@@ -12,7 +12,6 @@
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
-#include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_lcao/module_operator_lcao/operator_fs_utils.h"
 #ifdef __EXX
@@ -78,9 +77,6 @@ static void gather_and_write(const std::string& prefix,
                              const bool append,
                              const int* iat2iwt,
                              const int nat,
-                             const std::string& calculation,
-                             const bool out_app_flag,
-                             const std::string& global_out_dir,
                              const std::string& global_matrix_dir,
                              std::ofstream* ofs_running)
 {
@@ -94,9 +90,7 @@ static void gather_and_write(const std::string& prefix,
     if (GlobalV::MY_RANK == 0)
 #endif
     {
-        const bool md_no_append = (calculation == "md") && !out_app_flag;
-        const std::string& out_dir = md_no_append ? global_matrix_dir : global_out_dir;
-        const std::string fname = out_dir + hsr_gen_fname(prefix, ispin, append, istep);
+        const std::string fname = global_matrix_dir + hsr_gen_fname(prefix, ispin, append, istep);
         // H(R) component terms (T, V^NL, V^L, V^H, V^XC, V^EXX) are parts of
         // the Hamiltonian, not the full H(R): they do not carry the Fermi annotation
         const double no_efermi = 0.0;
@@ -127,7 +121,7 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                             const int nlocal,
                             const bool gamma_only,
                             const std::string& global_out_dir,
-                            const bool out_app_flag,
+                            const int out_app_flag,
                             const std::string& ks_solver,
                             const int drank)
 {
@@ -159,7 +153,7 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                            false,
                            8,
                            false,
-                           out_app_flag,
+                           append,
                            fname,
                            pv,
                            drank,
@@ -200,7 +194,7 @@ static void write_h_term(WriteHParams& params, const HTermSpec& spec)
     const int nlocal = params.nlocal;
     const bool gamma_only = params.gamma_only_local;
     const std::string& global_out_dir = params.global_out_dir;
-    const bool out_app_flag = params.out_app_flag;
+    const int out_app_flag = params.out_app_flag;
 
     const int nspin_out = (nspin == 2 ? 2 : 1);
 
@@ -215,37 +209,12 @@ static void write_h_term(WriteHParams& params, const HTermSpec& spec)
         if (also_hR)
         {
             gather_and_write(spec.r_prefix, spec.r_label, spec.term_name, hR_tmp, ucell, pv, nspin, ispin,
-                             istep, append, iat2iwt, nat, params.calculation, params.out_app_flag,
-                             params.global_out_dir, params.global_matrix_dir, params.ofs_running);
+                             istep, append, iat2iwt, nat,
+                             params.global_matrix_dir, params.ofs_running);
         }
     }
 
     ModuleBase::timer::end("ModuleIO", spec.timer_label);
-}
-
-void write_h_t(WriteHParams& params)
-{
-    const UnitCell& ucell = *params.ucell;
-    const Grid_Driver& gd = *params.gd;
-    const Parallel_Orbitals& pv = *params.pv;
-    const TwoCenterBundle& two_center_bundle = *params.two_center_bundle;
-    const LCAO_Orbitals& orb = *params.orb;
-    const K_Vectors& kv = *params.kv;
-    const std::vector<double>& orb_cutoff = orb.cutoffs();
-
-    HTermSpec spec;
-    spec.timer_label = "write_h_t";
-    spec.k_prefix = "tk";
-    spec.r_prefix = "t";
-    spec.r_label = "T";
-    spec.term_name = "kinetic";
-    spec.build = [&](hamilt::HContainer<double>& hR_tmp, int /*ispin*/) {
-        hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-            tmp_ekinetic(nullptr, kv.kvec_d, &hR_tmp, &ucell, orb_cutoff, &gd,
-                         two_center_bundle.kinetic_orb.get());
-        tmp_ekinetic.contributeHR();
-    };
-    write_h_term(params, spec);
 }
 
 void write_h_vnl(WriteHParams& params)
@@ -378,7 +347,7 @@ static void write_h_exx_impl(const UnitCell& ucell,
                              const std::string& global_out_dir,
                              const std::string& global_matrix_dir,
                              const std::string& calculation,
-                             const bool out_app_flag,
+                             const int out_app_flag,
                              const std::string& ks_solver,
                              const int drank,
                              const Exx_Info& exx_info,
@@ -402,7 +371,7 @@ static void write_h_exx_impl(const UnitCell& ucell,
         if (also_hR)
         {
             gather_and_write("vexx", "V^EXX", "exx", hR_tmp, ucell, pv, nspin, ispin, istep, append,
-                             iat2iwt, nat, calculation, out_app_flag, global_out_dir, global_matrix_dir,
+                             iat2iwt, nat, global_matrix_dir,
                              ofs_running);
         }
     }
@@ -413,7 +382,7 @@ void write_h_exx(WriteHParams& params, const Exx_Info& exx_info)
     ModuleBase::TITLE("ModuleIO", "write_h_exx");
     ModuleBase::timer::start("ModuleIO", "write_h_exx");
 
-    // Multi-k out_mat_h_exx is rejected upstream at the call site (setup_exx_h_params in
+    // Multi-k out_mat_exxk is rejected upstream at the call site (setup_exx_h_params in
     // ctrl_scf_lcao.cpp); this function is only reached on the gamma-only path.
     const UnitCell& ucell = *params.ucell;
     const Parallel_Orbitals& pv = *params.pv;
