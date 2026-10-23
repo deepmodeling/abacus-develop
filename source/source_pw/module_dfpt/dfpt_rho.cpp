@@ -452,7 +452,20 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
         // push the current in/out pair into the history, then solve for
         // the Broyden coefficients and mix
         auto screen = std::function<void(std::complex<double>*)>();
-        auto combine = std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)>();
+        // the Broyden push_data calls mix(data, data_in, F) unconditionally
+        // (broyden_mixing.cpp:47, no nullptr guard): provide the plain
+        // preliminary mix data = data_in + beta * F
+        const double beta = mix_beta_;
+        auto combine =
+            std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)>(
+                [npw, beta](std::complex<double>* data,
+                            const std::complex<double>* data_in,
+                            const std::complex<double>* F) {
+                    for (int i = 0; i < npw; ++i)
+                    {
+                        data[i] = data_in[i] + beta * F[i];
+                    }
+                });
         broyden_mixer_->push_data(mdata,
                                   rin.data(),
                                   out.data(),
