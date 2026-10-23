@@ -16,6 +16,10 @@ public:
     MPI_Comm communicator() const;
 #endif
     int rank() const;
+    int size() const;
+    int max(int value) const;
+    int sum(int value) const;
+    double max(double value) const;
 
 private:
 #ifdef __MPI
@@ -24,7 +28,7 @@ private:
     int rank_ = 0;
 };
 
-CommunicationDomain world_communication_domain();
+CommunicationDomain world_comm_domain();
 } // namespace ModuleBase
 
 #endif

@@ -176,7 +176,7 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
         pos2 = txt.find(mark, pos);
         ll = pos2 - pos;
         std::string tmpval = txt.substr(pos, ll);
-        tmpval = trim(tmpval);
+        tmpval = pseudopot::trim(tmpval);
         val[i] = tmpval;
         pos = pos2 + 1;
         for (int j = 0; j < 100; ++j)

@@ -123,7 +123,7 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
 
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {
-        auto atom_pair = this->_hcontainer->get_atom_pair(iap);
+        const auto& atom_pair = this->_hcontainer->get_atom_pair(iap);
         const int r_index = atom_pair.find_R(rx, ry, rz);
         if (r_index < 0) continue;
         auto tmp_matrix_info = atom_pair.get_matrix_values(r_index);

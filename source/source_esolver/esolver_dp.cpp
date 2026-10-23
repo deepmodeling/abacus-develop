@@ -20,19 +20,27 @@
 #include "esolver_dp.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/ghost_exchange_plan.h"
+#include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/cif_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include <algorithm>
 #include <iomanip>
 #include <array>
 #include <sstream>
 #include <unordered_map>
 
 using namespace ModuleESolver;
+
+#ifdef __DPMD
+#ifdef __DPMDC
+using DPInputNlist = deepmd::hpp::InputNlist;
+#else
+using DPInputNlist = deepmd::InputNlist;
+#endif
+#endif
 
 void ESolver_DP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
@@ -43,11 +51,14 @@ void ESolver_DP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     fparam = inp.mdp.dp_fparam;
     aparam = inp.mdp.dp_aparam;
 
-    if (basecell.kind() == BaseCell::Kind::md_cell)
+    if (basecell.kind() == BaseCell::Kind::mdcell)
     {
         MDCell& mdcell = static_cast<MDCell&>(basecell);
 #ifdef __DPMD
+        mdcell.set_neighbor_cutoff(dp.cutoff() * ModuleBase::ANGSTROM_AU);
         initialize_type_map_(mdcell.type_labels());
+#else
+        ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
 #endif
         return;
     }
@@ -69,7 +80,7 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
     ModuleBase::TITLE("ESolver_DP", "runner");
     ModuleBase::timer::start("ESolver_DP", "runner");
 
-    if (basecell.kind() == BaseCell::Kind::md_cell)
+    if (basecell.kind() == BaseCell::Kind::mdcell)
     {
 #ifndef __DPMD
         ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
@@ -78,11 +89,11 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         MDCell& mdcell = static_cast<MDCell&>(basecell);
         if (!mdcell.has_neighbor_search())
         {
-            mdcell.prepare_neighbors();
+            ModuleBase::WARNING_QUIT("ESolver", "MDCell neighbors must be prepared by the caller before runner().");
         }
-        const int nlocal = mdcell.nlocal();
-        const int nghost = mdcell.nghost();
-        const int natom = nlocal + nghost;
+        const int nowned_atoms = mdcell.owned_atoms().size();
+        const int nghost = mdcell.ghost_atoms().size();
+        const int natom = nowned_atoms + nghost;
         if (natom == 0)
         {
             ModuleBase::WARNING_QUIT("ESolver_DP", "MDCell contains no atoms.");
@@ -105,8 +116,8 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         std::vector<int> local_atype(static_cast<std::size_t>(natom), 0);
         for (int iat = 0; iat < natom; ++iat)
         {
-            const LocalAtom& atom = iat < nlocal ? owned_atoms[static_cast<std::size_t>(iat)]
-                                                  : ghost_atoms[static_cast<std::size_t>(iat - nlocal)];
+            const LocalAtom& atom = iat < nowned_atoms ? owned_atoms[static_cast<std::size_t>(iat)]
+                                                  : ghost_atoms[static_cast<std::size_t>(iat - nowned_atoms)];
             coord[3 * iat] = atom.cart.x * mdcell.lat0() * ModuleBase::BOHR_TO_A;
             coord[3 * iat + 1] = atom.cart.y * mdcell.lat0() * ModuleBase::BOHR_TO_A;
             coord[3 * iat + 2] = atom.cart.z * mdcell.lat0() * ModuleBase::BOHR_TO_A;
@@ -125,25 +136,55 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         }
 
         const NeighborList& neighbor_list = mdcell.neighbor_search().get_neighbor_list();
-        std::vector<int> ilist(static_cast<std::size_t>(nlocal), 0);
-        std::vector<int> numneigh(static_cast<std::size_t>(nlocal), 0);
-        std::vector<int*> firstneigh(static_cast<std::size_t>(nlocal), NULL);
-        for (int iat = 0; iat < nlocal; ++iat)
+        std::vector<int> ilist(static_cast<std::size_t>(nowned_atoms), 0);
+        std::vector<int> numneigh(static_cast<std::size_t>(nowned_atoms), 0);
+        std::vector<int*> firstneigh(static_cast<std::size_t>(nowned_atoms), NULL);
+        std::vector<std::vector<int> > sorted_neighbors(static_cast<std::size_t>(nowned_atoms));
+        for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             ilist[static_cast<std::size_t>(iat)] = iat;
-            numneigh[static_cast<std::size_t>(iat)] = neighbor_list.get_numneigh(iat);
-            firstneigh[static_cast<std::size_t>(iat)] = const_cast<int*>(neighbor_list.get_firstneigh(iat));
+            sorted_neighbors[static_cast<std::size_t>(iat)]
+                = neighbor_list.get_neighbors_sorted_by_distance(iat, coord);
+            numneigh[static_cast<std::size_t>(iat)]
+                = static_cast<int>(sorted_neighbors[static_cast<std::size_t>(iat)].size());
+            firstneigh[static_cast<std::size_t>(iat)]
+                = sorted_neighbors[static_cast<std::size_t>(iat)].empty()
+                      ? NULL
+                      : sorted_neighbors[static_cast<std::size_t>(iat)].data();
         }
-#ifdef __DPMDC
-        deepmd::hpp::InputNlist nlist(nlocal,
-                                      nlocal > 0 ? &ilist[0] : NULL,
-                                      nlocal > 0 ? &numneigh[0] : NULL,
-                                      nlocal > 0 ? &firstneigh[0] : NULL);
+
+        GhostExchangePlan& ghost_plan = mdcell.get_ghost_exchange_plan();
+        const bool use_mapping = ghost_plan.nprocs == 1;
+        if (!ghost_plan.is_valid(static_cast<std::size_t>(natom)))
+        {
+            ModuleBase::WARNING_QUIT("ESolver_DP", "Invalid MDCell ghost exchange plan.");
+        }
+        GhostExchangePlanView view = ghost_plan.make_view();
+        int** sendlist_data = view.sendlist_storage.empty() ? NULL : view.sendlist_storage.data();
+        int* ilist_data = nowned_atoms > 0 ? &ilist[0] : NULL;
+        int* numneigh_data = nowned_atoms > 0 ? &numneigh[0] : NULL;
+        int** firstneigh_data = nowned_atoms > 0 ? &firstneigh[0] : NULL;
+        int* mapping_data = use_mapping ? view.mapping : NULL;
+        void* dp_world = NULL;
+#ifdef __MPI
+        MPI_Comm dp_world_comm = mdcell.communicator();
+        dp_world = &dp_world_comm;
+#endif
+#if defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 13
+        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, view.nswap, view.sendnum, view.recvnum, view.firstrecv, sendlist_data, view.sendproc, view.recvproc, dp_world, ghost_plan.nprocs);
+#elif defined(__DPMD_COMM_NLIST_ARGS) && __DPMD_COMM_NLIST_ARGS == 12
+        DPInputNlist nlist(nowned_atoms, ilist_data, numneigh_data, firstneigh_data, view.nswap, view.sendnum, view.recvnum, view.firstrecv, sendlist_data, view.sendproc, view.recvproc, dp_world);
 #else
-        deepmd::InputNlist nlist(nlocal,
-                                 nlocal > 0 ? &ilist[0] : NULL,
-                                 nlocal > 0 ? &numneigh[0] : NULL,
-                                 nlocal > 0 ? &firstneigh[0] : NULL);
+        DPInputNlist nlist(nowned_atoms,
+                           ilist_data,
+                           numneigh_data,
+                           firstneigh_data);
+#endif
+#ifdef __DPMD_HAS_NLIST_MAPPING
+        if (use_mapping)
+        {
+            nlist.set_mapping(mapping_data);
+        }
 #endif
         double local_energy = 0.0;
         std::vector<double> force, virial;
@@ -155,19 +196,18 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
             ModuleBase::WARNING_QUIT("ESolver_DP", "DeePMD returned an invalid force array for MDCell.");
         }
 
-        std::vector<LocalAtom>& mutable_owned_atoms = mdcell.mutable_owned_atoms();
-        std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.mutable_ghost_atoms();
-        for (int iat = 0; iat < nlocal; ++iat)
+        std::vector<LocalAtom>& mutable_owned_atoms = mdcell.owned_atoms();
+        std::vector<LocalAtom>& mutable_ghost_atoms = mdcell.ghost_atoms();
+        for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             mutable_owned_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * iat], force[3 * iat + 1], force[3 * iat + 2]);
         }
         for (int iat = 0; iat < nghost; ++iat)
         {
-            mutable_ghost_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * (nlocal + iat)],
-                                                                           force[3 * (nlocal + iat) + 1],
-                                                                           force[3 * (nlocal + iat) + 2]);
+            mutable_ghost_atoms[static_cast<std::size_t>(iat)].force.set(force[3 * (nowned_atoms + iat)],
+                                                                           force[3 * (nowned_atoms + iat) + 1],
+                                                                           force[3 * (nowned_atoms + iat) + 2]);
         }
-        mdcell.accumulate_ghost_forces();
 
         if (virial.size() != 9)
         {
@@ -184,9 +224,13 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         const double fact_f = rescaling / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
         const double fact_v = rescaling / (mdcell.omega() * ModuleBase::Ry_to_eV);
         dp_potential = local_energy * fact_e;
-        for (int iat = 0; iat < nlocal; ++iat)
+        for (int iat = 0; iat < nowned_atoms; ++iat)
         {
             LocalAtom& atom = mutable_owned_atoms[static_cast<std::size_t>(iat)];
+            atom.force *= fact_f;
+        }
+        for (LocalAtom& atom : mutable_ghost_atoms)
+        {
             atom.force *= fact_f;
         }
         for (int i = 0; i < 3; ++i)
@@ -266,29 +310,13 @@ double ESolver_DP::cal_energy()
     return dp_potential;
 }
 
-bool ESolver_DP::supports_mdcell() const
-{
-    return true;
-}
-
-double ESolver_DP::mdcell_cutoff(const Input_para& inp) const
-{
-    static_cast<void>(inp);
-#ifdef __DPMD
-    return dp.cutoff() * ModuleBase::ANGSTROM_AU;
-#else
-    ModuleBase::WARNING_QUIT("ESolver_DP::mdcell_cutoff", "Please recompile with -D__DPMD");
-    return 0.0;
-#endif
-}
-
 void ESolver_DP::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    if (basecell.kind() == BaseCell::Kind::md_cell)
+    if (basecell.kind() == BaseCell::Kind::mdcell)
     {
         const MDCell& mdcell = static_cast<const MDCell&>(basecell);
-        force.create(mdcell.nlocal(), 3);
-        for (int iat = 0; iat < mdcell.nlocal(); ++iat)
+        force.create(mdcell.owned_atoms().size(), 3);
+        for (int iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
         {
             const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
             force(iat, 0) = atom.force.x;
@@ -307,7 +335,7 @@ void ESolver_DP::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
     stress = dp_virial;
 
-    if (basecell.kind() == BaseCell::Kind::unit_cell)
+    if (basecell.kind() == BaseCell::Kind::unitcell)
     {
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
     }

@@ -49,7 +49,7 @@ class Atom
     int stapos_wf = 0;                           ///< start position of wave functions
 
     std::string label;                            ///< atomic symbol
-    std::vector<ModuleBase::Vector3<double>> tau; ///< Cartesian coordinates of each atom in this type
+    std::vector<ModuleBase::Vector3<double>> tau; ///< Cartesian coordinates of each atom in this type, in unit of lat0
     std::vector<ModuleBase::Vector3<double>> dis; ///< direct displacements of each atom in this type in current step (liuyu modify 2023-03-22)
     std::vector<ModuleBase::Vector3<double>> taud; ///< Direct coordinates of each atom in this type
     std::vector<ModuleBase::Vector3<int>> boundary_shift; ///< record for periodic boundary adjustment

@@ -60,62 +60,21 @@ case "${with_openblas}" in
             [ -d OpenBLAS-${openblas_ver} ] && rm -rf OpenBLAS-${openblas_ver}
             tar -zxf ${openblas_pkg}
             cd OpenBLAS-${openblas_ver}
-
-            # First attempt to make openblas using auto detected
-            # TARGET, if this fails, then make with forced
-            # TARGET=NEHALEM
+            # Build OpenBLAS with DYNAMIC_ARCH unless native architecture is requested.
+            # If the latter fails, then build with DYNAMIC_ARCH.
             #
             # wrt NUM_THREADS=64: this is what the most common Linux distros seem to choose atm
             #                     for a good compromise between memory usage and scalability
             #
             # Unfortunately, NO_SHARED=1 breaks ScaLAPACK build.
-            case "${TARGET_CPU}" in
-                "generic")
-                    TARGET="NEHALEM"
-                    ;;
-                "native")
-                    TARGET=${OPENBLAS_LIBCORE}
-                    ;;
-                "broadwell" | "skylake")
-                    TARGET="HASWELL"
-                    ;;
-                "skylake-avx512")
-                    TARGET="SKYLAKEX"
-                    ;;
-                *)
-                    TARGET=${TARGET_CPU}
-                    ;;
-            esac
-            TARGET=$(echo ${TARGET} | tr '[:lower:]' '[:upper:]')
-            echo "Installing OpenBLAS library for target ${TARGET}"
-            (
-                make -j $(get_nprocs) \
-                    MAKE_NB_JOBS=0 \
-                    TARGET=${TARGET} \
-                    NUM_THREADS=64 \
-                    USE_THREAD=1 \
-                    USE_OPENMP=1 \
-                    NO_AFFINITY=1 \
-                    CC="${CC}" \
-                    FC="${FC}" \
-                    PREFIX="${pkg_install_dir}" \
-                    > make.log 2>&1 || tail -n ${LOG_LINES} make.log
-            ) || (
-                make -j $(get_nprocs) \
-                    MAKE_NB_JOBS=0 \
-                    TARGET=NEHALEM \
-                    NUM_THREADS=64 \
-                    USE_THREAD=1 \
-                    USE_OPENMP=1 \
-                    NO_AFFINITY=1 \
-                    CC="${CC}" \
-                    FC="${FC}" \
-                    PREFIX="${pkg_install_dir}" \
-                    > make.nehalem.log 2>&1 || tail -n ${LOG_LINES} make.nehalem.log
-            )
-            make -j $(get_nprocs) \
+            BUILD_DYNAMIC=0
+            if [ "native" != "${TARGET_CPU}" ]; then
+              BUILD_DYNAMIC=1
+            fi
+            if [ "${BUILD_DYNAMIC}" = "0" ]; then
+              echo "Installing OpenBLAS library for native target"
+              if ! make -j "$(get_nprocs)" \
                 MAKE_NB_JOBS=0 \
-                TARGET=${TARGET} \
                 NUM_THREADS=64 \
                 USE_THREAD=1 \
                 USE_OPENMP=1 \
@@ -123,8 +82,34 @@ case "${with_openblas}" in
                 CC="${CC}" \
                 FC="${FC}" \
                 PREFIX="${pkg_install_dir}" \
-                install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
-            cd ..
+                > make.log 2>&1; then
+                tail -n "${LOG_LINES}" make.log
+                make clean
+                BUILD_DYNAMIC=1
+              fi
+            fi
+            if [ "${BUILD_DYNAMIC}" != "0" ]; then
+              echo "Installing OpenBLAS library for dynamic target"
+              if ! make -j "$(get_nprocs)" \
+                MAKE_NB_JOBS=0 \
+                DYNAMIC_ARCH=1 \
+                NUM_THREADS=64 \
+                USE_THREAD=1 \
+                USE_OPENMP=1 \
+                NO_AFFINITY=1 \
+                CC="${CC}" \
+                FC="${FC}" \
+                PREFIX="${pkg_install_dir}" \
+                > make.log 2>&1; then
+                tail -n "${LOG_LINES}" make.log
+                exit 1
+              fi
+            fi
+            if ! make MAKE_NB_JOBS=0 PREFIX="${pkg_install_dir}" install \
+              > install.log 2>&1; then
+              tail -n "${LOG_LINES}" install.log
+              exit 1
+            fi
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage2/$(basename ${SCRIPT_NAME})"
         fi
         OPENBLAS_CFLAGS="-I'${pkg_install_dir}/include'"

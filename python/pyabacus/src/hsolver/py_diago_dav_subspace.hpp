@@ -1,16 +1,15 @@
 #ifndef PYTHON_PYABACUS_SRC_PY_DIAGO_DAV_SUBSPACE_HPP
 #define PYTHON_PYABACUS_SRC_PY_DIAGO_DAV_SUBSPACE_HPP
 
+#include "source_hsolver/diago_dav_subspace.h"
+
 #include <complex>
 #include <functional>
-
-#include <pybind11/pybind11.h>
 #include <pybind11/complex.h>
 #include <pybind11/functional.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
-#include "source_hsolver/diago_dav_subspace.h"
 
 namespace py = pybind11;
 
@@ -19,7 +18,7 @@ namespace py_hsolver
 
 class PyDiagoDavSubspace
 {
-public:
+  public:
     PyDiagoDavSubspace(int nbasis, int nband) : nbasis(nbasis), nband(nband)
     {
         psi = new std::complex<double>[nbasis * nband];
@@ -39,15 +38,15 @@ public:
 
     ~PyDiagoDavSubspace()
     {
-        if (psi != nullptr) 
-        { 
-            delete[] psi; 
-            psi = nullptr; 
+        if (psi != nullptr)
+        {
+            delete[] psi;
+            psi = nullptr;
         }
-        if (eigenvalue != nullptr) 
-        { 
-            delete[] eigenvalue; 
-            eigenvalue = nullptr; 
+        if (eigenvalue != nullptr)
+        {
+            delete[] eigenvalue;
+            eigenvalue = nullptr;
         }
     }
 
@@ -73,7 +72,7 @@ public:
             psi_out_ptr[i] = psi[i];
         }
 
-        return psi_out;   
+        return psi_out;
     }
 
     void init_eigenvalue()
@@ -99,60 +98,53 @@ public:
         return eigenvalue_out;
     }
 
-    int diag(
-        std::function<py::array_t<std::complex<double>>(py::array_t<std::complex<double>>)> mm_op,
-        std::vector<double>& precond_vec,
-        int dav_ndim,
-        double tol,
-        int max_iter,
-        bool need_subspace,
-        std::vector<double>& diag_ethr,
-        bool scf_type,
-        hsolver::diag_comm_info comm_info,
-        int diag_subspace,
-        int nb2d
-    ) {
-        auto hpsi_func = [mm_op] (
-            std::complex<double> *psi_in,
-            std::complex<double> *hpsi_out, 
-            const int ld_psi,
-            const int nvec
-        ) {
-            // Note: numpy's py::array_t is row-major, but
-            //       our raw pointer-array is column-major
-            py::array_t<std::complex<double>, py::array::f_style> psi({ld_psi, nvec});
-            py::buffer_info psi_buf = psi.request();
-            std::complex<double>* psi_ptr = static_cast<std::complex<double>*>(psi_buf.ptr);
-            std::copy(psi_in, psi_in + nvec * ld_psi, psi_ptr);
+    int diag(std::function<py::array_t<std::complex<double>>(py::array_t<std::complex<double>>)> mm_op,
+             std::vector<double>& precond_vec,
+             int dav_ndim,
+             double tol,
+             int max_iter,
+             bool need_subspace,
+             std::vector<double>& diag_ethr,
+             bool scf_type,
+             hsolver::diag_comm_info comm_info,
+             int diag_subspace,
+             int nb2d)
+    {
+        auto hpsi_func
+            = [mm_op](std::complex<double>* psi_in, std::complex<double>* hpsi_out, const int ld_psi, const int nvec) {
+                  // Note: numpy's py::array_t is row-major, but
+                  //       our raw pointer-array is column-major
+                  py::array_t<std::complex<double>, py::array::f_style> psi({ld_psi, nvec});
+                  py::buffer_info psi_buf = psi.request();
+                  std::complex<double>* psi_ptr = static_cast<std::complex<double>*>(psi_buf.ptr);
+                  std::copy(psi_in, psi_in + nvec * ld_psi, psi_ptr);
 
-            py::array_t<std::complex<double>, py::array::f_style> hpsi = mm_op(psi);
+                  py::array_t<std::complex<double>, py::array::f_style> hpsi = mm_op(psi);
 
-            py::buffer_info hpsi_buf = hpsi.request();
-            std::complex<double>* hpsi_ptr = static_cast<std::complex<double>*>(hpsi_buf.ptr);
-            std::copy(hpsi_ptr, hpsi_ptr + nvec * ld_psi, hpsi_out);
-        };
+                  py::buffer_info hpsi_buf = hpsi.request();
+                  std::complex<double>* hpsi_ptr = static_cast<std::complex<double>*>(hpsi_buf.ptr);
+                  std::copy(hpsi_ptr, hpsi_ptr + nvec * ld_psi, hpsi_out);
+              };
 
         auto spsi_func = [this](const std::complex<double>* psi_in,
                                 std::complex<double>* spsi_out,
                                 const int ld_psi,
                                 const int nvec) { syncmem_op()(spsi_out, psi_in, static_cast<size_t>(ld_psi * nvec)); };
 
-        obj = std::make_unique<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>>(
-            precond_vec, 
-            nband, 
-            nbasis, 
-            dav_ndim, 
-            tol, 
-            max_iter, 
-            comm_info,
-            diag_subspace,
-            nb2d
-        );
+        obj = std::make_unique<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>>(precond_vec,
+                                                                                                          nband,
+                                                                                                          nbasis,
+                                                                                                          dav_ndim,
+                                                                                                          tol,
+                                                                                                          max_iter,
+                                                                                                          comm_info,
+                                                                                                          diag_subspace,
+                                                                                                          nb2d);
 
         return obj->diag(hpsi_func, spsi_func, psi, nbasis, eigenvalue, diag_ethr, scf_type);
     }
 
-private:
+  private:
     std::complex<double>* psi = nullptr;
     double* eigenvalue = nullptr;
 

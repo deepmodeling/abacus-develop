@@ -21,6 +21,26 @@
 #include <map> // added by jghan, 2024-10-10
 #include <vector>
 
+
+/**
+ * @brief LibXC runtime settings, injected once at the ESolver boundary.
+ *
+ * Unlike SurchemParameters these initializers are not a copy of any physical INPUT
+ * default: 0.0 and the empty vectors are the neutral "nothing requested" state, and
+ * "default" is the same pre-parse sentinel Input_para uses, which ReadInput resolves
+ * to a real number before it ever reaches here. Keeping it deliberately unparseable
+ * means a missing set_runtime_parameters() fails loudly in std::stod rather than
+ * silently substituting a plausible-looking exchange fraction.
+ */
+struct XCFunctionalParameters
+{
+    double xc_temperature = 0.0;
+    std::vector<std::string> exx_fock_alpha = {"default"};
+    std::vector<std::string> exx_erfc_alpha = {"default"};
+    std::vector<double> xc_exch_ext;
+    std::vector<double> xc_corr_ext;
+};
+
 class XC_Functional
 {
     public:
@@ -52,6 +72,7 @@ class XC_Functional
         const int nspin,
         const bool domag,
         const bool domag_z,
+        const int gga_grad,
         const double hybrid_alpha,
         const double hse_omega);
 
@@ -73,7 +94,39 @@ class XC_Functional
         return func_type;
     };
 
+    /// @brief Set the functional class directly. set_xc_type() derives this from
+    ///        a functional name and is what production code uses; this is for
+    ///        callers that need to select a branch without configuring libxc.
+    static void set_func_type(const int func_type_in)
+    {
+        func_type = func_type_in;
+    };
+
     static void set_xc_type(const std::string xc_func_in);
+
+    // Temporary adapter for legacy Potential -> PotXC -> XC evaluation globals.
+    // Restores the complete selection on scope exit, including exception unwinding.
+    // Scopes may nest, but must not overlap across threads: this is process-wide state.
+    class ScopedType
+    {
+      public:
+        explicit ScopedType(const std::string& functional);
+        ~ScopedType();
+        ScopedType(const ScopedType&) = delete;
+        ScopedType& operator=(const ScopedType&) = delete;
+
+      private:
+        void restore() noexcept;
+        std::vector<int> func_id_;
+        int func_type_;
+        bool ked_flag_;
+        bool need_laplacian_;
+        bool use_libxc_;
+        double hybrid_alpha_;
+        double hse_omega_;
+        XCFunctionalParameters runtime_parameters_;
+        std::map<int, double> scaling_factor_xc_;
+    };
 
     // For hybrid functional
     static void set_hybrid_alpha(const double alpha_in);
@@ -85,6 +138,13 @@ class XC_Functional
 
     static void set_hse_omega(const double omega_in);
 
+    static void set_runtime_parameters(const XCFunctionalParameters& parameters);
+
+    static const XCFunctionalParameters& get_runtime_parameters()
+    {
+        return runtime_parameters;
+    };
+
     static double get_hse_omega()
     {
         return hse_omega;
@@ -93,6 +153,12 @@ class XC_Functional
     static bool get_ked_flag()
     {
         return ked_flag;
+    };
+
+    /// @brief Set whether the functional needs the kinetic energy density.
+    static void set_ked_flag(const bool ked_flag_in)
+    {
+        ked_flag = ked_flag_in;
     };
 
     static bool get_need_laplacian()
@@ -118,12 +184,23 @@ class XC_Functional
     // hse_omega for HSE functional:
     static double hse_omega;
 
+    static XCFunctionalParameters runtime_parameters;
+
     // added by jghan, 2024-07-07
     // as a scaling factor for different xc-functionals
     static std::map<int, double> scaling_factor_xc;
 
     public:
     static std::vector<int> get_func_id() { return func_id; }
+
+    /// signed combination weight of a functional component id (1.0 when
+    /// the functional is not in the scaling table), e.g. BLYP_LR
+    /// subtracts its short-range components
+    static double get_weight(const int id)
+    {
+        const auto it = scaling_factor_xc.find(id);
+        return it != scaling_factor_xc.end() ? it->second : 1.0;
+    }
 
 //-------------------
 //  xc_lda_wrap.cpp
@@ -233,6 +310,7 @@ class XC_Functional
         const int nspin,
         const bool domag,
         const bool domag_z,
+        const int gga_grad,
         const double hybrid_alpha,
         const double hse_omega);
 

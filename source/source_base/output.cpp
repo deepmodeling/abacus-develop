@@ -14,17 +14,17 @@ void output::printrm(std::ofstream &ofs,const std::string &s, const ModuleBase::
         {
             if (j % 8 == 0) ofs << "\n ";
 
-			if (std::abs(m(i,j)) > limit)
-			{
-				ofs << std::setprecision(6) << std::setw(12) << m(i,j);
+            if (std::abs(m(i,j)) > limit)
+            {
+                ofs << std::setprecision(6) << std::setw(12) << m(i,j);
             }
-			else
-			{
-				ofs << std::setw(12) << "0";
-			}
+            else
+            {
+                ofs << std::setw(12) << "0";
+            }
         }
     }
-	ofs << std::endl;
+    ofs << std::endl;
     return;
 }
 
@@ -37,16 +37,16 @@ void output::printrm(const std::string &s, const ModuleBase::matrix &m, const do
 
     for (int i = 0;i < b1;i++)
     {
-		//std::cout << "\n row=" << i;
+        //std::cout << "\n row=" << i;
         for (int j = 0;j < b2;j++)
         {
-			if (j % 8 == 0) std::cout << "\n ";
+            if (j % 8 == 0) std::cout << "\n ";
             if (std::abs(m(i,j)) > limit) std::cout << std::setprecision(6) << std::setw(12) << m(i,j);
             else std::cout<<std::setw(12)<<"0";
         }
     }
 
-	std::cout << std::endl;
+    std::cout << std::endl;
     return;
 }
 
@@ -78,11 +78,11 @@ void output::printr3_d(std::ofstream &ofs, const std::string &s,const ModuleBase
 void output::printM3(std::ofstream &ofs,const std::string &description, const ModuleBase::Matrix3 &m)
 {
     ofs << " " << description << std::endl;
-	ofs << std::setiosflags(std::ios::showpos);
+    ofs << std::setiosflags(std::ios::showpos);
     ofs << " " << std::setw(20) << m.e11 << std::setw(20) << m.e12 << std::setw(20) << m.e13
-	<< "\n " << std::setw(20) << m.e21 << std::setw(20) << m.e22 << std::setw(20) << m.e23
-	<< "\n " << std::setw(20) << m.e31 << std::setw(20) << m.e32 << std::setw(20) << m.e33 << std::endl;
-	ofs << std::resetiosflags(std::ios::showpos);
+    << "\n " << std::setw(20) << m.e21 << std::setw(20) << m.e22 << std::setw(20) << m.e23
+    << "\n " << std::setw(20) << m.e31 << std::setw(20) << m.e32 << std::setw(20) << m.e33 << std::endl;
+    ofs << std::resetiosflags(std::ios::showpos);
     return;
 }
 

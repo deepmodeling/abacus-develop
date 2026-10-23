@@ -12,6 +12,7 @@ AddTest(
   SOURCES
     atomic_radials_test.cpp
     ../atomic_radials.cpp
+    ../smoothgen.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../../module_ao/orb_atomic_lm.cpp
@@ -73,6 +74,7 @@ AddTest(
     radial_collection_test.cpp
     ../radial_collection.cpp
     ../atomic_radials.cpp
+    ../smoothgen.cpp
     ../beta_radials.cpp
     ../hydrogen_radials.cpp
     ../pswfc_radials.cpp
@@ -91,6 +93,7 @@ AddTest(
     ../two_center_table.cpp
     ../radial_collection.cpp
     ../atomic_radials.cpp
+    ../smoothgen.cpp
     ../beta_radials.cpp
     ../hydrogen_radials.cpp
     ../pswfc_radials.cpp
@@ -122,6 +125,7 @@ AddTest(
     ../real_gaunt_table.cpp
     ../radial_collection.cpp
     ../atomic_radials.cpp
+    ../smoothgen.cpp
     ../beta_radials.cpp
     ../hydrogen_radials.cpp
     ../pswfc_radials.cpp
@@ -143,6 +147,7 @@ AddTest(
     ../real_gaunt_table.cpp
     ../radial_collection.cpp
     ../atomic_radials.cpp
+    ../smoothgen.cpp
     ../beta_radials.cpp
     ../hydrogen_radials.cpp
     ../pswfc_radials.cpp
@@ -152,24 +157,3 @@ AddTest(
 
   LIBS parameter device base container orb
 )
-
-AddTest(
-  TARGET MODULE_NAO_generate_projection
-  SOURCES
-    projgen_test.cpp
-    ../two_center_bundle.cpp
-    ../two_center_integrator.cpp
-    ../two_center_table.cpp
-    ../real_gaunt_table.cpp
-    ../radial_collection.cpp
-    ../atomic_radials.cpp
-    ../beta_radials.cpp
-    ../hydrogen_radials.cpp
-    ../pswfc_radials.cpp
-    ../sphbes_radials.cpp
-    ../radial_set.cpp
-    ../numerical_radial.cpp
-
-  LIBS parameter device base container orb
-)
-

@@ -530,7 +530,7 @@ double ScState::get_current_sc_thr() const
 }
 
 /// get computed magnetic moments Mi per atom
-const std::vector<ModuleBase::Vector3<double>>& ScState::get_Mi() const
+const std::vector<ModuleBase::Vector3<double>>& ScState::get_mi() const
 {
     return this->Mi_;
 }

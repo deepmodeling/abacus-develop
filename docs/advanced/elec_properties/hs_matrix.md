@@ -45,6 +45,8 @@ Each output block starts with a comment header containing the one-based ionic-st
 
 For multi-k calculations, the matrices are Hermitian and each matrix element is written as `(real,imag)`. For gamma-only calculations, the matrices are symmetric and the matrix elements are written as real numbers.
 
+> **Note (3.10-LTS):** In the 3.10-LTS version, the corresponding keyword is `out_mat_hs`, and the output file names are `data-0-H` and `data-0-S`, etc.
+
 ### Native Binary Format
 
 For `out_hsk 2`, the filenames in the table above use `.dat` instead of `.txt`. Each matrix record is written without padding or a self-describing header:
@@ -73,6 +75,8 @@ The legacy keywords `out_mat_hs2 1 [precision]` and `out_hsr_npz 1` remain suppo
 For a multi-k calculation, the files contain the individual real-space blocks stored for the Bravais lattice vectors $R$. For a gamma-only calculation, ABACUS stores the real-space contributions in a folded representation. Text CSR, native binary, and NPZ output write this internal representation directly: all stored $R$-space contributions are summed into a single block labelled `R = (0, 0, 0)`.
 
 The folded gamma-only output is sufficient to inspect the matrix used by the gamma-only real-space container, but it does not retain the original lattice-vector resolution and cannot be used to interpolate matrices at arbitrary k points. Terms that are added only while constructing $H(k)$, rather than stored in the internal $H(R)$ container, are not guaranteed to be present. Use [out_hsk](../input_files/input-main.md#out_hsk) when the final $H(\Gamma)$ and $S(\Gamma)$ matrices are required.
+
+> **Note (3.10-LTS):** In the 3.10-LTS version, the corresponding keyword is `out_mat_hs2`, and the output file names are `data-HR-sparse_SPIN0.csr` and `data-SR-sparse_SPIN0.csr`, etc.
 
 ### Text CSR Format
 
@@ -116,7 +120,7 @@ Each file starts with a header:
  --- Ionic Step 1 ---
  # print H matrix in real space H(R)
  1 # number of spin directions
- 1 # spin index
+ 1 # spin index, E_Fermi = 10.3798 eV
  100 # number of localized basis
  50 # number of Bravais lattice vector R
 
@@ -133,6 +137,8 @@ Each file starts with a header:
  # CSR row pointers
  0 3 7 ...
 ```
+
+The spin index line may carry an optional `, E_Fermi = <value> eV` suffix when the Fermi energy is available (only for the H matrix). The value is printed in eV with 6 significant digits.
 
 The CSR format stores a sparse m × n matrix M in row form using three arrays (values, column indices, row pointers). According to Wikipedia:
 

@@ -47,6 +47,12 @@ double ElecState::get_local_pp_energy()
                                   this->pot->get_fixed_v(), 
                                   1, 
                                   this->charge->rho[is], 1)
+                                  // BUG(investigate): rhopw->omega is stale in variable-cell
+                                  // calculations (NPT): pw_rho/pw_rhod are not rebuilt on cell
+                                  // change, so this uses the initial cell volume. Should use
+                                  // ucell.omega instead. Need to check whether the resulting
+                                  // energy error is absorbed elsewhere (e.g. by the
+                                  // renormalization of rho), or if it biases the stress.
                                   * this->charge->rhopw->omega / this->charge->rhopw->nxyz;
     }
     Parallel_Reduce::reduce_pool(local_pseudopot_energy);

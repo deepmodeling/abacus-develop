@@ -1,13 +1,11 @@
 #ifndef DIAGO_BPCG_H_
 #define DIAGO_BPCG_H_
 
-#include <functional>
-
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_device/types.h"
 #include "source_base/para_gemm.h"
-#include "source_hamilt/hamilt.h"
+#include "source_hsolver/hs_operator.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_hsolver/para_lin_tf.h"
 
@@ -58,19 +56,16 @@ class DiagoBPCG
      */
     void init_iter(const int nband, const int nband_l, const int nbasis, const int ndim);
 
-    using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
-
     /**
      * @brief Diagonalize the Hamiltonian using the BPCG method.
      *
      * This function is called by the HsolverPW::solve() function.
      *
-     * @param hpsi_func A function computing the product of the Hamiltonian matrix H
-     * and a wavefunction blockvector X.
+     * @param op The H and S block-vector operator, see hsolver::HSOperator.
      * @param psi_in Pointer to input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(const HPsiFunc& hpsi_func,
+    void diag(const HSOperator<T, Device>& op,
               T* psi_in,
               Real* eigenvalue_in,
               const std::vector<double>& ethr_band);
@@ -107,13 +102,18 @@ class DiagoBPCG
     /// Pointer to the input wavefunction.
     /// Note: this pointer does not own memory, instead it ref the psi_in object.
     /// H|psi> matrix.
-    ct::Tensor psi = {}, hpsi = {};
+    ct::Tensor psi = {};
+    ct::Tensor hpsi = {};
+    ct::Tensor spsi = {};
     
     ct::Tensor hsub = {};
 
-    /// H|psi> - epsilo * psi, grad of the given problem.
+    /// H|psi> - epsilo * S|psi>, grad of the generalized problem.
     /// Dim: n_basis * n_band, column major, lda = n_basis_max.
-    ct::Tensor grad = {}, hgrad = {}, grad_old = {};
+    ct::Tensor grad = {};
+    ct::Tensor hgrad = {};
+    ct::Tensor sgrad = {};
+    ct::Tensor grad_old = {};
 
     /// work for some calculations within this class, including rotate_wf call
     ct::Tensor work = {};
@@ -155,15 +155,23 @@ class DiagoBPCG
      * psi_in[dim: n_basis x n_band, column major, lda = n_basis_max],
      * hpsi_out[dim: n_basis x n_band, column major, lda = n_basis_max].
      *
-     * @param hpsi_func A function computing the product of the Hamiltonian matrix H
-     * and a wavefunction blockvector X.
+     * @param op The H and S block-vector operator.
      * @param psi_in The input wavefunction psi.
      * @param hpsi_out Pointer to the array where the resulting hpsi matrix will be stored.
      */
     void calc_hpsi_with_block(
-        const HPsiFunc& hpsi_func,
-        T *psi_in, 
+        const HSOperator<T, Device>& op,
+        const T *psi_in, 
         ct::Tensor& hpsi_out);
+
+    /**
+     * @brief Apply the overlap operator to a wavefunction block.
+     *
+     * @param op The H and S block-vector operator.
+     * @param psi_in The input wavefunction block.
+     * @param spsi_out The resulting S|psi> block.
+     */
+    void calc_spsi_with_block(const HSOperator<T, Device>& op, const T* psi_in, ct::Tensor& spsi_out);
 
     /**
      * @brief Diagonalization of the subspace matrix.
@@ -221,7 +229,7 @@ class DiagoBPCG
      * @note The steps involved in optimization are:
      *   1. normalize psi
      *   2. calculate the epsilo
-     *   3. calculate the gradient by hpsi - epsilo * psi
+     *   3. calculate the gradient by hpsi - epsilo * spsi
      *   4. gradient mix with the previous gradient
      *   5. Do precondition
      */
@@ -229,7 +237,7 @@ class DiagoBPCG
         const ct::Tensor& prec_in, 
         ct::Tensor& err_out, 
         ct::Tensor& beta_out,
-        ct::Tensor& psi_in, ct::Tensor& hpsi_in,
+        ct::Tensor& psi_in, ct::Tensor& hpsi_in, ct::Tensor& spsi_in,
         ct::Tensor& grad_out, ct::Tensor& grad_old_out);
 
     /**
@@ -241,7 +249,7 @@ class DiagoBPCG
      * hsub_out[dim: n_band x n_band, column major, lda = n_band],
      * eigenvalue_out[dim: n_basis_max, column major].
      *
-     * @param hpsi_func A function computing the product of matrix H and wavefunction blockvector X.
+     * @param op The H and S block-vector operator.
      * @param psi_in Input wavefunction pointer.
      * @param psi_out Output wavefunction.
      * @param hpsi_out Product of psi_out and Hamiltonian.
@@ -249,9 +257,9 @@ class DiagoBPCG
      * @param eigenvalue_out Computed eigen.
      */
     void calc_hsub_with_block(
-        const HPsiFunc& hpsi_func,
+        const HSOperator<T, Device>& op,
         T *psi_in,
-        ct::Tensor& psi_out, ct::Tensor& hpsi_out,
+        ct::Tensor& psi_out, ct::Tensor& hpsi_out, ct::Tensor& spsi_out,
         ct::Tensor& hsub_out, ct::Tensor& workspace_in,
         ct::Tensor& eigenvalue_out);
     
@@ -290,12 +298,14 @@ class DiagoBPCG
      */
     void orth_projection(
         const ct::Tensor& psi_in,
+        const ct::Tensor& spsi_in,
         ct::Tensor& hsub_in,
-        ct::Tensor& grad_out);
+        ct::Tensor& grad_out,
+        ct::Tensor& sgrad_out);
 
     /**
      *
-     *@brief Optimize psi as well as the hpsi.
+     *@brief Optimize psi together with hpsi and spsi.
      *
      *@param grad_in Input gradient array, [dim: n_basis x n_band, column major, lda = n_basis_max].
      *@param hgrad_in Product of grad_in and Hamiltonian, [dim: n_basis x n_band, column major, lda = n_basis_max].
@@ -309,11 +319,13 @@ class DiagoBPCG
     void line_minimize(
         ct::Tensor& grad_in,
         ct::Tensor& hgrad_in,
+        ct::Tensor& sgrad_in,
         ct::Tensor& psi_out,
-        ct::Tensor& hpsi_out);
+        ct::Tensor& hpsi_out,
+        ct::Tensor& spsi_out);
 
     /**
-     * @brief Orthogonalize and normalize the column vectors in psi_out using Cholesky decomposition.
+     * @brief S-orthogonalize and normalize the column vectors in psi_out using Cholesky decomposition.
      *
      * @param workspace_in Workspace memory, [dim: n_basis x n_band, column major, lda = n_basis_max]..
      * @param psi_out Input and output wavefunction array. [dim: n_basis x n_band, column major, lda = n_basis_max].
@@ -324,6 +336,7 @@ class DiagoBPCG
         ct::Tensor& workspace_in, 
         ct::Tensor& psi_out, 
         ct::Tensor& hpsi_out, 
+        ct::Tensor& spsi_out,
         ct::Tensor& hsub_out);
 
     /**
@@ -346,6 +359,7 @@ class DiagoBPCG
     using delmem_complex_op = ct::kernels::delete_memory<T, ct_Device>;
     using resmem_complex_op = ct::kernels::resize_memory<T, ct_Device>;
     using syncmem_complex_op = ct::kernels::synchronize_memory<T, ct_Device, ct_Device>;
+    using syncmem_complex_2d_op = base_device::memory::synchronize_memory_2d_op<T, Device, Device>;
 
     // note: these operators use template parameter base_device::Device_*
     // defined in source_base/module_device/types.h

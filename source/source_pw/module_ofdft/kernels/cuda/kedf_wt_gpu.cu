@@ -125,7 +125,7 @@ void KEDF_WT::multi_kernel_gpu(
         resmem_dd_op()(d_result_, nrxx * 2);  // complex work buffer
         resmem_dd_op()(d_kernel_, npw);
 
-        syncmem_d2d_h2d_op()(d_kernel_, this->kernel_, npw);
+        syncmem_d2d_h2d_op()(d_kernel_, this->kernel_.data(), npw);
 
         // Match PW_Basis's full-box FFT layout used by ig2ixyz_gpu.
         CUFFT_CHECK(cufftPlan3d(&cufft_plan_fwd_, nx, ny, nz, CUFFT_Z2Z));

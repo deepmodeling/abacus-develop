@@ -25,4 +25,11 @@ AddTest(
     tmp_mocks.cpp
 )
 
+AddTest(
+  TARGET MODULE_LCAO_gint_prec_ctrl_test
+  LIBS parameter base device
+  SOURCES test_gint_prec_ctrl.cpp
+    ../gint_prec_ctrl.cpp
+)
+
 endif()

@@ -48,7 +48,7 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
 
     this->mpi_comm = mpi_comm_in;
     this->p_kv = kv_in;
-    this->nks0 = this->p_kv->get_nkstot_full();
+    this->nks0 = this->p_kv->get_nkstot_nospin();
     this->kvec_c.resize(this->nks0);
     this->ccp_rmesh_times = ccp_rmesh_times_in;
     this->abfs_Lmax = abfs_Lmax_in;
@@ -138,13 +138,13 @@ double Ewald_Vq<Tdata>::get_singular_chi(const UnitCell& ucell, const std::vecto
 
     double chi = 0.0;
     for(const auto &param : param_list)
-	{
+    {
         if(param.at("singularity_correction") == "carrier")
-		{
+        {
             chi = Singular_Value::cal_carrier(ucell, this->kvec_c, qdiv, 100, 30, 1e-6, 3);
         }
         else if(param.at("singularity_correction") == "massidda")
-		{
+        {
             chi = Singular_Value::cal_massidda(ucell, this->nmp, qdiv, 1, 5, 1e-4);
         }
         else
@@ -413,7 +413,7 @@ auto Ewald_Vq<Tdata>::set_Vq_dVq_gauss(const UnitCell& ucell,
 
     std::map<TA, std::map<TAK, Tresult>> Vq_dVq_gauss_out;
     for(const auto &param_list : this->coulomb_param)
-	{
+    {
         std::complex<double> alpha;
         for(const auto &param : param_list.second)
         {

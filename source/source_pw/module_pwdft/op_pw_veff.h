@@ -54,6 +54,9 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
         return this->wfcpw;
     }
 
+    // Override the effective potential for the TDDFT midpoint Hamiltonian.
+    void set_veff(const Real* custom_veff) { this->veff = custom_veff; }
+
   private:
 
     const int* isk = nullptr;

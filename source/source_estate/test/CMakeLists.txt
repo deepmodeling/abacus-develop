@@ -7,15 +7,51 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__MLALGO)
 abacus_disable_feature_definitions(_OPENMP)
 
+AddTest(
+  TARGET MODULE_ESTATE_charge_moments
+  LIBS base device
+  SOURCES test_charge_moments.cpp ../charge_moments.cpp
+)
+
+AddTest(
+  TARGET MODULE_ESTATE_pcc_0d
+  LIBS base device
+  SOURCES test_pcc_0d.cpp ../pcc_0d.cpp ../charge_moments.cpp ../../source_cell/cell_geometry.cpp
+)
+
+AddTest(
+  TARGET MODULE_ESTATE_pcc_2d
+  LIBS base device
+  SOURCES test_pcc_2d.cpp ../pcc_2d.cpp ../charge_moments.cpp ../../source_cell/cell_geometry.cpp
+)
+
 if (ENABLE_MPI)
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+set(pcc_test_sources
+    ../module_pot/pot_pcc.cpp ../pcc_0d.cpp ../pcc_2d.cpp ../charge_moments.cpp
+    ../../source_cell/cell_geometry.cpp ../../source_cell/cell_tools.cpp
+    ../../source_cell/atom_spec.cpp ../../source_cell/atom_pseudo.cpp ../../source_cell/pseudo.cpp
+)
+
+AddTest(
+  TARGET MODULE_ESTATE_pot_pcc
+  LIBS parameter base device planewave_serial
+  SOURCES test_pot_pcc.cpp ${pcc_test_sources}
+)
+
+abacus_copy_test_files(support)
 
 AddTest(
   TARGET MODULE_ESTATE_Elecstate_Op_UTs
   LIBS parameter  psi base device
   SOURCES ../kernels/test/elecstate_op_test.cpp
 )
+
+if(USE_CUDA)
+  target_compile_definitions(MODULE_ESTATE_Elecstate_Op_UTs PRIVATE __UT_USE_CUDA)
+elseif(USE_ROCM)
+  target_compile_definitions(MODULE_ESTATE_Elecstate_Op_UTs PRIVATE __UT_USE_ROCM)
+endif()
 
 AddTest(
   TARGET MODULE_ESTATE_elecstate_occupy
@@ -33,15 +69,16 @@ AddTest(
   TARGET MODULE_ESTATE_elecstate_print
   LIBS parameter  base device symmetry
   SOURCES elecstate_print_test.cpp ../elecstate_print.cpp ../occupy.cpp
-  ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(
   TARGET MODULE_ESTATE_elecstate_base
+  KEEP_FEATURE_DEFINITIONS __MPI
   LIBS parameter  base device symmetry
   SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
   ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
-  ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(
@@ -49,15 +86,16 @@ AddTest(
   LIBS parameter  planewave_serial base device symmetry
   SOURCES elecstate_pw_test.cpp
     ../elecstate_pw.cpp
+    ../uspp_density.cpp
     ../elecstate_pw_cal_tau.cpp
     ../elecstate.cpp
     ../occupy.cpp
-    ../module_charge/charge_mpi.cpp
+    ../module_charge/chg_parallel.cpp
     ../../source_lcao/module_deltaspin/spin_constrain.cpp
     ../../source_lcao/module_deltaspin/deltaspin_state.cpp
     ../../source_psi/psi.cpp
     ../../source_base/module_device/memory_op.cpp
-    ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+    ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(
@@ -68,7 +106,7 @@ AddTest(
     ../fp_energy.cpp
     ../makov_payne.cpp
     ../module_pot/h_hartree_pw.cpp
-    ../../source_cell/klist.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+    ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(
@@ -77,40 +115,29 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_ESTATE_occ_mixer
+  LIBS parameter base device cell_info
+  SOURCES test_occ_mixer.cpp ../occ_mixer.cpp ../occ_matrix.cpp
+)
+
+AddTest(
+  TARGET MODULE_ESTATE_occ_matrix
+  LIBS parameter base device cell_info
+  SOURCES test_occ_matrix.cpp ../occ_matrix.cpp
+)
+
+AddTest(
+  TARGET MODULE_ESTATE_occ_comput
+  LIBS parameter base device
+  SOURCES test_occ_comput.cpp ../occ_comput.cpp
+)
+
+AddTest(
   TARGET MODULE_ESTATE_potentials_new
   LIBS parameter  base device planewave_serial
   SOURCES potential_new_test.cpp td_field_test.cpp ../module_pot/potential_new.cpp
     ../module_pot/td_field.cpp ../module_pot/td_field_profiles.cpp ../module_pot/td_field_manager.cpp
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_charge_test
-  LIBS parameter  planewave_serial base device cell_info
-  SOURCES charge_test.cpp ../module_charge/charge.cpp
-
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_charge_mixing
-  LIBS parameter base  psi  device planewave_serial cell_info
-  SOURCES charge_mixing_test.cpp  
-  ../module_charge/charge_mixing.cpp ../module_charge/charge_mixing_dmr.cpp ../module_charge/mix_resid.cpp
-  ../module_charge/mix_precond.cpp ../module_charge/charge_mixing_rho.cpp
-  ../module_charge/charge_mixing_uspp.cpp
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_charge_extra
-  LIBS parameter base device cell_info
-  SOURCES charge_extra_test.cpp ../module_charge/charge_extra.cpp ../../source_io/module_output/read_cube.cpp ../../source_io/module_output/write_cube.cpp
- ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_gint_prec_ctrl
-  LIBS parameter base device
-  SOURCES gint_prec_ctrl_test.cpp
-    ../module_charge/gint_prec_ctrl.cpp
+    ${pcc_test_sources}
 )
 
 endif()

@@ -41,7 +41,7 @@ void wfc_nao_write2file(const std::string& name,
         }
         if (!ofs)
         {
-            ModuleBase::WARNING("ModuleIO::wfc_nao_write2file", "Can't write local orbital wave functions.");
+            ModuleBase::WARNING_QUIT("ModuleIO::wfc_nao_write2file", "Can't write local orbital wave functions.");
         }
 
         ofs << nbands;
@@ -73,7 +73,7 @@ void wfc_nao_write2file(const std::string& name,
         }
         if (!ofs)
         {
-            ModuleBase::WARNING("ModuleIO::wfc_nao_write2file", "Can't write local orbital wave functions.");
+            ModuleBase::WARNING_QUIT("ModuleIO::wfc_nao_write2file", "Can't write local orbital wave functions.");
         }
         ofs << nbands << " (number of bands)" << std::endl;
         ofs << nlocal << " (number of orbitals)";
@@ -132,7 +132,7 @@ void wfc_nao_write2file_complex(const std::string& name,
         }
         if (!ofs)
         {
-            ModuleBase::WARNING("ModuleIO::wfc_nao_write2file_complex", "Can't write local orbital wave functions.");
+            ModuleBase::WARNING_QUIT("ModuleIO::wfc_nao_write2file_complex", "Can't write local orbital wave functions.");
         }
         ofs << ik + 1;
         ofs << kvec_c.x;
@@ -167,7 +167,7 @@ void wfc_nao_write2file_complex(const std::string& name,
         }
         if (!ofs)
         {
-            ModuleBase::WARNING("ModuleIO::wfc_nao_write2file_complex", "Can't write local orbital wave functions.");
+            ModuleBase::WARNING_QUIT("ModuleIO::wfc_nao_write2file_complex", "Can't write local orbital wave functions.");
         }
         ofs << std::setprecision(8);
         ofs << ik + 1 << " (index of k points)" << std::endl;
@@ -202,16 +202,16 @@ void wfc_nao_write2file_complex(const std::string& name,
 
 template <typename T>
 void write_wfc_nao(const int out_type,
-		const bool out_app_flag,
-		const psi::Psi<T>& psi,
-		const ModuleBase::matrix& ekb,
-		const ModuleBase::matrix& wg,
-		const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-		const std::vector<int> &ik2iktot,
-		const int nkstot,
-		const Parallel_Orbitals& pv,
-		const int nspin,
-		const int istep)
+        const bool out_app_flag,
+        const psi::Psi<T>& psi,
+        const ModuleBase::matrix& ekb,
+        const ModuleBase::matrix& wg,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+        const std::vector<int> &ik2iktot,
+        const int nkstot,
+        const Parallel_Orbitals& pv,
+        const int nspin,
+        const int istep)
 {
     if (!out_type)
     {
@@ -311,27 +311,27 @@ void write_wfc_nao(const int out_type,
 }
 
 template void write_wfc_nao<double>(const int out_type,
-		const bool out_app_flag,
-		const psi::Psi<double>& psi,
-		const ModuleBase::matrix& ekb,
-		const ModuleBase::matrix& wg,
-		const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-		const std::vector<int> &ik2iktot,
-		const int nkstot,
-		const Parallel_Orbitals& pv,
-		const int nspin,
-		const int istep);
+        const bool out_app_flag,
+        const psi::Psi<double>& psi,
+        const ModuleBase::matrix& ekb,
+        const ModuleBase::matrix& wg,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+        const std::vector<int> &ik2iktot,
+        const int nkstot,
+        const Parallel_Orbitals& pv,
+        const int nspin,
+        const int istep);
 
 template void write_wfc_nao<std::complex<double>>(const int out_type,
-		const bool out_app_flag,
-		const psi::Psi<std::complex<double>>& psi,
-		const ModuleBase::matrix& ekb,
-		const ModuleBase::matrix& wg,
-		const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-		const std::vector<int> &ik2iktot,
-		const int nkstot,
-		const Parallel_Orbitals& pv,
-		const int nspin,
-		const int istep);
+        const bool out_app_flag,
+        const psi::Psi<std::complex<double>>& psi,
+        const ModuleBase::matrix& ekb,
+        const ModuleBase::matrix& wg,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+        const std::vector<int> &ik2iktot,
+        const int nkstot,
+        const Parallel_Orbitals& pv,
+        const int nspin,
+        const int istep);
 
 } // namespace ModuleIO

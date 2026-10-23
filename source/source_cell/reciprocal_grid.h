@@ -36,6 +36,11 @@ namespace ModuleCell
  */
 void restrict_kpt(ModuleBase::Vector3<double>& kvec, double epsilon);
 
+/// Compare reciprocal fractional coordinates modulo integer reciprocal vectors.
+bool kpoints_equivalent(const ModuleBase::Vector3<double>& first,
+                        const ModuleBase::Vector3<double>& second,
+                        double epsilon);
+
 /**
  * @brief Abstract base class shared by K_Vectors (electrons) and QList (phonons).
  *
@@ -46,11 +51,11 @@ void restrict_kpt(ModuleBase::Vector3<double>& kvec, double epsilon);
 class ReciprocalGrid
 {
   public:
-    /// Cartesian coordinates of the points.
+    /// Cartesian coordinates of the points, in unit of 2*pi/lat0.
     std::vector<ModuleBase::Vector3<double>> kvec_c;
     /// Direct coordinates of the points.
     std::vector<ModuleBase::Vector3<double>> kvec_d;
-    /// Cartesian coordinates of the full (unreduced) mesh.
+    /// Cartesian coordinates of the full (unreduced) mesh, in unit of 2*pi/lat0.
     std::vector<ModuleBase::Vector3<double>> kvec_c_full;
     /// Weight of each point.
     std::vector<double> wk;
@@ -68,10 +73,13 @@ class ReciprocalGrid
 
     /// Number of points in the current pool (spin-free view).
     int nks = 0;
-    /// Total number of (symmetry-reduced) points.
+    /// Total number of (symmetry-reduced) points, INCLUDING spin multiplicity
+    /// (i.e. nkstot = nkstot_nospin * spin_mult after K_Vectors::set_kup_and_kdw).
     int nkstot = 0;
-    /// Total number of points before symmetry reduction.
-    int nkstot_full = 0;
+    /// Total number of physical k-points before symmetry reduction,
+    /// WITHOUT spin multiplicity. EXX/RI/LR code relies on this convention
+    /// (see e.g. ri_2d_comm.hpp: ik_full + is_k * nkstot_nospin).
+    int nkstot_nospin = 0;
 
     ReciprocalGrid() = default;
     virtual ~ReciprocalGrid() = default;
@@ -108,7 +116,8 @@ class ReciprocalGrid
     void set_both_kvec(const ModuleBase::Matrix3& G,
                        const ModuleBase::Matrix3& R,
                        std::string& skpt,
-                       std::ofstream& ofs_running);
+                       std::ofstream& ofs_running,
+                       std::ofstream& ofs_warning);
 
     /// @brief Normalize the weights so that they sum to the spin degeneracy.
     void normalize_wk(const int& degspin);
@@ -157,7 +166,9 @@ class ReciprocalGrid
                                     const ModuleSymmetry::Symmetry& symm,
                                     bool use_symm,
                                     std::string& skpt,
-                                    bool& match) = 0;
+                                    bool& match,
+                                    const int my_rank,
+                                    std::ofstream& ofs_running) = 0;
 
     /// Whether this is a Monkhorst-Pack grid.
     bool is_mp = false;

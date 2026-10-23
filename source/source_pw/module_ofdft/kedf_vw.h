@@ -2,6 +2,7 @@
 #define KEDF_vW_H
 #include <cmath>
 #include <cstdio>
+#include <vector>
 
 #include "source_base/global_function.h"
 #include "source_base/matrix.h"
@@ -36,7 +37,9 @@ class KEDF_vW
     ModuleBase::matrix stress;
 
   private:
-    void laplacian_phi(const double* const* pphi, double** rLapPhi, ModulePW::PW_Basis* pw_rho);
+    void laplacian_phi(const std::vector<std::vector<double>>& pphi,
+                       std::vector<std::vector<double>>& rLapPhi,
+                       ModulePW::PW_Basis* pw_rho);
 
     double dV_ = 0.;
     double vw_weight_ = 1.;

@@ -3,6 +3,7 @@
 #include "lattice_change_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+
 #include <vector>
 
 using namespace Lattice_Change_Basic;
@@ -38,7 +39,12 @@ void Lattice_Change_CG::allocate(void)
     this->fmax = 0.0;
 }
 
-bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs, std::vector<double>& etot_info)
+bool Lattice_Change_CG::start(UnitCell& ucell,
+                              const ModuleBase::matrix& stress_in,
+                              const double& etot_in,
+                              std::ofstream& ofs,
+                              std::vector<double>& etot_info,
+                              const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Lattice_Change_CG", "start");
 
@@ -82,7 +88,7 @@ bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
         bool converged = false;
         if (flag == 0)
         {
-            converged = Lattice_Change_Basic::check_converged(ucell, stress, grad.data(), ofs);
+            converged = Lattice_Change_Basic::check_converged(ucell, stress, grad.data(), ofs, criteria.stress_thr);
         }
 
         if (converged)
@@ -94,12 +100,18 @@ bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
         if (this->sd)
         {
             e0 = etot_in;
-            CG_Base::setup_cg_grad(dim, grad.data(), grad0.data(), cg_grad.data(), cg_grad0.data(), this->ncggrad, flag);
+            CG_Base::setup_cg_grad(dim,
+                                   grad.data(),
+                                   grad0.data(),
+                                   cg_grad.data(),
+                                   cg_grad0.data(),
+                                   this->ncggrad,
+                                   flag);
             this->ncggrad++;
 
             CG_Base::normalize(dim, cg_gradn.data(), cg_grad.data());
             CG_Base::setup_move(dim, move0.data(), cg_gradn.data(), this->steplength);
-            Lattice_Change_Basic::change_lattice(ucell, move0.data(), lat.data());
+            Lattice_Change_Basic::change_lattice(ucell, move0.data(), lat.data(), criteria.fixed_ibrav);
 
             for (int i = 0; i < dim; i++)
             {
@@ -141,7 +153,7 @@ bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
             }
 
             CG_Base::setup_move(dim, move.data(), cg_gradn.data(), best_x);
-            Lattice_Change_Basic::change_lattice(ucell, move.data(), lat.data());
+            Lattice_Change_Basic::change_lattice(ucell, move.data(), lat.data(), criteria.fixed_ibrav);
 
             this->trial = false;
             this->xa = 0;
@@ -182,7 +194,7 @@ bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
 
         CG_Base::normalize(dim, cg_gradn.data(), cg_grad0.data());
         CG_Base::setup_move(dim, move.data(), cg_gradn.data(), best_x);
-        Lattice_Change_Basic::change_lattice(ucell, move.data(), lat.data());
+        Lattice_Change_Basic::change_lattice(ucell, move.data(), lat.data(), criteria.fixed_ibrav);
 
         Lattice_Change_Basic::lattice_change_ini = this->xc;
         return false;

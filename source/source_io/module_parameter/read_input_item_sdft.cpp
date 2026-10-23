@@ -13,23 +13,17 @@ void ReadInput::item_sdft()
     // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("method_sto");
+        item.domain.set_choices({"1", "2"});
         item.annotation = "1: slow and save memory, 2: fast and waste memory";
         item.category = "Electronic structure (SDFT)";
         item.type = "Integer";
         item.description = R"(Different methods to do stochastic DFT
 * 1: Calculate twice, this method cost less memory but is slower.
-* 2: Calculate once but needs much more memory. This method is much faster. Besides, it calculates with a smaller nche_sto. However, when the memory is not enough, only method 1 can be used.
-* other: use 2)";
+* 2: Calculate once but needs much more memory. This method is much faster. Besides, it calculates with a smaller nche_sto. However, when the memory is not enough, only method 1 can be used.)";
         item.default_value = "2";
         item.unit = "";
         item.set_availability("esolver_type==sdft");
         read_sync_int(input.method_sto);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.method_sto != 1 && para.input.method_sto != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "method_sto should be 1 or 2");
-            }
-        };
         this->add_item(item);
     }
     {

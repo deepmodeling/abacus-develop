@@ -53,7 +53,10 @@ void Structure_Factor::set(const ModulePW::PW_Basis* rho_basis_in, const int& nb
 
 // Peize Lin optimize and add OpenMP 2021.04.01
 //  Calculate structure factor
-void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid& pgrid, const ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::setup(const UnitCell* Ucell,
+                             const Parallel_Grid& pgrid,
+                             const ModulePW::PW_Basis* rho_basis,
+                             const bool has_float_data)
 {
     ModuleBase::TITLE("Structure_Factor","setup");
     ModuleBase::timer::start("Structure_Factor","setup");
@@ -161,7 +164,7 @@ void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid& pgrid, 
     }
     
     if (device == "gpu") {
-        if (PARAM.globalv.has_float_data) {
+        if (has_float_data) {
             resmem_cd_op()(this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_cd_op()(this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
             resmem_cd_op()(this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));
@@ -177,7 +180,7 @@ void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid& pgrid, 
         syncmem_z2z_h2d_op()(this->z_eigts3, this->eigts3.c, Ucell->nat * (2 * rho_basis->nz + 1));
     }
     else {
-        if (PARAM.globalv.has_float_data) {
+        if (has_float_data) {
             resmem_ch_op()(this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_ch_op()(this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
             resmem_ch_op()(this->c_eigts3, Ucell->nat * (2 * rho_basis->nz + 1));

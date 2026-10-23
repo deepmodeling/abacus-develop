@@ -1,4 +1,5 @@
 #include "source_pw/module_pwdft/setup_pwwfc.h" // pw_wfc
+#include "source_basis/module_pw/pw_basis_k_big.h" // PW_Basis_K_Big
 #include "source_base/parallel_comm.h" // POOL_WORLD
 #include "source_base/parallel_reduce.h" // Parallel_Reduce
 #include "source_io/module_output/print_info.h" // print information
@@ -6,14 +7,14 @@
 
 void pw::teardown_pwwfc(ModulePW::PW_Basis_K* &pw_wfc)
 {
-	delete pw_wfc;
+    delete pw_wfc;
 }
 
 void pw::setup_pwwfc(const Input_para& inp,
-		const UnitCell& ucell, 
-		const ModulePW::PW_Basis& pw_rho,
-		K_Vectors& kv,
-		ModulePW::PW_Basis_K* &pw_wfc)
+        const UnitCell& ucell, 
+        const ModulePW::PW_Basis& pw_rho,
+        K_Vectors& kv,
+        ModulePW::PW_Basis_K* &pw_wfc)
 {
     ModuleBase::TITLE("pw", "pw_setup");
 
@@ -47,11 +48,20 @@ void pw::setup_pwwfc(const Input_para& inp,
     pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
 
-	pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0,
-			ucell.latvec,
-			pw_rho.nx,
-			pw_rho.ny,
-			pw_rho.nz);
+    // NOTE(liuyu): ref_cell_factor is currently forced to 1.0 in
+    // read_input_item_md.cpp because the reference-cell mechanism is
+    // disabled for both pw_rho and pw_wfc. The wfc FFT grid shares the
+    // same nx/ny/nz as pw_rho, so the same staleness issue applies:
+    // when ref_cell_factor > 1, pw_wfc->lat0/tpiba/G/GGT/omega hold
+    // reference-cell values, which leaks into wfc IO (read_wfc_pw,
+    // write_wfc_pw), cal_energies, and other paths that read these
+    // members as physical-cell quantities. If re-enabled in the future,
+    // see the comment in setup_pwrho.cpp for the required refactor.
+    pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0,
+            ucell.latvec,
+            pw_rho.nx,
+            pw_rho.ny,
+            pw_rho.nz);
 
     pw_wfc->initparameters(false, inp.ecutwfc, kv.get_nks(), kv.kvec_d.data());
 #ifdef __MPI

@@ -1,7 +1,7 @@
 AddTest(
   TARGET MODULE_BASE_ParaCommon
   LIBS parameter MPI::MPI_CXX
-  SOURCES parallel_common_test.cpp ../global_variable.cpp ../parallel_common.cpp
+  SOURCES parallel_common_test.cpp ../global_variable.cpp ../parallel_common.cpp ../parallel_reduce.cpp ../parallel_comm.cpp ../parallel_global.cpp ../tool_quit.cpp ../global_file.cpp ../global_function.cpp ../memory_recorder.cpp ../timer.cpp
 )
 
 AddTest(
@@ -16,21 +16,21 @@ AddTest(
   SOURCES parallel_reduce_test.cpp ../global_variable.cpp ../parallel_global.cpp ../parallel_comm.cpp ../parallel_common.cpp ../parallel_reduce.cpp ../tool_quit.cpp ../global_file.cpp ../global_function.cpp ../memory_recorder.cpp ../timer.cpp
 )
 
-install(FILES parallel_common_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES parallel_global_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES parallel_reduce_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
+abacus_copy_test_files(
+  parallel_common_test.sh
+  parallel_global_test.sh
+  parallel_reduce_test.sh)
 find_program(BASH bash)
 add_test(NAME MODULE_BASE_parallel_common_test
-      COMMAND ${BASH} parallel_common_test.sh
+      COMMAND ${BASH} parallel_common_test.sh "$<TARGET_FILE:MODULE_BASE_ParaCommon>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_test(NAME MODULE_BASE_parallel_global_test
-      COMMAND ${BASH} parallel_global_test.sh
+      COMMAND ${BASH} parallel_global_test.sh "$<TARGET_FILE:MODULE_BASE_ParaGlobal>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_test(NAME MODULE_BASE_parallel_reduce_test
-      COMMAND ${BASH} parallel_reduce_test.sh
+      COMMAND ${BASH} parallel_reduce_test.sh "$<TARGET_FILE:MODULE_BASE_ParaReduce>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -41,13 +41,24 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_BASE_parallel_device
+  LIBS MPI::MPI_CXX base device parameter
+  SOURCES parallel_device_test.cpp ../test/mpi_test_main.cpp
+)
+
+add_test(NAME MODULE_BASE_parallel_device_parallel
+      COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_BASE_parallel_device>"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
   TARGET MODULE_BASE_math_chebyshev_mpi
   LIBS MPI::MPI_CXX parameter base device container
   SOURCES math_cheby_mpi_test.cpp
 )
 
 add_test(NAME MODULE_BASE_para_gemm_parallel
-      COMMAND mpirun -np 4 ./MODULE_BASE_para_gemm
+      COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_BASE_para_gemm>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -57,10 +68,21 @@ AddTest(
     LIBS parameter
 )
 
-install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+AddTest(
+  TARGET MODULE_BASE_parallel_domain_grid
+  SOURCES parallel_domain_grid_test.cpp ../test/mpi_test_main.cpp
+  LIBS parameter MPI::MPI_CXX base device
+)
+
+add_test(NAME MODULE_BASE_parallel_domain_grid_parallel
+      COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_BASE_parallel_domain_grid>"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+abacus_copy_test_files(parallel_2d_test.sh)
 find_program(BASH bash)
 add_test(NAME MODULE_BASE_parallel_2d_test_para
-      COMMAND ${BASH} parallel_2d_test.sh
+      COMMAND ${BASH} parallel_2d_test.sh "$<TARGET_FILE:MODULE_BASE_parallel_2d_test>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -77,8 +99,8 @@ add_test(NAME MODULE_BASE_parallel_2d_test_para
     LIBS parameter MPI::MPI_CXX ${BLACS_LIB}
     SOURCES blacs_connector_test.cpp
   )
-  install(FILES blacs_connector_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  abacus_copy_test_files(blacs_connector_test.sh)
   add_test(NAME MODULE_BASE_blacs_connector_test
-        COMMAND ${BASH} blacs_connector_test.sh
+        COMMAND ${BASH} blacs_connector_test.sh "$<TARGET_FILE:MODULE_BASE_blacs_connector>"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )

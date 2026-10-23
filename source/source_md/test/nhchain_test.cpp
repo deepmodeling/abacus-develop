@@ -1,10 +1,6 @@
+#include "source_cell/domain_decomposition.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
-#define private public
-#define protected public
 #include "setcell.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/nhchain.h"
@@ -38,34 +34,34 @@ class NHC_test : public testing::Test
   protected:
     MD_base* mdrun;
     UnitCell ucell;
-    MDCell* mdcell;
-    Parameter param_in;
+    MDCell mdcell;
+    DomainDecomposition decomp;
+    Input_para inp;
     ModuleESolver::ESolver* p_esolver;
+    /// the md writers take the directory explicitly, so the test owns it
+    const std::string out_dir = "./";
+    const std::string readin_dir = "./";
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
+        Setcell::parameters(inp);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
-        param_in.input.mdp.md_type = "npt";
-        param_in.input.mdp.md_pmode = "tri";
-        param_in.input.mdp.md_pfirst = 1;
-        param_in.input.mdp.md_plast = 1;
-        mdcell = new MDCell;
-        mdcell->initialize_from_unitcell(ucell,
-                                         8.5 * ModuleBase::ANGSTROM_AU,
-                                         0.0,
-                                         ModuleBase::world_communication_domain());
-        p_esolver->before_all_runners(*mdcell, param_in.inp);
-        mdrun = new Nose_Hoover(param_in, *mdcell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
+        inp.mdp.md_type = "npt";
+        inp.mdp.md_pmode = "tri";
+        inp.mdp.md_pfirst = 1;
+        inp.mdp.md_plast = 1;
+        mdcell = Setcell::setup_mdcell(ucell);
+        decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
+        p_esolver->before_all_runners(mdcell, inp);
+        mdrun = new Nose_Hoover(inp.mdp, inp.cal_stress, inp.init_vel, /*my_rank=*/0, mdcell);
+        mdrun->setup(p_esolver, readin_dir, decomp);
     }
 
     void TearDown()
     {
         delete mdrun;
-        delete mdcell;
         delete p_esolver;
     }
 };
@@ -88,31 +84,31 @@ TEST_F(NHC_test, first_half)
 {
     mdrun->first_half(GlobalV::ofs_running);
 
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(0)]).x, -0.00035596392702161582, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(0)]).y, 0.00026566987683715606, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(0)]).z, -6.4082739615824722e-05, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(1)]).x, 0.00037007414441809518, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(1)]).y, -0.00052501803299631633, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(1)]).z, 0.00044091358349508534, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(2)]).x, -0.00036876922955593201, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(2)]).y, -2.6151466573228018e-05, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(2)]).z, -0.00024731533582713971, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(3)]).x, 0.00035465901216238645, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(3)]).y, 0.00028549962273273618, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(3)]).z, -0.00012951550805257814, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(0)]).x, -0.00035596392702161582, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(0)]).y, 0.00026566987683715606, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(0)]).z, -6.4082739615824722e-05, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(1)]).x, 0.00037007414441809518, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(1)]).y, -0.00052501803299631633, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(1)]).z, 0.00044091358349508534, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(2)]).x, -0.00036876922955593201, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(2)]).y, -2.6151466573228018e-05, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(2)]).z, -0.00024731533582713971, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(3)]).x, 0.00035465901216238645, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(3)]).y, 0.00028549962273273618, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(3)]).z, -0.00012951550805257814, doublethreshold);
 
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(0)].vel.x, -0.00010335325828338315, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(0)].vel.y, 6.6973537793984337e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(0)].vel.z, -1.4644123959592966e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(1)].vel.x, 0.00010943331752057692, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(1)].vel.y, -0.00013283409023334643, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(1)].vel.z, 0.00010075713383789103, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(2)].vel.x, -0.00010717693628353973, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(2)].vel.y, -6.2046899135633754e-06, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(2)].vel.z, -5.6516254714969195e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(3)].vel.x, 0.00010109687704718878, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(3)].vel.y, 7.2065242353013738e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(3)].vel.z, -2.9596755163433345e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(0)].vel.x, -0.00010335325828338315, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(0)].vel.y, 6.6973537793984337e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(0)].vel.z, -1.4644123959592966e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(1)].vel.x, 0.00010943331752057692, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(1)].vel.y, -0.00013283409023334643, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(1)].vel.z, 0.00010075713383789103, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(2)].vel.x, -0.00010717693628353973, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(2)].vel.y, -6.2046899135633754e-06, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(2)].vel.z, -5.6516254714969195e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(3)].vel.x, 0.00010109687704718878, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(3)].vel.y, 7.2065242353013738e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(3)].vel.z, -2.9596755163433345e-05, doublethreshold);
 }
 
 TEST_F(NHC_test, second_half)
@@ -120,31 +116,31 @@ TEST_F(NHC_test, second_half)
     mdrun->first_half(GlobalV::ofs_running);
     mdrun->second_half();
 
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(0)]).x, -0.00035596392702161582, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(0)]).y, 0.00026566987683715606, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(0)]).z, -6.4082739615824722e-05, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(1)]).x, 0.00037007414441809518, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(1)]).y, -0.00052501803299631633, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(1)]).z, 0.00044091358349508534, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(2)]).x, -0.00036876922955593201, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(2)]).y, -2.6151466573228018e-05, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(2)]).z, -0.00024731533582713971, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(3)]).x, 0.00035465901216238645, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(3)]).y, 0.00028549962273273618, doublethreshold);
-    EXPECT_NEAR(Setcell::fractional_displacement(mdcell->owned_atoms()[static_cast<std::size_t>(3)]).z, -0.00012951550805257814, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(0)]).x, -0.00035596392702161582, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(0)]).y, 0.00026566987683715606, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(0)]).z, -6.4082739615824722e-05, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(1)]).x, 0.00037007414441809518, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(1)]).y, -0.00052501803299631633, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(1)]).z, 0.00044091358349508534, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(2)]).x, -0.00036876922955593201, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(2)]).y, -2.6151466573228018e-05, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(2)]).z, -0.00024731533582713971, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(3)]).x, 0.00035465901216238645, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(3)]).y, 0.00028549962273273618, doublethreshold);
+    EXPECT_NEAR(Setcell::fractional_displacement(mdcell.owned_atoms()[static_cast<std::size_t>(3)]).z, -0.00012951550805257814, doublethreshold);
 
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(0)].vel.x, -8.4972683205367143e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(0)].vel.y, 6.6834262571392232e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(0)].vel.z, -1.6287026488367857e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(1)].vel.x, 7.8726485842843947e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(1)].vel.y, -0.00012727726730227848, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(1)].vel.z, 0.00011206092711573642, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(2)].vel.x, -9.0636235945876312e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(2)].vel.y, -9.9771188254262979e-06, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(2)].vel.z, -6.285672943672849e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(3)].vel.x, 9.6882433309157637e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(3)].vel.y, 7.0420123556394411e-05, doublethreshold);
-    EXPECT_NEAR(mdcell->owned_atoms()[static_cast<std::size_t>(3)].vel.z, -3.2917171190756263e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(0)].vel.x, -8.4972683205367143e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(0)].vel.y, 6.6834262571392232e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(0)].vel.z, -1.6287026488367857e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(1)].vel.x, 7.8726485842843947e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(1)].vel.y, -0.00012727726730227848, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(1)].vel.z, 0.00011206092711573642, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(2)].vel.x, -9.0636235945876312e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(2)].vel.y, -9.9771188254262979e-06, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(2)].vel.z, -6.285672943672849e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(3)].vel.x, 9.6882433309157637e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(3)].vel.y, 7.0420123556394411e-05, doublethreshold);
+    EXPECT_NEAR(mdcell.owned_atoms()[static_cast<std::size_t>(3)].vel.z, -3.2917171190756263e-05, doublethreshold);
 }
 
 TEST_F(NHC_test, write_restart)
@@ -154,7 +150,7 @@ TEST_F(NHC_test, write_restart)
 
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(PARAM.sys.global_out_dir);
+    mdrun->write_restart(out_dir);
 
     std::ifstream ifs("Restart_md.txt");
     std::string output_str;
@@ -182,35 +178,35 @@ TEST_F(NHC_test, write_restart)
 
 TEST_F(NHC_test, restart)
 {
-    mdrun->restart(PARAM.sys.global_readin_dir);
+    mdrun->restart(readin_dir);
     remove("Restart_md.txt");
 
     Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
-    EXPECT_EQ(mdrun->mdp.md_tchain, 4);
-    EXPECT_EQ(mdrun->mdp.md_pchain, 4);
-    EXPECT_EQ(nhc->eta[0], -0.0626326);
-    EXPECT_EQ(nhc->eta[1], -0.578523);
-    EXPECT_EQ(nhc->eta[2], -0.462472);
-    EXPECT_EQ(nhc->eta[3], -0.424503);
-    EXPECT_EQ(nhc->v_eta[0], -0.00658882);
-    EXPECT_EQ(nhc->v_eta[1], -0.0304055);
-    EXPECT_EQ(nhc->v_eta[2], -0.0188618);
-    EXPECT_EQ(nhc->v_eta[3], -0.0175663);
-    EXPECT_EQ(nhc->v_omega[0], 0.583152);
-    EXPECT_EQ(nhc->v_omega[1], -0.106519);
-    EXPECT_EQ(nhc->v_omega[2], -0.895936);
-    EXPECT_EQ(nhc->v_omega[3], -0.634424);
-    EXPECT_EQ(nhc->v_omega[4], 0.627532);
-    EXPECT_EQ(nhc->v_omega[5], -0.473422);
-    EXPECT_EQ(nhc->peta[0], -6.08823);
-    EXPECT_EQ(nhc->peta[1], -0.525329);
-    EXPECT_EQ(nhc->peta[2], 0.121814);
-    EXPECT_EQ(nhc->peta[3], 4771.79);
-    EXPECT_EQ(nhc->v_peta[0], 255.853);
-    EXPECT_EQ(nhc->v_peta[1], -0.266732);
-    EXPECT_EQ(nhc->v_peta[2], 0);
-    EXPECT_EQ(nhc->v_peta[3], 226.197);
+    EXPECT_EQ(inp.mdp.md_tchain, 4);
+    EXPECT_EQ(inp.mdp.md_pchain, 4);
+    EXPECT_EQ(nhc->get_eta()[0], -0.0626326);
+    EXPECT_EQ(nhc->get_eta()[1], -0.578523);
+    EXPECT_EQ(nhc->get_eta()[2], -0.462472);
+    EXPECT_EQ(nhc->get_eta()[3], -0.424503);
+    EXPECT_EQ(nhc->get_v_eta()[0], -0.00658882);
+    EXPECT_EQ(nhc->get_v_eta()[1], -0.0304055);
+    EXPECT_EQ(nhc->get_v_eta()[2], -0.0188618);
+    EXPECT_EQ(nhc->get_v_eta()[3], -0.0175663);
+    EXPECT_EQ(nhc->get_v_omega()[0], 0.583152);
+    EXPECT_EQ(nhc->get_v_omega()[1], -0.106519);
+    EXPECT_EQ(nhc->get_v_omega()[2], -0.895936);
+    EXPECT_EQ(nhc->get_v_omega()[3], -0.634424);
+    EXPECT_EQ(nhc->get_v_omega()[4], 0.627532);
+    EXPECT_EQ(nhc->get_v_omega()[5], -0.473422);
+    EXPECT_EQ(nhc->get_peta()[0], -6.08823);
+    EXPECT_EQ(nhc->get_peta()[1], -0.525329);
+    EXPECT_EQ(nhc->get_peta()[2], 0.121814);
+    EXPECT_EQ(nhc->get_peta()[3], 4771.79);
+    EXPECT_EQ(nhc->get_v_peta()[0], 255.853);
+    EXPECT_EQ(nhc->get_v_peta()[1], -0.266732);
+    EXPECT_EQ(nhc->get_v_peta()[2], 0);
+    EXPECT_EQ(nhc->get_v_peta()[3], 226.197);
 }
 
 TEST_F(NHC_test, print_md)
@@ -242,7 +238,7 @@ TEST_F(NHC_test, print_md)
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
+            " -0.01536523561      -0.02391563725      0.008550401641      300                 1.0846391           "));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,

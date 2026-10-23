@@ -6,9 +6,15 @@
 #endif
 #include "source_base/timer.h"
 
-FIRE::FIRE(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
+FIRE::FIRE(const MD_para& mdp_in,
+           const bool cal_stress_in,
+           const bool init_vel,
+           const int my_rank_in,
+           const double force_thr_in,
+           MDCell& mdcell_in)
+    : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
-    force_thr = param_in.inp.force_thr;
+    force_thr = force_thr_in;
     dt_max = -1.0;
     alpha_start = 0.10;
     alpha = alpha_start;
@@ -30,12 +36,12 @@ FIRE::~FIRE()
 {
 }
 
-void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::start("FIRE", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, decomp);
 
     check_force();
 
@@ -82,8 +88,8 @@ void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
 
     const double max_force = max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;
 
-	ofs << " LARGEST FORCE (eV/A)      : " << max_force << std::endl;
-	std::cout << " LARGEST FORCE (eV/A)  : " << max_force << std::endl;
+    ofs << " LARGEST FORCE (eV/A)      : " << max_force << std::endl;
+    std::cout << " LARGEST FORCE (eV/A)  : " << max_force << std::endl;
 
     return;
 }
@@ -236,7 +242,7 @@ void FIRE::check_fire(void)
     // Compute P, |F| and |v| only on movable degrees of freedom.
     // Fixed atoms/directions may have non-zero raw forces, but they should not
     // affect the FIRE velocity projection or adaptive time-step control.
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    for (LocalAtom& atom : mdcell.owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {
@@ -283,7 +289,7 @@ void FIRE::check_fire(void)
     // Avoid 0/0. In a truly converged case check_force() should stop the run.
     if (sumforce > 0.0 && normvel > 0.0)
     {
-        for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+        for (LocalAtom& atom : mdcell.owned_atoms())
         {
             for (int j = 0; j < 3; ++j)
             {
@@ -313,7 +319,7 @@ void FIRE::check_fire(void)
         md_dt *= fdec;
         negative_count = 0;
 
-        for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+        for (LocalAtom& atom : mdcell.owned_atoms())
         {
             for (int j = 0; j < 3; ++j)
             {

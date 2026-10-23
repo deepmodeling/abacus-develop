@@ -2,247 +2,95 @@
 
 #include "source_cell/unitcell.h"
 #include "source_pw/module_pwdft/dftu_base.h"
-#include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
 #include "source_base/timer.h"
+#include "source_main/version.h"
 
-#include <cmath>
-#include <cstring>
+#include <ctime>
 #include <fstream>
 #include <iomanip>
+#include <sstream>
 #include <vector>
-
-// local helpers for eigenvalue calculation
-// migrated from dftu_base.cpp, mohan 2025-11-08
-namespace
-{
-
-inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int n)
-{
-    if (std::abs(A[p][q]) > 1e-10)
-    {
-        double r = (A[q][q] - A[p][p]) / (2.0 * A[p][q]);
-        double t = 0.0;
-        if (r >= 0)
-        {
-            t = 1.0 / (r + sqrt(1.0 + r * r));
-        }
-        else
-        {
-            t = -1.0 / (-r + sqrt(1.0 + r * r));
-        }
-        double c = 1.0 / sqrt(1.0 + t * t);
-        double s = t * c;
-
-        A[p][p] -= t * A[p][q];
-        A[q][q] += t * A[p][q];
-        A[p][q] = A[q][p] = 0.0;
-
-        for (int k = 0; k < n; k++)
-        {
-            if (k != p && k != q)
-            {
-                double Akp = c * A[k][p] - s * A[k][q];
-                double Akq = s * A[k][p] + c * A[k][q];
-                A[k][p] = A[p][k] = Akp;
-                A[k][q] = A[q][k] = Akq;
-            }
-        }
-    }
-}
-
-inline std::vector<double> CalculateEigenvalues(std::vector<std::vector<double>>& A, int n)
-{
-    std::vector<double> eigenvalues(n);
-    while (true)
-    {
-        int p = 0, q = 1;
-        for (int i = 0; i < n; i++)
-        {
-            for (int j = i + 1; j < n; j++)
-            {
-                if (std::abs(A[i][j]) > std::abs(A[p][q]))
-                {
-                    p = i;
-                    q = j;
-                }
-            }
-        }
-
-        if (std::abs(A[p][q]) < 1e-10)
-        {
-            for (int i = 0; i < n; i++)
-            {
-                eigenvalues[i] = A[i][i];
-            }
-            break;
-        }
-
-        JacobiRotate(A, p, q, n);
-    }
-    return eigenvalues;
-}
-
-} // namespace
-
 
 namespace DFTU_BASE
 {
 
-void read_occup_m(const UnitCell& ucell,
-                  OccupationMatrix& occ,
-                  const std::vector<int>& orbital_corr,
-                  const int occ_mat_ctrl,
-                  const std::string& fn,
-                  const std::string& init_chg,
-                  int nspin,
-                  int npol)
+// Write the STRU-style provenance header shared by occ_mat.txt and the
+// per-ionic-step snapshot files: ABACUS version, local timestamp and the
+// 1-based relaxation step this file belongs to.
+static void write_provenance_header(std::ostream& os, const int istep)
 {
-    ModuleBase::TITLE("DFTU_BASE", "read_occup_m");
+    std::time_t now = std::time(nullptr);
+    std::tm tm_local;
+    localtime_r(&now, &tm_local);
+    char time_buf[64];
+    std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", &tm_local);
+    os << "# ABACUS version: " << VERSION << "\n";
+    os << "# Written at " << time_buf << "\n";
+    os << "# RELAX STEP " << istep + 1 << "\n\n";
+}
 
-    if (GlobalV::MY_RANK != 0)
+static void validate_output_configuration(const char* context,
+                                          const int istep,
+                                          const int iter,
+                                          const OccmatOutputCfg& cfg)
+{
+    if (istep < 0)
     {
-        return;
+        ModuleBase::WARNING_QUIT(context, "istep must be >= 0");
     }
-
-    std::ifstream ifdftu(fn.c_str(), std::ios::in);
-
-    if (!ifdftu)
+    if (iter < 1)
     {
-        if (occ_mat_ctrl > 0)
-        {
-            ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "Can not find the file dm_onsite_ini.txt. Please check your dm_onsite_ini.txt");
-        }
-        else
-        {
-            if (init_chg == "file")
-            {
-                ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "Can not find the file dm_onsite.txt. Please do scf calculation first");
-            }
-        }
-        ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "Can not open dm_onsite.txt file");
+        ModuleBase::WARNING_QUIT(context, "iter must be >= 1");
     }
-
-    ifdftu.clear();
-    ifdftu.seekg(0);
-
-    char word[20];
-
-    int T = 0;
-    int iat = 0;
-    int spin = 0;
-    int L = 0;
-    int zeta = 0;
-
-    ifdftu.rdstate();
-
-    while (ifdftu.good())
+    if (cfg.out_freq_ion < 0 || cfg.out_freq_elec < 1 || cfg.scf_nmax < 1)
     {
-        ifdftu >> word;
-        if (ifdftu.eof())
+        ModuleBase::WARNING_QUIT(context,
+                                 "invalid occupation-matrix output frequency configuration");
+    }
+}
+
+bool is_ion_step_output_step(const int istep, const OccmatOutputCfg& cfg)
+{
+    if (cfg.out_freq_ion <= 0)
+    {
+        return false;
+    }
+    return (istep % cfg.out_freq_ion == 0);
+}
+
+bool is_elec_snapshot_trigger(const int iter,
+                              const bool conv_esolver,
+                              const OccmatOutputCfg& cfg)
+{
+    const bool periodic = (iter % cfg.out_freq_elec == 0);
+    const bool last_step = (iter == cfg.scf_nmax);
+    return periodic || last_step || conv_esolver;
+}
+
+std::string gen_ion_step_occ_mat_filename(const std::string& out_dir, const int istep)
+{
+    std::stringstream ss;
+    ss << out_dir << "occ_matg" << (istep + 1) << ".txt";
+    return ss.str();
+}
+
+std::string find_first_existing_file(const std::string& dir,
+                                     const std::vector<std::string>& candidates)
+{
+    for (const std::string& name : candidates)
+    {
+        const std::string full = dir + name;
+        std::ifstream probe(full.c_str());
+        if (probe.is_open())
         {
-            break;
-        }
-
-        if (strcmp("Atom=", word) == 0)
-        {
-            ifdftu >> iat;
-            iat -= 1;
-            ifdftu >> word;
-
-            if (strcmp("L=", word) != 0)
-            {
-                ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
-            }
-            ifdftu >> L;
-            ifdftu >> word;
-
-            if (strcmp("ORBITAL=", word) != 0)
-            {
-                ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
-            }
-            ifdftu >> zeta;
-            ifdftu.ignore(150, '\n');
-
-            T = ucell.iat2it[iat];
-            const int NL = ucell.atoms[T].nwl + 1;
-
-            for (int l = 0; l < NL; l++)
-            {
-                if (l != orbital_corr[T])
-                {
-                    continue;
-                }
-
-                if (nspin == 1 || nspin == 2)
-                {
-                    for (int is = 0; is < 2; is++)
-                    {
-                        ifdftu >> word;
-                        if (strcmp("spin=", word) == 0)
-                        {
-                            ifdftu >> spin;
-                            spin -= 1;
-                            ifdftu.ignore(150, '\n');
-
-                            double value = 0.0;
-                            for (int m0 = 0; m0 < 2 * L + 1; m0++)
-                            {
-                                for (int m1 = 0; m1 < 2 * L + 1; m1++)
-                                {
-                                    ifdftu >> value;
-                                    occ.set(iat, L, zeta, spin, m0, m1, value);
-                                }
-                                ifdftu.ignore(150, '\n');
-                            }
-                        }
-                        else
-                        {
-                            ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
-                        }
-                    }
-                }
-                else if (nspin == 4) // SOC
-                {
-                    double value = 0.0;
-                    for (int m0 = 0; m0 < 2 * L + 1; m0++)
-                    {
-                        for (int ipol0 = 0; ipol0 < npol; ipol0++)
-                        {
-                            const int m0_all = m0 + (2 * L + 1) * ipol0;
-
-                            for (int m1 = 0; m1 < 2 * L + 1; m1++)
-                            {
-                                for (int ipol1 = 0; ipol1 < npol; ipol1++)
-                                {
-                                    int m1_all = m1 + (2 * L + 1) * ipol1;
-                                    ifdftu >> value;
-                                    occ.set(iat, L, zeta, 0, m0_all, m1_all, value);
-                                }
-                            }
-                            ifdftu.ignore(150, '\n');
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("DFTU_BASE::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
-        }
-
-        ifdftu.rdstate();
-
-        if (ifdftu.eof() != 0)
-        {
-            break;
+            return full;
         }
     }
-
-    return;
+    return std::string();
 }
 
 #ifdef __MPI
@@ -253,290 +101,198 @@ void read_occup_m(const UnitCell& ucell,
 /// element.
 void local_occup_bcast(const UnitCell& ucell,
                        OccupationMatrix& occ,
-                       const std::vector<int>& orbital_corr,
-                       int nspin,
-                       int npol)
+                       const std::vector<int>& l_channel)
 {
     ModuleBase::TITLE("DFTU_BASE", "local_occup_bcast");
+    const int nspin = occ.nspin();
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1)
+        if (l_channel[T] == -1)
         {
             continue;
         }
-
+        const int l = l_channel[T];
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
-            const int L = orbital_corr[T];
-
-            for (int l = 0; l <= ucell.atoms[T].nwl; l++)
+            if (nspin == 1 || nspin == 2)
             {
-                if (l != orbital_corr[T])
+                for (int spin = 0; spin < 2; spin++)
                 {
-                    continue;
+                    Parallel_Common::bcast_double(occ.mat(iat, l, spin).c,
+                                                  occ.mat(iat, l, spin).nr * occ.mat(iat, l, spin).nc);
                 }
-
-                for (int n = 0; n < ucell.atoms[T].l_nchi[l]; n++)
-                {
-                    if (n != 0)
-                    {
-                        continue;
-                    }
-
-                    if (nspin == 1 || nspin == 2)
-                    {
-                        for (int spin = 0; spin < 2; spin++)
-                        {
-                            Parallel_Common::bcast_double(occ.mat(iat, l, n, spin).c,
-                                                          occ.mat(iat, l, n, spin).nr * occ.mat(iat, l, n, spin).nc);
-                        }
-                    }
-                    else if (nspin == 4) // SOC
-                    {
-                        Parallel_Common::bcast_double(occ.mat(iat, l, n, 0).c,
-                                                      occ.mat(iat, l, n, 0).nr * occ.mat(iat, l, n, 0).nc);
-                    }
-                }
+            }
+            else if (nspin == 4) // SOC
+            {
+                Parallel_Common::bcast_double(occ.mat(iat, l, 0).c,
+                                              occ.mat(iat, l, 0).nr * occ.mat(iat, l, 0).nc);
             }
         }
     }
-    return;
 }
 #endif
 
 
-void output(const Plus_U_Base& dftu,
-            const UnitCell& ucell,
-            bool out_chg,
-            const std::string& global_out_dir,
-            int nspin,
-            int npol)
+static void prepare_ion_step_file(const std::string& global_out_dir,
+                                  const int istep)
 {
-    ModuleBase::TITLE("DFTU_BASE", "output");
-
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    GlobalV::ofs_running << " | #DFT+U INFORMATION# |" << std::endl;
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-
-    for (int T = 0; T < ucell.ntype; T++)
-    {
-        const int NL = ucell.atoms[T].nwl + 1;
-
-        for (int L = 0; L < NL; L++)
-        {
-            const int N = ucell.atoms[T].l_nchi[L];
-
-            if (L >= dftu.get_orbital_corr(T) && dftu.has_correlated_orbital(T))
-            {
-                if (L != dftu.get_orbital_corr(T))
-                {
-                    continue;
-                }
-
-                if (!dftu.use_yukawa())
-                {
-                    GlobalV::ofs_running << " Type=" << T+1 << " L=" << L << " ORBITAL=" << 0
-                                         << " U=" << dftu.get_u_current(T) * ModuleBase::Ry_to_eV << " eV" << std::endl;
-                }
-                else
-                {
-                    for (int n = 0; n < N; n++)
-                    {
-                        if (n != 0)
-                        {
-                            continue;
-                        }
-                        double Ueff = (dftu.yukawa().get_U(T, L, n) - dftu.yukawa().get_J(T, L, n)) * ModuleBase::Ry_to_eV;
-                        GlobalV::ofs_running << " Type=" << T+1 << " L=" << L << "  ORBITAL=" << n
-                                             << " U=" << dftu.yukawa().get_U(T, L, n) * ModuleBase::Ry_to_eV << " eV"
-                                             << " J=" << dftu.yukawa().get_J(T, L, n) * ModuleBase::Ry_to_eV << " eV"
-                                             << std::endl;
-                    }
-                }
-            }
-        }
-    }
-
-    GlobalV::ofs_running << " Local Occupation Matrices for each atom" << std::endl;
-    write_occup_m(dftu, ucell, GlobalV::ofs_running, true, nspin, npol);
-
-    // Write dm_onsite.txt
-    if (out_chg && GlobalV::MY_RANK == 0)
-    {
-        std::ofstream ofdftu;
-        ofdftu.open(global_out_dir + "dm_onsite.txt");
-        if (!ofdftu)
-        {
-            ModuleBase::WARNING_QUIT("DFTU_BASE::output", "Can't create file dm_onsite.txt");
-        }
-        write_occup_m(dftu, ucell, ofdftu, false, nspin, npol);
-        ofdftu.close();
-    }
-
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    GlobalV::ofs_running << " | # END DFT+U INFO    |" << std::endl;
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl << std::endl;
-
-    return;
-}
-
-
-void write_occup_m(const Plus_U_Base& dftu,
-                   const UnitCell& ucell,
-                   std::ofstream& ofs,
-                   bool diag,
-                   int nspin,
-                   int npol)
-{
-    ModuleBase::TITLE("DFTU_BASE", "write_occup_m");
-
+    // Only the root process creates the per-ionic-step file.
     if (GlobalV::MY_RANK != 0)
     {
         return;
     }
 
-    for (int T = 0; T < ucell.ntype; T++)
+    // trunc makes a rerun start from a clean file instead of appending
+    // snapshots left over from a previous calculation.
+    const std::string ion_step_fn = gen_ion_step_occ_mat_filename(global_out_dir, istep);
+    std::ofstream ofs_ion_step;
+    ofs_ion_step.open(ion_step_fn, std::ios::out | std::ios::trunc);
+    if (!ofs_ion_step)
     {
-        if (!dftu.has_correlated_orbital(T))
-        {
-            continue;
-        }
-        const int NL = ucell.atoms[T].nwl + 1;
-        const int LC = dftu.get_orbital_corr(T);
+        ModuleBase::WARNING_QUIT("DFTU_BASE::prepare_ion_step_file",
+                                 "Can't create per-ionic-step occupation-matrix file");
+    }
+    // Provenance header shared with occ_mat.txt.
+    write_provenance_header(ofs_ion_step, istep);
+}
 
-        for (int I = 0; I < ucell.atoms[T].na; I++)
-        {
-            const int iat = ucell.itia2iat(T, I);
+void prepare_ion_step_output(const std::string& global_out_dir,
+                             const int istep,
+                             const int iter,
+                             const OccmatOutputCfg& cfg)
+{
+    ModuleBase::TITLE("DFTU_BASE", "prepare_ion_step_output");
+    validate_output_configuration("DFTU_BASE::prepare_ion_step_output",
+                                  istep,
+                                  iter,
+                                  cfg);
+    const bool ion_step_output = is_ion_step_output_step(istep, cfg);
+    if (cfg.out_occ_mat && ion_step_output && iter == 1)
+    {
+        prepare_ion_step_file(global_out_dir, istep);
+    }
+}
 
-            for (int l = 0; l < NL; l++)
-            {
-                if (l != dftu.get_orbital_corr(T))
-                {
-                    continue;
-                }
+// Write one electronic-step section shared by occ_mat.txt and the
+// per-ionic-step snapshot files: the step marker, the configured
+// charge-density convergence threshold, the actual charge-density
+// residual and the full occupation matrices. When occmat_ready is false,
+// the matrix body is an "N/A" placeholder.
+static void write_snapshot_section(std::ostream& os,
+                                   const Plus_U_Base& dftu,
+                                   const UnitCell& ucell,
+                                   const OccmatStepInfo& step,
+                                   const bool occmat_ready,
+                                   const OccmatSocLayout soc_layout)
+{
+    os << "# Electronic step " << step.iter << "\n";
+    os << "# scf_thr " << std::scientific << std::setprecision(8) << step.scf_thr << "\n";
+    os << "# drho " << std::scientific << std::setprecision(8) << step.drho << "\n";
 
-                const int N = ucell.atoms[T].l_nchi[l];
+    // The PW path has no occupation matrix at istep 0 / iter 1 unless it was
+    // loaded from file; record an explicit placeholder instead of a silent
+    // zero matrix. Such an incomplete snapshot is diagnostic output and is
+    // intentionally rejected by the strict restart reader.
+    if (!occmat_ready)
+    {
+        os << "\n N/A\n\n";
+        return;
+    }
 
-                for (int n = 0; n < N; n++)
-                {
-                    if (n != 0)
-                    {
-                        continue;
-                    }
+    // Full occupation matrices together with per-atom magnetism.
+    write_occup_m(dftu, ucell, os, soc_layout);
+    os << "\n";
+}
 
-                    ofs << "\n Atom= " << iat+1;
-                    ofs << " L= " << l;
-                    ofs << " ORBITAL= " << n << std::endl;
+void append_ion_step_snapshot(const Plus_U_Base& dftu,
+                              const UnitCell& ucell,
+                              const std::string& global_out_dir,
+                              const OccmatStepInfo& step,
+                              const bool conv_esolver,
+                              const bool occmat_ready,
+                              const OccmatOutputCfg& cfg,
+                              const OccmatSocLayout soc_layout)
+{
+    ModuleBase::TITLE("DFTU_BASE", "append_ion_step_snapshot");
 
-                    if (nspin == 1 || nspin == 2)
-                    {
-                        double sum0[2];
-                        for (int is = 0; is < 2; is++)
-                        {
-                            if (diag)
-                            {
-                                std::vector<std::vector<double>> A(2 * l + 1, std::vector<double>(2 * l + 1));
-                                for (int m0 = 0; m0 < 2 * l + 1; m0++)
-                                {
-                                    for (int m1 = 0; m1 < 2 * l + 1; m1++)
-                                    {
-                                        A[m0][m1] = dftu.occmat().get(iat, l, n, is, m0, m1);
-                                    }
-                                }
-                                std::vector<double> eigenvalues = CalculateEigenvalues(A, 2 * l + 1);
-                                sum0[is] = 0.0;
-                                ofs << " Eigenvalues for spin=" << is+1 << std::endl;
-                                ofs << std::setprecision(8) << std::fixed;
-                                for (int i = 0; i < 2 * l + 1; i++)
-                                {
-                                    ofs << std::setw(12) << eigenvalues[i];
-                                    sum0[is] += eigenvalues[i];
-                                }
-                                ofs << std::endl;
-                                ofs << " sum is " << std::setw(12) << sum0[is] << std::endl;
-                            }
-                            ofs << " spin= " << is+1 << std::endl;
-                            ofs << std::setprecision(8) << std::fixed;
-                            for (int m0 = 0; m0 < 2 * l + 1; m0++)
-                            {
-                                for (int m1 = 0; m1 < 2 * l + 1; m1++)
-                                {
-                                    ofs << std::setw(12)
-                                        << dftu.occmat().get(iat, l, n, is, m0, m1);
-                                }
-                                ofs << std::endl;
-                            }
-                        }
-                        if (diag)
-                        {
-                            ofs << std::setw(12) << std::setprecision(8)
-                                << std::fixed << " Magnetism for atom " << iat+1 << ": " << sum0[0] - sum0[1]
-                                << std::endl;
-                        }
-                    }
-                    else if (nspin == 4) // SOC
-                    {
-                        if (diag)
-                        {
-                            double sum0[4];
-                            std::vector<std::vector<double>> A(2 * l + 1, std::vector<double>(2 * l + 1));
-                            int index = 0;
-                            for (int is = 0; is < 4; is++)
-                            {
-                                for (int m0 = 0; m0 < 2 * l + 1; m0++)
-                                {
-                                    for (int m1 = 0; m1 < 2 * l + 1; m1++)
-                                    {
-                                        A[m0][m1] = dftu.occmat().get(iat, l, n, 0, m0, m1);
-                                        index++;
-                                    }
-                                }
-                                std::vector<double> eigenvalues = CalculateEigenvalues(A, 2 * l + 1);
-                                sum0[is] = 0.0;
-                                ofs << " Eigenvalues for is=" << is << std::endl;
-                                ofs << std::setprecision(8) << std::fixed;
-                                for (int i = 0; i < 2 * l + 1; i++)
-                                {
-                                    ofs << std::setw(12) << eigenvalues[i];
-                                    sum0[is] += eigenvalues[i];
-                                }
-                                ofs << std::endl;
-                                ofs << " sum is " << std::setw(12) << sum0[is] << std::endl;
-                            }
-                            ofs << std::setw(12) << std::setprecision(8)
-                                << std::fixed << " Magnetism for atom " << iat + 1 << ": "
-                                << sum0[1] << " " << sum0[2] << " " << sum0[3] << std::endl;
-                        }
-                        else
-                        {
-                            for (int m0 = 0; m0 < 2 * l + 1; m0++)
-                            {
-                                for (int ipol0 = 0; ipol0 < npol; ipol0++)
-                                {
-                                    const int m0_all = m0 + (2 * l + 1) * ipol0;
+    // dft_plus_u <= 0 means the occupation matrix was never computed
+    // (Plus_U_Base::l_channel stays empty); writing here would dereference
+    // a null l_channel.data() in write_occup_m. Match the documented contract
+    // that out_occ_mat only takes effect for DFT+U calculations. Check this
+    // before validating the step: when DFT+U is off this function is
+    // a no-op, so an invalid iter (e.g. from an upstream bug) must not crash
+    // here. Mirrors the guard-first pattern in write_latest_occmat.
+    if (!cfg.out_occ_mat || cfg.dft_plus_u <= 0)
+    {
+        return;
+    }
 
-                                    for (int m1 = 0; m1 < 2 * l + 1; m1++)
-                                    {
-                                        for (int ipol1 = 0; ipol1 < npol; ipol1++)
-                                        {
-                                            int m1_all = m1 + (2 * l + 1) * ipol1;
-                                            ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                                << dftu.occmat().get(iat, l, n, 0, m0_all, m1_all);
-                                        }
-                                    }
-                                    ofs << std::endl;
-                                }
-                            }
-                        }
-                    }
-                } // n
-            }     // l
-        }         // I
-    }             // T
+    validate_output_configuration("DFTU_BASE::append_ion_step_snapshot",
+                                  step.istep,
+                                  step.iter,
+                                  cfg);
 
-    return;
+    const bool ion_step_output = is_ion_step_output_step(step.istep, cfg);
+    const bool elec_trigger = is_elec_snapshot_trigger(step.iter, conv_esolver, cfg);
+    if (!ion_step_output || !elec_trigger || GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
+
+    const std::string ion_step_fn = gen_ion_step_occ_mat_filename(global_out_dir, step.istep);
+
+    std::ofstream ofs_ion_step;
+    ofs_ion_step.open(ion_step_fn, std::ios::app);
+    if (!ofs_ion_step)
+    {
+        ModuleBase::WARNING_QUIT("DFTU_BASE::append_ion_step_snapshot",
+                                 "Can't open per-ionic-step occupation-matrix file");
+    }
+
+    // A direct caller may not have prepared the file at iter 1. Add the
+    // provenance header when append mode opens an empty file.
+    if (ofs_ion_step.tellp() == std::streampos(0))
+    {
+        write_provenance_header(ofs_ion_step, step.istep);
+    }
+    write_snapshot_section(ofs_ion_step, dftu, ucell, step, occmat_ready, soc_layout);
+
+    GlobalV::ofs_running << " Append local occupation matrices of electronic step " << step.iter
+                         << " to file: " << ion_step_fn << std::endl;
+}
+
+
+void write_latest_occmat(const Plus_U_Base& dftu,
+                         const UnitCell& ucell,
+                         const std::string& global_out_dir,
+                         const OccmatStepInfo& step,
+                         const OccmatOutputCfg& cfg,
+                         const OccmatSocLayout soc_layout)
+{
+    ModuleBase::TITLE("DFTU_BASE", "write_latest_occmat");
+
+    if (!cfg.out_occ_mat || cfg.dft_plus_u <= 0 || GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
+
+    const std::string latest_fn = global_out_dir + "occ_mat.txt";
+    std::ofstream ofdftu;
+    ofdftu.open(latest_fn, std::ios::out | std::ios::trunc);
+    if (!ofdftu)
+    {
+        ModuleBase::WARNING_QUIT("DFTU_BASE::write_latest_occmat", "Can't create file occ_mat.txt");
+    }
+
+    // occ_mat.txt is a single-section snapshot file: the provenance
+    // header shared with the g files followed by the same section writer.
+    write_provenance_header(ofdftu, step.istep);
+    // Callers of write_latest_occmat() guarantee the matrix exists: the PW
+    // esolver gates on latest_ready, the LCAO esolver computes it every
+    // electronic iteration.
+    write_snapshot_section(ofdftu, dftu, ucell, step, true, soc_layout);
 }
 
 

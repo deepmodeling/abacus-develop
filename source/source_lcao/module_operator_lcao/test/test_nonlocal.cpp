@@ -34,12 +34,12 @@ class NonlocalTest : public ::testing::Test
         // set up a unitcell, with one element and test_size atoms, each atom has test_nw orbitals
         ucell.ntype = 1;
         auto* lcao_nl = new LCAONonlocalInfo();
-        lcao_nl->get_nonlocal().Beta = new Numerical_Nonlocal[ucell.ntype];
+        lcao_nl->get_nonlocal().resize_Beta(ucell.ntype);
         ucell.infoNL.reset(lcao_nl);
         ucell.nat = test_size;
         ucell.atoms = new Atom[ucell.ntype];
-        ucell.iat2it = new int[ucell.nat];
-        ucell.iat2ia = new int[ucell.nat];
+        ucell.iat2it.resize(ucell.nat);
+        ucell.iat2ia.resize(ucell.nat);
         ucell.atoms[0].tau.resize(ucell.nat);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
         for (int iat = 0; iat < ucell.nat; iat++)

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_PULAY_FS_H
+#define ABACUS_SOURCE_LCAO_PULAY_FS_H
+
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_cell/unitcell.h"
@@ -15,7 +17,7 @@ namespace PulayForceStress
     void cal_pulay_fs(
         ModuleBase::matrix& f,  ///< [out] force
         ModuleBase::matrix& s,  ///< [out] stress
-        const elecstate::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix or energy density matrix
+        const module_dm::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix or energy density matrix
         const UnitCell& ucell,  ///< [in] unit cell
         const Parallel_Orbitals& pv,  ///< [in] parallel orbitals
         const double* (&dHSx)[3],  ///< [in] dHSx x, y, z, for force
@@ -31,7 +33,7 @@ namespace PulayForceStress
     void cal_pulay_fs(
         ModuleBase::matrix& f,  ///< [out] force
         ModuleBase::matrix& s,  ///< [out] stress
-        const elecstate::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix or energy density matrix
+        const module_dm::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix or energy density matrix
         const UnitCell& ucell,  ///< [in] unit cell
         const Parallel_Orbitals& pv,  ///< [in] parallel orbitals
         const double* (&dHSx)[3],  ///< [in] dHSx x, y, z, for force and stress
@@ -44,15 +46,17 @@ namespace PulayForceStress
 
     /// for grid-integration terms
     template<typename TK, typename TR>
-    void cal_pulay_fs(
+    void cal_pulay_fs(const int nspin,
         ModuleBase::matrix& f,  ///< [out] force
         ModuleBase::matrix& s,  ///< [out] stress
-        const elecstate::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix or energy density matrix
+        const module_dm::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix or energy density matrix
         const UnitCell& ucell,  ///< [in] unit cell
         const elecstate::Potential* pot, ///< [in] potential on grid
         const bool& isforce,
         const bool& isstress,
         const bool& set_dmr_gint = true);
 }
-#include "pulay_fs_temp.hpp"
-#include "pulay_fs_gint.hpp"
+#include "pulay_fs_temp.h"
+#include "pulay_fs_gint.h"
+
+#endif // ABACUS_SOURCE_LCAO_PULAY_FS_H

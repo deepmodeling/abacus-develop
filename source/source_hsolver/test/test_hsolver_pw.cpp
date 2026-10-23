@@ -1,20 +1,35 @@
 #include <gtest/gtest.h>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
-#define private public
-#define protected public
-#include "source_io/module_parameter/parameter.h"
-#include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/hsolver_lcaopw.h"
-#include "hsolver_supplementary_mock.h"
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
-#include "source_base/global_variable.h"
-#include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
+#include "source_hsolver/diag_comm_info.h"
+#include "source_hsolver/hs_operator.h"
+#include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
-#undef private
-#undef protected
+
+#include <algorithm>
+#include <complex>
+
+/// H = S = identity: the simplest operator the solvers can be handed
+template <typename T>
+class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
+{
+  public:
+    void update_k(const int ik) override
+    {
+    }
+    void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
+    {
+        std::copy(x, x + static_cast<size_t>(ld) * nvec, hx);
+    }
+    void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+    {
+        std::copy(x, x + static_cast<size_t>(ld) * nvec, sx);
+    }
+};
 
 // Mock implementations for the template functions causing linking errors
 namespace ModulePW {
@@ -153,42 +168,58 @@ template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
 
 class TestHSolverPW : public ::testing::Test {
   public:
+    // HSolverPW declares this fixture a friend, but a TEST_F body lives in a
+    // class derived from it and friendship is not inherited, so the call into
+    // the protected hamiltSolvePsiK() is routed through here.
+    template <typename T, typename Device>
+    static void hamiltSolvePsiK(hsolver::HSolverPW<T, Device>& hs,
+                                const hsolver::HSOperator<T, Device>& op,
+                                psi::Psi<T, Device>& ps,
+                                std::vector<typename GetTypeReal<T>::type>& pre,
+                                typename GetTypeReal<T>::type* eig,
+                                const int ntry)
+    {
+        hs.hamiltSolvePsiK(op, ps, pre, eig, ntry);
+    }
+
     ModulePW::PW_Basis_K pwbk;
     hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f
-        = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(&pwbk,
-                                                                           "scf",
-                                                                           "pw",
-                                                                           "cg",
-                                                                           PARAM.sys.use_uspp,
-                                                                           PARAM.input.nspin,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-                                                                           PARAM.input.nbands,
-                                                                           PARAM.input.diago_smooth_ethr,
-                                                                           PARAM.input.pw_diag_ndim,
-                                                                           PARAM.input.diag_subspace,
-                                                                           PARAM.input.nb2d);
+        = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(
+            &pwbk,
+            "scf",
+            "pw",
+            "cg",
+            false,
+            1,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+            0,
+            false,
+            4,
+            0,
+            0);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
-        = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(&pwbk,
-                                                                            "scf",
-                                                                            "pw",
-                                                                            "cg",
-                                                                            PARAM.sys.use_uspp,
-                                                                            PARAM.input.nspin,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
-                                                                            PARAM.input.nbands,
-                                                                            PARAM.input.diago_smooth_ethr,
-                                                                            PARAM.input.pw_diag_ndim,
-                                                                            PARAM.input.diag_subspace,
-                                                                            PARAM.input.nb2d);
+        = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
+            &pwbk,
+            "scf",
+            "pw",
+            "cg",
+            false,
+            1,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+            0,
+            false,
+            4,
+            0,
+            0);
 
-    hamilt::Hamilt<std::complex<double>> hamilt_test_d;
-    hamilt::Hamilt<std::complex<float>> hamilt_test_f;
+    IdentityHSOperator<std::complex<double>> hamilt_test_d;
+    IdentityHSOperator<std::complex<float>> hamilt_test_f;
 
     psi::Psi<std::complex<double>> psi_test_cd;
     psi::Psi<std::complex<float>> psi_test_cf;
@@ -209,7 +240,7 @@ class TestHSolverPW : public ::testing::Test {
 //     this->ekb_f.resize(2);
 //     psi_test_cf.resize(1, 2, 3);
 //     psi_test_cd.resize(1, 2, 3);
-//     PARAM.input.nelec = 1.0;
+//     const double nelec = 1.0;
 
 //     // check solve()
 //     EXPECT_EQ(this->hs_f.initialed_psi, false);
@@ -220,8 +251,8 @@ class TestHSolverPW : public ::testing::Test {
 //                      &elecstate_test,
 //                      elecstate_test.ekb.c,
 
-//                      GlobalV::RANK_IN_POOL,
-//                      GlobalV::NPROC_IN_POOL,
+//                      0,
+//                      1,
 
 //                      true);
 //     // EXPECT_EQ(this->hs_f.initialed_psi, true);
@@ -237,9 +268,9 @@ class TestHSolverPW : public ::testing::Test {
 //                      psi_test_cd,
 //                      &elecstate_test,
 //                      elecstate_test.ekb.c,
-                     
-//                      GlobalV::RANK_IN_POOL,
-//                      GlobalV::NPROC_IN_POOL,
+
+//                      0,
+//                      1,
 
 //                      true);
   
@@ -303,14 +334,14 @@ class TestHSolverPW : public ::testing::Test {
 //     // EXPECT_NEAR(this->hs_d.precondition[2], 6.236067977, 1e-8);
 
 //     // // check diago_ethr
-//     // PARAM.input.init_chg = "atomic";
-//     // GlobalV::PW_DIAG_THR = 1e-7;
-//     // PARAM.input.calculation = "scf";
+//     // init_chg = "atomic";
+//     // diag_thr = 1e-7;
+//     // calculation = "scf";
 //     // float test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_NEAR(hs_f.diag_ethr, 0.01, 1.0e-7);
 //     // EXPECT_NEAR(test_diagethr, 0.01, 1.0e-7);
-//     // PARAM.input.calculation = "md";
-//     // PARAM.input.init_chg = "file";
+//     // calculation = "md";
+//     // init_chg = "file";
 //     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_NEAR(test_diagethr, 1e-5, 1.0e-7);
 //     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 2, 1.0);
@@ -318,14 +349,14 @@ class TestHSolverPW : public ::testing::Test {
 //     // test_diagethr = hs_f.set_diagethr(hs_f.diag_ethr, 0, 3, 1.0e-3);
 //     // EXPECT_NEAR(test_diagethr, 0.0001, 1.0e-7);
 
-//     // PARAM.input.init_chg = "atomic";
-//     // GlobalV::PW_DIAG_THR = 1e-7;
-//     // PARAM.input.calculation = "scf";
+//     // init_chg = "atomic";
+//     // diag_thr = 1e-7;
+//     // calculation = "scf";
 //     // double test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_EQ(hs_d.diag_ethr, 0.01);
 //     // EXPECT_EQ(test_diagethr_d, 0.01);
-//     // PARAM.input.calculation = "md";
-//     // PARAM.input.init_chg = "file";
+//     // calculation = "md";
+//     // init_chg = "file";
 //     // test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 1, 1.0);
 //     // EXPECT_EQ(test_diagethr_d, 1e-5);
 //     // test_diagethr_d = hs_d.set_diagethr(hs_d.diag_ethr, 0, 2, 1.0);
@@ -354,59 +385,77 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     transform_test_cd.resize(1, 3, 3);
     transform_test_cf.resize(1, 3, 3);
 
-    std::complex<double> psi_value_d = {0.0, 0.0};
-    std::complex<float> psi_value_f = {0.0, 0.0};
+    // 1, 2, 3 / 4, 5, 6 / 7, 8, 9 would be rank deficient, so the diagonal is
+    // lifted to keep the three subspace vectors linearly independent
     for (int iband = 0; iband < transform_test_cd.get_nbands(); iband++) {
         for (int ibasis = 0; ibasis < transform_test_cd.get_nbasis();
              ibasis++) {
+            const double value = iband * transform_test_cd.get_nbasis() + ibasis + 1 + (iband == ibasis ? 10.0 : 0.0);
             transform_test_cd
                 .get_pointer()[iband * transform_test_cd.get_nbasis() + ibasis]
-                = psi_value_d;
+                = std::complex<double>(value, 0.0);
             transform_test_cf
                 .get_pointer()[iband * transform_test_cf.get_nbasis() + ibasis]
-                = psi_value_f;
-            psi_value_d += std::complex<double>(1.0, 0.0);
-            psi_value_f += std::complex<float>(1.0, 0.0);
+                = std::complex<float>(value, 0.0);
         }
     }
-    PARAM.input.nelec = 1.0;
-
+    // with H = S = 1 every subspace eigenvalue is 1 and the rotated psi must
+    // come out orthonormal
+    auto check_orthonormal = [](const auto& p, const double tol) {
+        const int nb = p.get_nbands();
+        const int nbasis = p.get_nbasis();
+        for (int i = 0; i < nb; i++) {
+            for (int j = 0; j < nb; j++) {
+                std::complex<double> dot = 0.0;
+                for (int ig = 0; ig < nbasis; ig++) {
+                    dot += std::conj(std::complex<double>(p.get_pointer()[i * nbasis + ig]))
+                           * std::complex<double>(p.get_pointer()[j * nbasis + ig]);
+                }
+                EXPECT_NEAR(dot.real(), i == j ? 1.0 : 0.0, tol);
+                EXPECT_NEAR(dot.imag(), 0.0, tol);
+            }
+        }
+    };
     // check solve()
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
 
-    General_Exx_Info exx_info_local;
     hsolver::HSolverLIP<std::complex<float>> hs_f_lip
-        = hsolver::HSolverLIP<std::complex<float>>(&pwbk,
-                                                   PARAM.sys.use_uspp,
-                                                   PARAM.input.basis_type,
-                                                   PARAM.input.calculation,
-                                                   elecstate_test.ekb.nc);
+        = hsolver::HSolverLIP<std::complex<float>>(&pwbk, false, "pw", "scf", elecstate_test.ekb.nc);
     hsolver::HSolverLIP<std::complex<double>> hs_d_lip
-        = hsolver::HSolverLIP<std::complex<double>>(&pwbk,
-                                                    PARAM.sys.use_uspp,
-                                                    PARAM.input.basis_type,
-                                                    PARAM.input.calculation,
-                                                    elecstate_test.ekb.nc);
-    hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,transform_test_cf, true,0.0,0, exx_info_local);
+        = hsolver::HSolverLIP<std::complex<double>>(&pwbk, false, "pw", "scf", elecstate_test.ekb.nc);
+#ifdef __MPI
+    const hsolver::diag_comm_info diag_comm(MPI_COMM_SELF, 0, 1);
+#else
+    const hsolver::diag_comm_info diag_comm(0, 1);
+#endif
+    std::ostringstream log;
+    hs_f_lip.solve(hamilt_test_f,
+                   psi_test_cf,
+                   &elecstate_test,
+                   transform_test_cf,
+                   diag_comm,
+                   log,
+                   true);
+    EXPECT_NE(log.str().find("Average iterative diagonalization steps"), std::string::npos);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
-    for (int i = 0; i < psi_test_cf.size(); i++)
-    {
-        EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i);
-    }
-    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);
-    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 0.0);
+    check_orthonormal(psi_test_cf, 1e-5);
+    EXPECT_NEAR(elecstate_test.ekb.c[0], 1.0, 1e-5);
+    EXPECT_NEAR(elecstate_test.ekb.c[1], 1.0, 1e-5);
 
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    hs_d_lip.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true,0.0,0, exx_info_local);
+    hs_d_lip.solve(hamilt_test_d,
+                   psi_test_cd,
+                   &elecstate_test,
+                   transform_test_cd,
+                   diag_comm,
+                   log,
+                   true);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
-    for (int i = 0; i < psi_test_cd.size(); i++)
-    {
-        EXPECT_DOUBLE_EQ(psi_test_cd.get_pointer()[i].real(), i);
-    }
-    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);
-    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 0.0);
+    check_orthonormal(psi_test_cd, 1e-10);
+    EXPECT_NEAR(elecstate_test.ekb.c[0], 1.0, 1e-10);
+    EXPECT_NEAR(elecstate_test.ekb.c[1], 1.0, 1e-10);
 }
 
 // Test that the program exits with an error when npwx < nbands,
@@ -419,7 +468,7 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
     std::vector<double> eigenvalues(5, 0.0);
     // Expect death from WARNING_QUIT due to npwx < nbands
     EXPECT_EXIT(
-        hs_d.hamiltSolvePsiK(&hamilt_test_d, psi_test_cd, precond, eigenvalues.data(), 1),
+        hamiltSolvePsiK(hs_d, hamilt_test_d, psi_test_cd, precond, eigenvalues.data(), 1),
         ::testing::ExitedWithCode(1),
         ".*"
     );

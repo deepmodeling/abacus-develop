@@ -4,12 +4,14 @@
 #include "esolver_fp.h"                                // first-principles esolver
 #include "source_basis/module_pw/pw_basis_k.h"         // use plane wave
 #include "source_cell/klist.h"                         // use k-points in Brillouin zone
-#include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_estate/module_charge/chg_mix.h" // use charge mixing
 #include "source_hamilt/hamilt.h"                      // use Hamiltonian
 #include "source_hamilt/hamilt_base.h"                 // use Hamiltonian base class
 #include "source_hamilt/module_xc/general_exx_info.h"  // ESolver owns General_Exx_Info value
-#include "source_lcao/module_dftu/dftu_nao.h"              // mohan add 20251107
+#include "source_pw/module_pwdft/dftu_base.h"          // Plus_U_Base for dftu_ member
 #include "source_pw/module_pwdft/vnl_pw.h"
+
+#include <memory> // std::unique_ptr for dftu_ member
 
 namespace ModuleESolver
 {
@@ -30,6 +32,16 @@ class ESolver_KS : public ESolver_FP
     virtual void after_all_runners(BaseCell& basecell) override;
 
   protected:
+    /** @brief Select whether the density is an endpoint predictor or an SCF iterate. */
+    enum class DensityStage
+    {
+        standard,
+        predictor
+    };
+
+    /** @brief Identify mandatory predictor stages before mixing and convergence checks. */
+    virtual DensityStage density_stage(const int istep, const int iter) const;
+
     //! Something to do before SCF iterations.
     virtual void before_scf(UnitCell& ucell, const int istep) override;
 
@@ -44,6 +56,13 @@ class ESolver_KS : public ESolver_FP
 
     // calculate electron density from a specific Hamiltonian
     void hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr);
+
+    /**
+     * @brief Select the diagonalization threshold and error-control policy for the current stage.
+     *
+     * This policy does not change the requested solver type.
+     */
+    virtual std::string diag_policy(const int istep) const;
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
@@ -60,8 +79,9 @@ class ESolver_KS : public ESolver_FP
     //! nonlocal pseudopotentials
     pseudopot_cell_vnl ppcell;
 
-    //! DFT+U method, mohan add 2025-11-07
-    Plus_U dftu;
+    //! DFT+U method (PW and LCAO both news Plus_U_Base).
+    //! Owned by ESolver_KS via unique_ptr; released automatically in ~ESolver_KS.
+    std::unique_ptr<Plus_U_Base> dftu_;
 
     std::string basisname;          //! esolver_ks_lcao.cpp
     double esolver_KS_ne = 0.0;     //! number of electrons
@@ -77,6 +97,15 @@ class ESolver_KS : public ESolver_FP
     int niter;                      //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated
     bool scf_nmax_flag = false;     // whether scf has reached nmax, mohan add 20250921
+
+    /// Set by a subclass (e.g. ESolver_KS_PW via EXX) to request a fresh SCF
+    /// rerun from iter=1 after the current electronic iteration. ESolver_KS::
+    /// runner watches this flag at the bottom of each loop body and, when set,
+    /// clears it and restarts the SCF loop with iter=1. This replaces the
+    /// historical "iter=0 restart signal" trick that wrote 0 into the iter
+    /// reference, which crashed DFT+U occupation-matrix writers that validate
+    /// iter>=1.
+    bool scf_rerun_ = false;
 
     /// General EXX info owned by ESolver, initialized from input parameters.
     General_Exx_Info general_exx_info_;

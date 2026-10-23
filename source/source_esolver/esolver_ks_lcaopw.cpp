@@ -4,7 +4,7 @@
 #include <iostream>
 
 //--------------temporary----------------------------
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 //-----force-------------------
@@ -12,9 +12,12 @@
 //-----stress------------------
 #include "source_pw/module_pwdft/stress_pw.h"
 //---------------------------------------------------
+#include "source_base/global_variable.h"
+#include "source_base/parallel_comm.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_pw/module_pwdft/hamilt_lcaopw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
+#include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/kernels/hegvd_op.h"
@@ -26,7 +29,7 @@
 #include <ATen/kernels/lapack.h>
 #include <sys/time.h>
 #ifdef __LCAO
-#include "source_io/module_hs/write_vxc_lip.hpp"
+#include "source_io/module_hs/vxc_op_lip.h"
 #endif
 
 namespace ModuleESolver
@@ -74,7 +77,7 @@ namespace ModuleESolver
     template <typename T>
     void ESolver_KS_LIP<T>::before_all_runners(BaseCell& basecell, const Input_para& inp)
     {
-        basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+        basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
         UnitCell& ucell = static_cast<UnitCell&>(basecell);
         ESolver_KS_PW<T>::before_all_runners(basecell, inp);
 
@@ -147,8 +150,24 @@ namespace ModuleESolver
                                                this->inp_->basis_type,
                                                this->inp_->calculation,
                                                this->inp_->nbands);
-        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec,
-          *this->psi_local, skip_charge,ucell.tpiba,ucell.nat, this->general_exx_info_);
+#ifdef __MPI
+        const hsolver::diag_comm_info diag_comm(POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL);
+#else
+        const hsolver::diag_comm_info diag_comm(0, 1);
+#endif
+        // the solver sees the Hamiltonian only through this operator; the EXX
+        // subspace hooks live in the adapter, not in the solver
+        hamilt::HamiltLIPHSOperator<T> op(dynamic_cast<hamilt::HamiltLIP<T>*>(this->p_hamilt),
+                                          this->pw_wfc,
+                                          this->general_exx_info_.cal_exx,
+                                          this->general_exx_info_.hybrid_alpha);
+        hsolver_lip_obj.solve(op,
+                              *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
+                              this->pelec,
+                              *this->psi_local,
+                              diag_comm,
+                              GlobalV::ofs_running,
+                              skip_charge);
 
         // add exx
 #ifdef __EXX
@@ -160,7 +179,7 @@ namespace ModuleESolver
         }
 #endif
 
-        Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
+        module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
 
         // deband is calculated from "output" charge density calculated
         // in sum_band
@@ -193,7 +212,7 @@ namespace ModuleESolver
                 {
                     // update exx and redo scf
                     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-                    iter = 0;
+                    this->scf_rerun_ = true;
                     std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
                     this->two_level_step++;
                     conv_esolver = false;
@@ -219,7 +238,7 @@ namespace ModuleESolver
                 gettimeofday(&t_start, nullptr);
 
                 this->exx_lip->cal_exx();
-                iter = 0;
+                this->scf_rerun_ = true;
                 this->two_level_step++;
 
                 timeval t_end;
@@ -251,7 +270,7 @@ namespace ModuleESolver
     template <typename T>
     void ESolver_KS_LIP<T>::after_all_runners(BaseCell& basecell)
     {
-        basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+        basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
         UnitCell& ucell = static_cast<UnitCell&>(basecell);
         ESolver_KS_PW<T>::after_all_runners(basecell);
 
@@ -265,7 +284,7 @@ namespace ModuleESolver
             bool cal_exx = false;
             double hybrid_alpha = 0.0;
 #endif
-            ModuleIO::write_Vxc(this->inp_->nspin,
+            ModuleIO::write_Vxc_LIP(this->inp_->nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
                                 *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
@@ -279,6 +298,10 @@ namespace ModuleESolver
                                 this->chr,
                                 this->kv,
                                 this->pelec->wg,
+                                PARAM.globalv.gamma_only_local,
+                                PARAM.globalv.global_out_dir,
+                                this->inp_->out_ndigits,
+                                this->inp_->ks_solver,
                                 cal_exx,
                                 hybrid_alpha
 #ifdef __EXX

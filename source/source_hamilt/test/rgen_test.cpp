@@ -48,7 +48,7 @@ TEST_F(RgenTest, ZeroRmax)
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, 0.0, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
+    H_Ewald_pw::rgen(dtau, 0.0, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm, 0);
 
     EXPECT_EQ(nrm, 0);
 }
@@ -64,7 +64,7 @@ TEST_F(RgenTest, SimpleCubicNearestNeighbors)
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
+    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm, 0);
 
     EXPECT_EQ(nrm, 18);
 
@@ -98,7 +98,7 @@ TEST_F(RgenTest, SimpleCubicNonZeroDtau)
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
+    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm, 0);
 
     EXPECT_EQ(nrm, 2);
     for (int i = 0; i < nrm; ++i)
@@ -130,7 +130,7 @@ TEST_F(RgenTest, LargeRmaxExceedsOriginalLimit)
     std::vector<int> irr(mxr_test);
     int nrm = 0;
 
-    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm);
+    H_Ewald_pw::rgen(dtau, rmax, irr.data(), latvec, G, r.data(), r2.data(), mxr_test, nrm, 0);
 
     // Must exceed the old hard-coded limit that caused the crash
     EXPECT_GT(nrm, 200);

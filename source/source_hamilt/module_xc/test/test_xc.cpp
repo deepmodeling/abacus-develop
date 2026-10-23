@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "../xc_functional.h"
 #include "../libxc_abacus.h"
-#include "../exx_info.h"
 #include "xctest.h"
 
 /************************************************
@@ -16,19 +15,6 @@ namespace ModuleBase
     void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
     void TITLE(const std::string &class_function_name,bool disable){};
     void TITLE(const std::string &class_name,const std::string &function_name,bool disable){};
-}
-
-namespace GlobalV
-{
-    std::string BASIS_TYPE = "";
-    bool CAL_STRESS = 0;
-    int CAL_FORCE = 0;
-    int NSPIN = 1;
-}
-
-namespace GlobalC
-{
-	Exx_Info exx_info;
 }
 
 class XCTest_PBE : public XCTest

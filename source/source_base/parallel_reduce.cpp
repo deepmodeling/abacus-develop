@@ -73,6 +73,13 @@ void Parallel_Reduce::reduce_min_pool(const int& nproc_in_pool, T& v)
 #endif
 }
 
+void Parallel_Reduce::reduce_max(double* values, const int count)
+{
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, values, count, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+#endif
+}
+
 template <typename T>
 void Parallel_Reduce::reduce_max_pool(const int& nproc_in_pool, T& v)
 {
@@ -112,6 +119,7 @@ template void Parallel_Reduce::reduce_min<int>(int&);
 template void Parallel_Reduce::reduce_min<float>(float&);
 template void Parallel_Reduce::reduce_min<double>(double&);
 
+template void Parallel_Reduce::reduce_max<int>(int&);
 template void Parallel_Reduce::reduce_max<float>(float&);
 template void Parallel_Reduce::reduce_max<double>(double&);
 

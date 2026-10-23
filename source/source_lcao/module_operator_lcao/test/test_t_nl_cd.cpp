@@ -35,8 +35,8 @@ class TNLTest : public ::testing::Test
         ucell.ntype = 1;
         ucell.nat = test_size;
         ucell.atoms = new Atom[ucell.ntype];
-        ucell.iat2it = new int[ucell.nat];
-        ucell.iat2ia = new int[ucell.nat];
+        ucell.iat2it.resize(ucell.nat);
+        ucell.iat2ia.resize(ucell.nat);
         ucell.atoms[0].tau.resize(ucell.nat);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
         for (int iat = 0; iat < ucell.nat; iat++)
@@ -60,7 +60,7 @@ class TNLTest : public ::testing::Test
         ucell.set_iat2iwt(2);
         // for Nonlocal
         auto* lcao_nl = new LCAONonlocalInfo();
-        lcao_nl->get_nonlocal().Beta = new Numerical_Nonlocal[ucell.ntype];
+        lcao_nl->get_nonlocal().resize_Beta(ucell.ntype);
         ucell.infoNL.reset(lcao_nl);
         ucell.atoms[0].ncpp.d_real.create(5, 5);
         ucell.atoms[0].ncpp.d_real.zero_out();

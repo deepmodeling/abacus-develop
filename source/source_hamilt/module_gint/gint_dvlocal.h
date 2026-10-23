@@ -1,8 +1,10 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_DVLOCAL_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_DVLOCAL_H
+
 #include <memory>
 #include <vector>
 #include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "source_lcao/lcao_hs_arrays.hpp"
+#include "source_lcao/lcao_hs_arrays.h"
 #include "source_lcao/module_ri/abfs_vector3_order.h"
 #include "gint.h"
 #include "gint_info.h"
@@ -71,3 +73,5 @@ class Gint_dvlocal : public Gint
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_DVLOCAL_H

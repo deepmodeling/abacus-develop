@@ -1,16 +1,17 @@
 #include "psi_init_atomic.h"
+
+#include "source_base/global_variable.h"
+#include "source_base/math_integral.h" // for numerical integration
+#include "source_base/math_polyint.h"  // for polynomial interpolation
+#include "source_base/math_sphbes.h"   // for spherical bessel functions
+#include "source_base/math_ylmreal.h"  // for real spherical harmonics
+#include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/stru_fac.h"
-#include "source_pw/module_pwdft/soc.h"
-#include "source_base/math_integral.h" // for numerical integration
-#include "source_base/math_polyint.h" // for polynomial interpolation
-#include "source_base/math_ylmreal.h" // for real spherical harmonics
-#include "source_base/math_sphbes.h" // for spherical bessel functions
-#include "source_base/tool_quit.h"
-#include "source_base/timer.h"
-#include "source_base/global_variable.h"
 #include "source_io/module_output/write_pao.h"
+#include "source_pw/module_pwdft/soc.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 
 template <typename T>
 void psi_init_atomic<T>::allocate_ps_table()
@@ -24,12 +25,14 @@ void psi_init_atomic<T>::allocate_ps_table()
     }
     if (dim2 == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_table", 
+        ModuleBase::WARNING_QUIT(
+            "psi_init_atomic<T>::allocate_table",
             "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
     }
     if (this->nqx_ <= 0)
     {
-        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_ps_table",
+        ModuleBase::WARNING_QUIT(
+            "psi_init_atomic<T>::allocate_ps_table",
             "nqx_ must be greater than 0. Did you forget to call prepare_params() before initialize()?");
     }
     int dim3 = this->nqx_;
@@ -59,20 +62,20 @@ void psi_init_atomic<T>::prepare_params(const int& nqx,
 
 template <typename T>
 void psi_init_atomic<T>::initialize(const Structure_Factor* sf,
-    const ModulePW::PW_Basis_K* pw_wfc,
-    const UnitCell* p_ucell,
-    const std::vector<int>& ik2iktot,
-    const int& random_seed,
-    const int& rank,
-    const int& npol,
-    const int& nbands)
+                                    const ModulePW::PW_Basis_K* pw_wfc,
+                                    const UnitCell* p_ucell,
+                                    const std::vector<int>& ik2iktot,
+                                    const int& random_seed,
+                                    const int& rank,
+                                    const int& npol,
+                                    const int& nbands)
 {
     ModuleBase::timer::start("psi_init_atomic", "initialize");
 
     if (!this->params_prepared_)
     {
         ModuleBase::WARNING_QUIT("psi_init_atomic<T>::initialize",
-            "prepare_params() must be called before initialize()");
+                                 "prepare_params() must be called before initialize()");
     }
 
     psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
@@ -95,41 +98,42 @@ template <typename T>
 void psi_init_atomic<T>::tabulate()
 {
     ModuleBase::timer::start("psi_init_atomic", "tabulate");
-    
+
     GlobalV::ofs_running << "\n Make real space PAO into reciprocal space." << std::endl;
     ModuleIO::print_PAOs(*this->p_ucell_);
 
     // Find the type of atom that has most mesh points.
     int max_msh = 0;
-    for (int it=0; it<this->p_ucell_->ntype; it++)
+    for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
         max_msh = (this->p_ucell_->atoms[it].ncpp.msh > max_msh) ? this->p_ucell_->atoms[it].ncpp.msh : max_msh;
     }
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",max_msh);
-    
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "max mesh points in Pseudopotential", max_msh);
+
     this->ovlp_pswfcjlq_.zero_out();
     const int startq = 0;
     const double pref = ModuleBase::FOUR_PI / sqrt(this->p_ucell_->omega);
     std::vector<double> aux(max_msh);
     std::vector<double> vchi(max_msh);
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",this->dq_);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",this->nqx_);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "dq(describe PAO in reciprocal space)", this->dq_);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "max q", this->nqx_);
 
-    for (int it=0; it<this->p_ucell_->ntype; it++)
+    for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
         Atom* atom = &this->p_ucell_->atoms[it];
 
-        GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
+        GlobalV::ofs_running << "\n number of pseudo atomic orbitals for " << atom->label << " is " << atom->ncpp.nchi
+                             << std::endl;
 
         // QE uses atom->ncpp.mesh
         const int n_rgrid = (this->pseudo_mesh_) ? atom->ncpp.mesh : atom->ncpp.msh;
         std::vector<double> chi2(n_rgrid);
 
-        for (int ic = 0; ic < atom->ncpp.nchi ;ic++)
+        for (int ic = 0; ic < atom->ncpp.nchi; ic++)
         {
             // check the unit condition
-            for(int ir=0; ir<n_rgrid; ir++)
+            for (int ir = 0; ir < n_rgrid; ir++)
             {
                 double chi = atom->ncpp.chi(ic, ir);
                 chi2[ir] = chi * chi;
@@ -185,7 +189,10 @@ void psi_init_atomic<T>::tabulate()
                         {
                             norm_beta[ik] = atom->ncpp.betar(ib, ik) * atom->ncpp.chi(ic, ik);
                         }
-                        ModuleBase::Integral::Simpson_Integral(kkbeta, norm_beta.data(), atom->ncpp.rab.data(), work[ib]);
+                        ModuleBase::Integral::Simpson_Integral(kkbeta,
+                                                               norm_beta.data(),
+                                                               atom->ncpp.rab.data(),
+                                                               work[ib]);
                     }
                     else
                     {
@@ -237,14 +244,26 @@ void psi_init_atomic<T>::tabulate()
 
 std::complex<double> phase_factor(double arg, int mode)
 {
-    if(mode == 1) { return std::complex<double>(cos(arg),0); }
-    else if (mode == -1) { return std::complex<double>(0, sin(arg)); }
-    else if (mode == 0) { return std::complex<double>(cos(arg), sin(arg)); }
-    else { return std::complex<double>(1,0); }
+    if (mode == 1)
+    {
+        return std::complex<double>(cos(arg), 0);
+    }
+    else if (mode == -1)
+    {
+        return std::complex<double>(0, sin(arg));
+    }
+    else if (mode == 0)
+    {
+        return std::complex<double>(cos(arg), sin(arg));
+    }
+    else
+    {
+        return std::complex<double>(1, 0);
+    }
 }
 
 template <typename T>
-void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
+void psi_init_atomic<T>::init_psig(T* psig, const int& ik)
 {
     ModuleBase::timer::start("psi_init_atomic", "init_psig");
 
@@ -271,66 +290,74 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
     {
         for (int ia = 0; ia < this->p_ucell_->atoms[it].na; ia++)
         {
-/* FOR EVERY ATOM */
+            /* FOR EVERY ATOM */
             // I think it is always a BAD idea to new one pointer in a function, then return it
             // it indicates the ownership of the pointer and behind memory is transferred to the caller
             // then one must manually delete it, makes new-delete not symmetric
-            std::complex<double> *sk = this->sf_->get_sk(ik, it, ia, this->pw_wfc_);
+            std::complex<double>* sk = this->sf_->get_sk(ik, it, ia, this->pw_wfc_);
             for (int ipswfc = 0; ipswfc < this->p_ucell_->atoms[it].ncpp.nchi; ipswfc++)
             {
-/* FOR EVERY PSWFC OF ATOM */
+                /* FOR EVERY PSWFC OF ATOM */
                 if (this->p_ucell_->atoms[it].ncpp.oc[ipswfc] >= 0.0)
                 {
-/* IF IS OCCUPIED, GET L */
+                    /* IF IS OCCUPIED, GET L */
                     const int l = this->p_ucell_->atoms[it].ncpp.lchi[ipswfc];
                     std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, l);
 
-                    for (int ig=0; ig<npw; ig++)
+                    for (int ig = 0; ig < npw; ig++)
                     {
-                        ovlp_pswfcjlg[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
-                            this->ovlp_pswfcjlq_, it, ipswfc, 
-                            this->nqx_, this->dq_, gk[ig].norm() * this->p_ucell_->tpiba );
+                        ovlp_pswfcjlg[ig]
+                            = ModuleBase::PolyInt::Polynomial_Interpolation(this->ovlp_pswfcjlq_,
+                                                                            it,
+                                                                            ipswfc,
+                                                                            this->nqx_,
+                                                                            this->dq_,
+                                                                            gk[ig].norm() * this->p_ucell_->tpiba);
                     }
-/* NSPIN == 4 */
-                    if(this->nspin_ == 4)
+                    /* NSPIN == 4 */
+                    if (this->nspin_ == 4)
                     {
-                        if(this->p_ucell_->atoms[it].ncpp.has_so)
+                        if (this->p_ucell_->atoms[it].ncpp.has_so)
                         {
-                            Soc soc; soc.rot_ylm(l + 1);
+                            Soc soc;
+                            soc.rot_ylm(l + 1);
                             const double j = this->p_ucell_->atoms[it].ncpp.jchi[ipswfc];
-    /* NOT NONCOLINEAR CASE, rotation matrix become identity */
-                            if (!(this->domag_||this->domag_z_))
+                            /* NOT NONCOLINEAR CASE, rotation matrix become identity */
+                            if (!(this->domag_ || this->domag_z_))
                             {
                                 double cg_coeffs[2];
-                                for(int m = -l-1; m < l+1; m++)
+                                for (int m = -l - 1; m < l + 1; m++)
                                 {
                                     cg_coeffs[0] = soc.spinor(l, j, m, 0);
                                     cg_coeffs[1] = soc.spinor(l, j, m, 1);
                                     if (fabs(cg_coeffs[0]) > 1e-8 || fabs(cg_coeffs[1]) > 1e-8)
                                     {
-                                        for(int is = 0; is < 2; is++)
+                                        for (int is = 0; is < 2; is++)
                                         {
-                                            if(fabs(cg_coeffs[is]) > 1e-8)
+                                            if (fabs(cg_coeffs[is]) > 1e-8)
                                             {
-        /* GET COMPLEX SPHERICAL HARMONIC FUNCTION */
-                                                const int ind = this->lmaxkb_ + soc.sph_ind(l,j,m,is); // ind can be l+m, l+m+1, l+m-1
+                                                /* GET COMPLEX SPHERICAL HARMONIC FUNCTION */
+                                                const int ind
+                                                    = this->lmaxkb_
+                                                      + soc.sph_ind(l, j, m, is); // ind can be l+m, l+m+1, l+m-1
                                                 std::fill(aux.begin(), aux.end(), std::complex<double>(0.0, 0.0));
-                                                for(int n1 = 0; n1 < 2*l+1; n1++)
+                                                for (int n1 = 0; n1 < 2 * l + 1; n1++)
                                                 {
-                                                    const int lm = l*l +n1;
+                                                    const int lm = l * l + n1;
                                                     std::complex<double> umM = soc.rotylm(n1, ind);
-                                                    if(std::abs(umM) > 1e-8)
+                                                    if (std::abs(umM) > 1e-8)
                                                     {
-                                                        for(int ig = 0; ig < npw; ig++)
+                                                        for (int ig = 0; ig < npw; ig++)
                                                         {
                                                             aux[ig] += umM * ylm(lm, ig);
                                                         }
                                                     }
                                                 }
-                                                for(int ig = 0; ig < npw; ig++)
+                                                for (int ig = 0; ig < npw; ig++)
                                                 {
-                                                    psig[(2 * index + is) * npwk_max + ig] = this->template cast_to_T<T>(
-                                                        lphase * cg_coeffs[is] * sk[ig] * aux[ig] * ovlp_pswfcjlg[ig]);
+                                                    psig[(2 * index + is) * npwk_max + ig]
+                                                        = this->template cast_to_T<T>(lphase * cg_coeffs[is] * sk[ig]
+                                                                                      * aux[ig] * ovlp_pswfcjlg[ig]);
                                                 }
                                             }
                                             else
@@ -348,77 +375,84 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                             }
                             else
                             {
-    /* NONCONLINEAR CASE, will use [[cos(a/2)*exp(-ib/2), sin(a/2)*exp(ib/2)], [-sin(a/2)*exp(-ib/2), cos(a/2)*exp(ib/2)]] to rotate */
-                                int ipswfc_noncolin_soc=0;
-        /* J = L - 1/2 -> continue */
-        /* J = L + 1/2 */
-                                if(fabs(j - l + 0.5) < 1e-4)
+                                /* NONCONLINEAR CASE, will use [[cos(a/2)*exp(-ib/2), sin(a/2)*exp(ib/2)],
+                                 * [-sin(a/2)*exp(-ib/2), cos(a/2)*exp(ib/2)]] to rotate */
+                                int ipswfc_noncolin_soc = 0;
+                                /* J = L - 1/2 -> continue */
+                                /* J = L + 1/2 */
+                                if (fabs(j - l + 0.5) < 1e-4)
                                 {
                                     continue;
                                 }
                                 chiaux.clear();
                                 chiaux.resize(npw);
-        /* L == 0 */
-                                if(l == 0)
+                                /* L == 0 */
+                                if (l == 0)
                                 {
                                     std::memcpy(chiaux.data(), ovlp_pswfcjlg.data(), npw * sizeof(double));
                                 }
                                 else
                                 {
-        /* L != 0, scan pswfcs that have the same L and satisfy J(pswfc) = L - 0.5 */
-                                    for(int jpsiwfc = 0; jpsiwfc < this->p_ucell_->atoms[it].ncpp.nchi; jpsiwfc++)
+                                    /* L != 0, scan pswfcs that have the same L and satisfy J(pswfc) = L - 0.5 */
+                                    for (int jpsiwfc = 0; jpsiwfc < this->p_ucell_->atoms[it].ncpp.nchi; jpsiwfc++)
                                     {
-                                        if(
-                                            (this->p_ucell_->atoms[it].ncpp.lchi[jpsiwfc] == l)
-                                          &&(fabs(this->p_ucell_->atoms[it].ncpp.jchi[jpsiwfc] - l + 0.5) < 1e-4))
+                                        if ((this->p_ucell_->atoms[it].ncpp.lchi[jpsiwfc] == l)
+                                            && (fabs(this->p_ucell_->atoms[it].ncpp.jchi[jpsiwfc] - l + 0.5) < 1e-4))
                                         {
                                             ipswfc_noncolin_soc = jpsiwfc;
                                             break;
                                         }
                                     }
-                                    for(int ig=0;ig<npw;ig++)
+                                    for (int ig = 0; ig < npw; ig++)
                                     {
-            /* average <pswfc_a|jl(q)> and <pswfc_b(j=l-1/2)|jl(q)>, a and b seem not necessarily to be equal */
-                                        chiaux[ig] =  l *
-                                            ModuleBase::PolyInt::Polynomial_Interpolation(
-                                                this->ovlp_pswfcjlq_, it, ipswfc_noncolin_soc, 
-                                                this->nqx_, this->dq_, gk[ig].norm() * this->p_ucell_->tpiba);
-                                        chiaux[ig] += ovlp_pswfcjlg[ig] * (l + 1.0) ;
-                                        chiaux[ig] *= 1/(2.0*l+1.0);
+                                        /* average <pswfc_a|jl(q)> and <pswfc_b(j=l-1/2)|jl(q)>, a and b seem not
+                                         * necessarily to be equal */
+                                        chiaux[ig] = l
+                                                     * ModuleBase::PolyInt::Polynomial_Interpolation(
+                                                         this->ovlp_pswfcjlq_,
+                                                         it,
+                                                         ipswfc_noncolin_soc,
+                                                         this->nqx_,
+                                                         this->dq_,
+                                                         gk[ig].norm() * this->p_ucell_->tpiba);
+                                        chiaux[ig] += ovlp_pswfcjlg[ig] * (l + 1.0);
+                                        chiaux[ig] *= 1 / (2.0 * l + 1.0);
                                     }
                                 }
-            /* ROTATE ACCORDING TO NONCOLINEAR */
+                                /* ROTATE ACCORDING TO NONCOLINEAR */
                                 double alpha = this->p_ucell_->atoms[it].angle1[ia];
                                 double gamma = -1 * this->p_ucell_->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
                                 std::complex<double> fup, fdw;
 
-                                for(int m = 0; m < 2*l+1; m++)
+                                for (int m = 0; m < 2 * l + 1; m++)
                                 {
-                                    const int lm = l*l +m;
-                                    if(index+2*l+1 > this->p_ucell_->natomwfc)
+                                    const int lm = l * l + m;
+                                    if (index + 2 * l + 1 > this->p_ucell_->natomwfc)
                                     {
-                                        std::cout<<__FILE__<<__LINE__<<" "<<index<<" "<<this->p_ucell_->natomwfc<<std::endl;
-                                        //ModuleBase::WARNING_QUIT("psi_init_atomic<T>::init_psig()","error: too many wfcs");
+                                        std::cout << __FILE__ << __LINE__ << " " << index << " "
+                                                  << this->p_ucell_->natomwfc << std::endl;
+                                        // ModuleBase::WARNING_QUIT("psi_init_atomic<T>::init_psig()","error: too many
+                                        // wfcs");
                                     }
-                                    for(int ig = 0;ig<npw;ig++)
+                                    for (int ig = 0; ig < npw; ig++)
                                     {
-                                        aux[ig] = sk[ig] * ylm(lm,ig) * chiaux[ig];
+                                        aux[ig] = sk[ig] * ylm(lm, ig) * chiaux[ig];
                                     }
-                                    //rotate wfc as needed
-                                    //first rotation with angle alpha around (OX)
-                                    for(int ig = 0;ig<npw;ig++)
+                                    // rotate wfc as needed
+                                    // first rotation with angle alpha around (OX)
+                                    for (int ig = 0; ig < npw; ig++)
                                     {
-                                        fup = phase_factor(0.5*alpha,  1)*aux[ig];
-                                        fdw = phase_factor(0.5*alpha, -1)*aux[ig];
-                                        //build the orthogonal wfc
-                                        //first rotation with angle (alpha + ModuleBase::PI) around (OX)
+                                        fup = phase_factor(0.5 * alpha, 1) * aux[ig];
+                                        fdw = phase_factor(0.5 * alpha, -1) * aux[ig];
+                                        // build the orthogonal wfc
+                                        // first rotation with angle (alpha + ModuleBase::PI) around (OX)
                                         psig[index * 2 * npwk_max + ig]
                                             = this->template cast_to_T<T>(phase_factor(0.5 * gamma, 0) * fup);
                                         psig[(index * 2 + 1) * npwk_max + ig]
                                             = this->template cast_to_T<T>(phase_factor(-0.5 * gamma, 0) * fdw);
-                                        //second rotation with angle gamma around(OZ)
-                                        fup = phase_factor(0.5*(alpha + ModuleBase::PI),  1)*aux[ig];
-                                        fdw = phase_factor(0.5*(alpha + ModuleBase::PI), -1)*aux[ig];
+                                        // second rotation with angle gamma around(OZ)
+                                        fup = phase_factor(0.5 * (alpha + ModuleBase::PI), 1) * aux[ig];
+                                        fdw = phase_factor(0.5 * (alpha + ModuleBase::PI), -1) * aux[ig];
                                         psig[(index + 2 * l + 1) * 2 * npwk_max + ig]
                                             = this->template cast_to_T<T>(phase_factor(0.5 * gamma, 0) * fup);
                                         psig[((index + 2 * l + 1) * 2 + 1) * npwk_max + ig]
@@ -426,31 +460,33 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                                     }
                                     index++;
                                 }
-                                index += 2*l +1;
+                                index += 2 * l + 1;
                             }
                         }
                         else
-                        {//atomic_wfc_nc
-                            double alpha=0.0;
-                            double gamman=0.0;
+                        { // atomic_wfc_nc
+                            double alpha = 0.0;
+                            double gamman = 0.0;
                             std::complex<double> fup, fdown;
                             alpha = this->p_ucell_->atoms[it].angle1[ia];
                             gamman = -1 * this->p_ucell_->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
-                            for(int m = 0; m < 2*l+1; m++)
+                            for (int m = 0; m < 2 * l + 1; m++)
                             {
-                                const int lm = l*l +m;
-                                if(index+2*l+1 > this->p_ucell_->natomwfc)
+                                const int lm = l * l + m;
+                                if (index + 2 * l + 1 > this->p_ucell_->natomwfc)
                                 {
-                                    std::cout<<__FILE__<<__LINE__<<" "<<index<<" "<<this->p_ucell_->natomwfc<<std::endl;
-                                    //ModuleBase::WARNING_QUIT("psi_init_atomic<T>::init_psig()","error: too many wfcs");
+                                    std::cout << __FILE__ << __LINE__ << " " << index << " " << this->p_ucell_->natomwfc
+                                              << std::endl;
+                                    // ModuleBase::WARNING_QUIT("psi_init_atomic<T>::init_psig()","error: too many
+                                    // wfcs");
                                 }
-                                for(int ig = 0;ig<npw;ig++)
+                                for (int ig = 0; ig < npw; ig++)
                                 {
-                                     aux[ig] = sk[ig] * ylm(lm,ig) * ovlp_pswfcjlg[ig];
+                                    aux[ig] = sk[ig] * ylm(lm, ig) * ovlp_pswfcjlg[ig];
                                 }
-                                //rotate function
-                                //first, rotation with angle alpha around(OX)
-                                for(int ig = 0; ig<npw; ig++)
+                                // rotate function
+                                // first, rotation with angle alpha around(OX)
+                                for (int ig = 0; ig < npw; ig++)
                                 {
                                     fup = cos(0.5 * alpha) * aux[ig];
                                     fdown = ModuleBase::IMAG_UNIT * sin(0.5 * alpha) * aux[ig];
@@ -470,12 +506,12 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                                 }
                                 index++;
                             }
-                            index += 2*l+1;
+                            index += 2 * l + 1;
                         }
                     }
                     else
                     {
-                        for (int m = 0; m < 2*l+1; m++)
+                        for (int m = 0; m < 2 * l + 1; m++)
                         {
                             const int lm = l * l + m;
                             for (int ig = 0; ig < npw; ig++)
@@ -488,11 +524,11 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                     }
                 }
             }
-            delete [] sk;
+            delete[] sk;
         }
     }
     /* complement the rest of bands if there are */
-    if(this->nbands_complem() > 0)
+    if (this->nbands_complem() > 0)
     {
         this->random_t(psig, index, this->nbands_start_, ik);
     }

@@ -55,26 +55,26 @@ AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
     const std::string dft_functional_ = dft_functional;
     read_cell_pseudopots(pseudo_dir_, ofs, ucell, global_out_dir_, dft_functional_, lspinorb, pseudo_rcut, soc_lambda);
 
-	if (GlobalV::MY_RANK == 0) 
-	{
-		for (int it = 0; it < ucell.ntype; it++) 
-		{
-			Atom* atom = &ucell.atoms[it];
-			if (!(atom->label_orb.empty())) 
-			{
+    if (GlobalV::MY_RANK == 0) 
+    {
+        for (int it = 0; it < ucell.ntype; it++) 
+        {
+            Atom* atom = &ucell.atoms[it];
+            if (!(atom->label_orb.empty())) 
+            {
                 unitcell::compare_atom_labels(atom->label_orb, atom->ncpp.psd);
             }
         }
 
-		if (out_element_info_) 
-		{
-			for (int i = 0; i < ucell.ntype; i++) 
-			{
-				ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label, global_out_dir_);
+        if (out_element_info_) 
+        {
+            for (int i = 0; i < ucell.ntype; i++) 
+            {
+                ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label, global_out_dir_);
             }
-			for (int it = 0; it < ucell.ntype; it++) 
-			{
-				Atom* atom = &ucell.atoms[it];
+            for (int it = 0; it < ucell.ntype; it++) 
+            {
+                Atom* atom = &ucell.atoms[it];
                 std::stringstream ss;
                 ss << global_out_dir_ << atom->label << "/"
                    << atom->label << ".NONLOCAL";
@@ -181,20 +181,20 @@ AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
               basis_type, esolver_type, init_wfc, nbands);
 
     // Check whether the number of valence is minimum
-	if (GlobalV::MY_RANK == 0) 
-	{
-		int abtype = 0;
-		for (int it = 0; it < ucell.ntype; it++) 
-		{
-			if (ModuleBase::MinZval.find(ucell.atoms[it].ncpp.psd)
-					!= ModuleBase::MinZval.end()) 
-			{
-				if (ucell.atoms[it].ncpp.zv
-						> ModuleBase::MinZval.at(ucell.atoms[it].ncpp.psd)) 
-				{
+    if (GlobalV::MY_RANK == 0) 
+    {
+        int abtype = 0;
+        for (int it = 0; it < ucell.ntype; it++) 
+        {
+            if (ModuleBase::MinZval.find(ucell.atoms[it].ncpp.psd)
+                    != ModuleBase::MinZval.end()) 
+            {
+                if (ucell.atoms[it].ncpp.zv
+                        > ModuleBase::MinZval.at(ucell.atoms[it].ncpp.psd)) 
+                {
                     abtype += 1;
-					if (abtype == 1) 
-					{
+                    if (abtype == 1) 
+                    {
                         std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                                      "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                                      "%%%%%%%%%%%%%%%%%%%%%%%%%%"
@@ -219,9 +219,9 @@ AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
                 }
             }
         }
-		if (abtype > 0) 
-		{
-			std::cout << " Pseudopotentials with additional electrons can "
+        if (abtype > 0) 
+        {
+            std::cout << " Pseudopotentials with additional electrons can "
                          "yield (more) accurate outcomes, but may be "
                          "less efficient."
                       << std::endl;
@@ -347,7 +347,7 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
 
         if (GlobalV::MY_RANK == 0)
         {
-		    upf.complete_default(ucell.atoms[i].ncpp, pseudo_rcut_);
+            upf.complete_default(ucell.atoms[i].ncpp, pseudo_rcut_);
 
             log << std::endl;
             ModuleBase::GlobalFunc::OUT(log, "Pseudopotential file", ucell.pseudo_fn[i]);

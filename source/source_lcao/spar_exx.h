@@ -14,7 +14,7 @@
 
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
-#include "source_lcao/lcao_hs_arrays.hpp"
+#include "source_lcao/lcao_hs_arrays.h"
 
 // --------------------------------------------------------
 // Namespace - merged into one block

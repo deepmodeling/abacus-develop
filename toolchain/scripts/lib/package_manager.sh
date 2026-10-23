@@ -62,7 +62,7 @@ package_manager_define_dependencies() {
     # Stage 4: Advanced Libraries
     PACKAGE_DEPENDENCIES["dftd4"]="cmake"
     PACKAGE_DEPENDENCIES["cereal"]="gcc cmake"
-    PACKAGE_DEPENDENCIES["rapidjson"]="gcc cmake"
+    PACKAGE_DEPENDENCIES["json"]="gcc cmake"
     PACKAGE_DEPENDENCIES["libtorch"]="gcc cmake"
     PACKAGE_DEPENDENCIES["libnpy"]="gcc cmake"
     PACKAGE_DEPENDENCIES["libri"]="gcc cmake"

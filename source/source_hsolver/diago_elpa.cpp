@@ -1,15 +1,11 @@
 #include "diago_elpa.h"
-#include "source_base/global_function.h"
-#include "source_base/module_external/blas_connector.h"
 
 #include "module_genelpa/elpa_solver.h"
 #include "source_base/module_external/blacs_connector.h"
-#include "source_base/global_variable.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
+#include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
-
-typedef hamilt::MatrixBlock<double> matd;
-typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver {
 #ifdef __MPI
@@ -66,14 +62,12 @@ MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm() {
 #endif
 template <>
 void DiagoElpa<std::complex<double>>::diag(
-    hamilt::Hamilt<std::complex<double>>* phm_in,
+    ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
     psi::Psi<std::complex<double>>& psi,
     Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
-    matcd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
-
     std::vector<double> eigen(this->nlocal, 0.0);
 
     bool isReal = false;
@@ -104,14 +98,12 @@ void DiagoElpa<std::complex<double>>::diag(
 }
 
 template <>
-void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
+void DiagoElpa<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
+                             ModuleBase::MatrixBlock<double>& s_mat,
                              psi::Psi<double>& psi,
                              Real* eigenvalue_in) {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
-    matd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
-
     std::vector<double> eigen(this->nlocal, 0.0);
 
     bool isReal = true;
@@ -142,8 +134,8 @@ void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
 
 #ifdef __MPI
 template <>
-void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex<double>>& h_mat,
-    hamilt::MatrixBlock<std::complex<double>>& s_mat,
+void DiagoElpa<std::complex<double>>::diag_pool(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
     psi::Psi<std::complex<double>>& psi,
     Real* eigenvalue_in,
     MPI_Comm& comm)
@@ -171,8 +163,8 @@ void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex
 }
 
 template <>
-void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
-    hamilt::MatrixBlock<double>& s_mat,
+void DiagoElpa<double>::diag_pool(ModuleBase::MatrixBlock<double>& h_mat,
+    ModuleBase::MatrixBlock<double>& s_mat,
     psi::Psi<double>& psi,
     Real* eigenvalue_in,
     MPI_Comm& comm)
@@ -196,11 +188,7 @@ void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
     es.exit();
 
     const int inc = 1;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                "K-S equation was solved by genelpa2");
     BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                "eigenvalues were copied to ekb");
 }
 #endif
 

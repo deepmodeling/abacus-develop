@@ -15,12 +15,12 @@
 #include <sstream>
 
 void YukawaScreening::init(const UnitCell& cell,
-                           const std::vector<int>& orbital_corr,
+                           const std::vector<int>& l_channel,
                            double yukawa_lambda_cfg)
 {
     this->yukawa_lambda_cfg_ = yukawa_lambda_cfg;
     this->lambda_ = 0.0;
-    this->orbital_corr_ = orbital_corr;
+    this->l_channel_ = l_channel;
 
     this->Fk_.resize(cell.ntype);
     this->U_Yukawa_.resize(cell.ntype);
@@ -43,10 +43,10 @@ void YukawaScreening::init(const UnitCell& cell,
             {
                 this->Fk_[it][l][n].resize(l + 1, 0.0);
             }
-
-            this->U_Yukawa_[it][l].resize(N, 0.0);
-            this->J_Yukawa_[it][l].resize(N, 0.0);
         }
+        // only the first radial channel (n=0) of each l carries U/J
+        this->U_Yukawa_[it].resize(NL, 0.0);
+        this->J_Yukawa_[it].resize(NL, 0.0);
     }
 }
 
@@ -214,9 +214,9 @@ void YukawaScreening::cal_slater_UJ(const UnitCell& ucell,
 
         for (int L = 0; L < NL; L++)
         {
-            if (L >= this->orbital_corr_[T] && this->orbital_corr_[T] != -1)
+            if (L >= this->l_channel_[T] && this->l_channel_[T] != -1)
             {
-                if (L != this->orbital_corr_[T])
+                if (L != this->l_channel_[T])
                 {
                     continue;
                 }
@@ -224,25 +224,25 @@ void YukawaScreening::cal_slater_UJ(const UnitCell& ucell,
 
                 if (L == 1)
                 {
-                    this->U_Yukawa_[T][L][0] = this->Fk_[T][L][0][0];
-                    this->J_Yukawa_[T][L][0] = this->Fk_[T][L][0][1] / 5.0;
+                    this->U_Yukawa_[T][L] = this->Fk_[T][L][0][0];
+                    this->J_Yukawa_[T][L] = this->Fk_[T][L][0][1] / 5.0;
                 }
                 else if (L == 2)
                 {
-                    this->U_Yukawa_[T][L][0] = this->Fk_[T][L][0][0];
-                    this->J_Yukawa_[T][L][0] = (this->Fk_[T][L][0][1] + this->Fk_[T][L][0][2]) / 14.0;
+                    this->U_Yukawa_[T][L] = this->Fk_[T][L][0][0];
+                    this->J_Yukawa_[T][L] = (this->Fk_[T][L][0][1] + this->Fk_[T][L][0][2]) / 14.0;
                 }
                 else if (L == 3)
                 {
-                    this->U_Yukawa_[T][L][0] = this->Fk_[T][L][0][0];
-                    this->J_Yukawa_[T][L][0] = (286.0 * this->Fk_[T][L][0][1]
+                    this->U_Yukawa_[T][L] = this->Fk_[T][L][0][0];
+                    this->J_Yukawa_[T][L] = (286.0 * this->Fk_[T][L][0][1]
                                                 + 195.0 * this->Fk_[T][L][0][2]
                                                 + 250.0 * this->Fk_[T][L][0][3]) / 6435.0;
                 }
 
                 // Hartree to Rydeberg
-                this->U_Yukawa_[T][L][0] *= 2.0;
-                this->J_Yukawa_[T][L][0] *= 2.0;
+                this->U_Yukawa_[T][L] *= 2.0;
+                this->J_Yukawa_[T][L] *= 2.0;
             } // end if
         } // end L
     } // end T

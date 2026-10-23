@@ -43,8 +43,8 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
         const int npol,
         const T* tmpsi_in,
         T* tmhpsi,
-		const int ngk = 0,
-		const bool is_first_node = false)const override;
+        const int ngk = 0,
+        const bool is_first_node = false)const override;
 
     const int *get_isk() const {return this->isk;}
     const UnitCell *get_ucell() const {return this->ucell;}

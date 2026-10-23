@@ -35,7 +35,7 @@ class Evolve_OFDFT
                        std::vector<std::complex<double>>& pphi_, 
                        ModulePW::PW_Basis* pw_rho);
 
-    void renormalize_psi(Charge& chr, ModulePW::PW_Basis* pw_rho, std::vector<std::complex<double>>& pphi_);
+    void renormalize_psi(Charge& chr, ModulePW::PW_Basis* pw_rho, std::vector<std::complex<double>>& pphi_, const double omega);
 
   private:
     const double c_tf_

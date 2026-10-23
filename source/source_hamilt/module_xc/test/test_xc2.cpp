@@ -2,7 +2,6 @@
 #include "xctest.h"
 #include "../xc_functional.h"
 #include "../libxc_abacus.h"
-#include "../exx_info.h"
 /************************************************
 *  unit test of functionals
 ***********************************************/
@@ -15,19 +14,6 @@ namespace ModuleBase
     void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
     void TITLE(const std::string &class_function_name,bool disable){};
     void TITLE(const std::string &class_name,const std::string &function_name,bool disable){};
-}
-
-namespace GlobalV
-{
-    std::string BASIS_TYPE = "";
-    bool CAL_STRESS = false;
-    int CAL_FORCE = 0;
-    int NSPIN = 2;
-}
-
-namespace GlobalC
-{
-	Exx_Info exx_info;
 }
 
 class XCTest_PBE_SPN : public XCTest

@@ -55,16 +55,6 @@ public:
     /// @brief lsign_
     bool lsign_=false;
 
-private:
-    /**
-     * @brief Judge if two vectors are parallel.
-     *
-     * @param a first vector
-     * @param b second vector
-     * @return true if vectors are parallel
-     */
-    bool judge_parallel(const double a[3], const ModuleBase::Vector3<double> &b);
-
 };
 
 /**

@@ -1,27 +1,12 @@
-/// @file dftu_nao_for_r.h
-/// @brief DFT+U force calculation in real space (r-space)
-///
-/// This file provides the real-space implementation of DFT+U force contribution
-/// from a single atom pair (I,J,R). It is independent of k-point sampling because
-/// the real-space density matrix (DMR) already contains the Brillouin-zone integration.
-///
-/// Naming convention: _r suffix denotes real-space implementation,
-/// corresponding to _k suffix for k-space (legacy) implementation.
-///
-/// The force formula for atom pair (I,J,R) is:
-///
-///   F_{J1} += sum_{m,m'} V_U_{mm'}(I) * <phi_{mu,0}|chi_m(I)>
-///             * d<chi_m'(I)|phi_{nu,R}>/d tau_{J1} * DMR_{mu,nu}(J1,J2,R)
-///
-///   F_{J2} -= sum_{m,m'} V_U_{mm'}(I) * d<phi_{mu,0}|chi_m(I)>/d tau_{J2}
-///             * <chi_m'(I)|phi_{nu,R}> * DMR_{mu,nu}(J1,J2,R)
-///
-/// where V_U_{mm'}(I) = U_eff * (delta_{mm'}/2 - n_{m'm}(I)) is the on-site
-/// Hubbard potential, and the two-center integrals <phi|chi> are pre-computed
-/// by TwoCenterIntegrator::snap().
-
 #ifndef DFTU_NAO_FOR_R_H
 #define DFTU_NAO_FOR_R_H
+
+/// @file dftu_nao_for_r.h
+/// @brief DFT+U force contribution from a single atom pair (I,J,R) in real space
+///
+/// Per-pair kernel invoked by the unified entry cal_fs_nao_r (dftu_nao_fs_r.h).
+/// Naming convention: _r suffix denotes the real-space implementation,
+/// corresponding to _k for the k-space (legacy) one.
 
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
@@ -29,15 +14,8 @@
 #include <unordered_map>
 #include <vector>
 
-namespace hamilt
+namespace DFTU_LCAO
 {
-
-// Forward declarations to avoid circular dependency with dftu_lcao_op.h
-template <typename TK, typename TR>
-class OperatorLCAO;
-
-template <typename T>
-class DFTU;
 
 /**
  * @brief Compute DFT+U force contribution from a single atom pair (I,J,R) in real space
@@ -64,7 +42,9 @@ class DFTU;
  * @param nlm2_all    [in] pre-computed <phi|chi> and derivatives for atom J2
  * @param pot_onsite  [in] flattened V_U matrix: [m1*m_size + m2 + is*m_size2]
  * @param dmR_pointer [in] pointer to DMR matrix blocks for each spin
- * @param nspin       [in] number of spin channels (1, 2, or 4)
+ * @param nspin       [in] number of spin channels (1, 2, or 4); the spinor
+ *                     polarization count is derived as npol = 2 for nspin=4
+ *                     (non-collinear) and npol = 1 otherwise
  * @param force1      [out] force accumulator for atom J1 (3 components)
  * @param force2      [out] force accumulator for atom J2 (3 components)
  *
@@ -72,9 +52,7 @@ class DFTU;
  *       for spin degeneracy. For nspin=2, spin-up and spin-down are summed explicitly.
  *       For nspin=4 (non-collinear), the spinor structure is handled via npol=2 indexing.
  */
-template <typename TK, typename TR>
-void cal_for_IJR_nao_r(const DFTU<OperatorLCAO<TK, TR>>* dftu_op,
-                     const int& iat1,
+void cal_for_IJR_nao_r(const int& iat1,
                      const int& iat2,
                      const Parallel_Orbitals* pv,
                      const std::unordered_map<int, std::vector<double>>& nlm1_all,
@@ -85,6 +63,6 @@ void cal_for_IJR_nao_r(const DFTU<OperatorLCAO<TK, TR>>* dftu_op,
                      double* force1,
                      double* force2);
 
-} // namespace hamilt
+} // namespace DFTU_LCAO
 
 #endif // DFTU_NAO_FOR_R_H

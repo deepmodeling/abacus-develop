@@ -8,15 +8,7 @@
 
 namespace hamilt {
 
-// Not needed anymore
-#ifndef __EKINETICTEMPLATE
-#define __EKINETICTEMPLATE
-
 template<class T> class Ekinetic : public T {};
-// template<typename R, typename Device = base_device::DEVICE_CPU>
-// class Ekinetic : public OperatorPW<T, Device> {};
-
-#endif
 
 // template<typename R, typename Device = base_device::DEVICE_CPU>
 // class Ekinetic : public OperatorPW<T, Device>

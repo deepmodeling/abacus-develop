@@ -1,5 +1,4 @@
 #include "xc_functional.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_title.h"
 #include "source_base/constants.h"
@@ -20,7 +19,48 @@ bool XC_Functional::need_laplacian = false;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
 double XC_Functional::hse_omega = 0.0;
+XCFunctionalParameters XC_Functional::runtime_parameters;
 std::map<int, double> XC_Functional::scaling_factor_xc = { {1, 1.0} }; // added by jghan, 2024-10-10
+
+XC_Functional::ScopedType::ScopedType(const std::string& functional)
+    : func_id_(XC_Functional::func_id), func_type_(XC_Functional::func_type),
+      ked_flag_(XC_Functional::ked_flag), need_laplacian_(XC_Functional::need_laplacian),
+      use_libxc_(XC_Functional::use_libxc), hybrid_alpha_(XC_Functional::hybrid_alpha),
+      hse_omega_(XC_Functional::hse_omega), runtime_parameters_(XC_Functional::runtime_parameters),
+      scaling_factor_xc_(XC_Functional::scaling_factor_xc)
+{
+    try
+    {
+        XC_Functional::set_xc_type(functional);
+    }
+    catch (...)
+    {
+        restore();
+        throw;
+    }
+}
+
+XC_Functional::ScopedType::~ScopedType()
+{
+    restore();
+}
+
+void XC_Functional::ScopedType::restore() noexcept
+{
+    XC_Functional::func_id.swap(func_id_);
+    XC_Functional::func_type = func_type_;
+    XC_Functional::ked_flag = ked_flag_;
+    XC_Functional::need_laplacian = need_laplacian_;
+    XC_Functional::use_libxc = use_libxc_;
+    XC_Functional::hybrid_alpha = hybrid_alpha_;
+    XC_Functional::hse_omega = hse_omega_;
+    XC_Functional::runtime_parameters.xc_temperature = runtime_parameters_.xc_temperature;
+    XC_Functional::runtime_parameters.exx_fock_alpha.swap(runtime_parameters_.exx_fock_alpha);
+    XC_Functional::runtime_parameters.exx_erfc_alpha.swap(runtime_parameters_.exx_erfc_alpha);
+    XC_Functional::runtime_parameters.xc_exch_ext.swap(runtime_parameters_.xc_exch_ext);
+    XC_Functional::runtime_parameters.xc_corr_ext.swap(runtime_parameters_.xc_corr_ext);
+    XC_Functional::scaling_factor_xc.swap(scaling_factor_xc_);
+}
 
 void XC_Functional::set_hybrid_alpha(const double alpha_in)
 {
@@ -30,6 +70,11 @@ void XC_Functional::set_hybrid_alpha(const double alpha_in)
 void XC_Functional::set_hse_omega(const double omega_in)
 {
     hse_omega = omega_in;
+}
+
+void XC_Functional::set_runtime_parameters(const XCFunctionalParameters& parameters)
+{
+    runtime_parameters = parameters;
 }
 
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
@@ -340,7 +385,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     need_laplacian = false;
 #endif
 
-    if (func_id[0] == XC_GGA_X_OPTX)
+    if (!func_id.empty() && func_id[0] == XC_GGA_X_OPTX)
     {
         std::cerr << "\n OPTX untested please test,";
     }

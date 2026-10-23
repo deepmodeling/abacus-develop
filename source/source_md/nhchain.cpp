@@ -6,7 +6,12 @@
 #endif
 #include "source_base/timer.h"
 
-Nose_Hoover::Nose_Hoover(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
+Nose_Hoover::Nose_Hoover(const MD_para& mdp_in,
+                         const bool cal_stress_in,
+                         const bool init_vel,
+                         const int my_rank_in,
+                         MDCell& mdcell_in)
+    : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
 
@@ -154,12 +159,12 @@ Nose_Hoover::~Nose_Hoover()
     }
 }
 
-void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("Nose_Hoover", "setup");
     ModuleBase::timer::start("Nose_Hoover", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, decomp);
 
     /// determine target temperature
     t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
@@ -550,7 +555,7 @@ void Nose_Hoover::particle_thermo()
     }
 
     /// rescale velocity due to thermostats
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel *= scale;
+    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= scale;
 }
 
 void Nose_Hoover::baro_thermo()
@@ -695,7 +700,7 @@ void Nose_Hoover::vel_baro()
         factor[i] = exp(-(v_omega[i] + mtk_term) * md_dt / 4);
     }
 
-    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    for (LocalAtom& atom : mdcell.owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {

@@ -51,8 +51,6 @@ TEST_F(cal_pseudo_test, gauss_charge)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -76,7 +74,7 @@ TEST_F(cal_pseudo_test, gauss_charge)
     Structure_Factor sf;
     sf.nbspline = -1;
 
-    sf.setup(&ucell, pgrid, &pwtest);
+    sf.setup(&ucell, pgrid, &pwtest, false);
 
     solvent_model.gauss_charge(ucell, pgrid, &pwtest, N, &sf);
 
@@ -107,8 +105,6 @@ TEST_F(cal_pseudo_test, cal_pseudo)
 
     // init
 #ifdef __MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
     MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &POOL_WORLD); // in LCAO kpar=1
 #endif
 
@@ -128,7 +124,7 @@ TEST_F(cal_pseudo_test, cal_pseudo)
 
     Structure_Factor sf;
     sf.nbspline = -1;
-    sf.setup(&ucell, pgrid, &pwtest); // sf.setup is moved to here
+    sf.setup(&ucell, pgrid, &pwtest, false); // sf.setup is moved to here
 
     std::complex<double>* Porter_g = new std::complex<double>[npw];
     ModuleBase::GlobalFunc::ZEROS(Porter_g, npw);
@@ -151,8 +147,6 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

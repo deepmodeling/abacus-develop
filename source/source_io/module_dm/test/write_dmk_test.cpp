@@ -1,8 +1,12 @@
-#include "source_io/module_dm/write_dmk.h"
+#include <iomanip>
+#include <sstream>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
 
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
+#include "source_io/module_dm/write_dmk.h"
 #include "source_base/global_variable.h"
 #include "../../test/prepare_unitcell.h"
 
@@ -137,14 +141,14 @@ TEST(DMKTest,WriteDMK) {
 
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
     gen_dmk(dmk_multik, efs, nspin, nk_multik, nlocal, pv);
-    PARAM.sys.global_out_dir = "./";
+    const std::string out_dir = "./";
 
     const int istep = -1;
     K_Vectors kv;
     kv.set_nkstot(1);
-    kv.set_nkstot_full(1);
+    kv.set_nkstot_nospin(1);
     kv.set_nks(1);
-    kv.set_nspin(2);
+    kv.set_spin_mult(2);
     kv.kvec_c.resize(1);
     kv.kvec_c[0].x = 0.0;
     kv.kvec_c[0].y = 0.0;
@@ -160,8 +164,9 @@ TEST(DMKTest,WriteDMK) {
     kv.kc_done = true;
     kv.kd_done = true;
     
-    ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, istep);
-    ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, istep);
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, out_dir, istep, ofs_log);
+    ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, out_dir, istep, ofs_log);
     
     std::ifstream ifs;
 
@@ -236,7 +241,6 @@ TEST(DMKTest, ReadDMK) {
     std::vector<std::vector<std::complex<double>>> dmk_multik;
     Parallel_2D pv;
     std::vector<double> efs;
-    PARAM.sys.global_out_dir = "./";
 
     init_pv(nlocal, pv);
 
@@ -295,7 +299,7 @@ int main(int argc, char** argv)
     if (GlobalV::MY_RANK == 0 && result != 0)
     {
         std::cout << "ERROR:some tests are not passed" << std::endl;
-	}
+    }
 
     MPI_Finalize();
     return result;

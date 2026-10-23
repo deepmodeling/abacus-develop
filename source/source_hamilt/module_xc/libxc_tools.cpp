@@ -3,7 +3,10 @@
 #include "libxc_abacus.h"
 #include "xc_functional.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_io/module_parameter/parameter.h"
+
+#include <algorithm>
+#include <cassert>
+#include <stdexcept>
 
 // converting rho (abacus=>libxc)
 std::vector<double> XC_Functional_Libxc::convert_rho(
@@ -32,7 +35,7 @@ XC_Functional_Libxc::convert_rho_amag_nspin4(
 	const std::size_t nrxx,
 	const Charge* const chr)
 {
-	assert(PARAM.inp.nspin==4);
+	assert(nspin==2); // nspin here is the collapsed spin dimension for libxc (up/down)
 	std::vector<double> rho(nrxx*nspin);
 	std::vector<double> amag(nrxx);
 	#ifdef _OPENMP
@@ -49,6 +52,125 @@ XC_Functional_Libxc::convert_rho_amag_nspin4(
 		rho[ir*nspin+1] = (arhox - amag_clip) / 2.0;
 	}
 	return std::make_tuple(std::move(rho), std::move(amag));
+}
+
+XC_Functional_Libxc::NclSfDiscreteData
+XC_Functional_Libxc::make_ncl_sf_discrete_data(
+	const std::size_t nrxx,
+	const double tpiba,
+	const Charge* const chr,
+	const bool need_gradient)
+{
+	constexpr int nspin = 2;
+	NclSfDiscreteData data;
+	data.spin_map.resize(nrxx);
+	data.rho.resize(nrxx * nspin);
+
+	#ifdef _OPENMP
+	#pragma omp parallel for schedule(static, 1024)
+	#endif
+	for (std::size_t ir = 0; ir < nrxx; ++ir)
+	{
+		const std::array<double, 3> magnetization
+			= {{chr->rho[1][ir], chr->rho[2][ir], chr->rho[3][ir]}};
+		const ModuleXC::NcggaRadialPoint radial
+			= ModuleXC::make_ncgga_radial_point(
+				magnetization, ModuleXC::ncgga_lca_radial_eta());
+		data.spin_map[ir] = ModuleXC::make_ncgga_spin_map_point(
+			chr->rho[0][ir] + chr->rho_core[ir], radial);
+		data.rho[ir * nspin] = data.spin_map[ir].spin_density[0];
+		data.rho[ir * nspin + 1] = data.spin_map[ir].spin_density[1];
+	}
+
+	if (!need_gradient)
+	{
+		return data;
+	}
+
+	// Differentiate the mapped spin densities with the actual FFT operator.
+	// The reverse must apply its adjoint before the local map Jacobian.
+	data.spin_gradient = cal_gdr(nspin, nrxx, data.rho, tpiba, chr);
+	return data;
+}
+
+ModuleBase::matrix XC_Functional_Libxc::reverse_ncl_sf_discrete(
+	const std::size_t nrxx,
+	const NclSfDiscreteData& data,
+	const std::vector<double>& drho,
+	const std::vector<double>& dsigma,
+	const double tpiba,
+	const Charge* const chr)
+{
+	constexpr int nspin = 2;
+	constexpr int nchannel = 4;
+	assert(data.spin_map.size() == nrxx);
+	assert(data.rho.size() == nrxx * nspin);
+	assert(drho.size() == nrxx * nspin);
+
+	ModuleBase::matrix potential(nchannel, nrxx);
+	#ifdef _OPENMP
+	#pragma omp parallel for schedule(static, 512)
+	#endif
+	for (std::size_t ir = 0; ir < nrxx; ++ir)
+	{
+		for (int channel = 0; channel < nchannel; ++channel)
+		{
+			potential(channel, ir)
+				= ModuleBase::e2
+				  * (data.spin_map[ir].jacobian(0, channel)
+					 * drho[ir * nspin]
+					 + data.spin_map[ir].jacobian(1, channel)
+						   * drho[ir * nspin + 1]);
+		}
+	}
+
+	if (dsigma.empty())
+	{
+		return potential;
+	}
+
+	assert(dsigma.size() == nrxx * 3);
+	assert(data.spin_gradient.size() == nspin);
+	for (int spin = 0; spin < nspin; ++spin)
+	{
+		assert(data.spin_gradient[spin].size() == nrxx);
+	}
+
+	std::vector<ModuleBase::Vector3<double>> h_up(nrxx);
+	std::vector<ModuleBase::Vector3<double>> h_down(nrxx);
+	#ifdef _OPENMP
+	#pragma omp parallel for schedule(static, 512)
+	#endif
+	for (std::size_t ir = 0; ir < nrxx; ++ir)
+	{
+		const std::size_t sigma_index = 3 * ir;
+		h_up[ir]
+			= ModuleBase::e2
+			  * (2.0 * dsigma[sigma_index] * data.spin_gradient[0][ir]
+				 + dsigma[sigma_index + 1] * data.spin_gradient[1][ir]);
+		h_down[ir]
+			= ModuleBase::e2
+			  * (2.0 * dsigma[sigma_index + 2] * data.spin_gradient[1][ir]
+				 + dsigma[sigma_index + 1] * data.spin_gradient[0][ir]);
+	}
+
+	std::vector<double> divergence_up(nrxx);
+	std::vector<double> divergence_down(nrxx);
+	XC_Functional::grad_dot(h_up.data(), divergence_up.data(), chr->rhopw, tpiba);
+	XC_Functional::grad_dot(h_down.data(), divergence_down.data(), chr->rhopw, tpiba);
+	#ifdef _OPENMP
+	#pragma omp parallel for schedule(static, 512)
+	#endif
+	for (std::size_t ir = 0; ir < nrxx; ++ir)
+	{
+		for (int channel = 0; channel < nchannel; ++channel)
+		{
+			potential(channel, ir)
+				-= data.spin_map[ir].jacobian(0, channel) * divergence_up[ir]
+				   + data.spin_map[ir].jacobian(1, channel) * divergence_down[ir];
+		}
+	}
+	return potential;
 }
 
 // calculating grho
@@ -189,6 +311,68 @@ std::vector<double> XC_Functional_Libxc::cal_sgn(
 	return sgn;
 }
 
+// threshold masks for the xc potential, following the convention of Quantum
+// ESPRESSO's libxc interface (XClib/xc_wrapper_gga.f90): the first mask
+// applies to exc and vrho (kept down to rho_threshold_vrho), the second one
+// applies only to the vsigma (gradient) term
+std::pair<std::vector<double>, std::vector<double>> XC_Functional_Libxc::cal_sgn_vxc(
+	const double rho_threshold_vrho,
+	const double rho_threshold_vsigma,
+	const double grho_threshold_vsigma,
+	const xc_func_type &func,
+	const int nspin,
+	const std::size_t nrxx,
+	const std::vector<double> &rho,
+	const std::vector<double> &sigma)
+{
+	std::vector<double> sgn_vrho(nrxx*nspin, 1.0);
+	std::vector<double> sgn_vsigma(nrxx*nspin, 1.0);
+	const bool is_gga = (func.info->family == XC_FAMILY_GGA
+	                  || func.info->family == XC_FAMILY_HYB_GGA);
+	if(nspin==1)
+	{
+		#ifdef _OPENMP
+		#pragma omp parallel for schedule(static, 1024)
+		#endif
+		for( std::size_t ir=0; ir<nrxx; ++ir )
+		{
+			if( rho[ir] <= rho_threshold_vrho )
+			{
+				sgn_vrho[ir] = 0.0;
+			}
+			if( is_gga && (rho[ir] <= rho_threshold_vsigma
+				|| std::sqrt(std::abs(sigma[ir])) <= grho_threshold_vsigma) )
+			{
+				sgn_vsigma[ir] = 0.0;
+			}
+		}
+	}
+	else
+	{
+		#ifdef _OPENMP
+		#pragma omp parallel for schedule(static, 512)
+		#endif
+		for( std::size_t ir=0; ir<nrxx; ++ir )
+		{
+			const double rho_up = rho[ir*2];
+			const double rho_dw = rho[ir*2+1];
+			if( rho_up <= rho_threshold_vrho || rho_dw <= rho_threshold_vrho )
+			{
+				sgn_vrho[ir*2]   = 0.0;
+				sgn_vrho[ir*2+1] = 0.0;
+			}
+			if( is_gga && (rho_up <= rho_threshold_vsigma || rho_dw <= rho_threshold_vsigma
+				|| std::sqrt(std::abs(sigma[ir*3]))   <= grho_threshold_vsigma
+				|| std::sqrt(std::abs(sigma[ir*3+2])) <= grho_threshold_vsigma) )
+			{
+				sgn_vsigma[ir*2]   = 0.0;
+				sgn_vsigma[ir*2+1] = 0.0;
+			}
+		}
+	}
+	return std::make_pair(std::move(sgn_vrho), std::move(sgn_vsigma));
+}
+
 // converting etxc from exc (libxc=>abacus)
 double XC_Functional_Libxc::convert_etxc(
 	const int nspin,
@@ -211,12 +395,136 @@ double XC_Functional_Libxc::convert_etxc(
 	return etxc;
 }
 
+XC_Functional_Libxc::LibxcWeightedDerivatives
+XC_Functional_Libxc::make_libxc_weighted_derivatives(
+	const xc_func_type &func,
+	const int nspin,
+	const std::size_t nrxx,
+	const std::vector<double> &sgn,
+	const std::vector<double> &rho,
+	const std::vector<double> &sigma,
+	const std::vector<double> &exc,
+	const std::vector<double> &vrho,
+	const std::vector<double> &vsigma)
+{
+	assert(nspin == 1 || nspin == 2);
+	assert(sgn.size() == nrxx * nspin);
+	assert(rho.size() == nrxx * nspin);
+	assert(exc.size() == nrxx);
+	assert(vrho.size() == nrxx * nspin);
+	assert(func.nspin == nspin);
+
+	const bool is_gga
+		= func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA;
+	const std::size_t nsigma = nspin == 1 ? 1 : 3;
+	if (is_gga)
+	{
+		assert(sigma.size() == nrxx * nsigma);
+		assert(vsigma.size() == nrxx * nsigma);
+	}
+
+	LibxcWeightedDerivatives weighted;
+	weighted.energy_sum = 0.0;
+	weighted.drho.assign(nrxx * nspin, 0.0);
+	if (is_gga)
+	{
+		weighted.dsigma.assign(nrxx * nsigma, 0.0);
+	}
+
+	const double density_floor = func.dens_threshold;
+	const double sigma_floor = func.sigma_threshold * func.sigma_threshold;
+	double energy_sum = 0.0;
+	#ifdef _OPENMP
+	#pragma omp parallel for reduction(+:energy_sum) schedule(static, 512)
+	#endif
+	for (std::size_t ir = 0; ir < nrxx; ++ir)
+	{
+		double raw_density_sum = 0.0;
+		double sanitized_density_sum = 0.0;
+		double energy_weight = 0.0;
+		for (int is = 0; is < nspin; ++is)
+		{
+			const std::size_t index = ir * nspin + is;
+			raw_density_sum += rho[index];
+			sanitized_density_sum += std::max(density_floor, rho[index]);
+			energy_weight += sgn[index] * rho[index];
+		}
+
+		// Libxc leaves all outputs zero below the total-density threshold.
+		// Inside that branch, the ABACUS weighted energy is locally constant.
+		if (raw_density_sum < density_floor)
+		{
+			continue;
+		}
+
+		// ABACUS accumulates M*eps while Libxc differentiates Y*eps after
+		// y_s=max(T,rho_s). Hence d eps/d y_s=(vrho_s-eps)/Y.
+		energy_sum += energy_weight * exc[ir];
+		const double libxc_weight = energy_weight / sanitized_density_sum;
+		for (int is = 0; is < nspin; ++is)
+		{
+			const std::size_t index = ir * nspin + is;
+			const double floor_jacobian = rho[index] > density_floor ? 1.0 : 0.0;
+			weighted.drho[index]
+				= sgn[index] * exc[ir]
+				  + libxc_weight * floor_jacobian * (vrho[index] - exc[ir]);
+		}
+
+		if (!is_gga)
+		{
+			continue;
+		}
+
+		if (nspin == 1)
+		{
+			const double floor_jacobian = sigma[ir] > sigma_floor ? 1.0 : 0.0;
+			weighted.dsigma[ir] = libxc_weight * floor_jacobian * vsigma[ir];
+			continue;
+		}
+
+		const std::size_t sigma_index = 3 * ir;
+		const double sigma_uu = sigma[sigma_index];
+		const double sigma_ud = sigma[sigma_index + 1];
+		const double sigma_dd = sigma[sigma_index + 2];
+		const double jacobian_uu = sigma_uu > sigma_floor ? 1.0 : 0.0;
+		const double jacobian_dd = sigma_dd > sigma_floor ? 1.0 : 0.0;
+		const double sanitized_uu = std::max(sigma_floor, sigma_uu);
+		const double sanitized_dd = std::max(sigma_floor, sigma_dd);
+		const double cross_limit = 0.5 * (sanitized_uu + sanitized_dd);
+
+		double cross_to_diagonal = 0.0;
+		double cross_jacobian = 1.0;
+		if (sigma_ud < -cross_limit)
+		{
+			cross_to_diagonal = -0.5;
+			cross_jacobian = 0.0;
+		}
+		else if (sigma_ud > cross_limit)
+		{
+			cross_to_diagonal = 0.5;
+			cross_jacobian = 0.0;
+		}
+
+		weighted.dsigma[sigma_index]
+			= libxc_weight * jacobian_uu
+			  * (vsigma[sigma_index] + cross_to_diagonal * vsigma[sigma_index + 1]);
+		weighted.dsigma[sigma_index + 1]
+			= libxc_weight * cross_jacobian * vsigma[sigma_index + 1];
+		weighted.dsigma[sigma_index + 2]
+			= libxc_weight * jacobian_dd
+			  * (vsigma[sigma_index + 2] + cross_to_diagonal * vsigma[sigma_index + 1]);
+	}
+	weighted.energy_sum = energy_sum;
+	return weighted;
+}
+
 // converting vtxc and v from vrho and vsigma (libxc=>abacus)
 std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 	const xc_func_type &func,
 	const int nspin,
 	const std::size_t nrxx,
-	const std::vector<double> &sgn,
+	const std::vector<double> &sgn_vrho,
+	const std::vector<double> &sgn_vsigma,
 	const std::vector<double> &rho,
 	const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
 	const std::vector<double> &vrho,
@@ -236,7 +544,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 		for( std::size_t ir=0; ir<nrxx; ++ir )
 		{
             const std::size_t index = ir*nspin+is;
-			const double v_tmp = ModuleBase::e2 * vrho[index] * sgn[index];
+			const double v_tmp = ModuleBase::e2 * vrho[index] * sgn_vrho[index];
 			v(is,ir) += v_tmp;
 			vtxc += v_tmp * rho[index];
 		}
@@ -244,7 +552,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 
 	if(func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA)
 	{
-		const std::vector<std::vector<double>> dh = XC_Functional_Libxc::cal_dh(nspin, nrxx, sgn, gdr, vsigma, tpiba, chr);
+		const std::vector<std::vector<double>> dh = XC_Functional_Libxc::cal_dh(nspin, nrxx, sgn_vsigma, gdr, vsigma, tpiba, chr);
 
 		double rvtxc = 0.0;
 		#ifdef _OPENMP
@@ -264,7 +572,6 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 
 	return std::make_pair(vtxc, std::move(v));
 }
-
 
 // dh for gga v
 std::vector<std::vector<double>> XC_Functional_Libxc::cal_dh(
@@ -315,30 +622,30 @@ std::vector<std::vector<double>> XC_Functional_Libxc::cal_dh(
 	return dh;
 }
 
-
 // convert v for NSPIN=4
 ModuleBase::matrix XC_Functional_Libxc::convert_v_nspin4(
 	const std::size_t nrxx,
 	const Charge* const chr,
 	const std::vector<double> &amag,
-	const ModuleBase::matrix &v)
+	const ModuleBase::matrix &v,
+	const bool has_mag)
 {
     //assert(nrxx>0);
-	assert(PARAM.inp.nspin==4);
+	constexpr int nspin4 = 4;
 	constexpr double vanishing_charge = 1.0e-10;
-	ModuleBase::matrix v_nspin4(PARAM.inp.nspin, nrxx);
+	ModuleBase::matrix v_nspin4(nspin4, nrxx);
 	for( int ir=0; ir<nrxx; ++ir )
 	{
 		v_nspin4(0,ir) = 0.5 * (v(0,ir)+v(1,ir));
 	}
-	if(PARAM.globalv.domag || PARAM.globalv.domag_z)
+	if(has_mag)
 	{
 		for( int ir=0; ir<nrxx; ++ir )
 		{
 			if ( amag[ir] > vanishing_charge )
 			{
 				const double vs = 0.5 * (v(0,ir)-v(1,ir));
-				for(int ipol=1; ipol<PARAM.inp.nspin; ++ipol)
+				for(int ipol=1; ipol<nspin4; ++ipol)
 				{
 					v_nspin4(ipol,ir) = vs * chr->rho[ipol][ir] / amag[ir];
 				}

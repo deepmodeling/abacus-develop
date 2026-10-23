@@ -1,0 +1,15 @@
+#This is the atom file containing all the information
+#about the lattice structure.
+
+ATOMIC_SPECIES
+Li 6.941   Li-s.PD04.PBE.UPF
+
+LATTICE_CONSTANT
+10.0  			#Lattice constant
+
+ATOMIC_POSITIONS
+Cartesian   		#Cartesian(Unit is LATTICE_CONSTANT)
+Li 			#Name of element
+0.0			#Magnetic for this element.
+1			#Number of atoms
+0.00 0.00 0.00 0 0 0	#x,y,z, move_x, move_y, move_z

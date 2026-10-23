@@ -11,9 +11,7 @@
 #include <mpi.h>
 #endif
 
-#define private public
 #include "source_basis/module_ao/orb_atomic_lm.h"
-#undef private
 
 /***********************************************************
  *      unit test of class "Numerical_Orbital_Lm"
@@ -65,6 +63,14 @@ protected:
     size_t calc_nk(double const& ecutwfc, double const& dk);
     size_t calc_nr_uniform(double const& rcut, double const& dr_uniform);
     bool check_file_match(size_t const& nline, double const* col1, double const* col2, double const& tol, std::string const& fname);
+
+    // Numerical_Orbital_Lm declares this fixture a friend, but a TEST_F body
+    // lives in a class derived from it and friendship is not inherited, so the
+    // calls into the private radial transforms are routed through these.
+    void cal_kradial(size_t i) { nolm_[i].cal_kradial(); }
+    void cal_kradial_sbpool(size_t i) { nolm_[i].cal_kradial_sbpool(); }
+    void cal_rradial_sbpool(size_t i) { nolm_[i].cal_rradial_sbpool(); }
+    void plot(size_t i) const { nolm_[i].plot(); }
 
     // radial real-space mesh spacing
     double dr_;
@@ -352,64 +358,64 @@ TEST_F(NumericalOrbitalLmTest, Init) {
     // before
     // a brief check of the default constructor
     for (size_t ichi_tot = 0; ichi_tot != chi_.size(); ++ichi_tot) {
-        EXPECT_EQ(nolm_[ichi_tot].label, "");
-        EXPECT_EQ(nolm_[ichi_tot].index_atom_type, 0);
-        EXPECT_EQ(nolm_[ichi_tot].angular_momentum_l, 0);
-        EXPECT_EQ(nolm_[ichi_tot].index_chi, 0);
-        EXPECT_EQ(nolm_[ichi_tot].nr, 1);
-        EXPECT_EQ(nolm_[ichi_tot].nk, 1);
+        EXPECT_EQ(nolm_[ichi_tot].getLabel(), "");
+        EXPECT_EQ(nolm_[ichi_tot].getType(), 0);
+        EXPECT_EQ(nolm_[ichi_tot].getL(), 0);
+        EXPECT_EQ(nolm_[ichi_tot].getChi(), 0);
+        EXPECT_EQ(nolm_[ichi_tot].getNr(), 1);
+        EXPECT_EQ(nolm_[ichi_tot].getNk(), 1);
         EXPECT_EQ(nolm_[ichi_tot].nr_uniform, 1);
 
-        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].rcut, 0.0);
-        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].kcut, 0.0);
-        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].dk, 0.0);
+        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].getRcut(), 0.0);
+        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].getKcut(), 0.0);
+        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].getDk(), 0.0);
         EXPECT_DOUBLE_EQ(nolm_[ichi_tot].dr_uniform, -1.0);
         EXPECT_DOUBLE_EQ(nolm_[ichi_tot].zty, 0.0);
 
-        EXPECT_TRUE(nolm_[ichi_tot].r_radial.empty());
-        EXPECT_TRUE(nolm_[ichi_tot].k_radial.empty());
-        EXPECT_TRUE(nolm_[ichi_tot].psi.empty());
-        EXPECT_TRUE(nolm_[ichi_tot].psir.empty());
-        EXPECT_TRUE(nolm_[ichi_tot].psif.empty());
-        EXPECT_TRUE(nolm_[ichi_tot].psik.empty());
-        EXPECT_TRUE(nolm_[ichi_tot].psik2.empty());
+        EXPECT_TRUE(nolm_[ichi_tot].get_r_radial().empty());
+        EXPECT_TRUE(nolm_[ichi_tot].get_k_radial().empty());
+        EXPECT_TRUE(nolm_[ichi_tot].get_psi().empty());
+        EXPECT_TRUE(nolm_[ichi_tot].get_psir().empty());
+        EXPECT_TRUE(nolm_[ichi_tot].get_psif().empty());
+        EXPECT_TRUE(nolm_[ichi_tot].get_psi_k().empty());
+        EXPECT_TRUE(nolm_[ichi_tot].get_psi_k2().empty());
     }
 
     this->init();
 
     // after
     for (size_t ichi_tot = 0; ichi_tot != chi_.size(); ++ichi_tot) {
-        EXPECT_EQ(nolm_[ichi_tot].index_atom_type, index_atom_type_);
-        EXPECT_EQ(nolm_[ichi_tot].nk, nk_);
+        EXPECT_EQ(nolm_[ichi_tot].getType(), index_atom_type_);
+        EXPECT_EQ(nolm_[ichi_tot].getNk(), nk_);
         EXPECT_EQ(nolm_[ichi_tot].nr_uniform,
-                this->calc_nr_uniform(nolm_[ichi_tot].rcut, dr_uniform_));
+                this->calc_nr_uniform(nolm_[ichi_tot].getRcut(), dr_uniform_));
 
-        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].kcut, (nk_-1)*dk_);
-        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].dk, dk_);
+        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].getKcut(), (nk_-1)*dk_);
+        EXPECT_DOUBLE_EQ(nolm_[ichi_tot].getDk(), dk_);
         EXPECT_DOUBLE_EQ(nolm_[ichi_tot].dr_uniform, dr_uniform_);
         // TODO zty yet to be understood
         //EXPECT_DOUBLE_EQ(nolm_[ichi_tot].zty, 0.0);
 
-        EXPECT_EQ(nolm_[ichi_tot].r_radial.size(), nr_);
-        EXPECT_EQ(nolm_[ichi_tot].k_radial.size(), nk_);
-        EXPECT_EQ(nolm_[ichi_tot].psi.size(), nr_);
-        EXPECT_EQ(nolm_[ichi_tot].psir.size(), nr_);
-        EXPECT_EQ(nolm_[ichi_tot].psif.size(), nk_);
-        EXPECT_EQ(nolm_[ichi_tot].psik.size(), nk_);
-        EXPECT_EQ(nolm_[ichi_tot].psik2.size(), nk_);
+        EXPECT_EQ(nolm_[ichi_tot].get_r_radial().size(), nr_);
+        EXPECT_EQ(nolm_[ichi_tot].get_k_radial().size(), nk_);
+        EXPECT_EQ(nolm_[ichi_tot].get_psi().size(), nr_);
+        EXPECT_EQ(nolm_[ichi_tot].get_psir().size(), nr_);
+        EXPECT_EQ(nolm_[ichi_tot].get_psif().size(), nk_);
+        EXPECT_EQ(nolm_[ichi_tot].get_psi_k().size(), nk_);
+        EXPECT_EQ(nolm_[ichi_tot].get_psi_k2().size(), nk_);
 
         for (int ir = 0; ir != nr_; ++ir) {
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].r_radial[ir], ir*0.01);
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psi[ir], chi_[ichi_tot][ir]);
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psir[ir], ir*0.01*chi_[ichi_tot][ir]);
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].get_r_radial()[ir], ir*0.01);
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].get_psi()[ir], chi_[ichi_tot][ir]);
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].get_psir()[ir], ir*0.01*chi_[ichi_tot][ir]);
         }
 
         // whether psif makes sense or not is checked in r2k2r_consistency
 
         for (size_t ik = 0; ik != nk_; ++ik) {
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].k_radial[ik], ik*dk_);
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psik[ik], ik*dk_*nolm_[ichi_tot].psif[ik]);
-            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].psik2[ik], ik*dk_*nolm_[ichi_tot].psik[ik]);
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].get_k_radial()[ik], ik*dk_);
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].get_psi_k()[ik], ik*dk_*nolm_[ichi_tot].get_psif()[ik]);
+            EXPECT_DOUBLE_EQ(nolm_[ichi_tot].get_psi_k2()[ik], ik*dk_*nolm_[ichi_tot].get_psi_k()[ik]);
         }
     }
 
@@ -417,60 +423,60 @@ TEST_F(NumericalOrbitalLmTest, Init) {
 
     double max_tol = 1e-12;
 
-    EXPECT_EQ(nolm_[0].label, "O");
-    EXPECT_EQ(nolm_[0].angular_momentum_l, 0);
-    EXPECT_EQ(nolm_[0].index_chi, 0);
-    EXPECT_EQ(nolm_[0].nr, 701);
-    EXPECT_DOUBLE_EQ(nolm_[0].rcut, 7.0);
-    EXPECT_NEAR(nolm_[0].psi[0], 1.208504975904e+00, max_tol);
-    EXPECT_NEAR(nolm_[0].psi[1], 1.208605373194e+00, max_tol);
-    EXPECT_NEAR(nolm_[0].psi[4], 1.210103935461e+00, max_tol);
-    EXPECT_NEAR(nolm_[0].psi[699], 4.465396560257e-08, max_tol);
-    EXPECT_NEAR(nolm_[0].psi[700], 0.0, max_tol);
+    EXPECT_EQ(nolm_[0].getLabel(), "O");
+    EXPECT_EQ(nolm_[0].getL(), 0);
+    EXPECT_EQ(nolm_[0].getChi(), 0);
+    EXPECT_EQ(nolm_[0].getNr(), 701);
+    EXPECT_DOUBLE_EQ(nolm_[0].getRcut(), 7.0);
+    EXPECT_NEAR(nolm_[0].get_psi()[0], 1.208504975904e+00, max_tol);
+    EXPECT_NEAR(nolm_[0].get_psi()[1], 1.208605373194e+00, max_tol);
+    EXPECT_NEAR(nolm_[0].get_psi()[4], 1.210103935461e+00, max_tol);
+    EXPECT_NEAR(nolm_[0].get_psi()[699], 4.465396560257e-08, max_tol);
+    EXPECT_NEAR(nolm_[0].get_psi()[700], 0.0, max_tol);
 
-    EXPECT_EQ(nolm_[1].label, "O");
-    EXPECT_EQ(nolm_[1].angular_momentum_l, 0);
-    EXPECT_EQ(nolm_[1].index_chi, 1);
-    EXPECT_EQ(nolm_[1].nr, 701);
-    EXPECT_DOUBLE_EQ(nolm_[1].rcut, 7.0);
-    EXPECT_NEAR(nolm_[1].psi[0], 7.254873428942e-01, max_tol);
-    EXPECT_NEAR(nolm_[1].psi[1], 7.256666701836e-01, max_tol);
-    EXPECT_NEAR(nolm_[1].psi[4], 7.283448557011e-01, max_tol);
-    EXPECT_NEAR(nolm_[1].psi[699], -1.916246212603e-06, max_tol);
-    EXPECT_NEAR(nolm_[1].psi[700], 0.0, max_tol);
+    EXPECT_EQ(nolm_[1].getLabel(), "O");
+    EXPECT_EQ(nolm_[1].getL(), 0);
+    EXPECT_EQ(nolm_[1].getChi(), 1);
+    EXPECT_EQ(nolm_[1].getNr(), 701);
+    EXPECT_DOUBLE_EQ(nolm_[1].getRcut(), 7.0);
+    EXPECT_NEAR(nolm_[1].get_psi()[0], 7.254873428942e-01, max_tol);
+    EXPECT_NEAR(nolm_[1].get_psi()[1], 7.256666701836e-01, max_tol);
+    EXPECT_NEAR(nolm_[1].get_psi()[4], 7.283448557011e-01, max_tol);
+    EXPECT_NEAR(nolm_[1].get_psi()[699], -1.916246212603e-06, max_tol);
+    EXPECT_NEAR(nolm_[1].get_psi()[700], 0.0, max_tol);
 
-    EXPECT_EQ(nolm_[2].label, "O");
-    EXPECT_EQ(nolm_[2].angular_momentum_l, 1);
-    EXPECT_EQ(nolm_[2].index_chi, 0);
-    EXPECT_EQ(nolm_[2].nr, 701);
-    EXPECT_DOUBLE_EQ(nolm_[2].rcut, 7.0);
-    EXPECT_NEAR(nolm_[2].psi[0], 0.0, max_tol);
-    EXPECT_NEAR(nolm_[2].psi[1], 4.626669306440e-02, max_tol);
-    EXPECT_NEAR(nolm_[2].psi[4], 1.845014292772e-01, max_tol);
-    EXPECT_NEAR(nolm_[2].psi[699], 2.870401658966e-07, max_tol);
-    EXPECT_NEAR(nolm_[2].psi[700], 0.0, max_tol);
+    EXPECT_EQ(nolm_[2].getLabel(), "O");
+    EXPECT_EQ(nolm_[2].getL(), 1);
+    EXPECT_EQ(nolm_[2].getChi(), 0);
+    EXPECT_EQ(nolm_[2].getNr(), 701);
+    EXPECT_DOUBLE_EQ(nolm_[2].getRcut(), 7.0);
+    EXPECT_NEAR(nolm_[2].get_psi()[0], 0.0, max_tol);
+    EXPECT_NEAR(nolm_[2].get_psi()[1], 4.626669306440e-02, max_tol);
+    EXPECT_NEAR(nolm_[2].get_psi()[4], 1.845014292772e-01, max_tol);
+    EXPECT_NEAR(nolm_[2].get_psi()[699], 2.870401658966e-07, max_tol);
+    EXPECT_NEAR(nolm_[2].get_psi()[700], 0.0, max_tol);
 
-    EXPECT_EQ(nolm_[3].label, "O");
-    EXPECT_EQ(nolm_[3].angular_momentum_l, 1);
-    EXPECT_EQ(nolm_[3].index_chi, 1);
-    EXPECT_EQ(nolm_[3].nr, 701);
-    EXPECT_DOUBLE_EQ(nolm_[3].rcut, 7.0);
-    EXPECT_NEAR(nolm_[3].psi[0], 0.0, max_tol);
-    EXPECT_NEAR(nolm_[3].psi[1], 3.375340101333e-02, max_tol);
-    EXPECT_NEAR(nolm_[3].psi[4], 1.346256082234e-01, max_tol);
-    EXPECT_NEAR(nolm_[3].psi[699], -2.771091616120e-06, max_tol);
-    EXPECT_NEAR(nolm_[3].psi[700], 0.0, max_tol);
+    EXPECT_EQ(nolm_[3].getLabel(), "O");
+    EXPECT_EQ(nolm_[3].getL(), 1);
+    EXPECT_EQ(nolm_[3].getChi(), 1);
+    EXPECT_EQ(nolm_[3].getNr(), 701);
+    EXPECT_DOUBLE_EQ(nolm_[3].getRcut(), 7.0);
+    EXPECT_NEAR(nolm_[3].get_psi()[0], 0.0, max_tol);
+    EXPECT_NEAR(nolm_[3].get_psi()[1], 3.375340101333e-02, max_tol);
+    EXPECT_NEAR(nolm_[3].get_psi()[4], 1.346256082234e-01, max_tol);
+    EXPECT_NEAR(nolm_[3].get_psi()[699], -2.771091616120e-06, max_tol);
+    EXPECT_NEAR(nolm_[3].get_psi()[700], 0.0, max_tol);
 
-    EXPECT_EQ(nolm_[4].label, "O");
-    EXPECT_EQ(nolm_[4].angular_momentum_l, 2);
-    EXPECT_EQ(nolm_[4].index_chi, 0);
-    EXPECT_EQ(nolm_[4].nr, 701);
-    EXPECT_DOUBLE_EQ(nolm_[4].rcut, 7.0);
-    EXPECT_NEAR(nolm_[4].psi[0], 0.0, max_tol);
-    EXPECT_NEAR(nolm_[4].psi[1], -3.343626342662e-04, max_tol);
-    EXPECT_NEAR(nolm_[4].psi[4], -5.337546547975e-03, max_tol);
-    EXPECT_NEAR(nolm_[4].psi[699], 1.396308876444e-06, max_tol);
-    EXPECT_NEAR(nolm_[4].psi[700], 0.0, max_tol);
+    EXPECT_EQ(nolm_[4].getLabel(), "O");
+    EXPECT_EQ(nolm_[4].getL(), 2);
+    EXPECT_EQ(nolm_[4].getChi(), 0);
+    EXPECT_EQ(nolm_[4].getNr(), 701);
+    EXPECT_DOUBLE_EQ(nolm_[4].getRcut(), 7.0);
+    EXPECT_NEAR(nolm_[4].get_psi()[0], 0.0, max_tol);
+    EXPECT_NEAR(nolm_[4].get_psi()[1], -3.343626342662e-04, max_tol);
+    EXPECT_NEAR(nolm_[4].get_psi()[4], -5.337546547975e-03, max_tol);
+    EXPECT_NEAR(nolm_[4].get_psi()[699], 1.396308876444e-06, max_tol);
+    EXPECT_NEAR(nolm_[4].get_psi()[700], 0.0, max_tol);
 }
 
 
@@ -482,57 +488,57 @@ TEST_F(NumericalOrbitalLmTest, Getters) {
     this->init();
 
     for (size_t i = 0; i != chi_.size(); ++i) {
-        EXPECT_EQ(nolm_[i].getLabel(), nolm_[i].label);
-        EXPECT_EQ(nolm_[i].getType(), nolm_[i].index_atom_type);
-        EXPECT_EQ(nolm_[i].getL(), nolm_[i].angular_momentum_l);
-        EXPECT_EQ(nolm_[i].getChi(), nolm_[i].index_chi);
+        EXPECT_EQ(nolm_[i].getLabel(), nolm_[i].getLabel());
+        EXPECT_EQ(nolm_[i].getType(), nolm_[i].getType());
+        EXPECT_EQ(nolm_[i].getL(), nolm_[i].getL());
+        EXPECT_EQ(nolm_[i].getChi(), nolm_[i].getChi());
 
-        EXPECT_DOUBLE_EQ(nolm_[i].getDk(), nolm_[i].dk);
+        EXPECT_DOUBLE_EQ(nolm_[i].getDk(), nolm_[i].getDk());
         EXPECT_DOUBLE_EQ(nolm_[i].getDruniform(), dr_uniform_);
         EXPECT_EQ(nolm_[i].getPsiuniform(), &nolm_[i].psi_uniform[0]);
         EXPECT_EQ(nolm_[i].getDpsiuniform(), &nolm_[i].dpsi_uniform[0]);
         EXPECT_EQ(nolm_[i].getNruniform(), nolm_[i].nr_uniform);
         EXPECT_EQ(nolm_[i].getDruniform(), nolm_[i].dr_uniform);
 
-        EXPECT_EQ(nolm_[i].getNr(), nolm_[i].nr);
-        EXPECT_EQ(nolm_[i].getNk(), nolm_[i].nk);
+        EXPECT_EQ(nolm_[i].getNr(), nolm_[i].getNr());
+        EXPECT_EQ(nolm_[i].getNk(), nolm_[i].getNk());
 
-        EXPECT_EQ(nolm_[i].getRcut(), nolm_[i].rcut);
-        EXPECT_EQ(nolm_[i].getKcut(), nolm_[i].kcut);
+        EXPECT_EQ(nolm_[i].getRcut(), nolm_[i].getRcut());
+        EXPECT_EQ(nolm_[i].getKcut(), nolm_[i].getKcut());
 
-        EXPECT_EQ(nolm_[i].getRadial(), &nolm_[i].r_radial[0]);
-        EXPECT_EQ(nolm_[i].get_r_radial(), nolm_[i].r_radial);
+        EXPECT_EQ(nolm_[i].getRadial(), &nolm_[i].get_r_radial()[0]);
+        EXPECT_EQ(nolm_[i].get_r_radial(), nolm_[i].get_r_radial());
 
-        EXPECT_EQ(nolm_[i].getRab(), &nolm_[i].rab[0]);
-        EXPECT_EQ(nolm_[i].get_rab(), nolm_[i].rab);
+        EXPECT_EQ(nolm_[i].getRab(), &nolm_[i].get_rab()[0]);
+        EXPECT_EQ(nolm_[i].get_rab(), nolm_[i].get_rab());
 
-        EXPECT_EQ(nolm_[i].getDk(), nolm_[i].dk);
-        EXPECT_EQ(nolm_[i].getKpoint(), &nolm_[i].k_radial[0]);
-        EXPECT_EQ(nolm_[i].get_k_radial(), nolm_[i].k_radial);
+        EXPECT_EQ(nolm_[i].getDk(), nolm_[i].getDk());
+        EXPECT_EQ(nolm_[i].getKpoint(), &nolm_[i].get_k_radial()[0]);
+        EXPECT_EQ(nolm_[i].get_k_radial(), nolm_[i].get_k_radial());
 
-        EXPECT_EQ(nolm_[i].getPsi(), &nolm_[i].psi[0]);
-        EXPECT_EQ(nolm_[i].getPsi_r(), &nolm_[i].psir[0]);
-        EXPECT_EQ(nolm_[i].getPsif(), &nolm_[i].psif[0]);
-        EXPECT_EQ(nolm_[i].getPsi_k(), &nolm_[i].psik[0]);
-        EXPECT_EQ(nolm_[i].getPsi_k2(), &nolm_[i].psik2[0]);
+        EXPECT_EQ(nolm_[i].getPsi(), &nolm_[i].get_psi()[0]);
+        EXPECT_EQ(nolm_[i].getPsi_r(), &nolm_[i].get_psir()[0]);
+        EXPECT_EQ(nolm_[i].getPsif(), &nolm_[i].get_psif()[0]);
+        EXPECT_EQ(nolm_[i].getPsi_k(), &nolm_[i].get_psi_k()[0]);
+        EXPECT_EQ(nolm_[i].getPsi_k2(), &nolm_[i].get_psi_k2()[0]);
 
-        EXPECT_EQ(nolm_[i].get_psi(), nolm_[i].psi);
-        EXPECT_EQ(nolm_[i].get_psif(), nolm_[i].psif);
-        EXPECT_EQ(nolm_[i].get_psi_k(), nolm_[i].psik);
-        EXPECT_EQ(nolm_[i].get_psi_k2(), nolm_[i].psik2);
+        EXPECT_EQ(nolm_[i].get_psi(), nolm_[i].get_psi());
+        EXPECT_EQ(nolm_[i].get_psif(), nolm_[i].get_psif());
+        EXPECT_EQ(nolm_[i].get_psi_k(), nolm_[i].get_psi_k());
+        EXPECT_EQ(nolm_[i].get_psi_k2(), nolm_[i].get_psi_k2());
 
-        for (size_t ir = 0; ir != nolm_[i].r_radial.size(); ++ir) {
-            EXPECT_EQ(nolm_[i].getRadial(ir), nolm_[i].r_radial[ir]);
-            EXPECT_EQ(nolm_[i].getRab(ir), nolm_[i].rab[ir]);
-            EXPECT_EQ(nolm_[i].getPsi(ir), nolm_[i].psi[ir]);
-            EXPECT_EQ(nolm_[i].getPsi_r(ir), nolm_[i].psir[ir]);
+        for (size_t ir = 0; ir != nolm_[i].get_r_radial().size(); ++ir) {
+            EXPECT_EQ(nolm_[i].getRadial(ir), nolm_[i].get_r_radial()[ir]);
+            EXPECT_EQ(nolm_[i].getRab(ir), nolm_[i].get_rab()[ir]);
+            EXPECT_EQ(nolm_[i].getPsi(ir), nolm_[i].get_psi()[ir]);
+            EXPECT_EQ(nolm_[i].getPsi_r(ir), nolm_[i].get_psir()[ir]);
         }
 
-        for (size_t ik = 0; ik != nolm_[i].k_radial.size(); ++ik) {
-            EXPECT_EQ(nolm_[i].getKpoint(ik), nolm_[i].k_radial[ik]);
-            EXPECT_EQ(nolm_[i].getPsif(ik), nolm_[i].psif[ik]);
-            EXPECT_EQ(nolm_[i].getPsi_k(ik), nolm_[i].psik[ik]);
-            EXPECT_EQ(nolm_[i].getPsi_k2(ik), nolm_[i].psik2[ik]);
+        for (size_t ik = 0; ik != nolm_[i].get_k_radial().size(); ++ik) {
+            EXPECT_EQ(nolm_[i].getKpoint(ik), nolm_[i].get_k_radial()[ik]);
+            EXPECT_EQ(nolm_[i].getPsif(ik), nolm_[i].get_psif()[ik]);
+            EXPECT_EQ(nolm_[i].getPsi_k(ik), nolm_[i].get_psi_k()[ik]);
+            EXPECT_EQ(nolm_[i].getPsi_k2(ik), nolm_[i].get_psi_k2()[ik]);
         }
     }
 }
@@ -625,9 +631,9 @@ TEST_F(NumericalOrbitalLmTest, K2RConsistency) {
 
         // use a different method than which used in init()
         if (flag_sbpool_) {
-            nolm_[i].cal_kradial();
+            cal_kradial(i);
         } else {
-            nolm_[i].cal_kradial_sbpool();
+            cal_kradial_sbpool(i);
         }
 
         double max_tol = 1e-6;
@@ -661,7 +667,7 @@ TEST_F(NumericalOrbitalLmTest, R2K2RConsistency) {
             rchi_[ir] = nolm_[i].getPsi_r(ir);
         }
 
-        nolm_[i].cal_rradial_sbpool();
+        cal_rradial_sbpool(i);
 
         for (int ir = 0; ir != nr_; ++ir) {
             err_integrand[ir] = std::pow(rchi_[ir]-nolm_[i].getPsi_r(ir), 2);
@@ -725,10 +731,10 @@ TEST_F(NumericalOrbitalLmTest, PsiSave) {
     for (size_t i = 0; i != nolm_.size(); ++i) {
 
         // this call should successfully write data to files
-        ASSERT_NO_THROW(nolm_[i].plot());
+        ASSERT_NO_THROW(plot(i));
 
         auto get_fname = [&] (std::string const& suffix) -> std::string {
-            return dir+"/O-" + orb[i] + std::to_string(nolm_[i].index_chi+1)
+            return dir+"/O-" + orb[i] + std::to_string(nolm_[i].getChi()+1)
                 + "-orbital-" + suffix + ".dat";
         };
 
@@ -737,9 +743,9 @@ TEST_F(NumericalOrbitalLmTest, PsiSave) {
         std::string psiru_fname = get_fname("ru");
         std::string psidru_fname = get_fname("dru");
 
-        EXPECT_TRUE(this->check_file_match(nolm_[i].nr,
+        EXPECT_TRUE(this->check_file_match(nolm_[i].getNr(),
                     nolm_[i].getRadial(), nolm_[i].getPsi(), tol, psi_fname));
-        EXPECT_TRUE(this->check_file_match(nolm_[i].nk,
+        EXPECT_TRUE(this->check_file_match(nolm_[i].getNk(),
                     nolm_[i].getKpoint(), nolm_[i].getPsi_k(), tol, psik_fname));
 
         double* ru_mesh = new double[nolm_[i].nr_uniform];
@@ -777,10 +783,10 @@ TEST_F(NumericalOrbitalLmTest, VariousPsiType) {
     for (size_t i = 0; i != nolm_.size(); ++i) {
         std::vector<double> psi_ref, psif_ref, psik_ref, psik2_ref;
 
-        psi_ref = nolm_[i].psi;
-        psif_ref = nolm_[i].psif;
-        psik_ref = nolm_[i].psik;
-        psik2_ref = nolm_[i].psik2;
+        psi_ref = nolm_[i].get_psi();
+        psif_ref = nolm_[i].get_psif();
+        psik_ref = nolm_[i].get_psi_k();
+        psik2_ref = nolm_[i].get_psi_k2();
 
 
         // alternative Psi_Type input
@@ -792,8 +798,8 @@ TEST_F(NumericalOrbitalLmTest, VariousPsiType) {
                 &psif_ref[0], nk_, dk_,
                 dr_uniform_, flag_plot_, flag_sbpool_, force_flag_);
 
-        for (int ir = 0; ir != nolm_[i].nr; ++ir) {
-            EXPECT_NEAR(nolm_[i].psi[ir], psi_ref[ir], max_tol);
+        for (int ir = 0; ir != nolm_[i].getNr(); ++ir) {
+            EXPECT_NEAR(nolm_[i].get_psi()[ir], psi_ref[ir], max_tol);
         }
 
         // Psi_Type == Psik
@@ -803,8 +809,8 @@ TEST_F(NumericalOrbitalLmTest, VariousPsiType) {
                 &psik_ref[0], nk_, dk_,
                 dr_uniform_, flag_plot_, flag_sbpool_, force_flag_);
 
-        for (int ir = 0; ir != nolm_[i].nr; ++ir) {
-            EXPECT_NEAR(nolm_[i].psi[ir], psi_ref[ir], max_tol);
+        for (int ir = 0; ir != nolm_[i].getNr(); ++ir) {
+            EXPECT_NEAR(nolm_[i].get_psi()[ir], psi_ref[ir], max_tol);
         }
 
         // Psi_Type == Psik2
@@ -814,8 +820,8 @@ TEST_F(NumericalOrbitalLmTest, VariousPsiType) {
                 &psik2_ref[0], nk_, dk_,
                 dr_uniform_, flag_plot_, flag_sbpool_, force_flag_);
 
-        for (int ir = 0; ir != nolm_[i].nr; ++ir) {
-            EXPECT_NEAR(nolm_[i].psi[ir], psi_ref[ir], max_tol);
+        for (int ir = 0; ir != nolm_[i].getNr(); ++ir) {
+            EXPECT_NEAR(nolm_[i].get_psi()[ir], psi_ref[ir], max_tol);
         }
 
     }
@@ -836,10 +842,10 @@ TEST_F(NumericalOrbitalLmTest, TurnOffSphBesPool) {
     for (size_t i = 0; i != nolm_.size(); ++i) {
         std::vector<double> psi_ref, psif_ref, psik_ref, psik2_ref;
 
-        psi_ref = nolm_[i].psi;
-        psif_ref = nolm_[i].psif;
-        psik_ref = nolm_[i].psik;
-        psik2_ref = nolm_[i].psik2;
+        psi_ref = nolm_[i].get_psi();
+        psif_ref = nolm_[i].get_psif();
+        psik_ref = nolm_[i].get_psi_k();
+        psik2_ref = nolm_[i].get_psi_k2();
 
         EXPECT_NO_THROW(nolm_[i].set_orbital_info(elem_label_, index_atom_type_,
                 l_[i], index_chi_l_[i], nr_, rab_,

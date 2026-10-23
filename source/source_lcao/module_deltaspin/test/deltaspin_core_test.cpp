@@ -1,8 +1,10 @@
+#include "source_lcao/module_deltaspin/mi_tools.h"
+
 #include "gtest/gtest.h"
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <vector>
-#include <algorithm>
 
 /***********************************************************************
  * Unit tests for DeltaSpin core algorithms.
@@ -92,12 +94,34 @@ TEST_F(PauliToMomentTest, GeneralCase_AllComponents)
     EXPECT_NEAR(M.z, 0.2, 1e-15);
 }
 
+TEST(PauliConventionTest, LambdaExpectationMatchesDotMoment)
+{
+    const double amplitude = 1.0 / std::sqrt(2.0);
+    const std::complex<double> spinor[2] = {{amplitude, 0.0}, {0.0, amplitude}};
+    const std::complex<double> occ[4] = {std::conj(spinor[0]) * spinor[0],
+                                         std::conj(spinor[0]) * spinor[1],
+                                         std::conj(spinor[1]) * spinor[0],
+                                         std::conj(spinor[1]) * spinor[1]};
+    const ModuleBase::Vector3<double> lambda(0.0, 2.0, 0.0);
+    const auto matrix = spinconstrain::pauli_vector_to_spinor(lambda);
+    const auto moment = spinconstrain::pauli_to_moment(occ, 1.0);
+
+    const std::complex<double> h_up = matrix[0] * spinor[0] + matrix[1] * spinor[1];
+    const std::complex<double> h_down = matrix[2] * spinor[0] + matrix[3] * spinor[1];
+    const double expectation = (std::conj(spinor[0]) * h_up + std::conj(spinor[1]) * h_down).real();
+    const double dot_moment = lambda.x * moment.x + lambda.y * moment.y + lambda.z * moment.z;
+
+    EXPECT_NEAR(matrix[1].imag(), -2.0, 1e-15);
+    EXPECT_NEAR(matrix[2].imag(), 2.0, 1e-15);
+    EXPECT_NEAR(expectation, dot_moment, 1e-15);
+}
+
 // =====================================================================
 // 2. calculate_delta_hcc: Pauli matrix expansion
 //
 // npol=2: H += becp^H * lambda * becp
-//   lambda in Pauli basis: |lambda_z    lambda_x+i*lambda_y|
-//                          |lambda_x-i*lambda_y   -lambda_z |
+//   lambda in Pauli basis: |lambda_z                lambda_x-i*lambda_y|
+//                          |lambda_x+i*lambda_y     -lambda_z           |
 //
 // npol=1: H += becp^H * lambda_z * sign * becp
 // =====================================================================
@@ -276,6 +300,93 @@ TEST_F(AccumulateMiTest, Npol2_PureZMag)
     EXPECT_NEAR(Mi.x, 0.0, 1e-15);
     EXPECT_NEAR(Mi.y, 0.0, 1e-15);
     EXPECT_NEAR(Mi.z, 0.49, 1e-15);
+}
+
+// =====================================================================
+// 3b. Real spinconstrain::accumulate_Mi_from_becp vs the oracle above
+//
+// The oracle helpers reimplement the pre-refactor inline loops. These
+// tests call the actual function (now built on elecstate::occ_from_proj)
+// and require bit-for-bit agreement with the oracle on the same inputs.
+// =====================================================================
+
+TEST_F(AccumulateMiTest, RealFunction_Npol1_MatchesOracle)
+{
+    // two atoms: nh = {2, 1}, nkb = 3, two bands
+    const int nbands = 2, nkb = 3;
+    const int nh[2] = {2, 1};
+    const double wg[2] = {1.5, 0.5};
+    std::vector<std::complex<double>> becp(nbands * nkb);
+    for (size_t i = 0; i < becp.size(); i++)
+    {
+        becp[i] = std::complex<double>(0.1 * (i + 1), 0.02 * (i + 1));
+    }
+
+    for (int isk : {0, 1})
+    {
+        const int spin_sign = (isk == 0) ? 1 : -1;
+        std::vector<ModuleBase::Vector3<double>> mi(2);
+        spinconstrain::accumulate_Mi_from_becp(becp.data(), nkb, nbands, 1,
+                                               spin_sign, wg, nh, mi);
+
+        // oracle: sum over atoms/bands of sign * w * |becp|^2 per atom
+        double want0 = 0.0;
+        double want1 = 0.0;
+        int begin = 0;
+        for (int iat = 0; iat < 2; iat++)
+        {
+            double acc = 0.0;
+            for (int ib = 0; ib < nbands; ib++)
+            {
+                for (int ip = 0; ip < nh[iat]; ip++)
+                {
+                    const int idx = ib * nkb + begin + ip;
+                    acc += wg[ib] * (std::conj(becp[idx]) * becp[idx]).real();
+                }
+            }
+            if (iat == 0) { want0 = spin_sign * acc; }
+            else { want1 = spin_sign * acc; }
+            begin += nh[iat];
+        }
+        EXPECT_NEAR(mi[0].z, want0, 1e-12);
+        EXPECT_NEAR(mi[1].z, want1, 1e-12);
+        EXPECT_NEAR(mi[0].x, 0.0, 1e-12);
+        EXPECT_NEAR(mi[0].y, 0.0, 1e-12);
+    }
+}
+
+TEST_F(AccumulateMiTest, RealFunction_Npol2_MatchesOracle)
+{
+    const int nbands = 2, nkb = 2;
+    const int nh[1] = {2};
+    const double wg[2] = {1.0, 2.0};
+    std::vector<std::complex<double>> becp(nbands * 2 * nkb);
+    for (size_t i = 0; i < becp.size(); i++)
+    {
+        becp[i] = std::complex<double>(0.05 * (i + 1), 0.03 * (i + 1));
+    }
+
+    std::vector<ModuleBase::Vector3<double>> mi(1);
+    spinconstrain::accumulate_Mi_from_becp(becp.data(), nkb, nbands, 2,
+                                           1, wg, nh, mi);
+
+    // oracle: single atom, pauli_to_moment over summed blocks per band
+    std::complex<double> occ[4] = {{0, 0}, {0, 0}, {0, 0}, {0, 0}};
+    for (int ib = 0; ib < nbands; ib++)
+    {
+        for (int ip = 0; ip < nh[0]; ip++)
+        {
+            const int up = ib * 2 * nkb + ip;
+            const int dn = up + nkb;
+            occ[0] += wg[ib] * std::conj(becp[up]) * becp[up];
+            occ[1] += wg[ib] * std::conj(becp[up]) * becp[dn];
+            occ[2] += wg[ib] * std::conj(becp[dn]) * becp[up];
+            occ[3] += wg[ib] * std::conj(becp[dn]) * becp[dn];
+        }
+    }
+    EXPECT_NEAR(mi[0].x, (occ[1] + occ[2]).real(), 1e-12);
+    EXPECT_NEAR(mi[0].y, (occ[1] - occ[2]).imag(), 1e-12);
+    EXPECT_NEAR(mi[0].z, (occ[0] - occ[3]).real(), 1e-12);
 }
 
 // =====================================================================

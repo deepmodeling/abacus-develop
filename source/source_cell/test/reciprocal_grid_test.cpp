@@ -66,7 +66,9 @@ class TestGrid : public ModuleCell::ReciprocalGrid
                             const ModuleSymmetry::Symmetry&,
                             bool,
                             std::string&,
-                            bool&) override
+                            bool&,
+                            const int,
+                            std::ofstream&) override
     {
     }
 };
@@ -81,7 +83,7 @@ TEST_F(ReciprocalGridTest, Construct)
 {
     EXPECT_EQ(grid.nks, 0);
     EXPECT_EQ(grid.nkstot, 0);
-    EXPECT_EQ(grid.nkstot_full, 0);
+    EXPECT_EQ(grid.nkstot_nospin, 0);
     EXPECT_FALSE(grid.kc_done);
     EXPECT_FALSE(grid.kd_done);
     EXPECT_FALSE(grid.is_mp);
@@ -214,7 +216,7 @@ TEST_F(ReciprocalGridTest, ReduceIbzNonMp)
 
     grid.is_mp = false;
     grid.nkstot = 2;
-    grid.nkstot_full = 2;
+    grid.nkstot_nospin = 2;
     grid.kvec_d.resize(2);
     grid.kvec_d[0] = ModuleBase::Vector3<double>(0.25, 0.25, 0.25);
     grid.kvec_d[1] = ModuleBase::Vector3<double>(-0.25, -0.25, -0.25);
@@ -244,7 +246,7 @@ TEST_F(ReciprocalGridTest, ReduceIbzKeepsDistinctPoints)
 
     grid.is_mp = false;
     grid.nkstot = 2;
-    grid.nkstot_full = 2;
+    grid.nkstot_nospin = 2;
     grid.kvec_d.resize(2);
     grid.kvec_d[0] = ModuleBase::Vector3<double>(0.25, 0.25, 0.25);
     grid.kvec_d[1] = ModuleBase::Vector3<double>(0.50, 0.50, 0.50);
@@ -281,7 +283,7 @@ TEST_F(ReciprocalGridTest, ReduceIbzMpKLattice)
     const double offset[3] = {0.0, 0.0, 0.0};
     grid.Monkhorst_Pack(nmp, offset, 0); // sets nkstot=8, wk=1/8, kd_done
     grid.is_mp = true;
-    grid.nkstot_full = grid.nkstot;
+    grid.nkstot_nospin = grid.nkstot;
 
     // k-lattice basis of the 2x2x2 mesh: G/2 along each reciprocal axis.
     // In this diagonal frame the k-lattice rotations equal the reciprocal ones.
@@ -316,4 +318,19 @@ TEST_F(ReciprocalGridTest, ReduceIbzMpKLattice)
         sum += wk_ibz[i];
     }
     EXPECT_NEAR(sum, 1.0, 1e-12);
+}
+
+TEST(ReciprocalGrid, KpointsEquivalentModuloReciprocalVectors)
+{
+    const ModuleBase::Vector3<double> first(-0.499999, 0.125, -0.25);
+    const ModuleBase::Vector3<double> translated(0.500001, -1.875, 2.75);
+    const ModuleBase::Vector3<double> near(0.5000012, -1.875, 2.75);
+    const ModuleBase::Vector3<double> different(0.500011, -1.875, 2.75);
+    const double epsilon = 1e-6;
+    EXPECT_TRUE(ModuleCell::kpoints_equivalent(first, translated, epsilon));
+    EXPECT_TRUE(ModuleCell::kpoints_equivalent(translated, first, epsilon));
+    EXPECT_TRUE(ModuleCell::kpoints_equivalent(first, near, epsilon));
+    EXPECT_FALSE(ModuleCell::kpoints_equivalent(first, different, epsilon));
+    EXPECT_DOUBLE_EQ(first.x, -0.499999);
+    EXPECT_DOUBLE_EQ(translated.x, 0.500001);
 }

@@ -19,7 +19,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
 		elecstate::ElecState* pelec, // electronic info * 
-        elecstate::DensityMatrix<TK, double>& dm, // density matrix, mohan add 2025-11-03
+        module_dm::DensityMatrix<TK, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<TK>* psi, // wave functions *
@@ -57,10 +57,10 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         if (cal_exx)
         {
             real_number ?
-              exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm, 
-                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
+              exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
+                pv, *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
               exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
-                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver);
+                pv, *p_chgmix, scf_ene_thr, iter, istep, conv_esolver);
         }
     }
 #endif
@@ -90,7 +90,7 @@ template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
 		elecstate::ElecState* pelec, // electronic info * 
-        elecstate::DensityMatrix<double, double>& dm, // density matrix, mohan add 2025-11-03
+        module_dm::DensityMatrix<double, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<double>* psi, // wave functions *
@@ -111,7 +111,7 @@ template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // u
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
 		elecstate::ElecState* pelec, // electronic info * 
-        elecstate::DensityMatrix<std::complex<double>, double>& dm, // density matrix, mohan add 2025-11-03
+        module_dm::DensityMatrix<std::complex<double>, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<std::complex<double>>* psi, // wave functions *
@@ -132,7 +132,7 @@ template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCel
         const Input_para& inp, // input parameters *
 		K_Vectors& kv, // k points *
 		elecstate::ElecState* pelec, // electronic info * 
-        elecstate::DensityMatrix<std::complex<double>, double>& dm, // density matrix, mohan add 2025-11-03
+        module_dm::DensityMatrix<std::complex<double>, double>& dm, // density matrix, mohan add 2025-11-03
 		Parallel_Orbitals& pv, // parallel orbital info *
 		Grid_Driver& gd, // adjacent atom info *
 		psi::Psi<std::complex<double>>* psi, // wave functions *

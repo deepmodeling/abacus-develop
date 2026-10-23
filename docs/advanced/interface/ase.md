@@ -103,6 +103,104 @@ In the new implementation, we limit the range of functionalties supported to mai
 
 Please read the examples in `interfaces/ASE_interface/examples/` for more details.
 
+### Socket I/O with ASE
+
+#### When to use socket mode
+
+`AbacusSocketIO` is designed for a sequence of electronic-structure
+evaluations in which the atomic positions change while the simulation context
+remains fixed. Reuse one socket calculator only when the cell and periodic
+boundary conditions, atom count and species, pseudopotentials and orbitals,
+k-point sampling, spin settings, and other electronic-structure parameters do
+not change. The socket session can then keep one ABACUS process alive and
+receive successive position updates.
+
+This pattern is suitable for fixed-cell ASE optimization and molecular
+dynamics, fixed-cell NEB (use an independent calculator/session for each image),
+finite-displacement phonon or ASE finite-difference frequency calculations,
+position-only P-RFO or transition-state searches, and repeated fixed-cell
+force evaluations in larger workflows such as thermal-property or active-
+learning data generation. These workflows can use the socket calculator only
+when their driver calls the ASE calculator interface; the existing Phonopy,
+ShengBTE, DP-GEN, or transition-state tools are not automatically converted
+to socket workflows by installing abacuslite.
+
+Use the regular `Abacus` FileIO calculator when the cell, composition, or
+electronic-structure settings must change. Direct DFPT or dynamical-matrix
+calculations, and external workflows that require properties beyond energy,
+forces, and stress, also remain outside the current socket property interface.
+
+For socket-driven ASE workflows, use the `AbacusSocketIO` calculator. ASE runs the i-PI socket server, while ABACUS keeps `calculation=scf` and is launched with `socket_driver=1` as the client. Energy, forces, and stress are independent properties controlled by `cal_force` and `cal_stress`; the fixed i-PI wire layout still contains padding fields, while extras metadata identifies which values were actually computed. See the [ASE socket I/O documentation](https://ase-lib.org/ase/calculators/socketio/socketio.html) and the i-PI reference paper, [Ceriotti et al., Comput. Phys. Commun. 185, 1019-1026 (2014)](https://doi.org/10.1016/j.cpc.2013.10.027), for the protocol background.
+
+Build ABACUS as usual before using this interface. PW-only builds work with `basis_type=pw`; LCAO socket calculations require an LCAO-enabled executable. No extra socket library is required.
+
+With CMake, choose the executable according to the basis:
+
+```bash
+cmake -S . -B build-pw -DENABLE_MPI=ON -DENABLE_LCAO=OFF
+cmake --build build-pw --target abacus_pw_para -j
+
+cmake -S . -B build-lcao -DENABLE_MPI=ON -DENABLE_LCAO=ON
+cmake --build build-lcao --target abacus_basic_para -j
+```
+
+With the ABACUS toolchain workflow, build the normal ABACUS executable with LCAO support when `basis_type=lcao` is needed, then pass that executable to `AbacusProfile(command=...)`. The command can include an MPI launcher, for example `mpirun -np 4 /path/to/abacus`; ABACUS rank 0 opens the socket connection and broadcasts the i-PI data to the other ranks internally. On managed clusters, keep scheduler-specific launch options outside the calculator when possible and test the exact launcher command on a compute node.
+
+For PW calculations on CUDA/ROCm with multiple MPI ranks, use a k-point layout compatible with ABACUS' GPU parallelization. In practice, make sure each k-point pool contains one MPI rank; for example, a 4-rank PW GPU socket calculation should use at least four k-points so the default GPU `kpar` adjustment can assign one rank per pool. A one-k-point PW GPU job with several MPI ranks can fail in the PW GPU transform path; reduce the rank count or use a denser k-point mesh such as a smaller `kspacing`.
+
+The ASE interface can be installed from this repository with:
+
+```bash
+cd interfaces/ASE_interface
+pip install .
+```
+
+A minimal socket calculator setup is:
+
+```python
+from ase.optimize import BFGS
+from abacuslite import AbacusProfile, AbacusSocketIO
+
+aprof = AbacusProfile(
+    command="mpirun -np 4 /path/to/abacus",
+    pseudo_dir="/path/to/pseudopotentials",
+    orbital_dir="/path/to/orbitals",
+    omp_num_threads=1,
+)
+
+abacus = AbacusSocketIO(
+    profile=aprof,
+    directory="socketio",
+    unixsocket="abacus_si",
+    pseudopotentials={"Si": "Si_ONCV_PBE-1.0.upf"},
+    basissets={"Si": "Si_gga_8au_100Ry_2s2p1d.orb"},
+    inp={"calculation": "scf", "basis_type": "lcao", "kspacing": 0.1},
+)
+
+with abacus as calc:
+    atoms.calc = calc
+    BFGS(atoms).run(fmax=0.05)
+```
+
+`AbacusSocketIO` sets `socket_driver=1` automatically. The adapter enables properties requested through ASE, restarting the client if a later request expands the active property set. Set `inp={'cal_force': 1}` and/or `inp={'cal_stress': 1}` when a fixed-cell optimizer, MD integrator, or stress evaluation client needs those properties. Energy is always available. The interface selects the socket endpoint and passes it to ABACUS through `ABACUS_SOCKET_ADDRESS`, so users normally do not set this environment variable by hand when using abacuslite.
+
+There are two endpoint styles:
+
+- `unixsocket="abacus_si"` uses a local Unix-domain socket. ASE creates and listens on `/tmp/ipi_abacus_si`; abacuslite launches ABACUS with `ABACUS_SOCKET_ADDRESS=/tmp/ipi_abacus_si:UNIX`. The `:UNIX` suffix is part of ABACUS' address syntax and means that `/tmp/ipi_abacus_si` is a filesystem socket path, not a TCP host. This is usually the best choice when ASE and ABACUS run on the same node because it avoids TCP port conflicts.
+- `port=31415` uses a TCP socket. abacuslite launches ABACUS with `ABACUS_SOCKET_ADDRESS=localhost:31415`, meaning host `localhost` and TCP port `31415`. Use this style when the socket server should listen on a TCP port. If ABACUS is launched manually instead of through `AbacusSocketIO`, set `ABACUS_SOCKET_ADDRESS` yourself to the same `host:port` or `path:UNIX` endpoint.
+
+Calling `atoms.get_potential_energy()` does not force a force or stress calculation. If a requested property was disabled, ASE raises `PropertyNotImplementedError`; zero-filled i-PI padding is never treated as a physical result. When SCF does not converge, `AbacusSocketIO.last_scf_converged` is set to `False` and the caller decides whether to continue or stop.
+
+The ABACUS metadata extension is required to expose force/stress presence safely. If a legacy client returns an empty extras field, the adapter accepts only an energy-only response and refuses to infer forces or stress from the fixed-wire padding. Generic i-PI/ASE clients that ignore ABACUS extras cannot distinguish mandatory padding from a computed zero; use `AbacusSocketIO` or another metadata-aware client when requesting optional properties. When launching ABACUS with a generic client, explicitly set `cal_force=1` for force-driven workflows and `cal_stress=1` for stress evaluation; an omitted switch defaults to disabled. Such clients also need their own policy for unconverged SCF results.
+
+A socket calculator owns one ABACUS process initialized from one fixed `INPUT`/`STRU` setup. Reuse the same `AbacusSocketIO` instance only for position updates under the same electronic-structure settings and the same cell. Do not change `kpts`, `kspacing`, `nspin`, `basis_type`, `basissets`, pseudopotentials, species, atom count, cell, or other core `INPUT`/`STRU` parameters through an existing socket calculator; create a new `AbacusSocketIO` instance and a new ABACUS client process for those changes. `AbacusSocketIO` rejects cell changes before sending them to ABACUS, and the ABACUS socket driver also checks incoming POSDATA cells against the initial `STRU` cell and exits if they differ.
+
+In socket mode, ABACUS keeps one client process alive. All SCF evaluations produced by the same `AbacusSocketIO` instance are appended to the same `OUT.ABACUS/running_scf.log`, because the ABACUS calculation type remains `scf`. The authoritative per-step energy and force results are returned through the i-PI socket to ASE. Use ASE trajectory and optimizer log files, such as `BFGS(atoms, trajectory="opt.traj", logfile="opt.log")`, when each optimizer or MD step should be saved separately. Treat `running_scf.log` mainly as the ABACUS diagnostic log for the socket client, not as one independent FileIO result per structure.
+
+The i-PI protocol does not transmit element symbols. `AbacusSocketIO` therefore sorts the internal socket atoms with the same first-occurrence species grouping used when writing `STRU`, and maps returned forces back to the original ASE `Atoms` order. This avoids silent force/atom mismatches when structures are read from CIF, extxyz, POSCAR, or other formats whose atom order is not already grouped for ABACUS. Users should not manually reorder atoms for socket I/O; pass the physical ASE `Atoms` object directly to the calculator.
+
+A complete fixed-cell validation and benchmark example is available in `interfaces/ASE_interface/examples/socketio.py`.
+
 ## SPAP Analysis
 
 [SPAP](https://github.com/chuanxun/StructurePrototypeAnalysisPackage) (Structure Prototype Analysis Package) is written by Dr. Chuanxun Su to analyze symmetry and compare similarity of large amount of atomic structures. The coordination characterization function (CCF) is used to 
@@ -114,3 +212,10 @@ If you use this program and method in your research, please read and cite the pu
 `Su C, Lv J, Li Q, Wang H, Zhang L, Wang Y, Ma Y. Construction of crystal structure prototype database: methods and applications. J Phys Condens Matter. 2017 Apr 26;29(16):165901.`
 
 and you should install it first with command `pip install spap`.
+
+Socket results are read directly from the completed in-memory solver frame, not
+parsed from output files. The client clears cached results and convergence
+metadata before a new request and publishes them only after validating the full
+response. A failed request therefore leaves no previous-frame result available
+in the calculator cache. This protocol guarantee does not establish SCF
+convergence or numerical agreement with independent single-point calculations.

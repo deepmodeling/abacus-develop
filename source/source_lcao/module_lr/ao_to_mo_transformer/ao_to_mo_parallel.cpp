@@ -21,12 +21,16 @@ namespace LR
         const Parallel_2D& pmat_mo,
         double* mat_mo,
         const bool add_on,
-        const LR_Util::MO_TYPE type)
+        const LR_Util::MO_TYPE type,
+        const double factor)
     {
         ModuleBase::TITLE("LR", "ao_to_mo_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
         assert(pmat_ao.blacs_ctxt == pcoeff.blacs_ctxt && pmat_ao.blacs_ctxt == pmat_mo.blacs_ctxt);
-        assert(pmat_mo.get_local_size() > 0);
+
+        // Empty local blocks still participate in every collective PBLAS call.
+        double empty_block(0);
+        double* const mat_mo_data = mat_mo == nullptr ? &empty_block : mat_mo;
 
         const int nks = mat_ao.size();
         int nmo1_set, nmo2_set, imo1_set, imo2_set;
@@ -61,9 +65,9 @@ namespace LR
             // mat_mo = c ^ TVc
             // descC puts M(nvirt) to row
             ScalapackConnector::gemm(transa, transb, nmo2, nmo1, naos,
-                alpha, coeff.get_pointer(), i1, imo2, pcoeff.desc,
+                factor, coeff.get_pointer(), i1, imo2, pcoeff.desc,
                 Vc.data<double>(), i1, i1, pVc.desc,
-                beta, mat_mo + start, i1, i1, pmat_mo.desc);
+                beta, mat_mo_data + start, i1, i1, pmat_mo.desc);
 
         }
     }
@@ -80,12 +84,16 @@ namespace LR
         const Parallel_2D& pmat_mo,
         std::complex<double>* const mat_mo,
         const bool add_on,
-        const LR_Util::MO_TYPE type)
+        const LR_Util::MO_TYPE type,
+        const std::complex<double> factor)
     {
         ModuleBase::TITLE("LR", "ao_to_mo_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
         assert(pmat_ao.blacs_ctxt == pcoeff.blacs_ctxt && pmat_ao.blacs_ctxt == pmat_mo.blacs_ctxt);
-        assert(pmat_mo.get_local_size() > 0);
+
+        // Empty local blocks still participate in every collective PBLAS call.
+        std::complex<double> empty_block(0);
+        std::complex<double>* const mat_mo_data = mat_mo == nullptr ? &empty_block : mat_mo;
 
         const int nks = mat_ao.size();
         int nmo1_set, nmo2_set, imo1_set, imo2_set;
@@ -120,9 +128,9 @@ namespace LR
             // mat_mo = c ^ TVc
             // descC puts M(nvirt) to row
             ScalapackConnector::gemm(transa, transb, nmo2, nmo1, naos,
-                alpha, coeff.get_pointer(), i1, imo2, pcoeff.desc,
+                factor, coeff.get_pointer(), i1, imo2, pcoeff.desc,
                 Vc.data<std::complex<double>>(), i1, i1, pVc.desc,
-                beta, mat_mo + start, i1, i1, pmat_mo.desc);
+                beta, mat_mo_data + start, i1, i1, pmat_mo.desc);
         }
     }
 }

@@ -1,0 +1,27 @@
+{
+  "output_dir": "OUT.librpa",
+  "required": [
+    {
+      "pattern": "stru_out.txt",
+      "kind": "stru",
+      "symmetry_rows": 2,
+      "spin_symmetry_rows": 2,
+      "abs_tol": 1e-7
+    },
+    {
+      "pattern": "band_out.txt",
+      "kind": "band"
+    },
+    {
+      "pattern": "bz_sample.txt",
+      "kind": "text"
+    },
+    {
+      "pattern": "KS_wfc_0.dat",
+      "kind": "ks_wfc_v1",
+      "nao_dir": "OUT.autotest",
+      "spinor": true,
+      "abs_tol": 1e-7
+    }
+  ]
+}

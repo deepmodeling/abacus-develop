@@ -3,12 +3,12 @@ test if ABACUS can perform the calculation on the anti-ferromagnetic
 and ferromagnetic phases calculation on the BCC Fe
 '''
 import unittest
-import tempfile
 import numpy as np
 from pathlib import Path
 here = Path(__file__).parent
 from ase.atoms import Atoms
 from abacuslite import AbacusProfile, Abacus
+from common import preserved_tmpdir
 
 class TestMagneticSCF(unittest.TestCase):
 
@@ -28,7 +28,7 @@ class TestMagneticSCF(unittest.TestCase):
                    cell=np.eye(3) * 5.2,
                    pbc=True)
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with preserved_tmpdir('abacus_ase_afm_') as tmpdir:
             abacus = Abacus(
                 profile=self.aprof,
                 directory=tmpdir,
@@ -58,7 +58,7 @@ class TestMagneticSCF(unittest.TestCase):
                    cell=np.eye(3) * 5.2,
                    pbc=True)
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with preserved_tmpdir('abacus_ase_fm_') as tmpdir:
             abacus = Abacus(
                 profile=self.aprof,
                 directory=tmpdir,
@@ -96,7 +96,7 @@ class TestMagneticSCF(unittest.TestCase):
                    cell=np.eye(3) * 5.2,
                    pbc=True)
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with preserved_tmpdir('abacus_ase_nc_') as tmpdir:
             abacus = Abacus(
                 profile=self.aprof,
                 directory=tmpdir,

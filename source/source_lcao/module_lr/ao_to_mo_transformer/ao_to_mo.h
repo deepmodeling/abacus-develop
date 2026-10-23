@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_LR_AO_TO_MO_TRANSFORMER_AO_TO_MO_H
+#define ABACUS_SOURCE_LCAO_MODULE_LR_AO_TO_MO_TRANSFORMER_AO_TO_MO_H
+
 #include <ATen/core/tensor.h>
 #include "source_psi/psi.h"
 #include "source_lcao/module_lr/utils/mo_type.h"
@@ -9,6 +11,8 @@
 #endif
 namespace LR
 {
+    // type selects occupied/virtual MO blocks; factor scales the transformed matrix.
+    // add_on selects accumulation into mat_mo instead of overwriting it.
     template<typename T>
     void ao_to_mo_forloop_serial(
         const std::vector<container::Tensor>& mat_ao,
@@ -16,7 +20,8 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         T* const mat_mo,
-        const LR_Util::MO_TYPE type = LR_Util::VO);
+        const LR_Util::MO_TYPE type,
+        const T factor);
     template<typename T>
     void ao_to_mo_blas(
         const std::vector<container::Tensor>& mat_ao,
@@ -24,8 +29,9 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         T* const mat_mo,
-        const bool add_on = true,
-        const LR_Util::MO_TYPE type = LR_Util::VO);
+        const bool add_on,
+        const LR_Util::MO_TYPE type,
+        const T factor);
 #ifdef __MPI
     template<typename T>
     void ao_to_mo_pblas(
@@ -38,7 +44,10 @@ namespace LR
         const int& nvirt,
         const Parallel_2D& pmat_mo,
         T* const mat_mo,
-        const bool add_on = true,
-        const LR_Util::MO_TYPE type = LR_Util::VO);
+        const bool add_on,
+        const LR_Util::MO_TYPE type,
+        const T factor);
 #endif
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_LR_AO_TO_MO_TRANSFORMER_AO_TO_MO_H

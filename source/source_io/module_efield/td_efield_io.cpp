@@ -5,6 +5,7 @@
 #include "source_estate/module_pot/td_field_manager.h"
 
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 
 namespace
@@ -42,14 +43,53 @@ void prepare_td_field_output(const std::string& output_dir, const std::size_t fi
     }
 }
 
+void prepare_td_field_output(const std::string& output_dir, const elecstate::TDFieldManager& manager, const bool restart)
+{
+    if (!manager.file_source())
+    {
+        prepare_td_field_output(output_dir, manager.fields().size(), restart);
+    }
+    if (!restart)
+    {
+        std::ofstream output((output_dir + "efield_total.txt").c_str());
+        if (!output)
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::prepare_td_field_output", "Cannot prepare efield_total.txt.");
+        }
+        output << "# time(fs) Ex(V/Angstrom) Ey(V/Angstrom) Ez(V/Angstrom); ";
+        if (manager.file_source())
+        {
+            output << "endpoint finite differences\n";
+        }
+        else
+        {
+            output << "sum of analytic fields\n";
+        }
+    }
+}
+
 void write_td_field_values(const elecstate::TDFieldManager& manager, const std::string& output_dir)
 {
-    if (!manager.active())
+    // Keep the complete time series, including zero fields outside the analytic window.
+    {
+        std::ofstream output((output_dir + "efield_total.txt").c_str(), std::ofstream::app);
+        if (!output)
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::write_td_field_values", "Cannot append efield_total.txt.");
+        }
+        output << std::scientific << std::setprecision(16) << manager.current_step() * manager.dt_ha() * ModuleBase::AU_to_FS;
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            output << '\t' << manager.efield_ha()[direction] * ModuleBase::Hartree_to_eV / ModuleBase::BOHR_TO_A;
+        }
+        output << '\n';
+    }
+    if (manager.file_source())
     {
         return;
     }
 
-    const std::vector<double>& field_values = manager.field_values();
+    const std::vector<double>& field_values = manager.field_vals_ha();
     for (std::size_t field_index = 0; field_index < field_values.size(); ++field_index)
     {
         // Keep one file per input occurrence even when directions repeat.
@@ -61,8 +101,8 @@ void write_td_field_values(const elecstate::TDFieldManager& manager, const std::
         }
         // Convert only at the user-visible output boundary: time to fs and the
         // electric field to V/Angstrom.
-        output << manager.current_step() * manager.dt() * ModuleBase::AU_to_FS << "\t"
-               << field_values[field_index] * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A << std::endl;
+        output << manager.current_step() * manager.dt_ha() * ModuleBase::AU_to_FS << "\t"
+               << field_values[field_index] * ModuleBase::Hartree_to_eV / ModuleBase::BOHR_TO_A << std::endl;
     }
 }
 

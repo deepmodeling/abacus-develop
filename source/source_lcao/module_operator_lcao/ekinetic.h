@@ -12,9 +12,6 @@
 namespace hamilt
 {
 
-#ifndef __EKINETICTEMPLATE
-#define __EKINETICTEMPLATE
-
 /// The EKinetic class template inherits from class T
 /// it is used to calculate the electronic kinetic
 /// Template parameters:
@@ -24,8 +21,6 @@ template <class T>
 class EKinetic : public T
 {
 };
-
-#endif
 
 /// EKinetic class template specialization for OperatorLCAO<TK> base class
 /// It is used to calculate the electronic kinetic matrix in real space and fold it to k-space

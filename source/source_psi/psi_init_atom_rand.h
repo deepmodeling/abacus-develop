@@ -17,7 +17,7 @@ class psi_init_atomic_random : public psi_init_atomic<T>
         this->method_ = "atomic+random";
         this->mixing_coef_ = 0.05;
     }
-    ~psi_init_atomic_random(){};
+    ~psi_init_atomic_random() {};
 
     virtual void initialize(const Structure_Factor* sf,
                             const ModulePW::PW_Basis_K* pw_wfc,

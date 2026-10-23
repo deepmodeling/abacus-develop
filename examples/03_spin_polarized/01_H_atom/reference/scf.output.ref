@@ -125,8 +125,8 @@ DiagoElpa            elpa_solve                   0.00          14   0.00     0.
 ElecStateLCAO        psiToRho                     0.34           7   0.05     2.06
 ElecStateLCAO        cal_dm_2d                    0.00           7   0.00     0.00
 elecstate            cal_dm                       0.00           8   0.00     0.00
-psiMulPsiMpi         pdgemm                       0.00          16   0.00     0.00
-DensityMatrix        cal_DMR                      0.00           7   0.00     0.00
+cal_dmk_psi         pdgemm                       0.00          16   0.00     0.00
+DensityMatrix        cal_dmr                      0.00           7   0.00     0.00
 Gint                 transfer_DMR                 0.00           7   0.00     0.01
 Gint_interface       cal_gint_rho                 0.07           7   0.01     0.45
 Charge_Mixing        get_drho                     0.02           7   0.00     0.09

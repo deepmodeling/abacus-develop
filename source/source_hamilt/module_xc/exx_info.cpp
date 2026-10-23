@@ -3,6 +3,7 @@
 
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_base/global_function.h"
+#include "source_base/tool_quit.h"
 
 #include <algorithm>
 #include <cassert>
@@ -114,7 +115,8 @@ bool init_general_exx_info(General_Exx_Info& info, const Input_para& inp)
                 {
                     info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
-                        {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])} }};
+                        {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])},
+                        {"singularity_correction", inp.exx_singularity_correction} }};
                 }
             }
         }
@@ -178,6 +180,20 @@ bool init_general_exx_info(General_Exx_Info& info, const Input_para& inp)
         info.separate_loop = inp.exx_separate_loop;
         info.hybrid_step = inp.exx_hybrid_step;
         info.mixing_beta_for_loop1 = inp.exx_mixing_beta;
+
+        // PW EXX operator configuration
+        info.exxace = inp.exxace;
+        info.gamma_extrapolation = inp.exx_gamma_extra;
+        info.ecutexx_user_set = inp.ecutexx > 0.0;
+        info.ecut_exx = info.ecutexx_user_set ? inp.ecutexx : inp.ecutrho;
+        if (info.ecutexx_user_set && info.ecut_exx > inp.ecutrho)
+        {
+            // no pair-density G-components exist beyond the ecutrho sphere,
+            // and buffers sized by ecutrho would overflow; clamp instead
+            ModuleBase::WARNING("General_Exx_Info", "ecutexx is larger than ecutrho; ecutexx is set to ecutrho");
+            info.ecut_exx = inp.ecutrho;
+        }
+        info.exx_batch_size = inp.exx_batch_size;
     }
 
     return generate_opt_orb;

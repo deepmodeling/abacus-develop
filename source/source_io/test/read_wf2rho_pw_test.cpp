@@ -3,13 +3,13 @@
 
 #undef __LCAO
 
-#define private public
 #include "source_base/module_out/filename.h" // mohan add 2025-05-17
 #include "source_base/parallel_grid.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_estate/module_charge/symm_rho.h"
+#include "source_estate/module_charge/chg_parallel.h"
+#include "source_estate/module_charge/chg_symm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_wf/read_wf2rho_pw.h"
@@ -22,12 +22,18 @@
 #include "source_basis/module_pw/test/test_tool.h"
 #endif
 
-Charge::Charge()
+/// @brief Friend helper to mutate PARAM private members in unit tests.
+/// @details Parameter grants friend access to TestParameters so the test can
+/// modify input/sys fields without `#define private public`. The class must
+/// stay at global scope to match the friend declaration in parameter.h;
+/// an anonymous-namespace class would not be the friend.
+class TestParameters
 {
-}
-Charge::~Charge()
-{
-}
+  public:
+    static Input_para& input() { return PARAM.input; }
+    static System_para& sys() { return PARAM.sys; }
+};
+
 UnitCell::UnitCell()
 {
 }
@@ -55,27 +61,27 @@ Sep_Cell::~Sep_Cell() noexcept
 int XC_Functional::func_type = 0;
 bool XC_Functional::ked_flag = false;
 
-Symmetry_rho::Symmetry_rho()
+namespace module_charge
 {
-}
-Symmetry_rho::~Symmetry_rho()
-{
-}
-void Symmetry_rho::begin(const int& spin_now, const Charge& CHR, const ModulePW::PW_Basis* rho_basis, ModuleSymmetry::Symmetry& symm) const
+void cal_rhog_symm(const int& spin_now,
+                   const Charge& CHR,
+                   const ModulePW::PW_Basis* rho_basis,
+                   ModuleSymmetry::Symmetry& symm)
 {
     return;
 }
+} // namespace module_charge
 
 void cal_ik2iktot(std::vector<int>& ik2iktot, const int& nks, const int& nkstot)
 {
-    if (PARAM.inp.kpar == 1)
+    if (TestParameters::input().kpar == 1)
     {
         for (int ik = 0; ik < nks; ++ik)
         {
             ik2iktot[ik] = ik;
         }
     }
-    else if (PARAM.inp.kpar == 2)
+    else if (TestParameters::input().kpar == 2)
     {
         if (GlobalV::MY_POOL == 0)
         {
@@ -117,7 +123,7 @@ class ReadWfcRhoTest : public ::testing::Test
         rhopw = new ModulePW::PW_Basis;
         kv = new K_Vectors;
         // output .dat file
-        PARAM.input.out_wfc_pw = 2;
+        TestParameters::input().out_wfc_pw = 2;
 #ifdef __MPI
         MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 #endif
@@ -229,25 +235,18 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     //----------------------------------------
     // Initialize charge density
     //----------------------------------------
-    chg.rho = new double*[nspin];
-    chg._space_rho = new double[rhopw->nrxx];
-    chg.rho[0] = chg._space_rho;
-    ModuleBase::GlobalFunc::ZEROS(chg.rho[0], rhopw->nrxx);
-    chg.rhopw = rhopw;
-    chg.nrxx = rhopw->nrxx;
+    chg.set_rhopw(rhopw);
+    chg.allocate(nspin, false, false, 0);
     chg.pgrid = &pgrid;
 
     //----------------------------------------
     // set charge_ref
     //----------------------------------------
     Charge chg_ref;
-    chg_ref.rho = new double*[nspin];
-    chg_ref._space_rho = new double[rhopw->nrxx];
-    chg_ref.rho[0] = chg_ref._space_rho;
-    ModuleBase::GlobalFunc::ZEROS(chg_ref.rho[0], rhopw->nrxx);
-    std::vector<std::complex<double>> rho_tmp(rhopw->nrxx);
-    chg_ref.nrxx = rhopw->nrxx;
+    chg_ref.set_rhopw(rhopw);
+    chg_ref.allocate(nspin, false, false, 0);
     chg_ref.pgrid = &pgrid;
+    std::vector<std::complex<double>> rho_tmp(rhopw->nrxx);
 
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -266,7 +265,8 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     }
 
 #ifdef __MPI
-    chg_ref.reduce_diff_pools(chg_ref.rho[0]);
+    module_charge::reduce_diff_pools(chg_ref.rho[0], chg_ref, GlobalV::KPAR,
+                                     PARAM.globalv.all_ks_run, PARAM.inp.bndpar);
 #endif
 
     // for spin=1 or 2, npol=1
@@ -297,7 +297,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
                            npol,
                            GlobalV::RANK_IN_POOL,
                            GlobalV::NPROC_IN_POOL,
-                           PARAM.input.out_wfc_pw,
+                           TestParameters::input().out_wfc_pw,
                            ecutwfc,
                            out_dir,
                            *psi,
@@ -347,10 +347,6 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
         // }
     }
 
-    delete[] chg.rho;
-    delete[] chg._space_rho;
-    delete[] chg_ref.rho;
-    delete[] chg_ref._space_rho;
     delete psi;
 
     if (GlobalV::MY_RANK == 0)
@@ -376,12 +372,12 @@ int main(int argc, char** argv)
     setupmpi(argc, argv, GlobalV::NPROC, GlobalV::MY_RANK);
 
     // when kpar == 2, nspin == 2
-    PARAM.input.kpar = (GlobalV::NPROC > 1) ? 2 : 1;
-    GlobalV::KPAR = PARAM.input.kpar;
-    PARAM.input.bndpar = 1;
+    TestParameters::input().kpar = (GlobalV::NPROC > 1) ? 2 : 1;
+    GlobalV::KPAR = TestParameters::input().kpar;
+    TestParameters::input().bndpar = 1;
     Parallel_Global::divide_pools(GlobalV::NPROC,
                                   GlobalV::MY_RANK,
-                                  PARAM.inp.bndpar,
+                                  TestParameters::input().bndpar,
                                   GlobalV::KPAR,
                                   GlobalV::NPROC_IN_BNDGROUP,
                                   GlobalV::RANK_IN_BPGROUP,

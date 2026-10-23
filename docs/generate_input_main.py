@@ -56,7 +56,9 @@ CATEGORY_ORDER = [
     "Spin-Constrained DFT",
     "vdW correction",
     "Berry phase and wannier90 interface",
-    "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory",
+    "Real-Time TDDFT (Common)",
+    "Real-Time TDDFT (LCAO)",
+    "Real-Time TDDFT (PW)",
     "Variables useful for debugging",
     "Electronic conductivities",
     "Implicit solvation model",
@@ -171,6 +173,15 @@ def generate_parameter_markdown(param: Dict[str, str],
     if param.get('type', '') != '':
         type_text = escape_md_text(normalize_type(str(param['type'])))
         lines.append(f"- **Type**: {type_text}")
+
+    # Legal values from the same domain used by runtime validation.
+    if param.get('allowed_values'):
+        choices = ', '.join(escape_md_text(value) for value in param['allowed_values'])
+        lines.append(f"- **Allowed values**: {choices}")
+
+    for key, title in [('value_rule', 'Legal range'), ('requirements', 'Requirements')]:
+        if param.get(key):
+            lines.append(f"- **{title}**: " + link_availability(str(param[key]), name_anchors))
 
     # Availability (before description, as in original format)
     if param.get('availability', '') != '':

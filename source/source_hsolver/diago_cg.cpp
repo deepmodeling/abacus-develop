@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "ATen/core/tensor_map.h"
 #include "ATen/core/tensor_utils.h"
 #include "ATen/kernels/lapack.h"
@@ -11,11 +12,17 @@
 #include "source_base/tool_title.h"             // ModuleBase::TITLE
 #include "source_base/global_function.h"        // ModuleBase::GlobalFunc::NOTE
 #include "source_hsolver/diago_cg.h"
+#include "source_hsolver/diago_iter_assist.h"
 
 using namespace hsolver;
 
 template <typename T, typename Device>
 DiagoCG<T, Device>::DiagoCG(const std::string& basis_type, const std::string& calculation)
+#ifdef __MPI
+    : diag_comm_(MPI_COMM_SELF, 0, 1)
+#else
+    : diag_comm_(0, 1)
+#endif
 {
     basis_type_ = basis_type;
     calculation_ = calculation;
@@ -28,18 +35,16 @@ template <typename T, typename Device>
 DiagoCG<T, Device>::DiagoCG(const std::string& basis_type,
                             const std::string& calculation,
                             const bool& need_subspace,
-                            const SubspaceFunc& subspace_func,
+                            const diag_comm_info& diag_comm,
                             const Real& pw_diag_thr,
-                            const int& pw_diag_nmax,
-                            const int& nproc_in_pool)
+                            const int& pw_diag_nmax)
+    : diag_comm_(diag_comm)
 {
     basis_type_ = basis_type;
     calculation_ = calculation;
     need_subspace_ = need_subspace;
-    subspace_func_ = subspace_func;
     pw_diag_thr_ = pw_diag_thr;
     pw_diag_nmax_ = pw_diag_nmax;
-    nproc_in_pool_ = nproc_in_pool;
     this->one_ = new T(static_cast<T>(1.0));
     this->zero_ = new T(static_cast<T>(0.0));
     this->neg_one_ = new T(static_cast<T>(-1.0));
@@ -110,7 +115,7 @@ void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
     auto prec = prec_in;
     if (prec.NumElements() == 0)
     {
-        prec = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_});
+        prec = ct::Tensor(ct::DataTypeToEnum<Real>::value, ct::DeviceTypeToEnum<ct_Device>::value, {this->n_basis_});
         prec.set_value(static_cast<Real>(1.0));
     }
 
@@ -122,10 +127,10 @@ void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
     {
         phi_m.sync(psi[m]);
         // copy psi_in into internal psi, m=0 has been done in Constructor
-        this->spsi_func_(phi_m.data<T>(), sphi.data<T>(), this->n_basis_, 1); // sphi = S|psi(m)>
+        this->op_->spsi(phi_m.data<T>(), sphi.data<T>(), this->n_basis_, 1); // sphi = S|psi(m)>
         this->schmit_orth(m, psi, sphi, phi_m);
-        this->spsi_func_(phi_m.data<T>(), sphi.data<T>(), this->n_basis_, 1); // sphi = S|psi(m)>
-        this->hpsi_func_(phi_m.data<T>(), hphi.data<T>(), this->n_basis_, 1); // hphi = H|psi(m)>
+        this->op_->spsi(phi_m.data<T>(), sphi.data<T>(), this->n_basis_, 1); // sphi = S|psi(m)>
+        this->op_->hpsi(phi_m.data<T>(), hphi.data<T>(), this->n_basis_, 1); // hphi = H|psi(m)>
 
         eigen_pack[m] = dot_real_op()(this->n_basis_, phi_m.data<T>(), hphi.data<T>());
 
@@ -150,8 +155,8 @@ void DiagoCG<T, Device>::diag_once(const ct::Tensor& prec_in,
                                 g0,
                                 cg); // Tensor&
 
-            this->hpsi_func_(cg.data<T>(), pphi.data<T>(), this->n_basis_, 1);
-            this->spsi_func_(cg.data<T>(), scg.data<T>(), this->n_basis_, 1);
+            this->op_->hpsi(cg.data<T>(), pphi.data<T>(), this->n_basis_, 1);
+            this->op_->spsi(cg.data<T>(), scg.data<T>(), this->n_basis_, 1);
 
             converged = this->update_psi(pphi,
                                          cg,
@@ -264,13 +269,18 @@ void DiagoCG<T, Device>::orth_grad(const ct::Tensor& psi,
                                    ct::Tensor& scg,
                                    ct::Tensor& lagrange)
 {
-    this->spsi_func_(grad.data<T>(), scg.data<T>(), this->n_basis_, 1); // scg = S|grad>
+    const int matrix_ld = std::max(this->n_basis_, 1);
+    if (this->n_basis_ == 0)
+    {
+        lagrange.zero();
+    }
+    this->op_->spsi(grad.data<T>(), scg.data<T>(), this->n_basis_, 1); // scg = S|grad>
     ModuleBase::gemv_op<T, Device>()('C',
                                      this->n_basis_,
                                      m,
                                      this->one_,
                                      psi.data<T>(),
-                                     this->n_basis_,
+                                     matrix_ld,
                                      scg.data<T>(),
                                      1,
                                      this->zero_,
@@ -287,7 +297,7 @@ void DiagoCG<T, Device>::orth_grad(const ct::Tensor& psi,
                                      m,
                                      this->neg_one_,
                                      psi.data<T>(),
-                                     this->n_basis_,
+                                     matrix_ld,
                                      lagrange.data<T>(),
                                      1,
                                      this->one_,
@@ -299,7 +309,7 @@ void DiagoCG<T, Device>::orth_grad(const ct::Tensor& psi,
                                      m,
                                      this->neg_one_,
                                      psi.data<T>(),
-                                     this->n_basis_,
+                                     matrix_ld,
                                      lagrange.data<T>(),
                                      1,
                                      this->one_,
@@ -476,6 +486,7 @@ bool DiagoCG<T, Device>::update_psi(const ct::Tensor& pphi,
 template <typename T, typename Device>
 void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const ct::Tensor& sphi, ct::Tensor& phi_m)
 {
+    const int matrix_ld = std::max(this->n_basis_, 1);
     //	ModuleBase::TITLE("DiagoCG","schmit_orth");
     // ModuleBase::timer::start("DiagoCG","schmit_orth");
     // orthogonalize starting eigenfunction to those already calculated
@@ -488,6 +499,10 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
 
     ct::Tensor lagrange_so = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {m + 1});
 
+    if (this->n_basis_ == 0)
+    {
+        lagrange_so.zero();
+    }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
     int inc = 1;
@@ -496,7 +511,7 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
                                      m + 1,
                                      this->one_,
                                      psi.data<T>(),
-                                     this->n_basis_,
+                                     matrix_ld,
                                      sphi.data<T>(),
                                      inc,
                                      this->zero_,
@@ -513,7 +528,7 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
                                      m,
                                      this->neg_one_,
                                      psi.data<T>(),
-                                     this->n_basis_,
+                                     matrix_ld,
                                      lagrange_so.data<T>(),
                                      inc,
                                      this->one_,
@@ -565,6 +580,19 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
 }
 
 template <typename T, typename Device>
+void DiagoCG<T, Device>::diag_subspace(const T* psi_in, T* psi_out, const int dim, const int nband, const bool S_orth)
+{
+    // subspace diagonalization of the current nband vectors, packed with leading dimension dim;
+    // the eigenvalues it produces are not needed, CG recomputes them.
+    // The generalized problem is always solved: the S-orthogonal shortcut (heevx instead of
+    // hegvd) changes eigenvector phases and, for vectors that are only approximately
+    // S-orthonormal after a CG restart, the results; wavefunction-sensitive outputs such as
+    // the Wannier90 projections rely on the generalized path.
+    std::vector<Real> eigen(nband, 0.0);
+    DiagoIterAssist<T, Device>::diag_subspace(*op_, psi_in, psi_out, nband, nband, dim, dim, eigen.data(), diag_comm_, false);
+}
+
+template <typename T, typename Device>
 bool DiagoCG<T, Device>::test_exit_cond(const int& ntry, const int& notconv) const
 {
     const bool scf = calculation_ != "nscf";
@@ -579,8 +607,7 @@ bool DiagoCG<T, Device>::test_exit_cond(const int& ntry, const int& notconv) con
 }
 
 template <typename T, typename Device>
-double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
-                                const SPsiFunc& spsi_func,
+double DiagoCG<T, Device>::diag(const HSOperator<T, Device>& op,
                                 const int ld_psi,
                                 const int nband,
                                 const int dim,
@@ -602,7 +629,9 @@ double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
                                ct::TensorShape({nband}));
 
-    ct::Tensor prec_tensor;
+    // An empty LR rank can pass nullptr. Do not mistake Tensor's default
+    // one-element float buffer for a supplied preconditioner.
+    ct::Tensor prec_tensor(ct::DataTypeToEnum<Real>::value, ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value, {0});
     if (prec != nullptr)
     {
         prec_tensor = ct::TensorMap(const_cast<Real*>(prec),
@@ -615,11 +644,19 @@ double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     /// record the times of trying iterative diagonalization
     int ntry = 0;
     this->notconv_ = 0;
-    hpsi_func_ = hpsi_func;
-    spsi_func_ = spsi_func;
+    op_ = &op;
 
     // create a new slice of psi to do cg diagonalization
-    ct::Tensor psi_temp = psi.slice({0, 0}, {nband, dim});
+    ct::Tensor psi_temp;
+    if (dim == 0)
+    {
+        // Tensor::slice requires an in-bounds start even for an empty slice.
+        psi_temp = ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<ct_Device>::value, {nband, dim});
+    }
+    else
+    {
+        psi_temp = psi.slice({0, 0}, {nband, dim});
+    }
     do
     {
         // subspace diagonalization to get a better starting guess
@@ -630,22 +667,14 @@ double DiagoCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         {
             ct::TensorMap psi_map = ct::TensorMap(psi.data(), psi_temp);
             const bool assume_S_orthogonal = true;
-            this->subspace_func_(psi_temp.data<T>(),
-                                 psi_map.data<T>(),
-                                 dim,
-                                 nband,
-                                 assume_S_orthogonal);
+            this->diag_subspace(psi_temp.data<T>(), psi_map.data<T>(), dim, nband, assume_S_orthogonal);
             psi_temp.sync(psi_map);
         }
         else if (need_subspace_)
         {
             ct::TensorMap psi_map = ct::TensorMap(psi.data(), psi_temp);
             const bool assume_S_orthogonal = false;
-            this->subspace_func_(psi_temp.data<T>(),
-                                 psi_map.data<T>(),
-                                 dim,
-                                 nband,
-                                 assume_S_orthogonal);
+            this->diag_subspace(psi_temp.data<T>(), psi_map.data<T>(), dim, nband, assume_S_orthogonal);
             psi_temp.sync(psi_map);
         }
 

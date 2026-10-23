@@ -1,8 +1,8 @@
 #ifdef __MPI
 #include "source_base/parallel_reduce.h"
 
-#include "source_base/parallel_global.h"
 #include "mpi.h"
+#include "source_base/parallel_global.h"
 
 #include "gtest/gtest.h"
 #include <assert.h>
@@ -217,6 +217,39 @@ TEST_F(ParaReduce, ReduceComplexAll)
     delete[] rand_array;
 }
 
+TEST_F(ParaReduce, ReduceAdditionalTypesAll)
+{
+    const float float_local = static_cast<float>(my_rank + 1);
+    const float float_expected = static_cast<float>(nproc * (nproc + 1) / 2);
+    float float_scalar = float_local;
+    float float_array[2] = {float_local, 2.0F * float_local};
+    Parallel_Reduce::reduce_all(float_scalar);
+    Parallel_Reduce::reduce_all(float_array, 2);
+    EXPECT_FLOAT_EQ(float_scalar, float_expected);
+    EXPECT_FLOAT_EQ(float_array[0], float_expected);
+    EXPECT_FLOAT_EQ(float_array[1], 2.0F * float_expected);
+
+    const std::complex<float> complex_local(float_local, -float_local);
+    const std::complex<float> complex_expected(float_expected, -float_expected);
+    std::complex<float> complex_scalar = complex_local;
+    std::complex<float> complex_array[2] = {complex_local, 2.0F * complex_local};
+    Parallel_Reduce::reduce_all(complex_scalar);
+    Parallel_Reduce::reduce_all(complex_array, 2);
+    EXPECT_EQ(complex_scalar, complex_expected);
+    EXPECT_EQ(complex_array[0], complex_expected);
+    EXPECT_EQ(complex_array[1], 2.0F * complex_expected);
+
+    const long long long_local = static_cast<long long>(my_rank + 1);
+    const long long long_expected = static_cast<long long>(nproc * (nproc + 1) / 2);
+    long long long_scalar = long_local;
+    long long long_array[2] = {long_local, 2 * long_local};
+    Parallel_Reduce::reduce_all(long_scalar);
+    Parallel_Reduce::reduce_all(long_array, 2);
+    EXPECT_EQ(long_scalar, long_expected);
+    EXPECT_EQ(long_array[0], long_expected);
+    EXPECT_EQ(long_array[1], 2 * long_expected);
+}
+
 TEST_F(ParaReduce, GatherIntAll)
 {
     std::default_random_engine e(time(NULL) * (my_rank + 1));
@@ -264,6 +297,13 @@ TEST_F(ParaReduce, GatherDoubleAll)
         ///	my_rank,i,array[i],min_number,max_number);
     }
     delete[] array;
+
+    float min_float = static_cast<float>(my_rank);
+    float max_float = min_float;
+    Parallel_Reduce::reduce_min(min_float);
+    Parallel_Reduce::reduce_max(max_float);
+    EXPECT_FLOAT_EQ(min_float, 0.0F);
+    EXPECT_FLOAT_EQ(max_float, static_cast<float>(nproc - 1));
 }
 
 TEST_F(ParaReduce, ReduceDoubleDiag)
@@ -408,6 +448,23 @@ TEST_F(ParaReduce, ReduceDoublePool)
         /// printf("global rank %d sum1 = %f, sum2 = %f\n",my_rank,
         ///	global_sum_first, global_sum_second);
         EXPECT_NEAR(global_sum_first, global_sum_second, 1e-14);
+
+        const float float_local = static_cast<float>(mpiContext.rank_in_pool + 1);
+        const float float_expected = static_cast<float>(mpiContext.nproc_in_pool * (mpiContext.nproc_in_pool + 1) / 2);
+        float float_scalar = float_local;
+        Parallel_Reduce::reduce_pool(float_scalar);
+        EXPECT_FLOAT_EQ(float_scalar, float_expected);
+
+        int int_array[2] = {mpiContext.rank_in_pool + 1, 2 * (mpiContext.rank_in_pool + 1)};
+        Parallel_Reduce::reduce_pool(int_array, 2);
+        EXPECT_EQ(int_array[0], static_cast<int>(float_expected));
+        EXPECT_EQ(int_array[1], 2 * static_cast<int>(float_expected));
+
+        std::complex<float> complex_array[2]
+            = {std::complex<float>(float_local, -float_local), std::complex<float>(2.0F * float_local, float_local)};
+        Parallel_Reduce::reduce_pool(complex_array, 2);
+        EXPECT_EQ(complex_array[0], std::complex<float>(float_expected, -float_expected));
+        EXPECT_EQ(complex_array[1], std::complex<float>(2.0F * float_expected, float_expected));
 
         delete[] rand_array;
         MPI_Comm_free(&POOL_WORLD);

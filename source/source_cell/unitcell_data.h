@@ -24,7 +24,7 @@ struct Lattice
     double omega = 0.0;                ///< the volume of the unit cell
     std::vector<int> lat_axis_free{0, 0, 0};      ///< whether each lattice axis (a,b,c) is allowed to relax (0=fixed, 1=free)
 
-    ModuleBase::Matrix3 latvec = ModuleBase::Matrix3();           ///< Unitcell lattice vectors
+    ModuleBase::Matrix3 latvec = ModuleBase::Matrix3();           ///< Unitcell lattice vectors, in unit of lat0
     ModuleBase::Vector3<double> a1, a2, a3;                       ///< Same as latvec, just at another form
     ModuleBase::Vector3<double> latcenter;                        ///< (a1+a2+a3)/2 the center of vector
     ModuleBase::Matrix3 latvec_supercell = ModuleBase::Matrix3(); ///< Supercell lattice vectors
@@ -32,44 +32,6 @@ struct Lattice
     ModuleBase::Matrix3 GT = ModuleBase::Matrix3();               ///< transpose of G
     ModuleBase::Matrix3 GGT = ModuleBase::Matrix3();              ///< GGT = G*GT
     ModuleBase::Matrix3 invGGT = ModuleBase::Matrix3();           ///< inverse G
-};
-
-/**
- * @brief Statistics data and index maps.
- *
- * Relationships between indices:
- * - ntype, it: atom type index
- * - nat, iat: total atom index
- * - atoms[it].na, ia: atom index within type
- * - atoms[it].nw, iw: orbital index within atom
- *
- * - if know it ==> atoms[it].na; atoms[it].nw
- * - if know iat ==> it; ia
- * - if know ia, must have known it ==> iat
- * - if know iwt, must have known it, ia ==> iwt
- */
-struct Statistics
-{
-    int ntype = 0;                 ///< number of atom species in UnitCell
-    int nat = 0;                   ///< total number of atoms of all species in unitcell
-    int* iat2it = nullptr;         ///< iat==>it, distinguish a atom belong to which type
-    int* iat2ia = nullptr;         ///< iat==>ia
-    int* iwt2iat = nullptr;        ///< iwt ==> iat
-    int* iwt2iw = nullptr;         ///< iwt ==> iw (Peize Lin add 2018-07-02)
-    ModuleBase::IntArray itia2iat; ///< (it, ia)==>iat, the index in nat (add 2009-3-2 by mohan)
-    int namax = 0;                 ///< the max na among all atom species
-    int nwmax = 0;                 ///< the max nw among all atom species
-
-    /**
-     * @brief Destructor.
-     */
-    ~Statistics()
-    {
-        delete[] iat2it;
-        delete[] iat2ia;
-        delete[] iwt2iat;
-        delete[] iwt2iw;
-    }
 };
 
 #endif

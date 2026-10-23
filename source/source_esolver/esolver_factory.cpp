@@ -4,6 +4,7 @@
 #include "esolver_ks_pw.h"
 #include "esolver_dfpt_pw.h"
 #include "esolver_sdft_pw.h"
+#include "esolver_ks_pw_tddft.h"
 #include "source_base/module_device/device.h"
 #include "source_hamilt/module_xc/general_exx_info.h"
 #include "source_io/module_parameter/parameter.h"
@@ -55,6 +56,10 @@ std::string determine_type(const Input_para& inp)
         else if (inp.esolver_type == "dfpt")
         {
             esolver_type = "dfpt_pw";
+        }
+        else if (inp.esolver_type == "tddft")
+        {
+            esolver_type = "ksdft_pw_tddft";
         }
     }
     else if (inp.basis_type == "lcao_in_pw")
@@ -138,6 +143,9 @@ ESolver* init_esolver(const Input_para& inp)
     // determine type of esolver based on INPUT information
     const std::string esolver_type = determine_type(inp);
     const bool gamma_only = PARAM.globalv.gamma_only_local;
+#ifdef __LCAO
+    const LRRuntime lr_runtime{GlobalV::ofs_running, GlobalV::ofs_warning, GlobalV::MY_RANK};
+#endif
 
     // initialize the corresponding Esolver child class
     if (esolver_type == "ksdft_pw")
@@ -167,6 +175,30 @@ ESolver* init_esolver(const Input_para& inp)
     else if (esolver_type == "dfpt_pw")
     {
         return new ESolver_DFPT_PW();
+    }
+    else if (esolver_type == "ksdft_pw_tddft")
+    {
+#if defined(__CUDA) || defined(__ROCM)
+        if (inp.device == "gpu")
+        {
+            if (inp.precision == "single")
+            {
+                return new ESolver_KS_PW_TDDFT<std::complex<float>, base_device::DEVICE_GPU>();
+            }
+            else
+            {
+                return new ESolver_KS_PW_TDDFT<std::complex<double>, base_device::DEVICE_GPU>();
+            }
+        }
+#endif
+        if (inp.precision == "single")
+        {
+            return new ESolver_KS_PW_TDDFT<std::complex<float>, base_device::DEVICE_CPU>();
+        }
+        else
+        {
+            return new ESolver_KS_PW_TDDFT<std::complex<double>, base_device::DEVICE_CPU>();
+        }
     }
     else if (esolver_type == "sdft_pw")
     {
@@ -300,11 +332,11 @@ ESolver* init_esolver(const Input_para& inp)
         {
             if (gamma_only)
             {
-                return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir);
+                return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir, lr_runtime);
             }
             else
             {
-                return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir);
+                return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
             }
         }
         else
@@ -312,11 +344,11 @@ ESolver* init_esolver(const Input_para& inp)
 #ifdef __EXX
             if (gamma_only)
             {
-                return new ModuleESolver::ESolver_BSE<double, double>(inp, in_dir, out_dir);
+                return new ModuleESolver::ESolver_BSE<double, double>(inp, in_dir, out_dir, lr_runtime);
             }
             else
             {
-                return new ModuleESolver::ESolver_BSE<std::complex<double>, double>(inp, in_dir, out_dir);
+                return new ModuleESolver::ESolver_BSE<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
             }
 #else
             ModuleBase::WARNING_QUIT("ESolver", "BSE requires ENABLE_LIBRI=ON");
@@ -330,11 +362,11 @@ ESolver* init_esolver(const Input_para& inp)
         const std::string& out_dir = PARAM.globalv.global_out_dir;
         if (gamma_only)
         {
-            return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir);
+            return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir, lr_runtime);
         }
         else
         {
-            return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir);
+            return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
         }
     }
 #endif

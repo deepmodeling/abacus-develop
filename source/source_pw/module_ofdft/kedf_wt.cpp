@@ -55,8 +55,7 @@ void KEDF_WT::set_para(double dV,
     this->wt_coef_
         = 5. / (9. * this->alpha_ * this->beta_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 5. / 3.));
 
-    delete[] this->kernel_;
-    this->kernel_ = new double[pw_rho->npw];
+    this->kernel_.resize(pw_rho->npw);
 
     if (read_kernel) {
         this->read_kernel(kernel_file, pw_rho);

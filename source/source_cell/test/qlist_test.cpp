@@ -5,14 +5,12 @@
 #include <iterator>
 #include <streambuf>
 #include <string>
-#define private public
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
 #include "source_cell/pseudo.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/magnetism.h"
-#undef private
 #include "source_base/mathzone.h"
 #include "source_base/parallel_global.h"
 #include "source_base/global_variable.h"
@@ -175,12 +173,14 @@ TEST_F(QListTest, GenerateMeshFullSymmetry)
     ofs_running.open("tmp_qlist_1");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {8, 8, 8}, true);
 
     // full mesh 512 -> irreducible q-points of the primitive cubic lattice
-    EXPECT_EQ(qlist.nkstot_full, 512);
+    EXPECT_EQ(qlist.nkstot_nospin, 512);
     EXPECT_EQ(qlist.get_nq(), 35);
     EXPECT_EQ(qlist.get_nq(), qlist.nkstot);
     EXPECT_TRUE(qlist.is_mp);
@@ -213,12 +213,14 @@ TEST_F(QListTest, GenerateMeshSmallGrid)
     ofs_running.open("tmp_qlist_2");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
 
     // {0,0.5}^3 under O_h folds to Gamma + X + M + R
-    EXPECT_EQ(qlist.nkstot_full, 8);
+    EXPECT_EQ(qlist.nkstot_nospin, 8);
     EXPECT_EQ(qlist.get_nq(), 4);
 
     // the first irreducible q-point must be Gamma (0,0,0)
@@ -237,11 +239,13 @@ TEST_F(QListTest, GammaOnlyGrid)
     ofs_running.open("tmp_qlist_3");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {1, 1, 1}, true);
 
-    EXPECT_EQ(qlist.nkstot_full, 1);
+    EXPECT_EQ(qlist.nkstot_nospin, 1);
     EXPECT_EQ(qlist.get_nq(), 1);
     EXPECT_DOUBLE_EQ(qlist.wk[0], 1.0);
     EXPECT_DOUBLE_EQ(qlist.get_q(0).x, 0.0);
@@ -257,7 +261,9 @@ TEST_F(QListTest, IrrepPlaceholder)
     ofs_running.open("tmp_qlist_4");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
 
@@ -284,7 +290,9 @@ TEST_F(QListTest, CartesianCoordinatesComputed)
     ofs_running.open("tmp_qlist_cart");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
 
@@ -314,7 +322,9 @@ TEST_F(QListTest, UseIrrepsSwitch)
     ofs_running.open("tmp_qlist_irreps");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     // use_irreps = false: the q mesh is still reduced, but no irrep data
     qlist.generate_mesh(ucell, symm, {2, 2, 2}, false);
@@ -333,7 +343,9 @@ TEST_F(QListTest, PrintQlists)
     ofs_running.open("tmp_qlist_print");
     ModuleSymmetry::Symmetry symm;
     const int cal_symm_repr[2] = {0, 6};
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+    symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                   ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                   ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     qlist.generate_mesh(ucell, symm, {1, 1, 1}, false);
 

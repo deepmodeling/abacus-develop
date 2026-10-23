@@ -94,7 +94,6 @@ int loadPEXSIOption(MPI_Comm comm,
     // 11: ZERO_Limit
     double double_para[12];
 
-    // read in PEXSI options from GlobalV
     int_para[0] = pexsi::PEXSI_Solver::pexsi_npole;
     int_para[1] = pexsi::PEXSI_Solver::pexsi_inertia;
     int_para[2] = pexsi::PEXSI_Solver::pexsi_nmax;
@@ -113,7 +112,7 @@ int loadPEXSIOption(MPI_Comm comm,
     int_para[15] = 0;
     int_para[16] = pexsi::PEXSI_Solver::pexsi_nproc_pole;
 
-    double_para[0] = 2;//PARAM.inp.nspin; // pexsi::PEXSI_Solver::pexsi_spin;
+    double_para[0] = 2; // pexsi::PEXSI_Solver::pexsi_spin;
     double_para[1] = pexsi::PEXSI_Solver::pexsi_temp;
     double_para[2] = pexsi::PEXSI_Solver::pexsi_gap;
     double_para[3] = pexsi::PEXSI_Solver::pexsi_delta_e;

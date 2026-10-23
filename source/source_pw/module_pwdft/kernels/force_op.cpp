@@ -298,7 +298,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
                     const std::complex<FPTYPE>* pot_onsite,
-                    const int* orbital_corr,
+                    const int* l_channel,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* force)
@@ -307,7 +307,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
         int sum0 = 0;
         for (int it = 0; it < ntype; it++)
         {
-            const int orbital_l = orbital_corr[it];
+            const int orbital_l = l_channel[it];
             const int nproj = atom_nh[it];
             if(orbital_l == -1)
             {
@@ -407,8 +407,9 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 int iat = iat0 + ia;
                 int sum = sum0 + ia * nproj;
                 const std::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
-                const std::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
-                const std::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
+                // dbb1 = conj(d becp_up) * becp_down requires H_up,down = lambda_x - i lambda_y.
+                const std::complex<FPTYPE> coefficients1(lambda[iat*3], -lambda[iat*3+1]);
+                const std::complex<FPTYPE> coefficients2(lambda[iat*3], lambda[iat*3+1]);
                 const std::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
                 for (int ib = 0; ib < nbands_occ; ib++)
                 {

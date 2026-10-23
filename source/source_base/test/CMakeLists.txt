@@ -1,9 +1,15 @@
 abacus_disable_feature_definitions(__MPI)
-install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(data)
+
+AddTest(
+  TARGET MODULE_BASE_additional_coverage
+  LIBS parameter base device container
+  SOURCES additional_coverage_test.cpp
+)
 AddTest(
   TARGET MODULE_BASE_blas_connector
   LIBS parameter  base device
-  SOURCES blas_connector_test.cpp
+  SOURCES blas_connector_test.cpp blas_connector_additional_test.cpp
 )
 AddTest(
   TARGET MODULE_BASE_atom_in
@@ -145,13 +151,18 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_opt_cg
   LIBS parameter  base device
-  SOURCES opt_cg_test.cpp opt_test_tools.cpp
+  SOURCES opt_cg_test.cpp opt_test_tools.cpp mpi_test_main.cpp
+)
+
+AddTest(
+  TARGET MODULE_BASE_opt_dcsrch
+  SOURCES test_opt_dcsrch.cpp ../opt_dcsrch.cpp
 )
 
 AddTest(
   TARGET MODULE_BASE_opt_tn
   LIBS parameter  base device
-  SOURCES opt_tn_test.cpp opt_test_tools.cpp
+  SOURCES opt_tn_test.cpp opt_test_tools.cpp mpi_test_main.cpp
 )
 
 AddTest(
@@ -197,6 +208,18 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_BASE_math_erf_complex
+  SOURCES math_erf_complex_test.cpp
+  LIBS parameter base device
+)
+
+AddTest(
+  TARGET MODULE_BASE_math_lib_info
+  SOURCES math_lib_info_test.cpp
+  LIBS parameter base device
+)
+
+AddTest(
   TARGET MODULE_BASE_clebsch_gordan_coeff_test
   SOURCES cg_coeff_test.cpp
   LIBS parameter  base device
@@ -225,7 +248,7 @@ AddTest(
   SOURCES test_lebedev_laikov.cpp ../ylm.cpp ../math_lebedev_laikov.cpp
 )
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(support)
 
 AddTest(
   TARGET MODULE_BASE_binstream

@@ -175,6 +175,8 @@ void print_etot(const Magnetism& magnet,
                 const double& scf_thr,
                 const double& scf_thr_kin,
                 const double& duration,
+                const Input_para& inp,
+                const bool two_fermi,
                 const double& pw_diag_thr,
                 const double& avg_iter,
                 const bool print,
@@ -188,9 +190,9 @@ void print_etot(const Magnetism& magnet,
     GlobalV::ofs_running << std::setprecision(6);
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
 
-    GlobalV::ofs_running << " Electron density deviation " << scf_thr << std::endl;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Electron density deviation", scf_thr);
 
-    if (PARAM.inp.basis_type == "pw")
+    if (inp.basis_type == "pw")
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Diago Threshold", pw_diag_thr);
     }
@@ -199,7 +201,12 @@ void print_etot(const Magnetism& magnet,
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
 
-    if ((iter % PARAM.inp.out_freq_elec == 0) || converged || iter == PARAM.inp.scf_nmax)
+    // For DFT+U calculations, print the full energy table at every
+    // electronic step so E_plusU can be monitored. Charge-density and
+    // wavefunction output remain gated by out_freq_elec elsewhere.
+    const bool print_table = (iter % inp.out_freq_elec == 0) || converged
+                             || (iter == inp.scf_nmax) || inp.dft_plus_u;
+    if (print_table)
     {
         int n_order = std::max(0, Occupy::gaussian_type);
 
@@ -248,7 +255,7 @@ void print_etot(const Magnetism& magnet,
         energies_Ry.push_back(elec.f_en.e_local_pp);
 
         //! vdw energy
-        std::string vdw_method = PARAM.inp.vdw_method;
+        std::string vdw_method = inp.vdw_method;
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
         {
             titles.push_back("E_vdwD2");
@@ -266,7 +273,7 @@ void print_etot(const Magnetism& magnet,
         }
 
         // mohan add 20251108
-        if (PARAM.inp.dft_plus_u)
+        if (inp.dft_plus_u)
         {
             titles.push_back("E_plusU");
             energies_Ry.push_back(elec.f_en.edftu);
@@ -277,7 +284,7 @@ void print_etot(const Magnetism& magnet,
         energies_Ry.push_back(elec.f_en.exx);
 
         //! solvation energy
-        if (PARAM.inp.imp_sol)
+        if (inp.imp_sol)
         {
             titles.push_back("E_sol_el");
             energies_Ry.push_back(elec.f_en.esol_el);
@@ -285,15 +292,21 @@ void print_etot(const Magnetism& magnet,
             energies_Ry.push_back(elec.f_en.esol_cav);
         }
 
+        if (inp.assume_isolated == "pcc_0d" || inp.assume_isolated == "pcc_2d")
+        {
+            titles.push_back("E_pcc");
+            energies_Ry.push_back(elec.f_en.correction_el);
+        }
+
         //! electric field energy
-        if (PARAM.inp.efield_flag)
+        if (inp.efield_flag)
         {
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);
         }
 
         //! gate energy
-        if (PARAM.inp.gate_flag)
+        if (inp.gate_flag)
         {
             titles.push_back("E_gatefield");
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
@@ -301,12 +314,12 @@ void print_etot(const Magnetism& magnet,
 
         //! deepks energy
 #ifdef __MLALGO
-        if (PARAM.inp.deepks_scf)
+        if (inp.deepks_scf)
         {
             titles.push_back("E_DeePKS");
             energies_Ry.push_back(elec.f_en.edeepks_delta);
         }
-        if (PARAM.inp.ml_exx)
+        if (inp.ml_exx)
         {
             titles.push_back("E_ML-EXX");
             energies_Ry.push_back(elec.f_en.ml_exx);
@@ -322,7 +335,7 @@ void print_etot(const Magnetism& magnet,
     }
 
     // print out the Fermi energy if needed
-    if (PARAM.globalv.two_fermi)
+    if (two_fermi)
     {
         titles.push_back("E_Fermi_up");
         energies_Ry.push_back(elec.eferm.ef_up);
@@ -336,7 +349,7 @@ void print_etot(const Magnetism& magnet,
     }
 
     // print out the band gap if needed
-    if (!PARAM.globalv.two_fermi)
+    if (!two_fermi)
     {
         titles.push_back("E_gap(k)"); // gap of given k-points
         energies_Ry.push_back(elec.bandgap);
@@ -362,10 +375,10 @@ void print_etot(const Magnetism& magnet,
 
     GlobalV::ofs_running << table.str() << std::endl;
 
-    if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m")
+    if (inp.out_level == "ie" || inp.out_level == "m")
     {
         std::vector<double> mag;
-        switch (PARAM.inp.nspin)
+        switch (inp.nspin)
         {
         case 2:
             mag = {magnet.tot_mag, magnet.abs_mag};
@@ -384,7 +397,7 @@ void print_etot(const Magnetism& magnet,
         }
         // Pure SDFT (nbands=0) uses Chebyshev trace (CT) since no H diagonalization is performed.
         // Mixed SDFT (nbands>0) still diagonalizes KS orbitals, so use the actual ks_solver label.
-        const std::string iter_label = (PARAM.inp.esolver_type == "sdft" && PARAM.inp.nbands == 0) ? "sdft" : PARAM.inp.ks_solver;
+        const std::string iter_label = (inp.esolver_type == "sdft" && inp.nbands == 0) ? "sdft" : inp.ks_solver;
         elecstate::print_scf_iterinfo(iter_label,
                                       iter,
                                       4,

@@ -1,21 +1,23 @@
 #include "source_base/formatter.h"
 #include "source_base/timer.h"
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_cell/cal_ux.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/module_charge/symm_rho.h"
-#include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_estate/module_charge/chg_symm.h"
+#include "source_estate/module_dm/dm_from_psi.h"
 #include "source_hamilt/module_gint/gint.h"
 #include "source_io/module_chgpot/get_pchg_lcao.h"
-#include "source_io/module_hs/write_hs_r.h"
+#include "source_io/module_hs/hsr_legacy.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_restart/restart.h" // GlobalC::restart for load_exx_flag
 #include "source_io/module_wf/get_wf_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/lcao_domain.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_dftu/dftu_nao.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 
@@ -31,7 +33,7 @@ namespace ModuleESolver
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
@@ -99,13 +101,22 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                               this->pw_big->nbzp,
                                               orb_.Phi,
                                               ucell,
-                                              this->gd));
+                                              this->gd,
+                                              this->inp_->nspin,
+                                              gamma_only_local,
+                                              PARAM.globalv.domag,
+                                              this->inp_->device == "gpu",
+                                              this->inp_->nstream));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
 
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    this->RA.for_2d(ucell, this->gd, this->pv, gamma_only_local, orb_.cutoffs());
+    this->RA.for_2d(ucell, this->gd, this->pv, gamma_only_local, PARAM.globalv.npol, orb_.cutoffs());
+    if (this->inp_->out_level != "m" && !gamma_only_local)
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", this->pv.nnr);
+    }
 
     // 2. density matrix extrapolation
 
@@ -125,6 +136,8 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     }
     if (this->p_hamilt == nullptr)
     {
+        const bool load_exx_flag = !GlobalC::restart.info_load.restart_exx
+                                   && GlobalC::restart.info_load.load_H;
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(ucell,
                                                         this->gd,
                                                         &this->pv,
@@ -133,11 +146,14 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                                         two_center_bundle_,
                                                         orb_,
                                                         this->dmat.dm,
-                                                        &this->dftu,
+                                                        this->dftu_.get(),
                                                         this->deepks,
                                                         istep,
                                                         this->exx_nao,
-                                                        this->exx_info_);
+                                                        this->exx_info_,
+                                                        *this->inp_,
+                                                        load_exx_flag,
+                                                        this->get_td_info());
     }
 
     // for each ionic step, the overlap <phi|alpha> must be rebuilt

@@ -1,4 +1,5 @@
 #include "write_dmr.h"
+#include "source_io/module_output/spin_tag.h"
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -33,13 +34,13 @@ std::string dmr_gen_fname(const int out_type, const int ispin, const bool append
     return fname;
 }
 
-void write_dmr_csr(std::string& fname, 
+void write_dmr_csr(std::string& fname,
                    const UnitCell *ucell,
                    const int precision,
                    hamilt::HContainer<double>* dm_serial,
                    const int istep,
-		   const int ispin,
-		   const int nspin)
+                   const int ispin,
+                   const int nspin)
 {
     // write the head: ION step number, basis number and R loop number
 
@@ -60,10 +61,10 @@ void write_dmr_csr(std::string& fname,
     ofs << " # print density matrix in real space DM(R)" << std::endl;
     ofs << " " << nspin << " # number of spin directions" << std::endl;
     ofs << " " << ispin+1 << " # spin index" << std::endl;
-    ofs << " " << dm_serial->get_nbasis() 
-	    << " # number of localized basis" << std::endl;
-    ofs << " " << dm_serial->size_R_loop() 
-	    << " # number of Bravais lattice vector R" << std::endl;
+    ofs << " " << dm_serial->get_nbasis()
+        << " # number of localized basis" << std::endl;
+    ofs << " " << dm_serial->size_R_loop()
+        << " # number of Bravais lattice vector R" << std::endl;
     ofs << std::endl;
 
     // write ucell
@@ -84,7 +85,8 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const bool append,
                const int* iat2iwt,
                const int nat,
-               const int istep)
+               const int istep,
+               std::ofstream& ofs_running)
 {
     const int nspin = dmr.size();
     assert(nspin > 0);
@@ -110,6 +112,8 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
             const int out_type = 1;
             std::string fname = PARAM.globalv.global_out_dir + dmr_gen_fname(out_type, ispin, append, istep);
             write_dmr_csr(fname, ucell, precision, &dm_serial, istep, ispin, nspin);
+            const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
+            ofs_running << " Write DM(R)" << spin_tag << " matrix in NAO basis to file: " << fname << std::endl;
         }
     }
 }

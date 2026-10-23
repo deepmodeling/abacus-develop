@@ -31,7 +31,7 @@ class Slurm:
         return result.stdout
 
     def submit(self, script: Path, array_count: Optional[int] = None) -> str:
-        output = self._run(("sbatch", "--parsable", str(script))).strip()
+        output = self._run(("sbatch", "--account=abacus-group", "--parsable", str(script))).strip()
         match = re.fullmatch(r"([0-9]+)(?:;[A-Za-z0-9_.-]+)?", output)
         if not match:
             raise SlurmError("invalid sbatch output: {!r}".format(output))

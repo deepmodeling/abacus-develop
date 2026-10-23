@@ -24,7 +24,7 @@ jobs:
             prefix: Bi2Se3_pw
             basis: pw
           - name: advance (LCAO)
-            script: example_advance.py
+            script: example_advanced.py
             prefix: Bi2Se3_advanced
             basis: lcao
 
@@ -58,12 +58,14 @@ jobs:
         env:
           SCRIPT: ${{ matrix.script }}
           PREFIX: ${{ matrix.prefix }}
+          BASIS: ${{ matrix.basis }}
         run: |
           python3 << 'PYEOF'
           import os, re, textwrap
 
           script = os.environ["SCRIPT"]
           prefix = os.environ["PREFIX"]
+          basis = os.environ["BASIS"]
 
           # ── 1. Patch the example script ────────────────────────
           with open(script) as f:
@@ -146,10 +148,12 @@ jobs:
               f"     {nk}",     "!     num_kpts",
               "     4     4     4", "!     mp_grid",
           ]
+          lines.append("begin kpoints")
           for ix in range(4):
               for iy in range(4):
                   for iz in range(4):
                       lines.append(f"  {ix/4:.15f}  {iy/4:.15f}  {iz/4:.15f}")
+          lines.append("end kpoints")
 
           lines.append(f"     {nntot}")
           lines.append("!     nntot")

@@ -25,11 +25,12 @@
 #include "source_base/timer.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/device.h"
-#include "source_pw/module_pwdft/onsite_proj.h"
+#include "source_pw/module_proj/onsite_proj.h"
 #include "deltaspin_pw_cache.h"
 #include "mi_tools.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hsolver/diago_iter_assist.h"
+#include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_estate/elecstate.h"
 #include "source_estate/elecstate_pw.h"
@@ -82,7 +83,7 @@ void cal_mi_pw(ScState& state,
             int nkb = onsite_p->get_tot_nproj();
             const int spin_sign = (npol == 2) ? 1 : spin_sign_at(state, pelec, ik);
             accumulate_Mi_from_becp(becp, nkb, nbands, npol, spin_sign,
-                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.Mi_);
+                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.get_mi());
         }
     }
 #if ((defined __CUDA) || (defined __ROCM))
@@ -104,12 +105,12 @@ void cal_mi_pw(ScState& state,
             int nkb = onsite_p->get_size_becp() / nbands / npol;
             const int spin_sign = (npol == 2) ? 1 : spin_sign_at(state, pelec, ik);
             accumulate_Mi_from_becp(becp, nkb, nbands, npol, spin_sign,
-                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.Mi_);
+                &pelec->wg(ik, 0), &onsite_p->get_nh(0), state.get_mi());
         }
     }
 #endif
     // MPI reduction: sum Mi across all k-pool ranks
-    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(state.Mi_[0][0]), 3 * state.Mi_.size());
+    Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(state.get_mi()[0][0]), 3 * state.get_mi().size());
 
     ModuleBase::timer::end("spinconstrain::SpinConstrain", "cal_mi_pw");
 }
@@ -168,12 +169,13 @@ void calculate_delta_hcc(ScState& state,
         // =============================================================
         // nspin=4 (non-collinear): full Pauli matrix treatment
         // =============================================================
-        // For each atom, construct 2x2 coefficients:
-        //   | lambda_z      lambda_x + i*lambda_y |
-        //   | lambda_x - i*lambda_y   -lambda_z   |
+        // For each atom, construct lambda dot sigma:
+        //   | lambda_z                  lambda_x - i*lambda_y |
+        //   | lambda_x + i*lambda_y    -lambda_z              |
+        // The coefficient array uses {up-up, down-up, up-down, down-down}.
         // Then: ps_up = coeff0 * becp_up + coeff2 * becp_dn
         //        ps_dn = coeff1 * becp_up + coeff3 * becp_dn
-        for (size_t iat = 0; iat < state.Mi_.size(); iat++)
+        for (size_t iat = 0; iat < state.get_mi().size(); iat++)
         {
             const int nproj = nh_iat[iat];
             const std::complex<double> coefficients0(effective_lambda[iat][2], 0.0);
@@ -204,7 +206,7 @@ void calculate_delta_hcc(ScState& state,
         // ps = lambda_z * spin_sign * becp
         // spin_sign = +1 for spin-up k-points, -1 for spin-down
         const int spin_sign = spin_sign_at(state, pelec, ik);
-        for (size_t iat = 0; iat < state.Mi_.size(); iat++)
+        for (size_t iat = 0; iat < state.get_mi().size(); iat++)
         {
             const int nproj = nh_iat[iat];
             double coefficients0 = effective_lambda[iat][2] * spin_sign;
@@ -318,7 +320,7 @@ void update_psi_charge_pw_cpu(ScState& state,
     const ModuleBase::Vector3<double>* lambda_for_hcc = delta_lambda;
     if (full_update)
     {
-        lambda_for_hcc = state.lambda_.data();
+        lambda_for_hcc = state.get_sc_lambda().data();
     }
 
     // =============================================================
@@ -375,8 +377,15 @@ void update_psi_charge_pw_cpu(ScState& state,
             PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(hamilt_t, psi_t[0], pelec, pelec->ekb.c,
-            GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, false, state.tpiba, state.get_nat());
+        hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_CPU> op(hamilt_t, pw_wfc);
+        hsolver_pw_obj.solve(op,
+                             psi_t[0],
+                             pelec,
+                             pelec->ekb.c,
+                             GlobalV::RANK_IN_POOL,
+                             GlobalV::NPROC_IN_POOL,
+                             GlobalV::ofs_running,
+                             false);
     }
     else
     {
@@ -430,7 +439,7 @@ void update_psi_charge_pw_gpu(ScState& state,
     const ModuleBase::Vector3<double>* lambda_for_hcc = delta_lambda;
     if (full_update)
     {
-        lambda_for_hcc = state.lambda_.data();
+        lambda_for_hcc = state.get_sc_lambda().data();
     }
 
     // STAGE 1: Subspace diagonalization for each k-point (GPU)
@@ -481,8 +490,15 @@ void update_psi_charge_pw_gpu(ScState& state,
             PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(hamilt_t, psi_t[0], pelec, pelec->ekb.c,
-            GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, false, state.tpiba, state.get_nat());
+        hamilt::HamiltHSOperator<std::complex<double>, base_device::DEVICE_GPU> op(hamilt_t, pw_wfc);
+        hsolver_pw_obj.solve(op,
+                             psi_t[0],
+                             pelec,
+                             pelec->ekb.c,
+                             GlobalV::RANK_IN_POOL,
+                             GlobalV::NPROC_IN_POOL,
+                             GlobalV::ofs_running,
+                             false);
     }
     else
     {

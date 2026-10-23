@@ -4,15 +4,12 @@
 /// See dftu_nao_str_r.h for the mathematical formula and detailed documentation.
 
 #include "dftu_nao_str_r.h"
-#include "dftu_nao_op.h"
 #include "source_base/timer.h"
 
-namespace hamilt
+namespace DFTU_LCAO
 {
 
-template <typename TK, typename TR>
-void cal_str_IJR_nao_r(const DFTU<OperatorLCAO<TK, TR>>* dftu_op,
-                      const int& iat1,
+void cal_str_IJR_nao_r(const int& iat1,
                       const int& iat2,
                       const Parallel_Orbitals* pv,
                       const std::unordered_map<int, std::vector<double>>& nlm1_all,
@@ -24,16 +21,17 @@ void cal_str_IJR_nao_r(const DFTU<OperatorLCAO<TK, TR>>* dftu_op,
                       const ModuleBase::Vector3<double>& dis2,
                       double* stress)
 {
-    // npol is the number of polarizations,
-    // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
-    // 2 for magnetic (one Hamiltonian matrix has both spin-up and spin-down)
-    const int npol = dftu_op->get_ucell()->get_npol();
+    assert(nspin == 1 || nspin == 2 || nspin == 4);
+    // npol is the number of spinor polarizations:
+    // 1 for nspin=1 (non-spin-polarized) and nspin=2 (collinear magnetic),
+    // 2 for nspin=4 (non-collinear, one matrix holds both spin-up and spin-down)
+    const int npol = nspin == 4 ? 2 : 1;
 
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
-    auto row_indexes = pv->get_indexes_row(iat1);
-    auto col_indexes = pv->get_indexes_col(iat2);
+    std::vector<int> row_indexes = pv->get_indexes_row(iat1);
+    std::vector<int> col_indexes = pv->get_indexes_col(iat2);
     const int m_size = int(sqrt(pot_onsite_in.size() / nspin));
     const int m_size2 = m_size * m_size;
 
@@ -59,9 +57,7 @@ void cal_str_IJR_nao_r(const DFTU<OperatorLCAO<TK, TR>>* dftu_op,
             for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
             {
                 const std::vector<double>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
-#ifdef __DEBUG
                 assert(nlm1.size() == nlm2.size());
-#endif
                 for (int m1 = 0; m1 < m_size; m1++)
                 {
                     for (int m2 = 0; m2 < m_size; m2++)
@@ -92,44 +88,4 @@ void cal_str_IJR_nao_r(const DFTU<OperatorLCAO<TK, TR>>* dftu_op,
     }
 }
 
-// explicit template instantiation
-template void cal_str_IJR_nao_r<double, double>(
-    const DFTU<OperatorLCAO<double, double>>* dftu_op,
-    const int& iat1, const int& iat2,
-    const Parallel_Orbitals* pv,
-    const std::unordered_map<int, std::vector<double>>& nlm1_all,
-    const std::unordered_map<int, std::vector<double>>& nlm2_all,
-    const std::vector<double>& pot_onsite_in,
-    const hamilt::BaseMatrix<double>** dmR_pointer,
-    const int nspin,
-    const ModuleBase::Vector3<double>& dis1,
-    const ModuleBase::Vector3<double>& dis2,
-    double* stress);
-
-template void cal_str_IJR_nao_r<std::complex<double>, double>(
-    const DFTU<OperatorLCAO<std::complex<double>, double>>* dftu_op,
-    const int& iat1, const int& iat2,
-    const Parallel_Orbitals* pv,
-    const std::unordered_map<int, std::vector<double>>& nlm1_all,
-    const std::unordered_map<int, std::vector<double>>& nlm2_all,
-    const std::vector<double>& pot_onsite_in,
-    const hamilt::BaseMatrix<double>** dmR_pointer,
-    const int nspin,
-    const ModuleBase::Vector3<double>& dis1,
-    const ModuleBase::Vector3<double>& dis2,
-    double* stress);
-
-template void cal_str_IJR_nao_r<std::complex<double>, std::complex<double>>(
-    const DFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>* dftu_op,
-    const int& iat1, const int& iat2,
-    const Parallel_Orbitals* pv,
-    const std::unordered_map<int, std::vector<double>>& nlm1_all,
-    const std::unordered_map<int, std::vector<double>>& nlm2_all,
-    const std::vector<double>& pot_onsite_in,
-    const hamilt::BaseMatrix<double>** dmR_pointer,
-    const int nspin,
-    const ModuleBase::Vector3<double>& dis1,
-    const ModuleBase::Vector3<double>& dis2,
-    double* stress);
-
-} // namespace hamilt
+} // namespace DFTU_LCAO

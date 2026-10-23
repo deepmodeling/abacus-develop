@@ -9,6 +9,44 @@
 
 namespace ModuleIO
 {
+namespace
+{
+void parse_init_wfc(const std::vector<std::string>& values, Input_para& input)
+{
+    if (values.empty() || values.size() > 2)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", "init_wfc accepts one or two values");
+    }
+
+    const std::vector<std::string> valid_methods
+        = {"atomic", "atomic+random", "random", "nao", "nao+random", "file"};
+    if (std::find(valid_methods.begin(), valid_methods.end(), values[0]) == valid_methods.end())
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", nofound_str(valid_methods, "init_wfc"));
+    }
+
+    input.init_wfc = values[0];
+    input.init_wfc_file_format.clear();
+    if (input.init_wfc != "file")
+    {
+        if (values.size() == 2)
+        {
+            ModuleBase::WARNING_QUIT("ReadInput", "only init_wfc file accepts a second value");
+        }
+        return;
+    }
+
+    if (values.size() == 2)
+    {
+        if (values[1] != "txt" && values[1] != "binary")
+        {
+            ModuleBase::WARNING_QUIT("ReadInput", "the init_wfc file format must be txt or binary");
+        }
+        input.init_wfc_file_format = values[1];
+    }
+}
+} // namespace
+
 // There are some examples:
 // Generallly:
 // {
@@ -107,13 +145,16 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("calculation");
+        item.domain.set_choices({"scf", "relax", "md", "cell-relax", "nscf", "get_s", "get_wf", "get_pchg", "gen_bessel", "gen_opt_abfs", "test_memory", "test_neighbour"});
+        item.domain.add_requirement("calculation in [get_pchg, get_wf]", "basis_type!=pw");
+        item.domain.add_requirement("calculation==gen_bessel", "basis_type==pw");
         item.annotation = "scf; relax; md; cell-relax; nscf; get_s; get_wf; get_pchg; gen_bessel; gen_opt_abfs; test_memory; test_neighbour";
         item.category = "System variables";
         item.type = "String";
         item.description = R"(Specify the type of calculation.
 
 * scf: perform self-consistent electronic structure calculations
-* nscf: perform non-self-consistent electronic structure calculations. A charge density file is required
+* nscf: perform non-self-consistent electronic structure calculations using a saved charge density. PW screened hybrids also require SCF binary wavefunctions and eig_occ.txt; see [hybrid NSCF](../elec_properties/hybrid_nscf.md).
 * relax: perform structure relaxation calculations, the relax_nmax parameter depicts the maximal number of ionic iterations
 * cell-relax: perform cell relaxation calculations
 * md: perform molecular dynamics simulations
@@ -169,22 +210,48 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
+        Input_Item item("socket_driver");
+        item.annotation = "run as a socket client for external drivers using the i-PI protocol";
+        item.category = "System variables";
+        item.type = "Boolean";
+        item.description = R"(If set to True, ABACUS keeps the calculation type as scf and receives atomic positions from an external driver through the i-PI socket protocol.
+
+[NOTE] Use calculation = scf with socket_driver = True. ABACUS connects to the external i-PI server selected by ABACUS_SOCKET_ADDRESS. If ABACUS_SOCKET_ADDRESS is unset, ABACUS uses localhost:31415. The value can use one of two forms:
+* host:port, for example localhost:31415 or 127.0.0.1:31415, opens a TCP connection to that host and port. Use this when the i-PI server listens on a TCP port.
+* path:UNIX, for example /tmp/ipi_abacus_si:UNIX, opens a Unix-domain socket at the given filesystem path. The :UNIX suffix tells ABACUS that the preceding value is a local socket path rather than a TCP host name. This form only works on the same machine.
+When using the ASE AbacusSocketIO interface, this environment variable is set automatically from the port or unixsocket calculator argument.)";
+        item.description += R"(
+
+Socket mode always computes energy. Force and stress extraction follows cal_force and cal_stress independently; disabled properties are sent as protocol padding and marked absent in the ABACUS i-PI extras metadata, not reported as physical zero values. This metadata extension is required for safe optional-property handling: a legacy response with empty extras is accepted only for energy-only use, while a generic client that ignores extras cannot distinguish padding from a computed zero. A non-converged SCF step is returned with scf_converged=false metadata so an external driver can choose its policy.)";
+        item.default_value = "False";
+        read_sync_bool(input.socket_driver);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.socket_driver && para.input.calculation != "scf")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "socket_driver is only supported with calculation = scf.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("esolver_type");
         item.annotation = "the energy solver: ksdft, sdft, ofdft, tdofdft, tddft, lj, dp, ks-lr, lr, dfpt";
         item.category = "System variables";
         item.type = "String";
         item.description = R"(Choose the energy solver.
-* ksdft: Kohn-Sham density functional theory
-* ofdft: orbital-free density functional theory
-* tdofdft: time-dependent orbital-free density functional theory
-* sdft: stochastic density functional theory
-* tddft: real-time time-dependent density functional theory (RT-TDDFT)
-* lj: Leonard Jones potential
-* dp: DeeP potential
-* nep: Neuroevolution Potential
-* ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
-* lr: LR-TDDFT with given KS orbitals (Under Development Feature)
-* dfpt: density functional perturbation theory (Under Development Feature))";
+* `ksdft`: Kohn-Sham density functional theory.
+* `ofdft`: Orbital-free density functional theory.
+* `tdofdft`: Time-dependent orbital-free density functional theory.
+* `sdft`: Stochastic density functional theory.
+* `tddft`: Real-time time-dependent density functional theory (RT-TDDFT). Requires `calculation=md`.
+* `lj`: Lennard-Jones potential.
+* `dp`: Deep Potential (DP) model.
+* `nep`: Neuroevolution potential (NEP).
+* `ks-lr`: Kohn-Sham density functional theory followed by linear-response time-dependent density functional theory (LR-TDDFT; under development).
+* `lr`: Linear-response time-dependent density functional theory (LR-TDDFT) using precomputed Kohn-Sham orbitals (under development).
+* `dfpt`: Density functional perturbation theory (DFPT; under development).
+
+[NOTE] Excited-state forces (`cal_force = 1`) and atomic relaxation with `ks-lr` or `lr` currently require `gamma_only = 1` and pseudopotentials without nonlinear core correction (NLCC). NLCC core-density response-force and XC-kernel derivative terms are not implemented; these force requests are rejected after reading the pseudopotentials, before force evaluation. Multi-k spectra and spectra with NLCC pseudopotentials remain available with `cal_force = 0`. Ground-state forces are unaffected by this LR restriction.)";
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -193,6 +260,10 @@ void ReadInput::item_system()
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+            if (para.input.esolver_type == "tddft" && para.input.calculation != "md")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "esolver_type=tddft requires calculation=md.");
             }
             if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep")
             {
@@ -209,11 +280,48 @@ void ReadInput::item_system()
                     "esolver_type=lr requires calculation=nscf (it reads the ground state "
                     "wave function computed by a separate SCF run); please set calculation=nscf.");
             }
+            const bool is_lr = (para.input.esolver_type == "lr" || para.input.esolver_type == "ks-lr");
+            const bool requests_lr_force = para.input.cal_force || para.input.calculation == "relax";
+            if (is_lr && requests_lr_force && !para.input.gamma_only)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "LR-TDDFT excited-state forces and relaxation currently require gamma_only=1; "
+                    "complex/multi-k gradients are not implemented. Use cal_force=0 for multi-k spectra.");
+            }
+            if (is_lr && para.input.calculation == "cell-relax")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "LR-TDDFT has no excited-state stress, so calculation=cell-relax cannot be driven by it. "
+                    "Use calculation=relax to relax the atomic positions at fixed cell.");
+            }
+            if (is_lr && para.input.calculation == "md")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "excited-state MD is not supported: the non-adiabatic couplings between excited states "
+                    "are not implemented, so a trajectory cannot switch surfaces at a crossing, and a "
+                    "single-surface run would silently follow a fixed state index straight through one. "
+                    "Use calculation=relax instead.");
+            }
+            if (para.input.esolver_type == "lr" && para.input.calculation == "relax")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "esolver_type=lr reads a ground state from disk that belongs to one fixed geometry, "
+                    "so it cannot follow moving ions. Use esolver_type=ks-lr, which runs the SCF itself "
+                    "at every ionic step.");
+            }
+            if (para.input.esolver_type == "ks-lr" && para.input.calculation == "relax"
+                && para.input.lr_solver == "spectrum")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_solver=spectrum only reads previously written excitation amplitudes; it solves "
+                    "nothing, so it cannot produce gradients for a relaxation.");
+            }
         };
         this->add_item(item);
     }
     {
         Input_Item item("symmetry");
+        item.domain.set_choices({"-1", "0", "1"});
         item.annotation = "the control of symmetry";
         item.category = "System variables";
         item.type = "String";
@@ -223,7 +331,7 @@ void ReadInput::item_system()
 * 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations (point groups, space groups, primitive cells, and irreducible k-points). For a magnetic system, the symmetry of the initial magnetic structure will be analyzed and preserved.
 
 [NOTE] When symmetry is enabled (value 1), k-points are reduced to the irreducible Brillouin zone (IBZ). For explicit k-point lists with custom weights (see KPT file), the custom weights are preserved during symmetry reduction. For Monkhorst-Pack grids, uniform weights are used.)";
-        item.default_value = "default";
+        item.default_value = "1 normally; 0 or -1 depending on the calculation and enabled features.";
         read_sync_string(input.symmetry);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry == "default")
@@ -302,7 +410,8 @@ void ReadInput::item_system()
         item.annotation = "if calculate the force at the end of the electronic iteration";
         item.category = "System variables";
         item.type = "Boolean";
-        item.description = "If set to True, calculate the force at the end of the electronic iteration.";
+        item.description = R"(If set to True, calculate the force at the end of the electronic iteration.
+In socket_driver mode, this flag controls whether the returned frame advertises forces; it is not forced on by the socket protocol.)";
         item.default_value = "False";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             std::vector<std::string> use_force = {"cell-relax", "relax", "md"};
@@ -443,9 +552,13 @@ Available options are:
 
 Available options are:
 * none: regular periodic calculation without isolated-system correction.
+* pcc_0d: self-consistent point-counter-charge (PCC) correction for a molecule in a cubic cell. The multipoles are taken about the mass-weighted ionic center.
+* pcc_2d: self-consistent PCC correction for a slab, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane (rewrite a tilted cell as the equivalent perpendicular one), and the k-point sampling along it must be Gamma only. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge. ENVIRON uses -pi*Q/(3*L), so charged-slab energies agree with ENVIRON only for A = L^2.
 * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
-Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
+pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho.
+
+Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).)";
         item.default_value = "none";
         read_sync_string(input.assume_isolated);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -455,7 +568,7 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> allowed = {"none", "makov-payne", "m-p", "mp"};
+            const std::vector<std::string> allowed = {"none", "makov-payne", "m-p", "mp", "pcc_0d", "pcc_2d"};
             if (std::find(allowed.begin(), allowed.end(), para.input.assume_isolated) == allowed.end())
             {
                 ModuleBase::WARNING_QUIT("ReadInput", nofound_str(allowed, "assume_isolated"));
@@ -467,15 +580,51 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "Makov-Payne correction is available only for cubic lattices: latname = sc, fcc, or bcc.");
             }
+            const Input_para& inp = para.input;
+            if (inp.assume_isolated == "pcc_0d" || inp.assume_isolated == "pcc_2d")
+            {
+                std::string error;
+                if (inp.imp_sol) { error = "cannot be combined with imp_sol"; }
+                else if (inp.nspin != 1 && inp.nspin != 2) { error = "requires nspin 1 or 2"; }
+                else if (inp.device != "cpu") { error = "requires device cpu"; }
+                else if (inp.esolver_type != "ksdft") { error = "requires esolver_type ksdft"; }
+                else if (inp.basis_type != "pw" && inp.basis_type != "lcao") { error = "requires basis_type pw or lcao"; }
+                else if (inp.calculation != "scf" && inp.calculation != "relax") { error = "requires calculation scf or fixed-cell relax"; }
+                else if (inp.efield_flag) { error = "cannot be combined with efield_flag"; }
+                else if (inp.gate_flag) { error = "cannot be combined with gate_flag"; }
+                else if (inp.cal_stress) { error = "does not support cal_stress"; }
+                else if (inp.dfthalf_type != 0) { error = "cannot be combined with dfthalf_type"; }
+                else if (inp.deepks_scf || inp.deepks_out_labels || inp.deepks_bandgap || inp.deepks_v_delta)
+                {
+                    error = "cannot be combined with DeePKS correction or output";
+                }
+                else if (inp.dm_to_rho) { error = "cannot be combined with dm_to_rho"; }
+                if (!error.empty())
+                {
+                    const std::string message = inp.assume_isolated + " " + error;
+                    ModuleBase::WARNING_QUIT("ReadInput", message);
+                }
+            }
         };
         this->add_item(item);
     }
     {
-        Input_Item item("init_wfc");
-        item.annotation = "start wave functions are from 'atomic', "
-                          "'atomic+random', 'random' or";
+        Input_Item item("pcc_2d_axis");
+        item.domain.set_choices({"0", "1", "2"});
+        item.annotation = "open lattice vector of assume_isolated pcc_2d";
         item.category = "System variables";
-        item.type = "String";
+        item.type = "Integer";
+        item.description = "Index of the lattice vector along which assume_isolated=pcc_2d is open: 0, 1 or 2 for the first, second or third vector of LATTICE_VECTORS. The selected vector must be perpendicular to the other two, which span the periodic plane; the k-point sampling along it must be Gamma only.";
+        item.default_value = "2";
+        item.set_availability("assume_isolated==pcc_2d");
+        read_sync_int(input.pcc_2d_axis);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("init_wfc");
+        item.annotation = "atomic; atomic+random; random; nao; nao+random; file txt; file binary";
+        item.category = "System variables";
+        item.type = "Vector of string";
         item.description = R"(The method used to initialize wavefunction coefficients. The available options and behavior depend on `basis_type`.
 
 For `basis_type=pw`, the available options are:
@@ -484,19 +633,28 @@ For `basis_type=pw`, the available options are:
 * `random`: Initialize all bands with random coefficients.
 * `nao`: Use numerical atomic orbitals. If the number of NAO states is smaller than `nbands`, the remaining bands are initialized randomly.
 * `nao+random`: Apply an approximately 5% multiplicative random perturbation to the NAO initialization; any bands not covered by NAO states are first initialized randomly.
-* `file`: Read binary `wf*_pw.dat` files generated with `out_wfc_pw=2` from `read_file_dir`. The files must match the current k points, `nbands`, plane-wave layout, and lattice.
+* `file binary`: Read binary `wf*_pw.dat` files generated with `out_wfc_pw=2` from `read_file_dir`. The files must match the current k points, `nbands`, plane-wave layout, and lattice. The `txt` format is not supported for PW wavefunctions.
 
-For `basis_type=lcao`, only `file` triggers reading existing wavefunctions. It reads text `wf*_nao.txt` files generated with `out_wfc_lcao=1` from `read_file_dir`; binary files generated with `out_wfc_lcao=2` are not supported. The files must use a compatible NAO basis, match the current k-point and spin setup, and contain enough bands. Normal `init_wfc=file` reading matches files written with the default `out_app_flag=true`, which have no geometry-step index. Files written under `WFC/` with a `g*` geometry-step index when `out_app_flag=false` are not matched automatically.
+For `basis_type=lcao`, the file options are:
+* `file txt`: Read text `wf*_nao.txt` files generated with `out_wfc_lcao=1` from `read_file_dir`.
+* `file binary`: Read binary `wf*_nao.dat` files generated with `out_wfc_lcao=2` from `read_file_dir`.
+
+The selected format is required; ABACUS does not automatically detect or fall back to the other format. The files must use a compatible NAO basis, match the current k-point and spin setup, and contain enough bands. File initialization matches independent files without geometry-step indices. Files accumulated with `out_app_flag` or files under `WFC/` with a `g*` geometry-step index are not supported.
 
 For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
 
-[NOTE] For `calculation=get_wf` or `calculation=get_pchg`, `init_wfc` is automatically set to `file`. If `basis_type=lcao_in_pw` is also used, the final value is `nao`.)";
+[NOTE] For `calculation=get_wf` or `calculation=get_pchg`, non-file initialization choices are automatically changed to the file option appropriate for the selected basis. An explicitly selected file format is preserved. If `basis_type=lcao_in_pw` is also used, the final value is `nao`.)";
         item.default_value = "atomic";
         item.unit = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_init_wfc(item.str_values, para.input);
+        };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+            if ((para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+                && para.input.init_wfc != "file")
             {
                 para.input.init_wfc = "file";
+                para.input.init_wfc_file_format.clear();
             }
             if (para.input.basis_type == "lcao_in_pw")
             {
@@ -507,9 +665,41 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
                                             "basis_type is lcao_in_pw"
                                          << std::endl;
                 }
+                para.input.init_wfc_file_format.clear();
+            }
+            else if (para.input.init_wfc == "file" && para.input.init_wfc_file_format.empty())
+            {
+                para.input.init_wfc_file_format = para.input.basis_type == "lcao" ? "txt" : "binary";
             }
         };
-        read_sync_string(input.init_wfc);
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            item.final_value << para.input.init_wfc;
+            if (para.input.init_wfc == "file")
+            {
+                item.final_value << " " << para.input.init_wfc_file_format;
+            }
+        };
+        add_string_bcast(input.init_wfc);
+        add_string_bcast(input.init_wfc_file_format);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> valid_methods
+                = {"atomic", "atomic+random", "random", "nao", "nao+random", "file"};
+            if (std::find(valid_methods.begin(), valid_methods.end(), para.input.init_wfc) == valid_methods.end())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", nofound_str(valid_methods, "init_wfc"));
+            }
+            if (para.input.init_wfc == "file"
+                && para.input.init_wfc_file_format != "txt"
+                && para.input.init_wfc_file_format != "binary")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "the init_wfc file format must be txt or binary");
+            }
+            if (para.input.init_wfc == "file" && para.input.basis_type == "pw"
+                && para.input.init_wfc_file_format == "txt")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "init_wfc file txt is not supported for basis_type=pw");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -578,6 +768,8 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
     }
     {
         Input_Item item("mem_saver");
+        item.domain.set_choices({"0", "1"});
+        item.domain.add_requirement("calculation in [scf, relax]", "mem_saver==0");
         item.annotation = "Only for nscf calculations. if set to 1, then a "
                           "memory saving technique will be used for "
                           "many k point calculations.";
@@ -585,20 +777,12 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
         item.type = "Integer";
         item.description = R"(Save memory when performing nscf calculations.
 * 0: no memory saving techniques are used.
-* 1: a memory saving technique will be used for many k point calculations.)";
+* 1: a memory saving technique will be used for many k point calculations.
+
+Legal values are 0 and 1. For calculation=scf or relax, mem_saver must be 0; setting it to 1 is an input error rather than being reset to 0.)";
         item.default_value = "0";
         item.set_availability("calculation==nscf and basis_type==pw");
         read_sync_int(input.mem_saver);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mem_saver == 1)
-            {
-                if (para.input.calculation == "scf" || para.input.calculation == "relax")
-                {
-                    para.input.mem_saver = 0;
-                    ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
-                }
-            }
-        };
         this->add_item(item);
     }
     {
@@ -606,7 +790,8 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
         item.annotation = "calculate the stress or not";
         item.category = "System variables";
         item.type = "Boolean";
-        item.description = "If set to True, calculate the stress at the end of the electronic iteration.";
+        item.description = R"(If set to True, calculate the stress at the end of the electronic iteration.
+In socket_driver mode, this flag independently controls whether the returned frame advertises stress/virial.)";
         item.default_value = "False";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "md")
@@ -778,6 +963,7 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
     }
     {
         Input_Item item("device");
+        item.domain.set_choices({"cpu", "gpu"});
         item.annotation = "the computing device for ABACUS";
         item.category = "System variables";
         item.type = "String";
@@ -794,18 +980,12 @@ Available options are:
             para.input.device=base_device::information::get_device_flag(
                                 para.inp.device, para.inp.basis_type);
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"cpu", "gpu"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.device) == avail_list.end())
-            {
-                const std::string warningstr = nofound_str(avail_list, "device");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("precision");
+        item.domain.set_choices({"single", "double"});
+        item.domain.add_requirement("precision==single", "basis_type!=lcao");
         item.annotation = "the computing precision for ABACUS";
         item.category = "System variables";
         item.type = "String";
@@ -816,18 +996,6 @@ Available options are:
         item.set_availability("basis_type==pw");
         read_sync_string(input.precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"single", "double"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.precision) == avail_list.end())
-            {
-                const std::string warningstr = nofound_str(avail_list, "precision");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-            if (para.inp.precision == "single" && para.inp.basis_type == "lcao")
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "Single precision is not supported for NAO basis,\nPlease use double precision for NAO basis.\n");
-            }
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
             {
@@ -843,6 +1011,8 @@ Available options are:
     }
     {
         Input_Item item("gint_precision");
+        item.domain.set_choices({"single", "double", "mix"});
+        item.domain.add_requirement("gint_precision!=double", "basis_type==lcao and nspin!=4");
         item.annotation = "the computing precision for LCAO grid integral";
         item.category = "System variables";
         item.type = "String";
@@ -853,26 +1023,6 @@ Available options are:
         item.default_value = "double";
         item.set_availability("basis_type==lcao");
         read_sync_string(input.gint_precision);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"single", "double", "mix"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.gint_precision) == avail_list.end())
-            {
-                const std::string warningstr = nofound_str(avail_list, "gint_precision");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-            if (para.inp.gint_precision != "double" && para.inp.basis_type != "lcao")
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "gint_precision = single or mix is currently supported only for LCAO calculations.\n");
-            }
-            if (para.inp.gint_precision != "double" && para.inp.nspin == 4)
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "gint_precision = single or mix is not supported for nspin = 4 (noncollinear/SOC) calculations.\n");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -938,7 +1088,12 @@ Available options are:
         item.annotation = "atomic; first-order; second-order; dm:coefficients of SIA";
         item.category = "System variables";
         item.type = "String";
-        item.description = "Charge extrapolation method for MD and relaxation calculations.";
+        item.description = R"(Charge extrapolation method for MD, relaxation, and socket-driven calculations.
+
+When set to default, ABACUS chooses second-order for md, first-order for
+relax/cell-relax and socket_driver calculations, and atomic for other calculations. Socket-driven
+molecular dynamics can explicitly set second-order if the external driver
+updates structures smoothly enough for second-order extrapolation.)";
         item.default_value = "default";
         read_sync_string(input.chg_extrap);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -947,7 +1102,7 @@ Available options are:
                 para.input.chg_extrap = "second-order";
             }
             else if (para.input.chg_extrap == "default"
-                     && (para.input.calculation == "relax" || para.input.calculation == "cell-relax"))
+                     && (para.input.calculation == "relax" || para.input.calculation == "cell-relax" || para.input.socket_driver))
             {
                 para.input.chg_extrap = "first-order";
             }
@@ -964,6 +1119,7 @@ Available options are:
     }
     {
         Input_Item item("ecutwfc");
+        item.domain.set_rule("value>0");
         item.annotation = "energy cutoff for wave functions";
         item.category = "Plane wave related variables";
         item.type = "Real";
@@ -992,16 +1148,11 @@ Available options are:
                 }
             }
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ecutwfc <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "ecutwfc should be positive");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("ecutrho");
+        item.domain.set_rule("value>0");
         item.annotation = "energy cutoff for charge density and potential";
         item.category = "Plane wave related variables";
         item.type = "Real";
@@ -1110,6 +1261,10 @@ Available options are:
         item.default_value = "0";
         read_sync_int(input.ndx);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
+            // TODO: unlike the ecutrho/ecutwfc path, enabling double_grid here
+            // (and in the ndy/ndz blocks below) is not rejected for LCAO. It is
+            // currently harmless only because LCAO rejects USPP separately in
+            // uspp_support.cpp; revisit if LCAO gains USPP support.
             if (para.input.ndx > para.input.nx)
             {
                 para.sys.double_grid = true;
@@ -1177,7 +1332,7 @@ Available options are:
         item.default_value = "0";
         read_sync_int(input.ndz);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ndy > para.input.ny)
+            if (para.input.ndz > para.input.nz)
             {
                 para.sys.double_grid = true;
             }
@@ -1210,6 +1365,7 @@ Available options are:
     }
     {
         Input_Item item("diag_subspace");
+        item.domain.set_choices({"0", "1", "2"});
         item.annotation = "method of subspace diagonalization in dav_subspace. 0:LaPack; 1:genelpa, 2:scalapack";
         item.category = "Plane wave related variables";
         item.type = "Integer";
@@ -1235,6 +1391,7 @@ Available options are:
     }
     {
         Input_Item item("fft_mode");
+        item.domain.set_choices({"0", "1", "2", "3"});
         item.annotation = "mode of FFTW";
         item.category = "Plane wave related variables";
         item.type = "Integer";

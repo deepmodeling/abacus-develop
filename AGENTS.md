@@ -26,12 +26,62 @@ rules. Read the complete governance document before making or reviewing changes:
   8. Declare one variable per line; do not use comma-separated declarations.
   9. Do not call MPI routines directly; use the internally-guarded wrappers
      (e.g., `Parallel_Reduce::reduce_*`, `Parallel_Common::bcast_*`) instead.
+  10. Do not write new `#define private public` or `#define protected public`
+      access hacks in test files; the governance checker **blocks** a net
+      increase. These macros reinterpret access control for every declaration
+      in the translation unit -- standard library headers included -- and make
+      the test TU disagree with the rest of the build. The usual root cause is
+      that the code under test reads global `PARAM` itself, so the test has to
+      reach in to drive it; the fix is to pass those INPUT values as explicit
+      arguments (see `Relax_Criteria` and `K_Vectors::read_kpoints`). Where the
+      test genuinely needs internal state, add a public `const` observer, or an
+      explicit `friend class XxxTest;` on the class under test.
+  11. New unit test source files shall be named `test_<module_name>.cpp`,
+      matching the source file they exercise. For example, the test for
+      `rhog_io.cpp` shall be `test_rhog_io.cpp`. This naming keeps the
+      file-to-test relationship discoverable and consistent across the
+      repository. Historical tests are not required to be renamed.
+  12. Place `ModuleBase::timer::start`/`end` at the beginning and end of a
+      function, not around isolated statements inside the function body. Use
+      the enclosing function name (or constructor name) as the timer label so
+      the timer scopes the whole unit of work.
+  13. Do not call non-trivial functions inside a constructor's member
+      initializer list (e.g., `member(compute_something(...))`); limit the
+      initializer list to direct parameter passthrough. Perform multi-step
+      computations in the constructor body instead, so failures are easy to
+      debug and each intermediate result is inspectable.
+  14. Do not write conditional or computed expressions in a function's
+      argument list; first assign the value to a named local variable, then
+      pass that variable. This keeps each argument inspectable and makes the
+      call site self-documenting. For example, prefer
+      `const int isk = (nspin == 2 && isk_ptr) ? isk_ptr[ik] : 0;`
+      followed by `f(..., isk, ...)` over inlining the ternary into the call.
+  15. Do not use `#pragma once` in header files; use traditional
+      `#ifndef`/`#define`/`#endif` include guards instead.
+  16. When reading a file, print a one-line confirmation with its full path to
+      both stdout and the running log; when creating or overwriting a file,
+      print the same confirmation to the running log.
+  17. Do not create or delete files or directories from inside a unit test
+      via shell calls (`std::system("mkdir")`, `std::system("rm")`); scratch
+      files shall be written to `testing::TempDir()` rather than the working
+      directory. Direct library calls (`std::remove`,
+      `std::filesystem::remove_all`) on test-written files are acceptable.
+  18. Do not use non-reentrant C standard library functions that return
+      pointers to static internal buffers (`std::localtime`, `std::gmtime`,
+      `std::asctime`, `std::ctime`, `std::strtok`, etc.) in new or modified
+      code; use the `_r` suffix variants or equivalent thread-safe
+      alternatives instead.
+  19. When reading structured numerical data from user-supplied files, check
+      the stream state (`fail()`/`eof()`) after extraction and abort with a
+      diagnostic message on malformed input rather than silently defaulting
+      to zero.
+  20. Do not introduce new `#define` macros without approval. Include
+      guards and `#ifdef`/`#ifndef` usages of existing macros are exempt.
+  21. Do not initialize member variables from `PARAM` in `.h`/`.hpp`
+      files; pass the value through the constructor or a setter instead.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
-- INPUT parameter behavior changes must update `docs/parameters.yaml` and
-  `docs/advanced/input_files/input-main.md`, or the PR must state why no update
-  is required.
 - Report the exact verification performed. Do not claim completion without
   fresh test or check output.
 - For multi-step refactors (e.g., splitting a large `.cpp` into several
@@ -48,14 +98,24 @@ rules. Read the complete governance document before making or reviewing changes:
 - Core C++ implementation lives under `source/`; source additions must be wired
   through the relevant `CMakeLists.txt`.
 - INPUT parsing and help metadata live under `source/source_io/`; user-facing
-  INPUT docs live in `docs/parameters.yaml` and
-  `docs/advanced/input_files/input-main.md`.
+  INPUT reference is generated from that metadata during the documentation
+  build.
 - Unit tests are colocated under module `test/` directories such as
   `source/source_md/test/`; integration and workflow tests are selected through
   CTest labels and patterns.
 - Developer and user build/install references live in `docs/quick_start/`,
   `docs/advanced/`, `toolchain/`, `Dockerfile.gnu`, `Dockerfile.intel`, and
   `Dockerfile.cuda`.
+
+## File Move / Split Checklist
+
+When moving, splitting, or deleting a `.cpp`/`.h`, update **all** build surfaces:
+
+1. `source/Makefile.Objects` (legacy Makefile object lists)
+2. All C++ `CMakeLists.txt`
+3. `python/pyabacus/src/*/CMakeLists.txt` — pyabacus has independent hardcoded source lists that do not track the main CMake build
+
+When splitting a function into a new `.cpp`, if its callers span LCAO and PW, put it in an unconditionally-built OBJECT library, not inside `if(ENABLE_LCAO)`.
 
 ## Build And Test Entry Points
 
@@ -120,6 +180,23 @@ python3 tools/03_code_analysis/code_quality_score.py $(git diff --name-only upst
 The repository text files have been normalized to LF once. Day-to-day line
 ending enforcement should rely on staged/changed-file hooks and CI; rerun the
 full mixed-line-ending hook only for intentional repository-wide normalization.
+
+## Upstream Repository
+
+- Repository: https://github.com/deepmodeling/abacus-develop
+- Issues: https://github.com/deepmodeling/abacus-develop/issues
+- Pull requests: https://github.com/deepmodeling/abacus-develop/pulls
+- Upstream PRs are opened from personal fork branches
+  (`<fork-owner>:<branch>` into `develop`).
+- When synchronizing a local branch with `upstream/develop`, prefer
+  `git merge upstream/develop` over `git rebase upstream/develop`. Merge
+  preserves the original commit SHAs of the local work, keeps the branch
+  pushable without `--force`, and avoids re-applying a long patch series
+  when conflicts arise. Use rebase only when the user explicitly asks for
+  a linear history.
+- `workflow_dispatch`-only workflows (e.g. `.github/workflows/interface.yml`)
+  are not triggered by push/PR events; PR CI cannot verify such fixes, so
+  state "manual dispatch run required" in the PR verification notes.
 
 ## PR Self-Check
 

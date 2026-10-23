@@ -1,10 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#define private public
 #include "source_cell/module_neighbor/sltk_grid.h"
 #include "prepare_unitcell.h"
-#undef private
 #include "source_cell/read_stru.h"
 
 Magnetism::Magnetism()
@@ -36,6 +34,13 @@ class SltkGridTest : public testing::Test
     UcellTestPrepare utp = UcellTestLib["Si"];
     std::ofstream ofs;
     std::ifstream ifs;
+    // Grid declares this fixture a friend; a TEST_F body lives in a derived
+    // class, so the call into the private setMemberVariables goes through here.
+    void setMemberVariables(Grid& g, std::ofstream& os, const UnitCell& uc)
+    {
+        g.setMemberVariables(os, uc);
+    }
+
     bool pbc = true;
     double radius = ((8 + 5.01) * 2.0 + 0.01) / 10.2;
     int test_atom_in = 0;
@@ -77,7 +82,7 @@ TEST_F(SltkGridTest, InitSmall)
     radius = 0.5;
     Grid LatGrid(1);
     LatGrid.init(ofs, *ucell, radius, pbc);
-    LatGrid.setMemberVariables(ofs,  *ucell);
+    setMemberVariables(LatGrid, ofs,  *ucell);
     EXPECT_EQ(LatGrid.pbc, true);
     EXPECT_TRUE(LatGrid.pbc);
     EXPECT_DOUBLE_EQ(LatGrid.sradius2, radius * radius);
@@ -106,10 +111,10 @@ TEST_F(SltkGridTest, InitNoExpand)
     ofs.open("test.out");
     unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
-    PARAM.input.test_grid = 1;
+    const int test_grid = 1;
     double radius = 1e-1000;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
-    Grid LatGrid(PARAM.input.test_grid);
+    Grid LatGrid(test_grid);
     LatGrid.init(ofs, *ucell, Atom_inp);
     ofs.close();
 }

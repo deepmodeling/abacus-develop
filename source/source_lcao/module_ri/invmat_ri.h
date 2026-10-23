@@ -3,7 +3,9 @@
 // DATE :   2022-08-17
 //=======================
 
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_RI_INVMAT_RI_H
+#define ABACUS_SOURCE_LCAO_MODULE_RI_INVMAT_RI_H
+
 
 #include "abfs_construct_pca.h"
 
@@ -35,3 +37,5 @@ class Inverse_Matrix
 };
 
 #include "invmat_ri.hpp"
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_RI_INVMAT_RI_H

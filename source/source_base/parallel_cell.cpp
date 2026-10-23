@@ -24,12 +24,57 @@ int CommunicationDomain::rank() const
     return rank_;
 }
 
-CommunicationDomain world_communication_domain()
+int CommunicationDomain::size() const
 {
-    CommunicationDomain communication_domain;
+    int result = 1;
 #ifdef __MPI
-    communication_domain.initialize(MPI_COMM_WORLD);
+    if (communicator_ != MPI_COMM_NULL)
+    {
+        MPI_Comm_size(communicator_, &result);
+    }
 #endif
-    return communication_domain;
+    return result;
+}
+
+int CommunicationDomain::max(int value) const
+{
+#ifdef __MPI
+    if (communicator_ != MPI_COMM_NULL)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_INT, MPI_MAX, communicator_);
+    }
+#endif
+    return value;
+}
+
+int CommunicationDomain::sum(int value) const
+{
+#ifdef __MPI
+    if (communicator_ != MPI_COMM_NULL)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_INT, MPI_SUM, communicator_);
+    }
+#endif
+    return value;
+}
+
+double CommunicationDomain::max(double value) const
+{
+#ifdef __MPI
+    if (communicator_ != MPI_COMM_NULL)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_DOUBLE, MPI_MAX, communicator_);
+    }
+#endif
+    return value;
+}
+
+CommunicationDomain world_comm_domain()
+{
+    CommunicationDomain comm_domain;
+#ifdef __MPI
+    comm_domain.initialize(MPI_COMM_WORLD);
+#endif
+    return comm_domain;
 }
 } // namespace ModuleBase

@@ -1,21 +1,18 @@
-#include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
-#include "source_base/inverse_matrix.h"
-#include "source_base/module_external/lapack_connector.h"
-#include "source_psi/psi.h"
-#include "source_hamilt/hamilt.h"
-#include "source_pw/module_pwdft/hamilt_pw.h"
 #include "../diago_cg.h"
+#include "../diag_comm_info.h"
 #include "../diago_iter_assist.h"
 #include "diago_mock.h"
 #include "mpi.h"
+#include "source_base/parallel_comm.h"
+#include "source_base/inverse_matrix.h"
+#include "source_base/module_external/lapack_connector.h"
 #include "source_basis/module_pw/test/test_tool.h"
+#include "source_psi/psi.h"
+
+#include "gtest/gtest.h"
+#include <ATen/core/tensor_map.h>
 #include <complex>
 #include <random>
-
-#include <ATen/core/tensor_map.h>
 
 /************************************************
  *  unit test of functions in Diago_CG
@@ -106,8 +103,7 @@ public:
     //======================================================================
         double* en = new double[npw];
         int ik = 1;
-        hamilt::Hamilt<double>* ha;
-        ha = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+        HSOperatorMock<double> ha;
         int* ngk = new int[1];
         psi::Psi<double> psi;
         psi.resize(ik, nband, npw);
@@ -145,51 +141,25 @@ public:
         /**************************************************************/
         //  New interface of cg method
         /**************************************************************/
-        // warp the subspace_func into a lambda function
-        auto subspace_func = [ha](double* psi_in,
-                                  double* psi_out,
-                                  const int ld_psi,
-                                  const int nband,
-                                  const bool S_orth) {
-            auto psi_in_wrapper = psi::Psi<double>(psi_in, 1, nband, ld_psi, true);
-            auto psi_out_wrapper = psi::Psi<double>(psi_out, 1, nband, ld_psi, true);
-            std::vector<double> eigen(nband, 0.0);
-            hsolver::DiagoIterAssist<double>::diag_subspace(ha, psi_in_wrapper, psi_out_wrapper, eigen.data());
-        };
-        hsolver::DiagoCG<double> cg(
-            PARAM.input.basis_type,
-            PARAM.input.calculation,
-            hsolver::DiagoIterAssist<double>::need_subspace,
-            subspace_func,
-            hsolver::DiagoIterAssist<double>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX,
-            GlobalV::NPROC_IN_POOL);
+#ifdef __MPI
+        const hsolver::diag_comm_info diag_comm(POOL_WORLD, mypnum, nprocs);
+#else
+        const hsolver::diag_comm_info diag_comm(mypnum, nprocs);
+#endif
+        hsolver::DiagoCG<double> cg("pw",
+                                    "scf",
+                                    hsolver::DiagoIterAssist<double>::need_subspace,
+                                    diag_comm,
+                                    hsolver::DiagoIterAssist<double>::PW_DIAG_THR,
+                                    hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX);
         // hsolver::DiagoCG<double> cg(precondition_local);
         psi_local.fix_k(0);
         double start, end;
         start = MPI_Wtime();
 
-        auto hpsi_func = [ha](double* psi_in,
-                              double* hpsi_out,
-                              const int ld_psi,
-                              const int nvec) {
-            auto psi_wrapper = psi::Psi<double>(psi_in, 1, nvec, ld_psi, true);
-            psi::Range all_bands_range(true, 0, 0, nvec - 1);
-            using hpsi_info = typename hamilt::Operator<double>::hpsi_info;
-            hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out);
-            ha->ops->hPsi(info);
-        };
-        auto spsi_func = [ha](double* psi_in,
-                              double* spsi_out,
-                              const int ld_psi,
-                              const int nvec) {
-            ha->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nvec);
-        };
 
         std::vector<double> ethr_band(nband, 1e-5);
-        cg.diag(hpsi_func,
-                spsi_func,
-                psi_local.get_nbasis(),
+        cg.diag(ha, psi_local.get_nbasis(),
                 psi_local.get_nbands(),
                 psi_local.get_current_ngk(),
                 psi_local.get_pointer(),
@@ -210,7 +180,6 @@ public:
 
         delete[] en;
         delete[] e_lapack;
-        delete ha;
     }
 };
 
@@ -316,7 +285,6 @@ int main(int argc, char** argv)
     int nproc_in_pool, kpar = 1, mypool, rank_in_pool;
     setupmpi(argc, argv, nproc, myrank);
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
-    GlobalV::NPROC_IN_POOL = nproc;
 #else
     MPI_Init(&argc, &argv);
 #endif

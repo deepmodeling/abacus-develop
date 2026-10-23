@@ -68,15 +68,43 @@ class ESolver_DP : public ESolver
      */
     void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
-    bool supports_mdcell() const override;
-    double mdcell_cutoff(const Input_para& inp) const override;
-
     /**
      * @brief Prints the final total energy of the DP model to the output file
      *
      * This function prints the final total energy of the DP model in eV to the output file along with some formatting.
      */
     void after_all_runners(BaseCell& basecell) override;
+
+    //====================================================================
+    // Test seam.
+    //
+    // runner() needs a real DP model file, so the unit tests seed the computed
+    // results directly and check that cal_energy() / cal_force() / cal_stress()
+    // hand them back, and that type_map() filled atype correctly.
+    //
+    // Production code must keep using the private names directly.
+    //====================================================================
+
+    /// @brief atom type index corresponding to the DP model
+    std::vector<int>& get_atype()
+    {
+        return atype;
+    }
+    /// @brief computed potential energy
+    double& get_dp_potential()
+    {
+        return dp_potential;
+    }
+    /// @brief computed atomic forces
+    ModuleBase::matrix& get_dp_force()
+    {
+        return dp_force;
+    }
+    /// @brief computed lattice virials
+    ModuleBase::matrix& get_dp_virial()
+    {
+        return dp_virial;
+    }
 
   private:
     /**

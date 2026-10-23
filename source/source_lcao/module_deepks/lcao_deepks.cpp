@@ -237,7 +237,7 @@ void LCAO_Deepks<T>::allocate_V_delta(const int nat, const int nks)
 }
 
 template <typename T>
-void LCAO_Deepks<T>::init_DMR(const UnitCell& ucell,
+void LCAO_Deepks<T>::init_dmr(const UnitCell& ucell,
                               const LCAO_Orbitals& orb,
                               const Parallel_Orbitals& pv,
                               const Grid_Driver& GridD)

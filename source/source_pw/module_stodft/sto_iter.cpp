@@ -8,6 +8,7 @@
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_estate/kernels/elecstate_op.h"
+#include "source_estate/module_charge/chg_parallel.h"
 #include "source_estate/occupy.h"
 #include "source_hsolver/para_lin_tf.h"
 #include "source_io/module_parameter/parameter.h"
@@ -40,7 +41,7 @@ void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       Stochastic_WF<T, Device>& stowf,
                                       StoChe<Real, Device>& stoche,
-                                      hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto)
+                                      StoHamiltPW<T, Device>* p_hamilt_sto)
 {
     p_che = stoche.p_che.get();
     spolyv = stoche.spolyv.get();
@@ -185,7 +186,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
         while (true)
         {
             bool converge;
-            auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<T, Device>::hPsi_norm,
+            auto hchi_norm = std::bind(&StoHamiltPW<T, Device>::hPsi_norm,
                                        p_hamilt_sto,
                                        std::placeholders::_1,
                                        std::placeholders::_2,
@@ -399,7 +400,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         pchi = stowf.chi0->get_pointer();
     }
 
-    auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<T, Device>::hPsi_norm,
+    auto hchi_norm = std::bind(&StoHamiltPW<T, Device>::hPsi_norm,
                                p_hamilt_sto,
                                std::placeholders::_1,
                                std::placeholders::_2,
@@ -672,7 +673,11 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
     {
         for (int is = 0; is < nspin; ++is)
         {
-            pes->charge->reduce_diff_pools(sto_rho[is]);
+            module_charge::reduce_diff_pools(sto_rho[is],
+                                             *pes->charge,
+                                             GlobalV::KPAR,
+                                             PARAM.globalv.all_ks_run,
+                                             PARAM.inp.bndpar);
             if (!PARAM.globalv.all_ks_run && PARAM.inp.bndpar > 1)
             {
                 MPI_Allreduce(MPI_IN_PLACE, sto_rho[is], nrxx, MPI_DOUBLE, MPI_SUM, BP_WORLD);
@@ -779,7 +784,7 @@ void Stochastic_Iter<T, Device>::calTnchi_ik(const int& ik, Stochastic_WF<T, Dev
         {
             p_hamilt_sto->updateHk(ik); // necessary, because itermu should be called before this function
         }
-        auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<T, Device>::hPsi_norm,
+        auto hchi_norm = std::bind(&StoHamiltPW<T, Device>::hPsi_norm,
                                    p_hamilt_sto,
                                    std::placeholders::_1,
                                    std::placeholders::_2,

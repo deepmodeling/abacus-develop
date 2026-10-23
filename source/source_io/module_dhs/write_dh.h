@@ -11,6 +11,7 @@
 
 #include <array>
 #include <complex>
+#include <fstream>
 #include <vector>
 
 ///for lack of make_unique in c++11 
@@ -19,9 +20,6 @@ std::unique_ptr<T> make_unique(Args &&... args)
 {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
-
-template <typename T, typename Tdata>
-class Exx_LRI_Interface;
 
 namespace ModuleIO
 {
@@ -54,19 +52,7 @@ struct WriteDHParams
     // terms: V^H needs the total density (sum over spins), V^XC the spin-resolved densities.
     std::vector<const hamilt::HContainer<double>*> dmR;
     const Charge* chg = nullptr; // ground-state charge for XC Hellmann-Feynman (FDM)
-#ifdef __EXX
-    // The gamma-only (TK==double) exx interfaces used by write_dH_exx. 
-    // Deliberately NOT templated on TK, for two reasons:
-    //   1. Physics: at multi-k the derivative would be taken with respect to every mirror
-    //      atom of the periodic images, which is not what this output is used for.
-    //   2. Cost: templating these pointers on TK would force WriteHParams, WriteDHParams and
-    //      every free function taking them to become templates as well -- a large, purely
-    //      mechanical change for a case nobody needs.
-    // Multi-k + EXX is therefore rejected up front (see write_dH_components)
-    // instead of silently producing output with the EXX term missing.
-    Exx_LRI_Interface<double, double>* exd = nullptr;
-    Exx_LRI_Interface<double, std::complex<double>>* exc = nullptr;
-#endif
+    std::ofstream* ofs_running = nullptr; // running log for the "Write ... to file" messages
 };
 
 // Returns 0-based atom indices to output (converted from the 1-based user-facing values stored at param[2+]); 
@@ -90,6 +76,7 @@ void write_dh_perI(WriteDHParams& params,
     const std::string& rprefix,
     const std::string& kprefix,
     const std::string& label,
+    const std::string& term_name,
     std::array<std::vector<hamilt::HContainer<double>*>, 3>& g,
     const std::vector<int>& atom_filter = {});
 
@@ -109,11 +96,7 @@ bool write_dH_vxc(WriteDHParams& params);
 
 bool write_dH_vxc_pulay(WriteDHParams& params);
 
-bool write_dH_sum(WriteDHParams& params, const Exx_Info& exx_info);
-
-#ifdef __EXX
-bool write_dH_exx(WriteDHParams& params, const Exx_Info& exx_info);
-#endif
+bool write_dH_sum(WriteDHParams& params);
 
 } // namespace ModuleIO
 

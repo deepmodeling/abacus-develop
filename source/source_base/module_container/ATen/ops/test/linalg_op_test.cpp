@@ -188,6 +188,34 @@ TYPED_TEST(LinalgOpTest, Div) {
     EXPECT_EQ(A, expected);
 }
 
+template <typename T>
+void test_integer_tensor_arithmetic()
+{
+    Tensor a({static_cast<T>(2), static_cast<T>(4), static_cast<T>(8)});
+    Tensor b({static_cast<T>(1), static_cast<T>(2), static_cast<T>(4)});
+    Tensor result = a;
+    result.zero();
+
+    op::add_op()(a, b, result);
+    EXPECT_EQ(result, Tensor({static_cast<T>(3), static_cast<T>(6), static_cast<T>(12)}));
+
+    op::mul_op()(a, b, result);
+    EXPECT_EQ(result, Tensor({static_cast<T>(2), static_cast<T>(8), static_cast<T>(32)}));
+
+    op::div_op()(a, b, result);
+    EXPECT_EQ(result, Tensor({static_cast<T>(2), static_cast<T>(2), static_cast<T>(2)}));
+
+    EXPECT_EQ(a - b, Tensor({static_cast<T>(1), static_cast<T>(2), static_cast<T>(4)}));
+    a -= b;
+    EXPECT_EQ(a, Tensor({static_cast<T>(1), static_cast<T>(2), static_cast<T>(4)}));
+}
+
+TEST(LinalgOpIntegerTest, CoversIntegerDispatch)
+{
+    test_integer_tensor_arithmetic<int>();
+    test_integer_tensor_arithmetic<int64_t>();
+}
+
 TYPED_TEST(LinalgOpTest, Transpose) {
     using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;
     using Device = typename std::tuple_element<1, decltype(TypeParam())>::type;

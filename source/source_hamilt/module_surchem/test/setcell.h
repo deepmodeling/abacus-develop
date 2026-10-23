@@ -10,11 +10,6 @@
 #include "source_base/parallel_grid.h"
 #include "source_pw/module_pwdft/stru_fac.h"
 
-namespace GlobalC
-{
-    ModulePW::PW_Basis* rhopw;
-}
-
 UnitCell::UnitCell(){};
 UnitCell::~UnitCell(){};
 

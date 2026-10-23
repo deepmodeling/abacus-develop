@@ -43,13 +43,24 @@ class Parallel_Grid
     int get_nz() const { return ncz; }
     int get_nrxx() const { return nrxx; }
 
-    private:
+	private:
 
-    void z_distribution(void);
+    void z_distribution(const int kpar);
+    
+    void init_serial(const int& ncx_in,
+                     const int& ncy_in,
+                     const int& ncz_in,
+                     const int& nczp_in,
+                     const int& nrxx_in,
+                     const int& nbz_in,
+                     const int& bz_in);
 
 #ifdef __MPI
-    void zpiece_to_all(double* zpiece, const int& iz, double* rho) const;
-    void zpiece_to_stogroup(double* zpiece, const int& iz, double* rho) const; //qainrui add for sto-dft 2021-7-21
+    void init_parallel(const int nprocgroup);
+#endif
+
+#ifdef __MPI
+    void zpiece_distribute(double* zpiece, const int& iz, double* rho, const bool is_sdft) const;
 #endif
 
     std::vector<int> nproc_in_pool;

@@ -2,7 +2,9 @@
 #define MATHZONE_H
 
 #include "global_function.h"
+#include "matrix.h"
 #include "matrix3.h"
+#include "tool_quit.h"
 #include "vector3.h"
 #include "realarray.h"
 
@@ -171,8 +173,41 @@ class Mathzone
         proj.y = std::abs( latvec[1] * (latvec[2] ^ latvec[0]).normalize() );
         proj.z = std::abs( latvec[2] * (latvec[0] ^ latvec[1]).normalize() );
         return proj;
-    } 
+    }
 };
+
+/**
+ * @brief Remove the uniform net-force component in place (Newton's 3rd law).
+ *
+ * Subtract the per-component mean force so the total force sums to zero. This
+ * is a pure matrix operation, independent of symmetry. Shared by the PW and
+ * LCAO force paths. Not applied when an external field (gate/efield) is present.
+ *
+ * @param[in] nat number of atoms
+ * @param[in,out] force per-atom Cartesian forces, nat x 3, modified in place
+ */
+inline void remove_net_force(const int nat, ModuleBase::matrix& force)
+{
+    if (nat <= 0 || force.nr < nat || force.nc < 3)
+    {
+        ModuleBase::WARNING_QUIT("remove_net_force",
+                                 "nat must be positive and force must have at least nat x 3 elements");
+    }
+    for (int i = 0; i < 3; i++)
+    {
+        double sum = 0.0;
+        for (int iat = 0; iat < nat; iat++)
+        {
+            sum += force(iat, i);
+        }
+        const double compen = sum / nat;
+        for (int iat = 0; iat < nat; ++iat)
+        {
+            force(iat, i) -= compen;
+        }
+    }
+    return;
+}
 
 } // namespace ModuleBase
 

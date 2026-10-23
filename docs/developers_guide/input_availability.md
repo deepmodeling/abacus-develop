@@ -57,7 +57,7 @@ so forms such as `basis_type == pw` and
 `bare-value` is a non-empty value containing no whitespace or any of
 `()[],=<>!`. A value containing at least one of those characters must use the
 non-empty double-quoted form, and a value that does not require quotes must not
-use them. Thus `basis_type==pw` and `relax_method=="cg 2"` are canonical, while
+use them. Thus `basis_type==pw` and `relax_method==cg` are canonical, while
 `basis_type=="pw"` is not. `==` compares one complete value. Two or more
 alternatives use `in [...]`, while `parameter contains value` tests whether a
 vector contains one element, such as `td_ttype contains 0`. `/` is an ordinary
@@ -84,8 +84,8 @@ item.set_availability("esolver_type==sdft and method_sto==2");
 1. Parse and require canonical spelling in `set_availability()`.
 2. Finish registering all `Input_Item` objects.
 3. Validate referenced parameter names, operator compatibility, literal values, and that every referenced parameter carries its own enclosing requirements on the referencing path.
-4. Serialize the AST into `docs/parameters.yaml`.
-5. Generate `docs/advanced/input_files/input-main.md` from that YAML.
+4. Serialize the AST to YAML as part of the documentation build.
+5. Generate the INPUT reference documentation from that YAML.
 
 Runtime evaluation is outside this metadata contract. Any implementation must
 define evaluation timing, treatment of defaults and reset values, and warning

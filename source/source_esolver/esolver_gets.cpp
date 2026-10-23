@@ -5,8 +5,8 @@
 #include "source_cell/read_pp_ucell.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/param_update.h"
-#include "source_io/module_hs/cal_r_overlap_r.h"
-#include "source_io/module_hs/write_hs_r.h"
+#include "source_io/module_hs/pos_op_mat.h"
+#include "source_io/module_hs/hsr_legacy.h"
 #include "source_io/module_output/print_info.h"
 #include "source_lcao/lcao_domain.h"
 #include "source_lcao/hamilt_lcao.h"
@@ -27,7 +27,7 @@ ESolver_GetS::~ESolver_GetS()
 
 void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     this->inp_ = &inp;
@@ -69,8 +69,12 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     {
         const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
         ucell.symm.analy_sys(ucell.lat,
-                             ucell.st,
                              ucell.atoms,
+                             ucell.nat,
+                             ucell.ntype,
+                             ucell.iat2it,
+                             ucell.iat2ia,
+                             ucell.itia2iat,
                              GlobalV::ofs_running,
                              this->inp_->symmetry_prec,
                              inp.nspin,
@@ -91,6 +95,7 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
                  ucell.G,
                  ucell.latvec,
                  GlobalV::ofs_running,
+                 GlobalV::ofs_warning,
                  use_ibz,
                  global_out_dir,
                  gamma_only_local,
@@ -130,7 +135,7 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
 void ESolver_GetS::runner(BaseCell& basecell, const int istep)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
     ModuleBase::TITLE("ESolver_GetS", "runner");
@@ -154,7 +159,11 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                          this->inp_->test_atom_input);
 
     Record_adj RA;
-    RA.for_2d(ucell, gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    RA.for_2d(ucell, gd, this->pv, PARAM.globalv.gamma_only_local, PARAM.globalv.npol, orb_.cutoffs());
+    if (this->inp_->out_level != "m" && !PARAM.globalv.gamma_only_local)
+    {
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", this->pv.nnr);
+    }
 
     if (this->p_hamilt == nullptr)
     {
@@ -189,18 +198,54 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
     const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
 
     auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
-    ModuleIO::output_SR(pv, gd, hamilt_ptr, fn);
+    const bool binary = false;
+    const double sparse_threshold = 1e-10;
+    const int precision = 16;
+    ModuleIO::output_SR(pv,
+                        gd,
+                        hamilt_ptr,
+                        fn,
+                        binary,
+                        sparse_threshold,
+                        precision,
+                        PARAM.globalv.global_out_dir,
+                        PARAM.globalv.global_matrix_dir,
+                        PARAM.inp.calculation,
+                        PARAM.inp.out_app_flag,
+                        PARAM.inp.nspin,
+                        GlobalV::ofs_running);
 
     if (this->inp_->out_mat_r[0])
     {
-        cal_r_overlap_R r_matrix;
-        r_matrix.init(ucell, pv, orb_);
-        r_matrix.out_rR(ucell, gd, istep, this->inp_->out_mat_r[1]);
+        Position_op r_matrix;
+        const bool cal_force = PARAM.inp.cal_force;
+        const int nlocal = PARAM.globalv.nlocal;
+        r_matrix.init(ucell, pv, orb_, cal_force, nlocal);
+        r_matrix.out_rR(ucell,
+                        gd,
+                        -1, // get_s has no ionic step; use -1 for no step suffix
+                        this->inp_->out_mat_r[1],
+                        PARAM.globalv.global_out_dir,
+                        PARAM.globalv.global_matrix_dir,
+                        PARAM.inp.calculation,
+                        PARAM.inp.out_app_flag,
+                        nlocal,
+                        PARAM.globalv.npol,
+                        GlobalV::ofs_running);
     }
 
     if (this->inp_->out_mat_ds[0])
     {
         LCAO_HS_Arrays HS_Arrays; // store sparse arrays
+        ModuleIO::MatROutputOptions mat_R_options;
+        mat_R_options.binary = binary;
+        mat_R_options.sparse_threshold = sparse_threshold;
+        mat_R_options.precision = this->inp_->out_mat_ds[1];
+        mat_R_options.global_out_dir = PARAM.globalv.global_out_dir;
+        mat_R_options.global_matrix_dir = PARAM.globalv.global_matrix_dir;
+        mat_R_options.calculation = PARAM.inp.calculation;
+        mat_R_options.out_app_flag = PARAM.inp.out_app_flag;
+        mat_R_options.nspin = PARAM.inp.nspin;
         //! Print out sparse matrix
         ModuleIO::output_dSR(istep,
                              ucell,
@@ -209,10 +254,11 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                              gd, // mohan add 2024-04-06
                              two_center_bundle_,
                              orb_,
-                             kv,
-                             false,
-                             1e-10,
-                             this->inp_->out_mat_ds[1]);
+                             mat_R_options,
+                             PARAM.globalv.gamma_only_local,
+                             PARAM.globalv.npol,
+                             PARAM.globalv.nlocal,
+                             GlobalV::ofs_running);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");
@@ -220,7 +266,7 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
 
 void ESolver_GetS::after_all_runners(BaseCell& basecell)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 };
 double ESolver_GetS::cal_energy()
@@ -229,12 +275,12 @@ double ESolver_GetS::cal_energy()
 };
 void ESolver_GetS::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 };
 void ESolver_GetS::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
-    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 };
 

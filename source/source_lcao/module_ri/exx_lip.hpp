@@ -473,10 +473,12 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::write_q_pack() const
 {
-    ModuleBase::timer::start("Exx_Lip", "write_q_pack");
-
     if (PARAM.inp.out_chg[0] == 0)
-        { return; }
+    {
+        return;
+    }
+
+    ModuleBase::timer::start("Exx_Lip", "write_q_pack");
 
     if (!GlobalV::RANK_IN_POOL)
     {

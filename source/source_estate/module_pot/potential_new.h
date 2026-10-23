@@ -10,8 +10,11 @@
 #include <memory>
 #include <vector>
 
+struct Input_para;
+
 namespace elecstate
 {
+class PotPcc;
 class TDFieldManager;
 
 /**
@@ -72,12 +75,19 @@ class Potential : public PotBase
     void init_pot(const Charge* const chg);
     // initialize potential components before SCF
     void pot_register(const std::vector<std::string>& components_list);
+    void pot_register(const std::vector<std::string>& components_list, const Input_para& input);
     // update potential from current charge
     void update_from_charge(const Charge* const chg, const UnitCell* const ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 
-    PotBase* get_pot_type(const std::string& pot_type);
+    PotBase* get_pot_type(const std::string& pot_type, const Input_para& input);
+
+    // Solvation terms of the registered components; not PotBase overrides, so
+    // modules that stub Potential need not know about solvation.
+    void sum_sol_energy(double& electrostatic, double& non_electrostatic) const;
+    void sum_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const;
+    const std::vector<double>* find_sol_pot() const;
 
     /**
      * @brief Inject the shared RT-TDDFT field state before potential setup.
@@ -211,6 +221,12 @@ class Potential : public PotBase
     /// @return E_ML-EXX
     double get_ml_exx_energy() const;
 
+    /// Results of the registered point-counter-charge (PCC) component, used by
+    /// the energy, force and output stages; neutral values when PCC is off.
+    double pcc_energy_rydberg() const;
+    const std::vector<double>* pcc_electron_potential() const;
+    void add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) const;
+
   private:
     void cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;
@@ -218,6 +234,10 @@ class Potential : public PotBase
     void interpolate_vrs();
 
     void allocate();
+
+    // the registered PCC component, or nullptr when PCC is off
+    const PotPcc* pcc_component() const;
+    PotBase* make_sccs_pot(const Input_para& input);
 
     std::vector<double> v_eff_fixed;
     ModuleBase::matrix v_eff;

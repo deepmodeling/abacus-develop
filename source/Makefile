@@ -92,6 +92,9 @@ else
     FFTW_INCLUDE_DIR = ${FFTW_DIR}/include
     FFTW_LIB_DIR     = ${FFTW_DIR}/lib
     HONG  += -D__FFTW3
+    ifeq ($(OPENMP), ON)
+        LIBS += -L${FFTW_LIB_DIR} -lfftw3_omp
+    endif
     LIBS += -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR}
     INCLUDES += -I${FFTW_INCLUDE_DIR}
     
@@ -141,6 +144,9 @@ endif
 ifdef LIBRI_DIR
     INCLUDES += -I${LIBRI_DIR}/include
     INCLUDES += -I${LIBCOMM_DIR}/include
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_ri
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_rpa
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_rpa/module_librpa_io
     HONG                += -DUSE_LIBRI
     HONG += -D__EXX -DEXX_H_COMM=2 -DEXX_DM=3 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
 endif
@@ -179,6 +185,24 @@ ifdef DeePMD_DIR
     endif
 endif
 
+ifdef DeePMD_DIR
+    # Keep the legacy Make build on the same DeePMD API path as CMake. These
+    # are syntax-only probes, so no temporary executable or extra link step is
+    # required during the normal build.
+    DPMD_PROBE_SOURCE = ${ABACUS_ROOT}../tools/deepmd_input_nlist_probe.cpp
+    DPMD_COMM_NLIST_13 := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_COMM_13 -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    DPMD_COMM_NLIST_12 := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_COMM_12 -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    DPMD_NLIST_MAPPING := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_MAPPING -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    ifeq ($(DPMD_COMM_NLIST_13),1)
+        HONG += -D__DPMD_COMM_NLIST_ARGS=13
+    else ifeq ($(DPMD_COMM_NLIST_12),1)
+        HONG += -D__DPMD_COMM_NLIST_ARGS=12
+    endif
+    ifeq ($(DPMD_NLIST_MAPPING),1)
+        HONG += -D__DPMD_HAS_NLIST_MAPPING
+    endif
+endif
+
 ifdef TensorFlow_DIR
     #==========================
     # TensorFlow package
@@ -196,6 +220,15 @@ ifdef PEXSI_DIR
     HONG += -D__PEXSI
 endif
 
+ifdef PLUMED_DIR
+    #==========================
+    # PLUMED (https://www.plumed.org)
+    #==========================
+    INCLUDES += -I${PLUMED_DIR}/include
+    LIBS += -L${PLUMED_DIR}/lib -Wl,--no-as-needed -lplumed -lplumedKernel -Wl,--as-needed -Wl,-rpath=${PLUMED_DIR}/lib
+    HONG += -DUSE_PLUMED
+endif
+
 include $(ABACUS_ROOT)Makefile.Objects
 VPATH := $(patsubst ./%,$(ABACUS_ROOT)%,$(VPATH))
 HEADERS := $(patsubst %,$(ABACUS_ROOT)%,$(HEADERS))
@@ -204,9 +237,6 @@ HEADERS := $(patsubst %,$(ABACUS_ROOT)%,$(HEADERS))
 # Optional HONG
 #==========================
 HONG += -D__SELINV -DMETIS 
-# ifeq ($(MEM_CHECK), ON)
-#     HONG += -D_MCD_CHECK -DWIN32 -DMCD_VERBOSE
-# endif
 
 #==========================
 # OBJECTS NEEDED
@@ -214,7 +244,7 @@ HONG += -D__SELINV -DMETIS
 
 ifeq ($(MPI), ON)
     ifdef LIBRI_DIR
-        OBJS_ABACUS += $(OBJS_MODULE_RI) ${OBJS_SRC_RI}
+        OBJS_ABACUS += $(OBJS_MODULE_RI) $(OBJS_MODULE_RPA) $(OBJS_BSE) ${OBJS_SRC_RI}
     endif
 endif
 
@@ -253,14 +283,6 @@ $(BUILD_INFO_DIR)/build_info.h:$(ABACUS_ROOT)source_io/build_info.h.in $(ABACUS_
     # Specific rule for parse_args.o to enforce dependency on build_info.h.
     # This overrides the generic %.o:%.cpp rule for this specific file.
 ${OBJ_DIR}/parse_args.o: $(ABACUS_ROOT)source_io/parse_args.cpp $(BUILD_INFO_DIR)/build_info.h
-	@mkdir -p $(dir $@)
-	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
-
-# Explicit rule: source_cell/module_symmetry and source_estate/module_charge
-# both contain a symm_rho.cpp. VPATH resolves symm_rho.o to the source_cell
-# one (listed first), so the Symmetry_rho implementation needs an explicit
-# object name to be compiled from the correct source.
-${OBJ_DIR}/symm_rho_charge.o: $(ABACUS_ROOT)source_estate/module_charge/symm_rho.cpp
 	@mkdir -p $(dir $@)
 	${CXX} ${OPTS} ${OPTS_MPI} -c ${HONG} $< -o $@
 

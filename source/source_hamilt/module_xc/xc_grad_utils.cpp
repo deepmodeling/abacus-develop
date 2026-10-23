@@ -164,6 +164,16 @@ void XC_Functional::noncolin_rho(
             }
         }
     }
+    // Note: with lsign_ = true the up/down channels are defined w.r.t. the
+    // global axis ux_ through sign(m . ux_), evaluated point by point above;
+    // with lsign_ = false, "up" is always the local |m| (neg stays +1
+    // everywhere). amag = |m(r)| is non-negative; neg[ir] carries that sign.
+    // The global axis ux_ itself is derived from the STRU initial moments in
+    // cal_ux(). Because GGA also consumes the *gradients* of rhoout1/rhoout2,
+    // a flipping sign field changes the gradient terms too, so the two
+    // branches can give noticeably different v_xc even for predominantly
+    // single-sign mz. (Locked by GgaGradTools.NoncolinRhoGlobalAxis in
+    // module_xc/test/test_xc5.cpp.)
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif

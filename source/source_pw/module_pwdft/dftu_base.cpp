@@ -28,35 +28,32 @@ Plus_U_Base::~Plus_U_Base()
 
 
 // init_base: base-only initialization shared by PW and LCAO paths.
-// LCAO-specific setup (paraV, orb, ucell pointer) stays in Plus_U::init().
+// LCAO callers validate the paraV square-matrix invariant before calling.
 void Plus_U_Base::init_base(UnitCell& cell,
                              const int npol,
                              const int nspin,
-                             const std::vector<int>& orbital_corr,
+                             const std::vector<int>& l_channel,
                              const bool yukawa_potential,
                              const double yukawa_lambda,
                              const std::string& global_readin_dir,
                              const std::string& global_out_dir,
                              const std::string& init_chg,
                              const std::string& device,
-                             const int kpar,
                              const std::vector<double>& hubbard_u,
                              const double uramping,
-                             const int occ_mat_ctrl,
-                             const int mixing_dftu)
+                             const int init_occ_mat,
+                             const int mixing_dftu,
+                             const DFTU_BASE::OccmatSocLayout soc_layout)
 {
     ModuleBase::TITLE("Plus_U_Base", "init_base");
 
 #ifndef __MPI
-    std::cout << "DFT+U module is only accessible in mpi version" << std::endl;
-    exit(0);
+    ModuleBase::WARNING_QUIT("Plus_U_Base::init_base", "DFT+U module is only accessible in MPI version");
 #endif
 
-    this->nspin = nspin;
-    this->orbital_corr = orbital_corr;
+    this->l_channel = l_channel;
     this->uramping = uramping;
-    this->occ_mat_ctrl = occ_mat_ctrl;
-    this->mixing_dftu = mixing_dftu;
+    this->init_occ_mat = init_occ_mat;
     this->u_target = hubbard_u;
     this->u_current = hubbard_u;
     if (uramping > 0.01)
@@ -66,13 +63,12 @@ void Plus_U_Base::init_base(UnitCell& cell,
                   0.0);
     }
     this->device = device;
-    this->kpar = kpar;
 
     this->energy_u = 0.0;
 
-    this->occmat_.init(cell, orbital_corr, nspin, npol);
+    this->occmat_.init(cell, l_channel, nspin, npol);
 
-    this->pot_uterm_pw_index.resize(cell.nat);
+    this->uterm_mat_index.resize(cell.nat);
     int pot_index = 0;
 
     int num_locale = 0;
@@ -82,39 +78,36 @@ void Plus_U_Base::init_base(UnitCell& cell,
         {
             const int iat = cell.itia2iat(it, ia);
 
-            if(!has_correlated_orbital(it))
+            const int target_l = this->l_channel[it];
+            if (target_l == -1)
             {
                 continue;
             }
 
-            const int tlp1_npol = (get_orbital_corr(it)*2+1)*npol;
-            const int tlp1 = 2 * get_orbital_corr(it) + 1;
+            const int tlp1_npol = (target_l * 2 + 1) * npol;
+            const int tlp1 = 2 * target_l + 1;
             const int elem_size = tlp1 * tlp1;
             if(nspin == 4)
             {
-                this->pot_uterm_pw_index[iat] = pot_index;
+                this->uterm_mat_index[iat] = pot_index;
                 pot_index += tlp1_npol * tlp1_npol;
             }
             else
             {
-                this->pot_uterm_pw_index[iat] = pot_index;
+                this->uterm_mat_index[iat] = pot_index;
                 pot_index += elem_size;
             }
 
             for (int l = 0; l <= cell.atoms[it].nwl; l++)
             {
-                const int N = cell.atoms[it].l_nchi[l];
-
-                for (int n = 0; n < N; n++)
+                // only the first radial channel (n=0) of each l is stored
+                if (nspin == 1 || nspin == 2)
                 {
-                    if (nspin == 1 || nspin == 2)
-                    {
-                        num_locale += (2 * l + 1) * (2 * l + 1) * 2;
-                    }
-                    else if (nspin == 4)
-                    {
-                        num_locale += (2 * l + 1) * (2 * l + 1) * npol * npol;
-                    }
+                    num_locale += (2 * l + 1) * (2 * l + 1) * 2;
+                }
+                else if (nspin == 4)
+                {
+                    num_locale += (2 * l + 1) * (2 * l + 1) * npol * npol;
                 }
             }
         }
@@ -122,69 +115,93 @@ void Plus_U_Base::init_base(UnitCell& cell,
 
     if (nspin == 2) pot_index *= 2;
 
-    this->pot_uterm_pw.resize(pot_index, 0.0);
-    this->uom_array.resize(pot_index, 0.0);
-    this->uom_save.resize(pot_index, 0.0);
+    this->uterm_mat.resize(pot_index, 0.0);
+
+    // construct the occupation-matrix mixer only when mixing is enabled
+    if (mixing_dftu != 0)
+    {
+        this->occ_mixer_.reset(new OccMatMixer());
+        this->occ_mixer_->init(&cell, &this->l_channel,
+                               &this->uterm_mat_index, nspin, pot_index);
+    }
 
     if (yukawa_potential)
     {
         this->yukawa_.reset(new YukawaScreening());
-        this->yukawa_->init(cell, orbital_corr, yukawa_lambda);
+        this->yukawa_->init(cell, l_channel, yukawa_lambda);
     }
-    else
+    if (init_occ_mat != 0)
     {
-        // Clear any stale object from a previous init_base() call with
-        // yukawa_potential == true, preserving the old explicit-flag semantics.
-        this->yukawa_.reset();
-    }
-
-    if (occ_mat_ctrl != 0)
-    {
-        std::stringstream sst;
-        sst << global_readin_dir << "dm_onsite_ini.txt";
-        DFTU_BASE::read_occup_m(cell, this->occmat_, this->orbital_corr, this->occ_mat_ctrl,
-                                sst.str(), init_chg, nspin, npol);
+        // Try the user-prepared dm_onsite_ini.txt first, then fall back to
+        // the compact occupation-matrix snapshot written by a previous
+        // run (occ_mat.txt). Legacy dm_onsite.txt input is not supported.
+        const std::vector<std::string> candidates = {"dm_onsite_ini.txt",
+                                                      "occ_mat.txt"};
+        const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
+        if (readin_fn.empty())
+        {
+            ModuleBase::WARNING_QUIT("Plus_U_Base::init_base",
+                                     "init_occ_mat is set but no occupation-matrix file found in "
+                                     + global_readin_dir
+                                     + ". Tried: dm_onsite_ini.txt, occ_mat.txt");
+        }
+        DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
+                                readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
-        DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->orbital_corr, nspin, npol);
+        DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
 #endif
 
-        mark_occ_mat_initialized();
-        this->occmat_.copy_to_save(cell, this->orbital_corr);
-        this->occmat_.write_save_to_flat(cell, this->orbital_corr,
-                                         this->pot_uterm_pw_index, this->uom_save);
+        this->set_occmat_ready();
+        this->occmat_.copy_to_save(cell, this->l_channel);
+        if (this->has_occ_mixer())
+        {
+            // seed the mixing history with the file-loaded occupation matrix
+            this->occ_mixer().seed_save(this->occmat_);
+        }
     }
     else
     {
         if (init_chg == "file")
         {
-            std::stringstream sst;
-            sst << global_readin_dir << "dm_onsite.txt";
-            DFTU_BASE::read_occup_m(cell, this->occmat_, this->orbital_corr, this->occ_mat_ctrl,
-                                    sst.str(), init_chg, nspin, npol);
+            // Only the current compact restart output is supported.
+            const std::vector<std::string> candidates = {"occ_mat.txt"};
+            const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
+            if (readin_fn.empty())
+            {
+                ModuleBase::WARNING_QUIT("Plus_U_Base::init_base",
+                                         "init_chg is set to file but no occupation-matrix file "
+                                         "found in "
+                                         + global_readin_dir
+                                         + ". Tried: occ_mat.txt. Please do an scf "
+                                           "calculation first.");
+            }
+            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
+                                    readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
-            DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->orbital_corr, nspin, npol);
+            DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
 #endif
-            mark_occ_mat_initialized();
+            this->set_occmat_ready();
         }
         else
         {
-            this->occmat_.zero(cell, this->orbital_corr);
+            this->occmat_.zero(cell, this->l_channel);
         }
     }
 
     ModuleBase::Memory::record("Plus_U_Base::occ_mat", sizeof(double) * num_locale);
-    return;
 }
 
 
 void Plus_U_Base::uramping_update()
 {
     // Yukawa calculates U directly every iteration, no need for ramping
-    if (use_yukawa()) {
+    if (this->yukawa_ != nullptr)
+    {
         return;
     }
     // if uramping < 0.1, use the original U
-    if (this->uramping < 0.01) {
+    if (this->uramping < 0.01)
+    {
         return;
     }
     // loop to change U
@@ -205,7 +222,8 @@ void Plus_U_Base::uramping_update()
 bool Plus_U_Base::u_converged()
 {
     // Yukawa calculates U directly every iteration, always considered converged
-    if (use_yukawa()) {
+    if (this->yukawa_ != nullptr)
+    {
         return true;
     }
     for (int i = 0; i < static_cast<int>(this->u_target.size()); i++)
@@ -219,6 +237,7 @@ bool Plus_U_Base::u_converged()
 }
 
 
-// cal_occ_pw() is implemented in source_pw/module_pwdft/dftu_base_occ.cpp
-// as a Plus_U_Base method. Pure per-atom kernels live in dftu_base_tools.{h,cpp}
+// cal_occ_pw() is implemented as free function DFTU_BASE::cal_occ_pw
+// in source_pw/module_pwdft/dftu_pw.cpp.
+// All pure per-atom kernels also live in dftu_pw.{h,cpp}
 // as free functions in namespace DFTU_BASE.

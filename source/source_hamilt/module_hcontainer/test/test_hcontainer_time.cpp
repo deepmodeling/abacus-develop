@@ -24,7 +24,7 @@ class HContainerTest : public ::testing::Test
         ucell.ntype = 1;
         ucell.nat = test_size;
         ucell.atoms = new Atom[ucell.ntype];
-        ucell.iat2it = new int[ucell.nat];
+        ucell.iat2it.resize(ucell.nat);
         for (int iat = 0; iat < ucell.nat; iat++)
         {
             ucell.iat2it[iat] = 0;
@@ -142,8 +142,6 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

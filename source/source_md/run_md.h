@@ -1,10 +1,15 @@
 #ifndef RUN_MD_H
 #define RUN_MD_H
 
-#include "source_cell/md_cell.h"
-#include "source_cell/md_stru_file_metadata.h"
-#include "source_esolver/esolver.h"
-#include "source_io/module_parameter/parameter.h"
+class MDCell;
+class DomainDecomposition;
+class UnitCell;
+struct Parameter;
+
+namespace ModuleESolver
+{
+class ESolver;
+}
 
 /**
  * @brief the md loop line
@@ -12,6 +17,10 @@
  */
 namespace Run_MD
 {
+void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp);
+
+void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);
+
 /**
  * @brief the md loop line
  *
@@ -22,7 +31,7 @@ namespace Run_MD
 void md_line(MDCell& mdcell,
              ModuleESolver::ESolver* p_esolver,
              const Parameter& param_in,
-             const MdStruFileMetadata& stru_metadata);
+             DomainDecomposition& decomp);
 } // namespace Run_MD
 
 #endif

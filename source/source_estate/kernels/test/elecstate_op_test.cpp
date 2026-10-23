@@ -129,8 +129,8 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_op_gpu)
         EXPECT_LT(fabs(rho_data[ii] - expected_rho[ii]), 6e-5);
     }
     delete [] rho;
-    delete_memory_var_op()(this->gpu_ctx, d_rho_data);
-    delete_memory_complex_op()(this->gpu_ctx, d_wfcr);
+    delete_memory_var_op()(d_rho_data);
+    delete_memory_complex_op()(d_wfcr);
 }
 
 TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_gpu)
@@ -168,9 +168,65 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_gpu)
         EXPECT_LT(fabs(rho_data_2[ii] - expected_rho_2[ii]), 5e-4);
     }
     delete [] rho;
-    delete_memory_var_op()(this->gpu_ctx, d_rho_data_2);
-    delete_memory_complex_op()(this->gpu_ctx, d_wfcr_2);
-    delete_memory_complex_op()(this->gpu_ctx, d_wfcr_another_spin_2);
+    delete_memory_var_op()(d_rho_data_2);
+    delete_memory_complex_op()(d_wfcr_2);
+    delete_memory_complex_op()(d_wfcr_another_spin_2);
+}
+
+TEST_F(TestModuleElecstateMultiDevice, nonmagnetic_spinor_preserves_charge_on_gpu)
+{
+    const int nrxx = 2;
+    const double weight = 0.5;
+    const bool domag = false;
+    const bool domag_z = false;
+    const std::vector<std::complex<double>> wfcr = {{1.0, 0.0}, {0.0, 2.0}};
+    const std::vector<std::complex<double>> wfcr_another_spin = {{0.0, 1.0}, {3.0, 0.0}};
+    std::vector<double> rho_cpu = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0};
+    std::vector<double> rho_gpu = rho_cpu;
+    double* rho_cpu_components[4]
+        = {rho_cpu.data(), rho_cpu.data() + nrxx, rho_cpu.data() + 2 * nrxx, rho_cpu.data() + 3 * nrxx};
+
+    elecstate_cpu_op()(this->cpu_ctx,
+                       domag,
+                       domag_z,
+                       nrxx,
+                       nrxx,
+                       weight,
+                       rho_cpu_components,
+                       wfcr.data(),
+                       wfcr_another_spin.data());
+
+    double* rho_device = nullptr;
+    std::complex<double>* wfcr_device = nullptr;
+    std::complex<double>* wfcr_another_spin_device = nullptr;
+    resize_memory_var_op()(rho_device, rho_gpu.size());
+    resize_memory_complex_op()(wfcr_device, wfcr.size());
+    resize_memory_complex_op()(wfcr_another_spin_device, wfcr_another_spin.size());
+    syncmem_var_h2d_op()(rho_device, rho_gpu.data(), rho_gpu.size());
+    syncmem_complex_h2d_op()(wfcr_device, wfcr.data(), wfcr.size());
+    syncmem_complex_h2d_op()(wfcr_another_spin_device, wfcr_another_spin.data(), wfcr_another_spin.size());
+    double* rho_gpu_components[4] = {rho_device, rho_device + nrxx, rho_device + 2 * nrxx, rho_device + 3 * nrxx};
+
+    elecstate_gpu_op()(this->gpu_ctx,
+                       domag,
+                       domag_z,
+                       nrxx,
+                       nrxx,
+                       weight,
+                       rho_gpu_components,
+                       wfcr_device,
+                       wfcr_another_spin_device);
+    syncmem_var_d2h_op()(rho_gpu.data(), rho_device, rho_gpu.size());
+
+    EXPECT_DOUBLE_EQ(rho_cpu[0], 2.0);
+    EXPECT_DOUBLE_EQ(rho_cpu[1], 8.5);
+    for (std::size_t ir = 0; ir < rho_cpu.size(); ++ir)
+    {
+        EXPECT_DOUBLE_EQ(rho_gpu[ir], rho_cpu[ir]);
+    }
+
+    delete_memory_var_op()(rho_device);
+    delete_memory_complex_op()(wfcr_device);
+    delete_memory_complex_op()(wfcr_another_spin_device);
 }
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-

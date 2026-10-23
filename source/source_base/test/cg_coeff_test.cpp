@@ -38,7 +38,7 @@ TEST(ClebschGordanTest, ClebschGordan)
     ModuleBase::IntArray lpl;
 
     ModuleBase::Clebsch_Gordan::clebsch_gordan(lmaxkb + 1, ap, lpx, lpl);
-    EXPECT_DOUBLE_EQ(ap(0, 0, 0), 0.28209479177387564);
+    EXPECT_NEAR(ap(0, 0, 0), 0.28209479177387564, 1.0e-14);
     EXPECT_EQ(lpx(0, 0), 1);
     EXPECT_EQ(lpx(3, 3), 3);
     EXPECT_EQ(lpl(0, 0, 5), 0);

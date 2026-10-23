@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <fstream>
 #include <functional>
+#include <map>
 
 // #ifdef __MPI
 #include "mpi.h"
@@ -95,6 +96,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.min_dist_coef, 0.2);
     EXPECT_EQ(param.inp.gint_precision, "double");
     EXPECT_EQ(param.inp.dft_functional, "hse");
+    EXPECT_EQ(Parameter().inp.gga_grad, 0);
+    EXPECT_EQ(param.inp.gga_grad, 2);
     EXPECT_DOUBLE_EQ(param.inp.xc_temperature, 0.0);
     EXPECT_EQ(param.inp.nspin, 1);
     EXPECT_DOUBLE_EQ(param.inp.nelec, 0.0);
@@ -117,7 +120,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.fixed_axes, "None");
     EXPECT_FALSE(param.inp.fixed_ibrav);
     EXPECT_FALSE(param.inp.fixed_atoms);
-    EXPECT_EQ(param.inp.relax_method[0], "cg");
+    EXPECT_EQ(param.inp.relax_method, "cg");
     EXPECT_DOUBLE_EQ(param.inp.relax_cg_thr, 0.5);
     EXPECT_EQ(param.inp.out_level, "ie");
     EXPECT_TRUE(param.globalv.out_md_control);
@@ -223,7 +226,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.out_alllog);
     EXPECT_DOUBLE_EQ(param.inp.dos_emin_ev, -15);
     EXPECT_DOUBLE_EQ(param.inp.dos_emax_ev, 15);
-    EXPECT_DOUBLE_EQ(param.inp.dos_edelta_ev, 0.01);
+    EXPECT_DOUBLE_EQ(param.inp.dos_edelta_ev, 0.03);
     EXPECT_DOUBLE_EQ(param.inp.dos_scale, 0.01);
     EXPECT_DOUBLE_EQ(param.inp.dos_sigma, 0.07);
     EXPECT_DOUBLE_EQ(param.inp.stm_bias[0], 2.0);
@@ -275,7 +278,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(std::stod(param.inp.vdw_cutoff_radius), 56.6918);
     EXPECT_EQ(param.inp.vdw_radius_unit, "Bohr");
     EXPECT_DOUBLE_EQ(param.inp.vdw_cutoff_width2, 0.05);
-    EXPECT_DOUBLE_EQ(param.inp.vdw_cutoff_width3, 0.05);
+    EXPECT_DOUBLE_EQ(param.inp.vdw_cutoff_width3, 0.0);
     EXPECT_DOUBLE_EQ(param.inp.vdw_cn_thr, 40.0);
     EXPECT_EQ(param.inp.vdw_cn_thr_unit, "Bohr");
     EXPECT_EQ(param.inp.vdw_C6_file, "default");
@@ -305,6 +308,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.exx_v_grad_r_threshold, 0);
     EXPECT_EQ(param.inp.exx_ccp_rmesh_times, "1.5");
     EXPECT_DOUBLE_EQ(param.inp.rpa_ccp_rmesh_times, 10.0);
+    EXPECT_EQ(param.inp.out_librpa_ver, 1);
     EXPECT_EQ(param.inp.exx_opt_orb_lmax, 0);
     EXPECT_DOUBLE_EQ(param.inp.exx_opt_orb_ecut, 0.0);
     EXPECT_DOUBLE_EQ(param.inp.exx_opt_orb_tolerence, 0.0);
@@ -358,11 +362,12 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.yukawa_potential);
     EXPECT_DOUBLE_EQ(param.inp.yukawa_lambda, -1.0);
     EXPECT_EQ(param.inp.onsite_radius, 0.0);
-    EXPECT_EQ(param.inp.occ_mat_ctrl, 0);
+    EXPECT_EQ(param.inp.init_occ_mat, 0);
+    EXPECT_EQ(param.inp.omc, 0);
     EXPECT_FALSE(param.inp.dft_plus_dmft);
     EXPECT_FALSE(param.inp.rpa);
     EXPECT_FALSE(param.inp.rpa_out_vel);
-    EXPECT_EQ(param.inp.rpa_outdir, "./OUT.librpa/");
+    EXPECT_EQ(param.inp.rpa_outdir, "OUT.librpa/");
     EXPECT_EQ(param.inp.imp_sol, 0);
     EXPECT_DOUBLE_EQ(param.inp.eb_k, 80.0);
     EXPECT_DOUBLE_EQ(param.inp.tau, 1.0798 * 1e-5);
@@ -389,7 +394,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.device, "cpu");
     EXPECT_NEAR(param.inp.force_thr_ev, 0.025711245953622324, 1e-8);
     EXPECT_DOUBLE_EQ(param.globalv.hubbard_u[0], 0);
-    EXPECT_EQ(param.inp.orbital_corr[0], -1);
+    EXPECT_EQ(param.inp.l_channel[0], -1);
     EXPECT_EQ(param.inp.mdp.lj_rule, 2);
     EXPECT_FALSE(param.inp.mdp.lj_eshift);
     EXPECT_NEAR(param.inp.mdp.lj_epsilon[0], 0.01032, 1e-7);
@@ -412,9 +417,11 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_restart, 0);
     EXPECT_EQ(param.inp.mdp.md_restartfreq, 5);
     EXPECT_FALSE(param.inp.mdp.md_out_force);
+    EXPECT_FALSE(param.inp.mdp.plumed);
+    EXPECT_EQ(param.inp.mdp.plumed_file, "plumed.dat");
     EXPECT_EQ(param.inp.mdp.md_seed, -1);
     EXPECT_EQ(param.inp.mdp.md_prec_level, 0);
-    EXPECT_DOUBLE_EQ(param.inp.ref_cell_factor, 1.2);
+    EXPECT_DOUBLE_EQ(param.inp.ref_cell_factor, 1.0);
     EXPECT_EQ(param.inp.mdp.md_tchain, 1);
     EXPECT_DOUBLE_EQ(param.inp.mdp.md_tfirst, -1);
     EXPECT_DOUBLE_EQ(param.inp.mdp.md_tfreq, 0);
@@ -448,12 +455,15 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.sc_scf_thr, 1e-3);
     EXPECT_EQ(param.inp.sc_drop_thr, 1e-3);
     EXPECT_EQ(param.inp.lr_nstates, 1);
-    EXPECT_EQ(param.inp.nocc, param.inp.nbands);
+    // nocc is resolved from ground-state spin populations after SCF (see esolver_lr_lcao_tddft.cpp),
+    // not at INPUT-parse time, so a run with no explicit `nocc` keeps its raw unresolved default here.
+    EXPECT_EQ(param.inp.nocc, -1);
     EXPECT_EQ(param.inp.nvirt, 1);
     EXPECT_EQ(param.inp.xc_kernel, "LDA");
     EXPECT_EQ(param.inp.lr_init_xc_kernel[0], "default");
     EXPECT_EQ(param.inp.lr_solver, "dav");
     EXPECT_DOUBLE_EQ(param.inp.lr_thr, 1e-2);
+    EXPECT_EQ(param.inp.lr_grad_solver, "cg");
     EXPECT_FALSE(param.inp.lr_unrestricted);
     EXPECT_FALSE(param.inp.out_wfc_lr);
     EXPECT_EQ(param.inp.abs_wavelen_range.size(), 2);
@@ -484,12 +494,92 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
 }
 
+TEST_F(InputParaTest, OccMatLegacyAlias)
+{
+    // init_occ_mat is the current name of the former omc parameter: omc
+    // alone must still drive the occupation-matrix initialization, and
+    // when both keywords are present the new name takes precedence.
+    const char* input_cases[3]
+        = {"INPUT_PARAMETERS\n"
+           "stru_file    ./support/STRU\n"
+           "omc          2\n",
+           "INPUT_PARAMETERS\n"
+           "stru_file    ./support/STRU\n"
+           "init_occ_mat 1\n",
+           "INPUT_PARAMETERS\n"
+           "stru_file    ./support/STRU\n"
+           "omc          2\n"
+           "init_occ_mat 1\n"};
+    const int expected[3] = {2, 1, 1};
+
+    for (int icase = 0; icase < 3; ++icase)
+    {
+        if (GlobalV::MY_RANK == 0)
+        {
+            std::ofstream aliasfile("./INPUT_occ_mat_alias");
+            aliasfile << input_cases[icase];
+            aliasfile.close();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
+        Parameter param;
+        readinput.read_parameters(param, "./INPUT_occ_mat_alias");
+        EXPECT_EQ(param.inp.init_occ_mat, expected[icase]);
+        if (icase == 0)
+        {
+            EXPECT_EQ(param.inp.omc, 2);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (GlobalV::MY_RANK == 0)
+        {
+            std::remove("./INPUT_occ_mat_alias");
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+}
+
+TEST_F(InputParaTest, GgaGradAcceptedRange)
+{
+    ModuleIO::ReadInput readinput(0);
+    bool found = false;
+    for (const std::pair<std::string, ModuleIO::Input_Item>& entry: readinput.get_input_lists())
+    {
+        if (entry.first != "gga_grad")
+        {
+            continue;
+        }
+        found = true;
+        ModuleIO::Input_Item item(entry.second);
+        for (int mode = 0; mode <= 2; ++mode)
+        {
+            Parameter param;
+            item.str_values = {std::to_string(mode)};
+            item.read_value(item, param);
+            EXPECT_EQ(param.inp.gga_grad, mode);
+            EXPECT_TRUE(item.domain.validate_resolved(item.label, {{item.label, item.domain.value(param)}}).empty());
+        }
+        for (const int mode: {-1, 3})
+        {
+            Parameter param;
+            item.str_values = {std::to_string(mode)};
+            item.read_value(item, param);
+            EXPECT_FALSE(item.domain.validate_resolved(item.label, {{item.label, item.domain.value(param)}}).empty());
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
 TEST_F(InputParaTest, TypedTDFieldLists)
 {
     ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
     readinput.check_ntype_flag = false;
     Parameter param;
     readinput.read_parameters(param, "./support/INPUT.td_field_mixed");
+
+    EXPECT_EQ(param.inp.relax_method, "cg_trad");
+    EXPECT_FALSE(param.inp.uses_simultaneous_relaxation());
 
     EXPECT_THAT(param.inp.td_ttype, testing::ElementsAre(4, 0, 1, 2, 3, 0, 4, 1, 2, 3));
     EXPECT_THAT(param.inp.td_vext_dire, testing::ElementsAre(1, 2, 3, 1, 2, 3, 1, 2, 3, 1));
@@ -526,6 +616,16 @@ TEST_F(InputParaTest, TDFieldStructureErrors)
         invalid_case.mutate(input);
         EXPECT_EXIT(ModuleIO::check_td_efield_parameters(input), testing::ExitedWithCode(1), "") << invalid_case.name;
     }
+}
+
+TEST_F(InputParaTest, ParaReadPlumed)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    readinput.read_parameters(param, "./support/INPUT.plumed");
+    EXPECT_TRUE(param.inp.mdp.plumed);
+    EXPECT_EQ(param.inp.mdp.plumed_file, "my_plumed.dat");
 }
 
 TEST_F(InputParaTest, DiagoProc)
@@ -612,4 +712,89 @@ int main(int argc, char** argv)
     int result = RUN_ALL_TESTS();
     MPI_Finalize();
     return result;
+}
+
+TEST_F(InputParaTest, ExternalLRKernelRejectsForces)
+{
+    ModuleIO::ReadInput readinput(0);
+    std::map<std::string, ModuleIO::Input_Item> lists;
+    for (const auto& entry: readinput.get_input_lists())
+    {
+        lists.emplace(entry.first, entry.second);
+    }
+    const ModuleIO::Input_Item item = lists.at("lr_init_xc_kernel");
+    const auto set = [&lists](Parameter& param, const std::string& key,
+                             const std::vector<std::string>& values) {
+        ModuleIO::Input_Item input = lists.at(key);
+        input.str_values = values;
+        input.read_value(input, param);
+    };
+    Parameter param;
+    set(param, "esolver_type", {"ks-lr"});
+    set(param, "lr_init_xc_kernel", {"file", "kernel.cube"});
+    set(param, "calculation", {"scf"});
+    set(param, "cal_force", {"0"});
+    item.check_value(item, param);
+    set(param, "cal_force", {"1"});
+    EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+    set(param, "cal_force", {"0"});
+    set(param, "calculation", {"relax"});
+    EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+    Parameter charge;
+    set(charge, "esolver_type", {"ks-lr"});
+    set(charge, "calculation", {"relax"});
+    set(charge, "lr_init_xc_kernel", {"from_charge_file", "rho.cube"});
+    EXPECT_EXIT(item.check_value(item, charge), testing::ExitedWithCode(1), "");
+}
+
+TEST_F(InputParaTest, RemovedElpaZSolverIsRejected)
+{
+    ModuleIO::ReadInput readinput(0);
+    std::map<std::string, ModuleIO::Input_Item> lists;
+    for (const auto& entry: readinput.get_input_lists())
+    {
+        lists.emplace(entry.first, entry.second);
+    }
+    ModuleIO::Input_Item item = lists.at("lr_grad_solver");
+    Parameter param;
+    for (const auto& solver : {"cg", "lapack"})
+    {
+        item.str_values = {solver};
+        item.read_value(item, param);
+        item.check_value(item, param);
+    }
+#ifdef __MPI
+    for (const auto& solver : {"scalapack", "scalapack_chol"})
+    {
+        item.str_values = {solver};
+        item.read_value(item, param);
+        item.check_value(item, param);
+    }
+#endif
+    item.str_values = {"elpa"};
+    item.read_value(item, param);
+    EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
+}
+
+
+TEST_F(InputParaTest, OpticalGaugeCanDisableSpectrum)
+{
+    ModuleIO::ReadInput readinput(0);
+    std::map<std::string, ModuleIO::Input_Item> lists;
+    for (const auto& entry : readinput.get_input_lists())
+    {
+        lists.emplace(entry.first, entry.second);
+    }
+    ModuleIO::Input_Item item = lists.at("abs_gauge");
+    Parameter param;
+    for (const auto& gauge : {"velocity", "length", "none"})
+    {
+        item.str_values = {gauge};
+        item.read_value(item, param);
+        item.check_value(item, param);
+        EXPECT_EQ(param.inp.abs_gauge, gauge);
+    }
+    item.str_values = {"invalid"};
+    item.read_value(item, param);
+    EXPECT_EXIT(item.check_value(item, param), testing::ExitedWithCode(1), "");
 }

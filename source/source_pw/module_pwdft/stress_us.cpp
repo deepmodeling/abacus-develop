@@ -1,3 +1,6 @@
+#include <cassert>
+#include <cstddef>
+
 #include "source_base/libm/libm.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
@@ -5,7 +8,7 @@
 #include "source_base/math_ylmreal.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_pw.h"
-#include "source_pw/module_pwdft/nonlocal_maths.hpp"
+#include "source_pw/module_pwdft/nonlocal_maths.h"
 #include "stress_pw.h"
 
 // computes the part of the crystal stress which is due
@@ -23,11 +26,15 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     const int nh_tot = nlpp.nhm * (nlpp.nhm + 1) / 2;
     const std::complex<double> fac = ModuleBase::NEG_IMAG_UNIT * ucell.tpiba;
     const std::complex<double> ci_tpi = ModuleBase::IMAG_UNIT * ModuleBase::TWO_PI;
-    double* becsum = static_cast<const elecstate::ElecStatePW<std::complex<FPTYPE>, Device>*>(this->pelec)->becsum;
+    ModuleBase::matrix veff = this->pelec->pot->get_eff_v();
+    const std::vector<double>* becsum_vector = elecstate::get_becsum<Device>(*this->pelec);
+    assert(becsum_vector != nullptr);
+    const std::size_t becsum_size = static_cast<std::size_t>(veff.nr) * static_cast<std::size_t>(ucell.nat) * nh_tot;
+    assert(becsum_vector->size() == becsum_size);
+    const double* becsum = becsum_vector->data();
 
     ModuleBase::matrix stressus(3, 3);
 
-    ModuleBase::matrix veff = this->pelec->pot->get_eff_v();
     ModuleBase::ComplexMatrix vg(PARAM.inp.nspin, npw);
     // fourier transform of the total effective potential
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -203,10 +210,10 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl& nlpp,
                                          const ModuleBase::matrix& dylmk0,
                                          std::complex<FPTYPE>* dqg)
 {
-	if (PARAM.inp.test_pp) 
-	{
-		ModuleBase::TITLE("Stress", "dqvan2");
-	}
+    if (PARAM.inp.test_pp) 
+    {
+        ModuleBase::TITLE("Stress", "dqvan2");
+    }
 
     // computes the indices which correspond to ih,jh
     const int nb = nlpp.indv(itype, ih);

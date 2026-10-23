@@ -671,7 +671,7 @@ class PBand(Band):
                         for mag in wei[elem][ang].keys():
                             bandplot = BandPlot(fig, ax, **kwargs)
                             m_index = int(mag)
-                            bandplot._label = f"{elem}-{get_angular_momentum_name(l_index, m_index)}"
+                            bandplot._label = f"{elem}-{get_angular_momentum_name(l_index, m_index, m_is_physical=False)}"
                             for ib in range(self.nbands):
                                 points = np.array(
                                     (self.k_index, energy[0:, ib])).T.reshape(-1, 1, 2)
@@ -836,7 +836,7 @@ class PBand(Band):
                         for mag in wei[elem][ang].keys():
                             m_index = int(mag)
                             whole_label_parsed.append(
-                                f"{elem}-{get_angular_momentum_name(l_index, m_index)}")
+                                f"{elem}-{get_angular_momentum_name(l_index, m_index, m_is_physical=False)}")
                             whole_data_parsed.append(wei[elem][ang][mag])
 
                     else:

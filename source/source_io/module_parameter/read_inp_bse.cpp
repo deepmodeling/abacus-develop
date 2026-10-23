@@ -80,23 +80,24 @@ void ReadInput::item_bse()
     }
     {
         Input_Item item("bse_q_approx_mode");
-        item.annotation = "q->kpair mapping mode: 0=exact, 1=coarse q grid, 2=mixed";
+        item.annotation = "q->kpair mapping mode: 0=exact, 1=coarse q grid, 2=mixed, 3=truncate";
         item.category = "Bethe-Salpeter Equation";
         item.type = "Integer";
         item.description
-            = "q-to-k-pair mapping mode: 0 uses exact mapping, 1 uses the coarse q-grid approximation, and 2 uses "
-              "exact for Γ-close q-points and coarse for other q-points.";
+            = "q-to-k-pair mapping mode for W: 0=exact, 1=coarse q grid, 2=mixed, 3=truncate pairs with |q|>threshold "
+              "(W elements dropped)";
         item.default_value = "0";
         read_sync_int(input.bse_q_approx_mode);
         this->add_item(item);
     }
     {
         Input_Item item("bse_q_approx_threshold");
-        item.annotation = "threshold radius (Bohr^-1) for exact q mapping in mode 2";
+        item.annotation = "threshold radius (in unit of 2*pi/lat0) for exact q mapping in mode 2; in mode 3 pairs with larger |q| are dropped entirely";
         item.category = "Bethe-Salpeter Equation";
         item.type = "Real";
         item.description
-            = "Threshold radius in Bohr^-1 for exact q-to-k-pair mapping when bse_q_approx_mode is 2.";
+            = "Threshold radius in unit of 2*pi/lat0 (same unit system as kvec_c) for exact q-to-k-pair mapping when "
+              "bse_q_approx_mode is 2; in mode 3 pairs with larger |q| are dropped entirely.";
         item.default_value = "0.1";
         read_sync_double(input.bse_q_approx_threshold);
         this->add_item(item);

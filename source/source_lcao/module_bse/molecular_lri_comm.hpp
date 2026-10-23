@@ -85,9 +85,13 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
         for (int kai = k1_start; kai < k1_end; ++kai)
         {
             if ( !this->is_local_k1[kai] ) continue;
+            auto it_k1 = m_lri.find(kai);
+            if (it_k1 == m_lri.end()) { continue; }
             const int row_base = kai * npair;
             for (const int kbj : this->LR_lri.k2_indices)
             {
+                auto it_k2 = it_k1->second.find(kbj);
+                if (it_k2 == it_k1->second.end()) { continue; }
                 const int col_base = kbj * npair;
                 for (int j = 0; j < npair; )
                 {
@@ -151,11 +155,15 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
         {
             if (!this->is_local_k1[kai] ) continue;
             const int row_base = kai * npair;
+            auto it_k1 = m_lri.find(kai);
+            if (it_k1 == m_lri.end()) { continue; }
             const double fac = fac_base * this->kv.wk[kai]; // k-point weight, normalized as sum = 1
             for (const int kbj : this->LR_lri.k2_indices)
             {
                 const int col_base = kbj * npair;
-                const RI::Tensor<T>& m_kai_kbj = m_lri.at(kai).at(kbj);
+                auto it_k2 = it_k1->second.find(kbj);
+                if (it_k2 == it_k1->second.end()) { continue; }
+                const RI::Tensor<T>& m_kai_kbj = it_k2->second;
                 for (int j = 0; j < npair; )
                 {
                     const int global_col = col_base + j;
@@ -265,7 +273,11 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
         for (const int kbj : this->k2_indices)
         {
             const int k2_step = kbj * npair;
-            const RI::Tensor<T>& m_kai_kbj = m_lri.at(kai).at(kbj);
+            auto it_k1 = m_lri.find(kai);
+            if (it_k1 == m_lri.end()) { continue; }
+            auto it_k2 = it_k1->second.find(kbj);
+            if (it_k2 == it_k1->second.end()) { continue; }
+            const RI::Tensor<T>& m_kai_kbj = it_k2->second;
             gather_matrix(m_2d, *m_kai_kbj.data, k1_step, k2_step, fac_base * this->kv.wk[kai]);
         }
     }

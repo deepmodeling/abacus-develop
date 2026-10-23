@@ -203,5 +203,60 @@ TYPED_TEST(LinalgTest, Reduce) {
     EXPECT_EQ(A_reduce, expected);
 }
 
+template <typename T>
+void test_integer_linalg_kernels()
+{
+    const int count = 4;
+    const T alpha = static_cast<T>(2);
+    const T beta = static_cast<T>(3);
+    const T x[count] = {static_cast<T>(1), static_cast<T>(2), static_cast<T>(3), static_cast<T>(4)};
+    const T y[count] = {static_cast<T>(4), static_cast<T>(3), static_cast<T>(2), static_cast<T>(1)};
+    T output[count] = {};
+
+    kernels::add<T, DEVICE_CPU>()(count, alpha, x, beta, y, output);
+    EXPECT_EQ(output[0], static_cast<T>(14));
+    EXPECT_EQ(output[3], static_cast<T>(11));
+
+    kernels::mul<T, DEVICE_CPU>()(count, alpha, x, output);
+    EXPECT_EQ(output[0], static_cast<T>(2));
+    EXPECT_EQ(output[3], static_cast<T>(8));
+
+    kernels::mul<T, DEVICE_CPU>()(count, alpha, x, y, output);
+    EXPECT_EQ(output[0], static_cast<T>(8));
+    EXPECT_EQ(output[3], static_cast<T>(8));
+
+    kernels::div<T, DEVICE_CPU>()(count, alpha, x, y, output);
+    EXPECT_EQ(output[0], static_cast<T>(0));
+    EXPECT_EQ(output[3], static_cast<T>(8));
+
+    kernels::fma<T, DEVICE_CPU>()(count, alpha, x, y, beta, x, output);
+    EXPECT_EQ(output[0], static_cast<T>(11));
+    EXPECT_EQ(output[3], static_cast<T>(20));
+
+    const std::vector<int> permutation = {0};
+    const std::vector<int64_t> shape = {count};
+    kernels::transpose<T, DEVICE_CPU>()(permutation, shape, shape, x, output);
+    EXPECT_EQ(output[2], x[2]);
+
+    const std::vector<int64_t> unit_stride = {1};
+    kernels::stride<T, DEVICE_CPU>()(unit_stride, shape, shape, x, output);
+    EXPECT_EQ(output[2], x[2]);
+
+    kernels::inflate<T, DEVICE_CPU>()(unit_stride, shape, shape, x, output);
+    EXPECT_EQ(output[2], x[2]);
+
+    const int64_t output_count = 2;
+    const int64_t inner_dimension = 2;
+    kernels::reduce<T, DEVICE_CPU>()(output_count, inner_dimension, x, output);
+    EXPECT_EQ(output[0], static_cast<T>(3));
+    EXPECT_EQ(output[1], static_cast<T>(7));
+}
+
+TEST(LinalgIntegerTest, CoversIntegerKernelInstantiations)
+{
+    test_integer_linalg_kernels<int>();
+    test_integer_linalg_kernels<int64_t>();
+}
+
 } // namespace kernels
 } // namespace container

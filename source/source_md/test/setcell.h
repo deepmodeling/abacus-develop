@@ -6,14 +6,16 @@
 
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 #include "source_cell/unitcell.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/input_parameter.h"
 
-#include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 Magnetism::Magnetism()
 {
@@ -96,13 +98,16 @@ class Setcell
         ucell.set_iat2itia();
     };
 
+    /// @brief fill an Input_para with the settings the md tests share.
+    ///        Only the passed-in object is touched: no source compiled by any
+    ///        MODULE_MD target reads esolver_type, search_radius or cal_stress
+    ///        from the global parameter singleton, and the output/readin
+    ///        directories are passed explicitly to setup(), write_restart()
+    ///        and restart().
     static void parameters(Input_para& input)
     {
-        PARAM.sys.global_out_dir = "./";
-        PARAM.sys.global_readin_dir = "./";
-        PARAM.input.search_radius = 8.5 * ModuleBase::ANGSTROM_AU;
-        PARAM.input.cal_stress = true;
-
+        input.search_radius = 8.5 * ModuleBase::ANGSTROM_AU;
+        input.esolver_type = "lj";
 
         input.mdp.dump_virial = true;
         input.mdp.dump_force = true;
@@ -114,7 +119,6 @@ class Setcell
         input.mdp.md_dt = 1;
         input.mdp.md_tfirst = input.mdp.md_tlast = 300;
 
-        PARAM.input.esolver_type = "lj";
         input.mdp.lj_rcut = {8.5};
         input.mdp.lj_epsilon = {0.01032};
         input.mdp.lj_sigma = {3.405};
@@ -136,15 +140,43 @@ class Setcell
         input.mdp.md_tolerance = 0;
     };
 
-    static MDCell setup_mdcell(UnitCell& ucell, const Parameter& param)
+    static MDCell setup_mdcell(UnitCell& ucell)
     {
-        double cutoff = 0.0;
-        for (std::size_t i = 0; i < param.inp.mdp.lj_rcut.size(); ++i)
+        std::vector<LocalAtom> owned_atoms;
+        std::vector<std::string> type_labels;
+        std::vector<double> type_masses;
+        std::vector<std::int64_t> type_atom_counts;
+        for (int it = 0; it < ucell.ntype; ++it)
         {
-            cutoff = std::max(cutoff, param.inp.mdp.lj_rcut[i] * ModuleBase::ANGSTROM_AU);
+            type_labels.push_back(ucell.atoms[it].label);
+            type_masses.push_back(ucell.atoms[it].mass);
+            type_atom_counts.push_back(ucell.atoms[it].na);
+            for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+            {
+                owned_atoms.push_back(LocalAtom(ucell.atoms[it].tau[ia],
+                                                 ucell.atoms[it].taud[ia],
+                                                 ucell.atoms[it].vel[ia],
+                                                 ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                                 ucell.atoms[it].mbl[ia],
+                                                 ucell.atoms[it].mass / ModuleBase::AU_to_MASS,
+                                                 it,
+                                                 ia,
+                                                 0));
+            }
         }
+
         MDCell mdcell;
-        mdcell.initialize_from_unitcell(ucell, cutoff, 0.0, ModuleBase::world_communication_domain());
+        mdcell.initialize_from_owned_atoms(ucell.latvec,
+                                           ucell.GT,
+                                           ucell.lat0,
+                                           ucell.omega,
+                                           ucell.nat,
+                                           owned_atoms,
+                                           type_labels,
+                                           type_masses,
+                                           type_atom_counts,
+                                           0.0,
+                                           ModuleBase::world_comm_domain());
         return mdcell;
     }
 

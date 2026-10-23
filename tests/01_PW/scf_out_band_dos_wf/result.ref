@@ -1,0 +1,16 @@
+etotref -205.6688343917421093
+etotperatomref -102.8344171959
+totalforceref 2.063434
+totalstressref 1184.321602
+totaldosref 12.000000
+CompareBand_pass 0
+Max_wfc_1 0.9183
+Max_wfc_2 0.5000
+Max_wfc_3 0.3992
+Max_wfc_4 0.4681
+Max_wfc_5 0.5574
+Max_wfc_6 0.4435
+pointgroupref C_1h
+spacegroupref C_2h
+nksibzref 2
+totaltimeref 0.37

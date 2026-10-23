@@ -1,165 +1,159 @@
 #include "output_info.h"
-#include "para_json.h"
-#include "source_io/module_parameter/parameter.h"
+
 #include "abacusjson.h"
+#include "source_base/matrix.h"
+#include "source_cell/unitcell.h"
 
+#ifdef __JSON
+#include <nlohmann/json.hpp>
+#include <stdexcept>
+#endif
 
-//Add json objects to init
+#include <cmath>
+#include <utility>
+
 namespace Json
 {
 
-#ifdef __RAPIDJSON
+#ifdef __JSON
 
-
-    // Adjust the position of the json object and set the initial value
-    void init_output_array_obj(){
-
-
-        
-        jsonValue scf_obj(JobjectType);
-
-        Json::jsonValue nullValue;
-        nullValue.SetNull();
-        scf_obj.JaddNormal("e_fermi",nullValue);
-        scf_obj.JaddNormal("energy",nullValue);
-        scf_obj.JaddNormal("scf_converge",nullValue);
-
-        jsonValue force(JobjectType);
-        jsonValue stress(JobjectType);
-        jsonValue coordinate(JarrayType);
-        jsonValue mag(JarrayType);
-        jsonValue cell(JarrayType);
-
-        scf_obj.JaddNormal("force",nullValue);
-        scf_obj.JaddNormal("stress",nullValue);
-        scf_obj.JaddNormal("coordinate",coordinate);
-        scf_obj.JaddNormal("mag",mag);
-        scf_obj.JaddNormal("cell",cell);
-
-
-        AbacusJson::add_json({"output"},scf_obj,true);
-    }
-
-    void add_output_cell_coo_stress_force(
-        const UnitCell *ucell,
-        const ModuleBase::matrix force, const double fac,
-        const ModuleBase::matrix stress, const double unit_transform
-    ) {
-        int iat = 0;
-        const double output_acc = 1.0e-8;
-
-        if (PARAM.inp.cal_force){
-            //add force
-            Json::jsonValue force_array(JarrayType);
-            for (int it = 0; it < ucell->ntype; it++)
-            {
-                for (int ia = 0; ia < ucell->atoms[it].na; ia++)
-                {
-                    Json::jsonValue force_subarray(JarrayType);
-                    double fx = std::abs(force(iat, 0)) > output_acc ? force(iat, 0) * fac : 0.0;
-                    double fy = std::abs(force(iat, 1)) > output_acc ? force(iat, 1) * fac : 0.0;
-                    double fz = std::abs(force(iat, 2)) > output_acc ? force(iat, 2) * fac : 0.0;
-
-                    force_subarray.JPushBack(fx);
-                    force_subarray.JPushBack(fy);
-                    force_subarray.JPushBack(fz);
-                    force_array.JPushBack(force_subarray);
-                    iat++;
-                }
-            }
-            Json::AbacusJson::add_json({"output",-1,"force"}, force_array,false);
-
-            // AbacusJson::add_Json(force_array,false,"output",-1,"force");
-        }
-
-        if (PARAM.inp.cal_stress){
-        //add stress
-            Json::jsonValue stress_array(JarrayType);
-            for (int i = 0; i < 3; i++)
-            {
-                Json::jsonValue stress_subarray(JarrayType);
-                double sx = stress(i, 0) * unit_transform;
-                double sy = stress(i, 1) * unit_transform;
-                double sz = stress(i, 2) * unit_transform;
-                stress_subarray.JPushBack(sx);
-                stress_subarray.JPushBack(sy);
-                stress_subarray.JPushBack(sz);
-                stress_array.JPushBack(stress_subarray);
-            }            
-            Json::AbacusJson::add_json({"output",-1,"stress"}, stress_array,false);
-
-            // AbacusJson::add_Json(stress_array,false,"output",-1,"stress");
-        }
-        //add coordinate
-        int ntype = ucell->ntype;
-        const double lat0_angstrom = ucell->lat0_angstrom;
-        for(int i=0;i<ntype;i++){
-            ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau.data();
-            int na = ucell->atoms[i].na;
-            for(int j=0;j<na;j++){
-                Json::jsonValue coordinateArray(JarrayType);
-                coordinateArray.JPushBack(tau[j][0] * lat0_angstrom);
-                coordinateArray.JPushBack(tau[j][1] * lat0_angstrom);
-                coordinateArray.JPushBack(tau[j][2] * lat0_angstrom);
-                Json::AbacusJson::add_json({"output",-1,"coordinate"}, coordinateArray,true);
-                Json::AbacusJson::add_json( {"output",-1,"mag"},ucell->atoms[i].mag[j],true);
-            }
-        }        
-
-        //add cell 
-        {
-            Json::jsonValue cellArray1(JarrayType);
-            Json::jsonValue cellArray2(JarrayType);
-            Json::jsonValue cellArray3(JarrayType);
-            cellArray1.JPushBack(ucell->latvec.e11 * lat0_angstrom);
-            cellArray1.JPushBack(ucell->latvec.e12 * lat0_angstrom);
-            cellArray1.JPushBack(ucell->latvec.e13 * lat0_angstrom);
-            cellArray2.JPushBack(ucell->latvec.e21 * lat0_angstrom);
-            cellArray2.JPushBack(ucell->latvec.e22 * lat0_angstrom);
-            cellArray2.JPushBack(ucell->latvec.e23 * lat0_angstrom);
-            cellArray3.JPushBack(ucell->latvec.e31 * lat0_angstrom);
-            cellArray3.JPushBack(ucell->latvec.e32 * lat0_angstrom);
-            cellArray3.JPushBack(ucell->latvec.e33 * lat0_angstrom);
-            Json::AbacusJson::add_json({"output",-1,"cell"}, cellArray1,true);
-            Json::AbacusJson::add_json({"output",-1,"cell"}, cellArray2,true);
-            Json::AbacusJson::add_json({"output",-1,"cell"}, cellArray3,true);
-
-            // Json::AbacusJson::add_Json(cellArray1,true,"output",-1,"cell");
-            // Json::AbacusJson::add_Json(cellArray2,true,"output",-1,"cell");
-            // Json::AbacusJson::add_Json(cellArray2,true,"output",-1,"cell");
-        }
-
-    }
-
-    void add_output_efermi_converge(const double efermi, const bool scf_converge ){
-        Json::AbacusJson::add_json({"output",-1,"e_fermi"}, efermi,false);
-        Json::AbacusJson::add_json({"output",-1,"scf_converge"}, scf_converge,false);
-    }
-
-    void add_output_energy(const double energy)
+namespace
+{
+jsonValue& current_output()
+{
+    jsonValue& root = AbacusJson::document();
+    const jsonValue::iterator output = root.find("output");
+    if (output == root.end() || !output->is_array())
     {
-        Json::AbacusJson::add_json({"output",-1,"energy"}, energy,false);
+        throw std::invalid_argument("JSON output records must be initialized as an array");
+    }
+    if (output->empty())
+    {
+        throw std::out_of_range("JSON output record is not initialized");
+    }
+    jsonValue& record = output->back();
+    if (!record.is_object())
+    {
+        throw std::invalid_argument("JSON output record must be an object");
+    }
+    return record;
+}
+} // namespace
+
+void init_output_array_obj()
+{
+    jsonValue& output = *AbacusJson::document().emplace("output", jsonValue::array()).first;
+    if (!output.is_array())
+    {
+        throw std::invalid_argument("JSON output must be an array");
+    }
+    output.push_back({{"e_fermi", nullptr},
+                      {"energy", nullptr},
+                      {"scf_converge", nullptr},
+                      {"force", nullptr},
+                      {"stress", nullptr},
+                      {"coordinate", jsonValue::array()},
+                      {"mag", jsonValue::array()},
+                      {"cell", jsonValue::array()}});
+}
+
+void add_output_cell_coo_stress_force(const UnitCell& ucell,
+                                      const ModuleBase::matrix& force,
+                                      const double fac,
+                                      const ModuleBase::matrix& stress,
+                                      const double unit_transform,
+                                      const bool cal_force,
+                                      const bool cal_stress)
+{
+    jsonValue& output = current_output();
+    const double output_acc = 1.0e-8;
+    if (cal_force)
+    {
+        jsonValue force_array = jsonValue::array();
+        int iat = 0;
+        for (int it = 0; it < ucell.ntype; ++it)
+        {
+            for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+            {
+                const double fx = std::abs(force(iat, 0)) > output_acc ? force(iat, 0) * fac : 0.0;
+                const double fy = std::abs(force(iat, 1)) > output_acc ? force(iat, 1) * fac : 0.0;
+                const double fz = std::abs(force(iat, 2)) > output_acc ? force(iat, 2) * fac : 0.0;
+                force_array.push_back(jsonValue::array({fx, fy, fz}));
+                ++iat;
+            }
+        }
+        output["force"] = std::move(force_array);
     }
 
-    void add_output_scf_mag(
-        double total_mag, double absolute_mag,
-        double energy, double ediff, double drho,double time
-    ){
-        Json::AbacusJson::add_json({"output",-1,"total_mag"}, total_mag,false);
-        Json::AbacusJson::add_json({"output",-1,"absolute_mag"}, absolute_mag,false);
-
-        // Json::AbacusJson::add_Json(total_mag,false,"output",-1,"total_mag");
-        // Json::AbacusJson::add_Json(absolute_mag,false,"output",-1,"absolute_mag");
-
-        Json::jsonValue scf_obj(JobjectType);
-        scf_obj.JaddNormal("energy",energy);
-        scf_obj.JaddNormal("ediff",ediff);    
-        scf_obj.JaddNormal("drho",drho);    
-        scf_obj.JaddNormal("time",time);          
-        Json::AbacusJson::add_json({"output",-1,"scf"}, scf_obj,true);
-
-        // Json::AbacusJson::add_Json(scf_obj,true,"output",-1,"scf");
+    if (cal_stress)
+    {
+        jsonValue stress_array = jsonValue::array();
+        for (int i = 0; i < 3; ++i)
+        {
+            stress_array.push_back(jsonValue::array({stress(i, 0) * unit_transform,
+                                                     stress(i, 1) * unit_transform,
+                                                     stress(i, 2) * unit_transform}));
+        }
+        output["stress"] = std::move(stress_array);
     }
 
-#endif
+    const double lat0_angstrom = ucell.lat0_angstrom;
+    jsonValue coordinates = jsonValue::array();
+    jsonValue mag = jsonValue::array();
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            const ModuleBase::Vector3<double>& tau = ucell.atoms[it].tau[ia];
+            coordinates.push_back(jsonValue::array({tau[0] * lat0_angstrom,
+                                                    tau[1] * lat0_angstrom,
+                                                    tau[2] * lat0_angstrom}));
+            mag.push_back(ucell.atoms[it].mag[ia]);
+        }
+    }
+    output["coordinate"] = std::move(coordinates);
+    output["mag"] = std::move(mag);
+    output["cell"] = {{ucell.latvec.e11 * lat0_angstrom,
+                       ucell.latvec.e12 * lat0_angstrom,
+                       ucell.latvec.e13 * lat0_angstrom},
+                      {ucell.latvec.e21 * lat0_angstrom,
+                       ucell.latvec.e22 * lat0_angstrom,
+                       ucell.latvec.e23 * lat0_angstrom},
+                      {ucell.latvec.e31 * lat0_angstrom,
+                       ucell.latvec.e32 * lat0_angstrom,
+                       ucell.latvec.e33 * lat0_angstrom}};
+}
+
+void add_output_efermi_converge(const double efermi, const bool scf_converge)
+{
+    jsonValue& output = current_output();
+    output["e_fermi"] = efermi;
+    output["scf_converge"] = scf_converge;
+}
+
+void add_output_energy(const double energy)
+{
+    current_output()["energy"] = energy;
+}
+
+void add_output_scf_mag(const double total_mag,
+                        const double absolute_mag,
+                        const double energy,
+                        const double ediff,
+                        const double drho,
+                        const double time)
+{
+    jsonValue& output = current_output();
+    output["total_mag"] = total_mag;
+    output["absolute_mag"] = absolute_mag;
+    // Acquire the history only after inserting other fields: ordered_json may reallocate them.
+    jsonValue& scf = *output.emplace("scf", jsonValue::array()).first;
+    if (!scf.is_array())
+    {
+        throw std::invalid_argument("JSON SCF history must be an array");
+    }
+    scf.push_back({{"energy", energy}, {"ediff", ediff}, {"drho", drho}, {"time", time}});
+}
+
+#endif // __JSON
 } // namespace Json

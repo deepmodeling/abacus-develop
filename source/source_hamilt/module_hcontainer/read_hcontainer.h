@@ -18,7 +18,8 @@ class Read_HContainer
         hamilt::HContainer<T>* hcontainer, 
         const std::string& filename,
         const int nlocal,
-        const UnitCell* ucell
+        const UnitCell* ucell,
+        int rank
     );
     // read the matrices of all R vectors to the read stream
     void read();
@@ -40,6 +41,7 @@ class Read_HContainer
     std::string _filename;
     int _nlocal;
     const UnitCell* _ucell = nullptr;
+    int _rank = 0;
 };
 
 } // namespace hamilt

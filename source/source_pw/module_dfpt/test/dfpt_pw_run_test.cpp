@@ -11,7 +11,7 @@
 #include "dfpt_stru_fixture.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_global.h"
-#include "source_estate/module_charge/charge_mixing.h"
+#include "source_estate/module_charge/chg_mix.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
@@ -46,7 +46,9 @@ class DFPT_PWRunTest : public DFPTStruTestFixture
         ofs_running.open("tmp_dfpt_run");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
-        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+        symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                       ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                       ofs_running, 1e-6, 1, "scf", cal_symm_repr);
         ucell.symm = symm;
     }
 

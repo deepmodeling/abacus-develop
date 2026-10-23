@@ -3,7 +3,6 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_cell/update_cell.h"
 
 // Lattice-specific parameters (shared variables are in Relax_Data)
@@ -12,7 +11,7 @@ int Lattice_Change_Basic::stress_step = 0;
 double Lattice_Change_Basic::lattice_change_ini = 0.01; // default is 0.01
 std::string Lattice_Change_Basic::fixed_axes = "None";
 
-void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, double *grad, ModuleBase::matrix &stress)
+void Lattice_Change_Basic::setup_gradient(const UnitCell& ucell, double* lat, double* grad, ModuleBase::matrix& stress)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "setup_gradient");
 
@@ -98,7 +97,7 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
     return;
 }
 
-void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double *lat)
+void Lattice_Change_Basic::change_lattice(UnitCell& ucell, double* move, double* lat, const bool fixed_ibrav)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "change_lattice");
 
@@ -108,22 +107,23 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
     {
         ModuleBase::matrix move_mat_t(3, 3);
-        for (int i = 0;i < 3;++i) 
+        for (int i = 0; i < 3; ++i)
         {
-            for (int j = 0;j < 3;++j) 
+            for (int j = 0; j < 3; ++j)
             {
-                move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
+                move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0; // transpose
             }
         }
-        ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix());//symmetrize (latvec^{-1} * move_mat)^T
+        ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix()); // symmetrize (latvec^{-1} *
+                                                                                 // move_mat)^T
         ucell.symm.symmetrize_mat3(symm_move_mat_t, ucell.lat);
-        move_mat_t = symm_move_mat_t * ucell.latvec.Transpose().to_matrix();//G^{-1}=latvec^T
+        move_mat_t = symm_move_mat_t * ucell.latvec.Transpose().to_matrix(); // G^{-1}=latvec^T
 
-        for (int i = 0;i < 3;++i) 
+        for (int i = 0; i < 3; ++i)
         {
-            for (int j = 0;j < 3;++j) 
+            for (int j = 0; j < 3; ++j)
             {
-                move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0;//transpose back
+                move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0; // transpose back
             }
         }
     }
@@ -151,7 +151,7 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     // Order matters: fixed_ibrav first, then volume rescaling
 
     // 1. Enforce Bravais lattice symmetry if fixed_ibrav is set
-    if (PARAM.inp.fixed_ibrav)
+    if (fixed_ibrav)
     {
         unitcell::remake_cell(ucell.lat);
     }
@@ -231,7 +231,11 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     return;
 }
 
-bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs)
+bool Lattice_Change_Basic::check_converged(const UnitCell& ucell,
+                                           ModuleBase::matrix& stress,
+                                           double* grad,
+                                           std::ofstream& ofs,
+                                           const double& stress_thr)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "check_converged");
 
@@ -242,7 +246,7 @@ bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     {
         for (int i = 0; i < 3; i++)
         {
-            if (stress_ii_max < std::abs(stress(i, i))) 
+            if (stress_ii_max < std::abs(stress(i, i)))
             {
                 stress_ii_max = std::abs(stress(i, i));
             }
@@ -278,36 +282,26 @@ bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     }
     else if (ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] == 1)
     {
-        if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
+        if (Lattice_Change_Basic::largest_grad < stress_thr && stress_ii_max < stress_thr)
         {
-            ofs << "\n Geometry relaxation is converged!" << std::endl;
-            ofs << "\n Largest stress is " << largest_grad  
-             << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
             ++Lattice_Change_Basic::update_iter;
             return true;
         }
         else
         {
-            ofs << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
-                                 << " kbar" << std::endl;
             return false;
         }
     }
     else
     {
         // the code is almost the same as previous codes
-        if (Lattice_Change_Basic::largest_grad < 10 * PARAM.inp.stress_thr)
+        if (Lattice_Change_Basic::largest_grad < 10 * stress_thr)
         {
-            ofs << "\n Geometry relaxation is converged!" << std::endl;
-            ofs << "\n Largest stress is " << largest_grad  
-             << " kbar while threshold is " << PARAM.inp.stress_thr << " kbar" << std::endl;
             ++Lattice_Change_Basic::update_iter;
             return true;
         }
         else
         {
-            ofs << "\n Geometry relaxation is not converged because threshold is " << PARAM.inp.stress_thr
-                                 << " kbar" << std::endl;
             return false;
         }
     }
@@ -343,7 +337,7 @@ void Lattice_Change_Basic::terminate(const bool converged, std::ofstream& ofs)
     return;
 }
 
-void Lattice_Change_Basic::setup_etot(const double &energy_in, std::vector<double>& etot_info)
+void Lattice_Change_Basic::setup_etot(const double& energy_in, std::vector<double>& etot_info)
 {
     // etot_info[0] = etot (current total energy)
     // etot_info[1] = etot_p (previous total energy)

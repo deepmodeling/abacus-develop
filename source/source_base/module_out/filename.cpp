@@ -6,17 +6,17 @@ namespace ModuleIO
 {
 
 std::string filename_output(
-			const std::string &directory,
-			const std::string &property,
-			const std::string &basis,
-			const int ik_local, // the ik index within each pool
-			const std::vector<int> &ik2iktot,
-			const int nspin,
-			const int nkstot,
-			const int out_type,
-			const bool out_app_flag,
-			const bool gamma_only,
-			const int istep,
+            const std::string &directory,
+            const std::string &property,
+            const std::string &basis,
+            const int ik_local, // the ik index within each pool
+            const std::vector<int> &ik2iktot,
+            const int nspin,
+            const int nkstot,
+            const int out_type,
+            const bool out_app_flag,
+            const bool gamma_only,
+            const int istep,
             const int iter)
 {
     // output filename = "{global_out_dir}/property{s}{spin index}
@@ -24,57 +24,57 @@ std::string filename_output(
     // + {".txt"/".dat"}"
 
     std::set<std::string> valid_properties = { "wf", "chg", "hk", "sk", "tk", "vxc", "vxck", "vlk", "vnlk", "vhk", "vexxk" };
-	if (valid_properties.find(property) == valid_properties.end()) 
-	{
-		ModuleBase::WARNING_QUIT("ModuleIO::filename_output", "unknown property in filename function");
-	}
+    if (valid_properties.find(property) == valid_properties.end()) 
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::filename_output", "unknown property in filename function");
+    }
 
-	std::set<std::string> valid_basis = {"pw", "nao"};
-	if (valid_basis.find(basis) == valid_basis.end()) 
-	{
-		ModuleBase::WARNING_QUIT("ModuleIO::filename_output", "unknown basis in filename function");
-	}
+    std::set<std::string> valid_basis = {"pw", "nao"};
+    if (valid_basis.find(basis) == valid_basis.end()) 
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::filename_output", "unknown basis in filename function");
+    }
 
     assert(ik_local>=0);
     // mohan update 2025.05.07, if KPAR>1, "<" works
-	assert(ik2iktot.size() <= nkstot);
+    assert(ik2iktot.size() <= nkstot);
     assert(nspin>0);
 
-	// spin index
-	int is0 = -1;
-	// ik0 is the k-point index, starting from 0
-	int ik0 = ik2iktot[ik_local];
+    // spin index
+    int is0 = -1;
+    // ik0 is the k-point index, starting from 0
+    int ik0 = ik2iktot[ik_local];
 
-	// spin part
-	std::string spin_block;
+    // spin part
+    std::string spin_block;
 
     // mohan add 2026-01-04, overlap matrix is the same for any spin
-	if(property != "sk")
-	{
-		if(nspin == 1)
-		{
-			// do nothing
-		}
-		else if(nspin == 2)
-		{
-			const int half_k = nkstot/2;
-			if(ik0 >= half_k)
-			{
-				is0 = 2;
-				ik0 -= half_k;
-			}
-			else
-			{
-				is0 = 1;
-			}
-			spin_block = "s" + std::to_string(is0);
-		}
-		else if(nspin==4)
-		{
-			is0 = 4;
-			spin_block = "s" + std::to_string(is0);
-		}
-	}
+    if(property != "sk")
+    {
+        if(nspin == 1)
+        {
+            // do nothing
+        }
+        else if(nspin == 2)
+        {
+            const int half_k = nkstot/2;
+            if(ik0 >= half_k)
+            {
+                is0 = 2;
+                ik0 -= half_k;
+            }
+            else
+            {
+                is0 = 1;
+            }
+            spin_block = "s" + std::to_string(is0);
+        }
+        else if(nspin==4)
+        {
+            is0 = 4;
+            spin_block = "s" + std::to_string(is0);
+        }
+    }
 
 
     // k-point part
@@ -86,14 +86,14 @@ std::string filename_output(
     else
     {
         // mohan add 20250921
-		if(property=="hk" || property=="sk" || property=="tk")
-		{
-			kpoint_block = std::to_string(ik0+1);
-		}
-		else
-		{
-			kpoint_block = "k" + std::to_string(ik0+1);
-		}
+        if(property=="hk" || property=="sk" || property=="tk")
+        {
+            kpoint_block = std::to_string(ik0+1);
+        }
+        else
+        {
+            kpoint_block = "k" + std::to_string(ik0+1);
+        }
     }
 
     std::string istep_block

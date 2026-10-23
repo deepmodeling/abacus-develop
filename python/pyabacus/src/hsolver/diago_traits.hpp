@@ -10,21 +10,21 @@
 #ifndef PYABACUS_HSOLVER_DIAGO_TRAITS_HPP
 #define PYABACUS_HSOLVER_DIAGO_TRAITS_HPP
 
-#include <complex>
-#include <memory>
-#include <vector>
-#include <functional>
+#include "source_base/module_device/memory_op.h"
+#include "source_hsolver/diago_cg.h"
+#include "source_hsolver/diago_dav_subspace.h"
+#include "source_hsolver/diago_david.h"
+#include "source_hsolver/hs_operator.h"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include <complex>
+#include <functional>
+#include <memory>
 #include <pybind11/complex.h>
 #include <pybind11/functional.h>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
-#include "source_hsolver/diago_david.h"
-#include "source_hsolver/diago_dav_subspace.h"
-#include "source_hsolver/diago_cg.h"
-#include "source_base/module_device/memory_op.h"
+#include <vector>
 
 #ifdef __ENABLE_ATEN
 #include <ATen/core/tensor.h>
@@ -34,8 +34,10 @@
 
 namespace py = pybind11;
 
-namespace pyabacus {
-namespace hsolver {
+namespace pyabacus
+{
+namespace hsolver
+{
 
 // ============================================================================
 // Storage Policies
@@ -49,7 +51,7 @@ namespace hsolver {
 template <typename T>
 class RawPointerStorage
 {
-public:
+  public:
     using value_type = T;
 
     RawPointerStorage() = default;
@@ -69,10 +71,7 @@ public:
 
     // Move semantics
     RawPointerStorage(RawPointerStorage&& other) noexcept
-        : psi_(other.psi_)
-        , eigenvalue_(other.eigenvalue_)
-        , nbasis_(other.nbasis_)
-        , nband_(other.nband_)
+        : psi_(other.psi_), eigenvalue_(other.eigenvalue_), nbasis_(other.nbasis_), nband_(other.nband_)
     {
         other.psi_ = nullptr;
         other.eigenvalue_ = nullptr;
@@ -142,12 +141,24 @@ public:
     }
 
     // Accessors for solver
-    T* psi_ptr() { return psi_; }
-    double* eigenvalue_ptr() { return eigenvalue_; }
-    int nbasis() const { return nbasis_; }
-    int nband() const { return nband_; }
+    T* psi_ptr()
+    {
+        return psi_;
+    }
+    double* eigenvalue_ptr()
+    {
+        return eigenvalue_;
+    }
+    int nbasis() const
+    {
+        return nbasis_;
+    }
+    int nband() const
+    {
+        return nband_;
+    }
 
-private:
+  private:
     void cleanup()
     {
         if (psi_ != nullptr)
@@ -177,7 +188,7 @@ private:
 template <typename T>
 class TensorStorage
 {
-public:
+  public:
     using value_type = T;
 
     TensorStorage() = default;
@@ -196,11 +207,7 @@ public:
 
     // Move semantics
     TensorStorage(TensorStorage&& other) noexcept
-        : psi_(other.psi_)
-        , eig_(other.eig_)
-        , prec_(other.prec_)
-        , dim_(other.dim_)
-        , num_eigs_(other.num_eigs_)
+        : psi_(other.psi_), eig_(other.eig_), prec_(other.prec_), dim_(other.dim_), num_eigs_(other.num_eigs_)
     {
         other.psi_ = nullptr;
         other.eig_ = nullptr;
@@ -233,12 +240,10 @@ public:
         py::buffer_info buf = psi_in.request();
         T* ptr = static_cast<T*>(buf.ptr);
 
-        psi_ = new ct::TensorMap(
-            ptr,
-            ct::DataType::DT_COMPLEX_DOUBLE,
-            ct::DeviceType::CpuDevice,
-            ct::TensorShape({num_eigs_, dim_})
-        );
+        psi_ = new ct::TensorMap(ptr,
+                                 ct::DataType::DT_COMPLEX_DOUBLE,
+                                 ct::DeviceType::CpuDevice,
+                                 ct::TensorShape({num_eigs_, dim_}));
     }
 
     py::array_t<T> get_psi() const
@@ -280,22 +285,32 @@ public:
         py::buffer_info buf = prec_in.request();
         double* ptr = static_cast<double*>(buf.ptr);
 
-        prec_ = new ct::TensorMap(
-            ptr,
-            ct::DataType::DT_DOUBLE,
-            ct::DeviceType::CpuDevice,
-            ct::TensorShape({dim_})
-        );
+        prec_ = new ct::TensorMap(ptr, ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({dim_}));
     }
 
     // Accessors for solver
-    ct::Tensor* psi_tensor() { return psi_; }
-    ct::Tensor* eig_tensor() { return eig_; }
-    ct::Tensor* prec_tensor() { return prec_; }
-    int dim() const { return dim_; }
-    int num_eigs() const { return num_eigs_; }
+    ct::Tensor* psi_tensor()
+    {
+        return psi_;
+    }
+    ct::Tensor* eig_tensor()
+    {
+        return eig_;
+    }
+    ct::Tensor* prec_tensor()
+    {
+        return prec_;
+    }
+    int dim() const
+    {
+        return dim_;
+    }
+    int num_eigs() const
+    {
+        return num_eigs_;
+    }
 
-private:
+  private:
     void cleanup()
     {
         if (psi_ != nullptr)
@@ -337,12 +352,11 @@ struct DiagoDavidTraits
     using StoragePolicy = RawPointerStorage<T>;
 
     static constexpr const char* name = "diago_david";
-    static constexpr bool uses_f_style = true;  // Column-major arrays
+    static constexpr bool uses_f_style = true; // Column-major arrays
     static constexpr bool has_preconditioner = true;
 
     // Memory synchronization operation
-    using syncmem_op = base_device::memory::synchronize_memory_op<
-        T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+    using syncmem_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 };
 
 /**
@@ -355,12 +369,11 @@ struct DiagoDavSubspaceTraits
     using StoragePolicy = RawPointerStorage<T>;
 
     static constexpr const char* name = "diago_dav_subspace";
-    static constexpr bool uses_f_style = true;  // Column-major arrays
+    static constexpr bool uses_f_style = true; // Column-major arrays
     static constexpr bool has_preconditioner = true;
 
     // Memory synchronization operation
-    using syncmem_op = base_device::memory::synchronize_memory_op<
-        T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+    using syncmem_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 };
 
 #ifdef __ENABLE_ATEN
@@ -374,70 +387,68 @@ struct DiagoCGTraits
     using StoragePolicy = TensorStorage<T>;
 
     static constexpr const char* name = "diago_cg";
-    static constexpr bool uses_f_style = false;  // Row-major arrays
+    static constexpr bool uses_f_style = false; // Row-major arrays
     static constexpr bool has_preconditioner = true;
 
     // Memory synchronization operation for tensor interface
-    using syncmem_op = base_device::memory::synchronize_memory_op<
-        T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+    using syncmem_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 };
 #endif // __ENABLE_ATEN
 
 // ============================================================================
-// Helper Functions for Creating HPsi/SPsi Lambdas
+// HSOperator view of a Python callable, plus tensor helpers for the ATen CG path
 // ============================================================================
 
 /**
- * @brief Create hpsi_func lambda for raw pointer interface (F-style)
+ * @brief The Python matrix-vector callable seen through hsolver::HSOperator.
  *
- * Wraps a Python callable to work with ABACUS raw pointer interface.
- * Handles array layout conversion between Python (row-major) and
- * ABACUS (column-major for Davidson methods).
+ * H is applied by the Python callable mm_op on a column-major (ld_psi x nvec)
+ * array; S is the identity. This is all the Davidson-type solvers need.
  */
 template <typename T>
-auto make_hpsi_func_fstyle(
-    std::function<py::array_t<T>(py::array_t<T>)> mm_op)
+class PyHSOperator : public ::hsolver::HSOperator<T, base_device::DEVICE_CPU>
 {
-    return [mm_op](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
+  public:
+    explicit PyHSOperator(std::function<py::array_t<T>(py::array_t<T>)> mm_op) : mm_op_(std::move(mm_op))
+    {
+    }
+
+    void update_k(const int ik) override
+    {
+    }
+
+    void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
+    {
         // Create F-style numpy array (column-major)
-        py::array_t<T, py::array::f_style> psi({ld_psi, nvec});
+        py::array_t<T, py::array::f_style> psi({ld, nvec});
         py::buffer_info buf = psi.request();
         T* ptr = static_cast<T*>(buf.ptr);
-        std::copy(psi_in, psi_in + nvec * ld_psi, ptr);
+        std::copy(x, x + static_cast<size_t>(nvec) * ld, ptr);
 
         // Call Python function
-        py::array_t<T, py::array::f_style> hpsi = mm_op(psi);
+        py::array_t<T, py::array::f_style> hpsi_arr = mm_op_(psi);
 
         // Copy result back
-        py::buffer_info hpsi_buf = hpsi.request();
-        T* hpsi_ptr = static_cast<T*>(hpsi_buf.ptr);
-        std::copy(hpsi_ptr, hpsi_ptr + nvec * ld_psi, hpsi_out);
-    };
-}
+        py::buffer_info hpsi_buf = hpsi_arr.request();
+        const T* hpsi_ptr = static_cast<const T*>(hpsi_buf.ptr);
+        std::copy(hpsi_ptr, hpsi_ptr + static_cast<size_t>(nvec) * ld, hx);
+    }
 
-/**
- * @brief Create spsi_func lambda for raw pointer interface (identity)
- *
- * For non-orthogonal basis, S*psi = psi (identity operation).
- */
-template <typename Traits>
-auto make_spsi_func_identity()
-{
-    using T = typename Traits::T;
-    using syncmem_op = typename Traits::syncmem_op;
+    void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+    {
+        std::copy(x, x + static_cast<size_t>(nvec) * ld, sx);
+    }
 
-    return [](const T* psi_in, T* spsi_out, const int nrow, const int nbands) {
-        syncmem_op()(spsi_out, psi_in, static_cast<size_t>(nbands * nrow));
-    };
-}
+  private:
+    std::function<py::array_t<T>(py::array_t<T>)> mm_op_;
+};
 
 #ifdef __ENABLE_ATEN
 /**
  * @brief Create hpsi_func lambda for tensor interface
  */
 template <typename T>
-auto make_hpsi_func_tensor(
-    std::function<py::array_t<T>(py::array_t<T>)> mm_op)
+auto make_hpsi_func_tensor(std::function<py::array_t<T>(py::array_t<T>)> mm_op)
 {
     return [mm_op](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
         const auto ndim = psi_in.shape().ndim();
@@ -475,11 +486,7 @@ auto make_spsi_func_tensor_identity()
         REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
         const int nrow = ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1);
         const int nbands = ndim == 1 ? 1 : psi_in.shape().dim_size(0);
-        syncmem_op()(
-            spsi_out.data<T>(),
-            psi_in.data<T>(),
-            static_cast<size_t>(nrow * nbands)
-        );
+        syncmem_op()(spsi_out.data<T>(), psi_in.data<T>(), static_cast<size_t>(nrow * nbands));
     };
 }
 #endif // __ENABLE_ATEN

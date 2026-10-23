@@ -61,7 +61,7 @@ void set_rR_from_hR(const UnitCell& ucell,
                     const Grid_Driver& GridD,
                     const LCAO_Orbitals& orb,
                     const Parallel_Orbitals* pv,
-                    cal_r_overlap_R& r_calculator,
+                    Position_op& r_calculator,
                     const hamilt::HContainer<std::complex<double>>* hR,
                     ModuleBase::Vector3<hamilt::HContainer<double>*>& rR);
 template <typename TR>
@@ -72,7 +72,8 @@ void sum_HR(
     const hamilt::HContainer<TR>* hR,
     hamilt::HContainer<std::complex<double>>* full_hR,
     const Exx_NAO<std::complex<double>>& exx_nao,
-    const Exx_Info& exx_info
+    const Exx_Info& exx_info,
+    const TD_info& td_info
 );
 
 template <typename Tadd, typename Tfull>

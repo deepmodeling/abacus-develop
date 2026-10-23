@@ -1,12 +1,13 @@
 #include "output_log.h"
 
+#include "source_estate/fp_energy.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/constants.h"
 #include "source_base/formatter.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/parallel_comm.h"
-#include "source_cell/md_cell.h"
+#include "source_cell/mdcell.h"
 
 #include <cmath>
 #include <iomanip>
@@ -54,13 +55,23 @@ void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_run
     }
 }
 
-void output_efermi(const bool &convergence, double& efermi, std::ofstream& ofs_running)
+void output_efermi(const bool &convergence, const elecstate::Efermi& eferm, std::ofstream& ofs_running)
 {
     if (convergence && PARAM.inp.out_level != "m")
     {
-// mohan comment out 2025-06-22
-//        ofs_running << std::setprecision(16);
-//        ofs_running << " EFERMI = " << std::setprecision(11) << efermi * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        if (eferm.two_efermi)
+        {
+            ofs_running << " #FERMI ENERGY# "
+                        << std::setprecision(11) << eferm.ef_up * ModuleBase::Ry_to_eV
+                        << " " << eferm.ef_dw * ModuleBase::Ry_to_eV
+                        << " eV    # two fermi energies (up, down)" << std::endl;
+        }
+        else
+        {
+            ofs_running << " #FERMI ENERGY# "
+                        << std::setprecision(11) << eferm.ef * ModuleBase::Ry_to_eV
+                        << " eV" << std::endl;
+        }
     }
 }
 
@@ -262,17 +273,17 @@ void print_force(std::ofstream& ofs_running,
                  /*nrows=*/atom_label.size(), 
                  /*formats=*/{"%8s", "%20.10f", "%20.10f", "%20.10f"}, 
                  /*indent*/1,
-			     {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
+                 {FmtTable::Align::RIGHT,FmtTable::Align::RIGHT});
 
 
-	fmt << atom_label << force_x << force_y << force_z;
-	table = fmt.str();
+    fmt << atom_label << force_x << force_y << force_z;
+    table = fmt.str();
     ofs_running << table; 
 
-	if (PARAM.inp.test_force) 
-	{ 
-		std::cout << table;
-	}
+    if (PARAM.inp.test_force) 
+    { 
+        std::cout << table;
+    }
 }
 
 void print_force(std::ofstream& ofs, const MDCell& cell, const std::string& name)
@@ -299,8 +310,8 @@ void print_force(std::ofstream& ofs, const MDCell& cell, const std::string& name
     MPI_Comm_size(cell.communicator(), &size);
     if (rank != 0)
     {
-        const int nlocal = cell.nlocal();
-        MPI_Send(&nlocal, 1, MPI_INT, 0, 0, cell.communicator());
+        const int nowned_atoms = cell.owned_atoms().size();
+        MPI_Send(&nowned_atoms, 1, MPI_INT, 0, 0, cell.communicator());
         for (const LocalAtom& atom : owned_atoms)
         {
             MPI_Send(&atom.type, 1, MPI_INT, 0, 1, cell.communicator());

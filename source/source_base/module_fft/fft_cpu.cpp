@@ -11,7 +11,7 @@ void FFT_CPU<FPTYPE>::initfft(int nx_in,
                               int rixy_in, 
                               int ns_in, 
                               int nplane_in, 
-				              int nproc_in, 
+                              int nproc_in, 
                               bool gamma_only_in, 
                               bool xprime_in)
 {

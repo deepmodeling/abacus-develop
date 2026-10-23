@@ -2,11 +2,8 @@
 #include "gtest/gtest.h"
 #include "for_test.h"
 
-#define private public
-#define protected public
 #include "../esolver_dp.h"
 #include "source_io/module_parameter/input_parameter.h"
-#undef private
 /************************************************
  *  unit tests of class ESolver_DP
  ***********************************************/
@@ -29,10 +26,10 @@ class ESolverDPTest : public ::testing::Test
     {
         // Initialize variables before each test
         esolver = new ModuleESolver::ESolver_DP("./support/case_1.pb");
-        ucell.iat2it = new int[2];
+        ucell.iat2it.resize(2);
         ucell.iat2it[0] = 0;
         ucell.iat2it[1] = 1;
-        ucell.iat2ia = new int[2];
+        ucell.iat2ia.resize(2);
         ucell.iat2ia[0] = 0;
         ucell.iat2ia[1] = 1;
         ucell.nat = 2;
@@ -64,23 +61,23 @@ class ESolverDPTest : public ::testing::Test
 TEST_F(ESolverDPTest, InitCase1)
 {
     // Check the initialized variables
-    EXPECT_DOUBLE_EQ(esolver->dp_potential, 0.0);
+    EXPECT_DOUBLE_EQ(esolver->get_dp_potential(), 0.0);
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            EXPECT_DOUBLE_EQ(esolver->dp_virial(i, j), 0.0);
+            EXPECT_DOUBLE_EQ(esolver->get_dp_virial()(i, j), 0.0);
         }
     }
     for (int i = 0; i < ucell.nat; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            EXPECT_DOUBLE_EQ(esolver->dp_force(i, j), 0.0);
+            EXPECT_DOUBLE_EQ(esolver->get_dp_force()(i, j), 0.0);
         }
     }
-    EXPECT_EQ(esolver->atype[0], 0);
-    EXPECT_EQ(esolver->atype[1], 0);
+    EXPECT_EQ(esolver->get_atype()[0], 0);
+    EXPECT_EQ(esolver->get_atype()[1], 0);
 }
 
 // Test the Run() funciton WARNING_QUIT
@@ -100,7 +97,7 @@ TEST_F(ESolverDPTest, RunWarningQuit)
 TEST_F(ESolverDPTest, CalEnergy)
 {
     double etot = 0.0;
-    esolver->dp_potential = 9.8;
+    esolver->get_dp_potential() = 9.8;
     etot = esolver->cal_energy();
 
     // Check the results
@@ -115,7 +112,7 @@ TEST_F(ESolverDPTest, CalForce)
     {
         for (int j = 0; j < 3; ++j)
         {
-            esolver->dp_force(i, j) = 3.0 * i + j;
+            esolver->get_dp_force()(i, j) = 3.0 * i + j;
         }
     }
 
@@ -139,7 +136,7 @@ TEST_F(ESolverDPTest, CalStress)
     {
         for (int j = 0; j < 3; ++j)
         {
-            esolver->dp_virial(i, j) = 3.0 * i + j;
+            esolver->get_dp_virial()(i, j) = 3.0 * i + j;
         }
     }
 
@@ -158,7 +155,7 @@ TEST_F(ESolverDPTest, CalStress)
 // Test the postprocess() funciton
 TEST_F(ESolverDPTest, Postprocess)
 {
-    esolver->dp_potential = 9.8;
+    esolver->get_dp_potential() = 9.8;
 
     // Check the results
     GlobalV::ofs_running.open("log");

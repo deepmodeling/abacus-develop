@@ -2,6 +2,7 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "read_inp_sccs.h"
 namespace ModuleIO
 {
 void ReadInput::item_model()
@@ -17,14 +18,27 @@ void ReadInput::item_model()
         item.type = "Boolean";
         item.description = R"(Added the electric field.
 * True: A saw-like potential simulating an electric field is added to the bare ionic potential.
-* False: Not added the electric field.)";
+* False: Not added the electric field.
+[NOTE] LR-TDDFT excited-state forces and relaxation do not support this external field: the moving-AO correction is not implemented.)";
         item.default_value = "False";
         item.unit = "";
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            const auto& input = para.input;
+            const bool lr = input.esolver_type == "lr" || input.esolver_type == "ks-lr";
+            const bool forces = input.cal_force || input.calculation == "relax";
+            if (lr && forces && input.efield_flag)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "LR-TDDFT forces and relaxation with efield_flag are not supported: moving-AO correction is missing");
+            }
+        };
         read_sync_bool(input.efield_flag);
         this->add_item(item);
     }
     {
         Input_Item item("dip_cor_flag");
+        item.domain.add_requirement("dip_cor_flag==true", "efield_flag==true");
         item.annotation = "dipole correction";
         item.category = "Electric field and dipole correction";
         item.type = "Boolean";
@@ -36,17 +50,12 @@ void ReadInput::item_model()
         item.default_value = "False";
         item.unit = "";
         item.set_availability("efield_flag==true");
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.dip_cor_flag && !para.input.efield_flag)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "dipole correction is not active if efield_flag=false !");
-            }
-        };
         read_sync_bool(input.dip_cor_flag);
         this->add_item(item);
     }
     {
         Input_Item item("efield_dir");
+        item.domain.add_requirement("gate_flag==true and efield_flag==true", "dip_cor_flag==true");
         item.annotation = "the direction of the electric field or dipole correction";
         item.category = "Electric field and dipole correction";
         item.type = "Integer";
@@ -57,14 +66,6 @@ void ReadInput::item_model()
         item.default_value = "2";
         item.unit = "";
         item.set_availability("efield_flag==true");
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.gate_flag && para.input.efield_flag && !para.input.dip_cor_flag)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "gate field cannot be used with "
-                                         "efield if dip_cor_flag=false !");
-            }
-        };
         read_sync_int(input.efield_dir);
         this->add_item(item);
     }
@@ -181,16 +182,34 @@ void ReadInput::item_model()
         this->add_item(item);
     }
 
-    // imlicit_solvation
+    // Implicit solvation: imp_sol, the original model, then SCCS.
     {
         Input_Item item("imp_sol");
-        item.annotation = "calculate implicit solvation correction or not";
+        item.annotation = "implicit solvent model";
         item.category = "Implicit solvation model";
-        item.type = "Boolean";
-        item.description = "Calculate implicit solvation correction";
-        item.default_value = "False";
-        item.unit = "";
-        read_sync_bool(input.imp_sol);
+        item.type = "Integer";
+        item.description = "Implicit solvation model:\n"
+                           "* 0: no implicit solvent.\n"
+                           "* 1: the original ABACUS implicit solvation model.\n"
+                           "* 2: the self-consistent continuum solvation model (SCCS). Supported scope: CPU KS-DFT "
+                           "(esolver_type ksdft, device cpu) with basis_type pw or lcao; calculation scf energies and "
+                           "forces, no stress (cal_stress is rejected); nspin 1 or 2; periodic cells with "
+                           "assume_isolated none; no electric/gate field, DFT-1/2, DeePKS or dm_to_rho. SCCS is meant "
+                           "for neutral cells: a charged cell only prints a warning and runs, and its energy then "
+                           "depends on the cell size because the periodic Poisson solver drops the G = 0 net charge.\n\n"
+                           "Legacy Boolean values (true/false) are read as 1/0.";
+        item.default_value = "0";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            std::string error;
+            const bool valid = parse_imp_sol(item.str_values[0], para.input.imp_sol, error);
+            if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
+        };
+        sync_int(input.imp_sol);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            std::string error;
+            const bool valid = check_sccs_inp(para.input, error);
+            if (!valid) { ModuleBase::WARNING_QUIT("ReadInput", error); }
+        };
         this->add_item(item);
     }
     {
@@ -201,7 +220,7 @@ void ReadInput::item_model()
         item.description = "The relative permittivity of the bulk solvent, 80 for water";
         item.default_value = "80";
         item.unit = "";
-        item.set_availability("imp_sol==true");
+        item.set_availability("imp_sol==1");
         read_sync_double(input.eb_k);
         this->add_item(item);
     }
@@ -238,10 +257,12 @@ void ReadInput::item_model()
         read_sync_double(input.nc_k);
         this->add_item(item);
     }
+    this->item_sccs();
 
     // vdW Correction
     {
         Input_Item item("vdw_method");
+        item.domain.set_choices({"none", "d2", "d3_0", "d3_bj", "d4"});
         item.annotation = "the method of calculating vdw (none ; d2 ; d3_0 ; d3_bj ; d4)";
         item.category = "vdW correction";
         item.type = "String";
@@ -252,7 +273,7 @@ void ReadInput::item_model()
 * d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
 * none: no vdW correction
 
-[NOTE] ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.)";
+[NOTE] ABACUS automatically loads DFT-D3 parameters for supported functionals according to dft_functional setting. Individual user values overwrite the corresponding tabulated values. Setting all four of vdw_s6, vdw_s8, vdw_a1 and vdw_a2 defines a fully custom set and bypasses functional lookup.)";
         item.default_value = "none";
         item.unit = "";
         read_sync_string(input.vdw_method);
@@ -273,6 +294,7 @@ If set to default, ABACUS infers the functional name from dft_functional or pseu
     }
     {
         Input_Item item("vdw_d4_model");
+        item.domain.set_choices({"d4", "d4s", "D4", "D4S"});
         item.annotation = "DFT-D4 dispersion model";
         item.category = "vdW correction";
         item.type = "String";
@@ -284,13 +306,6 @@ Available options are:
         item.unit = "";
         item.set_availability("vdw_method==d4");
         read_sync_string(input.vdw_d4_model);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.vdw_d4_model != "d4" && para.input.vdw_d4_model != "d4s"
-                && para.input.vdw_d4_model != "D4" && para.input.vdw_d4_model != "D4S")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_d4_model must be d4 or d4s");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -298,7 +313,7 @@ Available options are:
         item.annotation = "scale parameter of d2/d3_0/d3_bj";
         item.category = "vdW correction";
         item.type = "String";
-        item.description = "This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). If not set, will use values of PBE functional. For DFT-D3, recommended values with different DFT functionals can be found on the here. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
+        item.description = "Scale factor s6, which is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP); if not set, will use values of PBE functional by default. For DFT-D3, ABACUS will search in built-in dataset based on the dft_functional setting by default; user set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
         item.set_availability("vdw_method in [d2, d3_0, d3_bj]");
@@ -323,7 +338,7 @@ Available options are:
         item.annotation = "scale parameter of d3_0/d3_bj";
         item.category = "vdW correction";
         item.type = "String";
-        item.description = "This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
+        item.description = "Scale factor s8 for D3(0) and D3(BJ). By default, ABACUS will search in built-in dataset based on the dft_functional setting. User set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
         item.set_availability("vdw_method in [d3_0, d3_bj]");
@@ -348,7 +363,7 @@ Available options are:
         item.annotation = "damping parameter of d3_0/d3_bj";
         item.category = "vdW correction";
         item.type = "String";
-        item.description = "This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
+        item.description = "Damping parameter rs6 for D3(0), or a1 for D3(BJ). If not set, ABACUS loads the s-dftd3 value for dft_functional. A user value overwrites the tabulated value.";
         item.default_value = "";
         item.unit = "";
         item.set_availability("vdw_method in [d3_0, d3_bj]");
@@ -370,10 +385,10 @@ Available options are:
     }
     {
         Input_Item item("vdw_a2");
-        item.annotation = "damping parameter of d3_bj";
+        item.annotation = "damping parameter of d3_0/d3_bj";
         item.category = "vdW correction";
         item.type = "String";
-        item.description = "This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
+        item.description = "Damping parameter rs8 for D3(0), or a2 for D3(BJ). If not set, ABACUS loads the s-dftd3 value for dft_functional. A user value overwrites the tabulated value.";
         item.default_value = "";
         item.unit = "";
         item.set_availability("vdw_method in [d3_0, d3_bj]");
@@ -437,6 +452,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
     }
     {
         Input_Item item("vdw_c6_unit");
+        item.domain.set_choices({"Jnm6/mol", "eVA6"});
         item.annotation = "unit of C6, Jnm6/mol or eVA6";
         item.category = "vdW correction";
         item.type = "String";
@@ -447,12 +463,6 @@ Namely, each line contains the element name and the corresponding parameter.)";
         item.unit = "";
         item.set_availability("vdw_method==d2 and vdw_c6_file!=default");
         read_sync_string(input.vdw_C6_unit);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.input.vdw_C6_unit != "Jnm6/mol") && (para.input.vdw_C6_unit != "eVA6"))
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_C6_unit must be Jnm6/mol or eVA6");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -473,6 +483,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
     }
     {
         Input_Item item("vdw_r0_unit");
+        item.domain.set_choices({"A", "Bohr"});
         item.annotation = "unit of R0, A or Bohr";
         item.category = "vdW correction";
         item.type = "String";
@@ -483,30 +494,20 @@ Namely, each line contains the element name and the corresponding parameter.)";
         item.unit = "";
         item.set_availability("vdw_method==d2 and vdw_r0_file!=default");
         read_sync_string(input.vdw_R0_unit);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.input.vdw_R0_unit != "A") && (para.input.vdw_R0_unit != "Bohr"))
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_R0_unit must be A or Bohr");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("vdw_cutoff_type");
+        item.domain.set_choices({"radius", "period"});
+        item.domain.add_requirement("vdw_method in [d3_0, d3_bj, d4]", "vdw_cutoff_type==radius");
         item.annotation = "expression model of periodic structure, radius or period";
         item.category = "vdW correction";
         item.type = "String";
         item.description = R"(Determines the method used for specifying the cutoff radius in periodic systems when applying Van der Waals correction. Available options are:
 * radius: The supercell is selected within a sphere centered at the origin with a radius defined by vdw_cutoff_radius.
-* period: The extent of the supercell is explicitly specified using the vdw_cutoff_period keyword.)";
+* period: The extent of the D2 supercell is explicitly specified using the vdw_cutoff_period keyword. DFT-D3 and DFT-D4 require radius.)";
         item.default_value = "radius";
         item.unit = "";
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.vdw_cutoff_type != "radius" && para.input.vdw_cutoff_type != "period")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_type must be radius or period");
-            }
-        };
         read_sync_string(input.vdw_cutoff_type);
         this->add_item(item);
     }
@@ -528,7 +529,8 @@ Namely, each line contains the element name and the corresponding parameter.)";
                 }
                 else if (para.input.vdw_method == "d3_0" || para.input.vdw_method == "d3_bj")
                 {
-                    para.input.vdw_cutoff_radius = "95";
+                    // Match the s-dftd3 default two-body real-space cutoff.
+                    para.input.vdw_cutoff_radius = "60";
                 }
                 else if (para.input.vdw_method == "d4")
                 {
@@ -554,6 +556,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
     }
     {
         Input_Item item("vdw_radius_unit");
+        item.domain.set_choices({"A", "Bohr"});
         item.annotation = "unit of radius cutoff for periodic structure";
         item.category = "vdW correction";
         item.type = "String";
@@ -564,16 +567,11 @@ Namely, each line contains the element name and the corresponding parameter.)";
         item.unit = "";
         item.set_availability("vdw_cutoff_type==radius");
         read_sync_string(input.vdw_radius_unit);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.input.vdw_radius_unit != "A") && (para.input.vdw_radius_unit != "Bohr"))
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_radius_unit must be A or Bohr");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("vdw_cutoff_width2");
+        item.domain.set_rule("value>=0");
         item.annotation = "smooth cutoff width for two-body dispersion";
         item.category = "vdW correction";
         item.type = "Real";
@@ -581,33 +579,22 @@ Namely, each line contains the element name and the corresponding parameter.)";
 A value of zero disables smoothing for the two-body contribution.)";
         item.default_value = "0.05";
         item.unit = "Bohr";
-        item.set_availability("vdw_method==d4");
+        item.set_availability("vdw_method in [d3_0, d3_bj, d4]");
         read_sync_double(input.vdw_cutoff_width2);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.vdw_cutoff_width2 < 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_width2 must be non-negative");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("vdw_cutoff_width3");
+        item.domain.set_rule("value>=0");
         item.annotation = "smooth cutoff width for three-body dispersion";
         item.category = "vdW correction";
         item.type = "Real";
         item.description = R"(Width of the smooth switching region for the three-body Axilrod-Teller-Muto (ATM) dispersion real-space cutoff.
 A value of zero disables smoothing for the three-body contribution.)";
-        item.default_value = "0.05";
+        item.default_value = "0.0";
         item.unit = "Bohr";
-        item.set_availability("vdw_method==d4");
+        item.set_availability("vdw_method in [d3_0, d3_bj, d4]");
         read_sync_double(input.vdw_cutoff_width3);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.vdw_cutoff_width3 < 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_width3 must be non-negative");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -651,6 +638,7 @@ A value of zero disables smoothing for the three-body contribution.)";
     }
     {
         Input_Item item("vdw_cn_thr");
+        item.domain.set_rule("value>0");
         item.annotation = "radius cutoff for cn";
         item.category = "vdW correction";
         item.type = "Real";
@@ -666,16 +654,11 @@ A value of zero disables smoothing for the three-body contribution.)";
             }
         };
         read_sync_double(input.vdw_cn_thr);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.vdw_cn_thr <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cn_thr <= 0 is not allowd");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("vdw_cn_thr_unit");
+        item.domain.set_choices({"A", "Bohr"});
         item.annotation = "unit of cn_thr, Bohr or Angstrom";
         item.category = "vdW correction";
         item.type = "String";
@@ -685,12 +668,6 @@ A value of zero disables smoothing for the three-body contribution.)";
         item.default_value = "Bohr";
         item.unit = "";
         read_sync_string(input.vdw_cn_thr_unit);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.input.vdw_cn_thr_unit != "A") && (para.input.vdw_cn_thr_unit != "Bohr"))
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cn_thr_unit must be A or Bohr");
-            }
-        };
         this->add_item(item);
     }
 }

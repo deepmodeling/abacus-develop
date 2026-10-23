@@ -154,9 +154,9 @@ public:
                void* p_hamilt_in,
                void* psi_in,
 #ifdef __LCAO
-			   elecstate::DensityMatrix<TK, double> *dm_in, // mohan add 2025-11-02
+               module_dm::DensityMatrix<TK, double> *dm_in, // mohan add 2025-11-02
 #endif
-			   elecstate::ElecState* pelec_in,
+               elecstate::ElecState* pelec_in,
                ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
 
   /**
@@ -165,7 +165,7 @@ public:
    * @details Uses the DeltaSpin operator to compute magnetic moments from the density
    * matrix. For nspin=2, extracts only the z-component. For nspin=4, extracts
    * all three components from the interleaved 4-component spinor density matrix.
-   * The moments are stored in state_.Mi_ (indexed by global atom index iat).
+   * The moments are stored in ScState (indexed by global atom index iat).
    *
    * @param step Current SCF iteration number (for logging)
    * @param print Whether to print moments to ofs_running
@@ -198,7 +198,7 @@ public:
    * @param delta_lambda Change in lambda from previous step (for incremental H correction)
    */
   void cal_mw_from_lambda(int i_step,
-		  const ModuleBase::Vector3<double>* delta_lambda = nullptr);
+          const ModuleBase::Vector3<double>* delta_lambda = nullptr);
 
   /**
    * @brief Calculate the spin constraint energy contribution: E_scon = -sum(lambda_i . Mi_i).
@@ -228,8 +228,8 @@ public:
    * @param rerun If true, use full PW solver for final charge update
    */
   void run_lambda_loop(int outer_step,
-		  bool rerun,
-		  std::ostream& ofs_running);
+          bool rerun,
+          std::ostream& ofs_running);
 
   /// @brief RMS error of the most recent lambda optimization loop (-1.0 if none has run).
   double get_last_rms_error() const { return last_rms_error_; }
@@ -303,7 +303,7 @@ public:
     elecstate::ElecState* pelec = nullptr;  ///< Electronic state: ekb, wg, charge, klist
     ModulePW::PW_Basis_K* pw_wfc_ = nullptr; ///< PW basis for wavefunction storage (PW only)
 #ifdef __LCAO
-    elecstate::DensityMatrix<TK, double>* dm_; ///< Density matrix pointer (LCAO only)
+    module_dm::DensityMatrix<TK, double>* dm_; ///< Density matrix pointer (LCAO only)
 #endif
     const double meV_to_Ry = 7.349864435130999e-05; ///< Conversion factor
     K_Vectors kv_; ///< K-point vector list
@@ -361,7 +361,7 @@ public:
     /// check atomCounts
     void check_atomCounts() const { state_.check_atomCounts(); }
     /// get iat
-    int get_iat(int itype, int atom_index) { return state_.get_iat(itype, atom_index); }
+    int get_iat(int itype, int atom_index) const { return state_.get_iat(itype, atom_index); }
     /// set nspin
     void set_nspin(int nspin) { state_.set_nspin(nspin); }
     /// get nspin
@@ -401,7 +401,7 @@ public:
     /// get sc_drop_thr
     double get_sc_drop_thr() const { return state_.get_sc_drop_thr(); }
     /// get computed magnetic moments Mi per atom
-    const std::vector<ModuleBase::Vector3<double>>& get_Mi() const { return state_.get_Mi(); }
+    const std::vector<ModuleBase::Vector3<double>>& get_mi() const { return state_.get_mi(); }
     /// get human-readable atom labels ("Fe_0", "Fe_1", ...) for table printing
     const std::vector<std::string>& get_atomLabels() const { return state_.get_atomLabels(); }
     /// @brief set orbital parallel info

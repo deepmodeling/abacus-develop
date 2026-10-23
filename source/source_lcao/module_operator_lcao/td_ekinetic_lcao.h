@@ -40,7 +40,8 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
                                      const UnitCell* ucell_in,
                                      const std::vector<double>& orb_cutoff,
                                      const Grid_Driver* GridD_in,
-                                     const TwoCenterIntegrator* intor);
+                                     const TwoCenterIntegrator* intor,
+                                     TD_info& td_info);
     ~TDEkinetic();
 
     virtual void contributeHR() override;

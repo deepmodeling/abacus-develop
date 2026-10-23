@@ -3,13 +3,11 @@
 #include <memory>
 #ifdef __PEXSI
 #include "diago_pexsi.h"
+#include "source_base/matrix_block.h"
 #include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
-
-typedef hamilt::MatrixBlock<double> matd;
-typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
@@ -20,11 +18,13 @@ template <typename T>
 DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
                           const int nspin_in,
                           const int nlocal_in,
-                          const double nelec_in)
+                          const double nelec_in,
+                          const int world_nproc_in)
 {
     this->nspin_dm = (nspin_in == 4) ? 1 : nspin_in;
     this->nlocal = nlocal_in;
     this->nelec = nelec_in;
+    this->world_nproc = world_nproc_in;
 
     mu_buffer.resize(this->nspin_dm);
     for (int i = 0; i < this->nspin_dm; i++)
@@ -57,11 +57,12 @@ DiagoPexsi<T>::~DiagoPexsi()
 }
 
 template <>
-void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, double* eigenvalue_in)
+void DiagoPexsi<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
+                              ModuleBase::MatrixBlock<double>& s_mat,
+                              psi::Psi<double>& psi,
+                              double* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoPEXSI", "diag");
-    matd h_mat, s_mat;
-    phm_in->matrix(h_mat, s_mat);
     int ik = psi.get_current_k();
     this->ps->prepare(this->ParaV->blacs_ctxt,
                       this->ParaV->nb,
@@ -73,7 +74,7 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
                       s_mat.p,
                       DM[ik],
                       EDM[ik]);
-    this->ps->solve(mu_buffer[ik]);
+    this->ps->solve(mu_buffer[ik], this->world_nproc);
     this->totalFreeEnergy = this->ps->get_totalFreeEnergy();
     this->totalEnergyH = this->ps->get_totalEnergyH();
     this->totalEnergyS = this->ps->get_totalEnergyS();
@@ -81,7 +82,8 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
 }
 
 template <>
-void DiagoPexsi<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in,
+void DiagoPexsi<std::complex<double>>::diag(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
+                                            ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
                                             psi::Psi<std::complex<double>>& psi,
                                             double* eigenvalue_in)
 {
