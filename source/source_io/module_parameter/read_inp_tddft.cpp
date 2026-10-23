@@ -35,10 +35,6 @@ void check_td_efield_parameters(const Input_para& input)
         ModuleBase::WARNING_QUIT("ReadInput",
                                  "td_ttype and td_vext_dire must contain the same number of fields.");
     }
-    if (input.td_stype < 0 || input.td_stype > 2)
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", "td_stype must be 0, 1, or 2.");
-    }
     for (const int direction: input.td_vext_dire)
     {
         if (direction < 1 || direction > 3)
@@ -154,6 +150,7 @@ void ReadInput::item_rt_tddft()
     // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("td_orthonormal");
+        item.domain.set_choices({"cholesky", "lowdin", "newton_schulz", "none"});
         item.annotation = "orthonormalization method for PW real-time propagation";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "String";
@@ -168,13 +165,6 @@ void ReadInput::item_rt_tddft()
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
         read_sync_string(input.td_orthonormal);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::string& method = para.inp.td_orthonormal;
-            if (method != "none" && method != "cholesky" && method != "lowdin" && method != "newton_schulz")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_orthonormal must be cholesky, lowdin, newton_schulz or none.");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -193,6 +183,8 @@ void ReadInput::item_rt_tddft()
     }
     {
         Input_Item item("td_max_halvings");
+        const std::string depth_rule = "value>=0 and value<" + std::to_string(std::numeric_limits<int>::digits);
+        item.domain.set_rule(depth_rule);
         item.annotation = "maximum depth of PW real-time half-step retries";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Integer";
@@ -201,16 +193,11 @@ void ReadInput::item_rt_tddft()
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
         read_sync_int(input.td_max_halvings);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.td_max_halvings < 0 || para.inp.td_max_halvings >= std::numeric_limits<int>::digits)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_max_halvings must be nonnegative and representable as an integer subdivision count.");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("td_scf_nmax");
+        item.domain.set_rule("value>=2");
         item.annotation = "SCF iteration limit per real-time propagation attempt";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
@@ -219,16 +206,11 @@ void ReadInput::item_rt_tddft()
         item.unit = "";
         item.set_availability("esolver_type==tddft and basis_type in [pw, lcao]");
         read_sync_int(input.td_scf_nmax);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.td_scf_nmax < 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_scf_nmax must be an integer of at least 2.");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("td_out_mag");
+        item.domain.set_choices({"voronoi", "onsite", "none"});
         item.annotation = "RT-TDDFT spinor magnetic moment output";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "String";
@@ -242,13 +224,6 @@ Total moments always come from the magnetization density. Atomic onsite moments 
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft and nspin==4");
         read_sync_string(input.td_out_mag);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            const std::string& method = para.inp.td_out_mag;
-            if (method != "voronoi" && method != "onsite" && method != "none")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_out_mag must be voronoi, onsite or none.");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -291,6 +266,7 @@ Components are ordered $xx,xy,xz,yx,yy,yz,zx,zy,zz$, with flow direction first a
     }
     {
         Input_Item item("lin_solver");
+        item.domain.set_choices({"bicgstab", "cgs", "gmres"});
         item.annotation = "linear solver for real-time propagation";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "String";
@@ -304,16 +280,11 @@ The initial ground-state diagonalization is controlled by `ks_solver`.)";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
         read_sync_string(input.lin_solver);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.lin_solver != "bicgstab" && para.inp.lin_solver != "cgs" && para.inp.lin_solver != "gmres")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_solver must be bicgstab, cgs or gmres.");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("lin_precond");
+        item.domain.set_choices({"kinetic", "kinetic_recycle", "kinetic_subspace", "none"});
         item.annotation = "right preconditioner for PW real-time propagation";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "String";
@@ -328,17 +299,11 @@ Preconditioning changes the convergence rate, while `lin_thr` still controls the
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
         read_sync_string(input.lin_precond);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.lin_precond != "kinetic" && para.inp.lin_precond != "none"
-                && para.inp.lin_precond != "kinetic_recycle" && para.inp.lin_precond != "kinetic_subspace")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_precond must be none, kinetic, kinetic_recycle or kinetic_subspace.");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("lin_thr");
+        item.domain.set_rule("value>=0");
         item.annotation = "residual tolerance of the linear solver";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Real";
@@ -351,12 +316,6 @@ All methods check the residual at the end of the linear solve, before orthonorma
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
         read_sync_double(input.lin_thr);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (!std::isfinite(para.inp.lin_thr) || para.inp.lin_thr < 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_thr must be a nonnegative finite real number.");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -415,6 +374,7 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
     }
     {
         Input_Item item("estep_per_md");
+        item.domain.set_rule("value>0");
         item.annotation = "steps of force change";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
@@ -422,12 +382,6 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.estep_per_md);
-        item.reset_value = [](const Input_Item&, Parameter& para) {
-            if (para.input.estep_per_md <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "estep_per_md must be a positive integer.");
-            }
-        };
         this->add_item(item);
     }
     // real time TDDFT
@@ -446,19 +400,8 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
                 GlobalV::ofs_running << "td_dt don't exist, set td_dt with md_dt" << std::endl;
                 para.input.td_dt = para.input.mdp.md_dt / para.input.estep_per_md;
             }
-            if (para.input.td_dt <= 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_dt must be greater than zero.");
-            }
         };
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_dt = doublevalue;
-            if (para.input.td_dt <= 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_dt must be greater than zero.");
-            }
-        };
-        sync_double(input.td_dt);
+        read_sync_double(input.td_dt);
         this->add_item(item);
     }
     {
@@ -491,6 +434,7 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
     }
     {
         Input_Item item("td_propagator");
+        item.domain.add_requirement("basis_type==pw and esolver_type==tddft", "td_propagator in [0, 2]");
         item.annotation = "method of propagator";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
@@ -511,17 +455,11 @@ For a nonorthogonal LCAO basis:
         item.unit = "";
         item.set_availability("(basis_type==pw or basis_type==lcao) and esolver_type==tddft");
         read_sync_int(input.propagator);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.basis_type == "pw" && para.inp.esolver_type == "tddft"
-                && para.inp.propagator != 0 && para.inp.propagator != 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "PW td_propagator must be 0 (CN) or 2 (ETRS).");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("td_exp_method");
+        item.domain.set_choices({"lanczos", "taylor"});
         item.annotation = "exponential algorithm for PW ETRS";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "String";
@@ -532,16 +470,11 @@ For a nonorthogonal LCAO basis:
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2");
         read_sync_string(input.td_exp_method);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.td_exp_method != "taylor" && para.inp.td_exp_method != "lanczos")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_exp_method must be taylor or lanczos.");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("td_exp_order");
+        item.domain.set_rule("value>=2");
         item.annotation = "Taylor polynomial order for PW ETRS";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Integer";
@@ -550,13 +483,11 @@ For a nonorthogonal LCAO basis:
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2 and td_exp_method==taylor");
         read_sync_int(input.td_exp_order);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.td_exp_order < 2) { ModuleBase::WARNING_QUIT("ReadInput", "td_exp_order must be at least 2."); }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("td_exp_thr");
+        item.domain.set_rule("value>=0");
         item.annotation = "relative exponential error target for PW Lanczos";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Real";
@@ -565,16 +496,11 @@ For a nonorthogonal LCAO basis:
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2 and td_exp_method==lanczos");
         read_sync_double(input.td_exp_thr);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (!std::isfinite(para.inp.td_exp_thr) || para.inp.td_exp_thr < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_exp_thr must be a nonnegative finite real number.");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("td_exp_krylov_dim");
+        item.domain.set_rule("value>=2");
         item.annotation = "maximum Lanczos dimension for PW ETRS";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Integer";
@@ -583,9 +509,6 @@ For a nonorthogonal LCAO basis:
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2 and td_exp_method==lanczos");
         read_sync_int(input.td_exp_krylov_dim);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.td_exp_krylov_dim < 2) { ModuleBase::WARNING_QUIT("ReadInput", "td_exp_krylov_dim must be at least 2."); }
-        };
         this->add_item(item);
     }
     {
@@ -620,6 +543,7 @@ For a nonorthogonal LCAO basis:
     }
     {
         Input_Item item("td_stype");
+        item.domain.add_requirement("init_vecpot==false", "td_stype in [0, 1, 2]");
         item.annotation = "type of electric field in space domain";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
@@ -1084,6 +1008,8 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     }
     {
         Input_Item item("init_vecpot");
+        item.domain.add_requirement("init_vecpot==true",
+                                    "esolver_type==tddft and ((basis_type==pw and td_stype==1) or (basis_type==lcao and td_stype in [1, 2]))");
         item.annotation = "read endpoint vector potentials from file";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
@@ -1096,16 +1022,6 @@ The file takes precedence over analytic waveforms, independently of `td_vext`, `
         item.unit = "";
         item.set_availability("esolver_type==tddft and ((basis_type==pw and td_stype==1) or (basis_type==lcao and td_stype in [1, 2]))");
         read_sync_bool(input.init_vecpot);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            const Input_para& inp = para.inp;
-            const bool supported = inp.esolver_type == "tddft"
-                && ((inp.basis_type == "pw" && inp.td_stype == 1)
-                    || (inp.basis_type == "lcao" && (inp.td_stype == 1 || inp.td_stype == 2)));
-            if (inp.init_vecpot && !supported)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "init_vecpot requires PW velocity gauge or LCAO velocity/hybrid gauge RT-TDDFT.");
-            }
-        };
         this->add_item(item);
     }
     {
