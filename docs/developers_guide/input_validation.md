@@ -11,8 +11,12 @@ item.domain.set_rule("value>0 and value<=1");
 item.domain.add_requirement("noncolin==true or lspinorb==true", "nspin==4");
 ```
 
-These are independent examples of declarations. Scalar readers register their
-actual numeric/Boolean type automatically. The existing `sync_*` registrations
+These are independent examples of declarations. Ordinary scalar readers register
+their numeric/Boolean/string type automatically. A supplied ordinary string
+parameter must have exactly one token, so a bare `stru_file` is rejected with
+the expected type and manual link before its reader accesses the value. This
+also rejects extra tokens that would otherwise be silently discarded.
+The existing `sync_*` registrations
 supply typed, read-only value access, including nested MD fields and vectors.
 The checker does not infer token cardinality from a prose documentation type,
 or format final values and parse them back. Custom input grammars remain in
@@ -50,7 +54,7 @@ explicit supplied values are still checked.
 
 ## Documentation and defaults
 
-The normal numeric/Boolean reader registrations enforce scalar type contracts
+The normal numeric/Boolean/string reader registrations enforce scalar type contracts
 automatically. Explicit choice/range/requirement declarations cover system,
 electronic, relaxation, MD, vdW, output, DeePKS, DFPT and TDDFT inputs, including
 `scf_thr_type`, `symmetry`, `mem_saver` and the spin dependency.
