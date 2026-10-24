@@ -138,6 +138,7 @@
 
 #define read_sync_string(PARAMETER)                                                                                    \
     {                                                                                                                  \
+        item.domain.scalar();                                                                                          \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = strvalue; };                  \
         sync_string(PARAMETER);                                                                                        \
     }
