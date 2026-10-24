@@ -37,6 +37,9 @@ References and operand types are checked when registrations are assembled.
 
 Errors identify the file, parameter, offending value, legal choices/rules, and
 its manual URL. All ranks receive the error before parameter broadcasts.
+File-open failures, a missing `INPUT_PARAMETERS` header, unknown names and
+duplicate parameters use the same broadcast-and-exit path. Reader code must
+return these errors to `read_parameters` rather than exit only on rank zero.
 Normal execution and `--check-input` share this preparation boundary. Existing
 checks needing structure, build capabilities or calculation context continue
 at their existing boundary.
