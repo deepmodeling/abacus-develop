@@ -9,10 +9,13 @@ namespace
 {
 void finish_reader()
 {
+    // Print before finalization so an early nonzero exit cannot make the
+    // MPI launcher terminate peers before their shutdown markers are written.
+    std::fputs("INPUT reader process reached shutdown\n", stderr);
+    std::fflush(stderr);
     // Finalization makes a rank-0-only exit fail the test's timeout even if
     // the MPI launcher would otherwise terminate the remaining ranks for us.
     Parallel_Global::finalize_mpi();
-    std::fputs("INPUT reader process exited\n", stderr);
 }
 } // namespace
 
