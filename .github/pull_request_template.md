@@ -5,6 +5,7 @@
 - [ ] I have listed the exact verification commands run and their results.
 - [ ] I have described user-visible behavior changes, including INPUT parameter changes.
 - [ ] I have explained core-module impact for ESolver, HSolver, ElecState, Hamilt, Operator, Psi, or other `source/` changes.
+- [ ] If this changes `interfaces/ASE_interface/`, `source/source_relax/socket_*`, or the socket metadata schema, I linked the abacuslite counterpart and updated the compatibility contract.
 - [ ] I have requested any needed governance exception below.
 
 ### Linked Issue
