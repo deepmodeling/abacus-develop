@@ -195,6 +195,11 @@ void ReadInput::item_dfpt()
             if (para.input.dfpt_asr != "no" && para.input.dfpt_asr != "simple" && para.input.dfpt_asr != "crystal")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_asr must be no, simple or crystal.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("dfpt_mix_type");
         item.annotation = "mixing scheme of the DFPT response SCF: rho_plain, rho_kerker, rho_broyden, v_sc_plain or v_sc_broyden";
         item.category = category;
@@ -205,7 +210,7 @@ void ReadInput::item_dfpt()
                            "f_g = |G+q|^2 / (|G+q|^2 + a^2) damps the Coulomb-stiff "
                            "smallest shells, stabilizing polar / small-gap systems at "
                            "beta up to 1; a^2 is set by dfpt_kerker_a2.";
-        item.default_value = "rho_plain";
+        item.default_value = "v_sc_broyden";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             if (item.get_size() == 0)
             {

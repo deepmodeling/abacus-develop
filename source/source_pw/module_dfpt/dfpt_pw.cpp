@@ -143,6 +143,9 @@ void DFPT_PW::set_asr(const std::string& asr_type)
     if (asr_type == "no" || asr_type == "simple" || asr_type == "crystal")
     {
         pimpl_->asr_type_ = asr_type;
+    }
+}
+
 void DFPT_PW::set_mix_type(const std::string& mix_type)
 {
     if (mix_type == "rho_plain" || mix_type == "rho_kerker" || mix_type == "rho_broyden"
