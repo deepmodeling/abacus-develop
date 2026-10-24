@@ -12,12 +12,14 @@
 
 #include "dfpt_pw_data.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 
 #include <cmath>
 #include <complex>
 #include <cstdlib>
 #include <iomanip>
+#include <sstream>
 #include <iostream>
 #include <vector>
 
@@ -229,16 +231,46 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
     double residual = 0.0;
     int n_iter_done = 0;
     std::vector<std::complex<double>> v_sc_r_last;
+    // v_sc mode: the SCF mixes the screening potential instead of the
+    // density -- the fixed-point variable change provides implicit K^-1
+    // preconditioning (the Hartree+XC kernel's inverse), flattening the
+    // Coulomb-stiff smallest-G shells that destabilize plain density
+    // mixing (see MIXING_20261020.md §8)
+    const bool vsc_mode = (mix_type_ == "v_sc_plain" || mix_type_ == "v_sc_broyden");
+    std::vector<std::complex<double>> v_sc_in_r(nrxx, std::complex<double>(0.0, 0.0));
+    // v_sc Broyden: a separate instance from the density Broyden because
+    // the array length differs (nrxx real-space potential vs npw G-space
+    // density); init and bind the Mixing_Data once per displacement cycle
+    const bool vsc_broyden = (mix_type_ == "v_sc_broyden");
+    if (vsc_broyden && !vsc_broyden_)
+    {
+        vsc_broyden_.reset(new Base_Mixing::Broyden_Mixing(broyden_ndim_));
+    }
+    if (vsc_broyden)
+    {
+        vsc_broyden_->reset();
+        vsc_broyden_mdata_.reset(new Base_Mixing::Mixing_Data());
+        vsc_broyden_->init_mixing_data(*vsc_broyden_mdata_, nrxx, sizeof(std::complex<double>));
+    }
     for (int iter = 0; iter < max_iter_ && !converged; ++iter)
     {
         std::vector<std::complex<double>> v_sc_r;
-        const std::vector<std::complex<double>> drho_in_g = data_.get_drho_g(q_idx, 0);
-        assemble_v_sc(q_cart, drho_in_g, v_sc_r);
+        if (vsc_mode)
+        {
+            // use the mixed screening potential directly (the density is
+            // only rebuilt from the converged potential for the 2n+1)
+            v_sc_r = v_sc_in_r;
+        }
+        else
+        {
+            const std::vector<std::complex<double>> drho_in_g = data_.get_drho_g(q_idx, 0);
+            assemble_v_sc(q_cart, drho_in_g, v_sc_r);
+        }
         if (dbg)
         {
-            debug_iter_snapshot(iter, drho_in_g, v_sc_r, npw, nrxx);
+            debug_iter_snapshot(iter, data_.get_drho_g(q_idx, 0), v_sc_r, npw, nrxx);
         }
-        v_sc_r_last = v_sc_r;
+        v_sc_r_last = vsc_mode ? v_sc_in_r : v_sc_r;
 
         for (int ik = 0; ik < nk; ++ik)
         {
@@ -270,8 +302,82 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
         }
 
         rho_.compute_drho(gs_psi_, wg_, q_idx, data_);
-        rho_.mix_drho(q_idx, data_);
-        residual = rho_.get_residual(q_idx, data_);
+        if (vsc_mode)
+        {
+            // v_sc mode: rebuild v_sc from the OUTPUT density, then mix
+            // the potential (not the density); the residual measures the
+            // potential self-consistency
+            std::vector<std::complex<double>> v_sc_out_r;
+            const std::vector<std::complex<double>> drho_out_g = data_.get_drho_g(q_idx, 0);
+            assemble_v_sc(q_cart, drho_out_g, v_sc_out_r);
+            if (vsc_broyden)
+            {
+                // Broyden on the real-space potential: push, cal_coef, mix
+                auto screen = std::function<void(std::complex<double>*)>();
+                const double beta = mix_beta_;
+                auto mix_cb =
+                    std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)>(
+                        [nrxx, beta](std::complex<double>* out,
+                                     const std::complex<double>* in,
+                                     const std::complex<double>* F) {
+                            for (int i = 0; i < nrxx; ++i)
+                            {
+                                out[i] = in[i] + beta * F[i];
+                            }
+                        });
+                vsc_broyden_->push_data(*vsc_broyden_mdata_,
+                                        v_sc_in_r.data(),
+                                        v_sc_out_r.data(),
+                                        screen,
+                                        mix_cb,
+                                        true);
+                vsc_broyden_->cal_coef(
+                    *vsc_broyden_mdata_,
+                    std::function<double(std::complex<double>*, std::complex<double>*)>(
+                        [nrxx](std::complex<double>* a, std::complex<double>* b) {
+                            double s = 0.0;
+                            for (int i = 0; i < nrxx; ++i)
+                            {
+                                s += (a[i] * std::conj(b[i])).real();
+                            }
+                            return s;
+                        }));
+                // residual from the unmixed in/out difference
+                double dn2 = 0.0;
+                double o2 = 0.0;
+                for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    dn2 += std::norm(v_sc_out_r[ir] - v_sc_in_r[ir]);
+                    o2 += std::norm(v_sc_out_r[ir]);
+                }
+                residual = (o2 > 0.0) ? std::sqrt(dn2 / o2) : 0.0;
+                vsc_broyden_->mix_data(*vsc_broyden_mdata_, v_sc_in_r.data());
+            }
+            else
+            {
+                // plain beta mix on the real-space potential
+                double dn2 = 0.0;
+                double o2 = 0.0;
+                for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    const std::complex<double> delta = v_sc_out_r[ir] - v_sc_in_r[ir];
+                    dn2 += std::norm(delta);
+                    o2 += std::norm(v_sc_out_r[ir]);
+                    v_sc_in_r[ir] += mix_beta_ * delta;
+                }
+                residual = (o2 > 0.0) ? std::sqrt(dn2 / o2) : 0.0;
+            }
+            // store the mixed density for the 2n+1 accumulation path:
+            // rebuild the G-space coefficients from the Sternheimer output
+            // (the density is NOT what we mix, but the 2n+1 needs the
+            // converged density from the converged potential)
+            data_.set_drho_g(q_idx, 0, drho_out_g);
+        }
+        else
+        {
+            rho_.mix_drho(q_idx, data_);
+            residual = rho_.get_residual(q_idx, data_);
+        }
         // default iteration trace (GS-SCF style); the DFPT_DEBUG snapshots
         // above stay opt-in diagnostics. Formatting goes through a local
         // buffer so the stream flags/precision are never disturbed for
@@ -301,6 +407,15 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
                 << (converged ? "converged" : "NOT converged (max_iter reached)") << ", residual=" << std::scientific
                 << std::setprecision(6) << residual << " (iter=" << n_iter_done << ")" << std::endl;
         std::cout << summary.str();
+    }
+    if (!converged)
+    {
+        std::ostringstream oss;
+        oss << "the displacement response (atom " << iat + 1 << " dir " << static_cast<char>('x' + idir)
+            << ") did not converge within dfpt_max_iter=" << max_iter_ << ": final residual " << std::scientific
+            << std::setprecision(3) << residual << " vs threshold " << std::setprecision(1) << conv_thr_
+            << std::defaultfloat << ". Phonon frequencies involving this displacement are unreliable";
+        ModuleBase::WARNING("DFPT_PW::solve_displacement", oss.str());
     }
     stash_converged_disp_response(q_idx, iat, idir, v_sc_r_last, nk, nbands);
 

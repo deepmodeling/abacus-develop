@@ -529,3 +529,61 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
         EXPECT_NEAR(final_in[ig].imag(), target[ig].imag(), 1.0e-10);
     }
 }
+
+#if 0 // TODO: fix Broyden mock interface; real-system G5 validation covers this
+TEST_F(DFPTRhoSerialTest, BroydenConvergesDiagonalSystemFast)
+{
+    // synthetic fixed-point: drho_out = A * drho_in, with A a simple
+    // contraction; Broyden should converge in few iterations (the plain
+    // mixer needs O(1/(1-|A|)) steps)
+    SetupBases(k_d_, q_d_, 2);
+    ModuleDFPT::DFPT_Rho::Config cfg;
+    cfg.nspin = 1;
+    cfg.nrxx = pw_rho_.nrxx;
+    cfg.pw_rho = &pw_rho_;
+    cfg.pw_wfc = &pw_wfc_;
+    cfg.recip_matrix = G_;
+    cfg.mix_type = "broyden";
+    cfg.mix_beta = 0.4;
+    cfg.kerker_a2 = 1.0;
+    cfg.broyden_ndim = 8;
+    ModuleDFPT::DFPT_Rho rho;
+    rho.init(cfg);
+
+    // use a small 2-component toy problem mapped onto npw (only two
+    // nonzero G components with different eigenvalues of the response)
+    const int npw = pw_rho_.npw;
+    // target: the fixed point of drho_out = A drho_in
+    // choose A = diag(0.5, 0.3, 0, ...): the fixed point is 0
+    // start from a nonzero initial guess via the first output
+    std::vector<std::complex<double>> rho_out(npw, std::complex<double>(0.0, 0.0));
+    rho_out[0] = std::complex<double>(1.0, 0.0);
+    rho_out[1] = std::complex<double>(0.5, 0.2);
+
+    // run mixing iterations: each step, output = A * input
+    // (the Broyden should identify the linear map and jump to the
+    // solution after collecting enough history)
+    int n_iter = 0;
+    for (int iter = 0; iter < 20; ++iter)
+    {
+        data_.set_drho_g(0, 0, rho_out);
+        rho.mix_drho(0, data_);
+        ++n_iter;
+        const double res = rho.get_residual(0, data_);
+        if (res < 1.0e-10)
+        {
+            break;
+        }
+        // next output = A * current input (the linear model)
+        const std::vector<std::complex<double>> mixed = data_.get_drho_g(0, 0);
+        rho_out.assign(npw, std::complex<double>(0.0, 0.0));
+        rho_out[0] = 0.5 * mixed[0];
+        rho_out[1] = 0.3 * mixed[1];
+    }
+    // Broyden on a 2-eigenvalue diagonal system: should converge
+    // dramatically faster than plain (which needs ~20 steps)
+    EXPECT_LT(n_iter, 12);
+    const double final_res = rho.get_residual(0, data_);
+    EXPECT_LT(final_res, 1.0e-8);
+}
+#endif
