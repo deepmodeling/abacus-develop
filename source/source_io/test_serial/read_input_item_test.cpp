@@ -174,7 +174,10 @@ TEST_F(InputTest, DeviceExx)
     input.device = "gpu";
 
 #ifdef __GPU_RI
-    expect_rejected("LibRI GPU contractions do not support real-space EXX symmetry");
+    it->second.check_value(it->second, param);
+    EXPECT_EQ(input.device_exx, "gpu");
+    EXPECT_EQ(input.symmetry, "1");
+    EXPECT_TRUE(input.exx_symmetry_realspace);
     input.exx_symmetry_realspace = false;
     it->second.check_value(it->second, param);
     input.exx_symmetry_realspace = true;

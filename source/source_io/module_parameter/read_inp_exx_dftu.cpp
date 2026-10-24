@@ -245,8 +245,8 @@ void ReadInput::item_exx()
         item.description = R"(Selects the LibRI tensor-contraction device for LCAO Kohn-Sham exact exchange.
 * cpu: retain CPU contractions, including when device=gpu.
 * gpu: use the experimental GPU backend; requires ENABLE_LIBRI_GPU=ON and device=gpu.
-GPU contractions do not support real-space EXX symmetry reduction. With symmetry=1,
-use device_exx=cpu or disable exx_symmetry_realspace.
+Real-space EXX symmetry reduction is supported with symmetry=1 and
+exx_symmetry_realspace=1.
 Independent LR and RDMFT exchange engines retain CPU contractions. LR inherits
 this selection only when it reuses the Kohn-Sham exchange object.
 For GPU contractions, all MPI ranks on a node must see the same allocated GPU
@@ -269,12 +269,6 @@ masking is unsupported.)";
 #ifndef __GPU_RI
                 ModuleBase::WARNING_QUIT("ReadInput", "device_exx=gpu requires a build with ENABLE_LIBRI_GPU=ON");
 #endif
-                if (para.input.symmetry == "1" && para.input.exx_symmetry_realspace)
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput",
-                                             "LibRI GPU contractions do not support real-space EXX symmetry; "
-                                             "set device_exx=cpu or exx_symmetry_realspace=0");
-                }
             }
         };
         this->add_item(item);
