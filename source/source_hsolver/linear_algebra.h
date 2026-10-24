@@ -20,7 +20,8 @@ void linear_buffer(ct::Tensor* buffer, const int64_t size)
     using CtDevice = typename ct::PsiToContainer<Device>::type;
     const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
     const int64_t elements = std::max<int64_t>(1, size);
-    if (buffer->NumElements() < elements || buffer->data_type() != ct::DataTypeToEnum<T>::value || buffer->device_type() != device)
+    if (buffer->NumElements() < elements || buffer->data_type() != ct::DataTypeToEnum<T>::value
+        || buffer->device_type() != device)
     {
         *buffer = ct::Tensor(ct::DataTypeToEnum<T>::value, device, {elements});
     }
@@ -40,7 +41,10 @@ class LinearSmallLU
 };
 
 /** @brief Rank-revealing coefficients for a small Gram matrix, with a norm cutoff. */
-std::vector<std::complex<double>> linear_gram_basis(const std::vector<std::complex<double>>& gram, int n, double cutoff, int* rank);
+std::vector<std::complex<double>> linear_gram_basis(const std::vector<std::complex<double>>& gram,
+                                                    int n,
+                                                    double cutoff,
+                                                    int* rank);
 
 /** @brief Collective block algebra; only small coefficients cross the device boundary. */
 template <typename T, typename Device>

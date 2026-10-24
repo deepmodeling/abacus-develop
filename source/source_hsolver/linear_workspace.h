@@ -50,7 +50,13 @@ class LinearWorkspace
   public:
     /** @brief Allocate only the recurrence slots required by the calling solver. */
     LinearWorkspace(const diag_comm_info& comm, int slots);
-    void prepare(const int ld, const int dim, const int nvec, const T* x, const T* b, const double tolerance, const int max_iter);
+    void prepare(const int ld,
+                 const int dim,
+                 const int nvec,
+                 const T* x,
+                 const T* b,
+                 const double tolerance,
+                 const int max_iter);
     /** @brief Initialize recurrence storage once per cycle, including padding. */
     void clear();
     void reset_statistics();
@@ -66,7 +72,17 @@ class LinearWorkspace
     /** @brief Return two packed global inner products in a single collective. */
     void dot_pair(int ld, int dim, int nvec, const T* x, const T* y, const T* z, const T* w, T* first, T* second);
     /** @brief Upload per-column coefficients and update all unmasked columns. */
-    void batch(int ld, int dim, int nvec, T* out, const T* x, const T* y, T a, T b, const T* ca, const T* cb, const int* skip);
+    void batch(int ld,
+               int dim,
+               int nvec,
+               T* out,
+               const T* x,
+               const T* y,
+               T a,
+               T b,
+               const T* ca,
+               const T* cb,
+               const int* skip);
     /** @brief Upload coefficients once; the caller reports zeros to select the GPU update path. */
     void gmres_update(int ld,
                       int dim,
@@ -84,7 +100,13 @@ class LinearWorkspace
     /** @brief Upload two coefficient arrays and execute a fused recurrence. */
     void bicg_update(int ld, int dim, int nvec, bool direction, T* out, const T* x, const T* y, const T* a, const T* b);
     void copy(const int ld, const int dim, const int nvec, const T* x, T* y) const;
-    void residual(const LinearOperator<T, Device>& op, const int ld, const int dim, const int nvec, const T* x, const T* b, T* r);
+    void residual(const LinearOperator<T, Device>& op,
+                  const int ld,
+                  const int dim,
+                  const int nvec,
+                  const T* x,
+                  const T* b,
+                  T* r);
     void verify(const LinearOperator<T, Device>& op,
                 const int ld,
                 const int dim,

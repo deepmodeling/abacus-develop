@@ -55,7 +55,8 @@ class LinearGMRES
 
   public:
     LinearGMRES(double tolerance, const LinearSolveOptions& options, const diag_comm_info& comm);
-    /** @brief Use the per-call budget and reconstruction policy; force_check requests an independent final application. */
+    /** @brief Use the per-call budget and reconstruction policy; force_check requests an independent final application.
+     */
     LinearSolveResult solve(const LinearOperator<T, Device>& op,
                             const LinearOperator<T, Device>& preconditioner,
                             int ld,

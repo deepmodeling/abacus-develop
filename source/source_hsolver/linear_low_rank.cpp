@@ -65,7 +65,8 @@ void LinearResponse<T, Device>::update(LinearAlgebra<T, Device>& algebra,
             for (int i = 0; i < rank_; ++i)
             {
                 if (!std::isfinite(std::abs(gram[i + j * rank_]))
-                    || std::abs(gram[i + j * rank_] - (i == j ? std::complex<double>(1) : std::complex<double>(0))) > limit)
+                    || std::abs(gram[i + j * rank_] - (i == j ? std::complex<double>(1) : std::complex<double>(0)))
+                           > limit)
                 {
                     rank_ = 0;
                     return;
@@ -76,30 +77,34 @@ void LinearResponse<T, Device>::update(LinearAlgebra<T, Device>& algebra,
 }
 
 template <typename T, typename Device>
-void LinearLowRank<T, Device>::prepare_response(int ld, int rank, const T* directions, const T* images, ct::Tensor* workspace)
+void LinearLowRank<T, Device>::prepare_response(int ld,
+                                                int rank,
+                                                const T* directions,
+                                                const T* images,
+                                                ct::Tensor* workspace)
 {
     prepare(ld, rank, directions, images, images, nullptr, workspace);
 }
 
 template <typename T, typename Device>
 void LinearLowRank<T, Device>::prepare_subspace(int ld,
-                                               int rank,
-                                               const T* basis,
-                                               const T* images,
-                                               const LinearSmallLU& factor,
-                                               ct::Tensor* workspace)
+                                                int rank,
+                                                const T* basis,
+                                                const T* images,
+                                                const LinearSmallLU& factor,
+                                                ct::Tensor* workspace)
 {
     prepare(ld, rank, basis, images, basis, &factor, workspace);
 }
 
 template <typename T, typename Device>
 void LinearLowRank<T, Device>::prepare(int ld,
-                                      int rank,
-                                      const T* z,
-                                      const T* w,
-                                      const T* test,
-                                      const LinearSmallLU* factor,
-                                      ct::Tensor* workspace)
+                                       int rank,
+                                       const T* z,
+                                       const T* w,
+                                       const T* test,
+                                       const LinearSmallLU* factor,
+                                       ct::Tensor* workspace)
 {
     rank_ = rank;
     test_ = rank > 0 ? test : nullptr;

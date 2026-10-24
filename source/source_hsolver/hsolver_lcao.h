@@ -1,12 +1,11 @@
 #ifndef HSOLVERLCAO_H
 #define HSOLVERLCAO_H
 
-#include "source_estate/elecstate.h"
-#include "source_hsolver/hs_matrix.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-
-#include "source_estate/module_charge/charge.h" // mohan add 20251024
+#include "source_estate/elecstate.h"
+#include "source_estate/module_charge/charge.h"     // mohan add 20251024
 #include "source_estate/module_dm/density_matrix.h" // mohan add 20251103
+#include "source_hsolver/hs_matrix.h"
 
 namespace hsolver
 {
@@ -25,17 +24,17 @@ class HSolverLCAO
                 const int world_nproc_in,
                 const int world_rank_in)
         : ParaV(ParaV_in), method(method_in), kpar_lcao(kpar_lcao_in), nlocal(nlocal_in), nbands(nbands_in),
-          nelec(nelec_in), use_gpu(use_gpu_in), world_nproc(world_nproc_in), world_rank(world_rank_in){};
+          nelec(nelec_in), use_gpu(use_gpu_in), world_nproc(world_nproc_in), world_rank(world_rank_in) {};
 
     /// @param hs supplies H(k) and S(k) of the Hamiltonian for each k point
     void solve(HSMatrix<TK>& hs,
                psi::Psi<TK>& psi,
                elecstate::ElecState* pes,
-			   module_dm::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
-			   Charge &chr, // charge density
-			   const int nspin,
+               module_dm::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
+               Charge& chr,                              // charge density
+               const int nspin,
                const double omega, // current cell volume (ucell.omega), NOT rhopw->omega
-			   const bool skip_charge);
+               const bool skip_charge);
 
   private:
     void hamiltSolvePsiK(ModuleBase::MatrixBlock<TK>& hk,
@@ -50,9 +49,7 @@ class HSolverLCAO
                     const int nspin); // for kpar_lcao > 1
 
     // The solving algorithm using cusolver is different from others, so a separate function is needed
-    void parakSolve_cusolver(HSMatrix<TK>& hs,
-                             psi::Psi<TK>& psi,
-                             elecstate::ElecState* pes);
+    void parakSolve_cusolver(HSMatrix<TK>& hs, psi::Psi<TK>& psi, elecstate::ElecState* pes);
 
     const Parallel_Orbitals* ParaV = nullptr;
 

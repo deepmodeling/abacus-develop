@@ -1,10 +1,10 @@
 #include "source_hsolver/kernels/linear_op.h"
 
-#include <hip/hip_runtime.h>
-#include <thrust/complex.h>
 #include <complex>
 #include <cstdint>
+#include <hip/hip_runtime.h>
 #include <stdexcept>
+#include <thrust/complex.h>
 
 namespace hsolver
 {
@@ -22,8 +22,11 @@ void check_launch()
 }
 
 template <typename Real>
-__global__ void dot_kernel(const int ld, const int dim, const thrust::complex<Real>* x,
-                           const thrust::complex<Real>* y, thrust::complex<Real>* out)
+__global__ void dot_kernel(const int ld,
+                           const int dim,
+                           const thrust::complex<Real>* x,
+                           const thrust::complex<Real>* y,
+                           thrust::complex<Real>* out)
 {
     __shared__ Real re[linear_threads];
     __shared__ Real im[linear_threads];
@@ -54,26 +57,44 @@ __global__ void dot_kernel(const int ld, const int dim, const thrust::complex<Re
 } // namespace
 
 template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::dot(const int ld, const int dim, const int nvec,
-                                              const T* x, const T* y, T* out) const
+void linear_op<T, base_device::DEVICE_GPU>::dot(const int ld,
+                                                const int dim,
+                                                const int nvec,
+                                                const T* x,
+                                                const T* y,
+                                                T* out) const
 {
-    if (nvec <= 0) { return; }
+    if (nvec <= 0)
+    {
+        return;
+    }
     using Complex = thrust::complex<typename T::value_type>;
-    dot_kernel<<<nvec, linear_threads>>>(ld, dim, reinterpret_cast<const Complex*>(x),
-        reinterpret_cast<const Complex*>(y), reinterpret_cast<Complex*>(out));
+    dot_kernel<<<nvec, linear_threads>>>(ld,
+                                         dim,
+                                         reinterpret_cast<const Complex*>(x),
+                                         reinterpret_cast<const Complex*>(y),
+                                         reinterpret_cast<Complex*>(out));
     check_launch();
 }
 
-
 template <typename C>
-__global__ void batch_kernel(int ld,int dim,C* out,const C* x,const C* y,C a,C b,const C* ca,const C* cb,const int* skip)
+__global__ void batch_kernel(int ld,
+                             int dim,
+                             C* out,
+                             const C* x,
+                             const C* y,
+                             C a,
+                             C b,
+                             const C* ca,
+                             const C* cb,
+                             const int* skip)
 {
-    const int i=blockIdx.x*blockDim.x+threadIdx.x;
-    const int band=blockIdx.y;
-    if(i<dim && (!skip || !skip[band]))
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    const int band = blockIdx.y;
+    if (i < dim && (!skip || !skip[band]))
     {
-        const int j=band*ld+i;
-        out[j]=(ca ? a*ca[band] : a)*x[j]+(cb ? b*cb[band] : b)*y[j];
+        const int j = band * ld + i;
+        out[j] = (ca ? a * ca[band] : a) * x[j] + (cb ? b * cb[band] : b) * y[j];
     }
 }
 template <typename C>
@@ -105,34 +126,57 @@ __global__ void gmres_update_kernel(int ld,
 }
 
 template <typename Real>
-__global__ void dots_kernel(int ld,int dim,int nvec,int tiles,
-    const thrust::complex<Real>* x,const thrust::complex<Real>* y,
-    const thrust::complex<Real>* z,const thrust::complex<Real>* w,thrust::complex<Real>* partial)
+__global__ void dots_kernel(int ld,
+                            int dim,
+                            int nvec,
+                            int tiles,
+                            const thrust::complex<Real>* x,
+                            const thrust::complex<Real>* y,
+                            const thrust::complex<Real>* z,
+                            const thrust::complex<Real>* w,
+                            thrust::complex<Real>* partial)
 {
     __shared__ Real re[256];
     __shared__ Real im[256];
-    const int tid=threadIdx.x;
-    const int band=blockIdx.x;
-    const int pair=blockIdx.z;
-    const thrust::complex<Real>* a=pair ? z : x;
-    const thrust::complex<Real>* b=pair ? w : y;
-    thrust::complex<Real> sum(0,0);
-    for(int i=blockIdx.y*256+tid;i<dim;i+=tiles*256) sum+=thrust::conj(a[band*ld+i])*b[band*ld+i];
-    re[tid]=sum.real(); im[tid]=sum.imag();
+    const int tid = threadIdx.x;
+    const int band = blockIdx.x;
+    const int pair = blockIdx.z;
+    const thrust::complex<Real>* a = pair ? z : x;
+    const thrust::complex<Real>* b = pair ? w : y;
+    thrust::complex<Real> sum(0, 0);
+    for (int i = blockIdx.y * 256 + tid; i < dim; i += tiles * 256)
+        sum += thrust::conj(a[band * ld + i]) * b[band * ld + i];
+    re[tid] = sum.real();
+    im[tid] = sum.imag();
     __syncthreads();
-    for(int n=128;n>0;n/=2) { if(tid<n){re[tid]+=re[tid+n];im[tid]+=im[tid+n];} __syncthreads(); }
-    if(tid==0) partial[(pair*nvec+band)*tiles+blockIdx.y]=thrust::complex<Real>(re[0],im[0]);
+    for (int n = 128; n > 0; n /= 2)
+    {
+        if (tid < n)
+        {
+            re[tid] += re[tid + n];
+            im[tid] += im[tid + n];
+        }
+        __syncthreads();
+    }
+    if (tid == 0)
+        partial[(pair * nvec + band) * tiles + blockIdx.y] = thrust::complex<Real>(re[0], im[0]);
 }
 template <typename C>
-__global__ void sum_tiles(int n,int tiles,const C* partial,C* out)
+__global__ void sum_tiles(int n, int tiles, const C* partial, C* out)
 {
-    const int i=blockIdx.x*blockDim.x+threadIdx.x;
-    if(i<n) { C sum(0,0); for(int t=0;t<tiles;++t)sum+=partial[i*tiles+t]; out[i]=sum; }
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < n)
+    {
+        C sum(0, 0);
+        for (int t = 0; t < tiles; ++t)
+            sum += partial[i * tiles + t];
+        out[i] = sum;
+    }
 }
 template <typename C>
-__global__ void gather_kernel(int ld,int dim,int stride,const C* in,C* out,const int* map)
+__global__ void gather_kernel(int ld, int dim, int stride, const C* in, C* out, const int* map)
 {
-    const int i=blockIdx.x*blockDim.x+threadIdx.x;
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < dim)
     {
         const std::int64_t slot_offset = static_cast<std::int64_t>(blockIdx.z) * stride;
@@ -142,25 +186,42 @@ __global__ void gather_kernel(int ld,int dim,int stride,const C* in,C* out,const
     }
 }
 template <typename T>
-void linear_op<T,base_device::DEVICE_GPU>::batch(int ld,int dim,int nvec,T* out,const T* x,const T* y,
-    T a,T b,const T* ca,const T* cb,const int* skip) const
+void linear_op<T, base_device::DEVICE_GPU>::batch(int ld,
+                                                  int dim,
+                                                  int nvec,
+                                                  T* out,
+                                                  const T* x,
+                                                  const T* y,
+                                                  T a,
+                                                  T b,
+                                                  const T* ca,
+                                                  const T* cb,
+                                                  const int* skip) const
 {
-    if(dim<=0 || nvec<=0)return;
-    using C=thrust::complex<typename T::value_type>;
-    batch_kernel<<<dim3((dim+255)/256,nvec),256>>>(ld,dim,reinterpret_cast<C*>(out),
-        reinterpret_cast<const C*>(x),reinterpret_cast<const C*>(y),C(a.real(),a.imag()),C(b.real(),b.imag()),
-        reinterpret_cast<const C*>(ca),reinterpret_cast<const C*>(cb),skip);
+    if (dim <= 0 || nvec <= 0)
+        return;
+    using C = thrust::complex<typename T::value_type>;
+    batch_kernel<<<dim3((dim + 255) / 256, nvec), 256>>>(ld,
+                                                         dim,
+                                                         reinterpret_cast<C*>(out),
+                                                         reinterpret_cast<const C*>(x),
+                                                         reinterpret_cast<const C*>(y),
+                                                         C(a.real(), a.imag()),
+                                                         C(b.real(), b.imag()),
+                                                         reinterpret_cast<const C*>(ca),
+                                                         reinterpret_cast<const C*>(cb),
+                                                         skip);
     check_launch();
 }
 template <typename T>
 void linear_op<T, base_device::DEVICE_GPU>::gmres_update(int ld,
-                                                        int dim,
-                                                        int nvec,
-                                                        T* solution,
-                                                        T* residual,
-                                                        const T* direction,
-                                                        const T* image,
-                                                        const T* coefficients) const
+                                                         int dim,
+                                                         int nvec,
+                                                         T* solution,
+                                                         T* residual,
+                                                         const T* direction,
+                                                         const T* image,
+                                                         const T* coefficients) const
 {
     if (dim <= 0 || nvec <= 0)
     {
@@ -173,92 +234,156 @@ void linear_op<T, base_device::DEVICE_GPU>::gmres_update(int ld,
     const C* current_direction = reinterpret_cast<const C*>(direction);
     const C* current_image = reinterpret_cast<const C*>(image);
     const C* coeff = reinterpret_cast<const C*>(coefficients);
-    gmres_update_kernel<<<grid, linear_threads>>>(ld, dim, current_solution, current_residual, current_direction, current_image, coeff);
+    gmres_update_kernel<<<grid, linear_threads>>>(ld,
+                                                  dim,
+                                                  current_solution,
+                                                  current_residual,
+                                                  current_direction,
+                                                  current_image,
+                                                  coeff);
     check_launch();
 }
 
 template <typename T>
-void linear_op<T,base_device::DEVICE_GPU>::dots(int ld,int dim,int nvec,const T* x,const T* y,const T* z,const T* w,
-    T* out,T* partial,int tiles) const
+void linear_op<T, base_device::DEVICE_GPU>::dots(int ld,
+                                                 int dim,
+                                                 int nvec,
+                                                 const T* x,
+                                                 const T* y,
+                                                 const T* z,
+                                                 const T* w,
+                                                 T* out,
+                                                 T* partial,
+                                                 int tiles) const
 {
-    if(nvec<=0)return;
-    using C=thrust::complex<typename T::value_type>;
-    const int pairs=z ? 2 : 1;
-    C* target=reinterpret_cast<C*>(tiles==1 ? out : partial);
-    dots_kernel<<<dim3(nvec,tiles,pairs),256>>>(ld,dim,nvec,tiles,reinterpret_cast<const C*>(x),
-        reinterpret_cast<const C*>(y),reinterpret_cast<const C*>(z),reinterpret_cast<const C*>(w),target);
+    if (nvec <= 0)
+        return;
+    using C = thrust::complex<typename T::value_type>;
+    const int pairs = z ? 2 : 1;
+    C* target = reinterpret_cast<C*>(tiles == 1 ? out : partial);
+    dots_kernel<<<dim3(nvec, tiles, pairs), 256>>>(ld,
+                                                   dim,
+                                                   nvec,
+                                                   tiles,
+                                                   reinterpret_cast<const C*>(x),
+                                                   reinterpret_cast<const C*>(y),
+                                                   reinterpret_cast<const C*>(z),
+                                                   reinterpret_cast<const C*>(w),
+                                                   target);
     check_launch();
-    if(tiles>1)
+    if (tiles > 1)
     {
-        sum_tiles<<<(pairs*nvec+255)/256,256>>>(pairs*nvec,tiles,target,reinterpret_cast<C*>(out));
+        sum_tiles<<<(pairs * nvec + 255) / 256, 256>>>(pairs * nvec, tiles, target, reinterpret_cast<C*>(out));
         check_launch();
     }
 }
 template <typename T>
-void linear_op<T,base_device::DEVICE_GPU>::gather(int ld,int dim,int nvec,int slots,int stride,const T* in,T* out,const int* map) const
+void linear_op<T, base_device::DEVICE_GPU>::gather(int ld,
+                                                   int dim,
+                                                   int nvec,
+                                                   int slots,
+                                                   int stride,
+                                                   const T* in,
+                                                   T* out,
+                                                   const int* map) const
 {
-    if(dim<=0 || nvec<=0)return;
-    using C=thrust::complex<typename T::value_type>;
-    gather_kernel<<<dim3((dim+255)/256,nvec,slots),256>>>(ld,dim,stride,reinterpret_cast<const C*>(in),reinterpret_cast<C*>(out),map);
+    if (dim <= 0 || nvec <= 0)
+        return;
+    using C = thrust::complex<typename T::value_type>;
+    gather_kernel<<<dim3((dim + 255) / 256, nvec, slots), 256>>>(ld,
+                                                                 dim,
+                                                                 stride,
+                                                                 reinterpret_cast<const C*>(in),
+                                                                 reinterpret_cast<C*>(out),
+                                                                 map);
     check_launch();
 }
 
-
 template <typename C>
-__global__ void swaps_kernel(int ld,int dim,int stride,int count,C* vectors,const int* pairs)
+__global__ void swaps_kernel(int ld, int dim, int stride, int count, C* vectors, const int* pairs)
 {
-    const int i=blockIdx.x*blockDim.x+threadIdx.x;
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= dim)
     {
         return;
     }
     const std::int64_t offset = static_cast<std::int64_t>(blockIdx.y) * stride + i;
-    for(int k=0;k<count;++k)
+    for (int k = 0; k < count; ++k)
     {
         const std::int64_t first = offset + static_cast<std::int64_t>(pairs[2 * k]) * ld;
         const std::int64_t second = offset + static_cast<std::int64_t>(pairs[2 * k + 1]) * ld;
         C& a = vectors[first];
         C& b = vectors[second];
-        const C value=a; a=b; b=value;
+        const C value = a;
+        a = b;
+        b = value;
     }
 }
 template <typename T>
-void linear_op<T,base_device::DEVICE_GPU>::swaps(int ld,int dim,int slots,int stride,int count,T* vectors,const int* pairs) const
+void linear_op<T, base_device::DEVICE_GPU>::swaps(int ld,
+                                                  int dim,
+                                                  int slots,
+                                                  int stride,
+                                                  int count,
+                                                  T* vectors,
+                                                  const int* pairs) const
 {
-    if(dim==0 || count==0)return;
-    using C=thrust::complex<typename T::value_type>;
-    swaps_kernel<<<dim3((dim+255)/256,slots),256>>>(ld,dim,stride,count,reinterpret_cast<C*>(vectors),pairs);
+    if (dim == 0 || count == 0)
+        return;
+    using C = thrust::complex<typename T::value_type>;
+    swaps_kernel<<<dim3((dim + 255) / 256, slots), 256>>>(ld, dim, stride, count, reinterpret_cast<C*>(vectors), pairs);
     check_launch();
 }
-
 
 template <typename C>
-__global__ void bicg_update_kernel(int ld,int dim,bool direction,C* out,const C* x,const C* y,const C* a,const C* b)
+__global__ void bicg_update_kernel(int ld,
+                                   int dim,
+                                   bool direction,
+                                   C* out,
+                                   const C* x,
+                                   const C* y,
+                                   const C* a,
+                                   const C* b)
 {
-    const int i=blockIdx.x*blockDim.x+threadIdx.x;
-    const int band=blockIdx.y;
-    if(i<dim)
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    const int band = blockIdx.y;
+    if (i < dim)
     {
-        const int j=band*ld+i;
-        out[j]=direction ? x[j]+a[band]*(out[j]-b[band]*y[j]) : (out[j]+a[band]*x[j])+b[band]*y[j];
+        const int j = band * ld + i;
+        out[j] = direction ? x[j] + a[band] * (out[j] - b[band] * y[j]) : (out[j] + a[band] * x[j]) + b[band] * y[j];
     }
 }
 template <typename T>
-void linear_op<T,base_device::DEVICE_GPU>::bicg_update(int ld,int dim,int nvec,bool direction,T* out,const T* x,const T* y,const T* a,const T* b) const
+void linear_op<T, base_device::DEVICE_GPU>::bicg_update(int ld,
+                                                        int dim,
+                                                        int nvec,
+                                                        bool direction,
+                                                        T* out,
+                                                        const T* x,
+                                                        const T* y,
+                                                        const T* a,
+                                                        const T* b) const
 {
-    if(dim==0 || nvec==0)return;
-    using C=thrust::complex<typename T::value_type>;
-    bicg_update_kernel<<<dim3((dim+255)/256,nvec),256>>>(ld,dim,direction,reinterpret_cast<C*>(out),
-        reinterpret_cast<const C*>(x),reinterpret_cast<const C*>(y),reinterpret_cast<const C*>(a),reinterpret_cast<const C*>(b));
+    if (dim == 0 || nvec == 0)
+        return;
+    using C = thrust::complex<typename T::value_type>;
+    bicg_update_kernel<<<dim3((dim + 255) / 256, nvec), 256>>>(ld,
+                                                               dim,
+                                                               direction,
+                                                               reinterpret_cast<C*>(out),
+                                                               reinterpret_cast<const C*>(x),
+                                                               reinterpret_cast<const C*>(y),
+                                                               reinterpret_cast<const C*>(a),
+                                                               reinterpret_cast<const C*>(b));
     check_launch();
 }
-
 
 template <typename C>
 __global__ void diagonal_kernel(int ld, int dim, const C* inverse, const C* x, C* y)
 {
     const int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i < dim) y[blockIdx.y * ld + i] = inverse[i] * x[blockIdx.y * ld + i];
+    if (i < dim)
+        y[blockIdx.y * ld + i] = inverse[i] * x[blockIdx.y * ld + i];
 }
 
 template <typename C>
@@ -301,64 +426,98 @@ __global__ void cgs_finish_kernel(int ld, int dim, C* x, C* r, const C* directio
 }
 
 template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::diagonal(int ld, int dim, int nvec, const T* inverse, const T* x, T* y) const
+void linear_op<T, base_device::DEVICE_GPU>::diagonal(int ld, int dim, int nvec, const T* inverse, const T* x, T* y)
+    const
 {
-    if (dim == 0 || nvec == 0) return;
+    if (dim == 0 || nvec == 0)
+        return;
     using C = thrust::complex<typename T::value_type>;
-    diagonal_kernel<<<dim3((dim + 255) / 256, nvec), 256>>>(ld, dim,
-        reinterpret_cast<const C*>(inverse),
-        reinterpret_cast<const C*>(x),
-        reinterpret_cast<C*>(y));
+    diagonal_kernel<<<dim3((dim + 255) / 256, nvec), 256>>>(ld,
+                                                            dim,
+                                                            reinterpret_cast<const C*>(inverse),
+                                                            reinterpret_cast<const C*>(x),
+                                                            reinterpret_cast<C*>(y));
     check_launch();
 }
 
 template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::cgs_direction(int ld, int dim, int nvec, T* p, T* u, const T* r, const T* q, const T* beta) const
+void linear_op<T, base_device::DEVICE_GPU>::cgs_direction(int ld,
+                                                          int dim,
+                                                          int nvec,
+                                                          T* p,
+                                                          T* u,
+                                                          const T* r,
+                                                          const T* q,
+                                                          const T* beta) const
 {
-    if (dim == 0 || nvec == 0) return;
+    if (dim == 0 || nvec == 0)
+        return;
     using C = thrust::complex<typename T::value_type>;
-    cgs_direction_kernel<<<dim3((dim + 255) / 256, nvec), 256>>>(ld, dim,
-        reinterpret_cast<C*>(p),
-        reinterpret_cast<C*>(u),
-        reinterpret_cast<const C*>(r),
-        reinterpret_cast<const C*>(q),
-        reinterpret_cast<const C*>(beta));
+    cgs_direction_kernel<<<dim3((dim + 255) / 256, nvec), 256>>>(ld,
+                                                                 dim,
+                                                                 reinterpret_cast<C*>(p),
+                                                                 reinterpret_cast<C*>(u),
+                                                                 reinterpret_cast<const C*>(r),
+                                                                 reinterpret_cast<const C*>(q),
+                                                                 reinterpret_cast<const C*>(beta));
     check_launch();
 }
 
 template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::cgs_alpha(int ld, int dim, int nvec, T* q, T* direction, const T* u, const T* v, const T* alpha) const
+void linear_op<T, base_device::DEVICE_GPU>::cgs_alpha(int ld,
+                                                      int dim,
+                                                      int nvec,
+                                                      T* q,
+                                                      T* direction,
+                                                      const T* u,
+                                                      const T* v,
+                                                      const T* alpha) const
 {
-    if (dim == 0 || nvec == 0) return;
+    if (dim == 0 || nvec == 0)
+        return;
     using C = thrust::complex<typename T::value_type>;
-    cgs_alpha_kernel<<<dim3((dim + 255) / 256, nvec), 256>>>(ld, dim,
-        reinterpret_cast<C*>(q),
-        reinterpret_cast<C*>(direction),
-        reinterpret_cast<const C*>(u),
-        reinterpret_cast<const C*>(v),
-        reinterpret_cast<const C*>(alpha));
+    cgs_alpha_kernel<<<dim3((dim + 255) / 256, nvec), 256>>>(ld,
+                                                             dim,
+                                                             reinterpret_cast<C*>(q),
+                                                             reinterpret_cast<C*>(direction),
+                                                             reinterpret_cast<const C*>(u),
+                                                             reinterpret_cast<const C*>(v),
+                                                             reinterpret_cast<const C*>(alpha));
     check_launch();
 }
 
 template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::cgs_finish(int ld, int dim, int nvec, T* x, T* r, const T* direction, const T* ad, const T* alpha) const
+void linear_op<T, base_device::DEVICE_GPU>::cgs_finish(int ld,
+                                                       int dim,
+                                                       int nvec,
+                                                       T* x,
+                                                       T* r,
+                                                       const T* direction,
+                                                       const T* ad,
+                                                       const T* alpha) const
 {
-    if (dim == 0 || nvec == 0) return;
+    if (dim == 0 || nvec == 0)
+        return;
     using C = thrust::complex<typename T::value_type>;
-    cgs_finish_kernel<<<dim3((dim + 255) / 256, nvec), 256>>>(ld, dim,
-        reinterpret_cast<C*>(x),
-        reinterpret_cast<C*>(r),
-        reinterpret_cast<const C*>(direction),
-        reinterpret_cast<const C*>(ad),
-        reinterpret_cast<const C*>(alpha));
+    cgs_finish_kernel<<<dim3((dim + 255) / 256, nvec), 256>>>(ld,
+                                                              dim,
+                                                              reinterpret_cast<C*>(x),
+                                                              reinterpret_cast<C*>(r),
+                                                              reinterpret_cast<const C*>(direction),
+                                                              reinterpret_cast<const C*>(ad),
+                                                              reinterpret_cast<const C*>(alpha));
     check_launch();
 }
 namespace
 {
 template <typename Real, typename Accumulator>
-__global__ void wide_dot_kernel(int ld, int dim, int nvec, int stride,
-                               const thrust::complex<Real>* basis, const thrust::complex<Real>* x,
-                               thrust::complex<Accumulator>* out)
+__global__ void wide_dot_kernel(int ld,
+                                int dim,
+                                int nvec,
+                                int stride,
+                                const thrust::complex<Real>* basis,
+                                const thrust::complex<Real>* x,
+                                thrust::complex<Accumulator>* out)
 {
     __shared__ Accumulator re[linear_threads];
     __shared__ Accumulator im[linear_threads];
@@ -378,32 +537,60 @@ __global__ void wide_dot_kernel(int ld, int dim, int nvec, int stride,
     __syncthreads();
     for (int s = blockDim.x / 2; s > 0; s /= 2)
     {
-        if (tid < s) { re[tid] += re[tid + s]; im[tid] += im[tid + s]; }
+        if (tid < s)
+        {
+            re[tid] += re[tid + s];
+            im[tid] += im[tid + s];
+        }
         __syncthreads();
     }
-    if (tid == 0) out[blockIdx.x] = thrust::complex<Accumulator>(re[0], im[0]);
+    if (tid == 0)
+        out[blockIdx.x] = thrust::complex<Accumulator>(re[0], im[0]);
 }
-}
+} // namespace
 
 template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::wide_dots(int ld, int dim, int nvec, int count, int stride,
-                                                     const T* basis, const T* x, std::complex<double>* out) const
+void linear_op<T, base_device::DEVICE_GPU>::wide_dots(int ld,
+                                                      int dim,
+                                                      int nvec,
+                                                      int count,
+                                                      int stride,
+                                                      const T* basis,
+                                                      const T* x,
+                                                      std::complex<double>* out) const
 {
-    if (nvec * count == 0) return;
+    if (nvec * count == 0)
+        return;
     using C = thrust::complex<typename T::value_type>;
-    wide_dot_kernel<<<nvec * count, linear_threads>>>(ld, dim, nvec, stride,
-        reinterpret_cast<const C*>(basis), reinterpret_cast<const C*>(x),
-        reinterpret_cast<thrust::complex<double>*>(out));
+    wide_dot_kernel<<<nvec * count, linear_threads>>>(ld,
+                                                      dim,
+                                                      nvec,
+                                                      stride,
+                                                      reinterpret_cast<const C*>(basis),
+                                                      reinterpret_cast<const C*>(x),
+                                                      reinterpret_cast<thrust::complex<double>*>(out));
     check_launch();
 }
 template <typename T>
-void linear_op<T, base_device::DEVICE_GPU>::native_dots(int ld, int dim, int nvec, int count, int stride,
-                                                       const T* basis, const T* x, T* out) const
+void linear_op<T, base_device::DEVICE_GPU>::native_dots(int ld,
+                                                        int dim,
+                                                        int nvec,
+                                                        int count,
+                                                        int stride,
+                                                        const T* basis,
+                                                        const T* x,
+                                                        T* out) const
 {
-    if (nvec * count == 0) return;
+    if (nvec * count == 0)
+        return;
     using C = thrust::complex<typename T::value_type>;
-    wide_dot_kernel<<<nvec * count, linear_threads>>>(ld, dim, nvec, stride,
-        reinterpret_cast<const C*>(basis), reinterpret_cast<const C*>(x), reinterpret_cast<C*>(out));
+    wide_dot_kernel<<<nvec * count, linear_threads>>>(ld,
+                                                      dim,
+                                                      nvec,
+                                                      stride,
+                                                      reinterpret_cast<const C*>(basis),
+                                                      reinterpret_cast<const C*>(x),
+                                                      reinterpret_cast<C*>(out));
     check_launch();
 }
 

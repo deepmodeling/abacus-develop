@@ -1,4 +1,4 @@
-/// This is the module for wrapper of 
+/// This is the module for wrapper of
 /// DeNse Generalized eigenValue (eXtended)
 /// HErmitian / SYmmetric
 
@@ -7,8 +7,8 @@
 #ifndef MODULE_HSOLVER_HEGVD_H
 #define MODULE_HSOLVER_HEGVD_H
 
-#include "source_base/parallel_reduce.h"
 #include "source_base/module_device/types.h"
+#include "source_base/parallel_reduce.h"
 
 #include <cassert>
 
@@ -35,14 +35,25 @@
 namespace hsolver
 {
 
-inline double get_real(const std::complex<double> &x) { return x.real(); }
+inline double get_real(const std::complex<double>& x)
+{
+    return x.real();
+}
 
-inline float get_real(const std::complex<float> &x) { return x.real(); }
+inline float get_real(const std::complex<float>& x)
+{
+    return x.real();
+}
 
-inline double get_real(const double &x) { return x; }
+inline double get_real(const double& x)
+{
+    return x;
+}
 
-inline float get_real(const float &x) { return x; }
-
+inline float get_real(const float& x)
+{
+    return x;
+}
 
 template <typename T, typename Device>
 struct hegvd_op
@@ -128,7 +139,7 @@ struct heevx_op
     /// Output Parameter
     ///     @param w: calculated eigenvalues
     ///     @param z: calculated eigenvectors
-    void operator()(const Device *d, const int ndim, const int lda, const T *A, const int neig, Real *w, T *z);
+    void operator()(const Device* d, const int ndim, const int lda, const T* A, const int neig, Real* w, T* z);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

@@ -1,13 +1,13 @@
-#include <mpi.h>
 #include <complex>
 #include <memory>
+#include <mpi.h>
 #ifdef __PEXSI
 #include "diago_pexsi.h"
-#include "source_base/matrix_block.h"
-#include "source_base/tool_title.h"
-#include "source_base/tool_quit.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
+#include "source_base/matrix_block.h"
+#include "source_base/tool_quit.h"
+#include "source_base/tool_title.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 
 namespace hsolver
 {
@@ -42,7 +42,6 @@ DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
         this->DM[i] = new T[ParaV->nrow * ParaV->ncol];
         this->EDM[i] = new T[ParaV->nrow * ParaV->ncol];
     }
-
 }
 
 template <typename T>
@@ -53,7 +52,6 @@ DiagoPexsi<T>::~DiagoPexsi()
         delete[] this->DM[i];
         delete[] this->EDM[i];
     }
-
 }
 
 template <>
@@ -92,7 +90,7 @@ void DiagoPexsi<std::complex<double>>::diag(ModuleBase::MatrixBlock<std::complex
 }
 
 template class DiagoPexsi<double>;
-template class DiagoPexsi<std::complex<double> >;
+template class DiagoPexsi<std::complex<double>>;
 
 } // namespace hsolver
 #endif

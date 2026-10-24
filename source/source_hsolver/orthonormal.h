@@ -80,7 +80,10 @@ class Orthonormal
     const diag_comm_info comm_;
     LinearAlgebra<T, Device>& algebra_;
     ct::Tensor candidate_;
-    bool factor(const std::vector<std::complex<double>>& gram, int bands, OrthMethod method, std::vector<std::complex<double>>* transform);
+    bool factor(const std::vector<std::complex<double>>& gram,
+                int bands,
+                OrthMethod method,
+                std::vector<std::complex<double>>* transform);
     bool try_candidate(T* input,
                        int ld,
                        int dim,
@@ -88,8 +91,19 @@ class Orthonormal
                        const std::vector<std::complex<double>>& transform,
                        std::vector<std::complex<double>>* gram,
                        OrthResult* result);
-    void correct(T* input, int ld, int dim, int bands, OrthMethod method, std::vector<std::complex<double>>* gram, OrthResult* result);
-    void rotate(const T* input, T* output, int ld, int dim, int bands, const std::vector<std::complex<double>>& transform);
+    void correct(T* input,
+                 int ld,
+                 int dim,
+                 int bands,
+                 OrthMethod method,
+                 std::vector<std::complex<double>>* gram,
+                 OrthResult* result);
+    void rotate(const T* input,
+                T* output,
+                int ld,
+                int dim,
+                int bands,
+                const std::vector<std::complex<double>>& transform);
     std::vector<std::complex<double>> gram(const T* input, int ld, int dim, int bands);
 
   public:

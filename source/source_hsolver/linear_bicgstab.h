@@ -59,7 +59,9 @@ class LinearBiCGSTAB final
                             const int max_iterations);
 
   private:
-    bool iterate(const LinearOperator<T, Device>& op, const LinearOperator<T, Device>& preconditioner, LinearSolveResult* result);
+    bool iterate(const LinearOperator<T, Device>& op,
+                 const LinearOperator<T, Device>& preconditioner,
+                 LinearSolveResult* result);
     void retire(const int band);
     void retire_converged(const bool alpha_step, const bool identity);
     bool breakdown(const T divisor, const int band, LinearSolveResult* result) const;

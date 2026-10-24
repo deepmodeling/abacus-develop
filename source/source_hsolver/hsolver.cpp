@@ -69,7 +69,8 @@ double set_diagethr_ks(const std::string basis_type,
                 res_diag_ethr = 1.e-2;
             }
             res_diag_ethr = std::min(res_diag_ethr,
-                                     static_cast<double>(0.1) * drho / std::max(static_cast<double>(1.0), static_cast<double>(nelec_in)));
+                                     static_cast<double>(0.1) * drho
+                                         / std::max(static_cast<double>(1.0), static_cast<double>(nelec_in)));
         }
 
         // Keep the single-precision diagonalization threshold at or above the floor
@@ -183,7 +184,10 @@ double reset_diag_ethr(std::ofstream& ofs_running,
     return new_diag_ethr;
 };
 
-double cal_hsolve_error(const std::string basis_type, const std::string esolver_type, const double diag_ethr_in, const double nelec_in)
+double cal_hsolve_error(const std::string basis_type,
+                        const std::string esolver_type,
+                        const double diag_ethr_in,
+                        const double nelec_in)
 {
     if (basis_type == "pw" && esolver_type == "ksdft")
     {

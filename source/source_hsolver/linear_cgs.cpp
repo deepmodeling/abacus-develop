@@ -5,7 +5,8 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-LinearCGS<T, Device>::LinearCGS(const double tolerance, const diag_comm_info& comm) : tolerance_(tolerance), work_(comm, 9)
+LinearCGS<T, Device>::LinearCGS(const double tolerance, const diag_comm_info& comm)
+    : tolerance_(tolerance), work_(comm, 9)
 {
 }
 
@@ -174,8 +175,8 @@ LinearSolveResult LinearCGS<T, Device>::solve(const LinearOperator<T, Device>& o
             result.status = LinearSolveStatus::residual_mismatch;
         }
         work_.verify(op, ld, dim, nband, x, b, original_threshold, work_.data(residual_slot), &result);
-        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iterations || result.iterations == cycle_start
-            || !std::isfinite(result.max_residual))
+        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iterations
+            || result.iterations == cycle_start || !std::isfinite(result.max_residual))
         {
             return result;
         }

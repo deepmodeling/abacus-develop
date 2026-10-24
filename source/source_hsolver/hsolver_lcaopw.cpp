@@ -17,9 +17,9 @@ namespace hsolver
     lcao_in_pw
 */
 template <typename T>
-void HSolverLIP<T>::solve(HSOperator<T>& op,       // ESolver_KS_PW::p_hamilt behind the operator interface
-                          psi::Psi<T>& psi,           // ESolver_KS_PW::kspw_psi
-                          elecstate::ElecState* pes,  // ESolver_KS_PW::pes
+void HSolverLIP<T>::solve(HSOperator<T>& op,         // ESolver_KS_PW::p_hamilt behind the operator interface
+                          psi::Psi<T>& psi,          // ESolver_KS_PW::kspw_psi
+                          elecstate::ElecState* pes, // ESolver_KS_PW::pes
                           psi::Psi<T>& transform,
                           const diag_comm_info& diag_comm,
                           std::ostream& log,
@@ -69,7 +69,7 @@ void HSolverLIP<T>::solve(HSOperator<T>& op,       // ESolver_KS_PW::p_hamilt be
                                  pes->nelec_spin,
                                  this->global_nbands,
                                  pes->skip_weights);
-    elecstate::calEBand(pes->ekb,pes->wg,pes->f_en);
+    elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
     if (skip_charge)
     {
         if (this->use_uspp)

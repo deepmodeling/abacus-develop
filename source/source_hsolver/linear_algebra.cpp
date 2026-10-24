@@ -11,7 +11,10 @@
 
 namespace hsolver
 {
-std::vector<std::complex<double>> linear_gram_basis(const std::vector<std::complex<double>>& gram, int n, double cutoff, int* rank)
+std::vector<std::complex<double>> linear_gram_basis(const std::vector<std::complex<double>>& gram,
+                                                    int n,
+                                                    double cutoff,
+                                                    int* rank)
 {
     using Wide = std::complex<double>;
     *rank = 0;
@@ -188,7 +191,12 @@ void LinearAlgebra<T, Device>::reduce(std::vector<Wide>* values) const
 }
 
 template <typename T, typename Device>
-std::vector<std::complex<double>> LinearAlgebra<T, Device>::projection_cross(int ld, int dim, int nx, int ny, const T* x, const T* y)
+std::vector<std::complex<double>> LinearAlgebra<T, Device>::projection_cross(int ld,
+                                                                             int dim,
+                                                                             int nx,
+                                                                             int ny,
+                                                                             const T* x,
+                                                                             const T* y)
 {
     if (std::is_same<T, Wide>::value)
     {
@@ -203,7 +211,9 @@ std::vector<std::complex<double>> LinearAlgebra<T, Device>::projection_cross(int
         const T zero(0);
         T* products = native_products_.template data<T>();
         ModuleBase::gemm_op<T, Device>()('C', 'N', nx, ny, dim, &one, x, ld, y, ld, &zero, products, nx);
-        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(native.data(), products, native.size());
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(native.data(),
+                                                                                         products,
+                                                                                         native.size());
     }
 #ifdef __MPI
     if (comm_.nproc > 1)
@@ -263,7 +273,12 @@ std::vector<std::complex<double>> LinearAlgebra<T, Device>::dots(int ld,
 }
 
 template <typename T, typename Device>
-std::vector<std::complex<double>> LinearAlgebra<T, Device>::cross(int ld, int dim, int nx, int ny, const T* x, const T* y)
+std::vector<std::complex<double>> LinearAlgebra<T, Device>::cross(int ld,
+                                                                  int dim,
+                                                                  int nx,
+                                                                  int ny,
+                                                                  const T* x,
+                                                                  const T* y)
 {
     const int64_t elements = static_cast<int64_t>(nx) * ny;
     std::vector<Wide> result(elements, Wide(0));
@@ -298,10 +313,23 @@ std::vector<std::complex<double>> LinearAlgebra<T, Device>::cross(int ld, int di
         linear_buffer<Wide, Device>(&products_, elements);
         const Wide one(1);
         const Wide zero(0);
-        ModuleBase::gemm_op<Wide, Device>()('C', 'N', nx, ny, dim, &one, a, ld, b, ld, &zero, products_.template data<Wide>(), nx);
-        base_device::memory::synchronize_memory_op<Wide, base_device::DEVICE_CPU, Device>()(result.data(),
-                                                                                            products_.template data<Wide>(),
-                                                                                            result.size());
+        ModuleBase::gemm_op<Wide, Device>()('C',
+                                            'N',
+                                            nx,
+                                            ny,
+                                            dim,
+                                            &one,
+                                            a,
+                                            ld,
+                                            b,
+                                            ld,
+                                            &zero,
+                                            products_.template data<Wide>(),
+                                            nx);
+        base_device::memory::synchronize_memory_op<Wide, base_device::DEVICE_CPU, Device>()(
+            result.data(),
+            products_.template data<Wide>(),
+            result.size());
     }
     reduce(&result);
     return result;
@@ -343,8 +371,11 @@ std::vector<std::complex<double>> LinearAlgebra<T, Device>::gram(int ld, int dim
         const Wide one(1);
         const Wide zero(0);
         Wide* products = products_.template data<Wide>();
-        ModuleBase::gemm_op<Wide, Device>()('C', 'N', bands, bands, dim, &one, wide, ld, wide, ld, &zero, products, bands);
-        base_device::memory::synchronize_memory_op<Wide, base_device::DEVICE_CPU, Device>()(result.data(), products, elements);
+        ModuleBase::gemm_op<Wide,
+                            Device>()('C', 'N', bands, bands, dim, &one, wide, ld, wide, ld, &zero, products, bands);
+        base_device::memory::synchronize_memory_op<Wide, base_device::DEVICE_CPU, Device>()(result.data(),
+                                                                                            products,
+                                                                                            elements);
     }
     reduce(&result);
     ModuleBase::timer::end("LinearAlgebra", "gram");
@@ -352,7 +383,14 @@ std::vector<std::complex<double>> LinearAlgebra<T, Device>::gram(int ld, int dim
 }
 
 template <typename T, typename Device>
-void LinearAlgebra<T, Device>::expand(int ld, int dim, int nx, int ny, const T* x, const std::vector<Wide>& c, T* y, T beta)
+void LinearAlgebra<T, Device>::expand(int ld,
+                                      int dim,
+                                      int nx,
+                                      int ny,
+                                      const T* x,
+                                      const std::vector<Wide>& c,
+                                      T* y,
+                                      T beta)
 {
     if (dim == 0 || nx == 0 || ny == 0)
     {
@@ -361,7 +399,9 @@ void LinearAlgebra<T, Device>::expand(int ld, int dim, int nx, int ny, const T* 
     std::vector<T> narrow(c.begin(), c.end());
     linear_buffer<T, Device>(&coefficients_, narrow.size());
     T* coeff = coefficients_.template data<T>();
-    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(coeff, narrow.data(), narrow.size());
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(coeff,
+                                                                                     narrow.data(),
+                                                                                     narrow.size());
     const T one(1);
     ModuleBase::gemm_op<T, Device>()('N', 'N', dim, ny, nx, &one, x, ld, coeff, nx, &beta, y, ld);
 }

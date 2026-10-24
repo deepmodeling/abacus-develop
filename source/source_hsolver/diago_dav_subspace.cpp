@@ -1,28 +1,28 @@
-#include <algorithm>
 #include "diago_dav_subspace.h"
 
 #include "diago_iter_assist.h"
-
+#include "source_base/kernels/dsp/dsp_connector.h"
+#include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/device.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include "source_base/kernels/math_kernel_op.h"
-#include "source_base/kernels/dsp/dsp_connector.h"
+
+#include <algorithm>
 // #include "source_base/module_container/ATen/kernels/lapack.h"
 
-#include <ATen/kernels/lapack.h>
-
-#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_hsolver/diag_hs_para.h"
 #include "source_hsolver/kernels/bpcg_kernel_op.h" // normalize_op, precondition_op, apply_eigenvalues_op
+#include "source_hsolver/kernels/hegvd_op.h"
 
+#include <ATen/kernels/lapack.h>
 #include <vector>
 
 #ifdef __MPI
-#include <mpi.h>
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_device.h"
+
+#include <mpi.h>
 #endif
 
 using namespace hsolver;
@@ -38,8 +38,8 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
                                                 const int diag_subspace_in,
                                                 const int diago_subspace_bs_in)
     : precondition(precondition_in), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in * david_ndim_in),
-      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), diag_comm(diag_comm_in),
-        diag_subspace(diag_subspace_in), diago_subspace_bs(diago_subspace_bs_in)
+      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), diag_comm(diag_comm_in), diag_subspace(diag_subspace_in),
+      diago_subspace_bs(diago_subspace_bs_in)
 {
     this->device = base_device::get_device_type(this->ctx);
 
@@ -307,48 +307,49 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
         }
     }
 
-    if (notconv > 1){
-
-#ifdef __DSP
-    ModuleBase::gemm_op_mt<T, Device>()
-#else
-    ModuleBase::gemm_op<T, Device>()
-#endif
-                        ('N',
-                         'N',
-                         this->dim,
-                         notconv,
-                         nbase,
-                         this->one,
-                         hpsi,
-                         matrix_ld,
-                         vcc,
-                         this->nbase_x,
-                         this->zero,
-                         psi_iter + (nbase) * this->dim,
-                         matrix_ld);
-    } else
+    if (notconv > 1)
     {
 
 #ifdef __DSP
-    ModuleBase::gemv_op_mt<T, Device>()
+        ModuleBase::gemm_op_mt<T, Device>()
 #else
-    ModuleBase::gemv_op<T, Device>()
+        ModuleBase::gemm_op<T, Device>()
 #endif
-                        ('N',
-                         this->dim,     // m: row of A
-                         nbase,         // n: col of A
-                         this->one,     // alpha
-                         hpsi,          // A dim * nbase
-                         matrix_ld,     // LDA: if(N) max(1,m)
-                         vcc,           // X nbase
-                         1,             // incx
-                         this->zero,    // beta
-                         psi_iter + (nbase) * this->dim,  // Y dim
-                         1              // incy
-                        );
+            ('N',
+             'N',
+             this->dim,
+             notconv,
+             nbase,
+             this->one,
+             hpsi,
+             matrix_ld,
+             vcc,
+             this->nbase_x,
+             this->zero,
+             psi_iter + (nbase) * this->dim,
+             matrix_ld);
     }
+    else
+    {
 
+#ifdef __DSP
+        ModuleBase::gemv_op_mt<T, Device>()
+#else
+        ModuleBase::gemv_op<T, Device>()
+#endif
+            ('N',
+             this->dim,                      // m: row of A
+             nbase,                          // n: col of A
+             this->one,                      // alpha
+             hpsi,                           // A dim * nbase
+             matrix_ld,                      // LDA: if(N) max(1,m)
+             vcc,                            // X nbase
+             1,                              // incx
+             this->zero,                     // beta
+             psi_iter + (nbase) * this->dim, // Y dim
+             1                               // incy
+            );
+    }
 
     // Eigenvalues operation section
     Real* e_temp_hd = eigenvalue_iter->data();
@@ -359,69 +360,67 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
     }
 
     // vcc = - vcc * eigenvalue
-    ModuleBase::matrix_mul_vector_op<T, Device>()(nbase, notconv, vcc, this->nbase_x, e_temp_hd, -1.0, vcc, this->nbase_x);
+    ModuleBase::matrix_mul_vector_op<T,
+                                     Device>()(nbase, notconv, vcc, this->nbase_x, e_temp_hd, -1.0, vcc, this->nbase_x);
 
-    if (notconv > 1){
+    if (notconv > 1)
+    {
 
 #ifdef __DSP
-    ModuleBase::gemm_op_mt<T, Device>()
+        ModuleBase::gemm_op_mt<T, Device>()
 #else
-    ModuleBase::gemm_op<T, Device>()
+        ModuleBase::gemm_op<T, Device>()
 #endif
-        ('N',
-         'N',
-         this->dim,
-         notconv,
-         nbase,
-         this->one,
-         spsi,
-         matrix_ld,
-         vcc,
-         this->nbase_x,
-         this->one,
-         psi_iter + nbase * this->dim,
-         matrix_ld);
-    } else
+            ('N',
+             'N',
+             this->dim,
+             notconv,
+             nbase,
+             this->one,
+             spsi,
+             matrix_ld,
+             vcc,
+             this->nbase_x,
+             this->one,
+             psi_iter + nbase * this->dim,
+             matrix_ld);
+    }
+    else
     {
 #ifdef __DSP
-    ModuleBase::gemv_op_mt<T, Device>()
+        ModuleBase::gemv_op_mt<T, Device>()
 #else
-    ModuleBase::gemv_op<T, Device>()
+        ModuleBase::gemv_op<T, Device>()
 #endif
-        ('N',
-         this->dim,     // m: row of A
-         nbase,         // n: col of A
-         this->one,     // alpha
-         spsi,          // A dim * nbase
-         matrix_ld,     // LDA: if(N) max(1,m)
-         vcc,           // X nbase
-         1,             // incx
-         this->one,    // beta
-         psi_iter + nbase * this->dim,  // Y dim
-         1              // incy
-        );
+            ('N',
+             this->dim,                    // m: row of A
+             nbase,                        // n: col of A
+             this->one,                    // alpha
+             spsi,                         // A dim * nbase
+             matrix_ld,                    // LDA: if(N) max(1,m)
+             vcc,                          // X nbase
+             1,                            // incx
+             this->one,                    // beta
+             psi_iter + nbase * this->dim, // Y dim
+             1                             // incy
+            );
     }
 
     // Precondition section
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
-        precondition_op<T, Device>()(this->dim,
-                                    psi_iter,
-                                    nbase,
-                                    notconv,
-                                    d_precondition,
-                                    this->d_eigenvalue);
+        precondition_op<T, Device>()(this->dim, psi_iter, nbase, notconv, d_precondition, this->d_eigenvalue);
     }
     else
 #endif
     {
         precondition_op<T, Device>()(this->dim,
-                                    psi_iter,
-                                    nbase,
-                                    notconv,
-                                    this->precondition.data(),
-                                    (*eigenvalue_iter).data());
+                                     psi_iter,
+                                     nbase,
+                                     notconv,
+                                     this->precondition.data(),
+                                     (*eigenvalue_iter).data());
     }
 
     // Normalize section
@@ -432,11 +431,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
         resmem_real_op()(psi_norm, notconv);
         setmem_real_op()(psi_norm, 0.0, notconv);
 
-        normalize_op<T, Device>()(this->dim,
-                                psi_iter,
-                                nbase,
-                                notconv,
-                                psi_norm);
+        normalize_op<T, Device>()(this->dim, psi_iter, nbase, notconv, psi_norm);
 
         // Check for zero norms (GPU path: copy norms from device to host)
         Real* psi_norm_host = nullptr;
@@ -465,11 +460,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
         resmem_real_h_op()(psi_norm, notconv);
         setmem_real_h_op()(psi_norm, 0.0, notconv);
 
-        normalize_op<T, Device>()(this->dim,
-                                psi_iter,
-                                nbase,
-                                notconv,
-                                psi_norm);
+        normalize_op<T, Device>()(this->dim, psi_iter, nbase, notconv, psi_norm);
 
         // Check for zero norms (CPU path)
         for (int i = 0; i < notconv; i++)
@@ -519,84 +510,84 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         setmem_complex_op()(s_contribution, 0, contribution_size);
     }
 
-    if (notconv > 1){
+    if (notconv > 1)
+    {
 #ifdef __DSP
-    ModuleBase::gemm_op_mt<T, Device>()
+        ModuleBase::gemm_op_mt<T, Device>()
 #else
-    ModuleBase::gemm_op<T, Device>()
+        ModuleBase::gemm_op<T, Device>()
 #endif
-        ('C',
-         'N',
-         nbase + notconv,
-         notconv,
-         this->dim,
-         this->one,
-         psi_iter,
-         matrix_ld,
-         &hpsi[nbase * this->dim],
-         matrix_ld,
-         this->zero,
-         &hcc[nbase * this->nbase_x],
-         this->nbase_x);
-
-#ifdef __DSP
-    ModuleBase::gemm_op_mt<T, Device>()
-#else
-    ModuleBase::gemm_op<T, Device>()
-#endif
-        ('C',
-         'N',
-         nbase + notconv,
-         notconv,
-         this->dim,
-         this->one,
-         psi_iter,
-         matrix_ld,
-         spsi + nbase * this->dim,
-         matrix_ld,
-         this->zero,
-         &scc[nbase * this->nbase_x],
-         this->nbase_x);
-
-        } else {
+            ('C',
+             'N',
+             nbase + notconv,
+             notconv,
+             this->dim,
+             this->one,
+             psi_iter,
+             matrix_ld,
+             &hpsi[nbase * this->dim],
+             matrix_ld,
+             this->zero,
+             &hcc[nbase * this->nbase_x],
+             this->nbase_x);
 
 #ifdef __DSP
-    ModuleBase::gemv_op_mt<T, Device>()
+        ModuleBase::gemm_op_mt<T, Device>()
 #else
-    ModuleBase::gemv_op<T, Device>()
+        ModuleBase::gemm_op<T, Device>()
 #endif
-        ('C',
-         this->dim,                 // m: row of A
-         nbase + notconv,          // n: col of A
-         this->one,                // alpha
-         psi_iter,                 // A dim * nbase
-         matrix_ld,                // LDA: if(N) max(1,m)
-         &hpsi[nbase * this->dim], // X nbase
-         1,                        // incx
-         this->zero,               // beta
-         &hcc[nbase * this->nbase_x], // Y dim
-         1                         // incy
-        );
+            ('C',
+             'N',
+             nbase + notconv,
+             notconv,
+             this->dim,
+             this->one,
+             psi_iter,
+             matrix_ld,
+             spsi + nbase * this->dim,
+             matrix_ld,
+             this->zero,
+             &scc[nbase * this->nbase_x],
+             this->nbase_x);
+    }
+    else
+    {
+
 #ifdef __DSP
-    ModuleBase::gemv_op_mt<T, Device>()
+        ModuleBase::gemv_op_mt<T, Device>()
 #else
-    ModuleBase::gemv_op<T, Device>()
+        ModuleBase::gemv_op<T, Device>()
 #endif
-        ('C',
-         this->dim,                 // m: row of A
-         nbase + notconv,          // n: col of A
-         this->one,                // alpha
-         psi_iter,                 // A dim * nbase
-         matrix_ld,                // LDA: if(N) max(1,m)
-         spsi + nbase * this->dim, // X nbase
-         1,                        // incx
-         this->zero,               // beta
-         &scc[nbase * this->nbase_x], // Y dim
-         1                         // incy
-        );
-
-        }
-
+            ('C',
+             this->dim,                   // m: row of A
+             nbase + notconv,             // n: col of A
+             this->one,                   // alpha
+             psi_iter,                    // A dim * nbase
+             matrix_ld,                   // LDA: if(N) max(1,m)
+             &hpsi[nbase * this->dim],    // X nbase
+             1,                           // incx
+             this->zero,                  // beta
+             &hcc[nbase * this->nbase_x], // Y dim
+             1                            // incy
+            );
+#ifdef __DSP
+        ModuleBase::gemv_op_mt<T, Device>()
+#else
+        ModuleBase::gemv_op<T, Device>()
+#endif
+            ('C',
+             this->dim,                   // m: row of A
+             nbase + notconv,             // n: col of A
+             this->one,                   // alpha
+             psi_iter,                    // A dim * nbase
+             matrix_ld,                   // LDA: if(N) max(1,m)
+             spsi + nbase * this->dim,    // X nbase
+             1,                           // incx
+             this->zero,                  // beta
+             &scc[nbase * this->nbase_x], // Y dim
+             1                            // incy
+            );
+    }
 
 #ifdef __MPI
     if (this->diag_comm.nproc > 1)
@@ -637,7 +628,12 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         if (this->diag_comm.rank == 0)
         {
             syncmem_complex_op()(this->d_scc, scc, nbase * this->nbase_x);
-            ct::kernels::lapack_hegvd<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
+            ct::kernels::lapack_hegvd<T, ct_Device>()(nbase,
+                                                      this->nbase_x,
+                                                      this->hcc,
+                                                      this->d_scc,
+                                                      this->d_eigenvalue,
+                                                      this->vcc);
             syncmem_var_d2h_op()((*eigenvalue_iter).data(), this->d_eigenvalue, this->nbase_x);
         }
 #endif
@@ -770,19 +766,19 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif
-                        ('N',
-                         'N',
-                         this->dim,
-                         nband,
-                         nbase,
-                         this->one,
-                         this->hpsi,
-                         matrix_ld,
-                         this->vcc,
-                         this->nbase_x,
-                         this->zero,
-                         psi_iter + nband * this->dim,
-                         matrix_ld);
+        ('N',
+         'N',
+         this->dim,
+         nband,
+         nbase,
+         this->one,
+         this->hpsi,
+         matrix_ld,
+         this->vcc,
+         this->nbase_x,
+         this->zero,
+         psi_iter + nband * this->dim,
+         matrix_ld);
 
     // update hpsi
     syncmem_complex_op()(hpsi, psi_iter + nband * this->dim, this->dim * nband);

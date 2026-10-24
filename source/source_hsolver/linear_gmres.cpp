@@ -262,8 +262,8 @@ bool LinearGMRES<T, Device>::cycle(const LinearOperator<T, Device>& op,
             {
                 return false;
             }
-            done[b] = std::abs(g_[b][j + 1]) <= 0.8 * threshold[order_[b]] || norm <= std::numeric_limits<Real>::min() || j + 1 == restart_
-                      || result->iterations == max_iterations;
+            done[b] = std::abs(g_[b][j + 1]) <= 0.8 * threshold[order_[b]] || norm <= std::numeric_limits<Real>::min()
+                      || j + 1 == restart_ || result->iterations == max_iterations;
             coeff[b] = done[b] ? T(0) : T(1.0 / norm);
             if (!done[b])
             {
@@ -414,7 +414,8 @@ LinearSolveResult LinearGMRES<T, Device>::solve(const LinearOperator<T, Device>&
             return result;
         }
         const bool retry_initial = initial_residual && result.restarts == 0;
-        if (result.iterations >= max_iterations || (result.iterations == start && !retry_initial) || !std::isfinite(result.max_residual))
+        if (result.iterations >= max_iterations || (result.iterations == start && !retry_initial)
+            || !std::isfinite(result.max_residual))
         {
             return result;
         }
