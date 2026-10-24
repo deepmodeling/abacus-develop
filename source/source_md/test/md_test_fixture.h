@@ -1,13 +1,13 @@
 #ifndef MD_TEST_FIXTURE_H
 #define MD_TEST_FIXTURE_H
 
-#include "gtest/gtest.h"
+#include "setcell.h"
+#include "source_cell/domain_decomposition.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_md/md_base.h"
-#include "source_cell/domain_decomposition.h"
-#include "setcell.h"
 
+#include "gtest/gtest.h"
 #include <memory>
 #include <string>
 #include <vector>

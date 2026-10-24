@@ -1,28 +1,28 @@
 #include "run_md.h"
 
-#include "source_base/constants.h"
-#include "source_base/global_function.h"
-#include "source_base/global_variable.h"
-#include "source_base/parallel_cell.h"
-#include "source_cell/mdcell_reader.h"
-#include "source_cell/mdcell.h"
-#include "source_cell/domain_decomposition.h"
-#include "source_io/module_parameter/parameter.h"
 #include "fire.h"
 #include "langevin.h"
 #include "md_func.h"
+#include "source_base/constants.h"
 #include "source_base/global_file.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/parallel_cell.h"
 #include "source_base/timer.h"
+#include "source_cell/domain_decomposition.h"
+#include "source_cell/mdcell.h"
+#include "source_cell/mdcell_reader.h"
+#include "source_io/module_parameter/parameter.h"
 #ifdef __JSON
 #include "source_io/module_json/output_info.h"
 #endif
-#include "source_io/module_output/print_info.h"
 #include "msst.h"
 #include "nhchain.h"
-#include "verlet.h"
-#include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h"
+#include "source_cell/update_cell.h"
+#include "source_io/module_output/print_info.h"
 #include "source_md/module_plumed/plumed_interface.h"
+#include "verlet.h"
 
 #include <vector>
 #ifdef __MPI
@@ -129,10 +129,7 @@ void collect_plumed_cell(const MDCell& mdcell, double* cell)
 }
 } // namespace
 
-void md_line(MDCell& mdcell,
-             ModuleESolver::ESolver* p_esolver,
-             const Parameter& param_in,
-             DomainDecomposition& decomp)
+void md_line(MDCell& mdcell, ModuleESolver::ESolver* p_esolver, const Parameter& param_in, DomainDecomposition& decomp)
 {
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::start("Run_MD", "md_line");
@@ -259,18 +256,12 @@ void md_line(MDCell& mdcell,
 
             mdrun->second_half();
 
-            MD_func::compute_stress(mdcell,
-                                    param_in.inp.cal_stress,
-                                    mdrun->virial,
-                                    mdrun->stress);
-            mdrun->t_current = MD_func::current_temp(mdrun->kinetic,
-                                                     mdcell,
-                                                     mdrun->frozen_freedom_);
+            MD_func::compute_stress(mdcell, param_in.inp.cal_stress, mdrun->virial, mdrun->stress);
+            mdrun->t_current = MD_func::current_temp(mdrun->kinetic, mdcell, mdrun->frozen_freedom_);
         }
 
         mdrun->print_md(GlobalV::ofs_running, PARAM.inp.cal_stress);
-        if (param_in.mdp.md_dumpfreq > 0
-            && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
+        if (param_in.mdp.md_dumpfreq > 0 && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
         {
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
                                PARAM.globalv.global_out_dir,
@@ -280,8 +271,7 @@ void md_line(MDCell& mdcell,
                                mdrun->virial);
         }
 
-        if (param_in.mdp.md_restartfreq > 0
-            && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)
+        if (param_in.mdp.md_restartfreq > 0 && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)
         {
             if (mdcell.has_backing_unitcell())
             {

@@ -2,6 +2,7 @@
 #define MSST_H
 
 #include "md_base.h"
+
 #include <vector>
 
 /**
@@ -15,11 +16,7 @@
 class MSST : public MD_base
 {
   public:
-    MSST(const MD_para& mdp_in,
-         const bool cal_stress_in,
-         const bool init_vel,
-         const int my_rank_in,
-         MDCell& mdcell_in);
+    MSST(const MD_para& mdp_in, const bool cal_stress_in, const bool init_vel, const int my_rank_in, MDCell& mdcell_in);
     ~MSST();
 
     /// @brief time derivative of the volume, per lattice direction
@@ -87,18 +84,18 @@ class MSST : public MD_base
      */
     void propagate_voldot(void);
 
-    std::vector<ModuleBase::Vector3<double> > old_v; ///< old atomic velocities
-    ModuleBase::Vector3<double> dilation; ///< dilation scale
-    ModuleBase::Vector3<double> omega;    ///< time derivative of volume
-    double p0;                            ///< initial pressure
-    double v0;                            ///< initial volume
-    double e0;                            ///< initial energy
-    double totmass;                       ///< total mass of the cell
-    double lag_pos;                       ///< Lagrangian location of cell
-    double vsum;                          ///< sum over v^2
-    double msst_vel;                      ///< shock msst_vel (\AA/fs)
-    double msst_qmass;                    ///< cell mass-like parameter (mass^2/length^4)
-    double msst_vis;                      ///< artificial msst_vis (mass/length/time)
+    std::vector<ModuleBase::Vector3<double>> old_v; ///< old atomic velocities
+    ModuleBase::Vector3<double> dilation;           ///< dilation scale
+    ModuleBase::Vector3<double> omega;              ///< time derivative of volume
+    double p0;                                      ///< initial pressure
+    double v0;                                      ///< initial volume
+    double e0;                                      ///< initial energy
+    double totmass;                                 ///< total mass of the cell
+    double lag_pos;                                 ///< Lagrangian location of cell
+    double vsum;                                    ///< sum over v^2
+    double msst_vel;                                ///< shock msst_vel (\AA/fs)
+    double msst_qmass;                              ///< cell mass-like parameter (mass^2/length^4)
+    double msst_vis;                                ///< artificial msst_vis (mass/length/time)
 };
 
 #endif

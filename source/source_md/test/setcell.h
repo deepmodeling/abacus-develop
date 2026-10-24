@@ -4,12 +4,12 @@
 #ifndef SETCELL_H
 #define SETCELL_H
 
-#include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_cell/mdcell.h"
-#include "source_cell/unitcell.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
+#include "source_cell/mdcell.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"
 
 #include <cmath>
@@ -35,7 +35,7 @@ class Setcell
 
         ucell.atoms = new Atom[ucell.ntype];
         ucell.set_atom_flag = true;
-        
+
         ucell.atoms[0].mass = 39.948;
         ucell.atoms[0].label = "Ar";
 
@@ -154,14 +154,14 @@ class Setcell
             for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
             {
                 owned_atoms.push_back(LocalAtom(ucell.atoms[it].tau[ia],
-                                                 ucell.atoms[it].taud[ia],
-                                                 ucell.atoms[it].vel[ia],
-                                                 ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                                 ucell.atoms[it].mbl[ia],
-                                                 ucell.atoms[it].mass / ModuleBase::AU_to_MASS,
-                                                 it,
-                                                 ia,
-                                                 0));
+                                                ucell.atoms[it].taud[ia],
+                                                ucell.atoms[it].vel[ia],
+                                                ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                                ucell.atoms[it].mbl[ia],
+                                                ucell.atoms[it].mass / ModuleBase::AU_to_MASS,
+                                                it,
+                                                ia,
+                                                0));
             }
         }
 
@@ -182,12 +182,10 @@ class Setcell
 
     static ModuleBase::Vector3<double> fractional_displacement(const LocalAtom& atom)
     {
-        const ModuleBase::Vector3<double> initial_frac[] = {
-            ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-            ModuleBase::Vector3<double>(0.52, 0.52, 0.0),
-            ModuleBase::Vector3<double>(0.51, 0.0, 0.5),
-            ModuleBase::Vector3<double>(0.0, 0.53, 0.5)
-        };
+        const ModuleBase::Vector3<double> initial_frac[] = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                                            ModuleBase::Vector3<double>(0.52, 0.52, 0.0),
+                                                            ModuleBase::Vector3<double>(0.51, 0.0, 0.5),
+                                                            ModuleBase::Vector3<double>(0.0, 0.53, 0.5)};
         ModuleBase::Vector3<double> displacement = atom.frac - initial_frac[atom.type_index];
         displacement.x -= std::floor(displacement.x + 0.5);
         displacement.y -= std::floor(displacement.y + 0.5);

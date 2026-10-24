@@ -29,7 +29,8 @@ MSST::MSST(const MD_para& mdp_in,
     lag_pos = 0;
     vsum = 0;
 
-    for (const LocalAtom& atom : mdcell.owned_atoms()) totmass += atom.mass;
+    for (const LocalAtom& atom: mdcell.owned_atoms())
+        totmass += atom.mass;
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &totmass, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
@@ -67,7 +68,8 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
 
             std::cout << "initial strain rate = " << fac2 << "    msst_tscale = " << mdp.msst_tscale << std::endl;
 
-            for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel *= sqrt(1.0 - mdp.msst_tscale);
+            for (LocalAtom& atom: mdcell.owned_atoms())
+                atom.vel *= sqrt(1.0 - mdp.msst_tscale);
         }
 
         MD_func::compute_stress(mdcell, cal_stress, virial, stress);
@@ -162,7 +164,6 @@ void MSST::second_half()
     return;
 }
 
-
 void MSST::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
@@ -195,7 +196,6 @@ void MSST::write_restart(const std::string& global_out_dir)
     return;
 }
 
-
 void MSST::restart(const std::string& global_readin_dir)
 {
     bool ok = true;
@@ -214,7 +214,7 @@ void MSST::restart(const std::string& global_readin_dir)
         if (ok)
         {
             file >> step_rst_ >> md_tfirst >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos;
-            if(!file)
+            if (!file)
             {
                 ok = false;
             }
@@ -248,7 +248,8 @@ double MSST::vel_sum() const
 {
     double vsum = 0;
 
-    for (const LocalAtom& atom : mdcell.owned_atoms()) vsum += atom.vel.norm2();
+    for (const LocalAtom& atom: mdcell.owned_atoms())
+        vsum += atom.vel.norm2();
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &vsum, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
@@ -270,10 +271,10 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     mdcell.refresh_cart_from_frac();
 
     /// rescale velocity
-    for (LocalAtom& atom : mdcell.owned_atoms()) atom.vel[sd] *= dilation[sd];
+    for (LocalAtom& atom: mdcell.owned_atoms())
+        atom.vel[sd] *= dilation[sd];
     static_cast<void>(ofs);
 }
-
 
 void MSST::propagate_vel()
 {
@@ -281,7 +282,7 @@ void MSST::propagate_vel()
     const double dthalf = 0.5 * md_dt;
     const double fac = msst_vis * pow(omega[sd], 2) / (vsum * mdcell.omega());
 
-    for (LocalAtom& atom : mdcell.owned_atoms())
+    for (LocalAtom& atom: mdcell.owned_atoms())
     {
         ModuleBase::Vector3<double> const_C = atom.force / atom.mass;
         ModuleBase::Vector3<double> const_D;
@@ -305,7 +306,6 @@ void MSST::propagate_vel()
     }
     return;
 }
-
 
 void MSST::propagate_voldot()
 {
