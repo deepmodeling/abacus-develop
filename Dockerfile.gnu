@@ -7,7 +7,7 @@
 # Docker images are aimed for evaluating ABACUS.
 # For production use, please compile ABACUS from source code and run in bare-metal for a better performace.
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 RUN apt update && apt install -y --no-install-recommends \
     libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev \
     libxc-dev libgtest-dev libgmock-dev libbenchmark-dev python3-numpy nlohmann-json3-dev \
