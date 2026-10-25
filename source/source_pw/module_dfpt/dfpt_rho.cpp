@@ -6,6 +6,8 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_base/module_mixing/plain_mixing.h"
+#include "source_base/module_mixing/broyden_mixing.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_sphbes.h"
 #include "source_estate/module_charge/chg_tools.h"
@@ -14,17 +16,38 @@
 #include <cmath>
 #include <complex>
 #include <functional>
+#include <limits>
 #include <vector>
 
 namespace ModuleDFPT
 {
 
+namespace
+{
+/// relative defect ||out - in|| / ||out|| with convergence-safe guards:
+/// a zero output norm only reports convergence when the defect itself is
+/// zero (v_out = 1 - c v_in maps a nonzero input to zero output far from
+/// its fixed point), and non-finite norms never report convergence
+double safe_relative_defect_(double dn2, double o2)
+{
+    if (!std::isfinite(dn2) || !std::isfinite(o2))
+    {
+        return std::numeric_limits<double>::max();
+    }
+    if (o2 <= 0.0)
+    {
+        return (dn2 <= 0.0) ? 0.0 : std::numeric_limits<double>::max();
+    }
+    return std::sqrt(dn2 / o2);
+}
+} // namespace
+
 DFPT_Rho::DFPT_Rho()
 {
 }
 
-// Defined here (after plain_mixing.h is included) so the unique_ptr deleter
-// sees the complete Plain_Mixing type. The body is implicitly generated.
+// Defined here (after the mixing headers are included) so the unique_ptr
+// deleters see the complete types. The body is implicitly generated.
 DFPT_Rho::~DFPT_Rho() = default;
 
 void DFPT_Rho::init(const Config& cfg)
@@ -397,15 +420,19 @@ void DFPT_Rho::reset_mixing(int q_idx)
         residual_[q_idx] = 0.0;
     }
     // Broyden history is per (q, displacement-cycle): drop it so the next
-    // displacement starts fresh; also reset the Broyden mixer's internal
-    // address binding (it must not point to the destroyed Mixing_Data)
+    // displacement starts fresh
     if (q_idx < static_cast<int>(broyden_mdata_.size()))
     {
         broyden_mdata_[q_idx].reset();
-        if (broyden_mixer_ != nullptr)
-        {
-            broyden_mixer_->reset();
-        }
+    }
+    // the shared Broyden mixer must be reset on every valid cycle,
+    // independently of whether this q already has a history entry: when a
+    // new q is entered for the first time the mixer is still address-bound
+    // to the previous q's Mixing_Data, and its first push would exit
+    // through the one-object-one-data address guard (broyden_mixing.cpp)
+    if (broyden_mixer_ != nullptr)
+    {
+        broyden_mixer_->reset();
     }
     ModuleBase::timer::end("DFPT_Rho", "reset_mixing");
 }
@@ -481,17 +508,10 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
                                   screen,
                                   combine,
                                   true);
-        auto inner = std::function<double(std::complex<double>*, std::complex<double>*)>(
-            [](std::complex<double>* a, std::complex<double>* b) {
-                double s = 0.0;
-                for (int i = 0; i < 1; ++i)
-                {
-                    s += (a[i] * std::conj(b[i])).real();
-                }
-                return s;
-            });
-        // the inner product needs the full length; use the templated path
-        // through the mixing data (the Broyden class handles the wrapping)
+        // the inner product is a pool-global quantity: each rank only
+        // holds its G-shell share, so the partial sum must be reduced
+        // before the Gram system is assembled (otherwise every rank
+        // solves a different least-squares problem)
         broyden_mixer_->cal_coef(mdata,
             std::function<double(std::complex<double>*, std::complex<double>*)>(
             [npw](std::complex<double>* a, std::complex<double>* b) {
@@ -500,11 +520,14 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
                 {
                     s += (a[i] * std::conj(b[i])).real();
                 }
+#ifdef __MPI
+                Parallel_Reduce::reduce_pool(s);
+#endif
                 return s;
             }));
         broyden_mixer_->mix_data(mdata, mixed.data());
     }
-    else if (mix_type_ == "kerker")
+    else if (mix_type_ == "rho_kerker")
     {
         const ModuleBase::Vector3<double> q_cart = q_frac * recip_matrix_;
         std::vector<std::complex<double>> rin_s(npw);
@@ -537,7 +560,8 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
     {
         mixer_->plain_mix(mixed.data(), rin.data(), out.data(), npw, std::function<void(std::complex<double>*)>());
     }
-    // relative residual ||out - in|| / ||out||
+    // relative residual ||out - in|| / ||out||; the norms are pool-global
+    // quantities (each rank sums its G shells only)
     double dn2 = 0.0;
     double o2 = 0.0;
     for (int ig = 0; ig < npw; ++ig)
@@ -545,7 +569,11 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
         dn2 += std::norm(out[ig] - rin[ig]);
         o2 += std::norm(out[ig]);
     }
-    residual_[q_idx] = (o2 > 0.0) ? std::sqrt(dn2 / o2) : 0.0;
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(dn2);
+    Parallel_Reduce::reduce_pool(o2);
+#endif
+    residual_[q_idx] = safe_relative_defect_(dn2, o2);
     drho_in_[q_idx][0] = mixed;
     data.set_drho_g(q_idx, 0, mixed);
 

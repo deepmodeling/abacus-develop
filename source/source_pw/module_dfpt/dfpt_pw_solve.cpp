@@ -11,6 +11,7 @@
 #include "dfpt_pw_impl.h"
 
 #include "dfpt_pw_data.h"
+#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
@@ -19,12 +20,33 @@
 #include <complex>
 #include <cstdlib>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <iostream>
 #include <vector>
 
 namespace ModuleDFPT
 {
+
+namespace
+{
+/// relative defect ||out - in|| / ||out|| with convergence-safe guards
+/// (shared definition with dfpt_rho.cpp; see the note there): a zero
+/// output norm only reports convergence when the defect itself is zero,
+/// and non-finite norms never report convergence
+double safe_relative_defect_(double dn2, double o2)
+{
+    if (!std::isfinite(dn2) || !std::isfinite(o2))
+    {
+        return std::numeric_limits<double>::max();
+    }
+    if (o2 <= 0.0)
+    {
+        return (dn2 <= 0.0) ? 0.0 : std::numeric_limits<double>::max();
+    }
+    return std::sqrt(dn2 / o2);
+}
+} // namespace
 
 void DFPT_PW::Impl::assemble_v_sc(const ModuleBase::Vector3<double>& q_cart,
                                   const std::vector<std::complex<double>>& drho_in_g,
@@ -232,10 +254,14 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
     int n_iter_done = 0;
     std::vector<std::complex<double>> v_sc_r_last;
     // v_sc mode: the SCF mixes the screening potential instead of the
-    // density -- the fixed-point variable change provides implicit K^-1
-    // preconditioning (the Hartree+XC kernel's inverse), flattening the
-    // Coulomb-stiff smallest-G shells that destabilize plain density
-    // mixing (see MIXING_20261020.md §8)
+    // density. For a fixed linear kernel the density and potential
+    // fixed-point maps have similar Jacobians (chi*K vs K*chi on the
+    // responsive subspace), so scalar plain mixing keeps the same
+    // spectrum: the variable change alone is not an inverse-kernel
+    // preconditioner. What changes is the metric the Broyden least
+    // squares works in (the K-weighted inner product), which is why
+    // v_sc_broyden is the stabilized default while v_sc_plain tracks
+    // the plain density mixing (see MIXING_20261020.md §8)
     const bool vsc_mode = (mix_type_ == "v_sc_plain" || mix_type_ == "v_sc_broyden");
     std::vector<std::complex<double>> v_sc_in_r(nrxx, std::complex<double>(0.0, 0.0));
     // v_sc Broyden: a separate instance from the density Broyden because
@@ -340,9 +366,16 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
                             {
                                 s += (a[i] * std::conj(b[i])).real();
                             }
+#ifdef __MPI
+                            // pool-global inner product: each rank sums
+                            // its FFT slab share only, and the Gram system
+                            // must be identical on every rank
+                            Parallel_Reduce::reduce_pool(s);
+#endif
                             return s;
                         }));
-                // residual from the unmixed in/out difference
+                // residual from the unmixed in/out difference; the norms
+                // are pool-global quantities (rank-local FFT slabs)
                 double dn2 = 0.0;
                 double o2 = 0.0;
                 for (int ir = 0; ir < nrxx; ++ir)
@@ -350,12 +383,17 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
                     dn2 += std::norm(v_sc_out_r[ir] - v_sc_in_r[ir]);
                     o2 += std::norm(v_sc_out_r[ir]);
                 }
-                residual = (o2 > 0.0) ? std::sqrt(dn2 / o2) : 0.0;
+#ifdef __MPI
+                Parallel_Reduce::reduce_pool(dn2);
+                Parallel_Reduce::reduce_pool(o2);
+#endif
+                residual = safe_relative_defect_(dn2, o2);
                 vsc_broyden_->mix_data(*vsc_broyden_mdata_, v_sc_in_r.data());
             }
             else
             {
-                // plain beta mix on the real-space potential
+                // plain beta mix on the real-space potential; the norms are
+                // pool-global quantities (rank-local FFT slabs)
                 double dn2 = 0.0;
                 double o2 = 0.0;
                 for (int ir = 0; ir < nrxx; ++ir)
@@ -365,7 +403,11 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
                     o2 += std::norm(v_sc_out_r[ir]);
                     v_sc_in_r[ir] += mix_beta_ * delta;
                 }
-                residual = (o2 > 0.0) ? std::sqrt(dn2 / o2) : 0.0;
+#ifdef __MPI
+                Parallel_Reduce::reduce_pool(dn2);
+                Parallel_Reduce::reduce_pool(o2);
+#endif
+                residual = safe_relative_defect_(dn2, o2);
             }
             // store the mixed density for the 2n+1 accumulation path:
             // rebuild the G-space coefficients from the Sternheimer output

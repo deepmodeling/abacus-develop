@@ -180,9 +180,9 @@ class DFPT_PW::Impl
     int max_iter_ = 100;
     double mix_beta_ = 0.4;
     std::string asr_type_ = "no"; ///< acoustic sum rule mode on the Gamma matrix
-    std::string mix_type_ = "plain"; ///< first-order density mixing scheme
-    double kerker_a2_ = 1.0;         ///< Kerker screening a^2, 1/lat0^2 (kerker only)
-    int broyden_ndim_ = 8;           ///< Broyden history depth (broyden only)
+    std::string mix_type_ = "v_sc_broyden"; ///< response SCF mixing scheme
+    double kerker_a2_ = 1.0;         ///< Kerker screening a^2, 1/lat0^2 (rho_kerker only)
+    int broyden_ndim_ = 8;           ///< Broyden history depth (rho/v_sc Broyden)
     ///< Broyden on the screening potential for v_sc mode (separate instance
     /// from the density Broyden because the array length differs: nrxx vs npw)
     std::unique_ptr<Base_Mixing::Broyden_Mixing> vsc_broyden_;

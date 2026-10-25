@@ -65,7 +65,7 @@ class DFPTRhoSerialTest : public DFPTSerialBase
     void SetUp() override
     {
         DFPTSerialBase::SetUp();
-        rho_.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("plain"), 0.4, 0.0});
+        rho_.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_plain"), 0.4, 0.0});
     }
 
     void FillRandomStates(psi::Psi<std::complex<double>>& psi,
@@ -242,7 +242,7 @@ TEST_F(DFPTRhoSerialTest, ChargeConservationAtGamma)
     ModuleDFPT::DFPT_PW_Data data0;
     data0.init(&qlist0, 1, nbands_, pw_wfc0.npwk_max, pw_rho_.nrxx, 1, 1, nullptr);
     ModuleDFPT::DFPT_Rho rho0;
-    rho0.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc0, G_, std::string("plain"), 0.4, 0.0});
+    rho0.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc0, G_, std::string("rho_plain"), 0.4, 0.0});
 
     psi::Psi<std::complex<double>> psi(1, nbands_, pw_wfc0.npwk_max, pw_wfc0.npwk[0], true);
     ModuleDFPT::DFPT_KQ_Basis kq0;
@@ -410,7 +410,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerFirstStepIsPreconditionedScaledOutput)
     }
     ASSERT_GT(w2_min, 0.0);
     const double a2 = 4.0 * w2_min;
-    rho_k.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("kerker"), 0.7, a2});
+    rho_k.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_kerker"), 0.7, a2});
 
     std::vector<std::complex<double>> out(pw_rho_.npw);
     int n_small = 0;
@@ -500,7 +500,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
 
     // plain beta = 0.7 on the stiff model diverges
     ModuleDFPT::DFPT_Rho rho_p;
-    rho_p.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("plain"), 0.7, 0.0});
+    rho_p.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_plain"), 0.7, 0.0});
     data_.set_drho_g(0, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
     for (int it = 0; it < 40; ++it)
     {
@@ -513,7 +513,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
     // kerker beta = 0.7 with a^2 = 9 w2_min (f ~ 0.1 on the stiff shell)
     // converges to the target
     ModuleDFPT::DFPT_Rho rho_k;
-    rho_k.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("kerker"), 0.7, 9.0 * w2_min});
+    rho_k.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_kerker"), 0.7, 9.0 * w2_min});
     data_.set_drho_g(0, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
     for (int it = 0; it < 300; ++it)
     {
@@ -530,12 +530,15 @@ TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
     }
 }
 
-#if 0 // TODO: fix Broyden mock interface; real-system G5 validation covers this
 TEST_F(DFPTRhoSerialTest, BroydenConvergesDiagonalSystemFast)
 {
-    // synthetic fixed-point: drho_out = A * drho_in, with A a simple
-    // contraction; Broyden should converge in few iterations (the plain
-    // mixer needs O(1/(1-|A|)) steps)
+    // synthetic fixed point: out = D in + (1 - D) t with a diagonal D
+    // (0.5 and 0.3 on two G shells, 0 elsewhere) and a fixed target t,
+    // so the response map has a source and the relative residual
+    // ||out - in|| / ||out|| genuinely decays. Plain beta = 0.4
+    // contracts every shell by |1 - beta (1 - D)| >= 0.6 (>= 90 steps
+    // to 1e-10); Modified Broyden on the few distinct eigenvalues
+    // should converge in a handful of iterations.
     SetupBases(k_d_, q_d_, 2);
     ModuleDFPT::DFPT_Rho::Config cfg;
     cfg.nspin = 1;
@@ -543,28 +546,34 @@ TEST_F(DFPTRhoSerialTest, BroydenConvergesDiagonalSystemFast)
     cfg.pw_rho = &pw_rho_;
     cfg.pw_wfc = &pw_wfc_;
     cfg.recip_matrix = G_;
-    cfg.mix_type = "broyden";
+    cfg.mix_type = "rho_broyden";
     cfg.mix_beta = 0.4;
     cfg.kerker_a2 = 1.0;
     cfg.broyden_ndim = 8;
     ModuleDFPT::DFPT_Rho rho;
     rho.init(cfg);
 
-    // use a small 2-component toy problem mapped onto npw (only two
-    // nonzero G components with different eigenvalues of the response)
     const int npw = pw_rho_.npw;
-    // target: the fixed point of drho_out = A drho_in
-    // choose A = diag(0.5, 0.3, 0, ...): the fixed point is 0
-    // start from a nonzero initial guess via the first output
-    std::vector<std::complex<double>> rho_out(npw, std::complex<double>(0.0, 0.0));
-    rho_out[0] = std::complex<double>(1.0, 0.0);
-    rho_out[1] = std::complex<double>(0.5, 0.2);
+    std::vector<std::complex<double>> target(npw, std::complex<double>(0.0, 0.0));
+    target[0] = std::complex<double>(0.9, -0.2);
+    target[1] = std::complex<double>(0.5, 0.2);
+    std::vector<double> d(npw, 0.0);
+    d[0] = 0.5;
+    d[1] = 0.3;
+    auto model_out = [&](const std::vector<std::complex<double>>& in) {
+        std::vector<std::complex<double>> o(npw);
+        for (int ig = 0; ig < npw; ++ig)
+        {
+            o[ig] = d[ig] * in[ig] + (1.0 - d[ig]) * target[ig];
+        }
+        return o;
+    };
 
-    // run mixing iterations: each step, output = A * input
-    // (the Broyden should identify the linear map and jump to the
-    // solution after collecting enough history)
+    // run mixing iterations from the zero input; each step the model
+    // rebuilds the output from the mixed input
     int n_iter = 0;
-    for (int iter = 0; iter < 20; ++iter)
+    std::vector<std::complex<double>> rho_out = model_out(std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
+    for (int iter = 0; iter < 40; ++iter)
     {
         data_.set_drho_g(0, 0, rho_out);
         rho.mix_drho(0, data_);
@@ -574,16 +583,78 @@ TEST_F(DFPTRhoSerialTest, BroydenConvergesDiagonalSystemFast)
         {
             break;
         }
-        // next output = A * current input (the linear model)
-        const std::vector<std::complex<double>> mixed = data_.get_drho_g(0, 0);
-        rho_out.assign(npw, std::complex<double>(0.0, 0.0));
-        rho_out[0] = 0.5 * mixed[0];
-        rho_out[1] = 0.3 * mixed[1];
+        rho_out = model_out(data_.get_drho_g(0, 0));
     }
-    // Broyden on a 2-eigenvalue diagonal system: should converge
-    // dramatically faster than plain (which needs ~20 steps)
+    // Broyden on a 3-eigenvalue diagonal system: converges dramatically
+    // faster than plain mixing (which needs >= 90 steps at 0.6/step)
     EXPECT_LT(n_iter, 12);
     const double final_res = rho.get_residual(0, data_);
     EXPECT_LT(final_res, 1.0e-8);
+    // the converged input is the fixed point of the model map
+    const std::vector<std::complex<double>> final_in = data_.get_drho_g(0, 0);
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        EXPECT_NEAR(final_in[ig].real(), target[ig].real(), 1.0e-8);
+        EXPECT_NEAR(final_in[ig].imag(), target[ig].imag(), 1.0e-8);
+    }
 }
-#endif
+
+TEST_F(DFPTRhoSerialTest, BroydenResetMixingAllowsFreshQAndSameQCycle)
+{
+    // regression (PR review): entering a fresh q after q = 0 must reset
+    // the shared Broyden mixer's address binding even though the new q
+    // has no history entry yet -- otherwise the first push of the newly
+    // allocated Mixing_Data exits through the one-object-one-data guard
+    // (broyden_mixing.cpp) and kills the process. The same-q cycle must
+    // also restart from a zero input density.
+    SetupBases(k_d_, q_d_, 2);
+    ModuleDFPT::DFPT_Rho::Config cfg;
+    cfg.nspin = 1;
+    cfg.nrxx = pw_rho_.nrxx;
+    cfg.pw_rho = &pw_rho_;
+    cfg.pw_wfc = &pw_wfc_;
+    cfg.recip_matrix = G_;
+    cfg.mix_type = "rho_broyden";
+    cfg.mix_beta = 0.4;
+    cfg.kerker_a2 = 1.0;
+    cfg.broyden_ndim = 8;
+    ModuleDFPT::DFPT_Rho rho;
+    rho.init(cfg);
+
+    const int npw = pw_rho_.npw;
+    std::vector<std::complex<double>> out(npw);
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        out[ig] = 0.01 * std::complex<double>(std::cos(0.3 * ig), std::sin(0.9 * ig));
+    }
+
+    // two pushes at q = 0: the mixer binds the q = 0 Mixing_Data
+    data_.set_drho_g(0, 0, out);
+    rho.mix_drho(0, data_);
+    data_.set_drho_g(0, 0, out);
+    rho.mix_drho(0, data_);
+
+    // entering q = 1 for the first time (no history entry exists): with
+    // the buggy guard the mixer stayed bound to q = 0 and this died
+    rho.reset_mixing(1);
+    data_.set_drho_g(1, 0, out);
+    rho.mix_drho(1, data_);
+    // fresh q starts from the zero input: first step is beta * out
+    const std::vector<std::complex<double>> mixed_q1 = data_.get_drho_g(1, 0);
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        EXPECT_NEAR(mixed_q1[ig].real(), 0.4 * out[ig].real(), 1.0e-12);
+        EXPECT_NEAR(mixed_q1[ig].imag(), 0.4 * out[ig].imag(), 1.0e-12);
+    }
+
+    // the same-q cycle also restarts from a zero input density
+    rho.reset_mixing(0);
+    data_.set_drho_g(0, 0, out);
+    rho.mix_drho(0, data_);
+    const std::vector<std::complex<double>> mixed_q0 = data_.get_drho_g(0, 0);
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        EXPECT_NEAR(mixed_q0[ig].real(), 0.4 * out[ig].real(), 1.0e-12);
+        EXPECT_NEAR(mixed_q0[ig].imag(), 0.4 * out[ig].imag(), 1.0e-12);
+    }
+}

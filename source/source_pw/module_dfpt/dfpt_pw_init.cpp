@@ -87,7 +87,7 @@ void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
     // Coulomb stiffness 4pi/G^2; measured lambda ~ -2.2 on {111}/{200}
     // for the diamond smoke case), so the coefficient must stay below
     // 2 / (1 + |lambda_min|); the INPUT default 0.4 keeps margin up to
-    // |lambda| ~ 3; the alternative is dfpt_mix_type = "kerker", the
+    // |lambda| ~ 3; the alternative is dfpt_mix_type = "rho_kerker", the
     // screen f_g = |G+q|^2 / (|G+q|^2 + a^2) in 1/lat0^2 units (a^2 via
     // dfpt_kerker_a2), which stabilizes those shells at beta up to 1;
     // both arrive through the INPUT setters (dfpt_mix_beta /

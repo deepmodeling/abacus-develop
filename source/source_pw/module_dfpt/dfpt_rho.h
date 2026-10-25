@@ -8,10 +8,6 @@
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 
-#include "source_base/module_mixing/mixing.h"
-#include "source_base/module_mixing/plain_mixing.h"
-#include "source_base/module_mixing/broyden_mixing.h"
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -19,6 +15,8 @@
 namespace Base_Mixing
 {
 class Plain_Mixing;
+class Broyden_Mixing;
+class Mixing_Data;
 }
 
 namespace ModuleDFPT
@@ -80,8 +78,8 @@ class XC_First_Order
  * mix_drho mixes the q-shifted coefficients:
  *   drho_in <- drho_in + beta_g (drho_out - drho_in)
  * through Base_Mixing::Plain_Mixing (no Charge_Mixing / Charge dependency).
- * With mix_type = "plain" beta_g = beta on every shell; with mix_type =
- * "kerker" beta_g = beta * f_g, the Kerker screen
+ * With mix_type = "rho_plain" beta_g = beta on every shell; with mix_type =
+ * "rho_kerker" beta_g = beta * f_g, the Kerker screen
  *   f_g = |G+q|^2 / (|G+q|^2 + a^2),
  * evaluated with the same q_shifted |G+q| = |gcar + q_cart * recip| (in
  * 1/lat0^2 units) convention as v_hartree_q, so the Coulomb-stiffness
@@ -104,10 +102,10 @@ class DFPT_Rho
         ModulePW::PW_Basis* pw_rho;
         ModulePW::PW_Basis_K* pw_wfc;
         ModuleBase::Matrix3 recip_matrix;
-        std::string mix_type; // "plain", "kerker", "broyden", or "v_sc"
+        std::string mix_type; // "rho_plain", "rho_kerker", "rho_broyden", "v_sc_plain", "v_sc_broyden"
         double mix_beta;
-        double kerker_a2; // Kerker screen a^2, 1/lat0^2 (kerker only)
-        int broyden_ndim; // Broyden history depth (broyden only, default 8)
+        double kerker_a2; // Kerker screen a^2, 1/lat0^2 (rho_kerker only)
+        int broyden_ndim; // Broyden history depth (rho_broyden only, default 8)
     };
 
     DFPT_Rho();
@@ -191,7 +189,7 @@ class DFPT_Rho
     ///< reciprocal lattice matrix in 1/lat0 (UnitCell::G convention)
     ModuleBase::Matrix3 recip_matrix_;
     double mix_beta_ = 0.7;
-    ///< mixing algorithm: "plain" (beta only) or "kerker" (Kerker screen)
+    ///< mixing algorithm: rho_plain | rho_kerker | rho_broyden (v_sc_* at solver)
     std::string mix_type_;
     ///< Kerker screening parameter a^2 in 1/lat0^2 (same units as |G+q|^2)
     double kerker_a2_ = 0.0;
