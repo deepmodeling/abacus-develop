@@ -1,16 +1,17 @@
 #ifndef IONS_MOVE_METHODS_H
 #define IONS_MOVE_METHODS_H
 
+#include "ions_move_basic.h"
+#include "ions_move_bfgs.h"
+#include "ions_move_bfgs2.h"
+#include "ions_move_cg.h"
+#include "ions_move_lbfgs.h"
+#include "ions_move_sd.h"
+#include "relax_criteria.h"
+
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include "ions_move_basic.h"
-#include "relax_criteria.h"
-#include "ions_move_bfgs.h"
-#include "ions_move_cg.h"
-#include "ions_move_sd.h"
-#include "ions_move_bfgs2.h"
-#include "ions_move_lbfgs.h"
 
 class Ions_Move_Methods
 {
@@ -18,16 +19,16 @@ class Ions_Move_Methods
     Ions_Move_Methods();
     ~Ions_Move_Methods();
 
-    void allocate(const int &natom, const std::string& relax_method_0, const std::string& relax_method_1);
-    void cal_movement(const int &istep,
-                      const int &force_step,
-                      const ModuleBase::matrix &f,
-                      const double &etot,
-                      UnitCell &ucell,
+    void allocate(const int& natom, const std::string& relax_method);
+    void cal_movement(const int& istep,
+                      const int& force_step,
+                      const ModuleBase::matrix& f,
+                      const double& etot,
+                      UnitCell& ucell,
                       std::ofstream& ofs,
-                      std::vector<std::string>& relax_method,
+                      std::string& relax_method,
                       const Relax_Criteria& criteria);
-    void reset_after_cell_change(const std::vector<std::string>& relax_method, std::ofstream& ofs);
+    void reset_after_cell_change(const std::string& relax_method, std::ofstream& ofs);
 
     bool get_converged() const
     {

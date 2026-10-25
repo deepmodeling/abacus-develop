@@ -18,24 +18,15 @@ void iter_init_dftu_pw(const int iter,
                         const OccmatOutputCfg& occmat_cfg,
                         const int* isk,
                         const int nspin,
-                        const int kpar,
-                        const int npol)
+                        const int kpar)
 {
     if (!p_chgmix || occmat_cfg.dft_plus_u <= 0)
     {
         return;
     }
 
-    // Prepare the per-ionic-step file at the first electronic step, before
-    // the first occupation matrix exists. output() is skipped below at
-    // istep 0 / iter 1; without this call the g1 file would miss its header
-    // and could inherit stale sections from a previous run.
-    if (iter == 1 && occmat_cfg.out_occ_mat
-        && DFTU_BASE::is_ion_step_output_step(istep, occmat_cfg))
-    {
-        DFTU_BASE::prepare_ion_step_file(global_out_dir,
-                                         istep, occmat_cfg);
-    }
+    // Prepare the per-ionic-step file before the first snapshot is appended.
+    DFTU_BASE::prepare_ion_step_output(global_out_dir, istep, iter, occmat_cfg);
 
     const bool first_scf_step = (iter == 1 && istep == 0);
 
@@ -75,16 +66,6 @@ void iter_init_dftu_pw(const int iter,
                               dftu.get_uterm_mat(), dftu.energy_ref());
     }
 
-    // Keep the historical output cadence: output() is skipped at the very
-    // first electronic step.
-    if (first_scf_step)
-    {
-        return;
-    }
-
-    DFTU_BASE::output(dftu, ucell, global_out_dir,
-                      nspin, npol, istep, iter, occmat_cfg,
-                      DFTU_BASE::SOC_LAYOUT_PAULI);
 }
 
 }

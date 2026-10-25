@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstring>
 #include <gtest/gtest.h>
+#include <limits>
 #include <sstream>
 #include <type_traits>
 
@@ -145,6 +146,48 @@ class PWTDDFTTest : public testing::Test
 };
 using Precisions = testing::Types<double, float>;
 TYPED_TEST_SUITE(PWTDDFTTest, Precisions);
+
+TYPED_TEST(PWTDDFTTest, ComplexEijExcludesPadding)
+{
+    using T = std::complex<TypeParam>;
+    const std::vector<int> sizes{4};
+    const int bands = 3;
+    const int ld = 6;
+    ModulePW::PW_Basis_K basis;
+    initialize_basis(sizes, &basis);
+    DenseHamiltonian<T> op(sizes);
+    hsolver::PWLinearOptions options;
+    options.global_k_indices = {0};
+#ifdef __MPI
+    const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
+#else
+    const hsolver::diag_comm_info comm(0, 1);
+#endif
+    std::ostringstream log;
+    hsolver::HSolverPWTDDFT<T, Device> solver(basis, options, comm, log);
+    psi::Psi<T> current(1, bands, ld, sizes, true);
+    const T phases[]{T(1), T(0, 1), T(-1)};
+    const T padding(std::numeric_limits<TypeParam>::quiet_NaN());
+    for (int band = 0; band < bands; ++band)
+    {
+        for (int g = 0; g < ld; ++g)
+        {
+            current(band, g) = g < sizes[0] ? T(0) : padding;
+        }
+        current(band, band) = phases[band];
+    }
+    const std::vector<std::complex<double>> eij = solver.cal_eij(op, current, 0);
+    ASSERT_EQ(eij.size(), bands * bands);
+    // These orbitals select H's leading block, with an independent phase on each column.
+    for (int j = 0; j < bands; ++j)
+    {
+        for (int i = 0; i < bands; ++i)
+        {
+            const T expected = std::conj(phases[i]) * op.matrices[0][j * sizes[0] + i] * phases[j];
+            EXPECT_NEAR(std::abs(eij[j * bands + i] - std::complex<double>(expected)), 0.0, 1e-7);
+        }
+    }
+}
 
 TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
 {

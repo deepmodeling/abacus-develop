@@ -62,6 +62,11 @@ class DFPT_PW_Data
     void set_drho_r(int q_idx, int spin, const std::vector<double>& rho);
     std::vector<double> get_drho_r(int q_idx, int spin) const;
     void set_drho_g(int q_idx, int spin, const std::vector<std::complex<double>>& rho);
+
+    /// q-shifted first-order core-density amplitude (G space, npw);
+    /// zero-size means no nlcc atoms / not yet computed
+    void set_drhoc_g(int q_idx, const std::vector<std::complex<double>>& rho_c);
+    std::vector<std::complex<double>> get_drhoc_g(int q_idx) const;
     std::vector<std::complex<double>> get_drho_g(int q_idx, int spin) const;
 
     void set_dv_r(int q_idx, int spin, const std::vector<double>& v);
@@ -267,6 +272,8 @@ class DFPT_PW_Data
 
     std::vector<std::vector<std::vector<double>>> drho_r_;
     std::vector<std::vector<std::vector<std::complex<double>>>> drho_g_;
+    ///< q-shifted first-order core density (G space), [q]
+    std::vector<std::vector<std::complex<double>>> drhoc_g_;
 
     std::vector<std::vector<std::vector<double>>> dv_r_;
 

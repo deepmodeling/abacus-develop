@@ -5,18 +5,19 @@
 #include "lat_change_method.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"
+
 #include <fstream>
 #include <vector>
 
 /**
  * @class IonCellOptimizer
  * @brief Optimizer for ionic position relaxation and cell parameter optimization.
- * 
+ *
  * This class handles both atomic relaxation and cell relaxation calculations.
  * It manages the geometry optimization process by coordinating between
  * Ions_Move_Methods (for atomic position updates) and Lattice_Change_Methods
  * (for cell parameter updates).
- * 
+ *
  * The optimization follows a sequential approach:
 1. First perform atomic relaxation until convergence
 2. Then perform cell relaxation (only in cell-relax mode)
@@ -32,11 +33,11 @@ class IonCellOptimizer
 
     /**
      * @brief Perform one step of relaxation (atomic and/or cell).
-     * 
+     *
      * This is the main interface for relaxation. Depending on the calculation type
      * ("relax" or "cell-relax"), it will perform atomic relaxation, cell relaxation,
      * or both in sequence.
-     * 
+     *
      * @param istep Current total iteration step
      * @param energy Total energy of the system
      * @param ucell Unit cell containing atomic positions and lattice vectors
@@ -57,8 +58,8 @@ class IonCellOptimizer
                     std::ofstream& ofs_running);
 
   private:
-    Ions_Move_Methods IMM;       ///< Ionic movement methods for atom relaxation
-    Lattice_Change_Methods LCM;  ///< Lattice change methods for cell relaxation
+    Ions_Move_Methods IMM;      ///< Ionic movement methods for atom relaxation
+    Lattice_Change_Methods LCM; ///< Lattice change methods for cell relaxation
     const Input_para* inp_ = nullptr;
 
     /// Largest force of each ionic step (eV/Angstrom), kept across cell changes.
@@ -77,14 +78,18 @@ class IonCellOptimizer
      *                    (true for cell-relax with a movable lattice).
      * @param ofs_running Output stream for the running log.
      */
-    void print_converged_summary(const int istep,
-                                 const bool with_stress,
-                                 std::ofstream& ofs_running) const;
+    void print_converged_summary(const int istep, const bool with_stress, std::ofstream& ofs_running) const;
 
   public:
     /// Read-only observers of the per-step convergence history, for the final summary.
-    const std::vector<double>& get_max_force_history() const { return max_force_history_; }
-    const std::vector<double>& get_max_stress_history() const { return max_stress_history_; }
+    const std::vector<double>& get_max_force_history() const
+    {
+        return max_force_history_;
+    }
+    const std::vector<double>& get_max_stress_history() const
+    {
+        return max_stress_history_;
+    }
 };
 
 #endif

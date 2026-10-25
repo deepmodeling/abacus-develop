@@ -5,6 +5,7 @@
 //==========================================================
 
 #include "vdwd2.h"
+
 #include "source_base/timer.h"
 
 #include <algorithm>
@@ -49,8 +50,7 @@ void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result)
         }
 
         const double tmp_factor = C6_product / pow(r_sqr, 3) / r / tmp_damp_recip
-                                  * (-6.0 / r
-                                     + tmp_exp / tmp_damp_recip * para_.damping() / R0_sum);
+                                  * (-6.0 / r + tmp_exp / tmp_damp_recip * para_.damping() / R0_sum);
 
         if (request.force)
         {

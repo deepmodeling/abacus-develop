@@ -1,12 +1,11 @@
-#include <pybind11/numpy.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
+#include "../utils/pybind_utils.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_nao/radial_collection.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 
-#include "../utils/pybind_utils.h"
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 using namespace pybind11::literals;
@@ -447,22 +446,18 @@ void bind_m_nao(py::module& m)
         .def_property_readonly("pr", &NumericalRadial::pr)
         .def_property_readonly("pk", &NumericalRadial::pk)
         .def_property_readonly("sbt", &NumericalRadial::sbt)
-        .def_property_readonly("rgrid",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.rgrid(), static_cast<size_t>(self.nr()));
-                               })
-        .def_property_readonly("kgrid",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.kgrid(), static_cast<size_t>(self.nk()));
-                               })
-        .def_property_readonly("rvalue",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.rvalue(), static_cast<size_t>(self.nr()));
-                               })
-        .def_property_readonly("kvalue",
-                               [](NumericalRadial& self) {
-                                   return numpy_from_ptr_copy(self.kvalue(), static_cast<size_t>(self.nk()));
-                               })
+        .def_property_readonly(
+            "rgrid",
+            [](NumericalRadial& self) { return numpy_from_ptr_copy(self.rgrid(), static_cast<size_t>(self.nr())); })
+        .def_property_readonly(
+            "kgrid",
+            [](NumericalRadial& self) { return numpy_from_ptr_copy(self.kgrid(), static_cast<size_t>(self.nk())); })
+        .def_property_readonly(
+            "rvalue",
+            [](NumericalRadial& self) { return numpy_from_ptr_copy(self.rvalue(), static_cast<size_t>(self.nr())); })
+        .def_property_readonly(
+            "kvalue",
+            [](NumericalRadial& self) { return numpy_from_ptr_copy(self.kvalue(), static_cast<size_t>(self.nk())); })
         .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_));
 }
 

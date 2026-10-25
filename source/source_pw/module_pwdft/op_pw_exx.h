@@ -59,6 +59,14 @@ class OperatorEXXPW : public OperatorPW<T, Device>
 
     void set_wg(const ModuleBase::matrix *wg_in) { wg = wg_in; }
 
+    // The source orbitals remain fixed while target states are diagonalized.
+    // Takes ownership of the frozen ensemble: the operator keeps observer pointers
+    // to these objects, so their lifetime must match the operator's own.
+    void set_source(std::unique_ptr<ModulePW::PW_Basis_K> source_basis,
+                    std::unique_ptr<K_Vectors> source_points,
+                    const psi::Psi<T, Device>& source_psi,
+                    ModuleBase::matrix source_weights);
+
     void construct_ace() const;
 
     bool first_iter = true;
@@ -71,6 +79,13 @@ class OperatorEXXPW : public OperatorPW<T, Device>
   private:
     const int* isk = nullptr;
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
+    const ModulePW::PW_Basis_K* source_basis_ = nullptr;
+    const K_Vectors* source_points_ = nullptr;
+    // Owned frozen SCF source for hybrid NSCF; null in ordinary SCF, where the
+    // observer pointers above alias wfcpw/kv instead.
+    std::unique_ptr<ModulePW::PW_Basis_K> owned_source_basis_;
+    std::unique_ptr<K_Vectors> owned_source_points_;
+    ModuleBase::matrix owned_source_weights_;
     const ModulePW::PW_Basis* rhopw = nullptr;
     ModulePW::PW_Basis* rhopw_dev = nullptr; // for device
     const UnitCell *ucell = nullptr;

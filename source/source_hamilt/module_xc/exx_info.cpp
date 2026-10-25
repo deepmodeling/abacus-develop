@@ -114,7 +114,8 @@ bool init_general_exx_info(General_Exx_Info& info, const Input_para& inp)
                 {
                     info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
-                        {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])} }};
+                        {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])},
+                        {"singularity_correction", inp.exx_singularity_correction} }};
                 }
             }
         }

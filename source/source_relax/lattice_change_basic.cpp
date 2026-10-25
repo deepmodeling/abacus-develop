@@ -11,7 +11,7 @@ int Lattice_Change_Basic::stress_step = 0;
 double Lattice_Change_Basic::lattice_change_ini = 0.01; // default is 0.01
 std::string Lattice_Change_Basic::fixed_axes = "None";
 
-void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, double *grad, ModuleBase::matrix &stress)
+void Lattice_Change_Basic::setup_gradient(const UnitCell& ucell, double* lat, double* grad, ModuleBase::matrix& stress)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "setup_gradient");
 
@@ -97,7 +97,7 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
     return;
 }
 
-void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double *lat, const bool fixed_ibrav)
+void Lattice_Change_Basic::change_lattice(UnitCell& ucell, double* move, double* lat, const bool fixed_ibrav)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "change_lattice");
 
@@ -107,22 +107,23 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
     {
         ModuleBase::matrix move_mat_t(3, 3);
-        for (int i = 0;i < 3;++i) 
+        for (int i = 0; i < 3; ++i)
         {
-            for (int j = 0;j < 3;++j) 
+            for (int j = 0; j < 3; ++j)
             {
-                move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
+                move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0; // transpose
             }
         }
-        ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix());//symmetrize (latvec^{-1} * move_mat)^T
+        ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix()); // symmetrize (latvec^{-1} *
+                                                                                 // move_mat)^T
         ucell.symm.symmetrize_mat3(symm_move_mat_t, ucell.lat);
-        move_mat_t = symm_move_mat_t * ucell.latvec.Transpose().to_matrix();//G^{-1}=latvec^T
+        move_mat_t = symm_move_mat_t * ucell.latvec.Transpose().to_matrix(); // G^{-1}=latvec^T
 
-        for (int i = 0;i < 3;++i) 
+        for (int i = 0; i < 3; ++i)
         {
-            for (int j = 0;j < 3;++j) 
+            for (int j = 0; j < 3; ++j)
             {
-                move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0;//transpose back
+                move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0; // transpose back
             }
         }
     }
@@ -230,7 +231,11 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     return;
 }
 
-bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad, std::ofstream& ofs, const double& stress_thr)
+bool Lattice_Change_Basic::check_converged(const UnitCell& ucell,
+                                           ModuleBase::matrix& stress,
+                                           double* grad,
+                                           std::ofstream& ofs,
+                                           const double& stress_thr)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "check_converged");
 
@@ -241,7 +246,7 @@ bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     {
         for (int i = 0; i < 3; i++)
         {
-            if (stress_ii_max < std::abs(stress(i, i))) 
+            if (stress_ii_max < std::abs(stress(i, i)))
             {
                 stress_ii_max = std::abs(stress(i, i));
             }
@@ -332,7 +337,7 @@ void Lattice_Change_Basic::terminate(const bool converged, std::ofstream& ofs)
     return;
 }
 
-void Lattice_Change_Basic::setup_etot(const double &energy_in, std::vector<double>& etot_info)
+void Lattice_Change_Basic::setup_etot(const double& energy_in, std::vector<double>& etot_info)
 {
     // etot_info[0] = etot (current total energy)
     // etot_info[1] = etot_p (previous total energy)

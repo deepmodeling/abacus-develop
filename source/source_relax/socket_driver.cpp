@@ -1,22 +1,23 @@
 #include "socket_driver.h"
 
-#include "source_relax/socket_handlers.h"
-#include "source_relax/socket_utils.h"
 #include "source_base/timer.h"
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
+#include "source_io/module_parameter/input_parameter.h"
+#include "source_relax/socket_handlers.h"
+#include "source_relax/socket_utils.h"
 
 #include <exception>
 #include <fstream>
 #include <string>
 
+using SocketHandlers::DriverContext;
+using SocketUtils::address;
 using SocketUtils::ComputedFrame;
 using SocketUtils::DriverState;
 using SocketUtils::ipi_cell_bohr_from_unitcell;
 using SocketUtils::is_root;
 using SocketUtils::quit_if_root_failed;
-using SocketUtils::address;
-using SocketHandlers::DriverContext;
 
 namespace
 {
@@ -82,8 +83,7 @@ static bool run_socket_driver(ModuleESolver::ESolver* p_esolver,
 
         while (true)
         {
-            const std::string header
-                = SocketHandlers::read_header_bcast(socket, context);
+            const std::string header = SocketHandlers::read_header_bcast(socket, context);
             if (header.empty())
             {
                 log_peer_closed(ofs_running);
@@ -116,8 +116,7 @@ static bool run_socket_driver(ModuleESolver::ESolver* p_esolver,
             }
             else
             {
-                quit_if_root_failed(is_root() ? 1 : 0,
-                                       is_root() ? "unknown i-PI header: " + header : "");
+                quit_if_root_failed(is_root() ? 1 : 0, is_root() ? "unknown i-PI header: " + header : "");
             }
         }
     }

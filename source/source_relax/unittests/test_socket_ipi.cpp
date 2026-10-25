@@ -1,11 +1,10 @@
 #include "../socket_ipi.h"
 
 #include "gtest/gtest.h"
-
 #include <cerrno>
 #include <cstdint>
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
 #include <exception>
 #include <limits>
 #include <stdexcept>

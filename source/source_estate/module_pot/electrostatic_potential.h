@@ -21,7 +21,8 @@ double electrostatic_reference(const UnitCell& cell, ModulePW::PW_Basis& basis,
 std::vector<double> electrostatic_potential(const UnitCell& cell, ModulePW::PW_Basis& basis,
                                            const Charge& charge, const double* fixed,
                                            const surchem& solvent, const Input_para& input,
-                                           const std::vector<double>* pcc_potential);
+                                           const std::vector<double>* pcc_potential,
+                                           const std::vector<double>* solvent_potential);
 double planar_potential_average(const UnitCell& cell, const ModulePW::PW_Basis& basis,
                                 const std::vector<double>& potential, int axis,
                                 double minimum_A, double maximum_A);

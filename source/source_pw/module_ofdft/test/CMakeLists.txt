@@ -5,11 +5,16 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__MLALGO)
 
 set(ofdft_test_sources
-  test_kedf_tf.cpp ../kedf_tf.cpp
-  test_kedf_vw.cpp ../kedf_vw.cpp
-  test_kedf_manager.cpp ../kedf_manager.cpp
-  ../kedf_wt.cpp ../kedf_extwt.cpp ../kedf_xwm.cpp ../kedf_lkt.cpp
-)
+    test_kedf_tf.cpp
+    ../kedf_tf.cpp
+    test_kedf_vw.cpp
+    ../kedf_vw.cpp
+    test_kedf_manager.cpp
+    ../kedf_manager.cpp
+    ../kedf_wt.cpp
+    ../kedf_extwt.cpp
+    ../kedf_xwm.cpp
+    ../kedf_lkt.cpp)
 set(ofdft_test_libs parameter base device planewave)
 if(ENABLE_MPI)
   # The linked base library performs MPI reductions even for a single rank.
@@ -17,8 +22,5 @@ if(ENABLE_MPI)
   list(APPEND ofdft_test_libs MPI::MPI_CXX)
 endif()
 
-AddTest(
-  TARGET MODULE_PW_OfDFT
-  LIBS ${ofdft_test_libs}
-  SOURCES ${ofdft_test_sources}
-)
+addtest(TARGET MODULE_PW_OfDFT LIBS ${ofdft_test_libs} SOURCES
+        ${ofdft_test_sources})

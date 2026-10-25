@@ -77,24 +77,25 @@ AddTest(
 )
 target_compile_definitions(MODULE_BASE_para_setup_mpi PRIVATE __MPI)
 
-file(COPY para_world_mpi_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY para_collection_mpi_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY para_mpi_func_mpi_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY para_setup_mpi_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(
+  para_world_mpi_test.sh
+  para_collection_mpi_test.sh
+  para_mpi_func_mpi_test.sh
+  para_setup_mpi_test.sh)
 find_program(BASH bash)
 add_test(NAME MODULE_BASE_para_world_mpi_test
-      COMMAND ${BASH} para_world_mpi_test.sh
+      COMMAND ${BASH} para_world_mpi_test.sh "$<TARGET_FILE:MODULE_BASE_para_world_mpi>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_test(NAME MODULE_BASE_para_collection_mpi_test
-      COMMAND ${BASH} para_collection_mpi_test.sh
+      COMMAND ${BASH} para_collection_mpi_test.sh "$<TARGET_FILE:MODULE_BASE_para_collection_mpi>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_test(NAME MODULE_BASE_para_mpi_func_mpi_test
-      COMMAND ${BASH} para_mpi_func_mpi_test.sh
+      COMMAND ${BASH} para_mpi_func_mpi_test.sh "$<TARGET_FILE:MODULE_BASE_para_mpi_func_mpi>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_test(NAME MODULE_BASE_para_setup_mpi_test
-      COMMAND ${BASH} para_setup_mpi_test.sh
+      COMMAND ${BASH} para_setup_mpi_test.sh "$<TARGET_FILE:MODULE_BASE_para_setup_mpi>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

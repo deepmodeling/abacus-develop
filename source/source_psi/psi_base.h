@@ -1,6 +1,7 @@
 #ifndef PSI_BASE_H
 #define PSI_BASE_H
 #include "source_psi/psi.h"
+
 #include <memory>
 #ifdef __MPI
 #include <mpi.h>
@@ -10,7 +11,10 @@
 #include <type_traits>
 #include <vector>
 
-namespace ModulePW { class PW_Basis_K; }
+namespace ModulePW
+{
+class PW_Basis_K;
+}
 class Structure_Factor;
 class UnitCell;
 
@@ -52,17 +56,17 @@ class psi_base
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    psi_base(){};
-    virtual ~psi_base(){};
+    psi_base() {};
+    virtual ~psi_base() {};
     /// @brief initialize the psi_base with external data and methods
-    virtual void initialize(const Structure_Factor* sf,             //< structure factor
-                            const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
-                            const UnitCell* p_ucell,                     //< unit cell
-                            const std::vector<int>& ik2iktot,             //< ik2iktot: local->global k-point mapping
-                            const int& random_seed,                      //< random seed
-                            const int& rank,                            //< rank
-                            const int& npol,                            //< npol
-                            const int& nbands);                         //< nbands
+    virtual void initialize(const Structure_Factor* sf,         //< structure factor
+                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
+                            const UnitCell* p_ucell,            //< unit cell
+                            const std::vector<int>& ik2iktot,   //< ik2iktot: local->global k-point mapping
+                            const int& random_seed,             //< random seed
+                            const int& rank,                    //< rank
+                            const int& npol,                    //< npol
+                            const int& nbands);                 //< nbands
 
     /// @brief CENTRAL FUNCTION: calculate the interpolate table if needed
     virtual void tabulate()
@@ -112,39 +116,38 @@ class psi_base
     }
 
   protected:
-
 #ifdef __MPI // MPI additional implementation
     /// @brief mapping from (ix, iy) to is
     void stick_to_pool(Real* stick,      //< stick
                        const int& ir,    //< ir
                        Real* out) const; //< out
 #endif
-    void random_t(T* psi,                            ///< [out] psi
-                  const int iw_start,                ///< iw_start, starting band index
-                  const int iw_end,                  ///< iw_end, ending band index
-                  const int ik,                      ///< ik, kpoint index
-                  const int mode = 1);               ///< mode, 0 for rr*exp(i*arg), 1 for rr/(1+gk2)*exp(i*arg)
+    void random_t(T* psi,              ///< [out] psi
+                  const int iw_start,  ///< iw_start, starting band index
+                  const int iw_end,    ///< iw_end, ending band index
+                  const int ik,        ///< ik, kpoint index
+                  const int mode = 1); ///< mode, 0 for rr*exp(i*arg), 1 for rr/(1+gk2)*exp(i*arg)
 
-    const Structure_Factor* sf_ = nullptr;           ///< Structure_Factor
+    const Structure_Factor* sf_ = nullptr; ///< Structure_Factor
 
-    const ModulePW::PW_Basis_K* pw_wfc_ = nullptr;   ///< use |k+G>, |G>, getgpluskcar and so on in PW_Basis_K
+    const ModulePW::PW_Basis_K* pw_wfc_ = nullptr; ///< use |k+G>, |G>, getgpluskcar and so on in PW_Basis_K
 
-    const UnitCell* p_ucell_ = nullptr;              ///< UnitCell
+    const UnitCell* p_ucell_ = nullptr; ///< UnitCell
 
-    std::vector<int> ik2iktot_;                      ///< local->global k-point mapping
+    std::vector<int> ik2iktot_; ///< local->global k-point mapping
 
-    int random_seed_ = 1;                            ///< random seed, shared by random, atomic+random, nao+random
+    int random_seed_ = 1; ///< random seed, shared by random, atomic+random, nao+random
 
-    std::vector<int> ixy2is_;                        ///< used by stick_to_pool function
+    std::vector<int> ixy2is_; ///< used by stick_to_pool function
 
-    std::string method_ = "none";                    ///< method name
+    std::string method_ = "none"; ///< method name
 
     int nbands_complem_ = 0; ///< complement number of bands, which is nbands_start_ - ucell.natomwfc
 
     double mixing_coef_ = 0; ///< mixing coefficient for atomic+random and nao+random
 
-    int nbands_start_ = 0;   ///< starting nbands, which is no less than PARAM.inp.nbands
+    int nbands_start_ = 0; ///< starting nbands, which is no less than PARAM.inp.nbands
 
-    int npol_ = 1;           ///< number of polarizations
+    int npol_ = 1; ///< number of polarizations
 };
 #endif

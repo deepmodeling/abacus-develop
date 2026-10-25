@@ -2,6 +2,7 @@
 #define MDCELL_H
 
 #include "source_cell/basecell.h"
+#include "source_cell/ghost_exchange_plan.h"
 #include "source_cell/strumeta.h"
 #include "source_cell/module_neighlist/local_atom.h"
 #include "source_base/matrix3.h"
@@ -65,6 +66,8 @@ public:
     const std::vector<std::string>& type_labels() const { return type_labels_; }
     const std::vector<double>& type_masses() const { return type_masses_; }
     const std::vector<std::int64_t>& type_atom_counts() const { return type_atom_counts_; }
+    const GhostExchangePlan& get_ghost_exchange_plan() const;
+    GhostExchangePlan& get_ghost_exchange_plan();
     StruMeta& mutable_stru_meta() { return stru_meta_; }
     const StruMeta& stru_meta() const { return stru_meta_; }
     int nowned_atoms() const { return static_cast<int>(owned_atoms_.size()); }
@@ -91,6 +94,8 @@ private:
     const ModuleBase::Matrix3& get_GT() const override;
 
     friend class DomainDecomposition;
+    void clear_ghost_exchange_plan_();
+    void set_ghost_exchange_plan_(const GhostExchangePlan& plan);
     void sync_backing_unitcell_geometry_();
     void clear_forces_(std::vector<LocalAtom>& atoms);
     static double wrap_fractional_(double value);
@@ -113,6 +118,8 @@ private:
     std::unique_ptr<NeighborSearch> neighbor_search_;
     std::vector<ModuleBase::Vector3<double> > neighbor_reference_frac_;
     bool neighbor_layout_valid_ = false;
+    GhostExchangePlan ghost_exchange_plan_;
+    bool ghost_exchange_plan_valid_ = false;
 
 #ifdef __MPI
     MPI_Comm comm_ = MPI_COMM_NULL;

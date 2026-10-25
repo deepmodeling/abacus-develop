@@ -6,3 +6,8 @@ AddTest(
           ../availability.cpp
           ../availability_validator.cpp
 )
+
+AddTest(
+  TARGET MODULE_IO_input_domain
+  SOURCES test_input_domain.cpp ../input_domain.cpp ../availability.cpp ../availability_validator.cpp
+)

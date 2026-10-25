@@ -59,6 +59,9 @@ extern "C"
 
     void Czgebs2d(int ConTxt, char *scope, char *top, int m, int n, std::complex<double> *A, int lda);
     void Czgebr2d(int ConTxt, char *scope, char *top, int m, int n, std::complex<double> *A, int lda, int rsrc, int csrc);
+
+    // element-wise sum over `scope`; rdest = -1 leaves the result on every process
+    void Cigsum2d(int ConTxt, char *scope, char *top, int m, int n, int *A, int lda, int rdest, int cdest);
 }
 
 // unified interface for broadcast

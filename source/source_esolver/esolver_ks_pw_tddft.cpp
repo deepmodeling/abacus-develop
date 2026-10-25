@@ -3,6 +3,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_device.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_pw.h"
@@ -12,12 +13,16 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_efield/td_efield_io.h"
 #include "source_io/module_efield/td_vector_pot_io.h"
+#include "source_io/module_energy/td_eij_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_pw/module_pwdft/td_pw.h"
 
+#include <algorithm>
 #include <iomanip>
+#include <iostream>
+#include <limits>
 
 namespace ModuleESolver
 {
@@ -86,8 +91,40 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
 }
 
 template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::runner(BaseCell& basecell, const int istep)
+{
+    const int steps_per_md = this->inp_->estep_per_md;
+    int first_step = 0;
+    int last_step = 0;
+    if (this->inp_->mdp.md_nstep == 1)
+    {
+        // Include the initial state before the fixed-ion propagation sequence.
+        last_step = steps_per_md;
+    }
+    else if (istep > 0)
+    {
+        first_step = (istep - 1) * steps_per_md + 1;
+        last_step = istep * steps_per_md;
+    }
+    for (int electronic_step = first_step; electronic_step <= last_step; ++electronic_step)
+    {
+        ESolver_KS::runner(basecell, electronic_step);
+    }
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::print_step(const int istep) const
+{
+    const int evolution_step = istep + 1;
+    std::cout << " -------------------------------------------" << std::endl;
+    std::cout << " STEP OF ELECTRON EVOLVE : " << evolution_step << std::endl;
+    std::cout << " -------------------------------------------" << std::endl;
+}
+
+template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
+    this->print_step(istep);
     this->prepare_td_step(istep);
     this->td_solver_->reset_orth_stats();
     const bool basis_updated = ucell.cell_parameter_updated;
@@ -134,6 +171,13 @@ void ESolver_KS_PW_TDDFT<T, Device>::prepare_td_step(const int istep)
         const int interval_left = istep - 1;
         this->td_field_manager_->prepare_interval(interval_left, istep);
     }
+    if (this->td_field_manager_->gauge() == 1)
+    {
+        const ModuleBase::Vector3<double>& A_right_ha = this->td_field_manager_->A_right_ha();
+        ModuleBase::GlobalFunc::OUT(log_, "Cartesian vector potential Ax(t)", A_right_ha[0]);
+        ModuleBase::GlobalFunc::OUT(log_, "Cartesian vector potential Ay(t)", A_right_ha[1]);
+        ModuleBase::GlobalFunc::OUT(log_, "Cartesian vector potential Az(t)", A_right_ha[2]);
+    }
     if (GlobalV::MY_RANK == 0)
     {
         if (this->inp_->out_vecpot)
@@ -161,8 +205,12 @@ std::string ESolver_KS_PW_TDDFT<T, Device>::diag_policy(const int istep) const
 template <typename T, typename Device>
 void ESolver_KS_PW_TDDFT<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
-    // With estep_per_md=1, the ionic and electronic step indices coincide.
-    ModuleIO::write_head_td(GlobalV::ofs_running, istep, istep, iter, this->basisname);
+    int ionic_step = 0;
+    if (this->inp_->mdp.md_nstep > 1 && istep > 0)
+    {
+        ionic_step = (istep - 1) / this->inp_->estep_per_md + 1;
+    }
+    ModuleIO::write_head_td(GlobalV::ofs_running, ionic_step, istep, iter, this->basisname);
     ESolver_KS_PW<T, Device>::iter_init(ucell, istep, iter);
 }
 
@@ -230,7 +278,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
         momentum_shift = this->td_field_manager_->A_prop_ha();
     }
     hamiltonian->bind_td_state(propagation.veff, propagation.vofk, momentum_shift);
-    // Pass the electronic step; it coincides with the MD step while estep_per_md=1.
+    // The solver sequence follows electronic steps across MD boundaries.
     this->td_solver_->solve(op,
                             this->history_.previous(),
                             current,
@@ -260,7 +308,10 @@ void ESolver_KS_PW_TDDFT<T, Device>::iter_finish(UnitCell& ucell, const int iste
     ESolver_KS_PW<T, Device>::iter_finish(ucell, istep, iter, conv_esolver);
     if (istep > 0 && !conv_esolver && iter >= this->inp_->scf_nmax)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "The time-dependent SCF step did not converge.");
+        const int evolution_step = istep + 1;
+        const std::string message = "The time-dependent SCF step did not converge. Electronic evolution step: "
+                                    + std::to_string(evolution_step) + ", SCF iteration: " + std::to_string(iter) + ".";
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", message);
     }
 }
 
@@ -269,14 +320,24 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
 {
     if (!conv_esolver)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "Cannot propagate an unconverged electronic state.");
+        const int evolution_step = istep + 1;
+        const std::string message
+            = "Cannot propagate an unconverged electronic state. Electronic evolution step: " + std::to_string(evolution_step) + ".";
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", message);
     }
     if (istep == 0 && this->inp_->td_orthonormal == "none")
     {
         const psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
         this->td_solver_->check_initial(*current, this->niter);
     }
+    if (this->inp_->td_print_eij >= 0.0)
+    {
+        print_eij(istep);
+    }
     ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver);
+    const std::streamsize original_precision = std::cout.precision();
+    std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot << std::endl;
+    std::cout.precision(original_precision);
     if (istep >= 0)
     {
         psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
@@ -303,6 +364,75 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     {
         report_orth(ucell, istep);
     }
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW_TDDFT<T, Device>::print_eij(const int istep)
+{
+    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "print_eij");
+    psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
+    const int original_k = current->get_current_k();
+    const int nband = current->get_nbands();
+    const size_t elements = static_cast<size_t>(nband) * nband;
+    const int nspin = this->inp_->nspin;
+    const int nk = this->kv.get_nkstot() / (nspin == 2 ? 2 : 1);
+    const Parallel_Kpoints& pools = this->kv.para_k;
+    const bool main_rank = pools.my_pool == 0 && pools.rank_in_pool == 0;
+    auto* hamiltonian = static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+    const Real* veff = this->pelec->pot->template get_veff_smooth_data<Real>();
+    const Real* vofk = this->pelec->pot->template get_vofk_smooth_data<Real>();
+    // cal_converged() updates the potential from the final density, after the last band-energy evaluation.
+    hamiltonian->bind_td_state(veff, vofk, this->td_field_manager_->A_right_ha());
+    hamilt::HamiltHSOperator<T, Device> op(hamiltonian, this->pw_wfc);
+    for (int global_k = 0; global_k < this->kv.get_nkstot(); ++global_k)
+    {
+        const int physical_k = global_k % nk;
+        const int spin = global_k / nk;
+        int owner = 0;
+        int local_k = global_k;
+#ifdef __MPI
+        owner = pools.whichpool[physical_k];
+        local_k = physical_k - pools.startk_pool[owner] + spin * pools.nks_pool[owner];
+#endif
+        std::vector<std::complex<double>> eij;
+        if (pools.my_pool == owner)
+        {
+            eij = this->td_solver_->cal_eij(op, *current, local_k);
+        }
+#ifdef __MPI
+        // Each pool already has the full matrix; transfer only one copy to the main log.
+        if (owner != 0 && pools.rank_in_pool == 0 && (main_rank || pools.my_pool == owner))
+        {
+            if (main_rank)
+            {
+                eij.resize(elements);
+            }
+            MPI_Comm world = MPI_COMM_WORLD;
+            const int source = pools.get_startpro_pool(owner);
+            const size_t max_count = std::numeric_limits<int>::max();
+            for (size_t offset = 0; offset < elements; offset += max_count)
+            {
+                const int count = static_cast<int>(std::min(max_count, elements - offset));
+                if (main_rank)
+                {
+                    Parallel_Common::recv_data(eij.data() + offset, count, source, 0, world, MPI_STATUS_IGNORE);
+                }
+                else
+                {
+                    Parallel_Common::send_data(eij.data() + offset, count, 0, 0, world);
+                }
+            }
+        }
+#endif
+        if (main_rank)
+        {
+            const ModuleIO::EijOutputInfo info{this->inp_->td_print_eij, istep + 1, this->niter, physical_k + 1, nspin, spin + 1};
+            ModuleIO::print_eij(eij.data(), nband, nband, info, log_);
+        }
+    }
+    current->fix_k(original_k);
+    op.update_k(original_k);
+    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "print_eij");
 }
 
 template <typename T, typename Device>

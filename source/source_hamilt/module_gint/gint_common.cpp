@@ -210,10 +210,10 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
                             + std::complex<double>(clx_i[is], clx_j[is]) * mat_nspin2->get_value(irow, icol);
                         }
                     }
-                    //fill the lower triangle matrix at -R by conjugate transpose of upper at R
-                    // This ensures H(-R) = H(R)^dagger, required for Hermiticity of H(k).
-                    // For real matrices (is=0,3), conj has no effect.
-                    // For complex matrices (is=1,2), conj is essential.
+                    // Transpose only the spatial indices within this fixed spin block.
+                    // The real Pauli-channel matrices obey V_mu(-R) = V_mu(R)^T.
+                    // Full spinor Hermiticity also exchanges the spin indices; the
+                    // conjugate coefficients are already in the opposite spin block.
                     if (iat1 < iat2)
                     {
                         auto lower_mat = lower_ap->find_matrix(-R_index);
@@ -221,7 +221,7 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
                         {
                             for (int icol = 0; icol < upper_mat->get_col_size(); ++icol)
                             {
-                                lower_mat->get_value(icol, irow) = std::conj(upper_mat->get_value(irow, icol));
+                                lower_mat->get_value(icol, irow) = upper_mat->get_value(irow, icol);
                             }
                         }
                     }

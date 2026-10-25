@@ -1,13 +1,13 @@
 #include "psi_base.h"
 
-#include <vector>
+#include "source_base/parallel_global.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_pwdft/stru_fac.h"
+
 #include <cassert>
 #include <cstdlib>
-
-#include "source_pw/module_pwdft/stru_fac.h"
-#include "source_cell/unitcell.h"
-#include "source_basis/module_pw/pw_basis_k.h"
-#include "source_base/parallel_global.h"
+#include <vector>
 // basic functions support
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -20,13 +20,13 @@
 
 template <typename T>
 void psi_base<T>::initialize(const Structure_Factor* sf,
-                                    const ModulePW::PW_Basis_K* pw_wfc,
-                                    const UnitCell* p_ucell,
-                                    const std::vector<int>& ik2iktot,
-                                    const int& random_seed,
-                                    const int& rank,
-                                    const int& npol,
-                                    const int& nbands)
+                             const ModulePW::PW_Basis_K* pw_wfc,
+                             const UnitCell* p_ucell,
+                             const std::vector<int>& ik2iktot,
+                             const int& random_seed,
+                             const int& rank,
+                             const int& npol,
+                             const int& nbands)
 {
     this->sf_ = sf;
     this->pw_wfc_ = pw_wfc;

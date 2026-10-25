@@ -70,11 +70,7 @@ void prepare_td_field_output(const std::string& output_dir, const elecstate::TDF
 
 void write_td_field_values(const elecstate::TDFieldManager& manager, const std::string& output_dir)
 {
-    // Preserve the analytic sampling window for both total and per-waveform output.
-    if (!manager.file_source() && !manager.active())
-    {
-        return;
-    }
+    // Keep the complete time series, including zero fields outside the analytic window.
     {
         std::ofstream output((output_dir + "efield_total.txt").c_str(), std::ofstream::app);
         if (!output)

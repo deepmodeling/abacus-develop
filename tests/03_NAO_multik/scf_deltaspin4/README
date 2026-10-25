@@ -1,2 +1,17 @@
 Test LCAO DeltaSpin with SOC and nonparallel xyz target moments of magnitude 3 mu_B (nspin=4).
 Check the two-overlap product-rule force regression at 12 Ry with at most 10 SCF steps.
+
+This is a fixed-budget trajectory regression: scf_nmax=10 is intentional, and
+neither the upstream nor mapped-density XC run reaches SCF convergence. Its
+energy, force, and stress fingerprints must not be presented as converged-state
+values or finite-difference validation.
+
+The reference uses the mapped-density FFT definition of gga_grad=2. Rebuilding
+only the upstream XC files reproduces the previous projected-gradient reference.
+At step 10, the mapped trajectory changes the two-atom energy by -0.1827584227 eV,
+the absolute-component force sum from 99.992332 to 93.374790 eV/Angstrom, and the
+stress sum from 30048.363075 to 30504.021979 kbar. These changes include the
+self-consistent density/constraint trajectory response, not just a direct XC
+term at fixed density. One- and four-rank CPU results pass the default comparison
+tolerances. INPUT, iteration budget, constraint settings, force implementation,
+and comparison tolerances are unchanged.

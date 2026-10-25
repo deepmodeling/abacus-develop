@@ -1,11 +1,11 @@
 #include "socket_handlers.h"
 
-#include "source_relax/socket_frame.h"
 #include "source_base/global_function.h"
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/input_parameter.h"
+#include "source_relax/socket_frame.h"
 #ifdef __JSON
 #include "source_io/module_json/output_info.h"
 #endif
@@ -21,8 +21,16 @@
 
 namespace SocketHandlers
 {
+using SocketUtils::all_ranks_converged;
+using SocketUtils::bcast_double_vector;
+using SocketUtils::bcast_header;
+using SocketUtils::bcast_int32;
 using SocketUtils::ComputedFrame;
 using SocketUtils::DriverState;
+using SocketUtils::fail_during_collective_stage;
+using SocketUtils::flatten_forces_hartree_per_bohr;
+using SocketUtils::ipi_cell_bohr_from_unitcell;
+using SocketUtils::is_root;
 using SocketUtils::kInverseAbsoluteTolerance;
 using SocketUtils::kInverseRelativeTolerance;
 using SocketUtils::kMaxCellCondition;
@@ -30,15 +38,7 @@ using SocketUtils::kMaxInitBytes;
 using SocketUtils::kRyToHartree;
 using SocketUtils::kStressAbsoluteTolerance;
 using SocketUtils::kStressRelativeTolerance;
-using SocketUtils::all_ranks_converged;
-using SocketUtils::bcast_double_vector;
-using SocketUtils::bcast_header;
-using SocketUtils::bcast_int32;
 using SocketUtils::bcast_string;
-using SocketUtils::fail_during_collective_stage;
-using SocketUtils::flatten_forces_hartree_per_bohr;
-using SocketUtils::ipi_cell_bohr_from_unitcell;
-using SocketUtils::is_root;
 using SocketUtils::matrix9_from_stress;
 using SocketUtils::max_abs_delta;
 using SocketUtils::max_wrapped_direct_delta_from_unitcell;
@@ -108,9 +108,7 @@ void handle_status(IpiSocket& socket, const DriverState state)
     quit_if_root_failed(io_failed, io_message);
 }
 
-void handle_init(IpiSocket& socket,
-                 DriverContext& context,
-                 std::ofstream& ofs_running)
+void handle_init(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running)
 {
     std::int32_t rid = 0;
     std::int32_t nbytes = 0;
@@ -296,9 +294,7 @@ PosdataPayload read_posdata(IpiSocket& socket, const DriverContext& context)
                 if (io_failed == 0)
                 {
                     payload.positions = socket.read_doubles(coordinate_count);
-                    if (!SocketFrame::validate_positions(payload.positions,
-                                                         coordinate_count,
-                                                         io_message))
+                    if (!SocketFrame::validate_positions(payload.positions, coordinate_count, io_message))
                     {
                         io_failed = 1;
                     }
@@ -351,8 +347,7 @@ void check_posdata_geometry(DriverContext& context, const PosdataPayload& payloa
     }
     if (max_abs_delta(wire_cell, expected_cell) > cell_tolerance)
     {
-        ModuleBase::WARNING_QUIT("ABACUS socket",
-                                 "variable-cell socket updates are not supported yet.");
+        ModuleBase::WARNING_QUIT("ABACUS socket", "variable-cell socket updates are not supported yet.");
     }
     if (context.cp.enabled && context.cp_wire_cell.empty()) { context.cp_wire_cell = wire_cell; }
     if (!context.checked_initial_positions)
@@ -361,11 +356,10 @@ void check_posdata_geometry(DriverContext& context, const PosdataPayload& payloa
         if (max_wrapped_direct_delta_from_unitcell(*context.ucell, payload.positions) > 1.0e-5
             && is_root())
         {
-            ModuleBase::WARNING(
-                "ABACUS socket",
-                "first POSDATA positions are not PBC-equivalent to STRU atom order; "
-                "i-PI POSDATA carries no species, so the client atoms should use the same atom order "
-                "as STRU.");
+            ModuleBase::WARNING("ABACUS socket",
+                                "first POSDATA positions are not PBC-equivalent to STRU atom order; "
+                                "i-PI POSDATA carries no species, so the client atoms should use the same atom order "
+                                "as STRU.");
         }
     }
 }
@@ -409,9 +403,7 @@ void run_esolver_for_positions(DriverContext& context, const std::vector<double>
     }
 }
 
-void compute_energy_hartree(ModuleESolver::ESolver* esolver,
-                            ComputedFrame& computed,
-                            std::ofstream& ofs_running)
+void compute_energy_hartree(ModuleESolver::ESolver* esolver, ComputedFrame& computed, std::ofstream& ofs_running)
 {
     double energy_ry = 0.0;
     try
@@ -427,8 +419,7 @@ void compute_energy_hartree(ModuleESolver::ESolver* esolver,
         fail_during_collective_stage("cal_energy", "unknown socket energy failure");
     }
     const int local_failed = std::isfinite(energy_ry) ? 0 : 1;
-    throw_if_any_rank_failed(local_failed,
-                             local_failed == 0 ? "" : "socket energy is not finite");
+    throw_if_any_rank_failed(local_failed, local_failed == 0 ? "" : "socket energy is not finite");
     if (!std::isfinite(energy_ry))
     {
         ModuleBase::WARNING_QUIT("ABACUS socket", "socket energy is not finite.");
@@ -436,16 +427,12 @@ void compute_energy_hartree(ModuleESolver::ESolver* esolver,
     computed.energy_hartree = energy_ry * kRyToHartree;
     if (is_root())
     {
-        ofs_running << " ABACUS socket return energy "
-                    << energy_ry << " Ry, "
-                    << energy_ry * ModuleBase::Ry_to_eV << " eV, "
-                    << computed.energy_hartree << " Ha" << std::endl;
+        ofs_running << " ABACUS socket return energy " << energy_ry << " Ry, " << energy_ry * ModuleBase::Ry_to_eV
+                    << " eV, " << computed.energy_hartree << " Ha" << std::endl;
     }
 }
 
-void compute_forces(UnitCell& ucell,
-                    ModuleESolver::ESolver* esolver,
-                    ComputedFrame& computed)
+void compute_forces(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFrame& computed)
 {
     ModuleBase::matrix force;
     try
@@ -480,9 +467,7 @@ void compute_forces(UnitCell& ucell,
     computed.forces_present = true;
 }
 
-void compute_stress(UnitCell& ucell,
-                    ModuleESolver::ESolver* esolver,
-                    ComputedFrame& computed)
+void compute_stress(UnitCell& ucell, ModuleESolver::ESolver* esolver, ComputedFrame& computed)
 {
     ModuleBase::matrix stress;
     try
@@ -501,11 +486,10 @@ void compute_stress(UnitCell& ucell,
     std::string local_message;
     try
     {
-        const SocketFrame::VirialConversion virial
-            = SocketFrame::make_ipi_virial(matrix9_from_stress(stress),
-                                           ucell.omega,
-                                           kStressAbsoluteTolerance,
-                                           kStressRelativeTolerance);
+        const SocketFrame::VirialConversion virial = SocketFrame::make_ipi_virial(matrix9_from_stress(stress),
+                                                                                  ucell.omega,
+                                                                                  kStressAbsoluteTolerance,
+                                                                                  kStressRelativeTolerance);
         if (!virial.ok)
         {
             throw std::runtime_error(virial.message);
@@ -527,9 +511,7 @@ void compute_stress(UnitCell& ucell,
 }
 } // namespace
 
-void handle_posdata(IpiSocket& socket,
-                    DriverContext& context,
-                    std::ofstream& ofs_running)
+void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running)
 {
     PosdataPayload payload = read_posdata(socket, context);
     bcast_posdata(payload);
@@ -548,9 +530,8 @@ void handle_posdata(IpiSocket& socket,
     }
     if (!computed.scf_converged && is_root())
     {
-        ModuleBase::WARNING(
-            "ABACUS socket",
-            "SCF did not converge; returning the available frame and marking it in i-PI extras.");
+        ModuleBase::WARNING("ABACUS socket",
+                            "SCF did not converge; returning the available frame and marking it in i-PI extras.");
     }
     compute_energy_hartree(context.esolver, computed, ofs_running);
     if (context.inp->cal_force)

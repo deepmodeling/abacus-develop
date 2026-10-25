@@ -13,8 +13,7 @@
 
 static_assert(sizeof(std::int32_t) == 4, "i-PI requires a 4-byte integer");
 static_assert(sizeof(double) == 8, "i-PI requires an 8-byte float");
-static_assert(std::numeric_limits<double>::is_iec559,
-              "i-PI requires IEEE-754 double precision");
+static_assert(std::numeric_limits<double>::is_iec559, "i-PI requires IEEE-754 double precision");
 
 namespace
 {

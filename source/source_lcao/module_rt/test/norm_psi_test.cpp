@@ -121,3 +121,42 @@ TEST(NormPsiTest, testNormPsi)
     delete[] psi_k;
     delete[] Stmp;
 }
+
+// A wavefunction arriving at t+dt must be normalized with S(t+dt).
+// Here the averaged overlap gives a unit norm in the wrong time layer.
+TEST(NormPsiTest, EndpointMetricDiffersFromPropagationMetric)
+{
+    Parallel_Orbitals pv;
+    const int nlocal = 2;
+    const int nband = 1;
+    const int block = 1;
+    const int zero = 0;
+    pv.nloc = 4;
+    pv.nloc_wfc = 2;
+    pv.nrow = pv.ncol = 2;
+    pv.ncol_bands = 1;
+    pv.dim0 = pv.dim1 = pv.nb = 1;
+    pv.blacs_ctxt = ictxt;
+    pv.set_coord(0, 0);
+    int info = 0;
+    int lld = 2;
+    descinit_(pv.desc, &nlocal, &nlocal, &block, &block, &zero, &zero, &ictxt, &lld, &info);
+    ASSERT_EQ(info, 0);
+    descinit_(pv.desc_wfc, &nlocal, &nband, &block, &block, &zero, &zero, &ictxt, &lld, &info);
+    ASSERT_EQ(info, 0);
+    descinit_(pv.desc_Eij, &nband, &nband, &block, &block, &zero, &zero, &ictxt, &lld, &info);
+    ASSERT_EQ(info, 0);
+    std::complex<double> endpoint[4] = {2.0, {0.0, -0.4}, {0.0, 0.4}, 1.0};
+    std::complex<double> midpoint[4] = {1.5, {0.0, -0.2}, {0.0, 0.2}, 1.0};
+    std::complex<double> right[2] = {1.0, {0.0, 0.5}};
+    std::complex<double> wrong[2] = {right[0], right[1]};
+    auto norm = [&](const std::complex<double>* psi) {
+        return (std::conj(psi[0]) * (endpoint[0]*psi[0] + endpoint[2]*psi[1])
+              + std::conj(psi[1]) * (endpoint[1]*psi[0] + endpoint[3]*psi[1])).real();
+    };
+    std::ofstream log;
+    module_rt::norm_psi(&pv, nband, nlocal, endpoint, right, log, 0);
+    module_rt::norm_psi(&pv, nband, nlocal, midpoint, wrong, log, 0);
+    EXPECT_NEAR(norm(right), 1.0, 1e-12);
+    EXPECT_GT(std::abs(norm(wrong)-1.0), 0.1);
+}

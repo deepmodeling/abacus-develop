@@ -1,0 +1,2 @@
+LR-TDDFT LDA on H2O, gamma_only, nspin=1, lr_nstates=2, lr_solver=lapack.
+Regression for the factor-two closed-shell singlet kernel; including analytic forces with KXC-enabled LibXC.

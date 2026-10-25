@@ -1,8 +1,4 @@
-add_library(
-    module_plumed
-    OBJECT
-    plumed_interface.cpp
-)
+add_library(module_plumed OBJECT plumed_interface.cpp)
 
 # The PLUMED interface is only compiled in when the build is configured with
 # -DENABLE_PLUMED=ON

@@ -67,8 +67,12 @@ class ReadInput
      *
      * @param param parameters of ABACUS
      * @param filename INPUT
+     * @return Empty on success, otherwise shared input-validation diagnostics.
      */
-    void read_txt_input(Parameter& param, const std::string& filename);
+    std::string read_txt_input(Parameter& param, const std::string& filename);
+    /// Validate explicit domains, read values, resolve defaults and validate
+    /// resolved domains. Return diagnostics before entering the calculation.
+    std::string prepare_input(Parameter& param);
     /**
      * @brief Resolve the primary H/S output options and their legacy aliases.
      *
@@ -146,6 +150,7 @@ class ReadInput
     void item_postprocess();
     // items for some models
     void item_model();
+    void item_sccs();
     // items for exx
     void item_exx();
     // items for dft+u

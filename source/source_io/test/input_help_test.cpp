@@ -309,11 +309,11 @@ TEST_F(ParameterHelpTest, EsolverTypeListFormatting) {
     EXPECT_TRUE(result);
     std::string output = captured.str();
 
-    // esolver_type has items like "ksdft:", "ofdft:", etc.
-    EXPECT_NE(output.find("ksdft:"), std::string::npos)
-        << "Expected 'ksdft:' in output:\n" << output;
-    EXPECT_NE(output.find("tddft:"), std::string::npos)
-        << "Expected 'tddft:' in output:\n" << output;
+    // esolver_type list items use inline code for parameter values.
+    EXPECT_NE(output.find("`ksdft`:"), std::string::npos)
+        << "Expected '`ksdft`:' in output:\n" << output;
+    EXPECT_NE(output.find("`tddft`:"), std::string::npos)
+        << "Expected '`tddft`:' in output:\n" << output;
 }
 
 // Test: symmetry parameter displays with list items

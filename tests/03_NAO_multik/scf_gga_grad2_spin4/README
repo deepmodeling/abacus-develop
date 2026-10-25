@@ -7,3 +7,14 @@ From tests/03_NAO_multik, run:
 
 Generate result.ref with the same command using -n 1 -g. Default energy,
 force and stress tolerances apply; no threshold overrides are used.
+
+The reference uses the mapped-density FFT definition of gga_grad=2. A matched
+rebuild with the upstream projected-gradient XC reproduces the previous reference;
+the mapped definition raises the converged two-atom energy by 0.1075335933 eV
+(53.7668 meV/atom) at this deliberately low 15-Ry cutoff. Its absolute-component
+stress sum changes from 3941.148224 to 3873.105155 kbar; this sum is a regression
+fingerprint, not a stress-component error or an accuracy bound. Both definitions
+converge with the unchanged INPUT. One- and four-rank CPU results agree within
+the default tolerances, without solver, SCF, or comparison-threshold changes.
+This low-cutoff finite-grid difference should not be generalized to converged
+cutoffs or interpreted as a uniform energy offset across materials.

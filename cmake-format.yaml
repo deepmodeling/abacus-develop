@@ -1,0 +1,4 @@
+# Do not prettify comments
+# Workaround due to cmake-format bug; should use "--enable-markup=false" in args instead
+markup:
+  enable_markup: false

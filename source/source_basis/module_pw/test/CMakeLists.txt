@@ -19,6 +19,10 @@ AddTest(
 )
 
 add_test(NAME MODULE_PW_pw_test_parallel
-      COMMAND mpirun -np 3 ./MODULE_PW_pw_test; mpirun -np 4 ./MODULE_PW_pw_test
+      COMMAND mpirun -np 3 "$<TARGET_FILE:MODULE_PW_pw_test>"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+add_test(NAME MODULE_PW_pw_test_parallel_4np
+      COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_PW_pw_test>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

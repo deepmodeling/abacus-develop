@@ -47,6 +47,17 @@ int CommunicationDomain::max(int value) const
     return value;
 }
 
+int CommunicationDomain::sum(int value) const
+{
+#ifdef __MPI
+    if (communicator_ != MPI_COMM_NULL)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, &value, 1, MPI_INT, MPI_SUM, communicator_);
+    }
+#endif
+    return value;
+}
+
 double CommunicationDomain::max(double value) const
 {
 #ifdef __MPI

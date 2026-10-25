@@ -1,4 +1,5 @@
 #include "psi_init_nao.h"
+
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/unitcell.h"
 #include "source_pw/module_pwdft/stru_fac.h"
@@ -44,10 +45,7 @@ void normalize(const std::vector<double>& r, std::vector<double>& flz)
 }
 
 template <typename T>
-void psi_init_nao<T>::prepare_params(const int& nqx,
-                                     const double& dq,
-                                     const int& nspin,
-                                     const std::string& orbital_dir)
+void psi_init_nao<T>::prepare_params(const int& nqx, const double& dq, const int& nspin, const std::string& orbital_dir)
 {
     this->nqx_ = nqx;
     this->dq_ = dq;
@@ -98,8 +96,8 @@ void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const
             GlobalV::ofs_running << "psi_init_nao<T>::read_orbital_files: reading orbital file: "
                                  << this->orbital_files_[it] << std::endl;
         }
-        std::string elem; // garbage value, will discard
-        double ecut = 0.0;      // garbage value, will discard
+        std::string elem;  // garbage value, will discard
+        double ecut = 0.0; // garbage value, will discard
         int nr = 0;
         double dr = 0.0;
         std::vector<int> nzeta;
@@ -162,20 +160,19 @@ void psi_init_nao<T>::allocate_ao_table()
 
 template <typename T>
 void psi_init_nao<T>::initialize(const Structure_Factor* sf,
-                                        const ModulePW::PW_Basis_K* pw_wfc,
-                                        const UnitCell* p_ucell,
-                                        const std::vector<int>& ik2iktot,
-                                        const int& random_seed,
-                                        const int& rank,
-                                        const int& npol,
-                                        const int& nbands)
+                                 const ModulePW::PW_Basis_K* pw_wfc,
+                                 const UnitCell* p_ucell,
+                                 const std::vector<int>& ik2iktot,
+                                 const int& random_seed,
+                                 const int& rank,
+                                 const int& npol,
+                                 const int& nbands)
 {
     ModuleBase::timer::start("psi_init_nao", "initialize");
 
     if (!this->params_prepared_)
     {
-        ModuleBase::WARNING_QUIT("psi_init_nao<T>::initialize",
-            "prepare_params() must be called before initialize()");
+        ModuleBase::WARNING_QUIT("psi_init_nao<T>::initialize", "prepare_params() must be called before initialize()");
     }
 
     // import
@@ -214,7 +211,8 @@ void psi_init_nao<T>::tabulate()
 
     if (this->nqx_ <= 0)
     {
-        ModuleBase::WARNING_QUIT("psi_init_nao<T>::tabulate",
+        ModuleBase::WARNING_QUIT(
+            "psi_init_nao<T>::tabulate",
             "nqx_ must be greater than 0. Did you forget to call prepare_params() with valid nqx?");
     }
 
@@ -363,15 +361,16 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         psig[(ibasis + 2 * L + 1) * 2 * npwk_max + ig] = this->template cast_to_T<T>(
                                             (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup);
-                                        psig[((ibasis + 2 * L + 1) * 2 + 1) * npwk_max + ig] = this->template cast_to_T<T>(
-                                            (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown);
+                                        psig[((ibasis + 2 * L + 1) * 2 + 1) * npwk_max + ig]
+                                            = this->template cast_to_T<T>(
+                                                (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown);
                                     }
                                     ibasis++;
                                 }
                                 ibasis += 2 * L + 1;
                             }
                         } // end for is_N
-                    }     // end if PARAM.inp.noncolin
+                    } // end if PARAM.inp.noncolin
                     else
                     { // LSDA and nomagnet case
                         /* DOES NOT DISTINGUISH m QUANTUM NUMBER FOR CHI */
@@ -381,17 +380,18 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
 #pragma omp parallel for
                             for (int ig = 0; ig < npw; ig++)
                             {
-                                psig[ibasis * npwk_max + ig] = this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * Jlfq[ig]);
+                                psig[ibasis * npwk_max + ig]
+                                    = this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * Jlfq[ig]);
                             }
                             ++ibasis;
                         }
                     }
                     ++ic;
                 } // end for N
-            }     // end for L
+            } // end for L
             delete[] sk;
         } // end for ia
-    }     // end for it
+    } // end for it
     /* complement the rest of bands if there are */
     if (this->nbands_complem() > 0)
     {

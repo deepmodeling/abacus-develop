@@ -4,7 +4,6 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_proj/onsite_proj.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
-#include "source_pw/module_pwdft/dftu_base.h" // mohan add 2025-11-06
 #include "source_pw/module_pwdft/vsep_pw.h"
 
 template <typename T, typename Device>
@@ -17,7 +16,6 @@ void pw::setup_pot(const int istep,
         const Charge &chr, // charge density
         pseudopot_cell_vl &locpp, // local pseudopotentials
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-        Plus_U_Base &dftu, // mohan add 2025-11-06
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<T, Device>* kspw_psi, // electronic wave functions
         hamilt::HamiltBase* p_hamilt, // hamiltonian
@@ -112,29 +110,6 @@ void pw::setup_pot(const int istep,
                    pw_wfc);
     }
 
-    //----------------------------------------------------------
-    //! 6) DFT+U algorithm
-    // This should not called in before_scf (esolver), it should be
-    // called in before_all_runners (esolver), which should 
-    // be improved later. Mohan note 2025-11-06
-    //----------------------------------------------------------
-    if (inp.dft_plus_u)
-    {
-        dftu.init_base(ucell,
-                  PARAM.globalv.npol,
-                  inp.nspin, inp.l_channel, inp.yukawa_potential,
-                  inp.yukawa_lambda,
-                  PARAM.globalv.global_readin_dir,
-                  PARAM.globalv.global_out_dir,
-                  inp.init_chg,
-                  inp.device,
-                  PARAM.globalv.hubbard_u,
-                  PARAM.globalv.uramping,
-                  inp.init_occ_mat,
-                  inp.mixing_dftu,
-                  DFTU_BASE::SOC_LAYOUT_PAULI);
-    }
-
     return;
 }
 
@@ -148,7 +123,6 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_CPU>(
         const Charge &chr, // charge density
         pseudopot_cell_vl &locpp, // local pseudopotentials
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-        Plus_U_Base &dftu, // mohan add 2025-11-06
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<std::complex<float>, base_device::DEVICE_CPU>* kspw_psi, // electronic wave functions
         hamilt::HamiltBase* p_hamilt, // hamiltonian
@@ -168,7 +142,6 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_CPU>(
         const Charge &chr, // charge density
         pseudopot_cell_vl &locpp, // local pseudopotentials
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-        Plus_U_Base &dftu, // mohan add 2025-11-06
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* kspw_psi, // electronic wave functions
         hamilt::HamiltBase* p_hamilt, // hamiltonian
@@ -189,7 +162,6 @@ template void pw::setup_pot<std::complex<float>, base_device::DEVICE_GPU>(
         const Charge &chr, // charge density
         pseudopot_cell_vl &locpp, // local pseudopotentials
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-        Plus_U_Base &dftu, // mohan add 2025-11-06
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* kspw_psi, // electronic wave functions
         hamilt::HamiltBase* p_hamilt, // hamiltonian
@@ -208,7 +180,6 @@ template void pw::setup_pot<std::complex<double>, base_device::DEVICE_GPU>(
         const Charge &chr, // charge density
         pseudopot_cell_vl &locpp, // local pseudopotentials
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-        Plus_U_Base &dftu, // mohan add 2025-11-06
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* kspw_psi, // electronic wave functions
         hamilt::HamiltBase* p_hamilt, // hamiltonian

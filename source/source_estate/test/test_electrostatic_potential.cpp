@@ -3,6 +3,7 @@
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_base/parallel_global.h"
+#include "source_io/module_parameter/input_parameter.h"
 
 #include <gtest/gtest.h>
 #include <algorithm>
@@ -18,13 +19,19 @@ SepPot::SepPot() {}
 SepPot::~SepPot() {}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
+Charge::Charge() {}
+Charge::~Charge() {}
+surchem::surchem() {}
+surchem::~surchem() {}
 
-// The same production translation unit also constructs potentials. These
-// dependencies must remain unused: the tests supply a hand-computed grid.
+// A constant Hartree term isolates the assembly of the local potentials.
+// The averaging tests supply their grid directly.
 ModuleBase::matrix elecstate::H_Hartree_pw::v_hartree(
-    const UnitCell&, ModulePW::PW_Basis*, const int&, const double* const* const)
+    const UnitCell&, ModulePW::PW_Basis* basis, const int& nspin, const double* const* const)
 {
-    throw std::logic_error("unexpected Hartree construction in averaging test");
+    ModuleBase::matrix hartree(nspin, basis->nrxx);
+    for (int ir = 0; ir < basis->nrxx; ++ir) { hartree(0, ir) = 2.0; }
+    return hartree;
 }
 ModuleBase::matrix elecstate::Efield::add_efield(
     const UnitCell&, const ModulePW::PW_Basis*, const int&, const double* const* const, const surchem&)
@@ -35,6 +42,11 @@ ModuleBase::matrix elecstate::Efield::add_efield(
 const std::vector<double>* elecstate::Potential::pcc_electron_potential() const
 {
     throw std::logic_error("unexpected PCC construction in averaging test");
+}
+
+const std::vector<double>* elecstate::Potential::find_sol_pot() const
+{
+    throw std::logic_error("unexpected solvation construction in averaging test");
 }
 
 namespace
@@ -87,6 +99,59 @@ class ElectrostaticPotentialTest : public testing::Test
     ModulePW::PW_Basis basis;
     std::vector<double> potential;
 };
+
+TEST_F(ElectrostaticPotentialTest, SccsAndPccAreAddedOnce)
+{
+    set_grid(5);
+    Input_para input;
+    input.nspin = 1;
+    input.imp_sol = 2;
+    Charge charge;
+    surchem solvent;
+    const std::vector<double> fixed(basis.nrxx, 3.0);
+    const std::vector<double> pcc(basis.nrxx, 0.25);
+    const std::vector<double> sccs(basis.nrxx, 0.5);
+    // SCCS does not initialize the legacy delta_phi array.
+    ASSERT_EQ(solvent.delta_phi, nullptr);
+    const auto result = elecstate::electrostatic_potential(cell, basis, charge, fixed.data(), solvent,
+                                                          input, &pcc, &sccs);
+    ASSERT_EQ(result.size(), static_cast<std::size_t>(basis.nrxx));
+    for (const double value : result) { EXPECT_DOUBLE_EQ(value, 5.75); }
+}
+
+TEST_F(ElectrostaticPotentialTest, LegacySolventAndVacuumRemainUnchanged)
+{
+    set_grid(5);
+    Input_para input;
+    input.nspin = 1;
+    Charge charge;
+    surchem solvent;
+    const std::vector<double> fixed(basis.nrxx, 3.0);
+    std::vector<double> delta_phi(basis.nrxx, 0.75);
+    solvent.delta_phi = delta_phi.data();
+    for (int model = 0; model <= 1; ++model)
+    {
+        input.imp_sol = model;
+        const auto result = elecstate::electrostatic_potential(cell, basis, charge, fixed.data(), solvent,
+                                                              input, nullptr, nullptr);
+        const double expected = model == 0 ? 5.0 : 5.75;
+        for (const double value : result) { EXPECT_DOUBLE_EQ(value, expected); }
+    }
+}
+
+TEST_F(ElectrostaticPotentialTest, SolventGridMismatchIsRejected)
+{
+    set_grid(5);
+    Input_para input;
+    input.nspin = 1;
+    input.imp_sol = 2;
+    Charge charge;
+    surchem solvent;
+    const std::vector<double> fixed(basis.nrxx, 3.0);
+    const std::vector<double> wrong_grid(basis.nrxx + 1, 0.5);
+    EXPECT_THROW(elecstate::electrostatic_potential(cell, basis, charge, fixed.data(), solvent,
+                                                  input, nullptr, &wrong_grid), std::runtime_error);
+}
 
 TEST_F(ElectrostaticPotentialTest, HalfOpenWindowsOnAllAxes)
 {

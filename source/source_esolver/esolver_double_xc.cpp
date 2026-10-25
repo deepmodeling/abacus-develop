@@ -427,7 +427,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
     const FSCalcConfig fs_cfg{this->inp_->nspin, this->inp_->nbands, this->inp_->t_in_h,
                         this->inp_->sc_mag_switch, this->inp_->device,
                         PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
-                        PARAM.globalv.gamma_only_pw};
+                        PARAM.globalv.gamma_only_pw, this->inp_->imp_sol};
 
     fsl.getForceStress(ucell,
                        this->get_vdw_result(),

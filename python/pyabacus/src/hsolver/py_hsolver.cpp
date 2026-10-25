@@ -6,18 +6,17 @@
  * using the unified adapter template approach.
  */
 
-#include <complex>
-#include <functional>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/complex.h>
-#include <pybind11/numpy.h>
-
-#include "source_hsolver/diago_dav_subspace.h"
+#include "diago_adapter.hpp"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/module_device/types.h"
+#include "source_hsolver/diago_dav_subspace.h"
 
-#include "diago_adapter.hpp"
+#include <complex>
+#include <functional>
+#include <pybind11/complex.h>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 using namespace pybind11::literals;
@@ -34,7 +33,8 @@ void bind_hsolver(py::module& m)
 
     // Bind PyDiagoDavSubspace using adapter
     py::class_<PyDiagoDavSubspaceAdapter>(m, "diago_dav_subspace")
-        .def(py::init<int, int>(), R"pbdoc(
+        .def(py::init<int, int>(),
+             R"pbdoc(
             Constructor of diago_dav_subspace, a class for diagonalizing
             a linear operator using the Davidson-Subspace Method.
 
@@ -48,8 +48,12 @@ void bind_hsolver(py::module& m)
                 The number of basis functions.
             nband : int
                 The number of bands to be calculated.
-        )pbdoc", "nbasis"_a, "nband"_a)
-        .def("diag", &PyDiagoDavSubspaceAdapter::diag, R"pbdoc(
+        )pbdoc",
+             "nbasis"_a,
+             "nband"_a)
+        .def("diag",
+             &PyDiagoDavSubspaceAdapter::diag,
+             R"pbdoc(
             Diagonalize the linear operator using the Davidson-Subspace Method.
 
             Parameters
@@ -85,20 +89,23 @@ void bind_hsolver(py::module& m)
             nb2d : int
                 The block size in 2d block cyclic distribution if use elpa or scalapack.
         )pbdoc",
-        "mm_op"_a,
-        "precond_vec"_a,
-        "dav_ndim"_a,
-        "tol"_a,
-        "max_iter"_a,
-        "need_subspace"_a,
-        "diag_ethr"_a,
-        "scf_type"_a,
-        "comm_info"_a,
-        "diago_subspace"_a,
-        "nb2d"_a)
-        .def("set_psi", &PyDiagoDavSubspaceAdapter::set_psi, R"pbdoc(
+             "mm_op"_a,
+             "precond_vec"_a,
+             "dav_ndim"_a,
+             "tol"_a,
+             "max_iter"_a,
+             "need_subspace"_a,
+             "diag_ethr"_a,
+             "scf_type"_a,
+             "comm_info"_a,
+             "diago_subspace"_a,
+             "nb2d"_a)
+        .def("set_psi",
+             &PyDiagoDavSubspaceAdapter::set_psi,
+             R"pbdoc(
             Set the initial guess of the eigenvectors, i.e. the wave functions.
-        )pbdoc", "psi_in"_a)
+        )pbdoc",
+             "psi_in"_a)
         .def("get_psi", &PyDiagoDavSubspaceAdapter::get_psi, R"pbdoc(
             Get the eigenvectors.
         )pbdoc")
@@ -111,7 +118,8 @@ void bind_hsolver(py::module& m)
 
     // Bind PyDiagoDavid using adapter
     py::class_<PyDiagoDavidAdapter>(m, "diago_david")
-        .def(py::init<int, int>(), R"pbdoc(
+        .def(py::init<int, int>(),
+             R"pbdoc(
             Constructor of diago_david, a class for diagonalizing
             a linear operator using the Davidson Method.
 
@@ -125,8 +133,12 @@ void bind_hsolver(py::module& m)
                 The number of basis functions.
             nband : int
                 The number of bands to be calculated.
-        )pbdoc", "nbasis"_a, "nband"_a)
-        .def("diag", &PyDiagoDavidAdapter::diag, R"pbdoc(
+        )pbdoc",
+             "nbasis"_a,
+             "nband"_a)
+        .def("diag",
+             &PyDiagoDavidAdapter::diag,
+             R"pbdoc(
             Diagonalize the linear operator using the Davidson Method.
 
             Parameters
@@ -146,16 +158,19 @@ void bind_hsolver(py::module& m)
             max_iter : int
                 The maximum number of iterations.
         )pbdoc",
-        "mm_op"_a,
-        "precond_vec"_a,
-        "dav_ndim"_a,
-        "tol"_a,
-        "diag_ethr"_a,
-        "max_iter"_a,
-        "comm_info"_a)
-        .def("set_psi", &PyDiagoDavidAdapter::set_psi, R"pbdoc(
+             "mm_op"_a,
+             "precond_vec"_a,
+             "dav_ndim"_a,
+             "tol"_a,
+             "diag_ethr"_a,
+             "max_iter"_a,
+             "comm_info"_a)
+        .def("set_psi",
+             &PyDiagoDavidAdapter::set_psi,
+             R"pbdoc(
             Set the initial guess of the eigenvectors, i.e. the wave functions.
-        )pbdoc", "psi_in"_a)
+        )pbdoc",
+             "psi_in"_a)
         .def("get_psi", &PyDiagoDavidAdapter::get_psi, R"pbdoc(
             Get the eigenvectors.
         )pbdoc")
@@ -197,33 +212,38 @@ void bind_hsolver(py::module& m)
                 Whether to use the SCF type, which is used to determine the
                 convergence criterion.
         )pbdoc",
-        "mm_op"_a,
-        "max_iter"_a,
-        "tol"_a,
-        "diag_ethr"_a,
-        "need_subspace"_a,
-        "scf_type"_a,
-        "nproc_in_pool"_a)
+             "mm_op"_a,
+             "max_iter"_a,
+             "tol"_a,
+             "diag_ethr"_a,
+             "need_subspace"_a,
+             "scf_type"_a,
+             "nproc_in_pool"_a)
         .def("init_eig", &PyDiagoCGAdapter::init_eig, R"pbdoc(
             Initialize the eigenvalues.
         )pbdoc")
         .def("get_eig", &PyDiagoCGAdapter::get_eig, R"pbdoc(
             Get the eigenvalues.
         )pbdoc")
-        .def("set_psi", &PyDiagoCGAdapter::set_psi, R"pbdoc(
+        .def("set_psi",
+             &PyDiagoCGAdapter::set_psi,
+             R"pbdoc(
             Set the eigenvectors.
-        )pbdoc", "psi_in"_a)
+        )pbdoc",
+             "psi_in"_a)
         .def("get_psi", &PyDiagoCGAdapter::get_psi, R"pbdoc(
             Get the eigenvectors.
         )pbdoc")
-        .def("set_prec", &PyDiagoCGAdapter::set_prec, R"pbdoc(
+        .def("set_prec",
+             &PyDiagoCGAdapter::set_prec,
+             R"pbdoc(
             Set the preconditioner.
-        )pbdoc", "prec_in"_a);
+        )pbdoc",
+             "prec_in"_a);
 #else
     // Provide stub binding when ATen is not available
     // This allows the module to load but will raise an error if used
-    m.def("diago_cg_available", []() { return false; },
-          "Check if diago_cg is available (requires ATen)");
+    m.def("diago_cg_available", []() { return false; }, "Check if diago_cg is available (requires ATen)");
 #endif
 }
 

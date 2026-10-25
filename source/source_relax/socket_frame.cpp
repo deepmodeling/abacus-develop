@@ -24,9 +24,7 @@ CellValidation make_failed_cell_validation()
     return result;
 }
 
-bool validate_cell_entries(const Matrix9& cell_wire,
-                           const Matrix9& inverse_wire,
-                           std::string& message)
+bool validate_cell_entries(const Matrix9& cell_wire, const Matrix9& inverse_wire, std::string& message)
 {
     if (!is_finite_matrix(cell_wire) || !is_finite_matrix(inverse_wire))
     {
@@ -51,8 +49,7 @@ bool validate_cell_tolerances(const double max_condition_number,
     return true;
 }
 
-bool compute_cell_scale(const Matrix9& cell_wire, double& scale, Matrix9& scaled_cell,
-                        std::string& message)
+bool compute_cell_scale(const Matrix9& cell_wire, double& scale, Matrix9& scaled_cell, std::string& message)
 {
     scale = 0.0;
     for (std::size_t index = 0; index < cell_wire.size(); ++index)
@@ -83,10 +80,8 @@ bool compute_cell_determinant(const double scale,
         return false;
     }
     const long double scale_long = scale;
-    const long double determinant
-        = determinant_scaled * scale_long * scale_long * scale_long;
-    if (!std::isfinite(determinant)
-        || determinant > static_cast<long double>(std::numeric_limits<double>::max()))
+    const long double determinant = determinant_scaled * scale_long * scale_long * scale_long;
+    if (!std::isfinite(determinant) || determinant > static_cast<long double>(std::numeric_limits<double>::max()))
     {
         message = "cell determinant is not representable as a finite double";
         return false;
@@ -137,8 +132,7 @@ bool compute_condition_number(const double singular_values[kMatrixDimension],
         return false;
     }
     condition_number_2 = largest_singular / smallest_singular;
-    if (!std::isfinite(condition_number_2)
-        || condition_number_2 >= max_condition_number)
+    if (!std::isfinite(condition_number_2) || condition_number_2 >= max_condition_number)
     {
         message = "cell condition number is not below the configured maximum";
         return false;
@@ -160,13 +154,11 @@ void compute_cell_inverse(const double scale,
             for (int singular = 0; singular < kMatrixDimension; ++singular)
             {
                 const long double sigma = singular_values[singular];
-                inverse_value
-                    += static_cast<long double>(right_vectors[row * kMatrixDimension + singular])
-                       * orthogonal_columns[column * kMatrixDimension + singular]
-                       / (static_cast<long double>(scale) * sigma * sigma);
+                inverse_value += static_cast<long double>(right_vectors[row * kMatrixDimension + singular])
+                                 * orthogonal_columns[column * kMatrixDimension + singular]
+                                 / (static_cast<long double>(scale) * sigma * sigma);
             }
-            computed_inverse[row * kMatrixDimension + column]
-                = static_cast<double>(inverse_value);
+            computed_inverse[row * kMatrixDimension + column] = static_cast<double>(inverse_value);
         }
     }
 }
@@ -179,15 +171,12 @@ bool check_inverse_consistency(const Matrix9& cell_wire,
                                double& inverse_residual,
                                std::string& message)
 {
-    const double direct_inverse_residual
-        = received_inverse_residual(cell_wire, inverse_wire, false);
-    const double transposed_inverse_residual
-        = received_inverse_residual(cell_wire, inverse_wire, true);
+    const double direct_inverse_residual = received_inverse_residual(cell_wire, inverse_wire, false);
+    const double transposed_inverse_residual = received_inverse_residual(cell_wire, inverse_wire, true);
     inverse_residual = std::min(direct_inverse_residual, transposed_inverse_residual);
     const double residual_limit
         = inverse_absolute_tolerance
-          + inverse_relative_tolerance * condition_number_2
-                * std::numeric_limits<double>::epsilon();
+          + inverse_relative_tolerance * condition_number_2 * std::numeric_limits<double>::epsilon();
     if (!std::isfinite(inverse_residual) || inverse_residual > residual_limit)
     {
         message = "received cell inverse is inconsistent with the cell";
@@ -199,9 +188,7 @@ bool check_inverse_consistency(const Matrix9& cell_wire,
 
 Matrix9 transpose_matrix9(const Matrix9& values)
 {
-    return {{values[0], values[3], values[6],
-             values[1], values[4], values[7],
-             values[2], values[5], values[8]}};
+    return {{values[0], values[3], values[6], values[1], values[4], values[7], values[2], values[5], values[8]}};
 }
 
 CellValidation validate_ipi_cell(const Matrix9& cell_wire,
@@ -238,22 +225,27 @@ CellValidation validate_ipi_cell(const Matrix9& cell_wire,
     double singular_values[kMatrixDimension];
     Matrix9 orthogonal_columns;
     Matrix9 right_vectors;
-    if (!compute_cell_svd(scaled_cell, singular_values, orthogonal_columns, right_vectors,
-                          result.message))
+    if (!compute_cell_svd(scaled_cell, singular_values, orthogonal_columns, right_vectors, result.message))
     {
         return result;
     }
-    if (!compute_condition_number(singular_values, max_condition_number,
-                                  result.condition_number_2, result.message))
+    if (!compute_condition_number(singular_values, max_condition_number, result.condition_number_2, result.message))
     {
         return result;
     }
 
-    compute_cell_inverse(scale, singular_values, orthogonal_columns, right_vectors,
+    compute_cell_inverse(scale,
+                         singular_values,
+                         orthogonal_columns,
+                         right_vectors,
                          result.computed_inverse_wire_bohr_inv);
-    if (!check_inverse_consistency(cell_wire, inverse_wire, result.condition_number_2,
-                                   inverse_absolute_tolerance, inverse_relative_tolerance,
-                                   result.inverse_residual, result.message))
+    if (!check_inverse_consistency(cell_wire,
+                                   inverse_wire,
+                                   result.condition_number_2,
+                                   inverse_absolute_tolerance,
+                                   inverse_relative_tolerance,
+                                   result.inverse_residual,
+                                   result.message))
     {
         return result;
     }
@@ -262,9 +254,7 @@ CellValidation validate_ipi_cell(const Matrix9& cell_wire,
     return result;
 }
 
-bool validate_positions(const std::vector<double>& positions_bohr,
-                        std::size_t coordinate_count,
-                        std::string& message)
+bool validate_positions(const std::vector<double>& positions_bohr, std::size_t coordinate_count, std::string& message)
 {
     if (positions_bohr.size() != coordinate_count)
     {
@@ -337,10 +327,8 @@ bool validate_virial_inputs(const Matrix9& stress_ry_per_bohr3,
         message = "cell volume must be finite and positive";
         return false;
     }
-    if (!std::isfinite(antisymmetric_absolute_tolerance)
-        || antisymmetric_absolute_tolerance < 0.0
-        || !std::isfinite(antisymmetric_relative_tolerance)
-        || antisymmetric_relative_tolerance < 0.0)
+    if (!std::isfinite(antisymmetric_absolute_tolerance) || antisymmetric_absolute_tolerance < 0.0
+        || !std::isfinite(antisymmetric_relative_tolerance) || antisymmetric_relative_tolerance < 0.0)
     {
         message = "stress symmetry tolerances must be finite and nonnegative";
         return false;
@@ -363,17 +351,13 @@ bool check_stress_symmetry(const Matrix9& stress_ry_per_bohr3,
     {
         for (int column = row + 1; column < kMatrixDimension; ++column)
         {
-            const double difference
-                = std::fabs(stress_ry_per_bohr3[row * kMatrixDimension + column]
-                            - stress_ry_per_bohr3[column * kMatrixDimension + row]);
-            max_antisymmetric_component
-                = std::max(max_antisymmetric_component, difference);
+            const double difference = std::fabs(stress_ry_per_bohr3[row * kMatrixDimension + column]
+                                                - stress_ry_per_bohr3[column * kMatrixDimension + row]);
+            max_antisymmetric_component = std::max(max_antisymmetric_component, difference);
         }
     }
-    const double symmetry_limit
-        = antisymmetric_absolute_tolerance + antisymmetric_relative_tolerance * maximum_stress;
-    if (!std::isfinite(max_antisymmetric_component)
-        || max_antisymmetric_component > symmetry_limit)
+    const double symmetry_limit = antisymmetric_absolute_tolerance + antisymmetric_relative_tolerance * maximum_stress;
+    if (!std::isfinite(max_antisymmetric_component) || max_antisymmetric_component > symmetry_limit)
     {
         message = "stress tensor is not symmetric within tolerance";
         return false;
@@ -397,8 +381,7 @@ bool compute_symmetric_virial(const Matrix9& stress_ry_per_bohr3,
                      + stress_ry_per_bohr3[column * kMatrixDimension + row]);
             const long double converted = 0.5L * volume_bohr3 * symmetric_stress;
             if (!std::isfinite(converted)
-                || std::fabs(converted)
-                       > static_cast<long double>(std::numeric_limits<double>::max()))
+                || std::fabs(converted) > static_cast<long double>(std::numeric_limits<double>::max()))
             {
                 message = "converted virial is not representable as finite doubles";
                 return false;
@@ -412,9 +395,9 @@ bool compute_symmetric_virial(const Matrix9& stress_ry_per_bohr3,
 } // namespace
 
 VirialConversion make_ipi_virial(const Matrix9& stress_ry_per_bohr3,
-                                  double volume_bohr3,
-                                  double antisymmetric_absolute_tolerance,
-                                  double antisymmetric_relative_tolerance)
+                                 double volume_bohr3,
+                                 double antisymmetric_absolute_tolerance,
+                                 double antisymmetric_relative_tolerance)
 {
     VirialConversion result = make_failed_virial_conversion();
 
@@ -434,10 +417,7 @@ VirialConversion make_ipi_virial(const Matrix9& stress_ry_per_bohr3,
     {
         return result;
     }
-    if (!compute_symmetric_virial(stress_ry_per_bohr3,
-                                  volume_bohr3,
-                                  result.wire_virial_hartree,
-                                  result.message))
+    if (!compute_symmetric_virial(stress_ry_per_bohr3, volume_bohr3, result.wire_virial_hartree, result.message))
     {
         return result;
     }

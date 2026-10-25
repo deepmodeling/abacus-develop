@@ -16,7 +16,9 @@ struct Vec3
     double z = 0.0;
 
     Vec3() = default;
-    Vec3(double x_in, double y_in, double z_in) : x(x_in), y(y_in), z(z_in) {}
+    Vec3(double x_in, double y_in, double z_in) : x(x_in), y(y_in), z(z_in)
+    {
+    }
 
     Vec3& operator+=(const Vec3& rhs)
     {

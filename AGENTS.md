@@ -75,6 +75,10 @@ rules. Read the complete governance document before making or reviewing changes:
       the stream state (`fail()`/`eof()`) after extraction and abort with a
       diagnostic message on malformed input rather than silently defaulting
       to zero.
+  20. Do not introduce new `#define` macros without approval. Include
+      guards and `#ifdef`/`#ifndef` usages of existing macros are exempt.
+  21. Do not initialize member variables from `PARAM` in `.h`/`.hpp`
+      files; pass the value through the constructor or a setter instead.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.

@@ -26,8 +26,6 @@ The purposes for this test directory are:
 | `09_DeePKS` | DeePKS tests. |
 | `10_others` | Other tests such as LCAO in pw. |
 | `11_PW_GPU` | KSDFT calculations in PW basis with multiple k-point setting using GPU. |
-| `12_NAO_Gamma_GPU` | KSDFT calculations in NAO basis with gamma-only k-point setting using GPU. |
-| `13_NAO_multik_GPU` | KSDFT calculations in NAO basis with multiple k-point setting using GPU. |
 | `16_SDFT_GPU` | Integrate tests for stochastic DFT running on GPU. |
 | `CMakeLists.txt` | CMake file for this directory. |
 | `integrate` | Stores scripts for integrate tests. |

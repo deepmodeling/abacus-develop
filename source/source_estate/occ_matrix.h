@@ -106,6 +106,13 @@ class OccupationMatrix
     int npol() const { return npol_; }
 
   private:
+    /// allocate occ_ and occ_save_ matrices for one atom
+    void allocate_atom_matrices(const UnitCell& cell, int iat, int it);
+
+    /// build corr_iwt_ mapping from the first radial channel to the
+    /// global orbital index for one atom
+    void build_corr_iwt(const UnitCell& cell, int iat, int ia);
+
     std::vector<std::vector<std::vector<ModuleBase::matrix>>> occ_;
     std::vector<std::vector<std::vector<ModuleBase::matrix>>> occ_save_;
     std::vector<std::vector<std::vector<std::vector<int>>>> corr_iwt_;

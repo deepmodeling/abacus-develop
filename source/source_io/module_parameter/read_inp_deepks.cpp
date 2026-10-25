@@ -29,6 +29,8 @@ void ReadInput::item_deepks()
     }
     {
         Input_Item item("deepks_out_freq_elec");
+        item.domain.set_rule("value>=0");
+        item.domain.add_requirement("deepks_out_freq_elec>0", "deepks_out_base!=none");
         item.annotation = ">0 frequency of electronic iteration to output descriptors and labels for deepks.";
         item.category = "DeePKS";
         item.type = "Integer";
@@ -37,20 +39,11 @@ void ReadInput::item_deepks()
         item.unit = "";
         item.set_availability("basis_type==lcao");
         read_sync_int(input.deepks_out_freq_elec);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.deepks_out_freq_elec < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "deepks_out_freq_elec must not be negative");
-            }
-            if (para.input.deepks_out_freq_elec > 0 && para.input.deepks_out_base == "none")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "to use deepks_out_freq_elec, please set deepks_out_base ");
-            }            
-        };
         this->add_item(item);
     }
     {
         Input_Item item("deepks_out_base");
+        item.domain.add_requirement("deepks_out_base!=none", "deepks_out_labels>0 and deepks_bandgap==0");
         item.annotation = "base functional for output files, with dft_functional as target functional";
         item.category = "DeePKS";
         item.type = "String";
@@ -59,16 +52,6 @@ void ReadInput::item_deepks()
         item.unit = "";
         item.set_availability("basis_type==lcao and deepks_out_freq_elec>0");
         read_sync_string(input.deepks_out_base);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.deepks_out_base != "none" && para.input.deepks_out_labels == 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "to use deepks_out_base, please set deepks_out_labels > 0 ");
-            }
-            if (para.input.deepks_out_base != "none" && para.input.deepks_bandgap > 0 )
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "outputting bandgap labels during electronic steps is not implemented yet ");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -179,6 +162,7 @@ void ReadInput::item_deepks()
     }
     {
         Input_Item item("bessel_descriptor_rcut");
+        item.domain.set_rule("value>=0");
         item.annotation = "radial cutoff for spherical bessel functions(a.u.)";
         item.category = "DeePKS";
         item.type = "Real";
@@ -187,12 +171,6 @@ void ReadInput::item_deepks()
         item.unit = "Bohr";
         item.set_availability("calculation==gen_bessel");
         read_sync_double(input.bessel_descriptor_rcut);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.bessel_descriptor_rcut < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "bessel_descriptor_rcut must >= 0");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -221,6 +199,7 @@ void ReadInput::item_deepks()
     }
     {
         Input_Item item("deepks_bandgap");
+        item.domain.set_choices({"0", "1", "2", "3"});
         item.annotation = ">0 for bandgap label";
         item.category = "DeePKS";
         item.type = "Integer";
@@ -233,12 +212,6 @@ void ReadInput::item_deepks()
         item.unit = "";
         item.set_availability("basis_type==lcao and deepks_scf==true");
         read_sync_int(input.deepks_bandgap);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.deepks_bandgap < 0 || para.input.deepks_bandgap > 3)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "deepks_bandgap must be integer in [0, 3]");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -284,6 +257,7 @@ void ReadInput::item_deepks()
     }
     {
         Input_Item item("deepks_v_delta");
+        item.domain.set_choices({"-2", "-1", "0", "1", "2"});
         item.annotation = "!=0 for v_delta/v_delta_R label. when output, 1 for vdpre, 2 for phialpha and grad_evdm (can save memory )"
                           " -1 for vdrpre, -2 for phialpha_r and gevdm (can save memory)";
         item.category = "DeePKS";
@@ -297,12 +271,6 @@ void ReadInput::item_deepks()
         item.unit = "";
         item.set_availability("basis_type==lcao");
         read_sync_int(input.deepks_v_delta);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.deepks_v_delta < -2 || para.input.deepks_v_delta > 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "deepks_v_delta must be integer in [-2, 2]");
-            }
-        };
         this->add_item(item);
     }
     {

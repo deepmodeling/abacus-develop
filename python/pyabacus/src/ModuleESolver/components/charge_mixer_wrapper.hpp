@@ -8,14 +8,16 @@
 #ifndef PYABACUS_ESOLVER_CHARGE_MIXER_WRAPPER_HPP
 #define PYABACUS_ESOLVER_CHARGE_MIXER_WRAPPER_HPP
 
-#include "../interfaces/i_charge_mixer.hpp"
 #include "../../utils/pybind_utils.h"
+#include "../interfaces/i_charge_mixer.hpp"
 
 #include <memory>
 #include <vector>
 
-namespace pyabacus {
-namespace esolver {
+namespace pyabacus
+{
+namespace esolver
+{
 
 /**
  * @brief Wrapper for ABACUS Charge_Mixing class
@@ -25,11 +27,10 @@ namespace esolver {
  */
 class ChargeMixerWrapper : public IChargeMixer
 {
-public:
+  public:
     ChargeMixerWrapper() = default;
 
-    ChargeMixerWrapper(int nspin, int nrxx)
-        : nspin_(nspin), nrxx_(nrxx)
+    ChargeMixerWrapper(int nspin, int nrxx) : nspin_(nspin), nrxx_(nrxx)
     {
         // Initialize history buffers for Pulay mixing
         rho_history_.reserve(config_.ndim);
@@ -40,8 +41,7 @@ public:
 
     // ==================== Core Mixing Operations ====================
 
-    py::array_t<double> mix(const py::array_t<double>& rho_in,
-                            const py::array_t<double>& rho_out) override
+    py::array_t<double> mix(const py::array_t<double>& rho_in, const py::array_t<double>& rho_out) override
     {
         using namespace pyabacus::utils;
 
@@ -53,8 +53,7 @@ public:
         const double* out_ptr = get_array_ptr(rho_out);
 
         // Create output array
-        py::array_t<double> rho_mixed({static_cast<ssize_t>(nspin_),
-                                        static_cast<ssize_t>(nrxx_)});
+        py::array_t<double> rho_mixed({static_cast<ssize_t>(nspin_), static_cast<ssize_t>(nrxx_)});
         double* mixed_ptr = get_array_ptr(rho_mixed);
 
         // Calculate drho
@@ -69,20 +68,20 @@ public:
         // Perform mixing based on method
         switch (config_.method)
         {
-            case MixingMethod::Plain:
-                mix_plain(in_ptr, out_ptr, mixed_ptr);
-                break;
-            case MixingMethod::Pulay:
-                mix_pulay(in_ptr, out_ptr, mixed_ptr);
-                break;
-            case MixingMethod::Broyden:
-                mix_broyden(in_ptr, out_ptr, mixed_ptr);
-                break;
-            case MixingMethod::Anderson:
-                mix_anderson(in_ptr, out_ptr, mixed_ptr);
-                break;
-            default:
-                mix_plain(in_ptr, out_ptr, mixed_ptr);
+        case MixingMethod::Plain:
+            mix_plain(in_ptr, out_ptr, mixed_ptr);
+            break;
+        case MixingMethod::Pulay:
+            mix_pulay(in_ptr, out_ptr, mixed_ptr);
+            break;
+        case MixingMethod::Broyden:
+            mix_broyden(in_ptr, out_ptr, mixed_ptr);
+            break;
+        case MixingMethod::Anderson:
+            mix_anderson(in_ptr, out_ptr, mixed_ptr);
+            break;
+        default:
+            mix_plain(in_ptr, out_ptr, mixed_ptr);
         }
 
         iteration_++;
@@ -99,9 +98,15 @@ public:
 
     // ==================== State Queries ====================
 
-    double get_drho() const override { return drho_; }
+    double get_drho() const override
+    {
+        return drho_;
+    }
 
-    int get_iteration() const override { return iteration_; }
+    int get_iteration() const override
+    {
+        return iteration_;
+    }
 
     // ==================== Configuration ====================
 
@@ -111,7 +116,10 @@ public:
         reset(); // Reset history when config changes
     }
 
-    MixingConfig get_config() const override { return config_; }
+    MixingConfig get_config() const override
+    {
+        return config_;
+    }
 
     void set_mixing_beta(double beta) override
     {
@@ -122,7 +130,10 @@ public:
         config_.beta = beta;
     }
 
-    double get_mixing_beta() const override { return config_.beta; }
+    double get_mixing_beta() const override
+    {
+        return config_.beta;
+    }
 
     void set_mixing_method(MixingMethod method) override
     {
@@ -130,7 +141,10 @@ public:
         reset();
     }
 
-    MixingMethod get_mixing_method() const override { return config_.method; }
+    MixingMethod get_mixing_method() const override
+    {
+        return config_.method;
+    }
 
     // ==================== Dimension Setters ====================
 
@@ -141,7 +155,7 @@ public:
         reset();
     }
 
-private:
+  private:
     // Plain linear mixing: rho_new = (1-beta)*rho_in + beta*rho_out
     void mix_plain(const double* rho_in, const double* rho_out, double* rho_mixed)
     {
@@ -215,8 +229,7 @@ private:
         {
             for (size_t k = 0; k < size; ++k)
             {
-                rho_mixed[k] += coeff[i] * (rho_history_[i][k] +
-                                            config_.beta * residual_history_[i][k]);
+                rho_mixed[k] += coeff[i] * (rho_history_[i][k] + config_.beta * residual_history_[i][k]);
             }
         }
     }
@@ -236,9 +249,7 @@ private:
     }
 
     // Simple linear system solver (Gaussian elimination with partial pivoting)
-    std::vector<double> solve_linear_system(std::vector<double>& A,
-                                            std::vector<double>& b,
-                                            int n)
+    std::vector<double> solve_linear_system(std::vector<double>& A, std::vector<double>& b, int n)
     {
         std::vector<double> x(n, 0.0);
 
@@ -270,7 +281,8 @@ private:
             // Eliminate
             for (int i = k + 1; i < n; ++i)
             {
-                if (std::abs(A[k * n + k]) < 1e-12) continue;
+                if (std::abs(A[k * n + k]) < 1e-12)
+                    continue;
                 double factor = A[i * n + k] / A[k * n + k];
                 for (int j = k; j < n; ++j)
                 {

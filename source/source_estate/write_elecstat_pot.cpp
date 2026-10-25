@@ -22,6 +22,7 @@ void write_elecstat_pot(
     const double* v_eff,
     const surchem& solvent,
     const std::vector<double>* pcc_potential,
+    const std::vector<double>* solvent_potential,
     const int precision,
     std::ofstream& ofs_running)
 {
@@ -29,7 +30,8 @@ void write_elecstat_pot(
     ModuleBase::timer::start("ModuleIO", "write_elecstat_pot");
 
     auto v_elecstat = elecstate::electrostatic_potential(*ucell, *rho_basis, *chr,
-                                                       v_eff, solvent, PARAM.inp, pcc_potential);
+                                                       v_eff, solvent, PARAM.inp,
+                                                       pcc_potential, solvent_potential);
 
     //-------------------------------------------
     //! Get the vacuum level of the system

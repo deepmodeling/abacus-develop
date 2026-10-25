@@ -41,9 +41,7 @@ list(APPEND depend_files
   ../../../source_lcao/center2orb.cpp
   )
 
-install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
-install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
+abacus_copy_test_files(GaAs)
 
 AddTest(
     TARGET MODULE_AO_ORB_nonlocal_test
@@ -84,12 +82,11 @@ AddTest(
     LIBS parameter device base
 )
 
-install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(parallel_orbitals_test.sh)
 find_program(BASH bash)
 add_test(NAME MODULE_AO_parallel_orbitals_test_para
-      COMMAND ${BASH} parallel_orbitals_test.sh
+      COMMAND ${BASH} parallel_orbitals_test.sh "$<TARGET_FILE:MODULE_AO_parallel_orbitals_test>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
+abacus_copy_test_files(lcao_H2O)

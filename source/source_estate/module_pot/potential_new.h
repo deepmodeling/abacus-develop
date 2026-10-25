@@ -10,6 +10,8 @@
 #include <memory>
 #include <vector>
 
+struct Input_para;
+
 namespace elecstate
 {
 class PotPcc;
@@ -73,12 +75,19 @@ class Potential : public PotBase
     void init_pot(const Charge* const chg);
     // initialize potential components before SCF
     void pot_register(const std::vector<std::string>& components_list);
+    void pot_register(const std::vector<std::string>& components_list, const Input_para& input);
     // update potential from current charge
     void update_from_charge(const Charge* const chg, const UnitCell* const ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 
-    PotBase* get_pot_type(const std::string& pot_type);
+    PotBase* get_pot_type(const std::string& pot_type, const Input_para& input);
+
+    // Solvation terms of the registered components; not PotBase overrides, so
+    // modules that stub Potential need not know about solvation.
+    void sum_sol_energy(double& electrostatic, double& non_electrostatic) const;
+    void sum_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const;
+    const std::vector<double>* find_sol_pot() const;
 
     /**
      * @brief Inject the shared RT-TDDFT field state before potential setup.
@@ -228,6 +237,7 @@ class Potential : public PotBase
 
     // the registered PCC component, or nullptr when PCC is off
     const PotPcc* pcc_component() const;
+    PotBase* make_sccs_pot(const Input_para& input);
 
     std::vector<double> v_eff_fixed;
     ModuleBase::matrix v_eff;

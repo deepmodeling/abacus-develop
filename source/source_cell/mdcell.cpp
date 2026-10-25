@@ -43,6 +43,36 @@ const ModuleBase::Matrix3& MDCell::get_GT() const
     return gt_;
 }
 
+const GhostExchangePlan& MDCell::get_ghost_exchange_plan() const
+{
+    if (!ghost_exchange_plan_valid_)
+    {
+        throw std::runtime_error("MDCell ghost exchange plan has not been prepared.");
+    }
+    return ghost_exchange_plan_;
+}
+
+GhostExchangePlan& MDCell::get_ghost_exchange_plan()
+{
+    if (!ghost_exchange_plan_valid_)
+    {
+        ModuleBase::WARNING_QUIT("MDCell", "Ghost exchange plan is not available.");
+    }
+    return ghost_exchange_plan_;
+}
+
+void MDCell::clear_ghost_exchange_plan_()
+{
+    ghost_exchange_plan_ = GhostExchangePlan();
+    ghost_exchange_plan_valid_ = false;
+}
+
+void MDCell::set_ghost_exchange_plan_(const GhostExchangePlan& plan)
+{
+    ghost_exchange_plan_ = plan;
+    ghost_exchange_plan_valid_ = true;
+}
+
 void MDCell::set_backing_unitcell(UnitCell& ucell)
 {
     backing_unitcell_ = &ucell;
@@ -85,6 +115,7 @@ void MDCell::initialize_from_owned_atoms(const ModuleBase::Matrix3& latvec,
     neighbor_search_.reset();
     neighbor_layout_valid_ = false;
     ghost_atoms_.clear();
+    clear_ghost_exchange_plan_();
 #ifdef __MPI
     comm_ = comm_domain.communicator();
     rank_ = comm_domain.rank();

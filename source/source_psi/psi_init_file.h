@@ -1,9 +1,10 @@
 #ifndef PSI_INIT_FILE_H
 #define PSI_INIT_FILE_H
 
-#include <vector>
-#include <string>
 #include "psi_base.h"
+
+#include <string>
+#include <vector>
 
 /*
 Psi (planewave based wavefunction) initializer: random method
@@ -24,16 +25,16 @@ class psi_init_file : public psi_base<T>
     {
         this->method_ = "file";
     };
-    ~psi_init_file(){};
+    ~psi_init_file() {};
 
-    virtual void initialize(const Structure_Factor* sf,             //< structure factor
-                            const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
-                            const UnitCell* p_ucell,                     //< unit cell
-                            const std::vector<int>& ik2iktot,             //< ik2iktot: local->global k-point mapping
-                            const int& random_seed,                      //< random seed
-                            const int& rank,                            //< MPI rank
-                            const int& npol,                            //< npol
-                            const int& nbands) override;                //< nbands
+    virtual void initialize(const Structure_Factor* sf,         //< structure factor
+                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
+                            const UnitCell* p_ucell,            //< unit cell
+                            const std::vector<int>& ik2iktot,   //< ik2iktot: local->global k-point mapping
+                            const int& random_seed,             //< random seed
+                            const int& rank,                    //< MPI rank
+                            const int& npol,                    //< npol
+                            const int& nbands) override;        //< nbands
 
     /// @brief calculate and output planewave wavefunction
     /// @param ik kpoint index

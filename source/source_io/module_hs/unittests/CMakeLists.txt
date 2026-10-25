@@ -10,7 +10,7 @@ AddTest(
 
 add_test(
   NAME MODULE_IO_hsk_writer_test_parallel
-  COMMAND mpirun -np 2 ./MODULE_IO_hsk_writer_test
+  COMMAND mpirun -np 2 "$<TARGET_FILE:MODULE_IO_hsk_writer_test>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -59,7 +59,7 @@ AddTest(
 
 add_test(
   NAME MODULE_IO_hs_dense_io_test_parallel
-  COMMAND mpirun -np 2 ./MODULE_IO_hs_dense_io_test
+  COMMAND mpirun -np 2 "$<TARGET_FILE:MODULE_IO_hs_dense_io_test>"
           --gtest_filter=HsDenseIoSaveMat.BinaryGammaUpperTriangle:HsDenseIoSaveMat.BinaryComplexUpperTriangleMpiReduction:HsDenseIoSaveMat.BinaryAppendCompleteRecordsAndOverwrite
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
@@ -78,7 +78,7 @@ AddTest(
 
 add_test(
   NAME MODULE_IO_hsr_writer_test_parallel
-  COMMAND mpirun -np 2 ./MODULE_IO_hsr_writer_test
+  COMMAND mpirun -np 2 "$<TARGET_FILE:MODULE_IO_hsr_writer_test>"
           --gtest_filter=HsrWriterIo.HContainerBinaryMpiGatherWritesCompleteFiles
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

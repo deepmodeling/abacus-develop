@@ -7,4 +7,4 @@ if [ "$#" -ne 1 ]; then
     exit 2
 fi
 
-python3 -m unittest discover -s "$1" -p test_librpa_wavefunctions.py
+python3 -m unittest discover -s "$1" -p 'test_librpa_*.py'

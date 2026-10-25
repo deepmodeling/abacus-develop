@@ -13,6 +13,7 @@ scf_out_xc_multik
 scf_campbeh_gamma
 scf_hse_soc_symm_multik
 lr_tddft_lda_gamma
+lr_tddft_lda_s1_gamma
 lr_tddft_pbe_gamma
 lr_tddft_hf_gamma
 lr_tddft_hf_ulr_gamma
@@ -22,3 +23,6 @@ rpa_scf_shrink_multik
 rt_tddft_pbe0_gamma
 bse_lr_multik
 nscf_hse_multik
+
+lr_relax_lda_beh2
+lr_relax_lda_ch4

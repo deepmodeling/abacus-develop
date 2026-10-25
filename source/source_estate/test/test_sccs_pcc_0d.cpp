@@ -1,0 +1,88 @@
+#include "source_estate/module_pot/pot_sccs.h"
+#include "source_estate/module_pot/pot_pcc.h"
+#include "source_estate/module_pot/sccs_pcc_0d.h"
+#include "source_cell/cell_tools.h"
+#include "source_hamilt/module_sccs/sccs_coulomb.h"
+#include "source_hamilt/module_sccs/sccs_functional.h"
+#include "source_hamilt/module_sccs/sccs_ion_charge.h"
+#include "source_hamilt/module_sccs/sccs_ion_force.h"
+#include "source_hamilt/module_sccs/sccs_response.h"
+#include "sccs_cell_test.h"
+#include "source_io/module_parameter/input_parameter.h"
+
+class SccsPcc0dTest : public SccsTest::CellTest
+{
+protected:
+    void SetUp() override
+    {
+        SccsTest::PwTest::SetUp();
+        set_up_cell();
+    }
+};
+
+// With epsilon 1 the solvent adds nothing, so the point-ion PCC is applied
+// exactly once; with a dielectric it adds only the reaction and cavity terms.
+TEST_F(SccsPcc0dTest, SolventAddsOnlyReactionAndCavityTermsToThePointIonPcc)
+{
+    const double epsilons[] = {1.0, 5.0};
+    for (double epsilon : epsilons)
+    {
+        Input_para input;
+        input.assume_isolated = "pcc_0d";
+        input.sccs_epsilon = epsilon;
+        ModuleSccs::SccsConfig config;
+        ModuleSccs::PolarizationSolverParameters solver;
+        elecstate::sccs_cfg_input(input, config, solver);
+        const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell.atoms, cell.ntype, cell.lat0);
+        std::unique_ptr<ModuleSccs::CoulombOperator> coulomb;
+        elecstate::pcc_0d_operator(cell, basis, atoms, coulomb);
+        std::vector<double> ions;
+        ModuleSccs::gauss_ion_rho(atoms, basis, tpiba,
+                                  ModuleSccs::gaussian_ion_spread, ions);
+        std::vector<double> solute_charge(basis.nrxx);
+        for (int ir = 0; ir < basis.nrxx; ++ir)
+        {
+            solute_charge[ir] = ions[ir] - density[ir];
+        }
+        const std::vector<double> cold;
+        ModuleSccs::SccsResponse response;
+        ModuleSccs::solve_response(density, solute_charge, config.cavity, solver, cold,
+                                   basis, tpiba, *coulomb, response);
+        ModuleSccs::FunctionalResult functional;
+        ModuleSccs::eval_functional(solute_charge, response, config, basis, tpiba,
+                                    *coulomb, functional);
+        elecstate::PotSccs solvent(&basis, config, solver, 0.6);
+        elecstate::PotPcc correction(&basis, 0.6);
+        ModuleBase::matrix potential(1, basis.nrxx);
+        correction.cal_v_eff(&charge, &cell, potential);
+        ModuleBase::matrix point_potential = potential;
+        const double point_energy = correction.get_energy();
+        solvent.cal_v_eff(&charge, &cell, potential);
+        const double reaction_energy_rydberg = 2.0 * functional.reaction_energy;
+        EXPECT_NEAR(solvent.get_energy(), reaction_energy_rydberg, 1e-12);
+        const double combined_energy = solvent.get_energy() + correction.get_energy();
+        const double expected_energy = point_energy + 2.0 * functional.reaction_energy;
+        EXPECT_NEAR(combined_energy, expected_energy, 1e-12);
+        std::vector<ModuleBase::Vector3<double>> reaction_force;
+        ModuleSccs::gauss_ion_force(atoms, functional.reaction_potential, basis,
+                                    tpiba, ModuleSccs::gaussian_ion_spread, reaction_force);
+        ModuleBase::matrix point_force(cell.nat, 3);
+        correction.add_force(cell, point_force);
+        ModuleBase::matrix combined_force = point_force;
+        solvent.add_sol_force(cell, combined_force);
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            const double expected = point_force(0, axis) + 2.0 * reaction_force[0][axis];
+            EXPECT_NEAR(combined_force(0, axis), expected, 1e-12);
+        }
+        const std::vector<double>* electrostatic = solvent.sol_elec_pot();
+        ASSERT_NE(electrostatic, nullptr);
+        for (int ir = 0; ir < basis.nrxx; ++ir)
+        {
+            const double expected = point_potential(0, ir) + 2.0 * functional.electron_potential[ir];
+            EXPECT_NEAR(potential(0, ir), expected, 1e-12);
+            const double expected_potential = -2.0 * functional.reaction_potential[ir];
+            EXPECT_NEAR((*electrostatic)[ir], expected_potential, 1e-12);
+        }
+    }
+}

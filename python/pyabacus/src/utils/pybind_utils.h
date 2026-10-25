@@ -13,21 +13,22 @@
 #ifndef PYABACUS_UTILS_PYBIND_UTILS_H
 #define PYABACUS_UTILS_PYBIND_UTILS_H
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
-
 #include <complex>
+#include <cstring>
 #include <memory>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <cstring>
 
 namespace py = pybind11;
 
-namespace pyabacus {
-namespace utils {
+namespace pyabacus
+{
+namespace utils
+{
 
 // ============================================================================
 // Array Validation Functions
@@ -45,8 +46,7 @@ void check_1d_array(const py::array_t<T>& arr, const std::string& name = "array"
     py::buffer_info info = arr.request();
     if (info.ndim != 1)
     {
-        throw std::runtime_error(name + " must be 1-dimensional, got " +
-                                 std::to_string(info.ndim) + " dimensions");
+        throw std::runtime_error(name + " must be 1-dimensional, got " + std::to_string(info.ndim) + " dimensions");
     }
 }
 
@@ -62,8 +62,7 @@ void check_2d_array(const py::array_t<T>& arr, const std::string& name = "array"
     py::buffer_info info = arr.request();
     if (info.ndim != 2)
     {
-        throw std::runtime_error(name + " must be 2-dimensional, got " +
-                                 std::to_string(info.ndim) + " dimensions");
+        throw std::runtime_error(name + " must be 2-dimensional, got " + std::to_string(info.ndim) + " dimensions");
     }
 }
 
@@ -75,14 +74,12 @@ void check_2d_array(const py::array_t<T>& arr, const std::string& name = "array"
  * @throws std::runtime_error if size doesn't match
  */
 template <typename T>
-void check_array_size(const py::array_t<T>& arr, size_t expected_size,
-                      const std::string& name = "array")
+void check_array_size(const py::array_t<T>& arr, size_t expected_size, const std::string& name = "array")
 {
     if (static_cast<size_t>(arr.size()) != expected_size)
     {
-        throw std::runtime_error(name + " must have size " +
-                                 std::to_string(expected_size) + ", got " +
-                                 std::to_string(arr.size()));
+        throw std::runtime_error(name + " must have size " + std::to_string(expected_size) + ", got "
+                                 + std::to_string(arr.size()));
     }
 }
 
@@ -107,8 +104,7 @@ void check_array_shape(const py::array_t<T>& arr,
     {
         if (info.shape[i] != expected_shape[i])
         {
-            throw std::runtime_error(name + " has wrong shape at dimension " +
-                                     std::to_string(i));
+            throw std::runtime_error(name + " has wrong shape at dimension " + std::to_string(i));
         }
     }
 }
@@ -122,14 +118,14 @@ void check_array_shape(const py::array_t<T>& arr,
  * @throws std::runtime_error if sizes don't match
  */
 template <typename T1, typename T2>
-void check_same_size(const py::array_t<T1>& arr1, const py::array_t<T2>& arr2,
+void check_same_size(const py::array_t<T1>& arr1,
+                     const py::array_t<T2>& arr2,
                      const std::string& name1 = "array1",
                      const std::string& name2 = "array2")
 {
     if (arr1.size() != arr2.size())
     {
-        throw std::runtime_error(name1 + " and " + name2 +
-                                 " must have the same size");
+        throw std::runtime_error(name1 + " and " + name2 + " must have the same size");
     }
 }
 
@@ -228,8 +224,7 @@ py::array_t<T> numpy_from_ptr_copy(const T* ptr, size_t size)
 template <typename T>
 py::array_t<T> numpy_from_ptr_copy_2d(const T* ptr, size_t nrow, size_t ncol)
 {
-    std::vector<ssize_t> shape = {static_cast<ssize_t>(nrow),
-                                   static_cast<ssize_t>(ncol)};
+    std::vector<ssize_t> shape = {static_cast<ssize_t>(nrow), static_cast<ssize_t>(ncol)};
     py::array_t<T> result(shape);
     std::memcpy(result.mutable_data(), ptr, nrow * ncol * sizeof(T));
     return result;
@@ -246,7 +241,7 @@ py::array_t<T> numpy_from_ptr_copy_nd(const T* ptr, const std::vector<ssize_t>& 
 {
     py::array_t<T> result(shape);
     size_t total_size = 1;
-    for (auto dim : shape)
+    for (auto dim: shape)
     {
         total_size *= static_cast<size_t>(dim);
     }
@@ -270,9 +265,7 @@ py::array_t<T> numpy_from_ptr_copy_nd(const T* ptr, const std::vector<ssize_t>& 
  * @return Numpy array view
  */
 template <typename T, typename Owner>
-py::array_t<T> numpy_view_with_keepalive(T* ptr,
-                                          const std::vector<ssize_t>& shape,
-                                          std::shared_ptr<Owner> owner_ptr)
+py::array_t<T> numpy_view_with_keepalive(T* ptr, const std::vector<ssize_t>& shape, std::shared_ptr<Owner> owner_ptr)
 {
     // Calculate strides for C-contiguous array
     std::vector<ssize_t> strides(shape.size());
@@ -303,10 +296,7 @@ py::array_t<T> numpy_view_with_keepalive(T* ptr,
 template <typename T>
 py::array_t<T> numpy_view_1d(T* ptr, size_t size)
 {
-    return py::array_t<T>({static_cast<ssize_t>(size)},
-                          {sizeof(T)},
-                          ptr,
-                          py::none());
+    return py::array_t<T>({static_cast<ssize_t>(size)}, {sizeof(T)}, ptr, py::none());
 }
 
 /**
@@ -322,12 +312,10 @@ py::array_t<T> numpy_view_1d(T* ptr, size_t size)
 template <typename T>
 py::array_t<T> numpy_view_2d(T* ptr, size_t nrow, size_t ncol)
 {
-    return py::array_t<T>(
-        {static_cast<ssize_t>(nrow), static_cast<ssize_t>(ncol)},
-        {static_cast<ssize_t>(ncol * sizeof(T)), sizeof(T)},
-        ptr,
-        py::none()
-    );
+    return py::array_t<T>({static_cast<ssize_t>(nrow), static_cast<ssize_t>(ncol)},
+                          {static_cast<ssize_t>(ncol * sizeof(T)), sizeof(T)},
+                          ptr,
+                          py::none());
 }
 
 // ============================================================================
@@ -400,9 +388,7 @@ struct BufferHelper
      * @param arr The numpy array
      */
     explicit BufferHelper(py::array_t<T>& arr)
-        : info(arr.request())
-        , ptr(static_cast<T*>(info.ptr))
-        , size(static_cast<size_t>(arr.size()))
+        : info(arr.request()), ptr(static_cast<T*>(info.ptr)), size(static_cast<size_t>(arr.size()))
     {
     }
 
@@ -411,9 +397,7 @@ struct BufferHelper
      * @param arr The numpy array
      */
     explicit BufferHelper(const py::array_t<T>& arr)
-        : info(arr.request())
-        , ptr(static_cast<T*>(info.ptr))
-        , size(static_cast<size_t>(arr.size()))
+        : info(arr.request()), ptr(static_cast<T*>(info.ptr)), size(static_cast<size_t>(arr.size()))
     {
     }
 
@@ -453,9 +437,8 @@ struct BufferHelper
     {
         if (size != expected)
         {
-            throw std::runtime_error(name + " must have size " +
-                                     std::to_string(expected) + ", got " +
-                                     std::to_string(size));
+            throw std::runtime_error(name + " must have size " + std::to_string(expected) + ", got "
+                                     + std::to_string(size));
         }
     }
 
@@ -465,8 +448,7 @@ struct BufferHelper
      * @param name Name for error messages
      * @throws std::runtime_error if shape doesn't match
      */
-    void require_shape(const std::vector<ssize_t>& expected_shape,
-                       const std::string& name = "array") const
+    void require_shape(const std::vector<ssize_t>& expected_shape, const std::string& name = "array") const
     {
         if (info.ndim != static_cast<ssize_t>(expected_shape.size()))
         {
@@ -476,8 +458,7 @@ struct BufferHelper
         {
             if (info.shape[i] != expected_shape[i])
             {
-                throw std::runtime_error(name + " has wrong shape at dimension " +
-                                         std::to_string(i));
+                throw std::runtime_error(name + " has wrong shape at dimension " + std::to_string(i));
             }
         }
     }
@@ -486,26 +467,38 @@ struct BufferHelper
      * @brief Get number of dimensions
      * @return Number of dimensions
      */
-    ssize_t ndim() const { return info.ndim; }
+    ssize_t ndim() const
+    {
+        return info.ndim;
+    }
 
     /**
      * @brief Get shape at dimension i
      * @param i Dimension index
      * @return Size at dimension i
      */
-    ssize_t shape(size_t i) const { return info.shape[i]; }
+    ssize_t shape(size_t i) const
+    {
+        return info.shape[i];
+    }
 
     /**
      * @brief Get number of rows (for 2D arrays)
      * @return Number of rows
      */
-    ssize_t nrow() const { return info.shape[0]; }
+    ssize_t nrow() const
+    {
+        return info.shape[0];
+    }
 
     /**
      * @brief Get number of columns (for 2D arrays)
      * @return Number of columns
      */
-    ssize_t ncol() const { return info.shape[1]; }
+    ssize_t ncol() const
+    {
+        return info.shape[1];
+    }
 };
 
 // ============================================================================

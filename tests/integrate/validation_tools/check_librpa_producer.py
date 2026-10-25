@@ -15,6 +15,7 @@ import re
 import struct
 from pathlib import Path
 
+from librpa_structure import check_spin_symmetry
 from librpa_wavefunctions import check_ks_nao, check_velocity, read_ks_wfc
 
 
@@ -94,7 +95,7 @@ def _compare_text(actual, reference, tolerance):
                 )
 
 
-def _check_stru(path, minimum_symmetry_rows):
+def _check_stru(path, minimum_symmetry_rows, spin_symmetry_rows=None):
     lines = path.read_text().splitlines()
     if len(lines) < 8:
         raise ProducerContractError("{} is too short for stru_out".format(path))
@@ -129,6 +130,7 @@ def _check_stru(path, minimum_symmetry_rows):
     if minimum_symmetry_rows is not None:
         if row_match is None or row_match < int(minimum_symmetry_rows):
             raise ProducerContractError("{} has too few symmetry rows".format(path))
+    symmetry_end = None
     if row_match is not None:
         if len(lines) < row_index + 1 + row_match:
             raise ProducerContractError("{} symmetry block is truncated".format(path))
@@ -143,6 +145,12 @@ def _check_stru(path, minimum_symmetry_rows):
                     raise ProducerContractError("{} has a non-integer symmetry rotation".format(path))
             for token in tokens[9:]:
                 _number(token)
+        symmetry_end = row_index + 1 + row_match
+    if spin_symmetry_rows is not None:
+        try:
+            check_spin_symmetry(lines, symmetry_end, path, int(spin_symmetry_rows), row_match)
+        except ValueError as error:
+            raise ProducerContractError(str(error))
 def _check_wfc_nao(path):
     """Validate the text LCAO wavefunction format consumed by GW preprocessing."""
     lines = [line.strip() for line in path.read_text().splitlines() if line.strip()]
@@ -388,7 +396,7 @@ def _check_file(path, entry):
     if kind == "gauge" or kind == "presence":
         return
     if kind == "stru":
-        _check_stru(path, entry.get("symmetry_rows"))
+        _check_stru(path, entry.get("symmetry_rows"), entry.get("spin_symmetry_rows"))
     elif kind == "wfc_nao":
         _check_wfc_nao(path)
     elif kind == "ks_wfc_v1":
@@ -448,7 +456,10 @@ def check_manifest(root, manifest):
                         if dims != (nk, nspin, nbands, nbasis):
                             raise ValueError("{} dimensions disagree with band_out.txt".format(path))
                 if entry.get("kind") == "ks_wfc_v1" and entry.get("nao_dir"):
-                    check_ks_nao(path, root / entry["nao_dir"], float(entry.get("abs_tol", 1.0e-7)))
+                    check_ks_nao(path,
+                                 root / entry["nao_dir"],
+                                 float(entry.get("abs_tol", 1.0e-7)),
+                                 spinor=bool(entry.get("spinor", False)))
             except (ValueError, struct.error) as error:
                 raise ProducerContractError(str(error))
             if entry.get("reference"):

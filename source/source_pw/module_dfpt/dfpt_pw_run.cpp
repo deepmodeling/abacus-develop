@@ -108,7 +108,25 @@ void DFPT_PW::Impl::run_q0_post(int q_idx)
 void DFPT_PW::Impl::run_assemble(int q_idx)
 {
     phon_.assemble(q_idx, data_);
-    phon_.diagonalize(q_idx, data_);
+    // translational sum-rule audit of the raw Gamma matrix (acoustic-branch
+    // diagnostics; the loto-corrected matrix is audited separately below).
+    // The raw audit does not consume frequencies, so the ordinary
+    // eigensolve runs once after any applicable ASR correction
+    if (asr_type_ != "no")
+    {
+        phon_.audit_asr("raw", q_idx, data_);
+        // enforce the sum rule on the raw matrix (with the Z* sum rule),
+        // diagonalize once and audit; the LO-TO term below then consumes
+        // the corrected Born charges (QE dynmat set_asr order)
+        phon_.apply_asr(asr_type_, q_idx, data_);
+        phon_.diagonalize(q_idx, data_);
+        phon_.audit_asr("asr", q_idx, data_);
+    }
+    else
+    {
+        phon_.diagonalize(q_idx, data_);
+        phon_.audit_asr("raw", q_idx, data_);
+    }
     if (q_idx != 0 || !data_.get_loto())
     {
         return;
@@ -118,6 +136,7 @@ void DFPT_PW::Impl::run_assemble(int q_idx)
     // set_loto_dir overrides, e.g. per irrep direction in stage A)
     phon_.add_loto(data_.get_loto_dir(), data_);
     phon_.diagonalize_loto(data_);
+    phon_.audit_asr("loto", q_idx, data_);
 }
 
 void DFPT_PW::run()

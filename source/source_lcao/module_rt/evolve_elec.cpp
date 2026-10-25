@@ -7,16 +7,16 @@
 namespace module_rt
 {
 template <typename Device>
-Evolve_elec<Device>::Evolve_elec(){};
+Evolve_elec<Device>::Evolve_elec() {};
 template <typename Device>
-Evolve_elec<Device>::~Evolve_elec(){};
+Evolve_elec<Device>::~Evolve_elec() {};
 
 template <typename Device>
 ct::DeviceType Evolve_elec<Device>::ct_device_type = ct::DeviceTypeToEnum<Device>::value;
 
 // this routine only serves for TDDFT using LCAO basis set
 template <typename Device>
-void Evolve_elec<Device>::solve_psi(const int& istep,
+void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output,
                                     const int nband,
                                     const int nlocal,
                                     const int& nks,
@@ -79,7 +79,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                        &(ekb(ik, 0)),
                        propagator,
                        ofs_running,
-                       print_matrix);
+                       print_matrix,
+                       eij_output[ik]);
             // GlobalV::ofs_running << "Print ekb: " << std::endl;
             // ekb.print(GlobalV::ofs_running);
         }
@@ -92,18 +93,10 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
             const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.nloc;
 
             // Create Tensor for psi_k, psi_k_laststep, H_laststep, S_laststep, ekb
-            ct::Tensor psi_k_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                    ct_device_type,
-                                    ct::TensorShape({len_psi_k_1, len_psi_k_2}));
-            ct::Tensor psi_k_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                             ct_device_type,
-                                             ct::TensorShape({len_psi_k_1, len_psi_k_2}));
-            ct::Tensor H_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                         ct_device_type,
-                                         ct::TensorShape({len_HS_laststep}));
-            ct::Tensor S_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE,
-                                         ct_device_type,
-                                         ct::TensorShape({len_HS_laststep}));
+            ct::Tensor psi_k_tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_psi_k_1, len_psi_k_2}));
+            ct::Tensor psi_k_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_psi_k_1, len_psi_k_2}));
+            ct::Tensor H_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS_laststep}));
+            ct::Tensor S_laststep_tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS_laststep}));
             ct::Tensor ekb_tensor(ct::DataType::DT_DOUBLE, ct_device_type, ct::TensorShape({nband}));
 
             // Global psi
@@ -145,9 +138,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                 // Only the root process (myid == 0) performs the copy
                 if (myid == root_proc)
                 {
-                    syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(),
-                                             p_psi_host,
-                                             len_psi_k_1 * len_psi_k_2);
+                    syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(), p_psi_host, len_psi_k_1 * len_psi_k_2);
                     syncmem_complex_h2d_op()(psi_k_laststep_tensor.data<std::complex<double>>(),
                                              p_psi_last_host,
                                              len_psi_k_1 * len_psi_k_2);
@@ -157,9 +148,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
             else
             {
                 // Syncronize data from CPU to Device
-                syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(),
-                                         psi[0].get_pointer(),
-                                         len_psi_k_1 * len_psi_k_2);
+                syncmem_complex_h2d_op()(psi_k_tensor.data<std::complex<double>>(), psi[0].get_pointer(), len_psi_k_1 * len_psi_k_2);
                 syncmem_complex_h2d_op()(psi_k_laststep_tensor.data<std::complex<double>>(),
                                          psi_laststep[0].get_pointer(),
                                          len_psi_k_1 * len_psi_k_2);
@@ -188,7 +177,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                       ofs_running,
                                       print_matrix,
                                       use_lapack,
-                                      cublas_res);
+                                      cublas_res,
+                                      eij_output[ik]);
 
             ModuleBase::timer::start("TD_Efficiency", "host_device_comm");
             // Need to distribute global psi back to all processes
@@ -202,9 +192,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
 
                 if (myid == 0)
                 {
-                    syncmem_complex_d2h_op()(p_psi_host,
-                                             psi_k_tensor.data<std::complex<double>>(),
-                                             len_psi_k_1 * len_psi_k_2);
+                    syncmem_complex_d2h_op()(p_psi_host, psi_k_tensor.data<std::complex<double>>(), len_psi_k_1 * len_psi_k_2);
                     syncmem_complex_d2h_op()(p_psi_last_host,
                                              psi_k_laststep_tensor.data<std::complex<double>>(),
                                              len_psi_k_1 * len_psi_k_2);
@@ -221,9 +209,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
             else
             {
                 // Syncronize data from Device to CPU
-                syncmem_complex_d2h_op()(psi[0].get_pointer(),
-                                         psi_k_tensor.data<std::complex<double>>(),
-                                         len_psi_k_1 * len_psi_k_2);
+                syncmem_complex_d2h_op()(psi[0].get_pointer(), psi_k_tensor.data<std::complex<double>>(), len_psi_k_1 * len_psi_k_2);
                 syncmem_complex_d2h_op()(psi_laststep[0].get_pointer(),
                                          psi_k_laststep_tensor.data<std::complex<double>>(),
                                          len_psi_k_1 * len_psi_k_2);

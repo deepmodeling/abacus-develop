@@ -19,8 +19,7 @@ set(SOURCES
     dfpt_q0.cpp
     dfpt_q0_pos.cpp
     dfpt_metal.cpp
-    dfpt_hamilt_shift.cpp
-)
+    dfpt_hamilt_shift.cpp)
 
 set(HEADERS
     dfpt_pw.h
@@ -33,29 +32,28 @@ set(HEADERS
     dfpt_q0.h
     dfpt_metal.h
     dfpt_hamilt_shift.h
-)
+    dfpt_xc_analytic.h)
 
 add_library(${MODULE_NAME} ${SOURCES} ${HEADERS})
 
-target_include_directories(${MODULE_NAME}
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
+# analytic libxc kernel for the DFPT first-order XC response; the source is
+# an empty translation unit without libxc, so an unconditional build keeps
+# every consumer linkable either way
+if(ENABLE_LIBXC)
+  target_sources(${MODULE_NAME} PRIVATE dfpt_xc_analytic.cpp)
+  target_link_libraries(${MODULE_NAME} PUBLIC Libxc::xc)
+endif()
 
-target_link_libraries(${MODULE_NAME}
-    PUBLIC
-        base
-        cell
-        psi
-        elecstate
-        module_pwdft
-)
+target_include_directories(${MODULE_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-if (BUILD_TESTING)
-    if(ENABLE_MPI)
-        add_subdirectory(test)
-        # serial (__MPI-off) tests for the FFT-driving kernels; must be built
-        # inside ENABLE_MPI so the shared prebuilt test libs stay available
-        add_subdirectory(test_serial)
-    endif()
+target_link_libraries(${MODULE_NAME} PUBLIC base cell psi elecstate
+                                            module_pwdft)
+
+if(BUILD_TESTING)
+  if(ENABLE_MPI)
+    add_subdirectory(test)
+    # serial (__MPI-off) tests for the FFT-driving kernels; must be built
+    # inside ENABLE_MPI so the shared prebuilt test libs stay available
+    add_subdirectory(test_serial)
+  endif()
 endif()

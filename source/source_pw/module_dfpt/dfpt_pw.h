@@ -128,6 +128,10 @@ class DFPT_PW
 
     void set_mix_beta(double beta);
 
+    /// acoustic sum rule on the Gamma dynamical matrix ("no" | "simple" |
+    /// "crystal"); applied to the raw matrix before the LO-TO term
+    void set_asr(const std::string& asr_type);
+
     /// q = 0 response switches (epsilon_inf / Born charges / LO-TO)
     void set_compute_q0(bool flag);
 

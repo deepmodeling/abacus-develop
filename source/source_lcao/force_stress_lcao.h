@@ -45,6 +45,7 @@ struct FSCalcConfig
     bool domag_z;
     int gga_grad;
     bool gamma_only_pw;
+    int imp_sol; // 2 adds the SCCS component force
 };
 
 // Force/stress component matrices assembled by getForceStress. Grouping them

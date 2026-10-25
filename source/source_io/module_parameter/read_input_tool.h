@@ -80,26 +80,31 @@
 
 #define sync_string(PARAMETER)                                                                                         \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::String, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_string_bcast(PARAMETER);                                                                                   \
     }
 #define sync_int(PARAMETER)                                                                                            \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::Integer, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_int_bcast(PARAMETER);                                                                                      \
     }
 #define sync_double(PARAMETER)                                                                                         \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::Real, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_double_bcast(PARAMETER);                                                                                   \
     }
 #define sync_bool(PARAMETER)                                                                                           \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::Boolean, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) { item.final_value << para.PARAMETER; };    \
         add_bool_bcast(PARAMETER);                                                                                     \
     }
 #define sync_doublevec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::RealVector, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
@@ -110,6 +115,7 @@
     }
 #define sync_intvec(PARAMETER, N, FILL)                                                                                \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::IntegerVector, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
@@ -120,6 +126,7 @@
     }
 #define sync_stringvec(PARAMETER, N, FILL)                                                                             \
     {                                                                                                                  \
+        item.domain.bind(AvailabilityValueKind::StringVector, [](const Parameter& para) { return InputValue(para.PARAMETER); }); \
         item.get_final_value = [](Input_Item& item, const Parameter& para) {                                           \
             for (int i = 0; i < N; i++)                                                                                \
             {                                                                                                          \
@@ -136,16 +143,19 @@
     }
 #define read_sync_int(PARAMETER)                                                                                       \
     {                                                                                                                  \
+        item.domain.scalar(); \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = intvalue; };                  \
         sync_int(PARAMETER);                                                                                           \
     }
 #define read_sync_double(PARAMETER)                                                                                    \
     {                                                                                                                  \
+        item.domain.scalar(); \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = doublevalue; };               \
         sync_double(PARAMETER);                                                                                        \
     }
 #define read_sync_bool(PARAMETER)                                                                                      \
     {                                                                                                                  \
+        item.domain.scalar(); \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = boolvalue; };                 \
         sync_bool(PARAMETER);                                                                                          \
     }

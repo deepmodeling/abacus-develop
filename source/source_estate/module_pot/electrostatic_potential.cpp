@@ -21,17 +21,22 @@ double electrostatic_reference(const UnitCell& cell, ModulePW::PW_Basis& basis,
 {
     const double* fixed = basis.nrxx > 0 ? pot.get_fixed_v() : nullptr;
     const auto* pcc_potential = pot.pcc_electron_potential();
-    const auto potential = electrostatic_potential(cell, basis, charge, fixed, solvent, input, pcc_potential);
+    const auto* solvent_potential = pot.find_sol_pot();
+    const auto potential = electrostatic_potential(cell, basis, charge, fixed, solvent, input,
+                                                   pcc_potential, solvent_potential);
     return planar_potential_average(cell, basis, potential, window.axis, window.minimum_A, window.maximum_A);
 }
 
 std::vector<double> electrostatic_potential(const UnitCell& cell, ModulePW::PW_Basis& basis,
                                            const Charge& charge, const double* fixed,
                                            const surchem& solvent, const Input_para& input,
-                                           const std::vector<double>* pcc_potential)
+                                           const std::vector<double>* pcc_potential,
+                                           const std::vector<double>* solvent_potential)
 {
-    if (basis.nrxx > 0 && (!fixed || (input.imp_sol && !solvent.delta_phi)))
+    if (basis.nrxx > 0 && (!fixed || (input.imp_sol == 1 && !solvent.delta_phi)))
     { throw std::runtime_error("electrostatic reference requires initialized fixed and solvent potentials"); }
+    if (solvent_potential && solvent_potential->size() != static_cast<std::size_t>(basis.nrxx))
+    { throw std::runtime_error("Solvent potential does not match the output grid"); }
     const auto hartree = H_Hartree_pw::v_hartree(cell, &basis, input.nspin, charge.rho);
     ModuleBase::matrix dipole;
     const bool add_dipole = input.efield_flag && input.dip_cor_flag;
@@ -43,7 +48,8 @@ std::vector<double> electrostatic_potential(const UnitCell& cell, ModulePW::PW_B
         potential[ir] = hartree(0, ir) + fixed[ir];
         if (add_dipole) { potential[ir] += dipole(0, ir); }
         if (pcc_potential) { potential[ir] += (*pcc_potential)[ir]; }
-        if (input.imp_sol) { potential[ir] += solvent.delta_phi[ir]; }
+        if (solvent_potential) { potential[ir] += (*solvent_potential)[ir]; }
+        if (input.imp_sol == 1) { potential[ir] += solvent.delta_phi[ir]; }
     }
     return potential;
 }

@@ -41,7 +41,7 @@
  *   - build_dv + apply_dv: the stored reciprocal coefficients and the FFT
  *     convolution dpsi(G'') = sum_G' psi(G') c(G''-G') are checked against
  *     the analytic matrix elements on the k+q basis (no extra q-phase).
- *   - build_efield: -E.r ramp layout and its closed-form discrete FT.
+
  *   - build_vkb: l=0 projector against an independent hand-rolled Simpson
  *     transform; pure phase response under a tau shift.
  *   - dVnl_dtau: the two-term NC identity is validated against a finite
@@ -176,66 +176,6 @@ TEST_F(DFPTPertSerialTest, ApplyDvConvolutionMatchesAnalyticMatrixElement)
         EXPECT_NEAR(d1[igl].real(), e1.real(), 1.0e-8);
         EXPECT_NEAR(d1[igl].imag(), e1.imag(), 1.0e-8);
     }
-}
-
-TEST_F(DFPTPertSerialTest, BuildEfieldRampMatchesClosedForm)
-{
-    const double E0 = 0.5;
-    const double Lx = 10.0 * lat0_;
-    pert_.build_efield(ModuleBase::Vector3<double>(E0, 0.0, 0.0), data_);
-    const std::vector<std::complex<double>> dv = data_.get_dv_rc(0, 0);
-    ASSERT_EQ(dv.size(), static_cast<size_t>(pw_rho_.nrxx));
-    const int nx = pw_rho_.nx;
-
-    // real-space values form a pure x ramp -E0 (ix/nx) Lx
-    for (int ir = 0; ir < pw_rho_.nrxx; ++ir)
-    {
-        const double j = std::llround(-dv[ir].real() / (E0 * Lx) * nx);
-        EXPECT_GE(j, 0.0);
-        EXPECT_LE(j, nx - 1.0);
-        EXPECT_NEAR(dv[ir].real(), -E0 * (j / nx) * Lx, 1.0e-10);
-        EXPECT_EQ(dv[ir].imag(), 0.0);
-    }
-
-    // closed-form discrete FT of the sawtooth discriminates the (ix,iy,iz)
-    // layout: c(k) = E0 Lx / (nx (1 - w)), w = exp(-2 pi i k / nx), k != 0
-    std::vector<std::complex<double>> recip(pw_rho_.npw);
-    pw_rho_.real2recip(dv.data(), recip.data());
-    int ig_p100 = -1, ig_m100 = -1, ig_p110 = -1, ig_p010 = -1;
-    for (int ig = 0; ig < pw_rho_.npw; ++ig)
-    {
-        const long long key = GKey(pw_rho_.gcar[ig]);
-        if (key == FKey(1, 0, 0))
-        {
-            ig_p100 = ig;
-        }
-        else if (key == FKey(-1, 0, 0))
-        {
-            ig_m100 = ig;
-        }
-        else if (key == FKey(1, 1, 0))
-        {
-            ig_p110 = ig;
-        }
-        else if (key == FKey(0, 1, 0))
-        {
-            ig_p010 = ig;
-        }
-    }
-    ASSERT_GE(ig_p100, 0);
-    ASSERT_GE(ig_m100, 0);
-    ASSERT_GE(ig_p110, 0);
-    ASSERT_GE(ig_p010, 0);
-    const std::complex<double> w1 = std::polar(1.0, -ModuleBase::TWO_PI / nx);
-    const std::complex<double> nx_c(nx);
-    const std::complex<double> c1 = E0 * Lx / (nx_c * (1.0 - w1));
-    const std::complex<double> cm1 = E0 * Lx / (nx_c * (1.0 - std::conj(w1)));
-    EXPECT_NEAR(recip[ig_p100].real(), c1.real(), 1.0e-8);
-    EXPECT_NEAR(recip[ig_p100].imag(), c1.imag(), 1.0e-8);
-    EXPECT_NEAR(recip[ig_m100].real(), cm1.real(), 1.0e-8);
-    EXPECT_NEAR(recip[ig_m100].imag(), cm1.imag(), 1.0e-8);
-    EXPECT_NEAR(std::abs(recip[ig_p110]), 0.0, 1.0e-10);
-    EXPECT_NEAR(std::abs(recip[ig_p010]), 0.0, 1.0e-10);
 }
 
 TEST_F(DFPTPertSerialTest, BuildVkbL0MatchesIndependentSimpson)

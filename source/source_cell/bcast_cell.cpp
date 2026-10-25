@@ -124,8 +124,11 @@ namespace unitcell
 
         for (int i = 0; i < ntype; i++)
         {
+            Parallel_Common::bcast_string(ucell.pseudo_fn[i]);
+            Parallel_Common::bcast_string(ucell.pseudo_type[i]);
             Parallel_Common::bcast_string(ucell.orbital_fn[i]);
         }
+        Parallel_Common::bcast_string(ucell.descriptor_file);
 
         // ABFS/JLE orbital-file lists (read from STRU on rank 0, used by LCAO EXX)
         bcast_string_vector(ucell.abfs_orbital_files);

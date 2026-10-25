@@ -158,7 +158,7 @@ AddTest(
 )
 
 add_test(NAME MODULE_CHARGE_parallel_4np
-      COMMAND mpirun -np 4 ./MODULE_CHARGE_parallel;
+      COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_CHARGE_parallel>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 

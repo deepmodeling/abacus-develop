@@ -211,3 +211,41 @@ TEST_F(FoldingTest, folding_HR_d2d)
 
     delete HR;
 }
+// Cross-geometry overlaps are ordered and nonsymmetric, including after Fourier folding.
+TEST(CrossOverlapFolding, PreservesOrderedPairsAndAllImages)
+{
+    Parallel_Orbitals distribution;
+    distribution.set_serial(2, 2);
+    const int atom_offsets[] = {0, 1, 2};
+    distribution.set_atomic_trace(atom_offsets, 2, 2);
+    hamilt::HContainer<double> overlap(&distribution);
+    const ModuleBase::Vector3<int> minus(-1, 0, 0);
+    const ModuleBase::Vector3<int> center(0, 0, 0);
+    const ModuleBase::Vector3<int> plus(1, 0, 0);
+    const hamilt::AtomPair<double> forward_minus(0, 1, minus, &distribution);
+    const hamilt::AtomPair<double> forward_center(0, 1, center, &distribution);
+    const hamilt::AtomPair<double> forward_plus(0, 1, plus, &distribution);
+    const hamilt::AtomPair<double> reverse(1, 0, center, &distribution);
+    overlap.insert_pair(forward_minus);
+    overlap.insert_pair(forward_center);
+    overlap.insert_pair(forward_plus);
+    overlap.insert_pair(reverse);
+    overlap.allocate(nullptr, true);
+    auto* forward = overlap.find_pair(0, 1);
+    forward->get_HR_values(-1, 0, 0).get_pointer()[0] = 2.0;
+    forward->get_HR_values(0, 0, 0).get_pointer()[0] = 3.0;
+    forward->get_HR_values(1, 0, 0).get_pointer()[0] = 5.0;
+    overlap.find_pair(1, 0)->get_pointer(0)[0] = 7.0;
+    const std::complex<double> zero(0.0, 0.0);
+    std::vector<std::complex<double>> gamma_matrix(4, zero);
+    const ModuleBase::Vector3<double> gamma(0.0, 0.0, 0.0);
+    hamilt::folding_HR(overlap, gamma_matrix.data(), gamma, 2, 0);
+    EXPECT_EQ(gamma_matrix[1], std::complex<double>(10.0, 0.0));
+    EXPECT_EQ(gamma_matrix[2], std::complex<double>(7.0, 0.0));
+    std::vector<std::complex<double>> k_matrix(4, zero);
+    const ModuleBase::Vector3<double> k(0.25, 0.0, 0.0);
+    hamilt::folding_HR(overlap, k_matrix.data(), k, 2, 0);
+    EXPECT_NEAR(k_matrix[1].real(), 3.0, 1e-14);
+    EXPECT_NEAR(k_matrix[1].imag(), 3.0, 1e-14);
+    EXPECT_EQ(k_matrix[2], std::complex<double>(7.0, 0.0));
+}

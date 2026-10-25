@@ -138,6 +138,14 @@ void DFPT_PW::set_mix_beta(double beta)
     }
 }
 
+void DFPT_PW::set_asr(const std::string& asr_type)
+{
+    if (asr_type == "no" || asr_type == "simple" || asr_type == "crystal")
+    {
+        pimpl_->asr_type_ = asr_type;
+    }
+}
+
 void DFPT_PW::set_compute_q0(bool flag)
 {
     pimpl_->data_.set_compute_q0(flag);

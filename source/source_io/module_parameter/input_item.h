@@ -8,6 +8,7 @@
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_parameter/availability.h"
+#include "source_io/module_parameter/input_domain.h"
 namespace ModuleIO
 {
 class Input_Item
@@ -31,6 +32,7 @@ class Input_Item
         description = item.description;
         default_value = item.default_value;
         unit = item.unit;
+        domain = item.domain;
         availability_expr_ = item.availability_expr_;
         annotation = item.annotation;
         read_value = item.read_value;
@@ -49,6 +51,7 @@ class Input_Item
     std::string description;   ///< full description (supports multi-line, lists, notes)
     std::string default_value; ///< default value as string
     std::string unit;          ///< unit of measurement (empty if none)
+    InputDomain domain;       ///< shared runtime validation and legal-value metadata
     /// Set and validate the canonical availability expression. An empty value
     /// means that the item is always available.
     void set_availability(const std::string& value)
