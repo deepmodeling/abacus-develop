@@ -12,6 +12,70 @@
 
 namespace ModuleIO
 {
+namespace
+{
+// xc_nonlocal=rvv10 is a staged interface. Reject everything outside it while
+// INPUT is read, before any expensive setup, and name the first unsupported
+// setting so the user knows what to change.
+void check_xc_nonlocal(const Input_para& p, const bool double_grid, const int nproc)
+{
+    const std::string nonlocal = p.xc_nonlocal;
+    if (nonlocal != "none" && nonlocal != "rvv10")
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", "xc_nonlocal must be either none or rvv10");
+    }
+    if (nonlocal != "rvv10")
+    {
+        return;
+    }
+#if !defined(__LIBXC) || !defined(__LIBVDWXC)
+    ModuleBase::WARNING_QUIT("ReadInput", "xc_nonlocal=rvv10 requires Libxc and libvdwxc-enabled CMake builds");
+#endif
+    std::string functional = p.dft_functional;
+    std::transform(functional.begin(), functional.end(), functional.begin(), [](unsigned char c) {
+        return static_cast<char>(std::toupper(c));
+    });
+    functional.erase(
+        std::remove_if(functional.begin(), functional.end(), [](unsigned char c) { return std::isspace(c); }),
+        functional.end());
+    if (functional.empty() || functional == "DEFAULT")
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", "xc_nonlocal=rvv10 requires an explicit semilocal dft_functional");
+    }
+    if (functional != "GGA_X_RPW86+GGA_C_PBE")
+    {
+        ModuleBase::WARNING_QUIT(
+            "ReadInput",
+            "xc_nonlocal=rvv10 requires dft_functional=GGA_X_RPW86+GGA_C_PBE for the libvdwxc backend");
+    }
+    // Report the first unsupported setting so the user knows what to change.
+    // gamma_only is rejected in its own reset, before the KPT file is rewritten.
+    const std::vector<std::pair<bool, const char*>> unsupported = {
+        {nproc != 1, "one MPI rank"},
+        {p.calculation != "scf", "calculation=scf"},
+        {p.esolver_type != "ksdft", "esolver_type=ksdft"},
+        {p.basis_type != "pw", "basis_type=pw"},
+        {p.device != "cpu", "device=cpu"},
+        {p.precision != "double", "precision=double"},
+        {p.nspin != 1, "nspin=1"},
+        {p.cal_force, "cal_force=0"},
+        {p.cal_stress, "cal_stress=0"},
+        {double_grid, "a single density grid"},
+        {p.vdw_method != "none", "vdw_method=none"},
+        {!p.vl_in_h, "vl_in_h=1"},
+    };
+    for (const std::pair<bool, const char*>& entry: unsupported)
+    {
+        if (entry.first)
+        {
+            const std::string message
+                = std::string("xc_nonlocal=rvv10 supports only ") + entry.second + " in the current libvdwxc interface";
+            ModuleBase::WARNING_QUIT("ReadInput", message);
+        }
+    }
+}
+} // namespace
+
 void ReadInput::item_elec_stru()
 {
     // NOTE: The order of add_item() calls below determines the parameter order
@@ -303,8 +367,10 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                 return static_cast<char>(std::toupper(c));
             });
             if (name == "RVV10")
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput", "Use xc_nonlocal=rvv10 with an explicit semilocal dft_functional");
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "Use xc_nonlocal=rvv10 with an explicit semilocal dft_functional");
+            }
         };
         this->add_item(item);
     }
@@ -313,7 +379,8 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "none; rvv10";
         item.category = "Electronic structure";
         item.type = "String";
-        item.description = R"(Select an optional libvdwxc-backed nonlocal exchange-correlation correction. `none` disables the correction. The current rVV10 interface requires a CMake build with `ENABLE_LIBXC=ON` and `ENABLE_LIBVDWXC=ON`, `dft_functional=GGA_X_RPW86+GGA_C_PBE`, fixed b=6.3 and C=0.0093, and a single-process, CPU double-precision, plane-wave, single-density-grid, right-handed-cell, norm-conserving, spin-unpolarized SCF calculation. Forces, stress, geometry optimization, molecular dynamics, non-SCF calculations such as `nscf`, LCAO, GPU, reduced-gamma layouts, ultrasoft/PAW pseudopotentials, spin-polarized calculations and pairwise vdW corrections are not part of this interface.)";
+        item.description
+            = R"(Select an optional libvdwxc-backed nonlocal exchange-correlation correction. `none` disables the correction. The current rVV10 interface requires a CMake build with `ENABLE_LIBXC=ON` and `ENABLE_LIBVDWXC=ON`, `dft_functional=GGA_X_RPW86+GGA_C_PBE` (the published rVV10 parameters b=6.3 and C=0.0093 of this pairing are built in), and a single-process, CPU double-precision, plane-wave, single-density-grid, right-handed-cell, norm-conserving, spin-unpolarized SCF calculation. Forces, stress, geometry optimization, molecular dynamics, non-SCF calculations such as `nscf`, LCAO, GPU, reduced-gamma layouts, ultrasoft pseudopotentials, spin-polarized calculations and pairwise vdW corrections are not part of this interface.)";
         item.default_value = "none";
         item.unit = "";
         read_sync_string(input.xc_nonlocal);
@@ -322,91 +389,10 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
         };
         item.check_value = [](const Input_Item&, const Parameter& para) {
-            std::string nonlocal = para.input.xc_nonlocal;
-            std::transform(nonlocal.begin(), nonlocal.end(), nonlocal.begin(), [](unsigned char c) {
-                return static_cast<char>(std::tolower(c));
-            });
-            if (nonlocal != "none" && nonlocal != "rvv10")
-                ModuleBase::WARNING_QUIT("ReadInput", "xc_nonlocal must be either none or rvv10");
-            if (nonlocal != "rvv10")
-                return;
-#if !defined(__LIBXC) || !defined(__LIBVDWXC)
-            ModuleBase::WARNING_QUIT("ReadInput", "xc_nonlocal=rvv10 requires Libxc and libvdwxc-enabled CMake builds");
-#endif
-            if (!std::isfinite(para.input.rvv10_b) || para.input.rvv10_b <= 0.0 || !std::isfinite(para.input.rvv10_c)
-                || para.input.rvv10_c < 0.0)
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput", "rvv10_b must be finite and positive, and rvv10_c must be finite and non-negative");
-            }
-            std::string functional = para.input.dft_functional;
-            std::transform(functional.begin(), functional.end(), functional.begin(), [](unsigned char c) {
-                return static_cast<char>(std::toupper(c));
-            });
-            functional.erase(std::remove_if(functional.begin(), functional.end(), [](unsigned char c) {
-                return std::isspace(c);
-            }), functional.end());
-            if (functional.empty() || functional == "DEFAULT")
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput", "xc_nonlocal=rvv10 requires an explicit semilocal dft_functional");
-            if (functional != "GGA_X_RPW86+GGA_C_PBE")
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "xc_nonlocal=rvv10 requires dft_functional=GGA_X_RPW86+GGA_C_PBE for the libvdwxc backend");
-            if (std::abs(para.input.rvv10_b - 6.3) > 1.0e-12 || std::abs(para.input.rvv10_c - 0.0093) > 1.0e-12)
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput", "xc_nonlocal=rvv10 uses fixed parameters rvv10_b=6.3 and rvv10_c=0.0093");
-            // Report the first unsupported setting so the user knows what to change.
-            const auto& p = para.input;
-            const std::vector<std::pair<bool, const char*>> unsupported = {
-                {para.globalv.nproc != 1, "one MPI rank"},
-                {p.calculation != "scf", "calculation=scf"},
-                {p.esolver_type != "ksdft", "esolver_type=ksdft"},
-                {p.basis_type != "pw", "basis_type=pw"},
-                {p.device != "cpu", "device=cpu"},
-                {p.precision != "double", "precision=double"},
-                {p.nspin != 1, "nspin=1"},
-                {p.cal_force, "cal_force=0"},
-                {p.cal_stress, "cal_stress=0"},
-                {para.sys.double_grid, "a single density grid"},
-                {p.gamma_only, "gamma_only=0"},
-                {p.vdw_method != "none", "vdw_method=none"},
-                {!p.vl_in_h, "vl_in_h=1"},
-            };
-            for (const auto& entry: unsupported)
-            {
-                if (entry.first)
-                {
-                    const std::string message = std::string("xc_nonlocal=rvv10 supports only ") + entry.second
-                                                + " in the current libvdwxc interface";
-                    ModuleBase::WARNING_QUIT("ReadInput", message);
-                }
-            }
+            const bool double_grid = para.sys.double_grid;
+            const int nproc = para.globalv.nproc;
+            check_xc_nonlocal(para.input, double_grid, nproc);
         };
-        this->add_item(item);
-    }
-    {
-        Input_Item item("rvv10_b");
-        item.annotation = "positive real";
-        item.category = "Electronic structure";
-        item.type = "Real";
-        item.description = "Fixed damping parameter b=6.3 for the current libvdwxc-backed `GGA_X_RPW86+GGA_C_PBE` rVV10 interface.";
-        item.default_value = "6.3";
-        item.unit = "dimensionless";
-        item.set_availability("xc_nonlocal==rvv10");
-        read_sync_double(input.rvv10_b);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("rvv10_c");
-        item.annotation = "non-negative real";
-        item.category = "Electronic structure";
-        item.type = "Real";
-        item.description = "Fixed parameter C=0.0093 for the current libvdwxc-backed `GGA_X_RPW86+GGA_C_PBE` rVV10 interface.";
-        item.default_value = "0.0093";
-        item.unit = "dimensionless";
-        item.set_availability("xc_nonlocal==rvv10");
-        read_sync_double(input.rvv10_c);
         this->add_item(item);
     }
     {
@@ -869,13 +855,10 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.basis_type == "pw" && para.input.gamma_only)
             {
-                // Resets precede validation. Reject before the PW fallback
-                // overwrites KPT; xc_nonlocal may not yet be lowercased.
-                std::string nonlocal = para.input.xc_nonlocal;
-                std::transform(nonlocal.begin(), nonlocal.end(), nonlocal.begin(), [](unsigned char c) {
-                    return static_cast<char>(std::tolower(c));
-                });
-                if (nonlocal == "rvv10")
+                // Resets run before check_value, so reject rVV10 here, before the
+                // PW fallback overwrites KPT. xc_nonlocal is registered earlier in
+                // this function and its reset has already lowercased the value.
+                if (para.input.xc_nonlocal == "rvv10")
                 {
                     ModuleBase::WARNING_QUIT("ReadInput",
                                              "xc_nonlocal=rvv10 supports only full k-point PW layouts; "

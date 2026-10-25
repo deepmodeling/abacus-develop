@@ -103,8 +103,7 @@ void setup_estate_pw_impl(
     {
         pelec->pot = new elecstate::Potential(pw_rhod,
               pw_rho, &ucell, &locpp.vloc, &sf,
-              &solvent, &(pelec->f_en.etxc), &(pelec->f_en.vtxc), vsep_cell,
-              inp.rvv10_b, inp.rvv10_c, inp.xc_nonlocal);
+              &solvent, &(pelec->f_en.etxc), &(pelec->f_en.vtxc), vsep_cell);
     }
 
     locpp.init_vloc(ucell, pw_rhod);

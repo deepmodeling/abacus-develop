@@ -276,26 +276,6 @@ TEST_F(InputTest, NonlocalXcRejectsIncorrectFunctional)
                          "requires dft_functional=GGA_X_RPW86+GGA_C_PBE");
 }
 
-TEST_F(InputTest, NonlocalXcRejectsInvalidOrUnsupportedParameters)
-{
-    const std::string filename = temporary_file("abacus_nonlocal_parameters.INPUT");
-    const std::string base = "xc_nonlocal rvv10\ndft_functional GGA_X_RPW86+GGA_C_PBE\n";
-    const std::vector<std::pair<std::string, std::string>> cases = {
-        {"rvv10_b 0\n", "must be finite and positive"},
-        {"rvv10_b nan\n", "must be finite and positive"},
-        {"rvv10_c -0.1\n", "must be finite and non-negative"},
-        {"rvv10_c inf\n", "must be finite and non-negative"},
-        {"rvv10_b 7.0\n", "uses fixed parameters"},
-        {"rvv10_c 0.01\n", "uses fixed parameters"},
-    };
-    for (const auto& entry: cases)
-    {
-        SCOPED_TRACE(entry.first);
-        const std::string parameters = base + entry.first;
-        expect_invalid_input(filename, parameters, entry.second);
-    }
-}
-
 TEST_F(InputTest, NonlocalXcRejectsUnsupportedInputCombinations)
 {
     const std::string filename = temporary_file("abacus_nonlocal_scope.INPUT");
@@ -311,7 +291,7 @@ TEST_F(InputTest, NonlocalXcRejectsUnsupportedInputCombinations)
         "vdw_method d2\n",
         "vl_in_h 0\n",
     };
-    for (const auto& entry: cases)
+    for (const std::string& entry: cases)
     {
         SCOPED_TRACE(entry);
         const std::string parameters = base + entry;

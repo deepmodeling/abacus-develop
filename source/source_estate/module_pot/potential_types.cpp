@@ -1,9 +1,10 @@
-#include "h_hartree_pw.h"
 #include "efield.h"
 #include "gatefield.h"
+#include "h_hartree_pw.h"
+#include "h_tddft_pw.h"
 #include "pot_local.h"
-#include "pot_pcc.h"
 #include "pot_nonlocal_xc.h"
+#include "pot_pcc.h"
 #include "pot_sccs.h"
 #include "pot_sep.h"
 #include "pot_surchem.h"
@@ -15,8 +16,6 @@
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
-#include "h_tddft_pw.h"
-
 #ifdef __MLALGO
 #include "pot_ml_exx.h"
 #endif
@@ -64,6 +63,10 @@ PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& 
     }
     else if (pot_type == "xc_nonlocal")
     {
+        if (this->ucell_ == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("Potential", "nonlocal XC requires the unit cell");
+        }
         // USPP can use a single density grid, so pointer equality does not
         // determine the pseudopotential type.
         for (int it = 0; it < this->ucell_->ntype; ++it)
@@ -77,12 +80,9 @@ PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& 
         {
             ModuleBase::WARNING_QUIT("Potential", "nonlocal XC currently requires the same smooth and dense density basis");
         }
-        return new PotNonlocalXC(this->rho_basis_,
-                                 this->etxc_,
-                                 this->vtxc_,
-                                 this->nonlocal_xc_,
-                                 this->nonlocal_xc_b_,
-                                 this->nonlocal_xc_c_);
+        const std::string method = input.xc_nonlocal;
+        return new PotNonlocalXC(this->rho_basis_, this->etxc_, this->vtxc_, method);
+    }
     else if (pot_type == "sccs")
     {
         return this->make_sccs_pot(input);

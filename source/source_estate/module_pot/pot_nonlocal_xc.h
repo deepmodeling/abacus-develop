@@ -12,17 +12,16 @@ class NonlocalXC;
 
 namespace elecstate
 {
-// Additive density-grid nonlocal XC correction, registered after PotXC on the
-// CPU/PW SCF path. The numerical method lives behind vdw::NonlocalXC.
+/**
+ * @brief Additive density-grid nonlocal XC correction for the CPU/PW SCF path.
+ *
+ * Registered after PotXC; the numerical method lives behind vdw::NonlocalXC.
+ * etxc and vtxc point at the energy bookkeeping that PotXC already fills.
+ */
 class PotNonlocalXC final : public PotBase
 {
   public:
-    PotNonlocalXC(const ModulePW::PW_Basis* density_basis,
-                  double* etxc,
-                  double* vtxc,
-                  const std::string& method,
-                  double b,
-                  double c);
+    PotNonlocalXC(const ModulePW::PW_Basis* density_basis, double* etxc, double* vtxc, const std::string& method);
     ~PotNonlocalXC() override;
     void cal_v_eff(const Charge* chg, const UnitCell* cell, ModuleBase::matrix& v_eff) override;
 

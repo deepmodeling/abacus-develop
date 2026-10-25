@@ -8,7 +8,6 @@
 #include "source_pw/module_pwdft/vsep_pw.h"
 
 #include <memory>
-#include <string>
 #include <vector>
 
 struct Input_para;
@@ -70,21 +69,6 @@ class Potential : public PotBase
               double* etxc_in,
               double* vtxc_in,
               VSep* vsep_cell_in = nullptr);
-    // Constructor used when a density-based nonlocal XC correction is
-    // selected. Keeping the method in the immutable Potential configuration
-    // avoids a mutable workflow switch after construction.
-    Potential(const ModulePW::PW_Basis* rho_basis_in,
-              const ModulePW::PW_Basis* rho_basis_smooth_in,
-              const UnitCell* ucell_in,
-              const ModuleBase::matrix* vloc_in,
-              Structure_Factor* structure_factors_in,
-              surchem* solvent_in,
-              double* etxc_in,
-              double* vtxc_in,
-              VSep* vsep_cell_in,
-              double nonlocal_xc_b_in,
-              double nonlocal_xc_c_in,
-              const std::string& nonlocal_xc_in);
     ~Potential();
 
     // initialize potential when SCF begin
@@ -214,12 +198,6 @@ class Potential : public PotBase
     {
         return this->rho_basis_;
     }
-
-    bool has_nonlocal_xc() const
-    {
-        return !nonlocal_xc_.empty() && nonlocal_xc_ != "none";
-    }
-
     const UnitCell* get_ucell() const
     {
         return this->ucell_;
@@ -291,10 +269,6 @@ class Potential : public PotBase
     Structure_Factor* structure_factors_ = nullptr;
     surchem* solvent_ = nullptr;
     VSep* vsep_cell = nullptr;
-    // Nonlocal XC selection; the parameters are only read when a method is set.
-    double nonlocal_xc_b_ = 0.0;
-    double nonlocal_xc_c_ = 0.0;
-    std::string nonlocal_xc_ = "none";
     bool use_gpu_ = false;
     std::shared_ptr<TDFieldManager> td_field_manager_;
 };

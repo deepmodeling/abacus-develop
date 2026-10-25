@@ -24,36 +24,8 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      double* etxc_in,
                      double* vtxc_in,
                      VSep* vsep_cell_in)
-    : Potential(rho_basis_in,
-                rho_basis_smooth_in,
-                ucell_in,
-                vloc_in,
-                structure_factors_in,
-                solvent_in,
-                etxc_in,
-                vtxc_in,
-                vsep_cell_in,
-                0.0,
-                0.0,
-                "none")
-{
-}
-
-Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
-                     const ModulePW::PW_Basis* rho_basis_smooth_in,
-                     const UnitCell* ucell_in,
-                     const ModuleBase::matrix* vloc_in,
-                     Structure_Factor* structure_factors_in,
-                     surchem* solvent_in,
-                     double* etxc_in,
-                     double* vtxc_in,
-                     VSep* vsep_cell_in,
-                     double nonlocal_xc_b_in,
-                     double nonlocal_xc_c_in,
-                     const std::string& nonlocal_xc_in)
     : ucell_(ucell_in), vloc_(vloc_in), structure_factors_(structure_factors_in), solvent_(solvent_in), vsep_cell(vsep_cell_in),
-      etxc_(etxc_in), vtxc_(vtxc_in), nonlocal_xc_b_(nonlocal_xc_b_in), nonlocal_xc_c_(nonlocal_xc_c_in),
-      nonlocal_xc_(nonlocal_xc_in)
+      etxc_(etxc_in), vtxc_(vtxc_in)
 {
     this->rho_basis_ = rho_basis_in;
     this->rho_basis_smooth_ = rho_basis_smooth_in;
