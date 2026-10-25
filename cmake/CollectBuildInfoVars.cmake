@@ -193,11 +193,11 @@ else()
 endif()
 
 if(ENABLE_LIBVDWXC AND libvdwxc_VERSION)
-    set(ABACUS_LIBVDWXC_VERSION "yes (v${libvdwxc_VERSION})")
+  set(ABACUS_LIBVDWXC_VERSION "yes (v${libvdwxc_VERSION})")
 elseif(ENABLE_LIBVDWXC)
-    set(ABACUS_LIBVDWXC_VERSION "yes (version unknown)")
+  set(ABACUS_LIBVDWXC_VERSION "yes (version unknown)")
 else()
-    set(ABACUS_LIBVDWXC_VERSION "no")
+  set(ABACUS_LIBVDWXC_VERSION "no")
 endif()
 
 # Accelerators

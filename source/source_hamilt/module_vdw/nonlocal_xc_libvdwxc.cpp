@@ -11,8 +11,9 @@
 #undef I
 #endif
 
-#include "source_basis/module_pw/pw_basis.h"
+#include "source_base/constants.h"
 #include "source_base/tool_quit.h"
+#include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
 #include <cmath>
@@ -23,6 +24,10 @@ namespace vdw
 {
 namespace
 {
+// The cell handed to libvdwxc at construction and the cell seen at each
+// evaluation come from the same PW_Basis, so only rounding may differ.
+const double CELL_RELATIVE_TOLERANCE = 1.0e-12;
+
 void check_serial_basis(const ModulePW::PW_Basis& pw)
 {
     const double determinant = pw.latvec.Det();
@@ -32,13 +37,14 @@ void check_serial_basis(const ModulePW::PW_Basis& pw)
         || !std::isfinite(pw.tpiba) || pw.tpiba <= 0.0)
     {
         ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC",
-            "libvdwxc rVV10 requires one-process CPU/double full-complex PW density grid and a right-handed cell");
+                                 "libvdwxc rVV10 requires a one-process CPU double-precision full-complex PW density "
+                                 "grid and a right-handed cell");
     }
 }
 
 std::array<double, 9> cell_vectors(const ModulePW::PW_Basis& pw)
 {
-    const auto& a = pw.latvec;
+    const ModuleBase::Matrix3& a = pw.latvec;
     // ABACUS stores a1, a2, a3 as rows. The C API groups C00,C10,C20 as
     // one vector, so pass the ABACUS rows consecutively in those groups.
     return {a.e11 * pw.lat0,
@@ -67,7 +73,7 @@ bool same_cell(const std::array<double, 9>& lhs, const std::array<double, 9>& rh
         {
             scale = rhs_abs;
         }
-        if (std::abs(lhs[i] - rhs[i]) > 1.0e-12 * scale)
+        if (std::abs(lhs[i] - rhs[i]) > CELL_RELATIVE_TOLERANCE * scale)
         {
             return false;
         }
@@ -138,13 +144,12 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
         volume_scale = initialized_omega_abs;
     }
     const bool same_grid = pw.nx == nx_ && pw.ny == ny_ && pw.nz == nz_;
-    const bool same_volume = std::abs(pw.omega - omega_) <= 1.0e-12 * volume_scale;
+    const bool same_volume = std::abs(pw.omega - omega_) <= CELL_RELATIVE_TOLERANCE * volume_scale;
     if (!same_grid || !same_cell(cell_, current_cell) || !same_volume
-        || total_density.size() != static_cast<std::size_t>(pw.nrxx)
-        || valence_density.size() != total_density.size())
+        || total_density.size() != static_cast<std::size_t>(pw.nrxx) || valence_density.size() != total_density.size())
     {
         ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC",
-                                "libvdwxc rVV10 received a density grid different from its initialized cell");
+                                 "libvdwxc rVV10 received a density grid different from its initialized cell");
     }
 
     using Complex = std::complex<double>;
@@ -178,12 +183,9 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
         sigma[r] = gradient[r].x * gradient[r].x + gradient[r].y * gradient[r].y + gradient[r].z * gradient[r].z;
     }
 
+    // vdwxc_calculate takes a non-const density pointer; keep the caller's array const.
     std::vector<double> density = total_density;
-    const double energy_ha = vdwxc_calculate(data_,
-                                             density.data(),
-                                             sigma.data(),
-                                             dedn.data(),
-                                             dedsigma.data());
+    const double energy_ha = vdwxc_calculate(data_, density.data(), sigma.data(), dedn.data(), dedsigma.data());
     if (!std::isfinite(energy_ha))
     {
         ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc returned a nonfinite rVV10 energy");
@@ -195,6 +197,7 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
         {
             ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc returned a nonfinite rVV10 derivative");
         }
+        // Chain rule for sigma = |grad n|^2: dE/d(grad n) = 2 * dE/dsigma * grad n.
         const double coefficient = 2.0 * dedsigma[r];
         field[r].x = coefficient * gradient[r].x;
         field[r].y = coefficient * gradient[r].y;
@@ -202,17 +205,17 @@ NonlocalXCResult LibvdwxcNonlocalXC::evaluate(const ModulePW::PW_Basis& pw,
     }
     XC_Functional::grad_dot(field.data(), divergence.data(), &pw, pw.tpiba);
 
-    // v = 2 * (dE/dn - div(2 * dE/dsigma * grad n)) converts the Hartree
-    // derivatives to Ry; vtxc contracts v with the valence density only, matching
-    // the PotXC bookkeeping. The library already includes the beta term.
-    const double energy_ry = 2.0 * energy_ha;
-    std::vector<double> potential(pw.nrxx, 0.0);
-    NonlocalXCResult result{energy_ry, 0.0, potential};
+    // libvdwxc returns Hartree quantities; e2 converts them to Ry as in PotXC.
+    // v = dE/dn - div(dE/d(grad n)); vtxc contracts v with the valence density
+    // only, matching the PotXC bookkeeping. The library includes the beta term.
+    NonlocalXCResult result;
+    result.energy = ModuleBase::e2 * energy_ha;
+    result.vtxc = 0.0;
+    result.potential.assign(pw.nrxx, 0.0);
     const double dv = pw.omega / pw.nxyz;
     for (int r = 0; r < pw.nrxx; ++r)
     {
-        // libvdwxc returns Hartree derivatives; ABACUS stores XC quantities in Ry.
-        result.potential[r] = 2.0 * (dedn[r] - divergence[r]);
+        result.potential[r] = ModuleBase::e2 * (dedn[r] - divergence[r]);
         if (!std::isfinite(divergence[r]) || !std::isfinite(result.potential[r]))
         {
             ModuleBase::WARNING_QUIT("LibvdwxcNonlocalXC", "libvdwxc produced a nonfinite rVV10 potential");

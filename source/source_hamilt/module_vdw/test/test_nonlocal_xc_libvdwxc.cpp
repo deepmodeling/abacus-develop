@@ -1,5 +1,5 @@
 #include "../nonlocal_xc_libvdwxc.h"
-
+#include "source_base/constants.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
@@ -22,7 +22,11 @@
 
 namespace
 {
-const double pi = std::acos(-1.0);
+// Adapter and direct API run the same FFT path, so results agree to rounding.
+const double ROUNDING_TOLERANCE = 2.0e-12;
+// Central difference on a smooth density: truncation error is of order step^2.
+const double FINITE_DIFFERENCE_STEP = 1.0e-5;
+const double FINITE_DIFFERENCE_TOLERANCE = 2.0e-6;
 
 class LibvdwxcAdapterTest : public testing::Test
 {
@@ -43,15 +47,19 @@ class LibvdwxcAdapterTest : public testing::Test
     {
         std::vector<double> values(pw.nrxx);
         for (int x = 0; x < pw.nx; ++x)
+        {
             for (int y = 0; y < pw.ny; ++y)
+            {
                 for (int z = 0; z < pw.nz; ++z)
                 {
                     const int index = (x * pw.ny + y) * pw.nz + z;
-                    const double ax = 2.0 * pi * x / pw.nx;
-                    const double ay = 2.0 * pi * y / pw.ny;
-                    const double az = 2.0 * pi * z / pw.nz;
+                    const double ax = ModuleBase::TWO_PI * x / pw.nx;
+                    const double ay = ModuleBase::TWO_PI * y / pw.ny;
+                    const double az = ModuleBase::TWO_PI * z / pw.nz;
                     values[index] = offset + amplitude * (1.0 + 0.25 * std::sin(ax) + 0.15 * std::cos(ay + az));
                 }
+            }
+        }
         return values;
     }
 
@@ -59,14 +67,18 @@ class LibvdwxcAdapterTest : public testing::Test
     {
         std::vector<double> values(pw.nrxx, 0.0);
         for (int x = 0; x < pw.nx; ++x)
+        {
             for (int y = 0; y < pw.ny; ++y)
+            {
                 for (int z = 0; z < pw.nz; ++z)
                 {
                     const int index = (x * pw.ny + y) * pw.nz + z;
-                    const double ax = 2.0 * pi * x / pw.nx;
-                    const double ay = 2.0 * pi * y / pw.ny;
+                    const double ax = ModuleBase::TWO_PI * x / pw.nx;
+                    const double ay = ModuleBase::TWO_PI * y / pw.ny;
                     values[index] = std::sin(ax + ay) + 0.3 * std::cos(2.0 * ay);
                 }
+            }
+        }
         return values;
     }
 };
@@ -80,8 +92,8 @@ TEST(LibvdwxcOwnershipTest, BackendHandleCannotBeCopied)
 
 TEST_F(LibvdwxcAdapterTest, MatchesDirectSerialApiForNonuniformDensity)
 {
-    const double b = 6.3;
-    const double c = 0.0093;
+    const double b = vdw::RVV10_B_RPW86_PBE;
+    const double c = vdw::RVV10_C_RPW86_PBE;
     const std::vector<double> total = density(0.004, 0.006);
     const std::vector<double> valence = density(0.002, 0.003);
     vdw::LibvdwxcNonlocalXC adapter(pw, b, c);
@@ -90,13 +102,22 @@ TEST_F(LibvdwxcAdapterTest, MatchesDirectSerialApiForNonuniformDensity)
     vdwxc_data direct = vdwxc_new(VDWXC_RVV10);
     ASSERT_NE(direct, nullptr);
     ASSERT_EQ(vdwxc_set_rvv10_parameters(direct, b, c), 0);
-    const auto& a = pw.latvec;
-    vdwxc_set_unit_cell(direct, pw.nx, pw.ny, pw.nz,
+    const ModuleBase::Matrix3& a = pw.latvec;
+    vdwxc_set_unit_cell(direct,
+                        pw.nx,
+                        pw.ny,
+                        pw.nz,
                         // libvdwxc stores each C00,C10,C20 group as one
                         // lattice vector; ABACUS stores lattice vectors in rows.
-                        a.e11 * pw.lat0, a.e12 * pw.lat0, a.e13 * pw.lat0,
-                        a.e21 * pw.lat0, a.e22 * pw.lat0, a.e23 * pw.lat0,
-                        a.e31 * pw.lat0, a.e32 * pw.lat0, a.e33 * pw.lat0);
+                        a.e11 * pw.lat0,
+                        a.e12 * pw.lat0,
+                        a.e13 * pw.lat0,
+                        a.e21 * pw.lat0,
+                        a.e22 * pw.lat0,
+                        a.e23 * pw.lat0,
+                        a.e31 * pw.lat0,
+                        a.e32 * pw.lat0,
+                        a.e33 * pw.lat0);
     vdwxc_init_serial(direct);
 
     std::vector<std::complex<double>> total_g(pw.npw);
@@ -113,7 +134,8 @@ TEST_F(LibvdwxcAdapterTest, MatchesDirectSerialApiForNonuniformDensity)
         sigma[r] = gradient[r].x * gradient[r].x + gradient[r].y * gradient[r].y + gradient[r].z * gradient[r].z;
     }
     std::vector<double> direct_density = total;
-    const double direct_energy = vdwxc_calculate(direct, direct_density.data(), sigma.data(), dedn.data(), dedsigma.data());
+    const double direct_energy
+        = vdwxc_calculate(direct, direct_density.data(), sigma.data(), dedn.data(), dedsigma.data());
     for (int r = 0; r < pw.nrxx; ++r)
     {
         const double coefficient = 2.0 * dedsigma[r];
@@ -125,14 +147,15 @@ TEST_F(LibvdwxcAdapterTest, MatchesDirectSerialApiForNonuniformDensity)
 
     const double dv = pw.omega / pw.nxyz;
     double expected_vtxc = 0.0;
-    EXPECT_NEAR(adapted.energy, 2.0 * direct_energy, 2.0e-12);
+    const double expected_energy = ModuleBase::e2 * direct_energy;
+    EXPECT_NEAR(adapted.energy, expected_energy, ROUNDING_TOLERANCE);
     for (int r = 0; r < pw.nrxx; ++r)
     {
-        const double expected_potential = 2.0 * (dedn[r] - divergence[r]);
+        const double expected_potential = ModuleBase::e2 * (dedn[r] - divergence[r]);
         expected_vtxc += dv * valence[r] * expected_potential;
-        EXPECT_NEAR(adapted.potential[r], expected_potential, 2.0e-12);
+        EXPECT_NEAR(adapted.potential[r], expected_potential, ROUNDING_TOLERANCE);
     }
-    EXPECT_NEAR(adapted.vtxc, expected_vtxc, 2.0e-12);
+    EXPECT_NEAR(adapted.vtxc, expected_vtxc, ROUNDING_TOLERANCE);
     vdwxc_finalize(&direct);
 }
 
@@ -144,17 +167,19 @@ TEST_F(LibvdwxcAdapterTest, RejectsLeftHandedCell)
     reflected.initparameters(false, 4.0, 1, true);
     reflected.setuptransform();
     reflected.collect_local_pw();
-    EXPECT_EXIT(vdw::LibvdwxcNonlocalXC(reflected, 6.3, 0.0093), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(vdw::LibvdwxcNonlocalXC(reflected, vdw::RVV10_B_RPW86_PBE, vdw::RVV10_C_RPW86_PBE),
+                testing::ExitedWithCode(1),
+                "");
 }
 
 TEST_F(LibvdwxcAdapterTest, RejectsInvalidParametersWithStandardDiagnostic)
 {
-    EXPECT_EXIT(vdw::LibvdwxcNonlocalXC(pw, 0.0, 0.0093), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(vdw::LibvdwxcNonlocalXC(pw, 0.0, vdw::RVV10_C_RPW86_PBE), testing::ExitedWithCode(1), "");
 }
 
 TEST_F(LibvdwxcAdapterTest, RejectsInvalidDensityWithStandardDiagnostic)
 {
-    vdw::LibvdwxcNonlocalXC adapter(pw, 6.3, 0.0093);
+    vdw::LibvdwxcNonlocalXC adapter(pw, vdw::RVV10_B_RPW86_PBE, vdw::RVV10_C_RPW86_PBE);
     const std::vector<double> total = density(0.004, 0.006);
     std::vector<double> invalid = total;
     invalid.pop_back();
@@ -179,13 +204,17 @@ TEST_F(LibvdwxcAdapterTest, CellMappingPreservesIndependentReciprocalGeometry)
     const double amplitude = 0.003;
     std::vector<double> total(pw.nrxx);
     for (int x = 0; x < pw.nx; ++x)
+    {
         for (int y = 0; y < pw.ny; ++y)
+        {
             for (int z = 0; z < pw.nz; ++z)
             {
                 const int index = (x * pw.ny + y) * pw.nz + z;
-                const double phase = 2.0 * pi * x / pw.nx;
+                const double phase = ModuleBase::TWO_PI * x / pw.nx;
                 total[index] = 0.01 + amplitude * std::cos(phase);
             }
+        }
+    }
 
     // The hand-derived gradient of cos(2*pi*s1) uses b1=(1,1/sqrt(3),0).
     std::vector<std::complex<double>> density_g(pw.npw);
@@ -193,35 +222,39 @@ TEST_F(LibvdwxcAdapterTest, CellMappingPreservesIndependentReciprocalGeometry)
     pw.real2recip(total.data(), density_g.data());
     XC_Functional::grad_rho(density_g.data(), gradient.data(), &pw, pw.tpiba);
     for (int x = 0; x < pw.nx; ++x)
+    {
         for (int y = 0; y < pw.ny; ++y)
+        {
             for (int z = 0; z < pw.nz; ++z)
             {
                 const int index = (x * pw.ny + y) * pw.nz + z;
-                const double phase = 2.0 * pi * x / pw.nx;
-                const double derivative = -amplitude * (2.0 * pi / pw.lat0) * std::sin(phase);
-                EXPECT_NEAR(gradient[index].x, derivative, 2.0e-12);
-                EXPECT_NEAR(gradient[index].y, derivative / std::sqrt(3.0), 2.0e-12);
-                EXPECT_NEAR(gradient[index].z, 0.0, 2.0e-12);
+                const double phase = ModuleBase::TWO_PI * x / pw.nx;
+                const double derivative = -amplitude * (ModuleBase::TWO_PI / pw.lat0) * std::sin(phase);
+                EXPECT_NEAR(gradient[index].x, derivative, ROUNDING_TOLERANCE);
+                EXPECT_NEAR(gradient[index].y, derivative / std::sqrt(3.0), ROUNDING_TOLERANCE);
+                EXPECT_NEAR(gradient[index].z, 0.0, ROUNDING_TOLERANCE);
             }
+        }
+    }
 
-    vdw::LibvdwxcNonlocalXC oblique_adapter(pw, 6.3, 0.0093);
-    vdw::LibvdwxcNonlocalXC orthogonal_adapter(orthogonal, 6.3, 0.0093);
+    vdw::LibvdwxcNonlocalXC oblique_adapter(pw, vdw::RVV10_B_RPW86_PBE, vdw::RVV10_C_RPW86_PBE);
+    vdw::LibvdwxcNonlocalXC orthogonal_adapter(orthogonal, vdw::RVV10_B_RPW86_PBE, vdw::RVV10_C_RPW86_PBE);
     const vdw::NonlocalXCResult oblique_result = oblique_adapter.evaluate(pw, total, total);
     const vdw::NonlocalXCResult orthogonal_result = orthogonal_adapter.evaluate(orthogonal, total, total);
-    EXPECT_NEAR(pw.omega, orthogonal.omega, 2.0e-12);
-    ASSERT_NEAR(oblique_result.energy, orthogonal_result.energy, 2.0e-12);
-    EXPECT_NEAR(oblique_result.vtxc, orthogonal_result.vtxc, 2.0e-12);
+    EXPECT_NEAR(pw.omega, orthogonal.omega, ROUNDING_TOLERANCE);
+    ASSERT_NEAR(oblique_result.energy, orthogonal_result.energy, ROUNDING_TOLERANCE);
+    EXPECT_NEAR(oblique_result.vtxc, orthogonal_result.vtxc, ROUNDING_TOLERANCE);
     for (int r = 0; r < pw.nrxx; ++r)
     {
-        EXPECT_NEAR(oblique_result.potential[r], orthogonal_result.potential[r], 2.0e-12);
+        EXPECT_NEAR(oblique_result.potential[r], orthogonal_result.potential[r], ROUNDING_TOLERANCE);
     }
 }
 
 TEST_F(LibvdwxcAdapterTest, PotentialMatchesFiniteDifferenceOfEnergy)
 {
-    const double b = 6.3;
-    const double c = 0.0093;
-    const double step = 1.0e-5;
+    const double b = vdw::RVV10_B_RPW86_PBE;
+    const double c = vdw::RVV10_C_RPW86_PBE;
+    const double step = FINITE_DIFFERENCE_STEP;
     const std::vector<double> total = density(0.004, 0.006);
     const std::vector<double> valence = total;
     const std::vector<double> direction = perturbation();
@@ -243,7 +276,7 @@ TEST_F(LibvdwxcAdapterTest, PotentialMatchesFiniteDifferenceOfEnergy)
     {
         potential_contraction += dv * reference.potential[r] * direction[r];
     }
-    EXPECT_NEAR(finite_difference, potential_contraction, 2.0e-6);
+    EXPECT_NEAR(finite_difference, potential_contraction, FINITE_DIFFERENCE_TOLERANCE);
 }
 #endif
 
