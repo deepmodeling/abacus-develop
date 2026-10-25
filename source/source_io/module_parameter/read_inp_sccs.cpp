@@ -39,18 +39,37 @@ namespace
 std::string context_error(const Input_para& input)
 {
     std::string error;
-    if (input.assume_isolated != "none") { error = "SCCS currently requires assume_isolated none"; }
-    else if (input.device != "cpu" || input.esolver_type != "ksdft") { error = "SCCS requires CPU KS-DFT"; }
-    else if (input.basis_type != "pw" && input.basis_type != "lcao") { error = "SCCS requires basis_type pw or lcao"; }
+    if (input.assume_isolated != "none" && input.assume_isolated != "pcc_0d"
+        && input.assume_isolated != "pcc_2d")
+    {
+        error = "SCCS currently supports assume_isolated none, pcc_0d or pcc_2d";
+    }
+    else if (input.device != "cpu" || input.esolver_type != "ksdft")
+    {
+        error = "SCCS requires CPU KS-DFT";
+    }
+    else if (input.basis_type != "pw" && input.basis_type != "lcao")
+    {
+        error = "SCCS requires basis_type pw or lcao";
+    }
     else if (input.calculation != "scf" || input.cal_stress)
-    { error = "SCCS currently supports SCF energies and forces without stress"; }
-    else if (input.nspin != 1 && input.nspin != 2) { error = "SCCS requires nspin 1 or 2"; }
+    {
+        error = "SCCS currently supports SCF energies and forces without stress";
+    }
+    else if (input.nspin != 1 && input.nspin != 2)
+    {
+        error = "SCCS requires nspin 1 or 2";
+    }
     else if (input.efield_flag || input.gate_flag || input.dfthalf_type != 0
              || input.deepks_scf || input.deepks_out_labels || input.deepks_bandgap
              || input.deepks_v_delta || input.dm_to_rho)
-    { error = "SCCS does not support electric/gate fields, DFT-1/2, DeePKS or dm_to_rho"; }
+    {
+        error = "SCCS does not support electric/gate fields, DFT-1/2, DeePKS or dm_to_rho";
+    }
     else if (!input.vl_in_h || !input.vion_in_h || !input.vh_in_h)
-    { error = "SCCS requires the local ionic and Hartree potentials in the Hamiltonian"; }
+    {
+        error = "SCCS requires the local ionic and Hartree potentials in the Hamiltonian";
+    }
     return error;
 }
 

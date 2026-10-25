@@ -38,3 +38,4 @@ scf_u_spin2
 scf_upf100
 test.sum
 scf_si2_tzdp_neq_spin2_gpu
+scf_metagga

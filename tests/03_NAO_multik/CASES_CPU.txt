@@ -71,3 +71,4 @@ scf_deltaspin2
 scf_deltaspin4
 scf_nspin4_nsoc_hr
 scf_nspin4_soc_hr
+scf_sccs_pcc2d
