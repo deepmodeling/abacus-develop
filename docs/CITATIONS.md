@@ -62,4 +62,4 @@ The following references are required to be cited when using ABACUS. Specificall
 
     R. Sabatini, T. Gorni, and S. de Gironcoli. "Nonlocal van der Waals density functional made simple and efficient." Physical Review B 87, 041108(R) (2013). DOI: 10.1103/PhysRevB.87.041108.
 
-    Cite the exact [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) revision used for the calculation, because the rVV10 CMake interface is version-dependent during development.
+    A. H. Larsen, M. Kuisma, J. Löfgren, Y. Pouillon, P. Erhart, and P. Hyldgaard. "libvdwxc: a library for exchange-correlation functionals in the vdW-DF family." Modelling and Simulation in Materials Science and Engineering 25, 065004 (2017). DOI: 10.1088/1361-651X/aa7320.

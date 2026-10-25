@@ -101,42 +101,18 @@ If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `
 
 ## Build with libvdwxc-backed rVV10 support
 
-The first rVV10 integration uses the external [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) library for the nonlocal kernel. The current rVV10 API is under review in Draft MR !32, so this option is intended for development and reproducible integration testing rather than a stable release build.
-
-Build and install the pinned libvdwxc development branch first (MR !32,
-`rvv10-cmake`, commit
-`94410ebdf3dc9615a40f40c3a5b59dbe20a433d2`), then pass its CMake prefix to
-ABACUS together with Libxc. This revision fixes Hermitian symmetry on stored
-FFT boundary planes in oblique cells. With GCC 11.2.1, its eight library tests
-pass using either FFTW 3.3.11 or the MKL 2022.2.1 compatibility backend.
-The ABACUS adapter is tested with standalone FFTW for both programs; the
-library's MKL tests alone do not validate an MKL-based ABACUS build. Do not
-mix the two FFT providers in one process. To use the validated serial
-configuration, leave `MKLROOT`/`MKL_ROOT` unset and select OpenBLAS/LAPACK plus
-FFTW through ABACUS's existing dependency options:
+`xc_nonlocal rvv10` uses the external [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) library for the rVV10 nonlocal kernel. Until a tagged libvdwxc release includes the rVV10 API, build and install the rVV10 branch from [libvdwxc merge request !32](https://gitlab.com/libvdwxc/libvdwxc/-/merge_requests/32) (commit `94410eb` at the time of writing) against the same FFTW that ABACUS will use, then pass its prefix together with Libxc. `ENABLE_LIBVDWXC` requires `ENABLE_LIBXC`. A serial configuration:
 
 ```bash
-cmake -B build-libvdwxc -DBUILD_TESTING=ON \
-  -DENABLE_MPI=OFF -DENABLE_LCAO=OFF \
+cmake -B build -DENABLE_MPI=OFF -DENABLE_LCAO=OFF \
   -DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON \
   -DCMAKE_PREFIX_PATH="/path/to/libvdwxc-prefix;/path/to/libxc-prefix" \
-  -DFFTW3_DIR=/path/to/fftw-prefix \
-  -DBLA_VENDOR=OpenBLAS \
-  -DBLAS_DIR=/path/to/openblas-prefix \
-  -DLAPACK_DIR=/path/to/openblas-prefix
+  -DFFTW3_DIR=/path/to/fftw-prefix
 ```
 
-Enable the correction with `xc_nonlocal rvv10` and explicitly select
-`dft_functional GGA_X_RPW86+GGA_C_PBE`; this first parameterization uses
-`rvv10_b 6.3` and `rvv10_c 0.0093`.
+Keep one FFT provider per process: do not combine a libvdwxc built against FFTW with an ABACUS build that uses the MKL FFT interface. The legacy Makefile does not build this backend.
 
-The first adapter supports CPU double-precision, full-complex PW, one process,
-`nspin=1`, a single density grid, a right-handed cell and norm-conserving
-pseudopotentials for SCF energy/potential evaluation. Other spin/layout modes,
-forces, stress, relaxation, non-SCF runs such as `nscf` band structures and
-pairwise D2/D3/D4 combinations are rejected.
-The legacy Makefile does not build this backend. See `tests/rvv10/README.md`
-for how to run the dependency-free and backend tests.
+Enable the correction with `xc_nonlocal rvv10` and `dft_functional GGA_X_RPW86+GGA_C_PBE`; the rVV10 parameters b=6.3 and C=0.0093 of this pairing are built in. `abacus -h xc_nonlocal` lists the supported calculation settings; unsupported ones are rejected when INPUT is read.
 
 ## Build with JSON support
 
