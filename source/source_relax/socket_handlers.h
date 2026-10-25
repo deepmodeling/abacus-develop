@@ -1,8 +1,8 @@
 #ifndef ABACUS_SOURCE_RELAX_SOCKET_HANDLERS_H
 #define ABACUS_SOURCE_RELAX_SOCKET_HANDLERS_H
 
-#include "source_relax/socket_utils.h"
 #include "source_relax/socket_ipi.h"
+#include "source_relax/socket_utils.h"
 
 #include <fstream>
 #include <string>
@@ -38,13 +38,9 @@ std::string read_header_bcast(IpiSocket& socket, const SocketUtils::DriverState 
 
 void handle_status(IpiSocket& socket, const SocketUtils::DriverState state);
 
-void handle_init(IpiSocket& socket,
-                 DriverContext& context,
-                 std::ofstream& ofs_running);
+void handle_init(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running);
 
-void handle_posdata(IpiSocket& socket,
-                    DriverContext& context,
-                    std::ofstream& ofs_running);
+void handle_posdata(IpiSocket& socket, DriverContext& context, std::ofstream& ofs_running);
 
 void handle_getforce(IpiSocket& socket, DriverContext& context);
 

@@ -19,6 +19,7 @@ void ReadInput::item_elec_stru()
     // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("basis_type");
+        item.domain.set_choices({"pw", "lcao", "lcao_in_pw"});
         item.annotation = "PW; LCAO in pw; LCAO";
         item.category = "Electronic structure";
         item.type = "String";
@@ -38,19 +39,15 @@ void ReadInput::item_elec_stru()
                 }
             }
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
-            if (std::find(basis_types.begin(), basis_types.end(), para.input.basis_type) == basis_types.end())
-            {
-                const std::string warningstr = nofound_str(basis_types, "basis_type");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-        };
         this->add_item(item);
     }
     // Electronic Structure
     {
         Input_Item item("ks_solver");
+        item.domain.set_choices({"cg", "dav", "bpcg", "dav_subspace", "genelpa", "elpa", "lapack", "scalapack_gvx", "cusolver", "cusolvermp", "pexsi"});
+        item.domain.add_requirement("basis_type==pw", "ks_solver in [cg, dav, bpcg, dav_subspace]");
+        item.domain.add_requirement("basis_type==lcao", "ks_solver in [genelpa, elpa, lapack, scalapack_gvx, cusolver, cusolvermp, pexsi]");
+        item.domain.add_requirement("ks_solver==genelpa", "device==cpu");
         item.annotation = "cg; dav; lapack; genelpa; elpa; scalapack_gvx; cusolver";
         item.category = "Electronic structure";
         item.type = "String";
@@ -136,41 +133,10 @@ Then the user has to correct the input file and restart the calculation.)";
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& ks_solver = para.input.ks_solver;
-            const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace"};
-            const std::vector<std::string> lcao_solvers = {
-                "genelpa",
-                "elpa",
-                "lapack",
-                "scalapack_gvx",
-                "cusolver",
-                "cusolvermp",
-                "pexsi",
-            };
-
-            if (para.input.basis_type == "pw")
+            if (para.input.basis_type == "lcao")
             {
-                if (std::find(pw_solvers.begin(), pw_solvers.end(), ks_solver) == pw_solvers.end())
-                {
-                    const std::string warningstr = "For PW basis: " + nofound_str(pw_solvers, "ks_solver");
-                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-                }
-            }
-            else if (para.input.basis_type == "lcao")
-            {
-                if (std::find(lcao_solvers.begin(), lcao_solvers.end(), ks_solver) == lcao_solvers.end())
-                {
-                    const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
-                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-                }
                 if (ks_solver == "genelpa")
                 {
-                    if (para.input.device == "gpu")
-                    {
-                        ModuleBase::WARNING_QUIT(
-                            "ReadInput",
-                            "ks_solver = genelpa does not support GPU acceleration. "
-                            "Please use ks_solver = elpa with device = gpu.");
-                    }
 #ifndef __ELPA
                     ModuleBase::WARNING_QUIT("Input",
                                              "Can not use genelpa if abacus is not compiled with "
@@ -240,6 +206,7 @@ Then the user has to correct the input file and restart the calculation.)";
     }
     {
         Input_Item item("nbands");
+        item.domain.set_rule("value>=0");
         item.annotation = "number of bands";
         item.category = "Electronic structure";
         item.type = "Integer";
@@ -247,16 +214,11 @@ Then the user has to correct the input file and restart the calculation.)";
         item.default_value = "";
         item.unit = "";
         read_sync_int(input.nbands);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nbands < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "nbands should be greater than 0.");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("nelec");
+        item.domain.set_rule("value>=0");
         item.annotation = "input number of electrons";
         item.category = "Electronic structure";
         item.type = "Real";
@@ -290,6 +252,7 @@ Then the user has to correct the input file and restart the calculation.)";
     }
     {
         Input_Item item("nupdown");
+        item.domain.add_requirement("nspin==1", "nupdown==0");
         item.annotation = "the difference number of electrons between spin-up "
                           "and spin-down";
         item.category = "Electronic structure";
@@ -306,12 +269,6 @@ Then the user has to correct the input file and restart the calculation.)";
             if (para.input.nspin == 1)
             {
                 para.sys.two_fermi = false;
-            }
-        };
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.input.nspin == 1 && para.input.nupdown != 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "nupdown mustn't have a non-zero value for spin-unpolarized calculations.");
             }
         };
         sync_double(input.nupdown);
@@ -583,6 +540,7 @@ The other way is only available when compiling with LIBXC, and it allows for sup
     }
     {
         Input_Item item("nspin");
+        item.domain.add_requirement("noncolin==true or lspinorb==true", "nspin==4");
         item.annotation = "1: single spin; 2: up and down spin; 4: noncollinear spin";
         item.category = "Electronic structure";
         item.type = "Integer";
@@ -594,17 +552,8 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 * Note: With nspin=4 no moment is ever autoset. The calculation starts from zero magnetic moment and a warning is printed; set 'mag' explicitly in STRU for the magnetic atoms if a magnetic ground state is expected.)";
         item.default_value = "1";
         item.unit = "";
+        item.domain.set_choices({"1", "2", "4"});
         read_sync_int(input.nspin);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nspin != 1 && para.input.nspin != 2 && para.input.nspin != 4)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "nspin should be 1, 2 or 4.");
-            }
-            if ((para.input.noncolin || para.input.lspinorb) && para.input.nspin != 4)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 4 when noncolin or lspinorb is enabled.");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -619,13 +568,8 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 For r = |m| and x = r/eta, S_eta = eta*x^3*(3*x^2 - 8*x + 6) for r < eta, and S_eta = r otherwise. The regularization is part of the functional definition, including its first and second derivatives.
 Mode 2 also uses this local map for the LDA contribution. Other spin configurations retain their existing behavior.)";
         item.default_value = "0";
+        item.domain.set_choices({"0", "1", "2"});
         read_sync_int(input.gga_grad);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.gga_grad < 0 || para.input.gga_grad > 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "gga_grad must be 0, 1, or 2.");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -702,6 +646,7 @@ In general, the convergence of the Broyden method is slightly faster than that o
     }
     {
         Input_Item item("mixing_beta");
+        item.domain.set_rule("value>=0");
         item.annotation = "mixing parameter: 0 means no new charge";
         item.category = "Electronic structure";
         item.type = "Real";
@@ -728,14 +673,10 @@ For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to conve
                 else if (para.input.nspin == 2)
                 {
                     para.input.mixing_beta = 0.4;
-                    para.input.mixing_beta_mag = 1.6;
-                    para.input.mixing_gg0_mag = 0.0;
                 }
                 else if (para.input.nspin == 4) // I will add this
                 {
                     para.input.mixing_beta = 0.4;
-                    para.input.mixing_beta_mag = 1.6;
-                    para.input.mixing_gg0_mag = 0.0;
                 }
             }
         };
@@ -743,10 +684,14 @@ For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to conve
     }
     {
         Input_Item item("mixing_beta_mag");
+        item.domain.set_rule("value>=0");
+        item.domain.set_active_when("nspin in [2, 4]");
         item.annotation = "mixing parameter for magnetic density";
         item.category = "Electronic structure";
         item.type = "Real";
         item.description = R"(Mixing parameter of magnetic density.
+
+An explicit nonnegative value is preserved even when mixing_beta is omitted.
 
 If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
 
@@ -841,6 +786,8 @@ For systems that are difficult to converge, particularly metallic systems, enabl
         item.category = "Electronic structure";
         item.type = "Real";
         item.description = R"(Controls the Kerker preconditioner for magnetic-density mixing. It is disabled by default and is generally only recommended for systems whose magnetic density is difficult to converge.
+
+An explicit value is preserved even when mixing_beta is omitted.
 
 The magnetic-density Kerker preconditioner is bypassed when mixing_beta_mag <= 0.1, so mixing_gg0_mag has no effect in that regime. It is also unavailable when the charge-density Kerker preconditioner itself is bypassed.)";
         item.default_value = "0.0";
@@ -976,6 +923,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
     }
     {
         Input_Item item("scf_thr");
+        item.domain.set_rule("value>=0");
         item.annotation = "charge density error";
         item.category = "Electronic structure";
         item.type = "Real";
@@ -1020,6 +968,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
     }
     {
         Input_Item item("scf_thr_type");
+        item.domain.set_choices({"1", "2"});
         item.annotation = "type of the criterion of scf_thr, 1: reci drho for "
                           "pw, 2: real drho for lcao";
         item.category = "Electronic structure";
@@ -1061,6 +1010,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
     }
     {
         Input_Item item("scf_os_thr");
+        item.domain.set_rule("value<0");
         item.annotation = "charge density threshold for oscillation";
         item.category = "Electronic structure";
         item.type = "Real";
@@ -1068,12 +1018,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.default_value = "-0.01";
         item.unit = "";
         read_sync_double(input.scf_os_thr);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.scf_os_thr >= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "scf_os_thr should be negative");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -1166,6 +1110,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("dfthalf_type");
+        item.domain.set_choices({"0", "1"});
         item.annotation = "DFT-1/2 type, 0:off; 1:shell DFT-1/2";
         item.category = "Electronic structure";
         item.type = "Integer";
@@ -1208,6 +1153,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("use_k_continuity");
+        item.domain.add_requirement("use_k_continuity==true", "basis_type==pw and calculation!=nscf and kpar==1 and nspin!=2 and esolver_type!=sdft");
         item.annotation = "whether to use k-point continuity for initializing wave functions";
         item.category = "Plane wave related variables";
         item.type = "Boolean";
@@ -1216,23 +1162,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.unit = "";
         item.set_availability("basis_type==pw");
         read_sync_bool(input.use_k_continuity);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.use_k_continuity && para.input.basis_type != "pw") {
-                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity only works for PW basis");
-            }
-            if (para.input.use_k_continuity && para.input.calculation == "nscf") {
-                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for NSCF calculation");
-            }
-            if (para.input.use_k_continuity && para.input.kpar > 1) {
-                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for k-point parallel calculation");
-            }
-            if (para.input.use_k_continuity && para.input.nspin == 2) {
-                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for spin-polarized calculation");
-            }
-            if (para.input.use_k_continuity && para.input.esolver_type == "sdft") {
-                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for SDFT calculation");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -1273,6 +1202,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
     // LCAO
     {
         Input_Item item("nb2d");
+        item.domain.set_rule("value>=0");
         item.annotation = "matrix 2d division";
         item.category = "System variables";
         item.type = "Integer";
@@ -1280,12 +1210,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.nb2d);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nb2d < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "nb2d should be greater than 0");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -1363,6 +1287,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("bx");
+        item.domain.set_rule("value>=0 and value<=10");
         item.annotation = "division of an element grid in FFT grid along x";
         item.category = "Numerical atomic orbitals related variables";
         item.type = "Integer";
@@ -1370,12 +1295,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.bx);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.bx > 10)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "bx should be no more than 10");
-            }
-        };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.basis_type == "pw" || para.input.basis_type == "lcao_in_pw"
                 || para.input.calculation == "get_wf")
@@ -1389,6 +1308,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("by");
+        item.domain.set_rule("value>=0 and value<=10");
         item.annotation = "division of an element grid in FFT grid along y";
         item.category = "Numerical atomic orbitals related variables";
         item.type = "Integer";
@@ -1396,16 +1316,11 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.by);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.by > 10)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "by should be no more than 10");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("bz");
+        item.domain.set_rule("value>=0 and value<=10");
         item.annotation = "division of an element grid in FFT grid along z";
         item.category = "Numerical atomic orbitals related variables";
         item.type = "Integer";
@@ -1413,12 +1328,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.bz);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.bz > 10)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "bz should be no more than 10");
-            }
-        };
         this->add_item(item);
     }
     {

@@ -35,7 +35,11 @@ class Plus_U_Base
     Plus_U_Base();
     ~Plus_U_Base();
 
-    /// allocate relevant data structures (base part, no LCAO types)
+    /// Initialize the run-lifetime DFT+U state (base part, no LCAO types).
+    ///
+    /// Call this exactly once on a freshly constructed object for each solver
+    /// run, before entering the electronic or ionic loops. A new calculation
+    /// configuration requires a new Plus_U_Base object.
     void init_base(UnitCell& cell,
                    const int npol,
                    const int nspin,
@@ -151,13 +155,6 @@ class Plus_U_Base
 
     // --- Occupation matrices ---
     OccupationMatrix occmat_;
-
-    /// Whether the initial occupation matrix has already been read from
-    /// file during this run. The file is read exactly once; on later
-    /// ionic steps the in-memory matrix is preserved (it stays fixed for
-    /// init_occ_mat=2 and evolves from the previous ionic step for
-    /// init_occ_mat=1).
-    bool occmat_file_loaded_ = false;
 
     // Occupation-matrix mixer; constructed only when mixing_dftu != 0.
     // Owns the flat uom/uom_save buffers and the mixing orchestration.

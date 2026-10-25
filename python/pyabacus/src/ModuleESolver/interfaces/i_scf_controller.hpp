@@ -12,8 +12,10 @@
 #include <functional>
 #include <string>
 
-namespace pyabacus {
-namespace esolver {
+namespace pyabacus
+{
+namespace esolver
+{
 
 /**
  * @brief SCF convergence status
@@ -52,9 +54,11 @@ struct SCFConvergenceCriteria
 using SCFIterationCallback = std::function<bool(int iter, double drho, double energy)>;
 
 // Forward declarations for component interfaces
-template <typename TK, typename TR> class IHamiltonianBuilder;
+template <typename TK, typename TR>
+class IHamiltonianBuilder;
 class IChargeMixer;
-template <typename TK> class IDiagonalizer;
+template <typename TK>
+class IDiagonalizer;
 
 /**
  * @brief Abstract interface for SCF controller
@@ -65,7 +69,7 @@ template <typename TK> class IDiagonalizer;
  */
 class ISCFController
 {
-public:
+  public:
     virtual ~ISCFController() = default;
 
     // ==================== Lifecycle ====================
@@ -97,8 +101,7 @@ public:
      * @param callback Optional callback for each iteration
      * @return Final SCF status
      */
-    virtual SCFStatus run_scf(const SCFConvergenceCriteria& criteria,
-                              SCFIterationCallback callback = nullptr) = 0;
+    virtual SCFStatus run_scf(const SCFConvergenceCriteria& criteria, SCFIterationCallback callback = nullptr) = 0;
 
     /**
      * @brief Check if SCF is converged

@@ -22,9 +22,10 @@ if(TARGET abacus::mkl)
   set(MKL_LIBRARIES abacus::mkl)
   if(ENABLE_MPI)
     if(NOT TARGET abacus::mkl_scalapack)
-      message(FATAL_ERROR
-        "The existing ABACUS MKL configuration lacks abacus::mkl_scalapack "
-        "for an MPI build.")
+      message(
+        FATAL_ERROR
+          "The existing ABACUS MKL configuration lacks abacus::mkl_scalapack "
+          "for an MPI build.")
     endif()
     set(MKL_LIBRARIES abacus::mkl_scalapack)
   endif()
@@ -51,7 +52,9 @@ set(_mkl_root_hints "${MKLROOT}" "${MKL_ROOT}" "$ENV{MKLROOT}")
 list(REMOVE_ITEM _mkl_root_hints "")
 list(REMOVE_DUPLICATES _mkl_root_hints)
 
-set(MKL_LINK AUTO CACHE STRING "oneMKL link mode: AUTO, static, or dynamic")
+set(MKL_LINK
+    AUTO
+    CACHE STRING "oneMKL link mode: AUTO, static, or dynamic")
 set_property(CACHE MKL_LINK PROPERTY STRINGS AUTO static dynamic)
 string(TOLOWER "${MKL_LINK}" _mkl_link)
 if(NOT _mkl_link MATCHES "^(auto|static|dynamic)$")
@@ -70,15 +73,19 @@ if(ENABLE_OPENMP)
 endif()
 
 if(ENABLE_MPI)
-  set(MKL_MPI AUTO CACHE STRING "oneMKL MPI interface: AUTO, openmpi, intelmpi, or mpich")
+  set(MKL_MPI
+      AUTO
+      CACHE STRING "oneMKL MPI interface: AUTO, openmpi, intelmpi, or mpich")
   set_property(CACHE MKL_MPI PROPERTY STRINGS AUTO openmpi intelmpi mpich)
 
   string(TOLOWER "${MKL_MPI}" _mkl_mpi)
   if(_mkl_mpi STREQUAL "auto")
     if(CMAKE_CROSSCOMPILING)
       message(
-        FATAL_ERROR "CMake cannot auto-determine MKL-BLACS interface correctly with cross compiling. "
-                    "Please manually pass -DMKL_MPI=<intelmpi|mpich|openmpi> flag to CMake.")
+        FATAL_ERROR
+          "CMake cannot auto-determine MKL-BLACS interface correctly with cross compiling. "
+          "Please manually pass -DMKL_MPI=<intelmpi|mpich|openmpi> flag to CMake."
+      )
     endif()
     if("${MPI_CXX_LIBRARY_VERSION_STRING}" MATCHES "Open MPI")
       set(_mkl_mpi openmpi)
@@ -96,30 +103,34 @@ if(ENABLE_MPI)
 endif()
 
 # These are result variables of this finder, not user configuration inputs.
-foreach(_mkl_result_var IN ITEMS
-    MKL_INCLUDE
-    MKL_FFTW_INCLUDE
-    MKL_INTERFACE_LIB
-    MKL_THREAD
-    MKL_CORE
-    MKL_SCALAPACK
-    MKL_BLACS)
+foreach(
+  _mkl_result_var IN
+  ITEMS MKL_INCLUDE
+        MKL_FFTW_INCLUDE
+        MKL_INTERFACE_LIB
+        MKL_THREAD
+        MKL_CORE
+        MKL_SCALAPACK
+        MKL_BLACS)
   if(DEFINED CACHE{${_mkl_result_var}})
-    message(WARNING
-      "${_mkl_result_var} is an internal result of FindMKL.cmake and will be ignored.")
+    message(
+      WARNING
+        "${_mkl_result_var} is an internal result of FindMKL.cmake and will be ignored."
+    )
     unset(${_mkl_result_var} CACHE)
   endif()
   unset(${_mkl_result_var})
 endforeach()
 
-foreach(_mkl_internal_var IN ITEMS
-    _abacus_mkl_include
-    _abacus_mkl_fftw_include
-    _abacus_mkl_interface_lib
-    _abacus_mkl_thread
-    _abacus_mkl_core
-    _abacus_mkl_scalapack
-    _abacus_mkl_blacs)
+foreach(
+  _mkl_internal_var IN
+  ITEMS _abacus_mkl_include
+        _abacus_mkl_fftw_include
+        _abacus_mkl_interface_lib
+        _abacus_mkl_thread
+        _abacus_mkl_core
+        _abacus_mkl_scalapack
+        _abacus_mkl_blacs)
   unset(${_mkl_internal_var})
   unset(${_mkl_internal_var} CACHE)
 endforeach()
@@ -131,44 +142,51 @@ elseif(_mkl_link STREQUAL "dynamic")
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
 endif()
 
-find_path(_abacus_mkl_include
+find_path(
+  _abacus_mkl_include
   NAMES mkl.h
   PATHS ${_mkl_root_hints}
   PATH_SUFFIXES include
   NO_DEFAULT_PATH)
 
-find_path(_abacus_mkl_fftw_include
+find_path(
+  _abacus_mkl_fftw_include
   NAMES fftw3.h
   PATHS ${_mkl_root_hints}
   PATH_SUFFIXES include/fftw
   NO_DEFAULT_PATH)
 
-find_library(_abacus_mkl_interface_lib
+find_library(
+  _abacus_mkl_interface_lib
   NAMES ${_mkl_interface_name}
   PATHS ${_mkl_root_hints}
   PATH_SUFFIXES lib/intel64 lib
   NO_DEFAULT_PATH)
 
-find_library(_abacus_mkl_thread
+find_library(
+  _abacus_mkl_thread
   NAMES mkl_${_mkl_threading}
   PATHS ${_mkl_root_hints}
   PATH_SUFFIXES lib/intel64 lib
   NO_DEFAULT_PATH)
 
-find_library(_abacus_mkl_core
+find_library(
+  _abacus_mkl_core
   NAMES mkl_core
   PATHS ${_mkl_root_hints}
   PATH_SUFFIXES lib/intel64 lib
   NO_DEFAULT_PATH)
 
 if(ENABLE_MPI)
-  find_library(_abacus_mkl_scalapack
+  find_library(
+    _abacus_mkl_scalapack
     NAMES mkl_scalapack_lp64
     PATHS ${_mkl_root_hints}
     PATH_SUFFIXES lib/intel64 lib
     NO_DEFAULT_PATH)
 
-  find_library(_abacus_mkl_blacs
+  find_library(
+    _abacus_mkl_blacs
     NAMES ${_mkl_blacs_name}
     PATHS ${_mkl_root_hints}
     PATH_SUFFIXES lib/intel64 lib
@@ -188,7 +206,8 @@ if(ENABLE_MPI)
   set(MKL_BLACS "${_abacus_mkl_blacs}")
 endif()
 
-set(_mkl_required_vars MKL_INCLUDE MKL_FFTW_INCLUDE MKL_INTERFACE_LIB MKL_THREAD MKL_CORE)
+set(_mkl_required_vars MKL_INCLUDE MKL_FFTW_INCLUDE MKL_INTERFACE_LIB
+                       MKL_THREAD MKL_CORE)
 if(ENABLE_MPI)
   list(APPEND _mkl_required_vars MKL_SCALAPACK MKL_BLACS)
 endif()
@@ -215,9 +234,11 @@ if(MKL_FOUND)
                   "Choose a consistent MKL_LINK mode or library set.")
   endif()
   if(_mkl_link STREQUAL "static" AND NOT _mkl_all_static)
-    message(FATAL_ERROR "MKL_LINK=static did not select static oneMKL libraries.")
+    message(
+      FATAL_ERROR "MKL_LINK=static did not select static oneMKL libraries.")
   elseif(_mkl_link STREQUAL "dynamic" AND _mkl_all_static)
-    message(FATAL_ERROR "MKL_LINK=dynamic did not select shared oneMKL libraries.")
+    message(
+      FATAL_ERROR "MKL_LINK=dynamic did not select shared oneMKL libraries.")
   endif()
 
   # oneMKL requires pthread even with mkl_sequential
@@ -232,9 +253,13 @@ if(MKL_FOUND)
   function(_mkl_link_group output)
     if(_mkl_all_static AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
       list(JOIN ARGN "," _mkl_archives)
-      set(${output} "-Wl,--start-group,${_mkl_archives},--end-group" PARENT_SCOPE)
+      set(${output}
+          "-Wl,--start-group,${_mkl_archives},--end-group"
+          PARENT_SCOPE)
     else()
-      set(${output} "${ARGN}" PARENT_SCOPE)
+      set(${output}
+          "${ARGN}"
+          PARENT_SCOPE)
     endif()
   endfunction()
 
@@ -243,29 +268,25 @@ if(MKL_FOUND)
 
   add_library(abacus_mkl INTERFACE)
   add_library(abacus::mkl ALIAS abacus_mkl)
-  target_include_directories(
-    abacus_mkl
-    INTERFACE
-      "${MKL_INCLUDE}"
-      "${MKL_FFTW_INCLUDE}")
+  target_include_directories(abacus_mkl INTERFACE "${MKL_INCLUDE}"
+                                                  "${MKL_FFTW_INCLUDE}")
   target_link_libraries(abacus_mkl INTERFACE ${_mkl_base} ${_mkl_runtime})
 
   if(ENABLE_MPI)
     add_library(abacus_mkl_scalapack INTERFACE)
     add_library(abacus::mkl_scalapack ALIAS abacus_mkl_scalapack)
-    target_include_directories(
-      abacus_mkl_scalapack
-      INTERFACE
-        "${MKL_INCLUDE}"
-        "${MKL_FFTW_INCLUDE}")
+    target_include_directories(abacus_mkl_scalapack
+                               INTERFACE "${MKL_INCLUDE}" "${MKL_FFTW_INCLUDE}")
     if(_mkl_all_static AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
-      _mkl_link_group(_mkl_cluster ${MKL_SCALAPACK} ${MKL_BLACS} ${_mkl_base_archives})
+      _mkl_link_group(_mkl_cluster ${MKL_SCALAPACK} ${MKL_BLACS}
+                      ${_mkl_base_archives})
       target_link_libraries(
-        abacus_mkl_scalapack INTERFACE ${_mkl_cluster} MPI::MPI_CXX ${_mkl_runtime})
+        abacus_mkl_scalapack INTERFACE ${_mkl_cluster} MPI::MPI_CXX
+                                       ${_mkl_runtime})
     else()
       target_link_libraries(
-        abacus_mkl_scalapack INTERFACE
-          ${MKL_SCALAPACK} ${MKL_BLACS} abacus::mkl MPI::MPI_CXX)
+        abacus_mkl_scalapack INTERFACE ${MKL_SCALAPACK} ${MKL_BLACS}
+                                       abacus::mkl MPI::MPI_CXX)
     endif()
     set(MKL_LIBRARIES abacus::mkl_scalapack)
   else()
@@ -277,13 +298,13 @@ endif()
 if(TARGET abacus::mkl)
   if(NOT TARGET BLAS::BLAS)
     add_library(BLAS::BLAS INTERFACE IMPORTED)
-    set_property(TARGET BLAS::BLAS PROPERTY
-                 INTERFACE_LINK_LIBRARIES abacus::mkl)
+    set_property(TARGET BLAS::BLAS PROPERTY INTERFACE_LINK_LIBRARIES
+                                            abacus::mkl)
   endif()
   if(NOT TARGET LAPACK::LAPACK)
     add_library(LAPACK::LAPACK INTERFACE IMPORTED)
-    set_property(TARGET LAPACK::LAPACK PROPERTY
-                 INTERFACE_LINK_LIBRARIES abacus::mkl)
+    set_property(TARGET LAPACK::LAPACK PROPERTY INTERFACE_LINK_LIBRARIES
+                                                abacus::mkl)
   endif()
 endif()
 

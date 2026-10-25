@@ -1,10 +1,9 @@
 #include "../line_search.h"
 
-#include <string>
-#include <fstream>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <fstream>
+#include <string>
 /************************************************
  *  unit test of class Line_Search
  ***********************************************/

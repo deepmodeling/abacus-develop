@@ -4,6 +4,7 @@
 #include "pot_local.h"
 #include "pot_pcc.h"
 #include "pot_nonlocal_xc.h"
+#include "pot_sccs.h"
 #include "pot_sep.h"
 #include "pot_surchem.h"
 #include "pot_xc.h"
@@ -23,7 +24,20 @@
 namespace elecstate
 {
 
-PotBase* Potential::get_pot_type(const std::string& pot_type)
+PotBase* Potential::make_sccs_pot(const Input_para& input)
+{
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    sccs_cfg_input(input, config, solver);
+    if (this->ucell_ != nullptr)
+    {
+        const std::string warning = check_charge(config, *this->ucell_, input.nelec);
+        if (!warning.empty()) { ModuleBase::WARNING("Potential::make_sccs_pot", warning); }
+    }
+    return new PotSccs(this->rho_basis_, config, solver, input.nelec);
+}
+
+PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& input)
 {
     ModuleBase::TITLE("Potential", "get_pot_type");
     if (pot_type == "local")
@@ -36,11 +50,10 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "xc")
     {
-        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, PARAM.inp.gga_grad, this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
+        return new PotXC(PARAM.globalv.domag, PARAM.globalv.domag_z, input.gga_grad, this->rho_basis_, this->etxc_, this->vtxc_, &(this->vofk_eff));
     }
     else if (pot_type == "pcc" || pot_type == "pcc_2d")
     {
-        const Input_para& input = PARAM.inp;
         const double electron_count = input.nelec;
         if (pot_type == "pcc")
         {
@@ -70,6 +83,9 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
                                  this->nonlocal_xc_,
                                  this->nonlocal_xc_b_,
                                  this->nonlocal_xc_c_);
+    else if (pot_type == "sccs")
+    {
+        return this->make_sccs_pot(input);
     }
     else if (pot_type == "surchem")
     {
@@ -77,7 +93,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "efield")
     {
-        return new PotEfield(this->rho_basis_, this->ucell_, this->solvent_, PARAM.inp.dip_cor_flag);
+        return new PotEfield(this->rho_basis_, this->ucell_, this->solvent_, input.dip_cor_flag);
     }
     else if (pot_type == "gatefield")
     {

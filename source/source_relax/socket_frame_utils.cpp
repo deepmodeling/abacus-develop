@@ -75,9 +75,7 @@ void rotate_columns(SocketFrame::Matrix9& values, int first, int second, double 
 
 bool one_sided_jacobi(SocketFrame::Matrix9& columns, SocketFrame::Matrix9& right_vectors)
 {
-    right_vectors = {{1.0, 0.0, 0.0,
-                      0.0, 1.0, 0.0,
-                      0.0, 0.0, 1.0}};
+    right_vectors = {{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
     const double multiplier = 32.0 * std::numeric_limits<double>::epsilon();
     const int pairs[3][2] = {{0, 1}, {0, 2}, {1, 2}};
 
@@ -97,8 +95,7 @@ bool one_sided_jacobi(SocketFrame::Matrix9& columns, SocketFrame::Matrix9& right
             }
 
             const double tau = (second_norm - first_norm) / (2.0 * dot);
-            const double tangent
-                = std::copysign(1.0 / (std::fabs(tau) + std::hypot(1.0, tau)), tau);
+            const double tangent = std::copysign(1.0 / (std::fabs(tau) + std::hypot(1.0, tau)), tau);
             const double cosine = 1.0 / std::sqrt(1.0 + tangent * tangent);
             const double sine = tangent * cosine;
             rotate_columns(columns, first, second, cosine, sine);
@@ -124,9 +121,7 @@ long double scaled_determinant(const SocketFrame::Matrix9& values)
     const long double a20 = values[6];
     const long double a21 = values[7];
     const long double a22 = values[8];
-    return a00 * (a11 * a22 - a12 * a21)
-           - a01 * (a10 * a22 - a12 * a20)
-           + a02 * (a10 * a21 - a11 * a20);
+    return a00 * (a11 * a22 - a12 * a21) - a01 * (a10 * a22 - a12 * a20) + a02 * (a10 * a21 - a11 * a20);
 }
 
 double received_inverse_residual(const SocketFrame::Matrix9& cell,
@@ -141,11 +136,9 @@ double received_inverse_residual(const SocketFrame::Matrix9& cell,
             long double product = 0.0L;
             for (int inner = 0; inner < kMatrixDimension; ++inner)
             {
-                const int inverse_index = transpose_inverse
-                                              ? column * kMatrixDimension + inner
-                                              : inner * kMatrixDimension + column;
-                product += static_cast<long double>(cell[row * kMatrixDimension + inner])
-                           * inverse[inverse_index];
+                const int inverse_index
+                    = transpose_inverse ? column * kMatrixDimension + inner : inner * kMatrixDimension + column;
+                product += static_cast<long double>(cell[row * kMatrixDimension + inner]) * inverse[inverse_index];
             }
             const long double expected = row == column ? 1.0L : 0.0L;
             maximum = std::max(maximum, std::fabs(product - expected));

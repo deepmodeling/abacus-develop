@@ -132,12 +132,14 @@ add_library(
     module_parameter/read_inp_dfpt.cpp
     module_parameter/read_inp_deepks.cpp
     module_parameter/read_inp_model.cpp
+    module_parameter/read_inp_sccs.cpp
     module_parameter/read_inp_postproc.cpp  
     module_parameter/read_inp_exx_dftu.cpp
     module_parameter/read_inp_other.cpp   
     module_parameter/read_inp_out.cpp  
     module_parameter/availability.cpp
     module_parameter/availability_validator.cpp
+    module_parameter/input_domain.cpp
     module_parameter/read_input.cpp
     module_parameter/read_set_globalv.cpp
 )

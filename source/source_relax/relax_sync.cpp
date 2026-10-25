@@ -1,12 +1,11 @@
 #include "relax_sync.h"
 
 #include "relax_history.h"
-
 #include "source_base/matrix3.h"
 #include "source_base/parallel_common.h"
 #include "source_base/tool_title.h"
-#include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h"
+#include "source_cell/update_cell.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_relax/ions_move_basic.h"
 
@@ -103,7 +102,10 @@ bool Relax::relax_step(UnitCell& ucell,
     return relax_done;
 }
 
-bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress, std::ofstream& ofs_running)
+bool Relax::setup_gradient(const UnitCell& ucell,
+                           const ModuleBase::matrix& force,
+                           const ModuleBase::matrix& stress,
+                           std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("Relax", "setup_gradient");
 
@@ -136,8 +138,10 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
     return force_converged;
 }
 
-double Relax::setup_ion_gradient(const UnitCell& ucell, const ModuleBase::matrix& force,
-                                 bool& force_converged, std::ofstream& ofs_running)
+double Relax::setup_ion_gradient(const UnitCell& ucell,
+                                 const ModuleBase::matrix& force,
+                                 bool& force_converged,
+                                 std::ofstream& ofs_running)
 {
     grad_ion.zero_out();
     ModuleBase::matrix force_eva = force * (ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A); // convert to eV/Angstrom
@@ -199,15 +203,16 @@ double Relax::setup_ion_gradient(const UnitCell& ucell, const ModuleBase::matrix
         etot_p = etot;
     }
 
-
     max_force_history_.push_back(max_grad);
-    ofs_running << "\n Largest force is " << max_grad <<
-             " eV/Angstrom while threshold is " << inp_->force_thr_ev << " eV/Angstrom" << std::endl;
+    ofs_running << "\n Largest force is " << max_grad << " eV/Angstrom while threshold is " << inp_->force_thr_ev
+                << " eV/Angstrom" << std::endl;
     return max_grad;
 }
 
-void Relax::setup_cell_gradient(const UnitCell& ucell, const ModuleBase::matrix& stress,
-                                bool& force_converged, std::ofstream& ofs_running)
+void Relax::setup_cell_gradient(const UnitCell& ucell,
+                                const ModuleBase::matrix& stress,
+                                bool& force_converged,
+                                std::ofstream& ofs_running)
 {
     grad_cell.zero_out();
     ModuleBase::matrix stress_ev = stress * (ucell.omega * ModuleBase::Ry_to_eV);
@@ -286,8 +291,8 @@ void Relax::setup_cell_gradient(const UnitCell& ucell, const ModuleBase::matrix&
     }
 
     max_stress_history_.push_back(largest_grad);
-    ofs_running << " Largest stress is " << largest_grad << " kbar while threshold is "
-                << inp_->stress_thr << " kbar" << std::endl;
+    ofs_running << " Largest stress is " << largest_grad << " kbar while threshold is " << inp_->stress_thr << " kbar"
+                << std::endl;
 }
 
 void Relax::print_gradient_summary(bool force_converged, std::ofstream& ofs_running)
@@ -297,7 +302,7 @@ void Relax::print_gradient_summary(bool force_converged, std::ofstream& ofs_runn
         // setup_gradient runs before istep is incremented at the end of
         // relax_step, so the step that just converged is istep + 1.
         const int converged_step = istep + 1;
-        const std::string method = inp_->relax_method.empty() ? "unknown" : inp_->relax_method[0];
+        const std::string method = inp_->relax_method.empty() ? "unknown" : inp_->relax_method;
         ofs_running << " Relaxation method: " << method << std::endl;
         ofs_running << " Relaxation converged in " << converged_step << " step(s)." << std::endl;
         ofs_running << " Largest force per step (eV/Angstrom):" << format_relax_history(max_force_history_);
@@ -688,10 +693,10 @@ void Relax::update_ion_positions(UnitCell& ucell, double fac, std::ofstream& ofs
         ucell.symm.symmetrize_vec3_nat(move_ion.data());
     }
 
-    unitcell::update_pos_taud(ucell.lat,move_ion.data(),ucell.ntype,ucell.nat,ucell.atoms);
+    unitcell::update_pos_taud(ucell.lat, move_ion.data(), ucell.ntype, ucell.nat, ucell.atoms);
 
     // Print the structure file.
-    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0,ofs_running);
+    unitcell::print_tau(ucell.atoms, ucell.Coordinate, ucell.ntype, ucell.lat0, ofs_running);
 }
 
 void Relax::update_reciprocal_cell(UnitCell& ucell, std::ofstream& ofs_running)

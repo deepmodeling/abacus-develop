@@ -18,6 +18,7 @@ public:
     int rank() const;
     int size() const;
     int max(int value) const;
+    int sum(int value) const;
     double max(double value) const;
 
 private:

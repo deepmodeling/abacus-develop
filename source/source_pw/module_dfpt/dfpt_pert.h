@@ -36,8 +36,6 @@ class DFPT_Pert
 
     void apply_dv(int q_idx, int k_idx, const psi::Psi<std::complex<double>>& psi, DFPT_PW_Data& data);
 
-    void build_efield(const ModuleBase::Vector3<double>& field, DFPT_PW_Data& data);
-
     /// C5: real-space kernel of the same-atom second-order LOCAL potential
     /// d2V_loc(r) = d^2 V_loc / d tau_{da} d tau_{db} (both displacement
     /// dressings e^{i q.R} multiply on the SAME atom, so the cell sum

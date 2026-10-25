@@ -1,11 +1,8 @@
 /**********************************************
  *  Unit tests for Plus_U_Base::init_base.
  *
- *  Focus: the Yukawa state must follow the
- *  yukawa_potential argument on every call,
- *  including a true -> false re-initialization
- *  (before_scf() -> setup_pot() may call
- *  init_base() repeatedly on the same object).
+ *  Focus: initialize base DFT+U state before
+ *  electronic and ionic iterations begin.
  ***********************************************/
 
 #include "source_pw/module_pwdft/dftu_base.h"
@@ -87,11 +84,24 @@ class DFTUBaseTest : public testing::Test
     /// Call init_base with the given Yukawa switch on a fresh d orbital
     void init_dftu(Plus_U_Base& dftu, const bool yukawa_potential)
     {
+        init_dftu_for_spin(dftu,
+                           yukawa_potential,
+                           2,
+                           1,
+                           DFTU_BASE::SOC_LAYOUT_PAULI);
+    }
+
+    void init_dftu_for_spin(Plus_U_Base& dftu,
+                            const bool yukawa_potential,
+                            const int nspin,
+                            const int npol,
+                            const DFTU_BASE::OccmatSocLayout soc_layout)
+    {
         const std::vector<int> l_channel = {2};
         const std::vector<double> hubbard_u = {0.0};
         dftu.init_base(ucell,
-                       1,                      // npol
-                       2,                      // nspin
+                       npol,
+                       nspin,
                        l_channel,
                        yukawa_potential,
                        0.5,                    // yukawa_lambda
@@ -103,33 +113,107 @@ class DFTUBaseTest : public testing::Test
                        0.0,                    // uramping
                        0,                      // init_occ_mat
                        0,                      // mixing_dftu
-                       DFTU_BASE::SOC_LAYOUT_PAULI);
+                       soc_layout);
     }
 };
 
-/// After a true -> false re-initialization the Yukawa object must be
-/// released so that use_yukawa() reflects the latest argument.
-TEST_F(DFTUBaseTest, InitBaseYukawaTrueThenFalseClearsState)
+namespace
+{
+
+void write_constant_matrix(std::ostream& os,
+                           const int size,
+                           const double value,
+                           const int first_row_columns,
+                           const bool inline_comment = false)
+{
+    for (int row = 0; row < size; ++row)
+    {
+        const int columns = (row == 0 && first_row_columns >= 0)
+                                ? first_row_columns
+                                : size;
+        for (int column = 0; column < columns; ++column)
+        {
+            os << " " << value;
+        }
+        if (inline_comment)
+        {
+            os << " # matrix row";
+        }
+        os << "\n";
+    }
+}
+
+void write_compact_collinear_body(std::ostream& os)
+{
+    os << "Fe Atom 1 L 2 mag 0.0\n";
+    os << "spin 1 nelec 0.5\n";
+    write_constant_matrix(os, 5, 0.1, 5);
+    os << "spin 2 nelec 0.5\n";
+    write_constant_matrix(os, 5, 0.2, 5);
+}
+
+void write_compact_collinear_atom(std::ostream& os,
+                                  const int atom_index,
+                                  const double spin_up,
+                                  const double spin_down)
+{
+    os << "Fe Atom " << atom_index << " L 2 mag 0.0\n";
+    os << "spin 1 nelec 0.5\n";
+    write_constant_matrix(os, 5, spin_up, 5);
+    os << "spin 2 nelec 0.5\n";
+    write_constant_matrix(os, 5, spin_down, 5);
+}
+
+} // namespace
+
+/// Enabling Yukawa screening constructs its run-lifetime state.
+TEST_F(DFTUBaseTest, InitBaseYukawaEnabledCreatesObject)
 {
     Plus_U_Base dftu;
 
     init_dftu(dftu, true);
     EXPECT_TRUE(dftu.use_yukawa());
+}
+
+/// Disabling Yukawa screening leaves its optional state empty.
+TEST_F(DFTUBaseTest, InitBaseYukawaDisabledLeavesObjectEmpty)
+{
+    Plus_U_Base dftu;
 
     init_dftu(dftu, false);
     EXPECT_FALSE(dftu.use_yukawa());
 }
 
-/// A false -> true re-initialization must create the Yukawa object.
-TEST_F(DFTUBaseTest, InitBaseYukawaFalseThenTrueCreatesObject)
+/// U-ramping starts from zero and advances toward the configured target.
+TEST_F(DFTUBaseTest, InitBaseSeedsURampingState)
 {
     Plus_U_Base dftu;
+    const std::vector<int> l_channel = {2};
+    const std::vector<double> hubbard_u = {5.0};
 
-    init_dftu(dftu, false);
-    EXPECT_FALSE(dftu.use_yukawa());
+    dftu.init_base(ucell,
+                   1,
+                   2,
+                   l_channel,
+                   false,
+                   0.5,
+                   "",
+                   "",
+                   "none",
+                   "cpu",
+                   hubbard_u,
+                   0.5,
+                   0,
+                   0,
+                   DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    init_dftu(dftu, true);
-    EXPECT_TRUE(dftu.use_yukawa());
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 0.0);
+    dftu.uramping_update();
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 0.5);
+    EXPECT_FALSE(dftu.u_converged());
+    dftu.uramping_update();
+    EXPECT_DOUBLE_EQ(dftu.get_u_current(0), 1.0);
+    EXPECT_FALSE(dftu.u_converged());
 }
 
 // =====================================================================
@@ -400,20 +484,17 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
 
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, true, 1};
     const std::string out_dir = testing::TempDir();
+    const DFTU_BASE::OccmatStepInfo first_step = {0, 1, 1e-6, 0.5};
+    const DFTU_BASE::OccmatStepInfo second_step = {1, 2, 1e-6, 0.5};
 
     // fresh run: no occupation matrix has been computed or loaded
     ASSERT_FALSE(dftu.is_occmat_ready());
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
                                         out_dir,
-                                        2, // nspin
-                                        1, // npol
-                                        0, // istep -> occ_matg1.txt
-                                        1, // iter
+                                        first_step,
                                         false,
                                         false, // occmat_ready
-                                        1e-6,
-                                        0.5,
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -434,14 +515,9 @@ TEST_F(DFTUBaseTest, AppendSnapshotNAPlaceholderAndReady)
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
                                         out_dir,
-                                        2, // nspin
-                                        1, // npol
-                                        1, // istep -> occ_matg2.txt
-                                        2, // iter
+                                        second_step,
                                         false,
                                         true, // occmat_ready
-                                        1e-6,
-                                        0.5,
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -470,6 +546,7 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
 
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, false, 1};
     const std::string out_dir = testing::TempDir();
+    const DFTU_BASE::OccmatStepInfo step = {0, 1, 1e-6, 0.5};
 
     // Remove stale files from previous test binary runs so the
     // "file not written" assertions are meaningful.
@@ -479,14 +556,9 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
                                         out_dir,
-                                        2, // nspin
-                                        1, // npol
-                                        0, // istep (an output ionic step)
-                                        1, // iter
+                                        step,
                                         false,
                                         true, // occmat_ready
-                                        1e-6,
-                                        0.5,
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -497,12 +569,7 @@ TEST_F(DFTUBaseTest, OccMatSwitchDisabledWritesNothing)
     DFTU_BASE::write_latest_occmat(dftu,
                                    ucell,
                                    out_dir,
-                                   2, // nspin
-                                   1, // npol
-                                   0, // istep
-                                   2, // iter
-                                   1e-6,
-                                   0.5,
+                                   step,
                                    cfg,
                                    DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -527,18 +594,14 @@ TEST_F(DFTUBaseTest, DftPlusUDisabledWritesNothing)
 
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, true, 0};
     const std::string out_dir = testing::TempDir() + "guard_test/";
+    const DFTU_BASE::OccmatStepInfo step = {0, 1, 1e-6, 0.5};
 
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
                                         out_dir,
-                                        2, // nspin
-                                        1, // npol
-                                        0, // istep (an output ionic step)
-                                        1, // iter
+                                        step,
                                         false,
                                         true, // occmat_ready
-                                        1e-6,
-                                        0.5,
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -549,12 +612,7 @@ TEST_F(DFTUBaseTest, DftPlusUDisabledWritesNothing)
     DFTU_BASE::write_latest_occmat(dftu,
                                    ucell,
                                    out_dir,
-                                   2, // nspin
-                                   1, // npol
-                                   0, // istep
-                                   2, // iter
-                                   1e-6,
-                                   0.5,
+                                   step,
                                    cfg,
                                    DFTU_BASE::SOC_LAYOUT_PAULI);
 
@@ -603,11 +661,8 @@ TEST(FindFirstExistingFileTest, ReturnsFirstExistingCandidate)
     }
 }
 
-/// For init_occ_mat=2 the occupation-matrix file is read exactly once.
-/// Later init_base() calls (one per ionic step in a relax run) must keep
-/// the in-memory matrix instead of reading the file again, so pointing
-/// the second call at a non-existent readin dir must not abort the run.
-TEST_F(DFTUBaseTest, InitBaseReadsOccMatFileOnlyOnce)
+/// init_occ_mat=2 loads the fixed occupation matrix during run initialization.
+TEST_F(DFTUBaseTest, InitBaseReadsFixedOccMat)
 {
     // Use the gtest-managed temporary directory so the test never creates
     // or deletes directories itself (see AGENTS.md rule 17).
@@ -615,8 +670,7 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatFileOnlyOnce)
     const std::string fn = dir + "occ_mat.txt";
 
     // One Fe atom, L=2, two spin channels of 5x5, filled with distinct
-    // constants so a re-read would be easy to distinguish from a
-    // preserved in-memory matrix.
+    // constants.
     {
         std::ofstream ofs(fn);
         ASSERT_TRUE(ofs.is_open());
@@ -645,35 +699,23 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatFileOnlyOnce)
     Plus_U_Base dftu;
     const std::vector<int> l_channel = {2};
     const std::vector<double> hubbard_u = {0.0};
-    auto call_init = [&](const std::string& readin_dir)
-    {
-        dftu.init_base(ucell,
-                       1,                // npol
-                       2,                // nspin
-                       l_channel,
-                       false,            // yukawa_potential
-                       0.5,              // yukawa_lambda
-                       readin_dir,       // global_readin_dir
-                       "",               // global_out_dir
-                       "none",           // init_chg
-                       "cpu",            // device
-                       hubbard_u,
-                       0.0,              // uramping
-                       2,                // init_occ_mat
-                       0,                // mixing_dftu
-                       DFTU_BASE::SOC_LAYOUT_PAULI);
-    };
+    dftu.init_base(ucell,
+                   1,                // npol
+                   2,                // nspin
+                   l_channel,
+                   false,            // yukawa_potential
+                   0.5,              // yukawa_lambda
+                   dir,              // global_readin_dir
+                   "",               // global_out_dir
+                   "none",           // init_chg
+                   "cpu",            // device
+                   hubbard_u,
+                   0.0,              // uramping
+                   2,                // init_occ_mat
+                   0,                // mixing_dftu
+                   DFTU_BASE::SOC_LAYOUT_PAULI);
 
-    // First ionic step: the file is read.
-    call_init(dir);
     ASSERT_TRUE(dftu.is_occmat_ready());
-    EXPECT_NEAR(dftu.occmat().get(0, 2, 0, 0, 0), 0.1, 1e-12);
-    EXPECT_NEAR(dftu.occmat().get(0, 2, 1, 4, 4), 0.2, 1e-12);
-
-    // Simulate a later ionic step: the in-memory matrix is preserved and
-    // the file is not consulted again, so a non-existent readin dir is fine.
-    call_init(dir + "does_not_exist/");
-    EXPECT_TRUE(dftu.is_occmat_ready());
     EXPECT_NEAR(dftu.occmat().get(0, 2, 0, 0, 0), 0.1, 1e-12);
     EXPECT_NEAR(dftu.occmat().get(0, 2, 1, 4, 4), 0.2, 1e-12);
 }
@@ -778,6 +820,490 @@ TEST_F(DFTUBaseTest, InitBaseReadsOccMatSocPauliRoundtrip)
         EXPECT_NEAR(occ0.c[3 * m2 + k], uu[k] - dd[k], 1e-12)    // b3
             << "Pauli block b3 mismatch at k=" << k;
     }
+}
+
+TEST_F(DFTUBaseTest, CompactWriterReaderCollinearRoundtrip)
+{
+    Plus_U_Base source;
+    init_dftu_for_spin(source, false, 2, 1, DFTU_BASE::SOC_LAYOUT_PAULI);
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        for (int row = 0; row < 5; ++row)
+        {
+            for (int column = 0; column < 5; ++column)
+            {
+                const double value = 0.1 * (spin + 1) + 0.01 * row + 0.001 * column;
+                source.occmat().set(0, 2, spin, row, column, value);
+            }
+        }
+    }
+
+    const std::string filename = testing::TempDir() + "compact_writer_collinear.txt";
+    {
+        std::ofstream output(filename.c_str());
+        ASSERT_TRUE(output.is_open());
+        DFTU_BASE::write_occup_m(source,
+                                 ucell,
+                                 output,
+                                 DFTU_BASE::SOC_LAYOUT_PAULI);
+    }
+
+    OccupationMatrix restored;
+    const std::vector<int> l_channel = {2};
+    restored.init(ucell, l_channel, 2, 1);
+    DFTU_BASE::read_occup_m(ucell,
+                            restored,
+                            l_channel,
+                            filename,
+                            2,
+                            1,
+                            DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        for (int row = 0; row < 5; ++row)
+        {
+            for (int column = 0; column < 5; ++column)
+            {
+                EXPECT_NEAR(restored.get(0, 2, spin, row, column),
+                            source.occmat().get(0, 2, spin, row, column),
+                            1e-8);
+            }
+        }
+    }
+
+    // Assert the diagnostic header values that read_occup_m only validates
+    // for finiteness: per-spin nelec (trace) and collinear mag (up - down).
+    double expected_nelec[2] = {0.0, 0.0};
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        for (int m = 0; m < 5; ++m)
+        {
+            expected_nelec[spin] += source.occmat().get(0, 2, spin, m, m);
+        }
+    }
+    const double expected_mag = expected_nelec[0] - expected_nelec[1];
+
+    std::ifstream input(filename.c_str());
+    ASSERT_TRUE(input.is_open());
+    std::string token;
+    double parsed_mag = 0.0;
+    double parsed_nelec[2] = {0.0, 0.0};
+    int spin_index = -1;
+    while (input >> token)
+    {
+        if (token == "mag")
+        {
+            ASSERT_TRUE(input >> parsed_mag);
+        }
+        else if (token == "spin")
+        {
+            ASSERT_TRUE(input >> spin_index);
+            ASSERT_GE(spin_index, 1);
+            ASSERT_LE(spin_index, 2);
+        }
+        else if (token == "nelec")
+        {
+            ASSERT_EQ(spin_index == 1 || spin_index == 2, true);
+            ASSERT_TRUE(input >> parsed_nelec[spin_index - 1]);
+        }
+    }
+    EXPECT_NEAR(parsed_mag, expected_mag, 1e-7);
+    EXPECT_NEAR(parsed_nelec[0], expected_nelec[0], 1e-7);
+    EXPECT_NEAR(parsed_nelec[1], expected_nelec[1], 1e-7);
+}
+
+TEST_F(DFTUBaseTest, CompactWriterReaderSocPauliRoundtrip)
+{
+    Plus_U_Base source;
+    init_dftu_for_spin(source, false, 4, 2, DFTU_BASE::SOC_LAYOUT_PAULI);
+    const int block_size = 25;
+    for (int block = 0; block < 4; ++block)
+    {
+        for (int index = 0; index < block_size; ++index)
+        {
+            source.occmat().mat(0, 2, 0).c[block * block_size + index]
+                = 0.1 * (block + 1) + 0.001 * index;
+        }
+    }
+
+    const std::string filename = testing::TempDir() + "compact_writer_soc_pauli.txt";
+    {
+        std::ofstream output(filename.c_str());
+        ASSERT_TRUE(output.is_open());
+        DFTU_BASE::write_occup_m(source,
+                                 ucell,
+                                 output,
+                                 DFTU_BASE::SOC_LAYOUT_PAULI);
+    }
+
+    OccupationMatrix restored;
+    const std::vector<int> l_channel = {2};
+    restored.init(ucell, l_channel, 4, 2);
+    DFTU_BASE::read_occup_m(ucell,
+                            restored,
+                            l_channel,
+                            filename,
+                            4,
+                            2,
+                            DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    for (int index = 0; index < 4 * block_size; ++index)
+    {
+        EXPECT_NEAR(restored.mat(0, 2, 0).c[index],
+                    source.occmat().mat(0, 2, 0).c[index],
+                    1e-8);
+    }
+
+    // Assert the SOC diagnostic header: mag x/y/z and per-spin nelec.
+    // Pauli blocks are charge/spin_x/spin_y/spin_z, so the writer reports
+    // mag_x = sum(spin_x diag), mag_y = sum(spin_y diag), mag_z = sum(spin_z diag)
+    // and nelec = 0.5 * sum(charge +/- spin_z) on the diagonal.
+    const ModuleBase::matrix& occ = source.occmat().mat(0, 2, 0);
+    double expected_mag[3] = {0.0, 0.0, 0.0};
+    double expected_nelec_soc[2] = {0.0, 0.0};
+    for (int m = 0; m < 5; ++m)
+    {
+        const int diag = m * 5 + m;
+        expected_mag[0] += occ.c[1 * block_size + diag];
+        expected_mag[1] += occ.c[2 * block_size + diag];
+        expected_mag[2] += occ.c[3 * block_size + diag];
+        expected_nelec_soc[0] += 0.5 * (occ.c[0 * block_size + diag] + occ.c[3 * block_size + diag]);
+        expected_nelec_soc[1] += 0.5 * (occ.c[0 * block_size + diag] - occ.c[3 * block_size + diag]);
+    }
+    // The fixture fills every block entry, including a nonzero spin_y block,
+    // so mag_y must be nonzero for this assertion to be meaningful.
+    EXPECT_NE(expected_mag[1], 0.0);
+
+    std::ifstream soc_input(filename.c_str());
+    ASSERT_TRUE(soc_input.is_open());
+    std::string token;
+    double parsed_mag_soc[3] = {0.0, 0.0, 0.0};
+    double parsed_nelec_soc[2] = {0.0, 0.0};
+    int spin_index = -1;
+    while (soc_input >> token)
+    {
+        if (token == "mag")
+        {
+            ASSERT_TRUE(soc_input >> parsed_mag_soc[0] >> parsed_mag_soc[1] >> parsed_mag_soc[2]);
+        }
+        else if (token == "spin")
+        {
+            ASSERT_TRUE(soc_input >> spin_index);
+        }
+        else if (token == "nelec")
+        {
+            ASSERT_EQ(spin_index == 1 || spin_index == 2, true);
+            ASSERT_TRUE(soc_input >> parsed_nelec_soc[spin_index - 1]);
+        }
+    }
+    EXPECT_NEAR(parsed_mag_soc[0], expected_mag[0], 1e-7);
+    EXPECT_NEAR(parsed_mag_soc[1], expected_mag[1], 1e-7);
+    EXPECT_NEAR(parsed_mag_soc[2], expected_mag[2], 1e-7);
+    EXPECT_NEAR(parsed_nelec_soc[0], expected_nelec_soc[0], 1e-7);
+    EXPECT_NEAR(parsed_nelec_soc[1], expected_nelec_soc[1], 1e-7);
+}
+
+TEST_F(DFTUBaseTest, CompactWriterReaderSocRealSpinBasisRoundtrip)
+{
+    Plus_U_Base source;
+    init_dftu_for_spin(source, false, 4, 2, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    const int orbital_size = 5;
+    for (int row = 0; row < orbital_size; ++row)
+    {
+        for (int column = 0; column < orbital_size; ++column)
+        {
+            const double up_up = 0.1 + 0.01 * row + 0.001 * column;
+            const double up_down = 0.2 + 0.01 * row + 0.001 * column;
+            const double down_down = 0.3 + 0.01 * row + 0.001 * column;
+            source.occmat().set(0, 2, 0, row, column, up_up);
+            source.occmat().set(0, 2, 0, row, column + orbital_size, up_down);
+            source.occmat().set(0, 2, 0, row + orbital_size, column, up_down);
+            source.occmat().set(0, 2, 0, row + orbital_size, column + orbital_size, down_down);
+        }
+    }
+
+    const std::string filename = testing::TempDir() + "compact_writer_soc_real.txt";
+    {
+        std::ofstream output(filename.c_str());
+        ASSERT_TRUE(output.is_open());
+        DFTU_BASE::write_occup_m(source,
+                                 ucell,
+                                 output,
+                                 DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    }
+
+    OccupationMatrix restored;
+    const std::vector<int> l_channel = {2};
+    restored.init(ucell, l_channel, 4, 2);
+    DFTU_BASE::read_occup_m(ucell,
+                            restored,
+                            l_channel,
+                            filename,
+                            4,
+                            2,
+                            DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+
+    for (int row = 0; row < 2 * orbital_size; ++row)
+    {
+        for (int column = 0; column < 2 * orbital_size; ++column)
+        {
+            EXPECT_NEAR(restored.get(0, 2, 0, row, column),
+                        source.occmat().get(0, 2, 0, row, column),
+                        1e-8);
+        }
+    }
+}
+
+TEST_F(DFTUBaseTest, ReadOccMatCompactHandlesLongComment)
+{
+    const std::string fn = testing::TempDir() + "compact_long_comment.txt";
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        ofs << "# " << std::string(300, 'x') << "\n";
+        ofs << "Fe Atom 1 L 2 mag 0.0 # atom header\n";
+        ofs << "spin 1 nelec 0.5 # spin header\n";
+        write_constant_matrix(ofs, 5, 0.1, 5, true);
+        ofs << "spin 2 nelec 0.5 # spin header\n";
+        write_constant_matrix(ofs, 5, 0.2, 5, true);
+    }
+
+    const std::vector<int> l_channel = {2};
+    OccupationMatrix occ;
+    occ.init(ucell, l_channel, 2, 1);
+    DFTU_BASE::read_occup_m(ucell,
+                            occ,
+                            l_channel,
+                            fn,
+                            2,
+                            1,
+                            DFTU_BASE::SOC_LAYOUT_PAULI);
+    EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, 0, 0), 0.1);
+    EXPECT_DOUBLE_EQ(occ.get(0, 2, 1, 4, 4), 0.2);
+}
+
+TEST_F(DFTUBaseTest, ReadOccMatCompactMultipleAtomsSkipsUncorrelatedSpecies)
+{
+    UnitCell multi_cell;
+    multi_cell.ntype = 2;
+    multi_cell.nat = 4;
+    multi_cell.atoms = new Atom[multi_cell.ntype];
+    multi_cell.set_atom_flag = true;
+
+    multi_cell.atoms[0].label = "O";
+    multi_cell.atoms[0].na = 2;
+    multi_cell.atoms[0].nwl = 1;
+    multi_cell.atoms[0].nw = 4;
+
+    Atom& fe = multi_cell.atoms[1];
+    fe.label = "Fe";
+    fe.na = 2;
+    fe.nwl = 2;
+    fe.nw = 9;
+    fe.iw2l.resize(fe.nw);
+    fe.iw2n.resize(fe.nw);
+    fe.iw2m.resize(fe.nw);
+    int iw = 0;
+    for (int l = 0; l <= fe.nwl; ++l)
+    {
+        for (int m = 0; m < 2 * l + 1; ++m)
+        {
+            fe.iw2l[iw] = l;
+            fe.iw2n[iw] = 0;
+            fe.iw2m[iw] = m;
+            ++iw;
+        }
+    }
+
+    multi_cell.set_iat2itia();
+    multi_cell.itia2iat.create(multi_cell.ntype, 2);
+    multi_cell.itia2iat(0, 0) = 0;
+    multi_cell.itia2iat(0, 1) = 1;
+    multi_cell.itia2iat(1, 0) = 2;
+    multi_cell.itia2iat(1, 1) = 3;
+    multi_cell.set_iat2iwt(1);
+
+    const std::string fn = testing::TempDir() + "compact_multi_atom.txt";
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        write_compact_collinear_atom(ofs, 3, 0.1, 0.2);
+        write_compact_collinear_atom(ofs, 4, 0.3, 0.4);
+    }
+
+    const std::vector<int> l_channel = {-1, 2};
+    OccupationMatrix occ;
+    occ.init(multi_cell, l_channel, 2, 1);
+    DFTU_BASE::read_occup_m(multi_cell,
+                            occ,
+                            l_channel,
+                            fn,
+                            2,
+                            1,
+                            DFTU_BASE::SOC_LAYOUT_PAULI);
+
+    EXPECT_DOUBLE_EQ(occ.get(2, 2, 0, 0, 0), 0.1);
+    EXPECT_DOUBLE_EQ(occ.get(2, 2, 1, 4, 4), 0.2);
+    EXPECT_DOUBLE_EQ(occ.get(3, 2, 0, 0, 0), 0.3);
+    EXPECT_DOUBLE_EQ(occ.get(3, 2, 1, 4, 4), 0.4);
+}
+
+TEST_F(DFTUBaseTest, ReadOccMatCompactSocRealSpinBasis)
+{
+    const std::string fn = testing::TempDir() + "compact_soc_real.txt";
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        ofs << "Fe Atom 1 L 2 mag 0.0 0.0 0.0\n";
+        ofs << "spin 1 nelec 0.5\n";
+        write_constant_matrix(ofs, 5, 1.0, 5);
+        ofs << "spin 12 re\n";
+        write_constant_matrix(ofs, 5, 2.0, 5);
+        ofs << "spin 12 im\n";
+        write_constant_matrix(ofs, 5, 3.0, 5);
+        ofs << "spin 2 nelec 0.5\n";
+        write_constant_matrix(ofs, 5, 4.0, 5);
+    }
+
+    const std::vector<int> l_channel = {2};
+    OccupationMatrix occ;
+    occ.init(ucell, l_channel, 4, 2);
+    DFTU_BASE::read_occup_m(ucell,
+                            occ,
+                            l_channel,
+                            fn,
+                            4,
+                            2,
+                            DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, 0, 0), 1.0);
+    EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, 0, 5), 2.0);
+    EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, 5, 0), 2.0);
+    EXPECT_DOUBLE_EQ(occ.get(0, 2, 0, 5, 5), 4.0);
+}
+
+TEST_F(DFTUBaseTest, ReadOccMatRejectsLegacyHeader)
+{
+    const std::string fn = testing::TempDir() + "legacy_header.txt";
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        ofs << "Fe 1 Atom=1 L=2 0 0 0\n";
+    }
+    const std::vector<int> l_channel = {2};
+    OccupationMatrix occ;
+    occ.init(ucell, l_channel, 2, 1);
+    EXPECT_EXIT(DFTU_BASE::read_occup_m(ucell,
+                                       occ,
+                                       l_channel,
+                                       fn,
+                                       2,
+                                       1,
+                                       DFTU_BASE::SOC_LAYOUT_PAULI),
+                testing::ExitedWithCode(1),
+                "");
+}
+
+TEST_F(DFTUBaseTest, ReadOccMatRejectsShortMatrixRow)
+{
+    const std::string fn = testing::TempDir() + "short_matrix_row.txt";
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        ofs << "Fe Atom 1 L 2 mag 0.0\n";
+        ofs << "spin 1 nelec 0.5\n";
+        write_constant_matrix(ofs, 5, 0.1, 4);
+        ofs << "spin 2 nelec 0.5\n";
+        write_constant_matrix(ofs, 5, 0.2, 5);
+    }
+    const std::vector<int> l_channel = {2};
+    OccupationMatrix occ;
+    occ.init(ucell, l_channel, 2, 1);
+    EXPECT_EXIT(DFTU_BASE::read_occup_m(ucell,
+                                       occ,
+                                       l_channel,
+                                       fn,
+                                       2,
+                                       1,
+                                       DFTU_BASE::SOC_LAYOUT_PAULI),
+                testing::ExitedWithCode(1),
+                "");
+}
+
+TEST_F(DFTUBaseTest, ReadOccMatRejectsLongMatrixRow)
+{
+    const std::string fn = testing::TempDir() + "long_matrix_row.txt";
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        ofs << "Fe Atom 1 L 2 mag 0.0\n";
+        ofs << "spin 1 nelec 0.5\n";
+        write_constant_matrix(ofs, 5, 0.1, 6);
+        ofs << "spin 2 nelec 0.5\n";
+        write_constant_matrix(ofs, 5, 0.2, 5);
+    }
+    const std::vector<int> l_channel = {2};
+    OccupationMatrix occ;
+    occ.init(ucell, l_channel, 2, 1);
+    EXPECT_EXIT(DFTU_BASE::read_occup_m(ucell,
+                                       occ,
+                                       l_channel,
+                                       fn,
+                                       2,
+                                       1,
+                                       DFTU_BASE::SOC_LAYOUT_PAULI),
+                testing::ExitedWithCode(1),
+                "");
+}
+
+TEST_F(DFTUBaseTest, ReadOccMatRejectsMissingSocBlock)
+{
+    const std::string fn = testing::TempDir() + "missing_soc_block.txt";
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        ofs << "Fe Atom 1 L 2 mag 0.0 0.0 0.0\n";
+        ofs << "spin 1 nelec 0.5\n";
+        write_constant_matrix(ofs, 5, 1.0, 5);
+        ofs << "spin 12 re\n";
+        write_constant_matrix(ofs, 5, 2.0, 5);
+        ofs << "spin 2 nelec 0.5\n";
+    }
+    const std::vector<int> l_channel = {2};
+    OccupationMatrix occ;
+    occ.init(ucell, l_channel, 4, 2);
+    EXPECT_EXIT(DFTU_BASE::read_occup_m(ucell,
+                                       occ,
+                                       l_channel,
+                                       fn,
+                                       4,
+                                       2,
+                                       DFTU_BASE::SOC_LAYOUT_PAULI),
+                testing::ExitedWithCode(1),
+                "");
+}
+
+TEST_F(DFTUBaseTest, ReadOccMatRejectsExtraContent)
+{
+    const std::string fn = testing::TempDir() + "extra_content.txt";
+    {
+        std::ofstream ofs(fn);
+        ASSERT_TRUE(ofs.is_open());
+        write_compact_collinear_body(ofs);
+        ofs << "unexpected_trailing_token_that_is_longer_than_twenty_characters\n";
+    }
+    const std::vector<int> l_channel = {2};
+    OccupationMatrix occ;
+    occ.init(ucell, l_channel, 2, 1);
+    EXPECT_EXIT(DFTU_BASE::read_occup_m(ucell,
+                                       occ,
+                                       l_channel,
+                                       fn,
+                                       2,
+                                       1,
+                                       DFTU_BASE::SOC_LAYOUT_PAULI),
+                testing::ExitedWithCode(1),
+                "");
 }
 
 /// For init_occ_mat=1 the file-loaded occupation matrix must seed the
@@ -997,6 +1523,7 @@ TEST_F(DFTUBaseTest, AppendSnapshotGuardDftuOffBeforeIterValidation)
     // out_occ_mat=true but dft_plus_u=0: the guard must catch dft_plus_u
     // and return before the iter < 1 check fires.
     const DFTU_BASE::OccmatOutputCfg cfg = {1, 1, 5, true, 0};
+    const DFTU_BASE::OccmatStepInfo step = {0, 0, 1e-6, 0.5};
 
     // Use a unique subdirectory so files from other tests in the same
     // binary do not cause false positives.
@@ -1007,14 +1534,9 @@ TEST_F(DFTUBaseTest, AppendSnapshotGuardDftuOffBeforeIterValidation)
     DFTU_BASE::append_ion_step_snapshot(dftu,
                                         ucell,
                                         out_dir,
-                                        2, // nspin
-                                        1, // npol
-                                        0, // istep
-                                        0, // iter — invalid, but DFT+U is off
+                                        step,
                                         false,
                                         false,
-                                        1e-6,
-                                        0.5,
                                         cfg,
                                         DFTU_BASE::SOC_LAYOUT_PAULI);
 
