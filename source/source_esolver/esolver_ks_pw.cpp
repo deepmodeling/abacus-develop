@@ -27,8 +27,6 @@
 #include "source_pw/module_pwdft/setup_pot.h"      // mohan add 20250929
 #include "source_pw/module_pwdft/update_cell_pw.h" // mohan add 20250309
 
-#include <stdexcept>
-
 namespace ModuleESolver
 {
 
