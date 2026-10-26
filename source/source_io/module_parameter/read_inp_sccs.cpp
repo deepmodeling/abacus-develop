@@ -168,7 +168,7 @@ void ReadInput::item_sccs()
         item.annotation = "Widths of the full-cavity Gaussians";
         item.category = "Implicit solvation model";
         item.type = "Vector of Real";
-        item.description = "Widths of the valence-charge Gaussians used only with sccs_solvent_mode full. One value applies to every atom except those whose known atomic number equals the pseudopotential valence charge (within 1e-8). More than one value requires exactly nat values in STRU atom order (grouped by atom type), and overrides this automatic exclusion. A value <= 0 disables the cavity Gaussian on that atom.";
+        item.description = "Widths of the valence-charge Gaussians used only with sccs_solvent_mode full. One value applies to every atom except those whose known atomic number equals the pseudopotential valence charge (within 1e-8). More than one value requires exactly nat values in STRU atom order (grouped by atom type), and overrides this automatic exclusion. A value <= 0 disables the cavity Gaussian on that atom. A per-atom list sets symmetry 1 to 0, because the symmetry analysis does not distinguish equivalent atoms by their widths.";
         item.default_value = "0.5";
         item.unit = "bohr";
         item.set_availability("imp_sol==2");
