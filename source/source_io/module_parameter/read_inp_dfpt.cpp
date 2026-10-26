@@ -123,7 +123,10 @@ void ReadInput::item_dfpt()
                            "residual is the screening-potential residual ||v_out - v_in|| / "
                            "||v_out||; with rho_plain, rho_kerker or rho_broyden it is the "
                            "first-order density residual ||drho_out - drho_in|| / ||drho_out||. "
-                           "The electric-field (LO-TO) solve always mixes the density.";
+                           "The electric-field (LO-TO) solve always mixes the density, using "
+                           "the density-space counterpart of the selected scheme (e.g. "
+                           "rho_broyden when dfpt_mix_type = v_sc_broyden), so its residual "
+                           "is always the density residual.";
         item.default_value = "1.0e-8";
         read_sync_double(input.dfpt_conv_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -272,8 +275,12 @@ void ReadInput::item_dfpt()
         item.type = "Integer";
         item.description = "Set the number of history steps used by the "
                            "Modified Broyden mixing (Johnson 1988) when "
-                           "dfpt_mix_type = rho_broyden or v_sc_broyden. More history "
-                           "generally accelerates convergence at the cost of memory.";
+                           "dfpt_mix_type = rho_broyden or v_sc_broyden. Under "
+                           "v_sc_broyden it sizes both Broyden instances: the "
+                           "screening-potential mixer of the displacement loop "
+                           "and the density mixer of the electric-field "
+                           "(LO-TO) loop. More history generally accelerates "
+                           "convergence at the cost of memory.";
         item.default_value = "8";
         read_sync_int(input.dfpt_broyden_ndim);
         item.check_value = [](const Input_Item& item, const Parameter& para) {

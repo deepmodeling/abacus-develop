@@ -95,11 +95,21 @@ void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
     const double mix_beta = mix_beta_;
     const std::string mix_type = mix_type_;
     const double kerker_a2 = kerker_a2_;
-    // DFPT_Rho handles density mixing only; v_sc modes do their own
-    // potential mixing in solve_displacement, so pass the plain default
-    // (the E-field loop in dfpt_pw_q0.cpp always mixes the density)
-    const std::string rho_mix_type
-        = (mix_type == "v_sc_plain" || mix_type == "v_sc_broyden") ? "rho_plain" : mix_type;
+    // DFPT_Rho handles density mixing only (the E-field loop in
+    // dfpt_pw_q0.cpp always mixes the density, while the v_sc modes do
+    // their own potential mixing in solve_displacement), so pass the
+    // density-space counterpart: v_sc_plain -> rho_plain, v_sc_broyden
+    // -> rho_broyden (the E-field solve must not silently fall back to
+    // the plain beta mix when the INPUT selects a Broyden scheme)
+    std::string rho_mix_type = mix_type;
+    if (mix_type == "v_sc_plain")
+    {
+        rho_mix_type = "rho_plain";
+    }
+    else if (mix_type == "v_sc_broyden")
+    {
+        rho_mix_type = "rho_broyden";
+    }
     rho_.init({nspin, nrxx, ctx.pw_rho, ctx.pw_wfc, ctx.ucell->G, rho_mix_type, mix_beta, kerker_a2, broyden_ndim_});
     phon_.init(*ctx.ucell, ctx.pw_rho, &pert_);
     q0_.init(*ctx.ucell, ctx.pw_rho, ctx.pw_wfc, &pert_);
