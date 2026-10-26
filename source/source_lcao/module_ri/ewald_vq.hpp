@@ -228,7 +228,8 @@ void Ewald_Vq<Tdata>::init_ions(const UnitCell& ucell, const std::array<Tcell, N
                    this->kvec_c.end(),
                    neg_kvec.begin(),
                    [](ModuleBase::Vector3<double>& vec) -> ModuleBase::Vector3<double> { return -vec; });
-    this->gaussian_abfs.init(ucell, 2 * this->abfs_Lmax + 1, neg_kvec, ucell.G, this->ewald_lambda);
+    this->gaussian_abfs.init(
+        ucell, 2 * this->abfs_Lmax + 1, neg_kvec, ucell.G, this->ewald_lambda, this->ewald_dimension);
 
     ModuleBase::timer::end("Ewald_Vq", "init_ions");
 }

@@ -5,15 +5,14 @@
 #include <cmath>
 #include <stdexcept>
 
-// Gaussian decay exponents that make the Ewald real-space and reciprocal
-// tails negligible (1e-14) for a given auxiliary angular momentum.
+// Gaussian decay exponents for the Ewald real-space and reciprocal sums.
 //
-// The historical defaults (17.5 real / 35.0 reciprocal at l=0) are kept as
-// starting points for compatibility; for higher l the multipole tail
-// erfc(sqrt(x)) + sum_k x^{k/2} e^{-x} / Gamma(k/2+1) decays more slowly, so
-// the exponent is enlarged by bisection until the tail bound is met. This
-// keeps the truncated Gaussian compensation accurate at every l instead of
-// silently reusing the l=0 cutoffs.
+// The strict bisection below (tail <= 1e-14, enlarged for higher l because
+// erfc(sqrt(x)) + sum_k x^{k/2} e^{-x} / Gamma(k/2+1) decays more slowly)
+// belongs to the strict-2D kernel. The 3D split route keeps the historical
+// exponents (17.5 real / 35.0 reciprocal at every l) through the
+// dimension-aware overloads at the bottom, so existing HSE/PBE0 and 3D RPA
+// runs are unchanged.
 namespace EwaldGaussianCutoff
 {
 constexpr double historical_real_space_exponent = 17.5;
@@ -128,6 +127,32 @@ inline double reciprocal_radius(const double lambda, const int lmax)
         throw std::invalid_argument("Ewald Gaussian lambda must be positive");
     }
     return std::sqrt(reciprocal_decay_exponent(lmax) * lambda);
+}
+
+inline double real_space_radius(const double lambda, const int angular_momentum, const int ewald_dimension)
+{
+    if (ewald_dimension != 2)
+    {
+        if (lambda <= 0.0)
+        {
+            throw std::invalid_argument("Ewald Gaussian lambda must be positive");
+        }
+        return std::sqrt(2.0 * historical_real_space_exponent / lambda);
+    }
+    return real_space_radius(lambda, angular_momentum);
+}
+
+inline double reciprocal_radius(const double lambda, const int lmax, const int ewald_dimension)
+{
+    if (ewald_dimension != 2)
+    {
+        if (lambda <= 0.0)
+        {
+            throw std::invalid_argument("Ewald Gaussian lambda must be positive");
+        }
+        return std::sqrt(historical_reciprocal_exponent * lambda);
+    }
+    return reciprocal_radius(lambda, lmax);
 }
 } // namespace EwaldGaussianCutoff
 

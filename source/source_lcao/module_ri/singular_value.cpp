@@ -195,7 +195,9 @@ double cal_massidda(const UnitCell& ucell,
     auto cal_chi = [&qdiv, &bvec, &nks, &qvec, &lmax, &ucell](const double& lambda) {
         Gaussian_Abfs gaussian_abfs;
         const double exponent = 1 / lambda;
-        gaussian_abfs.init(ucell, lmax, qvec, bvec, exponent);
+        // The 3D Massidda chi keeps the historical Gaussian cutoffs; the 2D
+        // branch uses cal_massidda_2d instead.
+        gaussian_abfs.init(ucell, lmax, qvec, bvec, exponent, 3);
         const T_cal_fq_type_no func_cal_fq_massidda
             = std::bind(&fq_massidda, ucell.tpiba, gaussian_abfs, qdiv, lambda, lmax);
         double prefactor

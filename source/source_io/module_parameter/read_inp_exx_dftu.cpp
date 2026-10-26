@@ -561,7 +561,7 @@ void ReadInput::item_exx()
                            "and strict also aborts on unconverged coverage. In every mode except off, "
                            "incomplete guard-shell coverage or a Hermitian residual above tolerance aborts "
                            "the run.";
-        item.default_value = "warn";
+        item.default_value = "off";
         read_sync_string(input.exx_ewald_tail_check);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& mode = para.input.exx_ewald_tail_check;

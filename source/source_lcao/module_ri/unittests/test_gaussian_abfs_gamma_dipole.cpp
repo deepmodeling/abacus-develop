@@ -57,7 +57,7 @@ int main()
     Gaussian_Abfs gaussian_abfs;
     const std::vector<ModuleBase::Vector3<double>> kvec_c
         = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0)};
-    gaussian_abfs.init(ucell, 1, kvec_c, G, lambda);
+    gaussian_abfs.init(ucell, 1, kvec_c, G, lambda, 2);
 
     // lz_bohr = omega / |a1_bohr x a2_bohr| = 3.0 / 1.0.
     const double conversion = 3.0 / ModuleBase::TWO_PI;

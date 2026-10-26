@@ -42,16 +42,17 @@ class Gaussian_Abfs
   C^{LM}_{lm,l'm'}： Gaunt coefficient
 */
   public:
-    static double radial_cutoff(const double lambda, const int angular_momentum)
+    static double radial_cutoff(const double lambda, const int angular_momentum, const int ewald_dimension)
     {
-        return EwaldGaussianCutoff::real_space_radius(lambda, angular_momentum);
+        return EwaldGaussianCutoff::real_space_radius(lambda, angular_momentum, ewald_dimension);
     }
 
     void init(const UnitCell& ucell,
               const int& Lmax,
               const std::vector<ModuleBase::Vector3<double>>& kvec_c,
               const ModuleBase::Matrix3& G,
-              const double& lambda);
+              const double& lambda,
+              const int& ewald_dimension);
 
     RI::Tensor<std::complex<double>> get_Vq(const int& lp_max,
                                             const int& lq_max, // Maximum L for which to calculate interaction.
@@ -116,6 +117,7 @@ Calculate the lattice sum over a Gaussian:
     double omega;
     double area_parallel_bohr2;
     double lz_bohr;
+    int ewald_dimension = 3;
     std::vector<ModuleBase::Vector3<double>> kvec_c;
     std::vector<std::vector<ModuleBase::Vector3<double>>> qGvecs;
     std::vector<ModuleBase::Vector3<double>> gvecs_direct;

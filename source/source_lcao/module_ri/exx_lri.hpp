@@ -7,6 +7,7 @@
 #define EXX_LRI_HPP
 
 #include "exx_lri.h"
+#include "exx_lri_detail.h"
 #include "source_base/parallel_common.h"
 #include "source_cell/unitcell.h"
 #include "ri_2d_comm.h"
@@ -68,21 +69,6 @@ using void_t = typename make_void<Ts...>::type;
 
 namespace ExxLriDetail
 {
-using CoulombParam
-    = std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>;
-
-inline void trim_malloc_cache()
-{
-#if defined(__GLIBC__)
-	malloc_trim(0);
-#endif
-}
-
-inline double default_spencer_rcut(const UnitCell& ucell, const K_Vectors& kv)
-{
-    return std::pow(0.75 * kv.get_nkstot_nospin() * ucell.omega / (ModuleBase::PI), 1.0 / 3.0);
-}
-
 inline bool rotate_abfs_in_place_for_current_full_matrix(const Exx_Info_RI&)
 {
     // The rotated-basis Ewald split uses the full rotated ABFS for the
@@ -110,39 +96,6 @@ inline void print_rt_tddft_ewald_force_stress_warning_once(const ExxLriRuntime& 
                   << std::endl;
         warning_printed = true;
     }
-}
-
-inline CoulombParam build_center2_cut_coulomb_param(const CoulombParam& coulomb_param,
-                                                    const UnitCell& ucell,
-                                                    const K_Vectors& kv,
-                                                    bool* synthesized_rcut = nullptr)
-{
-    CoulombParam center2_param = RI_Util::update_coulomb_param(coulomb_param, ucell, &kv);
-    const double fallback_rcut = default_spencer_rcut(ucell, kv);
-    bool used_fallback_rcut = false;
-
-    for (auto& param_list: center2_param)
-    {
-        if (param_list.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock)
-        {
-            continue;
-        }
-        for (auto& param: param_list.second)
-        {
-            auto rcut_it = param.find("Rcut");
-            if (rcut_it == param.end() || rcut_it->second.empty())
-            {
-                param["Rcut"] = ModuleBase::GlobalFunc::TO_STRING(fallback_rcut);
-                used_fallback_rcut = true;
-            }
-        }
-    }
-
-    if (synthesized_rcut != nullptr)
-    {
-        *synthesized_rcut = used_fallback_rcut;
-    }
-    return center2_param;
 }
 
 inline double get_total_fock_alpha(const CoulombParam& coulomb_param)
@@ -1438,25 +1391,10 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
                         }
                         else
                         {
-                            if (mpi_size > 1)
-                            {
-                                Parallel_Common::barrier(this->mpi_comm);
-                                auto Vs_bare_root
-                                    = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs_temp, all_atoms, all_atoms);
-                                Parallel_Common::barrier(this->mpi_comm);
-                                if (this->runtime.rank == 0)
-                                {
-                                    Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs_serial_full(
-                                        ucell,
-                                        chi,
-                                        Vs_bare_root,
-                                        period_Vs);
-                                }
-                            }
-                            else
-                            {
-                                Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
-                            }
+                            // Distributed Ewald V, as on the split route: each
+                            // rank keeps its own atom distribution, so 3D runs
+                            // never serialize the Gaussian sum on rank 0.
+                            Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
                         }
                         break;
                     }
@@ -1496,7 +1434,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
             LRI_CV_Tools::write_Vs_abf(Vs_long, this->runtime.output_dir + "Vs_long_n0");
         }
     }
-    if (mpi_size > 1
+    if (this->use_rotated_n0_long_range && mpi_size > 1
         && this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald) != this->coulomb_settings.end())
     {
         Parallel_Common::barrier(this->mpi_comm);
