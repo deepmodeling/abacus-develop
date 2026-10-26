@@ -139,6 +139,7 @@ add_library(
     module_parameter/read_inp_out.cpp  
     module_parameter/availability.cpp
     module_parameter/availability_validator.cpp
+    module_parameter/input_domain.cpp
     module_parameter/read_input.cpp
     module_parameter/read_set_globalv.cpp
 )

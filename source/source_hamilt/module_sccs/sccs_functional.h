@@ -10,6 +10,8 @@ class PW_Basis;
 
 namespace ModuleSccs
 {
+class CoulombOperator;
+
 struct SccsConfig;
 struct SccsResponse;
 
@@ -30,6 +32,15 @@ void eval_functional(const std::vector<double>& charge,
                       const SccsConfig& config,
                       const ModulePW::PW_Basis& basis,
                       double tpiba,
+                      FunctionalResult& result);
+
+// Use the same operator for the dielectric response and vacuum subtraction.
+void eval_functional(const std::vector<double>& charge,
+                      const SccsResponse& response,
+                      const SccsConfig& config,
+                      const ModulePW::PW_Basis& basis,
+                      double tpiba,
+                      CoulombOperator& coulomb,
                       FunctionalResult& result);
 } // namespace ModuleSccs
 

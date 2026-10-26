@@ -13,6 +13,7 @@ void ReadInput::item_relax()
     // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("relax_method");
+        item.domain.set_choices({"cg", "cg_trad", "bfgs", "bfgs_trad", "sd", "cg_bfgs", "lbfgs"});
         item.annotation = "cg; cg_trad; bfgs; bfgs_trad; sd; cg_bfgs; lbfgs";
         item.category = "Geometry relaxation";
         item.type = "String";
@@ -27,18 +28,7 @@ void ReadInput::item_relax()
 * sd: Steepest descent algorithm. Not recommended for production use.)";
         item.default_value = "cg";
         item.unit = "";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            const std::vector<std::string> methods
-                = {"cg", "cg_trad", "bfgs", "bfgs_trad", "sd", "cg_bfgs", "lbfgs"};
-            if (item.str_values.size() != 1 || std::find(methods.begin(), methods.end(), strvalue) == methods.end())
-            {
-                const std::string message = "relax_method requires exactly one scalar option. "
-                                            + nofound_str(methods, "relax_method");
-                ModuleBase::WARNING_QUIT("ReadInput", message);
-            }
-            para.input.relax_method = strvalue;
-        };
-        sync_string(input.relax_method);
+        read_sync_string(input.relax_method);
         this->add_item(item);
     }
     {
@@ -97,6 +87,7 @@ void ReadInput::item_relax()
     }
     {
         Input_Item item("force_thr");
+        item.domain.set_rule("value>=0");
         item.annotation = "force threshold, unit: Ry/Bohr";
         item.category = "Geometry relaxation";
         item.type = "Real";
@@ -127,6 +118,7 @@ void ReadInput::item_relax()
     }
     {
         Input_Item item("force_thr_ev");
+        item.domain.set_rule("value>=0");
         item.annotation = "force threshold, unit: eV/Angstrom";
         item.category = "Geometry relaxation";
         item.type = "Real";
@@ -254,6 +246,7 @@ void ReadInput::item_relax()
     }
     {
         Input_Item item("fixed_axes");
+        item.domain.add_requirement("fixed_axes in [shape, volume]", "relax_method==cg");
         item.annotation = "which axes are fixed";
         item.category = "Geometry relaxation";
         item.type = "String";
@@ -278,17 +271,11 @@ With relax_method set to cg_trad, bfgs, bfgs_trad, lbfgs, sd, or cg_bfgs, None a
         item.unit = "";
         item.set_availability("calculation==cell-relax");
         read_sync_string(input.fixed_axes);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.input.fixed_axes == "shape" || para.input.fixed_axes == "volume")
-                && !para.input.uses_simultaneous_relaxation())
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "fixed shape and fixed volume require relax_method = cg");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("fixed_ibrav");
+        item.domain.add_requirement("fixed_ibrav==true", "relax_method==cg and latname!=none");
         item.annotation = "whether to preseve lattice type during relaxation";
         item.category = "Geometry relaxation";
         item.type = "Boolean";
@@ -300,20 +287,11 @@ With relax_method set to cg_trad, bfgs, bfgs_trad, lbfgs, sd, or cg_bfgs, None a
         item.unit = "";
         item.set_availability("relax_method==cg and latname!=none");
         read_sync_bool(input.fixed_ibrav);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.fixed_ibrav && !para.input.uses_simultaneous_relaxation())
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "fixed_ibrav requires relax_method = cg");
-            }
-            if (para.input.latname == "none" && para.input.fixed_ibrav)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "to use fixed_ibrav, latname must be provided");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("fixed_atoms");
+        item.domain.add_requirement("fixed_atoms==true", "calculation!=relax");
         item.annotation = "whether to preseve direct coordinates of atoms "
                           "during relaxation";
         item.category = "Geometry relaxation";
@@ -323,12 +301,6 @@ With relax_method set to cg_trad, bfgs, bfgs_trad, lbfgs, sd, or cg_bfgs, None a
         item.default_value = "False";
         item.unit = "";
         read_sync_bool(input.fixed_atoms);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.fixed_atoms && para.input.calculation == "relax")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "fixed_atoms is not meant to be used for calculation = relax");
-            }
-        };
         this->add_item(item);
     }
     {

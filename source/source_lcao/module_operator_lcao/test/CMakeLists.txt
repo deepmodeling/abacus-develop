@@ -205,12 +205,16 @@ if(ENABLE_LCAO)
     tmp_mocks.cpp
     ../../../source_hamilt/operator.cpp)
 
-  install(FILES parallel_operator_tests.sh
-          DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+  abacus_copy_test_files(parallel_operator_tests.sh)
   find_program(BASH bash)
   add_test(
     NAME MODULE_LCAO_operators_para_test
-    COMMAND ${BASH} parallel_operator_tests.sh
+    COMMAND
+      ${BASH} parallel_operator_tests.sh
+      "$<TARGET_FILE:MODULE_LCAO_operator_overlap_cd_test>"
+      "$<TARGET_FILE:MODULE_LCAO_operator_overlap_test>"
+      "$<TARGET_FILE:MODULE_LCAO_operator_ekinetic_test>"
+      "$<TARGET_FILE:MODULE_LCAO_operator_nonlocal_test>"
+      "$<TARGET_FILE:MODULE_LCAO_operator_T_NL_cd_test>"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-
 endif()

@@ -173,6 +173,18 @@ TEST_F(PotSccsTest, InputMapsOntoSccsConfig)
     EXPECT_LT(config.pressure, 0.0);
     EXPECT_DOUBLE_EQ(config.surface_regularization, 1e-6);
     EXPECT_EQ(solver.max_iterations, 42);
+    EXPECT_EQ(config.boundary, ModuleSccs::Boundary::Periodic);
+    input.assume_isolated = "pcc_0d";
+    elecstate::sccs_cfg_input(input, config, solver);
+    EXPECT_EQ(config.boundary, ModuleSccs::Boundary::Pcc0d);
+    input.assume_isolated = "pcc_2d";
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        input.pcc_2d_axis = axis;
+        elecstate::sccs_cfg_input(input, config, solver);
+        EXPECT_EQ(config.boundary, ModuleSccs::Boundary::Pcc2d);
+        EXPECT_EQ(config.pcc_2d_axis, axis);
+    }
 }
 
 TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
@@ -210,6 +222,9 @@ TEST_F(PotSccsTest, ChargedDielectricCellWarnsAndRuns)
     ModuleSccs::SccsConfig vacuum_config = config;
     vacuum_config.cavity.epsilon_bulk = 1.0;
     EXPECT_TRUE(elecstate::check_charge(vacuum_config, cell, 0.5).empty());
+    ModuleSccs::SccsConfig pcc_config = config;
+    pcc_config.boundary = ModuleSccs::Boundary::Pcc0d;
+    EXPECT_TRUE(elecstate::check_charge(pcc_config, cell, 0.5).empty());
 
     const double density_value = 0.5 / basis.omega;
     std::vector<double> density(basis.nrxx, density_value);

@@ -4,29 +4,15 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
 find_program(BASH bash)
-file(COPY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-configure_file(bcast_atom_pseudo_test.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/bcast_atom_pseudo_test.sh COPYONLY)
-configure_file(bcast_atom_spec_test.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/bcast_atom_spec_test.sh COPYONLY)
-configure_file(parallel_kpoints_test.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/parallel_kpoints_test.sh COPYONLY)
-configure_file(klist_test_para.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/klist_test_para.sh COPYONLY)
-configure_file(unitcell_test_parallel.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/unitcell_test_parallel.sh COPYONLY)
-configure_file(bcast_read_sep_test.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/bcast_read_sep_test.sh COPYONLY)
-configure_file(bcast_sep_cell_test.sh
-               ${CMAKE_CURRENT_BINARY_DIR}/bcast_sep_cell_test.sh COPYONLY)
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES bcast_atom_pseudo_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES bcast_atom_spec_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES parallel_kpoints_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES klist_test_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES unitcell_test_parallel.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES bcast_read_sep_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES bcast_sep_cell_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(
+  support
+  bcast_atom_pseudo_test.sh
+  bcast_atom_spec_test.sh
+  parallel_kpoints_test.sh
+  klist_test_para.sh
+  unitcell_test_parallel.sh
+  bcast_read_sep_test.sh
+  bcast_sep_cell_test.sh)
 
 list(
   APPEND
@@ -210,6 +196,7 @@ addtest(
 add_test(
   NAME MODULE_CELL_klist_test_para4
   COMMAND ${BASH} klist_test_para.sh
+          "$<TARGET_FILE:MODULE_CELL_klist_test_para1>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 addtest(
@@ -271,16 +258,18 @@ find_program(BASH bash)
 add_test(
   NAME MODULE_CELL_bcast_atom_pseudo_test
   COMMAND ${BASH} bcast_atom_pseudo_test.sh
+          "$<TARGET_FILE:MODULE_CELL_atom_pseudo>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 add_test(
   NAME MODULE_CELL_bcast_atom_spec_test
-  COMMAND ${BASH} bcast_atom_spec_test.sh
+  COMMAND ${BASH} bcast_atom_spec_test.sh "$<TARGET_FILE:MODULE_CELL_atom_spec>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 add_test(
   NAME MODULE_CELL_parallel_kpoints_test
   COMMAND ${BASH} parallel_kpoints_test.sh
+          "$<TARGET_FILE:MODULE_CELL_ParaKpoints>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 addtest(
@@ -411,6 +400,7 @@ addtest(
 add_test(
   NAME MODULE_CELL_unitcell_test_parallel
   COMMAND ${BASH} unitcell_test_parallel.sh
+          "$<TARGET_FILE:MODULE_CELL_unitcell_test_para>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 addtest(
@@ -435,7 +425,7 @@ addtest(
 
 add_test(
   NAME MODULE_CELL_read_sep_parallel
-  COMMAND ${BASH} bcast_read_sep_test.sh
+  COMMAND ${BASH} bcast_read_sep_test.sh "$<TARGET_FILE:MODULE_CELL_SEP_TEST>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 addtest(
@@ -452,6 +442,7 @@ addtest(
 add_test(
   NAME MODULE_CELL_sep_cell_parallel
   COMMAND ${BASH} bcast_sep_cell_test.sh
+          "$<TARGET_FILE:MODULE_CELL_SEP_CELL_TEST>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 addtest(
@@ -477,5 +468,5 @@ addtest(
 
 add_test(
   NAME MODULE_CELL_cif_io_parallel
-  COMMAND mpirun -np 4 ./MODULE_CELL_cif_io
+  COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_CELL_cif_io>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
