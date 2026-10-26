@@ -244,7 +244,8 @@ void finish_response(const SqrtCgOperator& system,
             value -= mean;
         }
     }
-    const bool lowpass = uses_lowpass(cavity);
+    // The same condition under which make_cav_derivs keeps the filtered gradient.
+    const bool lowpass = open_boundary && uses_lowpass(cavity);
     if (!lowpass)
     {
         std::vector<std::complex<double>> potential_g(basis.npw);

@@ -144,3 +144,36 @@ TEST_F(SccsLowpassTest, FilterUsesDensityCutoff)
         }
     }
 }
+
+// The periodic chain path takes no FFT derivative of s, so lowpass parameters
+// set in code (the INPUT reader rejects them without PCC) leave the periodic
+// response unchanged.
+TEST_F(SccsLowpassTest, PeriodicResponseIgnoresTheLowpass)
+{
+    ModuleSccs::CavityParameters cavity;
+    cavity.density_min = 1e-4;
+    cavity.density_max = 5e-3;
+    cavity.epsilon_bulk = 5.0;
+    ModuleSccs::PolarizationSolverParameters solver;
+    const std::vector<double> mode = cosine_mode(0);
+    std::vector<double> density(basis.nrxx);
+    std::vector<double> charge(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        density[ir] = 1e-3 + 1e-4 * mode[ir];
+        charge[ir] = 2e-4 * mode[ir];
+    }
+    const std::vector<double> cold;
+    ModuleSccs::SccsResponse plain;
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold, basis, tpiba, plain);
+    cavity.lowpass_p1 = basis.ggecut;
+    cavity.lowpass_p2 = 0.5;
+    ModuleSccs::SccsResponse filtered;
+    ModuleSccs::solve_response(density, charge, cavity, solver, cold, basis, tpiba, filtered);
+    EXPECT_FALSE(filtered.polarization.gradient.empty());
+    ASSERT_EQ(filtered.cavity_potential.size(), plain.cavity_potential.size());
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_EQ(filtered.cavity_potential[ir], plain.cavity_potential[ir]);
+    }
+}
