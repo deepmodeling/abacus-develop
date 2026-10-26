@@ -23,32 +23,6 @@ ExpAction<T, Device>::ExpAction(const ExpOpts& exp_opts, const diag_comm_info& c
 }
 
 template <typename T, typename Device>
-ExpResult ExpAction<T, Device>::apply_pair(const HSOperator<T, Device>& op,
-                                           const OrbLayout& layout,
-                                           double alpha,
-                                           const T* input,
-                                           T* half,
-                                           T* full)
-{
-    ExpResult result = apply(op, layout, alpha, input, half);
-    if (result.state != ExpState::success)
-    {
-        return result;
-    }
-    const double full_alpha = 2.0 * alpha;
-    const ExpResult second = apply(op, layout, full_alpha, input, full);
-    result.state = second.state;
-    result.has_err_est = result.has_err_est && second.has_err_est;
-    result.failed_band = second.failed_band;
-    result.rel_err_est = std::max(result.rel_err_est, second.rel_err_est);
-    result.order_or_dim = std::max(result.order_or_dim, second.order_or_dim);
-    result.bisect_count += second.bisect_count;
-    result.hpsi_calls += second.hpsi_calls;
-    result.hpsi_cols += second.hpsi_cols;
-    return result;
-}
-
-template <typename T, typename Device>
 std::unique_ptr<ExpAction<T, Device>> make_exp_action(const ExpOpts& exp_opts, const diag_comm_info& comm)
 {
     if (exp_opts.method == ExpMethod::taylor)

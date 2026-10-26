@@ -1,5 +1,6 @@
 #include "source_hsolver/module_rt_pw/kernels/linear_op.h"
 
+#include <algorithm>
 #include <complex>
 #include <cstdint>
 #ifdef _OPENMP
@@ -287,6 +288,61 @@ void linear_op<T, Device>::native_dots(int ld, int dim, int nvec, int count, int
                 sum += std::conj(basis[basis_offset + i]) * x[band_offset + i];
             }
             out[j * nvec + band] = sum;
+        }
+    }
+}
+
+template <typename T, typename Device>
+void linear_op<T, Device>::combine(int ld, int dim, int nvec, int count, int stride, const T* basis, const T* coefficients, T* output) const
+{
+#pragma omp parallel for schedule(static) if (parallel_work(dim, nvec))
+    for (int b = 0; b < nvec; ++b)
+    {
+        for (int i = 0; i < dim; ++i)
+        {
+            const std::int64_t offset = static_cast<std::int64_t>(b) * ld + i;
+            T sum(0);
+            for (int j = 0; j < count; ++j)
+            {
+                sum += basis[static_cast<std::int64_t>(j) * stride + offset] * coefficients[j * nvec + b];
+            }
+            output[offset] += sum;
+        }
+    }
+}
+
+template <typename T, typename Device>
+void linear_op<T, Device>::scatter(int ld, int dim, int nvec, const T* input, T* output, const int* map) const
+{
+#pragma omp parallel for schedule(static) if (parallel_work(dim, nvec))
+    for (int b = 0; b < nvec; ++b)
+    {
+        const std::int64_t source = static_cast<std::int64_t>(b) * ld;
+        const std::int64_t destination = static_cast<std::int64_t>(map[b]) * ld;
+        std::copy_n(input + source, dim, output + destination);
+    }
+}
+
+template <typename T, typename Device>
+void linear_op<T, Device>::block_gram(int ld, int dim, int nvec, int count, int stride, const T* basis, std::complex<double>* output) const
+{
+#pragma omp parallel for collapse(2) schedule(static) if (parallel_work(dim, nvec * count))
+    for (int col = 0; col < count; ++col)
+    {
+        for (int b = 0; b < nvec; ++b)
+        {
+            for (int row = 0; row <= col; ++row)
+            {
+                const std::int64_t first = static_cast<std::int64_t>(row) * stride + static_cast<std::int64_t>(b) * ld;
+                const std::int64_t second = static_cast<std::int64_t>(col) * stride + static_cast<std::int64_t>(b) * ld;
+                std::complex<double> sum(0);
+                for (int i = 0; i < dim; ++i)
+                {
+                    sum += std::conj(std::complex<double>(basis[first + i])) * std::complex<double>(basis[second + i]);
+                }
+                output[(col * count + row) * nvec + b] = sum;
+                output[(row * count + col) * nvec + b] = std::conj(sum);
+            }
         }
     }
 }

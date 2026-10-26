@@ -13,6 +13,12 @@ template <typename T, typename Device>
 class linear_op
 {
   public:
+    /** @brief Add per-band linear combinations of Krylov columns; coefficients are column-major blocks. */
+    void combine(int ld, int dim, int nvec, int count, int stride, const T* basis, const T* coefficients, T* output) const;
+    /** @brief Scatter packed columns to distinct original-band destinations. */
+    void scatter(int ld, int dim, int nvec, const T* input, T* output, const int* map) const;
+    /** @brief Per-band Krylov Gram matrices in double precision, indexed as (column * count + row) * nvec + band. */
+    void block_gram(int ld, int dim, int nvec, int count, int stride, const T* basis, std::complex<double>* output) const;
     /** @brief Skip zero-coefficient columns; a null residual disables the paired residual update. */
     void gmres_update(int ld, int dim, int nvec, T* solution, T* residual, const T* direction, const T* image, const T* coefficients) const;
     /** @brief Batched products accumulated in wavefunction precision. */
@@ -45,6 +51,12 @@ template <typename T>
 class linear_op<T, base_device::DEVICE_GPU>
 {
   public:
+    /** @brief Add per-band linear combinations of Krylov columns; coefficients are column-major blocks. */
+    void combine(int ld, int dim, int nvec, int count, int stride, const T* basis, const T* coefficients, T* output) const;
+    /** @brief Scatter packed columns to distinct original-band destinations. */
+    void scatter(int ld, int dim, int nvec, const T* input, T* output, const int* map) const;
+    /** @brief Per-band Krylov Gram matrices in double precision, indexed as (column * count + row) * nvec + band. */
+    void block_gram(int ld, int dim, int nvec, int count, int stride, const T* basis, std::complex<double>* output) const;
     /** @brief Skip zero-coefficient columns; a null residual disables the paired residual update. */
     void gmres_update(int ld, int dim, int nvec, T* solution, T* residual, const T* direction, const T* image, const T* coefficients) const;
     /** @brief Batched products accumulated in wavefunction precision. */

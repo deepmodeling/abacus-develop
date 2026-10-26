@@ -45,7 +45,8 @@ void ETRSPropPW<T, Device>::report(const hsolver::ExpResult& result, const PropA
     std::ostringstream text;
     text << " PW ETRS exponential: step=" << args.elec_step << " scf_iter=" << args.scf_iter
          << " global_k=" << orb_opts_.global_k_indices.at(ik) + 1 << " order_or_dimension=" << result.order_or_dim
-         << " operator_calls=" << result.hpsi_calls << " operator_columns=" << result.hpsi_cols << " subdivisions=" << result.bisect_count;
+         << " operator_calls=" << result.hpsi_calls << " operator_columns=" << result.hpsi_cols << " subdivisions=" << result.bisect_count
+         << " reorthogonalizations=" << result.reorth_count;
     if (result.has_err_est)
     {
         text << " estimated_error=" << result.rel_err_est;

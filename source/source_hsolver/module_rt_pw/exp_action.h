@@ -41,6 +41,7 @@ struct ExpResult
     double rel_err_est = 0.0;
     int order_or_dim = 0;
     int bisect_count = 0;
+    int reorth_count = 0;
     int failed_band = -1;
     long long hpsi_calls = 0;
     long long hpsi_cols = 0;
@@ -64,7 +65,8 @@ class ExpAction
         return exp_opts_.rel_tol;
     }
     virtual ExpResult apply(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* output) = 0;
-    virtual ExpResult apply_pair(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* half, T* full);
+    virtual ExpResult apply_pair(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* half, T* full)
+        = 0;
 };
 
 /** @brief Construct a backend without reading global input parameters. */

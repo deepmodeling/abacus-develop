@@ -407,6 +407,126 @@ void linear_op<T, base_device::DEVICE_GPU>::native_dots(int ld, int dim, int nve
     check_launch();
 }
 
+namespace
+{
+template <typename C>
+__global__ void combine_kernel(int ld, int dim, int count, int stride, int nvec,
+                               const C* basis, const C* coefficients, C* output)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    const int b = blockIdx.y;
+    if (i < dim)
+    {
+        const std::int64_t offset = static_cast<std::int64_t>(b) * ld + i;
+        C sum(0);
+        for (int j = 0; j < count; ++j)
+        {
+            sum += basis[static_cast<std::int64_t>(j) * stride + offset] * coefficients[j * nvec + b];
+        }
+        output[offset] += sum;
+    }
+}
+
+template <typename C>
+__global__ void scatter_kernel(int ld, int dim, const C* input, C* output, const int* map)
+{
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    const int b = blockIdx.y;
+    if (i < dim)
+    {
+        output[static_cast<std::int64_t>(map[b]) * ld + i] = input[static_cast<std::int64_t>(b) * ld + i];
+    }
+}
+
+template <typename Real>
+__global__ void block_gram_kernel(int ld, int dim, int nvec, int count, int stride,
+                                 const thrust::complex<Real>* basis, thrust::complex<double>* output)
+{
+    const int b = blockIdx.x % nvec;
+    const int pair = blockIdx.x / nvec;
+    const int row = pair % count;
+    const int col = pair / count;
+    if (row > col)
+    {
+        return;
+    }
+    const std::int64_t first = static_cast<std::int64_t>(row) * stride + static_cast<std::int64_t>(b) * ld;
+    const std::int64_t second = static_cast<std::int64_t>(col) * stride + static_cast<std::int64_t>(b) * ld;
+    thrust::complex<double> sum(0);
+    for (int i = threadIdx.x; i < dim; i += blockDim.x)
+    {
+        sum += thrust::conj(thrust::complex<double>(basis[first + i])) * thrust::complex<double>(basis[second + i]);
+    }
+    __shared__ double re[linear_threads];
+    __shared__ double im[linear_threads];
+    const int tid = threadIdx.x;
+    re[tid] = sum.real();
+    im[tid] = sum.imag();
+    __syncthreads();
+    for (int step = blockDim.x / 2; step > 0; step /= 2)
+    {
+        if (tid < step)
+        {
+            re[tid] += re[tid + step];
+            im[tid] += im[tid + step];
+        }
+        __syncthreads();
+    }
+    if (tid == 0)
+    {
+        output[(col * count + row) * nvec + b] = thrust::complex<double>(re[0], im[0]);
+        if (row != col)
+        {
+            output[(row * count + col) * nvec + b] = thrust::complex<double>(re[0], -im[0]);
+        }
+    }
+}
+} // namespace
+
+template <typename T>
+void linear_op<T, base_device::DEVICE_GPU>::combine(int ld, int dim, int nvec, int count, int stride,
+                                                   const T* basis, const T* coefficients, T* output) const
+{
+    if (dim == 0 || nvec == 0)
+    {
+        return;
+    }
+    using C = thrust::complex<typename T::value_type>;
+    const dim3 grid((dim + linear_threads - 1) / linear_threads, nvec);
+    combine_kernel<<<grid, linear_threads>>>(ld, dim, count, stride, nvec,
+        reinterpret_cast<const C*>(basis), reinterpret_cast<const C*>(coefficients), reinterpret_cast<C*>(output));
+    check_launch();
+}
+
+template <typename T>
+void linear_op<T, base_device::DEVICE_GPU>::scatter(int ld, int dim, int nvec,
+                                                   const T* input, T* output, const int* map) const
+{
+    if (dim == 0 || nvec == 0)
+    {
+        return;
+    }
+    using C = thrust::complex<typename T::value_type>;
+    const dim3 grid((dim + linear_threads - 1) / linear_threads, nvec);
+    scatter_kernel<<<grid, linear_threads>>>(ld, dim, reinterpret_cast<const C*>(input), reinterpret_cast<C*>(output), map);
+    check_launch();
+}
+
+template <typename T>
+void linear_op<T, base_device::DEVICE_GPU>::block_gram(int ld, int dim, int nvec, int count, int stride,
+                                                      const T* basis, std::complex<double>* output) const
+{
+    if (nvec == 0 || count == 0)
+    {
+        return;
+    }
+    using C = thrust::complex<typename T::value_type>;
+    const int blocks = nvec * count * count;
+    block_gram_kernel<<<blocks, linear_threads>>>(ld, dim, nvec, count, stride, reinterpret_cast<const C*>(basis),
+        reinterpret_cast<thrust::complex<double>*>(output));
+    check_launch();
+}
+
 template class linear_op<std::complex<float>, base_device::DEVICE_GPU>;
 template class linear_op<std::complex<double>, base_device::DEVICE_GPU>;
 

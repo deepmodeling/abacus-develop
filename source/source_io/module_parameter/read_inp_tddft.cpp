@@ -464,7 +464,7 @@ For a nonorthogonal LCAO basis:
         item.category = "Real-Time TDDFT (PW)";
         item.type = "String";
         item.description = R"(Algorithm used to evaluate $\exp(-\mathrm{i}\tau\boldsymbol{H})\boldsymbol{\psi}$ for Enforced time-reversal symmetry (ETRS) propagation with a plane-wave basis. The Hamiltonian $\boldsymbol{H}$ is held fixed over the evolution interval $\tau$. The formulas below use Hartree atomic units.
-* `lanczos`: Lanczos method with full reorthogonalization, $\exp(-\mathrm{i}\tau\boldsymbol{H})\boldsymbol{\psi}\approx\lVert\boldsymbol{\psi}\rVert\boldsymbol{Q}_m\exp(-\mathrm{i}\tau\boldsymbol{H}_m)\boldsymbol{e}_1$, where $\boldsymbol{Q}_m$ contains the orthonormal Krylov basis vectors, $\boldsymbol{H}_m=\boldsymbol{Q}_m^\dagger\boldsymbol{H}\boldsymbol{Q}_m$, and $\boldsymbol{e}_1$ is the first unit vector. The estimated relative error is controlled by `td_exp_thr`, and the maximum Krylov dimension by `td_exp_krylov_dim`.
+* `lanczos`: Adaptive Lanczos approximation with automatic reorthogonalization when needed. The estimated error relative to the input wavefunction norm is controlled by `td_exp_thr`, and the maximum Krylov dimension by `td_exp_krylov_dim`. The half-step and full-step predictor share a Krylov basis. If the error target cannot be met within the maximum dimension, the frozen-Hamiltonian interval is subdivided internally.
 * `taylor`: Fixed-order Taylor approximation, $\exp(-\mathrm{i}\tau\boldsymbol{H})\boldsymbol{\psi}\approx\sum_{k=0}^{p}(-\mathrm{i}\tau\boldsymbol{H})^k\boldsymbol{\psi}/k!$, where the order $p$ is specified by `td_exp_order`.)";
         item.default_value = "lanczos";
         item.unit = "";
