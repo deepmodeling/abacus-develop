@@ -25,6 +25,12 @@ case "$props_result_file" in
         ;;
 esac
 props_init "$props_result_file"
+
+source "$PROPS_SCRIPT_DIR/props_lr.sh"
+if run_lr_tracking_props; then
+    exit 0
+fi
+
 source "$PROPS_SCRIPT_DIR/props_basic.sh"
 source "$PROPS_SCRIPT_DIR/props_mat.sh"
 source "$PROPS_SCRIPT_DIR/props_cube.sh"
@@ -36,6 +42,7 @@ source "$PROPS_SCRIPT_DIR/props_deepks.sh"
 # script so result files stay byte-identical; props_finalize() writes the
 # trailing totaltimeref entry. Add a new category by dropping a
 # props_<cat>.sh next to the others and calling run_<cat>_props here.
+run_lr_force_props
 run_basic_props
 
 #-------------------------------

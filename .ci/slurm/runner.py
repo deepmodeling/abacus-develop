@@ -759,7 +759,7 @@ def _rotate_cache_refs(cache: Path, bucket: str, source_sha: str) -> None:
     month = today.strftime("%Y-%m")
     if bucket == "daily":
         iso = today.isocalendar()
-        week = "{}-W{:02d}".format(iso.year, iso.week)
+        week = "{}-W{:02d}".format(iso[0], iso[1])
         days[today.isoformat()] = source_sha
         weeks.setdefault((month, week), source_sha)
         months.setdefault(month, source_sha)

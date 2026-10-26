@@ -83,10 +83,11 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         }
         // no variable can choose xc, maybe it is necessary
         pot_register_in.push_back("xc");
-        if (input.imp_sol)
+        if (input.imp_sol == 1)
         {
             pot_register_in.push_back("surchem");
         }
+        if (input.imp_sol == 2) { pot_register_in.push_back("sccs"); }
         if (input.assume_isolated == "pcc_0d")
         {
             pot_register_in.push_back("pcc");
@@ -122,7 +123,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         if (pot_register_in.size() > 0)
         {
             // register Potential by gathered operator
-            pot_in->pot_register(pot_register_in);
+            pot_in->pot_register(pot_register_in, input);
             Operator<T, Device>* veff = new Veff<OperatorPW<T, Device>>(isk,
                                                                         pot_in->get_veff_smooth_data<Real>(),
                                                                         pot_in->get_veff_smooth().nr,

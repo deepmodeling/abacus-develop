@@ -1,7 +1,6 @@
 #include "../socket_frame.h"
 
 #include "gtest/gtest.h"
-
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -11,13 +10,13 @@
 namespace
 {
 using SocketFrame::CellValidation;
-using SocketFrame::Matrix9;
-using SocketFrame::VirialConversion;
 using SocketFrame::checked_position_count;
 using SocketFrame::make_ipi_virial;
+using SocketFrame::Matrix9;
 using SocketFrame::transpose_matrix9;
 using SocketFrame::validate_ipi_cell;
 using SocketFrame::validate_positions;
+using SocketFrame::VirialConversion;
 
 const double EPSILON = std::numeric_limits<double>::epsilon();
 
@@ -54,9 +53,7 @@ TEST(SocketFrameTest, VirialUsesPositiveHalfVolumeAndWireTranspose)
 TEST(SocketFrameTest, RightHandedTriclinicCellReturnsKnownInverse)
 {
     const Matrix9 cell = {{2.0, 1.0, 0.0, 0.0, 3.0, 1.0, 0.0, 0.0, 4.0}};
-    const Matrix9 inverse = {{0.5, -1.0 / 6.0, 1.0 / 24.0,
-                              0.0, 1.0 / 3.0, -1.0 / 12.0,
-                              0.0, 0.0, 0.25}};
+    const Matrix9 inverse = {{0.5, -1.0 / 6.0, 1.0 / 24.0, 0.0, 1.0 / 3.0, -1.0 / 12.0, 0.0, 0.0, 0.25}};
 
     const CellValidation out = validate_with_driver_thresholds(cell, inverse);
 
@@ -72,41 +69,46 @@ TEST(SocketFrameTest, AseTriclinicInverseWireLayoutIsAcceptedAndRecomputedFromCe
     // and sends pinv(A) * Bohr as the inverse field. For this nonsingular
     // cell that received field is inv(H)^T, not inv(H).
     const double bohr_angstrom = 0.5291772105638411;
-    const Matrix9 cell_wire = {{5.0 / bohr_angstrom, 0.5 / bohr_angstrom, 0.25 / bohr_angstrom,
-                                0.0, 4.0 / bohr_angstrom, 0.75 / bohr_angstrom,
-                                0.0, 0.0, 3.0 / bohr_angstrom}};
-    const Matrix9 ase_inverse_wire = {{bohr_angstrom / 5.0, 0.0, 0.0,
-                                       -bohr_angstrom / 40.0, bohr_angstrom / 4.0, 0.0,
-                                       -bohr_angstrom / 96.0, -bohr_angstrom / 16.0,
+    const Matrix9 cell_wire = {{5.0 / bohr_angstrom,
+                                0.5 / bohr_angstrom,
+                                0.25 / bohr_angstrom,
+                                0.0,
+                                4.0 / bohr_angstrom,
+                                0.75 / bohr_angstrom,
+                                0.0,
+                                0.0,
+                                3.0 / bohr_angstrom}};
+    const Matrix9 ase_inverse_wire = {{bohr_angstrom / 5.0,
+                                       0.0,
+                                       0.0,
+                                       -bohr_angstrom / 40.0,
+                                       bohr_angstrom / 4.0,
+                                       0.0,
+                                       -bohr_angstrom / 96.0,
+                                       -bohr_angstrom / 16.0,
                                        bohr_angstrom / 3.0}};
     const Matrix9 inverse_computed_from_cell = {{bohr_angstrom / 5.0,
-                                                  -bohr_angstrom / 40.0,
-                                                  -bohr_angstrom / 96.0,
-                                                  0.0,
-                                                  bohr_angstrom / 4.0,
-                                                  -bohr_angstrom / 16.0,
-                                                  0.0,
-                                                  0.0,
-                                                  bohr_angstrom / 3.0}};
+                                                 -bohr_angstrom / 40.0,
+                                                 -bohr_angstrom / 96.0,
+                                                 0.0,
+                                                 bohr_angstrom / 4.0,
+                                                 -bohr_angstrom / 16.0,
+                                                 0.0,
+                                                 0.0,
+                                                 bohr_angstrom / 3.0}};
 
     const CellValidation out = validate_with_driver_thresholds(cell_wire, ase_inverse_wire);
 
     ASSERT_TRUE(out.ok) << out.message;
     EXPECT_NEAR(0.0, out.inverse_residual, 16.0 * EPSILON);
-    expect_matrix_near(inverse_computed_from_cell,
-                       out.computed_inverse_wire_bohr_inv,
-                       16.0 * EPSILON);
+    expect_matrix_near(inverse_computed_from_cell, out.computed_inverse_wire_bohr_inv, 16.0 * EPSILON);
 }
 
 TEST(SocketFrameTest, RotatedDiagonalTracksRightSingularVectorsAndInverseOrder)
 {
     // Hand-multiplied U diag(5, 2, 0.5) V^T, with rational plane rotations.
-    const Matrix9 cell = {{4.0, -0.72, -0.96,
-                           3.0, 0.96, 1.28,
-                           0.0, -0.4, 0.3}};
-    const Matrix9 inverse = {{0.16, 0.12, 0.0,
-                              -0.18, 0.24, -1.6,
-                              -0.24, 0.32, 1.2}};
+    const Matrix9 cell = {{4.0, -0.72, -0.96, 3.0, 0.96, 1.28, 0.0, -0.4, 0.3}};
+    const Matrix9 inverse = {{0.16, 0.12, 0.0, -0.18, 0.24, -1.6, -0.24, 0.32, 1.2}};
 
     const CellValidation out = validate_with_driver_thresholds(cell, inverse);
 
@@ -121,9 +123,7 @@ TEST(SocketFrameTest, InconsistentReceivedInverseIsRejected)
     const Matrix9 cell = {{2.0, 1.0, 0.0, 0.0, 3.0, 1.0, 0.0, 0.0, 4.0}};
     // This is neither inv(cell) nor inv(cell)^T, so both supported wire
     // layouts must reject it.
-    const Matrix9 wrong_inverse = {{0.6, -1.0 / 6.0, 1.0 / 24.0,
-                                     0.0, 1.0 / 3.0, -1.0 / 12.0,
-                                     0.0, 0.0, 0.25}};
+    const Matrix9 wrong_inverse = {{0.6, -1.0 / 6.0, 1.0 / 24.0, 0.0, 1.0 / 3.0, -1.0 / 12.0, 0.0, 0.0, 0.25}};
 
     const CellValidation out = validate_with_driver_thresholds(cell, wrong_inverse);
 
@@ -134,19 +134,13 @@ TEST(SocketFrameTest, InconsistentReceivedInverseIsRejected)
 
 TEST(SocketFrameTest, ReceivedInverseResidualUsesConditionScaledRelativeTolerance)
 {
-    const Matrix9 cell = {{1.0, 0.0, 0.0,
-                           0.0, 1.0, 0.0,
-                           0.0, 0.0, 1.0e-6}};
-    Matrix9 accepted_inverse = {{1.0 + 1.0e-8, 0.0, 0.0,
-                                 0.0, 1.0, 0.0,
-                                 0.0, 0.0, 1.0e6}};
+    const Matrix9 cell = {{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0e-6}};
+    Matrix9 accepted_inverse = {{1.0 + 1.0e-8, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0e6}};
     Matrix9 rejected_inverse = accepted_inverse;
     rejected_inverse[0] = 1.0 + 2.0e-8;
 
-    const CellValidation accepted
-        = validate_ipi_cell(cell, accepted_inverse, 1.0e12, 0.0, 64.0);
-    const CellValidation rejected
-        = validate_ipi_cell(cell, rejected_inverse, 1.0e12, 0.0, 64.0);
+    const CellValidation accepted = validate_ipi_cell(cell, accepted_inverse, 1.0e12, 0.0, 64.0);
+    const CellValidation rejected = validate_ipi_cell(cell, rejected_inverse, 1.0e12, 0.0, 64.0);
 
     ASSERT_TRUE(accepted.ok) << accepted.message;
     EXPECT_DOUBLE_EQ(1.0e6, accepted.condition_number_2);
@@ -168,12 +162,8 @@ TEST(SocketFrameTest, NegativeAndZeroDeterminantsAreRejected)
 
 TEST(SocketFrameTest, NonrepresentablePositiveCellVolumeIsRejected)
 {
-    const Matrix9 huge_cell = {{1.0e200, 0.0, 0.0,
-                                0.0, 1.0e200, 0.0,
-                                0.0, 0.0, 1.0e200}};
-    const Matrix9 tiny_inverse = {{1.0e-200, 0.0, 0.0,
-                                   0.0, 1.0e-200, 0.0,
-                                   0.0, 0.0, 1.0e-200}};
+    const Matrix9 huge_cell = {{1.0e200, 0.0, 0.0, 0.0, 1.0e200, 0.0, 0.0, 0.0, 1.0e200}};
+    const Matrix9 tiny_inverse = {{1.0e-200, 0.0, 0.0, 0.0, 1.0e-200, 0.0, 0.0, 0.0, 1.0e-200}};
 
     const CellValidation out = validate_with_driver_thresholds(huge_cell, tiny_inverse);
 
@@ -183,12 +173,8 @@ TEST(SocketFrameTest, NonrepresentablePositiveCellVolumeIsRejected)
 
 TEST(SocketFrameTest, UnderflowedCellVolumeIsRejectedAsZeroDeterminant)
 {
-    const Matrix9 tiny_cell = {{1.0e-200, 0.0, 0.0,
-                                0.0, 1.0e-200, 0.0,
-                                0.0, 0.0, 1.0e-200}};
-    const Matrix9 huge_inverse = {{1.0e200, 0.0, 0.0,
-                                   0.0, 1.0e200, 0.0,
-                                   0.0, 0.0, 1.0e200}};
+    const Matrix9 tiny_cell = {{1.0e-200, 0.0, 0.0, 0.0, 1.0e-200, 0.0, 0.0, 0.0, 1.0e-200}};
+    const Matrix9 huge_inverse = {{1.0e200, 0.0, 0.0, 0.0, 1.0e200, 0.0, 0.0, 0.0, 1.0e200}};
 
     const CellValidation out = validate_with_driver_thresholds(tiny_cell, huge_inverse);
 
@@ -257,10 +243,7 @@ TEST(SocketFrameTest, PositionCountRejectsMismatchBeforeDerivingAllocationSize)
     std::size_t coordinate_count = 123;
     std::string message;
 
-    EXPECT_FALSE(checked_position_count(std::numeric_limits<std::int32_t>::max(),
-                                        1,
-                                        coordinate_count,
-                                        message));
+    EXPECT_FALSE(checked_position_count(std::numeric_limits<std::int32_t>::max(), 1, coordinate_count, message));
     EXPECT_EQ(123u, coordinate_count);
     EXPECT_NE(std::string::npos, message.find("match"));
 }
@@ -289,12 +272,8 @@ TEST(SocketFrameTest, PositionsRequireExactSizeAndFiniteCoordinates)
 
 TEST(SocketFrameTest, SmallStressAsymmetryIsAveragedBeforeConversion)
 {
-    const Matrix9 stress = {{1.0, 2.1, 3.2,
-                             1.9, 5.0, 6.3,
-                             2.8, 5.7, 9.0}};
-    const Matrix9 expected = {{1.0, 2.0, 3.0,
-                               2.0, 5.0, 6.0,
-                               3.0, 6.0, 9.0}};
+    const Matrix9 stress = {{1.0, 2.1, 3.2, 1.9, 5.0, 6.3, 2.8, 5.7, 9.0}};
+    const Matrix9 expected = {{1.0, 2.0, 3.0, 2.0, 5.0, 6.0, 3.0, 6.0, 9.0}};
 
     const VirialConversion out = make_ipi_virial(stress, 2.0, 0.61, 0.0);
 
@@ -305,9 +284,7 @@ TEST(SocketFrameTest, SmallStressAsymmetryIsAveragedBeforeConversion)
 
 TEST(SocketFrameTest, ExcessiveStressAsymmetryIsRejected)
 {
-    const Matrix9 stress = {{1.0, 2.1, 3.2,
-                             1.9, 5.0, 6.3,
-                             2.8, 5.7, 9.0}};
+    const Matrix9 stress = {{1.0, 2.1, 3.2, 1.9, 5.0, 6.3, 2.8, 5.7, 9.0}};
 
     const VirialConversion out = make_ipi_virial(stress, 2.0, 0.59, 0.0);
 
@@ -318,20 +295,14 @@ TEST(SocketFrameTest, ExcessiveStressAsymmetryIsRejected)
 
 TEST(SocketFrameTest, StressAsymmetryUsesAbsolutePlusRelativeTolerance)
 {
-    const Matrix9 accepted_stress = {{10.0, 2.0 + 4.0e-8, 3.0,
-                                      2.0 - 4.0e-8, 5.0, 6.0,
-                                      3.0, 6.0, 9.0}};
+    const Matrix9 accepted_stress = {{10.0, 2.0 + 4.0e-8, 3.0, 2.0 - 4.0e-8, 5.0, 6.0, 3.0, 6.0, 9.0}};
     Matrix9 rejected_stress = accepted_stress;
     rejected_stress[1] = 2.0 + 6.0e-8;
     rejected_stress[3] = 2.0 - 6.0e-8;
-    const Matrix9 expected = {{10.0, 2.0, 3.0,
-                               2.0, 5.0, 6.0,
-                               3.0, 6.0, 9.0}};
+    const Matrix9 expected = {{10.0, 2.0, 3.0, 2.0, 5.0, 6.0, 3.0, 6.0, 9.0}};
 
-    const VirialConversion accepted
-        = make_ipi_virial(accepted_stress, 2.0, 1.0e-10, 1.0e-8);
-    const VirialConversion rejected
-        = make_ipi_virial(rejected_stress, 2.0, 1.0e-10, 1.0e-8);
+    const VirialConversion accepted = make_ipi_virial(accepted_stress, 2.0, 1.0e-10, 1.0e-8);
+    const VirialConversion rejected = make_ipi_virial(rejected_stress, 2.0, 1.0e-10, 1.0e-8);
 
     ASSERT_TRUE(accepted.ok) << accepted.message;
     expect_matrix_near(expected, accepted.wire_virial_hartree, 4.0 * EPSILON);
@@ -347,19 +318,13 @@ TEST(SocketFrameTest, NonpositiveOrNonfiniteVolumeIsRejected)
 
     EXPECT_FALSE(make_ipi_virial(zero_stress, 0.0, 1.0e-10, 1.0e-8).ok);
     EXPECT_FALSE(make_ipi_virial(zero_stress, -1.0, 1.0e-10, 1.0e-8).ok);
-    EXPECT_FALSE(make_ipi_virial(zero_stress,
-                                 std::numeric_limits<double>::infinity(),
-                                 1.0e-10,
-                                 1.0e-8)
-                     .ok);
+    EXPECT_FALSE(make_ipi_virial(zero_stress, std::numeric_limits<double>::infinity(), 1.0e-10, 1.0e-8).ok);
 }
 
 TEST(SocketFrameTest, FiniteStressAndVolumeRejectConvertedVirialOverflow)
 {
     const double largest_finite = std::numeric_limits<double>::max();
-    const Matrix9 stress = {{largest_finite, 0.0, 0.0,
-                             0.0, 1.0, 0.0,
-                             0.0, 0.0, 1.0}};
+    const Matrix9 stress = {{largest_finite, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
 
     const VirialConversion out = make_ipi_virial(stress, 4.0, 1.0e-10, 1.0e-8);
 

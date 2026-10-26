@@ -7,7 +7,7 @@
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_lcao/module_rt/velocity_op.h"
-#include "source_lcao/module_lr/utils/spectrum_mo.hpp"
+#include "source_lcao/module_lr/utils/spectrum_mo.h"
 
 namespace LR
 {
@@ -75,7 +75,7 @@ namespace LR
         double cal_mean_squared_dipole(ModuleBase::Vector3<T> dipole);
         /// calculate the transition density matrix
         module_dm::DensityMatrix<T, T> cal_transition_density_matrix(const int istate, const T* X_in = nullptr, const bool need_R = true);
-        
+
         const int my_rank;
         const int nspin_x = 1;   ///< 1 for singlet/triplet, 2 for updown(openshell)
         const int naos = 1;

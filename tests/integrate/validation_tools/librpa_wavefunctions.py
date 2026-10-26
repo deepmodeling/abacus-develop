@@ -29,17 +29,22 @@ def read_ks_wfc(path):
     return (nk, nspin, nbands, nbasis), records
 
 
-def check_ks_nao(path, nao_dir, tolerance):
+def check_ks_nao(path, nao_dir, tolerance, spinor=False):
     """Compare the MPI-IO assembly to the independent same-run text writer."""
     (nk, nspin, nbands, nbasis), records = read_ks_wfc(path)
+    if spinor and (nspin != 1 or nbasis % 2):
+        raise ValueError("{} has invalid spinor dimensions".format(path))
     for ik, record in enumerate(records, 1):
         for spin in range(1, nspin + 1):
-            name = "wfk{}_nao.txt".format(ik) if nspin == 1 else "wfk{}s{}_nao.txt".format(ik, spin)
+            if spinor:
+                name = "wfk{}s4_nao.txt".format(ik)
+            else:
+                name = "wfk{}_nao.txt".format(ik) if nspin == 1 else "wfk{}s{}_nao.txt".format(ik, spin)
             source = nao_dir / name
             lines = [line.strip() for line in source.read_text().splitlines() if line.strip()]
             if len(lines) < 4 or "(index of k points)" not in lines[0]:
                 raise ValueError("{} has an invalid text KS header".format(source))
-            text_index = ik + (spin - 1) * nk
+            text_index = ik if spinor else ik + (spin - 1) * nk
             if (int(lines[0].split()[0]), int(lines[2].split()[0]), int(lines[3].split()[0])) != (text_index, nbands, nbasis):
                 raise ValueError("{} dimensions disagree with {}".format(path, source))
             bands = [i for i, line in enumerate(lines) if line.endswith("(band)")]
@@ -51,8 +56,20 @@ def check_ks_nao(path, nao_dir, tolerance):
                 if len(tokens) != 2 * nbasis:
                     raise ValueError("{} has the wrong text coefficient count".format(source))
                 values = [complex(tokens[i], tokens[i + 1]) for i in range(0, len(tokens), 2)]
-                offset = ((spin - 1) * nbands + band) * nbasis
-                for actual, expected in zip(record[offset:offset + nbasis], values):
+                if spinor:
+                    spatial_basis = nbasis // 2
+                    component_values = nbands * spatial_basis
+                    offset = band * spatial_basis
+                    actual_values = [
+                        value
+                        for iw in range(spatial_basis)
+                        for value in (record[offset + iw],
+                                      record[component_values + offset + iw])
+                    ]
+                else:
+                    offset = ((spin - 1) * nbands + band) * nbasis
+                    actual_values = record[offset:offset + nbasis]
+                for actual, expected in zip(actual_values, values):
                     if not math.isfinite(expected.real) or not math.isfinite(expected.imag) or abs(actual - expected) > tolerance:
                         raise ValueError("{} KS payload disagrees with {}".format(path, source))
 

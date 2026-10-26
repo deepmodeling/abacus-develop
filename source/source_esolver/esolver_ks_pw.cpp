@@ -1,4 +1,5 @@
 #include "esolver_ks_pw.h"
+#include "source_pw/module_pwdft/pw_hybrid_nscf.h"
 
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/module_charge/chg_symm.h"
@@ -19,6 +20,8 @@
 #include "source_estate/setup_estate_pw.h"            // mohan add 20251005
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type used via general_exx_info_
 #include "source_io/module_ctrl/ctrl_output_pw.h"     // mohan add 20250927
+#include "source_pw/module_pwdft/dftu_base.h"
+#include "source_pw/module_pwdft/dftu_base_io.h"      // append_ion_step_snapshot
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/deltaspin_pw.h"   // mohan add 20250309
 #include "source_pw/module_pwdft/setup_dftu_pw.h"  // mohan add 20250309
@@ -81,6 +84,8 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
 
     ESolver_KS::before_all_runners(ucell, inp);
 
+    pw::validate_hybrid_nscf(inp, this->general_exx_info_);
+
     //! setup and allocation for pelec, potentials, etc.
     elecstate::setup_estate_pw(ucell,
                                this->kv,
@@ -96,6 +101,26 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
                                this->pw_big,
                                this->solvent,
                                inp);
+
+    if (inp.dft_plus_u)
+    {
+        const System_para& sys = PARAM.globalv;
+        this->dftu_->init_base(ucell,
+                               sys.npol,
+                               inp.nspin,
+                               inp.l_channel,
+                               inp.yukawa_potential,
+                               inp.yukawa_lambda,
+                               sys.global_readin_dir,
+                               sys.global_out_dir,
+                               inp.init_chg,
+                               inp.device,
+                               sys.hubbard_u,
+                               sys.uramping,
+                               inp.init_occ_mat,
+                               inp.mixing_dftu,
+                               DFTU_BASE::SOC_LAYOUT_PAULI);
+    }
 
     this->stp.before_runner(ucell, this->kv, this->sf, *this->pw_wfc, this->ppcell.lmaxkb, *this->inp_);
 
@@ -162,9 +187,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     //! Allocate HamiltPW
     this->allocate_hamilt(ucell);
 
-    //! Setup potentials (local, non-local, sc, +U, DFT-1/2)
-    // note: init DFT+U is done here for pw basis for every scf iteration, however,
-    // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
+    //! Setup potentials (local, non-local, spin constraint, DFT-1/2)
     pw::setup_pot(istep,
                   ucell,
                   this->kv,
@@ -174,7 +197,6 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
                   this->chr,
                   this->locpp,
                   this->ppcell,
-                  *this->dftu_,
                   this->vsep_cell,
                   this->stp.template get_psi_t<T, Device>(),
                   this->p_hamilt,
@@ -191,6 +213,14 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     //! Setup EXX helper for Hamiltonian and psi
     exx_helper->before_scf(this->p_hamilt, this->stp.template get_psi_t<T, Device>(), *this->inp_, this->general_exx_info_);
+
+    if (this->inp_->calculation == "nscf" && this->general_exx_info_.cal_exx)
+    {
+        const Input_para& inp = *this->inp_;
+        const std::string& readin_dir = PARAM.globalv.global_readin_dir;
+        auto* helper = static_cast<Exx_Helper<T, Device>*>(this->exx_helper);
+        pw::prepare_exx_nscf<T, Device>(inp, ucell, this->pw_wfc, *helper->op_exx, readin_dir);
+    }
 
     ModuleBase::timer::end("ESolver_KS_PW", "before_scf");
 }
@@ -221,6 +251,11 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
+    const DFTU_BASE::OccmatOutputCfg init_occmat_cfg{this->inp_->out_freq_ion,
+                                                     this->inp_->out_freq_elec,
+                                                     this->inp_->scf_nmax,
+                                                     this->inp_->out_occ_mat,
+                                                     this->inp_->dft_plus_u};
     DFTU_BASE::iter_init_dftu_pw(iter,
                                  istep,
                                  *this->dftu_,
@@ -228,7 +263,11 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
                                  this->pelec->wg,
                                  ucell,
                                  this->p_chgmix,
-                                 this->kv.isk.data());
+                                 PARAM.globalv.global_out_dir,
+                                 init_occmat_cfg,
+                                 this->kv.isk.data(),
+                                 this->inp_->nspin,
+                                 this->inp_->kpar);
 
     // mohan add 2025-11: push DFT+U energy from Plus_U instance to ElecState
     if (this->inp_->dft_plus_u)
@@ -304,7 +343,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // Related to EXX
     bool cal_exx = general_exx_info_.cal_exx;
     double hybrid_alpha = general_exx_info_.hybrid_alpha;
-    if (cal_exx && !exx_helper->get_op_first_iter())
+    if (cal_exx && this->inp_->calculation != "nscf" && !exx_helper->get_op_first_iter())
     {
         this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()), cal_exx, hybrid_alpha);
     }
@@ -324,11 +363,71 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
         this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
     }
 
-    // Handle EXX-related operations after SCF iteration
-    exx_helper->iter_finish(this->pelec, &this->chr, this->stp.template get_psi_t<T, Device>(), ucell, *this->inp_, conv_esolver, iter);
+    // Handle EXX-related operations after SCF iteration.
+    // EXX may override conv_esolver (true -> false) to request an SCF rerun
+    // after updating the exact-exchange operator. Capture the SCF-converged
+    // state before the call so we can detect that case and signal
+    // ESolver_KS::runner via scf_rerun_ to restart the SCF loop at iter=1.
+    // This replaces the historical iter=0 restart-signal trick (EXX wrote 0
+    // into the iter reference), which crashed DFT+U occupation-matrix writers
+    // validating iter>=1 and broke the 1-based iteration invariant.
+    const bool scf_converged = conv_esolver;
+    exx_helper->iter_finish(this->pelec,
+                            &this->chr,
+                            this->stp.template get_psi_t<T, Device>(),
+                            ucell,
+                            *this->inp_,
+                            conv_esolver,
+                            iter);
+    if (scf_converged && !conv_esolver)
+    {
+        this->scf_rerun_ = true;
+    }
 
     // check if oscillate for delta_spin method
     pw::check_deltaspin_oscillation(iter, this->drho, this->p_chgmix, *this->inp_);
+
+    // overwrite occ_mat.txt with the latest occupation matrix and the
+    // actual charge-density residual of this electronic step. At the very
+    // first step (istep 0, iter 1) the PW occupation matrix does not exist
+    // yet (iter_init_dftu_pw returns before calculating it), so skip it and
+    // keep the previous behavior where occ_mat.txt first appears at iter 2.
+    const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion,
+                                                this->inp_->out_freq_elec,
+                                                this->inp_->scf_nmax,
+                                                this->inp_->out_occ_mat,
+                                                this->inp_->dft_plus_u};
+    const DFTU_BASE::OccmatStepInfo occmat_step{istep,
+                                                iter,
+                                                this->scf_thr,
+                                                this->drho};
+    // Read globalv values once into locals so the repeated DFT+U call sites
+    // below do not each re-enter the global dependency surface.
+    const std::string& global_out_dir = PARAM.globalv.global_out_dir;
+    const bool latest_ready = (iter > 1 || istep > 0);
+    if (latest_ready)
+    {
+        DFTU_BASE::write_latest_occmat(*this->dftu_,
+                                      ucell,
+                                      global_out_dir,
+                                      occmat_step,
+                                      occmat_cfg,
+                                      DFTU_BASE::SOC_LAYOUT_PAULI);
+    }
+
+    // append the current electronic-step section to occ_matg{#}.txt
+    // At istep 0 / iter 1 the PW occupation matrix does not exist yet,
+    // unless it was loaded from dm_onsite_ini.txt or a previous
+    // occ_mat.txt; snapshot an "N/A" placeholder in that case.
+    const bool occmat_ready = latest_ready || this->dftu_->is_occmat_ready();
+    DFTU_BASE::append_ion_step_snapshot(*this->dftu_,
+                                        ucell,
+                                        global_out_dir,
+                                        occmat_step,
+                                        conv_esolver,
+                                        occmat_ready,
+                                        occmat_cfg,
+                                        DFTU_BASE::SOC_LAYOUT_PAULI);
 
     // the output quantities
     ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp, this->kv, this->pw_wfc, *this->inp_, GlobalV::ofs_running);

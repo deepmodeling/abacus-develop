@@ -1,11 +1,12 @@
 #ifndef LAT_CHANGE_METHOD_H
 #define LAT_CHANGE_METHOD_H
 
-#include "relax_criteria.h"
-#include <fstream>
-#include <vector>
 #include "lattice_change_basic.h"
 #include "lattice_change_cg.h"
+#include "relax_criteria.h"
+
+#include <fstream>
+#include <vector>
 
 class Lattice_Change_Methods
 {
@@ -16,11 +17,11 @@ class Lattice_Change_Methods
 
     void allocate(void);
 
-    void cal_lattice_change(const int &istep,
-                            const int &stress_step,
-                            const ModuleBase::matrix &stress,
-                            const double &etot,
-                            UnitCell &ucell,
+    void cal_lattice_change(const int& istep,
+                            const int& stress_step,
+                            const ModuleBase::matrix& stress,
+                            const double& etot,
+                            UnitCell& ucell,
                             std::ofstream& ofs,
                             const Relax_Criteria& criteria);
 

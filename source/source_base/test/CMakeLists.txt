@@ -1,5 +1,6 @@
 abacus_disable_feature_definitions(__MPI)
-install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(data)
+
 AddTest(
   TARGET MODULE_BASE_additional_coverage
   LIBS parameter base device container
@@ -219,12 +220,6 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_BASE_projgen
-  SOURCES projgen_test.cpp
-  LIBS parameter base device
-)
-
-AddTest(
   TARGET MODULE_BASE_clebsch_gordan_coeff_test
   SOURCES cg_coeff_test.cpp
   LIBS parameter  base device
@@ -253,7 +248,7 @@ AddTest(
   SOURCES test_lebedev_laikov.cpp ../ylm.cpp ../math_lebedev_laikov.cpp
 )
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(support)
 
 AddTest(
   TARGET MODULE_BASE_binstream

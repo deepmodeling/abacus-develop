@@ -9,7 +9,7 @@
 #include "source_pw/module_proj/onsite_proj.h"
 #include "source_pw/module_proj/onsite_proj_print.h"
 #include "source_pw/module_proj/radial_proj.h"
-#include "source_base/projgen.h"
+#include "source_basis/module_nao/smoothgen.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/tool_quit.h"
 #include "source_base/timer.h"

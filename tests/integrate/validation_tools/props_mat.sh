@@ -83,10 +83,14 @@ if ! test -z "$toW90"  && [  $toW90 == 1 ]; then
 	mmncal=OUT.autotest/diamond.mmn
 	eigref=diamond.eig
 	eigcal=OUT.autotest/diamond.eig
-	sed -i '1d' "$amncal"
-	sed -i '1d' "$mmncal"
-	record_compare_result "$props_result_file" "CompareAMN_pass" "$amnref" "$amncal" 1 8
-	record_compare_result "$props_result_file" "CompareMMN_pass" "$mmnref" "$mmncal" 1 8
+	# AMN is covariant under the band gauge (A -> U^dagger A), so compare
+	# the gauge-invariant Gram matrix A^dagger A instead of the raw elements.
+	run_and_record_status "$props_result_file" "CompareAMN_pass" \
+		python3 "$COMPARE_AMN_SCRIPT" "$amnref" "$amncal"
+	# MMN is covariant as M(k,b) -> U_k^dagger M(k,b) U_{k+b}; CPU and GPU
+	# differ by per-band phases, under which |M_mn| is invariant.
+	run_and_record_status "$props_result_file" "CompareMMN_pass" \
+		python3 "$COMPARE_MMN_SCRIPT" "$mmnref" "$mmncal"
 	record_compare_result "$props_result_file" "CompareEIG_pass" "$eigref" "$eigcal" 8
 fi
 

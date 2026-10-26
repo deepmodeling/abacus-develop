@@ -1,9 +1,44 @@
 #include "occupy.h"
 
+#include <limits>
+#include <sstream>
+
 #include "source_base/constants.h"
 #include "source_base/mymath.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
+
+namespace
+{
+// A chemical potential with an explicit energy origin. Occupations must use
+// both parts; the absolute double is only the rounded public/output value.
+struct FermiLevel
+{
+    double reference;
+    double offset;
+};
+
+FermiLevel find_fermi_level(const ModuleBase::matrix& ekb,
+                           const int nband,
+                           const int nks,
+                           const double& nelec,
+                           const std::vector<double>& wk,
+                           const double& smearing_sigma,
+                           const int ngauss,
+                           const int& is,
+                           const std::vector<int>& isk);
+
+double sum_occupations(const ModuleBase::matrix& ekb,
+                       const int nband,
+                       const int nks,
+                       const std::vector<double>& wk,
+                       const double& smearing_sigma,
+                       const int ngauss,
+                       const double reference,
+                       const double offset,
+                       const int& is,
+                       const std::vector<int>& isk);
+} // namespace
 
 Occupy::Occupy()
 {
@@ -201,7 +236,7 @@ void Occupy::iweights(
  * @param smearing_sigma parameter input by user.
  * @param ngauss which type of smearing.
  * @param ekb band energy.
- * @param ef output: fermi level
+ * @param ef output: rounded absolute Fermi level
  * @param demet output: energy correction for metal
  * @param wg output: weight of each band at each k point
  * @param is spin
@@ -224,8 +259,9 @@ void Occupy::gweights(const int nks,
     //===============================
     //  Calculate the Fermi energy ef
     //===============================
-    //  call efermig
-    occupy_smearing::efermig(ekb, nband, nks, nelec, wk, smearing_sigma, ngauss, ef, is, isk);
+    // Keep the centered solution when constructing the occupations.
+    const FermiLevel level = find_fermi_level(ekb, nband, nks, nelec, wk, smearing_sigma, ngauss, is, isk);
+    ef = level.reference + level.offset;
     demet = 0.0;
 
     for (int ik = 0; ik < nks; ik++)
@@ -235,13 +271,15 @@ void Occupy::gweights(const int nks,
             continue;
 }
 
-        for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
+        for (int ib = 0; ib < nband; ib++)
         {
             //================================
             // Calculate the gaussian weights
             //================================
             // call wgauss
-            wg(ik, ib) = wk[ik] * occupy_smearing::wgauss((ef - ekb(ik, ib)) / smearing_sigma, ngauss);
+            const double relative_energy = ekb(ik, ib) - level.reference;
+            const double argument = (level.offset - relative_energy) / smearing_sigma;
+            wg(ik, ib) = wk[ik] * occupy_smearing::wgauss(argument, ngauss);
 
             //====================================================================
             // The correct form of the band energy is  \int e n(e) de   for e<ef
@@ -249,7 +287,7 @@ void Occupy::gweights(const int nks,
             //====================================================================
             // Mohan fix bug 2010-1-9
             // call w1gauss
-            demet += wk[ik] * smearing_sigma * occupy_smearing::w1gauss((ef - ekb(ik, ib)) / smearing_sigma, ngauss);
+            demet += wk[ik] * smearing_sigma * occupy_smearing::w1gauss(argument, ngauss);
         }
     }
 
@@ -257,7 +295,7 @@ void Occupy::gweights(const int nks,
 } // end subroutine gweights
 
 /**
- * @brief Finds the Fermi energy
+ * @brief Finds the Fermi energy in a centered coordinate
  *
  * @param ekb band energy.
  * @param nband number of bands.
@@ -266,119 +304,183 @@ void Occupy::gweights(const int nks,
  * @param wk wk weight of each k point(symmetry considered).
  * @param smearing_sigma parameter input by user.
  * @param ngauss which type of smearing.
- * @param ef output: fermi level
+ * @return energy reference and converged relative Fermi level
  * @param is spin
  * @param isk array to point out each k belong to which spin
  */
-void occupy_smearing::efermig(const ModuleBase::matrix& ekb,
-                     const int nband,
-                     const int nks,
-                     const double& nelec,
-                     const std::vector<double>& wk,
-                     const double& smearing_sigma,
-                     const int ngauss,
-                     double& ef,
-                     const int& is,
-                     const std::vector<int>& isk)
+namespace
 {
-    // ModuleBase::TITLE("Occupy","efermig");
-    //==================================================================
-    //  Finds the Fermi energy - Gaussian Broadening (Methfessel-Paxton)
-    //==================================================================
-    // find bounds for the Fermi energy. Very safe choice!
+FermiLevel find_fermi_level(const ModuleBase::matrix& ekb,
+                           const int nband,
+                           const int nks,
+                           const double& nelec,
+                           const std::vector<double>& wk,
+                           const double& smearing_sigma,
+                           const int ngauss,
+                           const int& is,
+                           const std::vector<int>& isk)
+{
+    // Resolve particle number to floating-point accuracy, independently of the
+    // outer SCF threshold. The modest 16-epsilon allowance is validated against
+    // independent occupation sums; it is not an all-spectra rounding bound.
+    const double electron_magnitude = std::abs(nelec);
+    const double scale = std::max(1.0, electron_magnitude);
+    const double tolerance = 16.0 * std::numeric_limits<double>::epsilon() * scale;
+    if (!(smearing_sigma > 0.0) || !std::isfinite(smearing_sigma) || !std::isfinite(nelec))
+    {
+        ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Invalid smearing width or electron number");
+    }
+
+    // Empty local partitions contribute neutral extrema to the global bounds.
+    double lower = std::numeric_limits<double>::infinity();
+    double upper = -std::numeric_limits<double>::infinity();
+    for (int ik = 0; ik < nks; ++ik)
+    {
+        if (is != -1 && is != isk[ik])
+        {
+            continue;
+        }
+        for (int ib = 0; ib < nband; ++ib)
+        {
+            const double eigenvalue = ekb(ik, ib);
+            lower = std::min(lower, eigenvalue);
+            upper = std::max(upper, eigenvalue);
+        }
+    }
+#ifdef __MPI
+    Parallel_Reduce::reduce_min(lower);
+    Parallel_Reduce::reduce_max(upper);
+#endif
+    if (!std::isfinite(lower) || !std::isfinite(upper))
+    {
+        ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "No finite eigenvalue bounds");
+    }
+
+    // Keep the energy origin separate from the small chemical-potential offset.
+    // Rounding reference + offset before evaluating occupations can destroy
+    // particle-number accuracy even for a harmless constant shift of all levels.
+    double reference = 0.5 * lower + 0.5 * upper;
+    lower -= reference;
+    upper -= reference;
+    double step = 2.0 * smearing_sigma;
+    lower -= step;
+    upper += step;
+    double low_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, lower, is, isk);
+    double high_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, upper, is, isk);
+    int expansion = 0;
+    while (low_count > nelec + tolerance || high_count < nelec - tolerance)
+    {
+        if (++expansion > 100 || !std::isfinite(step))
+        {
+            ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Cannot bracket the requested electron number");
+        }
+        step *= 2.0;
+        if (low_count > nelec + tolerance)
+        {
+            lower -= step;
+            low_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, lower, is, isk);
+        }
+        if (high_count < nelec - tolerance)
+        {
+            upper += step;
+            high_count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, upper, is, isk);
+        }
+    }
+
+    if (!std::isfinite(low_count) || !std::isfinite(high_count)
+        || !std::isfinite(lower) || !std::isfinite(upper))
+    {
+        ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Non-finite Fermi bracket");
+    }
+
+    // Keep the best evaluated point, including the saturated endpoints. For
+    // empty/full bands or a resolved gap, the chemical potential is not unique.
+    FermiLevel result{reference, lower};
+    double best_error = std::abs(low_count - nelec);
+    const double high_error = std::abs(high_count - nelec);
+    if (high_error < best_error)
+    {
+        result.offset = upper;
+        best_error = high_error;
+    }
+    // Inherited safety cap; exhausting it must not report convergence.
     const int maxiter = 300;
-    const double eps = 1.0e-10;
-
-    /*
-    for(int ik=0; ik<nks; ik++)
+    for (int iteration = 0; iteration < maxiter; ++iteration)
     {
-        for(int i=0; i<nband; i++)
+        if (best_error <= tolerance)
         {
-            std::cout << " ib=" << i << " ekb=" << ekb[ik][i] << std::endl;
+            return result;
         }
-    }
-    */
-
-    // the first 0 stands for the first k point.
-    double elw = ekb(0, 0);
-    double eup = ekb(0, nband - 1);
-
-    for (int ik = 1; ik < nks; ik++) // do ik = 2, nks
-    {
-        elw = std::min(elw, ekb(ik, 0));
-        eup = std::max(eup, ekb(ik, nband - 1));
-    }
-
-    eup += 2 * smearing_sigma;
-    elw -= 2 * smearing_sigma;
-    // find min and max across pools
-    #ifdef __MPI
-    Parallel_Reduce::reduce_max(eup);
-    Parallel_Reduce::reduce_min(elw);
-    #endif
-    //=================
-    // Bisection method
-    //=================
-    // call sumkg
-    int changetime = 0;
-    while (true)
-    {
-        const double sumkup = occupy_smearing::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, eup, is, isk);
-        const double sumklw = occupy_smearing::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, elw, is, isk);
-
-        if (changetime > 1000)
+        // Follow the shrinking bracket: a fixed spectral midpoint can be far
+        // from the Fermi surface when there are high unoccupied bands. Keep
+        // the small interval in offsets even when the absolute origin rounds.
+        const double trial_offset = 0.5 * lower + 0.5 * upper;
+        const double next_reference = reference + trial_offset;
+        const double shift = next_reference - reference;
+        if (shift != 0.0 && std::isfinite(next_reference))
         {
-            std::cout << " SOMETHING WRONG: " << std::endl;
-            std::cout << " is = " << is << std::endl;
-            std::cout << " eup = " << eup << std::endl;
-            std::cout << " elw = " << elw << std::endl;
-            std::cout << " nband = " << nband << std::endl;
-            std::cout << " nelec = " << nelec << std::endl;
-            std::cout << " sumkup = " << sumkup << std::endl;
-            std::cout << " sumklw = " << sumklw << std::endl;
-            std::cout << " sumkup - nelec = " << sumkup - nelec << std::endl;
-            std::cout << " sumklw - nelec = " << sumklw - nelec << std::endl;
-            ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "ERROS in SMEARING");
-            // no need to break; quit directly
+            lower -= shift;
+            upper -= shift;
+            reference = next_reference;
         }
-        else if ((sumkup - nelec) < -eps)
+        const double middle = 0.5 * lower + 0.5 * upper;
+        if (middle == lower || middle == upper)
         {
-            eup += 2 * smearing_sigma;
-            ++changetime;
+            // No representable interior point remains. Do not silently spin to
+            // maxiter, nor claim that a small energy interval proves charge accuracy.
+            std::ostringstream message;
+            message.precision(17);
+            message << "Fermi bracket reached floating-point resolution; electron residual = "
+                    << best_error << ", requested tolerance = " << tolerance;
+            const std::string diagnostic = message.str();
+            ModuleBase::WARNING_QUIT("occupy_smearing::efermig", diagnostic);
+            return result;
         }
-        else if ((sumklw - nelec) > eps)
+        const double count = sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, middle, is, isk);
+        if (!std::isfinite(count))
         {
-            elw -= 2 * smearing_sigma;
-            ++changetime;
+            ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Non-finite electron number");
+        }
+        const double error = std::abs(count - nelec);
+        if (error < best_error)
+        {
+            result.reference = reference;
+            result.offset = middle;
+            best_error = error;
+        }
+        if (best_error <= tolerance)
+        {
+            return result;
+        }
+        if (count < nelec)
+        {
+            lower = middle;
         }
         else
         {
-            break;
+            upper = middle;
         }
     }
+    ModuleBase::WARNING_QUIT("occupy_smearing::efermig", "Fermi search exceeded its iteration limit");
+    return result;
+}
 
-    for (int i = 0; i < maxiter; i++)
-    {
-        //======================
-        // change ef value
-        //======================
-        ef = (eup + elw) / 2.0;
-        const double sumkmid = occupy_smearing::sumkg(ekb, nband, nks, wk, smearing_sigma, ngauss, ef, is, isk);
+} // namespace
 
-        if (std::abs(sumkmid - nelec) < eps)
-        {
-            return;
-        }
-        else if ((sumkmid - nelec) < -eps)
-        {
-            elw = ef;
-        }
-        else
-        {
-            eup = ef;
-        }
-    }
-    return;
+void occupy_smearing::efermig(const ModuleBase::matrix& ekb,
+                             const int nband,
+                             const int nks,
+                             const double& nelec,
+                             const std::vector<double>& wk,
+                             const double& smearing_sigma,
+                             const int ngauss,
+                             double& ef,
+                             const int& is,
+                             const std::vector<int>& isk)
+{
+    const FermiLevel level = find_fermi_level(ekb, nband, nks, nelec, wk, smearing_sigma, ngauss, is, isk);
+    // Public output is rounded to an absolute double; gweights retains both parts.
+    ef = level.reference + level.offset;
 }
 
 /**
@@ -390,38 +492,46 @@ void occupy_smearing::efermig(const ModuleBase::matrix& ekb,
  * @param wk weight of each k point(symmetry considered).
  * @param smearing_sigma parameter input by user
  * @param ngauss which type of smearing.
- * @param e a givern energy
+ * @param reference common energy origin
+ * @param offset Fermi level relative to the common origin
  * @param is spin
  * @param isk array to point out each k belong to which spin
  * @return (double) the number of states
  */
-double occupy_smearing::sumkg(const ModuleBase::matrix& ekb,
-                     const int nband,
-                     const int nks,
-                     const std::vector<double>& wk,
-                     const double& smearing_sigma,
-                     const int ngauss,
-                     const double& e,
-                     const int& is,
-                     const std::vector<int>& isk)
+namespace
+{
+double sum_occupations(const ModuleBase::matrix& ekb,
+                       const int nband,
+                       const int nks,
+                       const std::vector<double>& wk,
+                       const double& smearing_sigma,
+                       const int ngauss,
+                       const double reference,
+                       const double offset,
+                       const int& is,
+                       const std::vector<int>& isk)
 {
     // ModuleBase::TITLE("Occupy","sumkg");
     double sum2 = 0.0;
-    for (int ik = 0; ik < nks; ik++)
+    double compensation = 0.0;
+    for (int ik = 0; ik < nks; ++ik)
     {
-        if (is != -1 && is != isk[ik]) {
-            continue;
-}
-
-        double sum1 = 0.0;
-        for (int ib = 0; ib < nband; ib++)
+        if (is != -1 && is != isk[ik])
         {
-            //===========================
-            // call wgauss
-            //===========================
-            sum1 += occupy_smearing::wgauss((e - ekb(ik, ib)) / smearing_sigma, ngauss);
+            continue;
         }
-        sum2 += wk[ik] * sum1;
+        for (int ib = 0; ib < nband; ++ib)
+        {
+            // Sum the same weighted occupations as gweights, compensating the
+            // local accumulation before the existing pool/band reduction.
+            const double relative_energy = ekb(ik, ib) - reference;
+            const double argument = (offset - relative_energy) / smearing_sigma;
+            const double occupation = wk[ik] * occupy_smearing::wgauss(argument, ngauss);
+            const double corrected = occupation - compensation;
+            const double next = sum2 + corrected;
+            compensation = (next - sum2) - corrected;
+            sum2 = next;
+        }
     }
 
     // GlobalV::ofs_running << "\n sum2 before reduce = " << sum2 << std::endl;
@@ -434,6 +544,21 @@ double occupy_smearing::sumkg(const ModuleBase::matrix& ekb,
     // GlobalV::ofs_running << "\n sum2 after reduce = " << sum2 << std::endl;
 
     return sum2;
+}
+} // namespace
+
+double occupy_smearing::sumkg(const ModuleBase::matrix& ekb,
+                             const int nband,
+                             const int nks,
+                             const std::vector<double>& wk,
+                             const double& smearing_sigma,
+                             const int ngauss,
+                             const double& e,
+                             const int& is,
+                             const std::vector<int>& isk)
+{
+    const double reference = 0.0;
+    return sum_occupations(ekb, nband, nks, wk, smearing_sigma, ngauss, reference, e, is, isk);
 }
 
 double occupy_smearing::wgauss(const double& x, const int n)
@@ -481,14 +606,16 @@ double occupy_smearing::wgauss(const double& x, const int n)
     {
         const double xp = x - 1.00 / ModuleBase::SQRT2;
         const double arg = std::min(maxarg, xp * xp);
-        wga = 0.50 * erf(xp) + 1.00 / sqrt(ModuleBase::TWO_PI) * std::exp(-arg) + 0.50;
+        const double negative_xp = -xp;
+        wga = 0.50 * std::erfc(negative_xp) + 1.00 / sqrt(ModuleBase::TWO_PI) * std::exp(-arg);
         return wga;
     }
 
     //====================
     // Methfessel-Paxton       //pengfei 2014-10-13
     //====================
-    wga = 0.5 * (1 - erf(-x));
+    const double negative_x = -x;
+    wga = 0.5 * std::erfc(negative_x);
     // wga = gauss_freq(x * ModuleBase::SQRT2);
     //	std::cout<<"\n x="<<x<<" wga="<<wga;
     if (n == 0)

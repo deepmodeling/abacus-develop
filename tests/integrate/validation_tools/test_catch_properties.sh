@@ -169,6 +169,105 @@ for gamma in 0 1; do
     done
 done
 
+# Upstream's Wannier validators accept the band gauge without rewriting the
+# output files; all three statuses must still reject invalid references.
+wannier_case_dir="${test_root}/tests/01_PW/wannier_case"
+mkdir -p "${wannier_case_dir}/OUT.autotest"
+printf 'INPUT_PARAMETERS\ncalculation get_s\ntowannier90 1\n' > "${wannier_case_dir}/INPUT"
+printf 'Driver atomic_world 0.01\n' > "${wannier_case_dir}/OUT.autotest/running_get_s.log"
+touch "${wannier_case_dir}/sr_nao.csr.ref" "${wannier_case_dir}/OUT.autotest/sr_nao.csr"
+printf '2 1 1\n1 1 1 1 0\n2 1 1 0 0\n' > "${wannier_case_dir}/diamond.amn"
+printf 'Created on test date\n2 1 1\n1 1 1 0 0\n2 1 1 0 1\n' > "${wannier_case_dir}/OUT.autotest/diamond.amn"
+printf '1 1 1\n1 1 0 0 0\n1 0\n' > "${wannier_case_dir}/diamond.mmn"
+printf 'Created on test date\n1 1 1\n1 1 0 0 0\n0 1\n' > "${wannier_case_dir}/OUT.autotest/diamond.mmn"
+printf '1 1 0.5\n' > "${wannier_case_dir}/diamond.eig"
+cp "${wannier_case_dir}/diamond.eig" "${wannier_case_dir}/OUT.autotest/diamond.eig"
+(
+    cd "${wannier_case_dir}"
+    bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+)
+for property in AMN MMN EIG; do
+    grep -qx "Compare${property}_pass 0" "${wannier_case_dir}/result.ref"
+done
+grep -qx 'Created on test date' "${wannier_case_dir}/OUT.autotest/diamond.amn"
+grep -qx 'Created on test date' "${wannier_case_dir}/OUT.autotest/diamond.mmn"
+for extension in amn mmn eig; do
+    property=${extension^^}
+    output_file="${wannier_case_dir}/OUT.autotest/diamond.${extension}"
+    cp "${output_file}" "${test_root}/valid.${extension}"
+    for failure in malformed missing; do
+        if [ "${failure}" = malformed ]; then
+            printf 'invalid Wannier output\n' > "${output_file}"
+        else
+            rm "${output_file}"
+        fi
+        (
+            cd "${wannier_case_dir}"
+            bash -e ../../integrate/validation_tools/catch_properties.sh result.out
+        )
+        grep -qx "Compare${property}_pass 1" "${wannier_case_dir}/result.out"
+        if (
+            cd "${wannier_case_dir}"
+            bash ../../integrate/validation_tools/catch_properties.sh result.ref
+        ); then
+            echo "catch_properties.sh accepted ${failure} ${property} output in result.ref" >&2
+            exit 1
+        fi
+        test ! -e "${wannier_case_dir}/result.ref"
+    done
+    cp "${test_root}/valid.${extension}" "${output_file}"
+done
+
+# Both upstream LR routes keep failed checks in result.out, but reference
+# generation must fail and remove even the early-return tracking result.
+for lr_mode in force tracking; do
+    lr_case_dir="${test_root}/tests/01_PW/lr_${lr_mode}"
+    mkdir -p "${lr_case_dir}/OUT.autotest"
+    printf 'INPUT_PARAMETERS\ncalculation get_s\nesolver_type lr\ncal_force 1\n' > "${lr_case_dir}/INPUT"
+    printf 'Driver atomic_world 0.01\n' > "${lr_case_dir}/OUT.autotest/running_get_s.log"
+    touch "${lr_case_dir}/sr_nao.csr.ref" "${lr_case_dir}/OUT.autotest/sr_nao.csr"
+    if [ "${lr_mode}" = force ]; then
+        lr_property=CompareLRForce_pass
+        printf 'singlet 0 0 1 -2 3\n' > "${lr_case_dir}/lr_force.ref"
+        cat >> "${lr_case_dir}/OUT.autotest/running_get_s.log" <<'EOF'
+Start to calculate excited-state force of singlet
+Forces (-gradients) of each excited state: (eV/Angstrom)
+ state atom x y z
+ 0 0 force 1 -2 3
+DONE
+EOF
+    else
+        lr_property=CompareStateTracking_pass
+        printf 'out_band 1\n' >> "${lr_case_dir}/INPUT"
+        printf '{"steps": 1}\n' > "${lr_case_dir}/state_tracking.ref"
+        cat >> "${lr_case_dir}/OUT.autotest/running_get_s.log" <<'EOF'
+EXCITED-STATE RELAX step 0: E_gs = -10 eV, Omega = 1 eV, E_exc = -9 eV | |F_gs|max = 0.1, |F_Omega|max = 0.2 eV/Angstrom
+EOF
+    fi
+    (
+        cd "${lr_case_dir}"
+        bash -e ../../integrate/validation_tools/catch_properties.sh result.ref
+    )
+    grep -qx "${lr_property} 0" "${lr_case_dir}/result.ref"
+    if [ "${lr_mode}" = tracking ]; then
+        test "$(wc -l < "${lr_case_dir}/result.ref")" -eq 1
+    fi
+    printf 'Driver atomic_world 0.01\n' > "${lr_case_dir}/OUT.autotest/running_get_s.log"
+    (
+        cd "${lr_case_dir}"
+        bash -e ../../integrate/validation_tools/catch_properties.sh result.out
+    )
+    grep -qx "${lr_property} 1" "${lr_case_dir}/result.out"
+    if (
+        cd "${lr_case_dir}"
+        bash ../../integrate/validation_tools/catch_properties.sh result.ref
+    ); then
+        echo "catch_properties.sh accepted a failed LR ${lr_mode} check in result.ref" >&2
+        exit 1
+    fi
+    test ! -e "${lr_case_dir}/result.ref"
+done
+
 deepks_case_dir="${test_root}/tests/01_PW/deepks_case"
 mkdir -p "${deepks_case_dir}/OUT.autotest"
 
@@ -308,11 +407,11 @@ chmod +x "${test_root}/fake_bin/mpirun"
 # validation_tools directory.
 for run_check_mode in normal debug; do
     run_check_case_dir="${test_root}/tests/01_PW/run_check_${run_check_mode}"
-    mkdir -p "${run_check_case_dir}/OUT.autotest"
+    mkdir -p "${run_check_case_dir}/OUT.autotest/MLKEDF_Descriptors"
+    printf 'not a NumPy file\n' > "${run_check_case_dir}/OUT.autotest/MLKEDF_Descriptors/broken.npy"
     cat > "${run_check_case_dir}/INPUT" <<'EOF'
 INPUT_PARAMETERS
 calculation get_s
-towannier90 1
 EOF
     printf 'Driver atomic_world 0.01\n' > "${run_check_case_dir}/OUT.autotest/running_get_s.log"
     touch "${run_check_case_dir}/sr_nao.csr.ref" "${run_check_case_dir}/OUT.autotest/sr_nao.csr"

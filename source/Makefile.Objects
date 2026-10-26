@@ -49,6 +49,7 @@ VPATH=./src_global:\
 ./source_hamilt:\
 ./source_hamilt/module_ewald:\
 ./source_hamilt/module_surchem:\
+./source_hamilt/module_sccs:\
 ./source_hamilt/module_xc:\
 ./source_hamilt/module_xc/kernels:\
 ./source_pw/module_proj:\
@@ -76,6 +77,8 @@ VPATH=./src_global:\
 ./src_ri:\
 ./source_lcao/module_ri:\
 ./source_lcao/module_ri/module_exx_symmetry:\
+./source_lcao/module_rpa:\
+./source_lcao/module_rpa/module_librpa_io:\
 ./source_lcao/module_bse:\
 ./source_io/module_parameter:\
 ./source_io/module_efield:\
@@ -103,6 +106,7 @@ ${OBJS_PSI_INITIALIZER}\
 ${OBJS_PW}\
 ${OBJS_RELAXATION}\
 ${OBJS_SURCHEM}\
+${OBJS_SCCS}\
 ${OBJS_SYMMETRY}\
 ${OBJS_XC}\
 ${OBJS_IO}\
@@ -129,6 +133,7 @@ ${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
 ${OBJS_HSOLVER_PEXSI}\
 ${OBJS_LR}\
+${OBJS_LR_GRAD}\
 ${OBJS_RDMFT}
 
 OBJS_MAIN=main.o\
@@ -144,7 +149,6 @@ OBJS_BASE=assoc_laguerre.o\
     complexmatrix.o\
     clebsch_gordan_coeff.o\
     element_basis_index.o\
-    export.o\
     inverse_matrix.o\
     gather_math_lib_info.o\
     global_file.o\
@@ -279,6 +283,9 @@ OBJS_ELECSTAT=elecstate.o\
     pcc_0d.o\
     pcc_2d.o\
     pot_pcc.o\
+    pot_sccs.o\
+    sccs_pcc_0d.o\
+    sccs_pcc_2d.o\
     elecstate_op.o\
     efield.o\
     gatefield.o\
@@ -371,6 +378,8 @@ OBJS_GINT=batch_biggrid.o\
       unitcell_info.o\
 
 OBJS_HAMILT=hamilt_pw.o\
+    pw_hybrid_nscf.o\
+    pw_hybrid_source.o\
     td_history_pw.o\
     td_pw.o\
     hs_matrix_k.o\
@@ -433,7 +442,8 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_q0.o\
     dfpt_q0_pos.o\
     dfpt_rho.o\
-    dfpt_stern.o
+    dfpt_stern.o\
+    dfpt_xc_analytic.o
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
     hamilt_lcao_factory.o\
@@ -445,6 +455,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     nonlocal_dh.o\
     nonlocal_fs.o\
     overlap.o\
+    ovlp_block.o\
     overlap_fs.o\
     td_ekinetic_lcao.o\
     td_nonlocal_lcao.o\
@@ -557,7 +568,6 @@ OBJS_ORBITAL=orb_atomic.o\
       two_center_bundle.o\
       two_center_integrator.o\
       two_center_table.o\
-      projgen.o\
 
 OBJS_PSI=psi.o\
 
@@ -622,6 +632,18 @@ OBJS_SURCHEM=surchem.o\
     minimize_cg.o\
     sol_force.o\
 
+OBJS_SCCS=sccs_cavity.o\
+    sccs_cav_deriv.o\
+    sccs_functional.o\
+    sccs_parameters.o\
+    sccs_ion_charge.o\
+    sccs_ion_force.o\
+    sccs_coul_0d.o\
+    sccs_coul_2d.o\
+    sccs_moments.o\
+    sccs_pw_coulomb.o\
+    sccs_response.o
+
 OBJS_SYMMETRY=symm_other.o\
     symm_rot_spin.o\
     symm_basic.o\
@@ -677,6 +699,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_output/cal_test.o\
     module_dos/write_dos_pw.o\
     module_energy/write_bands.o\
+    module_energy/td_eij_io.o\
     module_dos/cal_dos.o\
     module_dos/cal_pdos_gamma.o\
     module_dos/cal_pdos_multik.o\
@@ -737,6 +760,7 @@ OBJS_IO=module_parameter/input_conv.o\
     parse_args.o\
     module_parameter/availability.o\
     module_parameter/availability_validator.o\
+    module_parameter/input_domain.o\
     module_parameter/read_input.o\
     module_parameter/read_inp_sys.o\
     module_parameter/read_inp_estruc.o\
@@ -748,6 +772,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_bse.o\
     module_parameter/read_inp_deepks.o\
     module_parameter/read_inp_model.o\
+    module_parameter/read_inp_sccs.o\
     module_parameter/read_inp_postproc.o\
     module_parameter/read_inp_exx_dftu.o\
     module_parameter/read_inp_dfpt.o\
@@ -857,10 +882,14 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       symm_rot_out.o\
       gaussian_abfs.o\
       exx_lri_detail.o\
+      exx_workspace.o\
       ri_util.o\
-      rpa_lri.o\
+      singular_value.o\
+
+OBJS_MODULE_RPA=rpa_lri.o\
       rpa_lri_detail.o\
       rpa_lri_band_io.o\
+      rpa_lri_coeff_v1.o\
       rpa_lri_mpi_layout.o\
       rpa_lri_wfc_mpi.o\
       rpa_lri_bz_io.o\
@@ -871,12 +900,14 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       rpa_lri_output.o\
       rpa_lri_bz.o\
       rpa_lri_sym.o\
+      librpa_bz_sampling.o\
+      librpa_stru_symmetry.o\
+      librpa_stru_units.o\
       rpa_lri_coeff_io.o\
       rpa_lri_velocity.o\
       rpa_lri_basis.o\
       rpa_lri_eigenvector_v1.o\
       rpa_lri_eigenvector.o\
-      singular_value.o\
 
 OBJS_BSE=esolver_lr_lcao_bse.o\
     hamilt_bse.o\
@@ -945,6 +976,8 @@ OBJS_SRCPW=h_ewald_pw.o\
     update_cell_pw.o\
     dftu_base.o\
     dftu_base_io.o\
+    dftu_base_io_read.o\
+    dftu_base_io_write.o\
     dftu_pw.o\
     dftu_pw_tools.o\
     yukawa_screening.o\
@@ -1010,6 +1043,8 @@ OBJS_SRCPW=h_ewald_pw.o\
     onsite_proj_tools_force.o\
     onsite_proj_tools_stress.o\
     onsite_proj_print.o\
+    projgen.o\
+    smoothgen.o\
     vsep_pw.o
 
 OBJS_VDW=vdw.o\
@@ -1063,8 +1098,8 @@ OBJS_TENSOR=tensor.o\
     refcount.o
 
     OBJS_LR=lr_util.o\
-    lr_util_hcontainer.o\
     utils/lr_io.o\
+    utils/lr_sparse.o\
     utils/exciton_plotter.o\
     ao_to_mo_parallel.o\
     ao_to_mo_serial.o\
@@ -1074,10 +1109,44 @@ OBJS_TENSOR=tensor.o\
     operator_lr_exx.o\
     xc_kernel.o\
     pot_hxc_lrtd.o\
+    kernel_pots.o\
+    init_helpers.o\
+    hsolver_lrtd.o\
+    zeq_solver.o\
+    zeq_cg.o\
+    hamilt_ulr.o\
+    lr_density.o\
+    spectrum_mo.o\
+    spectrum_out.o\
+    dm_diff_ser.o\
+    dm_diff_par.o\
     lr_spectrum.o\
     lr_spectrum_velocity.o\
     hamilt_casida.o\
+    esolver_lr_orb.o\
+    esolver_lr_init.o\
+    esolver_lr_cfg.o\
     esolver_lr_lcao_tddft.o\
+
+OBJS_LR_GRAD=lr_force.o\
+    xc_kxc.o\
+    lr_force_aux.o\
+    grad_degen.o\
+    state_group.o\
+    state_track.o\
+    state_ovlp.o\
+    grad_jt.o\
+    gradient_output.o\
+    lr_grad_cs.o\
+    lr_grad_os.o\
+    exx_proj.o\
+    cvcx_serial.o\
+    cvcx_par.o\
+    cal_edm.o\
+    zeqlin_solv.o\
+    pot_grad_xc.o\
+    esolver_lr_grad.o\
+    esolver_lr_rlx.o\
 
 OBJS_RDMFT=rdmft.o\
         rdmft_tools.o\

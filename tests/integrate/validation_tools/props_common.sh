@@ -23,6 +23,8 @@
 PROPS_TOOLS_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 COMPARE_SCRIPT="$PROPS_TOOLS_DIR/CompareFile.py"
+COMPARE_AMN_SCRIPT="$PROPS_TOOLS_DIR/compare_amn.py"
+COMPARE_MMN_SCRIPT="$PROPS_TOOLS_DIR/compare_mmn.py"
 CUBE_TOOL="$PROPS_TOOLS_DIR/cube_tool.py"
 COLLECT_NPY_MEANS="$PROPS_TOOLS_DIR/collect_npy_means.py"
 

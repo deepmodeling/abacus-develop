@@ -8,7 +8,7 @@ namespace ModuleIO
 {
 
 /// Write PDOS in plain text long-table format.
-/// File name: pdoss{spin}g{geom}_{basis}.txt
+/// File name: pdoss{spin}g{geom}.txt
 /// Columns: energy(eV)  atom  species  l  z  m  pdos(1/eV)
 /// For nspin=4, the two spinor components are summed.
 void write_pdos_text(
@@ -20,7 +20,6 @@ void write_pdos_text(
         const double& emin,
         const double& dos_edelta_ev,
         const std::string& out_dir,
-        const std::string& basis,
         const int istep);
 
 }
