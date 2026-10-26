@@ -88,7 +88,7 @@ struct Input_para
     double nupdown = 0.0;
     std::string dft_functional = "default"; ///< input DFT functional.
     int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized mapped-density LCA.
-    std::string xc_nonlocal = "none";      ///< nonlocal XC correction (none; rvv10)
+    std::string xc_nonlocal = "none"; ///< nonlocal XC correction (none; rvv10)
     double xc_temperature = 0.0;            ///< only relevant if finite temperature functional is used
     double pseudo_rcut = 15.0;              ///< cut-off radius for calculating msh
     bool pseudo_mesh = false;               ///< 0: use msh to normalize radial wave functions; 1:

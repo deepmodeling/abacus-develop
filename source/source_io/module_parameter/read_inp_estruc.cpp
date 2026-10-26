@@ -385,7 +385,9 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.unit = "";
         read_sync_string(input.xc_nonlocal);
         item.reset_value = [](const Input_Item&, Parameter& para) {
-            std::transform(para.input.xc_nonlocal.begin(), para.input.xc_nonlocal.end(), para.input.xc_nonlocal.begin(),
+            std::transform(para.input.xc_nonlocal.begin(),
+                           para.input.xc_nonlocal.end(),
+                           para.input.xc_nonlocal.begin(),
                            [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
         };
         item.check_value = [](const Input_Item&, const Parameter& para) {

@@ -39,14 +39,26 @@ if(BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)
   endif()
-  if(ENABLE_LIBVDWXC AND NOT ENABLE_MPI AND NOT USE_CUDA AND NOT USE_ROCM)
+  if(ENABLE_LIBVDWXC
+     AND NOT ENABLE_MPI
+     AND NOT USE_CUDA
+     AND NOT USE_ROCM)
     # The serial adapter test is registered here because test/ is MPI-only.
-    AddTest(
-      TARGET MODULE_HAMILT_vdwTest_LIBVDWXC
-      LIBS xc_ planewave base parameter device nonlocal_xc
-      SOURCES test/test_nonlocal_vdwxc.cpp
-    )
-    target_link_libraries(MODULE_HAMILT_vdwTest_LIBVDWXC PRIVATE Libxc::xc libvdwxc::vdwxc)
-    set_tests_properties(MODULE_HAMILT_vdwTest_LIBVDWXC PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+    addtest(
+      TARGET
+      MODULE_HAMILT_vdwTest_LIBVDWXC
+      LIBS
+      xc_
+      planewave
+      base
+      parameter
+      device
+      nonlocal_xc
+      SOURCES
+      test/test_nonlocal_vdwxc.cpp)
+    target_link_libraries(MODULE_HAMILT_vdwTest_LIBVDWXC
+                          PRIVATE Libxc::xc libvdwxc::vdwxc)
+    set_tests_properties(MODULE_HAMILT_vdwTest_LIBVDWXC
+                         PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
   endif()
 endif()

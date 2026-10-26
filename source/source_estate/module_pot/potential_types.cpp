@@ -73,12 +73,14 @@ PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para& 
         {
             if (this->ucell_->atoms[it].ncpp.tvanp)
             {
-                ModuleBase::WARNING_QUIT("Potential", "nonlocal XC currently supports norm-conserving pseudopotentials only");
+                ModuleBase::WARNING_QUIT("Potential",
+                                         "nonlocal XC currently supports norm-conserving pseudopotentials only");
             }
         }
         if (this->rho_basis_ != this->rho_basis_smooth_)
         {
-            ModuleBase::WARNING_QUIT("Potential", "nonlocal XC currently requires the same smooth and dense density basis");
+            ModuleBase::WARNING_QUIT("Potential",
+                                     "nonlocal XC currently requires the same smooth and dense density basis");
         }
         const std::string method = input.xc_nonlocal;
         return new PotNonlocalXC(this->rho_basis_, this->etxc_, this->vtxc_, method);
