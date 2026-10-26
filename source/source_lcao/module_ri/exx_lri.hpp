@@ -1436,8 +1436,17 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
             && this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
                    != this->coulomb_settings.end())
         {
+            // Only the writer requests data; every rank still joins the
+            // collective, so non-root ranks contribute without allocating the
+            // complete diagnostic map.
+            std::set<TA> diagnostic_atoms;
+            if (this->runtime.rank == 0)
+            {
+                diagnostic_atoms = all_atoms;
+            }
             Parallel_Common::barrier(this->mpi_comm);
-            auto Vs_for_write = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs, all_atoms, all_atoms);
+            auto Vs_for_write
+                = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs, diagnostic_atoms, diagnostic_atoms);
             Parallel_Common::barrier(this->mpi_comm);
             if (this->runtime.rank == 0)
             {

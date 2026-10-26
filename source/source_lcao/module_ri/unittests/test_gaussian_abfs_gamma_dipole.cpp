@@ -98,43 +98,66 @@ int main()
     // Ewald_Vq::init builds the radial Gaussian tables through Gauss() before
     // Gaussian_Abfs::init runs, so the dimension must be settable beforehand.
     {
-        const double dr = 0.05;
-        const int nr = 101;
-        std::vector<double> rab(nr, dr);
-        std::vector<double> r(nr, 0.0);
-        std::vector<double> radial(nr, 0.0);
-        for (int ir = 0; ir != nr; ++ir)
-        {
-            r[ir] = ir * dr;
-        }
-        Numerical_Orbital_Lm orbital;
-        orbital.set_orbital_info("N",
-                                 0,
-                                 8,
-                                 0,
-                                 nr,
-                                 rab.data(),
-                                 r.data(),
-                                 Numerical_Orbital_Lm::Psi_Type::Psi,
-                                 radial.data(),
-                                 101,
-                                 0.05,
-                                 dr,
-                                 false,
-                                 true,
-                                 false);
+        const double strict_cutoff = Gaussian_Abfs::radial_cutoff(lambda, 8, 2);
+        const double historical_cutoff = Gaussian_Abfs::radial_cutoff(lambda, 8, 3);
+        require(strict_cutoff > historical_cutoff, "strict-2D cutoff must exceed the historical 3D cutoff");
+
+        auto probe_orbital = [](const double dr) {
+            const int nr = 101;
+            std::vector<double> rab(nr, dr);
+            std::vector<double> r(nr, 0.0);
+            std::vector<double> radial(nr, 0.0);
+            for (int ir = 0; ir != nr; ++ir)
+            {
+                r[ir] = ir * dr;
+            }
+            Numerical_Orbital_Lm orbital;
+            orbital.set_orbital_info("N",
+                                     0,
+                                     8,
+                                     0,
+                                     nr,
+                                     rab.data(),
+                                     r.data(),
+                                     Numerical_Orbital_Lm::Psi_Type::Psi,
+                                     radial.data(),
+                                     101,
+                                     0.05,
+                                     dr,
+                                     false,
+                                     true,
+                                     false);
+            return orbital;
+        };
 
         Gaussian_Abfs strict_gaussian;
         strict_gaussian.set_ewald_dimension(2);
-        const Numerical_Orbital_Lm strict_table = strict_gaussian.Gauss(orbital, lambda);
-        const double strict_cutoff = Gaussian_Abfs::radial_cutoff(lambda, 8, 2);
-        require(strict_table.getNr() >= static_cast<int>(std::ceil(strict_cutoff / dr)),
+
+        // Even ceil(rcut/dr): the odd point-count bump puts the endpoint past
+        // the selected cutoff.
+        const double bumped_dr = strict_cutoff / 99.5;
+        const Numerical_Orbital_Lm bumped_table = strict_gaussian.Gauss(probe_orbital(bumped_dr), lambda);
+        require(bumped_table.getNr() % 2 == 1, "the Gaussian radial grid must keep an odd point count");
+        require(std::abs(bumped_table.getRcut() - (bumped_table.getNr() - 1) * bumped_dr)
+                    <= 1.0e-12 * bumped_dr,
+                "the Gaussian rcut must be the grid endpoint (Nr-1)*dr");
+        require(bumped_table.getRcut() >= strict_cutoff,
                 "a dimension set before Gauss() must select the strict-2D radial extent");
-        require(strict_table.getNr() % 2 == 1, "the Gaussian radial grid must keep an odd point count");
+
+        // Odd ceil(rcut/dr): the inherited grid stops one step below the
+        // cutoff, so only the endpoint-plus-step bound holds.
+        const double odd_dr = strict_cutoff / 98.5;
+        const Numerical_Orbital_Lm odd_table = strict_gaussian.Gauss(probe_orbital(odd_dr), lambda);
+        require(odd_table.getNr() % 2 == 1, "the odd ceil(rcut/dr) grid must keep its odd point count");
+        require(odd_table.getRcut() < strict_cutoff,
+                "an odd ceil(rcut/dr) grid ends below the selected cutoff");
+        require(odd_table.getRcut() + odd_dr >= strict_cutoff,
+                "the odd ceil(rcut/dr) grid must stay within one step of the cutoff");
 
         Gaussian_Abfs historical_gaussian;
-        const Numerical_Orbital_Lm historical_table = historical_gaussian.Gauss(orbital, lambda);
-        require(historical_table.getNr() < strict_table.getNr(),
+        const Numerical_Orbital_Lm historical_table
+            = historical_gaussian.Gauss(probe_orbital(bumped_dr), lambda);
+        require(historical_table.getNr() < bumped_table.getNr(),
                 "the default 3D Gauss() must keep the historical radial extent");
     }
 
