@@ -537,9 +537,9 @@ TEST_F(DFPTRhoSerialTest, BroydenConvergesDiagonalSystemFast)
     // so the response map has a source and the relative residual
     // ||out - in|| / ||out|| genuinely decays. Plain beta = 0.4
     // contracts every populated shell by |1 - beta (1 - D)| = 0.8 (d = 0.5,
-    // the binding shell; 0.72 for d = 0.3), i.e. >= 103 plain steps to
-    // 1e-10; Modified Broyden on the few distinct eigenvalues should
-    // converge in a handful of iterations.
+    // the binding shell; 0.72 for d = 0.3), i.e. roughly 100 plain
+    // iterations to 1e-10; Modified Broyden on the few distinct
+    // eigenvalues should converge in a handful of iterations.
     SetupBases(k_d_, q_d_, 2);
     ModuleDFPT::DFPT_Rho::Config cfg;
     cfg.nspin = 1;
@@ -587,7 +587,8 @@ TEST_F(DFPTRhoSerialTest, BroydenConvergesDiagonalSystemFast)
         rho_out = model_out(data_.get_drho_g(0, 0));
     }
     // Broyden on a 3-eigenvalue diagonal system: converges dramatically
-    // faster than plain mixing (which needs >= 90 steps at 0.6/step)
+    // faster than plain mixing (which needs roughly 100 iterations at
+    // 0.8/step on the binding shell)
     EXPECT_LT(n_iter, 12);
     const double final_res = rho.get_residual(0, data_);
     EXPECT_LT(final_res, 1.0e-8);

@@ -102,10 +102,10 @@ class DFPT_Rho
         ModulePW::PW_Basis* pw_rho;
         ModulePW::PW_Basis_K* pw_wfc;
         ModuleBase::Matrix3 recip_matrix;
-        std::string mix_type; // "rho_plain", "rho_kerker", "rho_broyden", "v_sc_plain", "v_sc_broyden"
+        std::string mix_type; // "rho_plain", "rho_kerker" or "rho_broyden" (v_sc_* is handled at the solver)
         double mix_beta;
         double kerker_a2; // Kerker screen a^2, 1/lat0^2 (rho_kerker only)
-        int broyden_ndim; // Broyden history depth (rho_broyden only, default 8)
+        int broyden_ndim; // Broyden history depth (rho_broyden only, must be >= 1; no C++11 aggregate default)
     };
 
     DFPT_Rho();

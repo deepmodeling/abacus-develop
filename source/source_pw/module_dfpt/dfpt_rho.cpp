@@ -28,7 +28,7 @@ namespace
 /// a zero output norm only reports convergence when the defect itself is
 /// zero (v_out = 1 - c v_in maps a nonzero input to zero output far from
 /// its fixed point), and non-finite norms never report convergence
-double safe_relative_defect_(double dn2, double o2)
+double safe_relative_defect(double dn2, double o2)
 {
     if (!std::isfinite(dn2) || !std::isfinite(o2))
     {
@@ -62,20 +62,23 @@ void DFPT_Rho::init(const Config& cfg)
     mix_beta_ = cfg.mix_beta;
     mix_type_ = cfg.mix_type; // internal: rho_plain|rho_kerker|rho_broyden (v_sc handled at solver)
     kerker_a2_ = cfg.kerker_a2;
+    // DFPT_Rho handles density mixing only; the solver-side init maps the
+    // v_sc_* INPUT modes onto the plain density mixer for its E-field loop
     if (cfg.mix_type != "rho_plain" && cfg.mix_type != "rho_kerker" && cfg.mix_type != "rho_broyden")
     {
-        // v_sc_* modes are handled in solve_displacement, not in DFPT_Rho
-        if (cfg.mix_type != "v_sc_plain" && cfg.mix_type != "v_sc_broyden")
-        {
-            ModuleBase::WARNING_QUIT(
-                "DFPT_Rho",
-                "unsupported mix_type, expected rho_plain, rho_kerker, rho_broyden, v_sc_plain or v_sc_broyden");
-        }
+        ModuleBase::WARNING_QUIT("DFPT_Rho", "unsupported mix_type, expected rho_plain, rho_kerker or rho_broyden");
     }
     // make_unique is C++14; C++11 uses new directly through reset()
     mixer_.reset(new Base_Mixing::Plain_Mixing(mix_beta_));
     if (mix_type_ == "rho_broyden")
     {
+        // Config is an aggregate initialized with braces, so a caller
+        // passing fewer fields gets broyden_ndim = 0; Broyden_Mixing
+        // would then divide by zero in its % mixing_ndim history wrap
+        if (cfg.broyden_ndim < 1)
+        {
+            ModuleBase::WARNING_QUIT("DFPT_Rho", "broyden_ndim must be >= 1 for rho_broyden mixing");
+        }
         broyden_mixer_.reset(new Base_Mixing::Broyden_Mixing(cfg.broyden_ndim));
     }
     ModuleBase::timer::end("DFPT_Rho", "init");
@@ -573,7 +576,7 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
     Parallel_Reduce::reduce_pool(dn2);
     Parallel_Reduce::reduce_pool(o2);
 #endif
-    residual_[q_idx] = safe_relative_defect_(dn2, o2);
+    residual_[q_idx] = safe_relative_defect(dn2, o2);
     drho_in_[q_idx][0] = mixed;
     data.set_drho_g(q_idx, 0, mixed);
 

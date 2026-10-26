@@ -34,7 +34,7 @@ namespace
 /// (shared definition with dfpt_rho.cpp; see the note there): a zero
 /// output norm only reports convergence when the defect itself is zero,
 /// and non-finite norms never report convergence
-double safe_relative_defect_(double dn2, double o2)
+double safe_relative_defect(double dn2, double o2)
 {
     if (!std::isfinite(dn2) || !std::isfinite(o2))
     {
@@ -261,7 +261,7 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
     // preconditioner. What changes is the metric the Broyden least
     // squares works in (the K-weighted inner product), which is why
     // v_sc_broyden is the stabilized default while v_sc_plain tracks
-    // the plain density mixing (see MIXING_20261020.md §8)
+    // the plain density mixing
     const bool vsc_mode = (mix_type_ == "v_sc_plain" || mix_type_ == "v_sc_broyden");
     std::vector<std::complex<double>> v_sc_in_r(nrxx, std::complex<double>(0.0, 0.0));
     // v_sc Broyden: a separate instance from the density Broyden because
@@ -387,7 +387,7 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
                 Parallel_Reduce::reduce_pool(dn2);
                 Parallel_Reduce::reduce_pool(o2);
 #endif
-                residual = safe_relative_defect_(dn2, o2);
+                residual = safe_relative_defect(dn2, o2);
                 vsc_broyden_->mix_data(*vsc_broyden_mdata_, v_sc_in_r.data());
             }
             else
@@ -407,13 +407,13 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
                 Parallel_Reduce::reduce_pool(dn2);
                 Parallel_Reduce::reduce_pool(o2);
 #endif
-                residual = safe_relative_defect_(dn2, o2);
+                residual = safe_relative_defect(dn2, o2);
             }
-            // store the mixed density for the 2n+1 accumulation path:
-            // rebuild the G-space coefficients from the Sternheimer output
-            // (the density is NOT what we mix, but the 2n+1 needs the
-            // converged density from the converged potential)
-            data_.set_drho_g(q_idx, 0, drho_out_g);
+            // the 2n+1 accumulation path reads the density from data_:
+            // unlike the density-mixing branch, the v_sc loop never calls
+            // mix_drho, so data_ still holds the last compute_drho output
+            // (drho_out_g was read from it), which at convergence is the
+            // density consistent with the final screening potential
         }
         else
         {
