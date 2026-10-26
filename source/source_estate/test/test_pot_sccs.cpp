@@ -185,8 +185,19 @@ TEST_F(PotSccsTest, InputMapsOntoSccsConfig)
         EXPECT_EQ(config.boundary, ModuleSccs::Boundary::Pcc2d);
         EXPECT_EQ(config.pcc_2d_axis, axis);
     }
+}
+
+TEST_F(PotSccsTest, InputMapsCavityModelKeys)
+{
+    Input_para input;
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    elecstate::sccs_cfg_input(input, config, solver);
     EXPECT_DOUBLE_EQ(config.cavity.lowpass_p1, -1.0);
+    EXPECT_DOUBLE_EQ(config.cavity.lowpass_p2, -1.0);
     EXPECT_FALSE(config.core_electrons);
+    input.sccs_preset = "water-neutral";
+    input.assume_isolated = "pcc_0d";
     input.sccs_lowpass_p1 = 10.0;
     input.sccs_lowpass_p2 = 5.0;
     input.sccs_solvent_mode = "full";
@@ -196,12 +207,11 @@ TEST_F(PotSccsTest, InputMapsOntoSccsConfig)
     EXPECT_DOUBLE_EQ(config.cavity.lowpass_p2, 5.0);
     EXPECT_TRUE(config.core_electrons);
     EXPECT_EQ(config.core_spreads, input.sccs_corespread);
+    // The cavity model keys leave the preset dielectric unchanged.
     EXPECT_DOUBLE_EQ(config.cavity.epsilon_bulk, 78.3);
 }
 
-// Electrostatic forces in a dielectric, and the cavity terms of core
-// Gaussians with surface tension and pressure.
-TEST_F(PotSccsTest, SolvationForceMatchesTheEnergyDerivative)
+TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
 {
     Input_para input;
     input.sccs_epsilon = 5.0;
@@ -211,19 +221,23 @@ TEST_F(PotSccsTest, SolvationForceMatchesTheEnergyDerivative)
     ModuleSccs::PolarizationSolverParameters solver;
     elecstate::sccs_cfg_input(input, config, solver);
     check_solvation_force(config, solver);
+}
 
-    Input_para full_input;
-    full_input.sccs_epsilon = 1.0;
-    full_input.sccs_tol_rms = 1e-13;
-    full_input.sccs_tol_max = 1e-12;
-    ModuleSccs::SccsConfig full;
-    ModuleSccs::PolarizationSolverParameters full_solver;
-    elecstate::sccs_cfg_input(full_input, full, full_solver);
-    full.core_electrons = true;
-    full.core_spreads = {2.0};
-    full.surface_tension = 1e-5;
-    full.pressure = 1e-6;
-    check_solvation_force(full, full_solver);
+// The cavity terms of core Gaussians, with surface tension and pressure.
+TEST_F(PotSccsTest, FullCavityForceMatchesTheEnergyDerivative)
+{
+    Input_para input;
+    input.sccs_epsilon = 1.0;
+    input.sccs_tol_rms = 1e-13;
+    input.sccs_tol_max = 1e-12;
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    elecstate::sccs_cfg_input(input, config, solver);
+    config.core_electrons = true;
+    config.core_spreads = {2.0};
+    config.surface_tension = 1e-5;
+    config.pressure = 1e-6;
+    check_solvation_force(config, solver);
 }
 
 TEST_F(PotSccsTest, FullCavityStructureChecksWarnOnceAndRejectWidthCount)
