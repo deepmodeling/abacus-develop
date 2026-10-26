@@ -1,5 +1,5 @@
-#ifndef ABACUS_NONLOCAL_XC_LIBVDWXC_H
-#define ABACUS_NONLOCAL_XC_LIBVDWXC_H
+#ifndef ABACUS_NONLOCAL_VDWXC_H
+#define ABACUS_NONLOCAL_VDWXC_H
 
 #include "nonlocal_xc.h"
 
@@ -34,6 +34,9 @@ class LibvdwxcNonlocalXC final : public NonlocalXC
                               const std::vector<double>& valence_density) const override;
 
   private:
+    /// Quit unless pw has the grid, cell and volume this adapter was initialized with.
+    void check_matches_initialized(const ModulePW::PW_Basis& pw) const;
+
     vdwxc_data_obj* data_ = nullptr;
     int nx_ = 0;
     int ny_ = 0;
@@ -45,4 +48,4 @@ class LibvdwxcNonlocalXC final : public NonlocalXC
 
 } // namespace vdw
 
-#endif // ABACUS_NONLOCAL_XC_LIBVDWXC_H
+#endif // ABACUS_NONLOCAL_VDWXC_H

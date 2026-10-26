@@ -1,4 +1,4 @@
-#include "../nonlocal_xc_libvdwxc.h"
+#include "../nonlocal_vdwxc.h"
 #include "source_base/constants.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_xc/xc_functional.h"

@@ -1,6 +1,6 @@
 #include "source_base/constants.h"
 #include "source_estate/module_pot/pot_nonlocal_xc.h"
-#include "source_hamilt/module_vdw/nonlocal_xc_libvdwxc.h"
+#include "source_hamilt/module_vdw/nonlocal_vdwxc.h"
 
 #include <cmath>
 #include <gtest/gtest.h>

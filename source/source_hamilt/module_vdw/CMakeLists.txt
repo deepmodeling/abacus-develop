@@ -21,7 +21,7 @@ add_library(vdw OBJECT ${vdw_sources})
 set(nonlocal_xc_sources nonlocal_xc.cpp)
 
 if(ENABLE_LIBVDWXC)
-  list(APPEND nonlocal_xc_sources nonlocal_xc_libvdwxc.cpp)
+  list(APPEND nonlocal_xc_sources nonlocal_vdwxc.cpp)
 endif()
 
 add_library(nonlocal_xc OBJECT ${nonlocal_xc_sources})
@@ -44,7 +44,7 @@ if(BUILD_TESTING)
     AddTest(
       TARGET MODULE_HAMILT_vdwTest_LIBVDWXC
       LIBS xc_ planewave base parameter device nonlocal_xc
-      SOURCES test/test_nonlocal_xc_libvdwxc.cpp
+      SOURCES test/test_nonlocal_vdwxc.cpp
     )
     target_link_libraries(MODULE_HAMILT_vdwTest_LIBVDWXC PRIVATE Libxc::xc libvdwxc::vdwxc)
     set_tests_properties(MODULE_HAMILT_vdwTest_LIBVDWXC PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")

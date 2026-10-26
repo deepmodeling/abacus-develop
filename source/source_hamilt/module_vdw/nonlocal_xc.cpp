@@ -1,6 +1,6 @@
 #include "nonlocal_xc.h"
 #ifdef __LIBVDWXC
-#include "nonlocal_xc_libvdwxc.h"
+#include "nonlocal_vdwxc.h"
 #endif
 
 #include "source_base/tool_quit.h"
