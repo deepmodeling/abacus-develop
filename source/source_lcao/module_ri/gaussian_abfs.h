@@ -47,6 +47,10 @@ class Gaussian_Abfs
         return EwaldGaussianCutoff::real_space_radius(lambda, angular_momentum, ewald_dimension);
     }
 
+    /// Set the Ewald dimension before Gauss() builds the radial tables; the
+    /// Ewald_Vq stage constructs those tables before init() is called.
+    void set_ewald_dimension(const int ewald_dimension) { this->ewald_dimension = ewald_dimension; }
+
     void init(const UnitCell& ucell,
               const int& Lmax,
               const std::vector<ModuleBase::Vector3<double>>& kvec_c,

@@ -95,6 +95,9 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
     {
         ModuleBase::WARNING_QUIT("Ewald_Vq::init", "ewald_dimension must be 2 or 3");
     }
+    // The radial Gaussian tables below are built here, before init_ions()
+    // reaches Gaussian_Abfs::init, so the dimension must be set first.
+    this->gaussian_abfs.set_ewald_dimension(this->ewald_dimension);
 
     this->g_lcaos = this->init_gauss(lcaos_in);
     this->g_abfs = this->init_gauss(abfs_in);

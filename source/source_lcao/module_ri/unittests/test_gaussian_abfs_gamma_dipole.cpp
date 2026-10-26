@@ -95,5 +95,48 @@ int main()
     require(std::abs(sum_coplanar[1]) == 0.0,
             "the Gamma s-pz normal-dipole limit must vanish at tau_z = 0");
 
+    // Ewald_Vq::init builds the radial Gaussian tables through Gauss() before
+    // Gaussian_Abfs::init runs, so the dimension must be settable beforehand.
+    {
+        const double dr = 0.05;
+        const int nr = 101;
+        std::vector<double> rab(nr, dr);
+        std::vector<double> r(nr, 0.0);
+        std::vector<double> radial(nr, 0.0);
+        for (int ir = 0; ir != nr; ++ir)
+        {
+            r[ir] = ir * dr;
+        }
+        Numerical_Orbital_Lm orbital;
+        orbital.set_orbital_info("N",
+                                 0,
+                                 8,
+                                 0,
+                                 nr,
+                                 rab.data(),
+                                 r.data(),
+                                 Numerical_Orbital_Lm::Psi_Type::Psi,
+                                 radial.data(),
+                                 101,
+                                 0.05,
+                                 dr,
+                                 false,
+                                 true,
+                                 false);
+
+        Gaussian_Abfs strict_gaussian;
+        strict_gaussian.set_ewald_dimension(2);
+        const Numerical_Orbital_Lm strict_table = strict_gaussian.Gauss(orbital, lambda);
+        const double strict_cutoff = Gaussian_Abfs::radial_cutoff(lambda, 8, 2);
+        require(strict_table.getNr() >= static_cast<int>(std::ceil(strict_cutoff / dr)),
+                "a dimension set before Gauss() must select the strict-2D radial extent");
+        require(strict_table.getNr() % 2 == 1, "the Gaussian radial grid must keep an odd point count");
+
+        Gaussian_Abfs historical_gaussian;
+        const Numerical_Orbital_Lm historical_table = historical_gaussian.Gauss(orbital, lambda);
+        require(historical_table.getNr() < strict_table.getNr(),
+                "the default 3D Gauss() must keep the historical radial extent");
+    }
+
     return 0;
 }

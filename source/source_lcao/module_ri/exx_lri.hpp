@@ -1426,12 +1426,31 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
         }
     }
 
-    if (write_cv && this->runtime.rank == 0)
+    if (write_cv)
     {
-        LRI_CV_Tools::write_Vs_abf(Vs, this->runtime.output_dir + "Vs");
-        if (this->use_rotated_n0_long_range)
+        // After the distributed Ewald V, Vs is rank-local; the optional
+        // diagnostic output needs the union, so gather for this write only
+        // (non-rotated multi-rank Ewald). The rotated path is already
+        // root-serial.
+        if (mpi_size > 1 && !this->use_rotated_n0_long_range
+            && this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+                   != this->coulomb_settings.end())
         {
-            LRI_CV_Tools::write_Vs_abf(Vs_long, this->runtime.output_dir + "Vs_long_n0");
+            Parallel_Common::barrier(this->mpi_comm);
+            auto Vs_for_write = RI_2D_Comm::comm_map2_first(this->mpi_comm, Vs, all_atoms, all_atoms);
+            Parallel_Common::barrier(this->mpi_comm);
+            if (this->runtime.rank == 0)
+            {
+                LRI_CV_Tools::write_Vs_abf(Vs_for_write, this->runtime.output_dir + "Vs");
+            }
+        }
+        else if (this->runtime.rank == 0)
+        {
+            LRI_CV_Tools::write_Vs_abf(Vs, this->runtime.output_dir + "Vs");
+            if (this->use_rotated_n0_long_range)
+            {
+                LRI_CV_Tools::write_Vs_abf(Vs_long, this->runtime.output_dir + "Vs_long_n0");
+            }
         }
     }
     if (this->use_rotated_n0_long_range && mpi_size > 1
