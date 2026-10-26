@@ -536,9 +536,10 @@ TEST_F(DFPTRhoSerialTest, BroydenConvergesDiagonalSystemFast)
     // (0.5 and 0.3 on two G shells, 0 elsewhere) and a fixed target t,
     // so the response map has a source and the relative residual
     // ||out - in|| / ||out|| genuinely decays. Plain beta = 0.4
-    // contracts every shell by |1 - beta (1 - D)| >= 0.6 (>= 90 steps
-    // to 1e-10); Modified Broyden on the few distinct eigenvalues
-    // should converge in a handful of iterations.
+    // contracts every populated shell by |1 - beta (1 - D)| = 0.8 (d = 0.5,
+    // the binding shell; 0.72 for d = 0.3), i.e. >= 103 plain steps to
+    // 1e-10; Modified Broyden on the few distinct eigenvalues should
+    // converge in a handful of iterations.
     SetupBases(k_d_, q_d_, 2);
     ModuleDFPT::DFPT_Rho::Config cfg;
     cfg.nspin = 1;
