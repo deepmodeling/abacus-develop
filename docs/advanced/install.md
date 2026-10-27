@@ -108,14 +108,14 @@ cmake -S libvdwxc -B build-libvdwxc -DVDWXC_ENABLE_MPI=ON -DCMAKE_INSTALL_PREFIX
 cmake --build build-libvdwxc && cmake --install build-libvdwxc
 ```
 
-Then pass `-DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON` to CMake for ABACUS and add `/path/to/libvdwxc` to `CMAKE_PREFIX_PATH`. ABACUS hands each k-point pool's density to libvdwxc's distributed interface, so the nonlocal convolution and its memory are shared by the processes of the pool. libvdwxc's MPI build uses FFTW and FFTW-MPI, so it cannot be combined with the MKL FFT interface. The legacy Makefile does not build this feature.
+Then pass `-DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON` to CMake for ABACUS and add `/path/to/libvdwxc` to `CMAKE_PREFIX_PATH`. ABACUS hands each k-point pool's density to libvdwxc's distributed interface, so the nonlocal convolution and its memory are shared by the processes of the pool. libvdwxc's MPI build uses FFTW and FFTW-MPI, while ABACUS uses the FFT interface of MKL whenever it finds MKL; that combination is untested, so configure ABACUS without MKL and against the same FFTW (CMake warns otherwise). The legacy Makefile does not build this feature.
 
 In the input file:
 
 ```text
 vdw_method rvv10
 dft_functional scan
-vdw_rvv10_b 15.7     # 6.3 (default) for GGA_X_RPW86+GGA_C_PBE, 15.7 for SCAN, 11.95 for r2SCAN
+vdw_rvv10_b 15.7     # b of SCAN+rVV10; see vdw_rvv10_b for other functionals
 ```
 
 ## Build with JSON support

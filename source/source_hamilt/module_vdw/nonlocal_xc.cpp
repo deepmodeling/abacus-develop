@@ -32,10 +32,14 @@ namespace vdw
 {
 namespace
 {
+/// Cartesian components of the stress tensor returned by vdwxc_stress, stored as [3 * a + b]
+const int STRESS_COMPONENTS = 9;
+
 /**
  * libvdwxc object for one grid and pool, kept between calls.
  *
- * libvdwxc distributes the first axis of its grid in blocks of ceil(n/P) planes, the FFTW-MPI default.
+ * libvdwxc distributes the first axis of its grid in blocks of ceil(n/P) planes, the FFTW-MPI default
+ * (vdwxc_init_mpi does not report its local slab, so plan_exchange recomputes it).
  * It is given the lattice vectors in the cyclic order (a3, a1, a2), so that this axis is the z axis
  * that ABACUS distributes and the slab of a process is stored as [z][x][y], the transpose of the
  * ABACUS layout [x][y][z]. Whole z planes are moved between the two distributions with all-to-all exchanges.
@@ -264,7 +268,7 @@ double Rvv10Workspace::evaluate(const ModulePW::PW_Basis& pw,
         Parallel_Common::reduce_data(&energy, 1, pw.pool_world);
         if (stress != nullptr)
         {
-            Parallel_Common::reduce_data(stress, 9, pw.pool_world);
+            Parallel_Common::reduce_data(stress, STRESS_COMPONENTS, pw.pool_world);
         }
     }
 #endif
@@ -279,12 +283,6 @@ Rvv10Workspace& workspace()
     return *instance;
 }
 
-/// Spin channels of chr that carry density; for nspin=4, rho[0] is the total valence density.
-int density_channels(const Charge& chr)
-{
-    return (chr.nspin == 2) ? 2 : 1;
-}
-
 /// Total density of chr (valence plus core), its plane-wave gradient and sigma = |grad n|^2.
 void total_density(const Charge& chr,
                    std::vector<double>& rho,
@@ -295,8 +293,10 @@ void total_density(const Charge& chr,
     const int nrxx = chr.nrxx;
     const double* core_begin = chr.rho_core;
     const double* core_end = core_begin + nrxx;
+    // for nspin = 4, rho[0] is the total valence density
+    const int nspin0 = (chr.nspin == 2) ? 2 : 1;
     rho.assign(core_begin, core_end);
-    for (int is = 0; is < density_channels(chr); ++is)
+    for (int is = 0; is < nspin0; ++is)
     {
         for (int ir = 0; ir < nrxx; ++ir)
         {
@@ -315,10 +315,13 @@ void total_density(const Charge& chr,
 }
 } // namespace
 
-void add_rvv10(const Charge& chr, double& etxc, double& vtxc, ModuleBase::matrix& v)
+void add_rvv10(const XCFunctionalParameters& parameters,
+               const Charge& chr,
+               double& etxc,
+               double& vtxc,
+               ModuleBase::matrix& v)
 {
-    const XCFunctionalParameters& parameters = XC_Functional::get_runtime_parameters();
-    if (parameters.rvv10_b <= 0.0)
+    if (!parameters.rvv10)
     {
         return;
     }
@@ -342,11 +345,13 @@ void add_rvv10(const Charge& chr, double& etxc, double& vtxc, ModuleBase::matrix
     }
     std::vector<double> divergence(nrxx);
     XC_Functional::grad_dot(grad.data(), divergence.data(), &pw, pw.tpiba);
+    // for nspin = 4 the potential of the total density goes to v(0) only
+    const int nspin0 = (chr.nspin == 2) ? 2 : 1;
     double vtxc_nl = 0.0;
     for (int ir = 0; ir < nrxx; ++ir)
     {
         const double v_nl = ModuleBase::e2 * (dedn[ir] - divergence[ir]);
-        for (int is = 0; is < density_channels(chr); ++is)
+        for (int is = 0; is < nspin0; ++is)
         {
             v(is, ir) += v_nl;
             vtxc_nl += v_nl * chr.rho[is][ir];
@@ -360,10 +365,9 @@ void add_rvv10(const Charge& chr, double& etxc, double& vtxc, ModuleBase::matrix
     ModuleBase::timer::end("vdw", "add_rvv10");
 }
 
-void add_rvv10_stress(const Charge& chr, ModuleBase::matrix& sigma)
+void add_rvv10_stress(const XCFunctionalParameters& parameters, const Charge& chr, ModuleBase::matrix& sigma)
 {
-    const XCFunctionalParameters& parameters = XC_Functional::get_runtime_parameters();
-    if (parameters.rvv10_b <= 0.0)
+    if (!parameters.rvv10)
     {
         return;
     }
@@ -377,7 +381,7 @@ void add_rvv10_stress(const Charge& chr, ModuleBase::matrix& sigma)
     total_density(chr, rho, grad, density_sigma);
     std::vector<double> dedn(nrxx);
     std::vector<double> dedsigma(nrxx);
-    double explicit_stress[9] = {0.0};
+    double explicit_stress[STRESS_COMPONENTS] = {0.0};
     const double energy = workspace().evaluate(pw,
                                                parameters.rvv10_b,
                                                parameters.rvv10_c,
@@ -388,7 +392,7 @@ void add_rvv10_stress(const Charge& chr, ModuleBase::matrix& sigma)
                                                explicit_stress);
 
     // integral of dE/dsigma d_a n d_b n, in units of the volume element
-    double gradient_term[9] = {0.0};
+    double gradient_term[STRESS_COMPONENTS] = {0.0};
     for (int ir = 0; ir < nrxx; ++ir)
     {
         const double g[3] = {grad[ir].x, grad[ir].y, grad[ir].z};
@@ -401,7 +405,7 @@ void add_rvv10_stress(const Charge& chr, ModuleBase::matrix& sigma)
         }
     }
 #ifdef __MPI
-    Parallel_Common::reduce_data(gradient_term, 9, pw.pool_world);
+    Parallel_Common::reduce_data(gradient_term, STRESS_COMPONENTS, pw.pool_world);
 #endif
 
     // The full strain derivative is T - delta_ab Int(n dE/dn + 2 sigma dE/dsigma) - 2 Int dE/dsigma d_a n d_b n,

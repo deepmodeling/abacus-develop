@@ -35,9 +35,6 @@ namespace LR_Util
     /// Reject unsupported NLCC force requests after pseudopotentials have been loaded.
     void check_force_pp(const UnitCell& cell, bool cal_force, const std::string& calculation);
 
-    /// Reject force requests with vdw_method rvv10, whose response kernel is not implemented.
-    void check_force_vdw(const std::string& vdw_method, bool cal_force, const std::string& calculation);
-
     /// Preserve signed sigma invariants except for the existing HSE06 stabilization.
     const std::vector<double>& prepare_xc_sigma(const std::vector<double>& sigma,
                                                bool is_hse06,

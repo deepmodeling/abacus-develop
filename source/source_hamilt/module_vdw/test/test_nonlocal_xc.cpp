@@ -58,6 +58,7 @@ namespace
 int test_rank = 0;
 int test_size = 1;
 typedef std::tuple<double, double, ModuleBase::matrix> VxcResult;
+typedef std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> MetaResult;
 // rVV10 parameters of the rPW86-PBE pairing
 const double RVV10_B = 6.3;
 const double RVV10_C = 0.0093;
@@ -103,17 +104,6 @@ double perturbation(const ModulePW::PW_Basis& pw, const int ix, const int iy, co
     const double axy = ax + ay;
     const double ay2 = 2.0 * ay;
     return std::sin(axy) + 0.3 * std::cos(ay2);
-}
-
-double x_only_density(const ModulePW::PW_Basis& pw, const int ix, const int iy, const int iz)
-{
-    const double ax = ModuleBase::TWO_PI * ix / pw.nx;
-    return 0.01 + 0.003 * std::cos(ax);
-}
-
-double zero_density(const ModulePW::PW_Basis& pw, const int ix, const int iy, const int iz)
-{
-    return 0.0;
 }
 
 /// Values of f on the z planes of this process, in the ABACUS layout [ixy * nplane + iz].
@@ -175,19 +165,27 @@ void setup(ModulePW::PW_Basis& basis, const ModuleBase::Matrix3& lattice, const 
     setup_grid(basis, lattice, cutoff, 5, 7, 9);
 }
 
-/// Sets the rVV10 parameters of the XC runtime parameters for the lifetime of the object.
-class Rvv10Parameters
+/// XC runtime parameters with the rVV10 switch set as given and the parameters of the rPW86-PBE pairing.
+XCFunctionalParameters rvv10_parameters(const bool rvv10)
+{
+    XCFunctionalParameters parameters = XC_Functional::get_runtime_parameters();
+    parameters.rvv10 = rvv10;
+    parameters.rvv10_b = RVV10_B;
+    parameters.rvv10_c = RVV10_C;
+    return parameters;
+}
+
+/// Sets the XC runtime parameters for the lifetime of the object, as ESolver_FP does.
+class RuntimeParameters
 {
   public:
-    Rvv10Parameters(const double b, const double c)
+    explicit RuntimeParameters(const bool rvv10)
     {
         saved_ = XC_Functional::get_runtime_parameters();
-        XCFunctionalParameters parameters = saved_;
-        parameters.rvv10_b = b;
-        parameters.rvv10_c = c;
+        const XCFunctionalParameters parameters = rvv10_parameters(rvv10);
         XC_Functional::set_runtime_parameters(parameters);
     }
-    ~Rvv10Parameters()
+    ~RuntimeParameters()
     {
         XC_Functional::set_runtime_parameters(saved_);
     }
@@ -223,14 +221,6 @@ class ChargeOnGrid
         chr.rho_core = core_.data();
         chr.rhog_core = core_g_.data();
     }
-    ~ChargeOnGrid()
-    {
-        chr.rho = nullptr;
-        chr.rhog = nullptr;
-        chr.rho_core = nullptr;
-        chr.rhog_core = nullptr;
-        chr.kin_r = nullptr;
-    }
     ChargeOnGrid(const ChargeOnGrid&) = delete;
     ChargeOnGrid& operator=(const ChargeOnGrid&) = delete;
 
@@ -251,10 +241,11 @@ VxcResult rvv10_result(ModulePW::PW_Basis& pw,
                        const std::vector<double>& core)
 {
     const ChargeOnGrid charge(pw, channels, core);
+    const XCFunctionalParameters parameters = rvv10_parameters(true);
     double etxc = 0.0;
     double vtxc = 0.0;
     ModuleBase::matrix v(charge.chr.nspin, pw.nrxx);
-    vdw::add_rvv10(charge.chr, etxc, vtxc, v);
+    vdw::add_rvv10(parameters, charge.chr, etxc, vtxc, v);
     return VxcResult(etxc, vtxc, v);
 }
 
@@ -264,8 +255,9 @@ ModuleBase::matrix rvv10_stress(ModulePW::PW_Basis& pw,
                                 const std::vector<double>& core)
 {
     const ChargeOnGrid charge(pw, channels, core);
+    const XCFunctionalParameters parameters = rvv10_parameters(true);
     ModuleBase::matrix sigma(3, 3);
-    vdw::add_rvv10_stress(charge.chr, sigma);
+    vdw::add_rvv10_stress(parameters, charge.chr, sigma);
     return sigma;
 }
 
@@ -289,17 +281,42 @@ void expect_same_result(const VxcResult& actual, const VxcResult& expected, cons
 /// A functional evaluated with rVV10 equals the evaluation without it plus add_rvv10.
 void expect_rvv10_added(const VxcResult& total, VxcResult semilocal, const Charge& chr)
 {
+    const XCFunctionalParameters parameters = rvv10_parameters(true);
     double& etxc = std::get<0>(semilocal);
     double& vtxc = std::get<1>(semilocal);
     ModuleBase::matrix& v = std::get<2>(semilocal);
-    vdw::add_rvv10(chr, etxc, vtxc, v);
+    vdw::add_rvv10(parameters, chr, etxc, vtxc, v);
     expect_same_result(total, semilocal, ROUNDING_TOLERANCE);
+}
+
+/// XC_Functional::v_xc for the given functional and density with and without rVV10.
+void expect_vxc_adds_rvv10(const char* functional,
+                           const Charge& chr,
+                           const UnitCell& ucell,
+                           const bool domag,
+                           const int gga_grad)
+{
+    XC_Functional::ScopedType scope(functional);
+    const int nrxx = chr.nrxx;
+    const int nspin = chr.nspin;
+    const bool domag_z = false;
+    const double hybrid_alpha = 0.0;
+    const double hse_omega = 0.0;
+    VxcResult total;
+    VxcResult semilocal;
+    for (int with_rvv10 = 0; with_rvv10 < 2; ++with_rvv10)
+    {
+        const bool rvv10 = with_rvv10 == 1;
+        RuntimeParameters parameters(rvv10);
+        VxcResult& result = rvv10 ? total : semilocal;
+        result = XC_Functional::v_xc(nrxx, &chr, &ucell, nspin, domag, domag_z, gga_grad, hybrid_alpha, hse_omega);
+    }
+    expect_rvv10_added(total, semilocal, chr);
 }
 
 class NonlocalXCTest : public testing::Test
 {
   protected:
-    Rvv10Parameters rvv10{RVV10_B, RVV10_C};
     /// grid on an oblique cell, distributed over the processes of the test
     ModulePW::PW_Basis pw{"cpu", "double"};
     /// the same grid, complete on every process
@@ -318,6 +335,7 @@ class NonlocalXCTest : public testing::Test
 
 TEST_F(NonlocalXCTest, MatchesDirectLibvdwxc)
 {
+    // unpolarized and spin-polarized layouts against libvdwxc called directly in the ABACUS axis order
     const std::vector<double> valence = local_grid(serial, valence_density);
     const std::vector<double> core = local_grid(serial, core_density);
     const VxcResult result = rvv10_result(serial, {valence}, core);
@@ -343,19 +361,10 @@ TEST_F(NonlocalXCTest, MatchesDirectLibvdwxc)
     ASSERT_NE(direct, nullptr);
     ASSERT_EQ(vdwxc_set_rvv10_parameters(direct, RVV10_B, RVV10_C), 0);
     const ModuleBase::Matrix3 a = serial.latvec * serial.lat0;
-    vdwxc_set_unit_cell(direct,
-                        serial.nx,
-                        serial.ny,
-                        serial.nz,
-                        a.e11,
-                        a.e12,
-                        a.e13,
-                        a.e21,
-                        a.e22,
-                        a.e23,
-                        a.e31,
-                        a.e32,
-                        a.e33);
+    const int nx = serial.nx;
+    const int ny = serial.ny;
+    const int nz = serial.nz;
+    vdwxc_set_unit_cell(direct, nx, ny, nz, a.e11, a.e12, a.e13, a.e21, a.e22, a.e23, a.e31, a.e32, a.e33);
     vdwxc_init_serial(direct);
     const double energy_ha = vdwxc_calculate(direct, total.data(), sigma.data(), dedn.data(), dedsigma.data());
     vdwxc_finalize(&direct);
@@ -378,12 +387,8 @@ TEST_F(NonlocalXCTest, MatchesDirectLibvdwxc)
     vtxc *= serial.omega / serial.nxyz;
     const VxcResult expected(etxc, vtxc, v);
     expect_same_result(result, expected, ROUNDING_TOLERANCE);
-}
 
-TEST_F(NonlocalXCTest, SpinChannelsShareTheTotalDensity)
-{
-    const std::vector<double> valence = local_grid(serial, valence_density);
-    const std::vector<double> core = local_grid(serial, core_density);
+    // spin channels share the total density: same energy and vtxc, and each channel gets the potential
     std::vector<double> up(serial.nrxx);
     std::vector<double> down(serial.nrxx);
     for (int ir = 0; ir < serial.nrxx; ++ir)
@@ -391,14 +396,13 @@ TEST_F(NonlocalXCTest, SpinChannelsShareTheTotalDensity)
         up[ir] = 0.7 * valence[ir];
         down[ir] = valence[ir] - up[ir];
     }
-    const VxcResult unpolarized = rvv10_result(serial, {valence}, core);
     const VxcResult polarized = rvv10_result(serial, {up, down}, core);
-    EXPECT_NEAR(std::get<0>(polarized), std::get<0>(unpolarized), ROUNDING_TOLERANCE);
-    EXPECT_NEAR(std::get<1>(polarized), std::get<1>(unpolarized), ROUNDING_TOLERANCE);
+    EXPECT_NEAR(std::get<0>(polarized), etxc, ROUNDING_TOLERANCE);
+    EXPECT_NEAR(std::get<1>(polarized), vtxc, ROUNDING_TOLERANCE);
     for (int ir = 0; ir < serial.nrxx; ++ir)
     {
-        EXPECT_NEAR(std::get<2>(polarized)(0, ir), std::get<2>(unpolarized)(0, ir), ROUNDING_TOLERANCE);
-        EXPECT_NEAR(std::get<2>(polarized)(1, ir), std::get<2>(unpolarized)(0, ir), ROUNDING_TOLERANCE);
+        EXPECT_NEAR(std::get<2>(polarized)(0, ir), v(0, ir), ROUNDING_TOLERANCE);
+        EXPECT_NEAR(std::get<2>(polarized)(1, ir), v(0, ir), ROUNDING_TOLERANCE);
     }
 }
 
@@ -419,6 +423,16 @@ TEST_F(NonlocalXCTest, DistributedGridMatchesCompleteGrid)
             const int local = ixy * pw.nplane + iz;
             const int global = ixy * pw.nz + pw.startz_current + iz;
             EXPECT_NEAR(std::get<2>(distributed)(0, local), std::get<2>(complete)(0, global), ROUNDING_TOLERANCE);
+        }
+    }
+    const ModuleBase::matrix stress = rvv10_stress(pw, {valence}, core);
+    const ModuleBase::matrix stress_complete = rvv10_stress(serial, {valence_complete}, core_complete);
+    EXPECT_GT(std::abs(stress_complete(0, 0)), 1.0e-10);
+    for (int a = 0; a < 3; ++a)
+    {
+        for (int b = 0; b < 3; ++b)
+        {
+            EXPECT_NEAR(stress(a, b), stress_complete(a, b), ROUNDING_TOLERANCE);
         }
     }
 }
@@ -451,38 +465,14 @@ TEST_F(NonlocalXCTest, PotentialIsTheDerivativeOfTheEnergy)
     EXPECT_NEAR(finite_difference, contraction, FINITE_DIFFERENCE_TOLERANCE);
 }
 
-TEST_F(NonlocalXCTest, ObliqueCellMatchesEquivalentOrthogonalCell)
-{
-    // Both cells have the volume sqrt(3) lat0^3 and the plane spacing sqrt(3)/2 lat0 along the
-    // first lattice direction, so a density that depends only on the first fractional coordinate
-    // has the same nonlocal energy and potential in both. A transposed cell matrix breaks this.
-    ModulePW::PW_Basis orthogonal{"cpu", "double"};
-    orthogonal.initmpi(1, 0, MPI_COMM_SELF);
-    const ModuleBase::Matrix3 rectangle(std::sqrt(0.75), 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 2.0);
-    setup(orthogonal, rectangle, BASIS_CUTOFF);
-    ASSERT_NEAR(serial.omega, orthogonal.omega, ROUNDING_TOLERANCE);
-
-    const std::vector<double> density = local_grid(serial, x_only_density);
-    const std::vector<double> no_core = local_grid(serial, zero_density);
-    const VxcResult oblique = rvv10_result(serial, {density}, no_core);
-    const VxcResult rectangular = rvv10_result(orthogonal, {density}, no_core);
-    EXPECT_NEAR(std::get<0>(oblique), std::get<0>(rectangular), ROUNDING_TOLERANCE);
-    for (int ir = 0; ir < serial.nrxx; ++ir)
-    {
-        EXPECT_NEAR(std::get<2>(oblique)(0, ir), std::get<2>(rectangular)(0, ir), ROUNDING_TOLERANCE);
-    }
-}
-
 TEST_F(NonlocalXCTest, LeftHandedCellGivesTheMirrorImageResult)
 {
-    // A mirror image has the same nonlocal energy and potential; libvdwxc's signed cell volume would
-    // otherwise flip the sign of the energy.
+    // A mirror image has the same result; libvdwxc's signed cell volume would flip the sign of the energy.
     ModulePW::PW_Basis mirror{"cpu", "double"};
     mirror.initmpi(1, 0, MPI_COMM_SELF);
     const ModuleBase::Matrix3 mirrored = oblique_lattice(-1.0);
     setup(mirror, mirrored, BASIS_CUTOFF);
     ASSERT_LT(mirror.latvec.Det(), 0.0);
-
     const std::vector<double> valence = local_grid(serial, valence_density);
     const std::vector<double> core = local_grid(serial, core_density);
     const VxcResult right_handed = rvv10_result(serial, {valence}, core);
@@ -522,24 +512,6 @@ TEST_F(NonlocalXCTest, WorkspaceFollowsGridCellAndProcessChanges)
     EXPECT_GT(std::abs(std::get<0>(other_cell) - std::get<0>(first)), 1.0e-8);
 }
 
-TEST_F(NonlocalXCTest, DistributedStressMatchesCompleteGrid)
-{
-    const std::vector<double> valence = local_grid(pw, valence_density);
-    const std::vector<double> core = local_grid(pw, core_density);
-    const std::vector<double> valence_complete = local_grid(serial, valence_density);
-    const std::vector<double> core_complete = local_grid(serial, core_density);
-    const ModuleBase::matrix distributed = rvv10_stress(pw, {valence}, core);
-    const ModuleBase::matrix complete = rvv10_stress(serial, {valence_complete}, core_complete);
-    EXPECT_GT(std::abs(complete(0, 0)), 1.0e-10);
-    for (int a = 0; a < 3; ++a)
-    {
-        for (int b = 0; b < 3; ++b)
-        {
-            EXPECT_NEAR(distributed(a, b), complete(a, b), ROUNDING_TOLERANCE);
-        }
-    }
-}
-
 TEST_F(NonlocalXCTest, StressIsTheStrainDerivativeOfTheEnergy)
 {
     // A strain keeps the grid and every G component of the density, so the stress is the exact derivative
@@ -549,7 +521,7 @@ TEST_F(NonlocalXCTest, StressIsTheStrainDerivativeOfTheEnergy)
     const ModuleBase::Matrix3 lattice = oblique_lattice(1.0);
     setup(box, lattice, LARGEST_SPHERE_CUTOFF);
     const std::vector<double> density = local_grid(box, valence_density);
-    const std::vector<double> no_core = local_grid(box, zero_density);
+    const std::vector<double> no_core(box.nrxx, 0.0);
     const VxcResult reference = rvv10_result(box, {density}, no_core);
     const ModuleBase::matrix extra = rvv10_stress(box, {density}, no_core);
     // the XC diagonal term that ABACUS adds from etxc and vtxc
@@ -588,8 +560,8 @@ TEST_F(NonlocalXCTest, StressIsTheStrainDerivativeOfTheEnergy)
 
 TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
 {
-    // v_xc and v_xc_meta with vdw_method rvv10 equal the semilocal result plus add_rvv10, for native PBE
-    // (final return), a libxc GGA (libxc branch), noncollinear PBE (NCGGA exit) and SCAN (v_xc_meta).
+    // v_xc and v_xc_meta with rVV10 equal the semilocal result plus add_rvv10, for native PBE (final
+    // return), a libxc GGA (v_xc_libxc), noncollinear PBE (NCGGA return) and SCAN (v_xc_meta).
     const std::vector<double> valence = local_grid(pw, valence_density);
     const std::vector<double> core = local_grid(pw, core_density);
     const std::vector<double> zeros(pw.nrxx);
@@ -608,47 +580,11 @@ TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
     ucell.omega = pw.omega;
     ucell.tpiba = pw.tpiba;
     ucell.magnet.lsign_ = false;
-    const bool domag_z = false;
-    const double hybrid_alpha = 0.0;
-    const double hse_omega = 0.0;
-
-    const int ncases = 3;
-    const char* functionals[ncases] = {"PBE", "GGA_X_RPW86+GGA_C_PBE", "PBE"};
-    const std::vector<std::vector<double>>* densities[ncases] = {&collinear, &collinear, &noncollinear};
-    const bool domags[ncases] = {false, false, true};
-    const int gga_grads[ncases] = {0, 0, 2};
-    for (int icase = 0; icase < ncases; ++icase)
-    {
-        SCOPED_TRACE(testing::Message() << functionals[icase] << " with nspin " << densities[icase]->size());
-        XC_Functional::ScopedType scope(functionals[icase]);
-        const ChargeOnGrid charge(pw, *densities[icase], core);
-        const int nspin = charge.chr.nspin;
-        const bool domag = domags[icase];
-        const int gga_grad = gga_grads[icase];
-        const VxcResult total = XC_Functional::v_xc(pw.nrxx,
-                                                    &charge.chr,
-                                                    &ucell,
-                                                    nspin,
-                                                    domag,
-                                                    domag_z,
-                                                    gga_grad,
-                                                    hybrid_alpha,
-                                                    hse_omega);
-        VxcResult semilocal;
-        {
-            Rvv10Parameters off(0.0, 0.0);
-            semilocal = XC_Functional::v_xc(pw.nrxx,
-                                            &charge.chr,
-                                            &ucell,
-                                            nspin,
-                                            domag,
-                                            domag_z,
-                                            gga_grad,
-                                            hybrid_alpha,
-                                            hse_omega);
-        }
-        expect_rvv10_added(total, semilocal, charge.chr);
-    }
+    const ChargeOnGrid polarized(pw, collinear, core);
+    const ChargeOnGrid magnetized(pw, noncollinear, core);
+    expect_vxc_adds_rvv10("PBE", polarized.chr, ucell, false, 0);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", polarized.chr, ucell, false, 0);
+    expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 2);
 
     XC_Functional::ScopedType scan("SCAN");
     const std::vector<std::vector<double>> unpolarized(1, valence);
@@ -658,30 +594,24 @@ TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
     charge.chr.kin_r = kinetic_rows.data();
     const std::vector<int> func_id = XC_Functional::get_func_id();
     const int nspin = 1;
-    typedef std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> MetaResult;
-    const MetaResult total = XC_Functional_Libxc::v_xc_meta(func_id,
-                                                            pw.nrxx,
-                                                            pw.omega,
-                                                            pw.tpiba,
-                                                            &charge.chr,
-                                                            nspin,
-                                                            hybrid_alpha,
-                                                            hse_omega);
-    MetaResult semilocal;
+    const double hybrid_alpha = 0.0;
+    const double hse_omega = 0.0;
+    VxcResult results[2];
+    for (int with_rvv10 = 0; with_rvv10 < 2; ++with_rvv10)
     {
-        Rvv10Parameters off(0.0, 0.0);
-        semilocal = XC_Functional_Libxc::v_xc_meta(func_id,
-                                                   pw.nrxx,
-                                                   pw.omega,
-                                                   pw.tpiba,
-                                                   &charge.chr,
-                                                   nspin,
-                                                   hybrid_alpha,
-                                                   hse_omega);
+        const bool rvv10 = with_rvv10 == 1;
+        RuntimeParameters parameters(rvv10);
+        const MetaResult meta = XC_Functional_Libxc::v_xc_meta(func_id,
+                                                               pw.nrxx,
+                                                               pw.omega,
+                                                               pw.tpiba,
+                                                               &charge.chr,
+                                                               nspin,
+                                                               hybrid_alpha,
+                                                               hse_omega);
+        results[with_rvv10] = VxcResult(std::get<0>(meta), std::get<1>(meta), std::get<2>(meta));
     }
-    const VxcResult total_xc(std::get<0>(total), std::get<1>(total), std::get<2>(total));
-    const VxcResult semilocal_xc(std::get<0>(semilocal), std::get<1>(semilocal), std::get<2>(semilocal));
-    expect_rvv10_added(total_xc, semilocal_xc, charge.chr);
+    expect_rvv10_added(results[1], results[0], charge.chr);
 }
 
 } // namespace

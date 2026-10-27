@@ -225,6 +225,8 @@ TEST_F(InputTest, VdwMethodRvv10)
     const std::string reason = "Requires esolver_type!=dfpt";
     expect_invalid_input(input_file, "vdw_method rvv10\nesolver_type dfpt\n", reason);
     expect_invalid_input(input_file, "vdw_method rvv10\nesolver_type lr\ncalculation nscf\ncal_force 1\n", reason);
+    // relax resets cal_force to true, so LR-TDDFT relaxation is rejected without an explicit cal_force
+    expect_invalid_input(input_file, "vdw_method rvv10\nesolver_type ks-lr\ncalculation relax\ngamma_only 1\n", reason);
     expect_invalid_input(input_file, "vdw_method rvv10\nvdw_rvv10_b 0\n", "vdw_rvv10_b");
     expect_invalid_input(input_file, "vdw_method rvv10\nvdw_rvv10_c -0.1\n", "vdw_rvv10_c");
     expect_invalid_input(input_file, "vdw_method RVV10\n", "vdw_method");

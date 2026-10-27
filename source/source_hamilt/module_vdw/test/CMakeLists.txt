@@ -23,7 +23,7 @@ if(ENABLE_DFTD4 AND ENABLE_MPI)
   )
 endif()
 
-if(ENABLE_LIBVDWXC)
+if(ENABLE_LIBVDWXC AND ENABLE_MPI)
   addtest(
     TARGET MODULE_HAMILT_nonlocal_xcTest
     LIBS xc_

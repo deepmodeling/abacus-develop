@@ -39,26 +39,18 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     if (use_libxc)
     {
 #ifdef __LIBXC
-        std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(),
-                                              nrxx,
-                                              ucell->omega,
-                                              ucell->tpiba,
-                                              chr,
-                                              nspin,
-                                              domag,
-                                              domag_z,
-                                              gga_grad,
-                                              &(scaling_factor_xc),
-                                              hybrid_alpha,
-                                              hse_omega);
-#ifdef __LIBVDWXC
-        double& etxc = std::get<0>(etxc_vtxc_v);
-        double& vtxc = std::get<1>(etxc_vtxc_v);
-        ModuleBase::matrix& v = std::get<2>(etxc_vtxc_v);
-        vdw::add_rvv10(*chr, etxc, vtxc, v);
-#endif
-        return etxc_vtxc_v;
+        return XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(),
+                                               nrxx,
+                                               ucell->omega,
+                                               ucell->tpiba,
+                                               chr,
+                                               nspin,
+                                               domag,
+                                               domag_z,
+                                               gga_grad,
+                                               &(scaling_factor_xc),
+                                               hybrid_alpha,
+                                               hse_omega);
 #else
         ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
@@ -73,7 +65,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
         double& etxc = std::get<0>(etxc_vtxc_v);
         double& vtxc = std::get<1>(etxc_vtxc_v);
         ModuleBase::matrix& v = std::get<2>(etxc_vtxc_v);
-        vdw::add_rvv10(*chr, etxc, vtxc, v);
+        vdw::add_rvv10(runtime_parameters, *chr, etxc, vtxc, v);
 #endif
         return etxc_vtxc_v;
     }
@@ -225,7 +217,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     etxc *= ucell->omega / chr->rhopw->nxyz;
     vtxc *= ucell->omega / chr->rhopw->nxyz;
 #ifdef __LIBVDWXC
-    vdw::add_rvv10(*chr, etxc, vtxc, v);
+    vdw::add_rvv10(runtime_parameters, *chr, etxc, vtxc, v);
 #endif
 
     ModuleBase::timer::end("XC_Functional", "v_xc");

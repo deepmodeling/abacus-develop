@@ -19,7 +19,9 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
     ModuleBase::TITLE("Stress","stress_gga");
     ModuleBase::timer::start("Stress","stress_gga");
 #ifdef __LIBVDWXC
-    vdw::add_rvv10_stress(*chr, sigma);
+    // rVV10 is added before the LDA return below; stress_gga is the XC stress hook of PW, LCAO, SDFT and OFDFT
+    const XCFunctionalParameters& xc_parameters = XC_Functional::get_runtime_parameters();
+    vdw::add_rvv10_stress(xc_parameters, *chr, sigma);
 #endif
 
     int func_type = XC_Functional::get_func_type();

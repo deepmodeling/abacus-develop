@@ -317,12 +317,6 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
             << ") needs response channels that are not implemented";
         ModuleBase::WARNING_QUIT("ESolver_DFPT_PW::init_dfpt", msg.str());
     }
-    if (XC_Functional::get_runtime_parameters().rvv10_b > 0.0)
-    {
-        ModuleBase::WARNING_QUIT(
-            "ESolver_DFPT_PW::init_dfpt",
-            "the response of the rVV10 nonlocal correlation (vdw_method rvv10) is not implemented");
-    }
 
     // first-order XC kernel around the converged ground-state density:
     // with libxc use the analytic kernel (libxc second derivatives in the

@@ -276,10 +276,12 @@ void ReadInput::item_model()
 * d3_0: Grimme's DFT-D3(0) dispersion correction method (zero-damping)
 * d3_bj: Grimme's DFTD3(BJ) dispersion correction method (BJ-damping)
 * d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
-* rvv10: rVV10 nonlocal correlation evaluated self-consistently with the external libvdwxc library and added to the exchange-correlation energy, potential, forces and stress of dft_functional; see vdw_rvv10_b and vdw_rvv10_c. DFPT and LR-TDDFT forces are not supported, and LR-TDDFT spectra use the kernel selected by xc_kernel without the rVV10 response
+* rvv10: rVV10 nonlocal correlation evaluated self-consistently with the external libvdwxc library and added to the exchange-correlation energy, potential, forces and stress of dft_functional; see vdw_rvv10_b and vdw_rvv10_c
 * none: no vdW correction
 
-[NOTE] ABACUS automatically loads DFT-D3 parameters for supported functionals according to dft_functional setting. Individual user values overwrite the corresponding tabulated values. Setting all four of vdw_s6, vdw_s8, vdw_a1 and vdw_a2 defines a fully custom set and bypasses functional lookup.)";
+[NOTE] ABACUS automatically loads DFT-D3 parameters for supported functionals according to dft_functional setting. Individual user values overwrite the corresponding tabulated values. Setting all four of vdw_s6, vdw_s8, vdw_a1 and vdw_a2 defines a fully custom set and bypasses functional lookup.
+
+[NOTE] vdw_method rvv10 does not support DFPT or LR-TDDFT forces. LR-TDDFT spectra use the kernel selected by xc_kernel, without the rVV10 response.)";
         item.default_value = "none";
         item.unit = "";
         read_sync_string(input.vdw_method);
