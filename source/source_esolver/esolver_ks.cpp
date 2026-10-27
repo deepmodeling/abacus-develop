@@ -1,5 +1,6 @@
 #include "esolver_ks.h"
 #include "source_base/timer_wrapper.h"
+#include "source_base/module_parallel/para_bridge.h"
 
 // for jason output information
 #include "source_io/module_json/output_info.h"
@@ -9,6 +10,7 @@
 #include "source_estate/module_charge/chg_drho.h" // module_charge::cal_drho/cal_dkin
 #include "source_estate/module_charge/chg_init.h" // module_charge::InitRhoCfg
 #include "source_estate/module_charge/chg_tools.h" // module_charge::check_rho
+#include "source_estate/module_charge/chg_rhog_io.h"
 #include "source_pw/module_pwdft/setup_pwwfc.h" // mohan add 20251018
 #include "source_hsolver/hsolver.h"
 #include "source_io/module_energy/write_eig_occ.h"
@@ -405,16 +407,27 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
                                        p_chgmix->get_mixing_config(), ucell.omega);
     }
 
-    // Iter finish 
+    // Iter finish
     const bool output_charge = iter % this->inp_->out_freq_elec == 0 || conv_esolver || iter == iter_limit;
     if (!this->defer_iter_output(istep) && output_charge)
     {
-        // The FP hook only writes density backups. Select output here using the
-        // active limit so its legacy scf_nmax check cannot trigger extra writes.
-        // This local flag forces output without changing actual convergence.
-        // Revisit this call if the base hook gains responsibilities beyond output.
-        bool force_output = true;
-        ESolver_FP::iter_finish(ucell, istep, iter, force_output);
+        const auto& system = PARAM.globalv;
+        const bool write_restart = this->inp_->out_chg[0] != -1;
+        const std::string prefix = system.global_out_dir + this->inp_->suffix;
+        const bool write_tau = XC_Functional::get_ked_flag();
+        const bool writer_pool = GlobalV::MY_POOL == 0;
+        const Parallel::ParaWorld pw_world = Parallel::make_pw_world();
+        module_charge::write_density_restart(this->chr,
+                                             *this->pw_rhod,
+                                             ucell.GT,
+                                             prefix,
+                                             this->inp_->nspin,
+                                             write_restart,
+                                             system.gamma_only_pw,
+                                             write_tau,
+                                             writer_pool,
+                                             pw_world,
+                                             &GlobalV::ofs_warning);
     }
 
     // the end, print time
