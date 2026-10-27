@@ -1,6 +1,7 @@
 #ifndef HSOLVER_EXP_LANCZOS_H
 #define HSOLVER_EXP_LANCZOS_H
 #include "source_hsolver/module_rt_pw/exp_action.h"
+#include "source_hsolver/module_rt_pw/linear_workspace.h"
 
 namespace hsolver
 {
@@ -9,6 +10,7 @@ class ExpLanczos final : public ExpAction<T, Device>
 {
   private:
     const diag_comm_info comm_;
+    LinearWorkspace<T, Device> work_;
     ct::Tensor basis_;
     ct::Tensor image_;
     ct::Tensor packed_;

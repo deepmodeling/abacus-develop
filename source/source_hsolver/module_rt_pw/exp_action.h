@@ -3,7 +3,6 @@
 
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/module_rt_pw/linear_algebra.h"
-#include "source_hsolver/module_rt_pw/linear_workspace.h"
 #include "source_hsolver/module_rt_pw/orb_buffer.h"
 
 #include <memory>
@@ -54,7 +53,6 @@ class ExpAction
   protected:
     ExpControls exp_ctrl_;
     LinearAlgebra<T, Device> algebra_;
-    LinearWorkspace<T, Device> work_;
 
   public:
     ExpAction(const ExpControls& exp_ctrl, const diag_comm_info& comm);

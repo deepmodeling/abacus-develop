@@ -9,8 +9,7 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-ExpAction<T, Device>::ExpAction(const ExpControls& exp_ctrl, const diag_comm_info& comm)
-    : exp_ctrl_(exp_ctrl), algebra_(comm), work_(comm, 1)
+ExpAction<T, Device>::ExpAction(const ExpControls& exp_ctrl, const diag_comm_info& comm) : exp_ctrl_(exp_ctrl), algebra_(comm)
 {
     using Real = typename T::value_type;
     if (exp_ctrl_.rel_tol == 0.0)

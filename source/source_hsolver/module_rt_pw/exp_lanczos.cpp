@@ -33,7 +33,7 @@ ExpResult failed_band(ExpResult result, int band, bool retry)
 
 template <typename T, typename Device>
 ExpLanczos<T, Device>::ExpLanczos(const ExpControls& exp_ctrl, const diag_comm_info& comm)
-    : ExpAction<T, Device>(exp_ctrl, comm), comm_(comm)
+    : ExpAction<T, Device>(exp_ctrl, comm), comm_(comm), work_(comm, 1)
 {
 }
 
