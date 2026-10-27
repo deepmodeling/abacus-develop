@@ -1,4 +1,6 @@
 #include "pot_sccs.h"
+#include "sccs_pcc_0d.h"
+#include "sccs_pcc_2d.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -8,6 +10,7 @@
 #include "source_hamilt/module_sccs/sccs_ion_charge.h"
 #include "source_hamilt/module_sccs/sccs_ion_force.h"
 #include "source_hamilt/module_sccs/sccs_response.h"
+#include "source_hamilt/module_sccs/sccs_pw_coulomb.h"
 #include "source_io/module_parameter/input_parameter.h"
 
 #include <cmath>
@@ -16,6 +19,13 @@
 
 namespace elecstate
 {
+namespace
+{
+// Charge tolerance in e, the same as the PotPcc electron-count check: far
+// above the grid round-off (~1e-12 e) and far below any physical net charge.
+const double charge_tolerance = 1e-6;
+} // namespace
+
 void sccs_cfg_input(const Input_para& input,
                     ModuleSccs::SccsConfig& config,
                     ModuleSccs::PolarizationSolverParameters& solver)
@@ -35,6 +45,19 @@ void sccs_cfg_input(const Input_para& input,
         config = ModuleSccs::preset_config(preset);
     }
     config.surface_regularization = input.sccs_surface_eta;
+    if (input.assume_isolated == "pcc_0d")
+    {
+        config.boundary = ModuleSccs::Boundary::Pcc0d;
+    }
+    else if (input.assume_isolated == "pcc_2d")
+    {
+        config.boundary = ModuleSccs::Boundary::Pcc2d;
+        config.pcc_2d_axis = input.pcc_2d_axis;
+    }
+    else
+    {
+        config.boundary = ModuleSccs::Boundary::Periodic;
+    }
     solver.max_iterations = input.sccs_maxiter;
     solver.tolerance_rms = input.sccs_tol_rms;
     solver.tolerance_max = input.sccs_tol_max;
@@ -48,9 +71,14 @@ std::string check_charge(const ModuleSccs::SccsConfig& config, const UnitCell& c
         ionic_charge += cell.atoms[it].ncpp.zv * cell.atoms[it].na;
     }
     const double net_charge = ionic_charge - electron_count;
-    if (config.cavity.epsilon_bulk <= 1.0 || std::abs(net_charge) <= 1e-6) { return std::string(); }
+    const bool periodic = config.boundary == ModuleSccs::Boundary::Periodic;
+    if (!periodic || config.cavity.epsilon_bulk <= 1.0 || std::abs(net_charge) <= charge_tolerance)
+    {
+        return std::string();
+    }
     return "charged SCCS with periodic boundaries: the periodic Poisson solver drops the G = 0 component "
-           "of the net charge, so the energy depends on the cell size.";
+           "of the net charge, so the energy depends on the cell size. Use assume_isolated pcc_0d or pcc_2d "
+           "for converged charged energies.";
 }
 
 PotSccs::PotSccs(const ModulePW::PW_Basis* basis,
@@ -87,22 +115,36 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     double valence_charge = 0.0;
     for (const unitcell::AtomData& atom : atoms) { valence_charge += atom.valence_charge; }
     const double ionic_error = grid_charges[1] * dv - valence_charge;
-    if (std::abs(ionic_error) > 1e-6)
+    if (std::abs(ionic_error) > charge_tolerance)
     {
         ModuleBase::WARNING_QUIT("PotSccs::cal_v_eff", "SCCS ionic density normalization does not match the valence charge");
     }
-    if (std::abs(electron_error) > 1e-6)
+    // With PCC the PCC component reports the same mismatch.
+    if (config_.boundary == ModuleSccs::Boundary::Periodic && std::abs(electron_error) > charge_tolerance)
     {
         std::ostringstream message;
         message << "SCCS grid electron count differs from the expected value by " << electron_error
                 << " e; the solute charge uses the grid density";
         ModuleBase::WARNING("PotSccs::cal_v_eff", message.str());
     }
+    std::unique_ptr<ModuleSccs::CoulombOperator> coulomb;
+    if (config_.boundary == ModuleSccs::Boundary::Pcc0d)
+    {
+        pcc_0d_operator(*cell, basis, atoms, coulomb);
+    }
+    else if (config_.boundary == ModuleSccs::Boundary::Pcc2d)
+    {
+        pcc_2d_operator(*cell, basis, atoms, config_.pcc_2d_axis, coulomb);
+    }
+    else
+    {
+        coulomb.reset(new ModuleSccs::PeriodicCoulombOperator(basis, cell->tpiba));
+    }
     ModuleSccs::SccsResponse response;
     ModuleSccs::solve_response(density, solute_charge, config_.cavity, solver_, restart_potential_, basis,
-                               cell->tpiba, response);
+                               cell->tpiba, *coulomb, response);
     ModuleSccs::FunctionalResult functional;
-    ModuleSccs::eval_functional(solute_charge, response, config_, basis, cell->tpiba, functional);
+    ModuleSccs::eval_functional(solute_charge, response, config_, basis, cell->tpiba, *coulomb, functional);
     electrostatic_rydberg_ = 2.0 * functional.reaction_energy;
     non_electrostatic_rydberg_ = 2.0 * (functional.surface_energy + functional.volume_energy);
     electrostatic_potential_.resize(basis.nrxx);

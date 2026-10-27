@@ -97,6 +97,11 @@ rules. Read the complete governance document before making or reviewing changes:
 
 - Core C++ implementation lives under `source/`; source additions must be wired
   through the relevant `CMakeLists.txt`.
+- Each module directory under `source/` (e.g., `source/source_esolver/`,
+  `source/source_io/`) may carry its own `AGENTS.md` describing module-specific
+  design constraints and conventions. When working inside such a directory,
+  read and follow its `AGENTS.md` in addition to this file; the module-level
+  rules refine, but never override, this root file.
 - INPUT parsing and help metadata live under `source/source_io/`; user-facing
   INPUT reference is generated from that metadata during the documentation
   build.

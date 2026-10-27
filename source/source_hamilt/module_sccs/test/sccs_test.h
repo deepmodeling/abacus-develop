@@ -11,6 +11,21 @@
 
 namespace SccsTest
 {
+// Model charges of the open-boundary tests, mean + amplitude * cosine mode.
+// The mean gives a monopole and the mode has an analytic potential; the
+// operators are linear, so only the shape matters, and the values are of
+// valence-density size with the density kept positive.
+const double charge_mean = 1e-3;
+const double charge_amplitude = 2e-4;
+// A second charge, not proportional to the first, for symmetry checks.
+const double probe_mean = 3e-4;
+const double probe_amplitude = 1e-4;
+// Cavity density inside the water-neutral switching range (1e-4 to 5e-3), so
+// the dielectric varies in space; the small amplitude keeps it mildly
+// nonuniform and the sqrt-CG short.
+const double cavity_mean = 1e-3;
+const double cavity_amplitude = 2e-5;
+
 extern int pool_size;
 extern int pool_rank;
 
@@ -21,12 +36,18 @@ protected:
 
     void SetUp() override
     {
-#ifdef __MPI
-        basis.initmpi(pool_size, pool_rank, POOL_WORLD);
-#endif
         const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0,
                                           0.0, 1.0, 0.0,
                                           0.0, 0.0, 1.0);
+        set_up_basis(lattice);
+    }
+
+    // Rows of lattice in units of length; ecut 20 Ry.
+    void set_up_basis(const ModuleBase::Matrix3& lattice)
+    {
+#ifdef __MPI
+        basis.initmpi(pool_size, pool_rank, POOL_WORLD);
+#endif
         basis.initgrids(length, lattice, 20.0);
         basis.initparameters(false, 20.0, 1, false);
         basis.setuptransform();

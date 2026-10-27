@@ -120,6 +120,52 @@ TEST_F(InputDomainReaderTest, PreservesLegacyEmptyValues)
     EXPECT_TRUE(input.inp.out_pchg.empty());
 }
 
+TEST_F(InputDomainReaderTest, RejectsMissingOrdinaryStringValues)
+{
+    for (const std::string label : {"stru_file", "kpoint_file", "suffix", "dft_functional"})
+    {
+        for (const std::string ending : {"", "\n", " # missing value\n", " ! missing value\n"})
+        {
+            const std::string values = label + ending;
+            const std::string output = reject_input(values);
+            const std::string diagnostic = "Invalid INPUT parameter '" + label + "': supplied ''";
+            const std::string manual = ModuleIO::input_manual_link(label);
+            EXPECT_NE(output.find(diagnostic), std::string::npos);
+            EXPECT_NE(output.find("Expected one String."), std::string::npos);
+            EXPECT_NE(output.find(manual), std::string::npos);
+            EXPECT_NE(output.find(filename), std::string::npos);
+        }
+    }
+}
+
+TEST_F(InputDomainReaderTest, RejectsExtraOrdinaryStringValues)
+{
+    const std::string output = reject_input("stru_file STRU extra\n");
+    EXPECT_NE(output.find("supplied 'STRU extra'"), std::string::npos);
+    EXPECT_NE(output.find("Expected one String."), std::string::npos);
+    EXPECT_NE(output.find("input-main.html#stru-file"), std::string::npos);
+}
+
+TEST_F(InputDomainReaderTest, KeepsExplicitStringPathsAndOmittedDefaults)
+{
+    write_input("stru_file /tmp/structure\nkpoint_file //server/KPT # custom path\n");
+    ModuleIO::ReadInput reader(0);
+    reader.check_ntype_flag = false;
+    Parameter input;
+    reader.read_parameters(input, filename);
+    EXPECT_EQ(input.inp.stru_file, "/tmp/structure");
+    EXPECT_EQ(input.inp.kpoint_file, "//server/KPT");
+    EXPECT_EQ(input.inp.suffix, "ABACUS");
+
+    write_input("");
+    ModuleIO::ReadInput defaults_reader(0);
+    defaults_reader.check_ntype_flag = false;
+    Parameter defaults;
+    defaults_reader.read_parameters(defaults, filename);
+    EXPECT_EQ(defaults.inp.stru_file, "STRU");
+    EXPECT_EQ(defaults.inp.kpoint_file, "KPT");
+}
+
 TEST_F(InputDomainReaderTest, KeepsTrailingCommentsAndAbsolutePaths)
 {
     write_input("scf_thr 1e-7 // about iteration\n"
