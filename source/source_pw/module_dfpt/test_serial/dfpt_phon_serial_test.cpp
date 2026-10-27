@@ -347,7 +347,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
     }
     data_.set_dpsi(0, 0, 0, dpsi_inj);
 
-    phon_.accumulate_electron(0, 0, 1, psi, wg, data_);
+    phon_.accumulate_electron(0, 0, 1, psi, wg, data_, std::vector<std::complex<double>>());
 
     // expected: row 1 (atom 0, dir 1) of the Hermitian 2n+1 accumulation:
     // the row element receives wg*<dpsi|dV^a|psi> once per off-diagonal
@@ -400,7 +400,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2GateOffGenericQ)
     }
     data_.set_dpsi(0, 0, 0, dpsi_inj);
 
-    phon_.accumulate_electron(0, 0, 0, psi, wg, data_);
+    phon_.accumulate_electron(0, 0, 0, psi, wg, data_, std::vector<std::complex<double>>());
 
     const std::vector<ModuleBase::Vector3<double>> g0(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int adir = 0; adir < 3; ++adir)
@@ -479,7 +479,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
     }
     data_.set_dpsi(0, 0, 0, dpsi_inj);
 
-    phon_.accumulate_electron(0, 0, 1, psi, wg, data_);
+    phon_.accumulate_electron(0, 0, 1, psi, wg, data_, std::vector<std::complex<double>>());
 
     for (int adir = 0; adir < 3; ++adir)
     {

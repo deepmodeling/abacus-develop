@@ -43,6 +43,10 @@ struct DFPT_PW_InitContext
     double nelec;
     double ecutwfc;
     const Plus_U_Base* dftu;
+    /// ground-state XC potential on the rho grid (valence + core charge
+    /// input, the same density the kernel linearizes around); consumed by
+    /// the nlcc diagonal 2n+1 term (QE dynmatcc). Null disables that term.
+    const std::vector<double>* vxc_r = nullptr;
 };
 
 /**

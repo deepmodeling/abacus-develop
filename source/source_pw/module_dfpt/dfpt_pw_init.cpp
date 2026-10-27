@@ -120,6 +120,10 @@ void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
     }
     rho_.init({nspin, nrxx, ctx.pw_rho, ctx.pw_wfc, ctx.ucell->G, mix_type, mix_beta, kerker_a2});
     phon_.init(*ctx.ucell, ctx.pw_rho, &pert_);
+    // nlcc direct-term providers (QE dynmat_nlcc + dynmatcc equivalents):
+    // the pure core-response builder and the ground-state XC potential
+    phon_.set_rho(&rho_);
+    phon_.set_vxc_r(ctx.vxc_r);
     q0_.init(*ctx.ucell, ctx.pw_rho, ctx.pw_wfc, &pert_);
     hamilt_.reset(new DFPT_HamiltShift(*ctx.ucell, ctx.pw_rho, ctx.pw_wfc, *ctx.veff_r, &pert_));
     data_.init(&qlist_, nk, nbands, npw_max, nrxx, nspin, nat, ctx.dftu);

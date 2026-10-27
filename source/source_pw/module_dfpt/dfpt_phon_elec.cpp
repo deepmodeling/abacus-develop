@@ -8,6 +8,9 @@
 #include "dfpt_kq_basis.h"
 #include "dfpt_pert.h"
 #include "dfpt_pw_data.h"
+#include "dfpt_rho.h"
+#include "source_base/math_integral.h"
+#include "source_base/math_sphbes.h"
 
 #include <algorithm>
 #include <cmath>
@@ -134,11 +137,12 @@ void scatter_chi_to_r(const ModulePW::PW_Basis& pw_rho,
 } // namespace
 
 void DFPT_Phon::accumulate_electron(int q_idx,
-                                    int atom_idx,
-                                    int dir,
-                                    const psi::Psi<std::complex<double>>& psi,
-                                    const ModuleBase::matrix& wg,
-                                    DFPT_PW_Data& data)
+                                     int atom_idx,
+                                     int dir,
+                                     const psi::Psi<std::complex<double>>& psi,
+                                     const ModuleBase::matrix& wg,
+                                     DFPT_PW_Data& data,
+                                     const std::vector<std::complex<double>>& dvxc_r)
 {
     ModuleBase::TITLE("DFPT_Phon", "accumulate_electron");
     ModuleBase::timer::start("DFPT_Phon", "accumulate_electron");
@@ -186,9 +190,165 @@ void DFPT_Phon::accumulate_electron(int q_idx,
         }
     }
 
+    // ---- nlcc direct terms (QE dynmat_nlcc + dynmatcc) ----
+    accum_nlcc_kernel(atom_idx, dir, q_idx, data, dvxc_r);
+    accum_nlcc_diag(atom_idx, q_idx);
+
     // restore the converged dpsi of this displacement
     restore_dpsi(data, q_idx, psi.get_nk(), psi.get_nbands(), dpsib);
     ModuleBase::timer::end("DFPT_Phon", "accumulate_electron");
+}
+
+void DFPT_Phon::accum_nlcc_kernel(int atom_idx,
+                                   int dir,
+                                   int q_idx,
+                                   DFPT_PW_Data& data,
+                                   const std::vector<std::complex<double>>& dvxc_r)
+{
+    ModuleBase::TITLE("DFPT_Phon", "accum_nlcc_kernel");
+    ModuleBase::timer::start("DFPT_Phon", "accum_nlcc_kernel");
+    const int nrxx = pw_rho_->nrxx;
+    if (rho_ == nullptr || ucell_ == nullptr || static_cast<int>(dvxc_r.size()) != nrxx)
+    {
+        ModuleBase::timer::end("DFPT_Phon", "accum_nlcc_kernel");
+        return;
+    }
+    // any nlcc atom at all?
+    bool nlcc_any = false;
+    for (int it = 0; it < ucell_->ntype; ++it)
+    {
+        if (ucell_->atoms[it].ncpp.nlcc)
+        {
+            nlcc_any = true;
+            break;
+        }
+    }
+    if (!nlcc_any)
+    {
+        ModuleBase::timer::end("DFPT_Phon", "accum_nlcc_kernel");
+        return;
+    }
+    const int nat = ucell_->nat;
+    const ModuleBase::Vector3<double> q_cart = data.get_qvec(q_idx) * ucell_->G;
+    const double fac = ucell_->omega / static_cast<double>(nrxx);
+    const int rowb = 3 * atom_idx + dir;
+    const double mass_row = ucell_->atoms[ucell_->iat2it[atom_idx]].mass;
+    std::vector<std::complex<double>> drhoc_g;
+    std::vector<std::complex<double>> drhoc_r(nrxx);
+    for (int iat2 = 0; iat2 < nat; ++iat2)
+    {
+        if (!ucell_->atoms[ucell_->iat2it[iat2]].ncpp.nlcc)
+        {
+            continue;
+        }
+        for (int idir2 = 0; idir2 < 3; ++idir2)
+        {
+            rho_->compute_drhoc_g(*ucell_, iat2, idir2, q_cart, drhoc_g);
+            if (static_cast<int>(drhoc_g.size()) != pw_rho_->npw)
+            {
+                continue;
+            }
+            pw_rho_->recip2real(drhoc_g.data(), drhoc_r.data());
+            std::complex<double> x(0.0, 0.0);
+            for (int ir = 0; ir < nrxx; ++ir)
+            {
+                x += dvxc_r[ir] * std::conj(drhoc_r[ir]);
+            }
+            x *= fac;
+            const int cola = 3 * iat2 + idir2;
+            const double mass_norm = std::sqrt(mass_row * ucell_->atoms[ucell_->iat2it[iat2]].mass);
+            dynmat_accum_(rowb, cola) += x / mass_norm;
+            dynmat_accum_(cola, rowb) += std::conj(x) / mass_norm;
+        }
+    }
+    ModuleBase::timer::end("DFPT_Phon", "accum_nlcc_kernel");
+}
+
+void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
+{
+    ModuleBase::TITLE("DFPT_Phon", "accum_nlcc_diag");
+    ModuleBase::timer::start("DFPT_Phon", "accum_nlcc_diag");
+    const int npw = pw_rho_ ? pw_rho_->npw : 0;
+    const int nrxx = pw_rho_ ? pw_rho_->nrxx : 0;
+    if (ucell_ == nullptr || pw_rho_ == nullptr || vxc_r_ == nullptr
+        || static_cast<int>(vxc_r_->size()) != nrxx || npw == 0 || accum_q_ != q_idx)
+    {
+        ModuleBase::timer::end("DFPT_Phon", "accum_nlcc_diag");
+        return;
+    }
+    const int it = ucell_->iat2it[atom_idx];
+    if (!ucell_->atoms[it].ncpp.nlcc)
+    {
+        ModuleBase::timer::end("DFPT_Phon", "accum_nlcc_diag");
+        return;
+    }
+    // QE dynmatcc ground truth, evaluated as a real-space integral:
+    //   D_ij += Int dr d2rho_c/(d tau_i d tau_j) (r) * v_xc^0(r)
+    // with the second-order shifted-core amplitude
+    //   d2rho_c(G) = -tpiba^2 G_i G_j rhoc~(|G|) exp(-i G tau_a)
+    // (a real field: W(-G) = conj(W(G))), so the contraction runs through
+    // the same recip2real machinery as every other real-space field and
+    // never touches the half-space G-sum convention directly.
+    const pseudo& p = ucell_->atoms[it].ncpp;
+    const int mesh = p.msh;
+    const ModuleBase::Vector3<double> tau_cart
+        = ucell_->atoms[it].tau[ucell_->iat2ia[atom_idx]] * ucell_->lat0;
+    std::vector<double> aux(mesh);
+    std::vector<std::complex<double>> w_g(npw);
+    std::vector<std::complex<double>> w_r(nrxx);
+    double d3[3][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+    const double fac = ucell_->omega / static_cast<double>(nrxx);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = i; j < 3; ++j)
+        {
+            std::fill(w_g.begin(), w_g.end(), std::complex<double>(0.0, 0.0));
+            for (int ig = 0; ig < npw; ++ig)
+            {
+                const ModuleBase::Vector3<double>& gv = pw_rho_->gcar[ig];
+                const double g2 = gv * gv;
+                // the G = 0 shell contributes nothing (G_i G_j factor)
+                if (g2 < 1.0e-12)
+                {
+                    continue;
+                }
+                const double gphys = std::sqrt(g2) * ucell_->tpiba;
+                ModuleBase::Sphbes::Spherical_Bessel(mesh, p.r.data(), gphys, 0, aux.data());
+                double rhocg = 0.0;
+                for (int ir = 0; ir < mesh; ++ir)
+                {
+                    aux[ir] = p.r[ir] * p.r[ir] * p.rho_atc[ir] * aux[ir];
+                }
+                ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), p.rab.data(), rhocg);
+                rhocg *= ModuleBase::FOUR_PI / ucell_->omega;
+
+                const double phase = ModuleBase::TWO_PI * (gv * tau_cart) / ucell_->lat0;
+                const std::complex<double> gtau(std::cos(phase), -std::sin(phase));
+                w_g[ig] = -ucell_->tpiba * ucell_->tpiba * gv[i] * gv[j] * rhocg * gtau;
+            }
+            pw_rho_->recip2real(w_g.data(), w_r.data());
+            double s = 0.0;
+            for (int ir = 0; ir < nrxx; ++ir)
+            {
+                s += w_r[ir].real() * (*vxc_r_)[ir];
+            }
+            d3[i][j] = fac * s;
+            if (j != i)
+            {
+                d3[j][i] = d3[i][j];
+            }
+        }
+    }
+    const double mass = ucell_->atoms[it].mass;
+    const int base = 3 * atom_idx;
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            dynmat_accum_(base + i, base + j) += d3[i][j] / mass;
+        }
+    }
+    ModuleBase::timer::end("DFPT_Phon", "accum_nlcc_diag");
 }
 
 void DFPT_Phon::accum_d2_same_atom(int atom_idx,

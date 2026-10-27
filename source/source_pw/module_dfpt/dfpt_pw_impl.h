@@ -65,7 +65,8 @@ class DFPT_PW::Impl
     /// v_sc^q = v_Hartree(drho_in) + xc(drho_in) on the shared grid;
     /// shared by solve_displacement and solve_efield_resp so the
     /// real-space Hartree+XC add loop is not duplicated
-    void assemble_v_sc(const ModuleBase::Vector3<double>& q_cart,
+    void assemble_v_sc(int q_idx,
+                       const ModuleBase::Vector3<double>& q_cart,
                        const std::vector<std::complex<double>>& drho_in_g,
                        std::vector<std::complex<double>>& v_sc_r) const;
 

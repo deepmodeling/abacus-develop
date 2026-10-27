@@ -64,6 +64,16 @@ void DFPT_Phon::init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, DFPT_Pert* per
     ModuleBase::timer::end("DFPT_Phon", "init");
 }
 
+void DFPT_Phon::set_rho(const DFPT_Rho* rho)
+{
+    rho_ = rho;
+}
+
+void DFPT_Phon::set_vxc_r(const std::vector<double>* vxc_r)
+{
+    vxc_r_ = vxc_r;
+}
+
 // ---------------------------------------------------------------------------
 // assemble / diagonalize / LO-TO / sum rule
 // ---------------------------------------------------------------------------

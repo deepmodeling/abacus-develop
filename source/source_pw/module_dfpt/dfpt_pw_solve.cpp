@@ -24,7 +24,8 @@
 namespace ModuleDFPT
 {
 
-void DFPT_PW::Impl::assemble_v_sc(const ModuleBase::Vector3<double>& q_cart,
+void DFPT_PW::Impl::assemble_v_sc(int q_idx,
+                                  const ModuleBase::Vector3<double>& q_cart,
                                   const std::vector<std::complex<double>>& drho_in_g,
                                   std::vector<std::complex<double>>& v_sc_r) const
 {
@@ -58,8 +59,10 @@ void DFPT_PW::Impl::assemble_v_sc(const ModuleBase::Vector3<double>& q_cart,
     pw_rho_->recip2real(drho_in_g.data(), a_r.data());
     // nlcc: the first-order core density enters the XC channel only (the
     // core Coulomb is already in the ionic pseudopotential, so the Hartree
-    // above correctly uses the valence density alone)
-    const std::vector<std::complex<double>> drhoc_g = data_.get_drhoc_g(last_q_);
+    // above correctly uses the valence density alone). The q index is
+    // passed explicitly: the drhoc slot is per q and last_q_ can be stale
+    // on the first assembly of a new q.
+    const std::vector<std::complex<double>> drhoc_g = data_.get_drhoc_g(q_idx);
     if (static_cast<int>(drhoc_g.size()) == pw_rho_->npw)
     {
         std::vector<std::complex<double>> drhoc_r(nrxx);
@@ -137,6 +140,10 @@ void DFPT_PW::Impl::stash_converged_disp_response(int q_idx,
                                                   int nbands)
 {
     data_.set_vsc_r(iat, idir, v_sc_r_last);
+    // stash the converged density response too: the two-pass accumulation
+    // rebuilds f_xc.(drho_val + drhoc) per displacement after the working
+    // drho slots have moved on to the next displacement
+    data_.set_drho_disp(iat, idir, data_.get_drho_g(q_idx, 0));
     std::vector<std::vector<std::vector<std::complex<double>>>> disp(
         nk,
         std::vector<std::vector<std::complex<double>>>(nbands));
@@ -233,7 +240,7 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
     {
         std::vector<std::complex<double>> v_sc_r;
         const std::vector<std::complex<double>> drho_in_g = data_.get_drho_g(q_idx, 0);
-        assemble_v_sc(q_cart, drho_in_g, v_sc_r);
+        assemble_v_sc(q_idx, q_cart, drho_in_g, v_sc_r);
         if (dbg)
         {
             debug_iter_snapshot(iter, drho_in_g, v_sc_r, npw, nrxx);
