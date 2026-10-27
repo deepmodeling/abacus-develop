@@ -100,7 +100,7 @@ CNSolverPW<T, Device>::CNSolverPW(const ModulePW::PW_Basis_K& basis,
                                   const PWLinearOptions& options,
                                   const diag_comm_info& comm,
                                   std::ostream& log)
-    : basis_(basis), comm_(comm), options_(options), algebra_(comm), log_(log), band_products_(comm, 9)
+    : basis_(basis), comm_(comm), options_(options), algebra_(comm), log_(log)
 {
     initialize();
 }
@@ -322,7 +322,10 @@ typename CNSolverPW<T, Device>::SolveDetails CNSolverPW<T, Device>::solve_kpoint
     if (options_.cn_init && iteration == 1 && details.projected)
     {
         const T* seed = projection_.seed();
-        band_products_.copy(batch.ld, batch.dim, batch.bands, seed, current);
+        if (batch.dim > 0)
+        {
+            base_device::memory::synchronize_memory_2d_op<T, Device, Device>()(current, batch.ld, seed, batch.ld, batch.dim, batch.bands);
+        }
         initial_residual = projection_.residual();
         details.cn_initial = true;
     }

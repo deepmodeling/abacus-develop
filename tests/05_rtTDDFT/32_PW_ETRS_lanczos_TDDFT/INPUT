@@ -47,12 +47,6 @@ td_gauss_phase      1.5707963267948966
 td_gauss_sigma      0.04
 td_gauss_t0         0
 td_gauss_amp        0.1
-lin_solver          bicgstab
-lin_precond         kinetic
-lin_thr             1e-13
-lin_maxiter         100
-td_cn_init          0
-lin_reconstruct     0
 td_out_torque       1
 td_out_spincur      1
 out_current         1

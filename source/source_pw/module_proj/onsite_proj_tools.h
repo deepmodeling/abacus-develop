@@ -63,11 +63,9 @@ class Onsite_Proj_tools
      * @brief calculate the becp = <psi|beta> for all beta functions
      */
     void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in = nullptr, const std::complex<FPTYPE>* ppsi_in = nullptr, int npwx = 0);
-    /** @brief Gauge-covariant projection at the explicit endpoint vector potential (inverse Bohr). */
-    void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in,
-                  const std::complex<FPTYPE>* ppsi_in, int npwx,
-                  const ModuleBase::Vector3<double>& vector_potential);
-    /** @brief Also retain the pool-reduced overlaps in the caller's host buffer. */
+    /** @brief Gauge-covariant projection at the explicit endpoint vector potential (inverse Bohr).
+     *  @param host_becp Optional caller-owned host buffer for the pool-reduced overlaps; may be nullptr.
+     */
     void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in,
                   const std::complex<FPTYPE>* ppsi_in, int npwx,
                   const ModuleBase::Vector3<double>& vector_potential,

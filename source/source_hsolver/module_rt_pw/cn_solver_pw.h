@@ -107,7 +107,6 @@ class CNSolverPW
     std::vector<KPointState> states_;
     SequenceState sequence_;
     std::unique_ptr<HSolverLinear<T, Device>> linear_solver_;
-    LinearWorkspace<T, Device> band_products_;
     ct::Tensor rhs_;
     ct::Tensor inverse_kinetic_;
     ct::Tensor response_workspace_;
