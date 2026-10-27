@@ -218,7 +218,7 @@ class Ewald_Vq
         const std::vector<TA>& list_A0,
         const std::vector<TAC>& list_A1,
         std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in,
-        const bool truncate_analytic_tail = false);
+        const bool truncate_analytic_tail);
     inline std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> cal_dVs_minus_gauss(
         const UnitCell& ucell,
         const std::vector<TA>& list_A0,
