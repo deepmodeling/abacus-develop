@@ -24,7 +24,15 @@ done
 if ! test -z "$out_current" && [ $out_current ]; then
 	current1ref=current_tot.txt.ref
 	current1cal=OUT.autotest/current_tot.txt
-	python3 $COMPARE_SCRIPT $current1ref $current1cal 10
+	local current_tol=1e-10
+	if [ -f threshold ]; then
+		local configured_tol
+		configured_tol=$(get_input_key_value current_threshold threshold)
+		if [ -n "$configured_tol" ]; then
+			current_tol=$configured_tol
+		fi
+	fi
+	python3 "$COMPARE_SCRIPT" "$current1ref" "$current1cal" -tol "$current_tol"
 	echo "CompareCurrent_pass $?" >>$props_result_file
 fi
 
