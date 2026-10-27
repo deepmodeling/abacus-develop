@@ -24,15 +24,13 @@ enum class PWPreconditioner
     kinetic_subspace
 };
 
-/** @brief Numerical and propagation options, resolved once at the input boundary. */
-struct PWLinearOptions
+/** @brief Crank-Nicolson linear solve and preconditioner controls. */
+struct CNControls
 {
-    int npol = 1; ///< Spin components per orbital; fixed throughout propagation.
-    LinearSolveOptions linear;
+    LinearControls linear;
     PWPreconditioner preconditioner = PWPreconditioner::kinetic;
     bool cn_init = false;
     bool kinetic_enabled = true;
-    std::vector<int> global_k_indices; ///< Required zero-based global index for every local k point.
 };
 
 LinearMethod parse_linear_method(const std::string& name);
@@ -43,8 +41,13 @@ template <typename T, typename Device>
 class CNSolverPW
 {
   public:
-    /** @brief Configure propagation using typed, explicit solver options. */
-    CNSolverPW(const ModulePW::PW_Basis_K& basis, const PWLinearOptions& options, const diag_comm_info& comm, std::ostream& log);
+    /** @brief Configure propagation with explicit numerical controls and orbital layout. */
+    CNSolverPW(const ModulePW::PW_Basis_K& basis,
+               const CNControls& cn_ctrl,
+               int npol,
+               const std::vector<int>& global_k,
+               const diag_comm_info& comm,
+               std::ostream& log);
 
     /** @brief Invalidate basis-dependent history and restart independent residual checks without releasing buffers.
      *  Call on every rank in the pool after changing the basis or its distribution, including
@@ -83,7 +86,7 @@ class CNSolverPW
         int ld = -1;
         int bands = -1;
     };
-    struct SolveBatch
+    struct BatchLayout
     {
         int ld;
         int dim;
@@ -99,7 +102,9 @@ class CNSolverPW
     };
     const ModulePW::PW_Basis_K& basis_;
     const diag_comm_info comm_;
-    PWLinearOptions options_;
+    CNControls cn_ctrl_;
+    const int npol_;
+    const std::vector<int> global_k_;
     ct::Tensor clean_;
     LinearAlgebra<T, Device> algebra_;
     std::ostream& log_;
@@ -119,12 +124,12 @@ class CNSolverPW
     SolveDetails solve_kpoint(const LinearOperator<T, Device>& op,
                               const T* previous,
                               T* current,
-                              const SolveBatch& batch,
+                              const BatchLayout& batch,
                               int step,
                               int iteration,
                               KPointState* state);
-    void retry_kinetic(const LinearOperator<T, Device>& op, T* current, const SolveBatch& batch, LinearSolveResult* result);
-    void update_state(KPointState* state, const SolveDetails& details, int step, const SolveBatch& batch, const T* current);
+    void retry_kinetic(const LinearOperator<T, Device>& op, T* current, const BatchLayout& batch, LinearSolveResult* result);
+    void update_state(KPointState* state, const SolveDetails& details, int step, const BatchLayout& batch, const T* current);
     void report_solve(const SolveDetails& details, int ik, int step, int iteration) const;
     void prepare_buffers(const int nbands, const int nbasis);
     void update_precond(const int ik, const int dim, const T coefficient, const ModuleBase::Vector3<double>& momentum_shift);

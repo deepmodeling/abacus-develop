@@ -71,19 +71,23 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
     const int xc_type = XC_Functional::get_func_type();
     pw::check_td_input(inp, ucell, xc_type, this->general_exx_info_.cal_exx);
 
-    spin_options_.method = inp.td_out_mag;
-    spin_options_.orbital_dir = inp.orbital_dir;
-    spin_options_.radius = inp.onsite_radius;
-    spin_options_.torque = inp.td_out_torque;
-
-    vel_request_.charge_total = inp.out_current == 1;
-    vel_request_.charge_per_k = vel_request_.charge_total && inp.out_current_k;
-    vel_request_.spin_current = inp.nspin == 4 && inp.td_out_spincur;
+    current_req_.charge_total = inp.out_current == 1;
+    current_req_.charge_per_k = current_req_.charge_total && inp.out_current_k;
+    current_req_.spin_current = inp.nspin == 4 && inp.td_out_spincur;
     vel_.initialize(ucell, *this->pw_wfc, this->kv, this->ppcell);
 
     if (inp.nspin == 4)
     {
-        spin_.initialize(ucell, *this->pw_rhod, *this->pw_wfc, this->kv, this->sf, this->ppcell, spin_options_);
+        spin_.initialize(ucell,
+                         *this->pw_rhod,
+                         *this->pw_wfc,
+                         this->kv,
+                         this->sf,
+                         this->ppcell,
+                         inp.td_out_mag,
+                         inp.orbital_dir,
+                         inp.onsite_radius,
+                         inp.td_out_torque);
     }
 
     this->pelec->pot->set_td_field_manager(this->td_field_manager_);
@@ -93,8 +97,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
     const hsolver::diag_comm_info comm(0, 1);
 #endif
     const int npol = ucell.get_npol();
-    const pw::TDPropOpts options = pw::td_prop_options(inp, npol, this->kv.ik2iktot);
-    this->td_prop_.reset(new pw::TDPropPW<T, Device>(*this->pw_wfc, options, comm, log_));
+    this->td_prop_ = pw::make_td_prop<T, Device>(*this->pw_wfc, inp, npol, this->kv.ik2iktot, comm, log_);
     this->history_.prepare(*this->pelec->pot);
 
     // Preserve existing field history until input validation and initialization succeed.
@@ -563,10 +566,10 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
 
         const auto& current = *this->stp.template get_psi_t<T, Device>();
         const auto& vecpot = this->td_field_manager_->A_right_ha();
-        const pw::TDVelResultPW currents = vel_.calculate(current, *this->pelec, vecpot, vel_request_);
+        const pw::TDVelResultPW currents = vel_.calculate(current, *this->pelec, vecpot, current_req_);
 
         pw::TDSpinResultPW moments;
-        if (this->inp_->nspin == 4 && (spin_options_.method != "none" || spin_options_.torque))
+        if (this->inp_->nspin == 4 && (this->inp_->td_out_mag != "none" || this->inp_->td_out_torque))
         {
             moments = spin_.calculate(current, *this->pelec, vecpot);
         }
@@ -575,8 +578,11 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
         const int nkstot = this->kv.get_nkstot();
         ModuleIO::ctrl_output_td_pw(currents,
                                     moments,
-                                    vel_request_,
-                                    spin_options_,
+                                    current_req_,
+                                    this->inp_->td_out_mag,
+                                    this->inp_->orbital_dir,
+                                    this->inp_->onsite_radius,
+                                    this->inp_->td_out_torque,
                                     ucell.orbital_fn,
                                     istep,
                                     dt_ha,

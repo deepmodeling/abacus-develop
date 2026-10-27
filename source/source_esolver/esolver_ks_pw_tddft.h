@@ -59,8 +59,7 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     std::shared_ptr<elecstate::TDFieldManager> td_field_manager_;
     pw::TDVelPW<Real, Device> vel_;
     pw::TDSpinPW<Real, Device> spin_;
-    pw::TDVelRequestPW vel_request_;
-    pw::TDSpinOptsPW spin_options_;
+    pw::CurrentRequest current_req_;
 
     pw::TDHistoryPW<T, Device> history_;
     double initial_wave_electrons_ = 0.0;

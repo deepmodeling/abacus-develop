@@ -38,20 +38,13 @@ enum class LinearMethod
 };
 
 /** @brief Numerical policy; tolerance zero selects the precision-aware default. */
-struct LinearSolveOptions
+struct LinearControls
 {
-    LinearMethod method = LinearMethod::bicgstab;
+    LinearMethod solver = LinearMethod::bicgstab;
     double tolerance = 0.0;
     int max_iterations = 500;
     int restart = 20;
     bool reconstruct = false;
-};
-
-/** @brief Explicit policy for one solve; does not change the solver's defaults. */
-struct LinearSolveControl
-{
-    int max_iterations;
-    bool reconstruct;
 };
 
 const char* linear_status_name(const LinearSolveStatus status);

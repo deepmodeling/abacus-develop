@@ -12,10 +12,16 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-TDOrbOps<T, Device>::TDOrbOps(const TDOrbOpts& options, const diag_comm_info& comm, std::ostream& log)
-    : comm_(comm), options_(options), algebra_(comm), orthonormal_(comm, algebra_), log_(log), band_products_(comm, 9)
+TDOrbOps<T, Device>::TDOrbOps(int npol,
+                              OrthMethod orth_method,
+                              bool out_stat,
+                              const std::vector<int>& global_k,
+                              const diag_comm_info& comm,
+                              std::ostream& log)
+    : comm_(comm), npol_(npol), orth_method_(orth_method), out_stat_(out_stat), global_k_(global_k), algebra_(comm),
+      orthonormal_(comm, algebra_), log_(log), band_products_(comm, 9)
 {
-    log_ << " PW RT-TDDFT orthonormalization: " << orth_method_name(options_.orthonormal) << '\n';
+    log_ << " PW RT-TDDFT orthonormalization: " << orth_method_name(orth_method_) << '\n';
 }
 
 template <typename T, typename Device>
@@ -29,7 +35,7 @@ void TDOrbOps<T, Device>::prepare_buffers(int nbands, int nbasis)
 template <typename T, typename Device>
 void TDOrbOps<T, Device>::correct(psi::Psi<T, Device>* current, int step, int iter, bool detailed_output)
 {
-    if (options_.out_stat)
+    if (out_stat_)
     {
         orth_norms_.resize(current->get_nk());
     }
@@ -38,7 +44,7 @@ void TDOrbOps<T, Device>::correct(psi::Psi<T, Device>* current, int step, int it
     {
         current->fix_k(ik);
         const int ld = current->get_nbasis();
-        const int dim = options_.npol == 2 ? ld : current->get_ngk(ik);
+        const int dim = npol_ == 2 ? ld : current->get_ngk(ik);
         const int bands = current->get_nbands();
         T* data = current->get_pointer();
         correct_orbitals(data, ld, dim, bands, ik, step, iter, detailed_output);
@@ -59,11 +65,11 @@ void TDOrbOps<T, Device>::cal_band_energy(HSOperator<T, Device>& op, const psi::
         op.update_k(ik);
         current.fix_k(ik);
         const int npw = current.get_ngk(ik);
-        const int dim = options_.npol == 2 ? ld : npw;
-        const OrbLayout layout{ld, npw, options_.npol, nband};
+        const int dim = npol_ == 2 ? ld : npw;
+        const OrbLayout layout{ld, npw, npol_, nband};
         const T* data = clean_orbs<T, Device>(current.get_pointer(), layout, &clean_);
         op.hpsi(data, hpsi, ld, nband);
-        if (options_.npol == 2)
+        if (npol_ == 2)
         {
             zero_pad<T, Device>(hpsi, layout);
         }
@@ -83,15 +89,15 @@ std::vector<std::complex<double>> TDOrbOps<T, Device>::cal_eij(HSOperator<T, Dev
     const int nband = current.get_nbands();
     const int ld = current.get_nbasis();
     const int npw = current.get_ngk(ik);
-    const int dim = options_.npol == 2 ? ld : npw;
+    const int dim = npol_ == 2 ? ld : npw;
     prepare_buffers(nband, ld);
     op.update_k(ik);
     current.fix_k(ik);
-    const OrbLayout layout{ld, npw, options_.npol, nband};
+    const OrbLayout layout{ld, npw, npol_, nband};
     const T* psi = clean_orbs<T, Device>(current.get_pointer(), layout, &clean_);
     T* hpsi = hpsi_.template data<T>();
     op.hpsi(psi, hpsi, ld, nband);
-    if (options_.npol == 2)
+    if (npol_ == 2)
     {
         zero_pad<T, Device>(hpsi, layout);
     }
@@ -103,7 +109,7 @@ std::vector<std::complex<double>> TDOrbOps<T, Device>::cal_eij(HSOperator<T, Dev
 template <typename T, typename Device>
 void TDOrbOps<T, Device>::reset_orth_stats()
 {
-    if (options_.out_stat)
+    if (out_stat_)
     {
         orth_stats_ = TDOrthStats();
     }
@@ -114,14 +120,14 @@ template <typename T, typename Device>
 void TDOrbOps<T, Device>::correct_orbitals(T* current, int ld, int dim, int bands, int ik, int istep, int iter, bool detailed_output)
 {
     ModuleBase::timer::start("TDOrbOps", "correct_orbitals");
-    const OrthResult result = orthonormal_.apply(current, ld, dim, bands, options_.orthonormal, options_.out_stat);
+    const OrthResult result = orthonormal_.apply(current, ld, dim, bands, orth_method_, out_stat_);
     record_orth(result, ik, istep, iter);
     if (detailed_output && result.gram_checked && log_.good())
     {
         const int evolution_step = istep + 1;
         std::ostringstream record;
         record << std::scientific << std::setprecision(6) << " PW RT-TDDFT orth: evolution_step=" << evolution_step << " scf_iter=" << iter
-               << " global_k=" << options_.global_k_indices.at(ik) + 1 << " requested=" << orth_method_name(options_.orthonormal)
+               << " global_k=" << global_k_.at(ik) + 1 << " requested=" << orth_method_name(orth_method_)
                << " orth_before=" << result.before << " orth_after=" << result.after << '\n';
         log_ << record.str();
     }
@@ -137,8 +143,7 @@ void TDOrbOps<T, Device>::record_orth(const OrthResult& result, int ik, int iste
         std::ostringstream message;
         const int evolution_step = istep + 1;
         message << std::setprecision(16) << " PW RT-TDDFT orbital validation failed (" << stage << "): evolution_step=" << evolution_step
-                << " scf_iter=" << iter << " global_k=" << options_.global_k_indices.at(ik) + 1
-                << " requested=" << orth_method_name(options_.orthonormal) << '\n'
+                << " scf_iter=" << iter << " global_k=" << global_k_.at(ik) + 1 << " requested=" << orth_method_name(orth_method_) << '\n'
                 << "   last_attempted=" << orth_method_name(result.actual) << " passes=" << result.passes
                 << " fallbacks=" << result.fallbacks << '\n'
                 << "   " << orth_failure_name(result.failure) << "; " << result.reason;
@@ -159,7 +164,7 @@ void TDOrbOps<T, Device>::record_orth(const OrthResult& result, int ik, int iste
         ModuleBase::WARNING_QUIT("TDOrbOps", message.str());
     }
     report_orth_warning(result, ik, istep, iter);
-    if (options_.out_stat)
+    if (out_stat_)
     {
         orth_norms_[ik] = result.norms;
         if (result.gram_checked)
@@ -195,8 +200,8 @@ void TDOrbOps<T, Device>::report_orth_warning(const OrthResult& result, int ik, 
     const int evolution_step = istep + 1;
     std::ostringstream message;
     message << std::setprecision(16) << " PW RT-TDDFT orbital warning: evolution_step=" << evolution_step << " scf_iter=" << iter;
-    message << " global_k=" << options_.global_k_indices.at(ik) + 1;
-    message << " requested=" << orth_method_name(options_.orthonormal) << '\n'
+    message << " global_k=" << global_k_.at(ik) + 1;
+    message << " requested=" << orth_method_name(orth_method_) << '\n'
             << "   before=" << result.before << " after=" << result.after << " tolerance=" << orth_tolerance<T>() << '\n'
             << "   ";
     message << "last_attempted=" << orth_method_name(result.actual) << ". ";
@@ -223,7 +228,7 @@ template <typename T, typename Device>
 void TDOrbOps<T, Device>::zero_padding(psi::Psi<T, Device>* current)
 {
     ModuleBase::timer::start("TDOrbOps", "zero_padding");
-    if (options_.npol != 2)
+    if (npol_ != 2)
     {
         ModuleBase::timer::end("TDOrbOps", "zero_padding");
         return;
@@ -235,7 +240,7 @@ void TDOrbOps<T, Device>::zero_padding(psi::Psi<T, Device>* current)
         const int npw = current->get_ngk(ik);
         const int ld = current->get_nbasis();
         const int bands = current->get_nbands();
-        const OrbLayout layout{ld, npw, options_.npol, bands};
+        const OrbLayout layout{ld, npw, npol_, bands};
         zero_pad<T, Device>(current->get_pointer(), layout);
     }
     current->fix_k(old_k);
@@ -247,9 +252,9 @@ bool TDOrbOps<T, Device>::orth_initial(psi::Psi<T, Device>* current, int iter)
 {
     ModuleBase::timer::start("TDOrbOps", "orth_initial");
     bool changed = false;
-    if (options_.orthonormal != OrthMethod::none)
+    if (orth_method_ != OrthMethod::none)
     {
-        if (options_.out_stat)
+        if (out_stat_)
         {
             // Initial diagnostics describe this SCF state, not earlier discarded iterates.
             orth_stats_ = TDOrthStats();
@@ -258,13 +263,9 @@ bool TDOrbOps<T, Device>::orth_initial(psi::Psi<T, Device>* current, int iter)
         for (int ik = 0; ik < current->get_nk(); ++ik)
         {
             current->fix_k(ik);
-            const int dim = options_.npol == 2 ? current->get_nbasis() : current->get_ngk(ik);
-            const OrthResult result = orthonormal_.apply(current->get_pointer(),
-                                                         current->get_nbasis(),
-                                                         dim,
-                                                         current->get_nbands(),
-                                                         options_.orthonormal,
-                                                         options_.out_stat);
+            const int dim = npol_ == 2 ? current->get_nbasis() : current->get_ngk(ik);
+            const OrthResult result
+                = orthonormal_.apply(current->get_pointer(), current->get_nbasis(), dim, current->get_nbands(), orth_method_, out_stat_);
             record_orth(result, ik, 0, iter);
             changed = changed || result.status == OrthStatus::accepted;
         }
@@ -277,11 +278,11 @@ template <typename T, typename Device>
 void TDOrbOps<T, Device>::check_initial(const psi::Psi<T, Device>& current, int iter)
 {
     ModuleBase::timer::start("TDOrbOps", "check_initial");
-    const bool full_gram = options_.orthonormal != OrthMethod::none;
+    const bool full_gram = orth_method_ != OrthMethod::none;
     const int ld = current.get_nbasis();
     const int bands = current.get_nbands();
     prepare_buffers(bands, ld);
-    if (options_.out_stat)
+    if (out_stat_)
     {
         orth_norms_.resize(current.get_nk());
     }
@@ -289,10 +290,10 @@ void TDOrbOps<T, Device>::check_initial(const psi::Psi<T, Device>& current, int 
     {
         current.fix_k(ik);
         const int npw = current.get_ngk(ik);
-        const int dim = options_.npol == 2 ? ld : npw;
-        const OrbLayout layout{ld, npw, options_.npol, bands};
+        const int dim = npol_ == 2 ? ld : npw;
+        const OrbLayout layout{ld, npw, npol_, bands};
         const T* data = clean_orbs<T, Device>(current.get_pointer(), layout, &clean_);
-        const OrthResult result = orthonormal_.inspect(data, current.get_nbasis(), dim, current.get_nbands(), full_gram, options_.out_stat);
+        const OrthResult result = orthonormal_.inspect(data, current.get_nbasis(), dim, current.get_nbands(), full_gram, out_stat_);
         record_orth(result, ik, 0, iter);
     }
     ModuleBase::timer::end("TDOrbOps", "check_initial");

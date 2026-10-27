@@ -71,23 +71,26 @@ void write_td_spin_pw(const std::string& directory,
                       int step,
                       double time_fs,
                       const std::vector<std::string>& orbitals,
-                      const pw::TDSpinOptsPW& options,
+                      const std::string& mag_partition,
+                      const std::string& orbital_dir,
+                      double onsite_radius,
+                      bool calc_torque,
                       bool spin_current,
                       const pw::TDSpinResultPW& spin,
                       const pw::TDVelResultPW& current,
                       std::ostream& log)
 {
-    if (options.method != "none")
+    if (mag_partition != "none")
     {
-        std::string header = "# method=" + options.method + "; total=density_integral; M=ABACUS_Pauli_moment(mu_B); no_electron_minus_sign";
-        if (options.method == "onsite")
+        std::string header = "# method=" + mag_partition + "; total=density_integral; M=ABACUS_Pauli_moment(mu_B); no_electron_minus_sign";
+        if (mag_partition == "onsite")
         {
             std::ostringstream radius;
-            radius << std::scientific << std::setprecision(12) << options.radius;
+            radius << std::scientific << std::setprecision(12) << onsite_radius;
             header += "\n# onsite_radius(Bohr)=" + radius.str() + "; projector=q(k+G+A); atom_phase_cancels";
             for (int it = 0; it < orbitals.size(); ++it)
             {
-                header += "\n# orbital=" + options.orbital_dir + orbitals[it];
+                header += "\n# orbital=" + orbital_dir + orbitals[it];
             }
         }
         std::ostringstream total_columns;
@@ -121,7 +124,7 @@ void write_td_spin_pw(const std::string& directory,
         finish_series(&total);
         write_atoms(&atoms, step, time_fs, spin.atom_mag);
     }
-    if (options.torque)
+    if (calc_torque)
     {
         std::ostringstream total_columns;
         total_columns << std::left << std::setw(6) << "#step" << "  " << std::right << std::setw(10) << "time_fs";

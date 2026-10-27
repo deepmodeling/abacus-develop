@@ -8,10 +8,9 @@ namespace td_test
 TEST_F(Observables, SOCTorqueMatchesCommutator)
 {
     const ModuleBase::Vector3<double> a(0.13, -0.07, 0.09);
-    pw::TDSpinOptsPW options;
-    options.torque = true;
+    const std::string mag_partition = "none";
     pw::TDSpinPW<double, Device> observer;
-    observer.initialize(cell_, basis_, basis_, kv_, sf_, pp_, options);
+    observer.initialize(cell_, basis_, basis_, kv_, sf_, pp_, mag_partition, "", 0.0, true);
     const auto actual = observer.calculate(*psi_, state_, a);
     const Vector beta = projectors(a);
     const int n = psi_->get_nbasis();
@@ -88,11 +87,9 @@ TEST_F(Observables, DensityMomentsAndPeriodicVoronoi)
         state_.pot->get_eff_v()(2, ir) = 0.2;
         state_.pot->get_eff_v()(3, ir) = -0.4;
     }
-    pw::TDSpinOptsPW options;
-    options.method = "voronoi";
-    options.torque = true;
+    const std::string mag_partition = "voronoi";
     pw::TDSpinPW<double, Device> observer;
-    observer.initialize(cell_, basis_, basis_, kv_, sf_, pp_, options);
+    observer.initialize(cell_, basis_, basis_, kv_, sf_, pp_, mag_partition, "", 0.0, true);
     const ModuleBase::Vector3<double> zero(0, 0, 0);
     const auto actual = observer.calculate(*psi_, state_, zero);
     const double integral = cell_.omega * (1.0 + 0.005 * (basis_.nxyz - 1));

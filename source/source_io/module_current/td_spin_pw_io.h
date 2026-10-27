@@ -3,6 +3,7 @@
 #include "source_pw/module_rt/td_obs_pw.h"
 
 #include <iosfwd>
+#include <string>
 namespace ModuleIO
 {
 /**
@@ -14,7 +15,10 @@ void write_td_spin_pw(const std::string& directory,
                       int step,
                       double time_fs,
                       const std::vector<std::string>& orbitals,
-                      const pw::TDSpinOptsPW& options,
+                      const std::string& mag_partition,
+                      const std::string& orbital_dir,
+                      double onsite_radius,
+                      bool calc_torque,
                       bool spin_current,
                       const pw::TDSpinResultPW& spin,
                       const pw::TDVelResultPW& current,

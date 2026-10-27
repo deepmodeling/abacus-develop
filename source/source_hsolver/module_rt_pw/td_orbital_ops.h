@@ -10,14 +10,6 @@
 
 namespace hsolver
 {
-/** @brief Method-independent orbital layout and diagnostics. */
-struct TDOrbOpts
-{
-    int npol = 1;
-    OrthMethod orthonormal = OrthMethod::cholesky;
-    bool out_stat = false;
-    std::vector<int> global_k_indices;
-};
 /** @brief Independent orthogonality maxima over accepted trial iterations and local k points. */
 struct TDOrthStats
 {
@@ -30,7 +22,10 @@ class TDOrbOps
 {
   private:
     const diag_comm_info comm_;
-    TDOrbOpts options_;
+    const int npol_;
+    const OrthMethod orth_method_;
+    const bool out_stat_;
+    const std::vector<int> global_k_;
     ct::Tensor clean_;
     ct::Tensor hpsi_;
     LinearAlgebra<T, Device> algebra_;
@@ -47,7 +42,12 @@ class TDOrbOps
 
   public:
     /** @brief Configure common orbital processing independently of a propagator. */
-    TDOrbOps(const TDOrbOpts& options, const diag_comm_info& comm, std::ostream& log);
+    TDOrbOps(int npol,
+             OrthMethod orth_method,
+             bool out_stat,
+             const std::vector<int>& global_k,
+             const diag_comm_info& comm,
+             std::ostream& log);
     /** @brief Apply common postprocessing to a completed predictor or corrector. */
     void correct(psi::Psi<T, Device>* current, int step, int iter, bool detailed_output);
     /** @brief Reset diagnostics without invalidating preconditioner history. */

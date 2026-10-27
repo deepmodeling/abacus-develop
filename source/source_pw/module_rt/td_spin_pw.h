@@ -9,6 +9,7 @@
 
 #include <complex>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace pw
@@ -28,7 +29,10 @@ class TDSpinPW
     const K_Vectors* kv_ = nullptr;
     Structure_Factor* sf_ = nullptr;
     pseudopot_cell_vnl* pp_ = nullptr;
-    TDSpinOptsPW options_;
+    std::string mag_partition_;
+    std::string orbital_dir_;
+    double onsite_radius_ = 0.0;
+    bool calc_torque_ = false;
     std::vector<ModuleBase::Vector3<double>> pos_cache_;
     std::vector<int> labels_;
     hamilt::NonlocalWorkspace<Complex, Device> nonlocal_;
@@ -54,6 +58,10 @@ class TDSpinPW
   public:
     /** @brief Bind once; dependencies outlive this object and retain their cell and layout.
      * The caller must refresh structure factors and electronic data before sampling moved ions.
+     * @param mag_partition Atomic moment partition: none, voronoi, or onsite.
+     * @param orbital_dir Directory containing the onsite projector orbitals.
+     * @param onsite_radius Onsite projector cutoff in Bohr.
+     * @param calc_torque Whether to calculate XC and SOC spin torques.
      */
     void initialize(const UnitCell& cell,
                     const ModulePW::PW_Basis& grid,
@@ -61,7 +69,10 @@ class TDSpinPW
                     const K_Vectors& kv,
                     Structure_Factor& sf,
                     pseudopot_cell_vnl& pp,
-                    const TDSpinOptsPW& options);
+                    const std::string& mag_partition,
+                    const std::string& orbital_dir,
+                    double onsite_radius,
+                    bool calc_torque);
     /** @brief Sample all ranks and restore the k cursor; coordinate changes invalidate geometric caches. */
     TDSpinResultPW calculate(const psi::Psi<Complex, Device>& psi, const elecstate::ElecState& state, const ModuleBase::Vector3<double>& a);
 };

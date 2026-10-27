@@ -23,23 +23,23 @@ const char* linear_status_name(const LinearSolveStatus status)
 }
 
 template <typename T, typename Device>
-HSolverLinear<T, Device>::HSolverLinear(const LinearSolveOptions& options, const diag_comm_info& comm)
-    : default_control_{options.max_iterations, options.reconstruct}
+HSolverLinear<T, Device>::HSolverLinear(const LinearControls& linear_ctrl, const diag_comm_info& comm)
+    : max_iter_(linear_ctrl.max_iterations), reconstruct_(linear_ctrl.reconstruct)
 {
     using Real = typename GetTypeReal<T>::type;
     const double roundoff_tolerance = 100.0 * std::numeric_limits<Real>::epsilon();
-    tolerance_ = options.tolerance == 0.0 ? std::max(1e-10, roundoff_tolerance) : options.tolerance;
-    if (options.method == LinearMethod::bicgstab)
+    tolerance_ = linear_ctrl.tolerance == 0.0 ? std::max(1e-10, roundoff_tolerance) : linear_ctrl.tolerance;
+    if (linear_ctrl.solver == LinearMethod::bicgstab)
     {
         bicgstab_.reset(new LinearBiCGSTAB<T, Device>(tolerance_, comm));
     }
-    else if (options.method == LinearMethod::cgs)
+    else if (linear_ctrl.solver == LinearMethod::cgs)
     {
         cgs_.reset(new LinearCGS<T, Device>(tolerance_, comm));
     }
-    else if (options.method == LinearMethod::gmres)
+    else if (linear_ctrl.solver == LinearMethod::gmres)
     {
-        gmres_.reset(new LinearGMRES<T, Device>(tolerance_, options, comm));
+        gmres_.reset(new LinearGMRES<T, Device>(tolerance_, linear_ctrl.restart, linear_ctrl.max_iterations, comm));
     }
     else
     {
@@ -58,7 +58,7 @@ LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device
                                                   const T* initial_residual,
                                                   bool force_check)
 {
-    return solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, force_check, default_control_);
+    return solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, force_check, max_iter_, reconstruct_);
 }
 
 template <typename T, typename Device>
@@ -71,19 +71,20 @@ LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device
                                                   const T* b,
                                                   const T* initial_residual,
                                                   bool force_check,
-                                                  const LinearSolveControl& control)
+                                                  int max_iter,
+                                                  bool reconstruct)
 {
     if (bicgstab_)
     {
-        return bicgstab_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, control.max_iterations);
+        return bicgstab_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, max_iter);
     }
     else if (cgs_)
     {
-        return cgs_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, control.max_iterations);
+        return cgs_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, max_iter);
     }
     else if (gmres_)
     {
-        return gmres_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, force_check, control);
+        return gmres_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, force_check, max_iter, reconstruct);
     }
     else
     {

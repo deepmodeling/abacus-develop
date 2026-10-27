@@ -6,7 +6,7 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-ExpTaylor<T, Device>::ExpTaylor(const ExpOpts& exp_opts, const diag_comm_info& comm) : ExpAction<T, Device>(exp_opts, comm)
+ExpTaylor<T, Device>::ExpTaylor(const ExpControls& exp_ctrl, const diag_comm_info& comm) : ExpAction<T, Device>(exp_ctrl, comm)
 {
 }
 
@@ -52,10 +52,10 @@ ExpResult ExpTaylor<T, Device>::evaluate(const HSOperator<T, Device>& op,
         base_device::memory::synchronize_memory_op<T, Device, Device>()(full, term, count);
     }
     ExpResult result;
-    result.order_or_dim = this->exp_opts_.taylor_order;
+    result.order_or_dim = this->exp_ctrl_.taylor_order;
     // Scale at the longer requested time; half-step weights cannot overflow at high order.
     const double series_alpha = full ? 2.0 * alpha : alpha;
-    for (int k = 1; k <= this->exp_opts_.taylor_order; ++k)
+    for (int k = 1; k <= this->exp_ctrl_.taylor_order; ++k)
     {
         op.hpsi(term, image, ld, bands);
         zero_pad<T, Device>(image, layout);

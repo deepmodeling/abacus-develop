@@ -2,13 +2,12 @@
 #define TD_OBS_PW_H
 
 #include <array>
-#include <string>
 #include <vector>
 
 namespace pw
 {
 /** @brief Independent requests; all ranks must use the same choices. */
-struct TDVelRequestPW
+struct CurrentRequest
 {
     bool charge_total = false;
     bool charge_per_k = false;
@@ -21,15 +20,6 @@ struct TDVelResultPW
     std::array<double, 3> total{}; ///< Electron charge current per volume, in Hartree atomic units.
     std::vector<double> per_k;     ///< Same units, [global k including spin][Cartesian direction].
     std::array<double, 9> spin{};  ///< Spin angular momentum flux, [flow][spin], hbar/(Bohr^2*atomic time).
-};
-
-/** @brief Magnetic choices fixed at initialization, independent of ionic positions. */
-struct TDSpinOptsPW
-{
-    std::string method = "none";
-    std::string orbital_dir;
-    double radius = 0.0; ///< Onsite cutoff in Bohr.
-    bool torque = false;
 };
 
 /** @brief Endpoint observables replicated on all ranks after the appropriate reductions. */

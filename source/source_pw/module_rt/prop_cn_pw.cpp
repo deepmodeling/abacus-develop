@@ -6,41 +6,54 @@ namespace pw
 {
 template <typename T, typename Device>
 CNPropPW<T, Device>::CNPropPW(const ModulePW::PW_Basis_K& basis,
-                              const hsolver::PWLinearOptions& cn_opts,
+                              const hsolver::CNControls& cn_ctrl,
+                              int npol,
+                              const std::vector<int>& global_k,
                               const hsolver::diag_comm_info& comm,
                               std::ostream& log)
-    : solver_(basis, cn_opts, comm, log)
+    : solver_(basis, cn_ctrl, npol, global_k, comm, log)
 {
 }
+
 template <typename T, typename Device>
 void CNPropPW<T, Device>::invalidate_basis()
 {
     solver_.invalidate_basis();
 }
+
 template <typename T, typename Device>
-void CNPropPW<T, Device>::evolve(PropArgs<T, Device>& args, psi::Psi<T, Device>* current)
+void CNPropPW<T, Device>::evolve(TDHamiltPW<T, Device>& hamilt,
+                                 const TDHistoryPW<T, Device>& history,
+                                 elecstate::Potential& potential,
+                                 const elecstate::TDFieldManager& field,
+                                 psi::Psi<T, Device>* current,
+                                 int elec_step,
+                                 int scf_iter,
+                                 bool log_detail)
 {
     using Real = typename T::value_type;
-    const Real* potential = args.potential.template get_veff_smooth_data<Real>();
-    if (args.scf_iter > 1)
+    const Real* veff = potential.template get_veff_smooth_data<Real>();
+    if (scf_iter > 1)
     {
-        const ModuleBase::matrix& shape = args.potential.get_veff_smooth();
+        const ModuleBase::matrix& shape = potential.get_veff_smooth();
         const int size = shape.nr * shape.nc;
         hsolver::linear_buffer<Real, Device>(&veff_mid_, size);
         Real* buffer = veff_mid_.template data<Real>();
-        const Real* previous = args.history.left_potential();
-        ModuleBase::vector_add_vector_op<Real, Device, Real>()(size, buffer, previous, Real(0.5), potential, Real(0.5));
-        potential = buffer;
+        const Real* previous = history.left_potential();
+        ModuleBase::vector_add_vector_op<Real, Device, Real>()(size, buffer, previous, Real(0.5), veff, Real(0.5));
+        veff = buffer;
     }
+
     ModuleBase::Vector3<double> vecpot_ha(0, 0, 0);
-    if (args.field.gauge() == 1)
+    if (field.gauge() == 1)
     {
-        vecpot_ha = args.field.A_prop_ha();
+        vecpot_ha = field.A_prop_ha();
     }
-    args.hamilt.bind(potential, vecpot_ha);
-    const auto& previous = args.history.previous();
-    const double dt = args.field.interval_dt_ha();
-    solver_.solve(args.hamilt, previous, current, dt, vecpot_ha, args.elec_step, args.scf_iter, args.log_detail);
+
+    hamilt.bind(veff, vecpot_ha);
+    const auto& previous = history.previous();
+    const double dt = field.interval_dt_ha();
+    solver_.solve(hamilt, previous, current, dt, vecpot_ha, elec_step, scf_iter, log_detail);
 }
 template class CNPropPW<std::complex<float>, base_device::DEVICE_CPU>;
 template class CNPropPW<std::complex<double>, base_device::DEVICE_CPU>;

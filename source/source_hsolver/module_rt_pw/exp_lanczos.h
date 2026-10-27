@@ -43,7 +43,7 @@ class ExpLanczos final : public ExpAction<T, Device>
     ExpResult evaluate(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* output, T* full);
 
   public:
-    ExpLanczos(const ExpOpts& exp_opts, const diag_comm_info& comm);
+    ExpLanczos(const ExpControls& exp_ctrl, const diag_comm_info& comm);
     ExpResult apply(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* output) override;
     /** @brief Share one Krylov construction for alpha and twice alpha. */
     ExpResult apply_pair(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* half, T* full) override;

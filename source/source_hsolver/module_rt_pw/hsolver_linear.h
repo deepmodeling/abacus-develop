@@ -17,10 +17,11 @@ class HSolverLinear
     std::unique_ptr<LinearCGS<T, Device>> cgs_;
     std::unique_ptr<LinearGMRES<T, Device>> gmres_;
     double tolerance_ = 0.0;
-    const LinearSolveControl default_control_;
+    const int max_iter_;
+    const bool reconstruct_;
 
   public:
-    HSolverLinear(const LinearSolveOptions& options, const diag_comm_info& comm);
+    HSolverLinear(const LinearControls& linear_ctrl, const diag_comm_info& comm);
     /** @brief Return the effective tolerance after resolving the precision-dependent default. */
     double tolerance() const
     {
@@ -46,7 +47,8 @@ class HSolverLinear
                             const T* b,
                             const T* initial_residual,
                             bool force_check,
-                            const LinearSolveControl& control);
+                            int max_iter,
+                            bool reconstruct);
 };
 } // namespace hsolver
 #endif

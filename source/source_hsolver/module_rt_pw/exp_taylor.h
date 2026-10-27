@@ -13,7 +13,7 @@ class ExpTaylor final : public ExpAction<T, Device>
     ExpResult evaluate(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* half, T* full);
 
   public:
-    ExpTaylor(const ExpOpts& exp_opts, const diag_comm_info& comm);
+    ExpTaylor(const ExpControls& exp_ctrl, const diag_comm_info& comm);
     ExpResult apply(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* output) override;
     ExpResult apply_pair(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* half, T* full) override;
 };

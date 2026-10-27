@@ -9,7 +9,7 @@ TEST_F(Observables, CurrentsMatchPauliAndHamiltonianDerivative)
     const ModuleBase::Vector3<double> a(0.13, -0.07, 0.09);
     pw::TDVelPW<double, Device> observer;
     observer.initialize(cell_, basis_, kv_, pp_);
-    pw::TDVelRequestPW request;
+    pw::CurrentRequest request;
     request.charge_total = true;
     request.charge_per_k = true;
     request.spin_current = true;

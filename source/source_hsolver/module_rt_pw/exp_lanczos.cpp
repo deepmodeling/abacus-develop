@@ -32,7 +32,8 @@ ExpResult failed_band(ExpResult result, int band, bool retry)
 } // namespace
 
 template <typename T, typename Device>
-ExpLanczos<T, Device>::ExpLanczos(const ExpOpts& exp_opts, const diag_comm_info& comm) : ExpAction<T, Device>(exp_opts, comm), comm_(comm)
+ExpLanczos<T, Device>::ExpLanczos(const ExpControls& exp_ctrl, const diag_comm_info& comm)
+    : ExpAction<T, Device>(exp_ctrl, comm), comm_(comm)
 {
 }
 
@@ -50,7 +51,7 @@ int ExpLanczos<T, Device>::batch_size(const OrbLayout& layout) const
         rows = *std::max_element(sizes.begin(), sizes.end());
     }
 #endif
-    const double vectors = static_cast<double>(this->exp_opts_.krylov_max) + 6.0;
+    const double vectors = static_cast<double>(this->exp_ctrl_.krylov_max) + 6.0;
     const double bytes_per_band = sizeof(T) * rows * vectors;
     const double budget = 256.0 * 1024.0 * 1024.0;
     const int memory_limit = static_cast<int>(std::min(64.0, budget / bytes_per_band));
@@ -137,7 +138,7 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
     const int bands = layout.bands;
     const int dim = layout.npol == 2 ? ld : layout.npw;
     const int stride = ld * bands;
-    const int limit = this->exp_opts_.krylov_max;
+    const int limit = this->exp_ctrl_.krylov_max;
     const int64_t size = std::max(1, stride);
     const double time = full ? 2.0 * std::abs(alpha) : std::abs(alpha);
     *lost_orthogonality = false;
@@ -512,7 +513,7 @@ ExpResult ExpLanczos<T, Device>::evaluate(const HSOperator<T, Device>& op,
         const T* src = input + offset;
         T* dst = output + offset;
         T* full_dst = full ? full + offset : nullptr;
-        const ExpResult local = interval(op, batch, alpha, this->exp_opts_.rel_tol, src, dst, full_dst, 0);
+        const ExpResult local = interval(op, batch, alpha, this->exp_ctrl_.rel_tol, src, dst, full_dst, 0);
         result.has_err_est = result.has_err_est && local.has_err_est;
         add_work(result, local);
         result.rel_err_est = std::max(result.rel_err_est, local.rel_err_est);

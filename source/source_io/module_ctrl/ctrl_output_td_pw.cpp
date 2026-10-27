@@ -8,8 +8,11 @@ namespace ModuleIO
 {
 void ctrl_output_td_pw(const pw::TDVelResultPW& currents,
                        const pw::TDSpinResultPW& moments,
-                       const pw::TDVelRequestPW& request,
-                       const pw::TDSpinOptsPW& spin_opts,
+                       const pw::CurrentRequest& request,
+                       const std::string& mag_partition,
+                       const std::string& orbital_dir,
+                       double onsite_radius,
+                       bool calc_torque,
                        const std::vector<std::string>& orbital_fn,
                        int step,
                        double dt_ha,
@@ -32,7 +35,18 @@ void ctrl_output_td_pw(const pw::TDVelResultPW& currents,
     if (nspin == 4)
     {
         const double time = step * dt_ha * ModuleBase::AU_to_FS;
-        write_td_spin_pw(directory, step, time, orbital_fn, spin_opts, request.spin_current, moments, currents, log);
+        write_td_spin_pw(directory,
+                         step,
+                         time,
+                         orbital_fn,
+                         mag_partition,
+                         orbital_dir,
+                         onsite_radius,
+                         calc_torque,
+                         request.spin_current,
+                         moments,
+                         currents,
+                         log);
     }
 }
 } // namespace ModuleIO

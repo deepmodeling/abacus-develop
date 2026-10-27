@@ -93,13 +93,16 @@ void TDSpinPW<Real, Device>::initialize(const UnitCell& cell,
                                         const K_Vectors& kv,
                                         Structure_Factor& sf,
                                         pseudopot_cell_vnl& pp,
-                                        const TDSpinOptsPW& options)
+                                        const std::string& mag_partition,
+                                        const std::string& orbital_dir,
+                                        double onsite_radius,
+                                        bool calc_torque)
 {
     if (cell_ != nullptr || cell.get_npol() != 2)
     {
         ModuleBase::WARNING_QUIT("TDSpinPW", "Initialize once with a spinor basis.");
     }
-    if (options.method != "none" && options.method != "voronoi" && options.method != "onsite")
+    if (mag_partition != "none" && mag_partition != "voronoi" && mag_partition != "onsite")
     {
         ModuleBase::WARNING_QUIT("TDSpinPW", "Unknown magnetic partition.");
     }
@@ -109,7 +112,10 @@ void TDSpinPW<Real, Device>::initialize(const UnitCell& cell,
     kv_ = &kv;
     sf_ = &sf;
     pp_ = &pp;
-    options_ = options;
+    mag_partition_ = mag_partition;
+    orbital_dir_ = orbital_dir;
+    onsite_radius_ = onsite_radius;
+    calc_torque_ = calc_torque;
 }
 
 template <typename Real, typename Device>
@@ -149,8 +155,7 @@ void TDSpinPW<Real, Device>::density(const elecstate::ElecState& state, TDSpinRe
 {
     const UnitCell& cell = *cell_;
     const ModulePW::PW_Basis& grid = *grid_;
-    const TDSpinOptsPW& options = options_;
-    const bool voronoi = options.method == "voronoi";
+    const bool voronoi = mag_partition_ == "voronoi";
     if (voronoi && labels_.size() != static_cast<size_t>(grid.nrxx))
     {
         labels_ = td_voronoi_pw(cell, grid);
@@ -175,7 +180,7 @@ void TDSpinPW<Real, Device>::density(const elecstate::ElecState& state, TDSpinRe
             {
                 result->atom_mag[3 * labels_[ir] + a] += m * volume;
             }
-            if (options.torque)
+            if (calc_torque_)
             {
                 // The effective spin field is in Ry; the angular-momentum torque here uses Hartree time.
                 const int b = (a + 1) % 3;
@@ -298,7 +303,6 @@ void TDSpinPW<Real, Device>::onsite(const psi::Psi<Complex, Device>& psi,
     const ModulePW::PW_Basis_K& basis = *basis_;
     const K_Vectors& kv = *kv_;
     Structure_Factor& sf = *sf_;
-    const TDSpinOptsPW& options = options_;
     // Onsite owns its atomic result; the independently integrated total moment remains unchanged.
     result->atom_mag.assign(3 * cell.nat, 0.0);
     const double dq = pp_->table_dq();
@@ -312,7 +316,7 @@ void TDSpinPW<Real, Device>::onsite(const psi::Psi<Complex, Device>& psi,
         onsite_projector_.reset(new projectors::OnsiteProjector<double, Device>());
         q_bound_ = td_momentum_bound(basis, cell.tpiba);
         const int nq = static_cast<int>(std::ceil(q_bound_ / dq)) + 4;
-        onsite_projector_->init(options.orbital_dir, &cell, *onsite_psi_, kv, basis, sf, options.radius, nq, dq, state.wg, state.ekb);
+        onsite_projector_->init(orbital_dir_, &cell, *onsite_psi_, kv, basis, sf, onsite_radius_, nq, dq, state.wg, state.ekb);
     }
     auto* projector = onsite_projector_.get();
     if (onsite_psi_->get_nbands() != nbands || onsite_psi_->get_nbasis() != ld_psi)
@@ -383,11 +387,11 @@ TDSpinResultPW TDSpinPW<Real, Device>::calculate(const psi::Psi<Complex, Device>
     const int old_k = psi.get_current_k();
     TDSpinResultPW result;
     density(state, &result);
-    if (options_.method == "onsite")
+    if (mag_partition_ == "onsite")
     {
         onsite(psi, state, a, &result);
     }
-    if (options_.torque)
+    if (calc_torque_)
     {
         soc(psi, state.wg, a, &result);
     }

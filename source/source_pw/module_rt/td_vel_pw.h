@@ -38,7 +38,7 @@ class TDVelPW
     TDVelResultPW calculate(const psi::Psi<Complex, Device>& psi,
                             const elecstate::ElecState& state,
                             const ModuleBase::Vector3<double>& a,
-                            const TDVelRequestPW& request);
+                            const CurrentRequest& request);
 };
 } // namespace pw
 #endif

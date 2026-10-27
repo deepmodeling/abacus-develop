@@ -50,11 +50,11 @@ class LinearGMRES
                const LinearOperator<T, Device>& preconditioner,
                const std::vector<double>& threshold,
                bool reconstruct,
-               int max_iterations,
+               int max_iter,
                LinearSolveResult* result);
 
   public:
-    LinearGMRES(double tolerance, const LinearSolveOptions& options, const diag_comm_info& comm);
+    LinearGMRES(double tolerance, int restart, int max_iter, const diag_comm_info& comm);
     /** @brief Use the per-call budget and reconstruction policy; force_check requests an independent final application. */
     LinearSolveResult solve(const LinearOperator<T, Device>& op,
                             const LinearOperator<T, Device>& preconditioner,
@@ -65,7 +65,8 @@ class LinearGMRES
                             const T* b,
                             const T* initial_residual,
                             bool force_check,
-                            const LinearSolveControl& control);
+                            int max_iter,
+                            bool reconstruct);
 };
 } // namespace hsolver
 #endif

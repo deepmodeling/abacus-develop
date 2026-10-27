@@ -27,7 +27,7 @@ template <typename Real, typename Device>
 TDVelResultPW TDVelPW<Real, Device>::calculate(const psi::Psi<Complex, Device>& psi,
                                                const elecstate::ElecState& state,
                                                const ModuleBase::Vector3<double>& a,
-                                               const TDVelRequestPW& request)
+                                               const CurrentRequest& request)
 {
     ModuleBase::timer::start("TDVelPW", "calculate");
     if (cell_ == nullptr)

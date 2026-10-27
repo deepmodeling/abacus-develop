@@ -97,10 +97,12 @@ PWPreconditioner parse_pw_precond(const std::string& name)
 
 template <typename T, typename Device>
 CNSolverPW<T, Device>::CNSolverPW(const ModulePW::PW_Basis_K& basis,
-                                  const PWLinearOptions& options,
+                                  const CNControls& cn_ctrl,
+                                  int npol,
+                                  const std::vector<int>& global_k,
                                   const diag_comm_info& comm,
                                   std::ostream& log)
-    : basis_(basis), comm_(comm), options_(options), algebra_(comm), log_(log)
+    : basis_(basis), comm_(comm), cn_ctrl_(cn_ctrl), npol_(npol), global_k_(global_k), algebra_(comm), log_(log)
 {
     initialize();
 }
@@ -111,7 +113,7 @@ void CNSolverPW<T, Device>::initialize()
     const char* method = nullptr;
     for (const LinearMethodName& entry: linear_method_names)
     {
-        if (options_.linear.method == entry.method)
+        if (cn_ctrl_.linear.solver == entry.method)
         {
             method = entry.name;
             break;
@@ -125,7 +127,7 @@ void CNSolverPW<T, Device>::initialize()
     const char* preconditioner = nullptr;
     for (const PWPrecondName& entry: pw_precond_names)
     {
-        if (options_.preconditioner == entry.preconditioner)
+        if (cn_ctrl_.preconditioner == entry.preconditioner)
         {
             preconditioner = entry.name;
             break;
@@ -136,18 +138,18 @@ void CNSolverPW<T, Device>::initialize()
         ModuleBase::WARNING_QUIT("CNSolverPW", "Unsupported preconditioner.");
         return;
     }
-    if (options_.linear.method != LinearMethod::gmres)
+    if (cn_ctrl_.linear.solver != LinearMethod::gmres)
     {
         // Ignore the GMRES-only option before creating solver state or reporting effective settings.
-        options_.linear.reconstruct = false;
+        cn_ctrl_.linear.reconstruct = false;
     }
-    linear_solver_.reset(new HSolverLinear<T, Device>(options_.linear, comm_));
+    linear_solver_.reset(new HSolverLinear<T, Device>(cn_ctrl_.linear, comm_));
     std::ostringstream info;
     info << " PW RT-TDDFT linear solver: " << method << "; tolerance: " << std::scientific << std::setprecision(6)
-         << linear_solver_->tolerance() << "; maximum iterations: " << options_.linear.max_iterations
-         << "; restart: " << options_.linear.restart << '\n'
-         << "   Preconditioner: " << preconditioner << "; CN initial guess: " << options_.cn_init
-         << "; residual reconstruction: " << options_.linear.reconstruct << '\n';
+         << linear_solver_->tolerance() << "; maximum iterations: " << cn_ctrl_.linear.max_iterations
+         << "; restart: " << cn_ctrl_.linear.restart << '\n'
+         << "   Preconditioner: " << preconditioner << "; CN initial guess: " << cn_ctrl_.cn_init
+         << "; residual reconstruction: " << cn_ctrl_.linear.reconstruct << '\n';
     log_ << info.str();
 }
 
@@ -186,12 +188,12 @@ void CNSolverPW<T, Device>::update_precond(const int ik,
     for (int ig = 0; ig < dim; ++ig)
     {
         // The two spin components share the same kinetic diagonal; padding keeps an identity preconditioner.
-        const int physical_g = options_.npol == 2 ? ig % basis_.npwk_max : ig;
+        const int physical_g = npol_ == 2 ? ig % basis_.npwk_max : ig;
         if (physical_g >= basis_.npwk[ik])
         {
             continue;
         }
-        const double kinetic = options_.kinetic_enabled ? ModulePW::shifted_kinetic(basis_, ik, physical_g, momentum_shift) : 0.0;
+        const double kinetic = cn_ctrl_.kinetic_enabled ? ModulePW::shifted_kinetic(basis_, ik, physical_g, momentum_shift) : 0.0;
         inverse[ig] = T(1) / (T(1) + coefficient * static_cast<Real>(kinetic));
     }
     if (dim > 0)
@@ -206,7 +208,7 @@ void CNSolverPW<T, Device>::update_precond(const int ik,
 template <typename T, typename Device>
 bool CNSolverPW<T, Device>::tracks_state() const
 {
-    return options_.preconditioner == PWPreconditioner::kinetic_recycle || options_.linear.reconstruct;
+    return cn_ctrl_.preconditioner == PWPreconditioner::kinetic_recycle || cn_ctrl_.linear.reconstruct;
 }
 
 template <typename T, typename Device>
@@ -244,7 +246,7 @@ void CNSolverPW<T, Device>::invalidate_basis()
 template <typename T, typename Device>
 bool CNSolverPW<T, Device>::require_audit(int step, KPointState* state) const
 {
-    if (!options_.linear.reconstruct)
+    if (!cn_ctrl_.linear.reconstruct)
     {
         return true;
     }
@@ -257,15 +259,15 @@ bool CNSolverPW<T, Device>::require_audit(int step, KPointState* state) const
 template <typename T, typename Device>
 void CNSolverPW<T, Device>::retry_kinetic(const LinearOperator<T, Device>& op,
                                           T* current,
-                                          const SolveBatch& batch,
+                                          const BatchLayout& batch,
                                           LinearSolveResult* result)
 {
-    const int remaining_iterations = options_.linear.max_iterations - result->iterations;
-    const LinearSolveControl control{remaining_iterations, false};
+    const int remaining_iter = cn_ctrl_.linear.max_iterations - result->iterations;
     const T* inverse = inverse_kinetic_.template data<T>();
     const LinearLowRank<T, Device> diagonal(algebra_, inverse, batch.dim);
     const T* rhs = rhs_.template data<T>();
-    LinearSolveResult retry = linear_solver_->solve(op, diagonal, batch.ld, batch.bands, batch.dim, current, rhs, nullptr, true, control);
+    LinearSolveResult retry
+        = linear_solver_->solve(op, diagonal, batch.ld, batch.bands, batch.dim, current, rhs, nullptr, true, remaining_iter, false);
     retry.iterations += result->iterations;
     retry.restarts += result->restarts;
     retry.operator_calls += result->operator_calls;
@@ -279,7 +281,7 @@ template <typename T, typename Device>
 void CNSolverPW<T, Device>::update_state(KPointState* state,
                                          const SolveDetails& details,
                                          int step,
-                                         const SolveBatch& batch,
+                                         const BatchLayout& batch,
                                          const T* current)
 {
     if (!state)
@@ -294,7 +296,7 @@ void CNSolverPW<T, Device>::update_state(KPointState* state,
     {
         state->independent_step = step;
     }
-    if (options_.preconditioner == PWPreconditioner::kinetic_recycle && details.projected
+    if (cn_ctrl_.preconditioner == PWPreconditioner::kinetic_recycle && details.projected
         && details.linear.status == LinearSolveStatus::converged && details.linear.reconstruction_fallbacks == 0 && !details.retried)
     {
         const T* seed = projection_.seed();
@@ -308,18 +310,18 @@ template <typename T, typename Device>
 typename CNSolverPW<T, Device>::SolveDetails CNSolverPW<T, Device>::solve_kpoint(const LinearOperator<T, Device>& op,
                                                                                  const T* previous,
                                                                                  T* current,
-                                                                                 const SolveBatch& batch,
+                                                                                 const BatchLayout& batch,
                                                                                  int step,
                                                                                  int iteration,
                                                                                  KPointState* state)
 {
     SolveDetails details;
     const T* rhs = rhs_.template data<T>();
-    const bool need_projection = (options_.cn_init && iteration == 1) || options_.preconditioner == PWPreconditioner::kinetic_recycle
-                                 || options_.preconditioner == PWPreconditioner::kinetic_subspace;
+    const bool need_projection = (cn_ctrl_.cn_init && iteration == 1) || cn_ctrl_.preconditioner == PWPreconditioner::kinetic_recycle
+                                 || cn_ctrl_.preconditioner == PWPreconditioner::kinetic_subspace;
     details.projected = need_projection && projection_.prepare(algebra_, batch.ld, batch.dim, batch.bands, previous, rhs);
     const T* initial_residual = nullptr;
-    if (options_.cn_init && iteration == 1 && details.projected)
+    if (cn_ctrl_.cn_init && iteration == 1 && details.projected)
     {
         const T* seed = projection_.seed();
         if (batch.dim > 0)
@@ -330,15 +332,15 @@ typename CNSolverPW<T, Device>::SolveDetails CNSolverPW<T, Device>::solve_kpoint
         details.cn_initial = true;
     }
     const bool force_check = require_audit(step, state);
-    const T* inverse = options_.preconditioner == PWPreconditioner::none ? nullptr : inverse_kinetic_.template data<T>();
+    const T* inverse = cn_ctrl_.preconditioner == PWPreconditioner::none ? nullptr : inverse_kinetic_.template data<T>();
     LinearLowRank<T, Device> preconditioner(algebra_, inverse, batch.dim);
-    if (options_.preconditioner == PWPreconditioner::kinetic_subspace && details.projected)
+    if (cn_ctrl_.preconditioner == PWPreconditioner::kinetic_subspace && details.projected)
     {
         const T* image = projection_.image();
         const LinearSmallLU& factor = projection_.factor();
         preconditioner.prepare_subspace(batch.ld, batch.bands, previous, image, factor, &correction_workspace_);
     }
-    else if (options_.preconditioner == PWPreconditioner::kinetic_recycle && state->response.rank() > 0)
+    else if (cn_ctrl_.preconditioner == PWPreconditioner::kinetic_recycle && state->response.rank() > 0)
     {
         const int rank = state->response.rank();
         const T* directions = state->response.directions();
@@ -349,7 +351,7 @@ typename CNSolverPW<T, Device>::SolveDetails CNSolverPW<T, Device>::solve_kpoint
     details.linear
         = linear_solver_->solve(op, preconditioner, batch.ld, batch.bands, batch.dim, current, rhs, initial_residual, force_check);
     if (details.linear.status != LinearSolveStatus::converged && details.coarse_rank > 0
-        && details.linear.iterations < options_.linear.max_iterations)
+        && details.linear.iterations < cn_ctrl_.linear.max_iterations)
     {
         retry_kinetic(op, current, batch, &details.linear);
         details.retried = true;
@@ -365,7 +367,7 @@ void CNSolverPW<T, Device>::report_solve(const SolveDetails& details, int ik, in
     const int evolution_step = step + 1;
     std::ostringstream record;
     record << std::scientific << std::setprecision(6) << " PW RT-TDDFT linear solve: evolution_step=" << evolution_step
-           << " scf_iter=" << iteration << " global_k=" << options_.global_k_indices.at(ik) + 1 << '\n'
+           << " scf_iter=" << iteration << " global_k=" << global_k_.at(ik) + 1 << '\n'
            << "   iterations=" << result.iterations << " restarts=" << result.restarts << " operator_calls=" << result.operator_calls
            << " operator_columns=" << result.operator_columns << " pre_orth_residual=" << result.max_residual
            << " residual_kind=" << (result.reconstructed ? "reconstructed" : "independent") << " true_checks=" << result.true_checks << '\n'
@@ -401,23 +403,23 @@ void CNSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
         previous.fix_k(ik);
         const int npw = current->get_ngk(ik);
         // A spinor spans both npwx-strided blocks, including their explicitly zeroed padding.
-        const int dim = options_.npol == 2 ? ld : npw;
+        const int dim = npol_ == 2 ? ld : npw;
         KPointState* state = tracks_state() ? &states_[ik] : nullptr;
-        const ShiftedHOperator<T, Device> rhs_op(op, rhs_coefficient, dim, npw, options_.npol);
-        const ShiftedHOperator<T, Device> lhs_op(op, coefficient, dim, npw, options_.npol);
-        const OrbLayout layout{ld, npw, options_.npol, bands};
+        const ShiftedHOperator<T, Device> rhs_op(op, rhs_coefficient, dim, npw, npol_);
+        const ShiftedHOperator<T, Device> lhs_op(op, coefficient, dim, npw, npol_);
+        const OrbLayout layout{ld, npw, npol_, bands};
         const T* previous_data = clean_orbs<T, Device>(previous.get_pointer(), layout, &clean_);
         T* current_data = current->get_pointer();
-        if (options_.npol == 2)
+        if (npol_ == 2)
         {
             zero_pad<T, Device>(current_data, layout);
         }
         rhs_op.apply(previous_data, rhs, ld, bands);
-        if (options_.preconditioner != PWPreconditioner::none)
+        if (cn_ctrl_.preconditioner != PWPreconditioner::none)
         {
             update_precond(ik, dim, coefficient, momentum_shift);
         }
-        const SolveBatch batch{ld, dim, bands};
+        const BatchLayout batch{ld, dim, bands};
         const SolveDetails details = solve_kpoint(lhs_op, previous_data, current_data, batch, istep, iter, state);
         if (detailed_output && log_.good())
         {
@@ -434,7 +436,7 @@ void CNSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
                 band_label = std::to_string(result.failed_band + 1);
             }
             message << "PW RT-TDDFT linear solve failed at electronic evolution step " << evolution_step << ", SCF iteration " << iter
-                    << ", global_k=" << options_.global_k_indices.at(ik) + 1 << ", band " << band_label << ", after " << result.iterations
+                    << ", global_k=" << global_k_.at(ik) + 1 << ", band " << band_label << ", after " << result.iterations
                     << " iterations: " << linear_status_name(result.status) << "; residual = " << result.max_residual;
             ModuleBase::WARNING_QUIT("CNSolverPW", message.str());
         }

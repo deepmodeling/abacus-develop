@@ -121,11 +121,11 @@ TYPED_TEST(LinearSolveTest, DenseReferenceAndReusedBatches)
     {
         for (const bool preconditioned: {false, true})
         {
-            hsolver::LinearSolveOptions options;
-            options.method = method;
-            options.tolerance = tolerance;
-            options.restart = 2;
-            hsolver::HSolverLinear<T> solver(options, comm);
+            hsolver::LinearControls linear_ctrl;
+            linear_ctrl.solver = method;
+            linear_ctrl.tolerance = tolerance;
+            linear_ctrl.restart = 2;
+            hsolver::HSolverLinear<T> solver(linear_ctrl, comm);
             // Shrink, grow, and use zero local rows without replacing the solver.
             for (const int n: {11, 5, 17, 1})
             {
@@ -271,11 +271,11 @@ TEST(LinearSolveFailure, ReportsOriginalColumnAndTrueResidual)
                 std::fill(a.begin(), a.end(), T(0));
             }
             DenseOperator<T> op(a, n, start, dim, comm);
-            hsolver::LinearSolveOptions options;
-            options.method = method;
-            options.tolerance = 1e-13;
-            options.max_iterations = singular ? 10 : 1;
-            hsolver::HSolverLinear<T> solver(options, comm);
+            hsolver::LinearControls linear_ctrl;
+            linear_ctrl.solver = method;
+            linear_ctrl.tolerance = 1e-13;
+            linear_ctrl.max_iterations = singular ? 10 : 1;
+            hsolver::HSolverLinear<T> solver(linear_ctrl, comm);
             std::vector<T> x(3 * ld, T(0));
             std::vector<T> b(3 * ld, T(0));
             // Retire column 0; column 2 is swapped forward but failure must still name column 1.
@@ -289,7 +289,7 @@ TEST(LinearSolveFailure, ReportsOriginalColumnAndTrueResidual)
                 = singular ? hsolver::LinearSolveStatus::breakdown : hsolver::LinearSolveStatus::max_iterations;
             EXPECT_EQ(result.status, expected);
             EXPECT_EQ(result.failed_band, 1);
-            EXPECT_LE(result.iterations, options.max_iterations);
+            EXPECT_LE(result.iterations, linear_ctrl.max_iterations);
             std::vector<T> ax(3 * ld, T(0));
             op.apply(x.data(), ax.data(), ld, 3);
             double residual2 = 0.0;
@@ -301,7 +301,7 @@ TEST(LinearSolveFailure, ReportsOriginalColumnAndTrueResidual)
             Parallel_Common::reduce_data(&residual2, 1, comm.comm);
 #endif
             EXPECT_NEAR(result.max_residual, std::sqrt(residual2), 1e-12);
-            EXPECT_GT(result.max_residual, options.tolerance);
+            EXPECT_GT(result.max_residual, linear_ctrl.tolerance);
         }
     }
 }
@@ -340,23 +340,23 @@ void check_reconstruction(const bool corrupt_initial)
             b[band * ld + i] = rhs[band * n + start + i];
         }
     }
-    hsolver::LinearSolveOptions options;
-    options.method = hsolver::LinearMethod::gmres;
+    hsolver::LinearControls linear_ctrl;
+    linear_ctrl.solver = hsolver::LinearMethod::gmres;
     // Above 100*epsilon in float: exercise reconstructed acceptance, not an automatic audit.
-    options.tolerance = std::is_same<T, std::complex<float>>::value ? 2e-5 : 1e-11;
-    options.restart = 2;
-    options.max_iterations = 100;
-    options.reconstruct = true;
+    linear_ctrl.tolerance = std::is_same<T, std::complex<float>>::value ? 2e-5 : 1e-11;
+    linear_ctrl.restart = 2;
+    linear_ctrl.max_iterations = 100;
+    linear_ctrl.reconstruct = true;
     DenseOperator<T> op(matrix, n, start, dim, comm);
     const IdentityOperator<T> identity(dim);
-    hsolver::HSolverLinear<T> solver(options, comm);
+    hsolver::HSolverLinear<T> solver(linear_ctrl, comm);
     const T* initial = corrupt_initial ? bad_residual.data() : nullptr;
     const hsolver::LinearSolveResult result = solver.solve(op, identity, ld, bands, dim, x.data(), b.data(), initial, corrupt_initial);
     ASSERT_EQ(result.status, hsolver::LinearSolveStatus::converged);
     EXPECT_EQ(result.failed_band, -1);
     EXPECT_GT(result.restarts, 0);
     EXPECT_GT(result.true_checks, 0);
-    EXPECT_LE(result.iterations, options.max_iterations);
+    EXPECT_LE(result.iterations, linear_ctrl.max_iterations);
     EXPECT_EQ(result.reconstructed, !corrupt_initial);
     EXPECT_EQ(result.reconstruction_fallbacks, corrupt_initial ? 1 : 0);
     std::vector<T> ax(ld * bands, T(0));
@@ -369,24 +369,24 @@ void check_reconstruction(const bool corrupt_initial)
         {
             error += std::norm(linear_test::Complex(ax[band * ld + i]) - linear_test::Complex(b[band * ld + i]));
             norm += std::norm(linear_test::Complex(b[band * ld + i]));
-            EXPECT_LT(std::abs(linear_test::Complex(x[band * ld + i]) - reference[band * n + start + i]), 10 * options.tolerance);
+            EXPECT_LT(std::abs(linear_test::Complex(x[band * ld + i]) - reference[band * n + start + i]), 10 * linear_ctrl.tolerance);
         }
 #ifdef __MPI
         Parallel_Common::reduce_data(&error, 1, comm.comm);
         Parallel_Common::reduce_data(&norm, 1, comm.comm);
 #endif
-        EXPECT_LE(std::sqrt(error), 1.2 * options.tolerance * std::max(1.0, std::sqrt(norm)));
+        EXPECT_LE(std::sqrt(error), 1.2 * linear_ctrl.tolerance * std::max(1.0, std::sqrt(norm)));
     }
     if (corrupt_initial)
     {
         // Recovery shares the total iteration budget rather than starting a fresh allowance.
-        options.max_iterations = 1;
-        hsolver::HSolverLinear<T> limited(options, comm);
+        linear_ctrl.max_iterations = 1;
+        hsolver::HSolverLinear<T> limited(linear_ctrl, comm);
         std::fill(x.begin(), x.end(), T(0));
         const hsolver::LinearSolveResult exhausted = limited.solve(op, identity, ld, bands, dim, x.data(), b.data(), initial, true);
         EXPECT_EQ(exhausted.status, hsolver::LinearSolveStatus::max_iterations);
         EXPECT_EQ(exhausted.failed_band, 1);
-        EXPECT_EQ(exhausted.iterations, options.max_iterations);
+        EXPECT_EQ(exhausted.iterations, linear_ctrl.max_iterations);
         EXPECT_EQ(exhausted.reconstruction_fallbacks, 1);
     }
 }

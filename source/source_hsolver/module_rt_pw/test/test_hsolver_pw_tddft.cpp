@@ -166,24 +166,21 @@ TYPED_TEST(PWTDDFTTest, SpinorCNMatchesDenseSolve)
     const std::vector<int> dimensions{2 * sizes[0], 2 * sizes[1]};
     DenseHamiltonian<T> op(dimensions);
     op.spinor = true;
-    hsolver::PWLinearOptions options;
-    hsolver::TDOrbOpts orb_opts;
-    options.npol = 2;
-    options.global_k_indices = std::vector<int>{0, 1};
-    options.linear.method = hsolver::LinearMethod::bicgstab;
-    options.linear.tolerance = single ? 2e-6 : 1e-13;
-    options.linear.max_iterations = 100;
-    options.kinetic_enabled = true;
+    hsolver::CNControls cn_ctrl;
+    const int npol = 2;
+    const std::vector<int> global_k{0, 1};
+    cn_ctrl.linear.solver = hsolver::LinearMethod::bicgstab;
+    cn_ctrl.linear.tolerance = single ? 2e-6 : 1e-13;
+    cn_ctrl.linear.max_iterations = 100;
+    cn_ctrl.kinetic_enabled = true;
 #ifdef __MPI
     const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
 #else
     const hsolver::diag_comm_info comm(0, 1);
 #endif
     std::ostringstream log;
-    orb_opts.npol = options.npol;
-    orb_opts.global_k_indices = options.global_k_indices;
-    hsolver::TDOrbOps<T, Device> orbitals(orb_opts, comm, log);
-    hsolver::CNSolverPW<T, Device> solver(basis, options, comm, log);
+    hsolver::TDOrbOps<T, Device> orbitals(npol, hsolver::OrthMethod::cholesky, false, global_k, comm, log);
+    hsolver::CNSolverPW<T, Device> solver(basis, cn_ctrl, npol, global_k, comm, log);
     const int ld = 2 * npwx;
     psi::Psi<T> previous(2, bands, ld, sizes, true);
     std::vector<std::vector<T>> packed(2);
@@ -264,19 +261,16 @@ TYPED_TEST(PWTDDFTTest, ComplexEijExcludesPadding)
     ModulePW::PW_Basis_K basis;
     initialize_basis(sizes, &basis);
     DenseHamiltonian<T> op(sizes);
-    hsolver::PWLinearOptions options;
-    hsolver::TDOrbOpts orb_opts;
-    options.global_k_indices = std::vector<int>{0};
+    hsolver::CNControls cn_ctrl;
+    const std::vector<int> global_k{0};
 #ifdef __MPI
     const hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
 #else
     const hsolver::diag_comm_info comm(0, 1);
 #endif
     std::ostringstream log;
-    orb_opts.npol = options.npol;
-    orb_opts.global_k_indices = options.global_k_indices;
-    hsolver::TDOrbOps<T, Device> orbitals(orb_opts, comm, log);
-    hsolver::CNSolverPW<T, Device> solver(basis, options, comm, log);
+    hsolver::TDOrbOps<T, Device> orbitals(1, hsolver::OrthMethod::cholesky, false, global_k, comm, log);
+    hsolver::CNSolverPW<T, Device> solver(basis, cn_ctrl, 1, global_k, comm, log);
     psi::Psi<T> current(1, bands, ld, sizes, true);
     const T phases[]{T(1), T(0, 1), T(-1)};
     const T padding(std::numeric_limits<TypeParam>::quiet_NaN());
@@ -335,22 +329,19 @@ TYPED_TEST(PWTDDFTTest, DenseCNCorrectorsAndConservation)
             initialize_basis(sizes, &basis);
             DenseHamiltonian<T> op(sizes);
             std::ostringstream log;
-            hsolver::PWLinearOptions options;
-            hsolver::TDOrbOpts orb_opts;
-            options.global_k_indices = std::vector<int>{0, 1};
+            hsolver::CNControls cn_ctrl;
+            const std::vector<int> global_k{0, 1};
             const std::string solver_name = cn_variant ? method.substr(0, method.size() - 3) : method;
-            options.linear.method = hsolver::parse_linear_method(solver_name);
-            options.linear.tolerance = single_precision ? 2e-6 : 1e-13;
-            options.linear.max_iterations = 100;
-            options.preconditioner = hsolver::parse_pw_precond(precond);
-            options.kinetic_enabled = true;
-            options.linear.restart = 2;
-            options.linear.reconstruct = method == "gmres" && recycle;
-            options.cn_init = method == "gmres" || cn_variant;
-            orb_opts.npol = options.npol;
-            orb_opts.global_k_indices = options.global_k_indices;
-            hsolver::TDOrbOps<T, Device> orbitals(orb_opts, comm, log);
-            hsolver::CNSolverPW<T, Device> solver(basis, options, comm, log);
+            cn_ctrl.linear.solver = hsolver::parse_linear_method(solver_name);
+            cn_ctrl.linear.tolerance = single_precision ? 2e-6 : 1e-13;
+            cn_ctrl.linear.max_iterations = 100;
+            cn_ctrl.preconditioner = hsolver::parse_pw_precond(precond);
+            cn_ctrl.kinetic_enabled = true;
+            cn_ctrl.linear.restart = 2;
+            cn_ctrl.linear.reconstruct = method == "gmres" && recycle;
+            cn_ctrl.cn_init = method == "gmres" || cn_variant;
+            hsolver::TDOrbOps<T, Device> orbitals(1, hsolver::OrthMethod::cholesky, false, global_k, comm, log);
+            hsolver::CNSolverPW<T, Device> solver(basis, cn_ctrl, 1, global_k, comm, log);
             psi::Psi<T> previous(2, bands, ld, sizes, true);
             for (int ik = 0; ik < 2; ++ik)
             {
@@ -489,19 +480,15 @@ TYPED_TEST(PWTDDFTTest, UnequalOccupationsAndDiagnosticsPreservePropagation)
     for (const bool out_stat: {false, true})
     {
         std::ostringstream log;
-        hsolver::PWLinearOptions options;
-        hsolver::TDOrbOpts orb_opts;
-        options.global_k_indices = std::vector<int>{0};
-        options.linear.method = hsolver::LinearMethod::gmres;
-        options.linear.tolerance = single ? 2e-6 : 1e-13;
-        options.linear.max_iterations = 100;
-        options.linear.restart = n;
-        options.preconditioner = hsolver::PWPreconditioner::none;
-        orb_opts.out_stat = out_stat;
-        orb_opts.npol = options.npol;
-        orb_opts.global_k_indices = options.global_k_indices;
-        hsolver::TDOrbOps<T, Device> orbitals(orb_opts, comm, log);
-        hsolver::CNSolverPW<T, Device> solver(basis, options, comm, log);
+        hsolver::CNControls cn_ctrl;
+        const std::vector<int> global_k{0};
+        cn_ctrl.linear.solver = hsolver::LinearMethod::gmres;
+        cn_ctrl.linear.tolerance = single ? 2e-6 : 1e-13;
+        cn_ctrl.linear.max_iterations = 100;
+        cn_ctrl.linear.restart = n;
+        cn_ctrl.preconditioner = hsolver::PWPreconditioner::none;
+        hsolver::TDOrbOps<T, Device> orbitals(1, hsolver::OrthMethod::cholesky, out_stat, global_k, comm, log);
+        hsolver::CNSolverPW<T, Device> solver(basis, cn_ctrl, 1, global_k, comm, log);
         psi::Psi<T> previous(1, bands, ld, sizes, true);
         std::fill_n(previous.get_pointer(), ld * bands, T(0));
         std::vector<Wide> reference(n * bands, Wide(0));
