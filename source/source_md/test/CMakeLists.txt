@@ -199,7 +199,7 @@ if(ENABLE_MPI)
     TARGET MODULE_MD_dump_mpi
     KEEP_FEATURE_DEFINITIONS __MPI
     LIBS parameter psi device
-    SOURCES mpi/test_md_func.cpp ../../source_base/parallel_common.cpp
+    SOURCES test_md_func.cpp ../../source_base/parallel_common.cpp
             ../../source_cell/magnetism.cpp ${depend_files})
   add_test(
     NAME MODULE_MD_dump_mpi_np4
