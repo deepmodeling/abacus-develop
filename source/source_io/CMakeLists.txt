@@ -16,6 +16,7 @@ list(APPEND objects
     module_energy/write_bands.cpp
     module_energy/write_eig_occ.cpp
     module_energy/td_eij_io.cpp
+    module_energy/td_eij_pw.cpp
     module_bessel/numerical_basis.cpp
     module_bessel/numerical_basis_overlap.cpp
     module_bessel/numerical_basis_output.cpp

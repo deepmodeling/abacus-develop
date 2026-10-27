@@ -717,6 +717,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_dos/write_dos_pw.o\
     module_energy/write_bands.o\
     module_energy/td_eij_io.o\
+    module_energy/td_eij_pw.o\
     module_ctrl/ctrl_output_td_pw.o\
     module_output/td_conserv_io.o\
     module_dos/cal_dos.o\

@@ -15,7 +15,7 @@
 #include "source_io/module_ctrl/ctrl_output_td_pw.h"
 #include "source_io/module_efield/td_efield_io.h"
 #include "source_io/module_efield/td_vecpot_io.h"
-#include "source_io/module_energy/td_eij_io.h"
+#include "source_io/module_energy/td_eij_pw.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/td_conserv_io.h"
 #include "source_io/module_parameter/parameter.h"
