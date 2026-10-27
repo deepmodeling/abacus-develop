@@ -99,20 +99,16 @@ vdw_d4_model d4    # or d4s for the smooth D4S model
 
 If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `dft_functional` or pseudopotential metadata and pass it to the DFT-D4 library. The `vdw_d4_model` keyword selects the dispersion model inside the DFT-D4 library; the default is `d4`, while `d4s` enables the smooth D4S model.
 
-## Build with libvdwxc-backed rVV10 support
+## Build with libvdwxc support
 
-`xc_nonlocal rvv10` uses the external [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) library for the rVV10 nonlocal kernel. Until a tagged libvdwxc release includes the rVV10 API, build and install the rVV10 branch from [libvdwxc merge request !32](https://gitlab.com/libvdwxc/libvdwxc/-/merge_requests/32) (commit `94410eb` at the time of writing) against the same FFTW that ABACUS will use, then pass its prefix together with Libxc. `ENABLE_LIBVDWXC` requires `ENABLE_LIBXC`. A serial configuration:
+The rVV10 nonlocal correlation (`dft_functional rvv10`) is evaluated by the external [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) library. Until a tagged libvdwxc release contains the rVV10 interface, build the branch of [libvdwxc merge request !32](https://gitlab.com/libvdwxc/libvdwxc/-/merge_requests/32) (commit `94410eb` at the time of writing) against the FFTW that ABACUS uses, with libvdwxc's CMake build so that ABACUS can find the exported package; a static libvdwxc also needs `pkg-config` and FFTW's `fftw3.pc`:
 
 ```bash
-cmake -B build -DENABLE_MPI=OFF -DENABLE_LCAO=OFF \
-  -DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON \
-  -DCMAKE_PREFIX_PATH="/path/to/libvdwxc-prefix;/path/to/libxc-prefix" \
-  -DFFTW3_DIR=/path/to/fftw-prefix
+cmake -S libvdwxc -B build-libvdwxc -DCMAKE_INSTALL_PREFIX=/path/to/libvdwxc
+cmake --build build-libvdwxc && cmake --install build-libvdwxc
 ```
 
-Keep one FFT provider per process: do not combine a libvdwxc built against FFTW with an ABACUS build that uses the MKL FFT interface. The legacy Makefile does not build this backend.
-
-Enable the correction with `xc_nonlocal rvv10` and `dft_functional GGA_X_RPW86+GGA_C_PBE`; the rVV10 parameters b=6.3 and C=0.0093 of this pairing are built in. `abacus -h xc_nonlocal` lists the supported calculation settings; unsupported ones are rejected when INPUT is read.
+Then pass `-DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON` to CMake for ABACUS and add `/path/to/libvdwxc` to `CMAKE_PREFIX_PATH`. A serial libvdwxc build is sufficient: in MPI runs, ABACUS collects the density of each k-point pool on its first process for the nonlocal term. Stress, DFPT and LR-TDDFT forces are not supported with this functional, and the legacy Makefile does not build it.
 
 ## Build with JSON support
 

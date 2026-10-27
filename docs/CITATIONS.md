@@ -56,7 +56,7 @@ The following references are required to be cited when using ABACUS. Specificall
 
     Nikolay V. Tkachenko, Linus B. Dittmer, Rebecca Tomann, and Martin Head-Gordon. "Smooth D4S model." The Journal of Physical Chemistry Letters 15, 10629-10637 (2024). DOI: 10.1021/acs.jpclett.4c02653.
 
-- **If the libvdwxc-backed rVV10 nonlocal correction is used:**
+- **If the rVV10 nonlocal correlation (`dft_functional rvv10`) is used:**
 
     O. A. Vydrov and T. Van Voorhis. "Nonlocal van der Waals density functional: The simpler the better." The Journal of Chemical Physics 133, 244103 (2010). DOI: 10.1063/1.3521275.
 

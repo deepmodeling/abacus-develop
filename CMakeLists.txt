@@ -49,7 +49,8 @@ option(USE_SW "Enable SW Architecture" OFF)
 
 option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
-option(ENABLE_LIBVDWXC "Enable libvdwxc-backed nonlocal XC" OFF)
+cmake_dependent_option(ENABLE_LIBVDWXC "Enable using the libvdwxc package" OFF
+                       "ENABLE_LIBXC" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
@@ -645,20 +646,7 @@ if(ENABLE_LIBXC)
 endif()
 
 if(ENABLE_LIBVDWXC)
-  if(NOT ENABLE_LIBXC)
-    message(
-      FATAL_ERROR
-        "ENABLE_LIBVDWXC requires ENABLE_LIBXC=ON: the rVV10 interface uses Libxc for the semilocal GGA_X_RPW86+GGA_C_PBE part."
-    )
-  endif()
-  # The exported target supplies headers and transitive FFT dependencies.
   find_package(libvdwxc CONFIG REQUIRED)
-  if(MKL_FOUND)
-    message(
-      WARNING
-        "ENABLE_LIBVDWXC with MKL: libvdwxc links its own FFTW3 while ABACUS uses the MKL FFTW3 interface, so two FFT providers would coexist in one process. The libvdwxc backend has only been validated with a standalone FFTW3 build of both ABACUS and libvdwxc."
-    )
-  endif()
 endif()
 
 if(DEFINED DeePMD_DIR)

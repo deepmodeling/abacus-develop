@@ -126,6 +126,8 @@ class XC_Functional
         double hse_omega_;
         XCFunctionalParameters runtime_parameters_;
         std::map<int, double> scaling_factor_xc_;
+        double nlc_b_;
+        double nlc_c_;
     };
 
     // For hybrid functional
@@ -166,6 +168,12 @@ class XC_Functional
         return need_laplacian;
     };
 
+    /// rVV10 parameter b of the nonlocal correlation (libxc's nlc_b); 0 if the functional has none
+    static double get_nlc_b()
+    {
+        return nlc_b;
+    };
+
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
     static void set_xc_first_loop(const UnitCell& ucell);
 
@@ -178,6 +186,9 @@ class XC_Functional
     static bool ked_flag; // whether the functional has kinetic energy density
     static bool need_laplacian; // whether any functional needs Laplacian of density
     static bool use_libxc;
+    // rVV10 nonlocal correlation parameters b and C; nlc_b = 0 means no nonlocal correlation
+    static double nlc_b;
+    static double nlc_c;
     // exx_hybrid_alpha for mixing exx in hybrid functional:
     static double hybrid_alpha;
 

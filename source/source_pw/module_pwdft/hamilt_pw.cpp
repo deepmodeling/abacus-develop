@@ -83,10 +83,6 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         }
         // no variable can choose xc, maybe it is necessary
         pot_register_in.push_back("xc");
-        if (input.xc_nonlocal != "none")
-        {
-            pot_register_in.push_back("xc_nonlocal");
-        }
         if (input.imp_sol == 1)
         {
             pot_register_in.push_back("surchem");

@@ -16,6 +16,12 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
     ModuleBase::TITLE("Stress","stress_gga");
     ModuleBase::timer::start("Stress","stress_gga");
 
+    if (XC_Functional::get_nlc_b() > 0.0)
+    {
+        ModuleBase::WARNING_QUIT("Stress_Func::stress_gga",
+                                 "stress of the rVV10 nonlocal correlation is not implemented");
+    }
+
     int func_type = XC_Functional::get_func_type();
     if (func_type == 0 || func_type == 1)
     {

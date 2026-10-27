@@ -66,8 +66,8 @@ set(_abacus_feature_definitions
     $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_LCAO=0>
     $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
     $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
-    $<$<BOOL:${ENABLE_LIBVDWXC}>:__LIBVDWXC>
     $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
+    $<$<BOOL:${ENABLE_LIBVDWXC}>:__LIBVDWXC>
     $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
@@ -282,8 +282,7 @@ set(_abacus_feature_libs
     $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
     $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
     $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>
-    $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>
-    $<$<BOOL:${ENABLE_LIBVDWXC}>:libvdwxc::vdwxc>)
+    $<$<BOOL:${ENABLE_PLUMED}>:PLUMED::plumed>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
@@ -408,8 +407,8 @@ foreach(
         cereal::cereal
         ELPA::ELPA
         Libxc::xc
-        libvdwxc::vdwxc
         dftd4::dftd4
+        libvdwxc::vdwxc
         DeePMD::deepmd_c
         DeePMD::deepmd_cc
         NEP::nep
@@ -769,7 +768,6 @@ target_link_libraries(
           module_stodft
           module_dfpt
           xc_
-          nonlocal_xc
           vdw
           relax
           io_advanced

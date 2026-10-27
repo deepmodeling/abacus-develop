@@ -31,6 +31,12 @@ if(ENABLE_COVERAGE)
   add_coverage(xc_)
 endif()
 
+if(ENABLE_LIBVDWXC)
+  # XC_Functional::v_xc adds the rVV10 nonlocal correlation through this adapter.
+  target_sources(xc_ PRIVATE ../module_vdw/nonlocal_xc.cpp)
+  target_link_libraries(xc_ PUBLIC libvdwxc::vdwxc)
+endif()
+
 if(BUILD_TESTING)
 if(ENABLE_MPI)
 if(ENABLE_LIBXC)

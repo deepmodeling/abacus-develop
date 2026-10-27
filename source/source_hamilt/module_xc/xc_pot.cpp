@@ -16,6 +16,9 @@
 #include "source_hamilt/module_xc/exx_info.h"
 #endif
 #endif
+#ifdef __LIBVDWXC
+#include "source_hamilt/module_vdw/nonlocal_xc.h"
+#endif
 
 
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
@@ -36,18 +39,27 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     if (use_libxc)
     {
 #ifdef __LIBXC
-        return XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(),
-                                               nrxx,
-                                               ucell->omega,
-                                               ucell->tpiba,
-                                               chr,
-                                               nspin,
-                                               domag,
-                                               domag_z,
-                                               gga_grad,
-                                               &(scaling_factor_xc),
-                                               hybrid_alpha,
-                                               hse_omega);
+        std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
+            = XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(),
+                                              nrxx,
+                                              ucell->omega,
+                                              ucell->tpiba,
+                                              chr,
+                                              nspin,
+                                              domag,
+                                              domag_z,
+                                              gga_grad,
+                                              &(scaling_factor_xc),
+                                              hybrid_alpha,
+                                              hse_omega);
+#ifdef __LIBVDWXC
+        // the nonlocal correlation of the functional; RVV10 always takes this libxc branch
+        if (nlc_b > 0.0)
+        {
+            vdw::add_rvv10(nlc_b, nlc_c, *chr, etxc_vtxc_v);
+        }
+#endif
+        return etxc_vtxc_v;
 #else
         ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
