@@ -658,10 +658,11 @@ if(ENABLE_LIBVDWXC)
         "ENABLE_LIBVDWXC with ENABLE_MPI requires libvdwxc configured with -DVDWXC_ENABLE_MPI=ON"
     )
   endif()
-  if(MKL_FOUND AND VDWXC_ENABLE_MPI)
+  # vdwxc_init_mpi creates FFTW-MPI plans, which the FFTW interface of MKL or KML cannot execute.
+  if(ENABLE_MPI AND (MKL_FOUND OR USE_KML))
     message(
-      WARNING
-        "libvdwxc with MPI links FFTW3 and FFTW3-MPI, while ABACUS uses the FFTW interface of MKL when MKL is found; this combination is untested. Configure ABACUS without MKL to use the same FFTW3."
+      FATAL_ERROR
+        "ENABLE_LIBVDWXC with ENABLE_MPI requires ABACUS built with FFTW3, not with the FFTW interface of MKL or KML"
     )
   endif()
 endif()

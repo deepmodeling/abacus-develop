@@ -101,14 +101,14 @@ If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `
 
 ## Build with libvdwxc support
 
-`vdw_method rvv10` evaluates the rVV10 nonlocal correlation with the external [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) library. Until a tagged libvdwxc release contains the rVV10 interface, build the branch of [libvdwxc merge request !32](https://gitlab.com/libvdwxc/libvdwxc/-/merge_requests/32) (tested at commit `da2d55f`) with libvdwxc's CMake build, which installs the package that ABACUS looks up, and against the FFTW that ABACUS uses. For an MPI build of ABACUS, configure libvdwxc with MPI, which needs FFTW with its MPI library; a static libvdwxc also needs `pkg-config` and FFTW's `fftw3.pc`:
+`vdw_method rvv10` evaluates the rVV10 nonlocal correlation with the external [libvdwxc](https://gitlab.com/libvdwxc/libvdwxc) library. Until a tagged libvdwxc release contains the rVV10 interface, build the branch of [libvdwxc merge request !32](https://gitlab.com/libvdwxc/libvdwxc/-/merge_requests/32) (tested at commit `da2d55f`) with libvdwxc's CMake build, which installs the package that ABACUS looks up, and against the FFTW that ABACUS uses. For an MPI build of ABACUS, configure libvdwxc with MPI, which needs FFTW with its MPI library:
 
 ```bash
-cmake -S libvdwxc -B build-libvdwxc -DVDWXC_ENABLE_MPI=ON -DCMAKE_INSTALL_PREFIX=/path/to/libvdwxc
+cmake -S libvdwxc -B build-libvdwxc -DBUILD_SHARED_LIBS=ON -DVDWXC_ENABLE_MPI=ON -DCMAKE_INSTALL_PREFIX=/path/to/libvdwxc
 cmake --build build-libvdwxc && cmake --install build-libvdwxc
 ```
 
-Then pass `-DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON` to CMake for ABACUS and add `/path/to/libvdwxc` to `CMAKE_PREFIX_PATH`. ABACUS hands each k-point pool's density to libvdwxc's distributed interface, so the nonlocal convolution and its memory are shared by the processes of the pool. libvdwxc's MPI build uses FFTW and FFTW-MPI, while ABACUS uses the FFT interface of MKL whenever it finds MKL; that combination is untested, so configure ABACUS without MKL and against the same FFTW (CMake warns otherwise). The legacy Makefile does not build this feature.
+Then pass `-DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON` to CMake for ABACUS and add `/path/to/libvdwxc` to `CMAKE_PREFIX_PATH`. ABACUS hands each k-point pool's density to libvdwxc's distributed interface, so the nonlocal convolution and its memory are shared by the processes of the pool. libvdwxc's MPI build plans its FFTs with FFTW-MPI, so an MPI build of ABACUS with libvdwxc must use FFTW3 rather than the FFTW interface of MKL or KML; CMake stops otherwise. The legacy Makefile does not build this feature.
 
 In the input file:
 

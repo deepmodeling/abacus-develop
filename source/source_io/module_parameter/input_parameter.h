@@ -604,7 +604,7 @@ struct Input_para
     //  vdw
     //  Peize Lin add 2014-03-31, jiyy update 2019-08-01
     // ==========================================================
-    std::string vdw_method = "none"; ///< the method of calculating vdw (none; d2; d3_0; d3_bj; d4; rvv10)
+    std::string vdw_method = "none";                        ///< the method of calculating vdw (none; d2; d3_0; d3_bj; d4)
     std::string vdw_s6 = "default";                         ///< scale parameter of d2/d3_0/d3_bj
     std::string vdw_s8 = "default";                         ///< scale parameter of d3_0/d3_bj
     std::string vdw_a1 = "default";                         ///< damping parameter of d3_0/d3_bj

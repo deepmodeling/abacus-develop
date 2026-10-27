@@ -99,7 +99,7 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, st
 #ifndef __LIBVDWXC
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw",
                                  "rVV10 support was not enabled at build time. "
-                                 "Rebuild ABACUS with -DENABLE_LIBVDWXC=ON.");
+                                 "Rebuild ABACUS with -DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON.");
 #endif
         // rVV10 is evaluated inside XC_Functional, so there is no pairwise term here
         if (plog != nullptr)

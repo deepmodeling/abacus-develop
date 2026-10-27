@@ -36,13 +36,13 @@ namespace
 const int STRESS_COMPONENTS = 9;
 
 /**
- * libvdwxc object for one grid and pool, kept between calls.
+ * libvdwxc object for one FFT grid and pool, kept between calls and rebuilt when either changes.
  *
- * libvdwxc distributes the first axis of its grid in blocks of ceil(n/P) planes, the FFTW-MPI default
- * (vdwxc_init_mpi does not report its local slab, so plan_exchange recomputes it).
- * It is given the lattice vectors in the cyclic order (a3, a1, a2), so that this axis is the z axis
- * that ABACUS distributes and the slab of a process is stored as [z][x][y], the transpose of the
- * ABACUS layout [x][y][z]. Whole z planes are moved between the two distributions with all-to-all exchanges.
+ * libvdwxc gets the lattice vectors in the cyclic order (a3, a1, a2), so that the first axis of its grid
+ * is the z axis that ABACUS distributes. It splits that axis into blocks of ceil(nz/P) planes, the FFTW-MPI
+ * default; vdwxc_init_mpi does not report the local slab, so plan_exchange computes it the same way. The
+ * slab of a process is stored as [z][x][y], the transpose of the ABACUS layout [x][y][z], and whole z
+ * planes are moved between the two distributions by all-to-all exchanges.
  */
 class Rvv10Workspace
 {
