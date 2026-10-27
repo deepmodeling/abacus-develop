@@ -10,7 +10,6 @@
 
 #include <iosfwd>
 #include <memory>
-#include <vector>
 
 namespace ModuleESolver
 {
@@ -66,33 +65,19 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     pw::TDHistoryPW<T, Device> history_;
     double initial_wave_electrons_ = 0.0;
     double initial_rho_electrons_ = 0.0;
-    /** @brief Small endpoint data; the accepted wavefunctions remain owned by history_. */
-    struct AcceptedState
-    {
-        elecstate::fenergy energy;
-        ModuleBase::matrix eigenvalues;
-        std::vector<double> density;
-    };
-    AcceptedState capture_state() const;
-    void restore_state(const AcceptedState& state);
-    void run_propagation(UnitCell& cell, int step);
+
+    void run_prop(UnitCell& cell, int step);
     bool advance_interval(UnitCell& cell,
                           int step,
                           int index,
                           int depth,
                           const elecstate::TDFieldState& full,
-                          AcceptedState& accepted,
+                          pw::TDElecSnap& accepted,
                           hsolver::TDOrthStats& stats);
     void output_field(int step) const;
     /** @brief Print the one-based electronic step header. */
     void print_step(const int istep) const;
-    /** @brief Rebuild an iteration-limited endpoint from its final orbitals without changing occupations. */
-    void finalize_endpoint(UnitCell& cell);
-    /** @brief Print Eij from the accepted endpoint, collecting all k-point pools on the main rank. */
-    void print_eij(const int istep);
-    void report_orth(const UnitCell& ucell, int istep);
     void prep_td_step(const int istep);
-    void sample_endpoint(UnitCell& cell, int step);
 };
 
 } // namespace ModuleESolver

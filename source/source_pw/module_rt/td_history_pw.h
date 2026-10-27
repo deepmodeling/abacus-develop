@@ -2,13 +2,30 @@
 #define TD_HISTORY_PW_H
 
 #include "source_base/module_container/ATen/core/tensor.h"
+#include "source_estate/fp_energy.h"
+#include "source_estate/module_charge/charge.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_psi/psi.h"
 
 #include <memory>
+#include <vector>
 
 namespace pw
 {
+
+/** @brief Electronic data at an accepted endpoint; orbitals and potential stay in TDHistoryPW. */
+struct TDElecSnap
+{
+    elecstate::fenergy energy;
+    ModuleBase::matrix eigenvalues;
+    std::vector<double> density;
+};
+
+/** @brief Copy energy, band expectations and density without advancing orbital history. */
+TDElecSnap capture_td(const elecstate::fenergy& energy, const ModuleBase::matrix& eigenvalues, const Charge& charge);
+
+/** @brief Restore electronic data on the unchanged density grid and refresh its mixing backup. */
+void restore_td(const TDElecSnap& state, elecstate::fenergy& energy, ModuleBase::matrix& eigenvalues, Charge& charge);
 
 /** @brief Accepted endpoint wavefunctions and potential snapshots. */
 template <typename T, typename Device>

@@ -1,4 +1,5 @@
 #include "source_io/module_current/td_current_pw.h"
+
 #include "source_base/tool_quit.h"
 
 #include <cstdint>
@@ -8,7 +9,7 @@
 namespace ModuleIO
 {
 
-void write_pw_current(const pw::TDVelResultPW& current,
+void write_current_pw(const pw::TDVelResultPW& current,
                       const int istep,
                       const int nk_per_spin,
                       const bool out_current_k,
@@ -22,7 +23,7 @@ void write_pw_current(const pw::TDVelResultPW& current,
     fout_tot.open(filename_tot, mode);
     if (!fout_tot)
     {
-        ModuleBase::WARNING_QUIT("write_pw_current", "Cannot open " + filename_tot);
+        ModuleBase::WARNING_QUIT("write_current_pw", "Cannot open " + filename_tot);
     }
     fout_tot << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(12);
     for (double value: current.total)
@@ -33,7 +34,7 @@ void write_pw_current(const pw::TDVelResultPW& current,
     fout_tot.close();
     if (!fout_tot)
     {
-        ModuleBase::WARNING_QUIT("write_pw_current", "Failed to write " + filename_tot);
+        ModuleBase::WARNING_QUIT("write_current_pw", "Failed to write " + filename_tot);
     }
 
     // Optionally write the contribution from each k point.
@@ -50,7 +51,7 @@ void write_pw_current(const pw::TDVelResultPW& current,
             fout_k.open(filename_k, mode);
             if (!fout_k)
             {
-                ModuleBase::WARNING_QUIT("write_pw_current", "Cannot open " + filename_k);
+                ModuleBase::WARNING_QUIT("write_current_pw", "Cannot open " + filename_k);
             }
             const std::int64_t offset = static_cast<std::int64_t>(ik) * 3;
             fout_k << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(12);
@@ -62,7 +63,7 @@ void write_pw_current(const pw::TDVelResultPW& current,
             fout_k.close();
             if (!fout_k)
             {
-                ModuleBase::WARNING_QUIT("write_pw_current", "Failed to write " + filename_k);
+                ModuleBase::WARNING_QUIT("write_current_pw", "Failed to write " + filename_k);
             }
         }
     }

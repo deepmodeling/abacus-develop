@@ -36,6 +36,33 @@ void save_potential(const ModuleBase::matrix& shape, const Real* current, ct::Te
 
 } // namespace
 
+TDElecSnap capture_td(const elecstate::fenergy& energy, const ModuleBase::matrix& eigenvalues, const Charge& charge)
+{
+    TDElecSnap state;
+    state.energy = energy;
+    state.eigenvalues = eigenvalues;
+    state.density.resize(charge.nspin * charge.nrxx);
+    for (int spin = 0; spin < charge.nspin; ++spin)
+    {
+        std::copy(charge.rho[spin], charge.rho[spin] + charge.nrxx, state.density.begin() + spin * charge.nrxx);
+    }
+    return state;
+}
+
+void restore_td(const TDElecSnap& state, elecstate::fenergy& energy, ModuleBase::matrix& eigenvalues, Charge& charge)
+{
+    ModuleBase::timer::start("pw", "restore_td");
+    energy = state.energy;
+    eigenvalues = state.eigenvalues;
+    for (int spin = 0; spin < charge.nspin; ++spin)
+    {
+        const double* density = state.density.data() + spin * charge.nrxx;
+        std::copy(density, density + charge.nrxx, charge.rho[spin]);
+    }
+    charge.save_rho_before_sum_band();
+    ModuleBase::timer::end("pw", "restore_td");
+}
+
 template <typename T, typename Device>
 void TDHistoryPW<T, Device>::prepare(const elecstate::Potential& potential)
 {

@@ -4,9 +4,6 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_parallel/para_bridge.h"
-#include "source_base/parallel_comm.h"
-#include "source_base/parallel_device.h"
-#include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/elecstate_tools.h"
@@ -15,14 +12,15 @@
 #include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_ctrl/ctrl_output_pw.h"
-#include "source_io/module_current/td_current_pw.h"
-#include "source_io/module_current/td_spin_pw_io.h"
+#include "source_io/module_ctrl/ctrl_output_td_pw.h"
 #include "source_io/module_efield/td_efield_io.h"
 #include "source_io/module_efield/td_vecpot_io.h"
 #include "source_io/module_energy/td_eij_io.h"
 #include "source_io/module_output/output_log.h"
+#include "source_io/module_output/td_conserv_io.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
+#include "source_pw/module_rt/td_endpoint_pw.h"
 #include "source_pw/module_rt/td_pw.h"
 
 #include <algorithm>
@@ -141,7 +139,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::runner(BaseCell& basecell, const int istep)
         {
             basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
             UnitCell& cell = static_cast<UnitCell&>(basecell);
-            this->run_propagation(cell, electronic_step);
+            this->run_prop(cell, electronic_step);
         }
         else
         {
@@ -163,59 +161,22 @@ int ESolver_KS_PW_TDDFT<T, Device>::scf_iter_limit(const int istep) const
 }
 
 template <typename T, typename Device>
-typename ESolver_KS_PW_TDDFT<T, Device>::AcceptedState ESolver_KS_PW_TDDFT<T, Device>::capture_state() const
-{
-    AcceptedState state;
-    state.energy = this->pelec->f_en;
-    state.eigenvalues = this->pelec->ekb;
-
-    state.density.resize(this->chr.nspin * this->chr.nrxx);
-    for (int spin = 0; spin < this->chr.nspin; ++spin)
-    {
-        std::copy(this->chr.rho[spin], this->chr.rho[spin] + this->chr.nrxx, state.density.begin() + spin * this->chr.nrxx);
-    }
-
-    return state;
-}
-
-template <typename T, typename Device>
-void ESolver_KS_PW_TDDFT<T, Device>::restore_state(const AcceptedState& state)
-{
-    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "restore_state");
-
-    *this->stp.template get_psi_t<T, Device>() = this->history_.previous();
-    this->pelec->f_en = state.energy;
-    this->pelec->ekb = state.eigenvalues;
-    this->pelec->vnew_exist = false;
-
-    for (int spin = 0; spin < this->chr.nspin; ++spin)
-    {
-        const double* density = state.density.data() + spin * this->chr.nrxx;
-        std::copy(density, density + this->chr.nrxx, this->chr.rho[spin]);
-    }
-    this->chr.save_rho_before_sum_band();
-
-    // The caller binds the trial field and rebuilds the endpoint potential. The saved
-    // left-endpoint potential used by the corrector is already held in history_.
-    this->td_prop_->invalidate_basis();
-    this->td_prop_->orbitals().reset_orth_stats();
-
-    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "restore_state");
-}
-
-template <typename T, typename Device>
 bool ESolver_KS_PW_TDDFT<T, Device>::advance_interval(UnitCell& cell,
                                                       int step,
                                                       int index,
                                                       int depth,
                                                       const elecstate::TDFieldState& full,
-                                                      AcceptedState& accepted,
+                                                      pw::TDElecSnap& accepted,
                                                       hsolver::TDOrthStats& stats)
 {
     const int parts = 1 << depth;
     if (depth > 0)
     {
-        this->restore_state(accepted);
+        *this->stp.template get_psi_t<T, Device>() = this->history_.previous();
+        pw::restore_td(accepted, this->pelec->f_en, this->pelec->ekb, this->chr);
+        this->pelec->vnew_exist = false;
+        this->td_prop_->invalidate_basis();
+        this->td_prop_->orbitals().reset_orth_stats();
 
         const elecstate::TDFieldState trial = this->td_field_manager_->subinterval(full, index, parts);
         this->td_field_manager_->bind_field(trial);
@@ -263,7 +224,24 @@ bool ESolver_KS_PW_TDDFT<T, Device>::advance_interval(UnitCell& cell,
 
     if (!converged)
     {
-        this->finalize_endpoint(cell);
+        auto& current = *this->stp.template get_psi_t<T, Device>();
+        auto& estate = *static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
+        auto& hamilt = *static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+        const auto& vecpot = this->td_field_manager_->A_right_ha();
+        pw::rebuild_td_end(current,
+                           estate,
+                           this->chr,
+                           cell,
+                           hamilt,
+                           this->td_prop_->orbitals(),
+                           *this->pw_wfc,
+                           *this->pw_rhod,
+                           vecpot,
+                           this->inp_->nspin,
+                           this->inp_->imp_sol,
+                           this->inp_->sc_mag_switch,
+                           this->inp_->dft_plus_u,
+                           this->inp_->assume_isolated);
     }
 
     const hsolver::TDOrthStats& trial_stats = this->td_prop_->orbitals().orth_stats();
@@ -275,22 +253,22 @@ bool ESolver_KS_PW_TDDFT<T, Device>::advance_interval(UnitCell& cell,
     this->td_prop_->finish_trial();
     if (this->inp_->td_max_halvings > 0)
     {
-        accepted = this->capture_state();
+        accepted = pw::capture_td(this->pelec->f_en, this->pelec->ekb, this->chr);
     }
 
     return converged;
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW_TDDFT<T, Device>::run_propagation(UnitCell& cell, int step)
+void ESolver_KS_PW_TDDFT<T, Device>::run_prop(UnitCell& cell, int step)
 {
-    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "run_propagation");
+    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "run_prop");
     const ModuleBase::TimePoint started = ModuleBase::get_time();
 
-    AcceptedState accepted;
+    pw::TDElecSnap accepted;
     if (this->inp_->td_max_halvings > 0)
     {
-        accepted = this->capture_state();
+        accepted = pw::capture_td(this->pelec->f_en, this->pelec->ekb, this->chr);
     }
 
     this->before_scf(cell, step);
@@ -334,7 +312,7 @@ void ESolver_KS_PW_TDDFT<T, Device>::run_propagation(UnitCell& cell, int step)
     this->after_scf(cell, step, converged);
     this->conv_esolver = converged;
 
-    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "run_propagation");
+    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "run_prop");
 }
 
 template <typename T, typename Device>
@@ -476,36 +454,22 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
     {
         ESolver_KS_PW<T, Device>::hamilt2rho_single(ucell, istep, iter, ethr);
 
-        psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
-        // Padding is a storage invariant even with orthogonalization disabled; clearing it does not change the density.
-        this->td_prop_->orbitals().zero_padding(current);
-
-        if (this->inp_->td_orthonormal != "none")
-        {
-            int changed = this->td_prop_->orbitals().orth_initial(current, iter);
-            // Occupations and density construction contain collectives across k-point pools.
-            Parallel_Reduce::reduce_all(changed);
-            if (changed > 0)
-            {
-                hamilt::Hamilt<T, Device>* hamiltonian = static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt);
-                hamilt::HamiltHSOperator<T, Device> op(hamiltonian, this->pw_wfc);
-                this->td_prop_->orbitals().cal_band_energy(op, *current, &this->pelec->ekb);
-
-                elecstate::calculate_weights(this->pelec->ekb,
-                                             this->pelec->wg,
-                                             this->pelec->klist,
-                                             this->pelec->eferm,
-                                             this->pelec->f_en,
-                                             this->pelec->nelec_spin,
-                                             this->inp_->nbands,
-                                             this->pelec->skip_weights);
-                elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
-
-                elecstate::ElecStatePW<T, Device>* estate = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
-                estate->psiToRho(*current);
-                module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
-            }
-        }
+        auto& current = *this->stp.template get_psi_t<T, Device>();
+        auto& estate = *static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
+        auto* hamilt = static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt);
+        hamilt::HamiltHSOperator<T, Device> op(hamilt, this->pw_wfc);
+        const bool do_orth = this->inp_->td_orthonormal != "none";
+        pw::orth_init_pw(this->td_prop_->orbitals(),
+                         op,
+                         current,
+                         estate,
+                         this->chr,
+                         ucell,
+                         *this->pw_rhod,
+                         this->inp_->nspin,
+                         this->inp_->nbands,
+                         iter,
+                         do_orth);
 
         ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "hamilt2rho_single");
         return;
@@ -543,7 +507,24 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     }
     if (!conv_esolver && istep == 0)
     {
-        finalize_endpoint(ucell);
+        auto& current = *this->stp.template get_psi_t<T, Device>();
+        auto& estate = *static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
+        auto& hamilt = *static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+        const auto& vecpot = this->td_field_manager_->A_right_ha();
+        pw::rebuild_td_end(current,
+                           estate,
+                           this->chr,
+                           ucell,
+                           hamilt,
+                           this->td_prop_->orbitals(),
+                           *this->pw_wfc,
+                           *this->pw_rhod,
+                           vecpot,
+                           this->inp_->nspin,
+                           this->inp_->imp_sol,
+                           this->inp_->sc_mag_switch,
+                           this->inp_->dft_plus_u,
+                           this->inp_->assume_isolated);
     }
 
     // Endpoint diagnostics use the accepted endpoint, not the propagation midpoint or a mixed trial density.
@@ -552,7 +533,17 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
     endpoint_hamilt->bind_td_state(endpoint_veff, this->td_field_manager_->A_right_ha());
     if (this->inp_->td_print_eij >= 0.0)
     {
-        print_eij(istep);
+        auto& current = *this->stp.template get_psi_t<T, Device>();
+        hamilt::HamiltHSOperator<T, Device> op(endpoint_hamilt, this->pw_wfc);
+        ModuleIO::print_eij_pw(op,
+                               this->td_prop_->orbitals(),
+                               current,
+                               this->kv,
+                               this->inp_->nspin,
+                               istep,
+                               this->niter,
+                               this->inp_->td_print_eij,
+                               log_);
     }
 
     ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver);
@@ -570,240 +561,52 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
             this->history_.save(*current, *this->pelec->pot);
         }
 
-        sample_endpoint(ucell, istep);
+        const auto& current = *this->stp.template get_psi_t<T, Device>();
+        const auto& vecpot = this->td_field_manager_->A_right_ha();
+        const pw::TDVelResultPW currents = vel_.calculate(current, *this->pelec, vecpot, vel_request_);
+
+        pw::TDSpinResultPW moments;
+        if (this->inp_->nspin == 4 && (spin_options_.method != "none" || spin_options_.torque))
+        {
+            moments = spin_.calculate(current, *this->pelec, vecpot);
+        }
+
+        const double dt_ha = this->td_field_manager_->dt_ha();
+        const int nkstot = this->kv.get_nkstot();
+        ModuleIO::ctrl_output_td_pw(currents,
+                                    moments,
+                                    vel_request_,
+                                    spin_options_,
+                                    ucell.orbital_fn,
+                                    istep,
+                                    dt_ha,
+                                    this->inp_->nspin,
+                                    nkstot,
+                                    GlobalV::MY_RANK,
+                                    PARAM.globalv.global_out_dir,
+                                    log_);
     }
 
     if (this->inp_->td_out_stat)
     {
-        report_orth(ucell, istep);
-    }
-}
-
-template <typename T, typename Device>
-void ESolver_KS_PW_TDDFT<T, Device>::finalize_endpoint(UnitCell& cell)
-{
-    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "finalize_endpoint");
-
-    psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
-    auto* estate = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
-    // The last SCF iteration may have mixed the density. Keep the actual orbitals and their occupations.
-    estate->psiToRho(*current);
-    module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, cell.symm);
-    this->chr.save_rho_before_sum_band();
-    this->pelec->pot->update_from_charge(&this->chr, &cell);
-
-    auto* hamiltonian = static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
-    const Real* veff = this->pelec->pot->template get_veff_smooth_data<Real>();
-    hamiltonian->bind_td_state(veff, this->td_field_manager_->A_right_ha());
-
-    hamilt::HamiltHSOperator<T, Device> op(hamiltonian, this->pw_wfc);
-    this->td_prop_->orbitals().cal_band_energy(op, *current, &this->pelec->ekb);
-    elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
-    this->pelec->f_en.deband = this->pelec->cal_delta_eband(cell);
-    this->pelec->f_en.descf = 0.0;
-
-    // Do not reuse a self-consistency force correction from an earlier endpoint.
-    this->pelec->vnew_exist = false;
-    this->pelec->cal_energies(2, this->inp_->imp_sol, this->inp_->sc_mag_switch, this->inp_->dft_plus_u, this->inp_->assume_isolated);
-
-    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "finalize_endpoint");
-}
-
-template <typename T, typename Device>
-void ESolver_KS_PW_TDDFT<T, Device>::sample_endpoint(UnitCell& cell, int step)
-{
-    psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
-    const ModuleBase::Vector3<double>& a = this->td_field_manager_->A_right_ha();
-
-    // All endpoint currents share one velocity action; disabled requests perform no collectives.
-    const pw::TDVelResultPW currents = vel_.calculate(*current, *this->pelec, a, vel_request_);
-
-    pw::TDSpinResultPW moments;
-    if (this->inp_->nspin == 4 && (spin_options_.method != "none" || spin_options_.torque))
-    {
-        moments = spin_.calculate(*current, *this->pelec, a);
-    }
-
-    const std::string& directory = PARAM.globalv.global_out_dir;
-    const int rank = GlobalV::MY_RANK;
-    if (rank == 0)
-    {
-        if (this->inp_->out_current == 1)
-        {
-            const int spin_mult = this->inp_->nspin == 2 ? 2 : 1;
-            const int nk = this->kv.get_nkstot() / spin_mult;
-            ModuleIO::write_pw_current(currents, step, nk, this->inp_->out_current_k, directory);
-        }
-        if (this->inp_->nspin == 4)
-        {
-            const double time = step * this->td_field_manager_->dt_ha() * ModuleBase::AU_to_FS;
-            ModuleIO::write_td_spin_pw(directory,
-                                       step,
-                                       time,
-                                       cell.orbital_fn,
-                                       spin_options_,
-                                       vel_request_.spin_current,
-                                       moments,
-                                       currents,
-                                       log_);
-        }
-    }
-}
-
-template <typename T, typename Device>
-void ESolver_KS_PW_TDDFT<T, Device>::print_eij(const int istep)
-{
-    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "print_eij");
-
-    psi::Psi<T, Device>* current = this->stp.template get_psi_t<T, Device>();
-    const int original_k = current->get_current_k();
-    const int nband = current->get_nbands();
-    const size_t elements = static_cast<size_t>(nband) * nband;
-    const int nspin = this->inp_->nspin;
-    const int nk = this->kv.get_nkstot() / (nspin == 2 ? 2 : 1);
-    const Parallel_Kpoints& pools = this->kv.para_k;
-    const bool main_rank = pools.my_pool == 0 && pools.rank_in_pool == 0;
-
-    auto* hamiltonian = static_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
-    const Real* veff = this->pelec->pot->template get_veff_smooth_data<Real>();
-    // cal_converged() updates the potential from the final density, after the last band-energy evaluation.
-    hamiltonian->bind_td_state(veff, this->td_field_manager_->A_right_ha());
-    hamilt::HamiltHSOperator<T, Device> op(hamiltonian, this->pw_wfc);
-
-    for (int global_k = 0; global_k < this->kv.get_nkstot(); ++global_k)
-    {
-        const int physical_k = global_k % nk;
-        const int spin = global_k / nk;
-        int owner = 0;
-        int local_k = global_k;
-#ifdef __MPI
-        owner = pools.whichpool[physical_k];
-        local_k = physical_k - pools.startk_pool[owner] + spin * pools.nks_pool[owner];
-#endif
-
-        std::vector<std::complex<double>> eij;
-        if (pools.my_pool == owner)
-        {
-            eij = this->td_prop_->orbitals().cal_eij(op, *current, local_k);
-        }
-
-#ifdef __MPI
-        // Each pool already has the full matrix; transfer only one copy to the main log.
-        if (owner != 0 && pools.rank_in_pool == 0 && (main_rank || pools.my_pool == owner))
-        {
-            if (main_rank)
-            {
-                eij.resize(elements);
-            }
-            MPI_Comm world = MPI_COMM_WORLD;
-            const int source = pools.get_startpro_pool(owner);
-            const size_t max_count = std::numeric_limits<int>::max();
-            for (size_t offset = 0; offset < elements; offset += max_count)
-            {
-                const int count = static_cast<int>(std::min(max_count, elements - offset));
-                if (main_rank)
-                {
-                    Parallel_Common::recv_data(eij.data() + offset, count, source, 0, world, MPI_STATUS_IGNORE);
-                }
-                else
-                {
-                    Parallel_Common::send_data(eij.data() + offset, count, 0, 0, world);
-                }
-            }
-        }
-#endif
-
-        if (main_rank)
-        {
-            const ModuleIO::EijOutputInfo info{this->inp_->td_print_eij, istep + 1, this->niter, physical_k + 1, nspin, spin + 1};
-            ModuleIO::print_eij(eij.data(), nband, nband, info, log_);
-        }
-    }
-
-    current->fix_k(original_k);
-    op.update_k(original_k);
-
-    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "print_eij");
-}
-
-template <typename T, typename Device>
-void ESolver_KS_PW_TDDFT<T, Device>::report_orth(const UnitCell& ucell, int istep)
-{
-    ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "report_orth");
-
-    double electrons = this->td_prop_->orbitals().wave_electrons(this->pelec->wg);
-    // Norms are replicated within a pool; only its root contributes to the total.
-    if (this->pw_wfc->poolrank != 0)
-    {
-        electrons = 0.0;
-    }
-    Parallel_Reduce::reduce_all(electrons);
-
-    double rho_electrons = 0.0;
-    const int density_spins = this->chr.nspin == 2 ? 2 : 1;
-    for (int spin = 0; spin < density_spins; ++spin)
-    {
-        for (int ir = 0; ir < this->chr.nrxx; ++ir)
-        {
-            rho_electrons += this->chr.rho[spin][ir];
-        }
-    }
-    rho_electrons *= ucell.omega / this->chr.rhopw->nxyz;
-    Parallel_Reduce::reduce_pool(rho_electrons);
-
-    if (istep == 0)
-    {
-        initial_wave_electrons_ = electrons;
-        initial_rho_electrons_ = rho_electrons;
-    }
-
-    const hsolver::TDOrthStats& stats = this->td_prop_->orbitals().orth_stats();
-    const bool full_gram = this->inp_->td_orthonormal != "none";
-    double maxima[] = {stats.before, stats.after};
-    if (full_gram)
-    {
-        Parallel_Reduce::reduce_max(maxima, 2);
-    }
-
-    if (!log_.good())
-    {
-        ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "report_orth");
-        return;
-    }
-
-    const char* stage = istep == 0 ? "initial state" : "propagation";
-    const int evolution_step = istep + 1;
-    const double delta_wave = electrons - initial_wave_electrons_;
-    const double delta_rho = rho_electrons - initial_rho_electrons_;
-
-    const std::ios::fmtflags saved_flags = log_.flags();
-    const std::streamsize saved_precision = log_.precision();
-    log_ << " PW RT-TDDFT conservation: evolution step " << evolution_step << ", " << stage << ", " << this->inp_->td_orthonormal << '\n';
-    log_ << std::right << std::fixed << std::setprecision(10);
-    ModuleBase::GlobalFunc::OUT(log_, "Npsi", electrons);
-    ModuleBase::GlobalFunc::OUT(log_, "Nrho", rho_electrons);
-
-    log_ << std::scientific << std::setprecision(6);
-    ModuleBase::GlobalFunc::OUT(log_, "dNpsi", delta_wave);
-    ModuleBase::GlobalFunc::OUT(log_, "dNrho", delta_rho);
-
-    if (full_gram)
-    {
+        const double local_npsi = this->td_prop_->orbitals().wave_electrons(this->pelec->wg);
+        const auto& stats = this->td_prop_->orbitals().orth_stats();
+        const bool full_gram = this->inp_->td_orthonormal != "none";
+        const pw::TDConserv values
+            = pw::cal_td_conserv(local_npsi, this->chr, ucell.omega, this->pw_wfc->poolrank, stats.before, stats.after, full_gram);
         if (istep == 0)
         {
-            ModuleBase::GlobalFunc::OUT(log_, "initial_orth_error", maxima[1]);
+            initial_wave_electrons_ = values.npsi;
+            initial_rho_electrons_ = values.nrho;
         }
-        else
-        {
-            ModuleBase::GlobalFunc::OUT(log_, "orth_before_step_max", maxima[0]);
-            ModuleBase::GlobalFunc::OUT(log_, "orth_after_step_max", maxima[1]);
-        }
+        ModuleIO::print_conserv(values,
+                                initial_wave_electrons_,
+                                initial_rho_electrons_,
+                                istep,
+                                full_gram,
+                                this->inp_->td_orthonormal,
+                                log_);
     }
-
-    log_.flags(saved_flags);
-    log_.precision(saved_precision);
-
-    ModuleBase::timer::end("ESolver_KS_PW_TDDFT", "report_orth");
 }
 
 template class ESolver_KS_PW_TDDFT<std::complex<float>, base_device::DEVICE_CPU>;

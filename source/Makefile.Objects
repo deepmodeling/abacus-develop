@@ -388,6 +388,8 @@ OBJS_HAMILT=hamilt_pw.o\
     prop_cn_pw.o\
     prop_etrs_pw.o\
     td_history_pw.o\
+    td_conserv_pw.o\
+    td_endpoint_pw.o\
     td_vel_pw.o\
     td_spin_pw.o\
     td_pw.o\
@@ -715,6 +717,8 @@ OBJS_IO=module_parameter/input_conv.o\
     module_dos/write_dos_pw.o\
     module_energy/write_bands.o\
     module_energy/td_eij_io.o\
+    module_ctrl/ctrl_output_td_pw.o\
+    module_output/td_conserv_io.o\
     module_dos/cal_dos.o\
     module_dos/cal_pdos_gamma.o\
     module_dos/cal_pdos_multik.o\

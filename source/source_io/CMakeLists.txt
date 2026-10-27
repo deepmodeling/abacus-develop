@@ -6,6 +6,7 @@ list(APPEND objects
     module_ctrl/ctrl_output_fp.cpp
     module_ctrl/ctrl_output_pw.cpp
     module_ctrl/ctrl_output_td.cpp
+    module_ctrl/ctrl_output_td_pw.cpp
     module_bessel/bessel_basis.cpp
     module_output/cal_test.cpp
     module_dos/cal_dos.cpp
@@ -39,6 +40,7 @@ list(APPEND objects
     module_efield/td_vecpot_io.cpp
     module_chgpot/write_libxc_r.cpp
     module_output/output_log.cpp
+    module_output/td_conserv_io.cpp
     module_json/para_json.cpp
     parse_args.cpp
     input_help.cpp

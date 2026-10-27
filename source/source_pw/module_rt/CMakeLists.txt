@@ -4,6 +4,8 @@ add_library(module_rt_pw OBJECT
   prop_cn_pw.cpp
   prop_etrs_pw.cpp
   td_history_pw.cpp
+  td_conserv_pw.cpp
+  td_endpoint_pw.cpp
   td_pw.cpp
   td_vel_pw.cpp
   td_spin_pw.cpp
