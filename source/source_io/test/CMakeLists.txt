@@ -20,6 +20,27 @@ if(NOT ENABLE_MPI)
   return()
 endif()
 
+add_executable(MODULE_IO_input_error_mpi test_read_input.cpp)
+target_link_libraries(MODULE_IO_input_error_mpi PRIVATE parameter base device io_input abacus::linalg_libs)
+if(ENABLE_COVERAGE)
+  add_coverage(MODULE_IO_input_error_mpi)
+endif()
+foreach(input_case IN ITEMS missing_file missing_header unknown_parameter duplicate_parameter
+    duplicate_string_eof invalid_value invalid_dependency valid)
+  add_test(NAME MODULE_IO_input_error_mpi_${input_case}
+    COMMAND ${CMAKE_COMMAND}
+      "-DREADER=$<TARGET_FILE:MODULE_IO_input_error_mpi>"
+      "-DMPIEXEC_EXECUTABLE=${MPIEXEC_EXECUTABLE}"
+      "-DMPIEXEC_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG}"
+      "-DMPIEXEC_PREFLAGS=${MPIEXEC_PREFLAGS}"
+      "-DMPIEXEC_POSTFLAGS=${MPIEXEC_POSTFLAGS}"
+      "-DINPUT_CASE=${input_case}"
+      "-DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/input_error_${input_case}"
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/test_read_input.cmake)
+  set_tests_properties(MODULE_IO_input_error_mpi_${input_case}
+    PROPERTIES PROCESSORS 4 TIMEOUT 45 ENVIRONMENT "OMP_NUM_THREADS=1")
+endforeach()
+
 add_test(NAME MODULE_IO_write_bands_parallel
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
     $<TARGET_FILE:MODULE_IO_write_bands> ${MPIEXEC_POSTFLAGS}

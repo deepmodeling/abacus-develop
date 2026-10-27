@@ -351,8 +351,7 @@ std::string ReadInput::read_txt_input(Parameter& param, const std::string& filen
 
     if (!ifs)
     {
-        std::cout << " Can't find the INPUT file." << std::endl;
-        ModuleBase::WARNING_QUIT("Input::Init", "Error during readin parameters.", 1);
+        return "Cannot open the INPUT file. Check the file path and read permissions.\n";
     }
 
     ifs.clear();
@@ -379,12 +378,8 @@ std::string ReadInput::read_txt_input(Parameter& param, const std::string& filen
 
     if (ierr == 0)
     {
-        std::cout << " Error parameter list. "
-                  << " The parameter list always starts with key word "
-                     "'INPUT_PARAMETERS'. "
-                  << std::endl;
-        ModuleBase::WARNING_QUIT("Input", 
-            "Bad parameter, please check the input parameters in file INPUT", 1);
+        return "Missing INPUT_PARAMETERS header. The parameter list must start with INPUT_PARAMETERS.\n"
+               "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html\n";
     }
 
     ascii_stream.rdstate();
@@ -406,8 +401,8 @@ std::string ReadInput::read_txt_input(Parameter& param, const std::string& filen
             }
             if (std::find(readvalue_items.begin(), readvalue_items.end(), p_item) != readvalue_items.end())
             {
-                std::string warningstr = "The parameter " + p_item->label + " has been read twice.";
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+                return "The parameter " + p_item->label + " has been read twice. Specify it only once.\nSee "
+                       + input_manual_link(p_item->label) + "\n";
             }
             this->readvalue_items.push_back(p_item);
             // qianrui delete '/' 2024-07-10, because path has '/' head.
@@ -417,9 +412,8 @@ std::string ReadInput::read_txt_input(Parameter& param, const std::string& filen
         {
             if (word[0] != '#' && word[0] != '/' && word[0] != '!') // if not recognized
             {
-                std::cout << " THE PARAMETER NAME '" << word << "' IS INCORRECT!" << std::endl;
-                ModuleBase::WARNING_QUIT("Input",
-                    "Bad parameter, please check the input parameters in file INPUT", 1);
+                return "Unknown INPUT parameter '" + word + "'. Check the parameter name.\n"
+                       "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html\n";
             }
             // otherwise, it is a comment. However, ...
             // but it is not always to be shorter than 150 characters
@@ -434,14 +428,11 @@ std::string ReadInput::read_txt_input(Parameter& param, const std::string& filen
         }
         else if (ascii_stream.bad())
         {
-            ModuleBase::WARNING_QUIT("Input", 
-                                    " Bad input parameters. ", 1);
+            return "Cannot read the INPUT parameter list: stream error.\n";
         }
         else if (ascii_stream.fail())
         {
-            ascii_stream.clear();
-            ModuleBase::WARNING_QUIT("Input", 
-                                    " fail to read parameters. ", 1);
+            return "Cannot read the INPUT parameter list: failed to extract a parameter.\n";
         }
     }
 
