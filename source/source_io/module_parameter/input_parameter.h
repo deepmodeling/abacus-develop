@@ -604,7 +604,7 @@ struct Input_para
     //  vdw
     //  Peize Lin add 2014-03-31, jiyy update 2019-08-01
     // ==========================================================
-    std::string vdw_method = "none";                        ///< the method of calculating vdw (none; d2; d3_0; d3_bj; d4)
+    std::string vdw_method = "none"; ///< the method of calculating vdw (none; d2; d3_0; d3_bj; d4; rvv10)
     std::string vdw_s6 = "default";                         ///< scale parameter of d2/d3_0/d3_bj
     std::string vdw_s8 = "default";                         ///< scale parameter of d3_0/d3_bj
     std::string vdw_a1 = "default";                         ///< damping parameter of d3_0/d3_bj
@@ -625,6 +625,8 @@ struct Input_para
     std::string vdw_cn_thr_unit = "Bohr";                   ///< unit of cn_thr, Bohr or Angstrom
     std::string vdw_d4_xc = "default";                      ///< functional name passed to DFT-D4
     std::string vdw_d4_model = "d4";                        ///< DFT-D4 dispersion model (d4 or d4s)
+    double vdw_rvv10_b = 6.3;                               ///< rVV10 parameter b
+    double vdw_rvv10_c = 0.0093;                            ///< rVV10 parameter C
     ModuleBase::Vector3<int> vdw_cutoff_period = {3, 3, 3}; ///< periods of periodic structure
 
     // ==============   #Parameters (15.exx) ====================

@@ -98,6 +98,7 @@ void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, co
         this->ks_ = LR_Util::make_unique<ModuleESolver::ESolver_KS_LCAO<T, TR>>();
         this->ks_->before_all_runners(basecell, inp);
         LR_Util::check_force_pp(ucell, inp.cal_force, inp.calculation);
+        LR_Util::check_force_vdw(inp.vdw_method, inp.cal_force, inp.calculation);
     }
     else
     {
@@ -339,6 +340,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     // necessary steps in ESolver_FP
     ESolver_FP::before_all_runners(ucell, inp);
     LR_Util::check_force_pp(ucell, inp.cal_force, inp.calculation);
+    LR_Util::check_force_vdw(inp.vdw_method, inp.cal_force, inp.calculation);
     this->pelec = new elecstate::ElecStateLCAO<T>();
 
     // necessary steps in ESolver_KS::before_all_runners : symmetry and k-points

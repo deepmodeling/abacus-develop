@@ -646,7 +646,22 @@ if(ENABLE_LIBXC)
 endif()
 
 if(ENABLE_LIBVDWXC)
+  # The libvdwxc package configuration looks up MPI for C when libvdwxc was built with MPI.
+  enable_language(C)
   find_package(libvdwxc CONFIG REQUIRED)
+  # A configuration that does not report VDWXC_ENABLE_MPI has no vdwxc_init_mpi either.
+  if(ENABLE_MPI AND NOT VDWXC_ENABLE_MPI)
+    message(
+      FATAL_ERROR
+        "ENABLE_LIBVDWXC with ENABLE_MPI requires libvdwxc configured with -DVDWXC_ENABLE_MPI=ON"
+    )
+  endif()
+  if(MKL_FOUND AND VDWXC_ENABLE_MPI)
+    message(
+      FATAL_ERROR
+        "libvdwxc with MPI links FFTW3 and FFTW3-MPI, which cannot be mixed with the MKL FFT interface; build ABACUS with the same FFTW3"
+    )
+  endif()
 endif()
 
 if(DEFINED DeePMD_DIR)

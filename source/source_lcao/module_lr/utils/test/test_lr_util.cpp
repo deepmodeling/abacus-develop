@@ -1,6 +1,8 @@
 #include "../lr_util.h"
 #include "source_cell/unitcell.h"
+
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <vector>
 
 TEST(LRForcePP, AllowsForcesAndRelaxationWithoutNLCC)
@@ -222,4 +224,12 @@ TEST(LRLinearSolver, ReportsSingularComplexFactorization)
     Complex result[] = {Complex(0.0), Complex(0.0)};
     const int info = LR_Util::lapack_linear_solver(matrix, result, rhs, 2, 1);
     EXPECT_GT(info, 0);
+}
+
+TEST(LRForceVdw, RejectsForcesAndRelaxationWithRvv10)
+{
+    EXPECT_NO_THROW(LR_Util::check_force_vdw("rvv10", false, "scf"));
+    EXPECT_NO_THROW(LR_Util::check_force_vdw("d3_bj", true, "relax"));
+    EXPECT_THROW(LR_Util::check_force_vdw("rvv10", true, "scf"), std::invalid_argument);
+    EXPECT_THROW(LR_Util::check_force_vdw("rvv10", false, "relax"), std::invalid_argument);
 }

@@ -1,8 +1,6 @@
 #ifndef NONLOCAL_XC_H
 #define NONLOCAL_XC_H
 
-#include <tuple>
-
 class Charge;
 namespace ModuleBase
 {
@@ -12,18 +10,16 @@ class matrix;
 namespace vdw
 {
 
-/**
- * @brief Add the rVV10 nonlocal correlation, evaluated by libvdwxc, to the results of XC_Functional::v_xc.
- *
- * The energy and the potential are those of the total density of chr, valence plus core. The
- * potential is added to every spin channel that carries density, and vtxc counts the valence
- * density only, as in v_xc. b and c are the rVV10 parameters; all results are in Ry. The complete
- * grid is collected on the root of the k-point pool, where libvdwxc runs serially.
- */
-void add_rvv10(const double b,
-               const double c,
-               const Charge& chr,
-               std::tuple<double, double, ModuleBase::matrix>& etxc_vtxc_v);
+// rVV10 nonlocal correlation of vdw_method rvv10, evaluated by libvdwxc. Both functions do nothing
+// unless the XC runtime parameters carry rvv10_b > 0. They use the total density of chr (valence plus
+// core) and are collective over the pool communicator of chr.rhopw. The libvdwxc object, its FFT plans
+// and its buffers are kept between calls.
+
+/// Add the rVV10 energy, potential and vtxc (Ry) to the pool-reduced results of an XC evaluation.
+void add_rvv10(const Charge& chr, double& etxc, double& vtxc, ModuleBase::matrix& v);
+
+/// Add the rVV10 stress (Ry/Bohr^3) that the XC diagonal and potential terms do not contain.
+void add_rvv10_stress(const Charge& chr, ModuleBase::matrix& sigma);
 
 } // namespace vdw
 

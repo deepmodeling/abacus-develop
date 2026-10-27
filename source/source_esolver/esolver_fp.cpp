@@ -60,6 +60,11 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     xc_parameters.exx_erfc_alpha = inp.exx_erfc_alpha;
     xc_parameters.xc_exch_ext = inp.xc_exch_ext;
     xc_parameters.xc_corr_ext = inp.xc_corr_ext;
+    if (inp.vdw_method == "rvv10")
+    {
+        xc_parameters.rvv10_b = inp.vdw_rvv10_b;
+        xc_parameters.rvv10_c = inp.vdw_rvv10_c;
+    }
     XC_Functional::set_runtime_parameters(xc_parameters);
 
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");

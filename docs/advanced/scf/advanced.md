@@ -96,6 +96,7 @@ To use VdW-correction, users need to supply value to the `vdw_method` keyword in
    - d2: DFT-D2 method
    - d3_0: DFT-D3(0) method
    - d3_bj: DFT-D3(BJ) method
+   - rvv10: rVV10 nonlocal correlation (requires libvdwxc). Unlike the DFT-D methods, it depends on the electron density: it is added self-consistently to the exchange-correlation energy and potential of `dft_functional`, and its energy is reported in the exchange-correlation term. Its parameters `vdw_rvv10_b` and `vdw_rvv10_c` should match the functional, e.g. b = 6.3 for `GGA_X_RPW86+GGA_C_PBE`, 15.7 for SCAN and 11.95 for r2SCAN.
 
 Furthermore, ABACUS also provides a [list of keywords](../input_files/input-main.md#vdw-correction) to control relevant parmeters used in calculating the VdW correction, such as the scale factor (s6) term. Recommended values of such parameters can be found on the [webpage](https://www.chemie.uni-bonn.de/pctc/mulliken-center/software/dft-d3). The default values of the parameters in ABACUS are set to be the recommended values for PBE.
 

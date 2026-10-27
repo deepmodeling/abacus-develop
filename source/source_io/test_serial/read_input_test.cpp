@@ -212,14 +212,22 @@ TEST_F(InputTest, RejectAutoDevice)
     EXPECT_TRUE(std::remove("./auto_device_INPUT") == 0);
 }
 
-TEST_F(InputTest, Rvv10RejectsStressDfptAndLrForces)
+TEST_F(InputTest, VdwMethodRvv10)
 {
+    const std::string input_file = testing::TempDir() + "rvv10_INPUT";
     Parameter param;
-    EXPECT_NO_THROW(read_parameters("rvv10_INPUT", "dft_functional rvv10\n", param));
-    const std::string reason = "Requires cal_stress==false and esolver_type!=dfpt";
-    expect_invalid_input("rvv10_INPUT", "dft_functional rVV10\ncalculation cell-relax\n", reason);
-    expect_invalid_input("rvv10_INPUT", "dft_functional RVV10\nesolver_type dfpt\n", reason);
-    expect_invalid_input("rvv10_INPUT", "dft_functional rvv10\nesolver_type lr\ncal_force 1\n", reason);
+    EXPECT_NO_THROW(read_parameters(input_file,
+                                    "vdw_method rvv10\ndft_functional scan\nvdw_rvv10_b 15.7\ncalculation cell-relax\n",
+                                    param));
+    EXPECT_EQ(param.inp.vdw_method, "rvv10");
+    EXPECT_DOUBLE_EQ(param.inp.vdw_rvv10_b, 15.7);
+    EXPECT_DOUBLE_EQ(param.inp.vdw_rvv10_c, 0.0093);
+    const std::string reason = "Requires esolver_type!=dfpt";
+    expect_invalid_input(input_file, "vdw_method rvv10\nesolver_type dfpt\n", reason);
+    expect_invalid_input(input_file, "vdw_method rvv10\nesolver_type lr\ncalculation nscf\ncal_force 1\n", reason);
+    expect_invalid_input(input_file, "vdw_method rvv10\nvdw_rvv10_b 0\n", "vdw_rvv10_b");
+    expect_invalid_input(input_file, "vdw_method rvv10\nvdw_rvv10_c -0.1\n", "vdw_rvv10_c");
+    expect_invalid_input(input_file, "vdw_method RVV10\n", "vdw_method");
 }
 
 TEST_F(InputTest, ValidateRelaxMethodScalar)

@@ -31,6 +31,13 @@ void gatherv_data(const double* sendbuf, int sendcount, double* recvbuf, const i
 void gatherv_data(const std::complex<double>* sendbuf, int sendcount, std::complex<double>* recvbuf, const int* recvcounts, const int* displs, MPI_Comm& comm);
 void gatherv_data(const float* sendbuf, int sendcount, float* recvbuf, const int* recvcounts, const int* displs, MPI_Comm& comm);
 void gatherv_data(const std::complex<float>* sendbuf, int sendcount, std::complex<float>* recvbuf, const int* recvcounts, const int* displs, MPI_Comm& comm);
+void alltoallv_data(const double* sendbuf,
+                    const int* sendcounts,
+                    const int* sdispls,
+                    double* recvbuf,
+                    const int* recvcounts,
+                    const int* rdispls,
+                    const MPI_Comm& comm);
 
 #if defined(__NCCL_PARALLEL_DEVICE)
 void nccl_bcast_data(double* object, const int& n, MPI_Comm& comm, int root = 0);

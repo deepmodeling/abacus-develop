@@ -17,8 +17,6 @@ int XC_Functional::func_type = 0;
 bool XC_Functional::ked_flag = false;
 bool XC_Functional::need_laplacian = false;
 bool XC_Functional::use_libxc = true;
-double XC_Functional::nlc_b = 0.0;
-double XC_Functional::nlc_c = 0.0;
 double XC_Functional::hybrid_alpha = 0.25;
 double XC_Functional::hse_omega = 0.0;
 XCFunctionalParameters XC_Functional::runtime_parameters;
@@ -29,8 +27,7 @@ XC_Functional::ScopedType::ScopedType(const std::string& functional)
       ked_flag_(XC_Functional::ked_flag), need_laplacian_(XC_Functional::need_laplacian),
       use_libxc_(XC_Functional::use_libxc), hybrid_alpha_(XC_Functional::hybrid_alpha),
       hse_omega_(XC_Functional::hse_omega), runtime_parameters_(XC_Functional::runtime_parameters),
-      scaling_factor_xc_(XC_Functional::scaling_factor_xc),
-      nlc_b_(XC_Functional::nlc_b), nlc_c_(XC_Functional::nlc_c)
+      scaling_factor_xc_(XC_Functional::scaling_factor_xc)
 {
     try
     {
@@ -62,9 +59,9 @@ void XC_Functional::ScopedType::restore() noexcept
     XC_Functional::runtime_parameters.exx_erfc_alpha.swap(runtime_parameters_.exx_erfc_alpha);
     XC_Functional::runtime_parameters.xc_exch_ext.swap(runtime_parameters_.xc_exch_ext);
     XC_Functional::runtime_parameters.xc_corr_ext.swap(runtime_parameters_.xc_corr_ext);
+    XC_Functional::runtime_parameters.rvv10_b = runtime_parameters_.rvv10_b;
+    XC_Functional::runtime_parameters.rvv10_c = runtime_parameters_.rvv10_c;
     XC_Functional::scaling_factor_xc.swap(scaling_factor_xc_);
-    XC_Functional::nlc_b = nlc_b_;
-    XC_Functional::nlc_c = nlc_c_;
 }
 
 void XC_Functional::set_hybrid_alpha(const double alpha_in)
@@ -128,8 +125,6 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 
     func_id.clear();
     scaling_factor_xc.clear(); // added by jghan, 2024-07-07
-    nlc_b = 0.0;
-    nlc_c = 0.0;
     std::string xc_func = xc_func_in;
     std::transform(xc_func.begin(), xc_func.end(), xc_func.begin(), (::toupper));
     if( xc_func == "LDA" || xc_func == "PZ" || xc_func == "SLAPZNOGXNOGC") //SLA+PZ
@@ -342,20 +337,6 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 4;
         use_libxc = true;
     }
-    else if (xc_func == "RVV10")
-    {
-        // rPW86 exchange, PBE correlation and the rVV10 nonlocal correlation evaluated by libvdwxc,
-        // R. Sabatini, T. Gorni and S. de Gironcoli, Phys. Rev. B 87, 041108(R) (2013)
-#ifndef __LIBVDWXC
-        ModuleBase::WARNING_QUIT("set_xc_type", "to use RVV10, compile with ENABLE_LIBVDWXC=ON");
-#endif
-        func_id.push_back(XC_GGA_X_RPW86);
-        func_id.push_back(XC_GGA_C_PBE);
-        func_type = 2;
-        use_libxc = true;
-        nlc_b = 6.3;
-        nlc_c = 0.0093;
-    }
 #endif
     else
     {
@@ -428,9 +409,9 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
         || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22" ||
         xc_func == "LC_PBE" || xc_func == "LC_WPBE" || xc_func == "LRC_WPBE" ||
-        xc_func == "LRC_PBEH" || xc_func == "CAM_PBEH" || xc_func == "RVV10")
+        xc_func == "LRC_PBEH" || xc_func == "CAM_PBEH")
     {
-        ModuleBase::WARNING_QUIT("set_xc_type","to use SCAN, SCAN0, HSE, long-range corrected (LC_PBE, LC_WPBE...), CAM_PBEH or RVV10 LIBXC is required");
+        ModuleBase::WARNING_QUIT("set_xc_type","to use SCAN, SCAN0, HSE, long-range corrected (LC_PBE, LC_WPBE...) or CAM_PBEH LIBXC is required");
     }
     use_libxc = false;
 #endif
@@ -464,10 +445,6 @@ std::string XC_Functional::output_info()
             }
         }
         XC_Functional_Libxc::finish_func(funcs);
-        if (nlc_b > 0.0)
-        {
-            ss << " Nonlocal correlation: rVV10 (libvdwxc), b = " << nlc_b << ", C = " << nlc_c << std::endl;
-        }
         return ss.str();
     }
     else

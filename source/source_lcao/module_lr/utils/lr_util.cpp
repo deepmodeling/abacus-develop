@@ -107,6 +107,17 @@ namespace LR_Util
         }
     }
 
+    void check_force_vdw(const std::string& vdw_method, const bool cal_force, const std::string& calculation)
+    {
+        const bool relaxation = calculation == "relax" || calculation == "cell-relax";
+        if (vdw_method == "rvv10" && (cal_force || relaxation))
+        {
+            throw std::invalid_argument("LR excited-state forces and relaxation do not support vdw_method rvv10:"
+                                        " the response of the rVV10 nonlocal correlation is not implemented."
+                                        " LR spectra remain available with cal_force=0.");
+        }
+    }
+
     const std::vector<double>& prepare_xc_sigma(const std::vector<double>& sigma,
                                                const bool is_hse06,
                                                std::vector<double>& hse_buffer)

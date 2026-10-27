@@ -285,16 +285,11 @@ Then the user has to correct the input file and restart the calculation.)";
   * If LIBXC is available, additional short-hand names of hybrid functionals are supported: HSE(referred to HSE06), B3LYP, LC_PBE, LC_WPBE, LRC_WPBE, LRC_WPBEH, CAM_PBEH, WP22, CWP22, MULLER (equivalent with POWER)
 * Hybrid meta-GGA functionals
   * SCAN0 (require LIBXC)
-* Nonlocal correlation functionals
-  * RVV10: rPW86 exchange, PBE correlation and rVV10 nonlocal correlation (require LIBXC and LIBVDWXC; stress, DFPT and LR-TDDFT forces are not supported)
 
 The other way is only available when compiling with LIBXC, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'.)";
         item.default_value = "Used the same as DFT functional as specified in the pseudopotential files.";
         item.unit = "";
         read_sync_string(input.dft_functional);
-        item.domain.add_requirement("dft_functional in [rvv10, RVV10, rVV10]",
-                                    "cal_stress==false and esolver_type!=dfpt and (cal_force==false or "
-                                    "(esolver_type!=lr and esolver_type!=ks-lr))");
         this->add_item(item);
     }
     {
