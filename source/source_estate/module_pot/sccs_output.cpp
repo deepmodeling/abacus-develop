@@ -1,61 +1,107 @@
 #include "sccs_output.h"
 #include "source_base/constants.h"
-#include <algorithm>
 #include <iomanip>
 #include <ostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace
 {
-class StreamState
+// The report is a grid: every cell (tag, key or value) has one width and is
+// left-aligned, so every cell starts on a column edge. Energies keep 9
+// significant digits, other reals 8.
+const int cell_width = 16;
+const int energy_digits = 9;
+const int value_digits = 8;
+
+std::string real_text(double value, int digits)
 {
-public:
-    explicit StreamState(std::ostream& stream) : stream_(stream)
+    std::ostringstream text;
+    text << std::scientific << std::setprecision(digits - 1) << value;
+    return text.str();
+}
+std::string int_text(int value)
+{
+    return std::to_string(value);
+}
+// One line of cells, without trailing blanks.
+void write_row(std::ostream& output, const std::vector<std::string>& cells)
+{
+    std::string line = " ";
+    for (std::size_t i = 0; i + 1 < cells.size(); ++i)
     {
-        flags_ = stream.flags();
-        precision_ = stream.precision();
+        line += cells[i];
+        line.append(cell_width - cells[i].size(), ' ');
     }
-    ~StreamState()
-    {
-        stream_.flags(flags_);
-        stream_.precision(precision_);
-    }
-private:
-    std::ostream& stream_;
-    std::ios_base::fmtflags flags_;
-    std::streamsize precision_;
-};
+    line += cells.back();
+    output << line << '\n';
+}
 void write_origin(std::ostream& output, const elecstate::PccOutput& result)
 {
     if (result.slab)
     {
-        output << " PCC2D_ORIGIN AXIS " << result.axis
-               << " COORDINATE/Bohr " << result.coordinate << '\n';
+        const std::vector<std::string> cells = {"PCC2D_ORIGIN", "AXIS", int_text(result.axis),
+                                                "COORDINATE/Bohr", real_text(result.coordinate, value_digits)};
+        write_row(output, cells);
+        return;
+    }
+    const std::vector<std::string> cells = {"PCC0D_ORIGIN",
+                                            "X/Bohr", real_text(result.origin.x, value_digits),
+                                            "Y/Bohr", real_text(result.origin.y, value_digits),
+                                            "Z/Bohr", real_text(result.origin.z, value_digits)};
+    write_row(output, cells);
+}
+// Smooth and point solute, polarization and screened charge: one header row,
+// then one row per kind. A slab reports the dipole and second moment along the normal.
+void write_moments(std::ostream& output, const elecstate::PccOutput& result)
+{
+    const std::string tag = result.slab ? "PCC2D_MOMENTS" : "PCC0D_MOMENTS";
+    std::vector<std::string> header = {tag, "KIND", "Q/e"};
+    if (result.slab)
+    {
+        header.push_back("PN/eBohr");
+        header.push_back("QNN/eBohr2");
     }
     else
     {
-        output << " PCC0D_ORIGIN X/Bohr " << result.origin.x
-               << " Y/Bohr " << result.origin.y << " Z/Bohr " << result.origin.z << '\n';
+        header.push_back("PX/eBohr");
+        header.push_back("PY/eBohr");
+        header.push_back("PZ/eBohr");
+        header.push_back("QRR/eBohr2");
     }
-}
-void write_moments(std::ostream& output, const char* label, const elecstate::ChargeMoments& moments)
-{
-    output << " PCC0D_MOMENTS " << label << " Q/e " << moments.charge
-           << " PX/eBohr " << moments.dipole.x << " PY/eBohr " << moments.dipole.y
-           << " PZ/eBohr " << moments.dipole.z << " QRR/eBohr2 " << moments.second_moment << '\n';
-}
-// Slab moments along the normal.
-void write_slab_moments(std::ostream& output,
-                        const char* label,
-                        const elecstate::ChargeMoments& moments,
-                        const ModuleBase::Vector3<double>& normal)
-{
-    const double dipole = moments.dipole * normal;
-    output << " PCC2D_MOMENTS " << label << " Q/e " << moments.charge << " PN/eBohr " << dipole
-           << " QNN/eBohr2 " << moments.second_moment << '\n';
+    write_row(output, header);
+    const char* labels[] = {"SMOOTH", "POINT", "POLARIZATION", "SCREENED"};
+    for (int i = 0; i < 4; ++i)
+    {
+        const elecstate::ChargeMoments& moments = result.moments[i];
+        std::vector<std::string> row = {tag, labels[i], real_text(moments.charge, value_digits)};
+        if (result.slab)
+        {
+            const double dipole = moments.dipole * result.normal;
+            row.push_back(real_text(dipole, value_digits));
+        }
+        else
+        {
+            row.push_back(real_text(moments.dipole.x, value_digits));
+            row.push_back(real_text(moments.dipole.y, value_digits));
+            row.push_back(real_text(moments.dipole.z, value_digits));
+        }
+        row.push_back(real_text(moments.second_moment, value_digits));
+        write_row(output, row);
+    }
 }
 }
 namespace elecstate
 {
+void write_sccs_wait(std::ostream& output, double residual, double start_drho, int start_nmax)
+{
+    const std::vector<std::string> cells = {"SCCS_DEFERRED", "DRHO", real_text(residual, value_digits),
+                                            "START_DRHO", real_text(start_drho, value_digits),
+                                            "START_NMAX", int_text(start_nmax)};
+    write_row(output, cells);
+}
+
 void write_sccs_out(std::ostream& output, const SccsOutput& result, int level,
                     double solvation_energy, bool pcc, double pcc_energy)
 {
@@ -63,51 +109,51 @@ void write_sccs_out(std::ostream& output, const SccsOutput& result, int level,
     {
         return;
     }
-    StreamState state(output);
-    output << " SCCS_ITER " << result.iterations << " E_SOL/Ry " << std::setprecision(8) << solvation_energy;
+    std::vector<std::string> iteration = {"SCCS_ITER", "CG_STEPS", int_text(result.iterations),
+                                          "E_SOL/Ry", real_text(solvation_energy, energy_digits)};
     if (pcc)
     {
-        output << " E_PCC/Ry " << pcc_energy;
+        iteration.push_back("E_PCC/Ry");
+        iteration.push_back(real_text(pcc_energy, energy_digits));
     }
-    output << '\n';
+    write_row(output, iteration);
     if (level < 2)
     {
         return;
     }
-    output << " SCCS_RESIDUAL RMS " << result.residual_rms << " MAX " << result.residual_max
-           << " WARM_START " << result.warm_started << '\n';
+    const std::vector<std::string> residual = {"SCCS_RESIDUAL", "RMS", real_text(result.residual_rms, value_digits),
+                                               "MAX", real_text(result.residual_max, value_digits),
+                                               "WARM_START", int_text(result.warm_started)};
+    write_row(output, residual);
     if (pcc)
     {
-        output << " SCCS_GAUSS Q_POL_FAR_FIELD/e " << result.far_field_charge
-               << " Q_POL_DENSITY/e " << result.pcc.moments[2].charge
-               << " Q_POL_EXPECTED/e " << result.expected_charge << '\n';
+        const std::vector<std::string> gauss = {"SCCS_GAUSS",
+                                                "Q_FAR_FIELD/e", real_text(result.far_field_charge, value_digits),
+                                                "Q_POL/e", real_text(result.pcc.moments[2].charge, value_digits),
+                                                "Q_EXPECTED/e", real_text(result.expected_charge, value_digits)};
+        write_row(output, gauss);
     }
-    output << " SCCS_CAVITY VOLUME/Bohr3 " << result.volume << " SURFACE/Bohr2 " << result.surface << '\n'
-           << " SCCS_FFT R2G_CALLS " << result.transforms.forward_calls
-           << " G2R_CALLS " << result.transforms.inverse_calls
-           << " CACHED_SOURCES " << result.reused_fixed_sources << '\n';
+    const std::vector<std::string> cavity = {"SCCS_CAVITY", "VOLUME/Bohr3", real_text(result.volume, value_digits),
+                                             "SURFACE/Bohr2", real_text(result.surface, value_digits)};
+    write_row(output, cavity);
+    const std::vector<std::string> transforms = {"SCCS_FFT",
+                                                 "R2G_CALLS", int_text(result.transforms.forward_calls),
+                                                 "G2R_CALLS", int_text(result.transforms.inverse_calls),
+                                                 "CACHED_SOURCES", int_text(result.reused_fixed_sources)};
+    write_row(output, transforms);
     if (!pcc)
     {
         return;
     }
-    output << std::setprecision(12);
     const PccOutput& data = result.pcc;
     write_origin(output, data);
-    const char* labels[] = {"SMOOTH", "POINT", "POLARIZATION", "SCREENED"};
-    for (int i = 0; i < 4; ++i)
-    {
-        if (data.slab)
-        {
-            write_slab_moments(output, labels[i], data.moments[i], data.normal);
-        }
-        else
-        {
-            write_moments(output, labels[i], data.moments[i]);
-        }
-    }
-    const char* label = data.slab ? " PCC2D_ENERGY" : " PCC0D_ENERGY";
+    write_moments(output, data);
+    // PCC energies are in Ry; ModuleBase::e2 converts Hartree to Rydberg.
     const double point_energy = pcc_energy / ModuleBase::e2;
-    output << label << " REACTION/Ha " << result.reaction_energy << " PCC_SMOOTH/Ha " << data.smooth_energy
-           << " PCC_POINT/Ha " << point_energy << " PCC_USED/Ry " << pcc_energy << '\n';
+    const std::string tag = data.slab ? "PCC2D_ENERGY" : "PCC0D_ENERGY";
+    const std::vector<std::string> energies = {tag, "REACTION/Ha", real_text(result.reaction_energy, energy_digits),
+                                               "PCC_SMOOTH/Ha", real_text(data.smooth_energy, energy_digits),
+                                               "PCC_POINT/Ha", real_text(point_energy, energy_digits)};
+    write_row(output, energies);
 }
 } // namespace elecstate

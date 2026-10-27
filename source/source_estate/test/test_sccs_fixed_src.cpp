@@ -4,10 +4,26 @@
 #include "source_hamilt/module_sccs/sccs_ion_charge.h"
 #include "source_hamilt/module_sccs/test/sccs_test.h"
 #include <sstream>
+#include <string>
 
 namespace
 {
 const elecstate::SccsResume no_resume = elecstate::SccsResume();
+
+// The value after a key in an sccs_debug report.
+std::string report_value(const std::string& report, const std::string& key)
+{
+    std::istringstream tokens(report);
+    std::string token;
+    while (tokens >> token)
+    {
+        if (token == key && tokens >> token)
+        {
+            return token;
+        }
+    }
+    return std::string();
+}
 }
 
 class SccsFixedSourcesTest : public SccsTest::PwTest
@@ -121,8 +137,8 @@ TEST_F(SccsFixedSourcesTest, CachedSourcesMatchFreshFullCavityEnergyPotentialAnd
         }
         std::ostringstream output;
         cached.write_iter(output, 2, 1e-5, 0.0);
-        const char* label = step == 1 ? "CACHED_SOURCES 1" : "CACHED_SOURCES 0";
-        EXPECT_NE(output.str().find(label), std::string::npos);
+        const std::string reused = step == 1 ? "1" : "0";
+        EXPECT_EQ(report_value(output.str(), "CACHED_SOURCES"), reused);
     }
 }
 
@@ -175,6 +191,6 @@ TEST_F(SccsFixedSourcesTest, NextIonicStepResumesTheWarmStart)
     std::ostringstream cold_output;
     resumed.write_iter(resumed_output, 2, 1e-5, 0.0);
     cold.write_iter(cold_output, 2, 1e-5, 0.0);
-    EXPECT_NE(resumed_output.str().find("WARM_START 1"), std::string::npos);
-    EXPECT_NE(cold_output.str().find("WARM_START 0"), std::string::npos);
+    EXPECT_EQ(report_value(resumed_output.str(), "WARM_START"), "1");
+    EXPECT_EQ(report_value(cold_output.str(), "WARM_START"), "0");
 }

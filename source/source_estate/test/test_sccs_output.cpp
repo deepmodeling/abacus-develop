@@ -31,13 +31,41 @@ TEST_F(SccsOutputTest, OutputLevelsSelectTheReportsAndPreserveStreamState)
     elecstate::write_sccs_out(output, result, 0, -0.2, true, 0.05);
     EXPECT_TRUE(output.str().empty());
     elecstate::write_sccs_out(output, result, 1, -0.2, true, 0.05);
-    EXPECT_NE(output.str().find("SCCS_ITER 4"), std::string::npos);
+    // Cells of 16 characters, each starting on a column edge.
+    const std::string iteration_line = " SCCS_ITER       CG_STEPS        4               E_SOL/Ry        "
+                                       "-2.00000000e-01 E_PCC/Ry        5.00000000e-02\n";
+    EXPECT_EQ(output.str(), iteration_line);
     EXPECT_EQ(output.str().find("SCCS_RESIDUAL"), std::string::npos);
     output.str("");
     elecstate::write_sccs_out(output, result, 2, -0.2, true, 0.05);
-    EXPECT_NE(output.str().find("PCC0D_MOMENTS SCREENED"), std::string::npos);
-    EXPECT_NE(output.str().find("CACHED_SOURCES 0"), std::string::npos);
-    EXPECT_EQ(output.str().find("FILLED_VOLUME"), std::string::npos);
+    // Every cell starts on the grid of 16 columns: no cell runs into the next,
+    // every cell begins on its column edge, and so do the table headers.
+    const std::size_t cell = 16;
+    std::istringstream lines(output.str());
+    std::string line;
+    int table_rows = 0;
+    while (std::getline(lines, line))
+    {
+        for (std::size_t start = 1 + cell; start < line.size(); start += cell)
+        {
+            EXPECT_EQ(line[start - 1], ' ') << line;
+            EXPECT_NE(line[start], ' ') << line;
+        }
+        if (line.find("PCC0D_MOMENTS") == std::string::npos)
+        {
+            continue;
+        }
+        ++table_rows;
+        if (line.find("KIND") != std::string::npos)
+        {
+            EXPECT_EQ(line.find("Q/e"), 1 + 2 * cell);
+            EXPECT_EQ(line.find("QRR/eBohr2"), 1 + 6 * cell);
+        }
+    }
+    EXPECT_EQ(table_rows, 5);
+    EXPECT_NE(output.str().find(" PCC0D_MOMENTS   SCREENED"), std::string::npos);
+    EXPECT_NE(output.str().find("CACHED_SOURCES  0"), std::string::npos);
+    EXPECT_EQ(output.str().find("V_FILLED"), std::string::npos);
     EXPECT_EQ(output.precision(), 3);
     EXPECT_EQ(output.flags(), flags);
     output.str("");
@@ -45,7 +73,7 @@ TEST_F(SccsOutputTest, OutputLevelsSelectTheReportsAndPreserveStreamState)
     result.pcc.normal.z = 1.0;
     elecstate::write_sccs_out(output, result, 2, -0.2, true, 0.05);
     EXPECT_NE(output.str().find("PCC2D_ORIGIN"), std::string::npos);
-    EXPECT_NE(output.str().find("PCC2D_MOMENTS SCREENED"), std::string::npos);
+    EXPECT_NE(output.str().find(" PCC2D_MOMENTS   SCREENED"), std::string::npos);
     EXPECT_EQ(output.precision(), 3);
     EXPECT_EQ(output.flags(), flags);
 }

@@ -54,7 +54,10 @@ void collect_output(const UnitCell& cell,
                      const ModuleSccs::SccsConfig& config,
                      const ModuleSccs::SccsResponse& response,
                      SccsOutput& result);
+// sccs_debug lines of one SCF iteration, tagged and column-aligned.
 void write_sccs_out(std::ostream& output, const SccsOutput& result, int level,
                     double solvation_energy, bool pcc, double pcc_energy);
+// The line of an SCF iteration while a delayed SCCS waits.
+void write_sccs_wait(std::ostream& output, double residual, double start_drho, int start_nmax);
 } // namespace elecstate
 #endif

@@ -307,8 +307,7 @@ void PotSccs::write_iter(std::ostream& output, int level, double residual, doubl
     }
     if (!sccs_active_)
     {
-        output << " SCCS_DEFERRED DRHO " << residual << " START_DRHO " << config_.start_drho
-               << " START_NMAX " << config_.start_nmax << '\n';
+        write_sccs_wait(output, residual, config_.start_drho, config_.start_nmax);
         return;
     }
     const double energy = get_energy();
