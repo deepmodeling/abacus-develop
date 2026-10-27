@@ -12,6 +12,22 @@ public:
     Parallel_Orbitals();
     ~Parallel_Orbitals();
 
+    /// Access to the block-cyclic distribution information.  The non-const
+    /// overload exists only for the two cases a const getter cannot serve:
+    /// non-const mutation by setup_2d_division, and test-side descriptor writes.
+    // DEPRECATED-ALIAS: para_2d() -> get_block_cyclic_distribution()
+    // DELETION-COMMIT: PR#TBD/3 commits after merge; trigger: git grep -w para_2d == 0
+    Parallel_2D& para_2d() { return *this; }
+
+    const Parallel_2D& para_2d() const { return *this; }
+
+#ifdef __MPI
+    /// BLACS context of the 2D process grid, completing the getter family
+    /// (get_row_size / get_col_size / get_local_size / get_block_size /
+    /// get_dim0 / get_dim1 / get_desc) inherited from Parallel_2D.
+    int get_blacs_ctxt() const { return blacs_ctxt; }
+#endif
+
     /// local size of bands, used for 2d wavefunction
     /// must divided on dim1 because of elpa interface
     int ncol_bands;
