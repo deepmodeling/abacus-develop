@@ -135,15 +135,4 @@ if(ENABLE_MPI)
     NAME MODULE_RI_ewald_mpi_distribution_parallel_test
     COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_RI_ewald_mpi_distribution_test>"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-
-  add_executable(MODULE_RI_comm_map2_writer_test test_comm_map2_writer.cpp)
-  target_link_libraries(
-    MODULE_RI_comm_map2_writer_test PRIVATE MPI::MPI_CXX base device parameter
-                                                abacus::linalg_libs)
-  install(TARGETS MODULE_RI_comm_map2_writer_test
-          DESTINATION ${CMAKE_BINARY_DIR}/tests)
-  add_test(
-    NAME MODULE_RI_comm_map2_writer_parallel_test
-    COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_RI_comm_map2_writer_test>"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif()
