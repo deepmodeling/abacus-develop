@@ -1004,6 +1004,7 @@ TEST_F(InputTest, Item_test)
 
         TestParameters::input(param).ks_solver = "ppcg";
         TestParameters::input(param).basis_type = "pw";
+        TestParameters::input(param).esolver_type = "ksdft";
         check_item(it->second, param);
         EXPECT_EQ(TestParameters::input(param).ks_solver, "ppcg");
 
