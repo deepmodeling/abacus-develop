@@ -5,6 +5,15 @@ contributors, general AI agents, CodeRabbit, and GitHub CI. `AGENTS.md` is the
 short entry point; this file is the complete rule source for implementation and
 review.
 
+## Entry Points
+
+The repository-root `AGENTS.md` is the short entry point. A module directory
+under `source/` (e.g., `source/source_esolver/`, `source/source_io/`) may carry
+its own `AGENTS.md` describing module-specific design constraints and
+conventions. When working in, or reviewing, such a directory, read the module
+file together with the root file; module-level rules refine the root baseline
+and never override it.
+
 ## Source Materials
 
 The governance rules consolidate project guidance from @mohanchen's coding
