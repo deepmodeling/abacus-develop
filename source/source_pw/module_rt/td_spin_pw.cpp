@@ -222,14 +222,16 @@ void TDSpinPW<Real, Device>::soc(const psi::Psi<Complex, Device>& psi,
         return;
     }
     using CtDevice = typename ct::PsiToContainer<Device>::type;
+    const ct::DeviceType device = ct::DeviceTypeToEnum<CtDevice>::value;
     const int nbands = psi.get_nbands();
     // Projection kernels count spin-component columns, not physical bands.
     const int ncols = 2 * nbands;
     const int ld_psi = psi.get_nbasis();
     const std::int64_t size = std::max<std::int64_t>(1, static_cast<std::int64_t>(pp.nkb) * basis.npwk_max);
-    if (beta_.NumElements() < size)
+    // Empty local PW partitions still need a correctly typed buffer before projector reductions.
+    if (beta_.NumElements() < size || beta_.data_type() != ct::DataTypeToEnum<Complex>::value || beta_.device_type() != device)
     {
-        beta_ = ct::Tensor(ct::DataTypeToEnum<Complex>::value, ct::DeviceTypeToEnum<CtDevice>::value, {size});
+        beta_ = ct::Tensor(ct::DataTypeToEnum<Complex>::value, device, {size});
     }
     Complex* beta = beta_.template data<Complex>();
     const size_t count = static_cast<size_t>(pp.nkb) * ncols;

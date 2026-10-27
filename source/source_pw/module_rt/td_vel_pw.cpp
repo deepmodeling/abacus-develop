@@ -63,11 +63,12 @@ TDVelResultPW TDVelPW<Real, Device>::calculate(const psi::Psi<Complex, Device>& 
     const std::int64_t vel_size = 3 * comp_size;
     const std::int64_t capacity = std::max<std::int64_t>(1, vel_size);
     const std::int64_t dot_size = std::max(1, ncols);
-    if (vpsi_.NumElements() < capacity)
+    // Default tensors contain one CPU float element; capacity alone does not establish a usable buffer.
+    if (vpsi_.NumElements() < capacity || vpsi_.data_type() != ct::DataTypeToEnum<Complex>::value || vpsi_.device_type() != device)
     {
         vpsi_ = ct::Tensor(ct::DataTypeToEnum<Complex>::value, device, {capacity});
     }
-    if (dots_.NumElements() < dot_size)
+    if (dots_.NumElements() < dot_size || dots_.data_type() != ct::DataTypeToEnum<Complex>::value || dots_.device_type() != device)
     {
         dots_ = ct::Tensor(ct::DataTypeToEnum<Complex>::value, device, {dot_size});
     }
