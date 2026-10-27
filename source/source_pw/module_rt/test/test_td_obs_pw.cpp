@@ -3,29 +3,42 @@
 #include "source_pw/module_rt/test/td_test_utils.h"
 
 #include <cmath>
+#include <utility>
 
-TestParameters::TestParameters() : input_(PARAM.inp), system_(PARAM.globalv)
+static_assert(noexcept(std::swap(std::declval<Input_para&>(), std::declval<Input_para&>())),
+              "Test input installation and restoration must not throw.");
+static_assert(noexcept(std::swap(std::declval<System_para&>(), std::declval<System_para&>())),
+              "Test system installation and restoration must not throw.");
+
+TestParameters::TestParameters(Parameter& target) : target_(target)
 {
-    PARAM.input.nspin = 4;
-    PARAM.input.noncolin = true;
-    PARAM.input.lspinorb = true;
-    PARAM.input.device = "cpu";
-    PARAM.input.basis_type = "pw";
-    PARAM.input.precision = "double";
-    PARAM.sys.nqx = 600;
-    PARAM.sys.nqxq = 600;
-    PARAM.sys.has_double_data = true;
-    PARAM.sys.has_float_data = false;
+    input_.nspin = 4;
+    input_.noncolin = true;
+    input_.lspinorb = true;
+    input_.device = "cpu";
+    input_.basis_type = "pw";
+    input_.precision = "double";
+    system_.nqx = 600;
+    system_.nqxq = 600;
+    system_.has_double_data = true;
+    system_.has_float_data = false;
+    // Prepare the complete configuration before installing it; retain the original state in these members.
+    std::swap(target_.input, input_);
+    std::swap(target_.sys, system_);
 }
 
-TestParameters::~TestParameters()
+TestParameters::~TestParameters() noexcept
 {
-    PARAM.input = input_;
-    PARAM.sys = system_;
+    std::swap(target_.input, input_);
+    std::swap(target_.sys, system_);
 }
 
 namespace td_test
 {
+Observables::Observables() : parameters_(PARAM)
+{
+}
+
 void Observables::SetUp()
 {
     cell_.ntype = 1;

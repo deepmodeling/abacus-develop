@@ -1,21 +1,27 @@
 #ifndef TD_TEST_UTILS_H
 #define TD_TEST_UTILS_H
 
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_rt/td_spin_pw.h"
 #include "source_pw/module_rt/td_vel_pw.h"
 
 #include <gtest/gtest.h>
 
-/** @brief Restore the global input used by legacy PW initialization. */
+/** @brief Install isolated spinor test settings and restore the supplied parameter object's state. */
 class TestParameters
 {
-  public:
-    TestParameters();
-    ~TestParameters();
-
   private:
+    Parameter& target_;
     Input_para input_;
     System_para system_;
+
+  public:
+    explicit TestParameters(Parameter& target);
+    ~TestParameters() noexcept;
+    TestParameters(const TestParameters&) = delete;
+    TestParameters& operator=(const TestParameters&) = delete;
+    TestParameters(TestParameters&&) = delete;
+    TestParameters& operator=(TestParameters&&) = delete;
 };
 
 namespace td_test
@@ -38,6 +44,7 @@ class Observables : public testing::Test
     elecstate::ElecState state_;
     std::unique_ptr<psi::Psi<Complex>> psi_;
 
+    Observables();
     void SetUp() override;
     void TearDown() override;
     Vector projectors(const ModuleBase::Vector3<double>& a);

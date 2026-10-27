@@ -2,7 +2,6 @@
 #include "source_hsolver/module_rt_pw/cn_solver_pw.h"
 #include "source_hsolver/module_rt_pw/td_orbital_ops.h"
 #include "source_hsolver/module_rt_pw/test/linear_test_utils.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
 #include <cmath>
@@ -11,22 +10,6 @@
 #include <limits>
 #include <sstream>
 #include <type_traits>
-
-class TestParameters
-{
-  public:
-    TestParameters() : saved_spin_(PARAM.inp.nspin)
-    {
-        PARAM.input.nspin = 4;
-    }
-    ~TestParameters()
-    {
-        PARAM.input.nspin = saved_spin_;
-    }
-
-  private:
-    int saved_spin_;
-};
 
 namespace
 {
@@ -172,7 +155,6 @@ TYPED_TEST(PWTDDFTTest, SpinorCNMatchesDenseSolve)
 {
     using T = std::complex<TypeParam>;
     using Wide = linear_test::Complex;
-    TestParameters spinor_parameters;
     const bool single = std::is_same<TypeParam, float>::value;
     const double tolerance = single ? 1e-4 : 1e-10;
     const std::vector<int> sizes{5, 3};
