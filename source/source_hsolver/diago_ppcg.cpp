@@ -180,6 +180,50 @@ inline bool ppcg_contiguous_cols(const std::vector<int>& cols, int& first)
 
 } // anonymous namespace
 
+bool ppcg_workspace_dimensions_valid(const int ld_psi,
+                                     const int nband,
+                                     const int dim,
+                                     const int sbsize)
+{
+    if (ld_psi <= 0 || nband <= 0 || dim <= 0 || dim > ld_psi)
+    {
+        return false;
+    }
+    const int limit = std::numeric_limits<int>::max();
+    const int bounded_sbsize = std::min(nband, sbsize);
+    const int block_size = std::max(1, bounded_sbsize);
+    if (nband > limit / ld_psi || block_size > limit / 3)
+    {
+        return false;
+    }
+    // The largest local basis holds [X, W, P]. The global startup correction
+    // holds up to 2*nband columns only in its projected matrices.
+    const int local_dim = 3 * block_size;
+    if (local_dim > limit / ld_psi)
+    {
+        return false;
+    }
+    int projected_dim = local_dim;
+    if (block_size < nband)
+    {
+        if (nband > limit / 2)
+        {
+            return false;
+        }
+        const int startup_dim = 2 * nband;
+        projected_dim = std::max(projected_dim, startup_dim);
+    }
+    if (projected_dim > limit / projected_dim)
+    {
+        return false;
+    }
+    const int matrix_size = projected_dim * projected_dim;
+    // lapack_heevd/hegvd additionally form 1+6*d+2*d*d in int arithmetic.
+    // The square bound above also makes the linear term safe to evaluate.
+    const int linear_workspace = 1 + 6 * projected_dim;
+    return matrix_size <= (limit - linear_workspace) / 2;
+}
+
 // =============================================================================
 // Constructor
 // =============================================================================
@@ -231,6 +275,10 @@ void DiagoPPCG<T, Device>::validate_input(
         if (n_dim_ > ld_psi_)
         {
             throw std::invalid_argument("PPCG: dim must not exceed ld_psi.");
+        }
+        if (!ppcg_workspace_dimensions_valid(ld_psi_, n_band_, n_dim_, sbsize_))
+        {
+            throw std::invalid_argument("PPCG: workspace dimensions exceed integer indexing or LAPACK limits.");
         }
         if (ethr_band.size() < size_t(n_band_))
         {
@@ -1807,7 +1855,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         local_overlap_max = std::numeric_limits<Real>::quiet_NaN();
         local_overlap_condition = std::numeric_limits<Real>::quiet_NaN();
         const int nact = int(active_cols.size());
-        const int nsb = std::max(1, (nact + sbsize_ - 1) / sbsize_);
+        const int nsb = 1 + (nact - 1) / sbsize_;
         // Keep the same number of local blocks and the same size limit, but
         // distribute the remainder evenly.  When the limit permits it, this
         // avoids a trailing one-column block that cannot exchange search

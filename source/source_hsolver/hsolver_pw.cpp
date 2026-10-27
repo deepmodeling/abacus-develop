@@ -20,7 +20,6 @@
 #include <cmath>
 #include <exception>
 #include <iomanip>
-#include <limits>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -101,15 +100,14 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
     const int rr_step_safe = std::max(1, rr_step);
-    // The host solver uses int indices. Check the product before allocation or
-    // copying, and reject it on every pool rank before any operator callback.
-    const int max_elements = std::numeric_limits<int>::max();
-    int invalid_dimensions = ld_psi <= 0 || nband <= 0 || dim <= 0 || dim > ld_psi
-                                 || nband > max_elements / ld_psi ? 1 : 0;
+    // Check the host solver's full workspace bounds before bridge allocation
+    // or copying, and reject unsupported shapes on every pool rank together.
+    const bool valid_dimensions = ppcg_workspace_dimensions_valid(ld_psi, nband, dim, sbsize);
+    int invalid_dimensions = valid_dimensions ? 0 : 1;
     Parallel_Reduce::reduce_pool(&invalid_dimensions, 1);
     if (invalid_dimensions != 0)
     {
-        ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Invalid or oversized wavefunction dimensions on a pool rank.");
+        ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Invalid or oversized workspace dimensions on a pool rank.");
     }
     const int nelem = ld_psi * nband;
     const Real solver_diag_thr = static_cast<Real>(diag_thr);
