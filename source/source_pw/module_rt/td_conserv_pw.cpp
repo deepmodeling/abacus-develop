@@ -2,6 +2,7 @@
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_estate/module_charge/charge.h"
 
 namespace pw
 {

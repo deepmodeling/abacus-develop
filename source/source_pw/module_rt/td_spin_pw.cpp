@@ -40,7 +40,8 @@ double image_dist(const ModuleBase::Vector3<double>& delta, const ModuleBase::Ma
             for (int k = lower[2]; k <= upper[2]; ++k)
             {
                 const ModuleBase::Vector3<double> image(delta.x + i, delta.y + j, delta.z + k);
-                best = std::min(best, (image * lattice).norm2());
+                const double distance_sq = (image * lattice).norm2();
+                best = std::min(best, distance_sq);
             }
         }
     }

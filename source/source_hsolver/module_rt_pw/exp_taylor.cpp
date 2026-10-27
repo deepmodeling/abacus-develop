@@ -38,6 +38,7 @@ ExpResult ExpTaylor<T, Device>::evaluate(const HSOperator<T, Device>& op,
     ModuleBase::timer::start("ExpTaylor", "evaluate");
     const int ld = layout.ld;
     const int bands = layout.bands;
+    const int stride = ld * bands;
     const int dim = layout.npol == 2 ? ld : layout.npw;
     const int64_t count = static_cast<int64_t>(ld) * bands;
     linear_buffer<T, Device>(&term_, count);
@@ -70,11 +71,11 @@ ExpResult ExpTaylor<T, Device>::evaluate(const HSOperator<T, Device>& op,
         ++result.hpsi_calls;
         result.hpsi_cols += bands;
     }
-    const auto norms = this->algebra_.dots(ld, dim, bands, 1, ld * bands, half, half);
+    const auto norms = this->algebra_.dots(ld, dim, bands, 1, stride, half, half);
     std::vector<std::complex<double>> full_norms;
     if (full)
     {
-        full_norms = this->algebra_.dots(ld, dim, bands, 1, ld * bands, full, full);
+        full_norms = this->algebra_.dots(ld, dim, bands, 1, stride, full, full);
     }
     for (int b = 0; b < bands; ++b)
     {
