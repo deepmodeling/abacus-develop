@@ -1,1 +1,1 @@
-Test nspin=4 PW RT-TDDFT with SOC in the velocity gauge using onsite magnetic moments.
+Test magnetic Fe PW RT-TDDFT from saved spinors with one initial SCF iteration, SOC, onsite moments, spin currents, torques, and default gga_grad=2.

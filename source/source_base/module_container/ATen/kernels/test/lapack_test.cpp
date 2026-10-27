@@ -4,6 +4,11 @@
 #include <ATen/kernels/lapack.h>
 #include <base/utils/gtest.h>
 
+#include <complex>
+#include <limits>
+#include <stdexcept>
+#include <vector>
+
 namespace container {
 namespace kernels {
 
@@ -54,6 +59,136 @@ TYPED_TEST(LapackTest, Trtri) {
 
     EXPECT_EQ(C, I);
 }
+
+#if defined(__CUDA)
+namespace {
+template <typename T>
+T trtri_value(double real, double imag)
+{
+    return static_cast<T>(real);
+}
+
+template <>
+std::complex<float> trtri_value(double real, double imag)
+{
+    return std::complex<float>(real, imag);
+}
+
+template <>
+std::complex<double> trtri_value(double real, double imag)
+{
+    return std::complex<double>(real, imag);
+}
+} // namespace
+
+template <typename T>
+class CudaTrtriTest : public LapackTest<T> {};
+
+using CudaTrtriTypes = ::testing::Types<float, double, std::complex<float>, std::complex<double>>;
+TYPED_TEST_SUITE(CudaTrtriTest, CudaTrtriTypes);
+
+TYPED_TEST(CudaTrtriTest, InverseAndUntouchedStorage)
+{
+    using T = TypeParam;
+    using Real = typename GetTypeReal<T>::type;
+    for (const int n : {1, 3, 7})
+    {
+        const int padded = n + 3;
+        for (const int lda : {n, padded})
+        {
+            for (const char uplo : {'U', 'L'})
+            {
+                for (const char diag : {'N', 'U'})
+                {
+                    SCOPED_TRACE(::testing::Message() << "n=" << n << " lda=" << lda << " uplo=" << uplo << " diag=" << diag);
+                    Tensor input(DataTypeToEnum<T>::value, {lda, n});
+                    T* data = input.data<T>();
+                    std::vector<std::complex<double>> matrix(n * n, 0.0);
+                    for (int col = 0; col < n; ++col)
+                    {
+                        for (int row = 0; row < lda; ++row)
+                        {
+                            data[col * lda + row] = T(-9);
+                            const bool selected = uplo == 'U' ? row <= col : row >= col;
+                            if (row < n && selected)
+                            {
+                                const double real = row == col ? 2.0 + row : 0.05 * (row + col + 1);
+                                const double imag = row == col ? 0.0 : 0.03 * (row - col);
+                                const T value = trtri_value<T>(real, imag);
+                                const bool implicit = row == col && diag == 'U';
+                                // Zero stored diagonals prove that unit-diagonal TRSM ignores them.
+                                data[col * lda + row] = implicit ? T(0) : value;
+                                matrix[col * n + row] = implicit ? T(1) : value;
+                            }
+                        }
+                    }
+                    Tensor device = input.to_device<DEVICE_GPU>();
+                    lapack_trtri<T, DEVICE_GPU>()(uplo, diag, n, device.data<T>(), lda);
+                    const Tensor result = device.to_device<DEVICE_CPU>();
+                    const T* inverse = result.data<T>();
+                    std::vector<std::complex<double>> unpacked(n * n, 0.0);
+                    for (int col = 0; col < n; ++col)
+                    {
+                        for (int row = 0; row < lda; ++row)
+                        {
+                            const bool selected = uplo == 'U' ? row <= col : row >= col;
+                            if (row < n && selected)
+                            {
+                                const bool implicit = row == col && diag == 'U';
+                                unpacked[col * n + row] = implicit ? T(1) : inverse[col * lda + row];
+                            }
+                            else
+                            {
+                                EXPECT_EQ(inverse[col * lda + row], data[col * lda + row]);
+                            }
+                        }
+                    }
+                    const double tolerance = 50 * n * std::numeric_limits<Real>::epsilon();
+                    for (int col = 0; col < n; ++col)
+                    {
+                        for (int row = 0; row < n; ++row)
+                        {
+                            std::complex<double> left = 0.0;
+                            std::complex<double> right = 0.0;
+                            // Independent host products, without calling the BLAS implementation under test.
+                            for (int k = 0; k < n; ++k)
+                            {
+                                left += matrix[k * n + row] * unpacked[col * n + k];
+                                right += unpacked[k * n + row] * matrix[col * n + k];
+                            }
+                            const double expected = row == col ? 1.0 : 0.0;
+                            EXPECT_LE(std::abs(left - expected), tolerance);
+                            EXPECT_LE(std::abs(right - expected), tolerance);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+TYPED_TEST(CudaTrtriTest, RejectsSingularDiagonal)
+{
+    using T = TypeParam;
+    const int n = 3;
+    const int lda = 6;
+    const char diag = 'N';
+    for (const char uplo : {'U', 'L'})
+    {
+        for (const int zero : {0, n - 1})
+        {
+            Tensor input(DataTypeToEnum<T>::value, {lda, n});
+            input.zero();
+            for (int i = 0; i < n; ++i)
+            {
+                input.data<T>()[i * lda + i] = i == zero ? T(0) : T(2);
+            }
+            Tensor device = input.to_device<DEVICE_GPU>();
+            EXPECT_THROW((lapack_trtri<T, DEVICE_GPU>()(uplo, diag, n, device.data<T>(), lda)), std::runtime_error);
+        }
+    }
+}
+#endif
 
 TYPED_TEST(LapackTest, Potrf) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
