@@ -780,8 +780,7 @@ TEST(RelaxSyncCellMove, FixedShapeIsotropicScale)
 // ---------------------------------------------------------------------------
 // Max-step termination on the Relax (simultaneous) path.
 //
-// Unlike IonCellOptimizer::relax_step (which checks istep == relax_nmax and
-// returns true without moving), Relax::relax_step has no max-step guard.
+// Relax::relax_step has no max-step guard.
 // When the driver loop hits relax_nmax, the last relax_step still calls
 // move_cell_ions, so the geometry IS updated and the force/stress in the
 // driver become stale. The driver then sets geometry_evaluated=false.

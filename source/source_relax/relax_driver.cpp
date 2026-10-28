@@ -51,36 +51,57 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
     // After relax_step() proposes a new geometry, it is not evaluated until
     // the next esolve() call; if we exit the loop early, force/stress are stale.
     bool geometry_evaluated = false;
+    int ionic_steps = 0;
+    RelaxStopReason stop_reason = RelaxStopReason::Running;
+
+    if (inp.relax_nmax == 0
+        && (inp.calculation == "relax" || inp.calculation == "cell-relax"))
+    {
+        stop_reason = RelaxStopReason::DryRun;
+    }
 
     while (steps[0] < inp.relax_nmax)
     {
         this->iter_info(steps, inp);
         this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
+        ++ionic_steps;
         geometry_evaluated = true;
         this->stru_out(steps[0], ucell, inp, etot, stress, force);
         bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
-        if (!converged)
-        {
-            geometry_evaluated = false;
-        }
         this->json_out(p_esolver, ucell, inp, force, stress);
 
         // Check stop conditions
         if (converged)
         {
-            // Relaxation converged, exit loop immediately
+            if (inp.calculation == "relax" || inp.calculation == "cell-relax")
+            {
+                stop_reason = RelaxStopReason::Converged;
+            }
+            else
+            {
+                stop_reason = RelaxStopReason::Finished;
+            }
             break;
         }
-        else if (ModuleIO::read_exit_file(my_rank_, "EXIT", ofs_running))
+
+        geometry_evaluated = false;
+
+        if (ModuleIO::read_exit_file(my_rank_, "EXIT", ofs_running))
         {
-            // EXIT file detected, exit loop
+            stop_reason = RelaxStopReason::UserExit;
+            break;
+        }
+
+        if (ionic_steps >= inp.relax_nmax)
+        {
+            stop_reason = RelaxStopReason::MaxSteps;
             break;
         }
 
         ++steps[0];
     }
 
-    this->final_out(steps[0], ucell, inp, etot, stress, force, geometry_evaluated, ofs_running);
+    this->final_out(steps[0], ionic_steps, stop_reason, ucell, inp, etot, stress, force, geometry_evaluated, ofs_running);
 
     ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
@@ -260,6 +281,8 @@ void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver,
 }
 
 void Relax_Driver::final_out(const int istep,
+                             const int ionic_steps,
+                             const RelaxStopReason stop_reason,
                              UnitCell& ucell,
                              const Input_para& inp,
                              const double etot,
@@ -294,37 +317,37 @@ void Relax_Driver::final_out(const int istep,
                                   write_force);
     }
 
-    // relax_nmax == 0 is a valid dry-run mode: no relaxation step was ever
-    // taken, so it must not be reported as a failed relaxation.
-    if (istep == inp.relax_nmax && inp.relax_nmax > 0)
+    if (stop_reason == RelaxStopReason::MaxSteps)
     {
-        if (is_relax)
-        {
-            print_not_converged_summary(inp, ofs_running);
+        print_not_converged_summary(ionic_steps, inp, ofs_running);
 
-            std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-            std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
-            std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
-            std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-        }
+        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+        std::cout << " Geometry relaxation stops here due to reaching the maximum      " << std::endl;
+        std::cout << " relaxation steps. More steps are needed to converge the results " << std::endl;
+        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     }
-    else if (inp.relax_nmax > 0)
+    else if (stop_reason == RelaxStopReason::Converged)
     {
-        if (is_relax)
-        {
-            std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-            std::cout << " Geometry relaxation thresholds are reached within " << istep << " steps." << std::endl;
-            std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
-        }
+        std::cout << "\n ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+        std::cout << " Geometry relaxation thresholds are reached within " << ionic_steps << " steps." << std::endl;
+        std::cout << " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     }
-
-    if (is_relax && inp.relax_nmax == 0)
+    else if (stop_reason == RelaxStopReason::UserExit)
+    {
+        ofs_running << " Geometry relaxation stopped by EXIT after "
+                    << ionic_steps << " ionic step(s)." << std::endl;
+        std::cout << " Geometry relaxation stopped by EXIT after "
+                  << ionic_steps << " ionic step(s)." << std::endl;
+    }
+    else if (stop_reason == RelaxStopReason::DryRun)
     {
         print_dry_run_message();
     }
 }
 
-void Relax_Driver::print_not_converged_summary(const Input_para& inp, std::ofstream& ofs_running) const
+void Relax_Driver::print_not_converged_summary(const int ionic_steps,
+                                               const Input_para& inp,
+                                               std::ofstream& ofs_running) const
 {
     // Unified not-converged summary for both relaxation paths so ASE and
     // users can read the method, the actual number of steps taken, and
@@ -333,7 +356,6 @@ void Relax_Driver::print_not_converged_summary(const Input_para& inp, std::ofstr
         = inp.uses_simultaneous_relaxation() ? rl.get_max_force_history() : rl_old.get_max_force_history();
     const std::vector<double>& stress_hist
         = inp.uses_simultaneous_relaxation() ? rl.get_max_stress_history() : rl_old.get_max_stress_history();
-    const int ionic_steps = static_cast<int>(force_hist.size());
     const std::string method = inp.relax_method.empty() ? "unknown" : inp.relax_method;
     ofs_running << " Relaxation method: " << method << std::endl;
     ofs_running << " Relaxation stopped after " << ionic_steps << " ionic step(s) (relax_nmax = " << inp.relax_nmax

@@ -23,7 +23,6 @@
  *   Largest stress is ... kbar while threshold is ... kbar
  *   Relaxation is converged!
  *   Relaxation is not converged yet!
- *   Relaxation is not converged after reaching relax_nmax!
  * The markers are what the ASE interface greps for (issue #6546).
  */
 
@@ -252,13 +251,16 @@ TEST_F(IonCellOptimizerTest, RelaxNotConverged)
     EXPECT_THAT(log, testing::Not(testing::HasSubstr("Relaxation is converged!")));
 }
 
-// Reaching relax_nmax must terminate with an explicit not-converged marker.
-TEST_F(IonCellOptimizerTest, RelaxNmaxReached)
+// The last allowed ionic step must still be checked for convergence before
+// the driver reports that relax_nmax was reached.
+TEST_F(IonCellOptimizerTest, RelaxNmaxLastStepConverged)
 {
     UnitCell ucell;
     setup_ucell(ucell);
+    inp.relax_nmax = 1;
     optimizer.init_relax(natom, inp);
     ModuleBase::matrix force(natom, 3);
+    force(0, 0) = 1.0e-4;
     ModuleBase::matrix stress(3, 3);
     int force_step = 1;
     int stress_step = 1;
@@ -268,15 +270,34 @@ TEST_F(IonCellOptimizerTest, RelaxNmaxReached)
     ofs.close();
 
     EXPECT_TRUE(done);
-    // Key invariant: when relax_nmax terminates the loop, cal_movement is
-    // skipped and the geometry is NOT touched. The force/stress captured by
-    // the driver before relax_step are still consistent with ucell, so the
-    // driver's geometry_evaluated=true is honest.
-    EXPECT_FALSE(ucell.ionic_position_updated);
     const std::string log = read_log();
     EXPECT_THAT(log, testing::HasSubstr(" Relaxation method: lbfgs"));
-    EXPECT_THAT(log, testing::HasSubstr(" ionic step(s) (relax_nmax = 50 reached)."));
-    EXPECT_THAT(log, testing::HasSubstr(" Relaxation is not converged after reaching relax_nmax!"));
+    EXPECT_THAT(log, testing::HasSubstr(" Relaxation converged in 1 step(s)."));
+    EXPECT_THAT(log, testing::HasSubstr("\n Relaxation is converged!"));
+}
+
+// A non-converged last allowed step must return not-converged to the driver;
+// the driver, rather than IonCellOptimizer, owns the relax_nmax summary.
+TEST_F(IonCellOptimizerTest, RelaxNmaxLastStepNotConverged)
+{
+    UnitCell ucell;
+    setup_ucell(ucell);
+    inp.relax_nmax = 1;
+    optimizer.init_relax(natom, inp);
+    ModuleBase::matrix force(natom, 3);
+    force(0, 0) = 1.0;
+    ModuleBase::matrix stress(3, 3);
+    int force_step = 1;
+    int stress_step = 1;
+    std::ofstream ofs(log_file);
+
+    const bool done = optimizer.relax_step(inp.relax_nmax, etot, ucell, force, stress, force_step, stress_step, ofs);
+    ofs.close();
+
+    EXPECT_FALSE(done);
+    const std::string log = read_log();
+    EXPECT_THAT(log, testing::HasSubstr(" Relaxation is not converged yet!"));
+    EXPECT_THAT(log, testing::Not(testing::HasSubstr(" relax_nmax = 1 reached.")));
     EXPECT_THAT(log, testing::Not(testing::HasSubstr("Relaxation is converged!")));
 }
 
