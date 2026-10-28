@@ -3,7 +3,6 @@
 #include "source_base/module_out/binstream.h"
 #include "source_base/module_parallel/para_mpi_func.h"
 #include "source_base/vector3.h"
-#include "source_estate/module_charge/charge.h"
 
 #include <algorithm>
 #include <numeric>

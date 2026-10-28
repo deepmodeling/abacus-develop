@@ -3,6 +3,7 @@
 
 #include "source_base/module_parallel/para_world.h"
 #include "source_basis/module_pw/pw_basis.h"
+#include "source_estate/module_charge/charge.h"
 
 #include <cassert>
 #include <ostream>
@@ -42,8 +43,6 @@
  *    miller index
  *    rho
  */
-
-class Charge;
 
 namespace module_charge
 {

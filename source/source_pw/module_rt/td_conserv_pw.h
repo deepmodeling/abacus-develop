@@ -1,7 +1,7 @@
 #ifndef TD_CONSERV_PW_H
 #define TD_CONSERV_PW_H
 
-class Charge;
+#include "source_estate/module_charge/charge.h"
 
 namespace pw
 {
