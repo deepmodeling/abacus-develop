@@ -157,7 +157,6 @@ class Relax_Driver
      * @brief Output final results after relaxation.
      *
      * @param istep Final iteration step.
-     * @param ionic_steps Number of evaluated ionic steps.
      * @param stop_reason Reason why the calculation stopped.
      * @param ucell Reference to the unit cell.
      * @param inp Input parameters for the calculation.
@@ -169,7 +168,6 @@ class Relax_Driver
      *        omitted / marked N/A.
      */
     void final_out(const int istep,
-                   const int ionic_steps,
                    const RelaxStopReason stop_reason,
                    UnitCell& ucell,
                    const Input_para& inp,

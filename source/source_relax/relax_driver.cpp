@@ -51,7 +51,6 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
     // After relax_step() proposes a new geometry, it is not evaluated until
     // the next esolve() call; if we exit the loop early, force/stress are stale.
     bool geometry_evaluated = false;
-    int ionic_steps = 0;
     RelaxStopReason stop_reason = RelaxStopReason::Finished;
 
     if (inp.relax_nmax == 0 && (inp.calculation == "relax" || inp.calculation == "cell-relax"))
@@ -63,7 +62,6 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
     {
         this->iter_info(steps, inp);
         this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
-        ++ionic_steps;
         geometry_evaluated = true;
         this->stru_out(steps[0], ucell, inp, etot, stress, force);
         bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
@@ -91,7 +89,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
             break;
         }
 
-        if (ionic_steps >= inp.relax_nmax)
+        if (steps[0] + 1 >= inp.relax_nmax)
         {
             stop_reason = RelaxStopReason::MaxSteps;
             break;
@@ -100,7 +98,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
         ++steps[0];
     }
 
-    this->final_out(steps[0], ionic_steps, stop_reason, ucell, inp, etot, stress, force, geometry_evaluated, ofs_running);
+    this->final_out(steps[0], stop_reason, ucell, inp, etot, stress, force, geometry_evaluated, ofs_running);
 
     ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
@@ -280,7 +278,6 @@ void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver,
 }
 
 void Relax_Driver::final_out(const int istep,
-                             const int ionic_steps,
                              const RelaxStopReason stop_reason,
                              UnitCell& ucell,
                              const Input_para& inp,
@@ -290,6 +287,12 @@ void Relax_Driver::final_out(const int istep,
                              const bool geometry_evaluated,
                              std::ofstream& ofs_running)
 {
+    int ionic_steps = istep + 1;
+    if (stop_reason == RelaxStopReason::DryRun)
+    {
+        ionic_steps = 0;
+    }
+
     // Structure final output is effective for scf/nscf/relax/cell-relax;
     // relax-specific screen messages remain guarded below.
     const bool is_relax = (inp.calculation == "relax" || inp.calculation == "cell-relax");
