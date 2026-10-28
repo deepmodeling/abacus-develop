@@ -238,8 +238,18 @@ endif()
 # the standalone BLAS/LAPACK/ScaLAPACK above so that the linker resolves the
 # BLAS symbols from the standalone BLAS instead of the bundled copy.
 if(USE_DSP)
+  # mtfftblas_v1.4.1c renamed libmtblasdev.a to libmtblasfftdev.a; accept both.
+  find_library(MTBLASDEV_LIB
+    NAMES mtblasfftdev mtblasdev
+    PATHS ${MTBLAS_FFT_DIR}/libmtblas/lib
+    NO_DEFAULT_PATH)
+  if(NOT MTBLASDEV_LIB)
+    message(FATAL_ERROR
+      "USE_DSP requires libmtblasfftdev.a (mtfftblas >= v1.4.1c) or libmtblasdev.a "
+      "under ${MTBLAS_FFT_DIR}/libmtblas/lib, but neither was found.")
+  endif()
   list(APPEND _abacus_linalg_libs ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a
-       ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a
+       ${MTBLASDEV_LIB}
        ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtfft.a)
 endif()
 
