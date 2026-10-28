@@ -48,7 +48,7 @@ TEST_F(LJ_pot_test, potential)
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
     p_esolver->before_all_runners(mdcell, inp);
-    MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
+    MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress);
     EXPECT_NEAR(potential, -0.011957818623534381, doublethreshold);
 }
 
@@ -73,7 +73,7 @@ TEST_F(LJ_pot_test, force)
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
     p_esolver->before_all_runners(mdcell, inp);
-    MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
+    MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress);
     const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
     EXPECT_NEAR(atoms[0].force.x, 0.00049817733089377704, doublethreshold);
     EXPECT_NEAR(atoms[0].force.y, 0.00082237246837022328, doublethreshold);
@@ -119,7 +119,7 @@ TEST_F(LJ_pot_test, stress)
     DomainDecomposition decomp;
     decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
     p_esolver->before_all_runners(mdcell, inp);
-    MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
+    MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress);
     EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 1), 1.7207745586539077e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 2), 0.0, doublethreshold);

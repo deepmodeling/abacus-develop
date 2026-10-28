@@ -64,7 +64,7 @@ TEST(MdForceVirialTest, ReturnsGhostForcesBeforeConvertingUnitsExactlyOnce)
     ModuleBase::matrix virial(3, 3);
     for (int step = 0; step < 2; ++step)
     {
-        MD_func::force_virial(&solver, step, cell, decomp, potential, true, virial, false);
+        MD_func::force_virial(&solver, step, cell, decomp, potential, true, virial);
         EXPECT_DOUBLE_EQ(potential, 3.0);
         EXPECT_DOUBLE_EQ(virial(0, 0), 4.0);
         ASSERT_EQ(cell.owned_atoms().size(), 1);

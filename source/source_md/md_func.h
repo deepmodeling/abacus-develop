@@ -95,8 +95,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
                   DomainDecomposition& decomp,
                   double& potential,
                   const bool& cal_stress,
-                  ModuleBase::matrix& virial,
-                  const bool& md_out_force);
+                  ModuleBase::matrix& virial);
 /**
  * @brief calculate the ionic kinetic energy
  *

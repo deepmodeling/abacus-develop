@@ -186,8 +186,8 @@ md_tchain                      1 #number of Nose-Hoover chains
 md_tfirst                      -1 #temperature first
 md_tlast                       -1 #temperature last
 md_dumpfreq                    1 #The period to dump MD information
+md_thermo_freq                 1 #The period to output MD thermodynamic information
 md_restartfreq                 5 #The period to output MD restart information
-md_out_force                   0 #output all atomic forces into running_md.log or not
 md_seed                        -1 #random seed for MD
 md_prec_level                  2 #precision level for vc-md
 ref_cell_factor                1.0 #construct a reference cell bigger than the initial cell (currently disabled, must be 1.0)
