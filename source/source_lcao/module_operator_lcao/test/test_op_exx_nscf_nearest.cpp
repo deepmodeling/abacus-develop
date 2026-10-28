@@ -13,7 +13,7 @@ namespace
 
 std::string make_test_dir()
 {
-    const std::string dir = "./op_exx_nscf_cell_nearest_tmp";
+    const std::string dir = "./op_exx_nscf_nearest_tmp";
     std::system(("rm -rf " + dir).c_str());
     std::system(("mkdir -p " + dir).c_str());
     return dir;

@@ -208,7 +208,7 @@ if(ENABLE_LCAO)
   if(ENABLE_LIBRI)
     addtest(
       TARGET
-      MODULE_LCAO_operator_exx_nscf_cell_nearest_test
+      MODULE_LCAO_op_exx_nscf_nearest_test
       LIBS
       parameter
       psi
@@ -218,7 +218,7 @@ if(ENABLE_LCAO)
       cereal::cereal
       ri
       SOURCES
-      test_op_exx_nscf_cell_nearest.cpp
+      test_op_exx_nscf_nearest.cpp
       ../op_exx_lcao.cpp
       ../../../source_hamilt/module_hcontainer/func_folding.cpp
       ../../../source_hamilt/module_hcontainer/base_matrix.cpp
