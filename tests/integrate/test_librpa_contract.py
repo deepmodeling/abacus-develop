@@ -22,8 +22,8 @@ from check_librpa_producer import ProducerContractError, check_manifest  # noqa:
 _LRICOEF_MARKER = -10267453
 
 
-def _manifest(root, entries):
-    manifest = {"output_dir": ".", "reference_dir": "reference", "required": entries}
+def _manifest(root, entries, output_dir=".", reference_dir="reference"):
+    manifest = {"output_dir": output_dir, "reference_dir": reference_dir, "required": entries}
     (root / "manifest.json").write_text(json.dumps(manifest))
     return manifest
 
@@ -62,6 +62,72 @@ class ProducerRejectionTests(unittest.TestCase):
             [{"pattern": "Cs_*.dat", "kind": "lri_coeff_v1", "reference": True, "abs_tol": 1.0e-8}],
         )
         with self.assertRaisesRegex(ProducerContractError, "payload value differs"):
+            check_manifest(self.root, manifest)
+
+    def test_reference_path_resolves_a_reference_outside_the_output_directory(self):
+        (self.root / "output").mkdir()
+        (self.root / "stored").mkdir()
+        (self.root / "output" / "values.txt").write_text("1.0 2.0\n")
+        (self.root / "stored" / "renamed.txt").write_text("1.0 2.0\n")
+        manifest = _manifest(
+            self.root,
+            [
+                {
+                    "base_dir": ".",
+                    "pattern": "output/values.txt",
+                    "kind": "numeric",
+                    "reference": True,
+                    "reference_path": "renamed.txt",
+                    "abs_tol": 1.0e-8,
+                }
+            ],
+            output_dir="output",
+            reference_dir="stored",
+        )
+        self.assertEqual([], check_manifest(self.root, manifest))
+
+    def test_reference_path_without_a_stored_file_is_rejected(self):
+        (self.root / "output").mkdir()
+        (self.root / "stored").mkdir()
+        (self.root / "output" / "values.txt").write_text("1.0 2.0\n")
+        manifest = _manifest(
+            self.root,
+            [
+                {
+                    "base_dir": ".",
+                    "pattern": "output/values.txt",
+                    "kind": "numeric",
+                    "reference": True,
+                    "reference_path": "absent.txt",
+                }
+            ],
+            output_dir="output",
+            reference_dir="stored",
+        )
+        with self.assertRaisesRegex(ProducerContractError, "missing producer reference"):
+            check_manifest(self.root, manifest)
+
+    def test_reference_path_value_mismatch_is_rejected(self):
+        (self.root / "output").mkdir()
+        (self.root / "stored").mkdir()
+        (self.root / "output" / "values.txt").write_text("1.0 2.0\n")
+        (self.root / "stored" / "renamed.txt").write_text("1.0 3.0\n")
+        manifest = _manifest(
+            self.root,
+            [
+                {
+                    "base_dir": ".",
+                    "pattern": "output/values.txt",
+                    "kind": "numeric",
+                    "reference": True,
+                    "reference_path": "renamed.txt",
+                    "abs_tol": 1.0e-8,
+                }
+            ],
+            output_dir="output",
+            reference_dir="stored",
+        )
+        with self.assertRaisesRegex(ProducerContractError, "line 1 column 2 differs"):
             check_manifest(self.root, manifest)
 
     @staticmethod

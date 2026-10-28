@@ -3,7 +3,7 @@
 
 #include "gtest/gtest.h"
 #include <array>
-#include <cstdlib>
+#include <cstdio>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -11,12 +11,16 @@
 namespace
 {
 
-std::string make_test_dir()
+// The reader appends "_<spin>.csr" to the prefix, so the fixture files live
+// directly in the test temporary directory.
+std::string make_file_prefix(const std::string& tag)
 {
-    const std::string dir = "./op_exx_nscf_nearest_tmp";
-    std::system(("rm -rf " + dir).c_str());
-    std::system(("mkdir -p " + dir).c_str());
-    return dir;
+    return testing::TempDir() + "op_exx_nscf_nearest_" + tag;
+}
+
+void remove_fixture(const std::string& file_prefix)
+{
+    std::remove((file_prefix + "_0.csr").c_str());
 }
 
 // The csrFileReader on develop expects the full sparse-file header (title,
@@ -52,19 +56,17 @@ void write_csr_r_block(std::ofstream& ofs, const int rx, const int ry, const int
     ofs << "\n";
 }
 
-void write_minimal_hexx_csr(const std::string& dir)
+void write_minimal_hexx_csr(const std::string& file_prefix)
 {
-    std::system(("mkdir -p " + dir).c_str());
-    std::ofstream ofs(dir + "/HexxR0_0.csr");
+    std::ofstream ofs(file_prefix + "_0.csr");
     write_csr_header(ofs);
     write_csr_r_block(ofs, 0, 0, 0, 1.0);
     write_csr_r_block(ofs, 1, 0, 0, 2.0);
 }
 
-void write_centered_hexx_csr(const std::string& dir)
+void write_centered_hexx_csr(const std::string& file_prefix)
 {
-    std::system(("mkdir -p " + dir).c_str());
-    std::ofstream ofs(dir + "/HexxR0_0.csr");
+    std::ofstream ofs(file_prefix + "_0.csr");
     write_csr_header(ofs);
     write_csr_r_block(ofs, -1, 0, 0, 1.0);
     write_csr_r_block(ofs, 0, 0, 0, 2.0);
@@ -82,8 +84,8 @@ class OperatorExxNscfCellNearestTest : public ::testing::Test
         MPI_Comm_rank(MPI_COMM_WORLD, &world_rank_);
 #endif
 
-        dir_ = make_test_dir();
-        write_minimal_hexx_csr(dir_);
+        prefix_ = make_file_prefix("min");
+        write_minimal_hexx_csr(prefix_);
 
         ucell_.ntype = 1;
         ucell_.nat = 2;
@@ -116,17 +118,19 @@ class OperatorExxNscfCellNearestTest : public ::testing::Test
 #endif
 
         hR_ = new hamilt::HContainer<double>(paraV_);
-
     }
 
     void TearDown() override
     {
         // tmp_mocks have partial UnitCell ownership; process cleanup avoids double free.
+        remove_fixture(prefix_);
+        remove_fixture(prefix_ + "_cen");
+        remove_fixture(prefix_ + "_out");
     }
 
     int world_size_ = 1;
     int world_rank_ = 0;
-    std::string dir_;
+    std::string prefix_;
     UnitCell ucell_;
     Parallel_Orbitals* paraV_ = nullptr;
     hamilt::HContainer<double>* hR_ = nullptr;
@@ -135,7 +139,7 @@ class OperatorExxNscfCellNearestTest : public ::testing::Test
 TEST_F(OperatorExxNscfCellNearestTest, ReallocatesHexxRWithNearestImageWhenPeriodIsInferredFromFile)
 {
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>> Hexxd;
-    ModuleIO::read_Hexxs_csr(dir_ + "/HexxR0", ucell_, 1, 2, Hexxd);
+    ModuleIO::read_Hexxs_csr(prefix_, ucell_, 1, 2, Hexxd);
 
     const auto inferred = hamilt::infer_complete_Rs_period_from_Hexxs(Hexxd);
     const std::array<int, 3> expected_period = {2, 1, 1};
@@ -154,11 +158,11 @@ TEST_F(OperatorExxNscfCellNearestTest, ReallocatesHexxRWithNearestImageWhenPerio
 
 TEST_F(OperatorExxNscfCellNearestTest, InfersPeriodFromCenteredCompleteRsSet)
 {
-    const std::string centered_dir = dir_ + "/centered";
-    write_centered_hexx_csr(centered_dir);
+    const std::string centered_prefix = prefix_ + "_cen";
+    write_centered_hexx_csr(centered_prefix);
 
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>> Hexxd;
-    ModuleIO::read_Hexxs_csr(centered_dir + "/HexxR0", ucell_, 1, 2, Hexxd);
+    ModuleIO::read_Hexxs_csr(centered_prefix, ucell_, 1, 2, Hexxd);
 
     const auto inferred = hamilt::infer_complete_Rs_period_from_Hexxs(Hexxd);
     const std::array<int, 3> expected_period = {2, 1, 1};
@@ -172,7 +176,7 @@ TEST_F(OperatorExxNscfCellNearestTest, WriteHexxsCsrRoundTripsThroughReader)
     // reader parses the sparse-file format with the lattice block, so the
     // writer has to emit that layout, not the bare save_sparse header.
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>> Hexxd;
-    ModuleIO::read_Hexxs_csr(dir_ + "/HexxR0", ucell_, 1, 2, Hexxd);
+    ModuleIO::read_Hexxs_csr(prefix_, ucell_, 1, 2, Hexxd);
 
     // fields only touched by the writer's lattice block
     ucell_.latName = "user_defined_lattice";
@@ -184,12 +188,11 @@ TEST_F(OperatorExxNscfCellNearestTest, WriteHexxsCsrRoundTripsThroughReader)
     ucell_.atoms[0].taud[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
     ucell_.atoms[0].taud[1] = ModuleBase::Vector3<double>(0.9, 0.0, 0.0);
 
-    const std::string out_dir = dir_ + "/roundtrip";
-    std::system(("mkdir -p " + out_dir).c_str());
-    ModuleIO::write_Hexxs_csr(out_dir + "/HexxR0", ucell_, Hexxd);
+    const std::string out_prefix = prefix_ + "_out";
+    ModuleIO::write_Hexxs_csr(out_prefix, ucell_, Hexxd);
 
     std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>> Hexxd2;
-    ModuleIO::read_Hexxs_csr(out_dir + "/HexxR0", ucell_, 1, 2, Hexxd2);
+    ModuleIO::read_Hexxs_csr(out_prefix, ucell_, 1, 2, Hexxd2);
 
     ASSERT_EQ(1u, Hexxd2.size());
     ASSERT_EQ(1u, Hexxd2[0].count(0));

@@ -5,6 +5,11 @@ The checker deliberately separates stable producer data from gauge-dependent
 wavefunction data.  It validates names, headers, dimensions, finite values,
 and optional tolerant references; it does not require KS eigenvector or
 velocity-matrix values to be byte-identical.
+
+A manifest entry marked ``reference`` looks up its stored file by mirroring the
+produced path under ``reference_dir``.  An entry may set ``reference_path``
+instead, relative to ``reference_dir``, for outputs whose produced directory
+name cannot be used for the stored copy.
 """
 
 import argparse
