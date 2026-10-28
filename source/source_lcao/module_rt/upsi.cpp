@@ -29,7 +29,7 @@ void upsi(const Parallel_Orbitals* pv,
                              U_operator,
                              1,
                              1,
-                             pv->desc,
+                             pv->para_2d().get_desc(),
                              psi_k_laststep,
                              1,
                              1,
@@ -46,8 +46,8 @@ void upsi(const Parallel_Orbitals* pv,
         ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().get_col_size();
+            for (int j = 0; j < pv->para_2d().get_col_size(); j++)
             {
                 double aa = psi_k[in + j].real();
                 double bb = psi_k[in + j].imag();
@@ -67,8 +67,8 @@ void upsi(const Parallel_Orbitals* pv,
         ofs_running << " psi_k_laststep:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().get_col_size();
+            for (int j = 0; j < pv->para_2d().get_col_size(); j++)
             {
                 double aa = psi_k_laststep[in + j].real();
                 double bb = psi_k_laststep[in + j].imag();

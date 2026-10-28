@@ -56,23 +56,23 @@ void boundary_shift_mat(const std::complex<double>& phase,
     const std::complex<double> phase_conj = std::conj(phase);
     size_t row0 = pv->atom_begin_row[iat];
     size_t col0 = pv->atom_begin_col[iat];
-    std::complex<double>* p_matkc = matk + col0 * pv->get_row_size();
+    std::complex<double>* p_matkc = matk + col0 * pv->para_2d().get_row_size();
     for(size_t nu = 0; nu < pv->get_ncol_atom(iat); ++nu)
     {
         
-        BlasConnector::scal(pv->get_row_size(),
+        BlasConnector::scal(pv->para_2d().get_row_size(),
                             phase,
                             p_matkc,
                             1);
-        p_matkc += pv->get_row_size();
+        p_matkc += pv->para_2d().get_row_size();
     }
     std::complex<double>* p_matkr = matk + row0;
     for(size_t mu = 0; mu < pv->get_nrow_atom(iat); ++mu)
     {
-        BlasConnector::scal(pv->get_col_size(),
+        BlasConnector::scal(pv->para_2d().get_col_size(),
                             phase_conj,
                             p_matkr,
-                            pv->get_row_size());
+                            pv->para_2d().get_row_size());
         p_matkr += 1;
     }
     return;
@@ -91,7 +91,7 @@ void boundary_shift_c(const std::complex<double>& phase,
         BlasConnector::scal(pv->ncol_bands,
                             phase_conj,
                             p_ck,
-                            pv->get_row_size());
+                            pv->para_2d().get_row_size());
         p_ck+=1;
     }
     return;
