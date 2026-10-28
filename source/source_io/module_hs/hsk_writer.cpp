@@ -58,7 +58,7 @@ void ModuleIO::write_hsk(
                 1,
                 out_app_flag,
                 h_fn,
-                pv,
+                pv.para_2d(),
                 drank,
                 ks_solver);
 
@@ -85,7 +85,7 @@ void ModuleIO::write_hsk(
                 1,
                 out_app_flag,
                 s_fn,
-                pv,
+                pv.para_2d(),
                 drank,
                 ks_solver);
     } // end ik
