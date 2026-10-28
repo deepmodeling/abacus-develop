@@ -151,12 +151,10 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
                                  this->deeq_nc.ptr,
                                  PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         }
-        if (PARAM.globalv.has_double_data)
-        {
-            syncmem_z2z_h2d_op()(this->z_deeq_nc,
-                                 this->deeq_nc.ptr,
-                                 PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
-        }
+        // Always keep the double buffer in sync for force/stress.
+        syncmem_z2z_h2d_op()(this->z_deeq_nc,
+                             this->deeq_nc.ptr,
+                             PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         syncmem_d2d_h2d_op()(this->d_deeq,
                              this->deeq.ptr,
                              PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);

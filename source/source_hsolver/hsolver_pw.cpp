@@ -335,7 +335,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
         const int nband = psi.get_nbands();            /// number of eigenpairs sought
         const int ld_psi = psi.get_nbasis();           /// leading dimension of psi
 
-        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, this->pw_diag_ndim, comm_info);
+        DiagoDavid<T, Device> david(pre_condition.data(), nband, dim, this->pw_diag_ndim, this->use_uspp, comm_info);
         // do diag and add davidson iteration counts up to avg_iter
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
              david.diag(op,

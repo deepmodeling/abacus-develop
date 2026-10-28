@@ -7,6 +7,7 @@
 #include <thrust/complex.h>
 
 #include <cassert>
+#include <cstddef>
 
 #include "source_base/module_device/device_check.h"
 
@@ -129,7 +130,8 @@ struct lapack_geqrf_inplace<T, DEVICE_GPU> {
         const int m,
         const int n,
         T *d_A,
-        const int lda)
+        const int lda,
+        T* rdiag)
     {
         const int k = std::min(m, n);
 
@@ -138,6 +140,18 @@ struct lapack_geqrf_inplace<T, DEVICE_GPU> {
         CHECK_CUDA(cudaMalloc(&d_tau, sizeof(T) * k));
 
         cuSolverConnector::geqrf(cusolver_handle, m, n, d_A, lda, d_tau);
+
+        // Capture the diagonal of R before orgqr overwrites d_A with Q.
+        if (rdiag != nullptr)
+        {
+            for (int j = 0; j < k; ++j)
+            {
+                CHECK_CUDA(cudaMemcpy(rdiag + j,
+                                      d_A + static_cast<std::size_t>(j) * lda + j,
+                                      sizeof(T),
+                                      cudaMemcpyDeviceToHost));
+            }
+        }
 
         cuSolverConnector::orgqr(cusolver_handle, m, n, k, d_A, lda, d_tau);
 

@@ -114,6 +114,7 @@ namespace LR
                                                  nband,
                                                  dim,
                                                  davidson_dimension,
+                                                 false,
                                                  comm_info);
                     std::vector<double> ethr_band(nband, diag_ethr);
                     hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(david.diag(op,

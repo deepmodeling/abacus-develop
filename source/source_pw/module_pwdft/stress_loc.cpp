@@ -20,9 +20,10 @@ void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
 	ModuleBase::TITLE("Stress","stress_loc");
 	ModuleBase::timer::start("Stress","stress_loc");
 
-	std::vector<FPTYPE> dvloc(rho_basis->npw);
-	FPTYPE evloc=0.0;
-	FPTYPE fact=1.0;
+    std::vector<FPTYPE> dvloc(rho_basis->npw);
+    // The diagonal potential term sums all plane waves on each MPI rank.
+    double evloc = 0.0;
+    FPTYPE fact = 1.0;
 
 	const int nspin_rho = (PARAM.inp.nspin == 2) ? 2 : 1;
 
