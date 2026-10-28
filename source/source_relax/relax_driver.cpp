@@ -54,8 +54,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
     int ionic_steps = 0;
     RelaxStopReason stop_reason = RelaxStopReason::Running;
 
-    if (inp.relax_nmax == 0
-        && (inp.calculation == "relax" || inp.calculation == "cell-relax"))
+    if (inp.relax_nmax == 0 && (inp.calculation == "relax" || inp.calculation == "cell-relax"))
     {
         stop_reason = RelaxStopReason::DryRun;
     }
