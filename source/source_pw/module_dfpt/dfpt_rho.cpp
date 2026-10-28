@@ -356,9 +356,15 @@ void DFPT_Rho::compute_drhoc_g(const UnitCell& ucell,
         ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), p.rab.data(), rhocg);
         rhocg *= ModuleBase::FOUR_PI / ucell.omega;
 
-        // structure factor phase: exp(i (G+q) . tau_iat)
+        // structure factor phase: exp(-i (G+q) . tau_iat). The sign is
+        // load-bearing: exp(+i(G+q)tau) mirrors the core response to the
+        // -tau site (for wurtzite B the mirror lands exactly on the N
+        // sites of the other layer), which bn_cubic cannot expose (B at
+        // the origin makes both conventions identical) but which showed
+        // up element-by-element in the bn_hex matrix comparison against
+        // QE dyn.G. QE addcore: e^{-i G tau} * e^{-i q tau}.
         const double phase = ModuleBase::TWO_PI * (w * tau_cart) / ucell.lat0;
-        const std::complex<double> gtau(std::cos(phase), std::sin(phase));
+        const std::complex<double> gtau(std::cos(phase), -std::sin(phase));
 
         // direction derivative: -i * tpiba * (G+q)_dir
         const double wdir = ucell.tpiba * w[dir];
