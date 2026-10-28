@@ -18,21 +18,25 @@ const int value_digits = 8;
 std::string real_text(double value, int digits)
 {
     std::ostringstream text;
-    text << std::scientific << std::setprecision(digits - 1) << value;
+    const int mantissa_digits = digits - 1;
+    text << std::scientific << std::setprecision(mantissa_digits) << value;
     return text.str();
 }
 std::string int_text(int value)
 {
     return std::to_string(value);
 }
-// One line of cells, without trailing blanks.
+// One line of cells, without trailing blanks. A cell wider than the column
+// keeps one blank after it.
 void write_row(std::ostream& output, const std::vector<std::string>& cells)
 {
+    const std::size_t width = cell_width;
     std::string line = " ";
     for (std::size_t i = 0; i + 1 < cells.size(); ++i)
     {
         line += cells[i];
-        line.append(cell_width - cells[i].size(), ' ');
+        const std::size_t padding = cells[i].size() < width ? width - cells[i].size() : 1;
+        line.append(padding, ' ');
     }
     line += cells.back();
     output << line << '\n';

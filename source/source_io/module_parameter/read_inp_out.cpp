@@ -196,22 +196,33 @@ The optional second integer controls the output precision. If not provided, the 
         item.unit = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
-            if (count < 1)
+            if (count < 1 || count > 2)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_sol needs at least 1 value");
+                ModuleBase::WARNING_QUIT("ReadInput", "out_sol takes 1 or 2 integers");
             }
-            para.input.out_sol[1] = 8;
-            try
-            {
-                para.input.out_sol[0] = std::stoi(item.str_values[0]);
-                if (count >= 2)
+            // The whole token must be an integer: std::stoi alone accepts "6junk".
+            auto parse_int = [](const std::string& text) {
+                size_t parsed = 0;
+                int value = 0;
+                try
                 {
-                    para.input.out_sol[1] = std::stoi(item.str_values[1]);
+                    value = std::stoi(text, &parsed);
                 }
-            }
-            catch (const std::exception&)
+                catch (const std::exception&)
+                {
+                    parsed = 0;
+                }
+                if (parsed == 0 || parsed != text.size())
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "out_sol takes integers");
+                }
+                return value;
+            };
+            para.input.out_sol[0] = parse_int(item.str_values[0]);
+            para.input.out_sol[1] = 8;
+            if (count == 2)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_sol takes integers");
+                para.input.out_sol[1] = parse_int(item.str_values[1]);
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {

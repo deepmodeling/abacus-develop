@@ -212,7 +212,7 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS report level";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Level of the SCCS reports, written to the running log (running_*.log in OUT.{suffix}): 0 (default) writes none; 1 writes the sqrt-CG iteration count and the correction energies of every SCF iteration; 2 also writes the residuals, warm start, cavity volume and surface and FFT counts, and with PCC the Gauss-law check (far-field polarization charge and its expected value), the charge moments and the energy components.";
+        item.description = "Level of the SCCS reports, written to the running log (running_*.log in OUT.{suffix}): 0 (default) writes none; 1 writes the sqrt-CG iteration count and the correction energies of every SCF iteration; 2 also writes the residuals, warm start, cavity volume and surface, the FFT counts of the Coulomb operator in the sqrt-CG solve and the count of reused fixed sources, and with PCC the Gauss-law check (far-field polarization charge and its expected value), the charge moments and the energy components.";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.sccs_debug);

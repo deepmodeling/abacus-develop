@@ -229,6 +229,8 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     ModuleSccs::SccsResponse response;
     ModuleSccs::solve_response(density, solute_charge, config_.cavity, solver_, restart_potential_, basis,
                                cell->tpiba, *coulomb, response);
+    // Only the Coulomb-operator FFTs of the sqrt-CG solve, its main cost; the
+    // functional below and the cavity derivatives transform outside this count.
     output_.transforms = coulomb->fft_counts();
     ModuleSccs::FunctionalResult functional;
     ModuleSccs::eval_functional(solute_charge, response, config_, basis, cell->tpiba, *coulomb, functional);

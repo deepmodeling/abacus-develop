@@ -78,6 +78,17 @@ TEST_F(SccsOutputTest, OutputLevelsSelectTheReportsAndPreserveStreamState)
     EXPECT_EQ(output.flags(), flags);
 }
 
+TEST_F(SccsOutputTest, CellAsWideAsTheColumnKeepsOneBlank)
+{
+    elecstate::SccsOutput result;
+    result.valid = true;
+    result.iterations = 4;
+    std::ostringstream output;
+    // A three-digit exponent fills the whole 16-character cell.
+    elecstate::write_sccs_out(output, result, 1, -1.5e-100, true, 0.05);
+    EXPECT_NE(output.str().find("-1.50000000e-100 E_PCC/Ry"), std::string::npos) << output.str();
+}
+
 TEST_F(SccsOutputTest, AdvancedDiagnosticsPreservePccPotentialEnergyAndForce)
 {
     UnitCell cell;

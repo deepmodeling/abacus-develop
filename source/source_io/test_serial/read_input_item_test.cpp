@@ -757,6 +757,21 @@ TEST_F(InputTest, Item_test)
         EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("out_sol takes integers"));
+        it->second.str_values = {"6junk"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes integers"));
+        it->second.str_values = {"1", "8x"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes integers"));
+        it->second.str_values = {"1", "8", "3"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes 1 or 2 integers"));
         TestParameters::input(param).out_sol = {0, 8};
         TestParameters::input(param).imp_sol = 0;
     }
