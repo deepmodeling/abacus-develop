@@ -192,7 +192,12 @@ void DFPT_Phon::accumulate_electron(int q_idx,
 
     // ---- nlcc direct terms (QE dynmat_nlcc + dynmatcc) ----
     accum_nlcc_kernel(atom_idx, dir, q_idx, data, dvxc_r);
-    accum_nlcc_diag(atom_idx, q_idx);
+    if (dir == 0)
+    {
+        // the diagonal block is direction-pair complete: add it once per
+        // atom (every accumulate_electron call would triple it)
+        accum_nlcc_diag(atom_idx, q_idx);
+    }
 
     // restore the converged dpsi of this displacement
     restore_dpsi(data, q_idx, psi.get_nk(), psi.get_nbands(), dpsib);
@@ -233,32 +238,76 @@ void DFPT_Phon::accum_nlcc_kernel(int atom_idx,
     const double fac = ucell_->omega / static_cast<double>(nrxx);
     const int rowb = 3 * atom_idx + dir;
     const double mass_row = ucell_->atoms[ucell_->iat2it[atom_idx]].mass;
+    // QE dynmat_nlcc semantics, pinned by the element-level comparison
+    // against QE dyn.G (bn_cubic): the raw matrix carries
+    //   X_ab = (Omega/nrxx) sum_r dvxc^a(r) conj(drhoc^b(r)),
+    // dvxc^a = f_xc.(drho_val^a + drhoc^a), once per element, and the
+    // effective Hermitian value is the symmetrized
+    //   S_ab = (1/2)(X_ab + conj(X_ba)).
+    // X_ab is two-sided only when BOTH displacements carry core response;
+    // for the one-sided cross blocks (e.g. B vs N: X_BN = 0 because N has
+    // no nlcc) this reduces to (1/2) X_NB. The column loop must therefore
+    // cover non-nlcc atoms too: their X_ab vanishes but the transposed
+    // piece conj(X_ba) = sum_r dvxc^b conj(drhoc^a) -- the column's
+    // valence-only dvaux against the ROW's core -- is exactly what the
+    // (nlcc-row, non-nlcc-column) element needs.
     std::vector<std::complex<double>> drhoc_g;
     std::vector<std::complex<double>> drhoc_r(nrxx);
+    // row's own core response in real space (for the conj(X_ba) piece;
+    // empty when the row atom carries no nlcc)
+    std::vector<std::complex<double>> drhoc_a_r;
+    rho_->compute_drhoc_g(*ucell_, atom_idx, dir, q_cart, drhoc_g);
+    const bool row_has_core = static_cast<int>(drhoc_g.size()) == pw_rho_->npw;
+    if (row_has_core)
+    {
+        drhoc_a_r.resize(nrxx);
+        pw_rho_->recip2real(drhoc_g.data(), drhoc_a_r.data());
+    }
+    const bool have_table = dvxc_core_ != nullptr;
     for (int iat2 = 0; iat2 < nat; ++iat2)
     {
-        if (!ucell_->atoms[ucell_->iat2it[iat2]].ncpp.nlcc)
-        {
-            continue;
-        }
+        const bool col_has_core = ucell_->atoms[ucell_->iat2it[iat2]].ncpp.nlcc;
         for (int idir2 = 0; idir2 < 3; ++idir2)
         {
-            rho_->compute_drhoc_g(*ucell_, iat2, idir2, q_cart, drhoc_g);
-            if (static_cast<int>(drhoc_g.size()) != pw_rho_->npw)
+            // X_ab: the row's dvaux against the column's core response
+            std::complex<double> x_ab(0.0, 0.0);
+            if (col_has_core)
+            {
+                rho_->compute_drhoc_g(*ucell_, iat2, idir2, q_cart, drhoc_g);
+                if (static_cast<int>(drhoc_g.size()) != pw_rho_->npw)
+                {
+                    continue;
+                }
+                pw_rho_->recip2real(drhoc_g.data(), drhoc_r.data());
+                for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    x_ab += dvxc_r[ir] * std::conj(drhoc_r[ir]);
+                }
+                x_ab *= fac;
+            }
+            // X_ba: the column's dvaux (per-q table) against the row's
+            // core response
+            std::complex<double> x_ba(0.0, 0.0);
+            const int cola = 3 * iat2 + idir2;
+            if (row_has_core && have_table && cola < static_cast<int>(dvxc_core_->size())
+                && static_cast<int>((*dvxc_core_)[cola].size()) == nrxx)
+            {
+                const std::vector<std::complex<double>>& dvxc_b = (*dvxc_core_)[cola];
+                for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    x_ba += dvxc_b[ir] * std::conj(drhoc_a_r[ir]);
+                }
+                x_ba *= fac;
+            }
+            if (x_ab == std::complex<double>(0.0, 0.0) && x_ba == std::complex<double>(0.0, 0.0))
             {
                 continue;
             }
-            pw_rho_->recip2real(drhoc_g.data(), drhoc_r.data());
-            std::complex<double> x(0.0, 0.0);
-            for (int ir = 0; ir < nrxx; ++ir)
-            {
-                x += dvxc_r[ir] * std::conj(drhoc_r[ir]);
-            }
-            x *= fac;
-            const int cola = 3 * iat2 + idir2;
+            const std::complex<double> s_ab = 0.5 * (x_ab + std::conj(x_ba));
             const double mass_norm = std::sqrt(mass_row * ucell_->atoms[ucell_->iat2it[iat2]].mass);
-            dynmat_accum_(rowb, cola) += x / mass_norm;
-            dynmat_accum_(cola, rowb) += std::conj(x) / mass_norm;
+            // single-ordering fill: the transposed element receives its
+            // own S_ba = conj(S_ab) from the column displacement's pass
+            dynmat_accum_(rowb, cola) += s_ab / mass_norm;
         }
     }
     ModuleBase::timer::end("DFPT_Phon", "accum_nlcc_kernel");

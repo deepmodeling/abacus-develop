@@ -65,6 +65,12 @@ class DFPT_Phon
     void set_rho(const DFPT_Rho* rho);
     void set_vxc_r(const std::vector<double>* vxc_r);
 
+    /// per-q table of f_xc.drhoc for every displacement slot [3*nat]
+    /// (the kernel term contracts it against the stashed valence
+    /// responses of the mixed piece). Set by the solver once per q,
+    /// before the accumulation pass; owned by the caller.
+    void set_dvxc_core_table(const std::vector<std::vector<std::complex<double>>>* table);
+
     void assemble(int q_idx, DFPT_PW_Data& data);
 
     /// Fill the D[b][*] row of the electronic dynamical-matrix contribution
@@ -165,6 +171,7 @@ class DFPT_Phon
     DFPT_Pert* pert_ = nullptr;
     const DFPT_Rho* rho_ = nullptr;
     const std::vector<double>* vxc_r_ = nullptr;
+    const std::vector<std::vector<std::complex<double>>>* dvxc_core_ = nullptr;
 
     double ewald_alpha_ = 0.0;
     double ewald_rcut_ = 0.0;

@@ -11,6 +11,7 @@
 #include <cmath>
 #include <complex>
 #include <cstdlib>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -74,6 +75,11 @@ void DFPT_Phon::set_vxc_r(const std::vector<double>* vxc_r)
     vxc_r_ = vxc_r;
 }
 
+void DFPT_Phon::set_dvxc_core_table(const std::vector<std::vector<std::complex<double>>>* table)
+{
+    dvxc_core_ = table;
+}
+
 // ---------------------------------------------------------------------------
 // assemble / diagonalize / LO-TO / sum rule
 // ---------------------------------------------------------------------------
@@ -121,6 +127,33 @@ void DFPT_Phon::assemble(int q_idx, DFPT_PW_Data& data)
         }
     }
     data.set_dynmat(q_idx, dyn);
+    // TEMPORARY QE-format dump for the nlcc element-level comparison
+    // (unreduced force constants; remove after the residual localization)
+    if (getenv("DFPT_DUMP_DYN") != nullptr)
+    {
+        std::ostringstream name;
+        name << "abacus_dyn.q" << q_idx << ".txt";
+        std::ofstream out(name.str());
+        out << std::setprecision(8) << std::scientific;
+        for (int ia = 0; ia < nat; ++ia)
+        {
+            for (int ja = 0; ja < nat; ++ja)
+            {
+                const double mm = std::sqrt(ucell_->atoms[ucell_->iat2it[ia]].mass
+                                            * ucell_->atoms[ucell_->iat2it[ja]].mass);
+                out << "    " << ia + 1 << "    " << ja + 1 << "\n";
+                for (int i = 0; i < 3; ++i)
+                {
+                    for (int j = 0; j < 3; ++j)
+                    {
+                        const std::complex<double> v = dyn(3 * ia + i, 3 * ja + j) * mm;
+                        out << " " << v.real() << " " << v.imag();
+                    }
+                    out << "\n";
+                }
+            }
+        }
+    }
     dynmat_accum_ = ModuleBase::ComplexMatrix();
     accum_q_ = -1;
     ModuleBase::timer::end("DFPT_Phon", "assemble");

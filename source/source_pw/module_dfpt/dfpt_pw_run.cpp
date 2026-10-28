@@ -97,6 +97,53 @@ double DFPT_PW::Impl::run_displacement_irrep_pass(int q_idx, int irrep)
     const int npw = pw_rho_->npw;
     const int nrxx = pw_rho_->nrxx;
     const ModuleBase::Vector3<double> q_cart = data_.get_qvec(q_idx) * ucell_->G;
+    // per-q table of f_xc.(drho_val + drhoc) for every displacement slot:
+    // the total-response first-order XC potential that the Hermitized
+    // kernel term contracts against the core responses (QE dynmat_nlcc
+    // semantics; built once, before the accumulation pass)
+    std::vector<std::vector<std::complex<double>>> dvxc_core;
+    if (nlcc_any && xc_ != nullptr)
+    {
+        // fill EVERY displacement slot: the kernel term X(i,j) contracts
+        // the row's dvaux with the COLUMN's core response, so rows of
+        // non-nlcc atoms need their dvaux too (f_xc applied to their
+        // valence response alone -- they have no core piece). Leaving
+        // their slots empty silently dropped the entire X(N,B) cross
+        // block (the dominant mixed piece for a B-N cell).
+        dvxc_core.resize(3 * nat);
+        std::vector<std::complex<double>> drhoc_g;
+        for (int iat = 0; iat < nat; ++iat)
+        {
+            const bool iat_nlcc = ucell_->atoms[ucell_->iat2it[iat]].ncpp.nlcc;
+            for (int idir = 0; idir < 3; ++idir)
+            {
+                std::vector<std::complex<double>> a_r(nrxx, std::complex<double>(0.0, 0.0));
+                if (iat_nlcc)
+                {
+                    rho_.compute_drhoc_g(*ucell_, iat, idir, q_cart, drhoc_g);
+                    if (static_cast<int>(drhoc_g.size()) == npw)
+                    {
+                        pw_rho_->recip2real(drhoc_g.data(), a_r.data());
+                    }
+                }
+                // add the stashed converged valence response of this
+                // displacement (the working slots hold the last one)
+                const std::vector<std::complex<double>> drho_a_g = data_.get_drho_disp(iat, idir);
+                if (static_cast<int>(drho_a_g.size()) == npw)
+                {
+                    std::vector<std::complex<double>> dval_r(nrxx);
+                    pw_rho_->recip2real(drho_a_g.data(), dval_r.data());
+                    for (int ir = 0; ir < nrxx; ++ir)
+                    {
+                        a_r[ir] += dval_r[ir];
+                    }
+                }
+                xc_->set_context(q_cart);
+                xc_->apply(a_r, dvxc_core[3 * iat + idir]);
+            }
+        }
+        phon_.set_dvxc_core_table(&dvxc_core);
+    }
     for (int iat = 0; iat < nat; ++iat)
     {
         for (int idir = 0; idir < 3; ++idir)
@@ -104,21 +151,11 @@ double DFPT_PW::Impl::run_displacement_irrep_pass(int q_idx, int irrep)
             std::vector<std::complex<double>> dvxc_r;
             if (nlcc_any && xc_ != nullptr)
             {
-                std::vector<std::complex<double>> drhoc_a_g;
-                rho_.compute_drhoc_g(*ucell_, iat, idir, q_cart, drhoc_a_g);
-                const std::vector<std::complex<double>> drho_a_g = data_.get_drho_disp(iat, idir);
-                if (static_cast<int>(drhoc_a_g.size()) == npw && static_cast<int>(drho_a_g.size()) == npw)
+                const int slot = 3 * iat + idir;
+                if (slot < static_cast<int>(dvxc_core.size())
+                    && static_cast<int>(dvxc_core[slot].size()) == nrxx)
                 {
-                    std::vector<std::complex<double>> a_r(nrxx);
-                    pw_rho_->recip2real(drho_a_g.data(), a_r.data());
-                    std::vector<std::complex<double>> drhoc_r(nrxx);
-                    pw_rho_->recip2real(drhoc_a_g.data(), drhoc_r.data());
-                    for (int ir = 0; ir < nrxx; ++ir)
-                    {
-                        a_r[ir] += drhoc_r[ir];
-                    }
-                    xc_->set_context(q_cart);
-                    xc_->apply(a_r, dvxc_r);
+                    dvxc_r = dvxc_core[slot];
                 }
             }
             // 2n+1 accumulation of this converged displacement
