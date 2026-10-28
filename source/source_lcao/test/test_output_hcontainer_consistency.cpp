@@ -70,7 +70,7 @@ protected:
         ucell.set_iat2iwt(1);
 
         paraV = new Parallel_Orbitals();
-        paraV->set_serial(nlocal, nlocal);
+        paraV->para_2d().set_serial(nlocal, nlocal);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, nlocal);
     }
 

@@ -67,7 +67,7 @@ class InitDMFileTest : public testing::Test
 
         // set up parallel orbitals (serial mode)
         paraV = new Parallel_Orbitals();
-        paraV->set_serial(nlocal, nlocal);
+        paraV->para_2d().set_serial(nlocal, nlocal);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, nlocal);
     }
 
