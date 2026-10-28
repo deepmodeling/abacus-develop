@@ -44,12 +44,6 @@ class Parallel_2D
         return nloc;
     };
 
-    /// whether the distribution was set up by set_serial()
-    bool is_serial() const
-    {
-        return is_serial;
-    };
-
     /// get the local index of a global index (row)
     int global2local_row(const std::size_t igr) const
     {
