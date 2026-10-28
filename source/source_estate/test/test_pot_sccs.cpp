@@ -187,6 +187,30 @@ TEST_F(PotSccsTest, InputMapsOntoSccsConfig)
     }
 }
 
+TEST_F(PotSccsTest, InputMapsCavityModelKeys)
+{
+    Input_para input;
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    elecstate::sccs_cfg_input(input, config, solver);
+    EXPECT_DOUBLE_EQ(config.cavity.lowpass_p1, -1.0);
+    EXPECT_DOUBLE_EQ(config.cavity.lowpass_p2, -1.0);
+    EXPECT_FALSE(config.core_electrons);
+    input.sccs_preset = "water-neutral";
+    input.assume_isolated = "pcc_0d";
+    input.sccs_lowpass_p1 = 10.0;
+    input.sccs_lowpass_p2 = 5.0;
+    input.sccs_solvent_mode = "full";
+    input.sccs_corespread = {0.8, 0.0, -1.0};
+    elecstate::sccs_cfg_input(input, config, solver);
+    EXPECT_DOUBLE_EQ(config.cavity.lowpass_p1, 10.0);
+    EXPECT_DOUBLE_EQ(config.cavity.lowpass_p2, 5.0);
+    EXPECT_TRUE(config.core_electrons);
+    EXPECT_EQ(config.core_spreads, input.sccs_corespread);
+    // The cavity model keys leave the preset dielectric unchanged.
+    EXPECT_DOUBLE_EQ(config.cavity.epsilon_bulk, 78.3);
+}
+
 TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
 {
     Input_para input;
@@ -197,6 +221,57 @@ TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
     ModuleSccs::PolarizationSolverParameters solver;
     elecstate::sccs_cfg_input(input, config, solver);
     check_solvation_force(config, solver);
+}
+
+// The cavity terms of core Gaussians, with surface tension and pressure.
+TEST_F(PotSccsTest, FullCavityForceMatchesTheEnergyDerivative)
+{
+    Input_para input;
+    input.sccs_epsilon = 1.0;
+    input.sccs_tol_rms = 1e-13;
+    input.sccs_tol_max = 1e-12;
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    elecstate::sccs_cfg_input(input, config, solver);
+    config.core_electrons = true;
+    config.core_spreads = {2.0};
+    config.surface_tension = 1e-5;
+    config.pressure = 1e-6;
+    check_solvation_force(config, solver);
+}
+
+TEST_F(PotSccsTest, FullCavityStructureChecksWarnOnceAndRejectWidthCount)
+{
+    UnitCell cell;
+    Atom atom;
+    cell.ntype = 1;
+    cell.nat = 2;
+    cell.atoms = &atom;
+    atom.na = 2;
+    atom.label = "X";
+    atom.ncpp.psd = "Xx";
+    ModuleSccs::SccsConfig config;
+    config.core_electrons = true;
+    config.core_spreads = {0.5};
+    auto warnings = [&]() { return elecstate::check_sccs_cell(config, cell); };
+    const std::string unknown = warnings();
+    EXPECT_NE(unknown.find("unknown"), std::string::npos);
+    atom.ncpp.psd = "O";
+    EXPECT_EQ(warnings(), "");
+    atom.ncpp.psd = "Xx";
+    config.core_spreads = {0.5, 0.6};
+    EXPECT_EQ(warnings(), "");
+    config.core_electrons = false;
+    config.core_spreads = {0.5};
+    EXPECT_EQ(warnings(), "");
+    config.core_electrons = true;
+    config.core_spreads = {0.5, 0.6, 0.7};
+    if (SccsTest::pool_size == 1)
+    {
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(elecstate::check_sccs_cell(config, cell), ::testing::ExitedWithCode(1), "");
+        testing::internal::GetCapturedStdout();
+    }
 }
 
 TEST_F(PotSccsTest, ChargedDielectricCellWarnsAndRuns)
