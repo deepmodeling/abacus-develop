@@ -19,7 +19,7 @@ void sparse_format::cal_dS(const UnitCell& ucell,
 ModuleBase::TITLE("sparse_format", "cal_dS");
 
 sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
-const int nnr = gamma_only_local ? pv.nloc : pv.nnr;
+const int nnr = gamma_only_local ? pv.para_2d().get_local_size() : pv.nnr;
 
 ForceStressArrays fsr_dh;
 fsr_dh.DHloc_fixedR_x.resize(nnr, 0.0);
@@ -60,7 +60,7 @@ void sparse_format::cal_dH(const UnitCell& ucell,
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    const int nnr = gamma_only_local ? pv.nloc : pv.nnr;
+    const int nnr = gamma_only_local ? pv.para_2d().get_local_size() : pv.nnr;
 
     ForceStressArrays fsr_dh;
 
@@ -213,7 +213,7 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                     for (int ii = 0; ii < atom1->nw * npol; ii++)
                     {
                         const int iw1_all = start + ii;
-                        const int mu = pv.global2local_row(iw1_all);
+                        const int mu = pv.para_2d().global2local_row(iw1_all);
 
                         if (mu < 0)
                         {
@@ -223,7 +223,7 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                         for (int jj = 0; jj < atom2->nw * npol; jj++)
                         {
                             int iw2_all = start2 + jj;
-                            const int nu = pv.global2local_col(iw2_all);
+                            const int nu = pv.para_2d().global2local_col(iw2_all);
 
                             if (nu < 0)
                             {

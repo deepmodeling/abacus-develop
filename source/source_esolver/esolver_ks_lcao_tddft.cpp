@@ -201,7 +201,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
 
     // Update the last-step matrices and wave functions if any atom crosses the boundary
     // Apply a phase correction to H, S, and psi to keep consistency when atoms cross periodic boundaries
-    const size_t len_hs_ik = use_tensor && use_lapack ? PARAM.globalv.nlocal * PARAM.globalv.nlocal : this->pv.nloc;
+    const size_t len_hs_ik = use_tensor && use_lapack ? PARAM.globalv.nlocal * PARAM.globalv.nlocal : this->pv.para_2d().get_local_size();
     module_rt::reset_matrix_boundary(ucell, this->kv, &(this->pv), this->Hk_laststep, this->Sk_laststep, this->psi_laststep, len_hs_ik);
 
     for (int estep = 0; estep < estep_max; estep++)
@@ -543,7 +543,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell, const int
             this->psi_laststep = new psi::Psi<std::complex<double>>(this->kv.get_nks(),
 #ifdef __MPI
                                                                     this->pv.ncol_bands,
-                                                                    this->pv.nrow,
+                                                                    this->pv.para_2d().get_row_size(),
 #else
                                                                     nbands,
                                                                     nlocal,
@@ -553,7 +553,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell, const int
         }
 
         // Length of Hk_laststep and Sk_laststep per k-point: nlocal * nlocal for full matrices, nloc for local blocks
-        const int len_HS_ik = use_tensor && use_lapack ? nlocal * nlocal : this->pv.nloc;
+        const int len_HS_ik = use_tensor && use_lapack ? nlocal * nlocal : this->pv.para_2d().get_local_size();
         const int len_HS_all = this->kv.get_nks() * len_HS_ik;
 
         // Allocate memory for Hk_laststep; use_tensor && use_lapack requires space for the full matrix

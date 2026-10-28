@@ -227,11 +227,11 @@ void Gint_dvlocal::distribute_pvdpR_sparse(
 
                 Parallel_Reduce::reduce_pool(tmp.data(), nlocal);
 
-                if (pv.global2local_row(row) >= 0)
+                if (pv.para_2d().global2local_row(row) >= 0)
                 {
                     for (int col = 0; col < nlocal; ++col)
                     {
-                        if (pv.global2local_col(col) >= 0)
+                        if (pv.para_2d().global2local_col(col) >= 0)
                         {
                             if (std::abs(tmp[col]) > sparse_thr)
                             {

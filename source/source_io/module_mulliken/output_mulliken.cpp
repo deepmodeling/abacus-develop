@@ -333,7 +333,7 @@ template <typename TK>
 void Output_Mulliken<TK>::set_ParaV(Parallel_Orbitals* ParaV_in)
 {
     this->ParaV_ = ParaV_in;
-    int nloc = this->ParaV_->nloc;
+    int nloc = this->ParaV_->para_2d().get_local_size();
     if (nloc <= 0)
     {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_ParaV", "nloc <= 0");
@@ -413,10 +413,10 @@ void Output_Mulliken<TK>::collect_MW(ModuleBase::matrix& MecMulP, const ModuleBa
     {
         for (size_t i = 0; i < nw; ++i)
         {
-            if (this->ParaV_->in_this_processor(i, i))
+            if (this->ParaV_->para_2d().in_this_processor(i, i))
             {
-                const int ir = this->ParaV_->global2local_row(i);
-                const int ic = this->ParaV_->global2local_col(i);
+                const int ir = this->ParaV_->para_2d().global2local_row(i);
+                const int ic = this->ParaV_->para_2d().global2local_col(i);
                 MecMulP(isk, i) += mud(ic, ir).real();
             }
         }
@@ -431,10 +431,10 @@ void Output_Mulliken<TK>::collect_MW(ModuleBase::matrix& MecMulP, const ModuleBa
                 const int j = i / 2;
                 const int k1 = 2 * j;
                 const int k2 = 2 * j + 1;
-                if (this->ParaV_->in_this_processor(k1, k1))
+                if (this->ParaV_->para_2d().in_this_processor(k1, k1))
                 {
-                    const int ir = this->ParaV_->global2local_row(k1);
-                    const int ic = this->ParaV_->global2local_col(k1);
+                    const int ir = this->ParaV_->para_2d().global2local_row(k1);
+                    const int ic = this->ParaV_->para_2d().global2local_col(k1);
                     MecMulP(0, j) += mud(ic, ir).real();
                     MecMulP(3, j) += mud(ic, ir).real();
                 }
@@ -443,27 +443,27 @@ void Output_Mulliken<TK>::collect_MW(ModuleBase::matrix& MecMulP, const ModuleBa
                 // bare Im formula here likely yields -m_y. It must NOT be used as an oracle for the DM
                 // convention (it is probably why #7664's DM m_y flip went unnoticed). Fix + unit test
                 // should be a separate PR after verifying against a case with nonzero in-plane moment.
-                if (this->ParaV_->in_this_processor(k1, k2))
+                if (this->ParaV_->para_2d().in_this_processor(k1, k2))
                 {
-                    const int ir = this->ParaV_->global2local_row(k1);
-                    const int ic = this->ParaV_->global2local_col(k2);
+                    const int ir = this->ParaV_->para_2d().global2local_row(k1);
+                    const int ic = this->ParaV_->para_2d().global2local_col(k2);
                     // note that mud is column major
                     MecMulP(1, j) += mud(ic, ir).real();
                     // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
                     MecMulP(2, j) -= mud(ic, ir).imag();
                 }
-                if (this->ParaV_->in_this_processor(k2, k1))
+                if (this->ParaV_->para_2d().in_this_processor(k2, k1))
                 {
-                    const int ir = this->ParaV_->global2local_row(k2);
-                    const int ic = this->ParaV_->global2local_col(k1);
+                    const int ir = this->ParaV_->para_2d().global2local_row(k2);
+                    const int ic = this->ParaV_->para_2d().global2local_col(k1);
                     MecMulP(1, j) += mud(ic, ir).real();
                     // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
                     MecMulP(2, j) += mud(ic, ir).imag();
                 }
-                if (this->ParaV_->in_this_processor(k2, k2))
+                if (this->ParaV_->para_2d().in_this_processor(k2, k2))
                 {
-                    const int ir = this->ParaV_->global2local_row(k2);
-                    const int ic = this->ParaV_->global2local_col(k2);
+                    const int ir = this->ParaV_->para_2d().global2local_row(k2);
+                    const int ic = this->ParaV_->para_2d().global2local_col(k2);
                     MecMulP(0, j) += mud(ic, ir).real();
                     MecMulP(3, j) -= mud(ic, ir).real();
                 }
@@ -585,7 +585,7 @@ void Output_Mulliken<std::complex<double>>::cal_orbMulP()
     {
         auto p_Sk = this->output_sk_->get_Sk(ik);
         auto p_DMk = this->output_dmk_->get_dmk(ik);
-        ModuleBase::ComplexMatrix mud(this->ParaV_->ncol, this->ParaV_->nrow, true);
+        ModuleBase::ComplexMatrix mud(this->ParaV_->para_2d().get_col_size(), this->ParaV_->para_2d().get_row_size(), true);
 #ifdef __MPI
         const char T_char = 'T';
         const char N_char = 'N';
@@ -600,16 +600,16 @@ void Output_Mulliken<std::complex<double>>::cal_orbMulP()
                 p_DMk,
                 one_int,
                 one_int,
-                this->ParaV_->desc,
+                this->ParaV_->para_2d().get_desc(),
                 p_Sk,
                 one_int,
                 one_int,
-                this->ParaV_->desc,
+                this->ParaV_->para_2d().get_desc(),
                 zero_float,
                 mud.c,
                 one_int,
                 one_int,
-                this->ParaV_->desc);
+                this->ParaV_->para_2d().get_desc());
         this->collect_MW(MecMulP, mud, nw, this->isk_[ik]);
 #endif
     }
@@ -635,7 +635,7 @@ void Output_Mulliken<double>::cal_orbMulP()
         ModuleBase::matrix mud;
         auto p_Sk = this->output_sk_->get_Sk(is);
         auto p_DMk = this->output_dmk_->get_dmk(is);
-        mud.create(this->ParaV_->ncol, this->ParaV_->nrow);
+        mud.create(this->ParaV_->para_2d().get_col_size(), this->ParaV_->para_2d().get_row_size());
 #ifdef __MPI
         const char T_char = 'T';
         const char N_char = 'N';
@@ -650,23 +650,23 @@ void Output_Mulliken<double>::cal_orbMulP()
                 p_DMk,
                 one_int,
                 one_int,
-                this->ParaV_->desc,
+                this->ParaV_->para_2d().get_desc(),
                 p_Sk,
                 one_int,
                 one_int,
-                this->ParaV_->desc,
+                this->ParaV_->para_2d().get_desc(),
                 zero_float,
                 mud.c,
                 one_int,
                 one_int,
-                this->ParaV_->desc);
+                this->ParaV_->para_2d().get_desc());
         if (this->nspin_ == 1 || this->nspin_ == 2)
         {
             for (size_t i = 0; i != nw; ++i)
-                if (this->ParaV_->in_this_processor(i, i))
+                if (this->ParaV_->para_2d().in_this_processor(i, i))
                 {
-                    const int ir = this->ParaV_->global2local_row(i);
-                    const int ic = this->ParaV_->global2local_col(i);
+                    const int ir = this->ParaV_->para_2d().global2local_row(i);
+                    const int ic = this->ParaV_->para_2d().global2local_col(i);
                     MecMulP(is, i) += mud(ic, ir);
                 }
         }

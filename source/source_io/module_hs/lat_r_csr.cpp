@@ -25,7 +25,7 @@ void ModuleIO::save_lat_r(std::ofstream& ofs,
     const Parallel_Orbitals& pv,
     const SparseWriteOptions& options)
 {
-    const int nlocal = pv.get_global_row_size();
+    const int nlocal = pv.para_2d().get_global_row_size();
     if (nlocal <= 0)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::save_lat_r",
@@ -43,7 +43,7 @@ void ModuleIO::save_lat_r(std::ofstream& ofs,
     {
         ModuleBase::GlobalFunc::ZEROS(line.data(), nlocal);
 
-        if (!options.reduce || pv.global2local_row(row) >= 0)
+        if (!options.reduce || pv.para_2d().global2local_row(row) >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())

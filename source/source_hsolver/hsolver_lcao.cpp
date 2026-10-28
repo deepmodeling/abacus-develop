@@ -205,8 +205,8 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
     k2d.set_kpar(kpar);
     int nbands = this->ParaV->get_nbands();
     int nks = psi.get_nk();
-    int nrow = this->ParaV->get_global_row_size();
-    int nb2d = this->ParaV->get_block_size();
+    int nrow = this->ParaV->para_2d().get_global_row_size();
+    int nb2d = this->ParaV->para_2d().get_block_size();
     k2d.set_para_env(psi.get_nk(), nrow, nb2d, this->world_nproc, this->world_rank, nspin);
     /// set psi_pool
     const int zero = 0;
