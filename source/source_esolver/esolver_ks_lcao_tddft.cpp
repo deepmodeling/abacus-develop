@@ -202,7 +202,15 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
     // Update the last-step matrices and wave functions if any atom crosses the boundary
     // Apply a phase correction to H, S, and psi to keep consistency when atoms cross periodic boundaries
     const size_t len_hs_ik = use_tensor && use_lapack ? PARAM.globalv.nlocal * PARAM.globalv.nlocal : this->pv.nloc;
-    module_rt::reset_matrix_boundary(ucell, this->kv, &(this->pv), this->Hk_laststep, this->Sk_laststep, this->psi_laststep, len_hs_ik);
+    const int kpoint_count = this->kv.get_nks();
+    module_rt::reset_matrix_boundary(ucell,
+                                     this->kv.kvec_d,
+                                     kpoint_count,
+                                     &(this->pv),
+                                     this->Hk_laststep,
+                                     this->Sk_laststep,
+                                     this->psi_laststep,
+                                     len_hs_ik);
 
     for (int estep = 0; estep < estep_max; estep++)
     {
