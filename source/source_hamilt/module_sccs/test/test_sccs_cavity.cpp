@@ -64,8 +64,8 @@ TEST_F(SccsCavityTest, LimitsThresholdsAndVacuum)
     EXPECT_DOUBLE_EQ(vacuum.depsilon_drho, 0.0);
 }
 
-// Analytic values at the logarithmic midpoint and finite differences across
-// the transition.
+// Analytic values at the logarithmic midpoint and finite differences of the
+// first and second derivatives across the transition.
 TEST_F(SccsCavityTest, MidpointAndDerivativesAcrossTransition)
 {
     const double product = parameters.density_min * parameters.density_max;
@@ -98,6 +98,9 @@ TEST_F(SccsCavityTest, MidpointAndDerivativesAcrossTransition)
         upper = ModuleSccs::evaluate_cavity(upper_density, parameters);
         const double solute_fd = (upper.solute - lower.solute) / (2.0 * step);
         const double epsilon_fd = (upper.epsilon - lower.epsilon) / (2.0 * step);
+        const double second_fd = (upper.dsolute_drho - lower.dsolute_drho) / (2.0 * step);
+        const double second_scale = std::abs(point.d2solute_drho2);
+        EXPECT_NEAR(point.d2solute_drho2, second_fd, 1e-6 * second_scale);
         const double solute_ratio = solute_fd / point.dsolute_drho;
         const double epsilon_ratio = epsilon_fd / point.depsilon_drho;
         EXPECT_NEAR(solute_ratio, 1.0, 1e-8);

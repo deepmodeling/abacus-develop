@@ -77,7 +77,7 @@ jobs:
           nvidia-smi
           source toolchain/install/setup
           rm -rf build
-          cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
+          cmake -B build -G Ninja -DUSE_CUDA=ON -DENABLE_LIBXC=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
             -DENABLE_GOOGLEBENCH=OFF \
             -DCMAKE_CUDA_ARCHITECTURES=70
           cmake --build build -j "$(nproc)"
