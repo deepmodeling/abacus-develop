@@ -998,11 +998,30 @@ Available options are:
         item.type = "String";
         item.description = R"(Specifies the precision when performing scf calculation.
 * single: single precision
-* double: double precision)";
+* double: double precision
+PW DFT+U and DeltaSpin onsite corrections require double precision.)";
         item.default_value = "double";
         item.set_availability("basis_type==pw");
         read_sync_string(input.precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const Input_para& inp = para.inp;
+            const bool pw_onsite_solver = inp.basis_type == "pw"
+                                          && (inp.esolver_type == "ksdft" || inp.esolver_type == "tddft");
+            if (pw_onsite_solver && inp.precision == "single")
+            {
+                if (inp.dft_plus_u != 0)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "PW DFT+U requires precision = double; single precision onsite corrections are not supported.");
+                }
+                if (inp.sc_mag_switch)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "PW DeltaSpin requires precision = double; single precision onsite corrections are not supported.");
+                }
+            }
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
             {
