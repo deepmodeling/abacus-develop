@@ -17,8 +17,8 @@ if(ENABLE_LCAO)
   endif()
 
   if(BUILD_TESTING)
-    if(ENABLE_MPI)
-      add_subdirectory(test)
-    endif()
+    # module_ao 测试主体均以 #ifdef __MPI 守卫或纯串行，支持 MPI/串行双配置
+    # （D6：set_serial 与 MPI 双覆盖，串行亦须构建并运行本目录测试）
+    add_subdirectory(test)
   endif()
 endif()
