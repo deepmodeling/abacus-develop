@@ -8,7 +8,6 @@
 class Parallel_Orbitals;
 class UnitCell;
 class Grid_Driver;
-class LCAO_HS_Arrays;
 
 namespace ModuleGint
 {
@@ -70,19 +69,6 @@ void cal_gint_fvl_meta(
     const bool isstress,
     ModuleBase::matrix* fvl,
     ModuleBase::matrix* svl);
-
-void cal_dvlocal_R_sparse(
-    const int nspin,
-    const int npol,
-    const int current_spin,
-    const int nlocal,
-    const double sparse_thr,
-    const double* vr_eff,
-    const Parallel_Orbitals& pv,
-    const UnitCell& ucell,
-    const Grid_Driver& gdriver,
-    LCAO_HS_Arrays& hs_arrays);
-
 
 } // namespace ModuleGint
 
