@@ -1,4 +1,5 @@
 #include "source_md/md_base.h"
+#include "source_md/md_func.h"
 #include "source_base/constants.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_global.h"
@@ -16,6 +17,23 @@
 
 namespace
 {
+class PositionStateSolver : public ModuleESolver::ESolver
+{
+public:
+    std::vector<bool> observed_position_updates;
+
+    void before_all_runners(BaseCell&, const Input_para&) override {}
+    void after_all_runners(BaseCell&) override {}
+    void runner(BaseCell& base, const int) override
+    {
+        const UnitCell& cell = static_cast<const UnitCell&>(base);
+        observed_position_updates.push_back(cell.ionic_position_updated);
+    }
+    double cal_energy() override { return 0.0; }
+    void cal_force(BaseCell&, ModuleBase::matrix& force) override { force.zero_out(); }
+    void cal_stress(BaseCell&, ModuleBase::matrix& stress) override { stress.zero_out(); }
+};
+
 class MdBoundaryTest : public testing::Test
 {
 protected:
@@ -118,11 +136,11 @@ protected:
         }
     }
 
-    void expect_backing_state()
+    void expect_backing_state(const bool positions_updated)
     {
         const Atom& actual = backing_types[0];
         const Atom& reference = reference_types[0];
-        EXPECT_TRUE(backing.ionic_position_updated);
+        EXPECT_EQ(backing.ionic_position_updated, positions_updated);
         for (int index = 0; index < 4; ++index)
         {
             SCOPED_TRACE(index);
@@ -266,8 +284,8 @@ TEST_F(MdBoundaryTest, MatchesLegacyWrappingThroughMigrationAndRepeatedSync)
         }
         // Before migration, rank zero and the other nonowners can be empty.
         backing.ionic_position_updated = false;
-        cell.sync_backing_unitcell();
-        expect_backing_state();
+        cell.sync_backing_unitcell(true);
+        expect_backing_state(true);
         decomposition.migrate_owned_atoms(cell);
         int migrated = 0;
         for (const LocalAtom& atom : cell.owned_atoms())
@@ -292,9 +310,13 @@ TEST_F(MdBoundaryTest, MatchesLegacyWrappingThroughMigrationAndRepeatedSync)
         // Restart output may synchronize the same MD step a second time.
         for (int repeat = 0; repeat < 2; ++repeat)
         {
-            backing.ionic_position_updated = false;
-            cell.sync_backing_unitcell();
-            expect_backing_state();
+            const bool positions_updated = repeat == 0;
+            if (positions_updated)
+            {
+                backing.ionic_position_updated = false;
+            }
+            cell.sync_backing_unitcell(positions_updated);
+            expect_backing_state(true);
         }
         expect_phase_correction(false);
         expect_phase_correction(true);
@@ -306,16 +328,47 @@ TEST_F(MdBoundaryTest, MatchesLegacyWrappingThroughMigrationAndRepeatedSync)
     }
 }
 
-TEST_F(MdBoundaryTest, InitialSyncClearsStaleBackingState)
+TEST_F(MdBoundaryTest, InitialForceEvaluationDoesNotAdvancePositionUpdateState)
+{
+    const int rank = domain.rank();
+    MD_base integrator(parameters, false, true, rank, cell);
+    PositionStateSolver solver;
+    const std::string readin_directory;
+    backing.ionic_position_updated = false;
+    integrator.setup(&solver, readin_directory, decomposition);
+    ASSERT_EQ(solver.observed_position_updates.size(), 1u);
+    EXPECT_FALSE(solver.observed_position_updates[0]);
+    // The legacy setup marks the state only after the first force evaluation.
+    EXPECT_TRUE(backing.ionic_position_updated);
+
+    backing.ionic_position_updated = false;
+    for (LocalAtom& atom : cell.owned_atoms())
+    {
+        const int index = atom.type_index;
+        atom.vel = velocity_for(index, 0);
+    }
+    std::ofstream log;
+    integrator.first_half(log);
+    MD_func::force_virial(&solver, 1, cell, decomposition,
+                          integrator.potential, false, integrator.virial, false);
+    ASSERT_EQ(solver.observed_position_updates.size(), 2u);
+    EXPECT_TRUE(solver.observed_position_updates[1]);
+}
+
+TEST_F(MdBoundaryTest, InitialSyncPreservesPositionUpdateState)
 {
     for (int index = 0; index < 4; ++index)
     {
         backing_types[0].boundary_shift[index].set(7, 8, 9);
         backing_types[0].dis[index].set(7.0, 8.0, 9.0);
     }
-    backing.ionic_position_updated = false;
-    cell.sync_backing_unitcell();
-    expect_backing_state();
+    const bool positions_updated = false;
+    for (const bool initial_state : {false, true})
+    {
+        backing.ionic_position_updated = initial_state;
+        cell.sync_backing_unitcell(positions_updated);
+        expect_backing_state(initial_state);
+    }
 }
 } // namespace
 

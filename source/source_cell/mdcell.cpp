@@ -177,7 +177,7 @@ void MDCell::refresh_cart_from_frac()
     neighbor_layout_valid_ = false;
 }
 
-void MDCell::sync_backing_unitcell()
+void MDCell::sync_backing_unitcell(const bool positions_updated)
 {
     if (backing_unitcell_ == nullptr)
     {
@@ -257,7 +257,10 @@ void MDCell::sync_backing_unitcell()
                 }
             }
         }
-        backing_unitcell_->ionic_position_updated = true;
+        if (positions_updated)
+        {
+            backing_unitcell_->ionic_position_updated = true;
+        }
         return;
     }
 #endif
@@ -272,7 +275,10 @@ void MDCell::sync_backing_unitcell()
         backing_unitcell_->atoms[atom.type].vel[atom.type_index] = atom.vel;
         backing_unitcell_->atoms[atom.type].mbl[atom.type_index] = atom.mbl;
     }
-    backing_unitcell_->ionic_position_updated = true;
+    if (positions_updated)
+    {
+        backing_unitcell_->ionic_position_updated = true;
+    }
 }
 
 #ifdef __MPI

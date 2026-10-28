@@ -343,7 +343,9 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         {
             backing_velocities[static_cast<std::size_t>(it)] = ucell.atoms[it].vel;
         }
-        mdcell.sync_backing_unitcell();
+        // Step zero evaluates the initial coordinates before the first MD drift.
+        const bool positions_updated = istep > 0;
+        mdcell.sync_backing_unitcell(positions_updated);
         for (int it = 0; it < ucell.ntype; ++it)
         {
             std::copy(backing_velocities[static_cast<std::size_t>(it)].begin(),
