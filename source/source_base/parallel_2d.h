@@ -44,6 +44,12 @@ class Parallel_2D
         return nloc;
     };
 
+    /// whether the distribution was set up by set_serial()
+    bool is_serial() const
+    {
+        return is_serial_;
+    };
+
     /// get the local index of a global index (row)
     int global2local_row(const std::size_t igr) const
     {
@@ -180,7 +186,7 @@ class Parallel_2D
     /// process coordinate in the BLACS grid
     int coord[2] = {-1, -1};
     /// whether to use the serial mode
-    bool is_serial = false;
+    bool is_serial_ = false;
 
   protected:
 

@@ -29,16 +29,9 @@ TEST(UpsiTest, testUpsi2)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->para_2d().nloc = nlocal * nband;
-    pv->para_2d().ncol = nlocal;
+    ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
     pv->ncol_bands = nband;
-
-    // Initialize input matrices
-    int info;
-    int mb = 1, nb = 1, lda = nband, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->para_2d().desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
-    descinit_(pv->desc_wfc, &nlocal, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    pv->set_desc_wfc_Eij(nlocal, nband, pv->para_2d().get_row_size());
 
     // Initialize data
     U_operator = new std::complex<double>[nlocal * nlocal];

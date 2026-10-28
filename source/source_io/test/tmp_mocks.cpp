@@ -1,6 +1,5 @@
 
 #include "source_cell/unitcell.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
 
 // constructor of Atom
 Atom::Atom()
@@ -48,12 +47,5 @@ UnitCell::UnitCell()
 {
 }
 UnitCell::~UnitCell()
-{
-}
-
-Parallel_Orbitals::Parallel_Orbitals()
-{
-}
-Parallel_Orbitals::~Parallel_Orbitals()
 {
 }
