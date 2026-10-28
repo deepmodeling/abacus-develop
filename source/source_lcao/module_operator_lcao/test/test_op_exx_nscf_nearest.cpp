@@ -6,21 +6,31 @@
 #include <cstdio>
 #include <fstream>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 namespace
 {
 
 // The reader appends "_<spin>.csr" to the prefix, so the fixture files live
-// directly in the test temporary directory.
+// directly in the test temporary directory.  The process id keeps concurrent
+// invocations on distinct files when they share that directory.
 std::string make_file_prefix(const std::string& tag)
 {
-    return testing::TempDir() + "op_exx_nscf_nearest_" + tag;
+    const std::string root = testing::TempDir();
+    const std::string process_tag = std::to_string(getpid());
+    return root + "op_exx_nscf_nearest_" + process_tag + "_" + tag;
+}
+
+std::string csr_file_name(const std::string& file_prefix)
+{
+    return file_prefix + "_0.csr";
 }
 
 void remove_fixture(const std::string& file_prefix)
 {
-    std::remove((file_prefix + "_0.csr").c_str());
+    const std::string file_name = csr_file_name(file_prefix);
+    std::remove(file_name.c_str());
 }
 
 // The csrFileReader on develop expects the full sparse-file header (title,
@@ -58,7 +68,8 @@ void write_csr_r_block(std::ofstream& ofs, const int rx, const int ry, const int
 
 void write_minimal_hexx_csr(const std::string& file_prefix)
 {
-    std::ofstream ofs(file_prefix + "_0.csr");
+    const std::string file_name = csr_file_name(file_prefix);
+    std::ofstream ofs(file_name);
     write_csr_header(ofs);
     write_csr_r_block(ofs, 0, 0, 0, 1.0);
     write_csr_r_block(ofs, 1, 0, 0, 2.0);
@@ -66,7 +77,8 @@ void write_minimal_hexx_csr(const std::string& file_prefix)
 
 void write_centered_hexx_csr(const std::string& file_prefix)
 {
-    std::ofstream ofs(file_prefix + "_0.csr");
+    const std::string file_name = csr_file_name(file_prefix);
+    std::ofstream ofs(file_name);
     write_csr_header(ofs);
     write_csr_r_block(ofs, -1, 0, 0, 1.0);
     write_csr_r_block(ofs, 0, 0, 0, 2.0);
@@ -123,9 +135,11 @@ class OperatorExxNscfCellNearestTest : public ::testing::Test
     void TearDown() override
     {
         // tmp_mocks have partial UnitCell ownership; process cleanup avoids double free.
+        const std::string centered_prefix = prefix_ + "_cen";
+        const std::string output_prefix = prefix_ + "_out";
         remove_fixture(prefix_);
-        remove_fixture(prefix_ + "_cen");
-        remove_fixture(prefix_ + "_out");
+        remove_fixture(centered_prefix);
+        remove_fixture(output_prefix);
     }
 
     int world_size_ = 1;
