@@ -30,7 +30,6 @@ if(LR_FORCE_TEST_PYTHON)
   add_test(
     NAME librpa_producer_contract
     COMMAND ${LR_FORCE_TEST_PYTHON} -m unittest discover -s
-            ${CMAKE_CURRENT_SOURCE_DIR}/producer_contract -p
-            test_check_librpa_producer.py)
+            ${CMAKE_CURRENT_SOURCE_DIR} -p test_librpa_producer_contract.py)
   set_tests_properties(librpa_producer_contract PROPERTIES TIMEOUT 30)
 endif()

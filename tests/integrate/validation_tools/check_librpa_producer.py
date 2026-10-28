@@ -499,7 +499,10 @@ def check_manifest(root, manifest):
             if entry.get("reference"):
                 if reference_root is None:
                     raise ProducerContractError("reference requested without reference_dir")
-                reference = reference_root / path.relative_to(entry_root)
+                # ``reference_path`` decouples the stored reference name from
+                # the produced one, for outputs whose directory name is
+                # reserved by the build harness (``OUT.*`` is gitignored).
+                reference = reference_root / entry.get("reference_path", path.relative_to(entry_root))
                 if not reference.is_file():
                     raise ProducerContractError("missing producer reference: {}".format(reference))
                 tolerance = float(entry.get("abs_tol", 1.0e-8))
