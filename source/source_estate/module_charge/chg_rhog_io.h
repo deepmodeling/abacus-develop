@@ -73,6 +73,16 @@ bool read_rhog(const std::string& filename,
                const Parallel::ParaWorld& pw_world,
                std::ostream* os_warning);
 
+/// Decode a reciprocal-space restart and transform every spin channel into rho.
+/// Returns false when the restart cannot be read; rho is unchanged in that case.
+bool read_rho_restart(const std::string& filename,
+                      const ModulePW::PW_Basis& rhopw,
+                      const int nspin,
+                      std::complex<double>** rhog,
+                      double** rho,
+                      const Parallel::ParaWorld& pw_world,
+                      std::ostream& log);
+
 bool write_rhog(const std::string& fchg,
                 const bool gamma_only,
                 const ModulePW::PW_Basis* pw_rho,

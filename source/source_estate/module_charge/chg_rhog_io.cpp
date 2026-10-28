@@ -252,6 +252,30 @@ bool module_charge::read_rhog(const std::string& filename,
     return true;
 }
 
+bool module_charge::read_rho_restart(const std::string& filename,
+                                      const ModulePW::PW_Basis& rhopw,
+                                      const int nspin,
+                                      std::complex<double>** rhog,
+                                      double** rho,
+                                      const Parallel::ParaWorld& pw_world,
+                                      std::ostream& log)
+{
+    if (rho == nullptr) { return false; }
+    const bool loaded = read_rhog(filename, &rhopw, nspin, rhog, pw_world, &log);
+    if (!loaded) { return false; }
+    for (int is = 0; is < nspin; ++is)
+    {
+        rhopw.recip2real(rhog[is], rho[is]);
+    }
+    if (pw_world.rank() == 0)
+    {
+        const std::string message = " Read electron density from restart and FFT: " + filename;
+        log << message << std::endl;
+        std::cout << message << std::endl;
+    }
+    return true;
+}
+
 bool module_charge::write_rhog(const std::string& fchg,
                                const bool gamma_only,
                                const ModulePW::PW_Basis* pw_rho,

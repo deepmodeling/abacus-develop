@@ -4,6 +4,10 @@
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_io/module_wf/read_wfc_nao.h"
 #include "source_io/module_output/cube_io.h"
+#include "source_estate/module_charge/chg_rhog_io.h"
+#include "source_base/module_parallel/para_bridge.h"
+#include "source_base/parallel_common.h"
+#include <fstream>
 #include "source_base/module_external/scalapack_connector.h"
 #include <algorithm>
 
@@ -293,6 +297,32 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
     chg_gs.set_rhopw(this->pw_rho);
     const bool kin_den = XC_Functional::get_ked_flag() || (this->inp_->out_elf[0] > 0); // mohan add 20251202
     chg_gs.allocate(this->nspin, kin_den, XC_Functional::get_ked_flag(), this->inp_->test_charge);
+    // Keep the existing cube input authoritative. Choose one density source for
+    // all spin channels and broadcast the decision before collective readers.
+    bool have_cubes = true;
+    if (this->my_rank_ == 0)
+    {
+        for (int is = 0; is < this->nspin; ++is)
+        {
+            const std::string name = this->nspin == 1 ? "chg.cube" : "chgs" + std::to_string(is + 1) + ".cube";
+            const std::string filename = this->in_dir + name;
+            have_cubes = have_cubes && std::ifstream(filename).good();
+        }
+    }
+    Parallel_Common::bcast_bool(have_cubes);
+    if (!have_cubes)
+    {
+        const std::string restart = this->in_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart";
+        const Parallel::ParaWorld world = Parallel::make_pw_world();
+        const bool loaded = module_charge::read_rho_restart(restart, *this->pw_rho, this->nspin,
+            chg_gs.rhog, chg_gs.rho, world, this->ofs_running_);
+        if (!loaded)
+        {
+            const std::string message = "No complete charge cube set or readable density restart in " + this->in_dir;
+            ModuleBase::WARNING_QUIT("ESolver_LR::read_ks_chg", message);
+        }
+        return;
+    }
     this->ofs_running_ << " try to read charge from file : ";
     for (int is = 0; is < this->nspin; ++is)
     {

@@ -4,6 +4,7 @@
 #include "source_base/module_parallel/para_world.h"
 #include "source_base/module_parallel/para_tag.h"
 #include "source_base/module_parallel/para_bridge.h"
+#include "source_base/module_parallel/para_mpi_func.h"
 #ifdef __MPI
 #include "source_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
@@ -462,6 +463,48 @@ TEST_F(ReadRhogTest, ReadRhogNspin2To4SpecialPath)
     }
 
     std::remove(tmpfile.c_str());
+}
+
+TEST_F(ReadRhogTest, RestartDensityTransformsEverySpin)
+{
+    setup_pw_basis();
+    const std::string filename = testing::TempDir() + "lr_density_fft_test.restart";
+    const std::vector<std::array<int, 3>> miller = {{{0, 0, 0}}};
+    const std::vector<std::vector<std::complex<double>>> values = {{{0.25, 0.0}}, {{0.75, 0.0}}};
+    write_binary_by_hand(filename, 0, 2, miller, values);
+    Parallel::barrier(pw_world);
+    fill_rhog(2);
+    std::vector<double> up(rhopw.nrxx, -1.0);
+    std::vector<double> down(rhopw.nrxx, -1.0);
+    double* density[] = {up.data(), down.data()};
+    std::ostringstream log;
+    const bool loaded = module_charge::read_rho_restart(filename, rhopw, 2, rhog.data(), density, pw_world, log);
+    EXPECT_TRUE(loaded);
+    for (int ir = 0; ir < rhopw.nrxx; ++ir)
+    {
+        EXPECT_NEAR(up[ir], 0.25, 1e-12);
+        EXPECT_NEAR(down[ir], 0.75, 1e-12);
+    }
+    if (pw_world.rank() == 0)
+    {
+        EXPECT_NE(log.str().find(filename), std::string::npos);
+        std::remove(filename.c_str());
+    }
+}
+
+TEST_F(ReadRhogTest, MissingRestartPreservesRealDensity)
+{
+    setup_pw_basis();
+    fill_rhog(1);
+    const std::string filename = testing::TempDir() + "lr_density_absent_test.restart";
+    if (pw_world.rank() == 0) { std::remove(filename.c_str()); }
+    Parallel::barrier(pw_world);
+    std::vector<double> density(rhopw.nrxx, 0.125);
+    double* channels[] = {density.data()};
+    std::ostringstream log;
+    const bool loaded = module_charge::read_rho_restart(filename, rhopw, 1, rhog.data(), channels, pw_world, log);
+    EXPECT_FALSE(loaded);
+    for (double value : density) { EXPECT_DOUBLE_EQ(value, 0.125); }
 }
 
 int main(int argc, char** argv)

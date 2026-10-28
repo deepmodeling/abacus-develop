@@ -1544,7 +1544,9 @@ updates structures smoothly enough for second-order extrapolation.)";
         item.annotation = "directory of files for reading";
         item.category = "Input files";
         item.type = "String";
-        item.description = "Location of files, such as the electron density (chgs1.cube), required as a starting point.";
+        item.description = "Location of files, such as the electron density (chgs1.cube), required as a starting point. "
+                           "Standalone LR first reads the complete chg.cube/chgs*.cube set. If unavailable, it reads "
+                           "{suffix}-CHARGE-DENSITY.restart and Fourier-transforms the density onto the current grid.";
         item.default_value = "OUT.$suffix";
         read_sync_string(input.read_file_dir);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
