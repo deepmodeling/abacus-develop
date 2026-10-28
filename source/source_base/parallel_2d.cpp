@@ -38,7 +38,7 @@ Parallel_2D& Parallel_2D::operator=(Parallel_2D&& rhs) noexcept
         dim1 = rhs.dim1;
         coord[0] = rhs.coord[0];
         coord[1] = rhs.coord[1];
-        is_serial_ = rhs.is_serial_;
+        is_serial = rhs.is_serial;
         global2local_row_ = std::move(rhs.global2local_row_);
         global2local_col_ = std::move(rhs.global2local_col_);
         local2global_row_ = std::move(rhs.local2global_row_);
@@ -58,7 +58,7 @@ bool Parallel_2D::in_this_processor(const std::size_t iw1_all, const std::size_t
 int Parallel_2D::owner_processor(const std::size_t iw1_all, const std::size_t iw2_all) const
 {
     assert(iw1_all < get_global_row_size() && iw2_all < get_global_col_size());
-    if (is_serial_)
+    if (is_serial)
     {
         return 0;
     }
@@ -69,7 +69,7 @@ int Parallel_2D::owner_processor(const std::size_t iw1_all, const std::size_t iw
 
 int Parallel_2D::get_global_row_size() const
 {
-    if (!is_serial_)
+    if (!is_serial)
     {
 #ifdef __MPI
         return desc[2];
@@ -80,7 +80,7 @@ int Parallel_2D::get_global_row_size() const
 
 int Parallel_2D::get_global_col_size() const
 {
-    if (!is_serial_)
+    if (!is_serial)
     {
 #ifdef __MPI
         return desc[3];
@@ -216,7 +216,7 @@ void Parallel_2D::set_serial(const int mg, const int ng)
     std::iota(local2global_col_.begin(), local2global_col_.end(), 0);
     global2local_row_ = local2global_row_;
     global2local_col_ = local2global_col_;
-    is_serial_ = true;
+    is_serial = true;
 #ifdef __MPI
     release_blacs_grid();
     // A serial layout must not reference any BLACS grid: for borrowers

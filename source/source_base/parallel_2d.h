@@ -47,7 +47,7 @@ class Parallel_2D
     /// whether the distribution was set up by set_serial()
     bool is_serial() const
     {
-        return is_serial_;
+        return is_serial;
     };
 
     /// get the local index of a global index (row)
@@ -186,7 +186,7 @@ class Parallel_2D
     /// process coordinate in the BLACS grid
     int coord[2] = {-1, -1};
     /// whether to use the serial mode
-    bool is_serial_ = false;
+    bool is_serial = false;
 
   protected:
 
