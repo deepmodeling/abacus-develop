@@ -45,7 +45,6 @@ class Relax_Driver
   private:
     enum class RelaxStopReason
     {
-        Running,
         Converged,
         MaxSteps,
         UserExit,

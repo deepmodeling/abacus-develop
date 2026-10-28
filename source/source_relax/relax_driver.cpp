@@ -52,7 +52,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
     // the next esolve() call; if we exit the loop early, force/stress are stale.
     bool geometry_evaluated = false;
     int ionic_steps = 0;
-    RelaxStopReason stop_reason = RelaxStopReason::Running;
+    RelaxStopReason stop_reason = RelaxStopReason::Finished;
 
     if (inp.relax_nmax == 0 && (inp.calculation == "relax" || inp.calculation == "cell-relax"))
     {
