@@ -156,8 +156,6 @@ void init_serial_orbitals(Parallel_Orbitals& pv)
     pv.atom_begin_row[1] = 2;
     pv.atom_begin_col[0] = 0;
     pv.atom_begin_col[1] = 2;
-    pv.para_2d().nrow = 2;
-    pv.para_2d().ncol = 2;
     pv.para_2d().set_serial(2, 2);
 }
 

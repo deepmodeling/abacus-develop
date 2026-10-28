@@ -418,8 +418,7 @@ TEST_F(HContainerTest, atompair_funcs)
         PO.atom_begin_row[i] = i*2; // nw = 2, value should be i*nw
         PO.atom_begin_col[i] = i*2;
     }
-    PO.para_2d().nrow = 4;
-    PO.para_2d().ncol = 4;
+    PO.para_2d().set_serial(4, 4);
     hamilt::AtomPair<std::complex<double>> atom_ij(0, 0, &PO, nullptr);
     hamilt::AtomPair<std::complex<double>> atom_ij2(0, 1, 1, 1, 1, &PO, nullptr);
     hamilt::AtomPair<std::complex<double>> atom_ij3(1, 0, PO.atom_begin_row.data(), PO.atom_begin_col.data(), 2, nullptr);
