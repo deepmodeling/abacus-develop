@@ -1,4 +1,4 @@
-#include "rpa_abfs_preorthogonalization.h"
+#include "rpa_abfs_preorth.h"
 
 #include "source_base/constants.h"
 #include "source_io/module_parameter/input_parameter.h"
@@ -17,11 +17,11 @@ namespace
 {
 
 constexpr double kGridTolerance = 1.0e-12;
-constexpr double kOrthogonalityTolerance = 1.0e-20;
-constexpr int kMaximumProjectionPasses = 4;
+constexpr double kOrthoTolerance = 1.0e-20;
+constexpr int kMaxProjPasses = 4;
 constexpr double kIdentityTolerance = 1.0e-10;
 
-int expanded_size(const RpaAbfsOrbitalSet& abfs)
+int expanded_size(const AbfsOrbitalSet& abfs)
 {
     int result = 0;
     for (const auto& type: abfs)
@@ -149,14 +149,14 @@ Numerical_Orbital_Lm rebuild_orbital(const std::vector<Numerical_Orbital_Lm>& or
     return output;
 }
 
-RpaAbfsPreorthChannelReport preorthogonalize_channel(std::vector<Numerical_Orbital_Lm>& channel,
-                                                     const double threshold,
-                                                     const bool force_flag)
+PreorthChannel preorth_channel(std::vector<Numerical_Orbital_Lm>& channel,
+                               const double threshold,
+                               const bool force_flag)
 {
     validate_channel(channel);
     const int atom_type = channel.front().getType();
     const int angular_momentum = channel.front().getL();
-    const auto metric = compute_onsite_coulomb_metric(channel);
+    const auto metric = coulomb_metric(channel);
     std::vector<std::vector<double>> accepted;
     std::vector<int> rejected;
     double minimum_residual = std::numeric_limits<double>::infinity();
@@ -193,7 +193,7 @@ RpaAbfsPreorthChannelReport preorthogonalize_channel(std::vector<Numerical_Orbit
         }
 
         bool orthogonal = accepted.empty();
-        for (int pass = 0; pass != kMaximumProjectionPasses && !orthogonal; ++pass)
+        for (int pass = 0; pass != kMaxProjPasses && !orthogonal; ++pass)
         {
             for (std::size_t i = 0; i != accepted.size(); ++i)
             {
@@ -212,7 +212,7 @@ RpaAbfsPreorthChannelReport preorthogonalize_channel(std::vector<Numerical_Orbit
                 value /= std::sqrt(norm);
             }
             overlaps = metric_overlaps(accepted, metric, candidate);
-            orthogonal = squared_norm(overlaps) <= kOrthogonalityTolerance;
+            orthogonal = squared_norm(overlaps) <= kOrthoTolerance;
         }
         if (!orthogonal)
         {
@@ -235,35 +235,35 @@ RpaAbfsPreorthChannelReport preorthogonalize_channel(std::vector<Numerical_Orbit
             rebuild_orbital(original, accepted[output_index], static_cast<int>(output_index), force_flag));
     }
 
-    const auto transformed_metric = compute_onsite_coulomb_metric(channel);
-    double maximum_identity_error = 0.0;
+    const auto transformed_metric = coulomb_metric(channel);
+    double max_identity_error = 0.0;
     for (std::size_t i = 0; i != transformed_metric.size(); ++i)
     {
         for (std::size_t j = 0; j != transformed_metric.size(); ++j)
         {
             const double target = i == j ? 1.0 : 0.0;
-            maximum_identity_error = std::max(maximum_identity_error, std::abs(transformed_metric[i][j] - target));
+            max_identity_error = std::max(max_identity_error, std::abs(transformed_metric[i][j] - target));
         }
     }
-    if (!std::isfinite(maximum_identity_error) || maximum_identity_error > kIdentityTolerance)
+    if (!std::isfinite(max_identity_error) || max_identity_error > kIdentityTolerance)
     {
         throw std::runtime_error("RPA ABFS Coulomb preorthogonalization failed its on-site identity check");
     }
 
-    RpaAbfsPreorthChannelReport report;
+    PreorthChannel report;
     report.atom_type = atom_type;
     report.angular_momentum = angular_momentum;
     report.input_count = static_cast<int>(original.size());
     report.output_count = static_cast<int>(channel.size());
     report.rejected_indices = std::move(rejected);
-    report.minimum_residual_norm = minimum_residual;
-    report.maximum_identity_error = maximum_identity_error;
+    report.min_residual_norm = minimum_residual;
+    report.max_identity_error = max_identity_error;
     return report;
 }
 
 } // namespace
 
-std::vector<std::vector<double>> compute_onsite_coulomb_metric(const std::vector<Numerical_Orbital_Lm>& channel)
+std::vector<std::vector<double>> coulomb_metric(const std::vector<Numerical_Orbital_Lm>& channel)
 {
     validate_channel(channel);
     if (channel.empty())
@@ -322,10 +322,10 @@ std::vector<std::vector<double>> compute_onsite_coulomb_metric(const std::vector
     return metric;
 }
 
-RpaAbfsPreorthReport apply_rpa_abfs_preorthogonalization(RpaAbfsOrbitalSet& abfs,
-                                                         const std::string& mode,
-                                                         const double threshold,
-                                                         const bool force_flag)
+PreorthReport apply_preorth(AbfsOrbitalSet& abfs,
+                            const std::string& mode,
+                            const double threshold,
+                            const bool force_flag)
 {
     if (mode != "none" && mode != "onsite_coulomb")
     {
@@ -336,11 +336,11 @@ RpaAbfsPreorthReport apply_rpa_abfs_preorthogonalization(RpaAbfsOrbitalSet& abfs
         throw std::invalid_argument("rpa_abfs_preorth_threshold must be finite and strictly inside (0,1)");
     }
 
-    RpaAbfsPreorthReport report;
+    PreorthReport report;
     report.mode = mode;
     report.threshold = threshold;
-    report.input_expanded_size = expanded_size(abfs);
-    report.output_expanded_size = report.input_expanded_size;
+    report.input_size = expanded_size(abfs);
+    report.output_size = report.input_size;
     if (mode == "none")
     {
         return report;
@@ -352,30 +352,24 @@ RpaAbfsPreorthReport apply_rpa_abfs_preorthogonalization(RpaAbfsOrbitalSet& abfs
         {
             if (!channel.empty())
             {
-                report.channels.push_back(preorthogonalize_channel(channel, threshold, force_flag));
+                report.channels.push_back(preorth_channel(channel, threshold, force_flag));
             }
         }
     }
-    report.output_expanded_size = expanded_size(abfs);
+    report.output_size = expanded_size(abfs);
     return report;
 }
 
-RpaAbfsPreorthReport finalize_rpa_abfs_from_input(RpaAbfsOrbitalSet& abfs,
-                                                  const Input_para& input,
-                                                  const bool force_flag)
+PreorthReport preorth_from_input(AbfsOrbitalSet& abfs, const Input_para& input, const bool force_flag)
 {
-    return apply_rpa_abfs_preorthogonalization(abfs,
-                                               input.rpa_abfs_preorth,
-                                               input.rpa_abfs_preorth_threshold,
-                                               force_flag);
+    return apply_preorth(abfs, input.rpa_abfs_preorth, input.rpa_abfs_preorth_threshold, force_flag);
 }
 
-std::string format_rpa_abfs_preorth_report(const RpaAbfsPreorthReport& report)
+std::string preorth_report(const PreorthReport& report)
 {
     std::ostringstream output;
     output << std::setprecision(16) << "RPA_ABFS_PREORTH mode=" << report.mode << " threshold=" << report.threshold
-           << " input_expanded_size=" << report.input_expanded_size
-           << " output_expanded_size=" << report.output_expanded_size << '\n';
+           << " input_size=" << report.input_size << " output_size=" << report.output_size << '\n';
     for (const auto& channel: report.channels)
     {
         output << "RPA_ABFS_PREORTH_CHANNEL type=" << channel.atom_type << " l=" << channel.angular_momentum
@@ -392,8 +386,8 @@ std::string format_rpa_abfs_preorth_report(const RpaAbfsPreorthReport& report)
                 output << (i == 0 ? "" : ",") << channel.rejected_indices[i];
             }
         }
-        output << " minimum_residual_norm=" << channel.minimum_residual_norm
-               << " maximum_identity_error=" << channel.maximum_identity_error << '\n';
+        output << " min_residual_norm=" << channel.min_residual_norm
+               << " max_identity_error=" << channel.max_identity_error << '\n';
     }
     return output.str();
 }

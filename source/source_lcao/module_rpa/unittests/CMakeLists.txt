@@ -23,13 +23,13 @@ addtest(
   ../rpa_lri_band_io.cpp)
 addtest(
   TARGET
-  MODULE_RPA_rpa_abfs_preorthogonalization_test
+  MODULE_RPA_abfs_preorth_test
   LIBS
   parameter
   base
   ${math_libs}
   device
   SOURCES
-  test_rpa_abfs_preorthogonalization.cpp
-  ../rpa_abfs_preorthogonalization.cpp
+  test_rpa_abfs_preorth.cpp
+  ../rpa_abfs_preorth.cpp
   ../../../source_basis/module_ao/orb_atomic_lm.cpp)

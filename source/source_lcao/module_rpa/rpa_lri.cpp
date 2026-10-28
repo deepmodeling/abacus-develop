@@ -1,13 +1,13 @@
 #include "rpa_lri.h"
 
 #include "exx_lri.h"
-#include "rpa_abfs_preorthogonalization.h"
+#include "rpa_abfs_preorth.h"
 #include "rpa_lri_detail.h"
 #include "source_base/global_function.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
+#include "source_cell/unitcell.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/input_parameter.h"
-#include "source_cell/unitcell.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
 #include <algorithm>
@@ -192,11 +192,11 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const module_dm::DensityMatrix<T, Tdata>
     // consumer: the symmetry-rotation Lmax below, the cut-Coulomb C/V through
     // init_spencer, and every later RPA producer output all reuse
     // abfs_for_lmax. mode=none (the default) leaves the basis untouched.
-    const ModuleRI::RpaAbfsPreorthReport preorth_report = ModuleRI::finalize_rpa_abfs_from_input(
-        abfs_for_lmax, this->runtime.input, this->runtime.input.cal_force);
-    if (this->runtime.rank == 0 && preorth_report.mode != "none")
+    const ModuleRI::PreorthReport preorth
+        = ModuleRI::preorth_from_input(abfs_for_lmax, this->runtime.input, this->runtime.input.cal_force);
+    if (this->runtime.rank == 0 && preorth.mode != "none")
     {
-        std::cout << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
+        std::cout << ModuleRI::preorth_report(preorth);
     }
 
     ModuleSymmetry::Symmetry_rotation symrot;
