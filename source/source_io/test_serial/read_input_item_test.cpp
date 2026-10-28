@@ -63,6 +63,44 @@ class InputTest : public testing::Test
     }
 };
 
+TEST_F(InputTest, PwOnsiteRequiresDoublePrecision)
+{
+    ModuleIO::ReadInput readinput(0);
+    auto item = find_label("precision", readinput.input_lists);
+    ASSERT_NE(item, readinput.input_lists.end());
+
+    Parameter param;
+    Input_para& inp = TestParameters::input(param);
+    inp.basis_type = "pw";
+    inp.esolver_type = "ksdft";
+    inp.device = "gpu";
+    inp.precision = "single";
+
+    inp.dft_plus_u = 1;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(check_item(item->second, param), ::testing::ExitedWithCode(1), "");
+    EXPECT_THAT(testing::internal::GetCapturedStdout(), testing::HasSubstr("PW DFT+U requires precision = double"));
+
+    inp.dft_plus_u = 0;
+    inp.sc_mag_switch = true;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(check_item(item->second, param), ::testing::ExitedWithCode(1), "");
+    EXPECT_THAT(testing::internal::GetCapturedStdout(), testing::HasSubstr("PW DeltaSpin requires precision = double"));
+
+    inp.esolver_type = "tddft";
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(check_item(item->second, param), ::testing::ExitedWithCode(1), "");
+    EXPECT_THAT(testing::internal::GetCapturedStdout(), testing::HasSubstr("PW DeltaSpin requires precision = double"));
+
+    inp.precision = "double";
+    inp.dft_plus_u = 1;
+    check_item(item->second, param);
+    inp.dft_plus_u = 0;
+    inp.sc_mag_switch = false;
+    inp.precision = "single";
+    check_item(item->second, param);
+}
+
 TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
 {
     ModuleIO::ReadInput reader(0);
