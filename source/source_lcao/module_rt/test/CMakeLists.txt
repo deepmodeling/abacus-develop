@@ -47,7 +47,8 @@ addtest(
   tddft_test_lib
   SOURCES
   middle_hamilt_test.cpp
-  ../middle_hamilt.cpp)
+  ../middle_hamilt.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
   TARGET
@@ -73,7 +74,8 @@ addtest(
   tddft_test_lib
   SOURCES
   norm_psi_test.cpp
-  ../norm_psi.cpp)
+  ../norm_psi.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
   TARGET
@@ -87,7 +89,8 @@ addtest(
   upsi_test1.cpp
   upsi_test2.cpp
   upsi_test3.cpp
-  ../upsi.cpp)
+  ../upsi.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
   TARGET
@@ -104,7 +107,8 @@ addtest(
   ../propagator.cpp
   ../propagator_cn2.cpp
   ../propagator_taylor.cpp
-  ../propagator_etrs.cpp)
+  ../propagator_etrs.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
   TARGET

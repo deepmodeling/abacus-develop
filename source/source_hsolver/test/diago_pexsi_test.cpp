@@ -140,13 +140,8 @@ class PexsiPrepare
             exit(1);
         }
 
-        // set po variables
-        po.ncol = hmtest.ncol;
-        po.nrow = hmtest.nrow;
-        po.nb = nb2d;
-        po.blacs_ctxt = icontxt;
-        po.dim0 = nprows;
-        po.dim1 = npcols;
+        // set po variables from the same BLACS grid used for hmtest
+        po.para_2d().set(nlocal, nlocal, nb2d, icontxt);
 
         if (DETAILINFO && myrank == 0)
         {

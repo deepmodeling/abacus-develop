@@ -460,8 +460,7 @@ TEST_F(HContainerTest, atompair_funcs)
         PO.atom_begin_row[i] = i*2; // nw = 2, value should be i*nw
         PO.atom_begin_col[i] = i*2;
     }
-    PO.para_2d().nrow = 4;
-    PO.para_2d().ncol = 4;
+    PO.para_2d().set_serial(4, 4);
     const int natom = 2;
     const int rx_shift = 1, ry_shift = 1, rz_shift = 1;
     hamilt::AtomPair<double> atom_ij(0, 0, &PO, nullptr);
