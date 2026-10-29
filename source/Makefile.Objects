@@ -540,6 +540,7 @@ OBJS_MD=fire.o\
     run_md.o\
     module_snap/snap_calculator.o\
     module_snap/snap_descriptor.o\
+    module_snap/snap_descriptor_derivative.o\
     module_snap/snap_model.o\
     module_snap/snap_clebsch_gordan.o\
     verlet.o\
