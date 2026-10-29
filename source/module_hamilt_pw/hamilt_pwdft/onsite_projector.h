@@ -74,7 +74,8 @@ namespace projectors
 
         int get_size_becp() const { return size_becp; }
         std::complex<double>* get_becp() const { return becp; }
-        std::complex<double>* get_h_becp() const { return h_becp; }
+        /// Return the current overlaps in host memory, synchronizing GPU data on access.
+        std::complex<double>* get_h_becp() const;
         std::complex<double>* get_tab_atomic() const { return tab_atomic_; }
         int get_tot_nproj() const { return tot_nproj; }
         int get_npw() const { return npw_; }
@@ -97,7 +98,7 @@ namespace projectors
         std::complex<double>* tab_atomic_ = nullptr;
         std::complex<double>* becp = nullptr;  // nbands * nkb
         // save becp in CPU memory, only used when Device is GPU
-        std::complex<double>* h_becp;
+        std::complex<double>* h_becp = nullptr;
 
         int size_becp = 0;
         int size_vproj = 0;

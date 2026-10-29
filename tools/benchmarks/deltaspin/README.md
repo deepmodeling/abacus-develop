@@ -231,6 +231,15 @@ operations, charge conservation, Hartree and XC fields, stress, Davidson
 eigenpairs, initialization/storage lifetimes, G+k assembly, magnetic-constraint
 Hamiltonian updates and mixing behavior.
 
+Onsite projector overlaps remain on the device while GPU operators consume
+them. A one-rank pool already has the complete contraction and skips the host
+staging used for MPI reduction. Multi-rank pools retain their host reduction.
+Host moment and occupation readers acquire a synchronized snapshot through
+`get_h_becp()` after the required overlap; they reacquire that view after each
+overlap update. `check_projector_reduction.cpp` checks direct contractions on
+CPU and GPU with one or two spin components, repeated k-point changes, varying
+band counts, input/guard preservation, and repeated host-view acquisition.
+
 The Davidson driver also supplies independently constructed projected matrices
 for a mixed, nonorthogonal initial basis and verifies their immutability. The
 CUDA DeltaSpin path can reuse these matrices for norm-conserving inputs because
@@ -319,6 +328,17 @@ Set `ABACUS_HOME` to the installation containing `build/` and load its environme
 mkdir -p results
 python3 src/link_check.py src/check_hartree.cpp
 OMP_NUM_THREADS=12 OPENBLAS_NUM_THREADS=1 results/check_hartree
+```
+
+The projector-reduction driver additionally reads the Fe orbital from the
+asset directory. Exercise both local and distributed contractions:
+
+```bash
+python3 src/link_check.py src/check_projector_reduction.cpp --cxxflag=-std=c++17
+for ranks in 1 2; do
+    OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 mpirun --bind-to none -np "$ranks" \
+        results/check_projector_reduction "$PWD/assets"
+done
 ```
 
 The existing-mixing-test wrapper additionally needs GoogleTest/GoogleMock headers
