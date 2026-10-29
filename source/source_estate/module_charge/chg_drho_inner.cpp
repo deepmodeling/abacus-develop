@@ -1,14 +1,13 @@
 #include "chg_drho_detail.h"
 #include "chg_mix_cfg.h"
+#include "source_base/global_function.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/timer.h"
+#include "source_basis/module_pw/pw_basis.h"
 
 #include <cassert>
 #include <functional>
 #include <vector>
-
-#include "source_basis/module_pw/pw_basis.h"
-#include "source_base/global_function.h"
-#include "source_base/parallel_reduce.h"
-#include "source_base/timer.h"
 
 namespace module_charge
 {
@@ -19,10 +18,7 @@ namespace
 {
 
 /// Coulomb-metric sum over G!=0 for a single spin channel
-double coulomb_sum_single(const std::complex<double>* g1,
-                         const std::complex<double>* g2,
-                         const ModulePW::PW_Basis& rhopw,
-                         const double fac)
+double coulomb_sum_single(const std::complex<double>* g1, const std::complex<double>* g2, const ModulePW::PW_Basis& rhopw, const double fac)
 {
     const int ig0 = rhopw.ig_gge0;
     double sum = 0.0;
@@ -71,8 +67,7 @@ double recip_rho_nspin2(const std::complex<double>* rho1,
         {
             continue;
         }
-        sum += (conj(rho1[ig] + rho1[ig + npw])
-                * (rho2[ig] + rho2[ig + npw])).real() / rhopw.gg[ig];
+        sum += (conj(rho1[ig] + rho1[ig + npw]) * (rho2[ig] + rho2[ig + npw])).real() / rhopw.gg[ig];
     }
     sum *= fac;
     if (cfg.gamma_only_pw)
@@ -84,8 +79,7 @@ double recip_rho_nspin2(const std::complex<double>* rho1,
     double sum2 = 0.0;
     if (ig0 >= 0)
     {
-        sum2 += fac2 * (conj(rho1[ig0] - rho1[ig0 + npw])
-                        * (rho2[ig0] - rho2[ig0 + npw])).real();
+        sum2 += fac2 * (conj(rho1[ig0] - rho1[ig0 + npw]) * (rho2[ig0] - rho2[ig0 + npw])).real();
     }
     double mag = 0.0;
 #ifdef _OPENMP
@@ -97,8 +91,7 @@ double recip_rho_nspin2(const std::complex<double>* rho1,
         {
             continue;
         }
-        mag += (conj(rho1[ig] - rho1[ig + npw])
-                * (rho2[ig] - rho2[ig + npw])).real();
+        mag += (conj(rho1[ig] - rho1[ig + npw]) * (rho2[ig] - rho2[ig + npw])).real();
     }
     mag *= fac2;
     if (cfg.gamma_only_pw)
@@ -135,12 +128,12 @@ double recip_rho_nspin4_mag(const std::complex<double>* rho1,
     }
     sum *= fac;
 
-    // G=0 magnetization term
-    if (ig0 > 0)
+    // Taoni fix 2026-10-14
+    // Index zero is valid; a negative index means this rank does not own G=0.
+    if (ig0 >= 0)
     {
         sum += fac2
-               * ((conj(rho1[ig0 + npw]) * rho2[ig0 + npw]).real()
-                  + (conj(rho1[ig0 + 2 * npw]) * rho2[ig0 + 2 * npw]).real()
+               * ((conj(rho1[ig0 + npw]) * rho2[ig0 + npw]).real() + (conj(rho1[ig0 + 2 * npw]) * rho2[ig0 + 2 * npw]).real()
                   + (conj(rho1[ig0 + 3 * npw]) * rho2[ig0 + 3 * npw]).real());
     }
 
@@ -160,8 +153,7 @@ double recip_rho_nspin4_mag(const std::complex<double>* rho1,
             continue;
         }
         sum += fac3
-               * ((conj(rho1[ig + npw]) * rho2[ig + npw]).real()
-                  + (conj(rho1[ig + 2 * npw]) * rho2[ig + 2 * npw]).real()
+               * ((conj(rho1[ig + npw]) * rho2[ig + npw]).real() + (conj(rho1[ig + 2 * npw]) * rho2[ig + 2 * npw]).real()
                   + (conj(rho1[ig + 3 * npw]) * rho2[ig + 3 * npw]).real());
     }
     return sum;
@@ -193,12 +185,12 @@ double recip_hartree_nspin4_trad(const std::complex<double>* rhog1,
     }
     sum *= fac;
 
-    // G=0 magnetization
-    if (ig0 > 0)
+    // Taoni fix 2026-10-14
+    // G=0 magnetization, including a valid local index of zero.
+    if (ig0 >= 0)
     {
         sum += fac2
-               * ((conj(rhog1[ig0 + npw]) * rhog2[ig0 + npw]).real()
-                  + (conj(rhog1[ig0 + 2 * npw]) * rhog2[ig0 + 2 * npw]).real()
+               * ((conj(rhog1[ig0 + npw]) * rhog2[ig0 + npw]).real() + (conj(rhog1[ig0 + 2 * npw]) * rhog2[ig0 + 2 * npw]).real()
                   + (conj(rhog1[ig0 + 3 * npw]) * rhog2[ig0 + 3 * npw]).real());
     }
 
@@ -218,8 +210,7 @@ double recip_hartree_nspin4_trad(const std::complex<double>* rhog1,
             continue;
         }
         sum += fac3
-               * ((conj(rhog1[ig + npw]) * rhog2[ig + npw]).real()
-                  + (conj(rhog1[ig + 2 * npw]) * rhog2[ig + 2 * npw]).real()
+               * ((conj(rhog1[ig + npw]) * rhog2[ig + npw]).real() + (conj(rhog1[ig + 2 * npw]) * rhog2[ig + 2 * npw]).real()
                   + (conj(rhog1[ig + 3 * npw]) * rhog2[ig + 3 * npw]).real());
     }
     return sum;
@@ -251,8 +242,9 @@ double recip_hartree_nspin4_angle(const std::complex<double>* rhog1,
     }
     sum *= fac;
 
-    // G=0 |m| term
-    if (ig0 > 0)
+    // Taoni fix 2026-10-14
+    // G=0 |m| term, including a valid local index of zero.
+    if (ig0 >= 0)
     {
         sum += fac2 * (conj(rhog1[ig0 + npw]) * rhog2[ig0 + npw]).real();
     }

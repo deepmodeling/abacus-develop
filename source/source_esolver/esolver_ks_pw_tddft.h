@@ -23,6 +23,9 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     /** @brief Initialize the field, propagation solver and time-step history. */
     void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
+    /** @brief Run the electronic steps belonging to the current MD step. */
+    void runner(BaseCell& basecell, const int istep) override;
+
   protected:
     /** @brief Use ground-state diagonalization for the initial electronic step. */
     std::string diag_policy(const int istep) const override;
@@ -58,6 +61,10 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     pw::TDHistoryPW<T, Device> history_;
     double initial_wave_electrons_ = 0.0;
     double initial_rho_electrons_ = 0.0;
+    /** @brief Print the one-based electronic step header. */
+    void print_step(const int istep) const;
+    /** @brief Print Eij from the converged density, collecting all k-point pools on the main rank. */
+    void print_eij(const int istep);
     void report_orth(const UnitCell& ucell, int istep);
     void prepare_td_step(const int istep);
 };

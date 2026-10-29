@@ -87,50 +87,9 @@ XC_Functional_Libxc::make_ncl_sf_discrete_data(
 		return data;
 	}
 
-	std::vector<ModuleBase::Vector3<double>> grad_total(nrxx);
-	std::vector<double> real_field(nrxx);
-	std::vector<std::complex<double>> reciprocal(chr->rhopw->npw);
-	#ifdef _OPENMP
-	#pragma omp parallel for schedule(static, 1024)
-	#endif
-	for (std::size_t ir = 0; ir < nrxx; ++ir)
-	{
-		real_field[ir] = chr->rho[0][ir] + chr->rho_core[ir];
-	}
-	chr->rhopw->real2recip(real_field.data(), reciprocal.data());
-	XC_Functional::grad_rho(
-		reciprocal.data(), grad_total.data(), chr->rhopw, tpiba);
-
-	for (int mu = 0; mu < 3; ++mu)
-	{
-		data.grad_m[mu].resize(nrxx);
-		chr->rhopw->real2recip(chr->rho[mu + 1], reciprocal.data());
-		XC_Functional::grad_rho(
-			reciprocal.data(), data.grad_m[mu].data(), chr->rhopw, tpiba);
-	}
-
-	data.spin_gradient.resize(nspin);
-	for (int spin = 0; spin < nspin; ++spin)
-	{
-		data.spin_gradient[spin].resize(nrxx);
-	}
-	#ifdef _OPENMP
-	#pragma omp parallel for schedule(static, 512)
-	#endif
-	for (std::size_t ir = 0; ir < nrxx; ++ir)
-	{
-		for (int spin = 0; spin < nspin; ++spin)
-		{
-			ModuleBase::Vector3<double> gradient
-				= data.spin_map[ir].jacobian(spin, 0) * grad_total[ir];
-			for (int mu = 0; mu < 3; ++mu)
-			{
-				gradient += data.spin_map[ir].jacobian(spin, mu + 1)
-						* data.grad_m[mu][ir];
-			}
-			data.spin_gradient[spin][ir] = gradient;
-		}
-	}
+	// Differentiate the mapped spin densities with the actual FFT operator.
+	// The reverse must apply its adjoint before the local map Jacobian.
+	data.spin_gradient = cal_gdr(nspin, nrxx, data.rho, tpiba, chr);
 	return data;
 }
 
@@ -176,12 +135,9 @@ ModuleBase::matrix XC_Functional_Libxc::reverse_ncl_sf_discrete(
 	{
 		assert(data.spin_gradient[spin].size() == nrxx);
 	}
-	for (int mu = 0; mu < 3; ++mu)
-	{
-		assert(data.grad_m[mu].size() == nrxx);
-	}
 
-	std::vector<ModuleBase::Vector3<double>> h_up(nrxx), h_down(nrxx);
+	std::vector<ModuleBase::Vector3<double>> h_up(nrxx);
+	std::vector<ModuleBase::Vector3<double>> h_down(nrxx);
 	#ifdef _OPENMP
 	#pragma omp parallel for schedule(static, 512)
 	#endif
@@ -198,43 +154,20 @@ ModuleBase::matrix XC_Functional_Libxc::reverse_ncl_sf_discrete(
 				 + dsigma[sigma_index + 1] * data.spin_gradient[0][ir]);
 	}
 
-	std::vector<ModuleBase::Vector3<double>> flux(nrxx);
-	std::vector<double> divergence(nrxx);
-	for (int channel = 0; channel < nchannel; ++channel)
+	std::vector<double> divergence_up(nrxx);
+	std::vector<double> divergence_down(nrxx);
+	XC_Functional::grad_dot(h_up.data(), divergence_up.data(), chr->rhopw, tpiba);
+	XC_Functional::grad_dot(h_down.data(), divergence_down.data(), chr->rhopw, tpiba);
+	#ifdef _OPENMP
+	#pragma omp parallel for schedule(static, 512)
+	#endif
+	for (std::size_t ir = 0; ir < nrxx; ++ir)
 	{
-		#ifdef _OPENMP
-		#pragma omp parallel for schedule(static, 512)
-		#endif
-		for (std::size_t ir = 0; ir < nrxx; ++ir)
+		for (int channel = 0; channel < nchannel; ++channel)
 		{
-			flux[ir]
-				= data.spin_map[ir].jacobian(0, channel) * h_up[ir]
-				  + data.spin_map[ir].jacobian(1, channel) * h_down[ir];
-		}
-		XC_Functional::grad_dot(
-			flux.data(), divergence.data(), chr->rhopw, tpiba);
-
-		#ifdef _OPENMP
-		#pragma omp parallel for schedule(static, 512)
-		#endif
-		for (std::size_t ir = 0; ir < nrxx; ++ir)
-		{
-			potential(channel, ir) -= divergence[ir];
-			if (channel == 0 || data.spin_map[ir].saturated)
-			{
-				continue;
-			}
-
-			const ModuleBase::Vector3<double> spin_flux
-				= 0.5 * (h_up[ir] - h_down[ir]);
-			double local_response = 0.0;
-			for (int nu = 0; nu < 3; ++nu)
-			{
-				local_response
-					+= data.spin_map[ir].radial.jacobian(nu, channel - 1)
-					   * (spin_flux * data.grad_m[nu][ir]);
-			}
-			potential(channel, ir) += local_response;
+			potential(channel, ir)
+				-= data.spin_map[ir].jacobian(0, channel) * divergence_up[ir]
+				   + data.spin_map[ir].jacobian(1, channel) * divergence_down[ir];
 		}
 	}
 	return potential;

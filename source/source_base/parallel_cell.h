@@ -1,6 +1,8 @@
 #ifndef PARALLEL_CELL_H
 #define PARALLEL_CELL_H
 
+#include <string>
+
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -18,7 +20,11 @@ public:
     int rank() const;
     int size() const;
     int max(int value) const;
+    int sum(int value) const;
     double max(double value) const;
+    /// Gather one bounded text batch on rank zero; other ranks receive an empty string.
+    /// maximum_count bounds both local payloads and their total in MPI count units.
+    std::string gather_text(const std::string& value, int maximum_count) const;
 
 private:
 #ifdef __MPI

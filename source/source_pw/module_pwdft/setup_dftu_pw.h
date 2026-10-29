@@ -26,8 +26,7 @@ void iter_init_dftu_pw(const int iter,
                        const OccmatOutputCfg& occmat_cfg,
                        const int* isk,
                        const int nspin,
-                       const int kpar,
-                       const int npol);
+                       const int kpar);
 
 }
 

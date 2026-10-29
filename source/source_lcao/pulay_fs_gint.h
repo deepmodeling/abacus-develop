@@ -9,7 +9,7 @@
 namespace PulayForceStress
 {
     template<typename TK, typename TR>
-    void cal_pulay_fs(
+    void cal_pulay_fs(const int nspin,
         ModuleBase::matrix& f,  ///< [out] force
         ModuleBase::matrix& s,  ///< [out] stress
         const module_dm::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix
@@ -19,7 +19,6 @@ namespace PulayForceStress
         const bool& isstress,
         const bool& set_dmr_gint)
     {
-        const int nspin = PARAM.inp.nspin;
         std::vector<const double*> vr_eff(nspin, nullptr);
         std::vector<const double*> vofk_eff(nspin, nullptr);
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)

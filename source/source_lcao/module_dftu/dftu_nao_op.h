@@ -71,6 +71,19 @@ class DFTU_onsite<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     void set_kv(const K_Vectors* kv_in) { this->kv_ = kv_in; }
 
   private:
+    bool should_restore_symmetric_dmr() const;
+
+    void ensure_symmetry_rotation(const Parallel_Orbitals& pv);
+
+    std::vector<ModuleBase::Vector3<double>> build_full_bz_kvectors(const int nspin0) const;
+
+    void contribute_from_symmetric_dmr(const Parallel_Orbitals& pv);
+
+    void contribute_hubbard_atoms(const Parallel_Orbitals& pv,
+                                  const hamilt::HContainer<double>* dmr);
+
+    void finish_spin_step();
+
     const UnitCell* ucell = nullptr;
 
     Plus_U_Base* dftu = nullptr;

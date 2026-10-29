@@ -237,6 +237,44 @@ def energy_minus_efermi(energy: Sequence, efermi: float) -> np.ndarray:
     return np.array(energy)-efermi
 
 
+def gaussian_smearing(energy: Sequence, dos: Sequence, sigma: float, chunk: int = 1024) -> np.ndarray:
+    """Apply Gaussian smearing to a raw (per-bin histogram) DOS column.
+
+    This mirrors the histogram-based convention: ``dos_smear[j] = sum_i
+    dos[i] * G(E_j - E_i)`` with a normalized Gaussian G of width parameter
+    ``sigma`` (the ``dos_sigma`` input). Note that the ``dos_smear`` column
+    written by ABACUS is instead computed by smearing the eigenvalues at
+    their exact positions; the two differ by the O(bin-width) binning
+    error of the histogram, which is expected.
+
+    The result is accumulated in row chunks, so memory usage stays
+    O(chunk * npoints) instead of O(npoints**2) for the dense
+    Gaussian matrix.
+
+    :params energy: energy grid in eV
+    :params dos: raw DOS (number of states per energy bin), shape
+        (npoints,) or (npoints, nspin)
+    :params sigma: finite positive Gaussian width parameter in eV
+    :params chunk: positive integer number of output rows computed per block
+    """
+    if np.ndim(sigma) != 0 or not np.isfinite(sigma) or sigma <= 0:
+        raise ValueError("sigma must be finite and positive")
+    if isinstance(chunk, (bool, np.bool_)) or not isinstance(chunk, (int, np.integer)) or chunk <= 0:
+        raise ValueError("chunk must be a positive integer")
+    energy = np.asarray(energy, dtype=float).flatten()
+    dos = np.asarray(dos, dtype=float)
+    width = np.sqrt(2.0) * sigma
+    norm = np.sqrt(np.pi) * width
+    n = energy.size
+    out = np.empty((n,) + dos.shape[1:], dtype=float)
+    for start in range(0, n, chunk):
+        stop = min(start + chunk, n)
+        delta = energy[start:stop, None] - energy[None, :]
+        gauss = np.exp(-(delta / width) ** 2) / norm
+        out[start:stop] = gauss @ dos
+    return out
+
+
 angular_momentum_label = ['s', 'p', 'd', 'f', 'g']
 
 

@@ -157,7 +157,7 @@ class ElecState
     /// @param dft_plus_u 0 disables the DFT+U energy term
     /// @param assume_isolated "makov-payne" adds the isolated-system correction
     void cal_energies(const int type,
-                      const bool imp_sol,
+                      const int imp_sol,
                       const bool sc_mag_switch,
                       const int dft_plus_u,
                       const std::string& assume_isolated);

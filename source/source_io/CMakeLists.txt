@@ -14,6 +14,7 @@ list(APPEND objects
     module_dos/write_dos_pw.cpp
     module_energy/write_bands.cpp
     module_energy/write_eig_occ.cpp
+    module_energy/td_eij_io.cpp
     module_bessel/numerical_basis.cpp
     module_bessel/numerical_basis_overlap.cpp
     module_bessel/numerical_basis_output.cpp
@@ -131,12 +132,15 @@ add_library(
     module_parameter/read_inp_dfpt.cpp
     module_parameter/read_inp_deepks.cpp
     module_parameter/read_inp_model.cpp
+    module_parameter/read_inp_sccs.cpp
+    module_parameter/sccs_inp_check.cpp
     module_parameter/read_inp_postproc.cpp  
     module_parameter/read_inp_exx_dftu.cpp
     module_parameter/read_inp_other.cpp   
     module_parameter/read_inp_out.cpp  
     module_parameter/availability.cpp
     module_parameter/availability_validator.cpp
+    module_parameter/input_domain.cpp
     module_parameter/read_input.cpp
     module_parameter/read_set_globalv.cpp
 )

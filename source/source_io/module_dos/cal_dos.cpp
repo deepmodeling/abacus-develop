@@ -5,6 +5,8 @@
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 
+#include <cmath>
+
 void ModuleIO::prepare_dos(std::ofstream& ofs_running,
         const elecstate::Efermi &energy_fermi,
         const ModuleBase::matrix& ekb,
@@ -126,15 +128,6 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         ofs_dos << istep+1 << "    # ionic step" << std::endl;
     }
 
-    std::vector<double> dos;
-    std::vector<double> ene;
-    std::vector<double> sum_elec;
-    std::vector<double> dos_smear; // dos_smearing
-    dos.clear();
-    ene.clear();
-    sum_elec.clear();
-    dos_smear.clear();
-
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
@@ -169,17 +162,29 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
                  << std::setw(15) << "dos_smear_int" << std::endl;
     }
 
-    std::vector<double> e_mod(npoints, 0.0); 
+    // Node-sampled grid shared with the PDOS text output: en = emin + n*de.
+    // Each node carries the histogram count of bin [en, en+de) and the
+    // Gaussian-smeared DOS evaluated directly at en from the exact
+    // eigenvalue positions, using the same normalized-Gaussian convention
+    // as cal_pdos (width parameter bcoeff), so that the sum of all PDOS
+    // orbitals equals this smeared column point by point.
+    std::vector<double> dos(npoints, 0.0);
+    std::vector<double> ene(npoints, 0.0);
+    std::vector<double> dos_smear(npoints, 0.0);
+    std::vector<double> sum_elec(npoints, 0.0);
 
-    double sum = 0.0;
-    double curr_energy = emin_ev;
-    double e_old = 0.0;
+    const double b = std::sqrt(2.0) * bcoeff;
+    const double gauss_norm = std::sqrt(ModuleBase::PI) * b;
 
-    while (curr_energy < emax_ev)
+    // en accumulates by de_ev so that adjacent bins [en, en+de) share the
+    // exact same floating-point boundary and no eigenvalue is counted twice
+    // or skipped; the printed labels still coincide with the PDOS nodes
+    // emin + n*de at the 1e-6 eV output precision.
+    double en = emin_ev;
+    for (int n = 0; n < npoints; ++n)
     {
-        double nstates = 0.0;
-        e_old = curr_energy;
-        curr_energy += de_ev;
+        ene[n] = en;
+        const double bin_hi = en + de_ev;
 
         // nks is the number of k-points in the 'pool'
         for (int ik = 0; ik < nks; ik++)
@@ -190,66 +195,47 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
                 // band index
                 for (int ib = 0; ib < nbands; ib++)
                 {
-                    //  compare et and e_old(curr_energy) in ev unit.
-                    if (ekb(ik, ib) * ModuleBase::Ry_to_eV >= e_old 
-                     && ekb(ik, ib) * ModuleBase::Ry_to_eV < curr_energy)
+                    const double e = ekb(ik, ib) * ModuleBase::Ry_to_eV;
+                    if (e >= en && e < bin_hi)
                     {
-                        nstates += wk[ik] * nkstot; 
+                        dos[n] += wk[ik] * nkstot;
                     }
+                    const double de = en - e;
+                    dos_smear[n] += wk[ik] * std::exp(-de * de / b / b) / gauss_norm;
                 }
             }
         }
-
-#ifdef __MPI
-        const int npool = GlobalV::KPAR * bndpar;
-        Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, nstates);
-#endif
-
-        nstates = nstates / static_cast<double>(nkstot);
-        sum += nstates;
-        if (GlobalV::MY_RANK == 0)
-        {
-            dos.push_back(nstates);
-            ene.push_back(curr_energy);
-            sum_elec.push_back(sum);
-        }
+        en = bin_hi;
     }
 
-    // Use Gaussian smearing to smooth the DOS
+#ifdef __MPI
+    const int npool = GlobalV::KPAR * bndpar;
+    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, dos.data(), npoints);
+    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, dos_smear.data(), npoints);
+#endif
+
+    double sum = 0.0;
+    double sum2 = 0.0;
+    const double dos_thr = 1.0e-12;
+
     if (GlobalV::MY_RANK == 0)
     {
-        dos_smear.resize(dos.size());
-
-        double b = sqrt(2.0) * bcoeff;
-        for (int i = 0; i < dos.size() ; i++)
+        for (int n = 0; n < npoints; ++n)
         {
-            double Gauss = 0.0;
+            dos[n] /= static_cast<double>(nkstot);
+            sum += dos[n];
+            sum_elec[n] = sum;
 
-            for (int j = 0; j < dos.size(); j++)
+            if (dos_smear[n] < dos_thr)
             {
-                double denergy = ene[j] - ene[i];
-                double de2 = denergy * denergy;
-                Gauss = exp(-de2 / b / b) / sqrt(ModuleBase::PI) / b;
-                dos_smear[j] += dos[i] * Gauss;
+                dos_smear[n] = 0.0;
             }
-        }
+            sum2 += dos_smear[n] * de_ev;
 
-        // mohan add 2025-06-08
-        const double dos_thr = 1.0e-12; 
-        double sum2 = 0.0;
-
-        for (int i = 0; i < dos.size(); i++)
-        {
-            if(dos_smear[i]<dos_thr)
-            {
-                 dos_smear[i]=0.0;
-            }
-            sum2 += dos_smear[i] * de_ev;
-
-            ofs_dos << std::setw(13) << ene[i]
-                 << " " << std::setw(12) << dos[i]
-                 << " " << std::setw(12) << sum_elec[i]
-                 << " " << std::setw(14) << dos_smear[i]
+            ofs_dos << std::setw(13) << ene[n]
+                 << " " << std::setw(12) << dos[n]
+                 << " " << std::setw(12) << sum_elec[n]
+                 << " " << std::setw(14) << dos_smear[n]
                  << " " << std::setw(14) << sum2 << std::endl;
         }
     }

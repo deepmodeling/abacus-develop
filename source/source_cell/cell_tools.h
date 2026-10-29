@@ -22,7 +22,12 @@ namespace unitcell
         ModuleBase::Vector3<double> position; ///< Bohr
         double mass = 0.0;
         double valence_charge = 0.0; ///< Positive ionic charge in units of e
+        int atomic_number = 0; ///< Nuclear charge from the pseudopotential element; 0 if unknown
     };
+
+    /// Atomic number of the pseudopotential element of one atom type; 0 if the
+    /// element symbol is not recognized.
+    int pseudo_atom_z(const Atom& atom);
 
     /// Extract positions, masses and pseudopotential valence charges.
     /// Requires initialized Atom storage and a positive lattice scale in Bohr.

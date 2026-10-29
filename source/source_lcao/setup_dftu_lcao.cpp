@@ -49,7 +49,6 @@ void finish_dftu_lcao(const bool conv_esolver,
                        void* hamilt_lcao,
                        const std::string& global_out_dir,
                        int nspin,
-                       int npol,
                        const bool gamma_only_local,
                        int istep,
                        int iter,
@@ -82,8 +81,7 @@ void finish_dftu_lcao(const bool conv_esolver,
             DFTU_LCAO::cal_energy_correction(*dftu_ptr, ucell, PARAM.inp.nspin);
         }
     }
-    DFTU_BASE::output(*dftu_ptr, ucell, global_out_dir, nspin, npol,
-                      istep, iter, occmat_cfg, DFTU_BASE::SOC_LAYOUT_SPIN_BASIS_REAL);
+    DFTU_BASE::prepare_ion_step_output(global_out_dir, istep, iter, occmat_cfg);
     
     /// use the converged occupation matrix for next MD/Relax SCF calculation
     if (conv_esolver)
@@ -103,7 +101,6 @@ template void finish_dftu_lcao<double>(const bool conv_esolver,
                                         void* hamilt_lcao,
                                         const std::string& global_out_dir,
                                         int nspin,
-                                        int npol,
                                         const bool gamma_only_local,
                                         int istep,
                                         int iter,
@@ -119,7 +116,6 @@ template void finish_dftu_lcao<std::complex<double>>(const bool conv_esolver,
                                                       void* hamilt_lcao,
                                                       const std::string& global_out_dir,
                                                       int nspin,
-                                                      int npol,
                                                       const bool gamma_only_local,
                                                       int istep,
                                                       int iter,
