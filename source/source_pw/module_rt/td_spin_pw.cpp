@@ -321,7 +321,7 @@ void TDSpinPW<Real, Device>::onsite(const psi::Psi<Complex, Device>& psi,
         const int nq = static_cast<int>(std::ceil(q_bound_ / dq)) + 4;
         onsite_projector_->init(orbital_dir_, &cell, *onsite_psi_, kv, basis, sf, onsite_radius_, nq, dq, state.wg, state.ekb);
     }
-    auto* projector = onsite_projector_.get();
+    projectors::OnsiteProjector<double, Device>* projector = onsite_projector_.get();
     if (onsite_psi_->get_nbands() != nbands || onsite_psi_->get_nbasis() != ld_psi)
     {
         ModuleBase::WARNING_QUIT("TDSpinPW", "The onsite wavefunction layout changed after initialization.");

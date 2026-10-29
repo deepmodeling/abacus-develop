@@ -96,7 +96,7 @@ void TDPropPW<T, Device>::evolve(hamilt::HamiltPW<T, Device>& hamilt,
     prop_->evolve(td_hamilt, history, potential, field, current, elec_step, scf_iter, log_detail);
     orb_ops_->correct(current, elec_step, scf_iter, log_detail);
     const Real* endpoint = potential.template get_veff_smooth_data<Real>();
-    const auto& vecpot_ha = field.A_right_ha();
+    const ModuleBase::Vector3<double>& vecpot_ha = field.A_right_ha();
     td_hamilt.bind(endpoint, vecpot_ha);
 }
 template class TDPropPW<std::complex<float>, base_device::DEVICE_CPU>;

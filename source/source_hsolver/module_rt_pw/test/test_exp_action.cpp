@@ -177,11 +177,11 @@ TYPED_TEST(ExpTest, LanczosMatchesFullExponential)
         SCOPED_TRACE(npol);
         DenseExp<T> op(npol);
         const hsolver::OrbLayout layout{10, 6 / npol, npol, 10};
-        const auto input = pack_input(op, layout);
+        const std::vector<T> input = pack_input(op, layout);
         std::vector<T> output(input.size());
         hsolver::ExpControls exp_ctrl;
-        auto exp = hsolver::make_exp_action<T, Device>(exp_ctrl, linear_test::world_comm());
-        const auto result = exp->apply(op, layout, 0.4, input.data(), output.data());
+        std::unique_ptr<hsolver::ExpAction<T, Device>> exp = hsolver::make_exp_action<T, Device>(exp_ctrl, linear_test::world_comm());
+        const hsolver::ExpResult result = exp->apply(op, layout, 0.4, input.data(), output.data());
         ASSERT_EQ(result.state, hsolver::ExpState::success);
         EXPECT_TRUE(result.has_err_est);
         EXPECT_LE(result.rel_err_est, exp->rel_tol());
@@ -200,14 +200,14 @@ TYPED_TEST(ExpTest, TaylorPairMatchesBothPolynomials)
         SCOPED_TRACE(npol);
         DenseExp<T> op(npol);
         const hsolver::OrbLayout layout{10, 6 / npol, npol, 3};
-        const auto input = pack_input(op, layout);
+        const std::vector<T> input = pack_input(op, layout);
         std::vector<T> half(input.size());
         std::vector<T> full(input.size());
         hsolver::ExpControls exp_ctrl;
         exp_ctrl.expansion = hsolver::ExpMethod::taylor;
         exp_ctrl.taylor_order = 6;
-        auto exp = hsolver::make_exp_action<T, Device>(exp_ctrl, linear_test::world_comm());
-        const auto result = exp->apply_pair(op, layout, 0.15, input.data(), half.data(), full.data());
+        std::unique_ptr<hsolver::ExpAction<T, Device>> exp = hsolver::make_exp_action<T, Device>(exp_ctrl, linear_test::world_comm());
+        const hsolver::ExpResult result = exp->apply_pair(op, layout, 0.15, input.data(), half.data(), full.data());
         ASSERT_EQ(result.state, hsolver::ExpState::success);
         EXPECT_FALSE(result.has_err_est);
         EXPECT_EQ(op.calls, exp_ctrl.taylor_order);
@@ -222,13 +222,13 @@ TEST(ExpAction, LanczosSubdividesOrReportsExhaustion)
 {
     DenseExp<Wide> op(1);
     const hsolver::OrbLayout layout{8, 6, 1, 2};
-    const auto input = pack_input(op, layout);
+    const std::vector<Wide> input = pack_input(op, layout);
     std::vector<Wide> output(input.size());
     hsolver::ExpControls exp_ctrl;
     exp_ctrl.krylov_max = 4;
     exp_ctrl.rel_tol = 1e-8;
-    auto exp = hsolver::make_exp_action<Wide, Device>(exp_ctrl, linear_test::world_comm());
-    const auto result = exp->apply(op, layout, 1.0, input.data(), output.data());
+    std::unique_ptr<hsolver::ExpAction<Wide, Device>> exp = hsolver::make_exp_action<Wide, Device>(exp_ctrl, linear_test::world_comm());
+    const hsolver::ExpResult result = exp->apply(op, layout, 1.0, input.data(), output.data());
     ASSERT_EQ(result.state, hsolver::ExpState::success);
     EXPECT_GT(result.bisect_count, 0);
     EXPECT_LE(result.rel_err_est, exp_ctrl.rel_tol);
@@ -239,7 +239,7 @@ TEST(ExpAction, LanczosSubdividesOrReportsExhaustion)
     exp_ctrl.krylov_max = 2;
     exp_ctrl.rel_tol = 1e-14;
     exp = hsolver::make_exp_action<Wide, Device>(exp_ctrl, linear_test::world_comm());
-    const auto failed = exp->apply(op, layout, 1.0, input.data(), output.data());
+    const hsolver::ExpResult failed = exp->apply(op, layout, 1.0, input.data(), output.data());
     EXPECT_EQ(failed.state, hsolver::ExpState::failed);
     EXPECT_GT(failed.bisect_count, 0);
     EXPECT_GE(failed.failed_band, 0);
@@ -250,15 +250,15 @@ TEST(ExpAction, NonfiniteInputReportsOriginalBand)
 {
     DenseExp<Wide> op(2);
     const hsolver::OrbLayout layout{10, 3, 2, 10};
-    auto input = pack_input(op, layout);
+    std::vector<Wide> input = pack_input(op, layout);
     input[9 * layout.ld] = Wide(std::numeric_limits<double>::quiet_NaN(), 0);
     std::vector<Wide> output(input.size());
-    for (auto method: {hsolver::ExpMethod::lanczos, hsolver::ExpMethod::taylor})
+    for (hsolver::ExpMethod method: {hsolver::ExpMethod::lanczos, hsolver::ExpMethod::taylor})
     {
         hsolver::ExpControls exp_ctrl;
         exp_ctrl.expansion = method;
-        auto exp = hsolver::make_exp_action<Wide, Device>(exp_ctrl, linear_test::world_comm());
-        const auto result = exp->apply(op, layout, 0.1, input.data(), output.data());
+        std::unique_ptr<hsolver::ExpAction<Wide, Device>> exp = hsolver::make_exp_action<Wide, Device>(exp_ctrl, linear_test::world_comm());
+        const hsolver::ExpResult result = exp->apply(op, layout, 0.1, input.data(), output.data());
         EXPECT_EQ(result.state, hsolver::ExpState::failed);
         EXPECT_EQ(result.failed_band, 9);
     }

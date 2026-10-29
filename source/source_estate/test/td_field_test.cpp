@@ -120,7 +120,7 @@ TEST(TDFieldManagerTest, SubintervalsPreserveFieldAndOriginalGrid)
     for (bool from_file: {false, true})
     {
         SCOPED_TRACE(from_file);
-        auto manager = elecstate::create_td_field_manager(input);
+        std::shared_ptr<elecstate::TDFieldManager> manager = elecstate::create_td_field_manager(input);
         if (from_file)
         {
             const std::vector<ModuleBase::Vector3<double>> samples = {{0, 0, 0}, {2, 0, 0}, {5, 0, 0}};
@@ -128,10 +128,10 @@ TEST(TDFieldManagerTest, SubintervalsPreserveFieldAndOriginalGrid)
         }
         manager->prepare_sample(0);
         manager->prepare_interval(0, 1);
-        const auto full = manager->field_state();
-        const auto left = manager->subinterval(full, 0, 2);
+        const elecstate::TDFieldState full = manager->field_state();
+        const elecstate::TDFieldState left = manager->subinterval(full, 0, 2);
         manager->bind_field(left);
-        const auto right = manager->subinterval(full, 1, 2);
+        const elecstate::TDFieldState right = manager->subinterval(full, 1, 2);
         EXPECT_DOUBLE_EQ(left.dt, 0.5);
         EXPECT_DOUBLE_EQ(right.dt, 0.5);
         EXPECT_DOUBLE_EQ(left.left.x, full.left.x);

@@ -278,7 +278,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
     {
         if (iter % this->inp_->out_freq_elec == 0 || iter == this->inp_->scf_nmax || conv_esolver)
         {
-            const auto& system = PARAM.globalv;
+            const System_para& system = PARAM.globalv;
             const bool write_restart = this->inp_->out_chg[0] != -1;
             const std::string prefix = system.global_out_dir + this->inp_->suffix;
             const bool write_tau = XC_Functional::get_ked_flag();

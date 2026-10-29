@@ -93,7 +93,7 @@ void ETRSPropPW<T, Device>::evolve(TDHamiltPW<T, Device>& hamilt,
 {
     using Real = typename T::value_type;
     const bool predictor = scf_iter == 1;
-    const auto& previous = history.previous();
+    const psi::Psi<T, Device>& previous = history.previous();
     const int ld = current->get_nbasis();
     const int bands = current->get_nbands();
     const int64_t stride = static_cast<int64_t>(ld) * bands;

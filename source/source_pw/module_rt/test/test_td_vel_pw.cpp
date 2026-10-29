@@ -13,7 +13,7 @@ TEST_F(Observables, CurrentsMatchPauliAndHamiltonianDerivative)
     request.charge_total = true;
     request.charge_per_k = true;
     request.spin_current = true;
-    const auto actual = observer.calculate(*psi_, state_, a, request);
+    const pw::TDVelResultPW actual = observer.calculate(*psi_, state_, a, request);
     hamilt::Velocity<double, Device> velocity(&basis_, kv_.isk.data(), &pp_, &cell_, true, nullptr, 0, 0);
     velocity.init(0, a);
     const int n = psi_->get_nbasis();
@@ -29,8 +29,8 @@ TEST_F(Observables, CurrentsMatchPauliAndHamiltonianDerivative)
         for (int direction = 0; direction < 3; ++direction)
         {
             const Vector component(vx.begin() + direction * n, vx.begin() + (direction + 1) * n);
-            auto plus = a;
-            auto minus = a;
+            ModuleBase::Vector3<double> plus = a;
+            ModuleBase::Vector3<double> minus = a;
             plus[direction] += epsilon;
             minus[direction] -= epsilon;
             const Vector hp = hamiltonian(plus, x);

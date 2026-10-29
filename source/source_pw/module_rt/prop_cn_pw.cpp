@@ -51,7 +51,7 @@ void CNPropPW<T, Device>::evolve(TDHamiltPW<T, Device>& hamilt,
     }
 
     hamilt.bind(veff, vecpot_ha);
-    const auto& previous = history.previous();
+    const psi::Psi<T, Device>& previous = history.previous();
     const double dt = field.interval_dt_ha();
     solver_.solve(hamilt, previous, current, dt, vecpot_ha, elec_step, scf_iter, log_detail);
 }

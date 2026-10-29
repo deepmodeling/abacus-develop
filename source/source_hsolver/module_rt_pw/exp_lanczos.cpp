@@ -168,7 +168,7 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
     }
     base_device::memory::synchronize_memory_op<T, Device, Device>()(q, input, stride);
     zero_pad<T, Device>(q, layout);
-    const auto norms = this->algebra_.dots(ld, dim, bands, 1, stride, q, q);
+    const std::vector<std::complex<double>> norms = this->algebra_.dots(ld, dim, bands, 1, stride, q, q);
     std::vector<double> scale(bands);
     std::vector<T> factors(bands);
     std::vector<bool> done(bands, false);
@@ -221,7 +221,7 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
         zero_pad<T, Device>(w, layout);
         ++result.hpsi_calls;
         result.hpsi_cols += count;
-        const auto projection = this->algebra_.dots(ld, dim, bands, 1, stride, column, w);
+        const std::vector<std::complex<double>> projection = this->algebra_.dots(ld, dim, bands, 1, stride, column, w);
         const int m = j + 1;
         result.order_or_dim = m;
         const int first = std::max(0, j - 1);
@@ -247,7 +247,7 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
             std::vector<double> removed(bands, 0.0);
             for (int pass = 0; pass < 2; ++pass)
             {
-                const auto projections = this->algebra_.dots(ld, dim, bands, m, stride, q, w);
+                const std::vector<std::complex<double>> projections = this->algebra_.dots(ld, dim, bands, m, stride, q, w);
                 std::vector<T> correction(m * bands, T(0));
                 for (int i = 0; i < m; ++i)
                 {
@@ -271,7 +271,7 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
                 correction_sq[b] += removed[b] * removed[b];
             }
         }
-        const auto residuals = this->algebra_.dots(ld, dim, bands, 1, stride, w, w);
+        const std::vector<std::complex<double>> residuals = this->algebra_.dots(ld, dim, bands, 1, stride, w, w);
         std::vector<int> candidates;
         for (int b: active)
         {
@@ -303,7 +303,7 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
         }
         if (!candidates.empty())
         {
-            const auto gram = basis_gram(layout, m, q);
+            const std::vector<std::complex<double>> gram = basis_gram(layout, m, q);
             // The defect bound follows the three-term relation, not Q-adjoint*Q=I.
             // Rebuilding for insignificant loss of orthogonality wastes H applications.
             // Check the actual output norm separately at the requested precision.
@@ -381,7 +381,7 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
             {
                 combine(layout, m, q, full_coefficients, full);
             }
-            const auto output_norms = this->algebra_.dots(ld, dim, bands, 1, stride, output, output);
+            const std::vector<std::complex<double>> output_norms = this->algebra_.dots(ld, dim, bands, 1, stride, output, output);
             std::vector<Wide> full_norms;
             if (full)
             {

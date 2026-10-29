@@ -211,8 +211,8 @@ TYPED_TEST(PWTDDFTTest, SpinorCNMatchesDenseSolve)
     {
         current.fix_k(ik);
         const int n = dimensions[ik];
-        const auto reference = dense_cn(op.matrices[ik], packed[ik], n, bands, dt);
-        const auto eij = orbitals.cal_eij(op, current, ik);
+        const std::vector<linear_test::Complex> reference = dense_cn(op.matrices[ik], packed[ik], n, bands, dt);
+        const std::vector<std::complex<double>> eij = orbitals.cal_eij(op, current, ik);
         for (int band = 0; band < bands; ++band)
         {
             for (int spin = 0; spin < 2; ++spin)

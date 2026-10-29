@@ -71,7 +71,7 @@ ExpResult ExpTaylor<T, Device>::evaluate(const HSOperator<T, Device>& op,
         ++result.hpsi_calls;
         result.hpsi_cols += bands;
     }
-    const auto norms = this->algebra_.dots(ld, dim, bands, 1, stride, half, half);
+    const std::vector<std::complex<double>> norms = this->algebra_.dots(ld, dim, bands, 1, stride, half, half);
     std::vector<std::complex<double>> full_norms;
     if (full)
     {

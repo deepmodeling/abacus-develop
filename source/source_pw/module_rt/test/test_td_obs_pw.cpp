@@ -54,7 +54,7 @@ void Observables::SetUp()
     cell_.omega = std::pow(cell_.lat0, 3) * cell_.latvec.Det();
     cell_.tpiba = ModuleBase::TWO_PI / cell_.lat0;
     cell_.tpiba2 = cell_.tpiba * cell_.tpiba;
-    for (const auto& position: cell_.atoms[0].taud)
+    for (const ModuleBase::Vector3<double>& position: cell_.atoms[0].taud)
     {
         cell_.atoms[0].tau.push_back(position * cell_.latvec);
     }
@@ -181,7 +181,7 @@ Vector Observables::hamiltonian(const ModuleBase::Vector3<double>& a, const Vect
     const int npw = basis_.npwk[0];
     for (int g = 0; g < npw; ++g)
     {
-        const auto q = basis_.getgpluskcar(0, g) * cell_.tpiba + a;
+        const ModuleBase::Vector3<double> q = basis_.getgpluskcar(0, g) * cell_.tpiba + a;
         for (int s = 0; s < 2; ++s)
         {
             y[s * npw + g] += 0.5 * q.norm2() * x[s * npw + g];
