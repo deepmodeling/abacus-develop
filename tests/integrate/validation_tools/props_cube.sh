@@ -197,10 +197,23 @@ fi
 # 2. out_wfc_norm/out_wfc_re_im/out_pchg (PW)
 #--------------------------------------------
 shopt -s nullglob
+local pchg_tol=1e-6
+if [ -f threshold ]; then
+    local configured_tol
+    configured_tol=$(get_input_key_value pchg_threshold threshold)
+    if [ -n "$configured_tol" ]; then
+        pchg_tol=$configured_tol
+    fi
+fi
 for pchg_ref in pchgi*.cube.ref; do
     pchg_cube=${pchg_ref%.ref}
     pchg_key=$(sanitize_result_key "${pchg_cube}_compare")
-    record_compare_result "$props_result_file" "$pchg_key" "$pchg_ref" "OUT.autotest/$pchg_cube" 6
+    if [ ! -f "OUT.autotest/$pchg_cube" ]; then
+        echo "$pchg_key 1" >> "$props_result_file"
+        continue
+    fi
+    python3 "$COMPARE_SCRIPT" "$pchg_ref" "OUT.autotest/$pchg_cube" -tol "$pchg_tol"
+    echo "$pchg_key $?" >> "$props_result_file"
 done
 shopt -u nullglob
 

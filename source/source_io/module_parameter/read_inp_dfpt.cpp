@@ -113,13 +113,20 @@ void ReadInput::item_dfpt()
     }
     {
         Input_Item item("dfpt_conv_thr");
-        item.annotation = "convergence threshold of the DFPT first-order density";
+        item.annotation = "convergence threshold of the DFPT response SCF";
         item.category = category;
         item.type = "Real";
         item.description = "Set the convergence threshold of the self-consistent DFPT cycle: "
-                           "the iteration stops when the relative residual of the first-order "
-                           "density ||drho_out - drho_in|| / ||drho_out|| drops below this "
-                           "value for every displacement.";
+                           "the iteration stops when the relative residual of the mixed "
+                           "variable drops below this value for every displacement. With "
+                           "dfpt_mix_type = v_sc_plain or v_sc_broyden (the default) the "
+                           "residual is the screening-potential residual ||v_out - v_in|| / "
+                           "||v_out||; with rho_plain, rho_kerker or rho_broyden it is the "
+                           "first-order density residual ||drho_out - drho_in|| / ||drho_out||. "
+                           "The electric-field (LO-TO) solve always mixes the density, using "
+                           "the density-space counterpart of the selected scheme (e.g. "
+                           "rho_broyden when dfpt_mix_type = v_sc_broyden), so its residual "
+                           "is always the density residual.";
         item.default_value = "1.0e-8";
         read_sync_double(input.dfpt_conv_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -147,12 +154,14 @@ void ReadInput::item_dfpt()
         item.annotation = "mixing coefficient of the DFPT first-order density";
         item.category = category;
         item.type = "Real";
-        item.description = "Set the plain-mixing coefficient of the first-order density in the "
-                           "self-consistent DFPT cycle. The response Jacobian has strongly "
-                           "negative eigenvalues on the smallest-G shells (Coulomb stiffness), "
-                           "so beta must stay below 2 / (1 + |lambda_min|); the default 0.4 "
-                           "keeps margin up to |lambda_min| ~ 3. A larger value accelerates "
-                           "convergence for weakly screened systems but may diverge.";
+        item.description = "Set the plain-mixing coefficient of the DFPT response SCF. It "
+                           "scales the preliminary step of the chosen dfpt_mix_type (the "
+                           "plain mix itself, or the initial guess pushed into the Broyden "
+                           "history). The response Jacobian has strongly negative eigenvalues "
+                           "on the smallest-G shells (Coulomb stiffness), so beta must stay "
+                           "below 2 / (1 + |lambda_min|); the default 0.4 keeps margin up to "
+                           "|lambda_min| ~ 3. A larger value accelerates convergence for "
+                           "weakly screened systems but may diverge.";
         item.default_value = "0.4";
         read_sync_double(input.dfpt_mix_beta);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -195,6 +204,89 @@ void ReadInput::item_dfpt()
             if (para.input.dfpt_asr != "no" && para.input.dfpt_asr != "simple" && para.input.dfpt_asr != "crystal")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_asr must be no, simple or crystal.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dfpt_mix_type");
+        item.annotation = "mixing scheme of the DFPT response SCF: rho_plain, rho_kerker, rho_broyden, v_sc_plain or v_sc_broyden";
+        item.category = category;
+        item.type = "String";
+        item.description = "Set the mixing scheme of the DFPT response SCF. rho_plain: the "
+                           "first-order density is mixed with the same coefficient "
+                           "dfpt_mix_beta on every shell. rho_kerker: the Kerker screen "
+                           "f_g = |G+q|^2 / (|G+q|^2 + a^2) damps the Coulomb-stiff "
+                           "smallest shells, stabilizing polar / small-gap systems at "
+                           "beta up to 1; a^2 is set by dfpt_kerker_a2. rho_broyden: "
+                           "Modified Broyden mixing (Johnson 1988) on the density, history "
+                           "depth dfpt_broyden_ndim. v_sc_plain / v_sc_broyden: mix the "
+                           "screening potential v_sc = v_H[drho] + v_xc[drho] instead of "
+                           "the density, with plain or Modified Broyden coefficients; "
+                           "v_sc_broyden is the default (the metric the Broyden least "
+                           "squares works in is K-weighted, which stabilizes the "
+                           "Coulomb-stiff shells that destabilize plain density mixing).";
+        item.default_value = "v_sc_broyden";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            if (item.get_size() == 0)
+            {
+                para.input.dfpt_mix_type = "v_sc_broyden";
+            }
+            else
+            {
+                para.input.dfpt_mix_type = strvalue;
+            }
+        };
+        sync_string(input.dfpt_mix_type);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& mt = para.input.dfpt_mix_type;
+            if (mt != "rho_plain" && mt != "rho_kerker" && mt != "rho_broyden"
+                && mt != "v_sc_plain" && mt != "v_sc_broyden")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "dfpt_mix_type must be rho_plain, rho_kerker, rho_broyden, v_sc_plain or v_sc_broyden.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dfpt_kerker_a2");
+        item.annotation = "Kerker screening parameter a^2 in 1/lat0^2 (dfpt_mix_type rho_kerker only)";
+        item.category = category;
+        item.type = "Real";
+        item.description = "Set the Kerker screening parameter a^2 (in 1/lat0^2 units) used "
+                           "by dfpt_mix_type = rho_kerker. The screen f_g = |G+q|^2 / "
+                           "(|G+q|^2 + a^2) freezes the stiff long-wavelength shells; "
+                           "larger a^2 damps more shells. Ignored by the other schemes.";
+        item.default_value = "1.0";
+        read_sync_double(input.dfpt_kerker_a2);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.dfpt_kerker_a2 <= 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_kerker_a2 must be > 0.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dfpt_broyden_ndim");
+        item.annotation = "Broyden history depth for dfpt_mix_type = rho_broyden or v_sc_broyden";
+        item.category = category;
+        item.type = "Integer";
+        item.description = "Set the number of history steps used by the "
+                           "Modified Broyden mixing (Johnson 1988) when "
+                           "dfpt_mix_type = rho_broyden or v_sc_broyden. Under "
+                           "v_sc_broyden it sizes both Broyden instances: the "
+                           "screening-potential mixer of the displacement loop "
+                           "and the density mixer of the electric-field "
+                           "(LO-TO) loop. More history generally accelerates "
+                           "convergence at the cost of memory.";
+        item.default_value = "8";
+        read_sync_int(input.dfpt_broyden_ndim);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.dfpt_broyden_ndim < 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_broyden_ndim must be >= 1.");
             }
         };
         this->add_item(item);

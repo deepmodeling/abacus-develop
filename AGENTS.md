@@ -158,7 +158,9 @@ When splitting a function into a new `.cpp`, if its callers span LCAO and PW, pu
 - Semantic questions such as module ownership, member-variable workflow state,
   test sufficiency, and exception approval require human review.
 - Exceptions must be recorded in the PR with reason, scope, risk, and a follow-up
-  cleanup plan.
+  cleanup plan, using the `### Governance Exception` template. CI downgrades a
+  covered blocker to a warning only after a maintainer applies the
+  `governance-exception-approved` label.
 - After a refactor, propose brief lessons worth recording in this file, then
   ask the developer whether to write them in; be cautious and skip unclear
   or unverified lessons.

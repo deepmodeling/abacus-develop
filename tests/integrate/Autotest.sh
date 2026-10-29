@@ -181,6 +181,7 @@ check_out(){
     stress_thr=$4
     fatal_thr=$5
     descriptor_thr=$6
+    wfc_thr=${7:-$thr}
 
     #------------------------------------------------------
     # outfile = result.out
@@ -240,6 +241,8 @@ check_out(){
             compare_thr=$thr
             if [[ $key == ml_desc_mean_* ]]; then
                 compare_thr=$descriptor_thr
+            elif [[ $key == wfi*.cube || $key == *_wfc_fp_rms || $key == *_wfc_fp_power_* || $key == *_wfc_fp_cross_* ]]; then
+                compare_thr=$wfc_thr
             fi
             if [ $(check_deviation_pass $deviation $compare_thr) = 0 ]; then
                 if [ $key == "totalforceref" ]; then
@@ -384,7 +387,8 @@ run_case()
                         my_stress_threshold=$(get_threshold $threshold_file "stress_threshold" $stress_threshold)
                         my_fatal_threshold=$(get_threshold $threshold_file "fatal_threshold" $fatal_threshold)
                         my_descriptor_threshold=$(get_threshold $threshold_file "descriptor_threshold" $descriptor_threshold)
-                        check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold
+                        my_wfc_threshold=$(get_threshold $threshold_file "wfc_threshold" $my_threshold)
+                        check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold $my_wfc_threshold
                     fi
                 else
                     bash -e ../../integrate/validation_tools/catch_properties.sh result.ref

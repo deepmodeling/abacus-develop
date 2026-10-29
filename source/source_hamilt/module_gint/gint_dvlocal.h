@@ -4,8 +4,6 @@
 #include <memory>
 #include <vector>
 #include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "source_lcao/lcao_hs_arrays.h"
-#include "source_lcao/module_ri/abfs_vector3_order.h"
 #include "gint.h"
 #include "gint_info.h"
 
@@ -28,16 +26,6 @@ class Gint_dvlocal : public Gint
     
     void cal_dvlocal();
 
-    void cal_dvlocal_R_sparse(
-        const int nspin,
-        const int cspin,
-        const int nlocal,
-        const double sparse_thr, 
-        const Parallel_Orbitals& pv,
-        const UnitCell& ucell,
-        const Grid_Driver& gdriver,
-        LCAO_HS_Arrays& hs_arrays);
-
     HContainer<double>* get_pvdpRx() { return &pvdpRx; }
     HContainer<double>* get_pvdpRy() { return &pvdpRy; }
     HContainer<double>* get_pvdpRz() { return &pvdpRz; }
@@ -46,17 +34,6 @@ class Gint_dvlocal : public Gint
     void init_hr_gint_();
 
     void cal_hr_gint_();
-
-    void distribute_pvdpR_sparse(
-        const int cspin,
-        const int dim,
-        const int nlocal,
-        const double sparse_thr,
-        const std::map<Abfs::Vector3_Order<int>,
-                       std::map<size_t, std::map<size_t, double>>>&
-            pvdpR_sparse,
-        const Parallel_Orbitals& pv,
-        LCAO_HS_Arrays& HS_Arrays);
 
     // input
     const double* vr_eff_ = nullptr;
