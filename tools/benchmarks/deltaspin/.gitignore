@@ -1,0 +1,4 @@
+/assets/
+/results/
+__pycache__/
+*.pyc

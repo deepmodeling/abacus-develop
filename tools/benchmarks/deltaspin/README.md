@@ -1,0 +1,113 @@
+# Fe DeltaSpin performance benchmarks
+
+The benchmark matrix uses 16-atom and 54-atom bcc Fe supercells, one GPU,
+one MPI rank, and either one or twelve CPU threads. Each thread configuration
+compares the original and optimized binaries using identical input and asset
+hashes. Thread-count effects are reported separately from implementation speedup.
+
+The reference source is tag `delta-spin-yinan`, commit
+`19ade18599bfdf9ee78a289bf798a9b2583d52cd`. Keep its executable separate from
+the development executable. Historical two-atom measurements are not evidence
+for performance on these supercells.
+
+## Inputs
+
+Both structures use a 2.866 A conventional bcc lattice, repeated 2x2x2 or
+3x3x3. One atom is displaced by 0.02 A along x to provide nonzero forces for
+comparison. The local moment target is 2.2 uB along +z on every atom.
+
+Both cases use 100 Ry, double precision, noncollinear spin, spin-orbit coupling,
+the same pseudopotential and orbital file, and an explicit Gamma-centered
+2x2x2 k mesh. `kspacing=0` selects the supplied KPT file. Electronic and magnetic
+thresholds, smearing and mixing parameters are recorded in each INPUT file.
+These are numerical-equivalence and performance fixtures, not a convergence
+study of bulk Fe properties. The structures are not relaxed during a benchmark.
+
+Copy the two supplied data files into `assets/` and verify them against
+`assets.sha256.json` before running:
+
+```text
+Fe.upf
+Fe_gga_8au_200.0Ry_4s2p2d1f.orb
+```
+
+The reference 54-atom two-step probe reaches approximately 32,343 MiB on a
+32 GiB V100. Check available device memory before starting this case.
+
+## Run the matrix
+
+Load the installation environment so MPI, CUDA and the linked numerical
+libraries are available. Run from this directory. Set the binary paths to the
+two preserved installations:
+
+```bash
+export DELTASPIN_BASELINE=/path/to/abacus-baseline
+export DELTASPIN_CANDIDATE=/path/to/abacus-optimized
+mkdir -p results
+for system in fe-bcc-16 fe-bcc-54; do
+    for threads in 1 12; do
+        python3 src/benchmark.py --binary "$DELTASPIN_BASELINE" \
+            --case "$system" --label "baseline-${system}-t${threads}" \
+            --threads "$threads"
+        python3 src/benchmark.py --binary "$DELTASPIN_CANDIDATE" \
+            --case "$system" --label "candidate-${system}-t${threads}" \
+            --threads "$threads"
+        python3 src/compare_results.py \
+            --reference "baseline-${system}-t${threads}" \
+            --candidate "candidate-${system}-t${threads}" \
+            --output "results/comparison-${system}-t${threads}.json"
+    done
+done
+```
+
+Each run creates a new label directory containing copied inputs, asset links,
+metadata, application logs, 100 ms GPU-memory samples and a parsed result.
+An existing label is rejected. `OMP_NUM_THREADS` is set to the requested count;
+`OPENBLAS_NUM_THREADS` is set to one. OpenMP builds of OpenBLAS follow their
+OpenMP runtime, so verify the linked BLAS threading implementation when moving
+to another installation.
+
+Use `--steps 2` for a bounded startup/memory probe. Such a run does not establish
+electronic convergence. Use a new label for every repeat or candidate. Run one
+benchmark at a time on the GPU and avoid simultaneous builds on the measured
+host. `--profile` is available for Nsight Systems diagnostics; profiled runs are
+excluded from the normal comparison helper.
+
+## Interpret results
+
+`benchmark.py` reads the atom count from the application output and checks the
+complete force, moment, magnetic-force and target-moment tables. A missing or
+truncated table does not count as a complete run. Energy, stress, native SCF
+convergence, density error and magnetic RMS are recorded separately.
+
+`compare_results.py` requires equal systems, thread/rank counts, step overrides,
+input hashes, asset hashes and table sizes. It reports elapsed-time ratios and
+absolute physical-output differences without imposing a universal tolerance.
+Use repeat runs of the reference to establish numerical variability. A speedup
+claim requires complete converged runs and accepted physical comparisons;
+native electronic convergence alone does not prove the magnetic target is met.
+
+Report both the sampled peak memory and its sampling interval. A 100 ms sample
+can miss a shorter allocation peak, so retain the raw samples and use the same
+measurement method for both binaries.
+
+## Focused correctness checks
+
+The C++ drivers in `src/` exercise the production public interfaces against
+CPU, analytical or full-grid references. They cover FFT/potential/density
+operations, charge conservation, Hartree and XC fields, stress, Davidson
+eigenpairs, initialization/storage lifetimes, G+k assembly and mixing behavior.
+
+`link_check.py` reuses the active Ninja application's compile and link commands.
+Set `ABACUS_HOME` to the installation containing `build/` and load its environment:
+
+```bash
+mkdir -p results
+python3 src/link_check.py src/check_hartree.cpp
+OMP_NUM_THREADS=12 OPENBLAS_NUM_THREADS=1 results/check_hartree
+```
+
+The existing-mixing-test wrapper additionally needs GoogleTest/GoogleMock headers
+and static libraries. Pass their installed paths with repeated `--cxxflag` and
+`--library` options; use `--cxxflag=-UNDEBUG` when exercising assertions. These
+focused checks supplement complete application comparisons on both supercells.
