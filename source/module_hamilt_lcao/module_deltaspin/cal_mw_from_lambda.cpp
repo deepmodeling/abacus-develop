@@ -16,6 +16,7 @@
 #include <ATen/core/tensor.h>
 #endif
 #if defined(__CUDA)
+#include "hpsi_transfer.h"
 #include <base/macros/macros.h>
 #include <cuda_runtime_api.h>
 #endif
@@ -33,6 +34,23 @@ namespace
 using Complex = std::complex<double>;
 using GPU = base_device::DEVICE_GPU;
 using NonlocalPW = hamilt::Nonlocal<hamilt::OperatorPW<Complex, GPU>>;
+
+struct InitialActionWorkspace
+{
+    spinconstrain::HPsiTransfer transfer;
+    ct::Tensor field;
+    ct::Tensor weighted;
+
+    InitialActionWorkspace(const Complex* host, int points, int bands, int leading,
+                           int polarizations, int projectors, const std::vector<double>& coefficients)
+        : transfer(host, points, bands, leading),
+          field(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {projectors, 3}),
+          weighted(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, {bands * polarizations, projectors})
+    {
+        base_device::memory::synchronize_memory_op<double, GPU, base_device::DEVICE_CPU>()(
+            nullptr, nullptr, field.data<double>(), coefficients.data(), coefficients.size());
+    }
+};
 
 NonlocalPW* find_nonlocal_operator(hamilt::Hamilt<Complex, GPU>* hamiltonian)
 {
@@ -636,6 +654,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
             const Solver::BasisObserver* observer = nullptr;
 #if defined(__CUDA)
             std::unique_ptr<NonlocalBasisObserver> projection_observer;
+            std::unique_ptr<InitialActionWorkspace> initial_workspace;
             auto* nonlocal = reuse_subspace && GlobalV::NPROC_IN_POOL == 1
                 ? find_nonlocal_operator(hamilt_t) : nullptr;
             const int projection_rows = nonlocal ? nonlocal->get_ppcell()->nkb * npol : 0;
@@ -675,28 +694,22 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                 {
                     const auto coefficients = pack_constraint_field(difference.size(), nkb, nh_iat, difference.data());
                     const int source_leading = psi_t->get_nbasis();
+                    initial_workspace.reset(new InitialActionWorkspace(this->hpsi_cache.get(), nk, nbands,
+                        source_leading, npol, nkb, coefficients));
+                    auto* workspace = initial_workspace.get();
                     // The cached action uses the same entry basis and local potential.
                     // Only the onsite constraint field needs a low-rank correction.
+                    // Scratch survives every k point so its release does not fence
+                    // the independent upload of the following Hamiltonian block.
                     initial_hpsi = [=](int ik, std::complex<double>* output, int leading) {
-                        using Complex = std::complex<double>;
-                        using GPU = base_device::DEVICE_GPU;
-                        using CPU = base_device::DEVICE_CPU;
-                        const size_t offset = size_t(ik) * nbands * source_leading;
-                        cudaErrcheck(cudaMemcpy2D(output, size_t(leading) * sizeof(Complex),
-                            this->hpsi_cache.get() + offset, size_t(source_leading) * sizeof(Complex),
-                            size_t(leading) * sizeof(Complex), nbands, cudaMemcpyHostToDevice));
-                        ct::Tensor field(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {nkb, 3});
-                        ct::Tensor weighted(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice,
-                                            {nbands * npol, nkb});
-                        base_device::memory::synchronize_memory_op<double, GPU, CPU>()(
-                            ctx, nullptr, field.data<double>(), coefficients.data(), coefficients.size());
-                        const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
-                        hamilt::spin_constraint_projectors_gpu(nbands, npol, nkb, sign, field.data<double>(),
-                            this->becp_save + size_t(ik) * size_becp, weighted.data<Complex>());
                         onsite_p->get_fs_tools()->prepare_projectors(ik);
+                        workspace->transfer.restore(ik, output, leading);
+                        const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
+                        hamilt::spin_constraint_projectors_gpu(nbands, npol, nkb, sign, workspace->field.data<double>(),
+                            this->becp_save + size_t(ik) * size_becp, workspace->weighted.data<Complex>());
                         const int npw = onsite_p->get_npw();
                         hsolver::gemm_op<Complex, GPU>()(ctx, 'N', 'N', npw, nbands * npol, nkb,
-                            &ModuleBase::ONE, onsite_p->get_tab_atomic(), npw, weighted.data<Complex>(), nkb,
+                            &ModuleBase::ONE, onsite_p->get_tab_atomic(), npw, workspace->weighted.data<Complex>(), nkb,
                             &ModuleBase::ONE, output, leading / npol);
                     };
                 }

@@ -240,17 +240,41 @@ constraint field and its saved value. Retries rebuild projections for their
 rotated basis; PAW and ultrasoft inputs retain the ordinary projection path.
 
 For the same eligible CUDA path, the constraint loop also retains the initial
-Hamiltonian action in pinned host memory. The first Davidson attempt copies it
-directly into its existing device buffer and applies the current constraint-field
-correction with projectors prepared for that k point. The cache is refreshed for
-each constraint loop; its allocation is reused across SCF steps and released
-with its owner. Failed
-pinned allocation retains ordinary Hamiltonian evaluation. Host storage scales
+Hamiltonian action in pinned host memory. The first Davidson attempt restores it
+into its device buffer and applies the current constraint-field correction with
+projectors prepared for that k point. The cache is refreshed for each constraint
+loop; its allocation is reused across SCF steps and released with its owner.
+Failed pinned allocation retains ordinary Hamiltonian evaluation. Host storage scales
 with k points, bands, and plane waves: approximately 1.58 GiB for Fe16 and 6.30 GiB
 for Fe32 in these fixtures. Transfers are included in the complete timings; this
 cache has a measurable host-memory cost and does not eliminate all Hamiltonian
 applications. The Davidson driver checks the supplied action against direct
 evaluation and verifies that later calls can use ordinary evaluation again.
+
+For multiple k points, a solve-owned device block prefetches the next action
+on a nonblocking CUDA stream while the current k point is diagonalized.
+Events order the upload, the default-stream restore, and reuse of this block.
+Repeated or reordered requests reload the required k point. The device
+allocation is attempted only after Davidson arrays and current projectors
+exist; allocation failure uses direct host-to-device copies for that solve.
+A single k point uses direct copies without allocating a prefetch block.
+The optional block adds approximately 203 MiB for Fe16 and 807 MiB for Fe32,
+so peak device memory must be measured as well as runtime.
+
+The constraint-field and weighted-projector scratch arrays remain allocated
+throughout the solve. Cached nonlocal projections and current onsite projectors
+are prepared before the action restore starts the next upload. The complex-double
+cuSolver generalized eigensolver retains its largest requested workspace until
+its handle is destroyed. These lifetimes prevent per-k-point and per-eigenproblem
+device frees from synchronizing the independent prefetch stream; they do not
+change the eigensolver or the convergence criteria.
+
+`check_hpsi_transfer.cpp` verifies bitwise restores, input and guard preservation,
+varying leading dimensions, repeated/reordered k points, single-k-point operation,
+and destruction with pending transfers. The same driver can exercise allocation
+failure with a CUDA allocation interposer. `check_solver_workspace.cpp` checks
+analytic generalized eigenpairs across growing and shrinking problem sizes,
+two handle lifetimes, and recovery after a non-positive-definite overlap matrix.
 
 Host caching overlaps the Hamiltonian projection on a separate CUDA copy stream.
 For the eligible norm-conserving path, the overlap operator is exactly the
