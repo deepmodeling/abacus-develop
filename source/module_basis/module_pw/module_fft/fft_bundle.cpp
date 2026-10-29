@@ -96,9 +96,11 @@ void FFT_Bundle::initfft(int nx_in,
             fft_double->initfft(nx_in,ny_in,nz_in);
         #elif defined(__CUDA)
             fft_float = make_unique<FFT_CUDA<float>>();
-            fft_float->initfft(nx_in,ny_in,nz_in);
+            fft_float->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in,
+                               nplane_in, nproc_in, gamma_only_in, xprime_in);
             fft_double = make_unique<FFT_CUDA<double>>();
-            fft_double->initfft(nx_in,ny_in,nz_in);
+            fft_double->initfft(nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in,
+                                nplane_in, nproc_in, gamma_only_in, xprime_in);
         #endif
         // Host-memory interface: always provide a double CPU backend, and a
         // float one when float FFTs are enabled. Single precision still needs
@@ -216,6 +218,32 @@ FFT_Bundle::fft3D_backward(const base_device::DEVICE_GPU* ctx,
                                  std::complex<double>* in, 
                                  std::complex<double>* out) 
 const {fft_double->fft3D_backward(in, out);}
+
+void FFT_Bundle::fft3D_forward_pw(std::complex<double>* in, std::complex<double>* out) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->fft3D_forward_pw(in, out);
+        return;
+    }
+#endif
+    fft_double->fft3D_forward(in, out);
+}
+
+void FFT_Bundle::fft3D_backward_pw(std::complex<double>* in, std::complex<double>* out) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->fft3D_backward_pw(in, out);
+        return;
+    }
+#endif
+    fft_double->fft3D_backward(in, out);
+}
 
 // access the real space data
 template <> float* 

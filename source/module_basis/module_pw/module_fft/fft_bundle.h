@@ -199,6 +199,10 @@ class FFT_Bundle
                             std::complex<FPTYPE>* in, 
                             std::complex<FPTYPE>* out) const;
 
+        // Double-precision GPU transforms that may skip empty x slabs.
+        void fft3D_forward_pw(std::complex<double>* in, std::complex<double>* out) const;
+        void fft3D_backward_pw(std::complex<double>* in, std::complex<double>* out) const;
+
     private:
         int  fft_mode = 0; 
         bool float_flag=false;

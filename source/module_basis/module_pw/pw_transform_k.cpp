@@ -373,10 +373,14 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
-    // Out-of-place complex transforms preserve the input grid.
+    // Only the plane-wave support is extracted from the transformed grid.
+#if defined(__CUDA)
+    this->fft_bundle.fft3D_forward_pw(const_cast<std::complex<double>*>(in), this->fft_bundle.get_auxr_3d_data<double>());
+#else
     this->fft_bundle.fft3D_forward(ctx,
                           const_cast<std::complex<double>*>(in),
                           this->fft_bundle.get_auxr_3d_data<double>());
+#endif
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
@@ -460,13 +464,21 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
     if (add)
     {
         auto* grid = this->fft_bundle.get_auxr_3d_data<double>();
+#if defined(__CUDA)
+        this->fft_bundle.fft3D_backward_pw(grid, grid);
+#else
         this->fft_bundle.fft3D_backward(ctx, grid, grid);
+#endif
         set_recip_to_real_output_op<double, base_device::DEVICE_GPU>()(
             ctx, this->nrxx, true, factor, grid, out);
     }
     else
     {
+#if defined(__CUDA)
+        this->fft_bundle.fft3D_backward_pw(this->fft_bundle.get_auxr_3d_data<double>(), out);
+#else
         this->fft_bundle.fft3D_backward(ctx, this->fft_bundle.get_auxr_3d_data<double>(), out);
+#endif
     }
 
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
