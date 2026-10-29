@@ -37,7 +37,36 @@ add_library(
 )
 
 if(USE_CUFFTDX)
-  add_library(planewave_fused_fft OBJECT kernels/cuda/fused_veff.cu)
+  set(fused_sources kernels/cuda/fused_veff.cu)
+  set(fused_declarations "")
+  set(fused_cases "")
+  # Enumerate the smooth lengths selected by PW_Basis::initgrids. Each
+  # translation unit instantiates the same kernels and can compile in parallel.
+  foreach(FFT_LENGTH RANGE 16 256)
+    set(remainder ${FFT_LENGTH})
+    foreach(factor 2 3 5)
+      math(EXPR residue "${remainder} % ${factor}")
+      while(residue EQUAL 0)
+        math(EXPR remainder "${remainder} / ${factor}")
+        math(EXPR residue "${remainder} % ${factor}")
+      endwhile()
+    endforeach()
+    if(remainder EQUAL 1)
+      set(generated "${CMAKE_CURRENT_BINARY_DIR}/fused_fft_${FFT_LENGTH}.cu")
+      configure_file(kernels/cuda/fused_fft_size.cu.in ${generated} @ONLY)
+      list(APPEND fused_sources ${generated})
+      string(APPEND fused_declarations "const FusedFFT* fused_fft_${FFT_LENGTH}();\n")
+      string(APPEND fused_cases "        case ${FFT_LENGTH}: return fused_fft_${FFT_LENGTH}();\n")
+    endif()
+  endforeach()
+  set(registry "${CMAKE_CURRENT_BINARY_DIR}/fused_fft_registry.cpp")
+  file(WRITE ${registry}
+    "#include \"module_basis/module_pw/kernels/fused_veff.h\"\n"
+    "namespace ModulePW {\n${fused_declarations}"
+    "const FusedFFT* fused_fft(int length) {\n    switch (length) {\n${fused_cases}"
+    "        default: return nullptr;\n    }\n}\n}\n")
+  list(APPEND fused_sources ${registry})
+  add_library(planewave_fused_fft OBJECT ${fused_sources})
   target_link_libraries(planewave_fused_fft PRIVATE mathdx::cufftdx)
   set_target_properties(planewave_fused_fft PROPERTIES
     CUDA_STANDARD 17

@@ -301,7 +301,7 @@ void FFT_CUDA<double>::transform_spinor_sticks(std::complex<double>* up, std::co
     for (int spin = 0; spin < 2; ++spin)
     {
         auto* sticks = workspace + spin * bands * stick_size;
-        ModulePW::transform_stick_slabs(sticks, slabs[spin], reverse, this->nz, this->lixy_index + 1,
+        ModulePW::transform_stick_slabs(sticks, slabs[spin], reverse, this->nx, this->ny, this->nz, this->lixy_index + 1,
                                         this->rixy_index, inverse, bands, stick_size);
     }
     if (!inverse) { CHECK_CUFFT(cufftExecZ2Z(plan, data, data, CUFFT_FORWARD)); }
@@ -319,7 +319,7 @@ void FFT_CUDA<double>::apply_spinor_potential(const double* potential, std::comp
     if (reverse != nullptr)
     {
         this->transform_spinor_sticks(up, down, reverse, true, bands);
-        ModulePW::fused_veff_x(this->ny * this->nz, this->lixy_index + 1, this->rixy_index, potential, up, down, bands);
+        ModulePW::fused_veff_x(this->nx, this->ny * this->nz, this->lixy_index + 1, this->rixy_index, potential, up, down, bands);
         this->transform_spinor_sticks(up, down, reverse, false, bands);
         return;
     }
@@ -339,7 +339,7 @@ void FFT_CUDA<double>::apply_spinor_potential(const double* potential, std::comp
     };
     transform_yz(up, CUFFT_INVERSE);
     transform_yz(down, CUFFT_INVERSE);
-    ModulePW::fused_veff_x(plane, left, this->rixy_index, potential, up, down);
+    ModulePW::fused_veff_x(this->nx, plane, left, this->rixy_index, potential, up, down);
     transform_yz(up, CUFFT_FORWARD);
     transform_yz(down, CUFFT_FORWARD);
 }

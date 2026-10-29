@@ -27,7 +27,7 @@ void PW_Basis_K::add_spinor_density(const std::complex<double>* input, double we
     const int* index = this->d_igl2isz_k + ik * this->npwk_max;
     pack_spinor_sticks(this->npwk[ik], stride, index, input, stick_up, stick_down);
     this->fft_bundle.transform_spinor_sticks(up, down, this->d_fftixy2is, true);
-    fused_density_x(this->ny * this->nz, this->fft_bundle.lixy + 1, this->fft_bundle.rixy, weight, density, up, down);
+    fused_density_x(this->nx, this->ny * this->nz, this->fft_bundle.lixy() + 1, this->fft_bundle.rixy(), weight, density, up, down);
     ModuleBase::timer::tick(this->classname, "spinor_density gpu");
 }
 

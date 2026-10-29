@@ -1,4 +1,5 @@
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/kernels/fused_veff.h"
 #include "module_elecstate/kernels/elecstate_op.h"
 
 #include <mpi.h>
@@ -23,10 +24,10 @@ void require(bool condition, const char* message)
     if (!condition) { std::cerr << message << '\n'; std::exit(2); }
 }
 
-void run(ModulePW::PW_Basis_K& basis, double cutoff, double& maximum, double& relative, double& charge_error)
+void run(ModulePW::PW_Basis_K& basis, double cutoff, double& maximum, double& relative, double& charge_error, int nx = 200, int ny = 200, int nz = 200)
 {
     basis.initmpi(1, 0, MPI_COMM_WORLD);
-    basis.initgrids(30.0, ModuleBase::Matrix3(1, 0.1, 0, 0, 1, 0.15, 0.05, 0, 1), 200, 200, 200);
+    basis.initgrids(nx * 0.15, ModuleBase::Matrix3(1, 0.1, 0, 0, double(ny) / nx, 0.15, 0.05, 0, double(nz) / nx), nx, ny, nz);
     ModuleBase::Vector3<double> points[2] = {{0.25, -0.125, 0.375}, {-0.2, 0.15, -0.1}};
     basis.initparameters(false, cutoff, 2, points);
     basis.setuptransform();
@@ -112,8 +113,20 @@ int main(int argc, char** argv)
     {
         {
             ModulePW::PW_Basis_K basis("gpu", "double");
+            for (int length = 16; length <= 256; ++length)
+            {
+                if (ModulePW::fused_fft(length) != nullptr)
+                {
+                    run(basis, 50.0, maximum, relative, charge_error, length, length, 31);
+                }
+            }
             run(basis, 50.0, maximum, relative, charge_error);
             run(basis, 100.0, maximum, relative, charge_error);
+            run(basis, 100.0, maximum, relative, charge_error, 72, 72, 72);
+            run(basis, 100.0, maximum, relative, charge_error, 72, 72, 144);
+            run(basis, 100.0, maximum, relative, charge_error, 108, 108, 108);
+            run(basis, 100.0, maximum, relative, charge_error, 72, 108, 125);
+            run(basis, 100.0, maximum, relative, charge_error, 125, 81, 90);
         }
         check_cuda(cudaDeviceSynchronize());
         check_cuda(cudaMemGetInfo(&free_bytes[repeat], &total));

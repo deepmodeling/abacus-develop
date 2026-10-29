@@ -1,4 +1,5 @@
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "module_basis/module_pw/kernels/fused_veff.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/veff_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/veff_op.h"
 
@@ -80,7 +81,8 @@ void run(ModulePW::PW_Basis_K& basis, int nx, int ny, int nz, bool xprime,
          double& max_error, double& max_hermitian, double cutoff = 50.0, int bands = 2)
 {
     basis.initmpi(1, 0, MPI_COMM_WORLD);
-    basis.initgrids(30.0, ModuleBase::Matrix3(1, 0.1, 0, 0, 1, 0.15, 0.05, 0, 1), nx, ny, nz);
+    const double length = nx * 0.15;
+    basis.initgrids(length, ModuleBase::Matrix3(1, 0.1, 0, 0, double(ny) / nx, 0.15, 0.05, 0, double(nz) / nx), nx, ny, nz);
     ModuleBase::Vector3<double> points[2] = {{0.25, -0.125, 0.375}, {-0.2, 0.15, -0.1}};
     basis.initparameters(false, cutoff, 2, points, 1, xprime);
     basis.setuptransform();
@@ -89,10 +91,8 @@ void run(ModulePW::PW_Basis_K& basis, int nx, int ny, int nz, bool xprime,
     const int stride = basis.npwk_max + 7;
     const int count = 2 * bands * stride;
     const int compact_size = basis.ft.fused_veff_grid_size();
-    require((compact_size > 0) == (nx == 200 && xprime), "Unexpected fused grid eligibility");
+    require((compact_size > 0) == (xprime && ModulePW::fused_fft(nx) != nullptr), "Unexpected fused grid eligibility");
     const int stick_size = basis.ft.fused_veff_stick_size();
-    require((stick_size > 0) == (nx == 200 && ny == 200 && nz == 200 && xprime),
-            "Unexpected stick transform eligibility");
     std::mt19937 generator(1234);
     std::uniform_real_distribution<double> random(-1, 1);
     std::vector<Complex> input(count), initial(count), expected(count), actual(count);
@@ -118,8 +118,8 @@ void run(ModulePW::PW_Basis_K& basis, int nx, int ny, int nz, bool xprime,
     check_cuda(cudaMemcpy(device_potential, potential.data(), potential.size() * sizeof(double), cudaMemcpyHostToDevice));
     if (compact_size > 0)
     {
-        check_cuda(cudaMalloc(&compact_up, 4 * compact_size * sizeof(Complex)));
-        check_cuda(cudaMalloc(&compact_down, 4 * compact_size * sizeof(Complex)));
+        check_cuda(cudaMalloc(&compact_up, basis.ft.spinor_batch_size() * compact_size * sizeof(Complex)));
+        check_cuda(cudaMalloc(&compact_down, basis.ft.spinor_batch_size() * compact_size * sizeof(Complex)));
     }
     const int spins[2] = {0, 0};
     {
@@ -145,7 +145,7 @@ void run(ModulePW::PW_Basis_K& basis, int nx, int ny, int nz, bool xprime,
                     for (int band = 0; band < bands;)
                     {
                         const int remaining = bands - band;
-                        const int batch = stick_size > 0 ? (remaining >= 4 ? 4 : (remaining >= 2 ? 2 : 1)) : 1;
+                        const int batch = std::min(remaining, basis.ft.spinor_batch_size());
                         basis.add_spinor_potential(device_input + band * 2 * stride, device_potential,
                                                    device_output + band * 2 * stride, ik, stride, compact_up, compact_down, batch);
                         band += batch;
@@ -192,6 +192,22 @@ int main(int argc, char** argv)
     {
         {
             ModulePW::PW_Basis_K basis("gpu", "double");
+            for (int length = 16; length <= 256; ++length)
+            {
+                if (ModulePW::fused_fft(length) != nullptr)
+                {
+                    run(basis, length, length, 31, true, max_error, max_hermitian, 50.0, 3);
+                }
+            }
+            run(basis, 79, 83, 89, true, max_error, max_hermitian, 50.0, 3);
+            run(basis, 50, 72, 80, true, max_error, max_hermitian, 50.0, 3);
+            run(basis, 72, 108, 125, true, max_error, max_hermitian, 100.0, 19);
+            run(basis, 125, 81, 90, true, max_error, max_hermitian, 100.0, 3);
+            run(basis, 72, 72, 72, true, max_error, max_hermitian, 100.0, 19);
+            run(basis, 72, 72, 144, true, max_error, max_hermitian, 100.0, 33);
+            run(basis, 108, 108, 108, true, max_error, max_hermitian, 100.0, 17);
+            run(basis, 72, 73, 74, true, max_error, max_hermitian, 50.0, 3);
+            run(basis, 72, 72, 72, false, max_error, max_hermitian, 100.0, 3);
             run(basis, 200, 81, 83, true, max_error, max_hermitian);
             run(basis, 200, 200, 200, true, max_error, max_hermitian, 100.0, 7);
             run(basis, 200, 81, 83, false, max_error, max_hermitian);

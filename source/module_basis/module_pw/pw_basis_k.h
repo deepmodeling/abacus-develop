@@ -157,7 +157,7 @@ public:
 #if defined(__CUFFTDX)
     // Adds the local spinor potential to the plane-wave output. Both scratch
     // grids contain bands * ft.fused_veff_grid_size() double-complex elements.
-    // Bands may be 1, 2, or 4; multiple bands require the sparse-stick layout.
+    // The batch is at most ft.spinor_batch_size(); multiple bands use sparse sticks.
     void add_spinor_potential(const std::complex<double>* input, const double* potential,
                              std::complex<double>* output, int ik, int stride,
                              std::complex<double>* up, std::complex<double>* down, int bands = 1) const;

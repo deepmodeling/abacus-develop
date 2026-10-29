@@ -94,6 +94,28 @@ Report both the sampled peak memory and its sampling interval. A 100 ms sample
 can miss a shorter allocation peak, so retain the raw samples and use the same
 measurement method for both binaries.
 
+## Fused spinor transforms
+
+The optional `USE_CUFFTDX` build uses one common kernel template for the local
+spinor potential and density. CMake enumerates FFT lengths from 16 through 256
+whose prime factors are 2, 3 and 5. Each length is instantiated in a separate
+translation unit. Lengths that require a cuFFTDx workspace, and lengths outside
+this registry, retain the cuFFT path. The optional build requires CUDA and
+cuFFTDx 1.6 or newer, discoverable through the MathDx CMake package.
+
+The application selects the fused path for double-complex spinors on Volta,
+with one MPI rank and an eligible plane-wave layout. The x and y dimensions
+are selected independently; z transforms use runtime cuFFT plans. Rectangular
+and nonorthogonal cells use the same implementation. A missing y template can
+use cuFFT for the y-z transforms while retaining the fused x operation.
+
+The potential operator batches bands according to the actual compact-grid and
+stick workspace sizes, targeting 256 MiB and at most 16 bands. A single band
+may exceed that target on a large grid. Scratch arrays grow only when necessary;
+FFT plans are cached by batch size and released with the basis. This policy
+does not depend on atom count or a named benchmark system. Automatic template
+instantiation increases compilation time and executable size.
+
 ## Focused correctness checks
 
 The C++ drivers in `src/` exercise the production public interfaces against

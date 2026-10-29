@@ -73,7 +73,7 @@ void Veff<OperatorPW<T, Device>>::act(
 #if defined(__CUFFTDX)
     if (fused_size > 0 && this->wfcpw->fft_bundle.fused_veff_stick_size() > 0)
     {
-        batch_size = nbands / npol >= 4 ? 4 : (nbands / npol >= 2 ? 2 : 1);
+        batch_size = std::min(nbands / npol, this->wfcpw->ft.spinor_batch_size());
     }
 #endif
     const int size = fused_size > 0 ? batch_size * fused_size : this->wfcpw->nmaxgr;
@@ -88,7 +88,7 @@ void Veff<OperatorPW<T, Device>>::act(
     for (int ib = 0; ib < nbands;)
     {
         const int remaining = (nbands - ib) / npol;
-        const int bands = std::min(batch_size, remaining >= 4 ? 4 : (remaining >= 2 ? 2 : 1));
+        const int bands = std::min(batch_size, remaining);
 #if defined(__CUFFTDX)
         if (fused_size > 0)
         {
