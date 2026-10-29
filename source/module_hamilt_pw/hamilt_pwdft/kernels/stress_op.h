@@ -9,6 +9,13 @@
 
 namespace hamilt
 {
+#if defined(__CUDA)
+int kinetic_stress_blocks_gpu(int npw);
+void kinetic_stress_gpu(int npw, int npwx, int nbands, int npol, double tpiba,
+                        double erf_ecut, double erf_height, double erf_sigma,
+                        const double* gcar, const double* kvector, const double* weights,
+                        const std::complex<double>* psi, double* partial);
+#endif
 
 template <typename FPTYPE, typename Device>
 struct cal_dbecp_noevc_nl_op

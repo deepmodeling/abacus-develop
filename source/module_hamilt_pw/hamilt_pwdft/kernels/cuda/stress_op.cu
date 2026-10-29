@@ -28,6 +28,73 @@ __device__ static inline
 thrust::complex<T> conj(thrust::complex<T>& in) {
     return thrust::conj(in);
 }
+
+
+__global__ void kinetic_stress(int npw, int npwx, int nbands, int npol, double tpiba,
+                               double erf_ecut, double erf_height, double erf_sigma,
+                               const double* gcar, const double* kvector, const double* weights,
+                               const thrust::complex<double>* psi, double* partial)
+{
+    const int ig = blockIdx.x * blockDim.x + threadIdx.x;
+    double g[3] = {}, density = 0.0;
+    if (ig < npw)
+    {
+        for (int axis = 0; axis < 3; ++axis) { g[axis] = (gcar[3 * ig + axis] + kvector[axis]) * tpiba; }
+        for (int band = 0; band < nbands; ++band)
+        {
+            if (weights[band] == 0.0) { continue; }
+            for (int spin = 0; spin < npol; ++spin)
+            {
+                const auto value = psi[(static_cast<size_t>(band) * npol + spin) * npwx + ig];
+                density += weights[band] * (value.real() * value.real() + value.imag() * value.imag());
+            }
+        }
+        if (erf_height > 0.0)
+        {
+            const double g2 = g[0] * g[0] + g[1] * g[1] + g[2] * g[2];
+            const double argument = (g2 - erf_ecut) / erf_sigma;
+            density *= 1.0 + erf_height / erf_sigma * (2.0 / sqrt(3.14159265358979323846))
+                             * exp(-argument * argument);
+        }
+    }
+    __shared__ double warp_sums[THREADS_PER_BLOCK / WARP_SIZE];
+    int component = 0;
+    for (int row = 0; row < 3; ++row)
+    {
+        for (int column = 0; column <= row; ++column)
+        {
+            double value = density * g[row] * g[column];
+            warp_reduce(value);
+            if (threadIdx.x % WARP_SIZE == 0) { warp_sums[threadIdx.x / WARP_SIZE] = value; }
+            __syncthreads();
+            if (threadIdx.x < WARP_SIZE)
+            {
+                value = threadIdx.x < THREADS_PER_BLOCK / WARP_SIZE ? warp_sums[threadIdx.x] : 0.0;
+                warp_reduce(value);
+                if (threadIdx.x == 0) { partial[6 * blockIdx.x + component] = value; }
+            }
+            __syncthreads();
+            ++component;
+        }
+    }
+}
+
+int kinetic_stress_blocks_gpu(int npw)
+{
+    return (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+}
+
+void kinetic_stress_gpu(int npw, int npwx, int nbands, int npol, double tpiba,
+                        double erf_ecut, double erf_height, double erf_sigma,
+                        const double* gcar, const double* kvector, const double* weights,
+                        const std::complex<double>* psi, double* partial)
+{
+    kinetic_stress<<<kinetic_stress_blocks_gpu(npw), THREADS_PER_BLOCK>>>(
+        npw, npwx, nbands, npol, tpiba, erf_ecut, erf_height, erf_sigma, gcar, kvector, weights,
+        reinterpret_cast<const thrust::complex<double>*>(psi), partial);
+    cudaCheckOnDebug();
+}
+
 template <typename T>
 __global__ void cal_stress_mgga(
     const int spin,

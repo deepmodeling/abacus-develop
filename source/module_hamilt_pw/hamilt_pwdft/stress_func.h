@@ -274,6 +274,12 @@ class Stress_Func
     using cal_vkb_deri_op = hamilt::cal_vkb_deri_op<FPTYPE, Device>;
 
   protected:
+#if defined(__CUDA)
+    void stress_kin_cuda(ModuleBase::matrix& sigma, const ModuleBase::matrix& wg,
+                         ModuleSymmetry::Symmetry* symmetry, K_Vectors* kpoints,
+                         ModulePW::PW_Basis_K* basis, const UnitCell& ucell_in,
+                         const psi::Psi<complex<FPTYPE>, Device>* wavefunctions);
+#endif
     pseudopot_cell_vnl* nlpp = nullptr;
     const UnitCell* ucell = nullptr;
 };
