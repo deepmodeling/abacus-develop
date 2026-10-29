@@ -344,14 +344,10 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
-    base_device::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
-        ctx,
-        ctx,
-        this->fft_bundle.get_auxr_3d_data<float>(),
-        in,
-        this->nrxx);
-
-    this->fft_bundle.fft3D_forward(ctx, this->fft_bundle.get_auxr_3d_data<float>(), this->fft_bundle.get_auxr_3d_data<float>());
+    // Out-of-place complex transforms preserve the input grid.
+    this->fft_bundle.fft3D_forward(ctx,
+                          const_cast<std::complex<float>*>(in),
+                          this->fft_bundle.get_auxr_3d_data<float>());
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
@@ -377,15 +373,10 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_GPU* ctx,
     assert(this->gamma_only == false);
     assert(this->poolnproc == 1);
 
-    base_device::memory::synchronize_memory_op<std::complex<double>,
-                                               base_device::DEVICE_GPU,
-                                               base_device::DEVICE_GPU>()(ctx,
-                                                                          ctx,
-                                                                          this->fft_bundle.get_auxr_3d_data<double>(),
-                                                                          in,
-                                                                          this->nrxx);
-
-    this->fft_bundle.fft3D_forward(ctx, this->fft_bundle.get_auxr_3d_data<double>(), this->fft_bundle.get_auxr_3d_data<double>());
+    // Out-of-place complex transforms preserve the input grid.
+    this->fft_bundle.fft3D_forward(ctx,
+                          const_cast<std::complex<double>*>(in),
+                          this->fft_bundle.get_auxr_3d_data<double>());
 
     const int startig = ik * this->npwk_max;
     const int npw_k = this->npwk[ik];
@@ -426,14 +417,17 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
                                                         this->ig2ixyz_k + startig,
                                                         in,
                                                         this->fft_bundle.get_auxr_3d_data<float>());
-    this->fft_bundle.fft3D_backward(ctx, this->fft_bundle.get_auxr_3d_data<float>(), this->fft_bundle.get_auxr_3d_data<float>());
-
-    set_recip_to_real_output_op<float, base_device::DEVICE_GPU>()(ctx,
-                                                                  this->nrxx,
-                                                                  add,
-                                                                  factor,
-                                                                  this->fft_bundle.get_auxr_3d_data<float>(),
-                                                                  out);
+    if (add)
+    {
+        auto* grid = this->fft_bundle.get_auxr_3d_data<float>();
+        this->fft_bundle.fft3D_backward(ctx, grid, grid);
+        set_recip_to_real_output_op<float, base_device::DEVICE_GPU>()(
+            ctx, this->nrxx, true, factor, grid, out);
+    }
+    else
+    {
+        this->fft_bundle.fft3D_backward(ctx, this->fft_bundle.get_auxr_3d_data<float>(), out);
+    }
 
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
 }
@@ -463,14 +457,17 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_GPU* ctx,
                                                          this->ig2ixyz_k + startig,
                                                          in,
                                                          this->fft_bundle.get_auxr_3d_data<double>());
-    this->fft_bundle.fft3D_backward(ctx, this->fft_bundle.get_auxr_3d_data<double>(), this->fft_bundle.get_auxr_3d_data<double>());
-
-    set_recip_to_real_output_op<double, base_device::DEVICE_GPU>()(ctx,
-                                                                   this->nrxx,
-                                                                   add,
-                                                                   factor,
-                                                                   this->fft_bundle.get_auxr_3d_data<double>(),
-                                                                   out);
+    if (add)
+    {
+        auto* grid = this->fft_bundle.get_auxr_3d_data<double>();
+        this->fft_bundle.fft3D_backward(ctx, grid, grid);
+        set_recip_to_real_output_op<double, base_device::DEVICE_GPU>()(
+            ctx, this->nrxx, true, factor, grid, out);
+    }
+    else
+    {
+        this->fft_bundle.fft3D_backward(ctx, this->fft_bundle.get_auxr_3d_data<double>(), out);
+    }
 
     ModuleBase::timer::tick(this->classname, "recip_to_real gpu");
 }
