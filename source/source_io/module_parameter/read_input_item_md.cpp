@@ -558,7 +558,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.category = "Molecular dynamics";
         item.type = "String";
         item.description = "The SNAP parameter file used with pot_file as the SNAP coefficient file.";
-        item.default_value = "snapparam";
+        item.default_value = "snap.param";
         item.unit = "";
         item.set_availability("esolver_type==snap");
         read_sync_string(input.mdp.snap_param_file);

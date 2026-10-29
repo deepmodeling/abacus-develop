@@ -2,8 +2,8 @@ INPUT_PARAMETERS
 calculation       md
 suffix            autotest
 esolver_type      snap
-pot_file          snapcoeff
-snap_param_file   snapparam
+pot_file          snap.coeff
+snap_param_file   snap.param
 cal_force         1
 cal_stress        1
 md_nstep          1

@@ -2,7 +2,7 @@
 #define ESOLVER_SNAP_H
 
 #include "esolver.h"
-#include "source_md/snap/snap_calculator.h"
+#include "source_md/module_snap/snap_calculator.h"
 
 #include <iosfwd>
 #include <memory>
