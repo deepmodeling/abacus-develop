@@ -151,6 +151,15 @@ add_library(
     ${objects}
 )
 
+add_library(io_input_help OBJECT input_help.cpp)
+
+# Include directory for build_info.h (generated at build time)
+target_include_directories(
+    io_input_help
+    PUBLIC
+    ${CMAKE_BINARY_DIR}/source/source_io
+)
+
 # Include directory for build_info.h (generated at build time)
 target_include_directories(
     io_basic
