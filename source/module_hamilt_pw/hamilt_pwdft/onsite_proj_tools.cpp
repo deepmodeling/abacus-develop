@@ -316,7 +316,6 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
         std::complex<FPTYPE>* d_sk = this->hd_sk;
         // prepare ylm，size: (lmax+1)^2 * this->max_npw
         const int lmax_ = this->lprojmax;
-        maths.cal_ylm(lmax_, npw, g_plus_k.data(), hd_ylm);
 
         // DEBUG: ONCE YOU CHECK ylm VALUES, YOU UNCOMMENT THE FOLLOW
         // std::vector<ModuleBase::Vector3<double>> qs(npw);
@@ -352,6 +351,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
             gk = d_g_plus_k;
             vq_tb = d_vq_tab;
         }
+        maths.cal_ylm(lmax_, npw, gk, hd_ylm);
 
         // int vkb_size = 0;
         for (int it = 0; it < this->ucell_->ntype; it++) // loop all elements
