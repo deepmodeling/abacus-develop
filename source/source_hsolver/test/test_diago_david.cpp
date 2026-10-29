@@ -126,7 +126,9 @@ Problem make_problem(const std::string& name)
         problem.dimension = 24;
         problem.leading_dimension = 27;
         problem.bands = 3;
-        problem.solver_threshold = 1.0e-14;
+        // Eigenvalue-change stopping needs a tighter request to satisfy the
+        // independent residual check below across LAPACK implementations.
+        problem.solver_threshold = 1.0e-15;
         problem.residual_tolerance = 2.0e-7;
     }
     const int matrix_size = problem.dimension * problem.dimension;
