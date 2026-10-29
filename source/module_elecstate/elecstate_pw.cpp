@@ -228,48 +228,34 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
         int npwx = npw / 2;
         for (int ibnd = 0; ibnd < nbands; ibnd++)
         {
-            ///
-            /// only occupied band should be calculated.
-            /// be care of when smearing_sigma is large, wg would less than 0
-            ///
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
+            // Negative smearing weights contribute; only exact zeros are omitted.
+            if (w1 == 0.0) { continue; }
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,npwx), this->wfcr_another_spin, ik);
 
-            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
-
-            if (w1 != 0.0)
-            {
-                // replaced by denghui at 20221110
-                elecstate_pw_op()(this->ctx,
-                                  PARAM.globalv.domag,
-                                  PARAM.globalv.domag_z,
-                                  this->basis->nrxx,
-                                  w1,
-                                  this->rho,
-                                  this->wfcr,
-                                  this->wfcr_another_spin);
-            }
+            elecstate_pw_op()(this->ctx,
+                              PARAM.globalv.domag,
+                              PARAM.globalv.domag_z,
+                              this->basis->nrxx,
+                              w1,
+                              this->rho,
+                              this->wfcr,
+                              this->wfcr_another_spin);
         }
     }
     else
     {
         for (int ibnd = 0; ibnd < nbands; ibnd++)
         {
-            ///
-            /// only occupied band should be calculated.
-            ///
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
+            if (w1 == 0.0) { continue; }
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
-            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
-
-            if (w1 != 0.0)
-            {
-                // replaced by denghui at 20221110
-                elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, w1, this->rho, this->wfcr);
-            }
+            elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, w1, this->rho, this->wfcr);
 
             // kinetic energy density
             if (get_xc_func_type() == 3)
