@@ -147,6 +147,12 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
     //----------------------------------------------------------------
     // 1) before_scf (preparation before the electronic-step loop)
     //----------------------------------------------------------------
+    // Preserve the field endpoint used by the saved H/S/psi before advancing the field.
+    ModuleBase::Vector3<double> boundary_A;
+    if (this->inp_->td_stype == 2)
+    {
+        boundary_A = td_p->endpoint_A();
+    }
     // Prepare the endpoint field before before_scf initializes the potential and constructs TD operators.
     const int first_estep = this->totstep + 1;
     if (this->inp_->td_stype == 0 || first_estep == 0)
@@ -206,6 +212,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
     module_rt::reset_matrix_boundary(ucell,
                                      this->kv.kvec_d,
                                      kpoint_count,
+                                     boundary_A,
                                      &(this->pv),
                                      this->Hk_laststep,
                                      this->Sk_laststep,

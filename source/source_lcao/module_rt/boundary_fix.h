@@ -18,6 +18,7 @@ namespace module_rt{
 * @param[in] ucell Unitcell information
 * @param[in] kvec_d Direct k-point vectors
 * @param[in] nks Number of local k points
+* @param[in] cart_At_last Saved hybrid-gauge Cartesian A in Hartree atomic units; zero in other gauges
 * @param[in] pv information of parallel
 * @param[in] hk_last Hamiltonian matrix from last step 
 * @param[in] sk_last Overlap matrix from last step 
@@ -30,6 +31,7 @@ namespace module_rt{
 void reset_matrix_boundary(const UnitCell& ucell,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                            const int nks,
+                           const ModuleBase::Vector3<double>& cart_At_last,
                            const Parallel_Orbitals* pv,
                            ct::Tensor& hk_last,
                            ct::Tensor& sk_last,

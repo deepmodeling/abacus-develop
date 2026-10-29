@@ -9,6 +9,7 @@ namespace module_rt{
 void reset_matrix_boundary(const UnitCell& ucell,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                            const int nks,
+                           const ModuleBase::Vector3<double>& cart_At_last,
                            const Parallel_Orbitals* pv,
                            ct::Tensor& hk_last,
                            ct::Tensor& sk_last,
@@ -45,7 +46,10 @@ void reset_matrix_boundary(const UnitCell& ucell,
             for(int ik = 0; ik < nks; ik++)
             {
                 const ModuleBase::Vector3<double> tmp_rshift(rshift.x, rshift.y, rshift.z);
-                const double arg = -kvec_d[ik] * tmp_rshift * ModuleBase::TWO_PI;
+                // Hybrid folding uses exp(i * (2*pi*k.R + A.R_cart)).
+                // Transform the saved state with its own field endpoint.
+                const ModuleBase::Vector3<double> cart_shift = tmp_rshift * ucell.latvec * ucell.lat0;
+                const double arg = -kvec_d[ik] * tmp_rshift * ModuleBase::TWO_PI - cart_At_last * cart_shift;
                 //skip unrelevent ik
                 if(arg==0)continue;
                 //calculate correction phase
@@ -60,8 +64,13 @@ void reset_matrix_boundary(const UnitCell& ucell,
                     module_rt::boundary_shift_mat(phase, h, matrix_distribution, iat);
                     module_rt::boundary_shift_mat(phase, s, matrix_distribution, iat);
                 }
-                psi_last->fix_k(ik);
-                module_rt::boundary_shift_c(phase, psi_last[0].get_pointer(), pv, iat);
+                if (pv->nrow > 0 && pv->ncol_bands > 0)
+                {
+                    // Saved LCAO coefficients use k-first storage. Index it without
+                    // changing the shared Psi cursor in this OpenMP loop.
+                    std::complex<double>* psi_k = &(*psi_last)(ik, 0, 0);
+                    module_rt::boundary_shift_c(phase, psi_k, pv, iat);
+                }
             }
         }
     }
