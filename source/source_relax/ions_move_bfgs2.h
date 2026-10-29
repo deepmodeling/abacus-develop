@@ -4,6 +4,7 @@
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
+#include "source_relax/relax_criteria.h"
 
 #include <algorithm>
 #include <cmath>
@@ -18,7 +19,8 @@ class Ions_Move_BFGS2
     void reset();
     bool relax_step(const ModuleBase::matrix& _force,
                     UnitCell& ucell,
-                    std::ofstream& ofs_running); // a full iteration step
+                    std::ofstream& ofs_running,
+                    const Relax_Criteria& criteria); // a full iteration step
 
     /// @brief whether allocate() has run and the optimiser holds live state.
     ///        reset() clears it; ions_move_methods_test checks that.
@@ -57,7 +59,7 @@ class Ions_Move_BFGS2
                      std::vector<ModuleBase::Vector3<double>>& dpos,
                      int& size,
                      UnitCell& ucell); // calculate the atomic displacement in one iteration step
-    bool IsRestrain();                 // check if converged
+    bool IsRestrain(const double force_thr_ev); // check if converged
     void CalculateLargestGrad(const ModuleBase::matrix& _force, UnitCell& ucell);
     void GetPos(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos);
     void GetPostaud(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos_taud);

@@ -183,10 +183,11 @@ TEST_F(BFGSTest, RelaxStepAutoInitialize)
     force(1, 2) = 0.0;
 
     std::ofstream ofs_running;
+    const Relax_Criteria criteria;
 
     // Before relax_step, is_initialized should be false
     EXPECT_FALSE(get_is_initialized());
-    bfgs.relax_step(force, ucell, ofs_running);
+    bfgs.relax_step(force, ucell, ofs_running, criteria);
     // After relax_step, is_initialized should be true
     EXPECT_TRUE(get_is_initialized());
 }
@@ -387,8 +388,9 @@ TEST_F(BFGSTest, RelaxStepBasic)
     bfgs.allocate(ucell.nat);
 
     std::ofstream ofs_running;
+    const Relax_Criteria criteria;
 
-    bfgs.relax_step(force, ucell, ofs_running);
+    bfgs.relax_step(force, ucell, ofs_running, criteria);
     // Check that ionic_position_updated is true
     EXPECT_TRUE(ucell.ionic_position_updated);
     // Check that force values are set (converted units)

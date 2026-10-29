@@ -65,14 +65,6 @@ void Ions_Move_Methods::cal_movement(const int& istep,
                                      const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
-    if (relax_method == "bfgs_trad" || relax_method == "lbfgs")
-    {
-        this->check_converged(f, ucell, criteria);
-        if (converged_)
-        {
-            return;
-        }
-    }
     if (relax_method == "bfgs")
     {
         converged_ = bfgs.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, criteria);
@@ -91,7 +83,7 @@ void Ions_Move_Methods::cal_movement(const int& istep,
     }
     else if (relax_method == "bfgs_trad")
     {
-        converged_ = bfgs_trad.relax_step(f, ucell, ofs);
+        converged_ = bfgs_trad.relax_step(f, ucell, ofs, criteria);
     }
     else if (relax_method == "lbfgs")
     {

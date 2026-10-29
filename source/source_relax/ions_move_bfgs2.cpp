@@ -38,7 +38,10 @@ void Ions_Move_BFGS2::reset()
     is_initialized = false;
 }
 
-bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force, UnitCell& ucell, std::ofstream& ofs_running)
+bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force,
+                                 UnitCell& ucell,
+                                 std::ofstream& ofs_running,
+                                 const Relax_Criteria& criteria)
 {
     if (!is_initialized)
     {
@@ -79,7 +82,7 @@ bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force, UnitCell& uce
     }
 
     this->CalculateLargestGrad(_force, ucell);
-    if (this->IsRestrain())
+    if (this->IsRestrain(criteria.force_thr_ev))
     {
         return true;
     }
@@ -374,7 +377,7 @@ void Ions_Move_BFGS2::CalculateLargestGrad(const ModuleBase::matrix& _force, Uni
     }
 }
 
-bool Ions_Move_BFGS2::IsRestrain()
+bool Ions_Move_BFGS2::IsRestrain(const double force_thr_ev)
 {
-    return Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < PARAM.inp.force_thr_ev;
+    return Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < force_thr_ev;
 }
