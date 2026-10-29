@@ -12,39 +12,66 @@
 namespace ModulePW {
 
 #if defined(__CUDA)
+namespace {
+
+template <typename Real>
+void upload_fft_input(int size, const std::complex<Real>* input, std::complex<Real>* grid,
+                      std::complex<Real>* /*scratch*/)
+{
+    base_device::memory::synchronize_memory_op<std::complex<Real>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        nullptr, nullptr, grid, input, size);
+}
+
+template <typename Real>
+void upload_fft_input(int size, const Real* input, std::complex<Real>* grid, std::complex<Real>* scratch)
+{
+    // The allocation stores the real input before it holds the gathered Fourier coefficients.
+    auto* real_input = reinterpret_cast<Real*>(scratch);
+    base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        nullptr, nullptr, real_input, input, size);
+    pack_real_grid_gpu(size, real_input, grid);
+}
+
+template <typename Real>
+Real* prepare_inverse_output(int size, bool add, Real factor, std::complex<Real>* grid, Real* output)
+{
+    extract_real_grid_gpu(size, add, factor, grid, output);
+    return output;
+}
+
+template <typename Real>
+std::complex<Real>* prepare_inverse_output(int size, bool add, Real factor, std::complex<Real>* grid,
+                                          std::complex<Real>* output)
+{
+    if (!add) { return grid; }
+    set_recip_to_real_output_op<Real, base_device::DEVICE_GPU>()(nullptr, size, true, factor, grid, output);
+    return output;
+}
+
+} // namespace
+
 template <typename Input, typename Real>
 void PW_Basis::real2recip_gpu(const Input* in, std::complex<Real>* out, bool add, Real factor) const
 {
     using Complex = std::complex<Real>;
     int scratch_size = this->npw;
-    if constexpr (std::is_same<Input, Real>::value)
+    if (std::is_same<Input, Real>::value)
     {
         scratch_size = std::max(scratch_size, (this->nrxx + 1) / 2);
     }
     Complex* scratch = nullptr;
     base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch, scratch_size);
     auto* grid = this->fft_bundle.get_auxr_3d_data<Real>();
-    if constexpr (std::is_same<Input, Complex>::value)
-    {
-        base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
-            gpu_ctx, cpu_ctx, grid, in, this->nrxx);
-    }
-    else
-    {
-        // A complex allocation also stores the contiguous real input before its FFT coefficients are gathered.
-        auto* real_input = reinterpret_cast<Real*>(scratch);
-        base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
-            gpu_ctx, cpu_ctx, real_input, in, this->nrxx);
-        pack_real_grid_gpu(this->nrxx, real_input, grid);
-    }
+    upload_fft_input(this->nrxx, in, grid, scratch);
     this->fft_bundle.fft3D_forward(gpu_ctx, grid, grid);
     if (add)
     {
         base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
             gpu_ctx, cpu_ctx, scratch, out, this->npw);
     }
-    set_real_to_recip_output_op<Real, base_device::DEVICE_GPU>()(
-        gpu_ctx, this->npw, this->nxyz, add, factor, this->d_ig2fftbox, grid, scratch);
+    // Evaluating the reciprocal scale before multiplication preserves the host transform's rounding order.
+    const Real scale = (add ? factor : Real(1)) / Real(this->nxyz);
+    gather_fft_coefficients_gpu(this->npw, add, scale, this->d_ig2fftbox, grid, scratch);
     base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
         cpu_ctx, gpu_ctx, out, scratch, this->npw);
     base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch);
@@ -55,7 +82,7 @@ void PW_Basis::recip2real_gpu(const std::complex<Real>* in, Output* out, bool ad
 {
     using Complex = std::complex<Real>;
     int scratch_size = this->npw;
-    if constexpr (std::is_same<Output, Real>::value)
+    if (std::is_same<Output, Real>::value)
     {
         scratch_size = std::max(scratch_size, (this->nrxx + 1) / 2);
     }
@@ -77,19 +104,7 @@ void PW_Basis::recip2real_gpu(const std::complex<Real>* in, Output* out, bool ad
         base_device::memory::synchronize_memory_op<Output, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
             gpu_ctx, cpu_ctx, result, out, this->nrxx);
     }
-    if constexpr (std::is_same<Output, Real>::value)
-    {
-        extract_real_grid_gpu(this->nrxx, add, factor, grid, result);
-    }
-    else if (add)
-    {
-        set_recip_to_real_output_op<Real, base_device::DEVICE_GPU>()(
-            gpu_ctx, this->nrxx, true, factor, grid, result);
-    }
-    else
-    {
-        result = grid;
-    }
+    result = prepare_inverse_output(this->nrxx, add, factor, grid, result);
     base_device::memory::synchronize_memory_op<Output, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
         cpu_ctx, gpu_ctx, out, result, this->nrxx);
     base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch);

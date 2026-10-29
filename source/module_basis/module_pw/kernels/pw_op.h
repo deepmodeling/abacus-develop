@@ -11,6 +11,10 @@ void pack_real_grid_gpu(int size, const Real* input, std::complex<Real>* grid);
 
 template <typename Real>
 void extract_real_grid_gpu(int size, bool add, Real factor, const std::complex<Real>* grid, Real* output);
+
+template <typename Real>
+void gather_fft_coefficients_gpu(int size, bool add, Real scale, const int* index,
+                                const std::complex<Real>* grid, std::complex<Real>* output);
 #endif
 
 template <typename FPTYPE, typename Device>
