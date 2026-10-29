@@ -16,15 +16,10 @@ void FFT_CUDA<FPTYPE>::initfft(int nx_in,
 template <>
 void FFT_CUDA<float>::setupFFT()
 {
-    cufftPlan3d(&c_handle, this->nx, this->ny, this->nz, CUFFT_C2C);
-    resmem_cd_op()(gpu_ctx, this->c_auxr_3d, this->nx * this->ny * this->nz);
-        
 }
 template <>  
 void FFT_CUDA<double>::setupFFT()
 {
-    cufftPlan3d(&z_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z);
-    resmem_zd_op()(gpu_ctx, this->z_auxr_3d, this->nx * this->ny * this->nz);
 }
 template <>
 void FFT_CUDA<float>::cleanFFT()
@@ -69,6 +64,10 @@ template <>
 void FFT_CUDA<float>::fft3D_forward(std::complex<float>* in, 
                                     std::complex<float>* out) const
 {
+    if (!this->c_handle)
+    {
+        CHECK_CUFFT(cufftPlan3d(&this->c_handle, this->nx, this->ny, this->nz, CUFFT_C2C));
+    }
     CHECK_CUFFT(cufftExecC2C(this->c_handle, 
                              reinterpret_cast<cufftComplex*>(in), 
                              reinterpret_cast<cufftComplex*>(out),
@@ -78,6 +77,10 @@ template <>
 void FFT_CUDA<double>::fft3D_forward(std::complex<double>* in, 
                                      std::complex<double>* out) const
 {
+    if (!this->z_handle)
+    {
+        CHECK_CUFFT(cufftPlan3d(&this->z_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z));
+    }
     CHECK_CUFFT(cufftExecZ2Z(this->z_handle, 
                              reinterpret_cast<cufftDoubleComplex*>(in),
                              reinterpret_cast<cufftDoubleComplex*>(out), 
@@ -87,6 +90,10 @@ template <>
 void FFT_CUDA<float>::fft3D_backward(std::complex<float>* in, 
                                      std::complex<float>* out) const
 {
+    if (!this->c_handle)
+    {
+        CHECK_CUFFT(cufftPlan3d(&this->c_handle, this->nx, this->ny, this->nz, CUFFT_C2C));
+    }
     CHECK_CUFFT(cufftExecC2C(this->c_handle, 
                              reinterpret_cast<cufftComplex*>(in), 
                              reinterpret_cast<cufftComplex*>(out),
@@ -97,15 +104,33 @@ template <>
 void FFT_CUDA<double>::fft3D_backward(std::complex<double>* in, 
                                       std::complex<double>* out) const
 {
+    if (!this->z_handle)
+    {
+        CHECK_CUFFT(cufftPlan3d(&this->z_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z));
+    }
     CHECK_CUFFT(cufftExecZ2Z(this->z_handle, 
                              reinterpret_cast<cufftDoubleComplex*>(in),
                              reinterpret_cast<cufftDoubleComplex*>(out), 
                              CUFFT_INVERSE));
 }
 template <> std::complex<float>* 
-FFT_CUDA<float>::get_auxr_3d_data()  const {return this->c_auxr_3d;}
+FFT_CUDA<float>::get_auxr_3d_data()  const
+{
+    if (this->c_auxr_3d == nullptr)
+    {
+        resmem_cd_op()(gpu_ctx, this->c_auxr_3d, this->nx * this->ny * this->nz);
+    }
+    return this->c_auxr_3d;
+}
 template <> std::complex<double>* 
-FFT_CUDA<double>::get_auxr_3d_data() const {return this->z_auxr_3d;}
+FFT_CUDA<double>::get_auxr_3d_data() const
+{
+    if (this->z_auxr_3d == nullptr)
+    {
+        resmem_zd_op()(gpu_ctx, this->z_auxr_3d, this->nx * this->ny * this->nz);
+    }
+    return this->z_auxr_3d;
+}
 
 template FFT_CUDA<float>::FFT_CUDA();
 template FFT_CUDA<float>::~FFT_CUDA();

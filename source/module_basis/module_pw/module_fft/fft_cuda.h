@@ -55,11 +55,11 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
         void fft3D_backward(std::complex<FPTYPE>* in, 
                             std::complex<FPTYPE>* out) const override;
     private:
-        cufftHandle c_handle = {};
-        cufftHandle z_handle = {};
+        mutable cufftHandle c_handle = {};
+        mutable cufftHandle z_handle = {};
        
-        std::complex<float>* c_auxr_3d = nullptr;  // fft space
-        std::complex<double>* z_auxr_3d = nullptr; // fft space
+        mutable std::complex<float>* c_auxr_3d = nullptr;  // fft space
+        mutable std::complex<double>* z_auxr_3d = nullptr; // fft space
 
 };
 
