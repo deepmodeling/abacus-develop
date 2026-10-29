@@ -19,7 +19,12 @@ build:
     - pkg-config
   jobs:
     pre_build:
-      - cmake -Bbuild -GNinja -DCMAKE_INSTALL_PREFIX=install -DENABLE_MPI=OFF -DENABLE_LCAO=OFF
+      # This executable only exports INPUT metadata; skip optimization and debug
+      # symbols to keep the documentation build within the RTD time limit.
+      - >-
+        cmake -Bbuild -GNinja -DCMAKE_INSTALL_PREFIX=install
+        -DENABLE_MPI=OFF -DENABLE_LCAO=OFF -DENABLE_NATIVE_OPTIMIZATION=OFF
+        -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g0"
       - cmake --build build --target install -j $(nproc)
       - install/bin/abacus --generate-parameters-yaml > docs/parameters.yaml
       - python3 docs/generate_input_main.py docs/parameters.yaml
