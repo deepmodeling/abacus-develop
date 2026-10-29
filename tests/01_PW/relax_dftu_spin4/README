@@ -1,1 +1,48 @@
-Test PW DFT+U with noncollinear spin (nspin=4), XY magnetization constraint
+Test PW DFT+U with noncollinear spin (nspin=4), fixed local occupation
+matrices, and two ionic relaxation steps.
+
+The reference records this finite two-step workflow with the original
+reciprocal-space SCF tolerance of 1e-7. Both electronic SCF cycles must
+converge; relax_nmax=2 sets the ionic-step budget. The structure, PBE spin
+mapping, pseudopotential, fixed occupation matrices, cutoffs, smearing,
+mixing parameters, and SCF stopping condition are unchanged.
+
+This magnetic case is sensitive to diagonalization accuracy. The adaptive
+threshold previously became loose again at the start of an electronic
+cycle, which changed the forces and the next ionic geometry between
+solvers. pw_diag_thr_max=5e-14 now bounds the threshold in every cycle,
+including both ionic steps. pw_diag_nmax=500 provides the corresponding
+iteration budget. The option defaults to zero for other calculations.
+
+Reference calibration (2026-10-29): GNU 12.3, OpenMPI 5.0.10, double
+precision, four MPI processes, OMP_NUM_THREADS=OPENBLAS_NUM_THREADS=1.
+result.ref is copied from an independent CG run with pw_diag_thr and
+pw_diag_thr_max both set to 1e-20. CG tests its energy decrease, whereas
+PPCG tests its residual norm, so the reference uses a separate CG
+threshold. Tightening CG from 1e-18 to 1e-20 changes the final energy by
+4.67e-8 eV. All reference fields satisfy the existing tolerances in that
+comparison.
+
+Against this CG reference, the default Davidson-subspace and PPCG runs
+at 5e-14 give the following absolute differences:
+
+solver          energy (eV)   energy/atom (eV)  force sum     stress sum
+dav_subspace    5.9501e-8     2.9800e-8         8.0e-6        3.0e-6
+ppcg            5.3115e-10    3.0013e-10        0             2.0e-6
+original limit  1e-7          1e-7              1e-4          1e-3
+
+Both solvers also pass with one MPI process. All these runs complete
+14 and 12 electronic iterations in the two ionic steps, respectively,
+without an iterative eigensolver failure. The original collector and
+acceptance tolerances are retained. The new reference corresponds to
+the explicit accuracy bound; the previous adaptive-threshold reference
+had final energy -5652.1157954576747215 eV.
+
+To reproduce, run this directory with a build supporting
+pw_diag_thr_max for calculation=relax:
+
+  OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 mpirun -np 4 /path/to/abacus
+
+In a separate copy, change only ks_solver to ppcg for the paired test.
+For the independent CG reference, set ks_solver=cg and both
+pw_diag_thr and pw_diag_thr_max to 1e-20; retain all other INPUT values.

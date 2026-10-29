@@ -108,38 +108,55 @@ fi
 # wave functions in plane wave basis
 # echo "$has_wfc_pw" ## test out_wfc_pw > 0
 #--------------------------------------------
-if ! test -z "$has_wfc_pw"  && [ $has_wfc_pw == 1 ]; then
-
-    # according to nspin value
-    if [ "$nspin" -eq 1 ]; then
-        filename="wfk1_pw.txt"
-    elif [ "$nspin" -eq 2 ]; then
-        filename="wfk1s1_pw.txt"
+# A complete reference or its result key requires full-vector comparison,
+# including when the output switch is absent or disabled. Missing reference
+# files must not silently fall back to the legacy maximum statistic.
+local full_wfc_reference=0
+if [[ -d wfc_pw.ref ]] || { [[ -f result.ref ]] && grep -q '^[[:space:]]*CompareWfc_pass[[:space:]]' result.ref; }; then
+    full_wfc_reference=1
+fi
+if [[ "$has_wfc_pw" == 1 || "$full_wfc_reference" == 1 ]]; then
+    if [[ "$full_wfc_reference" == 1 ]]; then
+        if python3 "$PROPS_TOOLS_DIR/compare_pw_wfc.py" \
+            wfc_pw.ref OUT.autotest band.txt.ref OUT.autotest/band.txt \
+            --coefficient-tolerance 1e-7 --energy-tolerance 1e-8; then
+            echo "CompareWfc_pass 0" >> "$props_result_file"
+        else
+            echo "CompareWfc_pass 1" >> "$props_result_file"
+            exit 1
+        fi
     else
-        # other nspin cases
-        echo "Unsupported nspin value: $nspin"
-        exit 1
+        # according to nspin value
+        if [ "$nspin" -eq 1 ]; then
+            filename="wfk1_pw.txt"
+        elif [ "$nspin" -eq 2 ]; then
+            filename="wfk1s1_pw.txt"
+        else
+            # other nspin cases
+            echo "Unsupported nspin value: $nspin"
+            exit 1
+        fi
+
+        full_path="OUT.autotest/$filename"
+
+        if [[ ! -f "$full_path" ]];then
+            echo "Can't find file $full_path"
+            exit 1
+        fi
+        awk 'BEGIN {max=0;read=0;band=1}
+        {
+            if(read==0 && $2 == "Band" && $3 == band){read=1}
+            else if(read==1 && $2 == "Band" && $3 == band)
+                {printf"Max_wfc_%d %.4f\n",band,max;read =0;band+=1;max=0}
+            else if(read==1)
+                {
+                    for(i=1;i<=NF;i++)
+                    {
+                        if(sqrt($i*$i)>max) {max=sqrt($i*$i)}
+                    }
+                }
+        }' "$full_path" >> "$props_result_file"
     fi
-
-    full_path="OUT.autotest/$filename"
-
-	if [[ ! -f "$full_path" ]];then
-		echo "Can't find file $full_path"
-		exit 1
-	fi
-	awk 'BEGIN {max=0;read=0;band=1}
-	{
-		if(read==0 && $2 == "Band" && $3 == band){read=1}
-		else if(read==1 && $2 == "Band" && $3 == band)
-			{printf"Max_wfc_%d %.4f\n",band,max;read =0;band+=1;max=0}
-		else if(read==1)
-			{
-				for(i=1;i<=NF;i++)
-				{
-					if(sqrt($i*$i)>max) {max=sqrt($i*$i)}
-				}
-			}
-	}' "$full_path" >> "$props_result_file"
 fi
 
 

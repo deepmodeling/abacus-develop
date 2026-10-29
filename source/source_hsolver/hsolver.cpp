@@ -19,7 +19,8 @@ double set_diagethr_ks(const std::string basis_type,
                        const double pw_diag_thr_init,
                        const double diag_ethr_in,
                        const double nelec_in,
-                       const double scf_thr_in)
+                       const double scf_thr_in,
+                       const double pw_diag_thr_max)
 {
     double res_diag_ethr = diag_ethr_in;
 
@@ -70,6 +71,13 @@ double set_diagethr_ks(const std::string basis_type,
             }
             res_diag_ethr = std::min(res_diag_ethr,
                                      static_cast<double>(0.1) * drho / std::max(static_cast<double>(1.0), static_cast<double>(nelec_in)));
+        }
+
+        // Apply the optional bound to every electronic cycle, including ionic relaxation.
+        const bool supports_bound = calculation_in == "scf" || calculation_in == "relax";
+        if (supports_bound && pw_diag_thr_max > 0.0)
+        {
+            res_diag_ethr = std::min(res_diag_ethr, pw_diag_thr_max);
         }
 
         // Keep the single-precision diagonalization threshold at or above the floor
@@ -151,7 +159,8 @@ double reset_diag_ethr(std::ofstream& ofs_running,
                        const double hsover_error,
                        const double drho_in,
                        const double diag_ethr_in,
-                       const double nelec_in)
+                       const double nelec_in,
+                       const double pw_diag_thr_max)
 {
 
     double new_diag_ethr = 0.0;
@@ -166,6 +175,12 @@ double reset_diag_ethr(std::ofstream& ofs_running,
         ofs_running << " Origin diag ethr = " << diag_ethr_in << std::endl;
 
         new_diag_ethr = 0.1 * drho_in / nelec_in;
+
+        // INPUT validation restricts a positive bound to PW KSDFT SCF calculations.
+        if (pw_diag_thr_max > 0.0)
+        {
+            new_diag_ethr = std::min(new_diag_ethr, pw_diag_thr_max);
+        }
 
         // Keep the single-precision diagonalization threshold at or above the floor
         // to avoid excessively strict convergence requirements.

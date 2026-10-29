@@ -8,3 +8,16 @@ nbands 3, out_chg 1 12, and out_wfc_pw 2.
 The cube-based band references differ from the former binary-restart references
 by at most 1.12e-4 eV: out_chg writes rho, while the binary restart writes rho_save.
 INPUT.info retains only the seven source SCF parameters checked by hybrid NSCF.
+
+Diagonalization accuracy for the band comparison:
+The 1e-8 eV band check needs a tighter solver threshold than the former 1e-10.
+With the stabilized CG update, the former threshold left a maximum band error
+of 1.05e-8 eV and changed the last printed digit of one band. Set pw_diag_thr
+to 1e-12 while retaining the default iteration budget of 50, stored references,
+and comparison tolerance. At four MPI ranks, CG, Davidson-subspace and PPCG
+then reproduce band.txt.ref exactly; their maximum eigenvalue differences from
+a tighter PPCG control are below 1.86e-11 eV. Four independent solver controls
+(CG, Davidson, Davidson-subspace, PPCG) at 1e-14 with a budget of 500 agree
+within 2.4e-13 eV, confirming the stored band reference.
+The default-budget PPCG substitution still reports an inner residual warning;
+the band comparison does not establish convergence of that residual.

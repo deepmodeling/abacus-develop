@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -124,6 +125,122 @@ TEST_F(InputTest, RelaxMethod)
         EXPECT_EQ(param.inp.relax_method, previous_method);
     }
     EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
+}
+
+TEST_F(InputTest, PwDiagThresholdUpperBoundDefaultsAndParsing)
+{
+    ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    Input_para& input = TestParameters::input(param);
+    auto it = find_label("pw_diag_thr_max", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    EXPECT_DOUBLE_EQ(input.pw_diag_thr_max, 0.0);
+    EXPECT_EQ(it->second.default_value, "0");
+    EXPECT_EQ(it->second.type, "Real");
+    EXPECT_EQ(it->second.get_availability(), "basis_type==pw and esolver_type==ksdft and calculation in [scf, relax]");
+    it->second.check_value(it->second, param);
+
+    it->second.str_values = {"1e-12"};
+    it->second.read_value(it->second, param);
+    EXPECT_DOUBLE_EQ(input.pw_diag_thr_max, 1.0e-12);
+    EXPECT_DOUBLE_EQ(input.pw_diag_thr, 0.01);
+    it->second.check_value(it->second, param);
+
+    it->second.str_values = {"0"};
+    it->second.read_value(it->second, param);
+    input.basis_type = "lcao";
+    input.esolver_type = "sdft";
+    input.calculation = "nscf";
+    input.diago_smooth_ethr = true;
+    input.precision = "single";
+    it->second.check_value(it->second, param);
+    EXPECT_DOUBLE_EQ(input.pw_diag_thr_max, 0.0);
+}
+
+TEST_F(InputTest, PwDiagThresholdUpperBoundAcceptsRelaxParsing)
+{
+    ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    Input_para& input = TestParameters::input(param);
+    input.calculation = "relax";
+    auto it = find_label("pw_diag_thr_max", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    it->second.str_values = {"1e-13"};
+    it->second.read_value(it->second, param);
+    EXPECT_DOUBLE_EQ(input.pw_diag_thr_max, 1.0e-13);
+    EXPECT_DOUBLE_EQ(input.pw_diag_thr, 0.01);
+    // A rejected calculation terminates; isolate the validation so the old
+    // implementation reports a test failure without aborting the whole suite.
+    EXPECT_EXIT(
+        {
+            it->second.check_value(it->second, param);
+            std::exit(0);
+        },
+        ::testing::ExitedWithCode(0), "");
+}
+
+TEST_F(InputTest, PwDiagThresholdUpperBoundRejectsInvalidNumbers)
+{
+    ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    auto it = find_label("pw_diag_thr_max", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    for (const std::string& value : {"-1e-12", "nan", "inf", "-inf"})
+    {
+        it->second.str_values = {value};
+        it->second.read_value(it->second, param);
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+    }
+}
+
+TEST_F(InputTest, PwDiagThresholdUpperBoundRejectsUnsupportedPolicies)
+{
+    ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    Input_para& input = TestParameters::input(param);
+    input.pw_diag_thr_max = 1.0e-12;
+    const Input_para valid = input;
+    auto it = find_label("pw_diag_thr_max", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    it->second.check_value(it->second, param);
+
+    for (const std::string& calculation : {"nscf", "cell-relax", "md"})
+    {
+        input = valid;
+        input.calculation = calculation;
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+    }
+    for (const std::string& calculation : {"scf", "relax"})
+    {
+        input = valid;
+        input.calculation = calculation;
+        input.basis_type = "lcao";
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        input = valid;
+        input.calculation = calculation;
+        input.esolver_type = "sdft";
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        input = valid;
+        input.calculation = calculation;
+        input.diago_smooth_ethr = true;
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+    }
+}
+
+TEST_F(InputTest, PwDiagThresholdUpperBoundChecksSinglePrecisionFloor)
+{
+    ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    Input_para& input = TestParameters::input(param);
+    input.precision = "single";
+    auto it = find_label("pw_diag_thr_max", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    input.pw_diag_thr_max = 5.0e-5;
+    it->second.check_value(it->second, param);
+    input.pw_diag_thr_max = 1.0e-4;
+    it->second.check_value(it->second, param);
+    input.pw_diag_thr_max = 4.0e-5;
+    EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
 }
 
 TEST_F(InputTest, PccSelectionAndUnsupportedCombinations)
@@ -514,6 +631,20 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).basis_type = "pw";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).pw_diag_thr, 1.0e-5);
+    }
+    { // pw_diag_rr_step
+        auto it = find_label("pw_diag_rr_step", readinput.input_lists);
+        const Input_para defaults;
+        EXPECT_EQ(defaults.pw_diag_rr_step, 1);
+        EXPECT_EQ(it->second.default_value, "1");
+        TestParameters::input(param).pw_diag_rr_step = 1;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+
+        TestParameters::input(param).pw_diag_rr_step = 16;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+
+        TestParameters::input(param).pw_diag_rr_step = 0;
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
     }
     { // nb2d
         auto it = find_label("nb2d", readinput.input_lists);
@@ -987,6 +1118,18 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).basis_type = "pw";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).ks_solver, "cg");
+
+        TestParameters::input(param).ks_solver = "ppcg";
+        TestParameters::input(param).basis_type = "pw";
+        TestParameters::input(param).esolver_type = "ksdft";
+        check_item(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).ks_solver, "ppcg");
+
+        TestParameters::input(param).basis_type = "lcao";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("Requires ks_solver in"));
 
         TestParameters::input(param).ks_solver = "default";
         TestParameters::input(param).basis_type = "lcao";

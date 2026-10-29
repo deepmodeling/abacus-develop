@@ -1,6 +1,8 @@
 #include "hsolver_pw.h"
 
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"
@@ -10,15 +12,191 @@
 #include "source_hsolver/diago_cg.h"
 #include "source_hsolver/diago_dav_subspace.h"
 #include "source_hsolver/diago_david.h"
+#include "source_hsolver/diago_ppcg.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_psi/psi.h"
 
 #include <algorithm>
+#include <cmath>
+#include <exception>
+#include <iomanip>
 #include <ostream>
+#include <sstream>
+#include <string>
+#include <type_traits>
 #include <vector>
 
 namespace hsolver
 {
+
+namespace
+{
+struct PPCGRunResult
+{
+    double average_iterations;
+    bool converged;
+    int active_band_count;
+    bool iteration_limit_reached;
+    double max_residual;
+};
+
+template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
+PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
+                          const SPsiFunc& spsi_func,
+                          const int ld_psi,
+                          const int nband,
+                          const int dim,
+                          T* psi,
+                          Real* eigenvalue,
+                          const std::vector<double>& ethr_band,
+                          const Real* pre_condition,
+                          const double diag_thr,
+                          const int diag_iter_max,
+                          const int pw_diag_ndim,
+                          const int rr_step,
+                          std::true_type)
+{
+    const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
+    const int rr_step_safe = std::max(1, rr_step);
+    const Real solver_diag_thr = static_cast<Real>(diag_thr);
+
+    DiagoPPCG<T, Device> ppcg(solver_diag_thr,
+                              diag_iter_max,
+                              sbsize,
+                              rr_step_safe);
+
+    PPCGRunResult result;
+    result.average_iterations = ppcg.diag(hpsi_func,
+                                          spsi_func,
+                                          ld_psi,
+                                          nband,
+                                          dim,
+                                          psi,
+                                          eigenvalue,
+                                          ethr_band,
+                                          pre_condition);
+    result.converged = ppcg.converged();
+    result.active_band_count = ppcg.active_band_count();
+    result.iteration_limit_reached = ppcg.iteration_limit_reached();
+    result.max_residual = double(ppcg.max_residual());
+    return result;
+}
+
+template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
+PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
+                          const SPsiFunc& spsi_func,
+                          const int ld_psi,
+                          const int nband,
+                          const int dim,
+                          T* psi,
+                          Real* eigenvalue,
+                          const std::vector<double>& ethr_band,
+                          const Real* pre_condition,
+                          const double diag_thr,
+                          const int diag_iter_max,
+                          const int pw_diag_ndim,
+                          const int rr_step,
+                          std::false_type)
+{
+    const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
+    const int rr_step_safe = std::max(1, rr_step);
+    // Check the host solver's full workspace bounds before bridge allocation
+    // or copying, and reject unsupported shapes on every pool rank together.
+    const bool valid_dimensions = ppcg_workspace_dimensions_valid(ld_psi, nband, dim, sbsize);
+    int invalid_dimensions = valid_dimensions ? 0 : 1;
+    Parallel_Reduce::reduce_pool(&invalid_dimensions, 1);
+    if (invalid_dimensions != 0)
+    {
+        ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Invalid or oversized workspace dimensions on a pool rank.");
+    }
+    const int nelem = ld_psi * nband;
+    const Real solver_diag_thr = static_cast<Real>(diag_thr);
+
+    // Transitional GPU path: keep PPCG's control logic and small dense solves
+    // on host, while applying H/S through the device operators.
+    struct DeviceBuffer
+    {
+        T* ptr = nullptr;
+        explicit DeviceBuffer(const int size)
+        {
+            base_device::memory::resize_memory_op<T, Device>()(ptr, size, "PPCG device bridge");
+        }
+        ~DeviceBuffer()
+        {
+            if (ptr != nullptr)
+                base_device::memory::delete_memory_op<T, Device>()(ptr);
+        }
+        DeviceBuffer(const DeviceBuffer&) = delete;
+        DeviceBuffer& operator=(const DeviceBuffer&) = delete;
+    };
+
+    std::vector<T> psi_host(nelem, T(0));
+    T* psi_host_ptr = psi_host.data();
+    base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+        psi_host_ptr, psi, nelem);
+
+    DeviceBuffer psi_dev(nelem);
+    DeviceBuffer out_dev(nelem);
+    // The bridge buffers are allocated once per diagonalization and reused for
+    // every H/S application.  Keep the leading dimension explicit: operators
+    // may receive padded wavefunction columns, so copying only ``dim`` would
+    // corrupt the column stride expected by the device implementation.
+    const auto copy_to_device = [&](T* host_ptr, const int ld, const int nvec) {
+        int invalid_block = ld <= 0 || nvec <= 0 || nvec > nelem / ld ? 1 : 0;
+        Parallel_Reduce::reduce_pool(&invalid_block, 1);
+        if (invalid_block != 0)
+        {
+            ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Input block exceeds allocated workspace on a pool rank.");
+        }
+        const int count = ld * nvec;
+        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+            psi_dev.ptr, host_ptr, count);
+    };
+    const auto copy_from_device = [&](T* host_ptr, const int ld, const int nvec) {
+        int invalid_block = ld <= 0 || nvec <= 0 || nvec > nelem / ld ? 1 : 0;
+        Parallel_Reduce::reduce_pool(&invalid_block, 1);
+        if (invalid_block != 0)
+        {
+            ModuleBase::WARNING_QUIT("PPCG GPU bridge", "Output block exceeds allocated workspace on a pool rank.");
+        }
+        const int count = ld * nvec;
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+            host_ptr, out_dev.ptr, count);
+    };
+    auto bridge_hpsi = [&](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
+        copy_to_device(psi_in, ld, nvec);
+        hpsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
+        copy_from_device(hpsi_out, ld, nvec);
+    };
+    auto bridge_spsi = [&](T* psi_in, T* spsi_out, const int ld, const int nvec) {
+        copy_to_device(psi_in, ld, nvec);
+        spsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
+        copy_from_device(spsi_out, ld, nvec);
+    };
+
+    DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(solver_diag_thr,
+                                               diag_iter_max,
+                                               sbsize,
+                                               rr_step_safe);
+    PPCGRunResult result;
+    result.average_iterations = ppcg.diag(bridge_hpsi,
+                                           bridge_spsi,
+                                           ld_psi,
+                                           nband,
+                                           dim,
+                                           psi_host_ptr,
+                                           eigenvalue,
+                                           ethr_band,
+                                           pre_condition);
+    result.converged = ppcg.converged();
+    result.active_band_count = ppcg.active_band_count();
+    result.iteration_limit_reached = ppcg.iteration_limit_reached();
+    result.max_residual = double(ppcg.max_residual());
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+        psi, psi_host_ptr, nelem);
+    return result;
+}
+} // namespace
 
 template <typename T, typename Device>
 void HSolverPW<T, Device>::cal_smooth_ethr(const double& wk,
@@ -79,7 +257,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
     this->nproc_in_pool = nproc_in_pool_in;
 
     // report if the specified diagonalization method is not supported
-    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
+    const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg", "ppcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
         ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
@@ -89,6 +267,14 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
     std::vector<Real> precondition(psi.get_nbasis(), 0.0);
     std::vector<Real> eigenvalues(this->wfc_basis->nks * psi.get_nbands(), 0.0);
     ethr_band.resize(psi.get_nbands(), this->diag_thr);
+
+    std::vector<DiagonalizationStatus> diagonalization_status;
+    const auto solve_kpoint = [&](const int ik) {
+        Real* eigenvalues_k = eigenvalues.data() + ik * psi.get_nbands();
+        const DiagonalizationStatus status = this->hamiltSolvePsiK(
+            op, psi, precondition, eigenvalues_k, this->wfc_basis->nks);
+        diagonalization_status.push_back(status);
+    };
 
     // Initialize k-point continuity if enabled
     static int count = 0;
@@ -131,7 +317,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            solve_kpoint(ik);
 
             if (skip_charge)
             {
@@ -169,7 +355,7 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            solve_kpoint(ik);
 
             // output iteration information and reset avg_iter
             if (skip_charge)
@@ -183,6 +369,11 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
             /// calculate the contribution of Psi for charge density rho
         }
     } // else (use_k_continuity)
+
+    if (this->method == "ppcg")
+    {
+        this->report_ppcg_convergence(diagonalization_status, log);
+    }
 
     // output average iteration information and reset avg_iter
     this->output_iterInfo(log);
@@ -224,38 +415,40 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
+typename HSolverPW<T, Device>::DiagonalizationStatus HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                                            psi::Psi<T, Device>& psi,
                                            std::vector<Real>& pre_condition,
                                            Real* eigenvalue,
                                            const int& nk_nums)
 {
     ModuleBase::timer::start("HSolverPW", "solve_psik");
+    DiagonalizationStatus status;
 #ifdef __MPI
     const diag_comm_info comm_info = {POOL_WORLD, this->rank_in_pool, this->nproc_in_pool};
 #else
     const diag_comm_info comm_info = {this->rank_in_pool, this->nproc_in_pool};
 #endif
 
-    const int cur_nbasis = psi.get_current_nbas();
+    const int local_basis_rank = psi.get_current_nbas() * psi.get_npol();
 
-    // Check for rank deficiency: the total number of plane waves (summed across
-    // all MPI processes) must be >= nbands. When npw_total < nbands, the basis is
-    // rank-deficient, leading to psi_norm <= 0 during Schmidt orthogonalization.
-    // Note: we sum cur_nbasis (local npw for this k-point) across the pool because
-    // psi.get_nbasis() gives the local storage dimension, not the total.
+    // Check for rank deficiency: the active wavefunction dimension (summed
+    // across all MPI processes) must be at least nbands. Otherwise Schmidt
+    // orthogonalization encounters a non-positive norm.
+    // Count both spinor components for nspin=4. psi.get_nbasis() is unsuitable
+    // here because it is the padded storage stride rather than the active rank.
     const int nbands = psi.get_nbands();
-    int npw_total = cur_nbasis;
+    int basis_rank_total = local_basis_rank;
 #ifdef __MPI
     if (this->nproc_in_pool > 1)
     {
-        MPI_Allreduce(&cur_nbasis, &npw_total, 1, MPI_INT, MPI_SUM, POOL_WORLD);
+        Parallel_Reduce::reduce_pool(&basis_rank_total, 1);
     }
 #endif
-    if (npw_total < nbands)
+    if (basis_rank_total < nbands)
     {
-        const std::string msg = "npw_total < nbands (" + std::to_string(npw_total) + " < " + std::to_string(nbands)
-                            + "): the total number of plane waves across all MPI processes "
+        const std::string msg = "basis_rank_total < nbands (" + std::to_string(basis_rank_total) + " < "
+                            + std::to_string(nbands)
+                            + "): the total active wavefunction dimension across all MPI processes "
                             + "is less than the number of bands, "
                             + "which leads to a rank-deficient problem. "
                             + "Please increase ecutwfc or reduce nbands.";
@@ -347,8 +540,99 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                         ntry_max,
                         notconv_max));
     }
+    else if (this->method == "ppcg")
+    {
+        const auto hpsi_func = [&op](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
+            op.hpsi(psi_in, hpsi_out, ld, nvec);
+        };
+        const auto spsi_func = [&op](T* psi_in, T* spsi_out, const int ld, const int nvec) {
+            op.spsi(psi_in, spsi_out, ld, nvec);
+        };
+        const std::is_same<Device, base_device::DEVICE_CPU> cpu_path;
+        const int ld_psi = psi.get_nbasis();
+        const int nband = psi.get_nbands();
+        const int dim = psi.get_current_ngk();
+        T* psi_pointer = psi.get_pointer();
+        const Real* precondition_pointer = pre_condition.data();
+        // PPCG uses a residual-norm stopping criterion. Preserve the requested
+        // norm tolerance: taking its square root can leave forces and stresses
+        // inaccurate even when the total energy appears converged.
+        try
+        {
+            const PPCGRunResult ppcg_result = run_ppcg_pw<T, Device, Real>(
+                hpsi_func,
+                spsi_func,
+                ld_psi,
+                nband,
+                dim,
+                psi_pointer,
+                eigenvalue,
+                this->ethr_band,
+                precondition_pointer,
+                this->diag_thr,
+                this->diag_iter_max,
+                this->pw_diag_ndim,
+                this->pw_diag_rr_step,
+                cpu_path);
+            DiagoIterAssist<T, Device>::avg_iter += ppcg_result.average_iterations;
+            status.converged = ppcg_result.converged;
+            status.iteration_limit_reached = ppcg_result.iteration_limit_reached;
+            status.active_band_count = ppcg_result.active_band_count;
+            status.max_residual = ppcg_result.max_residual;
+        }
+        catch (const std::exception& error)
+        {
+            const std::string message = std::string("PPCG diagonalization failed: ") + error.what();
+            ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", message);
+        }
+    }
     ModuleBase::timer::end("HSolverPW", "solve_psik");
-    return;
+    return status;
+}
+
+template <typename T, typename Device>
+void HSolverPW<T, Device>::report_ppcg_convergence(const std::vector<DiagonalizationStatus>& status,
+                                                  std::ostream& log) const
+{
+    int unconverged_kpoints = 0;
+    int iteration_limits = 0;
+    int active_bands = 0;
+    double max_residual = 0.0;
+    // Each pool contributes each k point once, including pools not owning
+    // world rank zero. All ranks enter the same final reductions.
+    if (this->rank_in_pool == 0)
+    {
+        for (const DiagonalizationStatus& item : status)
+        {
+            if (!item.converged)
+            {
+                ++unconverged_kpoints;
+                if (item.iteration_limit_reached)
+                {
+                    ++iteration_limits;
+                }
+                active_bands += item.active_band_count;
+                max_residual = std::max(max_residual, item.max_residual);
+            }
+        }
+    }
+    Parallel_Reduce::reduce_all(unconverged_kpoints);
+    Parallel_Reduce::reduce_all(iteration_limits);
+    Parallel_Reduce::reduce_all(active_bands);
+    Parallel_Reduce::reduce_max(max_residual);
+    if (unconverged_kpoints > 0)
+    {
+        std::ostringstream warning_stream;
+        warning_stream << "PPCG did not reach the requested residual thresholds at "
+                       << unconverged_kpoints << " k point(s) in electronic iteration " << this->scf_iter
+                       << "; " << iteration_limits << " reached the iteration limit " << this->diag_iter_max
+                       << "; active bands across those k points = " << active_bands
+                       << "; final max residual = " << std::scientific << std::setprecision(6)
+                       << max_residual << '.';
+        const std::string warning = warning_stream.str();
+        log << warning << '\n';
+        ModuleBase::WARNING("HSolverPW::solve", warning);
+    }
 }
 
 template <typename T, typename Device>

@@ -79,23 +79,17 @@ fi
 # Wannier90 information
 # echo $toW90
 #-------------------------------
-if ! test -z "$toW90"  && [  $toW90 == 1 ]; then
-	amnref=diamond.amn
-	amncal=OUT.autotest/diamond.amn
-	mmnref=diamond.mmn
-	mmncal=OUT.autotest/diamond.mmn
-	eigref=diamond.eig
-	eigcal=OUT.autotest/diamond.eig
-	# AMN is covariant under the band gauge (A -> U^dagger A), so compare
-	# the gauge-invariant Gram matrix A^dagger A instead of the raw elements.
-	python3 $COMPARE_AMN_SCRIPT $amnref $amncal
-	echo "CompareAMN_pass $?" >>$props_result_file
-	# MMN is covariant as M(k,b) -> U_k^dagger M(k,b) U_{k+b}; CPU and GPU
-	# differ by per-band phases, under which |M_mn| is invariant.
-	python3 $COMPARE_MMN_SCRIPT $mmnref $mmncal
-	echo "CompareMMN_pass $?" >>$props_result_file
-	python3 $COMPARE_SCRIPT $eigref $eigcal 8
-	echo "CompareEIG_pass $?" >>$props_result_file
+if [[ "$toW90" == 1 ]] || { [[ -f result.ref ]] && grep -qE '^[[:space:]]*Compare(AMN|MMN|EIG)_pass[[:space:]]' result.ref; }; then
+	# One shared gauge must preserve every AMN/MMN entry and the energy operator.
+	# Keep all labelled EIG values at 1e-8 eV; use explicit dimensionless
+	# matrix limits instead of the former ambiguous `1 -abs 8` arguments.
+	if ! python3 "$PROPS_SCRIPT_DIR/compare_wannier_bundle.py" \
+		diamond OUT.autotest/diamond \
+		--matrix-tolerance 1e-8 --energy-tolerance 1e-8; then
+		echo "Wannier90 bundle comparison failed" >&2
+		exit 1
+	fi
+	printf '%s\n' "CompareAMN_pass 0" "CompareMMN_pass 0" "CompareEIG_pass 0" >>"$props_result_file"
 fi
 
 #-------------------------------

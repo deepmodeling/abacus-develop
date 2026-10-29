@@ -9,7 +9,13 @@ pseudo_dir        ../../PP_ORB
 
 #Parameters (2.Iteration)
 ecutwfc           50
+# Tight real-space convergence stabilizes the energy and stress reference.
+scf_thr_type      2
 scf_thr           1e-9
+scf_nmax          200
+pw_diag_thr       1e-12
+pw_diag_nmax      200
+diago_smooth_ethr false
 
 dft_functional    scan
 

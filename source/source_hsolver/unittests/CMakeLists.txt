@@ -2,6 +2,59 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+# Each adversarial case must run in its own process. Requiring the completion
+# marker also catches historical solver failure paths that called exit(0).
+add_executable(MODULE_HSOLVER_davidson_stability
+  test_diago_david.cpp
+  ../diago_david.cpp
+  ../diago_dav_subspace.cpp
+)
+target_link_libraries(MODULE_HSOLVER_davidson_stability PRIVATE
+  parameter base psi device container abacus::linalg_libs
+)
+target_compile_definitions(MODULE_HSOLVER_davidson_stability PRIVATE
+  ABACUS_DAVIDSON_STABILITY_HARNESS
+)
+if(ENABLE_MPI)
+  target_sources(MODULE_HSOLVER_davidson_stability PRIVATE
+    ../diag_hs_para.cpp
+    ../diago_pxxxgvx.cpp
+  )
+  if(TARGET ELPA::ELPA)
+    target_link_libraries(MODULE_HSOLVER_davidson_stability PRIVATE ELPA::ELPA genelpa)
+  endif()
+endif()
+if(ENABLE_COVERAGE)
+  add_coverage(MODULE_HSOLVER_davidson_stability)
+endif()
+install(TARGETS MODULE_HSOLVER_davidson_stability DESTINATION ${CMAKE_BINARY_DIR}/tests)
+foreach(solver dav dav_subspace)
+  foreach(case exact partial_exact collinear near_collinear degenerate generalized_spd warm_start small_direction restart_spd)
+    set(test_name MODULE_HSOLVER_davidson_stability_${solver}_${case})
+    add_test(NAME ${test_name}
+      COMMAND MODULE_HSOLVER_davidson_stability ${solver} ${case}
+    )
+    set_tests_properties(${test_name} PROPERTIES
+      PASS_REGULAR_EXPRESSION "STABILITY_RESULT solver=${solver} case=${case} accepted=1 "
+      FAIL_REGULAR_EXPRESSION "STABILITY_EXCEPTION;accepted=0"
+      ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1"
+      LABELS "hsolver;davidson;stability"
+      TIMEOUT 60
+    )
+  endforeach()
+endforeach()
+
+AddTest(
+  TARGET MODULE_HSOLVER_cg_accuracy
+  LIBS parameter base psi device container
+  SOURCES test_diago_cg_accuracy.cpp ../diago_cg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp
+)
+set_tests_properties(MODULE_HSOLVER_cg_accuracy PROPERTIES
+  PASS_REGULAR_EXPRESSION "CG_ACCURACY_COMPLETE status=0"
+  ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1"
+  TIMEOUT 60
+)
+
 
 if (ENABLE_MPI)
   AddTest(
@@ -63,9 +116,11 @@ if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_pw
     LIBS parameter  psi device base container symmetry
-    SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
-  ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
-  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+    SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diago_ppcg.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
+    ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
+    ../../source_hamilt/module_xc/exx_info.cpp
+    ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+    ../../source_basis/module_pw/test/test_tool.cpp
   )
 
   if(ENABLE_LCAO)
@@ -102,6 +157,39 @@ if (ENABLE_MPI)
   target_compile_definitions(MODULE_HSOLVER_LCAO_cusolver PRIVATE __CUDA)
   endif()
 endif()
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg
+  LIBS parameter base psi device container
+  SOURCES test_diago_ppcg.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+AddTest(
+  TARGET MODULE_HSOLVER_diago_params
+  LIBS parameter base psi device
+  SOURCES test_diago_params.cpp ../diago_params.cpp
+)
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg_float
+  LIBS parameter base psi device container
+  SOURCES test_diago_ppcg_float.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+
+if (ENABLE_MPI)
+AddTest(
+  TARGET MODULE_HSOLVER_compare
+  LIBS parameter base psi device container
+  SOURCES test_diago_compare.cpp ../diago_cg.cpp ../diago_bpcg.cpp ../diago_david.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_lin_tf.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+set_tests_properties(MODULE_HSOLVER_compare PROPERTIES
+  DISABLED TRUE
+  LABELS benchmark
+)
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg_parallel
+  LIBS parameter base psi device container
+  SOURCES test_diago_ppcg_parallel.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+endif()
+
 abacus_copy_test_files(
   H-KPoints-Si2.dat
   H-GammaOnly-Si2.dat
@@ -118,6 +206,7 @@ abacus_copy_test_files(
   diago_cg_parallel_test.sh
   diago_david_parallel_test.sh
   diago_lcao_parallel_test.sh
+  diago_ppcg_parallel_test.sh
   PEXSI-H-GammaOnly-Si2.dat
   PEXSI-S-GammaOnly-Si2.dat
   PEXSI-DM-GammaOnly-Si2.dat
@@ -179,6 +268,11 @@ if (ENABLE_MPI)
           "$<TARGET_FILE:MODULE_HSOLVER_dav_float>"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       ) 
+  add_test(NAME MODULE_HSOLVER_ppcg_parallel_test
+        COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/diago_ppcg_parallel_test.sh
+          "$<TARGET_FILE:MODULE_HSOLVER_ppcg_parallel>"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
   if(ENABLE_LCAO)
     add_test(NAME MODULE_HSOLVER_LCAO_parallel
           COMMAND ${BASH} diago_lcao_parallel_test.sh

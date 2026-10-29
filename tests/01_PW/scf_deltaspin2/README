@@ -1,1 +1,42 @@
-Test PW DeltaSpin with collinear spin (nspin=2), Z magnetization constraint, iterative optimization to target. Force and stress computed.
+Collinear DeltaSpin force and stress regression
+=============================================
+
+Test PW DeltaSpin with collinear spin (nspin=2), a Z magnetization
+constraint and iterative optimization to target. Force and stress are
+computed after both the charge density and constrained atomic magnetic
+moments converge to 1e-8. The default solver remains Davidson-subspace.
+
+The previous charge threshold of 1e-6 and magnetic-moment threshold of
+1e-4 left force and stress differences larger than the existing reference
+tolerances. The revised inputs tighten both convergence targets, set the
+initial diagonalization threshold to 1e-10, disable empty-band threshold
+smoothing and increase the iteration budgets. The adaptive diagonalization
+threshold remains enabled; pw_diag_thr_max is not set. Structure, K points,
+pseudopotential, orbitals, cutoff, smearing, mixing and kpar=2 are unchanged.
+
+Reference provenance (2026-10-26)
+-------------------------------
+The reference uses Davidson-subspace output from a GNU 12.3 / OpenMPI
+5.0.10 Release build with four MPI ranks and one OpenMP/BLAS thread.
+The build is based on 77f7b4af69934064aa5f4b84267343e9135bc348 plus the
+accompanying local PPCG/Davidson and threshold-control fixes. Binary SHA-256:
+d9d2914b9f8f793d0da52f28b09a6996ae39483958658dfb72490f51c2b842f1.
+
+Independent PPCG and CG runs used identical inputs except ks_solver.
+PPCG and Davidson-subspace converged in 24 SCF steps, CG in 25. Their
+final charge errors were 9.22e-9, 8.47e-9 and 5.09e-9; complete-space
+magnetic moment RMS errors were 7.28e-9, 4.97e-9 and 2.66e-9 Bohr magnetons.
+The final printed atomic moments independently satisfy the same target.
+
+Maximum differences across all three solver pairs:
+  total energy:             1.20e-8 eV
+  force absolute-value sum:  6.0e-6 eV/Angstrom
+  stress absolute-value sum: 7.80e-5 kbar
+  individual force entry:   1.38e-6 eV/Angstrom
+  individual stress entry:  4.27e-5 kbar
+
+The original reference-check tolerances remain 1e-7 eV, 1e-4 eV/Angstrom
+and 1e-3 kbar. The reference contains the same four properties as before;
+timing output is not used as a numerical reference. All three tightened
+calculations differ from the old stress reference by about 8.764 kbar in
+the absolute-value sum, establishing the need for the reference update.

@@ -1,0 +1,34 @@
+INPUT_PARAMETERS
+# One outer iteration isolates the PPCG cutoff-degeneracy regression.
+suffix            autotest
+calculation       scf
+
+nbands            6
+symmetry          0
+pseudo_dir        ../../PP_ORB
+
+ecutwfc           20
+init_chg          atomic
+# Stop after the deterministic first Hamiltonian; eigensolver tolerance stays strict.
+scf_thr           1
+scf_nmax          1
+kpar              1
+
+out_band          1 16
+out_app_flag      0
+dft_functional    scan
+# Preserve the single-Hamiltonian regression; tighten only the inner solve.
+pw_diag_thr       1e-14
+pw_diag_nmax      500
+diago_smooth_ethr false
+ks_solver         ppcg
+pw_diag_ndim      4
+
+basis_type        pw
+
+smearing_method   gauss
+smearing_sigma    0.002
+
+mixing_type       plain
+mixing_beta       0.7
+mixing_gg0        0.0

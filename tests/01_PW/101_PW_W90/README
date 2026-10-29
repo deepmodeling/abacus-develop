@@ -1,0 +1,56 @@
+Test the complete Wannier90 AMN/MMN/EIG output for fixed-density PW NSCF.
+The supplied density, structure, k mesh, pseudopotential, four bands,
+50 Ry cutoff, fixed occupations and random seed are retained. CG remains
+the default solver. This case does not run a self-consistent density cycle.
+
+Reference and comparison revision (2026-10-29)
+---------------------------------------------
+Different eigensolvers can choose different Bloch-state phases and bases
+inside nearly degenerate band spaces. The former comparison independently
+took absolute values of the real and imaginary AMN/MMN components. Its
+arguments `1 -abs 8` also selected a 0.1 tolerance, whereas EIG used 1e-8 eV.
+
+The revised collector fits one unitary transformation per k point using
+the full AMN projection matrix, then applies the same transformation to
+all MMN links and the energy operator. Every complex AMN/MMN entry must
+agree within 1e-8, every energy-operator entry within 1e-8 eV, and every
+labelled EIG value within its original 1e-8 eV tolerance. There is no extra
+degeneracy window or cluster-average energy test. Headers, dimensions,
+indices, all records and finite values are checked. The tool explicitly
+rejects projection matrices that do not determine the complete gauge;
+this fixture has four independent projections for four bands.
+
+The old reference also contained non-gauge differences. Relative to the
+old CG run, its largest jointly aligned MMN difference was about 0.01355,
+on a link involving k point 47, and EIG differed by up to 3.78e-7 eV.
+The three output references are therefore regenerated from an independent
+CG calculation after fixing its projected search direction and stable
+two-dimensional energy-decrease calculation. Scalar result.ref values
+and their existing acceptance limits remain unchanged.
+
+The INPUT uses pw_diag_thr=1e-19, pw_diag_nmax=500, and disables empty-band
+threshold smoothing. CG tests the energy decrease; PPCG uses its residual
+criterion and existing 1e-14 floor. These solver criteria retain their
+respective meanings. The small energy-decrease threshold is evaluated by
+the corrected CG expression without subtracting two rounded total Ritz
+energies.
+
+The reference was cross-checked against independent Davidson,
+Davidson-subspace and PPCG calculations. Fresh CG/Davidson/PPCG runs at
+1, 2 and 4 MPI ranks pass all 45 original scalar/file property checks.
+Across all 36 pairs of the nine runs, maximum AMN/MMN/EIG/energy-operator
+differences are below 3.3e-11, 6.1e-10, 2.1e-10 eV and 6.9e-9 eV.
+Each PPCG run retains one inner residual warning at this very strict
+requested threshold; the final output comparisons all pass.
+
+Verification uses GNU 12.3, OpenMPI 5.0.10, CPU Release and one thread
+each for OpenMP, OpenBLAS and MKL. Executable SHA-256:
+625c9df20c3363232e9fd0eb742b9037869c318adf33e865b984d1b84be980a3.
+The comparator uses NumPy, already supplied in the GNU/Intel/CUDA test
+containers. In a local toolchain environment, select a Python interpreter
+whose NumPy BLAS libraries are compatible with that environment.
+
+Run the original Autotest.sh at -n1/-n2/-n4 -o1 on clean case copies with
+ks_solver=cg/dav/ppcg. Focused comparator tests can be run from
+tests/integrate with:
+  python3 -m unittest -v validation_tools/test_compare_wannier_bundle.py

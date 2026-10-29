@@ -1,0 +1,36 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix            autotest
+pseudo_dir        ../../PP_ORB
+pw_seed           1
+
+gamma_only        0
+calculation       scf
+symmetry          1
+out_level         ie
+smearing_method   gaussian
+smearing_sigma    0.02
+
+#Parameters (3.PW)
+ecutwfc           40
+# Resolve stress with a real-space density criterion; see README.
+scf_thr_type      2
+scf_thr           1e-10
+scf_nmax          50
+
+#Parameters (LCAO)
+basis_type        pw
+ks_solver         ppcg
+device            cpu
+nbands            8
+chg_extrap        second-order
+pw_diag_thr       0.00001
+pw_diag_nmax      200
+pw_diag_ndim      4
+
+cal_force         1
+cal_stress        1
+
+mixing_type       broyden
+mixing_beta       0.4
+mixing_gg0        1.5

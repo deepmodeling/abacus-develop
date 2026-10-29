@@ -3,6 +3,8 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
+#include <cmath>
+
 namespace ModuleIO
 {
 void ReadInput::item_elec_stru()
@@ -37,9 +39,10 @@ void ReadInput::item_elec_stru()
     // Electronic Structure
     {
         Input_Item item("ks_solver");
-        item.domain.set_choices({"cg", "dav", "bpcg", "dav_subspace", "genelpa", "elpa", "lapack", "scalapack_gvx", "cusolver", "cusolvermp", "pexsi"});
-        item.domain.add_requirement("basis_type==pw", "ks_solver in [cg, dav, bpcg, dav_subspace]");
+        item.domain.set_choices({"cg", "dav", "bpcg", "dav_subspace", "ppcg", "genelpa", "elpa", "lapack", "scalapack_gvx", "cusolver", "cusolvermp", "pexsi"});
+        item.domain.add_requirement("basis_type==pw", "ks_solver in [cg, dav, bpcg, dav_subspace, ppcg]");
         item.domain.add_requirement("basis_type==lcao", "ks_solver in [genelpa, elpa, lapack, scalapack_gvx, cusolver, cusolvermp, pexsi]");
+        item.domain.add_requirement("ks_solver==ppcg", "esolver_type!=sdft");
         item.domain.add_requirement("ks_solver==genelpa", "device==cpu");
         item.annotation = "cg; dav; lapack; genelpa; elpa; scalapack_gvx; cusolver";
         item.category = "Electronic structure";
@@ -50,7 +53,8 @@ For plane-wave basis,
 
 * cg: The conjugate-gradient (CG) method.
 * dav: The Davidson algorithm.
-* dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
+* dav_subspace: A block Davidson method. The CPU implementation orthogonalizes trial vectors in the overlap metric and filters linearly dependent expansion directions. `pw_diag_ndim` can be set to 2 for this method.
+* ppcg: The projection preconditioned conjugate-gradient method. It is optimized and validated for CPU plane-wave calculations; non-CPU devices use a transitional host/device bridge. It is not supported for esolver_type=sdft, including mixed stochastic-deterministic calculations.
 * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 
 For numerical atomic orbitals basis,
@@ -1000,10 +1004,10 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_thr");
-        item.annotation = "threshold for eigenvalues is cg electron iterations";
+        item.annotation = "threshold for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Real";
-        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
+        item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg/ppcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. The stopping criterion is solver-dependent: CG and Davidson methods compare eigenvalue changes against the threshold, whereas PPCG requires the norm of H psi - epsilon S psi to be at most max(ethr_band, ethr, 1e-14). The same numerical threshold therefore does not imply the same accuracy or cost across these methods. PPCG keeps the direct residual tolerance because an energy-only or square-root residual tolerance can leave forces and stresses insufficiently converged. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
         item.default_value = "0.01";
         item.unit = "";
         read_sync_double(input.pw_diag_thr);
@@ -1014,6 +1018,46 @@ Use case: When experimental or high-level theoretical results suggest that the S
                 {
                     para.input.pw_diag_thr = 1.0e-5;
                 }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pw_diag_thr_max");
+        item.annotation = "optional upper bound on the adaptive PW SCF diagonalization threshold";
+        item.category = "Plane wave related variables";
+        item.type = "Real";
+        item.description = R"(An optional upper bound on the diagonalization threshold selected during SCF iterations. Zero disables the bound and preserves the existing adaptive strategy. A positive value limits the threshold from the first electronic iteration of each self-consistent cycle onward, including every ionic step of relaxation, while allowing the adaptive strategy to tighten it further. It does not change the meaning or default value of pw_diag_thr, which sets the initial threshold.
+
+Positive values are supported only for basis_type=pw, esolver_type=ksdft, calculation=scf or relax, with diago_smooth_ethr=false. Smoothing is incompatible with this bound because it relaxes thresholds for weakly occupied bands. With precision=single, the bound must be at least 5e-5, the single-precision threshold floor.
+
+This bounds the SCF threshold supplied to the iterative solver, not a universal eigenvalue or residual error. Each solver retains its stopping criterion and numerical limits; in particular, PPCG has a minimum residual tolerance of 1e-14. Tight bounds can increase diagonalization cost or exhaust pw_diag_nmax. Validate convergence, energies, forces, and stresses for the intended calculation.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==ksdft and calculation in [scf, relax]");
+        read_sync_double(input.pw_diag_thr_max);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const Input_para& input = para.inp;
+            if (!std::isfinite(input.pw_diag_thr_max) || input.pw_diag_thr_max < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pw_diag_thr_max must be finite and nonnegative");
+            }
+            if (input.pw_diag_thr_max == 0.0)
+            {
+                return;
+            }
+            const bool supports_bound = input.calculation == "scf" || input.calculation == "relax";
+            if (input.basis_type != "pw" || input.esolver_type != "ksdft" || !supports_bound)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "Positive pw_diag_thr_max requires PW KSDFT SCF or relaxation");
+            }
+            if (input.diago_smooth_ethr)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "Positive pw_diag_thr_max requires diago_smooth_ethr=false");
+            }
+            if (input.precision == "single" && input.pw_diag_thr_max < 5.0e-5)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pw_diag_thr_max must be at least 5e-5 for single precision");
             }
         };
         this->add_item(item);
@@ -1044,25 +1088,44 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_nmax");
-        item.annotation = "max iteration number for cg";
+        item.annotation = "maximum iteration count for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
+        item.description = "Sets the iterative diagonalization limit for ks_solver = cg/dav/dav_subspace/ppcg in both SCF and NSCF calculations. NSCF uses this input, including its default of 50, rather than retaining a previous calculation's limit. CG and Davidson methods apply this limit within each internal diagonalization attempt and may retry; PPCG applies it to its subspace updates. It is not a common bound on total operator applications across solvers. Increasing the limit does not change convergence thresholds or guarantee convergence. BPCG currently does not use this parameter; its internal budget remains 24 updates in the first electronic iteration and 4 in later iterations.";
         item.default_value = "50";
         item.unit = "";
-        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg]");
+        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg, ppcg]");
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }
     {
         Input_Item item("pw_diag_ndim");
-        item.annotation = "dimension of workspace for Davidson diagonalization";
+        item.annotation = "dimension of workspace for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
+        item.description = "Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the block size for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
         item.default_value = "4";
         item.unit = "";
+        item.set_availability("basis_type==pw and ks_solver in [dav, dav_subspace, ppcg]");
         read_sync_int(input.pw_diag_ndim);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pw_diag_rr_step");
+        item.annotation = "full Rayleigh-Ritz interval for PPCG";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = "Only useful when you use ks_solver = ppcg. It must be a positive integer and sets the interval, in subspace iterations, between full Rayleigh-Ritz diagonalizations. The conservative default of 1 preserves the established every-iteration Rayleigh-Ritz cadence. The solver also performs a full Rayleigh-Ritz step at initialization, after the startup global correction, at final validation or tentative convergence, or when overlap orthogonalization fails. Additional expanded global Rayleigh-Ritz steps may be triggered when discarded local-block directions compete with the requested lowest roots; this root recovery is conditional, not a separate fixed interval. Between these steps it maintains S-orthogonality without diagonalizing the full projected Hamiltonian. H and S images are refreshed independently every 16 iterations, with additional refreshes when search-direction projection loses precision or residuals approach a floating-point cancellation scale. Convergence and final residuals are checked using freshly applied operators. Larger Rayleigh-Ritz intervals reduce full projected eigensolves but can change the SCF trajectory or require more diagonalization iterations; validate energies, forces, stresses, and the iteration budget for the intended calculation.";
+        item.default_value = "1";
+        item.unit = "";
+        item.set_availability("basis_type==pw and ks_solver==ppcg");
+        read_sync_int(input.pw_diag_rr_step);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.pw_diag_rr_step <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pw_diag_rr_step must be greater than 0");
+            }
+        };
         this->add_item(item);
     }
     {

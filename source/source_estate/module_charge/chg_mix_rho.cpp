@@ -258,20 +258,28 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     const int nspin = cfg_.nspin;
     assert(nspin==1 || nspin==2 || nspin==4);
 
+    // rho and kin_r use the dense real-space grid when double_grid is set.
+    // Use that grid for strides, FFT screening, and the history inner product.
+    ModulePW::PW_Basis* real_grid = this->rhopw;
+    if (this->cfg_.double_grid)
+    {
+        real_grid = this->rhodpw;
+    }
+
     double* rhor_in=nullptr;
     double* rhor_out=nullptr;
 
     // Kerker screening functor (see mix_rho_recip for the disable flag rationale).
-    std::function<void(double*)> screen = [this](double* p) {
+    std::function<void(double*)> screen = [this, real_grid](double* p) {
         if (this->kerker_disabled_)
         {
             return;
         }
-        module_charge::kerker_screen_real(this->cfg_, this->rhopw, *this->tpiba, p);
+        module_charge::kerker_screen_real(this->cfg_, real_grid, *this->tpiba, p);
     };
-    std::function<double(double*, double*)> inner_product = [this](double* rho1, double* rho2)
+    std::function<double(double*, double*)> inner_product = [this, real_grid](double* rho1, double* rho2)
     {
-        return module_charge::inner_product_real(rho1, rho2, *this->rhopw, this->cfg_);
+        return module_charge::inner_product_real(rho1, rho2, *real_grid, this->cfg_);
     };
 
     if (nspin == 1)
@@ -285,7 +293,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     else if (nspin == 2)
     {
         // magnetic density
-        const int nrxx = this->rhopw->nrxx;
+        const int nrxx = real_grid->nrxx;
         std::vector<double> rho_mag(nrxx * nspin);
         std::vector<double> rho_mag_save(nrxx * nspin);
         module_charge::detail::pack_rho_mag(rho_mag.data(), chr->rho[0], chr->rho[1], nrxx);
@@ -305,7 +313,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     {
         rhor_in = chr->rho_save[0];
         rhor_out = chr->rho[0];
-        const int nrxx = this->rhopw->nrxx;
+        const int nrxx = real_grid->nrxx;
         std::function<void(double*, const double*, const double*)> twobeta_mix
             = module_charge::detail::make_twobeta_mix<double>(4 * nrxx, nrxx, this->cfg_.mixing_beta, this->cfg_.mixing_beta_mag);
         this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, twobeta_mix, true);
@@ -315,7 +323,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     else if (nspin == 4 && cfg_.mixing_angle > 0)
     {
         // real-space version of the {rho, |m|} broyden mixing
-        const int nrxx = this->rhopw->nrxx;
+        const int nrxx = real_grid->nrxx;
         std::vector<double> rho_magabs(nrxx * 2);
         std::vector<double> rho_magabs_save(nrxx * 2);
         for (int ir = 0; ir < nrxx; ir++)

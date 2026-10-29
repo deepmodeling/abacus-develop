@@ -1,1 +1,48 @@
-test upf201 pseudopotential which has no cutoff_radius_index and multiserial <PP_LOCAL header, symmetry=on
+Test the UPF201 pseudopotential reader with no cutoff_radius_index and a
+multi-line PP_LOCAL header. Symmetry remains enabled.
+
+Reference validation (2026-10-28)
+--------------------------------
+The former input retained 10 bands for 17 electrons. Its highest band was
+still partially occupied, and CG and PPCG reached different self-consistent
+states: -2225.032737484868 and -2364.170263765835 eV, respectively. Both met
+the original SCF stopping criterion. Tightening scf_thr to 1e-11 and allowing
+200 diagonalization iterations while keeping 10 bands did not remove this
+disagreement: CG remained at -2225.032737542274 eV, while Davidson and PPCG
+reached approximately -2364.17026379 eV.
+
+The revised input retains 20 bands, uses scf_thr=1e-11, and permits 200
+diagonalization iterations. The structure, pseudopotential, plane-wave
+cutoff, electron count, symmetry, smearing, and default CG solver are
+unchanged. The additional bands are unoccupied at convergence. Increasing
+the retained space again to 24 bands confirms stability of the energy.
+
+Independent solver results using the revised precision:
+
+  Bands   CG energy (eV)       Davidson energy (eV)  PPCG energy (eV)
+  20      -2364.170263789949   -2364.170263789398    -2364.170263789641
+  24      -2364.170263790098   -2364.170263790731    -2364.170263791520
+
+All six runs converged. Their energy span is 2.122e-9 eV, below the existing
+1e-7 eV tolerance. Keeping the original SCF precision with 20 bands gave a
+CG/Davidson difference of 1.985e-7 eV; the revised precision settings bring
+the solver comparison within the original tolerance.
+
+The stored energy reference comes from the independent 20-band CG run.
+The other reference properties and all acceptance tolerances are unchanged.
+With this reference, CG, Davidson, and PPCG were each run at 1, 2, and 4 MPI
+ranks: all nine official Autotest runs passed all five checked properties.
+All nine SCF runs converged, their energy span was 2.716e-9 eV, and there
+were no PPCG residual warnings.
+
+Validation used GNU 12.3, OpenMPI 5.0.10, CPU Release, and one thread each
+for OpenMP, OpenBLAS, and MKL. The executable was built from base commit
+77f7b4af69934064aa5f4b84267343e9135bc348 plus the locally validated solver
+changes; its SHA-256 is
+7f14de6005560b6df11b7cf968a47ee52eb5fc4a379e5de7acec43228a114cac.
+The unchanged original input and reference remain in that base commit.
+
+To reproduce, use clean copies of this case with ks_solver=cg, dav, and
+ppcg and run the unchanged tests/integrate/Autotest.sh at -n1, -n2, and
+-n4 with -o1. Also compare the three solvers at nbands=24. Do not reuse
+wavefunctions, densities, or other outputs between solver runs.

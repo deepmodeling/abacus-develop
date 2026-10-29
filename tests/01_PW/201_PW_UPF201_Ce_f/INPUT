@@ -10,8 +10,13 @@ pseudo_dir        ../../PP_ORB
 
 #Parameters (2.Iteration)
 ecutwfc           20
-scf_thr           1e-9
-scf_nmax          100
+# Resolve the SCAN density consistently before comparing XC-sensitive energies.
+scf_thr_type      2
+scf_thr           1e-8
+scf_nmax          200
+pw_diag_thr       1e-12
+pw_diag_nmax      200
+diago_smooth_ethr false
 
 #Parameters (3.Basis)
 basis_type        pw
@@ -22,7 +27,8 @@ smearing_sigma    0.002
 
 #Parameters (5.Mixing)
 mixing_type       broyden
-mixing_beta       0.7
+mixing_beta       0.3
+mixing_tau        true
 
 init_chg          file
 read_file_dir     .

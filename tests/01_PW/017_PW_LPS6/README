@@ -1,1 +1,27 @@
 test LPS in psp6 format, symmetry=on
+
+Reference convergence (2026-10-28)
+----------------------------------
+The former SCF charge threshold left solver-dependent energy differences
+larger than the existing 1e-7 eV acceptance tolerance. Only scf_thr is
+tightened to 1e-11. The structure, pseudopotential, plane-wave cutoff,
+band count, k-point settings, mixing, default CG solver and iteration
+budgets remain unchanged. No comparison tolerance is relaxed.
+
+Independent MPI4 calculations at scf_thr=1e-11:
+
+  cg    -3860.058266241892 eV
+  dav   -3860.05826624193 eV
+  ppcg  -3860.058266242888 eV
+
+All three SCF calculations converged; their energy span is 9.959e-10 eV.
+Tightening CG once more to scf_thr=1e-12 changes its energy by 3.001e-10
+eV, also below the original tolerance. The two stored energy fields come
+from the independent 1e-11 CG run; other reference fields are unchanged.
+
+Validation used GNU 12.3, OpenMPI 5.0.10 and CPU Release, with one
+OpenMP/OpenBLAS/MKL thread. Executable SHA-256:
+bdf544c3e792c5ce7ea973e32ab093dffa563c09ce76956fbbfcf582d1a5eecf.
+To reproduce, start each solver from a clean copy of this case, set
+ks_solver to cg, dav or ppcg, and run the original Autotest.sh with
+-n4 -o1. Repeat CG with scf_thr=1e-12 to check threshold stability.

@@ -260,6 +260,16 @@ void DiagoCG<T, Device>::calc_grad(const ct::Tensor& prec,
                                                         1.0,
                                                         pphi.data<T>(),
                                                         (-lambda));
+
+    // Remove the residual projection left by cancellation in H*phi-lambda*S*phi.
+    const Real projection = ModuleBase::dot_real_op<T, Device>()(this->n_basis_, sphi.data<T>(), grad.data<T>());
+    const Real correction = -projection / es;
+    ModuleBase::vector_add_vector_op<T, Device, Real>()(this->n_basis_,
+                                                        grad.data<T>(),
+                                                        grad.data<T>(),
+                                                        1.0,
+                                                        pphi.data<T>(),
+                                                        correction);
 }
 
 template <typename T, typename Device>
@@ -427,15 +437,30 @@ bool DiagoCG<T, Device>::update_psi(const ct::Tensor& pphi,
 
     const Real new_e = (e0 - b0) * cos(2.0 * theta) + a0 * sin(2.0 * theta);
 
-    const Real e1 = (e0 + b0 + new_e) / 2.0;
-    const Real e2 = (e0 + b0 - new_e) / 2.0;
-
-    if (e1 > e2)
+    // Select the lower root before adding the common energy offset.
+    if (new_e > 0.0)
     {
         theta += ModuleBase::PI_HALF;
     }
 
-    eigen = std::min(e1, e2);
+    // Evaluate the energy decrease before adding the full Rayleigh quotient.
+    // Subtracting two rounded full eigenvalues can falsely report zero change.
+    const Real gap = b0 - e0;
+    const Real splitting = std::hypot(gap, a0);
+    Real energy_change = 0.0;
+    if (gap >= 0.0)
+    {
+        const Real denominator = gap + splitting;
+        if (denominator > 0.0)
+        {
+            energy_change = -0.5 * a0 * (a0 / denominator);
+        }
+    }
+    else
+    {
+        energy_change = 0.5 * (gap - splitting);
+    }
+    eigen = e0 + energy_change;
 
     const Real cost = cos(theta);
     const Real sint_norm = sin(theta) / cg_norm;
@@ -453,7 +478,7 @@ bool DiagoCG<T, Device>::update_psi(const ct::Tensor& pphi,
                                                         cg.data<T>(),
                                                         sint_norm);
 
-    if (std::abs(eigen - e0) < ethreshold)
+    if (std::abs(energy_change) < ethreshold)
     {
         // ModuleBase::timer::start("DiagoCG","update");
         return true;

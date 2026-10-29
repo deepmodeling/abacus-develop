@@ -1,1 +1,15 @@
 test calculation when atom number is zero.
+
+Force/stress accuracy (2026-10-29)
+--------------------------------
+Use scf_thr=1e-12 and pw_diag_nmax=200 to resolve force and
+stress at the existing 1e-4 eV/Angstrom and 1e-3 kbar comparison limits.
+The former references shift under tighter CG, Davidson-subspace and PPCG
+calculations. The updated scalar reference uses an independent
+Davidson-subspace run with scf_thr=1e-14, pw_diag_thr_max=1e-12 and
+pw_diag_nmax=200. At these settings, the maximum spread across the
+three solvers is 2.84e-14 eV in energy, 0 eV/Angstrom
+in the force sum and 9e-05 kbar in the stress sum.
+Calibration uses GNU 12.3, OpenMPI 5.0.10, four MPI ranks and one
+OpenMP/BLAS thread. Structure, pseudopotential, cutoff, mixing and
+acceptance tolerances are unchanged. Timing is not a numerical reference.

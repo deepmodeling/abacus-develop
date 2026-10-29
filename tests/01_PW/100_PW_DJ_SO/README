@@ -1,1 +1,49 @@
-DFTU + NSPIN4, Fe2, multi-k case
+DFT+U + noncollinear SOC, Fe2, multiple k points
+
+Numerical configuration
+-----------------------
+The wavefunction cutoff remains 10 Ry. The explicit 160 Ry charge-density
+cutoff improves resolution of the nonlinear core correction compared with
+the former implicit 40 Ry grid. This changes the numerical discretization
+and its reference energy; it is not a claim of complete cutoff convergence.
+
+The SCF threshold is 1e-11. pw_diag_thr sets the initial inner threshold;
+pw_diag_thr_max=1e-14 also bounds later SCF diagonalizations. Empty-band
+threshold smoothing is disabled. The larger iteration budgets allow these
+accuracy checks without changing the harness acceptance tolerances.
+
+Reference validation (2026-10-25)
+-------------------------------
+The reference is a fresh Davidson-subspace result, checked independently
+with PPCG and Davidson after the rank-deficient-direction and PPCG direction
+rotation fixes. GNU 12.3, OpenMPI 5.0.10, Release CPU; four MPI ranks;
+OMP_NUM_THREADS=OPENBLAS_NUM_THREADS=MKL_NUM_THREADS=1.
+All four solvers, including the supplementary CG run, reached SCF convergence
+in 20 iterations. Absolute differences relative to PPCG were:
+
+solver                 energy/eV       force sum/(eV/Angstrom)  stress sum/kbar
+Davidson-subspace      2.20e-9         0 (printed precision)    1.00e-4
+Davidson               1.16e-9         0 (printed precision)    9.20e-5
+CG                     2.13e-9         2.00e-6                  2.218e-3
+harness limit          1.00e-7         1.00e-4                  1.00e-3
+
+Force and stress are the sums extracted by the original property collector.
+The CG stress comparison remains outside the original limit. PPCG emitted
+six early-iteration residual warnings at 1.07e-14 to 1.52e-14 against the
+requested 1e-14; these warnings are retained. The final SCF and property
+checks are reported separately. Repeating Davidson-subspace/PPCG with two
+OpenMP threads also passed the same property limits.
+
+Using 1e-13 inner thresholds removed the PPCG residual warnings, but degraded
+the CG energy/force/stress agreement. That alternative was not adopted.
+Neither the original failed runs nor their references were used as the new
+cross-solver reference. The original files remain recoverable from Git.
+
+Reproduce the native reference check from tests/01_PW:
+  OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+    bash ../integrate/Autotest.sh -a /absolute/path/to/abacus -n4 -o1 -j1 \
+    -r '^100_PW_DJ_SO$'
+
+For a cross-solver check, copy the case and change only ks_solver to ppcg
+or dav. Keep the reference and the harness tolerances unchanged. The timing
+field is informational; these runs were not a controlled speed benchmark.

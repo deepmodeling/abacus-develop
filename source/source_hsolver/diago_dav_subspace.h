@@ -95,7 +95,7 @@ class Diago_DavSubspace
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    void cal_grad(const HSOperator<T, Device>& op,
+    int cal_grad(const HSOperator<T, Device>& op,
                   const int& dim,
                   const int& nbase,
                   const int& notconv,
@@ -105,6 +105,15 @@ class Diago_DavSubspace
                   T* vcc,
                   const int* unconv,
                   std::vector<Real>* eigenvalue_iter);
+
+    // CPU basis construction; returns the number of independent retained columns.
+    int orthonormalize_cpu(const HSOperator<T, Device>& op, const int first, const int count);
+
+    bool restarted_basis_is_orthonormal_cpu() const;
+
+    bool residuals_converged_cpu(const int nbase,
+                                const std::vector<Real>& eigenvalues,
+                                const std::vector<double>& ethr_band) const;
 
     void cal_elem(const int& dim,
                   int& nbase,

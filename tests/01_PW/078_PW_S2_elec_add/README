@@ -1,1 +1,43 @@
-test diamond Si with one additional spin-up electron, nspin=2, symmetry=on
+Test diamond Si with one additional spin-up electron, nspin=2, symmetry=on.
+
+Reference convergence (2026-10-28)
+----------------------------------
+The former loose SCF settings gave solver-dependent energies, occupations,
+forces and stresses. The revised input uses a real-space charge residual
+of 1e-8 and limits the adaptive diagonalization threshold to 1e-12 from
+the first electronic iteration. Inner and outer iteration budgets are 300.
+The default CG solver, random initial wavefunctions, seed 1, structure,
+pseudopotential, cutoffs, band count, k points and smearing are unchanged.
+The system still contains nine electrons with nupdown=1.
+
+Independent MPI4 calculations with the revised settings:
+
+  Solver   Energy (eV)           Force sum (eV/Angstrom)   Stress sum (kbar)
+  CG       -203.7827845743456    8.011022                  2586.655021
+  Davidson -203.7827845742895    8.011010                  2586.655301
+  PPCG     -203.7827845740013    8.011012                  2586.655295
+
+The reference energy and force/stress sums come from the independent CG
+run. Other reference fields and the existing acceptance limits (1e-7 eV,
+1e-4 eV/Angstrom and 1e-3 kbar) are unchanged.
+
+With the new reference, CG/Davidson/PPCG at each of 1/2/4 MPI ranks pass
+all 63 official property checks. All nine SCF calculations converge.
+Across these runs the energy, force-sum and stress-sum spans are
+2.350e-9 eV, 1.2e-5 eV/Angstrom and 2.91e-4 kbar. Independently summing
+the final weighted occupations gives five spin-up and four spin-down
+electrons. Each PPCG run reports one residual warning in the first
+electronic iteration; no residual warning occurs at the final step.
+
+The new reference energy is 7.75852e-4 eV higher than the old loose-CG
+reference. This revision verifies a reproducible constrained SCF solution
+for the fixed initial settings; it does not establish a unique lowest-energy
+state. Tighter Davidson/PPCG diagnostics approach the same state. Some
+more stringent CG diagnostics fail to converge or exit abnormally and
+are excluded from reference generation.
+
+Validation: GNU 12.3, OpenMPI 5.0.10, CPU Release, one OpenMP/OpenBLAS/MKL
+thread. Executable SHA-256:
+bdf544c3e792c5ce7ea973e32ab093dffa563c09ce76956fbbfcf582d1a5eecf.
+To reproduce, use clean case copies with ks_solver=cg, dav and ppcg,
+and run the original Autotest.sh at -n1, -n2 and -n4 with -o1.

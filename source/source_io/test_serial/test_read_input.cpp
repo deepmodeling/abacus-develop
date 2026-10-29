@@ -73,6 +73,50 @@ TEST_F(InputDomainReaderTest, KeepsExplicitValuesAndContextualDefaults)
     EXPECT_EQ(input.inp.gga_grad, 0);
 }
 
+TEST_F(InputDomainReaderTest, ReadsAndWritesPpcgWithTheUnifiedDomainRules)
+{
+    write_input("ks_solver ppcg\n");
+    ModuleIO::ReadInput reader(0);
+    reader.check_ntype_flag = false;
+    Parameter input;
+    reader.read_parameters(input, filename);
+    EXPECT_EQ(input.inp.ks_solver, "ppcg");
+
+    const std::string written = filename + ".written";
+    reader.write_parameters(input, written);
+    ModuleIO::ReadInput rereader(0);
+    rereader.check_ntype_flag = false;
+    Parameter restored;
+    rereader.read_parameters(restored, written);
+    EXPECT_EQ(restored.inp.ks_solver, "ppcg");
+
+    const ModuleIO::ParameterMetadata metadata = ModuleIO::ParameterHelp::get_metadata("ks_solver");
+    EXPECT_NE(metadata.allowed_values.find("ppcg"), std::string::npos);
+}
+
+TEST_F(InputDomainReaderTest, RejectsStochasticPpcgWithOrWithoutDeterministicBands)
+{
+    for (const int bands : {0, 4})
+    {
+        const std::string settings = "esolver_type sdft\nnbands " + std::to_string(bands)
+                                     + "\nnbands_sto 8\nsmearing_method fd\n";
+        const std::string invalid = settings + "ks_solver ppcg\n";
+        const std::string output = reject_input(invalid);
+        EXPECT_NE(output.find("ks_solver"), std::string::npos);
+        EXPECT_NE(output.find("Requires esolver_type!=sdft"), std::string::npos);
+
+        const std::string supported = settings + "ks_solver cg\n";
+        write_input(supported);
+        ModuleIO::ReadInput reader(0);
+        reader.check_ntype_flag = false;
+        Parameter input;
+        reader.read_parameters(input, filename);
+        EXPECT_EQ(input.inp.ks_solver, "cg");
+        EXPECT_EQ(input.inp.esolver_type, "sdft");
+        EXPECT_EQ(input.inp.nbands, bands);
+    }
+}
+
 TEST_F(InputDomainReaderTest, RejectsMalformedAndOutOfDomainExplicitValues)
 {
     for (const std::string value : {"3", "0", "-1", "2abc", "2.0", "2 4", "999999999999999999999"})

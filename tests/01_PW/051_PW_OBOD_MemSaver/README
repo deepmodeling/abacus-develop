@@ -1,2 +1,16 @@
 Test the output of bands and dos with key word "mem_saver"
 
+The fixed-density NSCF calculation checks bands to 1e-8 eV. Its former
+automatically selected diagonalization threshold, 1.25e-10, allowed the last
+printed digit of one CG band to cross the comparison boundary on CPU and GPU.
+Use pw_diag_thr=1e-12 to resolve the bands reliably, retaining the charge input,
+reference files, and comparison tolerances. CG bands then agree with a tighter
+Davidson-subspace control within 2e-11 eV; CG controls at 1e-14 agree across CPU
+and GPU within 2e-13 eV.
+
+Set pw_diag_nmax=100 so a PPCG substitution also reaches this stricter residual
+target. At the former budget of 50 it passed the observable checks but retained
+inner residual warnings. Budgets 100 and 200 give identical converged outputs
+in CPU and GPU controls, with no inner warning at 100. The larger ceiling does
+not extend CG solves that already meet their stopping criterion.
+

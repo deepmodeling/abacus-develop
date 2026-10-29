@@ -12,8 +12,8 @@ nspin           2
 ecutwfc         10
 nbands          28
 gamma_only      0
-scf_thr         1e-07
-scf_nmax        70
+scf_thr 1e-10
+scf_nmax 200
 out_chg         0
 out_occ_mat     1
 
@@ -44,3 +44,15 @@ pw_seed         1
 
 cal_force       1
 cal_stress      1
+
+ecutrho 160
+
+scf_thr_type 2
+
+pw_diag_thr 1e-13
+
+pw_diag_nmax 200
+
+diago_smooth_ethr false
+
+mixing_beta_mag 0.4

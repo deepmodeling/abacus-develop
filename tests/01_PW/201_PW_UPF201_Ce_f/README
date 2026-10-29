@@ -1,4 +1,10 @@
-1. SG15 pseudopotential with f electron
-2. SCAN exchange-correlation functional
-3. symmetry=on
-4. init_chg=file
+Test SCAN with Ce, symmetry and an input charge-density restart.
+
+The reference includes local XC terms at finite density and zero density
+gradient. The previous gradient mask also suppressed these local terms.
+Joint charge/kinetic-density mixing (beta=0.3), a real-space charge threshold
+of 1e-8, and tighter diagonalization stabilize the XC-sensitive state.
+The previous reciprocal-space threshold measured a different residual.
+The original 1e-7 eV energy acceptance, restart, cell, pseudopotential, basis
+and band count are retained. Independent checks use CG, Davidson and PPCG
+at 1/2/4 MPI ranks; Davidson uses pw_diag_ndim=2 in validation copies only.

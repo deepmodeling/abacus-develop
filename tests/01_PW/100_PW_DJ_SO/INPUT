@@ -4,8 +4,9 @@ nbands            40
 
 calculation       scf
 ecutwfc           10
-scf_thr           1.0e-4
-scf_nmax          50
+ecutrho           160
+scf_thr           1.0e-11
+scf_nmax          200
 out_chg           0
 
 #init_chg    file
@@ -27,7 +28,10 @@ mixing_dmr        1
 mixing_gg0        1.1
 
 ks_solver         dav_subspace
-diago_smooth_ethr  true
+diago_smooth_ethr  false
+pw_diag_thr       1.0e-14
+pw_diag_thr_max   1.0e-14
+pw_diag_nmax      500
 pw_diag_ndim      2
 basis_type        pw
 gamma_only        0
