@@ -37,16 +37,16 @@ ModuleBase::matrix hartree_gpu(const UnitCell& cell, const ModulePW::PW_Basis& b
     }
     base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
         gpu, cpu, gg.data<double>(), basis.gg, basis.npw);
-    auto* grid = basis.ft.get_auxr_3d_data<double>();
+    auto* grid = basis.fft_bundle.get_auxr_3d_data<double>();
     hartree_pack_density_gpu(basis.nrxx, channels, density.data<double>(), grid);
-    basis.ft.fft3D_forward(gpu, grid, grid);
+    basis.fft_bundle.fft3D_forward<double>(gpu, grid, grid);
     hartree_coefficients_gpu(basis.npw, basis.d_ig2fftbox, gg.data<double>(), 1.0 / basis.nxyz,
                              ModuleBase::e2 * ModuleBase::FOUR_PI, cell.tpiba2, grid,
                              coefficients.data<Complex>(), sums.data<double>());
     base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(gpu, grid, 0, basis.nxyz);
     ModulePW::set_3d_fft_box_op<double, base_device::DEVICE_GPU>()(
         gpu, basis.npw, basis.d_ig2fftbox, coefficients.data<Complex>(), grid);
-    basis.ft.fft3D_backward(gpu, grid, grid);
+    basis.fft_bundle.fft3D_backward<double>(gpu, grid, grid);
     ModulePW::extract_real_grid_gpu(basis.nrxx, false, 1.0, grid, density.data<double>());
     ModuleBase::matrix potential(nspin, basis.nrxx);
     base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(

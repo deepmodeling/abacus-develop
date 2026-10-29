@@ -6,6 +6,8 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
+#include <memory>
+
 Charge_Mixing::Charge_Mixing()
 {
 }

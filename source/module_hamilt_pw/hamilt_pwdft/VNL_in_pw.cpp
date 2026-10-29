@@ -464,7 +464,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     bool device_gk = false;
 #if defined(__CUDA)
     device_gk = std::is_same<Device, base_device::DEVICE_GPU>::value && std::is_same<FPTYPE, double>::value
-                && GlobalV::device_flag == "gpu";
+                && PARAM.inp.device == "gpu";
 #endif
     ModuleBase::Vector3<double>* _gk = nullptr;
     if (!device_gk)
