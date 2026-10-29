@@ -161,7 +161,9 @@ namespace LR
                     const int goffset_v_ds = (is * 3 + id) * nk * nbands * nbands;
                     for (int ik = 0; ik < nk; ++ik)
                     {
-                        const double wk = this->kv.wk[ik] * nk; // k-point weight, normalized as sum = nk
+                        // Callers supply spatial weights; the singlet factor is applied below.
+                        const int spin_k = is * nk + ik;
+                        const double wk = this->spatial_weights[spin_k] * nk;
                         const std::size_t loffset_X = loffset_X_bs + ik * pX[is].get_local_size();
                         const int goffset_v = goffset_v_ds + ik * nbands * nbands;
                         for (int io = 0; io < pX[is].get_col_size(); ++io)    // nocc_local
