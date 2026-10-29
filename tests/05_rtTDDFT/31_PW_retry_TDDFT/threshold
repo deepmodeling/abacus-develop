@@ -1,0 +1,2 @@
+# Allow platform-dependent residual currents in the CN half-step retry regression.
+current_threshold 5e-10

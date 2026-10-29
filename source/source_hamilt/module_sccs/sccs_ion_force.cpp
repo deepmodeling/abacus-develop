@@ -1,4 +1,5 @@
 #include "sccs_ion_force.h"
+#include "sccs_ion_charge.h"
 
 #include "source_base/constants.h"
 #include "source_base/parallel_reduce.h"
@@ -17,6 +18,17 @@ void gauss_ion_force(const std::vector<unitcell::AtomData>& atoms,
                      double spread,
                      std::vector<ModuleBase::Vector3<double>>& forces)
 {
+    const std::vector<double> spreads(atoms.size(), spread);
+    gauss_ion_force(atoms, reaction_potential, basis, tpiba, spreads, forces);
+}
+
+void gauss_ion_force(const std::vector<unitcell::AtomData>& atoms,
+                     const std::vector<double>& reaction_potential,
+                     const ModulePW::PW_Basis& basis,
+                     double tpiba,
+                     const std::vector<double>& spreads,
+                     std::vector<ModuleBase::Vector3<double>>& forces)
+{
     std::vector<std::complex<double>> potential_g(basis.npw);
     basis.real2recip(reaction_potential.data(), potential_g.data());
     forces.assign(atoms.size(), ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
@@ -26,6 +38,7 @@ void gauss_ion_force(const std::vector<unitcell::AtomData>& atoms,
     for (std::size_t ia = 0; ia < atoms.size(); ++ia)
     {
         const unitcell::AtomData& atom = atoms[ia];
+        const double spread = spreads[ia];
         for (int ig = 0; ig < basis.npw; ++ig)
         {
             const double exponent = -0.25 * spread * spread * tpiba2 * basis.gg[ig];
@@ -41,5 +54,18 @@ void gauss_ion_force(const std::vector<unitcell::AtomData>& atoms,
         Parallel_Reduce::reduce_pool(forces[ia].y);
         Parallel_Reduce::reduce_pool(forces[ia].z);
     }
+}
+
+void gauss_core_frc(const std::vector<unitcell::AtomData>& atoms,
+                    const std::vector<double>& reaction_potential,
+                    const ModulePW::PW_Basis& basis,
+                    double tpiba,
+                    const std::vector<double>& atom_spreads,
+                    std::vector<ModuleBase::Vector3<double>>& forces)
+{
+    std::vector<unitcell::AtomData> core_atoms;
+    std::vector<double> widths;
+    prep_core_gauss(atoms, atom_spreads, core_atoms, widths);
+    gauss_ion_force(core_atoms, reaction_potential, basis, tpiba, widths, forces);
 }
 } // namespace ModuleSccs

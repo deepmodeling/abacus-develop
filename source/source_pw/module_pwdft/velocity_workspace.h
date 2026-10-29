@@ -22,11 +22,12 @@ class VelocityWorkspace
     /** @brief Reserve four input and four output projector blocks. */
     Complex* prepare(const std::int64_t count);
 
-    /** @brief Reduce projections and contract D on their native device. */
+    /** @brief Reduce four projection blocks and contract D on their native device; bands counts spin-component columns. */
     void contract(const UnitCell& cell,
                   const pseudopot_cell_vnl& pp,
                   const int spin,
                   const int bands,
+                  const int npol,
                   const Real scale,
                   const ModulePW::PW_Basis_K& basis,
                   Complex* buffer);

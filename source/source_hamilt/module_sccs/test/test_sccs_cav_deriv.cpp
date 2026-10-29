@@ -40,9 +40,10 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
     }
     const bool open_boundary = true;
     ModuleSccs::SccsResponse response;
-    std::vector<double> coefficient;
+    ModuleSccs::CavityDerivatives derivatives;
+    const std::vector<double>& coefficient = derivatives.coefficient;
     ModuleSccs::make_cav_derivs(density, cavity, basis, tpiba, open_boundary,
-                                response, coefficient);
+                                response, derivatives);
     const double log_bulk = std::log(cavity.epsilon_bulk);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -65,9 +66,10 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
     }
     const bool periodic_boundary = false;
     ModuleSccs::SccsResponse periodic;
-    std::vector<double> periodic_coefficient;
+    ModuleSccs::CavityDerivatives periodic_derivatives;
+    const std::vector<double>& periodic_coefficient = periodic_derivatives.coefficient;
     ModuleSccs::make_cav_derivs(density, cavity, basis, tpiba, periodic_boundary,
-                                periodic, periodic_coefficient);
+                                periodic, periodic_derivatives);
     double difference = 0.0;
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
@@ -81,4 +83,71 @@ TEST_F(SccsCavityDerivativesTest, OpenBoundaryCoefficientUsesSwitchingFunctionFf
     Parallel_Reduce::reduce_max_pool(basis.poolnproc, difference);
     EXPECT_GT(difference, 1e-8);
 
+}
+
+namespace
+{
+// Density whose switching function is 0.5 + amplitude * mode, found by
+// bisection of the cavity function at every grid point.
+std::vector<double> shell_density(const ModuleSccs::CavityParameters& cavity,
+                                  const std::vector<double>& mode,
+                                  double amplitude)
+{
+    std::vector<double> density(mode.size());
+    for (std::size_t ir = 0; ir < mode.size(); ++ir)
+    {
+        const double solute = 0.5 + amplitude * mode[ir];
+        double lower = cavity.density_min;
+        double upper = cavity.density_max;
+        for (int iteration = 0; iteration < 64; ++iteration)
+        {
+            const double middle = 0.5 * (lower + upper);
+            const ModuleSccs::CavityPoint point = ModuleSccs::evaluate_cavity(middle, cavity);
+            if (point.solute < solute)
+            {
+                lower = middle;
+            }
+            else
+            {
+                upper = middle;
+            }
+        }
+        density[ir] = 0.5 * (lower + upper);
+    }
+    return density;
+}
+} // namespace
+
+// The lowpass multiplies the single cosine shell by f(G) = erfc(G^2 - 0.5)/2
+// = erfc(0.5)/2 before the FFT derivatives of the switching function.
+TEST_F(SccsCavityDerivativesTest, OpenBoundaryLowpassFiltersSwitchingFunctionDerivatives)
+{
+    ModuleSccs::CavityParameters cavity;
+    cavity.density_min = 1e-4;
+    cavity.density_max = 5e-3;
+    cavity.epsilon_bulk = 5.0;
+    cavity.lowpass_p1 = basis.ggecut;
+    cavity.lowpass_p2 = 0.5;
+    const std::vector<double> mode = cosine_mode(0);
+    const double amplitude = 0.45;
+    const std::vector<double> density = shell_density(cavity, mode, amplitude);
+    const bool open_boundary = true;
+    ModuleSccs::SccsResponse response;
+    ModuleSccs::CavityDerivatives derivatives;
+    ModuleSccs::make_cav_derivs(density, cavity, basis, tpiba, open_boundary,
+                                response, derivatives);
+    const double log_bulk = std::log(cavity.epsilon_bulk);
+    const double weight = 0.5 * std::erfc(0.5);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const int ix = ir / (basis.ny * basis.nplane);
+        const double angle = ModuleBase::TWO_PI * ix / basis.nx;
+        const double gradient = -amplitude * tpiba * std::sin(angle) * weight;
+        const double laplacian = -amplitude * tpiba * tpiba * mode[ir] * weight;
+        const double expected = response.epsilon[ir] * (-0.5 * log_bulk * laplacian
+                                      + 0.25 * log_bulk * log_bulk * gradient * gradient)
+                                / ModuleBase::FOUR_PI;
+        EXPECT_NEAR(derivatives.coefficient[ir], expected, 1e-12);
+        EXPECT_NEAR(derivatives.gradient[ir].x, gradient, 1e-12);
+    }
 }

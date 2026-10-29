@@ -3,139 +3,8 @@
 #include "read_input_tool.h"
 #include "source_base/tool_quit.h"
 
-#include <algorithm>
-#include <cctype>
-#include <cmath>
-#include <utility>
-
 namespace ModuleIO
 {
-bool parse_imp_sol(const std::string& value, int& model, std::string& error)
-{
-    error.clear();
-    std::string normalized = value;
-    for (char& c : normalized)
-    {
-        const unsigned char byte = static_cast<unsigned char>(c);
-        const int lower = std::tolower(byte);
-        c = static_cast<char>(lower);
-    }
-    const std::vector<std::string> yes = {"true", "1", "t", "yes", "y", "on", ".true."};
-    const std::vector<std::string> no = {"false", "0", "f", "no", "n", "off", ".false."};
-    if (normalized == "2") { model = 2; }
-    else if (std::find(yes.begin(), yes.end(), normalized) != yes.end()) { model = 1; }
-    else if (std::find(no.begin(), no.end(), normalized) != no.end()) { model = 0; }
-    else
-    {
-        error = "imp_sol must be 0, 1, 2 or a legacy Boolean value";
-        return false;
-    }
-    return true;
-}
-
-namespace
-{
-// Calculation settings that SCCS supports; empty when all are supported.
-std::string context_error(const Input_para& input)
-{
-    std::string error;
-    if (input.assume_isolated != "none" && input.assume_isolated != "pcc_0d"
-        && input.assume_isolated != "pcc_2d")
-    {
-        error = "SCCS currently supports assume_isolated none, pcc_0d or pcc_2d";
-    }
-    else if (input.device != "cpu" || input.esolver_type != "ksdft")
-    {
-        error = "SCCS requires CPU KS-DFT";
-    }
-    else if (input.basis_type != "pw" && input.basis_type != "lcao")
-    {
-        error = "SCCS requires basis_type pw or lcao";
-    }
-    else if (input.calculation != "scf" || input.cal_stress)
-    {
-        error = "SCCS currently supports SCF energies and forces without stress";
-    }
-    else if (input.nspin != 1 && input.nspin != 2)
-    {
-        error = "SCCS requires nspin 1 or 2";
-    }
-    else if (input.efield_flag || input.gate_flag || input.dfthalf_type != 0
-             || input.deepks_scf || input.deepks_out_labels || input.deepks_bandgap
-             || input.deepks_v_delta || input.dm_to_rho)
-    {
-        error = "SCCS does not support electric/gate fields, DFT-1/2, DeePKS or dm_to_rho";
-    }
-    else if (!input.vl_in_h || !input.vion_in_h || !input.vh_in_h)
-    {
-        error = "SCCS requires the local ionic and Hartree potentials in the Hamiltonian";
-    }
-    return error;
-}
-
-// The shared real parser (std::stod) accepts nan and inf, which pass the
-// ordered comparisons below; signed values stay allowed for gamma/pressure.
-std::string nonfinite_error(const Input_para& input)
-{
-    const std::vector<std::pair<const char*, double>> values = {
-        {"sccs_epsilon", input.sccs_epsilon},
-        {"sccs_rho_min", input.sccs_rho_min},
-        {"sccs_rho_max", input.sccs_rho_max},
-        {"sccs_gamma", input.sccs_gamma},
-        {"sccs_pressure", input.sccs_pressure},
-        {"sccs_tol_rms", input.sccs_tol_rms},
-        {"sccs_tol_max", input.sccs_tol_max},
-        {"sccs_surface_eta", input.sccs_surface_eta}};
-    for (const std::pair<const char*, double>& value : values)
-    {
-        if (!std::isfinite(value.second)) { return std::string(value.first) + " must be finite"; }
-    }
-    return std::string();
-}
-
-// Cavity and surface model parameters, starting with the preset.
-std::string model_error(const Input_para& input)
-{
-    const std::vector<std::string> presets = {"custom", "vacuum", "water-neutral", "water-cation", "water-anion"};
-    if (std::find(presets.begin(), presets.end(), input.sccs_preset) == presets.end())
-    {
-        return "Unknown sccs_preset";
-    }
-    std::string error;
-    if (input.sccs_epsilon < 1.0) { error = "sccs_epsilon must be at least 1"; }
-    else if (input.sccs_rho_min <= 0.0 || input.sccs_rho_max <= input.sccs_rho_min)
-    { error = "sccs_rho_min and sccs_rho_max must satisfy 0 < sccs_rho_min < sccs_rho_max"; }
-    else if (input.sccs_surface_eta <= 0.0) { error = "sccs_surface_eta must be positive"; }
-    return error;
-}
-
-// sqrt-CG solver controls.
-std::string solver_error(const Input_para& input)
-{
-    std::string error;
-    if (input.sccs_maxiter <= 0) { error = "sccs_maxiter must be positive"; }
-    else if (input.sccs_tol_rms <= 0.0) { error = "sccs_tol_rms must be positive"; }
-    else if (input.sccs_tol_max <= 0.0) { error = "sccs_tol_max must be positive"; }
-    return error;
-}
-} // namespace
-
-bool check_sccs_inp(const Input_para& input, std::string& error)
-{
-    error.clear();
-    if (input.imp_sol < 0 || input.imp_sol > 2)
-    {
-        error = "imp_sol must be 0, 1 or 2";
-        return false;
-    }
-    if (input.imp_sol != 2) { return true; }
-    error = context_error(input);
-    if (error.empty()) { error = nonfinite_error(input); }
-    if (error.empty()) { error = model_error(input); }
-    if (error.empty()) { error = solver_error(input); }
-    return error.empty();
-}
-
 void ReadInput::item_sccs()
 {
     {
@@ -256,6 +125,62 @@ void ReadInput::item_sccs()
         item.unit = "bohr^-1";
         item.set_availability("imp_sol==2");
         read_sync_double(input.sccs_surface_eta);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_lowpass_p1");
+        item.annotation = "SCCS switching-derivative low-pass slope";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Low-pass filter of the SCCS switching-function derivatives, as Environ deriv_lowpass_p1 with deriv_method fft. Only with assume_isolated pcc_0d or pcc_2d. The default -1 turns it off and reproduces Environ deriv_method fft (continuum cavity potential). With lowpass disabled (the default), analytical forces may differ from finite differences of the self-consistent energy. For geometry optimization with PCC, consider enabling lowpass and check force accuracy against finite differences. With lowpass disabled, the cavity potential uses the FFT gradient of the PCC-corrected potential, which oscillates around the potential step at the cell boundary half a cell from the system center; keep the dielectric transition region several bohr away from that boundary. Typical values are sccs_lowpass_p1 10 and sccs_lowpass_p2 5. The filter changes the model energy, so compare only results computed with the same values.";
+        item.default_value = "-1";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_lowpass_p1);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_lowpass_p2");
+        item.annotation = "SCCS switching-derivative low-pass offset";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Offset of the SCCS switching-function low-pass filter, as Environ deriv_lowpass_p2; see sccs_lowpass_p1. Both must be positive or both non-positive. Default -1 (off).";
+        item.default_value = "-1";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_lowpass_p2);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_solvent_mode");
+        item.annotation = "density that defines the SCCS cavity";
+        item.category = "Implicit solvation model";
+        item.type = "String";
+        item.description = "Allowed values: electronic (default) and full, as Environ solvent_mode. electronic builds the dielectric cavity from the valence electron density. full adds valence-charge Gaussians selected by sccs_corespread.";
+        item.default_value = "electronic";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_string(input.sccs_solvent_mode);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_corespread");
+        item.annotation = "Widths of the full-cavity Gaussians";
+        item.category = "Implicit solvation model";
+        item.type = "Vector of Real";
+        item.description = "Widths of the valence-charge Gaussians used only with sccs_solvent_mode full. One value applies to every atom except those whose known atomic number equals the pseudopotential valence charge (within 1e-8). More than one value requires exactly nat values in STRU atom order (grouped by atom type), and overrides this automatic exclusion. A value <= 0 disables the cavity Gaussian on that atom. A per-atom list sets symmetry 1 to 0, because the symmetry analysis does not distinguish equivalent atoms by their widths.";
+        item.default_value = "0.5";
+        item.unit = "bohr";
+        item.set_availability("imp_sol==2");
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            std::string error;
+            const bool valid = parse_spreads(item.str_values, para.input.sccs_corespread, error);
+            if (!valid)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", error);
+            }
+        };
+        sync_doublevec(input.sccs_corespread, para.input.sccs_corespread.size(), 0.0);
         this->add_item(item);
     }
 }

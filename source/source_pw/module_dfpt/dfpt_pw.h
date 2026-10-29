@@ -131,6 +131,17 @@ class DFPT_PW
     /// acoustic sum rule on the Gamma dynamical matrix ("no" | "simple" |
     /// "crystal"); applied to the raw matrix before the LO-TO term
     void set_asr(const std::string& asr_type);
+    /// response SCF mixing scheme: "rho_plain" (beta only), "rho_kerker"
+    /// (screen f_g = |G+q|^2/(|G+q|^2+a^2), a^2 via set_kerker_a2),
+    /// "rho_broyden" (Modified Broyden on the density), or the potential
+    /// mixes "v_sc_plain" / "v_sc_broyden" (handled in solve_displacement)
+    void set_mix_type(const std::string& mix_type);
+
+    /// Kerker screening a^2 in 1/lat0^2 units (rho_kerker scheme only)
+    void set_kerker_a2(double a2);
+
+    /// Broyden history depth (broyden scheme only)
+    void set_broyden_ndim(int ndim);
 
     /// q = 0 response switches (epsilon_inf / Born charges / LO-TO)
     void set_compute_q0(bool flag);

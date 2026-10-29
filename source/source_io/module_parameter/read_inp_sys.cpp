@@ -371,6 +371,13 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
             {
                 para.input.symmetry = "-1"; // disable kpoint reduce
             }
+            // Per-atom SCCS cavity widths can differ between equivalent atoms,
+            // which the symmetry analysis does not see.
+            const bool sccs_full = para.input.imp_sol == 2 && para.input.sccs_solvent_mode == "full";
+            if (sccs_full && para.input.sccs_corespread.size() > 1 && para.input.symmetry == "1")
+            {
+                para.input.symmetry = "0";
+            }
         };
         this->add_item(item);
     }
