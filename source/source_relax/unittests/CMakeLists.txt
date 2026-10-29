@@ -339,6 +339,7 @@ addtest(
   ../lat_change_method.cpp
   ../lattice_change_basic.cpp
   ../lattice_change_cg.cpp
+  ${socket_json_sources}
   LIBS
   MPI::MPI_CXX
   parameter
