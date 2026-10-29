@@ -238,8 +238,18 @@ endif()
 # the standalone BLAS/LAPACK/ScaLAPACK above so that the linker resolves the
 # BLAS symbols from the standalone BLAS instead of the bundled copy.
 if(USE_DSP)
+  # mtfftblas_v1.4.1c renamed libmtblasdev.a to libmtblasfftdev.a; accept both.
+  find_library(MTBLASDEV_LIB
+    NAMES mtblasfftdev mtblasdev
+    PATHS ${MTBLAS_FFT_DIR}/libmtblas/lib
+    NO_DEFAULT_PATH)
+  if(NOT MTBLASDEV_LIB)
+    message(FATAL_ERROR
+      "USE_DSP requires libmtblasfftdev.a (mtfftblas >= v1.4.1c) or libmtblasdev.a "
+      "under ${MTBLAS_FFT_DIR}/libmtblas/lib, but neither was found.")
+  endif()
   list(APPEND _abacus_linalg_libs ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a
-       ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a
+       ${MTBLASDEV_LIB}
        ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtfft.a)
 endif()
 
@@ -641,7 +651,7 @@ list(
   source_basis/module_pw/kernels/pw_op.cpp
   source_hsolver/kernels/hegvd_op.cpp
   source_hsolver/kernels/bpcg_kernel_op.cpp
-  source_hsolver/kernels/linear_op.cpp
+  source_hsolver/module_linalg/kernels/linear_op.cpp
   source_estate/kernels/elecstate_op.cpp
   source_base/module_device/device.cpp
   source_base/module_device/device_helpers.cpp
@@ -675,7 +685,7 @@ if(USE_CUDA)
     source_basis/module_pw/kernels/cuda/pw_op.cu
     source_hsolver/kernels/cuda/hegvd_op.cu
     source_hsolver/kernels/cuda/bpcg_kernel_op.cu
-    source_hsolver/kernels/cuda/linear_op.cu
+    source_hsolver/module_linalg/kernels/cuda/linear_op.cu
     source_estate/kernels/cuda/elecstate_op.cu
     source_base/module_device/cuda/memory_op.cu
     source_pw/module_pwdft/kernels/cuda/force_op.cu
@@ -714,7 +724,7 @@ if(USE_ROCM)
     source_basis/module_pw/kernels/rocm/pw_op.hip.cu
     source_hsolver/kernels/rocm/hegvd_op.hip.cu
     source_hsolver/kernels/rocm/bpcg_kernel_op.hip.cu
-    source_hsolver/kernels/rocm/linear_op.hip.cu
+    source_hsolver/module_linalg/kernels/rocm/linear_op.hip.cu
     source_estate/kernels/rocm/elecstate_op.hip.cu
     source_base/module_device/rocm/memory_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/force_op.hip.cu
@@ -757,9 +767,11 @@ target_link_libraries(
           driver
           esolver
           hsolver
+          hsolver_linalg
           hamilt_general
           elecstate
           module_pwdft
+          module_rt_pw
           module_proj
           nao_smoothgen
           module_ofdft

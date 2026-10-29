@@ -454,7 +454,7 @@ private:
 
 namespace BlasUtils{
 
-    static cublasHandle_t cublas_handle = nullptr;
+    extern cublasHandle_t cublas_handle;
 
     void createGpuBlasHandle(); // Create a cublas/hipblas handle.
 

@@ -141,6 +141,15 @@ namespace container {
 // Usage example:	BlasConnector::functionname(parameter list).
 namespace BlasConnector {
 
+// Column-major rank-one update; preserve the supplied vector strides and leading dimension.
+static inline
+void ger(const int m, const int n, const double alpha,
+         const double* x, const int incx, const double* y, const int incy,
+         double* a, const int lda)
+{
+    dger_(&m, &n, &alpha, x, &incx, y, &incy, a, &lda);
+}
+
 static inline
 void axpy( const int& n, const float& alpha, const float *x, const int& incx, float *y, const int& incy)
 {

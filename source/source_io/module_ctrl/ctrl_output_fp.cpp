@@ -225,7 +225,9 @@ void ctrl_output_fp(UnitCell& ucell,
     const bool output_dipole = inp.esolver_type == "tddft" || should_output;
     if (inp.out_dipole == 1 && output_dipole)
     {
-        for (int is = 0; is < nspin; ++is)
+        const int dipole_channels = nspin == 4 ? 1 : nspin;
+        // In a spinor density only channel zero is charge; the other three channels are magnetization.
+        for (int is = 0; is < dipole_channels; ++is)
         {
             std::stringstream ss_dipole;
             ss_dipole << global_out_dir << "dipole_s" << is + 1 << ".txt";

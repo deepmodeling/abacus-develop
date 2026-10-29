@@ -27,6 +27,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
                             const K_Vectors& kv,
                             const ModulePW::PW_Basis_K* pw_wfc,
                             const Input_para& inp,
+                            bool final_output,
                             std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_pw");
@@ -46,7 +47,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
     {
         if (istep % output_frequency == 0)
         {
-            if (iter % inp.out_freq_elec == 0 || iter == inp.scf_nmax || conv_esolver)
+            if (iter % inp.out_freq_elec == 0 || iter == inp.scf_nmax || conv_esolver || final_output)
             {
                 istep_in = istep;
                 iter_in = iter;
@@ -54,7 +55,7 @@ void ModuleIO::ctrl_iter_pw(const int istep,
             }
         }
     }
-    else if (iter == inp.scf_nmax || conv_esolver)
+    else if (iter == inp.scf_nmax || conv_esolver || final_output)
     {
         out_wfc_flag = true;
     }
@@ -246,10 +247,13 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //------------------------------------------------------------------
     // 9) write onsite occupations for charge and magnetizations
     //------------------------------------------------------------------
-    if (inp.onsite_radius > 0)
-    { // float type has not been implemented
+    const bool spinor_rt = inp.esolver_type == "tddft" && inp.nspin == 4;
+    // RT writes endpoint magnetic series instead of this static occupation report.
+    if (inp.onsite_radius > 0 && !spinor_rt)
+    {
+        stp.update_psi_d();
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
-        onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(stp.template get_psi_t<T, Device>()),
+        onsite_p->cal_occupations(stp.template get_psi_d<T, Device>(),
                                   pelec->wg,
                                   inp.nspin);
     }

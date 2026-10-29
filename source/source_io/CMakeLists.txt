@@ -6,6 +6,7 @@ list(APPEND objects
     module_ctrl/ctrl_output_fp.cpp
     module_ctrl/ctrl_output_pw.cpp
     module_ctrl/ctrl_output_td.cpp
+    module_ctrl/ctrl_output_td_pw.cpp
     module_bessel/bessel_basis.cpp
     module_output/cal_test.cpp
     module_dos/cal_dos.cpp
@@ -15,6 +16,7 @@ list(APPEND objects
     module_energy/write_bands.cpp
     module_energy/write_eig_occ.cpp
     module_energy/td_eij_io.cpp
+    module_energy/td_eij_pw.cpp
     module_bessel/numerical_basis.cpp
     module_bessel/numerical_basis_overlap.cpp
     module_bessel/numerical_basis_output.cpp
@@ -34,10 +36,12 @@ list(APPEND objects
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
     module_current/td_current_pw.cpp
+    module_current/td_spin_pw_io.cpp
     module_efield/td_efield_io.cpp
-    module_efield/td_vector_pot_io.cpp
+    module_efield/td_vecpot_io.cpp
     module_chgpot/write_libxc_r.cpp
     module_output/output_log.cpp
+    module_output/td_conserv_io.cpp
     module_json/para_json.cpp
     parse_args.cpp
     input_help.cpp
@@ -172,7 +176,7 @@ if(BUILD_TESTING)
   add_subdirectory(module_parameter/test)
   add_subdirectory(module_hs/unittests)
   add_subdirectory(test_serial)
-  add_subdirectory(test)
+  add_subdirectory(unittests)
   add_subdirectory(module_dos/unittests)
 endif()
 

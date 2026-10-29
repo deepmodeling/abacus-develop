@@ -7,7 +7,7 @@
 #include "source_base/global_variable.h"
 #include "source_io/module_ctrl/ctrl_output_td.h"
 #include "source_io/module_efield/td_efield_io.h"
-#include "source_io/module_efield/td_vector_pot_io.h"
+#include "source_io/module_efield/td_vecpot_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_wf/read_wfc_nao.h"
@@ -88,7 +88,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
     if (inp.init_vecpot)
     {
         // An empty directory selects the calculation working directory, not OUT.<suffix>.
-        const std::vector<ModuleBase::Vector3<double>> samples = ModuleIO::read_td_vector_pot("");
+        const std::vector<ModuleBase::Vector3<double>> samples = ModuleIO::read_td_vecpot("");
         td_field_manager_->set_A_samples(samples);
     }
     if (inp.mdp.md_restart)
@@ -97,15 +97,16 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
     }
     if (inp.out_efield && GlobalV::MY_RANK == 0)
     {
-        ModuleIO::prepare_td_field_output(output_dir, *td_field_manager_, inp.mdp.md_restart);
+        ModuleIO::prep_td_field_out(output_dir, *td_field_manager_, inp.mdp.md_restart);
     }
     if (inp.out_vecpot && GlobalV::MY_RANK == 0)
     {
         if (inp.init_vecpot)
         {
-            ModuleIO::check_td_vector_pot_paths("", output_dir);
+            // Reject output that aliases the input file before truncating it.
+            ModuleIO::check_td_vecpot_paths("", output_dir);
         }
-        ModuleIO::prepare_td_vector_pot_output(output_dir, inp.mdp.md_restart);
+        ModuleIO::prep_td_vecpot_out(output_dir, inp.mdp.md_restart);
     }
 
     // Run before_all_runners in ESolver_KS_LCAO
@@ -133,6 +134,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
             ModuleBase::WARNING_QUIT("ESolver_KS_LCAO_TDDFT", "Read electronic wavefunction from file failed!");
         }
     }
+}
+
+template <typename TR, typename Device>
+int ESolver_KS_LCAO_TDDFT<TR, Device>::scf_iter_limit(const int istep) const
+{
+    const int initial_step = this->inp_->init_wfc == "file" ? restart_step_ : 0;
+    return istep > initial_step ? this->inp_->td_scf_nmax : this->inp_->scf_nmax;
 }
 
 template <typename TR, typename Device>
@@ -227,7 +235,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
             const bool replay_restart = this->inp_->mdp.md_restart && !restart_done;
             if (this->inp_->out_vecpot && GlobalV::MY_RANK == 0 && !replay_restart)
             {
-                ModuleIO::write_td_vector_pot(PARAM.globalv.global_out_dir, this->totstep, td_field_manager_->A_right_ha());
+                ModuleIO::write_td_vecpot(PARAM.globalv.global_out_dir, this->totstep, td_field_manager_->A_right_ha());
             }
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ax(t)", td_p->endpoint_A()[0]);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Cartesian vector potential Ay(t)", td_p->endpoint_A()[1]);
@@ -242,7 +250,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
         const bool replay_restart = this->inp_->mdp.md_restart && !restart_done;
         if (this->inp_->out_efield && GlobalV::MY_RANK == 0 && !replay_restart)
         {
-            ModuleIO::write_td_field_values(*td_field_manager_, PARAM.globalv.global_out_dir);
+            ModuleIO::write_td_field(*td_field_manager_, PARAM.globalv.global_out_dir);
         }
 
         if (estep != 0)
@@ -290,10 +298,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
         // 2) SCF iterations
         //----------------------------------------------------------------
         bool conv_esolver = false;
-        this->niter = this->maxniter;
+        const int iter_limit = this->scf_iter_limit(totstep);
+        this->niter = iter_limit;
+        this->scf_nmax_flag = false;
         this->diag_ethr = this->inp_->pw_diag_thr;
-        for (int iter = 1; iter <= this->maxniter; ++iter)
+        for (int iter = 1; iter <= iter_limit; ++iter)
         {
+            this->scf_nmax_flag = iter == iter_limit;
             ModuleIO::write_head_td(GlobalV::ofs_running, istep, totstep, iter, this->basisname);
 
             // 2.1) Initialization of the SCF iteration
@@ -506,13 +517,19 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
 
     ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
 
-    // Store wave functions, Hamiltonian and overlap matrix, to be used in the next electronic step
-    // Store when converged or when the maximum iteration count is reached
-    bool force_save = conv_esolver || (iter == this->maxniter);
-    this->store_h_s_psi(ucell, istep, iter, force_save);
+    // Save the endpoint at convergence or the iteration limit for the next electronic step.
+    const int iter_limit = this->scf_iter_limit(istep);
+    const bool accept_state = conv_esolver || iter == iter_limit;
+    this->store_h_s_psi(ucell, istep, iter, accept_state);
 
-    // Calculate the RT-TDDFT energy-density matrix at the last converged substep when required by td_edm and the gauge
-    if (conv_esolver && estep == estep_max - 1 && istep >= (this->inp_->init_wfc == "file" ? 0 : 1) && this->inp_->td_edm == 0
+    // At an ionic-step boundary, runner exits immediately after replaying the restart endpoint.
+    // Refresh EDM here before that early exit leads to force and stress calculations.
+    const bool replay_endpoint = this->inp_->mdp.md_restart && !restart_done && estep == 0
+                                 && restart_step_ % this->inp_->estep_per_md == 0;
+    const bool last_endpoint = estep == estep_max - 1 || replay_endpoint;
+
+    // Refresh the energy-density matrix at convergence or the iteration limit for forces and stress.
+    if (accept_state && last_endpoint && istep >= (this->inp_->init_wfc == "file" ? 0 : 1) && this->inp_->td_edm == 0
         && this->inp_->td_stype != 2)
     {
         if (use_tensor && use_lapack)
