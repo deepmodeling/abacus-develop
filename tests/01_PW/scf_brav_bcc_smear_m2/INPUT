@@ -11,7 +11,7 @@ latname           bcc
 ecutwfc           25.0 # Rydberg
 #Parameters (electronic)
 basis_type        pw
-scf_thr           1e-10
+scf_thr 1e-12
 
 cal_force         1
 cal_stress        1
@@ -19,3 +19,7 @@ cal_stress        1
 #Parameters (Smearing)
 smearing_method   mp2
 smearing_sigma    0.002
+
+pw_diag_thr_max 1e-12
+
+pw_diag_nmax 200

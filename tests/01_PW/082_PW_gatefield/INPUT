@@ -10,7 +10,7 @@ pseudo_dir        ../../PP_ORB
 
 #Parameters (2.Iteration)
 ecutwfc           20
-scf_thr           1e-9
+scf_thr 1e-12
 scf_nmax          100
 
 #Parameters (3.Basis)
@@ -36,3 +36,7 @@ zgate             0.2
 nelec             7
 
 pw_seed           1
+
+pw_diag_thr_max 1e-12
+
+pw_diag_nmax 200

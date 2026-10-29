@@ -3,7 +3,7 @@ suffix            autotest
 
 calculation       scf
 ecutwfc           5
-scf_thr           1.0e-8
+scf_thr 1e-12
 scf_nmax          50
 out_chg           0
 
@@ -23,3 +23,7 @@ orbital_dir       ../../../tests/PP_ORB
 pw_seed           1
 
 init_wfc          nao
+
+pw_diag_thr_max 1e-12
+
+pw_diag_nmax 200
