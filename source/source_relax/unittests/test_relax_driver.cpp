@@ -1,0 +1,403 @@
+#include "source_cell/cell_tools.h"
+#include "source_cell/print_cell.h"
+#include "source_cell/update_cell.h"
+#include "source_esolver/esolver.h"
+#include "for_test.h"
+#include "source_relax/relax_driver.h"
+#include "source_relax/relax_stru_io.h"
+#include "source_relax/socket_driver.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
+#include <fstream>
+#include <iterator>
+#include <string>
+#include <unistd.h>
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
+#ifdef __MPI
+class MpiInitializer
+{
+  public:
+    MpiInitializer()
+    {
+        int initialized = 0;
+        MPI_Initialized(&initialized);
+        if (!initialized)
+        {
+            MPI_Init(nullptr, nullptr);
+            owns_mpi_ = true;
+        }
+    }
+
+    ~MpiInitializer()
+    {
+        int finalized = 0;
+        MPI_Finalized(&finalized);
+        if (owns_mpi_ && !finalized)
+        {
+            MPI_Finalize();
+        }
+    }
+
+  private:
+    bool owns_mpi_ = false;
+};
+
+MpiInitializer mpi_initializer;
+#endif
+
+namespace unitcell
+{
+bool if_atoms_can_move(const Atom*, const int)
+{
+    return true;
+}
+
+bool if_cell_can_change(const std::vector<int>&)
+{
+    return false;
+}
+
+void update_pos_tau(const Lattice& lat, const double* pos, const int ntype, const int nat, Atom* atoms)
+{
+    int iat = 0;
+    for (int it = 0; it < ntype; ++it)
+    {
+        for (int ia = 0; ia < atoms[it].na; ++ia)
+        {
+            for (int ik = 0; ik < 3; ++ik)
+            {
+                atoms[it].tau[ia][ik] = pos[3 * iat + ik] / lat.lat0;
+            }
+            ++iat;
+        }
+    }
+    EXPECT_EQ(iat, nat);
+}
+
+void update_pos_taud(const Lattice&, const double*, const int, const int, Atom*)
+{
+}
+
+void setup_cell_after_vc(UnitCell&, std::ofstream&, const int)
+{
+}
+
+void remake_cell(Lattice&)
+{
+}
+
+void print_tau(Atom*, const std::string&, const int, const double, std::ofstream&)
+{
+}
+} // namespace unitcell
+
+namespace ModuleIO
+{
+void print_screen(const int&, const int&, const int&)
+{
+}
+
+void output_after_relax(const bool, const bool, std::ofstream&)
+{
+}
+} // namespace ModuleIO
+
+namespace relax_stru_io
+{
+std::string build_stru_header(const int,
+                              const double,
+                              const ModuleBase::matrix&,
+                              const Input_para&,
+                              const bool,
+                              const bool)
+{
+    return std::string();
+}
+
+bool need_orbital(const Input_para&)
+{
+    return false;
+}
+
+void write_stru(UnitCell&,
+                const Input_para&,
+                const std::string&,
+                const std::string&,
+                const ModuleBase::matrix&,
+                const bool,
+                const bool,
+                const int,
+                const bool)
+{
+}
+} // namespace relax_stru_io
+
+void Socket_Driver::socket_driver(ModuleESolver::ESolver*, UnitCell&, const Input_para&, std::ofstream&)
+{
+}
+
+namespace
+{
+
+class DriverTestESolver : public ModuleESolver::ESolver
+{
+  public:
+    explicit DriverTestESolver(const double force_x) : force_x_(force_x)
+    {
+    }
+
+    void before_all_runners(BaseCell&, const Input_para&) override
+    {
+    }
+
+    void runner(BaseCell&, const int) override
+    {
+        ++runner_count;
+    }
+
+    void after_all_runners(BaseCell&) override
+    {
+    }
+
+    double cal_energy() override
+    {
+        return 0.0;
+    }
+
+    void cal_force(BaseCell&, ModuleBase::matrix& force) override
+    {
+        force.zero_out();
+        force(0, 0) = force_x_;
+    }
+
+    void cal_stress(BaseCell&, ModuleBase::matrix& stress) override
+    {
+        stress.zero_out();
+    }
+
+    int runner_count = 0;
+
+  private:
+    double force_x_;
+};
+
+class RelaxDriverTest : public ::testing::Test
+{
+  protected:
+    void SetUp() override
+    {
+        log_file_ = testing::TempDir() + "running.log";
+    }
+
+    static void make_cell(UnitCell& ucell)
+    {
+        ucell.ntype = 1;
+        ucell.nat = 1;
+        ucell.lat0 = 1.0;
+        ucell.omega = 1.0;
+        ucell.lat.lat0 = 1.0;
+        ucell.lat.latvec.Identity();
+        ucell.latvec.Identity();
+        ucell.atoms = new Atom[1];
+        ucell.atoms[0].na = 1;
+        ucell.atoms[0].tau.resize(1);
+        ucell.atoms[0].taud.resize(1);
+        ucell.atoms[0].mbl.resize(1, {1, 1, 1});
+        ucell.iat2it.resize(1);
+        ucell.iat2ia.resize(1);
+        ucell.iat2it[0] = 0;
+        ucell.iat2ia[0] = 0;
+    }
+
+    std::string read_running_log() const
+    {
+        std::ifstream ifs(log_file_);
+        return std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    }
+
+    std::string log_file_;
+};
+
+TEST_F(RelaxDriverTest, RelaxNmaxZeroDoesNotRunESolver)
+{
+    Input_para inp;
+    inp.calculation = "relax";
+    inp.relax_method = "lbfgs";
+    inp.relax_nmax = 0;
+    inp.out_level = "m";
+
+    UnitCell ucell;
+    make_cell(ucell);
+    DriverTestESolver esolver(1.0);
+    std::ofstream ofs(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&esolver, ucell, inp, ofs);
+    ofs.close();
+
+    EXPECT_EQ(esolver.runner_count, 0);
+}
+
+TEST_F(RelaxDriverTest, FirstStepConvergesOnNonSimultaneousPath)
+{
+    Input_para inp;
+    inp.calculation = "relax";
+    inp.relax_method = "lbfgs";
+    inp.relax_nmax = 3;
+    inp.force_thr = 0.1;
+    inp.force_thr_ev = 0.1 * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    inp.cal_force = 1;
+    inp.out_level = "m";
+
+    UnitCell ucell;
+    make_cell(ucell);
+    DriverTestESolver esolver(1.0e-4);
+    std::ofstream ofs(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&esolver, ucell, inp, ofs);
+    ofs.close();
+
+    EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_THAT(read_running_log(), testing::HasSubstr("Relaxation is converged!"));
+}
+
+TEST_F(RelaxDriverTest, FirstStepConvergesOnSimultaneousPath)
+{
+    Input_para inp;
+    inp.calculation = "relax";
+    inp.relax_method = "cg";
+    inp.relax_nmax = 3;
+    inp.force_thr = 0.1;
+    inp.force_thr_ev = 0.1 * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    inp.cal_force = 1;
+    inp.out_level = "m";
+
+    UnitCell ucell;
+    make_cell(ucell);
+    DriverTestESolver esolver(1.0e-4);
+    std::ofstream ofs(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&esolver, ucell, inp, ofs);
+    ofs.close();
+
+    EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_THAT(read_running_log(), testing::HasSubstr("Relaxation is converged!"));
+}
+
+TEST_F(RelaxDriverTest, MaxStepsMovesFinalNonSimultaneousGeometry)
+{
+    Input_para inp;
+    inp.calculation = "relax";
+    inp.relax_method = "lbfgs";
+    inp.relax_nmax = 1;
+    inp.force_thr = 0.0;
+    inp.force_thr_ev = 0.0;
+    inp.cal_force = 1;
+    inp.relax_bfgs_rmax = 0.2;
+    inp.out_level = "m";
+
+    UnitCell ucell;
+    make_cell(ucell);
+    DriverTestESolver esolver(1.0);
+    std::ofstream ofs(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&esolver, ucell, inp, ofs);
+    ofs.close();
+
+    EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_THAT(read_running_log(), testing::HasSubstr("reaching relax_nmax"));
+}
+
+TEST_F(RelaxDriverTest, MaxStepsStopsOnSimultaneousPath)
+{
+    Input_para inp;
+    inp.calculation = "relax";
+    inp.relax_method = "cg";
+    inp.relax_nmax = 1;
+    inp.force_thr = -1.0;
+    inp.force_thr_ev = -1.0;
+    inp.cal_force = 1;
+    inp.out_level = "m";
+
+    UnitCell ucell;
+    make_cell(ucell);
+    DriverTestESolver esolver(1.0);
+    std::ofstream ofs(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&esolver, ucell, inp, ofs);
+    ofs.close();
+
+    EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_THAT(read_running_log(), testing::HasSubstr("reaching relax_nmax"));
+}
+
+TEST_F(RelaxDriverTest, ExitStopsAfterCurrentNonSimultaneousStep)
+{
+    char old_cwd[4096];
+    ASSERT_NE(::getcwd(old_cwd, sizeof(old_cwd)), nullptr);
+    ASSERT_EQ(::chdir(testing::TempDir().c_str()), 0);
+    {
+        std::ofstream exit_file("EXIT");
+        exit_file << "stop_ion true\n";
+    }
+
+    Input_para inp;
+    inp.calculation = "relax";
+    inp.relax_method = "lbfgs";
+    inp.relax_nmax = 3;
+    inp.force_thr = 0.0;
+    inp.force_thr_ev = 0.0;
+    inp.cal_force = 1;
+    inp.out_level = "m";
+
+    UnitCell ucell;
+    make_cell(ucell);
+    DriverTestESolver esolver(1.0);
+    std::ofstream ofs(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&esolver, ucell, inp, ofs);
+    ofs.close();
+
+    ASSERT_EQ(::chdir(old_cwd), 0);
+    EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_THAT(read_running_log(), testing::HasSubstr("stopped by EXIT"));
+}
+
+TEST_F(RelaxDriverTest, ExitStopsAfterCurrentSimultaneousStep)
+{
+    char old_cwd[4096];
+    ASSERT_NE(::getcwd(old_cwd, sizeof(old_cwd)), nullptr);
+    ASSERT_EQ(::chdir(testing::TempDir().c_str()), 0);
+    {
+        std::ofstream exit_file("EXIT");
+        exit_file << "stop_ion true\n";
+    }
+
+    Input_para inp;
+    inp.calculation = "relax";
+    inp.relax_method = "cg";
+    inp.relax_nmax = 3;
+    inp.force_thr = -1.0;
+    inp.force_thr_ev = -1.0;
+    inp.cal_force = 1;
+    inp.out_level = "m";
+
+    UnitCell ucell;
+    make_cell(ucell);
+    DriverTestESolver esolver(1.0);
+    std::ofstream ofs(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&esolver, ucell, inp, ofs);
+    ofs.close();
+
+    ASSERT_EQ(::chdir(old_cwd), 0);
+    EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_THAT(read_running_log(), testing::HasSubstr("stopped by EXIT"));
+}
+
+} // namespace
