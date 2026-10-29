@@ -203,6 +203,14 @@ class FFT_Bundle
         void fft3D_forward_pw(std::complex<double>* in, std::complex<double>* out) const;
         void fft3D_backward_pw(std::complex<double>* in, std::complex<double>* out) const;
 
+#if defined(__CUFFTDX)
+        int fused_veff_grid_size() const;
+        void apply_spinor_potential(const double* potential, std::complex<double>* up,
+                                    std::complex<double>* down) const;
+        int lixy() const;
+        int rixy() const;
+#endif
+
     private:
         int  fft_mode = 0; 
         bool float_flag=false;

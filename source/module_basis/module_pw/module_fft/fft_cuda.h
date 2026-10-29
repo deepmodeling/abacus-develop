@@ -71,6 +71,14 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
                               std::complex<FPTYPE>* out) const;
         void fft3D_backward_pw(std::complex<FPTYPE>* in,
                                std::complex<FPTYPE>* out) const;
+
+#if defined(__CUFFTDX)
+        int fused_veff_grid_size() const;
+        void apply_spinor_potential(const double* potential, std::complex<double>* up,
+                                    std::complex<double>* down) const;
+#endif
+        int lixy() const { return this->lixy_index; }
+        int rixy() const { return this->rixy_index; }
     private:
         mutable cufftHandle c_handle = {};
         mutable cufftHandle z_handle = {};
@@ -81,8 +89,8 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
         mutable std::complex<float>* c_auxr_3d = nullptr;  // fft space
         mutable std::complex<double>* z_auxr_3d = nullptr; // fft space
 
-        int lixy = 0;
-        int rixy = 0;
+        int lixy_index = 0;
+        int rixy_index = 0;
         int nproc = 1;
         bool gamma_only = false;
         bool xprime = true;

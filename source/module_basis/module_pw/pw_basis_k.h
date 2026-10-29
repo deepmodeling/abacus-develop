@@ -151,6 +151,14 @@ public:
                        const bool add = false,
                        const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
 
+#if defined(__CUFFTDX)
+    // Adds the local spinor potential to the plane-wave output. Both scratch
+    // grids contain ft.fused_veff_grid_size() double-complex elements.
+    void add_spinor_potential(const std::complex<double>* input, const double* potential,
+                             std::complex<double>* output, int ik, int stride,
+                             std::complex<double>* up, std::complex<double>* down) const;
+#endif
+
   public:
     //operator:
     //get (G+K)^2:

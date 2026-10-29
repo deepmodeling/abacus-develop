@@ -36,6 +36,16 @@ add_library(
     ${objects}
 )
 
+if(USE_CUFFTDX)
+  add_library(planewave_fused_fft OBJECT kernels/cuda/fused_veff.cu)
+  target_link_libraries(planewave_fused_fft PRIVATE mathdx::cufftdx)
+  set_target_properties(planewave_fused_fft PROPERTIES
+    CUDA_STANDARD 17
+    CUDA_STANDARD_REQUIRED ON
+    CUDA_ARCHITECTURES 70)
+  target_sources(${ABACUS_BIN_NAME} PRIVATE $<TARGET_OBJECTS:planewave_fused_fft>)
+endif()
+
 if(ENABLE_COVERAGE)
   add_coverage(planewave)
 endif()

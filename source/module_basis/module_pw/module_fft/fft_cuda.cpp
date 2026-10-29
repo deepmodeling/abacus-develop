@@ -1,6 +1,10 @@
 #include "fft_cuda.h"
 #include "module_base/module_device/memory_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#if defined(__CUFFTDX)
+#include "module_basis/module_pw/kernels/fused_veff.h"
+#endif
+#include <cassert>
 
 namespace ModulePW
 {
@@ -28,8 +32,8 @@ void FFT_CUDA<FPTYPE>::initfft(int nx_in,
     this->nx = nx_in;
     this->ny = ny_in;
     this->nz = nz_in;
-    this->lixy = lixy_in;
-    this->rixy = rixy_in;
+    this->lixy_index = lixy_in;
+    this->rixy_index = rixy_in;
     this->nproc = nproc_in;
     this->gamma_only = gamma_only_in;
     this->xprime = xprime_in;
@@ -154,7 +158,7 @@ bool FFT_CUDA<double>::use_pruned_gpu_fft() const
     // grids avoid the y-z transforms in the unoccupied middle x slabs.
     return this->xprime && !this->gamma_only && this->nproc == 1
            && this->nx * this->ny * this->nz >= 1048576
-           && 4 * (this->lixy + 1 + this->nx - this->rixy) <= 3 * this->nx;
+           && 4 * (this->lixy_index + 1 + this->nx - this->rixy_index) <= 3 * this->nx;
 }
 template <typename FPTYPE>
 void FFT_CUDA<FPTYPE>::init_gpu_pruned_plan() const
@@ -173,11 +177,11 @@ void FFT_CUDA<double>::init_gpu_pruned_plan() const
     CHECK_CUFFT(cufftPlanMany(&this->z_x_handle, 1, &x_size, &x_size, plane, 1,
                              &x_size, plane, 1, CUFFT_Z2Z, plane));
     CHECK_CUFFT(cufftPlanMany(&this->z_yz_left_handle, 2, yz_size, yz_size, 1, plane,
-                             yz_size, 1, plane, CUFFT_Z2Z, this->lixy + 1));
-    if (this->rixy < this->nx)
+                             yz_size, 1, plane, CUFFT_Z2Z, this->lixy_index + 1));
+    if (this->rixy_index < this->nx)
     {
         CHECK_CUFFT(cufftPlanMany(&this->z_yz_right_handle, 2, yz_size, yz_size, 1, plane,
-                                 yz_size, 1, plane, CUFFT_Z2Z, this->nx - this->rixy));
+                                 yz_size, 1, plane, CUFFT_Z2Z, this->nx - this->rixy_index));
     }
 }
 template <typename FPTYPE>
@@ -205,7 +209,7 @@ void FFT_CUDA<double>::fft3D_forward_pw(std::complex<double>* in, std::complex<d
     CHECK_CUFFT(cufftExecZ2Z(this->z_yz_left_handle, output, output, CUFFT_FORWARD));
     if (this->z_yz_right_handle)
     {
-        auto* right = output + this->rixy * this->ny * this->nz;
+        auto* right = output + this->rixy_index * this->ny * this->nz;
         CHECK_CUFFT(cufftExecZ2Z(this->z_yz_right_handle, right, right, CUFFT_FORWARD));
     }
 }
@@ -223,11 +227,53 @@ void FFT_CUDA<double>::fft3D_backward_pw(std::complex<double>* in, std::complex<
     CHECK_CUFFT(cufftExecZ2Z(this->z_yz_left_handle, input, input, CUFFT_INVERSE));
     if (this->z_yz_right_handle)
     {
-        auto* right = input + this->rixy * this->ny * this->nz;
+        auto* right = input + this->rixy_index * this->ny * this->nz;
         CHECK_CUFFT(cufftExecZ2Z(this->z_yz_right_handle, right, right, CUFFT_INVERSE));
     }
     CHECK_CUFFT(cufftExecZ2Z(this->z_x_handle, input, output, CUFFT_INVERSE));
 }
+
+#if defined(__CUFFTDX)
+template <typename FPTYPE>
+int FFT_CUDA<FPTYPE>::fused_veff_grid_size() const
+{
+    return 0;
+}
+template <>
+int FFT_CUDA<double>::fused_veff_grid_size() const
+{
+    return this->nx == 200 && this->use_pruned_gpu_fft()
+               ? (this->lixy_index + 1 + this->nx - this->rixy_index) * this->ny * this->nz : 0;
+}
+template <typename FPTYPE>
+void FFT_CUDA<FPTYPE>::apply_spinor_potential(const double*, std::complex<double>*, std::complex<double>*) const
+{
+}
+template <>
+void FFT_CUDA<double>::apply_spinor_potential(const double* potential, std::complex<double>* up,
+                                              std::complex<double>* down) const
+{
+    assert(this->fused_veff_grid_size() > 0);
+    this->init_gpu_pruned_plan();
+    const int plane = this->ny * this->nz;
+    const int left = this->lixy_index + 1;
+    auto transform_yz = [&](std::complex<double>* grid, int direction)
+    {
+        auto* data = reinterpret_cast<cufftDoubleComplex*>(grid);
+        CHECK_CUFFT(cufftExecZ2Z(this->z_yz_left_handle, data, data, direction));
+        if (this->z_yz_right_handle)
+        {
+            data += left * plane;
+            CHECK_CUFFT(cufftExecZ2Z(this->z_yz_right_handle, data, data, direction));
+        }
+    };
+    transform_yz(up, CUFFT_INVERSE);
+    transform_yz(down, CUFFT_INVERSE);
+    ModulePW::fused_veff_x(plane, left, this->rixy_index, potential, up, down);
+    transform_yz(up, CUFFT_FORWARD);
+    transform_yz(down, CUFFT_FORWARD);
+}
+#endif
 
 template <> std::complex<float>* 
 FFT_CUDA<float>::get_auxr_3d_data()  const

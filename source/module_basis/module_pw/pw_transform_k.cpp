@@ -2,12 +2,37 @@
 #include "module_basis/module_pw/kernels/pw_op.h"
 #include "pw_basis_k.h"
 #include "pw_gatherscatter.h"
+#if defined(__CUFFTDX)
+#include "kernels/fused_veff.h"
+#endif
 
 #include <cassert>
 #include <complex>
 
 namespace ModulePW
 {
+
+#if defined(__CUFFTDX)
+void PW_Basis_K::add_spinor_potential(const std::complex<double>* input, const double* potential,
+                                     std::complex<double>* output, int ik, int stride,
+                                     std::complex<double>* up, std::complex<double>* down) const
+{
+    assert(ik >= 0 && ik < this->nks && stride >= this->npwk[ik]);
+    assert(this->ig2ixyz_k != nullptr && this->fft_bundle.fused_veff_grid_size() > 0);
+    ModuleBase::timer::tick(this->classname, "spinor_potential gpu");
+    const int size = this->fft_bundle.fused_veff_grid_size();
+    const base_device::DEVICE_GPU* context = nullptr;
+    base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(context, up, 0, size);
+    base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(context, down, 0, size);
+    const int* index = this->ig2ixyz_k + ik * this->npwk_max;
+    pack_spinor_grid(this->npwk[ik], stride, this->ny * this->nz, this->fft_bundle.lixy() + 1, this->fft_bundle.rixy(),
+                     index, input, up, down);
+    this->fft_bundle.apply_spinor_potential(potential, up, down);
+    add_spinor_grid(this->npwk[ik], stride, this->ny * this->nz, this->fft_bundle.lixy() + 1, this->fft_bundle.rixy(),
+                    this->nxyz, index, up, down, output);
+    ModuleBase::timer::tick(this->classname, "spinor_potential gpu");
+}
+#endif
 
 /**
  * @brief transform real space to reciprocal space
