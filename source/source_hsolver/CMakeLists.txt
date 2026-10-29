@@ -83,7 +83,7 @@ if(ENABLE_ELPA)
 endif()
 
 if(BUILD_TESTING)
-  add_subdirectory(test)
+  add_subdirectory(unittests)
   if(ENABLE_MPI)
     add_subdirectory(kernels/test)
   endif()

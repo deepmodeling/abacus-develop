@@ -56,19 +56,19 @@ endif()
 AddTest(
   TARGET MODULE_ESTATE_elecstate_occupy
   LIBS parameter  base device
-  SOURCES elecstate_occupy_test.cpp ../occupy.cpp
+  SOURCES test_occupy.cpp ../occupy.cpp
 )
 
 AddTest(
   TARGET MODULE_ESTATE_elecstate_fp_energy
   LIBS parameter  base device
-  SOURCES elecstate_fp_energy_test.cpp ../fp_energy.cpp
+  SOURCES test_fp_energy.cpp ../fp_energy.cpp
 )
 
 AddTest(
   TARGET MODULE_ESTATE_elecstate_print
   LIBS parameter  base device symmetry
-  SOURCES elecstate_print_test.cpp ../elecstate_print.cpp ../occupy.cpp
+  SOURCES test_elecstate_print.cpp ../elecstate_print.cpp ../occupy.cpp
   ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
@@ -76,7 +76,7 @@ AddTest(
   TARGET MODULE_ESTATE_elecstate_base
   KEEP_FEATURE_DEFINITIONS __MPI
   LIBS parameter  base device symmetry
-  SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
+  SOURCES test_elecstate.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
   ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
   ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
@@ -84,7 +84,7 @@ AddTest(
 AddTest(
   TARGET MODULE_ESTATE_elecstate_pw
   LIBS parameter  planewave_serial base device symmetry
-  SOURCES elecstate_pw_test.cpp
+  SOURCES test_elecstate_pw.cpp
     ../elecstate_pw.cpp
     ../uspp_density.cpp
     ../elecstate_pw_cal_tau.cpp
@@ -101,7 +101,7 @@ AddTest(
 AddTest(
   TARGET MODULE_ESTATE_elecstate_energy
   LIBS parameter  base device planewave_serial symmetry
-  SOURCES elecstate_energy_test.cpp
+  SOURCES test_elecstate_energy.cpp
     ../elecstate_energy.cpp
     ../fp_energy.cpp
     ../makov_payne.cpp
@@ -111,7 +111,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_ESTATE_potentials_base
-  SOURCES potentials_base_test.cpp
+  SOURCES test_pot_base.cpp
 )
 
 AddTest(
@@ -135,7 +135,7 @@ AddTest(
 AddTest(
   TARGET MODULE_ESTATE_potentials_new
   LIBS parameter  base device planewave_serial
-  SOURCES potential_new_test.cpp td_field_test.cpp ../module_pot/potential_new.cpp
+  SOURCES test_potential_new.cpp test_td_field.cpp ../module_pot/potential_new.cpp
     ../module_pot/td_field.cpp ../module_pot/td_field_profiles.cpp ../module_pot/td_field_manager.cpp
     ${pcc_test_sources}
 )

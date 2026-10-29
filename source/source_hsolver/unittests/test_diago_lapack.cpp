@@ -1,5 +1,5 @@
 // Author: Zhang Xiaoyang
-// A modified version of diago_lcao_test.cpp
+// A modified version of test_diago_lcao.cpp
 // Remove some useless functions and dependencies. Serialized the full code
 // and refactored some function.
 

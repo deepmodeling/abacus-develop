@@ -1,7 +1,7 @@
 #include "source_base/parallel_device.h"
 #include "source_base/parallel_global.h"
 #include "source_hsolver/module_rt_pw/hsolver_linear.h"
-#include "source_hsolver/module_rt_pw/test/linear_test_utils.h"
+#include "source_hsolver/module_rt_pw/unittests/linear_test_utils.h"
 
 #include <algorithm>
 #include <cmath>

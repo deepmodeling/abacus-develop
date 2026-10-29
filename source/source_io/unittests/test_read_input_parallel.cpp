@@ -15,7 +15,7 @@
 #include "source_basis/module_pw/test/test_tool.h"
 // #endif
 /************************************************
- *  unit test of read_input_test.cpp
+ *  unit test of read_input.cpp
  ***********************************************/
 
 /**

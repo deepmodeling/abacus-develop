@@ -91,7 +91,7 @@ endif()
 
 if(BUILD_TESTING)
   if(ENABLE_MPI)
-    add_subdirectory(test)
+    add_subdirectory(unittests)
     add_subdirectory(kernels/test)
   endif()
 endif()

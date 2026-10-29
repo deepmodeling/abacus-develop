@@ -7,7 +7,7 @@ AddTest(
   TARGET MODULE_PW_td_observables
   LIBS parameter base device container psi planewave nao_smoothgen symmetry
   SOURCES
-    test_td_obs_pw.cpp test_td_spin_pw.cpp test_td_vel_pw.cpp
+    td_test_utils.cpp test_td_spin_pw.cpp test_td_vel_pw.cpp
     ../td_spin_pw.cpp ../td_vel_pw.cpp ../td_pw.cpp
     ../../module_pwdft/op_pw_vel.cpp ../../module_pwdft/projector_gradient.cpp ../../module_pwdft/velocity_workspace.cpp ../../module_pwdft/nonlocal_workspace.cpp
     ../../module_pwdft/vnl_pw.cpp ../../module_pwdft/vnl_pw_init_vnl.cpp ../../module_pwdft/vnl_pw_getvnl.cpp ../../module_pwdft/vnl_pw_deeq.cpp

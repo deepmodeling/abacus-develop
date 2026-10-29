@@ -10,7 +10,7 @@ addtest(
   LIBS
   parameter
   SOURCES
-  soc_test.cpp
+  test_soc.cpp
   ../soc.cpp
   ../../../source_base/global_variable.cpp
   ../../../source_base/global_function.cpp
@@ -36,7 +36,7 @@ addtest(
   base
   device
   SOURCES
-  dftu_base_test.cpp
+  test_dftu_base.cpp
   ../dftu_base.cpp
   ../dftu_base_io.cpp
   ../dftu_base_io_read.cpp
@@ -84,7 +84,7 @@ addtest(
   device
   planewave
   SOURCES
-  structure_factor_test.cpp
+  test_stru_fac.cpp
   ../stru_fac.cpp
   ../../../source_cell/unitcell.cpp
   ../../../source_cell/unitcell_index.cpp

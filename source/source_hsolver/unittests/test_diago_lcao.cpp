@@ -1,6 +1,7 @@
 #include "source_base/matrix_block.h"
 #include "source_hsolver/diago_scalapack.h"
-#include "source_hsolver/test/diago_elpa_utils.h"
+#include "source_hsolver/diago_lapack.h"
+#include "source_hsolver/unittests/diago_elpa_utils.h"
 #include "mpi.h"
 #include "string.h"
 
@@ -8,9 +9,8 @@
 #include <vector>
 #ifdef __ELPA
 #include "source_hsolver/diago_elpa.h"
-#endif
-#ifdef __CUDA
-#include "source_hsolver/diago_cusolver.h"
+#include "source_hsolver/diago_elpa_native.h"
+#include "source_hsolver/module_genelpa/elpa_solver.h"
 #endif
 #include "source_base/module_external/scalapack_connector.h"
 
@@ -29,7 +29,7 @@
  *  - hsolver::DiagoScalapack::diag (for Scalapack)
  *
  * The 2d block cyclic distribution of H/S matrix is done by
- * self-realized functions in source_hsolver/test/diago_elpa_utils.h
+ * self-realized functions in source_hsolver/unittests/diago_elpa_utils.h
  */
 
 /// Minimal H(k)/S(k) supplier. The LCAO eigensolvers take the matrix blocks
@@ -68,10 +68,14 @@ class DiagoPrepare
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
         if (ks_solver == "scalapack_gvx")
-            ;//dh = new hsolver::DiagoScalapack<T>;
-#ifdef __CUDA
-        else if (ks_solver == "cusolver")
-            ;//dh = new hsolver::DiagoCusolver<T>;
+            ;
+//             dh = new hsolver::DiagoScalapack<T>;
+        else if (ks_solver == "lapack")
+            ;
+#ifdef __ELPA
+        else if (ks_solver == "genelpa")
+            ;
+//             dh = new hsolver::DiagoElpa<T>;
 #endif
         else
         {
@@ -90,7 +94,6 @@ class DiagoPrepare
     std::vector<T> s;
     std::vector<T> h_local;
     std::vector<T> s_local;
-    // hsolver::DiagH<T>* dh = 0;
     psi::Psi<T> psi;
     std::vector<double> e_solver;
     std::vector<double> e_lapack;
@@ -134,20 +137,46 @@ class DiagoPrepare
         return ok;
     }
 
-    void poison_lower_triangle()
+#ifdef __ELPA
+    void diago_native_with_poisoned_lower()
     {
-        // The distributed solver buffers are column-major. Keep the original
-        // row-major fixtures intact for the independent LAPACK reference.
-        for (int col = 0; col < nlocal; ++col)
+        this->pb2d();
+        this->distribute_data();
+        int nprows;
+        int npcols;
+        int myprow;
+        int mypcol;
+        Cblacs_gridinfo(icontxt, &nprows, &npcols, &myprow, &mypcol);
+        for (int col = 0; col < hmtest.ncol; ++col)
         {
-            for (int row = col + 1; row < nlocal; ++row)
+            const int global_col = (col / nb2d * npcols + mypcol) * nb2d + col % nb2d;
+            for (int row = 0; row < hmtest.nrow; ++row)
             {
-                const int index = row + col * nlocal;
-                this->h_local[index] = T(123.0 + row + col);
-                this->s_local[index] = T(0.0);
+                const int global_row = (row / nb2d * nprows + myprow) * nb2d + row % nb2d;
+                if (global_row > global_col)
+                {
+                    const int index = row + col * hmtest.nrow;
+                    h_local[index] = T(123.0 + global_row + global_col);
+                    s_local[index] = T(0.0);
+                }
             }
         }
+        hmtest.h_local = h_local;
+        hmtest.s_local = s_local;
+        ModuleBase::MatrixBlock<T> h_mat;
+        ModuleBase::MatrixBlock<T> s_mat;
+        hmtest.matrix(h_mat, s_mat);
+        hsolver::DiagoElpaNative<T> solver(nlocal, nbands, false);
+        solver.diag(h_mat, s_mat, psi, e_solver.data());
+        EXPECT_EQ(hmtest.h_local, h_local);
+        EXPECT_EQ(hmtest.s_local, s_local);
+        // A second solve must not reuse an in-place decomposition of the
+        // private overlap copy or alter the caller's matrix storage.
+        solver.diag(h_mat, s_mat, psi, e_solver.data());
+        EXPECT_EQ(hmtest.h_local, h_local);
+        EXPECT_EQ(hmtest.s_local, s_local);
     }
+#endif
 
     void print_hs()
     {
@@ -218,10 +247,6 @@ class DiagoPrepare
     {
         this->pb2d();
         this->distribute_data();
-        if (ks_solver == "cusolver")
-        {
-            this->poison_lower_triangle();
-        }
         this->print_hs();
         this->set_env();
 
@@ -239,14 +264,19 @@ class DiagoPrepare
                 hsolver::DiagoScalapack<T> dh(nlocal, nbands);
                 dh.diag(h_mat, s_mat, psi, e_solver.data());
             }
-    #ifdef __CUDA
-            else if (ks_solver == "cusolver")
-                {
-                    hsolver::DiagoCusolver<T> dh(nlocal, nbands);
-                    dh.diag(h_mat, s_mat, psi, e_solver.data());
-                }
+            else if (ks_solver == "lapack")
+            {
+                hsolver::DiagoLapack<T> la(nlocal, nbands);
+                la.diag(h_mat, s_mat, psi, e_solver.data());
+            }
+    #ifdef __ELPA
+            else if (ks_solver == "genelpa")
+            {
+                hsolver::DiagoElpa<T> dh(nlocal, nbands);
+                dh.diag(h_mat, s_mat, psi, e_solver.data());
+            }
     #endif
-            // dh->diag(&hmtest, psi, e_solver.data());
+            // dh.diag(&hmtest, psi, e_solver.data());
         }
         endtime = MPI_Wtime();
         hsolver_time = (endtime - starttime) / REPEATRUN;
@@ -307,6 +337,15 @@ TEST_P(DiagoGammaOnlyTest, LCAO)
     std::stringstream out_info;
     DiagoPrepare<double> dp = GetParam();
     ASSERT_TRUE(dp.produce_HS());
+
+    // Skip lapack tests in multi-process environment
+    // LAPACK is a serial solver and cannot work with distributed matrices
+    if (dp.ks_solver == "lapack" && dp.dsize > 1)
+    {
+        GTEST_SKIP() << "Skipping lapack test with " << dp.dsize
+                     << " MPI processes (lapack only supports single process)";
+    }
+
     dp.diago();
 
     if (dp.myrank == 0)
@@ -325,11 +364,14 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values( // int nlocal, int nbands, int nb2d, int sparsity, std::string ks_solver_in, std::string hfname,
                        // std::string sfname DiagoPrepare<double>(0, 0, 1, 0, "genelpa", "H-GammaOnly-Si2.dat",
                        // "S-GammaOnly-Si2.dat")
-#ifdef __CUDA
-        DiagoPrepare<double>(0, 0, 32, 0, "cusolver", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"),
+#ifdef __ELPA
+        DiagoPrepare<double>(0, 0, 32, 0, "genelpa", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"),
 #endif
         DiagoPrepare<double>(0, 0, 1, 0, "scalapack_gvx", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat"),
-        DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat")));
+        // DiagoPrepare<double>(0, 0, 32, 0, "scalapack_gvx", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"),
+        DiagoPrepare<double>(0, 0, 1, 0, "lapack", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat")
+        // DiagoPrepare<double>(0, 0, 32, 0, "lapack", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat")
+    ));
 
 class DiagoKPointsTest : public ::testing::TestWithParam<DiagoPrepare<std::complex<double>>>
 {
@@ -339,6 +381,15 @@ TEST_P(DiagoKPointsTest, LCAO)
     std::stringstream out_info;
     DiagoPrepare<std::complex<double>> dp = GetParam();
     ASSERT_TRUE(dp.produce_HS());
+
+    // Skip lapack tests in multi-process environment
+    // LAPACK is a serial solver and cannot work with distributed matrices
+    if (dp.ks_solver == "lapack" && dp.dsize > 1)
+    {
+        GTEST_SKIP() << "Skipping lapack test with " << dp.dsize
+                     << " MPI processes (lapack only supports single process)";
+    }
+
     dp.diago();
 
     if (dp.myrank == 0)
@@ -354,12 +405,119 @@ INSTANTIATE_TEST_SUITE_P(
     DiagoKPointsTest,
     ::testing::Values( // int nlocal, int nbands, int nb2d, int sparsity, std::string ks_solver_in, std::string hfname,
                        // std::string sfname DiagoPrepare<std::complex<double>>(800, 400, 32, 7, "genelpa", "", ""),
-#ifdef __CUDA
-        DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "cusolver", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
+#ifdef __ELPA
+        DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
 #endif
         // DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "genelpa", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat"),
         DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "scalapack_gvx", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
         DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "scalapack_gvx", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat")));
+
+#ifdef __ELPA
+class DiagoElpaNativeUpperTest : public ::testing::TestWithParam<int>
+{
+};
+
+TEST_P(DiagoElpaNativeUpperTest, PreservesInputsAndIgnoresLowerTriangle)
+{
+    DiagoPrepare<std::complex<double>> dp(0, 0, GetParam(), 0, "genelpa",
+                                          "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
+    ASSERT_TRUE(dp.produce_HS());
+    dp.diago_native_with_poisoned_lower();
+    if (dp.myrank == 0)
+    {
+        dp.diago_lapack();
+        std::stringstream out_info;
+        EXPECT_TRUE(dp.compare_eigen(out_info)) << out_info.str();
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(BlockSizes, DiagoElpaNativeUpperTest, ::testing::Values(1, 2, 3));
+
+TEST(DiagoElpaComplexTest, UsesAuthoritativeUpperTriangle)
+{
+    std::stringstream out_info;
+    DiagoPrepare<std::complex<double>> dp(0, 0, 1, 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
+    ASSERT_TRUE(dp.produce_HS());
+
+    if (dp.myrank == 0)
+    {
+        dp.diago_lapack();
+        for (int row = 1; row < dp.nlocal; ++row)
+        {
+            for (int col = 0; col < row; ++col)
+            {
+                dp.h[row * dp.nlocal + col] = std::complex<double>(17.0 + row + col, -13.0);
+            }
+        }
+    }
+
+    dp.diago();
+    if (dp.myrank == 0)
+    {
+        EXPECT_TRUE(dp.compare_eigen(out_info)) << out_info.str();
+    }
+}
+
+TEST(DiagoElpaComplexTest, FallbackUsesAuthoritativeUpperTriangle)
+{
+    std::stringstream out_info;
+    DiagoPrepare<std::complex<double>> dp(0, 0, 1, 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
+    ASSERT_TRUE(dp.produce_HS());
+
+    // Supply a precomputed, non-diagonal S^{-1/2} to exercise
+    // DecomposedState == 3 directly, without relying on Cholesky failure.
+    if (dp.myrank == 0)
+    {
+        std::vector<std::complex<double>> inverse_sqrt(dp.s.size(), 0.0);
+        std::fill(dp.s.begin(), dp.s.end(), 0.0);
+        for (int i = 0; i < dp.nlocal; ++i)
+        {
+            inverse_sqrt[i * dp.nlocal + i] = 1.0;
+            dp.s[i * dp.nlocal + i] = 1.0;
+        }
+        const double off_diagonal = 0.25;
+        const double denominator = 1.0 - off_diagonal * off_diagonal;
+        inverse_sqrt[1] = off_diagonal;
+        inverse_sqrt[dp.nlocal] = off_diagonal;
+        // For the leading 2-by-2 block B = S^{-1/2}, S = B^{-2}.
+        dp.s[0] = (1.0 + off_diagonal * off_diagonal) / (denominator * denominator);
+        dp.s[1] = -2.0 * off_diagonal / (denominator * denominator);
+        dp.s[dp.nlocal] = dp.s[1];
+        dp.s[dp.nlocal + 1] = dp.s[0];
+        dp.diago_lapack();
+        for (int row = 1; row < dp.nlocal; ++row)
+        {
+            for (int col = 0; col < row; ++col)
+            {
+                dp.h[row * dp.nlocal + col] = std::complex<double>(17.0 + row + col, -13.0);
+            }
+        }
+        dp.s = inverse_sqrt;
+    }
+
+    dp.pb2d();
+    dp.distribute_data();
+    int decomposed_state = 3;
+    ELPA_Solver solver(false,
+                       MPI_COMM_WORLD,
+                       dp.nbands,
+                       dp.hmtest.nrow,
+                       dp.hmtest.ncol,
+                       dp.hmtest.desc);
+    solver.generalized_eigenvector(dp.h_local.data(),
+                                   dp.s_local.data(),
+                                   decomposed_state,
+                                   dp.e_solver.data(),
+                                   dp.psi.get_pointer());
+    solver.exit();
+
+    EXPECT_EQ(decomposed_state, 3);
+    if (dp.myrank == 0)
+    {
+        EXPECT_TRUE(dp.compare_eigen(out_info)) << out_info.str();
+    }
+}
+#endif
 
 int main(int argc, char** argv)
 {
@@ -381,9 +539,6 @@ int main(int argc, char** argv)
         std::cout << "ERROR:some tests are not passed" << std::endl;
         return result;
     }
-    else
-    {
-        MPI_Finalize();
-        return 0;
-    }
+    MPI_Finalize();
+    return 0;
 }

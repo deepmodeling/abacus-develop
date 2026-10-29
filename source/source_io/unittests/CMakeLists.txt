@@ -6,7 +6,7 @@ abacus_disable_feature_definitions(__EXX)
 AddTest(
   TARGET MODULE_IO_write_bands
   LIBS parameter base device symmetry
-  SOURCES write_bands_test.cpp ../module_energy/write_bands.cpp
+  SOURCES test_write_bands.cpp ../module_energy/write_bands.cpp
     ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
     ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
@@ -55,7 +55,7 @@ abacus_copy_test_files(
 AddTest(
   TARGET MODULE_IO_input_test_para
   LIBS parameter  base device io_input
-  SOURCES read_input_ptest.cpp
+  SOURCES test_read_input_parallel.cpp
 )
 
 add_test(NAME MODULE_IO_input_test_para_4
@@ -66,7 +66,7 @@ add_test(NAME MODULE_IO_input_test_para_4
 AddTest(
   TARGET MODULE_IO_read_exit_file_test
   LIBS parameter  base device
-  SOURCES read_exit_file_test.cpp
+  SOURCES test_read_exit_file.cpp
 )
 
 add_test(NAME MODULE_IO_read_exit_file_test_para_4
@@ -77,13 +77,13 @@ add_test(NAME MODULE_IO_read_exit_file_test_para_4
 AddTest(
   TARGET MODULE_IO_output_test
   LIBS parameter  base device
-  SOURCES output_test.cpp
+  SOURCES test_output.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_td_efield_io_test
   LIBS parameter base device
-  SOURCES td_efield_io_test.cpp ../module_efield/td_efield_io.cpp
+  SOURCES test_td_efield_io.cpp ../module_efield/td_efield_io.cpp
     ../../source_estate/module_pot/td_field.cpp ../../source_estate/module_pot/td_field_profiles.cpp
     ../../source_estate/module_pot/td_field_manager.cpp
 )
@@ -91,13 +91,13 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_td_vecpot_io_test
   LIBS parameter base device
-  SOURCES test_vecpot_io.cpp ../module_efield/td_vecpot_io.cpp
+  SOURCES test_td_vecpot_io.cpp ../module_efield/td_vecpot_io.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  base device symmetry
-  SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
+  SOURCES test_write_eig_occ.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp
 		../../source_cell/cif_io.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
@@ -106,13 +106,13 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_print_info
   LIBS parameter  base device symmetry cell_info
-  SOURCES print_info_test.cpp ../module_output/print_info.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+  SOURCES test_print_info.cpp ../module_output/print_info.cpp ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_write_wfc_nao
   LIBS parameter  base psi device
-  SOURCES write_wfc_nao_test.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
+  SOURCES test_write_wfc_nao.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
 )
 
 abacus_copy_test_files(write_wfc_nao_para.sh)
@@ -125,31 +125,31 @@ add_test(NAME MODULE_IO_write_wfc_nao_para
 AddTest(
   TARGET MODULE_IO_write_orb_info
   LIBS parameter  base device cell_info
-  SOURCES write_orb_info_test.cpp ../module_output/write_orb_info.cpp
+  SOURCES test_write_orb_info.cpp ../module_output/write_orb_info.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_parse_args
   LIBS parameter  base device io_input
-  SOURCES parse_args_test.cpp ../parse_args.cpp ../input_help.cpp
+  SOURCES test_parse_args.cpp ../parse_args.cpp ../input_help.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_input_help_test
   LIBS parameter  base device io_input
-  SOURCES input_help_test.cpp ../input_help.cpp
+  SOURCES test_input_help.cpp ../input_help.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_bessel_basis_test
   LIBS parameter  base device
-  SOURCES bessel_basis_test.cpp ../module_bessel/bessel_basis.cpp
+  SOURCES test_bessel_basis.cpp ../module_bessel/bessel_basis.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_output_log_test
   LIBS parameter base device
-  SOURCES ../module_output/output_log.cpp outputlog_test.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES ../module_output/output_log.cpp test_output_log.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 if(ENABLE_LCAO)
@@ -157,7 +157,7 @@ AddTest(
   TARGET MODULE_IO_to_qo_test
   LIBS parameter  base device numerical_atomic_orbitals nao_smoothgen container orb
   SOURCES
-  to_qo_test.cpp
+  test_to_qo.cpp
   ../module_qo/to_qo_kernel.cpp
   ../module_qo/to_qo_mpi.cpp
   ../module_qo/to_qo_structures.cpp
@@ -171,7 +171,7 @@ endif()
 AddTest(
   TARGET MODULE_IO_read_wfc_pw_test
   LIBS parameter  base device planewave
-  SOURCES read_wfc_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES test_read_wfc_pw.cpp ../module_wf/read_wfc_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
@@ -182,7 +182,7 @@ add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
 AddTest(
   TARGET MODULE_IO_read_wf2rho_pw_test
   LIBS parameter base device planewave psi symmetry
-  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge.cpp ../../source_estate/module_charge/chg_tools.cpp ../../source_estate/module_charge/chg_parallel.cpp ../module_wf/write_wfc_pw.cpp
+  SOURCES test_read_wf2rho_pw.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge.cpp ../../source_estate/module_charge/chg_tools.cpp ../../source_estate/module_charge/chg_parallel.cpp ../module_wf/write_wfc_pw.cpp
   ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
 )
 
@@ -196,7 +196,7 @@ if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_IO_numerical_basis_test
   LIBS parameter  base device numerical_atomic_orbitals nao_smoothgen container orb
-  SOURCES numerical_basis_test.cpp
+  SOURCES test_numerical_basis.cpp
           ../module_bessel/numerical_basis_jyjy.cpp
           ../../source_lcao/center2orb.cpp
 )
@@ -206,7 +206,7 @@ endif()
 AddTest(
   TARGET MODULE_IO_mulliken_test
   LIBS parameter  base device
-  SOURCES output_mulliken_test.cpp output_mulliken_mock.cpp ../module_mulliken/output_mulliken.cpp
+  SOURCES test_output_mulliken.cpp output_mulliken_mock.cpp ../module_mulliken/output_mulliken.cpp
   ../../source_cell/cell_index.cpp
   ../../source_basis/module_ao/parallel_orbitals.cpp
 )
@@ -215,7 +215,7 @@ AddTest(
 #AddTest(
 #  TARGET MODULE_IO_read_wfc_lcao_test
 #  LIBS parameter  base device
-#  SOURCES read_wfc_lcao_test.cpp ../read_wfc_lcao.cpp
+#  SOURCES test_read_wfc_lcao.cpp ../read_wfc_lcao.cpp
 #)
 
 #add_test(NAME MODULE_IO_read_wfc_lcao_test_parallel
@@ -228,7 +228,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_orb_io_test
   LIBS parameter base device
-  SOURCES orb_io_test.cpp
+  SOURCES test_orb_io.cpp
 )
 
 add_test(NAME MODULE_IO_orb_io_test_parallel
@@ -261,7 +261,7 @@ endif()
 AddTest(
   TARGET MODULE_IO_read_wfc_nao_test
   LIBS parameter base device
-  SOURCES read_wfc_nao_test.cpp ../module_wf/read_wfc_nao.cpp ../module_wf/write_wfc_nao.cpp ../../source_psi/psi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
+  SOURCES test_read_wfc_nao.cpp ../module_wf/read_wfc_nao.cpp ../module_wf/write_wfc_nao.cpp ../../source_psi/psi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
 )
 
 add_test(
@@ -275,7 +275,7 @@ AddTest(
   TARGET MODULE_IO_restart_exx_csr_test
   LIBS parameter base device
   SOURCES
-  restart_exx_csr_test.cpp
+  test_restart_exx_csr.cpp
   ../module_restart/restart_exx_csr.cpp
   ../module_hs/hs_sparse_io.cpp
   ../module_hs/lat_r_csr.cpp
@@ -285,5 +285,5 @@ endif()
 
 AddTest(
   TARGET MODULE_IO_write_elf_logic_test
-  SOURCES write_elf_logic_test.cpp
+  SOURCES test_write_elf_logic.cpp
 )

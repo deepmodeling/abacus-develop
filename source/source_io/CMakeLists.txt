@@ -176,7 +176,7 @@ if(BUILD_TESTING)
   add_subdirectory(module_parameter/test)
   add_subdirectory(module_hs/unittests)
   add_subdirectory(test_serial)
-  add_subdirectory(test)
+  add_subdirectory(unittests)
   add_subdirectory(module_dos/unittests)
 endif()
 
