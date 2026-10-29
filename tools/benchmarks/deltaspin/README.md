@@ -99,7 +99,8 @@ measurement method for both binaries.
 The C++ drivers in `src/` exercise the production public interfaces against
 CPU, analytical or full-grid references. They cover FFT/potential/density
 operations, charge conservation, Hartree and XC fields, stress, Davidson
-eigenpairs, initialization/storage lifetimes, G+k assembly and mixing behavior.
+eigenpairs, initialization/storage lifetimes, G+k assembly, magnetic-constraint
+Hamiltonian updates and mixing behavior.
 
 `link_check.py` reuses the active Ninja application's compile and link commands.
 Set `ABACUS_HOME` to the installation containing `build/` and load its environment:

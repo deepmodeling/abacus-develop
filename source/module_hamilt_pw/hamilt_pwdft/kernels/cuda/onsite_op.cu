@@ -10,6 +10,54 @@ namespace hamilt
 
 #define THREADS_PER_BLOCK 256
 
+namespace
+{
+
+template <bool Spinor>
+__global__ void apply_spin_constraint(int bands, int nkb, int sign, const double* lambda,
+                                      const thrust::complex<double>* becp, thrust::complex<double>* ps)
+{
+    const int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < bands * nkb)
+    {
+        const int ip = index % nkb;
+        const int band = index / nkb;
+        const int row = band * (Spinor ? 2 : 1) * nkb + ip;
+        const double z = lambda[3 * ip + 2];
+        if (Spinor)
+        {
+            const thrust::complex<double> diagonal(z, 0.0);
+            const thrust::complex<double> plus(lambda[3 * ip], lambda[3 * ip + 1]);
+            const thrust::complex<double> minus(lambda[3 * ip], -lambda[3 * ip + 1]);
+            const auto up = becp[row], down = becp[row + nkb];
+            ps[row] = diagonal * up + minus * down;
+            ps[row + nkb] = plus * up - diagonal * down;
+        }
+        else { ps[row] = (z * sign) * becp[row]; }
+    }
+}
+
+} // namespace
+
+void spin_constraint_projectors_gpu(int bands, int npol, int nkb, int sign,
+                                    const double* lambda, const std::complex<double>* becp,
+                                    std::complex<double>* ps)
+{
+    const int blocks = (bands * nkb + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    const auto* input = reinterpret_cast<const thrust::complex<double>*>(becp);
+    auto* output = reinterpret_cast<thrust::complex<double>*>(ps);
+    if (npol == 2)
+    {
+        apply_spin_constraint<true><<<blocks, THREADS_PER_BLOCK>>>(bands, nkb, sign, lambda, input, output);
+    }
+    else
+    {
+        apply_spin_constraint<false><<<blocks, THREADS_PER_BLOCK>>>(bands, nkb, sign, lambda, input, output);
+    }
+    cudaErrcheck(cudaGetLastError());
+    cudaCheckOnDebug();
+}
+
 template <typename FPTYPE>
 __global__ void onsite_op(const int npm,
                           const int npol,

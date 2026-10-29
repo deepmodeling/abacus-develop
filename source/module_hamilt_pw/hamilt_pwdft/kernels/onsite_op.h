@@ -5,6 +5,15 @@
 #include <complex>
 
 namespace hamilt {
+#if defined(__CUDA)
+// Applies the scalar or Pauli constraint field to column-major projector
+// coefficients with shape (nkb * npol, bands). Lambda has shape (nkb, 3)
+// in projector-major order. The output is fully overwritten.
+void spin_constraint_projectors_gpu(int bands, int npol, int nkb, int sign,
+                                    const double* lambda, const std::complex<double>* becp,
+                                    std::complex<double>* ps);
+#endif
+
 template <typename FPTYPE, typename Device> 
 struct onsite_ps_op {
   void operator() (

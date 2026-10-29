@@ -9,6 +9,10 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/kernels/onsite_op.h"
+#if defined(__CUDA) || defined(__ROCM)
+#include <ATen/core/tensor.h>
+#endif
 
 #ifdef __LCAO
 #include "module_elecstate/elecstate_lcao.h"
@@ -16,115 +20,94 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 #endif
 
-template <>
-void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std::complex<double>* h_tmp, const std::complex<double>* becp_k, const ModuleBase::Vector3<double>* delta_lambda, const int nbands, const int nkb, const int* nh_iat)
+namespace
 {
-    int sum = 0;
-    int size_ps = nkb * 2 * nbands;
-    std::complex<double>* becp_cpu = nullptr;
-    if(PARAM.inp.device == "gpu")
-    {
-#if ((defined __CUDA) || (defined __ROCM))
-        base_device::DEVICE_GPU* ctx = {};
-        base_device::DEVICE_CPU* cpu_ctx = {};
-        base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx, becp_cpu, size_ps);
-        base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(cpu_ctx, ctx, becp_cpu, becp_k, size_ps);   
-#endif
-    }
-    else if (PARAM.inp.device == "cpu")
-    {
-        becp_cpu = const_cast<std::complex<double>*>(becp_k);
-    }
 
-    std::vector<std::complex<double>> ps(size_ps, 0.0);
-    for (int iat = 0; iat < this->Mi_.size(); iat++)
+void apply_spin_constraint_cpu(int atoms, int bands, int npol, int nkb, int sign,
+                               const int* projectors, const ModuleBase::Vector3<double>* lambda,
+                               const std::complex<double>* becp, std::complex<double>* ps)
+{
+    int offset = 0;
+    for (int atom = 0; atom < atoms; ++atom)
     {
-        const int nproj = nh_iat[iat];
-        const std::complex<double> coefficients0(delta_lambda[iat][2], 0.0);
-        const std::complex<double> coefficients1(delta_lambda[iat][0] , delta_lambda[iat][1]);
-        const std::complex<double> coefficients2(delta_lambda[iat][0] , -1 * delta_lambda[iat][1]);
-        const std::complex<double> coefficients3(-1 * delta_lambda[iat][2], 0.0);
-        // each atom has nproj, means this is with structure factor;
-        // each projector (each atom) must multiply coefficient
-        // with all the other projectors.
-        for (int ib = 0; ib < nbands * 2; ib+=2)
+        const std::complex<double> z(lambda[atom].z, 0.0);
+        const std::complex<double> plus(lambda[atom].x, lambda[atom].y);
+        const std::complex<double> minus(lambda[atom].x, -lambda[atom].y);
+        for (int band = 0; band < bands; ++band)
         {
-            for (int ip = 0; ip < nproj; ip++)
+            for (int ip = 0; ip < projectors[atom]; ++ip)
             {
-                const int becpind = ib * nkb + sum + ip;
-                const std::complex<double> becp1 = becp_cpu[becpind];
-                const std::complex<double> becp2 = becp_cpu[becpind + nkb];
-                ps[becpind] += coefficients0 * becp1
-                                + coefficients2 * becp2;
-                ps[becpind + nkb] += coefficients1 * becp1
-                                    + coefficients3 * becp2;
-            } // end ip
-        } // end ib
-        sum += nproj;
-    } // end iat
-    std::complex<double>* ps_pointer = nullptr;
-    if(PARAM.inp.device == "gpu")
-    {
-#if ((defined __CUDA) || (defined __ROCM))
-        base_device::DEVICE_GPU* ctx = {};
-        base_device::DEVICE_CPU* cpu_ctx = {};
-        base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, ps_pointer, size_ps);
-        base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(ctx, cpu_ctx, ps_pointer, ps.data(), size_ps);   
-#endif
+                const int index = band * npol * nkb + offset + ip;
+                if (npol == 2)
+                {
+                    ps[index] = z * becp[index] + minus * becp[index + nkb];
+                    ps[index + nkb] = plus * becp[index] - z * becp[index + nkb];
+                }
+                else { ps[index] = lambda[atom].z * sign * becp[index]; }
+            }
+        }
+        offset += projectors[atom];
     }
-    else if (PARAM.inp.device == "cpu")
-    {
-        ps_pointer = ps.data();
-    }
-    // update h_tmp by becp_k * ps
-    char transa = 'C';
-    char transb = 'N';
-    const int npm = nkb * 2;
+}
+
+} // namespace
+
+template <>
+void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(
+    std::complex<double>* h_tmp, const std::complex<double>* becp_k,
+    const ModuleBase::Vector3<double>* delta_lambda, const int nbands,
+    const int nkb, const int* nh_iat, const int sign)
+{
+    using Complex = std::complex<double>;
+    const int rows = nkb * this->npol_;
+    const int size = rows * nbands;
+    const int atoms = this->Mi_.size();
+#if defined(__CUDA) || defined(__ROCM)
     if (PARAM.inp.device == "gpu")
     {
-#if ((defined __CUDA) || (defined __ROCM))
-        base_device::DEVICE_GPU* ctx = {};
-        hsolver::gemm_op<std::complex<double>, base_device::DEVICE_GPU>()(
-            ctx,
-            transa,
-            transb,
-            nbands,
-            nbands,
-            npm,
-            &ModuleBase::ONE,
-            becp_k,
-            npm,
-            ps_pointer,
-            npm,
-            &ModuleBase::ONE,
-            h_tmp,
-            nbands
-        );
-        base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, ps_pointer);
-        delete[] becp_cpu;
+        const base_device::DEVICE_GPU* gpu = nullptr;
+        const base_device::DEVICE_CPU* cpu = nullptr;
+        ct::Tensor ps(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, {nbands, rows});
+#if defined(__CUDA)
+        // Each band shares the same three constraint coefficients per projector.
+        // Only these coefficients cross the host/device boundary.
+        std::vector<double> coefficients(3 * nkb);
+        int offset = 0;
+        for (int atom = 0; atom < atoms; ++atom)
+        {
+            for (int ip = 0; ip < nh_iat[atom]; ++ip)
+            {
+                coefficients[3 * (offset + ip)] = delta_lambda[atom].x;
+                coefficients[3 * (offset + ip) + 1] = delta_lambda[atom].y;
+                coefficients[3 * (offset + ip) + 2] = delta_lambda[atom].z;
+            }
+            offset += nh_iat[atom];
+        }
+        ct::Tensor lambda(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {nkb, 3});
+        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu, cpu, lambda.data<double>(), coefficients.data(), coefficients.size());
+        hamilt::spin_constraint_projectors_gpu(nbands, this->npol_, nkb, sign, lambda.data<double>(),
+                                               becp_k, ps.data<Complex>());
+#else
+        std::vector<Complex> input(size), output(size);
+        base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+            cpu, gpu, input.data(), becp_k, size);
+        apply_spin_constraint_cpu(atoms, nbands, this->npol_, nkb, sign, nh_iat, delta_lambda,
+                                  input.data(), output.data());
+        base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu, cpu, ps.data<Complex>(), output.data(), size);
 #endif
-
+        hsolver::gemm_op<Complex, base_device::DEVICE_GPU>()(
+            gpu, 'C', 'N', nbands, nbands, rows, &ModuleBase::ONE, becp_k, rows,
+            ps.data<Complex>(), rows, &ModuleBase::ONE, h_tmp, nbands);
+        return;
     }
-    else if (PARAM.inp.device == "cpu")
-    {
-        base_device::DEVICE_CPU* ctx = {};
-        hsolver::gemm_op<std::complex<double>, base_device::DEVICE_CPU>()(
-            ctx,
-            transa,
-            transb,
-            nbands,
-            nbands,
-            npm,
-            &ModuleBase::ONE,
-            becp_k,
-            npm,
-            ps_pointer,
-            npm,
-            &ModuleBase::ONE,
-            h_tmp,
-            nbands
-        );
-    }
+#endif
+    std::vector<Complex> ps(size);
+    apply_spin_constraint_cpu(atoms, nbands, this->npol_, nkb, sign, nh_iat, delta_lambda, becp_k, ps.data());
+    hsolver::gemm_op<Complex, base_device::DEVICE_CPU>()(
+        nullptr, 'C', 'N', nbands, nbands, rows, &ModuleBase::ONE, becp_k, rows,
+        ps.data(), rows, &ModuleBase::ONE, h_tmp, nbands);
 }
 
 template <>
@@ -232,7 +215,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                     memcpy(h_tmp.data(), h_k, sizeof(std::complex<double>) * nbands * nbands);
                     memcpy(s_tmp.data(), s_k, sizeof(std::complex<double>) * nbands * nbands);
                     // update h_tmp by delta_lambda
-                    if (i_step != -1) this->calculate_delta_hcc(h_tmp.data(), becp_k, delta_lambda, nbands, nkb, nh_iat);
+                    const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
+                    if (i_step != -1) this->calculate_delta_hcc(h_tmp.data(), becp_k, delta_lambda, nbands, nkb, nh_iat, sign);
 
                     hsolver::DiagoIterAssist<std::complex<double>>::diag_responce(h_tmp.data(),
                                                                                   s_tmp.data(),
@@ -291,7 +275,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, h_tmp, h_k, nbands * nbands);
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, s_tmp, s_k, nbands * nbands);
                     // update h_tmp by delta_lambda
-                    if (i_step != -1) this->calculate_delta_hcc(h_tmp, becp_k, delta_lambda, nbands, nkb, nh_iat);
+                    const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
+                    if (i_step != -1) this->calculate_delta_hcc(h_tmp, becp_k, delta_lambda, nbands, nkb, nh_iat, sign);
 
                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_responce(h_tmp,
                                                                                   s_tmp,
@@ -403,7 +388,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                 psi_t->fix_k(ik);
                 memcpy(h_tmp.data(), h_k, sizeof(std::complex<double>) * nbands * nbands);
                 memcpy(s_tmp.data(), s_k, sizeof(std::complex<double>) * nbands * nbands);
-                this->calculate_delta_hcc(h_tmp.data(), becp_k, delta_lambda, nbands, nkb, nh_iat);
+                const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
+                this->calculate_delta_hcc(h_tmp.data(), becp_k, delta_lambda, nbands, nkb, nh_iat, sign);
                 hsolver::DiagoIterAssist<std::complex<double>>::diag_subspace_psi(h_tmp.data(),
                                                                                 s_tmp.data(),
                                                                                 nbands,
@@ -478,7 +464,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                 psi_t->fix_k(ik);
                 base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, h_tmp, h_k, nbands * nbands);
                 base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, s_tmp, s_k, nbands * nbands);
-                this->calculate_delta_hcc(h_tmp, becp_k, delta_lambda, nbands, nkb, nh_iat);
+                const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
+                this->calculate_delta_hcc(h_tmp, becp_k, delta_lambda, nbands, nkb, nh_iat, sign);
                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_subspace_psi(h_tmp,
                                                                                 s_tmp,
                                                                                 nbands,
