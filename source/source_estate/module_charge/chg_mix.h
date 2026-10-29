@@ -74,6 +74,9 @@ class Charge_Mixing
      * @brief reset mixing, actually we only call init_mixing() to reset mixing instead of this function
      */
     void mix_reset();
+
+    /** @brief Reset restart counters and residual history for an independently limited SCF trial. */
+    void reset_scf_history(int iter_limit);
     
     // extracting parameters normally these parameters will not be used outside charge mixing
     // while Exx is using them as well as some other places
@@ -149,7 +152,7 @@ class Charge_Mixing
     MixingConfig cfg_;                 ///< aggregated mixing config, also holds nspin/scf_thr_type/double_grid
     double* omega = nullptr;                  ///< omega for non-linear core correction
     double* tpiba = nullptr;                  ///< 2*pi/beta for non-linear core correction
-    std::vector<double> _drho_history; ///< history of drho used to determine the oscillation, size is scf_nmax
+    std::vector<double> _drho_history; ///< Residual history for oscillation detection, sized to the active SCF limit.
 
     ModulePW::PW_Basis* rhopw = nullptr;  ///< smooth grid
     ModulePW::PW_Basis* rhodpw = nullptr; ///< dense grid, same as rhopw for ncpp.

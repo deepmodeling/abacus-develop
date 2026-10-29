@@ -316,10 +316,15 @@ struct Input_para
 
     // ==============   #Parameters (9.rt-tddft) ===========================
     double td_dt = -1.0;       ///< time step for propagation
+    int td_max_halvings = 0;   ///< Maximum depth of PW real-time interval bisection; zero disables retries.
+    int td_scf_nmax = 100;     ///< SCF limit per real-time propagation attempt, independent of initial-state SCF.
     int estep_per_md = 1;      ///< number of electronic steps per MD step
     std::string lin_solver = "gmres"; ///< linear solver for real-time propagation
     std::string td_orthonormal = "cholesky"; ///< Orthonormalization for PW real-time propagation.
     bool td_out_stat = false; ///< Output PW real-time conservation diagnostics.
+    std::string td_out_mag = "voronoi"; ///< RT-TDDFT spinor magnetic moment partition.
+    bool td_out_torque = false; ///< Output XC and SOC spin angular momentum torques.
+    bool td_out_spincur = false; ///< Output the macroscopic spin angular momentum current.
     int lin_gmres_restart = 20; ///< Maximum Arnoldi steps per GMRES cycle.
     bool td_cn_init = true; ///< CN subspace initial guess and residual reuse.
     bool lin_reconstruct = true; ///< Explicit GMRES residual reconstruction with periodic audits.
@@ -335,6 +340,10 @@ struct Input_para
     double td_print_eij = -1.0;      ///< threshold to output Eij elements
     int td_edm = 0;                  ///< 0: new edm method   1: old edm method
     int propagator = 0;              ///< method of propagator
+    std::string td_exp_method = "lanczos"; ///< PW ETRS exponential backend.
+    int td_exp_order = 4; ///< Fixed Taylor polynomial order.
+    double td_exp_thr = 0.0; ///< Zero selects the precision-dependent exponential tolerance.
+    int td_exp_krylov_dim = 32; ///< Maximum Lanczos dimension before frozen-operator subdivision.
     int td_stype = 0;                ///< type of space domain  0 : length gauge  1: velocity gauge
     std::vector<int> td_ttype = {0}; ///< type of time domain
     ///<  0  Gauss type function.

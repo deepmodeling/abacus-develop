@@ -5,16 +5,12 @@ list(
   hamilt_pw.cpp
   pw_hybrid_nscf.cpp
   pw_hybrid_source.cpp
-  td_history_pw.cpp
-  td_pw.cpp
   op_pw_ekin.cpp
-  op_pw_ekin_td.cpp
   op_pw_veff.cpp
   projector_gradient.cpp
   velocity_workspace.cpp
   nonlocal_workspace.cpp
   op_pw_nl.cpp
-  op_pw_nl_td.cpp
   op_pw_meta.cpp
   op_pw_vel.cpp
   op_pw.cpp
@@ -95,7 +91,7 @@ endif()
 
 if(BUILD_TESTING)
   if(ENABLE_MPI)
-    add_subdirectory(test)
+    add_subdirectory(unittests)
     add_subdirectory(kernels/test)
   endif()
 endif()

@@ -29,27 +29,9 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
                     const int ld_psi)
 {
     ModuleBase::timer::start("OnsiteProj", "overlap");
-    // notes on refactor for DCU calculation
-    // the npm here is nbands(occ) * npol, for calling cal_becp, the npol should be divided.
-    int npol = this->ucell->get_npol();
-    if(this->becp == nullptr || this->size_becp < npm*this->tot_nproj)
-    {
-        this->size_becp = npm*this->tot_nproj;
-        resmem_complex_op()(this->becp, this->size_becp);
-        if(this->device == base_device::GpuDevice )
-        {
-            resmem_complex_h_op()(this->h_becp, this->size_becp);
-        }
-        else
-        {
-            this->h_becp = this->becp;
-        }
-    }
-    this->fs_tools->cal_becp(ik_, npm/npol, this->becp, ppsi, ld_psi > 0 ? ld_psi : this->npwx_); // in cal_becp, npm should be the one not multiplied by npol
-    if(this->device == base_device::GpuDevice)
-    {
-        syncmem_complex_d2h_op()(h_becp, this->becp, this->size_becp);
-    }
+    const int stride = ld_psi > 0 ? ld_psi : npwx_;
+    const ModuleBase::Vector3<double> zero;
+    overlap_impl(npm, ppsi, stride, zero);
     ModuleBase::timer::end("OnsiteProj", "overlap");
 }
 
@@ -107,7 +89,50 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
     ModuleBase::timer::end("OnsiteProj", "cal_occupation");
 }
 
-// explicit method instantiation
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::invalidate_proj()
+{
+    if (fs_tools != nullptr)
+    {
+        fs_tools->invalidate_proj();
+    }
+}
+
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::overlap_td(int ik, int columns,
+                                                      const std::complex<double>* psi, int stride,
+                                                      const ModuleBase::Vector3<double>& vector_potential)
+{
+    tabulate_atomic(ik);
+    overlap_impl(columns, psi, stride, vector_potential);
+}
+
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::overlap_impl(int columns,
+                                                        const std::complex<double>* psi, int stride,
+                                                        const ModuleBase::Vector3<double>& vector_potential)
+{
+    const int count = columns * tot_nproj;
+    if (count > size_becp || becp == nullptr)
+    {
+        size_becp = count;
+        resmem_complex_op()(becp, std::max(1, count));
+        if (device == base_device::GpuDevice)
+        {
+            resmem_complex_h_op()(h_becp, std::max(1, count));
+        }
+        else
+        {
+            h_becp = becp;
+        }
+    }
+    const int bands = columns / ucell->get_npol();
+    fs_tools->cal_becp(ik_, bands, becp, psi, stride, vector_potential, h_becp);
+}
+
+template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::invalidate_proj();
+template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::overlap_td(
+    int, int, const std::complex<double>*, int, const ModuleBase::Vector3<double>&);
 template
 void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::tabulate_atomic(
     const int, const char);
@@ -123,6 +148,9 @@ void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::cal_occupatio
     const int);
 
 #if ((defined __CUDA) || (defined __ROCM))
+template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::invalidate_proj();
+template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::overlap_td(
+    int, int, const std::complex<double>*, int, const ModuleBase::Vector3<double>&);
 template
 void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::tabulate_atomic(
     const int, const char);

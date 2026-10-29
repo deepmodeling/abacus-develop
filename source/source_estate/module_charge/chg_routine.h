@@ -17,6 +17,7 @@ namespace module_charge
 /// Aggregated SCF convergence thresholds and status flags for chgmixing_ks
 struct ScfMixingCtx
 {
+    int iter_limit;        ///< maximum iterations for the current SCF attempt
     double hsolver_error;  ///< solver error from diagonalization
     double scf_thr;        ///< charge density convergence threshold
     double scf_ene_thr;    ///< energy convergence threshold
@@ -37,12 +38,14 @@ void chgmixing_ks(const int iter,
         const Input_para& inp);
 
 void chgmixing_ks_pw(const int iter,
+        const int iter_limit,
         Charge_Mixing* p_chgmix,
         Plus_U_Base& dftu,
         const bool mag_converged, ///< whether DeltaSpin magnetization converged; pass true when sc_mag_switch is off
         const Input_para& inp); // input parameters
 
 void chgmixing_ks_lcao(const int iter, // scf iteration number
+        const int iter_limit,
         Charge_Mixing* p_chgmix, // charge mixing class
         Plus_U_Base& dftu,
         const int nnr, // dimension of density matrix

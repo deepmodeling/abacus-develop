@@ -1,5 +1,6 @@
 #include "esolver_ks.h"
 #include "source_base/timer_wrapper.h"
+#include "source_base/module_parallel/para_bridge.h"
 
 // for jason output information
 #include "source_io/module_json/output_info.h"
@@ -9,6 +10,7 @@
 #include "source_estate/module_charge/chg_drho.h" // module_charge::cal_drho/cal_dkin
 #include "source_estate/module_charge/chg_init.h" // module_charge::InitRhoCfg
 #include "source_estate/module_charge/chg_tools.h" // module_charge::check_rho
+#include "source_estate/module_charge/chg_rhog_io.h"
 #include "source_pw/module_pwdft/setup_pwwfc.h" // mohan add 20251018
 #include "source_hsolver/hsolver.h"
 #include "source_io/module_energy/write_eig_occ.h"
@@ -181,9 +183,24 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
     this->before_scf(ucell, istep);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
+    const int iter_limit = this->scf_iter_limit(istep);
+    const bool converged = this->scf_loop(ucell, istep, iter_limit);
+    this->after_scf(ucell, istep, converged);
+    this->conv_esolver = converged;
+    ModuleBase::timer::end(this->classname, "runner");
+}
+
+int ESolver_KS::scf_iter_limit(const int istep) const
+{
+    return this->maxniter;
+}
+
+bool ESolver_KS::scf_loop(UnitCell& ucell, int istep, int iter_limit)
+{
+    ModuleBase::timer::start("ESolver_KS", "scf_loop");
     // 2) SCF iterations
     bool conv_esolver = false;
-    this->niter = this->maxniter;
+    this->niter = iter_limit;
     this->diag_ethr = this->inp_->pw_diag_thr;
     this->scf_nmax_flag = false; // mohan add 2025-09-21
     this->scf_rerun_ = false;         // clear any stale rerun request before the loop
@@ -191,9 +208,9 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
     int iter = 1;
     int rerun_count = 0;
     const int max_rerun = 100;  // safety net: EXX rerun should never exceed this
-    while (iter <= this->maxniter)
+    while (iter <= iter_limit)
     {
-        if(iter == this->maxniter)
+        if(iter == iter_limit)
         {
             this->scf_nmax_flag=true;
         }
@@ -211,7 +228,7 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
         if (conv_esolver || this->oscillate_esolver)
         {
             this->niter = iter;
-            if (this->oscillate_esolver)
+            if (this->oscillate_esolver && !this->defer_iter_output(istep))
             {
                 std::cout << " !! Density oscillation is found, STOP HERE !!" << std::endl;
             }
@@ -242,13 +259,9 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
         ++iter;
     } // end scf iterations
 
-    // 7) after scf
-    this->after_scf(ucell, istep, conv_esolver);
-    this->conv_esolver = conv_esolver;
-
-    ModuleBase::timer::end(this->classname, "runner");
-    return;
-};
+    ModuleBase::timer::end("ESolver_KS", "scf_loop");
+    return conv_esolver;
+}
 
 void ESolver_KS::before_scf(UnitCell& ucell, const int istep)
 {
@@ -293,8 +306,14 @@ ESolver_KS::DensityStage ESolver_KS::density_stage(const int istep, const int it
     return DensityStage::standard;
 }
 
+bool ESolver_KS::defer_iter_output(const int istep) const
+{
+    return false;
+}
+
 void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
 {
+    const int iter_limit = this->scf_iter_limit(istep);
 
     // 1.1) print out band gap 
     if (!PARAM.globalv.two_fermi)
@@ -307,15 +326,11 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     }
 
     // 1.2) print out eigenvalues and occupations
-    if (this->inp_->out_band[0])
+    if (this->inp_->out_band[0] && !this->defer_iter_output(istep))
     {
-        if (iter % this->inp_->out_freq_elec == 0 || iter == this->inp_->scf_nmax || conv_esolver)
+        if (iter % this->inp_->out_freq_elec == 0 || iter == iter_limit || conv_esolver)
         {
-            ModuleIO::write_eig_iter(this->pelec->ekb,
-                                     this->pelec->wg,
-                                     *this->pelec->klist,
-                                     this->inp_->nbands,
-                                     this->inp_->nspin);
+            this->write_iter_bands();
         }
     }
 
@@ -336,6 +351,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 #endif
 
     module_charge::ScfMixingCtx ctx;
+    ctx.iter_limit = iter_limit;
     ctx.hsolver_error = hsolver_error;
     ctx.scf_thr = this->scf_thr;
     ctx.scf_ene_thr = this->scf_ene_thr;
@@ -391,26 +407,60 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
                                        p_chgmix->get_mixing_config(), ucell.omega);
     }
 
-    // Iter finish 
-    ESolver_FP::iter_finish(ucell, istep, iter, conv_esolver);
-
+    // Iter finish
+    const bool output_charge = iter % this->inp_->out_freq_elec == 0 || conv_esolver || iter == iter_limit;
+    if (!this->defer_iter_output(istep) && output_charge)
+    {
+        const System_para& system = PARAM.globalv;
+        const bool write_restart = this->inp_->out_chg[0] != -1;
+        const std::string prefix = system.global_out_dir + this->inp_->suffix;
+        const bool write_tau = XC_Functional::get_ked_flag();
+        const bool writer_pool = GlobalV::MY_POOL == 0;
+        const Parallel::ParaWorld pw_world = Parallel::make_pw_world();
+        module_charge::write_density_restart(this->chr,
+                                             *this->pw_rhod,
+                                             ucell.GT,
+                                             prefix,
+                                             this->inp_->nspin,
+                                             write_restart,
+                                             system.gamma_only_pw,
+                                             write_tau,
+                                             writer_pool,
+                                             pw_world,
+                                             &GlobalV::ofs_warning);
+    }
 
     // the end, print time
     double duration = ModuleBase::get_duration(iter_time, ModuleBase::get_time());
 
     // print energies
-    elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho,
+    elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, iter_limit, drho,
     dkin, duration, *this->inp_, PARAM.globalv.two_fermi, diag_ethr, 0, true, this->ds_rms_);
 
 
+    if (!this->defer_iter_output(istep))
+    {
+        this->record_iteration(ucell, duration);
+    }
+}
+
+void ESolver_KS::write_iter_bands()
+{
+    if (this->inp_->out_band[0])
+    {
+        ModuleIO::write_eig_iter(this->pelec->ekb, this->pelec->wg, *this->pelec->klist,
+                                 this->inp_->nbands, this->inp_->nspin);
+    }
+}
+
+void ESolver_KS::record_iteration(const UnitCell& ucell, double duration)
+{
 #ifdef __JSON
-    // add Json of scf mag
     Json::add_output_scf_mag(ucell.magnet.tot_mag, ucell.magnet.abs_mag,
                              this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
                              this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
                              drho, duration);
 #endif //__JSON
-
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
