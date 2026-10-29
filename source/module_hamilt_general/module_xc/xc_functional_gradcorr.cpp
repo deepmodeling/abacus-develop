@@ -106,9 +106,10 @@ void density_divergence_gpu(const ModuleBase::Vector3<double>* vectors, double* 
 }
 
 void noncollinear_pbe_gpu(double& etxc, double& vtxc, ModuleBase::matrix& v,
-                         const Charge& charge, const ModulePW::PW_Basis& basis, double scale)
+                         const Charge& charge, const ModulePW::PW_Basis& basis, double scale, bool include_local)
 {
-    ModuleBase::timer::tick("XC_Functional", "gradcorr_gpu");
+    const char* timer_name = include_local ? "pbe_gpu" : "gradcorr_gpu";
+    ModuleBase::timer::tick("XC_Functional", timer_name);
     using Complex = std::complex<double>;
     const base_device::DEVICE_GPU* gpu = nullptr;
     const base_device::DEVICE_CPU* cpu = nullptr;
@@ -117,7 +118,12 @@ void noncollinear_pbe_gpu(double& etxc, double& vtxc, ModuleBase::matrix& v,
     auto indices = density_grid_indices(basis);
     auto gcar = copy_to_gpu(reinterpret_cast<const double*>(basis.gcar), 3 * basis.npw);
     auto core = copy_to_gpu(charge.rho_core, size);
-    auto potential = copy_to_gpu(v.c, 4 * size);
+    ct::Tensor potential(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {4, size});
+    if (!include_local)
+    {
+        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu, cpu, potential.data<double>(), v.c, 4 * size);
+    }
     ct::Tensor rho(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {4, size});
     ct::Tensor gradient_flux(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {2, size, 3});
     ct::Tensor magnetic_divergence(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {size});
@@ -160,7 +166,7 @@ void noncollinear_pbe_gpu(double& etxc, double& vtxc, ModuleBase::matrix& v,
         }
     }
     hamilt::xc_pbe_spin_gpu(size, rho.data<double>(), core.data<double>(), gradient_flux.data<double>(),
-                           potential.data<double>(), sums.data<double>());
+                           potential.data<double>(), sums.data<double>(), include_local);
     // Each divergence is projected onto the same reciprocal basis as the density gradients.
     for (int spin = 0; spin < 4; ++spin)
     {
@@ -190,10 +196,24 @@ void noncollinear_pbe_gpu(double& etxc, double& vtxc, ModuleBase::matrix& v,
         etxc += partial[block];
         vtxc += partial[blocks + block] - partial[2 * blocks + block] - partial[3 * blocks + block];
     }
-    ModuleBase::timer::tick("XC_Functional", "gradcorr_gpu");
+    ModuleBase::timer::tick("XC_Functional", timer_name);
 }
 
 } // namespace
+
+bool XC_Functional::use_gpu_pbe(const ModulePW::PW_Basis& basis)
+{
+    return !use_libxc && func_type == 2 && func_id.size() == 2
+           && func_id[0] == XC_GGA_X_PBE && func_id[1] == XC_GGA_C_PBE
+           && PARAM.inp.nspin == 4 && (PARAM.globalv.domag || PARAM.globalv.domag_z) && gga_grad == 2
+           && basis.d_is2fftixy != nullptr && basis.poolnproc == 1 && !basis.gamma_only;
+}
+
+void XC_Functional::v_xc_pbe_gpu(double& etxc, double& vtxc, ModuleBase::matrix& potential,
+                                const Charge& charge, const UnitCell& cell)
+{
+    noncollinear_pbe_gpu(etxc, vtxc, potential, charge, *charge.rhopw, cell.tpiba, true);
+}
 #endif
 
 // from gradcorr.f90
@@ -207,12 +227,9 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 
 	ModuleBase::timer::tick("XC_Functional", "gradcorr");
 #if defined(__CUDA)
-    if (!is_stress && !use_libxc && func_type == 2 && func_id.size() == 2
-        && func_id[0] == XC_GGA_X_PBE && func_id[1] == XC_GGA_C_PBE
-        && PARAM.inp.nspin == 4 && (PARAM.globalv.domag || PARAM.globalv.domag_z) && gga_grad == 2
-        && rhopw->d_is2fftixy != nullptr && rhopw->poolnproc == 1 && !rhopw->gamma_only)
+    if (!is_stress && use_gpu_pbe(*rhopw))
     {
-        noncollinear_pbe_gpu(etxc, vtxc, v, *chr, *rhopw, ucell->tpiba);
+        noncollinear_pbe_gpu(etxc, vtxc, v, *chr, *rhopw, ucell->tpiba, false);
         ModuleBase::timer::tick("XC_Functional", "gradcorr");
         return;
     }

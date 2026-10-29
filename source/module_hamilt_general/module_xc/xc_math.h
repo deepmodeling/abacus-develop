@@ -12,6 +12,28 @@
 // Scalar exchange-correlation formulas shared by host and device evaluation.
 namespace xc_math {
 
+// Slater exchange with alpha = 2/3 for spin-polarized density.
+ABACUS_XC_HOST_DEVICE inline void slater_spin( const double &rho, const double &zeta, 
+		double &ex, double &vxup, double &vxdw)
+{
+    const double f = - 1.107838149573033610;
+    const double alpha = 2.00 / 3.00;
+    // f = -9/8*(3/pi)^(1/3)
+    const double third = 1.0 / 3.0;
+    const double p43 = 4.0 / 3.0;
+
+    double rho13 = pow(((1.0 + zeta) * rho) , third);
+    double exup = f * alpha * rho13;
+    vxup = p43 * f * alpha * rho13;
+    rho13 = pow(((1.0 - zeta) * rho) , third);
+    double exdw = f * alpha * rho13;
+    vxdw = p43 * f * alpha * rho13;
+    ex = 0.50 * ((1.0 + zeta) * exup + (1.0 - zeta) * exdw);
+
+    return;
+}
+
+
 ABACUS_XC_HOST_DEVICE inline void pw_spin( const double &rs, const double &zeta, 
 		double &ec, double &vcup, double &vcdw)
 {

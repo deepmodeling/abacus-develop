@@ -80,6 +80,12 @@ class XC_Functional
 	static int gga_grad; // treatment of gradients for noncollinear GGA (1: eigenchannels, 2: chain rule)
 	static bool use_libxc;
 
+#if defined(__CUDA)
+    static bool use_gpu_pbe(const ModulePW::PW_Basis& basis);
+    static void v_xc_pbe_gpu(double& etxc, double& vtxc, ModuleBase::matrix& potential,
+                             const Charge& charge, const UnitCell& cell);
+#endif
+
 	//exx_hybrid_alpha for mixing exx in hybrid functional:
 	static double hybrid_alpha;
 

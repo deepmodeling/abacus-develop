@@ -32,7 +32,7 @@ void xc_add_reciprocal_gpu(int npw, const std::complex<double>* source,
 void xc_spin_gradient_gpu(int size, int spin, int component, double scale,
                          const std::complex<double>* grid, const double* rho, double* gradient);
 void xc_pbe_spin_gpu(int size, const double* rho, const double* core, double* gradient_flux,
-                    double* potential, double* sums);
+                    double* potential, double* sums, bool include_local);
 void xc_pack_spin_flux_gpu(int size, int spin, int component, const double* rho,
                           const double* flux, std::complex<double>* grid);
 void xc_apply_spin_divergence_gpu(int size, int spin, double scale,

@@ -137,14 +137,43 @@ __global__ void spin_gradient(int size, int spin, int component, double scale,
     }
 }
 
+__device__ void local_pbe_spin(int size, int ir, const double* rho, const double* core, double norm,
+                              double* potential, double& energy, double& potential_energy)
+{
+    for (int spin = 0; spin < 4; ++spin) { potential[spin * size + ir] = 0.0; }
+    const double density = rho[ir] + core[ir];
+    const double absolute_density = fabs(density);
+    if (absolute_density <= 1e-10) { return; }
+    const double zeta = fmin(norm / absolute_density, 1.0);
+    const double rs = 0.62035049089940 / pow(absolute_density, 1.0 / 3.0);
+    double exchange, correlation, exchange_up, exchange_down, correlation_up, correlation_down;
+    xc_math::slater_spin(absolute_density, zeta, exchange, exchange_up, exchange_down);
+    xc_math::pw_spin(rs, zeta, correlation, correlation_up, correlation_down);
+    const double up = exchange_up + correlation_up;
+    const double down = exchange_down + correlation_down;
+    energy = 2.0 * (exchange + correlation) * density;
+    potential[ir] = 2.0 * (0.5 * (up + down));
+    potential_energy = potential[ir] * rho[ir];
+    const double spin_potential = 0.5 * (up - down);
+    if (norm > 1e-10)
+    {
+        for (int spin = 1; spin < 4; ++spin)
+        {
+            potential[spin * size + ir] = 2.0 * spin_potential * rho[spin * size + ir] / norm;
+            potential_energy += potential[spin * size + ir] * rho[spin * size + ir];
+        }
+    }
+}
+
 __global__ void pbe_spin(int size, const double* rho, const double* core, double* gradient_flux,
-                        double* potential, double* sums)
+                        double* potential, double* sums, bool include_local)
 {
     const int ir = blockIdx.x * blockDim.x + threadIdx.x;
     double energy = 0.0, potential_energy = 0.0;
     if (ir < size)
     {
         const double norm = magnetic_norm(size, ir, rho);
+        if (include_local) { local_pbe_spin(size, ir, rho, core, norm, potential, energy, potential_energy); }
         const double up = 0.5 * (rho[ir] + norm) + 0.5 * core[ir];
         const double down = 0.5 * (rho[ir] - norm) + 0.5 * core[ir];
         const double total = up + down;
@@ -196,8 +225,8 @@ __global__ void pbe_spin(int size, const double* rho, const double* core, double
             gradient_flux[3 * (size + ir) + component]
                 = 2.0 * ((2.0 * v2xdw + v2c) * gd[component] + v2c * gu[component]);
         }
-        energy = 2.0 * (0.5 * (sxup + sxdw) + sc);
-        potential_energy = vu * (up - 0.5 * core[ir]) + vd * (down - 0.5 * core[ir]);
+        energy += 2.0 * (0.5 * (sxup + sxdw) + sc);
+        potential_energy += vu * (up - 0.5 * core[ir]) + vd * (down - 0.5 * core[ir]);
     }
     __shared__ double scratch[THREADS_PER_BLOCK];
     const double energy_sum = block_sum(energy, scratch);
@@ -347,10 +376,11 @@ void xc_spin_gradient_gpu(int size, int spin, int component, double scale, const
     cudaCheckOnDebug();
 }
 
-void xc_pbe_spin_gpu(int size, const double* rho, const double* core, double* gradient_flux, double* potential, double* sums)
+void xc_pbe_spin_gpu(int size, const double* rho, const double* core, double* gradient_flux,
+                     double* potential, double* sums, bool include_local)
 {
     pbe_spin<<<xc_reduction_size_gpu(size), THREADS_PER_BLOCK>>>(
-        size, rho, core, gradient_flux, potential, sums);
+        size, rho, core, gradient_flux, potential, sums, include_local);
     cudaCheckOnDebug();
 }
 
