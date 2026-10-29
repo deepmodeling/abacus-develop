@@ -35,12 +35,15 @@ ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
     result.cutoff_radius = (parameters.element_radii[static_cast<std::size_t>(center.atom_type)]
                             + parameters.element_radii[static_cast<std::size_t>(neighbor.atom_type)])
                            * parameters.rcutfac;
+    result.element_index = static_cast<std::size_t>(neighbor.atom_type);
     return result;
 }
 }
 
-ESolver_SNAP::ESolver_SNAP(const std::string& coefficient_file, const std::string& parameter_file)
-    : coefficient_file_(coefficient_file), parameter_file_(parameter_file)
+ESolver_SNAP::ESolver_SNAP(const std::string& coefficient_file,
+                           const std::string& parameter_file,
+                           std::ofstream& running_log)
+    : coefficient_file_(coefficient_file), parameter_file_(parameter_file), running_log_(running_log)
 {
     classname = "ESolver_SNAP";
 }
@@ -251,18 +254,43 @@ void ESolver_SNAP::cal_force(BaseCell& cell, ModuleBase::matrix& force)
         return;
     }
     force = snap_force_;
+    ModuleIO::print_force(running_log_,
+                          static_cast<UnitCell&>(cell),
+                          "TOTAL-FORCE (eV/Angstrom)",
+                          force,
+                          false);
 }
 
 void ESolver_SNAP::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
 {
-    static_cast<void>(cell);
     stress = snap_virial_;
+
+    if (cell.kind() == BaseCell::Kind::unitcell)
+    {
+        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, running_log_);
+    }
+    else
+    {
+#ifdef __MPI
+        if (static_cast<MDCell&>(cell).mpi_rank() == 0)
+#endif
+        {
+            ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, running_log_);
+        }
+    }
+
+    const double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+    const double external_stress[3] = {inp_->press1, inp_->press2, inp_->press3};
+    for (int i = 0; i < 3; ++i)
+    {
+        stress(i, i) -= external_stress[i] / unit_transform;
+    }
 }
 
 void ESolver_SNAP::after_all_runners(BaseCell& cell)
 {
     static_cast<void>(cell);
-    GlobalV::ofs_running << "\n !FINAL_ETOT_IS " << snap_potential_ * ModuleBase::Ry_to_eV << " eV\n";
+    running_log_ << "\n !FINAL_ETOT_IS " << snap_potential_ * ModuleBase::Ry_to_eV << " eV\n";
 }
 
 } // namespace ModuleESolver

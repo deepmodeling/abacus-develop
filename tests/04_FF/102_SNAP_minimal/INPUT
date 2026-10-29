@@ -1,0 +1,12 @@
+INPUT_PARAMETERS
+calculation       md
+suffix            autotest
+esolver_type      snap
+pot_file          snapcoeff
+snap_param_file   snapparam
+cal_force         1
+cal_stress        1
+md_nstep          1
+md_type           nve
+md_dt             1
+init_vel          0

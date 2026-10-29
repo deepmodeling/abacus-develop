@@ -24,6 +24,17 @@ bool next_data_line(std::istream& input, std::string& line)
     }
     return false;
 }
+
+template <typename T>
+bool read_parameter_value(std::istringstream& words, T& value, const std::string& keyword, std::string& error)
+{
+    if (!(words >> value) || words.fail())
+    {
+        error = "Invalid SNAP parameter value for keyword: " + keyword;
+        return false;
+    }
+    return true;
+}
 }
 
 namespace ModuleMD
@@ -202,65 +213,92 @@ bool ModelData::load(const std::string& coefficient_file,
         words >> keyword;
         if (keyword == "rcutfac")
         {
-            has_rcutfac = static_cast<bool>(words >> parameters.rcutfac);
+            if (!read_parameter_value(words, parameters.rcutfac, keyword, error))
+            {
+                return false;
+            }
+            has_rcutfac = true;
         }
         else if (keyword == "twojmax")
         {
-            has_twojmax = static_cast<bool>(words >> parameters.twojmax);
+            if (!read_parameter_value(words, parameters.twojmax, keyword, error))
+            {
+                return false;
+            }
+            has_twojmax = true;
         }
         else if (keyword == "rfac0")
         {
-            words >> parameters.rfac0;
+            if (!read_parameter_value(words, parameters.rfac0, keyword, error))
+            {
+                return false;
+            }
         }
         else if (keyword == "rmin0")
         {
-            words >> parameters.rmin;
+            if (!read_parameter_value(words, parameters.rmin, keyword, error))
+            {
+                return false;
+            }
         }
         else if (keyword == "bnormflag")
         {
             int value = 0;
-            words >> value;
+            if (!read_parameter_value(words, value, keyword, error))
+            {
+                return false;
+            }
             parameters.bnorm_flag = value != 0;
         }
         else if (keyword == "switchflag")
         {
             int value = 0;
-            words >> value;
+            if (!read_parameter_value(words, value, keyword, error))
+            {
+                return false;
+            }
             parameters.switch_flag = value != 0;
         }
         else if (keyword == "bzeroflag")
         {
             int value = 0;
-            words >> value;
+            if (!read_parameter_value(words, value, keyword, error))
+            {
+                return false;
+            }
             parameters.bzero_flag = value != 0;
         }
         else if (keyword == "quadraticflag")
         {
             int value = 0;
-            words >> value;
+            if (!read_parameter_value(words, value, keyword, error))
+            {
+                return false;
+            }
             parameters.quadratic_flag = value != 0;
         }
         else if (keyword == "wselfallflag")
         {
             int value = 0;
-            words >> value;
+            if (!read_parameter_value(words, value, keyword, error))
+            {
+                return false;
+            }
             parameters.wselfall_flag = value != 0;
         }
         else if (keyword == "chemflag")
         {
             int value = 0;
-            words >> value;
+            if (!read_parameter_value(words, value, keyword, error))
+            {
+                return false;
+            }
             parameters.chem_flag = value != 0;
         }
     }
     if (!has_rcutfac || !has_twojmax)
     {
         error = "SNAP parameter file must define rcutfac and twojmax.";
-        return false;
-    }
-    if (parameters.chem_flag)
-    {
-        error = "Chemical SNAP channels are not implemented in this CPU stage.";
         return false;
     }
     double maximum_cutoff = 0.0;

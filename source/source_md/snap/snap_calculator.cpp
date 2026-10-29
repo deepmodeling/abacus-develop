@@ -8,8 +8,12 @@ namespace SNAP
 {
 
 Calculator::Calculator(const ModelData& model)
-    : model_(model), descriptor_evaluator_(model.parameters), descriptor_size_(descriptor_evaluator_.bispectrum_size())
+    : model_(model),
+      descriptor_evaluator_(model.parameters),
+      descriptor_size_(0)
 {
+    const std::size_t channels = descriptor_evaluator_.channel_count();
+    descriptor_size_ = descriptor_evaluator_.bispectrum_size() * channels * channels * channels;
     if (model_.coefficients.size() != model_.parameters.elements.size())
     {
         throw std::invalid_argument("SNAP coefficient blocks do not match the element list.");
@@ -35,11 +39,13 @@ EnergyResult Calculator::compute(const std::vector<Neighbor>& neighbors, const s
     }
 
     EnergyResult result;
-    result.descriptor = descriptor_evaluator_.compute_bispectrum(descriptor_evaluator_.accumulate_u(neighbors));
+    result.descriptor = descriptor_evaluator_.compute_bispectrum(
+        descriptor_evaluator_.accumulate_u(neighbors, central_element));
     if (model_.parameters.bzero_flag)
     {
         const std::vector<double> bzero =
-            descriptor_evaluator_.compute_bispectrum(descriptor_evaluator_.accumulate_u(std::vector<Neighbor>()));
+            descriptor_evaluator_.compute_bispectrum(
+                descriptor_evaluator_.accumulate_u(std::vector<Neighbor>(), central_element));
         for (std::size_t index = 0; index < result.descriptor.size(); ++index)
         {
             result.descriptor[index] -= bzero[index];
@@ -84,11 +90,16 @@ ForceResult Calculator::compute_with_analytic_force(const std::vector<Neighbor>&
         {
             const UWithDerivative u_derivative =
                 descriptor_evaluator_.compute_u_with_derivative(neighbors[neighbor_index], direction);
-            std::vector<std::complex<double> > u = descriptor_evaluator_.accumulate_u(neighbors);
+            std::vector<std::complex<double> > u = descriptor_evaluator_.accumulate_u(neighbors, central_element);
             std::vector<std::complex<double> > du(u.size(), std::complex<double>(0.0, 0.0));
-            for (std::size_t index = 0; index < du.size(); ++index)
+            const std::size_t derivative_offset = model_.parameters.chem_flag
+                                                       ? neighbors[neighbor_index].element_index
+                                                             * descriptor_evaluator_.u_size()
+                                                       : 0;
+            const std::vector<std::complex<double> >& one_neighbor_derivative = u_derivative.derivatives;
+            for (std::size_t index = 0; index < one_neighbor_derivative.size(); ++index)
             {
-                du[index] = u_derivative.derivatives[index];
+                du[derivative_offset + index] = one_neighbor_derivative[index];
             }
             const std::vector<double> db = descriptor_evaluator_.compute_bispectrum_derivative(u, du);
             double derivative = 0.0;

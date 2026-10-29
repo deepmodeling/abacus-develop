@@ -19,6 +19,7 @@ struct Neighbor
     double z = 0.0;
     double weight = 1.0;
     double cutoff_radius = 0.0;
+    std::size_t element_index = 0;
 };
 
 struct UWithDerivative
@@ -38,6 +39,9 @@ class DescriptorEvaluator
 
     std::vector<std::complex<double> > accumulate_u(const std::vector<Neighbor>& neighbors) const;
 
+    std::vector<std::complex<double> > accumulate_u(const std::vector<Neighbor>& neighbors,
+                                                    std::size_t central_element) const;
+
     std::vector<double> compute_bispectrum(const std::vector<std::complex<double> >& u) const;
 
     std::vector<double> compute_bispectrum_derivative(const std::vector<std::complex<double> >& u,
@@ -51,6 +55,11 @@ class DescriptorEvaluator
     std::size_t bispectrum_size() const
     {
         return bispectrum_indices_.size();
+    }
+
+    std::size_t channel_count() const
+    {
+        return parameters_.chem_flag ? parameters_.elements.size() : 1;
     }
 
   private:

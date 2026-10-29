@@ -32,6 +32,7 @@ VPATH=./src_global:\
 ./source_base/module_out:\
 ./source_md:\
 ./source_md/module_plumed:\
+./source_md/snap:\
 ./source_basis/module_pw:\
 ./source_base/module_fft:\
 ./source_esolver:\
@@ -336,6 +337,7 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_nep.o\
+    esolver_snap.o\
     esolver_of.o\
     esolver_of_tddft.o\
     esolver_of_interface.o\
@@ -536,6 +538,10 @@ OBJS_MD=fire.o\
     nhchain.o\
     plumed_interface.o\
     run_md.o\
+    snap/snap_calculator.o\
+    snap/snap_descriptor.o\
+    snap/snap_model.o\
+    snap/snap_clebsch_gordan.o\
     verlet.o\
 
 OBJS_NEIGHBOR=sltk_atom.o\

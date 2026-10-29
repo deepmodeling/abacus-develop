@@ -5,6 +5,7 @@
 #include "esolver_dfpt_pw.h"
 #include "esolver_sdft_pw.h"
 #include "esolver_ks_pw_tddft.h"
+#include "source_base/global_variable.h"
 #include "source_base/module_device/device.h"
 #include "source_hamilt/module_xc/general_exx_info.h"
 #include "source_io/module_parameter/parameter.h"
@@ -397,7 +398,7 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "snap_pot")
     {
-        return new ESolver_SNAP(PARAM.mdp.pot_file, PARAM.mdp.snap_param_file);
+        return new ESolver_SNAP(inp.mdp.pot_file, inp.mdp.snap_param_file, GlobalV::ofs_running);
     }
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));
