@@ -399,6 +399,8 @@ namespace hamilt {
                 int nbands,
                 int ik,
                 int nkb,
+                int npol,
+                int spin_sign,
                 const int* atom_nh,
                 const int* atom_na,
                 int tpiba,
@@ -409,7 +411,6 @@ namespace hamilt {
                 FPTYPE* force)
         {
             const int ib = blockIdx.x / ntype; // index of loop-nbands
-            const int ib2 = ib * 2;
             const int it = blockIdx.x % ntype; // index of loop-ntype
 
             int iat = 0; // calculate the begin of atomic index
@@ -420,30 +421,48 @@ namespace hamilt {
                 sum += atom_na[ii] * atom_nh[ii];
             }
 
+            const int ib2 = ib * npol;
             const FPTYPE fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
             const int nprojs = atom_nh[it];
             for (int ia = 0; ia < atom_na[it]; ia++)
             {
-                const thrust::complex<FPTYPE> coefficients0(lambda[iat * 3 + 2], 0.0);
-                const thrust::complex<FPTYPE> coefficients1(lambda[iat * 3], lambda[iat * 3 + 1]);
-                const thrust::complex<FPTYPE> coefficients2(lambda[iat * 3], -1 * lambda[iat * 3 + 1]);
-                const thrust::complex<FPTYPE> coefficients3(-1 * lambda[iat * 3 + 2], 0.0);
-                for (int ip = threadIdx.x; ip < nprojs; ip += blockDim.x)
+                if (npol == 2)
                 {
-                    const int inkb = sum + ip + ib2 * nkb;
-                    // out<<"\n ps = "<<ps;
-                    for (int ipol = 0; ipol < 3; ipol++)
+                    const thrust::complex<FPTYPE> coefficients0(lambda[iat * 3 + 2], 0.0);
+                    // dbb1 = conj(d becp_up) * becp_down requires H_up,down = lambda_x - i lambda_y.
+                    const thrust::complex<FPTYPE> coefficients1(lambda[iat * 3], -lambda[iat * 3 + 1]);
+                    const thrust::complex<FPTYPE> coefficients2(lambda[iat * 3], lambda[iat * 3 + 1]);
+                    const thrust::complex<FPTYPE> coefficients3(-1 * lambda[iat * 3 + 2], 0.0);
+                    for (int ip = threadIdx.x; ip < nprojs; ip += blockDim.x)
                     {
-                        const int inkb0 = ipol * nbands * 2 * nkb + inkb;
-                        const thrust::complex<FPTYPE> dbb0 = conj(dbecp[inkb0]) * becp[inkb];
-                        const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb0]) * becp[inkb + nkb];
-                        const thrust::complex<FPTYPE> dbb2 = conj(dbecp[inkb0 + nkb]) * becp[inkb];
-                        const thrust::complex<FPTYPE> dbb3 = conj(dbecp[inkb0 + nkb]) * becp[inkb + nkb];
-                        const FPTYPE tmp
-                            = -fac
-                            * (coefficients0 * dbb0 + coefficients1 * dbb1 + coefficients2 * dbb2 + coefficients3 * dbb3)
-                            .real();
-                        atomicAdd(force + iat * forcenl_nc + ipol, tmp);
+                        const int inkb = sum + ip + ib2 * nkb;
+                        for (int ipol = 0; ipol < 3; ipol++)
+                        {
+                            const int inkb0 = ipol * nbands * 2 * nkb + inkb;
+                            const thrust::complex<FPTYPE> dbb0 = conj(dbecp[inkb0]) * becp[inkb];
+                            const thrust::complex<FPTYPE> dbb1 = conj(dbecp[inkb0]) * becp[inkb + nkb];
+                            const thrust::complex<FPTYPE> dbb2 = conj(dbecp[inkb0 + nkb]) * becp[inkb];
+                            const thrust::complex<FPTYPE> dbb3 = conj(dbecp[inkb0 + nkb]) * becp[inkb + nkb];
+                            const FPTYPE tmp
+                                = -fac
+                                * (coefficients0 * dbb0 + coefficients1 * dbb1 + coefficients2 * dbb2 + coefficients3 * dbb3)
+                                .real();
+                            atomicAdd(force + iat * forcenl_nc + ipol, tmp);
+                        }
+                    }
+                }
+                else
+                {
+                    const FPTYPE lambda_z = lambda[iat * 3 + 2];
+                    for (int ip = threadIdx.x; ip < nprojs; ip += blockDim.x)
+                    {
+                        const int inkb = sum + ip + ib2 * nkb;
+                        for (int ipol = 0; ipol < 3; ipol++)
+                        {
+                            const int inkb0 = ipol * nbands * nkb + inkb;
+                            const FPTYPE dbb = (conj(dbecp[inkb0]) * becp[inkb]).real();
+                            atomicAdd(force + iat * forcenl_nc + ipol, -fac * lambda_z * spin_sign * dbb);
+                        }
                     }
                 }
                 ++iat;
@@ -504,15 +523,22 @@ namespace hamilt {
                 const int& nbands,
                 const int& ik,
                 const int& nkb,
+                const int& npol,
                 const int* atom_nh,
                 const int* atom_na,
                 const FPTYPE& tpiba,
                 const FPTYPE* d_wg,
                 const FPTYPE* lambda,
+                const int* isk,
                 const std::complex<FPTYPE>* becp,
                 const std::complex<FPTYPE>* dbecp,
                 FPTYPE* force)
         {
+            int spin_sign = 1;
+            if (isk != nullptr && npol == 1)
+            {
+                spin_sign = (isk[ik] == 0) ? 1 : -1;
+            }
             hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_force_onsite<FPTYPE>),
                     dim3(nbands_occ * ntype),
                     dim3(THREADS_PER_BLOCK),
@@ -524,6 +550,8 @@ namespace hamilt {
                     nbands,
                     ik,
                     nkb,
+                    npol,
+                    spin_sign,
                     atom_nh,
                     atom_na,
                     tpiba,
@@ -638,6 +666,8 @@ namespace hamilt {
     template void revertVkbValues<double>(const int *gcar_zero_ptrs, std::complex<double> *vkb_ptr, const std::complex<double> *vkb_save_ptr, int nkb, int gcar_zero_count, int npw, int ipol, int npwx, const std::complex<double> coeff);
     // for saveVkbValues functions instantiation
     template void saveVkbValues<double>(const int *gcar_zero_ptrs, const std::complex<double> *vkb_ptr, std::complex<double> *vkb_save_ptr, int nkb, int gcar_zero_count, int npw, int ipol, int npwx);
+template void revertVkbValues<float>(const int *gcar_zero_ptrs, std::complex<float> *vkb_ptr, const std::complex<float> *vkb_save_ptr, int nkb, int gcar_zero_count, int npw, int ipol, int npwx, const std::complex<float> coeff);
+template void saveVkbValues<float>(const int *gcar_zero_ptrs, const std::complex<float> *vkb_ptr, std::complex<float> *vkb_save_ptr, int nkb, int gcar_zero_count, int npw, int ipol, int npwx);
 
 
     // HIP kernels for sincos loops

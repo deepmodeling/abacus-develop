@@ -1,5 +1,7 @@
 #include "diago_dav_subspace.h"
 
+#include "module_base/parallel_reduce.h"
+
 #include "diago_iter_assist.h"
 #include "module_base/memory.h"
 #include "module_base/module_device/device.h"
@@ -616,9 +618,9 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         // vcc: nbase * nband
         for (int i = 0; i < nband; i++)
         {
-            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, this->diag_comm.comm);
+            MPI_Bcast(&vcc[i * this->nbase_x], nbase, Parallel_Reduce::MPI_Type<T>::value, 0, this->diag_comm.comm);
         }
-        MPI_Bcast((*eigenvalue_iter).data(), nband, MPI_DOUBLE, 0, this->diag_comm.comm);
+        MPI_Bcast((*eigenvalue_iter).data(), nband, Parallel_Reduce::MPI_Type<Real>::value, 0, this->diag_comm.comm);
     }
 #endif
 

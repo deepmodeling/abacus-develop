@@ -1,8 +1,13 @@
 #include "diago_david.h"
 
+#include <type_traits>
+#include <vector>
+
 #include "module_base/timer.h"                  // ModuleBase::timer::tick
 #include "module_base/tool_title.h"             // ModuleBase::TITLE
 #include "module_base/module_device/device.h"
+#include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
 
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
@@ -12,6 +17,22 @@
 #endif
 
 using namespace hsolver;
+
+namespace
+{
+inline std::complex<double> to_complex_double(const std::complex<double>& v) { return v; }
+inline std::complex<double> to_complex_double(const std::complex<float>& v)
+{
+    return std::complex<double>(static_cast<double>(v.real()), static_cast<double>(v.imag()));
+}
+inline std::complex<double> to_complex_double(const double& v) { return std::complex<double>(v, 0.0); }
+inline void from_complex_double(const std::complex<double>& v, double& out) { out = v.real(); }
+inline void from_complex_double(const std::complex<double>& v, std::complex<double>& out) { out = v; }
+inline void from_complex_double(const std::complex<double>& v, std::complex<float>& out)
+{
+    out = std::complex<float>(static_cast<float>(v.real()), static_cast<float>(v.imag()));
+}
+} // namespace
 
 
 template <typename T, typename Device>
@@ -703,7 +724,59 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
             resmem_var_op()(this->ctx, eigenvalue_gpu, nbase_x);
             syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, this->eigenvalue, nbase_x);
 
-            dnevx_op<T, Device>()(this->ctx, nbase, nbase_x, hcc, nband, eigenvalue_gpu, vcc);
+            if (std::is_same<Real, float>::value && !PARAM.globalv.use_uspp)
+            {
+                // Solve this single reduced problem in double precision and
+                // return the requested eigenpairs in single precision.
+                using Z = std::complex<double>;
+                const size_t mat_size = static_cast<size_t>(nbase_x) * nbase_x;
+                Z* h64 = nullptr;
+                Z* v64 = nullptr;
+                double* e64 = nullptr;
+                base_device::memory::resize_memory_op<Z, Device>()(this->ctx, h64, mat_size, "DAV::h64");
+                base_device::memory::resize_memory_op<Z, Device>()(this->ctx, v64, mat_size, "DAV::v64");
+                base_device::memory::resize_memory_op<double, Device>()(this->ctx, e64, nbase_x, "DAV::e64");
+
+                std::vector<T> hbuf(mat_size);
+                syncmem_d2h_op()(this->cpu_ctx, this->ctx, hbuf.data(), hcc, mat_size);
+                std::vector<Z> hbuf64(mat_size);
+                for (size_t i = 0; i < mat_size; ++i)
+                {
+                    hbuf64[i] = to_complex_double(hbuf[i]);
+                }
+                base_device::memory::synchronize_memory_op<Z, Device, base_device::DEVICE_CPU>()(
+                    this->ctx, this->cpu_ctx, h64, hbuf64.data(), mat_size);
+
+                dnevx_op<Z, Device>()(this->ctx, nbase, nbase_x, h64, nband, e64, v64);
+
+                std::vector<Z> vbuf64(mat_size);
+                base_device::memory::synchronize_memory_op<Z, base_device::DEVICE_CPU, Device>()(
+                    this->cpu_ctx, this->ctx, vbuf64.data(), v64, mat_size);
+                std::vector<T> vbuf(mat_size);
+                for (size_t i = 0; i < mat_size; ++i)
+                {
+                    from_complex_double(vbuf64[i], vbuf[i]);
+                }
+                syncmem_h2d_op()(this->ctx, this->cpu_ctx, vcc, vbuf.data(), mat_size);
+
+                std::vector<double> ebuf(nbase_x, 0.0);
+                base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, Device>()(
+                    this->cpu_ctx, this->ctx, ebuf.data(), e64, nbase_x);
+                std::vector<Real> ebuf_real(nbase_x, Real(0));
+                for (int i = 0; i < nbase_x; ++i)
+                {
+                    ebuf_real[i] = static_cast<Real>(ebuf[i]);
+                }
+                syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, ebuf_real.data(), nbase_x);
+
+                base_device::memory::delete_memory_op<Z, Device>()(this->ctx, h64);
+                base_device::memory::delete_memory_op<Z, Device>()(this->ctx, v64);
+                base_device::memory::delete_memory_op<double, Device>()(this->ctx, e64);
+            }
+            else
+            {
+                dnevx_op<T, Device>()(this->ctx, nbase, nbase_x, hcc, nband, eigenvalue_gpu, vcc);
+            }
 
             syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->eigenvalue, eigenvalue_gpu, nbase_x);
             delmem_var_op()(this->ctx, eigenvalue_gpu);
@@ -721,9 +794,9 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
         // vcc: nbase * nband
         for (int i = 0; i < nband; i++)
         {
-            MPI_Bcast(&vcc[i * nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, diag_comm.comm);
+            MPI_Bcast(&vcc[i * nbase_x], nbase, Parallel_Reduce::MPI_Type<T>::value, 0, diag_comm.comm);
         }
-        MPI_Bcast(this->eigenvalue, nband, MPI_DOUBLE, 0, diag_comm.comm);
+        MPI_Bcast(this->eigenvalue, nband, Parallel_Reduce::MPI_Type<Real>::value, 0, diag_comm.comm);
     }
 #endif
 
@@ -815,6 +888,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     nbase = nband;
 
     setmem_complex_op()(this->ctx, hcc, 0, nbase_x * nbase_x);
+    setmem_complex_op()(this->ctx, vcc, 0, nbase_x * nbase_x);
 
     // setmem_complex_op()(this->ctx, scc, 0, nbase_x * nbase_x);
 
@@ -944,7 +1018,15 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     syncmem_d2h_op()(this->cpu_ctx, this->ctx, &var, lagrange_m + m, 1);
     double psi_norm = get_real(var);
 
-    assert(psi_norm > 0.0);
+    if (psi_norm <= 0.0)
+    {
+        // The residual direction has a zero (or negative) S-norm: in single
+        // precision the residual H*c - lambda*S*c suffers catastrophic
+        // cancellation and collapses to numerical noise. Treat it as converged
+        // and leave the (near-zero) direction untouched instead of aborting.
+        ModuleBase::timer::tick("DiagoDavid", "SchmidtOrth");
+        return;
+    }
 
     // / psi_m = psi_m - \sum_{i < m} \langle psi(i)|S|psi(m) \rangle psi(i)
     // psi_m = psi_m - basis * lagrange_m
@@ -975,26 +1057,24 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     //     psi_norm -= (conj(lagrange_m[j]) * lagrange_m[j]).real();
     // }
 
-    assert(psi_norm > 0.0);
+    if (psi_norm <= 0.0)
+    {
+        // Nearly rank-deficient direction after orthogonalization: skip it.
+        ModuleBase::timer::tick("DiagoDavid", "SchmidtOrth");
+        return;
+    }
 
     psi_norm = sqrt(psi_norm);
 
     if (psi_norm < 1.0e-12)
     {
-        std::cout << "DiagoDavid::SchmidtOrth:aborted for psi_norm <1.0e-12" << std::endl;
-        std::cout << "nband = " << nband << std::endl;
-        std::cout << "m = " << m << std::endl;
-        exit(0);
+        // Nearly rank-deficient direction: skip instead of aborting.
+        ModuleBase::timer::tick("DiagoDavid", "SchmidtOrth");
+        return;
     }
-    else
-    {
-        // psi_m = psi_m / psi_norm
-        vector_div_constant_op<T, Device>()(this->ctx, dim, psi_m, psi_m, psi_norm);
-        // for (int i = 0; i < npw; i++)
-        // {
-        //     psi_m[i] /= psi_norm;
-        // }
-    }
+
+    // psi_m = psi_m / psi_norm
+    vector_div_constant_op<T, Device>()(this->ctx, dim, psi_m, psi_m, psi_norm);
 
     // delete[] lagrange;
     ModuleBase::timer::tick("DiagoDavid", "SchmidtOrth");

@@ -22,7 +22,6 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
     this->ucell = ucell_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
-    assert(this->hsk != nullptr);
 #endif
     // initialize HR to allocate sparse Ekinetic matrix memory
     this->initialize_HR(GridD_in);

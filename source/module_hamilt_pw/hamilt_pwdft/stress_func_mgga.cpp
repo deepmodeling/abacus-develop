@@ -29,7 +29,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
 
     std::complex<FPTYPE>* psi;
     int ipol2xy[3][3] = {{0, 1, 3}, {1, 2, 4}, {3, 4, 5}};
-    FPTYPE sigma_mgga[3][3];
+    double sigma_mgga[3][3];
 
     using ct_Device = typename ct::PsiToContainer<Device>::type;
 

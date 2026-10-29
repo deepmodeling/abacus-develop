@@ -207,7 +207,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                             target_DMR_mat[icol + step_trace[0]] = tmp[0].real() + tmp[3].real();
                             target_DMR_mat[icol + step_trace[1]] = tmp[1].real() + tmp[2].real();
                             target_DMR_mat[icol + step_trace[2]]
-                                = -tmp[1].imag() + tmp[2].imag(); // (i * (rho_updown - rho_downup)).real()
+                                = tmp[1].imag() - tmp[2].imag(); // rho_y = Im(rho_updown - rho_downup)
                             target_DMR_mat[icol + step_trace[3]] = tmp[0].real() - tmp[3].real();
                         }
                         tmp_DMR_mat += col_size * 2;

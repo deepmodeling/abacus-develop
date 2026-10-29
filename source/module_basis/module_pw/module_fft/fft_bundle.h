@@ -206,7 +206,21 @@ class FFT_Bundle
         bool double_flag=false;
         std::shared_ptr<FFT_BASE<float>> fft_float=nullptr;
         std::shared_ptr<FFT_BASE<double>> fft_double=nullptr;
-        
+        // Extra CPU backends serving the host-memory ("cpu-like") interface
+        // when the primary backend is a device FFT. They keep host
+        // post-processing (e.g. Wannier90/Berry phase) working on GPU runs.
+        std::shared_ptr<FFT_BASE<float>> host_fft_float=nullptr;
+        std::shared_ptr<FFT_BASE<double>> host_fft_double=nullptr;
+
+        FFT_BASE<float>* get_host_fft_float() const
+        {
+            return (this->device == "cpu") ? this->fft_float.get() : this->host_fft_float.get();
+        }
+        FFT_BASE<double>* get_host_fft_double() const
+        {
+            return (this->device == "cpu") ? this->fft_double.get() : this->host_fft_double.get();
+        }
+
         std::string device = "cpu";
         std::string precision = "double";
 };   

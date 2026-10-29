@@ -413,24 +413,6 @@ std::vector<int> PW_Basis_K::get_ig2iz(const int ik) const
 }
 
 template <>
-float * PW_Basis_K::get_kvec_c_data() const {
-    return this->s_kvec_c;
-}
-template <>
-double * PW_Basis_K::get_kvec_c_data() const {
-    return this->d_kvec_c;
-}
-
-template <>
-float * PW_Basis_K::get_gcar_data() const {
-    return this->s_gcar;
-}
-template <>
-double * PW_Basis_K::get_gcar_data() const {
-    return this->d_gcar;
-}
-
-template <>
 float * PW_Basis_K::get_gk2_data() const {
     return this->s_gk2;
 }

@@ -115,6 +115,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
 
         this->pw_basis_ = &pw_basis;
         this->sf_ = &sf;
+        this->isk_ = kv.isk.data();
 
         std::vector<std::string> orb_files(ntype);
         std::vector<int> nproj(ntype);
@@ -532,6 +533,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
 
     // loop over k-points to calculate Mi of \sum_{k,i,l,m}<Psi_{k,i}|alpha_{l,m}><alpha_{l,m}|Psi_{k,i}>
     const int nbands = psi_in->get_nbands();
+    const int npol = psi_in->npol;
     for(int ik = 0; ik < psi_in->get_nk(); ik++)
     {
         psi_in->fix_k(ik);
@@ -539,17 +541,17 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
         {
             this->tabulate_atomic(ik);
         }
-        // std::cout << __FILE__ << ":" << __LINE__ << " nbands = " << nbands << std::endl;
-        this->overlap_proj_psi(
-                        nbands * psi_in->npol,
-                        psi_in->get_pointer());
+        this->overlap_proj_psi(nbands * npol, psi_in->get_pointer());
         const std::complex<double>* becp_p = this->get_h_becp();
         // becp(nbands*npol , nkb)
         // mag = wg * \sum_{nh}becp * becp
         int nkb = this->tot_nproj;
-        //nkb = 18;
-        //std::cout << "at " << __FILE__ << ": " << __LINE__ << " output nbands: " << nbands << std::endl;
-        //std::cout << "at " << __FILE__ << ": " << __LINE__ << " output nkb: " << nkb << std::endl;
+        // nspin=2 (npol=1): the spin-up and spin-down channels are separate
+        // k-points. Store spin-up occupancy in the up-up Pauli block (occ[0])
+        // and spin-down occupancy in the down-down block (occ[3]) so that
+        // print yields Charge = occ[0] + occ[3], Mag(z) = occ[0] - occ[3].
+        // nspin=1 (npol=1): split the occupancy evenly so Mag = 0.
+        // nspin=4 (npol=2): both spinor components are interleaved per band.
         for(int ib = 0;ib<nbands;ib++)
         {
             const double weight = wg_in(ik, ib);
@@ -560,11 +562,32 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
                 for(int ih = 0; ih < nh; ih++)
                 {
                     const int occ_index = (begin_ih + ih) * 4;
-                    const int index = ib*2*nkb + begin_ih + ih;
-                    occs[occ_index] += weight * conj(becp_p[index]) * becp_p[index];
-                    occs[occ_index + 1] += weight * conj(becp_p[index]) * becp_p[index + nkb];
-                    occs[occ_index + 2] += weight * conj(becp_p[index + nkb]) * becp_p[index];
-                    occs[occ_index + 3] += weight * conj(becp_p[index + nkb]) * becp_p[index + nkb];
+                    if (npol == 1)
+                    {
+                        const int index = ib * nkb + begin_ih + ih;
+                        const double occ = weight * (conj(becp_p[index]) * becp_p[index]).real();
+                        if (PARAM.inp.nspin == 2 && this->isk_ && this->isk_[ik] == 1)
+                        {
+                            occs[occ_index + 3] += occ;
+                        }
+                        else if (PARAM.inp.nspin == 1)
+                        {
+                            occs[occ_index] += 0.5 * occ;
+                            occs[occ_index + 3] += 0.5 * occ;
+                        }
+                        else
+                        {
+                            occs[occ_index] += occ;
+                        }
+                    }
+                    else
+                    {
+                        const int index = ib * 2 * nkb + begin_ih + ih;
+                        occs[occ_index] += weight * conj(becp_p[index]) * becp_p[index];
+                        occs[occ_index + 1] += weight * conj(becp_p[index]) * becp_p[index + nkb];
+                        occs[occ_index + 2] += weight * conj(becp_p[index + nkb]) * becp_p[index];
+                        occs[occ_index + 3] += weight * conj(becp_p[index + nkb]) * becp_p[index + nkb];
+                    }
                 }
                 begin_ih += nh;
             }
@@ -586,6 +609,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
     std::vector<double> mag_y(this->ucell->nat, 0.0);
     std::vector<double> mag_z(this->ucell->nat,0.0);
     auto atomLabels = this->ucell->get_atomLabels();
+    std::vector<std::string> atom_labels_iat(this->ucell->nat);
     const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
     const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
     const std::vector<std::string> orb_names = {"s", "p", "d", "f", "g"};
@@ -597,7 +621,8 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
         const int it = this->ucell->iat2it[iat];
         std::string atom_label = atomLabels[it];
         int ia = this->ucell->iat2ia[iat];
-        GlobalV::ofs_running << FmtCore::format("%-20s", atom_label+std::to_string(ia+1)) << std::endl;
+        atom_labels_iat[iat] = atom_label + std::to_string(ia + 1);
+        GlobalV::ofs_running << FmtCore::format("%-20s", atom_labels_iat[iat]) << std::endl;
         std::vector<double> sum(4, 0.0);
         int current_l = 1;
         std::vector<double> charge_mag(4, 0.0);
@@ -630,7 +655,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
     }
     GlobalV::ofs_running << "-------------------------------------------------------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::endl;
-    table << atomLabels << mag_x << mag_y << mag_z;
+    table << atom_labels_iat << mag_x << mag_y << mag_z;
     GlobalV::ofs_running << table.str() << std::endl;
     
     // print charge

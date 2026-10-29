@@ -166,11 +166,11 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
                 resmem_cd_op()(gpu_ctx, c_deeq_nc, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
                 resmem_cd_op()(gpu_ctx, c_qq_so, ntype * 4 * this->nhm * this->nhm);
             }
-            else
-            {
-                resmem_zd_op()(gpu_ctx, z_deeq_nc, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
-                resmem_zd_op()(gpu_ctx, z_qq_so, ntype * 4 * this->nhm * this->nhm);
-            }
+            // The double-precision force/stress path (Forces<double> /
+            // Stress_PW<double>) always reads these buffers, even when the
+            // SCF runs in single precision.
+            resmem_zd_op()(gpu_ctx, z_deeq_nc, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
+            resmem_zd_op()(gpu_ctx, z_qq_so, ntype * 4 * this->nhm * this->nhm);
             resmem_dd_op()(gpu_ctx, d_deeq, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
             resmem_dd_op()(gpu_ctx, d_indv, ntype * this->nhm);
             resmem_dd_op()(gpu_ctx, d_nhtol, ntype * this->nhm);
@@ -195,11 +195,10 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
                                "VNL::c_deeq_nc");
                 resmem_ch_op()(cpu_ctx, c_qq_so, ntype * 4 * this->nhm * this->nhm, "VNL::c_qq_so");
             }
-            else
-            {
-                this->z_deeq_nc = this->deeq_nc.ptr;
-                this->z_qq_so = this->qq_so.ptr;
-            }
+            // The double-precision force/stress path always reads these
+            // host buffers, even when the SCF runs in single precision.
+            this->z_deeq_nc = this->deeq_nc.ptr;
+            this->z_qq_so = this->qq_so.ptr;
             this->d_deeq = this->deeq.ptr;
             this->d_indv = this->indv.c;
             this->d_nhtol = this->nhtol.c;
@@ -876,10 +875,8 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
             castmem_d2s_h2d_op()(gpu_ctx, cpu_ctx, this->s_qq_nt, this->qq_nt.ptr, this->qq_nt.getSize());
             castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, this->c_qq_so, this->qq_so.ptr, this->qq_so.getSize());
         }
-        else
-        {
-            syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_qq_so, this->qq_so.ptr, this->qq_so.getSize());
-        }
+        // Always keep the double buffer in sync for force/stress.
+        syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, this->z_qq_so, this->qq_so.ptr, this->qq_so.getSize());
         // Even when the single precision flag is enabled,
         // these variables are utilized in the Force/Stress calculation as well.
         // modified by denghuilu at 2023-05-15
@@ -1498,14 +1495,12 @@ void pseudopot_cell_vnl::cal_effective_D(const ModuleBase::matrix& veff,
                                  this->deeq_nc.ptr,
                                  PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         }
-        else
-        {
-            syncmem_z2z_h2d_op()(gpu_ctx,
-                                 cpu_ctx,
-                                 this->z_deeq_nc,
-                                 this->deeq_nc.ptr,
-                                 PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
-        }
+        // Always keep the double buffer in sync for force/stress.
+        syncmem_z2z_h2d_op()(gpu_ctx,
+                             cpu_ctx,
+                             this->z_deeq_nc,
+                             this->deeq_nc.ptr,
+                             PARAM.inp.nspin * cell.nat * this->nhm * this->nhm);
         syncmem_d2d_h2d_op()(gpu_ctx,
                              cpu_ctx,
                              this->d_deeq,

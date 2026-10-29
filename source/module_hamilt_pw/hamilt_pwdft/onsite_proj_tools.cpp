@@ -888,6 +888,8 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dspin(int ik,
         d_wg = const_cast<FPTYPE*>(h_wg);
     }
     const int force_nc = 3;
+    const int npol = this->ucell_->get_npol();
+    const int* isk = this->kv_ ? this->kv_->isk.data() : nullptr;
     cal_force_nl_op<FPTYPE, Device>()(this->ctx,
                                       npm,
                                       this->nbands,
@@ -896,11 +898,13 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dspin(int ik,
                                       this->nbands,
                                       ik,
                                       nkb,
+                                      npol,
                                       atom_nh,
                                       atom_na,
                                       this->ucell_->tpiba,
                                       d_wg,
                                       lambda_tmp,
+                                      isk,
                                       becp,
                                       dbecp,
                                       force);

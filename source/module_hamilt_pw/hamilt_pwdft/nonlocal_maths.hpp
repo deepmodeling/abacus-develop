@@ -389,6 +389,19 @@ void Nonlocal_maths<FPTYPE, Device>::dylmr2(const int nylm,
                                             FPTYPE* dylm,
                                             const int ipol)
 {
+    // A 1e-6 finite difference loses significant digits when evaluated in float.
+    // Keep the difference in double, then store the derivative in the requested type.
+    if (sizeof(FPTYPE) < sizeof(double))
+    {
+        const std::vector<double> q(gk, gk + 3 * ngy);
+        std::vector<double> derivative(nylm * ngy);
+        Nonlocal_maths<double, Device>::dylmr2(nylm, ngy, q.data(), derivative.data(), ipol);
+        for (int i = 0; i < nylm * ngy; ++i)
+        {
+            dylm[i] = static_cast<FPTYPE>(derivative[i]);
+        }
+        return;
+    }
     //-----------------------------------------------------------------------
     //
     //     compute \partial Y_lm(G) \over \partial (G)_ipol
