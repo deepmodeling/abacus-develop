@@ -90,4 +90,4 @@ if(BUILD_TESTING)
   message(STATUS "Building tests")
 endif()
 
-add_subdirectory(module_rt_pw)
+add_subdirectory(module_linalg)

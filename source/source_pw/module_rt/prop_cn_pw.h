@@ -1,6 +1,6 @@
 #ifndef PW_PROP_CN_PW_H
 #define PW_PROP_CN_PW_H
-#include "source_hsolver/module_rt_pw/cn_solver_pw.h"
+#include "source_pw/module_rt/cn_solver_pw.h"
 #include "source_pw/module_rt/td_prop_pw.h"
 
 namespace pw

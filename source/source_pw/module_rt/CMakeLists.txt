@@ -1,4 +1,6 @@
 add_library(module_rt_pw OBJECT
+  cn_solver_pw.cpp
+  td_orbital_ops.cpp
   td_prop_pw.cpp
   td_hamilt_pw.cpp
   prop_cn_pw.cpp
@@ -17,6 +19,6 @@ if(ENABLE_COVERAGE)
   add_coverage(module_rt_pw)
 endif()
 
-if(BUILD_TESTING AND ENABLE_MPI)
+if(BUILD_TESTING)
   add_subdirectory(unittests)
 endif()

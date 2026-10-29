@@ -36,8 +36,8 @@ VPATH=./src_global:\
 ./source_base/module_fft:\
 ./source_esolver:\
 ./source_hsolver:\
-./source_hsolver/module_rt_pw:\
-./source_hsolver/module_rt_pw/kernels:\
+./source_hsolver/module_linalg:\
+./source_hsolver/module_linalg/kernels:\
 ./source_hsolver/kernels:\
 ./source_hsolver/module_genelpa:\
 ./source_hsolver/module_pexsi:\

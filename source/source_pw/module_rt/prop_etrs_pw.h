@@ -1,7 +1,7 @@
 #ifndef PW_PROP_ETRS_PW_H
 #define PW_PROP_ETRS_PW_H
 #include "source_hsolver/diag_comm_info.h"
-#include "source_hsolver/module_rt_pw/exp_action.h"
+#include "source_hsolver/module_linalg/exp_action.h"
 #include "source_pw/module_rt/td_prop_pw.h"
 
 namespace pw

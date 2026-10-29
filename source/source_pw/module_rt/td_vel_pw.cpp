@@ -2,7 +2,7 @@
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_hsolver/module_rt_pw/kernels/linear_op.h"
+#include "source_hsolver/module_linalg/kernels/linear_op.h"
 
 #include <algorithm>
 #include <cstdint>
