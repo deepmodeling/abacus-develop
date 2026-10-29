@@ -240,6 +240,20 @@ overlap update. `check_projector_reduction.cpp` checks direct contractions on
 CPU and GPU with one or two spin components, repeated k-point changes, varying
 band counts, input/guard preservation, and repeated host-view acquisition.
 
+The CUDA magnetic-constraint loop forms per-band atom moments from rotated
+projectors on the device. Those moments remain available until all k-point
+eigenvalues determine the occupations; a second kernel applies the occupations
+in the original k-point and band order. Separate double-precision products and
+sums preserve the host expression's rounding, and only the final three-component
+atom moments return to the host. Temporary device moment storage scales as
+`3 * nk * nbands * nat * sizeof(double)`, about 0.90/3.60 MiB for Fe16/Fe32,
+replacing host storage for the full rotated projector matrices. The pool
+reduction remains after moment accumulation. CPU and ROCm retain their host path.
+`check_projector_moments.cpp` checks all components against the host complex
+formula, scalar spin signs, zero and unequal projector counts, zero/tiny/negative
+occupations, guards, repeated weighting, Pauli eigenstates and common-phase
+invariance.
+
 The Davidson driver also supplies independently constructed projected matrices
 for a mixed, nonorthogonal initial basis and verifies their immutability. The
 CUDA DeltaSpin path can reuse these matrices for norm-conserving inputs because

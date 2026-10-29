@@ -12,6 +12,7 @@
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/onsite_op.h"
 #include <algorithm>
+#include <memory>
 #if defined(__CUDA) || defined(__ROCM)
 #include <ATen/core/tensor.h>
 #endif
@@ -34,6 +35,57 @@ namespace
 using Complex = std::complex<double>;
 using GPU = base_device::DEVICE_GPU;
 using NonlocalPW = hamilt::Nonlocal<hamilt::OperatorPW<Complex, GPU>>;
+
+struct ProjectedMoments
+{
+    const int atoms;
+    const int bands;
+    const int points;
+    const int npol;
+    const int nkb;
+    ct::Tensor offsets;
+    ct::Tensor spins;
+    ct::Tensor by_band;
+    ct::Tensor weights;
+    ct::Tensor result;
+
+    ProjectedMoments(int atoms_in, int bands_in, int points_in, int npol_in, int nkb_in,
+                     const int* counts, const int* spin_labels)
+        : atoms(atoms_in), bands(bands_in), points(points_in), npol(npol_in), nkb(nkb_in),
+          offsets(ct::DataType::DT_INT, ct::DeviceType::GpuDevice, {atoms + 1}),
+          spins(ct::DataType::DT_INT, ct::DeviceType::GpuDevice, {points}),
+          by_band(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {points, bands, atoms, 3}),
+          weights(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {points, bands}),
+          result(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {atoms, 3})
+    {
+        std::vector<int> host_offsets(atoms + 1, 0);
+        for (int atom = 0; atom < atoms; ++atom) { host_offsets[atom + 1] = host_offsets[atom] + counts[atom]; }
+        base_device::memory::synchronize_memory_op<int, GPU, base_device::DEVICE_CPU>()(
+            nullptr, nullptr, offsets.data<int>(), host_offsets.data(), host_offsets.size());
+        base_device::memory::synchronize_memory_op<int, GPU, base_device::DEVICE_CPU>()(
+            nullptr, nullptr, spins.data<int>(), spin_labels, points);
+    }
+
+    void capture(int point, const Complex* projections)
+    {
+        hamilt::projector_band_moments_gpu(bands, npol, atoms, nkb, offsets.data<int>(), projections,
+                                         by_band.data<double>() + size_t(point) * bands * atoms * 3);
+    }
+
+    void finish(const ModuleBase::matrix& occupations, double* output)
+    {
+        // Occupations depend on all k-point eigenvalues. Band-resolved moments
+        // survive until those occupations are available, without retaining the
+        // much larger rotated projector matrices on either host or device.
+        cudaErrcheck(cudaMemcpy2D(weights.data<double>(), bands * sizeof(double),
+                                  occupations.c, occupations.nc * sizeof(double),
+                                  bands * sizeof(double), points, cudaMemcpyHostToDevice));
+        hamilt::sum_projector_moments_gpu(points, bands, atoms, npol, by_band.data<double>(),
+                                          weights.data<double>(), spins.data<int>(), result.data<double>());
+        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, GPU>()(
+            nullptr, nullptr, output, result.data<double>(), atoms * 3);
+    }
+};
 
 struct InitialActionWorkspace
 {
@@ -300,6 +352,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
             this->zero_Mi();
             int size_becp = 0;
             std::vector<std::complex<double>> becp_tmp;
+#if defined(__CUDA)
+            std::unique_ptr<ProjectedMoments> moments;
+#endif
             int nk = 0;
             int nkb = 0;
             int nbands = 0;
@@ -370,7 +425,12 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                 nk = psi_t->get_nk();
                 nh_iat = &onsite_p->get_nh(0);
                 size_becp = nbands * nkb * npol;
+#if defined(__CUDA)
+                moments = std::make_unique<ProjectedMoments>(this->Mi_.size(), nbands, nk, npol, nkb,
+                                                             nh_iat, this->pelec->klist->isk.data());
+#else
                 becp_tmp.resize(size_becp * nk);
+#endif
                 std::complex<double>* h_tmp = nullptr;
                 std::complex<double>* s_tmp = nullptr;
                 base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, h_tmp, nbands * nbands);
@@ -481,8 +541,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                                                                                   becp_pointer,
                                                                                   nkb * npol,
                                                                                   &this->pelec->ekb(ik, 0));
-                    // copy becp_pointer from GPU to CPU
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(cpu_ctx, ctx, &becp_tmp[ik * size_becp], becp_pointer, size_becp);   
+#if defined(__CUDA)
+                    moments->capture(ik, becp_pointer);
+#else
+                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(cpu_ctx, ctx, &becp_tmp[ik * size_becp], becp_pointer, size_becp);
+#endif
                 }
 
                 // free memory for becp_pointer in GPU device
@@ -493,6 +556,13 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
 #endif
             // calculate weights from ekb to update wg
             this->pelec->calculate_weights();
+#if defined(__CUDA)
+            if (moments)
+            {
+                moments->finish(this->pelec->wg, &(this->Mi_[0][0]));
+            }
+            else
+#endif
             // calculate Mi from existed becp
             for (int ik = 0; ik < nk; ik++)
             {

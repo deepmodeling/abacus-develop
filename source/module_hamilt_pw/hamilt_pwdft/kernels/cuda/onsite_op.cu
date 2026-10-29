@@ -13,6 +13,52 @@ namespace hamilt
 namespace
 {
 
+__global__ void projector_band_moments(const double2* projections, const int* offsets,
+                                      int atoms, int bands, int npol, int nkb, double* output)
+{
+    const int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index >= atoms * bands) { return; }
+    const int atom = index % atoms, band = index / atoms;
+    double up_norm = 0, down_norm = 0, cross_real = 0, cross_imag = 0;
+    // Separate rounding preserves the host complex-product arithmetic and
+    // projector accumulation order, including cancellation between spin terms.
+    for (int projector = offsets[atom]; projector < offsets[atom + 1]; ++projector)
+    {
+        const int row = band * npol * nkb + projector;
+        const auto up = projections[row];
+        up_norm = __dadd_rn(up_norm, __dadd_rn(__dmul_rn(up.x, up.x), __dmul_rn(up.y, up.y)));
+        if (npol == 2)
+        {
+            const auto down = projections[row + nkb];
+            down_norm = __dadd_rn(down_norm, __dadd_rn(__dmul_rn(down.x, down.x), __dmul_rn(down.y, down.y)));
+            cross_real = __dadd_rn(cross_real, __dadd_rn(__dmul_rn(up.x, down.x), __dmul_rn(up.y, down.y)));
+            cross_imag = __dadd_rn(cross_imag, __dsub_rn(__dmul_rn(up.x, down.y), __dmul_rn(up.y, down.x)));
+        }
+    }
+    output[3 * index] = __dadd_rn(cross_real, cross_real);
+    output[3 * index + 1] = __dadd_rn(cross_imag, cross_imag);
+    output[3 * index + 2] = __dsub_rn(up_norm, down_norm);
+}
+
+__global__ void sum_projector_moments(const double* moments, const double* weights, const int* spins,
+                                     int points, int bands, int atoms, int npol, double* output)
+{
+    const int component = blockIdx.x * blockDim.x + threadIdx.x;
+    if (component >= atoms * 3) { return; }
+    double sum = 0;
+    for (int point = 0; point < points; ++point)
+    {
+        for (int band = 0; band < bands; ++band)
+        {
+            const int state = point * bands + band;
+            double contribution = __dmul_rn(weights[state], moments[state * atoms * 3 + component]);
+            if (npol == 1) { contribution = __dmul_rn(contribution, spins[point] == 0 ? 1.0 : -1.0); }
+            sum = __dadd_rn(sum, contribution);
+        }
+    }
+    output[component] = sum;
+}
+
 template <bool Spinor>
 __global__ void apply_spin_constraint(int bands, int nkb, int sign, const double* lambda,
                                       const thrust::complex<double>* becp, thrust::complex<double>* ps)
@@ -38,6 +84,24 @@ __global__ void apply_spin_constraint(int bands, int nkb, int sign, const double
 }
 
 } // namespace
+
+void projector_band_moments_gpu(int bands, int npol, int atoms, int nkb, const int* offsets,
+                                const std::complex<double>* projections, double* moments)
+{
+    projector_band_moments<<<(atoms * bands + 127) / 128, 128>>>(
+        reinterpret_cast<const double2*>(projections), offsets, atoms, bands, npol, nkb, moments);
+    cudaErrcheck(cudaGetLastError());
+    cudaCheckOnDebug();
+}
+
+void sum_projector_moments_gpu(int points, int bands, int atoms, int npol,
+                              const double* moments, const double* weights, const int* spins, double* output)
+{
+    sum_projector_moments<<<(atoms * 3 + 127) / 128, 128>>>(
+        moments, weights, spins, points, bands, atoms, npol, output);
+    cudaErrcheck(cudaGetLastError());
+    cudaCheckOnDebug();
+}
 
 void spin_constraint_projectors_gpu(int bands, int npol, int nkb, int sign,
                                     const double* lambda, const std::complex<double>* becp,
