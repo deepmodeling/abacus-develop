@@ -736,6 +736,14 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
                                        const std::vector<double>& ethr_band,
                                        const bool& scf_type)
 {
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == base_device::GpuDevice)
+    {
+        // The preconditioner is fixed during diagonalization but may change
+        // between calls when the same solver instance is reused.
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition.data(), this->dim);
+    }
+#endif
     /// record the times of trying iterative diagonalization
     this->notconv = 0;
 
