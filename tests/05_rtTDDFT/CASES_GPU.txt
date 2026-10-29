@@ -7,7 +7,7 @@
 07_NO_EDM_TDDFT
 #08_NO_ETRS_TDDFT
 09_NO_HEAV_TDDFT
-10_NO_HHG_TDDFT
+10_NO_MD_boundary_shift
 11_NO_O3_TDDFT
 12_NO_re_TDDFT
 #13_NO_Taylor_TDDFT
@@ -26,3 +26,9 @@
 26_PW_single_TDDFT
 27_PW_gmres_recycle_TDDFT
 28_PW_gmres_subspace_TDDFT
+29_PW_soc_len_TDDFT
+30_PW_soc_onsite_TDDFT
+31_PW_retry_TDDFT
+32_PW_ETRS_lanczos_TDDFT
+33_PW_ETRS_taylor_TDDFT
+34_PW_ETRS_retry_TDDFT

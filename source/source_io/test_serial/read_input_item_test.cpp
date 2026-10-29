@@ -2789,3 +2789,30 @@ TEST_F(InputTest, LRFixedFieldRejectsForcesAndRelaxation)
         check_item(it->second, param);
     }
 }
+
+// Per-atom full-cavity widths can differ between equivalent atoms, which the
+// symmetry analysis does not see, so symmetry 1 is reduced to 0.
+TEST_F(InputTest, PerAtomSccsCavityWidthsDisableSpatialSymmetry)
+{
+    ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    auto it = find_label("symmetry", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    Input_para& input = TestParameters::input(param);
+    input.imp_sol = 2;
+    input.sccs_solvent_mode = "full";
+    input.sccs_corespread = {0.5};
+    input.symmetry = "1";
+    it->second.reset_value(it->second, param);
+    EXPECT_EQ(input.symmetry, "1");
+    input.sccs_corespread = {0.5, 0.0};
+    it->second.reset_value(it->second, param);
+    EXPECT_EQ(input.symmetry, "0");
+    input.symmetry = "-1";
+    it->second.reset_value(it->second, param);
+    EXPECT_EQ(input.symmetry, "-1");
+    input.symmetry = "1";
+    input.sccs_solvent_mode = "electronic";
+    it->second.reset_value(it->second, param);
+    EXPECT_EQ(input.symmetry, "1");
+}

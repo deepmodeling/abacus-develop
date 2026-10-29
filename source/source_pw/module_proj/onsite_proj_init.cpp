@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <map>
 #include <tuple>
+#include <cmath>
 
 #include "source_base/module_out/orb_io.h"
 #include "source_pw/module_proj/onsite_proj.h"
@@ -141,7 +142,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
             }
         }
 
-        this->init_proj(PARAM.inp.orbital_dir,
+        this->init_proj(orbital_dir,
                         orb_files,
                         nproj,
                         lproj,
@@ -209,6 +210,10 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
             continue;
         }
         std::ifstream ifs(orbital_dir + orb_files[it]);
+        if (!ifs)
+        {
+            ModuleBase::WARNING_QUIT("OnsiteProjector", "Cannot open orbital file: " + orbital_dir + orb_files[it]);
+        }
         std::string elem = "";
         double ecut = -1.0;
         int nr_ = -1;
@@ -216,6 +221,10 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         std::vector<int> nzeta; // number of radials for each l
         std::vector<std::vector<double>> radials; // radials arranged in serial
         ModuleIO::read_abacus_orb(ifs, elem, ecut, nr_, dr_, nzeta, radials);
+        if (nr_ < 2 || !(dr_ > 0.0) || radials.empty())
+        {
+            ModuleBase::WARNING_QUIT("OnsiteProjector", "Invalid orbital radial grid.");
+        }
 #ifdef __DEBUG
         assert(elem != "");
         assert(ecut != -1.0);
@@ -227,16 +236,20 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         dr = (dr == -1.0) ? dr_ : dr;
         for(int ip = 0; ip < nproj_it; ++ip)
         {
+            if (!(onsite_r[idx] > 0.0) || onsite_r[idx] >= (nr_ - 1) * dr_)
+            {
+                ModuleBase::WARNING_QUIT("OnsiteProjector", "onsite_radius must lie inside the orbital radial grid.");
+            }
             int l = lproj[idx];
             int izeta = iproj[idx];
             int irad = 0;
             irad = std::accumulate(nzeta.begin(), nzeta.begin() + l, irad);
             irad += izeta;
             std::vector<double> temp = radials[irad];
-            rgrid.resize(nr);
+            rgrid.resize(nr_);
             std::iota(rgrid.begin(), rgrid.end(), 0);
             std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r_i) { r_i *= dr; });
-            smoothgen(nr, rgrid.data(), temp.data(), onsite_r[idx], projs[idx]);
+            smoothgen(nr_, rgrid.data(), temp.data(), onsite_r[idx], projs[idx]);
             it2iproj[it][ip] = idx;
             ++idx;
         }
@@ -253,6 +266,27 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
 }
 
 // explicit method instantiation
+template <typename T, typename Device>
+void projectors::OnsiteProjector<T, Device>::ensure_range(double momentum, double dq)
+{
+    // Four extra samples cover the radial interpolation stencil at the largest shifted momentum.
+    const int required = static_cast<int>(std::ceil(momentum / dq)) + 4;
+    if (required <= tab.getBound3())
+    {
+        return;
+    }
+    std::vector<int> counts(ntype);
+    for (int it = 0; it < ntype; ++it)
+    {
+        counts[it] = it2iproj[it].size();
+    }
+    const int capacity = std::max(required + 100, static_cast<int>(std::ceil(1.25 * tab.getBound3())));
+    const int npol = ucell->get_npol();
+    RadialProjection::build_sbt_tab(counts, rgrid, projs, lproj, capacity, dq, ucell->omega, npol, tab, nhtol);
+    fs_tools->refresh_table();
+}
+
+template void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::ensure_range(double, double);
 template
 void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::init(
     const std::string&,
@@ -277,6 +311,7 @@ void projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::init_proj(
     const std::vector<double>&);
 
 #if ((defined __CUDA) || (defined __ROCM))
+template void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::ensure_range(double, double);
 template
 void projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::init(
     const std::string&,

@@ -10,7 +10,8 @@ pseudo_dir        ../../PP_ORB
 
 #Parameters (2.Iteration)
 ecutwfc           20
-scf_thr           1e-9
+scf_thr           1e-13
+pw_diag_thr       1e-12
 scf_nmax          100
 
 #Parameters (3.Basis)

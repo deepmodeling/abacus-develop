@@ -232,6 +232,14 @@ extern "C"
 class ScalapackConnector
 {
 public:
+    // Preserve the block-cyclic descriptor layout and local column-major leading dimension.
+    static inline
+    void descinit(int* desc, const int m, const int n, const int mb, const int nb,
+                  const int irsrc, const int icsrc, const int ictxt, const int lld, int& info)
+    {
+        descinit_(desc, &m, &n, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    }
+
     static inline
     void geadd(
         const char transa,

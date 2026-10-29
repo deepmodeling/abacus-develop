@@ -4,6 +4,7 @@
 #include "sccs_cavity.h"
 
 #include <string>
+#include <vector>
 
 namespace ModuleSccs
 {
@@ -16,6 +17,8 @@ struct SccsConfig
     CavityParameters cavity;
     Boundary boundary = Boundary::Periodic;
     int pcc_2d_axis = 2;
+    bool core_electrons = false;
+    std::vector<double> core_spreads = {0.5}; // Bohr: singleton skips Z == zv; per-atom list overrides; <= 0 disables
     double surface_tension = 0.0; // Hartree/Bohr^2
     double pressure = 0.0; // Hartree/Bohr^3
     double surface_regularization = 0.0;

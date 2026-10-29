@@ -9,6 +9,50 @@ namespace container {
 namespace cuBlasConnector {
 
 static inline
+void trsm(cublasHandle_t& handle, const char uplo, const char diag, const int n,
+          const float* matrix, const int lda, float* inverse)
+{
+    const float one = 1.0f;
+    const cublasFillMode_t triangle = cublas_fill_mode(uplo);
+    const cublasDiagType_t diagonal = cublas_diag_type(diag);
+    CHECK_CUBLAS(cublasStrsm(handle, CUBLAS_SIDE_LEFT, triangle, CUBLAS_OP_N, diagonal, n, n, &one, matrix, lda, inverse, n));
+}
+
+static inline
+void trsm(cublasHandle_t& handle, const char uplo, const char diag, const int n,
+          const double* matrix, const int lda, double* inverse)
+{
+    const double one = 1.0;
+    const cublasFillMode_t triangle = cublas_fill_mode(uplo);
+    const cublasDiagType_t diagonal = cublas_diag_type(diag);
+    CHECK_CUBLAS(cublasDtrsm(handle, CUBLAS_SIDE_LEFT, triangle, CUBLAS_OP_N, diagonal, n, n, &one, matrix, lda, inverse, n));
+}
+
+static inline
+void trsm(cublasHandle_t& handle, const char uplo, const char diag, const int n,
+          const std::complex<float>* matrix, const int lda, std::complex<float>* inverse)
+{
+    const cuComplex one = make_cuComplex(1.0f, 0.0f);
+    const cublasFillMode_t triangle = cublas_fill_mode(uplo);
+    const cublasDiagType_t diagonal = cublas_diag_type(diag);
+    const cuComplex* cuda_matrix = reinterpret_cast<const cuComplex*>(matrix);
+    cuComplex* cuda_inverse = reinterpret_cast<cuComplex*>(inverse);
+    CHECK_CUBLAS(cublasCtrsm(handle, CUBLAS_SIDE_LEFT, triangle, CUBLAS_OP_N, diagonal, n, n, &one, cuda_matrix, lda, cuda_inverse, n));
+}
+
+static inline
+void trsm(cublasHandle_t& handle, const char uplo, const char diag, const int n,
+          const std::complex<double>* matrix, const int lda, std::complex<double>* inverse)
+{
+    const cuDoubleComplex one = make_cuDoubleComplex(1.0, 0.0);
+    const cublasFillMode_t triangle = cublas_fill_mode(uplo);
+    const cublasDiagType_t diagonal = cublas_diag_type(diag);
+    const cuDoubleComplex* cuda_matrix = reinterpret_cast<const cuDoubleComplex*>(matrix);
+    cuDoubleComplex* cuda_inverse = reinterpret_cast<cuDoubleComplex*>(inverse);
+    CHECK_CUBLAS(cublasZtrsm(handle, CUBLAS_SIDE_LEFT, triangle, CUBLAS_OP_N, diagonal, n, n, &one, cuda_matrix, lda, cuda_inverse, n));
+}
+
+static inline
 void copy(cublasHandle_t& handle, const int& n, const float *x, const int& incx, float *y, const int& incy)
 {
     CHECK_CUBLAS(cublasScopy(handle, n, x, incx, y, incy));

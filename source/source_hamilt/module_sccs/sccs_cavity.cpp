@@ -5,6 +5,11 @@
 
 namespace ModuleSccs
 {
+bool uses_lowpass(const CavityParameters& parameters)
+{
+    return parameters.lowpass_p1 > 0.0 && parameters.lowpass_p2 > 0.0;
+}
+
 CavityPoint evaluate_cavity(double density, const CavityParameters& parameters)
 {
     CavityPoint point;

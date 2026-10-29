@@ -12,10 +12,12 @@ namespace elecstate
     ///        headers are printed
     /// @param two_fermi whether the run keeps two Fermi levels; derived, so it
     ///        does not live in Input_para
+    /// @param iter_limit maximum iterations for this SCF attempt, including propagation
     void print_etot(const Magnetism& magnet,
                     const ElecState& elec,
                     const bool converged,
                     const int& iter_in,
+                    const int iter_limit,
                     const double& scf_thr,
                     const double& scf_thr_kin,
                     const double& duration,

@@ -63,6 +63,17 @@ class Onsite_Proj_tools
      * @brief calculate the becp = <psi|beta> for all beta functions
      */
     void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in = nullptr, const std::complex<FPTYPE>* ppsi_in = nullptr, int npwx = 0);
+    /** @brief Gauge-covariant projection at the explicit endpoint vector potential (inverse Bohr).
+     *  @param host_becp Optional caller-owned host buffer for the pool-reduced overlaps; may be nullptr.
+     */
+    void cal_becp(int ik, int npm, std::complex<FPTYPE>* becp_in,
+                  const std::complex<FPTYPE>* ppsi_in, int npwx,
+                  const ModuleBase::Vector3<double>& vector_potential,
+                  std::complex<FPTYPE>* host_becp);
+    /** @brief Invalidate projectors after resizing the borrowed radial interpolation table. */
+    void refresh_table();
+    /** @brief Rebuild overlap projectors on the next call after atomic coordinates change. */
+    void invalidate_proj();
     /**
      * @brief calculate the dbecp_{ij} = <psi|\partial beta/\partial varepsilon_{ij}> for all beta functions
      *       stress_{ij} = -1/omega \sum_{n,k}f_{nk} \sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_{ij} also calculated
@@ -147,6 +158,7 @@ class Onsite_Proj_tools
     int deeq_nc_dims[4] = {0, 0, 0, 0};
 
     int current_ik = -1;
+    ModuleBase::Vector3<double> current_a_;
 
     int max_nh = 0;
     int max_npw = 0;
@@ -213,6 +225,7 @@ class Onsite_Proj_tools
     /// becp and dbecp:
     std::complex<FPTYPE>* dbecp = nullptr; // nbands * nkb (for stress) or nbands * nkb * 3 (for force)
     std::complex<FPTYPE>* becp = nullptr;  // nbands * nkb
+    std::vector<std::complex<FPTYPE>> host_becp_;
 
     /// @brief rename the operators for CPU/GPU device
     using gemm_op = ModuleBase::gemm_op<std::complex<FPTYPE>, Device>;
