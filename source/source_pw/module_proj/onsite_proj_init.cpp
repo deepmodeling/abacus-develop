@@ -234,22 +234,22 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
         nr = std::max(nr, nr_); // the maximal nr
         assert(dr == -1.0 || dr == dr_); // the dr should be the same for all types
         dr = (dr == -1.0) ? dr_ : dr;
+        rgrid.resize(nr_);
+        std::iota(rgrid.begin(), rgrid.end(), 0);
+        std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r_i) { r_i *= dr; });
         for(int ip = 0; ip < nproj_it; ++ip)
         {
             if (!(onsite_r[idx] > 0.0) || onsite_r[idx] >= (nr_ - 1) * dr_)
             {
-                ModuleBase::WARNING_QUIT("OnsiteProjector", "onsite_radius must lie inside the orbital radial grid.");
+                ModuleBase::WARNING_QUIT("OnsiteProjector",
+                                         "onsite_radius must lie inside the orbital radial grid: " + orb_files[it]);
             }
             int l = lproj[idx];
             int izeta = iproj[idx];
             int irad = 0;
             irad = std::accumulate(nzeta.begin(), nzeta.begin() + l, irad);
             irad += izeta;
-            std::vector<double> temp = radials[irad];
-            rgrid.resize(nr_);
-            std::iota(rgrid.begin(), rgrid.end(), 0);
-            std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r_i) { r_i *= dr; });
-            smoothgen(nr_, rgrid.data(), temp.data(), onsite_r[idx], projs[idx]);
+            smoothgen(nr_, rgrid.data(), radials[irad].data(), onsite_r[idx], projs[idx]);
             it2iproj[it][ip] = idx;
             ++idx;
         }
