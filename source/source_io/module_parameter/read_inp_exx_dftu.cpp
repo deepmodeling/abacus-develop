@@ -888,20 +888,30 @@ void ReadInput::item_dftu()
     }
     {
         Input_Item item("onsite_radius");
-        item.annotation = "radius of the sphere for onsite projection (Bohr)";
+        item.domain.set_rule("value>0");
+        item.domain.set_active_when("onsite_radius!=0");
+        item.annotation = "cutoff radius of onsite projection orbitals (Bohr)";
         item.category = "DFT+U correction";
         item.type = "Real";
-        item.description = R"(* The onsite_radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals used for DFT+U projections.
-* The modulation algorithm applies a smooth truncation to the orbital tail followed by normalization. A representative profile is $f(r)=\frac{1}{2}\left[1+\operatorname{erf}\!\left(\frac{r_c-r}{\sigma}\right)\right]$, where $r_c$ is the cutoff radius and $\sigma=\gamma r_c$ controls smoothness.)";
-        item.default_value = "3.0";
+        item.description = R"(Cutoff radius for numerical atomic orbitals used in onsite projections.
+* Controls the localized projections for `dft_plus_u=1` and spin constraints (`sc_mag_switch=true`) in PW and LCAO calculations.
+* Enables onsite population analysis in ordinary PW calculations when set to a positive value.
+* Controls atomic magnetic moment projections for `nspin=4` PW RT-TDDFT with `td_out_mag=onsite`.
+
+When omitted, the value is `3.0` for `dft_plus_u=1`, `sc_mag_switch=true`, or `nspin=4` PW RT-TDDFT with `td_out_mag=onsite`; otherwise it is `0.0`. Explicit values must be positive.
+
+Provide numerical atomic orbital files through `NUMERICAL_ORBITAL` in `STRU`, with their directory specified by `orbital_dir`. Projected magnetic moments depend on the chosen orbitals and radius.)";
+        item.default_value = "`3.0` for `dft_plus_u=1`, `sc_mag_switch=true`, or `nspin=4` PW RT-TDDFT with `td_out_mag=onsite`; `0.0` otherwise";
         item.unit = "Bohr";
-        item.set_availability("dft_plus_u==1");
+        item.set_availability("basis_type in [pw, lcao]");
         read_sync_double(input.onsite_radius);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if ((para.input.dft_plus_u == 1 || para.input.sc_mag_switch) && para.input.onsite_radius == 0.0)
+            if (!item.is_read())
             {
-                // autoset onsite_radius to 3.0 as default, this default value comes from the systematic atomic magnetism test
-                para.input.onsite_radius = 3.0;
+                const bool rt_onsite = para.inp.basis_type == "pw" && para.inp.esolver_type == "tddft"
+                                       && para.inp.nspin == 4 && para.inp.td_out_mag == "onsite";
+                const bool use_onsite = para.inp.dft_plus_u == 1 || para.inp.sc_mag_switch || rt_onsite;
+                para.input.onsite_radius = use_onsite ? 3.0 : 0.0;
             }
         };
         this->add_item(item);

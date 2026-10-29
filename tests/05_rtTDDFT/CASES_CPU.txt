@@ -26,3 +26,9 @@
 26_PW_single_TDDFT
 27_PW_gmres_recycle_TDDFT
 28_PW_gmres_subspace_TDDFT
+29_PW_soc_len_TDDFT
+30_PW_soc_onsite_TDDFT
+31_PW_retry_TDDFT
+32_PW_ETRS_lanczos_TDDFT
+33_PW_ETRS_taylor_TDDFT
+34_PW_ETRS_retry_TDDFT
