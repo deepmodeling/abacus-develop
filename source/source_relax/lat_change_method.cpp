@@ -32,3 +32,15 @@ void Lattice_Change_Methods::cal_lattice_change(const int& istep,
 
     return;
 }
+
+void Lattice_Change_Methods::check_converged(const ModuleBase::matrix& stress,
+                                             const UnitCell& ucell,
+                                             std::ofstream& ofs,
+                                             const Relax_Criteria& criteria)
+{
+    std::vector<double> lat(9, 0.0);
+    std::vector<double> grad(9, 0.0);
+    ModuleBase::matrix stress_copy(stress);
+    Lattice_Change_Basic::setup_gradient(ucell, lat.data(), grad.data(), stress_copy);
+    converged_ = Lattice_Change_Basic::check_converged(ucell, stress_copy, grad.data(), ofs, criteria.stress_thr);
+}

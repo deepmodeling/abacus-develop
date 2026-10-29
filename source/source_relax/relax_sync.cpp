@@ -102,6 +102,14 @@ bool Relax::relax_step(UnitCell& ucell,
     return relax_done;
 }
 
+bool Relax::check_converged(UnitCell& ucell,
+                            const ModuleBase::matrix& force,
+                            const ModuleBase::matrix& stress,
+                            std::ofstream& ofs_running)
+{
+    return this->setup_gradient(ucell, force, stress, ofs_running);
+}
+
 bool Relax::setup_gradient(const UnitCell& ucell,
                            const ModuleBase::matrix& force,
                            const ModuleBase::matrix& stress,

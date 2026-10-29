@@ -28,6 +28,9 @@ class Ions_Move_Methods
                       std::ofstream& ofs,
                       std::string& relax_method,
                       const Relax_Criteria& criteria);
+    void check_converged(const ModuleBase::matrix& force,
+                         const UnitCell& ucell,
+                         const Relax_Criteria& criteria);
     void reset_after_cell_change(const std::string& relax_method, std::ofstream& ofs);
 
     bool get_converged() const

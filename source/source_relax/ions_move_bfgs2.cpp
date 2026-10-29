@@ -46,7 +46,6 @@ bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force, UnitCell& uce
     }
     GetPos(ucell, pos);
     GetPostaud(ucell, pos_taud);
-    ucell.ionic_position_updated = true;
     assert(_force.nr == force.size() && _force.nc == 3);
     for (int i = 0; i < _force.nr; i++)
     {
@@ -79,14 +78,19 @@ bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force, UnitCell& uce
         k += ucell.atoms[i].na;
     }
 
+    this->CalculateLargestGrad(_force, ucell);
+    if (this->IsRestrain())
+    {
+        return true;
+    }
+
     this->PrepareStep(force, pos, H, pos0, force0, steplength, dpos, size, ucell);
     this->DetermineStep(steplength, dpos, maxstep);
     this->UpdatePos(ucell);
-    this->CalculateLargestGrad(_force, ucell);
-    bool converged = this->IsRestrain();
+    ucell.ionic_position_updated = true;
     // print out geometry information during bfgs_trad relax
     unitcell::print_tau(ucell.atoms, ucell.Coordinate, ucell.ntype, ucell.lat0, ofs_running);
-    return converged;
+    return false;
 }
 
 void Ions_Move_BFGS2::GetPos(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos)

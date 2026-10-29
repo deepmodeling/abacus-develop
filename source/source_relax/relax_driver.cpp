@@ -64,10 +64,15 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
         this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
         geometry_evaluated = true;
         this->stru_out(steps[0], ucell, inp, etot, stress, force);
-        bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
         this->json_out(p_esolver, ucell, inp, force, stress);
+        bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
 
         // Check stop conditions
+        if (ucell.ionic_position_updated || ucell.cell_parameter_updated)
+        {
+            geometry_evaluated = false;
+        }
+
         if (converged)
         {
             if (inp.calculation == "relax" || inp.calculation == "cell-relax")
@@ -80,8 +85,6 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
             }
             break;
         }
-
-        geometry_evaluated = false;
 
         if (ModuleIO::read_exit_file(my_rank_, "EXIT", ofs_running))
         {
@@ -180,10 +183,18 @@ bool Relax_Driver::relax_step(std::vector<int>& steps,
     }
 
     bool converged = false;
+    const bool last_ionic_step = steps[0] + 1 >= inp.relax_nmax;
 
     if (inp.uses_simultaneous_relaxation())
     {
-        converged = this->rl.relax_step(ucell, force, stress, etot, ofs_running);
+        if (last_ionic_step)
+        {
+            converged = this->rl.check_converged(ucell, force, stress, ofs_running);
+        }
+        else
+        {
+            converged = this->rl.relax_step(ucell, force, stress, etot, ofs_running);
+        }
         // stress step +1
         steps[2]++;
         // fix force step to 1

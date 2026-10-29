@@ -65,6 +65,14 @@ void Ions_Move_Methods::cal_movement(const int& istep,
                                      const Relax_Criteria& criteria)
 {
     ModuleBase::TITLE("Ions_Move_Methods", "init");
+    if (relax_method == "bfgs_trad" || relax_method == "lbfgs")
+    {
+        this->check_converged(f, ucell, criteria);
+        if (converged_)
+        {
+            return;
+        }
+    }
     if (relax_method == "bfgs")
     {
         converged_ = bfgs.start(ucell, f, etot, force_step, update_iter_, ofs, etot_info_, criteria);
@@ -95,6 +103,30 @@ void Ions_Move_Methods::cal_movement(const int& istep,
         converged_ = false;
     }
     return;
+}
+
+void Ions_Move_Methods::check_converged(const ModuleBase::matrix& force,
+                                        const UnitCell& ucell,
+                                        const Relax_Criteria& criteria)
+{
+    Ions_Move_Basic::largest_grad = 0.0;
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            for (int idir = 0; idir < 3; ++idir)
+            {
+                if (ucell.atoms[it].mbl[ia][idir])
+                {
+                    Ions_Move_Basic::largest_grad = std::max(Ions_Move_Basic::largest_grad,
+                                                              std::abs(force(iat, idir)));
+                }
+            }
+            ++iat;
+        }
+    }
+    converged_ = Ions_Move_Basic::largest_grad < criteria.force_thr;
 }
 
 void Ions_Move_Methods::reset_after_cell_change(const std::string& relax_method, std::ofstream& ofs)

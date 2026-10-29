@@ -1,6 +1,7 @@
 #include "source_base/global_variable.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_relax/ions_move_bfgs2.h"
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/relax_nsync.h"
 
@@ -226,6 +227,27 @@ TEST_F(IonCellOptimizerTest, RelaxConverged)
     EXPECT_THAT(log, testing::HasSubstr(" Largest force per step (eV/Angstrom):"));
     EXPECT_THAT(log, testing::HasSubstr("\n Relaxation is converged!"));
     EXPECT_THAT(log, testing::Not(testing::HasSubstr("not converged")));
+    EXPECT_FALSE(ucell.ionic_position_updated);
+}
+
+TEST_F(IonCellOptimizerTest, BfgsTradConvergedBeforeMove)
+{
+    inp.relax_method = "bfgs_trad";
+    inp.relax_nmax = 2;
+    UnitCell ucell;
+    setup_ucell(ucell);
+    optimizer.init_relax(natom, inp);
+    ModuleBase::matrix force(natom, 3);
+    ModuleBase::matrix stress(3, 3);
+    int force_step = 1;
+    int stress_step = 1;
+    std::ofstream ofs(log_file);
+
+    const bool done = optimizer.relax_step(1, etot, ucell, force, stress, force_step, stress_step, ofs);
+    ofs.close();
+
+    EXPECT_TRUE(done);
+    EXPECT_FALSE(ucell.ionic_position_updated);
 }
 
 // relax + large force: not converged, and no ASE converged marker may appear.
@@ -295,6 +317,7 @@ TEST_F(IonCellOptimizerTest, RelaxNmaxLastStepNotConverged)
     ofs.close();
 
     EXPECT_FALSE(done);
+    EXPECT_FALSE(ucell.ionic_position_updated);
     const std::string log = read_log();
     EXPECT_THAT(log, testing::HasSubstr(" Relaxation is not converged yet!"));
     EXPECT_THAT(log, testing::Not(testing::HasSubstr(" relax_nmax = 1 reached.")));
@@ -336,6 +359,7 @@ TEST_F(IonCellOptimizerTest, CellRelaxConverged)
 TEST_F(IonCellOptimizerTest, CellRelaxNotConverged)
 {
     inp.calculation = "cell-relax";
+    inp.relax_nmax = 1;
     UnitCell ucell;
     setup_ucell(ucell);
     optimizer.init_relax(natom, inp);
@@ -351,6 +375,8 @@ TEST_F(IonCellOptimizerTest, CellRelaxNotConverged)
     ofs.close();
 
     EXPECT_FALSE(done);
+    EXPECT_FALSE(ucell.ionic_position_updated);
+    EXPECT_FALSE(ucell.cell_parameter_updated);
     const std::string log = read_log();
     EXPECT_THAT(log, testing::HasSubstr(" Largest stress is "));
     EXPECT_THAT(log, testing::HasSubstr("\n Relaxation is not converged yet!"));
