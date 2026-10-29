@@ -440,41 +440,47 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
             base_device::DEVICE_CPU* cpu_ctx = {};
             psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(this->psi);
             hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(this->p_hamilt);
-            auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
-            nbands = psi_t->get_nbands();
-            npol = psi_t->npol;
-            nkb = onsite_p->get_tot_nproj();
-            nk = psi_t->get_nk();
-            nh_iat = &onsite_p->get_nh(0);
-            size_becp = nbands * nkb * npol;
-
-            std::complex<double>* h_tmp = nullptr;
-            std::complex<double>* s_tmp = nullptr;
-            base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, h_tmp, nbands * nbands);
-            base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, s_tmp, nbands * nbands);
             assert(this->sub_h_save != nullptr);
             assert(this->sub_s_save != nullptr);
             assert(this->becp_save != nullptr);
-            for (int ik = 0; ik < nk; ++ik)
+            // Davidson diagonalizes the complete initial subspace itself.
+            // An invertible rotation before that solve leaves the span unchanged.
+            // Density-only updates and other solvers require explicit rotation.
+            if (!pw_solve || PARAM.inp.ks_solver != "dav_subspace")
             {
-                std::complex<double>* h_k = this->sub_h_save + ik * nbands * nbands;
-                std::complex<double>* s_k = this->sub_s_save + ik * nbands * nbands;
-                std::complex<double>* becp_k = this->becp_save + ik * size_becp;
+                auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
+                nbands = psi_t->get_nbands();
+                npol = psi_t->npol;
+                nkb = onsite_p->get_tot_nproj();
+                nk = psi_t->get_nk();
+                nh_iat = &onsite_p->get_nh(0);
+                size_becp = nbands * nkb * npol;
 
-                psi_t->fix_k(ik);
-                base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, h_tmp, h_k, nbands * nbands);
-                base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, s_tmp, s_k, nbands * nbands);
-                const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
-                this->calculate_delta_hcc(h_tmp, becp_k, delta_lambda, nbands, nkb, nh_iat, sign);
-                hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_subspace_psi(h_tmp,
-                                                                                s_tmp,
-                                                                                nbands,
-                                                                                psi_t[0],
-                                                                                &this->pelec->ekb(ik, 0));
+                std::complex<double>* h_tmp = nullptr;
+                std::complex<double>* s_tmp = nullptr;
+                base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, h_tmp, nbands * nbands);
+                base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, s_tmp, nbands * nbands);
+                for (int ik = 0; ik < nk; ++ik)
+                {
+                    std::complex<double>* h_k = this->sub_h_save + ik * nbands * nbands;
+                    std::complex<double>* s_k = this->sub_s_save + ik * nbands * nbands;
+                    std::complex<double>* becp_k = this->becp_save + ik * size_becp;
+
+                    psi_t->fix_k(ik);
+                    const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
+                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, h_tmp, h_k, nbands * nbands);
+                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, s_tmp, s_k, nbands * nbands);
+                    this->calculate_delta_hcc(h_tmp, becp_k, delta_lambda, nbands, nkb, nh_iat, sign);
+                    hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diag_subspace_psi(h_tmp,
+                                                                                    s_tmp,
+                                                                                    nbands,
+                                                                                    psi_t[0],
+                                                                                    &this->pelec->ekb(ik, 0));
+                }
+
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, h_tmp);
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, s_tmp);
             }
-
-            base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, h_tmp);
-            base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, s_tmp);
             base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, sub_h_save);
             base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, sub_s_save);
             base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, becp_save);
