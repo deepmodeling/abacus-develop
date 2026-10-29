@@ -254,6 +254,8 @@ public:
     FPTYPE* sub_h_save;
     FPTYPE* sub_s_save;
     FPTYPE* becp_save;
+    /// Constraint field used to construct the saved projected Hamiltonian.
+    std::vector<ModuleBase::Vector3<double>> subspace_lambda;
 };
 
 

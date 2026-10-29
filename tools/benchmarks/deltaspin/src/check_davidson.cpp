@@ -44,11 +44,11 @@ int main(int argc, char** argv)
     std::vector<double> precondition(rows, 1.0), eigenvalues(bands), thresholds(bands, 1e-13);
     hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
     double eigen_error = 0, residual_error = 0, orthogonality_error = 0;
-    double projector_error = 0;
+    double projector_error = 0, projected_input_error = 0;
     std::vector<Complex> reference_basis;
     {
         hsolver::Diago_DavSubspace<Complex, GPU> solver(precondition, bands, rows, 4, 1e-13, 100, false, comm);
-        for (int repetition = 0; repetition < 3; ++repetition)
+        for (int repetition = 0; repetition < 5; ++repetition)
         {
             std::vector<Complex> psi(leading * bands, Complex(7, -3));
             for (int band = 0; band < bands; ++band)
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
                         + 0.2 * basis[(band + bands) * rows + row]) / std::sqrt(1.04);
                 }
             }
-            if (repetition == 2)
+            if (repetition == 2 || repetition == 3)
             {
                 const auto original = psi;
                 for (int band = 0; band < bands; ++band)
@@ -82,6 +82,42 @@ int main(int argc, char** argv)
             }
             base_device::memory::synchronize_memory_op<Complex, GPU, CPU>()(nullptr, nullptr, device,
                                                                            psi.data(), psi.size());
+            Complex* initial_h = nullptr;
+            Complex* initial_s = nullptr;
+            std::vector<Complex> projected_h(bands * bands), projected_s(bands * bands);
+            if (repetition == 3)
+            {
+                std::vector<Complex> hpsi(rows * bands);
+                for (int band = 0; band < bands; ++band)
+                {
+                    for (int row = 0; row < rows; ++row)
+                    {
+                        for (int column = 0; column < rows; ++column)
+                        {
+                            hpsi[band * rows + row] += hamiltonian[row * rows + column]
+                                                       * psi[band * leading + column];
+                        }
+                    }
+                }
+                for (int column = 0; column < bands; ++column)
+                {
+                    for (int row = 0; row < bands; ++row)
+                    {
+                        for (int basis_row = 0; basis_row < rows; ++basis_row)
+                        {
+                            const Complex left = std::conj(psi[row * leading + basis_row]);
+                            projected_h[column * bands + row] += left * hpsi[column * rows + basis_row];
+                            projected_s[column * bands + row] += left * psi[column * leading + basis_row];
+                        }
+                    }
+                }
+                base_device::memory::resize_memory_op<Complex, GPU>()(nullptr, initial_h, bands * bands);
+                base_device::memory::resize_memory_op<Complex, GPU>()(nullptr, initial_s, bands * bands);
+                base_device::memory::synchronize_memory_op<Complex, GPU, CPU>()(
+                    nullptr, nullptr, initial_h, projected_h.data(), projected_h.size());
+                base_device::memory::synchronize_memory_op<Complex, GPU, CPU>()(
+                    nullptr, nullptr, initial_s, projected_s.data(), projected_s.size());
+            }
             auto apply = [&](Complex* output, Complex* input, int input_bands, int input_rows, int first, int last) {
                 std::vector<Complex> host_input(input_bands * input_rows), host_output((last - first + 1) * rows);
                 base_device::memory::synchronize_memory_op<Complex, CPU, GPU>()(nullptr, nullptr,
@@ -100,8 +136,24 @@ int main(int argc, char** argv)
                 base_device::memory::synchronize_memory_op<Complex, GPU, CPU>()(nullptr, nullptr,
                     output, host_output.data(), host_output.size());
             };
-            const int iterations = solver.diag(apply, device, leading, eigenvalues.data(), thresholds.data(), false);
+            const int iterations = solver.diag(apply, device, leading, eigenvalues.data(), thresholds.data(),
+                                                false, initial_h, initial_s);
             if (iterations < 0) { return 2; }
+            if (repetition == 3)
+            {
+                std::vector<Complex> retained_h(bands * bands), retained_s(bands * bands);
+                base_device::memory::synchronize_memory_op<Complex, CPU, GPU>()(
+                    nullptr, nullptr, retained_h.data(), initial_h, retained_h.size());
+                base_device::memory::synchronize_memory_op<Complex, CPU, GPU>()(
+                    nullptr, nullptr, retained_s.data(), initial_s, retained_s.size());
+                for (int index = 0; index < bands * bands; ++index)
+                {
+                    projected_input_error = std::max(projected_input_error, std::abs(retained_h[index] - projected_h[index]));
+                    projected_input_error = std::max(projected_input_error, std::abs(retained_s[index] - projected_s[index]));
+                }
+                base_device::memory::delete_memory_op<Complex, GPU>()(nullptr, initial_h);
+                base_device::memory::delete_memory_op<Complex, GPU>()(nullptr, initial_s);
+            }
             base_device::memory::synchronize_memory_op<Complex, CPU, GPU>()(nullptr, nullptr, psi.data(),
                                                                            device, psi.size());
             for (int band = 0; band < bands; ++band)
@@ -129,7 +181,7 @@ int main(int argc, char** argv)
                 }
             }
             if (repetition == 1) { reference_basis = psi; }
-            else if (repetition == 2)
+            else if (repetition >= 2)
             {
                 // The occupied-space projector is independent of eigenvector phases
                 // and of invertible changes to the initial subspace basis.
@@ -156,6 +208,7 @@ int main(int argc, char** argv)
     MPI_Finalize();
     std::cout << "eigenvalue_error=" << eigen_error << " residual=" << residual_error
               << " orthogonality_error=" << orthogonality_error << '\n';
-    std::cout << "projector_error=" << projector_error << std::endl;
-    return projector_error < 1e-6 && eigen_error < 1e-10 && residual_error < 2e-6 && orthogonality_error < 1e-10 ? 0 : 3;
+    std::cout << "projector_error=" << projector_error << " projected_input_error=" << projected_input_error << std::endl;
+    return projected_input_error == 0 && projector_error < 1e-6 && eigen_error < 1e-10
+           && residual_error < 2e-6 && orthogonality_error < 1e-10 ? 0 : 3;
 }

@@ -250,7 +250,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                 if(this->sub_h_save == nullptr)
                 {
                     initial_hs = 1;
-                    
+                    this->subspace_lambda = this->lambda_;
                     base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, this->sub_h_save, nbands * nbands * nk);
                     base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, this->sub_s_save, nbands * nbands * nk);
                     base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, this->becp_save, size_becp * nk);
@@ -443,19 +443,37 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
             assert(this->sub_h_save != nullptr);
             assert(this->sub_s_save != nullptr);
             assert(this->becp_save != nullptr);
-            // Davidson diagonalizes the complete initial subspace itself.
-            // An invertible rotation before that solve leaves the span unchanged.
-            // Density-only updates and other solvers require explicit rotation.
-            if (!pw_solve || PARAM.inp.ks_solver != "dav_subspace")
+            auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
+            nbands = psi_t->get_nbands();
+            npol = psi_t->npol;
+            nkb = onsite_p->get_tot_nproj();
+            nk = psi_t->get_nk();
+            nh_iat = &onsite_p->get_nh(0);
+            size_becp = nbands * nkb * npol;
+            const bool davidson_solve = pw_solve && PARAM.inp.ks_solver == "dav_subspace";
+            // Davidson uses the Euclidean overlap. The saved generalized
+            // overlap has the same meaning only for norm-conserving inputs.
+            const bool reuse_subspace = davidson_solve && !PARAM.inp.use_paw && !PARAM.globalv.use_uspp;
+            if (reuse_subspace)
             {
-                auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
-                nbands = psi_t->get_nbands();
-                npol = psi_t->npol;
-                nkb = onsite_p->get_tot_nproj();
-                nk = psi_t->get_nk();
-                nh_iat = &onsite_p->get_nh(0);
-                size_becp = nbands * nkb * npol;
-
+                // The local potential and initial wavefunctions stay fixed
+                // throughout the constraint loop. Only the low-rank onsite
+                // field changes.
+                std::vector<ModuleBase::Vector3<double>> difference(this->lambda_.size());
+                for (size_t atom = 0; atom < difference.size(); ++atom)
+                {
+                    difference[atom] = this->lambda_[atom] - this->subspace_lambda[atom];
+                }
+                for (int ik = 0; ik < nk; ++ik)
+                {
+                    const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
+                    this->calculate_delta_hcc(this->sub_h_save + ik * nbands * nbands,
+                                             this->becp_save + ik * size_becp, difference.data(),
+                                             nbands, nkb, nh_iat, sign);
+                }
+            }
+            else if (!davidson_solve)
+            {
                 std::complex<double>* h_tmp = nullptr;
                 std::complex<double>* s_tmp = nullptr;
                 base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, h_tmp, nbands * nbands);
@@ -481,11 +499,14 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, h_tmp);
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, s_tmp);
             }
-            base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, sub_h_save);
-            base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, sub_s_save);
+            if (!reuse_subspace)
+            {
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, sub_h_save);
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, sub_s_save);
+                this->sub_h_save = nullptr;
+                this->sub_s_save = nullptr;
+            }
             base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, becp_save);
-            this->sub_h_save = nullptr;
-            this->sub_s_save = nullptr;
             this->becp_save = nullptr;
 
             if(pw_solve)
@@ -510,12 +531,22 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                          GlobalV::NPROC_IN_POOL,
                          false,
                          this->tpiba,
-                         this->get_nat());
+                         this->get_nat(),
+                         this->sub_h_save,
+                         this->sub_s_save);
             }
             else
             {// update charge density only
                 reinterpret_cast<elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_GPU>*>(this->pelec)->psiToRho(*psi_t);
             }
+            if (reuse_subspace)
+            {
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, sub_h_save);
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, sub_s_save);
+                this->sub_h_save = nullptr;
+                this->sub_s_save = nullptr;
+            }
+            this->subspace_lambda.clear();
             
         }
 #endif       

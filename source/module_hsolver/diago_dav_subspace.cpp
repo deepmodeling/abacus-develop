@@ -105,7 +105,9 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                                             T* psi_in,
                                             const int psi_in_dmax,
                                             Real* eigenvalue_in_hsolver,
-                                            const std::vector<double>& ethr_band)
+                                            const std::vector<double>& ethr_band,
+                                            const T* initial_h,
+                                            const T* initial_s)
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "diag_once");
 
@@ -142,7 +144,21 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
     // hphi[:, 0:nbase_x] = H * psi_in_iter[:, 0:nbase_x]
     hpsi_func(this->psi_in_iter, this->hphi, this->dim, this->notconv);
 
-    this->cal_elem(this->dim, nbase, this->notconv, this->psi_in_iter, this->hphi, this->hcc, this->scc);
+    if (initial_h != nullptr)
+    {
+        for (int column = 0; column < this->n_band; ++column)
+        {
+            syncmem_complex_op()(this->ctx, this->ctx, this->hcc + column * this->nbase_x,
+                                 initial_h + column * this->n_band, this->n_band);
+            syncmem_complex_op()(this->ctx, this->ctx, this->scc + column * this->nbase_x,
+                                 initial_s + column * this->n_band, this->n_band);
+        }
+        nbase = this->n_band;
+    }
+    else
+    {
+        this->cal_elem(this->dim, nbase, this->notconv, this->psi_in_iter, this->hphi, this->hcc, this->scc);
+    }
 
     this->diag_zhegvx(nbase, this->notconv, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
 
@@ -783,8 +799,11 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
                                        const int psi_in_dmax,
                                        Real* eigenvalue_in_hsolver,
                                        const std::vector<double>& ethr_band,
-                                       const bool& scf_type)
+                                       const bool& scf_type,
+                                       const T* initial_h,
+                                       const T* initial_s)
 {
+    assert((initial_h == nullptr) == (initial_s == nullptr));
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == base_device::GpuDevice)
     {
@@ -802,7 +821,10 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
     do
     {
 
-        sum_iter += this->diag_once(hpsi_func, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band);
+        // A retry starts from rotated wavefunctions, so its projections are
+        // reconstructed even when the entry basis has supplied matrices.
+        sum_iter += this->diag_once(hpsi_func, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band,
+                                    ntry == 0 ? initial_h : nullptr, ntry == 0 ? initial_s : nullptr);
 
         ++ntry;
 

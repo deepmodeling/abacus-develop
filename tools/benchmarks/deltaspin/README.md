@@ -124,6 +124,14 @@ operations, charge conservation, Hartree and XC fields, stress, Davidson
 eigenpairs, initialization/storage lifetimes, G+k assembly, magnetic-constraint
 Hamiltonian updates and mixing behavior.
 
+The Davidson driver also supplies independently constructed projected matrices
+for a mixed, nonorthogonal initial basis and verifies their immutability. The
+CUDA DeltaSpin path can reuse these matrices for norm-conserving inputs because
+the local potential and initial wavefunctions stay fixed during the constraint
+loop. It corrects the saved Hamiltonian with the difference between the current
+constraint field and its saved value. Retries rebuild projections for their
+rotated basis; PAW and ultrasoft inputs retain the ordinary projection path.
+
 `link_check.py` reuses the active Ninja application's compile and link commands.
 Set `ABACUS_HOME` to the installation containing `build/` and load its environment:
 

@@ -57,6 +57,19 @@ class HSolverPW
                const double tpiba,
                const int nat);
 
+    /// Solve with projected matrices for the unchanged initial wavefunctions.
+    void solve(hamilt::Hamilt<T, Device>* pHamilt,
+               psi::Psi<T, Device>& psi,
+               elecstate::ElecState* pes,
+               double* out_eigenvalues,
+               const int rank_in_pool_in,
+               const int nproc_in_pool_in,
+               const bool skip_charge,
+               const double tpiba,
+               const int nat,
+               const T* initial_h,
+               const T* initial_s);
+
 
   protected:
     // diago caller
@@ -64,7 +77,9 @@ class HSolverPW
                          psi::Psi<T, Device>& psi,
                          std::vector<Real>& pre_condition,
                          Real* eigenvalue,
-                         const int& nk_nums);
+                         const int& nk_nums,
+                         const T* initial_h = nullptr,
+                         const T* initial_s = nullptr);
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);

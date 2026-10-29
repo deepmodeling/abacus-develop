@@ -43,7 +43,9 @@ class Diago_DavSubspace
              const int psi_in_dmax,
              Real* eigenvalue_in,
              const std::vector<double>& ethr_band,
-             const bool& scf_type);
+             const bool& scf_type,
+             const T* initial_h = nullptr,
+             const T* initial_s = nullptr);
 
   private:
     /// for MPI communication
@@ -138,7 +140,9 @@ class Diago_DavSubspace
                   T* psi_in,
                   const int psi_in_dmax,
                   Real* eigenvalue_in,
-                  const std::vector<double>& ethr_band);
+                  const std::vector<double>& ethr_band,
+                  const T* initial_h,
+                  const T* initial_s);
 
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 
