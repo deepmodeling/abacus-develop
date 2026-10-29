@@ -5,7 +5,7 @@
 #include "mpi.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/inverse_matrix.h"
-#include "source_base/module_external/lapack_connector.h"
+#include "source_base/module_container/base/third_party/lapack.h"
 #include "source_basis/module_pw/test/test_tool.h"
 #include "source_psi/psi.h"
 
@@ -45,11 +45,11 @@ void lapackEigen(int& npw, std::vector<double>& hm, double* e, bool outtime = fa
 
     double work_tmp;
     constexpr int minus_one = -1;
-    dsyev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, &work_tmp, &minus_one, &info);		// get best lwork
+    ct::lapackConnector::heev(tmp_c1, tmp_c2, npw, tmp.data(), npw, e, &work_tmp, minus_one, info);		// get best lwork
 
     const int lwork = work_tmp;
     double* work2 = new double[lwork];
-    dsyev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, &info);
+    ct::lapackConnector::heev(tmp_c1, tmp_c2, npw, tmp.data(), npw, e, work2, lwork, info);
     end = clock();
     if (info) { std::cout << "ERROR: Lapack solver, info=" << info << std::endl;
 }

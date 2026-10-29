@@ -1,5 +1,5 @@
 #include "source_base/module_external/blacs_connector.h"
-#include "source_base/module_external/lapack_connector.h"
+#include "source_base/module_container/base/third_party/lapack.h"
 #include "mpi.h"
 
 #include <complex>
@@ -38,10 +38,10 @@ void process_2d(int &nprows, int &npcols, int &myprow, int &mypcol, int &icontxt
     }
 
     int what = 0, ic = 0;
-    Cblacs_get(ic, what, &icontxt);
-    Cblacs_pinfo(&mypnum, &nprocs);
-    Cblacs_gridmap(&icontxt, usermap, nprows, nprows, npcols);
-    Cblacs_gridinfo(icontxt, &nprows, &npcols, &myprow, &mypcol);
+    BlacsConnector::get(ic, what, icontxt);
+    BlacsConnector::pinfo(mypnum, nprocs);
+    BlacsConnector::gridmap(icontxt, usermap, nprows, nprows, npcols);
+    BlacsConnector::gridinfo(icontxt, nprows, npcols, myprow, mypcol);
     delete[] usermap;
 }
 
@@ -62,7 +62,7 @@ void distribute_data(T *hmatrix, T *new_matrix, int &nFull, int &nblk, int &na_r
     int mypnum;
     MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
     int nprows, npcols, myprow, mypcol;
-    Cblacs_gridinfo(icontxt, &nprows, &npcols, &myprow, &mypcol);
+    BlacsConnector::gridinfo(icontxt, nprows, npcols, myprow, mypcol);
 
     int SENDPROW = 0, SENDPCOL = 0, tag = 0;
     T *tmp = new T[nblk];
@@ -177,7 +177,7 @@ void lapack_diago(double *hmatrix, double *smatrix, double *e, int &nFull)
         b[i] = smatrix[i];
     }
 
-    dsygv_(&itype, &jobz, &uplo, &nFull, a, &nFull, b, &nFull, e, ev, &lwork, &info);
+    container::lapackConnector::hegv(itype, jobz, uplo, nFull, a, nFull, b, nFull, e, ev, lwork, info);
     if (info != 0)
     {
         std::cout << "ERROR: solvered by LAPACK error, info=" << info << std::endl;
@@ -206,7 +206,7 @@ void lapack_diago(std::complex<double> *hmatrix, std::complex<double> *smatrix, 
         b[i] = smatrix[i];
     }
 
-    zhegv_(&itype, &jobz, &uplo, &nFull, a, &nFull, b, &nFull, e, ev, &lwork, rwork, &info);
+    container::lapackConnector::hegv(itype, jobz, uplo, nFull, a, nFull, b, nFull, e, ev, lwork, rwork, info);
     if (info != 0)
     {
         std::cout << "ERROR: solvered by LAPACK error, info=" << info << std::endl;

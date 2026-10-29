@@ -6,7 +6,7 @@
 #include "source_psi/psi.h"
 #include"gtest/gtest.h"
 #include "source_base/inverse_matrix.h"
-#include "source_base/module_external/lapack_connector.h"
+#include "source_base/module_container/base/third_party/lapack.h"
 #include "source_basis/module_pw/test/test_tool.h"
 #include"mpi.h"
 
@@ -45,7 +45,7 @@ void lapackEigen(int &npw, std::vector<std::complex<float>> &hm, float * e, bool
 	clock_t start,end;
 	start = clock();
 	char tmp_c1 = 'V', tmp_c2 = 'U';
-	cheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
+	ct::lapackConnector::heev(tmp_c1, tmp_c2, npw, tmp.data(), npw, e, work2, lwork, rwork, info);
 	end = clock();
 	if(info) { std::cout << "ERROR: Lapack solver, info=" << info <<std::endl;
 }

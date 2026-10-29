@@ -146,7 +146,7 @@ class DiagoPrepare
         int npcols;
         int myprow;
         int mypcol;
-        Cblacs_gridinfo(icontxt, &nprows, &npcols, &myprow, &mypcol);
+        BlacsConnector::gridinfo(icontxt, nprows, npcols, myprow, mypcol);
         for (int col = 0; col < hmtest.ncol; ++col)
         {
             const int global_col = (col / nb2d * npcols + mypcol) * nb2d + col % nb2d;
@@ -207,7 +207,7 @@ class DiagoPrepare
                                              npcols,
                                              mypcol); // the number of column of the new_matrix in each process
         int ISRC = 0, info;
-        descinit_(hmtest.desc, &nlocal, &nlocal, &nb2d, &nb2d, &ISRC, &ISRC, &icontxt, &(hmtest.nrow), &info);
+        ScalapackConnector::descinit(hmtest.desc, nlocal, nlocal, nb2d, nb2d, ISRC, ISRC, icontxt, hmtest.nrow, info);
         if (info != 0)
         {
             printf("Invalid blacs-distribution. Abort!\n");

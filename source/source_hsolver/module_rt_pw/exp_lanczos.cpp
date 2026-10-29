@@ -117,7 +117,7 @@ bool ExpLanczos<T, Device>::diagonalize(const std::vector<double>& diagonal,
     const char job = 'V';
     const char upper = 'U';
     int info = 0;
-    dsyev_(&job, &upper, &count, small_vectors_.data(), &count, small_values_.data(), small_work_.data(), &work_size, &info);
+    ct::lapackConnector::heev(job, upper, count, small_vectors_.data(), count, small_values_.data(), small_work_.data(), work_size, info);
     ModuleBase::timer::end("ExpLanczos", "diagonalize");
     return info == 0;
 }

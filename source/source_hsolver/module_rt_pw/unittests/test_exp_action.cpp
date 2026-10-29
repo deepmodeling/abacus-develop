@@ -1,3 +1,4 @@
+#include "source_base/module_container/base/third_party/lapack.h"
 #include "source_hsolver/module_rt_pw/exp_action.h"
 #include "source_hsolver/module_rt_pw/unittests/linear_test_utils.h"
 
@@ -82,7 +83,7 @@ std::vector<Wide> exact_exp(const std::vector<T>& matrix, const std::vector<Wide
     std::vector<double> rwork(3 * n);
     std::vector<double> values(n);
     int status = 0;
-    zheev_(&job, &upper, &n, vectors.data(), &n, values.data(), work.data(), &lwork, rwork.data(), &status);
+    ct::lapackConnector::heev(job, upper, n, vectors.data(), n, values.data(), work.data(), lwork, rwork.data(), status);
     EXPECT_EQ(status, 0);
     std::vector<Wide> output(n, Wide(0));
     for (int k = 0; k < n; ++k)

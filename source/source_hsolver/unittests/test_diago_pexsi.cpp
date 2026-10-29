@@ -133,7 +133,7 @@ class PexsiPrepare
                                              mypcol); // the number of column of the new_matrix in each process
 
         int ISRC = 0, info;
-        descinit_(hmtest.desc, &nlocal, &nlocal, &nb2d, &nb2d, &ISRC, &ISRC, &icontxt, &(hmtest.nrow), &info);
+        ScalapackConnector::descinit(hmtest.desc, nlocal, nlocal, nb2d, nb2d, ISRC, ISRC, icontxt, hmtest.nrow, info);
         if (info != 0)
         {
             printf("Invalid blacs-distribution. Abort!\n");

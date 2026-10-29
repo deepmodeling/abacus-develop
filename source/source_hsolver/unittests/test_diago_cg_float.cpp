@@ -5,7 +5,7 @@
 #include "mpi.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/inverse_matrix.h"
-#include "source_base/module_external/lapack_connector.h"
+#include "source_base/module_container/base/third_party/lapack.h"
 #include "source_basis/module_pw/test/test_tool.h"
 #include "source_psi/psi.h"
 
@@ -44,7 +44,7 @@ void lapackEigen(int &npw, std::vector<std::complex<float>> &hm, float *e, bool 
     float *rwork = new float[3 * npw - 2];
     int info = 0;
     char tmp_c1 = 'V', tmp_c2 = 'U';
-    cheev_(&tmp_c1, &tmp_c2, &npw, hm.data(), &npw, e, work2, &lwork, rwork, &info);
+    ct::lapackConnector::heev(tmp_c1, tmp_c2, npw, hm.data(), npw, e, work2, lwork, rwork, info);
     end = clock();
     if (outtime) {
         std::cout << "Lapack Run time: " << (float)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;

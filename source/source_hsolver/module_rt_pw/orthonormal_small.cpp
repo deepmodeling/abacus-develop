@@ -37,10 +37,10 @@ bool cholesky(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
     const char upper = 'U';
     const char nonunit = 'N';
     int info = 0;
-    zpotrf_(&upper, &n, c->data(), &n, &info);
+    ct::lapackConnector::potrf(upper, n, c->data(), n, info);
     if (info == 0)
     {
-        ztrtri_(&upper, &nonunit, &n, c->data(), &n, &info);
+        ct::lapackConnector::trtri(upper, nonunit, n, c->data(), n, info);
     }
     for (int j = 0; j < n; ++j)
     {
@@ -67,7 +67,19 @@ bool lowdin(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
     std::vector<double> rwork(lrwork);
     std::vector<int> iwork(liwork);
     int info = 0;
-    zheevd_(&vectors, &upper, &n, u.data(), &n, values.data(), work.data(), &lwork, rwork.data(), &lrwork, iwork.data(), &liwork, &info);
+    ct::lapackConnector::heevd(vectors,
+                               upper,
+                               n,
+                               u.data(),
+                               n,
+                               values.data(),
+                               work.data(),
+                               lwork,
+                               rwork.data(),
+                               lrwork,
+                               iwork.data(),
+                               liwork,
+                               info);
     bool valid = info == 0;
     for (double value: values)
     {
