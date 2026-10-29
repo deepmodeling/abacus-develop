@@ -23,9 +23,9 @@ public:
     /// non-const mutation by setup_2d_division, and test-side descriptor writes.
     // DEPRECATED-ALIAS: para_2d() -> get_block_cyclic_distribution()
     // DELETION-COMMIT: PR#TBD/3 commits after merge; trigger: git grep -w para_2d == 0
-    Parallel_2D& para_2d() { return para_2d_; }
+    BlockCyclicDistributionInformation& para_2d() { return para_2d_; }
 
-    const Parallel_2D& para_2d() const { return para_2d_; }
+    const BlockCyclicDistributionInformation& para_2d() const { return para_2d_; }
 
 #ifdef __MPI
     /// BLACS context of the 2D process grid, completing the getter family
@@ -124,7 +124,7 @@ public:
 private:
     /// Block-cyclic distribution of the Hamiltonian matrix.  Single source of
     /// truth for nrow/ncol/nloc/nb/dim0/dim1/desc/blacs_ctxt (R4).
-    Parallel_2D para_2d_;
+    BlockCyclicDistributionInformation para_2d_;
 
 };
 #endif

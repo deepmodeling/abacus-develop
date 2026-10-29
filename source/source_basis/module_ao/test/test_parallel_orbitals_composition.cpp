@@ -139,7 +139,7 @@ TEST_F(ParallelOrbitalsCompositionTest, GetterEqualsPara2d)
 #else
     po.para_2d().set_serial(mg, ng);
 #endif
-    const Parallel_2D& p2d = po.para_2d();
+    const BlockCyclicDistributionInformation& p2d = po.para_2d();
     EXPECT_EQ(p2d.get_row_size(), p2d.get_number_of_local_rows());
     EXPECT_EQ(p2d.get_col_size(), p2d.get_number_of_local_cols());
     EXPECT_EQ(p2d.get_local_size(), p2d.get_number_of_local_elements());
