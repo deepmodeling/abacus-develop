@@ -660,3 +660,150 @@ TEST_F(DFPTRhoSerialTest, BroydenResetMixingAllowsFreshQAndSameQCycle)
         EXPECT_NEAR(mixed_q0[ig].imag(), 0.4 * out[ig].imag(), 1.0e-12);
     }
 }
+
+// ---------------------------------------------------------------------------
+// nlcc phase regression: the first-order core response must localize at the
+// ATOM site, not its mirror. This is the anti-blind-spot test for the
+// structure-factor sign: exp(+i(G+q)tau) mirrors the response to -tau, a bug
+// every historical validation missed because the nlcc atom sat at the origin
+// (bn_cubic) where both conventions coincide. The wurtzite bn_hex comparison
+// against QE dyn.G pinned the sign: the mirror of B1 lands exactly on an N
+// site of the other layer, collapsing the interlayer shear to -399 cm^-1.
+// ---------------------------------------------------------------------------
+TEST_F(DFPTRhoSerialTest, DrhocLocalizesAtTheAtomNotItsMirror)
+{
+    MakeNlccTwoAtomCell();
+    SetupBases(k_d_, q_d_, 2);
+    ModuleDFPT::DFPT_Rho::Config cfg;
+    cfg.nspin = 1;
+    cfg.nrxx = pw_rho_.nrxx;
+    cfg.pw_rho = &pw_rho_;
+    cfg.pw_wfc = &pw_wfc_;
+    cfg.recip_matrix = G_;
+    cfg.mix_type = "rho_plain";
+    cfg.mix_beta = 0.4;
+    cfg.kerker_a2 = 1.0;
+    cfg.broyden_ndim = 8;
+    ModuleDFPT::DFPT_Rho rho;
+    rho.init(cfg);
+
+    // atom 1 carries the nlcc at the non-origin tau_nlcc_; all three
+    // displacement directions must localize at the atom
+    const int iat = 1;
+    const int it = ucell_.iat2it[iat];
+    ASSERT_TRUE(ucell_.atoms[it].ncpp.nlcc);
+    // tau is stored in lat0-cartesian units (fixture convention: cell edge
+    // a_ in lat0 units); the true fractional position divides by a_
+    const double inv_a = 1.0 / a_;
+    const ModuleBase::Vector3<double> tau_frac(ucell_.atoms[it].tau[ucell_.iat2ia[iat]].x * inv_a,
+                                               ucell_.atoms[it].tau[ucell_.iat2ia[iat]].y * inv_a,
+                                               ucell_.atoms[it].tau[ucell_.iat2ia[iat]].z * inv_a);
+    // mirror position folded back into the cell
+    ModuleBase::Vector3<double> mirror_frac(1.0 - tau_frac.x, 1.0 - tau_frac.y, 1.0 - tau_frac.z);
+
+    const int nrxx = pw_rho_.nrxx;
+    std::vector<std::complex<double>> drhoc_g;
+    std::vector<std::complex<double>> drhoc_r(nrxx);
+    for (int dir = 0; dir < 3; ++dir)
+    {
+        // q = 0 first: the amplitude is the plain derivative profile, its
+        // |.|^2 centroid is at the atom (up to the derivative skew)
+        const ModuleBase::Vector3<double> q_zero(0.0, 0.0, 0.0);
+        rho.compute_drhoc_g(ucell_, iat, dir, q_zero, drhoc_g);
+        ASSERT_EQ(static_cast<int>(drhoc_g.size()), pw_rho_.npw);
+        pw_rho_.recip2real(drhoc_g.data(), drhoc_r.data());
+        double wsum = 0.0;
+        double cx = 0.0;
+        double cy = 0.0;
+        double cz = 0.0;
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            const double wgt = std::norm(drhoc_r[ir]);
+            // fractional coordinates of the grid point via the FFT triple
+            const int iz = ir % pw_rho_.nz;
+            const int iy = (ir / pw_rho_.nz) % pw_rho_.ny;
+            const int ix = ir / (pw_rho_.ny * pw_rho_.nz);
+            // wrap-around: grid index -> fractional in [0, 1)
+            const double fx = static_cast<double>(ix) / pw_rho_.nx;
+            const double fy = static_cast<double>(iy) / pw_rho_.ny;
+            const double fz = static_cast<double>(iz) / pw_rho_.nz;
+            // weight by |field|^2, folding the +1 wrap for the periodic image
+            // closest to tau: the field is localized, so the unwrapped
+            // centroid near tau is what we need
+            double wx = fx;
+            double wy = fy;
+            double wz = fz;
+            if (std::abs(fx - tau_frac.x) > 0.5)
+            {
+                wx += (fx < tau_frac.x) ? 1.0 : -1.0;
+            }
+            if (std::abs(fy - tau_frac.y) > 0.5)
+            {
+                wy += (fy < tau_frac.y) ? 1.0 : -1.0;
+            }
+            if (std::abs(fz - tau_frac.z) > 0.5)
+            {
+                wz += (fz < tau_frac.z) ? 1.0 : -1.0;
+            }
+            wsum += wgt;
+            cx += wgt * wx;
+            cy += wgt * wy;
+            cz += wgt * wz;
+        }
+        ASSERT_GT(wsum, 0.0);
+        const ModuleBase::Vector3<double> com(cx / wsum, cy / wsum, cz / wsum);
+        const double dist_atom = (com - tau_frac) * (com - tau_frac);
+        const double dist_mirror = (com - mirror_frac) * (com - mirror_frac);
+        // the centroid of a derivative field sits at the atom up to the
+        // derivative skew (~sigma); the mirror is a full cell away
+        EXPECT_LT(std::sqrt(dist_atom), 0.1) << "dir=" << dir;
+        EXPECT_GT(dist_mirror, 100.0 * dist_atom) << "dir=" << dir;
+    }
+
+    // non-zero q variant: the q-phase exp(-i q.tau) must not mirror either.
+    // Use a generic incommensurate q (the fixture default q_d_ is already
+    // generic); the real-space field of the q-shifted amplitude still
+    // localizes at the atom (the e^{iqr} carrier is smooth on the sigma
+    // scale of the core).
+    const ModuleBase::Vector3<double> q2 = q_d_ * 0.7 + ModuleBase::Vector3<double>(0.11, -0.07, 0.05);
+    const ModuleBase::Vector3<double> q2_cart = q2 * ucell_.G;
+    rho.compute_drhoc_g(ucell_, iat, 1, q2_cart, drhoc_g);
+    ASSERT_EQ(static_cast<int>(drhoc_g.size()), pw_rho_.npw);
+    pw_rho_.recip2real(drhoc_g.data(), drhoc_r.data());
+    double wsum = 0.0;
+    double cx = 0.0;
+    double cy = 0.0;
+    double cz = 0.0;
+    for (int ir = 0; ir < nrxx; ++ir)
+    {
+        const double wgt = std::norm(drhoc_r[ir]);
+        const int iz = ir % pw_rho_.nz;
+        const int iy = (ir / pw_rho_.nz) % pw_rho_.ny;
+        const int ix = ir / (pw_rho_.ny * pw_rho_.nz);
+        double wx = static_cast<double>(ix) / pw_rho_.nx;
+        double wy = static_cast<double>(iy) / pw_rho_.ny;
+        double wz = static_cast<double>(iz) / pw_rho_.nz;
+        if (std::abs(wx - tau_frac.x) > 0.5)
+        {
+            wx += (wx < tau_frac.x) ? 1.0 : -1.0;
+        }
+        if (std::abs(wy - tau_frac.y) > 0.5)
+        {
+            wy += (wy < tau_frac.y) ? 1.0 : -1.0;
+        }
+        if (std::abs(wz - tau_frac.z) > 0.5)
+        {
+            wz += (wz < tau_frac.z) ? 1.0 : -1.0;
+        }
+        wsum += wgt;
+        cx += wgt * wx;
+        cy += wgt * wy;
+        cz += wgt * wz;
+    }
+    ASSERT_GT(wsum, 0.0);
+    const ModuleBase::Vector3<double> com2(cx / wsum, cy / wsum, cz / wsum);
+    const double d2a = (com2 - tau_frac) * (com2 - tau_frac);
+    const double d2m = (com2 - mirror_frac) * (com2 - mirror_frac);
+    EXPECT_LT(std::sqrt(d2a), 0.15);
+    EXPECT_GT(d2m, 100.0 * d2a);
+}

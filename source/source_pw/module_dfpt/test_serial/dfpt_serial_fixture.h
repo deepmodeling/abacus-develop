@@ -63,6 +63,21 @@ class DFPTSerialBase : public testing::Test
     void MakeCoulombAtom();
     void MakeNCAtom();
 
+    /// extend the two-atom cell of MakeTwoAtomCell with a nonlinear core
+    /// correction on the second species: a Gaussian rho_atc of total charge
+    /// nlcc_core_charge_ on the existing radial grid (msh points). The
+    /// atom sits at the non-origin tau_nlcc_ = (0.25, 0.31, 0.17) -- the
+    /// anti-blind-spot position: every structure-factor phase is active,
+    /// so a mirrored phase sign (exp(+iG.tau) instead of the QE addcore
+    /// exp(-iG.tau)) places the response at the wrong site and is caught
+    /// directly by the drhoc-localization test.
+    void MakeNlccTwoAtomCell();
+
+    /// total integrated core charge (in e) of the nlcc Gaussian above
+    static constexpr double nlcc_core_charge_ = 0.24;
+    const ModuleBase::Vector3<double> tau_nlcc_{0.25, 0.31, 0.17}; // lat0 units
+    double nlcc_sigma_ = 1.5; // bohr, grid-resolvable (spacing ~0.63 bohr)
+
     // reconfigure the cell as a two-atom Z=4/Z=2 crystal breaking all symmetry
     void MakeTwoAtomCell();
 
