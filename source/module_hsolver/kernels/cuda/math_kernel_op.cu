@@ -42,6 +42,7 @@ struct GetTypeThrust<std::complex<double>> {
 };
 
 static cublasHandle_t cublas_handle = nullptr;
+static bool use_volta_gemm3m = false;
 
 __global__ void selected_basis_residual_kernel(int rows, int leading,
                                               const double2* psi, const double2* hpsi,
@@ -90,6 +91,11 @@ void xdot_wrapper(const int &n, const double * x, const int &incx, const double 
 void createGpuBlasHandle(){
     if (cublas_handle == nullptr) {
         cublasErrcheck(cublasCreate(&cublas_handle));
+        int device = 0;
+        cudaDeviceProp properties;
+        cudaErrcheck(cudaGetDevice(&device));
+        cudaErrcheck(cudaGetDeviceProperties(&properties, device));
+        use_volta_gemm3m = properties.major == 7 && properties.minor == 0;
     }
 }
 
@@ -97,6 +103,7 @@ void destoryBLAShandle(){
     if (cublas_handle != nullptr) {
         cublasErrcheck(cublasDestroy(cublas_handle));
         cublas_handle = nullptr;
+        use_volta_gemm3m = false;
     }
 }
 
@@ -926,7 +933,19 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
 {
     cublasOperation_t cutransA = judge_trans_op(true, transa, "gemm_op");
     cublasOperation_t cutransB = judge_trans_op(true, transb, "gemm_op");
-    cublasErrcheck(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
+    // Three real products reduce arithmetic for wide Volta GEMMs. Narrow or
+    // small products retain the conventional complex accumulation order.
+    if (use_volta_gemm3m && m >= 128 && n >= 128 && k >= 64
+        && (m >= 4096 || n >= 4096 || k >= 4096))
+    {
+        cublasErrcheck(cublasZgemm3m(cublas_handle, cutransA, cutransB, m, n, k,
+            (double2*)alpha, (double2*)a, lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
+    }
+    else
+    {
+        cublasErrcheck(cublasZgemm(cublas_handle, cutransA, cutransB, m, n, k,
+            (double2*)alpha, (double2*)a, lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
+    }
 }
 
 template <>

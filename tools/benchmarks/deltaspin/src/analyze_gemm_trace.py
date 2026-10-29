@@ -43,14 +43,14 @@ def main() -> None:
             _, index = heapq.heappop(ends[tid])
             active[tid].pop(index)
         ancestors = sorted(active[tid].values())
-        shape = next((entry for entry in reversed(ancestors) if entry[2].startswith("ZGEMM/")), None)
+        shape = next((entry for entry in reversed(ancestors) if entry[2].startswith(("ZGEMM/", "ZGEMM3M/"))), None)
         if shape is None:
             continue
         parents = [entry[2] for entry in ancestors if entry[0] <= shape[0]
-                   and entry[1] >= shape[1] and not entry[2].startswith("ZGEMM/")]
+                   and entry[1] >= shape[1] and not entry[2].startswith(("ZGEMM/", "ZGEMM3M/"))]
         parent = parents[-1] if parents else "outside_marked_ranges"
         parts = shape[2].split("/")
-        key = (parent, parts[1], *(int(value) for value in parts[2:]))
+        key = (parent, parts[0], parts[1], *(int(value) for value in parts[2:]))
         scopes = ("all", "steady") if steady_start <= shape[0] < steady_end else ("all",)
         launch_info[(tid & ~((1 << 24) - 1), correlation)] = (key, scopes)
         for scope in scopes:
@@ -67,13 +67,14 @@ def main() -> None:
         for scope in scopes:
             durations[(scope, *key)] += end - start
             kernel_counts[(scope, *key)] += 1
-    names = ("scope", "parent", "transpose", "m", "n", "k", "lda", "ldb", "ldc")
+    names = ("scope", "parent", "method", "transpose", "m", "n", "k", "lda", "ldb", "ldc")
     rows = []
     for key, identifiers in calls.items():
         row = dict(zip(names, key))
         count = len(identifiers)
         seconds = durations[key] / 1e9
-        flops = 8 * row["m"] * row["n"] * row["k"] * count
+        work_per_product = 6 if row["method"] == "ZGEMM3M" else 8
+        flops = work_per_product * row["m"] * row["n"] * row["k"] * count
         rows.append({**row, "calls": count, "gpu_kernels": kernel_counts[key],
                      "gpu_seconds": seconds, "nominal_flops": flops,
                      "tflops_per_second": flops / seconds / 1e12 if seconds else None})
@@ -86,7 +87,8 @@ def main() -> None:
                           "gpu_seconds": seconds, "nominal_flops": flops,
                           "tflops_per_second": flops / seconds / 1e12 if seconds else None})
     result = {"scope": "Application double-complex GEMM wrapper only; excludes internal cuSolver GEMMs. "
-                       "Nominal work is 8*m*n*k per call, excluding alpha/beta operations. "
+                       "Nominal multiply work is 8*m*n*k for ZGEMM or 6*m*n*k for ZGEMM3M; "
+                       "it excludes packing, recombination and alpha/beta operations. "
                        "GPU duration is the sum of correlated kernels, not host API duration. "
                        "Steady excludes the first two hamilt2density calls and final forces/stress.",
               "summary": summaries,

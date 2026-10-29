@@ -10,6 +10,27 @@ import subprocess
 from pathlib import Path
 
 
+def instrument_gemms(source: str) -> str:
+    """Mark complete conventional and three-real-product cuBLAS calls."""
+    pattern = r"(?m)^([ \t]*)cublasErrcheck\((cublasZgemm(?:3m)?)\([^;]+;"
+
+    def mark_call(match: re.Match) -> str:
+        indent, routine = match.group(1, 2)
+        method = "ZGEMM3M" if routine.endswith("3m") else "ZGEMM"
+        return (
+            f"{indent}char shape[160];\n"
+            f'{indent}std::snprintf(shape, sizeof(shape), "{method}/%c%c/%d/%d/%d/%d/%d/%d",\n'
+            f"{indent}              transa, transb, m, n, k, lda, ldb, ldc);\n"
+            f"{indent}nvtxRangePushA(shape);\n"
+            + match.group(0) + f"\n{indent}nvtxRangePop();"
+        )
+
+    modified, count = re.subn(pattern, mark_call, source)
+    if count == 0:
+        raise ValueError("No double-complex cuBLAS GEMM calls found in the CUDA wrapper")
+    return '#include <nvtx3/nvToolsExt.h>\n#include <cstdio>\n' + modified
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("label")
@@ -74,14 +95,7 @@ def main() -> None:
         gemm_original = gemm_source.read_text()
         gemm_variant = output / (args.label + "-profile-gemm.cu")
         gemm_object = gemm_variant.with_suffix(".o")
-        call = next(line for line in gemm_original.splitlines() if "cublasErrcheck(cublasZgemm(" in line)
-        marker = '''    char shape[160];
-    std::snprintf(shape, sizeof(shape), "ZGEMM/%c%c/%d/%d/%d/%d/%d/%d",
-                  transa, transb, m, n, k, lda, ldb, ldc);
-    nvtxRangePushA(shape);
-'''
-        gemm_modified = '#include <nvtx3/nvToolsExt.h>\n#include <cstdio>\n' + gemm_original.replace(
-            call, marker + call + '\n    nvtxRangePop();', 1)
+        gemm_modified = instrument_gemms(gemm_original)
         gemm_variant.write_text(gemm_modified)
         gemm_command = shlex.split(next(line for line in commands if " -c " in line and str(gemm_source) in line))
         gemm_old_object = gemm_command[gemm_command.index("-o") + 1]

@@ -100,9 +100,10 @@ operation. GPU activity unions avoid double-counting concurrent execution;
 inclusive range durations overlap and cannot be summed. The steady view excludes
 the first two `hamilt2density` calls and the final force/stress calculation.
 
-The GEMM analyzer counts nominal real arithmetic as `8*m*n*k` per complex
-matrix product. This is a shape-derived work estimate, not a hardware-counter
-measurement, and excludes products internal to cuSolver. Check numerical
+The GEMM analyzer records the selected multiplication method and counts nominal
+multiply work as `8*m*n*k` for ZGEMM or `6*m*n*k` for ZGEMM3M. These shape-derived
+estimates exclude packing, recombination, alpha/beta operations and products
+internal to cuSolver; they are not hardware-counter measurements. Check numerical
 outputs, iteration counts and input hashes against an unprofiled run before
 using a trace to interpret the accepted implementation. Profiling wall time
 includes collection and report overhead and is not a speed benchmark.
@@ -151,6 +152,27 @@ may exceed that target on a large grid. Scratch arrays grow only when necessary;
 FFT plans are cached by batch size and released with the basis. This policy
 does not depend on atom count or a named benchmark system. Automatic template
 instantiation increases compilation time and executable size.
+
+## Large complex matrix products
+
+On Volta devices (compute capability 7.0), double-complex products use cuBLAS
+ZGEMM3M when both output dimensions are at least 128, the contraction dimension
+is at least 64, and at least one dimension is 4096 or larger. Device selection
+is established with the BLAS handle. Other shapes and architectures retain
+ZGEMM. The size gate targets wide plane-wave products; narrow projection panels
+and the historical two-atom fixture retain their conventional accumulation.
+
+ZGEMM3M forms a complex product from three double-precision real products. Its
+floating-point accumulation differs from ZGEMM, so mathematical equivalence
+does not imply identical SCF trajectories or bitwise physical outputs. Complete
+energy, force, stress and magnetic comparisons remain necessary. In particular,
+small stress differences can exceed the measured two-reference-run spread and
+must be reported explicitly instead of described as reference repeatability.
+
+`check_large_gemm.cpp` compares the production interface with ZGEMM and sampled
+long-double dot products. It covers all nine transpose/conjugation combinations,
+padded leading dimensions, input preservation, nonzero complex accumulation,
+cancellation-sensitive data, and shapes on both sides of the dispatch boundary.
 
 ## Focused correctness checks
 
