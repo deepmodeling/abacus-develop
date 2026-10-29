@@ -24,11 +24,6 @@ class Lattice_Change_Methods
                             UnitCell& ucell,
                             std::ofstream& ofs,
                             const Relax_Criteria& criteria);
-    void check_converged(const ModuleBase::matrix& stress,
-                         const UnitCell& ucell,
-                         std::ofstream& ofs,
-                         const Relax_Criteria& criteria);
-
     bool get_converged(void) const
     {
         return converged_;

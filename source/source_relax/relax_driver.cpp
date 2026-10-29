@@ -183,18 +183,10 @@ bool Relax_Driver::relax_step(std::vector<int>& steps,
     }
 
     bool converged = false;
-    const bool last_ionic_step = steps[0] + 1 >= inp.relax_nmax;
 
     if (inp.uses_simultaneous_relaxation())
     {
-        if (last_ionic_step)
-        {
-            converged = this->rl.check_converged(ucell, force, stress, ofs_running);
-        }
-        else
-        {
-            converged = this->rl.relax_step(ucell, force, stress, etot, ofs_running);
-        }
+        converged = this->rl.relax_step(ucell, force, stress, etot, ofs_running);
         // stress step +1
         steps[2]++;
         // fix force step to 1

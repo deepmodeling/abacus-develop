@@ -273,8 +273,8 @@ TEST_F(IonCellOptimizerTest, RelaxNotConverged)
     EXPECT_THAT(log, testing::Not(testing::HasSubstr("Relaxation is converged!")));
 }
 
-// The last allowed ionic step must still be checked for convergence before
-// the driver reports that relax_nmax was reached.
+// The last allowed ionic step still performs its optimizer move before the
+// driver reports that relax_nmax was reached.
 TEST_F(IonCellOptimizerTest, RelaxNmaxLastStepConverged)
 {
     UnitCell ucell;
@@ -317,7 +317,7 @@ TEST_F(IonCellOptimizerTest, RelaxNmaxLastStepNotConverged)
     ofs.close();
 
     EXPECT_FALSE(done);
-    EXPECT_FALSE(ucell.ionic_position_updated);
+    EXPECT_TRUE(ucell.ionic_position_updated);
     const std::string log = read_log();
     EXPECT_THAT(log, testing::HasSubstr(" Relaxation is not converged yet!"));
     EXPECT_THAT(log, testing::Not(testing::HasSubstr(" relax_nmax = 1 reached.")));
@@ -376,7 +376,7 @@ TEST_F(IonCellOptimizerTest, CellRelaxNotConverged)
 
     EXPECT_FALSE(done);
     EXPECT_FALSE(ucell.ionic_position_updated);
-    EXPECT_FALSE(ucell.cell_parameter_updated);
+    EXPECT_TRUE(ucell.cell_parameter_updated);
     const std::string log = read_log();
     EXPECT_THAT(log, testing::HasSubstr(" Largest stress is "));
     EXPECT_THAT(log, testing::HasSubstr("\n Relaxation is not converged yet!"));

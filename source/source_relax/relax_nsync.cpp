@@ -129,14 +129,7 @@ bool IonCellOptimizer::relax_step(const int& istep,
         criteria.out_level = inp_->out_level;
         criteria.test_relax_method = inp_->test_relax_method;
 
-        if (istep >= inp_->relax_nmax)
-        {
-            IMM.check_converged(force, ucell, criteria);
-        }
-        else
-        {
-            IMM.cal_movement(istep, force_step, force, energy, ucell, ofs_running, relax_method, criteria);
-        }
+        IMM.cal_movement(istep, force_step, force, energy, ucell, ofs_running, relax_method, criteria);
         ++force_step;
         atom_relax_performed = true;
         atom_converged = IMM.get_converged();
@@ -148,10 +141,7 @@ bool IonCellOptimizer::relax_step(const int& istep,
         if (!atom_converged)
         {
             ofs_running << "\n Relaxation is not converged yet!" << std::endl;
-            if (istep < inp_->relax_nmax)
-            {
-                ucell.ionic_position_updated = true;
-            }
+            ucell.ionic_position_updated = true;
             return false; // not converged
         }
         else if (!is_cell_relax)
@@ -192,14 +182,7 @@ bool IonCellOptimizer::relax_step(const int& istep,
         criteria.out_level = inp_->out_level;
         criteria.test_relax_method = inp_->test_relax_method;
 
-        if (istep >= inp_->relax_nmax)
-        {
-            LCM.check_converged(stress, ucell, ofs_running, criteria);
-        }
-        else
-        {
-            LCM.cal_lattice_change(istep, stress_step, stress, energy, ucell, ofs_running, criteria);
-        }
+        LCM.cal_lattice_change(istep, stress_step, stress, energy, ucell, ofs_running, criteria);
         bool converged = LCM.get_converged();
 
         const double max_stress_kbar = LCM.get_largest_grad();
@@ -213,18 +196,15 @@ bool IonCellOptimizer::relax_step(const int& istep,
         else
         {
             ofs_running << "\n Relaxation is not converged yet!" << std::endl;
-            if (istep < inp_->relax_nmax)
-            {
-                // Reset force_step counter after cell change for fresh atomic relaxation
-                force_step = 1;
-                stress_step++;
-                IMM.reset_after_cell_change(inp_->relax_method, ofs_running);
-                ucell.cell_parameter_updated = true;
+            // Reset force_step counter after cell change for fresh atomic relaxation
+            force_step = 1;
+            stress_step++;
+            IMM.reset_after_cell_change(inp_->relax_method, ofs_running);
+            ucell.cell_parameter_updated = true;
 
-                // Update cell-related parameters after volume change
-                unitcell::setup_cell_after_vc(ucell, ofs_running, inp_->nspin);
-                ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
-            }
+            // Update cell-related parameters after volume change
+            unitcell::setup_cell_after_vc(ucell, ofs_running, inp_->nspin);
+            ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
         }
 
         return converged;
