@@ -8,7 +8,7 @@
 #define VDWD2_PARAMETERS_H
 
 #include "source_cell/unitcell.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/input_parameter.h"
 #include "vdw_parameters.h"
 
 #include <map>

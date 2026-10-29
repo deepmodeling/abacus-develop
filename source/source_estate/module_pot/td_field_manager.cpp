@@ -85,8 +85,8 @@ TDFieldManager::TDFieldManager(const bool enabled,
                                const double length_cut1,
                                const double length_cut2,
                                std::vector<TDField> fields)
-    : enabled_(enabled), gauge_(gauge), start_step_(start_step), end_step_(end_step), dt_ha_(dt), length_cut1_(length_cut1),
-      length_cut2_(length_cut2), fields_(std::move(fields)), current_step_(-1), active_(false)
+    : enabled_(enabled), gauge_(gauge), start_step_(start_step), end_step_(end_step), dt_ha_(dt), interval_dt_ha_(dt),
+      length_cut1_(length_cut1), length_cut2_(length_cut2), fields_(std::move(fields)), current_step_(-1), active_(false)
 {
     field_vals_ha_.resize(fields_.size(), 0.0);
 }
@@ -247,6 +247,112 @@ void TDFieldManager::read_restart(const std::string& file_dir)
     }
     sample_field(current_step_);
     select_A_prop();
+}
+
+TDFieldState TDFieldManager::field_state() const
+{
+    TDFieldState state;
+    state.active = active_;
+    state.dt = interval_dt_ha_;
+    state.values = field_vals_ha_;
+    state.left = A_left_ha_;
+    state.right = A_right_ha_;
+    state.propagation = A_prop_ha_;
+    state.electric = efield_ha_;
+    return state;
+}
+
+void TDFieldManager::bind_field(const TDFieldState& state)
+{
+    active_ = state.active;
+    interval_dt_ha_ = state.dt;
+    field_vals_ha_ = state.values;
+    A_left_ha_ = state.left;
+    A_right_ha_ = state.right;
+    A_prop_ha_ = state.propagation;
+    efield_ha_ = state.electric;
+}
+
+ModuleBase::Vector3<double> TDFieldManager::substep_a(const TDFieldState& full, int node, int parts) const
+{
+    if (node == 0)
+    {
+        return full.left;
+    }
+    if (node == parts)
+    {
+        return full.right;
+    }
+    const double fraction = static_cast<double>(node) / parts;
+    if (file_source())
+    {
+        return full.left + (full.right - full.left) * fraction;
+    }
+    ModuleBase::Vector3<double> result = full.left;
+    const int left_step = current_step_ - 1;
+    if (gauge_ != 0 && enabled_ && left_step >= start_step_ && left_step <= end_step_)
+    {
+        // Anchor each prefix integral to the original left endpoint. A failed trial
+        // never contributes to the field integral or changes the original right endpoint.
+        for (const TDField& field: fields_)
+        {
+            const int count = field.subdivisions();
+            std::vector<double> samples(count + 1);
+            const int denominator = parts * count;
+            for (int j = 0; j <= count; ++j)
+            {
+                const int numerator = node * j;
+                const double time = (left_step + static_cast<double>(numerator) / denominator) * dt_ha_;
+                const TDFieldSample sample(left_step, numerator, denominator, time);
+                samples[j] = field.electric_field(sample);
+            }
+            double integral = 0.0;
+            const double spacing = dt_ha_ * fraction / count;
+            const int points = count + 1;
+            ModuleBase::Integral::Simpson_Integral(points, samples.data(), spacing, integral);
+            result[field.direction()] -= integral;
+        }
+    }
+    return result;
+}
+
+TDFieldState TDFieldManager::subinterval(const TDFieldState& full, int index, int parts) const
+{
+    TDFieldState state = full;
+    state.dt = dt_ha_ / parts;
+    state.left = substep_a(full, index, parts);
+    const int right = index + 1;
+    state.right = substep_a(full, right, parts);
+    state.propagation = (state.left + state.right) * 0.5;
+    if (right == parts)
+    {
+        return state;
+    }
+    const int left_step = current_step_ - 1;
+    state.active = enabled_ && left_step >= start_step_ && left_step <= end_step_;
+    std::fill(state.values.begin(), state.values.end(), 0.0);
+    state.electric.set(0.0, 0.0, 0.0);
+    if (file_source())
+    {
+        state.active = true;
+        state.electric = (full.left - full.right) * (1.0 / dt_ha_);
+    }
+    else if (state.active)
+    {
+        const double time = (left_step + static_cast<double>(right) / parts) * dt_ha_;
+        const TDFieldSample sample(left_step, right, parts, time);
+        for (std::size_t i = 0; i < fields_.size(); ++i)
+        {
+            state.values[i] = fields_[i].electric_field(sample);
+            state.electric[fields_[i].direction()] += state.values[i];
+        }
+    }
+    return state;
+}
+
+double TDFieldManager::interval_dt_ha() const
+{
+    return interval_dt_ha_;
 }
 
 void TDFieldManager::write_restart(const std::string& file_dir) const

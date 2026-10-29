@@ -33,6 +33,9 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
   protected:
+    //! Use the initial-state limit for initialization or restart replay, and the RT limit for propagation.
+    int scf_iter_limit(const int istep) const override;
+
     //! Return the solver-owned RT state used by LCAO operators and output.
     TD_info* get_td_info() const override { return td_p; }
 

@@ -278,46 +278,23 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
     {
         if (iter % this->inp_->out_freq_elec == 0 || iter == this->inp_->scf_nmax || conv_esolver)
         {
-            for (int is = 0; is < this->inp_->nspin; is++)
-            {
-                this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
-            }
-            // Temporary bridge: use factory until ParaCollection is wired into driver.
-            Parallel::ParaWorld pw_world = Parallel::make_pw_world();
-            // Only pool 0 writes the rhog file (rhog is identical across pools).
-            if (GlobalV::MY_POOL == 0)
-            {
-                module_charge::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart",
-                                     PARAM.globalv.gamma_only_pw,
-                                     this->pw_rhod,
-                                     this->inp_->nspin,
-                                     ucell.GT,
-                                     this->chr.rhog_save,
-                                     pw_world,
-                                     &GlobalV::ofs_warning);
-            }
-
-            if (XC_Functional::get_ked_flag())
-            {
-                std::vector<std::complex<double>> kin_g_space(this->inp_->nspin * this->chr.ngmc, {0.0, 0.0});
-                std::vector<std::complex<double>*> kin_g;
-                for (int is = 0; is < this->inp_->nspin; is++)
-                {
-                    kin_g.push_back(kin_g_space.data() + is * this->chr.ngmc);
-                    this->pw_rhod->real2recip(this->chr.kin_r_save[is], kin_g[is]);
-                }
-                if (GlobalV::MY_POOL == 0)
-                {
-                    module_charge::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-TAU-DENSITY.restart",
-                                         PARAM.globalv.gamma_only_pw,
-                                         this->pw_rhod,
-                                         this->inp_->nspin,
-                                         ucell.GT,
-                                         kin_g.data(),
-                                         pw_world,
-                                         &GlobalV::ofs_warning);
-                }
-            }
+            const System_para& system = PARAM.globalv;
+            const bool write_restart = this->inp_->out_chg[0] != -1;
+            const std::string prefix = system.global_out_dir + this->inp_->suffix;
+            const bool write_tau = XC_Functional::get_ked_flag();
+            const bool writer_pool = GlobalV::MY_POOL == 0;
+            const Parallel::ParaWorld pw_world = Parallel::make_pw_world();
+            module_charge::write_density_restart(this->chr,
+                                                 *this->pw_rhod,
+                                                 ucell.GT,
+                                                 prefix,
+                                                 this->inp_->nspin,
+                                                 write_restart,
+                                                 system.gamma_only_pw,
+                                                 write_tau,
+                                                 writer_pool,
+                                                 pw_world,
+                                                 &GlobalV::ofs_warning);
         }
     }
 }
