@@ -29,8 +29,16 @@ PotBase* Potential::make_sccs_pot(const Input_para& input)
     sccs_cfg_input(input, config, solver);
     if (this->ucell_ != nullptr)
     {
-        const std::string warning = check_charge(config, *this->ucell_, input.nelec);
-        if (!warning.empty()) { ModuleBase::WARNING("Potential::make_sccs_pot", warning); }
+        const std::string structure_warning = check_sccs_cell(config, *this->ucell_);
+        if (!structure_warning.empty())
+        {
+            ModuleBase::WARNING("Potential::make_sccs_pot", structure_warning);
+        }
+        const std::string charge_warning = check_charge(config, *this->ucell_, input.nelec);
+        if (!charge_warning.empty())
+        {
+            ModuleBase::WARNING("Potential::make_sccs_pot", charge_warning);
+        }
     }
     return new PotSccs(this->rho_basis_, config, solver, input.nelec);
 }

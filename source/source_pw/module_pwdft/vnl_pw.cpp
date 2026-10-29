@@ -169,9 +169,10 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
                 resmem_cd_op()(c_deeq_nc, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
                 resmem_cd_op()(c_qq_so, ntype * 4 * this->nhm * this->nhm);
             }
+            // Forces use double precision even when propagation uses float.
+            resmem_zd_op()(z_deeq_nc, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
             if (PARAM.globalv.has_double_data)
             {
-                resmem_zd_op()(z_deeq_nc, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
                 resmem_zd_op()(z_qq_so, ntype * 4 * this->nhm * this->nhm);
             }
             resmem_dd_op()(d_deeq, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm);
@@ -192,9 +193,9 @@ void pseudopot_cell_vnl::init(const UnitCell& ucell,
                 resmem_ch_op()(c_deeq_nc, PARAM.inp.nspin * ucell.nat * this->nhm * this->nhm, "VNL::c_deeq_nc");
                 resmem_ch_op()(c_qq_so, ntype * 4 * this->nhm * this->nhm, "VNL::c_qq_so");
             }
+            this->z_deeq_nc = this->deeq_nc.ptr;
             if (PARAM.globalv.has_double_data)
             {
-                this->z_deeq_nc = this->deeq_nc.ptr;
                 this->z_qq_so = this->qq_so.ptr;
             }
             this->d_deeq = this->deeq.ptr;

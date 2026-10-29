@@ -1,19 +1,19 @@
 #include "hamilt_pw.h"
 
 #include "op_pw_ekin.h"
-#include "op_pw_ekin_td.h"
 #include "op_pw_exx.h"
 #include "op_pw_meta.h"
 #include "op_pw_nl.h"
-#include "op_pw_nl_td.h"
 #include "op_pw_proj.h"
 #include "op_pw_veff.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
+#include "source_estate/module_pot/pot_pcc.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
 #include "source_io/module_parameter/parameter.h"
-#include "source_estate/module_pot/pot_pcc.h"
+#include "source_pw/module_rt/op_pw_ekin_td.h"
+#include "source_pw/module_rt/op_pw_nl_td.h"
 
 namespace hamilt
 {
@@ -43,8 +43,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     if (PARAM.inp.t_in_h)
     {
         // Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>
-        Operator<T, Device>* ekinetic
-            = new Ekinetic<OperatorPW<T, Device>>(tpiba2, gk2, wfc_basis->nks, wfc_basis->npwk_max);
+        Operator<T, Device>* ekinetic = new Ekinetic<OperatorPW<T, Device>>(tpiba2, gk2, wfc_basis->nks, wfc_basis->npwk_max);
         if (this->ops == nullptr)
         {
             this->ops = ekinetic;
@@ -87,7 +86,10 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
         {
             pot_register_in.push_back("surchem");
         }
-        if (input.imp_sol == 2) { pot_register_in.push_back("sccs"); }
+        if (input.imp_sol == 2)
+        {
+            pot_register_in.push_back("sccs");
+        }
         if (input.assume_isolated == "pcc_0d")
         {
             pot_register_in.push_back("pcc");
@@ -172,11 +174,8 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     }
     if (PARAM.inp.sc_mag_switch || PARAM.inp.dft_plus_u)
     {
-        Operator<T, Device>* onsite_proj = new OnsiteProj<OperatorPW<T, Device>>(isk,
-                                                                                 ucell,
-                                                                                 p_dftu,
-                                                                                 PARAM.inp.sc_mag_switch,
-                                                                                 (PARAM.inp.dft_plus_u > 0));
+        Operator<T, Device>* onsite_proj
+            = new OnsiteProj<OperatorPW<T, Device>>(isk, ucell, p_dftu, PARAM.inp.sc_mag_switch, (PARAM.inp.dft_plus_u > 0));
         this->ops->add(onsite_proj);
     }
     if (exx_info && exx_info->cal_exx)
@@ -214,7 +213,7 @@ HamiltPW<T, Device>::~HamiltPW()
 }
 
 template <typename T, typename Device>
-void HamiltPW<T, Device>::bind_td_state(const Real* veff, const Real* vofk, const ModuleBase::Vector3<double>& A_ha)
+void HamiltPW<T, Device>::bind_td_state(const Real* veff, const ModuleBase::Vector3<double>& A_ha)
 {
     Operator<T, Device>* op = this->ops;
     while (op != nullptr)
@@ -223,10 +222,6 @@ void HamiltPW<T, Device>::bind_td_state(const Real* veff, const Real* vofk, cons
         {
             static_cast<Veff<OperatorPW<T, Device>>*>(op)->set_veff(veff);
         }
-        else if (op->get_cal_type() == calculation_type::pw_meta)
-        {
-            static_cast<Meta<OperatorPW<T, Device>>*>(op)->set_vk(vofk);
-        }
         else if (op->get_cal_type() == calculation_type::pw_ekinetic_td)
         {
             static_cast<TDEkineticPW<T, Device>*>(op)->set_A_ha(A_ha);
@@ -234,7 +229,8 @@ void HamiltPW<T, Device>::bind_td_state(const Real* veff, const Real* vofk, cons
         else if (op->get_cal_type() == calculation_type::pw_nonlocal)
         {
             TDNonlocalPW<T, Device>* td_nonlocal = dynamic_cast<TDNonlocalPW<T, Device>*>(op);
-            if (td_nonlocal != nullptr) td_nonlocal->set_A_ha(A_ha);
+            if (td_nonlocal != nullptr)
+                td_nonlocal->set_A_ha(A_ha);
         }
         op = op->next_op;
     }
@@ -279,17 +275,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
             if (nbands == 1)
             {
                 int inc = 1;
-                gemv_op()(transa,
-                          npw,
-                          this->ppcell->nkb,
-                          &one,
-                          this->vkb,
-                          this->ppcell->vkbnc,
-                          psi_in,
-                          inc,
-                          &zero,
-                          becp,
-                          inc);
+                gemv_op()(transa, npw, this->ppcell->nkb, &one, this->vkb, this->ppcell->vkbnc, psi_in, inc, &zero, becp, inc);
             }
             else
             {
@@ -326,7 +312,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                 const int nh = atoms->ncpp.nh;
                 T* qqc = nullptr;
                 resmem_complex_op()(qqc, nh * nh, "Hamilt<PW>::qqc");
-                std::vector<T> qqc_host(nh*nh);
+                std::vector<T> qqc_host(nh * nh);
                 const double* qq_now_host = &this->ppcell->qq_nt.ptr[it * this->ppcell->nhm * this->ppcell->nhm];
 
                 for (int i = 0; i < nh; i++)
@@ -366,17 +352,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         if (nbands == 1)
         {
             const int inc = 1;
-            gemv_op()(transa,
-                      npw,
-                      this->ppcell->nkb,
-                      &one,
-                      this->vkb,
-                      this->ppcell->vkbnc,
-                      ps,
-                      inc,
-                      &one,
-                      spsi,
-                      inc);
+            gemv_op()(transa, npw, this->ppcell->nkb, &one, this->vkb, this->ppcell->vkbnc, ps, inc, &one, spsi, inc);
         }
         else
         {

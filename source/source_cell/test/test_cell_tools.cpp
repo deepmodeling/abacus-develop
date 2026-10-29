@@ -128,3 +128,43 @@ TEST(CellTools, AcceptsNoAtomTypes)
     const std::vector<unitcell::AtomData> data = unitcell::get_atom_data(nullptr, 0, 10.0);
     EXPECT_TRUE(data.empty());
 }
+
+TEST(CellTools, AtomDataCarriesPseudopotentialAtomicNumber)
+{
+    Atom atoms[2];
+    atoms[0].na = 2;
+    atoms[0].ncpp.psd = " C ";
+    atoms[0].tau = {ModuleBase::Vector3<double>(), ModuleBase::Vector3<double>()};
+    atoms[1].na = 1;
+    atoms[1].ncpp.psd = "H";
+    atoms[1].tau = {ModuleBase::Vector3<double>()};
+
+    const std::vector<unitcell::AtomData> data = unitcell::get_atom_data(atoms, 2, 10.0);
+    ASSERT_EQ(data.size(), 3u);
+    EXPECT_EQ(data[0].atomic_number, 6);
+    EXPECT_EQ(data[1].atomic_number, 6);
+    EXPECT_EQ(data[2].atomic_number, 1);
+}
+
+TEST(CellTools, UnknownPseudopotentialElementDoesNotGuessFromAtomLabel)
+{
+    Atom atom;
+    atom.na = 1;
+    atom.label = "H";
+    atom.ncpp.psd = "unknown";
+    atom.tau = {ModuleBase::Vector3<double>()};
+    const std::vector<unitcell::AtomData> data = unitcell::get_atom_data(&atom, 1, 1.0);
+    ASSERT_EQ(data.size(), 1u);
+    EXPECT_EQ(data[0].atomic_number, 0);
+}
+
+TEST(CellTools, PseudoAtomicNumberTrimsTheElementSymbol)
+{
+    Atom atom;
+    atom.ncpp.psd = " O ";
+    EXPECT_EQ(unitcell::pseudo_atom_z(atom), 8);
+    atom.ncpp.psd = "";
+    EXPECT_EQ(unitcell::pseudo_atom_z(atom), 0);
+    atom.ncpp.psd = "Oxygen";
+    EXPECT_EQ(unitcell::pseudo_atom_z(atom), 0);
+}

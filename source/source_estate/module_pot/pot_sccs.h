@@ -14,6 +14,12 @@ void sccs_cfg_input(const Input_para& input,
                     ModuleSccs::SccsConfig& config,
                     ModuleSccs::PolarizationSolverParameters& solver);
 
+// Structure-dependent checks that the INPUT reader cannot make: a
+// sccs_corespread count other than one or nat stops the run. Returns a warning
+// (empty if none) when a single width meets an unknown pseudopotential
+// element, whose automatic core exclusion is then not possible.
+std::string check_sccs_cell(const ModuleSccs::SccsConfig& config, const UnitCell& cell);
+
 // Returns a warning (empty if none) for a charged cell in a dielectric: the
 // periodic Poisson solver drops the G = 0 component of the net charge, so the
 // energy depends on the cell size. electron_count is the resolved nelec (the
@@ -44,6 +50,7 @@ private:
     double non_electrostatic_rydberg_ = 0.0;
     std::vector<double> electrostatic_potential_;
     std::vector<double> restart_potential_;
+    std::vector<double> cavity_potential_;
 };
 } // namespace elecstate
 #endif

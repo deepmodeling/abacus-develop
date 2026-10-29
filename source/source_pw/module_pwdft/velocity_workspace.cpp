@@ -33,6 +33,7 @@ void VelocityWorkspace<Real, Device>::contract(const UnitCell& cell,
                                                const pseudopot_cell_vnl& pp,
                                                const int spin,
                                                const int bands,
+                                               const int npol,
                                                const Real scale,
                                                const ModulePW::PW_Basis_K& basis,
                                                Complex* buffer)
@@ -65,6 +66,7 @@ void VelocityWorkspace<Real, Device>::contract(const UnitCell& cell,
     base_device::memory::set_memory_op<Complex, Device>()(output, 0, projection_elements);
     for (int component = 0; component < 4; ++component)
     {
+        // The ordinary overlap is packed separately from the three interleaved gradient overlaps.
         int sum = 0;
         int atom = 0;
         const int stride = component == 0 ? pp.nkb : 3 * pp.nkb;
@@ -73,24 +75,45 @@ void VelocityWorkspace<Real, Device>::contract(const UnitCell& cell,
         Complex* component_output = output + component * count;
         for (int type = 0; type < cell.ntype; ++type)
         {
-            nonlocal_pw_op<Real, Device>()(nullptr,
-                                           cell.atoms[type].na,
-                                           bands,
-                                           cell.atoms[type].ncpp.nh,
-                                           sum,
-                                           atom,
-                                           spin,
-                                           stride,
-                                           pp.deeq.getBound2(),
-                                           pp.deeq.getBound3(),
-                                           pp.deeq.getBound4(),
-                                           pp.template get_deeq_data<Real>(),
-                                           component_output,
-                                           input);
+            // Both kernels advance sum and atom by reference.
+            if (npol == 2)
+            {
+                nonlocal_pw_op<Real, Device>()(nullptr,
+                                               cell.atoms[type].na,
+                                               bands,
+                                               cell.atoms[type].ncpp.nh,
+                                               sum,
+                                               atom,
+                                               stride,
+                                               pp.deeq_nc.getBound2(),
+                                               pp.deeq_nc.getBound3(),
+                                               pp.deeq_nc.getBound4(),
+                                               pp.template get_deeq_nc_data<Real>(),
+                                               component_output,
+                                               input);
+            }
+            else
+            {
+                nonlocal_pw_op<Real, Device>()(nullptr,
+                                               cell.atoms[type].na,
+                                               bands,
+                                               cell.atoms[type].ncpp.nh,
+                                               sum,
+                                               atom,
+                                               spin,
+                                               stride,
+                                               pp.deeq.getBound2(),
+                                               pp.deeq.getBound3(),
+                                               pp.deeq.getBound4(),
+                                               pp.template get_deeq_data<Real>(),
+                                               component_output,
+                                               input);
+            }
         }
     }
     if (scale != Real(1))
     {
+        // Velocity contractions convert the Ry-valued D matrix to Hartree without changing the Hamiltonian's storage.
         const Complex factor(scale, 0);
         const std::int64_t max_chunk = std::numeric_limits<int>::max();
         for (std::int64_t offset = 0; offset < projection_elements;)

@@ -109,9 +109,15 @@ void MD_base::update_pos()
         }
         pos = pos * mdcell.GT();
         atom.frac += pos;
-        atom.frac.x -= std::floor(atom.frac.x);
-        atom.frac.y -= std::floor(atom.frac.y);
-        atom.frac.z -= std::floor(atom.frac.z);
+        for (int k = 0; k < 3; ++k)
+        {
+            atom.frac[k] -= std::floor(atom.frac[k]);
+            // A tiny negative value can round to exactly 1.0 after adding one.
+            if (atom.frac[k] >= 1.0)
+            {
+                atom.frac[k] = 0.0;
+            }
+        }
         atom.cart = atom.frac * mdcell.latvec();
     }
 
