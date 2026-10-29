@@ -22,8 +22,8 @@ namespace LR
         const std::vector<double>& orb_cutoff = inputs.orb_cutoff;
         const Grid_Driver& gd = inputs.gd;
         const K_Vectors& kv = inputs.kv;
-        const std::vector<Parallel_2D>& px = inputs.px;
-        const Parallel_2D& pc = inputs.pc;
+        const std::vector<BlockCyclicDistributionInformation>& px = inputs.px;
+        const BlockCyclicDistributionInformation& pc = inputs.pc;
         const Parallel_Orbitals& pmat = inputs.pmat;
         const std::string& dft_functional = inputs.dft_functional;
         std::weak_ptr<PotHxcLR> pot_hxc_gs = inputs.pot_hxc_gs;

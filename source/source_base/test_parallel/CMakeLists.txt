@@ -63,12 +63,6 @@ add_test(NAME MODULE_BASE_para_gemm_parallel
 )
 
 AddTest(
-    TARGET MODULE_BASE_parallel_2d_test
-    SOURCES parallel_2d_test.cpp ../block_cyclic_distribution_information.cpp
-    LIBS parameter
-)
-
-AddTest(
   TARGET MODULE_BASE_parallel_domain_grid
   SOURCES parallel_domain_grid_test.cpp ../test/mpi_test_main.cpp
   LIBS parameter MPI::MPI_CXX base device
@@ -76,13 +70,6 @@ AddTest(
 
 add_test(NAME MODULE_BASE_parallel_domain_grid_parallel
       COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_BASE_parallel_domain_grid>"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-abacus_copy_test_files(parallel_2d_test.sh)
-find_program(BASH bash)
-add_test(NAME MODULE_BASE_parallel_2d_test_para
-      COMMAND ${BASH} parallel_2d_test.sh "$<TARGET_FILE:MODULE_BASE_parallel_2d_test>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 

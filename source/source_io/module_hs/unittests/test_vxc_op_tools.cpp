@@ -6,8 +6,8 @@
  * / ScaLAPACK context:
  * - get_real (double and complex overloads)
  * - set_para2d_MO (non-MPI set_serial path)
- * - orbital_energy (serial Parallel_2D, double and complex)
- * - all_band_energy (serial Parallel_2D, double and complex)
+ * - orbital_energy (serial BlockCyclicDistributionInformation, double and complex)
+ * - all_band_energy (serial BlockCyclicDistributionInformation, double and complex)
  *
  * cVc is not tested here because it requires pv.desc / pv.desc_wfc
  * (full Parallel_Orbitals with BLACS context).
@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 
 #include "source_io/module_hs/vxc_op_tools.h"
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/matrix.h"
 
@@ -30,11 +30,11 @@
 namespace
 {
 /**
- * @brief Create a serial Parallel_2D that owns all rows/cols on rank 0.
+ * @brief Create a serial BlockCyclicDistributionInformation that owns all rows/cols on rank 0.
  */
-Parallel_2D make_serial_pv(int dim)
+BlockCyclicDistributionInformation make_serial_pv(int dim)
 {
-    Parallel_2D pv;
+    BlockCyclicDistributionInformation pv;
     pv.set_serial(dim, dim);
     return pv;
 }
@@ -69,7 +69,7 @@ TEST(VxcOpTools, SetPara2dMO)
 #else
     pv.para_2d().set_serial(nbands, nbands);
 #endif
-    Parallel_2D p2d;
+    BlockCyclicDistributionInformation p2d;
     ModuleIO::set_para2d_MO(pv, nbands, p2d);
     EXPECT_EQ(p2d.get_global_row_size(), nbands);
     EXPECT_EQ(p2d.get_global_col_size(), nbands);
@@ -82,7 +82,7 @@ TEST(VxcOpTools, SetPara2dMO)
 TEST(VxcOpTools, OrbitalEnergyDouble)
 {
     const int nbands = 3;
-    Parallel_2D p2d = make_serial_pv(nbands);
+    BlockCyclicDistributionInformation p2d = make_serial_pv(nbands);
     // MO matrix (row-major, p2d local): 3x3 diagonal
     // mat_mo[i * row_size + j] where row_size = get_row_size()
     const int row_size = p2d.get_row_size();
@@ -102,7 +102,7 @@ TEST(VxcOpTools, OrbitalEnergyDouble)
 TEST(VxcOpTools, OrbitalEnergyComplex)
 {
     const int nbands = 2;
-    Parallel_2D p2d = make_serial_pv(nbands);
+    BlockCyclicDistributionInformation p2d = make_serial_pv(nbands);
     const int row_size = p2d.get_row_size();
     std::vector<std::complex<double>> mat_mo(row_size * p2d.get_col_size());
     mat_mo[0 * row_size + 0] = std::complex<double>(1.5, 0.0);
@@ -122,7 +122,7 @@ TEST(VxcOpTools, AllBandEnergyDouble)
 {
     const int nbands = 3;
     const int ik = 0;
-    Parallel_2D p2d = make_serial_pv(nbands);
+    BlockCyclicDistributionInformation p2d = make_serial_pv(nbands);
     const int row_size = p2d.get_row_size();
     std::vector<double> mat_mo(row_size * p2d.get_col_size(), 0.0);
     mat_mo[0 * row_size + 0] = 1.0;
@@ -144,7 +144,7 @@ TEST(VxcOpTools, AllBandEnergyComplex)
 {
     const int nbands = 2;
     const int ik = 0;
-    Parallel_2D p2d = make_serial_pv(nbands);
+    BlockCyclicDistributionInformation p2d = make_serial_pv(nbands);
     const int row_size = p2d.get_row_size();
     std::vector<std::complex<double>> mat_mo(row_size * p2d.get_col_size());
     mat_mo[0 * row_size + 0] = std::complex<double>(2.0, 0.0);
@@ -162,7 +162,7 @@ TEST(VxcOpTools, AllBandEnergyComplex)
 // ---------------------------------------------------------------------------
 // TODO: cVc — requires full Parallel_Orbitals with BLACS context (pv.desc,
 // pv.desc_wfc) for the ScaLAPACK gemm path. To test, either:
-// (a) refactor cVc to accept raw matrix pointers + Parallel_2D instead of
+// (a) refactor cVc to accept raw matrix pointers + BlockCyclicDistributionInformation instead of
 //     Parallel_Orbitals (governance rule 10: pass explicit arguments), or
 // (b) construct a real Parallel_Orbitals via init(dim, dim, 1, DIAG_WORLD)
 //     and fill desc/desc_wfc — but this also requires valid BLACS context

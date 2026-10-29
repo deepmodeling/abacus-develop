@@ -83,7 +83,7 @@ template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
     const K_Vectors& kv,
     const UnitCell& ucell,
-    const Parallel_2D& pv)
+    const BlockCyclicDistributionInformation& pv)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_before_all_runners");
     this->refresh_symmetry(kv, ucell, pv);
@@ -91,7 +91,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::refresh_symmetry(
-    const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv)
+    const K_Vectors& kv, const UnitCell& ucell, const BlockCyclicDistributionInformation& pv)
 {
     ModuleBase::TITLE("Exx_LRI_Interface", "refresh_symmetry");
     this->symrot_.reset_symmetry();
@@ -116,7 +116,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
                                                 const Charge_Mixing& chgmix,
                                                 const UnitCell& ucell,
                                                 const LCAO_Orbitals& orb,
-                                                const Parallel_2D& pv,
+                                                const BlockCyclicDistributionInformation& pv,
                                                 const bool update_symmetry)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_beforescf");

@@ -4,7 +4,7 @@
 #include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/global_variable.h"
 #include "source_base/global_function.h"
@@ -236,7 +236,7 @@ void write_wfc_nao(const int out_type,
 
     bool gamma_only = (std::is_same<T, double>::value);
     bool writeBinary = (out_type == 2);
-    Parallel_2D pv_glb;
+    BlockCyclicDistributionInformation pv_glb;
     int blk_glb = std::max(nlocal, nbands);
     std::vector<T> ctot(myid == 0 ? nbands * nlocal : 0);
     ModuleBase::Memory::record("ModuleIO::write_wfc_nao::glb", sizeof(T) * nlocal * nbands);

@@ -9,11 +9,11 @@ namespace LR
     template <>
     void CVCX_occ_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistributionInformation& pmat,
         const psi::Psi<double, base_device::DEVICE_CPU>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistributionInformation& pc,
         const double* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistributionInformation& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -35,9 +35,9 @@ namespace LR
         const int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        Parallel_2D pcv;
+        BlockCyclicDistributionInformation pcv;
         LR_Util::setup_2d_division(pcv, pmat.get_block_size(), nocc, naos, pmat.get_blacs_ctxt());
-        Parallel_2D pcx;
+        BlockCyclicDistributionInformation pcx;
         LR_Util::setup_2d_division(pcx, pmat.get_block_size(), naos, nvirt, pmat.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {
@@ -122,11 +122,11 @@ namespace LR
     template <>
     void CVCX_occ_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistributionInformation& pmat,
         const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistributionInformation& pc,
         const std::complex<double>* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistributionInformation& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -148,9 +148,9 @@ namespace LR
         int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        Parallel_2D pcv;
+        BlockCyclicDistributionInformation pcv;
         LR_Util::setup_2d_division(pcv, pmat.get_block_size(), nocc, naos, pmat.get_blacs_ctxt());
-        Parallel_2D pcx;
+        BlockCyclicDistributionInformation pcx;
         LR_Util::setup_2d_division(pcx, pmat.get_block_size(), naos, nvirt, pmat.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {
@@ -236,11 +236,11 @@ namespace LR
     template <>
     void CVCX_virt_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistributionInformation& pmat,
         const psi::Psi<double, base_device::DEVICE_CPU>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistributionInformation& pc,
         const double* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistributionInformation& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -262,9 +262,9 @@ namespace LR
         const int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        Parallel_2D pcv;
+        BlockCyclicDistributionInformation pcv;
         LR_Util::setup_2d_division(pcv, pmat.get_block_size(), naos, nvirt, pmat.get_blacs_ctxt());
-        Parallel_2D pcx;
+        BlockCyclicDistributionInformation pcx;
         LR_Util::setup_2d_division(pcx, pmat.get_block_size(), nocc, naos, pmat.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {
@@ -350,11 +350,11 @@ namespace LR
     template <>
     void CVCX_virt_pblas(
         const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistributionInformation& pmat,
         const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistributionInformation& pc,
         const std::complex<double>* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistributionInformation& px,
         const int& naos,
         const int& nocc,
         const int& nvirt,
@@ -376,9 +376,9 @@ namespace LR
         const int nks = c.get_nk();
         assert(V_istate.size() == nks);
 
-        Parallel_2D pcv;
+        BlockCyclicDistributionInformation pcv;
         LR_Util::setup_2d_division(pcv, pmat.get_block_size(), naos, nvirt, pmat.get_blacs_ctxt());
-        Parallel_2D pcx;
+        BlockCyclicDistributionInformation pcx;
         LR_Util::setup_2d_division(pcx, pmat.get_block_size(), nocc, naos, pmat.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {

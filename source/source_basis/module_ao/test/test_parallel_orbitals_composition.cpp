@@ -5,7 +5,7 @@
 // 无裸指针新增、snake_case、必要注释、简单清晰）。
 //
 // 四组断言：
-//   ① getter 等价性：Parallel_2D 的 getter 族与底层字段一致，PO 对组合成员
+//   ① getter 等价性：BlockCyclicDistributionInformation 的 getter 族与底层字段一致，PO 对组合成员
 //     的唯一转发 getter（get_blacs_ctxt）与 para_2d() 内部状态一致（R4 防副本）；
 //   ② 派生层同步：重新初始化 para_2d()（init/set/set_serial）后重跑 PO 派生层
 //     入口，断言 nrow_bands、atom_begin_*、desc_wfc 与新分布逐项一致，
@@ -15,7 +15,7 @@
 //     （MPI 覆盖 init/set 路径，串行覆盖 set_serial 路径）。
 //
 // 值语义说明：Parallel_Orbitals 因用户声明析构而抑制隐式移动，且成员 para_2d_
-// 的拷贝操作被删除，故既不可拷贝也不可移动；Parallel_2D 手写移动语义，可移动。
+// 的拷贝操作被删除，故既不可拷贝也不可移动；BlockCyclicDistributionInformation 手写移动语义，可移动。
 
 #include "gtest/gtest.h"
 #include "../parallel_orbitals.h"
@@ -40,16 +40,16 @@ static_assert(!std::is_move_assignable<Parallel_Orbitals>::value,
 static_assert(std::is_default_constructible<Parallel_Orbitals>::value,
               "Parallel_Orbitals must be default constructible");
 
-static_assert(!std::is_copy_constructible<Parallel_2D>::value,
-              "Parallel_2D must not be copy constructible");
-static_assert(!std::is_copy_assignable<Parallel_2D>::value,
-              "Parallel_2D must not be copy assignable");
-static_assert(std::is_move_constructible<Parallel_2D>::value,
-              "Parallel_2D must be move constructible");
-static_assert(std::is_move_assignable<Parallel_2D>::value,
-              "Parallel_2D must be move assignable");
-static_assert(std::is_default_constructible<Parallel_2D>::value,
-              "Parallel_2D must be default constructible");
+static_assert(!std::is_copy_constructible<BlockCyclicDistributionInformation>::value,
+              "BlockCyclicDistributionInformation must not be copy constructible");
+static_assert(!std::is_copy_assignable<BlockCyclicDistributionInformation>::value,
+              "BlockCyclicDistributionInformation must not be copy assignable");
+static_assert(std::is_move_constructible<BlockCyclicDistributionInformation>::value,
+              "BlockCyclicDistributionInformation must be move constructible");
+static_assert(std::is_move_assignable<BlockCyclicDistributionInformation>::value,
+              "BlockCyclicDistributionInformation must be move assignable");
+static_assert(std::is_default_constructible<BlockCyclicDistributionInformation>::value,
+              "BlockCyclicDistributionInformation must be default constructible");
 
 class ParallelOrbitalsCompositionTest : public testing::Test
 {
@@ -240,14 +240,14 @@ TEST_F(ParallelOrbitalsCompositionTest, DerivedLayerSyncsAfterSetSerial)
 // ---------------------------------------------------------------------------
 TEST_F(ParallelOrbitalsCompositionTest, ValueSemanticsSmoke)
 {
-    Parallel_2D source;
+    BlockCyclicDistributionInformation source;
     source.set_serial(4, 4);
     EXPECT_EQ(source.get_row_size(), 4);
 
-    Parallel_2D moved(std::move(source)); // 移动构造
+    BlockCyclicDistributionInformation moved(std::move(source)); // 移动构造
     EXPECT_EQ(moved.get_row_size(), 4);
 
-    Parallel_2D assigned;
+    BlockCyclicDistributionInformation assigned;
     assigned = std::move(moved); // 移动赋值
     EXPECT_EQ(assigned.get_row_size(), 4);
 }

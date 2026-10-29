@@ -208,7 +208,7 @@ std::vector<int> Parallel_Orbitals::get_indexes_col(int iat) const
 #ifdef __MPI
 void Parallel_Orbitals::set_desc_wfc_Eij(const int& nbasis, const int& nbands, const int& lld)
 {
-    ModuleBase::TITLE("Parallel_2D", "set_desc_wfc_Eij");
+    ModuleBase::TITLE("BlockCyclicDistributionInformation", "set_desc_wfc_Eij");
 #ifdef __DEBUG
     assert(nbasis > 0 && nbands > 0 && lld > 0);
     assert(this->para_2d_.get_block_size() > 0 && this->para_2d_.get_dim0() > 0

@@ -19,7 +19,7 @@ namespace LR
             const ModulePW::PW_Basis& rho_basis, psi::Psi<T>& psi_ks_in,
             const UnitCell& ucell, const K_Vectors& kv_in, const Grid_Driver& gd, const std::vector<double>& orb_cutoff,
             const TwoCenterBundle& two_center_bundle_,
-            const std::vector<Parallel_2D>& pX_in, const Parallel_2D& pc_in, const Parallel_Orbitals& pmat_in,
+            const std::vector<BlockCyclicDistributionInformation>& pX_in, const BlockCyclicDistributionInformation& pc_in, const Parallel_Orbitals& pmat_in,
             const double* omega, const double* eig_ks, const T* X, const int& nstate, const bool& openshell,
             const std::string& gauge, const int my_rank, const std::string& out_dir) :
             my_rank(my_rank), nspin_x(openshell ? 2 : 1), naos(naos), nocc(nocc), nvirt(nvirt),
@@ -93,8 +93,8 @@ namespace LR
         bool is_full = false;
         const K_Vectors& kv;
         std::vector<psi::Psi<T>> psi_ks_vec;
-        const std::vector<Parallel_2D>& pX;
-        const Parallel_2D& pc;
+        const std::vector<BlockCyclicDistributionInformation>& pX;
+        const BlockCyclicDistributionInformation& pc;
         const Parallel_Orbitals& pmat;
         const ModulePW::PW_Basis& rho_basis;
         const Grid_Driver& gd_;

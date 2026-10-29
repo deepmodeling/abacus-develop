@@ -170,7 +170,7 @@ class WriteWfcLcaoTest : public testing::Test
         pv.set_desc_wfc_Eij(nbasis, nbands, pv.para_2d().get_row_size());
 
         // create a global PV, and distribute the psi_init to local
-        Parallel_2D pv_glb;
+        BlockCyclicDistributionInformation pv_glb;
         pv_glb.init(nbasis, nbands, std::max(nbasis, nbands), MPI_COMM_WORLD);
         psi_local_double.resize(nk * pv.para_2d().get_row_size() * pv.para_2d().get_col_size());
         psi_local_complex.resize(nk * pv.para_2d().get_row_size() * pv.para_2d().get_col_size());

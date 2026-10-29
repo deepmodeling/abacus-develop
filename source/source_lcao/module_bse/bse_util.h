@@ -8,7 +8,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include <RI/global/Tensor.h>
 #include <array>
@@ -75,7 +75,7 @@ using DAT_ENUM = container::DataTypeToEnum<T>;
 template<typename T>
 container::Tensor cal_dm_trans_onebase_pblas(
     const psi::Psi<T>& c,
-    const Parallel_2D& pc,
+    const BlockCyclicDistributionInformation& pc,
     const int& ik,
     const int& naos,
     const int& imo1, // imo1 → imo2, for excitation imo1[1,nocc], imo2[nocc+1,nocc+nvirt]

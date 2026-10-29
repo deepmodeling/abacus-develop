@@ -1,6 +1,6 @@
 #ifndef ABACUS_LR_STATE_OVERLAP_H
 #define ABACUS_LR_STATE_OVERLAP_H
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/vector3.h"
 #include <vector>
 
@@ -30,14 +30,14 @@ std::vector<double> cross_ao_overlap(const UnitCell& cell,
 template <typename T>
 std::vector<T> mo_overlap_dist(const std::vector<T>& old_coefficients,
     const std::vector<T>& ao, const std::vector<T>& current_coefficients,
-    const Parallel_2D& pc, const Parallel_2D& ps, const Parallel_2D& po, int first_band);
+    const BlockCyclicDistributionInformation& pc, const BlockCyclicDistributionInformation& ps, const BlockCyclicDistributionInformation& po, int first_band);
 // A = X^T (virtual rows, occupied columns): return O_vv^dagger A_previous O_oo.
 // pi/pv describe already aligned occupied/virtual overlaps, reused for all roots.
 // This function performs no redistribution or normalization.
 template <typename T>
 std::vector<T> project_reference_dist(const std::vector<T>& previous,
     const std::vector<T>& occupied_overlap, const std::vector<T>& virtual_overlap,
-    const Parallel_2D& pi, const Parallel_2D& pv, const Parallel_2D& px);
+    const BlockCyclicDistributionInformation& pi, const BlockCyclicDistributionInformation& pv, const BlockCyclicDistributionInformation& px);
 
 // Integer lattice translations selected by the same cross-geometry cutoff.
 // Retain these indices for HContainer storage and exp(+i k.R) Fourier phases.

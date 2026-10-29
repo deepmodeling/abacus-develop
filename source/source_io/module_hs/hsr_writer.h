@@ -1,7 +1,7 @@
 #ifndef HSR_WRITER_H
 #define HSR_WRITER_H
 
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 
 #include <complex>
 #include <string>
@@ -78,7 +78,7 @@ void write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                const UnitCell* ucell,
                const int out_type,
                const int precision,
-               const Parallel_2D& paraV,
+               const BlockCyclicDistributionInformation& paraV,
                const bool append,
                const bool gamma_only,
                const int* iat2iwt,

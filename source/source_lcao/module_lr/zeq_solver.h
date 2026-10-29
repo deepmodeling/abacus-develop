@@ -154,7 +154,7 @@ namespace LR
     /// (one column in flight), instead of the O(n_global^2) of `hm.matrix()`.
     /// Collective: every rank walks every column, since `hPsi` and the gather communicate.
     template<typename T, typename THam>
-    std::vector<T> zvec_hessian_2d(THam& hm, const int nspin_x, const int ld, const Parallel_2D& ph)
+    std::vector<T> zvec_hessian_2d(THam& hm, const int nspin_x, const int ld, const BlockCyclicDistributionInformation& ph)
     {
         ModuleBase::TITLE("Z_vector", "zvec_hessian_2d");
         ModuleBase::timer::start("Z_vector", "zvec_hessian_2d");
@@ -193,18 +193,18 @@ namespace LR
     template<typename T, typename THam>
     void solve_Z_2d(T* const Z, const T* const R, const int ld, const int nstates,
         THam& hm, const int nspin_x,
-        void (*linear_solver)(T*, T*, const Parallel_2D&, const Parallel_2D&))
+        void (*linear_solver)(T*, T*, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&))
     {
         ModuleBase::TITLE("Z_vector", "solve_Z_2d");
         ModuleBase::timer::start("Z_vector", "solve_Z_2d");
         const int n_global = zvec_global_dim(hm, nspin_x);
-        const Parallel_2D& px0 = hm.pX[0];
+        const BlockCyclicDistributionInformation& px0 = hm.pX[0];
         // Shrink the ScaLAPACK block for small systems so no rank is left empty.
         const int nproc_dim = std::max(px0.get_dim0(), px0.get_dim1());
         const int nb = std::max(1, std::min(32, n_global / nproc_dim));
-        Parallel_2D ph;
+        BlockCyclicDistributionInformation ph;
         LR_Util::setup_2d_division(ph, nb, n_global, n_global, px0.get_blacs_ctxt());
-        Parallel_2D pz;
+        BlockCyclicDistributionInformation pz;
         LR_Util::setup_2d_division(pz, nb, n_global, nstates, px0.get_blacs_ctxt());
 
         std::vector<T> h_loc = zvec_hessian_2d<T>(hm, nspin_x, ld, ph);

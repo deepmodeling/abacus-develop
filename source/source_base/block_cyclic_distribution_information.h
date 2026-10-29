@@ -142,8 +142,6 @@ class BlockCyclicDistributionInformation
     }
 #endif
 
-    // DEPRECATED-ALIAS: legacy Parallel_2D method names delegate to the semantic API above.
-    // DELETION-COMMIT: remove with the Parallel_2D alias in S5; trigger: Parallel_2D burn-down == 0.
     int get_row_size() const
     {
         return get_number_of_local_rows();

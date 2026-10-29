@@ -18,7 +18,7 @@ namespace LR
     /// triangle, so any numerical asymmetry of A would otherwise be dropped silently instead of
     /// averaged.
     template <typename T>
-    void hermitize_2d(T* A, const Parallel_2D& pA)
+    void hermitize_2d(T* A, const BlockCyclicDistributionInformation& pA)
     {
         const int n = pA.get_global_row_size();
         std::vector<T> AH(pA.get_local_size(), T(0));
@@ -32,7 +32,7 @@ namespace LR
     }
 
     template <typename T>
-    void scalapack_linear_solver(T* A, T* B, const Parallel_2D& pA, const Parallel_2D& pB)
+    void scalapack_linear_solver(T* A, T* B, const BlockCyclicDistributionInformation& pA, const BlockCyclicDistributionInformation& pB)
     {
         ModuleBase::TITLE("LR", "scalapack_linear_solver");
         ModuleBase::timer::start("LR", "scalapack_linear_solver");
@@ -55,7 +55,7 @@ namespace LR
     }
 
     template <typename T>
-    void scalapack_cholesky_linear_solver(T* A, T* B, const Parallel_2D& pA, const Parallel_2D& pB)
+    void scalapack_cholesky_linear_solver(T* A, T* B, const BlockCyclicDistributionInformation& pA, const BlockCyclicDistributionInformation& pB)
     {
         ModuleBase::TITLE("LR", "scalapack_cholesky_linear_solver");
         ModuleBase::timer::start("LR", "scalapack_cholesky_linear_solver");
@@ -95,13 +95,13 @@ namespace LR
         ModuleBase::timer::end("LR", "scalapack_cholesky_linear_solver");
     }
 
-    template void scalapack_linear_solver<double>(double*, double*, const Parallel_2D&, const Parallel_2D&);
+    template void scalapack_linear_solver<double>(double*, double*, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&);
     template void scalapack_linear_solver<std::complex<double>>(std::complex<double>*, std::complex<double>*,
-        const Parallel_2D&, const Parallel_2D&);
-    template void scalapack_cholesky_linear_solver<double>(double*, double*, const Parallel_2D&,
-        const Parallel_2D&);
+        const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&);
+    template void scalapack_cholesky_linear_solver<double>(double*, double*, const BlockCyclicDistributionInformation&,
+        const BlockCyclicDistributionInformation&);
     template void scalapack_cholesky_linear_solver<std::complex<double>>(std::complex<double>*,
-        std::complex<double>*, const Parallel_2D&, const Parallel_2D&);
+        std::complex<double>*, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&);
 
 }
 #endif

@@ -1,6 +1,6 @@
 #ifndef ABACUS_LR_SPECTRUM_MO_H
 #define ABACUS_LR_SPECTRUM_MO_H
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include <complex>
 #include <string>
 #include <vector>
@@ -18,7 +18,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
                                                 const Grid_Driver& gd,
                                                 const TwoCenterBundle& two_center_bundle,
                                                 const Parallel_Orbitals& pmat,/*nbasis×nbasis*/
-                                                const Parallel_2D& pc,/*nbasis×nbands*/
+                                                const BlockCyclicDistributionInformation& pc,/*nbasis×nbands*/
                                                 const K_Vectors& kv,
                                                 const psi::Psi<T>& psi_ks,
                                                 const int nk,

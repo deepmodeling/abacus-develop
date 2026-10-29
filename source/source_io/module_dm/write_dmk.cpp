@@ -65,7 +65,7 @@ template <typename T>
 bool ModuleIO::read_dmk(const int nspin,
         const int nk,
         const K_Vectors &kv,
-        const Parallel_2D& pv,
+        const BlockCyclicDistributionInformation& pv,
         const std::string& dmk_dir,
         std::vector<std::vector<T>>& dmk,
         std::ofstream &ofs_running)
@@ -154,7 +154,7 @@ bool ModuleIO::read_dmk(const int nspin,
 #ifdef __MPI
         // seperate dmk data to each processor with 2D block distribution
         dmk.resize(nspin * nk, std::vector<T>(pv.get_row_size() * pv.get_col_size()));
-        Parallel_2D pv_glb;
+        BlockCyclicDistributionInformation pv_glb;
         pv_glb.set(nlocal, nlocal, nlocal, pv.get_blacs_ctxt());
         for (int ik = 0; ik < nspin * nk; ik++)
         {
@@ -185,7 +185,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
         const int precision,
         const std::vector<double>& efs,
         const UnitCell* ucell,
-        const Parallel_2D& pv,
+        const BlockCyclicDistributionInformation& pv,
         const std::string& dmk_dir,
         const int istep,
         std::ofstream& ofs_running)
@@ -210,7 +210,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
         ModuleBase::WARNING_QUIT("ModuleIO::write_dmk", "The size of dmk is not consistent with nspin and nk.");
     }
 
-    Parallel_2D pv_glb;
+    BlockCyclicDistributionInformation pv_glb;
 
     for (int ispin = 0; ispin < nspin; ispin++)
     {
@@ -326,7 +326,7 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
 template bool ModuleIO::read_dmk<double>(const int nspin,
         const int nk,
         const K_Vectors &kv,
-        const Parallel_2D& pv,
+        const BlockCyclicDistributionInformation& pv,
         const std::string& dmk_dir,
         std::vector<std::vector<double>>& dmk,
         std::ofstream &ofs);
@@ -334,7 +334,7 @@ template bool ModuleIO::read_dmk<double>(const int nspin,
 template bool ModuleIO::read_dmk<std::complex<double>>(const int nspin,
         const int nk,
         const K_Vectors &kv,
-        const Parallel_2D& pv,
+        const BlockCyclicDistributionInformation& pv,
         const std::string& dmk_dir,
         std::vector<std::vector<std::complex<double>>>& dmk,
         std::ofstream &ofs);
@@ -344,7 +344,7 @@ template void ModuleIO::write_dmk<double>(const std::vector<std::vector<double>>
         const int precision,
         const std::vector<double>& efs,
         const UnitCell* ucell,
-        const Parallel_2D& pv,
+        const BlockCyclicDistributionInformation& pv,
         const std::string& dmk_dir,
         const int istep,
         std::ofstream& ofs_running);
@@ -354,7 +354,7 @@ template void ModuleIO::write_dmk<std::complex<double>>(const std::vector<std::v
         const int precision,
         const std::vector<double>& efs,
         const UnitCell* ucell,
-        const Parallel_2D& pv,
+        const BlockCyclicDistributionInformation& pv,
         const std::string& dmk_dir,
         const int istep,
         std::ofstream& ofs_running);

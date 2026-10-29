@@ -7,9 +7,9 @@ namespace LR
 {
     // X_ao_occ = C_virtual X; all matrices are column-major.
     template<typename T>
-    void cal_X_ao_occ(const T* const X, const Parallel_2D& px,
-        const T* const c, const Parallel_2D& pc,
-        T* const X_ao_occ, const Parallel_2D& px_ao_occ)
+    void cal_X_ao_occ(const T* const X, const BlockCyclicDistributionInformation& px,
+        const T* const c, const BlockCyclicDistributionInformation& pc,
+        T* const X_ao_occ, const BlockCyclicDistributionInformation& px_ao_occ)
     {
         const int nocc = px.get_global_col_size();
         const int nvirt = px.get_global_row_size();
@@ -32,8 +32,8 @@ namespace LR
 
     // D = vec1 vec2^dagger (transpose for real coefficients).
     template<typename T>
-    void matdot(const T* const vec1, const T* const vec2, const Parallel_2D& pvec,
-        T* const dm, const Parallel_2D& pmat)
+    void matdot(const T* const vec1, const T* const vec2, const BlockCyclicDistributionInformation& pvec,
+        T* const dm, const BlockCyclicDistributionInformation& pmat)
     {
         const int nocc = pvec.get_global_col_size();
         const int naos = pvec.get_global_row_size();
@@ -52,11 +52,11 @@ namespace LR
 #endif
     }
 
-    template void cal_X_ao_occ<double>(const double*, const Parallel_2D&, const double*,
-        const Parallel_2D&, double*, const Parallel_2D&);
-    template void cal_X_ao_occ<std::complex<double>>(const std::complex<double>*, const Parallel_2D&,
-        const std::complex<double>*, const Parallel_2D&, std::complex<double>*, const Parallel_2D&);
-    template void matdot<double>(const double*, const double*, const Parallel_2D&, double*, const Parallel_2D&);
+    template void cal_X_ao_occ<double>(const double*, const BlockCyclicDistributionInformation&, const double*,
+        const BlockCyclicDistributionInformation&, double*, const BlockCyclicDistributionInformation&);
+    template void cal_X_ao_occ<std::complex<double>>(const std::complex<double>*, const BlockCyclicDistributionInformation&,
+        const std::complex<double>*, const BlockCyclicDistributionInformation&, std::complex<double>*, const BlockCyclicDistributionInformation&);
+    template void matdot<double>(const double*, const double*, const BlockCyclicDistributionInformation&, double*, const BlockCyclicDistributionInformation&);
     template void matdot<std::complex<double>>(const std::complex<double>*, const std::complex<double>*,
-        const Parallel_2D&, std::complex<double>*, const Parallel_2D&);
+        const BlockCyclicDistributionInformation&, std::complex<double>*, const BlockCyclicDistributionInformation&);
 }

@@ -37,13 +37,13 @@ namespace LR
             const Grid_Driver& gd,
             const K_Vectors& kv,
             const Parallel_Orbitals& pmat,
-            const Parallel_2D& pc,
+            const BlockCyclicDistributionInformation& pc,
             const psi::Psi<T>& psi_ks,
             const std::vector<int>& nocc,
             const std::vector<int>& nvirt,
             const int naos,
-            const std::vector<Parallel_2D>& pX,       ///< layout of the X blocks (always VO)
-            const std::vector<Parallel_2D>& pout,     ///< layout of the output blocks (VO or OO)
+            const std::vector<BlockCyclicDistributionInformation>& pX,       ///< layout of the X blocks (always VO)
+            const std::vector<BlockCyclicDistributionInformation>& pout,     ///< layout of the output blocks (VO or OO)
             const LR_Util::MO_TYPE mo_type,
             const T factor,
             const int& nspin,
@@ -140,14 +140,14 @@ namespace LR
         const Grid_Driver& gd_;
         const K_Vectors& kv_;
         const Parallel_Orbitals& pmat_;
-        const Parallel_2D& pc_;
+        const BlockCyclicDistributionInformation& pc_;
         const psi::Psi<T>& psi_ks_;
         std::vector<psi::Psi<T>> psi_spin_;
         const std::vector<int>& nocc_;
         const std::vector<int>& nvirt_;
         const int naos_ = 1;
-        const std::vector<Parallel_2D>& pX_;
-        const std::vector<Parallel_2D>& pout_;
+        const std::vector<BlockCyclicDistributionInformation>& pX_;
+        const std::vector<BlockCyclicDistributionInformation>& pout_;
         std::vector<double> orb_cutoff_;
         const LR_Util::MO_TYPE mo_type_ = LR_Util::VO;
         const T factor_ = T(1);

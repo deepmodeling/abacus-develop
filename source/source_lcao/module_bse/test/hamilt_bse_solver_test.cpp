@@ -48,7 +48,7 @@ TEST(BSETest, skewSolver) {
 
     int nA = 2;
     std::vector<double> ev(2*nA);
-    Parallel_2D pM, pA, pA_glb;
+    BlockCyclicDistributionInformation pM, pA, pA_glb;
     pM.init(2*nA, 2*nA, 1, MPI_COMM_WORLD, false);
     pA.set(nA, nA, 1, pM.get_blacs_ctxt());
     pA_glb.set(nA, nA, nA, pM.get_blacs_ctxt());
@@ -76,7 +76,7 @@ TEST(BSETest, TDASolver) {
     int my_rank, num_procs;
     Cblacs_pinfo(&my_rank, &num_procs); 
     int nA = 5;
-    Parallel_2D pA_glb, pA;
+    BlockCyclicDistributionInformation pA_glb, pA;
     pA.init(nA, nA, 1, MPI_COMM_WORLD, false);
     pA_glb.set(nA, nA, nA, pA.get_blacs_ctxt());
 
@@ -135,7 +135,7 @@ TEST(BSETest, skewSolver2) {
 
     int nA = 5;
     int nM = 2 * nA; // Full matrix dimension
-    Parallel_2D pM, pA, pA_glb;
+    BlockCyclicDistributionInformation pM, pA, pA_glb;
     pM.init(nM, nM, 1, MPI_COMM_WORLD, false);
     pA.set(nA, nA, 1, pM.get_blacs_ctxt());
     pA_glb.set(nA, nA, nA, pM.get_blacs_ctxt());
@@ -237,8 +237,8 @@ TEST(BSETest, skewSolver2) {
 #else
 TEST(BSETest, MissingDiagonalizationBackend)
 {
-    Parallel_2D pA;
-    Parallel_2D pM;
+    BlockCyclicDistributionInformation pA;
+    BlockCyclicDistributionInformation pM;
     std::vector<double> ev;
     std::vector<double> A;
     std::vector<double> v_tda;

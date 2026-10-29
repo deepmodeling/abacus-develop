@@ -36,8 +36,8 @@ namespace LR
 #endif
                std::weak_ptr<PotLRBase> pot_in,
                const K_Vectors& kv_in,
-               const std::vector<Parallel_2D>& pX_in,
-               const Parallel_2D& pc_in,
+               const std::vector<BlockCyclicDistributionInformation>& pX_in,
+               const BlockCyclicDistributionInformation& pc_in,
                const Parallel_Orbitals& pmat_in,
                const std::string& spin_type,
                const std::string& in_dir,
@@ -198,7 +198,7 @@ namespace LR
         const std::vector<int>& nvirt;
         const int nspin = 1;
         const int nk = 1;
-        const std::vector<Parallel_2D>& pX;
+        const std::vector<BlockCyclicDistributionInformation>& pX;
     protected:
         /// Initialize shared storage without constructing a Casida operator chain or
         /// installing its density callback. Z operators build their own chains directly.
@@ -206,7 +206,7 @@ namespace LR
         HamiltLR(const int& nspin_in,
                  const std::vector<int>& nocc_in,
                  const std::vector<int>& nvirt_in,
-                 const std::vector<Parallel_2D>& pX_in,
+                 const std::vector<BlockCyclicDistributionInformation>& pX_in,
                  const K_Vectors& kv_in,
                  const Parallel_Orbitals& pmat_in)
             : nocc(nocc_in), nvirt(nvirt_in), nspin(nspin_in),

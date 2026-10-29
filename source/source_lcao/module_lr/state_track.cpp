@@ -4,7 +4,7 @@
 #include "grad_degen.h"
 #include "source_psi/psi.h"
 #include "lr_amp.h"
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include <algorithm>
@@ -73,12 +73,12 @@ void project_local_references(const RootInputs<T>& inputs, const RootBasis<T>& o
     const std::vector<int> spins = inputs.openshell ? std::vector<int>{0, 1} : std::vector<int>{0};
     for (const int spin : spins)
     {
-        const Parallel_2D& px = inputs.px[spin];
+        const BlockCyclicDistributionInformation& px = inputs.px[spin];
         const int no = inputs.nocc[spin];
         const int nv = inputs.nvirt[spin];
         const int local_count = px.get_local_size();
-        Parallel_2D pi;
-        Parallel_2D pv;
+        BlockCyclicDistributionInformation pi;
+        BlockCyclicDistributionInformation pv;
 #ifdef __MPI
         const int block_size = px.get_block_size();
         pi.set(no, no, block_size, px.get_blacs_ctxt());

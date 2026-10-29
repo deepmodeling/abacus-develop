@@ -1,13 +1,13 @@
 #ifndef _PARALLEL_ORBITALS_H_
 #define _PARALLEL_ORBITALS_H_
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include <fstream>
 #include <vector>
 
 /// This class packs the information of 2D-block-cyclic for LCAO code:
 /// parallel distribution of basis, wavefunction and matrix.
 ///
-/// R4 (single storage): this class must never add a copy of any Parallel_2D
+/// R4 (single storage): this class must never add a copy of any BlockCyclicDistributionInformation
 /// state field (nrow/ncol/nloc/nb/dim0/dim1/desc/blacs_ctxt).  The only
 /// authoritative copy lives in the para_2d_ member below; re-deriving the
 /// distribution from a duplicated field would silently desynchronize the
@@ -21,8 +21,6 @@ public:
     /// Access to the block-cyclic distribution information.  The non-const
     /// overload exists only for the two cases a const getter cannot serve:
     /// non-const mutation by setup_2d_division, and test-side descriptor writes.
-    // DEPRECATED-ALIAS: para_2d() -> get_block_cyclic_distribution()
-    // DELETION-COMMIT: PR#TBD/3 commits after merge; trigger: git grep -w para_2d == 0
     BlockCyclicDistributionInformation& para_2d() { return para_2d_; }
 
     const BlockCyclicDistributionInformation& para_2d() const { return para_2d_; }
@@ -30,7 +28,7 @@ public:
 #ifdef __MPI
     /// BLACS context of the 2D process grid, completing the getter family
     /// (get_row_size / get_col_size / get_local_size / get_block_size /
-    /// get_dim0 / get_dim1 / get_desc) of the held Parallel_2D.
+    /// get_dim0 / get_dim1 / get_desc) of the held BlockCyclicDistributionInformation.
     int get_blacs_ctxt() const { return para_2d_.get_blacs_ctxt(); }
 #endif
 

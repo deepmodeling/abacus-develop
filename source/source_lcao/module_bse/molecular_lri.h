@@ -73,7 +73,7 @@ public:
     /// =============== calculation interface ====================
     void init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const Exx_Info_RI& info_ri);
 
-    void cal_W_for_A(std::vector<T>& m_2d, const Parallel_2D& pm_2d, const double factor=1.0)
+    void cal_W_for_A(std::vector<T>& m_2d, const BlockCyclicDistributionInformation& pm_2d, const double factor=1.0)
     {
         ModuleBase::TITLE("MolecularLRI", "cal_W_for_A");
         ModuleBase::timer::start("MolecularLRI", "cal_W_for_A");
@@ -82,7 +82,7 @@ public:
         ModuleBase::timer::end("MolecularLRI", "cal_W_for_A");
         this->transform_k_2dlocal(m_2d, Wk, pm_2d, factor);
     }
-    void cal_W_for_B(std::vector<T>& m_2d, const Parallel_2D& pm_2d, const double factor=1.0)
+    void cal_W_for_B(std::vector<T>& m_2d, const BlockCyclicDistributionInformation& pm_2d, const double factor=1.0)
     {
         ModuleBase::TITLE("MolecularLRI", "cal_W_for_B");
         ModuleBase::timer::start("MolecularLRI", "cal_W_for_B");
@@ -91,7 +91,7 @@ public:
         ModuleBase::timer::end("MolecularLRI", "cal_W_for_B");
         this->transform_k_2dlocal(m_2d, Wk, pm_2d, factor);
     }
-    void cal_hartree_for_A(std::vector<T>& m_2d, const Parallel_2D& pm_2d, const double factor=1.0)
+    void cal_hartree_for_A(std::vector<T>& m_2d, const BlockCyclicDistributionInformation& pm_2d, const double factor=1.0)
     {
         ModuleBase::TITLE("MolecularLRI", "cal_hartree_for_A");
         ModuleBase::timer::start("MolecularLRI", "cal_hartree_for_A");
@@ -100,7 +100,7 @@ public:
         ModuleBase::timer::end("MolecularLRI", "cal_hartree_for_A");
         this->transform_k_2dlocal(m_2d, Vk, pm_2d, factor);
     }
-    void cal_hartree_for_B(std::vector<T>& m_2d, const Parallel_2D& pm_2d, const double factor=1.0)
+    void cal_hartree_for_B(std::vector<T>& m_2d, const BlockCyclicDistributionInformation& pm_2d, const double factor=1.0)
     {
         ModuleBase::TITLE("MolecularLRI", "cal_hartree_for_B");
         ModuleBase::timer::start("MolecularLRI", "cal_hartree_for_B");
@@ -143,7 +143,7 @@ protected:
     /// =============== inner function ====================
     void transform_k_2dlocal(std::vector<T>& m_2d,
         const std::map<int, std::map<int, RI::Tensor<T>>>& m_lri,
-        const Parallel_2D& pm_2d, const double factor);
+        const BlockCyclicDistributionInformation& pm_2d, const double factor);
 
     // <k, <iat, tesnor{nabfs, nw, nmo}>>
     std::map<int, std::map<TA, RI::Tensor<T>>> cal_Csk_ao_mo(const TLRI<T>& CsR_ao,
@@ -160,7 +160,7 @@ protected:
     const int nk;
     const K_Vectors& kv;
     const LR_IO::RI_kRlist& kRlist;
-    const Parallel_2D pm_2d;
+    const BlockCyclicDistributionInformation pm_2d;
     const int nocc;
     const int nvirt;
     const int ndim;
