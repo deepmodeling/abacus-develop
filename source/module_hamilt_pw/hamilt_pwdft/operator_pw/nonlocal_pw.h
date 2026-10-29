@@ -8,8 +8,13 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
+#include <memory>
 
 namespace hamilt {
+
+#if defined(__CUDA)
+class ProjectorFold;
+#endif
 
 #ifndef NONLOCALTEMPLATE_H
 #define NONLOCALTEMPLATE_H
@@ -81,6 +86,9 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     mutable T *ps = nullptr;
     mutable T *vkb = nullptr;
     mutable T *becp = nullptr;
+#if defined(__CUDA)
+    std::unique_ptr<ProjectorFold> projector_fold;
+#endif
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     Real * deeq = nullptr;

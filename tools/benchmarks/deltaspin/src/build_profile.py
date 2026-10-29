@@ -11,16 +11,19 @@ from pathlib import Path
 
 
 def instrument_gemms(source: str) -> str:
-    """Mark complete conventional and three-real-product cuBLAS calls."""
-    pattern = r"(?m)^([ \t]*)cublasErrcheck\((cublasZgemm(?:3m)?)\([^;]+;"
+    """Mark complete ordinary, three-real-product and strided-batch cuBLAS calls."""
+    pattern = r"(?m)^([ \t]*)cublasErrcheck\((cublasZgemm(?:3m|StridedBatched)?)\([^;]+;"
 
     def mark_call(match: re.Match) -> str:
         indent, routine = match.group(1, 2)
-        method = "ZGEMM3M" if routine.endswith("3m") else "ZGEMM"
+        batched = routine.endswith("StridedBatched")
+        method = "ZGEMM_BATCH" if batched else "ZGEMM3M" if routine.endswith("3m") else "ZGEMM"
+        batch_format = "/%d" if batched else ""
+        batch_argument = ", batches" if batched else ""
         return (
             f"{indent}char shape[160];\n"
-            f'{indent}std::snprintf(shape, sizeof(shape), "{method}/%c%c/%d/%d/%d/%d/%d/%d",\n'
-            f"{indent}              transa, transb, m, n, k, lda, ldb, ldc);\n"
+            f'{indent}std::snprintf(shape, sizeof(shape), "{method}/%c%c/%d/%d/%d/%d/%d/%d{batch_format}",\n'
+            f"{indent}              transa, transb, m, n, k, lda, ldb, ldc{batch_argument});\n"
             f"{indent}nvtxRangePushA(shape);\n"
             + match.group(0) + f"\n{indent}nvtxRangePop();"
         )

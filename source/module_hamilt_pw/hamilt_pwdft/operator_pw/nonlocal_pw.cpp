@@ -5,6 +5,10 @@
 #include "module_base/timer.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/tool_quit.h"
+#include <type_traits>
+#if defined(__CUDA)
+#include "module_hamilt_pw/hamilt_pwdft/kernels/projector_fold.h"
+#endif
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -30,7 +34,19 @@ Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
     this->deeq = this->ppcell->template get_deeq_data<Real>();
     this->deeq_nc = this->ppcell->template get_deeq_nc_data<Real>();
     this->vkb = this->ppcell->template get_vkb_data<Real>();
-
+#if defined(__CUDA)
+    if (std::is_same<T, std::complex<double>>::value && std::is_same<Device, base_device::DEVICE_GPU>::value
+        && !PARAM.inp.use_paw && !PARAM.globalv.use_uspp && GlobalV::NPROC_IN_POOL == 1
+        && this->ucell->ntype == 1 && wfc_basis != nullptr)
+    {
+        const auto& atoms = this->ucell->atoms[0];
+        if (this->ppcell->nkb == atoms.na * atoms.ncpp.nproj)
+        {
+            // HamiltPW recreates its operators before each ionic SCF cycle.
+            this->projector_fold = ProjectorFold::create(atoms.na, atoms.ncpp.nproj, atoms.taud.data(), atoms.tau.data(), *wfc_basis);
+        }
+    }
+#endif
 }
 
 template<typename T, typename Device>
@@ -48,6 +64,13 @@ void Nonlocal<OperatorPW<T, Device>>::init(const int ik_in)
 	if(this->ppcell->nkb > 0) //xiaohui add 2013-09-02. Attention...
 	{
 		this->ppcell->getvnl(this->ctx, *this->ucell, this->ik, this->vkb);
+#if defined(__CUDA)
+        if (this->projector_fold)
+        {
+            this->projector_fold->prepare(ik_in, reinterpret_cast<const std::complex<double>*>(this->vkb),
+                                          this->ppcell->vkb.nc);
+        }
+#endif
 	}
 
     if(this->next_op != nullptr)
@@ -174,6 +197,16 @@ void Nonlocal<OperatorPW<T, Device>>::act_projected(int m, int nbasis, int npol,
         } // end nt
     }
 
+#if defined(__CUDA)
+    if (this->projector_fold && this->projector_fold->add(m, max_npw,
+            reinterpret_cast<const std::complex<double>*>(this->ps),
+            reinterpret_cast<std::complex<double>*>(hpsi_in)))
+    {
+        ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
+        return;
+    }
+#endif
+
     // use simple method.
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // qianrui optimize 2021-3-31
@@ -252,7 +285,13 @@ void Nonlocal<OperatorPW<T, Device>>::act(
             // ModuleBase::ComplexMatrix becp(nbands, nkb, false);
             char transa = 'C';
             char transb = 'N';
-            if (nbands == 1)
+            bool folded = false;
+#if defined(__CUDA)
+            folded = this->projector_fold && this->projector_fold->project(nbands, max_npw,
+                reinterpret_cast<const std::complex<double>*>(tmpsi_in),
+                reinterpret_cast<std::complex<double>*>(this->becp));
+#endif
+            if (!folded && nbands == 1)
             {
                 int inc = 1;
                 // denghui replace 2022-10-20
@@ -271,7 +310,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                     this->becp,
                     inc);
             }
-            else
+            else if (!folded)
             {
                 int npm = nbands;
                 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
