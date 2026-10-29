@@ -209,6 +209,21 @@ __global__ void fused_spinor_density(const cufftDoubleComplex* input_up, const c
 }
 
 
+template <class FFT, int Limit>
+constexpr int fft_elements_at_most()
+{
+    using Candidate = decltype(FFT() + cufftdx::ElementsPerThread<Limit>());
+    if constexpr (cufftdx::is_supported<Candidate, 700>::value)
+    {
+        return Limit;
+    }
+    else if constexpr (Limit > 1)
+    {
+        return fft_elements_at_most<FFT, Limit - 1>();
+    }
+    return FFT::elements_per_thread;
+}
+
 template <int Length>
 struct FusedTransform
 {
@@ -218,10 +233,13 @@ struct FusedTransform
     using Default = decltype(Common() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
     static constexpr int suggested = Default::elements_per_thread;
     using Half = decltype(Default() + cufftdx::ElementsPerThread<suggested / 2>());
-    // Two simultaneous spin fields increase register demand. Halving a large
-    // legal element count limits that demand without a length-specific policy.
-    static constexpr int elements = suggested > 16 && suggested % 2 == 0
-                                   && cufftdx::is_supported<Half, 700>::value ? suggested / 2 : suggested;
+    // Two simultaneous spin fields retain twice the FFT register state. Select
+    // the largest legal count up to ten, retaining the library default only
+    // when no smaller descriptor exists. Single-field stick transforms use
+    // their own register budget.
+    static constexpr int elements = fft_elements_at_most<Default, std::min(10, suggested)>();
+    static constexpr int single_elements = suggested > 16 && suggested % 2 == 0
+                                          && cufftdx::is_supported<Half, 700>::value ? suggested / 2 : suggested;
     using Base = decltype(Common() + cufftdx::ElementsPerThread<elements>());
     using Geometry = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
     static constexpr int stride = Geometry::stride;
@@ -257,10 +275,13 @@ struct FusedTransform
     static void sticks(std::complex<double>* input, std::complex<double>* output, const int* reverse,
                         int nx, int nz, int left, int right, bool inverse, int bands, int stick_size)
     {
-        constexpr int y_batches = std::min({16, std::max(1, 256 / stride), 49152 / (Length * 16)});
-        using YInverse = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::inverse>()
+        using YBase = decltype(Common() + cufftdx::ElementsPerThread<single_elements>());
+        using YGeometry = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
+        constexpr int y_stride = YGeometry::stride;
+        constexpr int y_batches = std::min({16, std::max(1, 256 / y_stride), 49152 / (Length * 16)});
+        using YInverse = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::inverse>()
                                  + cufftdx::FFTsPerBlock<y_batches>());
-        using YForward = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::forward>()
+        using YForward = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::forward>()
                                  + cufftdx::FFTsPerBlock<y_batches>());
         const size_t tile = size_t(Length) * y_batches * sizeof(cufftDoubleComplex);
         const size_t bytes = std::max(tile, size_t(YInverse::shared_memory_size));

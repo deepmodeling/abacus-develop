@@ -109,6 +109,11 @@ are selected independently; z transforms use runtime cuFFT plans. Rectangular
 and nonorthogonal cells use the same implementation. A missing y template can
 use cuFFT for the y-z transforms while retaining the fused x operation.
 
+Two-spin x transforms select the largest supported element count per thread
+up to ten to limit register demand. Single-field y transforms retain their
+independent element and block-size policy. These choices apply uniformly to
+the generated registry and do not depend on a benchmark's grid dimensions.
+
 The potential operator batches bands according to the actual compact-grid and
 stick workspace sizes, targeting 256 MiB and at most 16 bands. A single band
 may exceed that target on a large grid. Scratch arrays grow only when necessary;
