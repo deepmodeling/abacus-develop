@@ -34,9 +34,12 @@ __device__ int compact_grid_index(int index, int plane, int left, int right)
 
 template <bool Compact>
 __global__ void pack_spinor(int npw, int stride, int plane, int left, int right, const int* index,
-                            const double2* input, double2* up, double2* down)
+                            const double2* input, double2* up, double2* down, int field_size)
 {
     const int ig = blockIdx.x * blockDim.x + threadIdx.x;
+    up += blockIdx.y * field_size;
+    down += blockIdx.y * field_size;
+    input += blockIdx.y * 2 * stride;
     if (ig < npw)
     {
         const int compact = Compact ? compact_grid_index(index[ig], plane, left, right) : index[ig];
@@ -48,9 +51,12 @@ __global__ void pack_spinor(int npw, int stride, int plane, int left, int right,
 template <bool Compact>
 __global__ void add_spinor(int npw, int stride, int plane, int left, int right, int nxyz, const int* index,
                            const thrust::complex<double>* up, const thrust::complex<double>* down,
-                           thrust::complex<double>* output)
+                           thrust::complex<double>* output, int field_size)
 {
     const int ig = blockIdx.x * blockDim.x + threadIdx.x;
+    up += blockIdx.y * field_size;
+    down += blockIdx.y * field_size;
+    output += blockIdx.y * 2 * stride;
     if (ig < npw)
     {
         const int compact = Compact ? compact_grid_index(index[ig], plane, left, right) : index[ig];
@@ -63,10 +69,12 @@ __global__ void add_spinor(int npw, int stride, int plane, int left, int right, 
 // The forward transform retains only the sticks required by the plane-wave basis.
 template <class FFT, bool Inverse>
 __global__ void transform_y_sticks(cufftDoubleComplex* sticks, cufftDoubleComplex* compact,
-                             const int* reverse, int nz, int left, int right)
+                             const int* reverse, int nz, int left, int right, int stick_size)
 {
     using Complex = typename FFT::value_type;
     constexpr int ny = 200, batches = FFT::ffts_per_block;
+    sticks += blockIdx.z * stick_size;
+    compact += blockIdx.z * (left + 200 - right) * ny * nz;
     const int cx = blockIdx.y;
     const int x = cx < left ? cx : cx + right - left;
     const int tid = threadIdx.y * blockDim.x + threadIdx.x;
@@ -114,7 +122,7 @@ __global__ void transform_y_sticks(cufftDoubleComplex* sticks, cufftDoubleComple
 template <class FFT, bool Load>
 __device__ void transfer_spinor_field(const cufftDoubleComplex* input, cufftDoubleComplex* output,
                               typename FFT::value_type* values, typename FFT::value_type* tile,
-                              int plane, int left, int right)
+                              int plane, int left, int right, int spatial_block)
 {
     constexpr int nx = cufftdx::size_of<FFT>::value;
     constexpr int batches = FFT::ffts_per_block;
@@ -136,7 +144,7 @@ __device__ void transfer_spinor_field(const cufftDoubleComplex* input, cufftDoub
     for (int i = tid; i < (left + nx - right) * batches; i += blockDim.x * blockDim.y)
     {
         const int compact_x = i / batches;
-        const int line = blockIdx.x * batches + i % batches;
+        const int line = spatial_block * batches + i % batches;
         const bool valid = line < plane;
         if (Load)
         {
@@ -162,21 +170,28 @@ __device__ void transfer_spinor_field(const cufftDoubleComplex* input, cufftDoub
     __syncthreads();
 }
 
-template <class FFTInverse, class FFTForward>
+template <class FFTInverse, class FFTForward, int Bands = 1>
 __global__ void fused_spinor_potential(const cufftDoubleComplex* input_up, const cufftDoubleComplex* input_down,
                                cufftDoubleComplex* output_up, cufftDoubleComplex* output_down,
                                const double* potential, int plane, int left, int right)
 {
+    const int band = blockIdx.x % Bands;
+    const int spatial_block = blockIdx.x / Bands;
+    const int count = (left + 200 - right) * plane;
+    input_up += band * count;
+    input_down += band * count;
+    output_up += band * count;
+    output_down += band * count;
     using Complex = typename FFTInverse::value_type;
     constexpr int nx = cufftdx::size_of<FFTInverse>::value;
-    const int line = blockIdx.x * FFTInverse::ffts_per_block + threadIdx.y;
+    const int line = spatial_block * FFTInverse::ffts_per_block + threadIdx.y;
     const int size = nx * plane;
     extern __shared__ __align__(16) Complex shared[];
     Complex up[FFTInverse::storage_size], down[FFTInverse::storage_size];
-    transfer_spinor_field<FFTInverse, true>(input_up, nullptr, up, shared, plane, left, right);
+    transfer_spinor_field<FFTInverse, true>(input_up, nullptr, up, shared, plane, left, right, spatial_block);
     FFTInverse().execute(up, shared);
     __syncthreads();
-    transfer_spinor_field<FFTInverse, true>(input_down, nullptr, down, shared, plane, left, right);
+    transfer_spinor_field<FFTInverse, true>(input_down, nullptr, down, shared, plane, left, right, spatial_block);
     FFTInverse().execute(down, shared);
     for (int j = 0; j < FFTInverse::elements_per_thread; ++j)
     {
@@ -197,8 +212,8 @@ __global__ void fused_spinor_potential(const cufftDoubleComplex* input_up, const
     FFTForward().execute(up, shared);
     __syncthreads();
     FFTForward().execute(down, shared);
-    transfer_spinor_field<FFTForward, false>(nullptr, output_up, up, shared, plane, left, right);
-    transfer_spinor_field<FFTForward, false>(nullptr, output_down, down, shared, plane, left, right);
+    transfer_spinor_field<FFTForward, false>(nullptr, output_up, up, shared, plane, left, right, spatial_block);
+    transfer_spinor_field<FFTForward, false>(nullptr, output_down, down, shared, plane, left, right, spatial_block);
 }
 
 template <class FFT>
@@ -210,10 +225,10 @@ __global__ void fused_spinor_density(const cufftDoubleComplex* input_up, const c
     const int size = nx * plane;
     extern __shared__ __align__(16) Complex shared[];
     Complex up[FFT::storage_size], down[FFT::storage_size];
-    transfer_spinor_field<FFT, true>(input_up, nullptr, up, shared, plane, left, right);
+    transfer_spinor_field<FFT, true>(input_up, nullptr, up, shared, plane, left, right, blockIdx.x);
     FFT().execute(up, shared);
     __syncthreads();
-    transfer_spinor_field<FFT, true>(input_down, nullptr, down, shared, plane, left, right);
+    transfer_spinor_field<FFT, true>(input_down, nullptr, down, shared, plane, left, right, blockIdx.x);
     FFT().execute(down, shared);
     auto* tile = reinterpret_cast<double*>(shared);
     for (int spin = 0; spin < 4; ++spin)
@@ -262,7 +277,7 @@ void pack_spinor_grid(int npw, int stride, int plane, int left, int right, const
                      const std::complex<double>* input, std::complex<double>* up, std::complex<double>* down)
 {
     pack_spinor<true><<<(npw + 255) / 256, 256>>>(npw, stride, plane, left, right, index,
-        reinterpret_cast<const double2*>(input), reinterpret_cast<double2*>(up), reinterpret_cast<double2*>(down));
+        reinterpret_cast<const double2*>(input), reinterpret_cast<double2*>(up), reinterpret_cast<double2*>(down), 0);
     check_launch();
 }
 
@@ -271,51 +286,52 @@ void add_spinor_grid(int npw, int stride, int plane, int left, int right, int nx
 {
     add_spinor<true><<<(npw + 255) / 256, 256>>>(npw, stride, plane, left, right, nxyz, index,
         reinterpret_cast<const thrust::complex<double>*>(up), reinterpret_cast<const thrust::complex<double>*>(down),
-        reinterpret_cast<thrust::complex<double>*>(output));
+        reinterpret_cast<thrust::complex<double>*>(output), 0);
     check_launch();
 }
 
 void pack_spinor_sticks(int npw, int stride, const int* index, const std::complex<double>* input,
-                        std::complex<double>* up, std::complex<double>* down)
+                        std::complex<double>* up, std::complex<double>* down, int bands, int stick_size)
 {
-    pack_spinor<false><<<(npw + 255) / 256, 256>>>(npw, stride, 0, 0, 0, index,
-        reinterpret_cast<const double2*>(input), reinterpret_cast<double2*>(up), reinterpret_cast<double2*>(down));
+    pack_spinor<false><<<dim3((npw + 255) / 256, bands), 256>>>(npw, stride, 0, 0, 0, index,
+        reinterpret_cast<const double2*>(input), reinterpret_cast<double2*>(up), reinterpret_cast<double2*>(down), stick_size);
     check_launch();
 }
 
 void add_spinor_sticks(int npw, int stride, int nxyz, const int* index,
-                       const std::complex<double>* up, const std::complex<double>* down, std::complex<double>* output)
+                       const std::complex<double>* up, const std::complex<double>* down, std::complex<double>* output, int bands, int stick_size)
 {
-    add_spinor<false><<<(npw + 255) / 256, 256>>>(npw, stride, 0, 0, 0, nxyz, index,
+    add_spinor<false><<<dim3((npw + 255) / 256, bands), 256>>>(npw, stride, 0, 0, 0, nxyz, index,
         reinterpret_cast<const thrust::complex<double>*>(up), reinterpret_cast<const thrust::complex<double>*>(down),
-        reinterpret_cast<thrust::complex<double>*>(output));
+        reinterpret_cast<thrust::complex<double>*>(output), stick_size);
     check_launch();
 }
 
 void transform_stick_slabs(std::complex<double>* sticks, std::complex<double>* slabs,
-                           const int* reverse, int nz, int left, int right, bool inverse)
+                           const int* reverse, int nz, int left, int right, bool inverse, int bands, int stick_size)
 {
     using Inverse = decltype(FFTBase<4>() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
     using Forward = decltype(FFTBase<4>() + cufftdx::Direction<cufftdx::fft_direction::forward>());
     constexpr size_t tile_bytes = 200 * Inverse::ffts_per_block * sizeof(cufftDoubleComplex);
     const size_t shared_bytes = std::max(tile_bytes, size_t(Inverse::shared_memory_size));
-    const dim3 blocks((nz + Inverse::ffts_per_block - 1) / Inverse::ffts_per_block, left + 200 - right);
+    const dim3 blocks((nz + Inverse::ffts_per_block - 1) / Inverse::ffts_per_block, left + 200 - right, bands);
     auto* stick_data = reinterpret_cast<cufftDoubleComplex*>(sticks);
     auto* slab_data = reinterpret_cast<cufftDoubleComplex*>(slabs);
     if (inverse)
     {
         transform_y_sticks<Inverse, true><<<blocks, Inverse::block_dim, shared_bytes>>>(
-            stick_data, slab_data, reverse, nz, left, right);
+            stick_data, slab_data, reverse, nz, left, right, stick_size);
     }
     else
     {
         transform_y_sticks<Forward, false><<<blocks, Forward::block_dim, shared_bytes>>>(
-            stick_data, slab_data, reverse, nz, left, right);
+            stick_data, slab_data, reverse, nz, left, right, stick_size);
     }
     check_launch();
 }
 
-void fused_veff_x(int plane, int left, int right, const double* potential,
+template <int Bands>
+void launch_spinor_potential(int plane, int left, int right, const double* potential,
                   std::complex<double>* up, std::complex<double>* down)
 {
     static_assert(!FFTInverse::requires_workspace && !FFTForward::requires_workspace,
@@ -325,10 +341,18 @@ void fused_veff_x(int plane, int left, int right, const double* potential,
     const size_t shared_bytes = std::max(tile_bytes, fft_bytes);
     auto* up_grid = reinterpret_cast<cufftDoubleComplex*>(up);
     auto* down_grid = reinterpret_cast<cufftDoubleComplex*>(down);
-    fused_spinor_potential<FFTInverse, FFTForward>
-        <<<(plane + FFTInverse::ffts_per_block - 1) / FFTInverse::ffts_per_block,
+    fused_spinor_potential<FFTInverse, FFTForward, Bands>
+        <<<Bands * ((plane + FFTInverse::ffts_per_block - 1) / FFTInverse::ffts_per_block),
            FFTInverse::block_dim, shared_bytes>>>(up_grid, down_grid, up_grid, down_grid, potential, plane, left, right);
     check_launch();
+}
+
+void fused_veff_x(int plane, int left, int right, const double* potential,
+                  std::complex<double>* up, std::complex<double>* down, int bands)
+{
+    if (bands == 4) { launch_spinor_potential<4>(plane, left, right, potential, up, down); }
+    else if (bands == 2) { launch_spinor_potential<2>(plane, left, right, potential, up, down); }
+    else { launch_spinor_potential<1>(plane, left, right, potential, up, down); }
 }
 
 void fused_density_x(int plane, int left, int right, double weight, double* density,

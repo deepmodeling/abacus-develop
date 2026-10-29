@@ -244,26 +244,38 @@ int FFT_Bundle::fused_veff_stick_size() const
     return 0;
 }
 
-void FFT_Bundle::transform_spinor_sticks(std::complex<double>* up, std::complex<double>* down,
-                                         const int* reverse, bool inverse) const
+std::complex<double>* FFT_Bundle::get_spinor_stick_data(int bands) const
 {
 #if defined(__CUDA)
     auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
     if (cuda != nullptr)
     {
-        cuda->transform_spinor_sticks(up, down, reverse, inverse);
+        return cuda->get_spinor_stick_data(bands);
+    }
+#endif
+    return nullptr;
+}
+
+void FFT_Bundle::transform_spinor_sticks(std::complex<double>* up, std::complex<double>* down,
+                                         const int* reverse, bool inverse, int bands) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->transform_spinor_sticks(up, down, reverse, inverse, bands);
     }
 #endif
 }
 
 void FFT_Bundle::apply_spinor_potential(const double* potential, std::complex<double>* up,
-                                        std::complex<double>* down, const int* reverse) const
+                                        std::complex<double>* down, const int* reverse, int bands) const
 {
 #if defined(__CUDA)
     auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
     if (cuda != nullptr)
     {
-        cuda->apply_spinor_potential(potential, up, down, reverse);
+        cuda->apply_spinor_potential(potential, up, down, reverse, bands);
     }
 #endif
 }

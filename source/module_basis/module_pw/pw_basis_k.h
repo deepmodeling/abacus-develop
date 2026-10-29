@@ -156,10 +156,11 @@ public:
 
 #if defined(__CUFFTDX)
     // Adds the local spinor potential to the plane-wave output. Both scratch
-    // grids contain ft.fused_veff_grid_size() double-complex elements.
+    // grids contain bands * ft.fused_veff_grid_size() double-complex elements.
+    // Bands may be 1, 2, or 4; multiple bands require the sparse-stick layout.
     void add_spinor_potential(const std::complex<double>* input, const double* potential,
                              std::complex<double>* output, int ik, int stride,
-                             std::complex<double>* up, std::complex<double>* down) const;
+                             std::complex<double>* up, std::complex<double>* down, int bands = 1) const;
     // Adds charge and all three magnetization channels, each of length nxyz.
     // The scratch grids use the same compact layout as add_spinor_potential.
     void add_spinor_density(const std::complex<double>* input, double weight, double* density,

@@ -33,7 +33,7 @@ void PW_Basis_K::add_spinor_density(const std::complex<double>* input, double we
 
 void PW_Basis_K::add_spinor_potential(const std::complex<double>* input, const double* potential,
                                      std::complex<double>* output, int ik, int stride,
-                                     std::complex<double>* up, std::complex<double>* down) const
+                                     std::complex<double>* up, std::complex<double>* down, int bands) const
 {
     assert(ik >= 0 && ik < this->nks && stride >= this->npwk[ik]);
     assert(this->ig2ixyz_k != nullptr && this->fft_bundle.fused_veff_grid_size() > 0);
@@ -42,17 +42,18 @@ void PW_Basis_K::add_spinor_potential(const std::complex<double>* input, const d
     if (stick_size > 0)
     {
         assert(this->d_fftixy2is != nullptr);
-        auto* stick_up = this->fft_bundle.get_auxr_3d_data<double>();
-        auto* stick_down = stick_up + stick_size;
+        auto* stick_up = this->fft_bundle.get_spinor_stick_data(bands);
+        auto* stick_down = stick_up + bands * stick_size;
         base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
-            nullptr, stick_up, 0, 2 * stick_size);
+            nullptr, stick_up, 0, 2 * bands * stick_size);
         const int* index = this->d_igl2isz_k + ik * this->npwk_max;
-        pack_spinor_sticks(this->npwk[ik], stride, index, input, stick_up, stick_down);
-        this->fft_bundle.apply_spinor_potential(potential, up, down, this->d_fftixy2is);
-        add_spinor_sticks(this->npwk[ik], stride, this->nxyz, index, stick_up, stick_down, output);
+        pack_spinor_sticks(this->npwk[ik], stride, index, input, stick_up, stick_down, bands, stick_size);
+        this->fft_bundle.apply_spinor_potential(potential, up, down, this->d_fftixy2is, bands);
+        add_spinor_sticks(this->npwk[ik], stride, this->nxyz, index, stick_up, stick_down, output, bands, stick_size);
         ModuleBase::timer::tick(this->classname, "spinor_potential gpu");
         return;
     }
+    assert(bands == 1);
     const int size = this->fft_bundle.fused_veff_grid_size();
     const base_device::DEVICE_GPU* context = nullptr;
     base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(context, up, 0, size);

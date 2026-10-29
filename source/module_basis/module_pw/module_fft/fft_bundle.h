@@ -206,10 +206,11 @@ class FFT_Bundle
 #if defined(__CUFFTDX)
         int fused_veff_grid_size() const;
         int fused_veff_stick_size() const;
+        std::complex<double>* get_spinor_stick_data(int bands) const;
         void transform_spinor_sticks(std::complex<double>* up, std::complex<double>* down,
-                                     const int* reverse, bool inverse) const;
+                                     const int* reverse, bool inverse, int bands = 1) const;
         void apply_spinor_potential(const double* potential, std::complex<double>* up,
-                                    std::complex<double>* down, const int* reverse = nullptr) const;
+                                    std::complex<double>* down, const int* reverse = nullptr, int bands = 1) const;
         int lixy() const;
         int rixy() const;
 #endif
