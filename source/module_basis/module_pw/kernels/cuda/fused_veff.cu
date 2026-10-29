@@ -13,11 +13,12 @@ namespace ModulePW
 namespace
 {
 
+template <unsigned int Batches>
 using FFTBase = decltype(cufftdx::Size<200>() + cufftdx::Precision<double>()
                          + cufftdx::Type<cufftdx::fft_type::c2c>() + cufftdx::ElementsPerThread<10>()
-                         + cufftdx::FFTsPerBlock<4>() + cufftdx::SM<700>() + cufftdx::Block());
-using FFTInverse = decltype(FFTBase() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
-using FFTForward = decltype(FFTBase() + cufftdx::Direction<cufftdx::fft_direction::forward>());
+                         + cufftdx::FFTsPerBlock<Batches>() + cufftdx::SM<700>() + cufftdx::Block());
+using FFTInverse = decltype(FFTBase<6>() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
+using FFTForward = decltype(FFTBase<6>() + cufftdx::Direction<cufftdx::fft_direction::forward>());
 
 void check_launch()
 {
@@ -250,19 +251,21 @@ void add_spinor_sticks(int npw, int stride, int nxyz, const int* index,
 void transform_stick_slabs(std::complex<double>* sticks, std::complex<double>* slabs,
                            const int* reverse, int nz, int left, int right, bool inverse)
 {
-    constexpr size_t tile_bytes = 200 * FFTInverse::ffts_per_block * sizeof(cufftDoubleComplex);
-    const size_t shared_bytes = std::max(tile_bytes, size_t(FFTInverse::shared_memory_size));
-    const dim3 blocks((nz + FFTInverse::ffts_per_block - 1) / FFTInverse::ffts_per_block, left + 200 - right);
+    using Inverse = decltype(FFTBase<4>() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
+    using Forward = decltype(FFTBase<4>() + cufftdx::Direction<cufftdx::fft_direction::forward>());
+    constexpr size_t tile_bytes = 200 * Inverse::ffts_per_block * sizeof(cufftDoubleComplex);
+    const size_t shared_bytes = std::max(tile_bytes, size_t(Inverse::shared_memory_size));
+    const dim3 blocks((nz + Inverse::ffts_per_block - 1) / Inverse::ffts_per_block, left + 200 - right);
     auto* stick_data = reinterpret_cast<cufftDoubleComplex*>(sticks);
     auto* slab_data = reinterpret_cast<cufftDoubleComplex*>(slabs);
     if (inverse)
     {
-        transform_y_sticks<FFTInverse, true><<<blocks, FFTInverse::block_dim, shared_bytes>>>(
+        transform_y_sticks<Inverse, true><<<blocks, Inverse::block_dim, shared_bytes>>>(
             stick_data, slab_data, reverse, nz, left, right);
     }
     else
     {
-        transform_y_sticks<FFTForward, false><<<blocks, FFTForward::block_dim, shared_bytes>>>(
+        transform_y_sticks<Forward, false><<<blocks, Forward::block_dim, shared_bytes>>>(
             stick_data, slab_data, reverse, nz, left, right);
     }
     check_launch();
