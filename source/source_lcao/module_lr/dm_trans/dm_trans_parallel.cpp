@@ -11,13 +11,13 @@ namespace LR
     // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
 template <>
 std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
-    const Parallel_2D& px,
+    const BlockCyclicDistributionInformation& px,
     const psi::Psi<double>& c,
-    const Parallel_2D& pc,
+    const BlockCyclicDistributionInformation& pc,
     const int naos,
     const int nocc,
     const int nvirt,
-    const Parallel_2D& pmat,
+    const BlockCyclicDistributionInformation& pmat,
     const double factor,
     const LR_Util::MO_TYPE type)
 {
@@ -51,7 +51,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
         const double beta = 0;
 
         // 1. [X*C_occ^T]^T=C_occ*X^T
-        Parallel_2D pXc; // nvirt*naos
+        BlockCyclicDistributionInformation pXc; // nvirt*naos
         LR_Util::setup_2d_division(pXc, px.get_block_size(), naos, nmo2, px.get_blacs_ctxt());
         container::Tensor Xc(DAT::DT_DOUBLE,
                              DEV::CpuDevice,
@@ -72,13 +72,13 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
 }
 template <>
 std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* const X_istate,
-    const Parallel_2D& px,
+    const BlockCyclicDistributionInformation& px,
     const psi::Psi<std::complex<double>>& c,
-    const Parallel_2D& pc,
+    const BlockCyclicDistributionInformation& pc,
     const int naos,
     const int nocc,
     const int nvirt,
-    const Parallel_2D& pmat,
+    const BlockCyclicDistributionInformation& pmat,
     const std::complex<double> factor,
     const LR_Util::MO_TYPE type)
 {
@@ -109,7 +109,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
         // char transa = 'N';
         // char transb = 'C';
         // // 1. [X*C_occ^\dagger]^\dagger=C_occ*X^\dagger
-        // Parallel_2D pXc;
+        // BlockCyclicDistributionInformation pXc;
         // LR_Util::setup_2d_division(pXc, px.get_block_size(), naos, nvirt,px.blacs_ctxt);
         // container::Tensor Xc(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pXc.get_col_size(), pXc.get_row_size()
         // });//row is "inside"(memory contiguity) for pblas Xc.zero(); const std::complex<double> alpha(1.0, 0.0);
@@ -130,7 +130,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
         // 1. X*C_occ^\dagger
         char transa = 'N';
         char transb = 'C';
-        Parallel_2D pXc;
+        BlockCyclicDistributionInformation pXc;
         LR_Util::setup_2d_division(pXc, px.get_block_size(), nmo2, naos, px.get_blacs_ctxt());
         container::Tensor Xc(DAT::DT_COMPLEX_DOUBLE,
                              DEV::CpuDevice,

@@ -11,7 +11,7 @@
 namespace ModuleIO
 {
 
-void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p2d)
+void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, BlockCyclicDistributionInformation& p2d)
 {
 #ifdef __MPI
     p2d.set(nbands, nbands, pv.para_2d().get_block_size(), pv.get_blacs_ctxt());
@@ -26,7 +26,7 @@ std::vector<T> cVc(const T* V,
                    const int nbasis,
                    const int nbands,
                    const Parallel_Orbitals& pv,
-                   const Parallel_2D& p2d)
+                   const BlockCyclicDistributionInformation& p2d)
 {
     std::vector<T> Vc(pv.nloc_wfc, 0.0);
     char transa = 'N';
@@ -60,7 +60,7 @@ std::vector<T> cVc(const T* V,
 template <typename T>
 double all_band_energy(const int ik,
                        const std::vector<T>& mat_mo,
-                       const Parallel_2D& p2d,
+                       const BlockCyclicDistributionInformation& p2d,
                        const ModuleBase::matrix& wg)
 {
     double e = 0.0;
@@ -82,7 +82,7 @@ template <typename T>
 std::vector<double> orbital_energy(const int ik,
                                    const int nbands,
                                    const std::vector<T>& mat_mo,
-                                   const Parallel_2D& p2d)
+                                   const BlockCyclicDistributionInformation& p2d)
 {
 #ifdef __DEBUG
     assert(nbands >= 0);
@@ -150,13 +150,13 @@ std::string build_eband_header(const int istep,
 }
 
 // Explicit template instantiations
-template std::vector<double> cVc<double>(const double*, const double*, const int, const int, const Parallel_Orbitals&, const Parallel_2D&);
-template std::vector<std::complex<double>> cVc<std::complex<double>>(const std::complex<double>*, const std::complex<double>*, const int, const int, const Parallel_Orbitals&, const Parallel_2D&);
+template std::vector<double> cVc<double>(const double*, const double*, const int, const int, const Parallel_Orbitals&, const BlockCyclicDistributionInformation&);
+template std::vector<std::complex<double>> cVc<std::complex<double>>(const std::complex<double>*, const std::complex<double>*, const int, const int, const Parallel_Orbitals&, const BlockCyclicDistributionInformation&);
 
-template double all_band_energy<double>(const int, const std::vector<double>&, const Parallel_2D&, const ModuleBase::matrix&);
-template double all_band_energy<std::complex<double>>(const int, const std::vector<std::complex<double>>&, const Parallel_2D&, const ModuleBase::matrix&);
+template double all_band_energy<double>(const int, const std::vector<double>&, const BlockCyclicDistributionInformation&, const ModuleBase::matrix&);
+template double all_band_energy<std::complex<double>>(const int, const std::vector<std::complex<double>>&, const BlockCyclicDistributionInformation&, const ModuleBase::matrix&);
 
-template std::vector<double> orbital_energy<double>(const int, const int, const std::vector<double>&, const Parallel_2D&);
-template std::vector<double> orbital_energy<std::complex<double>>(const int, const int, const std::vector<std::complex<double>>&, const Parallel_2D&);
+template std::vector<double> orbital_energy<double>(const int, const int, const std::vector<double>&, const BlockCyclicDistributionInformation&);
+template std::vector<double> orbital_energy<std::complex<double>>(const int, const int, const std::vector<std::complex<double>>&, const BlockCyclicDistributionInformation&);
 
 } // namespace ModuleIO

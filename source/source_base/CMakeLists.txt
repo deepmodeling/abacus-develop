@@ -55,7 +55,6 @@ add_library(
   sph_bessel_tf.cpp
   cubic_spline.cpp
   block_cyclic_distribution_information.cpp
-  parallel_2d.cpp
   module_out/binstream.cpp
   module_out/filename.cpp
   module_out/sparse_matrix.cpp

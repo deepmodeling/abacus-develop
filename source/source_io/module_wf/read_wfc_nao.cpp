@@ -581,7 +581,7 @@ bool ModuleIO::read_wfc_nao(
 
         psid.fix_k(ik);
 #ifdef __MPI
-        Parallel_2D pv_glb;
+        BlockCyclicDistributionInformation pv_glb;
         pv_glb.set(nlocal, nbands, std::max(nlocal, nbands), ParaV.get_blacs_ctxt());
         Cpxgemr2d(nlocal,
                   nbands,

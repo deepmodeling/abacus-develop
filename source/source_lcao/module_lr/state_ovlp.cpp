@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <algorithm>
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_operator_lcao/ovlp_block.h"
@@ -135,7 +135,7 @@ std::vector<double> cross_ao_overlap(const UnitCell& cell,
 
 namespace
 {
-void check_grid(const Parallel_2D& a, const Parallel_2D& b)
+void check_grid(const BlockCyclicDistributionInformation& a, const BlockCyclicDistributionInformation& b)
 {
 #ifdef __MPI
     if (a.get_blacs_ctxt() != b.get_blacs_ctxt() || a.get_block_size() != b.get_block_size())
@@ -149,7 +149,7 @@ void check_grid(const Parallel_2D& a, const Parallel_2D& b)
 template <typename T>
 std::vector<T> mo_overlap_dist(const std::vector<T>& old_coefficients,
     const std::vector<T>& ao, const std::vector<T>& current_coefficients,
-    const Parallel_2D& pc, const Parallel_2D& ps, const Parallel_2D& po, const int first_band)
+    const BlockCyclicDistributionInformation& pc, const BlockCyclicDistributionInformation& ps, const BlockCyclicDistributionInformation& po, const int first_band)
 {
     check_grid(pc, ps);
     check_grid(pc, po);
@@ -167,7 +167,7 @@ std::vector<T> mo_overlap_dist(const std::vector<T>& old_coefficients,
     const T one = T(1);
     // Align the selected old/new coefficient columns before either GEMM.
     // Only this occupied or virtual block is formed, never the full MO overlap.
-    Parallel_2D coefficients;
+    BlockCyclicDistributionInformation coefficients;
 #ifdef __MPI
     const int block_size = pc.get_block_size();
     coefficients.set(naos, bands, block_size, pc.get_blacs_ctxt());
@@ -222,7 +222,7 @@ std::vector<T> mo_overlap_dist(const std::vector<T>& old_coefficients,
 template <typename T>
 std::vector<T> project_reference_dist(const std::vector<T>& previous,
     const std::vector<T>& occupied_overlap, const std::vector<T>& virtual_overlap,
-    const Parallel_2D& pi, const Parallel_2D& pv, const Parallel_2D& px)
+    const BlockCyclicDistributionInformation& pi, const BlockCyclicDistributionInformation& pv, const BlockCyclicDistributionInformation& px)
 {
     check_grid(pi, px);
     check_grid(pv, px);
@@ -267,14 +267,14 @@ std::vector<T> project_reference_dist(const std::vector<T>& previous,
 
 template std::vector<double> mo_overlap_dist(const std::vector<double>&,
     const std::vector<double>&, const std::vector<double>&,
-    const Parallel_2D&, const Parallel_2D&, const Parallel_2D&, int);
+    const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&, int);
 template std::vector<std::complex<double>> mo_overlap_dist(
     const std::vector<std::complex<double>>&, const std::vector<std::complex<double>>&,
-    const std::vector<std::complex<double>>&, const Parallel_2D&, const Parallel_2D&, const Parallel_2D&, int);
+    const std::vector<std::complex<double>>&, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&, int);
 template std::vector<double> project_reference_dist(const std::vector<double>&,
-    const std::vector<double>&, const std::vector<double>&, const Parallel_2D&, const Parallel_2D&, const Parallel_2D&);
+    const std::vector<double>&, const std::vector<double>&, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&);
 template std::vector<std::complex<double>> project_reference_dist(
     const std::vector<std::complex<double>>&, const std::vector<std::complex<double>>&,
-    const std::vector<std::complex<double>>&, const Parallel_2D&, const Parallel_2D&, const Parallel_2D&);
+    const std::vector<std::complex<double>>&, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&, const BlockCyclicDistributionInformation&);
 
 }

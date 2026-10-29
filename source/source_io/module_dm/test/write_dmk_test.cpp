@@ -38,7 +38,7 @@ Magnetism::~Magnetism() { }
  *     - the serial version without MPI
  */
 
-void init_pv(int nlocal, Parallel_2D& pv)
+void init_pv(int nlocal, BlockCyclicDistributionInformation& pv)
 {
 #ifdef __MPI
         pv.init(nlocal, nlocal, 1, MPI_COMM_WORLD);
@@ -48,7 +48,7 @@ void init_pv(int nlocal, Parallel_2D& pv)
 }
 
 template <typename T>
-void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int nspin, int nk, int nlocal, Parallel_2D& pv)
+void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int nspin, int nk, int nlocal, BlockCyclicDistributionInformation& pv)
 {
     int myrank = 0;
 #ifdef __MPI
@@ -67,7 +67,7 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
         }
     }
 #ifdef __MPI
-    Parallel_2D pv_global;
+    BlockCyclicDistributionInformation pv_global;
     pv_global.init(nlocal, nlocal, nlocal, MPI_COMM_WORLD);
     dmk.resize(nspin * nk, std::vector<T>(pv.get_local_size(), 0.0));
     for (int i = 0; i < nspin * nk; i++)
@@ -135,7 +135,7 @@ TEST(DMKTest,WriteDMK) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<std::vector<std::complex<double>>> dmk_multik;
-    Parallel_2D pv;
+    BlockCyclicDistributionInformation pv;
     std::vector<double> efs;
     init_pv(nlocal, pv);
 
@@ -416,7 +416,7 @@ TEST(DMKTest, ReadDMK) {
     int nlocal = 26;
     std::vector<std::vector<double>> dmk;
     std::vector<std::vector<std::complex<double>>> dmk_multik;
-    Parallel_2D pv;
+    BlockCyclicDistributionInformation pv;
     std::vector<double> efs;
 
     init_pv(nlocal, pv);

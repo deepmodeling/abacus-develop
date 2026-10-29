@@ -7,7 +7,7 @@ namespace BSE_Util
 template <>
 container::Tensor cal_dm_trans_onebase_pblas(
     const psi::Psi<double>& c,
-    const Parallel_2D& pc,
+    const BlockCyclicDistributionInformation& pc,
     const int& ik,
     const int& naos,
     const int& imo1, // imo1 → imo2, for excitation imo1[0,nocc), imo2[nocc,nocc+nvirt)
@@ -48,7 +48,7 @@ container::Tensor cal_dm_trans_onebase_pblas(
 template <>
 container::Tensor cal_dm_trans_onebase_pblas(
     const psi::Psi<std::complex<double>>& c,
-    const Parallel_2D& pc,
+    const BlockCyclicDistributionInformation& pc,
     const int& ik,
     const int& naos,
     const int& imo1, // imo1 → imo2, for excitation imo1[0,nocc), imo2[nocc,nocc+nvirt)

@@ -149,7 +149,7 @@ template <>
 std::vector<std::map<TA, std::map<TAC, RI::Tensor<double>>>>
 split_m2D_ktoR<double, std::vector<double>>(
     const UnitCell&, const K_Vectors&, const std::vector<const std::vector<double>*>& mks,
-    const Parallel_2D&, const int nspin, const bool)
+    const BlockCyclicDistributionInformation&, const int nspin, const bool)
 {
     EXPECT_EQ(nspin, 2);
     EXPECT_EQ(mks.size(), 4U);

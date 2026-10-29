@@ -15,18 +15,18 @@ namespace LR
 
     // $X_{\mu i}=\sum_a c_{\mu a} X_{ai}$
     template <typename T>
-    void cal_X_ao_occ(const T* const X, const Parallel_2D& px,
-        const T* const c, const Parallel_2D& pc,
-        T* const X_ao_occ, const Parallel_2D& px_ao_occ);
+    void cal_X_ao_occ(const T* const X, const BlockCyclicDistributionInformation& px,
+        const T* const c, const BlockCyclicDistributionInformation& pc,
+        T* const X_ao_occ, const BlockCyclicDistributionInformation& px_ao_occ);
 
     // D=X1*X2^T
     // $D_{\mu\nu} = \sum_i X1_{\mu i}X2_{\nu i}$
     template <typename T>
-    void matdot(const T* const vec1, const T* const vec2, const Parallel_2D& pvec,
-        T* const dm, const Parallel_2D& pmat);
+    void matdot(const T* const vec1, const T* const vec2, const BlockCyclicDistributionInformation& pvec,
+        T* const dm, const BlockCyclicDistributionInformation& pmat);
 
     template<typename T>
-    void multiply_eig_onto_vec(const T* const vec, const double* const eig, const Parallel_2D& pvec, T* const evec)
+    void multiply_eig_onto_vec(const T* const vec, const double* const eig, const BlockCyclicDistributionInformation& pvec, T* const evec)
     {
         for (int i = 0;i < pvec.get_col_size();++i)
         {
@@ -40,7 +40,7 @@ namespace LR
     }
 
     template<typename T>
-    ct::Tensor cal_edm_single_kpoint(const T* const vec, const Parallel_2D& pvec, const double* eig, const Parallel_2D& pmat)
+    ct::Tensor cal_edm_single_kpoint(const T* const vec, const BlockCyclicDistributionInformation& pvec, const double* eig, const BlockCyclicDistributionInformation& pmat)
     {
         const int nocc = pvec.get_global_col_size();
         const int naos = pvec.get_global_row_size();
@@ -56,8 +56,8 @@ namespace LR
         const double eig_ext_istate,    //1, the excitation energy of one state
         const double* const eig_ks,     // gocc+gvirt
         const psi::Psi<T>& c,
-        const Parallel_2D& px,
-        const Parallel_2D& pc,
+        const BlockCyclicDistributionInformation& px,
+        const BlockCyclicDistributionInformation& pc,
         const Parallel_Orbitals& pmat)
     {
         const int& naos = pmat.para_2d().get_global_row_size();
@@ -65,7 +65,7 @@ namespace LR
         const int& nvirt = px.get_global_row_size();
         // 4. $\sum_i (\Omega + \epsilon_i) \sum_{ab} C_{\mu a} X_{ia} C_{\nu b} X_{ib}$
         std::vector<ct::Tensor> edm(c.get_nk());
-        Parallel_2D px_ao_occ;
+        BlockCyclicDistributionInformation px_ao_occ;
         LR_Util::setup_2d_division(px_ao_occ, px.get_block_size(), naos, nocc
 #ifdef __MPI
             , px.get_blacs_ctxt()
@@ -101,15 +101,15 @@ namespace LR
         const psi::Psi<T>& c,
         const int nspin,
         const bool test_force,
-        const Parallel_2D& p_occ_occ,
-        const Parallel_2D& p_virt_occ,
-        const Parallel_2D& pc,
+        const BlockCyclicDistributionInformation& p_occ_occ,
+        const BlockCyclicDistributionInformation& p_virt_occ,
+        const BlockCyclicDistributionInformation& pc,
         const Parallel_Orbitals& pmat)
     {
         const int& naos = pmat.para_2d().get_global_col_size();
         const int& nocc = p_occ_occ.get_global_col_size();
         const int& nvirt = p_virt_occ.get_global_row_size();
-        const Parallel_2D& px = p_virt_occ;
+        const BlockCyclicDistributionInformation& px = p_virt_occ;
 
         // 1. c * W * c
 #ifdef __MPI
@@ -194,8 +194,8 @@ namespace LR
         const std::vector<double>& orb_cutoff = inputs.orb_cutoff;
         const Grid_Driver& gd = inputs.gd;
         const K_Vectors& kv = inputs.kv;
-        const std::vector<Parallel_2D>& px = inputs.px;
-        const Parallel_2D& pc = inputs.pc;
+        const std::vector<BlockCyclicDistributionInformation>& px = inputs.px;
+        const BlockCyclicDistributionInformation& pc = inputs.pc;
         const Parallel_Orbitals& pmat = inputs.pmat;
 #ifdef __EXX
         std::weak_ptr<Exx_LRI<T>> exx_lri = inputs.exx_lri;
@@ -205,7 +205,7 @@ namespace LR
         const std::string xc_kernel = inputs.xc_kernel;
         const int nk = kv.get_nks() / nspin;
         // 1. calculate W multiplier
-        std::vector<Parallel_2D> p_occ_occ(nspin);
+        std::vector<BlockCyclicDistributionInformation> p_occ_occ(nspin);
         for (int is = 0;is < nspin;++is)
         {
             const int block_size = px[is].get_block_size();
@@ -266,8 +266,8 @@ namespace LR
         const std::vector<double>& orb_cutoff = inputs.orb_cutoff;
         const Grid_Driver& gd = inputs.gd;
         const K_Vectors& kv = inputs.kv;
-        const std::vector<Parallel_2D>& px = inputs.px;
-        const Parallel_2D& pc = inputs.pc;
+        const std::vector<BlockCyclicDistributionInformation>& px = inputs.px;
+        const BlockCyclicDistributionInformation& pc = inputs.pc;
         const Parallel_Orbitals& pmat = inputs.pmat;
 #ifdef __EXX
         std::weak_ptr<Exx_LRI<T>> exx_lri = inputs.exx_lri;
@@ -286,7 +286,7 @@ namespace LR
         const int nband_window = nocc[0] + nvirt[0];
 
         // 1. the W^c multiplier, one occ-occ block per spin
-        std::vector<Parallel_2D> p_occ_occ(2);
+        std::vector<BlockCyclicDistributionInformation> p_occ_occ(2);
         for (int is : {0, 1})
         {
             const int block_size = px[is].get_block_size();

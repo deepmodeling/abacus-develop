@@ -21,8 +21,8 @@ void printM(const std::vector<T>& A, int m, int n, std::string file, std::string
 void arrayFlatten1(const std::vector<std::complex<double>>& A,
                    const std::vector<std::complex<double>>& B,
                    std::vector<std::complex<double>>& result, // result={{A,B},{-B*,-A*}}
-                   const Parallel_2D& pA,
-                   const Parallel_2D& pM)
+                   const BlockCyclicDistributionInformation& pA,
+                   const BlockCyclicDistributionInformation& pM)
 {
     int nA = pA.get_global_row_size();
 #ifdef __MPI
@@ -60,8 +60,8 @@ void arrayFlatten1(const std::vector<std::complex<double>>& A,
 void arrayFlatten2(const std::vector<std::complex<double>>& A,
                    const std::vector<std::complex<double>>& B,
                    std::vector<double>& result, // result={{Re(A+B), Im(A-B)},{-Im(A+B), Re(A-B)}}
-                   const Parallel_2D& pA,
-                   const Parallel_2D& pM)
+                   const BlockCyclicDistributionInformation& pA,
+                   const BlockCyclicDistributionInformation& pM)
 {
     int nA = pA.get_global_row_size();
 #ifdef __MPI
@@ -108,8 +108,8 @@ void arrayFlatten2(const std::vector<std::complex<double>>& A,
 void solve_full(const int my_rank,
                 std::vector<std::complex<double>>& A_part,
                 std::vector<std::complex<double>>& B_part,
-                const Parallel_2D& pA,
-                const Parallel_2D& pM,
+                const BlockCyclicDistributionInformation& pA,
+                const BlockCyclicDistributionInformation& pM,
                 std::vector<double>& ev,
                 std::vector<std::complex<double>>& v)
 {

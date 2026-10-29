@@ -7,7 +7,7 @@
 #include "source_lcao/module_lr/utils/mo_type.h"
 #include <vector>
 #ifdef __MPI
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #endif
 namespace LR
 {
@@ -18,13 +18,13 @@ namespace LR
     template<typename T>
     std::vector<container::Tensor> cal_dm_trans_pblas(
         const T* const X_istate,
-        const Parallel_2D& px,
+        const BlockCyclicDistributionInformation& px,
         const psi::Psi<T>& c,
-        const Parallel_2D& pc,
+        const BlockCyclicDistributionInformation& pc,
         const int naos,
         const int nocc,
         const int nvirt,
-        const Parallel_2D& pmat,
+        const BlockCyclicDistributionInformation& pmat,
         const T factor = (T)1.0,
         const LR_Util::MO_TYPE type = LR_Util::MO_TYPE::VO);
 #endif

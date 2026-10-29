@@ -36,7 +36,7 @@ namespace ModuleSymmetry
     void Symmetry_rotation_k::cal_Ms(const K_Vectors& kv, const Symmetry& symm, const Atom* atoms,
         const ModuleBase::Matrix3& latvec, const int lmax,
         const int nat, const std::vector<int>& iat2it, const std::vector<int>& iat2ia,
-        const Parallel_2D& pv, const int nspin)
+        const BlockCyclicDistributionInformation& pv, const int nspin)
     {
         ModuleBase::TITLE("Symmetry_rotation_k", "cal_Ms");
         ModuleBase::timer::start("Symmetry_rotation_k", "cal_Ms");
@@ -133,7 +133,7 @@ namespace ModuleSymmetry
     }
 
     std::vector<std::vector<std::complex<double>>> Symmetry_rotation_k::restore_dm(const K_Vectors& kv,
-        const std::vector<std::vector<std::complex<double>>>& dm_k_ibz, const Parallel_2D& pv)const
+        const std::vector<std::vector<std::complex<double>>>& dm_k_ibz, const BlockCyclicDistributionInformation& pv)const
     {
         ModuleBase::TITLE("Symmetry_rotation_k", "restore_dm");
         ModuleBase::timer::start("Symmetry_rotation_k", "restore_dm");
@@ -227,7 +227,7 @@ namespace ModuleSymmetry
         return dm_k_full;
     }
     std::vector<std::vector<double>> Symmetry_rotation_k::restore_dm(const K_Vectors& kv,
-        const std::vector<std::vector<double>>& dm_k_ibz, const Parallel_2D& pv)const
+        const std::vector<std::vector<double>>& dm_k_ibz, const BlockCyclicDistributionInformation& pv)const
     {
         return dm_k_ibz;// do nothing for gamma_only
     }
@@ -372,7 +372,7 @@ namespace ModuleSymmetry
     }
 
     void Symmetry_rotation_k::set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
-        std::vector<std::complex<double>>& obj_mat, const Parallel_2D& pv, const bool trans) const
+        std::vector<std::complex<double>>& obj_mat, const BlockCyclicDistributionInformation& pv, const bool trans) const
     {   // caution: ComplaxMatrix is row-major(col-continuous), but obj_mat is col-major(row-continuous)
         for (int j = 0;j < block.nr;++j) {//outside dimension
             for (int i = 0;i < block.nc;++i) { //inside dimension
@@ -386,7 +386,7 @@ namespace ModuleSymmetry
     }
 
     void Symmetry_rotation_k::set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
-        std::vector<double>& obj_mat, const Parallel_2D& pv, const bool trans) const
+        std::vector<double>& obj_mat, const BlockCyclicDistributionInformation& pv, const bool trans) const
     {   // caution: ComplaxMatrix is row-major(col-continuous), but obj_mat is col-major(row-continuous)
         for (int j = 0;j < block.nr;++j) {//outside dimension
             for (int i = 0;i < block.nc;++i) { //inside dimension
@@ -403,7 +403,7 @@ namespace ModuleSymmetry
     // finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to   D(k) from D(Rk) in cal_Ms.
     std::vector<std::complex<double>> Symmetry_rotation_k::contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms,
         const int nat, const std::vector<int>& iat2it, const std::vector<int>& iat2ia,
-        const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv, const SpinRotation::Su2& spin_U) const
+        const TCdouble& kvec_d_ibz, int isym, const BlockCyclicDistributionInformation& pv, const SpinRotation::Su2& spin_U) const
     {
         const bool soc = (this->nspin_ == 4);
         const int npol = soc ? 2 : 1;  // spinor: global AO index is spin-fast interleaved, I = npol*iw_orb + s
@@ -484,7 +484,7 @@ namespace ModuleSymmetry
     // Ds from RI_2D_Comm are row-maj
     // the link  ik_ibz-isym-ik can be found in kstars.
     std::vector<std::complex<double>> Symmetry_rotation_k::rot_matrix_ao(const std::vector<std::complex<double>>& DMkibz,
-        const int ik_ibz, const int kstar_size, const int isym, const Parallel_2D& pv, const bool TRS_conj) const
+        const int ik_ibz, const int kstar_size, const int isym, const BlockCyclicDistributionInformation& pv, const bool TRS_conj) const
     {
         std::vector<std::complex<double>> DMk(pv.get_local_size(), 0.0);
         std::vector<std::complex<double>> DMkibz_M(pv.get_local_size(), 0.0);    // intermediate result
@@ -551,7 +551,7 @@ namespace ModuleSymmetry
         return DMk;
     }
 
-    std::vector<std::complex<double>> Symmetry_rotation_k::set_sigma_y_2d(const Parallel_2D& pv) const
+    std::vector<std::complex<double>> Symmetry_rotation_k::set_sigma_y_2d(const BlockCyclicDistributionInformation& pv) const
     {
         std::vector<std::complex<double>> sigma_y(pv.get_local_size(), 0.0);
         const int nlocal = pv.get_global_row_size();    // = 2*nao for nspin=4
@@ -576,7 +576,7 @@ namespace ModuleSymmetry
     }
 
     std::vector<std::complex<double>> Symmetry_rotation_k::trs_spin_rotate(const std::vector<std::complex<double>>& X,
-        const std::vector<std::complex<double>>& sigma_y, const Parallel_2D& pv, const double scale) const
+        const std::vector<std::complex<double>>& sigma_y, const BlockCyclicDistributionInformation& pv, const double scale) const
     {
         // stored (transposed 2d-block) form of  D_new = sigma_y * conj(D) * sigma_y  is
         // Sigma_y * conj(X) * Sigma_y  (Sigma_y^T = -Sigma_y, the two minus signs cancel).

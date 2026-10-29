@@ -168,7 +168,7 @@ namespace LR_Util
         }
     }
     template<typename T>
-    void print_tensor(const container::Tensor& t, const std::string& label, const Parallel_2D* pmat, const double& threshold = 1e-10)
+    void print_tensor(const container::Tensor& t, const std::string& label, const BlockCyclicDistributionInformation* pmat, const double& threshold = 1e-10)
     {
         std::cout << label << "\n";
         for (int j = 0; j < pmat->get_col_size();++j)

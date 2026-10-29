@@ -13,9 +13,9 @@ namespace Parallel
  * @brief matrix parallel domain: 2D block-cyclic distribution.
  *
  * Self-contained wrapper for the matrix-level parallel topology.
- * Replaces the process-grid part of Parallel_2D (dim0/dim1/coord)
+ * Replaces the process-grid part of BlockCyclicDistributionInformation (dim0/dim1/coord)
  * with a cleaner interface. The actual ScaLAPACK descriptor and
- * BLACS context management stay in Parallel_2D; this class only
+ * BLACS context management stay in BlockCyclicDistributionInformation; this class only
  * holds the process grid dimensions and coordinates.
  *
  * Tests only need this header.

@@ -12,13 +12,13 @@ namespace LR
     template<>
     void ao_to_mo_pblas(
         const std::vector<container::Tensor>& mat_ao,
-        const Parallel_2D& pmat_ao,
+        const BlockCyclicDistributionInformation& pmat_ao,
         const psi::Psi<double>& coeff,
-        const Parallel_2D& pcoeff,
+        const BlockCyclicDistributionInformation& pcoeff,
         const int& naos,
         const int& nocc,
         const int& nvirt,
-        const Parallel_2D& pmat_mo,
+        const BlockCyclicDistributionInformation& pmat_mo,
         double* mat_mo,
         const bool add_on,
         const LR_Util::MO_TYPE type,
@@ -41,7 +41,7 @@ namespace LR
         const int imo2 = imo2_set + 1;
         const int i1 = 1;
 
-        Parallel_2D pVc;        // for intermediate Vc
+        BlockCyclicDistributionInformation pVc;        // for intermediate Vc
         LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {
@@ -75,13 +75,13 @@ namespace LR
     template<>
     void ao_to_mo_pblas(
         const std::vector<container::Tensor>& mat_ao,
-        const Parallel_2D& pmat_ao,
+        const BlockCyclicDistributionInformation& pmat_ao,
         const psi::Psi<std::complex<double>>& coeff,
-        const Parallel_2D& pcoeff,
+        const BlockCyclicDistributionInformation& pcoeff,
         const int& naos,
         const int& nocc,
         const int& nvirt,
-        const Parallel_2D& pmat_mo,
+        const BlockCyclicDistributionInformation& pmat_mo,
         std::complex<double>* const mat_mo,
         const bool add_on,
         const LR_Util::MO_TYPE type,
@@ -104,7 +104,7 @@ namespace LR
         const int imo2 = imo2_set + 1;
         const int i1 = 1;
 
-        Parallel_2D pVc;        // for intermediate Vc
+        BlockCyclicDistributionInformation pVc;        // for intermediate Vc
         LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {

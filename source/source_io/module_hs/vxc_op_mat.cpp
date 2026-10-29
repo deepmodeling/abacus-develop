@@ -90,7 +90,7 @@ void write_Vxc(const int nspin,
     hamilt::DFTU_firstzeta<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, ucell, nullptr, kv.isk);
 
     // 4. calculate and write the MO-matrix Exc
-    Parallel_2D p2d;
+    BlockCyclicDistributionInformation p2d;
     set_para2d_MO(*pv, nbands, p2d);
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)

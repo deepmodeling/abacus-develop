@@ -1,4 +1,4 @@
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/parallel_common.h"
 
 #include "gtest/gtest.h"
@@ -89,12 +89,6 @@ TEST(BlockCyclicDistributionInformationTest, SerialInitializationAndIndexMaps)
     }
     EXPECT_TRUE(distribution.owns_index(6, 4));
     EXPECT_EQ(distribution.owner_of_index(6, 4), 0);
-
-    BlockCyclicDistributionInformation legacy_serial;
-    legacy_serial.set_serial(3, 2);
-    EXPECT_TRUE(legacy_serial.is_serial());
-    EXPECT_EQ(legacy_serial.get_row_size(), 3);
-    EXPECT_EQ(legacy_serial.get_col_size(), 2);
 
     distribution.set_coord(2, 3);
     EXPECT_EQ(distribution.get_coord_row(), 2);
@@ -202,6 +196,76 @@ TEST(BlockCyclicDistributionInformationTest, BindDescriptorBorrowsBlacsContext)
     EXPECT_EQ(moved_borrower.get_blacs_context(), owner_context);
     EXPECT_EQ(borrower.get_blacs_context(), kUnownedBlacsContext);
     EXPECT_GE(owner.get_blacs_context(), 0);
+}
+
+TEST(BlockCyclicDistributionInformationTest, SharedBorrowedContextSupportsMultipleLayouts)
+{
+    BlockCyclicDistributionInformation owner;
+    owner.initialize(30, 35, 2, MPI_COMM_WORLD);
+    const int owner_context = owner.get_blacs_context();
+    ASSERT_GE(owner_context, 0);
+
+    BlockCyclicDistributionInformation first_borrower;
+    const int first_degenerate = first_borrower.bind_descriptor(30, 35, 2, owner_context);
+    EXPECT_EQ(first_degenerate, 0);
+
+    BlockCyclicDistributionInformation second_borrower;
+    const int second_degenerate = second_borrower.bind_descriptor(49, 94, 3, owner_context);
+    EXPECT_EQ(second_degenerate, 0);
+
+    EXPECT_EQ(first_borrower.get_blacs_context(), owner_context);
+    EXPECT_EQ(second_borrower.get_blacs_context(), owner_context);
+    EXPECT_EQ(first_borrower.get_descriptor()[kDescriptorBlacsContextIndex], owner_context);
+    EXPECT_EQ(second_borrower.get_descriptor()[kDescriptorBlacsContextIndex], owner_context);
+
+    BlockCyclicDistributionInformation independent_owner;
+    independent_owner.initialize(57, 57, 2, MPI_COMM_WORLD);
+    EXPECT_NE(independent_owner.get_blacs_context(), owner_context);
+}
+
+TEST(BlockCyclicDistributionInformationTest, RebindingOwnedContextKeepsGridAlive)
+{
+    BlockCyclicDistributionInformation distribution;
+    distribution.initialize(30, 35, 2, MPI_COMM_WORLD);
+    const int original_context = distribution.get_blacs_context();
+    ASSERT_GE(original_context, 0);
+
+    const int is_degenerate = distribution.bind_descriptor(30, 35, 1, original_context);
+    EXPECT_EQ(is_degenerate, 0);
+
+    const int* const descriptor = distribution.get_descriptor();
+    EXPECT_EQ(distribution.get_blacs_context(), original_context);
+    EXPECT_EQ(descriptor[kDescriptorMatrixTypeIndex], 1);
+    EXPECT_EQ(descriptor[kDescriptorBlacsContextIndex], original_context);
+    EXPECT_EQ(descriptor[kDescriptorGlobalRowsIndex], 30);
+    EXPECT_EQ(descriptor[kDescriptorGlobalColsIndex], 35);
+    EXPECT_EQ(descriptor[kDescriptorBlockRowsIndex], 1);
+    EXPECT_EQ(descriptor[kDescriptorBlockColsIndex], 1);
+    EXPECT_EQ(distribution.get_block_size(), 1);
+    EXPECT_EQ(distribution.get_number_of_local_elements(),
+              static_cast<int64_t>(distribution.get_number_of_local_rows())
+                  * distribution.get_number_of_local_cols());
+    EXPECT_EQ(distribution.get_grid_rows() * distribution.get_grid_cols(),
+              Parallel_Common::comm_size(MPI_COMM_WORLD));
+}
+
+TEST(BlockCyclicDistributionInformationTest, SerialInitializationClearsBorrowedContext)
+{
+    BlockCyclicDistributionInformation owner;
+    owner.initialize(30, 35, 1, MPI_COMM_WORLD);
+    const int owner_context = owner.get_blacs_context();
+    ASSERT_GE(owner_context, 0);
+
+    BlockCyclicDistributionInformation borrower;
+    const int is_degenerate = borrower.bind_descriptor(30, 35, 1, owner_context);
+    EXPECT_EQ(is_degenerate, 0);
+    EXPECT_EQ(borrower.get_blacs_context(), owner_context);
+
+    borrower.initialize_serial(3, 4);
+    EXPECT_EQ(borrower.get_blacs_context(), kUnownedBlacsContext);
+    EXPECT_EQ(borrower.get_mpi_communicator(), MPI_COMM_NULL);
+    EXPECT_GE(owner.get_blacs_context(), 0);
+    EXPECT_NE(owner.get_mpi_communicator(), MPI_COMM_NULL);
 }
 #endif
 

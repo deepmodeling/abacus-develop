@@ -7,7 +7,7 @@
 #include <vector>
 #include <cassert>
 #ifdef __MPI
-#include "source_base/parallel_2d.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #endif
 namespace LR
 {
@@ -36,13 +36,13 @@ namespace LR
     template<typename T>
     void ao_to_mo_pblas(
         const std::vector<container::Tensor>& mat_ao,
-        const Parallel_2D& pmat_ao,
+        const BlockCyclicDistributionInformation& pmat_ao,
         const psi::Psi<T>& coeff,
-        const Parallel_2D& pcoeff,
+        const BlockCyclicDistributionInformation& pcoeff,
         const int& naos,
         const int& nocc,
         const int& nvirt,
-        const Parallel_2D& pmat_mo,
+        const BlockCyclicDistributionInformation& pmat_mo,
         T* const mat_mo,
         const bool add_on,
         const LR_Util::MO_TYPE type,
