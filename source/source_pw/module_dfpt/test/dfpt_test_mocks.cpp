@@ -21,7 +21,7 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/chg_mix.h"
 #include "source_pw/module_pwdft/dftu_base.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 
 pseudo::pseudo()
 {
