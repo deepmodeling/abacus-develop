@@ -10,6 +10,11 @@
 #include "module_base/timer.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
+#if defined(__CUDA)
+#include <base/macros/macros.h>
+#include <cuda_runtime_api.h>
+#include <type_traits>
+#endif
 
 namespace hsolver
 {
@@ -414,11 +419,12 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK(const int nstart,
 }
 
 template <typename T, typename Device>
-void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
-                                                const psi::Psi<T, Device>& psi,     // [in] wavefunction
+void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt,
+                                                const psi::Psi<T, Device>& psi,
                                                 T *hcc, 
                                                 T *scc,
-                                                T *hpsi_host)
+                                                T *hpsi_host,
+                                                bool identity_overlap)
 {
     const int nstart = psi.get_nbands();
     
@@ -441,10 +447,29 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>
         hpsi_info hpsi_in(&psi, all_bands_range, hphi);
         pHamilt->ops->hPsi(hpsi_in);
 
+#if defined(__CUDA)
+        cudaStream_t cache_stream = nullptr;
+        cudaEvent_t action_ready = nullptr;
+#endif
         if (hpsi_host != nullptr)
         {
-            base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
-                nullptr, ctx, hpsi_host, hphi, size_t(nstart) * dmax);
+#if defined(__CUDA)
+            if (std::is_same<Device, base_device::DEVICE_GPU>::value)
+            {
+                // Both projection and host caching read the completed action.
+                cudaErrcheck(cudaStreamCreateWithFlags(&cache_stream, cudaStreamNonBlocking));
+                cudaErrcheck(cudaEventCreateWithFlags(&action_ready, cudaEventDisableTiming));
+                cudaErrcheck(cudaEventRecord(action_ready));
+                cudaErrcheck(cudaStreamWaitEvent(cache_stream, action_ready, 0));
+                cudaErrcheck(cudaMemcpyAsync(hpsi_host, hphi, size_t(nstart) * dmax * sizeof(T),
+                                             cudaMemcpyDeviceToHost, cache_stream));
+            }
+            else
+#endif
+            {
+                base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+                    nullptr, ctx, hpsi_host, hphi, size_t(nstart) * dmax);
+            }
         }
 
         gemm_op<T, Device>()(ctx,
@@ -462,9 +487,17 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>
                              hcc,
                              nstart);
 
-        T* sphi = temp;
-        // do sPsi for all bands
-        pHamilt->sPsi(psi.get_pointer(), sphi, dmax, dmin, nstart);
+        const T* sphi = psi.get_pointer();
+        if (!identity_overlap)
+        {
+#if defined(__CUDA)
+            // Generalized overlaps overwrite the action buffer only after
+            // its host copy completes. Euclidean overlaps reuse psi directly.
+            if (cache_stream != nullptr) { cudaErrcheck(cudaStreamSynchronize(cache_stream)); }
+#endif
+            pHamilt->sPsi(psi.get_pointer(), temp, dmax, dmin, nstart);
+            sphi = temp;
+        }
 
         gemm_op<T, Device>()(ctx,
                              'C',
@@ -480,6 +513,15 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>
                              &zero,
                              scc,
                              nstart);
+
+#if defined(__CUDA)
+        if (cache_stream != nullptr)
+        {
+            cudaErrcheck(cudaStreamSynchronize(cache_stream));
+            cudaErrcheck(cudaEventDestroy(action_ready));
+            cudaErrcheck(cudaStreamDestroy(cache_stream));
+        }
+#endif
     }
 
     if (GlobalV::NPROC_IN_POOL > 1)

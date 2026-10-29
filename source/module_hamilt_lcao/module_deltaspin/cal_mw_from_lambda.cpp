@@ -314,8 +314,10 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                         /// update H(k) for each k point
                         hamilt_t->updateHk(ik);
                         const size_t offset = size_t(ik) * nbands * psi_t->get_nbasis();
+                        // Host action caching is restricted to norm-conserving inputs with S = I.
                         hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::cal_hs_subspace(
-                            hamilt_t, psi_t[0], h_k, s_k, hpsi_host == nullptr ? nullptr : hpsi_host + offset);
+                            hamilt_t, psi_t[0], h_k, s_k, hpsi_host == nullptr ? nullptr : hpsi_host + offset,
+                            hpsi_host != nullptr);
                         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, becp_k, onsite_p->get_becp(), size_becp);
                     }
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, h_tmp, h_k, nbands * nbands);

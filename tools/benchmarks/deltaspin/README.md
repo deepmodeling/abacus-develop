@@ -172,13 +172,24 @@ For the same eligible CUDA path, the constraint loop also retains the initial
 Hamiltonian action in pinned host memory. The first Davidson attempt copies it
 directly into its existing device buffer and applies the current constraint-field
 correction with projectors prepared for that k point. The cache is refreshed for
-each constraint loop, reused across SCF steps, and released with its owner. Failed
+each constraint loop; its allocation is reused across SCF steps and released
+with its owner. Failed
 pinned allocation retains ordinary Hamiltonian evaluation. Host storage scales
 with k points, bands, and plane waves: approximately 1.58 GiB for Fe16 and 6.30 GiB
 for Fe32 in these fixtures. Transfers are included in the complete timings; this
 cache has a measurable host-memory cost and does not eliminate all Hamiltonian
 applications. The Davidson driver checks the supplied action against direct
 evaluation and verifies that later calls can use ordinary evaluation again.
+
+Host caching overlaps the Hamiltonian projection on a separate CUDA copy stream.
+For the eligible norm-conserving path, the overlap operator is exactly the
+identity, so the projected overlap is formed directly from the wavefunctions
+while the action is copied. This retains the actual Gram matrix and does not
+assume that the input columns are orthonormal. Generalized overlap operators
+wait for the copy before reusing the action buffer. The host cache is complete
+before the projection routine returns. `check_subspace_cache.cpp` exercises
+asynchronous producers, CPU/GPU paths, generalized and Euclidean overlaps,
+padded inputs, pinned/pageable host storage, and repeated cache lifetimes.
 
 `link_check.py` reuses the active Ninja application's compile and link commands.
 Set `ABACUS_HOME` to the installation containing `build/` and load its environment:
