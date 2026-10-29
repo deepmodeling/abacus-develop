@@ -60,11 +60,11 @@ TEST_F(test_para2d, Divide2D)
                 EXPECT_EQ(p2d.get_block_size(), nb);
 
                 // 1. dim0 and dim1
-                EXPECT_EQ(p2d.dim0 * p2d.dim1, dsize);
+                EXPECT_EQ(p2d.get_dim0() * p2d.get_dim1(), dsize);
                 if (mode) {
-                    EXPECT_LE(p2d.dim1, p2d.dim0);
+                    EXPECT_LE(p2d.get_dim1(), p2d.get_dim0());
                 } else {
-                    EXPECT_LE(p2d.dim0, p2d.dim1);
+                    EXPECT_LE(p2d.get_dim0(), p2d.get_dim1());
 }
 
                 // 2. MPI 2d communicator
@@ -79,19 +79,19 @@ TEST_F(test_para2d, Divide2D)
                     return nblock / np * nb + static_cast<int>(nblock % np > pcoord) * nb // full blocks' contribution
                            + static_cast<int>(nblock % np == pcoord) * (gsize % nb); // the last block's contribution
                 };
-                EXPECT_EQ(lr, cal_lsize(gr, nb, p2d.dim0, p2d.get_coord_row()));
-                EXPECT_EQ(lc, cal_lsize(gc, nb, p2d.dim1, p2d.get_coord_col()));
+                EXPECT_EQ(lr, cal_lsize(gr, nb, p2d.get_dim0(), p2d.get_coord_row()));
+                EXPECT_EQ(lc, cal_lsize(gc, nb, p2d.get_dim1(), p2d.get_coord_col()));
 
                 // 4. ScaLAPACK descriptor
-                EXPECT_EQ(p2d.desc[0], 1);
-                EXPECT_EQ(p2d.desc[1], p2d.blacs_ctxt);
-                EXPECT_EQ(p2d.desc[2], gr);
-                EXPECT_EQ(p2d.desc[3], gc);
-                EXPECT_EQ(p2d.desc[4], p2d.get_block_size());
-                EXPECT_EQ(p2d.desc[5], p2d.get_block_size());
-                EXPECT_EQ(p2d.desc[6], 0);
-                EXPECT_EQ(p2d.desc[7], 0);
-                EXPECT_EQ(p2d.desc[8], lr);
+                EXPECT_EQ(p2d.get_desc()[0], 1);
+                EXPECT_EQ(p2d.get_desc()[1], p2d.get_blacs_ctxt());
+                EXPECT_EQ(p2d.get_desc()[2], gr);
+                EXPECT_EQ(p2d.get_desc()[3], gc);
+                EXPECT_EQ(p2d.get_desc()[4], p2d.get_block_size());
+                EXPECT_EQ(p2d.get_desc()[5], p2d.get_block_size());
+                EXPECT_EQ(p2d.get_desc()[6], 0);
+                EXPECT_EQ(p2d.get_desc()[7], 0);
+                EXPECT_EQ(p2d.get_desc()[8], lr);
 
                 // 5. global2local
                 auto sum_array = [&p2d](const int& gr, const int& gc) -> std::pair<int, int> {
@@ -129,13 +129,13 @@ TEST_F(test_para2d, DescReuseCtxt)
         p1.init(sizes[0].first, sizes[0].second, nb, MPI_COMM_WORLD);
 
         Parallel_2D p2; // use 2 different sizes, but they can share the same ctxt
-        p2.set(sizes[1].first, sizes[1].second, nb, p1.blacs_ctxt);
+        p2.set(sizes[1].first, sizes[1].second, nb, p1.get_blacs_ctxt());
 
-        EXPECT_EQ(p1.desc[1], p2.desc[1]);
+        EXPECT_EQ(p1.get_desc()[1], p2.get_desc()[1]);
 
         Parallel_2D p3;
         p3.init(sizes[2].first, sizes[2].second, nb, MPI_COMM_WORLD);
-        EXPECT_NE(p1.desc[1], p3.desc[1]);
+        EXPECT_NE(p1.get_desc()[1], p3.get_desc()[1]);
     }
 }
 TEST_F(test_para2d, SetWithOwnCtxt)
@@ -151,19 +151,19 @@ TEST_F(test_para2d, SetWithOwnCtxt)
         const int gc = sizes[0].second;
         p2d.init(gr, gc, nb, MPI_COMM_WORLD);
 
-        const int ctxt = p2d.blacs_ctxt;
-        p2d.set(gr, gc, 1, p2d.blacs_ctxt);
+        const int ctxt = p2d.get_blacs_ctxt();
+        p2d.set(gr, gc, 1, p2d.get_blacs_ctxt());
 
         // the grid must survive: context unchanged, descriptor valid
-        EXPECT_EQ(p2d.blacs_ctxt, ctxt);
-        EXPECT_EQ(p2d.desc[0], 1);
-        EXPECT_EQ(p2d.desc[1], ctxt);
-        EXPECT_EQ(p2d.desc[2], gr);
-        EXPECT_EQ(p2d.desc[3], gc);
-        EXPECT_EQ(p2d.desc[4], 1);
+        EXPECT_EQ(p2d.get_blacs_ctxt(), ctxt);
+        EXPECT_EQ(p2d.get_desc()[0], 1);
+        EXPECT_EQ(p2d.get_desc()[1], ctxt);
+        EXPECT_EQ(p2d.get_desc()[2], gr);
+        EXPECT_EQ(p2d.get_desc()[3], gc);
+        EXPECT_EQ(p2d.get_desc()[4], 1);
         EXPECT_EQ(p2d.get_block_size(), 1);
         EXPECT_EQ(p2d.get_row_size() * p2d.get_col_size(), p2d.get_local_size());
-        EXPECT_EQ(p2d.dim0 * p2d.dim1, dsize);
+        EXPECT_EQ(p2d.get_dim0() * p2d.get_dim1(), dsize);
     }
 }
 
@@ -177,15 +177,15 @@ TEST_F(test_para2d, SetSerialClearsBorrowedCtxt)
     owner.init(sizes[0].first, sizes[0].second, 1, MPI_COMM_WORLD);
 
     Parallel_2D borrower;
-    borrower.set(sizes[0].first, sizes[0].second, 1, owner.blacs_ctxt);
-    EXPECT_EQ(borrower.blacs_ctxt, owner.blacs_ctxt);
+    borrower.set(sizes[0].first, sizes[0].second, 1, owner.get_blacs_ctxt());
+    EXPECT_EQ(borrower.get_blacs_ctxt(), owner.get_blacs_ctxt());
 
     borrower.set_serial(3, 4);
-    EXPECT_EQ(borrower.blacs_ctxt, -1);
+    EXPECT_EQ(borrower.get_blacs_ctxt(), -1);
     EXPECT_EQ(borrower.comm(), MPI_COMM_NULL);
 
     // the owner's grid must be unaffected by the borrower's mode switch
-    EXPECT_GE(owner.blacs_ctxt, 0);
+    EXPECT_GE(owner.get_blacs_ctxt(), 0);
     EXPECT_NE(owner.comm(), MPI_COMM_NULL);
 }
 
@@ -212,9 +212,9 @@ TEST_F(test_para2d, Serial)
 
         // set_serial
         p2d.set_serial(gr, gc);
-        EXPECT_EQ(p2d.dim0 * p2d.dim1, 1);
-        EXPECT_EQ(p2d.dim0, 1);
-        EXPECT_EQ(p2d.dim1, 1);
+        EXPECT_EQ(p2d.get_dim0() * p2d.get_dim1(), 1);
+        EXPECT_EQ(p2d.get_dim0(), 1);
+        EXPECT_EQ(p2d.get_dim1(), 1);
 
         EXPECT_EQ(p2d.get_row_size(), gr);
         EXPECT_EQ(p2d.get_col_size(), gc);

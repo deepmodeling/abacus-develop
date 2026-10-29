@@ -50,9 +50,9 @@ template<typename T> void check_contractions()
     Parallel_2D pmat;
     LR_Util::setup_2d_division(pc, block, naos, nbands);
 #ifdef __MPI
-    LR_Util::setup_2d_division(px, block, nvirt, nocc, pc.blacs_ctxt);
-    LR_Util::setup_2d_division(pao, block, naos, nocc, pc.blacs_ctxt);
-    LR_Util::setup_2d_division(pmat, block, naos, naos, pc.blacs_ctxt);
+    LR_Util::setup_2d_division(px, block, nvirt, nocc, pc.get_blacs_ctxt());
+    LR_Util::setup_2d_division(pao, block, naos, nocc, pc.get_blacs_ctxt());
+    LR_Util::setup_2d_division(pmat, block, naos, naos, pc.get_blacs_ctxt());
 #else
     LR_Util::setup_2d_division(px, block, nvirt, nocc);
     LR_Util::setup_2d_division(pao, block, naos, nocc);

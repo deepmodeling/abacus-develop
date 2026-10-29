@@ -419,12 +419,12 @@ bool ModuleIO::read_wfc_nao(
                   ctot.data(),
                   1,
                   1,
-                  pv_glb.desc,
+                  const_cast<int*>(pv_glb.get_desc()),
                   psid.get_pointer(),
                   1,
                   1,
                   const_cast<int*>(ParaV.desc_wfc),
-                  pv_glb.blacs_ctxt);
+                  pv_glb.get_blacs_ctxt());
         Parallel_Common::bcast_double(&ekb(ik, 0), nbands);
         Parallel_Common::bcast_double(&wg(ik, 0), nbands);
 #else

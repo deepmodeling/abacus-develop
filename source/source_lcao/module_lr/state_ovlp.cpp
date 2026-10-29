@@ -138,7 +138,7 @@ namespace
 void check_grid(const Parallel_2D& a, const Parallel_2D& b)
 {
 #ifdef __MPI
-    if (a.blacs_ctxt != b.blacs_ctxt || a.get_block_size() != b.get_block_size())
+    if (a.get_blacs_ctxt() != b.get_blacs_ctxt() || a.get_block_size() != b.get_block_size())
     {
         throw std::invalid_argument("Root overlap matrices require the same BLACS grid and block size");
     }
@@ -170,7 +170,7 @@ std::vector<T> mo_overlap_dist(const std::vector<T>& old_coefficients,
     Parallel_2D coefficients;
 #ifdef __MPI
     const int block_size = pc.get_block_size();
-    coefficients.set(naos, bands, block_size, pc.blacs_ctxt);
+    coefficients.set(naos, bands, block_size, pc.get_blacs_ctxt());
 #else
     coefficients.set_serial(naos, bands);
 #endif
@@ -189,20 +189,22 @@ std::vector<T> mo_overlap_dist(const std::vector<T>& old_coefficients,
     // GEMR2D's legacy wrapper is non-const but only reads these sources.
     T* const old_source = const_cast<T*>(old_data);
     T* const new_source = const_cast<T*>(new_data);
-    int* const source_desc = const_cast<int*>(pc.desc);
+    int* const source_desc = const_cast<int*>(pc.get_desc());
     Cpxgemr2d(naos, bands, new_source, first, source_column, source_desc,
-        coefficient_block.data(), first, first, coefficients.desc, pc.blacs_ctxt);
+        coefficient_block.data(), first, first,
+        const_cast<int*>(coefficients.get_desc()), pc.get_blacs_ctxt());
     // Empty local blocks join all redistribution and PBLAS calls.
     ScalapackConnector::gemm('N', 'N', naos, bands, naos, one,
-        ao_data, first, first, ps.desc, coefficient_block.data(), first, first, coefficients.desc,
-        zero, intermediate.data(), first, first, coefficients.desc);
+        ao_data, first, first, ps.get_desc(), coefficient_block.data(), first, first, coefficients.get_desc(),
+        zero, intermediate.data(), first, first, coefficients.get_desc());
     // Reuse the coefficient buffer once S*C_current has been evaluated.
     Cpxgemr2d(naos, bands, old_source, first, source_column, source_desc,
-        coefficient_block.data(), first, first, coefficients.desc, pc.blacs_ctxt);
+        coefficient_block.data(), first, first,
+        const_cast<int*>(coefficients.get_desc()), pc.get_blacs_ctxt());
     ScalapackConnector::gemm(adjoint, 'N', bands, bands, naos, one,
-        coefficient_block.data(), first, first, coefficients.desc,
-        intermediate.data(), first, first, coefficients.desc,
-        zero, overlap.data(), first, first, po.desc);
+        coefficient_block.data(), first, first, coefficients.get_desc(),
+        intermediate.data(), first, first, coefficients.get_desc(),
+        zero, overlap.data(), first, first, po.get_desc());
 #else
     const int source_offset = first_band * naos;
     const int selected_count = naos * bands;
@@ -246,13 +248,13 @@ std::vector<T> project_reference_dist(const std::vector<T>& previous,
 #ifdef __MPI
     const int first = 1;
     ScalapackConnector::gemm(adjoint, 'N', nvirt, nocc, nvirt, one,
-        virtual_data, first, first, pv.desc,
-        old_data, first, first, px.desc, zero,
-        intermediate.data(), first, first, px.desc);
+        virtual_data, first, first, pv.get_desc(),
+        old_data, first, first, px.get_desc(), zero,
+        intermediate.data(), first, first, px.get_desc());
     ScalapackConnector::gemm('N', 'N', nvirt, nocc, nocc, one,
-        intermediate.data(), first, first, px.desc,
-        occupied_data, first, first, pi.desc, zero,
-        projected.data(), first, first, px.desc);
+        intermediate.data(), first, first, px.get_desc(),
+        occupied_data, first, first, pi.get_desc(), zero,
+        projected.data(), first, first, px.get_desc());
 #else
     BlasConnector::gemm_cm(adjoint, 'N', nvirt, nocc, nvirt, one,
         virtual_data, nvirt, old_data, nvirt, zero, intermediate.data(), nvirt);

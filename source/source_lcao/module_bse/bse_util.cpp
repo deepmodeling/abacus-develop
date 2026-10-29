@@ -17,7 +17,7 @@ container::Tensor cal_dm_trans_onebase_pblas(
 {
     ModuleBase::TITLE("BSE_Util", "cal_dm_trans_onebase_pblas(double)");
     assert(pc.comm() == pmat.comm());
-    assert(pc.blacs_ctxt == pmat.blacs_ctxt);
+    assert(pc.get_blacs_ctxt() == pmat.get_blacs_ctxt());
     assert(pmat.get_local_size() > 0);
     assert(pmat.get_global_row_size() == naos);
     assert(pmat.get_global_col_size() == naos);
@@ -35,9 +35,9 @@ container::Tensor cal_dm_trans_onebase_pblas(
     // (lhs for row-major Tensor, rhs for column-major pblas, occ_aos is contiguous)
 
     ScalapackConnector::gemm(transa, transb, naos, naos, one,
-        factor, c.get_pointer(), one, imo1_, pc.desc,
-        c.get_pointer(), one, imo2_, pc.desc,
-        beta, dm_trans.data<double>(), one, one, pmat.desc);
+        factor, c.get_pointer(), one, imo1_, pc.get_desc(),
+        c.get_pointer(), one, imo2_, pc.get_desc(),
+        beta, dm_trans.data<double>(), one, one, pmat.get_desc());
 
     return dm_trans;
 }
@@ -55,7 +55,7 @@ container::Tensor cal_dm_trans_onebase_pblas(
 {
     ModuleBase::TITLE("BSE_Util", "cal_dm_trans_onebase_pblas(complex)");
     assert(pc.comm() == pmat.comm());
-    assert(pc.blacs_ctxt == pmat.blacs_ctxt);
+    assert(pc.get_blacs_ctxt() == pmat.get_blacs_ctxt());
     assert(pmat.get_local_size() > 0);
     assert(pmat.get_global_row_size() == naos);
     assert(pmat.get_global_col_size() == naos);
@@ -76,14 +76,14 @@ container::Tensor cal_dm_trans_onebase_pblas(
     // Since psi::get_pointer(ib) is only for global wfc, we implement the conj through pzgemm 
     // As a comparasion, see cal_dm_trans_onebase_blas(complex)
     ScalapackConnector::gemm(transa, transb, naos, naos, one,
-            factor, c.get_pointer(), one, imo2_, pc.desc,
-            c.get_pointer(), one, imo1_, pc.desc,
-            beta, dm_trans_tmp.data(), one, one, pmat.desc);
+            factor, c.get_pointer(), one, imo2_, pc.get_desc(),
+            c.get_pointer(), one, imo1_, pc.get_desc(),
+            beta, dm_trans_tmp.data(), one, one, pmat.get_desc());
 
     ScalapackConnector::tranu(naos, naos, alpha,
-            dm_trans_tmp.data(), one, one, pmat.desc,
+            dm_trans_tmp.data(), one, one, pmat.get_desc(),
             beta,
-            dm_trans.data<std::complex<double>>(), one, one, pmat.desc);
+            dm_trans.data<std::complex<double>>(), one, one, pmat.get_desc());
 
     return dm_trans;
 }

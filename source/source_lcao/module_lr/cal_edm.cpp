@@ -21,8 +21,8 @@ namespace LR
         const int first = 1;
         const int virtual_start = nocc + 1;
         ScalapackConnector::gemm(normal, normal, naos, nocc, nvirt,
-            alpha, c, first, virtual_start, pc.desc,
-            X, first, first, px.desc, beta, X_ao_occ, first, first, px_ao_occ.desc);
+            alpha, c, first, virtual_start, pc.get_desc(),
+            X, first, first, px.get_desc(), beta, X_ao_occ, first, first, px_ao_occ.get_desc());
 #else
         const T* const c_virtual = c + nocc * naos;
         BlasConnector::gemm_cm(normal, normal, naos, nocc, nvirt,
@@ -44,8 +44,8 @@ namespace LR
 #ifdef __MPI
         const int first = 1;
         ScalapackConnector::gemm(normal, adjoint, naos, naos, nocc,
-            alpha, vec1, first, first, pvec.desc,
-            vec2, first, first, pvec.desc, beta, dm, first, first, pmat.desc);
+            alpha, vec1, first, first, pvec.get_desc(),
+            vec2, first, first, pvec.get_desc(), beta, dm, first, first, pmat.get_desc());
 #else
         BlasConnector::gemm_cm(normal, adjoint, naos, naos, nocc,
             alpha, vec1, naos, vec2, naos, beta, dm, naos);

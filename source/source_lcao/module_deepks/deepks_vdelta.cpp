@@ -41,17 +41,17 @@ void DeePKS_domain::cal_e_delta_band(const std::vector<std::vector<TK>>& dm,
                 int iic = 0;
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                 {
-                    iic = mu + nu * pv->nrow;
+                    iic = mu + nu * pv->get_row_size();
                 }
                 else
                 {
-                    iic = mu * pv->ncol + nu;
+                    iic = mu * pv->get_col_size() + nu;
                 }
                 for (int is = 0; is < nspin; is++)
                 {
                     for (int ik = 0; ik < nks / nspin; ik++)
                     {
-                        e_delta_band_tmp += dm[ik + is * nks / nspin][nu * pv->nrow + mu] * V_delta[ik][iic];
+                        e_delta_band_tmp += dm[ik + is * nks / nspin][nu * pv->get_row_size() + mu] * V_delta[ik][iic];
                     }
                 }
             }
@@ -97,11 +97,11 @@ void DeePKS_domain::collect_h_mat(const Parallel_Orbitals& pv,
                         int iic = 0;
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
-                            iic = ir + ic * pv.nrow;
+                            iic = ir + ic * pv.get_row_size();
                         }
                         else
                         {
-                            iic = ir * pv.ncol + ic;
+                            iic = ir * pv.get_col_size() + ic;
                         }
                         lineH[j - i] = h_in[k][iic];
                     }
@@ -151,13 +151,13 @@ void DeePKS_domain::get_h_tot(const Parallel_Orbitals& pv,
     {
         throw std::invalid_argument("Invalid matrix_type. Use 'H' for H(k) or 'S' for S(k).");
     }
-    std::vector<std::vector<TK>> h_mat(nks, std::vector<TK>(pv.nloc));
+    std::vector<std::vector<TK>> h_mat(nks, std::vector<TK>(pv.get_local_size()));
     for (int ik = 0; ik < nks; ik++)
     {
         h_tot[ik].create(nlocal, nlocal);
         p_ham->updateHk(ik);
         const TK* hk_ptr = (p_ham->*getMatrixFunc)();
-        for (int i = 0; i < pv.nloc; i++)
+        for (int i = 0; i < pv.get_local_size(); i++)
         {
             h_mat[ik][i] = hk_ptr[i];
         }

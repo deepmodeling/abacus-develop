@@ -24,7 +24,7 @@ void elpa_diag(MPI_Comm comm,
                Parallel_2D& para2d_local)
 {
     int DecomposedState = 0;
-    ELPA_Solver es(false, comm, nband, para2d_local.get_row_size(), para2d_local.get_col_size(), para2d_local.desc);
+    ELPA_Solver es(false, comm, nband, para2d_local.get_row_size(), para2d_local.get_col_size(), para2d_local.get_desc());
     es.generalized_eigenvector(h_local, s_local, DecomposedState, ekb, wfc_2d);
     es.exit();
 }
@@ -38,7 +38,7 @@ void elpa_diag(MPI_Comm comm,
                Parallel_2D& para2d_local)
 {
     int DecomposedState = 0;
-    ELPA_Solver es(true, comm, nband, para2d_local.get_row_size(), para2d_local.get_col_size(), para2d_local.desc);
+    ELPA_Solver es(true, comm, nband, para2d_local.get_row_size(), para2d_local.get_col_size(), para2d_local.get_desc());
     es.generalized_eigenvector(h_local, s_local, DecomposedState, ekb, wfc_2d);
     es.exit();
 }
@@ -109,9 +109,9 @@ void diago_hs_para(T* h,
     // for genelpa, if the block size is too large that some cores have no data, then it will cause error.
     if (diag_subspace == 1)
     {
-        if (max_nb * (std::max(para2d_global.dim0, para2d_global.dim1) - 1) >= lda)
+        if (max_nb * (std::max(para2d_global.get_dim0(), para2d_global.get_dim1()) - 1) >= lda)
         {
-            max_nb = lda / std::max(para2d_global.dim0, para2d_global.dim1);
+            max_nb = lda / std::max(para2d_global.get_dim0(), para2d_global.get_dim1());
         }
     }
 
@@ -121,8 +121,13 @@ void diago_hs_para(T* h,
     std::vector<T> wfc_2d(para2d_local.get_col_size() * para2d_local.get_row_size());
 
     // distribute h and s to 2D
-    Cpxgemr2d(lda, lda, h, 1, 1, para2d_global.desc, h_local.data(), 1, 1, para2d_local.desc, para2d_local.blacs_ctxt);
-    Cpxgemr2d(lda, lda, s, 1, 1, para2d_global.desc, s_local.data(), 1, 1, para2d_local.desc, para2d_local.blacs_ctxt);
+    // Cpxgemr2d is a legacy BLACS boundary that requires non-const descriptors.
+    int* const global_descriptor = const_cast<int*>(para2d_global.get_desc());
+    int* const local_descriptor = const_cast<int*>(para2d_local.get_desc());
+    Cpxgemr2d(lda, lda, h, 1, 1, global_descriptor, h_local.data(), 1, 1,
+              local_descriptor, para2d_local.get_blacs_ctxt());
+    Cpxgemr2d(lda, lda, s, 1, 1, global_descriptor, s_local.data(), 1, 1,
+              local_descriptor, para2d_local.get_blacs_ctxt());
 
     if (diag_subspace == 1)
     {
@@ -136,7 +141,7 @@ void diago_hs_para(T* h,
     }
     else if (diag_subspace == 2)
     {
-        hsolver::pxxxgvx_diag(para2d_local.desc,
+        hsolver::pxxxgvx_diag(para2d_local.get_desc(),
                               para2d_local.get_row_size(),
                               para2d_local.get_col_size(),
                               nband,
@@ -153,7 +158,8 @@ void diago_hs_para(T* h,
     }
 
     // gather wfc
-    Cpxgemr2d(lda, lda, wfc_2d.data(), 1, 1, para2d_local.desc, wfc, 1, 1, para2d_global.desc, para2d_local.blacs_ctxt);
+    Cpxgemr2d(lda, lda, wfc_2d.data(), 1, 1, local_descriptor, wfc, 1, 1,
+              global_descriptor, para2d_local.get_blacs_ctxt());
 }
 
 // template instantiation

@@ -137,7 +137,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
         return;
     }
 
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(pv->nloc_wfc > 0 && pv->get_local_size() > 0);
     assert(Htmp.device_type() == ct::DeviceType::GpuDevice);
     assert(psi_k.device_type() == ct::DeviceType::GpuDevice);
     assert(ekb.device_type() == ct::DeviceType::GpuDevice);
@@ -150,7 +150,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     ct::Tensor Tmp1_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({psi_elems}));
     void* d_Tmp1 = static_cast<void*>(Tmp1_gpu.data<std::complex<double>>());
 
-    int64_t eij_elems = pv->nloc;
+    int64_t eij_elems = pv->get_local_size();
     ct::Tensor Eij_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({eij_elems}));
     void* d_Eij = static_cast<void*>(Eij_gpu.data<std::complex<double>>());
 
@@ -323,10 +323,10 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     module_rt::gpu::launch_extract_ekb_kernel(reinterpret_cast<cuDoubleComplex*>(d_Eij),
                                               d_eii,
                                               pv->desc_Eij[8],
-                                              pv->nloc,
+                                              pv->get_local_size(),
                                               pv->desc_Eij[4],
-                                              pv->dim0,
-                                              pv->dim1,
+                                              pv->get_dim0(),
+                                              pv->get_dim1(),
                                               pv->get_coord_row(),
                                               pv->get_coord_col(),
                                               nband,

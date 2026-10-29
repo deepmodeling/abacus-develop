@@ -215,12 +215,12 @@ namespace LR_Util
             in,
             i1,
             i1,
-            pmat.desc,
+            pmat.get_desc(),
             beta,
             out,
             i1,
             i1,
-            pmat.desc);
+            pmat.get_desc());
     }
     template<>
     void matsym<double>(double* inout, const int n, const Parallel_2D& pmat)
@@ -235,12 +235,12 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.desc,
+            pmat.get_desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.desc);
+            pmat.get_desc());
     }
     template<>
     void matsym<std::complex<double>>(const std::complex<double>* in, const int n, const Parallel_2D& pmat, std::complex<double>* out)
@@ -254,12 +254,12 @@ namespace LR_Util
             in,
             i1,
             i1,
-            pmat.desc,
+            pmat.get_desc(),
             beta,
             out,
             i1,
             i1,
-            pmat.desc);
+            pmat.get_desc());
     }
     template<>
     void matsym<std::complex<double>>(std::complex<double>* inout, const int n, const Parallel_2D& pmat)
@@ -274,12 +274,12 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.desc,
+            pmat.get_desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.desc);
+            pmat.get_desc());
     }
 
     template<>
@@ -295,12 +295,12 @@ namespace LR_Util
             in,
             i1,
             i1,
-            pmat.desc,
+            pmat.get_desc(),
             beta,
             out,
             i1,
             i1,
-            pmat.desc);
+            pmat.get_desc());
     }
     template<>
     void mattrans<double>(double* inout, const int n, const Parallel_2D& pmat)
@@ -316,12 +316,12 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.desc,
+            pmat.get_desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.desc);
+            pmat.get_desc());
     }
     template<>
     void mattrans<std::complex<double>>(const std::complex<double>* in, const int n, const Parallel_2D& pmat, std::complex<double>* out)
@@ -336,12 +336,12 @@ namespace LR_Util
             in,
             i1,
             i1,
-            pmat.desc,
+            pmat.get_desc(),
             beta,
             out,
             i1,
             i1,
-            pmat.desc);
+            pmat.get_desc());
     }
     template<>
     void mattrans<std::complex<double>>(std::complex<double>* inout, const int n, const Parallel_2D& pmat)
@@ -357,12 +357,12 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.desc,
+            pmat.get_desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.desc);
+            pmat.get_desc());
     }
 
 
@@ -380,12 +380,12 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.desc,
+            pmat.get_desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.desc);
+            pmat.get_desc());
     }
     template<>
     void matantisym<std::complex<double>>(std::complex<double>* inout, const int n, const Parallel_2D& pmat)
@@ -401,12 +401,12 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.desc,
+            pmat.get_desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.desc);
+            pmat.get_desc());
     }
 #endif
 

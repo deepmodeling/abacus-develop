@@ -109,7 +109,7 @@ namespace
         Parallel_2D pa;
         LR_Util::setup_2d_division(pa, nb, n, n);
         Parallel_2D pb;
-        LR_Util::setup_2d_division(pb, nb, n, nrhs, pa.blacs_ctxt);
+        LR_Util::setup_2d_division(pb, nb, n, nrhs, pa.get_blacs_ctxt());
         std::vector<T> a_loc = to_local(a_in, pa);
         std::vector<T> x_loc = to_local(b, pb);
         solver(a_loc.data(), x_loc.data(), pa, pb);
@@ -137,7 +137,7 @@ namespace
         Parallel_2D pa;
         LR_Util::setup_2d_division(pa, nb, n, n);
         Parallel_2D pb;
-        LR_Util::setup_2d_division(pb, nb, n, 1, pa.blacs_ctxt);
+        LR_Util::setup_2d_division(pb, nb, n, 1, pa.get_blacs_ctxt());
         std::vector<T> a_loc = to_local(a, pa);
         const std::vector<T> rhs = rhs_matrix<T>(n, 1);
         std::vector<T> b_loc = to_local(rhs, pb);
@@ -254,7 +254,7 @@ TEST_F(ZeqLinearSolverTest, ScalapackCholRejectsIndefinite)
     Parallel_2D pa;
     LR_Util::setup_2d_division(pa, nb, n, n);
     Parallel_2D pb;
-    LR_Util::setup_2d_division(pb, nb, n, 1, pa.blacs_ctxt);
+    LR_Util::setup_2d_division(pb, nb, n, 1, pa.get_blacs_ctxt());
     std::vector<double> a_loc = to_local(a, pa);
     std::vector<double> b_loc = to_local(rhs_matrix<double>(n, 1), pb);
     EXPECT_THROW(LR::scalapack_cholesky_linear_solver<double>(a_loc.data(), b_loc.data(), pa, pb),

@@ -255,8 +255,8 @@ void write_wfc_nao(const int out_type,
                   ctot.data(),
                   1,
                   1,
-                  pv_glb.desc,
-                  pv_glb.blacs_ctxt);
+                  const_cast<int*>(pv_glb.get_desc()),
+                  pv_glb.get_blacs_ctxt());
 #else
         for (int ib = 0; ib < nbands; ib++)
         {

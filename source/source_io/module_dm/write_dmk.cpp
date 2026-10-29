@@ -155,7 +155,7 @@ bool ModuleIO::read_dmk(const int nspin,
         // seperate dmk data to each processor with 2D block distribution
         dmk.resize(nspin * nk, std::vector<T>(pv.get_row_size() * pv.get_col_size()));
         Parallel_2D pv_glb;
-        pv_glb.set(nlocal, nlocal, nlocal, pv.blacs_ctxt);
+        pv_glb.set(nlocal, nlocal, nlocal, pv.get_blacs_ctxt());
         for (int ik = 0; ik < nspin * nk; ik++)
         {
             Cpxgemr2d(
@@ -164,12 +164,12 @@ bool ModuleIO::read_dmk(const int nspin,
             dmk_global[ik].data(),
             1,
             1,
-            pv_glb.desc,
+            const_cast<int*>(pv_glb.get_desc()),
             dmk[ik].data(),
             1,
             1,
-            const_cast<int*>(pv.desc),
-            pv_glb.blacs_ctxt);
+            const_cast<int*>(pv.get_desc()),
+            pv_glb.get_blacs_ctxt());
         }
 #else
         dmk = dmk_global;
@@ -219,19 +219,19 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
             // gather dmk[ik] to dmk_global
             std::vector<T> dmk_global(my_rank == 0 ? nlocal * nlocal : 0);
 #ifdef __MPI
-            pv_glb.set(nlocal, nlocal, nlocal, pv.blacs_ctxt);
+            pv_glb.set(nlocal, nlocal, nlocal, pv.get_blacs_ctxt());
             Cpxgemr2d(
             nlocal,
             nlocal,
             const_cast<T*>(dmk[ik + nk * ispin].data()),
             1,
             1,
-            const_cast<int*>(pv.desc),
+            const_cast<int*>(pv.get_desc()),
             dmk_global.data(),
             1,
             1,
-            pv_glb.desc,
-            pv_glb.blacs_ctxt);
+            const_cast<int*>(pv_glb.get_desc()),
+            pv_glb.get_blacs_ctxt());
 #else
             dmk_global = dmk[ik + nk * ispin];
 #endif

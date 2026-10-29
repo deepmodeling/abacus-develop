@@ -85,7 +85,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
 
     LR_Util::setup_2d_division(this->paraC_, this->paraMat_.get_block_size(), this->nbasis, this->nbands
 #ifdef __MPI
-            , this->paraMat_.blacs_ctxt
+            , this->paraMat_.get_blacs_ctxt()
 #endif
         );
 
@@ -772,7 +772,7 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
         Parallel_2D px;
         LR_Util::setup_2d_division(px, /*nb2d=*/1, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
-            , this->paraC_.blacs_ctxt
+            , this->paraC_.get_blacs_ctxt()
 #endif
         );
         this->paraX_.emplace_back(std::move(px));

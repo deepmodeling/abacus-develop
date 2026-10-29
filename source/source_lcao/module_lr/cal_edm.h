@@ -68,7 +68,7 @@ namespace LR
         Parallel_2D px_ao_occ;
         LR_Util::setup_2d_division(px_ao_occ, px.get_block_size(), naos, nocc
 #ifdef __MPI
-            , px.blacs_ctxt
+            , px.get_blacs_ctxt()
 #endif
         );
         for (int ik = 0;ik < c.get_nk();++ik)
@@ -211,7 +211,7 @@ namespace LR
             const int block_size = px[is].get_block_size();
             LR_Util::setup_2d_division(p_occ_occ[is], block_size, nocc[is], nocc[is]
 #ifdef __MPI
-                , px[is].blacs_ctxt
+                , px[is].get_blacs_ctxt()
 #endif
             );
         }
@@ -292,7 +292,7 @@ namespace LR
             const int block_size = px[is].get_block_size();
             LR_Util::setup_2d_division(p_occ_occ[is], block_size, nocc[is], nocc[is]
 #ifdef __MPI
-                , px[is].blacs_ctxt
+                , px[is].get_blacs_ctxt()
 #endif
             );
         }

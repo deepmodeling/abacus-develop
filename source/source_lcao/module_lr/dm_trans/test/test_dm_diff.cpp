@@ -137,16 +137,16 @@ TEST_F(DMDiffTest, DoubleParallel)
         psi::Psi<double, base_device::DEVICE_CPU> X(s.nks, nstate, px.get_local_size(), {}, false);
         Parallel_2D pc;
         const int nmo = s.nocc + s.nvirt;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, px.get_blacs_ctxt());
         psi::Psi<double, base_device::DEVICE_CPU> c(s.nks, pc.get_col_size(), pc.get_row_size(), {}, true);
         Parallel_2D pmat;
-        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.get_blacs_ctxt());
 
-        EXPECT_EQ(px.dim0, pc.dim0);
-        EXPECT_EQ(px.dim1, pc.dim1);
-        EXPECT_GE(s.nvirt, px.dim0);
-        EXPECT_GE(s.nocc, px.dim1);
-        EXPECT_GE(s.naos, pc.dim0);
+        EXPECT_EQ(px.get_dim0(), pc.get_dim0());
+        EXPECT_EQ(px.get_dim1(), pc.get_dim1());
+        EXPECT_GE(s.nvirt, px.get_dim0());
+        EXPECT_GE(s.nocc, px.get_dim1());
+        EXPECT_GE(s.naos, pc.get_dim0());
 
         set_rand(X.get_pointer(), nstate * s.nks * px.get_local_size());        //set X and X_full
         psi::Psi<double, base_device::DEVICE_CPU> X_full(s.nks, nstate, s.nocc * s.nvirt, {}, false);        // allocate X_full
@@ -209,10 +209,10 @@ TEST_F(DMDiffTest, ComplexParallel)
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> X(s.nks, nstate, px.get_local_size(), {}, false);
         Parallel_2D pc;
         const int nmo = s.nocc + s.nvirt;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, px.get_blacs_ctxt());
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> c(s.nks, pc.get_col_size(), pc.get_row_size(), {}, true);
         Parallel_2D pmat;
-        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.get_blacs_ctxt());
 
         set_rand(X.get_pointer(), nstate * s.nks * px.get_local_size());        //set X and X_full
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> X_full(s.nks, nstate, s.nocc * s.nvirt, {}, false);        // allocate X_full

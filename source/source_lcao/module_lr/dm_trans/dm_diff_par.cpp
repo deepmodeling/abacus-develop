@@ -33,16 +33,16 @@ namespace LR
             C,
             i1,
             ivirt,
-            pc.desc,
+            pc.get_desc(),
             X,
             i1,
             i1,
-            px.desc,
+            px.get_desc(),
             beta,
             CvX,
             i1,
             i1,
-            pcx.desc);
+            pcx.get_desc());
     }
     void CvX(
         const std::complex<double>* C,
@@ -70,16 +70,16 @@ namespace LR
             C,
             i1,
             ivirt,
-            pc.desc,
+            pc.get_desc(),
             X,
             i1,
             i1,
-            px.desc,
+            px.get_desc(),
             beta,
             CvX,
             i1,
             i1,
-            pcx.desc);
+            pcx.get_desc());
     }
 
     void CoXT(
@@ -107,16 +107,16 @@ namespace LR
             C,
             i1,
             i1,
-            pc.desc,
+            pc.get_desc(),
             X,
             i1,
             i1,
-            px.desc,
+            px.get_desc(),
             beta,
             CoXT,
             i1,
             i1,
-            pcxt.desc);
+            pcxt.get_desc());
     }
     void CoXT(
         const std::complex<double>* C,
@@ -143,16 +143,16 @@ namespace LR
             C,
             i1,
             i1,
-            pc.desc,
+            pc.get_desc(),
             X,
             i1,
             i1,
-            px.desc,
+            px.get_desc(),
             beta,
             CoXT,
             i1,
             i1,
-            pcxt.desc);
+            pcxt.get_desc());
     }
 
     void AAT(
@@ -178,16 +178,16 @@ namespace LR
             A,
             i1,
             i1,
-            pa.desc,
+            pa.get_desc(),
             A,
             i1,
             i1,
-            pa.desc,
+            pa.get_desc(),
             beta,
             C,
             i1,
             i1,
-            pc.desc);
+            pc.get_desc());
     }
     void AAT(
         const std::complex<double>* A,
@@ -216,16 +216,16 @@ namespace LR
             A_conj.data(),
             i1,
             i1,
-            pa.desc,
+            pa.get_desc(),
             A,
             i1,
             i1,
-            pa.desc,
+            pa.get_desc(),
             beta,
             C,
             i1,
             i1,
-            pc.desc);
+            pc.get_desc());
     }
 
     //output: col first, consistent with blas
@@ -246,17 +246,17 @@ namespace LR
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_diff_pblas");
         assert(px.comm() == pc.comm() && px.comm() == pmat.comm());
-        assert(px.blacs_ctxt == pc.blacs_ctxt && px.blacs_ctxt == pmat.blacs_ctxt);
+        assert(px.get_blacs_ctxt() == pc.get_blacs_ctxt() && px.get_blacs_ctxt() == pmat.get_blacs_ctxt());
         T empty_block(0);
         const T* const x_data = X_istate == nullptr ? &empty_block : X_istate;
         const int nks = c.get_nk();
         const int nk = nks / nspin;
 
         Parallel_2D pcx;
-        LR_Util::setup_2d_division(pcx, px.get_block_size(), naos, nocc, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pcx, px.get_block_size(), naos, nocc, px.get_blacs_ctxt());
         ct::Tensor cvx(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
         Parallel_2D pcxt;
-        LR_Util::setup_2d_division(pcxt, px.get_block_size(), naos, nvirt, px.blacs_ctxt);
+        LR_Util::setup_2d_division(pcxt, px.get_block_size(), naos, nvirt, px.get_blacs_ctxt());
         ct::Tensor coxt(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcxt.get_col_size(), pcxt.get_row_size() });
         std::vector<ct::Tensor> dm_diff(nks, ct::Tensor(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pmat.get_col_size(), pmat.get_row_size() }));
         for (int iks = 0;iks < nks;++iks)

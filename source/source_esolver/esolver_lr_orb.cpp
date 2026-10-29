@@ -52,7 +52,7 @@ void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
         Parallel_2D px;
         LR_Util::setup_2d_division(px, block_size, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
-            , this->paraC_.blacs_ctxt
+            , this->paraC_.get_blacs_ctxt()
 #endif
         );//nvirt - row, nocc - col
         this->paraX_.emplace_back(std::move(px));
@@ -224,7 +224,7 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
         Parallel_2D px;
         LR_Util::setup_2d_division(px, block_size, this->nvirt_z_[is], this->nocc[is]
 #ifdef __MPI
-            , this->paraC_z_.blacs_ctxt
+            , this->paraC_z_.get_blacs_ctxt()
 #endif
         );
         this->paraX_z_.emplace_back(std::move(px));
@@ -254,7 +254,7 @@ void ModuleESolver::ESolver_LR<T, TR>::fill_z_window_(const int* desc_src)
         const int first_band = start_band + 1;
         Cpxgemr2d(this->nbasis, this->nbands_z_, this->psi_ks_all_->get_pointer(), 1, first_band,
             const_cast<int*>(desc_src), this->psi_ks_z_->get_pointer(), 1, 1,
-            this->paraC_z_.desc, this->paraC_z_.blacs_ctxt);
+            const_cast<int*>(this->paraC_z_.get_desc()), this->paraC_z_.get_blacs_ctxt());
 #else
         for (int ib = 0; ib < this->nbands_z_; ++ib)
         {

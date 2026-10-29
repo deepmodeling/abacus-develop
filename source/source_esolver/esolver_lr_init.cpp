@@ -260,7 +260,8 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
         this->psi_ks->fix_k(ik);
         const int first_band = start_band + 1;
         Cpxgemr2d(this->nbasis, this->nbands, this->psi_ks_all_->get_pointer(), 1, first_band, ks_sol.pv.desc_wfc,
-            this->psi_ks->get_pointer(), 1, 1, this->paraC_.desc, this->paraC_.blacs_ctxt);
+            this->psi_ks->get_pointer(), 1, 1, const_cast<int*>(this->paraC_.get_desc()),
+            this->paraC_.get_blacs_ctxt());
 #else
         // serial: each band is `nbasis` contiguous coefficients, so the window is a plain
         // band-by-band copy (this loop used to compute the two pointers and copy nothing,

@@ -27,7 +27,7 @@ void setup(Parallel_2D& target, int rows, int cols, const Parallel_2D& grid)
 {
 #ifdef __MPI
     const int block_size = grid.get_block_size();
-    target.set(rows, cols, block_size, grid.blacs_ctxt);
+    target.set(rows, cols, block_size, grid.get_blacs_ctxt());
 #else
     target.set_serial(rows, cols);
 #endif

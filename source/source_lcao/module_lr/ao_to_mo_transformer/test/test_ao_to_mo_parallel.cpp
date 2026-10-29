@@ -34,8 +34,8 @@ template <typename T> void check_empty_blocks(const int naos, const int nocc, co
     Parallel_2D pc;
     Parallel_2D px;
     LR_Util::setup_2d_division(pao, block, naos, naos);
-    LR_Util::setup_2d_division(pc, block, naos, nocc + nvirt, pao.blacs_ctxt);
-    LR_Util::setup_2d_division(px, block, nvirt, nocc, pao.blacs_ctxt);
+    LR_Util::setup_2d_division(pc, block, naos, nocc + nvirt, pao.get_blacs_ctxt());
+    LR_Util::setup_2d_division(px, block, nvirt, nocc, pao.get_blacs_ctxt());
     const int csize = std::max<int>(1, pc.get_local_size());
     const int xsize = std::max<int>(1, px.get_local_size());
     std::vector<T> coefficients(csize, T(0));

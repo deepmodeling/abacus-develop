@@ -319,9 +319,10 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
         MPI_Bcast(wfc_ks_global.get_pointer(), nbands * nbasis, LR_Util::MPIType<TK>::value(), 0, MPI_COMM_WORLD);
         Parallel_2D pv_glb;
         pv_glb.set(nbasis, nbands, std::max(nbasis, nbands), pmat.get_blacs_ctxt());
-        Cpxgemr2d(nbasis, nbands, wfc_ks_global.get_pointer(), 1, 1, pv_glb.desc,
+        Cpxgemr2d(nbasis, nbands, wfc_ks_global.get_pointer(), 1, 1,
+                    const_cast<int*>(pv_glb.get_desc()),
                     wfc_ks.get_pointer(), 1, 1, const_cast<int*>(pmat.desc_wfc)/*nbasis×nbands*/,
-                    pv_glb.blacs_ctxt);
+                    pv_glb.get_blacs_ctxt());
 #else
         BlasConnector::copy(nbands*nbasis, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
 #endif
@@ -419,9 +420,10 @@ void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
         MPI_Bcast(wfc_ks_global.get_pointer(), nbands * nbasis, LR_Util::MPIType<TK>::value(), 0, MPI_COMM_WORLD);
         Parallel_2D pv_glb;
         pv_glb.set(nbasis, nbands, std::max(nbasis, nbands), pmat.get_blacs_ctxt());
-        Cpxgemr2d(nbasis, nbands, wfc_ks_global.get_pointer(), 1, 1, pv_glb.desc,
+        Cpxgemr2d(nbasis, nbands, wfc_ks_global.get_pointer(), 1, 1,
+                    const_cast<int*>(pv_glb.get_desc()),
                     wfc_ks.get_pointer(), 1, 1, const_cast<int*>(pmat.desc_wfc)/*nbasis×nbands*/,
-                    pv_glb.blacs_ctxt);
+                    pv_glb.get_blacs_ctxt());
 #else
         BlasConnector::copy(nbands*nbasis, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
 #endif

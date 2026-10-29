@@ -29,7 +29,7 @@ list(APPEND depend_files
   ../../../source_base/libm/sincos.cpp
   ../../../source_base/sph_bessel_tf.cpp
   ../../../source_base/cubic_spline.cpp
-  ../../../source_base/parallel_2d.cpp
+    ../../../source_base/block_cyclic_distribution_information.cpp
   ../orb_read.cpp
   ../orb_atomic.cpp
   ../orb_atomic_lm.cpp

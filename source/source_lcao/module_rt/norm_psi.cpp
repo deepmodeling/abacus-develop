@@ -252,7 +252,7 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
     ct::Tensor Tmp1_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({psi_elems}));
     void* d_Tmp1 = static_cast<void*>(Tmp1_gpu.data<std::complex<double>>());
 
-    int64_t cij_elems = pv->nloc;
+    int64_t cij_elems = pv->get_local_size();
     ct::Tensor Cij_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({cij_elems}));
     void* d_Cij = static_cast<void*>(Cij_gpu.data<std::complex<double>>());
 
@@ -416,10 +416,10 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
     // Launch GPU In-place Normalization using the C++ wrapper
     module_rt::gpu::launch_normalize_cij_kernel(reinterpret_cast<cuDoubleComplex*>(d_Cij),
                                                 pv->desc_Eij[8],
-                                                pv->nloc,
+                                                pv->get_local_size(),
                                                 pv->desc_Eij[4],
-                                                pv->dim0,
-                                                pv->dim1,
+                                                pv->get_dim0(),
+                                                pv->get_dim1(),
                                                 pv->get_coord_row(),
                                                 pv->get_coord_col(),
                                                 nband,

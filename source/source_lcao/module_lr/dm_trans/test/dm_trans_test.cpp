@@ -129,8 +129,8 @@ TEST_F(DMTransTest, DoubleParallel)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
         Parallel_2D px_vo, px_oo, px_vv;
         LR_Util::setup_2d_division(px_vo, s.nb, s.nvirt, s.nocc);
-        LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.blacs_ctxt);
-        LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.blacs_ctxt);
+        LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.get_blacs_ctxt());
+        LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.get_blacs_ctxt());
 
         psi::Psi<double> X_vo(s.nks, nstate, px_vo.get_local_size(), px_vo.get_local_size(), false);
         set_rand(X_vo.get_pointer(), nstate * s.nks * px_vo.get_local_size());
@@ -140,18 +140,18 @@ TEST_F(DMTransTest, DoubleParallel)
         set_rand(X_vv.get_pointer(), nstate * s.nks * px_vv.get_local_size());
 
         Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.get_blacs_ctxt());
 
         std::vector<int> temp_2(s.nks, pc.get_row_size());
         psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), temp_2, true);
         Parallel_2D pmat;
-        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.blacs_ctxt);
+        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.get_blacs_ctxt());
 
-        EXPECT_EQ(px_vo.dim0, pc.dim0);
-        EXPECT_EQ(px_vo.dim1, pc.dim1);
-        EXPECT_GE(s.nvirt, px_vo.dim0);
-        EXPECT_GE(s.nocc, px_vo.dim1);
-        EXPECT_GE(s.naos, pc.dim0);
+        EXPECT_EQ(px_vo.get_dim0(), pc.get_dim0());
+        EXPECT_EQ(px_vo.get_dim1(), pc.get_dim1());
+        EXPECT_GE(s.nvirt, px_vo.get_dim0());
+        EXPECT_GE(s.nocc, px_vo.get_dim1());
+        EXPECT_GE(s.naos, pc.get_dim0());
 
         psi::Psi<double> X_full_vo(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);        // allocate X_full
         psi::Psi<double> X_full_oo(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);        // allocate X_full
@@ -223,8 +223,8 @@ TEST_F(DMTransTest, ComplexParallel)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
         Parallel_2D px_vo, px_oo, px_vv;
         LR_Util::setup_2d_division(px_vo, s.nb, s.nvirt, s.nocc);
-        LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.blacs_ctxt);
-        LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.blacs_ctxt);
+        LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.get_blacs_ctxt());
+        LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.get_blacs_ctxt());
 
         psi::Psi<std::complex<double>> X_vo(s.nks, nstate, px_vo.get_local_size(), px_vo.get_local_size(), false);
         set_rand(X_vo.get_pointer(), nstate * s.nks * px_vo.get_local_size());
@@ -234,12 +234,12 @@ TEST_F(DMTransTest, ComplexParallel)
         set_rand(X_vv.get_pointer(), nstate * s.nks * px_vv.get_local_size());
 
         Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.get_blacs_ctxt());
 
         std::vector<int> temp(s.nks, pc.get_row_size());
         psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size(), temp, true);
         Parallel_2D pmat;
-        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.blacs_ctxt);
+        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.get_blacs_ctxt());
 
         psi::Psi<std::complex<double>> X_full_vo(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);        // allocate X_full
         psi::Psi<std::complex<double>> X_full_oo(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nvirt, false);        // allocate X_full
