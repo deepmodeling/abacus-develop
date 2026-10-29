@@ -155,7 +155,7 @@ FFT plans are cached by batch size and released with the basis. This policy
 does not depend on atom count or a named benchmark system. Automatic template
 instantiation increases compilation time and executable size.
 
-## Periodic nonlocal projector phases
+## Periodic projector phases
 
 For identical atoms, each projector is a shared radial/angular factor times its
 atomic position phase. On a binary fractional-coordinate grid, that phase
@@ -163,10 +163,14 @@ depends only on the integer reciprocal index modulo the grid periods. The CUDA
 double-complex path groups plane waves by these residues, contracts the common
 projectors with strided-batch GEMMs, and applies the smaller atomic phase matrix.
 Expansion uses the adjoint factorization and adds to the existing Hamiltonian
-output. Per-atom nonlocal coefficients and spin coupling remain unchanged.
+output. The nonlocal pseudopotential and onsite constraint operators share this
+factorization. Per-atom coefficients and spin coupling remain unchanged.
 
-The selection is restricted to norm-conserving single-species calculations with
-one rank per pool. Grid periods are chosen from 1, 2, 4, 8 and 16, with at most
+Both operators require CUDA double precision, one species and one rank per
+pool. The nonlocal path additionally requires norm-conserving pseudopotentials.
+Onsite folding requires at least 256 projector columns: narrower matrices do
+not amortize packing on the measured V100 workloads and retain ordinary GEMMs.
+Grid periods are chosen from 1, 2, 4, 8 and 16, with at most
 512 residue groups, using exact alignment tests on the stored binary positions.
 No coordinate is rounded. Atoms outside the selected grid retain all their
 original projector columns in a compact ordinary GEMM. The estimated contraction
@@ -174,13 +178,18 @@ work, including padding and the atomic phase matrix, must be less than half the
 complete product; otherwise the ordinary operator is used. The real-space FFT
 grid, k points, symmetry setting and other calculation parameters are unchanged.
 
-Plans belong to the nonlocal operator, which is recreated before each ionic SCF
-cycle. Reciprocal maps and phase matrices are cached per k point; common and
-irregular projector data are refreshed from the actual table on initialization.
-Scratch operates on at most 128 spin-component columns at a time. In the supplied
-Fe16/Fe32 fixtures this adds 84/164 MiB to the preceding sampled GPU peaks. The
-speed benefit depends on the coordinate condition: these fixtures contain
-15/31 aligned atoms and one displaced atom, while general thermally displaced
+The nonlocal operator owns its plan and is recreated before each ionic SCF
+cycle. Onsite plans belong to `FS_Nonlocal_tools`, which the onsite projector
+recreates when initializing the geometry and basis. Reciprocal maps and phase
+matrices are cached per k point. Common and irregular projector data are
+refreshed whenever the underlying table is prepared; force and stress
+derivatives invalidate that table before reuse. Expansion and overlap
+contraction use the same prepared plan, with ordinary products as the fallback.
+
+Scratch operates on at most 128 spin-component columns at a time. The onsite
+plan has its own bounded workspace in addition to the nonlocal plan. The speed
+benefit depends on the coordinate condition: these fixtures contain 15/31
+aligned atoms and one displaced atom, while general thermally displaced
 structures can retain the ordinary path.
 
 `check_projector_fold.cpp` compares the public interface with independent CPU
