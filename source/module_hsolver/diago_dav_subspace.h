@@ -88,6 +88,8 @@ class Diago_DavSubspace
     /// Eigenvectors on the reduced basis
     T* vcc = nullptr;
 
+    Real* d_eigenvalue = nullptr;
+    int* d_unconv = nullptr;
     /// device type of psi
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
@@ -101,7 +103,8 @@ class Diago_DavSubspace
                   T* hphi,
                   T* vcc,
                   const int* unconv,
-                  std::vector<Real>* eigenvalue_iter);
+                  std::vector<Real>* eigenvalue_iter,
+                  bool basis_is_rotated);
 
     void cal_elem(const int& dim, int& nbase, const int& notconv, const T* psi_iter, const T* hphi, T* hcc, T* scc);
 

@@ -43,6 +43,40 @@ struct GetTypeThrust<std::complex<double>> {
 
 static cublasHandle_t cublas_handle = nullptr;
 
+__global__ void selected_basis_residual_kernel(int rows, int leading,
+                                              const double2* psi, const double2* hpsi,
+                                              const int* selected, const double* eigenvalues,
+                                              double2* residual)
+{
+    const int row = blockIdx.x * blockDim.x + threadIdx.x;
+    const int column = blockIdx.y;
+    if (row < rows)
+    {
+        const size_t source = size_t(selected[column]) * leading + row;
+        const double2 p = psi[source], h = hpsi[source];
+        const double scale = -eigenvalues[column];
+        // Separate rounding preserves the product-then-accumulation order
+        // of the two GEMMs with selected columns of the identity matrix.
+        residual[size_t(column) * leading + row] = make_double2(
+            __dadd_rn(h.x, __dmul_rn(scale, p.x)),
+            __dadd_rn(h.y, __dmul_rn(scale, p.y)));
+    }
+}
+
+void selected_basis_residual_gpu(int rows, int columns, int leading,
+                                 const std::complex<double>* psi,
+                                 const std::complex<double>* hpsi,
+                                 const int* selected, const double* eigenvalues,
+                                 std::complex<double>* residual)
+{
+    if (rows == 0 || columns == 0) { return; }
+    selected_basis_residual_kernel<<<dim3((rows + 255) / 256, columns), 256>>>(
+        rows, leading, reinterpret_cast<const double2*>(psi),
+        reinterpret_cast<const double2*>(hpsi), selected, eigenvalues,
+        reinterpret_cast<double2*>(residual));
+    cudaCheckOnDebug();
+}
+
 static inline
 void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
     cublasErrcheck(cublasSdot(cublas_handle, n, x, incx, y, incy, &result));

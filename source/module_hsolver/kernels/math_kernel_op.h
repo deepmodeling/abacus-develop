@@ -19,6 +19,17 @@
 
 namespace hsolver {
 
+#if defined(__CUDA)
+// Forms Hpsi[:, selected[j]] - eigenvalues[j] * psi[:, selected[j]].
+// All arrays reside on the device. Input and output columns are disjoint;
+// leading dimensions include padding, which is left unchanged.
+void selected_basis_residual_gpu(int rows, int columns, int leading,
+                                 const std::complex<double>* psi,
+                                 const std::complex<double>* hpsi,
+                                 const int* selected, const double* eigenvalues,
+                                 std::complex<double>* residual);
+#endif
+
 inline std::complex<double> set_real_tocomplex(const std::complex<double> &x) {
   return {x.real(), 0.0};
 }
