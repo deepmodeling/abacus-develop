@@ -1,6 +1,6 @@
 # Fe DeltaSpin performance benchmarks
 
-The benchmark matrix uses 16-atom and 54-atom bcc Fe supercells, one GPU,
+The timing benchmark matrix uses 16-atom and 32-atom bcc Fe supercells, one GPU,
 one MPI rank, and either one or twelve CPU threads. Each thread configuration
 compares the original and optimized binaries using identical input and asset
 hashes. Thread-count effects are reported separately from implementation speedup.
@@ -12,11 +12,11 @@ for performance on these supercells.
 
 ## Inputs
 
-Both structures use a 2.866 A conventional bcc lattice, repeated 2x2x2 or
-3x3x3. One atom is displaced by 0.02 A along x to provide nonzero forces for
+The structures use a 2.866 A conventional bcc lattice, repeated 2x2x2
+for Fe16, 2x2x4 for Fe32, or 3x3x3 for the Fe54 capacity check. One atom is displaced by 0.02 A along x to provide nonzero forces for
 comparison. The local moment target is 2.2 uB along +z on every atom.
 
-Both cases use 100 Ry, double precision, noncollinear spin, spin-orbit coupling,
+All cases use 100 Ry, double precision, noncollinear spin, spin-orbit coupling,
 the same pseudopotential and orbital file, and an explicit Gamma-centered
 2x2x2 k mesh. `kspacing=0` selects the supplied KPT file. Electronic and magnetic
 thresholds, smearing and mixing parameters are recorded in each INPUT file.
@@ -31,8 +31,11 @@ Fe.upf
 Fe_gga_8au_200.0Ry_4s2p2d1f.orb
 ```
 
-The reference 54-atom two-step probe reaches approximately 32,343 MiB on a
-32 GiB V100. Check available device memory before starting this case.
+The reference Fe54 two-step probe reaches approximately 32,343 MiB on a
+32 GiB V100. Its unrestricted run fails with CUDA out-of-memory after two
+completed SCF steps. Fe54 is retained as a capacity test; it cannot provide
+a converged reference runtime on this node. Fe32 supplies the larger-system
+timing comparison without changing the physical or solver settings.
 
 ## Run the matrix
 
@@ -44,7 +47,7 @@ two preserved installations:
 export DELTASPIN_BASELINE=/path/to/abacus-baseline
 export DELTASPIN_CANDIDATE=/path/to/abacus-optimized
 mkdir -p results
-for system in fe-bcc-16 fe-bcc-54; do
+for system in fe-bcc-16 fe-bcc-32; do
     for threads in 1 12; do
         python3 src/benchmark.py --binary "$DELTASPIN_BASELINE" \
             --case "$system" --label "baseline-${system}-t${threads}" \
