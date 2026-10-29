@@ -160,6 +160,10 @@ public:
     void add_spinor_potential(const std::complex<double>* input, const double* potential,
                              std::complex<double>* output, int ik, int stride,
                              std::complex<double>* up, std::complex<double>* down) const;
+    // Adds charge and all three magnetization channels, each of length nxyz.
+    // The scratch grids use the same compact layout as add_spinor_potential.
+    void add_spinor_density(const std::complex<double>* input, double weight, double* density,
+                            int ik, int stride, std::complex<double>* up, std::complex<double>* down) const;
 #endif
 
   public:

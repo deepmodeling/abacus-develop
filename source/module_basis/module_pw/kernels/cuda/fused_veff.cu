@@ -201,6 +201,50 @@ __global__ void fused_spinor_potential(const cufftDoubleComplex* input_up, const
     transfer_spinor_field<FFTForward, false>(nullptr, output_down, down, shared, plane, left, right);
 }
 
+template <class FFT>
+__global__ void fused_spinor_density(const cufftDoubleComplex* input_up, const cufftDoubleComplex* input_down,
+                              double* rho, double weight, int plane, int left, int right)
+{
+    using Complex = typename FFT::value_type;
+    constexpr int nx = cufftdx::size_of<FFT>::value;
+    const int size = nx * plane;
+    extern __shared__ __align__(16) Complex shared[];
+    Complex up[FFT::storage_size], down[FFT::storage_size];
+    transfer_spinor_field<FFT, true>(input_up, nullptr, up, shared, plane, left, right);
+    FFT().execute(up, shared);
+    __syncthreads();
+    transfer_spinor_field<FFT, true>(input_down, nullptr, down, shared, plane, left, right);
+    FFT().execute(down, shared);
+    auto* tile = reinterpret_cast<double*>(shared);
+    for (int spin = 0; spin < 4; ++spin)
+    {
+        __syncthreads();
+        for (int j = 0; j < FFT::elements_per_thread; ++j)
+        {
+            const int x = threadIdx.x + j * FFT::stride;
+            if (x < nx)
+            {
+                const Complex a = up[j], b = down[j];
+                const double norm_up = a.x * a.x + a.y * a.y;
+                const double norm_down = b.x * b.x + b.y * b.y;
+                double value = weight * (norm_up + norm_down);
+                if (spin == 1) { value = weight * 2.0 * (a.x * b.x + a.y * b.y); }
+                else if (spin == 2) { value = weight * 2.0 * (a.x * b.y - b.x * a.y); }
+                else if (spin == 3) { value = weight * (norm_up - norm_down); }
+                tile[x * FFT::ffts_per_block + threadIdx.y] = value;
+            }
+        }
+        __syncthreads();
+        const int tid = threadIdx.y * blockDim.x + threadIdx.x;
+        for (int i = tid; i < nx * FFT::ffts_per_block; i += blockDim.x * blockDim.y)
+        {
+            const int x = i / FFT::ffts_per_block;
+            const int output_line = blockIdx.x * FFT::ffts_per_block + i % FFT::ffts_per_block;
+            if (output_line < plane) { rho[spin * size + x * plane + output_line] += tile[i]; }
+        }
+    }
+}
+
 } // namespace
 
 bool fused_veff_supported()
@@ -284,6 +328,20 @@ void fused_veff_x(int plane, int left, int right, const double* potential,
     fused_spinor_potential<FFTInverse, FFTForward>
         <<<(plane + FFTInverse::ffts_per_block - 1) / FFTInverse::ffts_per_block,
            FFTInverse::block_dim, shared_bytes>>>(up_grid, down_grid, up_grid, down_grid, potential, plane, left, right);
+    check_launch();
+}
+
+void fused_density_x(int plane, int left, int right, double weight, double* density,
+                     const std::complex<double>* up, const std::complex<double>* down)
+{
+    using Inverse = decltype(FFTBase<8>() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
+    const size_t transfer_bytes = (left + 200 - right) * Inverse::ffts_per_block * sizeof(cufftDoubleComplex);
+    const size_t density_bytes = 200 * Inverse::ffts_per_block * sizeof(double);
+    const size_t shared_bytes = std::max(std::max(transfer_bytes, density_bytes), size_t(Inverse::shared_memory_size));
+    fused_spinor_density<Inverse><<<(plane + Inverse::ffts_per_block - 1) / Inverse::ffts_per_block,
+                                     Inverse::block_dim, shared_bytes>>>(
+        reinterpret_cast<const cufftDoubleComplex*>(up), reinterpret_cast<const cufftDoubleComplex*>(down),
+        density, weight, plane, left, right);
     check_launch();
 }
 

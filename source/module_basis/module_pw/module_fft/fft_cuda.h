@@ -75,6 +75,8 @@ class FFT_CUDA : public FFT_BASE<FPTYPE>
 #if defined(__CUFFTDX)
         int fused_veff_grid_size() const;
         int fused_veff_stick_size() const;
+        void transform_spinor_sticks(std::complex<double>* up, std::complex<double>* down,
+                                     const int* reverse, bool inverse) const;
         void apply_spinor_potential(const double* potential, std::complex<double>* up,
                                     std::complex<double>* down, const int* reverse = nullptr) const;
 #endif

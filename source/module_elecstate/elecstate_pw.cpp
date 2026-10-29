@@ -12,6 +12,11 @@
 #include "module_base/timer.h"
 #include "module_base/module_device/device.h"
 
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#if defined(__CUFFTDX)
+#include "module_basis/module_pw/kernels/fused_veff.h"
+#endif
+
 namespace elecstate {
 
 template <typename T, typename Device>
@@ -105,8 +110,23 @@ void ElecStatePW<T, Device>::init_rho_data()
             this->kin_r = reinterpret_cast<Real **>(this->charge->kin_r);
         }
     }
-    resmem_complex_op()(this->ctx, this->wfcr, this->basis->nmaxgr, "ElecSPW::wfcr");
-    resmem_complex_op()(this->ctx, this->wfcr_another_spin, this->basis->nrxx, "ElecSPW::wfcr_a");
+    int grid_size = this->basis->nmaxgr;
+    int spin_grid_size = this->basis->nrxx;
+#if defined(__CUFFTDX)
+    this->fused_density = std::is_same<T, std::complex<double>>::value
+                          && std::is_same<Device, base_device::DEVICE_GPU>::value
+                          && PARAM.inp.nspin == 4 && PARAM.globalv.domag
+                          && this->charge->nrxx == this->basis->nrxx
+                          && this->basis->d_igl2isz_k != nullptr
+                          && this->basis->fft_bundle.fused_veff_stick_size() > 0
+                          && ModulePW::fused_veff_supported();
+    if (this->fused_density)
+    {
+        grid_size = spin_grid_size = this->basis->fft_bundle.fused_veff_grid_size();
+    }
+#endif
+    resmem_complex_op()(this->ctx, this->wfcr, grid_size, "ElecSPW::wfcr");
+    resmem_complex_op()(this->ctx, this->wfcr_another_spin, spin_grid_size, "ElecSPW::wfcr_a");
     this->init_rho = true;
 }
 
@@ -232,6 +252,16 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             // Negative smearing weights contribute; only exact zeros are omitted.
             if (w1 == 0.0) { continue; }
 
+#if defined(__CUFFTDX)
+            if (this->fused_density)
+            {
+                this->basis->add_spinor_density(reinterpret_cast<const std::complex<double>*>(&psi(ibnd, 0)),
+                                                w1, reinterpret_cast<double*>(this->rho[0]), ik, npwx,
+                                                reinterpret_cast<std::complex<double>*>(this->wfcr),
+                                                reinterpret_cast<std::complex<double>*>(this->wfcr_another_spin));
+                continue;
+            }
+#endif
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,npwx), this->wfcr_another_spin, ik);

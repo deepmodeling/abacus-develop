@@ -13,6 +13,24 @@ namespace ModulePW
 {
 
 #if defined(__CUFFTDX)
+void PW_Basis_K::add_spinor_density(const std::complex<double>* input, double weight, double* density,
+                                   int ik, int stride, std::complex<double>* up, std::complex<double>* down) const
+{
+    assert(ik >= 0 && ik < this->nks && stride >= this->npwk[ik]);
+    assert(this->d_fftixy2is != nullptr && this->fft_bundle.fused_veff_stick_size() > 0);
+    ModuleBase::timer::tick(this->classname, "spinor_density gpu");
+    const int stick_size = this->fft_bundle.fused_veff_stick_size();
+    auto* stick_up = this->fft_bundle.get_auxr_3d_data<double>();
+    auto* stick_down = stick_up + stick_size;
+    base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
+        nullptr, stick_up, 0, 2 * stick_size);
+    const int* index = this->d_igl2isz_k + ik * this->npwk_max;
+    pack_spinor_sticks(this->npwk[ik], stride, index, input, stick_up, stick_down);
+    this->fft_bundle.transform_spinor_sticks(up, down, this->d_fftixy2is, true);
+    fused_density_x(this->ny * this->nz, this->fft_bundle.lixy + 1, this->fft_bundle.rixy, weight, density, up, down);
+    ModuleBase::timer::tick(this->classname, "spinor_density gpu");
+}
+
 void PW_Basis_K::add_spinor_potential(const std::complex<double>* input, const double* potential,
                                      std::complex<double>* output, int ik, int stride,
                                      std::complex<double>* up, std::complex<double>* down) const

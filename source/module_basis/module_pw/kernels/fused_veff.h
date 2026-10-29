@@ -32,6 +32,11 @@ void transform_stick_slabs(std::complex<double>* sticks, std::complex<double>* s
 void fused_veff_x(int plane, int left, int right, const double* potential,
                   std::complex<double>* up, std::complex<double>* down);
 
+// Adds the weighted charge and three magnetization components from the
+// inverse x transforms. Density channels are contiguous full real grids.
+void fused_density_x(int plane, int left, int right, double weight, double* density,
+                     const std::complex<double>* up, const std::complex<double>* down);
+
 } // namespace ModulePW
 
 #endif
