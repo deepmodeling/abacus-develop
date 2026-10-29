@@ -17,6 +17,15 @@ void pack_spinor_grid(int npw, int stride, int plane, int left, int right, const
 void add_spinor_grid(int npw, int stride, int plane, int left, int right, int nxyz, const int* index,
                     const std::complex<double>* up, const std::complex<double>* down, std::complex<double>* output);
 
+// Stick indices address contiguous z lines. The reverse map contains the
+// stick index for each x-y pair, or -1 for an absent Fourier line.
+void pack_spinor_sticks(int npw, int stride, const int* index, const std::complex<double>* input,
+                        std::complex<double>* up, std::complex<double>* down);
+void add_spinor_sticks(int npw, int stride, int nxyz, const int* index,
+                       const std::complex<double>* up, const std::complex<double>* down, std::complex<double>* output);
+void transform_stick_slabs(std::complex<double>* sticks, std::complex<double>* slabs,
+                           const int* reverse, int nz, int left, int right, bool inverse);
+
 // Applies the inverse x transform, the Hermitian 2x2 spin potential, and the
 // forward x transform in place. The x dimension is 200; normalization is
 // performed when the final plane-wave coefficients are gathered.

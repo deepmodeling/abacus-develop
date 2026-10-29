@@ -232,14 +232,26 @@ int FFT_Bundle::fused_veff_grid_size() const
     return 0;
 }
 
-void FFT_Bundle::apply_spinor_potential(const double* potential, std::complex<double>* up,
-                                        std::complex<double>* down) const
+int FFT_Bundle::fused_veff_stick_size() const
 {
 #if defined(__CUDA)
     auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
     if (cuda != nullptr)
     {
-        cuda->apply_spinor_potential(potential, up, down);
+        return cuda->fused_veff_stick_size();
+    }
+#endif
+    return 0;
+}
+
+void FFT_Bundle::apply_spinor_potential(const double* potential, std::complex<double>* up,
+                                        std::complex<double>* down, const int* reverse) const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        cuda->apply_spinor_potential(potential, up, down, reverse);
     }
 #endif
 }

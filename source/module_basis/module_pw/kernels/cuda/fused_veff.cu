@@ -31,18 +31,20 @@ __device__ int compact_grid_index(int index, int plane, int left, int right)
     return index - (index / plane >= right ? (right - left) * plane : 0);
 }
 
+template <bool Compact>
 __global__ void pack_spinor(int npw, int stride, int plane, int left, int right, const int* index,
                             const double2* input, double2* up, double2* down)
 {
     const int ig = blockIdx.x * blockDim.x + threadIdx.x;
     if (ig < npw)
     {
-        const int compact = compact_grid_index(index[ig], plane, left, right);
+        const int compact = Compact ? compact_grid_index(index[ig], plane, left, right) : index[ig];
         up[compact] = input[ig];
         down[compact] = input[stride + ig];
     }
 }
 
+template <bool Compact>
 __global__ void add_spinor(int npw, int stride, int plane, int left, int right, int nxyz, const int* index,
                            const thrust::complex<double>* up, const thrust::complex<double>* down,
                            thrust::complex<double>* output)
@@ -50,9 +52,59 @@ __global__ void add_spinor(int npw, int stride, int plane, int left, int right, 
     const int ig = blockIdx.x * blockDim.x + threadIdx.x;
     if (ig < npw)
     {
-        const int compact = compact_grid_index(index[ig], plane, left, right);
+        const int compact = Compact ? compact_grid_index(index[ig], plane, left, right) : index[ig];
         output[ig] += 1.0 / nxyz * up[compact];
         output[stride + ig] += 1.0 / nxyz * down[compact];
+    }
+}
+
+// The inverse transform expands occupied x-y sticks into complete y-z slabs.
+// The forward transform retains only the sticks required by the plane-wave basis.
+template <class FFT, bool Inverse>
+__global__ void transform_y_sticks(cufftDoubleComplex* sticks, cufftDoubleComplex* compact,
+                             const int* reverse, int nz, int left, int right)
+{
+    using Complex = typename FFT::value_type;
+    constexpr int ny = 200, batches = FFT::ffts_per_block;
+    const int cx = blockIdx.y;
+    const int x = cx < left ? cx : cx + right - left;
+    const int tid = threadIdx.y * blockDim.x + threadIdx.x;
+    extern __shared__ __align__(16) Complex shared[];
+    Complex values[FFT::storage_size];
+    for (int i = tid; i < ny * batches; i += blockDim.x * blockDim.y)
+    {
+        const int y = i / batches, iz = blockIdx.x * batches + i % batches;
+        const int stick = reverse[x * ny + y];
+        const int index = Inverse ? stick * nz + iz : (cx * ny + y) * nz + iz;
+        const bool valid = iz < nz && (!Inverse || stick >= 0);
+        const auto v = valid ? (Inverse ? sticks[index] : compact[index]) : make_cuDoubleComplex(0, 0);
+        shared[i] = Complex(v.x, v.y);
+    }
+    __syncthreads();
+    for (int i = 0; i < FFT::elements_per_thread; ++i)
+    {
+        const int y = threadIdx.x + i * FFT::stride;
+        values[i] = y < ny ? shared[y * batches + threadIdx.y] : Complex(0, 0);
+    }
+    __syncthreads();
+    FFT().execute(values, shared);
+    __syncthreads();
+    for (int i = 0; i < FFT::elements_per_thread; ++i)
+    {
+        const int y = threadIdx.x + i * FFT::stride;
+        if (y < ny) { shared[y * batches + threadIdx.y] = values[i]; }
+    }
+    __syncthreads();
+    for (int i = tid; i < ny * batches; i += blockDim.x * blockDim.y)
+    {
+        const int y = i / batches, iz = blockIdx.x * batches + i % batches;
+        const int stick = reverse[x * ny + y];
+        if (iz < nz && (Inverse || stick >= 0))
+        {
+            const auto v = make_cuDoubleComplex(shared[i].x, shared[i].y);
+            if (Inverse) { compact[(cx * ny + y) * nz + iz] = v; }
+            else { sticks[stick * nz + iz] = v; }
+        }
     }
 }
 
@@ -164,7 +216,7 @@ bool fused_veff_supported()
 void pack_spinor_grid(int npw, int stride, int plane, int left, int right, const int* index,
                      const std::complex<double>* input, std::complex<double>* up, std::complex<double>* down)
 {
-    pack_spinor<<<(npw + 255) / 256, 256>>>(npw, stride, plane, left, right, index,
+    pack_spinor<true><<<(npw + 255) / 256, 256>>>(npw, stride, plane, left, right, index,
         reinterpret_cast<const double2*>(input), reinterpret_cast<double2*>(up), reinterpret_cast<double2*>(down));
     check_launch();
 }
@@ -172,9 +224,47 @@ void pack_spinor_grid(int npw, int stride, int plane, int left, int right, const
 void add_spinor_grid(int npw, int stride, int plane, int left, int right, int nxyz, const int* index,
                     const std::complex<double>* up, const std::complex<double>* down, std::complex<double>* output)
 {
-    add_spinor<<<(npw + 255) / 256, 256>>>(npw, stride, plane, left, right, nxyz, index,
+    add_spinor<true><<<(npw + 255) / 256, 256>>>(npw, stride, plane, left, right, nxyz, index,
         reinterpret_cast<const thrust::complex<double>*>(up), reinterpret_cast<const thrust::complex<double>*>(down),
         reinterpret_cast<thrust::complex<double>*>(output));
+    check_launch();
+}
+
+void pack_spinor_sticks(int npw, int stride, const int* index, const std::complex<double>* input,
+                        std::complex<double>* up, std::complex<double>* down)
+{
+    pack_spinor<false><<<(npw + 255) / 256, 256>>>(npw, stride, 0, 0, 0, index,
+        reinterpret_cast<const double2*>(input), reinterpret_cast<double2*>(up), reinterpret_cast<double2*>(down));
+    check_launch();
+}
+
+void add_spinor_sticks(int npw, int stride, int nxyz, const int* index,
+                       const std::complex<double>* up, const std::complex<double>* down, std::complex<double>* output)
+{
+    add_spinor<false><<<(npw + 255) / 256, 256>>>(npw, stride, 0, 0, 0, nxyz, index,
+        reinterpret_cast<const thrust::complex<double>*>(up), reinterpret_cast<const thrust::complex<double>*>(down),
+        reinterpret_cast<thrust::complex<double>*>(output));
+    check_launch();
+}
+
+void transform_stick_slabs(std::complex<double>* sticks, std::complex<double>* slabs,
+                           const int* reverse, int nz, int left, int right, bool inverse)
+{
+    constexpr size_t tile_bytes = 200 * FFTInverse::ffts_per_block * sizeof(cufftDoubleComplex);
+    const size_t shared_bytes = std::max(tile_bytes, size_t(FFTInverse::shared_memory_size));
+    const dim3 blocks((nz + FFTInverse::ffts_per_block - 1) / FFTInverse::ffts_per_block, left + 200 - right);
+    auto* stick_data = reinterpret_cast<cufftDoubleComplex*>(sticks);
+    auto* slab_data = reinterpret_cast<cufftDoubleComplex*>(slabs);
+    if (inverse)
+    {
+        transform_y_sticks<FFTInverse, true><<<blocks, FFTInverse::block_dim, shared_bytes>>>(
+            stick_data, slab_data, reverse, nz, left, right);
+    }
+    else
+    {
+        transform_y_sticks<FFTForward, false><<<blocks, FFTForward::block_dim, shared_bytes>>>(
+            stick_data, slab_data, reverse, nz, left, right);
+    }
     check_launch();
 }
 

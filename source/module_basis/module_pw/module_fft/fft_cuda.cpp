@@ -23,7 +23,7 @@ void FFT_CUDA<FPTYPE>::initfft(int nx_in,
                                int nz_in,
                                int lixy_in,
                                int rixy_in,
-                               int /*ns_in*/,
+                               int ns_in,
                                int /*nplane_in*/,
                                int nproc_in,
                                bool gamma_only_in,
@@ -35,6 +35,7 @@ void FFT_CUDA<FPTYPE>::initfft(int nx_in,
     this->lixy_index = lixy_in;
     this->rixy_index = rixy_in;
     this->nproc = nproc_in;
+    this->ns_index = ns_in;
     this->gamma_only = gamma_only_in;
     this->xprime = xprime_in;
 }
@@ -63,7 +64,7 @@ void FFT_CUDA<double>::cleanFFT()
         cufftDestroy(z_handle);
         z_handle = {};
     }
-    for (auto* handle : {&z_x_handle, &z_yz_left_handle, &z_yz_right_handle})
+    for (auto* handle : {&z_x_handle, &z_yz_left_handle, &z_yz_right_handle, &z_stick_handle})
     {
         if (*handle)
         {
@@ -246,14 +247,54 @@ int FFT_CUDA<double>::fused_veff_grid_size() const
                ? (this->lixy_index + 1 + this->nx - this->rixy_index) * this->ny * this->nz : 0;
 }
 template <typename FPTYPE>
-void FFT_CUDA<FPTYPE>::apply_spinor_potential(const double*, std::complex<double>*, std::complex<double>*) const
+int FFT_CUDA<FPTYPE>::fused_veff_stick_size() const
+{
+    return 0;
+}
+template <>
+int FFT_CUDA<double>::fused_veff_stick_size() const
+{
+    return this->ny == 200 && this->nz == 200 && this->fused_veff_grid_size() > 0
+           && 2 * this->ns_index <= (this->lixy_index + 1 + this->nx - this->rixy_index) * this->ny
+               ? this->ns_index * this->nz : 0;
+}
+template <typename FPTYPE>
+void FFT_CUDA<FPTYPE>::apply_spinor_potential(const double*, std::complex<double>*, std::complex<double>*,
+                                              const int*) const
 {
 }
 template <>
 void FFT_CUDA<double>::apply_spinor_potential(const double* potential, std::complex<double>* up,
-                                              std::complex<double>* down) const
+                                              std::complex<double>* down, const int* reverse) const
 {
     assert(this->fused_veff_grid_size() > 0);
+    if (reverse != nullptr)
+    {
+        const int stick_size = this->fused_veff_stick_size();
+        assert(stick_size > 0);
+        if (!this->z_stick_handle)
+        {
+            int length = this->nz;
+            CHECK_CUFFT(cufftPlanMany(&this->z_stick_handle, 1, &length, &length, 1, length,
+                                     &length, 1, length, CUFFT_Z2Z, this->ns_index));
+        }
+        auto* stick_up = this->get_auxr_3d_data<double>();
+        auto* stick_down = stick_up + stick_size;
+        auto transform = [&](std::complex<double>* sticks, std::complex<double>* slabs, bool inverse)
+        {
+            auto* data = reinterpret_cast<cufftDoubleComplex*>(sticks);
+            if (inverse) { CHECK_CUFFT(cufftExecZ2Z(this->z_stick_handle, data, data, CUFFT_INVERSE)); }
+            ModulePW::transform_stick_slabs(sticks, slabs, reverse, this->nz, this->lixy_index + 1,
+                                            this->rixy_index, inverse);
+            if (!inverse) { CHECK_CUFFT(cufftExecZ2Z(this->z_stick_handle, data, data, CUFFT_FORWARD)); }
+        };
+        transform(stick_up, up, true);
+        transform(stick_down, down, true);
+        ModulePW::fused_veff_x(this->ny * this->nz, this->lixy_index + 1, this->rixy_index, potential, up, down);
+        transform(stick_up, up, false);
+        transform(stick_down, down, false);
+        return;
+    }
     this->init_gpu_pruned_plan();
     const int plane = this->ny * this->nz;
     const int left = this->lixy_index + 1;

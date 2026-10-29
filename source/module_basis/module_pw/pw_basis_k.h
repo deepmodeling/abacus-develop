@@ -101,6 +101,9 @@ public:
                           const double& erf_sigma_in = 0.1);
 
   private:
+#if defined(__CUFFTDX)
+    int* d_fftixy2is = nullptr;
+#endif
     float  * s_gk2 = nullptr;
     double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
     //create igl2isz_k map array for fft

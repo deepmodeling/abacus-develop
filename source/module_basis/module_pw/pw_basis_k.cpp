@@ -1,6 +1,7 @@
 #include "pw_basis_k.h"
 
 #include <utility>
+#include <vector>
 
 #include "module_base/constants.h"
 #include "module_base/memory.h"
@@ -36,6 +37,9 @@ PW_Basis_K::~PW_Basis_K()
         delmem_dd_op()(gpu_ctx, this->d_kvec_c);
         delmem_int_op()(gpu_ctx, this->ig2ixyz_k);
         delmem_int_op()(gpu_ctx, this->d_igl2isz_k);
+#if defined(__CUFFTDX)
+        delmem_int_op()(gpu_ctx, this->d_fftixy2is);
+#endif
     }
     else {
 #endif
@@ -192,6 +196,20 @@ void PW_Basis_K::setuptransform()
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }
     this->fft_bundle.setupFFT();
+#if defined(__CUFFTDX)
+    if (this->device == "gpu")
+    {
+        delmem_int_op()(gpu_ctx, this->d_fftixy2is);
+        this->d_fftixy2is = nullptr;
+        if (this->precision == "double" && this->fft_bundle.fused_veff_stick_size() > 0)
+        {
+            std::vector<int> reverse(this->nx * this->ny, -1);
+            for (int is = 0; is < this->nst; ++is) { reverse[this->is2fftixy[is]] = is; }
+            resmem_int_op()(gpu_ctx, this->d_fftixy2is, reverse.size());
+            syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_fftixy2is, reverse.data(), reverse.size());
+        }
+    }
+#endif
     ModuleBase::timer::tick(this->classname, "setuptransform");
 }
 
