@@ -157,10 +157,13 @@ instantiation increases compilation time and executable size.
 
 On Volta devices (compute capability 7.0), double-complex products use cuBLAS
 ZGEMM3M when both output dimensions are at least 128, the contraction dimension
-is at least 64, and at least one dimension is 4096 or larger. Device selection
-is established with the BLAS handle. Other shapes and architectures retain
-ZGEMM. The size gate targets wide plane-wave products; narrow projection panels
-and the historical two-atom fixture retain their conventional accumulation.
+is at least 64, and at least one dimension is 4096 or larger. Conjugate-transposed
+projections also use this implementation for at least 128 output rows, 64 output
+columns and a contraction dimension of at least 4096. This covers triangular
+Davidson projection panels without increasing the panel width or computing more
+of the unused lower triangle. Device selection is established with the BLAS
+handle. Other shapes and architectures retain ZGEMM, including the historical
+two-atom fixture's smaller projector products.
 
 ZGEMM3M forms a complex product from three double-precision real products. Its
 floating-point accumulation differs from ZGEMM, so mathematical equivalence

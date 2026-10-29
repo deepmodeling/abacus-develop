@@ -125,6 +125,14 @@ int main()
     run(reference_handle, 128, 127, 4096, 'C', 'N', false);
     run(reference_handle, 4096, 128, 63, 'N', 'N', false);
     run(reference_handle, 128, 128, 4095, 'C', 'N', false);
+    for (char ta : {'N', 'T', 'C'})
+    for (char tb : {'N', 'T', 'C'}) { run(reference_handle, 129, 64, 4097, ta, tb, true); }
+    run(reference_handle, 128, 64, 4096, 'C', 'N', false);
+    run(reference_handle, 127, 64, 4096, 'C', 'N', false);
+    run(reference_handle, 128, 63, 4096, 'C', 'N', false);
+    run(reference_handle, 128, 64, 4095, 'C', 'N', false);
+    run(reference_handle, 68, 104, 4097, 'C', 'N', false);
+    run(reference_handle, 4097, 104, 68, 'N', 'T', false);
     require(cublasDestroy(reference_handle) == CUBLAS_STATUS_SUCCESS, "Reference handle destruction failed");
     hsolver::destoryBLAShandle();
 }

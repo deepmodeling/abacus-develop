@@ -935,7 +935,8 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
     cublasOperation_t cutransB = judge_trans_op(true, transb, "gemm_op");
     // Three real products reduce arithmetic for wide Volta GEMMs. Narrow or
     // small products retain the conventional complex accumulation order.
-    if (use_volta_gemm3m && m >= 128 && n >= 128 && k >= 64
+    if (use_volta_gemm3m && m >= 128 && k >= 64
+        && (n >= 128 || (transa == 'C' && transb == 'N' && n >= 64 && k >= 4096))
         && (m >= 4096 || n >= 4096 || k >= 4096))
     {
         cublasErrcheck(cublasZgemm3m(cublas_handle, cutransA, cutransB, m, n, k,
