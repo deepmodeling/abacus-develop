@@ -30,6 +30,9 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	
 	if(func_type == 0 || func_type == 1) { return; } // none or LDA functional
 
+	ModuleBase::timer::tick("XC_Functional", "gradcorr");
+	ModuleBase::timer::tick("XC_Functional", "gradient_setup");
+
 	bool igcc_is_lyp = false;
 	if( func_id[1] == XC_GGA_C_LYP) { igcc_is_lyp = true; }
 
@@ -190,7 +193,10 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 
 	}
-	
+
+	ModuleBase::timer::tick("XC_Functional", "gradient_setup");
+	ModuleBase::timer::tick("XC_Functional", "functional_eval");
+
 	const double epsr = 1.0e-6;
 	const double epsg = 1.0e-10;
 
@@ -495,6 +501,9 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 }
 #endif
 
+	ModuleBase::timer::tick("XC_Functional", "functional_eval");
+	ModuleBase::timer::tick("XC_Functional", "potential_assembly");
+
 	//std::cout << "\n vtxcgc=" << vtxcgc;
 	//std::cout << "\n etxcgc=" << etxcgc << std::endl;
 
@@ -594,6 +603,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 			}
 		}
 	}
+	ModuleBase::timer::tick("XC_Functional", "potential_assembly");
+
 	// deacllocate
 	delete[] rhotmp1;
 	delete[] rhogsum1;
@@ -627,6 +638,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		delete[] gdr2;
 	}
 
+	ModuleBase::timer::tick("XC_Functional", "gradcorr");
 	return;
 }
 
