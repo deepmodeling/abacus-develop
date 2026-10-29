@@ -18,7 +18,8 @@ double set_diagethr_ks(const std::string basis_type,
                        const double pw_diag_thr_init,
                        const double diag_ethr_in,
                        const double nelec_in,
-                       const double scf_thr_in);
+                       const double scf_thr_in,
+                       const double pw_diag_thr_max);
 
 double set_diagethr_sdft(const std::string basis_type,
                          const std::string esolver_type,
@@ -43,7 +44,8 @@ double reset_diag_ethr(std::ofstream& ofs_running,
                        const double hsover_error,
                        const double drho_in,
                        const double diag_ethr_in,
-                       const double nelec_in);
+                       const double nelec_in,
+                       const double pw_diag_thr_max);
 
 // calculate hsolver_error (for sdft, lcao and lcao-in-pw, we suppose the error is zero)
 double cal_hsolve_error(const std::string basis_type,

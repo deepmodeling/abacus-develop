@@ -1,1 +1,42 @@
-Test PW DFT+U (U=5.0eV, l=2) with collinear spin (nspin=2), Z magnetization
+Test PW DFT+U (U=5.0 eV, l=2) with collinear spin and fixed occupations.
+The original three ionic steps, wavefunction cutoff (10 Ry), structure,
+pseudopotential, orbital file, U value, and default Davidson-subspace solver
+are retained. This checks a short relaxation trajectory, not a fully relaxed
+structure.
+
+The density cutoff is 160 Ry to resolve the charge and magnetic densities.
+Real-space SCF convergence uses a normalized L1 residual below 1e-10,
+including both spin channels. The magnetic mixing factor is 0.4; the charge
+mixing factor remains 0.4. The electronic/diagonalization budgets are 200,
+with an initial diagonalization threshold of 1e-13 and no empty-band
+threshold smoothing.
+
+These settings use the corrected dense-grid real-space mixing path: charge,
+kinetic-density history, spin strides, Kerker FFTs, and the history inner
+product all use the grid on which the real-space density is stored.
+The previous implementation used the smaller smooth-grid size and failed
+to mix the entire density when the grids differed.
+
+The higher density cutoff also changes the short relaxation trajectory.
+The former final energy was -5654.418683431447 eV; the recalculated
+reference is approximately -5627.291202544 eV, a shift of about +27.13 eV.
+The new reference is tied to the denser grid and the fully converged
+electronic steps of the revised input.
+
+Reference validation on 2026-10-28 used GNU 12.3, OpenMPI 5.0.10, CPU Release,
+and one thread each for OpenMP, OpenBLAS and MKL. The reference comes from
+an independent Davidson-subspace run. Davidson-subspace, Davidson and PPCG
+were each rerun from clean inputs at 1, 2 and 4 MPI ranks. All nine runs
+converged at all three ionic steps and passed the unchanged original
+Autotest checks (36/36 properties), without PPCG residual warnings.
+
+Across these nine runs, the final energy span was 4.232e-9 eV. The largest
+force/stress component differences over every ionic step were 6.870e-8
+eV/Angstrom and 1.710e-6 kbar. The original acceptance limits remain
+1e-7 eV for energy, 1e-4 for the force aggregate, and 1e-3 for the stress
+aggregate. The original reference remains in commit
+77f7b4af69934064aa5f4b84267343e9135bc348.
+
+To reproduce, use clean copies with ks_solver=dav_subspace, dav and ppcg,
+and run the original tests/integrate/Autotest.sh at -n1, -n2 and -n4 with
+-o1. Preserve all three ionic steps and the supplied fixed occ_mat.txt.

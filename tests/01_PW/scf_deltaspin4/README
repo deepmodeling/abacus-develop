@@ -1,2 +1,46 @@
-Test PW DeltaSpin with nspin=4 and nonparallel xyz constraints of magnitude 2 mu_B on each atom.
-The existing energy, force and stress comparisons include a regression for the onsite stress sign.
+Noncollinear DeltaSpin force and stress regression
+================================================
+
+Test PW DeltaSpin with nspin=4 and nonparallel xyz constraints of magnitude
+2 mu_B on each atom. The energy, force and stress comparisons include a
+regression for the onsite stress sign.
+
+This test checks the energy, force and stress after both the charge density
+and the constrained atomic magnetic moments converge to 1e-8. It retains
+Davidson-subspace as the default solver, kpar=2 and the original structure,
+pseudopotential, orbital basis, cutoff, smearing and mixing settings.
+
+The previous charge threshold of 1e-6 and magnetic-moment threshold of 1e-4
+stopped after 11 SCF steps. Its force and stress depended on the solver's
+SCF trajectory more strongly than the existing reference tolerances allow.
+The revised inputs tighten both convergence targets, set the initial
+diagonalization threshold to 1e-10, disable empty-band threshold smoothing,
+and increase the iteration budgets. The adaptive diagonalization threshold
+remains enabled; pw_diag_thr_max is not set.
+
+Reference provenance (2026-10-26)
+-------------------------------
+The reference uses Davidson-subspace output from a GNU 12.3 / OpenMPI 5.0.10
+Release build with four MPI ranks and one OpenMP/BLAS thread. The build is
+based on 77f7b4af69934064aa5f4b84267343e9135bc348 plus the accompanying
+local PPCG/Davidson and threshold-control fixes. Binary SHA-256:
+d9d2914b9f8f793d0da52f28b09a6996ae39483958658dfb72490f51c2b842f1.
+
+Independent PPCG and CG runs used identical inputs except ks_solver.
+PPCG and Davidson-subspace converged in 25 SCF steps, CG in 26. Their final
+charge errors were 7.45e-9, 7.51e-9 and 8.78e-9; complete-space magnetic
+moment RMS errors were 2.52e-9, 2.82e-9 and 7.21e-9 Bohr magnetons.
+The final printed atomic moments independently satisfy the same target.
+
+Maximum differences across all three solver pairs:
+  total energy:             7.79e-9 eV
+  force absolute-value sum:  6.0e-6 eV/Angstrom
+  stress absolute-value sum: 2.50e-4 kbar
+  individual force entry:   3.22e-7 eV/Angstrom
+  individual stress entry:  9.03e-5 kbar
+
+The original reference-check tolerances remain 1e-7 eV, 1e-4 eV/Angstrom
+and 1e-3 kbar. The reference contains the same four properties as before;
+timing output is not used as a numerical reference. All three tightened
+calculations differ from the old stress reference by about 3.091 kbar in
+the absolute-value sum, establishing the need for the reference update.

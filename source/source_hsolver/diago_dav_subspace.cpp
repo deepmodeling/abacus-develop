@@ -5,6 +5,8 @@
 #include "source_base/module_device/device.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
+#include "source_base/parallel_reduce.h"
+#include "source_base/module_container/base/third_party/lapack.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/kernels/dsp/dsp_connector.h"
 // #include "source_base/module_container/ATen/kernels/lapack.h"
@@ -16,6 +18,8 @@
 #include "source_hsolver/kernels/bpcg_kernel_op.h" // normalize_op, precondition_op, apply_eigenvalues_op
 
 #include <vector>
+#include <limits>
+#include <sstream>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -23,6 +27,64 @@
 #endif
 
 using namespace hsolver;
+
+namespace
+{
+template <typename T>
+T dav_conjugate(const T value)
+{
+    return value;
+}
+
+template <typename Real>
+std::complex<Real> dav_conjugate(const std::complex<Real> value)
+{
+    return std::conj(value);
+}
+
+// Keep INFO and M by reference: the general connector currently passes M by value.
+void dav_hegvx(const int n, const int nband, std::complex<double>* h, std::complex<double>* s,
+               double* eigenvalues, std::complex<double>* vectors, std::complex<double>* work,
+               const int lwork, double* rwork, int* iwork, int* ifail, int& found, int& info)
+{
+    const int itype = 1;
+    const char job = 'V';
+    const char range = 'I';
+    const char uplo = 'U';
+    const int first = 1;
+    const double zero = 0;
+    zhegvx_(&itype, &job, &range, &uplo, &n, h, &n, s, &n, &zero, &zero, &first, &nband,
+            &zero, &found, eigenvalues, vectors, &n, work, &lwork, rwork, iwork, ifail, &info);
+}
+
+void dav_hegvx(const int n, const int nband, std::complex<float>* h, std::complex<float>* s,
+               float* eigenvalues, std::complex<float>* vectors, std::complex<float>* work,
+               const int lwork, float* rwork, int* iwork, int* ifail, int& found, int& info)
+{
+    const int itype = 1;
+    const char job = 'V';
+    const char range = 'I';
+    const char uplo = 'U';
+    const int first = 1;
+    const float zero = 0;
+    chegvx_(&itype, &job, &range, &uplo, &n, h, &n, s, &n, &zero, &zero, &first, &nband,
+            &zero, &found, eigenvalues, vectors, &n, work, &lwork, rwork, iwork, ifail, &info);
+}
+
+void dav_hegvx(const int n, const int nband, double* h, double* s, double* eigenvalues,
+               double* vectors, double* work, const int lwork, double* rwork, int* iwork,
+               int* ifail, int& found, int& info)
+{
+    const int itype = 1;
+    const char job = 'V';
+    const char range = 'I';
+    const char uplo = 'U';
+    const int first = 1;
+    const double zero = 0;
+    dsygvx_(&itype, &job, &range, &uplo, &n, h, &n, s, &n, &zero, &zero, &first, &nband,
+            &zero, &found, eigenvalues, vectors, &n, work, &lwork, iwork, ifail, &info);
+}
+} // namespace
 
 template <typename T, typename Device>
 Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precondition_in,
@@ -108,6 +170,197 @@ Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
 }
 
 template <typename T, typename Device>
+int Diago_DavSubspace<T, Device>::orthonormalize_cpu(const HSOperator<T, Device>& op,
+                                                  const int first,
+                                                  const int count)
+{
+    // Scale before testing rank, so small residuals are not discarded just for
+    // their magnitude. Test the loss of S norm relative to the scaled input.
+    const Real rank_tolerance = 64 * std::numeric_limits<Real>::epsilon();
+    std::vector<T> candidate(this->dim);
+    std::vector<T> s_candidate(this->dim);
+    std::vector<T> overlaps(this->nbase_x);
+    int retained = 0;
+    for (int column = 0; column < count; ++column)
+    {
+        const int source_offset = (first + column) * this->dim;
+        Real scale = 0;
+        int invalid = 0;
+        for (int row = 0; row < this->dim; ++row)
+        {
+            candidate[row] = this->psi_in_iter[source_offset + row];
+            const Real magnitude = std::abs(candidate[row]);
+            invalid += !std::isfinite(magnitude);
+            scale = std::max(scale, magnitude);
+        }
+        if (this->diag_comm.nproc > 1)
+        {
+            Parallel_Reduce::reduce_pool(&invalid, 1);
+            double global_scale = scale;
+            Parallel_Reduce::reduce_max_pool(this->diag_comm.nproc, global_scale);
+            scale = static_cast<Real>(global_scale);
+        }
+        if (invalid != 0)
+        {
+            ModuleBase::WARNING_QUIT("Diago_DavSubspace", "Non-finite CPU basis direction.");
+        }
+        if (scale == 0)
+        {
+            continue;
+        }
+        for (int row = 0; row < this->dim; ++row)
+        {
+            candidate[row] /= scale;
+        }
+        op.spsi(candidate.data(), s_candidate.data(), this->dim, 1);
+        T initial_norm = 0;
+        for (int row = 0; row < this->dim; ++row)
+        {
+            initial_norm += dav_conjugate(candidate[row]) * s_candidate[row];
+        }
+        if (this->diag_comm.nproc > 1)
+        {
+            Parallel_Reduce::reduce_pool(&initial_norm, 1);
+        }
+        const Real initial_norm_squared = std::real(initial_norm);
+        if (!std::isfinite(initial_norm_squared) || initial_norm_squared <= 0)
+        {
+            ModuleBase::WARNING_QUIT("Diago_DavSubspace", "The CPU basis has a non-positive or non-finite S norm.");
+        }
+        const int accepted = first + retained;
+        for (int pass = 0; pass < 2; ++pass)
+        {
+            if (accepted > 0)
+            {
+                ModuleBase::gemv_op<T, base_device::DEVICE_CPU>()
+                    ('C', this->dim, accepted, this->one, this->psi_in_iter, this->dim,
+                     s_candidate.data(), 1, this->zero, overlaps.data(), 1);
+            }
+            if (this->diag_comm.nproc > 1 && accepted > 0)
+            {
+                Parallel_Reduce::reduce_pool(overlaps.data(), accepted);
+            }
+            if (accepted > 0)
+            {
+                ModuleBase::gemv_op<T, base_device::DEVICE_CPU>()
+                    ('N', this->dim, accepted, this->neg_one, this->psi_in_iter, this->dim,
+                     overlaps.data(), 1, this->one, candidate.data(), 1);
+            }
+            // Reapply S to avoid estimating a tiny norm by cancellation of
+            // large overlap terms, including when S is not the identity.
+            op.spsi(candidate.data(), s_candidate.data(), this->dim, 1);
+        }
+        T final_norm = 0;
+        for (int row = 0; row < this->dim; ++row)
+        {
+            final_norm += dav_conjugate(candidate[row]) * s_candidate[row];
+        }
+        if (this->diag_comm.nproc > 1)
+        {
+            Parallel_Reduce::reduce_pool(&final_norm, 1);
+        }
+        const Real final_norm_squared = std::real(final_norm);
+        if (!std::isfinite(final_norm_squared))
+        {
+            ModuleBase::WARNING_QUIT("Diago_DavSubspace", "Non-finite projected CPU S norm.");
+        }
+        if (final_norm_squared <= rank_tolerance * initial_norm_squared)
+        {
+            continue;
+        }
+        const Real norm = std::sqrt(final_norm_squared);
+        const int target_offset = accepted * this->dim;
+        for (int row = 0; row < this->dim; ++row)
+        {
+            this->psi_in_iter[target_offset + row] = candidate[row] / norm;
+            this->spsi[target_offset + row] = s_candidate[row] / norm;
+        }
+        ++retained;
+    }
+    return retained;
+}
+
+template <typename T, typename Device>
+bool Diago_DavSubspace<T, Device>::restarted_basis_is_orthonormal_cpu() const
+{
+    // Ritz coefficients are S-orthonormal, so rotation normally preserves the
+    // basis metric. Check the actual rotated vectors before using that identity.
+    const int gram_size = this->n_band * this->n_band;
+    std::vector<T> gram(gram_size);
+    ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()
+        ('C', 'N', this->n_band, this->n_band, this->dim, this->one,
+         this->psi_in_iter, this->dim, this->spsi, this->dim, this->zero,
+         gram.data(), this->n_band);
+    if (this->diag_comm.nproc > 1)
+    {
+        Parallel_Reduce::reduce_pool(gram.data(), gram_size);
+    }
+    const Real tolerance = 64 * std::numeric_limits<Real>::epsilon() * this->n_band;
+    for (int column = 0; column < this->n_band; ++column)
+    {
+        for (int row = 0; row < this->n_band; ++row)
+        {
+            T error = gram[column * this->n_band + row];
+            if (row == column)
+            {
+                error -= 1;
+            }
+            const Real magnitude = std::abs(error);
+            if (!std::isfinite(magnitude) || magnitude > tolerance)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+template <typename T, typename Device>
+bool Diago_DavSubspace<T, Device>::residuals_converged_cpu(const int nbase,
+                                                        const std::vector<Real>& eigenvalues,
+                                                        const std::vector<double>& ethr_band) const
+{
+    // This guard is used only when rank filtering leaves no expansion. A
+    // repeated Ritz value alone is not convergence in that situation.
+    for (int band = 0; band < this->n_band; ++band)
+    {
+        Real norms[3] = {};
+        for (int row = 0; row < this->dim; ++row)
+        {
+            T hx = 0;
+            T sx = 0;
+            for (int basis = 0; basis < nbase; ++basis)
+            {
+                const T coefficient = this->vcc[band * this->nbase_x + basis];
+                hx += this->hpsi[basis * this->dim + row] * coefficient;
+                sx += this->spsi[basis * this->dim + row] * coefficient;
+            }
+            const T residual = hx - eigenvalues[band] * sx;
+            const T residual_squared = dav_conjugate(residual) * residual;
+            const T h_squared = dav_conjugate(hx) * hx;
+            const T s_squared = dav_conjugate(sx) * sx;
+            norms[0] += std::real(residual_squared);
+            norms[1] += std::real(h_squared);
+            norms[2] += std::real(s_squared);
+        }
+        if (this->diag_comm.nproc > 1)
+        {
+            Parallel_Reduce::reduce_pool(norms, 3);
+        }
+        const Real residual_norm = std::sqrt(norms[0]);
+        const Real operator_scale = std::sqrt(norms[1]) + std::abs(eigenvalues[band]) * std::sqrt(norms[2]);
+        const Real roundoff = 32 * std::numeric_limits<Real>::epsilon() * nbase * operator_scale;
+        const Real target = static_cast<Real>(ethr_band[band]);
+        const Real tolerance = std::max(target, roundoff);
+        if (!std::isfinite(residual_norm) || residual_norm > tolerance)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+template <typename T, typename Device>
 int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                                             T* psi_in,
                                             const int psi_in_dmax,
@@ -139,6 +392,15 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
         unconv[m] = m;
     }
 
+    if (this->device == base_device::CpuDevice)
+    {
+        const int retained = this->orthonormalize_cpu(op, 0, this->n_band);
+        if (retained != this->n_band)
+        {
+            ModuleBase::WARNING_QUIT("Diago_DavSubspace", "Initial CPU trial vectors are linearly dependent in S.");
+        }
+    }
+
     // compute h*psi_in_iter
     // NOTE: bands after the first n_band should yield zero
     // hpsi[:, 0:nbase_x] = H * psi_in_iter[:, 0:nbase_x]
@@ -165,7 +427,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
     {
         dav_iter++;
 
-        this->cal_grad(op,
+        const int added = this->cal_grad(op,
                        this->dim,
                        nbase,
                        this->notconv,
@@ -176,35 +438,49 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                        unconv.data(),
                        &eigenvalue_iter);
 
-        this->cal_elem(this->dim,
-                       nbase,
-                       this->notconv,
-                       this->psi_in_iter,
-                       this->spsi,
-                       this->hpsi,
-                       this->hcc,
-                       this->scc);
-
-        this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
-
-        // check convergence and update eigenvalues
-        ModuleBase::timer::start("Diago_DavSubspace", "check_update");
-
-        this->notconv = 0;
-        for (int m = 0; m < this->n_band; m++)
+        if (added == 0)
         {
-            convflag[m] = (std::abs(eigenvalue_iter[m] - eigenvalue_in_hsolver[m]) < ethr_band[m]);
-
-            if (!convflag[m])
+            const bool converged = this->residuals_converged_cpu(nbase, eigenvalue_iter, ethr_band);
+            if (!converged)
             {
-                unconv[this->notconv] = m;
-                this->notconv++;
+                ModuleBase::WARNING_QUIT("Diago_DavSubspace",
+                                         "No independent CPU expansion direction remains, but the true residual is not converged.");
+            }
+            this->notconv = 0;
+        }
+        else
+        {
+            this->cal_elem(this->dim,
+                           nbase,
+                           added,
+                           this->psi_in_iter,
+                           this->spsi,
+                           this->hpsi,
+                           this->hcc,
+                           this->scc);
+
+            this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, &eigenvalue_iter, this->vcc);
+
+            // check convergence and update eigenvalues
+            ModuleBase::timer::start("Diago_DavSubspace", "check_update");
+
+            this->notconv = 0;
+            for (int m = 0; m < this->n_band; m++)
+            {
+                const Real eigenvalue_change = eigenvalue_iter[m] - eigenvalue_in_hsolver[m];
+                convflag[m] = (std::abs(eigenvalue_change) < ethr_band[m]);
+
+                if (!convflag[m])
+                {
+                    unconv[this->notconv] = m;
+                    this->notconv++;
+                }
+
+                eigenvalue_in_hsolver[m] = eigenvalue_iter[m];
             }
 
-            eigenvalue_in_hsolver[m] = eigenvalue_iter[m];
+            ModuleBase::timer::end("Diago_DavSubspace", "check_update");
         }
-
-        ModuleBase::timer::end("Diago_DavSubspace", "check_update");
 
         if ((this->notconv == 0) || (nbase + this->notconv + 1 > this->nbase_x) || (dav_iter == this->iter_nmax))
         {
@@ -249,6 +525,9 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                 // update this->psi_in_iter according to psi_in
                 syncmem_complex_2d_op()(this->psi_in_iter, this->dim, psi_in, psi_in_dmax, this->dim, this->n_band);
 
+                // Rotate cached H and S images with the same Ritz coefficients.
+                // This avoids reapplying H and solving an unchanged Ritz problem
+                // at each restart. Repair the CPU basis only if its metric drifts.
                 this->refresh(this->dim,
                               this->n_band,
                               nbase,
@@ -259,6 +538,25 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
                               this->hcc,
                               this->scc,
                               this->vcc);
+
+                if (this->device == base_device::CpuDevice && !this->restarted_basis_is_orthonormal_cpu())
+                {
+                    const int retained = this->orthonormalize_cpu(op, 0, this->n_band);
+                    if (retained != this->n_band)
+                    {
+                        ModuleBase::WARNING_QUIT("Diago_DavSubspace", "Restarted CPU Ritz vectors have lost S rank.");
+                    }
+                    op.hpsi(this->psi_in_iter, this->hpsi, this->dim, retained);
+                    nbase = 0;
+                    this->cal_elem(this->dim, nbase, retained, this->psi_in_iter,
+                                   this->spsi, this->hpsi, this->hcc, this->scc);
+                    this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc,
+                                      this->nbase_x, &eigenvalue_iter, this->vcc);
+                    for (int band = 0; band < this->n_band; ++band)
+                    {
+                        eigenvalue_in_hsolver[band] = eigenvalue_iter[band];
+                    }
+                }
 
                 ModuleBase::timer::end("Diago_DavSubspace", "last");
             }
@@ -272,7 +570,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HSOperator<T, Device>& op,
 }
 
 template <typename T, typename Device>
-void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
+int Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                                             const int& dim,
                                             const int& nbase,
                                             const int& notconv,
@@ -284,6 +582,49 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                                             std::vector<Real>* eigenvalue_iter)
 {
     ModuleBase::timer::start("Diago_DavSubspace", "cal_grad");
+
+    if (this->device == base_device::CpuDevice)
+    {
+        std::vector<Real> expansion_eigenvalues(notconv);
+        const int coefficient_count = nbase * notconv;
+        std::vector<T> coefficients(coefficient_count);
+        for (int column = 0; column < notconv; ++column)
+        {
+            const int band = unconv[column];
+            const Real eigenvalue = (*eigenvalue_iter)[band];
+            expansion_eigenvalues[column] = eigenvalue;
+            for (int basis = 0; basis < nbase; ++basis)
+            {
+                coefficients[column * nbase + basis] = vcc[band * this->nbase_x + basis];
+            }
+        }
+        T* residuals = psi_iter + nbase * dim;
+        ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()
+            ('N', 'N', dim, notconv, nbase, this->one, hpsi, dim,
+             coefficients.data(), nbase, this->zero, residuals, dim);
+        for (int column = 0; column < notconv; ++column)
+        {
+            const Real negative_eigenvalue = -expansion_eigenvalues[column];
+            for (int basis = 0; basis < nbase; ++basis)
+            {
+                coefficients[column * nbase + basis] *= negative_eigenvalue;
+            }
+        }
+        ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()
+            ('N', 'N', dim, notconv, nbase, this->one, spsi, dim,
+             coefficients.data(), nbase, this->one, residuals, dim);
+        precondition_op<T, base_device::DEVICE_CPU>()(dim, psi_iter, nbase, notconv,
+                                                       this->precondition.data(), expansion_eigenvalues.data());
+        const int added = this->orthonormalize_cpu(op, nbase, notconv);
+        if (added > 0)
+        {
+            T* new_basis = psi_iter + nbase * dim;
+            T* new_h_basis = hpsi + nbase * dim;
+            op.hpsi(new_basis, new_h_basis, dim, added);
+        }
+        ModuleBase::timer::end("Diago_DavSubspace", "cal_grad");
+        return added;
+    }
 
     for (size_t i = 0; i < notconv; i++)
     {
@@ -480,7 +821,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HSOperator<T, Device>& op,
     op.spsi(psi_iter + nbase * dim, spsi + nbase * this->dim, this->dim, notconv);
 
     ModuleBase::timer::end("Diago_DavSubspace", "cal_grad");
-    return;
+    return notconv;
 }
 
 template <typename T, typename Device>
@@ -579,7 +920,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
     {
 #ifdef __DSP
         // Only on dsp hardware need an extra space to reduce data
-        mtfunc::dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
+        mtfunc::dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, notconv, this->diag_comm.comm);
 #else
         assert(this->diag_comm.comm == POOL_WORLD);
         Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
@@ -622,45 +963,111 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
     {
         if (this->diag_subspace == 0)
         {
+            const int matrix_size = nbase * nbase;
+            const int vector_size = nbase * nband;
+            const T scalar_zero = 0;
+            const Real real_zero = 0;
+            std::vector<T> vectors(vector_size, scalar_zero);
+            std::vector<Real> eigenvalues(nbase, real_zero);
+            // Query INFO, solve INFO, and the actual returned eigenpair count.
+            int status[3] = {};
             if (this->diag_comm.rank == 0)
             {
-                std::vector<std::vector<T>> h_diag(nbase, std::vector<T>(nbase, *this->zero));
-                std::vector<std::vector<T>> s_diag(nbase, std::vector<T>(nbase, *this->zero));
-
-                for (size_t i = 0; i < nbase; i++)
+                std::vector<T> h_diag(matrix_size);
+                std::vector<T> s_diag(matrix_size);
+                for (int column = 0; column < nbase; ++column)
                 {
-                    for (size_t j = 0; j < nbase; j++)
+                    for (int row = 0; row <= column; ++row)
                     {
-                        h_diag[i][j] = hcc[i * this->nbase_x + j];
-                        s_diag[i][j] = scc[i * this->nbase_x + j];
+                        const int source = column * nbase_x + row;
+                        const int target = column * nbase + row;
+                        h_diag[target] = hcc[source];
+                        s_diag[target] = scc[source];
+                        const Real h_magnitude = std::abs(h_diag[target]);
+                        const Real s_magnitude = std::abs(s_diag[target]);
+                        if (!std::isfinite(h_magnitude) || !std::isfinite(s_magnitude))
+                        {
+                            status[0] = -1000;
+                        }
                     }
                 }
-                hegvx_op<T, Device>()(this->ctx,
-                                      nbase,
-                                      this->nbase_x,
-                                      this->hcc,
-                                      this->scc,
-                                      nband,
-                                      (*eigenvalue_iter).data(),
-                                      this->vcc);
-                // reset:
-                for (size_t i = 0; i < nbase; i++)
+                const int real_work_size = 7 * nbase;
+                const int integer_work_size = 5 * nbase;
+                std::vector<Real> rwork(real_work_size);
+                std::vector<int> iwork(integer_work_size);
+                std::vector<int> ifail(nbase);
+                T work_query = 0;
+                if (status[0] == 0)
                 {
-                    for (size_t j = 0; j < nbase; j++)
+                    dav_hegvx(nbase, nband, h_diag.data(), s_diag.data(), eigenvalues.data(), vectors.data(),
+                               &work_query, -1, rwork.data(), iwork.data(), ifail.data(), status[2], status[0]);
+                }
+                const Real requested_work = std::real(work_query);
+                const Real maximum_work = static_cast<Real>(std::numeric_limits<int>::max());
+                if (status[0] == 0
+                    && (!std::isfinite(requested_work) || requested_work < 1 || requested_work >= maximum_work))
+                {
+                    status[0] = -1001;
+                }
+                if (status[0] == 0)
+                {
+                    const int queried_work_size = static_cast<int>(requested_work);
+                    const int minimum_work_size = 8 * nbase;
+                    const int work_size = std::max(queried_work_size, minimum_work_size);
+                    std::vector<T> work(work_size);
+                    status[2] = 0;
+                    dav_hegvx(nbase, nband, h_diag.data(), s_diag.data(), eigenvalues.data(), vectors.data(),
+                               work.data(), work_size, rwork.data(), iwork.data(), ifail.data(), status[2], status[1]);
+                }
+                if (status[0] == 0 && status[1] == 0 && status[2] == nband)
+                {
+                    for (int band = 0; band < nband; ++band)
                     {
-                        hcc[i * this->nbase_x + j] = h_diag[i][j];
-                        scc[i * this->nbase_x + j] = s_diag[i][j];
+                        if (!std::isfinite(eigenvalues[band]))
+                        {
+                            status[1] = -1002;
+                        }
                     }
-
-                    for (size_t j = nbase; j < this->nbase_x; j++)
+                    for (int index = 0; index < vector_size; ++index)
                     {
-                        hcc[i * this->nbase_x + j] = *this->zero;
-                        hcc[j * this->nbase_x + i] = *this->zero;
-                        scc[i * this->nbase_x + j] = *this->zero;
-                        scc[j * this->nbase_x + i] = *this->zero;
+                        const Real magnitude = std::abs(vectors[index]);
+                        if (!std::isfinite(magnitude))
+                        {
+                            status[1] = -1002;
+                        }
                     }
                 }
             }
+            if (this->diag_comm.nproc > 1)
+            {
+                // Only the pool root contributes; publish status before any
+                // rank decides whether the temporary Ritz result is usable.
+                Parallel_Reduce::reduce_pool(status, 3);
+            }
+            if (status[0] != 0 || status[1] != 0 || status[2] != nband)
+            {
+                std::ostringstream message;
+                message << "CPU reduced solve failed: query INFO=" << status[0]
+                        << ", solve INFO=" << status[1] << ", M=" << status[2]
+                        << ", requested=" << nband << ", dimension=" << nbase;
+                const std::string diagnostic = message.str();
+                ModuleBase::WARNING_QUIT("Diago_DavSubspace", diagnostic);
+            }
+            if (this->diag_comm.nproc > 1)
+            {
+                Parallel_Reduce::reduce_pool(eigenvalues.data(), nband);
+                Parallel_Reduce::reduce_pool(vectors.data(), vector_size);
+            }
+            for (int band = 0; band < nband; ++band)
+            {
+                (*eigenvalue_iter)[band] = eigenvalues[band];
+                for (int row = 0; row < nbase; ++row)
+                {
+                    vcc[band * nbase_x + row] = vectors[band * nbase + row];
+                }
+            }
+            ModuleBase::timer::end("Diago_DavSubspace", "diag_zhegvx");
+            return;
         }
         else
         {

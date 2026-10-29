@@ -213,14 +213,14 @@ void ModuleIO::write_wfc_pw(
                                 {
                                     ofs2 << "\n< Band " << ib + 1 << " >" << std::endl;
                                 }
-                                ofs2 << std::scientific;
+                                ofs2 << std::scientific << std::setprecision(16);
                                 for (int ig = 0; ig < ng; ig++)
                                 {
                                     if (ig % 4 == 0 && (ig != 0 || id != 0))
                                     {
                                         ofs2 << "\n";
                                     }
-                                    ofs2 << std::setw(15) << psi(ib, ig).real() << std::setw(15) << psi(ib, ig).imag();
+                                    ofs2 << std::setw(25) << psi(ib, ig).real() << std::setw(25) << psi(ib, ig).imag();
                                 } // end ig
                                 if (id == nproc_in_pool - 1 && npol == 1)
                                 {
@@ -264,14 +264,14 @@ void ModuleIO::write_wfc_pw(
                                 {
                                     std::ofstream ofs2(wfilename[ik].c_str(), std::ios::app);
 
-                                    ofs2 << std::scientific;
+                                    ofs2 << std::scientific << std::setprecision(16);
                                     for (int ig = 0; ig < ng; ig++)
                                     {
                                         if (ig % 4 == 0 && (ig != 0 || id != 0))
                                         {
                                             ofs2 << "\n";
                                         }
-                                        ofs2 << std::setw(15) << psi(ib, ig + ng_max).real() << std::setw(15)
+                                        ofs2 << std::setw(25) << psi(ib, ig + ng_max).real() << std::setw(25)
                                              << psi(ib, ig + ng_max).imag();
                                     } // end ig
                                     if (id == nproc_in_pool - 1)

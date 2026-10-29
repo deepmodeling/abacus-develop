@@ -5,10 +5,11 @@ ntype             1
 nspin             1
 pseudo_dir        ../../PP_ORB
 symmetry          1
-nbands            10
+nbands            20
 
 ecutwfc           20
-scf_thr           1.0e-7 // about iteration
+scf_thr           1.0e-11
+pw_diag_nmax      200
 
 basis_type        pw
 smearing_method   gauss

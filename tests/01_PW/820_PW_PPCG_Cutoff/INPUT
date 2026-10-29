@@ -14,10 +14,13 @@ scf_thr           1
 scf_nmax          1
 kpar              1
 
-out_band          1
+out_band          1 16
 out_app_flag      0
 dft_functional    scan
-pw_diag_thr       1e-12
+# Preserve the single-Hamiltonian regression; tighten only the inner solve.
+pw_diag_thr       1e-14
+pw_diag_nmax      500
+diago_smooth_ethr false
 ks_solver         ppcg
 pw_diag_ndim      4
 

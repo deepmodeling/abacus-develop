@@ -66,6 +66,86 @@ namespace hsolver
 class DiagoPPCGProjectionTest : public ::testing::Test
 {
 protected:
+    void check_direction_rotation(const bool ritz)
+    {
+        const int dimension = 3;
+        const int leading_dimension = 4;
+        const int bands = 2;
+        const int size = leading_dimension * bands;
+        const std::vector<T> h = {T(1), T(0, -0.4), T(0),
+                                  T(0, 0.4), T(4), T(0), T(0), T(0), T(10)};
+        const std::vector<T> s = {T(1), T(0), T(0), T(0), T(2), T(0), T(0), T(0), T(3)};
+        std::vector<T> x(size, T(0));
+        x[0] = T(1);
+        x[leading_dimension] = T(0.3);
+        x[leading_dimension + 1] = T(1);
+        DiagoPPCG<T, base_device::DEVICE_CPU> solver(1e-12, 20, 1, 4);
+        solver.ld_psi_ = leading_dimension;
+        solver.n_dim_ = dimension;
+        solver.n_band_ = bands;
+        solver.hpsi_.assign(size, T(0));
+        solver.spsi_.assign(size, T(0));
+        solver.w_.assign(size, T(0));
+        solver.sw_.assign(size, T(0));
+        solver.hw_.assign(size, T(0));
+        solver.p_.assign(size, T(0));
+        solver.p_[2] = T(0.4, 0.3);
+        solver.p_[leading_dimension + 2] = T(-0.2, 0.6);
+        solver.hp_.assign(size, T(0));
+        solver.sp_.assign(size, T(0));
+        solver.rr_eval_.resize(bands);
+        dense_h_multiply(h.data(), dimension, x.data(), solver.hpsi_.data(), leading_dimension, bands);
+        dense_h_multiply(s.data(), dimension, x.data(), solver.spsi_.data(), leading_dimension, bands);
+        dense_h_multiply(h.data(), dimension, solver.p_.data(), solver.hp_.data(), leading_dimension, bands);
+        dense_h_multiply(s.data(), dimension, solver.p_.data(), solver.sp_.data(), leading_dimension, bands);
+        const std::vector<T> original_p = solver.p_;
+        if (ritz)
+        {
+            std::vector<Real> eigenvalues(bands);
+            const std::vector<double> thresholds(bands, 1e-12);
+            std::vector<int> active;
+            ASSERT_TRUE(solver.rayleigh_ritz(x.data(), eigenvalues.data(), active, thresholds));
+        }
+        else
+        {
+            ASSERT_TRUE(solver.orthonormalize(x.data()));
+        }
+        double change = 0.0;
+        for (int column = 0; column < bands; ++column)
+        {
+            // Recover C from X_new = X_old C using the known triangular
+            // leading 2-by-2 block, independently of the solver's workspace.
+            const int first = column * leading_dimension;
+            const T c0 = x[first] - 0.3 * x[first + 1];
+            const T c1 = x[first + 1];
+            for (int row = 0; row < dimension; ++row)
+            {
+                const int index = first + row;
+                const T expected = original_p[row] * c0 + original_p[row + leading_dimension] * c1;
+                const T direction_difference = solver.p_[index] - expected;
+                const double error = std::abs(direction_difference);
+                EXPECT_LT(error, 1e-13);
+                const T direction_change = solver.p_[index] - original_p[index];
+                change += std::norm(direction_change);
+            }
+            EXPECT_EQ(solver.p_[first + dimension], T(0));
+        }
+        EXPECT_GT(change, 1e-3);
+        std::vector<T> hp(size, T(0));
+        std::vector<T> sp(size, T(0));
+        dense_h_multiply(h.data(), dimension, solver.p_.data(), hp.data(), leading_dimension, bands);
+        dense_h_multiply(s.data(), dimension, solver.p_.data(), sp.data(), leading_dimension, bands);
+        for (int index = 0; index < size; ++index)
+        {
+            const T h_difference = hp[index] - solver.hp_[index];
+            const T s_difference = sp[index] - solver.sp_[index];
+            const double h_error = std::abs(h_difference);
+            const double s_error = std::abs(s_difference);
+            EXPECT_LT(h_error, 1e-13);
+            EXPECT_LT(s_error, 1e-13);
+        }
+    }
+
     void check_rank_truncated_outputs(const int kept_count)
     {
         const int dimension = 8;
@@ -218,6 +298,16 @@ protected:
 TEST_F(DiagoPPCGProjectionTest, RefreshesImagesAfterSevereProjectionCancellation)
 {
     check_projection(true, false);
+}
+
+TEST_F(DiagoPPCGProjectionTest, RitzRotationPreservesDirectionColumnAssociation)
+{
+    check_direction_rotation(true);
+}
+
+TEST_F(DiagoPPCGProjectionTest, OrthonormalizationRotatesDirectionImagesTogether)
+{
+    check_direction_rotation(false);
 }
 
 TEST_F(DiagoPPCGProjectionTest, ReusesImagesForWellSeparatedDirection)
@@ -490,7 +580,7 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
     };
     // Ten sweeps need no periodic refresh; eighteen exercise the one at 16.
     // Each configuration additionally encounters one projection cancellation.
-    // The interval-16 runs encounter one competing discarded direction and
+    // Each run encounters one competing discarded direction and
     // therefore add one conditional expanded Ritz solve, without another H call.
     const Configuration configurations[] = {{10, 1}, {10, 4}, {10, 16},
                                              {18, 1}, {18, 4}, {18, 16}};
@@ -530,7 +620,7 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
         const int scheduled = sweeps / interval;
         const int final_extra = sweeps % interval == 0 ? 0 : 1;
         const int startup_extra = interval == 1 ? 0 : 1;
-        const int competing_extra = interval == 16 ? 1 : 0;
+        const int competing_extra = 1;
         const int expected_ritz = 1 + scheduled + final_extra + startup_extra + competing_extra;
         const int operator_refreshes = sweeps / 16;
         const int cancellation_refreshes = 1;

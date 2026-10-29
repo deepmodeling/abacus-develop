@@ -5,7 +5,7 @@ init_wfc          random
 
 symmetry          1
 ecutwfc           20
-scf_thr           1e-07
+scf_thr           1e-11
 scf_nmax          100
 basis_type        pw
 latname           bco

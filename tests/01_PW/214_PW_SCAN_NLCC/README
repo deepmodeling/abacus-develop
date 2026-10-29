@@ -1,1 +1,7 @@
-scan functional test in PW base with an NLCC pseudopotential : system Si2, force and stress are tested
+Test SCAN with nonlinear core correction, force and stress output.
+
+The reference includes local XC terms at finite density and zero density
+gradient. Tighter real-space SCF and inner diagonalization thresholds resolve
+energy, force and stress at the existing acceptance limits. The reference
+is generated with CG and independently checked with CG, Davidson and PPCG.
+Physical inputs and all comparison tolerances are unchanged.

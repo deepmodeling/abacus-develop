@@ -95,6 +95,7 @@ struct Input_para
     int nspin = 1;                          ///< LDA ; LSDA ; non-linear spin
     int pw_diag_nmax = 50;
     double pw_diag_thr = 0.01;      ///< solver-dependent threshold for iterative PW solvers
+    double pw_diag_thr_max = 0.0;  ///< optional upper bound on the adaptive PW SCF threshold; zero disables it
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
     int pw_diag_ndim = 4;           ///< dimension of workspace for Davidson diagonalization
     int pw_diag_rr_step = 1;        ///< full Rayleigh-Ritz interval for PPCG diagonalization

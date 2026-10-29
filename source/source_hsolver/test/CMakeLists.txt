@@ -2,6 +2,56 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+# Each adversarial case must run in its own process. Requiring the completion
+# marker also catches historical solver failure paths that called exit(0).
+add_executable(MODULE_HSOLVER_davidson_stability
+  test_diago_david.cpp
+  ../diago_david.cpp
+  ../diago_dav_subspace.cpp
+)
+target_link_libraries(MODULE_HSOLVER_davidson_stability PRIVATE
+  parameter base psi device container abacus::linalg_libs
+)
+if(ENABLE_MPI)
+  target_sources(MODULE_HSOLVER_davidson_stability PRIVATE
+    ../diag_hs_para.cpp
+    ../diago_pxxxgvx.cpp
+  )
+  if(TARGET ELPA::ELPA)
+    target_link_libraries(MODULE_HSOLVER_davidson_stability PRIVATE ELPA::ELPA genelpa)
+  endif()
+endif()
+if(ENABLE_COVERAGE)
+  add_coverage(MODULE_HSOLVER_davidson_stability)
+endif()
+install(TARGETS MODULE_HSOLVER_davidson_stability DESTINATION ${CMAKE_BINARY_DIR}/tests)
+foreach(solver dav dav_subspace)
+  foreach(case exact partial_exact collinear near_collinear degenerate generalized_spd warm_start small_direction restart_spd)
+    set(test_name MODULE_HSOLVER_davidson_stability_${solver}_${case})
+    add_test(NAME ${test_name}
+      COMMAND MODULE_HSOLVER_davidson_stability ${solver} ${case}
+    )
+    set_tests_properties(${test_name} PROPERTIES
+      PASS_REGULAR_EXPRESSION "STABILITY_RESULT solver=${solver} case=${case} accepted=1 "
+      FAIL_REGULAR_EXPRESSION "STABILITY_EXCEPTION;accepted=0"
+      ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1"
+      LABELS "hsolver;davidson;stability"
+      TIMEOUT 60
+    )
+  endforeach()
+endforeach()
+
+AddTest(
+  TARGET MODULE_HSOLVER_cg_accuracy
+  LIBS parameter base psi device container
+  SOURCES test_diago_cg.cpp ../diago_cg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp
+)
+set_tests_properties(MODULE_HSOLVER_cg_accuracy PROPERTIES
+  PASS_REGULAR_EXPRESSION "CG_ACCURACY_COMPLETE status=0"
+  ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1"
+  TIMEOUT 60
+)
+
 set(TD_LINEAR_TEST_SOURCES
   ../hsolver_linear.cpp
   ../linear_bicgstab.cpp

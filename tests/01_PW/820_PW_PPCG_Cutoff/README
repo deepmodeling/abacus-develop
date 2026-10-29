@@ -1,1 +1,11 @@
 PPCG balanced-block regression for degenerate roots at the requested cutoff.
+
+Keep nbands=6, scf_nmax=1 and scf_thr=1: this isolates one Hamiltonian.
+The sixth requested band cuts through a threefold degenerate unoccupied
+cluster. It is not a self-consistent ground-state energy benchmark.
+The reference includes the SCAN local contribution at finite-density,
+zero-gradient points. The inner threshold is 1e-14, with up to 500 inner
+iterations; the extra budget allows the two-rank PPCG solve to meet that
+threshold without increasing the outer-step or band count. Band output uses
+16 digits. CG, Davidson and PPCG are compared at the original acceptance
+limits; no energy or band-comparison tolerance is relaxed.

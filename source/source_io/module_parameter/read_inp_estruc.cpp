@@ -3,6 +3,8 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
+#include <cmath>
+
 namespace ModuleIO
 {
 void ReadInput::item_elec_stru()
@@ -53,7 +55,7 @@ For plane-wave basis,
 
 * cg: The conjugate-gradient (CG) method.
 * dav: The Davidson algorithm.
-* dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
+* dav_subspace: A block Davidson method. The CPU implementation orthogonalizes trial vectors in the overlap metric and filters linearly dependent expansion directions. `pw_diag_ndim` can be set to 2 for this method.
 * ppcg: The projection preconditioned conjugate-gradient method. It is optimized and validated for CPU plane-wave calculations; non-CPU devices use a transitional host/device bridge.
 * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 
@@ -1063,6 +1065,46 @@ Use case: When experimental or high-level theoretical results suggest that the S
                 {
                     para.input.pw_diag_thr = 1.0e-5;
                 }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pw_diag_thr_max");
+        item.annotation = "optional upper bound on the adaptive PW SCF diagonalization threshold";
+        item.category = "Plane wave related variables";
+        item.type = "Real";
+        item.description = R"(An optional upper bound on the diagonalization threshold selected during SCF iterations. Zero disables the bound and preserves the existing adaptive strategy. A positive value limits the threshold from the first electronic iteration of each self-consistent cycle onward, including every ionic step of relaxation, while allowing the adaptive strategy to tighten it further. It does not change the meaning or default value of pw_diag_thr, which sets the initial threshold.
+
+Positive values are supported only for basis_type=pw, esolver_type=ksdft, calculation=scf or relax, with diago_smooth_ethr=false. Smoothing is incompatible with this bound because it relaxes thresholds for weakly occupied bands. With precision=single, the bound must be at least 5e-5, the single-precision threshold floor.
+
+This bounds the SCF threshold supplied to the iterative solver, not a universal eigenvalue or residual error. Each solver retains its stopping criterion and numerical limits; in particular, PPCG has a minimum residual tolerance of 1e-14. Tight bounds can increase diagonalization cost or exhaust pw_diag_nmax. Validate convergence, energies, forces, and stresses for the intended calculation.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==ksdft and calculation in [scf, relax]");
+        read_sync_double(input.pw_diag_thr_max);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const Input_para& input = para.inp;
+            if (!std::isfinite(input.pw_diag_thr_max) || input.pw_diag_thr_max < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pw_diag_thr_max must be finite and nonnegative");
+            }
+            if (input.pw_diag_thr_max == 0.0)
+            {
+                return;
+            }
+            const bool supports_bound = input.calculation == "scf" || input.calculation == "relax";
+            if (input.basis_type != "pw" || input.esolver_type != "ksdft" || !supports_bound)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "Positive pw_diag_thr_max requires PW KSDFT SCF or relaxation");
+            }
+            if (input.diago_smooth_ethr)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "Positive pw_diag_thr_max requires diago_smooth_ethr=false");
+            }
+            if (input.precision == "single" && input.pw_diag_thr_max < 5.0e-5)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "pw_diag_thr_max must be at least 5e-5 for single precision");
             }
         };
         this->add_item(item);

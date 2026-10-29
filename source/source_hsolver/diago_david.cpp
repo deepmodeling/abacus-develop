@@ -8,6 +8,10 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_comm.h"
 
+#include <cmath>
+#include <limits>
+#include <stdexcept>
+
 
 using namespace hsolver;
 
@@ -147,33 +151,16 @@ int DiagoDavid<T, Device>::diag_once(const HSOperator<T, Device>& op,
 
     // orthogonalise the initial trial psi(0~nband-1)
 
-    // plan for SchmidtOrth
-    std::vector<int> pre_matrix_mm_m(nband, 0);
-    std::vector<int> pre_matrix_mv_m(nband, 1);
-    this->planSchmidtOrth(nband, pre_matrix_mm_m, pre_matrix_mv_m);
-
-    for (int m = 0; m < nband; m++)
-    {
-        {
-            // phm_in->sPsi(psi_in + m*ld_psi, &this->spsi[m * dim], dim, dim, 1);
-            op.spsi(psi_in + m*ld_psi,&this->spsi[m*dim],dim, 1);
-        }
-    }
     // begin SchmidtOrth
     for (int m = 0; m < nband; m++)
     {
         syncmem_complex_op()(basis + dim*m, psi_in + m*ld_psi, dim);
 
-        this->SchmidtOrth(dim,
-                         nband,
-                         m,
-                         this->spsi,
-                         &this->lagrange_matrix[m * nband],
-                         pre_matrix_mm_m[m],
-                         pre_matrix_mv_m[m]);
+        T* coefficients = this->lagrange_matrix + m * nband;
+        const bool independent = this->SchmidtOrth(op, dim, m, this->spsi, coefficients);
+        if (!independent)
         {
-            // phm_in->sPsi(basis + dim*m, &this->spsi[m * dim], dim, dim, 1);
-            op.spsi(basis + dim*m, &this->spsi[m * dim], dim, 1);
+            throw std::runtime_error("DiagoDavid: initial wavefunctions are linearly dependent in the S metric");
         }
     }
 
@@ -200,7 +187,8 @@ int DiagoDavid<T, Device>::diag_once(const HSOperator<T, Device>& op,
     {
         dav_iter++;
 
-        this->cal_grad(op,
+        std::vector<bool> check_residual(nband, false);
+        const int added = this->cal_grad(op,
                        dim,
                        nbase,
                        nbase_x,
@@ -209,11 +197,15 @@ int DiagoDavid<T, Device>::diag_once(const HSOperator<T, Device>& op,
                        this->spsi,
                        this->vcc,
                        unconv.data(),
-                       this->eigenvalue);
+                       this->eigenvalue,
+                       ethr_band,
+                       check_residual);
 
-        this->cal_elem(dim, nbase, nbase_x, this->notconv, this->hpsi, this->spsi, this->hcc);
-
-        this->diag_zhegvx(nbase, nband, this->hcc, nbase_x, this->eigenvalue, this->vcc);
+        if (added > 0)
+        {
+            this->cal_elem(dim, nbase, nbase_x, added, this->hpsi, this->spsi, this->hcc);
+            this->diag_zhegvx(nbase, nband, this->hcc, nbase_x, this->eigenvalue, this->vcc);
+        }
 
         // check convergence and update eigenvalues
         ModuleBase::timer::start("DiagoDavid", "check_update");
@@ -222,6 +214,14 @@ int DiagoDavid<T, Device>::diag_once(const HSOperator<T, Device>& op,
         for (int m = 0; m < nband; m++)
         {
             convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < ethr_band[m]);
+            if (check_residual[m])
+            {
+                // A skipped or dependent direction is not evidence of convergence.
+                // Recheck the current Ritz state after the small solve: it may
+                // have changed even if its previous residual was already small.
+                const double residual_norm = this->ritz_residual_norm(nbase, m);
+                convflag[m] = std::isfinite(residual_norm) && residual_norm <= ethr_band[m];
+            }
             if (!convflag[m])
             {
                 unconv[this->notconv] = m;
@@ -231,7 +231,14 @@ int DiagoDavid<T, Device>::diag_once(const HSOperator<T, Device>& op,
         }
 
         ModuleBase::timer::end("DiagoDavid", "check_update");
-        if (!this->notconv || (nbase + this->notconv > nbase_x)
+        const bool expansion_stalled = added == 0 && this->notconv > 0;
+        if (expansion_stalled && diag_comm.rank == 0)
+        {
+            std::cout << "DiagoDavid: no independent expansion direction remains for "
+                      << this->notconv << " unconverged bands; retaining the residual failure for retry."
+                      << std::endl;
+        }
+        if (!this->notconv || expansion_stalled || (nbase + this->notconv > nbase_x)
             || (dav_iter == david_maxiter))
         {
             ModuleBase::timer::start("DiagoDavid", "last");
@@ -254,7 +261,7 @@ int DiagoDavid<T, Device>::diag_once(const HSOperator<T, Device>& op,
                                              psi_in, // C dim * nband
                                              ld_psi);
 
-            if (!this->notconv || (dav_iter == david_maxiter))
+            if (!this->notconv || expansion_stalled || (dav_iter == david_maxiter))
             {
                 // overall convergence or last iteration: exit the iteration
                 ModuleBase::timer::end("DiagoDavid", "last");
@@ -290,7 +297,7 @@ int DiagoDavid<T, Device>::diag_once(const HSOperator<T, Device>& op,
 
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::cal_grad(const HSOperator<T, Device>& op,
+int DiagoDavid<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                                         const int& dim,
                                         const int& nbase,   // current dimension of the reduced basis
                                         const int nbase_x,  // maximum dimension of the reduced basis set
@@ -299,14 +306,16 @@ void DiagoDavid<T, Device>::cal_grad(const HSOperator<T, Device>& op,
                                         T* spsi,
                                         const T* vcc,
                                         const int* unconv,
-                                        const Real* eigenvalue)
+                                        const Real* eigenvalue,
+                                        const std::vector<double>& ethr_band,
+                                        std::vector<bool>& check_residual)
 {
     if (test_david == 1) {
         ModuleBase::TITLE("DiagoDavid", "cal_grad");
     }
     // if all eigenpairs have converged, return
     if (notconv == 0) {
-        return;
+        return 0;
     }
     ModuleBase::timer::start("DiagoDavid", "cal_grad");
 
@@ -461,116 +470,99 @@ void DiagoDavid<T, Device>::cal_grad(const HSOperator<T, Device>& op,
     }
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    // Preconditioning
-    // basis[nbase] = T * basis[nbase] = T * (H - lambda * S) * psi
-    // where T, the preconditioner, is an approximate inverse of H
-    //          T is a diagonal stored in array `precondition`
-    // to do preconditioning, divide each column of basis by the corresponding element of precondition
+    // Keep the number of accepted directions distinct from the number of
+    // unconverged eigenpairs. Zero residuals and redundant block directions
+    // must not introduce zero columns into the reduced problem.
+    T* lagrange = nullptr;
+    const int coefficient_count = nbase + notconv;
+    resmem_complex_op()(lagrange, coefficient_count);
+    int added = 0;
     for (int m = 0; m < notconv; m++)
     {
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        const int band = unconv[m];
+        T* candidate = basis + dim * (nbase + m);
+        const double residual2 = ModuleBase::dot_real_op<T, Device>()(dim, candidate, candidate);
+        if (!std::isfinite(residual2) || residual2 < 0.0)
+        {
+            throw std::runtime_error("DiagoDavid: non-finite residual before preconditioning");
+        }
+        const double residual_norm = std::sqrt(residual2);
+        if (residual_norm <= ethr_band[band])
+        {
+            check_residual[band] = true;
+            continue;
+        }
+
+        const int target = nbase + added;
+        T* packed_candidate = basis + dim * target;
+        if (added != m)
+        {
+            syncmem_complex_op()(packed_candidate, candidate, dim);
+        }
         if (this->device == base_device::GpuDevice)
         {
 #if defined(__CUDA) || defined(__ROCM)
             ModuleBase::vector_div_vector_op<T, Device, Real>()(dim,
-                                                                basis + dim * (nbase + m),
-                                                                basis + dim * (nbase + m),
-                                                                this->d_precondition);
+                                                               packed_candidate,
+                                                               packed_candidate,
+                                                               this->d_precondition);
 #endif
         }
         else
         {
             ModuleBase::vector_div_vector_op<T, Device, Real>()(dim,
-                                                                basis + dim * (nbase + m),
-                                                                basis + dim * (nbase + m),
-                                                                this->precondition);
+                                                               packed_candidate,
+                                                               packed_candidate,
+                                                               this->precondition);
         }
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        // for (int ig = 0; ig < dim; ig++)
-        // {
-        //     ppsi[ig] /= this->precondition[ig];
-        // }
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    }
-
-    // there is a nbase to nbase + notconv band orthogonalise
-    // plan for SchmidtOrth
-    T* lagrange = nullptr;
-    resmem_complex_op()(lagrange, notconv * (nbase + notconv));
-    setmem_complex_op()(lagrange, 0, notconv * (nbase + notconv));
-
-    std::vector<int> pre_matrix_mm_m(notconv, 0);
-    std::vector<int> pre_matrix_mv_m(notconv, 1);
-    this->planSchmidtOrth(notconv, pre_matrix_mm_m, pre_matrix_mv_m);
-    for (int m = 0; m < notconv; m++)
-    {
+        const bool independent = this->SchmidtOrth(op, dim, target, spsi, lagrange);
+        if (independent)
         {
-            // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
-            op.spsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);
+            ++added;
         }
-    }
-    // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
-
-    // calculate the square matrix for future lagranges
-    if (notconv == 1){
-        //Use gemv for vector case to avoid potential bug using gemm call with n=1
-        ModuleBase::gemv_op<T, Device>()('C',
-                                     dim,                 // m: row of A
-                                     nbase,               // n: col of A
-                                     this->one,           // alpha
-                                     basis,               // A dim * nbase
-                                     dim,                 // LDA: if(N) max(1,m)
-                                     &spsi[nbase * dim], // X dim
-                                     1,           // incx
-                                     this->zero,          // beta
-                                     lagrange,           // Y nbase
-                                     1
-        );
-    } else
-    {
-        ModuleBase::gemm_op<T, Device>()('C',
-                                        'N',
-                                        nbase,              // m: row of A,C
-                                        notconv,            // n: col of B,C
-                                        dim,                // k: col of A, row of B
-                                        this->one,          // alpha
-                                        basis,              // A
-                                        dim,                // LDA: if(N) max(1,m) if(T) max(1,k)
-                                        &spsi[nbase * dim], // B
-                                        dim,                // LDB: if(N) max(1,k) if(T) max(1,n)
-                                        this->zero,         // belta
-                                        lagrange,           // C
-                                        nbase + notconv     // LDC: if(N) max(1, m)
-        );
-    }
-
-    for (int m = 0; m < notconv; m++)
-    {
-        this->SchmidtOrth(dim,
-                         nbase + notconv,
-                         nbase + m,
-                         spsi,
-                         &lagrange[m * (nbase + notconv)],
-                         pre_matrix_mm_m[m],
-                         pre_matrix_mv_m[m]);
+        else
         {
-            // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
-            op.spsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);
+            check_residual[band] = true;
         }
     }
-    // calculate H|psi> for not convergence bands
-    // hpsi_info dav_hpsi_in(&basis,
-    //                       psi::Range(true, 0, nbase, nbase + notconv - 1),
-    //                       &hpsi[nbase * dim]); // &hp(nbase, 0)
-    // phm_in->ops->hPsi(dav_hpsi_in);
-    // hpsi[:, nbase:nbase+notcnv] = H basis[:, nbase:nbase+notcnv]
-    op.hpsi(basis + nbase * dim, hpsi + nbase * dim, dim, notconv);
 
+    if (added > 0)
+    {
+        T* new_basis = basis + nbase * dim;
+        T* new_hpsi = hpsi + nbase * dim;
+        op.hpsi(new_basis, new_hpsi, dim, added);
+    }
     delmem_complex_op()(lagrange);
     delmem_complex_op()(vc_ev_vector);
 
     ModuleBase::timer::end("DiagoDavid", "cal_grad");
-    return;
+    return added;
+}
+
+
+template <typename T, typename Device>
+double DiagoDavid<T, Device>::ritz_residual_norm(const int nbase, const int band) const
+{
+    ModuleBase::timer::start("DiagoDavid", "ritz_residual_norm");
+    T* residual = nullptr;
+    T* overlap = nullptr;
+    resmem_complex_op()(residual, dim);
+    resmem_complex_op()(overlap, dim);
+    const T* coefficients = vcc + band * nbase_x;
+    ModuleBase::gemv_op<T, Device>()('N', dim, nbase, this->one, hpsi, dim,
+                                    coefficients, 1, this->zero, residual, 1);
+    ModuleBase::gemv_op<T, Device>()('N', dim, nbase, this->one, spsi, dim,
+                                    coefficients, 1, this->zero, overlap, 1);
+    const Real unit = 1.0;
+    const Real negative_eigenvalue = -eigenvalue[band];
+    ModuleBase::vector_add_vector_op<T, Device, Real>()(dim, residual, residual, unit,
+                                                        overlap, negative_eigenvalue);
+    const double residual2 = ModuleBase::dot_real_op<T, Device>()(dim, residual, residual);
+    delmem_complex_op()(residual);
+    delmem_complex_op()(overlap);
+    const double residual_norm = std::sqrt(residual2);
+    ModuleBase::timer::end("DiagoDavid", "ritz_residual_norm");
+    return residual_norm;
 }
 
 
@@ -765,6 +757,10 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     nbase = nband;
 
     setmem_complex_op()(hcc, 0, nbase_x * nbase_x);
+    // The restarted basis already consists of Ritz vectors. Its coefficient
+    // matrix is the identity, including zero off-diagonal entries.
+    const int coefficient_matrix_size = nbase_x * nbase_x;
+    setmem_complex_op()(vcc, 0, coefficient_matrix_size);
 
     if (this->device == base_device::GpuDevice)
     {
@@ -810,131 +806,69 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
 
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
-                                            const int nband,
-                                            const int m,
-                                            const T* spsi,
-                                            T* lagrange_m,
-                                            const int mm_size,
-                                            const int mv_size)
+bool DiagoDavid<T, Device>::SchmidtOrth(const HSOperator<T, Device>& op,
+                                       const int& dim,
+                                       const int m,
+                                       T* spsi,
+                                       T* lagrange_m)
 {
-    //	if(test_david == 1) ModuleBase::TITLE("DiagoDavid","SchmidtOrth");
     ModuleBase::timer::start("DiagoDavid", "SchmidtOrth");
-
-    // orthogonalize starting eigenfunction to those already calculated
-    // psi_m orthogonalize to psi(0) ~ psi(m-1)
-    // Attention, the orthogonalize here read as
-    // psi(m) -> psi(m) - \sum_{i < m} \langle psi(i)|S|psi(m) \rangle psi(i)
-    // so the orthogonalize is performed about S.
-
-    // assert(basis.get_nbands() >= nband);
     assert(m >= 0);
-    assert(m < nband);
-
-    // psi_m = basis[m]
-    T* psi_m = basis + dim*m;
-
-    // std::complex<double> *lagrange = new std::complex<double>[m + 1];
-    // ModuleBase::GlobalFunc::ZEROS(lagrange, m + 1);
-
-    // calculate the square matrix for future lagranges
-    if (mm_size != 0)
+    T* candidate = basis + dim * m;
+    T* s_candidate = spsi + dim * m;
+    op.spsi(candidate, s_candidate, dim, 1);
+    const Real initial_squared = ModuleBase::dot_real_op<T, Device>()(dim, candidate, s_candidate);
+    if (!std::isfinite(initial_squared) || initial_squared < 0)
     {
-        // lagrange_m[m - mv_size + 1 - mm_size]
-        // = basis[m - mv_size + 1 - mm_size]' * spsi[m]
-        ModuleBase::gemm_op<T, Device>()('C',
-                                         'N',
-                                         mm_size,                                   // m: row of A,C
-                                         mm_size,                                   // n: col of B,C
-                                         dim,                                       // k: col of A, row of B
-                                         this->one,                                 // alpha
-                                         basis + dim * (m - mv_size + 1 - mm_size), // A
-                                         dim,                                    // LDA: if(N) max(1,m) if(T) max(1,k)
-                                         &spsi[m * dim],                         // B
-                                         dim,                                    // LDB: if(N) max(1,k) if(T) max(1,n)
-                                         this->zero,                             // belta
-                                         &lagrange_m[m - mv_size + 1 - mm_size], // C
-                                         nband                                   // LDC: if(N) max(1, m)
-        );
+        throw std::runtime_error("DiagoDavid: non-positive or non-finite overlap norm");
     }
-    // calculate other lagranges for this band
-    // lagrange_m[m - mv_size + 1]
-    // = basis[m - mv_size + 1]' * spsi[m]
-    ModuleBase::gemv_op<T, Device>()('C',
-                                     dim,
-                                     mv_size,
-                                     this->one,
-                                     basis + dim * (m - mv_size + 1),
-                                     dim,
-                                     &spsi[m * dim],
-                                     1,
-                                     this->zero,
-                                     &lagrange_m[m - mv_size + 1],
-                                     1);
-
-    Parallel_Reduce::reduce_pool(lagrange_m, m + 1);
-
-    T var = *this->zero;
-    syncmem_d2h_op()(&var, lagrange_m + m, 1);
-    double psi_norm = get_real(var);
-
-    assert(psi_norm > 0.0);
-
-    // / psi_m = psi_m - \sum_{i < m} \langle psi(i)|S|psi(m) \rangle psi(i)
-    // psi_m = psi_m - basis * lagrange_m
-    ModuleBase::gemv_op<T, Device>()('N',
-                                     dim,
-                                     m,
-                                     this->neg_one,
-                                     basis,
-                                     dim,
-                                     lagrange_m,
-                                     1,
-                                     this->one,
-                                     psi_m,
-                                     1);
-
-    // psi_norm = psi_norm - lagrange_m · lagrange_m
-    psi_norm -= ModuleBase::dot_real_op<T, Device>()(m, lagrange_m, lagrange_m, false);
-
-    // for (int j = 0; j < m; j++)
-    // {
-    //     const std::complex<double> alpha = std::complex<double>(-1, 0) * lagrange_m[j];
-    //     zaxpy_(&npw, &alpha, &psi(j,0), &inc, psi_m, &inc);
-    //     /*for (int ig = 0; ig < npw; ig++)
-    //     {
-    //         psi_m[ig] -= lagrange[j] * psi(j, ig);
-    //     }*/
-    //     psi_norm -= (conj(lagrange_m[j]) * lagrange_m[j]).real();
-    // }
-
-    assert(psi_norm > 0.0);
-
-    psi_norm = sqrt(psi_norm);
-
-    if (psi_norm < 1.0e-12)
+    if (initial_squared == 0)
     {
-        std::cout << "DiagoDavid::SchmidtOrth:aborted for psi_norm <1.0e-12" << std::endl;
-        std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
-        std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
-        std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
-        std::cout << "nband = " << nband << std::endl;
-        std::cout << "m = " << m << std::endl;
-        exit(0);
-    }
-    else
-    {
-        // psi_m = psi_m / psi_norm
-        ModuleBase::vector_mul_real_op<T, Device>()(dim, psi_m, psi_m, Real(1.0 / psi_norm));
-        // for (int i = 0; i < npw; i++)
-        // {
-        //     psi_m[i] /= psi_norm;
-        // }
+        ModuleBase::timer::end("DiagoDavid", "SchmidtOrth");
+        return false;
     }
 
-    // delete[] lagrange;
+    // Normalize the input before testing its independence: the absolute size
+    // of a preconditioned residual does not measure the rank of its direction.
+    const Real initial_scale = 1 / std::sqrt(initial_squared);
+    ModuleBase::vector_mul_real_op<T, Device>()(dim, candidate, candidate, initial_scale);
+    ModuleBase::vector_mul_real_op<T, Device>()(dim, s_candidate, s_candidate, initial_scale);
+    for (int pass = 0; pass < 2; ++pass)
+    {
+        if (m > 0)
+        {
+            ModuleBase::gemv_op<T, Device>()('C', dim, m, this->one, basis, dim,
+                                            s_candidate, 1, this->zero, lagrange_m, 1);
+            // Keep the collective host-side even in a device instantiation.
+            std::vector<T> coefficients(m);
+            syncmem_d2h_op()(coefficients.data(), lagrange_m, m);
+            Parallel_Reduce::reduce_pool(coefficients.data(), m);
+            syncmem_h2d_op()(lagrange_m, coefficients.data(), m);
+            ModuleBase::gemv_op<T, Device>()('N', dim, m, this->neg_one, basis, dim,
+                                            lagrange_m, 1, this->one, candidate, 1);
+        }
+        op.spsi(candidate, s_candidate, dim, 1);
+    }
+
+    // Measure the projected vector itself; subtracting nearly equal squared
+    // norms loses the information needed to normalize a small direction.
+    const Real projected_squared = ModuleBase::dot_real_op<T, Device>()(dim, candidate, s_candidate);
+    if (!std::isfinite(projected_squared))
+    {
+        throw std::runtime_error("DiagoDavid: non-finite projected overlap norm");
+    }
+    const Real rank_tolerance = 64 * std::numeric_limits<Real>::epsilon();
+    const Real rank_tolerance_squared = rank_tolerance * rank_tolerance;
+    if (projected_squared <= rank_tolerance_squared)
+    {
+        ModuleBase::timer::end("DiagoDavid", "SchmidtOrth");
+        return false;
+    }
+    const Real projected_scale = 1 / std::sqrt(projected_squared);
+    ModuleBase::vector_mul_real_op<T, Device>()(dim, candidate, candidate, projected_scale);
+    ModuleBase::vector_mul_real_op<T, Device>()(dim, s_candidate, s_candidate, projected_scale);
     ModuleBase::timer::end("DiagoDavid", "SchmidtOrth");
-    return;
+    return true;
 }
 
 

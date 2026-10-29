@@ -158,8 +158,11 @@ class DiagoDavid
      * @param vcc The input array for the eigenvector coefficients.
      * @param unconv The array of indices for the unconverged eigenpairs.
      * @param eigenvalue The array of eigenvalues.
+     * @param ethr_band The requested per-band convergence thresholds.
+     * @param check_residual Bands whose omitted directions require a fresh residual check.
+     * @return Number of independent expansion vectors actually added.
      */
-    void cal_grad(const HSOperator<T, Device>& op,
+    int cal_grad(const HSOperator<T, Device>& op,
                   const int& dim,
                   const int& nbase,
                   const int nbase_x,
@@ -168,7 +171,11 @@ class DiagoDavid
                   T* spsi,
                   const T* vcc,
                   const int* unconv,
-                  const Real* eigenvalue);
+                  const Real* eigenvalue,
+                  const std::vector<double>& ethr_band,
+                  std::vector<bool>& check_residual);
+
+    double ritz_residual_norm(const int nbase, const int band) const;
 
     /**
      * Calculates the elements of the diagonalization matrix for the DiagoDavid class.
@@ -219,24 +226,20 @@ class DiagoDavid
 
     /**
      * SchmidtOrth function performs orthogonalization of the starting eigenfunction to those already calculated.
-     * It takes the dimension of the basis, number of bands, index of the current band, starting eigenfunction psi_m,
-     * lagrange_m array, mm_size, and mv_size as input parameters.
+     * Scales the candidate first, then performs two projections with fresh S images.
      *
+     * @param op Hamiltonian and overlap operations.
      * @param dim The dimension of the basis.
-     * @param nband The number of bands.
      * @param m The index of the current band.
-     * @param spsi Pointer to the starting eigenfunction psi_m.
+     * @param spsi Overlap images, updated for the accepted candidate.
      * @param lagrange_m Pointer to the lagrange_m array.
-     * @param mm_size The size of the square matrix for future lagranges.
-     * @param mv_size The size of the lagrange_m array.
+     * @return False if the candidate has no numerically independent direction.
      */
-    void SchmidtOrth(const int& dim,
-                     const int nband,
+    bool SchmidtOrth(const HSOperator<T, Device>& op,
+                     const int& dim,
                      const int m,
-                     const T* spsi,
-                     T* lagrange_m,
-                     const int mm_size,
-                     const int mv_size);
+                     T* spsi,
+                     T* lagrange_m);
 
     /**
      * @brief Plans the Schmidt orthogonalization for a given number of bands.

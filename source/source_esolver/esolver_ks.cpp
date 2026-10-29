@@ -155,7 +155,7 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
             {
                 diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running, this->inp_->basis_type,
                             policy, this->inp_->precision, hsolver_error,
-                            drho, diag_ethr, this->inp_->nelec);
+                            drho, diag_ethr, this->inp_->nelec, this->inp_->pw_diag_thr_max);
 
                 this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
@@ -274,7 +274,8 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
     {
         diag_ethr = hsolver::set_diagethr_ks(this->inp_->basis_type, policy,
           this->inp_->calculation, this->inp_->init_chg, this->inp_->precision, istep, iter,
-          drho, this->inp_->pw_diag_thr, diag_ethr, this->inp_->nelec, this->inp_->scf_thr);
+          drho, this->inp_->pw_diag_thr, diag_ethr, this->inp_->nelec, this->inp_->scf_thr,
+          this->inp_->pw_diag_thr_max);
     }
     else if (policy == "sdft")
     {

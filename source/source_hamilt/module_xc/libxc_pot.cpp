@@ -529,8 +529,12 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     constexpr double rho_th  = 1e-8;
     constexpr double grho_th = 1e-12;
     constexpr double tau_th  = 1e-8;
-    // sgn for threshold mask
+    // A vanishing density gradient is a valid uniform-density limit, not a
+    // reason to discard the local energy or rho/tau/Laplacian derivatives.
+    // Keep the existing density/tau cutoffs; apply the gradient cutoff only
+    // to the gradient contribution assembled from vsigma below.
     std::vector<double> sgn( nrxx * nspin);
+    std::vector<double> sgn_gradient(nrxx * nspin, 1.0);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -546,9 +550,13 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 #endif
         for( int ir=0; ir<nrxx; ++ir )
         {
-            if ( rho[ir]<rho_th || sqrt(std::abs(sigma[ir]))<grho_th || std::abs(kin_r[ir])<tau_th)
+            if (rho[ir] < rho_th || std::abs(kin_r[ir]) < tau_th)
             {
                 sgn[ir] = 0.0;
+            }
+            if (sgn[ir] == 0.0 || std::sqrt(std::abs(sigma[ir])) < grho_th)
+            {
+                sgn_gradient[ir] = 0.0;
             }
         }
     }
@@ -559,10 +567,14 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 #endif
         for( int ir=0; ir<nrxx; ++ir )
         {
-            if ( rho[ir*2]<rho_th || sqrt(std::abs(sigma[ir*3]))<grho_th || std::abs(kin_r[ir*2])<tau_th)
+            if (rho[ir*2] < rho_th || std::abs(kin_r[ir*2]) < tau_th)
                 { sgn[ir*2] = 0.0; }
-            if ( rho[ir*2+1]<rho_th || sqrt(std::abs(sigma[ir*3+2]))<grho_th || std::abs(kin_r[ir*2+1])<tau_th)
+            if (rho[ir*2+1] < rho_th || std::abs(kin_r[ir*2+1]) < tau_th)
                 { sgn[ir*2+1] = 0.0; }
+            if (sgn[ir*2] == 0.0 || std::sqrt(std::abs(sigma[ir*3])) < grho_th)
+                { sgn_gradient[ir*2] = 0.0; }
+            if (sgn[ir*2+1] == 0.0 || std::sqrt(std::abs(sigma[ir*3+2])) < grho_th)
+                { sgn_gradient[ir*2+1] = 0.0; }
         }
     }
 
@@ -649,7 +661,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
                     vsigma[ir] *= (1.0 - XC_Functional::get_hybrid_alpha());
                 }
 #endif
-                h[0][ir] = 2.0 * gdr[0][ir] * vsigma[ir] * 2.0 * sgn[ir];
+                h[0][ir] = 2.0 * gdr[0][ir] * vsigma[ir] * 2.0 * sgn_gradient[ir];
             }
         }
         else
@@ -667,10 +679,10 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
                     vsigma[ir*3+2] *= (1.0 - XC_Functional::get_hybrid_alpha());
                 }
 #endif
-                h[0][ir] = 2.0 * (gdr[0][ir] * vsigma[ir*3  ] * sgn[ir*2  ] * 2.0
-                                + gdr[1][ir] * vsigma[ir*3+1] * sgn[ir*2]   * sgn[ir*2+1]);
-                h[1][ir] = 2.0 * (gdr[1][ir] * vsigma[ir*3+2] * sgn[ir*2+1] * 2.0
-                                + gdr[0][ir] * vsigma[ir*3+1] * sgn[ir*2]   * sgn[ir*2+1]);
+                h[0][ir] = 2.0 * (gdr[0][ir] * vsigma[ir*3  ] * sgn_gradient[ir*2  ] * 2.0
+                                + gdr[1][ir] * vsigma[ir*3+1] * sgn_gradient[ir*2] * sgn_gradient[ir*2+1]);
+                h[1][ir] = 2.0 * (gdr[1][ir] * vsigma[ir*3+2] * sgn_gradient[ir*2+1] * 2.0
+                                + gdr[0][ir] * vsigma[ir*3+1] * sgn_gradient[ir*2] * sgn_gradient[ir*2+1]);
             }
         }
 

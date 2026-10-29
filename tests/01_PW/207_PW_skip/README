@@ -1,1 +1,9 @@
 test SG15 pseudopotential, symmetry=on, nz is 3 which less than default MPI_threads 4, ewald calculation is skipped in this case
+
+The energy reference includes the restored SCAN local contribution at finite
+density and zero density gradient. On 2026-10-28, independent CG calculations
+with the old and corrected XC implementations at 1/2/4 MPI ranks reproduced
+the energy shift of approximately +6.16077e-4 eV. The revised reference comes
+from corrected CG; fresh runs at all three MPI sizes passed the original
+five property checks. INPUT, the two-electronic-step limit, and acceptance
+tolerances are unchanged. This remains a short-step functionality test.

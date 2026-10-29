@@ -12,15 +12,15 @@ pseudo_dir        ../../PP_ORB
 
 #Parameters (2.Iteration)
 ecutwfc           20
-scf_thr           1e-8
-scf_nmax          100
+scf_thr 1e-11
+scf_nmax 200
 
 init_chg          atomic
 init_wfc          random
-out_band          1
+out_band 1 16
 out_dos           1
 out_wfc_pw        1
-pw_diag_thr       0.00001
+pw_diag_thr 1e-18
 
 #Parameters (3.Basis)
 basis_type        pw
@@ -37,3 +37,11 @@ dos_edelta_ev     0.01
 dos_sigma         0.05
 
 pw_seed           1
+
+scf_thr_type 2
+
+pw_diag_thr_max 1e-18
+
+pw_diag_nmax 500
+
+diago_smooth_ethr false

@@ -1733,6 +1733,18 @@ bool DiagoPPCG<T, Device>::rayleigh_ritz(
         {
             eigenvalue[j] = rr_eval_[j];
         }
+        // Keep each conjugate direction attached to the same Ritz column
+        // when the global solve mixes or permutes the retained states.
+        const auto rotate_direction = [&](std::vector<T>& values) {
+            std::copy(values.begin(), values.end(), w_.begin());
+            set_zero(values);
+            ModuleBase::gemm_op<T, Device>()('N', 'N', n_dim_, n_band_, n_band_,
+                                             &one, w_.data(), ld_psi_, rr_hsub_.data(), n_band_,
+                                             &zero, values.data(), ld_psi_);
+        };
+        rotate_direction(p_);
+        rotate_direction(sp_);
+        rotate_direction(hp_);
     }
     else
     {
@@ -1838,6 +1850,11 @@ bool DiagoPPCG<T, Device>::orthonormalize(T* psi)
     rotate(psi);
     rotate(hpsi_.data());
     rotate(spsi_.data());
+    // The non-Ritz sweep changes the column basis too. Transform the
+    // conjugate directions and both cached images with the same coefficients.
+    rotate(p_.data());
+    rotate(sp_.data());
+    rotate(hp_.data());
     return true;
 }
 
