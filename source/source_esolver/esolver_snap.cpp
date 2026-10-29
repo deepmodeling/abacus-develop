@@ -40,8 +40,10 @@ ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
 }
 }
 
-ESolver_SNAP::ESolver_SNAP(const std::string& coefficient_file, const std::string& parameter_file)
-    : coefficient_file_(coefficient_file), parameter_file_(parameter_file)
+ESolver_SNAP::ESolver_SNAP(const std::string& coefficient_file,
+                           const std::string& parameter_file,
+                           std::ofstream& running_log)
+    : coefficient_file_(coefficient_file), parameter_file_(parameter_file), running_log_(running_log)
 {
     classname = "ESolver_SNAP";
 }
@@ -252,7 +254,7 @@ void ESolver_SNAP::cal_force(BaseCell& cell, ModuleBase::matrix& force)
         return;
     }
     force = snap_force_;
-    ModuleIO::print_force(GlobalV::ofs_running,
+    ModuleIO::print_force(running_log_,
                           static_cast<UnitCell&>(cell),
                           "TOTAL-FORCE (eV/Angstrom)",
                           force,
@@ -265,7 +267,7 @@ void ESolver_SNAP::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
 
     if (cell.kind() == BaseCell::Kind::unitcell)
     {
-        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
+        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, running_log_);
     }
     else
     {
@@ -273,7 +275,7 @@ void ESolver_SNAP::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
         if (static_cast<MDCell&>(cell).mpi_rank() == 0)
 #endif
         {
-            ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, GlobalV::ofs_running);
+            ModuleIO::print_stress("TOTAL-STRESS", stress, true, false, running_log_);
         }
     }
 
@@ -288,7 +290,7 @@ void ESolver_SNAP::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
 void ESolver_SNAP::after_all_runners(BaseCell& cell)
 {
     static_cast<void>(cell);
-    GlobalV::ofs_running << "\n !FINAL_ETOT_IS " << snap_potential_ * ModuleBase::Ry_to_eV << " eV\n";
+    running_log_ << "\n !FINAL_ETOT_IS " << snap_potential_ * ModuleBase::Ry_to_eV << " eV\n";
 }
 
 } // namespace ModuleESolver
