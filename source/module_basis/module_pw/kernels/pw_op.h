@@ -5,6 +5,14 @@
 #include <complex>
 
 namespace ModulePW {
+#if defined(__CUDA)
+template <typename Real>
+void pack_real_grid_gpu(int size, const Real* input, std::complex<Real>* grid);
+
+template <typename Real>
+void extract_real_grid_gpu(int size, bool add, Real factor, const std::complex<Real>* grid, Real* output);
+#endif
+
 template <typename FPTYPE, typename Device>
 struct set_3d_fft_box_op {
     /// @brief Set the 3D fft box for fft transfrom between the recip and real space.

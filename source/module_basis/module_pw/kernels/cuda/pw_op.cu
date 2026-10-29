@@ -8,6 +8,47 @@ namespace ModulePW {
 
 #define THREADS_PER_BLOCK 256
 
+template <typename Real>
+__global__ void pack_real_grid(int size, const Real* input, thrust::complex<Real>* grid)
+{
+    const int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < size)
+    {
+        grid[index] = thrust::complex<Real>(input[index], 0);
+    }
+}
+
+template <typename Real>
+__global__ void extract_real_grid(int size, bool add, Real factor, const thrust::complex<Real>* grid, Real* output)
+{
+    const int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index < size)
+    {
+        output[index] = add ? output[index] + factor * grid[index].real() : grid[index].real();
+    }
+}
+
+template <typename Real>
+void pack_real_grid_gpu(int size, const Real* input, std::complex<Real>* grid)
+{
+    pack_real_grid<<<(size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(
+        size, input, reinterpret_cast<thrust::complex<Real>*>(grid));
+    cudaCheckOnDebug();
+}
+
+template <typename Real>
+void extract_real_grid_gpu(int size, bool add, Real factor, const std::complex<Real>* grid, Real* output)
+{
+    extract_real_grid<<<(size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK, THREADS_PER_BLOCK>>>(
+        size, add, factor, reinterpret_cast<const thrust::complex<Real>*>(grid), output);
+    cudaCheckOnDebug();
+}
+
+template void pack_real_grid_gpu<float>(int, const float*, std::complex<float>*);
+template void pack_real_grid_gpu<double>(int, const double*, std::complex<double>*);
+template void extract_real_grid_gpu<float>(int, bool, float, const std::complex<float>*, float*);
+template void extract_real_grid_gpu<double>(int, bool, double, const std::complex<double>*, double*);
+
 template<class FPTYPE>
 __global__ void set_3d_fft_box(
     const int npwk,

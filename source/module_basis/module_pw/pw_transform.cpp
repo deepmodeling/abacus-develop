@@ -1,12 +1,101 @@
 #include "module_fft/fft_bundle.h"
 #include <complex>
 #include "pw_basis.h"
+#include "kernels/pw_op.h"
+#include <algorithm>
+#include <type_traits>
 #include <cassert>
 #include "module_base/global_function.h"
 #include "module_base/timer.h"
 #include "pw_gatherscatter.h"
 
 namespace ModulePW {
+
+#if defined(__CUDA)
+template <typename Input, typename Real>
+void PW_Basis::real2recip_gpu(const Input* in, std::complex<Real>* out, bool add, Real factor) const
+{
+    using Complex = std::complex<Real>;
+    int scratch_size = this->npw;
+    if constexpr (std::is_same<Input, Real>::value)
+    {
+        scratch_size = std::max(scratch_size, (this->nrxx + 1) / 2);
+    }
+    Complex* scratch = nullptr;
+    base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch, scratch_size);
+    auto* grid = this->fft_bundle.get_auxr_3d_data<Real>();
+    if constexpr (std::is_same<Input, Complex>::value)
+    {
+        base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu_ctx, cpu_ctx, grid, in, this->nrxx);
+    }
+    else
+    {
+        // A complex allocation also stores the contiguous real input before its FFT coefficients are gathered.
+        auto* real_input = reinterpret_cast<Real*>(scratch);
+        base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu_ctx, cpu_ctx, real_input, in, this->nrxx);
+        pack_real_grid_gpu(this->nrxx, real_input, grid);
+    }
+    this->fft_bundle.fft3D_forward(gpu_ctx, grid, grid);
+    if (add)
+    {
+        base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu_ctx, cpu_ctx, scratch, out, this->npw);
+    }
+    set_real_to_recip_output_op<Real, base_device::DEVICE_GPU>()(
+        gpu_ctx, this->npw, this->nxyz, add, factor, this->d_ig2fftbox, grid, scratch);
+    base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        cpu_ctx, gpu_ctx, out, scratch, this->npw);
+    base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch);
+}
+
+template <typename Real, typename Output>
+void PW_Basis::recip2real_gpu(const std::complex<Real>* in, Output* out, bool add, Real factor) const
+{
+    using Complex = std::complex<Real>;
+    int scratch_size = this->npw;
+    if constexpr (std::is_same<Output, Real>::value)
+    {
+        scratch_size = std::max(scratch_size, (this->nrxx + 1) / 2);
+    }
+    else if (add)
+    {
+        scratch_size = std::max(scratch_size, this->nrxx);
+    }
+    Complex* scratch = nullptr;
+    base_device::memory::resize_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch, scratch_size);
+    base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+        gpu_ctx, cpu_ctx, scratch, in, this->npw);
+    auto* grid = this->fft_bundle.get_auxr_3d_data<Real>();
+    base_device::memory::set_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, grid, 0, this->nxyz);
+    set_3d_fft_box_op<Real, base_device::DEVICE_GPU>()(gpu_ctx, this->npw, this->d_ig2fftbox, scratch, grid);
+    this->fft_bundle.fft3D_backward(gpu_ctx, grid, grid);
+    auto* result = reinterpret_cast<Output*>(scratch);
+    if (add)
+    {
+        base_device::memory::synchronize_memory_op<Output, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
+            gpu_ctx, cpu_ctx, result, out, this->nrxx);
+    }
+    if constexpr (std::is_same<Output, Real>::value)
+    {
+        extract_real_grid_gpu(this->nrxx, add, factor, grid, result);
+    }
+    else if (add)
+    {
+        set_recip_to_real_output_op<Real, base_device::DEVICE_GPU>()(
+            gpu_ctx, this->nrxx, true, factor, grid, result);
+    }
+    else
+    {
+        result = grid;
+    }
+    base_device::memory::synchronize_memory_op<Output, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
+        cpu_ctx, gpu_ctx, out, result, this->nrxx);
+    base_device::memory::delete_memory_op<Complex, base_device::DEVICE_GPU>()(gpu_ctx, scratch);
+}
+#endif
+
 
 #if defined(__CUDA) || defined(__ROCM)
 template <typename FPTYPE>
@@ -96,6 +185,14 @@ void PW_Basis::real2recip(const std::complex<FPTYPE>* in,
                           const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "real2recip");
+#if defined(__CUDA)
+    if (this->d_ig2fftbox != nullptr)
+    {
+        this->real2recip_gpu(in, out, add, factor);
+        ModuleBase::timer::tick(this->classname, "real2recip");
+        return;
+    }
+#endif
 
     assert(this->gamma_only == false);
 #ifdef _OPENMP
@@ -143,6 +240,14 @@ template <typename FPTYPE>
 void PW_Basis::real2recip(const FPTYPE* in, std::complex<FPTYPE>* out, const bool add, const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "real2recip");
+#if defined(__CUDA)
+    if (this->d_ig2fftbox != nullptr)
+    {
+        this->real2recip_gpu(in, out, add, factor);
+        ModuleBase::timer::tick(this->classname, "real2recip");
+        return;
+    }
+#endif
     if(this->gamma_only)
     {
         const int npy = this->ny * this->nplane;
@@ -209,6 +314,14 @@ void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
                           const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "recip2real");
+#if defined(__CUDA)
+    if (this->d_ig2fftbox != nullptr)
+    {
+        this->recip2real_gpu(in, out, add, factor);
+        ModuleBase::timer::tick(this->classname, "recip2real");
+        return;
+    }
+#endif
     assert(this->gamma_only == false);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
@@ -261,6 +374,14 @@ template <typename FPTYPE>
 void PW_Basis::recip2real(const std::complex<FPTYPE>* in, FPTYPE* out, const bool add, const FPTYPE factor) const
 {
     ModuleBase::timer::tick(this->classname, "recip2real");
+#if defined(__CUDA)
+    if (this->d_ig2fftbox != nullptr)
+    {
+        this->recip2real_gpu(in, out, add, factor);
+        ModuleBase::timer::tick(this->classname, "recip2real");
+        return;
+    }
+#endif
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif

@@ -40,6 +40,7 @@ PW_Basis:: ~PW_Basis()
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu") {
         delmem_int_op()(gpu_ctx, this->d_is2fftixy);
+        delmem_int_op()(gpu_ctx, this->d_ig2fftbox);
     }
 #endif
 }
@@ -70,14 +71,27 @@ void PW_Basis::setuptransform()
 
 void PW_Basis::getstartgr()
 {
-    if(this->gamma_only)    
+#if defined(__CUDA)
+    delmem_int_op()(gpu_ctx, this->d_ig2fftbox);
+    this->d_ig2fftbox = nullptr;
+    if (this->device == "gpu" && this->poolnproc == 1 && !this->gamma_only)
     {
-        this->nmaxgr = ( this->npw > (this->nrxx+1)/2 ) ? this->npw : (this->nrxx+1)/2;
+        std::vector<int> indices(this->npw);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+        for (int ig = 0; ig < this->npw; ++ig)
+        {
+            const int isz = this->ig2isz[ig];
+            indices[ig] = this->is2fftixy[isz / this->nz] * this->nz + isz % this->nz;
+        }
+        resmem_int_op()(gpu_ctx, this->d_ig2fftbox, this->npw);
+        syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_ig2fftbox, indices.data(), this->npw);
     }
-    else
-    {
-        this->nmaxgr = ( this->npw > this->nrxx ) ? this->npw : this->nrxx;
-    }
+#endif
+    if(this->gamma_only)    this->nmaxgr = ( this->npw > (this->nrxx+1)/2 ) ? this->npw : (this->nrxx+1)/2;
+    else                    this->nmaxgr = ( this->npw > this->nrxx ) ? this->npw : this->nrxx;
+    this->nmaxgr = (this->nz * this->nst > this->nxy * nplane) ? this->nz * this->nst : this->nxy * nplane;
     
     //---------------------------------------------
 	// sum : starting plane of FFT box.
