@@ -1,5 +1,6 @@
 #include "sccs_cav_deriv.h"
 #include "sccs_cavity.h"
+#include "sccs_lowpass.h"
 #include "sccs_response.h"
 
 #include "source_base/constants.h"
@@ -45,8 +46,12 @@ void make_cav_derivs(const std::vector<double>& density,
                      double tpiba,
                      bool open_boundary,
                      SccsResponse& response,
-                     std::vector<double>& coefficient)
+                     CavityDerivatives& derivatives)
 {
+    derivatives.filter = switch_filter(cavity, basis);
+    const bool lowpass = uses_lowpass(cavity);
+    derivatives.gradient.clear();
+    std::vector<double>& coefficient = derivatives.coefficient;
     const std::size_t size = density.size();
     response.solute.resize(size);
     response.dsolute_drho.resize(size);
@@ -72,6 +77,13 @@ void make_cav_derivs(const std::vector<double>& density,
         // grid, since its chain coefficient is not converged at the cavity edge.
         std::vector<std::complex<double>> boundary_g(basis.npw);
         basis.real2recip(response.solute.data(), boundary_g.data());
+        if (lowpass)
+        {
+            for (int ig = 0; ig < basis.npw; ++ig)
+            {
+                boundary_g[ig] *= derivatives.filter[ig];
+            }
+        }
         XC_Functional::grad_rho(boundary_g.data(), gradient.data(), &basis, tpiba);
         XC_Functional::laplacian_rho(boundary_g.data(), laplacian.data(), &basis, tpiba);
     }
@@ -94,5 +106,10 @@ void make_cav_derivs(const std::vector<double>& density,
         }
     }
     eps_of_boundary(cavity, gradient, laplacian, response, coefficient);
+    if (open_boundary && lowpass)
+    {
+        derivatives.gradient.swap(gradient);
+    }
 }
+
 } // namespace ModuleSccs

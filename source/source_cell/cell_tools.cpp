@@ -3,9 +3,31 @@
  * @brief Implementation of cell tool free functions.
  */
 #include "cell_tools.h"
+#include "source_base/element_name.h"
+
+#include <algorithm>
 
 namespace unitcell
 {
+    int pseudo_atom_z(const Atom& atom)
+    {
+        const std::string& label = atom.ncpp.psd;
+        const std::size_t first = label.find_first_not_of(" \t");
+        if (first == std::string::npos)
+        {
+            return 0;
+        }
+        const std::size_t last = label.find_last_not_of(" \t");
+        const std::size_t symbol_length = last - first + 1;
+        const std::string symbol = label.substr(first, symbol_length);
+        const std::vector<std::string>::const_iterator element = std::find(ModuleBase::element_name.begin(), ModuleBase::element_name.end(), symbol);
+        if (element == ModuleBase::element_name.end())
+        {
+            return 0;
+        }
+        return element - ModuleBase::element_name.begin() + 1;
+    }
+
     std::vector<AtomData> get_atom_data(const Atom* atoms, const int ntype, const double lattice_scale)
     {
         int nat = 0;
@@ -17,12 +39,14 @@ namespace unitcell
         data.reserve(nat);
         for (int it = 0; it < ntype; ++it)
         {
+            const int atomic_number = pseudo_atom_z(atoms[it]);
             for (int ia = 0; ia < atoms[it].na; ++ia)
             {
                 AtomData atom;
                 atom.position = atoms[it].tau[ia] * lattice_scale;
                 atom.mass = atoms[it].mass;
                 atom.valence_charge = atoms[it].ncpp.zv;
+                atom.atomic_number = atomic_number;
                 data.push_back(atom);
             }
         }

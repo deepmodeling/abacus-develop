@@ -39,6 +39,13 @@ void eval_functional(const std::vector<double>& charge,
     FunctionalResult candidate;
     candidate.reaction_potential.resize(size);
     candidate.electron_potential.resize(size);
+    // The cavity-density derivative is needed only for the forces on the core
+    // Gaussians of the full cavity.
+    const bool core_electrons = config.core_electrons;
+    if (core_electrons)
+    {
+        candidate.cavity_potential = response.cavity_potential;
+    }
     for (std::size_t i = 0; i < size; ++i)
     {
         const double reaction = response.polarization.potential[i] - vacuum[i];
@@ -73,6 +80,10 @@ void eval_functional(const std::vector<double>& charge,
         const double nonel = (config.pressure - config.surface_tension * divergence[i])
                              * response.dsolute_drho[i];
         candidate.electron_potential[i] += nonel;
+        if (core_electrons)
+        {
+            candidate.cavity_potential[i] += nonel;
+        }
     }
     result = std::move(candidate);
 }

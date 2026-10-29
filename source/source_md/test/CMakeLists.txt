@@ -73,6 +73,15 @@ list(
   ../../source_cell/sep.cpp
   ../../source_cell/sep_cell.cpp)
 
+# Share canonical source paths with the sibling unittests directory.
+set(md_test_depend_files)
+foreach(depend_file IN LISTS depend_files)
+  get_filename_component(depend_path "${depend_file}" ABSOLUTE
+                         BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+  list(APPEND md_test_depend_files "${depend_path}")
+endforeach()
+set(md_test_depend_files "${md_test_depend_files}" PARENT_SCOPE)
+
 addtest(
   TARGET
   MODULE_MD_LJ_pot
@@ -147,6 +156,7 @@ addtest(
   device
   SOURCES
   verlet_test.cpp
+  test_md_base.cpp
   ../md_base.cpp
   ../verlet.cpp
   ${depend_files})

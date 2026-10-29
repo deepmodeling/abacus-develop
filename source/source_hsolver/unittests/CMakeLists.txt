@@ -1,0 +1,324 @@
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
+abacus_disable_feature_definitions(__EXX)
+
+# Each adversarial case must run in its own process. Requiring the completion
+# marker also catches historical solver failure paths that called exit(0).
+add_executable(MODULE_HSOLVER_davidson_stability
+  test_diago_david.cpp
+  ../diago_david.cpp
+  ../diago_dav_subspace.cpp
+)
+target_link_libraries(MODULE_HSOLVER_davidson_stability PRIVATE
+  parameter base psi device container abacus::linalg_libs
+)
+target_compile_definitions(MODULE_HSOLVER_davidson_stability PRIVATE
+  ABACUS_DAVIDSON_STABILITY_HARNESS
+)
+if(ENABLE_MPI)
+  target_sources(MODULE_HSOLVER_davidson_stability PRIVATE
+    ../diag_hs_para.cpp
+    ../diago_pxxxgvx.cpp
+  )
+  if(TARGET ELPA::ELPA)
+    target_link_libraries(MODULE_HSOLVER_davidson_stability PRIVATE ELPA::ELPA genelpa)
+  endif()
+endif()
+if(ENABLE_COVERAGE)
+  add_coverage(MODULE_HSOLVER_davidson_stability)
+endif()
+install(TARGETS MODULE_HSOLVER_davidson_stability DESTINATION ${CMAKE_BINARY_DIR}/tests)
+foreach(solver dav dav_subspace)
+  foreach(case exact partial_exact collinear near_collinear degenerate generalized_spd warm_start small_direction restart_spd)
+    set(test_name MODULE_HSOLVER_davidson_stability_${solver}_${case})
+    add_test(NAME ${test_name}
+      COMMAND MODULE_HSOLVER_davidson_stability ${solver} ${case}
+    )
+    set_tests_properties(${test_name} PROPERTIES
+      PASS_REGULAR_EXPRESSION "STABILITY_RESULT solver=${solver} case=${case} accepted=1 "
+      FAIL_REGULAR_EXPRESSION "STABILITY_EXCEPTION;accepted=0"
+      ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1"
+      LABELS "hsolver;davidson;stability"
+      TIMEOUT 60
+    )
+  endforeach()
+endforeach()
+
+AddTest(
+  TARGET MODULE_HSOLVER_cg_accuracy
+  LIBS parameter base psi device container
+  SOURCES test_diago_cg_accuracy.cpp ../diago_cg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp
+)
+set_tests_properties(MODULE_HSOLVER_cg_accuracy PROPERTIES
+  PASS_REGULAR_EXPRESSION "CG_ACCURACY_COMPLETE status=0"
+  ENVIRONMENT "OMP_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1;MKL_NUM_THREADS=1"
+  TIMEOUT 60
+)
+
+
+if (ENABLE_MPI)
+  AddTest(
+    TARGET MODULE_HSOLVER_parak2d_test
+    LIBS parameter  base device MPI::MPI_CXX
+    SOURCES test_parallel_k2d.cpp ../parallel_k2d.cpp ../../source_cell/parallel_kpoints.cpp
+  )
+  AddTest(
+    TARGET MODULE_HSOLVER_bpcg
+    LIBS parameter  base psi device container
+    SOURCES test_diago_bpcg.cpp ../diago_bpcg.cpp ../para_lin_tf.cpp ../diago_iter_assist.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+  )
+  AddTest(
+    TARGET MODULE_HSOLVER_cg
+    LIBS parameter  base psi device container
+    SOURCES test_diago_cg.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+  )
+  AddTest(
+    TARGET MODULE_HSOLVER_cg_float
+    LIBS parameter  base psi device container
+    SOURCES test_diago_cg_float.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+  )
+  AddTest(
+    TARGET MODULE_HSOLVER_dav
+    LIBS parameter  base psi device
+    SOURCES test_diago_david_double.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+  )
+  AddTest(
+    TARGET MODULE_HSOLVER_dav_float
+    LIBS parameter  base psi device
+    SOURCES test_diago_david_float.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+  )
+  if(ENABLE_LCAO)
+  AddTest(
+    TARGET MODULE_HSOLVER_cg_real
+    LIBS parameter  base psi device container
+    SOURCES test_diago_cg_float.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diag_const_nums.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+  )
+  AddTest(
+    TARGET MODULE_HSOLVER_dav_real
+    LIBS parameter  base psi device
+    SOURCES test_diago_david_real.cpp ../diago_david.cpp  ../diago_iter_assist.cpp  ../diag_const_nums.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+  )
+  endif()
+
+  AddTest(
+    TARGET MODULE_HSOLVER_base
+    LIBS parameter  psi device base
+    SOURCES test_hsolver.cpp ../hsolver.cpp
+  )
+
+  AddTest(
+    TARGET MODULE_HSOLVER_pw
+    LIBS parameter  psi device base container symmetry
+    SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diago_ppcg.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
+    ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
+    ../../source_hamilt/module_xc/exx_info.cpp
+    ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
+    ../../source_basis/module_pw/test/test_tool.cpp
+  )
+
+  if(ENABLE_LCAO)
+    if(TARGET ELPA::ELPA)
+    AddTest(
+      TARGET MODULE_HSOLVER_LCAO
+      LIBS parameter  ELPA::ELPA base genelpa psi device
+      SOURCES test_diago_lcao.cpp ../diago_elpa.cpp ../diago_elpa_native.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
+    )
+    else()
+      AddTest(
+        TARGET MODULE_HSOLVER_LCAO
+        LIBS parameter  base psi device
+        SOURCES test_diago_lcao.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
+      )
+    endif()
+
+    if (TARGET PEXSI::PEXSI)
+    AddTest(
+      TARGET MODULE_HSOLVER_LCAO_PEXSI
+      LIBS parameter  PEXSI::PEXSI base psi device pexsi
+      SOURCES test_diago_pexsi.cpp ../diago_pexsi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
+    )
+    endif()
+  endif()
+  if (USE_CUDA)
+  AddTest(
+    TARGET MODULE_HSOLVER_LCAO_cusolver
+    LIBS parameter   base psi device
+    SOURCES test_diago_cusolver.cpp ../diago_cusolver.cpp ../diago_scalapack.cpp
+    ../kernels/hegvd_op.cpp
+    ../kernels/cuda/diag_cusolver.cu
+  )
+  target_compile_definitions(MODULE_HSOLVER_LCAO_cusolver PRIVATE __CUDA)
+  endif()
+endif()
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg
+  LIBS parameter base psi device container
+  SOURCES test_diago_ppcg.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+AddTest(
+  TARGET MODULE_HSOLVER_diago_params
+  LIBS parameter base psi device
+  SOURCES test_diago_params.cpp ../diago_params.cpp
+)
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg_float
+  LIBS parameter base psi device container
+  SOURCES test_diago_ppcg_float.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+
+if (ENABLE_MPI)
+AddTest(
+  TARGET MODULE_HSOLVER_compare
+  LIBS parameter base psi device container
+  SOURCES test_diago_compare.cpp ../diago_cg.cpp ../diago_bpcg.cpp ../diago_david.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_lin_tf.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+set_tests_properties(MODULE_HSOLVER_compare PROPERTIES
+  DISABLED TRUE
+  LABELS benchmark
+)
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg_parallel
+  LIBS parameter base psi device container
+  SOURCES test_diago_ppcg_parallel.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+endif()
+
+abacus_copy_test_files(
+  H-KPoints-Si2.dat
+  H-GammaOnly-Si2.dat
+  S-KPoints-Si2.dat
+  S-GammaOnly-Si2.dat
+  H-KPoints-Si64.dat
+  H-GammaOnly-Si64.dat
+  S-KPoints-Si64.dat
+  S-GammaOnly-Si64.dat
+  GammaOnly-Si2-Solution.dat
+  GammaOnly-Si64-Solution.dat
+  KPoints-Si2-Solution.dat
+  KPoints-Si64-Solution.dat
+  diago_cg_parallel_test.sh
+  diago_david_parallel_test.sh
+  diago_lcao_parallel_test.sh
+  diago_ppcg_parallel_test.sh
+  PEXSI-H-GammaOnly-Si2.dat
+  PEXSI-S-GammaOnly-Si2.dat
+  PEXSI-DM-GammaOnly-Si2.dat
+  diago_pexsi_parallel_test.sh
+  parallel_k2d_test.sh)
+
+if(ENABLE_MPI)
+  if(TARGET ELPA::ELPA)
+    AddTest(
+      TARGET MODULE_HSOLVER_diago_hs_parallel
+      LIBS parameter ELPA::ELPA base device MPI::MPI_CXX genelpa psi
+      SOURCES
+        test_diag_hs_para.cpp
+        ../diag_hs_para.cpp
+        ../diago_pxxxgvx.cpp
+        ../diago_elpa.cpp
+        ../diago_scalapack.cpp
+    )
+  else()
+    AddTest(
+      TARGET MODULE_HSOLVER_diago_hs_parallel
+      LIBS parameter base device MPI::MPI_CXX psi
+      SOURCES
+        test_diag_hs_para.cpp
+        ../diag_hs_para.cpp
+        ../diago_pxxxgvx.cpp
+        ../diago_scalapack.cpp
+    )
+  endif()
+
+  AddTest(
+    TARGET MODULE_HSOLVER_linear_trans
+    LIBS parameter base device MPI::MPI_CXX
+    SOURCES test_para_lin_tf.cpp ../para_lin_tf.cpp
+  )
+
+  add_test(
+    NAME MODULE_HSOLVER_para_linear_trans
+    COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_HSOLVER_linear_trans>"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+endif()
+
+find_program(BASH bash)
+if (ENABLE_MPI)
+  add_test(NAME MODULE_HSOLVER_cg_parallel
+        COMMAND ${BASH} diago_cg_parallel_test.sh
+          "$<TARGET_FILE:MODULE_HSOLVER_cg>"
+          "$<TARGET_FILE:MODULE_HSOLVER_cg_float>"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+  add_test(NAME MODULE_HSOLVER_parak2d_test_parallel
+        COMMAND ${BASH} parallel_k2d_test.sh "$<TARGET_FILE:MODULE_HSOLVER_parak2d_test>"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+  add_test(NAME MODULE_HSOLVER_dav_parallel
+        COMMAND ${BASH} diago_david_parallel_test.sh
+          "$<TARGET_FILE:MODULE_HSOLVER_dav>"
+          "$<TARGET_FILE:MODULE_HSOLVER_dav_float>"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      ) 
+  add_test(NAME MODULE_HSOLVER_ppcg_parallel_test
+        COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/diago_ppcg_parallel_test.sh
+          "$<TARGET_FILE:MODULE_HSOLVER_ppcg_parallel>"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+  if(ENABLE_LCAO)
+    add_test(NAME MODULE_HSOLVER_LCAO_parallel
+          COMMAND ${BASH} diago_lcao_parallel_test.sh
+            "$<TARGET_FILE:MODULE_HSOLVER_LCAO>"
+            "$<TARGET_FILE:MODULE_HSOLVER_dav_real>"
+            "$<TARGET_FILE:MODULE_HSOLVER_cg_real>"
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+    if(ENABLE_PEXSI)
+      add_test(NAME MODULE_HSOLVER_LCAO_PEXSI_parallel
+            COMMAND ${BASH} diago_pexsi_parallel_test.sh "$<TARGET_FILE:MODULE_HSOLVER_LCAO_PEXSI>"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
+    endif()
+  endif()
+endif()
+
+if(ENABLE_LCAO)
+  set(DAVIDSON_OWNERSHIP_SOURCES
+    test_diago_david.cpp
+    ../diago_david.cpp
+    ../diago_dav_subspace.cpp
+    ../diago_cg.cpp
+    ../diago_iter_assist.cpp
+    ../diag_const_nums.cpp
+  )
+  set(DAVIDSON_OWNERSHIP_LIBS parameter base psi device container)
+  if(ENABLE_MPI)
+    list(APPEND DAVIDSON_OWNERSHIP_SOURCES
+      ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp)
+    if(TARGET ELPA::ELPA)
+      list(APPEND DAVIDSON_OWNERSHIP_SOURCES ../diago_elpa.cpp)
+      list(APPEND DAVIDSON_OWNERSHIP_LIBS ELPA::ELPA genelpa)
+    endif()
+  endif()
+  AddTest(
+    TARGET MODULE_HSOLVER_empty_blocks
+    LIBS ${DAVIDSON_OWNERSHIP_LIBS}
+    SOURCES ${DAVIDSON_OWNERSHIP_SOURCES}
+  )
+  set_tests_properties(MODULE_HSOLVER_empty_blocks PROPERTIES
+    TIMEOUT 120 ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
+  if(ENABLE_MPI)
+    add_test(NAME MODULE_HSOLVER_empty_blocks_mpi
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 $<TARGET_FILE:MODULE_HSOLVER_empty_blocks>)
+    set_tests_properties(MODULE_HSOLVER_empty_blocks_mpi PROPERTIES PROCESSORS 4 TIMEOUT 120
+      ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
+  endif()
+endif()

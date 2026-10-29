@@ -197,7 +197,8 @@ void ReadInput::item_model()
                            "pcc_2d; no electric/gate field, DFT-1/2, DeePKS or dm_to_rho. Use assume_isolated pcc_0d "
                            "or pcc_2d for charged systems: with assume_isolated none a charged cell only prints a "
                            "warning and runs, and its energy then depends on the cell size because the periodic "
-                           "Poisson solver drops the G = 0 net charge.\n\n"
+                           "Poisson solver drops the G = 0 net charge. With pcc_0d or pcc_2d, see sccs_lowpass_p1 "
+                           "for the accuracy of forces.\n\n"
                            "Legacy Boolean values (true/false) are read as 1/0.";
         item.default_value = "0";
         item.read_value = [](const Input_Item& item, Parameter& para) {
