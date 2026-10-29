@@ -2,6 +2,7 @@
 #define ESOLVER_OF_H
 
 #include <string>
+#include <vector>
 
 #include "esolver_fp.h"
 #include "source_base/opt_dcsrch.h"
@@ -50,15 +51,19 @@ class ESolver_OF : public ESolver_FP
 
     // ------------------ parameters from other module --------------
     double dV_ = 0;           // volume of one grid point in real space
-    double* nelec_ = nullptr; // number of electrons with each spin
+    std::vector<double> nelec_; // number of electrons with each spin
 
     // ----- parameters and arrays used in density optimization -----
     int iter_ = 0;                                // iteration number
-    double** pdirect_ = nullptr;                  // optimization direction of phi, which is sqrt(rho)
-    std::complex<double>** precip_dir_ = nullptr; // direction in reciprocal space, used when of_full_pw=false.
-    double* theta_ = nullptr;                     // step length
-    double** pdEdphi_ = nullptr;                  // dE/dphi
-    double** pdLdphi_ = nullptr;                  // dL/dphi
+    std::vector<double> pdirect_storage_;
+    std::vector<double*> pdirect_; // row views; optimization direction of phi, which is sqrt(rho)
+    std::vector<std::complex<double>> precip_dir_storage_;
+    std::vector<std::complex<double>*> precip_dir_; // row views; used when of_full_pw=false.
+    std::vector<double> theta_;                   // step length
+    std::vector<double> pdEdphi_storage_;
+    std::vector<double*> pdEdphi_; // row views; dE/dphi
+    std::vector<double> pdLdphi_storage_;
+    std::vector<double*> pdLdphi_; // row views; dL/dphi
     double** pphi_ = nullptr;                     // pphi[i] = ppsi.get_pointer(i), which will be freed in ~Psi().
     std::string task_;                 // used in line search
     int tn_spin_flag_ = -1;                       // spin flag used in cal_potential, which will be called by opt_tn
@@ -87,6 +92,7 @@ class ESolver_OF : public ESolver_FP
     // --------------------- initialize ---------------------------------
     void init_elecstate(UnitCell& ucell);
     void allocate_array();
+    void resize_spin_arrays();
 
     // --------------------- calculate physical qualities ---------------
     std::function<void(double*, double*)> bound_cal_potential_;

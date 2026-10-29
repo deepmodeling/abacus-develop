@@ -1,9 +1,9 @@
-#include <fstream>
-#include "source_relax/lat_change_method.h"
-#include "mock_remake_cell.h"
-
 #include "for_test.h"
+#include "mock_remake_cell.h"
+#include "source_relax/lat_change_method.h"
+
 #include "gtest/gtest.h"
+#include <fstream>
 /************************************************
  *  unit tests of class Lattice_Change_Methods
  ***********************************************/
@@ -25,7 +25,12 @@ void Lattice_Change_CG::allocate(void)
 {
 }
 
-bool Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_in, const double &etot_in, std::ofstream& ofs, std::vector<double>& etot_info, const Relax_Criteria& criteria)
+bool Lattice_Change_CG::start(UnitCell& ucell,
+                              const ModuleBase::matrix& stress_in,
+                              const double& etot_in,
+                              std::ofstream& ofs,
+                              std::vector<double>& etot_info,
+                              const Relax_Criteria& criteria)
 {
     return false;
 }

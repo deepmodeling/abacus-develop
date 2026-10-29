@@ -8,9 +8,10 @@
  *   - Davidson (DiagoDavid)
  *
  * Every solver is fed the SAME Hamiltonian, the SAME initial guess and the
- * SAME per-band convergence threshold, and wall time is measured to the SAME
- * reference accuracy (max_eval_err < err_target) so the timings are directly
- * comparable despite the solvers' differing internal stopping rules.
+ * SAME numerical per-band threshold. Each result is checked against the SAME
+ * LAPACK-reference accuracy (max_eval_err < err_target). The solvers retain
+ * their own stopping rules and call budgets, so timings must be read together
+ * with the reported accuracy.
  *
  * This is a benchmark/audit aid, not a correctness unit test: it is DISABLED
  * by default and must be run explicitly.
@@ -33,11 +34,14 @@
 #include <cstdlib>
 #include <functional>
 #include <limits>
-#include <malloc.h>
 #include <random>
 #include <string>
 #include <utility>
 #include <vector>
+
+#if defined(__GLIBC__) && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 33))
+#include <malloc.h>
+#endif
 
 using T = std::complex<double>;
 using Real = double;
@@ -49,23 +53,18 @@ static int g_sbsize = -1;
 static int g_rr_step = -1;
 
 // ---------------------------------------------------------------------------
-// Unified stopping criterion.  Wall time is measured as "time to reach
-// max_eval_err < err_target", the same LAPACK-reference accuracy for every
-// solver.  Each solver's own stopping rule (eigenvalue-change for PPCG/CG,
-// residual for BPCG/Davidson) is looser than the reference error, so every
-// solver is re-driven for up to max_outer_passes calls to diag().  max_err
-// always reports the accuracy actually reached, so a solver that fails to hit
-// err_target within the budget stays visible.
+// Common acceptance criterion: max_eval_err < err_target against LAPACK.
+// Identical ethr values have different internal meanings: PPCG checks residual
+// norms, CG and Davidson check eigenvalue changes, and BPCG checks its gradient
+// error. These quantities do not imply the same eigenvalue accuracy.
 //
-// NOTE: err_target must be strictly coarser than every solver's own stopping
-// point.  The CG solver stops on |eigenvalue change| < ethr, which in practice
-// leaves max_eval_err ~ (2-4)x ethr; a target tighter than that (e.g. 1e-6
-// with ethr=1e-6) can never be reached, so CG burns all max_outer_passes doing
-// an expensive subspace restart + per-band CG each round.  A relaxed target
-// keeps the cross-solver comparison honest instead of penalizing CG for being
-// re-driven into repeated subspace restarts.
+// PPCG, CG and BPCG are re-driven for up to max_outer_passes calls to diag(),
+// checking the common target after each call. Davidson receives one call with
+// its own iteration budget. The final error remains visible when a solver
+// misses the target; the run then returns a nonzero status. This fixed target
+// is a benchmark choice, not a guarantee relating ethr to eigenvalue error.
 // ---------------------------------------------------------------------------
-const double err_target = 1e-5;    // relaxed: reachable by every solver
+const double err_target = 1e-5;    // common LAPACK-reference acceptance threshold
 const int max_outer_passes = 20;   // outer diag() re-drives before giving up
 
 // max over bands of |eval_i - ref_i|: the reference-based accuracy that makes
@@ -85,13 +84,31 @@ static double max_eval_err(const Real* eval, const Real* ref, int nband)
     return err;
 }
 
-// Total heap memory currently allocated (bytes).  Used to compare the peak
-// working memory of the solvers: PPCG keeps a bounded subspace, while
-// Davidson grows its basis with the number of iterations.
-static long heap_bytes()
+// Allocator-reported process heap in bytes. Samples before solver construction
+// and after diag() measure retained heap changes while the solver is alive.
+// Temporary workspaces freed inside diag() are absent; allocator caching and
+// other process allocations can affect the result. This is not peak memory.
+// mallinfo2 is optional and available only with glibc >= 2.33.
+static double heap_bytes()
 {
-    struct mallinfo2 mi = mallinfo2();
-    return static_cast<long>(mi.uordblks) + static_cast<long>(mi.hblkhd);
+#if defined(__GLIBC__) && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 33))
+    const struct mallinfo2 mi = mallinfo2();
+    return static_cast<double>(mi.uordblks) + static_cast<double>(mi.hblkhd);
+#else
+    return std::numeric_limits<double>::quiet_NaN();
+#endif
+}
+
+static std::string format_heap_delta(const double retained_heap_delta_bytes)
+{
+    if (!std::isfinite(retained_heap_delta_bytes))
+    {
+        return "unavailable";
+    }
+    const double retained_heap_delta_mib = retained_heap_delta_bytes / 1048576.0;
+    char text[32];
+    std::snprintf(text, sizeof(text), "%.2f", retained_heap_delta_mib);
+    return text;
 }
 
 // Sparse symmetric band of half-bandwidth `bw`, stored in LAPACK upper-band
@@ -288,7 +305,7 @@ struct Result
 {
     double wall_s = 0.0;
     double max_err = 0.0;   // max |eval_i - ref_i| over the requested bands
-    long mem_bytes = 0;     // peak heap memory allocated by the solver
+    double retained_heap_delta_bytes = std::numeric_limits<double>::quiet_NaN();
     bool ok = false;
 };
 
@@ -326,7 +343,7 @@ static Result run_ppcg(const std::vector<Real>& band, int n, int bw, int bd, int
     Result r;
     std::vector<T> psi = psi0;
     std::vector<Real> eval(nband, 0.0);
-    long mem0 = heap_bytes();
+    const double heap_before = heap_bytes();
     const int sbsize = (g_sbsize > 0) ? g_sbsize : nband;
     const int rr_step = (g_rr_step > 0) ? g_rr_step : 16;
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, sbsize, rr_step);
@@ -343,7 +360,7 @@ static Result run_ppcg(const std::vector<Real>& band, int n, int bw, int bd, int
     }
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
-    r.mem_bytes = heap_bytes() - mem0;
+    r.retained_heap_delta_bytes = heap_bytes() - heap_before;
     r.max_err = max_eval_err(eval.data(), ref, nband);
     r.ok = std::isfinite(r.max_err) && r.max_err < err_target;
     return r;
@@ -355,7 +372,7 @@ static Result run_cg(const std::vector<Real>& band, int n, int bw, int bd, int n
     Result r;
     std::vector<T> psi = psi0;
     std::vector<Real> eval(nband, 0.0);
-    long mem0 = heap_bytes();
+    const double heap_before = heap_bytes();
     hsolver::diag_comm_info comm(MPI_COMM_WORLD, 0, 1);
     hsolver::DiagoCG<T, hsolver::base_device::DEVICE_CPU> cg("pw", "scf", true, comm, 1e-8, 500);
     CompareOperator op(
@@ -376,7 +393,7 @@ static Result run_cg(const std::vector<Real>& band, int n, int bw, int bd, int n
 
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
-    r.mem_bytes = heap_bytes() - mem0;
+    r.retained_heap_delta_bytes = heap_bytes() - heap_before;
     r.max_err = max_eval_err(eval.data(), ref, nband);
     r.ok = std::isfinite(r.max_err) && r.max_err < err_target;
     return r;
@@ -388,7 +405,7 @@ static Result run_bpcg(const std::vector<Real>& band, int n, int bw, int bd, int
     Result r;
     std::vector<T> psi = psi0;
     std::vector<Real> eval(nband, 0.0);
-    long mem0 = heap_bytes();
+    const double heap_before = heap_bytes();
     hsolver::DiagoBPCG<T, hsolver::base_device::DEVICE_CPU> bpcg(prec.data());
     bpcg.init_iter(nband, nband, n, n);
     CompareOperator op(
@@ -396,7 +413,7 @@ static Result run_bpcg(const std::vector<Real>& band, int n, int bw, int bd, int
             banded_h_multiply(band.data(), n, bw, bd, in, out, ld, nc);
         },
         [](const T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); });
-    // BPCG::diag() is a single block-CG sweep; iterate until convergence.
+    // Each BPCG call has an internal sweep budget; re-drive for the common target.
     int it = 0;
     auto t0 = std::chrono::high_resolution_clock::now();
     for (; it < max_outer_passes; ++it)
@@ -409,7 +426,7 @@ static Result run_bpcg(const std::vector<Real>& band, int n, int bw, int bd, int
     }
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
-    r.mem_bytes = heap_bytes() - mem0;
+    r.retained_heap_delta_bytes = heap_bytes() - heap_before;
     r.max_err = max_eval_err(eval.data(), ref, nband);
     r.ok = std::isfinite(r.max_err) && r.max_err < err_target;
     return r;
@@ -422,7 +439,7 @@ static Result run_dav(const std::vector<Real>& band, int n, int bw, int bd, int 
     std::vector<T> psi = psi0;
     std::vector<Real> eval(nband, 0.0);
     hsolver::diag_comm_info comm(MPI_COMM_WORLD, 0, 1);
-    long mem0 = heap_bytes();
+    const double heap_before = heap_bytes();
     hsolver::DiagoDavid<T, hsolver::base_device::DEVICE_CPU> dav(prec.data(), nband, n, 4, comm);
     CompareOperator op(
         [&band, n, bw, bd](const T* in, T* out, int ld, int nc) {
@@ -430,13 +447,12 @@ static Result run_dav(const std::vector<Real>& band, int n, int bw, int bd, int 
         },
         [](const T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); });
     auto t0 = std::chrono::high_resolution_clock::now();
-    // Davidson's diag() already iterates its growing subspace to convergence,
-    // so it must be called exactly once; a re-drive loop would reuse the stale
-    // Ritz basis and trigger a rank-deficient Schmidt orthogonalization.
+    // Davidson expands its basis up to david_ndim * nband and restarts at the
+    // cap. This benchmark uses one call with a 500-iteration budget.
     dav.diag(op, n, psi.data(), eval.data(), ethr, 500);
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
-    r.mem_bytes = heap_bytes() - mem0;
+    r.retained_heap_delta_bytes = heap_bytes() - heap_before;
     r.max_err = max_eval_err(eval.data(), ref, nband);
     r.ok = std::isfinite(r.max_err) && r.max_err < err_target;
     return r;
@@ -483,8 +499,10 @@ int main(int argc, char** argv)
     }
 
     std::printf("\n=== Solver comparison (identical H, psi0, ethr) ===\n");
-    std::printf("%-5s %-5s %-6s %-10s %-14s %-10s %-12s\n", "n", "nband", "bw", "solver", "wall_time(s)",
-                "max_err", "mem(MB)");
+    std::printf("Heap values are retained process-heap deltas after diag(), not peak memory.\n");
+    std::printf("The optional allocator metric is unavailable without glibc >= 2.33.\n");
+    std::printf("%-5s %-5s %-6s %-10s %-14s %-10s %-20s\n", "n", "nband", "bw", "solver", "wall_time(s)",
+                "max_err", "retained_heap(MiB)");
     std::printf("-----------------------------------------------------------------\n");
 
     bool all_ok = true;
@@ -506,14 +524,18 @@ int main(int argc, char** argv)
         Result r_dav = run_dav(band, c.n, c.bw, bd, c.nband, prec, psi0, ethr, ref.data());
         all_ok = all_ok && r_ppcg.ok && r_cg.ok && r_bpcg.ok && r_dav.ok;
 
-        std::printf("%-5d %-5d %-6d %-10s %-14.5f %-10.2e %-12.2f\n", c.n, c.nband, c.bw, "PPCG", r_ppcg.wall_s,
-                    r_ppcg.max_err, r_ppcg.mem_bytes / 1048576.0);
-        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-10.2e %-12.2f\n", "", "", "", "CG", r_cg.wall_s,
-                    r_cg.max_err, r_cg.mem_bytes / 1048576.0);
-        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-10.2e %-12.2f\n", "", "", "", "BPCG", r_bpcg.wall_s,
-                    r_bpcg.max_err, r_bpcg.mem_bytes / 1048576.0);
-        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-10.2e %-12.2f\n", "", "", "", "Davidson", r_dav.wall_s,
-                    r_dav.max_err, r_dav.mem_bytes / 1048576.0);
+        const std::string ppcg_heap = format_heap_delta(r_ppcg.retained_heap_delta_bytes);
+        const std::string cg_heap = format_heap_delta(r_cg.retained_heap_delta_bytes);
+        const std::string bpcg_heap = format_heap_delta(r_bpcg.retained_heap_delta_bytes);
+        const std::string davidson_heap = format_heap_delta(r_dav.retained_heap_delta_bytes);
+        std::printf("%-5d %-5d %-6d %-10s %-14.5f %-10.2e %-20s\n", c.n, c.nband, c.bw, "PPCG", r_ppcg.wall_s,
+                    r_ppcg.max_err, ppcg_heap.c_str());
+        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-10.2e %-20s\n", "", "", "", "CG", r_cg.wall_s,
+                    r_cg.max_err, cg_heap.c_str());
+        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-10.2e %-20s\n", "", "", "", "BPCG", r_bpcg.wall_s,
+                    r_bpcg.max_err, bpcg_heap.c_str());
+        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-10.2e %-20s\n", "", "", "", "Davidson", r_dav.wall_s,
+                    r_dav.max_err, davidson_heap.c_str());
         std::printf("-----------------------------------------------------------------\n");
     }
 

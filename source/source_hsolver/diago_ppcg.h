@@ -22,6 +22,10 @@ namespace hsolver {
 
 namespace base_device = ::base_device;
 
+// Check all possible CPU workspaces before allocating or copying through the
+// GPU bridge. Dense kernels and pool reductions use int element counts.
+bool ppcg_workspace_dimensions_valid(int ld_psi, int nband, int dim, int sbsize);
+
 template <typename T, typename Device>
 class DiagoPPCG
 {

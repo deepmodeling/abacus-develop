@@ -286,7 +286,7 @@ void ReadInput::item_exx()
         item.annotation = "threshold to screen density matrix in exx";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
-        item.description = "The Fock exchange can be expressed as where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.";
+        item.description = "The Fock exchange can be expressed as where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4. LR-TDDFT exchange operators and excited-state force contractions retain all density blocks to preserve linearity; this threshold still applies to the ground-state SCF.";
         item.default_value = "1E-4";
         item.unit = "";
         read_sync_double(input.exx_dm_threshold);
@@ -466,14 +466,19 @@ void ReadInput::item_exx()
     {
         Input_Item item("exx_singularity_correction");
         item.annotation = "set the scheme of Coulomb singularity correction";
-        item.category = "Exact Exchange (LCAO)";
+        item.category = "Exact Exchange (Common)";
         item.type = "String";
-        item.description = R"(* spencer: see Phys. Rev. B 77, 193110 (2008).
-* revised_spencer: see Phys. Rev. Mater. 5, 013807 (2021). Set the scheme of Coulomb singularity correction.)";
+        item.description = R"(Scheme for Coulomb singularity / zero-transfer treatment in exact exchange.
+* limits: use the finite screened Coulomb-kernel limit, without an auxiliary correction. Default for HSE and cwp22 in both PW and LCAO. PW requires screened exchange and exx_gamma_extra=false; the latter defaults to false for this scheme.
+* gygi: retain the historical PW Gygi-Baldereschi auxiliary-function correction. PW only; default for unscreened PW hybrids. For independent-k screened hybrid NSCF this can cause discontinuities at source k points.
+* spencer: LCAO spherical truncation, Phys. Rev. B 77, 193110 (2008).
+* revised_spencer: LCAO, Phys. Rev. Mater. 5, 013807 (2021).
+* massidda / carrier: LCAO auxiliary singularity corrections.
+Use the same scheme for consistent SCF and NSCF bands. A source configuration mismatch produces a warning and does not prevent reading the existing SCF files.)";
         item.default_value = "default";
         item.unit = "";
         read_sync_string(input.exx_singularity_correction);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [this](const Input_Item& item, Parameter& para) {
             if (para.input.exx_singularity_correction == "default")
             {  
                 std::string& dft_functional = para.input.dft_functional;
@@ -490,12 +495,57 @@ void ReadInput::item_exx()
                     || dft_functional_lower == "lrc_wpbeh"
                     || dft_functional_lower == "cam_pbeh")
                 {
-                    para.input.exx_singularity_correction = "spencer";
+                    if (para.input.basis_type == "pw")
+                    {
+                        para.input.exx_singularity_correction = "gygi";
+                    }
+                    else
+                    {
+                        para.input.exx_singularity_correction = "spencer";
+                    }
                 }
                 else if (dft_functional_lower == "hse" || dft_functional_lower == "cwp22")
                 {
                     para.input.exx_singularity_correction = "limits";
                 }
+            }
+            if (para.input.basis_type == "pw" && para.input.exx_singularity_correction == "limits")
+            {
+                const auto gamma_item = std::find_if(this->input_lists.begin(), this->input_lists.end(),
+                    [](const std::pair<std::string, Input_Item>& entry) {
+                        return entry.first == "exx_gamma_extra";
+                    });
+                if (gamma_item != this->input_lists.end() && !gamma_item->second.is_read())
+                {
+                    para.input.exx_gamma_extra = false;
+                }
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& scheme = para.input.exx_singularity_correction;
+            if (para.input.basis_type == "pw" && scheme != "default")
+            {
+                if (scheme != "limits" && scheme != "gygi")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "PW exx_singularity_correction must be limits or gygi");
+                }
+                if (scheme == "limits")
+                {
+                    bool has_fock = false;
+                    for (const auto& alpha : para.input.exx_fock_alpha)
+                    {
+                        has_fock = has_fock || std::stod(alpha) != 0.0;
+                    }
+                    if (has_fock || para.input.exx_gamma_extra)
+                    {
+                        ModuleBase::WARNING_QUIT("ReadInput",
+                            "PW limits requires screened exchange and exx_gamma_extra=false");
+                    }
+                }
+            }
+            else if (para.input.basis_type != "pw" && scheme == "gygi")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_singularity_correction gygi is only supported for PW");
             }
         };
         this->add_item(item);
@@ -816,7 +866,7 @@ void ReadInput::item_dftu()
 * 1: The first SCF step will use an initial density matrix read from a file, but for later steps, the onsite density matrix will be updated.
 * 2: The same onsite density matrix read from the file will be used throughout the entire calculation.
 
-[NOTE] The occupation-matrix file is read from the directory specified by read_file_dir. The search order is dm_onsite_ini.txt -> occ_mat.txt -> dm_onsite.txt, so a previously output occ_mat.txt can be reused directly without renaming. The easiest way to obtain such a file is to run a DFT+U calculation with out_occ_mat=1 (the default); the resulting occ_mat.txt in the OUT.prefix directory (which always holds the occupation matrix of the latest electronic step) can be placed in read_file_dir as-is. When out_freq_ion is positive, separate occ_matg{geom_step}.txt files are also written, one per output ionic step; they may contain several electronic-step sections separated by comment headers. The format of the file is rather straight-forward.)";
+[NOTE] The occupation-matrix file is read from the directory specified by read_file_dir. The search order is dm_onsite_ini.txt -> occ_mat.txt. Input must use the current compact format written by ABACUS; legacy Atom=/L=/spin= files such as dm_onsite.txt are not supported. The easiest way to obtain a valid file is to run a DFT+U calculation with out_occ_mat=1 (the default); the resulting occ_mat.txt in the OUT.prefix directory (which always holds the occupation matrix of the latest electronic step) can be placed in read_file_dir as-is. When out_freq_ion is positive, separate occ_matg{geom_step}.txt files are also written, one per output ionic step; they may contain several electronic-step sections separated by comment headers.)";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.init_occ_mat);

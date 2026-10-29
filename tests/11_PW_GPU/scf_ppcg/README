@@ -1,1 +1,18 @@
-This test for: PPCG method for GaAs on GPU (transitional host/device bridge)
+PPCG GaAs regression for the transitional host/device bridge.
+
+Absolute acceptance limits against the unchanged result.ref:
+  energy: 1e-6 eV (also applied to energy per atom)
+  sum of absolute force components: 0.02 eV/Angstrom
+  sum of absolute stress components: 0.5 kbar
+
+Calibration on an RTX 3090 with CUDA 13.1, GNU 12.3 and OpenMPI 5.0.10,
+using one OpenMP/BLAS thread and 2 or 4 MPI ranks, found maximum reference
+deviations of 2.58e-7 eV, 0.012368 eV/Angstrom and 0.282059 kbar. These
+limits retain margins above the observed deviations with the existing INPUT
+and scf_thr=1e-7. The original reference values and fatal threshold are retained.
+
+Separate paired CPU/GPU runs of the same executable agreed within 1.28e-11 eV
+in energy and 8.01e-10 kbar in each stress component; force components agreed
+at the ten decimal places printed in running_scf.log. The reference checks
+above apply to the collected aggregates; they do not measure CPU/GPU component
+agreement directly. Two-rank repeats and a four-rank pair were also checked.

@@ -89,10 +89,10 @@ fi
 
 #echo $total_charge
 if ! test -z "$has_dos"  && [  $has_dos -eq 1 ]; then
-	total_dos=`cat OUT.autotest/doss1g1_nao.txt | awk 'END {print}' | awk '{print $3}'`
+	total_dos=`cat OUT.autotest/doss1g1.txt | awk 'END {print}' | awk '{print $3}'`
 	echo "totaldosref $total_dos" >> $1
 fi
-#	smearing_dos=`sum_file OUT.autotest/doss1g1_nao.txt`
+#	smearing_dos=`sum_file OUT.autotest/doss1g1.txt`
 #	echo "totaldossmearing $smearing_dos" >> $1
 
 

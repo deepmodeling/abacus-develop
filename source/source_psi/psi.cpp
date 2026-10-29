@@ -202,9 +202,7 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
                                                                                  - psi_in.get_psi_bias(),
                                                                              psi_in.size());
         // synchronize the memory from CPU to GPU
-        base_device::memory::synchronize_memory_op<T, Device, Device_in>()(this->psi,
-                                                                           arr,
-                                                                           psi_in.size());
+        base_device::memory::synchronize_memory_op<T, Device, Device_in>()(this->psi, arr, psi_in.size());
         free(arr);
     }
     else
@@ -228,7 +226,7 @@ void Psi<T, Device>::set_all_psi(const T* another_pointer, const std::size_t siz
 template <typename T, typename Device>
 Psi<T, Device>& Psi<T, Device>::operator=(const Psi<T, Device>& psi_in)
 {
-//    printf("%d\n", &psi_in);
+    //    printf("%d\n", &psi_in);
     this->ngk = psi_in.ngk;
     this->nk = psi_in.get_nk();
     this->nbands = psi_in.get_nbands();
@@ -239,9 +237,7 @@ Psi<T, Device>& Psi<T, Device>::operator=(const Psi<T, Device>& psi_in)
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
 
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-    base_device::memory::synchronize_memory_op<T, Device, Device>()(this->psi,
-                                                                    psi_in.psi,
-                                                                    psi_in.size());
+    base_device::memory::synchronize_memory_op<T, Device, Device>()(this->psi, psi_in.psi, psi_in.size());
     this->psi_bias = psi_in.get_psi_bias();
     this->current_nbasis = psi_in.get_current_nbas();
     this->psi_current = this->psi + psi_in.get_psi_bias();
@@ -387,7 +383,7 @@ void Psi<T, Device>::fix_k(const int ik) const
     else
     {
         this->psi_bias = k_first ? static_cast<std::size_t>(ik) * this->nbands * this->nbasis
-                                : base + static_cast<std::size_t>(ik) * this->nbasis;
+                                 : base + static_cast<std::size_t>(ik) * this->nbasis;
         this->psi_current = const_cast<T*>(&(this->psi[psi_bias]));
     }
 }
@@ -411,7 +407,7 @@ void Psi<T, Device>::fix_b(const int ib) const
     else
     {
         this->psi_bias = k_first ? base + static_cast<std::size_t>(ib) * this->nbasis
-                                : static_cast<std::size_t>(ib) * this->nk * this->nbasis;
+                                 : static_cast<std::size_t>(ib) * this->nk * this->nbasis;
         this->psi_current = const_cast<T*>(&(this->psi[psi_bias]));
     }
 }
@@ -430,7 +426,7 @@ void Psi<T, Device>::fix_kb(const int ik, const int ib) const
     else
     {
         this->psi_bias = k_first ? (static_cast<std::size_t>(ik) * this->nbands + ib) * this->nbasis
-                                : (static_cast<std::size_t>(ib) * this->nk + ik) * this->nbasis;
+                                 : (static_cast<std::size_t>(ib) * this->nk + ik) * this->nbasis;
         this->psi_current = const_cast<T*>(&(this->psi[psi_bias]));
     }
 }
@@ -441,7 +437,7 @@ T& Psi<T, Device>::operator()(const int ikb1, const int ikb2, const int ibasis) 
     assert(ikb1 >= 0 && ikb2 >= 0 && ibasis >= 0);
     assert(this->k_first ? ikb1 < this->nk && ikb2 < this->nbands : ikb1 < this->nbands && ikb2 < this->nk);
     return this->k_first ? this->psi[(static_cast<std::size_t>(ikb1) * this->nbands + ikb2) * this->nbasis + ibasis]
-                        : this->psi[(static_cast<std::size_t>(ikb1) * this->nk + ikb2) * this->nbasis + ibasis];
+                         : this->psi[(static_cast<std::size_t>(ikb1) * this->nk + ikb2) * this->nbasis + ibasis];
 }
 
 template <typename T, typename Device>
@@ -517,7 +513,8 @@ std::tuple<const T*, int> Psi<T, Device>::to_range(const Range& range) const
     }
     else // [r1, r2] is the range of index2 with length m
     {
-        const T* p = &this->psi[(static_cast<std::size_t>(i1) * (k_first ? this->nbands : this->nk) + r1) * this->nbasis];
+        const T* p
+            = &this->psi[(static_cast<std::size_t>(i1) * (k_first ? this->nbands : this->nk) + r1) * this->nbasis];
         int m = (r2 - r1 + 1) * this->get_npol();
         return std::tuple<const T*, int>(p, m);
     }

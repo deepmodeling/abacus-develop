@@ -20,6 +20,27 @@ if(NOT ENABLE_MPI)
   return()
 endif()
 
+add_executable(MODULE_IO_input_error_mpi test_read_input.cpp)
+target_link_libraries(MODULE_IO_input_error_mpi PRIVATE parameter base device io_input abacus::linalg_libs)
+if(ENABLE_COVERAGE)
+  add_coverage(MODULE_IO_input_error_mpi)
+endif()
+foreach(input_case IN ITEMS missing_file missing_header unknown_parameter duplicate_parameter
+    duplicate_string_eof invalid_value invalid_dependency valid)
+  add_test(NAME MODULE_IO_input_error_mpi_${input_case}
+    COMMAND ${CMAKE_COMMAND}
+      "-DREADER=$<TARGET_FILE:MODULE_IO_input_error_mpi>"
+      "-DMPIEXEC_EXECUTABLE=${MPIEXEC_EXECUTABLE}"
+      "-DMPIEXEC_NUMPROC_FLAG=${MPIEXEC_NUMPROC_FLAG}"
+      "-DMPIEXEC_PREFLAGS=${MPIEXEC_PREFLAGS}"
+      "-DMPIEXEC_POSTFLAGS=${MPIEXEC_POSTFLAGS}"
+      "-DINPUT_CASE=${input_case}"
+      "-DCASE_DIR=${CMAKE_CURRENT_BINARY_DIR}/input_error_${input_case}"
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/test_read_input.cmake)
+  set_tests_properties(MODULE_IO_input_error_mpi_${input_case}
+    PROPERTIES PROCESSORS 4 TIMEOUT 45 ENVIRONMENT "OMP_NUM_THREADS=1")
+endforeach()
+
 add_test(NAME MODULE_IO_write_bands_parallel
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
     $<TARGET_FILE:MODULE_IO_write_bands> ${MPIEXEC_POSTFLAGS}
@@ -27,8 +48,9 @@ add_test(NAME MODULE_IO_write_bands_parallel
 )
 set_tests_properties(MODULE_IO_write_bands_parallel PROPERTIES PROCESSORS 4 TIMEOUT 120)
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-configure_file(INPUTs ${CMAKE_CURRENT_BINARY_DIR}/INPUTs COPYONLY)
+abacus_copy_test_files(
+  support
+  INPUTs)
 
 AddTest(
   TARGET MODULE_IO_input_test_para
@@ -37,7 +59,7 @@ AddTest(
 )
 
 add_test(NAME MODULE_IO_input_test_para_4
-      COMMAND mpirun -np 4 ./MODULE_IO_input_test_para
+      COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_IO_input_test_para>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -48,7 +70,7 @@ AddTest(
 )
 
 add_test(NAME MODULE_IO_read_exit_file_test_para_4
-      COMMAND mpirun -np 4 ./MODULE_IO_read_exit_file_test
+      COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_IO_read_exit_file_test>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -93,10 +115,10 @@ AddTest(
   SOURCES write_wfc_nao_test.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
 )
 
-configure_file(write_wfc_nao_para.sh ${CMAKE_CURRENT_BINARY_DIR}/write_wfc_nao_para.sh COPYONLY)
+abacus_copy_test_files(write_wfc_nao_para.sh)
 find_program(BASH bash)
 add_test(NAME MODULE_IO_write_wfc_nao_para
-      COMMAND ${BASH} write_wfc_nao_para.sh
+      COMMAND ${BASH} write_wfc_nao_para.sh "$<TARGET_FILE:MODULE_IO_write_wfc_nao>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -153,7 +175,7 @@ AddTest(
 )
 
 add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
-      COMMAND mpirun -np 4 ./MODULE_IO_read_wfc_pw_test
+      COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_IO_read_wfc_pw_test>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -165,7 +187,7 @@ AddTest(
 )
 
 add_test(NAME MODULE_IO_read_wf2rho_pw_parallel
-      COMMAND mpirun -np 4 ./MODULE_IO_read_wf2rho_pw_test
+      COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_IO_read_wf2rho_pw_test>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -210,7 +232,7 @@ AddTest(
 )
 
 add_test(NAME MODULE_IO_orb_io_test_parallel
-      COMMAND mpirun -np 4 ./MODULE_IO_orb_io_test
+      COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_IO_orb_io_test>"
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -223,7 +245,7 @@ AddTest(
 
 add_test(
   NAME MODULE_IO_write_dmk_parallel
-  COMMAND mpirun -np 2 ./MODULE_IO_write_dmk
+  COMMAND mpirun -np 2 "$<TARGET_FILE:MODULE_IO_write_dmk>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
@@ -244,7 +266,7 @@ AddTest(
 
 add_test(
   NAME MODULE_IO_read_wfc_nao_test_parallel
-  COMMAND mpirun -np 2 ./MODULE_IO_read_wfc_nao_test
+  COMMAND mpirun -np 2 "$<TARGET_FILE:MODULE_IO_read_wfc_nao_test>"
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 

@@ -3,6 +3,8 @@
 #include "source_base/timer.h"
 #include "source_cell/unitcell.h"
 
+#include <algorithm>
+
 void OccupationMatrix::init(const UnitCell& cell,
                             const std::vector<int>& l_channel,
                             const int nspin,
@@ -30,53 +32,61 @@ void OccupationMatrix::init(const UnitCell& cell,
                 continue;
             }
 
-            // only the first radial channel (n=0) of each l is stored
-            for (int l = 0; l <= cell.atoms[it].nwl; l++)
-            {
-                if (nspin == 1 || nspin == 2)
-                {
-                    occ_[iat][l].resize(2);
-                    occ_save_[iat][l].resize(2);
+            allocate_atom_matrices(cell, iat, it);
+            build_corr_iwt(cell, iat, ia);
+        }
+    }
+}
 
-                    occ_[iat][l][0].create(2 * l + 1, 2 * l + 1);
-                    occ_[iat][l][1].create(2 * l + 1, 2 * l + 1);
+void OccupationMatrix::allocate_atom_matrices(const UnitCell& cell,
+                                              const int iat,
+                                              const int it)
+{
+    const int nchan = (nspin_ == 4) ? 1 : 2;
+    const int nwl = cell.atoms[it].nwl;
 
-                    occ_save_[iat][l][0].create(2 * l + 1, 2 * l + 1);
-                    occ_save_[iat][l][1].create(2 * l + 1, 2 * l + 1);
-                }
-                else if (nspin == 4)
-                {
-                    occ_[iat][l].resize(1);
-                    occ_save_[iat][l].resize(1);
+    for (int l = 0; l <= nwl; l++)
+    {
+        const int dim = (nspin_ == 4) ? (2 * l + 1) * npol_ : 2 * l + 1;
 
-                    occ_[iat][l][0].create((2 * l + 1) * npol, (2 * l + 1) * npol);
-                    occ_save_[iat][l][0].create((2 * l + 1) * npol, (2 * l + 1) * npol);
-                }
-            }
+        occ_[iat][l].resize(nchan);
+        occ_save_[iat][l].resize(nchan);
 
-            for (int L = 0; L <= cell.atoms[it].nwl; L++)
-            {
-                corr_iwt_[iat][L].resize(2 * L + 1);
-                for (int m = 0; m < 2 * L + 1; m++)
-                {
-                    corr_iwt_[iat][L][m].resize(npol);
-                }
-            }
+        for (int is = 0; is < nchan; is++)
+        {
+            occ_[iat][l][is].create(dim, dim);
+            occ_save_[iat][l][is].create(dim, dim);
+        }
+    }
+}
 
-            for (int iw = 0; iw < cell.atoms[it].nw * npol; iw++)
-            {
-                const int iw0 = iw / npol;
-                const int ipol = iw % npol;
-                const int iwt = cell.itiaiw2iwt(it, ia, iw);
-                const int l = cell.atoms[it].iw2l[iw0];
-                const int n = cell.atoms[it].iw2n[iw0];
-                const int m = cell.atoms[it].iw2m[iw0];
+void OccupationMatrix::build_corr_iwt(const UnitCell& cell,
+                                      const int iat,
+                                      const int ia)
+{
+    const int it = cell.iat2it[iat];
+    const int nwl = cell.atoms[it].nwl;
+    for (int L = 0; L <= nwl; L++)
+    {
+        corr_iwt_[iat][L].resize(2 * L + 1);
+        for (int m = 0; m < 2 * L + 1; m++)
+        {
+            corr_iwt_[iat][L][m].resize(npol_);
+        }
+    }
 
-                if (n == 0)
-                {
-                    corr_iwt_[iat][l][m][ipol] = iwt;
-                }
-            }
+    for (int iw = 0; iw < cell.atoms[it].nw * npol_; iw++)
+    {
+        const int iw0 = iw / npol_;
+        const int ipol = iw % npol_;
+        const int iwt = cell.itiaiw2iwt(it, ia, iw);
+        const int l = cell.atoms[it].iw2l[iw0];
+        const int n = cell.atoms[it].iw2n[iw0];
+        const int m = cell.atoms[it].iw2m[iw0];
+
+        if (n == 0)
+        {
+            corr_iwt_[iat][l][m][ipol] = iwt;
         }
     }
 }
@@ -265,29 +275,18 @@ void OccupationMatrix::write_save_to_flat(const UnitCell& cell,
         for (int I = 0; I < cell.atoms[T].na; I++)
         {
             const int iat = cell.itia2iat(T, I);
-            const int size = occ_save_[iat][target_l][0].nr * occ_save_[iat][target_l][0].nc;
+            const ModuleBase::matrix& save0 = occ_save_[iat][target_l][0];
+            const int size = save0.nr * save0.nc;
 
-            if (nspin_ == 4)
+            // all supported spin modes share the channel-0 layout
+            std::copy(save0.c, save0.c + size, uom_save.begin() + index[iat]);
+
+            if (nspin_ == 2)
             {
-                for (int mm = 0; mm < size; mm++)
-                {
-                    uom_save[index[iat] + mm] = occ_save_[iat][target_l][0].c[mm];
-                }
-            }
-            else if (nspin_ == 1 || nspin_ == 2)
-            {
-                for (int mm = 0; mm < size; mm++)
-                {
-                    uom_save[index[iat] + mm] = occ_save_[iat][target_l][0].c[mm];
-                }
-                if (nspin_ == 2)
-                {
-                    const int half_size = uom_save.size() / 2;
-                    for (int mm = 0; mm < size; mm++)
-                    {
-                        uom_save[half_size + index[iat] + mm] = occ_save_[iat][target_l][1].c[mm];
-                    }
-                }
+                const ModuleBase::matrix& save1 = occ_save_[iat][target_l][1];
+                const int half_size = uom_save.size() / 2;
+                std::copy(save1.c, save1.c + size,
+                          uom_save.begin() + half_size + index[iat]);
             }
         }
     }

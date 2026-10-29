@@ -144,6 +144,9 @@ endif
 ifdef LIBRI_DIR
     INCLUDES += -I${LIBRI_DIR}/include
     INCLUDES += -I${LIBCOMM_DIR}/include
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_ri
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_rpa
+    INCLUDES += -I${ABACUS_ROOT}source_lcao/module_rpa/module_librpa_io
     HONG                += -DUSE_LIBRI
     HONG += -D__EXX -DEXX_H_COMM=2 -DEXX_DM=3 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
 endif
@@ -179,6 +182,24 @@ ifdef DeePMD_DIR
         LIBS += -L${DeeP_LIB_DIR} -ldeepmd_c -Wl,-rpath=${DeeP_LIB_DIR}
     else
         LIBS += -L${DeeP_LIB_DIR} -ldeepmd_cc -Wl,-rpath=${DeeP_LIB_DIR}
+    endif
+endif
+
+ifdef DeePMD_DIR
+    # Keep the legacy Make build on the same DeePMD API path as CMake. These
+    # are syntax-only probes, so no temporary executable or extra link step is
+    # required during the normal build.
+    DPMD_PROBE_SOURCE = ${ABACUS_ROOT}../tools/deepmd_input_nlist_probe.cpp
+    DPMD_COMM_NLIST_13 := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_COMM_13 -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    DPMD_COMM_NLIST_12 := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_COMM_12 -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    DPMD_NLIST_MAPPING := $(shell $(CXX) $(OPTS) $(INCLUDES) $(HONG) -DDPMD_PROBE_MAPPING -fsyntax-only $(DPMD_PROBE_SOURCE) >/dev/null 2>&1 && echo 1)
+    ifeq ($(DPMD_COMM_NLIST_13),1)
+        HONG += -D__DPMD_COMM_NLIST_ARGS=13
+    else ifeq ($(DPMD_COMM_NLIST_12),1)
+        HONG += -D__DPMD_COMM_NLIST_ARGS=12
+    endif
+    ifeq ($(DPMD_NLIST_MAPPING),1)
+        HONG += -D__DPMD_HAS_NLIST_MAPPING
     endif
 endif
 
@@ -223,7 +244,7 @@ HONG += -D__SELINV -DMETIS
 
 ifeq ($(MPI), ON)
     ifdef LIBRI_DIR
-        OBJS_ABACUS += $(OBJS_MODULE_RI) $(OBJS_BSE) ${OBJS_SRC_RI}
+        OBJS_ABACUS += $(OBJS_MODULE_RI) $(OBJS_MODULE_RPA) $(OBJS_BSE) ${OBJS_SRC_RI}
     endif
 endif
 

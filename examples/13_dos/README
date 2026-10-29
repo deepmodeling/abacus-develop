@@ -16,7 +16,7 @@ It requires two steps of calculation:
    - set 'out_dos' to '1'
    - set 'pw_diag_thr' to a suitable value when basis_type is 'pw'
 
-Finish! Then you can see the DOS file in OUT.ABACUS (dos.txt for PW basis, doss1g{geom}_nao.txt for LCAO basis). The columns are: energy(eV), dos(1/eV), dos_int (integrated DOS), dos_smear(1/eV), dos_smear_int (integrated smeared DOS). Plot it!
+Finish! Then you can see the DOS file in OUT.ABACUS (doss1g{geom}.txt for both PW and LCAO basis; for nspin=2 there are doss1*/doss2* files, one per spin channel). The columns are: energy(eV), dos (number of states in each energy bin), dos_int (integrated DOS), dos_smear(1/eV), dos_smear_int (integrated smeared DOS). Plot it!
 
 Note:
 1)If the "out_dos" is used, the DOS file will appear in the directory.

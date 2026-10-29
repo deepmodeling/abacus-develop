@@ -212,6 +212,26 @@ int main(int argc, char** argv)
     }
     const bool validation_before_operator = collective_validation_failed && h_calls == 0;
 
+    // Only one rank advertises an unrepresentable local [X,W,P] workspace.
+    // The wavefunction product still fits, and the tiny real buffers must not
+    // be read on that rank or passed to H on any of its peers.
+    int checked_ld = n_local;
+    if (rank_in_pool == 0)
+    {
+        checked_ld = std::numeric_limits<int>::max() / nband;
+    }
+    bool collective_size_failed = false;
+    try
+    {
+        solver.diag(h_op, nullptr, checked_ld, nband, n_local,
+                    psi.data(), eval.data(), ethr, prec.data());
+    }
+    catch (const std::invalid_argument&)
+    {
+        collective_size_failed = true;
+    }
+    const bool size_validation_before_operator = collective_size_failed && h_calls == 0;
+
     solver.diag(h_op, nullptr, n_local, nband, n_local,
                 psi.data(), eval.data(), ethr, prec.data());
 
@@ -219,6 +239,7 @@ int main(int argc, char** argv)
     int ok = 1;
     if (!world_root_is_correct
         || !validation_before_operator
+        || !size_validation_before_operator
         || trace_environment_ok != 1)
     {
         ok = 0;
@@ -230,6 +251,10 @@ int main(int argc, char** argv)
     if (!validation_before_operator)
     {
         std::fprintf(stderr, "rank %d: invalid input was not rejected before operator calls\n", myrank);
+    }
+    if (!size_validation_before_operator)
+    {
+        std::fprintf(stderr, "rank %d: workspace overflow was not rejected before operator calls\n", myrank);
     }
     if (!solver.converged()
         || solver.active_band_count() != 0

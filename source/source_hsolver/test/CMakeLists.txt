@@ -12,6 +12,9 @@ add_executable(MODULE_HSOLVER_davidson_stability
 target_link_libraries(MODULE_HSOLVER_davidson_stability PRIVATE
   parameter base psi device container abacus::linalg_libs
 )
+target_compile_definitions(MODULE_HSOLVER_davidson_stability PRIVATE
+  ABACUS_DAVIDSON_STABILITY_HARNESS
+)
 if(ENABLE_MPI)
   target_sources(MODULE_HSOLVER_davidson_stability PRIVATE
     ../diag_hs_para.cpp
@@ -215,31 +218,28 @@ AddTest(
 )
 endif()
 
-install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES S-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES S-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES H-KPoints-Si64.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES H-GammaOnly-Si64.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES S-KPoints-Si64.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES S-GammaOnly-Si64.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-install(FILES GammaOnly-Si2-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES GammaOnly-Si64-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES KPoints-Si2-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES KPoints-Si64-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-install(FILES diago_cg_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES diago_david_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES diago_lcao_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES diago_ppcg_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-install(FILES PEXSI-H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES PEXSI-S-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES PEXSI-DM-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES diago_pexsi_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-install(FILES parallel_k2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
+abacus_copy_test_files(
+  H-KPoints-Si2.dat
+  H-GammaOnly-Si2.dat
+  S-KPoints-Si2.dat
+  S-GammaOnly-Si2.dat
+  H-KPoints-Si64.dat
+  H-GammaOnly-Si64.dat
+  S-KPoints-Si64.dat
+  S-GammaOnly-Si64.dat
+  GammaOnly-Si2-Solution.dat
+  GammaOnly-Si64-Solution.dat
+  KPoints-Si2-Solution.dat
+  KPoints-Si64-Solution.dat
+  diago_cg_parallel_test.sh
+  diago_david_parallel_test.sh
+  diago_lcao_parallel_test.sh
+  diago_ppcg_parallel_test.sh
+  PEXSI-H-GammaOnly-Si2.dat
+  PEXSI-S-GammaOnly-Si2.dat
+  PEXSI-DM-GammaOnly-Si2.dat
+  diago_pexsi_parallel_test.sh
+  parallel_k2d_test.sh)
 
 if(ENABLE_MPI)
   if(TARGET ELPA::ELPA)
@@ -273,7 +273,7 @@ if(ENABLE_MPI)
 
   add_test(
     NAME MODULE_HSOLVER_para_linear_trans
-    COMMAND mpirun -np 4 ./MODULE_HSOLVER_linear_trans
+    COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_HSOLVER_linear_trans>"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
 endif()
@@ -282,30 +282,71 @@ find_program(BASH bash)
 if (ENABLE_MPI)
   add_test(NAME MODULE_HSOLVER_cg_parallel
         COMMAND ${BASH} diago_cg_parallel_test.sh
+          "$<TARGET_FILE:MODULE_HSOLVER_cg>"
+          "$<TARGET_FILE:MODULE_HSOLVER_cg_float>"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
   add_test(NAME MODULE_HSOLVER_parak2d_test_parallel
-        COMMAND ${BASH} parallel_k2d_test.sh
+        COMMAND ${BASH} parallel_k2d_test.sh "$<TARGET_FILE:MODULE_HSOLVER_parak2d_test>"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
   add_test(NAME MODULE_HSOLVER_dav_parallel
         COMMAND ${BASH} diago_david_parallel_test.sh
+          "$<TARGET_FILE:MODULE_HSOLVER_dav>"
+          "$<TARGET_FILE:MODULE_HSOLVER_dav_float>"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       ) 
   add_test(NAME MODULE_HSOLVER_ppcg_parallel_test
         COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/diago_ppcg_parallel_test.sh
+          "$<TARGET_FILE:MODULE_HSOLVER_ppcg_parallel>"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
   if(ENABLE_LCAO)
     add_test(NAME MODULE_HSOLVER_LCAO_parallel
           COMMAND ${BASH} diago_lcao_parallel_test.sh
+            "$<TARGET_FILE:MODULE_HSOLVER_LCAO>"
+            "$<TARGET_FILE:MODULE_HSOLVER_dav_real>"
+            "$<TARGET_FILE:MODULE_HSOLVER_cg_real>"
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
     if(ENABLE_PEXSI)
       add_test(NAME MODULE_HSOLVER_LCAO_PEXSI_parallel
-            COMMAND ${BASH} diago_pexsi_parallel_test.sh
+            COMMAND ${BASH} diago_pexsi_parallel_test.sh "$<TARGET_FILE:MODULE_HSOLVER_LCAO_PEXSI>"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       )
     endif()
+  endif()
+endif()
+
+if(ENABLE_LCAO)
+  set(DAVIDSON_OWNERSHIP_SOURCES
+    test_diago_david.cpp
+    ../diago_david.cpp
+    ../diago_dav_subspace.cpp
+    ../diago_cg.cpp
+    ../diago_iter_assist.cpp
+    ../diag_const_nums.cpp
+  )
+  set(DAVIDSON_OWNERSHIP_LIBS parameter base psi device container)
+  if(ENABLE_MPI)
+    list(APPEND DAVIDSON_OWNERSHIP_SOURCES
+      ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp)
+    if(TARGET ELPA::ELPA)
+      list(APPEND DAVIDSON_OWNERSHIP_SOURCES ../diago_elpa.cpp)
+      list(APPEND DAVIDSON_OWNERSHIP_LIBS ELPA::ELPA genelpa)
+    endif()
+  endif()
+  AddTest(
+    TARGET MODULE_HSOLVER_empty_blocks
+    LIBS ${DAVIDSON_OWNERSHIP_LIBS}
+    SOURCES ${DAVIDSON_OWNERSHIP_SOURCES}
+  )
+  set_tests_properties(MODULE_HSOLVER_empty_blocks PROPERTIES
+    TIMEOUT 120 ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
+  if(ENABLE_MPI)
+    add_test(NAME MODULE_HSOLVER_empty_blocks_mpi
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 $<TARGET_FILE:MODULE_HSOLVER_empty_blocks>)
+    set_tests_properties(MODULE_HSOLVER_empty_blocks_mpi PROPERTIES PROCESSORS 4 TIMEOUT 120
+      ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1;OPENBLAS_NUM_THREADS=1")
   endif()
 endif()

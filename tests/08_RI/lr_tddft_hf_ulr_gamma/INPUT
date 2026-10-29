@@ -34,6 +34,8 @@ exx_ccp_rmesh_times  1
 lr_nstates        3
 xc_kernel         hf
 lr_solver         lapack
+# Direct LU avoids repeated Z-operator applications for this small system.
+lr_grad_solver    lapack
 lr_thr            1e-2
 lr_unrestricted   1
 pw_diag_ndim      2
@@ -42,3 +44,6 @@ esolver_type      ks-lr
 
 nvirt             2
 nocc              2
+# Skip optical postprocessing in this energy/force regression.
+abs_gauge         none
+cal_force         1

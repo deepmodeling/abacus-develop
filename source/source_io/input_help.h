@@ -20,6 +20,9 @@ struct ParameterMetadata {
     std::string category;
     std::string unit;         // Empty string if no unit
     std::string availability; // Empty string if always available
+    std::string value_rule;
+    std::string requirements;
+    std::string allowed_values; // Rendered from the runtime domain; empty if not declared
     std::string name_lowercase; // Pre-computed lowercase for fast fuzzy matching
 };
 
