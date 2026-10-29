@@ -18,7 +18,8 @@ namespace
 std::string make_file_prefix(const std::string& tag)
 {
     const std::string root = testing::TempDir();
-    const std::string process_tag = std::to_string(getpid());
+    const pid_t process_id = getpid();
+    const std::string process_tag = std::to_string(process_id);
     return root + "op_exx_nscf_nearest_" + process_tag + "_" + tag;
 }
 
@@ -30,7 +31,8 @@ std::string csr_file_name(const std::string& file_prefix)
 void remove_fixture(const std::string& file_prefix)
 {
     const std::string file_name = csr_file_name(file_prefix);
-    std::remove(file_name.c_str());
+    const char* file_path = file_name.c_str();
+    std::remove(file_path);
 }
 
 // The csrFileReader on develop expects the full sparse-file header (title,
