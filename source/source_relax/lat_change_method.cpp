@@ -8,6 +8,7 @@ Lattice_Change_Methods::Lattice_Change_Methods()
 Lattice_Change_Methods::~Lattice_Change_Methods()
 {
 }
+
 void Lattice_Change_Methods::allocate()
 {
     Lattice_Change_Basic::dim = 9;
@@ -15,6 +16,7 @@ void Lattice_Change_Methods::allocate()
 
     return;
 }
+
 void Lattice_Change_Methods::cal_lattice_change(const int& istep,
                                                 const int& stress_step,
                                                 const ModuleBase::matrix& stress,

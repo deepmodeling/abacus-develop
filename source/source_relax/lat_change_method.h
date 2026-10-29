@@ -24,6 +24,7 @@ class Lattice_Change_Methods
                             UnitCell& ucell,
                             std::ofstream& ofs,
                             const Relax_Criteria& criteria);
+
     bool get_converged(void) const
     {
         return converged_;
