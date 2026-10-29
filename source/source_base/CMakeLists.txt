@@ -54,6 +54,7 @@ add_library(
   parallel_grid.cpp
   sph_bessel_tf.cpp
   cubic_spline.cpp
+  block_cyclic_distribution_information.cpp
   parallel_2d.cpp
   module_out/binstream.cpp
   module_out/filename.cpp
@@ -90,6 +91,11 @@ endif()
 
 if(BUILD_TESTING)
   # TODO: classify the serial and parrallel tests
+  AddTest(
+    TARGET MODULE_BASE_block_cyclic_distribution_information
+    LIBS parameter base device container
+    SOURCES test/test_block_cyclic_distribution_information.cpp
+  )
   if(ENABLE_MPI)
     add_subdirectory(test)
     add_subdirectory(test_parallel)

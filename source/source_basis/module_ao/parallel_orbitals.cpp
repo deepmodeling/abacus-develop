@@ -80,8 +80,8 @@ void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, con
             icol++;
         }
     }
-    this->atom_begin_row[nat] = this->para_2d_.nrow;
-    this->atom_begin_col[nat] = this->para_2d_.ncol;
+    this->atom_begin_row[nat] = this->para_2d_.get_row_size();
+    this->atom_begin_col[nat] = this->para_2d_.get_col_size();
 }
 
 // Get the number of columns of the orbital matrix of the iat-th atom
@@ -95,7 +95,7 @@ int Parallel_Orbitals::get_ncol_atom(int iat) const
     }
     iat += 1;
     // Traverse the orbital matrices of the atom and calculate the number of columns
-    while(this->atom_begin_col[iat] <= this->para_2d_.ncol)
+    while(this->atom_begin_col[iat] <= this->para_2d_.get_col_size())
     {
         if(this->atom_begin_col[iat] != -1)
         {
@@ -116,7 +116,7 @@ int Parallel_Orbitals::get_nrow_atom(int iat) const
         return 0;
     }
     iat += 1;
-    while(this->atom_begin_row[iat] <= this->para_2d_.nrow)
+    while(this->atom_begin_row[iat] <= this->para_2d_.get_row_size())
     {
         if(this->atom_begin_row[iat] != -1)
         {
@@ -137,8 +137,8 @@ bool Parallel_Orbitals::is_invalid_atom_pair(int iat1, int iat2) const
 // Get the global indexes of the rows of the parallel orbital matrix
 std::vector<int> Parallel_Orbitals::get_indexes_row() const
 {
-    std::vector<int> indexes(this->para_2d_.nrow);
-    for(int i = 0; i < this->para_2d_.nrow; i++)
+    std::vector<int> indexes(this->para_2d_.get_row_size());
+    for(int i = 0; i < this->para_2d_.get_row_size(); i++)
     {
 #ifdef __MPI
         indexes[i] = this->para_2d_.local2global_row(i);
@@ -151,8 +151,8 @@ std::vector<int> Parallel_Orbitals::get_indexes_row() const
 // Get the global indexes of the columns of the parallel orbital matrix
 std::vector<int> Parallel_Orbitals::get_indexes_col() const
 {
-    std::vector<int> indexes(this->para_2d_.ncol);
-    for(int i = 0; i < this->para_2d_.ncol; i++)
+    std::vector<int> indexes(this->para_2d_.get_col_size());
+    for(int i = 0; i < this->para_2d_.get_col_size(); i++)
     {
 #ifdef __MPI
         indexes[i] = this->para_2d_.local2global_col(i);
@@ -211,13 +211,16 @@ void Parallel_Orbitals::set_desc_wfc_Eij(const int& nbasis, const int& nbands, c
     ModuleBase::TITLE("Parallel_2D", "set_desc_wfc_Eij");
 #ifdef __DEBUG
     assert(nbasis > 0 && nbands > 0 && lld > 0);
-    assert(this->para_2d_.nb > 0 && this->para_2d_.dim0 > 0 && this->para_2d_.dim1 > 0);
+    assert(this->para_2d_.get_block_size() > 0 && this->para_2d_.get_dim0() > 0
+           && this->para_2d_.get_dim1() > 0);
 #endif
     int ISRC = 0;
     int info = 0;
-    descinit_(desc_wfc, &nbasis, &nbands, &this->para_2d_.nb, &this->para_2d_.nb, &ISRC, &ISRC, &this->para_2d_.blacs_ctxt, &lld, &info);
-    descinit_(desc_wfc1, &nbands, &nbasis, &this->para_2d_.nb, &this->para_2d_.nb, &ISRC, &ISRC, &this->para_2d_.blacs_ctxt, &lld, &info);
-    descinit_(desc_Eij, &nbands, &nbands, &this->para_2d_.nb, &this->para_2d_.nb, &ISRC, &ISRC, &this->para_2d_.blacs_ctxt, &lld, &info);
+    const int block_size = this->para_2d_.get_block_size();
+    const int blacs_context = this->para_2d_.get_blacs_ctxt();
+    descinit_(desc_wfc, &nbasis, &nbands, &block_size, &block_size, &ISRC, &ISRC, &blacs_context, &lld, &info);
+    descinit_(desc_wfc1, &nbands, &nbasis, &block_size, &block_size, &ISRC, &ISRC, &blacs_context, &lld, &info);
+    descinit_(desc_Eij, &nbands, &nbands, &block_size, &block_size, &ISRC, &ISRC, &blacs_context, &lld, &info);
 }
 int Parallel_Orbitals::set_nloc_wfc_Eij(
     const int& N_A,
@@ -228,16 +231,17 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
     // for wavefuncton , calculate nbands_loc
     this->nbands = N_A;
     int end_id = 0;
-    int block = N_A / this->para_2d_.nb;
-    if (block * this->para_2d_.nb < N_A)
+    int block = N_A / this->para_2d_.get_block_size();
+    if (block * this->para_2d_.get_block_size() < N_A)
     {
         block++;
     }
-    if (this->para_2d_.dim1 > block)
+    if (this->para_2d_.get_dim1() > block)
     {
-        ofs_warning << " cpu 2D distribution : " << this->para_2d_.dim0 << "*" << this->para_2d_.dim1 << std::endl;
+        ofs_warning << " cpu 2D distribution : " << this->para_2d_.get_dim0() << "*"
+                    << this->para_2d_.get_dim1() << std::endl;
         ofs_warning << " but, the number of bands-row-block is " << block << std::endl;
-        if (this->para_2d_.nb > 1)
+        if (this->para_2d_.get_block_size() > 1)
         {
             return 1;
         }
@@ -249,29 +253,30 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
             );
         }
     }
-    int col_b_bands = block / this->para_2d_.dim1;
-    if (this->para_2d_.get_coord_col() < block % this->para_2d_.dim1)
+    int col_b_bands = block / this->para_2d_.get_dim1();
+    if (this->para_2d_.get_coord_col() < block % this->para_2d_.get_dim1())
     {
         col_b_bands++;
     }
-    if (block % this->para_2d_.dim1 == 0)
+    if (block % this->para_2d_.get_dim1() == 0)
     {
-        end_id = this->para_2d_.dim1 - 1;
+        end_id = this->para_2d_.get_dim1() - 1;
     }
     else
     {
-        end_id = block % this->para_2d_.dim1 - 1;
+        end_id = block % this->para_2d_.get_dim1() - 1;
     }
     if (this->para_2d_.get_coord_col() == end_id)
     {
-        this->ncol_bands = (col_b_bands - 1) * this->para_2d_.nb + (N_A - (block - 1) * this->para_2d_.nb);
+        this->ncol_bands = (col_b_bands - 1) * this->para_2d_.get_block_size()
+                           + (N_A - (block - 1) * this->para_2d_.get_block_size());
     }
     else
     {
-        this->ncol_bands = col_b_bands * this->para_2d_.nb;
+        this->ncol_bands = col_b_bands * this->para_2d_.get_block_size();
     }
-    this->nrow_bands = this->para_2d_.nrow;
-    this->nloc_wfc = this->ncol_bands * this->para_2d_.nrow;
+    this->nrow_bands = this->para_2d_.get_row_size();
+    this->nloc_wfc = this->ncol_bands * this->para_2d_.get_row_size();
 
     this->nloc_Eij = this->ncol_bands * this->ncol_bands;
 

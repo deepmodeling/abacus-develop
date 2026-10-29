@@ -126,8 +126,8 @@ TEST_P(ParallelK2DTest, DividePools)
         */
         // k2d.get_p2D_pool()->init(10, 10, 1, POOL_WORLD, 0);
         EXPECT_EQ(this->NPROC, 8);
-        EXPECT_EQ(k2d.get_p2D_pool()->dim0, 2);
-        EXPECT_EQ(k2d.get_p2D_pool()->dim1, 2);
+        EXPECT_EQ(k2d.get_p2D_pool()->get_dim0(), 2);
+        EXPECT_EQ(k2d.get_p2D_pool()->get_dim1(), 2);
         EXPECT_EQ(k2d.get_p2D_pool()->get_row_size(), 5);
         EXPECT_EQ(k2d.get_p2D_pool()->get_col_size(), 5);
         k2d.set_kpar(10);

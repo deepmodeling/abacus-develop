@@ -26,7 +26,7 @@ namespace LR
     {
         ModuleBase::TITLE("LR", "ao_to_mo_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
-        assert(pmat_ao.blacs_ctxt == pcoeff.blacs_ctxt && pmat_ao.blacs_ctxt == pmat_mo.blacs_ctxt);
+        assert(pmat_ao.get_blacs_ctxt() == pcoeff.get_blacs_ctxt() && pmat_ao.get_blacs_ctxt() == pmat_mo.get_blacs_ctxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         double empty_block(0);
@@ -42,7 +42,7 @@ namespace LR
         const int i1 = 1;
 
         Parallel_2D pVc;        // for intermediate Vc
-        LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.blacs_ctxt);
+        LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {
             const int start = isk * pmat_mo.get_local_size();
@@ -57,17 +57,17 @@ namespace LR
             const double alpha = 1.0;
             const double beta = add_on ? 1.0 : 0.0;
             ScalapackConnector::gemm(transa, transb, naos, nmo1, naos,
-                alpha, mat_ao[isk].data<double>(), i1, i1, pmat_ao.desc,
-                coeff.get_pointer(), i1, imo1, pcoeff.desc,
-                beta, Vc.data<double>(), i1, i1, pVc.desc);
+                alpha, mat_ao[isk].data<double>(), i1, i1, pmat_ao.get_desc(),
+                coeff.get_pointer(), i1, imo1, pcoeff.get_desc(),
+                beta, Vc.data<double>(), i1, i1, pVc.get_desc());
 
             transa = 'T';
             // mat_mo = c ^ TVc
             // descC puts M(nvirt) to row
             ScalapackConnector::gemm(transa, transb, nmo2, nmo1, naos,
-                factor, coeff.get_pointer(), i1, imo2, pcoeff.desc,
-                Vc.data<double>(), i1, i1, pVc.desc,
-                beta, mat_mo_data + start, i1, i1, pmat_mo.desc);
+                factor, coeff.get_pointer(), i1, imo2, pcoeff.get_desc(),
+                Vc.data<double>(), i1, i1, pVc.get_desc(),
+                beta, mat_mo_data + start, i1, i1, pmat_mo.get_desc());
 
         }
     }
@@ -89,7 +89,7 @@ namespace LR
     {
         ModuleBase::TITLE("LR", "ao_to_mo_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
-        assert(pmat_ao.blacs_ctxt == pcoeff.blacs_ctxt && pmat_ao.blacs_ctxt == pmat_mo.blacs_ctxt);
+        assert(pmat_ao.get_blacs_ctxt() == pcoeff.get_blacs_ctxt() && pmat_ao.get_blacs_ctxt() == pmat_mo.get_blacs_ctxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         std::complex<double> empty_block(0);
@@ -105,7 +105,7 @@ namespace LR
         const int i1 = 1;
 
         Parallel_2D pVc;        // for intermediate Vc
-        LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.blacs_ctxt);
+        LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {
             const int start = isk * pmat_mo.get_local_size();
@@ -120,17 +120,17 @@ namespace LR
             const std::complex<double> alpha(1.0, 0.0);
             const std::complex<double> beta = add_on ? std::complex<double>(1.0, 0.0) : std::complex<double>(0.0, 0.0);
             ScalapackConnector::gemm(transa, transb, naos, nmo1, naos,
-                alpha, mat_ao[isk].data<std::complex<double>>(), i1, i1, pmat_ao.desc,
-                coeff.get_pointer(), i1, imo1, pcoeff.desc,
-                beta, Vc.data<std::complex<double>>(), i1, i1, pVc.desc);
+                alpha, mat_ao[isk].data<std::complex<double>>(), i1, i1, pmat_ao.get_desc(),
+                coeff.get_pointer(), i1, imo1, pcoeff.get_desc(),
+                beta, Vc.data<std::complex<double>>(), i1, i1, pVc.get_desc());
 
             transa = 'C';
             // mat_mo = c ^ TVc
             // descC puts M(nvirt) to row
             ScalapackConnector::gemm(transa, transb, nmo2, nmo1, naos,
-                factor, coeff.get_pointer(), i1, imo2, pcoeff.desc,
-                Vc.data<std::complex<double>>(), i1, i1, pVc.desc,
-                beta, mat_mo_data + start, i1, i1, pmat_mo.desc);
+                factor, coeff.get_pointer(), i1, imo2, pcoeff.get_desc(),
+                Vc.data<std::complex<double>>(), i1, i1, pVc.get_desc(),
+                beta, mat_mo_data + start, i1, i1, pmat_mo.get_desc());
         }
     }
 }

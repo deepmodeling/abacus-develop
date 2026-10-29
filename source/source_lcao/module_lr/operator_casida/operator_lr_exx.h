@@ -139,12 +139,12 @@ inline bool gs_is_hybrid(const std::string& dft_functional)
             const auto& c = this->psi_ks;
             // allocate local cvx
             Parallel_2D pcx;
-            LR_Util::setup_2d_division(pcx, pX.get_block_size(), naos, nocc, pX.blacs_ctxt);
+            LR_Util::setup_2d_division(pcx, pX.get_block_size(), naos, nocc, pX.get_blacs_ctxt());
             ct::Tensor cvx(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
 
             // allocate local coxt
             Parallel_2D pcxt;
-            LR_Util::setup_2d_division(pcxt, pX.get_block_size(), naos, nvirt, pX.blacs_ctxt);
+            LR_Util::setup_2d_division(pcxt, pX.get_block_size(), naos, nvirt, pX.get_blacs_ctxt());
             ct::Tensor coxt(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcxt.get_col_size(), pcxt.get_row_size() });
 
             // calculate global coxt_full, cvx_full

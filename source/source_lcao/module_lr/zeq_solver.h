@@ -203,9 +203,9 @@ namespace LR
         const int nproc_dim = std::max(px0.get_dim0(), px0.get_dim1());
         const int nb = std::max(1, std::min(32, n_global / nproc_dim));
         Parallel_2D ph;
-        LR_Util::setup_2d_division(ph, nb, n_global, n_global, px0.blacs_ctxt);
+        LR_Util::setup_2d_division(ph, nb, n_global, n_global, px0.get_blacs_ctxt());
         Parallel_2D pz;
-        LR_Util::setup_2d_division(pz, nb, n_global, nstates, px0.blacs_ctxt);
+        LR_Util::setup_2d_division(pz, nb, n_global, nstates, px0.get_blacs_ctxt());
 
         std::vector<T> h_loc = zvec_hessian_2d<T>(hm, nspin_x, ld, ph);
 

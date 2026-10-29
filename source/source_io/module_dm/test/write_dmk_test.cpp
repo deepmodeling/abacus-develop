@@ -77,12 +77,12 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
                   dmk_global[i].data(),
                   1,
                   1,
-                  pv_global.desc,
+                  const_cast<int*>(pv_global.get_desc()),
                   dmk[i].data(),
                   1,
                   1,
-                  pv.desc,
-                  pv.blacs_ctxt);
+                  const_cast<int*>(pv.get_desc()),
+                  pv.get_blacs_ctxt());
     }
 #else
     dmk = dmk_global;

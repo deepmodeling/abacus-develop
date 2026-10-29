@@ -45,7 +45,7 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
                                this->runtime.input.nbands
 #ifdef __MPI
                                ,
-                               distribution.blacs_ctxt
+                               distribution.get_blacs_ctxt()
 #endif
     );
 

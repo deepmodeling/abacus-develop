@@ -49,8 +49,10 @@ void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK>& hs,
             this->hk_pool.resize(this->P2D_pool->get_local_size(), 0.0);
             this->sk_pool.resize(this->P2D_pool->get_local_size(), 0.0);
         }
-        int desc_pool[9];
-        std::copy(this->P2D_pool->desc, this->P2D_pool->desc + 9, desc_pool);
+        constexpr int kDescriptorEntryCount = 9;
+        int desc_pool[kDescriptorEntryCount];
+        const int* const pool_descriptor = this->P2D_pool->get_desc();
+        std::copy(pool_descriptor, pool_descriptor + kDescriptorEntryCount, desc_pool);
         if (this->MY_POOL != this->Pkpoints->whichpool[ik_kpar[ipool]]) {
             desc_pool[1] = -1;
         }
@@ -59,23 +61,23 @@ void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK>& hs,
                   HK_global.p,
                   1,
                   1,
-                  this->P2D_global->desc,
+                    const_cast<int*>(this->P2D_global->get_desc()),
                   hk_pool.data(),
                   1,
                   1,
                   desc_pool,
-                  this->P2D_global->blacs_ctxt);
+                    this->P2D_global->get_blacs_ctxt());
         Cpxgemr2d(nw,
                   nw,
                   SK_global.p,
                   1,
                   1,
-                  this->P2D_global->desc,
+                    const_cast<int*>(this->P2D_global->get_desc()),
                   sk_pool.data(),
                   1,
                   1,
                   desc_pool,
-                  this->P2D_global->blacs_ctxt);
+                    this->P2D_global->get_blacs_ctxt());
     }
     ModuleBase::Memory::record("Parallel_K2D::hsk_pool", this->P2D_pool->get_local_size() * 2 * sizeof(TK));
     ModuleBase::timer::end("Parallel_K2D", "distribute_hsk");

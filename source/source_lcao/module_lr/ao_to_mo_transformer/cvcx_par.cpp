@@ -24,8 +24,8 @@ namespace LR
         ModuleBase::TITLE("hamilt_lrtd", "CVCX_occ_pblas");
         assert(pmat.comm() == pc.comm());
         assert(pmat.comm() == px.comm());
-        assert(pmat.blacs_ctxt == pc.blacs_ctxt);
-        assert(pmat.blacs_ctxt == px.blacs_ctxt);
+        assert(pmat.get_blacs_ctxt() == pc.get_blacs_ctxt());
+        assert(pmat.get_blacs_ctxt() == px.get_blacs_ctxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         double empty_block(0);
@@ -36,9 +36,9 @@ namespace LR
         assert(V_istate.size() == nks);
 
         Parallel_2D pcv;
-        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), nocc, naos, pmat.blacs_ctxt);
+        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), nocc, naos, pmat.get_blacs_ctxt());
         Parallel_2D pcx;
-        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), naos, nvirt, pmat.blacs_ctxt);
+        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), naos, nvirt, pmat.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
@@ -62,16 +62,16 @@ namespace LR
                 c.get_pointer(),
                 i1,
                 i1,
-                pc.desc,
+                pc.get_desc(),
                 V_istate[isk].data<double>(),
                 i1,
                 i1,
-                pmat.desc,
+                pmat.get_desc(),
                 zero,
                 cv.data<double>(),
                 i1,
                 i1,
-                pcv.desc);
+                pcv.get_desc());
 
             // cX^T[naos*nvirt]
             container::Tensor cx(DAT::DT_DOUBLE, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
@@ -84,16 +84,16 @@ namespace LR
                 c.get_pointer(),
                 i1,
                 i1,
-                pc.desc,
+                pc.get_desc(),
                 X_istate_data + start,
                 i1,
                 i1,
-                px.desc,
+                px.get_desc(),
                 zero,
                 cx.data<double>(),
                 i1,
                 i1,
-                pcx.desc);
+                pcx.get_desc());
 
             //AX_istate=[cX^T]^T[c^TV]^T (nvirt major)
             const auto accumulation_beta_10 = add_on ? one : zero;
@@ -106,16 +106,16 @@ namespace LR
                 cx.data<double>(),
                 i1,
                 i1,
-                pcx.desc,
+                pcx.get_desc(),
                 cv.data<double>(),
                 i1,
                 i1,
-                pcv.desc,
+                pcv.get_desc(),
                 accumulation_beta_10,
                 AX_istate_data + start,
                 i1,
                 i1,
-                px.desc);
+                px.get_desc());
         }
     }
 
@@ -137,8 +137,8 @@ namespace LR
         ModuleBase::TITLE("hamilt_lrtd", "CVCX_occ_pblas");
         assert(pmat.comm() == pc.comm());
         assert(pmat.comm() == px.comm());
-        assert(pmat.blacs_ctxt == pc.blacs_ctxt);
-        assert(pmat.blacs_ctxt == px.blacs_ctxt);
+        assert(pmat.get_blacs_ctxt() == pc.get_blacs_ctxt());
+        assert(pmat.get_blacs_ctxt() == px.get_blacs_ctxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         std::complex<double> empty_block(0);
@@ -149,9 +149,9 @@ namespace LR
         assert(V_istate.size() == nks);
 
         Parallel_2D pcv;
-        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), nocc, naos, pmat.blacs_ctxt);
+        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), nocc, naos, pmat.get_blacs_ctxt());
         Parallel_2D pcx;
-        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), naos, nvirt, pmat.blacs_ctxt);
+        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), naos, nvirt, pmat.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
@@ -176,16 +176,16 @@ namespace LR
                 c.get_pointer(),
                 i1,
                 i1,
-                pc.desc,
+                pc.get_desc(),
                 V_istate[isk].data<std::complex<double>>(),
                 i1,
                 i1,
-                pmat.desc,
+                pmat.get_desc(),
                 zero,
                 cv.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcv.desc);
+                pcv.get_desc());
 
             // cX^T[naos*nvirt]
             container::Tensor cx(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
@@ -198,16 +198,16 @@ namespace LR
                 c.get_pointer(),
                 i1,
                 i1,
-                pc.desc,
+                pc.get_desc(),
                 X_istate_data + start,
                 i1,
                 i1,
-                px.desc,
+                px.get_desc(),
                 zero,
                 cx.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcx.desc);
+                pcx.get_desc());
 
             //AX_istate=[cX^T]^T[c^TV]^T (nvirt major)
             const auto accumulation_beta_7 = add_on ? one : zero;
@@ -220,16 +220,16 @@ namespace LR
                 cx.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcx.desc,
+                pcx.get_desc(),
                 cv.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcv.desc,
+                pcv.get_desc(),
                 accumulation_beta_7,
                 AX_istate_data + start,
                 i1,
                 i1,
-                px.desc);
+                px.get_desc());
         }
     }
 
@@ -251,8 +251,8 @@ namespace LR
         ModuleBase::TITLE("hamilt_lrtd", "CVCX_virt_pblas");
         assert(pmat.comm() == pc.comm());
         assert(pmat.comm() == px.comm());
-        assert(pmat.blacs_ctxt == pc.blacs_ctxt);
-        assert(pmat.blacs_ctxt == px.blacs_ctxt);
+        assert(pmat.get_blacs_ctxt() == pc.get_blacs_ctxt());
+        assert(pmat.get_blacs_ctxt() == px.get_blacs_ctxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         double empty_block(0);
@@ -263,9 +263,9 @@ namespace LR
         assert(V_istate.size() == nks);
 
         Parallel_2D pcv;
-        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), naos, nvirt, pmat.blacs_ctxt);
+        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), naos, nvirt, pmat.get_blacs_ctxt());
         Parallel_2D pcx;
-        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), nocc, naos, pmat.blacs_ctxt);
+        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), nocc, naos, pmat.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
@@ -290,16 +290,16 @@ namespace LR
                 V_istate[isk].data<double>(),
                 i1,
                 i1,
-                pmat.desc,
+                pmat.get_desc(),
                 c.get_pointer(),
                 i1,
                 ivirt,
-                pc.desc,
+                pc.get_desc(),
                 zero,
                 cv.data<double>(),
                 i1,
                 i1,
-                pcv.desc);
+                pcv.get_desc());
 
             // X^TC^T[nocc*naos]
             container::Tensor cx(DAT::DT_DOUBLE, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
@@ -312,16 +312,16 @@ namespace LR
                 X_istate_data + start,
                 i1,
                 i1,
-                px.desc,
+                px.get_desc(),
                 c.get_pointer(),
                 i1,
                 ivirt,
-                pc.desc,
+                pc.get_desc(),
                 zero,
                 cx.data<double>(),
                 i1,
                 i1,
-                pcx.desc);
+                pcx.get_desc());
 
             //AX_istate=[VC]^T[X^TC^T]^T (nvirt major)
             const auto accumulation_beta_4 = add_on ? one : zero;
@@ -334,16 +334,16 @@ namespace LR
                 cv.data<double>(),
                 i1,
                 i1,
-                pcv.desc,
+                pcv.get_desc(),
                 cx.data<double>(),
                 i1,
                 i1,
-                pcx.desc,
+                pcx.get_desc(),
                 accumulation_beta_4,
                 AX_istate_data + start,
                 i1,
                 i1,
-                px.desc);
+                px.get_desc());
         }
     }
 
@@ -365,8 +365,8 @@ namespace LR
         ModuleBase::TITLE("hamilt_lrtd", "CVCX_virt_pblas");
         assert(pmat.comm() == pc.comm());
         assert(pmat.comm() == px.comm());
-        assert(pmat.blacs_ctxt == pc.blacs_ctxt);
-        assert(pmat.blacs_ctxt == px.blacs_ctxt);
+        assert(pmat.get_blacs_ctxt() == pc.get_blacs_ctxt());
+        assert(pmat.get_blacs_ctxt() == px.get_blacs_ctxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         std::complex<double> empty_block(0);
@@ -377,9 +377,9 @@ namespace LR
         assert(V_istate.size() == nks);
 
         Parallel_2D pcv;
-        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), naos, nvirt, pmat.blacs_ctxt);
+        LR_Util::setup_2d_division(pcv, pmat.get_block_size(), naos, nvirt, pmat.get_blacs_ctxt());
         Parallel_2D pcx;
-        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), nocc, naos, pmat.blacs_ctxt);
+        LR_Util::setup_2d_division(pcx, pmat.get_block_size(), nocc, naos, pmat.get_blacs_ctxt());
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
@@ -404,16 +404,16 @@ namespace LR
                 V_istate[isk].data<std::complex<double>>(),
                 i1,
                 i1,
-                pmat.desc,
+                pmat.get_desc(),
                 c.get_pointer(),
                 i1,
                 ivirt,
-                pc.desc,
+                pc.get_desc(),
                 zero,
                 cv.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcv.desc);
+                pcv.get_desc());
 
             // X^TC^T[nocc*naos]
             container::Tensor cx(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
@@ -426,16 +426,16 @@ namespace LR
                 X_istate_data + start,
                 i1,
                 i1,
-                px.desc,
+                px.get_desc(),
                 c.get_pointer(),
                 i1,
                 ivirt,
-                pc.desc,
+                pc.get_desc(),
                 zero,
                 cx.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcx.desc);
+                pcx.get_desc());
 
             //AX_istate=[VC]^T[X^TC^T]^T (nvirt major)
             const auto accumulation_beta_1 = add_on ? one : zero;
@@ -448,16 +448,16 @@ namespace LR
                 cv.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcv.desc,
+                pcv.get_desc(),
                 cx.data<std::complex<double>>(),
                 i1,
                 i1,
-                pcx.desc,
+                pcx.get_desc(),
                 accumulation_beta_1,
                 AX_istate_data + start,
                 i1,
                 i1,
-                px.desc);
+                px.get_desc());
         }
     }
 }

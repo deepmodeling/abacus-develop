@@ -486,8 +486,8 @@ namespace ModuleSymmetry
     std::vector<std::complex<double>> Symmetry_rotation_k::rot_matrix_ao(const std::vector<std::complex<double>>& DMkibz,
         const int ik_ibz, const int kstar_size, const int isym, const Parallel_2D& pv, const bool TRS_conj) const
     {
-        std::vector<std::complex<double>> DMk(pv.nloc, 0.0);
-        std::vector<std::complex<double>> DMkibz_M(pv.nloc, 0.0);    // intermediate result
+        std::vector<std::complex<double>> DMk(pv.get_local_size(), 0.0);
+        std::vector<std::complex<double>> DMkibz_M(pv.get_local_size(), 0.0);    // intermediate result
         const char dagger = 'C';
         const char transpose = 'T';
         const char notrans = 'N';
@@ -500,8 +500,8 @@ namespace ModuleSymmetry
             // D^T* = M^T [M^T (D^T)^T]^\dagger
 #ifdef __MPI
             ScalapackConnector::gemm(transpose, transpose, nbasis, nbasis, nbasis,
-                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz.data(), i1, i1, pv.desc,
-                beta, DMkibz_M.data(), i1, i1, pv.desc);
+                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.get_desc(), DMkibz.data(), i1, i1, pv.get_desc(),
+                beta, DMkibz_M.data(), i1, i1, pv.get_desc());
 #else
             // without MPI, pv holds the whole (non-block-cyclic) dense matrix locally,
             // so the 2D-block-cyclic pdgemm/pzgemm degenerates to a plain col-major gemm.
@@ -512,8 +512,8 @@ namespace ModuleSymmetry
             alpha.real(1.0 / static_cast<double>(kstar_size));
 #ifdef __MPI
             ScalapackConnector::gemm(transpose, dagger, nbasis, nbasis, nbasis,
-                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz_M.data(), i1, i1, pv.desc,
-                beta, DMk.data(), i1, i1, pv.desc);
+                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.get_desc(), DMkibz_M.data(), i1, i1, pv.get_desc(),
+                beta, DMk.data(), i1, i1, pv.get_desc());
 #else
             BlasConnector::gemm_cm(transpose, dagger, nbasis, nbasis, nbasis,
                 alpha, this->Ms_[ik_ibz].at(isym).data(), nbasis, DMkibz_M.data(), nbasis,
@@ -530,8 +530,8 @@ namespace ModuleSymmetry
             for (size_t i = 0; i < Mref.size(); ++i) { Mc[i] = std::conj(Mref[i]); }
 #ifdef __MPI
             ScalapackConnector::gemm(dagger, notrans, nbasis, nbasis, nbasis,
-                alpha, Mc.data(), i1, i1, pv.desc, DMkibz.data(), i1, i1, pv.desc,
-                beta, DMkibz_M.data(), i1, i1, pv.desc);
+                alpha, Mc.data(), i1, i1, pv.get_desc(), DMkibz.data(), i1, i1, pv.get_desc(),
+                beta, DMkibz_M.data(), i1, i1, pv.get_desc());
 #else
             BlasConnector::gemm_cm(dagger, notrans, nbasis, nbasis, nbasis,
                 alpha, Mc.data(), nbasis, DMkibz.data(), nbasis,
@@ -540,8 +540,8 @@ namespace ModuleSymmetry
             alpha.real(1.0 / static_cast<double>(kstar_size));
 #ifdef __MPI
             ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
-                alpha, DMkibz_M.data(), i1, i1, pv.desc, Mc.data(), i1, i1, pv.desc,
-                beta, DMk.data(), i1, i1, pv.desc);
+                alpha, DMkibz_M.data(), i1, i1, pv.get_desc(), Mc.data(), i1, i1, pv.get_desc(),
+                beta, DMk.data(), i1, i1, pv.get_desc());
 #else
             BlasConnector::gemm_cm(notrans, notrans, nbasis, nbasis, nbasis,
                 alpha, DMkibz_M.data(), nbasis, Mc.data(), nbasis,
@@ -592,8 +592,8 @@ namespace ModuleSymmetry
         // tmp = Sigma_y * conj(X)
 #ifdef __MPI
         ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
-            one, sigma_y.data(), i1, i1, pv.desc, Xc.data(), i1, i1, pv.desc,
-            beta, tmp.data(), i1, i1, pv.desc);
+            one, sigma_y.data(), i1, i1, pv.get_desc(), Xc.data(), i1, i1, pv.get_desc(),
+            beta, tmp.data(), i1, i1, pv.get_desc());
 #else
         // without MPI, pv holds the whole (non-block-cyclic) dense matrix locally,
         // so the 2D-block-cyclic pzgemm degenerates to a plain col-major gemm.
@@ -604,8 +604,8 @@ namespace ModuleSymmetry
         // out = scale * tmp * Sigma_y
 #ifdef __MPI
         ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
-            std::complex<double>(scale, 0.0), tmp.data(), i1, i1, pv.desc, sigma_y.data(), i1, i1, pv.desc,
-            beta, out.data(), i1, i1, pv.desc);
+            std::complex<double>(scale, 0.0), tmp.data(), i1, i1, pv.get_desc(), sigma_y.data(), i1, i1, pv.get_desc(),
+            beta, out.data(), i1, i1, pv.get_desc());
 #else
         BlasConnector::gemm_cm(notrans, notrans, nbasis, nbasis, nbasis,
             std::complex<double>(scale, 0.0), tmp.data(), nbasis, sigma_y.data(), nbasis,

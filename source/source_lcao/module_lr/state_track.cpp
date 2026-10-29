@@ -81,8 +81,8 @@ void project_local_references(const RootInputs<T>& inputs, const RootBasis<T>& o
         Parallel_2D pv;
 #ifdef __MPI
         const int block_size = px.get_block_size();
-        pi.set(no, no, block_size, px.blacs_ctxt);
-        pv.set(nv, nv, block_size, px.blacs_ctxt);
+        pi.set(no, no, block_size, px.get_blacs_ctxt());
+        pv.set(nv, nv, block_size, px.get_blacs_ctxt());
 #else
         pi.set_serial(no, no);
         pv.set_serial(nv, nv);

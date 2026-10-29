@@ -38,10 +38,10 @@ TEST(StateTrack, ClosedShellTripletIgnoresDownSpinVirtualRotation)
     Parallel_Orbitals pmat;
     std::vector<Parallel_2D> px(2);
 #ifdef __MPI
-    pmat.para_2d().set(3, 3, 1, pc.blacs_ctxt);
+    pmat.para_2d().set(3, 3, 1, pc.get_blacs_ctxt());
     for (auto& block: px)
     {
-        block.set(2, 1, 1, pc.blacs_ctxt);
+        block.set(2, 1, 1, pc.get_blacs_ctxt());
     }
 #else
     pmat.para_2d().set_serial(3, 3);

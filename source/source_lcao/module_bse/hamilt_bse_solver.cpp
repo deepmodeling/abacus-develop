@@ -26,12 +26,12 @@ void arrayFlatten1(const std::vector<std::complex<double>>& A,
 {
     int nA = pA.get_global_row_size();
 #ifdef __MPI
-    Cpxgemr2d(nA, nA, const_cast<std::complex<double>*>(A.data()), 1, 1, const_cast<int*>(pA.desc),
-                result.data(), 1, 1, const_cast<int*>(pM.desc),
-                pA.blacs_ctxt);
-    Cpxgemr2d(nA, nA, const_cast<std::complex<double>*>(B.data()), 1, 1, const_cast<int*>(pA.desc),
-                result.data(), 1, nA+1, const_cast<int*>(pM.desc),
-                pA.blacs_ctxt);
+    Cpxgemr2d(nA, nA, const_cast<std::complex<double>*>(A.data()), 1, 1, const_cast<int*>(pA.get_desc()),
+                result.data(), 1, 1, const_cast<int*>(pM.get_desc()),
+                pA.get_blacs_ctxt());
+    Cpxgemr2d(nA, nA, const_cast<std::complex<double>*>(B.data()), 1, 1, const_cast<int*>(pA.get_desc()),
+                result.data(), 1, nA+1, const_cast<int*>(pM.get_desc()),
+                pA.get_blacs_ctxt());
     std::vector<std::complex<double>> temp_A(pA.get_local_size(), 0.0);
     std::vector<std::complex<double>> temp_B(pA.get_local_size(), 0.0);
     #pragma omp parallel for
@@ -39,12 +39,12 @@ void arrayFlatten1(const std::vector<std::complex<double>>& A,
         temp_A[i] = -std::conj(A[i]);
         temp_B[i] = -std::conj(B[i]);
     }
-    Cpxgemr2d(nA, nA, temp_A.data(), 1, 1, const_cast<int*>(pA.desc),
-                result.data(), nA+1, nA+1, const_cast<int*>(pM.desc),
-                pA.blacs_ctxt);
-    Cpxgemr2d(nA, nA, temp_B.data(), 1, 1, const_cast<int*>(pA.desc),
-                result.data(), nA+1, 1, const_cast<int*>(pM.desc),
-                pA.blacs_ctxt);
+    Cpxgemr2d(nA, nA, temp_A.data(), 1, 1, const_cast<int*>(pA.get_desc()),
+                result.data(), nA+1, nA+1, const_cast<int*>(pM.get_desc()),
+                pA.get_blacs_ctxt());
+    Cpxgemr2d(nA, nA, temp_B.data(), 1, 1, const_cast<int*>(pA.get_desc()),
+                result.data(), nA+1, 1, const_cast<int*>(pM.get_desc()),
+                pA.get_blacs_ctxt());
 #else
     for (int j = 0; j < nA; j++ ){
         for (int i = 0; i < nA; i++ ){
@@ -69,27 +69,27 @@ void arrayFlatten2(const std::vector<std::complex<double>>& A,
     for (int i = 0; i < pA.get_local_size(); i++ ){
         temp[i] = A[i].real() + B[i].real();
     }
-    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.desc),
-                result.data(), 1, 1, const_cast<int*>(pM.desc),
-                pA.blacs_ctxt);
+    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.get_desc()),
+                result.data(), 1, 1, const_cast<int*>(pM.get_desc()),
+                pA.get_blacs_ctxt());
     for (int i = 0; i < pA.get_local_size(); i++ ){
         temp[i] = A[i].imag() - B[i].imag();
     }
-    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.desc),
-                result.data(), 1, nA+1, const_cast<int*>(pM.desc),
-                pA.blacs_ctxt);
+    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.get_desc()),
+                result.data(), 1, nA+1, const_cast<int*>(pM.get_desc()),
+                pA.get_blacs_ctxt());
     for (int i = 0; i < pA.get_local_size(); i++ ){
         temp[i] = - A[i].imag() - B[i].imag();
     }
-    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.desc),
-                result.data(), nA+1, 1, const_cast<int*>(pM.desc),
-                pA.blacs_ctxt);
+    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.get_desc()),
+                result.data(), nA+1, 1, const_cast<int*>(pM.get_desc()),
+                pA.get_blacs_ctxt());
     for (int i = 0; i < pA.get_local_size(); i++ ){
         temp[i] = A[i].real() - B[i].real();
     }
-    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.desc),
-                result.data(), nA+1, nA+1, const_cast<int*>(pM.desc),
-                pA.blacs_ctxt);
+    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.get_desc()),
+                result.data(), nA+1, nA+1, const_cast<int*>(pM.get_desc()),
+                pA.get_blacs_ctxt());
 #else
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -200,10 +200,10 @@ void solve_full(const int my_rank,
     std::vector<double> UJ (pM.get_local_size(), 0.0);
 
     ScalapackConnector::gemm('N', 'N', n, n, n, 1.0,
-        M.data(), 1, 1, pM.desc, 
-        J.data(), 1, 1, pM.desc,
+        M.data(), 1, 1, pM.get_desc(),
+        J.data(), 1, 1, pM.get_desc(),
         0.0,
-        UJ.data(), 1, 1, pM.desc);
+        UJ.data(), 1, 1, pM.get_desc());
 
     // std::vector<double> global_UJ (n*n);
     // Cpxgemr2d(n, n, UJ.data(), 1, 1, const_cast<int*>(pM.desc),
@@ -212,10 +212,10 @@ void solve_full(const int my_rank,
     //if (my_rank == 0) {std::cout<<"UJ:"<<std::endl; printM( global_UJ, n, n, "M", "M" );}
 
     ScalapackConnector::gemm('N', 'T', n, n, n, 1.0,
-        UJ.data(), 1, 1, pM.desc,
-        M.data(), 1, 1, pM.desc,
+        UJ.data(), 1, 1, pM.get_desc(),
+        M.data(), 1, 1, pM.get_desc(),
         0.0,
-        J.data(), 1, 1, pM.desc); // J is UJL here
+        J.data(), 1, 1, pM.get_desc()); // J is UJL here
     std::vector<double>().swap(UJ);
 
     // std::vector<double> global_UJL(n*n);
@@ -268,15 +268,15 @@ void solve_full(const int my_rank,
     // 6.2: LzΩ^(-1/2), combine real and imaginary part
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full6.2");
     ScalapackConnector::gemm('T', 'N', n, n, n, 1.0,
-        M.data(), 1, 1, pM.desc,
-        z.data(), 1, 1, pM.desc,
+        M.data(), 1, 1, pM.get_desc(),
+        z.data(), 1, 1, pM.get_desc(),
         0.0,
-        Lz_real.data(), 1, 1, pM.desc);
+        Lz_real.data(), 1, 1, pM.get_desc());
     ScalapackConnector::gemm('T', 'N', n, n, n, 1.0,
-        M.data(), 1, 1, pM.desc,
-        z.data() + pM.get_local_size(), 1, 1, pM.desc,
+        M.data(), 1, 1, pM.get_desc(),
+        z.data() + pM.get_local_size(), 1, 1, pM.get_desc(),
         0.0,
-        Lz_imag.data(), 1, 1, pM.desc);
+        Lz_imag.data(), 1, 1, pM.get_desc());
 
     std::vector<std::complex<double>> Lz(pM.get_local_size(), 0.0);
 #ifdef _OPENMP
@@ -319,10 +319,10 @@ void solve_full(const int my_rank,
     // 6.3: v=SQLzΩ^{-1/2}
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full6.3");
     ScalapackConnector::gemm('N', 'N', n, n, n, 1.0,
-        SQ.data(), 1, 1, pM.desc,
-        Lz.data(), 1, 1, pM.desc,
+        SQ.data(), 1, 1, pM.get_desc(),
+        Lz.data(), 1, 1, pM.get_desc(),
         0.0,
-        v.data(), 1, 1, pM.desc);
+        v.data(), 1, 1, pM.get_desc());
 
     elpa_deallocate(elpaInstance, &status);
     elpa_uninit(&status);

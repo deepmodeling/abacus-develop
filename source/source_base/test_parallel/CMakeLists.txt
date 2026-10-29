@@ -88,7 +88,7 @@ add_test(
 
 addtest(
   TARGET MODULE_BASE_parallel_2d_test
-  SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
+  SOURCES parallel_2d_test.cpp ../block_cyclic_distribution_information.cpp
   LIBS parameter)
 
 addtest(

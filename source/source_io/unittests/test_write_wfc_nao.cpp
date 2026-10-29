@@ -209,22 +209,22 @@ class WriteWfcLcaoTest : public testing::Test
                       psi_init_double.data() + ik * nbands * nbasis,
                       1,
                       1,
-                      pv_glb.desc,
+                      const_cast<int*>(pv_glb.get_desc()),
                       psi_local_double.data() + ik * pv.para_2d().get_row_size() * pv.para_2d().get_col_size(),
                       1,
                       1,
-                      pv.para_2d().desc,
+                      const_cast<int*>(pv.para_2d().get_desc()),
                       pv.get_blacs_ctxt());
             Cpxgemr2d(nbasis,
                       nbands,
                       psi_init_complex.data() + ik * nbands * nbasis,
                       1,
                       1,
-                      pv_glb.desc,
+                      const_cast<int*>(pv_glb.get_desc()),
                       psi_local_complex.data() + ik * pv.para_2d().get_row_size() * pv.para_2d().get_col_size(),
                       1,
                       1,
-                      pv.para_2d().desc,
+                      const_cast<int*>(pv.para_2d().get_desc()),
                       pv.get_blacs_ctxt());
         }
         nbands_local = pv.para_2d().get_col_size();

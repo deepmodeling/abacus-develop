@@ -24,7 +24,7 @@ namespace LR
         std::vector<T> AH(pA.get_local_size(), T(0));
         const T one(1.0);
         const T zero(0.0);
-        ScalapackConnector::tranc(n, n, one, A, 1, 1, pA.desc, zero, AH.data(), 1, 1, pA.desc);
+        ScalapackConnector::tranc(n, n, one, A, 1, 1, pA.get_desc(), zero, AH.data(), 1, 1, pA.get_desc());
         for (std::size_t i = 0; i < AH.size(); ++i)
         {
             A[i] = 0.5 * (A[i] + AH[i]);
@@ -40,12 +40,12 @@ namespace LR
         const int nrhs = pB.get_global_col_size();
         assert(pA.get_global_col_size() == n);
         assert(pB.get_global_row_size() == n);
-        assert(pA.blacs_ctxt == pB.blacs_ctxt);
+        assert(pA.get_blacs_ctxt() == pB.get_blacs_ctxt());
         assert(pA.get_block_size() == pB.get_block_size());
         // p?gesv needs LOCr(M_A) + MB_A pivot entries
         std::vector<int> ipiv(pA.get_row_size() + pA.get_block_size());
         int info = 0;
-        ScalapackConnector::gesv(n, nrhs, A, 1, 1, pA.desc, ipiv.data(), B, 1, 1, pB.desc, &info);
+        ScalapackConnector::gesv(n, nrhs, A, 1, 1, pA.get_desc(), ipiv.data(), B, 1, 1, pB.get_desc(), &info);
         if (info != 0)
         {
             ModuleBase::timer::end("LR", "scalapack_linear_solver");
@@ -63,7 +63,7 @@ namespace LR
         const int nrhs = pB.get_global_col_size();
         assert(pA.get_global_col_size() == n);
         assert(pB.get_global_row_size() == n);
-        assert(pA.blacs_ctxt == pB.blacs_ctxt);
+        assert(pA.get_blacs_ctxt() == pB.get_blacs_ctxt());
         assert(pA.get_block_size() == pB.get_block_size());
 
         hermitize_2d(A, pA);
@@ -71,7 +71,7 @@ namespace LR
         // A = U^H U, U in the upper triangle. p?potrf's INFO is global output, so a
         // non-positive-definite A is reported identically on every rank.
         int desc_a[9];
-        std::copy(pA.desc, pA.desc + 9, desc_a);
+        std::copy(pA.get_desc(), pA.get_desc() + 9, desc_a);
         int info = ScalapackConnector::potrf('U', n, A, desc_a);
         if (info != 0)
         {
@@ -85,7 +85,7 @@ namespace LR
             ModuleBase::timer::end("LR", "scalapack_cholesky_linear_solver");
             throw std::runtime_error(message);
         }
-        ScalapackConnector::potrs('U', n, nrhs, A, 1, 1, pA.desc, B, 1, 1, pB.desc, &info);
+        ScalapackConnector::potrs('U', n, nrhs, A, 1, 1, pA.get_desc(), B, 1, 1, pB.get_desc(), &info);
         if (info != 0)
         {
             ModuleBase::timer::end("LR", "scalapack_cholesky_linear_solver");

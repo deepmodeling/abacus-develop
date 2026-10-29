@@ -64,7 +64,7 @@ void DiagoPexsi<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
 {
     ModuleBase::TITLE("DiagoPEXSI", "diag");
     int ik = psi.get_current_k();
-    this->ps->prepare(this->ParaV->para_2d().blacs_ctxt,
+    this->ps->prepare(this->ParaV->para_2d().get_blacs_ctxt(),
                       this->ParaV->para_2d().get_block_size(),
                       this->ParaV->para_2d().get_row_size(),
                       this->ParaV->para_2d().get_col_size(),

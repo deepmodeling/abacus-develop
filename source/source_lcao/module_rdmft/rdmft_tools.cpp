@@ -68,7 +68,7 @@ void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV,
     const int nbands = ParaV->desc_wfc[3];
 
     ScalapackConnector::gemm( T_char, N_char, nbands, nbands, nbasis, one_double, &wfc, 1, 1, ParaV->desc_wfc,
-            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.desc );
+            &H_wfc, 1, 1, ParaV->desc_wfc, zero_double, &Dmn[0], 1, 1, para_Eij_in.get_desc() );
 #endif
 }
 

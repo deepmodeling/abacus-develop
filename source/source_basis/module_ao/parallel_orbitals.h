@@ -31,7 +31,7 @@ public:
     /// BLACS context of the 2D process grid, completing the getter family
     /// (get_row_size / get_col_size / get_local_size / get_block_size /
     /// get_dim0 / get_dim1 / get_desc) of the held Parallel_2D.
-    int get_blacs_ctxt() const { return para_2d_.blacs_ctxt; }
+    int get_blacs_ctxt() const { return para_2d_.get_blacs_ctxt(); }
 #endif
 
     /// local size of bands, used for 2d wavefunction

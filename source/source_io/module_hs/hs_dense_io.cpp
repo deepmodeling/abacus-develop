@@ -42,11 +42,11 @@ void gather_row(const T* mat,
                 int iic = 0;
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
                 {
-                    iic = ir + ic * pv.nrow;
+                    iic = ir + ic * pv.get_row_size();
                 }
                 else
                 {
-                    iic = ir * pv.ncol + ic;
+                    iic = ir * pv.get_col_size() + ic;
                 }
                 line[tri ? j - i : j] = mat[iic];
             }

@@ -43,14 +43,14 @@ std::vector<T> cVc(const T* V,
 #else
     container::BlasConnector::gemm(transa, transb, nbasis, nbands, nbasis, alpha, V, nbasis, c, nbasis, beta, Vc.data(), nbasis);
 #endif
-    std::vector<T> cVc_result(p2d.nloc, 0.0);
+    std::vector<T> cVc_result(p2d.get_local_size(), 0.0);
     transa = (std::is_same<T, double>::value ? 'T' : 'C');
 #ifdef __MPI
     ScalapackConnector::gemm(transa, transb,
         nbands, nbands, nbasis,
         alpha, c, i1, i1, pv.desc_wfc,
         Vc.data(), i1, i1, pv.desc_wfc,
-        beta, cVc_result.data(), i1, i1, p2d.desc);
+        beta, cVc_result.data(), i1, i1, p2d.get_desc());
 #else
     container::BlasConnector::gemm(transa, transb, nbands, nbands, nbasis, alpha, c, nbasis, Vc.data(), nbasis, beta, cVc_result.data(), nbasis);
 #endif

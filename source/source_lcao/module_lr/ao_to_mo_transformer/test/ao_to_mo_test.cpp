@@ -137,20 +137,20 @@ TEST_F(AO2MOTest, DoubleParallel)
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.get_blacs_ctxt());
 
         std::vector<int> ngk_temp(s.nks, pc.get_row_size());
         psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp, true);
         Parallel_2D pvo, poo, pvv;
-        LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
-        LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.blacs_ctxt);
-        LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.get_blacs_ctxt());
+        LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.get_blacs_ctxt());
+        LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.get_blacs_ctxt());
 
-        EXPECT_EQ(pV.dim0, pc.dim0);
-        EXPECT_EQ(pV.dim1, pc.dim1);
-        EXPECT_GE(s.nvirt, pvo.dim0);
-        EXPECT_GE(s.nocc, pvo.dim1);
-        EXPECT_GE(s.naos, pc.dim0);
+        EXPECT_EQ(pV.get_dim0(), pc.get_dim0());
+        EXPECT_EQ(pV.get_dim1(), pc.get_dim1());
+        EXPECT_GE(s.nvirt, pvo.get_dim0());
+        EXPECT_GE(s.nocc, pvo.get_dim1());
+        EXPECT_GE(s.naos, pc.get_dim0());
         psi::Psi<double> vo_pblas_loc(s.nks, nstate, pvo.get_local_size(), pvo.get_local_size(), false);
         psi::Psi<double> vo_gather(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
         vo_gather.zero_out();
@@ -214,14 +214,14 @@ TEST_F(AO2MOTest, ComplexParallel)
         LR_Util::setup_2d_division(pV, s.nb, s.naos, s.naos);
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.get_blacs_ctxt());
 
         std::vector<int> ngk_temp_1(s.nks, pc.get_row_size());
         psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp_1, true);
         Parallel_2D pvo, poo, pvv;
-        LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
-        LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.blacs_ctxt);
-        LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.get_blacs_ctxt());
+        LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.get_blacs_ctxt());
+        LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.get_blacs_ctxt());
 
         psi::Psi<std::complex<double>> vo_pblas_loc(s.nks, nstate, pvo.get_local_size(), pvo.get_local_size(), false);
         psi::Psi<std::complex<double>> vo_gather(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);

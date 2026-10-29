@@ -170,16 +170,16 @@ TEST_F(AXTest, DoubleParallel)
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
         const int nmo = s.nocc + s.nvirt;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, pV.get_blacs_ctxt());
         psi::Psi<double, base_device::DEVICE_CPU> c(s.nks, pc.get_col_size(), pc.get_row_size(), {}, true);
         Parallel_2D px;
-        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.get_blacs_ctxt());
 
-        EXPECT_EQ(pV.dim0, pc.dim0);
-        EXPECT_EQ(pV.dim1, pc.dim1);
-        EXPECT_GE(s.nvirt, px.dim0);
-        EXPECT_GE(s.nocc, px.dim1);
-        EXPECT_GE(s.naos, pc.dim0);
+        EXPECT_EQ(pV.get_dim0(), pc.get_dim0());
+        EXPECT_EQ(pV.get_dim1(), pc.get_dim1());
+        EXPECT_GE(s.nvirt, px.get_dim0());
+        EXPECT_GE(s.nocc, px.get_dim1());
+        EXPECT_GE(s.naos, pc.get_dim0());
 
         psi::Psi<double, base_device::DEVICE_CPU> AX_pblas_loc(s.nks, nstate, px.get_local_size(), {}, false);
         psi::Psi<double, base_device::DEVICE_CPU> AX_gather(s.nks, nstate, s.nocc * s.nvirt, {}, false);
@@ -278,10 +278,10 @@ TEST_F(AXTest, ComplexParallel)
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
         const int nmo = s.nocc + s.nvirt;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, nmo, pV.get_blacs_ctxt());
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> c(s.nks, pc.get_col_size(), pc.get_row_size(), {}, true);
         Parallel_2D px;
-        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
+        LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.get_blacs_ctxt());
 
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> AX_pblas_loc(s.nks, nstate, px.get_local_size(), {}, false);
         psi::Psi<std::complex<double>, base_device::DEVICE_CPU> AX_gather(s.nks, nstate, s.nocc * s.nvirt, {}, false);

@@ -1,5 +1,6 @@
 #ifndef ABACUS_LR_STATE_OVERLAP_H
 #define ABACUS_LR_STATE_OVERLAP_H
+#include "source_base/parallel_2d.h"
 #include "source_base/vector3.h"
 #include <vector>
 
@@ -11,7 +12,6 @@ class Matrix3;
 }
 class UnitCell;
 class Parallel_Orbitals;
-class Parallel_2D;
 class TwoCenterIntegrator;
 namespace LR
 {

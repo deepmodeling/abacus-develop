@@ -49,7 +49,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
     Parallel_2D pmo;
     LR_Util::setup_2d_division(pmo, pmat.para_2d().get_block_size(), KS_num, KS_num
 #ifdef __MPI
-        , pc.blacs_ctxt
+        , pc.get_blacs_ctxt()
 #endif
         );
 

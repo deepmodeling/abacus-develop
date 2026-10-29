@@ -72,7 +72,7 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
     else throw std::runtime_error("ndim in HamiltBSE is zero or negative.");
     LR_Util::setup_2d_division(this->pA, nb2d, ndim, ndim
         #ifdef __MPI
-            , this->pX[0].blacs_ctxt
+            , this->pX[0].get_blacs_ctxt()
         #endif
         );
 
@@ -397,7 +397,7 @@ void HamiltBSE<double>::full_solver(const int& st_index, const int& nstates,
     Parallel_2D pM;
     LR_Util::setup_2d_division(pM, this->pA.get_block_size(), 2*this->ndim, 2*this->ndim
         #ifdef __MPI
-                , this->pA.blacs_ctxt
+                , this->pA.get_blacs_ctxt()
         #endif
             );
     const auto to_complex = [](const std::vector<double>& vin) {
@@ -446,7 +446,7 @@ void HamiltBSE<std::complex<double>>::full_solver(const int& st_index, const int
     Parallel_2D pM;
     LR_Util::setup_2d_division(pM, this->pA.get_block_size(), 2*this->ndim, 2*this->ndim
         #ifdef __MPI
-                , this->pA.blacs_ctxt
+                , this->pA.get_blacs_ctxt()
         #endif
             );
     
@@ -484,7 +484,8 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
     LR_Util::initialize_HR<T, T>(*VR, this->ucell, this->gd, this->orb_cutoff);
 #ifdef __MPI
     Parallel_2D pV_col; //{nvirt*nocc, 1}
-    LR_Util::setup_2d_division(pV_col, this->pX[is].get_block_size(), nvirt[is]*nocc[is], 1, this->pX[is].blacs_ctxt);
+    LR_Util::setup_2d_division(pV_col, this->pX[is].get_block_size(), nvirt[is]*nocc[is], 1,
+                               this->pX[is].get_blacs_ctxt());
     std::vector<T> V_col_local(this->nk * pV_col.get_local_size(), 0.0); // V_col(bjk2)
 #endif
 
@@ -530,10 +531,10 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
 
                 for (int ik1 = 0; ik1 < this->nk; ++ik1) {
                     Cpxgemr2d(nvirt[is]*nocc[is], 1,
-                            V_col_local.data() + ik1 * pV_col.get_local_size(), 1, 1, pV_col.desc,
+                            V_col_local.data() + ik1 * pV_col.get_local_size(), 1, 1, pV_col.get_desc(),
                             this->VA_local.data(), 
-                            ik1 * nocc[is] * nvirt[is] + 1 , bjk + 1, this->pA.desc,
-                            this->pA.blacs_ctxt);
+                            ik1 * nocc[is] * nvirt[is] + 1 , bjk + 1, this->pA.get_desc(),
+                            this->pA.get_blacs_ctxt());
                 }
     #else
                 LR::ao_to_mo_blas(v_k_2d, psi_is, nocc[is], nvirt[is], this->VA_local.data()+bjk * this->ndim, false, LR_Util::MO_TYPE::VO, T(1.0));

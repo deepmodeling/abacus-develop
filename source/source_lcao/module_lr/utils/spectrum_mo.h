@@ -1,5 +1,6 @@
 #ifndef ABACUS_LR_SPECTRUM_MO_H
 #define ABACUS_LR_SPECTRUM_MO_H
+#include "source_base/parallel_2d.h"
 #include <complex>
 #include <string>
 #include <vector>
@@ -8,7 +9,6 @@ class UnitCell;
 class Grid_Driver;
 class TwoCenterBundle;
 class Parallel_Orbitals;
-class Parallel_2D;
 class K_Vectors;
 namespace LR_Util
 {

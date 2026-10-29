@@ -51,9 +51,9 @@ namespace LR
 #ifdef __MPI
             const int i1 = 1;
             ScalapackConnector::gemm('C', 'N', nocc, nocc, nvirt,
-                T(1.0), X + x_start_k, i1, i1, px.desc,
-                wX.data(), i1, i1, px.desc,
-                T(1.0)/*add-on*/, inout + inout_start_k, i1, i1, p_occ_occ.desc);
+                T(1.0), X + x_start_k, i1, i1, px.get_desc(),
+                wX.data(), i1, i1, px.get_desc(),
+                T(1.0)/*add-on*/, inout + inout_start_k, i1, i1, p_occ_occ.get_desc());
 #else
             BlasConnector::gemm_cm('C', 'N', nocc, nocc, nvirt,
                 T(1.0), X + x_start_k, nvirt,

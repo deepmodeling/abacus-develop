@@ -122,8 +122,8 @@ namespace LR_Util
         }
         std::vector<T> herm_mat(pmat.get_local_size());
         ScalapackConnector::tranc(n, n,
-                alpha, const_cast<T*>(mat), one, one, pmat.desc,
-                beta, herm_mat.data(), one, one, pmat.desc);
+                alpha, const_cast<T*>(mat), one, one, pmat.get_desc(),
+                beta, herm_mat.data(), one, one, pmat.get_desc());
         ModuleBase::TITLE("LR_Util", "is_hermitian: tranc");
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "is_hermitian: tranc");
         T diff;
@@ -146,7 +146,7 @@ namespace LR_Util
         MPI_Allreduce(&local_flag, &global_flag, 1, MPI_INT, MPI_LAND, pmat.comm());
         is_herm = (global_flag != 0);
 #else
-        assert(pmat.is_serial);
+        assert(pmat.is_serial());
         std::vector<T> minus_mat(pmat.get_local_size());
         std::vector<T> sum_mat(pmat.get_local_size());
         for (std::size_t i = 0;i < n;++i) {
@@ -187,8 +187,8 @@ namespace LR_Util
         }
         std::vector<T> trans_mat(pmat.get_local_size());
         ScalapackConnector::tranu(n, n,
-                alpha, const_cast<T*>(mat), one, one, pmat.desc,
-                beta, trans_mat.data(), one, one, pmat.desc);
+                alpha, const_cast<T*>(mat), one, one, pmat.get_desc(),
+                beta, trans_mat.data(), one, one, pmat.get_desc());
         ModuleBase::TITLE("LR_Util", "is_symmetric: tranu");
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "is_hermitian: tranu");
         T diff;
@@ -208,7 +208,7 @@ namespace LR_Util
         MPI_Allreduce(&local_flag, &global_flag, 1, MPI_INT, MPI_LAND, pmat.comm());
         is_sym = (global_flag != 0);
 #else
-        assert(pmat.is_serial);
+        assert(pmat.is_serial());
         std::vector<T> minus_mat(pmat.get_local_size());
         std::vector<T> sum_mat(pmat.get_local_size());
         for (std::size_t i = 0;i < n;++i) {
@@ -405,10 +405,10 @@ namespace LR_Util
         const int nbpA = pA.get_block_size();
         for (int gb = gb_start; gb < gb_end; ++gb)
         {
-            int proc_col = (gb / nbpA) % pA.dim1;
-            for (int pr = 0; pr < pA.dim0; ++pr)
+            int proc_col = (gb / nbpA) % pA.get_dim1();
+            for (int pr = 0; pr < pA.get_dim0(); ++pr)
             {
-                int ownerA = proc_col + pr * pA.dim1;
+                int ownerA = proc_col + pr * pA.get_dim1();
                 ++lnbands[ownerA];
                 gblist[ownerA].push_back(gb);
             }
