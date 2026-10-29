@@ -61,6 +61,40 @@ sanitize_result_key(){
 }
 
 
+record_compare_status(){
+	result_file=$1
+	result_key=$2
+	compare_status=$3
+
+	if [ "$compare_status" -ne 0 ]; then
+		case "$result_file" in
+			result.ref|*/result.ref)
+				echo "Error: refusing to record failed comparison $result_key in $result_file" >&2
+				rm -f "$result_file"
+				exit "$compare_status"
+				;;
+		esac
+	fi
+	echo "$result_key $compare_status" >> "$result_file"
+}
+
+
+run_and_record_status(){
+	result_file=$1
+	result_key=$2
+	shift 2
+
+	# A failed check remains useful data in result.out, but it must never be
+	# accepted as the expected value while generating result.ref.
+	if "$@"; then
+		command_status=0
+	else
+		command_status=$?
+	fi
+	record_compare_status "$result_file" "$result_key" "$command_status"
+}
+
+
 record_compare_result(){
 	result_file=$1
 	result_key=$2
@@ -68,14 +102,28 @@ record_compare_result(){
 	cal_file=$4
 	accuracy=${5:-8}
 	use_abs=${6:-0}
+	compare_type=${7:-}
 
 	if [ ! -f "$ref_file" ] || [ ! -f "$cal_file" ]; then
-		echo "$result_key 1" >> "$result_file"
-		return
+		record_compare_status "$result_file" "$result_key" 1
+		return $?
 	fi
 
-	python3 $COMPARE_SCRIPT "$ref_file" "$cal_file" "$accuracy" -abs "$use_abs"
-	echo "$result_key $?" >> "$result_file"
+	if [ -n "$compare_type" ]; then
+		if python3 "$COMPARE_SCRIPT" "$ref_file" "$cal_file" "$accuracy" \
+			-abs "$use_abs" -com_type "$compare_type"; then
+			compare_status=0
+		else
+			compare_status=$?
+		fi
+	else
+		if python3 "$COMPARE_SCRIPT" "$ref_file" "$cal_file" "$accuracy" -abs "$use_abs"; then
+			compare_status=0
+		else
+			compare_status=$?
+		fi
+	fi
+	record_compare_status "$result_file" "$result_key" "$compare_status"
 }
 
 

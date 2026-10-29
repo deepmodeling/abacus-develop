@@ -82,8 +82,7 @@ fi
 if ! test -z "$has_cond"  && [  $has_cond == 1 ]; then
 	onref=refOnsager.txt
 	oncal=OUT.autotest/Onsager.txt
-	python3 $COMPARE_SCRIPT $onref $oncal 3 -com_type 0
-    echo "CompareH_Failed $?" >>$props_result_file
+	record_compare_result "$props_result_file" "CompareH_Failed" "$onref" "$oncal" 3 0 0
 	rm -f je-je.txt Chebycoef
 fi
 
