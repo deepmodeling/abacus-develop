@@ -268,6 +268,17 @@ public:
                     const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
 
   protected:
+    template <typename FPTYPE>
+    void fft_forward() const;
+
+    template <typename FPTYPE>
+    void fft_backward() const;
+
+#if defined(__CUDA) || defined(__ROCM)
+    template <typename FPTYPE>
+    void fft3d_gpu(bool inverse) const;
+#endif
+
     //gather planes and scatter sticks of all processors
     template <typename T>
     void gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const;
