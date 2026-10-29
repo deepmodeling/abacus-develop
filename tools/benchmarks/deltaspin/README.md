@@ -76,6 +76,37 @@ benchmark at a time on the GPU and avoid simultaneous builds on the measured
 host. `--profile` is available for Nsight Systems diagnostics; profiled runs are
 excluded from the normal comparison helper.
 
+## Profile device work
+
+`build_profile.py` compiles isolated NVTX-instrumented timer and GEMM objects
+and relinks the active build without editing production sources. The optional
+GEMM ranges record transpose modes, dimensions and leading dimensions. The
+label must be unused. With Nsight Systems available in `PATH`:
+
+```bash
+python3 src/build_profile.py gemm-shapes --gemm-shapes
+python3 src/benchmark.py --binary results/abacus-gemm-shapes-profile \
+    --case fe-bcc-32 --label gemm-shapes-fe32-full --threads 12 --profile
+nsys export --type sqlite \
+    --output results/gemm-shapes-fe32-full/profile.sqlite \
+    results/gemm-shapes-fe32-full/profile.nsys-rep
+python3 src/analyze_trace.py results/gemm-shapes-fe32-full/profile.sqlite
+python3 src/analyze_gemm_trace.py results/gemm-shapes-fe32-full/profile.sqlite
+```
+
+Both analyzers assign device activity through CUDA launch correlation, so a
+kernel that executes after its host NVTX range still belongs to the correct
+operation. GPU activity unions avoid double-counting concurrent execution;
+inclusive range durations overlap and cannot be summed. The steady view excludes
+the first two `hamilt2density` calls and the final force/stress calculation.
+
+The GEMM analyzer counts nominal real arithmetic as `8*m*n*k` per complex
+matrix product. This is a shape-derived work estimate, not a hardware-counter
+measurement, and excludes products internal to cuSolver. Check numerical
+outputs, iteration counts and input hashes against an unprofiled run before
+using a trace to interpret the accepted implementation. Profiling wall time
+includes collection and report overhead and is not a speed benchmark.
+
 ## Interpret results
 
 `benchmark.py` reads the atom count from the application output and checks the
