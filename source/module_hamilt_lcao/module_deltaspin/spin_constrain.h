@@ -2,6 +2,7 @@
 #define SPIN_CONSTRAIN_H
 
 #include <map>
+#include <memory>
 #include <vector>
 
 #include "module_base/constants.h"
@@ -256,6 +257,9 @@ public:
     FPTYPE* becp_save;
     /// Constraint field used to construct the saved projected Hamiltonian.
     std::vector<ModuleBase::Vector3<double>> subspace_lambda;
+    /// Pinned host storage reused across constraint loops and released at destruction.
+    std::unique_ptr<FPTYPE, void (*)(FPTYPE*)> hpsi_cache{nullptr, nullptr};
+    size_t hpsi_cache_capacity = 0;
 };
 
 

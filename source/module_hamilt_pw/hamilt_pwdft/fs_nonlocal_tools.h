@@ -39,6 +39,10 @@ class FS_Nonlocal_tools
                       const ModuleBase::matrix* p_ekb);
     ~FS_Nonlocal_tools();
 
+    /// Construct reciprocal-space projectors for ik without computing overlaps.
+    /// Derivative operations invalidate the cached k point and require preparation again.
+    void prepare_projectors(int ik);
+
     /**
      * @brief calculate the projectors |beta>
      * 

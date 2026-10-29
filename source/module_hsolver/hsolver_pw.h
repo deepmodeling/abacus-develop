@@ -24,6 +24,8 @@ class HSolverPW
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
 
   public:
+    using InitialHPsiFunc = std::function<void(int, T*, int)>;
+
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
               const std::string calculation_type_in,
               const std::string basis_type_in,
@@ -68,7 +70,8 @@ class HSolverPW
                const double tpiba,
                const int nat,
                const T* initial_h,
-               const T* initial_s);
+               const T* initial_s,
+               const InitialHPsiFunc& initial_hpsi = {});
 
 
   protected:
@@ -79,7 +82,8 @@ class HSolverPW
                          Real* eigenvalue,
                          const int& nk_nums,
                          const T* initial_h = nullptr,
-                         const T* initial_s = nullptr);
+                         const T* initial_s = nullptr,
+                         const InitialHPsiFunc& initial_hpsi = {});
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);

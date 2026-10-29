@@ -132,6 +132,18 @@ loop. It corrects the saved Hamiltonian with the difference between the current
 constraint field and its saved value. Retries rebuild projections for their
 rotated basis; PAW and ultrasoft inputs retain the ordinary projection path.
 
+For the same eligible CUDA path, the constraint loop also retains the initial
+Hamiltonian action in pinned host memory. The first Davidson attempt copies it
+directly into its existing device buffer and applies the current constraint-field
+correction with projectors prepared for that k point. The cache is refreshed for
+each constraint loop, reused across SCF steps, and released with its owner. Failed
+pinned allocation retains ordinary Hamiltonian evaluation. Host storage scales
+with k points, bands, and plane waves: approximately 1.58 GiB for Fe16 and 6.30 GiB
+for Fe32 in these fixtures. Transfers are included in the complete timings; this
+cache has a measurable host-memory cost and does not eliminate all Hamiltonian
+applications. The Davidson driver checks the supplied action against direct
+evaluation and verifies that later calls can use ordinary evaluation again.
+
 `link_check.py` reuses the active Ninja application's compile and link commands.
 Set `ABACUS_HOME` to the installation containing `build/` and load its environment:
 

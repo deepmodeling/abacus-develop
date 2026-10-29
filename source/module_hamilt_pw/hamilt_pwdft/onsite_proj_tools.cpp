@@ -275,30 +275,13 @@ void Onsite_Proj_tools<FPTYPE, Device>::delete_memory()
 // . the multiplication with sk should be within specific operator
 // because the atom selection task is operator-specific.
 template <typename FPTYPE, typename Device>
-void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
-                                                 int npm,
-                                                 std::complex<FPTYPE>* becp_in,
-                                                 const std::complex<FPTYPE>* ppsi_in)
+void Onsite_Proj_tools<FPTYPE, Device>::prepare_projectors(int ik)
 {
-    ModuleBase::TITLE("Onsite_Proj_tools", "cal_becp");
-    ModuleBase::timer::tick("Onsite_Proj_tools", "cal_becp");
-
-    const int npol = this->ucell_->get_npol();
-    const std::complex<FPTYPE>* ppsi = ppsi_in == nullptr ? &(this->psi_[0](ik, 0, 0)) : ppsi_in;
-    const int npw = this->wfc_basis_->npwk[ik];
-    if (becp_in == nullptr && this->becp == nullptr)
+    if (ik == this->current_ik)
     {
-        resmem_complex_op()(this->ctx, becp, this->nbands * npol * this->nkb);
+        return;
     }
-    std::complex<FPTYPE>* becp_tmp = becp_in == nullptr ? this->becp : becp_in;
-    const int size_becp_act = npm * npol * this->nkb;
-    if (ik != this->current_ik) // different ik, need to recalculate vkb
-    {
-        const int size_becp = this->nbands * npol * this->nkb;
-        if (this->becp == nullptr)
-        {
-            resmem_complex_op()(this->ctx, becp, size_becp);
-        }
+    const int npw = this->wfc_basis_->npwk[ik];
 
         // prepare math tools
         Nonlocal_maths<FPTYPE, Device> maths(*(this->nhtol), this->lprojmax, this->ucell_);
@@ -408,7 +391,28 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
             }
         }
         this->current_ik = ik;
+    this->current_ik = ik;
+}
+
+template <typename FPTYPE, typename Device>
+void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
+                                                 int npm,
+                                                 std::complex<FPTYPE>* becp_in,
+                                                 const std::complex<FPTYPE>* ppsi_in)
+{
+    ModuleBase::TITLE("Onsite_Proj_tools", "cal_becp");
+    ModuleBase::timer::tick("Onsite_Proj_tools", "cal_becp");
+
+    const int npol = this->ucell_->get_npol();
+    const std::complex<FPTYPE>* ppsi = ppsi_in == nullptr ? &(this->psi_[0](ik, 0, 0)) : ppsi_in;
+    const int npw = this->wfc_basis_->npwk[ik];
+    if (becp_in == nullptr && this->becp == nullptr)
+    {
+        resmem_complex_op()(this->ctx, becp, this->nbands * npol * this->nkb);
     }
+    std::complex<FPTYPE>* becp_tmp = becp_in == nullptr ? this->becp : becp_in;
+    const int size_becp_act = npm * npol * this->nkb;
+    this->prepare_projectors(ik);
     // DEBUG: ONCE YOU CHECK vkb VALUES, YOU UNCOMMENT THE FOLLOWING LINE
     // for(int i = 0; i < vkb_size; i++)
     // {

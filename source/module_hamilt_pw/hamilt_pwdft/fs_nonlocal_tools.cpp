@@ -163,6 +163,12 @@ void FS_Nonlocal_tools<FPTYPE, Device>::delete_memory()
 
 // cal_vkb
 template <typename FPTYPE, typename Device>
+void FS_Nonlocal_tools<FPTYPE, Device>::prepare_projectors(int ik)
+{
+    this->cal_vkb(ik, this->nbands);
+}
+
+template <typename FPTYPE, typename Device>
 void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb(const int& ik, const int& nbdall)
 {
     ModuleBase::TITLE("FS_Nonlocal_tools", "cal_vkb");

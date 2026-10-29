@@ -417,7 +417,8 @@ template <typename T, typename Device>
 void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
                                                 const psi::Psi<T, Device>& psi,     // [in] wavefunction
                                                 T *hcc, 
-                                                T *scc)
+                                                T *scc,
+                                                T *hpsi_host)
 {
     const int nstart = psi.get_nbands();
     
@@ -439,6 +440,12 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>
         psi::Range all_bands_range(1, psi.get_current_k(), 0, nstart - 1);
         hpsi_info hpsi_in(&psi, all_bands_range, hphi);
         pHamilt->ops->hPsi(hpsi_in);
+
+        if (hpsi_host != nullptr)
+        {
+            base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+                nullptr, ctx, hpsi_host, hphi, size_t(nstart) * dmax);
+        }
 
         gemm_op<T, Device>()(ctx,
                              'C',

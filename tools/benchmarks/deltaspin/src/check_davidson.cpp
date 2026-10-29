@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 
@@ -48,7 +49,7 @@ int main(int argc, char** argv)
     std::vector<Complex> reference_basis;
     {
         hsolver::Diago_DavSubspace<Complex, GPU> solver(precondition, bands, rows, 4, 1e-13, 100, false, comm);
-        for (int repetition = 0; repetition < 5; ++repetition)
+        for (int repetition = 0; repetition < 6; ++repetition)
         {
             std::vector<Complex> psi(leading * bands, Complex(7, -3));
             for (int band = 0; band < bands; ++band)
@@ -59,7 +60,7 @@ int main(int argc, char** argv)
                         + 0.2 * basis[(band + bands) * rows + row]) / std::sqrt(1.04);
                 }
             }
-            if (repetition == 2 || repetition == 3)
+            if (repetition >= 2 && repetition <= 4)
             {
                 const auto original = psi;
                 for (int band = 0; band < bands; ++band)
@@ -85,9 +86,9 @@ int main(int argc, char** argv)
             Complex* initial_h = nullptr;
             Complex* initial_s = nullptr;
             std::vector<Complex> projected_h(bands * bands), projected_s(bands * bands);
-            if (repetition == 3)
+            std::vector<Complex> hpsi(rows * bands);
+            if (repetition == 3 || repetition == 4)
             {
-                std::vector<Complex> hpsi(rows * bands);
                 for (int band = 0; band < bands; ++band)
                 {
                     for (int row = 0; row < rows; ++row)
@@ -136,10 +137,22 @@ int main(int argc, char** argv)
                 base_device::memory::synchronize_memory_op<Complex, GPU, CPU>()(nullptr, nullptr,
                     output, host_output.data(), host_output.size());
             };
+            int initial_action_calls = 0;
+            hsolver::Diago_DavSubspace<Complex, GPU>::InitialHPsiFunc initial_action;
+            if (repetition == 4)
+            {
+                initial_action = [&](Complex* output, int output_leading) {
+                    if (output_leading != rows) { std::exit(4); }
+                    ++initial_action_calls;
+                    base_device::memory::synchronize_memory_op<Complex, GPU, CPU>()(
+                        nullptr, nullptr, output, hpsi.data(), hpsi.size());
+                };
+            }
             const int iterations = solver.diag(apply, device, leading, eigenvalues.data(), thresholds.data(),
-                                                false, initial_h, initial_s);
+                                                false, initial_h, initial_s, initial_action);
             if (iterations < 0) { return 2; }
-            if (repetition == 3)
+            if (initial_action_calls != (repetition == 4 ? 1 : 0)) { return 4; }
+            if (repetition == 3 || repetition == 4)
             {
                 std::vector<Complex> retained_h(bands * bands), retained_s(bands * bands);
                 base_device::memory::synchronize_memory_op<Complex, CPU, GPU>()(

@@ -37,6 +37,7 @@ class Diago_DavSubspace
 
     // See diago_david.h for information on the HPsiFunc function type
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
+    using InitialHPsiFunc = std::function<void(T*, int)>;
 
     int diag(const HPsiFunc& hpsi_func,
              T* psi_in,
@@ -45,7 +46,8 @@ class Diago_DavSubspace
              const std::vector<double>& ethr_band,
              const bool& scf_type,
              const T* initial_h = nullptr,
-             const T* initial_s = nullptr);
+             const T* initial_s = nullptr,
+             const InitialHPsiFunc& initial_hpsi = {});
 
   private:
     /// for MPI communication
@@ -142,7 +144,8 @@ class Diago_DavSubspace
                   Real* eigenvalue_in,
                   const std::vector<double>& ethr_band,
                   const T* initial_h,
-                  const T* initial_s);
+                  const T* initial_s,
+                  const InitialHPsiFunc& initial_hpsi);
 
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 
