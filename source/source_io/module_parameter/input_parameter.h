@@ -444,7 +444,8 @@ struct Input_para
     std::vector<int> dfpt_qmesh = {1, 1, 1}; ///< Monkhorst-Pack q mesh for DFPT (gamma-centered)
     std::string dfpt_qfile = "";              ///< file containing the DFPT q-point list; empty means dfpt_qmesh
     bool dfpt_compute_q0 = false;             ///< compute epsilon_inf and Born effective charges at q = 0
-    bool dfpt_loto = false;                   ///< apply the LO-TO non-analytic correction at q = 0
+    bool dfpt_loto = false;                   ///< apply the LO-TO nonanalytic correction at q = 0
+    bool dfpt_out_dyn = false;                ///< write the raw (pre-ASR, pre-LO-TO) dynamical matrix in QE dyn format
     double dfpt_conv_thr = 1.0e-8;            ///< convergence threshold of the DFPT first-order density
     int dfpt_max_iter = 100;                  ///< max iterations of the DFPT first-order density mixing
     double dfpt_mix_beta = 0.4;               ///< mixing coefficient of the DFPT first-order density

@@ -66,6 +66,11 @@ int DFPT_PW::get_nq() const
     return pimpl_->qlist_.get_nq();
 }
 
+const DFPT_PW_Data& DFPT_PW::get_data() const
+{
+    return pimpl_->data_;
+}
+
 ModuleBase::Vector3<double> DFPT_PW::get_qvec(int q_idx) const
 {
     return pimpl_->data_.get_qvec(q_idx);

@@ -5,6 +5,7 @@
 #include "source_base/vector3.h"
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 
 #include <memory>
 #include <string>
@@ -172,6 +173,10 @@ class DFPT_PW
     std::string format_q_report(int q_idx) const;
 
     std::string format_loto_report() const;
+
+    /// read-only access to the data layer (consumed by the dyn file
+    /// writer in the esolver post-processing)
+    const DFPT_PW_Data& get_data() const;
 
   private:
     std::unique_ptr<Impl> pimpl_;

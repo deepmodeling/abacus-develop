@@ -89,6 +89,13 @@ class DFPT_PW_Data
     /// through the LapackConnector::zheev wrapper.
     void set_dynmat(int q_idx, const ModuleBase::ComplexMatrix& dm);
     ModuleBase::ComplexMatrix get_dynmat(int q_idx) const;
+
+    /// stash the raw (pre-ASR, pre-LO-TO) dynamical matrix for the dyn
+    /// file output; the working dynmat_ is mutated in place by apply_asr
+    /// and add_loto at Gamma, so the file writer needs this untouched copy
+    void set_dynmat_raw(int q_idx, const ModuleBase::ComplexMatrix& dm);
+    ModuleBase::ComplexMatrix get_dynmat_raw(int q_idx) const;
+    bool has_dynmat_raw(int q_idx) const;
     void set_phon_freq(int q_idx, const std::vector<double>& freq);
     std::vector<double> get_phon_freq(int q_idx) const;
 
@@ -281,6 +288,8 @@ class DFPT_PW_Data
     std::vector<std::vector<std::vector<std::complex<double>>>> dv_rc_;
 
     std::vector<ModuleBase::ComplexMatrix> dynmat_;
+    /// pre-ASR / pre-LO-TO copies for the dyn file output ([q])
+    std::vector<ModuleBase::ComplexMatrix> dynmat_raw_;
     std::vector<std::vector<double>> phon_freq_;
 
     bool compute_q0_ = false;

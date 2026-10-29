@@ -112,6 +112,24 @@ void ReadInput::item_dfpt()
         this->add_item(item);
     }
     {
+        Input_Item item("dfpt_out_dyn");
+        item.annotation = "write the raw dynamical matrix in QE dyn format "
+                          "(pre-ASR, pre-LO-TO, unreduced force constants)";
+        item.category = category;
+        item.type = "Boolean";
+        item.description = "Write one QE-compatible dyn file per q point into the output "
+                           "directory: OUT.<suffix>/dyn.q<i>. Each file contains the "
+                           "unreduced (pre-ASR, pre-LO-TO) force-constant matrix Phi in "
+                           "Ry/bohr^2, the same content and layout as Quantum ESPRESSO's "
+                           "ph.x output (fildyn), so the files can be diffed element-by-element "
+                           "against QE references or post-processed by external tools. "
+                           "At Gamma with dfpt_compute_q0 the Born effective charges and "
+                           "dielectric tensor are appended in the QE convention.";
+        item.default_value = "false";
+        read_sync_bool(input.dfpt_out_dyn);
+        this->add_item(item);
+    }
+    {
         Input_Item item("dfpt_conv_thr");
         item.annotation = "convergence threshold of the DFPT response SCF";
         item.category = category;

@@ -521,7 +521,32 @@ void DFPT_PW_Data::set_dynmat(int q_idx, const ModuleBase::ComplexMatrix& dm)
         dynmat_.resize(q_idx + 1);
     }
     dynmat_[q_idx] = dm;
+    // stash the raw copy for the dyn file output (the working matrix is
+    // mutated by apply_asr and add_loto at Gamma)
+    if (q_idx >= static_cast<int>(dynmat_raw_.size()))
+    {
+        dynmat_raw_.resize(q_idx + 1);
+    }
+    dynmat_raw_[q_idx] = dm;
     ModuleBase::timer::end("DFPT_PW_Data", "set_dynmat");
+}
+
+ModuleBase::ComplexMatrix DFPT_PW_Data::get_dynmat_raw(int q_idx) const
+{
+    ModuleBase::TITLE("DFPT_PW_Data", "get_dynmat_raw");
+    ModuleBase::timer::start("DFPT_PW_Data", "get_dynmat_raw");
+    if (q_idx < static_cast<int>(dynmat_raw_.size()) && dynmat_raw_[q_idx].nr > 0)
+    {
+        ModuleBase::timer::end("DFPT_PW_Data", "get_dynmat_raw");
+        return dynmat_raw_[q_idx];
+    }
+    ModuleBase::timer::end("DFPT_PW_Data", "get_dynmat_raw");
+    return get_dynmat(q_idx); // fallback: the working copy
+}
+
+bool DFPT_PW_Data::has_dynmat_raw(int q_idx) const
+{
+    return q_idx >= 0 && q_idx < static_cast<int>(dynmat_raw_.size()) && dynmat_raw_[q_idx].nr > 0;
 }
 
 ModuleBase::ComplexMatrix DFPT_PW_Data::get_dynmat(int q_idx) const

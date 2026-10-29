@@ -19,6 +19,7 @@
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
+#include "source_pw/module_dfpt/dfpt_write_dyn.h"
 #ifdef __LIBXC
 #include "source_pw/module_dfpt/dfpt_xc_analytic.h"
 #endif
@@ -484,6 +485,12 @@ void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
             }
             std::cout << std::endl;
         }
+    }
+
+    // QE-format dyn file output (dfpt_out_dyn)
+    if (this->inp_->dfpt_out_dyn)
+    {
+        ModuleDFPT::DFPT_Write_Dyn(ucell, dfpt_->get_data(), nq, PARAM.globalv.global_out_dir);
     }
 }
 
