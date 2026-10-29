@@ -191,7 +191,9 @@ protected:
                 {
                     continue;
                 }
-                ModuleBase::Vector3<int> translation(column - row, row - column, 0);
+                const int translation_x = column - row;
+                const int translation_y = row - column;
+                ModuleBase::Vector3<int> translation(translation_x, translation_y, 0);
                 if (wrapped)
                 {
                     translation += backing_types[0].boundary_shift[row] - backing_types[0].boundary_shift[column];
@@ -267,9 +269,12 @@ protected:
             }
             EXPECT_GT(field_time_difference, 0.01);
             coefficients.fix_k(kpoint);
+            const double coefficient_real = 1.0 + kpoint;
+            const double coefficient_imaginary = 0.5 - kpoint;
+            const Complex initial(coefficient_real, coefficient_imaginary);
             for (int element = 0; element < orbitals.nrow * orbitals.ncol_bands; ++element)
             {
-                coefficients.get_pointer()[element] = Complex(1.0 + kpoint, 0.5 - kpoint);
+                coefficients.get_pointer()[element] = initial;
             }
         }
         coefficients.fix_k(0);
@@ -289,6 +294,9 @@ protected:
                 EXPECT_LT(s_error, 1.0e-12);
             }
             coefficients.fix_k(kpoint);
+            const double coefficient_real = 1.0 + kpoint;
+            const double coefficient_imaginary = 0.5 - kpoint;
+            const Complex initial(coefficient_real, coefficient_imaginary);
             for (int column = 0; column < orbitals.ncol_bands; ++column)
             {
                 for (int row = 0; row < orbitals.nrow; ++row)
@@ -299,7 +307,7 @@ protected:
                     const ModuleBase::Vector3<double> cartesian = direct * backing.latvec * backing.lat0;
                     const double angle = ModuleBase::TWO_PI * (points[kpoint] * direct) + saved_A * cartesian;
                     const Complex exponent(0.0, angle);
-                    const Complex target = Complex(1.0 + kpoint, 0.5 - kpoint) * std::exp(exponent);
+                    const Complex target = initial * std::exp(exponent);
                     const int element = column * orbitals.nrow + row;
                     const double error = std::abs(coefficients.get_pointer()[element] - target);
                     EXPECT_LT(error, 1.0e-12);
@@ -346,9 +354,12 @@ protected:
                 }
             }
             coefficients.fix_k(kpoint);
+            const double coefficient_real = 1.0 + kpoint;
+            const double coefficient_imaginary = 0.5 - kpoint;
+            const Complex initial(coefficient_real, coefficient_imaginary);
             for (int element = 0; element < orbitals.nrow * orbitals.ncol_bands; ++element)
             {
-                coefficients.get_pointer()[element] = Complex(1.0 + kpoint, 0.5 - kpoint);
+                coefficients.get_pointer()[element] = initial;
             }
         }
         coefficients.fix_k(0);
@@ -380,12 +391,14 @@ protected:
                 }
             }
             coefficients.fix_k(kpoint);
+            const double coefficient_real = 1.0 + kpoint;
+            const double coefficient_imaginary = 0.5 - kpoint;
+            const Complex initial(coefficient_real, coefficient_imaginary);
             for (int column = 0; column < orbitals.ncol_bands; ++column)
             {
                 for (int row = 0; row < orbitals.nrow; ++row)
                 {
                     const int global_row = orbitals.local2global_row(row);
-                    const Complex initial(1.0 + kpoint, 0.5 - kpoint);
                     const Complex expected = initial * std::conj(phase_for(global_row, kpoint));
                     const int element = column * orbitals.nrow + row;
                     const double error = std::abs(coefficients.get_pointer()[element] - expected);
