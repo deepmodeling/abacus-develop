@@ -10,6 +10,8 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_base/kernels/dsp/dsp_connector.h"
 
+#include <algorithm>
+#include <type_traits>
 #include <vector>
 
 using namespace hsolver;
@@ -409,45 +411,42 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_elem");
 
-#ifdef __DSP
-    gemm_op_mt<T, Device>()
-#else
-    gemm_op<T, Device>()
-#endif 
-                        (this->ctx,
-                         'C',
-                         'N',
-                         nbase + notconv,
-                         notconv,
-                         this->dim,
-                         this->one,
-                         psi_iter,
-                         this->dim,
-                         &hphi[nbase * this->dim],
-                         this->dim,
-                         this->zero,
-                         &hcc[nbase * this->nbase_x],
-                         this->nbase_x);
-
-#ifdef __DSP
-    gemm_op_mt<T, Device>()
-#else
-    gemm_op<T, Device>()
+    int columns_per_panel = notconv;
+#if defined(__CUDA)
+    if (this->device == base_device::GpuDevice
+        && std::is_same<T, std::complex<double>>::value && notconv >= 256)
+    {
+        columns_per_panel = 64;
+    }
 #endif
-                        (this->ctx,
-                         'C',
-                         'N',
-                         nbase + notconv,
-                         notconv,
-                         this->dim,
-                         this->one,
-                         psi_iter,
-                         this->dim,
-                         psi_iter + nbase * this->dim,
-                         this->dim,
-                         this->zero,
-                         &scc[nbase * this->nbase_x],
-                         this->nbase_x);
+    // The eigensolver reads the upper triangle. Each column panel includes
+    // every existing basis row and ends at its final diagonal entry, omitting
+    // the lower rows that cannot affect the projected eigenproblem.
+    for (int first = 0; first < notconv; first += columns_per_panel)
+    {
+        const int columns = std::min(columns_per_panel, notconv - first);
+        const int basis_offset = nbase + first;
+        const int rows = basis_offset + columns;
+#ifdef __DSP
+        gemm_op_mt<T, Device>()(this->ctx, 'C', 'N', rows, columns, this->dim,
+                               this->one, psi_iter, this->dim,
+                               hphi + basis_offset * this->dim, this->dim,
+                               this->zero, hcc + basis_offset * this->nbase_x, this->nbase_x);
+        gemm_op_mt<T, Device>()(this->ctx, 'C', 'N', rows, columns, this->dim,
+                               this->one, psi_iter, this->dim,
+                               psi_iter + basis_offset * this->dim, this->dim,
+                               this->zero, scc + basis_offset * this->nbase_x, this->nbase_x);
+#else
+        gemm_op<T, Device>()(this->ctx, 'C', 'N', rows, columns, this->dim,
+                            this->one, psi_iter, this->dim,
+                            hphi + basis_offset * this->dim, this->dim,
+                            this->zero, hcc + basis_offset * this->nbase_x, this->nbase_x);
+        gemm_op<T, Device>()(this->ctx, 'C', 'N', rows, columns, this->dim,
+                            this->one, psi_iter, this->dim,
+                            psi_iter + basis_offset * this->dim, this->dim,
+                            this->zero, scc + basis_offset * this->nbase_x, this->nbase_x);
+#endif
+    }
 
 #ifdef __MPI
     if (this->diag_comm.nproc > 1)
