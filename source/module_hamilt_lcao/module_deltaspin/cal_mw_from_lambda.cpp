@@ -306,6 +306,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
 
                 // free memory for becp_pointer in GPU device
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, becp_pointer);
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, h_tmp);
+                base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, s_tmp);
             }
 #endif
             // calculate weights from ekb to update wg
@@ -484,6 +486,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                                                                                 &this->pelec->ekb(ik, 0));
             }
 
+            base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, h_tmp);
+            base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, s_tmp);
             base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, sub_h_save);
             base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, sub_s_save);
             base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, becp_save);
