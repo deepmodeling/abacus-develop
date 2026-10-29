@@ -263,7 +263,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  const int nat)
 {
     this->solve(pHamilt, psi, pes, out_eigenvalues, rank_in_pool_in, nproc_in_pool_in,
-                skip_charge, tpiba, nat, nullptr, nullptr, {});
+                skip_charge, tpiba, nat, nullptr, nullptr, {}, nullptr);
 }
 
 template <typename T, typename Device>
@@ -278,7 +278,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  const int nat,
                                  const T* initial_h,
                                  const T* initial_s,
-                                 const InitialHPsiFunc& initial_hpsi)
+                                 const InitialHPsiFunc& initial_hpsi,
+                                 const BasisObserver* basis_observer)
 {
     assert((initial_h == nullptr) == (initial_s == nullptr));
     assert(!initial_hpsi || initial_h != nullptr);
@@ -350,7 +351,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                   this->wfc_basis->nks,
                                   initial_h == nullptr ? nullptr : initial_h + subspace_offset,
                                   initial_s == nullptr ? nullptr : initial_s + subspace_offset,
-                                  initial_hpsi);
+                                  initial_hpsi, basis_observer);
 
             if (skip_charge)
             {
@@ -397,7 +398,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                   this->wfc_basis->nks,
                                   initial_h == nullptr ? nullptr : initial_h + subspace_offset,
                                   initial_s == nullptr ? nullptr : initial_s + subspace_offset,
-                                  initial_hpsi);
+                                  initial_hpsi, basis_observer);
 
             if (skip_charge)
             {
@@ -455,7 +456,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                            const int& nk_nums,
                                            const T* initial_h,
                                            const T* initial_s,
-                                           const InitialHPsiFunc& initial_hpsi)
+                                           const InitialHPsiFunc& initial_hpsi,
+                                           const BasisObserver* basis_observer)
 {
 #ifdef __MPI
     const diag_comm_info comm_info = {POOL_WORLD, this->rank_in_pool, this->nproc_in_pool};
@@ -579,7 +581,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int nband = psi.get_nbands();
         const int nbasis = psi.get_nbasis();
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
-        auto hpsi_func = [hm, ngk_vector](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
+        const int ik = psi.get_current_k();
+        auto hpsi_func = [hm, ngk_vector, basis_observer, ik](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
 
             // Convert "pointer data stucture" to a psi::Psi object
@@ -590,6 +593,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
             hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
             hm->ops->hPsi(info);
+            if (basis_observer)
+            {
+                basis_observer->capture(ik, 0, nvec, false);
+            }
 
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
         };
@@ -600,7 +607,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     else if (this->method == "dav_subspace")
     {
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
-        auto hpsi_func = [hm, ngk_vector](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
+        const int ik = psi.get_current_k();
+        auto hpsi_func = [hm, ngk_vector, basis_observer, ik](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
 
             // Convert "pointer data stucture" to a psi::Psi object
@@ -633,9 +641,16 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                 initial_hpsi(psi.get_current_k(), output, leading);
             };
         }
+        typename Diago_DavSubspace<T, Device>::BasisRotationFunc rotate_basis;
+        if (basis_observer)
+        {
+            rotate_basis = [&](int size, const T* coefficients, int leading, bool final) {
+                basis_observer->rotate(ik, size, coefficients, leading, final);
+            };
+        }
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
             dav_subspace.diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, this->ethr_band, scf,
-                              initial_h, initial_s, initial_action));
+                              initial_h, initial_s, initial_action, rotate_basis));
     }
     else if (this->method == "dav")
     {
@@ -659,7 +674,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         // Davidson matrix-blockvector functions
         /// wrap hpsi into lambda function, Matrix \times blockvector
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
-        auto hpsi_func = [hm, ngk_vector](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
+        const int ik = psi.get_current_k();
+        auto hpsi_func = [hm, ngk_vector, basis_observer, ik](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
             ModuleBase::timer::tick("David", "hpsi_func");
 
             // Convert pointer of psi_in to a psi::Psi object

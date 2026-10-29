@@ -108,7 +108,8 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                                             const std::vector<double>& ethr_band,
                                             const T* initial_h,
                                             const T* initial_s,
-                                            const InitialHPsiFunc& initial_hpsi)
+                                            const InitialHPsiFunc& initial_hpsi,
+                                            const BasisRotationFunc& rotate_basis)
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "diag_once");
 
@@ -245,6 +246,12 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                                  this->zero,
                                  psi_in,
                                  psi_in_dmax);
+
+            if (rotate_basis)
+            {
+                rotate_basis(nbase, this->vcc, this->nbase_x,
+                             this->notconv == 0 || dav_iter == this->iter_nmax);
+            }
 
             if (!this->notconv || (dav_iter == this->iter_nmax))
             {
@@ -810,7 +817,8 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
                                        const bool& scf_type,
                                        const T* initial_h,
                                        const T* initial_s,
-                                       const InitialHPsiFunc& initial_hpsi)
+                                       const InitialHPsiFunc& initial_hpsi,
+                                       const BasisRotationFunc& rotate_basis)
 {
     assert((initial_h == nullptr) == (initial_s == nullptr));
 #if defined(__CUDA) || defined(__ROCM)
@@ -834,7 +842,7 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
         // reconstructed even when the entry basis has supplied matrices.
         sum_iter += this->diag_once(hpsi_func, psi_in, psi_in_dmax, eigenvalue_in_hsolver, ethr_band,
                                     ntry == 0 ? initial_h : nullptr, ntry == 0 ? initial_s : nullptr,
-                                    ntry == 0 ? initial_hpsi : InitialHPsiFunc{});
+                                    ntry == 0 ? initial_hpsi : InitialHPsiFunc{}, rotate_basis);
 
         ++ntry;
 

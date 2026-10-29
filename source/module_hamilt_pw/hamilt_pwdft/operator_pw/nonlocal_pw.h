@@ -58,16 +58,17 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
         return this->becp;
     }
 
+    /// Reserve the ordinary projection buffer for nbands spin-component columns.
+    T* prepare_becp(int nbands) const;
+
+    /// Add the nonlocal action from reduced projector overlaps with shape
+    /// (nkb, nbands), column-major. The overlaps already include pool reduction.
+    void act_projected(int nbands, int nbasis, int npol, const T* projections,
+                       T* output, int npw) const;
+
   private:
-    void add_nonlocal_pp(T *hpsi_in, const T *becp, const int m) const;
-
-    mutable int max_npw = 0;
-
-    mutable int npw = 0;
-
-    mutable int npol = 0;
-
-    mutable size_t nkb_m = 0;
+    mutable size_t becp_capacity = 0;
+    mutable size_t ps_capacity = 0;
 
     const int* isk = nullptr;
 

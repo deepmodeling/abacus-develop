@@ -62,24 +62,39 @@ void Nonlocal<OperatorPW<T, Device>>::init(const int ik_in)
 // this function sum up each non-local pseudopotential located on each atom,
 //--------------------------------------------------------------------------
 template<typename T, typename Device>
-void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp, const int m) const
+T* Nonlocal<OperatorPW<T, Device>>::prepare_becp(int nbands) const
+{
+    const size_t count = size_t(nbands) * this->ppcell->nkb;
+    if (count > this->becp_capacity)
+    {
+        resmem_complex_op()(this->ctx, this->becp, count, "Nonlocal<PW>::becp");
+        this->becp_capacity = count;
+    }
+    return this->becp;
+}
+
+template<typename T, typename Device>
+void Nonlocal<OperatorPW<T, Device>>::act_projected(int m, int nbasis, int npol,
+                                                      const T* becp, T* hpsi_in, int npw) const
 {
     ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
+
+    const int max_npw = nbasis / npol;
 
     // number of projectors
     int nkb = this->ppcell->nkb;
 
     // T *ps = new T[nkb * m];
     // ModuleBase::GlobalFunc::ZEROS(ps, m * nkb);
-    if (this->nkb_m < m * nkb) {
+    if (this->ps_capacity < m * nkb) {
         resmem_complex_op()(this->ctx, this->ps, nkb * m, "Nonlocal<PW>::ps");
-        this->nkb_m = m * nkb;
+        this->ps_capacity = m * nkb;
     }
     setmem_complex_op()(this->ctx, this->ps, 0, nkb * m);
 
     int sum = 0;
     int iat = 0;
-    if (this->npol == 1)
+    if (npol == 1)
     {
         const int current_spin = this->isk[this->ik];
         for (int it = 0; it < this->ucell->ntype; it++)
@@ -93,7 +108,7 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
                 sum, iat, current_spin, nkb,   // additional index params
                 this->ppcell->deeq.getBound2(), this->ppcell->deeq.getBound3(), this->ppcell->deeq.getBound4(), // realArray operator()
                 this->deeq, // array of data
-                this->ps, this->becp); //  array of data
+                this->ps, becp); //  array of data
             // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
             // {
@@ -107,7 +122,7 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
             //             for (int ip = 0; ip < nproj; ip++)
             //             {
             //                 this->ps[(sum + ip2) * m + ib]
-            //                     += this->ppcell->deeq(current_spin, iat, ip, ip2) * this->becp[ib * nkb + sum + ip];
+            //                     += this->ppcell->deeq(current_spin, iat, ip, ip2) * becp[ib * nkb + sum + ip];
             //             } // end ib
             //         } // end ih
             //     } // end jh
@@ -129,7 +144,7 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
                 sum, iat, nkb,   // additional index params
                 this->ppcell->deeq_nc.getBound2(), this->ppcell->deeq_nc.getBound3(), this->ppcell->deeq_nc.getBound4(), // realArray operator()
                 this->deeq_nc, // array of data
-                this->ps, this->becp); //  array of data
+                this->ps, becp); //  array of data
             // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
             // for (int ia = 0; ia < this->ucell->atoms[it].na; ia++)
             // {
@@ -172,7 +187,7 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
         gemv_op()(
             this->ctx,
             transa,
-            this->npw,
+            npw,
             this->ppcell->nkb,
             &this->one,
             this->vkb,
@@ -192,7 +207,7 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
             this->ctx,
             transa,
             transb,
-            this->npw,
+            npw,
             npm,
             this->ppcell->nkb,
             &this->one,
@@ -202,7 +217,7 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
             npm,
             &this->one,
             hpsi_in,
-            this->max_npw
+            max_npw
         );
     }
     ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
@@ -223,20 +238,17 @@ void Nonlocal<OperatorPW<T, Device>>::act(
     {
         setmem_complex_op()(this->ctx, tmhpsi, 0, nbasis*nbands/npol);
     }
+    const int npw = ngk_ik;
+    const int max_npw = nbasis / npol;
     if(!PARAM.inp.use_paw)
     {
-        this->npw = ngk_ik;
-        this->max_npw = nbasis / npol;
-        this->npol = npol;
 
         if (this->ppcell->nkb > 0)
         {
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // qianrui optimize 2021-3-31
             int nkb = this->ppcell->nkb;
-            if (this->nkb_m < nbands * nkb) {
-                resmem_complex_op()(this->ctx, this->becp, nbands * nkb, "Nonlocal<PW>::becp");
-            }
+            this->prepare_becp(nbands);
             // ModuleBase::ComplexMatrix becp(nbands, nkb, false);
             char transa = 'C';
             char transb = 'N';
@@ -248,7 +260,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                 gemv_op()(
                     this->ctx,
                     transa,
-                    this->npw,
+                    npw,
                     nkb,
                     &this->one,
                     this->vkb,
@@ -270,7 +282,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                     transb,
                     nkb,
                     npm,
-                    this->npw,
+                    npw,
                     &this->one,
                     this->vkb,
                     this->ppcell->vkb.nc,
@@ -284,15 +296,12 @@ void Nonlocal<OperatorPW<T, Device>>::act(
 
             Parallel_Reduce::reduce_pool(becp, nkb * nbands);
 
-            this->add_nonlocal_pp(tmhpsi, becp, nbands);
+            this->act_projected(nbands, nbasis, npol, becp, tmhpsi, npw);
         }
     }
     else
     {
 #ifdef USE_PAW
-        this->npw = ngk_ik;
-        this->max_npw = nbasis / npol;
-        this->npol = npol;
         std::complex<double> *vnlpsi;
         vnlpsi = new std::complex<double> [npw];
         for(int ibands = 0; ibands < nbands; ibands++)

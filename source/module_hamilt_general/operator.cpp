@@ -39,6 +39,12 @@ Operator<T, Device>::~Operator()
 template<typename T, typename Device>
 typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& input) const
 {
+    return this->hPsi(input, Action{});
+}
+
+template<typename T, typename Device>
+typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& input, const Action& action) const
+{
     using syncmem_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
     auto psi_input = std::get<0>(input);
     std::tuple<const T*, int> psi_info = psi_input->to_range(std::get<1>(input));
@@ -62,7 +68,12 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
     }
 
     auto call_act = [&, this](const Operator* op, const bool& is_first_node) -> void {
-        
+        if (action && action(op, nbands, psi_input->get_nbasis(), psi_input->npol,
+                             tmpsi_in, this->hpsi->get_pointer(), psi_input->get_ngk(op->ik)))
+        {
+            return;
+        }
+
         // a "psi" with the bands of needed range
         psi::Psi<T, Device> psi_wrapper(const_cast<T*>(tmpsi_in), 1, nbands, psi_input->get_nbasis(), true);
         

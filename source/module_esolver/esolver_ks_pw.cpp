@@ -496,6 +496,10 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
             = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
         if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
         {
+            if (PARAM.inp.sc_mag_switch)
+            {
+                sc.invalidate_nonlocal_projections();
+            }
             // optimize lambda to get target magnetic moments, but the lambda is not near target
             sc.run_lambda_loop(iter - 1);
             sc.set_mag_converged(true);

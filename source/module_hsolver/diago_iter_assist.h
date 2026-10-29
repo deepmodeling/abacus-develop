@@ -72,7 +72,8 @@ class DiagoIterAssist
                                                 T *hcc, 
                                                 T *scc,
                                                 T *hpsi_host = nullptr,
-                                                bool identity_overlap = false);
+                                                bool identity_overlap = false,
+                                                const typename hamilt::Operator<T, Device>::Action& action = {});
 
     /// @brief calculate the response matrix from rotation matrix solved by diagonalization of H and S matrix
     /// @param hcc : Hamiltonian matrix

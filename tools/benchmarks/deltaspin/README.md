@@ -216,6 +216,32 @@ before the projection routine returns. `check_subspace_cache.cpp` exercises
 asynchronous producers, CPU/GPU paths, generalized and Euclidean overlaps,
 padded inputs, pinned/pageable host storage, and repeated cache lifetimes.
 
+For CUDA norm-conserving calculations with one rank per pool, the nonlocal
+projector overlaps also follow the Davidson basis. A Ritz rotation
+`Psi_out = Psi_basis C` permits the smaller update
+`P^H Psi_out = (P^H Psi_basis) C`. The projector table depends on the cell and
+k point and stays fixed during this SCF cycle. The next constraint-loop
+Hamiltonian action can therefore consume these overlaps while applying the
+current nonlocal coefficients. No Hamiltonian or wavefunction values are held
+fixed across SCF steps.
+
+The per-k overlaps live in host memory; temporary device matrices hold the
+current projected basis and its rotation. The host allocation is approximately
+41 MiB for Fe16 and 163 MiB for Fe32. Device scratch scales as the projector
+count times the band count and Davidson basis capacity, and is included in
+peak-memory measurements. Ionic/solver initialization, unobserved wavefunction
+updates and density-only rotations invalidate the cache. A Davidson failure
+invalidates the affected k point before the ordinary CG fallback. Normal
+Hamiltonian actions recapture the initial basis on a Davidson retry.
+
+The operator action is supplied explicitly for one Hamiltonian call, and basis
+observations are supplied explicitly for one solve. Existing virtual `hPsi`
+overrides retain their entry point. `check_operator_action.cpp` verifies
+ordinary/replaced/ordinary calls for one- and two-component wavefunctions;
+`check_davidson.cpp` checks transported linear projections against the actual
+rotated wavefunctions through restarts and final rotations, including supplied
+initial Hamiltonian actions.
+
 `link_check.py` reuses the active Ninja application's compile and link commands.
 Set `ABACUS_HOME` to the installation containing `build/` and load its environment:
 

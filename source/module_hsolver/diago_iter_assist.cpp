@@ -424,7 +424,8 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>
                                                 T *hcc, 
                                                 T *scc,
                                                 T *hpsi_host,
-                                                bool identity_overlap)
+                                                bool identity_overlap,
+                                                const typename hamilt::Operator<T, Device>::Action& action)
 {
     const int nstart = psi.get_nbands();
     
@@ -445,7 +446,8 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>
         // do hPsi for all bands
         psi::Range all_bands_range(1, psi.get_current_k(), 0, nstart - 1);
         hpsi_info hpsi_in(&psi, all_bands_range, hphi);
-        pHamilt->ops->hPsi(hpsi_in);
+        if (action) { pHamilt->ops->hPsi(hpsi_in, action); }
+        else { pHamilt->ops->hPsi(hpsi_in); }
 
 #if defined(__CUDA)
         cudaStream_t cache_stream = nullptr;

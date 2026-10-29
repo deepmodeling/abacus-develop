@@ -26,6 +26,13 @@ class HSolverPW
   public:
     using InitialHPsiFunc = std::function<void(int, T*, int)>;
 
+    struct BasisObserver
+    {
+        std::function<void(int, int, int, bool)> capture;
+        std::function<void(int, int, const T*, int, bool)> rotate;
+        std::function<void(int)> invalidate;
+    };
+
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
               const std::string calculation_type_in,
               const std::string basis_type_in,
@@ -71,7 +78,8 @@ class HSolverPW
                const int nat,
                const T* initial_h,
                const T* initial_s,
-               const InitialHPsiFunc& initial_hpsi = {});
+               const InitialHPsiFunc& initial_hpsi = {},
+               const BasisObserver* basis_observer = nullptr);
 
 
   protected:
@@ -83,7 +91,8 @@ class HSolverPW
                          const int& nk_nums,
                          const T* initial_h = nullptr,
                          const T* initial_s = nullptr,
-                         const InitialHPsiFunc& initial_hpsi = {});
+                         const InitialHPsiFunc& initial_hpsi = {},
+                         const BasisObserver* basis_observer = nullptr);
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);

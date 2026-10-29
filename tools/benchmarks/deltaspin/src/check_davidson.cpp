@@ -45,7 +45,8 @@ int main(int argc, char** argv)
     std::vector<double> precondition(rows, 1.0), eigenvalues(bands), thresholds(bands, 1e-13);
     hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
     double eigen_error = 0, residual_error = 0, orthogonality_error = 0;
-    double projector_error = 0, projected_input_error = 0;
+    double projector_error = 0, projected_input_error = 0, transport_error = 0;
+    int restart_rotations = 0, final_rotations = 0;
     std::vector<Complex> reference_basis;
     {
         hsolver::Diago_DavSubspace<Complex, GPU> solver(precondition, bands, rows, 4, 1e-13, 100, false, comm);
@@ -119,6 +120,23 @@ int main(int argc, char** argv)
                 base_device::memory::synchronize_memory_op<Complex, GPU, CPU>()(
                     nullptr, nullptr, initial_s, projected_s.data(), projected_s.size());
             }
+            const int projection_rows = 7, capacity = 4 * bands;
+            std::vector<Complex> projected_basis(projection_rows * capacity);
+            auto projection = [&](const std::vector<Complex>& values, int stride, int band, int projector) {
+                Complex sum = 0;
+                for (int row = 0; row < rows; ++row)
+                {
+                    const Complex weight(std::sin((projector + 1) * (row + 1) * 0.13),
+                                         std::cos((projector + 3) * (row + 1) * 0.17));
+                    sum += std::conj(weight) * values[band * stride + row] / std::sqrt(double(rows));
+                }
+                return sum;
+            };
+            for (int band = 0; band < bands; ++band)
+            for (int projector = 0; projector < projection_rows; ++projector)
+            {
+                projected_basis[band * projection_rows + projector] = projection(psi, leading, band, projector);
+            }
             auto apply = [&](Complex* output, Complex* input, int input_bands, int input_rows, int first, int last) {
                 std::vector<Complex> host_input(input_bands * input_rows), host_output((last - first + 1) * rows);
                 base_device::memory::synchronize_memory_op<Complex, CPU, GPU>()(nullptr, nullptr,
@@ -134,6 +152,12 @@ int main(int argc, char** argv)
                         }
                     }
                 }
+                for (int band = first; band <= last; ++band)
+                for (int projector = 0; projector < projection_rows; ++projector)
+                {
+                    projected_basis[band * projection_rows + projector]
+                        = projection(host_input, input_rows, band, projector);
+                }
                 base_device::memory::synchronize_memory_op<Complex, GPU, CPU>()(nullptr, nullptr,
                     output, host_output.data(), host_output.size());
             };
@@ -148,8 +172,32 @@ int main(int argc, char** argv)
                         nullptr, nullptr, output, hpsi.data(), hpsi.size());
                 };
             }
+            auto rotate_basis = [&](int count, const Complex* coefficients, int coefficient_leading, bool final) {
+                std::vector<Complex> host_coefficients(coefficient_leading * bands), rotated(projection_rows * bands);
+                std::vector<Complex> wavefunctions(leading * bands);
+                base_device::memory::synchronize_memory_op<Complex, CPU, GPU>()(
+                    nullptr, nullptr, host_coefficients.data(), coefficients, host_coefficients.size());
+                base_device::memory::synchronize_memory_op<Complex, CPU, GPU>()(
+                    nullptr, nullptr, wavefunctions.data(), device, wavefunctions.size());
+                for (int band = 0; band < bands; ++band)
+                for (int projector = 0; projector < projection_rows; ++projector)
+                {
+                    auto& value = rotated[band * projection_rows + projector];
+                    for (int column = 0; column < count; ++column)
+                    {
+                        value += projected_basis[column * projection_rows + projector]
+                                 * host_coefficients[band * coefficient_leading + column];
+                    }
+                    const double difference = std::abs(value - projection(wavefunctions, leading, band, projector));
+                    if (!std::isfinite(difference)) { std::exit(5); }
+                    transport_error = std::max(transport_error, difference);
+                }
+                std::copy(rotated.begin(), rotated.end(), projected_basis.begin());
+                if (final) { ++final_rotations; }
+                else { ++restart_rotations; }
+            };
             const int iterations = solver.diag(apply, device, leading, eigenvalues.data(), thresholds.data(),
-                                                false, initial_h, initial_s, initial_action);
+                                                false, initial_h, initial_s, initial_action, rotate_basis);
             if (iterations < 0) { return 2; }
             if (initial_action_calls != (repetition == 4 ? 1 : 0)) { return 4; }
             if (repetition == 3 || repetition == 4)
@@ -222,6 +270,9 @@ int main(int argc, char** argv)
     std::cout << "eigenvalue_error=" << eigen_error << " residual=" << residual_error
               << " orthogonality_error=" << orthogonality_error << '\n';
     std::cout << "projector_error=" << projector_error << " projected_input_error=" << projected_input_error << std::endl;
-    return projected_input_error == 0 && projector_error < 1e-6 && eigen_error < 1e-10
+    std::cout << "transport_error=" << transport_error << " restart_rotations=" << restart_rotations
+              << " final_rotations=" << final_rotations << std::endl;
+    return transport_error < 1e-10 && restart_rotations > 0 && final_rotations == 6
+           && projected_input_error == 0 && projector_error < 1e-6 && eigen_error < 1e-10
            && residual_error < 2e-6 && orthogonality_error < 1e-10 ? 0 : 3;
 }

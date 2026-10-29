@@ -246,6 +246,8 @@ public:
     void set_mag_converged(bool is_Mi_converged_in){this->is_Mi_converged = is_Mi_converged_in;}
     /// @brief get is_Mi_converged
     bool mag_converged() const {return this->is_Mi_converged;}
+    /// Invalidate projections before wavefunctions change outside observed Davidson solves.
+    void invalidate_nonlocal_projections() { this->nonlocal_projections.clear(); }
   private:
     /// operator for spin-constrained DFT, used for calculating current atomic magnetic moment
     hamilt::Operator<FPTYPE>* p_operator = nullptr;
@@ -260,6 +262,9 @@ public:
     /// Pinned host storage reused across constraint loops and released at destruction.
     std::unique_ptr<FPTYPE, void (*)(FPTYPE*)> hpsi_cache{nullptr, nullptr};
     size_t hpsi_cache_capacity = 0;
+    /// Per-k nonlocal overlaps for the current wavefunctions, in host memory.
+    /// Empty entries denote invalid projections; ionic/solver setup clears all entries.
+    std::vector<std::vector<FPTYPE>> nonlocal_projections;
 };
 
 

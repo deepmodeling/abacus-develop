@@ -4,12 +4,14 @@
 #include "module_parameter/parameter.h"
 #include "spin_constrain.h"
 #include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
+#include "module_hamilt_pw/hamilt_pwdft/operator_pw/nonlocal_pw.h"
 #include "module_base/parallel_reduce.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/onsite_op.h"
+#include <algorithm>
 #if defined(__CUDA) || defined(__ROCM)
 #include <ATen/core/tensor.h>
 #endif
@@ -28,6 +30,101 @@ namespace
 {
 
 #if defined(__CUDA)
+using Complex = std::complex<double>;
+using GPU = base_device::DEVICE_GPU;
+using NonlocalPW = hamilt::Nonlocal<hamilt::OperatorPW<Complex, GPU>>;
+
+NonlocalPW* find_nonlocal_operator(hamilt::Hamilt<Complex, GPU>* hamiltonian)
+{
+    for (auto* op = hamiltonian->ops; op != nullptr; op = op->next_op)
+    {
+        if (auto* nonlocal = dynamic_cast<NonlocalPW*>(op)) { return nonlocal; }
+    }
+    return nullptr;
+}
+
+hamilt::Operator<Complex, GPU>::Action projected_nonlocal_action(
+    NonlocalPW* nonlocal, const std::vector<Complex>& projections, int bands, int polarizations)
+{
+    const size_t count = size_t(nonlocal->get_ppcell()->nkb) * bands * polarizations;
+    if (projections.size() != count) { return {}; }
+    auto* projected = nonlocal->prepare_becp(bands * polarizations);
+    base_device::memory::synchronize_memory_op<Complex, GPU, base_device::DEVICE_CPU>()(
+        nullptr, nullptr, projected, projections.data(), count);
+    return [nonlocal, projected](const hamilt::Operator<Complex, GPU>* op,
+        int columns, int leading, int npol, const Complex*, Complex* output, int plane_waves) {
+        if (op != nonlocal) { return false; }
+        nonlocal->act_projected(columns, leading, npol, projected, output, plane_waves);
+        return true;
+    };
+}
+
+class NonlocalBasisObserver
+{
+    using Solver = hsolver::HSolverPW<Complex, GPU>;
+    using Cache = std::vector<std::vector<Complex>>;
+
+    NonlocalPW* nonlocal_;
+    const int bands_;
+    const int rows_;
+    Cache& cache_;
+    ct::Tensor basis_;
+    ct::Tensor rotated_;
+    Solver::BasisObserver callbacks_;
+
+    void capture(int ik, int first, int count, bool cached_action)
+    {
+        auto* target = basis_.data<Complex>() + size_t(first) * rows_;
+        const size_t size = size_t(count) * rows_;
+        if (cached_action)
+        {
+            assert(first == 0 && count == bands_ && cache_[ik].size() == size);
+            base_device::memory::synchronize_memory_op<Complex, GPU, base_device::DEVICE_CPU>()(
+                nullptr, nullptr, target, cache_[ik].data(), size);
+        }
+        else
+        {
+            base_device::memory::synchronize_memory_op<Complex, GPU, GPU>()(
+                nullptr, nullptr, target, nonlocal_->get_becp(), size);
+        }
+    }
+
+    void rotate(int ik, int count, const Complex* coefficients, int leading, bool final)
+    {
+        auto* basis = basis_.data<Complex>();
+        auto* rotated = rotated_.data<Complex>();
+        hsolver::gemm_op<Complex, GPU>()(nullptr, 'N', 'N', rows_, bands_, count,
+            &ModuleBase::ONE, basis, rows_, coefficients, leading, &ModuleBase::ZERO, rotated, rows_);
+        const size_t size = size_t(rows_) * bands_;
+        if (final)
+        {
+            cache_[ik].resize(size);
+            base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, GPU>()(
+                nullptr, nullptr, cache_[ik].data(), rotated, size);
+        }
+        else
+        {
+            base_device::memory::synchronize_memory_op<Complex, GPU, GPU>()(
+                nullptr, nullptr, basis, rotated, size);
+        }
+    }
+
+  public:
+    NonlocalBasisObserver(NonlocalPW* nonlocal, int bands, int polarizations, int capacity, Cache& cache)
+        : nonlocal_(nonlocal), bands_(bands), rows_(nonlocal->get_ppcell()->nkb * polarizations), cache_(cache),
+          basis_(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, {capacity, rows_}),
+          rotated_(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, {bands_, rows_})
+    {
+        callbacks_.capture = [this](int ik, int first, int count, bool cached) { capture(ik, first, count, cached); };
+        callbacks_.rotate = [this](int ik, int count, const Complex* coefficients, int leading, bool final) {
+            rotate(ik, count, coefficients, leading, final);
+        };
+        callbacks_.invalidate = [this](int ik) { cache_[ik].clear(); };
+    }
+
+    const Solver::BasisObserver* callbacks() const { return &callbacks_; }
+};
+
 std::vector<double> pack_constraint_field(int atoms, int nkb, const int* projectors,
                                          const ModuleBase::Vector3<double>* field)
 {
@@ -168,14 +265,14 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                 psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
                 hamilt::Hamilt<std::complex<double>>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
                 hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU>* hsolver_t = static_cast<hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU>*>(this->phsol);
-                hsolver_t->solve(hamilt_t, psi_t[0], this->pelec, this->KS_SOLVER, true);
+                hsolver_t->solve(hamilt_t, psi_t[0], this->pelec, PARAM.inp.ks_solver, true);
             }
             else
             {
                 psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_t = static_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(this->psi);
                 hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(this->p_hamilt);
                 hsolver::HSolver<std::complex<double>, base_device::DEVICE_GPU>* hsolver_t = static_cast<hsolver::HSolver<std::complex<double>, base_device::DEVICE_GPU>*>(this->phsol);
-                hsolver_t->solve(hamilt_t, psi_t[0], this->pelec, this->KS_SOLVER, true);
+                hsolver_t->solve(hamilt_t, psi_t[0], this->pelec, PARAM.inp.ks_solver, true);
             }
             this->pelec->calculate_weights();
             this->cal_Mi_pw();
@@ -299,6 +396,22 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                     hpsi_host = this->hpsi_cache.get();
                 }
 #endif
+#if defined(__CUDA)
+                NonlocalPW* nonlocal = nullptr;
+                if (initial_hs && PARAM.inp.ks_solver == "dav_subspace" && !PARAM.inp.use_paw
+                    && !PARAM.globalv.use_uspp && GlobalV::NPROC_IN_POOL == 1)
+                {
+                    nonlocal = find_nonlocal_operator(hamilt_t);
+                    if (nonlocal && nonlocal->get_ppcell()->nkb > 0)
+                    {
+                        this->nonlocal_projections.resize(nk);
+                    }
+                    else
+                    {
+                        nonlocal = nullptr;
+                    }
+                }
+#endif
                 std::complex<double>* becp_pointer = nullptr;
                 // allocate memory for becp_pointer in GPU device
                 base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, becp_pointer, size_becp);
@@ -313,11 +426,28 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                     {
                         /// update H(k) for each k point
                         hamilt_t->updateHk(ik);
+                        typename hamilt::Operator<std::complex<double>, base_device::DEVICE_GPU>::Action projected_action;
+#if defined(__CUDA)
+                        size_t projection_count = 0;
+                        if (nonlocal)
+                        {
+                            projection_count = size_t(nonlocal->get_ppcell()->nkb) * nbands * npol;
+                            projected_action = projected_nonlocal_action(nonlocal, this->nonlocal_projections[ik], nbands, npol);
+                        }
+#endif
                         const size_t offset = size_t(ik) * nbands * psi_t->get_nbasis();
                         // Host action caching is restricted to norm-conserving inputs with S = I.
                         hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::cal_hs_subspace(
                             hamilt_t, psi_t[0], h_k, s_k, hpsi_host == nullptr ? nullptr : hpsi_host + offset,
-                            hpsi_host != nullptr);
+                            hpsi_host != nullptr, projected_action);
+#if defined(__CUDA)
+                        if (nonlocal && !projected_action)
+                        {
+                            this->nonlocal_projections[ik].resize(projection_count);
+                            base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, GPU>()(
+                                cpu_ctx, ctx, this->nonlocal_projections[ik].data(), nonlocal->get_becp(), projection_count);
+                        }
+#endif
                         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, becp_k, onsite_p->get_becp(), size_becp);
                     }
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, h_tmp, h_k, nbands * nbands);
@@ -502,6 +632,26 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
             // Davidson uses the Euclidean overlap. The saved generalized
             // overlap has the same meaning only for norm-conserving inputs.
             const bool reuse_subspace = davidson_solve && !PARAM.inp.use_paw && !PARAM.globalv.use_uspp;
+            using Solver = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU>;
+            const Solver::BasisObserver* observer = nullptr;
+#if defined(__CUDA)
+            std::unique_ptr<NonlocalBasisObserver> projection_observer;
+            auto* nonlocal = reuse_subspace && GlobalV::NPROC_IN_POOL == 1
+                ? find_nonlocal_operator(hamilt_t) : nullptr;
+            const int projection_rows = nonlocal ? nonlocal->get_ppcell()->nkb * npol : 0;
+            const size_t projection_count = size_t(projection_rows) * nbands;
+            const bool initial_projections_valid = projection_rows > 0
+                && this->nonlocal_projections.size() == size_t(nk)
+                && std::all_of(this->nonlocal_projections.begin(), this->nonlocal_projections.end(),
+                               [projection_count](const std::vector<Complex>& entry) { return entry.size() == projection_count; });
+            if (initial_projections_valid)
+            {
+                projection_observer.reset(new NonlocalBasisObserver(nonlocal, nbands, npol,
+                    nbands * PARAM.inp.pw_diag_ndim, this->nonlocal_projections));
+                observer = projection_observer->callbacks();
+            }
+#endif
+            if (observer == nullptr) { this->invalidate_nonlocal_projections(); }
             hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU>::InitialHPsiFunc initial_hpsi;
             if (reuse_subspace)
             {
@@ -617,7 +767,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                          this->get_nat(),
                          this->sub_h_save,
                          this->sub_s_save,
-                         initial_hpsi);
+                         initial_hpsi,
+                         observer);
             }
             else
             {// update charge density only
