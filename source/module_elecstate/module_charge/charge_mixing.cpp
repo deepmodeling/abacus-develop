@@ -202,42 +202,25 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, con
     // add drho into history
     this->_drho_history[iteration - 1] = drho;
 
-    if(threshold >= 0) // close the function
+    bool oscillating = false;
+    if (threshold < 0 && iteration >= iternum_used + this->mixing_restart_last)
     {
-        return false;
+        // Fit the slope of log10(drho) over the last iternum_used iterations.
+        double sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+        for (int i = iteration - iternum_used; i < iteration; i++)
+        {
+            sumX += i;
+            sumY += std::log10(this->_drho_history[i]);
+            sumXY += i * std::log10(this->_drho_history[i]);
+            sumXX += i * i;
+        }
+        double numerator = iternum_used * sumXY - sumX * sumY;
+        double denominator = iternum_used * sumXX - sumX * sumX;
+        if (denominator != 0)
+        {
+            oscillating = numerator / denominator > threshold;
+        }
     }
-
-    // check if the history is long enough
-    if(iteration < iternum_used + this->mixing_restart_last)
-    {
-        return false;
-    }
-
-    // calculate the slope of the last iternum_used iterations' drho
-    double slope = 0.0;
-
-    // Least Squares Method
-    // this part is too short, so I do not design it as a free function in principle
-    double sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-    for (int i = iteration - iternum_used; i < iteration; i++)
-    {
-        sumX += i;
-        sumY += std::log10(this->_drho_history[i]);
-        sumXY += i * std::log10(this->_drho_history[i]);
-        sumXX += i * i;
-    }
-    double numerator = iternum_used * sumXY - sumX * sumY;
-    double denominator = iternum_used * sumXX - sumX * sumX;
-    if (denominator == 0) {
-        return false;
-    }
-    slope =  numerator / denominator;
-
-    // if the slope is less than the threshold, return true
-    if(slope > threshold)
-    {
-        return true;
-    }
-
-    return false;
+    ModuleBase::timer::tick("Charge_Mixing", "if_scf_oscillate");
+    return oscillating;
 }
