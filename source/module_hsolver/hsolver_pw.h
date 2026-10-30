@@ -10,6 +10,7 @@
 
 namespace hsolver
 {
+template <typename T, typename Device> class Diago_DavSubspace;
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolverPW
@@ -92,7 +93,8 @@ class HSolverPW
                          const T* initial_h = nullptr,
                          const T* initial_s = nullptr,
                          const InitialHPsiFunc& initial_hpsi = {},
-                         const BasisObserver* basis_observer = nullptr);
+                         const BasisObserver* basis_observer = nullptr,
+                         std::unique_ptr<Diago_DavSubspace<T, Device>>* reusable_davidson = nullptr);
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);

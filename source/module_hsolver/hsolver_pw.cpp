@@ -15,6 +15,7 @@
 #include "module_psi/psi.h"
 
 #include <algorithm>
+#include <type_traits>
 #include <vector>
 
 #ifdef USE_PAW
@@ -301,6 +302,14 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     std::vector<Real> eigenvalues(this->wfc_basis->nks * psi.get_nbands(), 0.0);
     ethr_band.resize(psi.get_nbands(), this->diag_thr);
 
+    std::unique_ptr<Diago_DavSubspace<T, Device>> davidson;
+    bool reuse_davidson = false;
+#if defined(__CUDA)
+    reuse_davidson = std::is_same<Device, base_device::DEVICE_GPU>::value
+                     && std::is_same<T, std::complex<double>>::value
+                     && (psi.npol == 2 || !psi.get_k_first());
+#endif
+
     // Initialize k-point continuity if enabled
     static int count = 0;
     if (use_k_continuity) {
@@ -351,7 +360,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                   this->wfc_basis->nks,
                                   initial_h == nullptr ? nullptr : initial_h + subspace_offset,
                                   initial_s == nullptr ? nullptr : initial_s + subspace_offset,
-                                  initial_hpsi, basis_observer);
+                                  initial_hpsi, basis_observer, reuse_davidson ? &davidson : nullptr);
 
             if (skip_charge)
             {
@@ -398,7 +407,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                   this->wfc_basis->nks,
                                   initial_h == nullptr ? nullptr : initial_h + subspace_offset,
                                   initial_s == nullptr ? nullptr : initial_s + subspace_offset,
-                                  initial_hpsi, basis_observer);
+                                  initial_hpsi, basis_observer, reuse_davidson ? &davidson : nullptr);
 
             if (skip_charge)
             {
@@ -457,7 +466,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                            const T* initial_h,
                                            const T* initial_s,
                                            const InitialHPsiFunc& initial_hpsi,
-                                           const BasisObserver* basis_observer)
+                                           const BasisObserver* basis_observer,
+                                           std::unique_ptr<Diago_DavSubspace<T, Device>>* reusable_davidson)
 {
 #ifdef __MPI
     const diag_comm_info comm_info = {POOL_WORLD, this->rank_in_pool, this->nproc_in_pool};
@@ -472,6 +482,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     {
         ngk_vector[i] = ngk_pointer[i];
     }
+
+    std::unique_ptr<Diago_DavSubspace<T, Device>> local_davidson;
+    auto& davidson = reusable_davidson ? *reusable_davidson : local_davidson;
 
     if (this->method == "cg")
     {
@@ -624,7 +637,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         };
         bool scf = this->calculation_type == "nscf" ? false : true;
 
-        Diago_DavSubspace<T, Device> dav_subspace(pre_condition,
+        if (!davidson)
+        {
+            davidson.reset(new Diago_DavSubspace<T, Device>(pre_condition,
                                                   psi.get_nbands(),
                                                   psi.get_k_first() ? psi.get_current_nbas()
                                                                     : psi.get_nk() * psi.get_nbasis(),
@@ -632,7 +647,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                   this->diag_thr,
                                                   this->diag_iter_max,
                                                   this->need_subspace,
-                                                  comm_info);
+                                                  comm_info));
+        }
 
         typename Diago_DavSubspace<T, Device>::InitialHPsiFunc initial_action;
         if (initial_hpsi)
@@ -653,7 +669,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             };
         }
         DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            dav_subspace.diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, this->ethr_band, scf,
+            davidson->diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, this->ethr_band, scf,
                               initial_h, initial_s, initial_action, rotate_basis));
     }
     else if (this->method == "dav")

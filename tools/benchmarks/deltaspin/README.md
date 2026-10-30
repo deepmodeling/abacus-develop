@@ -262,6 +262,23 @@ long-double dot products. It covers all nine transpose/conjugation combinations,
 padded leading dimensions, input preservation, nonzero complex accumulation,
 cancellation-sensitive data, and shapes on both sides of the dispatch boundary.
 
+## Davidson workspace lifetime
+
+CUDA double-complex solves retain one Davidson workspace across k points when
+the wavefunction layout has a fixed basis dimension: two-component spinors or
+basis-first storage. The solver owns its basis arrays and projected matrices
+only for the enclosing Hamiltonian solve. Each diagonalization initializes its
+active basis and refreshes the preconditioner from the current k point; no
+eigenvectors, projected Hamiltonians or convergence decisions are reused.
+
+The workspace is released before charge-density construction. A Davidson
+failure also releases it before CG allocates its own work or changes the basis.
+Other data types, device backends and variable-dimension layouts retain their
+per-k-point solver lifetime. Projector preparation between k points can overlap
+the retained allocation, so both complete-run timing and sampled peak memory
+must be measured. The Davidson driver exercises repeated calls with changed
+preconditioners, initial bases, projected matrices and basis-rotation callbacks.
+
 ## Fixed-overlap constraint responses
 
 The wavefunction basis and its projected overlap stay fixed during one
