@@ -29,6 +29,10 @@ Apply these instructions when reviewing or changing ABACUS code:
   generated YAML or Markdown documentation files to be committed.
 - Check that new source files are linked through the relevant `CMakeLists.txt`
   unless the PR explains generated or indirect inclusion.
+- Unit tests under `source/` belong in a flat `unittests/` directory, with
+  sources named `test_<file under test>.cpp`. The checker blocks the layout
+  and the `test_` prefix; confirm in review that the rest of the name matches
+  the file under test.
 - Keep default C++ changes compatible with the repository C++11 baseline.
 - Ask for focused tests or explicit test rationale for feature changes, bug
   fixes, INPUT behavior changes, heterogeneous kernels, and core-module

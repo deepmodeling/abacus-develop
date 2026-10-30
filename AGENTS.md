@@ -36,11 +36,25 @@ rules. Read the complete governance document before making or reviewing changes:
       arguments (see `Relax_Criteria` and `K_Vectors::read_kpoints`). Where the
       test genuinely needs internal state, add a public `const` observer, or an
       explicit `friend class XxxTest;` on the class under test.
-  11. New unit test source files shall be named `test_<module_name>.cpp`,
-      matching the source file they exercise. For example, the test for
-      `rhog_io.cpp` shall be `test_rhog_io.cpp`. This naming keeps the
-      file-to-test relationship discoverable and consistent across the
-      repository. Historical tests are not required to be renamed.
+  11. Unit tests under `source/` live in a directory named `unittests/`, and
+      their source files are named `test_<module_name>.cpp`, matching the
+      source file they exercise. For example, the test for `rhog_io.cpp`
+      shall be `unittests/test_rhog_io.cpp`. The governance checker
+      **blocks**:
+      - adding any file (tests, headers, data, `CMakeLists.txt`) to a legacy
+        test directory such as `test/`, `tests/`, `test_serial/`,
+        `test_parallel/`, `test_gpu/`; modifying a `.cpp`/`.cu` there blocks
+        too, so a touched legacy test must be migrated into `unittests/`.
+        Deleting files and editing a legacy `CMakeLists.txt`, header, or data
+        file stays allowed, so legacy directories can shrink;
+      - a `.c`/`.cc`/`.cpp`/`.cxx`/`.cu` file added or modified directly in
+        `unittests/` whose name does not start with `test_`. Headers
+        (`.h`/`.hpp`/`.cuh`) are free-named, so mocks and shared helpers go
+        into headers;
+      - any code file (sources or headers) in a subdirectory of `unittests/`.
+        Subdirectories, with any name and depth, hold test data only.
+      Whether the name after `test_` matches the file under test is checked
+      in review, not by the checker.
   12. Place `ModuleBase::timer::start`/`end` at the beginning and end of a
       function, not around isolated statements inside the function body. Use
       the enclosing function name (or constructor name) as the timer label so

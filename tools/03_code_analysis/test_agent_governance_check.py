@@ -717,6 +717,158 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_warns_with_success(result, "Governance exception record")
 
+    def commit_baseline(self, files):
+        for path, content in files.items():
+            self.write(path, content)
+        self.git("add", ".")
+        self.git("commit", "-m", "baseline tests")
+        return self.git("rev-parse", "HEAD").stdout.strip()
+
+    def test_allows_conforming_unittests_layout(self):
+        self.write("source/source_md/unittests/test_verlet.cpp", "TEST(A, B) {}\n")
+        self.write("source/source_md/unittests/test_verlet.cu", "int k();\n")
+        self.write("source/source_md/unittests/mock_cell.h", "int mock();\n")
+        self.write("source/source_md/unittests/mock_dev.cuh", "int dev();\n")
+        self.write("source/source_md/unittests/mock_impl.hpp", "int impl();\n")
+        self.write("source/source_md/unittests/CMakeLists.txt", "AddTest(test_verlet)\n")
+        self.write("source/source_md/unittests/support/STRU", "ATOMIC_SPECIES\n")
+        self.write("source/source_md/unittests/data/test/H2O/run.sh", "echo ok\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("Unit test directory layout", result.stdout)
+        self.assertNotIn("Unit test file naming", result.stdout)
+
+    def test_blocks_any_file_added_to_legacy_test_directories(self):
+        for path in (
+            "source/source_md/test/verlet_test.cpp",
+            "source/source_md/test/support/STRU",
+            "source/source_md/test/CMakeLists.txt",
+            "source/source_io/test_serial/test_reader.cpp",
+            "source/source_pw/module_pwdft/tests/helper.h",
+            "source/source_md/UnitTests/test_verlet.cpp",
+            "source/source_md/test/unittests/test_verlet.cpp",
+        ):
+            with self.subTest(path=path):
+                self.write(path, "int x;\n")
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "Unit test directory layout")
+                self.assertIn(path, result.stdout)
+                self.git("reset", "--hard", self.base)
+
+    def test_blocks_modified_test_source_in_legacy_directory(self):
+        base = self.commit_baseline({"source/source_md/test/verlet_test.cpp": "TEST(A, B) {}\n"})
+        self.write("source/source_md/test/verlet_test.cpp", "TEST(A, B) {}\nTEST(A, C) {}\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assert_blocked_by(result, "Unit test directory layout")
+        self.assertIn("Modifies a unit test source", result.stdout)
+
+    def test_allows_cleanup_of_legacy_test_directories(self):
+        base = self.commit_baseline(
+            {
+                "source/source_md/test/verlet_test.cpp": "TEST(A, B) {}\n",
+                "source/source_md/test/old_test.cpp": "TEST(O, P) {}\n",
+                "source/source_md/test/helper.h": "int helper();\n",
+                "source/source_md/test/CMakeLists.txt": "AddTest(verlet_test)\nAddTest(old_test)\n",
+            }
+        )
+        self.git("rm", "-q", "source/source_md/test/old_test.cpp")
+        self.write("source/source_md/test/helper.h", "int helper(int);\n")
+        self.write("source/source_md/test/CMakeLists.txt", "AddTest(verlet_test)\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertNotIn("Unit test directory layout", result.stdout)
+
+    def test_allows_migrating_legacy_test_into_unittests(self):
+        body = "".join(f"TEST(Verlet, Case{i}) {{ EXPECT_EQ({i}, {i}); }}\n" for i in range(20))
+        base = self.commit_baseline({"source/source_md/test/verlet_test.cpp": body})
+        (self.repo / "source/source_md/unittests").mkdir()
+        self.git("mv", "source/source_md/test/verlet_test.cpp", "source/source_md/unittests/test_verlet.cpp")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertNotIn("Unit test directory layout", result.stdout)
+        self.assertNotIn("Unit test file naming", result.stdout)
+
+    def test_blocks_code_files_in_unittests_subdirectories(self):
+        for path in (
+            "source/source_md/unittests/support/helper.h",
+            "source/source_md/unittests/gpu/test_verlet.cu",
+            "source/source_md/unittests/data/deep/mock.cpp",
+            "source/source_md/unittests/support/dev.cuh",
+        ):
+            with self.subTest(path=path):
+                self.write(path, "int x;\n")
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "Unit test directory layout")
+                self.assertIn(path, result.stdout)
+                self.git("reset", "--hard", self.base)
+
+    def test_blocks_unittests_source_without_test_prefix(self):
+        for path in (
+            "source/source_md/unittests/verlet_test.cpp",
+            "source/source_md/unittests/tmp_mocks.cpp",
+            "source/source_md/unittests/kernel.cu",
+            "source/source_md/unittests/Test_verlet.cpp",
+        ):
+            with self.subTest(path=path):
+                self.write(path, "int x;\n")
+                head = self.commit_change()
+
+                result = self.run_checker("--base", self.base, "--head", head)
+
+                self.assert_blocked_by(result, "Unit test file naming")
+                self.git("reset", "--hard", self.base)
+
+    def test_blocks_misnamed_unittests_source_when_modified_or_renamed(self):
+        body = "".join(f"int mock_{i}() {{ return {i}; }}\n" for i in range(20))
+        base = self.commit_baseline({"source/source_md/unittests/tmp_mocks.cpp": body})
+        self.write("source/source_md/unittests/tmp_mocks.cpp", body + "int extra() { return 0; }\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assert_blocked_by(result, "Unit test file naming")
+
+        self.git("reset", "--hard", base)
+        self.git("mv", "source/source_md/unittests/tmp_mocks.cpp", "source/source_md/unittests/mocks.cpp")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assert_blocked_by(result, "Unit test file naming")
+
+    def test_unittest_layout_ignores_paths_outside_source(self):
+        self.write("tests/01_PW/test/run.cpp", "int x;\n")
+        self.write("python/pyabacus/tests/helper.cpp", "int y;\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("Unit test directory layout", result.stdout)
+        self.assertNotIn("Unit test file naming", result.stdout)
+
+    def test_staged_mode_blocks_new_file_in_legacy_test_directory(self):
+        self.write("source/source_md/test/verlet_test.cpp", "TEST(A, B) {}\n")
+        self.git("add", ".")
+
+        result = self.run_checker("--staged")
+
+        self.assert_blocked_by(result, "Unit test directory layout")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -589,6 +589,85 @@ def check_cmake_linkage(findings: List[Finding], statuses: Dict[str, str], chang
             )
 
 
+# Unit test layout under source/. See AGENTS.md rule 11.
+UNITTEST_DIR = "unittests"
+LEGACY_TEST_DIR_NAMES = {"test", "tests", "unittest", "unit_test", "unit_tests"}
+UNITTEST_CODE_EXTENSIONS = SOURCE_EXTENSIONS | HEADER_EXTENSIONS | {".cuh"}
+
+
+def is_legacy_test_dir(name: str) -> bool:
+    """`test/`, `test_serial/`, `UnitTests/`, ... -- anything test-like but `unittests/`."""
+    if name == UNITTEST_DIR:
+        return False
+    lowered = name.lower()
+    return lowered in LEGACY_TEST_DIR_NAMES or lowered == UNITTEST_DIR or lowered.startswith("test_")
+
+
+def check_unittest_layout(findings: List[Finding], statuses: Dict[str, str]) -> None:
+    """Enforce the `unittests/` layout for unit tests under source/.
+
+    Added, renamed, and copied files are checked at their new path; modified
+    files are checked too, so touching a test means bringing it into the
+    layout. Deletions are always allowed, which is how legacy directories
+    shrink.
+    """
+    for path, status in statuses.items():
+        if not path.startswith("source/") or status.startswith("D"):
+            continue
+        added = status[:1] in {"A", "R", "C"}
+        p = Path(path)
+        suffix = p.suffix.lower()
+        dirs = p.parts[1:-1]
+        # Data subdirectories below unittests/ may use any name, `test/` included.
+        owners = dirs[:dirs.index(UNITTEST_DIR)] if UNITTEST_DIR in dirs else dirs
+        legacy = next((d for d in owners if is_legacy_test_dir(d)), None)
+        if legacy is not None:
+            if added:
+                reason = f"Adds a file to the legacy test directory `{legacy}/`."
+            elif suffix in SOURCE_EXTENSIONS:
+                reason = f"Modifies a unit test source in the legacy test directory `{legacy}/`."
+            else:
+                continue
+            add_finding(
+                findings,
+                "Unit test directory layout",
+                BLOCK,
+                path,
+                None,
+                reason,
+                "Move the test into a sibling `unittests/` directory (named test_<file>.cpp) "
+                "and wire it into that directory's CMakeLists.txt; legacy test directories "
+                "may only have files deleted or migrated out.",
+            )
+            continue
+        if UNITTEST_DIR not in dirs:
+            continue
+        below = dirs[dirs.index(UNITTEST_DIR) + 1:]
+        if below:
+            if suffix in UNITTEST_CODE_EXTENSIONS:
+                add_finding(
+                    findings,
+                    "Unit test directory layout",
+                    BLOCK,
+                    path,
+                    None,
+                    f"Code file inside the `unittests/{'/'.join(below)}/` subdirectory.",
+                    "Keep test sources and headers directly in `unittests/`; its subdirectories "
+                    "may hold test data only.",
+                )
+            continue
+        if suffix in SOURCE_EXTENSIONS and not p.name.startswith("test_"):
+            add_finding(
+                findings,
+                "Unit test file naming",
+                BLOCK,
+                path,
+                None,
+                f"Source file `{p.name}` in `unittests/` does not start with `test_`.",
+                "Name the test test_<file under test>.cpp; move mocks and shared helpers into a .h header.",
+            )
+
+
 
 def read_pull_request(event_path: Optional[str]) -> Optional[dict]:
     if not event_path:
@@ -870,6 +949,7 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)
     check_cmake_linkage(findings, statuses, changed)
+    check_unittest_layout(findings, statuses)
     check_pr_metadata(findings, body)
     check_test_evidence_warning(findings, changed, body_text)
     check_heterogeneous_test_warning(findings, changed, body_text)
