@@ -411,7 +411,6 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
         }
     }
     MPI_Bcast(&header_ok, 1, MPI_INT, 0, comm);
-    MPI_Bcast(&base_offset, 1, MPI_OFFSET, 0, comm);
     if (header_ok == 0)
     {
         throw std::runtime_error("Unable to create MDCell restart STRU file: " + fn + ": " + std::strerror(errno));
@@ -428,7 +427,13 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
         throw std::runtime_error("Unable to open MDCell restart STRU file: " + fn + ": " + std::strerror(errno));
     }
 
-    MPI_Offset offset = base_offset + static_cast<MPI_Offset>(header.size());
+    // Every rank learns the write position from the file itself instead of
+    // broadcasting the MPI_Offset held by rank 0: after the barrier the header
+    // is in place, so the end of the file is the current base offset plus the
+    // header that was just written (zero for a truncated fresh file).
+    const off_t file_end = lseek(file, 0, SEEK_END);
+    MPI_Offset offset = file_end >= 0 ? static_cast<MPI_Offset>(file_end)
+                                      : static_cast<MPI_Offset>(header.size());
     for (std::size_t it = 0; it < stru_meta.species.size(); ++it)
     {
         const std::string type_header = mdcell_type_header(cell, stru_meta, it);

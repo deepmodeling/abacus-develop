@@ -18,9 +18,23 @@
 
 #ifdef __MPI
 #include "mpi.h"
+#include "source_base/module_parallel/para_mpi_func.h"
+#include "source_base/module_parallel/para_world.h"
 #include "source_base/parallel_global.h"
 #include "source_basis/module_pw/test/test_tool.h"
 #endif
+
+/// @brief Collectively synchronize the world communicator without direct MPI.
+/// @details Governance rule 9 forbids calling MPI routines directly, so the
+/// tests go through the guarded Parallel wrappers; the helper is a no-op in
+/// serial builds.
+void world_barrier()
+{
+#ifdef __MPI
+    const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("test_read_wf2rho_pw", MPI_COMM_WORLD);
+    Parallel::barrier(world);
+#endif
+}
 
 /// @brief Friend helper to mutate PARAM private members in unit tests.
 /// @details Parameter grants friend access to TestParameters so the test can
@@ -460,21 +474,15 @@ TEST_F(ReadWfcRhoTest, WriteWfcAppendMode)
     };
 
     write_once(0); // fresh first step: truncate
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
     const long size_first = file_size_bytes("wfk1_pw.dat");
 
     write_once(1); // later step: append a frame
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
     const long size_second = file_size_bytes("wfk1_pw.dat");
 
     write_once(0); // fresh run again: truncate back to a single frame
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
     const long size_third = file_size_bytes("wfk1_pw.dat");
 
     if (my_rank == 0)

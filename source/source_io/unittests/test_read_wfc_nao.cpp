@@ -5,12 +5,26 @@
 #include "source_io/module_wf/write_wfc_nao.h"
 #include "source_base/module_out/filename.h"
 #include "source_base/global_function.h"
+#include "source_base/module_parallel/para_mpi_func.h"
+#include "source_base/module_parallel/para_world.h"
 
 #include <cstdio>
 
 /************************************************
  *  unit test of functions in read_wfc_nao.cpp
  ***********************************************/
+
+namespace
+{
+// Domain-aware barrier wrapper (no direct MPI calls in tests); no-op in serial builds.
+void world_barrier()
+{
+#ifdef __MPI
+    const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("test_read_wfc_nao", MPI_COMM_WORLD);
+    Parallel::barrier(world);
+#endif
+}
+} // namespace
 
 /**
  * - Tested Functions:
@@ -35,16 +49,12 @@ protected:
 #endif
         binary_test_dir = "./read_wfc_nao_binary_np" + std::to_string(nproc) + "/";
         ModuleBase::GlobalFunc::MAKE_DIR(binary_test_dir);
-#ifdef __MPI
-        MPI_Barrier(MPI_COMM_WORLD);
-#endif
+        world_barrier();
     }
 
     void TearDown() override
     {
-#ifdef __MPI
-        MPI_Barrier(MPI_COMM_WORLD);
-#endif
+        world_barrier();
         if (my_rank == 0)
         {
             std::remove((binary_test_dir + "wf_nao.dat").c_str());
@@ -52,9 +62,7 @@ protected:
             std::remove((binary_test_dir + "wfk1_nao.dat").c_str());
             std::remove(binary_test_dir.substr(0, binary_test_dir.size() - 1).c_str());
         }
-#ifdef __MPI
-        MPI_Barrier(MPI_COMM_WORLD);
-#endif
+        world_barrier();
     }
 
     void initialize_parallel_orbitals(Parallel_Orbitals& para, const int nlocal, const int nbands)
@@ -189,9 +197,7 @@ TEST_F(ReadWfcNaoTest, ReadBinaryGamma)
                                      false,
                                      "");
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     psi::Psi<double> psi_read;
     ModuleBase::matrix ekb(1, nbands);
@@ -247,9 +253,7 @@ TEST_F(ReadWfcNaoTest, ReadTextWithCommentHeader)
                                      false,
                                      header);
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     psi::Psi<double> psi_read;
     ModuleBase::matrix ekb(1, nbands);
@@ -300,9 +304,7 @@ TEST_F(ReadWfcNaoTest, ReadBinaryGammaFloat)
                                      false,
                                      "");
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     psi::Psi<float> psi_read;
     ModuleBase::matrix ekb(1, nbands);
@@ -355,9 +357,7 @@ TEST_F(ReadWfcNaoTest, ReadBinaryComplex)
                                              false,
                                              "");
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     psi::Psi<std::complex<double>> psi_read;
     ModuleBase::matrix ekb(1, nbands);
@@ -413,9 +413,7 @@ TEST_F(ReadWfcNaoTest, ReadBinaryPart)
                                      false,
                                      "");
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     psi::Psi<double> psi_read;
     ModuleBase::matrix ekb(1, nbands);
@@ -463,9 +461,7 @@ TEST_F(ReadWfcNaoTest, BinaryDoesNotFallBackToText)
                                      false,
                                      "");
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     psi::Psi<double> psi_read;
     ModuleBase::matrix ekb(1, nbands);
@@ -495,9 +491,7 @@ TEST_F(ReadWfcNaoTest, RejectTruncatedBinary)
         ofs.write(reinterpret_cast<const char*>(&nbands), sizeof(nbands));
         ofs.write(reinterpret_cast<const char*>(&nlocal), sizeof(nlocal));
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     psi::Psi<double> psi_read;
     ModuleBase::matrix ekb(1, nbands);
@@ -529,9 +523,7 @@ TEST_F(ReadWfcNaoTest, ReadPsiDirectoryLayout)
     {
         ModuleBase::GlobalFunc::MAKE_DIR(psi_dir);
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     const std::vector<double> coefficients = {0.1, 0.2, 0.3, 1.1, 1.2, 1.3};
     ModuleBase::matrix ekb_source(1, nbands);
@@ -571,9 +563,7 @@ TEST_F(ReadWfcNaoTest, ReadPsiDirectoryLayout)
                                      false,
                                      "");
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     psi::Psi<double> psi_read;
     ModuleBase::matrix ekb(1, nbands);
@@ -623,9 +613,7 @@ TEST_F(ReadWfcNaoTest, ReadPsiDirectoryLayout)
         std::remove(snapshot.c_str());
         std::remove(psi_dir.c_str());
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 }
 
 
@@ -776,9 +764,7 @@ TEST_F(ReadWfcNaoTest, PositiveStepRejectsCumulativeFile)
                                      false,
                                      "");
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     psi::Psi<double> psi_read;
     ModuleBase::matrix ekb(1, nbands);
@@ -799,9 +785,7 @@ TEST_F(ReadWfcNaoTest, PositiveStepRejectsCumulativeFile)
     {
         std::remove(cumulative.c_str());
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 }
 
 TEST_F(ReadWfcNaoTest, ZeroStepFallsBackToCumulativeFile)
@@ -850,9 +834,7 @@ TEST_F(ReadWfcNaoTest, ZeroStepFallsBackToCumulativeFile)
                                      false,
                                      "");
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 
     psi::Psi<double> psi_read;
     ModuleBase::matrix ekb(1, nbands);
@@ -880,9 +862,7 @@ TEST_F(ReadWfcNaoTest, ZeroStepFallsBackToCumulativeFile)
     {
         std::remove(cumulative.c_str());
     }
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    world_barrier();
 }
 
 #ifdef __MPI

@@ -17,6 +17,8 @@
 
 #include "source_base/matrix_block.h"
 #include "source_base/module_out/filename.h"
+#include "source_base/module_parallel/para_mpi_func.h"
+#include "source_base/module_parallel/para_world.h"
 #include "source_base/parallel_comm.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hamilt/hamilt.h"
@@ -37,6 +39,16 @@ namespace
 {
 /// Rank in DIAG_WORLD; 0 without MPI.
 int test_rank = 0;
+
+/// Collectively synchronize DIAG_WORLD through the guarded Parallel wrappers.
+/// Governance rule 9 forbids direct MPI calls in tests; no-op in serial builds.
+void diag_world_barrier()
+{
+#ifdef __MPI
+    const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("test_hsk_writer", DIAG_WORLD);
+    Parallel::barrier(world);
+#endif
+}
 
 /// Output options shared by the tests (binary, no append, step 0).
 const int k_out_type = 2;
@@ -495,9 +507,7 @@ TEST(WriteHsk, Mode2OverwritesSameIstep)
                       distribute_matrix(pv, hk_second, dim),
                       distribute_matrix(pv, sk_second, dim));
 
-#ifdef __MPI
-    MPI_Barrier(DIAG_WORLD);
-#endif
+    diag_world_barrier();
     ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
                         gamma_only, out_app_flag, istep, out_type, precision, dim,
                         "cg", test_rank, ofs);

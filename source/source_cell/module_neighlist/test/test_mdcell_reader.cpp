@@ -154,10 +154,9 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 
 TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
 {
-    int rank = 0;
-    int size = 1;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_comm_domain();
+    const int rank = world_domain.rank();
+    const int size = world_domain.size();
     ASSERT_GE(size, 4);
 
     std::vector<LocalAtom> owned_atoms;
@@ -326,8 +325,8 @@ TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
 // ---------------------------------------------------------------------------
 TEST(MDCellReaderTest, STRUAppendWithFrameComment)
 {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_comm_domain();
+    const int rank = world_domain.rank();
 
     std::vector<LocalAtom> owned_atoms;
     owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
@@ -393,8 +392,8 @@ TEST(MDCellReaderTest, STRUAppendWithFrameComment)
 // ---------------------------------------------------------------------------
 TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
 {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const ModuleBase::CommunicationDomain world_domain = ModuleBase::world_comm_domain();
+    const int rank = world_domain.rank();
 
     std::vector<LocalAtom> owned_atoms;
     owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
@@ -408,22 +407,26 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
                                     rank));
 
     ModuleBase::Matrix3 lattice = make_lattice();
+    const ModuleBase::Matrix3 inverse = lattice.Inverse();
+    const std::vector<std::string> species_labels = {"A"};
+    const std::vector<double> species_masses = {1.0};
+    const std::vector<std::int64_t> species_counts = {1};
     MDCell mdcell;
     mdcell.initialize_from_owned_atoms(lattice,
-                  lattice.Inverse(),
+                  inverse,
                   1.0,
                   1.0,
                   1,
                   owned_atoms,
-                  std::vector<std::string>{"A"},
-                  std::vector<double>{1.0},
-                  std::vector<std::int64_t>{1},
+                  species_labels,
+                  species_masses,
+                  species_counts,
                   0.0,
-                  ModuleBase::world_comm_domain());
+                  world_domain);
     StruMeta metadata;
     metadata.species.resize(1);
-    const std::string output_file = "mdcell_fresh_run_test.STRU";
-    const std::string frame_file = "mdcell_fresh_run_test.frame";
+    const std::string output_file = testing::TempDir() + "mdcell_fresh_run_test.STRU";
+    const std::string frame_file = testing::TempDir() + "mdcell_fresh_run_test.frame";
 
     // Previous run: frames 1 and 2 accumulate.
     mdcell::print_stru_file(mdcell, metadata, output_file,
@@ -431,9 +434,19 @@ TEST(MDCellReaderTest, STRUFreshRunTruncatesPreviousFrames)
     mdcell::print_stru_file(mdcell, metadata, output_file,
                             "# MD step 2\n\n", /*append=*/true);
 
+    // The extraction runs on rank zero only; broadcast its result so every
+    // rank takes the same (collective-safe) return decision. Later
+    // print_stru_file calls broadcast/reduce across the whole communicator,
+    // so a rank-local ASSERT here would hang the remaining ranks.
+    const bool extracted = (rank == 0)
+        ? stru_frame_io::extract_last_frame(output_file, frame_file)
+        : true;
+    const int extracted_local = extracted ? 1 : 0;
+    const int extracted_all = world_domain.max(extracted_local);
+    ASSERT_EQ(extracted_all, 1);
+
     if (rank == 0)
     {
-        ASSERT_TRUE(stru_frame_io::extract_last_frame(output_file, frame_file));
         std::ifstream prev(frame_file.c_str());
         std::string prev_str((std::istreambuf_iterator<char>(prev)),
                              std::istreambuf_iterator<char>());
