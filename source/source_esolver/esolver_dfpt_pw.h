@@ -32,11 +32,6 @@ class ESolver_DFPT_PW : public ESolver_KS_PW<std::complex<double>, base_device::
   protected:
     ModuleDFPT::DFPT_PW* dfpt_ = nullptr;
 
-    ///< output directory for the dyn file writer, cached from the input
-    ///< parameter during init (avoids a new PARAM reference in the
-    ///< post-processing; governance rule: no net global dependency growth)
-    std::string out_dir_;
-
     ///< first-order XC kernel adapter over elecstate::PotXC_FDM (C7),
     ///< owned here so module_dfpt stays free of pot_xc_fdm.h dependencies
     ModuleDFPT::XC_First_Order* xc_adapter_ = nullptr;
