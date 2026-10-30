@@ -992,6 +992,11 @@ DomainDecomposition::PackedAtom DomainDecomposition::pack_atom(
     packed.mbl[0] = atom.mbl.x;
     packed.mbl[1] = atom.mbl.y;
     packed.mbl[2] = atom.mbl.z;
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        packed.displacement[axis] = atom.displacement[axis];
+        packed.boundary_shift[axis] = atom.boundary_shift[axis];
+    }
     packed.mass = atom.mass;
     packed.image_shift[0] = image_shift[0];
     packed.image_shift[1] = image_shift[1];
@@ -1006,21 +1011,27 @@ LocalAtom DomainDecomposition::unpack_ghost_atom(const PackedAtom& packed) const
 {
     const ModuleBase::Vector3<double> frac(packed.frac[0], packed.frac[1], packed.frac[2]);
     const ModuleBase::Vector3<double> image_frac(packed.frac[0] + packed.image_shift[0],
-                                                 packed.frac[1] + packed.image_shift[1],
-                                                 packed.frac[2] + packed.image_shift[2]);
+                                               packed.frac[1] + packed.image_shift[1],
+                                               packed.frac[2] + packed.image_shift[2]);
     const ModuleBase::Vector3<double> cart = image_frac * latvec_;
     const ModuleBase::Vector3<double> vel(packed.vel[0], packed.vel[1], packed.vel[2]);
     const ModuleBase::Vector3<double> force(packed.force[0], packed.force[1], packed.force[2]);
     const ModuleBase::Vector3<int> mbl(packed.mbl[0], packed.mbl[1], packed.mbl[2]);
-    return LocalAtom(cart,
-                     frac,
-                     vel,
-                     force,
-                     mbl,
-                     packed.mass,
-                     packed.type,
-                     packed.type_index,
-                     packed.owner_rank);
+    LocalAtom atom(cart,
+                   frac,
+                   vel,
+                   force,
+                   mbl,
+                   packed.mass,
+                   packed.type,
+                   packed.type_index,
+                   packed.owner_rank);
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        atom.displacement[axis] = packed.displacement[axis];
+        atom.boundary_shift[axis] = packed.boundary_shift[axis];
+    }
+    return atom;
 }
 
 LocalAtom DomainDecomposition::unpack_owned_atom(const PackedAtom& packed) const
@@ -1030,13 +1041,19 @@ LocalAtom DomainDecomposition::unpack_owned_atom(const PackedAtom& packed) const
     const ModuleBase::Vector3<double> vel(packed.vel[0], packed.vel[1], packed.vel[2]);
     const ModuleBase::Vector3<double> force(packed.force[0], packed.force[1], packed.force[2]);
     const ModuleBase::Vector3<int> mbl(packed.mbl[0], packed.mbl[1], packed.mbl[2]);
-    return LocalAtom(cart,
-                     frac,
-                     vel,
-                     force,
-                     mbl,
-                     packed.mass,
-                     packed.type,
-                     packed.type_index,
-                     packed.owner_rank);
+    LocalAtom atom(cart,
+                   frac,
+                   vel,
+                   force,
+                   mbl,
+                   packed.mass,
+                   packed.type,
+                   packed.type_index,
+                   packed.owner_rank);
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        atom.displacement[axis] = packed.displacement[axis];
+        atom.boundary_shift[axis] = packed.boundary_shift[axis];
+    }
+    return atom;
 }
