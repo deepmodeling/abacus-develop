@@ -242,8 +242,10 @@ TEST_F(ChargeMixingTest, ModelChangeRestartsUomHistory)
     charge_mixing.allocate_mixing_uom(uom_size);
     for (int step = 0; step < 2; ++step)
     {
-        std::vector<double> uom(uom_size, 1.0 + step);
-        std::vector<double> uom_save(uom_size, 0.5 + step);
+        const double uom_value = 1.0 + step;
+        const double uom_save_value = 0.5 + step;
+        std::vector<double> uom(uom_size, uom_value);
+        std::vector<double> uom_save(uom_size, uom_save_value);
         charge_mixing.mix_uom(uom, uom_save);
     }
 
