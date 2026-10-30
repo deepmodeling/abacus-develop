@@ -1,4 +1,5 @@
 #include "source_hsolver/kernels/hegvd_op.h"
+
 #include "source_base/module_container/base/third_party/lapack.h"
 
 #include <algorithm>
@@ -45,22 +46,8 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
         //===========================
         // calculate all eigenvalues
         //===========================
-        lapackConnector::hegvd(1,
-                                'V',
-                                'U',
-                                nstart,
-                                vcc,
-                                ldh,
-                                scc,
-                                ldh,
-                                eigenvalue,
-                                work,
-                                lwork,
-                                rwork,
-                                lrwork,
-                                iwork,
-                                liwork,
-                                info);
+        lapackConnector::
+            hegvd(1, 'V', 'U', nstart, vcc, ldh, scc, ldh, eigenvalue, work, lwork, rwork, lrwork, iwork, liwork, info);
 
         if (info != 0)
         {
@@ -302,29 +289,29 @@ struct hegvx_op<T, base_device::DEVICE_CPU>
         work = new T[lwork];
 
         lapackConnector::hegvx(1,
-                                'V',
-                                'I',
-                                'U',
-                                nbase,
-                                hcc,
-                                ldh,
-                                scc,
-                                ldh,
-                                0.0,
-                                0.0,
-                                1,
-                                m,
-                                0.0,
-                                mm,
-                                eigenvalue,
-                                vcc,
-                                ldh,
-                                work,
-                                lwork,
-                                rwork,
-                                iwork,
-                                ifail,
-                                info);
+                               'V',
+                               'I',
+                               'U',
+                               nbase,
+                               hcc,
+                               ldh,
+                               scc,
+                               ldh,
+                               0.0,
+                               0.0,
+                               1,
+                               m,
+                               0.0,
+                               mm,
+                               eigenvalue,
+                               vcc,
+                               ldh,
+                               work,
+                               lwork,
+                               rwork,
+                               iwork,
+                               ifail,
+                               info);
 
         delete[] work;
         delete[] rwork;

@@ -1,13 +1,14 @@
 #ifndef DIGAOPEXSI_H
 #define DIGAOPEXSI_H
 
-#include <vector>
-#include <memory>
-#include "source_base/macros.h"   // GetRealType
+#include "module_pexsi/pexsi_solver.h"
+#include "source_base/macros.h" // GetRealType
 #include "source_base/matrix_block.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_psi/psi.h"
-#include "module_pexsi/pexsi_solver.h"
+
+#include <memory>
+#include <vector>
 
 namespace hsolver
 {

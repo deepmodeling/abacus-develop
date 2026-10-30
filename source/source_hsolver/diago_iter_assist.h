@@ -89,19 +89,14 @@ class DiagoIterAssist
                                    const std::string& calculation,
                                    const diag_comm_info& diag_comm);
 
-    static void diag_heevx(const int nstart,
-                            const int nbands,
-                            const T *hcc,
-                            const int ldh,
-                            Real *e,
-                            T *vcc);
+    static void diag_heevx(const int nstart, const int nbands, const T* hcc, const int ldh, Real* e, T* vcc);
     static void diag_hegvd(const int nstart,
-                            const int nbands,
-                            const T *hcc,
-                            T *sc,
-                            const int ldh, // nstart
-                            Real *e,
-                            T *vcc);
+                           const int nbands,
+                           const T* hcc,
+                           T* sc,
+                           const int ldh, // nstart
+                           Real* e,
+                           T* vcc);
 
     /// @brief calculate Hamiltonian and overlap matrix in subspace spanned by nstart states psi
     /// @param op : applies H and S
@@ -125,17 +120,13 @@ class DiagoIterAssist
     static void diag_responce(const T* hcc,
                               T* scc,
                               const int nbands,
-                              const T* mat_in, 
-                              T* mat_out, 
-                              int mat_col, 
+                              const T* mat_in,
+                              T* mat_out,
+                              int mat_col,
                               Real* en);
-    
+
     /// @brief calculate the response wavefunction psi from rotation matrix solved by diagonalization of H and S matrix
-    static void diag_subspace_psi(const T* hcc,
-                              T* scc,
-                              const int dim_subspace,
-                              psi::Psi<T, Device>& evc,
-                              Real* en);
+    static void diag_subspace_psi(const T* hcc, T* scc, const int dim_subspace, psi::Psi<T, Device>& evc, Real* en);
 
   private:
     constexpr static const Device* ctx = {};

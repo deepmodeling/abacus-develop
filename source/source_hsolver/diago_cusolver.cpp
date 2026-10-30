@@ -1,10 +1,10 @@
 #include "diago_cusolver.h"
 
-#include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/blacs_connector.h"
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_base/tool_title.h"
 #include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 #include <memory>
 #include <type_traits>
@@ -31,11 +31,10 @@ DiagoCusolver<T>::~DiagoCusolver()
 
 // Diagonalization function
 template <typename T>
-void DiagoCusolver<T>::diag(
-    ModuleBase::MatrixBlock<T>& h_mat,
-    ModuleBase::MatrixBlock<T>& s_mat,
-    psi::Psi<T>& psi,
-    Real* eigenvalue_in)
+void DiagoCusolver<T>::diag(ModuleBase::MatrixBlock<T>& h_mat,
+                            ModuleBase::MatrixBlock<T>& s_mat,
+                            psi::Psi<T>& psi,
+                            Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoCusolver", "diag");
     ModuleBase::timer::start("DiagoCusolver", "cusolver");
