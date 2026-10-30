@@ -43,11 +43,12 @@ compare_hr_csr(){
 compare_eband_energy(){
 	local ref=$1
 	local cal=$2
+	local accuracy=${3:-4}
 	if ! test -f "$ref" || ! test -f "$cal"; then
 		echo "Error: can not find file $ref or $cal"
 		return 1
 	fi
-	python3 $COMPARE_SCRIPT <(sed '/^[[:space:]]*#/d' "$ref") <(sed '/^[[:space:]]*#/d' "$cal") 4
+	python3 $COMPARE_SCRIPT <(sed '/^[[:space:]]*#/d' "$ref") <(sed '/^[[:space:]]*#/d' "$cal") "$accuracy"
 }
 
 run_mat_dm1_props(){
@@ -241,7 +242,7 @@ if ! test -z "$has_xc" && [ "$has_xc" == 1 ]; then
 	oecal=OUT.autotest/eband_vxc.txt
 	python3 $COMPARE_SCRIPT $xcref $xccal 4
 	echo "CompareVXC_pass $?" >>$props_result_file
-	compare_eband_energy $oeref $oecal
+	compare_eband_energy $oeref $oecal 5
     echo "CompareOrbXC_pass $?" >>$props_result_file
 fi
 

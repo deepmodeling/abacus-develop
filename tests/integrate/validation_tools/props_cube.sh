@@ -184,10 +184,18 @@ if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ]; then
 	local wfc_ref_nohdr
 	wfc_cal_nohdr=$(mktemp)
 	wfc_ref_nohdr=$(mktemp)
-	sed '/^[[:space:]]*#/d' "$wfc_cal" >"$wfc_cal_nohdr"
-	sed '/^[[:space:]]*#/d' "$wfc_ref" >"$wfc_ref_nohdr"
-	python3 $COMPARE_SCRIPT "$wfc_cal_nohdr" "$wfc_ref_nohdr" 8 -abs 1
-	local wfc_pass=$?
+	# A missing source file makes sed leave a truncated temporary file, and
+	# CompareFile.py would then compare a nonempty reference against nothing.
+	# Detect that preprocessing failure here instead of trusting the
+	# downstream comparison.
+	if ! sed '/^[[:space:]]*#/d' "$wfc_cal" >"$wfc_cal_nohdr" \
+		|| ! sed '/^[[:space:]]*#/d' "$wfc_ref" >"$wfc_ref_nohdr"; then
+		echo "Error: failed to strip comment lines from $wfc_cal or $wfc_ref"
+		wfc_pass=1
+	else
+		python3 $COMPARE_SCRIPT "$wfc_cal_nohdr" "$wfc_ref_nohdr" 8 -abs 1
+		wfc_pass=$?
+	fi
 	rm -f "$wfc_cal_nohdr" "$wfc_ref_nohdr"
 	echo "Compare_wfc_lcao_pass $wfc_pass" >>$props_result_file
 fi
