@@ -11,31 +11,13 @@
 #include "source_base/module_out/binstream.h"
 #include "source_base/module_out/filename.h"
 #include "source_base/formatter.h"
+#include "source_io/module_output/spin_tag.h"
 #include "source_main/version.h"
 
 #include <ctime>
 
 namespace
 {
-
-/**
- * @brief compact spin-channel label for the per-file provenance header.
- *
- * The header goes into a per-spin file (e.g. wfk1s1_nao.txt), so the compact
- * form " (spin up)" is used, matching the bands1.txt/bands2.txt header.
- *
- * @param is spin channel index, -1 when undefined
- * @param nspin number of spins; the label is dropped unless nspin == 2
- * @return " (spin up)", " (spin down)" or an empty string
- */
-std::string wfc_spin_tag(const int is, const int nspin)
-{
-    if (nspin != 2 || is < 0)
-    {
-        return "";
-    }
-    return (is == 0) ? " (spin up)" : " (spin down)";
-}
 
 /**
  * @brief spin channel of a global k-point index, consistent with the s{N}
@@ -383,7 +365,7 @@ void write_wfc_nao(const int out_type,
             // provenance header (version, timestamp, ionic step, spin tag)
             const int ik0 = ik2iktot[ik];
             const int is = wfc_spin_index(ik0, nspin, nkstot);
-            const std::string spin_tag = wfc_spin_tag(is, nspin);
+            const std::string spin_tag = ModuleIO::make_compact_spin_tag(is, nspin);
             const std::string header = build_wfc_nao_header(istep, spin_tag);
             if (std::is_same<double, T>::value)
             {

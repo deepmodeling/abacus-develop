@@ -21,27 +21,6 @@ namespace
 {
 
 /**
- * @brief spin-channel label for the band provenance header.
- *
- * Unlike ModuleIO::make_spin_tag, which pads "up" so that both channels share
- * the same width wherever they are printed next to each other, the band header
- * goes into a per-spin file (bands1.txt/bands2.txt), so the compact form
- * " (spin up)" is used.
- *
- * @param is spin channel index
- * @param nspin number of spins, padding is dropped unless nspin == 2
- * @return " (spin up)", " (spin down)" or an empty string
- */
-std::string band_spin_tag(const int is, const int nspin)
-{
-    if (nspin != 2 || is < 0)
-    {
-        return "";
-    }
-    return (is == 0) ? " (spin up)" : " (spin down)";
-}
-
-/**
  * @brief build the STRU-style provenance header that precedes the k-point
  *        block of one ionic step in a band output file.
  *
@@ -95,7 +74,8 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
             const std::string log_spin_tag = ModuleIO::make_spin_tag(is, nspin0);
             ofs_running << " Write eigenvalues" << log_spin_tag << " to file: " << eig_file << std::endl;
 
-            const std::string header = build_band_header(istep, band_spin_tag(is, nspin0));
+            const std::string header_spin_tag = ModuleIO::make_compact_spin_tag(is, nspin0);
+            const std::string header = build_band_header(istep, header_spin_tag);
             const double eshift = 0.0;
             nscf_bands(is,
                        eig_file,
