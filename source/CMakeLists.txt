@@ -608,20 +608,6 @@ add_subdirectory(source_lcao/module_rdmft) # add by jghan
 
 add_library(driver OBJECT source_main/driver.cpp source_main/driver_run.cpp)
 
-add_executable(
-  abacus_input_doc
-  source_io/input_help_main.cpp
-)
-
-target_link_libraries(
-  abacus_input_doc
-  PRIVATE io_input_help
-          io_input
-          parameter
-          base
-          device
-          abacus::link_libs)
-
 # __USE_NVTX gates the NVTX code in source_base/timer.cpp (target base) and
 # source_main/driver.cpp (target driver), so it must be defined on those
 # OBJECT libraries, not only on the final executable (whose sole TU, main.cpp,
