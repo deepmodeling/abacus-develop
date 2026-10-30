@@ -22,14 +22,12 @@ Magnetism::Magnetism()
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
 }
-Magnetism::~Magnetism()
-{
-}
+Magnetism::~Magnetism() {}
 
 class Setcell
 {
   public:
-    static void setupcell(UnitCell& ucell)
+    static void setupcell(UnitCell &ucell)
     {
         ucell.ntype = 1;
 
@@ -104,7 +102,7 @@ class Setcell
     ///        from the global parameter singleton, and the output/readin
     ///        directories are passed explicitly to setup(), write_restart()
     ///        and restart().
-    static void parameters(Input_para& input)
+    static void parameters(Input_para &input)
     {
         input.search_radius = 8.5 * ModuleBase::ANGSTROM_AU;
         input.esolver_type = "lj";
@@ -140,7 +138,7 @@ class Setcell
         input.mdp.md_tolerance = 0;
     };
 
-    static MDCell setup_mdcell(UnitCell& ucell)
+    static MDCell setup_mdcell(UnitCell &ucell)
     {
         std::vector<LocalAtom> owned_atoms;
         std::vector<std::string> type_labels;
@@ -153,39 +151,41 @@ class Setcell
             type_atom_counts.push_back(ucell.atoms[it].na);
             for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
             {
-                owned_atoms.push_back(LocalAtom(ucell.atoms[it].tau[ia],
-                                                ucell.atoms[it].taud[ia],
-                                                ucell.atoms[it].vel[ia],
-                                                ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                                ucell.atoms[it].mbl[ia],
-                                                ucell.atoms[it].mass / ModuleBase::AU_to_MASS,
-                                                it,
-                                                ia,
-                                                0));
+                owned_atoms.push_back(LocalAtom(
+                    ucell.atoms[it].tau[ia],
+                    ucell.atoms[it].taud[ia],
+                    ucell.atoms[it].vel[ia],
+                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                    ucell.atoms[it].mbl[ia],
+                    ucell.atoms[it].mass / ModuleBase::AU_to_MASS,
+                    it,
+                    ia,
+                    0));
             }
         }
 
         MDCell mdcell;
-        mdcell.initialize_from_owned_atoms(ucell.latvec,
-                                           ucell.GT,
-                                           ucell.lat0,
-                                           ucell.omega,
-                                           ucell.nat,
-                                           owned_atoms,
-                                           type_labels,
-                                           type_masses,
-                                           type_atom_counts,
-                                           0.0,
-                                           ModuleBase::world_comm_domain());
+        mdcell.initialize_from_owned_atoms(
+            ucell.latvec,
+            ucell.GT,
+            ucell.lat0,
+            ucell.omega,
+            ucell.nat,
+            owned_atoms,
+            type_labels,
+            type_masses,
+            type_atom_counts,
+            0.0,
+            ModuleBase::world_comm_domain());
         return mdcell;
     }
 
-    static ModuleBase::Vector3<double> fractional_displacement(const LocalAtom& atom)
+    static ModuleBase::Vector3<double> fractional_displacement(const LocalAtom &atom)
     {
         const ModuleBase::Vector3<double> initial_frac[] = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                                            ModuleBase::Vector3<double>(0.52, 0.52, 0.0),
-                                                            ModuleBase::Vector3<double>(0.51, 0.0, 0.5),
-                                                            ModuleBase::Vector3<double>(0.0, 0.53, 0.5)};
+            ModuleBase::Vector3<double>(0.52, 0.52, 0.0),
+            ModuleBase::Vector3<double>(0.51, 0.0, 0.5),
+            ModuleBase::Vector3<double>(0.0, 0.53, 0.5)};
         ModuleBase::Vector3<double> displacement = atom.frac - initial_frac[atom.type_index];
         displacement.x -= std::floor(displacement.x + 0.5);
         displacement.y -= std::floor(displacement.y + 0.5);

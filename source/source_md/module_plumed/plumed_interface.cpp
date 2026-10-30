@@ -11,7 +11,7 @@
 extern "C"
 {
     plumed_handle plumed_create();
-    void plumed_cmd(plumed_handle plumed, const char* key, const void* val);
+    void plumed_cmd(plumed_handle plumed, const char *key, const void *val);
     void plumed_finalize(plumed_handle plumed);
 }
 #endif
@@ -31,12 +31,13 @@ constexpr double AU_TIME_TO_PS = 2.418884326509e-5;       // atomic unit of time
 constexpr double ELECTRON_MASS_TO_AMU = 5.48579909065e-4; // 1 electron mass = 5.48579909065e-4 amu
 } // namespace
 
-PlumedInterface::~PlumedInterface()
-{
-    this->finalize();
-}
+PlumedInterface::~PlumedInterface() { this->finalize(); }
 
-bool PlumedInterface::init(const std::string& plumed_file, const int nat, const double dt_au, const double* masses_au)
+bool PlumedInterface::init(
+    const std::string &plumed_file,
+    const int nat,
+    const double dt_au,
+    const double *masses_au)
 {
 #ifdef USE_PLUMED
     this->active_run_ = true;
@@ -54,8 +55,8 @@ bool PlumedInterface::init(const std::string& plumed_file, const int nat, const 
     this->has_plumed_ = true;
     if (this->plumed_.p == nullptr)
     {
-        ModuleBase::WARNING_QUIT("ModulePlumed::PlumedInterface::init",
-                                 "could not create a PLUMED object, check the PLUMED installation");
+        ModuleBase::WARNING_QUIT(
+            "ModulePlumed::PlumedInterface::init", "could not create a PLUMED object, check the PLUMED installation");
     }
 
     int real_precision = 8; // double precision reals
@@ -64,7 +65,7 @@ bool PlumedInterface::init(const std::string& plumed_file, const int nat, const 
     double energy_units = HARTREE_TO_KJMOL;
     double time_units = AU_TIME_TO_PS;
     double timestep = dt_au;
-    const char* engine = "abacus";
+    const char *engine = "abacus";
 
     // commands that configure PLUMED must be issued before "init"
     plumed_cmd(this->plumed_, "setRealPrecision", &real_precision);
@@ -84,14 +85,15 @@ bool PlumedInterface::init(const std::string& plumed_file, const int nat, const 
     (void)dt_au;
     (void)masses_au;
 
-    ModuleBase::WARNING_QUIT("ModulePlumed::PlumedInterface::init",
-                             "plumed was requested in INPUT but ABACUS was not compiled with PLUMED support; "
-                             "reconfigure with -DENABLE_PLUMED=ON");
+    ModuleBase::WARNING_QUIT(
+        "ModulePlumed::PlumedInterface::init",
+        "plumed was requested in INPUT but ABACUS was not compiled with PLUMED support; "
+        "reconfigure with -DENABLE_PLUMED=ON");
     return false;
 #endif
 }
 
-void PlumedInterface::prepare_virial_(const double* cell, const double* virial)
+void PlumedInterface::prepare_virial_(const double *cell, const double *virial)
 {
     // The Box (cell) data receives forces whenever a periodic collective
     // variable is biased, so PLUMED always needs a valid force buffer here;
@@ -110,21 +112,22 @@ void PlumedInterface::prepare_virial_(const double* cell, const double* virial)
     {
         return;
     }
-    const double volume = std::fabs(cell[0] * (cell[4] * cell[8] - cell[5] * cell[7])
-                                    - cell[1] * (cell[3] * cell[8] - cell[5] * cell[6])
-                                    + cell[2] * (cell[3] * cell[7] - cell[4] * cell[6]));
+    const double volume = std::fabs(
+        cell[0] * (cell[4] * cell[8] - cell[5] * cell[7]) - cell[1] * (cell[3] * cell[8] - cell[5] * cell[6]) +
+        cell[2] * (cell[3] * cell[7] - cell[4] * cell[6]));
     for (int i = 0; i < 9; ++i)
     {
         this->virial_buf_[i] = -virial[i] * volume;
     }
 }
 
-void PlumedInterface::compute_forces_(const int istep,
-                                      const ModuleBase::Vector3<double>* pos,
-                                      double* force,
-                                      const double* cell,
-                                      const double potential,
-                                      const double* virial)
+void PlumedInterface::compute_forces_(
+    const int istep,
+    const ModuleBase::Vector3<double> *pos,
+    double *force,
+    const double *cell,
+    const double potential,
+    const double *virial)
 {
 #ifdef USE_PLUMED
     int step = istep;
@@ -133,7 +136,8 @@ void PlumedInterface::compute_forces_(const int istep,
     plumed_cmd(this->plumed_, "setStep", &step);
     // Vector3<double> is a plain {double x, y, z} structure, so the arrays can
     // be handed to PLUMED as contiguous [nat][3] buffers
-    plumed_cmd(this->plumed_, "setPositions", reinterpret_cast<double*>(const_cast<ModuleBase::Vector3<double>*>(pos)));
+    plumed_cmd(
+        this->plumed_, "setPositions", reinterpret_cast<double *>(const_cast<ModuleBase::Vector3<double> *>(pos)));
     plumed_cmd(this->plumed_, "setMasses", this->masses_amu_.data());
     plumed_cmd(this->plumed_, "setBox", cell);
     plumed_cmd(this->plumed_, "setEnergy", &energy);
@@ -161,19 +165,26 @@ void PlumedInterface::compute_forces_(const int istep,
 #endif
 }
 
-void PlumedInterface::move(const int istep,
-                           const ModuleBase::Vector3<double>* pos,
-                           ModuleBase::Vector3<double>* force,
-                           const double* cell,
-                           const double potential,
-                           const double* virial)
+void PlumedInterface::move(
+    const int istep,
+    const ModuleBase::Vector3<double> *pos,
+    ModuleBase::Vector3<double> *force,
+    const double *cell,
+    const double potential,
+    const double *virial)
 {
 #ifdef USE_PLUMED
     if (!this->active_run_)
     {
         return;
     }
-    this->compute_forces_(istep, pos, reinterpret_cast<double*>(force), cell, potential, virial);
+    this->compute_forces_(
+        istep,
+        pos,
+        reinterpret_cast<double *>(force),
+        cell,
+        potential,
+        virial);
 #else
     (void)istep;
     (void)pos;

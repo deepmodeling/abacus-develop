@@ -32,9 +32,9 @@
 namespace Run_MD
 {
 
-void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp)
+void prepare_mdcell(MDCell &mdcell, const Parameter &param_in, DomainDecomposition &decomp)
 {
-    const Input_para& input = param_in.inp;
+    const Input_para &input = param_in.inp;
     std::vector<int> effective_replicate = input.cell_replica;
     if (input.mdp.md_restart)
     {
@@ -42,20 +42,26 @@ void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecompositi
     }
 
     const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
-    mdcell = MDCellReader::read_stru(param_in.globalv.global_in_stru,
-                                     effective_replicate,
-                                     input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A,
-                                     comm_domain,
-                                     decomp);
+    mdcell = MDCellReader::read_stru(
+        param_in.globalv.global_in_stru,
+        effective_replicate,
+        input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A,
+        comm_domain,
+        decomp);
     GlobalV::ofs_running << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
     GlobalV::ofs_running << std::endl;
 }
 
-void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp)
+void prepare_mdcell(MDCell &mdcell, UnitCell &ucell, DomainDecomposition &decomp)
 {
     const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
-    decomp.init(comm_domain, ucell.latvec, ucell.lat0, 0.0, 0.0);
+    decomp.init(
+        comm_domain,
+        ucell.latvec,
+        ucell.lat0,
+        0.0,
+        0.0);
     const std::vector<LocalAtom> owned_atoms = decomp.split_owned_atoms_from_ucell(ucell);
     std::vector<std::string> type_labels;
     std::vector<double> type_masses;
@@ -66,17 +72,18 @@ void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp
         type_masses.push_back(ucell.atoms[it].mass);
         type_atom_counts.push_back(ucell.atoms[it].na);
     }
-    mdcell.initialize_from_owned_atoms(ucell.latvec,
-                                       ucell.GT,
-                                       ucell.lat0,
-                                       ucell.omega,
-                                       ucell.nat,
-                                       owned_atoms,
-                                       type_labels,
-                                       type_masses,
-                                       type_atom_counts,
-                                       0.0,
-                                       comm_domain);
+    mdcell.initialize_from_owned_atoms(
+        ucell.latvec,
+        ucell.GT,
+        ucell.lat0,
+        ucell.omega,
+        ucell.nat,
+        owned_atoms,
+        type_labels,
+        type_masses,
+        type_atom_counts,
+        0.0,
+        comm_domain);
     mdcell.set_backing_unitcell(ucell);
     mdcell.mutable_stru_meta() = unitcell::make_stru_meta(ucell);
 }
@@ -85,10 +92,10 @@ namespace
 {
 /// @brief collect the absolute Cartesian positions (in Bohr) of the atoms
 /// owned by this rank; the cell stores cart in units of the lattice constant
-void collect_plumed_positions(const MDCell& mdcell, std::vector<ModuleBase::Vector3<double>>& positions)
+void collect_plumed_positions(const MDCell &mdcell, std::vector<ModuleBase::Vector3<double>> &positions)
 {
     const double lat0 = mdcell.lat0();
-    const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    const std::vector<LocalAtom> &atoms = mdcell.owned_atoms();
     positions.resize(atoms.size());
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
@@ -97,9 +104,9 @@ void collect_plumed_positions(const MDCell& mdcell, std::vector<ModuleBase::Vect
 }
 
 /// @brief gather the atomic forces (in Hartree/Bohr)
-void collect_plumed_forces(const MDCell& mdcell, std::vector<ModuleBase::Vector3<double>>& forces)
+void collect_plumed_forces(const MDCell &mdcell, std::vector<ModuleBase::Vector3<double>> &forces)
 {
-    const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    const std::vector<LocalAtom> &atoms = mdcell.owned_atoms();
     forces.resize(atoms.size());
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
@@ -108,9 +115,9 @@ void collect_plumed_forces(const MDCell& mdcell, std::vector<ModuleBase::Vector3
 }
 
 /// @brief write the (PLUMED-biased) forces back into the cell
-void apply_plumed_forces(MDCell& mdcell, const std::vector<ModuleBase::Vector3<double>>& forces)
+void apply_plumed_forces(MDCell &mdcell, const std::vector<ModuleBase::Vector3<double>> &forces)
 {
-    std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    std::vector<LocalAtom> &atoms = mdcell.owned_atoms();
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
         atoms[i].force = forces[i];
@@ -118,10 +125,10 @@ void apply_plumed_forces(MDCell& mdcell, const std::vector<ModuleBase::Vector3<d
 }
 
 /// @brief 3x3 cell matrix (in Bohr, row-major) expected by PLUMED
-void collect_plumed_cell(const MDCell& mdcell, double* cell)
+void collect_plumed_cell(const MDCell &mdcell, double *cell)
 {
     const double lat0 = mdcell.lat0();
-    const double* latvec = &mdcell.latvec().e11; // unitless lattice vectors
+    const double *latvec = &mdcell.latvec().e11; // unitless lattice vectors
     for (int i = 0; i < 9; ++i)
     {
         cell[i] = latvec[i] * lat0;
@@ -129,36 +136,66 @@ void collect_plumed_cell(const MDCell& mdcell, double* cell)
 }
 } // namespace
 
-void md_line(MDCell& mdcell, ModuleESolver::ESolver* p_esolver, const Parameter& param_in, DomainDecomposition& decomp)
+void md_line(
+    MDCell &mdcell,
+    ModuleESolver::ESolver *p_esolver,
+    const Parameter &param_in,
+    DomainDecomposition &decomp)
 {
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::start("Run_MD", "md_line");
     /// determine the md_type
-    MD_base* mdrun = nullptr;
+    MD_base *mdrun = nullptr;
     /// the integrators take the values they use, not the whole Parameter
-    const MD_para& mdp = param_in.mdp;
+    const MD_para &mdp = param_in.mdp;
     const bool cal_stress = param_in.inp.cal_stress;
     const bool init_vel = param_in.inp.init_vel;
     const int my_rank = param_in.globalv.myrank;
     if (param_in.mdp.md_type == "fire")
     {
-        mdrun = new FIRE(mdp, cal_stress, init_vel, my_rank, param_in.inp.force_thr, mdcell);
+        mdrun = new FIRE(
+            mdp,
+            cal_stress,
+            init_vel,
+            my_rank,
+            param_in.inp.force_thr,
+            mdcell);
     }
     else if ((param_in.mdp.md_type == "nvt" && param_in.mdp.md_thermostat == "nhc") || param_in.mdp.md_type == "npt")
     {
-        mdrun = new Nose_Hoover(mdp, cal_stress, init_vel, my_rank, mdcell);
+        mdrun = new Nose_Hoover(
+            mdp,
+            cal_stress,
+            init_vel,
+            my_rank,
+            mdcell);
     }
     else if (param_in.mdp.md_type == "nve" || param_in.mdp.md_type == "nvt")
     {
-        mdrun = new Verlet(mdp, cal_stress, init_vel, my_rank, mdcell);
+        mdrun = new Verlet(
+            mdp,
+            cal_stress,
+            init_vel,
+            my_rank,
+            mdcell);
     }
     else if (param_in.mdp.md_type == "langevin")
     {
-        mdrun = new Langevin(mdp, cal_stress, init_vel, my_rank, mdcell);
+        mdrun = new Langevin(
+            mdp,
+            cal_stress,
+            init_vel,
+            my_rank,
+            mdcell);
     }
     else if (param_in.mdp.md_type == "msst")
     {
-        mdrun = new MSST(mdp, cal_stress, init_vel, my_rank, mdcell);
+        mdrun = new MSST(
+            mdp,
+            cal_stress,
+            init_vel,
+            my_rank,
+            mdcell);
     }
     else
     {
@@ -172,16 +209,18 @@ void md_line(MDCell& mdcell, ModuleESolver::ESolver* p_esolver, const Parameter&
     std::vector<ModuleBase::Vector3<double>> plumed_forces;
     double plumed_cell[9];
 
-    auto run_plumed_step = [&](const int istep) {
+    auto run_plumed_step = [&](const int istep)
+    {
         collect_plumed_positions(mdcell, plumed_positions);
         collect_plumed_forces(mdcell, plumed_forces);
         collect_plumed_cell(mdcell, plumed_cell);
-        plumed.move(istep,
-                    plumed_positions.data(),
-                    plumed_forces.data(),
-                    plumed_cell,
-                    mdrun->potential,
-                    param_in.inp.cal_stress ? mdrun->virial.c : nullptr);
+        plumed.move(
+            istep,
+            plumed_positions.data(),
+            plumed_forces.data(),
+            plumed_cell,
+            mdrun->potential,
+            param_in.inp.cal_stress ? mdrun->virial.c : nullptr);
         apply_plumed_forces(mdcell, plumed_forces);
     };
 
@@ -209,19 +248,20 @@ void md_line(MDCell& mdcell, ModuleESolver::ESolver* p_esolver, const Parameter&
 #endif
                 if (nproc > 1)
                 {
-                    ModuleBase::WARNING_QUIT("md_line",
-                                             "the PLUMED interface currently supports a single MPI rank only; "
-                                             "run the MD with one process (OpenMP threads are fine)");
+                    ModuleBase::WARNING_QUIT(
+                        "md_line", "the PLUMED interface currently supports a single MPI rank only; "
+                                   "run the MD with one process (OpenMP threads are fine)");
                 }
                 std::vector<double> plumed_masses(mdcell.owned_atoms().size());
                 for (std::size_t i = 0; i < mdcell.owned_atoms().size(); ++i)
                 {
                     plumed_masses[i] = mdcell.owned_atoms()[i].mass;
                 }
-                plumed.init(param_in.mdp.plumed_file,
-                            static_cast<int>(mdcell.owned_atoms().size()),
-                            mdrun->get_md_dt(),
-                            plumed_masses.data());
+                plumed.init(
+                    param_in.mdp.plumed_file,
+                    static_cast<int>(mdcell.owned_atoms().size()),
+                    mdrun->get_md_dt(),
+                    plumed_masses.data());
                 /// the initial configuration already carries positions and
                 /// forces, so PLUMED can be called right away
                 run_plumed_step(mdrun->step_ + mdrun->step_rst_);
@@ -237,14 +277,15 @@ void md_line(MDCell& mdcell, ModuleESolver::ESolver* p_esolver, const Parameter&
             mdrun->first_half(GlobalV::ofs_running);
 
             /// update force and virial due to the update of atom positions
-            MD_func::force_virial(p_esolver,
-                                  mdrun->step_,
-                                  mdcell,
-                                  decomp,
-                                  mdrun->potential,
-                                  param_in.inp.cal_stress,
-                                  mdrun->virial,
-                                  param_in.mdp.md_out_force);
+            MD_func::force_virial(
+                p_esolver,
+                mdrun->step_,
+                mdcell,
+                decomp,
+                mdrun->potential,
+                param_in.inp.cal_stress,
+                mdrun->virial,
+                param_in.mdp.md_out_force);
 
             if (plumed.active())
             {
@@ -256,19 +297,24 @@ void md_line(MDCell& mdcell, ModuleESolver::ESolver* p_esolver, const Parameter&
 
             mdrun->second_half();
 
-            MD_func::compute_stress(mdcell, param_in.inp.cal_stress, mdrun->virial, mdrun->stress);
+            MD_func::compute_stress(
+                mdcell,
+                param_in.inp.cal_stress,
+                mdrun->virial,
+                mdrun->stress);
             mdrun->t_current = MD_func::current_temp(mdrun->kinetic, mdcell, mdrun->frozen_freedom_);
         }
 
         mdrun->print_md(GlobalV::ofs_running, PARAM.inp.cal_stress);
         if (param_in.mdp.md_dumpfreq > 0 && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
         {
-            MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
-                               PARAM.globalv.global_out_dir,
-                               mdcell,
-                               mdp,
-                               cal_stress,
-                               mdrun->virial);
+            MD_func::dump_info(
+                mdrun->step_ + mdrun->step_rst_,
+                PARAM.globalv.global_out_dir,
+                mdcell,
+                mdp,
+                cal_stress,
+                mdrun->virial);
         }
 
         if (param_in.mdp.md_restartfreq > 0 && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)

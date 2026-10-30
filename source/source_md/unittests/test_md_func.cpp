@@ -16,13 +16,13 @@
 
 namespace
 {
-std::string make_dump_directory(const ModuleBase::CommunicationDomain& domain)
+std::string make_dump_directory(const ModuleBase::CommunicationDomain &domain)
 {
     std::string directory;
     if (domain.rank() == 0)
     {
         std::string pattern = testing::TempDir() + "abacus-md-dump-XXXXXX";
-        char* created = mkdtemp(&pattern[0]);
+        char *created = mkdtemp(&pattern[0]);
         if (created != nullptr)
         {
             directory = created;
@@ -67,24 +67,38 @@ TEST_P(MdDumpBatchTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
     const std::vector<double> masses(2, 1.0);
     const std::vector<std::int64_t> counts = {6, 7};
     MDCell cell;
-    cell.initialize_from_owned_atoms(lattice,
-                                     inverse,
-                                     1.0,
-                                     1.0,
-                                     total_atoms,
-                                     atoms,
-                                     labels,
-                                     masses,
-                                     counts,
-                                     0.0,
-                                     domain);
+    cell.initialize_from_owned_atoms(
+        lattice,
+        inverse,
+        1.0,
+        1.0,
+        total_atoms,
+        atoms,
+        labels,
+        masses,
+        counts,
+        0.0,
+        domain);
     const std::string directory = make_dump_directory(domain);
     ASSERT_FALSE(directory.empty());
     MD_para parameters;
     ModuleBase::matrix virial(3, 3);
-    MD_func::dump_info(0, directory, cell, parameters, false, virial);
+    MD_func::dump_info(
+        0,
+        directory,
+        cell,
+        parameters,
+        false,
+        virial);
     const int batch_bytes = GetParam();
-    MD_func::dump_info(1, directory, cell, parameters, false, virial, batch_bytes);
+    MD_func::dump_info(
+        1,
+        directory,
+        cell,
+        parameters,
+        false,
+        virial,
+        batch_bytes);
     if (domain.rank() == 0)
     {
         const std::string filename = directory + "MD_dump";
@@ -129,7 +143,7 @@ TEST_P(MdDumpBatchTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
                     if (domain.size() > 2)
                     {
                         // Reproduce the aggregate-only overflow: each rank fits on its own.
-                        for (const std::size_t bytes: rank_bytes)
+                        for (const std::size_t bytes : rank_bytes)
                         {
                             EXPECT_LE(bytes, 1024u);
                         }
@@ -174,7 +188,13 @@ TEST_P(MdDumpBatchTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
 }
 
 // One-row, several-row, and normal budgets must produce identical complete frames.
-INSTANTIATE_TEST_SUITE_P(BufferBudgets, MdDumpBatchTest, testing::Values(1, 512, 1024, 1048576));
+INSTANTIATE_TEST_SUITE_P(
+    BufferBudgets, MdDumpBatchTest,
+    testing::Values(
+        1,
+        512,
+        1024,
+        1048576));
 
 TEST(MdDumpMpiTest, BoundedGatherRejectsOversizedBatchesCollectively)
 {
@@ -206,12 +226,29 @@ TEST(MdDumpMpiTest, EmptyRanksCanWriteAnEmptyFrame)
     const std::vector<double> masses(1, 1.0);
     const std::vector<std::int64_t> counts(1, 0);
     MDCell cell;
-    cell.initialize_from_owned_atoms(lattice, inverse, 1.0, 1.0, 0, atoms, labels, masses, counts, 0.0, domain);
+    cell.initialize_from_owned_atoms(
+        lattice,
+        inverse,
+        1.0,
+        1.0,
+        0,
+        atoms,
+        labels,
+        masses,
+        counts,
+        0.0,
+        domain);
     const std::string directory = make_dump_directory(domain);
     ASSERT_FALSE(directory.empty());
     MD_para parameters;
     ModuleBase::matrix virial(3, 3);
-    MD_func::dump_info(0, directory, cell, parameters, false, virial);
+    MD_func::dump_info(
+        0,
+        directory,
+        cell,
+        parameters,
+        false,
+        virial);
     if (domain.rank() == 0)
     {
         const std::string filename = directory + "MD_dump";
@@ -227,12 +264,17 @@ TEST(MdDumpMpiTest, EmptyRanksCanWriteAnEmptyFrame)
 }
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int process_count = 1;
     int thread_count = 1;
     int rank = 0;
-    Parallel_Global::read_pal_param(argc, argv, process_count, thread_count, rank);
+    Parallel_Global::read_pal_param(
+        argc,
+        argv,
+        process_count,
+        thread_count,
+        rank);
     // These application communicators are not created by this focused test.
     POOL_WORLD = MPI_COMM_NULL;
     KP_WORLD = MPI_COMM_NULL;

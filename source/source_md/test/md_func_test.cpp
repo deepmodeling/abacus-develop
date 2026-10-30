@@ -10,10 +10,15 @@
 
 namespace
 {
-void initialize_mdcell_from_ucell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp)
+void initialize_mdcell_from_ucell(MDCell &mdcell, UnitCell &ucell, DomainDecomposition &decomp)
 {
     const ModuleBase::CommunicationDomain comm_domain = ModuleBase::world_comm_domain();
-    decomp.init(comm_domain, ucell.latvec, ucell.lat0, 0.0, 0.0);
+    decomp.init(
+        comm_domain,
+        ucell.latvec,
+        ucell.lat0,
+        0.0,
+        0.0);
     const std::vector<LocalAtom> owned_atoms = decomp.split_owned_atoms_from_ucell(ucell);
     std::vector<std::string> type_labels;
     std::vector<double> type_masses;
@@ -24,17 +29,18 @@ void initialize_mdcell_from_ucell(MDCell& mdcell, UnitCell& ucell, DomainDecompo
         type_masses.push_back(ucell.atoms[it].mass);
         type_atom_counts.push_back(ucell.atoms[it].na);
     }
-    mdcell.initialize_from_owned_atoms(ucell.latvec,
-                                       ucell.GT,
-                                       ucell.lat0,
-                                       ucell.omega,
-                                       ucell.nat,
-                                       owned_atoms,
-                                       type_labels,
-                                       type_masses,
-                                       type_atom_counts,
-                                       0.0,
-                                       comm_domain);
+    mdcell.initialize_from_owned_atoms(
+        ucell.latvec,
+        ucell.GT,
+        ucell.lat0,
+        ucell.omega,
+        ucell.nat,
+        owned_atoms,
+        type_labels,
+        type_masses,
+        type_atom_counts,
+        0.0,
+        comm_domain);
     mdcell.set_backing_unitcell(ucell);
 }
 } // namespace
@@ -116,7 +122,12 @@ TEST_F(MD_func_test, RescaleVel)
         vel[i].z = 0.3;
     }
     temperature = 300.0 / ModuleBase::Hartree_to_K;
-    MD_func::rescale_vel(natom, temperature, allmass, frozen_freedom, vel);
+    MD_func::rescale_vel(
+        natom,
+        temperature,
+        allmass,
+        frozen_freedom,
+        vel);
 
     EXPECT_DOUBLE_EQ(vel[0].x, 4.579010775069125e-05);
     EXPECT_DOUBLE_EQ(vel[0].y, 9.15802155013825e-05);
@@ -138,11 +149,15 @@ TEST_F(MD_func_test, compute_stress)
     MDCell mdcell;
     DomainDecomposition decomp;
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
-    for (LocalAtom& atom: mdcell.owned_atoms())
+    for (LocalAtom &atom : mdcell.owned_atoms())
     {
         atom.vel = test_velocity;
     }
-    MD_func::compute_stress(mdcell, true, virial, stress);
+    MD_func::compute_stress(
+        mdcell,
+        true,
+        virial,
+        stress);
     EXPECT_DOUBLE_EQ(stress(0, 0), 2.9128300667662788);
     EXPECT_DOUBLE_EQ(stress(0, 1), 5.8256601335325575);
     EXPECT_DOUBLE_EQ(stress(0, 2), 8.7384902002988341);
@@ -159,11 +174,17 @@ TEST_F(MD_func_test, dump_info)
     MDCell mdcell;
     DomainDecomposition decomp;
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
-    for (LocalAtom& atom: mdcell.owned_atoms())
+    for (LocalAtom &atom : mdcell.owned_atoms())
     {
         atom.vel = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
     }
-    MD_func::dump_info(0, out_dir, mdcell, inp.mdp, inp.cal_stress, virial);
+    MD_func::dump_info(
+        0,
+        out_dir,
+        mdcell,
+        inp.mdp,
+        inp.cal_stress,
+        virial);
     std::ifstream ifs("MD_dump");
     std::string output_str;
     getline(ifs, output_str);
@@ -191,25 +212,35 @@ TEST_F(MD_func_test, dump_info)
         output_str,
         testing::HasSubstr("INDEX    LABEL    POSITION (Angstrom)    FORCE (eV/Angstrom)    VELOCITY (Angstrom/fs)"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  1  Ar  2.751720222021  2.751720222021  0.000000000000  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  1  Ar  2.751720222021  2.751720222021  0.000000000000  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  2  Ar  2.698802525444  0.000000000000  2.645884828867  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  2  Ar  2.698802525444  0.000000000000  2.645884828867  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  3  Ar  0.000000000000  2.804637918599  2.645884828867  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  3  Ar  0.000000000000  2.804637918599  2.645884828867  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     ifs.close();
 
     // append
-    MD_func::dump_info(1, out_dir, mdcell, inp.mdp, inp.cal_stress, virial);
+    MD_func::dump_info(
+        1,
+        out_dir,
+        mdcell,
+        inp.mdp,
+        inp.cal_stress,
+        virial);
     std::ifstream ifs2("MD_dump");
     getline(ifs2, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));
@@ -236,21 +267,25 @@ TEST_F(MD_func_test, dump_info)
         output_str,
         testing::HasSubstr("INDEX    LABEL    POSITION (Angstrom)    FORCE (eV/Angstrom)    VELOCITY (Angstrom/fs)"));
     getline(ifs2, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  1  Ar  2.751720222021  2.751720222021  0.000000000000  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  1  Ar  2.751720222021  2.751720222021  0.000000000000  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  2  Ar  2.698802525444  0.000000000000  2.645884828867  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  2  Ar  2.698802525444  0.000000000000  2.645884828867  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  3  Ar  0.000000000000  2.804637918599  2.645884828867  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  3  Ar  0.000000000000  2.804637918599  2.645884828867  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2, output_str);
     getline(ifs2, output_str);
     getline(ifs2, output_str);
@@ -278,21 +313,25 @@ TEST_F(MD_func_test, dump_info)
         output_str,
         testing::HasSubstr("INDEX    LABEL    POSITION (Angstrom)    FORCE (eV/Angstrom)    VELOCITY (Angstrom/fs)"));
     getline(ifs2, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  0  Ar  0.000000000000  0.000000000000  0.000000000000  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  1  Ar  2.751720222021  2.751720222021  0.000000000000  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  1  Ar  2.751720222021  2.751720222021  0.000000000000  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  2  Ar  2.698802525444  0.000000000000  2.645884828867  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  2  Ar  2.698802525444  0.000000000000  2.645884828867  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     getline(ifs2, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr("  3  Ar  0.000000000000  2.804637918599  2.645884828867  0.000000000000  "
-                                   "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
+    EXPECT_THAT(
+        output_str, testing::HasSubstr(
+                        "  3  Ar  0.000000000000  2.804637918599  2.645884828867  0.000000000000  "
+                        "0.000000000000  0.000000000000  0.000000000000  0.000000000000  0.000000000000"));
     ifs2.close();
 
     remove("MD_dump");
@@ -348,7 +387,11 @@ TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     int istep = -1;
     double temperature = 0.0;
-    MD_func::current_md_info(mdcell, "./", istep, temperature);
+    MD_func::current_md_info(
+        mdcell,
+        "./",
+        istep,
+        temperature);
 
     EXPECT_EQ(istep, 123);
     EXPECT_DOUBLE_EQ(temperature, 0.0);
@@ -362,7 +405,7 @@ TEST_F(MD_func_test, global_dof_mdcell)
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     EXPECT_EQ(MD_func::global_dof(mdcell), 9);
 
-    for (LocalAtom& atom: mdcell.owned_atoms())
+    for (LocalAtom &atom : mdcell.owned_atoms())
     {
         atom.mbl.x = 0;
     }
@@ -376,5 +419,11 @@ TEST_F(MD_func_test, current_step_warning)
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     int istep = 0;
     double temperature = 0.0;
-    EXPECT_EXIT(MD_func::current_md_info(mdcell, "./", istep, temperature), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(
+        MD_func::current_md_info(
+            mdcell,
+            "./",
+            istep,
+            temperature),
+        ::testing::ExitedWithCode(1), "");
 }

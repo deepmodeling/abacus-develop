@@ -11,7 +11,7 @@
 /// be stored by value and initialized to a null pointer
 struct plumed_handle
 {
-    void* p;
+    void *p;
 };
 
 namespace ModulePlumed
@@ -57,8 +57,8 @@ class PlumedInterface
     PlumedInterface() = default;
     ~PlumedInterface();
 
-    PlumedInterface(const PlumedInterface&) = delete;
-    PlumedInterface& operator=(const PlumedInterface&) = delete;
+    PlumedInterface(const PlumedInterface &) = delete;
+    PlumedInterface &operator=(const PlumedInterface &) = delete;
 
     /**
      * @brief create a PLUMED object and read the PLUMED input file
@@ -72,7 +72,11 @@ class PlumedInterface
      *                    masses), nat entries
      * @return true when the interface is ready to be used in the MD loop
      */
-    bool init(const std::string& plumed_file, const int nat, const double dt_au, const double* masses_au);
+    bool init(
+        const std::string &plumed_file,
+        const int nat,
+        const double dt_au,
+        const double *masses_au);
 
     /**
      * @brief one MD step: hand over the configuration, let PLUMED compute the
@@ -88,34 +92,33 @@ class PlumedInterface
      * @param virial    [in] 3x3 virial in Hartree (=-stress * volume), or
      *                  nullptr when the stress is not available
      */
-    void move(const int istep,
-              const ModuleBase::Vector3<double>* pos,
-              ModuleBase::Vector3<double>* force,
-              const double* cell,
-              const double potential,
-              const double* virial);
+    void move(
+        const int istep,
+        const ModuleBase::Vector3<double> *pos,
+        ModuleBase::Vector3<double> *force,
+        const double *cell,
+        const double potential,
+        const double *virial);
 
     /// @brief finalize PLUMED (flushes the COLVAR and other output files)
     void finalize();
 
     /// @brief whether PLUMED is active in this run
-    bool active() const
-    {
-        return this->active_run_;
-    }
+    bool active() const { return this->active_run_; }
 
   private:
     /// @brief register the configuration of one step with PLUMED and let it
     /// compute the collective variables and the biasing forces
-    void compute_forces_(const int istep,
-                         const ModuleBase::Vector3<double>* pos,
-                         double* force,
-                         const double* cell,
-                         const double potential,
-                         const double* virial);
+    void compute_forces_(
+        const int istep,
+        const ModuleBase::Vector3<double> *pos,
+        double *force,
+        const double *cell,
+        const double potential,
+        const double *virial);
 
     /// @brief build the 3x3 virial (in energy units) handed over to PLUMED
-    void prepare_virial_(const double* cell, const double* virial);
+    void prepare_virial_(const double *cell, const double *virial);
 
     plumed_handle plumed_{nullptr};  ///< handle returned by plumed_create()
     bool has_plumed_ = false;        ///< whether a PLUMED object is alive

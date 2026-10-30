@@ -52,7 +52,7 @@ TEST(RunMDTest, prepare_mdcell_from_unitcell)
     ASSERT_EQ(mdcell.owned_atoms().size(), 1);
     EXPECT_TRUE(mdcell.has_backing_unitcell());
     EXPECT_EQ(&mdcell.backing_unitcell(), &ucell);
-    const LocalAtom& atom = mdcell.owned_atoms()[0];
+    const LocalAtom &atom = mdcell.owned_atoms()[0];
     EXPECT_NEAR(atom.frac.x, 0.8, 1.0e-12);
     EXPECT_NEAR(atom.frac.y, 0.25, 1.0e-12);
     EXPECT_NEAR(atom.frac.z, 0.5, 1.0e-12);

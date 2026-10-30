@@ -29,7 +29,18 @@ MDCell make_position_test_cell()
     const std::vector<double> masses(1, 1.0);
     const std::vector<std::int64_t> counts(1, 2);
     MDCell cell;
-    cell.initialize_from_owned_atoms(lattice, inverse, 1.0, 1.0, 2, atoms, labels, masses, counts, 0.0, domain);
+    cell.initialize_from_owned_atoms(
+        lattice,
+        inverse,
+        1.0,
+        1.0,
+        2,
+        atoms,
+        labels,
+        masses,
+        counts,
+        0.0,
+        domain);
     return cell;
 }
 
@@ -40,8 +51,13 @@ TEST(MdPositionTest, TinyNegativeDisplacementRemainsInsideHalfOpenCell)
     parameters.md_dt = ModuleBase::AU_to_FS;
     parameters.md_tfirst = 0.0;
     parameters.md_tlast = 0.0;
-    MD_base integrator(parameters, false, true, 0, cell);
-    LocalAtom& moving = cell.owned_atoms()[0];
+    MD_base integrator(
+        parameters,
+        false,
+        true,
+        0,
+        cell);
+    LocalAtom &moving = cell.owned_atoms()[0];
     moving.frac.set(0.0, 0.0, 0.0);
     moving.cart.set(0.0, 0.0, 0.0);
     moving.vel.set(-1.0e-21, -2.0e-21, -3.0e-21);
@@ -63,17 +79,22 @@ TEST(MdPositionTest, FiniteBoundaryCrossingsAndFrozenComponentsKeepTheirPosition
     parameters.md_dt = ModuleBase::AU_to_FS;
     parameters.md_tfirst = 0.0;
     parameters.md_tlast = 0.0;
-    MD_base integrator(parameters, false, true, 0, cell);
+    MD_base integrator(
+        parameters,
+        false,
+        true,
+        0,
+        cell);
     cell.owned_atoms()[0].vel.set(-0.5, 1.75, -1.25);
     cell.owned_atoms()[1].mbl.set(0, 0, 0);
     cell.owned_atoms()[1].vel.set(-0.5, 1.75, -1.25);
     std::ofstream log;
     integrator.first_half(log);
-    const LocalAtom& moving = cell.owned_atoms()[0];
+    const LocalAtom &moving = cell.owned_atoms()[0];
     EXPECT_DOUBLE_EQ(moving.frac.x, 0.75);
     EXPECT_DOUBLE_EQ(moving.frac.y, 0.25);
     EXPECT_DOUBLE_EQ(moving.frac.z, 0.5);
-    const LocalAtom& frozen = cell.owned_atoms()[1];
+    const LocalAtom &frozen = cell.owned_atoms()[1];
     EXPECT_DOUBLE_EQ(frozen.frac.x, 0.25);
     EXPECT_DOUBLE_EQ(frozen.frac.y, 0.5);
     EXPECT_DOUBLE_EQ(frozen.frac.z, 0.75);

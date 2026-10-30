@@ -30,11 +30,12 @@ class MD_base
      *                   builds, where MDCell cannot supply it
      * @param mdcell_in mdcell information
      */
-    MD_base(const MD_para& mdp_in,
-            const bool cal_stress_in,
-            const bool init_vel,
-            const int my_rank_in,
-            MDCell& mdcell_in);
+    MD_base(
+        const MD_para &mdp_in,
+        const bool cal_stress_in,
+        const bool init_vel,
+        const int my_rank_in,
+        MDCell &mdcell_in);
     virtual ~MD_base();
 
     /**
@@ -43,16 +44,15 @@ class MD_base
      * @param p_esolver the energy solver used in md
      * @param global_readin_dir directory of files for reading
      */
-    virtual void setup(ModuleESolver::ESolver* p_esolver,
-                       const std::string& global_readin_dir,
-                       DomainDecomposition& decomp);
+    virtual void setup(
+        ModuleESolver::ESolver *p_esolver, const std::string &global_readin_dir, DomainDecomposition &decomp);
 
     /**
      * @brief the first half of equation of motion, update velocities and
      * positions
      * @param ofs determine the output files
      */
-    virtual void first_half(std::ofstream& ofs);
+    virtual void first_half(std::ofstream &ofs);
 
     /**
      * @brief the second half of equation of motion, update velocities
@@ -64,13 +64,13 @@ class MD_base
      * @param ofs determine the output files
      * @param cal_stress whether calculate and output stress
      */
-    virtual void print_md(std::ofstream& ofs, const bool& cal_stress);
+    virtual void print_md(std::ofstream &ofs, const bool &cal_stress);
 
     /**
      * @brief write the information into files used for MD restarting
      * @param global_out_dir directory of output files
      */
-    virtual void write_restart(const std::string& global_out_dir);
+    virtual void write_restart(const std::string &global_out_dir);
 
     /**
      * @brief restart MD when md_restart is true
@@ -81,7 +81,7 @@ class MD_base
      *
      * @param global_readin_dir directory of files for reading
      */
-    virtual void restart(const std::string& global_readin_dir);
+    virtual void restart(const std::string &global_readin_dir);
 
   protected:
     /**
@@ -97,10 +97,7 @@ class MD_base
 
   public:
     /// @brief the time increment in a.u., converted from mdp.md_dt
-    double get_md_dt() const
-    {
-        return md_dt;
-    }
+    double get_md_dt() const { return md_dt; }
 
     bool stop;                    ///< MD stop or not
     double t_current;             ///< current temperature
@@ -113,8 +110,8 @@ class MD_base
     double kinetic;               ///< kinetic energy
 
   protected:
-    const MD_para& mdp;   ///< input parameters used in md
-    MDCell& mdcell;       ///< mdcell information
+    const MD_para &mdp;   ///< input parameters used in md
+    MDCell &mdcell;       ///< mdcell information
     double energy_ = 0.0; ///< total energy of the system
 
     bool cal_stress;  ///< whether calculate stress

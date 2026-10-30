@@ -29,8 +29,7 @@ class MdTestBase : public testing::Test
     }
 };
 
-template <class Integrator>
-class MdIntegratorFixture : public MdTestBase
+template <class Integrator> class MdIntegratorFixture : public MdTestBase
 {
   protected:
     MDCell mdcell;
@@ -43,9 +42,19 @@ class MdIntegratorFixture : public MdTestBase
     {
         MdTestBase::SetUp();
         mdcell = Setcell::setup_mdcell(ucell);
-        decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
+        decomp.init(
+            ModuleBase::world_comm_domain(),
+            mdcell.latvec(),
+            mdcell.lat0(),
+            0.0,
+            0.0);
         p_esolver->before_all_runners(mdcell, inp);
-        mdrun.reset(new Integrator(this->inp.mdp, this->inp.cal_stress, this->inp.init_vel, /*my_rank=*/0, mdcell));
+        mdrun.reset(new Integrator(
+            this->inp.mdp,
+            this->inp.cal_stress,
+            this->inp.init_vel,
+            /*my_rank=*/0,
+            mdcell));
         mdrun->setup(p_esolver.get(), readin_dir, decomp);
     }
 };
@@ -59,11 +68,11 @@ class MdFuncTestFixture : public testing::Test
     std::vector<ModuleBase::Vector3<double>> vel_store;
     std::vector<ModuleBase::Vector3<int>> ionmbl_store;
     std::vector<ModuleBase::Vector3<double>> force_store;
-    double* allmass = nullptr;
-    ModuleBase::Vector3<double>* pos = nullptr;
-    ModuleBase::Vector3<double>* vel = nullptr;
-    ModuleBase::Vector3<int>* ionmbl = nullptr;
-    ModuleBase::Vector3<double>* force = nullptr;
+    double *allmass = nullptr;
+    ModuleBase::Vector3<double> *pos = nullptr;
+    ModuleBase::Vector3<double> *vel = nullptr;
+    ModuleBase::Vector3<int> *ionmbl = nullptr;
+    ModuleBase::Vector3<double> *force = nullptr;
     ModuleBase::matrix virial;
     ModuleBase::matrix stress;
     double potential = 0.0;
@@ -99,7 +108,7 @@ class LjPotTestFixture : public testing::Test
 {
   protected:
     std::vector<ModuleBase::Vector3<double>> force_store;
-    ModuleBase::Vector3<double>* force = nullptr;
+    ModuleBase::Vector3<double> *force = nullptr;
     ModuleBase::matrix stress;
     double potential = 0.0;
     int natom = 0;

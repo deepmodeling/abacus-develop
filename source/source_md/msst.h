@@ -16,46 +16,36 @@
 class MSST : public MD_base
 {
   public:
-    MSST(const MD_para& mdp_in, const bool cal_stress_in, const bool init_vel, const int my_rank_in, MDCell& mdcell_in);
+    MSST(
+        const MD_para &mdp_in,
+        const bool cal_stress_in,
+        const bool init_vel,
+        const int my_rank_in,
+        MDCell &mdcell_in);
     ~MSST();
 
     /// @brief time derivative of the volume, per lattice direction
-    const ModuleBase::Vector3<double>& get_omega() const
-    {
-        return omega;
-    }
+    const ModuleBase::Vector3<double> &get_omega() const { return omega; }
 
     /// @brief energy of the initial configuration
-    double get_e0() const
-    {
-        return e0;
-    }
+    double get_e0() const { return e0; }
 
     /// @brief volume of the initial configuration
-    double get_v0() const
-    {
-        return v0;
-    }
+    double get_v0() const { return v0; }
 
     /// @brief pressure of the initial configuration
-    double get_p0() const
-    {
-        return p0;
-    }
+    double get_p0() const { return p0; }
 
     /// @brief Lagrangian location of the cell
-    double get_lag_pos() const
-    {
-        return lag_pos;
-    }
+    double get_lag_pos() const { return lag_pos; }
 
   private:
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp);
-    void first_half(std::ofstream& ofs);
+    void setup(ModuleESolver::ESolver *p_esolver, const std::string &global_readin_dir, DomainDecomposition &decomp);
+    void first_half(std::ofstream &ofs);
     void second_half();
-    void print_md(std::ofstream& ofs, const bool& cal_stress);
-    void write_restart(const std::string& global_out_dir);
-    void restart(const std::string& global_readin_dir);
+    void print_md(std::ofstream &ofs, const bool &cal_stress);
+    void write_restart(const std::string &global_out_dir);
+    void restart(const std::string &global_readin_dir);
 
     /**
      * @brief get the sum of square of velocities
@@ -70,7 +60,7 @@ class MSST : public MD_base
      * @param ofs determine the output files
      * @param volume the current cell volume
      */
-    void rescale(std::ofstream& ofs, const double& volume);
+    void rescale(std::ofstream &ofs, const double &volume);
 
     /**
      * @brief propagate atomic velocities

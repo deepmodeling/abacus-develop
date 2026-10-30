@@ -10,11 +10,12 @@
 #include <algorithm>
 #include <iomanip>
 
-MD_base::MD_base(const MD_para& mdp_in,
-                 const bool cal_stress_in,
-                 const bool init_vel,
-                 const int my_rank_in,
-                 MDCell& mdcell_in)
+MD_base::MD_base(
+    const MD_para &mdp_in,
+    const bool cal_stress_in,
+    const bool init_vel,
+    const int my_rank_in,
+    MDCell &mdcell_in)
     : mdp(mdp_in), mdcell(mdcell_in)
 {
 #ifdef __MPI
@@ -41,17 +42,19 @@ MD_base::MD_base(const MD_para& mdp_in,
     step_ = 0;
     step_rst_ = 0;
 
-    MD_func::init_vel(mdcell, init_vel, mdp.md_restart, md_tfirst, frozen_freedom_);
+    MD_func::init_vel(
+        mdcell,
+        init_vel,
+        mdp.md_restart,
+        md_tfirst,
+        frozen_freedom_);
     t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 }
 
-MD_base::~MD_base()
-{
-}
+MD_base::~MD_base() {}
 
-void MD_base::setup(ModuleESolver::ESolver* p_esolver,
-                    const std::string& global_readin_dir,
-                    DomainDecomposition& decomp)
+void MD_base::setup(
+    ModuleESolver::ESolver *p_esolver, const std::string &global_readin_dir, DomainDecomposition &decomp)
 {
     if (mdp.md_restart)
     {
@@ -65,8 +68,20 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver,
 
     ModuleIO::print_screen(stress_step, force_step, istep_print);
 
-    MD_func::force_virial(p_esolver, step_, mdcell, decomp, potential, cal_stress, virial, mdp.md_out_force);
-    MD_func::compute_stress(mdcell, cal_stress, virial, stress);
+    MD_func::force_virial(
+        p_esolver,
+        step_,
+        mdcell,
+        decomp,
+        potential,
+        cal_stress,
+        virial,
+        mdp.md_out_force);
+    MD_func::compute_stress(
+        mdcell,
+        cal_stress,
+        virial,
+        stress);
     if (mdcell.has_backing_unitcell())
     {
         mdcell.backing_unitcell().ionic_position_updated = true;
@@ -75,7 +90,7 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver,
     return;
 }
 
-void MD_base::first_half(std::ofstream& ofs)
+void MD_base::first_half(std::ofstream &ofs)
 {
     update_vel();
     update_pos();
@@ -92,10 +107,10 @@ void MD_base::second_half()
 
 void MD_base::update_pos()
 {
-    std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    std::vector<LocalAtom> &atoms = mdcell.owned_atoms();
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
-        LocalAtom& atom = atoms[i];
+        LocalAtom &atom = atoms[i];
         ModuleBase::Vector3<double> pos;
         for (int k = 0; k < 3; ++k)
         {
@@ -127,10 +142,10 @@ void MD_base::update_pos()
 
 void MD_base::update_vel()
 {
-    std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    std::vector<LocalAtom> &atoms = mdcell.owned_atoms();
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
-        LocalAtom& atom = atoms[i];
+        LocalAtom &atom = atoms[i];
         for (int k = 0; k < 3; ++k)
         {
             if (atom.mbl[k])
@@ -142,7 +157,7 @@ void MD_base::update_vel()
     return;
 }
 
-void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
+void MD_base::print_md(std::ofstream &ofs, const bool &cal_stress)
 {
     t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 
@@ -227,7 +242,7 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     return;
 }
 
-void MD_base::write_restart(const std::string& global_out_dir)
+void MD_base::write_restart(const std::string &global_out_dir)
 {
     if (!my_rank)
     {
@@ -246,9 +261,13 @@ void MD_base::write_restart(const std::string& global_out_dir)
     return;
 }
 
-void MD_base::restart(const std::string& global_readin_dir)
+void MD_base::restart(const std::string &global_readin_dir)
 {
-    MD_func::current_md_info(mdcell, global_readin_dir, step_rst_, md_tfirst);
+    MD_func::current_md_info(
+        mdcell,
+        global_readin_dir,
+        step_rst_,
+        md_tfirst);
 
     return;
 }

@@ -36,26 +36,37 @@ class LJ_pot_test : public testing::Test
         Setcell::parameters(inp);
     }
 
-    void TearDown()
-    {
-    }
+    void TearDown() {}
 };
 
 TEST_F(LJ_pot_test, potential)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
+    decomp.init(
+        ModuleBase::world_comm_domain(),
+        mdcell.latvec(),
+        mdcell.lat0(),
+        0.0,
+        0.0);
     p_esolver->before_all_runners(mdcell, inp);
-    MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
+    MD_func::force_virial(
+        p_esolver,
+        0,
+        mdcell,
+        decomp,
+        potential,
+        true,
+        stress,
+        false);
     EXPECT_NEAR(potential, -0.011957818623534381, doublethreshold);
 }
 
 TEST_F(LJ_pot_test, unitcell_compatibility)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
     p_esolver->before_all_runners(ucell, inp);
     p_esolver->runner(ucell, 0);
     p_esolver->cal_force(ucell, stress);
@@ -68,14 +79,27 @@ TEST_F(LJ_pot_test, unitcell_compatibility)
 
 TEST_F(LJ_pot_test, force)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
+    decomp.init(
+        ModuleBase::world_comm_domain(),
+        mdcell.latvec(),
+        mdcell.lat0(),
+        0.0,
+        0.0);
     p_esolver->before_all_runners(mdcell, inp);
-    MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
-    const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    MD_func::force_virial(
+        p_esolver,
+        0,
+        mdcell,
+        decomp,
+        potential,
+        true,
+        stress,
+        false);
+    const std::vector<LocalAtom> &atoms = mdcell.owned_atoms();
     EXPECT_NEAR(atoms[0].force.x, 0.00049817733089377704, doublethreshold);
     EXPECT_NEAR(atoms[0].force.y, 0.00082237246837022328, doublethreshold);
     EXPECT_NEAR(atoms[0].force.z, 0.0, doublethreshold);
@@ -96,7 +120,12 @@ TEST_F(LJ_pot_test, mdcell_cal_force)
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
+    decomp.init(
+        ModuleBase::world_comm_domain(),
+        mdcell.latvec(),
+        mdcell.lat0(),
+        0.0,
+        0.0);
     p_esolver.before_all_runners(mdcell, inp);
     decomp.prepare_neighbors(mdcell);
     p_esolver.runner(mdcell, 0);
@@ -105,7 +134,7 @@ TEST_F(LJ_pot_test, mdcell_cal_force)
     p_esolver.cal_force(mdcell, force);
     for (int iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
     {
-        const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
+        const LocalAtom &atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
         EXPECT_DOUBLE_EQ(force(iat, 0), atom.force.x);
         EXPECT_DOUBLE_EQ(force(iat, 1), atom.force.y);
         EXPECT_DOUBLE_EQ(force(iat, 2), atom.force.z);
@@ -114,13 +143,26 @@ TEST_F(LJ_pot_test, mdcell_cal_force)
 
 TEST_F(LJ_pot_test, stress)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver *p_esolver = new ModuleESolver::ESolver_LJ();
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
+    decomp.init(
+        ModuleBase::world_comm_domain(),
+        mdcell.latvec(),
+        mdcell.lat0(),
+        0.0,
+        0.0);
     p_esolver->before_all_runners(mdcell, inp);
-    MD_func::force_virial(p_esolver, 0, mdcell, decomp, potential, true, stress, false);
+    MD_func::force_virial(
+        p_esolver,
+        0,
+        mdcell,
+        decomp,
+        potential,
+        true,
+        stress,
+        false);
     EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 1), 1.7207745586539077e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 2), 0.0, doublethreshold);
@@ -138,7 +180,12 @@ TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
     MDCell mdcell;
     mdcell = Setcell::setup_mdcell(ucell);
     DomainDecomposition decomp;
-    decomp.init(ModuleBase::world_comm_domain(), mdcell.latvec(), mdcell.lat0(), 0.0, 0.0);
+    decomp.init(
+        ModuleBase::world_comm_domain(),
+        mdcell.latvec(),
+        mdcell.lat0(),
+        0.0,
+        0.0);
     Input_para input = inp;
     p_esolver.before_all_runners(mdcell, input);
     decomp.prepare_neighbors(mdcell);
@@ -165,7 +212,7 @@ TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
 
 TEST_F(LJ_pot_test, RcutSearchRadius)
 {
-    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver_LJ *p_esolver = new ModuleESolver::ESolver_LJ();
     ucell.ntype = 2;
     std::vector<double> rcut = {3.0};
     p_esolver->rcut_search_radius_for_testing(ucell.ntype, rcut);
@@ -190,7 +237,7 @@ TEST_F(LJ_pot_test, RcutSearchRadius)
 
 TEST_F(LJ_pot_test, SetC6C12)
 {
-    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver_LJ *p_esolver = new ModuleESolver::ESolver_LJ();
     ucell.ntype = 2;
 
     // no rule
@@ -198,7 +245,11 @@ TEST_F(LJ_pot_test, SetC6C12)
     std::vector<double> lj_epsilon = {0.1, 0.2, 0.3};
     std::vector<double> lj_sigma = {0.2, 0.4, 0.6};
 
-    p_esolver->set_c6_c12_for_testing(ucell.ntype, rule, lj_epsilon, lj_sigma);
+    p_esolver->set_c6_c12_for_testing(
+        ucell.ntype,
+        rule,
+        lj_epsilon,
+        lj_sigma);
 
     for (int i = 0; i < ucell.ntype; i++)
     {
@@ -206,9 +257,8 @@ TEST_F(LJ_pot_test, SetC6C12)
         {
             int k = i * (i + 1) / 2 + j;
             double temp = pow(lj_sigma[k] * ModuleBase::ANGSTROM_AU, 6);
-            EXPECT_NEAR(p_esolver->get_lj_c6()(i, j),
-                        4.0 * lj_epsilon[k] * temp / ModuleBase::Ry_to_eV,
-                        doublethreshold);
+            EXPECT_NEAR(
+                p_esolver->get_lj_c6()(i, j), 4.0 * lj_epsilon[k] * temp / ModuleBase::Ry_to_eV, doublethreshold);
             EXPECT_NEAR(p_esolver->get_lj_c12()(i, j), p_esolver->get_lj_c6()(i, j) * temp, doublethreshold);
             EXPECT_DOUBLE_EQ(p_esolver->get_lj_c6()(i, j), p_esolver->get_lj_c6()(j, i));
             EXPECT_DOUBLE_EQ(p_esolver->get_lj_c12()(i, j), p_esolver->get_lj_c12()(j, i));
@@ -220,7 +270,11 @@ TEST_F(LJ_pot_test, SetC6C12)
     lj_epsilon = {0.1, 0.2};
     lj_sigma = {0.2, 0.4};
 
-    p_esolver->set_c6_c12_for_testing(ucell.ntype, rule, lj_epsilon, lj_sigma);
+    p_esolver->set_c6_c12_for_testing(
+        ucell.ntype,
+        rule,
+        lj_epsilon,
+        lj_sigma);
 
     for (int i = 0; i < ucell.ntype; i++)
     {
@@ -230,12 +284,12 @@ TEST_F(LJ_pot_test, SetC6C12)
 
         for (int j = 0; j < i; j++)
         {
-            EXPECT_NEAR(p_esolver->get_lj_c6()(i, j),
-                        std::sqrt(p_esolver->get_lj_c6()(i, i) * p_esolver->get_lj_c6()(j, j)),
-                        doublethreshold);
-            EXPECT_NEAR(p_esolver->get_lj_c12()(i, j),
-                        std::sqrt(p_esolver->get_lj_c12()(i, i) * p_esolver->get_lj_c12()(j, j)),
-                        doublethreshold);
+            EXPECT_NEAR(
+                p_esolver->get_lj_c6()(i, j), std::sqrt(p_esolver->get_lj_c6()(i, i) * p_esolver->get_lj_c6()(j, j)),
+                doublethreshold);
+            EXPECT_NEAR(
+                p_esolver->get_lj_c12()(i, j), std::sqrt(p_esolver->get_lj_c12()(i, i) * p_esolver->get_lj_c12()(j, j)),
+                doublethreshold);
             EXPECT_DOUBLE_EQ(p_esolver->get_lj_c6()(i, j), p_esolver->get_lj_c6()(j, i));
             EXPECT_DOUBLE_EQ(p_esolver->get_lj_c12()(i, j), p_esolver->get_lj_c12()(j, i));
         }
@@ -246,16 +300,20 @@ TEST_F(LJ_pot_test, SetC6C12)
     lj_epsilon = {0.1, 0.2};
     lj_sigma = {0.2, 0.4};
 
-    p_esolver->set_c6_c12_for_testing(ucell.ntype, rule, lj_epsilon, lj_sigma);
+    p_esolver->set_c6_c12_for_testing(
+        ucell.ntype,
+        rule,
+        lj_epsilon,
+        lj_sigma);
 
     for (int i = 0; i < ucell.ntype; i++)
     {
         for (int j = 0; j <= i; j++)
         {
             double temp = pow((lj_sigma[i] + lj_sigma[j]) / 2 * ModuleBase::ANGSTROM_AU, 6);
-            EXPECT_NEAR(p_esolver->get_lj_c6()(i, j),
-                        4.0 * std::sqrt(lj_epsilon[i] * lj_epsilon[j]) * temp / ModuleBase::Ry_to_eV,
-                        doublethreshold);
+            EXPECT_NEAR(
+                p_esolver->get_lj_c6()(i, j),
+                4.0 * std::sqrt(lj_epsilon[i] * lj_epsilon[j]) * temp / ModuleBase::Ry_to_eV, doublethreshold);
             EXPECT_NEAR(p_esolver->get_lj_c12()(i, j), p_esolver->get_lj_c6()(i, j) * temp, doublethreshold);
             EXPECT_DOUBLE_EQ(p_esolver->get_lj_c6()(i, j), p_esolver->get_lj_c6()(j, i));
             EXPECT_DOUBLE_EQ(p_esolver->get_lj_c12()(i, j), p_esolver->get_lj_c12()(j, i));
@@ -265,7 +323,7 @@ TEST_F(LJ_pot_test, SetC6C12)
 
 TEST_F(LJ_pot_test, CalEnShift)
 {
-    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    ModuleESolver::ESolver_LJ *p_esolver = new ModuleESolver::ESolver_LJ();
     ucell.ntype = 2;
 
     std::vector<double> rcut = {3.0};
@@ -274,7 +332,11 @@ TEST_F(LJ_pot_test, CalEnShift)
     int rule = 1;
     std::vector<double> lj_epsilon = {0.1, 0.2, 0.3};
     std::vector<double> lj_sigma = {0.2, 0.4, 0.6};
-    p_esolver->set_c6_c12_for_testing(ucell.ntype, rule, lj_epsilon, lj_sigma);
+    p_esolver->set_c6_c12_for_testing(
+        ucell.ntype,
+        rule,
+        lj_epsilon,
+        lj_sigma);
 
     // false
     p_esolver->cal_en_shift_for_testing(ucell.ntype, false);

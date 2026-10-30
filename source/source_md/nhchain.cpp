@@ -6,12 +6,18 @@
 #endif
 #include "source_base/timer.h"
 
-Nose_Hoover::Nose_Hoover(const MD_para& mdp_in,
-                         const bool cal_stress_in,
-                         const bool init_vel,
-                         const int my_rank_in,
-                         MDCell& mdcell_in)
-    : MD_base(mdp_in, cal_stress_in, init_vel, my_rank_in, mdcell_in)
+Nose_Hoover::Nose_Hoover(
+    const MD_para &mdp_in,
+    const bool cal_stress_in,
+    const bool init_vel,
+    const int my_rank_in,
+    MDCell &mdcell_in)
+    : MD_base(
+          mdp_in,
+          cal_stress_in,
+          init_vel,
+          my_rank_in,
+          mdcell_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
 
@@ -64,7 +70,7 @@ Nose_Hoover::Nose_Hoover(const MD_para& mdp_in,
          */
         else if (mdp.md_pmode == "tri")
         {
-            const ModuleBase::Matrix3& latvec = mdcell.latvec();
+            const ModuleBase::Matrix3 &latvec = mdcell.latvec();
             if (latvec.e12 || latvec.e13 || latvec.e23)
             {
                 ModuleBase::WARNING_QUIT("Nose_Hoover", "the lattice must be lower-triangular when md_pmode == tri!");
@@ -159,9 +165,8 @@ Nose_Hoover::~Nose_Hoover()
     }
 }
 
-void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver,
-                        const std::string& global_readin_dir,
-                        DomainDecomposition& decomp)
+void Nose_Hoover::setup(
+    ModuleESolver::ESolver *p_esolver, const std::string &global_readin_dir, DomainDecomposition &decomp)
 {
     ModuleBase::TITLE("Nose_Hoover", "setup");
     ModuleBase::timer::start("Nose_Hoover", "setup");
@@ -169,7 +174,11 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver,
     MD_base::setup(p_esolver, global_readin_dir, decomp);
 
     /// determine target temperature
-    t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
+    t_target = MD_func::target_temp(
+        step_ + step_rst_,
+        mdp.md_nstep,
+        md_tfirst,
+        md_tlast);
 
     /// init thermostats coupled with particles
     mass_eta[0] = tdof * t_target / md_tfreq / md_tfreq;
@@ -216,7 +225,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver,
     return;
 }
 
-void Nose_Hoover::first_half(std::ofstream& ofs)
+void Nose_Hoover::first_half(std::ofstream &ofs)
 {
     ModuleBase::TITLE("Nose_Hoover", "first_half");
     ModuleBase::timer::start("Nose_Hoover", "first_half");
@@ -228,7 +237,11 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     }
 
     /// update target T
-    t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
+    t_target = MD_func::target_temp(
+        step_ + step_rst_,
+        mdp.md_nstep,
+        md_tfirst,
+        md_tlast);
 
     /// update thermostats coupled with particles
     particle_thermo();
@@ -237,7 +250,11 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     {
         /// update temperature and stress due to velocity rescaling
         t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
-        MD_func::compute_stress(mdcell, cal_stress, virial, stress);
+        MD_func::compute_stress(
+            mdcell,
+            cal_stress,
+            virial,
+            stress);
 
         /// couple stress component due to md_pcouple
         couple_stress();
@@ -295,7 +312,11 @@ void Nose_Hoover::second_half()
     if (npt_flag)
     {
         /// update stress due to velocity rescaling
-        MD_func::compute_stress(mdcell, cal_stress, virial, stress);
+        MD_func::compute_stress(
+            mdcell,
+            cal_stress,
+            virial,
+            stress);
 
         /// couple stress component due to md_pcouple
         couple_stress();
@@ -318,12 +339,9 @@ void Nose_Hoover::second_half()
     return;
 }
 
-void Nose_Hoover::print_md(std::ofstream& ofs, const bool& cal_stress)
-{
-    MD_base::print_md(ofs, cal_stress);
-}
+void Nose_Hoover::print_md(std::ofstream &ofs, const bool &cal_stress) { MD_base::print_md(ofs, cal_stress); }
 
-void Nose_Hoover::write_restart(const std::string& global_out_dir)
+void Nose_Hoover::write_restart(const std::string &global_out_dir)
 {
     if (!my_rank)
     {
@@ -373,7 +391,7 @@ void Nose_Hoover::write_restart(const std::string& global_out_dir)
 #endif
 }
 
-void Nose_Hoover::restart(const std::string& global_readin_dir)
+void Nose_Hoover::restart(const std::string &global_readin_dir)
 {
     bool ok = true;
     bool ok2 = true;
@@ -444,9 +462,24 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, mdcell.communicator());
-    MPI_Bcast(&ok2, 1, MPI_C_BOOL, 0, mdcell.communicator());
-    MPI_Bcast(&ok3, 1, MPI_C_BOOL, 0, mdcell.communicator());
+    MPI_Bcast(
+        &ok,
+        1,
+        MPI_C_BOOL,
+        0,
+        mdcell.communicator());
+    MPI_Bcast(
+        &ok2,
+        1,
+        MPI_C_BOOL,
+        0,
+        mdcell.communicator());
+    MPI_Bcast(
+        &ok3,
+        1,
+        MPI_C_BOOL,
+        0,
+        mdcell.communicator());
 #endif
 
     if (!ok)
@@ -463,15 +496,50 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
     }
 
 #ifdef __MPI
-    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, mdcell.communicator());
-    MPI_Bcast(&md_tfirst, 1, MPI_DOUBLE, 0, mdcell.communicator());
-    MPI_Bcast(eta, mdp.md_tchain, MPI_DOUBLE, 0, mdcell.communicator());
-    MPI_Bcast(v_eta, mdp.md_tchain, MPI_DOUBLE, 0, mdcell.communicator());
+    MPI_Bcast(
+        &step_rst_,
+        1,
+        MPI_INT,
+        0,
+        mdcell.communicator());
+    MPI_Bcast(
+        &md_tfirst,
+        1,
+        MPI_DOUBLE,
+        0,
+        mdcell.communicator());
+    MPI_Bcast(
+        eta,
+        mdp.md_tchain,
+        MPI_DOUBLE,
+        0,
+        mdcell.communicator());
+    MPI_Bcast(
+        v_eta,
+        mdp.md_tchain,
+        MPI_DOUBLE,
+        0,
+        mdcell.communicator());
     if (npt_flag)
     {
-        MPI_Bcast(v_omega, 6, MPI_DOUBLE, 0, mdcell.communicator());
-        MPI_Bcast(peta, mdp.md_pchain, MPI_DOUBLE, 0, mdcell.communicator());
-        MPI_Bcast(v_peta, mdp.md_pchain, MPI_DOUBLE, 0, mdcell.communicator());
+        MPI_Bcast(
+            v_omega,
+            6,
+            MPI_DOUBLE,
+            0,
+            mdcell.communicator());
+        MPI_Bcast(
+            peta,
+            mdp.md_pchain,
+            MPI_DOUBLE,
+            0,
+            mdcell.communicator());
+        MPI_Bcast(
+            v_peta,
+            mdp.md_pchain,
+            MPI_DOUBLE,
+            0,
+            mdcell.communicator());
     }
 #endif
 }
@@ -555,8 +623,10 @@ void Nose_Hoover::particle_thermo()
     }
 
     /// rescale velocity due to thermostats
-    for (LocalAtom& atom: mdcell.owned_atoms())
+    for (LocalAtom &atom : mdcell.owned_atoms())
+    {
         atom.vel *= scale;
+    }
 }
 
 void Nose_Hoover::baro_thermo()
@@ -650,12 +720,24 @@ void Nose_Hoover::update_baro()
     else
     {
         ModuleBase::matrix t_vector(3, 3);
-        for (const LocalAtom& atom: mdcell.owned_atoms())
+        for (const LocalAtom &atom : mdcell.owned_atoms())
+        {
             for (int i = 0; i < 3; ++i)
+            {
                 for (int j = 0; j < 3; ++j)
+                {
                     t_vector(i, j) += atom.mass * atom.vel[i] * atom.vel[j];
+                }
+            }
+        }
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, t_vector.c, t_vector.nr * t_vector.nc, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
+        MPI_Allreduce(
+            MPI_IN_PLACE,
+            t_vector.c,
+            t_vector.nr * t_vector.nc,
+            MPI_DOUBLE,
+            MPI_SUM,
+            mdcell.communicator());
 #endif
 
         for (int i = 0; i < 3; ++i)
@@ -701,7 +783,7 @@ void Nose_Hoover::vel_baro()
         factor[i] = exp(-(v_omega[i] + mtk_term) * md_dt / 4);
     }
 
-    for (LocalAtom& atom: mdcell.owned_atoms())
+    for (LocalAtom &atom : mdcell.owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {
@@ -725,7 +807,7 @@ void Nose_Hoover::vel_baro()
     }
 }
 
-void Nose_Hoover::update_volume(std::ofstream& ofs)
+void Nose_Hoover::update_volume(std::ofstream &ofs)
 {
     double factor = 0.0;
     ModuleBase::Matrix3 latvec = mdcell.latvec();

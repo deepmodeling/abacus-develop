@@ -12,54 +12,40 @@
 class Nose_Hoover : public MD_base
 {
   public:
-    Nose_Hoover(const MD_para& mdp_in,
-                const bool cal_stress_in,
-                const bool init_vel,
-                const int my_rank_in,
-                MDCell& mdcell_in);
+    Nose_Hoover(
+        const MD_para &mdp_in,
+        const bool cal_stress_in,
+        const bool init_vel,
+        const int my_rank_in,
+        MDCell &mdcell_in);
     ~Nose_Hoover();
 
     /// @brief positions of the thermostats coupled with the particles
     ///        (md_tchain entries)
-    const double* get_eta() const
-    {
-        return eta;
-    }
+    const double *get_eta() const { return eta; }
 
     /// @brief velocities of the thermostats coupled with the particles
     ///        (md_tchain entries)
-    const double* get_v_eta() const
-    {
-        return v_eta;
-    }
+    const double *get_v_eta() const { return v_eta; }
 
     /// @brief positions of the thermostats coupled with the barostat
     ///        (md_pchain entries)
-    const double* get_peta() const
-    {
-        return peta;
-    }
+    const double *get_peta() const { return peta; }
 
     /// @brief velocities of the thermostats coupled with the barostat
     ///        (md_pchain entries)
-    const double* get_v_peta() const
-    {
-        return v_peta;
-    }
+    const double *get_v_peta() const { return v_peta; }
 
     /// @brief velocities of the six lattice components
-    const double* get_v_omega() const
-    {
-        return v_omega;
-    }
+    const double *get_v_omega() const { return v_omega; }
 
   private:
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir, DomainDecomposition& decomp);
-    void first_half(std::ofstream& ofs);
+    void setup(ModuleESolver::ESolver *p_esolver, const std::string &global_readin_dir, DomainDecomposition &decomp);
+    void first_half(std::ofstream &ofs);
     void second_half();
-    void print_md(std::ofstream& ofs, const bool& cal_stress);
-    void write_restart(const std::string& global_out_dir);
-    void restart(const std::string& global_readin_dir);
+    void print_md(std::ofstream &ofs, const bool &cal_stress);
+    void write_restart(const std::string &global_out_dir);
+    void restart(const std::string &global_readin_dir);
 
     /**
      * @brief perform half-step update of thermostats coupled with particles
@@ -102,7 +88,7 @@ class Nose_Hoover : public MD_base
      *
      * @param ofs determine the output files
      */
-    void update_volume(std::ofstream& ofs);
+    void update_volume(std::ofstream &ofs);
 
     const int nc_tchain = 1;  ///< the number of nc for nvt
     const int nc_pchain = 1;  ///< the number of nc for npt
@@ -111,10 +97,10 @@ class Nose_Hoover : public MD_base
 
     std::int64_t tdof;          ///< particle degree of freedom
     double t_target = 0.0;      ///< target temperature
-    double* mass_eta = nullptr; ///< mass of thermostats coupled with particles
-    double* eta = nullptr;      ///< position of thermostats coupled with particles
-    double* v_eta = nullptr;    ///< velocity of thermostats coupled with particles
-    double* g_eta = nullptr;    ///< acceleration of thermostats coupled with particles
+    double *mass_eta = nullptr; ///< mass of thermostats coupled with particles
+    double *eta = nullptr;      ///< position of thermostats coupled with particles
+    double *v_eta = nullptr;    ///< velocity of thermostats coupled with particles
+    double *g_eta = nullptr;    ///< acceleration of thermostats coupled with particles
 
     int npt_flag;         ///< whether NPT ensemble
     double mass_omega[6]; ///< mass of lattice component
@@ -127,10 +113,10 @@ class Nose_Hoover : public MD_base
     double p_target[6];   ///< target stress components
     double p_hydro = 0.0; ///< target hydrostatic target pressure
     double p_current[6] = {0.0}; ///< current stress after coupled
-    double* mass_peta = nullptr; ///< mass of thermostats coupled with barostat
-    double* peta = nullptr;      ///< position of thermostats coupled with barostat
-    double* v_peta = nullptr;    ///< velocity of thermostats coupled with barostat
-    double* g_peta = nullptr;    ///< acceleration of thermostats coupled with barostat
+    double *mass_peta = nullptr; ///< mass of thermostats coupled with barostat
+    double *peta = nullptr;      ///< position of thermostats coupled with barostat
+    double *v_peta = nullptr;    ///< velocity of thermostats coupled with barostat
+    double *g_peta = nullptr;    ///< acceleration of thermostats coupled with barostat
     double mtk_term = 0;         ///< mtk correction
     double md_tfreq;  ///< Oscillation frequency, used to determine qmass of thermostats coupled with particles
     double md_pfirst; ///< Initial pressure
