@@ -50,8 +50,9 @@ struct DFPT_PW_InitContext
     const Plus_U_Base* dftu;
     /// MPI rank of the running process (from the runtime context, not
     /// read from any global inside module_dfpt); consumed by the dyn
-    /// file writer for the rank-0 output gate
-    int myrank = 0;
+    /// file writer for the rank-0 output gate. No default member
+    /// initializer: C++11 aggregate rules require it.
+    int myrank;
 };
 
 /**
