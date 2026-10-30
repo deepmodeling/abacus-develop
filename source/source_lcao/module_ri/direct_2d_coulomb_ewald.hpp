@@ -14,7 +14,7 @@
 // the direct route evaluates the same physical operator as the split Ewald
 // route, assembles the auxiliary basis from the ABFS radial tables, and
 // writes the reader-v1 V_full files plus method metadata. Opt-in through
-// out_librpa_2d_coulomb_method = direct_mixed_fourier.
+// out_v2d_method = direct_mixed_fourier.
 template <typename Tdata>
 void Ewald_Vq<Tdata>::output_direct_2d_coulomb(const UnitCell& ucell,
                                                const double ecut_ry,

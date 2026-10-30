@@ -927,7 +927,7 @@ inline EwaldRealspaceRange<Tdata> select_ewald_realspace_range(
     {
         throw std::invalid_argument(
             "Adaptive Ewald tail enlargement currently supports energy/SCF only; "
-            "use exx_ewald_tail_check=warn for force or stress calculations.");
+            "use exx_tail_check=warn for force or stress calculations.");
     }
     const EwaldVqDetail::TailTolerances tolerances{info.ewald_tail_abs_tol,
                                                    info.ewald_tail_rel_tol,

@@ -333,7 +333,7 @@ PreorthReport apply_preorth(AbfsOrbitalSet& abfs,
     }
     if (!std::isfinite(threshold) || threshold <= 0.0 || threshold >= 1.0)
     {
-        throw std::invalid_argument("rpa_abfs_preorth_threshold must be finite and strictly inside (0,1)");
+        throw std::invalid_argument("rpa_preorth_threshold must be finite and strictly inside (0,1)");
     }
 
     PreorthReport report;
@@ -362,7 +362,7 @@ PreorthReport apply_preorth(AbfsOrbitalSet& abfs,
 
 PreorthReport preorth_from_input(AbfsOrbitalSet& abfs, const Input_para& input, const bool force_flag)
 {
-    return apply_preorth(abfs, input.rpa_abfs_preorth, input.rpa_abfs_preorth_threshold, force_flag);
+    return apply_preorth(abfs, input.rpa_abfs_preorth, input.rpa_preorth_threshold, force_flag);
 }
 
 std::string preorth_report(const PreorthReport& report)

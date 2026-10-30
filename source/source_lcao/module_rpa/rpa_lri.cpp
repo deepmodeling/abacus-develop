@@ -47,11 +47,11 @@ try
     ModuleBase::GlobalFunc::MAKE_DIR(this->runtime.input.rpa_outdir);
     this->ccp_rmesh_times_cut = this->runtime.input.rpa_ccp_rmesh_times;
     this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
-    if (this->runtime.input.out_librpa_abf_overlap
+    if (this->runtime.input.out_abf_overlap
         && (!this->runtime.input.rpa || this->runtime.input.out_librpa_ver != 1
             || this->info.shrink_abfs_pca_thr < 0.0))
     {
-        throw std::runtime_error("out_librpa_abf_overlap requires rpa=true, "
+        throw std::runtime_error("out_abf_overlap requires rpa=true, "
                                  "out_librpa_ver=1, and shrink ABFs.");
     } // should be `exx_ccp_rmesh_times`
 

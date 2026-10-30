@@ -14,7 +14,7 @@
 // the complete full-q mesh, built by Direct2dCoulomb::build_coulomb_matrix.
 // Like the 2D driver it reuses the Ewald Fock alpha and chi so it evaluates
 // the same operator as the split route, and writes the reader-v1 V_full
-// files. Opt-in through out_librpa_3d_coulomb_method = direct_reciprocal.
+// files. Opt-in through out_v3d_method = direct_reciprocal.
 template <typename Tdata>
 void Ewald_Vq<Tdata>::output_direct_3d_coulomb(const UnitCell& ucell,
                                                const double ecut_ry,

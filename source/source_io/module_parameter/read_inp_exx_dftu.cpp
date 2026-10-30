@@ -284,7 +284,7 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_v_threshold_long");
+        Input_Item item("exx_v_long_thr");
         item.annotation = "threshold to screen long-range V matrix in exx";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
@@ -292,7 +292,7 @@ void ReadInput::item_exx()
             = "Threshold used only for the long-range Coulomb channel in the rotated-ABFS moment workflow. Smaller values of the long-range V matrix can be truncated to accelerate calculation. The default is 0, i.e. no truncation, which preserves the current behavior.";
         item.default_value = "0";
         item.unit = "";
-        read_sync_double(input.exx_v_threshold_long);
+        read_sync_double(input.exx_v_long_thr);
         this->add_item(item);
     }
     {
@@ -308,7 +308,7 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_vcd_stats_only");
+        Input_Item item("exx_vcd_stats");
         item.annotation = "collect dynamic merged-short screening stats only";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Boolean";
@@ -316,11 +316,11 @@ void ReadInput::item_exx()
             = "When true, collect C/D-weighted short-screening statistics without skipping any EXX contraction paths. Useful for calibrating the dynamic threshold before enabling it.";
         item.default_value = "0";
         item.unit = "";
-        read_sync_bool(input.exx_vcd_stats_only);
+        read_sync_bool(input.exx_vcd_stats);
         this->add_item(item);
     }
     {
-        Input_Item item("exx_vcd_short_only");
+        Input_Item item("exx_vcd_short");
         item.annotation = "apply dynamic screening only to merged-short EXX";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Boolean";
@@ -328,7 +328,7 @@ void ReadInput::item_exx()
             = "When true, the C/D-weighted dynamic screen is restricted to the split merged-short EXX channel and does not affect full or long-range channels.";
         item.default_value = "1";
         item.unit = "";
-        read_sync_bool(input.exx_vcd_short_only);
+        read_sync_bool(input.exx_vcd_short);
         this->add_item(item);
     }
     {
@@ -552,7 +552,7 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("exx_ewald_tail_check");
+        Input_Item item("exx_tail_check");
         item.annotation = "Ewald short-range Gaussian-tail handling mode";
         item.category = "Exact Exchange (LCAO)";
         item.type = "String";
@@ -562,92 +562,92 @@ void ReadInput::item_exx()
                            "incomplete guard-shell coverage or a Hermitian residual above tolerance aborts "
                            "the run.";
         item.default_value = "off";
-        read_sync_string(input.exx_ewald_tail_check);
+        read_sync_string(input.exx_tail_check);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::string& mode = para.input.exx_ewald_tail_check;
+            const std::string& mode = para.input.exx_tail_check;
             if (mode != "off" && mode != "warn" && mode != "enlarge" && mode != "strict")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_check must be off, warn, enlarge, or strict");
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_tail_check must be off, warn, enlarge, or strict");
             }
         };
         this->add_item(item);
     }
     {
-        Input_Item item("exx_ewald_tail_abs_tol");
+        Input_Item item("exx_tail_abstol");
         item.annotation = "absolute Ewald short-range guard-shell tolerance";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
         item.description = "Absolute tolerance of the Ewald short-range guard-shell probe; together with the relative tolerance it bounds the allowed per-block and Hermitian residuals.";
         item.default_value = "1e-12";
-        read_sync_double(input.exx_ewald_tail_abs_tol);
+        read_sync_double(input.exx_tail_abstol);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_tail_abs_tol < 0.0)
+            if (para.input.exx_tail_abstol < 0.0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_abs_tol must be non-negative");
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_tail_abstol must be non-negative");
             }
         };
         this->add_item(item);
     }
     {
-        Input_Item item("exx_ewald_tail_rel_tol");
+        Input_Item item("exx_tail_reltol");
         item.annotation = "relative Ewald short-range guard-shell maximum tolerance";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
         item.description = "Relative tolerance of the Ewald short-range guard-shell probe, scaled by the production-shell reference norm; it bounds the maximum per-block residual and the Hermitian residual.";
         item.default_value = "1e-10";
-        read_sync_double(input.exx_ewald_tail_rel_tol);
+        read_sync_double(input.exx_tail_reltol);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_tail_rel_tol < 0.0)
+            if (para.input.exx_tail_reltol < 0.0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_rel_tol must be non-negative");
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_tail_reltol must be non-negative");
             }
         };
         this->add_item(item);
     }
     {
-        Input_Item item("exx_ewald_tail_sum_rel_tol");
+        Input_Item item("exx_tail_sumtol");
         item.annotation = "relative Ewald short-range guard-shell summed tolerance";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
         item.description = "Relative tolerance on the summed guard-shell residual, i.e. the total discarded tail norm relative to the production reference norm.";
         item.default_value = "1e-8";
-        read_sync_double(input.exx_ewald_tail_sum_rel_tol);
+        read_sync_double(input.exx_tail_sumtol);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_tail_sum_rel_tol < 0.0)
+            if (para.input.exx_tail_sumtol < 0.0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_sum_rel_tol must be non-negative");
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_tail_sumtol must be non-negative");
             }
         };
         this->add_item(item);
     }
     {
-        Input_Item item("exx_ewald_tail_guard_cells");
+        Input_Item item("exx_tail_guard");
         item.annotation = "number of lattice-cell layers in the Ewald tail probe";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Integer";
         item.description = "Thickness in lattice-cell layers of the guard shell probed around the production real-space range.";
         item.default_value = "1";
-        read_sync_int(input.exx_ewald_tail_guard_cells);
+        read_sync_int(input.exx_tail_guard);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_tail_guard_cells < 1)
+            if (para.input.exx_tail_guard < 1)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_guard_cells must be at least one");
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_tail_guard must be at least one");
             }
         };
         this->add_item(item);
     }
     {
-        Input_Item item("exx_ewald_tail_max_expansions");
+        Input_Item item("exx_tail_expansions");
         item.annotation = "maximum adaptive Ewald real-space range expansions";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Integer";
         item.description = "Maximum number of adaptive real-space range expansions in the enlarge and strict modes; the run aborts when the tail is still unconverged after this many expansions.";
         item.default_value = "3";
-        read_sync_int(input.exx_ewald_tail_max_expansions);
+        read_sync_int(input.exx_tail_expansions);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ewald_tail_max_expansions < 0)
+            if (para.input.exx_tail_expansions < 0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_max_expansions must be non-negative");
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_tail_expansions must be non-negative");
             }
         };
         this->add_item(item);
@@ -674,7 +674,7 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
-        Input_Item item("rpa_abfs_preorth_threshold");
+        Input_Item item("rpa_preorth_threshold");
         item.annotation = "residual Coulomb-norm threshold for RPA auxiliary preorthogonalization";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
@@ -682,15 +682,15 @@ void ReadInput::item_exx()
         item.default_value = "1e-2";
         item.unit = "";
         item.set_availability("basis_type==lcao and rpa_abfs_preorth==onsite_coulomb");
-        read_sync_double(input.rpa_abfs_preorth_threshold);
+        read_sync_double(input.rpa_preorth_threshold);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!std::isfinite(para.input.rpa_abfs_preorth_threshold)
-                || para.input.rpa_abfs_preorth_threshold <= 0.0
-                || para.input.rpa_abfs_preorth_threshold >= 1.0)
+            if (!std::isfinite(para.input.rpa_preorth_threshold)
+                || para.input.rpa_preorth_threshold <= 0.0
+                || para.input.rpa_preorth_threshold >= 1.0)
             {
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
-                    "rpa_abfs_preorth_threshold must be finite and strictly between 0 and 1");
+                    "rpa_preorth_threshold must be finite and strictly between 0 and 1");
             }
         };
         this->add_item(item);

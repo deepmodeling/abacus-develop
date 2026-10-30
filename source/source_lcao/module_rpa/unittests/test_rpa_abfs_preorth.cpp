@@ -180,7 +180,7 @@ TEST(RpaAbfsPreorth, InputAdapterUsesOnlyPublicInputs)
     const auto radial = radial_exp(0.0);
     Input_para input;
     input.rpa_abfs_preorth = "none";
-    input.rpa_abfs_preorth_threshold = 1.0e-2;
+    input.rpa_preorth_threshold = 1.0e-2;
     auto legacy = make_set(0, {radial, radial});
     ModuleRI::preorth_from_input(legacy, input, false);
     EXPECT_EQ(legacy[0][0].size(), 2U);
@@ -198,7 +198,7 @@ TEST(RpaAbfsPreorth, InputAdapterSupportsForceDerivatives)
     const auto radial = radial_exp(0.0);
     Input_para input;
     input.rpa_abfs_preorth = "onsite_coulomb";
-    input.rpa_abfs_preorth_threshold = 1.0e-2;
+    input.rpa_preorth_threshold = 1.0e-2;
     input.cal_force = true;
     auto forced = make_set(0, {radial, radial});
     const auto report = ModuleRI::preorth_from_input(forced, input, input.cal_force);
@@ -215,7 +215,7 @@ TEST(RpaAbfsPreorth, ShrinkEnabledInputActsOnActiveBasisOnly)
     const auto radial = radial_exp(0.0);
     Input_para input;
     input.rpa_abfs_preorth = "onsite_coulomb";
-    input.rpa_abfs_preorth_threshold = 1.0e-2;
+    input.rpa_preorth_threshold = 1.0e-2;
     input.shrink_abfs_pca_thr = 1.0e-6;
     auto active = make_set(0, {radial, radial});
     auto large = make_set(0, {radial, radial, radial});

@@ -22,13 +22,13 @@
 // check probes a guard shell of lattice cells around the production range,
 // classifies every (I, J, R) block by that logic, and reduces the norm of
 // the residual difference against tolerances. The verdict drives the
-// exx_ewald_tail_check modes: warn reports and fails, enlarge adaptively
+// exx_tail_check modes: warn reports and fails, enlarge adaptively
 // expands the real-space range, strict fails without expansion budget.
 namespace EwaldVqDetail
 {
 using TailCell = std::array<int, 3>;
 
-// Behavior of the tail check (INPUT exx_ewald_tail_check).
+// Behavior of the tail check (INPUT exx_tail_check).
 enum class TailMode
 {
     Off,

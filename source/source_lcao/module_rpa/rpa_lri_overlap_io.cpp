@@ -293,7 +293,7 @@ try
         }
     }
 
-    if (this->runtime.input.out_librpa_abf_overlap)
+    if (this->runtime.input.out_abf_overlap)
     {
         out_abfs_overlap_raw_v1(ucell, overlap_abfs_abfs, index_abfs_s);
     }
