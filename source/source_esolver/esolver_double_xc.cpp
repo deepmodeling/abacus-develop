@@ -69,9 +69,9 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Inpu
         {
             nsk = this->inp_->nspin;
             ncol = this->pv.ncol_bands;
-            if (this->inp_->ks_solver == "genelpa" || this->inp_->ks_solver == "elpa" || this->inp_->ks_solver == "lapack"
-                || this->inp_->ks_solver == "pexsi" || this->inp_->ks_solver == "cusolver"
-                || this->inp_->ks_solver == "cusolvermp")
+            if (this->inp_->ks_solver == "genelpa" || this->inp_->ks_solver == "elpa"
+                || this->inp_->ks_solver == "lapack" || this->inp_->ks_solver == "pexsi"
+                || this->inp_->ks_solver == "cusolver" || this->inp_->ks_solver == "cusolvermp")
             {
                 ncol = this->pv.ncol;
             }
@@ -104,14 +104,16 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Inpu
     init_rho_cfg.domag_z = PARAM.globalv.domag_z;
     init_rho_cfg.npol = PARAM.globalv.npol;
     init_rho_cfg.meta_gga = XC_Functional::get_ked_flag();
-    this->chr_base.set_rhopw(this->pw_rhod);           // mohan add 20251130
+    this->chr_base.set_rhopw(this->pw_rhod);                                            // mohan add 20251130
     const bool kin_den = XC_Functional::get_ked_flag() || (this->inp_->out_elf[0] > 0); // mohan add 20251202
-    this->chr_base.allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(),
-                            this->inp_->test_charge);
+    this->chr_base.allocate(this->inp_->nspin, kin_den, XC_Functional::get_ked_flag(), this->inp_->test_charge);
     this->chr_base.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv, nullptr, init_rho_cfg);
-    module_charge::check_rho(this->chr_base.rho, this->chr_base.nspin,
-                             this->chr_base.rhopw->nrxx, ucell.omega,
-                             this->chr_base.rhopw->nxyz, this->inp_->nelec);
+    module_charge::check_rho(this->chr_base.rho,
+                             this->chr_base.nspin,
+                             this->chr_base.rhopw->nrxx,
+                             ucell.omega,
+                             this->chr_base.rhopw->nxyz,
+                             this->inp_->nelec);
 
     // 11) initialize the potential
     if (this->pelec_base->pot == nullptr)
@@ -158,8 +160,7 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
     if (this->p_hamilt_base == nullptr)
     {
-        const bool load_exx_flag = !GlobalC::restart.info_load.restart_exx
-                                   && GlobalC::restart.info_load.load_H;
+        const bool load_exx_flag = !GlobalC::restart.info_load.restart_exx && GlobalC::restart.info_load.load_H;
         this->p_hamilt_base = new hamilt::HamiltLCAO<TK, TR>(ucell,
                                                              this->gd,
                                                              &this->pv,
@@ -305,10 +306,10 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
                                        this->inp_->imp_sol,
                                        this->inp_->sc_mag_switch,
                                        this->inp_->dft_plus_u,
-                                       this->inp_->assume_isolated);  // 2 means Kohn-Sham functional
-                                            // std::cout<<"in double_xc------"<<std::endl;
-                                            // this->pelec_base->f_en.print_all();
-                                            // std::cout<<"in double_xc------"<<std::endl;
+                                       this->inp_->assume_isolated); // 2 means Kohn-Sham functional
+                                                                     // std::cout<<"in double_xc------"<<std::endl;
+                                                                     // this->pelec_base->f_en.print_all();
+                                                                     // std::cout<<"in double_xc------"<<std::endl;
         // GlobalV::ofs_running << std::setprecision(15) << " etot of base functional (Ry) " << pelec_base->f_en.etot <<
         // std::endl;
 
@@ -424,10 +425,16 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
 
     this->deepks.dpks_out_type = "base"; // for deepks method
 
-    const FSCalcConfig fs_cfg{this->inp_->nspin, this->inp_->nbands, this->inp_->t_in_h,
-                        this->inp_->sc_mag_switch, this->inp_->device,
-                        PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
-                        PARAM.globalv.gamma_only_pw, this->inp_->imp_sol};
+    const FSCalcConfig fs_cfg{this->inp_->nspin,
+                              this->inp_->nbands,
+                              this->inp_->t_in_h,
+                              this->inp_->sc_mag_switch,
+                              this->inp_->device,
+                              PARAM.globalv.domag,
+                              PARAM.globalv.domag_z,
+                              this->inp_->gga_grad,
+                              PARAM.globalv.gamma_only_pw,
+                              this->inp_->imp_sol};
 
     fsl.getForceStress(ucell,
                        this->get_vdw_result(),
@@ -454,7 +461,9 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                        this->exx_nao,
                        &ucell.symm,
                        this->exx_info_,
-                       fs_cfg, nullptr, nullptr);
+                       fs_cfg,
+                       nullptr,
+                       nullptr);
 
     // restore to original xc
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);

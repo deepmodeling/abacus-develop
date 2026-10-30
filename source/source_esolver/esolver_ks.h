@@ -1,14 +1,14 @@
 #ifndef ESOLVER_KS_H
 #define ESOLVER_KS_H
 
-#include "esolver_fp.h"                                // first-principles esolver
-#include "source_basis/module_pw/pw_basis_k.h"         // use plane wave
-#include "source_cell/klist.h"                         // use k-points in Brillouin zone
-#include "source_estate/module_charge/chg_mix.h" // use charge mixing
-#include "source_hamilt/hamilt.h"                      // use Hamiltonian
-#include "source_hamilt/hamilt_base.h"                 // use Hamiltonian base class
-#include "source_hamilt/module_xc/general_exx_info.h"  // ESolver owns General_Exx_Info value
-#include "source_pw/module_pwdft/dftu_base.h"          // Plus_U_Base for dftu_ member
+#include "esolver_fp.h"                               // first-principles esolver
+#include "source_basis/module_pw/pw_basis_k.h"        // use plane wave
+#include "source_cell/klist.h"                        // use k-points in Brillouin zone
+#include "source_estate/module_charge/chg_mix.h"      // use charge mixing
+#include "source_hamilt/hamilt.h"                     // use Hamiltonian
+#include "source_hamilt/hamilt_base.h"                // use Hamiltonian base class
+#include "source_hamilt/module_xc/general_exx_info.h" // ESolver owns General_Exx_Info value
+#include "source_pw/module_pwdft/dftu_base.h"         // Plus_U_Base for dftu_ member
 #include "source_pw/module_pwdft/vnl_pw.h"
 
 #include <memory> // std::unique_ptr for dftu_ member
@@ -96,13 +96,13 @@ class ESolver_KS : public ESolver_FP
     //! Owned by ESolver_KS via unique_ptr; released automatically in ~ESolver_KS.
     std::unique_ptr<Plus_U_Base> dftu_;
 
-    std::string basisname;          //! esolver_ks_lcao.cpp
-    double esolver_KS_ne = 0.0;     //! number of electrons
-    double diag_ethr;               //! the threshold for diagonalization
-    double scf_thr;                 //! scf density threshold
-    double scf_ene_thr;             //! scf energy threshold
-    double drho;                    //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
-    double hsolver_error;           //! the error of HSolver
+    std::string basisname;      //! esolver_ks_lcao.cpp
+    double esolver_KS_ne = 0.0; //! number of electrons
+    double diag_ethr;           //! the threshold for diagonalization
+    double scf_thr;             //! scf density threshold
+    double scf_ene_thr;         //! scf energy threshold
+    double drho;                //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
+    double hsolver_error;       //! the error of HSolver
     /// DeltaSpin RMS from the most recent lambda optimization loop; -1.0 means no DeltaSpin.
     /// Set by ESolver_KS_LCAO after run_lambda_loop, read by ESolver_KS::iter_finish when calling print_etot.
     double ds_rms_ = -1.0;

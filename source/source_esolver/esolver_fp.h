@@ -2,14 +2,14 @@
 #define ESOLVER_FP_H
 
 #include "esolver.h"
+#include "source_base/parallel_grid.h" // Parallel_Grid (value member below)
 #include "source_base/timer_wrapper.h"
-#include "source_basis/module_pw/pw_basis_sup.h"          // plane wave basis
-#include "source_estate/elecstate.h"                  // electronic states
+#include "source_basis/module_pw/pw_basis_sup.h"   // plane wave basis
+#include "source_cell/stru_fac.h"                  // structure factor
+#include "source_estate/elecstate.h"               // electronic states
 #include "source_estate/module_charge/chg_extra.h" // charge extrapolation
-#include "source_hamilt/module_surchem/surchem.h"     // solvation model
-#include "source_base/parallel_grid.h"     // Parallel_Grid (value member below)
-#include "source_cell/stru_fac.h"  // structure factor
-#include "source_pw/module_pwdft/vl_pw.h"             // local pseudopotential
+#include "source_hamilt/module_surchem/surchem.h"  // solvation model
+#include "source_pw/module_pwdft/vl_pw.h"          // local pseudopotential
 
 #include <fstream>
 #include <memory>
@@ -48,7 +48,10 @@ class ESolver_FP : public ESolver
 
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver);
 
-    const vdw::VdwResult* get_vdw_result() const { return this->vdw_result_.get(); }
+    const vdw::VdwResult* get_vdw_result() const
+    {
+        return this->vdw_result_.get();
+    }
 
     //! vdW correction evaluated once for the current ionic configuration.
     std::unique_ptr<const vdw::VdwResult> vdw_result_;

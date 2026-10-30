@@ -2,8 +2,8 @@
 #define ESOLVER_SDFT_PW_H
 
 #include "esolver_ks_pw.h"
-#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_che.h"
+#include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_iter.h"
 #include "source_pw/module_stodft/sto_wf.h"
 

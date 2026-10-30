@@ -12,7 +12,8 @@
 #include "esolver_ks_pw.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 
-namespace ModuleDFPT {
+namespace ModuleDFPT
+{
 class XC_First_Order;
 }
 

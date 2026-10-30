@@ -52,7 +52,10 @@ class ESolver_KS_LCAO : public ESolver_KS
 
   protected:
     //! Optional solver-owned RT state passed to LCAO consumers.
-    virtual TD_info* get_td_info() const { return nullptr; }
+    virtual TD_info* get_td_info() const
+    {
+        return nullptr;
+    }
 
     //! Prepare an ionic step using istep for both initialization and initial-state output.
     virtual void before_scf(UnitCell& ucell, const int istep) override;

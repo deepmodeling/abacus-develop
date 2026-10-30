@@ -37,7 +37,10 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     int scf_iter_limit(const int istep) const override;
 
     //! Return the solver-owned RT state used by LCAO operators and output.
-    TD_info* get_td_info() const override { return td_p; }
+    TD_info* get_td_info() const override
+    {
+        return td_p;
+    }
 
     //! Run the electronic steps belonging to one MD call, including initialization or restart replay.
     virtual void runner(BaseCell& basecell, const int istep) override;
@@ -49,7 +52,12 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     void store_h_s_psi(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver);
 
     //! Finish an electronic iteration and update the saved state and requested energy-density matrix.
-    void iter_finish(UnitCell& ucell, const int istep, const int estep, const int estep_max, int& iter, bool& conv_esolver);
+    void iter_finish(UnitCell& ucell,
+                     const int istep,
+                     const int estep,
+                     const int estep_max,
+                     int& iter,
+                     bool& conv_esolver);
 
     //! Write the electronic-step energy and TD observables after the SCF loop.
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;

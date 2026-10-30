@@ -54,7 +54,8 @@ void ESolver_KS_PW_TDDFT<T, Device>::before_all_runners(BaseCell& basecell, cons
         {
             if (field.subdivisions() > std::numeric_limits<int>::max() / parts)
             {
-                ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT", "td_max_halvings exceeds the field sampling integer range.");
+                ModuleBase::WARNING_QUIT("ESolver_KS_PW_TDDFT",
+                                         "td_max_halvings exceeds the field sampling integer range.");
             }
         }
     }
@@ -193,7 +194,8 @@ bool ESolver_KS_PW_TDDFT<T, Device>::advance_interval(UnitCell& cell,
     const double left_time = (step - 1 + static_cast<double>(index) / parts) * full.dt * ModuleBase::AU_to_FS;
     const double right_time = (step - 1 + static_cast<double>(index + 1) / parts) * full.dt * ModuleBase::AU_to_FS;
     const std::streamsize precision = log_.precision();
-    log_ << " TD trial: [" << std::setprecision(12) << left_time << ", " << right_time << "] fs, depth=" << depth << '\n';
+    log_ << " TD trial: [" << std::setprecision(12) << left_time << ", " << right_time << "] fs, depth=" << depth
+         << '\n';
     log_.precision(precision);
 
     std::ostringstream interval;
@@ -213,7 +215,8 @@ bool ESolver_KS_PW_TDDFT<T, Device>::advance_interval(UnitCell& cell,
          << ", accepted=" << accept_trial << '\n';
     if (!converged && depth < this->inp_->td_max_halvings)
     {
-        std::cout << " TD retry: SCF not converged; splitting " << interval_text << " into two half steps." << std::endl;
+        std::cout << " TD retry: SCF not converged; splitting " << interval_text << " into two half steps."
+                  << std::endl;
         this->td_prop_->discard_trial();
 
         const int next_depth = depth + 1;
@@ -449,7 +452,10 @@ ESolver_KS::DensityStage ESolver_KS_PW_TDDFT<T, Device>::density_stage(const int
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
+void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell,
+                                                       const int istep,
+                                                       const int iter,
+                                                       const double ethr)
 {
     ModuleBase::timer::start("ESolver_KS_PW_TDDFT", "hamilt2rho_single");
 
@@ -485,7 +491,8 @@ void ESolver_KS_PW_TDDFT<T, Device>::hamilt2rho_single(UnitCell& ucell, const in
     hamilt::HamiltHSOperator<T, Device> op(hamiltonian, this->pw_wfc);
 
     const bool detailed = this->inp_->out_level == "ie";
-    this->td_prop_->evolve(*hamiltonian, potential, this->history_, *this->td_field_manager_, current, istep, iter, detailed);
+    this->td_prop_
+        ->evolve(*hamiltonian, potential, this->history_, *this->td_field_manager_, current, istep, iter, detailed);
 
     elecstate::ElecStatePW<T, Device>* estate = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
     // Propagation keeps the occupations of the initial state fixed.
@@ -598,8 +605,13 @@ void ESolver_KS_PW_TDDFT<T, Device>::after_scf(UnitCell& ucell, const int istep,
         const double local_npsi = this->td_prop_->orbitals().wave_electrons(this->pelec->wg);
         const hsolver::TDOrthStats& stats = this->td_prop_->orbitals().orth_stats();
         const bool full_gram = this->inp_->td_orthonormal != "none";
-        const pw::TDConserv values
-            = pw::cal_td_conserv(local_npsi, this->chr, ucell.omega, this->pw_wfc->poolrank, stats.before, stats.after, full_gram);
+        const pw::TDConserv values = pw::cal_td_conserv(local_npsi,
+                                                        this->chr,
+                                                        ucell.omega,
+                                                        this->pw_wfc->poolrank,
+                                                        stats.before,
+                                                        stats.after,
+                                                        full_gram);
         if (istep == 0)
         {
             initial_wave_electrons_ = values.npsi;

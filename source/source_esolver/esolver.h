@@ -35,7 +35,9 @@ class ESolver
 
     //! deal with exx and other calculation than scf/md/relax/cell-relax:
     //! such as nscf, get_wf and get_pchg
-    virtual void others(BaseCell&, const int) {}
+    virtual void others(BaseCell&, const int)
+    {
+    }
 
     //! calculate total energy of a given system
     virtual double cal_energy() = 0;
