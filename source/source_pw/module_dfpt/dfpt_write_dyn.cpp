@@ -89,10 +89,11 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
         out << "  " << ucell.ntype << "  " << nat << "  0  " << alat
             << "  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000" << "\n";
         out << "Basis vectors\n";
-        // lattice vectors in alat units (latvec is already in lat0 units)
+        // latvec is already in lat0 (= alat) units (unitcell_setup.cpp:
+        // "latvec have the unit of lat0"); write directly, no division
         for (int i = 0; i < 3; ++i)
         {
-            const ModuleBase::Matrix3 lv = ucell.latvec / alat;
+            const ModuleBase::Matrix3& lv = ucell.latvec;
             out << "  ";
             if (i == 0)
             {
@@ -154,7 +155,8 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
             }
         }
 
-        // --- Born charges and dielectric tensor at Gamma ---
+        // --- dielectric tensor and Born charges at Gamma (QE order:
+        // Dielectric Tensor first, then Effective Charges) ---
         // gate on the computed q0 response (compute_q0), not on the LO-TO
         // working-matrix correction: with compute_q0=true and loto=false
         // the tensors are still computed and should be exported
@@ -164,6 +166,18 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
             const ModuleBase::matrix& born0 = data.get_born(0);
             const bool has_eps = eps.nr == 3 && eps.nc == 3;
             const bool has_born = born0.nr == 3 && born0.nc == 3;
+            if (has_eps)
+            {
+                out << "\n     Dielectric Tensor:\n\n";
+                for (int i = 0; i < 3; ++i)
+                {
+                    for (int j = 0; j < 3; ++j)
+                    {
+                        out << "  " << std::setw(22) << eps(i, j);
+                    }
+                    out << "\n";
+                }
+            }
             if (has_born)
             {
                 out << "\n     Effective Charges E-U: Z_{alpha}{s,beta}\n\n";
@@ -181,18 +195,6 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
                     }
                 }
             }
-            if (has_eps)
-            {
-                out << "\n     Dielectric Tensor:\n\n";
-                for (int i = 0; i < 3; ++i)
-                {
-                    for (int j = 0; j < 3; ++j)
-                    {
-                        out << "  " << std::setw(22) << eps(i, j);
-                    }
-                    out << "\n";
-                }
-            }
         }
 
         out.close();
@@ -204,8 +206,10 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
         }
         else
         {
-            // log the successfully written full path (AGENTS rule 16)
-            std::cout << " DFPT_Write_Dyn: wrote " << name.str() << std::endl;
+            // log the created file path (AGENTS rule 16)
+            std::ostringstream ok;
+            ok << "DFPT_Write_Dyn: wrote " << name.str();
+            std::cout << " " << ok.str() << std::endl;
         }
     }
     ModuleBase::timer::end("ModuleDFPT", "DFPT_Write_Dyn");

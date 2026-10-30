@@ -100,7 +100,7 @@ class DFPT_PW
               double nelec,
               double ecutwfc,
               const Plus_U_Base* dftu,
-              int myrank = 0)
+              int myrank)
     {
         const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu, myrank};
         init(ctx);
