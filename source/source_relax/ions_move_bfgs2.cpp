@@ -6,6 +6,7 @@
 #include "source_cell/print_cell.h" // lanshuyue add 2025-06-19
 #include "source_cell/update_cell.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_relax/relax_criteria.h"
 
 //! initialize H0、H、pos0、force0、force
 void Ions_Move_BFGS2::allocate(const int _size)

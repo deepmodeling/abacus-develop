@@ -317,8 +317,6 @@ addtest(
 addtest(
   TARGET
   MODULE_RELAX_relax_driver_test
-  KEEP_FEATURE_DEFINITIONS
-  __MPI
   SOURCES
   test_relax_driver.cpp
   ../relax_driver.cpp
@@ -341,7 +339,6 @@ addtest(
   ../lattice_change_cg.cpp
   ${socket_json_sources}
   LIBS
-  MPI::MPI_CXX
   parameter
   base
   device)

@@ -4,13 +4,14 @@
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
-#include "source_relax/relax_criteria.h"
 
 #include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <tuple>
 #include <vector>
+
+struct Relax_Criteria;
 
 class Ions_Move_BFGS2
 {

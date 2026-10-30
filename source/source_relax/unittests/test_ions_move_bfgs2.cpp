@@ -4,6 +4,7 @@
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
 #include "source_relax/ions_move_bfgs2.h"
 #include "source_relax/relax_data.h"
+#include "source_relax/relax_criteria.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
