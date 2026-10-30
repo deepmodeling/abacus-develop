@@ -488,12 +488,13 @@ void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
     }
 
     // QE-format dyn file output (dfpt_out_dyn); the output directory is
-    // the one global dependency this PR adds (governance exception: it
-    // is the same directory every other esolver writes to, read once
-    // here because the DFPT post-processing has no StateSharing access)
+    // constructed from the suffix (the same formula as
+    // ReadInput::set_global_dir: "OUT." + suffix + "/"), avoiding any
+    // new PARAM reference (governance rule: explicit dependency passing)
     if (this->inp_->dfpt_out_dyn)
     {
-        ModuleDFPT::DFPT_Write_Dyn(ucell, dfpt_->get_data(), nq, PARAM.globalv.global_out_dir);
+        const std::string out_dir = "OUT." + this->inp_->suffix + "/";
+        ModuleDFPT::DFPT_Write_Dyn(ucell, dfpt_->get_data(), nq, out_dir);
     }
 }
 
