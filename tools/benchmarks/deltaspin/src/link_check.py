@@ -11,6 +11,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path)
     parser.add_argument("--cxxflag", action="append", default=[])
+    parser.add_argument("--ldflag", action="append", default=[])
     parser.add_argument("--library", type=Path, action="append", default=[])
     args = parser.parse_args()
     source = args.source.resolve(strict=True)
@@ -37,6 +38,7 @@ def main() -> None:
     link_command[link_command.index(original_object)] = str(object_path)
     link_command[link_command.index("-o") + 1] = str(executable)
     link_command.extend(str(path.resolve(strict=True)) for path in args.library)
+    link_command.extend(args.ldflag)
     log_path = executable.with_suffix(".build.log")
     with log_path.open("w") as log:
         for command in (compile_command, link_command):

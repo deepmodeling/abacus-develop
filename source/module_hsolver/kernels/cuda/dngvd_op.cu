@@ -9,9 +9,121 @@
 #include <algorithm>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace hsolver
 {
+
+#if CUSOLVER_VERSION >= 11703
+class FixedOverlapSubspace::Batch
+{
+  public:
+    using Complex = std::complex<double>;
+
+    Batch(int points, int bands, cusolverDnHandle_t handle)
+        : points_(points), bands_(bands), handle_(handle), status_(points)
+    {
+        assert(points > 1 && bands > 0);
+        const std::size_t matrix_count = std::size_t(points) * bands * bands;
+        const std::size_t value_count = std::size_t(points) * bands;
+        const std::size_t bytes = matrix_count * sizeof(Complex) + value_count * sizeof(double)
+                                  + std::size_t(points) * sizeof(int);
+        if (!allocate(reinterpret_cast<void**>(&matrices_), bytes)) { return; }
+        values_ = reinterpret_cast<double*>(matrices_ + matrix_count);
+        info_ = reinterpret_cast<int*>(values_ + value_count);
+        cusolverErrcheck(cusolverDnCreateParams(&parameters_));
+        cusolverErrcheck(cusolverDnXsyevBatched_bufferSize(handle_, parameters_, CUSOLVER_EIG_MODE_VECTOR,
+            CUBLAS_FILL_MODE_UPPER, bands, CUDA_C_64F, matrices_, bands, CUDA_R_64F, values_,
+            CUDA_C_64F, &device_bytes_, &host_bytes_, points));
+        if (device_bytes_ != 0 && !allocate(&device_work_, device_bytes_))
+        {
+            release();
+            return;
+        }
+        host_work_.resize(host_bytes_);
+    }
+
+    ~Batch() { release(); }
+    Batch(const Batch&) = delete;
+    Batch& operator=(const Batch&) = delete;
+
+    bool available() const { return matrices_ != nullptr; }
+
+    void capture(int point, const Complex* h)
+    {
+        assert(available() && point >= 0 && point < points_);
+        cudaErrcheck(cudaMemcpy(matrices_ + std::size_t(point) * bands_ * bands_, h,
+                               std::size_t(bands_) * bands_ * sizeof(Complex), cudaMemcpyDeviceToDevice));
+    }
+
+    void diagonalize(double* eigenvalues, int leading)
+    {
+        assert(available() && leading >= bands_);
+        cusolverErrcheck(cusolverDnXsyevBatched(handle_, parameters_, CUSOLVER_EIG_MODE_VECTOR,
+            CUBLAS_FILL_MODE_UPPER, bands_, CUDA_C_64F, matrices_, bands_, CUDA_R_64F, values_,
+            CUDA_C_64F, device_work_, device_bytes_, host_work_.data(), host_bytes_, info_, points_));
+        cudaErrcheck(cudaMemcpy(status_.data(), info_, std::size_t(points_) * sizeof(int), cudaMemcpyDeviceToHost));
+        for (int point = 0; point < points_; ++point)
+        {
+            if (status_[point] != 0)
+            {
+                throw std::runtime_error("Batched response failed at k point " + std::to_string(point)
+                    + ", dimension " + std::to_string(bands_) + ", cuSolver info=" + std::to_string(status_[point]));
+            }
+        }
+        cudaErrcheck(cudaMemcpy2D(eigenvalues, std::size_t(leading) * sizeof(double),
+            values_, std::size_t(bands_) * sizeof(double), std::size_t(bands_) * sizeof(double),
+            points_, cudaMemcpyDeviceToHost));
+    }
+
+    const Complex* vectors(int point) const
+    {
+        assert(available() && point >= 0 && point < points_);
+        return matrices_ + std::size_t(point) * bands_ * bands_;
+    }
+
+  private:
+    const int points_, bands_;
+    cusolverDnHandle_t handle_;
+    cusolverDnParams_t parameters_ = nullptr;
+    Complex* matrices_ = nullptr;
+    double* values_ = nullptr;
+    int* info_ = nullptr;
+    void* device_work_ = nullptr;
+    std::size_t device_bytes_ = 0, host_bytes_ = 0;
+    std::vector<char> host_work_;
+    std::vector<int> status_;
+
+    static bool allocate(void** pointer, std::size_t bytes)
+    {
+        const auto status = cudaMalloc(pointer, bytes);
+        if (status == cudaErrorMemoryAllocation)
+        {
+            cudaGetLastError();
+            *pointer = nullptr;
+            return false;
+        }
+        cudaErrcheck(status);
+        return true;
+    }
+
+    void release()
+    {
+        cudaErrcheck(cudaFree(device_work_));
+        cudaErrcheck(cudaFree(matrices_));
+        device_work_ = nullptr;
+        matrices_ = nullptr;
+        if (parameters_ != nullptr)
+        {
+            cusolverErrcheck(cusolverDnDestroyParams(parameters_));
+            parameters_ = nullptr;
+        }
+    }
+};
+
+#else
+class FixedOverlapSubspace::Batch {};
+#endif
 
 // The workspace shares the single-threaded solver handle lifetime. Retaining
 // it avoids a device-wide cudaFree fence while other streams prefetch data.
@@ -163,6 +275,50 @@ void FixedOverlapSubspace::diagonalize(const Complex* h, const Complex* projecto
     const Complex one(1, 0), zero(0, 0);
     gemm_op<Complex, base_device::DEVICE_GPU>()(nullptr, 'N', 'N', rows_, bands_, bands_,
         &one, projectors, rows_, vectors_, bands_, &zero, rotated, rows_);
+}
+
+bool FixedOverlapSubspace::prepare_batch()
+{
+#if CUSOLVER_VERSION >= 11703
+    assert(available());
+    if (points_ <= 1) { return false; }
+    if (!batch_) { batch_ = std::make_unique<Batch>(points_, bands_, solver.handle); }
+    return batch_->available();
+#else
+    return false;
+#endif
+}
+
+void FixedOverlapSubspace::capture_batch(int point, const Complex* h)
+{
+#if CUSOLVER_VERSION >= 11703
+    assert(batch_ && batch_->available());
+    batch_->capture(point, h);
+#else
+    throw std::logic_error("Batched response requires cuSolver 11.7.3 or newer");
+#endif
+}
+
+void FixedOverlapSubspace::diagonalize_batch(double* eigenvalues, int leading)
+{
+#if CUSOLVER_VERSION >= 11703
+    assert(batch_ && batch_->available());
+    batch_->diagonalize(eigenvalues, leading);
+#else
+    throw std::logic_error("Batched response requires cuSolver 11.7.3 or newer");
+#endif
+}
+
+void FixedOverlapSubspace::rotate_batch(int point, Complex* rotated)
+{
+#if CUSOLVER_VERSION >= 11703
+    assert(batch_ && batch_->available());
+    const Complex one(1, 0), zero(0, 0);
+    gemm_op<Complex, base_device::DEVICE_GPU>()(nullptr, 'N', 'N', rows_, bands_, bands_,
+        &one, projectors(point), rows_, batch_->vectors(point), bands_, &zero, rotated, rows_);
+#else
+    throw std::logic_error("Batched response requires cuSolver 11.7.3 or newer");
+#endif
 }
 
 static inline

@@ -2,6 +2,7 @@
 #define HSOLVER_FIXED_OVERLAP_H
 
 #include <complex>
+#include <memory>
 
 namespace hsolver
 {
@@ -32,7 +33,23 @@ class FixedOverlapSubspace
     /// Eigenvalues are written to host memory; rotated projectors stay on CUDA.
     void diagonalize(const Complex* h, const Complex* projectors, Complex* rotated, double* eigenvalues);
 
+    /// Attempt optional batching after all required response scratch is reserved.
+    /// Older cuSolver releases and unavailable device memory retain serial solves.
+    bool prepare_batch();
+
+    /// Capture each point's compact column-major device Hamiltonian for a response.
+    /// These methods require successful preparation and all points before solving.
+    void capture_batch(int point, const Complex* h);
+
+    /// Write each point's spectrum to a host row with the specified leading size.
+    void diagonalize_batch(double* eigenvalues, int leading);
+
+    /// Rotate a solved point's cached projectors into compact device output.
+    void rotate_batch(int point, Complex* rotated);
+
   private:
+    class Batch;
+    std::unique_ptr<Batch> batch_;
     const int points_, bands_, rows_;
     Complex* storage_ = nullptr;
     Complex* h_ = nullptr;

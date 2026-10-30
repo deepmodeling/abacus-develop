@@ -213,6 +213,37 @@ std::vector<double> pack_constraint_field(int atoms, int nkb, const int* project
     }
     return coefficients;
 }
+
+// Bands and k points share the same three coefficients per projector within
+// one response evaluation. The weighted projectors are overwritten per point.
+struct ProjectedField
+{
+    const int bands;
+    const int npol;
+    const int nkb;
+    ct::Tensor coefficients;
+    ct::Tensor weighted;
+
+    ProjectedField(int atoms, int bands_in, int npol_in, int nkb_in,
+                   const int* counts, const ModuleBase::Vector3<double>* field)
+        : bands(bands_in), npol(npol_in), nkb(nkb_in),
+          coefficients(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {nkb, 3}),
+          weighted(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, {bands, npol * nkb})
+    {
+        const auto packed = pack_constraint_field(atoms, nkb, counts, field);
+        base_device::memory::synchronize_memory_op<double, GPU, base_device::DEVICE_CPU>()(
+            nullptr, nullptr, coefficients.data<double>(), packed.data(), packed.size());
+    }
+
+    void add(Complex* h, const Complex* projectors, int sign)
+    {
+        hamilt::spin_constraint_projectors_gpu(bands, npol, nkb, sign, coefficients.data<double>(),
+                                               projectors, weighted.data<Complex>());
+        const int rows = npol * nkb;
+        hsolver::gemm_op<Complex, GPU>()(nullptr, 'C', 'N', bands, bands, rows,
+            &ModuleBase::ONE, projectors, rows, weighted.data<Complex>(), rows, &ModuleBase::ONE, h, bands);
+    }
+};
 #endif
 
 void apply_spin_constraint_cpu(int atoms, int bands, int npol, int nkb, int sign,
@@ -257,19 +288,13 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(
 #if defined(__CUDA) || defined(__ROCM)
     if (PARAM.inp.device == "gpu")
     {
+#if defined(__CUDA)
+        ProjectedField field(atoms, nbands, this->npol_, nkb, nh_iat, delta_lambda);
+        field.add(h_tmp, becp_k, sign);
+#else
         const base_device::DEVICE_GPU* gpu = nullptr;
         const base_device::DEVICE_CPU* cpu = nullptr;
         ct::Tensor ps(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, {nbands, rows});
-#if defined(__CUDA)
-        // Each band shares the same three constraint coefficients per projector.
-        // Only these coefficients cross the host/device boundary.
-        const auto coefficients = pack_constraint_field(atoms, nkb, nh_iat, delta_lambda);
-        ct::Tensor lambda(ct::DataType::DT_DOUBLE, ct::DeviceType::GpuDevice, {nkb, 3});
-        base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
-            gpu, cpu, lambda.data<double>(), coefficients.data(), coefficients.size());
-        hamilt::spin_constraint_projectors_gpu(nbands, this->npol_, nkb, sign, lambda.data<double>(),
-                                               becp_k, ps.data<Complex>());
-#else
         std::vector<Complex> input(size), output(size);
         base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
             cpu, gpu, input.data(), becp_k, size);
@@ -277,10 +302,10 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(
                                   input.data(), output.data());
         base_device::memory::synchronize_memory_op<Complex, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
             gpu, cpu, ps.data<Complex>(), output.data(), size);
-#endif
         hsolver::gemm_op<Complex, base_device::DEVICE_GPU>()(
             gpu, 'C', 'N', nbands, nbands, rows, &ModuleBase::ONE, becp_k, rows,
             ps.data<Complex>(), rows, &ModuleBase::ONE, h_tmp, nbands);
+#endif
         return;
     }
 #endif
@@ -506,8 +531,23 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                 }
 #endif
                 std::complex<double>* becp_pointer = nullptr;
+#if defined(__CUDA)
+                // The field is fixed across k points within one response evaluation.
+                std::unique_ptr<ProjectedField> field;
+                if (i_step != -1)
+                {
+                    field = std::make_unique<ProjectedField>(this->Mi_.size(), nbands, npol, nkb,
+                                                              nh_iat, delta_lambda);
+                }
+#endif
                 // allocate memory for becp_pointer in GPU device
                 base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, becp_pointer, size_becp);
+#if defined(__CUDA)
+                // Initial H/S construction retains its full memory budget. Later
+                // field responses reserve required scratch before optional batching.
+                const bool batch_response = !initial_hs && this->fixed_overlap
+                                            && this->fixed_overlap->prepare_batch();
+#endif
                 for (int ik = 0; ik < nk; ++ik)
                 {
                     psi_t->fix_k(ik);
@@ -556,10 +596,18 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(ctx, ctx, h_tmp, response_h, nbands * nbands);
                     // update h_tmp by delta_lambda
                     const int sign = this->pelec->klist->isk[ik] == 0 ? 1 : -1;
+#if defined(__CUDA)
+                    if (field) { field->add(h_tmp, response_projectors, sign); }
+                    else
+#endif
                     if (i_step != -1) this->calculate_delta_hcc(h_tmp, response_projectors, delta_lambda, nbands, nkb, nh_iat, sign);
 
 #if defined(__CUDA)
-                    if (this->fixed_overlap)
+                    if (batch_response)
+                    {
+                        this->fixed_overlap->capture_batch(ik, h_tmp);
+                    }
+                    else if (this->fixed_overlap)
                     {
                         this->fixed_overlap->diagonalize(h_tmp, response_projectors, becp_pointer, &this->pelec->ekb(ik, 0));
                     }
@@ -572,11 +620,23 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                             h_tmp, s_tmp, nbands, becp_k, becp_pointer, nkb * npol, &this->pelec->ekb(ik, 0));
                     }
 #if defined(__CUDA)
-                    moments->capture(ik, becp_pointer);
+                    if (!batch_response) { moments->capture(ik, becp_pointer); }
 #else
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(cpu_ctx, ctx, &becp_tmp[ik * size_becp], becp_pointer, size_becp);
 #endif
                 }
+
+#if defined(__CUDA)
+                if (batch_response)
+                {
+                    this->fixed_overlap->diagonalize_batch(this->pelec->ekb.c, this->pelec->ekb.nc);
+                    for (int ik = 0; ik < nk; ++ik)
+                    {
+                        this->fixed_overlap->rotate_batch(ik, becp_pointer);
+                        moments->capture(ik, becp_pointer);
+                    }
+                }
+#endif
 
                 // free memory for becp_pointer in GPU device
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(ctx, becp_pointer);

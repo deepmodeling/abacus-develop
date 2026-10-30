@@ -305,6 +305,36 @@ multiple k points in reverse order, repeated object lifetimes, immutable inputs
 and caches, buffer guards, intervening generalized solves, and optional
 allocation failure. It uses analytical matrices and requires no external data.
 
+With cuSolver 11.7.3 or newer, subsequent responses can solve their independent
+k-point matrices in one `cusolverDnXsyevBatched` call. The initial response
+constructs H/S and uses serial solves. Required field coefficients, weighted
+projectors and output scratch are allocated before optional batch storage.
+Coefficients are uploaded once per response; the weighted-projector buffer is
+reused across k points. A single k point, an older cuSolver, or failed optional
+device allocation retains serial responses with the same field workspace.
+
+Batch storage contains all k-point Hamiltonians, spectra, status values and the
+library-reported workspace. It belongs to the fixed-overlap cache and is
+released before Davidson. The solver uses FP64 arithmetic and checks every
+matrix's convergence status. Rotated projectors are consumed in the original
+k-point order before calculating occupations and weighting moments. Neither
+chemical identity nor benchmark dimensions select the batching path.
+
+`check_response_batch.cpp` checks analytical spectra, physical generalized
+eigenpair residuals, overlap orthogonality, projector rotations, input and cache
+preservation, and host-output guards for several matrix and batch dimensions.
+It also exercises older-library and single-point fallback. Link the driver with
+`-Wl,--wrap=cudaMalloc -Wl,--wrap=cudaFree` to enable its two optional-allocation
+failure checks and verify release of tracked batch storage. Compare complete
+application runs using identical CUDA libraries: a toolkit change is a separate
+variable from response batching.
+
+```bash
+python3 src/link_check.py src/check_response_batch.cpp --cxxflag=-UNDEBUG \
+    --ldflag=-Wl,--wrap=cudaMalloc --ldflag=-Wl,--wrap=cudaFree
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 results/check_response_batch
+```
+
 ## Focused correctness checks
 
 The C++ drivers in `src/` exercise the production public interfaces against
