@@ -31,7 +31,7 @@ if(ENABLE_MPI)
       ../../module_pwdft/op_pw_vel.cpp ../../module_pwdft/projector_gradient.cpp ../../module_pwdft/velocity_workspace.cpp ../../module_pwdft/nonlocal_workspace.cpp
       ../../module_pwdft/vnl_pw.cpp ../../module_pwdft/vnl_pw_init_vnl.cpp ../../module_pwdft/vnl_pw_getvnl.cpp ../../module_pwdft/vnl_pw_deeq.cpp
       ../../module_pwdft/vnl_pw_grad.cpp ../../module_pwdft/vnl_pw_table.cpp ../../module_pwdft/vnl_pw_qrad.cpp
-      ../../module_pwdft/stru_fac.cpp ../../module_pwdft/stru_fac_k.cpp ../../module_pwdft/soc.cpp ../../module_pwdft/nonlocal_maths.cpp
+      ../../../source_cell/stru_fac.cpp ../../../source_cell/stru_fac_k.cpp ../../../source_cell/soc.cpp ../../module_pwdft/nonlocal_maths.cpp
       ../../module_proj/onsite_proj.cpp ../../module_proj/onsite_proj_init.cpp
       ../../module_proj/onsite_proj_overlap.cpp ../../module_proj/onsite_proj_tools.cpp
       ../../module_proj/onsite_proj_tools_becp.cpp ../../module_proj/radial_proj.cpp
