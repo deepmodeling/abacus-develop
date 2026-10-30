@@ -60,6 +60,8 @@ private:
         double frac[3];
         double vel[3];
         double force[3];
+        double displacement[3];
+        int boundary_shift[3];
         int mbl[3];
         double mass;
         int image_shift[3];

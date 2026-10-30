@@ -19,6 +19,7 @@ VPATH=./src_global:\
 ./source_cell/module_neighlist:\
 ./source_cell/module_symmetry:\
 ./source_cell:\
+./source_cell/kernels:\
 ./source_base:\
 ./source_base/kernels:\
 ./source_base/module_external:\
@@ -889,6 +890,9 @@ OBJS_LCAO=evolve_elec.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       smooth_cut_coulomb.o\
+      invmat_ri.o\
+      lri_cv.o\
+      lri_cv_tools.o\
       exx_abfs_jle.o\
       module_restart/restart_exx_csr.o\
       exx_abfs_io.o\

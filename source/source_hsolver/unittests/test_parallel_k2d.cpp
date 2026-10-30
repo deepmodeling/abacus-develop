@@ -14,9 +14,11 @@
  * Test fixture for class Parallel_K2D
  */
 
-class MPIContext {
+class MPIContext
+{
   public:
-    MPIContext() {
+    MPIContext()
+    {
         MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
         MPI_Comm_size(MPI_COMM_WORLD, &_size);
     }
@@ -34,50 +36,61 @@ class MPIContext {
     int _size;
 };
 
-class ParaPrepare {
+class ParaPrepare
+{
   public:
-    ParaPrepare(int KPAR_in, int nkstot_in)
-        : KPAR_(KPAR_in), nkstot_(nkstot_in) {}
+    ParaPrepare(int KPAR_in, int nkstot_in) : KPAR_(KPAR_in), nkstot_(nkstot_in) {}
     int KPAR_;
     int nkstot_;
 };
 
-class ParallelK2DTest : public ::testing::TestWithParam<ParaPrepare> {
+class ParallelK2DTest : public ::testing::TestWithParam<ParaPrepare>
+{
   protected:
     Parallel_K2D<double> k2d;
     MPIContext mpi;
     int NPROC;
     int MY_RANK;
-    void SetUp() override {
+    void SetUp() override
+    {
         NPROC = mpi.GetSize();
         MY_RANK = mpi.GetRank();
     }
     void TearDown() override {}
 };
 
-TEST_P(ParallelK2DTest, DividePools) {
+TEST_P(ParallelK2DTest, DividePools)
+{
     ParaPrepare pp = GetParam();
     mpi.KPAR = pp.KPAR_;
-    //k2d.Pkpoints = new Parallel_Kpoints;
-    //k2d.get_p2D_pool() = new Parallel_2D;
-    if (mpi.KPAR > NPROC) {
+    // k2d.Pkpoints = new Parallel_Kpoints;
+    // k2d.get_p2D_pool() = new Parallel_2D;
+    if (mpi.KPAR > NPROC)
+    {
         std::string output;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(Parallel_Global::divide_mpi_groups(this->NPROC,
-                                                       mpi.KPAR,
-                                                       this->MY_RANK,
-                                                       mpi.NPROC_IN_POOL,
-                                                       mpi.MY_POOL,
-                                                       mpi.RANK_IN_POOL),
-                    testing::ExitedWithCode(1),
-                    "");
+        EXPECT_EXIT(
+            Parallel_Global::divide_mpi_groups(
+                this->NPROC,
+                mpi.KPAR,
+                this->MY_RANK,
+                mpi.NPROC_IN_POOL,
+                mpi.MY_POOL,
+                mpi.RANK_IN_POOL),
+            testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(
-            output,
-            testing::HasSubstr("must be greater than the number of groups"));
-    } else {
+        EXPECT_THAT(output, testing::HasSubstr("must be greater than the number of groups"));
+    }
+    else
+    {
         k2d.set_kpar(mpi.KPAR);
-        k2d.set_para_env(pp.nkstot_, 10, 1, this->NPROC, this->MY_RANK, 1);
+        k2d.set_para_env(
+            pp.nkstot_,
+            10,
+            1,
+            this->NPROC,
+            this->MY_RANK,
+            1);
         /*
         Parallel_Global::divide_mpi_groups(this->NPROC,
                                            mpi.KPAR,
@@ -111,7 +124,7 @@ TEST_P(ParallelK2DTest, DividePools) {
         k2d.Pkpoints->get_startpro_pool(ipool) << std::endl;
         }
         */
-        //k2d.get_p2D_pool()->init(10, 10, 1, POOL_WORLD, 0);
+        // k2d.get_p2D_pool()->init(10, 10, 1, POOL_WORLD, 0);
         EXPECT_EQ(this->NPROC, 8);
         EXPECT_EQ(k2d.get_p2D_pool()->dim0, 2);
         EXPECT_EQ(k2d.get_p2D_pool()->dim1, 2);
@@ -121,17 +134,18 @@ TEST_P(ParallelK2DTest, DividePools) {
         EXPECT_EQ(k2d.get_kpar(), 10);
         k2d.unset_para_env();
     }
-    //delete k2d.Pkpoints;
-    //delete k2d.get_p2D_pool();
+    // delete k2d.Pkpoints;
+    // delete k2d.get_p2D_pool();
 }
 
-INSTANTIATE_TEST_SUITE_P(TESTPK,
-                         ParallelK2DTest,
-                         ::testing::Values(
-                             // KPAR, nkstot
-                             ParaPrepare(2, 16)));
+INSTANTIATE_TEST_SUITE_P(
+    TESTPK, ParallelK2DTest,
+    ::testing::Values(
+        // KPAR, nkstot
+        ParaPrepare(2, 16)));
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
