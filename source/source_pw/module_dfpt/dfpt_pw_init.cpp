@@ -143,6 +143,7 @@ void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
     pimpl_->nelec_ = ctx.nelec;
     pimpl_->ecutwfc_ = ctx.ecutwfc;
     pimpl_->dftu_ = ctx.dftu;
+    pimpl_->myrank_ = ctx.myrank;
 
     pimpl_->check_metallic_occ(*ctx.wg);
 

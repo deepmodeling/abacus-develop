@@ -18,7 +18,8 @@ namespace ModuleDFPT
 void DFPT_Write_Dyn(const UnitCell& ucell,
                     const DFPT_PW_Data& data,
                     int nq,
-                    const std::string& out_dir);
+                    const std::string& out_dir,
+                    int my_rank);
 } // namespace ModuleDFPT
 
 #endif // DFPT_WRITE_DYN_H

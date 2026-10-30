@@ -19,7 +19,6 @@
 
 #include "source_cell/unitcell.h"
 #include "source_base/constants.h"
-#include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 
@@ -42,13 +41,15 @@ static double amu_to_ry(double mass_amu)
 void DFPT_Write_Dyn(const UnitCell& ucell,
                     const DFPT_PW_Data& data,
                     int nq,
-                    const std::string& out_dir)
+                    const std::string& out_dir,
+                    int my_rank)
 {
     ModuleBase::TITLE("ModuleDFPT", "DFPT_Write_Dyn");
     ModuleBase::timer::start("ModuleDFPT", "DFPT_Write_Dyn");
 
-    // only the output rank writes, to avoid competing truncations
-    if (GlobalV::MY_RANK != 0)
+    // only the output rank writes, to avoid competing truncations;
+    // the rank is passed by the caller (no global-state read here)
+    if (my_rank != 0)
     {
         ModuleBase::timer::end("ModuleDFPT", "DFPT_Write_Dyn");
         return;

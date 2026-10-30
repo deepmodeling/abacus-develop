@@ -48,6 +48,10 @@ struct DFPT_PW_InitContext
     double nelec;
     double ecutwfc;
     const Plus_U_Base* dftu;
+    /// MPI rank of the running process (from the runtime context, not
+    /// read from any global inside module_dfpt); consumed by the dyn
+    /// file writer for the rank-0 output gate
+    int myrank = 0;
 };
 
 /**
@@ -94,9 +98,10 @@ class DFPT_PW
               const XC_First_Order* xc,
               double nelec,
               double ecutwfc,
-              const Plus_U_Base* dftu)
+              const Plus_U_Base* dftu,
+              int myrank = 0)
     {
-        const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu};
+        const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu, myrank};
         init(ctx);
     }
 
@@ -181,6 +186,10 @@ class DFPT_PW
     /// read-only access to the data layer (consumed by the dyn file
     /// writer in the esolver post-processing)
     const DFPT_PW_Data& get_data() const;
+
+    /// the MPI rank passed at init (0 for serial); consumed by the dyn
+    /// file writer for the rank-0 output gate
+    int get_myrank() const;
 
   private:
     std::unique_ptr<Impl> pimpl_;

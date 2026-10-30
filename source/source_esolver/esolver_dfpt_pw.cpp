@@ -428,9 +428,13 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     }
 
     this->stp.sync_cpu();
+    // myrank from the runtime context (the adjacent domag read on line
+    // above uses the same source); flows through InitContext -> Impl ->
+    // the dyn file writer's rank-0 gate, no global read in the writer
+    const int myrank = PARAM.globalv.myrank;
     dfpt_->init(ucell, *this->stp.psi_cpu, this->pw_rho, this->pw_wfc, &this->sf, veff_r,
                 this->pelec->wg, this->pelec->ekb, xc_adapter_, nelec_, ecutwfc_,
-                dft_plus_u_ ? this->dftu_.get() : nullptr);
+                dft_plus_u_ ? this->dftu_.get() : nullptr, myrank);
 }
 
 void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
@@ -489,11 +493,13 @@ void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
 
     // QE-format dyn file output (dfpt_out_dyn); the output directory is
     // constructed from the suffix (the same formula as
-    // ReadInput::set_global_dir), so no global-state read is needed
+    // ReadInput::set_global_dir), so no global-state read is needed.
+    // The rank parameter defaults to 0 (serial DFPT; the MPI follow-up
+    // will wire it through the init context)
     if (this->inp_->dfpt_out_dyn)
     {
         const std::string out_dir = "OUT." + this->inp_->suffix + "/";
-        ModuleDFPT::DFPT_Write_Dyn(ucell, dfpt_->get_data(), nq, out_dir);
+        ModuleDFPT::DFPT_Write_Dyn(ucell, dfpt_->get_data(), nq, out_dir, dfpt_->get_myrank());
     }
 }
 
