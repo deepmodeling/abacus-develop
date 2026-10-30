@@ -6,6 +6,7 @@
 #include "vnl_pw.h"
 
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <vector>
 
@@ -66,8 +67,11 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     FPTYPE* indv_ptr = this->get_indv_data<FPTYPE>();
     FPTYPE* nhtol_ptr = this->get_nhtol_data<FPTYPE>();
     FPTYPE* nhtolm_ptr = this->get_nhtolm_data<FPTYPE>();
-    resmem_var_op()(ylm, ylm_count * npw, "VNL::ylm");
-    resmem_var_op()(vkb_radial, this->nhm * npw, "VNL::vkb_radial");
+    const std::int64_t ylm_elements = static_cast<std::int64_t>(ylm_count) * npw;
+    const std::int64_t radial_elements = static_cast<std::int64_t>(this->nhm) * npw;
+    const std::int64_t momentum_elements = static_cast<std::int64_t>(npw) * 3;
+    resmem_var_op()(ylm, ylm_elements, "VNL::ylm");
+    resmem_var_op()(vkb_radial, radial_elements, "VNL::vkb_radial");
 
     const ModuleBase::Vector3<double> reduced_vector_potential = vector_potential / ucell.tpiba;
     std::vector<ModuleBase::Vector3<double>> shifted_gk(npw);
@@ -101,8 +105,8 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
         syncmem_int_op()(atom_nb, host_atom_nb.data(), ucell.ntype);
         syncmem_int_op()(atom_na, host_atom_na.data(), ucell.ntype);
 
-        resmem_var_op()(shifted_gk_data, npw * 3);
-        castmem_var_h2d_op()(shifted_gk_data, reinterpret_cast<double*>(shifted_gk.data()), npw * 3);
+        resmem_var_op()(shifted_gk_data, momentum_elements);
+        castmem_var_h2d_op()(shifted_gk_data, reinterpret_cast<double*>(shifted_gk.data()), momentum_elements);
     }
     else
     {
@@ -111,8 +115,8 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
         atom_na = host_atom_na.data();
         if (std::is_same<FPTYPE, float>::value)
         {
-            resmem_var_op()(shifted_gk_data, npw * 3);
-            castmem_var_h2h_op()(shifted_gk_data, reinterpret_cast<double*>(shifted_gk.data()), npw * 3);
+            resmem_var_op()(shifted_gk_data, momentum_elements);
+            castmem_var_h2h_op()(shifted_gk_data, reinterpret_cast<double*>(shifted_gk.data()), momentum_elements);
         }
         else
         {
@@ -123,7 +127,8 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     ModuleBase::YlmReal::Ylm_Real(ctx, ylm_count, npw, shifted_gk_data, ylm);
 
     std::complex<FPTYPE>* structure_factor = nullptr;
-    resmem_complex_op()(structure_factor, ucell.nat * npw);
+    const std::int64_t structure_elements = static_cast<std::int64_t>(ucell.nat) * npw;
+    resmem_complex_op()(structure_factor, structure_elements);
     this->psf->get_sk(ctx, ik, this->wfcpw, structure_factor);
 
     cal_vnl_op()(ctx,

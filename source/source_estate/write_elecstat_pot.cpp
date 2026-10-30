@@ -22,17 +22,25 @@ void write_elecstat_pot(
     const UnitCell* ucell,
     const double* v_eff,
     const surchem& solvent,
-    const int precision)
+    const std::vector<double>* pcc_potential,
+    const std::vector<double>* solvent_potential,
+    const int precision,
+    std::ofstream& ofs_running)
 {
     ModuleBase::TITLE("ModuleIO", "write_elecstat_pot");
     ModuleBase::timer::start("ModuleIO", "write_elecstat_pot");
 
     std::vector<double> v_elecstat(rho_basis->nrxx, 0.0);
 
+    if (solvent_potential != nullptr && solvent_potential->size() != static_cast<std::size_t>(rho_basis->nrxx))
+    {
+        ModuleBase::WARNING_QUIT("write_elecstat_pot", "Solvent potential does not match the output grid");
+    }
+
     const int nspin = PARAM.inp.nspin;
     const int efield = PARAM.inp.efield_flag;
     const int dip_corr = PARAM.inp.dip_cor_flag;
-    const bool imp_sol = PARAM.inp.imp_sol;
+    const int imp_sol = PARAM.inp.imp_sol;
 
     //==========================================
     // Hartree potential
@@ -66,7 +74,15 @@ void write_elecstat_pot(
         {
             v_elecstat[ir] += v_efield(0, ir);
         }
-        if(imp_sol == true)
+        if (pcc_potential != nullptr)
+        {
+            v_elecstat[ir] += (*pcc_potential)[ir];
+        }
+        if (solvent_potential != nullptr)
+        {
+            v_elecstat[ir] += (*solvent_potential)[ir];
+        }
+        if (imp_sol == 1)
         {
             v_elecstat[ir] += solvent.delta_phi[ir];
         }
@@ -84,7 +100,8 @@ void write_elecstat_pot(
                                   rho_basis->nxyz,
                                   rho_basis->nrxx,
                                   rho_basis->nplane,
-                                  rho_basis->startz_current);
+                                  rho_basis->startz_current,
+                                  ofs_running);
 
     //-------------------------------------------
     //! Write down the electrostatic potential
@@ -104,7 +121,9 @@ void write_elecstat_pot(
         precision,
         out_fermi,
         PARAM.globalv.two_fermi,
-        false);
+        false,
+        ofs_running,
+        "electrostatic potential");
 
     ModuleBase::timer::end("ModuleIO", "write_elecstat_pot");
     return;

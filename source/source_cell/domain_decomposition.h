@@ -15,6 +15,7 @@
 
 class UnitCell;
 class MDCell;
+struct GhostExchangePlan;
 namespace ModuleBase
 {
 class CommunicationDomain;
@@ -76,6 +77,8 @@ private:
         int send_rank;
         int recv_rank;
         std::vector<int> send_atom_indices;
+        std::vector<std::array<double, 3>> previous_fracs;
+        std::vector<std::array<int, 3>> dynamic_image_shifts;
         std::size_t ghost_begin;
         int ghost_count;
     };
@@ -110,7 +113,12 @@ private:
     void target_for_offset(const std::array<int, 3>& offset,
                            std::array<int, 3>& target_coords,
                            std::array<int, 3>& image_shift) const;
+    std::array<int, 3> image_shift_for_update(const LocalAtom& atom,
+                                              const std::array<double, 3>& previous_frac,
+                                              const std::array<int, 3>& previous_image_shift,
+                                              const GhostExchangeSlot& slot) const;
     void build_ghost_exchange_slots(std::vector<GhostExchangeSlot>& slots) const;
+    GhostExchangePlan build_ghost_exchange_plan(const MDCell& cell) const;
     PackedAtom pack_atom(const LocalAtom& atom, const std::array<int, 3>& image_shift) const;
     LocalAtom unpack_ghost_atom(const PackedAtom& packed) const;
     LocalAtom unpack_owned_atom(const PackedAtom& packed) const;

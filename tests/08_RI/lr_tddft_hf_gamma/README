@@ -1,1 +1,3 @@
 LR-TDDFT HF on H2O, gamma_only, nspin=2, lr_nstates=2, lr_solver=dav.
+Retains Z-CG coverage. abs_gauge=none skips optical postprocessing;
+the excitation-energy and signed force references are unchanged.

@@ -1,0 +1,1 @@
+Double-precision PW RT-TDDFT with GMRES(20), history preconditioning, CN initialization and residual reconstruction. Tests energy and current with three k points distributed over two pools (kpar=2).

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_H
+
 #include <cassert>
 #include <memory>
 #include "gint_info.h"
@@ -33,3 +35,5 @@ class Gint
 };
 
 }
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_GINT_H

@@ -1,4 +1,5 @@
 #include "potential_new.h"
+#include "pot_pcc.h"
 
 #include "pot_ml_exx.h"
 #include "source_base/global_function.h"
@@ -14,7 +15,6 @@
 
 namespace elecstate
 {
-
 Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      const ModulePW::PW_Basis* rho_basis_smooth_in,
                      const UnitCell* ucell_in,
@@ -63,6 +63,11 @@ Potential::~Potential()
 
 void Potential::pot_register(const std::vector<std::string>& components_list)
 {
+    this->pot_register(components_list, PARAM.inp);
+}
+
+void Potential::pot_register(const std::vector<std::string>& components_list, const Input_para& input)
+{
     ModuleBase::TITLE("Potential", "pot_register");
     // delete old components first.
     if (this->components.size() > 0)
@@ -80,7 +85,7 @@ void Potential::pot_register(const std::vector<std::string>& components_list)
     //---------------------------
     for (auto comp: components_list)
     {
-        PotBase* tmp = this->get_pot_type(comp);
+        PotBase* tmp = this->get_pot_type(comp, input);
         this->components.push_back(tmp);
     }
 
@@ -354,6 +359,80 @@ double Potential::get_ml_exx_energy() const
 #else
     return 0.0;
 #endif
+}
+
+const PotPcc* Potential::pcc_component() const
+{
+    for (const PotBase* component : this->components)
+    {
+        const PotPcc* pcc = dynamic_cast<const PotPcc*>(component);
+        if (pcc != nullptr)
+        {
+            return pcc;
+        }
+    }
+    return nullptr;
+}
+
+double Potential::pcc_energy_rydberg() const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc == nullptr)
+    {
+        return 0.0;
+    }
+    return pcc->get_energy();
+}
+
+const std::vector<double>* Potential::pcc_electron_potential() const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc == nullptr)
+    {
+        return nullptr;
+    }
+    return &pcc->electron_potential();
+}
+
+void Potential::add_pcc_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+    const PotPcc* pcc = this->pcc_component();
+    if (pcc != nullptr)
+    {
+        pcc->add_force(cell, force);
+    }
+}
+
+void Potential::sum_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const
+{
+    for (const PotBase* component : this->components)
+    {
+        component->add_sol_force(cell, force);
+    }
+}
+
+void Potential::sum_sol_energy(double& electrostatic, double& non_electrostatic) const
+{
+    electrostatic = 0.0;
+    non_electrostatic = 0.0;
+    for (const PotBase* component : this->components)
+    {
+        double el = 0.0;
+        double nonel = 0.0;
+        component->sol_energy(el, nonel);
+        electrostatic += el;
+        non_electrostatic += nonel;
+    }
+}
+
+const std::vector<double>* Potential::find_sol_pot() const
+{
+    for (const PotBase* component : this->components)
+    {
+        const std::vector<double>* value = component->sol_elec_pot();
+        if (value != nullptr) { return value; }
+    }
+    return nullptr;
 }
 
 } // namespace elecstate

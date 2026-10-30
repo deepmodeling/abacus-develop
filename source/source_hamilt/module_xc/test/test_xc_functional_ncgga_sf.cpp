@@ -274,6 +274,75 @@ TEST_P(RealPwNcgga, ZeroMagnetizationIsFinite)
             EXPECT_NEAR(std::get<2>(result)(c, ir), 0.0, 1e-13);
 }
 
+// A local rotation preserves both mapped spin densities pointwise. This is
+// stronger than global spin covariance and fails for J(x) G_h(x) at finite cutoff.
+TEST_P(RealPwNcgga, LocalSpinRotationPreservesEnergyAndCovariesPotential)
+{
+    const VxcResult reference = evaluate();
+    std::vector<double> cosine(pw.nrxx);
+    std::vector<double> sine(pw.nrxx);
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        const double angle = 0.7 * std::sin(0.31 * ir);
+        cosine[ir] = std::cos(angle);
+        sine[ir] = std::sin(angle);
+        const double mx = density[1][ir];
+        const double my = density[2][ir];
+        density[1][ir] = cosine[ir] * mx - sine[ir] * my;
+        density[2][ir] = sine[ir] * mx + cosine[ir] * my;
+    }
+    const VxcResult rotated = evaluate();
+    EXPECT_NEAR(std::get<0>(reference), std::get<0>(rotated), 1e-10);
+    const ModuleBase::matrix& before = std::get<2>(reference);
+    const ModuleBase::matrix& after = std::get<2>(rotated);
+    for (int ir = 0; ir < pw.nrxx; ++ir)
+    {
+        const double expected_x = cosine[ir] * before(1, ir) - sine[ir] * before(2, ir);
+        const double expected_y = sine[ir] * before(1, ir) + cosine[ir] * before(2, ir);
+        EXPECT_NEAR(after(0, ir), before(0, ir), 1e-11);
+        EXPECT_NEAR(after(1, ir), expected_x, 1e-11);
+        EXPECT_NEAR(after(2, ir), expected_y, 1e-11);
+        EXPECT_NEAR(after(3, ir), before(3, ir), 1e-11);
+    }
+}
+
+TEST_P(RealPwNcgga, ClippingBoundaryEnergyIsContinuous)
+{
+    // Each point reaches |m|=|n+core| together, while the spin direction varies.
+    const std::array<std::vector<double>, 4> original = density;
+    double previous_jump = 0.0;
+    for (int level = 0; level < 4; ++level)
+    {
+        const double epsilon = 1e-5 / (1 << level);
+        double energies[2];
+        for (int side = 0; side < 2; ++side)
+        {
+            const double factor = side == 0 ? 1.0 - epsilon : 1.0 + epsilon;
+            for (int ir = 0; ir < pw.nrxx; ++ir)
+            {
+                const double mx = original[1][ir];
+                const double my = original[2][ir];
+                const double mz = original[3][ir];
+                const double magnitude = std::sqrt(mx * mx + my * my + mz * mz);
+                const double target = factor * std::abs(density[0][ir] + core[ir]);
+                for (int c = 1; c < noncollinear_spin; ++c)
+                {
+                    density[c][ir] = original[c][ir] * target / magnitude;
+                }
+            }
+            const VxcResult result = evaluate();
+            energies[side] = std::get<0>(result);
+        }
+        const double jump = std::abs(energies[0] - energies[1]);
+        if (level > 0)
+        {
+            EXPECT_LE(jump, 0.6 * previous_jump + 1e-10);
+        }
+        previous_jump = jump;
+    }
+}
+
+
 INSTANTIATE_TEST_SUITE_P(ProductionBranches, RealPwNcgga,
                         testing::Combine(testing::Bool(), testing::Values(Smooth, Negative, Saturated, Radial)));
 } // namespace

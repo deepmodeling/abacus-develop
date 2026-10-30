@@ -32,6 +32,16 @@ class ESolver_KS : public ESolver_FP
     virtual void after_all_runners(BaseCell& basecell) override;
 
   protected:
+    //! Maximum SCF iterations for the current electronic step.
+    virtual int scf_iter_limit(const int istep) const;
+
+    /** @brief Run SCF iterations without preparing or committing a physical endpoint. */
+    bool scf_loop(UnitCell& ucell, int istep, int iter_limit);
+    /** @brief Record an accepted iteration in JSON without changing its convergence status. */
+    void record_iteration(const UnitCell& ucell, double duration);
+    /** @brief Write current band expectations when iterative band output is requested. */
+    void write_iter_bands();
+
     /** @brief Select whether the density is an endpoint predictor or an SCF iterate. */
     enum class DensityStage
     {
@@ -47,6 +57,9 @@ class ESolver_KS : public ESolver_FP
 
     //! Something to do before hamilt2rho function in each iter loop.
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter);
+
+    //! Whether KS iterations defer output until the final state is accepted.
+    virtual bool defer_iter_output(const int istep) const;
 
     //! Something to do after hamilt2rho function in each iter loop.
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
@@ -97,6 +110,15 @@ class ESolver_KS : public ESolver_FP
     int niter;                      //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated
     bool scf_nmax_flag = false;     // whether scf has reached nmax, mohan add 20250921
+
+    /// Set by a subclass (e.g. ESolver_KS_PW via EXX) to request a fresh SCF
+    /// rerun from iter=1 after the current electronic iteration. ESolver_KS::
+    /// runner watches this flag at the bottom of each loop body and, when set,
+    /// clears it and restarts the SCF loop with iter=1. This replaces the
+    /// historical "iter=0 restart signal" trick that wrote 0 into the iter
+    /// reference, which crashed DFT+U occupation-matrix writers that validate
+    /// iter>=1.
+    bool scf_rerun_ = false;
 
     /// General EXX info owned by ESolver, initialized from input parameters.
     General_Exx_Info general_exx_info_;

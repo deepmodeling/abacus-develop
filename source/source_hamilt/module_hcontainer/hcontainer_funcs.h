@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_HCONTAINER_HCONTAINER_FUNCS_H
+#define ABACUS_SOURCE_HAMILT_MODULE_HCONTAINER_HCONTAINER_FUNCS_H
+
 
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
@@ -80,3 +82,5 @@ void gatherParallels(const hamilt::HContainer<TR>& hR_p,
 #endif // __MPI
 
 } // namespace hamilt
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_HCONTAINER_HCONTAINER_FUNCS_H

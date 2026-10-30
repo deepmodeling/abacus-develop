@@ -1,11 +1,16 @@
 #ifndef PRINT_INFO_H
 #define PRINT_INFO_H
 
-#include "source_basis/module_pw/pw_basis_k.h"
-#include "source_basis/module_pw/pw_basis_sup.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"
+
+namespace ModulePW
+{
+class PW_Basis;
+class PW_Basis_Big;
+class PW_Basis_K;
+}
 
 namespace ModuleIO
 {

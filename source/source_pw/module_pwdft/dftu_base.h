@@ -4,6 +4,7 @@
 #include "source_base/matrix.h"
 #include "source_estate/occ_matrix.h"
 #include "source_estate/occ_mixer.h"
+#include "source_pw/module_pwdft/dftu_types.h"
 #include "source_pw/module_pwdft/yukawa_screening.h"
 
 #include <complex>
@@ -34,7 +35,11 @@ class Plus_U_Base
     Plus_U_Base();
     ~Plus_U_Base();
 
-    /// allocate relevant data structures (base part, no LCAO types)
+    /// Initialize the run-lifetime DFT+U state (base part, no LCAO types).
+    ///
+    /// Call this exactly once on a freshly constructed object for each solver
+    /// run, before entering the electronic or ionic loops. A new calculation
+    /// configuration requires a new Plus_U_Base object.
     void init_base(UnitCell& cell,
                    const int npol,
                    const int nspin,
@@ -47,8 +52,9 @@ class Plus_U_Base
                    const std::string& device,
                    const std::vector<double>& hubbard_u,
                    const double uramping,
-                   const int occ_mat_ctrl,
-                   const int mixing_dftu);
+                   const int init_occ_mat,
+                   const int mixing_dftu,
+                   const DFTU_BASE::OccmatSocLayout soc_layout);
 
     void uramping_update();
     bool u_converged();
@@ -64,7 +70,7 @@ class Plus_U_Base
     const std::vector<int>& get_l_channel_vec() const { return l_channel; }
 
     double get_uramping() const { return uramping; }
-    int get_occ_mat_ctrl() const { return occ_mat_ctrl; }
+    int get_init_occ_mat() const { return init_occ_mat; }
     UForm get_form() const { return form; }
 
 
@@ -145,7 +151,7 @@ class Plus_U_Base
     std::vector<int> l_channel;
 
     double uramping = 0.0;
-    int occ_mat_ctrl = 0;
+    int init_occ_mat = 0;
 
     // --- Occupation matrices ---
     OccupationMatrix occmat_;

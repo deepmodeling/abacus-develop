@@ -1,4 +1,6 @@
 #include "source_pw/module_pwdft/kernels/vnl_op.h"
+
+#include <cstdint>
 #include "vnl_tools_cu.hpp"
 
 #include <complex>
@@ -44,17 +46,18 @@ __global__ void cal_vnl(
         const int nbeta = atom_nb[it];
 
         for (int nb = 0; nb < nbeta; nb++) {
-            const FPTYPE gnorm = sqrt(gk[ig * 3 + 0] * gk[ig * 3 + 0] + gk[ig * 3 + 1] * gk[ig * 3 + 1] +
-                                      gk[ig * 3 + 2] * gk[ig * 3 + 2]) * tpiba;
+            const std::int64_t g_offset = static_cast<std::int64_t>(ig) * 3;
+            const FPTYPE gnorm = sqrt(gk[g_offset + 0] * gk[g_offset + 0] + gk[g_offset + 1] * gk[g_offset + 1] +
+                                      gk[g_offset + 2] * gk[g_offset + 2]) * tpiba;
 
             vq = _polynomial_interpolation(
                     tab, it, nb, tab_2, tab_3, DQ, gnorm);
 
             // add spherical harmonic part
             for (int ih = 0; ih < nh; ih++) {
-                if (nb == indv[it * nhm + ih]) {
-                    const int lm = static_cast<int>(nhtolm[it * nhm + ih]);
-                    vkb1[ih * npw + ig] = ylm[lm * npw + ig] * vq;
+                if (nb == indv[static_cast<std::int64_t>(it) * nhm + ih]) {
+                    const int lm = static_cast<int>(nhtolm[static_cast<std::int64_t>(it) * nhm + ih]);
+                    vkb1[static_cast<std::int64_t>(ih) * npw + ig] = ylm[static_cast<std::int64_t>(lm) * npw + ig] * vq;
                 }
             } // end ih
         } // end nbeta
@@ -63,9 +66,9 @@ __global__ void cal_vnl(
         // now add the structure factor and factor (-i)^l
         for (int ia = 0; ia < atom_na[it]; ia++) {
             for (int ih = 0; ih < nh; ih++) {
-                thrust::complex<FPTYPE> pref = pow(NEG_IMAG_UNIT, nhtol[it * nhm + ih]);    //?
-                thrust::complex<FPTYPE> *pvkb = vkb_in + jkb * npwx;
-                pvkb[ig] = vkb1[ih * npw + ig] * sk[iat * npw + ig] * pref;
+                thrust::complex<FPTYPE> pref = pow(NEG_IMAG_UNIT, nhtol[static_cast<std::int64_t>(it) * nhm + ih]);    //?
+                thrust::complex<FPTYPE> *pvkb = vkb_in + static_cast<std::int64_t>(jkb) * npwx;
+                pvkb[ig] = vkb1[static_cast<std::int64_t>(ih) * npw + ig] * sk[static_cast<std::int64_t>(iat) * npw + ig] * pref;
                 ++jkb;
             } // end ih
             iat++;
@@ -98,7 +101,7 @@ void cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>::operator() (
     const std::complex<FPTYPE> *sk,
     std::complex<FPTYPE> *vkb_in)
 {
-    int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    int block = npw / THREADS_PER_BLOCK + (npw % THREADS_PER_BLOCK != 0);
     cal_vnl<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
             ntype, npw, npwx, nhm, tab_2, tab_3,
             atom_na, atom_nb, atom_nh,

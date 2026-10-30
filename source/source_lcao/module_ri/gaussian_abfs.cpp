@@ -16,6 +16,7 @@
 #include "source_base/math_ylmreal.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#include "source_io/module_parameter/parameter.h"
 //#include "source_pw/hamilt_pwdft/global.h"
 
 #include <RI/global/Global_Func-1.h>

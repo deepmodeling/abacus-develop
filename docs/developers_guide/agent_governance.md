@@ -5,6 +5,15 @@ contributors, general AI agents, CodeRabbit, and GitHub CI. `AGENTS.md` is the
 short entry point; this file is the complete rule source for implementation and
 review.
 
+## Entry Points
+
+The repository-root `AGENTS.md` is the short entry point. A module directory
+under `source/` (e.g., `source/source_esolver/`, `source/source_io/`) may carry
+its own `AGENTS.md` describing module-specific design constraints and
+conventions. When working in, or reviewing, such a directory, read the module
+file together with the root file; module-level rules refine the root baseline
+and never override it.
+
 ## Source Materials
 
 The governance rules consolidate project guidance from @mohanchen's coding
@@ -54,6 +63,8 @@ focused cleanup.
   not around isolated statements inside the function body. Use the enclosing
   function name (or constructor name) as the timer label so the timer scopes
   the whole unit of work.
+- Do not use `#pragma once` in header files; use traditional
+  `#ifndef`/`#define`/`#endif` include guards instead.
 
 AI agents have additional workflow obligations:
 
@@ -72,9 +83,10 @@ decisions.
 | Rule category | Typical rule | Phase-one status | Default executor | Severity | Default action | Detection scope | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Basic text format | LF line endings | phase-one mechanical | hook + CI | medium | block | full changed text file | `.bat` and `.cmd` keep CRLF |
+| Header include guard | New `#pragma once` in a header | phase-one mechanical | hook + CI | high | block | added header lines (`.h`/`.hh`/`.hpp`/`.hxx`/`.cuh`) | Use `#ifndef`/`#define`/`#endif` guards; no exception allowed |
 | Language baseline | C++11 compatibility | build/toolchain | CI | high | block | build/static tooling | Actual compiler/toolchain result wins |
 | Global dependency budget | Net increase of `GlobalV`/`GlobalC`/`PARAM` references in code diff | phase-one mechanical + AI review | CI + AI review | high | block on net increase, warn on non-increasing added usage | added and removed code lines | Historical untouched usage and documentation mentions are not blocked; migration-neutral moves require reviewer rationale |
-| New default parameter | Header declaration adds a default argument | phase-one mechanical + AI review | CI + AI review | high | block | header diff | High misuse risk |
+| New default parameter | Header declaration adds a default argument | phase-one mechanical warning + AI review | CI + AI review | high | warn | header diff | High misuse risk; the single-line heuristic is not reliable enough to block, so AI and human review confirm |
 | `.hpp` propagation | New `.hpp` or header includes `.hpp` | phase-one mechanical warning | CI + AI review | medium | warn | new files and added includes | Exception can be recorded in PR |
 | Header dependency growth | Header diff adds includes | phase-one mechanical warning + AI review | CI + AI review | medium | warn | added header includes | Necessity is semantic and not mechanically decided |
 | Member variable workflow switch | Key flow state hidden as mutable member state | AI review + human confirmation | AI + human review | high | human confirmation | semantic review | Static matching is unreliable |
@@ -89,7 +101,7 @@ decisions.
 | Documentation sync | Behavior/interface docs updated | phase-one mechanical warning + AI review | CI + AI review | medium | warn | changed paths and PR body | Major behavior changes escalate to reviewers |
 | PR metadata completeness | Issue, tests, behavior, INPUT, core impact, exceptions | phase-one mechanical | CI or GitHub bot | medium | warn | PR template fields | Not run by local hook |
 | AI workflow | Interface lookup, uncertainty, verification report | AI review | AI review | high | warn | review transcript/output | Applies to AI agents |
-| Exceptions | Reason, scope, risk, follow-up plan | human confirmation | human review + CI | high | human confirmation | PR exception section | CI checks presence, not approval |
+| Exceptions | Reason, scope, risk, follow-up plan | human confirmation | human review + CI | high | human confirmation | PR exception section + approval label | CI downgrades a covered blocker to a warning only when the section is complete and a maintainer applied the `governance-exception-approved` label |
 
 Implementations must use this matrix as the default baseline. Upgrading warnings
 to blockers or converting human-confirmation rules into mechanical blockers
@@ -120,14 +132,14 @@ Local hooks:
 CI:
 
 - Run diff-level governance checks with PR base/head SHAs.
-- Check PR body completeness and INPUT documentation linkage.
+- Check PR body completeness and INPUT metadata changes.
 - Publish Markdown summaries that humans and AI reviewers can consume.
 
 AI review:
 
 - Explain governance findings in actionable terms.
 - Add semantic review for module ownership, header dependency growth, test
-  sufficiency, documentation sync, and AI workflow discipline.
+  sufficiency, INPUT metadata consistency, and AI workflow discipline.
 - Use the output format below for actionable findings.
 
 Human review:
@@ -220,26 +232,21 @@ setup workflows and should be added only through a later governance change.
 ## INPUT Parameter Changes
 
 Changes to parameter metadata, default values, type, availability, description,
-or parsing behavior should include both:
+or parsing behavior should update the corresponding C++ `Input_Item`
+registrations. The generated YAML and Markdown documentation are build artifacts
+and should not be edited or committed.
 
-- `docs/parameters.yaml`
-- `docs/advanced/input_files/input-main.md`
-
-These files are generated artifacts, not additional sources of truth. Update
-the C++ `Input_Item` registrations and regenerate both files; do not edit the
-YAML or Markdown output by hand.
-
-If the diff touches parameter internals but does not change user-visible INPUT
-behavior, the PR should state why no documentation update is required. Missing
-documentation updates trigger a governance warning (not a block), but maintainers
-may still request documentation updates before merging.
+If the diff touches parameter internals but does not require an `Input_Item`
+metadata change, the PR should state why. Missing metadata updates trigger a
+governance warning (not a block), but maintainers may still request updates
+before merging.
 
 ## PR Self-Consistency
 
 Before requesting review, check that the PR description matches the diff:
 
-- New or changed INPUT behavior lists the changed parameters and links the YAML
-  and Markdown documentation updates.
+- New or changed INPUT behavior lists the changed parameters and any corresponding
+  `Input_Item` metadata updates.
 - Source changes list focused unit, case, or CLI verification commands with the
   observed result.
 - Header include growth, `.hpp` propagation, missing tests, or other warnings
@@ -261,6 +268,22 @@ Use this template in the PR when a rule must be bypassed temporarily:
 - Follow-up cleanup plan:
 - Requested approver:
 ```
+
+`Rule` names the checker rule(s) being excepted, using the exact rule names
+from the governance summary (for example `Global dependency budget` or
+`CMake linkage for new sources`). The CI checker handles the section as follows:
+
+- An incomplete section (any field empty) produces a warning and changes
+  nothing else.
+- A complete section without approval produces a warning that the exception is
+  awaiting approval; blocking findings still fail the check.
+- A complete section plus the `governance-exception-approved` label, applied by
+  a maintainer other than the PR author, downgrades the blocking findings whose
+  rule appears in `Rule` to warnings. Findings marked `Exception allowed: no`
+  (LF line endings, `#pragma once`) are never downgraded.
+
+Applying or removing the label re-runs the check. The local `--staged` hook has
+no PR body or labels and therefore never applies exceptions.
 
 ## AI Review Finding Format
 

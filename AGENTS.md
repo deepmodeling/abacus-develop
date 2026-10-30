@@ -56,12 +56,32 @@ rules. Read the complete governance document before making or reviewing changes:
       call site self-documenting. For example, prefer
       `const int isk = (nspin == 2 && isk_ptr) ? isk_ptr[ik] : 0;`
       followed by `f(..., isk, ...)` over inlining the ternary into the call.
+  15. Do not use `#pragma once` in header files; use traditional
+      `#ifndef`/`#define`/`#endif` include guards instead.
+  16. When reading a file, print a one-line confirmation with its full path to
+      both stdout and the running log; when creating or overwriting a file,
+      print the same confirmation to the running log.
+  17. Do not create or delete files or directories from inside a unit test
+      via shell calls (`std::system("mkdir")`, `std::system("rm")`); scratch
+      files shall be written to `testing::TempDir()` rather than the working
+      directory. Direct library calls (`std::remove`,
+      `std::filesystem::remove_all`) on test-written files are acceptable.
+  18. Do not use non-reentrant C standard library functions that return
+      pointers to static internal buffers (`std::localtime`, `std::gmtime`,
+      `std::asctime`, `std::ctime`, `std::strtok`, etc.) in new or modified
+      code; use the `_r` suffix variants or equivalent thread-safe
+      alternatives instead.
+  19. When reading structured numerical data from user-supplied files, check
+      the stream state (`fail()`/`eof()`) after extraction and abort with a
+      diagnostic message on malformed input rather than silently defaulting
+      to zero.
+  20. Do not introduce new `#define` macros without approval. Include
+      guards and `#ifdef`/`#ifndef` usages of existing macros are exempt.
+  21. Do not initialize member variables from `PARAM` in `.h`/`.hpp`
+      files; pass the value through the constructor or a setter instead.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
-- INPUT parameter behavior changes must update `docs/parameters.yaml` and
-  `docs/advanced/input_files/input-main.md`, or the PR must state why no update
-  is required.
 - Report the exact verification performed. Do not claim completion without
   fresh test or check output.
 - For multi-step refactors (e.g., splitting a large `.cpp` into several
@@ -77,15 +97,30 @@ rules. Read the complete governance document before making or reviewing changes:
 
 - Core C++ implementation lives under `source/`; source additions must be wired
   through the relevant `CMakeLists.txt`.
+- Each module directory under `source/` (e.g., `source/source_esolver/`,
+  `source/source_io/`) may carry its own `AGENTS.md` describing module-specific
+  design constraints and conventions. When working inside such a directory,
+  read and follow its `AGENTS.md` in addition to this file; the module-level
+  rules refine, but never override, this root file.
 - INPUT parsing and help metadata live under `source/source_io/`; user-facing
-  INPUT docs live in `docs/parameters.yaml` and
-  `docs/advanced/input_files/input-main.md`.
+  INPUT reference is generated from that metadata during the documentation
+  build.
 - Unit tests are colocated under module `test/` directories such as
   `source/source_md/test/`; integration and workflow tests are selected through
   CTest labels and patterns.
 - Developer and user build/install references live in `docs/quick_start/`,
   `docs/advanced/`, `toolchain/`, `Dockerfile.gnu`, `Dockerfile.intel`, and
   `Dockerfile.cuda`.
+
+## File Move / Split Checklist
+
+When moving, splitting, or deleting a `.cpp`/`.h`, update **all** build surfaces:
+
+1. `source/Makefile.Objects` (legacy Makefile object lists)
+2. All C++ `CMakeLists.txt`
+3. `python/pyabacus/src/*/CMakeLists.txt` — pyabacus has independent hardcoded source lists that do not track the main CMake build
+
+When splitting a function into a new `.cpp`, if its callers span LCAO and PW, put it in an unconditionally-built OBJECT library, not inside `if(ENABLE_LCAO)`.
 
 ## Build And Test Entry Points
 
@@ -113,11 +148,6 @@ rules. Read the complete governance document before making or reviewing changes:
 - Do not relax existing tests or references merely to make a failure pass.
   Update references only when the intended behavior changed and the PR explains
   why.
-- When mocking `UnitCell` in a test fixture, do not `delete[] iat2it` or
-  `iat2ia` in `TearDown`: they are owned by `UnitCell`'s internal `Statistics`
-  member, whose destructor releases them. Deleting them again causes a double
-  free. Mirror the ownership pattern of existing fixtures such as
-  `source/source_lcao/module_dftu/test/dftu_lcao_test.cpp`.
 
 ## Review And Exception Flow
 
@@ -128,7 +158,9 @@ rules. Read the complete governance document before making or reviewing changes:
 - Semantic questions such as module ownership, member-variable workflow state,
   test sufficiency, and exception approval require human review.
 - Exceptions must be recorded in the PR with reason, scope, risk, and a follow-up
-  cleanup plan.
+  cleanup plan, using the `### Governance Exception` template. CI downgrades a
+  covered blocker to a warning only after a maintainer applies the
+  `governance-exception-approved` label.
 - After a refactor, propose brief lessons worth recording in this file, then
   ask the developer whether to write them in; be cautious and skip unclear
   or unverified lessons.
@@ -163,6 +195,12 @@ full mixed-line-ending hook only for intentional repository-wide normalization.
 - Pull requests: https://github.com/deepmodeling/abacus-develop/pulls
 - Upstream PRs are opened from personal fork branches
   (`<fork-owner>:<branch>` into `develop`).
+- When synchronizing a local branch with `upstream/develop`, prefer
+  `git merge upstream/develop` over `git rebase upstream/develop`. Merge
+  preserves the original commit SHAs of the local work, keeps the branch
+  pushable without `--force`, and avoids re-applying a long patch series
+  when conflicts arise. Use rebase only when the user explicitly asks for
+  a linear history.
 - `workflow_dispatch`-only workflows (e.g. `.github/workflows/interface.yml`)
   are not triggered by push/PR events; PR CI cannot verify such fixes, so
   state "manual dispatch run required" in the PR verification notes.

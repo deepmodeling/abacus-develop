@@ -57,9 +57,32 @@ private:
     using TatomR = std::array<double,Ndim>;		// tmp
 
 public:
+    using CoulombSettings = std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
+                                    std::pair<bool,
+                                              std::map<Conv_Coulomb_Pot_K::Coulomb_Type,
+                                                       std::vector<std::map<std::string, std::string>>>>>;
+
     Exx_LRI(const Exx_Info_RI& info_in) :info(info_in) {}
     Exx_LRI operator=(const Exx_LRI&) = delete;
     Exx_LRI operator=(Exx_LRI&&);
+
+    // accessors used by the LR-TDDFT analytical-gradient module
+    RI::Exx<TA, Tcell, Ndim, Tdata>& get()
+    {
+        return this->exx_lri;
+    }
+    auto& get_info() const
+    {
+        return this->info;
+    }
+    auto& get_mpi_comm() const
+    {
+        return this->mpi_comm;
+    }
+
+    // Share read-only geometry tensors, but keep all electronic work buffers independent.
+    std::shared_ptr<Exx_LRI<Tdata>> make_lr_workspace(const UnitCell& ucell,
+                                                   const K_Vectors& kv) const;
 
     void init(
         const MPI_Comm &mpi_comm_in,
@@ -67,6 +90,10 @@ public:
         const K_Vectors &kv_in,
         const LCAO_Orbitals& orb,
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in = {});
+    /// Refresh changed Coulomb kernels while retaining the initialized basis and Gaunt table.
+    void refresh_coulomb(const UnitCell& ucell,
+                         const LCAO_Orbitals& orb,
+                         const CoulombSettings& settings);
     void init_spencer(const MPI_Comm& mpi_comm_in,
                       const UnitCell& ucell,
                       const K_Vectors& kv_in,
@@ -99,21 +126,20 @@ public:
         const ModuleSymmetry::Symmetry_rotation* p_symrot);
     void cal_exx_force(const int& nat);
     void cal_exx_stress(const double& omega, const double& lat0);
-    void cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
-        const UnitCell& ucell,
-        const Parallel_Orbitals& pv);
 
     void reset_Cs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in) { this->exx_lri.set_Cs(Cs_in, this->info.C_threshold); }
     void reset_Vs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) { this->exx_lri.set_Vs(Vs_in, this->info.V_threshold); }
     //std::vector<std::vector<int>> get_abfs_nchis() const;
 
     std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
-    std::array<std::vector<std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>>, 3> dHexxs; // direction, atom, spin, (i,j,R)
     double Eexx = 0.0; // initialize: in the HexxR-restart branch (init_chg=file) Eexx is
                        // never computed, and OperatorEXX still reads get_Eexx() for the NSCF
                        // energy report; leaving it uninitialized leaked an indeterminate value.
     ModuleBase::matrix force_exx;
     ModuleBase::matrix stress_exx;
+
+    void post_process_Hexx(std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Hexxs_io) const;
+    double post_process_Eexx(const double& Eexx_in) const;
 
     int abfs_Lmax() const { return abfs_Lmax_; }
     const Exx_Info_RI& get_info_ri() const { return info; }
@@ -132,13 +158,7 @@ private:
     std::map<Conv_Coulomb_Pot_K::Coulomb_Method, Exx_Obj<Tdata>> exx_objs;
     //LRI_CV<Tdata> cv;
     RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
-    std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
-        std::pair<bool,
-            std::map<Conv_Coulomb_Pot_K::Coulomb_Type,
-                std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
-
-    void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
-    double post_process_Eexx(const double& Eexx_in) const;
+    CoulombSettings coulomb_settings;
 
     friend class RPA_LRI<double, Tdata>;
     friend class RPA_LRI<std::complex<double>, Tdata>;

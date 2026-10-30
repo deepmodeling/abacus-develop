@@ -14,7 +14,7 @@ if(DEFINED DeePMD_DIR)
   endif()
 endif()
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(support)
 
 AddTest(
   TARGET MODULE_ESOLVER_esolver_dp_test
@@ -24,5 +24,6 @@ AddTest(
     ../esolver_dp.cpp
     ../../source_cell/basecell.cpp
     ../../source_cell/cif_io.cpp
+    ../../source_cell/module_neighlist/neighbor_list.cpp
     ../../source_io/module_output/output_log.cpp
 )

@@ -1,5 +1,8 @@
 #ifndef STO_TOOL_H
 #define STO_TOOL_H
+
+#include <vector>
+
 #include "source_cell/klist.h"
 #include "source_pw/module_stodft/sto_hamilt_pw.h"
 #include "source_pw/module_stodft/sto_wf.h"
@@ -65,10 +68,9 @@ struct parallel_distribution
 struct info_gatherv
 {
     info_gatherv(const int& ngroup_per, const int& np, const int& num_in_group, MPI_Comm comm_world)
+        : nrecv(np), displs(np)
     {
-        nrecv = new int[np];
-        displs = new int[np];
-        MPI_Allgather(&ngroup_per, 1, MPI_INT, nrecv, 1, MPI_INT, comm_world);
+        MPI_Allgather(&ngroup_per, 1, MPI_INT, nrecv.data(), 1, MPI_INT, comm_world);
         displs[0] = 0;
         for (int i = 1; i < np; ++i)
         {
@@ -80,13 +82,8 @@ struct info_gatherv
             displs[i] *= num_in_group;
         }
     }
-    ~info_gatherv()
-    {
-        delete[] nrecv;
-        delete[] displs;
-    }
-    int* nrecv = nullptr;
-    int* displs = nullptr;
+    std::vector<int> nrecv;
+    std::vector<int> displs;
 };
 #endif
 

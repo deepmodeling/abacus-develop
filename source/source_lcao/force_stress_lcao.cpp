@@ -95,7 +95,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           ModuleSymmetry::Symmetry* symm,
                                           const Exx_Info& exx_info,
                                           const FSCalcConfig& cfg,
-                                          const int td_stype,
+                                          TD_info* td_info,
                                           hamilt::Hamilt<T>* p_hamilt)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
@@ -166,7 +166,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     // Calculate operator-based force/stress terms (kinetic, overlap,
     // nonlocal, rt-TDDFT hybrid gauge, local Pulay term and DeltaSpin).
     this->cal_operator_fs(ucell, gd, pv, pelec, dmat, psi, two_center_bundle,
-                          orb, kv, isforce, isstress, cfg, td_stype, p_hamilt, parts, sparts);
+                          orb, kv, isforce, isstress, cfg, td_info, p_hamilt, parts, sparts);
 
     // MPI reduction for forces
     if (isforce)
@@ -185,7 +185,18 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
     // vdW force/stress and external-field forces
     LCAO_domain::cal_vdw_fields_fs(vdw_result, ucell, solvent, rhopw, locpp,
-                                   isforce, isstress, parts, sparts);
+                                   isforce, isstress, parts, sparts, td_info != nullptr ? &td_info->field() : nullptr);
+    if (isforce)
+    {
+        parts.fpcc.create(ucell.nat, 3);
+        pelec->pot->add_pcc_force(ucell, parts.fpcc);
+        // imp_sol 1 fills fsol in cal_vdw_fields_fs; only SCCS uses the component hook.
+        if (cfg.imp_sol == 2)
+        {
+            parts.fsol.create(ucell.nat, 3);
+            pelec->pot->sum_sol_force(ucell, parts.fsol);
+        }
+    }
 
     // DFT+U force/stress
     LCAO_domain::cal_dftu_fs(ucell, gd, pv, orb, kv, dmat, two_center_bundle, dftu, isforce, isstress, parts, sparts);
@@ -234,11 +245,12 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
                                              const bool isforce,
                                              const bool isstress,
                                              const FSCalcConfig& cfg,
-                                             const int td_stype,
+                                             TD_info* td_info,
                                              hamilt::Hamilt<T>* p_hamilt,
                                              LCAOForceParts& parts,
                                              LCAOStressParts& sparts)
 {
+    const int td_stype = td_info != nullptr ? td_info->field().gauge() : 0;
 
     // Calculate forces and stresses using new operator-based methods
     // Step 1: Calculate Energy Density Matrix (EDM) for overlap force
@@ -287,10 +299,10 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
         if(td_stype == 2)
         {
             hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<T, double>> tmp_hybrid(
-                nullptr, &kv, nullptr, nullptr, orb, &ucell, orb.cutoffs(), &gd, nullptr);
+                nullptr, &kv, nullptr, nullptr, orb, &ucell, orb.cutoffs(), &gd, nullptr, *td_info);
             tmp_hybrid.cal_force_stress(isforce, dmR, parts.fpothybrid);
 
-            cal_foverlap_rt(parts.foverlap, dmat, p_hamilt, kv, pv, ucell);
+            cal_foverlap_rt(parts.foverlap, dmat, p_hamilt, kv, pv, ucell, *td_info);
         }
 
         // Switch back to spin channel 0
@@ -303,7 +315,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
         // Calculate local potential force/stress (vl_dphi)
         // This uses grid integration, not operator-based method
         edm_cal.ParaV = &pv;
-        PulayForceStress::cal_pulay_fs(parts.fvl_dphi, sparts.svl_dphi, *dmat.dm, ucell, pelec->pot,
+        PulayForceStress::cal_pulay_fs(cfg.nspin, parts.fvl_dphi, sparts.svl_dphi, *dmat.dm, ucell, pelec->pot,
                                        isforce, isstress, false /*reset dm to gint*/);
     }
     else if (cfg.nspin == 4)
@@ -340,7 +352,7 @@ void Force_Stress_LCAO<T>::cal_operator_fs(UnitCell& ucell,
 
         // Local-potential (vl_dphi) Pulay term via grid integration
         edm_cal.ParaV = &pv;
-        PulayForceStress::cal_pulay_fs(parts.fvl_dphi, sparts.svl_dphi, *dmat.dm, ucell, pelec->pot,
+        PulayForceStress::cal_pulay_fs(cfg.nspin, parts.fvl_dphi, sparts.svl_dphi, *dmat.dm, ucell, pelec->pot,
                                        isforce, isstress, false);
     }
 

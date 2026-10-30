@@ -11,14 +11,22 @@ list(APPEND objects
     elecstate_pw_sdft.cpp
     elecstate_pw_cal_tau.cpp
     makov_payne.cpp
+    charge_moments.cpp
+    pcc_0d.cpp
+    pcc_2d.cpp
     module_pot/gatefield.cpp
     module_pot/efield.cpp
     module_pot/h_hartree_pw.cpp
     module_pot/h_tddft_pw.cpp
     module_pot/pot_xc.cpp
     module_pot/pot_local.cpp
+    module_pot/pot_pcc.cpp
+    module_pot/pot_sccs.cpp
+    module_pot/sccs_pcc_0d.cpp
+    module_pot/sccs_pcc_2d.cpp
     module_pot/potential_new.cpp
     module_pot/potential_types.cpp
+    module_pot/pot_surchem.cpp
     module_pot/pot_ml_exx.cpp
     module_pot/pot_ml_exx_label.cpp
     module_pot/pot_sep.cpp
@@ -89,7 +97,7 @@ endif()
 
 if(BUILD_TESTING)
   if(ENABLE_MPI)
-    add_subdirectory(test)
+    add_subdirectory(unittests)
     add_subdirectory(module_charge/unittests)
   endif()
 endif()
@@ -97,8 +105,6 @@ endif()
 if(ENABLE_LCAO)
   add_subdirectory(module_dm)
   if(BUILD_TESTING)
-    if(ENABLE_MPI)
-      add_subdirectory(module_dm/unittests)
-    endif()
+    add_subdirectory(module_dm/unittests)
   endif()
 endif()

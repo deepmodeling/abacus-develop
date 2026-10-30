@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_HAMILT_MODULE_GINT_MESHGRID_INFO_H
+#define ABACUS_SOURCE_HAMILT_MODULE_GINT_MESHGRID_INFO_H
+
 
 #include "gint_type.h"
 
@@ -61,3 +63,5 @@ class MeshGridInfo
 };
 
 } // namespace ModuleGint
+
+#endif // ABACUS_SOURCE_HAMILT_MODULE_GINT_MESHGRID_INFO_H

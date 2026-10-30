@@ -22,6 +22,7 @@
 #include <cmath>
 #include <complex>
 #include <cstdlib>
+#include <string>
 #include <utility>
 
 namespace hamilt
@@ -53,6 +54,8 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     {
         ModuleBase::WARNING_QUIT("OperatorEXXPW", "EXX Calculation does not support k-point parallelism when exxace is set to false");
     }
+    source_basis_ = wfcpw_in;
+    source_points_ = kv_in;
     gamma_extrapolation = exx_info.gamma_extrapolation;
     bool is_mp = kv_in->get_is_mp();
 #ifdef __MPI
@@ -88,8 +91,12 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     Real tpiba2 = tpiba * tpiba;
 
     // initialize rhopw_dev on the resolved EXX cutoff
-    rhopw_dev = new ModulePW::PW_Basis(wfcpw->get_device(), rhopw->get_precision());
-    rhopw_dev->fft_bundle.setfft(wfcpw->get_device(), rhopw->get_precision());
+    // Pair densities have the wavefunction precision, while the ordinary
+    // charge density may retain double precision in a single-precision run.
+    const std::string exchange_device = wfcpw->get_device();
+    const std::string exchange_precision = wfcpw->get_precision();
+    rhopw_dev = new ModulePW::PW_Basis(exchange_device, exchange_precision);
+    rhopw_dev->fft_bundle.setfft(exchange_device, exchange_precision);
 #ifdef __MPI
     rhopw_dev->initmpi(rhopw->poolnproc, rhopw->poolrank, rhopw->pool_world);
 #endif
@@ -115,14 +122,20 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     auto param_erfc = this->coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc];
     for (auto param: param_erfc)
     {
-        erfc_div.push_back(exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc,
-                                          std::stod(param["omega"]),
-                                          kv,
-                                          wfcpw,
-                                          rhopw_dev,
-                                          tpiba,
-                                          gamma_extrapolation,
-                                          ucell->omega));
+        double correction = 0.0;
+        if (param.at("singularity_correction") == "gygi")
+        {
+            const double omega = std::stod(param.at("omega"));
+            correction = exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc,
+                                       omega,
+                                       kv,
+                                       wfcpw,
+                                       rhopw_dev,
+                                       tpiba,
+                                       gamma_extrapolation,
+                                       ucell->omega);
+        }
+        erfc_div.push_back(correction);
     }
 
 }   // end of constructor
@@ -226,6 +239,58 @@ void OperatorEXXPW<T, Device>::act(const int nbands,
 }
 
 template <typename T, typename Device>
+void OperatorEXXPW<T, Device>::set_source(std::unique_ptr<ModulePW::PW_Basis_K> source_basis,
+                                        std::unique_ptr<K_Vectors> source_points,
+                                        const psi::Psi<T, Device>& source_psi,
+                                        ModuleBase::matrix source_weights)
+{
+    if (exxace_ || gamma_extrapolation || exx_sg_init)
+    {
+        ModuleBase::WARNING_QUIT("OperatorEXXPW", "Independent EXX sources require direct exchange without gamma extrapolation, before FFT initialization");
+    }
+    if (source_basis->nks != source_points->get_nks() || source_psi.get_nk() != source_basis->nks
+        || source_weights.nr != source_basis->nks || source_weights.nc != source_psi.get_nbands()
+        || source_psi.get_nbasis() != source_basis->npwk_max
+        || source_basis->nx != wfcpw->nx || source_basis->ny != wfcpw->ny || source_basis->nz != wfcpw->nz
+        || source_basis->nrxx != wfcpw->nrxx || source_basis->poolnproc != wfcpw->poolnproc)
+    {
+        ModuleBase::WARNING_QUIT("OperatorEXXPW", "Incompatible EXX source dimensions or FFT distribution");
+    }
+    owned_source_basis_ = std::move(source_basis);
+    owned_source_points_ = std::move(source_points);
+    owned_source_weights_ = std::move(source_weights);
+    source_basis_ = owned_source_basis_.get();
+    source_points_ = owned_source_points_.get();
+    wg = &owned_source_weights_;
+    psi = source_psi;
+    // Cache the Gygi-Baldereschi auxiliary correction on the frozen source mesh, rather than
+    // the independent target path. Limits keeps this correction at zero.
+    const auto screened = coulomb_param.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
+    if (screened != coulomb_param.end())
+    {
+        for (std::size_t i = 0; i < screened->second.size(); ++i)
+        {
+            const auto& param = screened->second[i];
+            erfc_div[i] = 0.0;
+            if (param.at("singularity_correction") == "gygi")
+            {
+                const double omega = std::stod(param.at("omega"));
+                erfc_div[i] = exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc,
+                                            omega,
+                                            source_points_,
+                                            source_basis_,
+                                            rhopw_dev,
+                                            tpiba,
+                                            gamma_extrapolation,
+                                            ucell->omega);
+            }
+        }
+    }
+    q_points.clear();
+    first_iter = false;
+}
+
+template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::act_op(const int nbands,
                                    const int nbasis,
                                    const int npol,
@@ -245,7 +310,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
 
     auto q_points = get_q_points(this->ik);
     int nk_fac = nspin_ == 2 ? 2 : 1;
-    int nk = wfcpw->nks / nk_fac;
+    int nk = source_basis_->nks / nk_fac;
     const Real nqs = q_points.size();
 
     maybe_setup_exx_grid();
@@ -254,7 +319,8 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
 
     for (int iq: q_points)
     {
-        get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq % nk, false, this->coulomb_param);
+        const int iq_nospin = iq % nk;
+        get_exx_potential<Real, Device>(source_points_, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq_nospin, false, this->coulomb_param);
         for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
         {
             // occupation of the source state (m, iq), not of the target k-point
@@ -264,10 +330,18 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
                 continue;
             }
 
-            wfc_to_real_exx(get_pw(m_iband, iq), iq, nbasis);
+            const T* source_band = get_pw(m_iband, iq);
+            if (source_basis_ == wfcpw)
+            {
+                wfc_to_real_exx(source_band, iq, psi.get_nbasis());
+            }
+            else
+            {
+                source_basis_->recip_to_real(ctx, source_band, psi_mq_real, iq);
+            }
 
             // full accumulation weight, hybrid_alpha included
-            const Real factor = this->hybrid_alpha * wg_mqb_real / kv->wk[iq] / nqs;
+            const Real factor = this->hybrid_alpha * wg_mqb_real / source_points_->wk[iq] / nqs;
             apply_fock_all_bands(nbands, nbasis, iq, factor, tmhpsi);
 
         } // end of m_iband
@@ -280,12 +354,11 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
 
 template <typename T, typename Device>
 void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
-                                   const int nbasis,
-                                   const int npol,
-                                   const T *tmpsi_in,
-                                   T *tmhpsi,
-                                   const int ngk_ik,
-                                   const bool is_first_node) const
+                                         const int nbasis,
+                                         const T* tmpsi_in,
+                                         T* tmhpsi,
+                                         const int ispin,
+                                         const bool has_kpoint) const
 {
     ModuleBase::timer::start("OperatorEXXPW", "act_op_kpar");
 
@@ -299,12 +372,14 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
     setmem_complex_op()(psi_mq_real, 0, wfcpw->nrxx);
     int nqs = kv->get_nkstot_nospin();
     int nspin_fac = nspin_ == 2 ? 2 : 1;
-    int ispin = this->ik < (wfcpw->nks / nspin_fac) ? 0 : 1;
 
     maybe_setup_exx_grid();
     // psi_nk in real space for all bands once per ik, reused over (iq, m);
     // the MPI communication order below is unchanged
-    cache_psi_nk_real(nbands, nbasis, tmpsi_in, this->ik);
+    if (has_kpoint)
+    {
+        cache_psi_nk_real(nbands, nbasis, tmpsi_in, this->ik);
+    }
 
     // ik fixed here, select band n
     for (int iq = 0; iq < nqs; iq++)
@@ -324,7 +399,8 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
         // occupation row and k weight of the source k-point, fetched from the
         // pool that owns it in a single broadcast
         const int nb = psi.get_nbands();
-        std::vector<double> occ_q(nb + 1);
+        const int occupation_count = nb + 1;
+        std::vector<double> occ_q(occupation_count);
         if (iq_pool == my_pool_)
         {
             for (int m = 0; m < nb; m++)
@@ -334,8 +410,9 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
             occ_q[nb] = kv->wk[iq_loc_spin];
         }
 #ifdef __MPI
+        const int source_rank = kv->para_k.get_startpro_pool(iq_pool);
         Parallel_Common::bcast_dev<double, base_device::DEVICE_CPU>(
-            occ_q.data(), nb + 1, MPI_COMM_WORLD, kv->para_k.get_startpro_pool(iq_pool));
+            occ_q.data(), occupation_count, MPI_COMM_WORLD, source_rank);
 #endif
         const Real wk_q = occ_q[nb];
 
@@ -350,13 +427,17 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                 wfc_to_real_exx(get_pw(m_iband, iq_loc_spin), iq_loc, nbasis);
             }
 #ifdef __MPI
-            Parallel_Common::bcast_dev<T, Device>(psi_mq_real, exx_grid_size(), KP_WORLD, iq_pool);
+            const int grid_size = exx_grid_size();
+            Parallel_Common::bcast_dev<T, Device>(psi_mq_real, grid_size, KP_WORLD, iq_pool);
 #endif
 
             // k weight of the source k-point (identical to wk[this->ik] on the
             // uniform k-grids without symmetry reduction this scheme assumes)
             const Real factor = this->hybrid_alpha * wg_mqb / wk_q / nqs;
-            apply_fock_all_bands(nbands, nbasis, iq, factor, tmhpsi);
+            if (has_kpoint)
+            {
+                apply_fock_all_bands(nbands, nbasis, iq, factor, tmhpsi);
+            }
 
         } // end of m_iband
 
@@ -383,6 +464,11 @@ void OperatorEXXPW<T, Device>::maybe_setup_exx_grid() const
         return;
     }
 #endif
+    if (source_basis_ != wfcpw)
+    {
+        exx_sg_init = true;
+        return;
+    }
     setup_exx_small_grid();
     if (std::is_same<Device, base_device::DEVICE_CPU>::value && !exx_sg_ok)
     {
@@ -395,6 +481,10 @@ void OperatorEXXPW<T, Device>::maybe_setup_exx_grid() const
 template <typename T, typename Device>
 bool OperatorEXXPW<T, Device>::exx_grid_active() const
 {
+    if (source_basis_ != wfcpw)
+    {
+        return false;
+    }
 #if !defined(__CUDA)
     if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
     {
@@ -865,7 +955,7 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
 
     // if () // downsampling
     {
-        for (int iq = 0; iq < wfcpw->nks; iq++)
+        for (int iq = 0; iq < source_basis_->nks; iq++)
         {
             if (nspin_ ==1 )
             {
@@ -873,9 +963,7 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
             }
             else if (nspin_ == 2)
             {
-                int nk_fac = 2;
-                int nk = wfcpw->nks / nk_fac;
-                if (iq / nk == ik / nk)
+                if (source_points_->isk[iq] == isk[ik])
                 {
                     q_points_ik.push_back(iq);
                 }
@@ -888,7 +976,7 @@ std::vector<int> OperatorEXXPW<T, Device>::get_q_points(const int ik) const
     }
     // else
     // {
-    //     for (int iq = 0; iq < wfcpw->nks; iq++)
+    //     for (int iq = 0; iq < source_basis_->nks; iq++)
     //     {
     //         kv->
     //     }
@@ -925,9 +1013,16 @@ template <typename T, typename Device>
 template <typename T_in, typename Device_in>
 OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op)
 {
+    if (op->owned_source_basis_ || op->owned_source_points_)
+    {
+        ModuleBase::WARNING_QUIT("OperatorEXXPW",
+            "Precision conversion after EXX source installation is unsupported");
+    }
     // copy all the datas
     this->isk = op->isk;
     this->wfcpw = op->wfcpw;
+    this->source_basis_ = op->source_basis_;
+    this->source_points_ = op->source_points_;
     this->rhopw = op->rhopw;
     this->rhopw_dev = op->rhopw_dev;
     this->psi = op->psi;
@@ -1023,7 +1118,8 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
 
         for (int iq: q_points_ik)
         {
-            get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq % nk, false, this->coulomb_param);
+            const int iq_nospin = iq % nk;
+            get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq_nospin, false, this->coulomb_param);
             for (int m_iband = 0; m_iband < nb; m_iband++)
             {
                 const double wg_iqb_real = (*wg)(iq, m_iband);
@@ -1049,9 +1145,13 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
                         {
                             continue;
                         }
+                        // pure occupations f = wg / wk; divide by the q-mesh
+                        // size nqs to apply the uniform q-point BZ weight, and
+                        // by wk[ik] to convert wg(ik) into the occupation.
+                        const double exx_weight = wg_iqb_real / nqs * wg_ikb_real / kv->wk[ik];
                         Eexx_ik_real += exx_cal_energy_op<T, Device>()(pair_density(n_iband),
                                                                        pot,
-                                                                       wg_iqb_real / nqs * wg_ikb_real / kv->wk[ik],
+                                                                       exx_weight,
                                                                        npw);
                     }
                 }

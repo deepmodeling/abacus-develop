@@ -17,12 +17,20 @@ class Vdwd2 : public Vdw
 {
 
   public:
-    Vdwd2(const UnitCell& unit_in) : Vdw(unit_in) {}
+    Vdwd2(const UnitCell& unit_in) : Vdw(unit_in)
+    {
+    }
 
     ~Vdwd2() = default;
 
-    Vdwd2Parameters& parameter() { return para_; }
-    const Vdwd2Parameters& parameter() const { return para_; }
+    Vdwd2Parameters& parameter()
+    {
+        return para_;
+    }
+    const Vdwd2Parameters& parameter() const
+    {
+        return para_;
+    }
 
   private:
     Vdwd2Parameters para_;
@@ -70,8 +78,7 @@ class Vdwd2 : public Vdw
                             {
                                 for (ilat_loop.z = -zidx; ilat_loop.z <= zidx; ++ilat_loop.z)
                                 {
-                                    if ((!(ilat_loop.x || ilat_loop.y || ilat_loop.z)) && (it1 == it2)
-                                        && (ia1 == ia2))
+                                    if ((!(ilat_loop.x || ilat_loop.y || ilat_loop.z)) && (it1 == it2) && (ia1 == ia2))
                                     {
                                         continue;
                                     }

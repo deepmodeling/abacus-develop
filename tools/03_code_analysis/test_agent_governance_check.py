@@ -216,67 +216,6 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_blocked_by(result, "CMake linkage for new sources")
 
-    def test_warns_input_parameter_changes_without_docs_linkage(self):
-        self.write(
-            "source/source_io/module_parameter/read_input_item_model.cpp",
-            'Input_Item item("new_switch");\nitem.default_value = "0";\n',
-        )
-        head = self.commit_change()
-
-        result = self.run_checker("--base", self.base, "--head", head)
-
-        self.assert_warns_with_success(result, "INPUT parameter documentation linkage")
-
-    def test_allows_parameter_file_comment_only_change_without_docs(self):
-        self.write(
-            "source/source_io/module_parameter/read_input_item_model.cpp",
-            'Input_Item item("old_switch");\n// Keep legacy input switch documented nearby.\n',
-        )
-        head = self.commit_change()
-
-        result = self.run_checker("--base", self.base, "--head", head)
-
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-    def test_allows_input_item_test_fixture_without_docs(self):
-        self.write("tools/03_code_analysis/input_fixture.py", 'fixture = "Input_Item item(\\"old_switch\\");"\n')
-        head = self.commit_change()
-
-        result = self.run_checker("--base", self.base, "--head", head)
-
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-    def test_allows_input_parameter_changes_with_required_docs(self):
-        self.write(
-            "source/source_io/module_parameter/read_input_item_model.cpp",
-            'Input_Item item("new_switch");\nitem.default_value = "0";\n',
-        )
-        self.write("docs/parameters.yaml", "parameters: []\n")
-        self.write("docs/advanced/input_files/input-main.md", "# INPUT\n")
-        head = self.commit_change()
-
-        result = self.run_checker("--base", self.base, "--head", head)
-
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-    def test_warns_input_parameter_change_when_required_docs_are_deleted(self):
-        self.write("docs/parameters.yaml", "parameters: []\n")
-        self.write("docs/advanced/input_files/input-main.md", "# INPUT\n")
-        self.git("add", ".")
-        self.git("commit", "-m", "add input docs")
-        base = self.git("rev-parse", "HEAD").stdout.strip()
-        self.write(
-            "source/source_io/module_parameter/read_input_item_model.cpp",
-            'Input_Item item("new_switch");\nitem.default_value = "0";\n',
-        )
-        (self.repo / "docs" / "parameters.yaml").unlink()
-        (self.repo / "docs" / "advanced" / "input_files" / "input-main.md").unlink()
-        head = self.commit_change()
-
-        result = self.run_checker("--base", base, "--head", head)
-
-        self.assert_warns_with_success(result, "INPUT parameter documentation linkage")
-
     def test_warns_for_unfilled_pr_template_fields_from_event_payload(self):
         event = self.repo / "event.json"
         event.write_text(
@@ -642,6 +581,141 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("--staged cannot be combined with --base/--head", result.stderr)
+
+    def test_blocks_new_pragma_once_in_header(self):
+        self.write("source/source_base/new_header.h", "#pragma once\n\nint foo();\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_blocked_by(result, "No #pragma once")
+
+    def test_blocks_new_pragma_once_in_cuh(self):
+        self.write("source/source_base/kernels/new_header.cuh", "#pragma once\n\nint foo();\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_blocked_by(result, "No #pragma once")
+
+    def test_allows_ifndef_include_guard(self):
+        self.write(
+            "source/source_base/new_header.h",
+            "#ifndef NEW_HEADER_H\n#define NEW_HEADER_H\n\nint foo();\n\n#endif\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertNotIn("No #pragma once", result.stdout)
+
+    def test_allows_existing_pragma_once_on_unchanged_lines(self):
+        self.write("source/source_base/old_header.h", "#pragma once\n\nint foo();\n")
+        self.write("source/source_base/CMakeLists.txt", "add_library(old old_header.h)\n")
+        self.git("add", ".")
+        self.git("commit", "-m", "add header with pragma once")
+        base2 = self.git("rev-parse", "HEAD").stdout.strip()
+        # Touch only an unrelated line; the #pragma once line is not in the diff.
+        self.write("source/source_base/old_header.h", "#pragma once\n\nint foo();\nint bar();\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base2, "--head", head)
+
+        self.assertNotIn("No #pragma once", result.stdout)
+
+    def write_exception_event(self, rule, labels, approver="@maintainer"):
+        event = self.repo / "event.json"
+        body = "\n".join(
+            [
+                "### Governance Exception",
+                f"- Rule: {rule}",
+                "- Reason: file is consumed by a generated build list.",
+                "- Scope: source/source_base/generated.cpp only.",
+                "- User or maintenance risk: low.",
+                "- Why the normal rule cannot be followed now: generator lands in a follow-up PR.",
+                "- Follow-up cleanup plan: wire the file through CMakeLists.txt in the follow-up.",
+                f"- Requested approver: {approver}",
+            ]
+        )
+        event.write_text(
+            json.dumps(
+                {"pull_request": {"body": body, "labels": [{"name": name} for name in labels]}}
+            )
+        )
+        return event
+
+    def test_approved_exception_downgrades_covered_blocker(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event(
+            "CMake linkage for new sources", ["governance-exception-approved"]
+        )
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_warns_with_success(result, "CMake linkage for new sources")
+        self.assertIn("Downgraded from error by the approved governance exception", result.stdout)
+
+    def test_unapproved_exception_keeps_blocker(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event("CMake linkage for new sources", [])
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "CMake linkage for new sources")
+        self.assertIn("awaiting maintainer approval", result.stdout)
+
+    def test_incomplete_exception_keeps_blocker_even_with_label(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event(
+            "CMake linkage for new sources", ["governance-exception-approved"], approver=""
+        )
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "CMake linkage for new sources")
+        self.assertIn("missing fields: Requested approver", result.stdout)
+
+    def test_approved_exception_does_not_downgrade_other_rules(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event(
+            "Global dependency budget", ["governance-exception-approved"]
+        )
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "CMake linkage for new sources")
+        self.assertNotIn("Downgraded from error", result.stdout)
+
+    def test_approved_exception_never_downgrades_non_exceptable_rule(self):
+        self.write("source/source_base/new_header.h", "#pragma once\n\nint foo();\n")
+        head = self.commit_change()
+        event = self.write_exception_event("No #pragma once", ["governance-exception-approved"])
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "No #pragma once")
+        self.assertNotIn("Downgraded from error", result.stdout)
+
+    def test_warns_when_approval_label_has_no_exception_section(self):
+        event = self.repo / "event.json"
+        event.write_text(
+            json.dumps(
+                {
+                    "pull_request": {
+                        "body": "### What's changed?\n- Docs tweak.\n",
+                        "labels": [{"name": "governance-exception-approved"}],
+                    }
+                }
+            )
+        )
+
+        result = self.run_checker("--event-path", str(event))
+
+        self.assert_warns_with_success(result, "Governance exception record")
 
 
 if __name__ == "__main__":

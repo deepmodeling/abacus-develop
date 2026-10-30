@@ -24,8 +24,8 @@ void DFPTSerialBase::SetUpCell()
     ucell_.tpiba = ModuleBase::TWO_PI / lat0_;
     ucell_.tpiba2 = ucell_.tpiba * ucell_.tpiba;
     ucell_.omega = a_ * a_ * a_ * lat0_ * lat0_ * lat0_;
-    ucell_.iat2it = new int[1];
-    ucell_.iat2ia = new int[1];
+    ucell_.iat2it.resize(1);
+    ucell_.iat2ia.resize(1);
     ucell_.iat2it[0] = 0;
     ucell_.iat2ia[0] = 0;
     MakeCoulombAtom();
@@ -61,10 +61,6 @@ void DFPTSerialBase::TearDown()
 {
     delete[] ucell_.atoms;
     ucell_.atoms = nullptr;
-    delete[] ucell_.iat2it;
-    ucell_.iat2it = nullptr;
-    delete[] ucell_.iat2ia;
-    ucell_.iat2ia = nullptr;
 }
 
 void DFPTSerialBase::MakeCoulombAtom()
@@ -143,10 +139,8 @@ void DFPTSerialBase::MakeTwoAtomCell()
         at.ncpp.nh = 0;
         at.mass = (it == 0) ? 12.0 : 4.0;
     }
-    delete[] ucell_.iat2it;
-    delete[] ucell_.iat2ia;
-    ucell_.iat2it = new int[2];
-    ucell_.iat2ia = new int[2];
+    ucell_.iat2it.resize(2);
+    ucell_.iat2ia.resize(2);
     ucell_.iat2it[0] = 0;
     ucell_.iat2ia[0] = 0;
     ucell_.iat2it[1] = 1;

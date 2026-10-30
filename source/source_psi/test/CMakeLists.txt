@@ -12,7 +12,7 @@ AddTest(
     LIBS parameter base device psi psi_init planewave
     SOURCES
         psi_init_unit_test.cpp
-        ../../source_pw/module_pwdft/soc.cpp
+        ../../source_cell/soc.cpp
         ../../source_cell/atom_spec.cpp
         ../../source_cell/test/support/mock_unitcell.cpp
         
@@ -21,4 +21,4 @@ AddTest(
 )
 endif()
 
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(support)

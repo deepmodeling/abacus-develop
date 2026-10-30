@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_BSE_H
+#define ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_BSE_H
+
 #include "esolver_lr_lcao_tddft.h"
 #include "source_lcao/module_bse/molecular_lri.h"
 
@@ -9,8 +11,8 @@ namespace ModuleESolver
     template<typename T, typename TR = double>
     class ESolver_BSE : public ESolver_LR<T, TR> {
     public:
-        ESolver_BSE(const Input_para& inp, const std::string& in_dir, const std::string& out_dir)
-            : ESolver_LR<T, TR>(inp, in_dir, out_dir), rpa_dir(inp.rpa_outdir)
+        ESolver_BSE(const Input_para& inp, const std::string& in_dir, const std::string& out_dir, const LRRuntime& runtime)
+            : ESolver_LR<T, TR>(inp, in_dir, out_dir, runtime), rpa_dir(inp.rpa_outdir)
         {
         }
 
@@ -53,3 +55,5 @@ namespace ModuleESolver
     };
 
 }
+
+#endif // ABACUS_SOURCE_ESOLVER_ESOLVER_LR_LCAO_BSE_H

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_PULAY_FS_TEMP_H
+#define ABACUS_SOURCE_LCAO_PULAY_FS_TEMP_H
+
 #include <omp.h>
 #include "pulay_fs.h"
 #include "source_base/timer.h"
@@ -132,3 +134,5 @@ namespace PulayForceStress
         ModuleBase::timer::end("Force_LCAO", "cal_pulay_fs_center2");
     }
 }
+
+#endif // ABACUS_SOURCE_LCAO_PULAY_FS_TEMP_H

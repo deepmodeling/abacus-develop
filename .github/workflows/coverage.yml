@@ -62,7 +62,7 @@ jobs:
           -DENABLE_MLALGO=ON \
           -DENABLE_LIBXC=ON \
           -DENABLE_LIBRI=ON \
-          -DENABLE_GOOGLEBENCH=ON \
+          -DENABLE_GOOGLEBENCH=OFF \
           -DENABLE_JSON=ON \
           -DCMAKE_BUILD_TYPE=Debug \
           -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \

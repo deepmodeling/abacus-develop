@@ -1,0 +1,8 @@
+# Source SCF parameters used by the hybrid NSCF consistency check.
+dft_functional HSE
+exx_fock_alpha
+exx_erfc_alpha 0.25
+exx_erfc_omega 0.11
+exx_singularity_correction limits
+exx_gamma_extra 0
+ecutexx 0

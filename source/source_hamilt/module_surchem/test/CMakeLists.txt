@@ -1,6 +1,6 @@
 abacus_disable_feature_definitions(__LCAO)
 abacus_disable_feature_definitions(__LIBXC)
-install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+abacus_copy_test_files(support)
 
 list(APPEND depend_files 
 
@@ -15,7 +15,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_cal_pseudo  
   LIBS parameter planewave device base psi
-  SOURCES cal_pseudo_test.cpp  ../cal_pseudo.cpp ../surchem.cpp ../cal_epsilon.cpp ../../../source_pw/module_pwdft/stru_fac.cpp
+  SOURCES cal_pseudo_test.cpp  ../cal_pseudo.cpp ../surchem.cpp ../cal_epsilon.cpp ../../../source_cell/stru_fac.cpp
 )
 
 AddTest(

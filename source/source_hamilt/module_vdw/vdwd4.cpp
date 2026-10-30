@@ -1,10 +1,11 @@
 #include "vdwd4.h"
-#include "vdw_xcname.h"
 
 #include "source_base/constants.h"
 #include "source_base/element_name.h"
+#include "vdw_xcname.h"
 #ifdef __MPI
 #include "source_base/parallel_reduce.h"
+
 #include <mpi.h>
 #endif
 #include "source_base/timer.h"
@@ -96,13 +97,11 @@ Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
 
     if (smooth_width_2b_ < 0.0 || smooth_width_2b_ > cutoff_disp2_)
     {
-        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4",
-                                 "vdw_cutoff_width2 must satisfy 0 <= width <= two-body cutoff");
+        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4", "vdw_cutoff_width2 must satisfy 0 <= width <= two-body cutoff");
     }
     if (smooth_width_3b_ < 0.0 || smooth_width_3b_ > cutoff_disp3_)
     {
-        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4",
-                                 "vdw_cutoff_width3 must satisfy 0 <= width <= three-body cutoff");
+        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4", "vdw_cutoff_width3 must satisfy 0 <= width <= three-body cutoff");
     }
 
     double valence_charge = 0.0;
@@ -190,11 +189,9 @@ void Vdwd4::compute(double& energy_ha,
 
     build_structure(numbers, positions, lattice, periodic, atom_indices);
 
-    if (gradient_ha_bohr != nullptr
-        && gradient_ha_bohr->size() < static_cast<std::size_t>(3 * numbers.size()))
+    if (gradient_ha_bohr != nullptr && gradient_ha_bohr->size() < static_cast<std::size_t>(3 * numbers.size()))
     {
-        ModuleBase::WARNING_QUIT("Vdwd4::compute",
-                                 "gradient_ha_bohr is too small for the filtered atom set.");
+        ModuleBase::WARNING_QUIT("Vdwd4::compute", "gradient_ha_bohr is too small for the filtered atom set.");
     }
 
     // These vectors own all arrays passed to DFT-D4. Their data() pointers
@@ -248,7 +245,8 @@ void Vdwd4::compute(double& energy_ha,
     method.push_back('\0');
 
     // Use the DFT-D4 library's internal rational damping parameters.
-    // The final boolean selects the three-body-specific parameterization in the C API.
+    // The final boolean selects the three-body-specific parameterization in the
+    // C API.
     const bool atm = true;
     dftd4_param param = dftd4_load_rational_damping(error, method.data(), atm);
     check_dftd4_error(error, "dftd4_load_rational_damping");
@@ -299,11 +297,11 @@ void Vdwd4::set_force_from_gradient(const std::vector<double>& gradient_ha_bohr,
     result.has_force = true;
 }
 
-void Vdwd4::set_stress_from_sigma(const std::array<double, 9>& sigma_ha,
-                                  VdwResult& result) const
+void Vdwd4::set_stress_from_sigma(const std::array<double, 9>& sigma_ha, VdwResult& result) const
 {
     // Tentative mapping consistent with the current D3 convention.
-    // Confirm sign, transposition and volume normalization by finite-strain tests.
+    // Confirm sign, transposition and volume normalization by finite-strain
+    // tests.
     result.stress = ModuleBase::Matrix3(2.0 * sigma_ha[0],
                                         2.0 * sigma_ha[1],
                                         2.0 * sigma_ha[2],

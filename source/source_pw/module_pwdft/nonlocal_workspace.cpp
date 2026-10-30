@@ -5,6 +5,9 @@
 #include "source_base/timer.h"
 #include "source_pw/module_pwdft/kernels/nonlocal_op.h"
 
+#include <algorithm>
+#include <limits>
+
 namespace hamilt
 {
 namespace
@@ -45,7 +48,9 @@ void NonlocalWorkspace<T, Device>::project(const T* vkb, const T* psi, const int
     const T zero(0, 0);
     if (npw == 0)
     {
-        Zero<T, Device>()(becp_, 0, nkb * bands);
+        // Empty PW partitions still supply zero coefficients to the collective projector reduction.
+        const size_t count = static_cast<size_t>(nkb) * bands;
+        Zero<T, Device>()(becp_, 0, count);
     }
     else if (bands == 1)
     {
@@ -62,7 +67,8 @@ void NonlocalWorkspace<T, Device>::contract(const UnitCell& cell, const pseudopo
                                           const int spin, const int npol, const int bands)
 {
     using Real = typename GetTypeReal<T>::type;
-    Zero<T, Device>()(ps_, 0, pp.nkb * bands);
+    const size_t count = static_cast<size_t>(pp.nkb) * bands;
+    Zero<T, Device>()(ps_, 0, count);
     int sum = 0;
     int atom = 0;
     for (int type = 0; type < cell.ntype; ++type)
@@ -107,8 +113,25 @@ void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_c
     ModuleBase::timer::start("NonlocalWorkspace", "apply");
     if (is_first_node)
     {
-        Zero<T, Device>()(hpsi, 0, nbasis * bands / npol);
+        const size_t count = static_cast<size_t>(nbasis) * bands / npol;
+        Zero<T, Device>()(hpsi, 0, count);
     }
+    // Here bands counts spin-component columns, while nbasis includes all components of one orbital.
+    project_contract(cell, pp, basis, spin, bands, nbasis, npol, npw, vkb, psi);
+    if (pp.nkb > 0 && bands > 0 && npw > 0)
+    {
+        this->back_project(vkb, hpsi, npw, pp.vkbnc, nbasis / npol, pp.nkb, bands);
+    }
+    ModuleBase::timer::end("NonlocalWorkspace", "apply");
+}
+
+
+template <typename T, typename Device>
+void NonlocalWorkspace<T, Device>::project_contract(const UnitCell& cell, const pseudopot_cell_vnl& pp,
+                                                   const ModulePW::PW_Basis_K& basis, int spin,
+                                                   int bands, int nbasis, int npol, int npw,
+                                                   const T* vkb, const T* psi)
+{
     if (pp.nkb > 0 && bands > 0)
     {
         const size_t count = static_cast<size_t>(pp.nkb) * bands;
@@ -126,18 +149,21 @@ void NonlocalWorkspace<T, Device>::apply(const UnitCell& cell, const pseudopot_c
 #ifdef __MPI
         if (basis.poolnproc > 1)
         {
-            Parallel_Common::reduce_dev<T, Device>(becp_, pp.nkb * bands, basis.pool_world);
+            // The complex reduction wrapper doubles the MPI element count.
+            const size_t max_chunk = std::numeric_limits<int>::max() / 2;
+            for (size_t offset = 0; offset < count;)
+            {
+                const size_t remaining = count - offset;
+                const int chunk_size = static_cast<int>(std::min(max_chunk, remaining));
+                T* chunk = becp_ + offset;
+                Parallel_Common::reduce_dev<T, Device>(chunk, chunk_size, basis.pool_world);
+                offset += chunk_size;
+            }
         }
 #endif
-        if (npw > 0)
-        {
-            this->contract(cell, pp, spin, npol, bands);
-            this->back_project(vkb, hpsi, npw, pp.vkbnc, nbasis / npol, pp.nkb, bands);
-        }
+        this->contract(cell, pp, spin, npol, bands);
     }
-    ModuleBase::timer::end("NonlocalWorkspace", "apply");
 }
-
 template class NonlocalWorkspace<std::complex<float>, base_device::DEVICE_CPU>;
 template class NonlocalWorkspace<std::complex<double>, base_device::DEVICE_CPU>;
 #if defined(__CUDA) || defined(__ROCM)

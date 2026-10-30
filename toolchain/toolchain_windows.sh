@@ -42,7 +42,7 @@ pacman -S --needed --noconfirm \
 #  * scalapack : distributed eigensolver used by the LCAO MPI build (no ELPA).
 
 # 'bc' (a base MSYS tool, not a MinGW package) is used by the integration-test
-# harness tests/integrate/tools/catch_properties.sh; install it so the existing
+# harness tests/integrate/validation_tools/catch_properties.sh; install it so the existing
 # serial test flow (Autotest.sh -n 0) works out of the box.
 pacman -S --needed --noconfirm bc
 

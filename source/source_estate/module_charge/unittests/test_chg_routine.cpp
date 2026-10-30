@@ -75,7 +75,7 @@ TEST_F(ChgRoutineTest, ChgmixingKsPwIter1SetsRestartStep)
     inp.mixing_restart = 0.0;
     inp.dft_plus_u = false;
 
-    module_charge::chgmixing_ks_pw(1, &cm, dftu, true, inp);
+    module_charge::chgmixing_ks_pw(1, inp.scf_nmax, &cm, dftu, true, inp);
 
     EXPECT_EQ(cm.mixing_restart_step, inp.scf_nmax + 1);
 }
@@ -90,7 +90,7 @@ TEST_F(ChgRoutineTest, ChgmixingKsLcaoIter1SetsRestartStep)
     inp.mixing_restart = 0.0;
     inp.dft_plus_u = false;
 
-    module_charge::chgmixing_ks_lcao(1, &cm, dftu, 0, inp);
+    module_charge::chgmixing_ks_lcao(1, inp.scf_nmax, &cm, dftu, 0, inp);
 
     EXPECT_EQ(cm.mixing_restart_step, inp.scf_nmax + 1);
 }
@@ -107,6 +107,7 @@ TEST_F(ChgRoutineTest, ChgmixingKsConvergedSkipsMixing)
     inp.nelec = 1.0;
 
     module_charge::ScfMixingCtx ctx;
+    ctx.iter_limit = inp.scf_nmax;
     ctx.hsolver_error = 1e-6;
     ctx.scf_thr = 1e-4;
     ctx.scf_ene_thr = 0.0;
@@ -138,6 +139,7 @@ TEST_F(ChgRoutineTest, ChgmixingKsDrhoBelowHsolverSkipsMixing)
     inp.nelec = 1.0;
 
     module_charge::ScfMixingCtx ctx;
+    ctx.iter_limit = inp.scf_nmax;
     ctx.hsolver_error = 1e-3;
     ctx.scf_thr = 1e-4;
     ctx.scf_ene_thr = 0.0;

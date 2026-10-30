@@ -32,7 +32,7 @@ void init_scf(const UnitCell& ucell,
     pelec->pot->init_pot(pelec->charge);
 
     //! output the initial potential
-    ModuleIO::write_pot_init(ucell, pgrid, pelec, istep, out_dir, inp, PARAM.globalv.two_fermi);
+    ModuleIO::write_pot_init(ucell, pgrid, pelec, istep, out_dir, inp, PARAM.globalv.two_fermi, GlobalV::ofs_running);
 }
 
 } // namespace elecstate

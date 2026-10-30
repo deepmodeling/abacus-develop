@@ -1,18 +1,89 @@
 #include "source_psi/psi.h"
 
 #include <gtest/gtest.h>
+#include <memory>
+
+TEST(PsiLargeOffsets, ThreeDimensionalAccess)
+{
+    // No zero-initialization: the test touches only one page of this 12 GiB buffer.
+    std::unique_ptr<float[]> storage(new float[3221225472ULL]);
+    float* const data = storage.get();
+    data[2684354567ULL] = 42.0f;
+    for (const bool k_first: {true, false})
+    {
+        const int nk = k_first ? 3 : 2;
+        const int nbands = k_first ? 2 : 3;
+        const int ik = k_first ? 2 : 1;
+        const int ib = k_first ? 1 : 2;
+        psi::Psi<float> wave(data, nk, nbands, 536870912, 536870912, k_first);
+
+        if (k_first)
+        {
+            wave.fix_k(ik);
+        }
+        else
+        {
+            wave.fix_b(ib);
+        }
+        ASSERT_EQ(wave.get_psi_bias(), 2147483648ULL);
+        ASSERT_EQ(wave.get_pointer(), data + 2147483648ULL);
+        ASSERT_EQ(wave.get_pointer(1), data + 2684354560ULL);
+
+        if (k_first)
+        {
+            wave.fix_b(ib);
+        }
+        else
+        {
+            wave.fix_k(ik);
+        }
+        EXPECT_EQ(wave.get_pointer(), data + 2684354560ULL);
+
+        wave.fix_kb(ik, ib);
+        ASSERT_EQ(wave.get_psi_bias(), 2684354560ULL);
+        EXPECT_EQ(wave.get_pointer(), data + 2684354560ULL);
+        ASSERT_EQ(&wave(2, 1, 7), data + 2684354567ULL);
+        EXPECT_FLOAT_EQ(wave(2, 1, 7), 42.0f);
+        EXPECT_EQ(&wave(1, 1, 536870911), data + 2147483647ULL);
+
+        const psi::Range range(k_first, 2, 1, 1);
+        const auto result = wave.to_range(range);
+        ASSERT_EQ(std::get<0>(result), data + 2684354560ULL);
+        const psi::Range outer_range(k_first, -1, 2, 2);
+        const auto outer_result = wave.to_range(outer_range);
+        EXPECT_EQ(std::get<0>(outer_result), data + 2147483648ULL);
+    }
+}
+
+TEST(PsiLargeOffsets, TwoDimensionalAccess)
+{
+    std::unique_ptr<float[]> storage(new float[3221225472ULL]);
+    float* const data = storage.get();
+    data[2147483655ULL] = 24.0f;
+    for (const bool k_first: {true, false})
+    {
+        const int nk = k_first ? 1 : 3;
+        const int nbands = k_first ? 3 : 1;
+        psi::Psi<float> wave(data, nk, nbands, 1073741824, 1073741824, k_first);
+        ASSERT_EQ(wave.get_pointer(2), data + 2147483648ULL);
+        ASSERT_EQ(&wave(2, 7), data + 2147483655ULL);
+        EXPECT_FLOAT_EQ(wave(2, 7), 24.0f);
+    }
+}
 
 class TestPsi : public ::testing::Test
 {
   public:
-      const int ink = 2;
+    const int ink = 2;
     const int inbands = 4;
     const int inbasis = 10;
     std::vector<int> ngk = {10, 10, 10, 10};
 
-    const psi::Psi<std::complex<double>>* psi_object31 = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<std::complex<double>>* psi_object31
+        = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, true);
     const psi::Psi<double>* psi_object32 = new psi::Psi<double>(ink, inbands, inbasis, ngk, true);
-    const psi::Psi<std::complex<float>>* psi_object33 = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<std::complex<float>>* psi_object33
+        = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, true);
     const psi::Psi<float>* psi_object34 = new psi::Psi<float>(ink, inbands, inbasis, ngk, true);
 };
 
@@ -67,7 +138,7 @@ TEST_F(TestPsi, get_pointer_op_zero_complex_double)
         psi_object31->fix_k(i);
         for (int j = 0; j < inbands; j++)
         {
-            for (int k = 0; k< inbasis; k++)
+            for (int k = 0; k < inbasis; k++)
             {
                 psi_object31->get_pointer()[j * inbasis + k].real(j * inbasis + k);
                 psi_object31->get_pointer()[j * inbasis + k].imag(j * inbasis + k);
@@ -111,7 +182,7 @@ TEST_F(TestPsi, get_pointer_op_zero_complex_float)
         psi_object33->fix_k(i);
         for (int j = 0; j < inbands; j++)
         {
-            for (int k = 0; k< inbasis; k++)
+            for (int k = 0; k < inbasis; k++)
             {
                 psi_object33->get_pointer()[j * inbasis + k].real(j * inbasis + k);
                 psi_object33->get_pointer()[j * inbasis + k].imag(j * inbasis + k);
@@ -145,7 +216,7 @@ TEST_F(TestPsi, get_pointer_op_zero_double)
         psi_object32->fix_k(i);
         for (int j = 0; j < inbands; j++)
         {
-            for (int k = 0; k< inbasis; k++)
+            for (int k = 0; k < inbasis; k++)
             {
                 psi_object32->get_pointer()[j * inbasis + k] = j * inbasis + k;
             }
@@ -173,7 +244,7 @@ TEST_F(TestPsi, get_pointer_op_zero_float)
         psi_object34->fix_k(i);
         for (int j = 0; j < inbands; j++)
         {
-            for (int k = 0; k< inbasis; k++)
+            for (int k = 0; k < inbasis; k++)
             {
                 psi_object34->get_pointer()[j * inbasis + k] = j * inbasis + k;
             }
@@ -194,7 +265,6 @@ TEST_F(TestPsi, get_pointer_op_zero_float)
     delete psi_object6;
 }
 
-
 TEST_F(TestPsi, size)
 {
     EXPECT_EQ(psi_object31->size(), ink * inbands * inbasis);
@@ -209,8 +279,8 @@ TEST_F(TestPsi, size)
 
 TEST_F(TestPsi, range)
 {
-    psi::Range range1(1);// k_first = 1;index_1 = 0;range_1 = 1;range_2 = 1;
-    psi::Range range2(false,1,0,0);
+    psi::Range range1(1); // k_first = 1;index_1 = 0;range_1 = 1;range_2 = 1;
+    psi::Range range2(false, 1, 0, 0);
     EXPECT_EQ(range1.range_1, 1);
     EXPECT_EQ(range1.range_2, 1);
     EXPECT_EQ(range2.k_first, 0);
@@ -241,24 +311,26 @@ TEST_F(TestPsi, range)
 
 TEST_F(TestPsi, band_first)
 {
-    const psi::Psi<std::complex<double>>* psi_band_c64 = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<std::complex<double>>* psi_band_c64
+        = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, false);
     const psi::Psi<double>* psi_band_64 = new psi::Psi<double>(ink, inbands, inbasis, ngk, false);
-    const psi::Psi<std::complex<float>>* psi_band_c32 = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<std::complex<float>>* psi_band_c32
+        = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, false);
     const psi::Psi<float>* psi_band_32 = new psi::Psi<float>(ink, inbands, inbasis, ngk, false);
 
     // set values: cover 4 different cases
-    for (int ib = 0;ib < inbands;++ib)
+    for (int ib = 0; ib < inbands; ++ib)
     {
         psi_band_c64->fix_b(ib); // 1. fix_b, fix_k, (ibasis)
-        psi_band_64->fix_b(ib);// 2. fix_kb, (ibasis)
-        psi_band_c32->fix_b(ib);// 3. fix_b, (ik, ibasis)
+        psi_band_64->fix_b(ib);  // 2. fix_kb, (ibasis)
+        psi_band_c32->fix_b(ib); // 3. fix_b, (ik, ibasis)
         EXPECT_EQ(psi_band_c64->get_current_b(), ib);
         EXPECT_EQ(psi_band_64->get_current_b(), ib);
         EXPECT_EQ(psi_band_c32->get_current_b(), ib);
         EXPECT_EQ(psi_band_c64->get_psi_bias(), ib * ink * inbasis);
         EXPECT_EQ(psi_band_64->get_psi_bias(), ib * ink * inbasis);
         EXPECT_EQ(psi_band_c32->get_psi_bias(), ib * ink * inbasis);
-        for (int ik = 0;ik < ink;++ik)
+        for (int ik = 0; ik < ink; ++ik)
         {
             psi_band_c64->fix_k(ik);
             psi_band_64->fix_kb(ik, ib);
@@ -266,13 +338,13 @@ TEST_F(TestPsi, band_first)
             EXPECT_EQ(psi_band_64->get_current_k(), ik);
             EXPECT_EQ(psi_band_c64->get_psi_bias(), (ib * ink + ik) * inbasis);
             EXPECT_EQ(psi_band_64->get_psi_bias(), (ib * ink + ik) * inbasis);
-            for (int ibas = 0;ibas < inbasis;++ibas)
+            for (int ibas = 0; ibas < inbasis; ++ibas)
             {
                 int index = ((ib * ink) + ik) * inbasis + ibas;
                 (*psi_band_c64)(ibas).real(index);
                 (*psi_band_64)(ibas) = index;
                 (*psi_band_c32)(ik, ibas).real(index);
-                (*psi_band_32)(ib, ik, ibas) = index; //4. no fix, (ib, ik, ibasis)
+                (*psi_band_32)(ib, ik, ibas) = index; // 4. no fix, (ib, ik, ibasis)
             }
         }
     }

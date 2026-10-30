@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_PULAY_FS_H
+#define ABACUS_SOURCE_LCAO_PULAY_FS_H
+
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_cell/unitcell.h"
@@ -44,7 +46,7 @@ namespace PulayForceStress
 
     /// for grid-integration terms
     template<typename TK, typename TR>
-    void cal_pulay_fs(
+    void cal_pulay_fs(const int nspin,
         ModuleBase::matrix& f,  ///< [out] force
         ModuleBase::matrix& s,  ///< [out] stress
         const module_dm::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix or energy density matrix
@@ -56,3 +58,5 @@ namespace PulayForceStress
 }
 #include "pulay_fs_temp.h"
 #include "pulay_fs_gint.h"
+
+#endif // ABACUS_SOURCE_LCAO_PULAY_FS_H

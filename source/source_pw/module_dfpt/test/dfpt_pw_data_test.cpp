@@ -50,7 +50,9 @@ class DFPT_PW_DataTest : public DFPTStruTestFixture
         ofs_running.open("tmp_dfpt_qlist");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
-        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
+        symm.analy_sys(ucell.lat, ucell.atoms, ucell.nat, ucell.ntype,
+                       ucell.iat2it, ucell.iat2ia, ucell.itia2iat,
+                       ofs_running, 1e-6, 1, "scf", cal_symm_repr);
         qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
         data.init(&qlist, 1, 2, 3, 0, 1, 1, nullptr);
     }

@@ -285,7 +285,6 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
 
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(CE.get_rho_extr(), 3);
-    std::remove("./support/OLD2_SPIN1_CHG.cube");
 }
 
 TEST_F(ChargeExtraTest, UpdateAllDis)

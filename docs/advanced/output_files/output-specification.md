@@ -86,7 +86,7 @@ All output file naming conventions can be found in the online documentation (wit
 | `elfs1g1.cube` | ELF, spin 1, geometry step 1 (nspin=2) |
 | `elftotg1.cube` | ELF, total, geometry step 1 (nspin=2) |
 | `eig_occ.txt` | Eigenvalues and occupations |
-| `doss1g1_nao.txt` | DOS, spin 1, geometry step 1, NAO basis |
+| `doss1g1.txt` | DOS, spin 1, geometry step 1 |
 | `wf_pw.dat` | Wavefunction, plane wave basis |
 | `sr.csr` | Overlap matrix in real space (no spin index) |
 
@@ -95,7 +95,7 @@ All output file naming conventions can be found in the online documentation (wit
 | File Name | Description |
 |-----------|-------------|
 | `running_scf.log` | SCF iteration log |
-| `dos.txt` | Density of states |
+| `doss1g1.txt` | Density of states |
 | `eig_occ.txt` | Eigenvalues and occupations |
 | `mulliken.txt` | Mulliken population analysis |
 | `band.txt` | Band structure |
@@ -308,7 +308,7 @@ void OutputMyData::write(const std::string& filename, int precision)
 | File | Location | Strengths |
 |------|----------|-----------|
 | `chgs1.cube` | `tests/03_NAO_multik/scf_out_chg_tau/OUT.autotest/` | Short name, spin index convention |
-| `dos.txt` | `tests/03_NAO_multik/scf_out_dos_spin2/OUT.autotest/` | Clear header with metadata |
+| `doss1g1.txt` | `tests/03_NAO_multik/scf_out_dos_spin2/OUT.autotest/` | Clear header with metadata |
 | `eig_occ.txt` | Same as above | Clear block structure for spin/k-point |
 | `mulliken.txt` | `tests/03_NAO_multik/scf_out_mul/OUT.autotest/` | Clear atom separators |
 

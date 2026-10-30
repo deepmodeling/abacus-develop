@@ -174,7 +174,8 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                                                              this->exx_nao,
                                                              this->exx_info_,
                                                              *this->inp_,
-                                                             load_exx_flag);
+                                                             load_exx_flag,
+                                                             nullptr);
     }
 
     XC_Functional::set_xc_type(this->inp_->deepks_out_base);
@@ -426,7 +427,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
     const FSCalcConfig fs_cfg{this->inp_->nspin, this->inp_->nbands, this->inp_->t_in_h,
                         this->inp_->sc_mag_switch, this->inp_->device,
                         PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
-                        PARAM.globalv.gamma_only_pw};
+                        PARAM.globalv.gamma_only_pw, this->inp_->imp_sol};
 
     fsl.getForceStress(ucell,
                        this->get_vdw_result(),
@@ -453,7 +454,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                        this->exx_nao,
                        &ucell.symm,
                        this->exx_info_,
-                       fs_cfg);
+                       fs_cfg, nullptr, nullptr);
 
     // restore to original xc
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);

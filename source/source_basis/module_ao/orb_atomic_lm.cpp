@@ -232,19 +232,6 @@ void Numerical_Orbital_Lm::extra_uniform(const double &dr_uniform_in, const bool
     
     this->psi_uniform.resize(nr_uniform,0);
 
-    // do interpolation here to make grid more dense
-
-#ifdef _OPENMP
-    #pragma omp parallel for schedule(static)
-#endif
-    for (int ir = 0; ir < this->nr_uniform; ir++)
-    {
-        const double psi_uniform_tmp  = 
-        ModuleBase::Mathzone_Add1::Uni_RadialF(ModuleBase::GlobalFunc::VECTOR_TO_PTR(this->psi), this->nr, this->rab[0], ir * dr_uniform); 
-        this->psi_uniform[ir] = psi_uniform_tmp;
-//    	this->psi_uniform[ir] = ModuleBase::Mathzone::Polynomial_Interpolation(this->psi, this->nr, this->rab[0], ir * dr_uniform); 
-    }
-    
     //----------------------------------------------	 
     // calculate the dpsi_uniform
     //----------------------------------------------	 
@@ -302,8 +289,24 @@ void Numerical_Orbital_Lm::extra_uniform(const double &dr_uniform_in, const bool
 
     //	ModuleBase::Mathzone_Add1::SplineD2 (rad, psi_uniform, nr_uniform, 0.0, 0.0, ddpsi_uniform);
     double* tmp = new double[nr_uniform];
-    ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(ModuleBase::GlobalFunc::VECTOR_TO_PTR(r_radial), ModuleBase::GlobalFunc::VECTOR_TO_PTR(psi), y2, 
-            nr, rad, nr_uniform, tmp, ModuleBase::GlobalFunc::VECTOR_TO_PTR(dpsi_uniform));
+    const double* radial_data = r_radial.data();
+    const double* psi_data = psi.data();
+    double* psi_uniform_data = psi_uniform.data();
+    double* dpsi_uniform_data = dpsi_uniform.data();
+    ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(radial_data, psi_data, y2,
+            nr, rad, nr_uniform, psi_uniform_data, dpsi_uniform_data);
+
+    // Gint's Hermite interpolation requires values and slopes of the same
+    // radial function. Mixing Uni_RadialF values with cubic-spline slopes
+    // breaks that consistency. Preserve zero padding beyond the support:
+    // the spline helper otherwise extrapolates its final interval.
+    for (int ir = 0; ir < nr_uniform; ++ir)
+    {
+        if (rad[ir] >= rcut)
+        {
+            psi_uniform[ir] = 0.0;
+        }
+    }
 
     // calculate zty
     // liaochen add 2010-08

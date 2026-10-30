@@ -89,7 +89,8 @@ LcaoOpsBundle<TK, TR> build_multik_ops(const UnitCell& ucell,
                                        const K_Vectors* kv,
                                        HS_Matrix_K<TK>* hsk,
                                        HContainer<TR>* hR,
-                                       HContainer<TR>* sR);
+                                       HContainer<TR>* sR,
+                                       TD_info* td_info);
 
 } // namespace hamilt
 

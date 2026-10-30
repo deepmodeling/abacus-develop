@@ -69,16 +69,14 @@ class AccumulateHrIat0Test : public ::testing::Test
         ucell.ntype = 1;
         ucell.nat = nat;
         ucell.atoms = atoms_buf;
-        iat2it_buf.assign(nat, 0);
-        iat2ia_buf.resize(nat);
-        ucell.iat2it = iat2it_buf.data();
-        ucell.iat2ia = iat2ia_buf.data();
+        ucell.iat2it.assign(nat, 0);
+        ucell.iat2ia.resize(nat);
         ucell.atoms[0].tau.resize(nat);
         ucell.lat0 = 1.0;
         ucell.itia2iat.create(ucell.ntype, nat);
         for (int iat = 0; iat < nat; iat++)
         {
-            iat2ia_buf[iat] = iat;
+            ucell.iat2ia[iat] = iat;
             ucell.atoms[0].tau[iat] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
             ucell.itia2iat(0, iat) = iat;
         }
@@ -102,8 +100,6 @@ class AccumulateHrIat0Test : public ::testing::Test
         HR.reset();
         paraV.reset();
         ucell.atoms = nullptr;
-        ucell.iat2it = nullptr;
-        ucell.iat2ia = nullptr;
     }
 
     AdjacentAtomInfo make_adjs() const
@@ -142,8 +138,6 @@ class AccumulateHrIat0Test : public ::testing::Test
     int my_rank = 0;
     UnitCell ucell;
     Atom atoms_buf[1];
-    std::vector<int> iat2it_buf;
-    std::vector<int> iat2ia_buf;
     std::unique_ptr<Parallel_Orbitals> paraV;
     std::unique_ptr<hamilt::HContainer<double>> HR;
 };

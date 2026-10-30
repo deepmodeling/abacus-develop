@@ -1,9 +1,24 @@
 #ifndef CTRL_OUTPUT_FP_H
 #define CTRL_OUTPUT_FP_H
 
-#include "source_estate/elecstate_lcao.h"
+#include <fstream>
 
 struct Input_para;
+class UnitCell;
+class Charge;
+class surchem;
+class Parallel_Grid;
+
+namespace elecstate
+{
+class ElecState;
+}
+
+namespace ModulePW
+{
+class PW_Basis;
+class PW_Basis_Big;
+}
 
 namespace ModuleIO
 {
@@ -16,7 +31,8 @@ void ctrl_output_fp(UnitCell& ucell,
                     Charge& chr,
                     surchem& solvent,
                     Parallel_Grid& para_grid,
-                    const int istep);
+                    const int istep,
+                    std::ofstream& ofs_running);
 
 }
 #endif

@@ -41,8 +41,9 @@ void Plus_U_Base::init_base(UnitCell& cell,
                              const std::string& device,
                              const std::vector<double>& hubbard_u,
                              const double uramping,
-                             const int occ_mat_ctrl,
-                             const int mixing_dftu)
+                             const int init_occ_mat,
+                             const int mixing_dftu,
+                             const DFTU_BASE::OccmatSocLayout soc_layout)
 {
     ModuleBase::TITLE("Plus_U_Base", "init_base");
 
@@ -52,7 +53,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
 
     this->l_channel = l_channel;
     this->uramping = uramping;
-    this->occ_mat_ctrl = occ_mat_ctrl;
+    this->init_occ_mat = init_occ_mat;
     this->u_target = hubbard_u;
     this->u_current = hubbard_u;
     if (uramping > 0.01)
@@ -129,21 +130,25 @@ void Plus_U_Base::init_base(UnitCell& cell,
         this->yukawa_.reset(new YukawaScreening());
         this->yukawa_->init(cell, l_channel, yukawa_lambda);
     }
-    else
+    if (init_occ_mat != 0)
     {
-        // Clear any stale object from a previous init_base() call with
-        // yukawa_potential == true, preserving the old explicit-flag semantics.
-        this->yukawa_.reset();
-    }
-
-    if (occ_mat_ctrl != 0)
-    {
-        std::stringstream sst;
-        sst << global_readin_dir << "dm_onsite_ini.txt";
-        DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel, this->occ_mat_ctrl,
-                                sst.str(), init_chg, nspin, npol);
+        // Try the user-prepared dm_onsite_ini.txt first, then fall back to
+        // the compact occupation-matrix snapshot written by a previous
+        // run (occ_mat.txt). Legacy dm_onsite.txt input is not supported.
+        const std::vector<std::string> candidates = {"dm_onsite_ini.txt",
+                                                      "occ_mat.txt"};
+        const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
+        if (readin_fn.empty())
+        {
+            ModuleBase::WARNING_QUIT("Plus_U_Base::init_base",
+                                     "init_occ_mat is set but no occupation-matrix file found in "
+                                     + global_readin_dir
+                                     + ". Tried: dm_onsite_ini.txt, occ_mat.txt");
+        }
+        DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
+                                readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
-        DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel, nspin, npol);
+        DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
 #endif
 
         this->set_occmat_ready();
@@ -158,12 +163,22 @@ void Plus_U_Base::init_base(UnitCell& cell,
     {
         if (init_chg == "file")
         {
-            std::stringstream sst;
-            sst << global_readin_dir << "dm_onsite.txt";
-            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel, this->occ_mat_ctrl,
-                                    sst.str(), init_chg, nspin, npol);
+            // Only the current compact restart output is supported.
+            const std::vector<std::string> candidates = {"occ_mat.txt"};
+            const std::string readin_fn = DFTU_BASE::find_first_existing_file(global_readin_dir, candidates);
+            if (readin_fn.empty())
+            {
+                ModuleBase::WARNING_QUIT("Plus_U_Base::init_base",
+                                         "init_chg is set to file but no occupation-matrix file "
+                                         "found in "
+                                         + global_readin_dir
+                                         + ". Tried: occ_mat.txt. Please do an scf "
+                                           "calculation first.");
+            }
+            DFTU_BASE::read_occup_m(cell, this->occmat_, this->l_channel,
+                                    readin_fn, nspin, npol, soc_layout);
 #ifdef __MPI
-            DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel, nspin, npol);
+            DFTU_BASE::local_occup_bcast(cell, this->occmat_, this->l_channel);
 #endif
             this->set_occmat_ready();
         }

@@ -46,7 +46,8 @@ class Get_pchg_pw
                const std::vector<int>& out_pchg,
                const std::string& global_out_dir,
                const bool if_separate_k,
-               const bool noncolin) const;
+               const bool noncolin,
+               std::ofstream& ofs_running) const;
 
   private:
     const psi::Psi<T, Device>& psi_;
@@ -76,6 +77,7 @@ class Get_pchg_pw
                         const std::string& out_dir,
                         const bool noncolin,
                         const Parallel::ParaBandOutput& band_output,
+                        std::ofstream& ofs_running,
                         Workspace* work) const;
     void write_summed(const int band,
                       UnitCell* ucell,
@@ -84,6 +86,7 @@ class Get_pchg_pw
                       const std::string& out_dir,
                       const bool noncolin,
                       const Parallel::ParaBandOutput& band_output,
+                      std::ofstream& ofs_running,
                       Workspace* work) const;
 
     void calc_density(const int spin_index, const double weight, const bool noncolin, const bool accumulate, Workspace* work) const;
@@ -104,7 +107,8 @@ class Get_pchg_pw
                     const Parallel_Grid& pgrid,
                     const std::string& out_dir,
                     const bool separate_k,
-                    const std::vector<double>& values) const;
+                    const std::vector<double>& values,
+                    std::ofstream& ofs_running) const;
 };
 } // namespace ModuleIO
 

@@ -8,7 +8,7 @@
 
 #include "source_io/module_dm/write_dmk.h"
 #include "source_base/global_variable.h"
-#include "../../test/prepare_unitcell.h"
+#include "../../unittests/prepare_unitcell.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -164,8 +164,9 @@ TEST(DMKTest,WriteDMK) {
     kv.kc_done = true;
     kv.kd_done = true;
     
-    ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, out_dir, istep);
-    ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, out_dir, istep);
+    std::ofstream ofs_log;
+    ModuleIO::write_dmk(dmk, kv, 3, efs, ucell, pv, out_dir, istep, ofs_log);
+    ModuleIO::write_dmk(dmk_multik, kv, 3, efs, ucell, pv, out_dir, istep, ofs_log);
     
     std::ifstream ifs;
 

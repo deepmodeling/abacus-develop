@@ -1,5 +1,6 @@
 #include "source_base/formatter.h"
 #include "source_base/timer.h"
+#include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_cell/cal_ux.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -151,7 +152,8 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                                         this->exx_nao,
                                                         this->exx_info_,
                                                         *this->inp_,
-                                                        load_exx_flag);
+                                                        load_exx_flag,
+                                                        this->get_td_info());
     }
 
     // for each ionic step, the overlap <phi|alpha> must be rebuilt

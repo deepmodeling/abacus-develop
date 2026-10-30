@@ -1,17 +1,17 @@
 #include "source_main/driver.h"
 #include "source_base/global_file.h"
 #include "source_base/memory_recorder.h"
+#include "source_base/parallel_global.h"
 #include "source_base/timer.h"
 #include "source_esolver/esolver.h"
-#include "source_io/parse_command_line.h"
-#include "source_io/module_output/cal_test.h"
-#include "source_io/module_parameter/input_conv.h"
 #include "source_io/module_json/para_json.h"
+#include "source_io/module_output/cal_test.h"
 #include "source_io/module_output/print_info.h"
-#include "source_io/module_parameter/read_input.h"
+#include "source_io/module_parameter/input_conv.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/read_input.h"
+#include "source_io/parse_command_line.h"
 #include "source_main/version.h"
-#include "source_base/parallel_global.h"
 #ifdef __DSP
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_external/blas_connector.h"
@@ -107,7 +107,7 @@ void Driver::print_start_info(const std::string& input_card)
 
     GlobalV::ofs_running << "\n READING GENERAL INFORMATION" << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_out_dir", PARAM.globalv.global_out_dir);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card",  input_card);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "global_in_card", input_card);
 }
 
 void Driver::reading(const ModuleIO::CommandLineArgs& cli)

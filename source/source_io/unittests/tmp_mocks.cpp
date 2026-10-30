@@ -1,0 +1,59 @@
+
+#include "source_cell/unitcell.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
+
+// constructor of Atom
+Atom::Atom()
+{
+}
+Atom::~Atom()
+{
+}
+
+Atom_pseudo::Atom_pseudo()
+{
+}
+Atom_pseudo::~Atom_pseudo()
+{
+}
+
+Magnetism::Magnetism()
+{
+}
+Magnetism::~Magnetism()
+{
+}
+
+pseudo::pseudo()
+{
+}
+pseudo::~pseudo()
+{
+}
+
+SepPot::SepPot()
+{
+}
+SepPot::~SepPot()
+{
+}
+
+Sep_Cell::Sep_Cell() noexcept : ntype(0), omega(0.0), tpiba2(0.0)
+{
+}
+Sep_Cell::~Sep_Cell() noexcept = default;
+
+// constructor of UnitCell
+UnitCell::UnitCell()
+{
+}
+UnitCell::~UnitCell()
+{
+}
+
+Parallel_Orbitals::Parallel_Orbitals()
+{
+}
+Parallel_Orbitals::~Parallel_Orbitals()
+{
+}

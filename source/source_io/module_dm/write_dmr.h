@@ -5,6 +5,7 @@
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_cell/unitcell.h"
 
+#include <fstream>
 #include <string>
 
 namespace ModuleIO
@@ -62,7 +63,8 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const bool append,
                const int* iat2iwt,
                const int nat,
-               const int istep);
+               const int istep,
+               std::ofstream& ofs_running);
 } // namespace ModuleIO
 
 #endif

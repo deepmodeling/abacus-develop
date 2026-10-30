@@ -2,7 +2,9 @@
 // For simplicity, only ELPA solver with MPI parallization is implementated.
 // Thus, instead of iterative solver such as Davidson, here matrix is constructed directly.
 
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_BSE_HAMILT_BSE_H
+#define ABACUS_SOURCE_LCAO_MODULE_BSE_HAMILT_BSE_H
+
 #include "bse_util.h"
 #include "hamilt_bse_solver.h"
 #include "molecular_lri.h"
@@ -134,3 +136,5 @@ private:
     std::unique_ptr<module_dm::DensityMatrix<T, T>> DM_trans = nullptr;
 };
 } // namespace BSE
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_BSE_HAMILT_BSE_H

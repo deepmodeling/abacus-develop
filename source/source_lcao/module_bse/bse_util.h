@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_MODULE_BSE_BSE_UTIL_H
+#define ABACUS_SOURCE_LCAO_MODULE_BSE_BSE_UTIL_H
+
 
 #include <ATen/core/tensor.h>
 #include "source_psi/psi.h"
@@ -94,3 +96,5 @@ container::Tensor cal_dm_trans_onebase_blas(
     const T& factor = (T)1.0);
 
 }
+
+#endif // ABACUS_SOURCE_LCAO_MODULE_BSE_BSE_UTIL_H

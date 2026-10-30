@@ -130,9 +130,13 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
 
                             }
 
+                            // pure occupations f = wg / wk; divide by the q-mesh
+                            // size nqs to apply the uniform q-point BZ weight,
+                            // and by wk[ik] to convert wg(ik) into the occupation.
+                            const double exx_weight = wg(ik, nband) * wg(iq, mband) / nqs / p_kv->wk[ik];
                             sigma(alpha, beta) -= exx_info.hybrid_alpha
                                                   * 0.25 * sigma_ab_loc
-                                                  * wg(ik, nband) * wg(iq, mband) / nqs / p_kv->wk[ik];
+                                                  * exx_weight;
                         }
                     }
                 }

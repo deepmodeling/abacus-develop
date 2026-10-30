@@ -42,6 +42,7 @@ scf_out_mul_spin4
 scf_out_mul_nupdw
 scf_out_elf
 scf_out_qo
+scf_out_hsr_spin2
 nscf_out_dos
 nscf_out_band_pband
 nscf_out_pot1
@@ -65,3 +66,7 @@ get_wf0
 get_pchg
 get_pchg_k
 get_s
+scf_bisecuo_gpu
+scf_out_chg_tau
+scf_nspin4_nsoc_hr
+scf_nspin4_soc_hr

@@ -1,6 +1,8 @@
 #ifndef FORCE_STRESS_LCAO_H
 #define FORCE_STRESS_LCAO_H
 
+#include "source_lcao/module_rt/td_info.h"
+
 #include <string>
 
 #include "edm.h"
@@ -8,7 +10,7 @@
 #include "source_base/matrix.h"
 #include "source_pw/module_pwdft/force_pw.h"
 #include "source_pw/module_pwdft/stress_func.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 #include "source_io/module_parameter/input_conv.h"
 #include "source_psi/psi.h"
 #ifdef __EXX
@@ -43,6 +45,7 @@ struct FSCalcConfig
     bool domag_z;
     int gga_grad;
     bool gamma_only_pw;
+    int imp_sol; // 2 adds the SCCS component force
 };
 
 // Force/stress component matrices assembled by getForceStress. Grouping them
@@ -69,6 +72,7 @@ struct LCAOForceParts
     ModuleBase::matrix fefield_tddft;
     ModuleBase::matrix fgate;
     ModuleBase::matrix fsol;
+    ModuleBase::matrix fpcc;
 };
 
 struct LCAOStressParts
@@ -128,8 +132,8 @@ class Force_Stress_LCAO
                         ModuleSymmetry::Symmetry* symm,
                         const Exx_Info& exx_info,
                         const FSCalcConfig& cfg,
-                        const int td_stype = 0,
-                        hamilt::Hamilt<T>* p_hamilt = nullptr);
+                        TD_info* td_info,
+                        hamilt::Hamilt<T>* p_hamilt);
 
   private:
     int nat;
@@ -151,7 +155,7 @@ class Force_Stress_LCAO
                          const bool isforce,
                          const bool isstress,
                          const FSCalcConfig& cfg,
-                         const int td_stype,
+                         TD_info* td_info,
                          hamilt::Hamilt<T>* p_hamilt,
                          LCAOForceParts& parts,
                          LCAOStressParts& sparts);

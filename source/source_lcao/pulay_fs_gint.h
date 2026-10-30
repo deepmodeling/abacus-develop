@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ABACUS_SOURCE_LCAO_PULAY_FS_GINT_H
+#define ABACUS_SOURCE_LCAO_PULAY_FS_GINT_H
+
 #include "pulay_fs.h"
 #include "source_lcao/stress_tools.h"
 #include "source_hamilt/module_xc/xc_functional.h"
@@ -7,7 +9,7 @@
 namespace PulayForceStress
 {
     template<typename TK, typename TR>
-    void cal_pulay_fs(
+    void cal_pulay_fs(const int nspin,
         ModuleBase::matrix& f,  ///< [out] force
         ModuleBase::matrix& s,  ///< [out] stress
         const module_dm::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix
@@ -17,7 +19,6 @@ namespace PulayForceStress
         const bool& isstress,
         const bool& set_dmr_gint)
     {
-        const int nspin = PARAM.inp.nspin;
         std::vector<const double*> vr_eff(nspin, nullptr);
         std::vector<const double*> vofk_eff(nspin, nullptr);
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -41,3 +42,5 @@ namespace PulayForceStress
         if (isstress) { StressTools::stress_fill(-1.0, ucell.omega, s); }
     }
 }
+
+#endif // ABACUS_SOURCE_LCAO_PULAY_FS_GINT_H

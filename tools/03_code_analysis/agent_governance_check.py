@@ -47,6 +47,18 @@ TEST_PATH_PREFIXES = ("tests/", "test/", "unit_test/", "examples/")
 TEST_NAME_PATTERNS = ("test", "tests", "unittest", "pytest", "ctest", "case")
 HETEROGENEOUS_MARKERS = ("/cuda/", "/rocm/", "/kernels/", "cuda/", "rocm/", "kernels/")
 PR_SECTION_RE = re.compile(r"^###\s+(.+?)\s*$", re.MULTILINE)
+EXCEPTION_SECTION = "Governance Exception"
+EXCEPTION_APPROVED_LABEL = "governance-exception-approved"
+EXCEPTION_FIELDS = (
+    "Rule",
+    "Reason",
+    "Scope",
+    "User or maintenance risk",
+    "Why the normal rule cannot be followed now",
+    "Follow-up cleanup plan",
+    "Requested approver",
+)
+EXCEPTION_FIELD_RE = re.compile(r"^[-*]\s*([^:]+):\s*(.*)$")
 
 
 @dataclass
@@ -247,6 +259,8 @@ GLOBAL_DEPENDENCY_RE = re.compile(r"\b(GlobalV::|GlobalC::|PARAM(?:\.|->|::|\b))
 # `#define private public` / `#define protected public`. See AGENTS.md rule 10.
 ACCESS_HACK_RE = re.compile(r"^\s*#\s*define\s+(?:private|protected)\s+public\b")
 
+# `#pragma once`. See AGENTS.md rule 15.
+PRAGMA_ONCE_RE = re.compile(r"^\s*#\s*pragma\s+once\b")
 
 
 def is_global_dependency_check_path(path: str) -> bool:
@@ -361,6 +375,29 @@ def check_access_hacks(
             ),
         )
 
+
+def check_pragma_once(
+    findings: List[Finding],
+    added_lines: Iterable[DiffLine],
+) -> None:
+    """Block new `#pragma once` in headers (AGENTS.md rule 15).
+
+    Use traditional `#ifndef`/`#define`/`#endif` include guards instead.
+    """
+    for line in added_lines:
+        if Path(line.path).suffix.lower() not in HEADER_EXTENSIONS | {".cuh"}:
+            continue
+        if PRAGMA_ONCE_RE.search(line.content):
+            add_finding(
+                findings,
+                "No #pragma once",
+                BLOCK,
+                line.path,
+                line.line,
+                "Adds `#pragma once` to a header file.",
+                "Use traditional `#ifndef`/`#define`/`#endif` include guards instead.",
+                allow_exception=False,
+            )
 
 
 def _has_default_arg_in_parens(stripped: str) -> bool:
@@ -552,71 +589,8 @@ def check_cmake_linkage(findings: List[Finding], statuses: Dict[str, str], chang
             )
 
 
-def input_parameter_changed(paths: Sequence[str], lines: Sequence[DiffLine]) -> bool:
-    parameter_paths = [
-        path
-        for path in paths
-        if path.startswith("source/source_io/module_parameter/")
-        and Path(path).suffix.lower() in {".cpp", ".h", ".hpp"}
-    ]
-    if parameter_paths:
-        sensitive = re.compile(
-            r"\b(Input_Item|add_item|default_value|description|category|availability|read_value|reset_value|check_value|type)\b"
-        )
-        return any(
-            line.path in parameter_paths
-            and not line.content.lstrip().startswith("//")
-            and sensitive.search(line.content)
-            for line in lines
-        )
-    return any(
-        line.path.startswith("source/")
-        and re.search(r"\bInput_Item\s+\w+|add_item\s*\(", line.content)
-        for line in lines
-    )
 
-
-def pr_body_allows_no_input_doc_update(body: str) -> bool:
-    lowered = body.lower()
-    needles = [
-        "input parameter documentation: not needed",
-        "input docs: not needed",
-        "no input documentation update required",
-        "无需更新 input",
-    ]
-    return any(needle in lowered for needle in needles)
-
-
-def check_input_parameter_docs(
-    findings: List[Finding],
-    changed: Sequence[str],
-    statuses: Dict[str, str],
-    lines: Sequence[DiffLine],
-    pr_body: str,
-) -> None:
-    if not input_parameter_changed(changed, lines):
-        return
-    has_yaml = "docs/parameters.yaml" in changed and not statuses.get("docs/parameters.yaml", "").startswith("D")
-    has_markdown = (
-        "docs/advanced/input_files/input-main.md" in changed
-        and not statuses.get("docs/advanced/input_files/input-main.md", "").startswith("D")
-    )
-    if has_yaml and has_markdown:
-        return
-    if pr_body and pr_body_allows_no_input_doc_update(pr_body):
-        return
-    add_finding(
-        findings,
-        "INPUT parameter documentation linkage",
-        WARN,
-        "source/source_io/module_parameter",
-        None,
-        "INPUT parameter behavior appears to change without both docs/parameters.yaml and input-main.md updates.",
-        "Regenerate docs/parameters.yaml and docs/advanced/input_files/input-main.md, or state why no INPUT documentation update is required in the PR.",
-    )
-
-
-def read_pr_body(event_path: Optional[str]) -> Optional[str]:
+def read_pull_request(event_path: Optional[str]) -> Optional[dict]:
     if not event_path:
         return None
     try:
@@ -626,10 +600,29 @@ def read_pr_body(event_path: Optional[str]) -> Optional[str]:
         return None
     if "pull_request" not in payload or not isinstance(payload["pull_request"], dict):
         return None
-    body = payload["pull_request"].get("body")
+    return payload["pull_request"]
+
+
+def read_pr_body(event_path: Optional[str]) -> Optional[str]:
+    pull_request = read_pull_request(event_path)
+    if pull_request is None:
+        return None
+    body = pull_request.get("body")
     if body is None:
         return ""
     return str(body)
+
+
+def read_pr_labels(event_path: Optional[str]) -> List[str]:
+    pull_request = read_pull_request(event_path)
+    if pull_request is None:
+        return []
+    labels = pull_request.get("labels") or []
+    return [
+        str(label.get("name", ""))
+        for label in labels
+        if isinstance(label, dict)
+    ]
 
 
 def pr_sections(body: str) -> Dict[str, str]:
@@ -789,25 +782,99 @@ def check_documentation_warning(findings: List[Finding], changed: Sequence[str],
         )
 
 
+def parse_governance_exception(body: str) -> Optional[Dict[str, str]]:
+    sections = pr_sections(body)
+    content = sections.get(EXCEPTION_SECTION)
+    if content is None:
+        return None
+    fields: Dict[str, str] = {}
+    for raw in content.splitlines():
+        match = EXCEPTION_FIELD_RE.match(raw.strip())
+        if match:
+            fields[match.group(1).strip().lower()] = match.group(2).strip()
+    return fields
+
+
+def apply_governance_exception(
+    findings: List[Finding],
+    body: Optional[str],
+    labels: Sequence[str],
+) -> None:
+    """Downgrade blocking findings covered by an approved Governance Exception.
+
+    The PR body records the exception; the maintainer-applied label is the
+    approval. Findings with allow_exception=False are never downgraded.
+    """
+    if body is None:
+        return
+    approved = EXCEPTION_APPROVED_LABEL in labels
+    fields = parse_governance_exception(body)
+    if fields is None or not any(fields.values()):
+        if approved:
+            add_finding(
+                findings,
+                "Governance exception record",
+                WARN,
+                "pull_request.body",
+                None,
+                f"PR carries the `{EXCEPTION_APPROVED_LABEL}` label but has no filled `### {EXCEPTION_SECTION}` section.",
+                "Record the exception with the template in docs/developers_guide/agent_governance.md, or remove the label.",
+            )
+        return
+    missing = [field for field in EXCEPTION_FIELDS if not fields.get(field.lower())]
+    if missing:
+        add_finding(
+            findings,
+            "Governance exception record",
+            WARN,
+            "pull_request.body",
+            None,
+            f"`### {EXCEPTION_SECTION}` section is incomplete; missing fields: " + ", ".join(missing) + ".",
+            "Fill every field of the exception template; incomplete exceptions do not downgrade blocking findings.",
+        )
+        return
+    if not approved:
+        add_finding(
+            findings,
+            "Governance exception record",
+            WARN,
+            "pull_request.body",
+            None,
+            f"Governance exception requested for: {fields['rule']}; awaiting maintainer approval.",
+            f"A maintainer approves the exception by applying the `{EXCEPTION_APPROVED_LABEL}` label.",
+        )
+        return
+    excepted_rules = fields["rule"].lower()
+    for finding in findings:
+        if finding.severity != BLOCK or not finding.allow_exception:
+            continue
+        if finding.rule.lower() not in excepted_rules:
+            continue
+        finding.severity = WARN
+        finding.reason += " Downgraded from error by the approved governance exception."
+
+
 def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     findings: List[Finding] = []
     statuses, changed = changed_paths(root, args)
     lines, removed_lines = changed_lines(root, args)
     body = read_pr_body(args.event_path)
+    labels = read_pr_labels(args.event_path)
     body_text = body or ""
 
     check_line_endings(findings, root, changed, statuses, args)
     check_global_dependencies(findings, lines, removed_lines)
     check_access_hacks(findings, lines, removed_lines)
+    check_pragma_once(findings, lines)
     check_default_parameters(findings, lines)
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)
     check_cmake_linkage(findings, statuses, changed)
-    check_input_parameter_docs(findings, changed, statuses, lines, body_text)
     check_pr_metadata(findings, body)
     check_test_evidence_warning(findings, changed, body_text)
     check_heterogeneous_test_warning(findings, changed, body_text)
     check_documentation_warning(findings, changed, body_text)
+    apply_governance_exception(findings, body, labels)
     return findings
 
 
