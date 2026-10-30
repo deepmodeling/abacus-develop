@@ -53,7 +53,7 @@ class ESolverDPTest : public ::testing::Test
         delete[] ucell.atoms;
     }
 
-    ModuleESolver::ESolver_DP* esolver;
+    ModuleESolver::ESolver_DP *esolver;
     Input_para inp;
     UnitCell ucell;
 };
@@ -163,9 +163,9 @@ TEST_F(ESolverDPTest, Postprocess)
     esolver->after_all_runners(ucell);
     GlobalV::ofs_running.close();
 
-    std::string expected_output
-        = "\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404000000235 eV\n "
-          "--------------------------------------------\n\n\n";
+    std::string expected_output =
+        "\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404000000235 eV\n "
+        "--------------------------------------------\n\n\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();

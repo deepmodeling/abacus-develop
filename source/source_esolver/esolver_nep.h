@@ -15,13 +15,13 @@ class ESolver_NEP : public ESolver
 {
   public:
 #ifdef __NEP
-    ESolver_NEP(const std::string& pot_file) : nep(pot_file)
+    ESolver_NEP(const std::string &pot_file) : nep(pot_file)
     {
         classname = "ESolver_NEP";
         nep_file = pot_file;
     }
 #else
-    ESolver_NEP(const std::string& pot_file)
+    ESolver_NEP(const std::string &pot_file)
     {
         classname = "ESolver_NEP";
         nep_file = pot_file;
@@ -34,7 +34,7 @@ class ESolver_NEP : public ESolver
      * @param inp input parameters
      * @param cell unitcell information
      */
-    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
     /**
      * @brief Run the NEP solver for a given ion/md step and unit cell
@@ -42,7 +42,7 @@ class ESolver_NEP : public ESolver
      * @param istep the current ion/md step
      * @param cell unitcell information
      */
-    void runner(BaseCell& basecell, const int istep) override;
+    void runner(BaseCell &basecell, const int istep) override;
 
     /**
      * @brief get the total energy without ion kinetic energy
@@ -57,21 +57,21 @@ class ESolver_NEP : public ESolver
      *
      * @param force the computed atomic forces
      */
-    void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell &basecell, ModuleBase::matrix &force) override;
 
     /**
      * @brief get the computed lattice virials
      *
      * @param stress the computed lattice virials
      */
-    void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell &basecell, ModuleBase::matrix &stress) override;
 
     /**
      * @brief Prints the final total energy of the NEP model to the output file
      *
      * This function prints the final total energy of the NEP model in eV to the output file along with some formatting.
      */
-    void after_all_runners(BaseCell& basecell) override;
+    void after_all_runners(BaseCell &basecell) override;
 
   private:
     /**
@@ -79,8 +79,8 @@ class ESolver_NEP : public ESolver
      *
      * @param ucell unitcell information
      */
-    void type_map(const UnitCell& ucell);
-    void initialize_type_map_(const std::vector<std::string>& type_labels);
+    void type_map(const UnitCell &ucell);
+    void initialize_type_map_(const std::vector<std::string> &type_labels);
 
     /**
      * @brief NEP related variables for ESolver_NEP class

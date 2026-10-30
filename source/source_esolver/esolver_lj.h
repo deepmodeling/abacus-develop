@@ -16,24 +16,21 @@ namespace ModuleESolver
 class ESolver_LJ : public ESolver
 {
   public:
-    ESolver_LJ()
-    {
-        classname = "ESolver_LJ";
-    }
+    ESolver_LJ() { classname = "ESolver_LJ"; }
 
-    void before_all_runners(BaseCell& cell, const Input_para& inp) override;
+    void before_all_runners(BaseCell &cell, const Input_para &inp) override;
 
-    void runner(BaseCell& cell, const int istep) override;
+    void runner(BaseCell &cell, const int istep) override;
 
     double cal_energy() override;
 
-    void cal_force(BaseCell& cell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell &cell, ModuleBase::matrix &force) override;
 
-    void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell &cell, ModuleBase::matrix &stress) override;
 
-    void after_all_runners(BaseCell& cell) override;
+    void after_all_runners(BaseCell &cell) override;
 
-    void others(BaseCell& cell, const int istep) override;
+    void others(BaseCell &cell, const int istep) override;
 
     //====================================================================
     // Test seam.
@@ -48,65 +45,50 @@ class ESolver_LJ : public ESolver
     //====================================================================
 
     /// @brief neighbour search radius derived from the largest cutoff
-    double get_search_radius() const
-    {
-        return search_radius;
-    }
+    double get_search_radius() const { return search_radius; }
     /// @brief per-type-pair cutoff radii
-    const ModuleBase::matrix& get_lj_rcut() const
-    {
-        return lj_rcut;
-    }
+    const ModuleBase::matrix &get_lj_rcut() const { return lj_rcut; }
     /// @brief per-type-pair c6 coefficients
-    const ModuleBase::matrix& get_lj_c6() const
-    {
-        return lj_c6;
-    }
+    const ModuleBase::matrix &get_lj_c6() const { return lj_c6; }
     /// @brief per-type-pair c12 coefficients
-    const ModuleBase::matrix& get_lj_c12() const
-    {
-        return lj_c12;
-    }
+    const ModuleBase::matrix &get_lj_c12() const { return lj_c12; }
     /// @brief per-type-pair energy shift at the cutoff
-    const ModuleBase::matrix& get_en_shift() const
-    {
-        return en_shift;
-    }
+    const ModuleBase::matrix &get_en_shift() const { return en_shift; }
     /// @brief computed lattice virials
-    const ModuleBase::matrix& get_lj_virial() const
-    {
-        return lj_virial;
-    }
+    const ModuleBase::matrix &get_lj_virial() const { return lj_virial; }
 
-    void rcut_search_radius_for_testing(const int& ntype, const std::vector<double>& rcut)
+    void rcut_search_radius_for_testing(const int &ntype, const std::vector<double> &rcut)
     {
         rcut_search_radius(ntype, rcut);
     }
-    void set_c6_c12_for_testing(const int& ntype,
-                                const int& rule,
-                                const std::vector<double>& epsilon,
-                                const std::vector<double>& sigma)
+    void set_c6_c12_for_testing(
+        const int &ntype,
+        const int &rule,
+        const std::vector<double> &epsilon,
+        const std::vector<double> &sigma)
     {
-        set_c6_c12(ntype, rule, epsilon, sigma);
+        set_c6_c12(
+            ntype,
+            rule,
+            epsilon,
+            sigma);
     }
-    void cal_en_shift_for_testing(const int& ntype, const bool& is_shift)
-    {
-        cal_en_shift(ntype, is_shift);
-    }
+    void cal_en_shift_for_testing(const int &ntype, const bool &is_shift) { cal_en_shift(ntype, is_shift); }
 
   private:
-    double LJ_energy(const double& d, const int& i, const int& j) const;
+    double LJ_energy(const double &d, const int &i, const int &j) const;
 
-    ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const;
+    ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double> &dr, const int &i, const int &j) const;
 
-    void rcut_search_radius(const int& ntype, const std::vector<double>& rcut);
+    void rcut_search_radius(const int &ntype, const std::vector<double> &rcut);
 
-    void set_c6_c12(const int& ntype,
-                    const int& rule,
-                    const std::vector<double>& epsilon,
-                    const std::vector<double>& sigma);
+    void set_c6_c12(
+        const int &ntype,
+        const int &rule,
+        const std::vector<double> &epsilon,
+        const std::vector<double> &sigma);
 
-    void cal_en_shift(const int& ntype, const bool& is_shift);
+    void cal_en_shift(const int &ntype, const bool &is_shift);
 
     //--------------temporary----------------------------
     double search_radius = -1.0;

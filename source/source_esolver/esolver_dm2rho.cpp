@@ -14,23 +14,19 @@
 namespace ModuleESolver
 {
 
-template <typename TK, typename TR>
-ESolver_DM2rho<TK, TR>::ESolver_DM2rho()
+template <typename TK, typename TR> ESolver_DM2rho<TK, TR>::ESolver_DM2rho()
 {
     this->classname = "ESolver_DM2rho";
     this->basisname = "LCAO";
 }
 
-template <typename TK, typename TR>
-ESolver_DM2rho<TK, TR>::~ESolver_DM2rho()
-{
-}
+template <typename TK, typename TR> ESolver_DM2rho<TK, TR>::~ESolver_DM2rho() {}
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
+void ESolver_DM2rho<TK, TR>::before_all_runners(BaseCell &basecell, const Input_para &inp)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_DM2rho", "before_all_runners");
     ModuleBase::timer::start("ESolver_DM2rho", "before_all_runners");
@@ -40,11 +36,10 @@ void ESolver_DM2rho<TK, TR>::before_all_runners(BaseCell& basecell, const Input_
     ModuleBase::timer::end("ESolver_DM2rho", "before_all_runners");
 }
 
-template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
+template <typename TK, typename TR> void ESolver_DM2rho<TK, TR>::runner(BaseCell &basecell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_DM2rho", "runner");
     ModuleBase::timer::start("ESolver_DM2rho", "runner");
@@ -55,23 +50,32 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
     std::string zipname = "output_DM0.npz";
 
     // read DM from file
-    ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_dmr_ptr(1)));
+    ModuleIO::read_mat_npz(
+        &(this->pv),
+        ucell,
+        zipname,
+        *(this->dmat.dm->get_dmr_ptr(1)));
 
     // if nspin=2, need extra reading
     if (this->inp_->nspin == 2)
     {
         zipname = "output_DM1.npz";
-        ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_dmr_ptr(2)));
+        ModuleIO::read_mat_npz(
+            &(this->pv),
+            ucell,
+            zipname,
+            *(this->dmat.dm->get_dmr_ptr(2)));
     }
 
     // it's dangerous to design psiToRho function like this, mohan note 20251024
     // this->pelec->psiToRho(*this->psi);
-    LCAO_domain::dm2rho(this->dmat.dm->get_dmr_vec(),
-                        this->inp_->nspin,
-                        &this->chr,
-                        this->inp_->nelec,
-                        ucell.omega,
-                        false);
+    LCAO_domain::dm2rho(
+        this->dmat.dm->get_dmr_vec(),
+        this->inp_->nspin,
+        &this->chr,
+        this->inp_->nelec,
+        ucell.omega,
+        false);
 
     // Write every density channel (rho[0..3] for nspin=4) so the file set
     // matches ctrl_output_fp: the init_chg=file reader reads chgs1..chgs<nspin>
@@ -90,32 +94,36 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
         fn += ".cube";
 
         // write electron density
-        const std::string desc_chg = ModuleIO::make_data_desc("charge density", "magnetization density m", is, nspin);
+        const std::string desc_chg = ModuleIO::make_data_desc(
+            "charge density",
+            "magnetization density m",
+            is,
+            nspin);
 
-        ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                      this->chr.rho[is],
-                                      is,
-                                      nspin,
-                                      istep,
-                                      fn,
-                                      this->pelec->eferm.get_efval(is),
-                                      &(ucell),
-                                      3,
-                                      1,
-                                      PARAM.globalv.two_fermi,
-                                      false,
-                                      GlobalV::ofs_running,
-                                      desc_chg);
+        ModuleIO::write_vdata_palgrid(
+            this->Pgrid,
+            this->chr.rho[is],
+            is,
+            nspin,
+            istep,
+            fn,
+            this->pelec->eferm.get_efval(is),
+            &(ucell),
+            3,
+            1,
+            PARAM.globalv.two_fermi,
+            false,
+            GlobalV::ofs_running,
+            desc_chg);
     }
 
     ModuleBase::timer::end("ESolver_DM2rho", "runner");
 }
 
-template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::after_all_runners(BaseCell& basecell)
+template <typename TK, typename TR> void ESolver_DM2rho<TK, TR>::after_all_runners(BaseCell &basecell)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_DM2rho", "after_all_runners");
     ModuleBase::timer::start("ESolver_DM2rho", "after_all_runners");

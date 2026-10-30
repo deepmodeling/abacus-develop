@@ -44,21 +44,35 @@ namespace
 class XC_First_Order_FDM : public ModuleDFPT::XC_First_Order
 {
   public:
-    XC_First_Order_FDM(const int nspin,
-                       const bool domag,
-                       const bool domag_z,
-                       const int gga_grad,
-                       const bool out_elf,
-                       const int test_charge,
-                       ModulePW::PW_Basis* rho_basis,
-                       const Charge* chg0,
-                       const UnitCell* ucell)
+    XC_First_Order_FDM(
+        const int nspin,
+        const bool domag,
+        const bool domag_z,
+        const int gga_grad,
+        const bool out_elf,
+        const int test_charge,
+        ModulePW::PW_Basis *rho_basis,
+        const Charge *chg0,
+        const UnitCell *ucell)
         : ucell_(ucell)
     {
-        fdm_ = new elecstate::PotXC_FDM(nspin, domag, domag_z, gga_grad, out_elf, test_charge, rho_basis, chg0, ucell);
+        fdm_ = new elecstate::PotXC_FDM(
+            nspin,
+            domag,
+            domag_z,
+            gga_grad,
+            out_elf,
+            test_charge,
+            rho_basis,
+            chg0,
+            ucell);
         chg1_ = new Charge();
         chg1_->set_rhopw(rho_basis);
-        chg1_->allocate(chg0->nspin, false, false, test_charge);
+        chg1_->allocate(
+            chg0->nspin,
+            false,
+            false,
+            test_charge);
         veff_1_.create(chg0->nspin, chg0->nrxx);
     }
 
@@ -68,8 +82,8 @@ class XC_First_Order_FDM : public ModuleDFPT::XC_First_Order
         delete chg1_;
     }
 
-    void apply(const std::vector<std::complex<double>>& drho_r,
-               std::vector<std::complex<double>>& dvxc_r) const override
+    void apply(
+        const std::vector<std::complex<double>> &drho_r, std::vector<std::complex<double>> &dvxc_r) const override
     {
         const int nrxx = veff_1_.nc;
         if (static_cast<int>(drho_r.size()) != nrxx)
@@ -162,10 +176,10 @@ class XC_First_Order_FDM : public ModuleDFPT::XC_First_Order
     }
 
   private:
-    elecstate::PotXC_FDM* fdm_ = nullptr;
-    Charge* chg1_ = nullptr;
+    elecstate::PotXC_FDM *fdm_ = nullptr;
+    Charge *chg1_ = nullptr;
     mutable ModuleBase::matrix veff_1_;
-    const UnitCell* ucell_ = nullptr;
+    const UnitCell *ucell_ = nullptr;
 };
 
 } // namespace
@@ -197,10 +211,10 @@ ESolver_DFPT_PW::~ESolver_DFPT_PW()
     }
 }
 
-void ESolver_DFPT_PW::before_all_runners(BaseCell& basecell, const Input_para& inp)
+void ESolver_DFPT_PW::before_all_runners(BaseCell &basecell, const Input_para &inp)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_DFPT_PW", "before_all_runners");
 
@@ -230,10 +244,10 @@ void ESolver_DFPT_PW::before_all_runners(BaseCell& basecell, const Input_para& i
     dfpt_->set_loto(inp.dfpt_loto);
 }
 
-void ESolver_DFPT_PW::runner(BaseCell& basecell, const int istep)
+void ESolver_DFPT_PW::runner(BaseCell &basecell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_DFPT_PW", "runner");
 
@@ -256,24 +270,24 @@ void ESolver_DFPT_PW::runner(BaseCell& basecell, const int istep)
     run_post_process(ucell);
 }
 
-void ESolver_DFPT_PW::after_all_runners(BaseCell& basecell)
+void ESolver_DFPT_PW::after_all_runners(BaseCell &basecell)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_DFPT_PW", "after_all_runners");
 
     ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>::after_all_runners(ucell);
 }
 
-void ESolver_DFPT_PW::run_gs(UnitCell& ucell)
+void ESolver_DFPT_PW::run_gs(UnitCell &ucell)
 {
     ModuleBase::TITLE("ESolver_DFPT_PW", "run_gs");
 
     ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>::runner(ucell, 0);
 }
 
-void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
+void ESolver_DFPT_PW::init_dfpt(UnitCell &ucell)
 {
     ModuleBase::TITLE("ESolver_DFPT_PW", "init_dfpt");
 
@@ -281,8 +295,8 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     {
         ModuleBase::WARNING_QUIT("ESolver_DFPT_PW::init_dfpt", "DFPT currently supports nspin = 1 only");
     }
-    if (this->pelec == nullptr || this->pelec->charge == nullptr || this->pelec->pot == nullptr
-        || this->stp.psi_cpu == nullptr || this->pw_rho == nullptr || this->pw_wfc == nullptr)
+    if (this->pelec == nullptr || this->pelec->charge == nullptr || this->pelec->pot == nullptr ||
+        this->stp.psi_cpu == nullptr || this->pw_rho == nullptr || this->pw_wfc == nullptr)
     {
         ModuleBase::WARNING_QUIT("ESolver_DFPT_PW::init_dfpt", "ground state is not ready");
     }
@@ -292,7 +306,7 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     }
 
     // converged effective potential on the shared rho grid (row 0: nspin = 1)
-    const ModuleBase::matrix& veff_smooth = this->pelec->pot->get_veff_smooth();
+    const ModuleBase::matrix &veff_smooth = this->pelec->pot->get_veff_smooth();
     if (veff_smooth.nc != this->pw_rho->nrxx)
     {
         ModuleBase::WARNING_QUIT("ESolver_DFPT_PW::init_dfpt", "veff_smooth is not on the rho grid");
@@ -329,7 +343,7 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     // plus the nonlinear core correction density when the pseudopotentials
     // carry one (PotXC_FDM adds chg->rho_core the same way); the first-order
     // density itself stays valence-only (a frozen core does not respond)
-    const Charge* chg0 = this->pelec->charge;
+    const Charge *chg0 = this->pelec->charge;
     const bool has_core = chg0->rho_core != nullptr;
     std::vector<double> rho0_r(this->pw_rho->nrxx, 0.0);
     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
@@ -341,35 +355,35 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     // LDA, tuned fractions) and the signed per-component combination
     // factors (e.g. BLYP_LR subtracts its short-range components)
     const std::vector<int> xc_func_id = XC_Functional::get_func_id();
-    const std::vector<std::vector<double>> xc_ext_params
-        = XC_Functional_Libxc::ext_params_for(xc_func_id,
-                                              XC_Functional::get_hybrid_alpha(),
-                                              XC_Functional::get_hse_omega());
+    const std::vector<std::vector<double>> xc_ext_params = XC_Functional_Libxc::ext_params_for(
+        xc_func_id, XC_Functional::get_hybrid_alpha(), XC_Functional::get_hse_omega());
     std::vector<double> xc_weights(xc_func_id.size(), 1.0);
     for (size_t i = 0; i < xc_func_id.size(); ++i)
     {
         xc_weights[i] = XC_Functional::get_weight(xc_func_id[i]);
     }
-    xc_adapter_ = new ModuleDFPT::XC_First_Order_Analytic(xc_func_id,
-                                                          XC_Functional::get_func_type(),
-                                                          rho0_r,
-                                                          this->pw_rho,
-                                                          xc_ext_params,
-                                                          xc_weights);
+    xc_adapter_ = new ModuleDFPT::XC_First_Order_Analytic(
+        xc_func_id,
+        XC_Functional::get_func_type(),
+        rho0_r,
+        this->pw_rho,
+        xc_ext_params,
+        xc_weights);
 #else
-    ModuleBase::WARNING("ESolver_DFPT_PW::init_dfpt",
-                        "built without libxc: the DFPT XC kernel falls back to the finite-difference "
-                        "amplitude path (LDA-only support; the GGA response at q != 0 lacks the "
-                        "i(q.f_grad)A carrier term)");
-    xc_adapter_ = new XC_First_Order_FDM(this->inp_->nspin,
-                                         PARAM.globalv.domag,
-                                         PARAM.globalv.domag_z,
-                                         this->inp_->gga_grad,
-                                         this->inp_->out_elf[0] > 0,
-                                         this->inp_->test_charge,
-                                         this->pw_rho,
-                                         this->pelec->charge,
-                                         &ucell);
+    ModuleBase::WARNING(
+        "ESolver_DFPT_PW::init_dfpt", "built without libxc: the DFPT XC kernel falls back to the finite-difference "
+                                      "amplitude path (LDA-only support; the GGA response at q != 0 lacks the "
+                                      "i(q.f_grad)A carrier term)");
+    xc_adapter_ = new XC_First_Order_FDM(
+        this->inp_->nspin,
+        PARAM.globalv.domag,
+        PARAM.globalv.domag_z,
+        this->inp_->gga_grad,
+        this->inp_->out_elf[0] > 0,
+        this->inp_->test_charge,
+        this->pw_rho,
+        this->pelec->charge,
+        &ucell);
 #endif
 
     if (getenv("DFPT_VKB") != nullptr)
@@ -384,13 +398,25 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
             gk[ig] = this->pw_wfc->getgpluskcar(ik, ig);
         }
         ModuleDFPT::DFPT_Pert pert;
-        pert.init(ucell, this->pw_rho, this->pw_wfc, this->sf);
+        pert.init(
+            ucell,
+            this->pw_rho,
+            this->pw_wfc,
+            this->sf);
         std::vector<std::vector<std::complex<double>>> vkb;
-        pert.build_vkb(0, 0, gk, vkb);
+        pert.build_vkb(
+            0,
+            0,
+            gk,
+            vkb);
         std::vector<std::vector<std::complex<double>>> vkb1;
-        pert.build_vkb(0, 1, gk, vkb1);
+        pert.build_vkb(
+            0,
+            1,
+            gk,
+            vkb1);
         const int nh = ucell.atoms[0].ncpp.nh;
-        const std::complex<double>* gsvkb = this->ppcell.get_vkb_data<double>();
+        const std::complex<double> *gsvkb = this->ppcell.get_vkb_data<double>();
         std::cout << "VKBCHK npw=" << npw << " nh=" << nh << " nkb=" << this->ppcell.nkb << std::endl;
         for (int mu = 0; mu < nh; ++mu)
         {
@@ -431,21 +457,22 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     }
 
     this->stp.sync_cpu();
-    dfpt_->init(ucell,
-                *this->stp.psi_cpu,
-                this->pw_rho,
-                this->pw_wfc,
-                &this->sf,
-                veff_r,
-                this->pelec->wg,
-                this->pelec->ekb,
-                xc_adapter_,
-                nelec_,
-                ecutwfc_,
-                dft_plus_u_ ? this->dftu_.get() : nullptr);
+    dfpt_->init(
+        ucell,
+        *this->stp.psi_cpu,
+        this->pw_rho,
+        this->pw_wfc,
+        &this->sf,
+        veff_r,
+        this->pelec->wg,
+        this->pelec->ekb,
+        xc_adapter_,
+        nelec_,
+        ecutwfc_,
+        dft_plus_u_ ? this->dftu_.get() : nullptr);
 }
 
-void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
+void ESolver_DFPT_PW::run_post_process(UnitCell &ucell)
 {
     ModuleBase::TITLE("ESolver_DFPT_PW", "run_post_process");
 
@@ -466,7 +493,7 @@ void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
             std::cout << dfpt_->format_loto_report();
         }
     }
-    const ModuleBase::matrix& eps = dfpt_->get_dielectric_tensor();
+    const ModuleBase::matrix &eps = dfpt_->get_dielectric_tensor();
     if (eps.nr == 3 && eps.nc == 3)
     {
         std::cout << " DFPT dielectric tensor (epsilon_inf):" << std::endl;
@@ -482,7 +509,7 @@ void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
     }
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
-        const ModuleBase::matrix& zstar = dfpt_->get_born_charges(iat);
+        const ModuleBase::matrix &zstar = dfpt_->get_born_charges(iat);
         if (zstar.nr != 3 || zstar.nc != 3)
         {
             continue;

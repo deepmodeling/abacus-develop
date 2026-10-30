@@ -21,14 +21,12 @@ ESolver_GetS::ESolver_GetS()
     this->basisname = "LCAO";
 }
 
-ESolver_GetS::~ESolver_GetS()
-{
-}
+ESolver_GetS::~ESolver_GetS() {}
 
-void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
+void ESolver_GetS::before_all_runners(BaseCell &basecell, const Input_para &inp)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     this->inp_ = &inp;
 
@@ -40,46 +38,48 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     const int npol = PARAM.globalv.npol;
     const bool two_fermi = PARAM.globalv.two_fermi;
     // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
-    auto atoms_info = unitcell::read_pseudo(GlobalV::ofs_running,
-                                            ucell,
-                                            this->inp_->pseudo_dir,
-                                            global_out_dir,
-                                            this->inp_->out_element_info,
-                                            this->inp_->dft_functional,
-                                            this->inp_->lspinorb,
-                                            this->inp_->pseudo_rcut,
-                                            this->inp_->soc_lambda,
-                                            this->inp_->nspin,
-                                            npol,
-                                            this->inp_->basis_type,
-                                            this->inp_->esolver_type,
-                                            this->inp_->init_wfc,
-                                            this->inp_->nbands,
-                                            two_fermi,
-                                            this->inp_->nelec_delta,
-                                            this->inp_->smearing_method,
-                                            this->inp_->ks_solver,
-                                            this->inp_->bndpar,
-                                            this->inp_->nelec,
-                                            this->inp_->nupdown);
+    auto atoms_info = unitcell::read_pseudo(
+        GlobalV::ofs_running,
+        ucell,
+        this->inp_->pseudo_dir,
+        global_out_dir,
+        this->inp_->out_element_info,
+        this->inp_->dft_functional,
+        this->inp_->lspinorb,
+        this->inp_->pseudo_rcut,
+        this->inp_->soc_lambda,
+        this->inp_->nspin,
+        npol,
+        this->inp_->basis_type,
+        this->inp_->esolver_type,
+        this->inp_->init_wfc,
+        this->inp_->nbands,
+        two_fermi,
+        this->inp_->nelec_delta,
+        this->inp_->smearing_method,
+        this->inp_->ks_solver,
+        this->inp_->bndpar,
+        this->inp_->nelec,
+        this->inp_->nupdown);
     elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
 
     // 1.2) symmetrize things
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
-        ucell.symm.analy_sys(ucell.lat,
-                             ucell.atoms,
-                             ucell.nat,
-                             ucell.ntype,
-                             ucell.iat2it,
-                             ucell.iat2ia,
-                             ucell.itia2iat,
-                             GlobalV::ofs_running,
-                             this->inp_->symmetry_prec,
-                             inp.nspin,
-                             this->inp_->calculation,
-                             cal_symm_repr);
+        ucell.symm.analy_sys(
+            ucell.lat,
+            ucell.atoms,
+            ucell.nat,
+            ucell.ntype,
+            ucell.iat2it,
+            ucell.iat2ia,
+            ucell.itia2iat,
+            GlobalV::ofs_running,
+            this->inp_->symmetry_prec,
+            inp.nspin,
+            this->inp_->calculation,
+            cal_symm_repr);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
@@ -88,20 +88,21 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
     const double kspacing[3] = {this->inp_->kspacing[0], this->inp_->kspacing[1], this->inp_->kspacing[2]};
     const double koffset[3] = {this->inp_->koffset[0], this->inp_->koffset[1], this->inp_->koffset[2]};
-    this->kv.set(ucell,
-                 ucell.symm,
-                 inp.kpoint_file,
-                 inp.nspin,
-                 ucell.G,
-                 ucell.latvec,
-                 GlobalV::ofs_running,
-                 GlobalV::ofs_warning,
-                 use_ibz,
-                 global_out_dir,
-                 gamma_only_local,
-                 kspacing,
-                 this->inp_->kmesh_type,
-                 koffset);
+    this->kv.set(
+        ucell,
+        ucell.symm,
+        inp.kpoint_file,
+        inp.nspin,
+        ucell.G,
+        ucell.latvec,
+        GlobalV::ofs_running,
+        GlobalV::ofs_warning,
+        use_ibz,
+        global_out_dir,
+        gamma_only_local,
+        kspacing,
+        this->inp_->kmesh_type,
+        koffset);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     ModuleIO::print_parameters(ucell, this->kv, inp);
@@ -111,55 +112,65 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     if (this->pelec == nullptr)
     {
         // TK stands for double and std::complex<double>?
-        this->pelec = new elecstate::ElecStateLCAO<std::complex<double>>(&(this->chr), // use which parameter?
-                                                                         &(this->kv),
-                                                                         this->kv.get_nks(),
-                                                                         this->pw_big);
+        this->pelec = new elecstate::ElecStateLCAO<std::complex<double>>(
+            &(this->chr), // use which parameter?
+            &(this->kv),
+            this->kv.get_nks(),
+            this->pw_big);
     }
 
     // 3) init LCAO basis
     // reading the localized orbitals/projectors
     // construct the interpolation tables.
-    LCAO_domain::init_basis_lcao(this->pv,
-                                 inp.onsite_radius,
-                                 inp.lcao_ecut,
-                                 inp.lcao_dk,
-                                 inp.lcao_dr,
-                                 inp.lcao_rmax,
-                                 ucell,
-                                 two_center_bundle_,
-                                 orb_);
+    LCAO_domain::init_basis_lcao(
+        this->pv,
+        inp.onsite_radius,
+        inp.lcao_ecut,
+        inp.lcao_dk,
+        inp.lcao_dr,
+        inp.lcao_rmax,
+        ucell,
+        two_center_bundle_,
+        orb_);
 
     ModuleBase::timer::end("ESolver_GetS", "before_all_runners");
 }
 
-void ESolver_GetS::runner(BaseCell& basecell, const int istep)
+void ESolver_GetS::runner(BaseCell &basecell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_GetS", "runner");
     ModuleBase::timer::start("ESolver_GetS", "runner");
 
     // (1) Find adjacent atoms for each atom.
     double search_radius = -1.0;
-    search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                            this->inp_->out_level,
-                                            orb_.get_rcutmax_Phi(),
-                                            ucell.infoNL->get_rcutmax_Beta(),
-                                            PARAM.globalv.gamma_only_local);
+    search_radius = atom_arrange::set_sr_NL(
+        GlobalV::ofs_running,
+        this->inp_->out_level,
+        orb_.get_rcutmax_Phi(),
+        ucell.infoNL->get_rcutmax_Beta(),
+        PARAM.globalv.gamma_only_local);
 
     Grid_Driver gd;
 
-    atom_arrange::search(PARAM.globalv.search_pbc,
-                         GlobalV::ofs_running,
-                         gd,
-                         ucell,
-                         search_radius,
-                         this->inp_->test_atom_input);
+    atom_arrange::search(
+        PARAM.globalv.search_pbc,
+        GlobalV::ofs_running,
+        gd,
+        ucell,
+        search_radius,
+        this->inp_->test_atom_input);
 
     Record_adj RA;
-    RA.for_2d(ucell, gd, this->pv, PARAM.globalv.gamma_only_local, PARAM.globalv.npol, orb_.cutoffs());
+    RA.for_2d(
+        ucell,
+        gd,
+        this->pv,
+        PARAM.globalv.gamma_only_local,
+        PARAM.globalv.npol,
+        orb_.cutoffs());
     if (this->inp_->out_level != "m" && !PARAM.globalv.gamma_only_local)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", this->pv.nnr);
@@ -169,69 +180,77 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
     {
         if (this->inp_->nspin == 4)
         {
-            this->p_hamilt
-                = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(ucell,
-                                                                                     gd,
-                                                                                     &this->pv,
-                                                                                     this->kv,
-                                                                                     *(two_center_bundle_.overlap_orb),
-                                                                                     orb_.cutoffs());
-            auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
-            auto* ops_ptr
-                = dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(hamilt_ptr->ops);
+            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(
+                ucell,
+                gd,
+                &this->pv,
+                this->kv,
+                *(two_center_bundle_.overlap_orb),
+                orb_.cutoffs());
+            auto *hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
+            auto *ops_ptr =
+                dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>> *>(hamilt_ptr->ops);
             ops_ptr->contributeHR();
         }
         else
         {
-            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(ucell,
-                                                                                  gd,
-                                                                                  &this->pv,
-                                                                                  this->kv,
-                                                                                  *(two_center_bundle_.overlap_orb),
-                                                                                  orb_.cutoffs());
-            auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
-            auto* ops_ptr = dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(hamilt_ptr->ops);
+            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(
+                ucell,
+                gd,
+                &this->pv,
+                this->kv,
+                *(two_center_bundle_.overlap_orb),
+                orb_.cutoffs());
+            auto *hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
+            auto *ops_ptr = dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double> *>(hamilt_ptr->ops);
             ops_ptr->contributeHR();
         }
     }
 
     const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
 
-    auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
+    auto *hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>> *>(this->p_hamilt);
     const bool binary = false;
     const double sparse_threshold = 1e-10;
     const int precision = 16;
-    ModuleIO::output_SR(pv,
-                        gd,
-                        hamilt_ptr,
-                        fn,
-                        binary,
-                        sparse_threshold,
-                        precision,
-                        PARAM.globalv.global_out_dir,
-                        PARAM.globalv.global_matrix_dir,
-                        PARAM.inp.calculation,
-                        PARAM.inp.out_app_flag,
-                        PARAM.inp.nspin,
-                        GlobalV::ofs_running);
+    ModuleIO::output_SR(
+        pv,
+        gd,
+        hamilt_ptr,
+        fn,
+        binary,
+        sparse_threshold,
+        precision,
+        PARAM.globalv.global_out_dir,
+        PARAM.globalv.global_matrix_dir,
+        PARAM.inp.calculation,
+        PARAM.inp.out_app_flag,
+        PARAM.inp.nspin,
+        GlobalV::ofs_running);
 
     if (this->inp_->out_mat_r[0])
     {
         Position_op r_matrix;
         const bool cal_force = PARAM.inp.cal_force;
         const int nlocal = PARAM.globalv.nlocal;
-        r_matrix.init(ucell, pv, orb_, cal_force, nlocal);
-        r_matrix.out_rR(ucell,
-                        gd,
-                        -1, // get_s has no ionic step; use -1 for no step suffix
-                        this->inp_->out_mat_r[1],
-                        PARAM.globalv.global_out_dir,
-                        PARAM.globalv.global_matrix_dir,
-                        PARAM.inp.calculation,
-                        PARAM.inp.out_app_flag,
-                        nlocal,
-                        PARAM.globalv.npol,
-                        GlobalV::ofs_running);
+        r_matrix.init(
+            ucell,
+            pv,
+            orb_,
+            cal_force,
+            nlocal);
+        r_matrix.out_rR(
+            ucell,
+            gd,
+            -1, // get_s has no ionic step; use -1 for no step suffix
+            this->inp_->out_mat_r[1],
+            PARAM.globalv.global_out_dir,
+            PARAM.globalv.global_matrix_dir,
+            PARAM.inp.calculation,
+            PARAM.inp.out_app_flag,
+            nlocal,
+            PARAM.globalv.npol,
+            GlobalV::ofs_running);
     }
 
     if (this->inp_->out_mat_ds[0])
@@ -247,41 +266,39 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
         mat_R_options.out_app_flag = PARAM.inp.out_app_flag;
         mat_R_options.nspin = PARAM.inp.nspin;
         //! Print out sparse matrix
-        ModuleIO::output_dSR(istep,
-                             ucell,
-                             this->pv,
-                             HS_Arrays,
-                             gd, // mohan add 2024-04-06
-                             two_center_bundle_,
-                             orb_,
-                             mat_R_options,
-                             PARAM.globalv.gamma_only_local,
-                             PARAM.globalv.npol,
-                             PARAM.globalv.nlocal,
-                             GlobalV::ofs_running);
+        ModuleIO::output_dSR(
+            istep,
+            ucell,
+            this->pv,
+            HS_Arrays,
+            gd, // mohan add 2024-04-06
+            two_center_bundle_,
+            orb_,
+            mat_R_options,
+            PARAM.globalv.gamma_only_local,
+            PARAM.globalv.npol,
+            PARAM.globalv.nlocal,
+            GlobalV::ofs_running);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");
 }
 
-void ESolver_GetS::after_all_runners(BaseCell& basecell)
+void ESolver_GetS::after_all_runners(BaseCell &basecell)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 };
-double ESolver_GetS::cal_energy()
-{
-    return 0.0;
-};
-void ESolver_GetS::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
+double ESolver_GetS::cal_energy() { return 0.0; };
+void ESolver_GetS::cal_force(BaseCell &basecell, ModuleBase::matrix &force)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 };
-void ESolver_GetS::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
+void ESolver_GetS::cal_stress(BaseCell &basecell, ModuleBase::matrix &stress)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 };
 
 } // namespace ModuleESolver

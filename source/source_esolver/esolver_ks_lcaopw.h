@@ -10,8 +10,7 @@
 namespace ModuleESolver
 {
 
-template <typename T>
-class ESolver_KS_LIP : public ESolver_KS_PW<T, base_device::DEVICE_CPU>
+template <typename T> class ESolver_KS_LIP : public ESolver_KS_PW<T, base_device::DEVICE_CPU>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -21,21 +20,29 @@ class ESolver_KS_LIP : public ESolver_KS_PW<T, base_device::DEVICE_CPU>
 
     ~ESolver_KS_LIP();
 
-    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
-    void after_all_runners(BaseCell& basecell) override;
+    void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
+    void after_all_runners(BaseCell &basecell) override;
 
-    virtual void before_scf(UnitCell& ucell, const int istep) override;
+    virtual void before_scf(UnitCell &ucell, const int istep) override;
 
   protected:
-    virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    virtual void iter_init(UnitCell &ucell, const int istep, const int iter) override;
+    virtual void iter_finish(
+        UnitCell &ucell,
+        const int istep,
+        int &iter,
+        bool &conv_esolver) override;
 
     /// All the other interfaces except this one are the same as ESolver_KS_PW.
-    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2rho_single(
+        UnitCell &ucell,
+        const int istep,
+        const int iter,
+        const double ethr) override;
 
-    virtual void allocate_hamilt(const UnitCell& ucell) override;
+    virtual void allocate_hamilt(const UnitCell &ucell) override;
 
-    psi::Psi<T, base_device::DEVICE_CPU>* psi_local = nullptr; ///< psi for all local NAOs
+    psi::Psi<T, base_device::DEVICE_CPU> *psi_local = nullptr; ///< psi for all local NAOs
 
     /// LIP-specific EXX info (lambda, ccp_type, hse_omega)
     Exx_Info_Lip info_lip_;

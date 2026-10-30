@@ -19,7 +19,7 @@ class ESolver;
  * @param [in] inp  Input parameters used to determine the ESolver type.
  * @return [out] std::string The type label consumed by init_esolver().
  */
-std::string determine_type(const Input_para& inp);
+std::string determine_type(const Input_para &inp);
 
 /**
  * @brief Determine and initialize an ESolver based on input information.
@@ -32,7 +32,7 @@ std::string determine_type(const Input_para& inp);
  * @param [in] inp  Input parameters used to select and configure the ESolver.
  * @return [out]    A pointer to the newly created ESolver object.
  */
-ESolver* init_esolver(const Input_para& inp);
+ESolver *init_esolver(const Input_para &inp);
 
 } // namespace ModuleESolver
 

@@ -25,20 +25,20 @@ class ESolver_KS : public ESolver_FP
     //! Deconstructor
     virtual ~ESolver_KS();
 
-    virtual void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    virtual void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
-    virtual void runner(BaseCell& basecell, const int istep) override;
+    virtual void runner(BaseCell &basecell, const int istep) override;
 
-    virtual void after_all_runners(BaseCell& basecell) override;
+    virtual void after_all_runners(BaseCell &basecell) override;
 
   protected:
     //! Maximum SCF iterations for the current electronic step.
     virtual int scf_iter_limit(const int istep) const;
 
     /** @brief Run SCF iterations without preparing or committing a physical endpoint. */
-    bool scf_loop(UnitCell& ucell, int istep, int iter_limit);
+    bool scf_loop(UnitCell &ucell, int istep, int iter_limit);
     /** @brief Record an accepted iteration in JSON without changing its convergence status. */
-    void record_iteration(const UnitCell& ucell, double duration);
+    void record_iteration(const UnitCell &ucell, double duration);
     /** @brief Write current band expectations when iterative band output is requested. */
     void write_iter_bands();
 
@@ -53,22 +53,34 @@ class ESolver_KS : public ESolver_FP
     virtual DensityStage density_stage(const int istep, const int iter) const;
 
     //! Something to do before SCF iterations.
-    virtual void before_scf(UnitCell& ucell, const int istep) override;
+    virtual void before_scf(UnitCell &ucell, const int istep) override;
 
     //! Something to do before hamilt2rho function in each iter loop.
-    virtual void iter_init(UnitCell& ucell, const int istep, const int iter);
+    virtual void iter_init(UnitCell &ucell, const int istep, const int iter);
 
     //! Whether KS iterations defer output until the final state is accepted.
     virtual bool defer_iter_output(const int istep) const;
 
     //! Something to do after hamilt2rho function in each iter loop.
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    virtual void iter_finish(
+        UnitCell &ucell,
+        const int istep,
+        int &iter,
+        bool &conv_esolver) override;
 
     // calculate electron density from a specific Hamiltonian with ethr
-    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr);
+    virtual void hamilt2rho_single(
+        UnitCell &ucell,
+        const int istep,
+        const int iter,
+        const double ethr);
 
     // calculate electron density from a specific Hamiltonian
-    void hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr);
+    void hamilt2rho(
+        UnitCell &ucell,
+        const int istep,
+        const int iter,
+        const double ethr);
 
     /**
      * @brief Select the diagonalization threshold and error-control policy for the current stage.
@@ -78,16 +90,16 @@ class ESolver_KS : public ESolver_FP
     virtual std::string diag_policy(const int istep) const;
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
+    virtual void after_scf(UnitCell &ucell, const int istep, const bool conv_esolver) override;
 
     //! Hamiltonian (base class pointer, actual type determined at runtime)
-    hamilt::HamiltBase* p_hamilt = nullptr;
+    hamilt::HamiltBase *p_hamilt = nullptr;
 
     //! PW for wave functions, only used in KSDFT, not in OFDFT
-    ModulePW::PW_Basis_K* pw_wfc = nullptr;
+    ModulePW::PW_Basis_K *pw_wfc = nullptr;
 
     //! Charge mixing method
-    Charge_Mixing* p_chgmix = nullptr;
+    Charge_Mixing *p_chgmix = nullptr;
 
     //! nonlocal pseudopotentials
     pseudopot_cell_vnl ppcell;

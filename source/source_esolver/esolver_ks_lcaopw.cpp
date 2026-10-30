@@ -37,14 +37,12 @@
 namespace ModuleESolver
 {
 
-template <typename T>
-ESolver_KS_LIP<T>::ESolver_KS_LIP()
+template <typename T> ESolver_KS_LIP<T>::ESolver_KS_LIP()
 {
     this->classname = "ESolver_KS_LIP";
     this->basisname = "LIP";
 }
-template <typename T>
-ESolver_KS_LIP<T>::~ESolver_KS_LIP()
+template <typename T> ESolver_KS_LIP<T>::~ESolver_KS_LIP()
 {
     //****************************************************
     // do not add any codes in this deconstructor funcion
@@ -58,34 +56,32 @@ ESolver_KS_LIP<T>::~ESolver_KS_LIP()
     }
 }
 
-template <typename T>
-void ESolver_KS_LIP<T>::allocate_hamilt(const UnitCell& ucell)
+template <typename T> void ESolver_KS_LIP<T>::allocate_hamilt(const UnitCell &ucell)
 {
-    this->p_hamilt = new hamilt::HamiltLIP<T>(this->pelec->pot,
-                                              this->pw_wfc,
-                                              &this->kv,
-                                              &this->ppcell,
-                                              &ucell
+    this->p_hamilt = new hamilt::HamiltLIP<T>(
+        this->pelec->pot,
+        this->pw_wfc,
+        &this->kv,
+        &this->ppcell,
+        &ucell
 #ifdef __EXX
-                                              ,
-                                              *this->exx_lip
+        ,
+        *this->exx_lip
 #endif
     );
 }
 
-template <typename T>
-void ESolver_KS_LIP<T>::before_scf(UnitCell& ucell, const int istep)
+template <typename T> void ESolver_KS_LIP<T>::before_scf(UnitCell &ucell, const int istep)
 {
     ESolver_KS_PW<T>::before_scf(ucell, istep);
-    auto* p_psi_init = static_cast<psi::PSIPrepare<T>*>(this->stp.p_psi_init);
+    auto *p_psi_init = static_cast<psi::PSIPrepare<T> *>(this->stp.p_psi_init);
     p_psi_init->initialize_lcao_in_pw(this->psi_local, GlobalV::ofs_running);
 }
 
-template <typename T>
-void ESolver_KS_LIP<T>::before_all_runners(BaseCell& basecell, const Input_para& inp)
+template <typename T> void ESolver_KS_LIP<T>::before_all_runners(BaseCell &basecell, const Input_para &inp)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
     ESolver_KS_PW<T>::before_all_runners(basecell, inp);
 
     // Initialize LIP-specific info_lip_ from general_exx_info_ and input
@@ -96,36 +92,36 @@ void ESolver_KS_LIP<T>::before_all_runners(BaseCell& basecell, const Input_para&
         this->info_lip_.lambda = std::stod(inp.exx_fock_lambda[0]);
     }
 
-    auto* p_psi_init = static_cast<psi::PSIPrepare<T>*>(this->stp.p_psi_init);
+    auto *p_psi_init = static_cast<psi::PSIPrepare<T> *>(this->stp.p_psi_init);
     delete this->psi_local;
-    this->psi_local = new psi::Psi<T>(this->stp.psi_cpu->get_nk(),
-                                      p_psi_init->psi_initer->nbands_start(),
-                                      this->stp.psi_cpu->get_nbasis(),
-                                      this->kv.ngk,
-                                      true);
+    this->psi_local = new psi::Psi<T>(
+        this->stp.psi_cpu->get_nk(),
+        p_psi_init->psi_initer->nbands_start(),
+        this->stp.psi_cpu->get_nbasis(),
+        this->kv.ngk,
+        true);
 #ifdef __EXX
-    if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
-        || inp.calculation == "md")
+    if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax" ||
+        inp.calculation == "md")
     {
         if (this->general_exx_info_.cal_exx)
         {
             XC_Functional::set_xc_first_loop(ucell);
-            this->exx_lip
-                = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(this->info_lip_,
-                                                             &this->kv,
-                                                             this->psi_local,
-                                                             this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
-                                                             this->pw_wfc,
-                                                             this->pw_rho,
-                                                             &ucell,
-                                                             this->pelec));
+            this->exx_lip = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(
+                this->info_lip_,
+                &this->kv,
+                this->psi_local,
+                this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
+                this->pw_wfc,
+                this->pw_rho,
+                &ucell,
+                this->pelec));
         }
     }
 #endif
 }
 
-template <typename T>
-void ESolver_KS_LIP<T>::iter_init(UnitCell& ucell, const int istep, const int iter)
+template <typename T> void ESolver_KS_LIP<T>::iter_init(UnitCell &ucell, const int istep, const int iter)
 {
     ESolver_KS_PW<T>::iter_init(ucell, istep, iter);
 #ifdef __EXX
@@ -137,7 +133,11 @@ void ESolver_KS_LIP<T>::iter_init(UnitCell& ucell, const int istep, const int it
 }
 
 template <typename T>
-void ESolver_KS_LIP<T>::hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
+void ESolver_KS_LIP<T>::hamilt2rho_single(
+    UnitCell &ucell,
+    const int istep,
+    const int iter,
+    const double ethr)
 {
     ModuleBase::TITLE("ESolver_KS_LIP", "hamilt2rho_single");
     ModuleBase::timer::start("ESolver_KS_LIP", "hamilt2rho_single");
@@ -154,11 +154,12 @@ void ESolver_KS_LIP<T>::hamilt2rho_single(UnitCell& ucell, const int istep, cons
     hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = this->inp_->pw_diag_nmax;
     bool skip_charge = this->inp_->calculation == "nscf" ? true : false;
 
-    hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc,
-                                           PARAM.globalv.use_uspp,
-                                           this->inp_->basis_type,
-                                           this->inp_->calculation,
-                                           this->inp_->nbands);
+    hsolver::HSolverLIP<T> hsolver_lip_obj(
+        this->pw_wfc,
+        PARAM.globalv.use_uspp,
+        this->inp_->basis_type,
+        this->inp_->calculation,
+        this->inp_->nbands);
 #ifdef __MPI
     const hsolver::diag_comm_info diag_comm(POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL);
 #else
@@ -166,17 +167,19 @@ void ESolver_KS_LIP<T>::hamilt2rho_single(UnitCell& ucell, const int istep, cons
 #endif
     // the solver sees the Hamiltonian only through this operator; the EXX
     // subspace hooks live in the adapter, not in the solver
-    hamilt::HamiltLIPHSOperator<T> op(dynamic_cast<hamilt::HamiltLIP<T>*>(this->p_hamilt),
-                                      this->pw_wfc,
-                                      this->general_exx_info_.cal_exx,
-                                      this->general_exx_info_.hybrid_alpha);
-    hsolver_lip_obj.solve(op,
-                          *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
-                          this->pelec,
-                          *this->psi_local,
-                          diag_comm,
-                          GlobalV::ofs_running,
-                          skip_charge);
+    hamilt::HamiltLIPHSOperator<T> op(
+        dynamic_cast<hamilt::HamiltLIP<T> *>(this->p_hamilt),
+        this->pw_wfc,
+        this->general_exx_info_.cal_exx,
+        this->general_exx_info_.hybrid_alpha);
+    hsolver_lip_obj.solve(
+        op,
+        *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
+        this->pelec,
+        *this->psi_local,
+        diag_comm,
+        GlobalV::ofs_running,
+        skip_charge);
 
     // add exx
 #ifdef __EXX
@@ -188,7 +191,11 @@ void ESolver_KS_LIP<T>::hamilt2rho_single(UnitCell& ucell, const int istep, cons
     }
 #endif
 
-    module_charge::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
+    module_charge::symmetrize_rho(
+        this->inp_->nspin,
+        this->chr,
+        this->pw_rhod,
+        ucell.symm);
 
     // deband is calculated from "output" charge density calculated
     // in sum_band
@@ -199,9 +206,17 @@ void ESolver_KS_LIP<T>::hamilt2rho_single(UnitCell& ucell, const int istep, cons
 }
 
 template <typename T>
-void ESolver_KS_LIP<T>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
+void ESolver_KS_LIP<T>::iter_finish(
+    UnitCell &ucell,
+    const int istep,
+    int &iter,
+    bool &conv_esolver)
 {
-    ESolver_KS_PW<T>::iter_finish(ucell, istep, iter, conv_esolver);
+    ESolver_KS_PW<T>::iter_finish(
+        ucell,
+        istep,
+        iter,
+        conv_esolver);
 
 #ifdef __EXX
     if (this->general_exx_info_.cal_exx && conv_esolver)
@@ -229,8 +244,8 @@ void ESolver_KS_LIP<T>::iter_finish(UnitCell& ucell, const int istep, int& iter,
         }
         // has separate_loop case
         // exx converged or get max exx steps
-        else if (this->two_level_step == this->general_exx_info_.hybrid_step
-                 || (iter == 1 && this->two_level_step != 0))
+        else if (this->two_level_step == this->general_exx_info_.hybrid_step ||
+                 (iter == 1 && this->two_level_step != 0))
         {
             conv_esolver = true;
         }
@@ -275,11 +290,10 @@ void ESolver_KS_LIP<T>::iter_finish(UnitCell& ucell, const int istep, int& iter,
 #endif
 }
 
-template <typename T>
-void ESolver_KS_LIP<T>::after_all_runners(BaseCell& basecell)
+template <typename T> void ESolver_KS_LIP<T>::after_all_runners(BaseCell &basecell)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
     ESolver_KS_PW<T>::after_all_runners(basecell);
 
 #ifdef __LCAO
@@ -292,29 +306,30 @@ void ESolver_KS_LIP<T>::after_all_runners(BaseCell& basecell)
         bool cal_exx = false;
         double hybrid_alpha = 0.0;
 #endif
-        ModuleIO::write_Vxc_LIP(this->inp_->nspin,
-                                PARAM.globalv.nlocal,
-                                GlobalV::DRANK,
-                                *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
-                                ucell,
-                                this->sf,
-                                this->solvent,
-                                *this->pw_wfc,
-                                *this->pw_rho,
-                                *this->pw_rhod,
-                                this->locpp.vloc,
-                                this->chr,
-                                this->kv,
-                                this->pelec->wg,
-                                PARAM.globalv.gamma_only_local,
-                                PARAM.globalv.global_out_dir,
-                                this->inp_->out_ndigits,
-                                this->inp_->ks_solver,
-                                cal_exx,
-                                hybrid_alpha
+        ModuleIO::write_Vxc_LIP(
+            this->inp_->nspin,
+            PARAM.globalv.nlocal,
+            GlobalV::DRANK,
+            *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
+            ucell,
+            this->sf,
+            this->solvent,
+            *this->pw_wfc,
+            *this->pw_rho,
+            *this->pw_rhod,
+            this->locpp.vloc,
+            this->chr,
+            this->kv,
+            this->pelec->wg,
+            PARAM.globalv.gamma_only_local,
+            PARAM.globalv.global_out_dir,
+            this->inp_->out_ndigits,
+            this->inp_->ks_solver,
+            cal_exx,
+            hybrid_alpha
 #ifdef __EXX
-                                ,
-                                *this->exx_lip
+            ,
+            *this->exx_lip
 #endif
         );
     }

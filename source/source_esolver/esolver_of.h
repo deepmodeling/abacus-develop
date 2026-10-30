@@ -18,28 +18,28 @@ class ESolver_OF : public ESolver_FP
     ESolver_OF();
     ~ESolver_OF();
 
-    virtual void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    virtual void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
-    virtual void runner(BaseCell& basecell, const int istep) override;
+    virtual void runner(BaseCell &basecell, const int istep) override;
 
-    virtual void after_all_runners(BaseCell& basecell) override;
+    virtual void after_all_runners(BaseCell &basecell) override;
 
     virtual double cal_energy() override;
 
-    virtual void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
+    virtual void cal_force(BaseCell &basecell, ModuleBase::matrix &force) override;
 
-    virtual void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
+    virtual void cal_stress(BaseCell &basecell, ModuleBase::matrix &stress) override;
 
   protected:
     // ======================= variables ==========================
     // ---------- the kinetic energy density functionals ----------
-    KEDF_Manager* kedf_manager_ = nullptr; // KEDF manager, which will be initialized in before_all_runners
+    KEDF_Manager *kedf_manager_ = nullptr; // KEDF manager, which will be initialized in before_all_runners
 
     // ----------------- the optimization methods ------------------
-    ModuleBase::Opt_CG* opt_cg_ = nullptr;
-    ModuleBase::Opt_TN* opt_tn_ = nullptr;
-    ModuleBase::Opt_DCsrch* opt_dcsrch_ = nullptr;
-    ModuleBase::Opt_CG* opt_cg_mag_ = nullptr; // for spin2 case, under testing
+    ModuleBase::Opt_CG *opt_cg_ = nullptr;
+    ModuleBase::Opt_TN *opt_tn_ = nullptr;
+    ModuleBase::Opt_DCsrch *opt_dcsrch_ = nullptr;
+    ModuleBase::Opt_CG *opt_cg_mag_ = nullptr; // for spin2 case, under testing
 
     // ----------------- necessary parameters from INPUT ------------
     std::string of_kinetic_ = "wt";  // Kinetic energy functional, such as TF, VW, WT
@@ -56,21 +56,21 @@ class ESolver_OF : public ESolver_FP
     // ----- parameters and arrays used in density optimization -----
     int iter_ = 0; // iteration number
     std::vector<double> pdirect_storage_;
-    std::vector<double*> pdirect_; // row views; optimization direction of phi, which is sqrt(rho)
+    std::vector<double *> pdirect_; // row views; optimization direction of phi, which is sqrt(rho)
     std::vector<std::complex<double>> precip_dir_storage_;
-    std::vector<std::complex<double>*> precip_dir_; // row views; used when of_full_pw=false.
-    std::vector<double> theta_;                     // step length
+    std::vector<std::complex<double> *> precip_dir_; // row views; used when of_full_pw=false.
+    std::vector<double> theta_;                      // step length
     std::vector<double> pdEdphi_storage_;
-    std::vector<double*> pdEdphi_; // row views; dE/dphi
+    std::vector<double *> pdEdphi_; // row views; dE/dphi
     std::vector<double> pdLdphi_storage_;
-    std::vector<double*> pdLdphi_;    // row views; dL/dphi
-    double** pphi_ = nullptr;         // pphi[i] = ppsi.get_pointer(i), which will be freed in ~Psi().
+    std::vector<double *> pdLdphi_;   // row views; dL/dphi
+    double **pphi_ = nullptr;         // pphi[i] = ppsi.get_pointer(i), which will be freed in ~Psi().
     std::string task_;                // used in line search
     int tn_spin_flag_ = -1;           // spin flag used in cal_potential, which will be called by opt_tn
     int max_dcsrch_ = 200;            // max no. of line search
     int flag_ = -1;                   // flag of TN
-    Charge* ptemp_rho_ = nullptr;     // used in line search
-    psi::Psi<double>* psi_ = nullptr; // sqrt(rho)
+    Charge *ptemp_rho_ = nullptr;     // used in line search
+    psi::Psi<double> *psi_ = nullptr; // sqrt(rho)
 
     // ----------------- used for convergence check -------------------
     double energy_llast_ = 0;
@@ -81,43 +81,57 @@ class ESolver_OF : public ESolver_FP
     double normdLdphi_ = 100.;
 
     // ==================== main process of OFDFT ======================
-    void before_opt(const int istep, UnitCell& ucell);
-    void update_potential(UnitCell& ucell);
-    void optimize(UnitCell& ucell);
+    void before_opt(const int istep, UnitCell &ucell);
+    void update_potential(UnitCell &ucell);
+    void optimize(UnitCell &ucell);
     void update_rho();
-    bool check_exit(bool& conv_esolver);
-    void after_opt(const int istep, UnitCell& ucell, const bool conv_esolver);
+    bool check_exit(bool &conv_esolver);
+    void after_opt(const int istep, UnitCell &ucell, const bool conv_esolver);
 
     // ============================ tools ===============================
     // --------------------- initialize ---------------------------------
-    void init_elecstate(UnitCell& ucell);
+    void init_elecstate(UnitCell &ucell);
     void allocate_array();
     void resize_spin_arrays();
 
     // --------------------- calculate physical qualities ---------------
-    std::function<void(double*, double*)> bound_cal_potential_;
-    void cal_potential_wrapper(double* ptemp_phi, double* rdLdphi);
-    void cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& ucell);
-    void cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta);
-    double cal_mu(double* pphi, double* pdEdphi, double nelec);
+    std::function<void(double *, double *)> bound_cal_potential_;
+    void cal_potential_wrapper(double *ptemp_phi, double *rdLdphi);
+    void cal_potential(double *ptemp_phi, double *rdLdphi, UnitCell &ucell);
+    void cal_dEdtheta(
+        double **ptemp_phi,
+        Charge *temp_rho,
+        UnitCell &ucell,
+        double *ptheta,
+        double *rdEdtheta);
+    double cal_mu(double *pphi, double *pdEdphi, double nelec);
 
     // --------------------- determine the optimization direction -------
     void adjust_direction();
-    void check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
-    void test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
+    void check_direction(double *dEdtheta, double **ptemp_phi, UnitCell &ucell);
+    void test_direction(double *dEdtheta, double **ptemp_phi, UnitCell &ucell);
 
     // --------------------- interface to blas --------------------------
-    double inner_product(double* pa, double* pb, int length, double dV = 1) const
+    double inner_product(
+        double *pa,
+        double *pb,
+        int length,
+        double dV = 1) const
     {
-        double innerproduct = BlasConnector::dot(length, pa, 1, pb, 1);
+        double innerproduct = BlasConnector::dot(
+            length,
+            pa,
+            1,
+            pb,
+            1);
         innerproduct *= dV;
         return innerproduct;
     }
 
     // ---------------------- interfaces to optimization methods --------
     void init_opt();
-    void get_direction(UnitCell& ucell);
-    void get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
+    void get_direction(UnitCell &ucell);
+    void get_step_length(double *dEdtheta, double **ptemp_phi, UnitCell &ucell);
 };
 } // namespace ModuleESolver
 

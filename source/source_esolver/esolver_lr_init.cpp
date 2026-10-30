@@ -34,9 +34,8 @@ namespace
 /// that two-way split is not even expressible ($\alpha/r+\beta\,\mathrm{erfc}(\mu r)/r$
 /// is both at once), and the write was in any case dead for the RI path: only `Exx_LRI`
 /// runs here, and it never looks at `ccp_type`.
-void warn_if_kernel_differs_from_gs(const std::string& xc_kernel,
-                                    const std::string& dft_functional,
-                                    std::ofstream& ofs_running)
+void warn_if_kernel_differs_from_gs(
+    const std::string &xc_kernel, const std::string &dft_functional, std::ofstream &ofs_running)
 {
     const bool k = LR::exx_kernel_list().count(xc_kernel) > 0;
     const bool g = LR::exx_kernel_list().count(dft_functional) > 0;
@@ -57,27 +56,26 @@ void warn_if_kernel_differs_from_gs(const std::string& xc_kernel,
 #endif
 
 #ifdef __EXX
-template <>
-void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
+template <> void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<double>> &exx_ks)
 {
     ModuleBase::TITLE("ESolver_LR<double>", "share_exx_lri");
     this->exx_lri = exx_ks->make_lr_workspace(*this->ucell_, this->kv);
 }
 template <>
 void ModuleESolver::ESolver_LR<std::complex<double>>::share_exx_lri(
-    std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
+    std::shared_ptr<Exx_LRI<std::complex<double>>> &exx_ks)
 {
     ModuleBase::TITLE("ESolver_LR<complex>", "share_exx_lri");
     this->exx_lri = exx_ks->make_lr_workspace(*this->ucell_, this->kv);
 }
 template <>
-void ModuleESolver::ESolver_LR<std::complex<double>>::share_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
+void ModuleESolver::ESolver_LR<std::complex<double>>::share_exx_lri(std::shared_ptr<Exx_LRI<double>> &exx_ks)
 {
     throw std::runtime_error(
         "ESolver_LR<std::complex<double>>::share_exx_lri: cannot share double to std::complex<double>");
 }
 template <>
-void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
+void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>> &exx_ks)
 {
     throw std::runtime_error("ESolver_LR<double>::share_exx_lri: cannot share std::complex<double> to double");
 }
@@ -86,10 +84,10 @@ void ModuleESolver::ESolver_LR<double>::share_exx_lri(std::shared_ptr<Exx_LRI<st
 using namespace LR;
 
 template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
+void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell &basecell, const Input_para &inp)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
     this->ucell_ = &ucell;
     this->inp_ = &inp;
     if (inp.esolver_type == "ks-lr")
@@ -112,8 +110,7 @@ void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, co
     }
 }
 
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::bind_ground_state_aliases_()
+template <typename T, typename TR> void ModuleESolver::ESolver_LR<T, TR>::bind_ground_state_aliases_()
 {
     if (this->ks_)
     {
@@ -145,10 +142,10 @@ void ModuleESolver::ESolver_LR<T, TR>::bind_ground_state_aliases_()
 }
 
 template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, const Input_para& inp)
+void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell &ucell, const Input_para &inp)
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(KS)");
-    ModuleESolver::ESolver_KS_LCAO<T, TR>& ks_sol = *this->ks_;
+    ModuleESolver::ESolver_KS_LCAO<T, TR> &ks_sol = *this->ks_;
     this->bind_ground_state_aliases_();
 
     if (this->inp_->lr_solver == "spectrum")
@@ -167,25 +164,27 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
 
     // KS and LR must use the same AO distribution, including its BLACS grid.
     const int ks_block_size = ks_sol.pv.get_block_size();
-    LR_Util::setup_2d_division(this->paraMat_,
-                               ks_block_size,
-                               this->nbasis,
-                               this->nbasis
+    LR_Util::setup_2d_division(
+        this->paraMat_,
+        ks_block_size,
+        this->nbasis,
+        this->nbasis
 #ifdef __MPI
-                               ,
-                               ks_sol.pv.blacs_ctxt
+        ,
+        ks_sol.pv.blacs_ctxt
 #endif
     );
     this->set_parallel_orbitals_band(this->paraMat_, this->nbands);
     if (this->inp_->cal_force)
     {
-        LR_Util::setup_2d_division(this->paraMat_all_,
-                                   ks_block_size,
-                                   this->nbasis,
-                                   this->nbasis
+        LR_Util::setup_2d_division(
+            this->paraMat_all_,
+            ks_block_size,
+            this->nbasis,
+            this->nbasis
 #ifdef __MPI
-                                   ,
-                                   ks_sol.pv.blacs_ctxt
+            ,
+            ks_sol.pv.blacs_ctxt
 #endif
         );
         this->set_parallel_orbitals_band(this->paraMat_all_, this->inp_->nbands);
@@ -195,25 +194,32 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
     this->paraMat_.atom_begin_col = ks_sol.pv.atom_begin_col;
     this->paraMat_.iat2iwt_ = ucell.get_iat2iwt();
 
-    LR_Util::setup_2d_division(this->paraC_,
-                               ks_block_size,
-                               this->nbasis,
-                               this->nbands
+    LR_Util::setup_2d_division(
+        this->paraC_,
+        ks_block_size,
+        this->nbasis,
+        this->nbands
 #ifdef __MPI
-                               ,
-                               this->paraMat_.blacs_ctxt
+        ,
+        this->paraMat_.blacs_ctxt
 #endif
     );
 
     // allocate psi_ks and eig_ks in the [nocc, nvirt] window
 #ifdef __MPI
-    this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
-                                       this->paraC_.get_col_size(),
-                                       this->paraC_.get_row_size(),
-                                       this->kv.ngk,
-                                       true));
+    this->psi_ks.reset(new psi::Psi<T>(
+        this->kv.get_nks(),
+        this->paraC_.get_col_size(),
+        this->paraC_.get_row_size(),
+        this->kv.ngk,
+        true));
 #else
-    this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(), this->nbands, this->nbasis, this->kv.ngk, true));
+    this->psi_ks.reset(new psi::Psi<T>(
+        this->kv.get_nks(),
+        this->nbands,
+        this->nbasis,
+        this->kv.ngk,
+        true));
 #endif
     this->eig_ks.create(this->kv.get_nks(), this->nbands);
     this->pelec = new elecstate::ElecStateLCAO<T>();
@@ -231,8 +237,8 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
         // derives from dft_functional alone -- so whenever the ground-state solver has one of the
         // right type its geometry tensors are already up to date. Share those tensors in a
         // separate LR electronic workspace, skipping a `cal_exx_ions` per ionic step.
-        const bool share = (ks_sol.exx_nao.exd && std::is_same<T, double>::value)
-                           || (ks_sol.exx_nao.exc && std::is_same<T, std::complex<double>>::value);
+        const bool share = (ks_sol.exx_nao.exd && std::is_same<T, double>::value) ||
+                           (ks_sol.exx_nao.exc && std::is_same<T, std::complex<double>>::value);
         warn_if_kernel_differs_from_gs(xc_kernel, dft_functional, this->ofs_running_);
         if (share)
         {
@@ -247,7 +253,11 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
             exx_info.info_opt_abfs.files_abfs = ucell.abfs_orbital_files;
             exx_info.info_opt_abfs.files_jles = ucell.jle_orbital_files;
             this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
-            this->exx_lri->init(MPI_COMM_WORLD, ucell, this->kv, ks_sol.orb_);
+            this->exx_lri->init(
+                MPI_COMM_WORLD,
+                ucell,
+                this->kv,
+                ks_sol.orb_);
             this->exx_owned_ = true; // the position-dependent `cal_exx_ions` is left to `refresh_from_ks_`
         }
     }
@@ -257,11 +267,10 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
     this->ks_initialized_ = true;
 }
 
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
+template <typename T, typename TR> void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell &ucell)
 {
     ModuleBase::TITLE("ESolver_LR", "refresh_from_ks_");
-    ModuleESolver::ESolver_KS_LCAO<T, TR>& ks_sol = *this->ks_;
+    ModuleESolver::ESolver_KS_LCAO<T, TR> &ks_sol = *this->ks_;
     // The ground-state solver owns `psi` and reuses it across ionic steps, so it cannot be stolen.
     // `eig_ks_all` / `wg_ks_all` are nspin x nbands matrices -- a few kB, copied rather than aliased
     // so that they survive the KS solver overwriting `pelec` on the next step.
@@ -278,25 +287,26 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
         this->psi_ks_all_->fix_k(ik);
         this->psi_ks->fix_k(ik);
         const int first_band = start_band + 1;
-        Cpxgemr2d(this->nbasis,
-                  this->nbands,
-                  this->psi_ks_all_->get_pointer(),
-                  1,
-                  first_band,
-                  ks_sol.pv.desc_wfc,
-                  this->psi_ks->get_pointer(),
-                  1,
-                  1,
-                  this->paraC_.desc,
-                  this->paraC_.blacs_ctxt);
+        Cpxgemr2d(
+            this->nbasis,
+            this->nbands,
+            this->psi_ks_all_->get_pointer(),
+            1,
+            first_band,
+            ks_sol.pv.desc_wfc,
+            this->psi_ks->get_pointer(),
+            1,
+            1,
+            this->paraC_.desc,
+            this->paraC_.blacs_ctxt);
 #else
         // serial: each band is `nbasis` contiguous coefficients, so the window is a plain
         // band-by-band copy (this loop used to compute the two pointers and copy nothing,
         // leaving `psi_ks` uninitialized in every non-MPI build)
         for (int ib = 0; ib < this->nbands; ++ib)
         {
-            const auto* start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
-            auto* to = &(*this->psi_ks)(ik, ib, 0);
+            const auto *start = &(*this->psi_ks_all_)(ik, start_band + ib, 0);
+            auto *to = &(*this->psi_ks)(ik, ib, 0);
             std::copy(start, start + this->nbasis, to);
         }
 #endif
@@ -309,8 +319,8 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
 
     if (nspin == 2)
     {
-        const int nupdown_now
-            = LR_Util::spin_population_difference(ks_sol.pelec->wg, this->kv.para_k.kpar, this->kv.para_k.rank_in_pool);
+        const int nupdown_now =
+            LR_Util::spin_population_difference(ks_sol.pelec->wg, this->kv.para_k.kpar, this->kv.para_k.rank_in_pool);
         if (!this->ks_initialized_)
         {
             this->nupdown = nupdown_now;
@@ -318,9 +328,10 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
         }
         else if (nupdown_now != this->nupdown)
         {
-            ModuleBase::WARNING_QUIT("ESolver_LR::refresh_from_ks_",
-                                     "the ground-state spin population changed between ionic steps, but nocc/nvirt and"
-                                     " the distributions built from them were fixed at the first step.");
+            ModuleBase::WARNING_QUIT(
+                "ESolver_LR::refresh_from_ks_",
+                "the ground-state spin population changed between ionic steps, but nocc/nvirt and"
+                " the distributions built from them were fixed at the first step.");
         }
     }
     // `gint_info_` stays owned by the KS solver: its `before_scf` rebuilds and re-publishes it
@@ -357,7 +368,7 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
 }
 
 template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Input_para& inp)
+void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell &ucell, const Input_para &inp)
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(from scratch)");
     this->bind_ground_state_aliases_();
@@ -373,38 +384,40 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
-        ucell.symm.analy_sys(ucell.lat,
-                             ucell.atoms,
-                             ucell.nat,
-                             ucell.ntype,
-                             ucell.iat2it,
-                             ucell.iat2ia,
-                             ucell.itia2iat,
-                             this->ofs_running_,
-                             this->inp_->symmetry_prec,
-                             this->inp_->nspin,
-                             this->inp_->calculation,
-                             cal_symm_repr);
+        ucell.symm.analy_sys(
+            ucell.lat,
+            ucell.atoms,
+            ucell.nat,
+            ucell.ntype,
+            ucell.iat2it,
+            ucell.iat2ia,
+            ucell.itia2iat,
+            this->ofs_running_,
+            this->inp_->symmetry_prec,
+            this->inp_->nspin,
+            this->inp_->calculation,
+            cal_symm_repr);
         ModuleBase::GlobalFunc::DONE(this->ofs_running_, "SYMMETRY");
     }
     const bool use_ibz = false;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
     const double kspacing[3] = {this->inp_->kspacing[0], this->inp_->kspacing[1], this->inp_->kspacing[2]};
     const double koffset[3] = {this->inp_->koffset[0], this->inp_->koffset[1], this->inp_->koffset[2]};
-    this->kv.set(ucell,
-                 ucell.symm,
-                 this->inp_->kpoint_file,
-                 this->inp_->nspin,
-                 ucell.G,
-                 ucell.latvec,
-                 this->ofs_running_,
-                 this->ofs_warning_,
-                 use_ibz,
-                 this->out_dir,
-                 gamma_only_local,
-                 kspacing,
-                 this->inp_->kmesh_type,
-                 koffset);
+    this->kv.set(
+        ucell,
+        ucell.symm,
+        this->inp_->kpoint_file,
+        this->inp_->nspin,
+        ucell.G,
+        ucell.latvec,
+        this->ofs_running_,
+        this->ofs_warning_,
+        use_ibz,
+        this->out_dir,
+        gamma_only_local,
+        kspacing,
+        this->inp_->kmesh_type,
+        koffset);
     ModuleBase::GlobalFunc::DONE(this->ofs_running_, "INIT K-POINTS");
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
@@ -414,16 +427,22 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     two_center_bundle_own_.build_orb(ucell.ntype, ucell.orbital_fn.data(), inp.orbital_dir);
 
     LCAO_Orbitals orb;
-    two_center_bundle_own_.to_LCAO_Orbitals(orb,
-                                            inp.lcao_ecut,
-                                            inp.lcao_dk,
-                                            inp.lcao_dr,
-                                            inp.lcao_rmax,
-                                            inp.out_element_info,
-                                            inp.cal_force);
+    two_center_bundle_own_.to_LCAO_Orbitals(
+        orb,
+        inp.lcao_ecut,
+        inp.lcao_dk,
+        inp.lcao_dr,
+        inp.lcao_rmax,
+        inp.out_element_info,
+        inp.cal_force);
     orb_cutoff_ = orb.cutoffs();
     // Standalone LR neighbor search needs projector metadata for every optical gauge.
-    LR::setup_nonlocal_info(orb, ucell, *this->inp_, this->my_rank_, this->ofs_running_);
+    LR::setup_nonlocal_info(
+        orb,
+        ucell,
+        *this->inp_,
+        this->my_rank_,
+        this->ofs_running_);
     const bool need_force_tables = this->inp_->cal_force || this->inp_->calculation == "relax";
     const bool need_velocity_tables = LR_Util::tolower(this->inp_->abs_gauge) == "velocity";
     if (need_force_tables || need_velocity_tables)
@@ -433,22 +452,31 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
 
     this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
-    LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
+    LR_Util::setup_2d_division(
+        this->paraMat_,
+        1,
+        this->nbasis,
+        this->nbasis);
     this->set_parallel_orbitals_band(this->paraMat_, this->nbands);
     if (this->inp_->cal_force)
     {
-        LR_Util::setup_2d_division(this->paraMat_all_, 1, this->nbasis, this->nbasis);
+        LR_Util::setup_2d_division(
+            this->paraMat_all_,
+            1,
+            this->nbasis,
+            this->nbasis);
         this->set_parallel_orbitals_band(this->paraMat_all_, this->inp_->nbands);
     }
 
     // read the ground state info
     // now ModuleIO::read_wfc_nao needs `Parallel_Orbitals` and can only read all the bands
     // it need improvement to read only the bands needed
-    this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
-                                       this->paraMat_.ncol_bands,
-                                       this->paraMat_.get_row_size(),
-                                       this->kv.ngk,
-                                       true));
+    this->psi_ks.reset(new psi::Psi<T>(
+        this->kv.get_nks(),
+        this->paraMat_.ncol_bands,
+        this->paraMat_.get_row_size(),
+        this->kv.ngk,
+        true));
     this->read_ks_wfc();
 
     if (nspin == 2)
@@ -463,13 +491,14 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     this->fill_z_window_(nullptr);
 #endif
 
-    LR_Util::setup_2d_division(this->paraC_,
-                               1,
-                               this->nbasis,
-                               this->nbands
+    LR_Util::setup_2d_division(
+        this->paraC_,
+        1,
+        this->nbasis,
+        this->nbands
 #ifdef __MPI
-                               ,
-                               paraMat_.blacs_ctxt
+        ,
+        paraMat_.blacs_ctxt
 #endif
     );
 
@@ -478,14 +507,15 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     this->pelec = new elecstate::ElecState();
 
     // read the ground state charge density and calculate xc kernel
-    pgrid().init(this->pw_rho->nx,
-                 this->pw_rho->ny,
-                 this->pw_rho->nz,
-                 this->pw_rho->nplane,
-                 this->pw_rho->nrxx,
-                 pw_big->nbz,
-                 pw_big->bz,
-                 GlobalV::NPROC);
+    pgrid().init(
+        this->pw_rho->nx,
+        this->pw_rho->ny,
+        this->pw_rho->nz,
+        this->pw_rho->nplane,
+        this->pw_rho->nrxx,
+        pw_big->nbz,
+        pw_big->bz,
+        GlobalV::NPROC);
     Charge chg_gs;
     if (this->inp_->ri_hartree_benchmark == "none")
     {
@@ -495,45 +525,48 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
 
     // search adjacent atoms and init Gint
     double search_radius = -1.0;
-    search_radius = atom_arrange::set_sr_NL(this->ofs_running_,
-                                            this->inp_->out_level,
-                                            orb.get_rcutmax_Phi(),
-                                            ucell.infoNL->get_rcutmax_Beta(),
-                                            PARAM.globalv.gamma_only_local);
-    atom_arrange::search(PARAM.globalv.search_pbc,
-                         this->ofs_running_,
-                         this->gd(),
-                         *this->ucell_,
-                         search_radius,
-                         this->inp_->test_atom_input);
-    gint_info_.reset(new ModuleGint::GintInfo(this->pw_big->nbx,
-                                              this->pw_big->nby,
-                                              this->pw_big->nbz,
-                                              this->pw_rho->nx,
-                                              this->pw_rho->ny,
-                                              this->pw_rho->nz,
-                                              0,
-                                              0,
-                                              this->pw_big->nbzp_start,
-                                              this->pw_big->nbx,
-                                              this->pw_big->nby,
-                                              this->pw_big->nbzp,
-                                              orb.Phi,
-                                              ucell,
-                                              this->gd(),
-                                              this->inp_->nspin,
-                                              PARAM.globalv.gamma_only_local,
-                                              PARAM.globalv.domag,
-                                              this->inp_->device == "gpu",
-                                              this->inp_->nstream));
+    search_radius = atom_arrange::set_sr_NL(
+        this->ofs_running_,
+        this->inp_->out_level,
+        orb.get_rcutmax_Phi(),
+        ucell.infoNL->get_rcutmax_Beta(),
+        PARAM.globalv.gamma_only_local);
+    atom_arrange::search(
+        PARAM.globalv.search_pbc,
+        this->ofs_running_,
+        this->gd(),
+        *this->ucell_,
+        search_radius,
+        this->inp_->test_atom_input);
+    gint_info_.reset(new ModuleGint::GintInfo(
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbz,
+        this->pw_rho->nx,
+        this->pw_rho->ny,
+        this->pw_rho->nz,
+        0,
+        0,
+        this->pw_big->nbzp_start,
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbzp,
+        orb.Phi,
+        ucell,
+        this->gd(),
+        this->inp_->nspin,
+        PARAM.globalv.gamma_only_local,
+        PARAM.globalv.domag,
+        this->inp_->device == "gpu",
+        this->inp_->nstream));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs
     // when:
     // 1. EXX xc_kernel
     // 2. cal_force with ground state with EXX functional
 #ifdef __EXX
-    if (((exx_kernel_list().count(xc_kernel)) && this->inp_->lr_solver != "spectrum")
-        || (this->inp_->cal_force && gs_is_hybrid(this->inp_->dft_functional)))
+    if (((exx_kernel_list().count(xc_kernel)) && this->inp_->lr_solver != "spectrum") ||
+        (this->inp_->cal_force && gs_is_hybrid(this->inp_->dft_functional)))
     {
         warn_if_kernel_differs_from_gs(xc_kernel, LR_Util::tolower(this->inp_->dft_functional), this->ofs_running_);
         // `input_conv` already filled `info_ri.coulomb_param` from INPUT.
@@ -543,7 +576,11 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
         exx_info.info_opt_abfs.files_abfs = ucell.abfs_orbital_files;
         exx_info.info_opt_abfs.files_jles = ucell.jle_orbital_files;
         this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
-        this->exx_lri->init(MPI_COMM_WORLD, ucell, this->kv, orb);
+        this->exx_lri->init(
+            MPI_COMM_WORLD,
+            ucell,
+            this->kv,
+            orb);
         this->exx_lri->cal_exx_ions(ucell, this->inp_->out_ri_cv);
     }
     // else

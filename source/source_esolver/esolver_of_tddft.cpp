@@ -22,15 +22,12 @@ ESolver_OF_TDDFT::ESolver_OF_TDDFT()
     this->evolve_ofdft = new Evolve_OFDFT();
 }
 
-ESolver_OF_TDDFT::~ESolver_OF_TDDFT()
-{
-    delete this->evolve_ofdft;
-}
+ESolver_OF_TDDFT::~ESolver_OF_TDDFT() { delete this->evolve_ofdft; }
 
-void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
+void ESolver_OF_TDDFT::runner(BaseCell &basecell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::timer::start("ESolver_OF_TDDFT", "runner");
     // get Ewald energy, initial rho and phi if necessary
@@ -72,7 +69,11 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
 
             this->iter_++;
 
-            ESolver_FP::iter_finish(ucell, istep, this->iter_, conv_esolver);
+            ESolver_FP::iter_finish(
+                ucell,
+                istep,
+                this->iter_,
+                conv_esolver);
         }
 
 #ifdef _OPENMP
@@ -102,7 +103,12 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
     }
     else
     {
-        this->evolve_ofdft->propagate_psi_RK4(this->pelec, this->chr, ucell, this->phi_td, this->pw_rho);
+        this->evolve_ofdft->propagate_psi_RK4(
+            this->pelec,
+            this->chr,
+            ucell,
+            this->phi_td,
+            this->pw_rho);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif

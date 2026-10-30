@@ -25,51 +25,51 @@
 #endif
 namespace LR
 {
-template <typename T>
-struct GradientInputs;
+template <typename T> struct GradientInputs;
 }
 namespace ModuleESolver
 {
 struct LRRuntime
 {
-    std::ofstream& running_log;
-    std::ofstream& warning_log;
+    std::ofstream &running_log;
+    std::ofstream &warning_log;
     int rank;
 };
 
 /// Excited State Solver: Linear Response TDDFT (Tamm Dancoff Approximation)
-template <typename T, typename TR = double>
-class ESolver_LR : public ModuleESolver::ESolver_FP
+template <typename T, typename TR = double> class ESolver_LR : public ModuleESolver::ESolver_FP
 {
   public:
-    ESolver_LR(const Input_para& inp, const std::string& in_dir, const std::string& out_dir, const LRRuntime& runtime);
-    ~ESolver_LR()
-    {
-    }
+    ESolver_LR(
+        const Input_para &inp,
+        const std::string &in_dir,
+        const std::string &out_dir,
+        const LRRuntime &runtime);
+    ~ESolver_LR() {}
 
     /// input: input, call, basis(LCAO), psi(ground state), elecstate
     // initialize sth. independent of the ground state
-    virtual void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
-    virtual void runner(BaseCell& basecell, int istep) override;
-    virtual void after_all_runners(BaseCell& basecell) override;
+    virtual void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
+    virtual void runner(BaseCell &basecell, int istep) override;
+    virtual void after_all_runners(BaseCell &basecell) override;
 
     /// Total energy of the excited state being relaxed: E_gs + Omega. Zero outside a
     /// relaxation, where nothing consumes it and the old behaviour is kept.
     virtual double cal_energy() override;
     /// Force on the atoms in the relaxed excited state, F = -d(E_gs + Omega)/dR (Ry/Bohr).
-    virtual void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
+    virtual void cal_force(BaseCell &basecell, ModuleBase::matrix &force) override;
     /// Not implemented: there is no excited-state stress. `cell-relax` is rejected at input.
-    virtual void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
+    virtual void cal_stress(BaseCell &basecell, ModuleBase::matrix &stress) override;
 
   protected:
     const std::string in_dir;
     const std::string out_dir;
-    const UnitCell* ucell_ = nullptr;
+    const UnitCell *ucell_ = nullptr;
     std::vector<double> orb_cutoff_;
 
     /// cached aliases, read once here instead of at every log/print call site below
-    std::ofstream& ofs_running_;
-    std::ofstream& ofs_warning_;
+    std::ofstream &ofs_running_;
+    std::ofstream &ofs_warning_;
     const int my_rank_;
 
     /// @brief the ground-state solver, kept alive across ionic steps (esolver_type = "ks-lr").
@@ -83,32 +83,17 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     // object's own members below, which `initialize_from_unitcell_` fills from file.
     Grid_Driver gd_own_;                    ///< only used when `ks_` is null
     TwoCenterBundle two_center_bundle_own_; ///< only used when `ks_` is null
-    Grid_Driver* gd_ptr_ = nullptr;
-    const TwoCenterBundle* tcb_ptr_ = nullptr;
-    Parallel_Grid* pgrid_ptr_ = nullptr;
-    Structure_Factor* sf_ptr_ = nullptr;
-    pseudopot_cell_vl* locpp_ptr_ = nullptr;
+    Grid_Driver *gd_ptr_ = nullptr;
+    const TwoCenterBundle *tcb_ptr_ = nullptr;
+    Parallel_Grid *pgrid_ptr_ = nullptr;
+    Structure_Factor *sf_ptr_ = nullptr;
+    pseudopot_cell_vl *locpp_ptr_ = nullptr;
 
-    Grid_Driver& gd() const
-    {
-        return *this->gd_ptr_;
-    }
-    const TwoCenterBundle& tcb() const
-    {
-        return *this->tcb_ptr_;
-    }
-    Parallel_Grid& pgrid() const
-    {
-        return *this->pgrid_ptr_;
-    }
-    Structure_Factor& sfac() const
-    {
-        return *this->sf_ptr_;
-    }
-    pseudopot_cell_vl& vloc() const
-    {
-        return *this->locpp_ptr_;
-    }
+    Grid_Driver &gd() const { return *this->gd_ptr_; }
+    const TwoCenterBundle &tcb() const { return *this->tcb_ptr_; }
+    Parallel_Grid &pgrid() const { return *this->pgrid_ptr_; }
+    Structure_Factor &sfac() const { return *this->sf_ptr_; }
+    pseudopot_cell_vl &vloc() const { return *this->locpp_ptr_; }
     /// bind the aliases above; `ks_` must already be set (or null for the `lr` path)
     void bind_ground_state_aliases_();
 
@@ -124,7 +109,7 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// @brief all KS orbitals. On the `ks-lr` path this aliases the ground-state solver's
     /// `psi` (nk x nbands x nbasis -- far too big to copy every ionic step, and only read
     /// here); on the `lr` path it points at `psi_ks_all_own_`, filled from file.
-    psi::Psi<T>* psi_ks_all_ = nullptr;
+    psi::Psi<T> *psi_ks_all_ = nullptr;
     std::unique_ptr<psi::Psi<T>> psi_ks_all_own_;
 
     /// @brief ground state bands, read from the file, or moved from ESolver_FP::pelec.ekb
@@ -167,11 +152,11 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     bool openshell = false;
     std::string xc_kernel;
 
-    void initialize_from_unitcell_(UnitCell& ucell, const Input_para& inp);
+    void initialize_from_unitcell_(UnitCell &ucell, const Input_para &inp);
     /// one-time setup from the ground-state solver; ends by calling `refresh_from_ks_`
-    void initialize_from_ks_(UnitCell& ucell, const Input_para& inp);
+    void initialize_from_ks_(UnitCell &ucell, const Input_para &inp);
     /// re-read everything that depends on the atomic positions, once per ionic step
-    void refresh_from_ks_(UnitCell& ucell);
+    void refresh_from_ks_(UnitCell &ucell);
     bool ks_initialized_ = false; ///< whether `initialize_from_ks_` has already run
     bool exx_owned_ = false;      ///< `exx_lri` was built here (so its Cs/Vs are ours to refresh)
 
@@ -200,7 +185,7 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// Match the old subspace to current energy groups and refresh the single/group references.
     /// `ofs` receives the note when the followed root changes index, and the warning when
     /// no current root resembles the previous one.
-    void follow_target_state_(std::ofstream& ofs);
+    void follow_target_state_(std::ofstream &ofs);
 
     /// index of the relaxed state inside `pelec->ekb`
     int target_ekb_offset_() const
@@ -236,7 +221,7 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     int nloc_per_state_z_ = 0;
     /// (re)build the Z window from `psi_ks_all_` / `eig_ks_all`. `desc_src` describes the
     /// source wavefunction's 2D layout; unused (and may be null) in a serial build.
-    void fill_z_window_(const int* desc_src);
+    void fill_z_window_(const int *desc_src);
     /// Widen `nst` X blocks starting at `istate_begin` from the X window into the Z window,
     /// zero-filling the virtual rows X does not have.
     ct::Tensor pad_X_to_z_(const int ispin, const int istate_begin, const int nst) const;
@@ -254,9 +239,9 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// @brief read in the ground state wave function, band energy and occupation
     virtual void read_ks_wfc();
     /// @brief  read in the ground state charge density
-    void read_ks_chg(Charge& chg);
+    void read_ks_chg(Charge &chg);
 
-    virtual void init_pot(const Charge& chg_gs);
+    virtual void init_pot(const Charge &chg_gs);
 
     /// @brief check the legality of the input parameters
     /// @brief set nocc, nvirt, nbasis, npairs and nstates
@@ -265,12 +250,12 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     void reset_dim_spin2();
 
     /// setup Parallel_Orbitals info. beyond Parallel_2D
-    void set_parallel_orbitals_band(Parallel_Orbitals& p, const int nbands_in);
+    void set_parallel_orbitals_band(Parallel_Orbitals &p, const int nbands_in);
 
     ///========================== for gradient calculation =========================
-    void init_pot_groundstate(const Charge& chg_gs);
+    void init_pot_groundstate(const Charge &chg_gs);
     /// Solve the Z-vector equation for `nst` independent blocks of `Xz`.
-    ct::Tensor solve_zvector_eqation(const int ispin, const int nst, const ct::Tensor& Xz);
+    ct::Tensor solve_zvector_eqation(const int ispin, const int nst, const ct::Tensor &Xz);
     /// Excited-state gradients d(Omega)/dR, one matrix per state solved. `istate_only >= 0`
     /// restricts it to that one state: geometry relaxation follows a single state, and the
     /// Z-vector solve dominates the cost. -1 does all `nstates`.
@@ -290,14 +275,14 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     ///
     /// @param omega        excitation energy of each block (Ry); its size sets the block count
     /// @param label_begin  state index the first block is reported under (labels only)
-    std::vector<ModuleBase::matrix> cal_force_Xz(const int ispin,
-                                                 const ct::Tensor& Xz,
-                                                 const std::vector<double>& omega,
-                                                 const int label_begin);
+    std::vector<ModuleBase::matrix> cal_force_Xz(
+        const int ispin,
+        const ct::Tensor &Xz,
+        const std::vector<double> &omega,
+        const int label_begin);
     /// open-shell counterpart of `cal_force_Xz`
-    std::vector<ModuleBase::matrix> cal_force_openshell_Xz(const ct::Tensor& Xz,
-                                                           const std::vector<double>& omega,
-                                                           const int label_begin);
+    std::vector<ModuleBase::matrix> cal_force_openshell_Xz(
+        const ct::Tensor &Xz, const std::vector<double> &omega, const int label_begin);
     /// @brief The linear vibronic coupling (LVC) data of one degenerate multiplet.
     ///
     /// $H(\delta R)=\Omega_0\mathbb{1}+\sum_{A\alpha}\delta R_{A\alpha}G^{(A\alpha)}$ is the
@@ -313,10 +298,7 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
         double omega_spread = 0.0; ///< max - min over the members (Ry); 0 if exact
         /// G[k][l], symmetric, each a (nat, 3) force matrix -- i.e. the 3N matrices of d x d
         std::vector<std::vector<ModuleBase::matrix>> g;
-        int dim() const
-        {
-            return static_cast<int>(states.size());
-        }
+        int dim() const { return static_cast<int>(states.size()); }
         /// $\operatorname{Tr}G/d$: the one smooth, basis-independent 3N vector field the
         /// multiplet has. Following it preserves the symmetric configuration.
         ModuleBase::matrix average_force() const;
@@ -336,7 +318,7 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     double target_omega_() const;
     /// The LR half of the force for the current geometry, following whichever surface
     /// `lr_degen_mode` selects. `ofs` receives the note when that is not a single state.
-    ModuleBase::matrix cal_lr_force_relax_(std::ofstream& ofs);
+    ModuleBase::matrix cal_lr_force_relax_(std::ofstream &ofs);
     /// @brief The force of the steepest-descending branch of the target multiplet, i.e.
     ///        `lr_degen_mode = jt`.
     ///
@@ -346,16 +328,16 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// the ordinary single-state path takes over, so the mode is self-limiting.
     ///
     /// @param diag  the multiplet's per-state forces, already computed
-    ModuleBase::matrix cal_jt_force_(const std::vector<ModuleBase::matrix>& diag, std::ofstream& ofs);
+    ModuleBase::matrix cal_jt_force_(const std::vector<ModuleBase::matrix> &diag, std::ofstream &ofs);
     LR::GradientInputs<T> gradient_inputs_() const;
     /// Widen a multiplet's eigenvectors into the Z window, one block each. Members need not be
     /// contiguous, so they are padded one at a time.
-    ct::Tensor pad_group_to_z_(const int ispin, const std::vector<int>& group) const;
+    ct::Tensor pad_group_to_z_(const int ispin, const std::vector<int> &group) const;
     /// @brief Per-state gradients of every state, plus the gradient matrix of each degenerate
     ///        multiplet when `lr_degen_thr` asks for it. The single-point entry point.
     ///
     /// Fills `multiplet_lvc_`.
-    void cal_force_and_grad_matrix_(const int ispin, std::ofstream& ofs);
+    void cal_force_and_grad_matrix_(const int ispin, std::ofstream &ofs);
     /// @brief The gradient matrix of one degenerate multiplet,
     ///        $G^{(A\alpha)}_{kl}=\langle X_k|\partial A/\partial R_{A\alpha}|X_l\rangle$.
     ///
@@ -370,10 +352,11 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     /// @param diag   their per-state gradients, i.e. $G_{kk}$, already computed by `cal_force`
     /// @param ofs    log stream the matrix and the precondition diagnostics are written to
     /// @return  G[k][l], symmetric, each entry a (nat, 3) force matrix
-    std::vector<std::vector<ModuleBase::matrix>> cal_grad_matrix_degenerate(const int ispin,
-                                                                            const std::vector<int>& group,
-                                                                            const std::vector<ModuleBase::matrix>& diag,
-                                                                            std::ofstream& ofs);
+    std::vector<std::vector<ModuleBase::matrix>> cal_grad_matrix_degenerate(
+        const int ispin,
+        const std::vector<int> &group,
+        const std::vector<ModuleBase::matrix> &diag,
+        std::ofstream &ofs);
     void test_force();                               // test: reproduce the force of ground state
     module_dm::DensityMatrix<T, double> cal_dm_gs(); ///< ground-state density matrix
 
@@ -382,8 +365,8 @@ class ESolver_LR : public ModuleESolver::ESolver_FP
     std::shared_ptr<Exx_LRI<T>> exx_lri = nullptr;
     /// share the ground-state solver's Exx_LRI. It is shared, not stolen: the KS solver
     /// keeps using it on the next ionic step.
-    void share_exx_lri(std::shared_ptr<Exx_LRI<double>>&);
-    void share_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>&);
+    void share_exx_lri(std::shared_ptr<Exx_LRI<double>> &);
+    void share_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>> &);
     Exx_Info exx_info;
 #endif
 };

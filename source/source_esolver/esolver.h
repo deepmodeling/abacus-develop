@@ -12,10 +12,7 @@ namespace ModuleESolver
 class ESolver
 {
   public:
-    ESolver()
-    {
-        classname = "ESolver";
-    }
+    ESolver() { classname = "ESolver"; }
 
     virtual ~ESolver()
     {
@@ -25,28 +22,26 @@ class ESolver
     }
 
     //! initialize the energy solver by using input parameters and cell modules
-    virtual void before_all_runners(BaseCell& cell, const Input_para& inp) = 0;
+    virtual void before_all_runners(BaseCell &cell, const Input_para &inp) = 0;
 
     //! run energy solver
-    virtual void runner(BaseCell& cell, const int istep) = 0;
+    virtual void runner(BaseCell &cell, const int istep) = 0;
 
     //! perform post processing calculations
-    virtual void after_all_runners(BaseCell& cell) = 0;
+    virtual void after_all_runners(BaseCell &cell) = 0;
 
     //! deal with exx and other calculation than scf/md/relax/cell-relax:
     //! such as nscf, get_wf and get_pchg
-    virtual void others(BaseCell&, const int)
-    {
-    }
+    virtual void others(BaseCell &, const int) {}
 
     //! calculate total energy of a given system
     virtual double cal_energy() = 0;
 
     //! calcualte forces for the atoms in the given cell
-    virtual void cal_force(BaseCell& cell, ModuleBase::matrix& force) = 0;
+    virtual void cal_force(BaseCell &cell, ModuleBase::matrix &force) = 0;
 
     //! calcualte stress of given cell
-    virtual void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) = 0;
+    virtual void cal_stress(BaseCell &cell, ModuleBase::matrix &stress) = 0;
 
     bool conv_esolver = true; // whether esolver is converged
 
@@ -54,7 +49,7 @@ class ESolver
 
   protected:
     /// Bound in before_all_runners; members use inp_->xxx instead of PARAM.inp.xxx
-    const Input_para* inp_ = nullptr;
+    const Input_para *inp_ = nullptr;
 };
 
 } // namespace ModuleESolver

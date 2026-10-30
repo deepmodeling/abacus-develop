@@ -22,12 +22,10 @@
 namespace ModuleESolver
 {
 //! Forward declaration for the linear-response solver.
-template <typename T, typename TR>
-class ESolver_LR;
+template <typename T, typename TR> class ESolver_LR;
 
 //! Kohn-Sham energy solver using the LCAO basis.
-template <typename TK, typename TR>
-class ESolver_KS_LCAO : public ESolver_KS
+template <typename TK, typename TR> class ESolver_KS_LCAO : public ESolver_KS
 {
   public:
     //! Initialize the solver identity and DFT+U storage.
@@ -36,50 +34,55 @@ class ESolver_KS_LCAO : public ESolver_KS
     ~ESolver_KS_LCAO();
 
     //! Initialize the LCAO basis, electronic state, and potentials before all steps.
-    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
     //! Return the electronic total energy in Ry.
     double cal_energy() override;
 
     //! Calculate the requested forces and stress, caching the stress for cal_stress().
-    void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell &basecell, ModuleBase::matrix &force) override;
 
     //! Return the cached stress, calling cal_force() first when needed.
-    void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell &basecell, ModuleBase::matrix &stress) override;
 
     //! Perform final LCAO output and postprocessing after all steps.
-    void after_all_runners(BaseCell& basecell) override;
+    void after_all_runners(BaseCell &basecell) override;
 
   protected:
     //! Optional solver-owned RT state passed to LCAO consumers.
-    virtual TD_info* get_td_info() const
-    {
-        return nullptr;
-    }
+    virtual TD_info *get_td_info() const { return nullptr; }
 
     //! Prepare an ionic step using istep for both initialization and initial-state output.
-    virtual void before_scf(UnitCell& ucell, const int istep) override;
+    virtual void before_scf(UnitCell &ucell, const int istep) override;
 
     //! Prepare an ionic step with a separate index for initial charge and potential output.
-    void before_scf(UnitCell& ucell, const int istep, const int output_step);
+    void before_scf(UnitCell &ucell, const int istep, const int output_step);
 
     //! Prepare charge mixing and Hamiltonian updates for an SCF iteration.
-    virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
+    virtual void iter_init(UnitCell &ucell, const int istep, const int iter) override;
 
     //! Solve the Hamiltonian and update the charge density and energy terms.
-    virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2rho_single(
+        UnitCell &ucell,
+        const int istep,
+        const int iter,
+        const double ethr) override;
 
     //! Finish an SCF iteration with energy corrections, mixing, convergence checks, and output.
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    virtual void iter_finish(
+        UnitCell &ucell,
+        const int istep,
+        int &iter,
+        bool &conv_esolver) override;
 
     //! Write the SCF results and release adjacency records when forces and stress are not requested.
-    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
+    virtual void after_scf(UnitCell &ucell, const int istep, const bool conv_esolver) override;
 
     //! Run specialized LCAO calculations outside the standard SCF workflow.
-    virtual void others(BaseCell& basecell, const int istep) override;
+    virtual void others(BaseCell &basecell, const int istep) override;
 
     //! Electronic wave functions (moved from base class)
-    psi::Psi<TK>* psi = nullptr;
+    psi::Psi<TK> *psi = nullptr;
 
     //! Store information about adjacent atoms for the distributed matrix layout.
     Record_adj RA;

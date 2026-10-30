@@ -6,30 +6,33 @@
 namespace ModuleESolver
 {
 // used in deepks, run target and base xc functional simultaneously
-template <typename TK, typename TR>
-class ESolver_DoubleXC : public ESolver_KS_LCAO<TK, TR>
+template <typename TK, typename TR> class ESolver_DoubleXC : public ESolver_KS_LCAO<TK, TR>
 {
   public:
     ESolver_DoubleXC();
     ~ESolver_DoubleXC();
 
-    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
-    void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell &basecell, ModuleBase::matrix &force) override;
 
   protected:
-    void before_scf(UnitCell& ucell, const int istep) override;
+    void before_scf(UnitCell &ucell, const int istep) override;
 
-    void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    void iter_finish(
+        UnitCell &ucell,
+        const int istep,
+        int &iter,
+        bool &conv_esolver) override;
 
     //! Hamiltonian
-    hamilt::Hamilt<TK>* p_hamilt_base = nullptr;
+    hamilt::Hamilt<TK> *p_hamilt_base = nullptr;
 
     //! Electronic wavefunctions
-    psi::Psi<TK>* psi_base = nullptr;
+    psi::Psi<TK> *psi_base = nullptr;
 
     //! Electronic states
-    elecstate::ElecState* pelec_base = nullptr;
+    elecstate::ElecState *pelec_base = nullptr;
 
     //! Density Matrix, mohan add 2025-11-03
     module_dm::Setup_DM<TK> dmat_base;

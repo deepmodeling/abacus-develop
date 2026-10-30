@@ -30,11 +30,10 @@
 namespace ModuleESolver
 {
 
-template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
+template <typename TK, typename TR> void ESolver_KS_LCAO<TK, TR>::others(BaseCell &basecell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unitcell, __FUNCTION__);
-    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    UnitCell &ucell = static_cast<UnitCell &>(basecell);
 
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
     ModuleBase::timer::start("ESolver_KS_LCAO", "others");
@@ -46,13 +45,14 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     if (cal_type == "test_memory")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing memory");
-        Cal_Test::test_memory(ucell.nat,
-                              ucell.ntype,
-                              ucell.GGT,
-                              this->pw_rho,
-                              this->pw_wfc,
-                              this->p_chgmix->get_mixing_mode(),
-                              this->p_chgmix->get_mixing_ndim());
+        Cal_Test::test_memory(
+            ucell.nat,
+            ucell.ntype,
+            ucell.GGT,
+            this->pw_rho,
+            this->pw_wfc,
+            this->p_chgmix->get_mixing_mode(),
+            this->p_chgmix->get_mixing_ndim());
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing memory");
         return;
     }
@@ -61,13 +61,14 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         // test_search_neighbor();
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing neighbour");
         double search_radius = this->inp_->search_radius;
-        atom_arrange::search(PARAM.globalv.search_pbc,
-                             GlobalV::ofs_running,
-                             this->gd,
-                             ucell,
-                             search_radius,
-                             this->inp_->test_atom_input,
-                             true);
+        atom_arrange::search(
+            PARAM.globalv.search_pbc,
+            GlobalV::ofs_running,
+            this->gd,
+            ucell,
+            search_radius,
+            this->inp_->test_atom_input,
+            true);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing neighbour");
         return;
     }
@@ -78,46 +79,55 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
 
     // 1. prepare HS matrices, prepare grid integral
     // (1) Find adjacent atoms for each atom.
-    double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                   this->inp_->out_level,
-                                                   orb_.get_rcutmax_Phi(),
-                                                   ucell.infoNL->get_rcutmax_Beta(),
-                                                   gamma_only_local);
+    double search_radius = atom_arrange::set_sr_NL(
+        GlobalV::ofs_running,
+        this->inp_->out_level,
+        orb_.get_rcutmax_Phi(),
+        ucell.infoNL->get_rcutmax_Beta(),
+        gamma_only_local);
 
-    atom_arrange::search(PARAM.globalv.search_pbc,
-                         GlobalV::ofs_running,
-                         this->gd,
-                         ucell,
-                         search_radius,
-                         this->inp_->test_atom_input);
+    atom_arrange::search(
+        PARAM.globalv.search_pbc,
+        GlobalV::ofs_running,
+        this->gd,
+        ucell,
+        search_radius,
+        this->inp_->test_atom_input);
 
     // (3) Periodic condition search for each grid.
-    gint_info_.reset(new ModuleGint::GintInfo(this->pw_big->nbx,
-                                              this->pw_big->nby,
-                                              this->pw_big->nbz,
-                                              this->pw_rho->nx,
-                                              this->pw_rho->ny,
-                                              this->pw_rho->nz,
-                                              0,
-                                              0,
-                                              this->pw_big->nbzp_start,
-                                              this->pw_big->nbx,
-                                              this->pw_big->nby,
-                                              this->pw_big->nbzp,
-                                              orb_.Phi,
-                                              ucell,
-                                              this->gd,
-                                              this->inp_->nspin,
-                                              gamma_only_local,
-                                              PARAM.globalv.domag,
-                                              this->inp_->device == "gpu",
-                                              this->inp_->nstream));
+    gint_info_.reset(new ModuleGint::GintInfo(
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbz,
+        this->pw_rho->nx,
+        this->pw_rho->ny,
+        this->pw_rho->nz,
+        0,
+        0,
+        this->pw_big->nbzp_start,
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbzp,
+        orb_.Phi,
+        ucell,
+        this->gd,
+        this->inp_->nspin,
+        gamma_only_local,
+        PARAM.globalv.domag,
+        this->inp_->device == "gpu",
+        this->inp_->nstream));
     ModuleGint::Gint::set_gint_info(gint_info_.get());
 
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    this->RA.for_2d(ucell, this->gd, this->pv, gamma_only_local, PARAM.globalv.npol, orb_.cutoffs());
+    this->RA.for_2d(
+        ucell,
+        this->gd,
+        this->pv,
+        gamma_only_local,
+        PARAM.globalv.npol,
+        orb_.cutoffs());
     if (this->inp_->out_level != "m" && !gamma_only_local)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", this->pv.nnr);
@@ -142,46 +152,54 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     if (this->p_hamilt == nullptr)
     {
         const bool load_exx_flag = !GlobalC::restart.info_load.restart_exx && GlobalC::restart.info_load.load_H;
-        this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(ucell,
-                                                        this->gd,
-                                                        &this->pv,
-                                                        this->pelec->pot,
-                                                        this->kv,
-                                                        two_center_bundle_,
-                                                        orb_,
-                                                        this->dmat.dm,
-                                                        this->dftu_.get(),
-                                                        this->deepks,
-                                                        istep,
-                                                        this->exx_nao,
-                                                        this->exx_info_,
-                                                        *this->inp_,
-                                                        load_exx_flag,
-                                                        this->get_td_info());
+        this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
+            ucell,
+            this->gd,
+            &this->pv,
+            this->pelec->pot,
+            this->kv,
+            two_center_bundle_,
+            orb_,
+            this->dmat.dm,
+            this->dftu_.get(),
+            this->deepks,
+            istep,
+            this->exx_nao,
+            this->exx_info_,
+            *this->inp_,
+            load_exx_flag,
+            this->get_td_info());
     }
 
     // for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
-    this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), *this->inp_);
+    this->deepks.build_overlap(
+        ucell,
+        orb_,
+        pv,
+        gd,
+        *(two_center_bundle_.overlap_orb_alpha),
+        *this->inp_);
 
     if (this->inp_->sc_mag_switch)
     {
-        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
-        sc.init_sc(this->inp_->sc_thr,
-                   this->inp_->nsc,
-                   this->inp_->nsc_min,
-                   this->inp_->alpha_trial,
-                   this->inp_->sccut,
-                   this->inp_->sc_drop_thr,
-                   ucell,
-                   this->inp_->sc_direction_only,
-                   &(this->pv),
-                   this->inp_->nspin,
-                   this->kv,
-                   this->p_hamilt,
-                   this->psi,
-                   this->dmat.dm,
-                   this->pelec);
+        spinconstrain::SpinConstrain<TK> &sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        sc.init_sc(
+            this->inp_->sc_thr,
+            this->inp_->nsc,
+            this->inp_->nsc_min,
+            this->inp_->alpha_trial,
+            this->inp_->sccut,
+            this->inp_->sc_drop_thr,
+            ucell,
+            this->inp_->sc_direction_only,
+            &(this->pv),
+            this->inp_->nspin,
+            this->kv,
+            this->p_hamilt,
+            this->psi,
+            this->dmat.dm,
+            this->pelec);
     }
 
     //=========================================================
@@ -191,14 +209,15 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     unitcell::cal_ux(ucell, this->inp_->nspin);
 
     // pelec should be initialized before these calculations
-    elecstate::init_scf(ucell,
-                        this->Pgrid,
-                        this->sf.strucFac,
-                        this->locpp.numeric,
-                        istep,
-                        global_out_dir,
-                        *this->inp_,
-                        this->pelec);
+    elecstate::init_scf(
+        ucell,
+        this->Pgrid,
+        this->sf.strucFac,
+        this->locpp.numeric,
+        istep,
+        global_out_dir,
+        *this->inp_,
+        this->pelec);
 
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
@@ -207,20 +226,26 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         Get_pchg_lcao get_pchg(*this->psi, this->pv, this->inp_->nspin);
         if (gamma_only_local)
         {
-            get_pchg
-                .begin_gamma(ucell, this->Pgrid, this->gd, this->inp_->out_pchg, global_out_dir, GlobalV::ofs_running);
+            get_pchg.begin_gamma(
+                ucell,
+                this->Pgrid,
+                this->gd,
+                this->inp_->out_pchg,
+                global_out_dir,
+                GlobalV::ofs_running);
         }
         else
         {
-            get_pchg.begin_k(*this->pw_rhod,
-                             ucell,
-                             this->Pgrid,
-                             this->gd,
-                             this->kv,
-                             this->inp_->out_pchg,
-                             this->inp_->if_separate_k,
-                             global_out_dir,
-                             GlobalV::ofs_running);
+            get_pchg.begin_k(
+                *this->pw_rhod,
+                ucell,
+                this->Pgrid,
+                this->gd,
+                this->kv,
+                this->inp_->out_pchg,
+                this->inp_->if_separate_k,
+                global_out_dir,
+                GlobalV::ofs_running);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
     }
@@ -230,22 +255,24 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         Get_wf_lcao get_wf(*this->psi, this->pv, this->inp_->nspin);
         if (gamma_only_local)
         {
-            get_wf.begin_gamma(ucell,
-                               this->Pgrid,
-                               this->inp_->out_wfc_norm,
-                               this->inp_->out_wfc_re_im,
-                               global_out_dir,
-                               GlobalV::ofs_running);
+            get_wf.begin_gamma(
+                ucell,
+                this->Pgrid,
+                this->inp_->out_wfc_norm,
+                this->inp_->out_wfc_re_im,
+                global_out_dir,
+                GlobalV::ofs_running);
         }
         else
         {
-            get_wf.begin_k(ucell,
-                           this->Pgrid,
-                           this->kv,
-                           this->inp_->out_wfc_norm,
-                           this->inp_->out_wfc_re_im,
-                           global_out_dir,
-                           GlobalV::ofs_running);
+            get_wf.begin_k(
+                ucell,
+                this->Pgrid,
+                this->kv,
+                this->inp_->out_wfc_norm,
+                this->inp_->out_wfc_re_im,
+                global_out_dir,
+                GlobalV::ofs_running);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting wave function");
     }

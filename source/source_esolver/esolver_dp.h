@@ -17,13 +17,13 @@ class ESolver_DP : public ESolver
 {
   public:
 #ifdef __DPMD
-    ESolver_DP(const std::string& pot_file) : dp(pot_file)
+    ESolver_DP(const std::string &pot_file) : dp(pot_file)
     {
         classname = "ESolver_DP";
         dp_file = pot_file;
     }
 #else
-    ESolver_DP(const std::string& pot_file)
+    ESolver_DP(const std::string &pot_file)
     {
         classname = "ESolver_DP";
         dp_file = pot_file;
@@ -36,7 +36,7 @@ class ESolver_DP : public ESolver
      * @param inp input parameters
      * @param cell unitcell information
      */
-    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
     /**
      * @brief Run the DP solver for a given ion/md step and unit cell
@@ -44,7 +44,7 @@ class ESolver_DP : public ESolver
      * @param istep the current ion/md step
      * @param cell unitcell information
      */
-    void runner(BaseCell& basecell, const int istep) override;
+    void runner(BaseCell &basecell, const int istep) override;
 
     /**
      * @brief get the total energy without ion kinetic energy
@@ -59,21 +59,21 @@ class ESolver_DP : public ESolver
      *
      * @param force the computed atomic forces
      */
-    void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell &basecell, ModuleBase::matrix &force) override;
 
     /**
      * @brief get the computed lattice virials
      *
      * @param stress the computed lattice virials
      */
-    void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell &basecell, ModuleBase::matrix &stress) override;
 
     /**
      * @brief Prints the final total energy of the DP model to the output file
      *
      * This function prints the final total energy of the DP model in eV to the output file along with some formatting.
      */
-    void after_all_runners(BaseCell& basecell) override;
+    void after_all_runners(BaseCell &basecell) override;
 
     //====================================================================
     // Test seam.
@@ -86,25 +86,13 @@ class ESolver_DP : public ESolver
     //====================================================================
 
     /// @brief atom type index corresponding to the DP model
-    std::vector<int>& get_atype()
-    {
-        return atype;
-    }
+    std::vector<int> &get_atype() { return atype; }
     /// @brief computed potential energy
-    double& get_dp_potential()
-    {
-        return dp_potential;
-    }
+    double &get_dp_potential() { return dp_potential; }
     /// @brief computed atomic forces
-    ModuleBase::matrix& get_dp_force()
-    {
-        return dp_force;
-    }
+    ModuleBase::matrix &get_dp_force() { return dp_force; }
     /// @brief computed lattice virials
-    ModuleBase::matrix& get_dp_virial()
-    {
-        return dp_virial;
-    }
+    ModuleBase::matrix &get_dp_virial() { return dp_virial; }
 
   private:
     /**
@@ -112,8 +100,8 @@ class ESolver_DP : public ESolver
      *
      * @param ucell unitcell information
      */
-    void type_map(const UnitCell& ucell);
-    void initialize_type_map_(const std::vector<std::string>& type_labels);
+    void type_map(const UnitCell &ucell);
+    void initialize_type_map_(const std::vector<std::string> &type_labels);
 
     /**
      * @brief DeePMD related variables for ESolver_DP class

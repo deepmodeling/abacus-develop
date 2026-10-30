@@ -37,27 +37,28 @@ class ESolver_FP : public ESolver
     virtual ~ESolver_FP();
 
     //! Initialize of the first-principels energy solver
-    virtual void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    virtual void before_all_runners(BaseCell &basecell, const Input_para &inp) override;
 
-    virtual void after_all_runners(BaseCell& basecell) override;
+    virtual void after_all_runners(BaseCell &basecell) override;
 
   protected:
-    virtual void before_scf(UnitCell& ucell, const int istep);
+    virtual void before_scf(UnitCell &ucell, const int istep);
 
-    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver);
+    virtual void after_scf(UnitCell &ucell, const int istep, const bool conv_esolver);
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver);
+    virtual void iter_finish(
+        UnitCell &ucell,
+        const int istep,
+        int &iter,
+        bool &conv_esolver);
 
-    const vdw::VdwResult* get_vdw_result() const
-    {
-        return this->vdw_result_.get();
-    }
+    const vdw::VdwResult *get_vdw_result() const { return this->vdw_result_.get(); }
 
     //! vdW correction evaluated once for the current ionic configuration.
     std::unique_ptr<const vdw::VdwResult> vdw_result_;
 
     //! These pointers will be deleted in the free_pointers() function every ion step.
-    elecstate::ElecState* pelec = nullptr; ///< Electronic states
+    elecstate::ElecState *pelec = nullptr; ///< Electronic states
 
     //! K points in Brillouin zone
     K_Vectors kv;
@@ -70,9 +71,9 @@ class ESolver_FP : public ESolver
     //!          dense grid for for uspp, used for ultrasoft augmented charge density.
     //!          charge density and potential are defined on dense grids,
     //!          but effective potential needs to be interpolated on smooth grids in order to compute Veff|psi>
-    ModulePW::PW_Basis* pw_rho = nullptr;
-    ModulePW::PW_Basis* pw_rhod = nullptr;    //! dense grid for USPP
-    ModulePW::PW_Basis_Big* pw_big = nullptr; ///< [temp] pw_basis_big class
+    ModulePW::PW_Basis *pw_rho = nullptr;
+    ModulePW::PW_Basis *pw_rhod = nullptr;    //! dense grid for USPP
+    ModulePW::PW_Basis_Big *pw_big = nullptr; ///< [temp] pw_basis_big class
 
     //! parallel for rho grid
     Parallel_Grid Pgrid;

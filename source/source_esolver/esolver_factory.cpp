@@ -32,7 +32,7 @@
 namespace ModuleESolver
 {
 
-std::string determine_type(const Input_para& inp)
+std::string determine_type(const Input_para &inp)
 {
     std::string esolver_type = "none";
     if (inp.basis_type == "pw")
@@ -122,7 +122,7 @@ std::string determine_type(const Input_para& inp)
 
     auto device_info = inp.device;
 
-    for (char& c: device_info)
+    for (char &c : device_info)
     {
         if (std::islower(c))
         {
@@ -138,7 +138,7 @@ std::string determine_type(const Input_para& inp)
 }
 
 // Some API to operate E_Solver
-ESolver* init_esolver(const Input_para& inp)
+ESolver *init_esolver(const Input_para &inp)
 {
     // determine type of esolver based on INPUT information
     const std::string esolver_type = determine_type(inp);
@@ -326,17 +326,25 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "lr_lcao")
     {
-        const std::string& in_dir = PARAM.globalv.global_readin_dir;
-        const std::string& out_dir = PARAM.globalv.global_out_dir;
+        const std::string &in_dir = PARAM.globalv.global_readin_dir;
+        const std::string &out_dir = PARAM.globalv.global_out_dir;
         if (inp.xc_kernel != "bse")
         {
             if (gamma_only)
             {
-                return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir, lr_runtime);
+                return new ModuleESolver::ESolver_LR<double, double>(
+                    inp,
+                    in_dir,
+                    out_dir,
+                    lr_runtime);
             }
             else
             {
-                return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
+                return new ModuleESolver::ESolver_LR<std::complex<double>, double>(
+                    inp,
+                    in_dir,
+                    out_dir,
+                    lr_runtime);
             }
         }
         else
@@ -344,11 +352,19 @@ ESolver* init_esolver(const Input_para& inp)
 #ifdef __EXX
             if (gamma_only)
             {
-                return new ModuleESolver::ESolver_BSE<double, double>(inp, in_dir, out_dir, lr_runtime);
+                return new ModuleESolver::ESolver_BSE<double, double>(
+                    inp,
+                    in_dir,
+                    out_dir,
+                    lr_runtime);
             }
             else
             {
-                return new ModuleESolver::ESolver_BSE<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
+                return new ModuleESolver::ESolver_BSE<std::complex<double>, double>(
+                    inp,
+                    in_dir,
+                    out_dir,
+                    lr_runtime);
             }
 #else
             ModuleBase::WARNING_QUIT("ESolver", "BSE requires ENABLE_LIBRI=ON");
@@ -358,15 +374,23 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {
-        const std::string& in_dir = PARAM.globalv.global_readin_dir;
-        const std::string& out_dir = PARAM.globalv.global_out_dir;
+        const std::string &in_dir = PARAM.globalv.global_readin_dir;
+        const std::string &out_dir = PARAM.globalv.global_out_dir;
         if (gamma_only)
         {
-            return new ModuleESolver::ESolver_LR<double, double>(inp, in_dir, out_dir, lr_runtime);
+            return new ModuleESolver::ESolver_LR<double, double>(
+                inp,
+                in_dir,
+                out_dir,
+                lr_runtime);
         }
         else
         {
-            return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp, in_dir, out_dir, lr_runtime);
+            return new ModuleESolver::ESolver_LR<std::complex<double>, double>(
+                inp,
+                in_dir,
+                out_dir,
+                lr_runtime);
         }
     }
 #endif
@@ -390,8 +414,9 @@ ESolver* init_esolver(const Input_para& inp)
     {
         return new ESolver_NEP(PARAM.mdp.pot_file);
     }
-    throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
-                                + " line " + std::to_string(__LINE__));
+    throw std::invalid_argument(
+        "esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__) + " line " +
+        std::to_string(__LINE__));
 }
 
 } // namespace ModuleESolver

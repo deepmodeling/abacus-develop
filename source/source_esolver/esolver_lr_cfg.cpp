@@ -13,8 +13,7 @@
 
 using namespace LR;
 
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::set_dimension()
+template <typename T, typename TR> void ModuleESolver::ESolver_LR<T, TR>::set_dimension()
 {
     this->nspin = this->inp_->nspin;
     this->nstates = this->inp_->lr_nstates;
@@ -25,22 +24,22 @@ void ModuleESolver::ESolver_LR<T, TR>::set_dimension()
         this->nupdown = static_cast<int>(std::lround(this->inp_->nupdown));
         if (this->ks_)
         {
-            this->nupdown = LR_Util::spin_population_difference(this->ks_->pelec->wg,
-                                                                this->kv.para_k.kpar,
-                                                                this->kv.para_k.rank_in_pool);
+            this->nupdown = LR_Util::spin_population_difference(
+                this->ks_->pelec->wg, this->kv.para_k.kpar, this->kv.para_k.rank_in_pool);
         }
         else if (this->inp_->ri_hartree_benchmark != "aims" && this->inp_->ri_hartree_benchmark != "aims-librpa")
         {
             std::vector<double> populations;
             const bool gamma_only = std::is_same<T, double>::value;
             const bool binary = this->inp_->init_wfc_file_format == "binary";
-            if (!ModuleIO::read_wfc_nao_spin_populations(this->in_dir,
-                                                         this->kv.get_nkstot(),
-                                                         this->nspin,
-                                                         gamma_only,
-                                                         binary,
-                                                         this->my_rank_,
-                                                         populations))
+            if (!ModuleIO::read_wfc_nao_spin_populations(
+                    this->in_dir,
+                    this->kv.get_nkstot(),
+                    this->nspin,
+                    gamma_only,
+                    binary,
+                    this->my_rank_,
+                    populations))
             {
                 ModuleBase::WARNING_QUIT("ESolver_LR", "read complete KS occupations failed");
             }
@@ -49,8 +48,8 @@ void ModuleESolver::ESolver_LR<T, TR>::set_dimension()
     }
     // read_pseudo/ParamUpdater has already resolved nelec and applied nelec_delta.
     this->nocc_max = LR_Util::cal_nocc(this->inp_->nelec, this->nspin, this->nupdown);
-    if (this->inp_->ri_hartree_benchmark == "aims"
-        || this->inp_->ri_hartree_benchmark == "aims-librpa" && !this->inp_->aims_nbasis.empty())
+    if (this->inp_->ri_hartree_benchmark == "aims" ||
+        this->inp_->ri_hartree_benchmark == "aims-librpa" && !this->inp_->aims_nbasis.empty())
     {
         // Total basis size: sum the per-atom basis size times the atom count for each type.
         int total_nbasis = 0;
@@ -64,13 +63,18 @@ void ModuleESolver::ESolver_LR<T, TR>::set_dimension()
         {
             this->ucell_->atoms[it].nw = this->inp_->aims_nbasis[it];
         }
-        const_cast<UnitCell*>(this->ucell_)->set_iat2iwt(1); // update iat2iwt for aims_nbasis 25-05-23
+        const_cast<UnitCell *>(this->ucell_)->set_iat2iwt(1); // update iat2iwt for aims_nbasis 25-05-23
 
         int nbands_file = 0;
         int nk_file = 0;
         int nspin_file = 0;
         int nocc_file = 0;
-        LR_IO::parse_band_out_file(this->inp_->rpa_outdir, nbands_file, nk_file, nspin_file, nocc_file);
+        LR_IO::parse_band_out_file(
+            this->inp_->rpa_outdir,
+            nbands_file,
+            nk_file,
+            nspin_file,
+            nocc_file);
         std::cout << "nocc from band_out: " << nocc_file << std::endl;
         ks_nbands = nbands_file;
         this->nocc_max = nocc_file;
@@ -115,8 +119,7 @@ void ModuleESolver::ESolver_LR<T, TR>::set_dimension()
     this->ofs_running_ << "number of excited states to be solved: " << this->nstates << std::endl;
 }
 
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::reset_dim_spin2()
+template <typename T, typename TR> void ModuleESolver::ESolver_LR<T, TR>::reset_dim_spin2()
 {
     if (nspin != 2)
     {
@@ -132,12 +135,12 @@ void ModuleESolver::ESolver_LR<T, TR>::reset_dim_spin2()
         npairs = {nocc[0] * nvirt[0], nocc[1] * nvirt[1]};
         std::cout << "** Solve the spin-up and spin-down states separately for open-shell system. **" << std::endl;
     }
-    for (int is: {0, 1})
+    for (int is : {0, 1})
     {
         if (npairs[is] <= 0)
         {
-            throw std::invalid_argument(std::string("ESolver_LR: npairs (nocc*nvirt) <= 0 for spin")
-                                        + std::string(is == 0 ? "up" : "down"));
+            throw std::invalid_argument(
+                std::string("ESolver_LR: npairs (nocc*nvirt) <= 0 for spin") + std::string(is == 0 ? "up" : "down"));
         }
     }
 
@@ -155,36 +158,37 @@ void ModuleESolver::ESolver_LR<T, TR>::reset_dim_spin2()
     }
 }
 
-template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
+template <typename T, typename TR> void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge &chg_gs)
 {
     this->pot.assign(nspin, nullptr);
     if (this->inp_->ri_hartree_benchmark != "none")
     {
         return;
     }
-    const auto& grid = pgrid();
-    auto prepared = LR::prepare_lr_potentials(*this->inp_,
-                                              xc_kernel,
-                                              *this->pw_rho,
-                                              *this->ucell_,
-                                              chg_gs,
-                                              grid,
-                                              nspin,
-                                              openshell);
+    const auto &grid = pgrid();
+    auto prepared = LR::prepare_lr_potentials(
+        *this->inp_,
+        xc_kernel,
+        *this->pw_rho,
+        *this->ucell_,
+        chg_gs,
+        grid,
+        nspin,
+        openshell);
     this->pot = std::move(prepared.pot);
     if (this->inp_->cal_force)
     {
         this->init_pot_groundstate(chg_gs);
-        this->pot_hxc_gs = LR::prepare_gs_potential(*this->inp_,
-                                                    xc_kernel,
-                                                    *this->pw_rho,
-                                                    *this->ucell_,
-                                                    chg_gs,
-                                                    grid,
-                                                    nspin,
-                                                    openshell,
-                                                    prepared);
+        this->pot_hxc_gs = LR::prepare_gs_potential(
+            *this->inp_,
+            xc_kernel,
+            *this->pw_rho,
+            *this->ucell_,
+            chg_gs,
+            grid,
+            nspin,
+            openshell,
+            prepared);
     }
 }
 
