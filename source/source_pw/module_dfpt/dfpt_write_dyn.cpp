@@ -1,85 +1,136 @@
 // ============================================================
 // QE-compatible dynamical-matrix file writer (dfpt_out_dyn).
 //
-// One file per q point (OUT.<suffix>/dyn.q<i>), format aligned with
-// QE ph.x's fildyn output so files can be diffed element-by-element
-// against QE references or post-processed by external tools. The
-// matrix content is the raw (pre-ASR, pre-LO-TO) UNREDUCED force
-// constants Phi = D * sqrt(m_a * m_b) in Ry/bohr^2, matching the
-// QE dyn convention. At Gamma with compute_q0, the Born effective
-// charges and dielectric tensor are appended.
+// One file per q point (OUT.<suffix>/dyn.q<i>), format matching
+// Quantum ESPRESSO ph.x's fildyn output (io_dyn_mat_old.f90):
+// the file can be parsed by QE's read routine or diffed against
+// QE references. The matrix content is the raw (pre-ASR, pre-LO-TO)
+// unreduced force constants Phi = D * sqrt(m_a * m_b) in Ry/bohr^2.
+// At Gamma with dfpt_compute_q0, the Born effective charges and
+// dielectric tensor are appended in the QE convention.
+//
+// Only the ionode (rank 0 of Comm_Comm) writes, to avoid competing
+// truncations of the same relative path on a shared directory.
 // ============================================================
+
+#include "dfpt_write_dyn.h"
 
 #include "dfpt_pw_data.h"
 
 #include "source_cell/unitcell.h"
 #include "source_base/constants.h"
+#include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+
 #include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <string>
-#include <vector>
 
 namespace ModuleDFPT
 {
+
+/// QE's mass unit conversion: dyn files store mass[amu] * AMU_RY,
+/// where AMU_RY = AMU_AU / 2 = 911.444... (constants.f90 line 57)
+static double amu_to_ry(double mass_amu)
+{
+    return mass_amu * 911.4442431045;
+}
 
 void DFPT_Write_Dyn(const UnitCell& ucell,
                     const DFPT_PW_Data& data,
                     int nq,
                     const std::string& out_dir)
 {
-    ModuleBase::TITLE("DFPT_Write_Dyn", "write");
-    ModuleBase::timer::start("DFPT_Write_Dyn", "write");
+    ModuleBase::TITLE("ModuleDFPT", "DFPT_Write_Dyn");
+    ModuleBase::timer::start("ModuleDFPT", "DFPT_Write_Dyn");
+
+    // only the output rank writes, to avoid competing truncations
+    if (GlobalV::MY_RANK != 0)
+    {
+        ModuleBase::timer::end("ModuleDFPT", "DFPT_Write_Dyn");
+        return;
+    }
+
     const int nat = ucell.nat;
     const int nat3 = 3 * nat;
+    const double alat = ucell.lat0; // bohr, the QE celldm(1)
+
     for (int q = 0; q < nq; ++q)
     {
-        if (!data.has_dynmat_raw(q) && data.get_dynmat(q).nr != nat3)
+        const ModuleBase::ComplexMatrix dm = data.has_dynmat_raw(q) ? data.get_dynmat_raw(q)
+                                                                    : data.get_dynmat(q);
+        if (dm.nr != nat3)
         {
             continue;
         }
+
         std::ostringstream name;
         name << out_dir << "/dyn.q" << q;
         std::ofstream out(name.str());
         if (!out.is_open())
         {
+            // report the full failed path and skip this q
+            std::ostringstream err;
+            err << "DFPT_Write_Dyn: cannot open " << name.str() << " for writing; skipping q="
+                << q;
+            ModuleBase::WARNING("DFPT_Write_Dyn", err.str());
             continue;
         }
         out << std::setprecision(10) << std::scientific;
-        const ModuleBase::ComplexMatrix dm = data.has_dynmat_raw(q) ? data.get_dynmat_raw(q)
-                                                                    : data.get_dynmat(q);
-        const ModuleBase::Vector3<double> q_frac = data.get_qvec(q);
 
-        // QE dyn header
+        // --- QE dyn header (io_dyn_mat_old.f90 write_dyn_mat_header) ---
         out << "Dynamical matrix file\n";
-        out << "    " << nq << "    " << nat << "\n";
-        // unit-cell lattice vectors (QE writes them in alat units; here
-        // we use lat0-scaled bohr, which for cubic cells matches alat)
-        const double inv_scale = 1.0 / ucell.lat0;
-        const ModuleBase::Matrix3 lv = ucell.latvec * inv_scale;
-        out << " " << lv.e11 << " " << lv.e12 << " " << lv.e13 << "\n";
-        out << " " << lv.e21 << " " << lv.e22 << " " << lv.e23 << "\n";
-        out << " " << lv.e31 << " " << lv.e32 << " " << lv.e33 << "\n";
-        // species and masses
+        out << "ABACUS DFPT output                                                          \n";
+        // ntyp nat ibrav celldm(1..6); ibrav=0 (basis vectors follow)
+        out << "  " << ucell.ntype << "  " << nat << "  0  " << alat
+            << "  0.0000000  0.0000000  0.0000000  0.0000000  0.0000000" << "\n";
+        out << "Basis vectors\n";
+        // lattice vectors in alat units (latvec is already in lat0 units)
+        for (int i = 0; i < 3; ++i)
+        {
+            const ModuleBase::Matrix3 lv = ucell.latvec / alat;
+            out << "  ";
+            if (i == 0)
+            {
+                out << lv.e11 << "  " << lv.e12 << "  " << lv.e13;
+            }
+            else if (i == 1)
+            {
+                out << lv.e21 << "  " << lv.e22 << "  " << lv.e23;
+            }
+            else
+            {
+                out << lv.e31 << "  " << lv.e32 << "  " << lv.e33;
+            }
+            out << "\n";
+        }
+        // species: index, label, mass * AMU_RY (io_dyn_mat_old.f90 line 78)
         for (int it = 0; it < ucell.ntype; ++it)
         {
-            out << " " << ucell.atoms[it].label << " " << ucell.atoms[it].mass;
+            const double mass_file = amu_to_ry(ucell.atoms[it].mass);
+            out << "  " << it + 1 << "  '" << ucell.atoms[it].label << "'  " << mass_file << "\n";
         }
-        out << "\n";
-        // atom types and positions (fractional)
+        // atoms: global index, type index, tau in alat units
         for (int ia = 0; ia < nat; ++ia)
         {
             const int it = ucell.iat2it[ia];
             const int ial = ucell.iat2ia[ia];
-            out << " " << it + 1 << " (" << ucell.atoms[it].tau[ial].x << ", "
-                << ucell.atoms[it].tau[ial].y << ", " << ucell.atoms[it].tau[ial].z << ")\n";
+            const ModuleBase::Vector3<double> tau_alat = ucell.atoms[it].tau[ial];
+            out << "  " << ia + 1 << "  " << it + 1 << "  " << tau_alat.x << "  " << tau_alat.y
+                << "  " << tau_alat.z << "\n";
         }
-        // q vector
-        out << "q = ( " << q_frac.x << " " << q_frac.y << " " << q_frac.z << " )\n";
-        // dynamical matrix blocks (unreduced: Phi = D * sqrt(m_a m_b))
+
+        // --- q vector in cartesian 2*pi/alat units (QE convention) ---
+        const ModuleBase::Vector3<double> q_frac = data.get_qvec(q);
+        // q_cart = q_frac * G, already in 2*pi/lat0 = 2*pi/alat units
+        const ModuleBase::Vector3<double> q_cart = q_frac * ucell.G;
+        out << "\n     Dynamical  Matrix in cartesian axes\n\n";
+        out << "     q = ( " << q_cart.x << "  " << q_cart.y << "  " << q_cart.z << " )\n\n";
+
+        // --- force-constant matrix blocks (unreduced) ---
         for (int ia = 0; ia < nat; ++ia)
         {
             const double ma = ucell.atoms[ucell.iat2it[ia]].mass;
@@ -87,50 +138,76 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
             {
                 const double mb = ucell.atoms[ucell.iat2it[ja]].mass;
                 const double mm = std::sqrt(ma * mb);
-                out << "    " << ia + 1 << "    " << ja + 1 << "\n";
+                out << "  " << ia + 1 << "  " << ja + 1 << "\n";
                 for (int i = 0; i < 3; ++i)
                 {
                     for (int j = 0; j < 3; ++j)
                     {
-                        const std::complex<double> v = dm(3 * ia + i, 3 * ja + j) * mm;
-                        out << " " << v.real() << " " << v.imag();
+                        const int row = 3 * ia + i;
+                        const int col = 3 * ja + j;
+                        const std::complex<double> phi = dm(row, col) * mm;
+                        out << " " << phi.real() << "  " << phi.imag();
                     }
                     out << "\n";
                 }
             }
         }
-        // Gamma-point Born charges and dielectric tensor
-        if (q == 0 && data.get_loto())
+
+        // --- Born charges and dielectric tensor at Gamma ---
+        // gate on the computed q0 response (compute_q0), not on the LO-TO
+        // working-matrix correction: with compute_q0=true and loto=false
+        // the tensors are still computed and should be exported
+        if (q == 0 && data.get_compute_q0())
         {
-            out << "\n     Dielectric constant in cartesian axis\n\n";
             const ModuleBase::matrix& eps = data.get_dielectric();
-            for (int i = 0; i < 3; ++i)
+            const ModuleBase::matrix& born0 = data.get_born(0);
+            const bool has_eps = eps.nr == 3 && eps.nc == 3;
+            const bool has_born = born0.nr == 3 && born0.nc == 3;
+            if (has_born)
             {
-                out << "          (";
-                for (int j = 0; j < 3; ++j)
+                out << "\n     Effective Charges E-U: Z_{alpha}{s,beta}\n\n";
+                for (int ia = 0; ia < nat; ++ia)
                 {
-                    out << " " << std::setw(15) << eps(i, j);
-                }
-                out << " )\n";
-            }
-            out << "\n     Effective charges (d Force / dE) in cartesian axis\n\n";
-            for (int ia = 0; ia < nat; ++ia)
-            {
-                out << "           atom      " << ia + 1 << "   " << ucell.atoms[ucell.iat2it[ia]].label << "\n";
-                const ModuleBase::matrix& zstar = data.get_born(ia);
-                for (int b = 0; b < 3; ++b)
-                {
-                    out << "      E" << static_cast<char>('x' + b) << "  (";
-                    for (int a = 0; a < 3; ++a)
+                    const ModuleBase::matrix& zstar = data.get_born(ia);
+                    out << "     atom #  " << ia + 1 << "\n";
+                    for (int b = 0; b < 3; ++b)
                     {
-                        out << " " << std::setw(15) << zstar(b, a);
+                        for (int a = 0; a < 3; ++a)
+                        {
+                            out << "  " << std::setw(22) << zstar(b, a);
+                        }
+                        out << "\n";
                     }
-                    out << " )\n";
+                }
+            }
+            if (has_eps)
+            {
+                out << "\n     Dielectric Tensor:\n\n";
+                for (int i = 0; i < 3; ++i)
+                {
+                    for (int j = 0; j < 3; ++j)
+                    {
+                        out << "  " << std::setw(22) << eps(i, j);
+                    }
+                    out << "\n";
                 }
             }
         }
+
+        out.close();
+        if (out.fail())
+        {
+            std::ostringstream err;
+            err << "DFPT_Write_Dyn: write error on " << name.str();
+            ModuleBase::WARNING("DFPT_Write_Dyn", err.str());
+        }
+        else
+        {
+            // log the successfully written full path (AGENTS rule 16)
+            std::cout << " DFPT_Write_Dyn: wrote " << name.str() << std::endl;
+        }
     }
-    ModuleBase::timer::end("DFPT_Write_Dyn", "write");
+    ModuleBase::timer::end("ModuleDFPT", "DFPT_Write_Dyn");
 }
 
 } // namespace ModuleDFPT

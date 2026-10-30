@@ -5,7 +5,6 @@
 #include "source_base/vector3.h"
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
 
 #include <memory>
 #include <string>
@@ -19,6 +18,11 @@ namespace ModulePW
 class PW_Basis;
 class PW_Basis_K;
 } // namespace ModulePW
+
+namespace ModuleDFPT
+{
+class DFPT_PW_Data;
+}
 
 namespace ModuleDFPT
 {
