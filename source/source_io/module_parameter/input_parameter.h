@@ -449,6 +449,9 @@ struct Input_para
     int dfpt_max_iter = 100;                  ///< max iterations of the DFPT first-order density mixing
     double dfpt_mix_beta = 0.4;               ///< mixing coefficient of the DFPT first-order density
     std::string dfpt_asr = "no";              ///< acoustic sum rule on the Gamma dynamical matrix: no | simple | crystal
+    std::string dfpt_mix_type = "v_sc_broyden"; ///< mixing scheme: rho_plain | rho_kerker | rho_broyden | v_sc_plain | v_sc_broyden
+    double dfpt_kerker_a2 = 1.0;              ///< Kerker screening parameter a^2 in 1/lat0^2 (kerker only)
+    int dfpt_broyden_ndim = 8;                ///< Broyden history depth (broyden variants)
 
     // ==============   #Parameters (11.Output) ===========================
     int out_stru = 1;                         ///< output stru file each ion step

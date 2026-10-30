@@ -15,7 +15,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/qlist.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 
 #include <algorithm>
 #include <cmath>
@@ -143,6 +143,31 @@ void DFPT_PW::set_asr(const std::string& asr_type)
     if (asr_type == "no" || asr_type == "simple" || asr_type == "crystal")
     {
         pimpl_->asr_type_ = asr_type;
+    }
+}
+
+void DFPT_PW::set_mix_type(const std::string& mix_type)
+{
+    if (mix_type == "rho_plain" || mix_type == "rho_kerker" || mix_type == "rho_broyden"
+        || mix_type == "v_sc_plain" || mix_type == "v_sc_broyden")
+    {
+        pimpl_->mix_type_ = mix_type;
+    }
+}
+
+void DFPT_PW::set_kerker_a2(double a2)
+{
+    if (a2 > 0.0)
+    {
+        pimpl_->kerker_a2_ = a2;
+    }
+}
+
+void DFPT_PW::set_broyden_ndim(int ndim)
+{
+    if (ndim >= 1)
+    {
+        pimpl_->broyden_ndim_ = ndim;
     }
 }
 

@@ -238,8 +238,18 @@ endif()
 # the standalone BLAS/LAPACK/ScaLAPACK above so that the linker resolves the
 # BLAS symbols from the standalone BLAS instead of the bundled copy.
 if(USE_DSP)
+  # mtfftblas_v1.4.1c renamed libmtblasdev.a to libmtblasfftdev.a; accept both.
+  find_library(MTBLASDEV_LIB
+    NAMES mtblasfftdev mtblasdev
+    PATHS ${MTBLAS_FFT_DIR}/libmtblas/lib
+    NO_DEFAULT_PATH)
+  if(NOT MTBLASDEV_LIB)
+    message(FATAL_ERROR
+      "USE_DSP requires libmtblasfftdev.a (mtfftblas >= v1.4.1c) or libmtblasdev.a "
+      "under ${MTBLAS_FFT_DIR}/libmtblas/lib, but neither was found.")
+  endif()
   list(APPEND _abacus_linalg_libs ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a
-       ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a
+       ${MTBLASDEV_LIB}
        ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtfft.a)
 endif()
 
@@ -652,7 +662,7 @@ list(
   source_pw/module_pwdft/kernels/force_op.cpp
   source_pw/module_pwdft/kernels/stress_op.cpp
   source_pw/module_pwdft/kernels/onsite_op.cpp
-  source_pw/module_pwdft/kernels/wf_op.cpp
+  source_cell/kernels/wf_op.cpp
   source_pw/module_pwdft/kernels/vnl_op.cpp
   source_base/kernels/math_ylm_op.cpp
   source_hamilt/module_xc/kernels/xc_functional_op.cpp
@@ -680,7 +690,7 @@ if(USE_CUDA)
     source_base/module_device/cuda/memory_op.cu
     source_pw/module_pwdft/kernels/cuda/force_op.cu
     source_pw/module_pwdft/kernels/cuda/stress_op.cu
-    source_pw/module_pwdft/kernels/cuda/wf_op.cu
+    source_cell/kernels/cuda/wf_op.cu
     source_pw/module_pwdft/kernels/cuda/vnl_op.cu
     source_base/module_device/cuda_compat.cpp
     source_base/kernels/cuda/math_ylm_op.cu
@@ -719,7 +729,7 @@ if(USE_ROCM)
     source_base/module_device/rocm/memory_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/force_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/stress_op.hip.cu
-    source_pw/module_pwdft/kernels/rocm/wf_op.hip.cu
+    source_cell/kernels/rocm/wf_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/vnl_op.hip.cu
     source_base/kernels/rocm/math_kernel_op.hip.cu
     source_base/kernels/rocm/math_kernel_op_vec.hip.cu
@@ -783,6 +793,7 @@ target_link_libraries(
           planewave
           symmetry
           cell
+          structure_factor
           parameter
           psi_overall_init
           psi_init
