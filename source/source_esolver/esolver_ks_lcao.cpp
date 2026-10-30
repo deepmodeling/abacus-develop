@@ -690,12 +690,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                          this->kv,
                          this->p_chgmix->get_mixing_beta(),
                          hamilt_lcao,
-                         global_out_dir,
                          this->inp_->nspin,
-                         gamma_only_local,
-                         istep,
-                         iter,
-                         occmat_cfg);
+                         gamma_only_local);
 
     // mohan add 2025-11: push DFT+U energy from Plus_U_Base to ElecState.
     // Covers both dft_plus_u==1 (new method, energy accumulated by DFTU_onsite::contributeHR

@@ -260,11 +260,6 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    const DFTU_BASE::OccmatOutputCfg init_occmat_cfg{this->inp_->out_freq_ion,
-                                                     this->inp_->out_freq_elec,
-                                                     iter_limit,
-                                                     this->inp_->out_occ_mat,
-                                                     this->inp_->dft_plus_u};
     DFTU_BASE::iter_init_dftu_pw(iter,
                                  istep,
                                  *this->dftu_,
@@ -272,8 +267,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
                                  this->pelec->wg,
                                  ucell,
                                  this->p_chgmix,
-                                 PARAM.globalv.global_out_dir,
-                                 init_occmat_cfg,
+                                 this->inp_->dft_plus_u,
                                  this->kv.isk.data(),
                                  this->inp_->nspin,
                                  this->inp_->kpar);
