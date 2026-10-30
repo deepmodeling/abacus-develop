@@ -1,9 +1,12 @@
-# Fe DeltaSpin performance benchmarks
+# DeltaSpin performance benchmarks
 
 The timing benchmark matrix uses 16-atom and 32-atom bcc Fe supercells, one GPU,
 one MPI rank, and either one or twelve CPU threads. Each thread configuration
 compares the original and optimized binaries using identical input and asset
 hashes. Thread-count effects are reported separately from implementation speedup.
+These fixed fixtures measure regressions in a general-purpose DFT implementation;
+their element, atom counts, and coordinates do not define optimization dispatch.
+Additional disordered and mixed-element cases test applicability independently.
 
 The reference source is tag `delta-spin-yinan`, commit
 `19ade18599bfdf9ee78a289bf798a9b2583d52cd`. Keep its executable separate from
@@ -16,7 +19,7 @@ The structures use a 2.866 A conventional bcc lattice, repeated 2x2x2
 for Fe16, 2x2x4 for Fe32, or 3x3x3 for the Fe54 capacity check. One atom is displaced by 0.02 A along x to provide nonzero forces for
 comparison. The local moment target is 2.2 uB along +z on every atom.
 
-All cases use 100 Ry, double precision, noncollinear spin, spin-orbit coupling,
+These three Fe cases use 100 Ry, double precision, noncollinear spin, spin-orbit coupling,
 the same pseudopotential and orbital file, and an explicit Gamma-centered
 2x2x2 k mesh. `kspacing=0` selects the supplied KPT file. Electronic and magnetic
 thresholds, smearing and mixing parameters are recorded in each INPUT file.
@@ -36,6 +39,42 @@ The reference Fe54 two-step probe reaches approximately 32,343 MiB on a
 completed SCF steps. Fe54 is retained as a capacity test; it cannot provide
 a converged reference runtime on this node. Fe32 supplies the larger-system
 timing comparison without changing the physical or solver settings.
+
+### Generality controls
+
+`fe16-disordered` retains the formal Fe16 cell, INPUT, KPT and assets, with every
+atom independently displaced by at most 0.03 A per Cartesian component. No atom
+lies on a supported exact binary-coordinate phase grid. This tests the dense
+projector path and separates general implementation gains from periodic-phase
+factorization. The input is fixed; it is not adjusted to obtain faster convergence.
+
+`feni4-nonorthogonal` contains two Fe and two Ni atoms in a sheared cell with
+independent noncollinear moment targets. It uses the repository's scalar
+relativistic Ni pseudopotential, so spin-orbit coupling is disabled for both
+executables in this case. Precision, cutoff, k mesh, solver, mixing and stopping
+controls otherwise match the formal fixtures. This is a numerical control,
+not an equilibrium alloy or a validated materials model.
+
+Run these cases in a separate working directory so adding Ni assets does not
+change the recorded asset set of earlier formal runs. From this directory:
+
+```bash
+export DELTASPIN_GENERALITY=/path/to/generality-workspace
+mkdir -p "$DELTASPIN_GENERALITY"/{assets,inputs,src,results}
+cp src/benchmark.py src/compare_results.py "$DELTASPIN_GENERALITY/src/"
+cp -r inputs/fe16-disordered inputs/feni4-nonorthogonal "$DELTASPIN_GENERALITY/inputs/"
+cp assets/Fe.upf assets/Fe_gga_8au_200.0Ry_4s2p2d1f.orb "$DELTASPIN_GENERALITY/assets/"
+cp ../../../tests/PP_ORB/Ni_ONCV_PBE-1.0.upf \
+   ../../../tests/PP_ORB/Ni_gga_9au_100Ry_4s2p2d1f.orb "$DELTASPIN_GENERALITY/assets/"
+cp generality-assets.sha256.json "$DELTASPIN_GENERALITY/assets.sha256.json"
+```
+
+Verify the copied assets against this manifest, then use the same original and
+candidate commands below with these case names and twelve threads. Each pair
+must use identical inputs and assets. Report native electronic convergence and
+per-atom physical differences separately from timing. These controls broaden
+the evidence but do not establish speedups for all structures, functionals,
+pseudopotentials, solvers, device types or MPI decompositions.
 
 ## Run the matrix
 
@@ -222,6 +261,32 @@ must be reported explicitly instead of described as reference repeatability.
 long-double dot products. It covers all nine transpose/conjugation combinations,
 padded leading dimensions, input preservation, nonzero complex accumulation,
 cancellation-sensitive data, and shapes on both sides of the dispatch boundary.
+
+## Fixed-overlap constraint responses
+
+The wavefunction basis and its projected overlap stay fixed during one
+constraint-field loop. The CUDA path factors each overlap as `S = U^H U`
+once and caches `U^-H H U^-1` and `R U^-1`, where `R` contains the onsite
+projector overlaps. Field corrections are assembled with these transformed
+projectors, so each response uses a standard Hermitian eigensolve followed by
+the projected eigenvector rotation. This retains the full positive-definite
+overlap matrix and does not assume that the input basis is orthonormal.
+
+The constraint object owns this cache and releases it before updating the
+wavefunctions or starting Davidson. Original projected matrices remain
+available for those operations. The implementation shares the existing
+single-host-thread CUDA solver and BLAS contexts and the solver's retained
+workspace. Optional cache allocation failure preserves the original generalized
+response path. CPU and ROCm retain their existing implementations. The change
+reorders double-precision operations, so full physical comparisons remain
+necessary even though the transformed eigenproblem is mathematically equivalent.
+
+`check_fixed_overlap.cpp` checks signed field changes against generalized
+eigenvalues, normwise eigenpair backward error, overlap orthogonality, and
+projected eigenvectors. It includes zero eigenvalues, nonorthogonal bases,
+multiple k points in reverse order, repeated object lifetimes, immutable inputs
+and caches, buffer guards, intervening generalized solves, and optional
+allocation failure. It uses analytical matrices and requires no external data.
 
 ## Focused correctness checks
 

@@ -1,5 +1,6 @@
 #include "module_base/module_device/memory_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_hsolver/kernels/fixed_overlap.h"
 #include "module_psi/psi.h"
 #include "module_base/tool_quit.h"
 
@@ -42,6 +43,21 @@ struct GetTypeThrust<std::complex<double>> {
 };
 
 static cublasHandle_t cublas_handle = nullptr;
+
+void FixedOverlapSubspace::whiten(Complex* h, Complex* projectors) const
+{
+    const auto one = make_cuDoubleComplex(1.0, 0.0);
+    const auto* factor = reinterpret_cast<const double2*>(cholesky_);
+    cublasErrcheck(cublasZtrsm(cublas_handle, CUBLAS_SIDE_LEFT, CUBLAS_FILL_MODE_UPPER,
+        CUBLAS_OP_C, CUBLAS_DIAG_NON_UNIT, bands_, bands_, &one, factor, bands_,
+        reinterpret_cast<double2*>(h), bands_));
+    cublasErrcheck(cublasZtrsm(cublas_handle, CUBLAS_SIDE_RIGHT, CUBLAS_FILL_MODE_UPPER,
+        CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, bands_, bands_, &one, factor, bands_,
+        reinterpret_cast<double2*>(h), bands_));
+    cublasErrcheck(cublasZtrsm(cublas_handle, CUBLAS_SIDE_RIGHT, CUBLAS_FILL_MODE_UPPER,
+        CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, rows_, bands_, &one, factor, bands_,
+        reinterpret_cast<double2*>(projectors), rows_));
+}
 static bool use_volta_gemm3m = false;
 
 __global__ void selected_basis_residual_kernel(int rows, int leading,

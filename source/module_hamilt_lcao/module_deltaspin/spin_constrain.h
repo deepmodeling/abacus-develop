@@ -12,6 +12,10 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
+#include "module_hsolver/hsolver.h"
+#if defined(__CUDA)
+#include "module_hsolver/kernels/fixed_overlap.h"
+#endif
 #include "module_hamilt_general/operator.h"
 #include "module_elecstate/elecstate.h"
 
@@ -257,6 +261,10 @@ public:
     FPTYPE* sub_h_save;
     FPTYPE* sub_s_save;
     FPTYPE* becp_save;
+#if defined(__CUDA)
+    /// Orthonormal response matrices for one fixed-wavefunction constraint loop.
+    std::unique_ptr<hsolver::FixedOverlapSubspace> fixed_overlap;
+#endif
     /// Constraint field used to construct the saved projected Hamiltonian.
     std::vector<ModuleBase::Vector3<double>> subspace_lambda;
     /// Pinned host storage reused across constraint loops and released at destruction.

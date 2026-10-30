@@ -1,9 +1,14 @@
 #include "module_hsolver/kernels/dngvd_op.h"
+#include "module_hsolver/kernels/fixed_overlap.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
 #include "helper_cuda.h"
 
 #include <base/macros/macros.h>
 
 #include <cusolverDn.h>
+#include <algorithm>
+#include <stdexcept>
+#include <string>
 
 namespace hsolver
 {
@@ -35,6 +40,129 @@ void destroyGpuSolverHandle()
         cusolverErrcheck(cusolverDnDestroy(solver.handle));
         solver = {};
     }
+}
+
+namespace
+{
+
+__global__ void expand_hermitian_upper(const double2* input, double2* output, int size)
+{
+    const size_t index = size_t(blockIdx.x) * blockDim.x + threadIdx.x;
+    if (index >= size_t(size) * size) { return; }
+    const int row = index % size, column = index / size;
+    const auto value = row <= column ? input[index] : input[size_t(row) * size + column];
+    output[index] = make_double2(value.x, row == column ? 0.0 : row < column ? value.y : -value.y);
+}
+
+} // namespace
+
+FixedOverlapSubspace::FixedOverlapSubspace(int points, int bands, int projector_rows)
+    : points_(points), bands_(bands), rows_(projector_rows)
+{
+    assert(points > 0 && bands > 0 && projector_rows > 0 && solver.handle != nullptr);
+    const size_t matrix = size_t(bands) * bands;
+    const size_t projections = size_t(bands) * projector_rows;
+    const size_t scalar_storage = (size_t(bands) * sizeof(double) + sizeof(int) + sizeof(Complex) - 1)
+                                  / sizeof(Complex);
+    const size_t elements = size_t(points) * (matrix + projections) + 2 * matrix + scalar_storage;
+    auto status = cudaMalloc(&storage_, elements * sizeof(Complex));
+    if (status == cudaErrorMemoryAllocation)
+    {
+        cudaGetLastError();
+        storage_ = nullptr;
+        return;
+    }
+    cudaErrcheck(status);
+    h_ = storage_;
+    r_ = h_ + size_t(points) * matrix;
+    cholesky_ = r_ + size_t(points) * projections;
+    vectors_ = cholesky_ + matrix;
+    eigenvalues_ = reinterpret_cast<double*>(vectors_ + matrix);
+    info_ = reinterpret_cast<int*>(eigenvalues_ + bands);
+    cusolverErrcheck(cusolverDnZpotrf_bufferSize(solver.handle, CUBLAS_FILL_MODE_UPPER,
+        bands, reinterpret_cast<double2*>(cholesky_), bands, &factor_work_));
+    cusolverErrcheck(cusolverDnZheevd_bufferSize(solver.handle, CUSOLVER_EIG_MODE_VECTOR,
+        CUBLAS_FILL_MODE_UPPER, bands, reinterpret_cast<double2*>(vectors_), bands,
+        eigenvalues_, &eigen_work_));
+    const int work = std::max(factor_work_, eigen_work_);
+    if (work <= solver.zhegvd_capacity) { return; }
+
+    // The optional cache cannot displace the established solver workspace.
+    // Reserve its larger workspace before releasing the existing allocation.
+    double2* replacement = nullptr;
+    status = cudaMalloc(&replacement, size_t(work) * sizeof(double2));
+    if (status == cudaErrorMemoryAllocation)
+    {
+        cudaGetLastError();
+        cudaErrcheck(cudaFree(storage_));
+        storage_ = nullptr;
+        return;
+    }
+    cudaErrcheck(status);
+    cudaErrcheck(cudaFree(solver.zhegvd_work));
+    solver.zhegvd_work = replacement;
+    solver.zhegvd_capacity = work;
+}
+
+FixedOverlapSubspace::~FixedOverlapSubspace()
+{
+    cudaErrcheck(cudaFree(storage_));
+}
+
+const FixedOverlapSubspace::Complex* FixedOverlapSubspace::hamiltonian(int point) const
+{
+    assert(available() && point >= 0 && point < points_);
+    return h_ + size_t(point) * bands_ * bands_;
+}
+
+const FixedOverlapSubspace::Complex* FixedOverlapSubspace::projectors(int point) const
+{
+    assert(available() && point >= 0 && point < points_);
+    return r_ + size_t(point) * bands_ * rows_;
+}
+
+void FixedOverlapSubspace::require_success(const char* operation) const
+{
+    int info = 0;
+    cudaErrcheck(cudaMemcpy(&info, info_, sizeof(int), cudaMemcpyDeviceToHost));
+    if (info != 0)
+    {
+        throw std::runtime_error(std::string("Fixed-overlap ") + operation
+            + " failed for dimension " + std::to_string(bands_) + ", cuSolver info=" + std::to_string(info));
+    }
+}
+
+void FixedOverlapSubspace::prepare(int point, const Complex* h, const Complex* s, const Complex* projectors)
+{
+    assert(available() && point >= 0 && point < points_);
+    const size_t matrix = size_t(bands_) * bands_;
+    auto* transformed_h = h_ + size_t(point) * matrix;
+    auto* transformed_r = r_ + size_t(point) * bands_ * rows_;
+    cudaErrcheck(cudaMemcpy(cholesky_, s, matrix * sizeof(Complex), cudaMemcpyDeviceToDevice));
+    cusolverErrcheck(cusolverDnZpotrf(solver.handle, CUBLAS_FILL_MODE_UPPER, bands_,
+        reinterpret_cast<double2*>(cholesky_), bands_, solver.zhegvd_work, factor_work_, info_));
+    require_success("Cholesky factorization");
+    expand_hermitian_upper<<<(matrix + 255) / 256, 256>>>(
+        reinterpret_cast<const double2*>(h), reinterpret_cast<double2*>(transformed_h), bands_);
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaMemcpy(transformed_r, projectors, size_t(rows_) * bands_ * sizeof(Complex),
+                           cudaMemcpyDeviceToDevice));
+    whiten(transformed_h, transformed_r);
+}
+
+void FixedOverlapSubspace::diagonalize(const Complex* h, const Complex* projectors,
+                                      Complex* rotated, double* eigenvalues)
+{
+    assert(available());
+    cudaErrcheck(cudaMemcpy(vectors_, h, size_t(bands_) * bands_ * sizeof(Complex), cudaMemcpyDeviceToDevice));
+    cusolverErrcheck(cusolverDnZheevd(solver.handle, CUSOLVER_EIG_MODE_VECTOR, CUBLAS_FILL_MODE_UPPER,
+        bands_, reinterpret_cast<double2*>(vectors_), bands_, eigenvalues_,
+        solver.zhegvd_work, eigen_work_, info_));
+    require_success("Hermitian diagonalization");
+    cudaErrcheck(cudaMemcpy(eigenvalues, eigenvalues_, bands_ * sizeof(double), cudaMemcpyDeviceToHost));
+    const Complex one(1, 0), zero(0, 0);
+    gemm_op<Complex, base_device::DEVICE_GPU>()(nullptr, 'N', 'N', rows_, bands_, bands_,
+        &one, projectors, rows_, vectors_, bands_, &zero, rotated, rows_);
 }
 
 static inline
