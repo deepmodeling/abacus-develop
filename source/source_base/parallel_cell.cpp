@@ -61,6 +61,26 @@ int CommunicationDomain::sum(int value) const
     return value;
 }
 
+void CommunicationDomain::sum(int* values, int count) const
+{
+#ifdef __MPI
+    if (communicator_ != MPI_COMM_NULL)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, values, count, MPI_INT, MPI_SUM, communicator_);
+    }
+#endif
+}
+
+void CommunicationDomain::sum(double* values, int count) const
+{
+#ifdef __MPI
+    if (communicator_ != MPI_COMM_NULL)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, values, count, MPI_DOUBLE, MPI_SUM, communicator_);
+    }
+#endif
+}
+
 double CommunicationDomain::max(double value) const
 {
 #ifdef __MPI

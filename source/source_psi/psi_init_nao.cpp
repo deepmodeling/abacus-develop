@@ -1,8 +1,8 @@
 #include "psi_init_nao.h"
 
 #include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/stru_fac.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/stru_fac.h"
 
 #include <fstream>
 // numerical algorithm support

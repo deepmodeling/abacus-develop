@@ -7,8 +7,8 @@
 #include "source_base/realarray.h"
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
-#include "source_pw/module_pwdft/soc.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/soc.h"
+#include "source_cell/stru_fac.h"
 
 #include <vector>
 #ifdef __LCAO
