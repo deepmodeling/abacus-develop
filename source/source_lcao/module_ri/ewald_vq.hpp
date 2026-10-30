@@ -6,6 +6,7 @@
 #ifndef EWALD_VQ_HPP
 #define EWALD_VQ_HPP
 
+#include "lri_cv_tools.h"
 #include <RI/comm/mix/Communicate_Tensors_Map_Judge.h>
 #include <RI/distribute/Distribute_Equally.h>
 #include <RI/global/Global_Func-1.h>

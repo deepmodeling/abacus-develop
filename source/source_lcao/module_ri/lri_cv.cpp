@@ -3,8 +3,6 @@
 // DATE :   2022-08-17
 //=======================
 
-#ifndef LRI_CV_HPP
-#define LRI_CV_HPP
 
 #include "lri_cv.h"
 #include "lri_cv_tools.h"
@@ -406,11 +404,25 @@ LRI_CV<Tdata>::DPcal_C_dC(
                       DPcal_V(it1, it1, {0,0,0}, {{"writable_Vws",true}})}};
 
             std::vector<std::vector<RI::Tensor<Tdata>>> L;
+            std::array<LRI_CV_Tools::RIBlockMatrix<Tdata>, 3> dL;
             const double cs_inv_thr = this->p_info_ri != nullptr ? this->p_info_ri->Cs_inv_thr : 0.0;
-            if (cs_inv_thr > 0)
+            if (cs_inv_thr > 0 && !flag_finish_dC)
+            {
+                const auto derivative01 = DPcal_dV(it0, it1, R, flags);
+                const auto reverse_derivative = DPcal_dV(it1, it0, Rm, flags);
+                const auto derivative10 = LRI_CV_Tools::negative(reverse_derivative);
+                auto inverse = LRI_CV_Tools::cal_I_dI(V, derivative01, derivative10, cs_inv_thr);
+                L = std::move(inverse.first);
+                dL = std::move(inverse.second);
+            }
+            else if (cs_inv_thr > 0)
+            {
                 L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, cs_inv_thr);
+            }
             else
+            {
                 L = LRI_CV_Tools::cal_I(V);
+            }
 
             const std::vector<RI::Tensor<Tdata>> C = LRI_CV_Tools::mul2(L,A);
             if(flags.at("writable_Cws"))
@@ -438,10 +450,26 @@ LRI_CV<Tdata>::DPcal_C_dC(
                                 this->index_abfs, this->index_lcaos, this->index_lcaos,
                                 Matrix_Orbs21::Matrix_Order::A1BA2))};
 
-                const std::array<RI::Tensor<Tdata>,3> dV_01 = DPcal_dV(it0, it1, R, flags);
-                const std::array<RI::Tensor<Tdata>,3> dV_10 = LRI_CV_Tools::negative(DPcal_dV(it1, it0, Rm, flags));
-
-                std::array<std::vector<RI::Tensor<Tdata>>,3>		// dC = L*(dA-dV*C)
+                std::array<std::vector<RI::Tensor<Tdata>>, 3> dC_tmp;
+                if (cs_inv_thr > 0)
+                {
+                    // C = F(V) A: include rotations between retained and discarded modes.
+                    for (std::size_t axis = 0; axis < 3; ++axis)
+                    {
+                        const std::vector<RI::Tensor<Tdata>> derivative_A = {dA[0][axis], dA[1][axis]};
+                        dC_tmp[axis] = LRI_CV_Tools::mul2(L, derivative_A);
+                        const auto inverse_response = LRI_CV_Tools::mul2(dL[axis], A);
+                        for (std::size_t block = 0; block < 2; ++block)
+                        {
+                            dC_tmp[axis][block] += inverse_response[block];
+                        }
+                    }
+                }
+                else
+                {
+                    const auto dV_01 = DPcal_dV(it0, it1, R, flags);
+                    const auto reverse_derivative = DPcal_dV(it1, it0, Rm, flags);
+                    const auto dV_10 = LRI_CV_Tools::negative(reverse_derivative);
                     dC_tmp = LRI_CV_Tools::mul2(
                             L,
                             LRI_CV_Tools::change_order( LRI_CV_Tools::minus(
@@ -449,6 +477,7 @@ LRI_CV<Tdata>::DPcal_C_dC(
                                 std::vector<std::array<RI::Tensor<Tdata>,3>>{
                                     LRI_CV_Tools::mul1(dV_01, C[1]),
                                     LRI_CV_Tools::mul1(dV_10, C[0])})));
+                }
                 const std::vector<std::array<RI::Tensor<Tdata>,3>>
                     dC = LRI_CV_Tools::change_order(std::move(dC_tmp));
                 if(flags.at("writable_dCws"))
@@ -464,5 +493,6 @@ LRI_CV<Tdata>::DPcal_C_dC(
     } // end else (!(C_read && flag_finish_dC))
 }
 
-
-#endif
+// Supported real and complex double-precision RI backends.
+template class LRI_CV<double>;
+template class LRI_CV<std::complex<double>>;

@@ -7,69 +7,64 @@
 #include <mpi.h>
 #endif
 
-void random_data(std::vector<double>& A_global,
-                 std::vector<double>& B_global,
-                 std::vector<double>& U_global,
-                 double& alpha,
-                 double& beta)
+void random_data(
+    std::vector<double> &A_global,
+    std::vector<double> &B_global,
+    std::vector<double> &U_global,
+    double &alpha,
+    double &beta)
 {
-    for (auto& val: A_global)
+    for (auto &val : A_global)
     {
         val = std::rand() / (RAND_MAX + 1.0);
     }
-    for (auto& val: B_global)
+    for (auto &val : B_global)
     {
         val = std::rand() / (RAND_MAX + 1.0);
     }
-    for (auto& val: U_global)
+    for (auto &val : U_global)
     {
         val = std::rand() / (RAND_MAX + 1.0);
     }
     alpha = std::rand() / (RAND_MAX + 1.0);
     beta = std::rand() / (RAND_MAX + 1.0);
 }
-void random_data(std::vector<std::complex<double>>& A_global,
-                 std::vector<std::complex<double>>& B_global,
-                 std::vector<std::complex<double>>& U_global,
-                 std::complex<double>& alpha,
-                 std::complex<double>& beta)
+void random_data(
+    std::vector<std::complex<double>> &A_global,
+    std::vector<std::complex<double>> &B_global,
+    std::vector<std::complex<double>> &U_global,
+    std::complex<double> &alpha,
+    std::complex<double> &beta)
 {
-    for (auto& val: A_global)
+    for (auto &val : A_global)
     {
         val = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     }
-    for (auto& val: B_global)
+    for (auto &val : B_global)
     {
         val = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     }
-    for (auto& val: U_global)
+    for (auto &val : U_global)
     {
         val = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     }
     alpha = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
     beta = std::complex<double>(std::rand() / (RAND_MAX + 1.0), std::rand() / (RAND_MAX + 1.0));
 }
-double get_double(std::complex<double>& val)
-{
-    return val.real() + val.imag();
-}
-double get_double(double& val)
-{
-    return val;
-}
+double get_double(std::complex<double> &val) { return val.real() + val.imag(); }
+double get_double(double &val) { return val; }
 
-template <typename T>
-class ParaLinearTransformTest : public ::testing::Test
+template <typename T> class ParaLinearTransformTest : public ::testing::Test
 {
   protected:
-    void SetUp() override
-    {
-    }
+    void SetUp() override {}
 
-    void TearDown() override
-    {
-    }
-    void prepare(const int nrow, const int ncolA_glo, const int ncolB_glo, const int LDA)
+    void TearDown() override {}
+    void prepare(
+        const int nrow,
+        const int ncolA_glo,
+        const int ncolB_glo,
+        const int LDA)
     {
         int rank = 0;
         int nproc = 1;
@@ -91,8 +86,22 @@ class ParaLinearTransformTest : public ::testing::Test
         }
         std::vector<int> ncolA_ip(nproc);
         std::vector<int> ncolB_ip(nproc);
-        MPI_Allgather(&ncolA_loc, 1, MPI_INT, ncolA_ip.data(), 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Allgather(&ncolB_loc, 1, MPI_INT, ncolB_ip.data(), 1, MPI_INT, MPI_COMM_WORLD);
+        MPI_Allgather(
+            &ncolA_loc,
+            1,
+            MPI_INT,
+            ncolA_ip.data(),
+            1,
+            MPI_INT,
+            MPI_COMM_WORLD);
+        MPI_Allgather(
+            &ncolB_loc,
+            1,
+            MPI_INT,
+            ncolB_ip.data(),
+            1,
+            MPI_INT,
+            MPI_COMM_WORLD);
         for (int i = 0; i < rank; ++i)
         {
             colA_start += ncolA_ip[i];
@@ -105,43 +114,109 @@ class ParaLinearTransformTest : public ::testing::Test
         U_global.resize(ncolA_glo * ncolB_glo);
         if (rank == 0)
         {
-            random_data(A_global, B_global, U_global, alpha, beta);
+            random_data(
+                A_global,
+                B_global,
+                U_global,
+                alpha,
+                beta);
             B_global_ref = B_global;
-            const base_device::DEVICE_CPU* ctx = {};
-            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()('N',
-                                                              'N',
-                                                              nrow,
-                                                              ncolB_glo,
-                                                              ncolA_glo,
-                                                              &alpha,
-                                                              A_global.data(),
-                                                              LDA,
-                                                              U_global.data(),
-                                                              ncolA_glo,
-                                                              &beta,
-                                                              B_global_ref.data(),
-                                                              LDA);
+            const base_device::DEVICE_CPU *ctx = {};
+            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(
+                'N',
+                'N',
+                nrow,
+                ncolB_glo,
+                ncolA_glo,
+                &alpha,
+                A_global.data(),
+                LDA,
+                U_global.data(),
+                ncolA_glo,
+                &beta,
+                B_global_ref.data(),
+                LDA);
         }
         if (std::is_same<T, double>::value)
         {
 #ifdef __MPI
-            MPI_Bcast(A_global.data(), A_global.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-            MPI_Bcast(B_global.data(), B_global.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-            MPI_Bcast(U_global.data(), U_global.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-            MPI_Bcast(B_global_ref.data(), B_global_ref.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-            MPI_Bcast(&alpha, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-            MPI_Bcast(&beta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+            MPI_Bcast(
+                A_global.data(),
+                A_global.size(),
+                MPI_DOUBLE,
+                0,
+                MPI_COMM_WORLD);
+            MPI_Bcast(
+                B_global.data(),
+                B_global.size(),
+                MPI_DOUBLE,
+                0,
+                MPI_COMM_WORLD);
+            MPI_Bcast(
+                U_global.data(),
+                U_global.size(),
+                MPI_DOUBLE,
+                0,
+                MPI_COMM_WORLD);
+            MPI_Bcast(
+                B_global_ref.data(),
+                B_global_ref.size(),
+                MPI_DOUBLE,
+                0,
+                MPI_COMM_WORLD);
+            MPI_Bcast(
+                &alpha,
+                1,
+                MPI_DOUBLE,
+                0,
+                MPI_COMM_WORLD);
+            MPI_Bcast(
+                &beta,
+                1,
+                MPI_DOUBLE,
+                0,
+                MPI_COMM_WORLD);
 #endif
         }
         else if (std::is_same<T, std::complex<double>>::value)
         {
 #ifdef __MPI
-            MPI_Bcast(A_global.data(), A_global.size(), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
-            MPI_Bcast(B_global.data(), B_global.size(), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
-            MPI_Bcast(U_global.data(), U_global.size(), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
-            MPI_Bcast(B_global_ref.data(), B_global_ref.size(), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
-            MPI_Bcast(&alpha, 1, MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
-            MPI_Bcast(&beta, 1, MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
+            MPI_Bcast(
+                A_global.data(),
+                A_global.size(),
+                MPI_DOUBLE_COMPLEX,
+                0,
+                MPI_COMM_WORLD);
+            MPI_Bcast(
+                B_global.data(),
+                B_global.size(),
+                MPI_DOUBLE_COMPLEX,
+                0,
+                MPI_COMM_WORLD);
+            MPI_Bcast(
+                U_global.data(),
+                U_global.size(),
+                MPI_DOUBLE_COMPLEX,
+                0,
+                MPI_COMM_WORLD);
+            MPI_Bcast(
+                B_global_ref.data(),
+                B_global_ref.size(),
+                MPI_DOUBLE_COMPLEX,
+                0,
+                MPI_COMM_WORLD);
+            MPI_Bcast(
+                &alpha,
+                1,
+                MPI_DOUBLE_COMPLEX,
+                0,
+                MPI_COMM_WORLD);
+            MPI_Bcast(
+                &beta,
+                1,
+                MPI_DOUBLE_COMPLEX,
+                0,
+                MPI_COMM_WORLD);
 #endif
         }
 
@@ -183,7 +258,11 @@ TYPED_TEST(ParaLinearTransformTest, globalU)
     const int ncolB_glo = 11;
     const int LDA = 9;
 
-    this->prepare(nrowA, ncolA_glo, ncolB_glo, LDA);
+    this->prepare(
+        nrowA,
+        ncolA_glo,
+        ncolB_glo,
+        LDA);
     int rank_col = 0, nproc_col = 1;
 #ifdef __MPI
     MPI_Comm col_world = MPI_COMM_WORLD;
@@ -191,15 +270,21 @@ TYPED_TEST(ParaLinearTransformTest, globalU)
     MPI_Comm_size(col_world, &nproc_col);
 #endif
 
-    this->lt.set_dimension(nrowA,
-                           this->ncolA_loc,
-                           this->ncolB_loc,
-                           LDA,
+    this->lt.set_dimension(
+        nrowA,
+        this->ncolA_loc,
+        this->ncolB_loc,
+        LDA,
 #ifdef __MPI
-                           col_world,
+        col_world,
 #endif
-                           false);
-    this->lt.act(this->alpha, this->A.data(), this->U_global.data(), this->beta, this->B.data());
+        false);
+    this->lt.act(
+        this->alpha,
+        this->A.data(),
+        this->U_global.data(),
+        this->beta,
+        this->B.data());
 
     for (int i = 0; i < this->ncolB_loc; ++i)
     {
@@ -217,7 +302,11 @@ TYPED_TEST(ParaLinearTransformTest, localU)
     const int ncolB_glo = 11;
     const int LDA = 9;
 
-    this->prepare(nrowA, ncolA_glo, ncolB_glo, LDA);
+    this->prepare(
+        nrowA,
+        ncolA_glo,
+        ncolB_glo,
+        LDA);
     int rank_col = 0, nproc_col = 1;
 
     MPI_Comm col_world = MPI_COMM_WORLD;
@@ -225,7 +314,14 @@ TYPED_TEST(ParaLinearTransformTest, localU)
     MPI_Comm_size(col_world, &nproc_col);
     std::vector<int> ncolB_ip(nproc_col);
     std::vector<int> start_colB(nproc_col);
-    MPI_Allgather(&this->ncolB_loc, 1, MPI_INT, ncolB_ip.data(), 1, MPI_INT, col_world);
+    MPI_Allgather(
+        &this->ncolB_loc,
+        1,
+        MPI_INT,
+        ncolB_ip.data(),
+        1,
+        MPI_INT,
+        col_world);
     start_colB[0] = 0;
     for (int i = 1; i < nproc_col; ++i)
     {
@@ -233,9 +329,20 @@ TYPED_TEST(ParaLinearTransformTest, localU)
     }
     int start = start_colB[rank_col];
 
-    this->lt.set_dimension(nrowA, this->ncolA_loc, this->ncolB_loc, LDA, col_world, true);
+    this->lt.set_dimension(
+        nrowA,
+        this->ncolA_loc,
+        this->ncolB_loc,
+        LDA,
+        col_world,
+        true);
 
-    this->lt.act(this->alpha, this->A.data(), this->U_global.data() + start * ncolA_glo, this->beta, this->B.data());
+    this->lt.act(
+        this->alpha,
+        this->A.data(),
+        this->U_global.data() + start * ncolA_glo,
+        this->beta,
+        this->B.data());
 
     for (int i = 0; i < this->ncolB_loc; ++i)
     {
@@ -247,7 +354,7 @@ TYPED_TEST(ParaLinearTransformTest, localU)
 }
 #endif
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);

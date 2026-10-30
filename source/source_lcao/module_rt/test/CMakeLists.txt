@@ -141,7 +141,7 @@ addtest(
   ../../../source_io/module_hs/pos_op_writer.cpp
   ../../../source_io/module_hs/lat_r_csr.cpp
   ../../../source_io/module_hs/pos_op_csr.cpp
-  ../../../source_pw/module_pwdft/soc.cpp
+  ../../../source_cell/soc.cpp
   ${SNAP_PSIBETA_CUDA_TEST_SOURCES})
 
 addtest(
