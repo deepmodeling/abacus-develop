@@ -487,10 +487,18 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
             // the number of MPI processes. Other configurations make the vendor
             // routines return inconsistent results across ranks and the SCF
             // silently diverges, so reject them at input time. See issue #8228.
+            // bndpar <= 0 is rejected by the bndpar input check; skip here so
+            // the diagnostic below never divides by zero.
+            if (para.input.bndpar <= 0)
+            {
+                return;
+            }
             const int nproc = para.sys.nproc;
-            const int kpar_eff = std::max(para.input.kpar, para.sys.kpar_lcao);
-            const int expected_nproc = kpar_eff * para.input.bndpar;
-            if (nproc != expected_nproc)
+            const bool layout_valid = dsp_kpar_layout_valid(nproc,
+                                                            para.input.kpar,
+                                                            para.sys.kpar_lcao,
+                                                            para.input.bndpar);
+            if (!layout_valid)
             {
                 const std::string msg =
                     "On DSP hardware, the mtblas/C_PACK libraries require kpar (kpar_lcao for LCAO) * bndpar"
