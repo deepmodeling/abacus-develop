@@ -14,6 +14,47 @@ namespace ModulePW
 {
 
 #if defined(__CUFFTDX)
+void PW_Basis_K::spinor_to_slabs(const std::complex<double>* input, int ik, int stride,
+                                std::complex<double>* up, std::complex<double>* down, int bands) const
+{
+    const int stick_size = this->fft_bundle.fused_veff_stick_size();
+    auto* sticks = this->fft_bundle.get_spinor_stick_data(bands);
+    if (this->d_isz2igl_k != nullptr)
+    {
+        const int* reverse = this->d_isz2igl_k + size_t(ik) * stick_size;
+        fused_fft(this->nz)->load_sticks(input, sticks, reverse, this->nst, bands, stride);
+        this->fft_bundle.transform_spinor_slabs(up, down, this->d_fftixy2is, true, bands);
+    }
+    else
+    {
+        base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
+            nullptr, sticks, 0, 2 * bands * stick_size);
+        const int* index = this->d_igl2isz_k + ik * this->npwk_max;
+        pack_spinor_sticks(this->npwk[ik], stride, index, input, sticks, sticks + bands * stick_size, bands, stick_size);
+        this->fft_bundle.transform_spinor_sticks(up, down, this->d_fftixy2is, true, bands);
+    }
+}
+
+void PW_Basis_K::slabs_to_spinor(std::complex<double>* up, std::complex<double>* down, int ik,
+                                int stride, std::complex<double>* output, int bands) const
+{
+    const int stick_size = this->fft_bundle.fused_veff_stick_size();
+    auto* sticks = this->fft_bundle.get_spinor_stick_data(bands);
+    if (this->d_isz2igl_k != nullptr)
+    {
+        this->fft_bundle.transform_spinor_slabs(up, down, this->d_fftixy2is, false, bands);
+        const int* reverse = this->d_isz2igl_k + size_t(ik) * stick_size;
+        fused_fft(this->nz)->add_sticks(sticks, output, reverse, this->nst, bands, stride, this->nxyz);
+    }
+    else
+    {
+        this->fft_bundle.transform_spinor_sticks(up, down, this->d_fftixy2is, false, bands);
+        const int* index = this->d_igl2isz_k + ik * this->npwk_max;
+        add_spinor_sticks(this->npwk[ik], stride, this->nxyz, index, sticks, sticks + bands * stick_size, output,
+                         bands, stick_size);
+    }
+}
+
 void PW_Basis_K::add_spinor_density(const std::complex<double>* input, double weight, double* density,
                                    int ik, int stride, std::complex<double>* up, std::complex<double>* down) const
 {
@@ -27,15 +68,8 @@ void PW_Basis_K::add_spinor_density(const std::complex<double>* input, const dou
     assert(this->d_fftixy2is != nullptr && this->fft_bundle.fused_veff_stick_size() > 0);
     assert(bands >= 1 && bands <= std::min(4, this->fft_bundle.spinor_batch_size()));
     ModuleBase::timer::tick(this->classname, "spinor_density gpu");
-    const int stick_size = this->fft_bundle.fused_veff_stick_size();
-    auto* stick_up = this->fft_bundle.get_spinor_stick_data(bands);
-    auto* stick_down = stick_up + bands * stick_size;
-    base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
-        nullptr, stick_up, 0, 2 * bands * stick_size);
-    const int* index = this->d_igl2isz_k + ik * this->npwk_max;
-    pack_spinor_sticks(this->npwk[ik], stride, index, input, stick_up, stick_down, bands, stick_size);
-    this->fft_bundle.transform_spinor_sticks(up, down, this->d_fftixy2is, true, bands);
-    fused_density_x(this->nx, this->ny * this->nz, this->fft_bundle.lixy() + 1, this->fft_bundle.rixy(), weights, bands, density, up, down);
+    this->spinor_to_slabs(input, ik, stride, up, down, bands);
+    fused_density_x(this->nx, this->ny * this->nz, this->fft_bundle.lixy + 1, this->fft_bundle.rixy, weights, bands, density, up, down);
     ModuleBase::timer::tick(this->classname, "spinor_density gpu");
 }
 
@@ -50,14 +84,9 @@ void PW_Basis_K::add_spinor_potential(const std::complex<double>* input, const d
     if (stick_size > 0)
     {
         assert(this->d_fftixy2is != nullptr);
-        auto* stick_up = this->fft_bundle.get_spinor_stick_data(bands);
-        auto* stick_down = stick_up + bands * stick_size;
-        base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(
-            nullptr, stick_up, 0, 2 * bands * stick_size);
-        const int* index = this->d_igl2isz_k + ik * this->npwk_max;
-        pack_spinor_sticks(this->npwk[ik], stride, index, input, stick_up, stick_down, bands, stick_size);
-        this->fft_bundle.apply_spinor_potential(potential, up, down, this->d_fftixy2is, bands);
-        add_spinor_sticks(this->npwk[ik], stride, this->nxyz, index, stick_up, stick_down, output, bands, stick_size);
+        this->spinor_to_slabs(input, ik, stride, up, down, bands);
+        fused_veff_x(this->nx, this->ny * this->nz, this->fft_bundle.lixy + 1, this->fft_bundle.rixy, potential, up, down, bands);
+        this->slabs_to_spinor(up, down, ik, stride, output, bands);
         ModuleBase::timer::tick(this->classname, "spinor_potential gpu");
         return;
     }

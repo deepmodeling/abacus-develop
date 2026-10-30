@@ -197,6 +197,7 @@ int main(int argc, char** argv)
                 if (ModulePW::fused_fft(length) != nullptr)
                 {
                     run(basis, length, length, 31, true, max_error, max_hermitian, 50.0, 3);
+                    run(basis, 72, 72, length, true, max_error, max_hermitian, 50.0, 3);
                 }
             }
             run(basis, 79, 83, 89, true, max_error, max_hermitian, 50.0, 3);
@@ -223,4 +224,5 @@ int main(int argc, char** argv)
                  - static_cast<long long>(free_bytes[1]) << std::endl;
     require(max_error < 1e-12 && max_hermitian < 1e-12, "Spinor potential comparison failed");
     MPI_Finalize();
+    return 0;
 }

@@ -321,6 +321,26 @@ void FFT_CUDA<double>::transform_spinor_sticks(std::complex<double>* up, std::co
     if (!inverse) { CHECK_CUFFT(cufftExecZ2Z(plan, data, data, CUFFT_FORWARD)); }
 }
 template <typename FPTYPE>
+void FFT_CUDA<FPTYPE>::transform_spinor_slabs(std::complex<double>*, std::complex<double>*, const int*, bool, int) const
+{
+}
+template <>
+void FFT_CUDA<double>::transform_spinor_slabs(std::complex<double>* up, std::complex<double>* down,
+                                              const int* reverse, bool inverse, int bands) const
+{
+    const int stick_size = this->fused_veff_stick_size();
+    assert(stick_size > 0 && reverse != nullptr);
+    assert(bands >= 1 && bands <= this->spinor_batch_size());
+    auto* workspace = this->get_spinor_stick_data(bands);
+    std::complex<double>* slabs[2] = {up, down};
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        auto* sticks = workspace + spin * bands * stick_size;
+        ModulePW::transform_stick_slabs(sticks, slabs[spin], reverse, this->nx, this->ny, this->nz,
+                                        this->lixy_index + 1, this->rixy_index, inverse, bands, stick_size);
+    }
+}
+template <typename FPTYPE>
 void FFT_CUDA<FPTYPE>::apply_spinor_potential(const double*, std::complex<double>*, std::complex<double>*,
                                               const int*, int) const
 {

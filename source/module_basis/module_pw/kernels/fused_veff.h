@@ -8,6 +8,11 @@ namespace ModulePW
 
 struct FusedFFT
 {
+    // The reverse map gives a wavefunction index at each stick/z position, or
+    // -1 for a hole. Loads produce spin-major scratch from band-major spinors;
+    // additions normalize by nxyz and preserve output outside the basis.
+    void (*load_sticks)(const std::complex<double>*, std::complex<double>*, const int*, int, int, int);
+    void (*add_sticks)(const std::complex<double>*, std::complex<double>*, const int*, int, int, int, int);
     void (*potential)(int, int, int, const double*, std::complex<double>*, std::complex<double>*, int);
     void (*density)(int, int, int, const double*, int, double*, const std::complex<double>*, const std::complex<double>*);
     void (*sticks)(std::complex<double>*, std::complex<double>*, const int*, int, int, int, int, bool, int, int);

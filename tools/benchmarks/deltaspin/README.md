@@ -177,13 +177,21 @@ this registry, retain the cuFFT path. The optional build requires CUDA and
 cuFFTDx 1.6 or newer, discoverable through the MathDx CMake package.
 
 The application selects the fused path for double-complex spinors on Volta,
-with one MPI rank and an eligible plane-wave layout. The x and y dimensions
-are selected independently; z transforms use runtime cuFFT plans. Rectangular
-and nonorthogonal cells use the same implementation. A missing y template can
+with one MPI rank and an eligible plane-wave layout. The x, y and z dimensions
+are selected independently. Rectangular and nonorthogonal cells use the same
+implementation. A missing y template can
 use cuFFT for the y-z transforms while retaining the fused x operation.
 
+For a supported z length, the inverse transform loads sparse wavefunction
+coefficients directly, supplies zeros for absent coefficients, and writes the
+internal stick grid. The forward transform adds normalized coefficients to the
+wavefunction output without a separate gather. Per-k inverse maps are rebuilt
+with the basis and released with it. Unsupported z lengths and failure to
+allocate the optional map retain packing, runtime cuFFT plans and gathering.
+This changes FP64 operation order; it does not imply bitwise SCF trajectories.
+
 Two-spin x transforms select the largest supported element count per thread
-up to ten to limit register demand. Single-field y transforms retain their
+up to ten to limit register demand. Single-field y and z transforms retain their
 independent element and block-size policy. These choices apply uniformly to
 the generated registry and do not depend on a benchmark's grid dimensions.
 
@@ -193,6 +201,18 @@ may exceed that target on a large grid. Scratch arrays grow only when necessary;
 FFT plans are cached by batch size and released with the basis. This policy
 does not depend on atom count or a named benchmark system. Automatic template
 instantiation increases compilation time and executable size.
+
+The potential check covers every supported z length against full-grid cuFFT,
+including sparse layouts, nonorthogonal cells, band tails, accumulation and
+repeated basis lifetimes. `check_z_fft_fallback.cpp` additionally rejects the
+optional inverse-map allocation at the allocator boundary, checks its contents
+against the host basis, and verifies release after basis changes and destruction:
+
+```bash
+python3 src/link_check.py src/check_z_fft_fallback.cpp --cxxflag=-UNDEBUG \
+    --ldflag=-Wl,--wrap=cudaMalloc --ldflag=-Wl,--wrap=cudaFree
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 results/check_z_fft_fallback
+```
 
 ## Periodic projector phases
 

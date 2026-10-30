@@ -210,6 +210,8 @@ class FFT_Bundle
         std::complex<double>* get_spinor_stick_data(int bands) const;
         void transform_spinor_sticks(std::complex<double>* up, std::complex<double>* down,
                                      const int* reverse, bool inverse, int bands = 1) const;
+        void transform_spinor_slabs(std::complex<double>* up, std::complex<double>* down,
+                                    const int* reverse, bool inverse, int bands) const;
         void apply_spinor_potential(const double* potential, std::complex<double>* up,
                                     std::complex<double>* down, const int* reverse = nullptr, int bands = 1) const;
         int lixy() const;

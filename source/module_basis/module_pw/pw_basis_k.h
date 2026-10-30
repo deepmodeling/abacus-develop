@@ -103,6 +103,13 @@ public:
   private:
 #if defined(__CUFFTDX)
     int* d_fftixy2is = nullptr;
+    // Per-k inverse plane-wave maps, with -1 at unoccupied z coefficients.
+    int* d_isz2igl_k = nullptr;
+    void setup_spinor_wave_map();
+    void spinor_to_slabs(const std::complex<double>* input, int ik, int stride,
+                         std::complex<double>* up, std::complex<double>* down, int bands) const;
+    void slabs_to_spinor(std::complex<double>* up, std::complex<double>* down, int ik,
+                         int stride, std::complex<double>* output, int bands) const;
 #endif
     float  * s_gk2 = nullptr;
     double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]

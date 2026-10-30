@@ -413,13 +413,106 @@ struct FusedTransform
     }
 };
 
+// Each block transforms contiguous z rows. The reverse map identifies the
+// plane-wave coefficient at each Fourier-grid position, with -1 for a hole.
+// Spin-major scratch rows correspond to band-major input/output spinors.
+template <class FFT, bool Inverse>
+__global__ void transform_z_wave(const cufftDoubleComplex* input, cufftDoubleComplex* output,
+                              const int* reverse, int sticks, int bands, int stride, double scale)
+{
+    using Complex = typename FFT::value_type;
+    constexpr int length = cufftdx::size_of<FFT>::value;
+    const int stick = blockIdx.x * FFT::ffts_per_block + threadIdx.y;
+    const int spin = blockIdx.y / bands, band = blockIdx.y % bands;
+    const size_t wave_offset = size_t(2 * band + spin) * stride;
+    const size_t field_offset = size_t(blockIdx.y) * sticks * length;
+    extern __shared__ __align__(16) Complex shared[];
+    Complex values[FFT::storage_size];
+    for (int i = 0; i < FFT::elements_per_thread; ++i)
+    {
+        const int z = threadIdx.x + i * FFT::stride;
+        Complex value(0.0, 0.0);
+        if (stick < sticks && z < length)
+        {
+            const int position = stick * length + z;
+            const int ig = reverse[position];
+            if (!Inverse || ig >= 0)
+            {
+                const auto v = input[Inverse ? wave_offset + ig : field_offset + position];
+                value = Complex(v.x, v.y);
+            }
+        }
+        values[i] = value;
+    }
+    FFT().execute(values, shared);
+    for (int i = 0; i < FFT::elements_per_thread; ++i)
+    {
+        const int z = threadIdx.x + i * FFT::stride;
+        if (stick < sticks && z < length)
+        {
+            const int position = stick * length + z;
+            if constexpr (Inverse)
+            {
+                output[field_offset + position] = make_cuDoubleComplex(values[i].x, values[i].y);
+            }
+            else
+            {
+                const int ig = reverse[position];
+                if (ig >= 0)
+                {
+                    auto& result = output[wave_offset + ig];
+                    result.x += scale * values[i].x;
+                    result.y += scale * values[i].y;
+                }
+            }
+        }
+    }
+}
+
+template <int Length>
+struct ZTransferTransform
+{
+    using Production = ModulePW::FusedTransform<Length>;
+    using Base = decltype(typename Production::Common()
+                         + cufftdx::ElementsPerThread<Production::single_elements>());
+    using Geometry = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
+    static constexpr int batches = std::min({16, std::max(1, 256 / int(Geometry::stride)),
+                                             49152 / (Length * 16)});
+    using Inverse = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::inverse>()
+                            + cufftdx::FFTsPerBlock<batches>());
+    using Forward = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::forward>()
+                            + cufftdx::FFTsPerBlock<batches>());
+
+    static void load(const std::complex<double>* input, std::complex<double>* output,
+                     const int* reverse, int sticks, int bands, int stride)
+    {
+        const dim3 blocks((sticks + batches - 1) / batches, 2 * bands);
+        transform_z_wave<Inverse, true><<<blocks, Inverse::block_dim, Inverse::shared_memory_size>>>(
+            reinterpret_cast<const cufftDoubleComplex*>(input), reinterpret_cast<cufftDoubleComplex*>(output),
+            reverse, sticks, bands, stride, 1.0);
+        cudaErrcheck(cudaGetLastError());
+    }
+
+    static void add(const std::complex<double>* input, std::complex<double>* output,
+                    const int* reverse, int sticks, int bands, int stride, int nxyz)
+    {
+        const dim3 blocks((sticks + batches - 1) / batches, 2 * bands);
+        transform_z_wave<Forward, false><<<blocks, Forward::block_dim, Forward::shared_memory_size>>>(
+            reinterpret_cast<const cufftDoubleComplex*>(input), reinterpret_cast<cufftDoubleComplex*>(output),
+            reverse, sticks, bands, stride, 1.0 / nxyz);
+        cudaErrcheck(cudaGetLastError());
+    }
+};
+
+
 template <int Length>
 const FusedFFT* make_fused_fft()
 {
     using Transform = FusedTransform<Length>;
     if constexpr (!Transform::Default::requires_workspace)
     {
-        static const FusedFFT functions = {Transform::potential, Transform::density, Transform::sticks};
+        static const FusedFFT functions = {ZTransferTransform<Length>::load, ZTransferTransform<Length>::add,
+                                           Transform::potential, Transform::density, Transform::sticks};
         return &functions;
     }
     return nullptr;
