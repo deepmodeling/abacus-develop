@@ -229,6 +229,38 @@ TEST_F(ChargeMixingTest, ModelChangeRestartsTheOscillationWindow)
     EXPECT_EQ(restarted.mixing_restart_last, model_change);
 }
 
+// mix_uom reuses the coefficients of the rho history, so after a model change
+// (SCCS delayed start) the first occupation update must be a single simple
+// mixing step, not a combination of the old occupations.
+TEST_F(ChargeMixingTest, ModelChangeRestartsUomHistory)
+{
+    cfg.mixing_mode = "pulay";
+    Charge_Mixing charge_mixing;
+    charge_mixing.set_mixing(make_cfg(), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
+    charge_mixing.init_mixing();
+    const int uom_size = 4;
+    charge_mixing.allocate_mixing_uom(uom_size);
+    for (int step = 0; step < 2; ++step)
+    {
+        std::vector<double> uom(uom_size, 1.0 + step);
+        std::vector<double> uom_save(uom_size, 0.5 + step);
+        charge_mixing.mix_uom(uom, uom_save);
+    }
+
+    const int model_change = 3;
+    charge_mixing.restart_for_new_model(model_change);
+    std::vector<double> uom = {2.0, 3.0, 4.0, 5.0};
+    std::vector<double> uom_save = {1.0, 1.0, 1.0, 1.0};
+    charge_mixing.mix_uom(uom, uom_save);
+
+    const double beta = cfg.mixing_beta;
+    for (int i = 0; i < uom_size; ++i)
+    {
+        const double expected = 1.0 + beta * (2.0 + i - 1.0);
+        EXPECT_NEAR(uom[i], expected, 1e-12) << "element " << i;
+    }
+}
+
 TEST_F(ChargeMixingTest, MixResetClearsDmrHistory)
 {
     cfg.mixing_dmr = true;
