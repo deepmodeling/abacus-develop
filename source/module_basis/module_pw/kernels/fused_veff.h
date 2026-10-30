@@ -9,7 +9,7 @@ namespace ModulePW
 struct FusedFFT
 {
     void (*potential)(int, int, int, const double*, std::complex<double>*, std::complex<double>*, int);
-    void (*density)(int, int, int, double, double*, const std::complex<double>*, const std::complex<double>*);
+    void (*density)(int, int, int, const double*, int, double*, const std::complex<double>*, const std::complex<double>*);
     void (*sticks)(std::complex<double>*, std::complex<double>*, const int*, int, int, int, int, bool, int, int);
 };
 
@@ -46,6 +46,11 @@ void fused_veff_x(int nx, int plane, int left, int right, const double* potentia
 // inverse x transforms. Density channels are contiguous full real grids.
 void fused_density_x(int nx, int plane, int left, int right, double weight, double* density,
                      const std::complex<double>* up, const std::complex<double>* down);
+
+// The host weights contain one to four values. Compact spin grids concatenate
+// bands in their original order; each density element is accumulated in that order.
+void fused_density_x(int nx, int plane, int left, int right, const double* weights, int bands,
+                     double* density, const std::complex<double>* up, const std::complex<double>* down);
 
 } // namespace ModulePW
 

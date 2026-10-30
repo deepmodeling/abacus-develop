@@ -296,6 +296,22 @@ operations, charge conservation, Hartree and XC fields, stress, Davidson
 eigenpairs, initialization/storage lifetimes, G+k assembly, magnetic-constraint
 Hamiltonian updates and mixing behavior.
 
+The fused CUDA spin-density path groups up to four consecutive occupied bands,
+bounded by the existing 256 MiB spinor-transform workspace policy. Exact zero
+weights end a group and are skipped before the transforms; negative and tiny
+weights remain contributions. Each block retains the charge and three spin
+densities across the group, then stores them once. Band order and the separate
+rounding of each weighted contribution are preserved. Single-band groups use
+the original density kernel, and unsupported FFT layouts and device paths
+retain their ordinary transforms. Group scratch storage scales with the compact
+FFT grid and must be included in whole-application peak-memory measurements.
+
+`check_density_bands.cpp` compares the grouped public interface with ordered
+single-band calls over cubic and rectangular grids, two k points, one to four
+bands, padded plane-wave storage, and signed, zero and tiny weights. It checks
+bitwise density agreement, integrated charge, immutable input, density guards,
+the resource-limited single-band case, and unsupported FFT registry entries.
+
 Onsite projector overlaps remain on the device while GPU operators consume
 them. A one-rank pool already has the complete contraction and skips the host
 staging used for MPI reduction. Multi-rank pools retain their host reduction.

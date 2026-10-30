@@ -7,6 +7,7 @@
 #include <cufft.h>
 #include <cufftdx.hpp>
 #include <algorithm>
+#include <cassert>
 
 namespace ModulePW
 {
@@ -208,6 +209,105 @@ __global__ void fused_spinor_density(const cufftDoubleComplex* input_up, const c
     }
 }
 
+struct DensityWeights
+{
+    double values[4];
+};
+
+// A block owns disjoint grid points and retains all four density channels
+// while processing consecutive bands. Cooperative shared-memory transposes
+// coalesce the initial density loads and the final density stores.
+template <class FFT>
+__global__ void accumulate_spinor_density(const cufftDoubleComplex* input_up,
+                                          const cufftDoubleComplex* input_down,
+                                          double* rho, DensityWeights weights, int bands,
+                                          int plane, int left, int right)
+{
+    using Complex = typename FFT::value_type;
+    constexpr int nx = cufftdx::size_of<FFT>::value;
+    constexpr int batches = FFT::ffts_per_block;
+    const int size = nx * plane;
+    const int compact = (left + nx - right) * plane;
+    const int line = blockIdx.x * batches + threadIdx.y;
+    const int tid = threadIdx.y * blockDim.x + threadIdx.x;
+    extern __shared__ __align__(16) Complex shared[];
+    auto* tile = reinterpret_cast<double*>(shared);
+    double accumulated[4][FFT::elements_per_thread];
+
+    #pragma unroll
+    for (int spin = 0; spin < 4; ++spin)
+    {
+        __syncthreads();
+        for (int i = tid; i < nx * batches; i += blockDim.x * blockDim.y)
+        {
+            const int x = i / batches;
+            const int grid_line = blockIdx.x * batches + i % batches;
+            tile[i] = grid_line < plane ? rho[spin * size + x * plane + grid_line] : 0.0;
+        }
+        __syncthreads();
+        #pragma unroll
+        for (int j = 0; j < FFT::elements_per_thread; ++j)
+        {
+            const int x = threadIdx.x + j * FFT::stride;
+            accumulated[spin][j] = x < nx ? tile[x * batches + threadIdx.y] : 0.0;
+        }
+    }
+    __syncthreads();
+
+    Complex up[FFT::storage_size], down[FFT::storage_size];
+    for (int band = 0; band < bands; ++band)
+    {
+        const double weight = band == 0 ? weights.values[0] : band == 1 ? weights.values[1]
+                            : band == 2 ? weights.values[2] : weights.values[3];
+        if (weight == 0.0) { continue; }
+        transfer_spinor_field<FFT, true>(input_up + band * compact, nullptr, up,
+                                        shared, plane, left, right, blockIdx.x);
+        FFT().execute(up, shared);
+        __syncthreads();
+        transfer_spinor_field<FFT, true>(input_down + band * compact, nullptr, down,
+                                        shared, plane, left, right, blockIdx.x);
+        FFT().execute(down, shared);
+        #pragma unroll
+        for (int j = 0; j < FFT::elements_per_thread; ++j)
+        {
+            const int x = threadIdx.x + j * FFT::stride;
+            if (x < nx && line < plane)
+            {
+                const Complex a = up[j], b = down[j];
+                const double norm_up = a.x * a.x + a.y * a.y;
+                const double norm_down = b.x * b.x + b.y * b.y;
+                // The single-band kernel rounds each weighted contribution
+                // through shared memory before adding it to the density.
+                // Explicit rounding preserves that order without a fused add.
+                accumulated[0][j] = __dadd_rn(accumulated[0][j], weight * (norm_up + norm_down));
+                accumulated[1][j] = __dadd_rn(accumulated[1][j], weight * 2.0 * (a.x * b.x + a.y * b.y));
+                accumulated[2][j] = __dadd_rn(accumulated[2][j], weight * 2.0 * (a.x * b.y - b.x * a.y));
+                accumulated[3][j] = __dadd_rn(accumulated[3][j], weight * (norm_up - norm_down));
+            }
+        }
+        __syncthreads();
+    }
+
+    #pragma unroll
+    for (int spin = 0; spin < 4; ++spin)
+    {
+        __syncthreads();
+        #pragma unroll
+        for (int j = 0; j < FFT::elements_per_thread; ++j)
+        {
+            const int x = threadIdx.x + j * FFT::stride;
+            if (x < nx) { tile[x * batches + threadIdx.y] = accumulated[spin][j]; }
+        }
+        __syncthreads();
+        for (int i = tid; i < nx * batches; i += blockDim.x * blockDim.y)
+        {
+            const int x = i / batches;
+            const int grid_line = blockIdx.x * batches + i % batches;
+            if (grid_line < plane) { rho[spin * size + x * plane + grid_line] = tile[i]; }
+        }
+    }
+}
+
 
 template <class FFT, int Limit>
 constexpr int fft_elements_at_most()
@@ -261,15 +361,27 @@ struct FusedTransform
                 a, b, a, b, values, plane, left, right, bands);
     }
 
-    static void density(int plane, int left, int right, double weight, double* rho,
+    static void density(int plane, int left, int right, const double* weights, int bands, double* rho,
                          const std::complex<double>* up, const std::complex<double>* down)
     {
+        assert(bands >= 1 && bands <= 4);
         const size_t transfer = size_t(left + Length - right) * batches * sizeof(cufftDoubleComplex);
         const size_t density = size_t(Length) * batches * sizeof(double);
         const size_t bytes = std::max({transfer, density, size_t(Inverse::shared_memory_size)});
-        fused_spinor_density<Inverse><<<(plane + batches - 1) / batches, Inverse::block_dim, bytes>>>(
-            reinterpret_cast<const cufftDoubleComplex*>(up), reinterpret_cast<const cufftDoubleComplex*>(down),
-            rho, weight, plane, left, right);
+        const auto* a = reinterpret_cast<const cufftDoubleComplex*>(up);
+        const auto* b = reinterpret_cast<const cufftDoubleComplex*>(down);
+        if (bands == 1)
+        {
+            fused_spinor_density<Inverse><<<(plane + batches - 1) / batches, Inverse::block_dim, bytes>>>(
+                a, b, rho, weights[0], plane, left, right);
+        }
+        else
+        {
+            DensityWeights values{};
+            std::copy(weights, weights + bands, values.values);
+            accumulate_spinor_density<Inverse><<<(plane + batches - 1) / batches, Inverse::block_dim, bytes>>>(
+                a, b, rho, values, bands, plane, left, right);
+        }
     }
 
     static void sticks(std::complex<double>* input, std::complex<double>* output, const int* reverse,

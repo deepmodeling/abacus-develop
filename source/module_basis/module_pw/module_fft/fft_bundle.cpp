@@ -244,6 +244,18 @@ int FFT_Bundle::fused_veff_stick_size() const
     return 0;
 }
 
+int FFT_Bundle::spinor_batch_size() const
+{
+#if defined(__CUDA)
+    auto* cuda = dynamic_cast<FFT_CUDA<double>*>(fft_double.get());
+    if (cuda != nullptr)
+    {
+        return cuda->spinor_batch_size();
+    }
+#endif
+    return 1;
+}
+
 std::complex<double>* FFT_Bundle::get_spinor_stick_data(int bands) const
 {
 #if defined(__CUDA)

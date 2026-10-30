@@ -120,7 +120,13 @@ void fused_veff_x(int nx, int plane, int left, int right, const double* potentia
 void fused_density_x(int nx, int plane, int left, int right, double weight, double* density,
                      const std::complex<double>* up, const std::complex<double>* down)
 {
-    fused_fft(nx)->density(plane, left, right, weight, density, up, down);
+    fused_density_x(nx, plane, left, right, &weight, 1, density, up, down);
+}
+
+void fused_density_x(int nx, int plane, int left, int right, const double* weights, int bands,
+                     double* density, const std::complex<double>* up, const std::complex<double>* down)
+{
+    fused_fft(nx)->density(plane, left, right, weights, bands, density, up, down);
     check_launch();
 }
 

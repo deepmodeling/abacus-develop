@@ -165,6 +165,11 @@ public:
     // The scratch grids use the same compact layout as add_spinor_potential.
     void add_spinor_density(const std::complex<double>* input, double weight, double* density,
                             int ik, int stride, std::complex<double>* up, std::complex<double>* down) const;
+    // Accumulates consecutive bands with host weights, preserving band order.
+    // Scratch grids contain bands * ft.fused_veff_grid_size() elements each;
+    // bands is at most min(4, ft.spinor_batch_size()).
+    void add_spinor_density(const std::complex<double>* input, const double* weights, int bands, double* density,
+                            int ik, int stride, std::complex<double>* up, std::complex<double>* down) const;
 #endif
 
   public:

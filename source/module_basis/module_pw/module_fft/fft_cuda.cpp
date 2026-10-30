@@ -260,6 +260,20 @@ int FFT_CUDA<double>::fused_veff_stick_size() const
                ? this->ns_index * this->nz : 0;
 }
 template <typename FPTYPE>
+int FFT_CUDA<FPTYPE>::spinor_batch_size() const
+{
+    return 1;
+}
+template <>
+int FFT_CUDA<double>::spinor_batch_size() const
+{
+    const int sticks = this->fused_veff_stick_size();
+    if (sticks == 0) { return 1; }
+    const size_t bytes = 2 * sizeof(std::complex<double>)
+                         * (size_t(sticks) + this->fused_veff_grid_size());
+    return std::max(1, std::min(16, int((256ULL * 1024 * 1024) / bytes)));
+}
+template <typename FPTYPE>
 std::complex<double>* FFT_CUDA<FPTYPE>::get_spinor_stick_data(int) const
 {
     return nullptr;
