@@ -267,13 +267,12 @@ void md_line(MDCell& mdcell,
             ModuleIO::print_screen(stress_step, force_step, istep_print);
             mdrun->first_half(GlobalV::ofs_running);
 
-            /// update force and virial due to the update of atom positions
-            /// Use the global (1 + restarted) step index so a restarted run's
-            /// first local step still appends to the accumulated output files
-            /// instead of truncating the previous run's records.
-            const int global_step = mdrun->step_ + mdrun->step_rst_;
+            /// The solver receives the local run index so its first call still
+            /// enters the init_chg dm/hr and init_wfc file branches. The
+            /// global (1 + restarted) index above is used only for screen,
+            /// dump, STRU and restart-file output.
             MD_func::force_virial(p_esolver,
-                                  global_step,
+                                  mdrun->step_,
                                   mdcell,
                                   decomp,
                                   mdrun->potential,
@@ -315,38 +314,60 @@ void md_line(MDCell& mdcell,
         const int current_step = mdrun->step_ + mdrun->step_rst_;
         const bool do_output_step = eff_output_freq > 0
             && current_step % eff_output_freq == 0;
-        if (do_output_step)
+        /// Restart checkpoints follow md_restartfreq independently of the
+        /// user-facing output cadence: setting out_freq_ion must not change
+        /// how often the run can be resumed from.
+        const bool do_restart_step = param_in.mdp.md_restartfreq > 0
+            && current_step % param_in.mdp.md_restartfreq == 0;
+        if (do_output_step || do_restart_step)
         {
             if (mdcell.has_backing_unitcell())
             {
                 mdcell.sync_backing_unitcell();
             }
-            if (param_in.inp.out_stru > 0)
+        }
+        if (do_output_step && param_in.inp.out_stru > 0)
+        {
+            const int stru_step = current_step + 1;
+            // File-name selection and append/truncate are two independent
+            // decisions. The file name is fixed to "STRU" whenever mode 1
+            // accumulation is allowed (and no legacy STRU/ directory is in
+            // the way); modes 0/2 keep the numbered STRU{stru_step} files.
+            // Whether to append depends on whether this is the very first
+            // step of a fresh (non-restart) run: a fresh first frame
+            // truncates the fixed-name file so it does not keep frames
+            // from a previous run, while later steps and restarted runs
+            // append one frame each, introduced by a one-based
+            // "# MD step N" comment line.
+            const bool use_fixed_name = append_stru_allowed && !has_legacy_stru_dir;
+            const bool is_first_step_of_fresh_run = (mdrun->step_ == 0) && (mdrun->step_rst_ == 0);
+            const bool append_stru = use_fixed_name && !is_first_step_of_fresh_run;
+            const std::string frame_comment = use_fixed_name
+                ? "# MD step " + std::to_string(stru_step) + "\n\n"
+                : "";
+            std::stringstream file;
+            file << stru_out_dir << "STRU";
+            if (!use_fixed_name)
             {
-                const int stru_step = current_step + 1;
-                // File-name selection and append/truncate are two independent
-                // decisions. The file name is fixed to "STRU" whenever mode 1
-                // accumulation is allowed (and no legacy STRU/ directory is in
-                // the way); modes 0/2 keep the numbered STRU{stru_step} files.
-                // Whether to append depends on whether this is the very first
-                // step of a fresh (non-restart) run: a fresh first frame
-                // truncates the fixed-name file so it does not keep frames
-                // from a previous run, while later steps and restarted runs
-                // append one frame each, introduced by a one-based
-                // "# MD step N" comment line.
-                const bool use_fixed_name = append_stru_allowed && !has_legacy_stru_dir;
-                const bool is_first_step_of_fresh_run = (mdrun->step_ == 0) && (mdrun->step_rst_ == 0);
-                const bool append_stru = use_fixed_name && !is_first_step_of_fresh_run;
-                const std::string frame_comment = use_fixed_name
-                    ? "# MD step " + std::to_string(stru_step) + "\n\n"
-                    : "";
-                std::stringstream file;
-                file << stru_out_dir << "STRU";
-                if (!use_fixed_name)
-                {
-                    file << stru_step;
-                }
-                mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str(), frame_comment, append_stru);
+                file << stru_step;
+            }
+            mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str(), frame_comment, append_stru);
+        }
+        if (do_restart_step)
+        {
+            // The restart snapshot must exist even when out_stru is 0, so it
+            // is kept separate from the user-facing trajectory above. The
+            // zero-based step is used in the file name because md_restart
+            // resolves it from Restart_md.txt as an istep value.
+            if (!(do_output_step && param_in.inp.out_stru > 0))
+            {
+                std::stringstream restart_stru;
+                restart_stru << stru_out_dir << "STRU_MD_" << current_step;
+                mdcell::print_stru_file(mdcell,
+                                        mdcell.stru_meta(),
+                                        restart_stru.str(),
+                                        std::string(),
+                                        /*append=*/false);
             }
             mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
