@@ -1,9 +1,10 @@
-#include "source_cell/domain_decomposition.h"
-#include "gtest/gtest.h"
 #include "setcell.h"
+#include "source_cell/domain_decomposition.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_md/md_func.h"
+
+#include "gtest/gtest.h"
 #define doublethreshold 1e-12
 
 /************************************************
@@ -205,7 +206,9 @@ TEST_F(LJ_pot_test, SetC6C12)
         {
             int k = i * (i + 1) / 2 + j;
             double temp = pow(lj_sigma[k] * ModuleBase::ANGSTROM_AU, 6);
-            EXPECT_NEAR(p_esolver->get_lj_c6()(i, j), 4.0 * lj_epsilon[k] * temp / ModuleBase::Ry_to_eV, doublethreshold);
+            EXPECT_NEAR(p_esolver->get_lj_c6()(i, j),
+                        4.0 * lj_epsilon[k] * temp / ModuleBase::Ry_to_eV,
+                        doublethreshold);
             EXPECT_NEAR(p_esolver->get_lj_c12()(i, j), p_esolver->get_lj_c6()(i, j) * temp, doublethreshold);
             EXPECT_DOUBLE_EQ(p_esolver->get_lj_c6()(i, j), p_esolver->get_lj_c6()(j, i));
             EXPECT_DOUBLE_EQ(p_esolver->get_lj_c12()(i, j), p_esolver->get_lj_c12()(j, i));

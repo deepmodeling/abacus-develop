@@ -1,14 +1,13 @@
-#include "source_md/md_func.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
-
-#include <gtest/gtest.h>
+#include "source_md/md_func.h"
 
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -68,7 +67,17 @@ TEST_P(MdDumpBatchTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
     const std::vector<double> masses(2, 1.0);
     const std::vector<std::int64_t> counts = {6, 7};
     MDCell cell;
-    cell.initialize_from_owned_atoms(lattice, inverse, 1.0, 1.0, total_atoms, atoms, labels, masses, counts, 0.0, domain);
+    cell.initialize_from_owned_atoms(lattice,
+                                     inverse,
+                                     1.0,
+                                     1.0,
+                                     total_atoms,
+                                     atoms,
+                                     labels,
+                                     masses,
+                                     counts,
+                                     0.0,
+                                     domain);
     const std::string directory = make_dump_directory(domain);
     ASSERT_FALSE(directory.empty());
     MD_para parameters;
@@ -120,7 +129,7 @@ TEST_P(MdDumpBatchTest, OrdersAtomsAcrossRanksAndAppendsCompleteFrames)
                     if (domain.size() > 2)
                     {
                         // Reproduce the aggregate-only overflow: each rank fits on its own.
-                        for (const std::size_t bytes : rank_bytes)
+                        for (const std::size_t bytes: rank_bytes)
                         {
                             EXPECT_LE(bytes, 1024u);
                         }

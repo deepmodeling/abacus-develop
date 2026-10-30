@@ -1,8 +1,10 @@
+#include "source_md/md_func.h"
+
+#include "md_test_fixture.h"
 #include "source_cell/domain_decomposition.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "md_test_fixture.h"
-#include "source_md/md_func.h"
 
 #define doublethreshold 1e-12
 
@@ -136,7 +138,7 @@ TEST_F(MD_func_test, compute_stress)
     MDCell mdcell;
     DomainDecomposition decomp;
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
-    for (LocalAtom& atom : mdcell.owned_atoms())
+    for (LocalAtom& atom: mdcell.owned_atoms())
     {
         atom.vel = test_velocity;
     }
@@ -157,7 +159,7 @@ TEST_F(MD_func_test, dump_info)
     MDCell mdcell;
     DomainDecomposition decomp;
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
-    for (LocalAtom& atom : mdcell.owned_atoms())
+    for (LocalAtom& atom: mdcell.owned_atoms())
     {
         atom.vel = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
     }
@@ -309,27 +311,27 @@ TEST_F(MD_func_test, print_stress)
     EXPECT_THAT(output_str, testing::HasSubstr("IONIC (KINETIC) PART OF STRESS: 0 kbar"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MD PRESSURE (ELECTRONS+IONS)  : 0 kbar"));
-/*
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr(" MD STRESS (kbar)"));
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str,
-                testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
-    getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
-*/
+    /*
+        getline(ifs, output_str);
+        getline(ifs, output_str);
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str,
+                    testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
+        getline(ifs, output_str);
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str, testing::HasSubstr(" MD STRESS (kbar)"));
+        getline(ifs, output_str);
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str,
+                    testing::HasSubstr(" ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><"));
+        getline(ifs, output_str);
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
+        getline(ifs, output_str);
+        EXPECT_THAT(output_str, testing::HasSubstr("              0              0              0"));
+    */
 
     ifs.close();
     remove("running.log");
@@ -360,7 +362,7 @@ TEST_F(MD_func_test, global_dof_mdcell)
     initialize_mdcell_from_ucell(mdcell, ucell, decomp);
     EXPECT_EQ(MD_func::global_dof(mdcell), 9);
 
-    for (LocalAtom& atom : mdcell.owned_atoms())
+    for (LocalAtom& atom: mdcell.owned_atoms())
     {
         atom.mbl.x = 0;
     }

@@ -197,9 +197,7 @@ double current_temp(double& kinetic,
                     const int& frozen_freedom,
                     const double* allmass,
                     const ModuleBase::Vector3<double>* vel);
-double current_temp(double& kinetic,
-                    const MDCell& mdcell,
-                    const std::int64_t& frozen_freedom);
+double current_temp(double& kinetic, const MDCell& mdcell, const std::int64_t& frozen_freedom);
 std::int64_t global_dof(const MDCell& mdcell);
 
 void current_md_info(const MDCell& mdcell, const std::string& file_dir, int& md_step, double& temperature);

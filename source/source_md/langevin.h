@@ -41,8 +41,8 @@ class Langevin : public MD_base
      */
     void post_force();
 
-    std::vector<ModuleBase::Vector3<double> > total_force; ///< total force = true force + Langevin fictitious_force
-    double md_damp;                           ///< damping factor
+    std::vector<ModuleBase::Vector3<double>> total_force; ///< total force = true force + Langevin fictitious_force
+    double md_damp;                                       ///< damping factor
 };
 
 #endif

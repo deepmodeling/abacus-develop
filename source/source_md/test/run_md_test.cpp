@@ -1,9 +1,10 @@
-#include "source_cell/domain_decomposition.h"
-#include "gtest/gtest.h"
+#include "source_md/run_md.h"
 
+#include "source_cell/domain_decomposition.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/unitcell.h"
-#include "source_md/run_md.h"
+
+#include "gtest/gtest.h"
 
 TEST(RunMDTest, prepare_mdcell_from_unitcell)
 {

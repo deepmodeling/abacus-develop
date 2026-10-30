@@ -1,10 +1,10 @@
 #ifndef PLUMED_INTERFACE_H
 #define PLUMED_INTERFACE_H
 
+#include "source_base/vector3.h"
+
 #include <string>
 #include <vector>
-
-#include "source_base/vector3.h"
 
 /// opaque handle of the PLUMED wrapper library, see <plumed/wrapper/Plumed.h>
 /// in a PLUMED installation; it is a plain pointer-sized structure, so it can
@@ -72,10 +72,7 @@ class PlumedInterface
      *                    masses), nat entries
      * @return true when the interface is ready to be used in the MD loop
      */
-    bool init(const std::string& plumed_file,
-              const int nat,
-              const double dt_au,
-              const double* masses_au);
+    bool init(const std::string& plumed_file, const int nat, const double dt_au, const double* masses_au);
 
     /**
      * @brief one MD step: hand over the configuration, let PLUMED compute the
