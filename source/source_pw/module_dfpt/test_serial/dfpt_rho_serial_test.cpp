@@ -752,12 +752,22 @@ TEST_F(DFPTRhoSerialTest, DrhocLocalizesAtTheAtomNotItsMirror)
         }
         ASSERT_GT(wsum, 0.0);
         const ModuleBase::Vector3<double> com(cx / wsum, cy / wsum, cz / wsum);
-        const double dist_atom = (com - tau_frac) * (com - tau_frac);
-        const double dist_mirror = (com - mirror_frac) * (com - mirror_frac);
+        // minimum-image distance: wrap each component into [-0.5, 0.5)
+        auto mindist2 = [](const ModuleBase::Vector3<double>& a,
+                           const ModuleBase::Vector3<double>& b) {
+            double dx = a.x - b.x; dx -= std::round(dx);
+            double dy = a.y - b.y; dy -= std::round(dy);
+            double dz = a.z - b.z; dz -= std::round(dz);
+            return dx * dx + dy * dy + dz * dz;
+        };
+        const double dist_atom = mindist2(com, tau_frac);
+        const double dist_mirror = mindist2(com, mirror_frac);
         // the centroid of a derivative field sits at the atom up to the
-        // derivative skew (~sigma); the mirror is a full cell away
-        EXPECT_LT(std::sqrt(dist_atom), 0.1) << "dir=" << dir;
-        EXPECT_GT(dist_mirror, 100.0 * dist_atom) << "dir=" << dir;
+        // derivative skew; the mirror is a full half-cell away in the
+        // minimum-image sense, far beyond any tolerance that would admit
+        // the reflected profile
+        EXPECT_LT(dist_atom, 0.01) << "dir=" << dir;
+        EXPECT_GT(dist_mirror, 25.0 * dist_atom) << "dir=" << dir;
     }
 
     // non-zero q variant: the q-phase exp(-i q.tau) must not mirror either.
@@ -802,8 +812,16 @@ TEST_F(DFPTRhoSerialTest, DrhocLocalizesAtTheAtomNotItsMirror)
     }
     ASSERT_GT(wsum, 0.0);
     const ModuleBase::Vector3<double> com2(cx / wsum, cy / wsum, cz / wsum);
-    const double d2a = (com2 - tau_frac) * (com2 - tau_frac);
-    const double d2m = (com2 - mirror_frac) * (com2 - mirror_frac);
-    EXPECT_LT(std::sqrt(d2a), 0.15);
-    EXPECT_GT(d2m, 100.0 * d2a);
+    // same minimum-image comparison as above
+    auto mindist2 = [](const ModuleBase::Vector3<double>& a,
+                       const ModuleBase::Vector3<double>& b) {
+        double dx = a.x - b.x; dx -= std::round(dx);
+        double dy = a.y - b.y; dy -= std::round(dy);
+        double dz = a.z - b.z; dz -= std::round(dz);
+        return dx * dx + dy * dy + dz * dz;
+    };
+    const double d2a = mindist2(com2, tau_frac);
+    const double d2m = mindist2(com2, mirror_frac);
+    EXPECT_LT(d2a, 0.02);
+    EXPECT_GT(d2m, 25.0 * d2a);
 }

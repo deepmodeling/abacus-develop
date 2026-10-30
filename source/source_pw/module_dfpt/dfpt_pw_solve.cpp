@@ -167,7 +167,8 @@ void DFPT_PW::Impl::stash_converged_disp_response(int q_idx,
     // stash the converged density response too: the two-pass accumulation
     // rebuilds f_xc.(drho_val + drhoc) per displacement after the working
     // drho slots have moved on to the next displacement
-    data_.set_drho_disp(iat, idir, data_.get_drho_g(q_idx, 0));
+    const std::vector<std::complex<double>> drho_conv = data_.get_drho_g(q_idx, 0);
+    data_.set_drho_disp(iat, idir, drho_conv);
     std::vector<std::vector<std::vector<std::complex<double>>>> disp(
         nk,
         std::vector<std::vector<std::complex<double>>>(nbands));

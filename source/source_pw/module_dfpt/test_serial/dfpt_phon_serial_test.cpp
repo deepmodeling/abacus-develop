@@ -1039,7 +1039,7 @@ TEST_F(DFPTPhonSerialTest, NlccDirectTermsFillSemantics)
         std::complex<double> x_ba(0.0, 0.0);
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            x_ba += table[j][ir] * std::conj(drhoc_r[ir]);
+            x_ba += std::conj(table[j][ir]) * drhoc_r[ir];
         }
         x_ba *= fac;
         const std::complex<double> expect = 0.5 * std::conj(x_ba) / (m0 * m1);

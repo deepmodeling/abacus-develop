@@ -11,6 +11,7 @@
 #include "dfpt_rho.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_sphbes.h"
+#include "source_base/parallel_reduce.h"
 
 #include <algorithm>
 #include <cmath>
@@ -235,7 +236,9 @@ void DFPT_Phon::accum_nlcc_kernel(int atom_idx,
     }
     const int nat = ucell_->nat;
     const ModuleBase::Vector3<double> q_cart = data.get_qvec(q_idx) * ucell_->G;
-    const double fac = ucell_->omega / static_cast<double>(nrxx);
+    // pool-global normalization: nrxx is the rank-local FFT slab size,
+    // so the raw sum needs a pool reduction (the mixing PR's convention)
+    const double fac = ucell_->omega / static_cast<double>(pw_rho_->nxyz);
     const int rowb = 3 * atom_idx + dir;
     const double mass_row = ucell_->atoms[ucell_->iat2it[atom_idx]].mass;
     // QE dynmat_nlcc semantics, pinned by the element-level comparison
@@ -269,7 +272,11 @@ void DFPT_Phon::accum_nlcc_kernel(int atom_idx,
         const bool col_has_core = ucell_->atoms[ucell_->iat2it[iat2]].ncpp.nlcc;
         for (int idir2 = 0; idir2 < 3; ++idir2)
         {
-            // X_ab: the row's dvaux against the column's core response
+            // X_ab: the row's dvaux against the column's core response.
+            // Conjugation convention: the ROW response carries the
+            // conjugate (sum(conj(row)*col), matching the wavefunction
+            // and Ewald terms; at Gamma with real amplitudes this is a
+            // no-op, at nonzero q it fixes the imaginary cross terms)
             std::complex<double> x_ab(0.0, 0.0);
             if (col_has_core)
             {
@@ -281,12 +288,15 @@ void DFPT_Phon::accum_nlcc_kernel(int atom_idx,
                 pw_rho_->recip2real(drhoc_g.data(), drhoc_r.data());
                 for (int ir = 0; ir < nrxx; ++ir)
                 {
-                    x_ab += dvxc_r[ir] * std::conj(drhoc_r[ir]);
+                    x_ab += std::conj(dvxc_r[ir]) * drhoc_r[ir];
                 }
+#ifdef __MPI
+                Parallel_Reduce::reduce_pool(x_ab);
+#endif
                 x_ab *= fac;
             }
             // X_ba: the column's dvaux (per-q table) against the row's
-            // core response
+            // core response; same conjugation swap
             std::complex<double> x_ba(0.0, 0.0);
             const int cola = 3 * iat2 + idir2;
             if (row_has_core && have_table && cola < static_cast<int>(dvxc_core_->size())
@@ -295,8 +305,11 @@ void DFPT_Phon::accum_nlcc_kernel(int atom_idx,
                 const std::vector<std::complex<double>>& dvxc_b = (*dvxc_core_)[cola];
                 for (int ir = 0; ir < nrxx; ++ir)
                 {
-                    x_ba += dvxc_b[ir] * std::conj(drhoc_a_r[ir]);
+                    x_ba += std::conj(dvxc_b[ir]) * drhoc_a_r[ir];
                 }
+#ifdef __MPI
+                Parallel_Reduce::reduce_pool(x_ba);
+#endif
                 x_ba *= fac;
             }
             if (x_ab == std::complex<double>(0.0, 0.0) && x_ba == std::complex<double>(0.0, 0.0))
@@ -346,7 +359,7 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
     std::vector<std::complex<double>> w_g(npw);
     std::vector<std::complex<double>> w_r(nrxx);
     double d3[3][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
-    const double fac = ucell_->omega / static_cast<double>(nrxx);
+    const double fac = ucell_->omega / static_cast<double>(pw_rho_->nxyz);
     for (int i = 0; i < 3; ++i)
     {
         for (int j = i; j < 3; ++j)
@@ -381,6 +394,9 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
             {
                 s += w_r[ir].real() * (*vxc_r_)[ir];
             }
+#ifdef __MPI
+            Parallel_Reduce::reduce_pool(s);
+#endif
             d3[i][j] = fac * s;
             if (j != i)
             {
