@@ -40,15 +40,21 @@ class DFPT_Rho;
  * for phase B).
  *
  * nlcc systems add two direct terms (QE ph.x ground truth: dynmat_nlcc
- * and dynmatcc, both absent from the wavefunction response):
- *   D_ab += (Omega/nrxx) sum_r dvxc^a(r) conj(drhoc^b(r))
- * (dvxc^a = f_xc . (drho_val^a + drhoc^a) passed in by the caller; the
- * mixed core-valence and core-core kernel pieces) and the q-independent
- * diagonal correction
- *   D_aa[i][j] -= Omega tpiba^2 sum_G G_i G_j rhoc~(|G|)
- *                exp(-i G tau_a) conj(vxc^0(G))
- * (second derivative of the shifted core charge contracted with the
- * ground-state XC potential).
+ * and dynmatcc, both absent from the wavefunction response). Kernel
+ * term (row-conjugated, pool-summed):
+ *   X_ab = (Omega/nxyz) sum_pool conj(dvxc^a(r)) drhoc^b(r),
+ *   D_ab += (1/2)(X_ab + conj(X_ba)) / sqrt(m_a m_b)
+ * where dvxc^a = f_xc . (drho_val^a + drhoc^a) is the first-order XC
+ * potential of the TOTAL response of displacement a, supplied by the
+ * caller through the per-q kernel table (covering ALL atoms: rows of
+ * non-nlcc atoms carry their valence-only dvxc; leaving their slots
+ * empty silently drops the one-sided cross blocks). Diagonal
+ * correction (q-independent, pool-summed):
+ *   D_aa[i][j] += (Omega/nxyz) sum_pool Re[w_ij(r) vxc^0(r)] / m_a
+ * where w_ij = -tpiba^2 G_i G_j rhoc~(|G|) exp(-i G tau_a), evaluated
+ * through recip2real as a real field. The ground-state XC potential
+ * vxc^0 is the valence + core charge density's XC potential, supplied
+ * through the InitContext by the esolver wiring.
  */
 class DFPT_Phon
 {

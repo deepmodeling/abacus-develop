@@ -117,9 +117,10 @@ void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
     phon_.set_rho(&rho_);
     // the Impl-owned copy: the context pointer refers to caller stack
     // state that dies when the esolver init returns
-    // AGENTS rule 14: named local instead of a conditional in the call
-    const std::vector<double>* vxc_provider = vxc_r_.empty() ? nullptr : &vxc_r_;
-    phon_.set_vxc_r(vxc_provider);
+    // always pass the pointer (never nullptr): a rank with an empty
+    // local field must still enter accum_nlcc_diag's collective
+    // participation; the size checks inside gate only the local work
+    phon_.set_vxc_r(&vxc_r_);
     q0_.init(*ctx.ucell, ctx.pw_rho, ctx.pw_wfc, &pert_);
     hamilt_.reset(new DFPT_HamiltShift(*ctx.ucell, ctx.pw_rho, ctx.pw_wfc, *ctx.veff_r, &pert_));
     data_.init(&qlist_, nk, nbands, npw_max, nrxx, nspin, nat, ctx.dftu);

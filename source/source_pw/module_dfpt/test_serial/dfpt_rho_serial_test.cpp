@@ -824,4 +824,45 @@ TEST_F(DFPTRhoSerialTest, DrhocLocalizesAtTheAtomNotItsMirror)
     const double d2m = mindist2(com2, mirror_frac);
     EXPECT_LT(d2a, 0.02);
     EXPECT_GT(d2m, 25.0 * d2a);
+
+    // phase-sensitive check at generic q: the centroid via |field|^2 is
+    // invariant under a global phase rotation, so flipping the sign of
+    // exp(i q.tau) alone would leave it unchanged. Instead, verify the
+    // G-space coefficient phase directly: drhoc_g(G) must carry
+    // exp(-i(G+q).tau) (the QE addcore convention), not the conjugate.
+    // Compare the q=0 and q=q2 coefficients: their ratio at each G must
+    // be exp(-i q.cart . tau) * (ratio of the radial/Bessel factor at
+    // |G| vs |G+q|). For a single G with a dominant coefficient this
+    // isolates the structure-factor phase.
+    const ModuleBase::Vector3<double> q_zero_cart(0.0, 0.0, 0.0);
+    std::vector<std::complex<double>> drhoc_g0;
+    rho.compute_drhoc_g(ucell_, iat, 1, q_zero_cart, drhoc_g0);
+    ASSERT_EQ(static_cast<int>(drhoc_g0.size()), pw_rho_.npw);
+    // find the G with the largest |G|=0-adjacent coefficient (where the
+    // radial factor is comparable) and verify the phase relation
+    int ig_best = -1;
+    double best_mag = 0.0;
+    for (int ig = 0; ig < pw_rho_.npw; ++ig)
+    {
+        const double m = std::norm(drhoc_g0[ig]);
+        if (m > best_mag)
+        {
+            best_mag = m;
+            ig_best = ig;
+        }
+    }
+    ASSERT_GE(ig_best, 0);
+    // the expected extra phase from q is exp(-i q_cart . tau_cart):
+    // drhoc_q(G) / drhoc_0(G) ~= [radial(|G+q|)/radial(|G|)] * exp(-i q.tau)
+    // for the dominant G (where |G+q| ~= |G| for small q), the ratio's
+    // phase is approximately -q_cart . tau_cart
+    const std::complex<double> ratio = drhoc_g[ig_best] / drhoc_g0[ig_best];
+    const double expected_phase_arg = -(q2_cart * (ucell_.atoms[it].tau[ucell_.iat2ia[iat]] * ucell_.lat0));
+    const std::complex<double> expected_phase(std::cos(expected_phase_arg), std::sin(expected_phase_arg));
+    // the phase of the ratio should match the expected exp(-i q.tau)
+    // (within the radial-factor ratio, which is positive real)
+    const double phase_diff = std::arg(ratio / expected_phase);
+    // wrap to [-pi, pi] and allow the radial-ratio approximation
+    const double phase_diff_wrapped = std::atan2(std::sin(phase_diff), std::cos(phase_diff));
+    EXPECT_NEAR(phase_diff_wrapped, 0.0, 0.5) << "phase of drhoc_q/drhoc_0 ratio vs expected exp(-i q.tau)";
 }

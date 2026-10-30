@@ -477,7 +477,7 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
                                                nelec_,
                                                ecutwfc_,
                                                dft_plus_u_ ? this->dftu_.get() : nullptr,
-                                               vxc_r.empty() ? nullptr : &vxc_r};
+                                               &vxc_r};
     dfpt_->init(ctx);
 }
 

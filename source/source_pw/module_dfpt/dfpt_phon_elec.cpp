@@ -385,7 +385,10 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
                 rhocg *= ModuleBase::FOUR_PI / ucell_->omega;
 
                 const double phase = ModuleBase::TWO_PI * (gv * tau_cart) / ucell_->lat0;
-                const std::complex<double> gtau(std::cos(phase), -std::sin(phase));
+                // AGENTS rule 14: named locals instead of computed ctor args
+                const double gtau_re = std::cos(phase);
+                const double gtau_im = -std::sin(phase);
+                const std::complex<double> gtau(gtau_re, gtau_im);
                 w_g[ig] = -ucell_->tpiba * ucell_->tpiba * gv[i] * gv[j] * rhocg * gtau;
             }
             pw_rho_->recip2real(w_g.data(), w_r.data());
