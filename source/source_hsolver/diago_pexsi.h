@@ -13,26 +13,27 @@
 namespace hsolver
 {
 
-template <typename T>
-class DiagoPexsi
+template <typename T> class DiagoPexsi
 {
   private:
     using Real = typename GetTypeReal<T>::type;
     static std::vector<double> mu_buffer;
 
   public:
-    DiagoPexsi(const Parallel_Orbitals* ParaV_in,
-               const int nspin_in,
-               const int nlocal_in,
-               const double nelec_in,
-               const int world_nproc_in);
-    void diag(ModuleBase::MatrixBlock<T>& h_mat,
-              ModuleBase::MatrixBlock<T>& s_mat,
-              psi::Psi<T>& psi,
-              Real* eigenvalue_in);
-    const Parallel_Orbitals* ParaV = nullptr;
-    std::vector<T*> DM;
-    std::vector<T*> EDM;
+    DiagoPexsi(
+        const Parallel_Orbitals *ParaV_in,
+        const int nspin_in,
+        const int nlocal_in,
+        const double nelec_in,
+        const int world_nproc_in);
+    void diag(
+        ModuleBase::MatrixBlock<T> &h_mat,
+        ModuleBase::MatrixBlock<T> &s_mat,
+        psi::Psi<T> &psi,
+        Real *eigenvalue_in);
+    const Parallel_Orbitals *ParaV = nullptr;
+    std::vector<T *> DM;
+    std::vector<T *> EDM;
     double totalEnergyH;
     double totalEnergyS;
     double totalFreeEnergy;

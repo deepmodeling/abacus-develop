@@ -9,8 +9,7 @@
 #include <vector>
 namespace hsolver
 {
-template <typename T, typename Device>
-PLinearTransform<T, Device>::~PLinearTransform()
+template <typename T, typename Device> PLinearTransform<T, Device>::~PLinearTransform()
 {
 #ifdef __MPI
     delmem_dev_op()(U_tmp_);
@@ -19,14 +18,15 @@ PLinearTransform<T, Device>::~PLinearTransform()
 #endif
 }
 template <typename T, typename Device>
-void PLinearTransform<T, Device>::set_dimension(const int nrowA,
-                                                const int ncolA,
-                                                const int ncolB,
-                                                const int LDA,
+void PLinearTransform<T, Device>::set_dimension(
+    const int nrowA,
+    const int ncolA,
+    const int ncolB,
+    const int LDA,
 #ifdef __MPI
-                                                MPI_Comm col_world,
+    MPI_Comm col_world,
 #endif
-                                                const bool localU)
+    const bool localU)
 {
     this->nrowA = nrowA;
     this->ncolA = ncolA;
@@ -40,7 +40,14 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
     {
         this->localU = localU;
         colA_loc.resize(nproc_col);
-        MPI_Allgather(&ncolA, 1, MPI_INT, colA_loc.data(), 1, MPI_INT, col_world);
+        MPI_Allgather(
+            &ncolA,
+            1,
+            MPI_INT,
+            colA_loc.data(),
+            1,
+            MPI_INT,
+            col_world);
         start_colA.resize(nproc_col);
         start_colA[0] = 0;
         for (int ip = 1; ip < nproc_col; ++ip)
@@ -51,7 +58,14 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
         this->max_colA = *std::max_element(colA_loc.begin(), colA_loc.end());
 
         std::vector<int> colB_loc(nproc_col);
-        MPI_Allgather(&ncolB, 1, MPI_INT, colB_loc.data(), 1, MPI_INT, col_world);
+        MPI_Allgather(
+            &ncolB,
+            1,
+            MPI_INT,
+            colB_loc.data(),
+            1,
+            MPI_INT,
+            col_world);
         start_colB.resize(nproc_col);
         start_colB[0] = 0;
         for (int ip = 1; ip < nproc_col; ++ip)
@@ -78,7 +92,12 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
 #endif
 }
 template <typename T, typename Device>
-void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, const T beta, T* B)
+void PLinearTransform<T, Device>::act(
+    const T alpha,
+    const T *A,
+    const T *U,
+    const T beta,
+    T *B)
 {
     ModuleBase::timer::start("PLinearTransform", "act");
 #ifdef __MPI
@@ -92,18 +111,44 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
             if (rank_col != ip)
             {
                 int size = LDA * ncolA;
-                Parallel_Common::isend_dev<T, Device>(A, size, ip, 0, col_world, &requests[ip], isend_tmp_.data());
+                Parallel_Common::isend_dev<T, Device>(
+                    A,
+                    size,
+                    ip,
+                    0,
+                    col_world,
+                    &requests[ip],
+                    isend_tmp_.data());
             }
         }
 
         // local part
         const int start = this->localU ? 0 : start_colB[rank_col];
-        const T* U_part = U + start_colA[rank_col] + start * ncolA_glo;
-        ModuleBase::matrixCopy<T, Device>()(ncolB, ncolA, U_part, ncolA_glo, U_tmp_, ncolA);
-        ModuleBase::gemm_op<T, Device>()('N', 'N', nrowA, ncolB, ncolA, &alpha, A, LDA, U_tmp_, ncolA, &beta, B, LDA);
+        const T *U_part = U + start_colA[rank_col] + start * ncolA_glo;
+        ModuleBase::matrixCopy<T, Device>()(
+            ncolB,
+            ncolA,
+            U_part,
+            ncolA_glo,
+            U_tmp_,
+            ncolA);
+        ModuleBase::gemm_op<T, Device>()(
+            'N',
+            'N',
+            nrowA,
+            ncolB,
+            ncolA,
+            &alpha,
+            A,
+            LDA,
+            U_tmp_,
+            ncolA,
+            &beta,
+            B,
+            LDA);
 
         // Receive
-        T* Atmp_device = nullptr;
+        T *Atmp_device = nullptr;
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
             Atmp_device = A_tmp_device_;
@@ -118,28 +163,48 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
             {
                 T zero = 0.0;
                 const int ncolA_ip = colA_loc[ip];
-                const T* U_part = U + start_colA[ip] + start * ncolA_glo;
-                ModuleBase::matrixCopy<T, Device>()(ncolB, ncolA_ip, U_part, ncolA_glo, U_tmp_, ncolA_ip);
+                const T *U_part = U + start_colA[ip] + start * ncolA_glo;
+                ModuleBase::matrixCopy<T, Device>()(
+                    ncolB,
+                    ncolA_ip,
+                    U_part,
+                    ncolA_glo,
+                    U_tmp_,
+                    ncolA_ip);
 
                 int size = LDA * ncolA_ip;
                 MPI_Status status;
-                Parallel_Common::recv_dev<T, Device>(Atmp_device, size, ip, 0, col_world, &status, A_tmp_.data());
-                ModuleBase::gemm_op<T, Device>()('N',
-                                                 'N',
-                                                 nrowA,
-                                                 ncolB,
-                                                 ncolA_ip,
-                                                 &alpha,
-                                                 Atmp_device,
-                                                 LDA,
-                                                 U_tmp_,
-                                                 ncolA_ip,
-                                                 &zero,
-                                                 B_tmp_,
-                                                 LDA);
+                Parallel_Common::recv_dev<T, Device>(
+                    Atmp_device,
+                    size,
+                    ip,
+                    0,
+                    col_world,
+                    &status,
+                    A_tmp_.data());
+                ModuleBase::gemm_op<T, Device>()(
+                    'N',
+                    'N',
+                    nrowA,
+                    ncolB,
+                    ncolA_ip,
+                    &alpha,
+                    Atmp_device,
+                    LDA,
+                    U_tmp_,
+                    ncolA_ip,
+                    &zero,
+                    B_tmp_,
+                    LDA);
                 // sum all the results
                 T one = 1.0;
-                ModuleBase::axpy_op<T, Device>()(ncolB * LDA, &one, B_tmp_, 1, B, 1);
+                ModuleBase::axpy_op<T, Device>()(
+                    ncolB * LDA,
+                    &one,
+                    B_tmp_,
+                    1,
+                    B,
+                    1);
             }
         }
 
@@ -155,7 +220,20 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
     else
 #endif
     {
-        ModuleBase::gemm_op<T, Device>()('N', 'N', nrowA, ncolB, ncolA, &alpha, A, LDA, U, ncolA, &beta, B, LDA);
+        ModuleBase::gemm_op<T, Device>()(
+            'N',
+            'N',
+            nrowA,
+            ncolB,
+            ncolA,
+            &alpha,
+            A,
+            LDA,
+            U,
+            ncolA,
+            &beta,
+            B,
+            LDA);
     }
     ModuleBase::timer::end("PLinearTransform", "act");
 };

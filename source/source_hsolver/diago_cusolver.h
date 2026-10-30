@@ -10,8 +10,7 @@ namespace hsolver
 {
 
 // DiagoCusolver class for diagonalization using CUSOLVER
-template <typename T>
-class DiagoCusolver
+template <typename T> class DiagoCusolver
 {
   private:
     // Real is the real part of the complex type T
@@ -24,10 +23,11 @@ class DiagoCusolver
     ~DiagoCusolver();
 
     // Override the diag function for CUSOLVER diagonalization
-    void diag(ModuleBase::MatrixBlock<T>& h_mat,
-              ModuleBase::MatrixBlock<T>& s_mat,
-              psi::Psi<T>& psi,
-              Real* eigenvalue_in);
+    void diag(
+        ModuleBase::MatrixBlock<T> &h_mat,
+        ModuleBase::MatrixBlock<T> &s_mat,
+        psi::Psi<T> &psi,
+        Real *eigenvalue_in);
 
     // Static variable to keep track of the decomposition state
     static int DecomposedState;
@@ -38,7 +38,7 @@ class DiagoCusolver
   private:
 #ifdef __MPI
     // Function to check if ELPA handle needs to be created or reused in MPI settings
-    bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF) const;
+    bool ifElpaHandle(const bool &newIteration, const bool &ifNSCF) const;
 #endif
 
     const int nlocal;

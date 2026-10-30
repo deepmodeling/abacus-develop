@@ -8,14 +8,15 @@
 namespace hsolver
 {
 template <typename Real>
-__global__ void line_minimize_with_block(thrust::complex<Real>* grad,
-                                         thrust::complex<Real>* hgrad,
-                                         thrust::complex<Real>* sgrad,
-                                         thrust::complex<Real>* psi,
-                                         thrust::complex<Real>* hpsi,
-                                         thrust::complex<Real>* spsi,
-                                         const int n_basis,
-                                         const int n_basis_max)
+__global__ void line_minimize_with_block(
+    thrust::complex<Real> *grad,
+    thrust::complex<Real> *hgrad,
+    thrust::complex<Real> *sgrad,
+    thrust::complex<Real> *psi,
+    thrust::complex<Real> *hpsi,
+    thrust::complex<Real> *spsi,
+    const int n_basis,
+    const int n_basis_max)
 {
     int band_idx = blockIdx.x; // band_idx
     int tid = threadIdx.x;     // basis_idx
@@ -100,16 +101,17 @@ __global__ void line_minimize_with_block(thrust::complex<Real>* grad,
 }
 
 template <typename Real>
-__global__ void calc_grad_with_block(const Real* prec,
-                                     Real* err,
-                                     Real* beta,
-                                     thrust::complex<Real>* psi,
-                                     thrust::complex<Real>* hpsi,
-                                     thrust::complex<Real>* spsi,
-                                     thrust::complex<Real>* grad,
-                                     thrust::complex<Real>* grad_old,
-                                     const int n_basis,
-                                     const int n_basis_max)
+__global__ void calc_grad_with_block(
+    const Real *prec,
+    Real *err,
+    Real *beta,
+    thrust::complex<Real> *psi,
+    thrust::complex<Real> *hpsi,
+    thrust::complex<Real> *spsi,
+    thrust::complex<Real> *grad,
+    thrust::complex<Real> *grad_old,
+    const int n_basis,
+    const int n_basis_max)
 {
     int band_idx = blockIdx.x; // band_idx
     int tid = threadIdx.x;     // basis_idx
@@ -206,12 +208,13 @@ __global__ void calc_grad_with_block(const Real* prec,
 }
 
 template <typename Real>
-__global__ void apply_eigenvalues_kernel(const thrust::complex<Real>* vectors,
-                                         thrust::complex<Real>* result,
-                                         const Real* eigenvalues,
-                                         const int nbase,
-                                         const int nbase_x,
-                                         const int notconv)
+__global__ void apply_eigenvalues_kernel(
+    const thrust::complex<Real> *vectors,
+    thrust::complex<Real> *result,
+    const Real *eigenvalues,
+    const int nbase,
+    const int nbase_x,
+    const int notconv)
 {
     int m = blockIdx.x;
     int idx = threadIdx.x + blockIdx.y * blockDim.x;
@@ -223,12 +226,13 @@ __global__ void apply_eigenvalues_kernel(const thrust::complex<Real>* vectors,
 }
 
 template <typename Real>
-__global__ void precondition_kernel(thrust::complex<Real>* psi_iter,
-                                    const Real* precondition,
-                                    const Real* eigenvalues,
-                                    const int dim,
-                                    const int nbase,
-                                    const int notconv)
+__global__ void precondition_kernel(
+    thrust::complex<Real> *psi_iter,
+    const Real *precondition,
+    const Real *eigenvalues,
+    const int dim,
+    const int nbase,
+    const int notconv)
 {
     int m = blockIdx.x;
     int i = threadIdx.x + blockIdx.y * blockDim.x;
@@ -242,11 +246,12 @@ __global__ void precondition_kernel(thrust::complex<Real>* psi_iter,
 }
 
 template <typename Real>
-__global__ void normalize_kernel(thrust::complex<Real>* psi_iter,
-                                 Real* psi_norm,
-                                 const int dim,
-                                 const int nbase,
-                                 const int notconv)
+__global__ void normalize_kernel(
+    thrust::complex<Real> *psi_iter,
+    Real *psi_norm,
+    const int dim,
+    const int nbase,
+    const int notconv)
 {
     int m = blockIdx.x;
     int tid = threadIdx.x;
@@ -289,13 +294,14 @@ __global__ void normalize_kernel(thrust::complex<Real>* psi_iter,
 }
 
 template <typename T, typename Real>
-__global__ void refresh_hcc_scc_vcc_kernel(const int n,
-                                           T* hcc,
-                                           T* scc,
-                                           T* vcc,
-                                           const int ldh,
-                                           const Real* eigenvalue,
-                                           const T one)
+__global__ void refresh_hcc_scc_vcc_kernel(
+    const int n,
+    T *hcc,
+    T *scc,
+    T *vcc,
+    const int ldh,
+    const Real *eigenvalue,
+    const T one)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < n)
@@ -307,167 +313,215 @@ __global__ void refresh_hcc_scc_vcc_kernel(const int n,
 }
 
 template <typename T>
-void line_minimize_with_block_op<T, base_device::DEVICE_GPU>::operator()(T* grad_out,
-                                                                         T* hgrad_out,
-                                                                         T* sgrad_out,
-                                                                         T* psi_out,
-                                                                         T* hpsi_out,
-                                                                         T* spsi_out,
-                                                                         const int& n_basis,
-                                                                         const int& n_basis_max,
-                                                                         const int& n_band)
+void line_minimize_with_block_op<T, base_device::DEVICE_GPU>::operator()(
+    T *grad_out,
+    T *hgrad_out,
+    T *sgrad_out,
+    T *psi_out,
+    T *hpsi_out,
+    T *spsi_out,
+    const int &n_basis,
+    const int &n_basis_max,
+    const int &n_band)
 {
-    auto A = reinterpret_cast<thrust::complex<Real>*>(grad_out);
-    auto B = reinterpret_cast<thrust::complex<Real>*>(hgrad_out);
-    auto C = reinterpret_cast<thrust::complex<Real>*>(sgrad_out);
-    auto D = reinterpret_cast<thrust::complex<Real>*>(psi_out);
-    auto E = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
-    auto F = reinterpret_cast<thrust::complex<Real>*>(spsi_out);
+    auto A = reinterpret_cast<thrust::complex<Real> *>(grad_out);
+    auto B = reinterpret_cast<thrust::complex<Real> *>(hgrad_out);
+    auto C = reinterpret_cast<thrust::complex<Real> *>(sgrad_out);
+    auto D = reinterpret_cast<thrust::complex<Real> *>(psi_out);
+    auto E = reinterpret_cast<thrust::complex<Real> *>(hpsi_out);
+    auto F = reinterpret_cast<thrust::complex<Real> *>(spsi_out);
 
-    line_minimize_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(A, B, C, D, E, F, n_basis, n_basis_max);
+    line_minimize_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
+        A,
+        B,
+        C,
+        D,
+        E,
+        F,
+        n_basis,
+        n_basis_max);
 
     hipCheckOnDebug();
 }
 
 template <typename T>
-void calc_grad_with_block_op<T, base_device::DEVICE_GPU>::operator()(const Real* prec_in,
-                                                                     Real* err_out,
-                                                                     Real* beta_out,
-                                                                     T* psi_out,
-                                                                     T* hpsi_out,
-                                                                     T* spsi_out,
-                                                                     T* grad_out,
-                                                                     T* grad_old_out,
-                                                                     const int& n_basis,
-                                                                     const int& n_basis_max,
-                                                                     const int& n_band)
+void calc_grad_with_block_op<T, base_device::DEVICE_GPU>::operator()(
+    const Real *prec_in,
+    Real *err_out,
+    Real *beta_out,
+    T *psi_out,
+    T *hpsi_out,
+    T *spsi_out,
+    T *grad_out,
+    T *grad_old_out,
+    const int &n_basis,
+    const int &n_basis_max,
+    const int &n_band)
 {
-    auto A = reinterpret_cast<thrust::complex<Real>*>(psi_out);
-    auto B = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
-    auto C = reinterpret_cast<thrust::complex<Real>*>(spsi_out);
-    auto D = reinterpret_cast<thrust::complex<Real>*>(grad_out);
-    auto E = reinterpret_cast<thrust::complex<Real>*>(grad_old_out);
+    auto A = reinterpret_cast<thrust::complex<Real> *>(psi_out);
+    auto B = reinterpret_cast<thrust::complex<Real> *>(hpsi_out);
+    auto C = reinterpret_cast<thrust::complex<Real> *>(spsi_out);
+    auto D = reinterpret_cast<thrust::complex<Real> *>(grad_out);
+    auto E = reinterpret_cast<thrust::complex<Real> *>(grad_old_out);
 
-    calc_grad_with_block<Real>
-        <<<n_band, THREAD_PER_BLOCK>>>(prec_in, err_out, beta_out, A, B, C, D, E, n_basis, n_basis_max);
+    calc_grad_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
+        prec_in,
+        err_out,
+        beta_out,
+        A,
+        B,
+        C,
+        D,
+        E,
+        n_basis,
+        n_basis_max);
 
     hipCheckOnDebug();
 }
 
 template <typename T>
-void apply_eigenvalues_op<T, base_device::DEVICE_GPU>::operator()(const int& nbase,
-                                                                  const int& nbase_x,
-                                                                  const int& notconv,
-                                                                  T* result,
-                                                                  const T* vectors,
-                                                                  const Real* eigenvalues)
+void apply_eigenvalues_op<T, base_device::DEVICE_GPU>::operator()(
+    const int &nbase,
+    const int &nbase_x,
+    const int &notconv,
+    T *result,
+    const T *vectors,
+    const Real *eigenvalues)
 {
     const int threads_per_block = 256;
     const int blocks_per_grid_y = (nbase + threads_per_block - 1) / threads_per_block;
 
     dim3 grid(notconv, blocks_per_grid_y);
 
-    auto vec_complex = reinterpret_cast<const thrust::complex<Real>*>(vectors);
-    auto res_complex = reinterpret_cast<thrust::complex<Real>*>(result);
+    auto vec_complex = reinterpret_cast<const thrust::complex<Real> *>(vectors);
+    auto res_complex = reinterpret_cast<thrust::complex<Real> *>(result);
 
-    apply_eigenvalues_kernel<Real>
-        <<<grid, threads_per_block>>>(vec_complex, res_complex, eigenvalues, nbase, nbase_x, notconv);
+    apply_eigenvalues_kernel<Real><<<grid, threads_per_block>>>(
+        vec_complex,
+        res_complex,
+        eigenvalues,
+        nbase,
+        nbase_x,
+        notconv);
 
     hipCheckOnDebug();
 }
 
 template <typename T>
-void precondition_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
-                                                             T* psi_iter,
-                                                             const int& nbase,
-                                                             const int& notconv,
-                                                             const Real* precondition,
-                                                             const Real* eigenvalues)
+void precondition_op<T, base_device::DEVICE_GPU>::operator()(
+    const int &dim,
+    T *psi_iter,
+    const int &nbase,
+    const int &notconv,
+    const Real *precondition,
+    const Real *eigenvalues)
 {
     const int threads_per_block = 256;
     const int blocks_per_grid_y = (dim + threads_per_block - 1) / threads_per_block;
 
     dim3 grid(notconv, blocks_per_grid_y);
 
-    auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
+    auto psi_complex = reinterpret_cast<thrust::complex<Real> *>(psi_iter);
 
-    precondition_kernel<Real><<<grid, threads_per_block>>>(psi_complex, precondition, eigenvalues, dim, nbase, notconv);
+    precondition_kernel<Real><<<grid, threads_per_block>>>(
+        psi_complex,
+        precondition,
+        eigenvalues,
+        dim,
+        nbase,
+        notconv);
 
     hipCheckOnDebug();
 }
 
 template <typename T>
-void normalize_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
-                                                          T* psi_iter,
-                                                          const int& nbase,
-                                                          const int& notconv,
-                                                          Real* psi_norm)
+void normalize_op<T, base_device::DEVICE_GPU>::operator()(
+    const int &dim,
+    T *psi_iter,
+    const int &nbase,
+    const int &notconv,
+    Real *psi_norm)
 {
-    auto psi_complex = reinterpret_cast<thrust::complex<Real>*>(psi_iter);
+    auto psi_complex = reinterpret_cast<thrust::complex<Real> *>(psi_iter);
 
-    normalize_kernel<Real><<<notconv, THREAD_PER_BLOCK>>>(psi_complex, psi_norm, dim, nbase, notconv);
+    normalize_kernel<Real><<<notconv, THREAD_PER_BLOCK>>>(
+        psi_complex,
+        psi_norm,
+        dim,
+        nbase,
+        notconv);
 
     hipCheckOnDebug();
 }
 
 template <>
-void refresh_hcc_scc_vcc_op<double, base_device::DEVICE_GPU>::operator()(const int& n,
-                                                                         double* hcc,
-                                                                         double* scc,
-                                                                         double* vcc,
-                                                                         const int& ldh,
-                                                                         const double* eigenvalue,
-                                                                         const double& one)
+void refresh_hcc_scc_vcc_op<double, base_device::DEVICE_GPU>::operator()(
+    const int &n,
+    double *hcc,
+    double *scc,
+    double *vcc,
+    const int &ldh,
+    const double *eigenvalue,
+    const double &one)
 {
     int thread = 512;
     int block = (n + thread - 1) / thread;
-    refresh_hcc_scc_vcc_kernel<double, double><<<block, thread>>>(n, hcc, scc, vcc, ldh, eigenvalue, one);
+    refresh_hcc_scc_vcc_kernel<double, double><<<block, thread>>>(
+        n,
+        hcc,
+        scc,
+        vcc,
+        ldh,
+        eigenvalue,
+        one);
 
     hipCheckOnDebug();
 }
 
 template <>
-void refresh_hcc_scc_vcc_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& n,
-                                                                                      std::complex<float>* hcc,
-                                                                                      std::complex<float>* scc,
-                                                                                      std::complex<float>* vcc,
-                                                                                      const int& ldh,
-                                                                                      const float* eigenvalue,
-                                                                                      const std::complex<float>& one)
+void refresh_hcc_scc_vcc_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(
+    const int &n,
+    std::complex<float> *hcc,
+    std::complex<float> *scc,
+    std::complex<float> *vcc,
+    const int &ldh,
+    const float *eigenvalue,
+    const std::complex<float> &one)
 {
     int thread = 512;
     int block = (n + thread - 1) / thread;
-    refresh_hcc_scc_vcc_kernel<thrust::complex<float>, float>
-        <<<block, thread>>>(n,
-                            reinterpret_cast<thrust::complex<float>*>(hcc),
-                            reinterpret_cast<thrust::complex<float>*>(scc),
-                            reinterpret_cast<thrust::complex<float>*>(vcc),
-                            ldh,
-                            eigenvalue,
-                            thrust::complex<float>(one));
+    refresh_hcc_scc_vcc_kernel<thrust::complex<float>, float><<<block, thread>>>(
+        n,
+        reinterpret_cast<thrust::complex<float> *>(hcc),
+        reinterpret_cast<thrust::complex<float> *>(scc),
+        reinterpret_cast<thrust::complex<float> *>(vcc),
+        ldh,
+        eigenvalue,
+        thrust::complex<float>(one));
 
     hipCheckOnDebug();
 }
 
 template <>
-void refresh_hcc_scc_vcc_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int& n,
-                                                                                       std::complex<double>* hcc,
-                                                                                       std::complex<double>* scc,
-                                                                                       std::complex<double>* vcc,
-                                                                                       const int& ldh,
-                                                                                       const double* eigenvalue,
-                                                                                       const std::complex<double>& one)
+void refresh_hcc_scc_vcc_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
+    const int &n,
+    std::complex<double> *hcc,
+    std::complex<double> *scc,
+    std::complex<double> *vcc,
+    const int &ldh,
+    const double *eigenvalue,
+    const std::complex<double> &one)
 {
     int thread = 512;
     int block = (n + thread - 1) / thread;
-    refresh_hcc_scc_vcc_kernel<thrust::complex<double>, double>
-        <<<block, thread>>>(n,
-                            reinterpret_cast<thrust::complex<double>*>(hcc),
-                            reinterpret_cast<thrust::complex<double>*>(scc),
-                            reinterpret_cast<thrust::complex<double>*>(vcc),
-                            ldh,
-                            eigenvalue,
-                            thrust::complex<double>(one));
+    refresh_hcc_scc_vcc_kernel<thrust::complex<double>, double><<<block, thread>>>(
+        n,
+        reinterpret_cast<thrust::complex<double> *>(hcc),
+        reinterpret_cast<thrust::complex<double> *>(scc),
+        reinterpret_cast<thrust::complex<double> *>(vcc),
+        ldh,
+        eigenvalue,
+        thrust::complex<double>(one));
 
     hipCheckOnDebug();
 }

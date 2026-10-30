@@ -17,13 +17,14 @@ namespace hsolver
     lcao_in_pw
 */
 template <typename T>
-void HSolverLIP<T>::solve(HSOperator<T>& op,         // ESolver_KS_PW::p_hamilt behind the operator interface
-                          psi::Psi<T>& psi,          // ESolver_KS_PW::kspw_psi
-                          elecstate::ElecState* pes, // ESolver_KS_PW::pes
-                          psi::Psi<T>& transform,
-                          const diag_comm_info& diag_comm,
-                          std::ostream& log,
-                          const bool skip_charge)
+void HSolverLIP<T>::solve(
+    HSOperator<T> &op,         // ESolver_KS_PW::p_hamilt behind the operator interface
+    psi::Psi<T> &psi,          // ESolver_KS_PW::kspw_psi
+    elecstate::ElecState *pes, // ESolver_KS_PW::pes
+    psi::Psi<T> &transform,
+    const diag_comm_info &diag_comm,
+    std::ostream &log,
+    const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLIP", "solve");
     ModuleBase::timer::start("HSolverLIP", "solve");
@@ -37,15 +38,16 @@ void HSolverLIP<T>::solve(HSOperator<T>& op,         // ESolver_KS_PW::p_hamilt 
         transform.fix_k(ik);
 
         /// solve eigenvector and eigenvalue for H(k)
-        hsolver::DiagoIterAssist<T>::diag_subspace_init(op,
-                                                        transform.get_pointer(), // transform matrix between lcao and pw
-                                                        transform.get_nbands(),
-                                                        transform.get_nbasis(),
-                                                        psi,                                   // psi in pw basis
-                                                        eigenvalues.data() + ik * pes->ekb.nc, // eigenvalues
-                                                        this->basis_type,
-                                                        this->calculation,
-                                                        diag_comm);
+        hsolver::DiagoIterAssist<T>::diag_subspace_init(
+            op,
+            transform.get_pointer(), // transform matrix between lcao and pw
+            transform.get_nbands(),
+            transform.get_nbasis(),
+            psi,                                   // psi in pw basis
+            eigenvalues.data() + ik * pes->ekb.nc, // eigenvalues
+            this->basis_type,
+            this->calculation,
+            diag_comm);
 
         if (skip_charge)
         {
@@ -57,29 +59,28 @@ void HSolverLIP<T>::solve(HSOperator<T>& op,         // ESolver_KS_PW::p_hamilt 
         /// calculate the contribution of Psi for charge density rho
     }
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
-        pes->ekb.c,
-        eigenvalues.data(),
-        pes->ekb.nr * pes->ekb.nc);
+        pes->ekb.c, eigenvalues.data(), pes->ekb.nr * pes->ekb.nc);
 
-    elecstate::calculate_weights(pes->ekb,
-                                 pes->wg,
-                                 pes->klist,
-                                 pes->eferm,
-                                 pes->f_en,
-                                 pes->nelec_spin,
-                                 this->global_nbands,
-                                 pes->skip_weights);
+    elecstate::calculate_weights(
+        pes->ekb,
+        pes->wg,
+        pes->klist,
+        pes->eferm,
+        pes->f_en,
+        pes->nelec_spin,
+        this->global_nbands,
+        pes->skip_weights);
     elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
     if (skip_charge)
     {
         if (this->use_uspp)
         {
-            reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->cal_becsum(psi);
+            reinterpret_cast<elecstate::ElecStatePW<T> *>(pes)->cal_becsum(psi);
         }
         ModuleBase::timer::end("HSolverLIP", "solve");
         return;
     }
-    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->psiToRho(psi);
+    reinterpret_cast<elecstate::ElecStatePW<T> *>(pes)->psiToRho(psi);
 
     ModuleBase::timer::end("HSolverLIP", "solve");
     return;

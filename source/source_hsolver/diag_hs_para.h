@@ -31,15 +31,16 @@ namespace hsolver
  * allowed
  */
 template <typename T>
-void diago_hs_para(T* h,
-                   T* s,
-                   const int lda,
-                   const int nband,
-                   typename GetTypeReal<T>::type* const ekb,
-                   T* const wfc,
-                   const MPI_Comm& comm,
-                   const int diag_subspace,
-                   const int block_size = 0);
+void diago_hs_para(
+    T *h,
+    T *s,
+    const int lda,
+    const int nband,
+    typename GetTypeReal<T>::type *const ekb,
+    T *const wfc,
+    const MPI_Comm &comm,
+    const int diag_subspace,
+    const int block_size = 0);
 #endif
 
 } // namespace hsolver

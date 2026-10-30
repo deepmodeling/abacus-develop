@@ -7,28 +7,53 @@
 #include "source_base/timer.h"
 
 template <typename TK>
-void Parallel_K2D<TK>::set_para_env(int nks,
-                                    const int& nw,
-                                    const int& nb2d,
-                                    const int& nproc,
-                                    const int& my_rank,
-                                    const int& nspin)
+void Parallel_K2D<TK>::set_para_env(
+    int nks,
+    const int &nw,
+    const int &nb2d,
+    const int &nproc,
+    const int &my_rank,
+    const int &nspin)
 {
     const int kpar = this->get_kpar();
-    Parallel_Global::divide_mpi_groups(nproc, kpar, my_rank, this->NPROC_IN_POOL, this->MY_POOL, this->RANK_IN_POOL);
+    Parallel_Global::divide_mpi_groups(
+        nproc,
+        kpar,
+        my_rank,
+        this->NPROC_IN_POOL,
+        this->MY_POOL,
+        this->RANK_IN_POOL);
 #ifdef __MPI
-    MPI_Comm_split(MPI_COMM_WORLD, this->MY_POOL, this->RANK_IN_POOL, &this->POOL_WORLD_K2D);
+    MPI_Comm_split(
+        MPI_COMM_WORLD,
+        this->MY_POOL,
+        this->RANK_IN_POOL,
+        &this->POOL_WORLD_K2D);
 #endif
     this->Pkpoints.reset(new Parallel_Kpoints());
     this->P2D_global.reset(new Parallel_2D());
     this->P2D_pool.reset(new Parallel_2D());
-    this->Pkpoints->kinfo(nks, kpar, this->MY_POOL, this->RANK_IN_POOL, nproc, nspin);
-    this->P2D_global->init(nw, nw, nb2d, MPI_COMM_WORLD);
-    this->P2D_pool->init(nw, nw, nb2d, this->POOL_WORLD_K2D);
+    this->Pkpoints->kinfo(
+        nks,
+        kpar,
+        this->MY_POOL,
+        this->RANK_IN_POOL,
+        nproc,
+        nspin);
+    this->P2D_global->init(
+        nw,
+        nw,
+        nb2d,
+        MPI_COMM_WORLD);
+    this->P2D_pool->init(
+        nw,
+        nw,
+        nb2d,
+        this->POOL_WORLD_K2D);
 }
 
 template <typename TK>
-void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK>& hs, const std::vector<int>& ik_kpar, const int& nw)
+void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK> &hs, const std::vector<int> &ik_kpar, const int &nw)
 {
 #ifdef __MPI
     ModuleBase::timer::start("Parallel_K2D", "distribute_hsk");
@@ -47,28 +72,30 @@ void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK>& hs, const std::vect
         {
             desc_pool[1] = -1;
         }
-        Cpxgemr2d(nw,
-                  nw,
-                  HK_global.p,
-                  1,
-                  1,
-                  this->P2D_global->desc,
-                  hk_pool.data(),
-                  1,
-                  1,
-                  desc_pool,
-                  this->P2D_global->blacs_ctxt);
-        Cpxgemr2d(nw,
-                  nw,
-                  SK_global.p,
-                  1,
-                  1,
-                  this->P2D_global->desc,
-                  sk_pool.data(),
-                  1,
-                  1,
-                  desc_pool,
-                  this->P2D_global->blacs_ctxt);
+        Cpxgemr2d(
+            nw,
+            nw,
+            HK_global.p,
+            1,
+            1,
+            this->P2D_global->desc,
+            hk_pool.data(),
+            1,
+            1,
+            desc_pool,
+            this->P2D_global->blacs_ctxt);
+        Cpxgemr2d(
+            nw,
+            nw,
+            SK_global.p,
+            1,
+            1,
+            this->P2D_global->desc,
+            sk_pool.data(),
+            1,
+            1,
+            desc_pool,
+            this->P2D_global->blacs_ctxt);
     }
     ModuleBase::Memory::record("Parallel_K2D::hsk_pool", this->P2D_pool->get_local_size() * 2 * sizeof(TK));
     ModuleBase::timer::end("Parallel_K2D", "distribute_hsk");
@@ -76,8 +103,7 @@ void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK>& hs, const std::vect
 #endif
 }
 
-template <typename TK>
-void Parallel_K2D<TK>::unset_para_env()
+template <typename TK> void Parallel_K2D<TK>::unset_para_env()
 {
     this->Pkpoints.reset();
     this->P2D_global.reset();
@@ -85,8 +111,7 @@ void Parallel_K2D<TK>::unset_para_env()
     MPI_Comm_free(&this->POOL_WORLD_K2D);
 }
 
-template <typename TK>
-void Parallel_K2D<TK>::set_kpar(int kpar)
+template <typename TK> void Parallel_K2D<TK>::set_kpar(int kpar)
 {
     if (kpar < 1)
     {

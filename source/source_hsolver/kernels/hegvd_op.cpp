@@ -12,17 +12,17 @@ namespace lapackConnector = container::lapackConnector; // see "source_base/modu
 namespace hsolver
 {
 // hegvd and sygvd; dn for dense?
-template <typename T>
-struct hegvd_op<T, base_device::DEVICE_CPU>
+template <typename T> struct hegvd_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* d,
-                    const int nstart,
-                    const int ldh,
-                    const T* hcc,
-                    T* scc,
-                    Real* eigenvalue,
-                    T* vcc)
+    void operator()(
+        const base_device::DEVICE_CPU *d,
+        const int nstart,
+        const int ldh,
+        const T *hcc,
+        T *scc,
+        Real *eigenvalue,
+        T *vcc)
     {
         for (int i = 0; i < nstart * ldh; i++)
         {
@@ -32,22 +32,37 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
         // SYGVD needs more WORK than HEGVD when eigenvectors are requested.
         const bool real_problem = std::is_same<T, Real>::value;
         int lwork = real_problem ? 1 + 6 * nstart + 2 * nstart * nstart : 2 * nstart + nstart * nstart;
-        T* work = new T[lwork];
+        T *work = new T[lwork];
         std::fill(work, work + lwork, T(0));
 
         int lrwork = 1 + 5 * nstart + 2 * nstart * nstart;
-        Real* rwork = new Real[lrwork];
+        Real *rwork = new Real[lrwork];
         std::fill(rwork, rwork + lrwork, Real(0));
 
         int liwork = 3 + 5 * nstart;
-        int* iwork = new int[liwork];
+        int *iwork = new int[liwork];
         std::fill(iwork, iwork + liwork, 0);
 
         //===========================
         // calculate all eigenvalues
         //===========================
-        lapackConnector::
-            hegvd(1, 'V', 'U', nstart, vcc, ldh, scc, ldh, eigenvalue, work, lwork, rwork, lrwork, iwork, liwork, info);
+        lapackConnector::hegvd(
+            1,
+            'V',
+            'U',
+            nstart,
+            vcc,
+            ldh,
+            scc,
+            ldh,
+            eigenvalue,
+            work,
+            lwork,
+            rwork,
+            lrwork,
+            iwork,
+            liwork,
+            info);
 
         if (info != 0)
         {
@@ -140,19 +155,19 @@ struct hegvd_op<T, base_device::DEVICE_CPU>
  * both heevx and syevx are implemented through the `evx` interface of LAPACK.
  * wrapped in LapackWrapper::xheevx
  */
-template <typename T>
-struct heevx_op<T, base_device::DEVICE_CPU>
+template <typename T> struct heevx_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
-                    const int nstart,
-                    const int ldh,
-                    const T* hcc,     // hcc
-                    const int nbands, // nbands
-                    Real* eigenvalue, // eigenvalue
-                    T* vcc)           // vcc
+    void operator()(
+        const base_device::DEVICE_CPU * /*ctx*/,
+        const int nstart,
+        const int ldh,
+        const T *hcc,     // hcc
+        const int nbands, // nbands
+        Real *eigenvalue, // eigenvalue
+        T *vcc)           // vcc
     {
-        T* aux = new T[nstart * ldh];
+        T *aux = new T[nstart * ldh];
         for (int ii = 0; ii < nstart * ldh; ii++)
         {
             aux[ii] = hcc[ii];
@@ -160,10 +175,10 @@ struct heevx_op<T, base_device::DEVICE_CPU>
 
         int info = 0;
         int lwork = -1;
-        T* work = new T[1];
-        Real* rwork = new Real[7 * nstart];
-        int* iwork = new int[5 * nstart];
-        int* ifail = new int[nstart];
+        T *work = new T[1];
+        Real *rwork = new Real[7 * nstart];
+        int *iwork = new int[5 * nstart];
+        int *ifail = new int[nstart];
 
         // When lwork = -1, the demension of work will be assumed
         // Assume the denmension of work by output work[0]
@@ -233,18 +248,18 @@ struct heevx_op<T, base_device::DEVICE_CPU>
     }
 };
 
-template <typename T>
-struct hegvx_op<T, base_device::DEVICE_CPU>
+template <typename T> struct hegvx_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* d,
-                    const int nbase,
-                    const int ldh,
-                    T* hcc,
-                    T* scc,
-                    const int m,
-                    Real* eigenvalue,
-                    T* vcc)
+    void operator()(
+        const base_device::DEVICE_CPU *d,
+        const int nbase,
+        const int ldh,
+        T *hcc,
+        T *scc,
+        const int m,
+        Real *eigenvalue,
+        T *vcc)
     {
 
         int info = 0;
@@ -253,10 +268,10 @@ struct hegvx_op<T, base_device::DEVICE_CPU>
 
         int lwork = -1;
 
-        T* work = new T[1];
-        Real* rwork = new Real[7 * nbase];
-        int* iwork = new int[5 * nbase];
-        int* ifail = new int[nbase];
+        T *work = new T[1];
+        Real *rwork = new Real[7 * nbase];
+        int *iwork = new int[5 * nbase];
+        int *ifail = new int[nbase];
 
         lapackConnector::hegvx(
             1,     // ITYPE = 1:  A*x = (lambda)*B*x
@@ -288,30 +303,31 @@ struct hegvx_op<T, base_device::DEVICE_CPU>
         delete[] work;
         work = new T[lwork];
 
-        lapackConnector::hegvx(1,
-                               'V',
-                               'I',
-                               'U',
-                               nbase,
-                               hcc,
-                               ldh,
-                               scc,
-                               ldh,
-                               0.0,
-                               0.0,
-                               1,
-                               m,
-                               0.0,
-                               mm,
-                               eigenvalue,
-                               vcc,
-                               ldh,
-                               work,
-                               lwork,
-                               rwork,
-                               iwork,
-                               ifail,
-                               info);
+        lapackConnector::hegvx(
+            1,
+            'V',
+            'I',
+            'U',
+            nbase,
+            hcc,
+            ldh,
+            scc,
+            ldh,
+            0.0,
+            0.0,
+            1,
+            m,
+            0.0,
+            mm,
+            eigenvalue,
+            vcc,
+            ldh,
+            work,
+            lwork,
+            rwork,
+            iwork,
+            ifail,
+            info);
 
         delete[] work;
         delete[] rwork;

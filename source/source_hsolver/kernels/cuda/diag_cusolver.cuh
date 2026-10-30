@@ -30,16 +30,16 @@ class Diag_Cusolver_gvd
     int m = 0;
     int lda = 0;
 
-    double* d_A = nullptr;
-    double* d_B = nullptr;
-    double* d_work = nullptr;
+    double *d_A = nullptr;
+    double *d_B = nullptr;
+    double *d_work = nullptr;
 
-    cuDoubleComplex* d_A2 = nullptr;
-    cuDoubleComplex* d_B2 = nullptr;
-    cuDoubleComplex* d_work2 = nullptr;
+    cuDoubleComplex *d_A2 = nullptr;
+    cuDoubleComplex *d_B2 = nullptr;
+    cuDoubleComplex *d_work2 = nullptr;
 
-    double* d_W = nullptr;
-    int* devInfo = nullptr;
+    double *d_W = nullptr;
+    int *devInfo = nullptr;
 
     int lwork = 0;
     int info_gpu = 0;
@@ -71,22 +71,53 @@ class Diag_Cusolver_gvd
     //          W: generalized eigenvalues
     //          V: generalized eigenvectors (column major)
 
-    void Dngvd_double(int N, int M, double* A, double* B, double* W, double* V);
-    void Dngvd_complex(int N,
-                       int M,
-                       std::complex<double>* A,
-                       std::complex<double>* B,
-                       double* W,
-                       std::complex<double>* V);
+    void Dngvd_double(
+        int N,
+        int M,
+        double *A,
+        double *B,
+        double *W,
+        double *V);
+    void Dngvd_complex(
+        int N,
+        int M,
+        std::complex<double> *A,
+        std::complex<double> *B,
+        double *W,
+        std::complex<double> *V);
 
-    void Dngvd(int N, int M, double* A, double* B, double* W, double* V)
+    void Dngvd(
+        int N,
+        int M,
+        double *A,
+        double *B,
+        double *W,
+        double *V)
     {
-        return Dngvd_double(N, M, A, B, W, V);
+        return Dngvd_double(
+            N,
+            M,
+            A,
+            B,
+            W,
+            V);
     };
 
-    void Dngvd(int N, int M, std::complex<double>* A, std::complex<double>* B, double* W, std::complex<double>* V)
+    void Dngvd(
+        int N,
+        int M,
+        std::complex<double> *A,
+        std::complex<double> *B,
+        double *W,
+        std::complex<double> *V)
     {
-        return Dngvd_complex(N, M, A, B, W, V);
+        return Dngvd_complex(
+            N,
+            M,
+            A,
+            B,
+            W,
+            V);
     };
 };
 

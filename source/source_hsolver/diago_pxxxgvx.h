@@ -23,14 +23,15 @@ namespace hsolver
  */
 
 template <typename T>
-void pxxxgvx_diag(const int* const desc,
-                  const int ncol,
-                  const int nrow,
-                  const int nbands,
-                  const T* const h_mat,
-                  const T* const s_mat,
-                  typename GetTypeReal<T>::type* const ekb,
-                  T* const wfc_2d);
+void pxxxgvx_diag(
+    const int *const desc,
+    const int ncol,
+    const int nrow,
+    const int nbands,
+    const T *const h_mat,
+    const T *const s_mat,
+    typename GetTypeReal<T>::type *const ekb,
+    T *const wfc_2d);
 #endif
 
 } // namespace hsolver

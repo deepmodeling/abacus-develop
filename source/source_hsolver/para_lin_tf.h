@@ -15,8 +15,7 @@ namespace hsolver
  *        A and B are local matrice
  *        U can be a local matrix or a global matrix
  */
-template <typename T, typename Device>
-class PLinearTransform
+template <typename T, typename Device> class PLinearTransform
 {
   public:
     using syncmem_dev_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
@@ -46,14 +45,15 @@ class PLinearTransform
      *        A: LDA * nrow, U_global: ncolA_global * ncolB_global, U_local: ncolA_global * ncolB
      *        B: LDA * ncolB
      */
-    void set_dimension(const int nrowA,
-                       const int ncolA,
-                       const int ncolB,
-                       const int LDA,
+    void set_dimension(
+        const int nrowA,
+        const int ncolA,
+        const int ncolB,
+        const int LDA,
 #ifdef __MPI
-                       MPI_Comm col_world,
+        MPI_Comm col_world,
 #endif
-                       const bool localU);
+        const bool localU);
 
     /**
      * @brief B =  alpha * A * U + beta * B
@@ -70,15 +70,20 @@ class PLinearTransform
      * @param B : input/output matrix
      *
      */
-    void act(const T alpha, const T* A, const T* U_global, const T beta, T* B);
+    void act(
+        const T alpha,
+        const T *A,
+        const T *U_global,
+        const T beta,
+        T *B);
 
 #ifdef __MPI
   private:
     std::vector<T> A_tmp_;      // temperory memory for A
     std::vector<T> isend_tmp_;  // temperory memory for isend
-    T* U_tmp_ = nullptr;        // temperory memory for U
-    T* B_tmp_ = nullptr;        // temperory memory for B
-    T* A_tmp_device_ = nullptr; // temperory pointer
+    T *U_tmp_ = nullptr;        // temperory memory for U
+    T *B_tmp_ = nullptr;        // temperory memory for B
+    T *A_tmp_device_ = nullptr; // temperory pointer
 #endif
 };
 } // namespace hsolver

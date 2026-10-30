@@ -11,15 +11,15 @@
 
 namespace hsolver
 {
-template <typename T>
-std::vector<double> DiagoPexsi<T>::mu_buffer;
+template <typename T> std::vector<double> DiagoPexsi<T>::mu_buffer;
 
 template <typename T>
-DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
-                          const int nspin_in,
-                          const int nlocal_in,
-                          const double nelec_in,
-                          const int world_nproc_in)
+DiagoPexsi<T>::DiagoPexsi(
+    const Parallel_Orbitals *ParaV_in,
+    const int nspin_in,
+    const int nlocal_in,
+    const double nelec_in,
+    const int world_nproc_in)
 {
     this->nspin_dm = (nspin_in == 4) ? 1 : nspin_in;
     this->nlocal = nlocal_in;
@@ -44,8 +44,7 @@ DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
     }
 }
 
-template <typename T>
-DiagoPexsi<T>::~DiagoPexsi()
+template <typename T> DiagoPexsi<T>::~DiagoPexsi()
 {
     for (int i = 0; i < this->nspin_dm; i++)
     {
@@ -55,23 +54,25 @@ DiagoPexsi<T>::~DiagoPexsi()
 }
 
 template <>
-void DiagoPexsi<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
-                              ModuleBase::MatrixBlock<double>& s_mat,
-                              psi::Psi<double>& psi,
-                              double* eigenvalue_in)
+void DiagoPexsi<double>::diag(
+    ModuleBase::MatrixBlock<double> &h_mat,
+    ModuleBase::MatrixBlock<double> &s_mat,
+    psi::Psi<double> &psi,
+    double *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoPEXSI", "diag");
     int ik = psi.get_current_k();
-    this->ps->prepare(this->ParaV->blacs_ctxt,
-                      this->ParaV->nb,
-                      this->ParaV->nrow,
-                      this->ParaV->ncol,
-                      this->nlocal,
-                      this->nelec,
-                      h_mat.p,
-                      s_mat.p,
-                      DM[ik],
-                      EDM[ik]);
+    this->ps->prepare(
+        this->ParaV->blacs_ctxt,
+        this->ParaV->nb,
+        this->ParaV->nrow,
+        this->ParaV->ncol,
+        this->nlocal,
+        this->nelec,
+        h_mat.p,
+        s_mat.p,
+        DM[ik],
+        EDM[ik]);
     this->ps->solve(mu_buffer[ik], this->world_nproc);
     this->totalFreeEnergy = this->ps->get_totalFreeEnergy();
     this->totalEnergyH = this->ps->get_totalEnergyH();
@@ -80,10 +81,11 @@ void DiagoPexsi<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
 }
 
 template <>
-void DiagoPexsi<std::complex<double>>::diag(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
-                                            ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
-                                            psi::Psi<std::complex<double>>& psi,
-                                            double* eigenvalue_in)
+void DiagoPexsi<std::complex<double>>::diag(
+    ModuleBase::MatrixBlock<std::complex<double>> &h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>> &s_mat,
+    psi::Psi<std::complex<double>> &psi,
+    double *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoPEXSI", "diag");
     ModuleBase::WARNING_QUIT("DiagoPEXSI", "PEXSI is not completed for multi-k case");

@@ -39,14 +39,15 @@ namespace hsolver
 {
 
 template <typename TK>
-void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
-                            psi::Psi<TK>& psi,
-                            elecstate::ElecState* pes,
-                            module_dm::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
-                            Charge& chr,
-                            const int nspin,
-                            const double omega,
-                            const bool skip_charge)
+void HSolverLCAO<TK>::solve(
+    HSMatrix<TK> &hs,
+    psi::Psi<TK> &psi,
+    elecstate::ElecState *pes,
+    module_dm::DensityMatrix<TK, double> &dm, // mohan add 2025-11-03
+    Charge &chr,
+    const int nspin,
+    const double omega,
+    const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
     ModuleBase::timer::start("HSolverLCAO", "solve");
@@ -61,11 +62,15 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
         }
         else
 #endif
-            if (this->kpar_lcao > 1
-                && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"
-                    || this->method == "lapack"))
+            if (this->kpar_lcao > 1 && (this->method == "genelpa" || this->method == "elpa" ||
+                                           this->method == "scalapack_gvx" || this->method == "lapack"))
         {
-            this->parakSolve(hs, psi, pes, this->kpar_lcao, nspin);
+            this->parakSolve(
+                hs,
+                psi,
+                pes,
+                this->kpar_lcao,
+                nspin);
         }
         else
 #endif
@@ -82,26 +87,35 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
                 psi.fix_k(ik);
 
                 /// solve eigenvector and eigenvalue for H(k)
-                this->hamiltSolvePsiK(hk, sk, psi, &(pes->ekb(ik, 0)));
+                this->hamiltSolvePsiK(
+                    hk,
+                    sk,
+                    psi,
+                    &(pes->ekb(ik, 0)));
             }
         }
         else
         {
-            ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
-                                     "This method and KPAR setting is not supported for lcao basis in ABACUS!");
+            ModuleBase::WARNING_QUIT(
+                "HSolverLCAO::solve", "This method and KPAR setting is not supported for lcao basis in ABACUS!");
         }
 
-        elecstate::calculate_weights(pes->ekb,
-                                     pes->wg,
-                                     pes->klist,
-                                     pes->eferm,
-                                     pes->f_en,
-                                     pes->nelec_spin,
-                                     this->nbands,
-                                     pes->skip_weights);
+        elecstate::calculate_weights(
+            pes->ekb,
+            pes->wg,
+            pes->klist,
+            pes->eferm,
+            pes->f_en,
+            pes->nelec_spin,
+            this->nbands,
+            pes->skip_weights);
 
         elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
-        module_dm::dm_from_psi(this->ParaV, pes->wg, psi, dm);
+        module_dm::dm_from_psi(
+            this->ParaV,
+            pes->wg,
+            psi,
+            dm);
         dm.cal_dmr(-1);
 
         if (!skip_charge)
@@ -109,7 +123,11 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
             // compute charge density from density matrix, mohan update 20251024
             // delegate to ElecStateLCAO to keep the source_lcao dependency out of
             // source_hsolver (mirrors the pexsi branch below and the PW psiToRho path)
-            dynamic_cast<elecstate::ElecStateLCAO<TK>*>(pes)->dmToRho(dm.get_dmr_vec(), nspin, &chr, omega);
+            dynamic_cast<elecstate::ElecStateLCAO<TK> *>(pes)->dmToRho(
+                dm.get_dmr_vec(),
+                nspin,
+                &chr,
+                omega);
         }
         else
         {
@@ -119,19 +137,32 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
     else if (this->method == "pexsi")
     {
 #ifdef __PEXSI // other purification methods should follow this routine
-        DiagoPexsi<TK> pe(ParaV, nspin, this->nlocal, this->nelec, this->world_nproc);
+        DiagoPexsi<TK> pe(
+            ParaV,
+            nspin,
+            this->nlocal,
+            this->nelec,
+            this->world_nproc);
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             psi.fix_k(ik);
             ModuleBase::MatrixBlock<TK> hk, sk;
             hs.hs_at_k(ik, hk, sk);
             // solve eigenvector and eigenvalue for H(k)
-            pe.diag(hk, sk, psi, nullptr);
+            pe.diag(
+                hk,
+                sk,
+                psi,
+                nullptr);
         }
-        auto _pes = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(pes);
+        auto _pes = dynamic_cast<elecstate::ElecStateLCAO<TK> *>(pes);
         pes->f_en.eband = pe.totalFreeEnergy;
         // maybe eferm could be dealt with in the future
-        _pes->dm2rho(pe.DM, pe.EDM, &dm, omega);
+        _pes->dm2rho(
+            pe.DM,
+            pe.EDM,
+            &dm,
+            omega);
 #endif
     }
 
@@ -140,10 +171,11 @@ void HSolverLCAO<TK>::solve(HSMatrix<TK>& hs,
 }
 
 template <typename T>
-void HSolverLCAO<T>::hamiltSolvePsiK(ModuleBase::MatrixBlock<T>& hk,
-                                     ModuleBase::MatrixBlock<T>& sk,
-                                     psi::Psi<T>& psi,
-                                     double* eigenvalue)
+void HSolverLCAO<T>::hamiltSolvePsiK(
+    ModuleBase::MatrixBlock<T> &hk,
+    ModuleBase::MatrixBlock<T> &sk,
+    psi::Psi<T> &psi,
+    double *eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::start("HSolverLCAO", "hamiltSolvePsiK");
@@ -152,19 +184,31 @@ void HSolverLCAO<T>::hamiltSolvePsiK(ModuleBase::MatrixBlock<T>& hk,
     {
 #ifdef __MPI
         DiagoScalapack<T> sa(this->nlocal, this->nbands);
-        sa.diag(hk, sk, psi, eigenvalue);
+        sa.diag(
+            hk,
+            sk,
+            psi,
+            eigenvalue);
 #endif
     }
 #ifdef __ELPA
     else if (this->method == "genelpa")
     {
         DiagoElpa<T> el(this->nlocal, this->nbands);
-        el.diag(hk, sk, psi, eigenvalue);
+        el.diag(
+            hk,
+            sk,
+            psi,
+            eigenvalue);
     }
     else if (this->method == "elpa")
     {
         DiagoElpaNative<T> el(this->nlocal, this->nbands, this->use_gpu);
-        el.diag(hk, sk, psi, eigenvalue);
+        el.diag(
+            hk,
+            sk,
+            psi,
+            eigenvalue);
     }
 #endif
 #ifdef __CUDA
@@ -172,20 +216,32 @@ void HSolverLCAO<T>::hamiltSolvePsiK(ModuleBase::MatrixBlock<T>& hk,
     {
         // Note: This branch will only be executed in the single-process case
         DiagoCusolver<T> cu(this->nlocal, this->nbands);
-        cu.diag(hk, sk, psi, eigenvalue);
+        cu.diag(
+            hk,
+            sk,
+            psi,
+            eigenvalue);
     }
 #ifdef __CUSOLVERMP
     else if (this->method == "cusolvermp")
     {
         DiagoCusolverMP<T> cm(this->nlocal, this->nbands);
-        cm.diag(hk, sk, psi, eigenvalue);
+        cm.diag(
+            hk,
+            sk,
+            psi,
+            eigenvalue);
     }
 #endif
 #endif
     else if (this->method == "lapack") // only for single core
     {
         DiagoLapack<T> la(this->nlocal, this->nbands);
-        la.diag(hk, sk, psi, eigenvalue);
+        la.diag(
+            hk,
+            sk,
+            psi,
+            eigenvalue);
     }
     else
     {
@@ -196,11 +252,12 @@ void HSolverLCAO<T>::hamiltSolvePsiK(ModuleBase::MatrixBlock<T>& hk,
 }
 
 template <typename T>
-void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
-                                psi::Psi<T>& psi,
-                                elecstate::ElecState* pes,
-                                const int kpar,
-                                const int nspin)
+void HSolverLCAO<T>::parakSolve(
+    HSMatrix<T> &hs,
+    psi::Psi<T> &psi,
+    elecstate::ElecState *pes,
+    const int kpar,
+    const int nspin)
 {
 #ifdef __MPI
     ModuleBase::timer::start("HSolverLCAO", "parakSolve");
@@ -210,11 +267,22 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
     int nks = psi.get_nk();
     int nrow = this->ParaV->get_global_row_size();
     int nb2d = this->ParaV->get_block_size();
-    k2d.set_para_env(psi.get_nk(), nrow, nb2d, this->world_nproc, this->world_rank, nspin);
+    k2d.set_para_env(
+        psi.get_nk(),
+        nrow,
+        nb2d,
+        this->world_nproc,
+        this->world_rank,
+        nspin);
     /// set psi_pool
     const int zero = 0;
     int coord_col = k2d.get_p2D_pool()->get_coord_col();
-    int ncol_bands_pool = numroc_(&(nbands), &(nb2d), &coord_col, &zero, &(k2d.get_p2D_pool()->dim1));
+    int ncol_bands_pool = numroc_(
+        &(nbands),
+        &(nb2d),
+        &coord_col,
+        &zero,
+        &(k2d.get_p2D_pool()->dim1));
     /// Loop over k points for solve Hamiltonian to charge density
     for (int ik = 0; ik < k2d.get_pKpoints()->get_max_nks_pool(); ++ik)
     {
@@ -243,47 +311,71 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
         k2d.distribute_hsk(hs, ik_kpar, nrow);
         /// global index of k point
         int ik_global = ik + k2d.get_pKpoints()->startk_pool[k2d.get_my_pool()];
-        auto psi_pool = psi::Psi<T>(1, ncol_bands_pool, k2d.get_p2D_pool()->nrow, k2d.get_p2D_pool()->nrow, true);
+        auto psi_pool = psi::Psi<T>(
+            1,
+            ncol_bands_pool,
+            k2d.get_p2D_pool()->nrow,
+            k2d.get_p2D_pool()->nrow,
+            true);
         ModuleBase::Memory::record("HSolverLCAO::psi_pool", nrow * ncol_bands_pool * sizeof(T));
         if (ik_global < psi.get_nk() && ik < k2d.get_pKpoints()->nks_pool[k2d.get_my_pool()])
         {
             /// local psi in pool
             psi_pool.fix_k(0);
             ModuleBase::MatrixBlock<T> hk_pool = ModuleBase::MatrixBlock<T>{k2d.hk_pool.data(),
-                                                                            (size_t)k2d.get_p2D_pool()->get_row_size(),
-                                                                            (size_t)k2d.get_p2D_pool()->get_col_size(),
-                                                                            k2d.get_p2D_pool()->desc};
+                (size_t)k2d.get_p2D_pool()->get_row_size(), (size_t)k2d.get_p2D_pool()->get_col_size(),
+                k2d.get_p2D_pool()->desc};
             ModuleBase::MatrixBlock<T> sk_pool = ModuleBase::MatrixBlock<T>{k2d.sk_pool.data(),
-                                                                            (size_t)k2d.get_p2D_pool()->get_row_size(),
-                                                                            (size_t)k2d.get_p2D_pool()->get_col_size(),
-                                                                            k2d.get_p2D_pool()->desc};
+                (size_t)k2d.get_p2D_pool()->get_row_size(), (size_t)k2d.get_p2D_pool()->get_col_size(),
+                k2d.get_p2D_pool()->desc};
             /// solve eigenvector and eigenvalue for H(k)
             if (this->method == "scalapack_gvx")
             {
                 DiagoScalapack<T> sa(this->nlocal, this->nbands);
-                sa.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+                sa.diag_pool(
+                    hk_pool,
+                    sk_pool,
+                    psi_pool,
+                    &(pes->ekb(ik_global, 0)),
+                    k2d.POOL_WORLD_K2D);
             }
             else if (this->method == "lapack")
             {
                 DiagoLapack<T> la(this->nlocal, this->nbands);
-                la.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+                la.diag_pool(
+                    hk_pool,
+                    sk_pool,
+                    psi_pool,
+                    &(pes->ekb(ik_global, 0)),
+                    k2d.POOL_WORLD_K2D);
             }
 #ifdef __ELPA
             else if (this->method == "genelpa")
             {
                 DiagoElpa<T> el(this->nlocal, this->nbands);
-                el.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+                el.diag_pool(
+                    hk_pool,
+                    sk_pool,
+                    psi_pool,
+                    &(pes->ekb(ik_global, 0)),
+                    k2d.POOL_WORLD_K2D);
             }
             else if (this->method == "elpa")
             {
                 DiagoElpaNative<T> el(this->nlocal, this->nbands, this->use_gpu);
-                el.diag_pool(hk_pool, sk_pool, psi_pool, &(pes->ekb(ik_global, 0)), k2d.POOL_WORLD_K2D);
+                el.diag_pool(
+                    hk_pool,
+                    sk_pool,
+                    psi_pool,
+                    &(pes->ekb(ik_global, 0)),
+                    k2d.POOL_WORLD_K2D);
             }
 #endif
             else
             {
-                ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
-                                         "This type of eigensolver for k-parallelism diagnolization is not supported!");
+                ModuleBase::WARNING_QUIT(
+                    "HSolverLCAO::solve",
+                    "This type of eigensolver for k-parallelism diagnolization is not supported!");
             }
         }
         MPI_Barrier(MPI_COMM_WORLD);
@@ -291,7 +383,12 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
         for (int ipool = 0; ipool < ik_kpar.size(); ++ipool)
         {
             int source = k2d.get_pKpoints()->get_startpro_pool(ipool);
-            MPI_Bcast(&(pes->ekb(ik_kpar[ipool], 0)), nbands, MPI_DOUBLE, source, MPI_COMM_WORLD);
+            MPI_Bcast(
+                &(pes->ekb(ik_kpar[ipool], 0)),
+                nbands,
+                MPI_DOUBLE,
+                source,
+                MPI_COMM_WORLD);
             int desc_pool[9];
             std::copy(k2d.get_p2D_pool()->desc, k2d.get_p2D_pool()->desc + 9, desc_pool);
             if (k2d.get_my_pool() != ipool)
@@ -299,17 +396,18 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
                 desc_pool[1] = -1;
             }
             psi.fix_k(ik_kpar[ipool]);
-            Cpxgemr2d(nrow,
-                      nbands,
-                      psi_pool.get_pointer(),
-                      1,
-                      1,
-                      desc_pool,
-                      psi.get_pointer(),
-                      1,
-                      1,
-                      k2d.get_p2D_global()->desc,
-                      k2d.get_p2D_global()->blacs_ctxt);
+            Cpxgemr2d(
+                nrow,
+                nbands,
+                psi_pool.get_pointer(),
+                1,
+                1,
+                desc_pool,
+                psi.get_pointer(),
+                1,
+                1,
+                k2d.get_p2D_global()->desc,
+                k2d.get_p2D_global()->blacs_ctxt);
         }
         MPI_Barrier(MPI_COMM_WORLD);
         ModuleBase::timer::end("HSolverLCAO", "collect_psi");
@@ -321,11 +419,11 @@ void HSolverLCAO<T>::parakSolve(HSMatrix<T>& hs,
 
 #if defined(__MPI) && defined(__CUDA)
 template <typename T>
-void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs, psi::Psi<T>& psi, elecstate::ElecState* pes)
+void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T> &hs, psi::Psi<T> &psi, elecstate::ElecState *pes)
 {
     ModuleBase::timer::start("HSolverLCAO", "parakSolve");
     // GPU device is already bound by DeviceContext::init() in read_input.cpp
-    auto& dev_ctx = base_device::DeviceContext::instance();
+    auto &dev_ctx = base_device::DeviceContext::instance();
     const int local_rank = dev_ctx.get_local_rank();
     const int device_count = dev_ctx.get_device_count();
 
@@ -340,8 +438,22 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs, psi::Psi<T>& psi, elec
     std::vector<int> all_local_ranks(world_size);
     std::vector<int> all_is_active(world_size);
 
-    MPI_Allgather(&local_rank, 1, MPI_INT, all_local_ranks.data(), 1, MPI_INT, MPI_COMM_WORLD);
-    MPI_Allgather(&is_active_int, 1, MPI_INT, all_is_active.data(), 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Allgather(
+        &local_rank,
+        1,
+        MPI_INT,
+        all_local_ranks.data(),
+        1,
+        MPI_INT,
+        MPI_COMM_WORLD);
+    MPI_Allgather(
+        &is_active_int,
+        1,
+        MPI_INT,
+        all_is_active.data(),
+        1,
+        MPI_INT,
+        MPI_COMM_WORLD);
 
     int total_active_ranks = 0;
     int max_local_rank = 0;
@@ -351,7 +463,9 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs, psi::Psi<T>& psi, elec
         {
             total_active_ranks++;
             if (all_local_ranks[i] > max_local_rank)
+            {
                 max_local_rank = all_local_ranks[i];
+            }
         }
     }
 
@@ -380,14 +494,34 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs, psi::Psi<T>& psi, elec
     Parallel_2D psi_para_local;  // store the info about how the psi is distributed before distributing to all processes
 
     MPI_Comm self_comm; // the communicator that only contains the current process itself
-    MPI_Comm_split(MPI_COMM_WORLD, world_rank, 0, &self_comm);
+    MPI_Comm_split(
+        MPI_COMM_WORLD,
+        world_rank,
+        0,
+        &self_comm);
     int nrow = this->ParaV->get_global_row_size(); // number of rows in the global matrix
     int ncol = nrow;
     int nb2d = this->ParaV->get_block_size(); // block size for the 2D matrix distribution
-    mat_para_global.init(nrow, ncol, nb2d, MPI_COMM_WORLD);
-    psi_para_global.init(nrow, nbands, nb2d, MPI_COMM_WORLD);
-    mat_para_local.init(nrow, ncol, nb2d, self_comm);
-    psi_para_local.init(nrow, ncol, nb2d, self_comm);
+    mat_para_global.init(
+        nrow,
+        ncol,
+        nb2d,
+        MPI_COMM_WORLD);
+    psi_para_global.init(
+        nrow,
+        nbands,
+        nb2d,
+        MPI_COMM_WORLD);
+    mat_para_local.init(
+        nrow,
+        ncol,
+        nb2d,
+        self_comm);
+    psi_para_local.init(
+        nrow,
+        ncol,
+        nb2d,
+        self_comm);
 
     std::vector<T> hk_mat; // temporary storage for H(k) matrix collected from all processes
     std::vector<T> sk_mat; // temporary storage for S(k) matrix collected from all processes
@@ -410,36 +544,38 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs, psi::Psi<T>& psi, elec
             ModuleBase::MatrixBlock<T> hk_2D, sk_2D;
             hs.hs_at_k(ik, hk_2D, sk_2D);
             int desc_tmp[9];
-            T* hk_local_ptr = hk_mat.data();
-            T* sk_local_ptr = sk_mat.data();
+            T *hk_local_ptr = hk_mat.data();
+            T *sk_local_ptr = sk_mat.data();
             std::copy(mat_para_local.desc, mat_para_local.desc + 9, desc_tmp);
             if (!is_active)
             {
                 desc_tmp[1] = -1;
             }
 
-            Cpxgemr2d(nrow,
-                      ncol,
-                      hk_2D.p,
-                      1,
-                      1,
-                      mat_para_global.desc,
-                      hk_local_ptr,
-                      1,
-                      1,
-                      desc_tmp,
-                      mat_para_global.blacs_ctxt);
-            Cpxgemr2d(nrow,
-                      ncol,
-                      sk_2D.p,
-                      1,
-                      1,
-                      mat_para_global.desc,
-                      sk_local_ptr,
-                      1,
-                      1,
-                      desc_tmp,
-                      mat_para_global.blacs_ctxt);
+            Cpxgemr2d(
+                nrow,
+                ncol,
+                hk_2D.p,
+                1,
+                1,
+                mat_para_global.desc,
+                hk_local_ptr,
+                1,
+                1,
+                desc_tmp,
+                mat_para_global.blacs_ctxt);
+            Cpxgemr2d(
+                nrow,
+                ncol,
+                sk_2D.p,
+                1,
+                1,
+                mat_para_global.desc,
+                sk_local_ptr,
+                1,
+                1,
+                desc_tmp,
+                mat_para_global.blacs_ctxt);
         }
 
         // diagonalize the Hamiltonian matrix using cusolver
@@ -448,21 +584,30 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs, psi::Psi<T>& psi, elec
         {
             psi_local.resize(1, ncol, nrow);
             DiagoCusolver<T> cu(this->nlocal, this->nbands);
-            ModuleBase::MatrixBlock<T> hk_local
-                = ModuleBase::MatrixBlock<T>{hk_mat.data(), (size_t)nrow, (size_t)ncol, mat_para_local.desc};
-            ModuleBase::MatrixBlock<T> sk_local
-                = ModuleBase::MatrixBlock<T>{sk_mat.data(), (size_t)nrow, (size_t)ncol, mat_para_local.desc};
-            cu.diag(hk_local, sk_local, psi_local, &(pes->ekb(kpt_assigned, 0)));
+            ModuleBase::MatrixBlock<T> hk_local = ModuleBase::MatrixBlock<T>{hk_mat.data(), (size_t)nrow, (size_t)ncol,
+                mat_para_local.desc};
+            ModuleBase::MatrixBlock<T> sk_local = ModuleBase::MatrixBlock<T>{sk_mat.data(), (size_t)nrow, (size_t)ncol,
+                mat_para_local.desc};
+            cu.diag(
+                hk_local,
+                sk_local,
+                psi_local,
+                &(pes->ekb(kpt_assigned, 0)));
         }
 
         // transfer the eigenvectors and eigenvalues to all processes
         for (int ik = ik_start; ik < ik_start + total_active_ranks && ik < nks; ik++)
         {
             int root = active_ranks[ik % total_active_ranks];
-            MPI_Bcast(&(pes->ekb(ik, 0)), nbands, MPI_DOUBLE, root, MPI_COMM_WORLD);
+            MPI_Bcast(
+                &(pes->ekb(ik, 0)),
+                nbands,
+                MPI_DOUBLE,
+                root,
+                MPI_COMM_WORLD);
             int desc_pool[9];
             std::copy(psi_para_local.desc, psi_para_local.desc + 9, desc_pool);
-            T* psi_local_ptr = nullptr;
+            T *psi_local_ptr = nullptr;
             if (world_rank != root)
             {
                 desc_pool[1] = -1;
@@ -472,17 +617,18 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs, psi::Psi<T>& psi, elec
                 psi_local_ptr = psi_local.get_pointer();
             }
             psi.fix_k(ik);
-            Cpxgemr2d(nrow,
-                      nbands,
-                      psi_local_ptr,
-                      1,
-                      1,
-                      desc_pool,
-                      psi.get_pointer(),
-                      1,
-                      1,
-                      psi_para_global.desc,
-                      psi_para_global.blacs_ctxt);
+            Cpxgemr2d(
+                nrow,
+                nbands,
+                psi_local_ptr,
+                1,
+                1,
+                desc_pool,
+                psi.get_pointer(),
+                1,
+                1,
+                psi_para_global.desc,
+                psi_para_global.blacs_ctxt);
         }
     }
 

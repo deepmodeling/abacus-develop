@@ -13,25 +13,25 @@ namespace hsolver
 namespace
 {
 template <typename T>
-void check_lapack_layout(const ModuleBase::MatrixBlock<T>& h_mat,
-                         const ModuleBase::MatrixBlock<T>& s_mat,
-                         const std::size_t n)
+void check_lapack_layout(
+    const ModuleBase::MatrixBlock<T> &h_mat, const ModuleBase::MatrixBlock<T> &s_mat, const std::size_t n)
 {
     if (h_mat.row != n || h_mat.col != n || s_mat.row != n || s_mat.col != n)
     {
-        ModuleBase::WARNING_QUIT("DiagoLapack",
-                                 "The LAPACK eigensolver requires replicated " + std::to_string(n) + " x "
-                                     + std::to_string(n) + " Hamiltonian and overlap matrices, but received "
-                                     + std::to_string(h_mat.row) + " x " + std::to_string(h_mat.col)
-                                     + " local blocks. Please use ScaLAPACK or ELPA for distributed matrices.");
+        ModuleBase::WARNING_QUIT(
+            "DiagoLapack", "The LAPACK eigensolver requires replicated " + std::to_string(n) + " x " +
+                               std::to_string(n) + " Hamiltonian and overlap matrices, but received " +
+                               std::to_string(h_mat.row) + " x " + std::to_string(h_mat.col) +
+                               " local blocks. Please use ScaLAPACK or ELPA for distributed matrices.");
     }
 }
 } // namespace
 template <>
-void DiagoLapack<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
-                               ModuleBase::MatrixBlock<double>& s_mat,
-                               psi::Psi<double>& psi,
-                               Real* eigenvalue_in)
+void DiagoLapack<double>::diag(
+    ModuleBase::MatrixBlock<double> &h_mat,
+    ModuleBase::MatrixBlock<double> &s_mat,
+    psi::Psi<double> &psi,
+    Real *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoLapack", "diag");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
@@ -39,67 +39,115 @@ void DiagoLapack<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
     check_lapack_layout(h_mat, s_mat, eigen.size());
 
     // Diag
-    this->dsygvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
+    this->dsygvx_diag(
+        h_mat.col,
+        h_mat.row,
+        h_mat.p,
+        s_mat.p,
+        eigen.data(),
+        psi);
     // Copy result
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 }
 
 template <>
-void DiagoLapack<std::complex<double>>::diag(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
-                                             ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
-                                             psi::Psi<std::complex<double>>& psi,
-                                             Real* eigenvalue_in)
+void DiagoLapack<std::complex<double>>::diag(
+    ModuleBase::MatrixBlock<std::complex<double>> &h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>> &s_mat,
+    psi::Psi<std::complex<double>> &psi,
+    Real *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoLapack", "diag");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
     check_lapack_layout(h_mat, s_mat, eigen.size());
-    this->zhegvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
+    this->zhegvx_diag(
+        h_mat.col,
+        h_mat.row,
+        h_mat.p,
+        s_mat.p,
+        eigen.data(),
+        psi);
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 }
 
 #ifdef __MPI
 template <>
-void DiagoLapack<double>::diag_pool(ModuleBase::MatrixBlock<double>& h_mat,
-                                    ModuleBase::MatrixBlock<double>& s_mat,
-                                    psi::Psi<double>& psi,
-                                    Real* eigenvalue_in,
-                                    MPI_Comm& comm)
+void DiagoLapack<double>::diag_pool(
+    ModuleBase::MatrixBlock<double> &h_mat,
+    ModuleBase::MatrixBlock<double> &s_mat,
+    psi::Psi<double> &psi,
+    Real *eigenvalue_in,
+    MPI_Comm &comm)
 {
     ModuleBase::TITLE("DiagoLapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
     check_lapack_layout(h_mat, s_mat, eigen.size());
-    this->dsygvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
+    this->dsygvx_diag(
+        h_mat.col,
+        h_mat.row,
+        h_mat.p,
+        s_mat.p,
+        eigen.data(),
+        psi);
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 }
 template <>
-void DiagoLapack<std::complex<double>>::diag_pool(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
-                                                  ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
-                                                  psi::Psi<std::complex<double>>& psi,
-                                                  Real* eigenvalue_in,
-                                                  MPI_Comm& comm)
+void DiagoLapack<std::complex<double>>::diag_pool(
+    ModuleBase::MatrixBlock<std::complex<double>> &h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>> &s_mat,
+    psi::Psi<std::complex<double>> &psi,
+    Real *eigenvalue_in,
+    MPI_Comm &comm)
 {
     ModuleBase::TITLE("DiagoLapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
     check_lapack_layout(h_mat, s_mat, eigen.size());
-    this->zhegvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
+    this->zhegvx_diag(
+        h_mat.col,
+        h_mat.row,
+        h_mat.p,
+        s_mat.p,
+        eigen.data(),
+        psi);
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 }
 #endif
 
 template <typename T>
-std::pair<int, std::vector<int>> DiagoLapack<T>::dsygvx_once(const int ncol,
-                                                             const int nrow,
-                                                             const double* const h_mat,
-                                                             const double* const s_mat,
-                                                             double* const ekb,
-                                                             psi::Psi<double>& wfc_2d) const
+std::pair<int, std::vector<int>> DiagoLapack<T>::dsygvx_once(
+    const int ncol,
+    const int nrow,
+    const double *const h_mat,
+    const double *const s_mat,
+    double *const ekb,
+    psi::Psi<double> &wfc_2d) const
 {
     ModuleBase::matrix h_tmp(ncol, nrow, false);
     memcpy(h_tmp.c, h_mat, sizeof(double) * ncol * nrow);
@@ -124,33 +172,35 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::dsygvx_once(const int ncol,
     //  ABSTOL, M, W, Z, LDZ, WORK, LWORK, IWORK, IFAIL, INFO)
     int n = this->nlocal;
     int lda = n, ldb = n, ldz = n;
-    dsygvx_(&itype,
-            &jobz,
-            &range,
-            &uplo,
-            &n,
-            h_tmp.c,
-            &lda,
-            s_tmp.c,
-            &ldb,
-            &vl,
-            &vu,
-            &il,
-            &iu,
-            &abstol,
-            &M,
-            ekb,
-            wfc_2d.get_pointer(),
-            &ldz,
-            work.data(),
-            &lwork,
-            iwork.data(),
-            ifail.data(),
-            &info);
+    dsygvx_(
+        &itype,
+        &jobz,
+        &range,
+        &uplo,
+        &n,
+        h_tmp.c,
+        &lda,
+        s_tmp.c,
+        &ldb,
+        &vl,
+        &vu,
+        &il,
+        &iu,
+        &abstol,
+        &M,
+        ekb,
+        wfc_2d.get_pointer(),
+        &ldz,
+        work.data(),
+        &lwork,
+        iwork.data(),
+        ifail.data(),
+        &info);
     if (info)
     {
-        throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__)
-                                 + " line " + std::to_string(__LINE__));
+        throw std::runtime_error(
+            "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__) + " line " +
+            std::to_string(__LINE__));
     }
 
     // Query returned optimal lwork in work[0]
@@ -160,29 +210,30 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::dsygvx_once(const int ncol,
     liwork = std::max(1, 5 * n);
     iwork.resize(liwork, 0);
 
-    dsygvx_(&itype,
-            &jobz,
-            &range,
-            &uplo,
-            &n,
-            h_tmp.c,
-            &lda,
-            s_tmp.c,
-            &ldb,
-            &vl,
-            &vu,
-            &il,
-            &iu,
-            &abstol,
-            &M,
-            ekb,
-            wfc_2d.get_pointer(),
-            &ldz,
-            work.data(),
-            &lwork,
-            iwork.data(),
-            ifail.data(),
-            &info);
+    dsygvx_(
+        &itype,
+        &jobz,
+        &range,
+        &uplo,
+        &n,
+        h_tmp.c,
+        &lda,
+        s_tmp.c,
+        &ldb,
+        &vl,
+        &vu,
+        &il,
+        &iu,
+        &abstol,
+        &M,
+        ekb,
+        wfc_2d.get_pointer(),
+        &ldz,
+        work.data(),
+        &lwork,
+        iwork.data(),
+        ifail.data(),
+        &info);
 
     if (info == 0)
     {
@@ -210,18 +261,20 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::dsygvx_once(const int ncol,
     }
     else
     {
-        throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__)
-                                 + " line " + std::to_string(__LINE__));
+        throw std::runtime_error(
+            "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__) + " line " +
+            std::to_string(__LINE__));
     }
 }
 
 template <typename T>
-std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
-                                                             const int nrow,
-                                                             const std::complex<double>* const h_mat,
-                                                             const std::complex<double>* const s_mat,
-                                                             double* const ekb,
-                                                             psi::Psi<std::complex<double>>& wfc_2d) const
+std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(
+    const int ncol,
+    const int nrow,
+    const std::complex<double> *const h_mat,
+    const std::complex<double> *const s_mat,
+    double *const ekb,
+    psi::Psi<std::complex<double>> &wfc_2d) const
 {
     ModuleBase::ComplexMatrix h_tmp(ncol, nrow, false);
     memcpy(h_tmp.c, h_mat, sizeof(std::complex<double>) * ncol * nrow);
@@ -279,8 +332,9 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
         &info);
     if (info)
     {
-        throw std::runtime_error("info=" + ModuleBase::GlobalFunc::TO_STRING(info) + ". " + std::string(__FILE__)
-                                 + " line " + std::to_string(__LINE__));
+        throw std::runtime_error(
+            "info=" + ModuleBase::GlobalFunc::TO_STRING(info) + ". " + std::string(__FILE__) + " line " +
+            std::to_string(__LINE__));
     }
 
     // Query returned optimal lwork in work[0]
@@ -349,22 +403,30 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
     }
     else
     {
-        throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__)
-                                 + " line " + std::to_string(__LINE__));
+        throw std::runtime_error(
+            "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__) + " line " +
+            std::to_string(__LINE__));
     }
 }
 
 template <typename T>
-void DiagoLapack<T>::dsygvx_diag(const int ncol,
-                                 const int nrow,
-                                 const double* const h_mat,
-                                 const double* const s_mat,
-                                 double* const ekb,
-                                 psi::Psi<double>& wfc_2d)
+void DiagoLapack<T>::dsygvx_diag(
+    const int ncol,
+    const int nrow,
+    const double *const h_mat,
+    const double *const s_mat,
+    double *const ekb,
+    psi::Psi<double> &wfc_2d)
 {
     while (true)
     {
-        const std::pair<int, std::vector<int>> info_vec = dsygvx_once(ncol, nrow, h_mat, s_mat, ekb, wfc_2d);
+        const std::pair<int, std::vector<int>> info_vec = dsygvx_once(
+            ncol,
+            nrow,
+            h_mat,
+            s_mat,
+            ekb,
+            wfc_2d);
         post_processing(info_vec.first, info_vec.second);
         if (info_vec.first == 0)
         {
@@ -374,16 +436,23 @@ void DiagoLapack<T>::dsygvx_diag(const int ncol,
 }
 
 template <typename T>
-void DiagoLapack<T>::zhegvx_diag(const int ncol,
-                                 const int nrow,
-                                 const std::complex<double>* const h_mat,
-                                 const std::complex<double>* const s_mat,
-                                 double* const ekb,
-                                 psi::Psi<std::complex<double>>& wfc_2d)
+void DiagoLapack<T>::zhegvx_diag(
+    const int ncol,
+    const int nrow,
+    const std::complex<double> *const h_mat,
+    const std::complex<double> *const s_mat,
+    double *const ekb,
+    psi::Psi<std::complex<double>> &wfc_2d)
 {
     while (true)
     {
-        const std::pair<int, std::vector<int>> info_vec = zhegvx_once(ncol, nrow, h_mat, s_mat, ekb, wfc_2d);
+        const std::pair<int, std::vector<int>> info_vec = zhegvx_once(
+            ncol,
+            nrow,
+            h_mat,
+            s_mat,
+            ekb,
+            wfc_2d);
         post_processing(info_vec.first, info_vec.second);
         if (info_vec.first == 0)
         {
@@ -392,8 +461,7 @@ void DiagoLapack<T>::zhegvx_diag(const int ncol,
     }
 }
 
-template <typename T>
-void DiagoLapack<T>::post_processing(const int info, const std::vector<int>& vec)
+template <typename T> void DiagoLapack<T>::post_processing(const int info, const std::vector<int> &vec)
 {
     const std::string str_info = "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n";
     const std::string str_FILE = std::string(__FILE__) + " line " + std::to_string(__LINE__) + ".\n";
@@ -406,17 +474,16 @@ void DiagoLapack<T>::post_processing(const int info, const std::vector<int>& vec
     else if (info < 0)
     {
         const int info_negative = -info;
-        const std::string str_index
-            = (info_negative > 100)
-                  ? ModuleBase::GlobalFunc::TO_STRING(info_negative / 100) + "-th argument "
-                        + ModuleBase::GlobalFunc::TO_STRING(info_negative % 100) + "-entry is illegal.\n"
-                  : ModuleBase::GlobalFunc::TO_STRING(info_negative) + "-th argument is illegal.\n";
+        const std::string str_index =
+            (info_negative > 100) ? ModuleBase::GlobalFunc::TO_STRING(info_negative / 100) + "-th argument " +
+                                        ModuleBase::GlobalFunc::TO_STRING(info_negative % 100) + "-entry is illegal.\n"
+                                  : ModuleBase::GlobalFunc::TO_STRING(info_negative) + "-th argument is illegal.\n";
         throw std::runtime_error(str_info_FILE + str_index);
     }
     else if (info % 2)
     {
         std::string str_ifail = "ifail = ";
-        for (const int i: vec)
+        for (const int i : vec)
         {
             str_ifail += ModuleBase::GlobalFunc::TO_STRING(i) + " ";
         }
@@ -433,8 +500,8 @@ void DiagoLapack<T>::post_processing(const int info, const std::vector<int>& vec
         if (degeneracy_need <= this->degeneracy_max)
         {
             throw std::runtime_error(
-                str_info_FILE + "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n"
-                + "degeneracy_saved = " + ModuleBase::GlobalFunc::TO_STRING(this->degeneracy_max) + ".\n");
+                str_info_FILE + "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n" +
+                "degeneracy_saved = " + ModuleBase::GlobalFunc::TO_STRING(this->degeneracy_max) + ".\n");
         }
         else
         {

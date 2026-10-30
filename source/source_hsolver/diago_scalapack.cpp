@@ -21,80 +21,138 @@ namespace
 {
 /// Number of processes in the BLACS process grid that `desc` lives on.
 /// p?sygvx requires iclustr(2*NPROW*NPCOL) and gap(NPROW*NPCOL).
-int blacs_grid_size(const int* const desc)
+int blacs_grid_size(const int *const desc)
 {
     int nprow = 0, npcol = 0, myprow = 0, mypcol = 0;
-    Cblacs_gridinfo(desc[1], &nprow, &npcol, &myprow, &mypcol);
+    Cblacs_gridinfo(
+        desc[1],
+        &nprow,
+        &npcol,
+        &myprow,
+        &mypcol);
     return nprow * npcol;
 }
 } // namespace
 
 template <>
-void DiagoScalapack<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
-                                  ModuleBase::MatrixBlock<double>& s_mat,
-                                  psi::Psi<double>& psi,
-                                  Real* eigenvalue_in)
+void DiagoScalapack<double>::diag(
+    ModuleBase::MatrixBlock<double> &h_mat,
+    ModuleBase::MatrixBlock<double> &s_mat,
+    psi::Psi<double> &psi,
+    Real *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoScalapack", "diag");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
-    this->pdsygvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
+    this->pdsygvx_diag(
+        h_mat.desc,
+        h_mat.col,
+        h_mat.row,
+        h_mat.p,
+        s_mat.p,
+        eigen.data(),
+        psi);
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 }
 template <>
-void DiagoScalapack<std::complex<double>>::diag(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
-                                                ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
-                                                psi::Psi<std::complex<double>>& psi,
-                                                Real* eigenvalue_in)
+void DiagoScalapack<std::complex<double>>::diag(
+    ModuleBase::MatrixBlock<std::complex<double>> &h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>> &s_mat,
+    psi::Psi<std::complex<double>> &psi,
+    Real *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoScalapack", "diag");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
-    this->pzhegvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
+    this->pzhegvx_diag(
+        h_mat.desc,
+        h_mat.col,
+        h_mat.row,
+        h_mat.p,
+        s_mat.p,
+        eigen.data(),
+        psi);
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 }
 
 #ifdef __MPI
 template <>
-void DiagoScalapack<double>::diag_pool(ModuleBase::MatrixBlock<double>& h_mat,
-                                       ModuleBase::MatrixBlock<double>& s_mat,
-                                       psi::Psi<double>& psi,
-                                       Real* eigenvalue_in,
-                                       MPI_Comm& comm)
+void DiagoScalapack<double>::diag_pool(
+    ModuleBase::MatrixBlock<double> &h_mat,
+    ModuleBase::MatrixBlock<double> &s_mat,
+    psi::Psi<double> &psi,
+    Real *eigenvalue_in,
+    MPI_Comm &comm)
 {
     ModuleBase::TITLE("DiagoScalapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
-    this->pdsygvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
+    this->pdsygvx_diag(
+        h_mat.desc,
+        h_mat.col,
+        h_mat.row,
+        h_mat.p,
+        s_mat.p,
+        eigen.data(),
+        psi);
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 }
 template <>
-void DiagoScalapack<std::complex<double>>::diag_pool(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
-                                                     ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
-                                                     psi::Psi<std::complex<double>>& psi,
-                                                     Real* eigenvalue_in,
-                                                     MPI_Comm& comm)
+void DiagoScalapack<std::complex<double>>::diag_pool(
+    ModuleBase::MatrixBlock<std::complex<double>> &h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>> &s_mat,
+    psi::Psi<std::complex<double>> &psi,
+    Real *eigenvalue_in,
+    MPI_Comm &comm)
 {
     ModuleBase::TITLE("DiagoScalapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(this->nlocal, 0.0);
-    this->pzhegvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
+    this->pzhegvx_diag(
+        h_mat.desc,
+        h_mat.col,
+        h_mat.row,
+        h_mat.p,
+        s_mat.p,
+        eigen.data(),
+        psi);
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 }
 #endif
 
 template <typename T>
-std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(const int* const desc,
-                                                                 const int ncol,
-                                                                 const int nrow,
-                                                                 const double* const h_mat,
-                                                                 const double* const s_mat,
-                                                                 double* const ekb,
-                                                                 psi::Psi<double>& wfc_2d) const
+std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(
+    const int *const desc,
+    const int ncol,
+    const int nrow,
+    const double *const h_mat,
+    const double *const s_mat,
+    double *const ekb,
+    psi::Psi<double> &wfc_2d) const
 {
     ModuleBase::matrix h_tmp(ncol, nrow, false);
     memcpy(h_tmp.c, h_mat, sizeof(double) * ncol * nrow);
@@ -113,44 +171,46 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(const int* cons
     std::vector<int> iclustr(2 * ngrid);
     std::vector<double> gap(ngrid);
 
-    pdsygvx_(&itype,
-             &jobz,
-             &range,
-             &uplo,
-             &this->nlocal,
-             h_tmp.c,
-             &one,
-             &one,
-             desc,
-             s_tmp.c,
-             &one,
-             &one,
-             desc,
-             &vl,
-             &vu,
-             &il,
-             &iu,
-             &abstol,
-             &M,
-             &NZ,
-             ekb,
-             &orfac,
-             wfc_2d.get_pointer(),
-             &one,
-             &one,
-             desc,
-             work.data(),
-             &lwork,
-             iwork.data(),
-             &liwork,
-             ifail.data(),
-             iclustr.data(),
-             gap.data(),
-             &info);
+    pdsygvx_(
+        &itype,
+        &jobz,
+        &range,
+        &uplo,
+        &this->nlocal,
+        h_tmp.c,
+        &one,
+        &one,
+        desc,
+        s_tmp.c,
+        &one,
+        &one,
+        desc,
+        &vl,
+        &vu,
+        &il,
+        &iu,
+        &abstol,
+        &M,
+        &NZ,
+        ekb,
+        &orfac,
+        wfc_2d.get_pointer(),
+        &one,
+        &one,
+        desc,
+        work.data(),
+        &lwork,
+        iwork.data(),
+        &liwork,
+        ifail.data(),
+        iclustr.data(),
+        gap.data(),
+        &info);
     if (info)
     {
-        throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__)
-                                 + " line " + std::to_string(__LINE__));
+        throw std::runtime_error(
+            "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__) + " line " +
+            std::to_string(__LINE__));
     }
 
     lwork = work[0];
@@ -158,40 +218,41 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(const int* cons
     liwork = iwork[0];
     iwork.resize(liwork, 0);
 
-    pdsygvx_(&itype,
-             &jobz,
-             &range,
-             &uplo,
-             &this->nlocal,
-             h_tmp.c,
-             &one,
-             &one,
-             desc,
-             s_tmp.c,
-             &one,
-             &one,
-             desc,
-             &vl,
-             &vu,
-             &il,
-             &iu,
-             &abstol,
-             &M,
-             &NZ,
-             ekb,
-             &orfac,
-             wfc_2d.get_pointer(),
-             &one,
-             &one,
-             desc,
-             work.data(),
-             &lwork,
-             iwork.data(),
-             &liwork,
-             ifail.data(),
-             iclustr.data(),
-             gap.data(),
-             &info);
+    pdsygvx_(
+        &itype,
+        &jobz,
+        &range,
+        &uplo,
+        &this->nlocal,
+        h_tmp.c,
+        &one,
+        &one,
+        desc,
+        s_tmp.c,
+        &one,
+        &one,
+        desc,
+        &vl,
+        &vu,
+        &il,
+        &iu,
+        &abstol,
+        &M,
+        &NZ,
+        ekb,
+        &orfac,
+        wfc_2d.get_pointer(),
+        &one,
+        &one,
+        desc,
+        work.data(),
+        &lwork,
+        iwork.data(),
+        &liwork,
+        ifail.data(),
+        iclustr.data(),
+        gap.data(),
+        &info);
 
     if (info == 0)
     {
@@ -219,18 +280,20 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(const int* cons
     }
     else
     {
-        throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__)
-                                 + " line " + std::to_string(__LINE__));
+        throw std::runtime_error(
+            "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__) + " line " +
+            std::to_string(__LINE__));
     }
 }
 template <typename T>
-std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* const desc,
-                                                                 const int ncol,
-                                                                 const int nrow,
-                                                                 const std::complex<double>* const h_mat,
-                                                                 const std::complex<double>* const s_mat,
-                                                                 double* const ekb,
-                                                                 psi::Psi<std::complex<double>>& wfc_2d) const
+std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(
+    const int *const desc,
+    const int ncol,
+    const int nrow,
+    const std::complex<double> *const h_mat,
+    const std::complex<double> *const s_mat,
+    double *const ekb,
+    psi::Psi<std::complex<double>> &wfc_2d) const
 {
     ModuleBase::ComplexMatrix h_tmp(ncol, nrow, false);
     memcpy(h_tmp.c, h_mat, sizeof(std::complex<double>) * ncol * nrow);
@@ -253,46 +316,48 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* cons
     std::vector<int> iclustr(2 * ngrid);
     std::vector<double> gap(ngrid);
 
-    pzhegvx_(&itype,
-             &jobz,
-             &range,
-             &uplo,
-             &this->nlocal,
-             h_tmp.c,
-             &one,
-             &one,
-             desc,
-             s_tmp.c,
-             &one,
-             &one,
-             desc,
-             &vl,
-             &vu,
-             &il,
-             &iu,
-             &abstol,
-             &M,
-             &NZ,
-             ekb,
-             &orfac,
-             wfc_2d.get_pointer(),
-             &one,
-             &one,
-             desc,
-             work.data(),
-             &lwork,
-             rwork.data(),
-             &lrwork,
-             iwork.data(),
-             &liwork,
-             ifail.data(),
-             iclustr.data(),
-             gap.data(),
-             &info);
+    pzhegvx_(
+        &itype,
+        &jobz,
+        &range,
+        &uplo,
+        &this->nlocal,
+        h_tmp.c,
+        &one,
+        &one,
+        desc,
+        s_tmp.c,
+        &one,
+        &one,
+        desc,
+        &vl,
+        &vu,
+        &il,
+        &iu,
+        &abstol,
+        &M,
+        &NZ,
+        ekb,
+        &orfac,
+        wfc_2d.get_pointer(),
+        &one,
+        &one,
+        desc,
+        work.data(),
+        &lwork,
+        rwork.data(),
+        &lrwork,
+        iwork.data(),
+        &liwork,
+        ifail.data(),
+        iclustr.data(),
+        gap.data(),
+        &info);
     if (info)
     {
-        throw std::runtime_error("info=" + ModuleBase::GlobalFunc::TO_STRING(info) + ". " + std::string(__FILE__)
-                                 + " line " + std::to_string(__LINE__));
+        throw std::runtime_error(
+            "info=" + ModuleBase::GlobalFunc::TO_STRING(info) + ". " + std::string(__FILE__) + " line " +
+            std::to_string(__LINE__));
     }
 
     lwork = work[0].real();
@@ -303,42 +368,43 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* cons
     liwork = iwork[0];
     iwork.resize(liwork, 0);
 
-    pzhegvx_(&itype,
-             &jobz,
-             &range,
-             &uplo,
-             &this->nlocal,
-             h_tmp.c,
-             &one,
-             &one,
-             desc,
-             s_tmp.c,
-             &one,
-             &one,
-             desc,
-             &vl,
-             &vu,
-             &il,
-             &iu,
-             &abstol,
-             &M,
-             &NZ,
-             ekb,
-             &orfac,
-             wfc_2d.get_pointer(),
-             &one,
-             &one,
-             desc,
-             work.data(),
-             &lwork,
-             rwork.data(),
-             &lrwork,
-             iwork.data(),
-             &liwork,
-             ifail.data(),
-             iclustr.data(),
-             gap.data(),
-             &info);
+    pzhegvx_(
+        &itype,
+        &jobz,
+        &range,
+        &uplo,
+        &this->nlocal,
+        h_tmp.c,
+        &one,
+        &one,
+        desc,
+        s_tmp.c,
+        &one,
+        &one,
+        desc,
+        &vl,
+        &vu,
+        &il,
+        &iu,
+        &abstol,
+        &M,
+        &NZ,
+        ekb,
+        &orfac,
+        wfc_2d.get_pointer(),
+        &one,
+        &one,
+        desc,
+        work.data(),
+        &lwork,
+        rwork.data(),
+        &lrwork,
+        iwork.data(),
+        &liwork,
+        ifail.data(),
+        iclustr.data(),
+        gap.data(),
+        &info);
 
     if (info == 0)
     {
@@ -366,22 +432,31 @@ std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* cons
     }
     else
     {
-        throw std::runtime_error("info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__)
-                                 + " line " + std::to_string(__LINE__));
+        throw std::runtime_error(
+            "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n" + std::string(__FILE__) + " line " +
+            std::to_string(__LINE__));
     }
 }
 template <typename T>
-void DiagoScalapack<T>::pdsygvx_diag(const int* const desc,
-                                     const int ncol,
-                                     const int nrow,
-                                     const double* const h_mat,
-                                     const double* const s_mat,
-                                     double* const ekb,
-                                     psi::Psi<double>& wfc_2d)
+void DiagoScalapack<T>::pdsygvx_diag(
+    const int *const desc,
+    const int ncol,
+    const int nrow,
+    const double *const h_mat,
+    const double *const s_mat,
+    double *const ekb,
+    psi::Psi<double> &wfc_2d)
 {
     while (true)
     {
-        const std::pair<int, std::vector<int>> info_vec = pdsygvx_once(desc, ncol, nrow, h_mat, s_mat, ekb, wfc_2d);
+        const std::pair<int, std::vector<int>> info_vec = pdsygvx_once(
+            desc,
+            ncol,
+            nrow,
+            h_mat,
+            s_mat,
+            ekb,
+            wfc_2d);
         post_processing(info_vec.first, info_vec.second);
         if (info_vec.first == 0)
         {
@@ -391,17 +466,25 @@ void DiagoScalapack<T>::pdsygvx_diag(const int* const desc,
 }
 
 template <typename T>
-void DiagoScalapack<T>::pzhegvx_diag(const int* const desc,
-                                     const int ncol,
-                                     const int nrow,
-                                     const std::complex<double>* const h_mat,
-                                     const std::complex<double>* const s_mat,
-                                     double* const ekb,
-                                     psi::Psi<std::complex<double>>& wfc_2d)
+void DiagoScalapack<T>::pzhegvx_diag(
+    const int *const desc,
+    const int ncol,
+    const int nrow,
+    const std::complex<double> *const h_mat,
+    const std::complex<double> *const s_mat,
+    double *const ekb,
+    psi::Psi<std::complex<double>> &wfc_2d)
 {
     while (true)
     {
-        const std::pair<int, std::vector<int>> info_vec = pzhegvx_once(desc, ncol, nrow, h_mat, s_mat, ekb, wfc_2d);
+        const std::pair<int, std::vector<int>> info_vec = pzhegvx_once(
+            desc,
+            ncol,
+            nrow,
+            h_mat,
+            s_mat,
+            ekb,
+            wfc_2d);
         post_processing(info_vec.first, info_vec.second);
         if (info_vec.first == 0)
         {
@@ -410,8 +493,7 @@ void DiagoScalapack<T>::pzhegvx_diag(const int* const desc,
     }
 }
 
-template <typename T>
-void DiagoScalapack<T>::post_processing(const int info, const std::vector<int>& vec)
+template <typename T> void DiagoScalapack<T>::post_processing(const int info, const std::vector<int> &vec)
 {
     const std::string str_info = "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n";
     const std::string str_FILE = std::string(__FILE__) + " line " + std::to_string(__LINE__) + ".\n";
@@ -424,17 +506,16 @@ void DiagoScalapack<T>::post_processing(const int info, const std::vector<int>& 
     else if (info < 0)
     {
         const int info_negative = -info;
-        const std::string str_index
-            = (info_negative > 100)
-                  ? ModuleBase::GlobalFunc::TO_STRING(info_negative / 100) + "-th argument "
-                        + ModuleBase::GlobalFunc::TO_STRING(info_negative % 100) + "-entry is illegal.\n"
-                  : ModuleBase::GlobalFunc::TO_STRING(info_negative) + "-th argument is illegal.\n";
+        const std::string str_index =
+            (info_negative > 100) ? ModuleBase::GlobalFunc::TO_STRING(info_negative / 100) + "-th argument " +
+                                        ModuleBase::GlobalFunc::TO_STRING(info_negative % 100) + "-entry is illegal.\n"
+                                  : ModuleBase::GlobalFunc::TO_STRING(info_negative) + "-th argument is illegal.\n";
         throw std::runtime_error(str_info_FILE + str_index);
     }
     else if (info % 2)
     {
         std::string str_ifail = "ifail = ";
-        for (const int i: vec)
+        for (const int i : vec)
         {
             str_ifail += ModuleBase::GlobalFunc::TO_STRING(i) + " ";
         }
@@ -451,8 +532,8 @@ void DiagoScalapack<T>::post_processing(const int info, const std::vector<int>& 
         if (degeneracy_need <= this->degeneracy_max)
         {
             throw std::runtime_error(
-                str_info_FILE + "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n"
-                + "degeneracy_saved = " + ModuleBase::GlobalFunc::TO_STRING(this->degeneracy_max) + ".\n");
+                str_info_FILE + "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n" +
+                "degeneracy_saved = " + ModuleBase::GlobalFunc::TO_STRING(this->degeneracy_max) + ".\n");
         }
         else
         {

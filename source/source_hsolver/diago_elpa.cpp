@@ -10,8 +10,7 @@
 namespace hsolver
 {
 #ifdef __MPI
-template <>
-MPI_Comm DiagoElpa<double>::setmpicomm()
+template <> MPI_Comm DiagoElpa<double>::setmpicomm()
 {
     if (this->elpa_num_thread == -1)
     {
@@ -28,14 +27,18 @@ MPI_Comm DiagoElpa<double>::setmpicomm()
         else
         {
             lastmpinum++;
-            int* _ranks = new int[elpa_num_thread];
+            int *_ranks = new int[elpa_num_thread];
             for (int i = 0; i < elpa_num_thread; i++)
             {
                 _ranks[i] = (lastmpinum + i) % _num;
             }
             MPI_Group _tempgroup, _oldgroup;
             MPI_Comm_group(MPI_COMM_WORLD, &_oldgroup);
-            MPI_Group_incl(_oldgroup, elpa_num_thread, _ranks, &_tempgroup);
+            MPI_Group_incl(
+                _oldgroup,
+                elpa_num_thread,
+                _ranks,
+                &_tempgroup);
             MPI_Comm _new_comm;
             MPI_Comm_create(MPI_COMM_WORLD, _tempgroup, &_new_comm);
             delete[] _ranks;
@@ -43,8 +46,7 @@ MPI_Comm DiagoElpa<double>::setmpicomm()
         }
     }
 }
-template <>
-MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm()
+template <> MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm()
 {
     if (this->elpa_num_thread == -1)
     {
@@ -61,14 +63,18 @@ MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm()
         else
         {
             lastmpinum++;
-            int* _ranks = new int[elpa_num_thread];
+            int *_ranks = new int[elpa_num_thread];
             for (int i = 0; i < elpa_num_thread; i++)
             {
                 _ranks[i] = (lastmpinum + i) % _num;
             }
             MPI_Group _tempgroup, _oldgroup;
             MPI_Comm_group(MPI_COMM_WORLD, &_oldgroup);
-            MPI_Group_incl(_oldgroup, elpa_num_thread, _ranks, &_tempgroup);
+            MPI_Group_incl(
+                _oldgroup,
+                elpa_num_thread,
+                _ranks,
+                &_tempgroup);
             MPI_Comm _new_comm;
             MPI_Comm_create(MPI_COMM_WORLD, _tempgroup, &_new_comm);
             delete[] _ranks;
@@ -78,10 +84,11 @@ MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm()
 }
 #endif
 template <>
-void DiagoElpa<std::complex<double>>::diag(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
-                                           ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
-                                           psi::Psi<std::complex<double>>& psi,
-                                           Real* eigenvalue_in)
+void DiagoElpa<std::complex<double>>::diag(
+    ModuleBase::MatrixBlock<std::complex<double>> &h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>> &s_mat,
+    psi::Psi<std::complex<double>> &psi,
+    Real *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
@@ -89,30 +96,38 @@ void DiagoElpa<std::complex<double>>::diag(ModuleBase::MatrixBlock<std::complex<
 
     bool isReal = false;
     MPI_Comm COMM_DIAG = setmpicomm(); // set mpi_comm needed
-    ELPA_Solver es((const bool)isReal,
-                   COMM_DIAG,
-                   (const int)this->nbands,
-                   (const int)h_mat.row,
-                   (const int)h_mat.col,
-                   (const int*)h_mat.desc);
+    ELPA_Solver es(
+        (const bool)isReal,
+        COMM_DIAG, (const int)this->nbands, (const int)h_mat.row, (const int)h_mat.col, (const int *)h_mat.desc);
     this->DecomposedState = 0; // for k pointer, the decomposed s_mat can not be reused
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
-    es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
+    es.generalized_eigenvector(
+        h_mat.p,
+        s_mat.p,
+        this->DecomposedState,
+        eigen.data(),
+        psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
 
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 #else
     ModuleBase::WARNING_QUIT("DiagoElpa", "DiagoElpa only can be used with macro __MPI");
 #endif
 }
 
 template <>
-void DiagoElpa<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
-                             ModuleBase::MatrixBlock<double>& s_mat,
-                             psi::Psi<double>& psi,
-                             Real* eigenvalue_in)
+void DiagoElpa<double>::diag(
+    ModuleBase::MatrixBlock<double> &h_mat,
+    ModuleBase::MatrixBlock<double> &s_mat,
+    psi::Psi<double> &psi,
+    Real *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpa", "diag");
 #ifdef __MPI
@@ -120,19 +135,26 @@ void DiagoElpa<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
 
     bool isReal = true;
     MPI_Comm COMM_DIAG = setmpicomm(); // set mpi_comm needed
-    ELPA_Solver es((const bool)isReal,
-                   COMM_DIAG,
-                   (const int)this->nbands,
-                   (const int)h_mat.row,
-                   (const int)h_mat.col,
-                   (const int*)h_mat.desc);
+    ELPA_Solver es(
+        (const bool)isReal,
+        COMM_DIAG, (const int)this->nbands, (const int)h_mat.row, (const int)h_mat.col, (const int *)h_mat.desc);
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
-    es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
+    es.generalized_eigenvector(
+        h_mat.p,
+        s_mat.p,
+        this->DecomposedState,
+        eigen.data(),
+        psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
 
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 #else
     ModuleBase::WARNING_QUIT("DiagoElpa", "DiagoElpa only can be used with macro __MPI");
 #endif
@@ -140,58 +162,73 @@ void DiagoElpa<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
 
 #ifdef __MPI
 template <>
-void DiagoElpa<std::complex<double>>::diag_pool(ModuleBase::MatrixBlock<std::complex<double>>& h_mat,
-                                                ModuleBase::MatrixBlock<std::complex<double>>& s_mat,
-                                                psi::Psi<std::complex<double>>& psi,
-                                                Real* eigenvalue_in,
-                                                MPI_Comm& comm)
+void DiagoElpa<std::complex<double>>::diag_pool(
+    ModuleBase::MatrixBlock<std::complex<double>> &h_mat,
+    ModuleBase::MatrixBlock<std::complex<double>> &s_mat,
+    psi::Psi<std::complex<double>> &psi,
+    Real *eigenvalue_in,
+    MPI_Comm &comm)
 {
     std::vector<double> eigen(this->nlocal, 0.0);
     bool isReal = false;
-    ELPA_Solver es((const bool)isReal,
-                   comm,
-                   (const int)this->nbands,
-                   (const int)h_mat.row,
-                   (const int)h_mat.col,
-                   (const int*)h_mat.desc);
+    ELPA_Solver es(
+        (const bool)isReal,
+        comm, (const int)this->nbands, (const int)h_mat.row, (const int)h_mat.col, (const int *)h_mat.desc);
     this->DecomposedState = 0; // for k pointer, the decomposed s_mat can not be reused
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
-    es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
+    es.generalized_eigenvector(
+        h_mat.p,
+        s_mat.p,
+        this->DecomposedState,
+        eigen.data(),
+        psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 }
 
 template <>
-void DiagoElpa<double>::diag_pool(ModuleBase::MatrixBlock<double>& h_mat,
-                                  ModuleBase::MatrixBlock<double>& s_mat,
-                                  psi::Psi<double>& psi,
-                                  Real* eigenvalue_in,
-                                  MPI_Comm& comm)
+void DiagoElpa<double>::diag_pool(
+    ModuleBase::MatrixBlock<double> &h_mat,
+    ModuleBase::MatrixBlock<double> &s_mat,
+    psi::Psi<double> &psi,
+    Real *eigenvalue_in,
+    MPI_Comm &comm)
 {
     std::vector<double> eigen(this->nlocal, 0.0);
 
     bool isReal = true;
-    ELPA_Solver es((const bool)isReal,
-                   comm,
-                   (const int)this->nbands,
-                   (const int)h_mat.row,
-                   (const int)h_mat.col,
-                   (const int*)h_mat.desc);
+    ELPA_Solver es(
+        (const bool)isReal,
+        comm, (const int)this->nbands, (const int)h_mat.row, (const int)h_mat.col, (const int *)h_mat.desc);
     ModuleBase::timer::start("DiagoElpa", "elpa_solve");
-    es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
+    es.generalized_eigenvector(
+        h_mat.p,
+        s_mat.p,
+        this->DecomposedState,
+        eigen.data(),
+        psi.get_pointer());
     ModuleBase::timer::end("DiagoElpa", "elpa_solve");
     es.exit();
 
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
 }
 #endif
 
 #ifdef __MPI
-template <typename T>
-bool DiagoElpa<T>::ifElpaHandle(const bool& newIteration, const bool& ifNSCF) const
+template <typename T> bool DiagoElpa<T>::ifElpaHandle(const bool &newIteration, const bool &ifNSCF) const
 {
     int doHandle = false;
     if (newIteration)

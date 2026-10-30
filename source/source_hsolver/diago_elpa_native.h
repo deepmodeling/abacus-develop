@@ -9,8 +9,7 @@
 namespace hsolver
 {
 
-template <typename T>
-class DiagoElpaNative
+template <typename T> class DiagoElpaNative
 {
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -22,17 +21,19 @@ class DiagoElpaNative
     DiagoElpaNative(const int nlocal_in, const int nbands_in, const bool use_gpu_in)
         : nlocal(nlocal_in), nbands(nbands_in), use_gpu(use_gpu_in) {};
 
-    void diag(ModuleBase::MatrixBlock<T>& h_mat,
-              ModuleBase::MatrixBlock<T>& s_mat,
-              psi::Psi<T>& psi,
-              Real* eigenvalue_in);
+    void diag(
+        ModuleBase::MatrixBlock<T> &h_mat,
+        ModuleBase::MatrixBlock<T> &s_mat,
+        psi::Psi<T> &psi,
+        Real *eigenvalue_in);
 #ifdef __MPI
     // diagnolization used in parallel-k case
-    void diag_pool(ModuleBase::MatrixBlock<T>& h_mat,
-                   ModuleBase::MatrixBlock<T>& s_mat,
-                   psi::Psi<T>& psi,
-                   Real* eigenvalue_in,
-                   MPI_Comm& comm);
+    void diag_pool(
+        ModuleBase::MatrixBlock<T> &h_mat,
+        ModuleBase::MatrixBlock<T> &s_mat,
+        psi::Psi<T> &psi,
+        Real *eigenvalue_in,
+        MPI_Comm &comm);
     MPI_Comm setmpicomm();      // set mpi comm;
     static int elpa_num_thread; // need to set mpi_comm or not,-1 not,else the number of mpi needed
     static int lastmpinum;      // last using mpi;
@@ -47,14 +48,11 @@ class DiagoElpaNative
     const bool use_gpu;
 };
 
-template <typename T>
-int DiagoElpaNative<T>::DecomposedState = 0;
+template <typename T> int DiagoElpaNative<T>::DecomposedState = 0;
 #ifdef __MPI
 
-template <typename T>
-int DiagoElpaNative<T>::lastmpinum = -1;
-template <typename T>
-int DiagoElpaNative<T>::elpa_num_thread = -1;
+template <typename T> int DiagoElpaNative<T>::lastmpinum = -1;
+template <typename T> int DiagoElpaNative<T>::elpa_num_thread = -1;
 #endif
 
 } // namespace hsolver
