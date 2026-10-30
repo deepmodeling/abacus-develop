@@ -314,7 +314,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                               psi.get_nbasis(),
                               eigenvalue,
                               this->ethr_band,
-                              scf));
+                              scf,
+                              psi.get_current_k()));
     }
     else if (this->method == "dav")
     {

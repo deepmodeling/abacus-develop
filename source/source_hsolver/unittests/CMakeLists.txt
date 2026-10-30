@@ -2,6 +2,36 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
+set(DAV_SUBSPACE_TEST_SOURCES test_diago_dav_subspace.cpp ../diago_dav_subspace.cpp)
+set(DAV_SUBSPACE_TEST_LIBS parameter base device container psi)
+if(ENABLE_MPI)
+  list(APPEND DAV_SUBSPACE_TEST_SOURCES ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp)
+  if(ENABLE_ELPA)
+    list(APPEND DAV_SUBSPACE_TEST_SOURCES ../diago_elpa.cpp)
+    list(APPEND DAV_SUBSPACE_TEST_LIBS genelpa ELPA::ELPA)
+  endif()
+endif()
+AddTest(
+  TARGET MODULE_HSOLVER_dav_subspace
+  LIBS ${DAV_SUBSPACE_TEST_LIBS}
+  SOURCES ${DAV_SUBSPACE_TEST_SOURCES}
+)
+if(ENABLE_MPI)
+  add_test(NAME MODULE_HSOLVER_dav_subspace_parallel
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:MODULE_HSOLVER_dav_subspace> --gtest_filter=DavSubspaceTest/0.*:DavSubspace.* ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(MODULE_HSOLVER_dav_subspace_parallel PROPERTIES PROCESSORS 2 TIMEOUT 120)
+endif()
+
+if(USE_CUDA OR USE_ROCM)
+  AddTest(
+    TARGET MODULE_HSOLVER_dav_subspace_gpu
+    LIBS ${DAV_SUBSPACE_TEST_LIBS}
+    SOURCES ${DAV_SUBSPACE_TEST_SOURCES}
+    KEEP_FEATURE_DEFINITIONS __CUDA __ROCM
+  )
+  target_compile_definitions(MODULE_HSOLVER_dav_subspace_gpu PRIVATE ABACUS_DAV_GPU_TEST)
+endif()
 
 if (ENABLE_MPI)
   AddTest(

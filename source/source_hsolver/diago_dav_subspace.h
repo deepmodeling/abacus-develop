@@ -37,12 +37,22 @@ class Diago_DavSubspace
 
     ~Diago_DavSubspace();
 
+    /// General operators (for example LR-TDDFT) need not have a single k point.
     int diag(const HSOperator<T, Device>& op,
              T* psi_in,
              const int psi_in_dmax,
              Real* eigenvalue_in,
              const std::vector<double>& ethr_band,
              const bool& scf_type);
+
+    /// ik is the pool-local k-point index, used only in breakdown diagnostics.
+    int diag(const HSOperator<T, Device>& op,
+             T* psi_in,
+             const int psi_in_dmax,
+             Real* eigenvalue_in,
+             const std::vector<double>& ethr_band,
+             const bool& scf_type,
+             const int ik);
 
   private:
     /// for MPI communication
@@ -98,13 +108,15 @@ class Diago_DavSubspace
     void cal_grad(const HSOperator<T, Device>& op,
                   const int& dim,
                   const int& nbase,
-                  const int& notconv,
+                  int& notconv,
                   T* psi_iter,
                   T* hpsi,
                   T* spsi,
                   T* vcc,
-                  const int* unconv,
-                  std::vector<Real>* eigenvalue_iter);
+                  int* unconv,
+                  const std::vector<Real>* eigenvalue_iter,
+                  const std::vector<double>& ethr_band,
+                  const int ik);
 
     void cal_elem(const int& dim,
                   int& nbase,
@@ -146,7 +158,8 @@ class Diago_DavSubspace
                   T* psi_in,
                   const int psi_in_dmax,
                   Real* eigenvalue_in,
-                  const std::vector<double>& ethr_band);
+                  const std::vector<double>& ethr_band,
+                  const int ik);
 
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 
