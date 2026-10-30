@@ -1,22 +1,24 @@
 #ifndef IONS_MOVE_BFGS2_H
 #define IONS_MOVE_BFGS2_H
 
-#include <vector>
-#include <tuple> 
-#include <algorithm>
-#include <cmath>
-#include <fstream>
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
 
+#include <algorithm>
+#include <cmath>
+#include <fstream>
+#include <tuple>
+#include <vector>
 
 class Ions_Move_BFGS2
 {
-public:
-    void allocate(const int _size);//initialize parameters
+  public:
+    void allocate(const int _size); // initialize parameters
     void reset();
-    bool relax_step(const ModuleBase::matrix& _force,UnitCell& ucell, std::ofstream& ofs_running);//a full iteration step
+    bool relax_step(const ModuleBase::matrix& _force,
+                    UnitCell& ucell,
+                    std::ofstream& ofs_running); // a full iteration step
 
     /// @brief whether allocate() has run and the optimiser holds live state.
     ///        reset() clears it; ions_move_methods_test checks that.
@@ -25,36 +27,48 @@ public:
         return is_initialized;
     }
 
-private:
+  private:
     // The unit test drives the private step machinery directly (seeding the
     // Hessian and the previous-step state, then calling one stage at a time).
     friend class BFGSTest;
 
-    bool sign;//check if this is the first iteration
-    double alpha;//initialize H,diagonal element is alpha
-    double maxstep;//every movement smaller than maxstep
-    int size;//number of atoms
-    bool is_initialized=false;
+    bool sign;      // check if this is the first iteration
+    double alpha;   // initialize H,diagonal element is alpha
+    double maxstep; // every movement smaller than maxstep
+    int size;       // number of atoms
+    bool is_initialized = false;
 
-    std::vector<double> steplength;//the length of atoms displacement 
-    std::vector<std::vector<double>> H;//Hessian matrix
-    std::vector<double> force0;//force in previous step
+    std::vector<double> steplength;     // the length of atoms displacement
+    std::vector<std::vector<double>> H; // Hessian matrix
+    std::vector<double> force0;         // force in previous step
     std::vector<ModuleBase::Vector3<double>> force;
-    std::vector<double> pos0;//atom pos in previous step(cartesian coordinates)
+    std::vector<double> pos0; // atom pos in previous step(cartesian coordinates)
     std::vector<ModuleBase::Vector3<double>> pos;
-    std::vector<double> pos_taud0;//atom pos in previous step(relative coordinates)
+    std::vector<double> pos_taud0; // atom pos in previous step(relative coordinates)
     std::vector<ModuleBase::Vector3<double>> pos_taud;
     std::vector<ModuleBase::Vector3<double>> dpos;
-    
-    void PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,std::vector<ModuleBase::Vector3<double>>& pos,std::vector<std::vector<double>>& H,std::vector<double>& pos0,std::vector<double>& force0,std::vector<double>& steplength,std::vector<ModuleBase::Vector3<double>>& dpos,int& size,UnitCell& ucell);//calculate the atomic displacement in one iteration step
-    bool IsRestrain();//check if converged
-    void CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell);
-    void GetPos(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos);
-    void GetPostaud(UnitCell& ucell,std::vector<ModuleBase::Vector3<double>>& pos_taud);
-    void Update(std::vector<double>& pos, std::vector<double>& force,std::vector<std::vector<double>>& H,UnitCell& ucell);//update hessian matrix
-    void DetermineStep(std::vector<double>& steplength,std::vector<ModuleBase::Vector3<double>>& dpos,double& maxstep);//normalize large atomic displacements based on maxstep
-    void UpdatePos(UnitCell& ucell);//update ucell with the new coordinates
-    
+
+    void PrepareStep(std::vector<ModuleBase::Vector3<double>>& force,
+                     std::vector<ModuleBase::Vector3<double>>& pos,
+                     std::vector<std::vector<double>>& H,
+                     std::vector<double>& pos0,
+                     std::vector<double>& force0,
+                     std::vector<double>& steplength,
+                     std::vector<ModuleBase::Vector3<double>>& dpos,
+                     int& size,
+                     UnitCell& ucell); // calculate the atomic displacement in one iteration step
+    bool IsRestrain();                 // check if converged
+    void CalculateLargestGrad(const ModuleBase::matrix& _force, UnitCell& ucell);
+    void GetPos(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos);
+    void GetPostaud(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos_taud);
+    void Update(std::vector<double>& pos,
+                std::vector<double>& force,
+                std::vector<std::vector<double>>& H,
+                UnitCell& ucell); // update hessian matrix
+    void DetermineStep(std::vector<double>& steplength,
+                       std::vector<ModuleBase::Vector3<double>>& dpos,
+                       double& maxstep); // normalize large atomic displacements based on maxstep
+    void UpdatePos(UnitCell& ucell);     // update ucell with the new coordinates
 };
 
 #endif // IONS_MOVE_BFGS2_H

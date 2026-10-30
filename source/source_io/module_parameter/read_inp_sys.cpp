@@ -145,13 +145,16 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("calculation");
+        item.domain.set_choices({"scf", "relax", "md", "cell-relax", "nscf", "get_s", "get_wf", "get_pchg", "gen_bessel", "gen_opt_abfs", "test_memory", "test_neighbour"});
+        item.domain.add_requirement("calculation in [get_pchg, get_wf]", "basis_type!=pw");
+        item.domain.add_requirement("calculation==gen_bessel", "basis_type==pw");
         item.annotation = "scf; relax; md; cell-relax; nscf; get_s; get_wf; get_pchg; gen_bessel; gen_opt_abfs; test_memory; test_neighbour";
         item.category = "System variables";
         item.type = "String";
         item.description = R"(Specify the type of calculation.
 
 * scf: perform self-consistent electronic structure calculations
-* nscf: perform non-self-consistent electronic structure calculations. A charge density file is required
+* nscf: perform non-self-consistent electronic structure calculations using a saved charge density. PW screened hybrids also require SCF binary wavefunctions and eig_occ.txt; see [hybrid NSCF](../elec_properties/hybrid_nscf.md).
 * relax: perform structure relaxation calculations, the relax_nmax parameter depicts the maximal number of ionic iterations
 * cell-relax: perform cell relaxation calculations
 * md: perform molecular dynamics simulations
@@ -246,7 +249,9 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
 * `nep`: Neuroevolution potential (NEP).
 * `ks-lr`: Kohn-Sham density functional theory followed by linear-response time-dependent density functional theory (LR-TDDFT; under development).
 * `lr`: Linear-response time-dependent density functional theory (LR-TDDFT) using precomputed Kohn-Sham orbitals (under development).
-* `dfpt`: Density functional perturbation theory (DFPT; under development).)";
+* `dfpt`: Density functional perturbation theory (DFPT; under development).
+
+[NOTE] Excited-state forces (`cal_force = 1`) and atomic relaxation with `ks-lr` or `lr` currently require `gamma_only = 1` and pseudopotentials without nonlinear core correction (NLCC). NLCC core-density response-force and XC-kernel derivative terms are not implemented; these force requests are rejected after reading the pseudopotentials, before force evaluation. Multi-k spectra and spectra with NLCC pseudopotentials remain available with `cal_force = 0`. Ground-state forces are unaffected by this LR restriction.)";
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -275,11 +280,48 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
                     "esolver_type=lr requires calculation=nscf (it reads the ground state "
                     "wave function computed by a separate SCF run); please set calculation=nscf.");
             }
+            const bool is_lr = (para.input.esolver_type == "lr" || para.input.esolver_type == "ks-lr");
+            const bool requests_lr_force = para.input.cal_force || para.input.calculation == "relax";
+            if (is_lr && requests_lr_force && !para.input.gamma_only)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "LR-TDDFT excited-state forces and relaxation currently require gamma_only=1; "
+                    "complex/multi-k gradients are not implemented. Use cal_force=0 for multi-k spectra.");
+            }
+            if (is_lr && para.input.calculation == "cell-relax")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "LR-TDDFT has no excited-state stress, so calculation=cell-relax cannot be driven by it. "
+                    "Use calculation=relax to relax the atomic positions at fixed cell.");
+            }
+            if (is_lr && para.input.calculation == "md")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "excited-state MD is not supported: the non-adiabatic couplings between excited states "
+                    "are not implemented, so a trajectory cannot switch surfaces at a crossing, and a "
+                    "single-surface run would silently follow a fixed state index straight through one. "
+                    "Use calculation=relax instead.");
+            }
+            if (para.input.esolver_type == "lr" && para.input.calculation == "relax")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "esolver_type=lr reads a ground state from disk that belongs to one fixed geometry, "
+                    "so it cannot follow moving ions. Use esolver_type=ks-lr, which runs the SCF itself "
+                    "at every ionic step.");
+            }
+            if (para.input.esolver_type == "ks-lr" && para.input.calculation == "relax"
+                && para.input.lr_solver == "spectrum")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_solver=spectrum only reads previously written excitation amplitudes; it solves "
+                    "nothing, so it cannot produce gradients for a relaxation.");
+            }
         };
         this->add_item(item);
     }
     {
         Input_Item item("symmetry");
+        item.domain.set_choices({"-1", "0", "1"});
         item.annotation = "the control of symmetry";
         item.category = "System variables";
         item.type = "String";
@@ -289,7 +331,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
 * 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations (point groups, space groups, primitive cells, and irreducible k-points). For a magnetic system, the symmetry of the initial magnetic structure will be analyzed and preserved.
 
 [NOTE] When symmetry is enabled (value 1), k-points are reduced to the irreducible Brillouin zone (IBZ). For explicit k-point lists with custom weights (see KPT file), the custom weights are preserved during symmetry reduction. For Monkhorst-Pack grids, uniform weights are used.)";
-        item.default_value = "default";
+        item.default_value = "1 normally; 0 or -1 depending on the calculation and enabled features.";
         read_sync_string(input.symmetry);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry == "default")
@@ -328,6 +370,13 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
             if (para.input.berry_phase)
             {
                 para.input.symmetry = "-1"; // disable kpoint reduce
+            }
+            // Per-atom SCCS cavity widths can differ between equivalent atoms,
+            // which the symmetry analysis does not see.
+            const bool sccs_full = para.input.imp_sol == 2 && para.input.sccs_solvent_mode == "full";
+            if (sccs_full && para.input.sccs_corespread.size() > 1 && para.input.symmetry == "1")
+            {
+                para.input.symmetry = "0";
             }
         };
         this->add_item(item);
@@ -514,7 +563,7 @@ Available options are:
 * pcc_2d: self-consistent PCC correction for a slab, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane (rewrite a tilted cell as the equivalent perpendicular one), and the k-point sampling along it must be Gamma only. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge. ENVIRON uses -pi*Q/(3*L), so charged-slab energies agree with ENVIRON only for A = L^2.
 * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
-pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho.
+pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho. With imp_sol=2, pcc_0d and pcc_2d support SCF energies and forces; imp_sol=1 is not supported.
 
 Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).)";
         item.default_value = "none";
@@ -542,7 +591,7 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreuss
             if (inp.assume_isolated == "pcc_0d" || inp.assume_isolated == "pcc_2d")
             {
                 std::string error;
-                if (inp.imp_sol) { error = "cannot be combined with imp_sol"; }
+                if (inp.imp_sol == 1) { error = "cannot be combined with imp_sol=1"; }
                 else if (inp.nspin != 1 && inp.nspin != 2) { error = "requires nspin 1 or 2"; }
                 else if (inp.device != "cpu") { error = "requires device cpu"; }
                 else if (inp.esolver_type != "ksdft") { error = "requires esolver_type ksdft"; }
@@ -568,6 +617,7 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreuss
     }
     {
         Input_Item item("pcc_2d_axis");
+        item.domain.set_choices({"0", "1", "2"});
         item.annotation = "open lattice vector of assume_isolated pcc_2d";
         item.category = "System variables";
         item.type = "Integer";
@@ -575,12 +625,6 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreuss
         item.default_value = "2";
         item.set_availability("assume_isolated==pcc_2d");
         read_sync_int(input.pcc_2d_axis);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.input.pcc_2d_axis < 0 || para.input.pcc_2d_axis > 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "pcc_2d_axis must be 0, 1 or 2");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -731,6 +775,8 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
     }
     {
         Input_Item item("mem_saver");
+        item.domain.set_choices({"0", "1"});
+        item.domain.add_requirement("calculation in [scf, relax]", "mem_saver==0");
         item.annotation = "Only for nscf calculations. if set to 1, then a "
                           "memory saving technique will be used for "
                           "many k point calculations.";
@@ -738,20 +784,12 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
         item.type = "Integer";
         item.description = R"(Save memory when performing nscf calculations.
 * 0: no memory saving techniques are used.
-* 1: a memory saving technique will be used for many k point calculations.)";
+* 1: a memory saving technique will be used for many k point calculations.
+
+Legal values are 0 and 1. For calculation=scf or relax, mem_saver must be 0; setting it to 1 is an input error rather than being reset to 0.)";
         item.default_value = "0";
         item.set_availability("calculation==nscf and basis_type==pw");
         read_sync_int(input.mem_saver);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.mem_saver == 1)
-            {
-                if (para.input.calculation == "scf" || para.input.calculation == "relax")
-                {
-                    para.input.mem_saver = 0;
-                    ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
-                }
-            }
-        };
         this->add_item(item);
     }
     {
@@ -932,6 +970,7 @@ In socket_driver mode, this flag independently controls whether the returned fra
     }
     {
         Input_Item item("device");
+        item.domain.set_choices({"cpu", "gpu"});
         item.annotation = "the computing device for ABACUS";
         item.category = "System variables";
         item.type = "String";
@@ -948,18 +987,12 @@ Available options are:
             para.input.device=base_device::information::get_device_flag(
                                 para.inp.device, para.inp.basis_type);
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"cpu", "gpu"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.device) == avail_list.end())
-            {
-                const std::string warningstr = nofound_str(avail_list, "device");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("precision");
+        item.domain.set_choices({"single", "double"});
+        item.domain.add_requirement("precision==single", "basis_type!=lcao");
         item.annotation = "the computing precision for ABACUS";
         item.category = "System variables";
         item.type = "String";
@@ -970,18 +1003,6 @@ Available options are:
         item.set_availability("basis_type==pw");
         read_sync_string(input.precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"single", "double"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.precision) == avail_list.end())
-            {
-                const std::string warningstr = nofound_str(avail_list, "precision");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-            if (para.inp.precision == "single" && para.inp.basis_type == "lcao")
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "Single precision is not supported for NAO basis,\nPlease use double precision for NAO basis.\n");
-            }
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
             {
@@ -997,6 +1018,8 @@ Available options are:
     }
     {
         Input_Item item("gint_precision");
+        item.domain.set_choices({"single", "double", "mix"});
+        item.domain.add_requirement("gint_precision!=double", "basis_type==lcao and nspin!=4");
         item.annotation = "the computing precision for LCAO grid integral";
         item.category = "System variables";
         item.type = "String";
@@ -1007,26 +1030,6 @@ Available options are:
         item.default_value = "double";
         item.set_availability("basis_type==lcao");
         read_sync_string(input.gint_precision);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"single", "double", "mix"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.gint_precision) == avail_list.end())
-            {
-                const std::string warningstr = nofound_str(avail_list, "gint_precision");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-            if (para.inp.gint_precision != "double" && para.inp.basis_type != "lcao")
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "gint_precision = single or mix is currently supported only for LCAO calculations.\n");
-            }
-            if (para.inp.gint_precision != "double" && para.inp.nspin == 4)
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "gint_precision = single or mix is not supported for nspin = 4 (noncollinear/SOC) calculations.\n");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -1123,6 +1126,7 @@ updates structures smoothly enough for second-order extrapolation.)";
     }
     {
         Input_Item item("ecutwfc");
+        item.domain.set_rule("value>0");
         item.annotation = "energy cutoff for wave functions";
         item.category = "Plane wave related variables";
         item.type = "Real";
@@ -1151,16 +1155,11 @@ updates structures smoothly enough for second-order extrapolation.)";
                 }
             }
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ecutwfc <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "ecutwfc should be positive");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("ecutrho");
+        item.domain.set_rule("value>0");
         item.annotation = "energy cutoff for charge density and potential";
         item.category = "Plane wave related variables";
         item.type = "Real";
@@ -1373,6 +1372,7 @@ updates structures smoothly enough for second-order extrapolation.)";
     }
     {
         Input_Item item("diag_subspace");
+        item.domain.set_choices({"0", "1", "2"});
         item.annotation = "method of subspace diagonalization in dav_subspace. 0:LaPack; 1:genelpa, 2:scalapack";
         item.category = "Plane wave related variables";
         item.type = "Integer";
@@ -1398,6 +1398,7 @@ updates structures smoothly enough for second-order extrapolation.)";
     }
     {
         Input_Item item("fft_mode");
+        item.domain.set_choices({"0", "1", "2", "3"});
         item.annotation = "mode of FFTW";
         item.category = "Plane wave related variables";
         item.type = "Integer";

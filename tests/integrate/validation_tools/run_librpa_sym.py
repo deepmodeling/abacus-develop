@@ -13,10 +13,13 @@ import subprocess
 import tempfile
 
 from librpa_wavefunctions import check_ks_nao, read_ks_wfc
+from librpa_symmetry import preserves_bvk_mesh
 from run_librpa_mpi import ignore_outputs, mpi_command, use_mpi_solver
 
 
-def check_output(case, mesh, symmetry, nspin):
+def check_output(case, mesh, symmetry, nspin, wfc_nspin=None,
+                 require_spin_symmetry=False, require_antiunitary=False, spinor=False,
+                 offset=(0.0, 0.0, 0.0)):
     out = case / "OUT.librpa"
     rows = [line.split() for line in (out / "bz_sample.txt").read_text().splitlines()]
     assert tuple(map(int, rows[0])) == mesh
@@ -49,13 +52,15 @@ def check_output(case, mesh, symmetry, nspin):
         assert nk == full
     if symmetry == 1 or (symmetry == 0 and mesh == (1, 1, 3)):
         assert nk < full, "The test must exercise an actual reduction"
+    if wfc_nspin is None:
+        wfc_nspin = nspin
     dims, _ = read_ks_wfc(out / "KS_wfc_0.dat")
     bands = (out / "band_out.txt").read_text().split()
-    assert dims[:2] == (nk, nspin)
+    assert dims[:2] == (nk, wfc_nspin)
     assert tuple(map(int, bands[:4])) == (nk, nspin, dims[2], dims[3])
     manifest = json.loads((case / "librpa_producer_manifest.json").read_text())
     tolerance = next(entry["abs_tol"] for entry in manifest["required"] if entry["kind"] == "ks_wfc_v1")
-    check_ks_nao(out / "KS_wfc_0.dat", case / "OUT.autotest", tolerance)
+    check_ks_nao(out / "KS_wfc_0.dat", case / "OUT.autotest", tolerance, spinor=spinor)
     for iq in range(1, nq + 1):
         for rank in (0, 1):
             data = (out / "V_full_{}_r{}.dat".format(iq, rank)).read_bytes()
@@ -67,16 +72,37 @@ def check_output(case, mesh, symmetry, nspin):
         begin = 7 + int(stru[6])
         count, convention = stru[begin].split()
         assert int(count) > 1 and convention == "row"
-        assert len(stru[begin + 1:]) == int(count)
-        assert all(len(row.split()) == 12 for row in stru[begin + 1:])
-        for row in stru[begin + 1:]:
+        row_end = begin + 1 + int(count)
+        assert len(stru) >= row_end
+        assert all(len(row.split()) == 12 for row in stru[begin + 1:row_end])
+        spin_start = row_end
+        antiunitary = [False] * int(count)
+        if require_spin_symmetry or spin_start < len(stru):
+            assert spin_start < len(stru), "SOC stru_out has no spin_symmetry block"
+            header = stru[spin_start].split()
+            assert header[:1] == ["spin_symmetry"] and len(header) == 3
+            assert int(header[1]) in (0, 1)
+            spin_source = int(header[2])
+            assert spin_source in (0, 1)
+            spin_rows = stru[spin_start + 1:]
+            assert len(spin_rows) == int(count)
+            expected_fields = 9 if spin_source == 1 else 1
+            antiunitary = []
+            for row in spin_rows:
+                fields = row.split()
+                assert len(fields) == expected_fields and int(fields[0]) in (0, 1)
+                antiunitary.append(int(fields[0]) == 1)
+                for value in fields[1:]:
+                    assert math.isfinite(float(value))
+            if require_antiunitary:
+                assert any(antiunitary), "shifted magnetic case has no antiunitary operation"
+        for row_index, row in enumerate(stru[begin + 1:row_end]):
             rotation = list(map(int, row.split()[:9]))
-            for i in range(3):
-                for j in range(3):
-                    step = rotation[3 * i + j] * mesh[i] / mesh[j]
-                    assert abs(step - round(step)) < 1e-12, "Operation does not preserve the BvK mesh"
+            assert preserves_bvk_mesh(rotation, mesh, offset, antiunitary[row_index]), (
+                "Operation {} does not preserve the BvK mesh: {}".format(row_index, rotation)
+            )
     return {"case": str(case), "mesh": mesh, "symmetry": symmetry,
-            "nspin": nspin, "nk_full": full, "nk_scf": nk, "nq": nq}
+            "nspin": nspin, "nspin_wfc": wfc_nspin, "nk_full": full, "nk_scf": nk, "nq": nq}
 
 
 def run(args, root):
@@ -93,7 +119,7 @@ def run(args, root):
                ABACUS_MPIEXEC_PREFLAGS=" ".join(args.mpi_preflag),
                ABACUS_MPIEXEC_POSTFLAGS=" ".join(args.mpi_postflag))
     cases = (source / "CASES_LIBRPA_PRODUCER.txt").read_text().split()
-    for name, nspin in zip(cases, (1, 2)):
+    for name, nspin in zip(cases[:2], (1, 2)):
         for mesh in ((1, 1, 3), (2, 2, 2)):
             for symmetry in (-1, 0, 1):
                 case = work / "{}_{}_s{}".format(name, "".join(map(str, mesh)), symmetry)
@@ -115,8 +141,63 @@ def run(args, root):
                 result = check_output(case, mesh, symmetry, nspin)
                 results.append(result)
                 print(json.dumps(result), flush=True)
+    soc_case = work / "63_librpa_soc_symmetry_222_s1"
+    shutil.copytree(source / "63_librpa_soc_symmetry", soc_case, ignore=ignore_outputs)
+    use_mpi_solver(soc_case)
+    soc_input = soc_case / "INPUT"
+    soc_input.write_text(re.sub(r"(?m)^symmetry\s+.*$", "symmetry 1", soc_input.read_text()))
+    with soc_input.open("a") as stream:
+        stream.write("scf_thr 1e-10\n")
+    (soc_case / "KPT").write_text("K_POINTS\n0\nGamma\n2 2 2 0 0 0\n")
+    with (soc_case / "producer.log").open("w") as log:
+        subprocess.run(mpi_command(args, 2), cwd=soc_case, env=env,
+                       stdout=log, stderr=subprocess.STDOUT, check=True, timeout=180)
+    soc_result = check_output(soc_case, (2, 2, 2), 1, 1,
+                              require_spin_symmetry=True, spinor=True)
+    results.append(soc_result)
+    print(json.dumps(soc_result), flush=True)
+
+    magnetic_case = work / "63_librpa_soc_symmetry_shifted_magnetic"
+    shutil.copytree(source / "63_librpa_soc_symmetry", magnetic_case, ignore=ignore_outputs)
+    use_mpi_solver(magnetic_case)
+    magnetic_stru = []
+    diagonal_vectors = iter(("3.000000 0.000000 0.000000",
+                             "0.000000 3.000000 0.000000",
+                             "0.000000 0.000000 3.000000"))
+    replace_vectors = False
+    vector_index = 0
+    for line in (magnetic_case / "STRU").read_text().splitlines():
+        if line == "LATTICE_VECTORS":
+            replace_vectors = True
+            magnetic_stru.append(line)
+            continue
+        if replace_vectors:
+            line = next(diagonal_vectors)
+            vector_index += 1
+            if vector_index == 3:
+                replace_vectors = False
+        fields = line.split()
+        if len(fields) == 6 and fields[3:] == ["0", "0", "0"]:
+            line += " mag 0 0 1"
+        magnetic_stru.append(line)
+    (magnetic_case / "STRU").write_text("\n".join(magnetic_stru) + "\n")
+    magnetic_input = magnetic_case / "INPUT"
+    magnetic_input.write_text(re.sub(r"(?m)^symmetry\s+.*$", "symmetry 1", magnetic_input.read_text()))
+    with magnetic_input.open("a") as stream:
+        stream.write("scf_thr 1e-10\n")
+    (magnetic_case / "KPT").write_text("K_POINTS\n0\nGamma\n2 3 3 0.25 0 0\n")
+    with (magnetic_case / "producer.log").open("w") as log:
+        subprocess.run(mpi_command(args, 2), cwd=magnetic_case, env=env,
+                       stdout=log, stderr=subprocess.STDOUT, check=True, timeout=180)
+    magnetic_result = check_output(magnetic_case, (2, 3, 3), 1, 1,
+                                   require_spin_symmetry=True,
+                                   require_antiunitary=True,
+                                   spinor=True,
+                                   offset=(0.25, 0.0, 0.0))
+    results.append(magnetic_result)
+    print(json.dumps(magnetic_result), flush=True)
     (root / "summary.json").write_text(json.dumps(results, indent=2) + "\n")
-    print("Symmetry producer checks: PASS (12 two-rank runs)")
+    print("Symmetry producer checks: PASS (12 baseline runs and two SOC runs)")
 
 
 def main():

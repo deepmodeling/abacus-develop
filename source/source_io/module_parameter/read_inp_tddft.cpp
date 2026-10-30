@@ -7,55 +7,12 @@
 #include <cctype>
 #include <array>
 #include <cmath>
-#include <stdexcept>
+#include <limits>
 
 namespace ModuleIO
 {
 namespace
 {
-
-int parse_td_integer(const Input_Item& item)
-{
-    std::size_t consumed = 0;
-    try
-    {
-        if (item.str_values.size() == 1)
-        {
-            const int value = std::stoi(item.str_values[0], &consumed);
-            if (consumed == item.str_values[0].size())
-            {
-                return value;
-            }
-        }
-    }
-    catch (const std::exception&)
-    {
-    }
-    const std::string message = item.label + " must be a positive integer.";
-    ModuleBase::WARNING_QUIT("ReadInput", message);
-    return 0;
-}
-
-std::vector<int> parse_supersine_steps(const Input_Item& item, const int default_step)
-{
-    const std::vector<std::string> tokens
-        = item.is_read() ? item.str_values : std::vector<std::string>(1, "default");
-    std::vector<int> values;
-    for (const std::string& token: tokens)
-    {
-        if (token == "default")
-        {
-            values.push_back(default_step);
-        }
-        else
-        {
-            std::vector<int> parsed;
-            parse_expression(std::vector<std::string>(1, token), parsed);
-            values.insert(values.end(), parsed.begin(), parsed.end());
-        }
-    }
-    return values;
-}
 
 struct FieldParameterRule
 {
@@ -77,10 +34,6 @@ void check_td_efield_parameters(const Input_para& input)
     {
         ModuleBase::WARNING_QUIT("ReadInput",
                                  "td_ttype and td_vext_dire must contain the same number of fields.");
-    }
-    if (input.td_stype < 0 || input.td_stype > 2)
-    {
-        ModuleBase::WARNING_QUIT("ReadInput", "td_stype must be 0, 1, or 2.");
     }
     for (const int direction: input.td_vext_dire)
     {
@@ -197,6 +150,7 @@ void ReadInput::item_rt_tddft()
     // Please preserve this ordering when adding new parameters.
     {
         Input_Item item("td_orthonormal");
+        item.domain.set_choices({"cholesky", "lowdin", "newton_schulz", "none"});
         item.annotation = "orthonormalization method for PW real-time propagation";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "String";
@@ -206,18 +160,11 @@ void ReadInput::item_rt_tddft()
 * `newton_schulz`: Newton-Schulz iteration for a Gram matrix close to the identity. Starting from $\boldsymbol{C}_0=\boldsymbol{I}$, approximate $\boldsymbol{S}^{-1/2}$ using $\boldsymbol{C}_{j+1}=\boldsymbol{C}_j(3\boldsymbol{I}-\boldsymbol{S}\boldsymbol{C}_j^2)/2$.
 * `none`: Disable orthonormalization.
 
-[NOTE] Orthonormalization is applied after the Crank-Nicolson linear solve and uses an orthogonality tolerance independent of `lin_thr`. With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. Wavefunctions within this tolerance are left unchanged. Nonfinite or nonpositive orbital norms are rejected even with `none`.)";
+[NOTE] Orthonormalization is applied after each wavefunction propagation. With orthonormalization enabled, the propagated Gram matrix must differ from the identity by at most `1e-6` (single precision) or `1e-12` (double precision) per element; unsuccessful corrections stop the calculation. Wavefunctions within this tolerance are left unchanged. Nonfinite or nonpositive orbital norms are rejected even with `none`.)";
         item.default_value = "cholesky";
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==tddft");
         read_sync_string(input.td_orthonormal);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::string& method = para.inp.td_orthonormal;
-            if (method != "none" && method != "cholesky" && method != "lowdin" && method != "newton_schulz")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_orthonormal must be cholesky, lowdin, newton_schulz or none.");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -225,7 +172,7 @@ void ReadInput::item_rt_tddft()
         item.annotation = "output PW real-time conservation diagnostics";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Boolean";
-        item.description = R"(Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Electron counts describe the end-of-step state; orthogonality errors before and after correction are separate maxima over all SCF iterations and k points within that step. Orthogonality errors are omitted when `td_orthonormal=none`.
+        item.description = R"(Write wavefunction and density electron counts, their changes from the initial state, and orthogonality errors to the running log after each electronic evolution step. Electron counts describe the end-of-step state; orthogonality errors before and after correction are separate maxima over all SCF iterations and k points within that step. When half-step retries are enabled, only accepted substeps contribute to these maxima. Orthogonality errors are omitted when `td_orthonormal=none`.
 
 [NOTE] Enabling this output adds density integration and diagnostic communication.)";
         item.default_value = "false";
@@ -235,7 +182,91 @@ void ReadInput::item_rt_tddft()
         this->add_item(item);
     }
     {
+        Input_Item item("td_max_halvings");
+        const std::string depth_rule = "value>=0 and value<" + std::to_string(std::numeric_limits<int>::digits);
+        item.domain.set_rule(depth_rule);
+        item.annotation = "maximum depth of PW real-time half-step retries";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Integer";
+        item.description = R"(Maximum number of recursive halvings of an electronic propagation interval when self-consistency fails. Zero disables retries. Each full-step or subdivided trial uses at most `td_scf_nmax` iterations. The smallest internal time step is `td_dt / 2^td_max_halvings`; output times and the physical field profile retain the original `td_dt` grid. A value of 3 allows internal steps down to `td_dt / 8`.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft");
+        read_sync_int(input.td_max_halvings);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_scf_nmax");
+        item.domain.set_rule("value>=2");
+        item.annotation = "SCF iteration limit per real-time propagation attempt";
+        item.category = "Real-Time TDDFT (Common)";
+        item.type = "Integer";
+        item.description = R"(Maximum number of self-consistency iterations for each real-time propagation step in PW and LCAO calculations. Must be an integer of at least 2. Convergence can end the iterations early. In PW calculations, when `td_max_halvings` is positive, the limit applies independently to each full-step or subdivided trial. This parameter is independent of `scf_nmax`.)";
+        item.default_value = "100";
+        item.unit = "";
+        item.set_availability("esolver_type==tddft and basis_type in [pw, lcao]");
+        read_sync_int(input.td_scf_nmax);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_out_mag");
+        item.domain.set_choices({"voronoi", "onsite", "none"});
+        item.annotation = "RT-TDDFT spinor magnetic moment output";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "String";
+        item.description = R"(Write total and atomic magnetic moments to `mag_tot.txt` and `mag_atom.txt` at every step.
+* `voronoi`: Integrate magnetization over periodic nearest-atom regions, including vacuum.
+* `onsite`: Project onto the smoothed single-zeta numerical atomic orbitals. `onsite_radius` controls their cutoff.
+* `none`: Disable these two files.
+
+Total moments always come from the magnetization density. Atomic onsite moments need not sum to the total. Moments follow the ABACUS Pauli convention in Bohr magnetons.)";
+        item.default_value = "voronoi";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and nspin==4");
+        read_sync_string(input.td_out_mag);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_out_torque");
+        item.annotation = "output PW spin angular momentum torques";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Boolean";
+        item.description = R"(Write total exchange-correlation and SOC torques to `torque_tot.txt` and the atomic SOC contributions to `torque_atom.txt` at every step. In Hartree atomic units,
+
+$$\boldsymbol{\tau}_{\mathrm{xc}}=\mathrm{i}\sum_{n\boldsymbol{k}}f_{n\boldsymbol{k}}\Braket{\psi_{n\boldsymbol{k}}|\left[\hat{V}_{\mathrm{xc}},\hat{\boldsymbol{S}}\right]|\psi_{n\boldsymbol{k}}},$$
+
+$$\boldsymbol{\tau}_{\mathrm{SOC}}=\mathrm{i}\sum_{n\boldsymbol{k}}f_{n\boldsymbol{k}}\Braket{\psi_{n\boldsymbol{k}}|\left[\hat{V}_{\mathrm{SOC}},\hat{\boldsymbol{S}}\right]|\psi_{n\boldsymbol{k}}}.$$
+
+Here $\hat{\boldsymbol{S}}=\boldsymbol{\sigma}/2$, with $\boldsymbol{\sigma}$ the Pauli matrices, and $f_{n\boldsymbol{k}}$ includes occupations and k-point weights. $\hat{V}_{\mathrm{xc}}$ is the spin-dependent exchange-correlation potential, and $\hat{V}_{\mathrm{SOC}}$ is the SOC part of the nonlocal pseudopotential.
+
+The torques describe changes in spin angular momentum $\boldsymbol{S}=\boldsymbol{M}/2$, where $\boldsymbol{M}$ follows the ABACUS Pauli convention. Atomic SOC contributions use the corresponding atomic pseudopotential terms.)";
+        item.default_value = "false";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and nspin==4");
+        read_sync_bool(input.td_out_torque);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_out_spincur");
+        item.annotation = "output PW spin angular momentum current";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Boolean";
+        item.description = R"(Write the nine macroscopic spin angular momentum current components to `spincur_tot.txt` at every step. In Hartree atomic units,
+
+$$J_i^a=\frac{1}{2\Omega}\sum_{n\boldsymbol{k}}f_{n\boldsymbol{k}}\Braket{\psi_{n\boldsymbol{k}}|\left\{\hat{v}_i,\hat{S}_a\right\}|\psi_{n\boldsymbol{k}}},\qquad \hat{S}_a=\frac{\sigma_a}{2}.$$
+
+Here $\Omega$ is the cell volume, $f_{n\boldsymbol{k}}$ includes occupations and k-point weights, $\sigma_a$ is a Pauli matrix, and $\hat{v}_i$ is the velocity operator including the nonlocal pseudopotential contribution.
+
+Components are ordered $xx,xy,xz,yx,yy,yz,zx,zy,zz$, with flow direction first and spin polarization second.)";
+        item.default_value = "false";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and nspin==4");
+        read_sync_bool(input.td_out_spincur);
+        this->add_item(item);
+    }
+    {
         Input_Item item("lin_solver");
+        item.domain.set_choices({"bicgstab", "cgs", "gmres"});
         item.annotation = "linear solver for real-time propagation";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "String";
@@ -247,18 +278,13 @@ void ReadInput::item_rt_tddft()
 The initial ground-state diagonalization is controlled by `ks_solver`.)";
         item.default_value = "gmres";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
         read_sync_string(input.lin_solver);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.lin_solver != "bicgstab" && para.inp.lin_solver != "cgs" && para.inp.lin_solver != "gmres")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_solver must be bicgstab, cgs or gmres.");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("lin_precond");
+        item.domain.set_choices({"kinetic", "kinetic_recycle", "kinetic_subspace", "none"});
         item.annotation = "right preconditioner for PW real-time propagation";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "String";
@@ -271,19 +297,13 @@ The initial ground-state diagonalization is controlled by `ks_solver`.)";
 Preconditioning changes the convergence rate, while `lin_thr` still controls the residual of the original equation.)";
         item.default_value = "kinetic_recycle";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
         read_sync_string(input.lin_precond);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.lin_precond != "kinetic" && para.inp.lin_precond != "none"
-                && para.inp.lin_precond != "kinetic_recycle" && para.inp.lin_precond != "kinetic_subspace")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_precond must be none, kinetic, kinetic_recycle or kinetic_subspace.");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("lin_thr");
+        item.domain.set_rule("value>=0");
         item.annotation = "residual tolerance of the linear solver";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Real";
@@ -294,74 +314,34 @@ Preconditioning changes the convergence rate, while `lin_thr` still controls the
 All methods check the residual at the end of the linear solve, before orthonormalization. GMRES can use explicit residual reconstruction with periodic independent checks when `lin_reconstruct` is enabled. Subsequent orthonormalization uses a separate orthogonality tolerance and does not guarantee that the corrected wavefunctions satisfy the same linear residual tolerance.)";
         item.default_value = "0";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            std::size_t consumed = 0;
-            try
-            {
-                if (item.str_values.size() == 1)
-                {
-                    para.input.lin_thr = std::stod(item.str_values[0], &consumed);
-                    if (consumed == item.str_values[0].size())
-                    {
-                        return;
-                    }
-                }
-            }
-            catch (const std::exception&)
-            {
-            }
-            ModuleBase::WARNING_QUIT("ReadInput", "lin_thr must be a nonnegative finite real number.");
-        };
-        sync_double(input.lin_thr);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (!std::isfinite(para.inp.lin_thr) || para.inp.lin_thr < 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_thr must be a nonnegative finite real number.");
-            }
-        };
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
+        read_sync_double(input.lin_thr);
         this->add_item(item);
     }
     {
         Input_Item item("lin_maxiter");
+        item.domain.set_rule("value>0");
         item.annotation = "maximum iterations per linear solve";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Integer";
-        item.description = "Positive maximum number of iterations for each PW real-time linear solve. Failure to converge stops the calculation. The number of self-consistency iterations is controlled separately by `scf_nmax`.";
+        item.description = "Positive maximum number of iterations for each PW real-time linear solve. Failure to converge stops the calculation. Initial-state self-consistency uses `scf_nmax`; real-time self-consistency uses `td_scf_nmax`.";
         item.default_value = "500";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.lin_maxiter = parse_td_integer(item);
-        };
-        sync_int(input.lin_maxiter);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.lin_maxiter <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_maxiter must be a positive integer.");
-            }
-        };
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
+        read_sync_int(input.lin_maxiter);
         this->add_item(item);
     }
     {
         Input_Item item("lin_gmres_restart");
+        item.domain.set_rule("value>0");
         item.annotation = "Arnoldi dimension of restarted GMRES";
         item.category = "Real-Time TDDFT (PW)";
         item.type = "Integer";
         item.description = "Positive maximum Arnoldi dimension per GMRES cycle. `lin_maxiter` limits the total iterations across all cycles.";
         item.default_value = "20";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft and lin_solver==gmres");
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.lin_gmres_restart = parse_td_integer(item);
-        };
-        sync_int(input.lin_gmres_restart);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.inp.lin_gmres_restart <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "lin_gmres_restart must be positive.");
-            }
-        };
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0 and lin_solver==gmres");
+        read_sync_int(input.lin_gmres_restart);
         this->add_item(item);
     }
     {
@@ -372,7 +352,7 @@ All methods check the residual at the end of the linear solve, before orthonorma
         item.description = R"(Project the Crank-Nicolson equation $\boldsymbol{L}\boldsymbol{x}=\boldsymbol{b}$ onto the previous-time wavefunction subspace to initialize the first propagation solve of each time step. With those wavefunctions as the columns of $\boldsymbol{U}$, the projected initial guess is $\boldsymbol{x}_0=\boldsymbol{U}(\boldsymbol{U}^{\dagger}\boldsymbol{L}\boldsymbol{U})^{-1}\boldsymbol{U}^{\dagger}\boldsymbol{b}$. Evaluate and reuse the initial residual $\boldsymbol{r}_0=\boldsymbol{b}-\boldsymbol{L}\boldsymbol{x}_0$ using the stored subspace operator images $\boldsymbol{L}\boldsymbol{U}$, without an additional Hamiltonian application. Available with all linear solvers and preconditioners; later self-consistency iterations retain their current wavefunction guess.)";
         item.default_value = "true";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft");
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0");
         read_sync_bool(input.td_cn_init);
         this->add_item(item);
     }
@@ -388,31 +368,26 @@ Use an internal tolerance of 0.8 times the effective `lin_thr` and independently
 Only effective for `lin_solver=gmres`; ignored otherwise.)";
         item.default_value = "true";
         item.unit = "";
-        item.set_availability("basis_type==pw and esolver_type==tddft and lin_solver==gmres");
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==0 and lin_solver==gmres");
         read_sync_bool(input.lin_reconstruct);
         this->add_item(item);
     }
     {
         Input_Item item("estep_per_md");
+        item.domain.set_rule("value>0");
         item.annotation = "steps of force change";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
         item.description = "The number of electronic propagation steps between two ionic steps.";
         item.default_value = "1";
         item.unit = "";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.estep_per_md = parse_td_integer(item);
-            if (para.input.estep_per_md <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "estep_per_md must be a positive integer.");
-            }
-        };
-        sync_int(input.estep_per_md);
+        read_sync_int(input.estep_per_md);
         this->add_item(item);
     }
     // real time TDDFT
     {
         Input_Item item("td_dt");
+        item.domain.set_rule("value>0");
         item.annotation = "time step for evolving wavefunction";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Real";
@@ -425,19 +400,8 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
                 GlobalV::ofs_running << "td_dt don't exist, set td_dt with md_dt" << std::endl;
                 para.input.td_dt = para.input.mdp.md_dt / para.input.estep_per_md;
             }
-            if (para.input.td_dt <= 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_dt must be greater than zero.");
-            }
         };
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_dt = doublevalue;
-            if (para.input.td_dt <= 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "td_dt must be greater than zero.");
-            }
-        };
-        sync_double(input.td_dt);
+        read_sync_double(input.td_dt);
         this->add_item(item);
     }
     {
@@ -459,7 +423,7 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
         item.annotation = "print eij or not";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Real";
-        item.description = R"(Controls output of the propagated-state Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i | \hat{H} | \psi_j}$ to the running log. The printed band indices $i$ and $j$ are one-based global indices. Both the threshold and the printed matrix elements are in Ry.
+        item.description = R"(Controls output of the propagated-state Hamiltonian matrix elements $E_{ij}=\Braket{\psi_i | \hat{H} | \psi_j}$ to the running log. The printed band indices $i$ and $j$ are global indices. Both the threshold and the printed matrix elements are in Ry.
 * $\lt 0$: Disable the output.
 * $\geqslant 0$: Print an element when either $\left|\operatorname{Re}E_{ij}\right|$ or $\left|\operatorname{Im}E_{ij}\right|$ is greater than or equal to `td_print_eij`.)";
         item.default_value = "-1";
@@ -470,20 +434,81 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
     }
     {
         Input_Item item("td_propagator");
+        item.domain.add_requirement("basis_type==pw and esolver_type==tddft", "td_propagator in [0, 2]");
         item.annotation = "method of propagator";
-        item.category = "Real-Time TDDFT (LCAO)";
+        item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
-        item.description = R"(Method used to propagate the electronic states in a nonorthogonal LCAO basis. The formulas below use Hartree atomic units, with $S$, $H$, and $\Delta t=\mathtt{td\_dt}$ evaluated as required by each approximation.
-* `0`: Crank-Nicolson through an explicitly constructed evolution matrix, $U=\left[S+\mathrm{i}H\Delta t/2\right]^{-1}\left[S-\mathrm{i}H\Delta t/2\right]$.
-* `1`: Fourth-order Taylor approximation to the exponential. With $\mathcal{A}=-\mathrm{i}S^{-1}H\Delta t$, $U=I+\mathcal{A}+\mathcal{A}^2/2+\mathcal{A}^3/6+\mathcal{A}^4/24$.
-* `2`: Enforced time-reversal symmetry (ETRS), $U(t+\Delta t,t)=\exp\left[-\mathrm{i}S^{-1}H(t+\Delta t)\Delta t/2\right]\exp\left[-\mathrm{i}S^{-1}H(t)\Delta t/2\right]$. In the implementation, each exponential is replaced by the fourth-order Taylor polynomial from method `1` evaluated with a half time step.
-* `3`: Crank-Nicolson by directly solving $\left[S+\mathrm{i}H\Delta t/2\right]\psi(t+\Delta t)=\left[S-\mathrm{i}H\Delta t/2\right]\psi(t)$.
+        item.description = R"(Method used to propagate the electronic states. The formulas below use Hartree atomic units, with $\Delta t$ denoting the electronic propagation time step and $S$ the LCAO overlap matrix. The Hamiltonian $H$ and overlap matrix $S$ are evaluated as required by each approximation.
 
-[NOTE] GPU execution currently supports only method `0` in both single-GPU and multi-GPU solver configurations. CPU execution supports methods `0` through `3`.)";
+For a plane-wave (PW) basis:
+* `0`: Crank-Nicolson, $\left[I+\mathrm{i}H\Delta t/2\right]\psi(t+\Delta t)=\left[I-\mathrm{i}H\Delta t/2\right]\psi(t)$. The linear system uses the same midpoint Hamiltonian on both sides.
+* `2`: Enforced time-reversal symmetry (ETRS), $U(t+\Delta t,t)=\exp\left[-\mathrm{i}H(t+\Delta t)\Delta t/2\right]\exp\left[-\mathrm{i}H(t)\Delta t/2\right]$. Select the exponential algorithm with `td_exp_method`.
+
+For a nonorthogonal LCAO basis:
+* `0`: Crank-Nicolson, $U=\left[S+\mathrm{i}H\Delta t/2\right]^{-1}\left[S-\mathrm{i}H\Delta t/2\right]$. The evolution matrix is constructed explicitly and applied to the wavefunctions.
+* `1`: Fourth-order Taylor approximation to the exponential. With $\mathcal{A}=-\mathrm{i}S^{-1}H\Delta t$, $U=I+\mathcal{A}+\mathcal{A}^2/2+\mathcal{A}^3/6+\mathcal{A}^4/24$.
+* `2`: Enforced time-reversal symmetry (ETRS), $U(t+\Delta t,t)=\exp\left[-\mathrm{i}S^{-1}H(t+\Delta t)\Delta t/2\right]\exp\left[-\mathrm{i}S^{-1}H(t)\Delta t/2\right]$. Each exponential uses the fourth-order Taylor approximation from method `1` with a half time step.
+* `3`: Crank-Nicolson, $\left[S+\mathrm{i}H\Delta t/2\right]\psi(t+\Delta t)=\left[S-\mathrm{i}H\Delta t/2\right]\psi(t)$. The linear system is solved directly.
+
+[NOTE] PW supports methods `0` and `2` on CPU and GPU. LCAO supports methods `0` through `3` on CPU and only method `0` on GPU.)";
         item.default_value = "0";
         item.unit = "";
-        item.set_availability("basis_type==lcao and esolver_type==tddft");
+        item.set_availability("(basis_type==pw or basis_type==lcao) and esolver_type==tddft");
         read_sync_int(input.propagator);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_exp_method");
+        item.domain.set_choices({"lanczos", "taylor"});
+        item.annotation = "exponential algorithm for PW ETRS";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "String";
+        item.description = R"(Algorithm used to evaluate $\exp(-\mathrm{i}\tau\boldsymbol{H})\boldsymbol{\psi}$ for Enforced time-reversal symmetry (ETRS) propagation with a plane-wave basis. The Hamiltonian $\boldsymbol{H}$ is held fixed over the evolution interval $\tau$. The formulas below use Hartree atomic units.
+* `lanczos`: Adaptive Lanczos approximation with automatic reorthogonalization when needed. The estimated error relative to the input wavefunction norm is controlled by `td_exp_thr`, and the maximum Krylov dimension by `td_exp_krylov_dim`. The half-step and full-step predictor share a Krylov basis. If the error target cannot be met within the maximum dimension, the frozen-Hamiltonian interval is subdivided internally.
+* `taylor`: Fixed-order Taylor approximation, $\exp(-\mathrm{i}\tau\boldsymbol{H})\boldsymbol{\psi}\approx\sum_{k=0}^{p}(-\mathrm{i}\tau\boldsymbol{H})^k\boldsymbol{\psi}/k!$, where the order $p$ is specified by `td_exp_order`.)";
+        item.default_value = "lanczos";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2");
+        read_sync_string(input.td_exp_method);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_exp_order");
+        item.domain.set_rule("value>=2");
+        item.annotation = "Taylor polynomial order for PW ETRS";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Integer";
+        item.description = "Taylor polynomial order $p$ used by `td_exp_method=taylor`. Must be an integer of at least 2.";
+        item.default_value = "4";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2 and td_exp_method==taylor");
+        read_sync_int(input.td_exp_order);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_exp_thr");
+        item.domain.set_rule("value>=0");
+        item.annotation = "relative exponential error target for PW Lanczos";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Real";
+        item.description = R"(Target for the estimated error in each Lanczos exponential calculation, relative to the input wavefunction norm. Must be nonnegative and finite. Zero selects $\max(10^{-10},100\epsilon)$, where $\epsilon$ is machine epsilon for the wavefunction precision, giving `1e-10` in double precision and approximately `1.19209e-5` in single precision. A positive value specifies the target directly.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2 and td_exp_method==lanczos");
+        read_sync_double(input.td_exp_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("td_exp_krylov_dim");
+        item.domain.set_rule("value>=2");
+        item.annotation = "maximum Lanczos dimension for PW ETRS";
+        item.category = "Real-Time TDDFT (PW)";
+        item.type = "Integer";
+        item.description = "Maximum number of Krylov basis vectors used in each Lanczos exponential calculation. Must be an integer of at least 2. Larger values increase wavefunction storage and orthogonalization work.";
+        item.default_value = "32";
+        item.unit = "";
+        item.set_availability("basis_type==pw and esolver_type==tddft and td_propagator==2 and td_exp_method==lanczos");
+        read_sync_int(input.td_exp_krylov_dim);
         this->add_item(item);
     }
     {
@@ -518,6 +543,7 @@ Only effective for `lin_solver=gmres`; ignored otherwise.)";
     }
     {
         Input_Item item("td_stype");
+        item.domain.add_requirement("init_vecpot==false", "td_stype in [0, 1, 2]");
         item.annotation = "type of electric field in space domain";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
@@ -708,7 +734,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.annotation = "t1 of Trapezoid type electric field";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
-        item.description = R"(Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy `td_trape_t1 <= td_trape_t2 <= td_trape_t3`. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
+        item.description = R"(Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy $\mathtt{td\_trape\_t1}\leqslant\mathtt{td\_trape\_t2}\leqslant\mathtt{td\_trape\_t3}$. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
         item.default_value = "1875";
         item.unit = "";
         item.set_availability("td_ttype contains 1");
@@ -723,7 +749,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.annotation = "t2 of Trapezoid type electric field";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
-        item.description = R"(Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy `td_trape_t1 <= td_trape_t2 <= td_trape_t3`. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
+        item.description = R"(Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy $\mathtt{td\_trape\_t1}\leqslant\mathtt{td\_trape\_t2}\leqslant\mathtt{td\_trape\_t3}$. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
         item.default_value = "5625";
         item.unit = "";
         item.set_availability("td_ttype contains 1");
@@ -738,7 +764,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.annotation = "t3 of Trapezoid type electric field";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Vector of Real";
-        item.description = R"(Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy `td_trape_t1 <= td_trape_t2 <= td_trape_t3`. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
+        item.description = R"(Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. The value must be a nonnegative integer; integer-valued real inputs such as `2.0` are accepted. Each field must satisfy $\mathtt{td\_trape\_t1}\leqslant\mathtt{td\_trape\_t2}\leqslant\mathtt{td\_trape\_t3}$. Supply exactly one value for each `td_ttype 1` occurrence, in occurrence order.)";
         item.default_value = "7500";
         item.unit = "";
         item.set_availability("td_ttype contains 1");
@@ -938,7 +964,15 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.unit = "";
         item.set_availability("td_ttype contains 4");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_supsine_tstart = parse_supersine_steps(item, para.input.td_tstart);
+            std::vector<std::string> tokens = item.is_read() ? item.str_values : std::vector<std::string>(1, "default");
+            for (std::string& token: tokens)
+            {
+                if (token == "default")
+                {
+                    token = std::to_string(para.input.td_tstart);
+                }
+            }
+            parse_expression(tokens, para.input.td_supsine_tstart);
         };
         item.get_final_value = [](Input_Item& item, const Parameter&) {
             item.final_value << (item.is_read() ? longstring(item.str_values) : "default");
@@ -956,7 +990,15 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.unit = "";
         item.set_availability("td_ttype contains 4");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_supsine_tend = parse_supersine_steps(item, para.input.td_tend);
+            std::vector<std::string> tokens = item.is_read() ? item.str_values : std::vector<std::string>(1, "default");
+            for (std::string& token: tokens)
+            {
+                if (token == "default")
+                {
+                    token = std::to_string(para.input.td_tend);
+                }
+            }
+            parse_expression(tokens, para.input.td_supsine_tend);
         };
         item.get_final_value = [](Input_Item& item, const Parameter&) {
             item.final_value << (item.is_read() ? longstring(item.str_values) : "default");
@@ -966,6 +1008,8 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
     }
     {
         Input_Item item("init_vecpot");
+        item.domain.add_requirement("init_vecpot==true",
+                                    "esolver_type==tddft and ((basis_type==pw and td_stype==1) or (basis_type==lcao and td_stype in [1, 2]))");
         item.annotation = "read endpoint vector potentials from file";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
@@ -978,16 +1022,6 @@ The file takes precedence over analytic waveforms, independently of `td_vext`, `
         item.unit = "";
         item.set_availability("esolver_type==tddft and ((basis_type==pw and td_stype==1) or (basis_type==lcao and td_stype in [1, 2]))");
         read_sync_bool(input.init_vecpot);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            const Input_para& inp = para.inp;
-            const bool supported = inp.esolver_type == "tddft"
-                && ((inp.basis_type == "pw" && inp.td_stype == 1)
-                    || (inp.basis_type == "lcao" && (inp.td_stype == 1 || inp.td_stype == 2)));
-            if (inp.init_vecpot && !supported)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "init_vecpot requires PW velocity gauge or LCAO velocity/hybrid gauge RT-TDDFT.");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -1070,7 +1104,7 @@ void ReadInput::item_lr_tddft()
         item.annotation = "exchange correlation (XC) kernel for LR-TDDFT";
         item.category = "Linear Response TDDFT";
         item.type = "String";
-        item.description = "The exchange-correlation kernel used in the calculation. Currently supported: RPA, LDA, PBE, HSE, HF.";
+        item.description = "The exchange-correlation kernel used in the calculation. Currently supported: RPA, LDA, PWLDA, PBE, and the hybrids HF, PBE0, HSE, B3LYP, CAM_PBEH, LC_PBE, LC_WPBE, LRC_WPBE, LRC_WPBEH. A hybrid kernel needs the ground state to use the same functional: the exact-exchange operator $[\\alpha+\\beta\\,\\mathrm{erfc}(\\mu r)]/r$ is built from exx_fock_alpha ($\\alpha$), exx_erfc_alpha ($\\beta$) and exx_erfc_omega ($\\mu$), which are keyed off dft_functional, not off this parameter.";
         item.default_value = "LDA";
         item.unit = "";
         read_sync_string(input.xc_kernel);
@@ -1084,6 +1118,7 @@ void ReadInput::item_lr_tddft()
         item.description = R"(The method to initalize the xc kernel.
 * "default": Calculate xc kernel from the ground-state charge density.
 * "file": Read the xc kernel on grid from the provided files. The following words should be the paths of ".cube" files, where the first 1 (nspin==1) or 3 (nspin==2, namely spin-aa, spin-ab and spin-bb) will be read in. The parameter xc_kernel will be invalid. Now only LDA-type kernel is supported as the potential will be calculated by directly multiplying the transition density.
+[NOTE] The "file" and "from_charge_file" modes support spectra only. Excited-state forces and relaxation require the consistent ground-state density and its response; externally supplied kernels or frozen densities do not provide these derivatives.
 * "from_charge_file": Calculate fxc from the charge density read from the provided files. The following words should be the paths of ".cube" files, where the first nspin files will be read in.)";
         item.default_value = "\"default\"";
         item.unit = "";
@@ -1095,6 +1130,19 @@ void ReadInput::item_lr_tddft()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.lr_init_xc_kernel.empty()) { para.input.lr_init_xc_kernel.push_back("default"); }
             };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const auto& input = para.input;
+            const bool lr = input.esolver_type == "lr" || input.esolver_type == "ks-lr";
+            const bool forces = input.cal_force || input.calculation == "relax";
+            const bool external_kernel = !input.lr_init_xc_kernel.empty()
+                && (input.lr_init_xc_kernel[0] == "file" || input.lr_init_xc_kernel[0] == "from_charge_file");
+            if (lr && forces && external_kernel)
+            {
+                const std::string message = "lr_init_xc_kernel=" + input.lr_init_xc_kernel[0]
+                    + " supports spectra only; excited-state forces and relaxation are not supported";
+                ModuleBase::WARNING_QUIT("ReadInput", message);
+            }
+        };
         sync_stringvec(input.lr_init_xc_kernel, para.input.lr_init_xc_kernel.size(), "default");
         this->add_item(item);
     }
@@ -1125,18 +1173,18 @@ void ReadInput::item_lr_tddft()
     }
     {
         Input_Item item("nocc");
-        item.annotation = "the number of occupied orbitals to form the 2-particle basis ( <= nelec/2)";
+        item.annotation = "the occupied orbital window ending at HOMO for LR-TDDFT";
         item.category = "Linear Response TDDFT";
         item.type = "Integer";
-        item.description = R"(The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation.
-* Note: If the value is illegal ( > nelec/2 or <= 0), it will be autoset to nelec/2.)";
-        item.default_value = "nband";
+        item.description = R"(The number of occupied orbitals (up to HOMO) retained in the majority-spin LR-TDDFT window. A positive value selects a shared core prefix to discard from both spin channels; it does not change the ground-state occupations.
+* If omitted, non-positive, or larger than the occupied majority-spin channel, all occupied orbitals are used.
+* The full occupied window is determined by the effective electron number (including nelec_delta once) and the ground-state spin populations. For nspin=2, the minority-spin window has abs(N_up-N_down) fewer occupied orbitals.
+
+[NOTE] For reliable excited-state forces and relaxation, retain all occupied orbitals. With a truncated occupied or virtual X window, the current analytic force is an approximation and may differ from finite differences of the selected truncated excitation energy. Zero-padding X into a larger Z virtual space is retained, but does not restore every active/inactive orbital-response term. Check force/window convergence.)";
+        item.default_value = "all occupied orbitals";
         item.unit = "";
         read_sync_int(input.nocc);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            const int nocc_default = std::max(static_cast<int>(para.input.nelec + 1) / 2, para.input.nbands);
-            if (para.input.nocc <= 0 || para.input.nocc > nocc_default) { para.input.nocc = nocc_default; }
-            };
+        // Resolve the occupied window only after effective nelec and KS spin populations are known.
         this->add_item(item);
     }
     {
@@ -1144,7 +1192,9 @@ void ReadInput::item_lr_tddft()
         item.annotation = "the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)";
         item.category = "Linear Response TDDFT";
         item.type = "Integer";
-        item.description = "The number of virtual orbitals (starting from LUMO) used in the LR-TDDFT calculation.";
+        item.description = R"(The number of virtual orbitals (starting from LUMO) used in the LR-TDDFT calculation.
+
+[NOTE] For reliable excited-state forces and relaxation, use all occupied orbitals, nbands = NLOCAL (the AO basis size), and the full spin-resolved virtual window, nvirt = nbands - nocc. Merely setting nvirt = nbands - nocc is insufficient when nbands < NLOCAL. The Z virtual window is widened to the available ground-state bands and X is zero-padded without changing the selected excitation energy; this does not make the force an exact derivative of a truncated-X problem. Changing nvirt itself generally changes the excitation energies. Truncated-window forces remain available with a warning and require convergence checks, especially before optimization.)";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.nvirt);
@@ -1160,6 +1210,172 @@ void ReadInput::item_lr_tddft()
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.lr_nstates);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_target_state");
+        item.annotation = "the initial excited state for geometry relaxation (0-based)";
+        item.category = "Linear Response TDDFT";
+        item.type = "Integer";
+        item.description
+            = R"(Initial excited-state index for `calculation = relax`, counted from 0 within the spin channel selected by `lr_target_spin`.
+
+The gradient of the followed state (or its degenerate multiplet selected by `lr_degen_mode`) is computed, since solving the Z-vector equation dominates the cost of an excited-state gradient. It also selects the state whose excitation energy is added to the ground-state total energy, which is the quantity the energy-based relaxation algorithms (`cg`, `bfgs`, `lbfgs`) line-search on.
+
+Ignored outside `calculation = relax`: a single-point run solves and reports the gradients of every state.
+
+[NOTE] This index seeds the first ionic step. Subsequent steps compute cross-geometry AO overlaps and transform them with the saved and current KS orbitals to compare excitation amplitudes in a common occupied/virtual basis. Orbital sign changes and rotations within those subspaces do not change the overlap criterion. Index changes and low overlaps are reported. In JT mode the selected normalized multiplet mixture and its orbital basis become the reference. The projection is not renormalized, so window leakage remains visible. Tracking currently requires a fixed cell and unchanged orbital windows; degeneracy and a state leaving the solved window still limit state identification. Increase `lr_nstates` or reduce the ionic step when the overlap is low.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // Both parameters only steer a relaxation. A single-point run solves and reports every
+            // state, so they are dead there and must not be able to abort it.
+            if (para.input.calculation != "relax")
+            {
+                return;
+            }
+            if (para.input.lr_target_state < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_target_state must be >= 0");
+            }
+            // lr_nstates <= 0 means "all particle-hole pairs"; that count is only known once the
+            // ground state has been read, so ESolver_LR::setup_relax_target_() re-checks there
+            if (para.input.lr_nstates > 0 && para.input.lr_target_state >= para.input.lr_nstates)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_target_state must be < lr_nstates");
+            }
+            const std::vector<std::string> spins = { "singlet", "triplet", "updown" };
+            if (std::find(spins.begin(), spins.end(), para.input.lr_target_spin) == spins.end())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_target_spin must be singlet, triplet or updown");
+            }
+            if (para.input.lr_target_spin == "triplet" && para.input.nspin == 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_target_spin=triplet requires nspin=2: only the singlet channel is built at nspin=1");
+            }
+        };
+        read_sync_int(input.lr_target_state);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_degen_thr");
+        item.annotation
+            = "max excitation-energy spread of a degenerate multiplet whose gradient matrix is computed (Ry); 0 disables";
+        item.category = "Linear Response TDDFT";
+        item.type = "Real";
+        item.description = R"(Excited states whose excitation energies lie within this threshold of each other are treated as one degenerate multiplet, and the full gradient matrix $G^{(A\alpha)}_{kl}=\langle X_k|\partial A/\partial R_{A\alpha}|X_l\rangle$ is computed for it in addition to the per-state gradients. Zero (the default) disables this and leaves the per-state gradients as the only output.
+
+At a $d$-fold degeneracy no single state has a gradient vector: the branch slopes along a displacement $u$ are the eigenvalues of $\sum_{A\alpha}u_{A\alpha}G^{(A\alpha)}$, and the eigenvectors that diagonalise it depend on $u$. The per-state gradients are the diagonal of $G$ in whichever basis the eigensolver happened to return, so only their sum (the trace) is basis-independent, while $G$ itself is the complete first-order information -- it is the linear vibronic coupling Hamiltonian of the multiplet. The extra cost is $d(d-1)/2$ further Z-vector solves per multiplet.
+
+The threshold proposes candidates; it cannot tell a true degeneracy from an accidental near-degeneracy, where the states have genuinely different excitation energies and the construction does not apply. Each multiplet's actual energy spread and the orthonormality of its eigenvectors are reported in the running log so the distinction can be made there.
+
+[NOTE] In `lr_degen_mode = jt`, all members of a threshold-defined group are approximated as sharing one energy: relaxation reports their mean excitation energy but uses the selected JT mixed-state force. At an exact degeneracy this force gives the first-order branch slope; no additional mixing-coefficient response is required. With a finite energy spread below this threshold, however, the mean energy and JT force are generally not derivatives of the same surface. Energy-based line searches can therefore be inconsistent within this grouping interval, even if the spread is small. The ordinary single-root energy and force resume when the tracked group becomes a singleton after threshold-based splitting. This threshold does not bound the resulting force error. Check the reported spreads against numerical accuracy and test sensitivity to the grouping threshold before relying on JT relaxation convergence.
+
+[NOTE] A sensible value is a few times the eigensolver threshold `lr_thr`, so that states split by real physics are not merged.)";
+        item.default_value = "0";
+        item.unit = "Ry";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.lr_degen_thr < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "lr_degen_thr must be >= 0");
+            }
+        };
+        read_sync_double(input.lr_degen_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_degen_mode");
+        item.annotation = "what a relaxation follows when the target state is degenerate: state or average";
+        item.category = "Linear Response TDDFT";
+        item.type = "String";
+        item.description
+            = R"(What `calculation = relax` follows when `lr_target_state` sits inside a degenerate multiplet, as identified by `lr_degen_thr`. It has no effect when the target state is non-degenerate.
+
+* state: follow the gradient of that one state, as returned by the eigensolver. This is the historical behaviour and is what reproduces earlier results, but inside a multiplet it is not a well-defined quantity: the per-state gradients are the diagonal of the subspace gradient matrix in whichever basis the eigensolver happened to return, so they depend on numerical details of the diagonalisation rather than on physics.
+* average: follow the multiplet average $\bar\Omega=\frac{1}{d}\sum_k\Omega_k$, whose gradient is $\operatorname{Tr}G/d$. For a fixed complete multiplet the average is basis-independent and its gradient respects the multiplet symmetry. Tracking allows groups to split or merge: split groups are not recombined to enforce symmetry, so changing group membership can change the average surface and lose geometric symmetry. Groups larger than three are tracked but use the selected single-state energy and force with a warning. Both the reported energy and the reported gradient switch to the average together, which the energy-based optimisers (`cg`, `bfgs`, `lbfgs`) require -- a gradient of one surface line-searched against the energy of another does not converge. This mode deliberately does NOT find the Jahn-Teller distortion, which is orthogonal to the totally symmetric average gradient.
+* jt: descend the Jahn-Teller branch for a two- or three-state multiplet; larger JT force groups are rejected before gradient construction. Solves $\min_{\|u\|=1}\lambda_{\min}(\sum_{A\alpha}u_{A\alpha}G^{(A\alpha)})$ -- a joint optimisation over the displacement and the mixing inside the multiplet, since the two are determined together -- and follows the force of the resulting branch. This needs the off-diagonal part of the gradient matrix, so it costs $d(d-1)/2$ further Z-vector solves per step on top of the $d$ diagonal ones. The running log reports the branch's force, its mixing coefficients, and its split into the part common to the multiplet and the part that actually breaks the degeneracy.
+
+[NOTE] Groups have no tracking dimension cap. `average` ranks groups by total cross-geometry subspace overlap; `jt` instead ranks by the projection weight of the previous actual JT mixture in each current group. The running log records both dimensions, coverage and singular values. Lost coverage is diagnosed and tracking continues; this does not guarantee a continuous energy surface. For `average`, ties use the previous selected-state projection weight; for `jt`, ties use total subspace overlap.
+
+[NOTE] The usual sequence is `average` first, to reach the symmetric stationary point, then `jt` from there: at a stationary point of the average surface the common part vanishes and the whole force is Jahn-Teller. `jt` returns to the ordinary single-state energy and force once threshold-based splitting leaves the tracked group with one member; smaller splittings remain subject to the approximation described under `lr_degen_thr`.
+
+[NOTE] `jt` gives the first-order DIRECTION. The distortion amplitude also needs the harmonic term, and the step norm is Cartesian rather than mass-weighted. A linear molecule has no first-order term at all (the effect is second-order Renner-Teller) and the log says so.)";
+        item.default_value = "state";
+        item.unit = "";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> modes = { "state", "average", "jt" };
+            if (std::find(modes.begin(), modes.end(), para.input.lr_degen_mode) == modes.end())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_degen_mode must be state, average or jt");
+            }
+            // Both non-default modes need to know which states form the multiplet, and that
+            // grouping is what lr_degen_thr defines; without it there is nothing to act on.
+            if (para.input.lr_degen_mode != "state" && para.input.lr_degen_thr <= 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "lr_degen_mode=" + para.input.lr_degen_mode
+                    + " requires lr_degen_thr > 0 to define the multiplet");
+            }
+        };
+        read_sync_string(input.lr_degen_mode);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_grad_solver");
+        item.annotation = "the linear solver of the Z-vector equation for LR-TDDFT gradients";
+        item.category = "Linear Response TDDFT";
+        item.type = "String";
+        item.description
+            = R"(The method to solve the Z-vector (relaxed-density) equation $(A+B)Z=R$ in LR-TDDFT force and relaxation calculations, the linear-equation counterpart of `lr_solver`. Its dimension is $n_k n_{occ} n_{virt}$ summed over spin, where $n_{virt}$ counts every virtual band of the ground state, not only the `nvirt` window of the excitation.
+* cg: Solve iteratively with the conjugate-gradient method, applying the orbital Hessian $A+B$ to a vector at each step. The matrix is never built.
+* lapack: Construct the full matrix and solve directly with LAPACK (LU). Every MPI process holds the whole matrix and solves the same system.
+* scalapack: Construct the matrix distributed over the MPI processes (2D block-cyclic) and solve with ScaLAPACK (LU).
+* scalapack_chol: Construct the matrix distributed as for scalapack and solve by a ScaLAPACK Cholesky factorization, about half the flops of the LU and in place.
+
+[NOTE] The direct solvers build the matrix column by column, at the cost of one application of $A+B$ per column, which usually dominates the cost of the solve itself; scalapack and scalapack_chol need an MPI build.
+
+[NOTE] scalapack_chol requires $A+B$ to be positive definite. A non-positive-definite matrix causes an error on every MPI rank; use lr_grad_solver=scalapack (LU) instead. The LU solver does not require positive definiteness, but still requires a nonsingular matrix. The former elpa option has been removed; use scalapack_chol for distributed Cholesky.)";
+        item.default_value = "cg";
+        item.unit = "";
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& solver = para.input.lr_grad_solver;
+            const std::vector<std::string> solvers = { "cg", "lapack", "scalapack", "scalapack_chol" };
+            if (std::find(solvers.begin(), solvers.end(), solver) == solvers.end())
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "lr_grad_solver must be cg, lapack, scalapack or scalapack_chol; elpa has been removed");
+            }
+#ifndef __MPI
+            if (solver == "scalapack" || solver == "scalapack_chol")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "lr_grad_solver = " + solver + " needs an MPI build; use cg or lapack");
+            }
+#endif
+
+        };
+        read_sync_string(input.lr_grad_solver);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lr_target_spin");
+        item.annotation = "spin channel of lr_target_state: singlet, triplet or updown";
+        item.category = "Linear Response TDDFT";
+        item.type = "String";
+        item.description = R"(Which spin channel `lr_target_state` indexes.
+
+* singlet / triplet: the two closed-shell channels solved at `nspin = 2`. At `nspin = 1` only `singlet` exists.
+* updown: the single spin-conserving channel of an open-shell calculation (`lr_unrestricted`, or a spin-polarised ground state with a non-zero moment).
+
+An open-shell calculation has only one channel, so any value is accepted there and relaxes that channel; an explicit `triplet` is reported as ignored. A closed-shell calculation rejects `updown`, since singlet and triplet are separate states with separate gradients.
+
+Ignored outside `calculation = relax`.)";
+        item.default_value = "singlet";
+        item.unit = "";
+        read_sync_string(input.lr_target_spin);
         this->add_item(item);
     }
     {
@@ -1206,13 +1422,21 @@ void ReadInput::item_lr_tddft()
     }
     {
         Input_Item item("abs_gauge");
-        item.annotation = "whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT";
+        item.annotation = "optical gauge: length, velocity, or none to skip the spectrum";
         item.category = "Linear Response TDDFT";
         item.type = "String";
-        item.description = "Whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT.";
+        item.description = "Optical gauge for LR-TDDFT/BSE: length or velocity. Set none to skip transition dipoles, oscillator strengths, transition analysis and absorption spectra, while retaining excitation energies, requested charge output, and LR forces or relaxation.";
         item.default_value = "velocity";
         item.unit = "";
         read_sync_string(input.abs_gauge);
+        item.check_value = [](const Input_Item& item, const Parameter& para)
+        {
+            const std::vector<std::string> gauges = {"length", "velocity", "none"};
+            if (std::find(gauges.begin(), gauges.end(), para.input.abs_gauge) == gauges.end())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "abs_gauge must be length, velocity or none");
+            }
+        };
         this->add_item(item);
     }
     {

@@ -19,31 +19,29 @@
 # Note: Currently only CPU version is supported, Since the NEP interface with GPU support is not available yet.
 #       In feature, if available, we can use USE_CUDA to switch between CPU and GPU version.
 
-find_path(NEP_INCLUDE_DIR nep.h
-    HINTS ${NEP_DIR}
-    PATH_SUFFIXES "include"
-    )
+find_path(
+  NEP_INCLUDE_DIR nep.h
+  HINTS ${NEP_DIR}
+  PATH_SUFFIXES "include")
 
-find_library(NEP_LIBRARY
-    NAMES nep
-    HINTS ${NEP_DIR}
-    PATH_SUFFIXES "lib"
-    )
+find_library(
+  NEP_LIBRARY
+  NAMES nep
+  HINTS ${NEP_DIR}
+  PATH_SUFFIXES "lib")
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(NEP
-    DEFAULT_MSG
-    NEP_LIBRARY NEP_INCLUDE_DIR)
+find_package_handle_standard_args(NEP DEFAULT_MSG NEP_LIBRARY NEP_INCLUDE_DIR)
 
 if(NEP_FOUND)
-    if(NOT TARGET NEP::nep)
-        add_library(NEP::nep UNKNOWN IMPORTED)
-        set_target_properties(NEP::nep PROPERTIES
-            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-            IMPORTED_LOCATION "${NEP_LIBRARY}"
-            INTERFACE_INCLUDE_DIRECTORIES "${NEP_INCLUDE_DIR}"
-        )
-    endif()
+  if(NOT TARGET NEP::nep)
+    add_library(NEP::nep UNKNOWN IMPORTED)
+    set_target_properties(
+      NEP::nep
+      PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                 IMPORTED_LOCATION "${NEP_LIBRARY}"
+                 INTERFACE_INCLUDE_DIRECTORIES "${NEP_INCLUDE_DIR}")
+  endif()
 endif()
 
 mark_as_advanced(NEP_INCLUDE_DIR NEP_LIBRARY)

@@ -105,9 +105,9 @@ void evolve_psi(const int nband,
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     /// @brief normalize psi_k
-    /// @input Stmp, psi_not_norm, psi_k, print_matrix
+    /// @input S(t+dt), psi_not_norm, psi_k, print_matrix
     /// @output psi_k
-    norm_psi(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
+    norm_psi(pv, nband, nlocal, s_mat.p, psi_k, ofs_running, print_matrix);
 
     // (5)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -260,7 +260,11 @@ void evolve_psi_tensor(const int nband,
         upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
     }
 
-    // (4) Normalize psi_k
+    // (4) Normalize in the endpoint metric, not the averaged propagation metric.
+    if (s_src != nullptr && (!use_lapack || myid == root_proc))
+    {
+        syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_src, len_HS);
+    }
     if (!use_lapack)
     {
         norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix, cublas_res);

@@ -8,16 +8,18 @@
 #ifndef PYABACUS_ESOLVER_HAMILTONIAN_BUILDER_LCAO_HPP
 #define PYABACUS_ESOLVER_HAMILTONIAN_BUILDER_LCAO_HPP
 
-#include "../interfaces/i_hamiltonian_builder.hpp"
 #include "../../utils/pybind_utils.h"
+#include "../interfaces/i_hamiltonian_builder.hpp"
 
-#include <memory>
-#include <vector>
 #include <map>
+#include <memory>
 #include <tuple>
+#include <vector>
 
-namespace pyabacus {
-namespace esolver {
+namespace pyabacus
+{
+namespace esolver
+{
 
 /**
  * @brief LCAO Hamiltonian builder implementation
@@ -31,7 +33,7 @@ namespace esolver {
 template <typename TK, typename TR = double>
 class HamiltonianBuilderLCAO : public IHamiltonianBuilder<TK, TR>
 {
-public:
+  public:
     HamiltonianBuilderLCAO() = default;
 
     HamiltonianBuilderLCAO(int nbasis, int nks, int nrow, int ncol)
@@ -72,8 +74,7 @@ public:
         nrxx_ = static_cast<int>(buf.shape[1]);
 
         // Store rho
-        rho_data_.assign(static_cast<const double*>(buf.ptr),
-                         static_cast<const double*>(buf.ptr) + nspin_ * nrxx_);
+        rho_data_.assign(static_cast<const double*>(buf.ptr), static_cast<const double*>(buf.ptr) + nspin_ * nrxx_);
 
         // Mark H(k) as needing update
         hk_valid_.assign(nks_, false);
@@ -106,22 +107,18 @@ public:
     {
         validate_kpoint(ik);
 
-        return utils::numpy_from_ptr_copy_2d(
-            Hk_matrices_[ik].data(),
-            static_cast<size_t>(nrow_),
-            static_cast<size_t>(ncol_)
-        );
+        return utils::numpy_from_ptr_copy_2d(Hk_matrices_[ik].data(),
+                                             static_cast<size_t>(nrow_),
+                                             static_cast<size_t>(ncol_));
     }
 
     py::array_t<TK> get_Sk(int ik) const override
     {
         validate_kpoint(ik);
 
-        return utils::numpy_from_ptr_copy_2d(
-            Sk_matrices_[ik].data(),
-            static_cast<size_t>(nrow_),
-            static_cast<size_t>(ncol_)
-        );
+        return utils::numpy_from_ptr_copy_2d(Sk_matrices_[ik].data(),
+                                             static_cast<size_t>(nrow_),
+                                             static_cast<size_t>(ncol_));
     }
 
     // ==================== Real-space Matrix Access ====================
@@ -161,16 +158,25 @@ public:
 
     // ==================== Dimension Queries ====================
 
-    int get_nbasis() const override { return nbasis_; }
+    int get_nbasis() const override
+    {
+        return nbasis_;
+    }
 
-    int get_nks() const override { return nks_; }
+    int get_nks() const override
+    {
+        return nks_;
+    }
 
     std::pair<int, int> get_local_dims() const override
     {
         return {nrow_, ncol_};
     }
 
-    bool is_valid() const override { return valid_; }
+    bool is_valid() const override
+    {
+        return valid_;
+    }
 
     // ==================== Data Setters (for testing/compatibility) ====================
 
@@ -227,7 +233,7 @@ public:
         }
     }
 
-private:
+  private:
     void validate_kpoint(int ik) const
     {
         if (!valid_)
@@ -240,14 +246,12 @@ private:
         }
     }
 
-    py::array_t<TK> matrix_multiply(const std::vector<TK>& matrix,
-                                    const py::array_t<TK>& vec) const
+    py::array_t<TK> matrix_multiply(const std::vector<TK>& matrix, const py::array_t<TK>& vec) const
     {
         auto vec_buf = vec.request();
         const TK* vec_ptr = static_cast<const TK*>(vec_buf.ptr);
 
-        const ssize_t nvec = (vec_buf.ndim == 1) ? 1 :
-                             (vec_buf.ndim == 2) ? vec_buf.shape[1] : 1;
+        const ssize_t nvec = (vec_buf.ndim == 1) ? 1 : (vec_buf.ndim == 2) ? vec_buf.shape[1] : 1;
         const ssize_t vec_rows = (vec_buf.ndim == 1) ? vec_buf.shape[0] : vec_buf.shape[0];
 
         if (vec_rows != ncol_)

@@ -2,8 +2,8 @@
 #define source_hamilt_MODULE_XC_KERNELS_H_
 
 #include <complex>
-#include <source_psi/psi.h>
 #include <source_base/macros.h>
+#include <source_base/module_device/types.h>
 
 namespace hamilt {
 

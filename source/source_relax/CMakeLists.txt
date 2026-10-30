@@ -1,32 +1,30 @@
 add_library(
-    relax
-    OBJECT
-    relax_data.cpp
-    socket_ipi.cpp
-    socket_frame_utils.cpp
-    socket_frame.cpp
-    socket_utils.cpp
-    socket_handlers.cpp
-    socket_driver.cpp
-    cg_base.cpp
-    relax_driver.cpp
-    relax_stru_io.cpp
-    relax_sync.cpp
-    line_search.cpp
-    ions_move_lbfgs.cpp
-    relax_nsync.cpp
-    bfgs_basic.cpp
-    ions_move_basic.cpp
-    ions_move_bfgs.cpp
-    ions_move_bfgs2.cpp
-    ions_move_cg.cpp
-    ions_move_sd.cpp
-    ions_move_methods.cpp
-    lattice_change_basic.cpp
-    lattice_change_cg.cpp
-    lat_change_method.cpp
-    matrix_methods.cpp
-)
+  relax OBJECT
+  relax_data.cpp
+  socket_ipi.cpp
+  socket_frame_utils.cpp
+  socket_frame.cpp
+  socket_utils.cpp
+  socket_handlers.cpp
+  socket_driver.cpp
+  cg_base.cpp
+  relax_driver.cpp
+  relax_stru_io.cpp
+  relax_sync.cpp
+  line_search.cpp
+  ions_move_lbfgs.cpp
+  relax_nsync.cpp
+  bfgs_basic.cpp
+  ions_move_basic.cpp
+  ions_move_bfgs.cpp
+  ions_move_bfgs2.cpp
+  ions_move_cg.cpp
+  ions_move_sd.cpp
+  ions_move_methods.cpp
+  lattice_change_basic.cpp
+  lattice_change_cg.cpp
+  lat_change_method.cpp
+  matrix_methods.cpp)
 
 if(ENABLE_COVERAGE)
   add_coverage(relax)

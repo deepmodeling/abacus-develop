@@ -115,7 +115,7 @@ void module_charge::chgmixing_ks(const int iter,
     // SCF restart information
     if (inp.mixing_restart > 0
         && iter == p_chgmix->mixing_restart_step - 1
-        && iter != inp.scf_nmax)
+        && iter != ctx.iter_limit)
     {
         p_chgmix->mixing_restart_last = iter;
         std::cout << " SCF restart after this step!" << std::endl;
@@ -126,6 +126,7 @@ void module_charge::chgmixing_ks(const int iter,
 
 
 void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
+        const int iter_limit,
         Charge_Mixing* p_chgmix, // charge mixing class
         Plus_U_Base& dftu,
         const bool mag_converged, ///< whether DeltaSpin magnetization converged (true when disabled)
@@ -136,7 +137,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
     if (iter == 1)
     {
         p_chgmix->init_mixing();
-        p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+        p_chgmix->reset_scf_history(iter_limit);
         if (inp.dft_plus_u && dftu.has_occ_mixer())
         {
             // allocate memory for uom_mdata sized to the flat occupation buffer
@@ -154,7 +155,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
         {
             if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
             {
-                p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+                p_chgmix->mixing_restart_step = iter_limit + 1;
             }
             if (dftu.get_uramping() > 0.01)
             {
@@ -176,6 +177,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 }
 
 void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
+        const int iter_limit,
         Charge_Mixing* p_chgmix, // charge mixing class
         Plus_U_Base& dftu,
         const int nnr, // dimension of density matrix
@@ -186,8 +188,7 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
     if (iter == 1)
     {
         p_chgmix->mix_reset(); // init mixing
-        p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
-        p_chgmix->mixing_restart_count = 0;
+        p_chgmix->reset_scf_history(iter_limit);
         // this output will be removed once the feeature is stable
         if (dftu.get_uramping() > 0.01)
         {
@@ -219,7 +220,7 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
             }
             if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
             {
-                p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+                p_chgmix->mixing_restart_step = iter_limit + 1;
             }
         }
         if (inp.mixing_dmr) // for mixing_dmr

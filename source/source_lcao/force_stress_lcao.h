@@ -10,7 +10,7 @@
 #include "source_base/matrix.h"
 #include "source_pw/module_pwdft/force_pw.h"
 #include "source_pw/module_pwdft/stress_func.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 #include "source_io/module_parameter/input_conv.h"
 #include "source_psi/psi.h"
 #ifdef __EXX
@@ -45,6 +45,7 @@ struct FSCalcConfig
     bool domag_z;
     int gga_grad;
     bool gamma_only_pw;
+    int imp_sol; // 2 adds the SCCS component force
 };
 
 // Force/stress component matrices assembled by getForceStress. Grouping them

@@ -259,6 +259,8 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
     }
     {
         Input_Item item("out_wfc_pw");
+        item.domain.set_choices({"0", "1", "2"});
+        item.domain.add_requirement("out_wfc_pw!=0", "basis_type==pw");
         item.annotation = "output wave functions";
         item.category = "Output information";
         item.type = "Integer";
@@ -280,20 +282,12 @@ With `init_wfc file binary`, ABACUS reads only unindexed binary `wf*_pw.dat` fil
         item.unit = "";
         item.set_availability("basis_type==pw and esolver_type==ksdft");
         read_sync_int(input.out_wfc_pw);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_wfc_pw < 0 || para.input.out_wfc_pw > 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_pw should be 0, 1, or 2");
-            }
-            if (para.input.basis_type != "pw" && para.input.out_wfc_pw != 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_pw is only available for basis_type = pw");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("out_wfc_lcao");
+        item.domain.set_choices({"0", "1", "2"});
+        item.domain.add_requirement("out_wfc_lcao!=0", "basis_type==lcao");
         item.annotation = "ouput LCAO wave functions, 0, no output 1: text, 2: binary";
         item.category = "Output information";
         item.type = "Integer";
@@ -321,16 +315,6 @@ Also controled by out_freq_ion and out_app_flag.
                 para.input.out_wfc_lcao = 1;
             }
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_wfc_lcao < 0 || para.input.out_wfc_lcao > 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao should be 0, 1, or 2");
-            }
-            if (para.input.basis_type != "lcao" && para.input.out_wfc_lcao != 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_lcao is only available for basis_type = lcao");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -341,7 +325,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.description = R"(Whether to output the density of states (DOS) and projected density of states (PDOS). For more information, refer to the dos.md.
 * 0: no output
 * 1: output the density of states (DOS) and projected density of states (PDOS, LCAO only)
- * nspin=1 or 4: doss1g{geom}_{basis}.txt and pdoss1g{geom}_{basis}.txt, where geom is the geometry index when cell changes or ions move while basis is either pw or nao.
+ * nspin=1 or 4: doss1g{geom}.txt and pdoss1g{geom}.txt (PDOS is LCAO only), where geom is the geometry index when cell changes or ions move. PW and LCAO calculations use the same naming.
  * nspin=2: doss1/doss2 and pdoss1/pdoss2 files for two spin channels.
 Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will raise an error.)";
         item.default_value = "0";
@@ -1485,6 +1469,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
     }
     {
         Input_Item item("out_librpa_ver");
+        item.domain.set_choices({"0", "1"});
         item.annotation = "LibRPA output reader version";
         item.category = "Output information";
         item.type = "Integer";
@@ -1493,13 +1478,6 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.unit = "";
         item.set_availability("basis_type==lcao");
         read_sync_int(input.out_librpa_ver);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            const int value = para.input.out_librpa_ver;
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT("INPUT", "out_librpa_ver must be 0 or 1.");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -1676,9 +1654,16 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output dipole or not";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls electric-dipole output. In RT-TDDFT, each enabled spin channel is written to `OUT.{suffix}/dipole_s[spin].txt` using a one-based spin number. Every row contains the one-based electronic-step index followed by the Cartesian electronic-dipole components $P_x$, $P_y$, and $P_z$ in atomic units. The running log additionally reports the electronic, ionic, and total dipoles and the norm of the total dipole.
-* `True`: Output the electric dipole information.
-* `False`: Do not output the electric dipole information.)";
+        item.description = R"(Output the electronic dipole moment to `OUT.{suffix}/dipole_s[spin].txt`. In Hartree atomic units,
+
+$$\boldsymbol{P}(t)=-\int_{\Omega}\boldsymbol{r}\,\rho(\boldsymbol{r},t)\,\mathrm{d}^3r,$$
+
+where the integral is over the simulation cell and $\rho$ is the electron number density. For `nspin=2`, the two spin channels are written separately; for `nspin=1` or `4`, a single file contains the dipole of the total electron density.
+
+Each row contains the step index followed by $P_x$, $P_y$, and $P_z$. The running log additionally reports the ionic and combined dipoles.
+
+* `True`: Enable dipole output.
+* `False`: Disable dipole output.)";
         item.default_value = "False";
         item.unit = "";
         read_sync_bool(input.out_dipole);
@@ -1689,10 +1674,17 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output current or not";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Integer";
-        item.description = R"(Controls the current-density output method for RT-TDDFT. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units; the initial ground state is step 1 and subsequent steps increase by one.
-* `0`: Do not output current.
-* `1`: Available for PW and LCAO. PW evaluates the occupied-state expectation values of the velocity operator, using plane-wave momentum and nonlocal-projector derivatives; in the velocity gauge these are evaluated at the vector-potential-shifted momentum. In the length gauge, a kinetic-energy-density functional also contributes its velocity term. LCAO explicitly constructs the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (`td_stype=1`); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to `OUT.{suffix}/current_tot.txt`.
-* `2`: Available only for LCAO. Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to `OUT.{suffix}/current_tot_comm.txt`.)";
+        item.description = R"(Output the RT-TDDFT charge current density. In Hartree atomic units,
+
+$$\boldsymbol{J}(t)=-\frac{1}{\Omega}\sum_{n\boldsymbol{k}}f_{n\boldsymbol{k}}\operatorname{Re}\Braket{\psi_{n\boldsymbol{k}}(t)|\hat{\boldsymbol{v}}(t)|\psi_{n\boldsymbol{k}}(t)},$$
+
+where $\Omega$ is the cell volume, $f_{n\boldsymbol{k}}$ includes occupations and k-point weights, and $\hat{\boldsymbol{v}}$ is the velocity operator.
+
+* `0`: Disable current output.
+* `1`: Available for PW and LCAO. Evaluate the velocity from momentum and nonlocal pseudopotential contributions, including coupling to the vector potential in the velocity gauge. Other nonlocal terms, such as exact exchange, are not included. Write the total current to `OUT.{suffix}/current_tot.txt`.
+* `2`: Available only for LCAO. Construct the velocity matrix from the full Hamiltonian in the nonorthogonal atomic-orbital basis: $\widetilde{v}_{\alpha}=\partial_{k_{\alpha}}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{k_{\alpha}}S$, where $H$, $S$, and $\mathcal{R}_{\alpha}$ are the Hamiltonian, overlap, and position matrices in k space. This automatically includes nonlocal contributions present in the Hamiltonian, including exact exchange. Write the total current to `OUT.{suffix}/current_tot_comm.txt`.
+
+Each row contains the step index followed by $J_x$, $J_y$, and $J_z$.)";
         item.default_value = "0";
         item.unit = "";
         item.set_availability("basis_type in [pw, lcao] and esolver_type==tddft");
@@ -1705,7 +1697,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
         item.description = R"(Controls whether RT-TDDFT current density is also resolved by spin and k-point. PW supports `out_current=1`; LCAO supports `out_current=1` or `2`. The total-current file is always written when current output is enabled.
-* `True`: In addition to the total, `out_current=1` writes `OUT.{suffix}/current_s[spin]k[kpoint].txt`; `out_current=2` writes `OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt`. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Rows follow the step numbering, atomic units, precision, and append convention described in `out_current`. These weighted contributions sum to the total current.
+* `True`: In addition to the total, `out_current=1` writes `OUT.{suffix}/current_s[spin]k[kpoint].txt`; `out_current=2` writes `OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt`. These weighted contributions sum to the total current.
 * `False`: Output only `current_tot.txt` for `out_current=1` or `current_tot_comm.txt` for `out_current=2`.)";
         item.default_value = "False";
         item.unit = "";
@@ -1718,7 +1710,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output electric fields";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls time-dependent electric-field output in `OUT.{suffix}/`. `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Each configured analytic field is additionally written to `efield_[index].txt`, containing time in fs and the field value in V/Angstrom. The one-based index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Output is written on active electronic steps. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+        item.description = R"(Controls time-dependent electric-field output in `OUT.{suffix}/`. `efield_total.txt` contains time in fs followed by the total-field components $E_x$, $E_y$, and $E_z$ in V/Angstrom. Each configured analytic field is additionally written to `efield_[index].txt`, containing time in fs and the field value in V/Angstrom. The index follows the occurrence order in `td_ttype` and `td_vext_dire`; fields assigned to the same direction remain in separate files. Output is written on active electronic steps. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
 * `True`: Output electric-field values.
 * `False`: Do not output electric-field values.)";
         item.default_value = "False";
@@ -1732,7 +1724,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output endpoint vector potentials";
         item.category = "Real-Time TDDFT (Common)";
         item.type = "Boolean";
-        item.description = R"(Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
+        item.description = R"(Controls vector-potential output to `OUT.{suffix}/vector_pot.txt`. Each row contains the step index followed by $A_x$, $A_y$, and $A_z$ in Hartree atomic units. The file can be used as input for `init_vecpot` with the same `td_dt`. Fresh calculations overwrite the output; runs with `md_restart=True` append to it.
 * `True`: Output the vector potential.
 * `False`: Do not output the vector potential.)";
         item.default_value = "False";

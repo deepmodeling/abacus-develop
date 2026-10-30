@@ -1,0 +1,2 @@
+Minimal LCAO rt-TDDFT regression for a sub-roundoff displacement at a periodic boundary.
+Also checks that Gaussian pulses in multiple directions run successfully.

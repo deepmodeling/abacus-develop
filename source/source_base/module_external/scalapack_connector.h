@@ -118,6 +118,20 @@ extern "C"
             int *ipiv, std::complex<double>* B, const int* ib, const int* jb, const int*descb, const int *info
         );
 
+    void pdgesv_(
+            const int *n, const int *nrhs,
+            double *A, const int *ia, const int *ja, const int *desca,
+            int *ipiv, double* B, const int* ib, const int* jb, const int*descb, int *info
+        );
+
+    void pdpotrs_(const char* uplo, const int* n, const int* nrhs,
+        const double* A, const int* ia, const int* ja, const int* desca,
+        double* B, const int* ib, const int* jb, const int* descb, int* info);
+
+    void pzpotrs_(const char* uplo, const int* n, const int* nrhs,
+        const std::complex<double>* A, const int* ia, const int* ja, const int* desca,
+        std::complex<double>* B, const int* ib, const int* jb, const int* descb, int* info);
+
     void pdsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
         const int* n, double* A, const int* ia, const int* ja, const int*desca, double* B, const int* ib, const int* jb, const int*descb,
         const double* vl, const double* vu, const int* il, const int* iu,
@@ -218,6 +232,14 @@ extern "C"
 class ScalapackConnector
 {
 public:
+    // Preserve the block-cyclic descriptor layout and local column-major leading dimension.
+    static inline
+    void descinit(int* desc, const int m, const int n, const int mb, const int nb,
+                  const int irsrc, const int icsrc, const int ictxt, const int lld, int& info)
+    {
+        descinit_(desc, &m, &n, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    }
+
     static inline
     void geadd(
         const char transa,
@@ -397,9 +419,36 @@ public:
     }
 
     static inline
+    void gesv(
+        const int n, const int nrhs,
+        double *A, const int ia, const int ja, const int *desca,
+        int *ipiv, double* B, const int ib, const int jb, const int*descb, int *info)
+    {
+        pdgesv_(&n, &nrhs, A, &ia, &ja, desca, ipiv, B, &ib, &jb, descb, info);
+    }
+
+    static inline
+    void potrs(
+        const char uplo, const int n, const int nrhs,
+        const double* A, const int ia, const int ja, const int* desca,
+        double* B, const int ib, const int jb, const int* descb, int* info)
+    {
+        pdpotrs_(&uplo, &n, &nrhs, A, &ia, &ja, desca, B, &ib, &jb, descb, info);
+    }
+
+    static inline
+    void potrs(
+        const char uplo, const int n, const int nrhs,
+        const std::complex<double>* A, const int ia, const int ja, const int* desca,
+        std::complex<double>* B, const int ib, const int jb, const int* descb, int* info)
+    {
+        pzpotrs_(&uplo, &n, &nrhs, A, &ia, &ja, desca, B, &ib, &jb, descb, info);
+    }
+
+    static inline
     void tranu(
         const int m, const int n,
-        const double alpha, double *a, const int ia, const int ja, const int *desca,
+        const double alpha, const double *a, const int ia, const int ja, const int *desca,
         const double beta, double *c, const int ic, const int jc, const int *descc)
     {
         pdtran_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
@@ -407,7 +456,7 @@ public:
     static inline
     void tranu(
         const int m, const int n,
-        const std::complex<double> alpha, std::complex<double> *a, const int ia, const int ja, const int *desca,
+        const std::complex<double> alpha, const std::complex<double> *a, const int ia, const int ja, const int *desca,
         const std::complex<double> beta, std::complex<double> *c, const int ic, const int jc, const int *descc)
     {
         pztranu_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
@@ -415,7 +464,7 @@ public:
     static inline
     void tranc(
         const int m, const int n,
-        const double alpha, double *a, const int ia, const int ja, const int *desca,
+        const double alpha, const double *a, const int ia, const int ja, const int *desca,
         const double beta, double *c, const int ic, const int jc, const int *descc)
     {
         pdtran_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
@@ -423,7 +472,7 @@ public:
     static inline
     void tranc(
         const int m, const int n,
-        const std::complex<double> alpha, std::complex<double> *a, const int ia, const int ja, const int *desca,
+        const std::complex<double> alpha, const std::complex<double> *a, const int ia, const int ja, const int *desca,
         const std::complex<double> beta, std::complex<double> *c, const int ic, const int jc, const int *descc)
     {
         pztranc_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);

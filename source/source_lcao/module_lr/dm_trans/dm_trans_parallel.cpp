@@ -24,7 +24,10 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
     ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_pblas");
     assert(px.comm() == pc.comm() && px.comm() == pmat.comm());
     assert(px.blacs_ctxt == pc.blacs_ctxt && px.blacs_ctxt == pmat.blacs_ctxt);
-    assert(pmat.get_local_size() > 0);
+
+        // Empty local blocks still participate in every collective PBLAS call.
+        double empty_block(0);
+        const double* const X_istate_data = X_istate == nullptr ? &empty_block : X_istate;
 
     const int nks = c.get_nk();
     const int i1 = 1;
@@ -56,7 +59,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
         Xc.zero();
         ScalapackConnector::gemm(transa, transb, naos, nmo2, nmo1,
             alpha, c.get_pointer(), 1, imo1, pc.desc,
-            X_istate + x_start, 1, 1, px.desc,
+            X_istate_data + x_start, 1, 1, px.desc,
             beta, Xc.data<double>(), 1, 1, pXc.desc);
 
         // 2. C_virt*[X*C_occ^T]
@@ -82,7 +85,10 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
     ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_pblas");
     assert(px.comm() == pc.comm() && px.comm() == pmat.comm());
     assert(px.blacs_ctxt == pc.blacs_ctxt && px.blacs_ctxt == pmat.blacs_ctxt);
-    assert(pmat.get_local_size() > 0);
+
+        // Empty local blocks still participate in every collective PBLAS call.
+        std::complex<double> empty_block(0);
+        const std::complex<double>* const X_istate_data = X_istate == nullptr ? &empty_block : X_istate;
     const int nks = c.get_nk();
     const int i1 = 1;
     int nmo1_set, nmo2_set, imo1_set, imo2_set;
@@ -104,13 +110,13 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
         // char transb = 'C';
         // // 1. [X*C_occ^\dagger]^\dagger=C_occ*X^\dagger
         // Parallel_2D pXc;
-        // LR_Util::setup_2d_division(pXc, px.get_block_size(), naos, nvirt, px.comm_2D, px.blacs_ctxt);
+        // LR_Util::setup_2d_division(pXc, px.get_block_size(), naos, nvirt,px.blacs_ctxt);
         // container::Tensor Xc(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pXc.get_col_size(), pXc.get_row_size()
         // });//row is "inside"(memory contiguity) for pblas Xc.zero(); const std::complex<double> alpha(1.0, 0.0);
         // const std::complex<double> beta(0.0, 0.0);
         // pzgemm_(&transa, &transb, &naos, &nvirt, &nocc,
         //     &alpha, c.get_pointer(), &i1, &i1, pc.desc,
-        //     X_istate + x_start, &i1, &i1, px.desc,
+        //     X_istate_data + x_start, &i1, &i1, px.desc,
         //     &beta, Xc.data<std::complex<double>>(), &i1, &i1, pXc.desc);
 
         // // 2. C_virt*[X*C_occ^\dagger]
@@ -133,7 +139,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
         const std::complex<double> alpha(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
         ScalapackConnector::gemm(transa, transb, nmo2, naos, nmo1, alpha,
-            X_istate + x_start, i1, i1, px.desc,
+            X_istate_data + x_start, i1, i1, px.desc,
             c.get_pointer(), i1, imo1, pc.desc,
             beta, Xc.data<std::complex<double>>(), i1, i1, pXc.desc);
 

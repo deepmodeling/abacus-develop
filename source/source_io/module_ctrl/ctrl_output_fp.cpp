@@ -161,6 +161,7 @@ void ctrl_output_fp(UnitCell& ucell,
         fn += geom_block + ".cube";
 
         const std::vector<double>* pcc_potential = pelec->pot->pcc_electron_potential();
+        const std::vector<double>* solvent_potential = pelec->pot->find_sol_pot();
         ModuleIO::write_elecstat_pot(
 #ifdef __MPI
             pw_big->bz,
@@ -174,6 +175,7 @@ void ctrl_output_fp(UnitCell& ucell,
             pelec->pot->get_fixed_v(),
             solvent,
             pcc_potential,
+            solvent_potential,
             inp.out_pot[1],
             ofs_running);
     }
@@ -223,7 +225,9 @@ void ctrl_output_fp(UnitCell& ucell,
     const bool output_dipole = inp.esolver_type == "tddft" || should_output;
     if (inp.out_dipole == 1 && output_dipole)
     {
-        for (int is = 0; is < nspin; ++is)
+        const int dipole_channels = nspin == 4 ? 1 : nspin;
+        // In a spinor density only channel zero is charge; the other three channels are magnetization.
+        for (int is = 0; is < dipole_channels; ++is)
         {
             std::stringstream ss_dipole;
             ss_dipole << global_out_dir << "dipole_s" << is + 1 << ".txt";

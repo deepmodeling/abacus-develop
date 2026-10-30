@@ -68,22 +68,6 @@ struct set_matrix<T, DEVICE_GPU> {
 
 // --- 1. Matrix Decomposition ---
 template <typename T>
-struct lapack_trtri<T, DEVICE_GPU> {
-    void operator()(
-        const char& uplo,
-        const char& diag,
-        const int& dim,
-        T* Mat,
-        const int& lda)
-    {
-        // TODO: trtri is not implemented in this method yet
-        // Cause the trtri in cuSolver is not stable for ABACUS!
-        cuSolverConnector::trtri(cusolver_handle, uplo, diag, dim, Mat, lda);
-        // cuSolverConnector::potri(cusolver_handle, uplo, diag, dim, Mat, lda);
-    }
-};
-
-template <typename T>
 struct lapack_potrf<T, DEVICE_GPU> {
     void operator()(
         const char& uplo,
@@ -342,11 +326,6 @@ template struct set_matrix<float,  DEVICE_GPU>;
 template struct set_matrix<double, DEVICE_GPU>;
 template struct set_matrix<std::complex<float>,  DEVICE_GPU>;
 template struct set_matrix<std::complex<double>, DEVICE_GPU>;
-
-template struct lapack_trtri<float,  DEVICE_GPU>;
-template struct lapack_trtri<double, DEVICE_GPU>;
-template struct lapack_trtri<std::complex<float>,  DEVICE_GPU>;
-template struct lapack_trtri<std::complex<double>, DEVICE_GPU>;
 
 template struct lapack_potrf<float,  DEVICE_GPU>;
 template struct lapack_potrf<double, DEVICE_GPU>;
