@@ -280,6 +280,10 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_DFPT_PW", "init_dfpt");
 
+    // cache the output directory for the dyn file writer (the PARAM read
+    // stays in this init path; the post-processing uses the cached copy)
+    out_dir_ = PARAM.globalv.global_out_dir;
+
     if (nspin_ != 1)
     {
         ModuleBase::WARNING_QUIT("ESolver_DFPT_PW::init_dfpt", "DFPT currently supports nspin = 1 only");
@@ -490,7 +494,7 @@ void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
     // QE-format dyn file output (dfpt_out_dyn)
     if (this->inp_->dfpt_out_dyn)
     {
-        ModuleDFPT::DFPT_Write_Dyn(ucell, dfpt_->get_data(), nq, PARAM.globalv.global_out_dir);
+        ModuleDFPT::DFPT_Write_Dyn(ucell, dfpt_->get_data(), nq, out_dir_);
     }
 }
 
