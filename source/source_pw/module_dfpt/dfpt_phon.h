@@ -71,7 +71,10 @@ class DFPT_Phon
     void set_rho(const DFPT_Rho* rho);
     void set_vxc_r(const std::vector<double>* vxc_r);
 
-    /// per-q table of f_xc.drhoc for every displacement slot [3*nat]
+    /// per-q table of dvxc^a = f_xc . (drho_val^a + drhoc^a) for every
+    /// displacement slot [3*nat]: the first-order XC potential of the
+    /// TOTAL response (valence + core) supplied by the solver's
+    /// accumulation loop; coreless atoms carry their valence-only dvxc
     /// (the kernel term contracts it against the stashed valence
     /// responses of the mixed piece). Set by the solver once per q,
     /// before the accumulation pass; owned by the caller.

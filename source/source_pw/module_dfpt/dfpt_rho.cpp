@@ -295,6 +295,14 @@ void DFPT_Rho::compute_drhoc(const UnitCell& ucell,
     compute_drhoc_g(ucell, iat, dir, q_cart, drhoc_g);
     data.set_drhoc_g(q_idx, drhoc_g);
 
+    // early return for invalid/coreless atoms: compute_drhoc_g already
+    // returned empty, so the iat2it indexing below would be out of
+    // bounds for a bad index — skip the diagnostic in that case
+    if (drhoc_g.empty() || iat < 0 || iat >= ucell.nat)
+    {
+        ModuleBase::timer::end("DFPT_Rho", "compute_drhoc");
+        return;
+    }
     const int it = ucell.iat2it[iat];
     // report magnitude for diagnostics
     double norm2 = 0.0;

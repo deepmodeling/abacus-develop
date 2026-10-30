@@ -853,16 +853,28 @@ TEST_F(DFPTRhoSerialTest, DrhocLocalizesAtTheAtomNotItsMirror)
     }
     ASSERT_GE(ig_best, 0);
     // the expected extra phase from q is exp(-i q_cart . tau_cart):
-    // drhoc_q(G) / drhoc_0(G) ~= [radial(|G+q|)/radial(|G|)] * exp(-i q.tau)
-    // for the dominant G (where |G+q| ~= |G| for small q), the ratio's
-    // phase is approximately -q_cart . tau_cart
+    // drhoc_q(G) = -i|G+q| tpiba rho~(|G+q|) exp(-i(G+q).tau)
+    // drhoc_0(G) = -i|G|   tpiba rho~(|G|)   exp(-i G. tau)
+    // ratio = [|G+q|/|G| · rho~(|G+q|)/rho~(|G|)] · exp(-i q. tau)
+    // The bracket is positive real; the phase is exactly -q_cart . tau_cart.
+    // Use the full TWO_PI-scaled phase (the tau and q_cart are already in
+    // consistent units: tau in lat0-cartesian, q_cart in 2pi/lat0 units,
+    // so the dot product directly gives the phase in radians).
     const std::complex<double> ratio = drhoc_g[ig_best] / drhoc_g0[ig_best];
-    const double expected_phase_arg = -(q2_cart * (ucell_.atoms[it].tau[ucell_.iat2ia[iat]] * ucell_.lat0));
-    const std::complex<double> expected_phase(std::cos(expected_phase_arg), std::sin(expected_phase_arg));
-    // the phase of the ratio should match the expected exp(-i q.tau)
-    // (within the radial-factor ratio, which is positive real)
-    const double phase_diff = std::arg(ratio / expected_phase);
-    // wrap to [-pi, pi] and allow the radial-ratio approximation
-    const double phase_diff_wrapped = std::atan2(std::sin(phase_diff), std::cos(phase_diff));
-    EXPECT_NEAR(phase_diff_wrapped, 0.0, 0.5) << "phase of drhoc_q/drhoc_0 ratio vs expected exp(-i q.tau)";
+    const ModuleBase::Vector3<double> tau_cart_alat = ucell_.atoms[it].tau[ucell_.iat2ia[iat]];
+    const double expected_phase_arg = -ModuleBase::TWO_PI * (q2_cart * tau_cart_alat) / ucell_.lat0;
+    const double cos_arg = std::cos(expected_phase_arg);
+    const double sin_arg = std::sin(expected_phase_arg);
+    const std::complex<double> expected_phase(cos_arg, sin_arg);
+    // tight tolerance: the exact phase relation is exp(-i q.tau), so both
+    // omission (arg=0) and reversal (arg=+q.tau) must be rejected; the
+    // only residual is the positive-real radial-ratio bracket (which has
+    // zero phase contribution) and floating-point noise
+    // rule 14: named locals for computed function arguments
+    const std::complex<double> unit_phase_ratio = ratio / expected_phase;
+    const double phase_diff = std::arg(unit_phase_ratio);
+    const double sin_diff = std::sin(phase_diff);
+    const double cos_diff = std::cos(phase_diff);
+    const double phase_diff_wrapped = std::atan2(sin_diff, cos_diff);
+    EXPECT_NEAR(phase_diff_wrapped, 0.0, 0.05) << "phase of drhoc_q/drhoc_0 ratio vs expected exp(-i q.tau)";
 }

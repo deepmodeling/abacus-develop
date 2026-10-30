@@ -166,9 +166,23 @@ void DFPT_PW::Impl::stash_converged_disp_response(int q_idx,
     data_.set_vsc_r(iat, idir, v_sc_r_last);
     // stash the converged density response too: the two-pass accumulation
     // rebuilds f_xc.(drho_val + drhoc) per displacement after the working
-    // drho slots have moved on to the next displacement
-    const std::vector<std::complex<double>> drho_conv = data_.get_drho_g(q_idx, 0);
-    data_.set_drho_disp(iat, idir, drho_conv);
+    // drho slots have moved on; only needed when some species carries
+    // a nonlinear core correction (skip the 3*nat*npw complex copies
+    // for coreless runs)
+    bool nlcc_any_solve = false;
+    for (int it = 0; it < ucell_->ntype; ++it)
+    {
+        if (ucell_->atoms[it].ncpp.nlcc)
+        {
+            nlcc_any_solve = true;
+            break;
+        }
+    }
+    if (nlcc_any_solve)
+    {
+        const std::vector<std::complex<double>> drho_conv = data_.get_drho_g(q_idx, 0);
+        data_.set_drho_disp(iat, idir, drho_conv);
+    }
     std::vector<std::vector<std::vector<std::complex<double>>>> disp(
         nk,
         std::vector<std::vector<std::complex<double>>>(nbands));
