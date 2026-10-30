@@ -26,6 +26,15 @@ directory:
    ../bin/abacus --generate-parameters-yaml > ./parameters.yaml
    ```
 
+   If you have no binary yet, the much smaller `abacus_input_yaml` target writes the same file
+   (this is what Read the Docs builds):
+
+   ```bash
+   cmake -B ../build -DENABLE_MPI=OFF -DENABLE_LCAO=OFF ..
+   cmake --build ../build --target abacus_input_yaml
+   ../build/source/source_io/abacus_input_yaml > ./parameters.yaml
+   ```
+
 1. (optional but recommended) Generate Markdown pages from the `parameters.yaml` file:
 
    ```bash
