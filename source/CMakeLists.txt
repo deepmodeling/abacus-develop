@@ -662,7 +662,7 @@ list(
   source_pw/module_pwdft/kernels/force_op.cpp
   source_pw/module_pwdft/kernels/stress_op.cpp
   source_pw/module_pwdft/kernels/onsite_op.cpp
-  source_pw/module_pwdft/kernels/wf_op.cpp
+  source_cell/kernels/wf_op.cpp
   source_pw/module_pwdft/kernels/vnl_op.cpp
   source_base/kernels/math_ylm_op.cpp
   source_hamilt/module_xc/kernels/xc_functional_op.cpp
@@ -690,7 +690,7 @@ if(USE_CUDA)
     source_base/module_device/cuda/memory_op.cu
     source_pw/module_pwdft/kernels/cuda/force_op.cu
     source_pw/module_pwdft/kernels/cuda/stress_op.cu
-    source_pw/module_pwdft/kernels/cuda/wf_op.cu
+    source_cell/kernels/cuda/wf_op.cu
     source_pw/module_pwdft/kernels/cuda/vnl_op.cu
     source_base/module_device/cuda_compat.cpp
     source_base/kernels/cuda/math_ylm_op.cu
@@ -729,7 +729,7 @@ if(USE_ROCM)
     source_base/module_device/rocm/memory_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/force_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/stress_op.hip.cu
-    source_pw/module_pwdft/kernels/rocm/wf_op.hip.cu
+    source_cell/kernels/rocm/wf_op.hip.cu
     source_pw/module_pwdft/kernels/rocm/vnl_op.hip.cu
     source_base/kernels/rocm/math_kernel_op.hip.cu
     source_base/kernels/rocm/math_kernel_op_vec.hip.cu
@@ -793,6 +793,7 @@ target_link_libraries(
           planewave
           symmetry
           cell
+          structure_factor
           parameter
           psi_overall_init
           psi_init
