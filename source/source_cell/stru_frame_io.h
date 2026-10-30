@@ -26,6 +26,12 @@ namespace stru_frame_io
 /// comment line, into frame_path. The side file is rewritten on every call so
 /// repeated restarts always see the most recent frame.
 bool extract_last_frame(const std::string& cumulative_path, const std::string& frame_path);
+
+/// @brief Read the one-based step number of the last frame of a cumulative STRU.
+/// @param cumulative_path path of the mode-1 "STRU" file
+/// @return the step number carried by the last "# MD step N" marker, or 0 when
+///         the file is missing or carries no frame marker
+int last_frame_step(const std::string& cumulative_path);
 } // namespace stru_frame_io
 
 #endif // STRU_FRAME_IO_H

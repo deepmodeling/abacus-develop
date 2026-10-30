@@ -14,14 +14,37 @@ namespace
 /// @param istep number of completed ionic steps recorded in Restart_md.txt
 /// @return path of the first existing structure file, empty if none exists
 /// @details Three naming schemes are accepted, in order:
+/// - "STRU": fixed-name cumulative file written in out_app_flag == 1 mode,
+///   accepted when its last "# MD step N" frame matches step istep + 1; the
+///   last frame is extracted to "STRU_restart_frame" and that path is
+///   returned so the restart readers see a single-frame file;
 /// - "STRU{istep + 1}": written by run_md since the ionic-step numbering
 ///   was unified with relax (1-based);
-/// - "STRU_MD_{istep}": written by older ABACUS versions;
-/// - "STRU": fixed-name cumulative file written in out_app_flag == 1 mode;
-///   the last frame is extracted to "STRU_restart_frame" and that path is
-///   returned so the restart readers see a single-frame file.
+/// - "STRU_MD_{istep}": written by older ABACUS versions.
+/// If none matches, the last frame of an arbitrary cumulative STRU is used as
+/// a last resort, preserving restarts whose frame numbering cannot be
+/// validated against Restart_md.txt.
 std::string find_md_restart_stru(const std::string& stru_dir, const int istep)
 {
+    // Prefer the fixed-name cumulative STRU when its last frame belongs to the
+    // step this restart resumes from. A stale number-named file left behind by
+    // an earlier run must not shadow it, so the header is checked before the
+    // legacy names are consulted.
+    const std::string stru_cumulative = stru_dir + "STRU";
+    std::ifstream file_cumulative(stru_cumulative.c_str());
+    if (file_cumulative.good())
+    {
+        file_cumulative.close();
+        const int last_step = stru_frame_io::last_frame_step(stru_cumulative);
+        if (last_step == istep + 1)
+        {
+            const std::string frame_path = stru_dir + "STRU_restart_frame";
+            if (stru_frame_io::extract_last_frame(stru_cumulative, frame_path))
+            {
+                return frame_path;
+            }
+        }
+    }
     const std::string stru_new = stru_dir + "STRU" + std::to_string(istep + 1);
     std::ifstream file_new(stru_new.c_str());
     if (file_new.good())
@@ -34,10 +57,10 @@ std::string find_md_restart_stru(const std::string& stru_dir, const int istep)
     {
         return stru_old;
     }
-    const std::string stru_cumulative = stru_dir + "STRU";
-    std::ifstream file_cumulative(stru_cumulative.c_str());
-    if (file_cumulative.good())
+    std::ifstream file_last_frame(stru_cumulative.c_str());
+    if (file_last_frame.good())
     {
+        file_last_frame.close();
         const std::string frame_path = stru_dir + "STRU_restart_frame";
         if (stru_frame_io::extract_last_frame(stru_cumulative, frame_path))
         {

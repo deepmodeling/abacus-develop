@@ -87,3 +87,26 @@ TEST_F(StruFrameIoTest, ExtractLastFrameFailsWithoutMarker)
     const std::string frame = case_dir + "STRU_restart_frame";
     EXPECT_FALSE(stru_frame_io::extract_last_frame(cumulative, frame));
 }
+
+TEST_F(StruFrameIoTest, LastFrameStepReportsNewestMarker)
+{
+    const std::string cumulative = case_dir + "STRU";
+    std::ofstream ofs(cumulative.c_str());
+    ofs << "# MD step 1\n\nATOMIC_SPECIES\nSi 28.0855\n";
+    ofs << "# MD step 3\n\nLATTICE_CONSTANT\n10.2\n";
+    ofs.close();
+
+    EXPECT_EQ(stru_frame_io::last_frame_step(cumulative), 3);
+}
+
+TEST_F(StruFrameIoTest, LastFrameStepIsZeroOnMissingOrUnmarkedFile)
+{
+    EXPECT_EQ(stru_frame_io::last_frame_step(case_dir + "NO_SUCH_STRU"), 0);
+
+    const std::string unmarked = case_dir + "STRU_no_marker";
+    std::ofstream ofs(unmarked.c_str());
+    ofs << "ATOMIC_SPECIES\nSi 28.0855\n";
+    ofs.close();
+
+    EXPECT_EQ(stru_frame_io::last_frame_step(unmarked), 0);
+}

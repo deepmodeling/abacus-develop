@@ -184,6 +184,30 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     EXPECT_TRUE(frame_ifs.good());
     frame_ifs.close();
 
+    // Regression: a stale number-named file from an earlier run must not
+    // shadow the cumulative STRU of the run being restarted. Here the fixed
+    // name holds the frame of step 1 that Restart_md.txt resumes from, while
+    // "STRU1" is a leftover of a previous run in the same output directory.
+    const std::string stale_dir = case_dir + "stale/";
+    ModuleBase::make_directory(stale_dir);
+    const std::string restart_txt_stale = stale_dir + "Restart_md.txt";
+    std::ofstream restart_file_stale(restart_txt_stale.c_str());
+    restart_file_stale << 0 << std::endl;
+    restart_file_stale << 0.03 << std::endl;
+    restart_file_stale.close();
+    const std::string stru_stale = stale_dir + "STRU";
+    std::ofstream stru_file_stale(stru_stale.c_str());
+    stru_file_stale << "# MD step 1\n\nATOMIC_SPECIES\nSi 28.0855\n" << std::endl;
+    stru_file_stale.close();
+    const std::string stru_leftover = stale_dir + "STRU1";
+    std::ofstream stru_file_leftover(stru_leftover.c_str());
+    stru_file_leftover << "ATOMIC_SPECIES\nO 15.999\n" << std::endl;
+    stru_file_leftover.close();
+
+    input.read_file_dir = stale_dir;
+    TestParameters::set_global_dir(readinput, input, sys);
+    EXPECT_EQ(sys.global_in_stru, stale_dir + "STRU_restart_frame");
+
     // restore the shared input state so other tests are not affected
     input.calculation = "scf";
     input.mdp.md_restart = false;
