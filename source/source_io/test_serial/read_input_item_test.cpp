@@ -1385,6 +1385,33 @@ TEST_F(InputTest, Item_test)
     }
 }
 
+TEST_F(InputTest, OutEbandLegacyAlias)
+{
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_eband_terms", readinput.input_lists);
+        legacy->second.str_values = {"1"};
+        legacy->second.read_value(legacy->second, param);
+
+        readinput.normalize_out_eband_alias(param);
+        EXPECT_TRUE(TestParameters::input(param).out_eband);
+    }
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto primary = find_label("out_eband", readinput.input_lists);
+        auto legacy = find_label("out_eband_terms", readinput.input_lists);
+        primary->second.str_values = {"0"};
+        legacy->second.str_values = {"1"};
+        primary->second.read_value(primary->second, param);
+        legacy->second.read_value(legacy->second, param);
+
+        readinput.normalize_out_eband_alias(param);
+        EXPECT_FALSE(TestParameters::input(param).out_eband);
+    }
+}
+
 TEST_F(InputTest, HsOutputAliases)
 {
     {

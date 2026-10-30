@@ -350,7 +350,8 @@ void ReadInput::create_directory(const Parameter& param)
                  || param.input.out_mat_vhk[0] > 0 || param.input.out_mat_vxck[0] > 0 || param.input.out_mat_exxk[0] > 0
                  || param.input.out_mat_dh_t[0] > 0 || param.input.out_mat_dh_vl[0] > 0 || param.input.out_mat_dh_vnl[0] > 0
                  || param.input.out_mat_dh_vh[0] > 0 || param.input.out_mat_dh_vxc[0] > 0
-                 || param.input.out_hsr[0] == 1 || param.input.out_hsr[0] == 2,
+                 || param.input.out_hsr[0] == 1 || param.input.out_hsr[0] == 2
+                 || param.input.out_hsr[0] == 3,
              param.globalv.global_mat_dir}
         };
         for (const auto& flag_dir : subdir_flags)
@@ -522,6 +523,7 @@ std::string ReadInput::prepare_input(Parameter& param)
 
     this->normalize_hs_output_options(param);
     this->normalize_occ_mat_options(param);
+    this->normalize_out_eband_alias(param);
 
     // Snapshot typed effective values once for shared domain and dependency checks.
     InputValues values;
@@ -664,6 +666,34 @@ void ReadInput::normalize_hs_output_options(Parameter& param)
     merge_alias("out_mat_vhk", "out_mat_h_vh", param.input.out_mat_vhk, param.input.out_mat_h_vh);
     merge_alias("out_mat_vxck", "out_mat_h_vxc", param.input.out_mat_vxck, param.input.out_mat_h_vxc);
     merge_alias("out_mat_exxk", "out_mat_h_exx", param.input.out_mat_exxk, param.input.out_mat_h_exx);
+}
+
+void ReadInput::normalize_out_eband_alias(Parameter& param)
+{
+    const auto item_is_read = [this](const std::string& label) {
+        const auto item = std::find_if(
+            this->input_lists.begin(),
+            this->input_lists.end(),
+            [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
+        return item != this->input_lists.end() && item->second.is_read();
+    };
+
+    // out_eband_terms is the legacy spelling of out_eband. Accepting it keeps
+    // existing INPUT files working instead of aborting on an unknown keyword;
+    // the canonical out_eband wins when both are present.
+    const bool out_eband_is_read = item_is_read("out_eband");
+    const bool out_eband_terms_is_read = item_is_read("out_eband_terms");
+    if (out_eband_is_read)
+    {
+        if (out_eband_terms_is_read)
+        {
+            ModuleBase::WARNING("ReadInput", "both out_eband and out_eband_terms are set; out_eband takes precedence");
+        }
+    }
+    else if (out_eband_terms_is_read)
+    {
+        param.input.out_eband = param.input.out_eband_terms_compat;
+    }
 }
 
 void ReadInput::write_txt_input(const Parameter& param, const std::string& filename)

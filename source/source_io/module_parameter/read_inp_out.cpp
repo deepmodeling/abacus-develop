@@ -1417,6 +1417,21 @@ The circle order of the charge density on real space grids is: x is the outer lo
         this->add_item(item);
     }
     {
+        Input_Item item("out_eband_terms");
+        item.annotation = "legacy alias for out_eband";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Legacy alias for out_eband, which outputs the band-decomposed energy of each Hamiltonian term. If both out_eband and out_eband_terms are present, out_eband takes precedence.";
+        item.default_value = "False";
+        item.unit = "";
+        item.set_availability("basis_type==lcao");
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.out_eband_terms_compat = assume_as_boolean(item.str_values[0]);
+        };
+        add_bool_bcast(input.out_eband_terms_compat);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_hr_npz");
         item.annotation = "output H(R) matrix in npz format";
         item.category = "Output information";
