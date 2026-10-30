@@ -65,6 +65,14 @@ focused cleanup.
   the whole unit of work.
 - Do not use `#pragma once` in header files; use traditional
   `#ifndef`/`#define`/`#endif` include guards instead.
+- Put unit tests under `source/` in a flat `unittests/` directory and name each
+  test source `test_<file under test>.cpp` (`.cu` likewise). Headers there are
+  free-named; subdirectories of `unittests/` hold test data only and contain no
+  `.c`/`.cc`/`.cpp`/`.cxx`/`.cu`/`.h`/`.hh`/`.hpp`/`.hxx`/`.cuh` files. Legacy
+  test directories (`test/`, `tests/`, `test_serial/`, `test_parallel/`,
+  `test_gpu/`, ...) accept no new files, and a test source modified there must
+  be migrated into `unittests/`; deleting files, and editing a legacy
+  `CMakeLists.txt`, header, or data file, stays allowed.
 
 AI agents have additional workflow obligations:
 
@@ -92,6 +100,8 @@ decisions.
 | Member variable workflow switch | Key flow state hidden as mutable member state | AI review + human confirmation | AI + human review | high | human confirmation | semantic review | Static matching is unreliable |
 | Timer placement | `timer::start`/`end` wrap a whole function body | AI review | AI + human review | low | warn | semantic review | Mechanical matching is unreliable for scopes; label should name the enclosing function |
 | Module path and build linkage | New source path and `CMakeLists.txt` linkage | phase-one mechanical | CI | medium | block | new source files and build-script diff | Deterministic path/build check only |
+| Unit test directory layout | New unit tests go in a flat `unittests/`; legacy test directories accept no new files | phase-one mechanical | hook + CI | high | block | added, renamed, copied, and modified paths under `source/` | Added files in legacy test directories block; modified `.c`/`.cc`/`.cpp`/`.cxx`/`.cu` there block; code files in `unittests/` subdirectories block; deletions never block |
+| Unit test file naming | Sources in `unittests/` start with `test_` | phase-one mechanical + AI review | hook + CI + AI review | medium | block | added, renamed, copied, and modified sources directly in `unittests/` | Headers are exempt; reviewers confirm the rest of the name matches the file under test |
 | Module semantic ownership | Best module/submodule placement | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Final call belongs to maintainers |
 | Heterogeneous code linkage | CUDA/ROCM/kernel source and `CMakeLists.txt` linkage | phase-one mechanical | CI + AI review | medium | block | new heterogeneous files and linkage | Mechanical path/linkage only |
 | Heterogeneous test evidence | CUDA/ROCM/kernel change has test evidence or reason | phase-one mechanical warning + AI review | CI + AI review | high | warn | changed paths and PR body | Sufficiency is human-reviewed |
