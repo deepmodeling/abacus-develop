@@ -129,7 +129,10 @@ void Driver::driver_run()
         {
             ModuleBase::WARNING_QUIT("Driver::driver_run", "cannot recognize the 'calculation' command");
         }
-        p_esolver->after_all_runners(ucell);
+        if (cal != "scf" && cal != "relax" && cal != "cell-relax" && cal != "nscf")
+        {
+            p_esolver->after_all_runners(ucell);
+        }
     }
 
     delete p_esolver;

@@ -127,6 +127,7 @@ class DriverTestESolver : public ModuleESolver::ESolver
 
     void after_all_runners(BaseCell&) override
     {
+        ++after_all_count;
     }
 
     double cal_energy() override
@@ -146,6 +147,7 @@ class DriverTestESolver : public ModuleESolver::ESolver
     }
 
     int runner_count = 0;
+    int after_all_count = 0;
 
   private:
     double force_x_;
@@ -207,6 +209,7 @@ TEST_F(RelaxDriverTest, RelaxNmaxZeroDoesNotRunESolver)
     ofs.close();
 
     EXPECT_EQ(esolver.runner_count, 0);
+    EXPECT_EQ(esolver.after_all_count, 1);
     EXPECT_THAT(output, testing::HasSubstr("relax_nmax = 0, DRY RUN TEST SUCCEEDS"));
 }
 
@@ -232,6 +235,7 @@ TEST_F(RelaxDriverTest, FirstStepConvergesOnNonSimultaneousPath)
     ofs.close();
 
     EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_EQ(esolver.after_all_count, 1);
     EXPECT_THAT(read_running_log(), testing::HasSubstr("Relaxation is converged!"));
     EXPECT_THAT(output, testing::HasSubstr("Geometry relaxation thresholds are reached within 1 steps."));
 }
@@ -258,6 +262,7 @@ TEST_F(RelaxDriverTest, FirstStepConvergesOnSimultaneousPath)
     ofs.close();
 
     EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_EQ(esolver.after_all_count, 1);
     EXPECT_THAT(read_running_log(), testing::HasSubstr("Relaxation is converged!"));
     EXPECT_THAT(output, testing::HasSubstr("Geometry relaxation thresholds are reached within 1 steps."));
 }
@@ -283,6 +288,7 @@ TEST_F(RelaxDriverTest, MaxStepsMovesFinalNonSimultaneousGeometry)
     ofs.close();
 
     EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_EQ(esolver.after_all_count, 1);
     EXPECT_THAT(read_running_log(), testing::HasSubstr("reaching relax_nmax"));
     EXPECT_THAT(read_running_log(), testing::HasSubstr("stopped after 1 ionic step(s) (relax_nmax = 1 reached)"));
 }
@@ -307,11 +313,36 @@ TEST_F(RelaxDriverTest, MaxStepsStopsOnSimultaneousPath)
     ofs.close();
 
     EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_EQ(esolver.after_all_count, 1);
     EXPECT_THAT(read_running_log(), testing::HasSubstr("reaching relax_nmax"));
     EXPECT_THAT(read_running_log(), testing::HasSubstr("stopped after 1 ionic step(s) (relax_nmax = 1 reached)"));
 }
 
-TEST_F(RelaxDriverTest, ExitStopsAfterCurrentNonSimultaneousStep)
+TEST_F(RelaxDriverTest, FinalAllowedStepConvergesAndCallsAfterAllOnce)
+{
+    Input_para inp;
+    inp.calculation = "relax";
+    inp.relax_method = "lbfgs";
+    inp.relax_nmax = 1;
+    inp.force_thr = 0.1;
+    inp.force_thr_ev = 0.1 * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    inp.cal_force = 1;
+    inp.out_level = "m";
+
+    UnitCell ucell;
+    make_cell(ucell);
+    DriverTestESolver esolver(1.0e-4);
+    std::ofstream ofs(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&esolver, ucell, inp, ofs);
+    ofs.close();
+
+    EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_EQ(esolver.after_all_count, 1);
+    EXPECT_THAT(read_running_log(), testing::HasSubstr("Relaxation is converged!"));
+}
+
+TEST_F(RelaxDriverTest, ExitStopsBeforeNonSimultaneousRelaxStep)
 {
     char old_cwd[4096];
     ASSERT_NE(::getcwd(old_cwd, sizeof(old_cwd)), nullptr);
@@ -340,11 +371,13 @@ TEST_F(RelaxDriverTest, ExitStopsAfterCurrentNonSimultaneousStep)
 
     ASSERT_EQ(::chdir(old_cwd), 0);
     EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_EQ(esolver.after_all_count, 1);
+    EXPECT_DOUBLE_EQ(ucell.atoms[0].tau[0][0], 0.0);
     EXPECT_THAT(read_running_log(), testing::HasSubstr("stopped by EXIT"));
     EXPECT_THAT(read_running_log(), testing::HasSubstr("stopped by EXIT after 1 ionic step(s)"));
 }
 
-TEST_F(RelaxDriverTest, ExitStopsAfterCurrentSimultaneousStep)
+TEST_F(RelaxDriverTest, ExitStopsBeforeSimultaneousRelaxStep)
 {
     char old_cwd[4096];
     ASSERT_NE(::getcwd(old_cwd, sizeof(old_cwd)), nullptr);
@@ -373,6 +406,7 @@ TEST_F(RelaxDriverTest, ExitStopsAfterCurrentSimultaneousStep)
 
     ASSERT_EQ(::chdir(old_cwd), 0);
     EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_EQ(esolver.after_all_count, 1);
     EXPECT_THAT(read_running_log(), testing::HasSubstr("stopped by EXIT"));
     EXPECT_THAT(read_running_log(), testing::HasSubstr("stopped by EXIT after 1 ionic step(s)"));
 }

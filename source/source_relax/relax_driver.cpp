@@ -29,6 +29,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
     {
         Socket_Driver socket_driver;
         socket_driver.socket_driver(p_esolver, ucell, inp, ofs_running);
+        p_esolver->after_all_runners(ucell);
         ModuleBase::timer::end("Relax_Driver", "relax_driver");
         return;
     }
@@ -52,6 +53,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
     // the next esolve() call; if we exit the loop early, force/stress are stale.
     bool geometry_evaluated = false;
     RelaxStopReason stop_reason = RelaxStopReason::Finished;
+    bool after_all_runners_called = false;
 
     if (inp.relax_nmax == 0 && (inp.calculation == "relax" || inp.calculation == "cell-relax"))
     {
@@ -65,7 +67,23 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
         geometry_evaluated = true;
         this->stru_out(steps[0], ucell, inp, etot, stress, force);
         this->json_out(p_esolver, ucell, inp, force, stress);
-        bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
+
+        if (ModuleIO::read_exit_file(my_rank_, "EXIT", ofs_running))
+        {
+            stop_reason = RelaxStopReason::UserExit;
+            break;
+        }
+
+        const bool laststep =
+            (inp.calculation == "relax" || inp.calculation == "cell-relax")
+            && steps[0] + 1 == inp.relax_nmax;
+        if (laststep)
+        {
+            p_esolver->after_all_runners(ucell);
+            after_all_runners_called = true;
+        }
+
+        const bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
 
         // Check stop conditions
         if (ucell.ionic_position_updated || ucell.cell_parameter_updated)
@@ -86,12 +104,6 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
             break;
         }
 
-        if (ModuleIO::read_exit_file(my_rank_, "EXIT", ofs_running))
-        {
-            stop_reason = RelaxStopReason::UserExit;
-            break;
-        }
-
         if (steps[0] + 1 >= inp.relax_nmax)
         {
             stop_reason = RelaxStopReason::MaxSteps;
@@ -102,6 +114,11 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
     }
 
     this->final_out(steps[0], stop_reason, ucell, inp, etot, stress, force, geometry_evaluated, ofs_running);
+
+    if (!after_all_runners_called)
+    {
+        p_esolver->after_all_runners(ucell);
+    }
 
     ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
