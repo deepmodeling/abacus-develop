@@ -13,7 +13,6 @@
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
-#include "source_esolver/esolver_ks.h"
 
 /**
  * @class Ions_Move_LBFGS

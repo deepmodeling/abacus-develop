@@ -14,7 +14,7 @@
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_basis/module_pw/pw_basis.h"
 

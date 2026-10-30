@@ -9,6 +9,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/stru_fac.h"
 #include "source_cell/unitcell.h"
 #include "source_hamilt/hamilt_hs_adapter.h"
 #include "source_hsolver/diag_comm_info.h"
@@ -20,7 +21,6 @@
 #include "source_psi/psi_init_nao.h"
 #include "source_psi/psi_init_nao_random.h"
 #include "source_psi/psi_init_random.h"
-#include "source_pw/module_pwdft/stru_fac.h"
 
 namespace psi
 {
