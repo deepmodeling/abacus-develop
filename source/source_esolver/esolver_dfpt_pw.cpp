@@ -12,6 +12,7 @@
 #include "source_estate/module_pot/pot_xc_fdm.h"
 #include "source_base/macros.h"
 #include "source_base/math_polyint.h"
+#include "source_base/parallel_cell.h"
 #include "source_base/tool_quit.h"
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #include "source_hamilt/module_xc/xc_functional.h"
@@ -428,10 +429,9 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     }
 
     this->stp.sync_cpu();
-    // myrank from the runtime context (the adjacent domag read on line
-    // above uses the same source); flows through InitContext -> Impl ->
-    // the dyn file writer's rank-0 gate, no global read in the writer
-    const int myrank = PARAM.globalv.myrank;
+    // myrank from the guarded parallel wrapper (no global-state read;
+    // the same CommunicationDomain::rank() pattern as source_md)
+    const int myrank = ModuleBase::world_comm_domain().rank();
     dfpt_->init(ucell, *this->stp.psi_cpu, this->pw_rho, this->pw_wfc, &this->sf, veff_r,
                 this->pelec->wg, this->pelec->ekb, xc_adapter_, nelec_, ecutwfc_,
                 dft_plus_u_ ? this->dftu_.get() : nullptr, myrank);
