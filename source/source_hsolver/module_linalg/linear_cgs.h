@@ -5,8 +5,7 @@
 namespace hsolver
 {
 /** @brief Right-preconditioned CGS with a compact active set of columns. */
-template <typename T, typename Device = base_device::DEVICE_CPU>
-class LinearCGS final
+template <typename T, typename Device = base_device::DEVICE_CPU> class LinearCGS final
 {
   private:
     enum WorkspaceSlot
@@ -37,28 +36,30 @@ class LinearCGS final
     std::vector<int> swaps_;
 
   public:
-    LinearCGS(const double tolerance, const diag_comm_info& comm);
+    LinearCGS(const double tolerance, const diag_comm_info &comm);
     /**
      * @brief Solve A*x=b in Device memory, preserving padding and caller column order.
      * @param initial_residual Optional initial residual, reused on the first cycle only; otherwise nullptr.
      * @param max_iterations Iteration budget for this call, shared by all restart cycles.
      * @note Uses tolerance*norm(b), or tolerance for a zero right-hand side.
      */
-    LinearSolveResult solve(const LinearOperator<T, Device>& op,
-                            const LinearOperator<T, Device>& preconditioner,
-                            int ld,
-                            int nband,
-                            int dim,
-                            T* x,
-                            const T* b,
-                            const T* initial_residual,
-                            const int max_iterations);
+    LinearSolveResult solve(
+        const LinearOperator<T, Device> &op,
+        const LinearOperator<T, Device> &preconditioner,
+        int ld,
+        int nband,
+        int dim,
+        T *x,
+        const T *b,
+        const T *initial_residual,
+        const int max_iterations);
 
   private:
-    bool iterate(const LinearOperator<T, Device>& op,
-                 const LinearOperator<T, Device>& preconditioner,
-                 const bool first_iteration,
-                 LinearSolveResult* result);
+    bool iterate(
+        const LinearOperator<T, Device> &op,
+        const LinearOperator<T, Device> &preconditioner,
+        const bool first_iteration,
+        LinearSolveResult *result);
     void retire_converged();
 };
 } // namespace hsolver

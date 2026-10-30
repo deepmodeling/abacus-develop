@@ -4,8 +4,7 @@
 namespace hsolver
 {
 /** @brief Right-preconditioned BiCGSTAB for independent complex right-hand sides. */
-template <typename T, typename Device = base_device::DEVICE_CPU>
-class LinearBiCGSTAB final
+template <typename T, typename Device = base_device::DEVICE_CPU> class LinearBiCGSTAB final
 {
   private:
     enum WorkspaceSlot
@@ -39,7 +38,7 @@ class LinearBiCGSTAB final
     std::vector<int> skip_;
 
   public:
-    LinearBiCGSTAB(const double tolerance, const diag_comm_info& comm);
+    LinearBiCGSTAB(const double tolerance, const diag_comm_info &comm);
     /**
      * @brief Solve A*x=b, using x as initial guess and M as inverse preconditioner.
      * @param ld Column stride, at least dim. Padding is neither read nor overwritten.
@@ -48,21 +47,24 @@ class LinearBiCGSTAB final
      * @param max_iterations Iteration budget for this call, shared by all restart cycles.
      * @note Accepts only true residuals below tolerance*max(1, norm(b)) per column.
      */
-    LinearSolveResult solve(const LinearOperator<T, Device>& op,
-                            const LinearOperator<T, Device>& preconditioner,
-                            int ld,
-                            int nband,
-                            int dim,
-                            T* x,
-                            const T* b,
-                            const T* initial_residual,
-                            const int max_iterations);
+    LinearSolveResult solve(
+        const LinearOperator<T, Device> &op,
+        const LinearOperator<T, Device> &preconditioner,
+        int ld,
+        int nband,
+        int dim,
+        T *x,
+        const T *b,
+        const T *initial_residual,
+        const int max_iterations);
 
   private:
-    bool iterate(const LinearOperator<T, Device>& op, const LinearOperator<T, Device>& preconditioner, LinearSolveResult* result);
+    bool iterate(
+        const LinearOperator<T, Device> &op, const LinearOperator<T, Device> &preconditioner,
+        LinearSolveResult *result);
     void retire(const int band);
     void retire_converged(const bool alpha_step, const bool identity);
-    bool breakdown(const T divisor, const int band, LinearSolveResult* result) const;
+    bool breakdown(const T divisor, const int band, LinearSolveResult *result) const;
 };
 } // namespace hsolver
 #endif

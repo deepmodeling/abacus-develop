@@ -20,7 +20,13 @@ bool parallel_work(const int dim, const int nvec)
 } // namespace
 
 template <typename T, typename Device>
-void linear_op<T, Device>::dot(const int ld, const int dim, const int nvec, const T* x, const T* y, T* out) const
+void linear_op<T, Device>::dot(
+    const int ld,
+    const int dim,
+    const int nvec,
+    const T *x,
+    const T *y,
+    T *out) const
 {
     for (int band = 0; band < nvec; ++band)
     {
@@ -35,17 +41,18 @@ void linear_op<T, Device>::dot(const int ld, const int dim, const int nvec, cons
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::batch(int ld,
-                                 int dim,
-                                 int nvec,
-                                 T* out,
-                                 const T* x,
-                                 const T* y,
-                                 T a,
-                                 T b,
-                                 const T* ca,
-                                 const T* cb,
-                                 const int* skip) const
+void linear_op<T, Device>::batch(
+    int ld,
+    int dim,
+    int nvec,
+    T *out,
+    const T *x,
+    const T *y,
+    T a,
+    T b,
+    const T *ca,
+    const T *cb,
+    const int *skip) const
 {
 #pragma omp parallel for schedule(static) if (parallel_work(dim, nvec))
     for (int band = 0; band < nvec; ++band)
@@ -64,14 +71,15 @@ void linear_op<T, Device>::batch(int ld,
     }
 }
 template <typename T, typename Device>
-void linear_op<T, Device>::gmres_update(int ld,
-                                        int dim,
-                                        int nvec,
-                                        T* solution,
-                                        T* residual,
-                                        const T* direction,
-                                        const T* image,
-                                        const T* coefficients) const
+void linear_op<T, Device>::gmres_update(
+    int ld,
+    int dim,
+    int nvec,
+    T *solution,
+    T *residual,
+    const T *direction,
+    const T *image,
+    const T *coefficients) const
 {
 #pragma omp parallel for schedule(static) if (parallel_work(dim, nvec))
     for (int band = 0; band < nvec; ++band)
@@ -94,8 +102,17 @@ void linear_op<T, Device>::gmres_update(int ld,
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::dots(int ld, int dim, int nvec, const T* x, const T* y, const T* z, const T* w, T* out, T* partial, int tiles)
-    const
+void linear_op<T, Device>::dots(
+    int ld,
+    int dim,
+    int nvec,
+    const T *x,
+    const T *y,
+    const T *z,
+    const T *w,
+    T *out,
+    T *partial,
+    int tiles) const
 {
     // Independent tiles also expose parallelism when there are few bands.
 #pragma omp parallel for collapse(2) schedule(static) if (parallel_work(dim, nvec))
@@ -135,7 +152,15 @@ void linear_op<T, Device>::dots(int ld, int dim, int nvec, const T* x, const T* 
     }
 }
 template <typename T, typename Device>
-void linear_op<T, Device>::gather(int ld, int dim, int nvec, int slots, int stride, const T* in, T* out, const int* map) const
+void linear_op<T, Device>::gather(
+    int ld,
+    int dim,
+    int nvec,
+    int slots,
+    int stride,
+    const T *in,
+    T *out,
+    const int *map) const
 {
     for (int slot = 0; slot < slots; ++slot)
     {
@@ -153,7 +178,14 @@ void linear_op<T, Device>::gather(int ld, int dim, int nvec, int slots, int stri
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::swaps(int ld, int dim, int slots, int stride, int count, T* vectors, const int* pairs) const
+void linear_op<T, Device>::swaps(
+    int ld,
+    int dim,
+    int slots,
+    int stride,
+    int count,
+    T *vectors,
+    const int *pairs) const
 {
     for (int slot = 0; slot < slots; ++slot)
     {
@@ -171,8 +203,16 @@ void linear_op<T, Device>::swaps(int ld, int dim, int slots, int stride, int cou
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::bicg_update(int ld, int dim, int nvec, bool direction, T* out, const T* x, const T* y, const T* a, const T* b)
-    const
+void linear_op<T, Device>::bicg_update(
+    int ld,
+    int dim,
+    int nvec,
+    bool direction,
+    T *out,
+    const T *x,
+    const T *y,
+    const T *a,
+    const T *b) const
 {
 #pragma omp parallel for collapse(2) schedule(static) if (parallel_work(dim, nvec))
     for (int band = 0; band < nvec; ++band)
@@ -180,13 +220,20 @@ void linear_op<T, Device>::bicg_update(int ld, int dim, int nvec, bool direction
         for (int i = 0; i < dim; ++i)
         {
             const int j = band * ld + i;
-            out[j] = direction ? x[j] + a[band] * (out[j] - b[band] * y[j]) : (out[j] + a[band] * x[j]) + b[band] * y[j];
+            out[j] =
+                direction ? x[j] + a[band] * (out[j] - b[band] * y[j]) : (out[j] + a[band] * x[j]) + b[band] * y[j];
         }
     }
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::diagonal(int ld, int dim, int nvec, const T* inverse, const T* x, T* y) const
+void linear_op<T, Device>::diagonal(
+    int ld,
+    int dim,
+    int nvec,
+    const T *inverse,
+    const T *x,
+    T *y) const
 {
 #pragma omp parallel for collapse(2) schedule(static) if (parallel_work(dim, nvec))
     for (int band = 0; band < nvec; ++band)
@@ -199,7 +246,15 @@ void linear_op<T, Device>::diagonal(int ld, int dim, int nvec, const T* inverse,
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::cgs_direction(int ld, int dim, int nvec, T* p, T* u, const T* r, const T* q, const T* beta) const
+void linear_op<T, Device>::cgs_direction(
+    int ld,
+    int dim,
+    int nvec,
+    T *p,
+    T *u,
+    const T *r,
+    const T *q,
+    const T *beta) const
 {
 #pragma omp parallel for collapse(2) schedule(static) if (parallel_work(dim, nvec))
     for (int band = 0; band < nvec; ++band)
@@ -214,7 +269,15 @@ void linear_op<T, Device>::cgs_direction(int ld, int dim, int nvec, T* p, T* u, 
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::cgs_alpha(int ld, int dim, int nvec, T* q, T* direction, const T* u, const T* v, const T* alpha) const
+void linear_op<T, Device>::cgs_alpha(
+    int ld,
+    int dim,
+    int nvec,
+    T *q,
+    T *direction,
+    const T *u,
+    const T *v,
+    const T *alpha) const
 {
 #pragma omp parallel for collapse(2) schedule(static) if (parallel_work(dim, nvec))
     for (int band = 0; band < nvec; ++band)
@@ -229,7 +292,15 @@ void linear_op<T, Device>::cgs_alpha(int ld, int dim, int nvec, T* q, T* directi
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::cgs_finish(int ld, int dim, int nvec, T* x, T* r, const T* direction, const T* ad, const T* alpha) const
+void linear_op<T, Device>::cgs_finish(
+    int ld,
+    int dim,
+    int nvec,
+    T *x,
+    T *r,
+    const T *direction,
+    const T *ad,
+    const T *alpha) const
 {
 #pragma omp parallel for collapse(2) schedule(static) if (parallel_work(dim, nvec))
     for (int band = 0; band < nvec; ++band)
@@ -243,14 +314,15 @@ void linear_op<T, Device>::cgs_finish(int ld, int dim, int nvec, T* x, T* r, con
     }
 }
 template <typename T, typename Device>
-void linear_op<T, Device>::wide_dots(int ld,
-                                     int dim,
-                                     int nvec,
-                                     int count,
-                                     int stride,
-                                     const T* basis,
-                                     const T* x,
-                                     std::complex<double>* out) const
+void linear_op<T, Device>::wide_dots(
+    int ld,
+    int dim,
+    int nvec,
+    int count,
+    int stride,
+    const T *basis,
+    const T *x,
+    std::complex<double> *out) const
 {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) if (parallel_work(dim, nvec * count))
@@ -264,14 +336,23 @@ void linear_op<T, Device>::wide_dots(int ld,
             std::complex<double> sum = 0.0;
             for (int i = 0; i < dim; ++i)
             {
-                sum += std::conj(std::complex<double>(basis[basis_offset + i])) * std::complex<double>(x[band_offset + i]);
+                sum +=
+                    std::conj(std::complex<double>(basis[basis_offset + i])) * std::complex<double>(x[band_offset + i]);
             }
             out[j * nvec + b] = sum;
         }
     }
 }
 template <typename T, typename Device>
-void linear_op<T, Device>::native_dots(int ld, int dim, int nvec, int count, int stride, const T* basis, const T* x, T* out) const
+void linear_op<T, Device>::native_dots(
+    int ld,
+    int dim,
+    int nvec,
+    int count,
+    int stride,
+    const T *basis,
+    const T *x,
+    T *out) const
 {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) if (parallel_work(dim, nvec * count))
@@ -293,7 +374,15 @@ void linear_op<T, Device>::native_dots(int ld, int dim, int nvec, int count, int
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::combine(int ld, int dim, int nvec, int count, int stride, const T* basis, const T* coefficients, T* output) const
+void linear_op<T, Device>::combine(
+    int ld,
+    int dim,
+    int nvec,
+    int count,
+    int stride,
+    const T *basis,
+    const T *coefficients,
+    T *output) const
 {
 #pragma omp parallel for schedule(static) if (parallel_work(dim, nvec))
     for (int b = 0; b < nvec; ++b)
@@ -312,7 +401,13 @@ void linear_op<T, Device>::combine(int ld, int dim, int nvec, int count, int str
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::scatter(int ld, int dim, int nvec, const T* input, T* output, const int* map) const
+void linear_op<T, Device>::scatter(
+    int ld,
+    int dim,
+    int nvec,
+    const T *input,
+    T *output,
+    const int *map) const
 {
 #pragma omp parallel for schedule(static) if (parallel_work(dim, nvec))
     for (int b = 0; b < nvec; ++b)
@@ -324,7 +419,14 @@ void linear_op<T, Device>::scatter(int ld, int dim, int nvec, const T* input, T*
 }
 
 template <typename T, typename Device>
-void linear_op<T, Device>::block_gram(int ld, int dim, int nvec, int count, int stride, const T* basis, std::complex<double>* output) const
+void linear_op<T, Device>::block_gram(
+    int ld,
+    int dim,
+    int nvec,
+    int count,
+    int stride,
+    const T *basis,
+    std::complex<double> *output) const
 {
 #pragma omp parallel for collapse(2) schedule(static) if (parallel_work(dim, nvec * count))
     for (int col = 0; col < count; ++col)

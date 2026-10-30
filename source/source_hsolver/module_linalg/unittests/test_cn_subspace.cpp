@@ -8,8 +8,7 @@
 
 namespace
 {
-template <typename Real>
-class CNSubspaceTest : public testing::Test
+template <typename Real> class CNSubspaceTest : public testing::Test
 {
 };
 using Precisions = testing::Types<float, double>;
@@ -40,7 +39,7 @@ TYPED_TEST(CNSubspaceTest, ProjectedSeedAndResidualOrRankDeficientFallback)
     }
     hsolver::LinearAlgebra<T, base_device::DEVICE_CPU> algebra(comm);
     hsolver::CNSubspace<T, base_device::DEVICE_CPU> projection;
-    for (const bool singular: {false, true})
+    for (const bool singular : {false, true})
     {
         SCOPED_TRACE(singular);
         std::vector<T> u(n * bands);
@@ -52,11 +51,37 @@ TYPED_TEST(CNSubspaceTest, ProjectedSeedAndResidualOrRankDeficientFallback)
                 u[j * n + i] = std::polar(TypeParam(1.0 / std::sqrt(n)), TypeParam(phase));
             }
         }
-        const std::vector<T> b = linear_test::multiply(right, u, n, bands);
-        const std::vector<T> au = linear_test::multiply(a, u, n, bands);
-        const std::vector<T> local_u = linear_test::local_columns(u, n, bands, start, dim, ld);
-        const std::vector<T> local_b = linear_test::local_columns(b, n, bands, start, dim, ld);
-        const bool prepared = projection.prepare(algebra, ld, dim, bands, local_u.data(), local_b.data());
+        const std::vector<T> b = linear_test::multiply(
+            right,
+            u,
+            n,
+            bands);
+        const std::vector<T> au = linear_test::multiply(
+            a,
+            u,
+            n,
+            bands);
+        const std::vector<T> local_u = linear_test::local_columns(
+            u,
+            n,
+            bands,
+            start,
+            dim,
+            ld);
+        const std::vector<T> local_b = linear_test::local_columns(
+            b,
+            n,
+            bands,
+            start,
+            dim,
+            ld);
+        const bool prepared = projection.prepare(
+            algebra,
+            ld,
+            dim,
+            bands,
+            local_u.data(),
+            local_b.data());
         if (singular)
         {
             EXPECT_FALSE(prepared);
@@ -76,7 +101,11 @@ TYPED_TEST(CNSubspaceTest, ProjectedSeedAndResidualOrRankDeficientFallback)
                 }
             }
         }
-        const std::vector<Wide> coefficients = linear_test::lapack_solve(projected, projected_rhs, bands, bands);
+        const std::vector<Wide> coefficients = linear_test::lapack_solve(
+            projected,
+            projected_rhs,
+            bands,
+            bands);
         std::vector<Wide> actual(n * bands, Wide(0));
         for (int j = 0; j < bands; ++j)
         {
@@ -97,7 +126,11 @@ TYPED_TEST(CNSubspaceTest, ProjectedSeedAndResidualOrRankDeficientFallback)
         Parallel_Common::reduce_data(actual.data(), count, comm.comm);
 #endif
         const std::vector<Wide> wide_a(a.begin(), a.end());
-        const std::vector<Wide> ax = linear_test::multiply(wide_a, actual, n, bands);
+        const std::vector<Wide> ax = linear_test::multiply(
+            wide_a,
+            actual,
+            n,
+            bands);
         for (int j = 0; j < bands; ++j)
         {
             for (int i = 0; i < dim; ++i)

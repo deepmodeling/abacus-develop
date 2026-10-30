@@ -12,10 +12,7 @@ namespace hsolver
 class LinearPreconditionerError final : public std::exception
 {
   public:
-    const char* what() const noexcept override
-    {
-        return "Preconditioner application failed.";
-    }
+    const char *what() const noexcept override { return "Preconditioner application failed."; }
 };
 
 /**
@@ -26,12 +23,15 @@ class LinearPreconditionerError final : public std::exception
  * operator acts on every column, including reordered or compacted blocks.
  * A zero local row count must still participate in operator collectives.
  */
-template <typename T, typename Device = base_device::DEVICE_CPU>
-class LinearOperator
+template <typename T, typename Device = base_device::DEVICE_CPU> class LinearOperator
 {
   public:
     virtual ~LinearOperator() = default;
-    virtual void apply(const T* x, T* y, const int ld, const int nvec) const = 0;
+    virtual void apply(
+        const T *x,
+        T *y,
+        const int ld,
+        const int nvec) const = 0;
     /** @brief Allow solvers to bypass identity preconditioner copies. */
     virtual bool is_identity() const { return false; }
 };

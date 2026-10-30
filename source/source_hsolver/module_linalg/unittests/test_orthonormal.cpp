@@ -25,8 +25,7 @@ hsolver::diag_comm_info self_comm()
 #endif
 }
 
-template <typename T>
-std::vector<Wide> overlaps(const std::vector<T>& psi)
+template <typename T> std::vector<Wide> overlaps(const std::vector<T> &psi)
 {
     std::vector<Wide> gram(bands * bands, Wide(0));
     for (int j = 0; j < bands; ++j)
@@ -42,8 +41,7 @@ std::vector<Wide> overlaps(const std::vector<T>& psi)
     return gram;
 }
 
-template <typename T>
-std::vector<T> orbitals()
+template <typename T> std::vector<T> orbitals()
 {
     const double nan = std::numeric_limits<double>::quiet_NaN();
     std::vector<T> psi(ld * bands, T(nan, nan));
@@ -57,8 +55,7 @@ std::vector<T> orbitals()
     return psi;
 }
 
-template <typename T>
-void check_orthogonal(const std::vector<T>& psi)
+template <typename T> void check_orthogonal(const std::vector<T> &psi)
 {
     const std::vector<Wide> gram = overlaps(psi);
     const double tolerance = hsolver::orth_tolerance<T>();
@@ -72,8 +69,7 @@ void check_orthogonal(const std::vector<T>& psi)
     }
 }
 
-template <typename Real>
-class OrthonormalTest : public testing::Test
+template <typename Real> class OrthonormalTest : public testing::Test
 {
 };
 using Precisions = testing::Types<double, float>;
@@ -85,12 +81,19 @@ TYPED_TEST(OrthonormalTest, CorrectsComplexOverlapsWithoutFallback)
     const hsolver::diag_comm_info comm = self_comm();
     hsolver::LinearAlgebra<T, Device> algebra(comm);
     hsolver::Orthonormal<T, Device> orth(comm, algebra);
-    for (const hsolver::OrthMethod method: {hsolver::OrthMethod::cholesky, hsolver::OrthMethod::lowdin, hsolver::OrthMethod::newton_schulz})
+    for (const hsolver::OrthMethod method :
+        {hsolver::OrthMethod::cholesky, hsolver::OrthMethod::lowdin, hsolver::OrthMethod::newton_schulz})
     {
         SCOPED_TRACE(hsolver::orth_method_name(method));
         std::vector<T> psi = orbitals<T>();
         const std::vector<T> original(psi);
-        const hsolver::OrthResult result = orth.apply(psi.data(), ld, dim, bands, method, false);
+        const hsolver::OrthResult result = orth.apply(
+            psi.data(),
+            ld,
+            dim,
+            bands,
+            method,
+            false);
         ASSERT_EQ(result.status, hsolver::OrthStatus::accepted);
         EXPECT_EQ(result.actual, method);
         EXPECT_EQ(result.fallbacks, 0);
@@ -113,7 +116,13 @@ TYPED_TEST(OrthonormalTest, NewtonSchulzFallsBackOutsideItsRange)
     std::vector<T> psi(ld * bands, T(0));
     psi[0] = T(2);
     psi[ld + 1] = T(2);
-    const hsolver::OrthResult result = orth.apply(psi.data(), ld, dim, bands, hsolver::OrthMethod::newton_schulz, false);
+    const hsolver::OrthResult result = orth.apply(
+        psi.data(),
+        ld,
+        dim,
+        bands,
+        hsolver::OrthMethod::newton_schulz,
+        false);
     ASSERT_EQ(result.status, hsolver::OrthStatus::accepted);
     EXPECT_EQ(result.actual, hsolver::OrthMethod::cholesky);
     EXPECT_EQ(result.fallbacks, 1);
@@ -129,9 +138,9 @@ TYPED_TEST(OrthonormalTest, RejectsInvalidOrbitalsWithoutOverwritingThem)
     hsolver::Orthonormal<T, Device> orth(comm, algebra);
     const double nan = std::numeric_limits<double>::quiet_NaN();
     const double inf = std::numeric_limits<double>::infinity();
-    for (const hsolver::OrthMethod method: {hsolver::OrthMethod::cholesky, hsolver::OrthMethod::none})
+    for (const hsolver::OrthMethod method : {hsolver::OrthMethod::cholesky, hsolver::OrthMethod::none})
     {
-        for (const double value: {0.0, nan, inf})
+        for (const double value : {0.0, nan, inf})
         {
             SCOPED_TRACE(hsolver::orth_method_name(method));
             SCOPED_TRACE(value);
@@ -139,10 +148,17 @@ TYPED_TEST(OrthonormalTest, RejectsInvalidOrbitalsWithoutOverwritingThem)
             psi[0] = T(value);
             psi[ld + 1] = T(1);
             const std::vector<T> original(psi);
-            const hsolver::OrthResult result = orth.apply(psi.data(), ld, dim, bands, method, false);
+            const hsolver::OrthResult result = orth.apply(
+                psi.data(),
+                ld,
+                dim,
+                bands,
+                method,
+                false);
             EXPECT_EQ(result.status, hsolver::OrthStatus::failed);
-            const hsolver::OrthFailure nonfinite
-                = method == hsolver::OrthMethod::none ? hsolver::OrthFailure::nonfinite_norm : hsolver::OrthFailure::nonfinite_gram;
+            const hsolver::OrthFailure nonfinite = method == hsolver::OrthMethod::none
+                                                       ? hsolver::OrthFailure::nonfinite_norm
+                                                       : hsolver::OrthFailure::nonfinite_gram;
             const hsolver::OrthFailure expected = value == 0.0 ? hsolver::OrthFailure::nonpositive_norm : nonfinite;
             EXPECT_EQ(result.failure, expected);
             EXPECT_EQ(std::memcmp(psi.data(), original.data(), psi.size() * sizeof(T)), 0);
@@ -152,7 +168,13 @@ TYPED_TEST(OrthonormalTest, RejectsInvalidOrbitalsWithoutOverwritingThem)
     duplicate[0] = T(1);
     duplicate[ld] = T(1);
     const std::vector<T> original(duplicate);
-    const hsolver::OrthResult result = orth.apply(duplicate.data(), ld, dim, bands, hsolver::OrthMethod::cholesky, false);
+    const hsolver::OrthResult result = orth.apply(
+        duplicate.data(),
+        ld,
+        dim,
+        bands,
+        hsolver::OrthMethod::cholesky,
+        false);
     EXPECT_EQ(result.status, hsolver::OrthStatus::failed);
     EXPECT_EQ(result.failure, hsolver::OrthFailure::factorization_failed);
     EXPECT_EQ(std::memcmp(duplicate.data(), original.data(), duplicate.size() * sizeof(T)), 0);
@@ -167,10 +189,22 @@ TYPED_TEST(OrthonormalTest, InitialInspectionAndNoneAreReadOnly)
     std::vector<T> psi = orbitals<T>();
     const std::vector<T> original(psi);
     const std::vector<Wide> gram = overlaps(psi);
-    for (const bool collect: {false, true})
+    for (const bool collect : {false, true})
     {
-        const hsolver::OrthResult inspected = orth.inspect(psi.data(), ld, dim, bands, true, collect);
-        const hsolver::OrthResult disabled = orth.apply(psi.data(), ld, dim, bands, hsolver::OrthMethod::none, collect);
+        const hsolver::OrthResult inspected = orth.inspect(
+            psi.data(),
+            ld,
+            dim,
+            bands,
+            true,
+            collect);
+        const hsolver::OrthResult disabled = orth.apply(
+            psi.data(),
+            ld,
+            dim,
+            bands,
+            hsolver::OrthMethod::none,
+            collect);
         EXPECT_EQ(inspected.status, hsolver::OrthStatus::inspected);
         EXPECT_GT(inspected.after, hsolver::orth_tolerance<T>());
         EXPECT_EQ(disabled.status, hsolver::OrthStatus::disabled);

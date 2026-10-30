@@ -47,28 +47,34 @@ struct ExpResult
 };
 
 /** @brief Apply exp(-i*alpha*H_Ry); caller selects k, buffers must not alias. */
-template <typename T, typename Device>
-class ExpAction
+template <typename T, typename Device> class ExpAction
 {
   protected:
     ExpControls exp_ctrl_;
     LinearAlgebra<T, Device> algebra_;
 
   public:
-    ExpAction(const ExpControls& exp_ctrl, const diag_comm_info& comm);
+    ExpAction(const ExpControls &exp_ctrl, const diag_comm_info &comm);
     virtual ~ExpAction() = default;
     /** @brief Effective relative tolerance after resolving the precision-dependent default. */
-    double rel_tol() const
-    {
-        return exp_ctrl_.rel_tol;
-    }
-    virtual ExpResult apply(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* output) = 0;
-    virtual ExpResult apply_pair(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* half, T* full)
-        = 0;
+    double rel_tol() const { return exp_ctrl_.rel_tol; }
+    virtual ExpResult apply(
+        const HSOperator<T, Device> &op,
+        const OrbLayout &layout,
+        double alpha,
+        const T *input,
+        T *output) = 0;
+    virtual ExpResult apply_pair(
+        const HSOperator<T, Device> &op,
+        const OrbLayout &layout,
+        double alpha,
+        const T *input,
+        T *half,
+        T *full) = 0;
 };
 
 /** @brief Construct a backend without reading global input parameters. */
 template <typename T, typename Device>
-std::unique_ptr<ExpAction<T, Device>> make_exp_action(const ExpControls& exp_ctrl, const diag_comm_info& comm);
+std::unique_ptr<ExpAction<T, Device>> make_exp_action(const ExpControls &exp_ctrl, const diag_comm_info &comm);
 } // namespace hsolver
 #endif

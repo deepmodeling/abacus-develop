@@ -9,7 +9,7 @@ namespace hsolver
 {
 namespace
 {
-bool positive_norms(const std::vector<std::complex<double>>& gram, int bands)
+bool positive_norms(const std::vector<std::complex<double>> &gram, int bands)
 {
     for (int band = 0; band < bands; ++band)
     {
@@ -23,36 +23,54 @@ bool positive_norms(const std::vector<std::complex<double>>& gram, int bands)
 } // namespace
 
 template <typename T, typename Device>
-Orthonormal<T, Device>::Orthonormal(const diag_comm_info& comm, LinearAlgebra<T, Device>& algebra) : comm_(comm), algebra_(algebra)
+Orthonormal<T, Device>::Orthonormal(const diag_comm_info &comm, LinearAlgebra<T, Device> &algebra)
+    : comm_(comm), algebra_(algebra)
 {
 }
 
 template <typename T, typename Device>
-std::vector<std::complex<double>> Orthonormal<T, Device>::gram(const T* input, int ld, int dim, int bands)
+std::vector<std::complex<double>> Orthonormal<T, Device>::gram(
+    const T *input,
+    int ld,
+    int dim,
+    int bands)
 {
     ModuleBase::timer::start("Orthonormal", "gram");
-    std::vector<std::complex<double>> result = algebra_.gram(ld, dim, bands, input);
+    std::vector<std::complex<double>> result = algebra_.gram(
+        ld,
+        dim,
+        bands,
+        input);
     ModuleBase::timer::end("Orthonormal", "gram");
     return result;
 }
 
 template <typename T, typename Device>
-bool Orthonormal<T, Device>::factor(const std::vector<std::complex<double>>& g,
-                                    int bands,
-                                    OrthMethod method,
-                                    std::vector<std::complex<double>>* transform)
+bool Orthonormal<T, Device>::factor(
+    const std::vector<std::complex<double>> &g,
+    int bands,
+    OrthMethod method,
+    std::vector<std::complex<double>> *transform)
 {
     ModuleBase::timer::start("Orthonormal", "factor");
     bool valid = false;
     if (comm_.rank == 0)
     {
-        valid = orth_transform(g, bands, method, transform);
+        valid = orth_transform(
+            g,
+            bands,
+            method,
+            transform);
     }
     double status = static_cast<double>(valid);
 #ifdef __MPI
     if (comm_.nproc > 1)
     {
-        Parallel_Common::bcast_data(&status, 1, comm_.comm, 0);
+        Parallel_Common::bcast_data(
+            &status,
+            1,
+            comm_.comm,
+            0);
     }
 #endif
     valid = status != 0.0;
@@ -64,7 +82,11 @@ bool Orthonormal<T, Device>::factor(const std::vector<std::complex<double>>& g,
         {
             // Every partition must apply the same coefficients and take the same recovery branch.
             const int elements = bands * bands;
-            Parallel_Common::bcast_data(transform->data(), elements, comm_.comm, 0);
+            Parallel_Common::bcast_data(
+                transform->data(),
+                elements,
+                comm_.comm,
+                0);
         }
 #endif
     }
@@ -73,12 +95,13 @@ bool Orthonormal<T, Device>::factor(const std::vector<std::complex<double>>& g,
 }
 
 template <typename T, typename Device>
-void Orthonormal<T, Device>::rotate(const T* input,
-                                    T* output,
-                                    int ld,
-                                    int dim,
-                                    int bands,
-                                    const std::vector<std::complex<double>>& transform)
+void Orthonormal<T, Device>::rotate(
+    const T *input,
+    T *output,
+    int ld,
+    int dim,
+    int bands,
+    const std::vector<std::complex<double>> &transform)
 {
     ModuleBase::timer::start("Orthonormal", "rotate");
     std::vector<std::complex<double>> delta(transform);
@@ -88,26 +111,51 @@ void Orthonormal<T, Device>::rotate(const T* input,
     }
     if (dim > 0)
     {
-        base_device::memory::synchronize_memory_2d_op<T, Device, Device>()(output, ld, input, ld, dim, bands);
+        base_device::memory::synchronize_memory_2d_op<T, Device, Device>()(
+            output,
+            ld,
+            input,
+            ld,
+            dim,
+            bands);
     }
-    algebra_.expand(ld, dim, bands, bands, input, delta, output, T(1));
+    algebra_.expand(
+        ld,
+        dim,
+        bands,
+        bands,
+        input,
+        delta,
+        output,
+        T(1));
     ModuleBase::timer::end("Orthonormal", "rotate");
 }
 
 template <typename T, typename Device>
-bool Orthonormal<T, Device>::try_candidate(T* input,
-                                           int ld,
-                                           int dim,
-                                           int bands,
-                                           const std::vector<std::complex<double>>& transform,
-                                           std::vector<std::complex<double>>* g,
-                                           OrthResult* result)
+bool Orthonormal<T, Device>::try_candidate(
+    T *input,
+    int ld,
+    int dim,
+    int bands,
+    const std::vector<std::complex<double>> &transform,
+    std::vector<std::complex<double>> *g,
+    OrthResult *result)
 {
     ModuleBase::timer::start("Orthonormal", "try_candidate");
-    T* candidate = candidate_.template data<T>();
-    rotate(input, candidate, ld, dim, bands, transform);
+    T *candidate = candidate_.template data<T>();
+    rotate(
+        input,
+        candidate,
+        ld,
+        dim,
+        bands,
+        transform);
     ++result->passes;
-    const std::vector<std::complex<double>> check = gram(candidate, ld, dim, bands);
+    const std::vector<std::complex<double>> check = gram(
+        candidate,
+        ld,
+        dim,
+        bands);
     const double error = orth_error(check, bands);
     const bool valid = std::isfinite(error) && positive_norms(check, bands);
     const bool improved = valid && error < result->after;
@@ -115,7 +163,13 @@ bool Orthonormal<T, Device>::try_candidate(T* input,
     {
         if (dim > 0)
         {
-            base_device::memory::synchronize_memory_2d_op<T, Device, Device>()(input, ld, candidate, ld, dim, bands);
+            base_device::memory::synchronize_memory_2d_op<T, Device, Device>()(
+                input,
+                ld,
+                candidate,
+                ld,
+                dim,
+                bands);
         }
         result->after = error;
         *g = check;
@@ -124,7 +178,8 @@ bool Orthonormal<T, Device>::try_candidate(T* input,
     else if (!valid || result->after > orth_tolerance<T>())
     {
         result->failure = valid ? OrthFailure::no_improvement : OrthFailure::invalid_candidate;
-        result->reason += std::string(orth_method_name(result->actual)) + ": " + orth_failure_name(result->failure) + "; ";
+        result->reason +=
+            std::string(orth_method_name(result->actual)) + ": " + orth_failure_name(result->failure) + "; ";
         ++result->rejected;
     }
     ModuleBase::timer::end("Orthonormal", "try_candidate");
@@ -132,13 +187,14 @@ bool Orthonormal<T, Device>::try_candidate(T* input,
 }
 
 template <typename T, typename Device>
-void Orthonormal<T, Device>::correct(T* input,
-                                     int ld,
-                                     int dim,
-                                     int bands,
-                                     OrthMethod method,
-                                     std::vector<std::complex<double>>* g,
-                                     OrthResult* result)
+void Orthonormal<T, Device>::correct(
+    T *input,
+    int ld,
+    int dim,
+    int bands,
+    OrthMethod method,
+    std::vector<std::complex<double>> *g,
+    OrthResult *result)
 {
     ModuleBase::timer::start("Orthonormal", "correct");
     std::vector<OrthMethod> methods{method};
@@ -164,15 +220,27 @@ void Orthonormal<T, Device>::correct(T* input,
             {
                 ++result->fallbacks;
             }
-            const bool factored = factor(*g, bands, result->actual, &transform);
+            const bool factored = factor(
+                *g,
+                bands,
+                result->actual,
+                &transform);
             if (factored)
             {
-                improved = try_candidate(input, ld, dim, bands, transform, g, result);
+                improved = try_candidate(
+                    input,
+                    ld,
+                    dim,
+                    bands,
+                    transform,
+                    g,
+                    result);
             }
             else
             {
                 result->failure = OrthFailure::factorization_failed;
-                result->reason += std::string(orth_method_name(result->actual)) + ": " + orth_failure_name(result->failure) + "; ";
+                result->reason +=
+                    std::string(orth_method_name(result->actual)) + ": " + orth_failure_name(result->failure) + "; ";
             }
             if (improved || result->after <= orth_tolerance<T>())
             {
@@ -196,14 +264,24 @@ void Orthonormal<T, Device>::correct(T* input,
 }
 
 template <typename T, typename Device>
-OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int bands, bool full_gram, bool collect_norms)
+OrthResult Orthonormal<T, Device>::inspect(
+    const T *input,
+    int ld,
+    int dim,
+    int bands,
+    bool full_gram,
+    bool collect_norms)
 {
     ModuleBase::timer::start("Orthonormal", "inspect");
     OrthResult result;
     result.gram_checked = full_gram;
     if (full_gram)
     {
-        const std::vector<std::complex<double>> g = gram(input, ld, dim, bands);
+        const std::vector<std::complex<double>> g = gram(
+            input,
+            ld,
+            dim,
+            bands);
         result.before = orth_error(g, bands);
         result.after = result.before;
         for (int band = 0; collect_norms && band < bands; ++band)
@@ -229,7 +307,14 @@ OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int 
         std::vector<std::complex<double>> norms;
         if (bands > 0)
         {
-            norms = algebra_.dots(ld, dim, bands, 1, 0, input, input);
+            norms = algebra_.dots(
+                ld,
+                dim,
+                bands,
+                1,
+                0,
+                input,
+                input);
         }
         result.status = OrthStatus::disabled;
         for (int band = 0; band < bands; ++band)
@@ -263,18 +348,34 @@ OrthResult Orthonormal<T, Device>::inspect(const T* input, int ld, int dim, int 
 }
 
 template <typename T, typename Device>
-OrthResult Orthonormal<T, Device>::apply(T* input, int ld, int dim, int bands, OrthMethod method, bool collect_norms)
+OrthResult Orthonormal<T, Device>::apply(
+    T *input,
+    int ld,
+    int dim,
+    int bands,
+    OrthMethod method,
+    bool collect_norms)
 {
     ModuleBase::timer::start("Orthonormal", "apply");
     if (method == OrthMethod::none)
     {
-        const OrthResult result = inspect(input, ld, dim, bands, false, collect_norms);
+        const OrthResult result = inspect(
+            input,
+            ld,
+            dim,
+            bands,
+            false,
+            collect_norms);
         ModuleBase::timer::end("Orthonormal", "apply");
         return result;
     }
     OrthResult result;
     result.gram_checked = true;
-    std::vector<std::complex<double>> g = gram(input, ld, dim, bands);
+    std::vector<std::complex<double>> g = gram(
+        input,
+        ld,
+        dim,
+        bands);
     result.before = orth_error(g, bands);
     result.after = result.before;
     if (!std::isfinite(result.before))
@@ -291,7 +392,14 @@ OrthResult Orthonormal<T, Device>::apply(T* input, int ld, int dim, int bands, O
     }
     else
     {
-        correct(input, ld, dim, bands, method, &g, &result);
+        correct(
+            input,
+            ld,
+            dim,
+            bands,
+            method,
+            &g,
+            &result);
     }
     for (int i = 0; collect_norms && i < bands; ++i)
     {

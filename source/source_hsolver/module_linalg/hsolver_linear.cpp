@@ -4,7 +4,7 @@
 
 namespace hsolver
 {
-const char* linear_status_name(const LinearSolveStatus status)
+const char *linear_status_name(const LinearSolveStatus status)
 {
     switch (status)
     {
@@ -23,7 +23,7 @@ const char* linear_status_name(const LinearSolveStatus status)
 }
 
 template <typename T, typename Device>
-HSolverLinear<T, Device>::HSolverLinear(const LinearControls& linear_ctrl, const diag_comm_info& comm)
+HSolverLinear<T, Device>::HSolverLinear(const LinearControls &linear_ctrl, const diag_comm_info &comm)
     : max_iter_(linear_ctrl.max_iterations), reconstruct_(linear_ctrl.reconstruct)
 {
     using Real = typename GetTypeReal<T>::type;
@@ -39,7 +39,11 @@ HSolverLinear<T, Device>::HSolverLinear(const LinearControls& linear_ctrl, const
     }
     else if (linear_ctrl.solver == LinearMethod::gmres)
     {
-        gmres_.reset(new LinearGMRES<T, Device>(tolerance_, linear_ctrl.restart, linear_ctrl.max_iterations, comm));
+        gmres_.reset(new LinearGMRES<T, Device>(
+            tolerance_,
+            linear_ctrl.restart,
+            linear_ctrl.max_iterations,
+            comm));
     }
     else
     {
@@ -48,43 +52,85 @@ HSolverLinear<T, Device>::HSolverLinear(const LinearControls& linear_ctrl, const
 }
 
 template <typename T, typename Device>
-LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device>& op,
-                                                  const LinearOperator<T, Device>& preconditioner,
-                                                  int ld,
-                                                  int nvec,
-                                                  int dim,
-                                                  T* x,
-                                                  const T* b,
-                                                  const T* initial_residual,
-                                                  bool force_check)
+LinearSolveResult HSolverLinear<T, Device>::solve(
+    const LinearOperator<T, Device> &op,
+    const LinearOperator<T, Device> &preconditioner,
+    int ld,
+    int nvec,
+    int dim,
+    T *x,
+    const T *b,
+    const T *initial_residual,
+    bool force_check)
 {
-    return solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, force_check, max_iter_, reconstruct_);
+    return solve(
+        op,
+        preconditioner,
+        ld,
+        nvec,
+        dim,
+        x,
+        b,
+        initial_residual,
+        force_check,
+        max_iter_,
+        reconstruct_);
 }
 
 template <typename T, typename Device>
-LinearSolveResult HSolverLinear<T, Device>::solve(const LinearOperator<T, Device>& op,
-                                                  const LinearOperator<T, Device>& preconditioner,
-                                                  int ld,
-                                                  int nvec,
-                                                  int dim,
-                                                  T* x,
-                                                  const T* b,
-                                                  const T* initial_residual,
-                                                  bool force_check,
-                                                  int max_iter,
-                                                  bool reconstruct)
+LinearSolveResult HSolverLinear<T, Device>::solve(
+    const LinearOperator<T, Device> &op,
+    const LinearOperator<T, Device> &preconditioner,
+    int ld,
+    int nvec,
+    int dim,
+    T *x,
+    const T *b,
+    const T *initial_residual,
+    bool force_check,
+    int max_iter,
+    bool reconstruct)
 {
     if (bicgstab_)
     {
-        return bicgstab_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, max_iter);
+        return bicgstab_->solve(
+            op,
+            preconditioner,
+            ld,
+            nvec,
+            dim,
+            x,
+            b,
+            initial_residual,
+            max_iter);
     }
     else if (cgs_)
     {
-        return cgs_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, max_iter);
+        return cgs_->solve(
+            op,
+            preconditioner,
+            ld,
+            nvec,
+            dim,
+            x,
+            b,
+            initial_residual,
+            max_iter);
     }
     else if (gmres_)
     {
-        return gmres_->solve(op, preconditioner, ld, nvec, dim, x, b, initial_residual, force_check, max_iter, reconstruct);
+        return gmres_->solve(
+            op,
+            preconditioner,
+            ld,
+            nvec,
+            dim,
+            x,
+            b,
+            initial_residual,
+            force_check,
+            max_iter,
+            reconstruct);
     }
     else
     {

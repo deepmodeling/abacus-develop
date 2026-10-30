@@ -10,21 +10,19 @@
 
 namespace
 {
-template <typename T>
-class IdentityOperator final : public hsolver::LinearOperator<T>
+template <typename T> class IdentityOperator final : public hsolver::LinearOperator<T>
 {
   private:
     const int dim_;
 
   public:
-    explicit IdentityOperator(const int dim) : dim_(dim)
-    {
-    }
-    bool is_identity() const override
-    {
-        return true;
-    }
-    void apply(const T* x, T* y, const int ld, const int nvec) const override
+    explicit IdentityOperator(const int dim) : dim_(dim) {}
+    bool is_identity() const override { return true; }
+    void apply(
+        const T *x,
+        T *y,
+        const int ld,
+        const int nvec) const override
     {
         for (int band = 0; band < nvec; ++band)
         {
@@ -36,16 +34,24 @@ class IdentityOperator final : public hsolver::LinearOperator<T>
     }
 };
 
-template <typename T>
-class DenseOperator final : public hsolver::LinearOperator<T>
+template <typename T> class DenseOperator final : public hsolver::LinearOperator<T>
 {
   public:
-    DenseOperator(const std::vector<T>& matrix, const int n, const int start, const int dim, const hsolver::diag_comm_info& comm)
+    DenseOperator(
+        const std::vector<T> &matrix,
+        const int n,
+        const int start,
+        const int dim,
+        const hsolver::diag_comm_info &comm)
         : matrix_(matrix), n_(n), start_(start), dim_(dim), comm_(comm)
     {
     }
 
-    void apply(const T* x, T* y, const int ld, const int nvec) const override
+    void apply(
+        const T *x,
+        T *y,
+        const int ld,
+        const int nvec) const override
     {
         std::vector<T> full(n_ * nvec, T(0));
         for (int band = 0; band < nvec; ++band)
@@ -59,7 +65,11 @@ class DenseOperator final : public hsolver::LinearOperator<T>
         const int count = full.size();
         Parallel_Common::reduce_data(full.data(), count, comm_.comm);
 #endif
-        const std::vector<T> product = linear_test::multiply(matrix_, full, n_, nvec);
+        const std::vector<T> product = linear_test::multiply(
+            matrix_,
+            full,
+            n_,
+            nvec);
         for (int band = 0; band < nvec; ++band)
         {
             for (int i = 0; i < dim_; ++i)
@@ -70,22 +80,29 @@ class DenseOperator final : public hsolver::LinearOperator<T>
     }
 
   private:
-    const std::vector<T>& matrix_;
+    const std::vector<T> &matrix_;
     const int n_;
     const int start_;
     const int dim_;
     const hsolver::diag_comm_info comm_;
 };
 
-template <typename T>
-class RightPreconditioner final : public hsolver::LinearOperator<T>
+template <typename T> class RightPreconditioner final : public hsolver::LinearOperator<T>
 {
   public:
-    RightPreconditioner(const std::vector<T>& matrix, const int n, const int start, const int dim)
+    RightPreconditioner(
+        const std::vector<T> &matrix,
+        const int n,
+        const int start,
+        const int dim)
         : matrix_(matrix), n_(n), start_(start), dim_(dim)
     {
     }
-    void apply(const T* x, T* y, const int ld, const int nvec) const override
+    void apply(
+        const T *x,
+        T *y,
+        const int ld,
+        const int nvec) const override
     {
         for (int band = 0; band < nvec; ++band)
         {
@@ -98,14 +115,13 @@ class RightPreconditioner final : public hsolver::LinearOperator<T>
     }
 
   private:
-    const std::vector<T>& matrix_;
+    const std::vector<T> &matrix_;
     const int n_;
     const int start_;
     const int dim_;
 };
 
-template <typename Real>
-class LinearSolveTest : public testing::Test
+template <typename Real> class LinearSolveTest : public testing::Test
 {
 };
 using Precisions = testing::Types<double, float>;
@@ -117,9 +133,10 @@ TYPED_TEST(LinearSolveTest, DenseReferenceAndReusedBatches)
     const hsolver::diag_comm_info comm = linear_test::world_comm();
     const double tolerance = std::is_same<TypeParam, double>::value ? 1e-12 : 2e-6;
     const double solution_tol = std::is_same<TypeParam, double>::value ? 1e-10 : 1e-4;
-    for (const hsolver::LinearMethod method: {hsolver::LinearMethod::bicgstab, hsolver::LinearMethod::cgs, hsolver::LinearMethod::gmres})
+    for (const hsolver::LinearMethod method :
+        {hsolver::LinearMethod::bicgstab, hsolver::LinearMethod::cgs, hsolver::LinearMethod::gmres})
     {
-        for (const bool preconditioned: {false, true})
+        for (const bool preconditioned : {false, true})
         {
             hsolver::LinearControls linear_ctrl;
             linear_ctrl.solver = method;
@@ -127,17 +144,21 @@ TYPED_TEST(LinearSolveTest, DenseReferenceAndReusedBatches)
             linear_ctrl.restart = 2;
             hsolver::HSolverLinear<T> solver(linear_ctrl, comm);
             // Shrink, grow, and use zero local rows without replacing the solver.
-            for (const int n: {11, 5, 17, 1})
+            for (const int n : {11,
+                     5,
+                     17,
+                     1})
             {
                 const int start = n * comm.rank / comm.nproc;
                 const int end = n * (comm.rank + 1) / comm.nproc;
                 const int dim = end - start;
                 const int ld = dim + 3;
                 const int nvec = n == 5 ? 3 : 5;
-                for (const bool cn_matrix: {true, false})
+                for (const bool cn_matrix : {true, false})
                 {
-                    SCOPED_TRACE(testing::Message() << "n=" << n << " method=" << static_cast<int>(method)
-                                                    << " preconditioned=" << preconditioned << " cn=" << cn_matrix);
+                    SCOPED_TRACE(
+                        testing::Message() << "n=" << n << " method=" << static_cast<int>(method)
+                                           << " preconditioned=" << preconditioned << " cn=" << cn_matrix);
                     std::vector<T> a = linear_test::hermitian<T>(n);
                     for (int j = 0; j < n; ++j)
                     {
@@ -169,8 +190,16 @@ TYPED_TEST(LinearSolveTest, DenseReferenceAndReusedBatches)
                     std::fill(exact.begin() + n, exact.begin() + 2 * n, T(0));
                     std::fill(exact.begin() + 2 * n, exact.begin() + 3 * n, T(0));
                     exact[2 * n] = T(0.7, -0.2);
-                    const std::vector<T> b = linear_test::multiply(a, exact, n, nvec);
-                    const std::vector<linear_test::Complex> reference = linear_test::lapack_solve(a, b, n, nvec);
+                    const std::vector<T> b = linear_test::multiply(
+                        a,
+                        exact,
+                        n,
+                        nvec);
+                    const std::vector<linear_test::Complex> reference = linear_test::lapack_solve(
+                        a,
+                        b,
+                        n,
+                        nvec);
                     const T sentinel(123, -45);
                     std::vector<T> rhs(ld * nvec, sentinel);
                     std::vector<T> x(ld * nvec, sentinel);
@@ -183,17 +212,44 @@ TYPED_TEST(LinearSolveTest, DenseReferenceAndReusedBatches)
                         }
                     }
                     const std::vector<T> rhs_before = rhs;
-                    DenseOperator<T> op(a, n, start, dim, comm);
-                    RightPreconditioner<T> precond(a, n, start, dim);
+                    DenseOperator<T> op(
+                        a,
+                        n,
+                        start,
+                        dim,
+                        comm);
+                    RightPreconditioner<T> precond(
+                        a,
+                        n,
+                        start,
+                        dim);
                     hsolver::LinearSolveResult result;
                     if (preconditioned)
                     {
-                        result = solver.solve(op, precond, ld, nvec, dim, x.data(), rhs.data(), nullptr, true);
+                        result = solver.solve(
+                            op,
+                            precond,
+                            ld,
+                            nvec,
+                            dim,
+                            x.data(),
+                            rhs.data(),
+                            nullptr,
+                            true);
                     }
                     else
                     {
                         const IdentityOperator<T> identity(dim);
-                        result = solver.solve(op, identity, ld, nvec, dim, x.data(), rhs.data(), nullptr, true);
+                        result = solver.solve(
+                            op,
+                            identity,
+                            ld,
+                            nvec,
+                            dim,
+                            x.data(),
+                            rhs.data(),
+                            nullptr,
+                            true);
                     }
                     EXPECT_EQ(result.status, hsolver::LinearSolveStatus::converged);
                     EXPECT_EQ(result.failed_band, -1);
@@ -208,7 +264,8 @@ TYPED_TEST(LinearSolveTest, DenseReferenceAndReusedBatches)
                         for (int i = 0; i < dim; ++i)
                         {
                             full[band * n + start + i] = x[band * ld + i];
-                            EXPECT_LT(std::abs(full[band * n + start + i] - reference[band * n + start + i]), solution_tol);
+                            EXPECT_LT(
+                                std::abs(full[band * n + start + i] - reference[band * n + start + i]), solution_tol);
                         }
                         for (int i = dim; i < ld; ++i)
                         {
@@ -220,7 +277,11 @@ TYPED_TEST(LinearSolveTest, DenseReferenceAndReusedBatches)
                     Parallel_Common::reduce_data(full.data(), count, comm.comm);
 #endif
                     const std::vector<linear_test::Complex> a_double(a.begin(), a.end());
-                    const std::vector<linear_test::Complex> ax = linear_test::multiply(a_double, full, n, nvec);
+                    const std::vector<linear_test::Complex> ax = linear_test::multiply(
+                        a_double,
+                        full,
+                        n,
+                        nvec);
                     double max_residual = 0.0;
                     for (int band = 0; band < nvec; ++band)
                     {
@@ -261,16 +322,22 @@ TEST(LinearSolveFailure, ReportsOriginalColumnAndTrueResidual)
     const int start = n * comm.rank / comm.nproc;
     const int dim = n * (comm.rank + 1) / comm.nproc - start;
     const int ld = dim + 1;
-    for (const hsolver::LinearMethod method: {hsolver::LinearMethod::bicgstab, hsolver::LinearMethod::cgs, hsolver::LinearMethod::gmres})
+    for (const hsolver::LinearMethod method :
+        {hsolver::LinearMethod::bicgstab, hsolver::LinearMethod::cgs, hsolver::LinearMethod::gmres})
     {
-        for (const bool singular: {false, true})
+        for (const bool singular : {false, true})
         {
             std::vector<T> a = linear_test::hermitian<T>(n);
             if (singular)
             {
                 std::fill(a.begin(), a.end(), T(0));
             }
-            DenseOperator<T> op(a, n, start, dim, comm);
+            DenseOperator<T> op(
+                a,
+                n,
+                start,
+                dim,
+                comm);
             hsolver::LinearControls linear_ctrl;
             linear_ctrl.solver = method;
             linear_ctrl.tolerance = 1e-13;
@@ -284,14 +351,27 @@ TEST(LinearSolveFailure, ReportsOriginalColumnAndTrueResidual)
                 b[ld + i] = T(1, 0.1 * (start + i));
             }
             const IdentityOperator<T> identity(dim);
-            const hsolver::LinearSolveResult result = solver.solve(op, identity, ld, 3, dim, x.data(), b.data(), nullptr, true);
-            const hsolver::LinearSolveStatus expected
-                = singular ? hsolver::LinearSolveStatus::breakdown : hsolver::LinearSolveStatus::max_iterations;
+            const hsolver::LinearSolveResult result = solver.solve(
+                op,
+                identity,
+                ld,
+                3,
+                dim,
+                x.data(),
+                b.data(),
+                nullptr,
+                true);
+            const hsolver::LinearSolveStatus expected =
+                singular ? hsolver::LinearSolveStatus::breakdown : hsolver::LinearSolveStatus::max_iterations;
             EXPECT_EQ(result.status, expected);
             EXPECT_EQ(result.failed_band, 1);
             EXPECT_LE(result.iterations, linear_ctrl.max_iterations);
             std::vector<T> ax(3 * ld, T(0));
-            op.apply(x.data(), ax.data(), ld, 3);
+            op.apply(
+                x.data(),
+                ax.data(),
+                ld,
+                3);
             double residual2 = 0.0;
             for (int i = 0; i < dim; ++i)
             {
@@ -305,8 +385,7 @@ TEST(LinearSolveFailure, ReportsOriginalColumnAndTrueResidual)
         }
     }
 }
-template <typename T>
-void check_reconstruction(const bool corrupt_initial)
+template <typename T> void check_reconstruction(const bool corrupt_initial)
 {
     const hsolver::diag_comm_info comm = linear_test::world_comm();
     const int n = 8;
@@ -328,8 +407,16 @@ void check_reconstruction(const bool corrupt_initial)
         exact[n + i] = T(std::cos(0.3 * i), std::sin(0.4 * i));
     }
     exact[2 * n] = T(1);
-    const std::vector<T> rhs = linear_test::multiply(matrix, exact, n, bands);
-    const std::vector<linear_test::Complex> reference = linear_test::lapack_solve(matrix, rhs, n, bands);
+    const std::vector<T> rhs = linear_test::multiply(
+        matrix,
+        exact,
+        n,
+        bands);
+    const std::vector<linear_test::Complex> reference = linear_test::lapack_solve(
+        matrix,
+        rhs,
+        n,
+        bands);
     std::vector<T> b(ld * bands, T(0));
     std::vector<T> x(ld * bands, T(0));
     std::vector<T> bad_residual(ld * bands, T(0));
@@ -347,11 +434,25 @@ void check_reconstruction(const bool corrupt_initial)
     linear_ctrl.restart = 2;
     linear_ctrl.max_iterations = 100;
     linear_ctrl.reconstruct = true;
-    DenseOperator<T> op(matrix, n, start, dim, comm);
+    DenseOperator<T> op(
+        matrix,
+        n,
+        start,
+        dim,
+        comm);
     const IdentityOperator<T> identity(dim);
     hsolver::HSolverLinear<T> solver(linear_ctrl, comm);
-    const T* initial = corrupt_initial ? bad_residual.data() : nullptr;
-    const hsolver::LinearSolveResult result = solver.solve(op, identity, ld, bands, dim, x.data(), b.data(), initial, corrupt_initial);
+    const T *initial = corrupt_initial ? bad_residual.data() : nullptr;
+    const hsolver::LinearSolveResult result = solver.solve(
+        op,
+        identity,
+        ld,
+        bands,
+        dim,
+        x.data(),
+        b.data(),
+        initial,
+        corrupt_initial);
     ASSERT_EQ(result.status, hsolver::LinearSolveStatus::converged);
     EXPECT_EQ(result.failed_band, -1);
     EXPECT_GT(result.restarts, 0);
@@ -360,7 +461,11 @@ void check_reconstruction(const bool corrupt_initial)
     EXPECT_EQ(result.reconstructed, !corrupt_initial);
     EXPECT_EQ(result.reconstruction_fallbacks, corrupt_initial ? 1 : 0);
     std::vector<T> ax(ld * bands, T(0));
-    op.apply(x.data(), ax.data(), ld, bands);
+    op.apply(
+        x.data(),
+        ax.data(),
+        ld,
+        bands);
     for (int band = 0; band < bands; ++band)
     {
         double error = 0.0;
@@ -369,7 +474,9 @@ void check_reconstruction(const bool corrupt_initial)
         {
             error += std::norm(linear_test::Complex(ax[band * ld + i]) - linear_test::Complex(b[band * ld + i]));
             norm += std::norm(linear_test::Complex(b[band * ld + i]));
-            EXPECT_LT(std::abs(linear_test::Complex(x[band * ld + i]) - reference[band * n + start + i]), 10 * linear_ctrl.tolerance);
+            EXPECT_LT(
+                std::abs(linear_test::Complex(x[band * ld + i]) - reference[band * n + start + i]),
+                10 * linear_ctrl.tolerance);
         }
 #ifdef __MPI
         Parallel_Common::reduce_data(&error, 1, comm.comm);
@@ -383,7 +490,16 @@ void check_reconstruction(const bool corrupt_initial)
         linear_ctrl.max_iterations = 1;
         hsolver::HSolverLinear<T> limited(linear_ctrl, comm);
         std::fill(x.begin(), x.end(), T(0));
-        const hsolver::LinearSolveResult exhausted = limited.solve(op, identity, ld, bands, dim, x.data(), b.data(), initial, true);
+        const hsolver::LinearSolveResult exhausted = limited.solve(
+            op,
+            identity,
+            ld,
+            bands,
+            dim,
+            x.data(),
+            b.data(),
+            initial,
+            true);
         EXPECT_EQ(exhausted.status, hsolver::LinearSolveStatus::max_iterations);
         EXPECT_EQ(exhausted.failed_band, 1);
         EXPECT_EQ(exhausted.iterations, linear_ctrl.max_iterations);
@@ -402,12 +518,17 @@ TYPED_TEST(LinearSolveTest, ReconstructionRecoversIncorrectInitialResidual)
 }
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int nproc = 1;
     int nthread = 1;
     int rank = 0;
-    Parallel_Global::read_pal_param(argc, argv, nproc, nthread, rank);
+    Parallel_Global::read_pal_param(
+        argc,
+        argv,
+        nproc,
+        nthread,
+        rank);
 #ifdef __MPI
     // This numerical test creates no application pools; the shared finalizer owns these handles.
     POOL_WORLD = MPI_COMM_NULL;

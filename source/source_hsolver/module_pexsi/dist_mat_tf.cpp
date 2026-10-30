@@ -20,19 +20,20 @@ namespace pexsi
 // wether this function is called for the first time for a index array; nprocs: total number of processes size_process:
 // the number of indices in each process displacement_process: the start position in each process index: the array
 // contains the indices
-inline int DistMatrixTransformer::MinimumIndexPosition(const bool isFirst,
-                                                       const int nprocs,
-                                                       int* size_process,
-                                                       int* displacement_process,
-                                                       const int* index)
+inline int DistMatrixTransformer::MinimumIndexPosition(
+    const bool isFirst,
+    const int nprocs,
+    int *size_process,
+    int *displacement_process,
+    const int *index)
 {
     // usually the minimum index is continuous, so it will be a good idea to
     // check the one next to the previous index first.
     static int pre_position = 0; // previous position in index array of minimum index,
     static int pre_process = 0;  // the process contains previous index
 
-    int minimum_index
-        = INT_MAX; // the minimum index, initial value is a large number which is larger than any other index;
+    int minimum_index =
+        INT_MAX; // the minimum index, initial value is a large number which is larger than any other index;
     int minimum_position = -1;
     int minimum_process = -1;
 
@@ -96,22 +97,30 @@ inline int DistMatrixTransformer::MinimumIndexPosition(const bool isFirst,
     }
 }
 
-inline void DistMatrixTransformer::buildCCSParameter(const int size,
-                                                     const int nprocs,
-                                                     std::vector<int> size_process,
-                                                     std::vector<int> displacement_process,
-                                                     const int* position_index,
-                                                     DistCCSMatrix& DST_Matrix,
-                                                     int* buffer2ccsIndex)
+inline void DistMatrixTransformer::buildCCSParameter(
+    const int size,
+    const int nprocs,
+    std::vector<int> size_process,
+    std::vector<int> displacement_process,
+    const int *position_index,
+    DistCCSMatrix &DST_Matrix,
+    int *buffer2ccsIndex)
 {
     // find the minimum one from left buffer index
     if (DST_Matrix.get_nnzlocal() <= 0)
+    {
         return;
+    }
 
     int pre_col = -1;
     int nnz_now = 0;
     int p_mini = 0;
-    p_mini = MinimumIndexPosition(true, nprocs, &size_process[0], &displacement_process[0], position_index);
+    p_mini = MinimumIndexPosition(
+        true,
+        nprocs,
+        &size_process[0],
+        &displacement_process[0],
+        position_index);
     while (p_mini >= 0)
     {
         int index_mini = position_index[p_mini];
@@ -126,45 +135,56 @@ inline void DistMatrixTransformer::buildCCSParameter(const int size,
         // copy data from buffer to M, be careful M is a 0-based array
         buffer2ccsIndex[nnz_now] = p_mini;
         ++nnz_now;
-        p_mini = MinimumIndexPosition(false, nprocs, &size_process[0], &displacement_process[0], position_index);
+        p_mini = MinimumIndexPosition(
+            false,
+            nprocs,
+            &size_process[0],
+            &displacement_process[0],
+            position_index);
     }
     // The last element of colptrLocal is nnzLocal+1
     DST_Matrix.get_colptr_local()[DST_Matrix.get_numcol_local()] = nnz_now + 1;
 }
 
-inline void DistMatrixTransformer::buffer2CCSvalue(int nnzLocal,
-                                                   int* buffer2ccsIndex,
-                                                   double* buffer,
-                                                   double* nzvalLocal)
+inline void DistMatrixTransformer::buffer2CCSvalue(
+    int nnzLocal,
+    int *buffer2ccsIndex,
+    double *buffer,
+    double *nzvalLocal)
 {
     for (int i = 0; i < nnzLocal; ++i)
     {
         nzvalLocal[i] = buffer[buffer2ccsIndex[i]];
     }
 }
-inline void DistMatrixTransformer::countMatrixDistribution(int N, double* A, std::map<int, int>& P)
+inline void DistMatrixTransformer::countMatrixDistribution(int N, double *A, std::map<int, int> &P)
 {
     for (int i = 0; i < N; ++i)
     {
         int key = 0;
         if (fabs(A[i] < 1e-31))
+        {
             key = -100;
+        }
         else
+        {
             key = floor(log10(fabs(A[i])));
+        }
         ++P[key];
     }
 }
 
 // find out the index of non-zero elements
-inline int DistMatrixTransformer::getNonZeroIndex(char layout,
-                                                  const int nrow,
-                                                  const int ncol,
-                                                  double* H_2d,
-                                                  double* S_2d,
-                                                  const double ZERO_Limit,
-                                                  int& nnz,
-                                                  std::vector<int>& rowidx,
-                                                  std::vector<int>& colidx)
+inline int DistMatrixTransformer::getNonZeroIndex(
+    char layout,
+    const int nrow,
+    const int ncol,
+    double *H_2d,
+    double *S_2d,
+    const double ZERO_Limit,
+    int &nnz,
+    std::vector<int> &rowidx,
+    std::vector<int> &colidx)
 {
     int idx = 0;
     nnz = 0;
@@ -209,21 +229,22 @@ inline int DistMatrixTransformer::getNonZeroIndex(char layout,
     return 0;
 }
 
-int DistMatrixTransformer::buildTransformParameter(DistBCDMatrix& SRC_Matrix,
-                                                   DistCCSMatrix& DST_Matrix,
-                                                   const int NPROC_TRANS,
-                                                   MPI_Group& GROUP_TRANS,
-                                                   MPI_Comm& COMM_TRANS,
-                                                   const int nnz,
-                                                   std::vector<int>& rowidx,
-                                                   std::vector<int>& colidx,
-                                                   int& sender_size,
-                                                   std::vector<int>& sender_size_process,
-                                                   std::vector<int>& sender_displacement_process,
-                                                   int& receiver_size,
-                                                   std::vector<int>& receiver_size_process,
-                                                   std::vector<int>& receiver_displacement_process,
-                                                   std::vector<int>& buffer2ccsIndex)
+int DistMatrixTransformer::buildTransformParameter(
+    DistBCDMatrix &SRC_Matrix,
+    DistCCSMatrix &DST_Matrix,
+    const int NPROC_TRANS,
+    MPI_Group &GROUP_TRANS,
+    MPI_Comm &COMM_TRANS,
+    const int nnz,
+    std::vector<int> &rowidx,
+    std::vector<int> &colidx,
+    int &sender_size,
+    std::vector<int> &sender_size_process,
+    std::vector<int> &sender_displacement_process,
+    int &receiver_size,
+    std::vector<int> &receiver_size_process,
+    std::vector<int> &receiver_displacement_process,
+    std::vector<int> &buffer2ccsIndex)
 {
     int myproc;
     MPI_Comm_rank(MPI_COMM_WORLD, &myproc);
@@ -235,19 +256,44 @@ int DistMatrixTransformer::buildTransformParameter(DistBCDMatrix& SRC_Matrix,
     if (myproc == 0)
     {
         MPI_Group_size(DST_Matrix.get_group_data(), &nproc_data);
-        MPI_Bcast(&nproc_data, 1, MPI_INT, 0, COMM_TRANS);
+        MPI_Bcast(
+            &nproc_data,
+            1,
+            MPI_INT,
+            0,
+            COMM_TRANS);
         proc_map_data_trans.resize(nproc_data, 0);
         for (int i = 0; i < nproc_data; ++i)
         {
-            MPI_Group_translate_ranks(DST_Matrix.get_group_data(), 1, &i, GROUP_TRANS, &proc_map_data_trans[i]);
+            MPI_Group_translate_ranks(
+                DST_Matrix.get_group_data(),
+                1,
+                &i,
+                GROUP_TRANS,
+                &proc_map_data_trans[i]);
         }
-        MPI_Bcast(&proc_map_data_trans[0], nproc_data, MPI_INT, 0, COMM_TRANS);
+        MPI_Bcast(
+            &proc_map_data_trans[0],
+            nproc_data,
+            MPI_INT,
+            0,
+            COMM_TRANS);
     }
     else
     {
-        MPI_Bcast(&nproc_data, 1, MPI_INT, 0, COMM_TRANS);
+        MPI_Bcast(
+            &nproc_data,
+            1,
+            MPI_INT,
+            0,
+            COMM_TRANS);
         proc_map_data_trans.resize(nproc_data, 0);
-        MPI_Bcast(&proc_map_data_trans[0], nproc_data, MPI_INT, 0, COMM_TRANS);
+        MPI_Bcast(
+            &proc_map_data_trans[0],
+            nproc_data,
+            MPI_INT,
+            0,
+            COMM_TRANS);
     }
 
     for (int i = 0; i < nnz; ++i)
@@ -260,7 +306,14 @@ int DistMatrixTransformer::buildTransformParameter(DistBCDMatrix& SRC_Matrix,
         ++sender_size_process[dst_process_trans];
     }
     // transfer sender index size to receiver index size
-    MPI_Alltoall(&sender_size_process[0], 1, MPI_INT, &receiver_size_process[0], 1, MPI_INT, COMM_TRANS);
+    MPI_Alltoall(
+        &sender_size_process[0],
+        1,
+        MPI_INT,
+        &receiver_size_process[0],
+        1,
+        MPI_INT,
+        COMM_TRANS);
     // setup all2all parameters
     sender_displacement_process[0] = 0;
     for (int i = 1; i < NPROC_TRANS; ++i)
@@ -292,33 +345,36 @@ int DistMatrixTransformer::buildTransformParameter(DistBCDMatrix& SRC_Matrix,
 
     // transfer index to receiver
     std::vector<int> receiver_index(receiver_size);
-    MPI_Alltoallv(&sender_index[0],
-                  &sender_size_process[0],
-                  &sender_displacement_process[0],
-                  MPI_INT,
-                  &receiver_index[0],
-                  &receiver_size_process[0],
-                  &receiver_displacement_process[0],
-                  MPI_INT,
-                  COMM_TRANS);
+    MPI_Alltoallv(
+        &sender_index[0],
+        &sender_size_process[0],
+        &sender_displacement_process[0],
+        MPI_INT,
+        &receiver_index[0],
+        &receiver_size_process[0],
+        &receiver_displacement_process[0],
+        MPI_INT,
+        COMM_TRANS);
 
     // setup buffer2ccsIndex based on receiver_index
     buffer2ccsIndex.resize(receiver_size);
     DST_Matrix.setnnz(receiver_size);
-    buildCCSParameter(receiver_size,
-                      NPROC_TRANS,
-                      receiver_size_process,
-                      receiver_displacement_process,
-                      &receiver_index[0],
-                      DST_Matrix,
-                      &buffer2ccsIndex[0]);
+    buildCCSParameter(
+        receiver_size,
+        NPROC_TRANS,
+        receiver_size_process,
+        receiver_displacement_process,
+        &receiver_index[0],
+        DST_Matrix,
+        &buffer2ccsIndex[0]);
     return 0;
 }
 
-int DistMatrixTransformer::newGroupCommTrans(DistBCDMatrix& SRC_Matrix,
-                                             DistCCSMatrix& DST_Matrix,
-                                             MPI_Group& GROUP_TRANS,
-                                             MPI_Comm& COMM_TRANS)
+int DistMatrixTransformer::newGroupCommTrans(
+    DistBCDMatrix &SRC_Matrix,
+    DistCCSMatrix &DST_Matrix,
+    MPI_Group &GROUP_TRANS,
+    MPI_Comm &COMM_TRANS)
 {
     // build transfortram communicator which contains both processes of BCD processors and
     // CCS processors with nonzero elements
@@ -327,7 +383,7 @@ int DistMatrixTransformer::newGroupCommTrans(DistBCDMatrix& SRC_Matrix,
     return 0;
 }
 
-int DistMatrixTransformer::deleteGroupCommTrans(MPI_Group& GROUP_TRANS, MPI_Comm& COMM_TRANS)
+int DistMatrixTransformer::deleteGroupCommTrans(MPI_Group &GROUP_TRANS, MPI_Comm &COMM_TRANS)
 {
     MPI_Group_free(&GROUP_TRANS);
     if (COMM_TRANS != MPI_COMM_NULL)
@@ -341,17 +397,22 @@ int DistMatrixTransformer::deleteGroupCommTrans(MPI_Group& GROUP_TRANS, MPI_Comm
 // two destination matrices share the same non-zero elements positions
 // if either of two elements in source matrices is non-zeros, the elements in the destination matrices are non-zero,
 // even if one of them is acturely zero All matrices must have same MPI communicator
-int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
-                                             double* H_2d,
-                                             double* S_2d,
-                                             const double ZERO_Limit,
-                                             DistCCSMatrix& DST_Matrix,
-                                             double*& H_ccs,
-                                             double*& S_ccs)
+int DistMatrixTransformer::transformBCDtoCCS(
+    DistBCDMatrix &SRC_Matrix,
+    double *H_2d,
+    double *S_2d,
+    const double ZERO_Limit,
+    DistCCSMatrix &DST_Matrix,
+    double *&H_ccs,
+    double *&S_ccs)
 {
     MPI_Group GROUP_TRANS;
     MPI_Comm COMM_TRANS = MPI_COMM_NULL;
-    newGroupCommTrans(SRC_Matrix, DST_Matrix, GROUP_TRANS, COMM_TRANS);
+    newGroupCommTrans(
+        SRC_Matrix,
+        DST_Matrix,
+        GROUP_TRANS,
+        COMM_TRANS);
     if (COMM_TRANS != MPI_COMM_NULL)
     {
         // set up sender and receiver=
@@ -370,34 +431,36 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
         int nnz = 0;
         if (SRC_Matrix.get_comm() != MPI_COMM_NULL)
         {
-            getNonZeroIndex(SRC_Matrix.get_layout(),
-                            SRC_Matrix.get_nrow(),
-                            SRC_Matrix.get_ncol(),
-                            H_2d,
-                            S_2d,
-                            ZERO_Limit,
-                            nnz,
-                            rowidx,
-                            colidx);
+            getNonZeroIndex(
+                SRC_Matrix.get_layout(),
+                SRC_Matrix.get_nrow(),
+                SRC_Matrix.get_ncol(),
+                H_2d,
+                S_2d,
+                ZERO_Limit,
+                nnz,
+                rowidx,
+                colidx);
         }
         // build all2all transformation parameters and the map index of receiver buffer
         std::vector<int> buffer2ccsIndex;
-        buildTransformParameter(SRC_Matrix,
-                                DST_Matrix,
-                                NPROC_TRANS,
-                                GROUP_TRANS,
-                                COMM_TRANS,
-                                nnz,
-                                rowidx,
-                                colidx,
-                                sender_size,
-                                sender_size_process,
-                                sender_displacement_process,
-                                receiver_size,
-                                receiver_size_process,
-                                receiver_displacement_process,
-                                buffer2ccsIndex);
-// Do transformation
+        buildTransformParameter(
+            SRC_Matrix,
+            DST_Matrix,
+            NPROC_TRANS,
+            GROUP_TRANS,
+            COMM_TRANS,
+            nnz,
+            rowidx,
+            colidx,
+            sender_size,
+            sender_size_process,
+            sender_displacement_process,
+            receiver_size,
+            receiver_size_process,
+            receiver_displacement_process,
+            buffer2ccsIndex);
+        // Do transformation
         std::vector<double> sender_buffer(sender_size);
         std::vector<double> receiver_buffer(receiver_size);
         // put H to sender buffer
@@ -416,19 +479,24 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
             }
         }
         // do all2all transformation
-        MPI_Alltoallv(&sender_buffer[0],
-                      &sender_size_process[0],
-                      &sender_displacement_process[0],
-                      MPI_DOUBLE,
-                      &receiver_buffer[0],
-                      &receiver_size_process[0],
-                      &receiver_displacement_process[0],
-                      MPI_DOUBLE,
-                      COMM_TRANS);
-// collect H from receiver buffer
+        MPI_Alltoallv(
+            &sender_buffer[0],
+            &sender_size_process[0],
+            &sender_displacement_process[0],
+            MPI_DOUBLE,
+            &receiver_buffer[0],
+            &receiver_size_process[0],
+            &receiver_displacement_process[0],
+            MPI_DOUBLE,
+            COMM_TRANS);
+        // collect H from receiver buffer
         delete[] H_ccs;
         H_ccs = new double[receiver_size];
-        buffer2CCSvalue(receiver_size, &buffer2ccsIndex[0], &receiver_buffer[0], H_ccs);
+        buffer2CCSvalue(
+            receiver_size,
+            &buffer2ccsIndex[0],
+            &receiver_buffer[0],
+            H_ccs);
 
         // put S to sender buffer
         if (SRC_Matrix.get_layout() == 'R' || SRC_Matrix.get_layout() == 'r')
@@ -446,19 +514,24 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
             }
         }
         // do all2all transformation
-        MPI_Alltoallv(&sender_buffer[0],
-                      &sender_size_process[0],
-                      &sender_displacement_process[0],
-                      MPI_DOUBLE,
-                      &receiver_buffer[0],
-                      &receiver_size_process[0],
-                      &receiver_displacement_process[0],
-                      MPI_DOUBLE,
-                      COMM_TRANS);
-// collect S from receiver buffer
+        MPI_Alltoallv(
+            &sender_buffer[0],
+            &sender_size_process[0],
+            &sender_displacement_process[0],
+            MPI_DOUBLE,
+            &receiver_buffer[0],
+            &receiver_size_process[0],
+            &receiver_displacement_process[0],
+            MPI_DOUBLE,
+            COMM_TRANS);
+        // collect S from receiver buffer
         delete[] S_ccs;
         S_ccs = new double[receiver_size];
-        buffer2CCSvalue(receiver_size, &buffer2ccsIndex[0], &receiver_buffer[0], S_ccs);
+        buffer2CCSvalue(
+            receiver_size,
+            &buffer2ccsIndex[0],
+            &receiver_buffer[0],
+            S_ccs);
     }
     // clear and return
     deleteGroupCommTrans(GROUP_TRANS, COMM_TRANS);
@@ -467,18 +540,23 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
 
 // transform two sparse matrices from Compressed Column Storage (CCS) to block cyclic distribution (BCD) distribution
 // two source matrices share the same non-zero elements positions
-int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
-                                             double* DMnzvalLocal,
-                                             double* EDMnzvalLocal,
-                                             DistBCDMatrix& DST_Matrix,
-                                             double* DM,
-                                             double* EDM)
+int DistMatrixTransformer::transformCCStoBCD(
+    DistCCSMatrix &SRC_Matrix,
+    double *DMnzvalLocal,
+    double *EDMnzvalLocal,
+    DistBCDMatrix &DST_Matrix,
+    double *DM,
+    double *EDM)
 {
     int myproc;
     MPI_Comm_rank(MPI_COMM_WORLD, &myproc);
     MPI_Group GROUP_TRANS;
     MPI_Comm COMM_TRANS = MPI_COMM_NULL;
-    newGroupCommTrans(DST_Matrix, SRC_Matrix, GROUP_TRANS, COMM_TRANS);
+    newGroupCommTrans(
+        DST_Matrix,
+        SRC_Matrix,
+        GROUP_TRANS,
+        COMM_TRANS);
     if (COMM_TRANS != MPI_COMM_NULL)
     {
         // init DM and EDM with 0
@@ -501,31 +579,59 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         if (myproc_trans == 0)
         {
             MPI_Group_size(DST_Matrix.get_group(), &nproc_bcd);
-            MPI_Bcast(&nproc_bcd, 1, MPI_INT, 0, COMM_TRANS);
+            MPI_Bcast(
+                &nproc_bcd,
+                1,
+                MPI_INT,
+                0,
+                COMM_TRANS);
             proc_map_bcd_trans.resize(nproc_bcd, 0);
             for (int i = 0; i < nproc_bcd; ++i)
             {
-                MPI_Group_translate_ranks(DST_Matrix.get_group(), 1, &i, GROUP_TRANS, &proc_map_bcd_trans[i]);
+                MPI_Group_translate_ranks(
+                    DST_Matrix.get_group(),
+                    1,
+                    &i,
+                    GROUP_TRANS,
+                    &proc_map_bcd_trans[i]);
             }
-            MPI_Bcast(&proc_map_bcd_trans[0], nproc_bcd, MPI_INT, 0, COMM_TRANS);
+            MPI_Bcast(
+                &proc_map_bcd_trans[0],
+                nproc_bcd,
+                MPI_INT,
+                0,
+                COMM_TRANS);
         }
         else
         {
-            MPI_Bcast(&nproc_bcd, 1, MPI_INT, 0, COMM_TRANS);
+            MPI_Bcast(
+                &nproc_bcd,
+                1,
+                MPI_INT,
+                0,
+                COMM_TRANS);
             proc_map_bcd_trans.resize(nproc_bcd, 0);
-            MPI_Bcast(&proc_map_bcd_trans[0], nproc_bcd, MPI_INT, 0, COMM_TRANS);
+            MPI_Bcast(
+                &proc_map_bcd_trans[0],
+                nproc_bcd,
+                MPI_INT,
+                0,
+                COMM_TRANS);
         }
         // setup sender_size_process
         // std::fill(sender_size_process.begin(), sender_size_process.end(), 0);
         for (int i = 0; i < NPROC_TRANS; ++i)
+        {
             sender_size_process[i] = 0;
+        }
         for (int icol = 0; icol < SRC_Matrix.get_numcol_local(); ++icol)
         {
             int g_col = SRC_Matrix.globalCol(icol);
             int recv_pcol_bcd;
             int recv_col = DST_Matrix.localCol(g_col, recv_pcol_bcd);
-    
-            for (int rowidx = SRC_Matrix.get_colptr_local()[icol] - 1; rowidx < SRC_Matrix.get_colptr_local()[icol + 1] - 1; ++rowidx)
+
+            for (int rowidx = SRC_Matrix.get_colptr_local()[icol] - 1;
+                rowidx < SRC_Matrix.get_colptr_local()[icol + 1] - 1; ++rowidx)
             {
                 int g_row = SRC_Matrix.get_rowind_local()[rowidx] - 1;
                 int recv_prow_bcd;
@@ -539,8 +645,17 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         // setup receiver_size_process
         // std::fill(receiver_size_process.begin(), receiver_size_process.end(), 0);
         for (int i = 0; i < NPROC_TRANS; ++i)
+        {
             receiver_size_process[i] = 0;
-        MPI_Alltoall(&sender_size_process[0], 1, MPI_INT, &receiver_size_process[0], 1, MPI_INT, COMM_TRANS);
+        }
+        MPI_Alltoall(
+            &sender_size_process[0],
+            1,
+            MPI_INT,
+            &receiver_size_process[0],
+            1,
+            MPI_INT,
+            COMM_TRANS);
         // setup sender_displacement and receiver_displacement
         sender_displacement_process[0] = 0;
         receiver_displacement_process[0] = 0;
@@ -554,11 +669,11 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
 
         // setup up sender index and receiver index
         int sender_size = SRC_Matrix.get_nnzlocal();
-        int* sender_index = nullptr;
-        double* sender_buffer = nullptr;
-        int* dst_index = nullptr;
-        int* receiver_index = nullptr;
-        double* receiver_buffer = nullptr;
+        int *sender_index = nullptr;
+        double *sender_buffer = nullptr;
+        int *dst_index = nullptr;
+        int *receiver_index = nullptr;
+        double *receiver_buffer = nullptr;
 
         if (sender_size > 0)
         {
@@ -621,7 +736,8 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
             int g_col = SRC_Matrix.globalCol(icol);
             int recv_pcol_bcd;
             int recv_col = DST_Matrix.localCol(g_col, recv_pcol_bcd);
-            for (int rowidx = SRC_Matrix.get_colptr_local()[icol] - 1; rowidx < SRC_Matrix.get_colptr_local()[icol + 1] - 1; ++rowidx)
+            for (int rowidx = SRC_Matrix.get_colptr_local()[icol] - 1;
+                rowidx < SRC_Matrix.get_colptr_local()[icol + 1] - 1; ++rowidx)
             {
                 int g_row = SRC_Matrix.get_rowind_local()[rowidx] - 1;
                 int recv_prow_bcd;
@@ -648,15 +764,16 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
             receiver_displacement_process[i] *= 2;
         }
 
-        MPI_Alltoallv(&dst_index[0],
-                      &sender_size_process[0],
-                      &sender_displacement_process[0],
-                      MPI_INT,
-                      &receiver_index[0],
-                      &receiver_size_process[0],
-                      &receiver_displacement_process[0],
-                      MPI_INT,
-                      COMM_TRANS);
+        MPI_Alltoallv(
+            &dst_index[0],
+            &sender_size_process[0],
+            &sender_displacement_process[0],
+            MPI_INT,
+            &receiver_index[0],
+            &receiver_size_process[0],
+            &receiver_displacement_process[0],
+            MPI_INT,
+            COMM_TRANS);
 
         // reset size and displacement for transfering matrix value by alltoall
         for (int i = 0; i < NPROC_TRANS; ++i)
@@ -675,15 +792,16 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         }
 
         // transfer sender buffer to receiver buffer
-        MPI_Alltoallv(&sender_buffer[0],
-                      &sender_size_process[0],
-                      &sender_displacement_process[0],
-                      MPI_DOUBLE,
-                      &receiver_buffer[0],
-                      &receiver_size_process[0],
-                      &receiver_displacement_process[0],
-                      MPI_DOUBLE,
-                      COMM_TRANS);
+        MPI_Alltoallv(
+            &sender_buffer[0],
+            &sender_size_process[0],
+            &sender_displacement_process[0],
+            MPI_DOUBLE,
+            &receiver_buffer[0],
+            &receiver_size_process[0],
+            &receiver_displacement_process[0],
+            MPI_DOUBLE,
+            COMM_TRANS);
 
         // transform receiver_buffer to DM
         if (DST_Matrix.get_layout() == 'R' || DST_Matrix.get_layout() == 'r')
@@ -716,15 +834,16 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         }
 
         // transfer sender buffer to receiver buffer
-        MPI_Alltoallv(&sender_buffer[0],
-                      &sender_size_process[0],
-                      &sender_displacement_process[0],
-                      MPI_DOUBLE,
-                      &receiver_buffer[0],
-                      &receiver_size_process[0],
-                      &receiver_displacement_process[0],
-                      MPI_DOUBLE,
-                      COMM_TRANS);
+        MPI_Alltoallv(
+            &sender_buffer[0],
+            &sender_size_process[0],
+            &sender_displacement_process[0],
+            MPI_DOUBLE,
+            &receiver_buffer[0],
+            &receiver_size_process[0],
+            &receiver_displacement_process[0],
+            MPI_DOUBLE,
+            COMM_TRANS);
 
         // transform receiver_buffer to EDM
         if (DST_Matrix.get_layout() == 'R' || DST_Matrix.get_layout() == 'r')
@@ -755,7 +874,6 @@ int DistMatrixTransformer::transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
         delete[] dst_index;
         delete[] receiver_index;
         delete[] receiver_buffer;
-
     }
     deleteGroupCommTrans(GROUP_TRANS, COMM_TRANS);
     return 0;

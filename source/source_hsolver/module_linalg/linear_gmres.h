@@ -6,8 +6,7 @@
 namespace hsolver
 {
 /** @brief Restarted right-preconditioned GMRES with independent batched columns. */
-template <typename T, typename Device>
-class LinearGMRES
+template <typename T, typename Device> class LinearGMRES
 {
   private:
     using Wide = std::complex<double>;
@@ -29,44 +28,52 @@ class LinearGMRES
     int stride_ = 0;
     int active_ = 0;
 
-    T* vector(int slot);
-    T* residual();
-    T* solution();
-    T* basis(int index);
-    T* direction(int index);
-    T* image(int index);
-    bool start_cycle(const std::vector<double>& threshold, std::vector<T>* coefficients);
-    void orthogonalize(int j, T* next, std::vector<T>* coefficients);
+    T *vector(int slot);
+    T *residual();
+    T *solution();
+    T *basis(int index);
+    T *direction(int index);
+    T *image(int index);
+    bool start_cycle(const std::vector<double> &threshold, std::vector<T> *coefficients);
+    void orthogonalize(int j, T *next, std::vector<T> *coefficients);
     bool update_qr(int b, int j, double norm);
-    bool back_substitute(int b, int j, std::vector<Wide>* weights);
-    void update_solution(int j,
-                         const std::vector<int>& done,
-                         const std::vector<std::vector<Wide>>& weights,
-                         bool reconstruct,
-                         std::vector<T>* coefficients);
+    bool back_substitute(int b, int j, std::vector<Wide> *weights);
+    void update_solution(
+        int j,
+        const std::vector<int> &done,
+        const std::vector<std::vector<Wide>> &weights,
+        bool reconstruct,
+        std::vector<T> *coefficients);
     void retire(int band);
     void apply_swaps(int last);
-    bool cycle(const LinearOperator<T, Device>& op,
-               const LinearOperator<T, Device>& preconditioner,
-               const std::vector<double>& threshold,
-               bool reconstruct,
-               int max_iter,
-               LinearSolveResult* result);
+    bool cycle(
+        const LinearOperator<T, Device> &op,
+        const LinearOperator<T, Device> &preconditioner,
+        const std::vector<double> &threshold,
+        bool reconstruct,
+        int max_iter,
+        LinearSolveResult *result);
 
   public:
-    LinearGMRES(double tolerance, int restart, int max_iter, const diag_comm_info& comm);
-    /** @brief Use the per-call budget and reconstruction policy; force_check requests an independent final application. */
-    LinearSolveResult solve(const LinearOperator<T, Device>& op,
-                            const LinearOperator<T, Device>& preconditioner,
-                            int ld,
-                            int nvec,
-                            int dim,
-                            T* x,
-                            const T* b,
-                            const T* initial_residual,
-                            bool force_check,
-                            int max_iter,
-                            bool reconstruct);
+    LinearGMRES(
+        double tolerance,
+        int restart,
+        int max_iter,
+        const diag_comm_info &comm);
+    /** @brief Use the per-call budget and reconstruction policy; force_check requests an independent final application.
+     */
+    LinearSolveResult solve(
+        const LinearOperator<T, Device> &op,
+        const LinearOperator<T, Device> &preconditioner,
+        int ld,
+        int nvec,
+        int dim,
+        T *x,
+        const T *b,
+        const T *initial_residual,
+        bool force_check,
+        int max_iter,
+        bool reconstruct);
 };
 } // namespace hsolver
 #endif
