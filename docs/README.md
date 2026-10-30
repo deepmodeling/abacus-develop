@@ -27,12 +27,13 @@ directory:
    ```
 
    If you have no binary yet, the much smaller `abacus_input_yaml` target writes the same file
-   (this is what Read the Docs builds):
+   (this is what Read the Docs builds). Run these commands from the repository root, where `build`
+   is the CMake build directory as in the [installation guide](quick_start/easy_install.md):
 
    ```bash
-   cmake -B ../build -DENABLE_MPI=OFF -DENABLE_LCAO=OFF ..
-   cmake --build ../build --target abacus_input_yaml
-   ../build/source/source_io/abacus_input_yaml > ./parameters.yaml
+   cmake -B build -DENABLE_MPI=OFF -DENABLE_LCAO=OFF
+   cmake --build build --target abacus_input_yaml
+   build/source/source_io/abacus_input_yaml > docs/parameters.yaml
    ```
 
 1. (optional but recommended) Generate Markdown pages from the `parameters.yaml` file:
