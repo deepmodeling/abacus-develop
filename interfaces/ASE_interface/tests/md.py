@@ -1,22 +1,22 @@
 import unittest
+import numpy as np
 from pathlib import Path
 here = Path(__file__).parent
 from ase.build import bulk
 from ase.units import fs
 from ase.md import Langevin
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
-from abacuslite.io.generalio import load_pseudo, load_orbital
 from abacuslite import AbacusProfile, Abacus
-from common import preserved_tmpdir
+from common import preserved_tmpdir, test_profile_paths, assert_scf_facts
 
 class TestLangevinMolecularDynamics(unittest.TestCase):
 
     def test(self):
-        pporb = here.parent.parent.parent / 'tests' / 'PP_ORB'
+        command, pporb = test_profile_paths(here)
 
         silicon = bulk('Si', 'diamond', a=5.43)
         aprof = AbacusProfile(
-            command='mpirun -np 2 abacus',
+            command=command,
             pseudo_dir=pporb,
             orbital_dir=pporb,
             omp_num_threads=1,
@@ -26,8 +26,8 @@ class TestLangevinMolecularDynamics(unittest.TestCase):
             abacus = Abacus(
                 profile=aprof,
                 directory=tmpdir,
-                pseudopotentials=load_pseudo(pporb),
-                basissets=load_orbital(pporb, efficiency=True),
+                pseudopotentials={'Si': 'Si_ONCV_PBE-1.0.upf'},
+                basissets={'Si': 'Si_gga_8au_100Ry_2s2p1d.orb'},
                 inp={
                     'basis_type': 'lcao',
                     'gamma_only': True,
@@ -38,13 +38,24 @@ class TestLangevinMolecularDynamics(unittest.TestCase):
                 }
             )
 
-        silicon.calc = abacus
-        MaxwellBoltzmannDistribution(silicon, temperature_K=300)
-        dyn = Langevin(silicon, 
-                       timestep=1.0 * fs, 
-                       temperature_K=300, 
-                       friction=0.01)
-        dyn.run(2)
+            silicon.calc = abacus
+            MaxwellBoltzmannDistribution(silicon, temperature_K=300)
+            positions = silicon.positions.copy()
+            frames = []
+            dyn = Langevin(silicon,
+                           timestep=1.0 * fs,
+                           temperature_K=300,
+                           friction=0.01)
+            dyn.attach(lambda: frames.append((silicon.positions.copy(), silicon.get_forces().copy())))
+            dyn.run(2)
+            self.assertEqual(dyn.nsteps, 2)
+            self.assertGreaterEqual(len(frames), 3)
+            self.assertFalse(np.allclose(silicon.positions, positions))
+            for frame_positions, frame_forces in frames:
+                self.assertEqual(frame_forces.shape, (len(silicon), 3))
+                self.assertTrue(np.all(np.isfinite(frame_positions)))
+                self.assertTrue(np.all(np.isfinite(frame_forces)))
+            assert_scf_facts(self, abacus, tmpdir, len(silicon), forces=True, stress=True)
 
 if __name__ == '__main__':
     unittest.main()

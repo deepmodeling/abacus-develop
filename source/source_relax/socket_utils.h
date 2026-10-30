@@ -21,6 +21,7 @@ constexpr double kInverseRelativeTolerance = 64.0;
 constexpr double kStressAbsoluteTolerance = 1.0e-10;
 constexpr double kStressRelativeTolerance = 1.0e-8;
 constexpr std::int32_t kMaxInitBytes = static_cast<std::int32_t>(1048576);
+constexpr const char* kPropertiesSchema = "abacus.socket.properties.v1";
 
 enum class DriverState
 {

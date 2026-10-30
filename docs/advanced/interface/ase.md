@@ -4,7 +4,11 @@
 
 [ASE](https://wiki.fysik.dtu.dk/ase/) (Atomic Simulation Environment) performs as a powerful Pythonic platform for atomistic simulations, in which there are plenty of functionalties supported, such as various geometry optimization algorithms for finding both the minimum energy point and the transition states, including BFGS, BFGSLineSearch, FIRE, NEB, AUTO-NEB, etc, and various molecular dynamics techniques, including thermostats (Langevin, CSVR, Nose-Hoover Chain, etc) and metadynamics (via the interface with Plumed). 
 
-Due to the growing number of softwares and machine-learning forcefields, we turn to maintain the interface with ASE by our own, while a legacy version of ASE interface can still be found at [our GitLab repository of ase-abacus](https://gitlab.com/1041176461/ase-abacus ).
+Due to the growing number of softwares and machine-learning forcefields, the
+ABACUS ASE interface is maintained as the independent
+[`abacuslite`](https://github.com/QuantumMisaka/abacuslite) package. A legacy
+version of the ASE interface can still be found at
+[our GitLab repository of ase-abacus](https://gitlab.com/1041176461/ase-abacus).
 
 ## Installation
 
@@ -15,12 +19,22 @@ conda create -n abacus python=3.10
 conda activate abacus
 ```
 
-Then, install the ASE interface by:
+Then, install the independently maintained ASE plugin:
 
 ```bash
-cd interfaces/ASE_interface
-pip install .
+python -m pip install abacuslite
 ```
+
+`abacuslite` owns the Python calculator, ABACUS input/output readers and user
+examples. The ABACUS repository keeps only the engine-side compatibility
+harness in
+[`interfaces/ASE_interface/tests`](https://github.com/deepmodeling/abacus-develop/tree/develop/interfaces/ASE_interface/tests).
+ABACUS CI installs the published plugin, or a reviewed candidate ref, and runs
+that harness against the executable built from the current source. Manual CI
+dispatch can select the candidate ref.
+
+The plugin is not vendored and is not a git submodule, so GitHub source
+archives remain complete.
 
 ## ABACUS Calculator
 
@@ -99,9 +113,34 @@ with tempfile.TemporaryDirectory() as tmpdir:
 
 ## Perform Calculations
 
-In the new implementation, we limit the range of functionalties supported to mainly include the necessary ones, such as the SCF calculation, the energy and force/stress evaluation. The other features, such as starting the molecule dynamics directly in ABACUS from Python, is not supported anymore. Instead, it is encouraged to use the ASE tools to perform the molecule dynamics.
+### Parser and API contract
 
-Please read the examples in `interfaces/ASE_interface/examples/` for more details.
+The [abacuslite public API contract](https://github.com/QuantumMisaka/abacuslite/blob/main/docs/public-api.md)
+defines supported calculator and I/O entry points, result units, atom ordering,
+missing-value behavior and compatibility rules. Use the documented readers
+for completed output and the calculator/ASE API for execution; no ABACUS-side
+parser wrapper is required. Pure file I/O does not need an ABACUS executable.
+
+ABACUS owns its output formats and real-engine compatibility tests; abacuslite
+owns parsing and ASE result assembly. An engine format change must be checked
+against the installed plugin using independent raw-output assertions.
+Internal parser helpers, template flags and ASE server process handles are
+not external integration interfaces.
+
+In the new implementation, the supported surface is the one the external plugin
+exposes: SCF calculations, energy and force/stress evaluation, ASE-driven
+relaxation and molecular dynamics through the ASE optimizers and integrators,
+and ABACUS native MD, in which the engine runs its own MD integrator and the
+plugin reads the resulting trajectory. Both molecular-dynamics paths are
+validated rather than assumed: the engine-side harness runs the ASE-driven
+Langevin case (`md.py`) and the native-MD case (`native_md.py`) as required
+compatibility cases in both the develop and the legacy output-format lanes.
+Calculation types the plugin does not expose remain outside the supported
+surface, and for simulations whose integrator you control the ASE tools remain
+the recommended path.
+
+See the [abacuslite examples](https://github.com/QuantumMisaka/abacuslite/tree/main/examples)
+for complete scripts.
 
 ### Socket I/O with ASE
 
@@ -148,11 +187,10 @@ With the ABACUS toolchain workflow, build the normal ABACUS executable with LCAO
 
 For PW calculations on CUDA/ROCm with multiple MPI ranks, use a k-point layout compatible with ABACUS' GPU parallelization. In practice, make sure each k-point pool contains one MPI rank; for example, a 4-rank PW GPU socket calculation should use at least four k-points so the default GPU `kpar` adjustment can assign one rank per pool. A one-k-point PW GPU job with several MPI ranks can fail in the PW GPU transform path; reduce the rank count or use a denser k-point mesh such as a smaller `kspacing`.
 
-The ASE interface can be installed from this repository with:
+The ASE interface is installed from PyPI:
 
 ```bash
-cd interfaces/ASE_interface
-pip install .
+python -m pip install abacuslite
 ```
 
 A minimal socket calculator setup is:
@@ -193,13 +231,28 @@ Calling `atoms.get_potential_energy()` does not force a force or stress calculat
 
 The ABACUS metadata extension is required to expose force/stress presence safely. If a legacy client returns an empty extras field, the adapter accepts only an energy-only response and refuses to infer forces or stress from the fixed-wire padding. Generic i-PI/ASE clients that ignore ABACUS extras cannot distinguish mandatory padding from a computed zero; use `AbacusSocketIO` or another metadata-aware client when requesting optional properties. When launching ABACUS with a generic client, explicitly set `cal_force=1` for force-driven workflows and `cal_stress=1` for stress evaluation; an omitted switch defaults to disabled. Such clients also need their own policy for unconverged SCF results.
 
+#### Socket protocol compatibility
+
+The socket metadata extension uses the schema `abacus.socket.properties.v1`.
+The `present` list distinguishes computed properties from protocol padding, and
+`scf_converged` reports the SCF state for the returned frame. Additive metadata
+fields may be added within v1; a breaking change requires a new schema version
+and a transition period in both ABACUS and abacuslite.
+
+The ASE-side adapter contract is documented in the
+[abacuslite socket contract](https://github.com/QuantumMisaka/abacuslite/blob/main/docs/socket-contract.md).
+
+Engine and adapter changes that alter this contract should be linked and tested
+together.
+
 A socket calculator owns one ABACUS process initialized from one fixed `INPUT`/`STRU` setup. Reuse the same `AbacusSocketIO` instance only for position updates under the same electronic-structure settings and the same cell. Do not change `kpts`, `kspacing`, `nspin`, `basis_type`, `basissets`, pseudopotentials, species, atom count, cell, or other core `INPUT`/`STRU` parameters through an existing socket calculator; create a new `AbacusSocketIO` instance and a new ABACUS client process for those changes. `AbacusSocketIO` rejects cell changes before sending them to ABACUS, and the ABACUS socket driver also checks incoming POSDATA cells against the initial `STRU` cell and exits if they differ.
 
 In socket mode, ABACUS keeps one client process alive. All SCF evaluations produced by the same `AbacusSocketIO` instance are appended to the same `OUT.ABACUS/running_scf.log`, because the ABACUS calculation type remains `scf`. The authoritative per-step energy and force results are returned through the i-PI socket to ASE. Use ASE trajectory and optimizer log files, such as `BFGS(atoms, trajectory="opt.traj", logfile="opt.log")`, when each optimizer or MD step should be saved separately. Treat `running_scf.log` mainly as the ABACUS diagnostic log for the socket client, not as one independent FileIO result per structure.
 
 The i-PI protocol does not transmit element symbols. `AbacusSocketIO` therefore sorts the internal socket atoms with the same first-occurrence species grouping used when writing `STRU`, and maps returned forces back to the original ASE `Atoms` order. This avoids silent force/atom mismatches when structures are read from CIF, extxyz, POSCAR, or other formats whose atom order is not already grouped for ABACUS. Users should not manually reorder atoms for socket I/O; pass the physical ASE `Atoms` object directly to the calculator.
 
-A complete fixed-cell validation and benchmark example is available in `interfaces/ASE_interface/examples/socketio.py`.
+A complete fixed-cell validation example is available in
+[`abacuslite/examples/socketio.py`](https://github.com/QuantumMisaka/abacuslite/blob/main/examples/socketio.py).
 
 ## SPAP Analysis
 

@@ -14,6 +14,11 @@ simulations. The interfaces here are designed to:
   preprocessing -> ABACUS calculation -> post-analysis)
 - Standardize integration methods to ensure reproducibility and ease of use
 
+The ASE calculator is maintained externally as the
+[`abacuslite`](https://github.com/QuantumMisaka/abacuslite) package.
+`ASE_interface/` in this repository contains only the engine-side
+compatibility harness used by ABACUS CI.
+
 ## Usage Guidelines
 
 - For each software interface, refer to the dedicated README file in the 
