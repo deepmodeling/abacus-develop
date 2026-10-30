@@ -1,4 +1,4 @@
-/// This is the module for wrapper of 
+/// This is the module for wrapper of
 /// DeNse Generalized eigenValue (eXtended)
 /// HErmitian / SYmmetric
 
@@ -7,8 +7,8 @@
 #ifndef MODULE_HSOLVER_HEGVD_H
 #define MODULE_HSOLVER_HEGVD_H
 
-#include "source_base/parallel_reduce.h"
 #include "source_base/module_device/types.h"
+#include "source_base/parallel_reduce.h"
 
 #include <cassert>
 
@@ -43,9 +43,7 @@ inline double get_real(const double &x) { return x; }
 
 inline float get_real(const float &x) { return x; }
 
-
-template <typename T, typename Device>
-struct hegvd_op
+template <typename T, typename Device> struct hegvd_op
 {
     using Real = typename GetTypeReal<T>::type;
     /// @brief HEGVD computes all the eigenvalues and eigenvectors of a complex generalized
@@ -67,7 +65,14 @@ struct hegvd_op
     /// Output Parameter
     ///     @param W : calculated eigenvalues
     ///     @param V : calculated eigenvectors (col major)
-    void operator()(const Device* d, const int nstart, const int ldh, const T* A, T* B, Real* W, T* V);
+    void operator()(
+        const Device *d,
+        const int nstart,
+        const int ldh,
+        const T *A,
+        T *B,
+        Real *W,
+        T *V);
 };
 
 // template <typename T, typename Device>
@@ -87,8 +92,7 @@ struct hegvd_op
 //     void operator()(const Device* d, const int nstart, const int ldh, const T* A, T* B, Real* W, T* V);
 // };
 
-template <typename T, typename Device>
-struct hegvx_op
+template <typename T, typename Device> struct hegvx_op
 {
     using Real = typename GetTypeReal<T>::type;
     /// @brief HEGVX computes first m eigenvalues and eigenvectors of a complex generalized
@@ -102,11 +106,18 @@ struct hegvx_op
     /// Output Parameter
     ///     @param W : calculated eigenvalues
     ///     @param V : calculated eigenvectors (col major)
-    void operator()(const Device* d, const int nstart, const int ldh, T* A, T* B, const int m, Real* W, T* V);
+    void operator()(
+        const Device *d,
+        const int nstart,
+        const int ldh,
+        T *A,
+        T *B,
+        const int m,
+        Real *W,
+        T *V);
 };
 
-template <typename T, typename Device>
-struct heevx_op
+template <typename T, typename Device> struct heevx_op
 {
     using Real = typename GetTypeReal<T>::type;
     /// @brief heevx computes the first m eigenvalues and their corresponding eigenvectors of
@@ -128,7 +139,14 @@ struct heevx_op
     /// Output Parameter
     ///     @param w: calculated eigenvalues
     ///     @param z: calculated eigenvectors
-    void operator()(const Device *d, const int ndim, const int lda, const T *A, const int neig, Real *w, T *z);
+    void operator()(
+        const Device *d,
+        const int ndim,
+        const int lda,
+        const T *A,
+        const int neig,
+        Real *w,
+        T *z);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

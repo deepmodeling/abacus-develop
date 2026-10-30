@@ -2,12 +2,12 @@
 #define ABACUS_SOURCE_HSOLVER_KERNELS_CUDA_DIAG_CUSOLVERMP_CUH
 
 #include "mpi.h"
+#include "source_base/macros.h"
 
 #include <complex>
+#include <cusolverMp.h>
 #include <fstream>
 #include <vector>
-#include <cusolverMp.h>
-#include "source_base/macros.h"
 
 #ifdef __USE_CAL
 #include <cal.h>
@@ -15,30 +15,30 @@
 #include <nccl.h>
 #endif
 
-template<typename inputT>
-class Diag_CusolverMP_gvd
+template <typename inputT> class Diag_CusolverMP_gvd
 {
   private:
     using outputT = typename GetTypeReal<inputT>::type;
 
   public:
-    Diag_CusolverMP_gvd(const MPI_Comm comm,
-                          const int narows,
-                          const int nacols,
-                          const int* desc);
-
+    Diag_CusolverMP_gvd(
+        const MPI_Comm comm,
+        const int narows,
+        const int nacols,
+        const int *desc);
 
     // 20240530 zhanghaochong
     // Here eigen is the output rather than the input. Don't be confused by inputT.
     // Here inputT is the data type, the data type of EigenVector should be the same as
     // the data type of the input matrix.
-    int generalized_eigenvector(inputT* A,
-                                inputT* B,
-                                outputT* EigenValue,
-                                inputT* EigenVector);
+    int generalized_eigenvector(
+        inputT *A,
+        inputT *B,
+        outputT *EigenValue,
+        inputT *EigenVector);
     ~Diag_CusolverMP_gvd();
-  private:
 
+  private:
     int nFull;
     int cblacs_ctxt;
     int lda;

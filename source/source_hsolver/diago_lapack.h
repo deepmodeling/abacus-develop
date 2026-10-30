@@ -8,9 +8,9 @@
 #ifndef DIAGOLAPACK_H
 #define DIAGOLAPACK_H
 
-#include "source_base/macros.h"   // GetRealType
-#include "source_base/matrix_block.h"
+#include "source_base/macros.h" // GetRealType
 #include "source_base/matrix.h"
+#include "source_base/matrix_block.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_psi/psi.h"
 
@@ -20,8 +20,7 @@
 
 namespace hsolver
 {
-template <typename T>
-class DiagoLapack
+template <typename T> class DiagoLapack
 {
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -31,44 +30,54 @@ class DiagoLapack
     /// @param nbands_in number of lowest eigenpairs to compute
     DiagoLapack(const int nlocal_in, const int nbands_in) : nlocal(nlocal_in), nbands(nbands_in) {};
 
-    void diag(ModuleBase::MatrixBlock<T>& h_mat,
-              ModuleBase::MatrixBlock<T>& s_mat,
-              psi::Psi<T>& psi,
-              Real* eigenvalue_in);
-  #ifdef __MPI
+    void diag(
+        ModuleBase::MatrixBlock<T> &h_mat,
+        ModuleBase::MatrixBlock<T> &s_mat,
+        psi::Psi<T> &psi,
+        Real *eigenvalue_in);
+#ifdef __MPI
     // diagnolization used in parallel-k case
-    void diag_pool(ModuleBase::MatrixBlock<T>& h_mat, ModuleBase::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm);
+    void diag_pool(
+        ModuleBase::MatrixBlock<T> &h_mat,
+        ModuleBase::MatrixBlock<T> &s_mat,
+        psi::Psi<T> &psi,
+        Real *eigenvalue_in,
+        MPI_Comm &comm);
 #endif
 
-    void dsygvx_diag(const int ncol,
-                     const int nrow,
-                     const double* const h_mat,
-                     const double* const s_mat,
-                     double* const ekb,
-                     psi::Psi<double>& wfc_2d);
-    void zhegvx_diag(const int ncol,
-                     const int nrow,
-                     const std::complex<double>* const h_mat,
-                     const std::complex<double>* const s_mat,
-                     double* const ekb,
-                     psi::Psi<std::complex<double>>& wfc_2d);
+    void dsygvx_diag(
+        const int ncol,
+        const int nrow,
+        const double *const h_mat,
+        const double *const s_mat,
+        double *const ekb,
+        psi::Psi<double> &wfc_2d);
+    void zhegvx_diag(
+        const int ncol,
+        const int nrow,
+        const std::complex<double> *const h_mat,
+        const std::complex<double> *const s_mat,
+        double *const ekb,
+        psi::Psi<std::complex<double>> &wfc_2d);
 
-    std::pair<int, std::vector<int>> dsygvx_once(const int ncol,
-            const int nrow,
-            const double* const h_mat,
-            const double* const s_mat,
-            double* const ekb,
-            psi::Psi<double>& wfc_2d) const;
-    std::pair<int, std::vector<int>> zhegvx_once(const int ncol,
-            const int nrow,
-            const std::complex<double>* const h_mat,
-            const std::complex<double>* const s_mat,
-            double* const ekb,
-            psi::Psi<std::complex<double>>& wfc_2d) const;
+    std::pair<int, std::vector<int>> dsygvx_once(
+        const int ncol,
+        const int nrow,
+        const double *const h_mat,
+        const double *const s_mat,
+        double *const ekb,
+        psi::Psi<double> &wfc_2d) const;
+    std::pair<int, std::vector<int>> zhegvx_once(
+        const int ncol,
+        const int nrow,
+        const std::complex<double> *const h_mat,
+        const std::complex<double> *const s_mat,
+        double *const ekb,
+        psi::Psi<std::complex<double>> &wfc_2d) const;
 
     int degeneracy_max = 12; // For reorthogonalized memory. 12 followes siesta.
 
-    void post_processing(const int info, const std::vector<int>& vec);
+    void post_processing(const int info, const std::vector<int> &vec);
 
   private:
     const int nlocal;

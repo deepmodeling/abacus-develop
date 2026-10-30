@@ -8,18 +8,19 @@
 namespace hsolver
 {
 
-double set_diagethr_ks(const std::string basis_type,
-                       const std::string esolver_type,
-                       const std::string calculation_in,
-                       const std::string init_chg_in,
-                       const std::string precision_flag_in,
-                       const int istep,
-                       const int iter,
-                       const double drho,
-                       const double pw_diag_thr_init,
-                       const double diag_ethr_in,
-                       const double nelec_in,
-                       const double scf_thr_in)
+double set_diagethr_ks(
+    const std::string basis_type,
+    const std::string esolver_type,
+    const std::string calculation_in,
+    const std::string init_chg_in,
+    const std::string precision_flag_in,
+    const int istep,
+    const int iter,
+    const double drho,
+    const double pw_diag_thr_init,
+    const double diag_ethr_in,
+    const double nelec_in,
+    const double scf_thr_in)
 {
     double res_diag_ethr = diag_ethr_in;
 
@@ -68,8 +69,9 @@ double set_diagethr_ks(const std::string basis_type,
             {
                 res_diag_ethr = 1.e-2;
             }
-            res_diag_ethr = std::min(res_diag_ethr,
-                                     static_cast<double>(0.1) * drho / std::max(static_cast<double>(1.0), static_cast<double>(nelec_in)));
+            res_diag_ethr = std::min(
+                res_diag_ethr,
+                static_cast<double>(0.1) * drho / std::max(static_cast<double>(1.0), static_cast<double>(nelec_in)));
         }
 
         // Keep the single-precision diagonalization threshold at or above the floor
@@ -87,19 +89,20 @@ double set_diagethr_ks(const std::string basis_type,
     return res_diag_ethr;
 }
 
-double set_diagethr_sdft(const std::string basis_type,
-                         const std::string esolver_type,
-                         const std::string calculation_in,
-                         const std::string init_chg_in,
-                         const int istep,
-                         const int iter,
-                         const double drho,
-                         const double pw_diag_thr_init,
-                         const double diag_ethr_in,
-                         const int nband_in,
-                         const double stoiter_ks_ne_in,
-                         const double nelec_in,
-                         const double scf_thr_in)
+double set_diagethr_sdft(
+    const std::string basis_type,
+    const std::string esolver_type,
+    const std::string calculation_in,
+    const std::string init_chg_in,
+    const int istep,
+    const int iter,
+    const double drho,
+    const double pw_diag_thr_init,
+    const double diag_ethr_in,
+    const int nband_in,
+    const double stoiter_ks_ne_in,
+    const double nelec_in,
+    const double scf_thr_in)
 {
     double res_diag_ethr = diag_ethr_in;
 
@@ -144,14 +147,15 @@ double set_diagethr_sdft(const std::string basis_type,
     return res_diag_ethr;
 }
 
-double reset_diag_ethr(std::ofstream& ofs_running,
-                       const std::string basis_type,
-                       const std::string esolver_type,
-                       const std::string precision_flag_in,
-                       const double hsover_error,
-                       const double drho_in,
-                       const double diag_ethr_in,
-                       const double nelec_in)
+double reset_diag_ethr(
+    std::ofstream &ofs_running,
+    const std::string basis_type,
+    const std::string esolver_type,
+    const std::string precision_flag_in,
+    const double hsover_error,
+    const double drho_in,
+    const double diag_ethr_in,
+    const double nelec_in)
 {
 
     double new_diag_ethr = 0.0;
@@ -183,7 +187,11 @@ double reset_diag_ethr(std::ofstream& ofs_running,
     return new_diag_ethr;
 };
 
-double cal_hsolve_error(const std::string basis_type, const std::string esolver_type, const double diag_ethr_in, const double nelec_in)
+double cal_hsolve_error(
+    const std::string basis_type,
+    const std::string esolver_type,
+    const double diag_ethr_in,
+    const double nelec_in)
 {
     if (basis_type == "pw" && esolver_type == "ksdft")
     {

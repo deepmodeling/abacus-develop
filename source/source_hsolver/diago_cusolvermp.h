@@ -10,8 +10,7 @@
 namespace hsolver
 {
 // DiagoCusolverMP class, for diagonalization using CUSOLVERMP
-template <typename T>
-class DiagoCusolverMP
+template <typename T> class DiagoCusolverMP
 {
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -19,14 +18,13 @@ class DiagoCusolverMP
   public:
     /// @param nlocal_in global dimension of the NAO Hamiltonian
     /// @param nbands_in number of lowest eigenpairs to compute
-    DiagoCusolverMP(const int nlocal_in, const int nbands_in) : nlocal(nlocal_in), nbands(nbands_in)
-    {
-    }
+    DiagoCusolverMP(const int nlocal_in, const int nbands_in) : nlocal(nlocal_in), nbands(nbands_in) {}
     // the diag function for CUSOLVERMP diagonalization
-    void diag(ModuleBase::MatrixBlock<T>& h_mat,
-              ModuleBase::MatrixBlock<T>& s_mat,
-              psi::Psi<T>& psi,
-              Real* eigenvalue_in);
+    void diag(
+        ModuleBase::MatrixBlock<T> &h_mat,
+        ModuleBase::MatrixBlock<T> &s_mat,
+        psi::Psi<T> &psi,
+        Real *eigenvalue_in);
 
   private:
     const int nlocal;

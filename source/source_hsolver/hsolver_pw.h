@@ -14,8 +14,7 @@ class TestHSolverPW; // unit-test fixture, see source_hsolver/unittests/
 namespace hsolver
 {
 
-template <typename T, typename Device = base_device::DEVICE_CPU>
-class HSolverPW
+template <typename T, typename Device = base_device::DEVICE_CPU> class HSolverPW
 {
     /// the unit test drives the protected hamiltSolvePsiK() and
     /// update_precondition() directly; the fixture is at global scope
@@ -31,57 +30,63 @@ class HSolverPW
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
 
   public:
-    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
-              const std::string calculation_type_in,
-              const std::string basis_type_in,
-              const std::string method_in,
-              const bool use_uspp_in,
-              const int nspin_in,
-              const int scf_iter_in,
-              const int diag_iter_max_in,
-              const double diag_thr_in,
-              const bool need_subspace_in,
-              const int nbands_in,
-              const bool diago_smooth_ethr_in,
-              const int pw_diag_ndim_in,
-              const int diag_subspace_in,
-              const int nb2d_in,
-              const bool use_k_continuity_in = false)
+    HSolverPW(
+        ModulePW::PW_Basis_K *wfc_basis_in,
+        const std::string calculation_type_in,
+        const std::string basis_type_in,
+        const std::string method_in,
+        const bool use_uspp_in,
+        const int nspin_in,
+        const int scf_iter_in,
+        const int diag_iter_max_in,
+        const double diag_thr_in,
+        const bool need_subspace_in,
+        const int nbands_in,
+        const bool diago_smooth_ethr_in,
+        const int pw_diag_ndim_in,
+        const int diag_subspace_in,
+        const int nb2d_in,
+        const bool use_k_continuity_in = false)
         : wfc_basis(wfc_basis_in), calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
-          use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
-          diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in),
-          nbands(nbands_in), diago_smooth_ethr(diago_smooth_ethr_in), pw_diag_ndim(pw_diag_ndim_in),
-          diag_subspace(diag_subspace_in), nb2d(nb2d_in),
-          use_k_continuity(use_k_continuity_in) {};
+          use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in), diag_iter_max(diag_iter_max_in),
+          diag_thr(diag_thr_in), need_subspace(need_subspace_in), nbands(nbands_in),
+          diago_smooth_ethr(diago_smooth_ethr_in), pw_diag_ndim(pw_diag_ndim_in), diag_subspace(diag_subspace_in),
+          nb2d(nb2d_in), use_k_continuity(use_k_continuity_in) {};
 
     /// @brief solve function for pw
     /// @param op the H and S operator of the Hamiltonian, switched to each k point in turn
     /// @param psi reference to psi
     /// @param pes interface to elecstate
     /// @param skip_charge
-    void solve(HSOperator<T, Device>& op,
-               psi::Psi<T, Device>& psi,
-               elecstate::ElecState* pes,
-               double* out_eigenvalues,
-               const int rank_in_pool_in,
-               const int nproc_in_pool_in,
-               std::ostream& log,
-               const bool skip_charge);
+    void solve(
+        HSOperator<T, Device> &op,
+        psi::Psi<T, Device> &psi,
+        elecstate::ElecState *pes,
+        double *out_eigenvalues,
+        const int rank_in_pool_in,
+        const int nproc_in_pool_in,
+        std::ostream &log,
+        const bool skip_charge);
 
   protected:
     // diago caller
-    void hamiltSolvePsiK(const HSOperator<T, Device>& op,
-                         psi::Psi<T, Device>& psi,
-                         std::vector<Real>& pre_condition,
-                         Real* eigenvalue,
-                         const int& nk_nums);
+    void hamiltSolvePsiK(
+        const HSOperator<T, Device> &op,
+        psi::Psi<T, Device> &psi,
+        std::vector<Real> &pre_condition,
+        Real *eigenvalue,
+        const int &nk_nums);
 
     // calculate the precondition array for diagonalization in PW base
-    void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
+    void update_precondition(
+        std::vector<Real> &h_diag,
+        const int ik,
+        const int npw,
+        const Real vl_of_0);
 
-    void output_iterInfo(std::ostream& log);
+    void output_iterInfo(std::ostream &log);
 
-    ModulePW::PW_Basis_K* wfc_basis = nullptr;
+    ModulePW::PW_Basis_K *wfc_basis = nullptr;
 
     const std::string calculation_type;
     const std::string basis_type;
@@ -95,16 +100,16 @@ class HSolverPW
 
     const bool need_subspace; // for cg or dav_subspace
 
-    const int nbands;              // global number of bands, may differ from psi.get_nbands() under band parallelism
-    const bool diago_smooth_ethr;  // use a band-wise smoothed threshold for all iter methods
-    const int pw_diag_ndim;        // dimension of the workspace for Davidson-type methods
-    const int diag_subspace;       // subspace eigensolver for dav_subspace: 0 Lapack, 1 elpa, 2 scalapack
-    const int nb2d;                // 2d block size used by the dav_subspace scalapack path
+    const int nbands;             // global number of bands, may differ from psi.get_nbands() under band parallelism
+    const bool diago_smooth_ethr; // use a band-wise smoothed threshold for all iter methods
+    const int pw_diag_ndim;       // dimension of the workspace for Davidson-type methods
+    const int diag_subspace;      // subspace eigensolver for dav_subspace: 0 Lapack, 1 elpa, 2 scalapack
+    const int nb2d;               // 2d block size used by the dav_subspace scalapack path
 
     const bool use_k_continuity;
 
   protected:
-    Device* ctx = {};
+    Device *ctx = {};
 
     int rank_in_pool = 0;
     int nproc_in_pool = 1;
@@ -113,17 +118,19 @@ class HSolverPW
 
   private:
     /// @brief calculate the threshold for iterative-diagonalization for each band
-    void cal_smooth_ethr(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
-
-
+    void cal_smooth_ethr(
+        const double &wk,
+        const double *wg,
+        const double &ethr,
+        std::vector<double> &ethrs);
 
     // K-point continuity related members
     std::vector<int> k_order;
     std::unordered_map<int, int> k_parent;
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    
+
     void build_k_neighbors();
-    void propagate_psi(psi::Psi<T, Device>& psi, const int from_ik, const int to_ik);
+    void propagate_psi(psi::Psi<T, Device> &psi, const int from_ik, const int to_ik);
 };
 
 } // namespace hsolver

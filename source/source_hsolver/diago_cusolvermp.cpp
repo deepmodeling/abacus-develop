@@ -12,10 +12,11 @@ using complex = std::complex<double>;
 namespace hsolver
 {
 template <typename T>
-void DiagoCusolverMP<T>::diag(ModuleBase::MatrixBlock<T>& h_mat,
-                              ModuleBase::MatrixBlock<T>& s_mat,
-                              psi::Psi<T>& psi,
-                              Real* eigenvalue_in)
+void DiagoCusolverMP<T>::diag(
+    ModuleBase::MatrixBlock<T> &h_mat,
+    ModuleBase::MatrixBlock<T> &s_mat,
+    psi::Psi<T> &psi,
+    Real *eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoCusolverMP", "diag");
 
@@ -24,16 +25,30 @@ void DiagoCusolverMP<T>::diag(ModuleBase::MatrixBlock<T>& h_mat,
 
     MPI_Comm COMM_DIAG = MPI_COMM_WORLD; // use all processes
     {
-        Diag_CusolverMP_gvd<T> es(COMM_DIAG, (const int)h_mat.row, (const int)h_mat.col, (const int*)h_mat.desc);
+        Diag_CusolverMP_gvd<T> es(COMM_DIAG, (const int)h_mat.row, (const int)h_mat.col, (const int *)h_mat.desc);
 
         ModuleBase::timer::start("DiagoCusolverMP", "Diag_CusolverMP_gvd");
-        es.generalized_eigenvector(h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
+        es.generalized_eigenvector(
+            h_mat.p,
+            s_mat.p,
+            eigen.data(),
+            eigenvectors.data());
         ModuleBase::timer::end("DiagoCusolverMP", "Diag_CusolverMP_gvd");
     }
     const int inc = 1;
-    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(
+        this->nbands,
+        eigen.data(),
+        inc,
+        eigenvalue_in,
+        inc);
     const int size = psi.get_nbands() * psi.get_nbasis();
-    BlasConnector::copy(size, eigenvectors.data(), inc, psi.get_pointer(), inc);
+    BlasConnector::copy(
+        size,
+        eigenvectors.data(),
+        inc,
+        psi.get_pointer(),
+        inc);
 }
 template class DiagoCusolverMP<double>;
 template class DiagoCusolverMP<complex>;

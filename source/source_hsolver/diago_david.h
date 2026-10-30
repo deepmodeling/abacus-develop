@@ -1,12 +1,10 @@
 #ifndef DIAGODAVID_H
 #define DIAGODAVID_H
 
-#include "source_base/macros.h"   // GetRealType
-#include "source_base/module_device/device.h"   // base_device
-#include "source_base/module_device/memory_op.h"// base_device::memory
-
+#include "source_base/macros.h"                               // GetRealType
 #include "source_base/module_container/ATen/kernels/lapack.h" // container::kernels
-
+#include "source_base/module_device/device.h"                 // base_device
+#include "source_base/module_device/memory_op.h"              // base_device::memory
 #include "source_hsolver/diag_comm_info.h"
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/kernels/hegvd_op.h"
@@ -25,8 +23,7 @@ namespace hsolver
  * @tparam T The data type of the matrices and arrays (e.g., float, double, std::complex<float>, std::complex<double>).
  * @tparam Device The device type (e.g., base_device::DEVICE_CPU or DEVICE_GPU).
  */
-template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
-class DiagoDavid
+template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU> class DiagoDavid
 {
   private:
     // Note GetTypeReal<T>::type will
@@ -35,7 +32,6 @@ class DiagoDavid
     using Real = typename GetTypeReal<T>::type;
 
   public:
-
     /**
      * @brief Constructor for the DiagoDavid class.
      *
@@ -52,11 +48,12 @@ class DiagoDavid
      *
      * @note Auxiliary memory is allocated in the constructor and deallocated in the destructor.
      */
-    DiagoDavid(const Real* precondition_in,
-               const int nband_in,
-               const int dim_in,
-               const int david_ndim_in,
-               const diag_comm_info& diag_comm_in);
+    DiagoDavid(
+        const Real *precondition_in,
+        const int nband_in,
+        const int dim_in,
+        const int david_ndim_in,
+        const diag_comm_info &diag_comm_in);
 
     /**
      * @brief Destructor for the DiagoDavid class.
@@ -66,7 +63,6 @@ class DiagoDavid
      *
      */
     ~DiagoDavid();
-
 
     /**
      * @brief Performs iterative diagonalization using the David algorithm.
@@ -87,14 +83,14 @@ class DiagoDavid
      *       notconv_max is determined by the accuracy required for the calculation, default 0
      */
     int diag(
-      const HSOperator<T, Device>& op, // applies H and S to block vectors
-      const int ld_psi,           // Leading dimension of the psi input
-      T *psi_in,                  // Pointer to eigenvectors
-      Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
-      const std::vector<double>& ethr_band, // Convergence threshold for the Davidson iteration
-      const int david_maxiter,    // Maximum allowed iterations for the Davidson method
-      const int ntry_max = 5,     // Maximum number of diagonalization attempts (5 by default)
-      const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
+        const HSOperator<T, Device> &op,      // applies H and S to block vectors
+        const int ld_psi,                     // Leading dimension of the psi input
+        T *psi_in,                            // Pointer to eigenvectors
+        Real *eigenvalue_in,                  // Pointer to store the resulting eigenvalues
+        const std::vector<double> &ethr_band, // Convergence threshold for the Davidson iteration
+        const int david_maxiter,              // Maximum allowed iterations for the Davidson method
+        const int ntry_max = 5,               // Maximum number of diagonalization attempts (5 by default)
+        const int notconv_max = 0);           // Maximum number of allowed non-converged eigenvectors
 
   private:
     int test_david = 0;
@@ -113,37 +109,38 @@ class DiagoDavid
     int notconv = 0;
 
     /// precondition for diag, diagonal approximation of matrix A(i.e. Hamilt)
-    const Real* precondition = nullptr;
-    Real* d_precondition = nullptr;
+    const Real *precondition = nullptr;
+    Real *d_precondition = nullptr;
 
     /// eigenvalue results
-    Real* eigenvalue = nullptr;
+    Real *eigenvalue = nullptr;
 
-    T *basis = nullptr;  /// pointer to basis set(dim, nbase_x), leading dimension = dim
+    T *basis = nullptr; /// pointer to basis set(dim, nbase_x), leading dimension = dim
 
-    T* hpsi = nullptr;    /// the product of H and psi in the reduced basis set
+    T *hpsi = nullptr; /// the product of H and psi in the reduced basis set
 
-    T* spsi = nullptr;    /// the Product of S and psi in the reduced basis set
+    T *spsi = nullptr; /// the Product of S and psi in the reduced basis set
 
-    T* hcc = nullptr;     /// Hamiltonian on the reduced basis
+    T *hcc = nullptr; /// Hamiltonian on the reduced basis
 
-    T* vcc = nullptr;     /// eigenvectors of hc
+    T *vcc = nullptr; /// eigenvectors of hc
 
-    T* lagrange_matrix = nullptr;
+    T *lagrange_matrix = nullptr;
 
     /// device type of psi
-    Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
+    Device *ctx = {};
+    base_device::DEVICE_CPU *cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    int diag_once(const HSOperator<T, Device>& op,
-                  const int dim,
-                  const int nband,
-                  const int ld_psi,
-                  T *psi_in,
-                  Real* eigenvalue_in,
-                  const std::vector<double>& ethr_band,
-                  const int david_maxiter);
+    int diag_once(
+        const HSOperator<T, Device> &op,
+        const int dim,
+        const int nband,
+        const int ld_psi,
+        T *psi_in,
+        Real *eigenvalue_in,
+        const std::vector<double> &ethr_band,
+        const int david_maxiter);
 
     /**
      * Calculates the preconditioned gradient of the eigenvectors in Davidson method.
@@ -159,16 +156,17 @@ class DiagoDavid
      * @param unconv The array of indices for the unconverged eigenpairs.
      * @param eigenvalue The array of eigenvalues.
      */
-    void cal_grad(const HSOperator<T, Device>& op,
-                  const int& dim,
-                  const int& nbase,
-                  const int nbase_x,
-                  const int& notconv,
-                  T* hpsi,
-                  T* spsi,
-                  const T* vcc,
-                  const int* unconv,
-                  const Real* eigenvalue);
+    void cal_grad(
+        const HSOperator<T, Device> &op,
+        const int &dim,
+        const int &nbase,
+        const int nbase_x,
+        const int &notconv,
+        T *hpsi,
+        T *spsi,
+        const T *vcc,
+        const int *unconv,
+        const Real *eigenvalue);
 
     /**
      * Calculates the elements of the diagonalization matrix for the DiagoDavid class.
@@ -181,13 +179,14 @@ class DiagoDavid
      * @param spsi The output array for the overlap matrix S times blockvector psi.
      * @param hcc Pointer to the array where the calculated Hamiltonian matrix elements will be stored.
      */
-    void cal_elem(const int& dim,
-                  int& nbase,
-                  const int nbase_x,
-                  const int& notconv,
-                  const T* hpsi,
-                  const T* spsi,
-                  T* hcc);
+    void cal_elem(
+        const int &dim,
+        int &nbase,
+        const int nbase_x,
+        const int &notconv,
+        const T *hpsi,
+        const T *spsi,
+        T *hcc);
 
     /**
      * Refreshes the diagonalization solver by updating the basis and the reduced Hamiltonian.
@@ -205,17 +204,18 @@ class DiagoDavid
      * @param vcc Pointer to the output array for the updated eigenvector matrix.
      *
      */
-    void refresh(const int& dim,
-                 const int& nband,
-                 int& nbase,
-                 const int nbase_x,
-                 const Real* eigenvalue,
-                 const T *psi_in,
-                 const int ld_psi,
-                 T* hpsi,
-                 T* spsi,
-                 T* hcc,
-                 T* vcc);
+    void refresh(
+        const int &dim,
+        const int &nband,
+        int &nbase,
+        const int nbase_x,
+        const Real *eigenvalue,
+        const T *psi_in,
+        const int ld_psi,
+        T *hpsi,
+        T *spsi,
+        T *hcc,
+        T *vcc);
 
     /**
      * SchmidtOrth function performs orthogonalization of the starting eigenfunction to those already calculated.
@@ -230,13 +230,14 @@ class DiagoDavid
      * @param mm_size The size of the square matrix for future lagranges.
      * @param mv_size The size of the lagrange_m array.
      */
-    void SchmidtOrth(const int& dim,
-                     const int nband,
-                     const int m,
-                     const T* spsi,
-                     T* lagrange_m,
-                     const int mm_size,
-                     const int mv_size);
+    void SchmidtOrth(
+        const int &dim,
+        const int nband,
+        const int m,
+        const T *spsi,
+        T *lagrange_m,
+        const int mm_size,
+        const int mv_size);
 
     /**
      * @brief Plans the Schmidt orthogonalization for a given number of bands.
@@ -247,14 +248,15 @@ class DiagoDavid
      * @param pre_matrix_mm_m The vector to store the matrix sizes.
      * @param pre_matrix_mv_m The vector to store the number of matrix-vector multiplications.
      */
-    void planSchmidtOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
+    void planSchmidtOrth(const int nband, std::vector<int> &pre_matrix_mm_m, std::vector<int> &pre_matrix_mv_m);
 
-    void diag_zhegvx(const int& nbase,
-                     const int& nband,
-                     const T* hcc,
-                     const int& nbase_x,
-                     Real* eigenvalue,
-                     T* vcc);
+    void diag_zhegvx(
+        const int &nbase,
+        const int &nband,
+        const T *hcc,
+        const int &nbase_x,
+        Real *eigenvalue,
+        T *vcc);
 
     /**
      * @brief Check the convergence of block eigenvectors in the Davidson iteration.
@@ -276,7 +278,11 @@ class DiagoDavid
      * @note Exits the diagonalization loop if either the convergence criteria
      *       are met or the maximum number of tries is exceeded.
      */
-    bool check_block_conv(const int &ntry, const int &notconv, const int &ntry_max, const int &notconv_max);
+    bool check_block_conv(
+        const int &ntry,
+        const int &notconv,
+        const int &ntry_max,
+        const int &notconv_max);
 
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
