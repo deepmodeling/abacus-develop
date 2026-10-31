@@ -12,6 +12,69 @@
 namespace ModuleIO
 {
 
+void collect_MW_nspin4(ModuleBase::matrix& MecMulP,
+                       const ModuleBase::ComplexMatrix& mud,
+                       int nw,
+                       const Parallel_Orbitals* pv)
+{
+    for (size_t i = 0; i < nw; ++i)
+    {
+        const int index = i % 2;
+        if (!index)
+        {
+            const int j = i / 2;
+            const int k1 = 2 * j;
+            const int k2 = 2 * j + 1;
+            if (pv->in_this_processor(k1, k1))
+            {
+                const int ir = pv->global2local_row(k1);
+                const int ic = pv->global2local_col(k1);
+                MecMulP(0, j) += mud(ic, ir).real();
+                MecMulP(3, j) += mud(ic, ir).real();
+            }
+            // mud is DM.S with the conj-first density matrix built by
+            // dm_from_psi (DM_{ab} = sum_n w_n conj(c_{n,a}) c_{n,b}), i.e.
+            // DM = conj(P) for the physical one-body density matrix P. The
+            // up-down spin block therefore satisfies mud_{up,down} =
+            // conj(Q_{up,down}) for the physical Mulliken spin block Q, and
+            // the Pauli decomposition (see module_dm/dm_tools.cpp
+            // xyz_to_updown and module_deltaspin/mi_tools.h pauli_to_moment)
+            // reads
+            //   Mx = Re(mud_{up,down} + mud_{down,up})
+            //   My = Im(mud_{up,down} - mud_{down,up})
+            //   Mz = Re(mud_{up,up} - mud_{down,down}).
+            // Historically My was accumulated as
+            // -Im(mud_{up,down}) + Im(mud_{down,up}) = -My, i.e. with the
+            // wrong sign; that pre-existing flip is fixed here (see PR #7832,
+            // which documented it and deferred the fix to a separate PR).
+            if (pv->in_this_processor(k1, k2))
+            {
+                const int ir = pv->global2local_row(k1);
+                const int ic = pv->global2local_col(k2);
+                // note that mud is column major
+                MecMulP(1, j) += mud(ic, ir).real();
+                // M_y = Im(mud_{up,down} - mud_{down,up})
+                MecMulP(2, j) += mud(ic, ir).imag();
+            }
+            if (pv->in_this_processor(k2, k1))
+            {
+                const int ir = pv->global2local_row(k2);
+                const int ic = pv->global2local_col(k1);
+                MecMulP(1, j) += mud(ic, ir).real();
+                // M_y = Im(mud_{up,down} - mud_{down,up})
+                MecMulP(2, j) -= mud(ic, ir).imag();
+            }
+            if (pv->in_this_processor(k2, k2))
+            {
+                const int ir = pv->global2local_row(k2);
+                const int ic = pv->global2local_col(k2);
+                MecMulP(0, j) += mud(ic, ir).real();
+                MecMulP(3, j) -= mud(ic, ir).real();
+            }
+        }
+    }
+}
+
 template <typename TK>
 Output_Mulliken<TK>::Output_Mulliken(Output_Sk<TK>* output_sk,
                                      Output_DMK<TK>* output_dmk,
@@ -423,52 +486,7 @@ void Output_Mulliken<TK>::collect_MW(ModuleBase::matrix& MecMulP, const ModuleBa
     }
     else if (this->nspin_ == 4)
     {
-        for (size_t i = 0; i < nw; ++i)
-        {
-            const int index = i % 2;
-            if (!index)
-            {
-                const int j = i / 2;
-                const int k1 = 2 * j;
-                const int k2 = 2 * j + 1;
-                if (this->ParaV_->in_this_processor(k1, k1))
-                {
-                    const int ir = this->ParaV_->global2local_row(k1);
-                    const int ic = this->ParaV_->global2local_col(k1);
-                    MecMulP(0, j) += mud(ic, ir).real();
-                    MecMulP(3, j) += mud(ic, ir).real();
-                }
-                // WARNING (pre-existing, predates #7664, since 3.7.0 commit a339356): this M_y sign
-                // is suspect. mud is DM.S with the same conj-first DM convention as dm_from_psi, so the
-                // bare Im formula here likely yields -m_y. It must NOT be used as an oracle for the DM
-                // convention (it is probably why #7664's DM m_y flip went unnoticed). Fix + unit test
-                // should be a separate PR after verifying against a case with nonzero in-plane moment.
-                if (this->ParaV_->in_this_processor(k1, k2))
-                {
-                    const int ir = this->ParaV_->global2local_row(k1);
-                    const int ic = this->ParaV_->global2local_col(k2);
-                    // note that mud is column major
-                    MecMulP(1, j) += mud(ic, ir).real();
-                    // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
-                    MecMulP(2, j) -= mud(ic, ir).imag();
-                }
-                if (this->ParaV_->in_this_processor(k2, k1))
-                {
-                    const int ir = this->ParaV_->global2local_row(k2);
-                    const int ic = this->ParaV_->global2local_col(k1);
-                    MecMulP(1, j) += mud(ic, ir).real();
-                    // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
-                    MecMulP(2, j) += mud(ic, ir).imag();
-                }
-                if (this->ParaV_->in_this_processor(k2, k2))
-                {
-                    const int ir = this->ParaV_->global2local_row(k2);
-                    const int ic = this->ParaV_->global2local_col(k2);
-                    MecMulP(0, j) += mud(ic, ir).real();
-                    MecMulP(3, j) -= mud(ic, ir).real();
-                }
-            }
-        }
+        collect_MW_nspin4(MecMulP, mud, nw, this->ParaV_);
     }
 }
 

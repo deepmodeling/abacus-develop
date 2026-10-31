@@ -17,6 +17,23 @@ class Output_Sk;
 template <typename TK>
 class Output_DMK;
 
+/**
+ * @brief Accumulate the nspin=4 Mulliken charge and Mx/My/Mz components.
+ *
+ * @details Decomposes one k-point mud = DM*S^T into the Pauli components using
+ * the conj-first DM convention (DM = conj(P), see dm_from_psi.h):
+ * Mx = Re(mud_ud + mud_du), My = Im(mud_ud - mud_du), Mz = Re(mud_uu - mud_dd).
+ *
+ * @param MecMulP accumulators [4 x nw/2]: 0 = charge, 1/2/3 = Mx/My/Mz
+ * @param mud     DM*S^T stored in ScaLAPACK column-major layout
+ * @param nw      total number of spinor orbitals (2 * number of spatial orbitals)
+ * @param pv      orbital distribution mapping
+ */
+void collect_MW_nspin4(ModuleBase::matrix& MecMulP,
+                       const ModuleBase::ComplexMatrix& mud,
+                       int nw,
+                       const Parallel_Orbitals* pv);
+
 /// @brief the output interface to write the Mulliken population charges
 template <typename TK>
 class Output_Mulliken
