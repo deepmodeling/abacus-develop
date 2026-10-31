@@ -63,6 +63,13 @@ case "$with_libxc" in
             cd libxc-${libxc_ver}
             mkdir build 
             cd build
+            # LibXC 7.1 replaced the per-order switches with MAXORDER.
+            IFS=. read -r libxc_major libxc_minor libxc_patch <<< "${libxc_ver}"
+            if (( libxc_major > 7 || (libxc_major == 7 && libxc_minor >= 1) )); then
+                libxc_derivative_args=(-DMAXORDER=3)
+            else
+                libxc_derivative_args=(-DDISABLE_KXC=OFF -DDISABLE_LXC=ON)
+            fi
             cmake \
                 -DCMAKE_BUILD_TYPE=Release \
                 -DCMAKE_INSTALL_PREFIX=${pkg_install_dir} \
@@ -72,7 +79,7 @@ case "$with_libxc" in
                 -DENABLE_FORTRAN=ON \
                 -DENABLE_PYTHON=OFF \
                 -DBUILD_TESTING=OFF \
-                -DMAXORDER=3 .. \
+                "${libxc_derivative_args[@]}" .. \
                 > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
             make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
             make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
