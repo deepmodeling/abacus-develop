@@ -1,6 +1,7 @@
 #include "source_cell/cell_tools.h"
 #include "source_cell/print_cell.h"
 #include "source_cell/update_cell.h"
+#include "source_base/parallel_global.h"
 #include "source_esolver/esolver.h"
 #include "for_test.h"
 #include "source_relax/relax_driver.h"
@@ -108,6 +109,29 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver*, UnitCell&, const Inpu
 
 namespace
 {
+
+class MpiEnvironment final : public testing::Environment
+{
+  public:
+    void SetUp() override
+    {
+        int nproc = 0;
+        int nthread_per_proc = 0;
+        int my_rank = 0;
+        char arg0[] = "MODULE_RELAX_relax_driver_test";
+        char* argv[] = {arg0, nullptr};
+        int argc = 1;
+        Parallel_Global::read_pal_param(argc, argv, nproc, nthread_per_proc, my_rank);
+    }
+
+    void TearDown() override
+    {
+        Parallel_Global::finalize_mpi();
+    }
+};
+
+testing::Environment* const mpi_environment
+    = testing::AddGlobalTestEnvironment(new MpiEnvironment);
 
 class DriverTestESolver : public ModuleESolver::ESolver
 {
