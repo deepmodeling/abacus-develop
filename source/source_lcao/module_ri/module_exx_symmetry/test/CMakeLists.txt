@@ -17,3 +17,31 @@ addtest(
   ../symm_rot_out.cpp
   ../../../../source_basis/module_ao/parallel_orbitals.cpp
   ../../../../source_cell/parallel_kpoints.cpp)
+addtest(
+  TARGET
+  MODULE_RI_EXX_SYMMETRY_abf_rotation
+  LIBS
+  base
+  ${math_libs}
+  device
+  symmetry
+  neighbor
+  parameter
+  SOURCES
+  test_abf_rotation.cpp
+  ../symm_rotation.cpp
+  ../../../../source_basis/module_ao/parallel_orbitals.cpp)
+addtest(
+  TARGET
+  MODULE_RI_EXX_SYMMETRY_nspin4_restore
+  LIBS
+  base
+  ${math_libs}
+  device
+  symmetry
+  neighbor
+  parameter
+  SOURCES
+  test_nspin4_restore.cpp
+  ../symm_rotation.cpp
+  ../../../../source_basis/module_ao/parallel_orbitals.cpp)

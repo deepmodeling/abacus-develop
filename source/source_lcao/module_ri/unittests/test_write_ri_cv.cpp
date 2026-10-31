@@ -2,9 +2,10 @@
 
 #include <RI/global/Tensor.h>
 #include <array>
-#include <vector>
 #include <fstream>
-#include "source_lcao/module_ri/write_ri_cv.hpp"
+#include <map>
+#include <vector>
+#include "../lri_cv_tools.h"
 
 using TC = std::array<int, 3>;
 using TAC = std::pair<int, TC>;
@@ -31,4 +32,26 @@ TEST(LRI_CV_Tools, ReadCs)
     EXPECT_EQ(Vs.at(0).size(), 6);
     EXPECT_EQ(Vs.at(1).at({ 1, {1, 0, 0} }).shape.size(), 2);
 
+}
+
+TEST(LRI_CV_Tools, MinusCommonKeysKeepsLeftOnlyBlocks)
+{
+    std::map<int, std::map<TAC, int>> lhs;
+    std::map<int, std::map<TAC, int>> rhs;
+
+    lhs[0][{0, {0, 0, 0}}] = 10;
+    lhs[0][{1, {0, 0, 0}}] = 20;
+    lhs[1][{0, {0, 0, 0}}] = 30;
+
+    rhs[0][{0, {0, 0, 0}}] = 3;
+    rhs[2][{0, {0, 0, 0}}] = 40;
+
+    const auto diff = LRI_CV_Tools::minus_common_keys(lhs, rhs);
+
+    ASSERT_EQ(diff.size(), 2);
+    ASSERT_EQ(diff.at(0).size(), 2);
+    EXPECT_EQ(diff.at(0).at({0, {0, 0, 0}}), 7);
+    EXPECT_EQ(diff.at(0).at({1, {0, 0, 0}}), 20);
+    EXPECT_EQ(diff.at(1).at({0, {0, 0, 0}}), 30);
+    EXPECT_EQ(diff.count(2), 0);
 }

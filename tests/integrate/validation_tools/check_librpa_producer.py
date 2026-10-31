@@ -5,6 +5,11 @@ The checker deliberately separates stable producer data from gauge-dependent
 wavefunction data.  It validates names, headers, dimensions, finite values,
 and optional tolerant references; it does not require KS eigenvector or
 velocity-matrix values to be byte-identical.
+
+A manifest entry marked ``reference`` looks up its stored file by mirroring the
+produced path under ``reference_dir``.  An entry may set ``reference_path``
+instead, relative to ``reference_dir``, for outputs whose produced directory
+name cannot be used for the stored copy.
 """
 
 import argparse
@@ -219,6 +224,38 @@ def _check_wfc_nao(path):
             )
 
 
+def _check_strict_2d_head(path):
+    """Validate the reader-v1 strict-2D Coulomb-head metadata sidecar."""
+    values = {}
+    for line_number, line in enumerate(path.read_text().splitlines(), 1):
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if "=" not in stripped:
+            raise ProducerContractError("{} line {} is not a key/value record".format(path, line_number))
+        key, value = (part.strip() for part in stripped.split("=", 1))
+        if not key or key in values:
+            raise ProducerContractError("{} line {} has an invalid or duplicate key".format(path, line_number))
+        values[key] = value
+    required = {
+        "version",
+        "area_parallel_bohr2",
+        "multipole_norm_squared",
+        "strict_2d_coulomb_head_coefficient",
+        "strict_2d_sheet_to_raw_scale",
+    }
+    if set(values) != required:
+        raise ProducerContractError(
+            "{} has metadata keys {}; expected {}".format(path, sorted(values), sorted(required))
+        )
+    if values["version"] != "1":
+        raise ProducerContractError("{} has unsupported metadata version {}".format(path, values["version"]))
+    for key in sorted(required - {"version"}):
+        value = _required_number(path, values[key], key)
+        if value <= 0.0:
+            raise ProducerContractError("{} has non-positive {}".format(path, key))
+
+
 def _upper_pair(pair_index, natom):
     current = 0
     for iatom in range(natom):
@@ -397,6 +434,8 @@ def _check_file(path, entry):
         return
     if kind == "stru":
         _check_stru(path, entry.get("symmetry_rows"), entry.get("spin_symmetry_rows"))
+    elif kind == "strict_2d_head":
+        _check_strict_2d_head(path)
     elif kind == "wfc_nao":
         _check_wfc_nao(path)
     elif kind == "ks_wfc_v1":
@@ -465,7 +504,10 @@ def check_manifest(root, manifest):
             if entry.get("reference"):
                 if reference_root is None:
                     raise ProducerContractError("reference requested without reference_dir")
-                reference = reference_root / path.relative_to(entry_root)
+                # ``reference_path`` decouples the stored reference name from
+                # the produced one, for outputs whose directory name is
+                # reserved by the build harness (``OUT.*`` is gitignored).
+                reference = reference_root / entry.get("reference_path", path.relative_to(entry_root))
                 if not reference.is_file():
                     raise ProducerContractError("missing producer reference: {}".format(reference))
                 tolerance = float(entry.get("abs_tol", 1.0e-8))

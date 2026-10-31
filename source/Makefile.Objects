@@ -907,12 +907,15 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       symm_rotation.o\
       symm_rot_out.o\
       gaussian_abfs.o\
+      direct_2d_coulomb.o\
+      mix_matrix.o\
       exx_lri_detail.o\
       exx_workspace.o\
       ri_util.o\
       singular_value.o\
 
-OBJS_MODULE_RPA=rpa_lri.o\
+OBJS_MODULE_RPA=rpa_abfs_preorth.o\
+      rpa_lri.o\
       rpa_lri_detail.o\
       rpa_lri_band_io.o\
       rpa_lri_coeff_v1.o\

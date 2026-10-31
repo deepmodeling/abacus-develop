@@ -193,15 +193,8 @@ void TwoCenterIntegrator::snap(const int itype1,
     }
 }
 
-#include "source_basis/module_ao/orb_read.h"
-LCAO_Orbitals::LCAO_Orbitals()
-{
-    this->Phi = new Numerical_Orbital[1];
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-    delete[] Phi;
-}
+// LCAO_Orbitals ctor/dtor/cutoffs come from the real orb_read.cpp, which is
+// in this target's source list; do not stub them here.
 
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 // mock find_atom() function
@@ -293,4 +286,18 @@ const ModuleBase::Vector3<double>& TD_info::endpoint_A() const
 int elecstate::TDFieldManager::gauge() const
 {
     return gauge_;
+}
+
+// Restart (including the GlobalC::restart instance and the out-of-line
+// read_file2) comes from the real module_io restart.cpp, which is in this
+// target's source list; do not stub it here.
+
+// op_exx_lcao.cpp reads the global XC functional type inside OperatorEXX
+// member functions that the cell-nearest test never enters; satisfy the
+// linker without module_xc's PW-dependent objects.
+#include "source_hamilt/module_xc/xc_functional.h"
+int XC_Functional::func_type = 0;
+void XC_Functional::set_xc_type(const std::string xc_func_in)
+{
+    (void)xc_func_in;
 }

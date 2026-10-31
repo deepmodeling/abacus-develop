@@ -1,3 +1,7 @@
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+
 #include "source_base/formatter.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
@@ -1431,9 +1435,8 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.category = "Output information";
         item.type = "Boolean";
         item.description = "Generate output files used in rpa calculations."
-                          "\n\n[NOTE] If symmetry is set to 1, additional files containing the necessary information for "
-                          "exploiting symmetry in the subsequent rpa calculation will be output: "
-                          "irreducible_sector.txt, symrot_k.txt and symrot_R.txt.";
+                          "\n\n[NOTE] If symmetry is set to 1, stru_out.txt also contains the spatial and, for nspin=4, "
+                          "magnetic symmetry operations consumed by the subsequent LibRPA calculation.";
         item.default_value = "False";
         item.unit = "";
         item.set_availability("basis_type==lcao");
@@ -1478,6 +1481,180 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.unit = "";
         item.set_availability("basis_type==lcao");
         read_sync_int(input.out_librpa_ver);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_v2d_method");
+        item.annotation = "strict-2D full Coulomb construction used by LibRPA reader-v1 output";
+        item.category = "Output information";
+        item.type = "String";
+        item.description = "Use ewald for the established split-Ewald output, or direct_mixed_fourier "
+                           "to construct the strict-2D full auxiliary Coulomb matrix as a positive Gram matrix. "
+                           "The direct method is default-off and has no automatic fallback.";
+        item.default_value = "ewald";
+        item.unit = "";
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2");
+        read_sync_string(input.out_v2d_method);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const auto& method = para.input.out_v2d_method;
+            if (method != "ewald" && method != "direct_mixed_fourier")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         item.label + " supports only ewald or direct_mixed_fourier.");
+            }
+            if (method == "direct_mixed_fourier")
+            {
+                if (!para.input.rpa || para.input.out_librpa_ver != 1
+                    || para.input.exx_ewald_dimension != 2)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        item.label + "=direct_mixed_fourier requires rpa=1, "
+                                     "out_librpa_ver=1, and exx_ewald_dimension=2.");
+                }
+                if (!(para.input.out_v2d_ecut > 0.0)
+                    || para.input.out_v2d_kz <= 0
+                    || para.input.out_v2d_gamma <= 0
+                    || para.input.out_v2d_gamma % 2 != 0)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        item.label + "=direct_mixed_fourier requires positive out_v2d_ecut, "
+                                     "positive out_v2d_kz, and a positive even "
+                                     "out_v2d_gamma.");
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+    }
+    {
+        Input_Item item("out_v2d_ecut");
+        item.annotation = "reciprocal cutoff for direct mixed-Fourier strict-2D Coulomb output";
+        item.category = "Output information";
+        item.type = "Real";
+        item.description = "Reciprocal cutoff in Ry for out_v2d_method=direct_mixed_fourier. "
+                           "This value must be converged for each auxiliary basis.";
+        item.default_value = "0";
+        item.unit = "Ry";
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2 and out_v2d_method==direct_mixed_fourier");
+        read_sync_double(input.out_v2d_ecut);
+        this->add_item(item);
+    }
+    {
+    }
+    {
+        Input_Item item("out_v2d_kz");
+        item.annotation = "kz quadrature order for direct mixed-Fourier strict-2D Coulomb output";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Positive transformed-kz quadrature order for the direct strict-2D Coulomb matrix. "
+                           "It must be converged independently of the reciprocal cutoff.";
+        item.default_value = "0";
+        item.unit = "";
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2 and out_v2d_method==direct_mixed_fourier");
+        read_sync_int(input.out_v2d_kz);
+        this->add_item(item);
+    }
+    {
+    }
+    {
+        Input_Item item("out_v2d_gamma");
+        item.annotation = "Gamma-plane quadrature order for direct mixed-Fourier strict-2D Coulomb output";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Positive even in-plane quadrature order for the Gamma-cell Coulomb average. "
+                           "Like the kz order, this quadrature order must be converged independently of the "
+                           "reciprocal cutoff.";
+        item.default_value = "8";
+        item.unit = "";
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==2 and out_v2d_method==direct_mixed_fourier");
+        read_sync_int(input.out_v2d_gamma);
+        this->add_item(item);
+    }
+    {
+    }
+    {
+        Input_Item item("out_v3d_method");
+        item.annotation = "3D full Coulomb construction used by LibRPA reader-v1 output";
+        item.category = "Output information";
+        item.type = "String";
+        item.description = "Use ewald for the established split-Ewald output, or direct_reciprocal "
+                           "to construct the 3D full auxiliary Coulomb matrix as a positive Gram matrix. "
+                           "The direct method is default-off and has no automatic fallback.";
+        item.default_value = "ewald";
+        item.unit = "";
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==3");
+        read_sync_string(input.out_v3d_method);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const auto& method = para.input.out_v3d_method;
+            if (method != "ewald" && method != "direct_reciprocal")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         item.label + " supports only ewald or direct_reciprocal.");
+            }
+            if (method == "direct_reciprocal")
+            {
+                if (!para.input.rpa || para.input.out_librpa_ver != 1
+                    || para.input.exx_ewald_dimension != 3)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        item.label + "=direct_reciprocal requires rpa=1, "
+                                     "out_librpa_ver=1, and exx_ewald_dimension=3.");
+                }
+                if (!(para.input.out_v3d_ecut > 0.0))
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        item.label + "=direct_reciprocal requires positive out_v3d_ecut.");
+                }
+            }
+        };
+        this->add_item(item);
+    }
+    {
+    }
+    {
+        Input_Item item("out_v3d_ecut");
+        item.annotation = "reciprocal cutoff for direct 3D Coulomb output";
+        item.category = "Output information";
+        item.type = "Real";
+        item.description = "Reciprocal cutoff in Ry for "
+                           "out_v3d_method=direct_reciprocal. "
+                           "This value must be converged for each auxiliary basis.";
+        item.default_value = "0";
+        item.unit = "Ry";
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1 and exx_ewald_dimension==3 and out_v3d_method==direct_reciprocal");
+        read_sync_double(input.out_v3d_ecut);
+        this->add_item(item);
+    }
+    {
+    }
+    {
+        Input_Item item("out_abf_overlap");
+        item.annotation = "output raw active-ABF overlap for LibRPA v1 PSD diagnostics";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Write raw active-ABF q-space overlap matrices as "
+                           "v1_abf_overlap_active_iq_<iq>.dat. This diagnostic requires "
+                           "rpa=true, out_librpa_ver=1, and a shrink/active ABF "
+                           "lifecycle; full-unshrunk overlap output is not provided.";
+        item.default_value = "False";
+        item.unit = "";
+        item.set_availability("basis_type==lcao and rpa==true and out_librpa_ver==1");
+        read_sync_bool(input.out_abf_overlap);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_abf_overlap
+                && (!para.input.rpa || para.input.out_librpa_ver != 1
+                    || para.input.shrink_abfs_pca_thr < 0.0))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         item.label + " requires rpa=true, "
+                                         "out_librpa_ver=1, and shrink ABFs.");
+            }
+        };
         this->add_item(item);
     }
     {

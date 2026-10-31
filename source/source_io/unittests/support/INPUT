@@ -288,8 +288,18 @@ exx_c_grad_threshold           0 #
 exx_v_grad_threshold           0 #
 exx_c_grad_r_threshold         0 #
 exx_v_grad_r_threshold         0 #
+exx_v_long_thr                 0.123 #
 exx_ccp_rmesh_times            default #
 out_librpa_ver       1 #
+exx_ewald_lambda               0.25 #
+exx_tail_check                 enlarge #
+exx_tail_abstol                2e-12 #
+exx_tail_reltol                3e-10 #
+exx_tail_sumtol                4e-8 #
+exx_tail_guard                 2 #
+exx_tail_expansions            4 #
+out_v3d_method                 ewald #
+out_v3d_ecut                   110.0 # Ry
 exx_opt_orb_lmax               0 #
 exx_opt_orb_ecut               0 #
 exx_opt_orb_tolerence          0 #
