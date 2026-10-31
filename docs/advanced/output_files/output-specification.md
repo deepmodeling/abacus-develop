@@ -55,18 +55,21 @@ All output file naming conventions can be found in the online documentation (wit
 - All index numbers start from 1 (not 0)
 - For Gamma-only algorithm in LCAO, no `k` index is included
 - Overlap matrix `s` does not distinguish spin, so only one matrix is output
-- `out_app_flag = 1` omits the `g#` suffix for cube files (chg/tau/pot/elf): the
-  first written ionic step truncates the fixed-name file and every later
-  written step appends one complete cube frame whose first comment line is
-  `Ionic_Step {#}` (one-based). `out_app_flag = 0` writes one suffixed file per
-  step, and `out_app_flag = 2` writes those suffixed files into the `CHG/`,
-  `POT/` and `ELF/` subdirectories
+- `out_app_flag = 0` keeps the fixed cube filenames (chg/tau/pot/elf) and
+  truncates and overwrites them at every write. `out_app_flag = 1` also keeps
+  the fixed filenames: the first written ionic step truncates them and every
+  later written step appends one complete cube frame whose first comment line
+  is `Ionic_Step {#}` (one-based). Only `out_app_flag = 2` adds the `g#` suffix
+  and writes those suffixed files into the `CHG/`, `POT/` and `ELF/`
+  subdirectories
 - For initial charge density output (`out_chg = 2`):
-  - `out_freq_ion = 0`: `chg_ini.cube` (nspin=1) or `chgs{#}_ini.cube` (nspin=2/4) - output at every step (overwrite same file)
-  - `out_freq_ion > 0`: `chgg{#}_ini.cube` (nspin=1) or `chgs{#}g{#}_ini.cube` (nspin=2/4) - output every out_freq_ion steps
+  - `nspin=1`: `chg_ini.cube`; `nspin=2/4`: `chgs{#}_ini.cube`
+  - `out_freq_ion = 0` writes at every step; `out_freq_ion > 0` writes every `out_freq_ion` steps
+  - Only `out_app_flag = 2` inserts `g{#}` (e.g., `chgg1_ini.cube`, `chgs1g1_ini.cube`); modes 0 and 1 keep the fixed name
 - For initial potential output (`out_pot = 3`):
-  - `out_freq_ion = 0`: `pot_ini.cube` (nspin=1) or `pots{#}_ini.cube` (nspin=2/4) - output at every step (overwrite same file)
-  - `out_freq_ion > 0`: `potg{#}_ini.cube` (nspin=1) or `pots{#}g{#}_ini.cube` (nspin=2/4) - output every out_freq_ion steps
+  - `nspin=1`: `pot_ini.cube`; `nspin=2/4`: `pots{#}_ini.cube`
+  - `out_freq_ion = 0` writes at every step; `out_freq_ion > 0` writes every `out_freq_ion` steps
+  - Only `out_app_flag = 2` inserts `g{#}` (e.g., `potg1_ini.cube`, `pots1g1_ini.cube`); modes 0 and 1 keep the fixed name
 
 ### 2.2 Examples
 
@@ -77,22 +80,22 @@ All output file naming conventions can be found in the online documentation (wit
 | `chgs3.cube` | Charge density, spin 3 (non-collinear with SOC) |
 | `chg_ini.cube` | Initial charge density (out_freq_ion=0, nspin=1) |
 | `chgs1_ini.cube` | Initial charge density (out_freq_ion=0, spin 1, nspin=2/4) |
-| `chgg1_ini.cube` | Initial charge density, geometry step 1 (nspin=1) |
-| `chgs1g1_ini.cube` | Initial charge density, spin 1, geometry step 1 (nspin=2/4) |
+| `chgg1_ini.cube` | Initial charge density, geometry step 1, out_app_flag=2 (nspin=1) |
+| `chgs1g1_ini.cube` | Initial charge density, spin 1, geometry step 1, out_app_flag=2 (nspin=2/4) |
 | `pot_ini.cube` | Initial potential (out_freq_ion=0, nspin=1) |
 | `pots1_ini.cube` | Initial potential (out_freq_ion=0, spin 1, nspin=2/4) |
-| `potg1_ini.cube` | Initial potential, geometry step 1 (nspin=1) |
-| `pots1g1_ini.cube` | Initial potential, spin 1, geometry step 1 (nspin=2/4) |
+| `potg1_ini.cube` | Initial potential, geometry step 1, out_app_flag=2 (nspin=1) |
+| `pots1g1_ini.cube` | Initial potential, spin 1, geometry step 1, out_app_flag=2 (nspin=2/4) |
 | `pots1.cube` | Local potential, spin 1 |
 | `elftot.cube` | ELF, total (nspin=1/4) |
 | `elfs1.cube` | ELF, spin 1 (nspin=2) |
 | `elfs2.cube` | ELF, spin 2 (nspin=2) |
 | `elftot.cube` | ELF, total (nspin=2) |
-| `elftotg1.cube` | ELF, total, geometry step 1 (nspin=1/4) |
-| `elfs1g1.cube` | ELF, spin 1, geometry step 1 (nspin=2) |
-| `elftotg1.cube` | ELF, total, geometry step 1 (nspin=2) |
+| `elftotg1.cube` | ELF, total, geometry step 1, out_app_flag=2 (nspin=1/4) |
+| `elfs1g1.cube` | ELF, spin 1, geometry step 1, out_app_flag=2 (nspin=2) |
+| `elftotg1.cube` | ELF, total, geometry step 1, out_app_flag=2 (nspin=2) |
 | `eig_occ.txt` | Eigenvalues and occupations |
-| `doss1g1.txt` | DOS, spin 1, geometry step 1 |
+| `doss1g1.txt` | DOS, spin 1, geometry step 1, out_app_flag=2 |
 | `wf_pw.dat` | Wavefunction, plane wave basis |
 | `sr.csr` | Overlap matrix in real space (no spin index) |
 
@@ -101,7 +104,7 @@ All output file naming conventions can be found in the online documentation (wit
 | File Name | Description |
 |-----------|-------------|
 | `running_scf.log` | SCF iteration log |
-| `doss1g1.txt` | Density of states |
+| `doss1g1.txt` | Density of states, spin 1, geometry step 1, out_app_flag=2 |
 | `eig_occ.txt` | Eigenvalues and occupations |
 | `mulliken.txt` | Mulliken population analysis |
 | `band.txt` | Band structure (nspin=1/4); `bands1.txt`/`bands2.txt` when nspin=2 |
@@ -110,22 +113,22 @@ All output file naming conventions can be found in the online documentation (wit
 | Initial charge density (out_chg=2) | |
 | `chg_ini.cube` | Initial charge density (out_freq_ion=0, nspin=1) |
 | `chgs{#}_ini.cube` | Initial charge density (out_freq_ion=0, spin {#}, nspin=2/4) |
-| `chgg{#}_ini.cube` | Initial charge density (out_freq_ion>0, geometry step {#}, nspin=1) |
-| `chgs{#}g{#}_ini.cube` | Initial charge density (out_freq_ion>0, spin {#}, geometry step {#}, nspin=2/4) |
+| `chgg{#}_ini.cube` | Initial charge density (geometry step {#}, nspin=1, out_app_flag=2) |
+| `chgs{#}g{#}_ini.cube` | Initial charge density (spin {#}, geometry step {#}, nspin=2/4, out_app_flag=2) |
 | Initial potential (out_pot=3) | |
 | `pot_ini.cube` | Initial potential (out_freq_ion=0, nspin=1) |
 | `pots{#}_ini.cube` | Initial potential (out_freq_ion=0, spin {#}, nspin=2/4) |
-| `potg{#}_ini.cube` | Initial potential (out_freq_ion>0, geometry step {#}, nspin=1) |
-| `pots{#}g{#}_ini.cube` | Initial potential (out_freq_ion>0, spin {#}, geometry step {#}, nspin=2/4) |
+| `potg{#}_ini.cube` | Initial potential (geometry step {#}, nspin=1, out_app_flag=2) |
+| `pots{#}g{#}_ini.cube` | Initial potential (spin {#}, geometry step {#}, nspin=2/4, out_app_flag=2) |
 | `taus1.cube`, `taus2.cube` | Kinetic energy density (tau) |
 | `pots1.cube`, `pots2.cube` | Local potential |
 | ELF (out_elf) | |
 | `elftot.cube` | ELF, total (nspin=1/4) |
 | `elfs1.cube`, `elfs2.cube` | ELF, spin 1/2 (nspin=2) |
 | `elftot.cube` | ELF, total (nspin=2) |
-| `elftotg{#}.cube` | ELF, total, geometry step {#} (nspin=1/4) |
-| `elfs{#}g{#}.cube` | ELF, spin {#}, geometry step {#} (nspin=2) |
-| `elftotg{#}.cube` | ELF, total, geometry step {#} (nspin=2) |
+| `elftotg{#}.cube` | ELF, total, geometry step {#}, out_app_flag=2 (nspin=1/4) |
+| `elfs{#}g{#}.cube` | ELF, spin {#}, geometry step {#}, out_app_flag=2 (nspin=2) |
+| `elftotg{#}.cube` | ELF, total, geometry step {#}, out_app_flag=2 (nspin=2) |
 
 **Band structure files (`out_band`):** each ionic step of `band.txt`,
 `bands1.txt` and `bands2.txt` is preceded by a provenance comment block, so the
