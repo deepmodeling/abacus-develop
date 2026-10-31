@@ -23,16 +23,16 @@ protected:
 };
 
 // ---------------------------------------------------------------------------
-// mode 0 = no append -> per-step g{N} suffix included.
+// mode 0 = overwrite a fixed filename -> no g{N} suffix even when istep >= 0.
 // ---------------------------------------------------------------------------
-TEST_F(FilenameOutputTest, Mode0IstepAddsG)
+TEST_F(FilenameOutputTest, Mode0FixedNameIgnoresIstep)
 {
     // PW wavefunction, binary, k1, spin up (ik0=0 < half_k=1 -> s1).
     const std::string fn = filename_output(
         dir, "wf", "pw", ik_local, ik2iktot, nspin, nkstot,
         /*out_type=*/2, /*out_app_flag=*/0, /*gamma_only=*/false,
         /*istep=*/1, /*iter=*/-1);
-    EXPECT_EQ(fn, "OUT.test/wfk1s1g2_pw.dat");
+    EXPECT_EQ(fn, "OUT.test/wfk1s1_pw.dat");
 }
 
 // ---------------------------------------------------------------------------
@@ -48,11 +48,10 @@ TEST_F(FilenameOutputTest, Mode1FixedNameNoG)
 }
 
 // ---------------------------------------------------------------------------
-// mode 2 = write to subdirectory -> same naming as mode 0 (g suffix kept).
-// The directory routing is handled by the caller (set_global_dir), so
-// filename_output itself treats modes 0 and 2 identically.
+// mode 2 = per-step file -> the only mode that embeds the g{N} suffix.
+// The directory routing is handled by the caller (set_global_dir).
 // ---------------------------------------------------------------------------
-TEST_F(FilenameOutputTest, Mode2SameNamingAsMode0)
+TEST_F(FilenameOutputTest, Mode2EmbedsStep)
 {
     const std::string fn = filename_output(
         dir, "wf", "pw", ik_local, ik2iktot, nspin, nkstot,
@@ -74,16 +73,16 @@ TEST_F(FilenameOutputTest, SinglePointNoG)
 }
 
 // ---------------------------------------------------------------------------
-// iter >= 0 adds e{N} in modes 0/2, but is suppressed in mode 1 too.
+// iter >= 0 adds e{N} only in mode 2; modes 0 and 1 keep the fixed filename.
 // ---------------------------------------------------------------------------
-TEST_F(FilenameOutputTest, IterIndexRespectsAppendFlag)
+TEST_F(FilenameOutputTest, IterIndexOnlyInMode2)
 {
-    // mode 0: both g and e present.
+    // mode 0: neither g nor e.
     const std::string fn_mode0 = filename_output(
         dir, "wf", "pw", ik_local, ik2iktot, nspin, nkstot,
         /*out_type=*/1, /*out_app_flag=*/0, /*gamma_only=*/false,
         /*istep=*/1, /*iter=*/3);
-    EXPECT_EQ(fn_mode0, "OUT.test/wfk1s1g2e3_pw.txt");
+    EXPECT_EQ(fn_mode0, "OUT.test/wfk1s1_pw.txt");
 
     // mode 1: neither g nor e.
     const std::string fn_mode1 = filename_output(
@@ -91,6 +90,13 @@ TEST_F(FilenameOutputTest, IterIndexRespectsAppendFlag)
         /*out_type=*/1, /*out_app_flag=*/1, /*gamma_only=*/false,
         /*istep=*/1, /*iter=*/3);
     EXPECT_EQ(fn_mode1, "OUT.test/wfk1s1_pw.txt");
+
+    // mode 2: both g and e present.
+    const std::string fn_mode2 = filename_output(
+        dir, "wf", "pw", ik_local, ik2iktot, nspin, nkstot,
+        /*out_type=*/1, /*out_app_flag=*/2, /*gamma_only=*/false,
+        /*istep=*/1, /*iter=*/3);
+    EXPECT_EQ(fn_mode2, "OUT.test/wfk1s1g2e3_pw.txt");
 }
 
 // ---------------------------------------------------------------------------

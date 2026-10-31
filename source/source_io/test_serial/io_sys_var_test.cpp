@@ -68,9 +68,9 @@ TEST_F(InputTest, Item_test)
         TestParameters::set_global_dir(readinput, input, sys);
 
         EXPECT_EQ(sys.global_out_dir, "OUT.test/");
-        // out_app_flag defaults to 1, so stru dir maps to global out dir
+        // out_app_flag defaults to 0, so stru dir maps to global out dir
         EXPECT_EQ(sys.global_stru_dir, "OUT.test/");
-        // out_app_flag defaults to 1, so matrix dir maps to global out dir
+        // out_app_flag defaults to 0, so matrix dir maps to global out dir
         EXPECT_EQ(sys.global_matrix_dir, "OUT.test/");
         EXPECT_EQ(sys.global_wfc_dir, "OUT.test/");
         EXPECT_EQ(sys.global_psi_dir, "OUT.test/");

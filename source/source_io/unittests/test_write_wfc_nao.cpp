@@ -62,7 +62,7 @@ TEST(GenWfcLcaoFnameTest, OutType2GammaOnlyOutAppFlagFalse)
     const int out_type = 2;
     const int out_app_flag = 0;
     const bool gamma_only = true;
-    // if out_app_flag = 0 (no append), then the 'g' label appears
+    // if out_app_flag = 0 (overwrite a fixed file), the 'g' label never appears
     const int istep = 2;
 
 	std::string result = ModuleIO::filename_output(
@@ -70,7 +70,7 @@ TEST(GenWfcLcaoFnameTest, OutType2GammaOnlyOutAppFlagFalse)
 			nkstot, out_type, out_app_flag, gamma_only, istep);
 
     // output .dat file when out_type=2
-    std::string expected_output = "wfs2g3_nao.dat";
+    std::string expected_output = "wfs2_nao.dat";
     EXPECT_EQ(result, expected_output);
 }
 
@@ -103,10 +103,11 @@ TEST(GenWfcLcaoFnameTest, OutTypeInvalid)
 }
 
 // ---------------------------------------------------------------------------
-// out_app_flag = 2 (write to subdirectory) keeps the g{N} suffix, identical
-// to mode 0 at the filename level; directory routing is handled by the caller.
+// out_app_flag = 2 (write to a per-step subdirectory) is the only mode that
+// embeds the g{N} suffix in the filename; directory routing is handled by the
+// caller.
 // ---------------------------------------------------------------------------
-TEST(GenWfcLcaoFnameTest, OutAppFlagMode2SameNamingAsMode0)
+TEST(GenWfcLcaoFnameTest, OutAppFlagMode2EmbedsStep)
 {
     const std::string directory = "";
     const std::string property = "wf";

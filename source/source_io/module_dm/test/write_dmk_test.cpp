@@ -236,9 +236,9 @@ TEST(DMKTest,WriteDMK) {
 };
 
 // ---------------------------------------------------------------------------
-// out_app_flag = 0: per-step files with g suffix, overwrite each call.
+// out_app_flag = 0: one fixed filename, truncated and overwritten each call.
 // ---------------------------------------------------------------------------
-TEST(DMKTest, Mode0PerStepFiles) {
+TEST(DMKTest, Mode0FixedNameOverwrite) {
     UnitCell* ucell;
     UcellTestPrepare utp = UcellTestLib["Si"];
     ucell = utp.SetUcellInfo();
@@ -274,25 +274,26 @@ TEST(DMKTest, Mode0PerStepFiles) {
     const int out_app_flag = 0;
     std::ofstream ofs_log;
 
-    // Two different isteps -> two differently-named files.
+    // Two different isteps -> the same fixed filename, overwritten each call.
     ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/0, out_app_flag, ofs_log);
     ModuleIO::write_dmk(dmk, kv, /*precision=*/3, efs, ucell, pv, out_dir, /*istep=*/1, out_app_flag, ofs_log);
 
     if (GlobalV::MY_RANK == 0)
     {
-        // First call: g1 suffix (istep 0 -> istep+1).
-        std::ifstream ifs("dms1g1_nao.txt");
-        EXPECT_TRUE(ifs.good());
+        std::ifstream ifs("dms1_nao.txt");
+        std::string str((std::istreambuf_iterator<char>(ifs)),
+                        std::istreambuf_iterator<char>());
         ifs.close();
-        // Second call: g2 suffix.
-        ifs.open("dms1g2_nao.txt");
-        EXPECT_TRUE(ifs.good());
-        ifs.close();
-        // Fixed-name file must NOT exist.
-        ifs.open("dms1_nao.txt");
+        // The second write replaced the first record: only step 2 remains.
+        EXPECT_THAT(str, testing::HasSubstr(" --- Ionic Step 2 ---"));
+        EXPECT_THAT(str, testing::Not(testing::HasSubstr(" --- Ionic Step 1 ---")));
+        // g-suffixed files must NOT exist.
+        ifs.open("dms1g1_nao.txt");
         EXPECT_FALSE(ifs.good());
-        remove("dms1g1_nao.txt");
-        remove("dms1g2_nao.txt");
+        ifs.open("dms1g2_nao.txt");
+        EXPECT_FALSE(ifs.good());
+        remove("dms1_nao.txt");
+        remove("dms2_nao.txt");
     }
     delete ucell;
 }
@@ -358,10 +359,10 @@ TEST(DMKTest, Mode1FixedNameAppend) {
 }
 
 // ---------------------------------------------------------------------------
-// out_app_flag = 2: same naming as mode 0 (g suffix kept); directory routing
-// is handled by set_global_dir and is covered by io_sys_var_test.
+// out_app_flag = 2: per-step g{step} filename; directory routing is handled by
+// set_global_dir and is covered by io_sys_var_test.
 // ---------------------------------------------------------------------------
-TEST(DMKTest, Mode2SameNamingAsMode0) {
+TEST(DMKTest, Mode2PerStepFile) {
     UnitCell* ucell;
     UcellTestPrepare utp = UcellTestLib["Si"];
     ucell = utp.SetUcellInfo();

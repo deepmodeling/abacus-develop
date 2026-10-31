@@ -85,7 +85,8 @@ int count_frames(const std::string& content)
 TEST(WriteDmr, GenFnameKeepsCurrentContract)
 {
     EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 0, true, -1), "dmrs1_nao.csr");
-    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 1, false, 2), "dmrs2g3_nao.csr");
+    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 1, false, 2), "dmrs2_nao.csr");
+    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 1, true, 2), "dmrs2g3_nao.csr");
     EXPECT_EQ(ModuleIO::dmr_gen_fname(2, 0, true, 5), "dmrs1_nao.npz");
 }
 
@@ -102,7 +103,7 @@ TEST(WriteDmr, CsrHeaderKeepsCurrentFormat)
     double values[4] = {0.25, 0.0, 0.0, 0.75};
     fill_matrix(matrix, pv, values);
 
-    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 1, 2);
+    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 1, 2, false);
 
     const std::string output = read_file(filename);
     EXPECT_THAT(output, testing::HasSubstr(" --- Ionic Step 1 ---\n"));
@@ -122,9 +123,9 @@ TEST(WriteDmr, ModeOneFixedNameTruncatesOnRerun)
     // istep <= 0 and appends otherwise. A 0 -> 1 -> 0 sequence (two steps
     // of one run, then the first step of a rerun in the same directory)
     // must therefore use one filename and drop the previous run's frames.
-    const bool append = true; // out_app_flag == 1
-    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 0, append, 0), "dmrs1_nao.csr");
-    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 0, append, 1), "dmrs1_nao.csr");
+    const bool numbered = false; // out_app_flag == 1
+    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 0, numbered, 0), "dmrs1_nao.csr");
+    EXPECT_EQ(ModuleIO::dmr_gen_fname(1, 0, numbered, 1), "dmrs1_nao.csr");
 
     UnitCell ucell;
     init_unitcell(ucell);
@@ -137,14 +138,14 @@ TEST(WriteDmr, ModeOneFixedNameTruncatesOnRerun)
     std::string filename = testing::TempDir() + "/dmrs1_nao.csr";
     std::remove(filename.c_str());
 
-    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 0, 1);
-    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 1, 0, 1);
+    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 0, 1, true);
+    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 1, 0, 1, true);
     const std::string after_first_run = read_file(filename);
     EXPECT_EQ(count_frames(after_first_run), 2);
     EXPECT_THAT(after_first_run, testing::HasSubstr(" --- Ionic Step 2 ---\n"));
 
     // First step of a rerun must truncate the accumulated frames.
-    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 0, 1);
+    ModuleIO::write_dmr_csr(filename, &ucell, 4, &matrix, 0, 0, 1, true);
     const std::string after_rerun = read_file(filename);
     EXPECT_EQ(count_frames(after_rerun), 1);
     EXPECT_THAT(after_rerun, testing::HasSubstr(" --- Ionic Step 1 ---\n"));

@@ -113,8 +113,9 @@ TEST_F(WritePdosTextTest, BasicOutput)
     remove("test_write_pdos_text.log");
 }
 
-// istep >= 0 appends g{istep+1} to the file name.
-TEST_F(WritePdosTextTest, IstepFileName)
+// mode 0 keeps a fixed name even when istep >= 0; the step only appears in
+// the record header.
+TEST_F(WritePdosTextTest, Mode0FixedNameWithStep)
 {
     GlobalV::ofs_running.open("test_write_pdos_text.log");
 
@@ -129,10 +130,10 @@ TEST_F(WritePdosTextTest, IstepFileName)
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
                               emin, dos_edelta_ev, "./", 2, 0);
 
-    const std::string str = read_file("./pdoss1g3.txt");
+    const std::string str = read_file("./pdoss1.txt");
     EXPECT_THAT(str, testing::HasSubstr("# istep: 3"));
 
-    remove("./pdoss1g3.txt");
+    remove("./pdoss1.txt");
     GlobalV::ofs_running.close();
     remove("test_write_pdos_text.log");
 }
@@ -216,9 +217,9 @@ TEST_F(WritePdosTextTest, Mode1FixedNameAppend)
 }
 
 // ---------------------------------------------------------------------------
-// out_app_flag = 2: same naming as mode 0 (g suffix kept).
+// out_app_flag = 2: per-step g{step} filename (the only mode that adds it).
 // ---------------------------------------------------------------------------
-TEST_F(WritePdosTextTest, Mode2SameNamingAsMode0)
+TEST_F(WritePdosTextTest, Mode2PerStepFile)
 {
     GlobalV::ofs_running.open("test_write_pdos_text.log");
 

@@ -27,7 +27,7 @@ static std::ofstream ofs_running;
 
 TEST(DhsSparseWriter, TextCountsOnlyValuesAboveThreshold)
 {
-    remove_derivative_files("h", 5);
+    remove_derivative_files("h");
     init_sparse_output_globals();
 
     Parallel_Orbitals pv;
@@ -42,7 +42,7 @@ TEST(DhsSparseWriter, TextCountsOnlyValuesAboveThreshold)
 
     ModuleIO::save_dH_sparse(5, pv, arrays, 1e-10, false, "h", 8, "./", "scf", false, 1, 2, ofs_running);
 
-    const std::vector<std::string> lines = read_lines("dhrxs1g6_nao.csr");
+    const std::vector<std::string> lines = read_lines("dhrxs1_nao.csr");
     ASSERT_GE(lines.size(), 7);
     // istep = 5 is the sixth ionic step, printed one-based as 6
     EXPECT_EQ(lines[0], "STEP: 6");
@@ -70,16 +70,16 @@ TEST(DhsSparseWriter, TextCountsOnlyValuesAboveThreshold)
     }
     EXPECT_THAT(indptr, testing::ElementsAre(0, 1, 2));
 
-    const std::vector<std::string> y_lines = read_lines("dhrys1g6_nao.csr");
+    const std::vector<std::string> y_lines = read_lines("dhrys1_nao.csr");
     ASSERT_GE(y_lines.size(), 4);
     EXPECT_EQ(y_lines[3], "0 0 0 0");
 
-    remove_derivative_files("h", 5);
+    remove_derivative_files("h");
 }
 
 TEST(DhsSparseWriter, BinaryCountsOnlyValuesAboveThreshold)
 {
-    remove_derivative_files("h", 6);
+    remove_derivative_files("h");
     init_sparse_output_globals();
 
     Parallel_Orbitals pv;
@@ -94,7 +94,7 @@ TEST(DhsSparseWriter, BinaryCountsOnlyValuesAboveThreshold)
 
     ModuleIO::save_dH_sparse(6, pv, arrays, 1e-10, true, "h", 8, "./", "scf", false, 1, 2, ofs_running);
 
-    std::ifstream ifs("dhrxs1g7_nao.csr", std::ios::binary);
+    std::ifstream ifs("dhrxs1_nao.csr", std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
     // istep = 6 -> one-based step 7 in the binary header
     EXPECT_EQ(read_binary_value<int>(ifs), 7);
@@ -112,12 +112,12 @@ TEST(DhsSparseWriter, BinaryCountsOnlyValuesAboveThreshold)
     EXPECT_EQ(read_binary_value<long long>(ifs), 1);
     EXPECT_EQ(read_binary_value<long long>(ifs), 2);
 
-    remove_derivative_files("h", 6);
+    remove_derivative_files("h");
 }
 
 TEST(DhsSparseWriter, SocWritesAllDirections)
 {
-    remove_derivative_files("s", 7);
+    remove_derivative_files("s");
     init_sparse_output_globals();
 
     Parallel_Orbitals pv;
@@ -131,9 +131,9 @@ TEST(DhsSparseWriter, SocWritesAllDirections)
 
     ModuleIO::save_dH_sparse(7, pv, arrays, 1e-10, false, "s", 8, "./", "scf", false, 4, 2, ofs_running);
 
-    const std::string x_output = read_file("dsrxs1g8_nao.csr");
-    const std::string y_output = read_file("dsrys1g8_nao.csr");
-    const std::string z_output = read_file("dsrzs1g8_nao.csr");
+    const std::string x_output = read_file("dsrxs1_nao.csr");
+    const std::string y_output = read_file("dsrys1_nao.csr");
+    const std::string z_output = read_file("dsrzs1_nao.csr");
     EXPECT_THAT(x_output, testing::HasSubstr("Matrix number of dHx(R): 1\n0 0 0 1\n"));
     EXPECT_THAT(y_output, testing::HasSubstr("Matrix number of dHy(R): 1\n0 0 0 1\n"));
     EXPECT_THAT(z_output, testing::HasSubstr("Matrix number of dHz(R): 1\n0 0 0 1\n"));
@@ -141,7 +141,7 @@ TEST(DhsSparseWriter, SocWritesAllDirections)
     EXPECT_THAT(y_output, testing::HasSubstr("(2.00000000e+00,-1.00000000e+00)"));
     EXPECT_THAT(z_output, testing::HasSubstr("(-3.00000000e+00,5.00000000e-01)"));
 
-    remove_derivative_files("s", 7);
+    remove_derivative_files("s");
 }
 
 TEST(DhsSparseWriter, AppendModeReusesFixedFilename)
@@ -171,7 +171,8 @@ TEST(DhsSparseWriter, AppendModeReusesFixedFilename)
     EXPECT_EQ(count_substr(two_frames, "STEP: 1"), 1);
     EXPECT_EQ(count_substr(two_frames, "STEP: 2"), 1);
 
-    // Modes 0 and 2 keep one suffixed file per ionic step and never append.
+    // Mode 2 keeps one suffixed file per ionic step and never appends; mode 0
+    // overwrites the fixed filename instead.
     ModuleIO::save_dH_sparse(0, pv, arrays, 1e-10, false, "s", 8, "./", "md", 2, 1, 2, ofs_running);
     const std::vector<std::string> mode2_lines = read_lines("dsrxs1g1_nao.csr");
     ASSERT_FALSE(mode2_lines.empty());

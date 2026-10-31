@@ -107,7 +107,8 @@ class InitDMFileTest : public testing::Test
         }
 
         std::string fname = filename;
-        ModuleIO::write_dmr_csr(fname, &ucell, 8, &hc, 0, ispin, nspin);
+        const bool append = false;
+        ModuleIO::write_dmr_csr(fname, &ucell, 8, &hc, 0, ispin, nspin, append);
     }
 
     /// Create DensityMatrix with given nspin and initialize DMR from an HContainer template

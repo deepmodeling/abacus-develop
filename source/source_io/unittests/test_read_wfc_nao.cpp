@@ -536,7 +536,7 @@ TEST_F(ReadWfcNaoTest, ReadPsiDirectoryLayout)
     const int istep = 0;
     const std::vector<int> ik2iktot = {0};
     const int read_type = 2;
-    const int suffix_app_flag = 0;
+    const int suffix_app_flag = 2;
     // The real-valued reader builds candidate names through the gamma-only
     // branch of filename_output, so the snapshot must use the same naming.
     const bool gamma_only_for_name = true;

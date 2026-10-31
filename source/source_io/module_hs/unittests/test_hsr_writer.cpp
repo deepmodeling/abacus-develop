@@ -43,46 +43,46 @@ void expect_fname_eq(const std::string& expected, const std::string& actual)
 // hsr_gen_fname: H(R) spin-dependent filename
 // ---------------------------------------------------------------------------
 
-TEST(HsrWriterFname, HsrOverwriteWithStep)
+TEST(HsrWriterFname, HsrNumberedWithStep)
 {
-    // prefix="data-", ispin=0, append=false, istep=0
+    // prefix="data-", ispin=0, numbered=true, istep=0
     // -> "data-1g1_nao.csr"
-    const std::string fname = ModuleIO::hsr_gen_fname("data-", 0, false, 0);
+    const std::string fname = ModuleIO::hsr_gen_fname("data-", 0, true, 0);
     expect_fname_eq("data-1g1_nao.csr", fname);
 }
 
-TEST(HsrWriterFname, HsrOverwriteWithStepTwo)
+TEST(HsrWriterFname, HsrNumberedWithStepTwo)
 {
     // istep=2 -> g3
-    const std::string fname = ModuleIO::hsr_gen_fname("data-", 1, false, 2);
+    const std::string fname = ModuleIO::hsr_gen_fname("data-", 1, true, 2);
     expect_fname_eq("data-2g3_nao.csr", fname);
 }
 
-TEST(HsrWriterFname, HsrAppendSuppressesStep)
+TEST(HsrWriterFname, HsrFixedNameSuppressesStep)
 {
-    // append=true -> step number is omitted
-    const std::string fname = ModuleIO::hsr_gen_fname("data-", 0, true, 5);
+    // numbered=false -> step number is omitted (modes 0/1)
+    const std::string fname = ModuleIO::hsr_gen_fname("data-", 0, false, 5);
     expect_fname_eq("data-1_nao.csr", fname);
 }
 
 TEST(HsrWriterFname, HsrNegativeStepSuppressesStep)
 {
     // istep=-1 -> step number is omitted (no "g" suffix)
-    const std::string fname = ModuleIO::hsr_gen_fname("data-", 0, false, -1);
+    const std::string fname = ModuleIO::hsr_gen_fname("data-", 0, true, -1);
     expect_fname_eq("data-1_nao.csr", fname);
 }
 
 TEST(HsrWriterFname, HsrDatExtension)
 {
     // out_type=2 -> ".dat" extension
-    const std::string fname = ModuleIO::hsr_gen_fname("data-", 0, false, 0, 2);
+    const std::string fname = ModuleIO::hsr_gen_fname("data-", 0, true, 0, 2);
     expect_fname_eq("data-1g1_nao.dat", fname);
 }
 
 TEST(HsrWriterFname, HsrCsrExtensionDefault)
 {
     // out_type=1 (default) -> ".csr" extension
-    const std::string fname = ModuleIO::hsr_gen_fname("data-", 0, false, 0, 1);
+    const std::string fname = ModuleIO::hsr_gen_fname("data-", 0, true, 0, 1);
     expect_fname_eq("data-1g1_nao.csr", fname);
 }
 
@@ -90,31 +90,31 @@ TEST(HsrWriterFname, HsrCsrExtensionDefault)
 // sr_gen_fname: S(R) spin-independent filename
 // ---------------------------------------------------------------------------
 
-TEST(HsrWriterFname, SrOverwriteWithStep)
+TEST(HsrWriterFname, SrNumberedWithStep)
 {
-    // append=false, istep=0 -> "srg1_nao.csr"
-    const std::string fname = ModuleIO::sr_gen_fname(false, 0);
+    // numbered=true, istep=0 -> "srg1_nao.csr"
+    const std::string fname = ModuleIO::sr_gen_fname(true, 0);
     expect_fname_eq("srg1_nao.csr", fname);
 }
 
-TEST(HsrWriterFname, SrAppendSuppressesStep)
+TEST(HsrWriterFname, SrFixedNameSuppressesStep)
 {
-    // append=true -> "sr_nao.csr" (no step number)
-    const std::string fname = ModuleIO::sr_gen_fname(true, 5);
+    // numbered=false -> "sr_nao.csr" (no step number)
+    const std::string fname = ModuleIO::sr_gen_fname(false, 5);
     expect_fname_eq("sr_nao.csr", fname);
 }
 
 TEST(HsrWriterFname, SrNegativeStepSuppressesStep)
 {
     // istep=-1 -> "sr_nao.csr"
-    const std::string fname = ModuleIO::sr_gen_fname(false, -1);
+    const std::string fname = ModuleIO::sr_gen_fname(true, -1);
     expect_fname_eq("sr_nao.csr", fname);
 }
 
 TEST(HsrWriterFname, SrDatExtension)
 {
     // out_type=2 -> ".dat"
-    const std::string fname = ModuleIO::sr_gen_fname(false, 0, 2);
+    const std::string fname = ModuleIO::sr_gen_fname(true, 0, 2);
     expect_fname_eq("srg1_nao.dat", fname);
 }
 
@@ -122,25 +122,25 @@ TEST(HsrWriterFname, SrDatExtension)
 // dhr_gen_fname: dH/dR spin-dependent filename
 // ---------------------------------------------------------------------------
 
-TEST(HsrWriterFname, DhrOverwriteWithStep)
+TEST(HsrWriterFname, DhrNumberedWithStep)
 {
-    // prefix="H", ispin=0, append=false, istep=0
+    // prefix="H", ispin=0, numbered=true, istep=0
     // -> "Hrs1g1_nao.csr"
-    const std::string fname = ModuleIO::dhr_gen_fname("H", 0, false, 0);
+    const std::string fname = ModuleIO::dhr_gen_fname("H", 0, true, 0);
     expect_fname_eq("Hrs1g1_nao.csr", fname);
 }
 
-TEST(HsrWriterFname, DhrAppendSuppressesStep)
+TEST(HsrWriterFname, DhrFixedNameSuppressesStep)
 {
-    // append=true -> step omitted
-    const std::string fname = ModuleIO::dhr_gen_fname("H", 1, true, 3);
+    // numbered=false -> step omitted (modes 0/1)
+    const std::string fname = ModuleIO::dhr_gen_fname("H", 1, false, 3);
     expect_fname_eq("Hrs2_nao.csr", fname);
 }
 
 TEST(HsrWriterFname, DhrNegativeStepSuppressesStep)
 {
     // istep=-1 -> step omitted
-    const std::string fname = ModuleIO::dhr_gen_fname("dH", 0, false, -1);
+    const std::string fname = ModuleIO::dhr_gen_fname("dH", 0, true, -1);
     expect_fname_eq("dHrs1_nao.csr", fname);
 }
 
@@ -163,7 +163,7 @@ TEST(HsrWriterIo, HContainerCsrHeaderKeepsCurrentFormat)
 
     // label "H": header carries the Fermi energy of this spin channel
     const double efermi_eV = 5.4321;
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 5, &matrix, 0, 0, 1, "H", "", efermi_eV, true);
+    ModuleIO::write_hcontainer_csr(filename, &ucell, 5, &matrix, 0, false, 0, 1, "H", "", efermi_eV, true);
 
     const std::string output = read_file(filename);
     EXPECT_THAT(output, testing::HasSubstr(" --- Ionic Step 1 ---\n"));
@@ -203,7 +203,7 @@ TEST(HsrWriterIo, GammaFoldedHeaderKeepsCsrReadable)
     // label "H" without Fermi energy available: pass has_efermi = false
     const double no_efermi = 0.0;
     ModuleIO::write_hcontainer_csr(
-        filename, &ucell, 5, &matrix, 0, 0, 1, "H", representation_note, no_efermi, false);
+        filename, &ucell, 5, &matrix, 0, false, 0, 1, "H", representation_note, no_efermi, false);
 
     const std::string output = read_file(filename);
     EXPECT_THAT(output, testing::HasSubstr("# representation: " + representation_note + "\n"));
@@ -235,8 +235,8 @@ TEST(HsrWriterIo, HContainerCsrAppendKeepsCurrentStepSections)
 
     // label "S": header carries no Fermi energy (has_efermi = false)
     const double ignored_efermi = 0.0;
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 0, 0, 1, "S", "", ignored_efermi, false);
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 1, 0, 1, "S", "", ignored_efermi, false);
+    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 0, false, 0, 1, "S", "", ignored_efermi, false);
+    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 1, true, 0, 1, "S", "", ignored_efermi, false);
 
     const std::string output = read_file(filename);
     EXPECT_EQ(count_substr(output, " --- Ionic Step "), 2);
@@ -266,8 +266,8 @@ TEST(HsrWriterIo, HContainerCsrHeaderCarriesPerChannelFermi)
     const std::string filename_dw = "write_hs_r_header_fermi_dw.csr";
     std::remove(filename_up.c_str());
     std::remove(filename_dw.c_str());
-    ModuleIO::write_hcontainer_csr(filename_up, &ucell, 5, &matrix, 0, 0, 2, "H", "", efermi_up_eV, true);
-    ModuleIO::write_hcontainer_csr(filename_dw, &ucell, 5, &matrix, 0, 1, 2, "H", "", efermi_dw_eV, true);
+    ModuleIO::write_hcontainer_csr(filename_up, &ucell, 5, &matrix, 0, false, 0, 2, "H", "", efermi_up_eV, true);
+    ModuleIO::write_hcontainer_csr(filename_dw, &ucell, 5, &matrix, 0, false, 1, 2, "H", "", efermi_dw_eV, true);
 
     const std::string output_up = read_file(filename_up);
     const std::string output_dw = read_file(filename_dw);
@@ -457,7 +457,7 @@ TEST(HsrWriterIo, HContainerBinaryMpiGatherWritesCompleteFiles)
     eferm.ef = 0.4; // Ry; used only for the H(R) header
     std::ofstream ofs_running_null; // not opened; test does not inspect the running log
     ModuleIO::write_hsr(
-        hr_vec, &sr_parallel, &ucell, 2, 8, parallel_pv, true, true, iat2iwt, 1, 0, "./", eferm,
+        hr_vec, &sr_parallel, &ucell, 2, 8, parallel_pv, 1, true, iat2iwt, 1, 0, "./", eferm,
         ofs_running_null);
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -497,7 +497,7 @@ TEST(HsrWriterIo, WriteHsrTextCsrCarriesPerSpinFermiFromEfermi)
     // Exercise the fix path inside write_hsr: eferm.get_efval(ispin) * Ry_to_eV
     // for a two-Fermi (nspin=2) case. The only existing write_hsr test uses
     // out_type=2 (binary), which skips the Fermi branch entirely.
-    // append=true suppresses the ionic-step suffix in the generated names.
+    // out_app_flag=1 keeps a fixed filename (no g{step} suffix) and appends.
     const std::string hr_up_filename = "hrs1_nao.csr";
     const std::string hr_dw_filename = "hrs2_nao.csr";
     const std::string sr_filename = "sr_nao.csr";
@@ -545,7 +545,7 @@ TEST(HsrWriterIo, WriteHsrTextCsrCarriesPerSpinFermiFromEfermi)
 
     std::ofstream ofs_running_null; // not opened; test does not inspect the running log
     ModuleIO::write_hsr(
-        hr_vec, &sr, &ucell, 1, 8, pv, true, true, iat2iwt_ptr, 1, 0, "./", eferm,
+        hr_vec, &sr, &ucell, 1, 8, pv, 1, true, iat2iwt_ptr, 1, 0, "./", eferm,
         ofs_running_null);
 
     const std::string output_up = read_file(hr_up_filename);
