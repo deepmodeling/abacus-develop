@@ -112,6 +112,15 @@ void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
     }
     rho_.init({nspin, nrxx, ctx.pw_rho, ctx.pw_wfc, ctx.ucell->G, rho_mix_type, mix_beta, kerker_a2, broyden_ndim_});
     phon_.init(*ctx.ucell, ctx.pw_rho, &pert_);
+    // nlcc direct-term providers (QE dynmat_nlcc + dynmatcc equivalents):
+    // the pure core-response builder and the ground-state XC potential
+    phon_.set_rho(&rho_);
+    // the Impl-owned copy: the context pointer refers to caller stack
+    // state that dies when the esolver init returns
+    // always pass the pointer (never nullptr): a rank with an empty
+    // local field must still enter accum_nlcc_diag's collective
+    // participation; the size checks inside gate only the local work
+    phon_.set_vxc_r(&vxc_r_);
     q0_.init(*ctx.ucell, ctx.pw_rho, ctx.pw_wfc, &pert_);
     hamilt_.reset(new DFPT_HamiltShift(*ctx.ucell, ctx.pw_rho, ctx.pw_wfc, *ctx.veff_r, &pert_));
     data_.init(&qlist_, nk, nbands, npw_max, nrxx, nspin, nat, ctx.dftu);
@@ -137,6 +146,11 @@ void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
     pimpl_->pw_wfc_ = pw_wfc;
     pimpl_->sf_ = sf;
     pimpl_->veff_r_ = *ctx.veff_r;
+    pimpl_->vxc_r_.clear();
+    if (ctx.vxc_r != nullptr)
+    {
+        pimpl_->vxc_r_ = *ctx.vxc_r;
+    }
     pimpl_->wg_ = *ctx.wg;
     pimpl_->eig_ = *ctx.eig;
     pimpl_->xc_ = ctx.xc;

@@ -19,9 +19,11 @@ build:
     - pkg-config
   jobs:
     pre_build:
-      - cmake -Bbuild -GNinja -DCMAKE_INSTALL_PREFIX=install -DENABLE_MPI=OFF -DENABLE_LCAO=OFF
-      - cmake --build build --target install -j $(nproc)
-      - install/bin/abacus --generate-parameters-yaml > docs/parameters.yaml
+      # Build only the INPUT-registry dumper (~30 sources), not the full
+      # program: compiling all of ABACUS took most of RTD's 15-minute limit.
+      - cmake -Bbuild -GNinja -DENABLE_MPI=OFF -DENABLE_LCAO=OFF
+      - cmake --build build --target abacus_input_yaml -j $(nproc)
+      - build/source/source_io/abacus_input_yaml > docs/parameters.yaml
       - python3 docs/generate_input_main.py docs/parameters.yaml
       # RTD builds PR (external) versions as HTML only, so PDF failures would
       # not surface until post-merge. Run the same latex->PDF chain here as a
