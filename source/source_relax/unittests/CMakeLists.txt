@@ -321,6 +321,7 @@ addtest(
   __MPI
   SOURCES
   test_relax_driver.cpp
+  ../../source_base/test/mpi_test_main.cpp
   ../relax_driver.cpp
   ../relax_nsync.cpp
   ../relax_sync.cpp

@@ -845,7 +845,7 @@ TEST(RelaxSyncConvergence, ClearsPreviousGeometryUpdate)
 {
     const int nat = 1;
     Input_para inp;
-    inp.calculation = "relax";
+    inp.calculation = "cell-relax";
     inp.relax_method = "cg";
     inp.force_thr = 0.01;
     inp.force_thr_ev = 1.0;
@@ -885,6 +885,7 @@ TEST(RelaxSyncConvergence, ClearsPreviousGeometryUpdate)
     const bool first_done = rl.relax_step(ucell, moving_force, stress, 0.0, ofs);
     EXPECT_FALSE(first_done);
     EXPECT_TRUE(ucell.ionic_position_updated);
+    EXPECT_TRUE(ucell.cell_parameter_updated);
 
     const bool second_done = rl.relax_step(ucell, converged_force, stress, 0.0, ofs);
     ofs.close();

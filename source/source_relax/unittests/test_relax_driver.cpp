@@ -1,7 +1,6 @@
 #include "source_cell/cell_tools.h"
 #include "source_cell/print_cell.h"
 #include "source_cell/update_cell.h"
-#include "source_base/parallel_global.h"
 #include "source_esolver/esolver.h"
 #include "for_test.h"
 #include "source_relax/relax_driver.h"
@@ -18,6 +17,8 @@
 
 namespace unitcell
 {
+bool allow_cell_change = false;
+
 bool if_atoms_can_move(const Atom*, const int)
 {
     return true;
@@ -25,7 +26,7 @@ bool if_atoms_can_move(const Atom*, const int)
 
 bool if_cell_can_change(const std::vector<int>&)
 {
-    return false;
+    return allow_cell_change;
 }
 
 void update_pos_tau(const Lattice& lat, const double* pos, const int ntype, const int nat, Atom* atoms)
@@ -49,8 +50,9 @@ void update_pos_taud(const Lattice&, const double*, const int, const int, Atom*)
 {
 }
 
-void setup_cell_after_vc(UnitCell&, std::ofstream&, const int)
+void setup_cell_after_vc(UnitCell& ucell, std::ofstream&, const int)
 {
+    ucell.omega = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
 }
 
 void remake_cell(Lattice&)
@@ -110,29 +112,6 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver*, UnitCell&, const Inpu
 namespace
 {
 
-class MpiEnvironment final : public testing::Environment
-{
-  public:
-    void SetUp() override
-    {
-        int nproc = 0;
-        int nthread_per_proc = 0;
-        int my_rank = 0;
-        char arg0[] = "MODULE_RELAX_relax_driver_test";
-        char* argv[] = {arg0, nullptr};
-        int argc = 1;
-        Parallel_Global::read_pal_param(argc, argv, nproc, nthread_per_proc, my_rank);
-    }
-
-    void TearDown() override
-    {
-        Parallel_Global::finalize_mpi();
-    }
-};
-
-testing::Environment* const mpi_environment
-    = testing::AddGlobalTestEnvironment(new MpiEnvironment);
-
 class DriverTestESolver : public ModuleESolver::ESolver
 {
   public:
@@ -144,14 +123,18 @@ class DriverTestESolver : public ModuleESolver::ESolver
     {
     }
 
-    void runner(BaseCell&, const int) override
+    void runner(BaseCell& cell, const int) override
     {
         ++runner_count;
+        runner_omega = cell.omega();
+        runner_latvec_e11 = cell.latvec().e11;
     }
 
-    void after_all_runners(BaseCell&) override
+    void after_all_runners(BaseCell& cell) override
     {
         ++after_all_count;
+        after_all_omega = cell.omega();
+        after_all_latvec_e11 = cell.latvec().e11;
     }
 
     double cal_energy() override
@@ -168,13 +151,26 @@ class DriverTestESolver : public ModuleESolver::ESolver
     void cal_stress(BaseCell&, ModuleBase::matrix& stress) override
     {
         stress.zero_out();
+        stress(0, 0) = stress_x_;
+        stress(1, 1) = stress_x_;
+        stress(2, 2) = stress_x_;
+    }
+
+    void set_stress(const double stress_x)
+    {
+        stress_x_ = stress_x;
     }
 
     int runner_count = 0;
     int after_all_count = 0;
+    double runner_omega = 0.0;
+    double after_all_omega = 0.0;
+    double runner_latvec_e11 = 0.0;
+    double after_all_latvec_e11 = 0.0;
 
   private:
     double force_x_;
+    double stress_x_ = 0.0;
 };
 
 class RelaxDriverTest : public ::testing::Test
@@ -340,6 +336,42 @@ TEST_F(RelaxDriverTest, MaxStepsStopsOnSimultaneousPath)
     EXPECT_EQ(esolver.after_all_count, 1);
     EXPECT_THAT(read_running_log(), testing::HasSubstr("reaching relax_nmax"));
     EXPECT_THAT(read_running_log(), testing::HasSubstr("stopped after 1 ionic step(s) (relax_nmax = 1 reached)"));
+}
+
+TEST_F(RelaxDriverTest, MaxStepsAfterAllUsesEvaluatedCellRelaxGeometry)
+{
+    unitcell::allow_cell_change = true;
+
+    Input_para inp;
+    inp.calculation = "cell-relax";
+    inp.relax_method = "cg";
+    inp.relax_nmax = 1;
+    inp.force_thr = -1.0;
+    inp.force_thr_ev = -1.0;
+    inp.stress_thr = -1.0;
+    inp.cal_force = 1;
+    inp.cal_stress = 1;
+    inp.fixed_axes = "None";
+    inp.out_level = "m";
+
+    UnitCell ucell;
+    make_cell(ucell);
+    ucell.lat_axis_free.assign(3, 1);
+    DriverTestESolver esolver(0.0);
+    esolver.set_stress(1.0);
+    std::ofstream ofs(log_file_);
+    Relax_Driver driver;
+    driver.relax_driver(&esolver, ucell, inp, ofs);
+    ofs.close();
+
+    unitcell::allow_cell_change = false;
+
+    EXPECT_EQ(esolver.runner_count, 1);
+    EXPECT_EQ(esolver.after_all_count, 1);
+    EXPECT_DOUBLE_EQ(esolver.after_all_omega, esolver.runner_omega);
+    EXPECT_DOUBLE_EQ(esolver.after_all_latvec_e11, esolver.runner_latvec_e11);
+    EXPECT_NE(ucell.omega, esolver.runner_omega);
+    EXPECT_THAT(read_running_log(), testing::HasSubstr("reaching relax_nmax"));
 }
 
 TEST_F(RelaxDriverTest, FinalAllowedStepConvergesAndCallsAfterAllOnce)
