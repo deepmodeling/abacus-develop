@@ -12,8 +12,9 @@ void run(int points, int source_leading, int leading, int bands)
     const size_t count = size_t(points) * bands * source_leading;
     Complex* host = nullptr;
     Complex* output = nullptr;
-    const std::vector<int> indices = points == 1 ? std::vector<int>{0, 0, 0}
-        : std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 7, 1, 3, 2, 0, 7, 2};
+    std::vector<int> indices;
+    for (int ik = 0; ik < points; ++ik) { indices.push_back(ik); }
+    for (int ik : {7, 1, 3, 2, 0, 7, 2}) { indices.push_back(ik % points); }
     const size_t stride = size_t(bands) * leading + 2;
     std::vector<Complex> actual(stride * indices.size(), Complex(999, -777));
     auto expected = actual;
@@ -39,16 +40,17 @@ void run(int points, int source_leading, int leading, int bands)
                 std::copy(source, source + rows, expected.data() + offset + size_t(band) * rows);
             }
         }
-        // Destruction drains the final restore and an unconsumed prefetch.
+        // Destruction drains the final restore before host storage is reused.
         // No host synchronization separates consecutive requests above.
     }
+    if (std::memcmp(original.data(), host, count * sizeof(Complex)) != 0) { std::exit(3); }
+    std::fill(host, host + count, Complex(-123, 456));
     cudaErrcheck(cudaMemcpy(actual.data(), output, actual.size() * sizeof(Complex), cudaMemcpyDeviceToHost));
     if (std::memcmp(actual.data(), expected.data(), actual.size() * sizeof(Complex)) != 0)
     {
         std::cerr << "Transfer output or guard changed: points=" << points << " source_leading=" << source_leading << '\n';
         std::exit(2);
     }
-    if (std::memcmp(original.data(), host, count * sizeof(Complex)) != 0) { std::exit(3); }
     cudaErrcheck(cudaFree(output));
     cudaErrcheck(cudaFreeHost(host));
     std::cout << "points=" << points << " source_leading=" << source_leading << " leading=" << leading
@@ -60,9 +62,11 @@ int main()
 {
     for (int lifecycle = 0; lifecycle < 2; ++lifecycle)
     {
-        run(8, 17, 11, 7);
-        run(8, 513, 513, 19);
-        run(8, 4099, 4093, 73);
-        run(1, 17, 11, 7);
+        for (int points : {1, 2, 3, 8})
+        {
+            run(points, 17, 11, 7);
+            run(points, 513, 513, 19);
+            run(points, 4099, 4093, 73);
+        }
     }
 }

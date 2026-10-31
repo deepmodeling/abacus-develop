@@ -15,11 +15,13 @@ for performance on these supercells.
 
 ## Inputs
 
-The structures use a 2.866 A conventional bcc lattice, repeated 2x2x2
-for Fe16, 2x2x4 for Fe32, or 3x3x3 for the Fe54 capacity check. One atom is displaced by 0.02 A along x to provide nonzero forces for
-comparison. The local moment target is 2.2 uB along +z on every atom.
+The structures use a 2.866 A conventional bcc lattice. The formal timing cases
+repeat it 2x2x2 for Fe16 and 2x2x4 for Fe32. Capacity inputs use 3x3x3 for Fe54,
+4x4x2 for Fe64, 4x3x3 for Fe72, 5x4x2 for Fe80 and 4x4x3 for Fe96. One atom is
+displaced by 0.02 A along x to provide nonzero forces for comparison. The local
+moment target is 2.2 uB along +z on every atom.
 
-These three Fe cases use 100 Ry, double precision, noncollinear spin, spin-orbit coupling,
+These Fe cases use 100 Ry, double precision, noncollinear spin, spin-orbit coupling,
 the same pseudopotential and orbital file, and an explicit Gamma-centered
 2x2x2 k mesh. `kspacing=0` selects the supplied KPT file. Electronic and magnetic
 thresholds, smearing and mixing parameters are recorded in each INPUT file.
@@ -150,6 +152,81 @@ inputs/assets; `--steps` creates a bounded diagnostic and is not a converged
 performance result. The runner records native convergence separately from a
 complete executable run. `summarize_multigpu.py` reparses raw outputs and sampling
 records before accepting a converged scaling series.
+
+### Capacity and allocation scaling
+
+The larger Fe inputs retain the Fe54 INPUT and KPT settings. Record successful
+completion of a bounded probe separately from full electronic convergence;
+neither a successful first allocation nor a few completed steps establish full
+capacity. Allocation failures remain useful evidence of the memory boundary.
+
+K-point distribution reduces the number of resident wavefunction blocks per
+rank. It does not partition the Davidson arrays for an individual k point. If
+`B = sizeof(complex<double>) * nbands * nbasis`, `q` is the number of local k
+points and `d = pw_diag_ndim`, the resident Psi and two Davidson basis arrays
+alone require approximately `(q + 2*d) * B` bytes. Projectors, dense matrices,
+CUDA context and temporary allocations add further costs. At fixed density,
+cutoff and bands per atom, both `nbands` and `nbasis` grow approximately with
+atom count. Four GPUs therefore do not imply four times as many atoms under
+this decomposition. Measure the actual allocation boundary for each input.
+
+The Fe64 four-V100 input is sensitive to floating-point SCF trajectories at
+twelve CPU threads per rank. Two complete runs of the unchanged parent
+`3ff7cb39` both converge in 39 steps but differ by up to `3.03e-4 eV/angstrom`
+in their final forces. The direct-upload candidate differs from the first
+parent by `3.55e-4 eV/angstrom` and from the second by `7.24e-5 eV/angstrom`.
+These observations document numerical sensitivity; two repeats do not establish
+a statistical bound. Keep this capacity case separate from strict physical
+regression controls, and retain all differences even when native SCF converges.
+
+Complete four-V100 comparisons of direct Hpsi uploads against that parent use
+the same CUDA 12.8 runtime, twelve threads and six physical cores per rank:
+
+| Case | Parent seconds | Direct-upload seconds | Parent peak MiB per GPU | Direct-upload peak MiB per GPU | SCF steps, both |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Fe16 | 31.783 | 32.407 | 2468 | 2252 | 30 |
+| Fe32 | 130.926 | 133.996 | 8056 | 7248 | 34 |
+| Fe54 | 441.392 | 450.511 | 20662 | 18368 | 31 |
+| Fe64, sensitivity control | 754.566-755.228 | 772.850 | 29236 | 26012 | 39 |
+
+The Fe54 maximum force difference is `2.19e-8 eV/angstrom`. Fe64 sampled total
+device memory falls from 116620-116736 MiB across its two parent runs to
+103812 MiB. These measurements support a memory/time tradeoff, not a speedup.
+The Fe64 numerical limitation above applies independently of its memory saving.
+
+The matching single-V100 controls retain six physical cores and vary only the
+requested OpenMP thread count within each case:
+
+| Case | Threads | Parent seconds | Direct-upload seconds | Parent / direct peak MiB | SCF steps, both |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Fe16 | 1 | 79.857 | 84.043 | 3722 / 3518 | 30 |
+| Fe16 | 12 | 74.329 | 78.947 | 3722 / 3518 | 30 |
+| Fe32 | 1 | 396.590 | 414.512 | 13030 / 12222 | 34 |
+| Fe32 | 12 | 379.884 | 396.923 | 13030 / 12222 | 34 |
+
+These controls reduce peak memory by 5.5-6.2% at 4.5-6.2% greater elapsed time.
+Both one-thread pairs preserve all printed energies, forces, moments and
+magnetic forces; stress differences are at most `1.01e-10 kbar`. Across all four
+pairs, the largest force difference is `1.66e-8 eV/angstrom`.
+
+Thirteen complete direct-upload regression pairs cover V100 and H20,
+one/four GPUs, one/twelve threads, disordered Fe, mixed Fe/Ni and an uneven
+27-point distribution. Their largest force/stress differences are
+`2.19e-8 eV/angstrom` and `4.33e-7 kbar`; every pair retains its SCF step count.
+The Fe64 sensitivity case and Fe72 capacity run are excluded from these maxima.
+
+The direct-upload executable completes Fe72 on four V100s in 33 SCF steps and
+1067.371 seconds, with a maximum per-device peak of 32026 MiB and a sampled total
+of 127636 MiB. This is complete-run capacity evidence, not a paired speedup or
+physical-accuracy comparison: the parent Fe72 run was limited to three steps.
+The optional prefetch already failed to allocate at this size, so removing it
+does not substantially change the mandatory allocation peak.
+
+The Fe80 and Fe96 parent probes exhaust device memory before the first SCF step.
+An isolated host-staging prototype reduces the Fe72 three-step peak by about
+13% at about 12% greater elapsed time, but also fails at Fe80. It is excluded
+from the production implementation. These observations locate a tested
+capacity boundary; they do not establish a universal maximum atom count.
 
 For MPI profiles, pass one encoded Nsight `globalPid` at a time to
 `analyze_trace.py`, `analyze_gemm_trace.py` and `analyze_idle.py` with
@@ -519,28 +596,27 @@ cache has a measurable host-memory cost and does not eliminate all Hamiltonian
 applications. The Davidson driver checks the supplied action against direct
 evaluation and verifies that later calls can use ordinary evaluation again.
 
-For multiple k points, a solve-owned device block prefetches the next action
-on a nonblocking CUDA stream while the current k point is diagonalized.
-Events order the upload, the default-stream restore, and reuse of this block.
-Repeated or reordered requests reload the required k point. The device
-allocation is attempted only after Davidson arrays and current projectors
-exist; allocation failure uses direct host-to-device copies for that solve.
-A single k point uses direct copies without allocating a prefetch block.
-The optional block adds approximately 203 MiB for Fe16 and 807 MiB for Fe32,
-so peak device memory must be measured as well as runtime.
+Hamiltonian actions are uploaded directly from pinned host storage into the
+Davidson destination on the default CUDA stream. The transfer keeps no duplicate
+device wavefunction block, independently of the number of k points. Requests
+may repeat or reorder k points and use different output leading dimensions.
+A completion event covers all host reads and is drained before the transfer
+object is destroyed, so the caller can safely release or reuse its host cache.
+This trades inter-k-point transfer overlap for lower peak device memory;
+complete-run timing and memory are measured together.
 
 The constraint-field and weighted-projector scratch arrays remain allocated
 throughout the solve. Cached nonlocal projections and current onsite projectors
-are prepared before the action restore starts the next upload. The complex-double
+are prepared before the action restore. The complex-double
 cuSolver generalized eigensolver retains its largest requested workspace until
-its handle is destroyed. These lifetimes prevent per-k-point and per-eigenproblem
-device frees from synchronizing the independent prefetch stream; they do not
+its handle is destroyed. These lifetimes avoid repeated per-k-point and
+per-eigenproblem allocation and release; they do not
 change the eigensolver or the convergence criteria.
 
 `check_hpsi_transfer.cpp` verifies bitwise restores, input and guard preservation,
-varying leading dimensions, repeated/reordered k points, single-k-point operation,
-and destruction with pending transfers. The same driver can exercise allocation
-failure with a CUDA allocation interposer. `check_solver_workspace.cpp` checks
+varying leading dimensions, repeated/reordered requests with 1/2/3/8 k points,
+and host-storage reuse immediately after destruction with pending transfers.
+`check_solver_workspace.cpp` checks
 analytic generalized eigenpairs across growing and shrinking problem sizes,
 two handle lifetimes, and recovery after a non-positive-definite overlap matrix.
 

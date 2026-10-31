@@ -27,6 +27,14 @@ class HSolverPW
   public:
     using InitialHPsiFunc = std::function<void(int, T*, int)>;
 
+    /// A complete observer follows Davidson basis changes for each k point.
+    /// capture receives the first band, count and whether the action comes
+    /// from a cache. Cached products are restored before initial_hpsi, so
+    /// their uploads precede the Hamiltonian-action restore. Otherwise capture runs
+    /// after hPsi, when fresh projector products are available.
+    /// rotate receives the old basis size, Ritz coefficients,
+    /// leading dimension and final/restart flag. invalidate precedes a
+    /// fallback that changes wavefunctions without Davidson rotations.
     struct BasisObserver
     {
         std::function<void(int, int, int, bool)> capture;

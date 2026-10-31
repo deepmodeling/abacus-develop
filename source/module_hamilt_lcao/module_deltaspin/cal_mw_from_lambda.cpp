@@ -864,8 +864,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                     auto* workspace = initial_workspace.get();
                     // The cached action uses the same entry basis and local potential.
                     // Only the onsite constraint field needs a low-rank correction.
-                    // Scratch survives every k point so its release does not fence
-                    // the independent upload of the following Hamiltonian block.
+                    // Scratch survives every k point to avoid repeated allocation
+                    // and release while restoring the Hamiltonian actions.
                     initial_hpsi = [=](int ik, std::complex<double>* output, int leading) {
                         onsite_p->get_fs_tools()->prepare_projectors(ik);
                         workspace->transfer.restore(ik, output, leading);
