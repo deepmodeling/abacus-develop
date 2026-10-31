@@ -148,6 +148,7 @@ fi
 # echo "$has_lowf" # test out_wfc_lcao > 0
 #--------------------------------------------
 if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ]; then
+	wfc_prep_ok=1
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
 		wfc_cal=OUT.autotest/wf_nao.txt
 		wfc_ref=wf_nao.txt.ref
@@ -158,6 +159,10 @@ if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ]; then
 		else
 			wfc_name=wfk2_nao
 			input_file=wfk2_nao
+		fi
+		if [[ ! -f "OUT.autotest/$input_file.txt" ]]; then
+			echo "Can't find file OUT.autotest/$input_file.txt"
+			exit 1
 		fi
 	awk 'BEGIN {flag=999}
 	{
@@ -171,6 +176,10 @@ if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ]; then
 		}
 		else {print $0}
 	}' OUT.autotest/"$input_file".txt > OUT.autotest/"$wfc_name"_mod.txt
+		if [ $? -ne 0 ]; then
+			echo "Error: failed to preprocess OUT.autotest/$input_file.txt"
+			wfc_prep_ok=0
+		fi
 		wfc_cal=OUT.autotest/"$wfc_name"_mod.txt
 		wfc_ref="$wfc_name"_mod.txt.ref
 	fi
@@ -188,7 +197,9 @@ if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ]; then
 	# CompareFile.py would then compare a nonempty reference against nothing.
 	# Detect that preprocessing failure here instead of trusting the
 	# downstream comparison.
-	if ! sed '/^[[:space:]]*#/d' "$wfc_cal" >"$wfc_cal_nohdr" \
+	if [ "$wfc_prep_ok" -ne 1 ]; then
+		wfc_pass=1
+	elif ! sed '/^[[:space:]]*#/d' "$wfc_cal" >"$wfc_cal_nohdr" \
 		|| ! sed '/^[[:space:]]*#/d' "$wfc_ref" >"$wfc_ref_nohdr"; then
 		echo "Error: failed to strip comment lines from $wfc_cal or $wfc_ref"
 		wfc_pass=1
