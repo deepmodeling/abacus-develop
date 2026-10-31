@@ -18,10 +18,10 @@ struct FusedFFT
     void (*sticks)(std::complex<double>*, std::complex<double>*, const int*, int, int, int, int, bool, int, int);
 };
 
-// Returns generated kernels for a supported length, or nullptr for cuFFT.
+// Returns loadable kernels for the current device and length, or nullptr for cuFFT.
 const FusedFFT* fused_fft(int length);
 
-// The fused transform is selected only on the measured Volta architecture.
+// Availability follows compiled CUDA images and device resource limits.
 bool fused_veff_supported();
 
 // The two spin components are separated by stride coefficients. Grid storage

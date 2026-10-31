@@ -1,0 +1,50 @@
+#include "module_basis/module_pw/kernels/fused_veff.h"
+#include <base/macros/macros.h>
+#include <cuda_runtime.h>
+#include <array>
+
+namespace ModulePW
+{
+@fused_declarations@
+namespace
+{
+const FusedFFT* select_fft(int length, const cudaDeviceProp& properties)
+{
+    const int sm = properties.major * 100 + properties.minor * 10;
+    switch (length)
+    {
+@fused_cases@
+        default: return nullptr;
+    }
+}
+} // namespace
+
+const FusedFFT* fused_fft(int length)
+{
+    if (length < 0 || length > @FFT_MAX_LENGTH@) { return nullptr; }
+    // Device switches invalidate both successful and unavailable entries.
+    // Each thread queries kernel attributes only on first use of a length.
+    struct Cache
+    {
+        int device = -1;
+        cudaDeviceProp properties{};
+        std::array<const FusedFFT*, @FFT_MAX_LENGTH@ + 1> functions{};
+        std::array<bool, @FFT_MAX_LENGTH@ + 1> initialized{};
+    };
+    static thread_local Cache cache;
+    int device = 0;
+    cudaErrcheck(cudaGetDevice(&device));
+    if (cache.device != device)
+    {
+        cache = Cache{};
+        cudaErrcheck(cudaGetDeviceProperties(&cache.properties, device));
+        cache.device = device;
+    }
+    if (!cache.initialized[length])
+    {
+        cache.functions[length] = select_fft(length, cache.properties);
+        cache.initialized[length] = true;
+    }
+    return cache.functions[length];
+}
+} // namespace ModulePW

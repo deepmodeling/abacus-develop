@@ -171,13 +171,32 @@ measurement method for both binaries.
 
 The optional `USE_CUFFTDX` build uses one common kernel template for the local
 spinor potential and density. CMake enumerates FFT lengths from 16 through 256
-whose prime factors are 2, 3 and 5. Each length is instantiated in a separate
-translation unit. Lengths that require a cuFFTDx workspace, and lengths outside
+whose prime factors are 2, 3 and 5. Each length and CUDA architecture is
+instantiated in a separate translation unit. Lengths that require a cuFFTDx workspace, and lengths outside
 this registry, retain the cuFFT path. The optional build requires CUDA and
 cuFFTDx 1.6 or newer, discoverable through the MathDx CMake package.
 
-The application selects the fused path for double-complex spinors on Volta,
-with one MPI rank and an eligible plane-wave layout. The x, y and z dimensions
+Descriptors and CUDA images follow `CMAKE_CUDA_ARCHITECTURES`, including its
+`native`, `all`, `all-major`, `-real` and `-virtual` forms. The runtime selects a
+loadable descriptor and checks kernel thread and shared-memory requirements on
+the current device. The selection is cached per host thread and invalidated on
+device switches. Missing images or insufficient resources retain cuFFT. There
+is no GPU-model whitelist. A configuration targeting Volta, Ampere and Hopper
+can use the following options in addition to the installation's dependency settings:
+
+```bash
+cmake -S . -B build -DUSE_CUDA=ON -DUSE_CUFFTDX=ON \
+    '-DCMAKE_CUDA_ARCHITECTURES=70;80;90' -Dmathdx_ROOT=/path/to/mathdx
+cmake --build build --parallel 6
+```
+
+`USE_CUFFTDX=OFF` retains ordinary cuFFT execution. Compilation for an
+architecture establishes build coverage; hardware-specific performance requires
+matched complete calculations on that device.
+
+The application selects the fused path for double-complex spinors with one MPI
+rank per k-point pool and an eligible plane-wave layout. Multiple GPU pools
+transform their own k points independently. The x, y and z dimensions
 are selected independently. Rectangular and nonorthogonal cells use the same
 implementation. A missing y template can
 use cuFFT for the y-z transforms while retaining the fused x operation.
@@ -194,6 +213,27 @@ Two-spin x transforms select the largest supported element count per thread
 up to ten to limit register demand. Single-field y and z transforms retain their
 independent element and block-size policy. These choices apply uniformly to
 the generated registry and do not depend on a benchmark's grid dimensions.
+
+`check_fused_fft_dispatch.cpp` tests available lengths against independent
+long-double DFTs, normalized round trips, sparse maps, input preservation and
+device switches. Its `--expect-unavailable` mode tests binaries with no loadable
+image. `validate_portable_fft.py` links this check and the public potential,
+density, band-group and allocation-failure checks to a configured application:
+
+```bash
+python3 tools/benchmarks/deltaspin/src/validate_portable_fft.py \
+    --build build --output /path/to/unused-validation-directory
+```
+
+The dispatch and independent DFT checks also build without the application or
+its MPI, BLAS, pseudopotential and orbital dependencies:
+
+```bash
+cmake -S tools/benchmarks/deltaspin/fft -B fft-check -DCMAKE_BUILD_TYPE=Release \
+    '-DCMAKE_CUDA_ARCHITECTURES=70;80;90' -Dmathdx_ROOT=/path/to/mathdx
+cmake --build fft-check --target check_fused_fft_dispatch --parallel 6
+./fft-check/check_fused_fft_dispatch
+```
 
 The potential operator batches bands according to the actual compact-grid and
 stick workspace sizes, targeting 256 MiB and at most 16 bands. A single band

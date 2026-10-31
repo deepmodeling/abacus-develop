@@ -309,27 +309,27 @@ __global__ void accumulate_spinor_density(const cufftDoubleComplex* input_up,
 }
 
 
-template <class FFT, int Limit>
+template <class FFT, int SM, int Limit>
 constexpr int fft_elements_at_most()
 {
     using Candidate = decltype(FFT() + cufftdx::ElementsPerThread<Limit>());
-    if constexpr (cufftdx::is_supported<Candidate, 700>::value)
+    if constexpr (cufftdx::is_supported<Candidate, SM>::value)
     {
         return Limit;
     }
     else if constexpr (Limit > 1)
     {
-        return fft_elements_at_most<FFT, Limit - 1>();
+        return fft_elements_at_most<FFT, SM, Limit - 1>();
     }
     return FFT::elements_per_thread;
 }
 
-template <int Length>
+template <int Length, int SM>
 struct FusedTransform
 {
     using Common = decltype(cufftdx::Size<Length>() + cufftdx::Precision<double>()
                             + cufftdx::Type<cufftdx::fft_type::c2c>()
-                            + cufftdx::SM<700>() + cufftdx::Block());
+                            + cufftdx::SM<SM>() + cufftdx::Block());
     using Default = decltype(Common() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
     static constexpr int suggested = Default::elements_per_thread;
     using Half = decltype(Default() + cufftdx::ElementsPerThread<suggested / 2>());
@@ -337,9 +337,9 @@ struct FusedTransform
     // the largest legal count up to ten, retaining the library default only
     // when no smaller descriptor exists. Single-field stick transforms use
     // their own register budget.
-    static constexpr int elements = fft_elements_at_most<Default, std::min(10, suggested)>();
+    static constexpr int elements = fft_elements_at_most<Default, SM, std::min(10, suggested)>();
     static constexpr int single_elements = suggested > 16 && suggested % 2 == 0
-                                          && cufftdx::is_supported<Half, 700>::value ? suggested / 2 : suggested;
+                                          && cufftdx::is_supported<Half, SM>::value ? suggested / 2 : suggested;
     using Base = decltype(Common() + cufftdx::ElementsPerThread<elements>());
     using Geometry = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
     static constexpr int stride = Geometry::stride;
@@ -348,6 +348,15 @@ struct FusedTransform
                             + cufftdx::FFTsPerBlock<batches>());
     using Forward = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::forward>()
                             + cufftdx::FFTsPerBlock<batches>());
+
+    using YBase = decltype(Common() + cufftdx::ElementsPerThread<single_elements>());
+    using YGeometry = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
+    static constexpr int y_stride = YGeometry::stride;
+    static constexpr int y_batches = std::min({16, std::max(1, 256 / y_stride), 49152 / (Length * 16)});
+    using YInverse = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::inverse>()
+                             + cufftdx::FFTsPerBlock<y_batches>());
+    using YForward = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::forward>()
+                             + cufftdx::FFTsPerBlock<y_batches>());
 
     static void potential(int plane, int left, int right, const double* values,
                            std::complex<double>* up, std::complex<double>* down, int bands)
@@ -387,14 +396,6 @@ struct FusedTransform
     static void sticks(std::complex<double>* input, std::complex<double>* output, const int* reverse,
                         int nx, int nz, int left, int right, bool inverse, int bands, int stick_size)
     {
-        using YBase = decltype(Common() + cufftdx::ElementsPerThread<single_elements>());
-        using YGeometry = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
-        constexpr int y_stride = YGeometry::stride;
-        constexpr int y_batches = std::min({16, std::max(1, 256 / y_stride), 49152 / (Length * 16)});
-        using YInverse = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::inverse>()
-                                 + cufftdx::FFTsPerBlock<y_batches>());
-        using YForward = decltype(YBase() + cufftdx::Direction<cufftdx::fft_direction::forward>()
-                                 + cufftdx::FFTsPerBlock<y_batches>());
         const size_t tile = size_t(Length) * y_batches * sizeof(cufftDoubleComplex);
         const size_t bytes = std::max(tile, size_t(YInverse::shared_memory_size));
         const dim3 blocks((nz + y_batches - 1) / y_batches, left + nx - right, bands);
@@ -469,10 +470,10 @@ __global__ void transform_z_wave(const cufftDoubleComplex* input, cufftDoubleCom
     }
 }
 
-template <int Length>
+template <int Length, int SM>
 struct ZTransferTransform
 {
-    using Production = ModulePW::FusedTransform<Length>;
+    using Production = ModulePW::FusedTransform<Length, SM>;
     using Base = decltype(typename Production::Common()
                          + cufftdx::ElementsPerThread<Production::single_elements>());
     using Geometry = decltype(Base() + cufftdx::Direction<cufftdx::fft_direction::inverse>());
@@ -505,15 +506,61 @@ struct ZTransferTransform
 };
 
 
-template <int Length>
-const FusedFFT* make_fused_fft()
+// CUDA checks image compatibility before reporting attributes. A cubin-only
+// build can therefore decline another SM without ever launching a kernel.
+template <class Kernel>
+bool kernel_fits(Kernel kernel, dim3 block, size_t shared, const cudaDeviceProp& properties)
 {
-    using Transform = FusedTransform<Length>;
-    if constexpr (!Transform::Default::requires_workspace)
+    cudaFuncAttributes attributes{};
+    const cudaError_t status = cudaFuncGetAttributes(&attributes, kernel);
+    if (status == cudaErrorInvalidDeviceFunction || status == cudaErrorNoKernelImageForDevice)
     {
-        static const FusedFFT functions = {ZTransferTransform<Length>::load, ZTransferTransform<Length>::add,
-                                           Transform::potential, Transform::density, Transform::sticks};
-        return &functions;
+        cudaGetLastError();
+        return false;
+    }
+    cudaErrcheck(status);
+    return block.x * block.y * block.z <= attributes.maxThreadsPerBlock
+           && attributes.sharedSizeBytes + shared <= properties.sharedMemPerBlock;
+}
+
+template <int Length, int SM>
+const FusedFFT* make_fused_fft(const cudaDeviceProp& properties)
+{
+    using Description = decltype(cufftdx::Size<Length>() + cufftdx::Precision<double>()
+                                 + cufftdx::Type<cufftdx::fft_type::c2c>()
+                                 + cufftdx::Direction<cufftdx::fft_direction::inverse>() + cufftdx::Block());
+    if constexpr (cufftdx::is_supported<Description, SM>::value)
+    {
+        using Transform = FusedTransform<Length, SM>;
+        using Z = ZTransferTransform<Length, SM>;
+        using Inverse = typename Transform::Inverse;
+        using Forward = typename Transform::Forward;
+        using YInverse = typename Transform::YInverse;
+        using YForward = typename Transform::YForward;
+        if constexpr (!Inverse::requires_workspace && !Forward::requires_workspace
+                      && !YInverse::requires_workspace && !YForward::requires_workspace
+                      && !Z::Inverse::requires_workspace && !Z::Forward::requires_workspace)
+        {
+            const size_t x_shared = std::max(size_t(Length) * Transform::batches * sizeof(cufftDoubleComplex),
+                                             size_t(Inverse::shared_memory_size));
+            const size_t y_shared = std::max(size_t(Length) * Transform::y_batches * sizeof(cufftDoubleComplex),
+                                             size_t(YInverse::shared_memory_size));
+            if (!kernel_fits(fused_spinor_potential<Inverse, Forward>, Inverse::block_dim, x_shared, properties)
+                || !kernel_fits(fused_spinor_density<Inverse>, Inverse::block_dim, x_shared, properties)
+                || !kernel_fits(accumulate_spinor_density<Inverse>, Inverse::block_dim, x_shared, properties)
+                || !kernel_fits(transform_y_sticks<YInverse, true>, YInverse::block_dim, y_shared, properties)
+                || !kernel_fits(transform_y_sticks<YForward, false>, YForward::block_dim, y_shared, properties)
+                || !kernel_fits(transform_z_wave<typename Z::Inverse, true>, Z::Inverse::block_dim,
+                                Z::Inverse::shared_memory_size, properties)
+                || !kernel_fits(transform_z_wave<typename Z::Forward, false>, Z::Forward::block_dim,
+                                Z::Forward::shared_memory_size, properties))
+            {
+                return nullptr;
+            }
+            static const FusedFFT functions = {Z::load, Z::add, Transform::potential,
+                                               Transform::density, Transform::sticks};
+            return &functions;
+        }
     }
     return nullptr;
 }

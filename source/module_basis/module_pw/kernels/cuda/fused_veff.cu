@@ -59,13 +59,7 @@ __global__ void add_spinor(int npw, int stride, int plane, int left, int right, 
 
 bool fused_veff_supported()
 {
-    int device = 0;
-    cudaError_t status = cudaGetDevice(&device);
-    cudaErrcheck(status);
-    cudaDeviceProp properties;
-    status = cudaGetDeviceProperties(&properties, device);
-    cudaErrcheck(status);
-    return properties.major == 7 && properties.minor == 0;
+    return fused_fft(16) != nullptr;
 }
 
 void pack_spinor_grid(int npw, int stride, int plane, int left, int right, const int* index,
