@@ -6,6 +6,23 @@ The following files are the central input files for ABACUS. Before executing the
 
 The `INPUT` file contains parameters that control the type of calculation as well as a variety of settings.
 
+By default, ABACUS reads `INPUT` in the current working directory. Use
+`abacus -in cases/INPUT.alt` (or `--input`) to select a different file, including
+an absolute path. This selects only the INPUT file: relative `stru_file`,
+`kpoint_file`, `pseudo_dir`, `orbital_dir`, restart paths, and output paths still
+resolve from the working directory. For example, when run from a directory
+containing `STRU` and `KPT`, `abacus -in cases/INPUT.alt` uses those working-directory
+files unless the selected INPUT specifies other paths. The selected INPUT path is
+recorded in the running log. Its parameter summary uses only the filename inside
+the output directory, for example `OUT.<suffix>/INPUT.alt.info`.
+
+The repeatable `-p/--parameter <name> <value>` option currently parses and stores
+variables but **does not apply them to INPUT** (PART I). A run using this option
+prints a warning. Duplicate names keep the last value; names must be nonempty
+and must not start with a digit. Negative values are accepted. Variable
+substitution is reserved for PART II; set calculation parameters in the selected
+INPUT file in the meantime.
+
 Below is an example `INPUT` file with some of the most important parameters that need to be set:
 
 ```text
@@ -46,7 +63,7 @@ In the above example, the meanings of the parameters are:
 
 For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
 
-> **Note:** Users cannot change the filename "INPUT" to other names. Boolean paramerters such as `out_chg` can be set by using `True` and `False`, `1` and `0`, or `T` and `F`. It is case insensitive so that other preferences such as `true` and `false`, `TRUE` and `FALSE`, and `t` and `f` for setting boolean values are also supported. Specifically for the `out_chg`, `-1` option is also available, which means turn off the checkpoint of charge density in binary (always dumped in `OUT.{suffix}`, whose name ends with `CHARGE-DENSITY.restart`). Some parameters controlling the output also support a second option to control the output precision, e.g., `out_chg 1 8` will output the charge density on realspace grid with 8 digits after the decimal point.
+> **Note:** Boolean parameters such as `out_chg` can be set by using `True` and `False`, `1` and `0`, or `T` and `F`. It is case insensitive so that other preferences such as `true` and `false`, `TRUE` and `FALSE`, and `t` and `f` for setting boolean values are also supported. Specifically for the `out_chg`, `-1` option is also available, which means turn off the checkpoint of charge density in binary (always dumped in `OUT.{suffix}`, whose name ends with `CHARGE-DENSITY.restart`). Some parameters controlling the output also support a second option to control the output precision, e.g., `out_chg 1 8` will output the charge density on realspace grid with 8 digits after the decimal point.
 
 ## Getting Help with Parameters
 

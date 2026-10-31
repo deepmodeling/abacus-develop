@@ -12,6 +12,11 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_IO_parse_command_line_test
+  SOURCES test_parse_command_line.cpp ../parse_command_line.cpp
+)
+
+AddTest(
   TARGET MODULE_IO_spin_tag
   SOURCES test_spin_tag.cpp
 )
@@ -131,7 +136,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_parse_args
   LIBS parameter  base device io_input
-  SOURCES test_parse_args.cpp ../parse_args.cpp ../input_help.cpp
+  SOURCES test_parse_args.cpp ../parse_args.cpp ../parse_command_line.cpp ../input_help.cpp
 )
 
 AddTest(
