@@ -49,6 +49,9 @@ void write_dh_perI(WriteDHParams& params,
     // calculation or out_app_flag branching is needed here.
     const std::string mat_dir = PARAM.globalv.global_mat_dir;
     const int out_app_flag = PARAM.inp.out_app_flag;
+    // Mode 1 appends to the fixed file; only mode 2 embeds the step in the name.
+    const bool append = (out_app_flag == 1);
+    const bool numbered = (out_app_flag == 2);
 
 #ifdef __MPI
     Parallel_Orbitals serialV;
@@ -81,15 +84,15 @@ void write_dh_perI(WriteDHParams& params,
             if (GlobalV::MY_RANK == 0)
 #endif
             {
-                std::string fr = mat_dir + ModuleIO::dhr_gen_fname(rprefix + tag, ispin, params.append, params.istep);
+                std::string fr = mat_dir + ModuleIO::dhr_gen_fname(rprefix + tag, ispin, numbered, params.istep);
                 // dH/dR is not a Hamiltonian: no Fermi energy annotation in the header
                 const double no_efermi = 0.0;
 #ifdef __MPI
                 ModuleIO::write_hcontainer_csr(
-                    fr, &ucell, 8, &hR_s, params.istep, ispin, nspin, label, "", no_efermi, false);
+                    fr, &ucell, 8, &hR_s, params.istep, append, ispin, nspin, label, "", no_efermi, false);
 #else
                 ModuleIO::write_hcontainer_csr(
-                    fr, &ucell, 8, hR, params.istep, ispin, nspin, label, "", no_efermi, false);
+                    fr, &ucell, 8, hR, params.istep, append, ispin, nspin, label, "", no_efermi, false);
 #endif
                 if (params.ofs_running != nullptr)
                 {

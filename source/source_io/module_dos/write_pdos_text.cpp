@@ -25,11 +25,12 @@ void ModuleIO::write_pdos_text(
     // number of spin channels to write
     const int nspin0 = (nspin == 2) ? 2 : 1;
 
-    // In append mode (out_app_flag == 1) reuse the fixed filename and append
-    // each ionic step; single-point SCF passes istep = -1 and truncates.
+    // Modes 0 and 1 reuse the fixed filename (mode 0 overwrites, mode 1 appends
+    // each ionic step); only mode 2 embeds the step number in the filename.
+    // Single-point SCF passes istep = -1 and truncates.
     // The first written step (istep == 0) truncates so a fresh run does not
     // keep records from a previous run; only later steps (istep > 0) append.
-    const int istep_file = (out_app_flag == 1) ? -1 : istep;
+    const int istep_file = (out_app_flag == 2) ? istep : -1;
     const bool append_step = (out_app_flag == 1) && (istep > 0);
 
     for (int is = 0; is < nspin0; ++is)

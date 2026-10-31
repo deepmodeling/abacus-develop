@@ -230,11 +230,12 @@ void Relax_Driver::stru_out(const int istep,
     }
 
     // Numbered files per out_freq_ion: only meaningful for relaxation calculations
-    if (is_relax && freq_ok)
+    if (is_relax && freq_ok && inp.out_app_flag != 0)
     {
-        // out_app_flag == 1: single fixed-name STRU accumulates one block per
-        // step (CIF format truncates to the latest frame instead); modes 0/2
-        // keep the numbered STRU{istep+1} files.
+        // Mode 1: single fixed-name STRU accumulates one block per step (CIF
+        // format truncates to the latest frame instead). Mode 2 keeps the
+        // numbered STRU{istep+1} files. Mode 0 only writes STRU_NOW, which is
+        // already overwritten each step above.
         const bool append_stru = (inp.out_app_flag == 1) && (inp.out_stru == 1);
         const std::string step_file = (inp.out_app_flag == 1)
             ? out_dir_ + (inp.out_stru == 1 ? "STRU" : "STRU.cif")

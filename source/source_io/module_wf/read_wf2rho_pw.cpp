@@ -131,7 +131,7 @@ void ModuleIO::read_wf2rho_pw_impl(const ModulePW::PW_Basis_K* pw_wfc,
         // NOTE: reads the fixed-name binary file from its first frame. Files
         // accumulated across ionic steps under out_app_flag == 1 hold one
         // frame per step (MD trajectories); only the first frame is seen
-        // here, so use out_app_flag 0/2 (per-step files) when the charge
+        // here, so use out_app_flag = 2 (per-step files) when the charge
         // density of a specific step is to be reconstructed.
         const int out_type = 2;
         const int out_app_flag = 0;

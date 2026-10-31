@@ -112,10 +112,10 @@ void ModuleIO::save_dH_sparse(const int& istep,
         }
     }
 
-    // In append mode (out_app_flag == 1) the fixed filename is reused so that
-    // every written ionic step accumulates into one file. Modes 0 and 2 embed
-    // the one-based ionic step before "_nao" and never append.
-    const bool include_step = (istep >= 0) && (out_app_flag != 1);
+    // Modes 0 and 1 keep the fixed filename (mode 0 overwrites, mode 1 appends
+    // every written ionic step); only mode 2 embeds the one-based ionic step
+    // before "_nao".
+    const bool include_step = (istep >= 0) && (out_app_flag == 2);
 
     for (auto& comp: comps)
     {

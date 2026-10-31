@@ -74,12 +74,15 @@ static void gather_and_write(const std::string& prefix,
                              const int nspin,
                              const int ispin,
                              const int istep,
-                             const bool append,
+                             const int out_app_flag,
                              const int* iat2iwt,
                              const int nat,
                              const std::string& global_matrix_dir,
                              std::ofstream* ofs_running)
 {
+    // Mode 1 appends to the fixed file; only mode 2 embeds the step in the name.
+    const bool append = (out_app_flag == 1);
+    const bool numbered = (out_app_flag == 2);
     const int nbasis = hR.get_nbasis();
 #ifdef __MPI
     Parallel_Orbitals serialV;
@@ -90,14 +93,14 @@ static void gather_and_write(const std::string& prefix,
     if (GlobalV::MY_RANK == 0)
 #endif
     {
-        const std::string fname = global_matrix_dir + hsr_gen_fname(prefix, ispin, append, istep);
+        const std::string fname = global_matrix_dir + hsr_gen_fname(prefix, ispin, numbered, istep);
         // H(R) component terms (T, V^NL, V^L, V^H, V^XC, V^EXX) are parts of
         // the Hamiltonian, not the full H(R): they do not carry the Fermi annotation
         const double no_efermi = 0.0;
 #ifdef __MPI
-        write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, ispin, nspin, label, "", no_efermi, false);
+        write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, append, ispin, nspin, label, "", no_efermi, false);
 #else
-        write_hcontainer_csr(fname, &ucell, 8, &hR, istep, ispin, nspin, label, "", no_efermi, false);
+        write_hcontainer_csr(fname, &ucell, 8, &hR, istep, append, ispin, nspin, label, "", no_efermi, false);
 #endif
         if (ofs_running != nullptr)
         {
@@ -211,7 +214,7 @@ static void write_h_term(WriteHParams& params, const HTermSpec& spec)
         if (also_hR)
         {
             gather_and_write(spec.r_prefix, spec.r_label, spec.term_name, hR_tmp, ucell, pv, nspin, ispin,
-                             istep, append, iat2iwt, nat,
+                             istep, out_app_flag, iat2iwt, nat,
                              params.global_matrix_dir, params.ofs_running);
         }
     }
@@ -391,7 +394,7 @@ static void write_h_exx_impl(const UnitCell& ucell,
 
         if (also_hR)
         {
-            gather_and_write("vexx", "V^EXX", "exx", hR_tmp, ucell, pv, nspin, ispin, istep, append,
+            gather_and_write("vexx", "V^EXX", "exx", hR_tmp, ucell, pv, nspin, ispin, istep, out_app_flag,
                              iat2iwt, nat, global_matrix_dir,
                              ofs_running);
         }

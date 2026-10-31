@@ -56,11 +56,11 @@ void ctrl_output_fp(UnitCell& ucell,
     bool should_output = (output_frequency == 0);
     if (istep_in >= 0)
     {
-        // In append mode (out_app_flag == 1) each cube output reuses a fixed
-        // filename, so every written step appends one complete frame to that
-        // file. Modes 0 and 2 keep a per-step g{index} suffix, which makes
-        // every file hold exactly one frame.
-        if (out_app_flag != 1)
+        // Modes 0 and 1 reuse a fixed filename: mode 0 truncates and overwrites
+        // it at every write, while mode 1 appends one complete frame per written
+        // step. Only mode 2 keeps a per-step g{index} suffix, which makes every
+        // file hold exactly one frame.
+        if (out_app_flag == 2)
         {
             geom_block = "g" + std::to_string(istep + 1);
         }

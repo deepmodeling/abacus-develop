@@ -508,8 +508,9 @@ struct Input_para
     bool out_hr_npz = false;                  ///< output H(R) matrix in npz format
     bool out_hsr_npz = false;                 ///< output H(R) and S(R) matrices in npz format
     bool out_dm_npz = false;                  ///< output DM(R) matrix in npz format
-    int out_app_flag = 1;                   ///< 0: no append, no subdirectory; 1: append to same file;
-                                            ///< 2: write to subdirectory (PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/)
+    int out_app_flag = 0;                   ///< 0: fixed filename, truncated and overwritten at every write;
+                                            ///< 1: append to the same fixed file; 2: write to subdirectory
+                                            ///< (PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/) with a g{step} suffix
                                             ///< liuyu 2023-03-20, modified 2025-10-16
     int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output
     std::vector<int> out_mat_t = {0, 8};     ///< output T(R) matrix with precision

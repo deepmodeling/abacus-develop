@@ -101,14 +101,14 @@ std::string filename_output(
     }
 
     std::string istep_block
-        = (istep >= 0 && (out_app_flag != 1))
+        = (istep >= 0 && (out_app_flag == 2))
               ? "g" + std::to_string(istep + 1) // istep starts from 0
-              : ""; // only when istep >= 0 and out_app_flag is not append mode will write each wfc to a separate file
+              : ""; // only mode 2 writes each step to a separate g{step} file
 
     std::string iter_block
-        = (iter >= 0 && (out_app_flag != 1))
+        = (iter >= 0 && (out_app_flag == 2))
               ? "e" + std::to_string(iter) // iter starts from 1
-              : ""; // only when istep >= 0 and out_app_flag is not append mode will write each wfc to a separate file
+              : ""; // only mode 2 writes each electronic iteration to a separate e{iter} file
 
     std::string suffix_block;
     if (out_type == 1)

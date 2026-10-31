@@ -393,10 +393,11 @@ void ModuleIO::Angmom_op::calculate(
     }
     std::ofstream ofout;
     const std::string dir = "xyz";
-    /// @brief Filename suffix: in append mode (out_app_flag == 1) the fixed
-    ///        name is reused and each ionic step appends; modes 0 and 2 carry
-    ///        "g{istep+1}" (e.g., "g1") following the out_freq_ion convention.
-    const std::string step_suffix = (istep >= 0 && out_app_flag != 1) ? "g" + std::to_string(istep + 1) : "";
+    /// @brief Filename suffix: modes 0 and 1 reuse the fixed name (mode 0
+    ///        overwrites, mode 1 appends each written step); only mode 2
+    ///        carries "g{istep+1}" (e.g., "g1") following the out_freq_ion
+    ///        convention.
+    const std::string step_suffix = (istep >= 0 && out_app_flag == 2) ? "g" + std::to_string(istep + 1) : "";
     const bool append_step = (out_app_flag == 1) && (istep > 0);
     const std::string title = "# it ia il iz im iRx iRy iRz jt ja jl jz jm Re[<a|L|b>] Im[<a|L|b>]\n"
                               "# it: atomtype index of the first atom\n"

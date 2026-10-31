@@ -428,14 +428,18 @@ bool ModuleIO::read_wfc_nao(
             std::stringstream error_message;
             const int read_type = binary ? 2 : 1;
             // Candidate file locations, in priority order:
-            // 1. readin_dir + step-suffixed name: layout written by runs with
-            //    out_app_flag 0 (files in the OUT directory root)
+            // 1. readin_dir + step-suffixed name: layout written by older runs
+            //    with out_app_flag 0 (per-step g files in the OUT directory root)
             // 2. readin_dir + "PSI/" + step-suffixed name: layout written by
-            //    runs with out_app_flag 2
+            //    runs with out_app_flag 2 (also accepts a g file in the root)
             // 3. readin_dir + "WFC/" + step-suffixed name: layout written by
             //    releases before the out_app_flag rework
-            // 4. readin_dir + name without the step suffix: written in append
-            //    mode (out_app_flag 1)
+            // 4. readin_dir + name without the step suffix: written in fixed-name
+            //    modes (out_app_flag 0/1)
+            //
+            // Step-suffixed names are generated with out_app_flag 2, the only
+            // mode that still embeds g{step}; this keeps backward compatibility
+            // with files written by older versions.
             //
             // istep semantics:
             // - istep > 0: positive indexed restart. Only step-suffixed
@@ -449,7 +453,7 @@ bool ModuleIO::read_wfc_nao(
             std::vector<std::string> candidates;
             if (istep > 0)
             {
-                const int suffix_app_flag = 0;
+                const int suffix_app_flag = 2;
                 candidates.push_back(ModuleIO::filename_output(global_readin_dir,
                         "wf",
                         "nao",
@@ -488,7 +492,7 @@ bool ModuleIO::read_wfc_nao(
             }
             else if (istep == 0)
             {
-                const int suffix_app_flag = 0;
+                const int suffix_app_flag = 2;
                 candidates.push_back(ModuleIO::filename_output(global_readin_dir,
                         "wf",
                         "nao",

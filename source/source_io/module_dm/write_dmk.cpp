@@ -194,10 +194,10 @@ void ModuleIO::write_dmk(const std::vector<std::vector<T>>& dmk,
     ModuleBase::TITLE("ModuleIO", "write_dmk");
     ModuleBase::timer::start("ModuleIO", "write_dmk");
 
-    // In append mode (out_app_flag == 1) DM(k) reuses a fixed filename,
-    // so each ionic step overwrites the previous snapshot; the file body
-    // still records the real ionic step via istep.
-    const int istep_file = (out_app_flag == 1) ? -1 : istep;
+    // Modes 0 and 1 reuse a fixed filename (mode 0 overwrites the previous
+    // snapshot, mode 1 appends a new record); only mode 2 embeds the ionic
+    // step in the filename. The file body always records the real ionic step.
+    const int istep_file = (out_app_flag == 2) ? istep : -1;
     // Each multi-step run (MD or relax) appends a new record to the fixed
     // file, mirroring the open_sparse_file convention; single-point SCF
     // passes istep = -1 and starts a fresh file. The first written step
