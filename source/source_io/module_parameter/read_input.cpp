@@ -525,6 +525,14 @@ std::string ReadInput::prepare_input(Parameter& param)
     this->normalize_occ_mat_options(param);
     this->normalize_out_eband_alias(param);
 
+    // The MD driver writes ABACUS STRU frames only, and the restart logic reads
+    // them back, so CIF output (out_stru = 2) is not available for MD. Reject it
+    // instead of silently writing STRU content under a CIF setting.
+    if (param.input.calculation == "md" && param.input.out_stru == 2)
+    {
+        errors += "Invalid INPUT parameter 'out_stru': value 2 (CIF) is not supported for calculation = md; use 0 or 1.\n";
+    }
+
     // Snapshot typed effective values once for shared domain and dependency checks.
     InputValues values;
     for (const auto& entry : this->input_lists)
