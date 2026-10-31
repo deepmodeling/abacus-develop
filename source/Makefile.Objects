@@ -889,6 +889,7 @@ OBJS_LCAO=evolve_elec.o\
       center2orb_orb22.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
+      smooth_cut_coulomb.o\
       invmat_ri.o\
       lri_cv.o\
       lri_cv_tools.o\

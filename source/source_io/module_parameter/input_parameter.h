@@ -677,6 +677,9 @@ struct Input_para
     bool exx_symmetry_realspace = true; ///< whether to reduce the real-space sector in when using symmetry=1 in EXX calculation
     double rpa_ccp_rmesh_times = 10.0;  ///< how many times larger the radial mesh required for
                                         ///< calculating Columb potential is to that of atomic orbitals
+    std::string rpa_cut_coulomb = "hard"; ///< post-SCF cut kernel: hard or log_erfc
+    std::string rpa_cut_radius = "legacy"; ///< legacy radius or BvK inscribed radius
+    double rpa_cut_width = 1.091868692359; ///< multiplicative log-erfc width
     double exx_cs_inv_thr = -1;         ///< threshold to inverse Vq in abfs for generating Cs
     double shrink_abfs_pca_thr = -1;    ///< threshold to shrink auxiliary basis for GW/RPA
     double shrink_LU_inv_thr = 1e-6; ///< threshold to get inverse of overlap matrix by LU decomposition in auxiliary basis representation

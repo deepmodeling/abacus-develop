@@ -120,6 +120,48 @@ TEST_F(InputDomainReaderTest, PreservesLegacyEmptyValues)
     EXPECT_TRUE(input.inp.out_pchg.empty());
 }
 
+TEST_F(InputDomainReaderTest, RejectsMalformedRpaCutoffTokens)
+{
+    for (const std::string cut_name : {"rpa_cut_coulomb", "rpa_cut_radius", "rpa_cut_width"})
+    {
+        for (const std::string cut_tokens : {"\nscf_nmax 20\n", "", " invalid\n", " 1 2\n"})
+        {
+            const std::string cut_input = cut_name + cut_tokens;
+            const std::string cut_output = reject_input(cut_input);
+            const std::string cut_error = "Invalid INPUT parameter '" + cut_name + "'";
+            EXPECT_NE(cut_output.find(cut_error), std::string::npos) << cut_input;
+        }
+    }
+    for (const std::string cut_input : {"rpa_cut_coulomb log_erfc extra\n",
+                                       "rpa_cut_radius inscribed extra\n",
+                                       "rpa_cut_width 1\n", "rpa_cut_width 1.2501\n",
+                                       "rpa_cut_width nan\n", "rpa_cut_width inf\n"})
+    {
+        const std::string cut_output = reject_input(cut_input);
+        EXPECT_NE(cut_output.find("Invalid INPUT parameter 'rpa_cut_"), std::string::npos) << cut_input;
+    }
+}
+
+TEST_F(InputDomainReaderTest, AcceptsRpaCutoffChoicesAndWidthUpperBound)
+{
+    for (const std::string cut_mode : {"hard", "log_erfc"})
+    {
+        for (const std::string cut_radius : {"legacy", "inscribed"})
+        {
+            const std::string cut_input = "rpa_cut_coulomb " + cut_mode + "\nrpa_cut_radius "
+                + cut_radius + "\nrpa_cut_width 1.25\n";
+            write_input(cut_input);
+            ModuleIO::ReadInput cut_reader(0);
+            cut_reader.check_ntype_flag = false;
+            Parameter cut_parameters;
+            cut_reader.read_parameters(cut_parameters, filename);
+            EXPECT_EQ(cut_parameters.inp.rpa_cut_coulomb, cut_mode);
+            EXPECT_EQ(cut_parameters.inp.rpa_cut_radius, cut_radius);
+            EXPECT_DOUBLE_EQ(cut_parameters.inp.rpa_cut_width, 1.25);
+        }
+    }
+}
+
 TEST_F(InputDomainReaderTest, RejectsMissingOrdinaryStringValues)
 {
     for (const std::string label : {"stru_file", "kpoint_file", "suffix", "dft_functional"})
