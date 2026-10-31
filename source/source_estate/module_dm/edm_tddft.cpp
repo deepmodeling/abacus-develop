@@ -7,8 +7,6 @@
 #include "source_base/module_device/memory_op.h"              // memory operations
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_lcao/module_rt/gather_mat.h"     // gatherMatrix and distributeMatrix
-#include "source_lcao/module_rt/propagator.h"     // Include header for create_identity_matrix
 
 namespace module_dm
 {

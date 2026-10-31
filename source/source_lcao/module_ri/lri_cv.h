@@ -45,13 +45,13 @@ public:
         const double &kmesh_times,
         std::shared_ptr<ORB_gaunt_table> MGT,
         const bool& init_C);
-    inline std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
+    std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
     cal_Vs(
         const UnitCell &ucell,
         const std::vector<TA> &list_A0,
         const std::vector<TAC> &list_A1,
         const std::map<std::string,bool> &flags);						// "writable_Vws"
-    inline std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>
+    std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>>
     cal_dVs(
         const UnitCell &ucell,
         const std::vector<TA> &list_A0,
@@ -108,16 +108,16 @@ private:
         const T_func_cal_Rcut& func_cal_Rcut,
         const T_func_DPcal_data<Tresult>& func_DPcal_data);
 
-    inline double cal_V_Rcut(const int it0, const int it1);
-    inline double cal_C_Rcut(const int it0, const int it1);
+    double cal_V_Rcut(const int it0, const int it1);
+    double cal_C_Rcut(const int it0, const int it1);
 
-    inline RI::Tensor<Tdata>
+    RI::Tensor<Tdata>
     DPcal_V(
         const int it0,
         const int it1,
         const Abfs::Vector3_Order<double> &R,
         const std::map<std::string,bool> &flags);						// "writable_Vws"
-    inline std::array<RI::Tensor<Tdata>,3>
+    std::array<RI::Tensor<Tdata>,3>
     DPcal_dV(
         const int it0,
         const int it1,
@@ -141,6 +141,5 @@ private:
         const Tfunc &func_cal_o11);
 };
 
-#include "lri_cv.hpp"
 
 #endif
