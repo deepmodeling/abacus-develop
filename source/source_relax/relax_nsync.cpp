@@ -54,14 +54,13 @@ void IonCellOptimizer::init_relax(const int& natom, const Input_para& inp)
  * @brief Perform one step of relaxation (atomic and/or cell).
  *
  * Main relaxation loop that coordinates atomic and cell relaxation:
- * 1. Check for maximum iteration limit
- * 2. Determine calculation mode (relax vs cell-relax)
- * 3. Perform atomic relaxation if needed and atoms can move
- * 4. If in cell-relax mode and atomic relaxation converged, perform cell relaxation
+ * 1. Determine calculation mode (relax vs cell-relax)
+ * 2. Perform atomic relaxation if needed and atoms can move
+ * 3. If in cell-relax mode and atomic relaxation converged, perform cell relaxation
  *
  * Convergence behavior:
  * - Returns false if relaxation is still in progress
- * - Returns true if relaxation has converged or maximum iterations reached
+ * - Returns true if the current geometry has converged
  *
  * @param istep Current total iteration step
  * @param energy Total energy of the system
@@ -92,27 +91,6 @@ bool IonCellOptimizer::relax_step(const int& istep,
     // branch of Relax_Driver::final_out). Terminate immediately and silently.
     if (inp_->relax_nmax == 0)
     {
-        return true;
-    }
-
-    // Check if we've reached the maximum number of iterations.
-    if (istep == inp_->relax_nmax)
-    {
-        // This step never ran cal_movement, so no force was recorded for it;
-        // the actual number of ionic steps taken is the history length.
-        const int ionic_steps = static_cast<int>(max_force_history_.size());
-        ofs_running << " Relaxation method: " << inp_->relax_method << std::endl;
-        ofs_running << " Relaxation stopped after " << ionic_steps
-                    << " ionic step(s) (relax_nmax = " << inp_->relax_nmax << " reached)." << std::endl;
-        if (!max_force_history_.empty())
-        {
-            ofs_running << " Largest force per step (eV/Angstrom):" << format_relax_history(max_force_history_);
-        }
-        if (!max_stress_history_.empty())
-        {
-            ofs_running << " Largest stress per step (kbar):" << format_relax_history(max_stress_history_);
-        }
-        ofs_running << " Relaxation is not converged after reaching relax_nmax!" << std::endl;
         return true;
     }
 

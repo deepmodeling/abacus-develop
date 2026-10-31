@@ -126,6 +126,7 @@ class IonsMoveLBFGSTest : public ::testing::Test
 TEST_F(IonsMoveLBFGSTest, RelaxStepConverged)
 {
     UnitCell ucell;
+    const double initial_tau_x = ucell.atoms[0].tau[0].x;
     ModuleBase::matrix force(natom, 3);
     force(0, 0) = 1.0e-4; // Ry/Bohr, ~0.005 eV/Angstrom
     const double etot = 0.0;
@@ -140,6 +141,8 @@ TEST_F(IonsMoveLBFGSTest, RelaxStepConverged)
     EXPECT_TRUE(converged);
     EXPECT_NEAR(Ions_Move_Basic::largest_grad, 1.0e-4, 1e-12); // Ry/Bohr, lat0 = 1
     EXPECT_LT(Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A, criteria.force_thr_ev);
+    EXPECT_NEAR(ucell.atoms[0].tau[0].x, initial_tau_x, 1e-12);
+    EXPECT_FALSE(ucell.ionic_position_updated);
 }
 
 // A force above force_thr_ev must be reported as not converged.
