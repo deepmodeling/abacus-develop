@@ -17,21 +17,21 @@
 #     ./build_abacus_windows.sh
 
 if ! command -v pacman >/dev/null 2>&1; then
-    echo "ERROR: pacman not found. Run this inside an MSYS2 shell (https://www.msys2.org)."
-    exit 1
+  echo "ERROR: pacman not found. Run this inside an MSYS2 shell (https://www.msys2.org)."
+  exit 1
 fi
 
 echo "[*] Installing MinGW-w64 build prerequisites via pacman ..."
 pacman -S --needed --noconfirm \
-    mingw-w64-x86_64-gcc \
-    mingw-w64-x86_64-gcc-fortran \
-    mingw-w64-x86_64-cmake \
-    mingw-w64-x86_64-ninja \
-    mingw-w64-x86_64-openblas \
-    mingw-w64-x86_64-fftw \
-    mingw-w64-x86_64-cereal \
-    mingw-w64-x86_64-msmpi \
-    mingw-w64-x86_64-scalapack
+  mingw-w64-x86_64-gcc \
+  mingw-w64-x86_64-gcc-fortran \
+  mingw-w64-x86_64-cmake \
+  mingw-w64-x86_64-ninja \
+  mingw-w64-x86_64-openblas \
+  mingw-w64-x86_64-fftw \
+  mingw-w64-x86_64-cereal \
+  mingw-w64-x86_64-msmpi \
+  mingw-w64-x86_64-scalapack
 
 # Notes:
 #  * cereal    : header-only serialization, required by the LCAO build.
@@ -52,7 +52,7 @@ pacman -S --needed --noconfirm bc
 TOOL=$(cd "$(dirname "$0")" && pwd)
 INSTALL_DIR="$TOOL/install"
 mkdir -p "$INSTALL_DIR"
-cat > "$INSTALL_DIR/setup" <<'EOF'
+cat >"$INSTALL_DIR/setup" <<'EOF'
 # Native Windows (MSYS2/MinGW-w64) prerequisites live under /mingw64.
 export MINGW_PREFIX="${MINGW_PREFIX:-/mingw64}"
 export OPENBLAS_ROOT="$MINGW_PREFIX"   # OpenBLAS provides BLAS *and* LAPACK
