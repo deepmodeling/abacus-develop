@@ -1,4 +1,5 @@
-add_library(module_rt_pw OBJECT
+add_library(
+  module_rt_pw OBJECT
   cn_solver_pw.cpp
   td_orbital_ops.cpp
   td_prop_pw.cpp
@@ -12,8 +13,7 @@ add_library(module_rt_pw OBJECT
   td_vel_pw.cpp
   td_spin_pw.cpp
   op_pw_ekin_td.cpp
-  op_pw_nl_td.cpp
-)
+  op_pw_nl_td.cpp)
 
 if(ENABLE_COVERAGE)
   add_coverage(module_rt_pw)

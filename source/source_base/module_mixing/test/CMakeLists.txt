@@ -1,6 +1,5 @@
 abacus_disable_feature_definitions(__MPI)
-AddTest(
+addtest(
   TARGET MODULE_BASE_MIXING_unittests
   LIBS parameter base device
-  SOURCES mixing_test.cpp
-)
+  SOURCES mixing_test.cpp)
