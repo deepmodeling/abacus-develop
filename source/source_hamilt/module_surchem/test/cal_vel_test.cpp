@@ -235,6 +235,20 @@ TEST_F(cal_vel_test, cal_vel)
     EXPECT_NEAR(v_res(0, 0), 0.0532168705, 1e-10);
     EXPECT_NEAR(v_res(0, 1), 0.0447818244, 1e-10);
 
+    // out_sol: cal_vel keeps the dielectric function of this correction.
+    std::vector<double> ps_totn_real(nrxx);
+    pwtest.recip2real(PS_TOTN, ps_totn_real.data());
+    std::vector<double> epsilon(nrxx);
+    std::vector<double> epsilon0(nrxx);
+    solvent_model.cal_epsilon(&pwtest, ps_totn_real.data(), epsilon.data(), epsilon0.data());
+    const std::vector<double>& stored = solvent_model.last_epsilon();
+    ASSERT_EQ(stored.size(), static_cast<std::size_t>(nrxx));
+    for (int ir = 0; ir < nrxx; ++ir)
+    {
+        EXPECT_EQ(stored[ir], epsilon[ir]);
+    }
+    EXPECT_DOUBLE_EQ(solvent_model.bulk_epsilon(), 80.0);
+
     delete[] PS_TOTN;
     delete[] TOTN;
 }

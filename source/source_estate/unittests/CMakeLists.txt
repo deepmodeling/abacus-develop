@@ -28,6 +28,7 @@ AddTest(
 if (ENABLE_MPI)
 
 set(pcc_test_sources
+    ../module_pot/sccs_output.cpp
     ../module_pot/pot_pcc.cpp ../pcc_0d.cpp ../pcc_2d.cpp ../charge_moments.cpp
     ../../source_cell/cell_geometry.cpp ../../source_cell/cell_tools.cpp
     ../../source_cell/atom_spec.cpp ../../source_cell/atom_pseudo.cpp ../../source_cell/pseudo.cpp

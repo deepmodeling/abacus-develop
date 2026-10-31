@@ -1,0 +1,31 @@
+INPUT_PARAMETERS
+suffix            autotest
+pseudo_dir        ../../PP_ORB
+orbital_dir       ../../PP_ORB
+calculation       relax
+basis_type        lcao
+gamma_only        1
+ks_solver         genelpa
+nbands            8
+ecutwfc           60
+ecutrho           240
+scf_nmax          100
+scf_thr           1.0e-7
+smearing_method   fixed
+mixing_type       pulay
+mixing_beta       0.6
+symmetry          0
+init_wfc          atomic
+cal_force         1
+nelec_delta       -1
+
+imp_sol           2
+assume_isolated   pcc_0d
+sccs_preset       water-cation
+sccs_maxiter      200
+sccs_tol_rms      1.0e-10
+sccs_tol_max      1.0e-8
+sccs_surface_eta  1.0e-8
+sccs_lowpass_p1   10
+sccs_lowpass_p2   5
+relax_nmax        2

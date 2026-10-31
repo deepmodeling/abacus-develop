@@ -1,6 +1,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "../chg_mix.h"
+#include "../chg_dmr.h"
 #include "../chg_drho.h"
 #include "../chg_drho_detail.h"
 #include "../chg_precond.h"
@@ -192,6 +193,97 @@ class ChargeMixingTest : public ::testing::Test
         cm.set_mixing_config(cur);
     }
 };
+
+// A model change (SCCS delayed start) raises drho; the oscillation check must
+// not compare it with the drho of the old model.
+TEST_F(ChargeMixingTest, ModelChangeRestartsTheOscillationWindow)
+{
+    const int scf_nmax = 20;
+    cfg.scf_nmax = scf_nmax;
+    Charge_Mixing plain;
+    Charge_Mixing restarted;
+    plain.set_mixing(make_cfg(), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
+    restarted.set_mixing(make_cfg(), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
+    plain.init_mixing();
+    restarted.init_mixing();
+    const int scf_os_ndim = 3;
+    const double scf_os_thr = -0.05;
+    const int model_change = 6;
+    // Steady decrease, a jump when the new model starts, then a steady decrease.
+    const double drho[9] = {1e-2, 3e-3, 9e-4, 2.7e-4, 8.1e-5, 2.43e-5, 1e-2, 5e-3, 2.5e-3};
+    for (int iter = 1; iter <= 9; ++iter)
+    {
+        if (iter == model_change)
+        {
+            restarted.restart_for_new_model(iter);
+        }
+        const double residual = drho[iter - 1];
+        const bool plain_oscillates = plain.if_scf_oscillate(iter, residual, scf_os_ndim, scf_os_thr);
+        const bool restarted_oscillates = restarted.if_scf_oscillate(iter, residual, scf_os_ndim, scf_os_thr);
+        EXPECT_FALSE(restarted_oscillates) << "iteration " << iter;
+        if (iter == model_change + 1)
+        {
+            EXPECT_TRUE(plain_oscillates);
+        }
+    }
+    EXPECT_EQ(restarted.mixing_restart_last, model_change);
+}
+
+// mix_uom reuses the coefficients of the rho history, so after a model change
+// (SCCS delayed start) the first occupation update must be a single simple
+// mixing step, not a combination of the old occupations.
+TEST_F(ChargeMixingTest, ModelChangeRestartsUomHistory)
+{
+    cfg.mixing_mode = "pulay";
+    Charge_Mixing charge_mixing;
+    charge_mixing.set_mixing(make_cfg(), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
+    charge_mixing.init_mixing();
+    const int uom_size = 4;
+    charge_mixing.allocate_mixing_uom(uom_size);
+    for (int step = 0; step < 2; ++step)
+    {
+        const double uom_value = 1.0 + step;
+        const double uom_save_value = 0.5 + step;
+        std::vector<double> uom(uom_size, uom_value);
+        std::vector<double> uom_save(uom_size, uom_save_value);
+        charge_mixing.mix_uom(uom, uom_save);
+    }
+
+    const int model_change = 3;
+    charge_mixing.restart_for_new_model(model_change);
+    std::vector<double> uom = {2.0, 3.0, 4.0, 5.0};
+    std::vector<double> uom_save = {1.0, 1.0, 1.0, 1.0};
+    charge_mixing.mix_uom(uom, uom_save);
+
+    const double beta = cfg.mixing_beta;
+    for (int i = 0; i < uom_size; ++i)
+    {
+        const double expected = 1.0 + beta * (2.0 + i - 1.0);
+        EXPECT_NEAR(uom[i], expected, 1e-12) << "element " << i;
+    }
+}
+
+TEST_F(ChargeMixingTest, MixResetClearsDmrHistory)
+{
+    cfg.mixing_dmr = true;
+    cfg.scf_thr_type = 2;
+    Charge_Mixing charge_mixing;
+    charge_mixing.set_mixing(make_cfg(), &pw_basis, &pw_basis, ucell.omega, ucell.tpiba);
+    charge_mixing.init_mixing();
+
+    Base_Mixing::Mixing_Data& dmr_mdata = charge_mixing.get_dmr_mdata();
+    module_charge::init_mixing_dmr(charge_mixing.get_mixing(), dmr_mdata, 4,
+                                   charge_mixing.get_mixing_config());
+    const double dmr[4] = {1.0, 2.0, 3.0, 4.0};
+    dmr_mdata.push(dmr);
+    ASSERT_EQ(dmr_mdata.ndim_history, 1);
+
+    charge_mixing.mix_reset();
+
+    EXPECT_EQ(dmr_mdata.ndim_use, 0);
+    EXPECT_EQ(dmr_mdata.ndim_history, 0);
+    EXPECT_EQ(dmr_mdata.start, -1);
+}
 
 TEST_F(ChargeMixingTest, SetMixingTest)
 {

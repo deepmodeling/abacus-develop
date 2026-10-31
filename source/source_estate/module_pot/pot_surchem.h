@@ -20,6 +20,8 @@ class PotSurChem : public PotBase
 
     // Passing an explicit output matrix makes the lifetime and allocation explicit and avoids hidden allocations.
     void cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff) override;
+    // eps, and the cavity s = 1 - S of the shape function when eb_k > 1.
+    void add_sol_fields(std::vector<SolventGridField>& fields) const override;
 
   private:
     surchem* surchem_ = nullptr;

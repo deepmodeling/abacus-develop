@@ -181,6 +181,68 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         this->add_item(item);
     }
     {
+        Input_Item item("out_sol");
+        item.annotation = "output the solvent dielectric function and cavity (with precision 8)";
+        item.category = "Output information";
+        item.type = R"(Integer \[Integer\](optional))";
+        item.description = R"(* 0: No output.
+* 1: Output the implicit-solvent fields of the last solvent correction on real space grids into files in the folder OUT.{suffix}, for imp_sol 1 (the original implicit solvation model) and imp_sol 2 (SCCS):
+ * `sol_eps.cube`: the dielectric function epsilon(r), 1 in the solute and the bulk permittivity in the solvent.
+ * `sol_cavity.cube`: the solute boundary s(r), 1 in the solute and 0 in the solvent; for imp_sol 1 it is 1 minus the solvent shape function (written only when eb_k > 1).
+ With out_freq_ion > 0 the files are written every out_freq_ion ionic steps with the geometry index in the name, e.g. `sol_epsg1.cube`; with out_freq_ion = 0 they are overwritten at every step. Nothing is written while SCCS waits for its delayed start (sccs_start_drho).
+
+The optional second integer controls the output precision. If not provided, the default precision is 8.)";
+        item.default_value = "0";
+        item.unit = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1 || count > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_sol takes 1 or 2 integers");
+            }
+            // The whole token must be an integer: std::stoi alone accepts "6junk".
+            auto parse_int = [](const std::string& text) {
+                size_t parsed = 0;
+                int value = 0;
+                try
+                {
+                    value = std::stoi(text, &parsed);
+                }
+                catch (const std::exception&)
+                {
+                    parsed = 0;
+                }
+                if (parsed == 0 || parsed != text.size())
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "out_sol takes integers");
+                }
+                return value;
+            };
+            para.input.out_sol[0] = parse_int(item.str_values[0]);
+            para.input.out_sol[1] = 8;
+            if (count == 2)
+            {
+                para.input.out_sol[1] = parse_int(item.str_values[1]);
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_sol[0] != 0 && para.input.out_sol[0] != 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_sol must be 0 or 1");
+            }
+            if (para.input.out_sol[0] == 1 && para.input.imp_sol == 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_sol 1 requires imp_sol 1 or 2");
+            }
+            if (para.input.out_sol[1] <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_sol precision must be positive");
+            }
+        };
+        sync_intvec(input.out_sol, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_dmk");
         item.annotation = ">0 output density matrix DM(k) for each k-point";
         item.category = "Output information";

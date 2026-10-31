@@ -1,0 +1,4 @@
+gamma-only LCAO H3O+ (nelec_delta -1) fixed-cell relax with SCCS (water-cation preset), 0D PCC and the cavity
+low-pass filter (p1 10, p2 5), two ionic steps: the warm start of a charged solute carries over to the rebuilt
+potential of the second step. ecutwfc 60 and ecutrho 240 as in scf_sccs_water; scf_thr 1e-7 and mixing_beta 0.6
+keep the run short.

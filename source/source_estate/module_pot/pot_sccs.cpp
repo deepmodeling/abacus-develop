@@ -1,4 +1,5 @@
 #include "pot_sccs.h"
+#include "sol_grid_field.h"
 #include "sccs_pcc_0d.h"
 #include "sccs_pcc_2d.h"
 
@@ -44,6 +45,9 @@ void sccs_cfg_input(const Input_para& input,
     {
         config = ModuleSccs::preset_config(preset);
     }
+    config.start_drho = input.sccs_start_drho;
+    config.start_nmax = input.sccs_start_nmax;
+    config.collect_report = input.sccs_debug >= 2;
     config.core_electrons = input.sccs_solvent_mode == "full";
     config.core_spreads = input.sccs_corespread;
     config.surface_regularization = input.sccs_surface_eta;
@@ -120,20 +124,58 @@ std::string check_charge(const ModuleSccs::SccsConfig& config, const UnitCell& c
 PotSccs::PotSccs(const ModulePW::PW_Basis* basis,
                  const ModuleSccs::SccsConfig& config,
                  const ModuleSccs::PolarizationSolverParameters& solver,
-                 double electron_count)
+                 double electron_count,
+                 const SccsResume& resume)
     : config_(config), solver_(solver), electron_count_(electron_count)
 {
     this->rho_basis_ = basis;
     this->dynamic_mode = true;
+    sccs_active_ = config_.start_drho <= 0.0 || resume.active;
+    restart_potential_ = resume.restart_potential;
+}
+
+SccsResume PotSccs::resume_state() const
+{
+    SccsResume resume;
+    resume.active = sccs_active_;
+    resume.restart_potential = restart_potential_;
+    return resume;
+}
+
+bool PotSccs::try_activate(int electronic_iteration, double density_residual)
+{
+    if (sccs_active_)
+    {
+        return false;
+    }
+    if (density_residual > config_.start_drho && electronic_iteration < config_.start_nmax)
+    {
+        return false;
+    }
+    sccs_active_ = true;
+    restart_potential_.clear();
+    return true;
 }
 
 void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::matrix& potential)
 {
     ModuleBase::timer::start("PotSccs", "cal_v_eff");
     const ModulePW::PW_Basis& basis = *this->rho_basis_;
+    if (!sccs_active_)
+    {
+        electrostatic_rydberg_ = 0.0;
+        non_electrostatic_rydberg_ = 0.0;
+        electrostatic_potential_.assign(basis.nrxx, 0.0);
+        cavity_potential_.clear();
+        ModuleBase::timer::end("PotSccs", "cal_v_eff");
+        return;
+    }
     const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell->atoms, cell->ntype, cell->lat0);
-    std::vector<double> ions;
-    ModuleSccs::gauss_ion_rho(atoms, basis, cell->tpiba, ModuleSccs::gaussian_ion_spread, ions);
+    // The ion and core densities are rebuilt only when the atoms changed.
+    const bool reused_fixed_sources = fixed_sources_.update(*cell, basis, atoms, config_);
+    output_.reused_fixed_sources = reused_fixed_sources;
+    const std::vector<double>& ions = fixed_sources_.ionic_density();
+    const std::vector<ModuleBase::Vector3<double>>& grid_positions = fixed_sources_.positions();
     std::vector<double> density(basis.nrxx, 0.0);
     std::vector<double> solute_charge(basis.nrxx);
     double grid_charges[2] = {0.0, 0.0}; // electrons, ions
@@ -166,11 +208,11 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     std::unique_ptr<ModuleSccs::CoulombOperator> coulomb;
     if (config_.boundary == ModuleSccs::Boundary::Pcc0d)
     {
-        pcc_0d_operator(*cell, basis, atoms, coulomb);
+        pcc_0d_operator(*cell, basis, atoms, grid_positions, coulomb);
     }
     else if (config_.boundary == ModuleSccs::Boundary::Pcc2d)
     {
-        pcc_2d_operator(*cell, basis, atoms, config_.pcc_2d_axis, coulomb);
+        pcc_2d_operator(*cell, basis, atoms, config_.pcc_2d_axis, grid_positions, coulomb);
     }
     else
     {
@@ -178,8 +220,7 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     }
     if (config_.core_electrons)
     {
-        std::vector<double> core_density;
-        ModuleSccs::gauss_core_rho(atoms, basis, cell->tpiba, config_.core_spreads, core_density);
+        const std::vector<double>& core_density = fixed_sources_.core_density();
         for (int ir = 0; ir < basis.nrxx; ++ir)
         {
             density[ir] += core_density[ir];
@@ -188,8 +229,24 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
     ModuleSccs::SccsResponse response;
     ModuleSccs::solve_response(density, solute_charge, config_.cavity, solver_, restart_potential_, basis,
                                cell->tpiba, *coulomb, response);
+    // Only the Coulomb-operator FFTs of the sqrt-CG solve, its main cost; the
+    // functional below and the cavity derivatives transform outside this count.
+    output_.transforms = coulomb->fft_counts();
     ModuleSccs::FunctionalResult functional;
     ModuleSccs::eval_functional(solute_charge, response, config_, basis, cell->tpiba, *coulomb, functional);
+    output_.valid = true;
+    output_.iterations = response.polarization.iterations;
+    output_.warm_started = response.polarization.warm_started;
+    output_.residual_rms = response.polarization.residual_rms;
+    output_.residual_max = response.polarization.residual_max;
+    output_.reaction_energy = functional.reaction_energy;
+    output_.volume = functional.volume;
+    output_.surface = functional.surface;
+    output_.far_field_charge = response.far_field_polarization_charge;
+    if (config_.collect_report && config_.boundary != ModuleSccs::Boundary::Periodic)
+    {
+        collect_output(*cell, basis, atoms, grid_positions, ions, solute_charge, config_, response, output_);
+    }
     electrostatic_rydberg_ = 2.0 * functional.reaction_energy;
     non_electrostatic_rydberg_ = 2.0 * (functional.surface_energy + functional.volume_energy);
     electrostatic_potential_.resize(basis.nrxx);
@@ -200,6 +257,8 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
         for (int spin = 0; spin < charge->nspin; ++spin) { potential(spin, ir) += value; }
     }
     cavity_potential_ = std::move(functional.cavity_potential);
+    epsilon_ = std::move(response.epsilon);
+    solute_ = std::move(response.solute);
     restart_potential_ = std::move(response.restart_potential);
     ModuleBase::timer::end("PotSccs", "cal_v_eff");
 }
@@ -207,6 +266,11 @@ void PotSccs::cal_v_eff(const Charge* charge, const UnitCell* cell, ModuleBase::
 void PotSccs::add_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const
 {
     ModuleBase::timer::start("PotSccs", "add_sol_force");
+    if (!sccs_active_)
+    {
+        ModuleBase::timer::end("PotSccs", "add_sol_force");
+        return;
+    }
     const ModulePW::PW_Basis& basis = *this->rho_basis_;
     const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell.atoms, cell.ntype, cell.lat0);
     std::vector<double> reaction(basis.nrxx);
@@ -237,6 +301,22 @@ void PotSccs::add_sol_force(const UnitCell& cell, ModuleBase::matrix& force) con
     ModuleBase::timer::end("PotSccs", "add_sol_force");
 }
 
+void PotSccs::write_iter(std::ostream& output, int level, double residual, double pcc_energy) const
+{
+    if (level == 0)
+    {
+        return;
+    }
+    if (!sccs_active_)
+    {
+        write_sccs_wait(output, residual, config_.start_drho, config_.start_nmax);
+        return;
+    }
+    const double energy = get_energy();
+    const bool pcc = config_.boundary != ModuleSccs::Boundary::Periodic;
+    write_sccs_out(output, output_, level, energy, pcc, pcc_energy);
+}
+
 double PotSccs::get_energy() const
 {
     return electrostatic_rydberg_ + non_electrostatic_rydberg_;
@@ -251,5 +331,23 @@ void PotSccs::sol_energy(double& electrostatic, double& non_electrostatic) const
 const std::vector<double>* PotSccs::sol_elec_pot() const
 {
     return &electrostatic_potential_;
+}
+
+void PotSccs::add_sol_fields(std::vector<SolventGridField>& fields) const
+{
+    // Fields are written collectively: gate on output_.valid, set on every rank,
+    // not on epsilon_, which is empty on a rank without grid points.
+    if (!sccs_active_ || !output_.valid)
+    {
+        return;
+    }
+    SolventGridField dielectric;
+    dielectric.name = "eps";
+    dielectric.values = epsilon_;
+    fields.push_back(dielectric);
+    SolventGridField cavity;
+    cavity.name = "cavity";
+    cavity.values = solute_;
+    fields.push_back(cavity);
 }
 } // namespace elecstate

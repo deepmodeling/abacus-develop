@@ -36,6 +36,21 @@ TEST_F(SccsPwCoulombTest, FourierModeAndConstantBackground)
     }
 }
 
+// Each application is one forward and one inverse FFT, reported by sccs_debug 2.
+TEST_F(SccsPwCoulombTest, FftCountsFollowTheApplications)
+{
+    ModuleSccs::PeriodicCoulombOperator coulomb(basis, tpiba);
+    const std::vector<double> charge = cosine_mode(0);
+    std::vector<double> potential;
+    EXPECT_EQ(coulomb.fft_counts().forward_calls, 0);
+    for (int application = 1; application <= 2; ++application)
+    {
+        coulomb.apply_potential(charge, potential);
+        EXPECT_EQ(coulomb.fft_counts().forward_calls, application);
+        EXPECT_EQ(coulomb.fft_counts().inverse_calls, application);
+    }
+}
+
 int main(int argc, char** argv)
 {
     int threads = 1;

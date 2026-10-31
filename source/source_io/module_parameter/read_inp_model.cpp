@@ -192,13 +192,13 @@ void ReadInput::item_model()
                            "* 0: no implicit solvent.\n"
                            "* 1: the original ABACUS implicit solvation model.\n"
                            "* 2: the self-consistent continuum solvation model (SCCS). Supported scope: CPU KS-DFT "
-                           "(esolver_type ksdft, device cpu) with basis_type pw or lcao; calculation scf energies and "
-                           "forces, no stress (cal_stress is rejected); nspin 1 or 2; assume_isolated none, pcc_0d or "
-                           "pcc_2d; no electric/gate field, DFT-1/2, DeePKS or dm_to_rho. Use assume_isolated pcc_0d "
-                           "or pcc_2d for charged systems: with assume_isolated none a charged cell only prints a "
-                           "warning and runs, and its energy then depends on the cell size because the periodic "
-                           "Poisson solver drops the G = 0 net charge. With pcc_0d or pcc_2d, see sccs_lowpass_p1 "
-                           "for the accuracy of forces.\n\n"
+                           "(esolver_type ksdft, device cpu) with basis_type pw or lcao; calculation scf (energies and "
+                           "forces) or fixed-cell relax, no stress (cal_stress and cell-relax are rejected); nspin 1 "
+                           "or 2; assume_isolated none, pcc_0d or pcc_2d; no electric/gate field, DFT-1/2, DeePKS or "
+                           "dm_to_rho. Use assume_isolated pcc_0d or pcc_2d for charged systems: with assume_isolated "
+                           "none a charged cell only prints a warning and runs, and its energy then depends on the "
+                           "cell size because the periodic Poisson solver drops the G = 0 net charge. With pcc_0d or "
+                           "pcc_2d, see sccs_lowpass_p1 for the accuracy of forces.\n\n"
                            "Legacy Boolean values (true/false) are read as 1/0.";
         item.default_value = "0";
         item.read_value = [](const Input_Item& item, Parameter& para) {

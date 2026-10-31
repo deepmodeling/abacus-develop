@@ -18,8 +18,6 @@ void surchem::v_correction(const UnitCell& cell,
     ModuleBase::TITLE("surchem", "v_cor");
     ModuleBase::timer::start("surchem", "v_cor");
 
-    assert(rho_basis->nrxx>0);
-   
     double* porter = new double[rho_basis->nrxx];
     for (int i = 0; i < rho_basis->nrxx; i++)
     {
