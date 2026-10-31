@@ -23,46 +23,67 @@ class ELPA_Solver
      *             The context must remain valid for the lifetime of this object.
      *             This class does NOT take ownership of the BLACS context.
      */
-    ELPA_Solver(const bool isReal,
-                const MPI_Comm comm,
-                const int nev,
-                const int narows,
-                const int nacols,
-                const int* desc,
-                const bool reuse_handle_0 = true);
-    ELPA_Solver(const bool isReal,
-                const MPI_Comm comm,
-                const int nev,
-                const int narows,
-                const int nacols,
-                const int* desc,
-                const int* otherParameter);
+    ELPA_Solver(
+        const bool isReal,
+        const MPI_Comm comm,
+        const int nev,
+        const int narows,
+        const int nacols,
+        const int *desc,
+        const bool reuse_handle_0 = true);
+    ELPA_Solver(
+        const bool isReal,
+        const MPI_Comm comm,
+        const int nev,
+        const int narows,
+        const int nacols,
+        const int *desc,
+        const int *otherParameter);
 
-    int eigenvector(double* A, double* EigenValue, double* EigenVector);
-    int generalized_eigenvector(double* A, double* B, int& DecomposedState, double* EigenValue, double* EigenVector);
-    int eigenvector(std::complex<double>* A, double* EigenValue, std::complex<double>* EigenVector);
-    int generalized_eigenvector(std::complex<double>* A,
-                                std::complex<double>* B,
-                                int& DecomposedState,
-                                double* EigenValue,
-                                std::complex<double>* EigenVector);
+    int eigenvector(double *A, double *EigenValue, double *EigenVector);
+    int generalized_eigenvector(
+        double *A,
+        double *B,
+        int &DecomposedState,
+        double *EigenValue,
+        double *EigenVector);
+    int eigenvector(std::complex<double> *A, double *EigenValue, std::complex<double> *EigenVector);
+    int generalized_eigenvector(
+        std::complex<double> *A,
+        std::complex<double> *B,
+        int &DecomposedState,
+        double *EigenValue,
+        std::complex<double> *EigenVector);
     void setLoglevel(int loglevel);
     void setKernel(bool isReal, int Kernel);
     void setQR(int useQR);
     void outputParameters();
-    void verify(double* A, double* EigenValue, double* EigenVector, double& maxRemain, double& meanRemain);
-    void verify(double* A, double* B, double* EigenValue, double* EigenVector, double& maxRemain, double& meanRemain);
-    void verify(std::complex<double>* A,
-                double* EigenValue,
-                std::complex<double>* EigenVector,
-                double& maxError,
-                double& meanError);
-    void verify(std::complex<double>* A,
-                std::complex<double>* B,
-                double* EigenValue,
-                std::complex<double>* EigenVector,
-                double& maxError,
-                double& meanError);
+    void verify(
+        double *A,
+        double *EigenValue,
+        double *EigenVector,
+        double &maxRemain,
+        double &meanRemain);
+    void verify(
+        double *A,
+        double *B,
+        double *EigenValue,
+        double *EigenVector,
+        double &maxRemain,
+        double &meanRemain);
+    void verify(
+        std::complex<double> *A,
+        double *EigenValue,
+        std::complex<double> *EigenVector,
+        double &maxError,
+        double &meanError);
+    void verify(
+        std::complex<double> *A,
+        std::complex<double> *B,
+        double *EigenValue,
+        std::complex<double> *EigenVector,
+        double &maxError,
+        double &meanError);
     void exit();
 
   private:
@@ -102,15 +123,24 @@ class ELPA_Solver
     int read_real_kernel();
     int read_complex_kernel();
     int allocate_work();
-    int decomposeRightMatrix(double* B, double* EigenValue, double* EigenVector, int& DecomposedState);
-    int decomposeRightMatrix(std::complex<double>* B,
-                             double* EigenValue,
-                             std::complex<double>* EigenVector,
-                             int& DecomposedState);
-    int composeEigenVector(int DecomposedState, double* B, double* EigenVector);
-    int composeEigenVector(int DecomposedState, std::complex<double>* B, std::complex<double>* EigenVector);
+    int decomposeRightMatrix(
+        double *B,
+        double *EigenValue,
+        double *EigenVector,
+        int &DecomposedState);
+    int decomposeRightMatrix(
+        std::complex<double> *B,
+        double *EigenValue,
+        std::complex<double> *EigenVector,
+        int &DecomposedState);
+    int composeEigenVector(int DecomposedState, double *B, double *EigenVector);
+    int composeEigenVector(int DecomposedState, std::complex<double> *B, std::complex<double> *EigenVector);
     // debug tool
-    void timer(int myid, const char function[], const char step[], double& t0);
+    void timer(
+        int myid,
+        const char function[],
+        const char step[],
+        double &t0);
 };
 
 #endif // ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_SOLVER_H

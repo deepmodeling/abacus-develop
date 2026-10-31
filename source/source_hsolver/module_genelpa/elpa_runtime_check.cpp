@@ -34,9 +34,17 @@ std::size_t index(const int row, const int col, const int leading_dimension)
     return static_cast<std::size_t>(row) + static_cast<std::size_t>(col) * leading_dimension;
 }
 
-bool set_integer(elpa_t handle, const char* name, const int value, int& status)
+bool set_integer(
+    elpa_t handle,
+    const char *name,
+    const int value,
+    int &status)
 {
-    elpa_set_integer(handle, name, value, &status);
+    elpa_set_integer(
+        handle,
+        name,
+        value,
+        &status);
     return status == ELPA_OK;
 }
 
@@ -57,8 +65,7 @@ std::pair<std::vector<Complex>, std::vector<Complex>> generate_hs()
             const double h_imag = distribution(generator);
 
             h[static_cast<std::size_t>(i) * kN + j] = {h_real, h_imag};
-            h[static_cast<std::size_t>(j) * kN + i]
-                = i == j ? Complex{h_real, 0.0} : Complex{h_real, -h_imag};
+            h[static_cast<std::size_t>(j) * kN + i] = i == j ? Complex{h_real, 0.0} : Complex{h_real, -h_imag};
 
             const double s_real = distribution(generator);
             const double s_imag = distribution(generator);
@@ -73,8 +80,8 @@ std::pair<std::vector<Complex>, std::vector<Complex>> generate_hs()
             Complex value{0.0, 0.0};
             for (int k = 0; k < kN; ++k)
             {
-                value += s_tmp[static_cast<std::size_t>(i) * kN + k]
-                         * std::conj(s_tmp[static_cast<std::size_t>(j) * kN + k]);
+                value += s_tmp[static_cast<std::size_t>(i) * kN + k] *
+                         std::conj(s_tmp[static_cast<std::size_t>(j) * kN + k]);
             }
             if (i == j)
             {
@@ -87,7 +94,7 @@ std::pair<std::vector<Complex>, std::vector<Complex>> generate_hs()
     return {std::move(h), std::move(s)};
 }
 
-bool upper_cholesky(const std::vector<Complex>& matrix, std::vector<Complex>& upper)
+bool upper_cholesky(const std::vector<Complex> &matrix, std::vector<Complex> &upper)
 {
     upper.assign(kN * kN, Complex{0.0, 0.0});
 
@@ -120,7 +127,7 @@ bool upper_cholesky(const std::vector<Complex>& matrix, std::vector<Complex>& up
     return true;
 }
 
-std::vector<Complex> invert_upper_triangular(const std::vector<Complex>& upper)
+std::vector<Complex> invert_upper_triangular(const std::vector<Complex> &upper)
 {
     std::vector<Complex> inverse(kN * kN, Complex{0.0, 0.0});
 
@@ -140,7 +147,7 @@ std::vector<Complex> invert_upper_triangular(const std::vector<Complex>& upper)
     return inverse;
 }
 
-std::vector<Complex> multiply(const std::vector<Complex>& left, const std::vector<Complex>& right)
+std::vector<Complex> multiply(const std::vector<Complex> &left, const std::vector<Complex> &right)
 {
     std::vector<Complex> result(kN * kN, Complex{0.0, 0.0});
     for (int col = 0; col < kN; ++col)
@@ -158,7 +165,7 @@ std::vector<Complex> multiply(const std::vector<Complex>& left, const std::vecto
     return result;
 }
 
-std::vector<Complex> conjugate_transpose(const std::vector<Complex>& matrix)
+std::vector<Complex> conjugate_transpose(const std::vector<Complex> &matrix)
 {
     std::vector<Complex> result(kN * kN);
     for (int col = 0; col < kN; ++col)
@@ -171,11 +178,11 @@ std::vector<Complex> conjugate_transpose(const std::vector<Complex>& matrix)
     return result;
 }
 
-bool generate_a_tilde(std::vector<Complex>& result)
+bool generate_a_tilde(std::vector<Complex> &result)
 {
     const std::pair<std::vector<Complex>, std::vector<Complex>> hs = generate_hs();
-    const std::vector<Complex>& h_row_major = hs.first;
-    const std::vector<Complex>& s_row_major = hs.second;
+    const std::vector<Complex> &h_row_major = hs.first;
+    const std::vector<Complex> &s_row_major = hs.second;
 
     std::vector<Complex> a(kN * kN);
     std::vector<Complex> s(kN * kN);
@@ -200,7 +207,7 @@ bool generate_a_tilde(std::vector<Complex>& result)
     return true;
 }
 
-double frobenius_norm(const std::vector<Complex>& matrix)
+double frobenius_norm(const std::vector<Complex> &matrix)
 {
     double norm_squared = 0.0;
     for (const Complex value : matrix)
@@ -210,7 +217,7 @@ double frobenius_norm(const std::vector<Complex>& matrix)
     return std::sqrt(norm_squared);
 }
 
-double vector_norm(const Complex* vector, const int size)
+double vector_norm(const Complex *vector, const int size)
 {
     double norm_squared = 0.0;
     for (int i = 0; i < size; ++i)
@@ -220,10 +227,11 @@ double vector_norm(const Complex* vector, const int size)
     return std::sqrt(norm_squared);
 }
 
-double relative_residual(const std::vector<Complex>& matrix,
-                         const Complex* eigenvector,
-                         const double eigenvalue,
-                         const double matrix_norm)
+double relative_residual(
+    const std::vector<Complex> &matrix,
+    const Complex *eigenvector,
+    const double eigenvalue,
+    const double matrix_norm)
 {
     std::vector<Complex> residual(kN, Complex{0.0, 0.0});
 
@@ -239,11 +247,10 @@ double relative_residual(const std::vector<Complex>& matrix,
 
     const double eigenvector_norm = vector_norm(eigenvector, kN);
     const double denominator = (matrix_norm + std::abs(eigenvalue)) * eigenvector_norm;
-    return denominator > 0.0 ? vector_norm(residual.data(), kN) / denominator
-                             : vector_norm(residual.data(), kN);
+    return denominator > 0.0 ? vector_norm(residual.data(), kN) / denominator : vector_norm(residual.data(), kN);
 }
 
-double orthogonality_error(const std::vector<Complex>& eigenvectors)
+double orthogonality_error(const std::vector<Complex> &eigenvectors)
 {
     double error_squared = 0.0;
 
@@ -281,9 +288,8 @@ ElpaRuntimeCheckResult failed_result()
 
 bool needs_runtime_check(const int kernel)
 {
-    return kernel == ELPA_2STAGE_COMPLEX_AVX_BLOCK2
-           || kernel == ELPA_2STAGE_COMPLEX_AVX2_BLOCK2
-           || kernel == ELPA_2STAGE_COMPLEX_AVX512_BLOCK2;
+    return kernel == ELPA_2STAGE_COMPLEX_AVX_BLOCK2 || kernel == ELPA_2STAGE_COMPLEX_AVX2_BLOCK2 ||
+           kernel == ELPA_2STAGE_COMPLEX_AVX512_BLOCK2;
 }
 
 ElpaRuntimeCheckResult check_complex_block2_kernel(const int kernel)
@@ -305,7 +311,8 @@ ElpaRuntimeCheckResult check_complex_block2_kernel(const int kernel)
         return failed_result();
     }
 
-    const auto deallocate = [&handle](int& current_status) {
+    const auto deallocate = [&handle](int &current_status)
+    {
         int deallocate_status = ELPA_OK;
         elpa_deallocate(handle, &deallocate_status);
         if (current_status == ELPA_OK && deallocate_status != ELPA_OK)
@@ -315,36 +322,85 @@ ElpaRuntimeCheckResult check_complex_block2_kernel(const int kernel)
     };
 
 #ifdef _OPENMP
-    if (!set_integer(handle, "omp_threads", 1, status))
+    if (!set_integer(
+            handle,
+            "omp_threads",
+            1,
+            status))
     {
         deallocate(status);
         return failed_result();
     }
 #endif
 
-    if (!set_integer(handle, "na", kN, status)
-        || !set_integer(handle, "nev", kNev, status)
-        || !set_integer(handle, "local_nrows", kN, status)
-        || !set_integer(handle, "local_ncols", kN, status)
-        || !set_integer(handle, "nblk", kNblk, status)
-        || !set_integer(handle, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_SELF), status)
-        || !set_integer(handle, "process_row", 0, status)
-        || !set_integer(handle, "process_col", 0, status))
+    if (!set_integer(
+            handle,
+            "na",
+            kN,
+            status) ||
+        !set_integer(
+            handle,
+            "nev",
+            kNev,
+            status) ||
+        !set_integer(
+            handle,
+            "local_nrows",
+            kN,
+            status) ||
+        !set_integer(
+            handle,
+            "local_ncols",
+            kN,
+            status) ||
+        !set_integer(
+            handle,
+            "nblk",
+            kNblk,
+            status) ||
+        !set_integer(
+            handle,
+            "mpi_comm_parent",
+            MPI_Comm_c2f(MPI_COMM_SELF),
+            status) ||
+        !set_integer(
+            handle,
+            "process_row",
+            0,
+            status) ||
+        !set_integer(
+            handle,
+            "process_col",
+            0,
+            status))
     {
         deallocate(status);
         return failed_result();
     }
 
     status = elpa_setup(handle);
-    if (status != ELPA_OK
-        || !set_integer(handle, "solver", ELPA_SOLVER_2STAGE, status)
-        || !set_integer(handle, "complex_kernel", kernel, status))
+    if (status != ELPA_OK ||
+        !set_integer(
+            handle,
+            "solver",
+            ELPA_SOLVER_2STAGE,
+            status) ||
+        !set_integer(
+            handle,
+            "complex_kernel",
+            kernel,
+            status))
     {
         deallocate(status);
         return failed_result();
     }
 
-    elpa_eigenvectors(handle, matrix.data(), eigenvalues.data(), eigenvectors.data(), &status);
+    elpa_eigenvectors(
+        handle,
+        matrix.data(),
+        eigenvalues.data(),
+        eigenvectors.data(),
+        &status);
     if (status != ELPA_OK)
     {
         deallocate(status);
@@ -355,12 +411,12 @@ ElpaRuntimeCheckResult check_complex_block2_kernel(const int kernel)
     double maximum_residual = 0.0;
     for (int band = 0; band < kNev; ++band)
     {
-        maximum_residual
-            = std::max(maximum_residual,
-                       relative_residual(original_matrix,
-                                         &eigenvectors[index(0, band, kN)],
-                                         eigenvalues[band],
-                                         matrix_norm));
+        maximum_residual = std::max(
+            maximum_residual, relative_residual(
+                                  original_matrix,
+                                  &eigenvectors[index(0, band, kN)],
+                                  eigenvalues[band],
+                                  matrix_norm));
     }
 
     const double orthogonality = orthogonality_error(eigenvectors);
@@ -376,7 +432,13 @@ void validate_elpa_complex_kernel(const int kernel, const int set_status, const 
 {
     const int local_check_required = set_status == ELPA_OK && needs_runtime_check(kernel) ? 1 : 0;
     int any_check_required = 0;
-    MPI_Allreduce(&local_check_required, &any_check_required, 1, MPI_INT, MPI_MAX, comm);
+    MPI_Allreduce(
+        &local_check_required,
+        &any_check_required,
+        1,
+        MPI_INT,
+        MPI_MAX,
+        comm);
     if (any_check_required == 0)
     {
         return;
@@ -396,7 +458,13 @@ void validate_elpa_complex_kernel(const int kernel, const int set_status, const 
 
     const int local_failed = result.passed ? 0 : 1;
     int any_failed = 0;
-    MPI_Allreduce(&local_failed, &any_failed, 1, MPI_INT, MPI_MAX, comm);
+    MPI_Allreduce(
+        &local_failed,
+        &any_failed,
+        1,
+        MPI_INT,
+        MPI_MAX,
+        comm);
     if (any_failed == 0)
     {
         return;
@@ -404,8 +472,20 @@ void validate_elpa_complex_kernel(const int kernel, const int set_status, const 
 
     double max_residual = result.max_residual;
     double max_orthogonality = result.orthogonality;
-    MPI_Allreduce(MPI_IN_PLACE, &max_residual, 1, MPI_DOUBLE, MPI_MAX, comm);
-    MPI_Allreduce(MPI_IN_PLACE, &max_orthogonality, 1, MPI_DOUBLE, MPI_MAX, comm);
+    MPI_Allreduce(
+        MPI_IN_PLACE,
+        &max_residual,
+        1,
+        MPI_DOUBLE,
+        MPI_MAX,
+        comm);
+    MPI_Allreduce(
+        MPI_IN_PLACE,
+        &max_orthogonality,
+        1,
+        MPI_DOUBLE,
+        MPI_MAX,
+        comm);
 
     std::ostringstream message;
     message << "The selected ELPA complex 2-stage BLOCK2 kernel failed a runtime correctness check:\n\n "

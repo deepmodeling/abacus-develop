@@ -23,24 +23,52 @@ std::vector<Wide> identity(int n)
     return result;
 }
 
-void multiply(const std::vector<Wide>& a, const std::vector<Wide>& b, int n, std::vector<Wide>* result)
+void multiply(
+    const std::vector<Wide> &a,
+    const std::vector<Wide> &b,
+    int n,
+    std::vector<Wide> *result)
 {
     const Wide one(1);
     const Wide zero(0);
-    ModuleBase::gemm_op<Wide, base_device::DEVICE_CPU>()('N', 'N', n, n, n, &one, a.data(), n, b.data(), n, &zero, result->data(), n);
+    ModuleBase::gemm_op<Wide, base_device::DEVICE_CPU>()(
+        'N',
+        'N',
+        n,
+        n,
+        n,
+        &one,
+        a.data(),
+        n,
+        b.data(),
+        n,
+        &zero,
+        result->data(),
+        n);
 }
 
-bool cholesky(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
+bool cholesky(const std::vector<Wide> &g, int n, std::vector<Wide> *c)
 {
     ModuleBase::timer::start("Orthonormal", "cholesky");
     *c = g;
     const char upper = 'U';
     const char nonunit = 'N';
     int info = 0;
-    ct::lapackConnector::potrf(upper, n, c->data(), n, info);
+    ct::lapackConnector::potrf(
+        upper,
+        n,
+        c->data(),
+        n,
+        info);
     if (info == 0)
     {
-        ct::lapackConnector::trtri(upper, nonunit, n, c->data(), n, info);
+        ct::lapackConnector::trtri(
+            upper,
+            nonunit,
+            n,
+            c->data(),
+            n,
+            info);
     }
     for (int j = 0; j < n; ++j)
     {
@@ -53,7 +81,7 @@ bool cholesky(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
     return info == 0;
 }
 
-bool lowdin(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
+bool lowdin(const std::vector<Wide> &g, int n, std::vector<Wide> *c)
 {
     ModuleBase::timer::start("Orthonormal", "lowdin");
     std::vector<Wide> u(g);
@@ -67,21 +95,22 @@ bool lowdin(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
     std::vector<double> rwork(lrwork);
     std::vector<int> iwork(liwork);
     int info = 0;
-    ct::lapackConnector::heevd(vectors,
-                               upper,
-                               n,
-                               u.data(),
-                               n,
-                               values.data(),
-                               work.data(),
-                               lwork,
-                               rwork.data(),
-                               lrwork,
-                               iwork.data(),
-                               liwork,
-                               info);
+    ct::lapackConnector::heevd(
+        vectors,
+        upper,
+        n,
+        u.data(),
+        n,
+        values.data(),
+        work.data(),
+        lwork,
+        rwork.data(),
+        lrwork,
+        iwork.data(),
+        liwork,
+        info);
     bool valid = info == 0;
-    for (double value: values)
+    for (double value : values)
     {
         valid = valid && std::isfinite(value) && value > 0.0;
     }
@@ -98,13 +127,26 @@ bool lowdin(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
         c->resize(n * n);
         const Wide one(1);
         const Wide zero(0);
-        ModuleBase::gemm_op<Wide, base_device::DEVICE_CPU>()('N', 'C', n, n, n, &one, scaled.data(), n, u.data(), n, &zero, c->data(), n);
+        ModuleBase::gemm_op<Wide, base_device::DEVICE_CPU>()(
+            'N',
+            'C',
+            n,
+            n,
+            n,
+            &one,
+            scaled.data(),
+            n,
+            u.data(),
+            n,
+            &zero,
+            c->data(),
+            n);
     }
     ModuleBase::timer::end("Orthonormal", "lowdin");
     return valid;
 }
 
-bool newton_schulz(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
+bool newton_schulz(const std::vector<Wide> &g, int n, std::vector<Wide> *c)
 {
     ModuleBase::timer::start("Orthonormal", "newton_schulz");
     constexpr double iteration_tol = 1e-12;
@@ -138,8 +180,16 @@ bool newton_schulz(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
         std::vector<Wide> residual(n * n);
         for (int iteration = 1; iteration <= max_updates; ++iteration)
         {
-            multiply(*c, *c, n, &square);
-            multiply(g, square, n, &residual);
+            multiply(
+                *c,
+                *c,
+                n,
+                &square);
+            multiply(
+                g,
+                square,
+                n,
+                &residual);
             if (orth_error(residual, n) <= iteration_tol)
             {
                 valid = true;
@@ -154,7 +204,11 @@ bool newton_schulz(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
                 residual[i] = 0.5 * (3.0 * unit[i] - residual[i]);
             }
             // The square is no longer needed; reuse its storage without aliasing GEMM inputs.
-            multiply(*c, residual, n, &square);
+            multiply(
+                *c,
+                residual,
+                n,
+                &square);
             c->swap(square);
         }
     }
@@ -163,7 +217,7 @@ bool newton_schulz(const std::vector<Wide>& g, int n, std::vector<Wide>* c)
 }
 } // namespace
 
-const char* orth_method_name(OrthMethod method)
+const char *orth_method_name(OrthMethod method)
 {
     switch (method)
     {
@@ -178,9 +232,12 @@ const char* orth_method_name(OrthMethod method)
     }
 }
 
-OrthMethod parse_orth_method(const std::string& name)
+OrthMethod parse_orth_method(const std::string &name)
 {
-    for (OrthMethod method: {OrthMethod::none, OrthMethod::cholesky, OrthMethod::lowdin, OrthMethod::newton_schulz})
+    for (OrthMethod method : {OrthMethod::none,
+             OrthMethod::cholesky,
+             OrthMethod::lowdin,
+             OrthMethod::newton_schulz})
     {
         if (name == orth_method_name(method))
         {
@@ -190,7 +247,7 @@ OrthMethod parse_orth_method(const std::string& name)
     throw std::invalid_argument("Unsupported orthonormalization method: " + name);
 }
 
-double orth_error(const std::vector<Wide>& g, int n)
+double orth_error(const std::vector<Wide> &g, int n)
 {
     double error = 0.0;
     for (int j = 0; j < n; ++j)
@@ -209,7 +266,7 @@ double orth_error(const std::vector<Wide>& g, int n)
     return error;
 }
 
-const char* orth_failure_name(OrthFailure failure)
+const char *orth_failure_name(OrthFailure failure)
 {
     switch (failure)
     {
@@ -232,7 +289,11 @@ const char* orth_failure_name(OrthFailure failure)
     }
 }
 
-bool orth_transform(const std::vector<Wide>& g, int n, OrthMethod method, std::vector<Wide>* c)
+bool orth_transform(
+    const std::vector<Wide> &g,
+    int n,
+    OrthMethod method,
+    std::vector<Wide> *c)
 {
     ModuleBase::timer::start("Orthonormal", "orth_transform");
     bool valid = false;
@@ -250,7 +311,7 @@ bool orth_transform(const std::vector<Wide>& g, int n, OrthMethod method, std::v
     default:
         valid = false;
     }
-    for (const Wide& value: *c)
+    for (const Wide &value : *c)
     {
         valid = valid && std::isfinite(std::abs(value));
     }

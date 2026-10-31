@@ -1,8 +1,8 @@
 #include "utils.h"
 
 #include "source_base/module_external/blacs_connector.h"
-#include "source_base/tool_quit.h"
 #include "source_base/module_external/scalapack_connector.h"
+#include "source_base/tool_quit.h"
 
 #include <complex>
 #include <cstring>
@@ -12,10 +12,20 @@
 #include <sstream>
 #include <string>
 // load matrix from the file
-void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int blacs_ctxt)
+void loadMatrix(
+    const char FileName[],
+    int nFull,
+    double *a,
+    int *desca,
+    int blacs_ctxt)
 {
     int nprows, npcols, myprow, mypcol;
-    Cblacs_gridinfo(blacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
+    Cblacs_gridinfo(
+        blacs_ctxt,
+        &nprows,
+        &npcols,
+        &myprow,
+        &mypcol);
     int myid = Cblacs_pnum(blacs_ctxt, myprow, mypcol);
 
     const int ROOT_PROC = 0;
@@ -25,25 +35,37 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
         matrixFile.open(FileName);
         if (!matrixFile.is_open())
         {
-            ModuleBase::WARNING_QUIT("module_genelpa::loadMatrix",
-                                     std::string("Failed to open matrix file: ") + FileName);
+            ModuleBase::WARNING_QUIT(
+                "module_genelpa::loadMatrix", std::string("Failed to open matrix file: ") + FileName);
         }
     }
 
-    double* b = nullptr; // buffer
+    double *b = nullptr;             // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
-    int M
-        = std::max(1, std::min(nFull, (int)(MAX_BUFFER_SIZE / nFull / sizeof(double)))); // at lease 1 row, max size 1GB
+    int M =
+        std::max(1, std::min(nFull, (int)(MAX_BUFFER_SIZE / nFull / sizeof(double)))); // at lease 1 row, max size 1GB
     if (myid == ROOT_PROC)
+    {
         b = new double[M * N];
+    }
     else
+    {
         b = new double[1];
+    }
 
     // set descb, which has all elements in the only block in the root process
     //  block size is M x N, so all elements are in the first process
-    int descb[9] = {1, blacs_ctxt, M, N, M, N, 0, 0, M};
+    int descb[9] = {1,
+        blacs_ctxt,
+        M,
+        N,
+        M,
+        N,
+        0,
+        0,
+        M};
 
     int ja = 1, ib = 1, jb = 1;
     for (int ia = 1; ia < nFull; ia += M)
@@ -61,16 +83,33 @@ void loadMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
             }
         }
         // gather data rows by rows from all processes
-        Cpdgemr2d(thisM, N, b, ib, jb, descb, a, ia, ja, desca, blacs_ctxt);
+        Cpdgemr2d(
+            thisM,
+            N,
+            b,
+            ib,
+            jb,
+            descb,
+            a,
+            ia,
+            ja,
+            desca,
+            blacs_ctxt);
     }
 
     if (myid == ROOT_PROC)
+    {
         matrixFile.close();
+    }
 
     delete[] b;
 }
 
-void saveLocalMatrix(const char filePrefix[], int narows, int nacols, double* a)
+void saveLocalMatrix(
+    const char filePrefix[],
+    int narows,
+    int nacols,
+    double *a)
 {
     char FileName[80];
     int myid = 0;
@@ -81,12 +120,16 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, double* a)
     myid = 0;
 #endif
 
-    sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
+    sprintf(
+        FileName,
+        "%s_%3.3d.dat",
+        filePrefix,
+        myid);
     matrixFile.open(FileName);
     if (!matrixFile.is_open())
     {
-        ModuleBase::WARNING_QUIT("module_genelpa::saveLocalMatrix",
-                                 std::string("Failed to open matrix file for write: ") + FileName);
+        ModuleBase::WARNING_QUIT(
+            "module_genelpa::saveLocalMatrix", std::string("Failed to open matrix file for write: ") + FileName);
     }
     matrixFile.flags(std::ios_base::scientific);
     matrixFile.precision(17);
@@ -104,10 +147,20 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, double* a)
 
 // use pdgemr2d to collect matrix from all processes to root process
 // and save to one completed matrix file
-void saveMatrix(const char FileName[], int nFull, double* a, int* desca, int blacs_ctxt)
+void saveMatrix(
+    const char FileName[],
+    int nFull,
+    double *a,
+    int *desca,
+    int blacs_ctxt)
 {
     int nprows, npcols, myprow, mypcol;
-    Cblacs_gridinfo(blacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
+    Cblacs_gridinfo(
+        blacs_ctxt,
+        &nprows,
+        &npcols,
+        &myprow,
+        &mypcol);
     int myid = Cblacs_pnum(blacs_ctxt, myprow, mypcol);
 
     const int ROOT_PROC = 0;
@@ -117,34 +170,57 @@ void saveMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
         matrixFile.open(FileName);
         if (!matrixFile.is_open())
         {
-            ModuleBase::WARNING_QUIT("module_genelpa::saveMatrix",
-                                     std::string("Failed to open matrix file for write: ") + FileName);
+            ModuleBase::WARNING_QUIT(
+                "module_genelpa::saveMatrix", std::string("Failed to open matrix file for write: ") + FileName);
         }
         matrixFile.flags(std::ios_base::scientific);
         matrixFile.precision(17);
         matrixFile.width(24);
     }
 
-    double* b = nullptr; // buffer
+    double *b = nullptr;             // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
-    int M
-        = std::max(1, std::min(nFull, (int)(MAX_BUFFER_SIZE / nFull / sizeof(double)))); // at lease 1 row, max size 1GB
+    int M =
+        std::max(1, std::min(nFull, (int)(MAX_BUFFER_SIZE / nFull / sizeof(double)))); // at lease 1 row, max size 1GB
     if (myid == ROOT_PROC)
+    {
         b = new double[M * N];
+    }
     else
+    {
         b = new double[1];
+    }
 
     // set descb, which has all elements in the only block in the root process
-    int descb[9] = {1, blacs_ctxt, M, N, M, N, 0, 0, M};
+    int descb[9] = {1,
+        blacs_ctxt,
+        M,
+        N,
+        M,
+        N,
+        0,
+        0,
+        M};
 
     int ja = 1, ib = 1, jb = 1;
     for (int ia = 1; ia < nFull; ia += M)
     {
         int thisM = std::min(M, nFull - ia + 1); // nFull-ia+1 is the last few row to be saved
         // gather data rows by rows from all processes
-        Cpdgemr2d(thisM, N, a, ia, ja, desca, b, ib, jb, descb, blacs_ctxt);
+        Cpdgemr2d(
+            thisM,
+            N,
+            a,
+            ia,
+            ja,
+            desca,
+            b,
+            ib,
+            jb,
+            descb,
+            blacs_ctxt);
         // write to the file
         if (myid == ROOT_PROC)
         {
@@ -160,16 +236,28 @@ void saveMatrix(const char FileName[], int nFull, double* a, int* desca, int bla
     }
 
     if (myid == ROOT_PROC)
+    {
         matrixFile.close();
+    }
 
     delete[] b;
 }
 
 // load matrix from the file
-void loadMatrix(const char FileName[], int nFull, std::complex<double>* a, int* desca, int blacs_ctxt)
+void loadMatrix(
+    const char FileName[],
+    int nFull,
+    std::complex<double> *a,
+    int *desca,
+    int blacs_ctxt)
 {
     int nprows, npcols, myprow, mypcol;
-    Cblacs_gridinfo(blacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
+    Cblacs_gridinfo(
+        blacs_ctxt,
+        &nprows,
+        &npcols,
+        &myprow,
+        &mypcol);
     int myid = Cblacs_pnum(blacs_ctxt, myprow, mypcol);
 
     const int ROOT_PROC = 0;
@@ -179,26 +267,37 @@ void loadMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
         matrixFile.open(FileName);
         if (!matrixFile.is_open())
         {
-            ModuleBase::WARNING_QUIT("module_genelpa::loadMatrix",
-                                     std::string("Failed to open matrix file: ") + FileName);
+            ModuleBase::WARNING_QUIT(
+                "module_genelpa::loadMatrix", std::string("Failed to open matrix file: ") + FileName);
         }
     }
 
-    std::complex<double>* b; // buffer
+    std::complex<double> *b;         // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
     int M = std::max(
-        1,
-        std::min(nFull, (int)(MAX_BUFFER_SIZE / nFull / (2 * sizeof(double))))); // at lease 1 row, max size 1GB
+        1, std::min(nFull, (int)(MAX_BUFFER_SIZE / nFull / (2 * sizeof(double))))); // at lease 1 row, max size 1GB
     if (myid == ROOT_PROC)
+    {
         b = new std::complex<double>[M * N];
+    }
     else
+    {
         b = new std::complex<double>[1];
+    }
 
     // set descb, which has all elements in the only block in the root process
     //  block size is M x N, so all elements are in the first process
-    int descb[9] = {1, blacs_ctxt, M, N, M, N, 0, 0, M};
+    int descb[9] = {1,
+        blacs_ctxt,
+        M,
+        N,
+        M,
+        N,
+        0,
+        0,
+        M};
 
     int ja = 1, ib = 1, jb = 1;
     for (int ia = 1; ia < nFull; ia += M)
@@ -216,16 +315,33 @@ void loadMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
             }
         }
         // gather data rows by rows from all processes
-        Cpzgemr2d(thisM, N, b, ib, jb, descb, a, ia, ja, desca, blacs_ctxt);
+        Cpzgemr2d(
+            thisM,
+            N,
+            b,
+            ib,
+            jb,
+            descb,
+            a,
+            ia,
+            ja,
+            desca,
+            blacs_ctxt);
     }
 
     if (myid == ROOT_PROC)
+    {
         matrixFile.close();
+    }
 
     delete[] b;
 }
 
-void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::complex<double>* a)
+void saveLocalMatrix(
+    const char filePrefix[],
+    int narows,
+    int nacols,
+    std::complex<double> *a)
 {
     char FileName[80];
     int myid;
@@ -236,12 +352,16 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::compl
     myid = 0;
 #endif
 
-    sprintf(FileName, "%s_%3.3d.dat", filePrefix, myid);
+    sprintf(
+        FileName,
+        "%s_%3.3d.dat",
+        filePrefix,
+        myid);
     matrixFile.open(FileName);
     if (!matrixFile.is_open())
     {
-        ModuleBase::WARNING_QUIT("module_genelpa::saveLocalMatrix",
-                                 std::string("Failed to open matrix file for write: ") + FileName);
+        ModuleBase::WARNING_QUIT(
+            "module_genelpa::saveLocalMatrix", std::string("Failed to open matrix file for write: ") + FileName);
     }
     matrixFile.flags(std::ios_base::scientific);
     matrixFile.precision(17);
@@ -259,10 +379,20 @@ void saveLocalMatrix(const char filePrefix[], int narows, int nacols, std::compl
 
 // use pzgemr2d to collect matrix from all processes to root process
 // and save to one completed matrix file
-void saveMatrix(const char FileName[], int nFull, std::complex<double>* a, int* desca, int blacs_ctxt)
+void saveMatrix(
+    const char FileName[],
+    int nFull,
+    std::complex<double> *a,
+    int *desca,
+    int blacs_ctxt)
 {
     int nprows, npcols, myprow, mypcol;
-    Cblacs_gridinfo(blacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
+    Cblacs_gridinfo(
+        blacs_ctxt,
+        &nprows,
+        &npcols,
+        &myprow,
+        &mypcol);
     int myid = Cblacs_pnum(blacs_ctxt, myprow, mypcol);
 
     const int ROOT_PROC = 0;
@@ -272,34 +402,57 @@ void saveMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
         matrixFile.open(FileName);
         if (!matrixFile.is_open())
         {
-            ModuleBase::WARNING_QUIT("module_genelpa::saveMatrix",
-                                     std::string("Failed to open matrix file for write: ") + FileName);
+            ModuleBase::WARNING_QUIT(
+                "module_genelpa::saveMatrix", std::string("Failed to open matrix file for write: ") + FileName);
         }
         matrixFile.flags(std::ios_base::scientific);
         matrixFile.precision(17);
         matrixFile.width(24);
     }
 
-    std::complex<double>* b; // buffer
+    std::complex<double> *b;         // buffer
     const int MAX_BUFFER_SIZE = 1e9; // max buffer size is 1GB
 
     int N = nFull;
-    int M
-        = std::max(1, std::min(nFull, (int)(MAX_BUFFER_SIZE / nFull / sizeof(double)))); // at lease 1 row, max size 1GB
+    int M =
+        std::max(1, std::min(nFull, (int)(MAX_BUFFER_SIZE / nFull / sizeof(double)))); // at lease 1 row, max size 1GB
     if (myid == ROOT_PROC)
+    {
         b = new std::complex<double>[M * N];
+    }
     else
+    {
         b = new std::complex<double>[1];
+    }
 
     // set descb, which has all elements in the only block in the root process
-    int descb[9] = {1, blacs_ctxt, M, N, M, N, 0, 0, M};
+    int descb[9] = {1,
+        blacs_ctxt,
+        M,
+        N,
+        M,
+        N,
+        0,
+        0,
+        M};
 
     int ja = 1, ib = 1, jb = 1;
     for (int ia = 1; ia < nFull; ia += M)
     {
         int transM = std::min(M, nFull - ia + 1); // nFull-ia+1 is the last few row to be saved
         // gather data rows by rows from all processes
-        Cpzgemr2d(transM, N, a, ia, ja, desca, b, ib, jb, descb, blacs_ctxt);
+        Cpzgemr2d(
+            transM,
+            N,
+            a,
+            ia,
+            ja,
+            desca,
+            b,
+            ib,
+            jb,
+            descb,
+            blacs_ctxt);
         // write to the file
         if (myid == ROOT_PROC)
         {
@@ -315,7 +468,9 @@ void saveMatrix(const char FileName[], int nFull, std::complex<double>* a, int* 
     }
 
     if (myid == ROOT_PROC)
+    {
         matrixFile.close();
+    }
 
     delete[] b;
 }

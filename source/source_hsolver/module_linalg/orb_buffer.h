@@ -16,13 +16,12 @@ struct OrbLayout
 };
 
 /** @brief Clear all spin-component tails, including scalar-orbital padding. */
-template <typename T, typename Device>
-void zero_pad(T* data, const OrbLayout& layout);
+template <typename T, typename Device> void zero_pad(T *data, const OrbLayout &layout);
 
 /** @brief Borrow scalar input, or copy spinors into scratch and clear their padding.
  *  Scratch must have room for ld * bands coefficients; input remains unchanged.
  */
 template <typename T, typename Device>
-const T* clean_orbs(const T* input, const OrbLayout& layout, ct::Tensor* scratch);
+const T *clean_orbs(const T *input, const OrbLayout &layout, ct::Tensor *scratch);
 } // namespace hsolver
 #endif

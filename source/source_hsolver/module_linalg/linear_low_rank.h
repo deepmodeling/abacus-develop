@@ -6,8 +6,7 @@
 namespace hsolver
 {
 /** @brief A bounded, paired-orthogonalized response history for one k point. */
-template <typename T, typename Device>
-class LinearResponse
+template <typename T, typename Device> class LinearResponse
 {
   private:
     ct::Tensor directions_;
@@ -15,78 +14,83 @@ class LinearResponse
     int rank_ = 0;
 
   public:
-    int rank() const
-    {
-        return rank_;
-    }
-    void clear()
-    {
-        rank_ = 0;
-    }
-    const T* directions() const
-    {
-        return directions_.template data<T>();
-    }
-    const T* images() const
-    {
-        return images_.template data<T>();
-    }
+    int rank() const { return rank_; }
+    void clear() { rank_ = 0; }
+    const T *directions() const { return directions_.template data<T>(); }
+    const T *images() const { return images_.template data<T>(); }
 
     /** @brief Replace the history only after a successful solve; discard unresolved directions. */
-    void update(LinearAlgebra<T, Device>& algebra,
-                int ld,
-                int dim,
-                int bands,
-                const T* solution,
-                const T* seed,
-                const T* seed_residual,
-                double tolerance,
-                ct::Tensor* workspace);
+    void update(
+        LinearAlgebra<T, Device> &algebra,
+        int ld,
+        int dim,
+        int bands,
+        const T *solution,
+        const T *seed,
+        const T *seed_residual,
+        double tolerance,
+        ct::Tensor *workspace);
 };
 
 /** @brief Diagonal inverse with an optional response or Galerkin coarse correction. */
-template <typename T, typename Device>
-class LinearLowRank final : public LinearOperator<T, Device>
+template <typename T, typename Device> class LinearLowRank final : public LinearOperator<T, Device>
 {
   private:
-    LinearAlgebra<T, Device>& algebra_;
-    const T* diagonal_;
+    LinearAlgebra<T, Device> &algebra_;
+    const T *diagonal_;
     const int dim_;
-    const T* test_ = nullptr;
+    const T *test_ = nullptr;
     int rank_ = 0;
-    const LinearSmallLU* factor_ = nullptr;
-    const T* correction_ = nullptr;
+    const LinearSmallLU *factor_ = nullptr;
+    const T *correction_ = nullptr;
 
   public:
-    LinearLowRank(LinearAlgebra<T, Device>& algebra, const T* diagonal, int dim) : algebra_(algebra), diagonal_(diagonal), dim_(dim)
+    LinearLowRank(LinearAlgebra<T, Device> &algebra, const T *diagonal, int dim)
+        : algebra_(algebra), diagonal_(diagonal), dim_(dim)
     {
     }
-    bool is_identity() const override
-    {
-        return diagonal_ == nullptr && rank_ == 0;
-    }
-    int rank() const
-    {
-        return rank_;
-    }
+    bool is_identity() const override { return diagonal_ == nullptr && rank_ == 0; }
+    int rank() const { return rank_; }
 
     /** @brief Prepare a response correction with orthonormal images.
      *  @param images Borrowed projection vectors; keep them valid and unchanged until the last apply.
      *  @param workspace Caller-owned correction storage; do not modify or resize it until the last apply.
      */
-    void prepare_response(int ld, int rank, const T* directions, const T* images, ct::Tensor* workspace);
+    void prepare_response(
+        int ld,
+        int rank,
+        const T *directions,
+        const T *images,
+        ct::Tensor *workspace);
     /** @brief Prepare a Galerkin coarse correction.
      *  @param basis Borrowed projection vectors; keep them valid and unchanged until the last apply.
      *  @param factor Borrowed factorization of basis^H*images; keep it valid and unchanged until the last apply.
      *  @param workspace Caller-owned correction storage; do not modify or resize it until the last apply.
      */
-    void prepare_subspace(int ld, int rank, const T* basis, const T* images, const LinearSmallLU& factor, ct::Tensor* workspace);
+    void prepare_subspace(
+        int ld,
+        int rank,
+        const T *basis,
+        const T *images,
+        const LinearSmallLU &factor,
+        ct::Tensor *workspace);
     /** @brief Apply the fixed correction; throw LinearPreconditionerError if the coarse solve fails. */
-    void apply(const T* x, T* y, int ld, int nvec) const override;
+    void apply(
+        const T *x,
+        T *y,
+        int ld,
+        int nvec) const override;
 
   private:
     /** @brief Form Z-D*W and retain the projection data for subsequent applications. */
-    void prepare(int ld, int rank, const T* z, const T* w, const T* test, const LinearSmallLU* factor, ct::Tensor* workspace);
+    void prepare(
+        int ld,
+        int rank,
+        const T *z,
+        const T *w,
+        const T *test,
+        const LinearSmallLU *factor,
+        ct::Tensor *workspace);
 };
 } // namespace hsolver
 #endif

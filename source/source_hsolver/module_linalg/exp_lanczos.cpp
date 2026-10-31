@@ -13,7 +13,7 @@ namespace
 {
 using Wide = std::complex<double>;
 
-void add_work(ExpResult& total, const ExpResult& part)
+void add_work(ExpResult &total, const ExpResult &part)
 {
     total.hpsi_calls += part.hpsi_calls;
     total.hpsi_cols += part.hpsi_cols;
@@ -32,13 +32,12 @@ ExpResult failed_band(ExpResult result, int band, bool retry)
 } // namespace
 
 template <typename T, typename Device>
-ExpLanczos<T, Device>::ExpLanczos(const ExpControls& exp_ctrl, const diag_comm_info& comm)
+ExpLanczos<T, Device>::ExpLanczos(const ExpControls &exp_ctrl, const diag_comm_info &comm)
     : ExpAction<T, Device>(exp_ctrl, comm), comm_(comm), work_(comm, 1)
 {
 }
 
-template <typename T, typename Device>
-int ExpLanczos<T, Device>::batch_size(const OrbLayout& layout) const
+template <typename T, typename Device> int ExpLanczos<T, Device>::batch_size(const OrbLayout &layout) const
 {
     // The layout can differ between ranks, but operator column counts must agree.
     double rows = std::max(1, layout.ld);
@@ -59,28 +58,49 @@ int ExpLanczos<T, Device>::batch_size(const OrbLayout& layout) const
 }
 
 template <typename T, typename Device>
-void ExpLanczos<T, Device>::combine(const OrbLayout& layout, int count, const T* basis, const std::vector<T>& coefficients, T* output)
+void ExpLanczos<T, Device>::combine(
+    const OrbLayout &layout,
+    int count,
+    const T *basis,
+    const std::vector<T> &coefficients,
+    T *output)
 {
     ModuleBase::timer::start("ExpLanczos", "combine");
     linear_buffer<T, Device>(&coefficients_, coefficients.size());
-    T* data = coefficients_.template data<T>();
-    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(data, coefficients.data(), coefficients.size());
+    T *data = coefficients_.template data<T>();
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+        data, coefficients.data(), coefficients.size());
     const int dim = layout.npol == 2 ? layout.ld : layout.npw;
     const int stride = layout.ld * layout.bands;
-    linear_op<T, Device>().combine(layout.ld, dim, layout.bands, count, stride, basis, data, output);
+    linear_op<T, Device>().combine(
+        layout.ld,
+        dim,
+        layout.bands,
+        count,
+        stride,
+        basis,
+        data,
+        output);
     ModuleBase::timer::end("ExpLanczos", "combine");
 }
 
 template <typename T, typename Device>
-std::vector<Wide> ExpLanczos<T, Device>::basis_gram(const OrbLayout& layout, int count, const T* basis)
+std::vector<Wide> ExpLanczos<T, Device>::basis_gram(const OrbLayout &layout, int count, const T *basis)
 {
     ModuleBase::timer::start("ExpLanczos", "basis_gram");
     const int size = layout.bands * count * count;
     linear_buffer<Wide, Device>(&products_, size);
-    Wide* data = products_.template data<Wide>();
+    Wide *data = products_.template data<Wide>();
     const int dim = layout.npol == 2 ? layout.ld : layout.npw;
     const int stride = layout.ld * layout.bands;
-    linear_op<T, Device>().block_gram(layout.ld, dim, layout.bands, count, stride, basis, data);
+    linear_op<T, Device>().block_gram(
+        layout.ld,
+        dim,
+        layout.bands,
+        count,
+        stride,
+        basis,
+        data);
     std::vector<Wide> gram(size);
     base_device::memory::synchronize_memory_op<Wide, base_device::DEVICE_CPU, Device>()(gram.data(), data, size);
 #ifdef __MPI
@@ -94,11 +114,12 @@ std::vector<Wide> ExpLanczos<T, Device>::basis_gram(const OrbLayout& layout, int
 }
 
 template <typename T, typename Device>
-bool ExpLanczos<T, Device>::diagonalize(const std::vector<double>& diagonal,
-                                        const std::vector<double>& off_diagonal,
-                                        int band,
-                                        int bands,
-                                        int count)
+bool ExpLanczos<T, Device>::diagonalize(
+    const std::vector<double> &diagonal,
+    const std::vector<double> &off_diagonal,
+    int band,
+    int bands,
+    int count)
 {
     ModuleBase::timer::start("ExpLanczos", "diagonalize");
     small_vectors_.assign(count * count, 0.0);
@@ -117,21 +138,31 @@ bool ExpLanczos<T, Device>::diagonalize(const std::vector<double>& diagonal,
     const char job = 'V';
     const char upper = 'U';
     int info = 0;
-    ct::lapackConnector::heev(job, upper, count, small_vectors_.data(), count, small_values_.data(), small_work_.data(), work_size, info);
+    ct::lapackConnector::heev(
+        job,
+        upper,
+        count,
+        small_vectors_.data(),
+        count,
+        small_values_.data(),
+        small_work_.data(),
+        work_size,
+        info);
     ModuleBase::timer::end("ExpLanczos", "diagonalize");
     return info == 0;
 }
 
 template <typename T, typename Device>
-ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
-                                         const OrbLayout& layout,
-                                         double alpha,
-                                         double rel_tol,
-                                         const T* input,
-                                         T* output,
-                                         T* full,
-                                         bool reorthogonalize,
-                                         bool* lost_orthogonality)
+ExpResult ExpLanczos<T, Device>::attempt(
+    const HSOperator<T, Device> &op,
+    const OrbLayout &layout,
+    double alpha,
+    double rel_tol,
+    const T *input,
+    T *output,
+    T *full,
+    bool reorthogonalize,
+    bool *lost_orthogonality)
 {
     using Real = typename T::value_type;
     const int ld = layout.ld;
@@ -156,11 +187,11 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
     linear_buffer<T, Device>(&packed_, size);
     linear_buffer<T, Device>(&hpacked_, size);
     linear_buffer<int, Device>(&permutation_, bands);
-    T* q = basis_.template data<T>();
-    T* w = image_.template data<T>();
-    T* packed = packed_.template data<T>();
-    T* hpacked = hpacked_.template data<T>();
-    int* map = permutation_.template data<int>();
+    T *q = basis_.template data<T>();
+    T *w = image_.template data<T>();
+    T *packed = packed_.template data<T>();
+    T *hpacked = hpacked_.template data<T>();
+    int *map = permutation_.template data<int>();
     base_device::memory::set_memory_op<T, Device>()(output, 0, stride);
     if (full)
     {
@@ -168,7 +199,14 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
     }
     base_device::memory::synchronize_memory_op<T, Device, Device>()(q, input, stride);
     zero_pad<T, Device>(q, layout);
-    const std::vector<std::complex<double>> norms = this->algebra_.dots(ld, dim, bands, 1, stride, q, q);
+    const std::vector<std::complex<double>> norms = this->algebra_.dots(
+        ld,
+        dim,
+        bands,
+        1,
+        stride,
+        q,
+        q);
     std::vector<double> scale(bands);
     std::vector<T> factors(bands);
     std::vector<bool> done(bands, false);
@@ -189,7 +227,18 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
         done[b] = scale[b] == 0.0;
         factors[b] = done[b] ? T(0) : T(1.0 / scale[b]);
     }
-    this->work_.batch(ld, dim, bands, q, q, q, T(1), T(0), factors.data(), nullptr, nullptr);
+    this->work_.batch(
+        ld,
+        dim,
+        bands,
+        q,
+        q,
+        q,
+        T(1),
+        T(0),
+        factors.data(),
+        nullptr,
+        nullptr);
     for (int j = 0; j < limit; ++j)
     {
         active.clear();
@@ -205,29 +254,59 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
             return result;
         }
         const int count = active.size();
-        T* column = q + static_cast<int64_t>(j) * stride;
+        T *column = q + static_cast<int64_t>(j) * stride;
         if (count == bands)
         {
-            op.hpsi(column, w, ld, bands);
+            op.hpsi(
+                column,
+                w,
+                ld,
+                bands);
         }
         else
         {
-            base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(map, active.data(), count);
-            linear_op<T, Device>().gather(ld, ld, count, 1, stride, column, packed, map);
-            op.hpsi(packed, hpacked, ld, count);
+            base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>()(
+                map, active.data(), count);
+            linear_op<T, Device>().gather(
+                ld,
+                ld,
+                count,
+                1,
+                stride,
+                column,
+                packed,
+                map);
+            op.hpsi(
+                packed,
+                hpacked,
+                ld,
+                count);
             base_device::memory::set_memory_op<T, Device>()(w, 0, stride);
-            linear_op<T, Device>().scatter(ld, ld, count, hpacked, w, map);
+            linear_op<T, Device>().scatter(
+                ld,
+                ld,
+                count,
+                hpacked,
+                w,
+                map);
         }
         zero_pad<T, Device>(w, layout);
         ++result.hpsi_calls;
         result.hpsi_cols += count;
-        const std::vector<std::complex<double>> projection = this->algebra_.dots(ld, dim, bands, 1, stride, column, w);
+        const std::vector<std::complex<double>> projection = this->algebra_.dots(
+            ld,
+            dim,
+            bands,
+            1,
+            stride,
+            column,
+            w);
         const int m = j + 1;
         result.order_or_dim = m;
         const int first = std::max(0, j - 1);
         const int columns = j - first + 1;
         std::vector<T> recurrence(columns * bands, T(0));
-        for (int b: active)
+        for (int b : active)
         {
             if (!std::isfinite(std::abs(projection[b])))
             {
@@ -240,18 +319,30 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
                 recurrence[b] = T(-beta[(j - 1) * bands + b]);
             }
         }
-        const T* previous = q + static_cast<int64_t>(first) * stride;
-        combine(layout, columns, previous, recurrence, w);
+        const T *previous = q + static_cast<int64_t>(first) * stride;
+        combine(
+            layout,
+            columns,
+            previous,
+            recurrence,
+            w);
         if (reorthogonalize)
         {
             std::vector<double> removed(bands, 0.0);
             for (int pass = 0; pass < 2; ++pass)
             {
-                const std::vector<std::complex<double>> projections = this->algebra_.dots(ld, dim, bands, m, stride, q, w);
+                const std::vector<std::complex<double>> projections = this->algebra_.dots(
+                    ld,
+                    dim,
+                    bands,
+                    m,
+                    stride,
+                    q,
+                    w);
                 std::vector<T> correction(m * bands, T(0));
                 for (int i = 0; i < m; ++i)
                 {
-                    for (int b: active)
+                    for (int b : active)
                     {
                         const Wide value = projections[i * bands + b];
                         if (!std::isfinite(std::abs(value)))
@@ -262,18 +353,30 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
                         correction[i * bands + b] = T(-value);
                     }
                 }
-                combine(layout, m, q, correction, w);
+                combine(
+                    layout,
+                    m,
+                    q,
+                    correction,
+                    w);
             }
-            for (int b: active)
+            for (int b : active)
             {
                 // ||Q*C|| <= sum_i |C_i| for normalized columns. Accumulate
                 // a Frobenius bound on the discarded recurrence corrections.
                 correction_sq[b] += removed[b] * removed[b];
             }
         }
-        const std::vector<std::complex<double>> residuals = this->algebra_.dots(ld, dim, bands, 1, stride, w, w);
+        const std::vector<std::complex<double>> residuals = this->algebra_.dots(
+            ld,
+            dim,
+            bands,
+            1,
+            stride,
+            w,
+            w);
         std::vector<int> candidates;
-        for (int b: active)
+        for (int b : active)
         {
             if (!std::isfinite(residuals[b].real()) || residuals[b].real() < 0.0)
             {
@@ -310,7 +413,7 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
             const double roundoff = std::numeric_limits<Real>::epsilon();
             const double orth_tol = std::max(std::sqrt(roundoff), 0.1 * rel_tol);
             const double norm_tol = std::max(100.0 * m * std::numeric_limits<Real>::epsilon(), 0.1 * rel_tol);
-            for (int b: candidates)
+            for (int b : candidates)
             {
                 double defect = 0.0;
                 for (int row = 0; row < m; ++row)
@@ -340,9 +443,14 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
             {
                 full_coefficients.assign(m * bands, T(0));
             }
-            for (int b: candidates)
+            for (int b : candidates)
             {
-                if (!diagonalize(diagonal, beta, b, bands, m))
+                if (!diagonalize(
+                        diagonal,
+                        beta,
+                        b,
+                        bands,
+                        m))
                 {
                     return failed_band(result, b, false);
                 }
@@ -376,18 +484,42 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
                     }
                 }
             }
-            combine(layout, m, q, coefficients, output);
+            combine(
+                layout,
+                m,
+                q,
+                coefficients,
+                output);
             if (full)
             {
-                combine(layout, m, q, full_coefficients, full);
+                combine(
+                    layout,
+                    m,
+                    q,
+                    full_coefficients,
+                    full);
             }
-            const std::vector<std::complex<double>> output_norms = this->algebra_.dots(ld, dim, bands, 1, stride, output, output);
+            const std::vector<std::complex<double>> output_norms = this->algebra_.dots(
+                ld,
+                dim,
+                bands,
+                1,
+                stride,
+                output,
+                output);
             std::vector<Wide> full_norms;
             if (full)
             {
-                full_norms = this->algebra_.dots(ld, dim, bands, 1, stride, full, full);
+                full_norms = this->algebra_.dots(
+                    ld,
+                    dim,
+                    bands,
+                    1,
+                    stride,
+                    full,
+                    full);
             }
-            for (int b: candidates)
+            for (int b : candidates)
             {
                 const double norm_error = std::abs(std::sqrt(output_norms[b].real()) / scale[b] - 1.0);
                 double full_error = 0.0;
@@ -426,9 +558,20 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
         }
         if (m < limit)
         {
-            T* next = q + static_cast<int64_t>(m) * stride;
+            T *next = q + static_cast<int64_t>(m) * stride;
             base_device::memory::set_memory_op<T, Device>()(next, 0, stride);
-            this->work_.batch(ld, dim, bands, next, w, w, T(1), T(0), factors.data(), nullptr, nullptr);
+            this->work_.batch(
+                ld,
+                dim,
+                bands,
+                next,
+                w,
+                w,
+                T(1),
+                T(0),
+                factors.data(),
+                nullptr,
+                nullptr);
         }
     }
     result.state = ExpState::retry;
@@ -437,21 +580,40 @@ ExpResult ExpLanczos<T, Device>::attempt(const HSOperator<T, Device>& op,
 }
 
 template <typename T, typename Device>
-ExpResult ExpLanczos<T, Device>::interval(const HSOperator<T, Device>& op,
-                                          const OrbLayout& layout,
-                                          double alpha,
-                                          double rel_tol,
-                                          const T* input,
-                                          T* output,
-                                          T* full,
-                                          int depth)
+ExpResult ExpLanczos<T, Device>::interval(
+    const HSOperator<T, Device> &op,
+    const OrbLayout &layout,
+    double alpha,
+    double rel_tol,
+    const T *input,
+    T *output,
+    T *full,
+    int depth)
 {
     bool lost_orthogonality = false;
-    ExpResult trial = attempt(op, layout, alpha, rel_tol, input, output, full, false, &lost_orthogonality);
+    ExpResult trial = attempt(
+        op,
+        layout,
+        alpha,
+        rel_tol,
+        input,
+        output,
+        full,
+        false,
+        &lost_orthogonality);
     if (lost_orthogonality)
     {
         const ExpResult previous = trial;
-        trial = attempt(op, layout, alpha, rel_tol, input, output, full, true, &lost_orthogonality);
+        trial = attempt(
+            op,
+            layout,
+            alpha,
+            rel_tol,
+            input,
+            output,
+            full,
+            true,
+            &lost_orthogonality);
         add_work(trial, previous);
     }
     if (trial.state != ExpState::retry)
@@ -466,8 +628,8 @@ ExpResult ExpLanczos<T, Device>::interval(const HSOperator<T, Device>& op,
     ++trial.bisect_count;
     ct::Tensor midpoint;
     const int64_t size = static_cast<int64_t>(layout.ld) * layout.bands;
-    T* middle = output;
-    T* endpoint = full;
+    T *middle = output;
+    T *endpoint = full;
     double sub_alpha = alpha;
     if (!full)
     {
@@ -478,13 +640,29 @@ ExpResult ExpLanczos<T, Device>::interval(const HSOperator<T, Device>& op,
     }
     const double sub_tol = rel_tol / 2.0;
     const int next_depth = depth + 1;
-    ExpResult left = interval(op, layout, sub_alpha, sub_tol, input, middle, nullptr, next_depth);
+    ExpResult left = interval(
+        op,
+        layout,
+        sub_alpha,
+        sub_tol,
+        input,
+        middle,
+        nullptr,
+        next_depth);
     add_work(left, trial);
     if (left.state != ExpState::success)
     {
         return left;
     }
-    ExpResult right = interval(op, layout, sub_alpha, sub_tol, middle, endpoint, nullptr, next_depth);
+    ExpResult right = interval(
+        op,
+        layout,
+        sub_alpha,
+        sub_tol,
+        middle,
+        endpoint,
+        nullptr,
+        next_depth);
     add_work(right, left);
     if (right.state == ExpState::success)
     {
@@ -494,12 +672,13 @@ ExpResult ExpLanczos<T, Device>::interval(const HSOperator<T, Device>& op,
 }
 
 template <typename T, typename Device>
-ExpResult ExpLanczos<T, Device>::evaluate(const HSOperator<T, Device>& op,
-                                          const OrbLayout& layout,
-                                          double alpha,
-                                          const T* input,
-                                          T* output,
-                                          T* full)
+ExpResult ExpLanczos<T, Device>::evaluate(
+    const HSOperator<T, Device> &op,
+    const OrbLayout &layout,
+    double alpha,
+    const T *input,
+    T *output,
+    T *full)
 {
     ModuleBase::timer::start("ExpLanczos", "evaluate");
     ExpResult result;
@@ -508,12 +687,23 @@ ExpResult ExpLanczos<T, Device>::evaluate(const HSOperator<T, Device>& op,
     for (int first = 0; first < layout.bands; first += batch_limit)
     {
         const int bands = std::min(batch_limit, layout.bands - first);
-        const OrbLayout batch{layout.ld, layout.npw, layout.npol, bands};
+        const OrbLayout batch{layout.ld,
+            layout.npw,
+            layout.npol,
+            bands};
         const int64_t offset = static_cast<int64_t>(first) * layout.ld;
-        const T* src = input + offset;
-        T* dst = output + offset;
-        T* full_dst = full ? full + offset : nullptr;
-        const ExpResult local = interval(op, batch, alpha, this->exp_ctrl_.rel_tol, src, dst, full_dst, 0);
+        const T *src = input + offset;
+        T *dst = output + offset;
+        T *full_dst = full ? full + offset : nullptr;
+        const ExpResult local = interval(
+            op,
+            batch,
+            alpha,
+            this->exp_ctrl_.rel_tol,
+            src,
+            dst,
+            full_dst,
+            0);
         result.has_err_est = result.has_err_est && local.has_err_est;
         add_work(result, local);
         result.rel_err_est = std::max(result.rel_err_est, local.rel_err_est);
@@ -529,20 +719,38 @@ ExpResult ExpLanczos<T, Device>::evaluate(const HSOperator<T, Device>& op,
 }
 
 template <typename T, typename Device>
-ExpResult ExpLanczos<T, Device>::apply(const HSOperator<T, Device>& op, const OrbLayout& layout, double alpha, const T* input, T* output)
+ExpResult ExpLanczos<T, Device>::apply(
+    const HSOperator<T, Device> &op,
+    const OrbLayout &layout,
+    double alpha,
+    const T *input,
+    T *output)
 {
-    return evaluate(op, layout, alpha, input, output, nullptr);
+    return evaluate(
+        op,
+        layout,
+        alpha,
+        input,
+        output,
+        nullptr);
 }
 
 template <typename T, typename Device>
-ExpResult ExpLanczos<T, Device>::apply_pair(const HSOperator<T, Device>& op,
-                                            const OrbLayout& layout,
-                                            double alpha,
-                                            const T* input,
-                                            T* half,
-                                            T* full)
+ExpResult ExpLanczos<T, Device>::apply_pair(
+    const HSOperator<T, Device> &op,
+    const OrbLayout &layout,
+    double alpha,
+    const T *input,
+    T *half,
+    T *full)
 {
-    return evaluate(op, layout, alpha, input, half, full);
+    return evaluate(
+        op,
+        layout,
+        alpha,
+        input,
+        half,
+        full);
 }
 
 template class ExpLanczos<std::complex<float>, base_device::DEVICE_CPU>;

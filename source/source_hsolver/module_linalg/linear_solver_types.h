@@ -47,7 +47,7 @@ struct LinearControls
     bool reconstruct = false;
 };
 
-const char* linear_status_name(const LinearSolveStatus status);
+const char *linear_status_name(const LinearSolveStatus status);
 
 } // namespace hsolver
 #endif

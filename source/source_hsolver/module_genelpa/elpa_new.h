@@ -1,10 +1,7 @@
 #ifndef ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_NEW_H
 #define ABACUS_SOURCE_HSOLVER_MODULE_GENELPA_ELPA_NEW_H
 
-
 #include <elpa/elpa_version.h>
-
-
 
 #if ELPA_API_VERSION >= 20221101
 #include <elpa/elpa.h>

@@ -7,12 +7,13 @@
 namespace hsolver
 {
 template <typename T, typename Device>
-LinearBiCGSTAB<T, Device>::LinearBiCGSTAB(const double tolerance, const diag_comm_info& comm) : tolerance_(tolerance), work_(comm, 9)
+LinearBiCGSTAB<T, Device>::LinearBiCGSTAB(const double tolerance, const diag_comm_info &comm)
+    : tolerance_(tolerance), work_(comm, 9)
 {
 }
 
 template <typename T, typename Device>
-bool LinearBiCGSTAB<T, Device>::breakdown(const T divisor, const int band, LinearSolveResult* result) const
+bool LinearBiCGSTAB<T, Device>::breakdown(const T divisor, const int band, LinearSolveResult *result) const
 {
     if (!linear_bad_divisor(divisor))
     {
@@ -23,8 +24,7 @@ bool LinearBiCGSTAB<T, Device>::breakdown(const T divisor, const int band, Linea
     return true;
 }
 
-template <typename T, typename Device>
-void LinearBiCGSTAB<T, Device>::retire(const int band)
+template <typename T, typename Device> void LinearBiCGSTAB<T, Device>::retire(const int band)
 {
     const int last = active_ - 1;
     if (band != last)
@@ -44,14 +44,29 @@ void LinearBiCGSTAB<T, Device>::retire(const int band)
 template <typename T, typename Device>
 void LinearBiCGSTAB<T, Device>::retire_converged(const bool alpha_step, const bool identity)
 {
-    const T* residual = work_.data(alpha_step ? intermediate_slot : residual_slot);
+    const T *residual = work_.data(alpha_step ? intermediate_slot : residual_slot);
     if (alpha_step)
     {
-        work_.dot(ld_, dim_, active_, residual, residual, norm_.data());
+        work_.dot(
+            ld_,
+            dim_,
+            active_,
+            residual,
+            residual,
+            norm_.data());
     }
     else
     {
-        work_.dot_pair(ld_, dim_, active_, residual, residual, work_.data(shadow_slot), residual, norm_.data(), rho_.data());
+        work_.dot_pair(
+            ld_,
+            dim_,
+            active_,
+            residual,
+            residual,
+            work_.data(shadow_slot),
+            residual,
+            norm_.data(),
+            rho_.data());
     }
     swaps_.clear();
     skip_.assign(active_, 1);
@@ -72,17 +87,18 @@ void LinearBiCGSTAB<T, Device>::retire_converged(const bool alpha_step, const bo
     if (alpha_step)
     {
         const int update_slot = identity ? direction_slot : precond_direction_slot;
-        work_.batch(ld_,
-                    dim_,
-                    active_,
-                    work_.data(solution_slot),
-                    work_.data(solution_slot),
-                    work_.data(update_slot),
-                    T(1),
-                    T(1),
-                    nullptr,
-                    alpha_.data(),
-                    skip_.data());
+        work_.batch(
+            ld_,
+            dim_,
+            active_,
+            work_.data(solution_slot),
+            work_.data(solution_slot),
+            work_.data(update_slot),
+            T(1),
+            T(1),
+            nullptr,
+            alpha_.data(),
+            skip_.data());
     }
     for (int band = active_ - 1; band >= 0; --band)
     {
@@ -96,36 +112,60 @@ void LinearBiCGSTAB<T, Device>::retire_converged(const bool alpha_step, const bo
 }
 
 template <typename T, typename Device>
-bool LinearBiCGSTAB<T, Device>::iterate(const LinearOperator<T, Device>& op,
-                                        const LinearOperator<T, Device>& preconditioner,
-                                        LinearSolveResult* result)
+bool LinearBiCGSTAB<T, Device>::iterate(
+    const LinearOperator<T, Device> &op, const LinearOperator<T, Device> &preconditioner, LinearSolveResult *result)
 {
-    T* r = work_.data(residual_slot);
+    T *r = work_.data(residual_slot);
     const bool identity = preconditioner.is_identity();
-    T* shadow = work_.data(shadow_slot);
-    T* p = work_.data(direction_slot);
-    T* v = work_.data(image_slot);
-    T* s = work_.data(intermediate_slot);
-    T* y = work_.data(identity ? direction_slot : precond_direction_slot);
-    T* z = work_.data(identity ? intermediate_slot : precond_intermediate_slot);
-    T* t = work_.data(intermediate_image_slot);
-    T* solution = work_.data(solution_slot);
+    T *shadow = work_.data(shadow_slot);
+    T *p = work_.data(direction_slot);
+    T *v = work_.data(image_slot);
+    T *s = work_.data(intermediate_slot);
+    T *y = work_.data(identity ? direction_slot : precond_direction_slot);
+    T *z = work_.data(identity ? intermediate_slot : precond_intermediate_slot);
+    T *t = work_.data(intermediate_image_slot);
+    T *solution = work_.data(solution_slot);
 
     for (int band = 0; band < active_; ++band)
     {
-        if (breakdown(rho_[band], band, result) || breakdown(rho_prev_[band], band, result) || breakdown(omega_[band], band, result))
+        if (breakdown(rho_[band], band, result) || breakdown(rho_prev_[band], band, result) ||
+            breakdown(omega_[band], band, result))
         {
             return false;
         }
         beta_[band] = (rho_[band] / rho_prev_[band]) * (alpha_[band] / omega_[band]);
     }
-    work_.bicg_update(ld_, dim_, active_, true, p, r, v, beta_.data(), omega_.data());
+    work_.bicg_update(
+        ld_,
+        dim_,
+        active_,
+        true,
+        p,
+        r,
+        v,
+        beta_.data(),
+        omega_.data());
     if (!identity)
     {
-        preconditioner.apply(p, y, ld_, active_);
+        preconditioner.apply(
+            p,
+            y,
+            ld_,
+            active_);
     }
-    work_.apply(op, y, v, ld_, active_);
-    work_.dot(ld_, dim_, active_, shadow, v, denominator_.data());
+    work_.apply(
+        op,
+        y,
+        v,
+        ld_,
+        active_);
+    work_.dot(
+        ld_,
+        dim_,
+        active_,
+        shadow,
+        v,
+        denominator_.data());
     for (int band = 0; band < active_; ++band)
     {
         if (breakdown(denominator_[band], band, result))
@@ -134,7 +174,18 @@ bool LinearBiCGSTAB<T, Device>::iterate(const LinearOperator<T, Device>& op,
         }
         alpha_[band] = rho_[band] / denominator_[band];
     }
-    work_.batch(ld_, dim_, active_, s, r, v, T(1), T(-1), nullptr, alpha_.data(), nullptr);
+    work_.batch(
+        ld_,
+        dim_,
+        active_,
+        s,
+        r,
+        v,
+        T(1),
+        T(-1),
+        nullptr,
+        alpha_.data(),
+        nullptr);
     // Retire exact alpha steps before evaluating omega = <t,s>/<t,t>.
     retire_converged(true, identity);
     if (active_ == 0)
@@ -143,10 +194,28 @@ bool LinearBiCGSTAB<T, Device>::iterate(const LinearOperator<T, Device>& op,
     }
     if (!identity)
     {
-        preconditioner.apply(s, z, ld_, active_);
+        preconditioner.apply(
+            s,
+            z,
+            ld_,
+            active_);
     }
-    work_.apply(op, z, t, ld_, active_);
-    work_.dot_pair(ld_, dim_, active_, t, s, t, t, denominator_.data(), tt_.data());
+    work_.apply(
+        op,
+        z,
+        t,
+        ld_,
+        active_);
+    work_.dot_pair(
+        ld_,
+        dim_,
+        active_,
+        t,
+        s,
+        t,
+        t,
+        denominator_.data(),
+        tt_.data());
     for (int band = 0; band < active_; ++band)
     {
         if (breakdown(tt_[band], band, result))
@@ -161,25 +230,53 @@ bool LinearBiCGSTAB<T, Device>::iterate(const LinearOperator<T, Device>& op,
 
         rho_prev_[band] = rho_[band];
     }
-    work_.bicg_update(ld_, dim_, active_, false, solution, y, z, alpha_.data(), omega_.data());
-    work_.batch(ld_, dim_, active_, r, s, t, T(1), T(-1), nullptr, omega_.data(), nullptr);
+    work_.bicg_update(
+        ld_,
+        dim_,
+        active_,
+        false,
+        solution,
+        y,
+        z,
+        alpha_.data(),
+        omega_.data());
+    work_.batch(
+        ld_,
+        dim_,
+        active_,
+        r,
+        s,
+        t,
+        T(1),
+        T(-1),
+        nullptr,
+        omega_.data(),
+        nullptr);
     retire_converged(false, identity);
     return true;
 }
 
 template <typename T, typename Device>
-LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Device>& op,
-                                                   const LinearOperator<T, Device>& preconditioner,
-                                                   int ld,
-                                                   int nband,
-                                                   int dim,
-                                                   T* x,
-                                                   const T* b,
-                                                   const T* initial_residual,
-                                                   const int max_iterations)
+LinearSolveResult LinearBiCGSTAB<T, Device>::solve(
+    const LinearOperator<T, Device> &op,
+    const LinearOperator<T, Device> &preconditioner,
+    int ld,
+    int nband,
+    int dim,
+    T *x,
+    const T *b,
+    const T *initial_residual,
+    const int max_iterations)
 {
     const LinearSolveTimer timer("LinearBiCGSTAB");
-    work_.prepare(ld, dim, nband, x, b, tolerance_, max_iterations);
+    work_.prepare(
+        ld,
+        dim,
+        nband,
+        x,
+        b,
+        tolerance_,
+        max_iterations);
     work_.reset_statistics();
     ld_ = ld;
     dim_ = dim;
@@ -195,7 +292,13 @@ LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Devic
     threshold_.resize(nband);
     original_.resize(nband);
     std::iota(original_.begin(), original_.end(), 0);
-    work_.dot(ld, dim, nband, b, b, norm_.data());
+    work_.dot(
+        ld,
+        dim,
+        nband,
+        b,
+        b,
+        norm_.data());
     for (int band = 0; band < nband; ++band)
     {
         threshold_[band] = tolerance_ * std::max(1.0, linear_norm(norm_[band]));
@@ -213,16 +316,38 @@ LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Devic
         rho_prev_.assign(nband, T(1));
         alpha_.assign(nband, T(1));
         omega_.assign(nband, T(1));
-        work_.copy(ld, dim, nband, x, work_.data(solution_slot));
+        work_.copy(
+            ld,
+            dim,
+            nband,
+            x,
+            work_.data(solution_slot));
         if (initial_residual && result.restarts == 0)
         {
-            work_.copy(ld, dim, nband, initial_residual, work_.data(residual_slot));
+            work_.copy(
+                ld,
+                dim,
+                nband,
+                initial_residual,
+                work_.data(residual_slot));
         }
         else
         {
-            work_.residual(op, ld, dim, nband, work_.data(solution_slot), b, work_.data(residual_slot));
+            work_.residual(
+                op,
+                ld,
+                dim,
+                nband,
+                work_.data(solution_slot),
+                b,
+                work_.data(residual_slot));
         }
-        work_.copy(ld, dim, nband, work_.data(residual_slot), work_.data(shadow_slot));
+        work_.copy(
+            ld,
+            dim,
+            nband,
+            work_.data(residual_slot),
+            work_.data(shadow_slot));
         retire_converged(false, preconditioner.is_identity());
         result.status = LinearSolveStatus::max_iterations;
         const int cycle_start = result.iterations;
@@ -237,18 +362,33 @@ LinearSolveResult LinearBiCGSTAB<T, Device>::solve(const LinearOperator<T, Devic
                 }
             }
         }
-        catch (const LinearPreconditionerError&)
+        catch (const LinearPreconditionerError &)
         {
             result.status = LinearSolveStatus::preconditioner_failure;
         }
-        work_.restore(ld, dim, nband, original_, work_.data(solution_slot), x);
+        work_.restore(
+            ld,
+            dim,
+            nband,
+            original_,
+            work_.data(solution_slot),
+            x);
         if (active_ == 0)
         {
             result.status = LinearSolveStatus::residual_mismatch;
         }
-        work_.verify(op, ld, dim, nband, x, b, original_threshold, work_.data(residual_slot), &result);
-        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iterations || result.iterations == cycle_start
-            || !std::isfinite(result.max_residual))
+        work_.verify(
+            op,
+            ld,
+            dim,
+            nband,
+            x,
+            b,
+            original_threshold,
+            work_.data(residual_slot),
+            &result);
+        if (result.status != LinearSolveStatus::residual_mismatch || result.iterations >= max_iterations ||
+            result.iterations == cycle_start || !std::isfinite(result.max_residual))
         {
             return result;
         }
