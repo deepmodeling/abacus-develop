@@ -27,8 +27,7 @@
 
 /// Minimal H(k)/S(k) supplier. The LCAO eigensolvers take the matrix blocks
 /// directly, so this test no longer needs a hamilt::Hamilt subclass.
-template <typename T>
-class HamiltTEST
+template <typename T> class HamiltTEST
 {
   public:
     int desc[9];
@@ -36,24 +35,26 @@ class HamiltTEST
     std::vector<T> h_local;
     std::vector<T> s_local;
 
-    void matrix(ModuleBase::MatrixBlock<T>& hk_in, ModuleBase::MatrixBlock<T>& sk_in)
+    void matrix(ModuleBase::MatrixBlock<T> &hk_in, ModuleBase::MatrixBlock<T> &sk_in)
     {
-        hk_in = ModuleBase::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-        sk_in = ModuleBase::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
+        hk_in = ModuleBase::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol,
+            this->desc};
+        sk_in = ModuleBase::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol,
+            this->desc};
     }
 };
 
-template <class T>
-class PexsiPrepare
+template <class T> class PexsiPrepare
 {
   public:
-    PexsiPrepare(int nlocal,
-                 int nbands,
-                 int nb2d,
-                 int sparsity,
-                 std::string hfname,
-                 std::string sfname,
-                 std::string dmname)
+    PexsiPrepare(
+        int nlocal,
+        int nbands,
+        int nb2d,
+        int sparsity,
+        std::string hfname,
+        std::string sfname,
+        std::string dmname)
         : nlocal(nlocal), nbands(nbands), nb2d(nb2d), sparsity(sparsity), hfname(hfname), sfname(sfname), dmname(dmname)
     {
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
@@ -81,8 +82,8 @@ class PexsiPrepare
     double nelec = 0.0;
 
     // density matrix
-    std::vector<T*> dm_local;
-    std::vector<T*> edm_local;
+    std::vector<T *> dm_local;
+    std::vector<T *> edm_local;
 
     std::vector<T> dm;
 
@@ -104,12 +105,29 @@ class PexsiPrepare
             }
             nlocal = hdim;
         }
-        MPI_Bcast(&nlocal, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&readhfile, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&readsfile, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+        MPI_Bcast(
+            &nlocal,
+            1,
+            MPI_INT,
+            0,
+            MPI_COMM_WORLD);
+        MPI_Bcast(
+            &readhfile,
+            1,
+            MPI_C_BOOL,
+            0,
+            MPI_COMM_WORLD);
+        MPI_Bcast(
+            &readsfile,
+            1,
+            MPI_C_BOOL,
+            0,
+            MPI_COMM_WORLD);
         nbands = nlocal / 2;
         if (readhfile && readsfile)
+        {
             return true;
+        }
         return false;
     }
 
@@ -121,19 +139,36 @@ class PexsiPrepare
 
     void pb2d()
     {
-        LCAO_DIAGO_TEST::process_2d(nprows, npcols, myprow, mypcol, icontxt);
+        LCAO_DIAGO_TEST::process_2d(
+            nprows,
+            npcols,
+            myprow,
+            mypcol,
+            icontxt);
 
-        hmtest.nrow = LCAO_DIAGO_TEST::na_rc(nlocal,
-                                             nb2d,
-                                             nprows,
-                                             myprow); // the number of row of the new_matrix in each process
-        hmtest.ncol = LCAO_DIAGO_TEST::na_rc(nlocal,
-                                             nb2d,
-                                             npcols,
-                                             mypcol); // the number of column of the new_matrix in each process
+        hmtest.nrow = LCAO_DIAGO_TEST::na_rc(
+            nlocal,
+            nb2d,
+            nprows,
+            myprow); // the number of row of the new_matrix in each process
+        hmtest.ncol = LCAO_DIAGO_TEST::na_rc(
+            nlocal,
+            nb2d,
+            npcols,
+            mypcol); // the number of column of the new_matrix in each process
 
         int ISRC = 0, info;
-        ScalapackConnector::descinit(hmtest.desc, nlocal, nlocal, nb2d, nb2d, ISRC, ISRC, icontxt, hmtest.nrow, info);
+        ScalapackConnector::descinit(
+            hmtest.desc,
+            nlocal,
+            nlocal,
+            nb2d,
+            nb2d,
+            ISRC,
+            ISRC,
+            icontxt,
+            hmtest.nrow,
+            info);
         if (info != 0)
         {
             printf("Invalid blacs-distribution. Abort!\n");
@@ -153,7 +188,12 @@ class PexsiPrepare
             std::cout << "nrow: " << hmtest.nrow << ", ncol: " << hmtest.ncol << ", nb: " << nb2d << std::endl;
         }
 
-        dh.reset(new hsolver::DiagoPexsi<T>(&po, 1, nlocal, nelec, dsize));
+        dh.reset(new hsolver::DiagoPexsi<T>(
+            &po,
+            1,
+            nlocal,
+            nelec,
+            dsize));
     }
 
     void distribute_data()
@@ -163,20 +203,22 @@ class PexsiPrepare
         this->h_local.resize(local_size);
         this->s_local.resize(local_size);
 
-        LCAO_DIAGO_TEST::distribute_data<T>(this->h.data(),
-                                            this->h_local.data(),
-                                            nlocal,
-                                            nb2d,
-                                            hmtest.nrow,
-                                            hmtest.ncol,
-                                            icontxt);
-        LCAO_DIAGO_TEST::distribute_data<T>(this->s.data(),
-                                            this->s_local.data(),
-                                            nlocal,
-                                            nb2d,
-                                            hmtest.nrow,
-                                            hmtest.ncol,
-                                            icontxt);
+        LCAO_DIAGO_TEST::distribute_data<T>(
+            this->h.data(),
+            this->h_local.data(),
+            nlocal,
+            nb2d,
+            hmtest.nrow,
+            hmtest.ncol,
+            icontxt);
+        LCAO_DIAGO_TEST::distribute_data<T>(
+            this->s.data(),
+            this->s_local.data(),
+            nlocal,
+            nb2d,
+            hmtest.nrow,
+            hmtest.ncol,
+            icontxt);
     }
 
     void set_env()
@@ -252,7 +294,11 @@ class PexsiPrepare
             hmtest.s_local = this->s_local;
             ModuleBase::MatrixBlock<T> h_mat, s_mat;
             hmtest.matrix(h_mat, s_mat);
-            dh->diag(h_mat, s_mat, psi, nullptr);
+            dh->diag(
+                h_mat,
+                s_mat,
+                psi,
+                nullptr);
 
             // copy the density matrix to dm_local
             dm_local = dh->DM;
@@ -307,7 +353,7 @@ class PexsiPrepare
         return true;
     }
 
-    bool compare_ref(std::stringstream& out_info)
+    bool compare_ref(std::stringstream &out_info)
     {
         double maxerror = 0.0;
         bool pass = true;
@@ -346,8 +392,20 @@ class PexsiPrepare
 
         bool pass_all = true;
         double maxerror_all = 0.0;
-        MPI_Allreduce(&pass, &pass_all, 1, MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
-        MPI_Allreduce(&maxerror, &maxerror_all, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(
+            &pass,
+            &pass_all,
+            1,
+            MPI_C_BOOL,
+            MPI_LAND,
+            MPI_COMM_WORLD);
+        MPI_Allreduce(
+            &maxerror,
+            &maxerror_all,
+            1,
+            MPI_DOUBLE,
+            MPI_MAX,
+            MPI_COMM_WORLD);
         if (myrank == 0)
         {
             std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
@@ -370,9 +428,9 @@ class PexsiPrepare
 struct PexsiTestCase
 {
     int nb2d;
-    const char* hfname;
-    const char* sfname;
-    const char* dmname;
+    const char *hfname;
+    const char *sfname;
+    const char *dmname;
 };
 
 class PexsiGammaOnlyTest : public ::testing::TestWithParam<PexsiTestCase>
@@ -381,9 +439,15 @@ class PexsiGammaOnlyTest : public ::testing::TestWithParam<PexsiTestCase>
 
 TEST_P(PexsiGammaOnlyTest, LCAO)
 {
-    const auto& test_case = GetParam();
+    const auto &test_case = GetParam();
     PexsiPrepare<double> dp(
-        0, 0, test_case.nb2d, 0, test_case.hfname, test_case.sfname, test_case.dmname);
+        0,
+        0,
+        test_case.nb2d,
+        0,
+        test_case.hfname,
+        test_case.sfname,
+        test_case.dmname);
 
     std::stringstream out_info;
     if (DETAILINFO && dp.myrank == 0)
@@ -414,19 +478,18 @@ TEST_P(PexsiGammaOnlyTest, LCAO)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    DiagoTest,
-    PexsiGammaOnlyTest,
+    DiagoTest, PexsiGammaOnlyTest,
     ::testing::Values(
         PexsiTestCase{2,
-                      "PEXSI-H-GammaOnly-Si2.dat",
-                      "PEXSI-S-GammaOnly-Si2.dat",
-                      "PEXSI-DM-GammaOnly-Si2.dat"},
+            "PEXSI-H-GammaOnly-Si2.dat",
+            "PEXSI-S-GammaOnly-Si2.dat",
+            "PEXSI-DM-GammaOnly-Si2.dat"},
         PexsiTestCase{1,
-                      "PEXSI-H-GammaOnly-Si2.dat",
-                      "PEXSI-S-GammaOnly-Si2.dat",
-                      "PEXSI-DM-GammaOnly-Si2.dat"}));
+            "PEXSI-H-GammaOnly-Si2.dat",
+            "PEXSI-S-GammaOnly-Si2.dat",
+            "PEXSI-DM-GammaOnly-Si2.dat"}));
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
 
@@ -434,7 +497,7 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
     testing::InitGoogleTest(&argc, argv);
-    ::testing::TestEventListeners& listeners = ::testing::UnitTest::GetInstance()->listeners();
+    ::testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (myrank != 0)
     {
         delete listeners.Release(listeners.default_result_printer());

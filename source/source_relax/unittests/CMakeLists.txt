@@ -313,3 +313,36 @@ addtest(
   mock_remake_cell.cpp
   ../../source_cell/bcast_cell.cpp
   ../../source_cell/print_cell.cpp)
+
+addtest(
+  TARGET
+  MODULE_RELAX_relax_driver_test
+  KEEP_FEATURE_DEFINITIONS
+  __MPI
+  SOURCES
+  test_relax_driver.cpp
+  ../../source_base/test/mpi_test_main.cpp
+  ../relax_driver.cpp
+  ../relax_nsync.cpp
+  ../relax_sync.cpp
+  ../relax_data.cpp
+  ../line_search.cpp
+  ../ions_move_methods.cpp
+  ../ions_move_bfgs.cpp
+  ../ions_move_bfgs2.cpp
+  ../ions_move_cg.cpp
+  ../ions_move_sd.cpp
+  ../ions_move_lbfgs.cpp
+  ../ions_move_basic.cpp
+  ../bfgs_basic.cpp
+  ../cg_base.cpp
+  ../matrix_methods.cpp
+  ../lat_change_method.cpp
+  ../lattice_change_basic.cpp
+  ../lattice_change_cg.cpp
+  ${socket_json_sources}
+  LIBS
+  MPI::MPI_CXX
+  parameter
+  base
+  device)
