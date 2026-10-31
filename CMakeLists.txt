@@ -49,6 +49,8 @@ option(USE_SW "Enable SW Architecture" OFF)
 
 option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
+cmake_dependent_option(ENABLE_LIBVDWXC "Enable using the libvdwxc package" OFF
+                       "ENABLE_LIBXC" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
@@ -284,6 +286,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(ENABLE_DFTD4 OR ENABLE_PEXSI)
   enable_language(C)
   enable_language(Fortran)
+endif()
+# The libvdwxc package configuration looks up MPI for C when libvdwxc was built with MPI.
+if(ENABLE_LIBVDWXC)
+  enable_language(C)
 endif()
 
 macro(set_if_higher VARIABLE VALUE)
@@ -640,6 +646,24 @@ if(ENABLE_LIBXC)
   if(Libxc_VERSION VERSION_LESS "5.1.7")
     message(
       FATAL_ERROR "Libxc >= 5.1.7 is required; found version ${Libxc_VERSION}")
+  endif()
+endif()
+
+if(ENABLE_LIBVDWXC)
+  find_package(libvdwxc CONFIG REQUIRED)
+  # An MPI build calls vdwxc_init_mpi, which only an MPI-enabled libvdwxc provides.
+  if(ENABLE_MPI AND NOT VDWXC_ENABLE_MPI)
+    message(
+      FATAL_ERROR
+        "ENABLE_LIBVDWXC with ENABLE_MPI requires libvdwxc configured with -DVDWXC_ENABLE_MPI=ON"
+    )
+  endif()
+  # vdwxc_init_mpi creates FFTW-MPI plans, which the FFTW interface of MKL or KML cannot execute.
+  if(ENABLE_MPI AND (MKL_FOUND OR USE_KML))
+    message(
+      FATAL_ERROR
+        "ENABLE_LIBVDWXC with ENABLE_MPI requires ABACUS built with FFTW3, not with the FFTW interface of MKL or KML"
+    )
   endif()
 endif()
 

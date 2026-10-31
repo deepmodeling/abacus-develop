@@ -39,6 +39,10 @@ struct XCFunctionalParameters
     std::vector<std::string> exx_erfc_alpha = {"default"};
     std::vector<double> xc_exch_ext;
     std::vector<double> xc_corr_ext;
+    /// rVV10 nonlocal correlation (vdw_method rvv10) added to any functional, and its parameters b and C
+    bool rvv10 = false;
+    double rvv10_b = 0.0;
+    double rvv10_c = 0.0;
 };
 
 class XC_Functional

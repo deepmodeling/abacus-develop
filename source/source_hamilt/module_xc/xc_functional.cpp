@@ -59,6 +59,9 @@ void XC_Functional::ScopedType::restore() noexcept
     XC_Functional::runtime_parameters.exx_erfc_alpha.swap(runtime_parameters_.exx_erfc_alpha);
     XC_Functional::runtime_parameters.xc_exch_ext.swap(runtime_parameters_.xc_exch_ext);
     XC_Functional::runtime_parameters.xc_corr_ext.swap(runtime_parameters_.xc_corr_ext);
+    XC_Functional::runtime_parameters.rvv10 = runtime_parameters_.rvv10;
+    XC_Functional::runtime_parameters.rvv10_b = runtime_parameters_.rvv10_b;
+    XC_Functional::runtime_parameters.rvv10_c = runtime_parameters_.rvv10_c;
     XC_Functional::scaling_factor_xc.swap(scaling_factor_xc_);
 }
 

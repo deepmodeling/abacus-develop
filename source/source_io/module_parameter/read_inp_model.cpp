@@ -264,8 +264,12 @@ void ReadInput::item_model()
     // vdW Correction
     {
         Input_Item item("vdw_method");
-        item.domain.set_choices({"none", "d2", "d3_0", "d3_bj", "d4"});
-        item.annotation = "the method of calculating vdw (none ; d2 ; d3_0 ; d3_bj ; d4)";
+        item.domain.set_choices({"none", "d2", "d3_0", "d3_bj", "d4", "rvv10"});
+        // The rVV10 response kernel needed by DFPT and LR-TDDFT forces is not implemented.
+        item.domain.add_requirement(
+            "vdw_method==rvv10",
+            "esolver_type!=dfpt and (cal_force==false or (esolver_type!=lr and esolver_type!=ks-lr))");
+        item.annotation = "the method of calculating vdw (none ; d2 ; d3_0 ; d3_bj ; d4 ; rvv10)";
         item.category = "vdW correction";
         item.type = "String";
         item.description = R"(Specifies the method used for Van der Waals (VdW) correction. Available options are:
@@ -273,9 +277,12 @@ void ReadInput::item_model()
 * d3_0: Grimme's DFT-D3(0) dispersion correction method (zero-damping)
 * d3_bj: Grimme's DFTD3(BJ) dispersion correction method (BJ-damping)
 * d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
+* rvv10: rVV10 nonlocal correlation evaluated self-consistently with the external libvdwxc library and added to the exchange-correlation energy, potential, forces and stress of dft_functional; see vdw_rvv10_b and vdw_rvv10_c
 * none: no vdW correction
 
-[NOTE] ABACUS automatically loads DFT-D3 parameters for supported functionals according to dft_functional setting. Individual user values overwrite the corresponding tabulated values. Setting all four of vdw_s6, vdw_s8, vdw_a1 and vdw_a2 defines a fully custom set and bypasses functional lookup.)";
+[NOTE] ABACUS automatically loads DFT-D3 parameters for supported functionals according to dft_functional setting. Individual user values overwrite the corresponding tabulated values. Setting all four of vdw_s6, vdw_s8, vdw_a1 and vdw_a2 defines a fully custom set and bypasses functional lookup.
+
+[NOTE] vdw_method rvv10 does not support DFPT or LR-TDDFT forces. LR-TDDFT spectra use the kernel selected by xc_kernel, without the rVV10 response.)";
         item.default_value = "none";
         item.unit = "";
         read_sync_string(input.vdw_method);
@@ -308,6 +315,34 @@ Available options are:
         item.unit = "";
         item.set_availability("vdw_method==d4");
         read_sync_string(input.vdw_d4_model);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("vdw_rvv10_b");
+        item.domain.set_rule("value>0");
+        item.annotation = "rVV10 parameter b";
+        item.category = "vdW correction";
+        item.type = "Real";
+        item.description
+            = R"(Parameter b of rVV10, which sets the short-range damping and depends on dft_functional. Published values are 6.3 for rPW86 exchange with PBE correlation (dft_functional GGA_X_RPW86+GGA_C_PBE, the original rVV10), 15.7 for SCAN and 11.95 for r2SCAN.)";
+        item.default_value = "6.3";
+        item.unit = "";
+        item.set_availability("vdw_method==rvv10");
+        read_sync_double(input.vdw_rvv10_b);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("vdw_rvv10_c");
+        item.domain.set_rule("value>=0");
+        item.annotation = "rVV10 parameter C";
+        item.category = "vdW correction";
+        item.type = "Real";
+        item.description = "Parameter C of rVV10, which sets the gradient dependence of the local polarizability; "
+                           "0.0093 in the original rVV10 and in the SCAN and r2SCAN parametrizations.";
+        item.default_value = "0.0093";
+        item.unit = "";
+        item.set_availability("vdw_method==rvv10");
+        read_sync_double(input.vdw_rvv10_c);
         this->add_item(item);
     }
     {
@@ -548,7 +583,8 @@ Namely, each line contains the element name and the corresponding parameter.)";
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (std::stod(para.input.vdw_cutoff_radius) <= 0 && para.input.vdw_method != "none")
+            if (std::stod(para.input.vdw_cutoff_radius) <= 0 && para.input.vdw_method != "none"
+                && para.input.vdw_method != "rvv10")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_radius <= 0 is not allowd");
             }

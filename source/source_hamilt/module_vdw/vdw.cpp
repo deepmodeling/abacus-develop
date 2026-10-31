@@ -94,6 +94,21 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, st
                                  "Rebuild ABACUS with -DENABLE_DFTD4=ON.");
 #endif
     }
+    else if (input.vdw_method == "rvv10")
+    {
+#ifndef __LIBVDWXC
+        ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw",
+                                 "rVV10 support was not enabled at build time. "
+                                 "Rebuild ABACUS with -DENABLE_LIBXC=ON -DENABLE_LIBVDWXC=ON.");
+#endif
+        // rVV10 is evaluated inside XC_Functional, so there is no pairwise term here
+        if (plog != nullptr)
+        {
+            *plog << "\nrVV10 nonlocal correlation (libvdwxc): b=" << input.vdw_rvv10_b << " C=" << input.vdw_rvv10_c
+                  << "\nincluded in the exchange-correlation energy, potential, forces and stress" << std::endl;
+        }
+        return nullptr;
+    }
     else if (input.vdw_method != "none")
     {
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw",

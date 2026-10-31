@@ -9,6 +9,9 @@
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
 #endif
+#ifdef __LIBVDWXC
+#include "source_hamilt/module_vdw/nonlocal_xc.h"
+#endif
 
 #include <xc.h>
 
@@ -449,6 +452,10 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
 
     etxc *= omega / chr->rhopw->nxyz;
     vtxc *= omega / chr->rhopw->nxyz;
+#ifdef __LIBVDWXC
+    const XCFunctionalParameters& xc_parameters = XC_Functional::get_runtime_parameters();
+    vdw::add_rvv10(xc_parameters, *chr, etxc, vtxc, v);
+#endif
 
     XC_Functional_Libxc::finish_func(funcs);
 
@@ -768,6 +775,10 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 
     etxc *= omega / chr->rhopw->nxyz;
     vtxc *= omega / chr->rhopw->nxyz;
+#ifdef __LIBVDWXC
+    const XCFunctionalParameters& xc_parameters = XC_Functional::get_runtime_parameters();
+    vdw::add_rvv10(xc_parameters, *chr, etxc, vtxc, v);
+#endif
 
     XC_Functional_Libxc::finish_func(funcs);
 

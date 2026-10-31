@@ -55,3 +55,13 @@ The following references are required to be cited when using ABACUS. Specificall
     Eike Caldeweyher, Jan-Michael Mewes, Sebastian Ehlert, and Stefan Grimme. "Extension and evaluation of the D4 London-dispersion model for periodic systems." Physical Chemistry Chemical Physics 22, 8499-8512 (2020). DOI: 10.1039/D0CP00502A.
 
     Nikolay V. Tkachenko, Linus B. Dittmer, Rebecca Tomann, and Martin Head-Gordon. "Smooth D4S model." The Journal of Physical Chemistry Letters 15, 10629-10637 (2024). DOI: 10.1021/acs.jpclett.4c02653.
+
+- **If the rVV10 nonlocal correlation (`vdw_method rvv10`) is used:**
+
+    O. A. Vydrov and T. Van Voorhis. "Nonlocal van der Waals density functional: The simpler the better." The Journal of Chemical Physics 133, 244103 (2010). DOI: 10.1063/1.3521275.
+
+    R. Sabatini, T. Gorni, and S. de Gironcoli. "Nonlocal van der Waals density functional made simple and efficient." Physical Review B 87, 041108(R) (2013). DOI: 10.1103/PhysRevB.87.041108.
+
+    A. H. Larsen, M. Kuisma, J. Löfgren, Y. Pouillon, P. Erhart, and P. Hyldgaard. "libvdwxc: a library for exchange-correlation functionals in the vdW-DF family." Modelling and Simulation in Materials Science and Engineering 25, 065004 (2017). DOI: 10.1088/1361-651X/aa7320.
+
+    For SCAN+rVV10 and r2SCAN+rVV10, also cite the parametrization: H. Peng, Z.-H. Yang, J. P. Perdew, and J. Sun. "Versatile van der Waals density functional based on a meta-generalized gradient approximation." Physical Review X 6, 041005 (2016). DOI: 10.1103/PhysRevX.6.041005; J. Ning, M. Kothakonda, J. W. Furness, A. D. Kaplan, S. Ehlert, J. G. Brandenburg, J. P. Perdew, and J. Sun. "Workhorse minimally empirical dispersion-corrected density functional with tests for weakly bound systems: r2SCAN+rVV10." Physical Review B 106, 075422 (2022). DOI: 10.1103/PhysRevB.106.075422.

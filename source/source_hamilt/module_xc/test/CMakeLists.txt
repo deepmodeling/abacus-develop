@@ -164,3 +164,7 @@ foreach(xc_gradient_test MODULE_HAMILT_XCTest_GRADCORR MODULE_HAMILT_XCTest_LAPL
     ../xc_functional_ncgga_sf.cpp ../xc_ncgga_radial.cpp
     ../libxc_pot.cpp ../libxc_tools.cpp ../../../source_base/timer.cpp)
 endforeach()
+
+# The targets in this directory compile xc_pot.cpp or libxc_pot.cpp against a mocked PW basis, without the
+# libvdwxc adapter.
+abacus_disable_feature_definitions(__LIBVDWXC)

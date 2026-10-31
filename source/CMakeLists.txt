@@ -67,6 +67,7 @@ set(_abacus_feature_definitions
     $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
     $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
     $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
+    $<$<BOOL:${ENABLE_LIBVDWXC}>:__LIBVDWXC>
     $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
@@ -417,6 +418,7 @@ foreach(
         ELPA::ELPA
         Libxc::xc
         dftd4::dftd4
+        libvdwxc::vdwxc
         DeePMD::deepmd_c
         DeePMD::deepmd_cc
         NEP::nep
