@@ -226,28 +226,16 @@ void ReadInput::item_dfpt()
                            "v_sc_broyden is the default (the metric the Broyden least "
                            "squares works in is K-weighted, which stabilizes the "
                            "Coulomb-stiff shells that destabilize plain density mixing).";
-        item.default_value = "v_sc_broyden";
-        item.read_value = [](const Input_Item& item, Parameter& para) {
-            if (item.get_size() == 0)
-            {
-                para.input.dfpt_mix_type = "v_sc_broyden";
-            }
-            else
-            {
-                para.input.dfpt_mix_type = strvalue;
-            }
-        };
-        sync_string(input.dfpt_mix_type);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::string& mt = para.input.dfpt_mix_type;
-            if (mt != "rho_plain" && mt != "rho_kerker" && mt != "rho_broyden"
-                && mt != "v_sc_plain" && mt != "v_sc_broyden")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                    "dfpt_mix_type must be rho_plain, rho_kerker, rho_broyden, v_sc_plain or v_sc_broyden.");
-            }
-        };
-        this->add_item(item);
+         item.default_value = "v_sc_broyden";
+         item.domain.set_choices({"rho_plain", "rho_kerker", "rho_broyden", "v_sc_plain", "v_sc_broyden"});
+         // Contract: the line may be omitted (default_value v_sc_broyden
+         // applies) or supply exactly one of the five choices. An
+         // explicitly empty or unknown value is rejected by the scalar
+         // choices domain before read_value runs; the previous
+         // get_size()==0 fallback silently mapped an empty value onto
+         // v_sc_broyden and is intentionally dropped.
+         read_sync_string(input.dfpt_mix_type);
+         this->add_item(item);
     }
     {
         Input_Item item("dfpt_kerker_a2");
@@ -258,15 +246,10 @@ void ReadInput::item_dfpt()
                            "by dfpt_mix_type = rho_kerker. The screen f_g = |G+q|^2 / "
                            "(|G+q|^2 + a^2) freezes the stiff long-wavelength shells; "
                            "larger a^2 damps more shells. Ignored by the other schemes.";
-        item.default_value = "1.0";
-        read_sync_double(input.dfpt_kerker_a2);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.dfpt_kerker_a2 <= 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_kerker_a2 must be > 0.");
-            }
-        };
-        this->add_item(item);
+         item.default_value = "1.0";
+         item.domain.set_rule("value>0");
+         read_sync_double(input.dfpt_kerker_a2);
+         this->add_item(item);
     }
     {
         Input_Item item("dfpt_broyden_ndim");
@@ -281,15 +264,10 @@ void ReadInput::item_dfpt()
                            "and the density mixer of the electric-field "
                            "(LO-TO) loop. More history generally accelerates "
                            "convergence at the cost of memory.";
-        item.default_value = "8";
-        read_sync_int(input.dfpt_broyden_ndim);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.dfpt_broyden_ndim < 1)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "dfpt_broyden_ndim must be >= 1.");
-            }
-        };
-        this->add_item(item);
+         item.default_value = "8";
+         item.domain.set_rule("value>=1");
+         read_sync_int(input.dfpt_broyden_ndim);
+         this->add_item(item);
     }
 }
 } // namespace ModuleIO
