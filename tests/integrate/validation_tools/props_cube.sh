@@ -154,11 +154,15 @@ if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ]; then
 		wfc_ref=wf_nao.txt.ref
 	else  # multi-k point case
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
-			wfc_name=wfk1g3_nao
-			input_file=wfk1g3_nao
+			# mode 0 overwrites one fixed file at every write, so the file holds
+			# the last written step; the reference below records that step (3).
+			wfc_name=wfk1_nao
+			input_file=wfk1_nao
+			wfc_ref_name=wfk1g3_nao
 		else
 			wfc_name=wfk2_nao
 			input_file=wfk2_nao
+			wfc_ref_name=wfk2_nao
 		fi
 		if [[ ! -f "OUT.autotest/$input_file.txt" ]]; then
 			echo "Can't find file OUT.autotest/$input_file.txt"
@@ -181,7 +185,7 @@ if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ]; then
 			wfc_prep_ok=0
 		fi
 		wfc_cal=OUT.autotest/"$wfc_name"_mod.txt
-		wfc_ref="$wfc_name"_mod.txt.ref
+		wfc_ref="$wfc_ref_name"_mod.txt.ref
 	fi
 
 	# wfc text output carries a provenance header ("# ABACUS version:",
