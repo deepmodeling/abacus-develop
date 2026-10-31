@@ -37,7 +37,7 @@ lr_nstates        2
 xc_kernel         hf
 lr_solver         dav
 lr_grad_solver    cg
-lr_thr            1e-16
+lr_thr            1e-2
 pw_diag_ndim      2
 
 # energy solver for LR-TDDFT
