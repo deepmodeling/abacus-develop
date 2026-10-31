@@ -43,6 +43,15 @@ class Relax_Driver
                       std::ofstream& ofs_running);
 
   private:
+    enum class RelaxStopReason
+    {
+        Converged,
+        MaxSteps,
+        UserExit,
+        DryRun,
+        Finished
+    };
+
     /// New relaxation optimizer (Relax class)
     Relax rl;
     /// Old relaxation optimizer (IonCellOptimizer class)
@@ -148,6 +157,7 @@ class Relax_Driver
      * @brief Output final results after relaxation.
      *
      * @param istep Final iteration step.
+     * @param stop_reason Reason why the calculation stopped.
      * @param ucell Reference to the unit cell.
      * @param inp Input parameters for the calculation.
      * @param etot Total energy of the final step.
@@ -158,6 +168,7 @@ class Relax_Driver
      *        omitted / marked N/A.
      */
     void final_out(const int istep,
+                   const RelaxStopReason stop_reason,
                    UnitCell& ucell,
                    const Input_para& inp,
                    const double etot,
@@ -173,10 +184,13 @@ class Relax_Driver
      * per-step largest force / stress history, so ASE and users can diagnose
      * why the relaxation stopped at relax_nmax.
      *
+     * @param ionic_steps Number of evaluated ionic steps.
      * @param inp Input parameters (selects the active optimizer and relax_nmax).
      * @param ofs_running Output stream for the running log.
      */
-    void print_not_converged_summary(const Input_para& inp, std::ofstream& ofs_running) const;
+    void print_not_converged_summary(const int ionic_steps,
+                                     const Input_para& inp,
+                                     std::ofstream& ofs_running) const;
 
     /**
      * @brief Print the dry-run success message to screen.

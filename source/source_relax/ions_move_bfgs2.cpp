@@ -6,6 +6,7 @@
 #include "source_cell/print_cell.h" // lanshuyue add 2025-06-19
 #include "source_cell/update_cell.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_relax/relax_criteria.h"
 
 //! initialize H0、H、pos0、force0、force
 void Ions_Move_BFGS2::allocate(const int _size)
@@ -38,7 +39,10 @@ void Ions_Move_BFGS2::reset()
     is_initialized = false;
 }
 
-bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force, UnitCell& ucell, std::ofstream& ofs_running)
+bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force,
+                                 UnitCell& ucell,
+                                 std::ofstream& ofs_running,
+                                 const Relax_Criteria& criteria)
 {
     if (!is_initialized)
     {
@@ -46,7 +50,6 @@ bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force, UnitCell& uce
     }
     GetPos(ucell, pos);
     GetPostaud(ucell, pos_taud);
-    ucell.ionic_position_updated = true;
     assert(_force.nr == force.size() && _force.nc == 3);
     for (int i = 0; i < _force.nr; i++)
     {
@@ -79,14 +82,19 @@ bool Ions_Move_BFGS2::relax_step(const ModuleBase::matrix& _force, UnitCell& uce
         k += ucell.atoms[i].na;
     }
 
+    this->CalculateLargestGrad(_force, ucell);
+    if (this->IsRestrain(criteria.force_thr_ev))
+    {
+        return true;
+    }
+
     this->PrepareStep(force, pos, H, pos0, force0, steplength, dpos, size, ucell);
     this->DetermineStep(steplength, dpos, maxstep);
     this->UpdatePos(ucell);
-    this->CalculateLargestGrad(_force, ucell);
-    bool converged = this->IsRestrain();
+    ucell.ionic_position_updated = true;
     // print out geometry information during bfgs_trad relax
     unitcell::print_tau(ucell.atoms, ucell.Coordinate, ucell.ntype, ucell.lat0, ofs_running);
-    return converged;
+    return false;
 }
 
 void Ions_Move_BFGS2::GetPos(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos)
@@ -370,7 +378,7 @@ void Ions_Move_BFGS2::CalculateLargestGrad(const ModuleBase::matrix& _force, Uni
     }
 }
 
-bool Ions_Move_BFGS2::IsRestrain()
+bool Ions_Move_BFGS2::IsRestrain(const double force_thr_ev)
 {
-    return Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < PARAM.inp.force_thr_ev;
+    return Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A < force_thr_ev;
 }
