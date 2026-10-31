@@ -34,6 +34,17 @@ inline bool dfpt_band_occupied(const ModuleBase::matrix& wg, int ik, int ib)
     return wg(ik, ib) > 0.5 * wg(ik, 0);
 }
 
+/// Validate the q-point ordering for the polar (dfpt_compute_q0)
+/// pipeline: when compute_q0 is on, Gamma must be the FIRST q point
+/// (the E-field response, dielectric tensor and Born charges are
+/// computed at q index 0 and are only defined at Gamma) and no later
+/// q may duplicate Gamma (the polar tensors and LO-TO attach to the
+/// first Gamma entry only). Quits with an explicit diagnostic naming
+/// the offending index otherwise; a no-op when compute_q0 is off, so
+/// arbitrary orderings (e.g. an explicit [X, Gamma] file) stay legal
+/// for plain phonon runs.
+void validate_q_ordering(const ModuleCell::QList& qlist, bool compute_q0);
+
 class DFPT_PW_Data
 {
   public:

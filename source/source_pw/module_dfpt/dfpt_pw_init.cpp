@@ -72,43 +72,13 @@ void DFPT_PW::Impl::setup_q_list(UnitCell& ucell)
         std::vector<int> mp_grid = {nqx_, nqy_, nqz_};
         qlist_.generate_mesh(ucell, ucell.symm, mp_grid, true);
     }
-    // The uniform E-field response (q0) pipeline -- position legs, E-field
-    // SCF, epsilon -- runs at q index 0 and is only defined at Gamma, and
-    // the dyn-file polar tensors plus LO-TO are keyed to the Gamma entry
-    // the same way. Reject, at input time, the orderings that would
-    // silently mis-attach those: Gamma not first, or a duplicate Gamma
-    // later in the list (an explicit [X, Gamma] file would otherwise put
-    // the tensors on the nonzero-q entry while the Gamma file gets none).
-    if (data_.get_compute_q0())
-    {
-        const double gamma_tol = 1.0e-8; ///< empirical parameter: fractional-q Gamma tolerance (dfpt_phon.cpp value)
-        const int nq = qlist_.get_nq();
-        const ModuleBase::Vector3<double> q_first = qlist_.get_q(0);
-        const bool first_is_gamma = std::abs(q_first.x) <= gamma_tol && std::abs(q_first.y) <= gamma_tol
-                                    && std::abs(q_first.z) <= gamma_tol;
-        if (!first_is_gamma)
-        {
-            ModuleBase::WARNING_QUIT("DFPT_PW::init",
-                                     "dfpt_compute_q0 requires Gamma (0 0 0) as the FIRST q point: "
-                                     "the E-field response, dielectric tensor and Born charges are "
-                                     "computed at q index 0; put Gamma first in the q-point file.");
-        }
-        for (int iq = 1; iq < nq; ++iq)
-        {
-            const ModuleBase::Vector3<double> qi = qlist_.get_q(iq);
-            const bool is_gamma = std::abs(qi.x) <= gamma_tol && std::abs(qi.y) <= gamma_tol
-                                  && std::abs(qi.z) <= gamma_tol;
-            if (is_gamma)
-            {
-                std::stringstream msg;
-                msg << "duplicate Gamma q point at index " << iq
-                    << " in the q-point list: with dfpt_compute_q0 the polar tensors and LO-TO "
-                       "correction attach to the first Gamma entry only; remove the duplicate "
-                       "Gamma point.";
-                ModuleBase::WARNING_QUIT("DFPT_PW::init", msg.str());
-            }
-        }
-    }
+    // The uniform E-field response (q0) pipeline runs at q index 0 and is
+    // only defined at Gamma, and the dyn-file polar tensors plus LO-TO
+    // are keyed to the Gamma entry the same way. Reject, at input time,
+    // the orderings that would silently mis-attach those (Gamma not
+    // first, or a duplicate Gamma later); arbitrary orderings stay legal
+    // for plain phonon runs (compute_q0 off). See validate_q_ordering.
+    validate_q_ordering(qlist_, data_.get_compute_q0());
 }
 
 void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,

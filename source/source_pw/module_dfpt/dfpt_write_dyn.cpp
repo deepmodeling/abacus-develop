@@ -141,7 +141,8 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
             for (int ja = 0; ja < nat; ++ja)
             {
                 const double mb = ucell.atoms[ucell.iat2it[ja]].mass;
-                const double mm = std::sqrt(ma * mb);
+                const double mass_product = ma * mb;
+                const double mm = std::sqrt(mass_product);
                 out << "  " << ia + 1 << "  " << ja + 1 << "\n";
                 for (int i = 0; i < 3; ++i)
                 {
