@@ -77,7 +77,7 @@ TEST_F(DFPT_PWRunTest, RunsPerIrrepLoopForAllQ)
               nullptr,
               1.0,
               15.0,
-              nullptr);
+              nullptr, 0);
     dfpt.run();
 
     // each of the 4 irreducible q points must expose 3*nat phonon modes
@@ -103,7 +103,7 @@ TEST_F(DFPT_PWRunTest, DielectricAndBornAreExposed)
               nullptr,
               1.0,
               15.0,
-              nullptr);
+              nullptr, 0);
     dfpt.run();
 
     // design-phase stubs return default-constructed matrices
@@ -150,7 +150,7 @@ TEST_F(DFPT_PWRunTest, DftuReservationWithProviderRejectsInit)
                       nullptr,
                       1.0,
                       15.0,
-                      &dftu);
+                      &dftu, 0);
         },
         ::testing::ExitedWithCode(1),
         "DFT\\+U with DFPT is not supported");

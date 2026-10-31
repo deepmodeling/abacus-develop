@@ -61,7 +61,11 @@ void ReadInput::item_dfpt()
                            "as the KPT file (Q_POINTS card: Gamma/Monkhorst-Pack mesh, or an "
                            "explicit Direct/Cartesian list; symmetry reduction is not applied "
                            "to file q lists). When set, it overrides dfpt_qmesh. Each q point "
-                           "must still be commensurate with the ground-state k mesh.";
+                           "must still be commensurate with the ground-state k mesh. When "
+                           "dfpt_compute_q0 is true, Gamma must be the FIRST q point and must "
+                           "appear exactly once (the run rejects [X, Gamma] and [Gamma, X, "
+                           "Gamma] orderings at input time, regardless of dfpt_out_dyn); "
+                           "arbitrary orderings are allowed when dfpt_compute_q0 is false.";
         item.default_value = "\"\"";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             if (item.get_size() == 0)
@@ -84,8 +88,11 @@ void ReadInput::item_dfpt()
         item.type = "Boolean";
         item.description = "Whether to compute the macroscopic dielectric tensor "
                            "(epsilon_inf) and the Born effective charges at q = 0 "
-                           "within the same DFPT run. Requires a q point at Gamma "
-                           "(the default dfpt_qmesh 1 1 1).";
+                           "within the same DFPT run. Requires Gamma as the FIRST "
+                           "q point, exactly once (the default dfpt_qmesh 1 1 1 "
+                           "satisfies this); orderings such as [X, Gamma] or "
+                           "[Gamma, X, Gamma] are rejected at input time, "
+                           "independently of dfpt_out_dyn.";
         item.default_value = "false";
         read_sync_bool(input.dfpt_compute_q0);
         this->add_item(item);
@@ -109,6 +116,24 @@ void ReadInput::item_dfpt()
                 ModuleBase::WARNING_QUIT("ReadInput", "dfpt_loto requires dfpt_compute_q0 to be true.");
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dfpt_out_dyn");
+        item.annotation = "write the raw dynamical matrix in QE dyn format "
+                          "(pre-ASR, pre-LO-TO, unreduced force constants)";
+        item.category = category;
+        item.type = "Boolean";
+        item.description = "Write one QE-compatible dyn file per q point into the output "
+                           "directory: OUT.<suffix>/dyn.q<i>. Each file contains the "
+                           "unreduced (pre-ASR, pre-LO-TO) force-constant matrix Phi in "
+                           "Ry/bohr^2, the same content and layout as Quantum ESPRESSO's "
+                           "ph.x output (fildyn), so the files can be diffed element-by-element "
+                           "against QE references or post-processed by external tools. "
+                           "At Gamma with dfpt_compute_q0 the Born effective charges and "
+                           "dielectric tensor are appended in the QE convention.";
+        item.default_value = "false";
+        read_sync_bool(input.dfpt_out_dyn);
         this->add_item(item);
     }
     {

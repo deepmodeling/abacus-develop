@@ -14,7 +14,7 @@
 #include "dfpt_rho.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-
+#include <cmath>
 #include <cstdlib>
 #include <map>
 #include <memory>
@@ -72,6 +72,13 @@ void DFPT_PW::Impl::setup_q_list(UnitCell& ucell)
         std::vector<int> mp_grid = {nqx_, nqy_, nqz_};
         qlist_.generate_mesh(ucell, ucell.symm, mp_grid, true);
     }
+    // The uniform E-field response (q0) pipeline runs at q index 0 and is
+    // only defined at Gamma, and the dyn-file polar tensors plus LO-TO
+    // are keyed to the Gamma entry the same way. Reject, at input time,
+    // the orderings that would silently mis-attach those (Gamma not
+    // first, or a duplicate Gamma later); arbitrary orderings stay legal
+    // for plain phonon runs (compute_q0 off). See validate_q_ordering.
+    validate_q_ordering(qlist_, data_.get_compute_q0());
 }
 
 void DFPT_PW::Impl::init_submodules(const DFPT_PW_InitContext& ctx,
@@ -157,6 +164,7 @@ void DFPT_PW::init(const DFPT_PW_InitContext& ctx)
     pimpl_->nelec_ = ctx.nelec;
     pimpl_->ecutwfc_ = ctx.ecutwfc;
     pimpl_->dftu_ = ctx.dftu;
+    pimpl_->myrank_ = ctx.myrank;
 
     pimpl_->check_metallic_occ(*ctx.wg);
 

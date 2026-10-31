@@ -1,8 +1,10 @@
 #include "dfpt_pw_data.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 #include <cmath>
+#include <sstream>
 
 namespace ModuleDFPT
 {
@@ -267,6 +269,47 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_docc(int q_idx) const
 int DFPT_PW_Data::get_nq() const
 {
     return qlist_->get_nq();
+}
+
+void validate_q_ordering(const ModuleCell::QList& qlist, bool compute_q0)
+{
+    ModuleBase::TITLE("ModuleDFPT", "validate_q_ordering");
+    ModuleBase::timer::start("ModuleDFPT", "validate_q_ordering");
+    if (!compute_q0)
+    {
+        ModuleBase::timer::end("ModuleDFPT", "validate_q_ordering");
+        return;
+    }
+    const double gamma_tol = 1.0e-8; ///< empirical parameter: fractional-q Gamma tolerance (dfpt_phon.cpp value)
+    const int nq = qlist.get_nq();
+    const ModuleBase::Vector3<double> q_first = qlist.get_q(0);
+    const bool first_is_gamma = std::abs(q_first.x) <= gamma_tol && std::abs(q_first.y) <= gamma_tol
+                                && std::abs(q_first.z) <= gamma_tol;
+    if (!first_is_gamma)
+    {
+        ModuleBase::timer::end("ModuleDFPT", "validate_q_ordering");
+        ModuleBase::WARNING_QUIT("validate_q_ordering",
+                                 "dfpt_compute_q0 requires Gamma (0 0 0) as the FIRST q point: "
+                                 "the E-field response, dielectric tensor and Born charges are "
+                                 "computed at q index 0; put Gamma first in the q-point file.");
+    }
+    for (int iq = 1; iq < nq; ++iq)
+    {
+        const ModuleBase::Vector3<double> qi = qlist.get_q(iq);
+        const bool is_gamma = std::abs(qi.x) <= gamma_tol && std::abs(qi.y) <= gamma_tol
+                              && std::abs(qi.z) <= gamma_tol;
+        if (is_gamma)
+        {
+            std::stringstream msg;
+            msg << "duplicate Gamma q point at index " << iq
+                << " in the q-point list: with dfpt_compute_q0 the polar tensors and LO-TO "
+                   "correction attach to the first Gamma entry only; remove the duplicate "
+                   "Gamma point.";
+            ModuleBase::timer::end("ModuleDFPT", "validate_q_ordering");
+            ModuleBase::WARNING_QUIT("validate_q_ordering", msg.str());
+        }
+    }
+    ModuleBase::timer::end("ModuleDFPT", "validate_q_ordering");
 }
 
 ModuleBase::Vector3<double> DFPT_PW_Data::get_qvec(int q_idx) const
@@ -561,6 +604,37 @@ void DFPT_PW_Data::set_dynmat(int q_idx, const ModuleBase::ComplexMatrix& dm)
     ModuleBase::timer::end("DFPT_PW_Data", "set_dynmat");
 }
 
+void DFPT_PW_Data::set_dynmat_raw(int q_idx, const ModuleBase::ComplexMatrix& dm)
+{
+    ModuleBase::TITLE("DFPT_PW_Data", "set_dynmat_raw");
+    ModuleBase::timer::start("DFPT_PW_Data", "set_dynmat_raw");
+    if (q_idx >= static_cast<int>(dynmat_raw_.size()))
+    {
+        const int raw_size = q_idx + 1;
+        dynmat_raw_.resize(raw_size);
+    }
+    dynmat_raw_[q_idx] = dm;
+    ModuleBase::timer::end("DFPT_PW_Data", "set_dynmat_raw");
+}
+
+ModuleBase::ComplexMatrix DFPT_PW_Data::get_dynmat_raw(int q_idx) const
+{
+    ModuleBase::TITLE("DFPT_PW_Data", "get_dynmat_raw");
+    ModuleBase::timer::start("DFPT_PW_Data", "get_dynmat_raw");
+    if (q_idx < static_cast<int>(dynmat_raw_.size()) && dynmat_raw_[q_idx].nr > 0)
+    {
+        ModuleBase::timer::end("DFPT_PW_Data", "get_dynmat_raw");
+        return dynmat_raw_[q_idx];
+    }
+    ModuleBase::timer::end("DFPT_PW_Data", "get_dynmat_raw");
+    return get_dynmat(q_idx); // fallback: the working copy
+}
+
+bool DFPT_PW_Data::has_dynmat_raw(int q_idx) const
+{
+    return q_idx >= 0 && q_idx < static_cast<int>(dynmat_raw_.size()) && dynmat_raw_[q_idx].nr > 0;
+}
+
 ModuleBase::ComplexMatrix DFPT_PW_Data::get_dynmat(int q_idx) const
 {
     ModuleBase::TITLE("DFPT_PW_Data", "get_dynmat");
@@ -670,6 +744,7 @@ void DFPT_PW_Data::deallocate_memory()
     ModuleBase::TITLE("DFPT_PW_Data", "deallocate_memory");
     ModuleBase::timer::start("DFPT_PW_Data", "deallocate_memory");
     dynmat_.clear();
+    dynmat_raw_.clear();
     phon_freq_.clear();
     born_.clear();
     docc_.clear();

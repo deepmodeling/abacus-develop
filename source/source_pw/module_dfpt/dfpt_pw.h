@@ -21,6 +21,11 @@ class PW_Basis_K;
 
 namespace ModuleDFPT
 {
+class DFPT_PW_Data;
+}
+
+namespace ModuleDFPT
+{
 
 class XC_First_Order;
 
@@ -43,6 +48,11 @@ struct DFPT_PW_InitContext
     double nelec;
     double ecutwfc;
     const Plus_U_Base* dftu;
+    /// MPI rank of the running process (from the runtime context, not
+    /// read from any global inside module_dfpt); consumed by the dyn
+    /// file writer for the rank-0 output gate. No default member
+    /// initializer: C++11 aggregate rules require it.
+    int myrank;
     /// ground-state XC potential on the rho grid (valence + core charge
     /// input, the same density the kernel linearizes around); consumed by
     /// the nlcc diagonal 2n+1 term (QE dynmatcc). Null disables that term.
@@ -94,9 +104,10 @@ class DFPT_PW
               const XC_First_Order* xc,
               double nelec,
               double ecutwfc,
-              const Plus_U_Base* dftu)
+              const Plus_U_Base* dftu,
+              int myrank)
     {
-        const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu, nullptr};
+        const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu, myrank, nullptr};
         init(ctx);
     }
 
@@ -177,6 +188,14 @@ class DFPT_PW
     std::string format_q_report(int q_idx) const;
 
     std::string format_loto_report() const;
+
+    /// read-only access to the data layer (consumed by the dyn file
+    /// writer in the esolver post-processing)
+    const DFPT_PW_Data& get_data() const;
+
+    /// the MPI rank passed at init (0 for serial); consumed by the dyn
+    /// file writer for the rank-0 output gate
+    int get_myrank() const;
 
   private:
     std::unique_ptr<Impl> pimpl_;

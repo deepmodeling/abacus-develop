@@ -34,6 +34,17 @@ inline bool dfpt_band_occupied(const ModuleBase::matrix& wg, int ik, int ib)
     return wg(ik, ib) > 0.5 * wg(ik, 0);
 }
 
+/// Validate the q-point ordering for the polar (dfpt_compute_q0)
+/// pipeline: when compute_q0 is on, Gamma must be the FIRST q point
+/// (the E-field response, dielectric tensor and Born charges are
+/// computed at q index 0 and are only defined at Gamma) and no later
+/// q may duplicate Gamma (the polar tensors and LO-TO attach to the
+/// first Gamma entry only). Quits with an explicit diagnostic naming
+/// the offending index otherwise; a no-op when compute_q0 is off, so
+/// arbitrary orderings (e.g. an explicit [X, Gamma] file) stay legal
+/// for plain phonon runs.
+void validate_q_ordering(const ModuleCell::QList& qlist, bool compute_q0);
+
 class DFPT_PW_Data
 {
   public:
@@ -89,6 +100,13 @@ class DFPT_PW_Data
     /// through the LapackConnector::zheev wrapper.
     void set_dynmat(int q_idx, const ModuleBase::ComplexMatrix& dm);
     ModuleBase::ComplexMatrix get_dynmat(int q_idx) const;
+
+    /// stash the raw (pre-ASR, pre-LO-TO) dynamical matrix for the dyn
+    /// file output; the working dynmat_ is mutated in place by apply_asr
+    /// and add_loto at Gamma, so the file writer needs this untouched copy
+    void set_dynmat_raw(int q_idx, const ModuleBase::ComplexMatrix& dm);
+    ModuleBase::ComplexMatrix get_dynmat_raw(int q_idx) const;
+    bool has_dynmat_raw(int q_idx) const;
     void set_phon_freq(int q_idx, const std::vector<double>& freq);
     std::vector<double> get_phon_freq(int q_idx) const;
 
@@ -288,6 +306,8 @@ class DFPT_PW_Data
     std::vector<std::vector<std::vector<std::complex<double>>>> dv_rc_;
 
     std::vector<ModuleBase::ComplexMatrix> dynmat_;
+    /// pre-ASR / pre-LO-TO copies for the dyn file output ([q])
+    std::vector<ModuleBase::ComplexMatrix> dynmat_raw_;
     std::vector<std::vector<double>> phon_freq_;
 
     bool compute_q0_ = false;
