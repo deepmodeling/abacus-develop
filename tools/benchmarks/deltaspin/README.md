@@ -71,7 +71,8 @@ change the recorded asset set of earlier formal runs. From this directory:
 export DELTASPIN_GENERALITY=/path/to/generality-workspace
 mkdir -p "$DELTASPIN_GENERALITY"/{assets,inputs,src,results}
 cp src/benchmark.py src/compare_results.py "$DELTASPIN_GENERALITY/src/"
-cp -r inputs/fe16-disordered inputs/feni4-nonorthogonal "$DELTASPIN_GENERALITY/inputs/"
+cp -r inputs/fe16-disordered inputs/feni4-nonorthogonal inputs/feni8-nonorthogonal \
+    "$DELTASPIN_GENERALITY/inputs/"
 cp assets/Fe.upf assets/Fe_gga_8au_200.0Ry_4s2p2d1f.orb "$DELTASPIN_GENERALITY/assets/"
 cp ../../../tests/PP_ORB/Ni_ONCV_PBE-1.0.upf \
    ../../../tests/PP_ORB/Ni_gga_9au_100Ry_4s2p2d1f.orb "$DELTASPIN_GENERALITY/assets/"
@@ -226,7 +227,8 @@ loadable descriptor and checks kernel thread and shared-memory requirements on
 the current device. The selection is cached per host thread and invalidated on
 device switches. Missing images or insufficient resources retain cuFFT. There
 is no GPU-model whitelist. A configuration targeting Volta, Ampere and Hopper
-can use the following options in addition to the installation's dependency settings:
+can use the following options in addition to the installation's dependency settings.
+Run the build and validation commands in this section from the repository root:
 
 ```bash
 cmake -S . -B build -DUSE_CUDA=ON -DUSE_CUFFTDX=ON \
@@ -369,7 +371,8 @@ cancellation-sensitive data, and shapes on both sides of the dispatch boundary.
 an eligible product reaches the 3M API and an adjacent ineligible shape retains
 ordinary GEMM on the active GPU. Component acceleration is shape dependent;
 complete matched calculations remain the performance acceptance criterion.
-The production-linked dispatch, matrix and Davidson checks run with:
+From the repository root, run the production-linked dispatch, matrix and
+Davidson checks with:
 
 ```bash
 python3 tools/benchmarks/deltaspin/src/validate_portable_gemm.py \
