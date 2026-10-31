@@ -228,17 +228,13 @@ void ReadInput::item_dfpt()
                            "Coulomb-stiff shells that destabilize plain density mixing).";
          item.default_value = "v_sc_broyden";
          item.domain.set_choices({"rho_plain", "rho_kerker", "rho_broyden", "v_sc_plain", "v_sc_broyden"});
-         item.read_value = [](const Input_Item& item, Parameter& para) {
-             if (item.get_size() == 0)
-             {
-                 para.input.dfpt_mix_type = "v_sc_broyden";
-             }
-             else
-             {
-                 para.input.dfpt_mix_type = strvalue;
-             }
-         };
-         sync_string(input.dfpt_mix_type);
+         // Contract: the line may be omitted (default_value v_sc_broyden
+         // applies) or supply exactly one of the five choices. An
+         // explicitly empty or unknown value is rejected by the scalar
+         // choices domain before read_value runs; the previous
+         // get_size()==0 fallback silently mapped an empty value onto
+         // v_sc_broyden and is intentionally dropped.
+         read_sync_string(input.dfpt_mix_type);
          this->add_item(item);
     }
     {
