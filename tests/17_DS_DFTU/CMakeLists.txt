@@ -6,6 +6,11 @@ enable_testing()
 # Uncomment the add_test blocks below once the feature branch is merged.
 
 find_program(BASH bash)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_test(
+  NAME 17_DS_DFTU_onsite_mesh
+  COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_onsite_proj_mesh.py
+          ${ABACUS_BIN_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/50_FeO_O_first_Fe_second)
 if(ENABLE_ASAN)
   add_test(
     NAME 17_DS_DFTU_test_with_asan
