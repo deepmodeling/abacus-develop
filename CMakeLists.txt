@@ -570,8 +570,6 @@ if(ENABLE_MLALGO)
       GIT_SHALLOW TRUE
       GIT_PROGRESS TRUE)
     FetchContent_MakeAvailable(libnpy)
-  else()
-
   endif()
 endif()
 

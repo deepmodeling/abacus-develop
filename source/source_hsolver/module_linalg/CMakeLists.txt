@@ -1,4 +1,5 @@
-add_library(hsolver_linalg OBJECT
+add_library(
+  hsolver_linalg OBJECT
   orb_buffer.cpp
   exp_action.cpp
   exp_taylor.cpp
@@ -12,8 +13,7 @@ add_library(hsolver_linalg OBJECT
   linear_low_rank.cpp
   cn_subspace.cpp
   orthonormal.cpp
-  orthonormal_small.cpp
-)
+  orthonormal_small.cpp)
 
 if(ENABLE_COVERAGE)
   add_coverage(hsolver_linalg)

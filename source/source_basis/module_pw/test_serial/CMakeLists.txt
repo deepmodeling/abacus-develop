@@ -7,37 +7,32 @@ abacus_disable_feature_definitions(__UT_USE_ROCM)
 abacus_disable_feature_definitions(__MLALGO)
 
 add_library(
-    planewave_serial
-    OBJECT
-    ../../../source_base/module_fft/fft_bundle.cpp
-    ../../../source_base/module_fft/fft_cpu.cpp
-    ../pw_basis.cpp
-    ../pw_grid_geometry.cpp
-    ../pw_basis_k.cpp
-    ../pw_basis_sup.cpp
-    ../pw_distributeg.cpp
-    ../pw_distg_method1.cpp
-    ../pw_distg_method2.cpp
-    ../pw_distributer.cpp
-    ../pw_init.cpp
-    ../pw_transform.cpp
-    ../pw_transform_k.cpp
-)
+  planewave_serial OBJECT
+  ../../../source_base/module_fft/fft_bundle.cpp
+  ../../../source_base/module_fft/fft_cpu.cpp
+  ../pw_basis.cpp
+  ../pw_grid_geometry.cpp
+  ../pw_basis_k.cpp
+  ../pw_basis_sup.cpp
+  ../pw_distributeg.cpp
+  ../pw_distg_method1.cpp
+  ../pw_distg_method2.cpp
+  ../pw_distributer.cpp
+  ../pw_init.cpp
+  ../pw_transform.cpp
+  ../pw_transform_k.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_PW_grid_geometry
   LIBS parameter planewave_serial device base
-  SOURCES test_pw_grid_geometry.cpp
-)
+  SOURCES test_pw_grid_geometry.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_PW_basis_pw_serial
   LIBS parameter planewave_serial device base
-  SOURCES pw_basis_test.cpp
-)
+  SOURCES pw_basis_test.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_PW_basis_pw_k_serial
   LIBS parameter planewave_serial device base
-  SOURCES pw_basis_k_test.cpp
-)
+  SOURCES pw_basis_k_test.cpp)
