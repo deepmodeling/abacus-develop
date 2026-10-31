@@ -11,17 +11,28 @@ import sqlite3
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("database", type=Path)
+    parser.add_argument("--global-pid", type=int, help="Encoded Nsight process ID for one MPI rank")
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     connection = sqlite3.connect(f"file:{args.database.resolve()}?mode=ro", uri=True)
+    process_parameters = () if args.global_pid is None else (~((1 << 24) - 1), args.global_pid)
+    nvtx_filter = "" if args.global_pid is None else " AND (n.globalTid & ?) = ?"
+    runtime_filter = "" if args.global_pid is None else " WHERE (globalTid & ?) = ?"
     ranges = collections.defaultdict(list)
     phases = []
+    phase_processes = set()
     for start, end, tid, label in connection.execute(
         "SELECT start, end, globalTid, coalesce(text, s.value) FROM NVTX_EVENTS n "
-        "LEFT JOIN StringIds s ON n.textId=s.id WHERE end IS NOT NULL ORDER BY start"
+        "LEFT JOIN StringIds s ON n.textId=s.id WHERE end IS NOT NULL" + nvtx_filter + " ORDER BY start",
+        process_parameters,
     ):
+        process = tid & ~((1 << 24) - 1)
         ranges[tid].append((start, end, label))
         if label == "ESolver_KS_PW/hamilt2density":
             phases.append((start, end))
+            phase_processes.add(process)
+    if len(phase_processes) > 1:
+        raise ValueError("Multiple application processes require --global-pid")
     if len(phases) < 3:
         raise ValueError("At least three hamilt2density ranges are required")
     steady_start, steady_end = phases[2][0], phases[-1][1]
@@ -31,7 +42,8 @@ def main() -> None:
     launch_info = {}
     calls = collections.defaultdict(set)
     for start, tid, correlation in connection.execute(
-        "SELECT start, globalTid, correlationId FROM CUPTI_ACTIVITY_KIND_RUNTIME ORDER BY globalTid, start"
+        "SELECT start, globalTid, correlationId FROM CUPTI_ACTIVITY_KIND_RUNTIME" + runtime_filter + " ORDER BY globalTid, start",
+        process_parameters,
     ):
         while positions[tid] < len(ranges[tid]) and ranges[tid][positions[tid]][0] <= start:
             index = positions[tid]
@@ -60,6 +72,8 @@ def main() -> None:
     kernel_counts = collections.Counter()
     for start, end, pid, correlation in connection.execute(
         "SELECT start, end, globalPid, correlationId FROM CUPTI_ACTIVITY_KIND_KERNEL"
+        + (" WHERE globalPid=?" if args.global_pid is not None else ""),
+        () if args.global_pid is None else (args.global_pid,),
     ):
         info = launch_info.get((pid, correlation))
         if info is None:
@@ -87,7 +101,8 @@ def main() -> None:
         summaries.append({"scope": scope, "calls": sum(row["calls"] for row in selected),
                           "gpu_seconds": seconds, "nominal_flops": flops,
                           "tflops_per_second": flops / seconds / 1e12 if seconds else None})
-    result = {"scope": "Application double-complex GEMM wrapper only; excludes internal cuSolver GEMMs. "
+    result = {"global_pid": args.global_pid,
+              "scope": "Application double-complex GEMM wrapper only; excludes internal cuSolver GEMMs. "
                        "Nominal multiply work is 8*m*n*k for ZGEMM, 6*m*n*k for ZGEMM3M, "
                        "or 8*m*n*k*batches for ZGEMM_BATCH; "
                        "it excludes packing, recombination and alpha/beta operations. "
@@ -95,8 +110,9 @@ def main() -> None:
                        "Steady excludes the first two hamilt2density calls and final forces/stress.",
               "summary": summaries,
               "shapes": sorted(rows, key=lambda row: (row["scope"], -row["gpu_seconds"]))}
-    destination = args.database.with_name("gemm-attribution.json")
-    destination.write_text(json.dumps(result, indent=2) + "\n")
+    destination = args.output or args.database.with_name("gemm-attribution.json")
+    with destination.open("x") as stream:
+        stream.write(json.dumps(result, indent=2) + "\n")
     print(json.dumps(summaries))
 
 

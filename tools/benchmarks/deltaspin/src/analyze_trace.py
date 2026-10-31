@@ -19,18 +19,29 @@ def union_seconds(intervals: list[tuple[int, int]]) -> float:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("database", type=Path)
+    parser.add_argument("--global-pid", type=int, help="Encoded Nsight process ID for one MPI rank")
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     connection = sqlite3.connect(f"file:{args.database.resolve()}?mode=ro", uri=True)
+    process_parameters = () if args.global_pid is None else (~((1 << 24) - 1), args.global_pid)
+    nvtx_filter = "" if args.global_pid is None else " AND (n.globalTid & ?) = ?"
+    runtime_filter = "" if args.global_pid is None else " WHERE (globalTid & ?) = ?"
     strings = dict(connection.execute("SELECT id, value FROM StringIds"))
     ranges = collections.defaultdict(list)
     phase_windows = []
+    phase_processes = set()
     for start, end, tid, label in connection.execute(
         "SELECT start, end, globalTid, coalesce(text, s.value) FROM NVTX_EVENTS n "
-        "LEFT JOIN StringIds s ON n.textId=s.id WHERE end IS NOT NULL ORDER BY start"
+        "LEFT JOIN StringIds s ON n.textId=s.id WHERE end IS NOT NULL" + nvtx_filter + " ORDER BY start",
+        process_parameters,
     ):
+        process = tid & ~((1 << 24) - 1)
         ranges[tid].append((start, end, label))
         if label == "ESolver_KS_PW/hamilt2density":
             phase_windows.append((start, end))
+            phase_processes.add(process)
+    if len(phase_processes) > 1:
+        raise ValueError("Multiple application processes require --global-pid")
     if len(phase_windows) < 3:
         raise ValueError("At least three hamilt2density ranges are required for the steady-state view")
     steady_start = phase_windows[2][0]
@@ -42,7 +53,8 @@ def main() -> None:
     api_times = collections.Counter()
     for start, end, tid, correlation, name_id in connection.execute(
         "SELECT start, end, globalTid, correlationId, nameId "
-        "FROM CUPTI_ACTIVITY_KIND_RUNTIME ORDER BY globalTid, start"
+        "FROM CUPTI_ACTIVITY_KIND_RUNTIME" + runtime_filter + " ORDER BY globalTid, start",
+        process_parameters,
     ):
         while positions[tid] < len(ranges[tid]) and ranges[tid][positions[tid]][0] <= start:
             index = positions[tid]
@@ -75,6 +87,8 @@ def main() -> None:
     ):
         for start, end, pid, correlation, device, detail, size in connection.execute(
             f"SELECT start, end, globalPid, correlationId, deviceId, {extra} FROM {table}"
+            + (" WHERE globalPid=?" if args.global_pid is not None else ""),
+            () if args.global_pid is None else (args.global_pid,),
         ):
             info = launch_info.get((pid, correlation))
             if info is None:
@@ -101,6 +115,7 @@ def main() -> None:
         return result
 
     output = {
+        "global_pid": args.global_pid,
         "scope": "Steady excludes the first two hamilt2density calls and final forces/stress. "
                  "GPU activity is assigned by CUDA launch correlation; API times include waits. "
                  "Inclusive range times overlap and must not be summed.",
@@ -120,8 +135,9 @@ def main() -> None:
     for entry in output["transfers"]:
         key = tuple(entry[name] for name in ("scope", "range", "copy_kind", "bytes_per_copy"))
         entry["count"] = transfer_counts[key]
-    destination = args.database.with_name("launch-attribution.json")
-    destination.write_text(json.dumps(output, indent=2) + "\n")
+    destination = args.output or args.database.with_name("launch-attribution.json")
+    with destination.open("x") as stream:
+        stream.write(json.dumps(output, indent=2) + "\n")
     print(destination)
 
 

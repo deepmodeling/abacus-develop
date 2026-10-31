@@ -55,6 +55,15 @@ executables in this case. Precision, cutoff, k mesh, solver, mixing and stopping
 controls otherwise match the formal fixtures. This is a numerical control,
 not an equilibrium alloy or a validated materials model.
 
+`feni8-nonorthogonal` repeats the four-atom mixed cell twice along its first
+lattice vector, retains each atom's moment target and uses `pw_seed=1`. Its 164
+bands exercise the large-product path with multiple species. Dense-k controls
+copy `feni4-nonorthogonal`, use the same positive seed and change only KPT to
+Gamma-centered 3x3x3 or 5x5x5 meshes. These controls are separate from the
+unchanged formal Fe16/Fe32 timing inputs. A positive seed makes the random
+initialization depend on global k-point indices; `pw_seed=0` does not guarantee
+the same initial orbitals when the MPI partition changes.
+
 Run these cases in a separate working directory so adding Ni assets does not
 change the recorded asset set of earlier formal runs. From this directory:
 
@@ -114,6 +123,41 @@ electronic convergence. Use a new label for every repeat or candidate. Run one
 benchmark at a time on the GPU and avoid simultaneous builds on the measured
 host. `--profile` is available for Nsight Systems diagnostics; profiled runs are
 excluded from the normal comparison helper.
+
+## Multi-GPU runs
+
+`run_multigpu.py` runs a single-node comparison with one MPI rank per requested
+physical NVIDIA GPU. It binds each rank to a distinct CPU allocation and masks
+its device by UUID. Requested GPUs must be idle at launch; the result requires
+one distinct observed compute process per GPU. Driver PIDs and namespace-local MPI
+PIDs are recorded separately. Runs retain effective input/asset hashes, process
+placement, per-device memory peaks and the maximum sum within complete sampling
+rounds. The aggregate samples are not simultaneous atomic measurements.
+
+```bash
+python3 src/run_multigpu.py --binary "$DELTASPIN_CANDIDATE" \
+    --case fe-bcc-16 --label candidate-fe16-g4-t12-full \
+    --devices 0,1,2,3 --threads 12 --cores-per-rank 6
+```
+
+Repeat at one, two and four GPUs with the same threads per rank and scientific
+inputs. Both CPU and GPU allocation grow in that series. The GPU plane-wave
+implementation assigns one rank to each k-point pool, so the number of ranks
+must not exceed the irreducible k-point count. Multi-GPU decomposition within one
+k point is outside this implementation. `--workspace` selects independent
+inputs/assets; `--steps` creates a bounded diagnostic and is not a converged
+performance result. The runner records native convergence separately from a
+complete executable run. `summarize_multigpu.py` reparses raw outputs and sampling
+records before accepting a converged scaling series.
+
+For MPI profiles, pass one encoded Nsight `globalPid` at a time to
+`analyze_trace.py`, `analyze_gemm_trace.py` and `analyze_idle.py` with
+`--global-pid` and distinct `--output` paths. Unfiltered multi-process application
+traces are rejected. `analyze_mpi.py` aligns world-communicator collectives by
+call order and traced payloads, separating arrival spread from time after the
+last rank enters. Those quantities include software progress and are not pure
+network latency or a prediction of recoverable wall time. Analysis outputs use
+new paths and are not overwritten.
 
 ## Profile device work
 
@@ -300,14 +344,14 @@ because regrouping changes floating-point accumulation order.
 
 ## Large complex matrix products
 
-On Volta devices (compute capability 7.0), double-complex products use cuBLAS
-ZGEMM3M when both output dimensions are at least 128, the contraction dimension
+Double-complex products use cuBLAS ZGEMM3M when both output dimensions are at
+least 128, the contraction dimension
 is at least 64, and at least one dimension is 4096 or larger. Conjugate-transposed
 projections also use this implementation for at least 128 output rows, 64 output
 columns and a contraction dimension of at least 4096. This covers triangular
 Davidson projection panels without increasing the panel width or computing more
-of the unused lower triangle. Device selection is established with the BLAS
-handle. Other shapes and architectures retain ZGEMM, including the historical
+of the unused lower triangle. Selection depends on shape rather than GPU model;
+cuBLAS supplies the device implementation. Other shapes retain ZGEMM, including the historical
 two-atom fixture's smaller projector products.
 
 ZGEMM3M forms a complex product from three double-precision real products. Its
@@ -321,6 +365,16 @@ must be reported explicitly instead of described as reference repeatability.
 long-double dot products. It covers all nine transpose/conjugation combinations,
 padded leading dimensions, input preservation, nonzero complex accumulation,
 cancellation-sensitive data, and shapes on both sides of the dispatch boundary.
+`check_gemm_dispatch.cpp`, linked with `-Wl,--wrap=cublasZgemm3m`, verifies that
+an eligible product reaches the 3M API and an adjacent ineligible shape retains
+ordinary GEMM on the active GPU. Component acceleration is shape dependent;
+complete matched calculations remain the performance acceptance criterion.
+The production-linked dispatch, matrix and Davidson checks run with:
+
+```bash
+python3 tools/benchmarks/deltaspin/src/validate_portable_gemm.py \
+    --build build --output /path/to/unused-gemm-validation-directory
+```
 
 ## Davidson workspace lifetime
 

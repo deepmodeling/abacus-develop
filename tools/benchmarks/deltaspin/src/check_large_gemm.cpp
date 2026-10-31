@@ -63,15 +63,17 @@ void run(cublasHandle_t reference_handle, int m, int n, int k, char ta, char tb,
     cuda_check(cudaMemcpy(db, b.data(), b.size() * sizeof(Complex), cudaMemcpyHostToDevice));
     double reference_error = 0.0, extended_error = 0.0;
     const Complex alpha(0.7, -0.1);
+    const auto cuda_alpha = make_cuDoubleComplex(alpha.real(), alpha.imag());
     for (const Complex beta : {Complex{}, Complex(-0.3, 0.2)})
     {
         cuda_check(cudaMemcpy(dc, original.data(), actual.size() * sizeof(Complex), cudaMemcpyHostToDevice));
         cuda_check(cudaMemcpy(dr, original.data(), actual.size() * sizeof(Complex), cudaMemcpyHostToDevice));
         hsolver::gemm_op<Complex, base_device::DEVICE_GPU>()(
             nullptr, ta, tb, m, n, k, &alpha, da, lda, db, ldb, &beta, dc, ldc);
+        const auto cuda_beta = make_cuDoubleComplex(beta.real(), beta.imag());
         require(cublasZgemm(reference_handle, operation(ta), operation(tb), m, n, k,
-            reinterpret_cast<const cuDoubleComplex*>(&alpha), reinterpret_cast<const cuDoubleComplex*>(da), lda,
-            reinterpret_cast<const cuDoubleComplex*>(db), ldb, reinterpret_cast<const cuDoubleComplex*>(&beta),
+            &cuda_alpha, reinterpret_cast<const cuDoubleComplex*>(da), lda,
+            reinterpret_cast<const cuDoubleComplex*>(db), ldb, &cuda_beta,
             reinterpret_cast<cuDoubleComplex*>(dr), ldc) == CUBLAS_STATUS_SUCCESS, "Reference GEMM failed");
         cuda_check(cudaMemcpy(actual.data(), dc, actual.size() * sizeof(Complex), cudaMemcpyDeviceToHost));
         cuda_check(cudaMemcpy(reference.data(), dr, reference.size() * sizeof(Complex), cudaMemcpyDeviceToHost));

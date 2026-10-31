@@ -60,7 +60,6 @@ void FixedOverlapSubspace::whiten(Complex* h, Complex* projectors) const
         CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, rows_, bands_, &one, factor, bands_,
         reinterpret_cast<double2*>(projectors), rows_));
 }
-static bool use_volta_gemm3m = false;
 
 __global__ void selected_basis_residual_kernel(int rows, int leading,
                                               const double2* psi, const double2* hpsi,
@@ -109,11 +108,6 @@ void xdot_wrapper(const int &n, const double * x, const int &incx, const double 
 void createGpuBlasHandle(){
     if (cublas_handle == nullptr) {
         cublasErrcheck(cublasCreate(&cublas_handle));
-        int device = 0;
-        cudaDeviceProp properties;
-        cudaErrcheck(cudaGetDevice(&device));
-        cudaErrcheck(cudaGetDeviceProperties(&properties, device));
-        use_volta_gemm3m = properties.major == 7 && properties.minor == 0;
     }
 }
 
@@ -121,7 +115,6 @@ void destoryBLAShandle(){
     if (cublas_handle != nullptr) {
         cublasErrcheck(cublasDestroy(cublas_handle));
         cublas_handle = nullptr;
-        use_volta_gemm3m = false;
     }
 }
 
@@ -942,9 +935,9 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
     cublasOperation_t cutransB = judge_trans_op(true, transb, "gemm_op");
     const auto alpha_value = make_cuDoubleComplex(alpha->real(), alpha->imag());
     const auto beta_value = make_cuDoubleComplex(beta->real(), beta->imag());
-    // Three real products reduce arithmetic for wide Volta GEMMs. Narrow or
+    // Three real products reduce arithmetic for wide complex GEMMs. Narrow or
     // small products retain the conventional complex accumulation order.
-    if (use_volta_gemm3m && m >= 128 && k >= 64
+    if (m >= 128 && k >= 64
         && (n >= 128 || (transa == 'C' && transb == 'N' && n >= 64 && k >= 4096))
         && (m >= 4096 || n >= 4096 || k >= 4096))
     {
