@@ -1,9 +1,1 @@
-Output of charge and kinetic-energy density for SCAN.
-
-The references include local XC terms at finite density and zero density
-gradient. The previous gradient mask suppressed those local terms.
-Real-space SCF convergence at 1e-9, inner diagonalization at 1e-12 and
-12-digit cube output resolve both fields at the existing pointwise limits:
-1e-6 for charge and 1e-8 for kinetic-energy density. References come from
-an independent CG calculation; cross-checks use CG, Davidson and PPCG.
-The structure, pseudopotential, basis, band count and mixing are unchanged.
+output of kinectic energy density
