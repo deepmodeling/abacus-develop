@@ -20,3 +20,4 @@
 20_LJ_dry_run
 #50_DP_Al
 #101_NEP_HfO2
+102_SNAP_minimal

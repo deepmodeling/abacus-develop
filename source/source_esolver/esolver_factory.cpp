@@ -5,6 +5,7 @@
 #include "esolver_dfpt_pw.h"
 #include "esolver_sdft_pw.h"
 #include "esolver_ks_pw_tddft.h"
+#include "source_base/global_variable.h"
 #include "source_base/module_device/device.h"
 #include "source_hamilt/module_xc/general_exx_info.h"
 #include "source_io/module_parameter/parameter.h"
@@ -23,6 +24,7 @@
 #endif
 #include "esolver_dp.h"
 #include "esolver_nep.h"
+#include "esolver_snap.h"
 #include "esolver_lj.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
@@ -113,6 +115,10 @@ std::string determine_type(const Input_para& inp)
     {
         esolver_type = "nep_pot";
     }
+    else if (inp.esolver_type == "snap")
+    {
+        esolver_type = "snap_pot";
+    }
     else if (esolver_type == "none")
     {
         ModuleBase::WARNING_QUIT("ESolver", "No such esolver_type combined with basis_type");
@@ -130,7 +136,6 @@ std::string determine_type(const Input_para& inp)
         }
     }
     base_device::information::output_device_info(std::cout, inp.device);
-    base_device::information::output_device_info(GlobalV::ofs_running, inp.device);
     /***auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     std::cout << "hipGetDeviceInfo took " << duration.count() << " seconds" << std::endl;***/
@@ -142,7 +147,7 @@ ESolver* init_esolver(const Input_para& inp)
 {
     // determine type of esolver based on INPUT information
     const std::string esolver_type = determine_type(inp);
-    const bool gamma_only = PARAM.globalv.gamma_only_local;
+    const bool gamma_only = inp.gamma_only;
 #ifdef __LCAO
     const LRRuntime lr_runtime{GlobalV::ofs_running, GlobalV::ofs_warning, GlobalV::MY_RANK};
 #endif
@@ -384,11 +389,15 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "dp_pot")
     {
-        return new ESolver_DP(PARAM.mdp.pot_file);
+        return new ESolver_DP(inp.mdp.pot_file);
     }
     else if (esolver_type == "nep_pot")
     {
-        return new ESolver_NEP(PARAM.mdp.pot_file);
+        return new ESolver_NEP(inp.mdp.pot_file);
+    }
+    else if (esolver_type == "snap_pot")
+    {
+        return new ESolver_SNAP(inp.mdp.pot_file, inp.mdp.snap_param_file, GlobalV::ofs_running);
     }
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));

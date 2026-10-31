@@ -247,6 +247,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
 * `lj`: Lennard-Jones potential.
 * `dp`: Deep Potential (DP) model.
 * `nep`: Neuroevolution potential (NEP).
+* `snap`: Spectral Neighbor Analysis Potential (SNAP).
 * `ks-lr`: Kohn-Sham density functional theory followed by linear-response time-dependent density functional theory (LR-TDDFT; under development).
 * `lr`: Linear-response time-dependent density functional theory (LR-TDDFT) using precomputed Kohn-Sham orbitals (under development).
 * `dfpt`: Density functional perturbation theory (DFPT; under development).
@@ -255,7 +256,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr", "dfpt" };
+            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "snap", "lr", "ks-lr", "dfpt" };
             if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
@@ -265,11 +266,16 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "esolver_type=tddft requires calculation=md.");
             }
-            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep")
+            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep"
+                || para.input.esolver_type == "snap")
             {
                 if (access(para.input.mdp.pot_file.c_str(), 0) == -1)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "Can not find `pot_file` !");
+                }
+                if (para.input.esolver_type == "snap" && access(para.input.mdp.snap_param_file.c_str(), 0) == -1)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "Can not find `snap_param_file` !");
                 }
             }
             // LR reads the ground state wave function from a separate SCF run,
