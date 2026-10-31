@@ -14,83 +14,91 @@
 #include <complex>
 
 /// H = S = identity: the simplest operator the solvers can be handed
-template <typename T>
-class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
+template <typename T> class IdentityHSOperator : public hsolver::HSOperator<T, base_device::DEVICE_CPU>
 {
   public:
-    void update_k(const int ik) override
-    {
-    }
-    void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
+    void update_k(const int ik) override {}
+    void hpsi(
+        const T *x,
+        T *hx,
+        const int ld,
+        const int nvec) const override
     {
         std::copy(x, x + static_cast<size_t>(ld) * nvec, hx);
     }
-    void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+    void spsi(
+        const T *x,
+        T *sx,
+        const int ld,
+        const int nvec) const override
     {
         std::copy(x, x + static_cast<size_t>(ld) * nvec, sx);
     }
 };
 
 // Mock implementations for the template functions causing linking errors
-namespace ModulePW {
-    // Mock implementation for recip_to_real
-    template<typename FPTYPE, typename Device>
-    void PW_Basis_K::recip_to_real(const Device* ctx,
-                                  const std::complex<FPTYPE>* in,
-                                  std::complex<FPTYPE>* out,
-                                  const int ik,
-                                  const bool add,
-                                  const FPTYPE factor) const
-    {
-        // Simple mock implementation that does nothing
-        // In a real test, you might want to implement behavior that simulates the actual function
-    }
-
-    // Mock implementation for real_to_recip
-    template<typename FPTYPE, typename Device>
-    void PW_Basis_K::real_to_recip(const Device* ctx,
-                                  const std::complex<FPTYPE>* in,
-                                  std::complex<FPTYPE>* out,
-                                  const int ik,
-                                  const bool add,
-                                  const FPTYPE factor) const
-    {
-        // Simple mock implementation that does nothing
-    }
-
-    // Explicit template instantiations
-    template void PW_Basis_K::recip_to_real<float, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<float>* in,
-        std::complex<float>* out,
-        const int ik,
-        const bool add,
-        const float factor) const;
-
-    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<double>* in,
-        std::complex<double>* out,
-        const int ik,
-        const bool add,
-        const double factor) const;
-
-    template void PW_Basis_K::real_to_recip<float, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<float>* in,
-        std::complex<float>* out,
-        const int ik,
-        const bool add,
-        const float factor) const;
-
-    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(
-        const base_device::DEVICE_CPU* ctx,
-        const std::complex<double>* in,
-        std::complex<double>* out,
-        const int ik,
-        const bool add,
-        const double factor) const;
+namespace ModulePW
+{
+// Mock implementation for recip_to_real
+template <typename FPTYPE, typename Device>
+void PW_Basis_K::recip_to_real(
+    const Device *ctx,
+    const std::complex<FPTYPE> *in,
+    std::complex<FPTYPE> *out,
+    const int ik,
+    const bool add,
+    const FPTYPE factor) const
+{
+    // Simple mock implementation that does nothing
+    // In a real test, you might want to implement behavior that simulates the actual function
 }
+
+// Mock implementation for real_to_recip
+template <typename FPTYPE, typename Device>
+void PW_Basis_K::real_to_recip(
+    const Device *ctx,
+    const std::complex<FPTYPE> *in,
+    std::complex<FPTYPE> *out,
+    const int ik,
+    const bool add,
+    const FPTYPE factor) const
+{
+    // Simple mock implementation that does nothing
+}
+
+// Explicit template instantiations
+template void PW_Basis_K::recip_to_real<float, base_device::DEVICE_CPU>(
+    const base_device::DEVICE_CPU *ctx,
+    const std::complex<float> *in,
+    std::complex<float> *out,
+    const int ik,
+    const bool add,
+    const float factor) const;
+
+template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU>(
+    const base_device::DEVICE_CPU *ctx,
+    const std::complex<double> *in,
+    std::complex<double> *out,
+    const int ik,
+    const bool add,
+    const double factor) const;
+
+template void PW_Basis_K::real_to_recip<float, base_device::DEVICE_CPU>(
+    const base_device::DEVICE_CPU *ctx,
+    const std::complex<float> *in,
+    std::complex<float> *out,
+    const int ik,
+    const bool add,
+    const float factor) const;
+
+template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(
+    const base_device::DEVICE_CPU *ctx,
+    const std::complex<double> *in,
+    std::complex<double> *out,
+    const int ik,
+    const bool add,
+    const double factor) const;
+} // namespace ModulePW
 
 /************************************************
  *  unit test of HSolverPW class
@@ -112,79 +120,93 @@ namespace ModulePW {
  */
 
 // mock diago_hs_para
-namespace hsolver {
+namespace hsolver
+{
 template <typename T>
-void diago_hs_para(T* h,
-                   T* s,
-                   const int lda,
-                   const int nband,
-                   typename GetTypeReal<T>::type* const ekb,
-                   T* const wfc,
-                   const MPI_Comm& comm,
-                   const int diag_subspace,
-                   const int block_size = 0)
-{}
-template void diago_hs_para<double>(double* h,
-                                    double* s,
-                                    const int lda,
-                                    const int nband,
-                                    typename GetTypeReal<double>::type* const ekb,
-                                    double* const wfc,
-                                    const MPI_Comm& comm,
-                                    const int diag_subspace,
-                                    const int block_size);
-
-template void diago_hs_para<std::complex<double>>(std::complex<double>* h,
-                                                  std::complex<double>* s,
-                                                  const int lda,
-                                                  const int nband,
-                                                  typename GetTypeReal<std::complex<double>>::type* const ekb,
-                                                  std::complex<double>* const wfc,
-                                                  const MPI_Comm& comm,
-                                                  const int diag_subspace,
-                                                  const int block_size);
-
-template void diago_hs_para<float>(float* h,
-                                   float* s,
-                                   const int lda,
-                                   const int nband,
-                                   typename GetTypeReal<float>::type* const ekb,
-                                   float* const wfc,
-                                   const MPI_Comm& comm,
-                                   const int diag_subspace,
-                                   const int block_size);
-                                   
-template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
-                                                 std::complex<float>* s,
-                                                 const int lda,
-                                                 const int nband,
-                                                 typename GetTypeReal<std::complex<float>>::type* const ekb,
-                                                 std::complex<float>* const wfc,
-                                                 const MPI_Comm& comm,
-                                                 const int diag_subspace,
-                                                 const int block_size);
-
+void diago_hs_para(
+    T *h,
+    T *s,
+    const int lda,
+    const int nband,
+    typename GetTypeReal<T>::type *const ekb,
+    T *const wfc,
+    const MPI_Comm &comm,
+    const int diag_subspace,
+    const int block_size = 0)
+{
 }
+template void diago_hs_para<double>(
+    double *h,
+    double *s,
+    const int lda,
+    const int nband,
+    typename GetTypeReal<double>::type *const ekb,
+    double *const wfc,
+    const MPI_Comm &comm,
+    const int diag_subspace,
+    const int block_size);
 
-class TestHSolverPW : public ::testing::Test {
+template void diago_hs_para<std::complex<double>>(
+    std::complex<double> *h,
+    std::complex<double> *s,
+    const int lda,
+    const int nband,
+    typename GetTypeReal<std::complex<double>>::type *const ekb,
+    std::complex<double> *const wfc,
+    const MPI_Comm &comm,
+    const int diag_subspace,
+    const int block_size);
+
+template void diago_hs_para<float>(
+    float *h,
+    float *s,
+    const int lda,
+    const int nband,
+    typename GetTypeReal<float>::type *const ekb,
+    float *const wfc,
+    const MPI_Comm &comm,
+    const int diag_subspace,
+    const int block_size);
+
+template void diago_hs_para<std::complex<float>>(
+    std::complex<float> *h,
+    std::complex<float> *s,
+    const int lda,
+    const int nband,
+    typename GetTypeReal<std::complex<float>>::type *const ekb,
+    std::complex<float> *const wfc,
+    const MPI_Comm &comm,
+    const int diag_subspace,
+    const int block_size);
+
+} // namespace hsolver
+
+class TestHSolverPW : public ::testing::Test
+{
   public:
     // HSolverPW declares this fixture a friend, but a TEST_F body lives in a
     // class derived from it and friendship is not inherited, so the call into
     // the protected hamiltSolvePsiK() is routed through here.
     template <typename T, typename Device>
-    static void hamiltSolvePsiK(hsolver::HSolverPW<T, Device>& hs,
-                                const hsolver::HSOperator<T, Device>& op,
-                                psi::Psi<T, Device>& ps,
-                                std::vector<typename GetTypeReal<T>::type>& pre,
-                                typename GetTypeReal<T>::type* eig,
-                                const int ntry)
+    static void hamiltSolvePsiK(
+        hsolver::HSolverPW<T, Device> &hs,
+        const hsolver::HSOperator<T, Device> &op,
+        psi::Psi<T, Device> &ps,
+        std::vector<typename GetTypeReal<T>::type> &pre,
+        typename GetTypeReal<T>::type *eig,
+        const int ntry)
     {
-        hs.hamiltSolvePsiK(op, ps, pre, eig, ntry);
+        hs.hamiltSolvePsiK(
+            op,
+            ps,
+            pre,
+            eig,
+            ntry);
     }
 
     ModulePW::PW_Basis_K pwbk;
-    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f
-        = hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU> hs_f =
+        hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>(
             &pwbk,
             "scf",
             "pw",
@@ -200,8 +222,8 @@ class TestHSolverPW : public ::testing::Test {
             4,
             0,
             0);
-    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
-        = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d =
+        hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(
             &pwbk,
             "scf",
             "pw",
@@ -273,7 +295,7 @@ class TestHSolverPW : public ::testing::Test {
 //                      1,
 
 //                      true);
-  
+
 //     // EXPECT_EQ(this->hs_d.initialed_psi, true);
 //     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter,
 //                      0.0);
@@ -365,13 +387,14 @@ class TestHSolverPW : public ::testing::Test {
 //     // EXPECT_EQ(test_diagethr_d, 0.0001);
 // }
 
-TEST_F(TestHSolverPW, SolveLcaoInPW) {
+TEST_F(TestHSolverPW, SolveLcaoInPW)
+{
     pwbk.nks = 1;
     // initial memory and data
     elecstate_test.ekb.create(1, 2);
-    elecstate_test.wg.create(1,2);
-    elecstate_test.klist=new K_Vectors;
-    elecstate_test.skip_weights=true;
+    elecstate_test.wg.create(1, 2);
+    elecstate_test.klist = new K_Vectors;
+    elecstate_test.skip_weights = true;
     elecstate_test.pot = new elecstate::Potential;
     // 1 kpt, 2 bands, 3 basis
     psi_test_cf.resize(1, 2, 3);
@@ -387,29 +410,32 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
 
     // 1, 2, 3 / 4, 5, 6 / 7, 8, 9 would be rank deficient, so the diagonal is
     // lifted to keep the three subspace vectors linearly independent
-    for (int iband = 0; iband < transform_test_cd.get_nbands(); iband++) {
-        for (int ibasis = 0; ibasis < transform_test_cd.get_nbasis();
-             ibasis++) {
+    for (int iband = 0; iband < transform_test_cd.get_nbands(); iband++)
+    {
+        for (int ibasis = 0; ibasis < transform_test_cd.get_nbasis(); ibasis++)
+        {
             const double value = iband * transform_test_cd.get_nbasis() + ibasis + 1 + (iband == ibasis ? 10.0 : 0.0);
-            transform_test_cd
-                .get_pointer()[iband * transform_test_cd.get_nbasis() + ibasis]
-                = std::complex<double>(value, 0.0);
-            transform_test_cf
-                .get_pointer()[iband * transform_test_cf.get_nbasis() + ibasis]
-                = std::complex<float>(value, 0.0);
+            transform_test_cd.get_pointer()[iband * transform_test_cd.get_nbasis() + ibasis] =
+                std::complex<double>(value, 0.0);
+            transform_test_cf.get_pointer()[iband * transform_test_cf.get_nbasis() + ibasis] =
+                std::complex<float>(value, 0.0);
         }
     }
     // with H = S = 1 every subspace eigenvalue is 1 and the rotated psi must
     // come out orthonormal
-    auto check_orthonormal = [](const auto& p, const double tol) {
+    auto check_orthonormal = [](const auto &p, const double tol)
+    {
         const int nb = p.get_nbands();
         const int nbasis = p.get_nbasis();
-        for (int i = 0; i < nb; i++) {
-            for (int j = 0; j < nb; j++) {
+        for (int i = 0; i < nb; i++)
+        {
+            for (int j = 0; j < nb; j++)
+            {
                 std::complex<double> dot = 0.0;
-                for (int ig = 0; ig < nbasis; ig++) {
-                    dot += std::conj(std::complex<double>(p.get_pointer()[i * nbasis + ig]))
-                           * std::complex<double>(p.get_pointer()[j * nbasis + ig]);
+                for (int ig = 0; ig < nbasis; ig++)
+                {
+                    dot += std::conj(std::complex<double>(p.get_pointer()[i * nbasis + ig])) *
+                           std::complex<double>(p.get_pointer()[j * nbasis + ig]);
                 }
                 EXPECT_NEAR(dot.real(), i == j ? 1.0 : 0.0, tol);
                 EXPECT_NEAR(dot.imag(), 0.0, tol);
@@ -420,23 +446,32 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
 
-    hsolver::HSolverLIP<std::complex<float>> hs_f_lip
-        = hsolver::HSolverLIP<std::complex<float>>(&pwbk, false, "pw", "scf", elecstate_test.ekb.nc);
-    hsolver::HSolverLIP<std::complex<double>> hs_d_lip
-        = hsolver::HSolverLIP<std::complex<double>>(&pwbk, false, "pw", "scf", elecstate_test.ekb.nc);
+    hsolver::HSolverLIP<std::complex<float>> hs_f_lip = hsolver::HSolverLIP<std::complex<float>>(
+        &pwbk,
+        false,
+        "pw",
+        "scf",
+        elecstate_test.ekb.nc);
+    hsolver::HSolverLIP<std::complex<double>> hs_d_lip = hsolver::HSolverLIP<std::complex<double>>(
+        &pwbk,
+        false,
+        "pw",
+        "scf",
+        elecstate_test.ekb.nc);
 #ifdef __MPI
     const hsolver::diag_comm_info diag_comm(MPI_COMM_SELF, 0, 1);
 #else
     const hsolver::diag_comm_info diag_comm(0, 1);
 #endif
     std::ostringstream log;
-    hs_f_lip.solve(hamilt_test_f,
-                   psi_test_cf,
-                   &elecstate_test,
-                   transform_test_cf,
-                   diag_comm,
-                   log,
-                   true);
+    hs_f_lip.solve(
+        hamilt_test_f,
+        psi_test_cf,
+        &elecstate_test,
+        transform_test_cf,
+        diag_comm,
+        log,
+        true);
     EXPECT_NE(log.str().find("Average iterative diagonalization steps"), std::string::npos);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
     check_orthonormal(psi_test_cf, 1e-5);
@@ -445,13 +480,14 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
 
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    hs_d_lip.solve(hamilt_test_d,
-                   psi_test_cd,
-                   &elecstate_test,
-                   transform_test_cd,
-                   diag_comm,
-                   log,
-                   true);
+    hs_d_lip.solve(
+        hamilt_test_d,
+        psi_test_cd,
+        &elecstate_test,
+        transform_test_cd,
+        diag_comm,
+        log,
+        true);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     check_orthonormal(psi_test_cd, 1e-10);
     EXPECT_NEAR(elecstate_test.ekb.c[0], 1.0, 1e-10);
@@ -468,8 +504,12 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
     std::vector<double> eigenvalues(5, 0.0);
     // Expect death from WARNING_QUIT due to npwx < nbands
     EXPECT_EXIT(
-        hamiltSolvePsiK(hs_d, hamilt_test_d, psi_test_cd, precond, eigenvalues.data(), 1),
-        ::testing::ExitedWithCode(1),
-        ".*"
-    );
+        hamiltSolvePsiK(
+            hs_d,
+            hamilt_test_d,
+            psi_test_cd,
+            precond,
+            eigenvalues.data(),
+            1),
+        ::testing::ExitedWithCode(1), ".*");
 }

@@ -115,6 +115,43 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_vsc_r(int atom_idx, int dir)
     return std::vector<std::complex<double>>();
 }
 
+void DFPT_PW_Data::set_drho_disp(int atom_idx, int dir, const std::vector<std::complex<double>>& rho)
+{
+    ModuleBase::TITLE("DFPT_PW_Data", "set_drho_disp");
+    ModuleBase::timer::start("DFPT_PW_Data", "set_drho_disp");
+    if (atom_idx < 0 || dir < 0 || dir >= 3)
+    {
+        ModuleBase::timer::end("DFPT_PW_Data", "set_drho_disp");
+        return;
+    }
+    const size_t slot = static_cast<size_t>(3 * atom_idx + dir);
+    if (slot >= drho_disp_.size())
+    {
+        drho_disp_.resize(slot + 1);
+    }
+    drho_disp_[slot] = rho;
+    ModuleBase::timer::end("DFPT_PW_Data", "set_drho_disp");
+}
+
+std::vector<std::complex<double>> DFPT_PW_Data::get_drho_disp(int atom_idx, int dir) const
+{
+    ModuleBase::TITLE("DFPT_PW_Data", "get_drho_disp");
+    ModuleBase::timer::start("DFPT_PW_Data", "get_drho_disp");
+    if (atom_idx < 0 || dir < 0 || dir >= 3)
+    {
+        ModuleBase::timer::end("DFPT_PW_Data", "get_drho_disp");
+        return std::vector<std::complex<double>>();
+    }
+    const size_t slot = static_cast<size_t>(3 * atom_idx + dir);
+    if (slot < drho_disp_.size())
+    {
+        ModuleBase::timer::end("DFPT_PW_Data", "get_drho_disp");
+        return drho_disp_[slot];
+    }
+    ModuleBase::timer::end("DFPT_PW_Data", "get_drho_disp");
+    return std::vector<std::complex<double>>();
+}
+
 void DFPT_PW_Data::set_dpsi_disp(int atom_idx,
                                  int dir,
                                  const std::vector<std::vector<std::vector<std::complex<double>>>>& d)

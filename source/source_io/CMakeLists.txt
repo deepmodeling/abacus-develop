@@ -149,6 +149,34 @@ add_library(
     module_parameter/read_set_globalv.cpp
 )
 
+# Prints docs/parameters.yaml for the documentation build. It links only the
+# INPUT registry and the few source_base files it calls, so .readthedocs.yaml
+# builds this target instead of the full executable.
+add_executable(
+    abacus_input_yaml
+    EXCLUDE_FROM_ALL
+    input_yaml_main.cpp
+    input_help.cpp
+    ../source_base/global_file.cpp
+    ../source_base/global_function.cpp
+    ../source_base/global_variable.cpp
+    ../source_base/parallel_common.cpp
+    ../source_base/parallel_comm.cpp
+    ../source_base/parallel_global.cpp
+    ../source_base/parallel_reduce.cpp
+    ../source_base/timer.cpp
+    ../source_base/tool_quit.cpp
+    ../source_base/tool_title.cpp
+    ../source_base/module_device/device.cpp
+)
+target_link_libraries(
+    abacus_input_yaml
+    PRIVATE
+    io_input
+    parameter
+    abacus::linalg_libs
+)
+
 add_library(
     io_basic
     OBJECT
