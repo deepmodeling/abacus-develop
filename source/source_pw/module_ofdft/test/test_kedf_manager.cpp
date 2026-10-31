@@ -201,3 +201,63 @@ TEST_F(TestKEDFManager, InitWTAndReinitializeWithChangedParameters)
     inp.of_vw_weight = 0.8;
     check_wt(inp);
 }
+
+TEST_F(TestKEDFManager, WeightedEnergyMatchesConservedDensityDerivative)
+{
+    const char* kinetics[] = {"tf", "wt"};
+    const double weights[] = {1.0, 1.1};
+    const double step = 1e-4;
+    std::vector<double> direction(basis.nrxx);
+    double particle_change = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const int iz = ir % basis.nplane + basis.startz_current;
+        const double phase = ModuleBase::TWO_PI * iz / basis.nz;
+        direction[ir] = std::cos(phase);
+        particle_change += direction[ir] * dV;
+    }
+    ASSERT_NEAR(particle_change, 0.0, 1e-10);
+
+    for (const auto kinetic : kinetics)
+    {
+        SCOPED_TRACE(kinetic);
+        for (const double weight : weights)
+        {
+            SCOPED_TRACE(weight);
+            Input_para inp;
+            inp.of_kinetic = kinetic;
+            inp.of_tf_weight = weight;
+            manager.init(inp, &basis, dV, nelec);
+            const double* density[] = {rho.data()};
+            const double* wave[] = {phi.data()};
+            ModuleBase::matrix gradient(1, basis.nrxx);
+            manager.get_potential(density, wave, &basis, gradient);
+            double product = 0.0;
+            for (int ir = 0; ir < basis.nrxx; ++ir)
+            {
+                // The manager returns dT/dphi; convert to dT/drho.
+                product += gradient(0, ir) * direction[ir] / (2.0 * phi[ir]) * dV;
+            }
+
+            double energies[2];
+            std::vector<double> perturbed_rho(basis.nrxx);
+            std::vector<double> perturbed_phi(basis.nrxx);
+            for (int sign_index = 0; sign_index < 2; ++sign_index)
+            {
+                const double sign = 1.0 - 2.0 * sign_index;
+                for (int ir = 0; ir < basis.nrxx; ++ir)
+                {
+                    perturbed_rho[ir] = rho[ir] + sign * step * direction[ir];
+                    perturbed_phi[ir] = std::sqrt(perturbed_rho[ir]);
+                }
+                const double* perturbed_density[] = {perturbed_rho.data()};
+                const double* perturbed_wave[] = {perturbed_phi.data()};
+                ModuleBase::matrix perturbed_gradient(1, basis.nrxx);
+                manager.get_potential(perturbed_density, perturbed_wave, &basis, perturbed_gradient);
+                energies[sign_index] = manager.get_energy();
+            }
+            const double derivative = (energies[0] - energies[1]) / (2.0 * step);
+            EXPECT_NEAR(derivative, product, 1e-5);
+        }
+    }
+}
