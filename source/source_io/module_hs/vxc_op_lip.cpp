@@ -4,6 +4,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_io/module_hs/hs_dense_io.h"
+#include "source_io/module_hs/vxc_op_tools.h"
 
 #include <fstream>
 #include <iomanip>
@@ -104,6 +105,8 @@ FPTYPE all_band_energy_lip(const int ik, const std::vector<FPTYPE>& orbital_ener
 
 template <typename FPTYPE>
 void write_Vxc_LIP(int nspin,
+                   const int istep,
+                   const double etot,
                    int naos,
                    int drank,
                    const psi::Psi<std::complex<FPTYPE>>& psi_pw,
@@ -195,15 +198,15 @@ void write_Vxc_LIP(int nspin,
 #endif
 
         // add-up and write
-        const int istep = -1;
+        const int istep_mat = -1;
         const int out_label = 1; // 1 means .txt while 2 means .dat
-        const bool out_app_flag = 0;
+        const int out_app_flag = 0;
         std::string vxc_file = ModuleIO::filename_output(
             global_out_dir,
             "vxc", "nao", ik, kv.ik2iktot, nspin, kv.get_nkstot(),
-            out_label, out_app_flag, gamma_only, istep);
+            out_label, out_app_flag, gamma_only, istep_mat);
 
-        ModuleIO::save_mat(istep, vxc_tot_k_mo.data(), nbands,
+        ModuleIO::save_mat(istep_mat, vxc_tot_k_mo.data(), nbands,
             false, out_ndigits, true,
             out_app_flag, vxc_file,
             p2d_serial, drank, ks_solver, false);
@@ -215,13 +218,18 @@ void write_Vxc_LIP(int nspin,
     const int nspin0 = (nspin == 2) ? 2 : 1;
     auto write_orb_energy_lip = [&kv, &nspin0, &nbands, &global_out_dir](const std::vector<std::vector<FPTYPE>>& e_orb,
         const std::string& label,
+        const std::string& header,
         const bool app = false) {
             assert(e_orb.size() == kv.get_nks());
             const int nk = kv.get_nks() / nspin0;
             std::ofstream ofs;
             const std::string out_name = (label == "") ? ".txt" : "_" + label + ".txt";
-            ofs.open(global_out_dir + "vxc" + out_name,
+            ofs.open(global_out_dir + "eband_vxc" + out_name,
                 app ? std::ios::app : std::ios::out);
+            if (!header.empty())
+            {
+                ofs << header;
+            }
             ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
             ofs << std::scientific << std::setprecision(16);
             for (int ik = 0; ik < nk; ++ik)
@@ -238,12 +246,17 @@ void write_Vxc_LIP(int nspin,
 
     if (GlobalV::MY_RANK == 0)
     {
-        write_orb_energy_lip(e_orb_tot, "");
+        const double etot_eV = etot * ModuleBase::Ry_to_eV;
+        const std::string time_stamp = local_time_stamp();
+        const std::string header_tot = build_eband_header(istep, etot_eV, "V_xc", time_stamp);
+        write_orb_energy_lip(e_orb_tot, "", header_tot);
 #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))
         if (cal_exx)
         {
-            write_orb_energy_lip(e_orb_locxc, "local");
-            write_orb_energy_lip(e_orb_exx, "exx");
+            const std::string header_loc = build_eband_header(istep, etot_eV, "V_xc_local", time_stamp);
+            const std::string header_exx = build_eband_header(istep, etot_eV, "V_EXX", time_stamp);
+            write_orb_energy_lip(e_orb_locxc, "local", header_loc);
+            write_orb_energy_lip(e_orb_exx, "exx", header_exx);
         }
 #endif
     }
@@ -251,7 +264,7 @@ void write_Vxc_LIP(int nspin,
 
 // Explicit template instantiations
 template void write_Vxc_LIP<float>(
-    int, int, int, const psi::Psi<std::complex<float>>&, const UnitCell&, Structure_Factor&, surchem&,
+    int, const int, const double, int, int, const psi::Psi<std::complex<float>>&, const UnitCell&, Structure_Factor&, surchem&,
     const ModulePW::PW_Basis_K&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&,
     const bool, const std::string&, const int, const std::string&, bool, double
@@ -261,7 +274,7 @@ template void write_Vxc_LIP<float>(
 );
 
 template void write_Vxc_LIP<double>(
-    int, int, int, const psi::Psi<std::complex<double>>&, const UnitCell&, Structure_Factor&, surchem&,
+    int, const int, const double, int, int, const psi::Psi<std::complex<double>>&, const UnitCell&, Structure_Factor&, surchem&,
     const ModulePW::PW_Basis_K&, const ModulePW::PW_Basis&, const ModulePW::PW_Basis&,
     const ModuleBase::matrix&, const Charge&, const K_Vectors&, const ModuleBase::matrix&,
     const bool, const std::string&, const int, const std::string&, bool, double

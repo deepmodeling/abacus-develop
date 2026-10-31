@@ -20,7 +20,11 @@ if(NOT ENABLE_MPI)
   return()
 endif()
 
-add_executable(MODULE_IO_input_error_mpi test_read_input.cpp)
+add_executable(MODULE_IO_input_error_mpi test_read_input.cpp
+    # io_input (via read_set_globalv.cpp) references
+    # stru_frame_io::extract_last_frame, but this test does not link
+    # the cell library, so provide the translation unit directly.
+    ../../source_cell/stru_frame_io.cpp)
 target_link_libraries(MODULE_IO_input_error_mpi PRIVATE parameter base device io_input abacus::linalg_libs)
 if(ENABLE_COVERAGE)
   add_coverage(MODULE_IO_input_error_mpi)
@@ -56,6 +60,10 @@ AddTest(
   TARGET MODULE_IO_input_test_para
   LIBS parameter  base device io_input
   SOURCES test_read_input_parallel.cpp
+          # io_input (via read_set_globalv.cpp) references
+          # stru_frame_io::extract_last_frame, but this test does not link
+          # the cell library, so provide the translation unit directly.
+          ../../source_cell/stru_frame_io.cpp
 )
 
 add_test(NAME MODULE_IO_input_test_para_4
@@ -132,6 +140,7 @@ AddTest(
   TARGET MODULE_IO_parse_args
   LIBS parameter  base device io_input
   SOURCES test_parse_args.cpp ../parse_args.cpp ../input_help.cpp
+          ../../source_cell/stru_frame_io.cpp
 )
 
 AddTest(
@@ -144,6 +153,7 @@ AddTest(
   TARGET MODULE_IO_input_help_test
   LIBS parameter  base device io_input
   SOURCES test_input_help.cpp ../input_help.cpp
+          ../../source_cell/stru_frame_io.cpp
 )
 
 AddTest(

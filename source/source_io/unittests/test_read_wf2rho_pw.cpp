@@ -286,9 +286,11 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
 
     const int istep = -1; // -1 means ionic iteration number will not appear in file name
     const int iter = -1;  // -1 means electronic iteration number will not appear in file name
+    const int append_step = -1; // single-point write: truncate, do not append
 
     ModuleIO::write_wfc_pw(istep,
                            iter,
+                           append_step,
                            kpar,
                            my_pool,
                            my_rank,
@@ -298,6 +300,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
                            GlobalV::RANK_IN_POOL,
                            GlobalV::NPROC_IN_POOL,
                            TestParameters::input().out_wfc_pw,
+                           0,
                            ecutwfc,
                            out_dir,
                            *psi,
@@ -362,6 +365,137 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
             remove("running_log1.txt");
             remove("running_log2.txt");
             remove("running_log3.txt");
+        }
+    }
+}
+
+// Size of a file in bytes; returns -1 when the file cannot be opened.
+static long file_size_bytes(const std::string& path)
+{
+    std::ifstream ifs(path.c_str(), std::ios::binary | std::ios::ate);
+    if (!ifs.is_open())
+    {
+        return -1;
+    }
+    return static_cast<long>(ifs.tellg());
+}
+
+// In append mode (out_app_flag == 1) with a fixed filename (istep == -1), the
+// first output step of a run must truncate the file while a later step must
+// append a new frame. This is driven by append_step, independent of the
+// filename sentinel istep. Before the fix, istep == -1 always truncated, so a
+// second write never grew the file.
+TEST_F(ReadWfcRhoTest, WriteWfcAppendMode)
+{
+    const int kpar = GlobalV::KPAR;
+    const int nspin = 1;
+    const int nbands = 4;
+    const int my_pool = GlobalV::MY_POOL;
+    const int my_rank = GlobalV::MY_RANK;
+    const int nproc_in_pool = GlobalV::NPROC_IN_POOL;
+    const int rank_in_pool = GlobalV::RANK_IN_POOL;
+    const int nks = 2;
+    const int nkstot = kpar * nks;
+
+    // K points and PW basis
+    kv->set_nkstot(nkstot);
+    kv->set_nks(nks);
+    kv->isk = {0, 0};
+    const double shift = my_pool * 0.1;
+    kv->kvec_d = {ModuleBase::Vector3<double>(shift, shift, shift), ModuleBase::Vector3<double>(0.5 + shift, 0.5 + shift, 0.5 + shift)};
+    kv->ik2iktot.resize(nks);
+    cal_ik2iktot(kv->ik2iktot, nks, nkstot);
+
+#ifdef __MPI
+    wfcpw->initmpi(nproc_in_pool, rank_in_pool, POOL_WORLD);
+#endif
+    wfcpw->initgrids(5.3233, ModuleBase::Matrix3(-0.5, 0.0, 0.5, 0.0, 0.5, 0.5, -0.5, 0.5, 0.0), 80);
+    wfcpw->initparameters(false, 20, nks, kv->kvec_d.data());
+    wfcpw->setuptransform();
+    wfcpw->collect_local_pw();
+
+    kv->kvec_c.clear();
+    for (int ik = 0; ik < nks; ++ik)
+    {
+        kv->kvec_c.push_back(wfcpw->kvec_c[ik]);
+    }
+    kv->ngk = {wfcpw->npwk[0], wfcpw->npwk[1]};
+    kv->wk = {1.0, 1.0};
+
+    psi = new psi::Psi<std::complex<double>>(nks, nbands, wfcpw->npwk_max, kv->ngk, true);
+    std::complex<double>* ptr = psi->get_pointer();
+    for (int i = 0; i < nks * nbands * wfcpw->npwk_max; i++)
+    {
+        ptr[i] = std::complex<double>((i + my_pool * 100) / 100.0, (i + my_pool) / 100.0);
+    }
+
+    const std::string out_dir = "./";
+    std::ofstream running_log("running_log_app0.txt");
+    const double ecutwfc = 20;
+    const int npol = 1;
+    const int istep = -1;   // filename sentinel: no step suffix
+    const int iter = -1;
+    const int out_app_flag = 1; // append mode
+
+    auto write_once = [&](const int append_step) {
+        ModuleIO::write_wfc_pw(istep,
+                               iter,
+                               append_step,
+                               kpar,
+                               my_pool,
+                               my_rank,
+                               nbands,
+                               nspin,
+                               npol,
+                               rank_in_pool,
+                               nproc_in_pool,
+                               TestParameters::input().out_wfc_pw,
+                               out_app_flag,
+                               ecutwfc,
+                               out_dir,
+                               *psi,
+                               *kv,
+                               wfcpw,
+                               running_log);
+    };
+
+    write_once(0); // fresh first step: truncate
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    const long size_first = file_size_bytes("wfk1_pw.dat");
+
+    write_once(1); // later step: append a frame
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    const long size_second = file_size_bytes("wfk1_pw.dat");
+
+    write_once(0); // fresh run again: truncate back to a single frame
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    const long size_third = file_size_bytes("wfk1_pw.dat");
+
+    if (my_rank == 0)
+    {
+        EXPECT_GT(size_first, 0);
+        EXPECT_GT(size_second, size_first);
+        EXPECT_EQ(size_third, size_first);
+    }
+
+    running_log.close();
+    delete psi;
+
+    if (my_rank == 0)
+    {
+        remove("running_log_app0.txt");
+        remove("wfk1_pw.dat");
+        remove("wfk2_pw.dat");
+        if (kpar == 2)
+        {
+            remove("wfk3_pw.dat");
+            remove("wfk4_pw.dat");
         }
     }
 }

@@ -53,8 +53,8 @@ void setup_exx_h_params(ModuleIO::WriteHParams& h_params, Exx_NAO<TK>& exx_nao, 
     // EXX-H output is unsupported. Reject it explicitly here so the request cannot be silently
     // dropped (the WARNING_QUIT inside write_h_exx is unreachable at multi-k).
     ModuleBase::WARNING_QUIT("setup_exx_h_params",
-                             "out_mat_h_exx is only supported for gamma-only: the V^EXX(R) "
-                             "output is not available at multi-k. Use gamma_only.");
+                             "out_mat_exxk (legacy out_mat_h_exx) is only supported for gamma-only: "
+                             "the V^EXX(R) output is not available at multi-k. Use gamma_only.");
 }
 
 template <>
@@ -136,10 +136,15 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
     //*****
 
-    const bool out_app_flag = inp.out_app_flag;
+    const int out_app_flag = inp.out_app_flag;
     const bool gamma_only = PARAM.globalv.gamma_only_local;
     const int nspin = inp.nspin;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    const std::string global_mat_dir = PARAM.globalv.global_mat_dir;
+    const std::string global_matrix_dir = PARAM.globalv.global_matrix_dir;
+    const int npol = PARAM.globalv.npol;
+    const int nlocal = PARAM.globalv.nlocal;
+    const bool cal_force = inp.cal_force;
 
     //------------------------------------------------------------------
     //! 1) print out density of states (DOS)
@@ -168,7 +173,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                  inp.dos_emin_ev,
                                  PARAM.globalv.two_fermi,
                                  inp.bndpar,
-                                 PARAM.globalv.global_out_dir,
+                                 PARAM.globalv.global_dos_dir,
                                  ofs_running);
     }
 
@@ -178,9 +183,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     if (inp.out_dmr[0])
     {
         const int precision = inp.out_dmr[1];
+        const bool append_dmr = (out_app_flag == 1) && (istep > 0);
 
-        ModuleIO::write_dmr(dm->get_dmr_vec(), &ucell, precision, pv, out_app_flag, 
-			ucell.get_iat2iwt(), ucell.nat, istep, ofs_running);
+        ModuleIO::write_dmr(dm->get_dmr_vec(), &ucell, precision, pv, append_dmr,
+				ucell.get_iat2iwt(), ucell.nat, global_mat_dir, istep, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -195,7 +201,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         }
         const int precision = inp.out_dmk[1];
 
-        ModuleIO::write_dmk(dm->get_dmk_vec(), kv, precision, efermis, &(ucell), pv, global_out_dir, istep, ofs_running);
+        ModuleIO::write_dmk(dm->get_dmk_vec(), kv, precision, efermis, &(ucell), pv, global_mat_dir, istep, out_app_flag, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -205,7 +211,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     if (hsk_out_type == 1 || hsk_out_type == 2)
     {
         const int precision = inp.out_hsk[1];
-        ModuleIO::write_hsk(global_out_dir,
+        ModuleIO::write_hsk(global_mat_dir,
                             nspin,
                             kv.get_nks(),
                             kv.get_nkstot(),
@@ -279,8 +285,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
 
         ModuleIO::write_hsr(hr_vec, sr, &ucell, inp.out_hsr[0], precision, pv,
-                            out_app_flag, gamma_only, ucell.get_iat2iwt(), ucell.nat, istep,
-                            PARAM.globalv.global_out_dir, pelec->eferm,
+                            (out_app_flag == 1), gamma_only, ucell.get_iat2iwt(), ucell.nat, istep,
+                            global_mat_dir, pelec->eferm,
                             ofs_running);
     }
 
@@ -290,7 +296,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     const bool output_hsr_npz = inp.out_hsr[0] == 3 || inp.out_hsr_npz_compat;
     if (output_hsr_npz)
     {
-        std::string zipname = PARAM.globalv.global_out_dir + "sr_nao.npz";
+        std::string zipname = global_mat_dir + "sr_nao.npz";
         ModuleIO::output_mat_npz(ucell, zipname, *(p_hamilt->getSR()));
     }
 
@@ -300,7 +306,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         for (int ispin = 0; ispin < hr_vec.size(); ++ispin)
         {
             std::string zipname
-                = PARAM.globalv.global_out_dir + "hrs" + std::to_string(ispin + 1) + "_nao.npz";
+                = global_mat_dir + "hrs" + std::to_string(ispin + 1) + "_nao.npz";
             ModuleIO::output_mat_npz(ucell, zipname, *(hr_vec[ispin]));
         }
     }
@@ -311,7 +317,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         for (int ispin = 0; ispin < dmr_vec.size(); ++ispin)
         {
             std::string zipname
-                = PARAM.globalv.global_out_dir + "output_DM" + std::to_string(ispin) + ".npz";
+                = global_mat_dir + "output_DM" + std::to_string(ispin) + ".npz";
             ModuleIO::output_mat_npz(ucell, zipname, *(dmr_vec[ispin]));
         }
     }
@@ -343,6 +349,15 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                 kv,
                                 p_ham_tk,
                                 &dftu,
+                                global_out_dir,
+                                global_matrix_dir,
+                                inp.calculation,
+                                out_app_flag,
+                                nspin,
+                                gamma_only,
+                                npol,
+                                nlocal,
+                                cal_force,
                                 ofs_running);
 
     //------------------------------------------------------------------
@@ -399,7 +414,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         dh_params.nspin = inp.nspin;
         dh_params.istep = istep;
         dh_params.gamma_only = gamma_only;
-        dh_params.append = out_app_flag;
+        dh_params.append = (out_app_flag == 1);
         dh_params.ofs_running = &ofs_running;
         if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
         {
@@ -442,7 +457,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         h_params.nrxx = pw_rho->nrxx;
         h_params.nspin = nspin;
         h_params.istep = istep;
-        h_params.append = out_app_flag;
+        h_params.append = (out_app_flag == 1);
         h_params.iat2iwt = ucell.get_iat2iwt();
         h_params.nat = ucell.nat;
         h_params.nlocal = PARAM.globalv.nlocal;
@@ -453,33 +468,34 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         h_params.gga_grad = PARAM.inp.gga_grad;
         h_params.out_app_flag = out_app_flag;
         h_params.calculation = inp.calculation;
-        h_params.global_out_dir = global_out_dir;
-        h_params.global_matrix_dir = PARAM.globalv.global_matrix_dir;
+        // H(k) component matrices follow the selected matrix directory so
+        // they land in MAT/ together with the other matrix outputs in mode 2
+        h_params.global_out_dir = global_mat_dir;
+        h_params.global_matrix_dir = global_matrix_dir;
         h_params.ks_solver = PARAM.inp.ks_solver;
         h_params.drank = GlobalV::DRANK;
         h_params.ofs_running = &ofs_running;
-        if (inp.out_mat_h_t[0])
-        {
-            ModuleIO::write_h_t(h_params);
-        }
-        if (inp.out_mat_h_vnl[0])
+        // out_mat_h_t is a legacy alias for out_mat_tk (resolved at input
+        // normalization); the dedicated write_h_t path is removed because it
+        // duplicated the T(k) output of the out_mat_tk block below.
+        if (inp.out_mat_vnlk[0])
         {
             ModuleIO::write_h_vnl(h_params);
         }
-        if (inp.out_mat_h_vl[0])
+        if (inp.out_mat_vlk[0])
         {
             ModuleIO::write_h_vl(h_params);
         }
-        if (inp.out_mat_h_vh[0])
+        if (inp.out_mat_vhk[0])
         {
             ModuleIO::write_h_vh(h_params);
         }
-        if (inp.out_mat_h_vxc[0])
+        if (inp.out_mat_vxck[0])
         {
             ModuleIO::write_h_vxc(h_params);
         }
 #ifdef __EXX
-        if (inp.out_mat_h_exx[0] && exx_info.info_global.cal_exx)
+        if (inp.out_mat_exxk[0] && exx_info.info_global.cal_exx)
         {
             // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
             setup_exx_h_params(h_params, exx_nao, exx_info);
@@ -509,7 +525,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
             const int out_label = 1; // 1: .txt, 2: .dat
 
-            std::string t_fn = ModuleIO::filename_output(global_out_dir,
+            std::string t_fn = ModuleIO::filename_output(global_mat_dir,
                                                          "tk",
                                                          "nao",
                                                          ik,
@@ -527,7 +543,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                false, // bit
                                inp.out_mat_tk[1],
                                1, // true for upper triangle matrix
-                               inp.out_app_flag,
+                               (inp.out_app_flag == 1),
                                t_fn,
                                pv,
                                GlobalV::DRANK,
@@ -558,7 +574,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           PARAM.globalv.gamma_only_local,
                                                           &ofs_running,
                                                           GlobalV::MY_RANK);
-        mylcalculator.calculate(inp.suffix, global_out_dir, ucell, inp.out_mat_l[1], GlobalV::MY_RANK, istep_in);
+        mylcalculator.calculate(inp.suffix, global_mat_dir, ucell, inp.out_mat_l[1], GlobalV::MY_RANK, istep_in, out_app_flag);
     }
 
     //------------------------------------------------------------------

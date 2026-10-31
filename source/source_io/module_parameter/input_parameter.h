@@ -482,12 +482,17 @@ struct Input_para
     std::vector<int> out_mat_tk = {0, 8};     ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};      ///< output L matrix in local basis.
     std::vector<int> out_mat_hs2 = {0, 8};    ///< legacy alias for text H(R) and S(R) output
-    std::vector<int> out_mat_h_t = {0, 8};    ///< output kinetic energy T(R) matrix
-    std::vector<int> out_mat_h_vnl = {0, 8};  ///< output nonlocal pseudopotential Vnl(R) matrix
-    std::vector<int> out_mat_h_vl = {0, 8};   ///< output local pseudopotential Vl(R) matrix
-    std::vector<int> out_mat_h_vh = {0, 8};   ///< output Hartree Vh(R) matrix
-    std::vector<int> out_mat_h_vxc = {0, 8};  ///< output XC Vxc(R) matrix
-    std::vector<int> out_mat_h_exx = {0, 8};  ///< output exact-exchange Vexx(R) matrix
+    std::vector<int> out_mat_h_t = {0, 8};    ///< legacy alias for out_mat_tk (kinetic T(k) matrix)
+    std::vector<int> out_mat_vnlk = {0, 8};   ///< output nonlocal pseudopotential Vnl(k) matrix
+    std::vector<int> out_mat_vlk = {0, 8};    ///< output local pseudopotential Vl(k) matrix
+    std::vector<int> out_mat_vhk = {0, 8};    ///< output Hartree Vh(k) matrix
+    std::vector<int> out_mat_vxck = {0, 8};   ///< output XC Vxc(k) matrix
+    std::vector<int> out_mat_exxk = {0, 8};   ///< output exact-exchange Vexx(k) matrix
+    std::vector<int> out_mat_h_vnl = {0, 8};  ///< legacy alias for out_mat_vnlk
+    std::vector<int> out_mat_h_vl = {0, 8};   ///< legacy alias for out_mat_vlk
+    std::vector<int> out_mat_h_vh = {0, 8};   ///< legacy alias for out_mat_vhk
+    std::vector<int> out_mat_h_vxc = {0, 8};  ///< legacy alias for out_mat_vxck
+    std::vector<int> out_mat_h_exx = {0, 8};  ///< legacy alias for out_mat_exxk
     std::vector<int> out_mat_dh = {0, 8};     ///< output dH/dR matrices with precision
     std::vector<int> out_mat_dh_t = {0, 8};   ///< output kinetic dH/dR (dT/dR) matrices
     std::vector<int> out_mat_dh_vl = {0, 8};  ///< output local pseudopotential dH/dR (dV^L/dR) matrices
@@ -498,12 +503,13 @@ struct Input_para
     bool out_mat_xc = false;                  ///< output exchange-correlation matrix in
                                               ///< KS-orbital representation.
     std::vector<int> out_mat_xc2 = {0, 8};    ///< output Vxc(R) matrix with precision
-    bool out_eband_terms = false;             ///< output the band energy terms separately
+    bool out_eband = false;                   ///< output the band energy terms separately
     bool out_hr_npz = false;                  ///< output H(R) matrix in npz format
     bool out_hsr_npz = false;                 ///< output H(R) and S(R) matrices in npz format
     bool out_dm_npz = false;                  ///< output DM(R) matrix in npz format
-    bool out_app_flag = true;                ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
-                                             ///< in an append manner during MD liuyu 2023-03-20
+    int out_app_flag = 1;                   ///< 0: no append, no subdirectory; 1: append to same file;
+                                            ///< 2: write to subdirectory (PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/)
+                                            ///< liuyu 2023-03-20, modified 2025-10-16
     int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output
     std::vector<int> out_mat_t = {0, 8};     ///< output T(R) matrix with precision
     bool out_element_info = false;           ///< output information of all elements

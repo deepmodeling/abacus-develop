@@ -14,6 +14,7 @@
 void ModuleIO::write_wfc_pw(
         const int istep,
         const int iter,
+        const int append_step,
         const int kpar,
         const int my_pool,
         const int my_rank,
@@ -23,6 +24,7 @@ void ModuleIO::write_wfc_pw(
         const int rank_in_pool,
         const int nproc_in_pool,
         const int out_wfc_pw,
+        const int out_app_flag,
         const double& ecutwfc,
         const std::string& global_out_dir,
         const psi::Psi<std::complex<double>>& psi,
@@ -43,7 +45,6 @@ void ModuleIO::write_wfc_pw(
     assert(nkstot>0);
     assert(nks>0);
 
-    bool out_app_flag = false; // need to modify later, mohan 2025-05-17
     bool gamma_only = false; // need to modify later, mohan 2025-05-17
 
     std::string* wfilename = new std::string[nks];
@@ -65,15 +66,26 @@ void ModuleIO::write_wfc_pw(
 
             if (rank_in_pool == 0)
             {
-                if (out_wfc_pw == 1)
+                // Mirrors write_wfc_nao's append_flag: the first step of a
+                // run truncates the file, later steps append a new frame
+                // when out_app_flag == 1, so the file accumulates one frame
+                // per ionic step instead of being rewritten each step. The
+                // decision uses append_step (the real output step), not istep
+                // (the filename sentinel), so an out_freq_ion == 0 run that
+                // writes a fixed-name file still appends after its first step.
+                const bool append_frame = (append_step > 0 && out_app_flag == 1);
+                if (!append_frame)
                 {
-                    std::ofstream ofs(fn.c_str()); // clear all wavefunc files.
-                    ofs.close();
-                }
-                else if (out_wfc_pw == 2)
-                {
-                    Binstream wfs(fn, "w");
-                    wfs.close();
+                    if (out_wfc_pw == 1)
+                    {
+                        std::ofstream ofs(fn.c_str()); // clear all wavefunc files.
+                        ofs.close();
+                    }
+                    else if (out_wfc_pw == 2)
+                    {
+                        Binstream wfs(fn, "w");
+                        wfs.close();
+                    }
                 }
             }
         }

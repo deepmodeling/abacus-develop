@@ -226,19 +226,21 @@ namespace ModuleIO
              *               filenames are fixed as l{x,y,z}[g{step}]_nao.txt)
              * @param outdir the output directory
              * @param ucell the unit cell object
-             * @param precision the precision of the output, default is 10
-             * @param rank the MPI rank, default is 0
-             * @param istep the ionic step index. If >= 0, the filename includes
-             *              `g{istep+1}` (e.g., lxg1_nao.txt); if -1, the filename
-             *              has no step suffix (e.g., lx_nao.txt). Default is -1
-             *              (single-step overwrite mode).
+             * @param precision the precision of the output
+             * @param rank the MPI rank
+             * @param istep the ionic step index; -1 for single-point runs
+             * @param out_app_flag append mode: with 1 the fixed filename
+             *              l{x,y,z}_nao.txt is reused and each step appends;
+             *              with 0 or 2 the filename carries `g{istep+1}`
+             *              (e.g., lxg1_nao.txt)
              */
             void calculate(const std::string& prefix,
                            const std::string& outdir,
                            const UnitCell& ucell,
-                           const int precision = 10,
-                           const int rank = 0,
-                           const int istep = -1);
+                           const int precision,
+                           const int rank,
+                           const int istep,
+                           const int out_app_flag);
 
         private:
             std::ofstream fallback_ofs_;

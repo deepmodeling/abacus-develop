@@ -219,7 +219,8 @@ void ModuleIO::write_hcontainer_csr_binary(const std::string& fname,
     }
     std::sort(R_coordinates.begin(), R_coordinates.end());
 
-    const int step = std::max(istep, 0);
+    // ionic step written one-based per governance rule 22
+    const int step = std::max(istep, 0) + 1;
     const int nbasis = mat_serial->get_nbasis();
     const int nR = static_cast<int>(R_coordinates.size());
     write_native_value(ofs, step);

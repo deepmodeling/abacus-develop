@@ -264,7 +264,7 @@ void CellIndex::cal_orbitalCounts()
 void CellIndex::write_orb_info(const std::string& out_dir) const
 {
     std::stringstream os;
-    os << out_dir << "Orbital";
+    os << out_dir << "nao.txt";
     std::ofstream out(os.str().c_str());
     out << std::setw(5) << "#io" << std::setw(8) << "spec" << std::setw(5) << "l" << std::setw(5) << "m" << std::setw(5)
         << "z" << std::setw(5) << "sym" << std::endl;

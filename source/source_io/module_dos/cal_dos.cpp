@@ -108,7 +108,7 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
         const ModuleBase::matrix& ekb, // energy for each k point and each band
         const ModuleBase::matrix& wg,  // weight of k-points and bands
         const int istep, // ionic step
-        const bool out_app_flag,
+        const int out_app_flag,
         const int bndpar)
 {
     ModuleBase::TITLE("ModuleIO", "cal_dos");
@@ -117,7 +117,8 @@ bool ModuleIO::cal_dos(const int& is,  // index for spin
 
     if (GlobalV::MY_RANK == 0)
     {
-        if(out_app_flag==true)
+        const bool append_step = (out_app_flag == 1) && (istep > 0);
+        if (append_step)
         {
             ofs_dos.open(fn.c_str(), std::ios::app);
         }

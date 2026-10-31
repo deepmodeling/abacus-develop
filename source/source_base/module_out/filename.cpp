@@ -14,7 +14,7 @@ std::string filename_output(
             const int nspin,
             const int nkstot,
             const int out_type,
-            const bool out_app_flag,
+            const int out_app_flag,
             const bool gamma_only,
             const int istep,
             const int iter)
@@ -86,7 +86,11 @@ std::string filename_output(
     else
     {
         // mohan add 20250921
-        if(property=="hk" || property=="sk" || property=="tk")
+        // A property whose name already ends in 'k' denotes a k-space
+        // quantity (hk, sk, tk, vhk, vlk, vnlk, vxck, vexxk, ...); the
+        // k-point index then needs no extra 'k' prefix, otherwise the
+        // filename would contain a doubled 'k' (e.g. vhkk1).
+        if (!property.empty() && property.back() == 'k')
         {
             kpoint_block = std::to_string(ik0+1);
         }
@@ -97,14 +101,14 @@ std::string filename_output(
     }
 
     std::string istep_block
-        = (istep >= 0 && (!out_app_flag))
+        = (istep >= 0 && (out_app_flag != 1))
               ? "g" + std::to_string(istep + 1) // istep starts from 0
-              : ""; // only when istep >= 0 and out_app_flag is false will write each wfc to a separate file
+              : ""; // only when istep >= 0 and out_app_flag is not append mode will write each wfc to a separate file
 
     std::string iter_block
-        = (iter >= 0 && (!out_app_flag))
+        = (iter >= 0 && (out_app_flag != 1))
               ? "e" + std::to_string(iter) // iter starts from 1
-              : ""; // only when istep >= 0 and out_app_flag is false will write each wfc to a separate file
+              : ""; // only when istep >= 0 and out_app_flag is not append mode will write each wfc to a separate file
 
     std::string suffix_block;
     if (out_type == 1)

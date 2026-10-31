@@ -37,6 +37,19 @@ compare_hr_csr(){
 	python3 $COMPARE_SCRIPT <(sed -n "$pick" "$ref") <(sed -n "$pick" "$cal") 3
 }
 
+# Band-energy-term files start with comment lines (version, timestamp, ionic
+# step, formula, units) that legitimately change between runs, so the header
+# is stripped and only the numeric body is compared.
+compare_eband_energy(){
+	local ref=$1
+	local cal=$2
+	if ! test -f "$ref" || ! test -f "$cal"; then
+		echo "Error: can not find file $ref or $cal"
+		return 1
+	fi
+	python3 $COMPARE_SCRIPT <(sed '/^[[:space:]]*#/d' "$ref") <(sed '/^[[:space:]]*#/d' "$cal") 4
+}
+
 run_mat_dm1_props(){
 
 #-------------------------------
@@ -69,8 +82,8 @@ fi
 # echo $out_pband
 #-------------------------------
 if ! test -z "$out_pband"  && [  $out_pband == 1 ]; then
-	orbref=refOrbital
-	orbcal=OUT.autotest/Orbital
+	orbref=refNaoTxt
+	orbcal=OUT.autotest/nao.txt
 	python3 $COMPARE_SCRIPT $orbref $orbcal 8
 	echo "CompareOrb_pass $?" >>$props_result_file
 fi
@@ -106,8 +119,18 @@ fi
 if ! test -z "$has_band"  && [  $has_band == 1 ]; then
 	bandref=band.txt.ref
 	bandcal=OUT.autotest/band.txt
-	python3 $COMPARE_SCRIPT $bandref $bandcal 8
-	echo "CompareBand_pass $?" >>$props_result_file
+	# Every ionic step in band.txt is preceded by a provenance comment block
+	# ("# ABACUS version: ...", "# Written at ...", "# IONIC STEP n"), so the
+	# reference and the computed file are compared after those lines are
+	# stripped. A missing file must be reported explicitly, because process
+	# substitution would hand CompareFile.py an empty stream and pass silently.
+	if ! test -f "$bandref" || ! test -f "$bandcal"; then
+		echo "Error: can not find file $bandref or $bandcal"
+		echo "CompareBand_pass 1" >>$props_result_file
+	else
+		python3 $COMPARE_SCRIPT <(sed '/^[[:space:]]*#/d' "$bandref") <(sed '/^[[:space:]]*#/d' "$bandcal") 8
+		echo "CompareBand_pass $?" >>$props_result_file
+	fi
 fi
 
 #--------------------------------
@@ -214,11 +237,11 @@ if ! test -z "$has_xc" && [ "$has_xc" == 1 ]; then
 			xcref=vxck2_nao.txt.ref
 			xccal=OUT.autotest/vxck2_nao.txt
 	fi
-	oeref=vxc.ref
-	oecal=OUT.autotest/vxc.txt
+	oeref=eband_vxc.ref
+	oecal=OUT.autotest/eband_vxc.txt
 	python3 $COMPARE_SCRIPT $xcref $xccal 4
 	echo "CompareVXC_pass $?" >>$props_result_file
-	python3 $COMPARE_SCRIPT $oeref $oecal 5
+	compare_eband_energy $oeref $oecal
     echo "CompareOrbXC_pass $?" >>$props_result_file
 fi
 
@@ -236,21 +259,13 @@ fi
 # separate terms in band enegy
 #--------------------------------
 if ! test -z "$has_eband_separate"  && [  $has_eband_separate == 1 ]; then
-	ekref=kinetic_out.ref
-	ekcal=OUT.autotest/kinetic_out.dat
-	python3 $COMPARE_SCRIPT $ekref $ekcal 4
+	compare_eband_energy eband_kin.ref OUT.autotest/eband_kin.txt
 	echo "CompareOrbKinetic_pass $?" >>$props_result_file
-	vlref=vpp_local_out.ref
-	vlcal=OUT.autotest/vpp_local_out.dat
-	python3 $COMPARE_SCRIPT $vlref $vlcal 4
+	compare_eband_energy eband_vl.ref OUT.autotest/eband_vl.txt
 	echo "CompareOrbVL_pass $?" >>$props_result_file
-	vnlref=vpp_nonlocal_out.ref
-	vnlcal=OUT.autotest/vpp_nonlocal_out.dat
-	python3 $COMPARE_SCRIPT $vnlref $vnlcal 4
+	compare_eband_energy eband_vnl.ref OUT.autotest/eband_vnl.txt
 	echo "CompareOrbVNL_pass $?" >>$props_result_file
-	vhref=vhartree_out.ref
-	vhcal=OUT.autotest/vhartree_out.dat
-	python3 $COMPARE_SCRIPT $vhref $vhcal 4
+	compare_eband_energy eband_hart.ref OUT.autotest/eband_hart.txt
 	echo "CompareOrbVHartree_pass $?" >>$props_result_file
 fi
 

@@ -28,7 +28,6 @@ namespace Global_File
         const bool &restart,
         const bool out_alllog,
         const std::string &global_out_dir,
-        const std::string &global_stru_dir,
         const std::string &global_matrix_dir,
         const std::string &global_wfc_dir,
         const std::string &global_mlkedf_descriptor_dir,

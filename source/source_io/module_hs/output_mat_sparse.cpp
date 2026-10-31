@@ -18,18 +18,18 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham,
                        Plus_U_Base* p_dftu,
+                       const std::string& global_out_dir,
+                       const std::string& global_matrix_dir,
+                       const std::string& calculation,
+                       const int out_app_flag,
+                       const int nspin,
+                       const bool gamma_only_local,
+                       const int npol,
+                       const int nlocal,
+                       const bool cal_force,
                        std::ofstream& ofs_running)
 {
     LCAO_HS_Arrays HS_Arrays; // store sparse arrays
-
-    const std::string& global_out_dir = PARAM.globalv.global_out_dir;
-    const std::string& global_matrix_dir = PARAM.globalv.global_matrix_dir;
-    const std::string& calculation = PARAM.inp.calculation;
-    const bool out_app_flag = PARAM.inp.out_app_flag;
-    const int nspin = PARAM.inp.nspin;
-    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
-    const int npol = PARAM.globalv.npol;
-    const int nlocal = PARAM.globalv.nlocal;
 
     MatROutputOptions mat_R_options;
     mat_R_options.binary = options.binary;
@@ -99,7 +99,6 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
         Position_op r_matrix;
         r_matrix.binary = options.binary;
         r_matrix.sparse_threshold = options.sparse_threshold;
-        const bool cal_force = PARAM.inp.cal_force;
         r_matrix.init(ucell, pv, orb, cal_force, nlocal);
         r_matrix.out_rR(ucell,
                         grid,
@@ -128,6 +127,15 @@ template void output_mat_sparse<double>(const MatSparseOutputOptions& options,
                                         const K_Vectors& kv,
                                         hamilt::Hamilt<double>* p_ham,
                                         Plus_U_Base* p_dftu,
+                                        const std::string& global_out_dir,
+                                        const std::string& global_matrix_dir,
+                                        const std::string& calculation,
+                                        const int out_app_flag,
+                                        const int nspin,
+                                        const bool gamma_only_local,
+                                        const int npol,
+                                        const int nlocal,
+                                        const bool cal_force,
                                         std::ofstream& ofs_running);
 
 template void output_mat_sparse<std::complex<double>>(const MatSparseOutputOptions& options,
@@ -141,6 +149,15 @@ template void output_mat_sparse<std::complex<double>>(const MatSparseOutputOptio
                                                       const K_Vectors& kv,
                                                       hamilt::Hamilt<std::complex<double>>* p_ham,
                                                       Plus_U_Base* p_dftu,
+                                                      const std::string& global_out_dir,
+                                                      const std::string& global_matrix_dir,
+                                                      const std::string& calculation,
+                                                      const int out_app_flag,
+                                                      const int nspin,
+                                                      const bool gamma_only_local,
+                                                      const int npol,
+                                                      const int nlocal,
+                                                      const bool cal_force,
                                                       std::ofstream& ofs_running);
 
 } // namespace ModuleIO

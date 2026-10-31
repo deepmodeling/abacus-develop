@@ -64,6 +64,8 @@ bool need_orbital(const Input_para& inp);
  * @param has_force true to emit per-atom f fields; forwarded to
  *        print_stru_file. Callers must pass false when the forces do not
  *        belong to the geometry being written (e.g. early relax exit).
+ * @param append true to append the structure block (STRU format only,
+ *        for out_app_flag == 1 multi-step runs); CIF always truncates.
  */
 void write_stru(UnitCell& ucell,
                 const Input_para& inp,
@@ -73,7 +75,8 @@ void write_stru(UnitCell& ucell,
                 const bool need_orb,
                 const bool deepks_setorb,
                 const int my_rank,
-                const bool has_force);
+                const bool has_force,
+                const bool append);
 } // namespace relax_stru_io
 
 #endif

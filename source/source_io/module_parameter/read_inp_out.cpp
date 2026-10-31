@@ -91,7 +91,7 @@ void ReadInput::item_output()
             - nspin = 2: `chgs1g{geom_step}_ini.cube` and `chgs2g{geom_step}_ini.cube`;
             - nspin = 4: `chgs1g{geom_step}_ini.cube`, `chgs2g{geom_step}_ini.cube`, `chgs3g{geom_step}_ini.cube`, and `chgs4g{geom_step}_ini.cube`.
             - output every out_freq_ion steps
-        Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
+        Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1). With out_app_flag = 1, the geometry-step index is omitted and each snapshot overwrites the same fixed file.
     - -1: Disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
 
 The second integer controls the precision of the charge density output. If not given, `3` is used as default. For restarting from this file and other high-precision calculations, `10` is recommended.
@@ -152,7 +152,7 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
    * nspin = 2: `pots1g{geom_step}_ini.cube` and `pots2g{geom_step}_ini.cube`;
    * nspin = 4: `pots1g{geom_step}_ini.cube`, `pots2g{geom_step}_ini.cube`, `pots3g{geom_step}_ini.cube`, and `pots4g{geom_step}_ini.cube`.
    * output every out_freq_ion steps
- Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
+ Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1). With out_app_flag = 1, the geometry-step index is omitted and each snapshot overwrites the same fixed file.
 
 The optional second integer controls the output precision. If not provided, the default precision is 8.
 
@@ -273,9 +273,9 @@ Available values are:
 
 The file-name pattern is `wfk{k}[s{spin}][g{geometry step}][e{electronic iteration}]_pw.txt` for `out_wfc_pw=1` and `wfk{k}[s{spin}][g{geometry step}][e{electronic iteration}]_pw.dat` for `out_wfc_pw=2`. All PW output files include a `k*` label, including Gamma-only calculations. Without geometry-step or electronic-iteration indices, representative names are `wfk1_pw.txt` or `wfk1_pw.dat` for `nspin=1`, `wfk1s1_pw.txt` and `wfk1s2_pw.txt` or their `.dat` equivalents for `nspin=2`, and `wfk1s4_pw.txt` or `wfk1s4_pw.dat` for `nspin=4`.
 
-With `out_freq_ion=0`, files are written only when the electronic calculation converges or reaches `scf_nmax`; no `g*` or `e*` index is added. During structural relaxation or molecular dynamics, later ionic steps overwrite the same unindexed files. With `out_freq_ion` > 0, output is restricted to the ionic steps selected by `out_freq_ion` and is written when the electronic iteration is a multiple of `out_freq_elec`, when the calculation converges, or when it reaches `scf_nmax`. Both `g*` and `e*` indices are then added, including for a static `calculation=scf` or `calculation=nscf` run.
+With `out_freq_ion=0`, files are written only when the electronic calculation converges or reaches `scf_nmax`; no `g*` or `e*` index is added. During structural relaxation or molecular dynamics with `out_app_flag=1`, the first written step truncates the unindexed files and later ionic steps append one frame per step (mirroring `out_wfc_lcao`); with `out_app_flag=0` the unindexed files are overwritten each step. With `out_freq_ion` > 0, output is restricted to the ionic steps selected by `out_freq_ion` and is written when the electronic iteration is a multiple of `out_freq_elec`, when the calculation converges, or when it reaches `scf_nmax`. Both `g*` and `e*` indices are then added (except that `g*` is omitted when `out_app_flag=1`), including for a static `calculation=scf` or `calculation=nscf` run.
 
-With `init_wfc file binary`, ABACUS reads only unindexed binary `wf*_pw.dat` files from `read_file_dir`. Such directly reusable files are normally generated with `out_wfc_pw=2` and `out_freq_ion=0`. Text `wf*_pw.txt` files and files containing `g*` or `e*` indices are not matched automatically.
+With `init_wfc file binary`, ABACUS reads only unindexed binary `wf*_pw.dat` files from `read_file_dir`, starting from the first frame. Such directly reusable files are normally generated with `out_wfc_pw=2` and `out_freq_ion=0`; multi-frame files accumulated under `out_app_flag=1` are trajectories and only their first frame is visible to the reader. Text `wf*_pw.txt` files and files containing `g*` or `e*` indices are not matched automatically.
 
 [NOTE] In the 3.10-LTS version, the binary files are named `WAVEFUNC1.dat`, `WAVEFUNC2.dat`, etc.)";
         item.default_value = "0";
@@ -291,7 +291,7 @@ With `init_wfc file binary`, ABACUS reads only unindexed binary `wf*_pw.dat` fil
         item.annotation = "ouput LCAO wave functions, 0, no output 1: text, 2: binary";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = R"(Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{s}{spin index}{k(optional)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the wave functions accumulate during ionic steps. If the out_app_flag is set to false, a new folder named WFC will be created, and the wave function files will be saved into it.
+        item.description = R"(Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix} (or its PSI/ subdirectory when out_app_flag is 2). The files are named as wf{s}{spin index}{k(optional)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if out_app_flag is not 1, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is 1, the wave functions accumulate during ionic steps. When out_app_flag is 2, the wave function files are saved into the PSI/ subdirectory of OUT.${suffix}.
 * 0: no output
 * 1: (txt format)
  * gamma-only: wfs1_nao.txt or wfs2_nao.txt, ...;
@@ -325,8 +325,9 @@ Also controled by out_freq_ion and out_app_flag.
         item.description = R"(Whether to output the density of states (DOS) and projected density of states (PDOS). For more information, refer to the dos.md.
 * 0: no output
 * 1: output the density of states (DOS) and projected density of states (PDOS, LCAO only)
- * nspin=1 or 4: doss1g{geom}.txt and pdoss1g{geom}.txt (PDOS is LCAO only), where geom is the geometry index when cell changes or ions move. PW and LCAO calculations use the same naming.
- * nspin=2: doss1/doss2 and pdoss1/pdoss2 files for two spin channels.
+ * With out_app_flag = 0 or 2: per-step files are named `doss{s}g{geom}.txt` and `pdoss{s}g{geom}.txt` where `{geom}` is the one-based geometry index (e.g. `doss1g3.txt` for the third ionic step).
+ * With out_app_flag = 1: fixed-name files (`doss{s}.txt`, `pdoss{s}.txt`) are reused; the first written step truncates them and later steps append one record per step (prefixed with a `# ionic step N` header, one-based).
+ * nspin=1 or 4: one spin channel (`s1`). nspin=2: two channels (`s1`, `s2`). PW and LCAO use the same naming.
 Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will raise an error.)";
         item.default_value = "0";
         item.unit = "";
@@ -440,10 +441,10 @@ Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will rai
         item.annotation = "output the structure files per ion step";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Controls the output of structure files per ionic step. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep} (for scf/nscf this is the single step), i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion is positive, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps during geometry relaxation; when out_freq_ion is 0, no numbered files are output. This parameter is effective for scf/nscf/relax/cell-relax; for scf/nscf only STRU_FINAL (or STRU_FINAL.cif) is written, and structure output is disabled by default unless out_stru is set explicitly. Molecular dynamics structure output is instead controlled by md_restartfreq (STRU_MD_*).\n"
+        item.description = "Controls the output of structure files per ionic step. The files are written to the OUT.{suffix}/ directory (or the OUT.{suffix}/STRUC/ subdirectory when out_app_flag is 2). Each file corresponds to the structure at the current ionic step, and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion is positive, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps; when out_freq_ion is 0, no numbered files are output. This parameter is effective for scf/nscf/relax/cell-relax and md. For scf/nscf only STRU_FINAL (or STRU_FINAL.cif) is written. For MD, structure output follows the same out_freq_ion frequency as the restart file.\n"
                           "    - 0: No structure files are output.\n"
-                          "    - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL. No CIF files are output.\n"
-                          "    - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output.\n"
+                          "    - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL. No CIF files are output. When out_app_flag is 1, the numbered STRU{istep} files are replaced by a single fixed-name STRU file that appends one structure block (with a one-based \"# Ionic Step N\" or \"# MD step N\" comment) per written step.\n"
+                          "    - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output. When out_app_flag is 1, the numbered files are replaced by a fixed-name STRU.cif overwritten each written step.\n"
                           "[NOTE] For backward compatibility, true/false (case insensitive) are accepted and converted to 1/0.";
         item.default_value = "1";
         item.unit = "";
@@ -546,8 +547,8 @@ The output is also controlled by out_freq_ion and out_app_flag. For more informa
 * Multi-k, nspin = 2: hk1s1_nao.txt and hk1s2_nao.txt for the two spin channels of the Hamiltonian matrix, and sk1_nao.txt for the overlap matrix at the first k-point. Only one overlap matrix is written because it is identical for both spin channels.
 * Multi-k, nspin = 4: hk1s4_nao.txt for the spinor Hamiltonian matrix and sk1_nao.txt for the spinor overlap matrix at the first k-point.
 For binary output, the same names use the .dat suffix. Each native binary record contains the matrix dimension as an int followed by the row-major upper triangle. Gamma-only elements are doubles; multi-k and spinor elements are pairs of doubles containing the real and imaginary parts. Native integer representation and byte order are used.
-When out_app_flag is true, the first ionic step truncates the file and later steps append complete records.
-When out_app_flag is false, g followed by the one-based ionic-step index is inserted before _nao, for example hk1s1g1_nao.txt.
+When out_app_flag is 1, the first ionic step truncates the file and later steps append complete records.
+When out_app_flag is 0 or 2, g followed by the one-based ionic-step index is inserted before _nao, for example hk1s1g1_nao.txt.
 
 [NOTE] In the 3.10-LTS version, the file names are data-0-H and data-0-S, etc.)";
         item.default_value = "0 8";
@@ -620,7 +621,7 @@ When out_app_flag is false, g followed by the one-based ionic-step index is inse
 
 For multi-k calculations, the output contains the individual real-space blocks stored for the Bravais lattice vectors R. For gamma-only calculations, the internal real-space contributions are folded into a single R = (0, 0, 0) block. This folded result cannot recover the original R-resolved contributions or interpolate arbitrary k points. Terms added only while constructing H(k) are not guaranteed to be present.
 
-For binary output, each file uses the same basename as text output with a .dat suffix. Every native record contains the zero-based ionic step, matrix dimension, and number of R blocks as ints. Each R block contains three int coordinates, an int nonzero count, native double values (real/imaginary double pairs for complex matrices), int column indices, and long long row pointers. Native integer representation and byte order are used. When out_app_flag is true, the first ionic step truncates the file and later steps append complete records.
+For binary output, each file uses the same basename as text output with a .dat suffix. Every native record contains the one-based ionic step, matrix dimension, and number of R blocks as ints. Each R block contains three int coordinates, an int nonzero count, native double values (real/imaginary double pairs for complex matrices), int column indices, and long long row pointers. Native integer representation and byte order are used. When out_app_flag is true, the first ionic step truncates the file and later steps append complete records.
 
 [NOTE] In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.)";
         item.default_value = "0 8";
@@ -991,11 +992,10 @@ For binary output, each file uses the same basename as text output with a .dat s
     }
     {
         Input_Item item("out_mat_h_t");
-        item.annotation = "output kinetic energy T(R) matrix";
+        item.annotation = "legacy alias for out_mat_tk";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Whether to print files containing the kinetic energy matrix T(R) in CSR format."
-                          "\n\nSee out_hsr for format details.";
+        item.description = "Legacy alias for out_mat_tk, which outputs the kinetic energy matrix T(k) for each k-point in the NAO basis. The optional second integer controls text precision. If both out_mat_tk and out_mat_h_t are present, out_mat_tk takes precedence.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -1006,21 +1006,47 @@ For binary output, each file uses the same basename as text output with a .dat s
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_h_t enable flag must be 0/1, using default 0");
             }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_mat_h_t[0] && para.input.nspin == 4)
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_t is not available for nspin = 4");
+            if (count >= 2) try { para.input.out_mat_h_t[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
         };
         sync_intvec(input.out_mat_h_t, 2, 0);
         this->add_item(item);
     }
     {
-        Input_Item item("out_mat_h_vnl");
-        item.annotation = "output nonlocal pseudopotential Vnl(R) matrix";
+        Input_Item item("out_mat_vnlk");
+        item.annotation = "output nonlocal pseudopotential Vnl(k) matrix";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Whether to print files containing the nonlocal pseudopotential matrix Vnl(R) in CSR format."
-                          "\n\nSee out_hsr for format details.";
+        item.description = "Whether to print the nonlocal pseudopotential matrix Vnl(k) for each k-point in the NAO basis, into text files OUT.${suffix}/vnlk*_nao.txt."
+                          "\n\nThe optional second integer controls text precision (default 8).";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_vnlk[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_vnlk enable flag must be 0/1, using default 0");
+            }
+            if (count >= 2) try { para.input.out_mat_vnlk[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_vnlk[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_vnlk is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_vnlk, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vnl");
+        item.annotation = "legacy alias for out_mat_vnlk";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Legacy alias for out_mat_vnlk, which outputs the nonlocal pseudopotential matrix Vnl(k) for each k-point in the NAO basis. The optional second integer controls text precision. If both out_mat_vnlk and out_mat_h_vnl are present, out_mat_vnlk takes precedence.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -1031,21 +1057,47 @@ For binary output, each file uses the same basename as text output with a .dat s
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_h_vnl enable flag must be 0/1, using default 0");
             }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_mat_h_vnl[0] && para.input.nspin == 4)
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vnl is not available for nspin = 4");
+            if (count >= 2) try { para.input.out_mat_h_vnl[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
         };
         sync_intvec(input.out_mat_h_vnl, 2, 0);
         this->add_item(item);
     }
     {
-        Input_Item item("out_mat_h_vl");
-        item.annotation = "output local pseudopotential Vl(R) matrix";
+        Input_Item item("out_mat_vlk");
+        item.annotation = "output local pseudopotential Vl(k) matrix";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Whether to print files containing the local pseudopotential matrix Vl(R) in CSR format."
-                          "\n\nSee out_hsr for format details.";
+        item.description = "Whether to print the local pseudopotential matrix Vl(k) for each k-point in the NAO basis, into text files OUT.${suffix}/vlk*_nao.txt."
+                          "\n\nThe optional second integer controls text precision (default 8).";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_vlk[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_vlk enable flag must be 0/1, using default 0");
+            }
+            if (count >= 2) try { para.input.out_mat_vlk[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_vlk[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_vlk is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_vlk, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vl");
+        item.annotation = "legacy alias for out_mat_vlk";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Legacy alias for out_mat_vlk, which outputs the local pseudopotential matrix Vl(k) for each k-point in the NAO basis. The optional second integer controls text precision. If both out_mat_vlk and out_mat_h_vl are present, out_mat_vlk takes precedence.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -1056,21 +1108,47 @@ For binary output, each file uses the same basename as text output with a .dat s
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_h_vl enable flag must be 0/1, using default 0");
             }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_mat_h_vl[0] && para.input.nspin == 4)
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vl is not available for nspin = 4");
+            if (count >= 2) try { para.input.out_mat_h_vl[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
         };
         sync_intvec(input.out_mat_h_vl, 2, 0);
         this->add_item(item);
     }
     {
-        Input_Item item("out_mat_h_vh");
-        item.annotation = "output Hartree Vh(R) matrix";
+        Input_Item item("out_mat_vhk");
+        item.annotation = "output Hartree Vh(k) matrix";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Whether to print files containing the Hartree matrix Vh(R) in CSR format."
-                          "\n\nSee out_hsr for format details.";
+        item.description = "Whether to print the Hartree matrix Vh(k) for each k-point in the NAO basis, into text files OUT.${suffix}/vhk*_nao.txt."
+                          "\n\nThe optional second integer controls text precision (default 8).";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_vhk[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_vhk enable flag must be 0/1, using default 0");
+            }
+            if (count >= 2) try { para.input.out_mat_vhk[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_vhk[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_vhk is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_vhk, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vh");
+        item.annotation = "legacy alias for out_mat_vhk";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Legacy alias for out_mat_vhk, which outputs the Hartree matrix Vh(k) for each k-point in the NAO basis. The optional second integer controls text precision. If both out_mat_vhk and out_mat_h_vh are present, out_mat_vhk takes precedence.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -1081,21 +1159,47 @@ For binary output, each file uses the same basename as text output with a .dat s
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_h_vh enable flag must be 0/1, using default 0");
             }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_mat_h_vh[0] && para.input.nspin == 4)
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vh is not available for nspin = 4");
+            if (count >= 2) try { para.input.out_mat_h_vh[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
         };
         sync_intvec(input.out_mat_h_vh, 2, 0);
         this->add_item(item);
     }
     {
-        Input_Item item("out_mat_h_vxc");
-        item.annotation = "output exchange-correlation Vxc(R) matrix";
+        Input_Item item("out_mat_vxck");
+        item.annotation = "output exchange-correlation Vxc(k) matrix";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Whether to print files containing the XC matrix Vxc(R) in CSR format."
-                          "\n\nSee out_hsr for format details.";
+        item.description = "Whether to print the exchange-correlation matrix Vxc(k) for each k-point in the NAO basis, into text files OUT.${suffix}/vxck*_nao.txt."
+                          "\n\nThe optional second integer controls text precision (default 8).";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_vxck[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_vxck enable flag must be 0/1, using default 0");
+            }
+            if (count >= 2) try { para.input.out_mat_vxck[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_vxck[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_vxck is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_vxck, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vxc");
+        item.annotation = "legacy alias for out_mat_vxck";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Legacy alias for out_mat_vxck, which outputs the exchange-correlation matrix Vxc(k) for each k-point in the NAO basis. The optional second integer controls text precision. If both out_mat_vxck and out_mat_h_vxc are present, out_mat_vxck takes precedence.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -1106,21 +1210,47 @@ For binary output, each file uses the same basename as text output with a .dat s
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_h_vxc enable flag must be 0/1, using default 0");
             }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_mat_h_vxc[0] && para.input.nspin == 4)
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vxc is not available for nspin = 4");
+            if (count >= 2) try { para.input.out_mat_h_vxc[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
         };
         sync_intvec(input.out_mat_h_vxc, 2, 0);
         this->add_item(item);
     }
     {
-        Input_Item item("out_mat_h_exx");
-        item.annotation = "output exact-exchange Vexx(R) matrix";
+        Input_Item item("out_mat_exxk");
+        item.annotation = "output exact-exchange Vexx(k) matrix";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Whether to print files containing the exact-exchange matrix Vexx(R) in CSR format."
-                          "\n\nSee out_hsr for format details.";
+        item.description = "Whether to print the exact-exchange matrix Vexx(k) for each k-point in the NAO basis, into text files OUT.${suffix}/vexxk*_nao.txt."
+                          "\n\nThe optional second integer controls text precision (default 8). Only available for gamma-only calculations with exact exchange enabled.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_exxk[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_exxk enable flag must be 0/1, using default 0");
+            }
+            if (count >= 2) try { para.input.out_mat_exxk[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_exxk[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_exxk is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_exxk, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_exx");
+        item.annotation = "legacy alias for out_mat_exxk";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Legacy alias for out_mat_exxk, which outputs the exact-exchange matrix Vexx(k) for each k-point in the NAO basis. The optional second integer controls text precision. If both out_mat_exxk and out_mat_h_exx are present, out_mat_exxk takes precedence.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -1131,10 +1261,9 @@ For binary output, each file uses the same basename as text output with a .dat s
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_h_exx enable flag must be 0/1, using default 0");
             }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_mat_h_exx[0] && para.input.nspin == 4)
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_exx is not available for nspin = 4");
+            if (count >= 2) try { para.input.out_mat_h_exx[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) { /* do nothing */ }
         };
         sync_intvec(input.out_mat_h_exx, 2, 0);
         this->add_item(item);
@@ -1178,7 +1307,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output exchange-correlation matrix in KS-orbital representation";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Write exchange-correlation matrices in the Kohn-Sham orbital basis and their diagonal expectation values. The diagonal energies are saved in OUT.${suffix}/vxc.txt. When EXX is calculated, its local and EXX contributions are also saved as vxc_local.txt and vxc_exx.txt in the same directory. Each energy file begins with nk, nspin, and nbands, followed by nk*nspin*nbands rows of energies in Hartree and eV."
+        item.description = "Write exchange-correlation matrices in the Kohn-Sham orbital basis and their diagonal expectation values. The diagonal energies are saved in OUT.${suffix}/eband_vxc.txt. When EXX is calculated, its local and EXX contributions are also saved as eband_vxc_local.txt and eband_vxc_exx.txt in the same directory. Each energy file begins with nk, nspin, and nbands, followed by nk*nspin*nbands rows of energies in Hartree and eV."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is k-$k-Vxc and so on.";
         item.default_value = "False";
         item.unit = "Ry";
@@ -1276,15 +1405,15 @@ The circle order of the charge density on real space grids is: x is the outer lo
         this->add_item(item);
     }
     {
-        Input_Item item("out_eband_terms");
+        Input_Item item("out_eband");
         item.annotation = "output the band energy terms separately";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print the band energy terms separately in the file OUT.{term}_out.dat. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).";
+        item.description = "Whether to print the band-decomposed energy of each Hamiltonian term in the files eband_kin.txt, eband_vl.txt, eband_vnl.txt, eband_hart.txt and eband_vxc.txt under the output directory. Each file starts with comment lines giving the ABACUS version, the timestamp, the ionic step and total energy, the expectation-value formula, and the units. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).";
         item.default_value = "False";
         item.unit = "";
         item.set_availability("basis_type==lcao");
-        read_sync_bool(input.out_eband_terms);
+        read_sync_bool(input.out_eband);
         this->add_item(item);
     }
     {
@@ -1375,15 +1504,48 @@ The circle order of the charge density on real space grids is: x is the outer lo
     }
     {
         Input_Item item("out_app_flag");
-        item.annotation = "whether output r(R), H(R), S(R), T(R), and dH(R) "
-                          "matrices in an append manner during MD";
+        item.annotation = "output directory layout and append behavior "
+                          "during multi-step calculations (0/1/2)";
         item.category = "Output information";
-        item.type = "Boolean";
-        item.description = "Whether to output r(R), H(R), S(R), T(R), dH(R), dS(R), and wfc matrices in an append manner during molecular dynamics calculations. Check input parameters out_mat_r, out_hsr, out_mat_t, out_mat_dh, out_hsk and out_wfc_lcao for more information.";
-        item.default_value = "true";
+        item.type = "Integer";
+        item.description = R"(Controls output file organization during multi-step calculations (MD, relax, RT-TDDFT). The directory routing applies to both LCAO and PW basis calculations.
+* 0: Write to OUT directory directly, no append (each step's file carries a g{step} suffix)
+* 1: Reuse fixed filenames across steps (default, backward compatible): text outputs append new records, cube outputs accumulate one frame per written step
+  In mode 1 the first output step of a fresh (non-restart) run truncates the fixed-name file so a rerun does not keep stale records from a previous run; later steps and restarted runs keep appending.
+* 2: Write to subdirectory (STRUC/ for structure files, PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/), files carry a g{step} suffix
+The legacy Boolean spellings (true/false, yes/no, on/off, t/f, y/n, and the dotted forms) are still accepted and map to modes 1/0 as before.
+For more information, refer to the documentation of out_mat_r, out_hsr, out_mat_t, out_mat_dh, out_hsk, out_wfc_lcao, out_chg, out_pot, out_elf, out_dos, out_dipole, out_stru.)";
+        item.default_value = "1";
         item.unit = "";
-        item.set_availability("basis_type==lcao and gamma_only==0");
-        read_sync_bool(input.out_app_flag);
+        // out_app_flag applies to both LCAO and PW bases, and gamma-only runs
+        // follow the same directory routing rules as multi-k runs. An empty
+        // availability expression means "always available".
+        item.set_availability("");
+        // Keep the previously accepted Boolean spellings working: the legacy
+        // parser treated out_app_flag as a Boolean, so INPUT files containing
+        // "true"/"false"/"yes"/"no"/"on"/"off" (case-insensitive) must keep
+        // parsing instead of reaching std::stoi and throwing.
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            try
+            {
+                para.input.out_app_flag = std::stoi(item.str_values[0]);
+            }
+            catch (const std::invalid_argument&)
+            {
+                para.input.out_app_flag = assume_as_boolean(item.str_values[0]) ? 1 : 0;
+            }
+            catch (const std::out_of_range&)
+            {
+                para.input.out_app_flag = assume_as_boolean(item.str_values[0]) ? 1 : 0;
+            }
+        };
+        sync_int(input.out_app_flag);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_app_flag < 0 || para.input.out_app_flag > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_app_flag should be 0, 1, or 2");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -1609,6 +1771,8 @@ Here $\tilde{\psi}$ is the pseudo-wavefunction, $\beta_i^I$ are the atomic proje
     * elftot.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
 
 When `out_freq_ion > 0`, a geometry step suffix `g{#}` is appended to the file names (e.g., `elftotg1.cube`, `elfs1g1.cube`).
+
+With `out_app_flag=1` the geometry step suffix is omitted and the same ELF files accumulate one complete cube frame per written ionic step (`Ionic_Step {#}` as the first comment line, one-based); the first written step truncates them. With `out_app_flag=0` every step writes its own suffixed file, and with `out_app_flag=2` the frames are routed to the `ELF/` subdirectory.
 
 The second integer controls the precision of the kinetic energy density output, if not given, will use 3 as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use 10.
 

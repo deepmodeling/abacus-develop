@@ -159,7 +159,7 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.category = "Molecular dynamics";
         item.type = "Boolean";
         item.description = R"(Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
-* True: ABACUS will read in {md_step}, then read in the corresponding STRU_MD_suffix/STRU/ automatically. For tddft, ABACUS will also read in WFC_NAO_K${kpoint} of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
+* True: ABACUS will read in {md_step}, then read in the corresponding structure file automatically (STRU{istep} from the STRUC/ output directory when out_app_flag=2; older releases wrote STRU_MD_{istep} into a STRU/ subdirectory, which is still recognized). For tddft, ABACUS will also read in WFC_NAO_K${kpoint} of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
 * False: ABACUS will start molecular dynamics calculations normally from the first step.)";
         item.default_value = "False";
         item.unit = "";
@@ -171,7 +171,9 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "The period to output MD restart information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The output frequency of OUT.{suffix}/STRU_MD_*, which are used to restart molecular dynamics calculations, see md_restart in detail. Set to 0 to disable MD restart output.";
+        item.description = "Deprecated: use out_freq_ion to control MD output frequency instead. "
+                           "This parameter is kept for backward compatibility as a fallback when "
+                           "out_freq_ion is not set (0).";
         item.default_value = "5";
         item.unit = "";
         read_sync_int(input.mdp.md_restartfreq);

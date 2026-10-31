@@ -19,10 +19,16 @@ namespace ModuleIO
 {
 
 /// @brief Write the Vxc matrix in KS orbital representation for LIP (LCAO-in-PW), useful for GW calculation
-/// including terms: local/semi-local XC and EXX
+/// including terms: local/semi-local XC and EXX.
+/// The band-decomposed diagonal energies (eband_vxc.txt and, with EXX,
+/// eband_vxc_local.txt and eband_vxc_exx.txt) are written to global_out_dir.
+/// @param istep Zero-based ionic step index; written one-based in the header
+/// @param etot Total energy of the current frame in Ry
 /// @tparam FPTYPE Floating point type (float or double)
 template <typename FPTYPE>
 void write_Vxc_LIP(int nspin,
+                   const int istep,
+                   const double etot,
                    int naos,
                    int drank,
                    const psi::Psi<std::complex<FPTYPE>>& psi_pw,

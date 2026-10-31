@@ -121,6 +121,7 @@ if(ENABLE_MPI)
     ../../mdcell_reader.cpp
     ../../mdcell.cpp
     ../../print_cell.cpp
+    ../../stru_frame_io.cpp
     ../../domain_decomposition.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp

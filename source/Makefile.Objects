@@ -238,6 +238,7 @@ OBJS_CELL=atom_pseudo.o\
     update_cell.o\
     bcast_cell.o\
     read_stru.o\
+    stru_frame_io.o\
     read_atom_species.o\
     sep.o\
     sep_cell.o\

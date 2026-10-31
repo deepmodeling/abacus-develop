@@ -28,6 +28,9 @@ add_library(
     ../module_parameter/availability.cpp
     ../module_parameter/availability_validator.cpp
     ../module_parameter/input_domain.cpp
+    # read_set_globalv.cpp references stru_frame_io::extract_last_frame, so
+    # every target linking io_input_serial needs this translation unit.
+    ../../source_cell/stru_frame_io.cpp
 )
 
 abacus_copy_test_files(support)

@@ -39,6 +39,15 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham,
                        Plus_U_Base* p_dftu,
+                       const std::string& global_out_dir,
+                       const std::string& global_matrix_dir,
+                       const std::string& calculation,
+                       const int out_app_flag,
+                       const int nspin,
+                       const bool gamma_only_local,
+                       const int npol,
+                       const int nlocal,
+                       const bool cal_force,
                        std::ofstream& ofs_running);
 } // namespace ModuleIO
 

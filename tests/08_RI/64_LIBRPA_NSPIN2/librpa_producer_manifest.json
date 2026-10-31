@@ -12,8 +12,8 @@
     {"pattern": "V_full_*.dat", "kind": "coulomb_v1", "reference": true, "abs_tol": 1e-4},
     {"pattern": "KS_wfc_0.dat", "kind": "ks_wfc_v1", "nao_dir": "OUT.autotest", "abs_tol": 1e-7},
     {"pattern": "velocity_matrix.txt", "kind": "velocity"},
-    {"base_dir": ".", "pattern": "OUT.autotest/vxc.txt", "kind": "text", "reference": true, "abs_tol": 1e-7},
-    {"base_dir": ".", "pattern": "OUT.autotest/KPT.info", "kind": "text", "reference": true, "abs_tol": 1e-7},
+    {"base_dir": "OUT.autotest", "pattern": "eband_vxc.txt", "kind": "text", "reference": true, "abs_tol": 1e-7},
+    {"base_dir": "OUT.autotest", "pattern": "KPT.info", "kind": "text", "reference": true, "abs_tol": 1e-7},
     {"base_dir": ".", "pattern": "OUT.autotest/wfk*s*_nao.txt", "kind": "wfc_nao", "expected_count": 4}
   ]
 }

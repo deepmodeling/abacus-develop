@@ -38,6 +38,7 @@ add_library(
   magnetism.cpp
   bcast_cell.cpp
   read_stru.cpp
+  stru_frame_io.cpp
   print_cell.cpp
   read_atom_species.cpp
   sep.cpp

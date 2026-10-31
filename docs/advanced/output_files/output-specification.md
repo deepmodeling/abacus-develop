@@ -55,6 +55,12 @@ All output file naming conventions can be found in the online documentation (wit
 - All index numbers start from 1 (not 0)
 - For Gamma-only algorithm in LCAO, no `k` index is included
 - Overlap matrix `s` does not distinguish spin, so only one matrix is output
+- `out_app_flag = 1` omits the `g#` suffix for cube files (chg/tau/pot/elf): the
+  first written ionic step truncates the fixed-name file and every later
+  written step appends one complete cube frame whose first comment line is
+  `Ionic_Step {#}` (one-based). `out_app_flag = 0` writes one suffixed file per
+  step, and `out_app_flag = 2` writes those suffixed files into the `CHG/`,
+  `POT/` and `ELF/` subdirectories
 - For initial charge density output (`out_chg = 2`):
   - `out_freq_ion = 0`: `chg_ini.cube` (nspin=1) or `chgs{#}_ini.cube` (nspin=2/4) - output at every step (overwrite same file)
   - `out_freq_ion > 0`: `chgg{#}_ini.cube` (nspin=1) or `chgs{#}g{#}_ini.cube` (nspin=2/4) - output every out_freq_ion steps
@@ -98,7 +104,7 @@ All output file naming conventions can be found in the online documentation (wit
 | `doss1g1.txt` | Density of states |
 | `eig_occ.txt` | Eigenvalues and occupations |
 | `mulliken.txt` | Mulliken population analysis |
-| `band.txt` | Band structure |
+| `band.txt` | Band structure (nspin=1/4); `bands1.txt`/`bands2.txt` when nspin=2 |
 | `chgs1.cube`, `chgs2.cube` | Charge density (spin 1, spin 2) |
 | `chg.cube` | Total charge density |
 | Initial charge density (out_chg=2) | |
@@ -120,6 +126,21 @@ All output file naming conventions can be found in the online documentation (wit
 | `elftotg{#}.cube` | ELF, total, geometry step {#} (nspin=1/4) |
 | `elfs{#}g{#}.cube` | ELF, spin {#}, geometry step {#} (nspin=2) |
 | `elftotg{#}.cube` | ELF, total, geometry step {#} (nspin=2) |
+
+**Band structure files (`out_band`):** each ionic step of `band.txt`,
+`bands1.txt` and `bands2.txt` is preceded by a provenance comment block, so the
+k-point blocks appended by a relax/md run stay distinguishable:
+
+```
+# ABACUS version: v3.11.0-beta11
+# Written at 2026-10-20 15:40:45
+# IONIC STEP 1 (spin up)
+   1 0.00000000 -5.36802595 6.70427084 ...
+```
+
+`# IONIC STEP` is one-based and carries the collinear spin-channel label only
+when `nspin = 2`. Consumers that parse the numeric columns must skip lines
+starting with `#`.
 
 ## 3. File Format Standards
 

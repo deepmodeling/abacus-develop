@@ -58,6 +58,16 @@ addtest(
   test_cell_geometry.cpp
   ../cell_geometry.cpp)
 
+addtest(
+  TARGET
+  MODULE_CELL_stru_frame_io
+  LIBS
+  base
+  device
+  SOURCES
+  test_stru_frame_io.cpp
+  ../stru_frame_io.cpp)
+
 if(NOT ENABLE_MPI)
   return()
 endif()
