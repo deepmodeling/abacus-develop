@@ -25,6 +25,7 @@
 #include <cmath>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -42,7 +43,8 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
                     const DFPT_PW_Data& data,
                     int nq,
                     const std::string& out_dir,
-                    int my_rank)
+                    int my_rank,
+                    std::ostream* running_log)
 {
     ModuleBase::TITLE("ModuleDFPT", "DFPT_Write_Dyn");
     ModuleBase::timer::start("ModuleDFPT", "DFPT_Write_Dyn");
@@ -157,10 +159,18 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
 
         // --- dielectric tensor and Born charges at Gamma (QE order:
         // Dielectric Tensor first, then Effective Charges) ---
-        // gate on the computed q0 response (compute_q0), not on the LO-TO
-        // working-matrix correction: with compute_q0=true and loto=false
-        // the tensors are still computed and should be exported
-        if (q == 0 && data.get_compute_q0())
+        // gate on the computed q0 response (compute_q0) at the actual
+        // Gamma entry -- a q-vector check, not a list-index check, so a
+        // reordered explicit q file cannot attach the tensors to a
+        // nonzero-q entry (setup_q_list additionally rejects non-Gamma-
+        // first orderings when compute_q0 is on, keeping the q0 solver
+        // and this export consistent); independent of get_loto(): with
+        // compute_q0=true and loto=false the tensors are still computed
+        // and should be exported
+        const double gamma_tol = 1.0e-8; ///< empirical parameter: fractional-q Gamma tolerance (dfpt_phon.cpp value)
+        const bool q_is_gamma = std::abs(q_frac.x) <= gamma_tol && std::abs(q_frac.y) <= gamma_tol
+                                && std::abs(q_frac.z) <= gamma_tol;
+        if (q_is_gamma && data.get_compute_q0())
         {
             const ModuleBase::matrix& eps = data.get_dielectric();
             const ModuleBase::matrix& born0 = data.get_born(0);
@@ -206,10 +216,18 @@ void DFPT_Write_Dyn(const UnitCell& ucell,
         }
         else
         {
-            // log the created file path (AGENTS rule 16)
+            // log the created file path (AGENTS rule 16): the running log
+            // receives the record through the explicit running_log
+            // dependency (serial runs open a separate running log stream
+            // in global_file.cpp, so stdout alone does not reach it);
+            // stdout keeps a terminal echo
             std::ostringstream ok;
-            ok << "DFPT_Write_Dyn: wrote " << name.str();
-            std::cout << " " << ok.str() << std::endl;
+            ok << "DFPT_Write_Dyn: wrote " << name.str() << std::endl;
+            if (running_log != nullptr)
+            {
+                (*running_log) << " " << ok.str();
+            }
+            std::cout << " " << ok.str();
         }
     }
     ModuleBase::timer::end("ModuleDFPT", "DFPT_Write_Dyn");
