@@ -112,18 +112,6 @@ void Charge_Mixing::init_mixing()
                                  "set_mixing must be called before init_mixing");
     }
 
-    // Real-space charge and kinetic density are stored on the dense grid.
-    // Reciprocal mixing still separates smooth and high-frequency components.
-    ModulePW::PW_Basis* real_grid = this->rhopw;
-    if (this->cfg_.scf_thr_type == 2 && this->cfg_.double_grid)
-    {
-        if (this->rhodpw == nullptr)
-        {
-            ModuleBase::WARNING_QUIT("Charge_Mixing", "rhodpw is null in real-space init_mixing");
-        }
-        real_grid = this->rhodpw;
-    }
-
     // (re)construct mixing object
     if (this->cfg_.mixing_mode == "broyden")
     {
@@ -172,13 +160,14 @@ void Charge_Mixing::init_mixing()
     }
     else
     {
-        int real_channels = this->cfg_.nspin;
-        if (this->cfg_.nspin == 4 && this->cfg_.mixing_angle > 0)
+        if (this->cfg_.nspin == 4 && this->cfg_.mixing_angle > 0 )
         {
-            real_channels = 2;
+            this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * 2, sizeof(double));
         }
-        const int real_size = real_grid->nrxx * real_channels;
-        this->mixing->init_mixing_data(this->rho_mdata, real_size, sizeof(double));
+        else
+        {
+            this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * this->cfg_.nspin, sizeof(double));
+        }
     }
 
     // initailize tau_mdata
@@ -192,8 +181,7 @@ void Charge_Mixing::init_mixing()
         }
         else
         {
-            const int tau_size = real_grid->nrxx * this->cfg_.nspin;
-            this->mixing->init_mixing_data(this->tau_mdata, tau_size, sizeof(double));
+            this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * this->cfg_.nspin, sizeof(double));
         }
     }
 
