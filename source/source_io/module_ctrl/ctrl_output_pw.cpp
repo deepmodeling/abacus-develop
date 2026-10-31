@@ -47,7 +47,17 @@ void ModuleIO::ctrl_iter_pw(const int istep,
     {
         if (istep % output_frequency == 0)
         {
-            if (iter % inp.out_freq_elec == 0 || iter == inp.scf_nmax || conv_esolver || final_output)
+            // In mode 1 the fixed-name file accumulates one frame per ionic
+            // step, so only the last electronic iteration of each selected
+            // step is written (out_freq_elec is ignored). In modes 0 and 2
+            // out_freq_elec still selects intermediate iterations.
+            const bool last_elec_iter = (iter == inp.scf_nmax || conv_esolver || final_output);
+            bool write_iter = last_elec_iter;
+            if (inp.out_app_flag != 1)
+            {
+                write_iter = write_iter || (iter % inp.out_freq_elec == 0);
+            }
+            if (write_iter)
             {
                 istep_in = istep;
                 iter_in = iter;
