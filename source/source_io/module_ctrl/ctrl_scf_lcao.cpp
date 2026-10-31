@@ -487,24 +487,29 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         // duplicated the T(k) output of the out_mat_tk block below.
         if (inp.out_mat_vnlk[0])
         {
+            h_params.precision = inp.out_mat_vnlk[1];
             ModuleIO::write_h_vnl(h_params);
         }
         if (inp.out_mat_vlk[0])
         {
+            h_params.precision = inp.out_mat_vlk[1];
             ModuleIO::write_h_vl(h_params);
         }
         if (inp.out_mat_vhk[0])
         {
+            h_params.precision = inp.out_mat_vhk[1];
             ModuleIO::write_h_vh(h_params);
         }
         if (inp.out_mat_vxck[0])
         {
+            h_params.precision = inp.out_mat_vxck[1];
             ModuleIO::write_h_vxc(h_params);
         }
 #ifdef __EXX
         if (inp.out_mat_exxk[0] && exx_info.info_global.cal_exx)
         {
             // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
+            h_params.precision = inp.out_mat_exxk[1];
             setup_exx_h_params(h_params, exx_nao, exx_info);
         }
 #endif

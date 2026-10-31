@@ -2904,6 +2904,36 @@ TEST_F(InputTest, PerAtomSccsCavityWidthsDisableSpatialSymmetry)
     EXPECT_EQ(input.symmetry, "1");
 }
 
+// The optional second value of the H(k) component controls selects the text
+// precision; it must survive both direct reads and legacy alias merging so the
+// writer can forward it to save_mat.
+TEST_F(InputTest, OutMatComponentPrecision)
+{
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto it = find_label("out_mat_vnlk", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        it->second.str_values = {"1", "5"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[1], 5);
+    }
+    {
+        // Legacy out_mat_h_vnl carries its own precision; the alias merge must
+        // copy the whole value vector, not only the enable flag.
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_h_vnl", readinput.input_lists);
+        ASSERT_NE(legacy, readinput.input_lists.end());
+        legacy->second.str_values = {"1", "4"};
+        legacy->second.read_value(legacy->second, param);
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[1], 4);
+    }
+}
+
 // MD writes ABACUS STRU frames only and the restart logic reads them back, so
 // CIF output (out_stru = 2) must be rejected instead of silently emitting
 // STRU content under the CIF setting.

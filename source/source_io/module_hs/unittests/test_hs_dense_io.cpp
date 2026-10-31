@@ -416,6 +416,22 @@ TEST(HsDenseIoSaveMat, AppendFalseOverwritesSameIstep)
     remove_test_file(filename);
 }
 
+TEST(HsDenseIoSaveMat, TextPrecisionFollowsArgument)
+{
+    // The H(k) component writers forward the second INPUT value to this
+    // precision argument; a non-default value must change the printed mantissa.
+    const std::string filename = testing::TempDir() + "/save_mat_precision.dat";
+    const int dim = 2;
+    std::vector<double> mat(dim * dim, 0.0);
+    mat[0] = 1.23456789;
+    const Parallel_2D pv = make_serial_pv(dim);
+    ModuleIO::save_mat(0, mat.data(), dim, false, 5, false, false,
+                       filename, pv, 0, "genelpa", false);
+    const std::string content = read_text_file(filename);
+    EXPECT_NE(content.find("1.23457"), std::string::npos);
+    std::remove(filename.c_str());
+}
+
 // ---------------------------------------------------------------------------
 // Main: initialize MPI before running tests (required by save_mat's MPI path)
 // ---------------------------------------------------------------------------

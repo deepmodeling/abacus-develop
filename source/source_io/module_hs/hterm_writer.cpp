@@ -119,6 +119,7 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                             const int* iat2iwt,
                             const int nat,
                             const int nlocal,
+                            const int precision,
                             const bool gamma_only,
                             const std::string& global_out_dir,
                             const int out_app_flag,
@@ -151,7 +152,7 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                            hk_global.data(),
                            nlocal,
                            false,
-                           8,
+                           precision,
                            false,
                            append,
                            fname,
@@ -204,7 +205,8 @@ static void write_h_term(WriteHParams& params, const HTermSpec& spec)
         spec.build(hR_tmp, ispin);
 
         write_hk_common(hR_tmp, spec.k_prefix, ucell, pv, kv, nspin, istep, append, iat2iwt, nat,
-                        nlocal, gamma_only, global_out_dir, out_app_flag, params.ks_solver, params.drank);
+                        nlocal, params.precision, gamma_only, global_out_dir, out_app_flag,
+                        params.ks_solver, params.drank);
 
         if (also_hR)
         {
@@ -360,6 +362,7 @@ static void write_h_exx_impl(const UnitCell& ucell,
                              const bool also_hR,
                              const int npol,
                              const int nlocal,
+                             const int precision,
                              const bool gamma_only,
                              const std::string& global_out_dir,
                              const std::string& global_matrix_dir,
@@ -383,7 +386,8 @@ static void write_h_exx_impl(const UnitCell& ucell,
         RI_2D_Comm::add_HexxR(ispin, alpha, Hexxs, pv, npol, hR_tmp, nullptr);
 
         write_hk_common(hR_tmp, "vexxk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat,
-                        nlocal, gamma_only, global_out_dir, out_app_flag, ks_solver, drank);
+                        nlocal, precision, gamma_only, global_out_dir, out_app_flag, ks_solver,
+                        drank);
 
         if (also_hR)
         {
@@ -417,7 +421,7 @@ void write_h_exx(WriteHParams& params, const Exx_Info& exx_info)
         if (params.exd != nullptr)
         {
             write_h_exx_impl(ucell, pv, params.exd, kv, nspin, istep, append, iat2iwt, nat, also_hR,
-                             params.npol, params.nlocal, params.gamma_only_local,
+                             params.npol, params.nlocal, params.precision, params.gamma_only_local,
                              params.global_out_dir, params.global_matrix_dir,
                              params.calculation, params.out_app_flag, params.ks_solver, params.drank, exx_info,
                              params.ofs_running);
@@ -428,7 +432,7 @@ void write_h_exx(WriteHParams& params, const Exx_Info& exx_info)
         if (params.exc != nullptr)
         {
             write_h_exx_impl(ucell, pv, params.exc, kv, nspin, istep, append, iat2iwt, nat, also_hR,
-                             params.npol, params.nlocal, params.gamma_only_local,
+                             params.npol, params.nlocal, params.precision, params.gamma_only_local,
                              params.global_out_dir, params.global_matrix_dir,
                              params.calculation, params.out_app_flag, params.ks_solver, params.drank, exx_info,
                              params.ofs_running);

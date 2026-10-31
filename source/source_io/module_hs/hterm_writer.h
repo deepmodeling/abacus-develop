@@ -41,6 +41,7 @@ struct WriteHParams
     int nat = 0;
     bool also_hR = false; // H(k) is always written; H(R) (CSR) only when this is true
     int nlocal = 0;
+    int precision = 8; // text precision of the H(k) component matrices (second INPUT value)
     bool gamma_only_local = false;
     int npol = 1;
     bool domag = false;
