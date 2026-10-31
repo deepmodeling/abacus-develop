@@ -6,6 +6,7 @@
 #ifndef EXX_LRI_HPP
 #define EXX_LRI_HPP
 
+#include "lri_cv_tools.h"
 #include "exx_lri.h"
 #include "exx_lri_detail.h"
 #include "source_base/parallel_common.h"

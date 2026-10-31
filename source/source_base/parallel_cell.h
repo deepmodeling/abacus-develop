@@ -21,6 +21,8 @@ public:
     int size() const;
     int max(int value) const;
     int sum(int value) const;
+    void sum(int* values, int count) const;
+    void sum(double* values, int count) const;
     double max(double value) const;
     /// Gather one bounded text batch on rank zero; other ranks receive an empty string.
     /// maximum_count bounds both local payloads and their total in MPI count units.

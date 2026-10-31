@@ -135,6 +135,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_IO_test_read_inp_sys
+  LIBS base device
+  SOURCES test_read_inp_sys.cpp
+)
+
+AddTest(
   TARGET MODULE_IO_input_help_test
   LIBS parameter  base device io_input
   SOURCES test_input_help.cpp ../input_help.cpp

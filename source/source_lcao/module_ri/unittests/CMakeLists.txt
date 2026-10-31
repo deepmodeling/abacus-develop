@@ -13,7 +13,12 @@ if(ENABLE_LCAO)
     SOURCES
     test_exx_workspace.cpp
     ../exx_workspace.cpp
+    ../lri_cv.cpp
     ../../../source_basis/module_ao/orb_atomic_lm.cpp)
+  # Link the compiled LRI lifecycle while keeping unrelated integral assembly out
+  # of this focused geometry-sharing test.
+  target_compile_options(MODULE_RI_exx_workspace PRIVATE -ffunction-sections -fdata-sections)
+  target_link_options(MODULE_RI_exx_workspace PRIVATE -Wl,--gc-sections)
 endif()
 addtest(
   TARGET
@@ -134,3 +139,13 @@ if(ENABLE_MPI)
     COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_RI_ewald_mpi_dist_test>"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif()
+
+addtest(
+  TARGET MODULE_RI_invmat_ri
+  LIBS parameter base device ${math_libs}
+  SOURCES test_invmat_ri.cpp ../invmat_ri.cpp ../lri_cv_tools.cpp
+          ../abfs_construct_pca.cpp
+          ../../../source_basis/module_ao/orb_atomic_lm.cpp)
+# Keep only the tensor eigensolver from the PCA translation unit in this focused test.
+target_compile_options(MODULE_RI_invmat_ri PRIVATE -ffunction-sections -fdata-sections)
+target_link_options(MODULE_RI_invmat_ri PRIVATE -Wl,--gc-sections)

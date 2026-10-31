@@ -57,7 +57,8 @@ public:
     const NeighborSearch& neighbor_search() const;
     void set_lattice_vectors(const ModuleBase::Matrix3& latvec);
     void refresh_cart_from_frac();
-    void sync_backing_unitcell();
+    /// Copy state; mark a position update only when requested, otherwise preserve the flag.
+    void sync_backing_unitcell(const bool positions_updated);
 
     std::vector<LocalAtom>& owned_atoms() { return owned_atoms_; }
     const std::vector<LocalAtom>& owned_atoms() const { return owned_atoms_; }
