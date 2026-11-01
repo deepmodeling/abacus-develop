@@ -4,6 +4,7 @@
 #include "source_estate/elecstate.h"               // use elecstate::ElecState
 #include "source_estate/module_charge/charge.h"    // use Charge
 #include "source_estate/module_charge/chg_symm.h"  // use module_charge::cal_rhog_symm
+#include "source_estate/module_pot/sol_grid_field.h" // use SolventGridField
 #include "source_estate/write_elecstat_pot.h"      // use write_elecstat_pot
 #include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 #include "source_io/module_dipole/dipole_io.h"     // use write_dipole
@@ -178,6 +179,31 @@ void ctrl_output_fp(UnitCell& ucell,
             solvent_potential,
             inp.out_pot[1],
             ofs_running);
+    }
+
+    // 5b) write the implicit-solvent dielectric function and cavity
+    if (inp.out_sol[0] == 1 && should_output)
+    {
+        const std::vector<elecstate::SolventGridField> fields = pelec->pot->sol_out_fields();
+        for (const elecstate::SolventGridField& field : fields)
+        {
+            const std::string fn = global_out_dir + "sol_" + field.name + geom_block + ".cube";
+            const std::string data_desc = "implicit solvent " + field.name;
+            ModuleIO::write_vdata_palgrid(para_grid,
+                                          field.values.data(),
+                                          -1, // spin-independent field
+                                          nspin,
+                                          istep,
+                                          fn,
+                                          0.0, // efermi
+                                          &(ucell),
+                                          inp.out_sol[1], // precision
+                                          0, // out_fermi
+                                          false, // two_fermi, unused without out_fermi
+                                          false, // reduce_all_pool
+                                          ofs_running,
+                                          data_desc);
+        }
     }
 
     // 6) write ELF
