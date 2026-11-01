@@ -7,6 +7,7 @@
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
 
+#include <iosfwd>
 #include <memory>
 #include <vector>
 
@@ -15,6 +16,9 @@ struct Input_para;
 namespace elecstate
 {
 class PotPcc;
+class PotSccs;
+struct SolventGridField;
+struct SccsResume;
 class TDFieldManager;
 
 /**
@@ -81,13 +85,25 @@ class Potential : public PotBase
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 
-    PotBase* get_pot_type(const std::string& pot_type, const Input_para& input);
+    // resume is the SCCS state of the previous ionic step, used by "sccs" only.
+    PotBase* get_pot_type(const std::string& pot_type, const Input_para& input, const SccsResume& resume);
 
+    /// True while a component waits to change its model during the SCF (the
+    /// SCCS delayed start); the state is the same on every rank.
+    bool model_pending() const;
+    /// Called before SCF mixing with the pool-consistent density residual.
+    /// True only in the iteration in which a component changes its model;
+    /// log, when not null, receives a one-line notice.
+    bool update_model(int electronic_iteration, double density_residual, std::ostream* log);
+    /// sccs_debug output of the SCCS correction.
+    void write_corr_iter(std::ostream& output, int level, double residual) const;
     // Solvation terms of the registered components; not PotBase overrides, so
     // modules that stub Potential need not know about solvation.
     void sum_sol_energy(double& electrostatic, double& non_electrostatic) const;
     void sum_sol_force(const UnitCell& cell, ModuleBase::matrix& force) const;
     const std::vector<double>* find_sol_pot() const;
+    /// Implicit-solvent fields of the registered components, for out_sol.
+    std::vector<SolventGridField> sol_out_fields() const;
 
     /**
      * @brief Inject the shared RT-TDDFT field state before potential setup.
@@ -237,7 +253,12 @@ class Potential : public PotBase
 
     // the registered PCC component, or nullptr when PCC is off
     const PotPcc* pcc_component() const;
-    PotBase* make_sccs_pot(const Input_para& input);
+    const PotSccs* sccs_component() const;
+    PotSccs* sccs_component();
+    // The SCCS activation and warm start of an earlier ionic step are passed
+    // to the rebuilt component.
+    PotBase* make_sccs_pot(const Input_para& input, const SccsResume& resume);
+    SccsResume get_resume() const;
 
     std::vector<double> v_eff_fixed;
     ModuleBase::matrix v_eff;
