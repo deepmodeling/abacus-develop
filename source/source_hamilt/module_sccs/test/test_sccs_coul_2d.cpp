@@ -173,9 +173,10 @@ TEST_F(SccsPcc2dCoulombTest, NonuniformResponseSatisfiesFixedPointAndWarmStart)
                                basis, tpiba, coulomb, response);
     const bool open_boundary = true;
     ModuleSccs::SccsResponse derivatives;
-    std::vector<double> coefficient;
+    ModuleSccs::CavityDerivatives cavity_derivatives;
+    const std::vector<double>& coefficient = cavity_derivatives.coefficient;
     ModuleSccs::make_cav_derivs(density, cavity, basis, tpiba, open_boundary,
-                                derivatives, coefficient);
+                                derivatives, cavity_derivatives);
     std::vector<double> source(basis.nrxx);
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {

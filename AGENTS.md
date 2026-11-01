@@ -97,6 +97,11 @@ rules. Read the complete governance document before making or reviewing changes:
 
 - Core C++ implementation lives under `source/`; source additions must be wired
   through the relevant `CMakeLists.txt`.
+- Each module directory under `source/` (e.g., `source/source_esolver/`,
+  `source/source_io/`) may carry its own `AGENTS.md` describing module-specific
+  design constraints and conventions. When working inside such a directory,
+  read and follow its `AGENTS.md` in addition to this file; the module-level
+  rules refine, but never override, this root file.
 - INPUT parsing and help metadata live under `source/source_io/`; user-facing
   INPUT reference is generated from that metadata during the documentation
   build.
@@ -153,7 +158,9 @@ When splitting a function into a new `.cpp`, if its callers span LCAO and PW, pu
 - Semantic questions such as module ownership, member-variable workflow state,
   test sufficiency, and exception approval require human review.
 - Exceptions must be recorded in the PR with reason, scope, risk, and a follow-up
-  cleanup plan.
+  cleanup plan, using the `### Governance Exception` template. CI downgrades a
+  covered blocker to a warning only after a maintainer applies the
+  `governance-exception-approved` label.
 - After a refactor, propose brief lessons worth recording in this file, then
   ask the developer whether to write them in; be cautious and skip unclear
   or unverified lessons.

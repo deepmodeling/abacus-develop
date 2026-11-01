@@ -2,8 +2,70 @@
 #include "source_estate/module_charge/chg_dmr.h"
 
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_common.h"
 #include "source_pw/module_pwdft/dftu_base.h" // Plus_U_Base members used below
 #include "source_estate/update_pot.h"
+#include "source_cell/klist.h"
+
+#include <iostream>
+
+namespace
+{
+// SCCS reports and the start notice come from the first rank of the first pool.
+bool reports_here(const K_Vectors& kv)
+{
+    return kv.para_k.my_pool == 0 && kv.para_k.rank_in_pool == 0;
+}
+
+// sccs_debug reports go to the running log of that rank.
+std::ostream* corr_log(const K_Vectors& kv, const int sccs_debug)
+{
+    if (sccs_debug > 0 && reports_here(kv))
+    {
+        return &GlobalV::ofs_running;
+    }
+    return nullptr;
+}
+} // namespace
+
+bool module_charge::update_pot_model(const int iter,
+        const double drho,
+        const K_Vectors& kv,
+        elecstate::Potential& pot,
+        Charge_Mixing* p_chgmix)
+{
+    // Only while a potential component waits to change its model: ordinary
+    // runs skip the broadcast. The state is synchronized, so every rank takes
+    // the same branch.
+    if (!pot.model_pending())
+    {
+        return false;
+    }
+    // Band-parallel groups may differ slightly in drho until mixing broadcasts
+    // it; broadcast first so every rank changes the model in the same iteration.
+    double density_residual = drho;
+    Parallel_Common::bcast_double(density_residual);
+    const bool reports = reports_here(kv);
+    std::ostream* const notice = reports ? &std::cout : nullptr;
+    const bool model_changed = pot.update_model(iter, density_residual, notice);
+    if (model_changed)
+    {
+        p_chgmix->restart_for_new_model(iter);
+    }
+    return model_changed;
+}
+
+void module_charge::print_corr_iter(const K_Vectors& kv,
+        const int sccs_debug,
+        const double drho,
+        const elecstate::Potential& pot)
+{
+    std::ostream* const log = corr_log(kv, sccs_debug);
+    if (log != nullptr)
+    {
+        pot.write_corr_iter(*log, sccs_debug, drho);
+    }
+}
 
 void module_charge::chgmixing_ks(const int iter,
         UnitCell& ucell,
@@ -42,7 +104,7 @@ void module_charge::chgmixing_ks(const int iter,
         // not ground state
         bool not_restart_step = !(iter == p_chgmix->mixing_restart_step && inp.mixing_restart > 0.0);
 
-        conv_esolver = (drho < scf_thr && not_restart_step && converged_u);
+        conv_esolver = (drho < scf_thr && not_restart_step && converged_u && !ctx.model_changed);
 
         // add energy threshold for SCF convergence
         if (scf_ene_thr > 0.0)
@@ -115,7 +177,7 @@ void module_charge::chgmixing_ks(const int iter,
     // SCF restart information
     if (inp.mixing_restart > 0
         && iter == p_chgmix->mixing_restart_step - 1
-        && iter != inp.scf_nmax)
+        && iter != ctx.iter_limit)
     {
         p_chgmix->mixing_restart_last = iter;
         std::cout << " SCF restart after this step!" << std::endl;
@@ -126,6 +188,7 @@ void module_charge::chgmixing_ks(const int iter,
 
 
 void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
+        const int iter_limit,
         Charge_Mixing* p_chgmix, // charge mixing class
         Plus_U_Base& dftu,
         const bool mag_converged, ///< whether DeltaSpin magnetization converged (true when disabled)
@@ -136,7 +199,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
     if (iter == 1)
     {
         p_chgmix->init_mixing();
-        p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+        p_chgmix->reset_scf_history(iter_limit);
         if (inp.dft_plus_u && dftu.has_occ_mixer())
         {
             // allocate memory for uom_mdata sized to the flat occupation buffer
@@ -154,7 +217,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
         {
             if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
             {
-                p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+                p_chgmix->mixing_restart_step = iter_limit + 1;
             }
             if (dftu.get_uramping() > 0.01)
             {
@@ -176,6 +239,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 }
 
 void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
+        const int iter_limit,
         Charge_Mixing* p_chgmix, // charge mixing class
         Plus_U_Base& dftu,
         const int nnr, // dimension of density matrix
@@ -186,8 +250,7 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
     if (iter == 1)
     {
         p_chgmix->mix_reset(); // init mixing
-        p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
-        p_chgmix->mixing_restart_count = 0;
+        p_chgmix->reset_scf_history(iter_limit);
         // this output will be removed once the feeature is stable
         if (dftu.get_uramping() > 0.01)
         {
@@ -219,7 +282,7 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
             }
             if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
             {
-                p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
+                p_chgmix->mixing_restart_step = iter_limit + 1;
             }
         }
         if (inp.mixing_dmr) // for mixing_dmr

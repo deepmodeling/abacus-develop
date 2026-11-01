@@ -21,6 +21,11 @@ class PW_Basis_K;
 
 namespace ModuleDFPT
 {
+class DFPT_PW_Data;
+}
+
+namespace ModuleDFPT
+{
 
 class XC_First_Order;
 
@@ -43,6 +48,16 @@ struct DFPT_PW_InitContext
     double nelec;
     double ecutwfc;
     const Plus_U_Base* dftu;
+    /// MPI rank of the running process (from the runtime context, not
+    /// read from any global inside module_dfpt); consumed by the dyn
+    /// file writer for the rank-0 output gate. No default member
+    /// initializer: C++11 aggregate rules require it.
+    int myrank;
+    /// ground-state XC potential on the rho grid (valence + core charge
+    /// input, the same density the kernel linearizes around); consumed by
+    /// the nlcc diagonal 2n+1 term (QE dynmatcc). Null disables that term.
+    /// No default member initializer: C++11 aggregate rules require it.
+    const std::vector<double>* vxc_r;
 };
 
 /**
@@ -89,9 +104,10 @@ class DFPT_PW
               const XC_First_Order* xc,
               double nelec,
               double ecutwfc,
-              const Plus_U_Base* dftu)
+              const Plus_U_Base* dftu,
+              int myrank)
     {
-        const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu};
+        const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu, myrank, nullptr};
         init(ctx);
     }
 
@@ -131,6 +147,17 @@ class DFPT_PW
     /// acoustic sum rule on the Gamma dynamical matrix ("no" | "simple" |
     /// "crystal"); applied to the raw matrix before the LO-TO term
     void set_asr(const std::string& asr_type);
+    /// response SCF mixing scheme: "rho_plain" (beta only), "rho_kerker"
+    /// (screen f_g = |G+q|^2/(|G+q|^2+a^2), a^2 via set_kerker_a2),
+    /// "rho_broyden" (Modified Broyden on the density), or the potential
+    /// mixes "v_sc_plain" / "v_sc_broyden" (handled in solve_displacement)
+    void set_mix_type(const std::string& mix_type);
+
+    /// Kerker screening a^2 in 1/lat0^2 units (rho_kerker scheme only)
+    void set_kerker_a2(double a2);
+
+    /// Broyden history depth (broyden scheme only)
+    void set_broyden_ndim(int ndim);
 
     /// q = 0 response switches (epsilon_inf / Born charges / LO-TO)
     void set_compute_q0(bool flag);
@@ -161,6 +188,14 @@ class DFPT_PW
     std::string format_q_report(int q_idx) const;
 
     std::string format_loto_report() const;
+
+    /// read-only access to the data layer (consumed by the dyn file
+    /// writer in the esolver post-processing)
+    const DFPT_PW_Data& get_data() const;
+
+    /// the MPI rank passed at init (0 for serial); consumed by the dyn
+    /// file writer for the rank-0 output gate
+    int get_myrank() const;
 
   private:
     std::unique_ptr<Impl> pimpl_;

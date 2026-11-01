@@ -51,7 +51,7 @@ struct Exx_Helper : public Exx_HelperBase
         if (!strict_electronic_step) { op_exx->set_wg(wg); }
     }
 
-    bool exx_after_converge(int iter, bool ene_conv) override;
+    bool exx_after_converge(int iter, bool ene_conv, const Input_para& inp) override;
 
     double cal_exx_energy(void* psi_) override;
 

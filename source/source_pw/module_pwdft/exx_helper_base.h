@@ -40,7 +40,7 @@ class Exx_HelperBase
     ///       value (false = not converged, rerun SCF) and the caller
     ///       (ESolver_KS_PW) sets ESolver_KS::scf_rerun_ to trigger the
     ///       restart at iter=1 in ESolver_KS::runner.
-    virtual bool exx_after_converge(int iter, bool ene_conv) = 0;
+    virtual bool exx_after_converge(int iter, bool ene_conv, const Input_para& inp) = 0;
 
     virtual double cal_exx_energy(void* psi) = 0;
 

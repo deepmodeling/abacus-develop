@@ -111,11 +111,10 @@ void Driver::driver_run()
     {
         initialize_ucell();
         p_esolver->before_all_runners(ucell, PARAM.inp);
-        bool ran_frame = true;
         if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
         {
             Relax_Driver rl_driver;
-            ran_frame = rl_driver.relax_driver(p_esolver, ucell, PARAM, GlobalV::ofs_running);
+            rl_driver.relax_driver(p_esolver, ucell, PARAM, GlobalV::ofs_running);
         }
         else if (cal == "get_s")
         {
@@ -130,7 +129,10 @@ void Driver::driver_run()
         {
             ModuleBase::WARNING_QUIT("Driver::driver_run", "cannot recognize the 'calculation' command");
         }
-        if (ran_frame) { p_esolver->after_all_runners(ucell); }
+        if (cal != "scf" && cal != "relax" && cal != "cell-relax" && cal != "nscf")
+        {
+            p_esolver->after_all_runners(ucell);
+        }
     }
 
     delete p_esolver;

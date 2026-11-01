@@ -103,7 +103,7 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* ps
             }
             bool conv_ene = std::abs(dexx) < inp.exx_ene_thr;
 
-            conv_esolver = this->exx_after_converge(iter, conv_ene);
+            conv_esolver = this->exx_after_converge(iter, conv_ene, inp);
 
             if (!conv_esolver)
             {
@@ -143,11 +143,10 @@ double Exx_Helper<T, Device>::cal_exx_energy(void* psi_)
 }
 
 template <typename T, typename Device>
-bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv)
+bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv, const Input_para& inp)
 {
     if (strict_electronic_step && op_exx->separate_loop)
     {
-        const auto& inp = PARAM.inp;
         // A changed electron number must complete at least one EXX update.
         // Reaching the outer-loop budget is not a convergence criterion.
         const bool outer_converged = exx_iter > 0
@@ -165,15 +164,15 @@ bool Exx_Helper<T, Device>::exx_after_converge(int iter, bool ene_conv)
     {
         return true;
     }
-    else if (PARAM.inp.exx_thr_type == "energy" && ene_conv)
+    else if (inp.exx_thr_type == "energy" && ene_conv)
     {
         return true;
     }
-    else if (PARAM.inp.exx_thr_type == "density" && iter == 1)
+    else if (inp.exx_thr_type == "density" && iter == 1)
     {
         return true;
     }
-    else if (exx_iter >= PARAM.inp.exx_hybrid_step)
+    else if (exx_iter >= inp.exx_hybrid_step)
     {
         GlobalV::ofs_running << " !!EXX IS NOT CONVERGED!!" << std::endl;
         std::cout << " !!EXX IS NOT CONVERGED!!" << std::endl;

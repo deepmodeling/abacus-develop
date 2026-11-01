@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -138,6 +139,7 @@
 
 #define read_sync_string(PARAMETER)                                                                                    \
     {                                                                                                                  \
+        item.domain.scalar();                                                                                          \
         item.read_value = [](const Input_Item& item, Parameter& para) { para.PARAMETER = strvalue; };                  \
         sync_string(PARAMETER);                                                                                        \
     }
@@ -240,3 +242,23 @@ void reset_vector(std::vector<T>& vec, int size, T default_value)
         vec.resize(size, default_value);
     }
 }
+
+namespace ModuleIO
+{
+/**
+ * @brief Check whether a k-point/band parallel layout satisfies the DSP vendor
+ * library constraint.
+ *
+ * On DSP hardware, the mtblas/C_PACK libraries require exactly one MPI process
+ * per k-point pool: the effective pool count (kpar for PW, kpar_lcao for LCAO,
+ * the other being 1) times bndpar must equal nproc exactly. Defined inline here
+ * so that both the __DSP input check and non-DSP unit tests can use it.
+ * See issue #8228.
+ */
+inline bool dsp_kpar_layout_valid(const int nproc, const int kpar, const int kpar_lcao, const int bndpar)
+{
+    const int kpar_eff = std::max(kpar, kpar_lcao);
+    const int expected_nproc = kpar_eff * bndpar;
+    return nproc == expected_nproc;
+}
+} // namespace ModuleIO

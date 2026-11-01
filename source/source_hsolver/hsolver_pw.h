@@ -9,7 +9,7 @@
 #include <iosfwd>
 #include <unordered_map>
 
-class TestHSolverPW; // unit-test fixture, see source_hsolver/test/
+class TestHSolverPW; // unit-test fixture, see source_hsolver/unittests/
 
 namespace hsolver
 {

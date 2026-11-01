@@ -11,6 +11,7 @@
 #include <cmath>
 #include <complex>
 #include <cstdlib>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -64,6 +65,21 @@ void DFPT_Phon::init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, DFPT_Pert* per
     ModuleBase::timer::end("DFPT_Phon", "init");
 }
 
+void DFPT_Phon::set_rho(const DFPT_Rho* rho)
+{
+    rho_ = rho;
+}
+
+void DFPT_Phon::set_vxc_r(const std::vector<double>* vxc_r)
+{
+    vxc_r_ = vxc_r;
+}
+
+void DFPT_Phon::set_dvxc_core_table(const std::vector<std::vector<std::complex<double>>>* table)
+{
+    dvxc_core_ = table;
+}
+
 // ---------------------------------------------------------------------------
 // assemble / diagonalize / LO-TO / sum rule
 // ---------------------------------------------------------------------------
@@ -111,6 +127,10 @@ void DFPT_Phon::assemble(int q_idx, DFPT_PW_Data& data)
         }
     }
     data.set_dynmat(q_idx, dyn);
+    // stash the raw pre-ASR pre-LO-TO copy for the dyn file writer;
+    // later set_dynmat calls (apply_asr, add_loto) update the working
+    // matrix but must not overwrite this snapshot
+    data.set_dynmat_raw(q_idx, dyn);
     dynmat_accum_ = ModuleBase::ComplexMatrix();
     accum_q_ = -1;
     ModuleBase::timer::end("DFPT_Phon", "assemble");
