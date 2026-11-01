@@ -451,6 +451,7 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_phon_ewald.o\
     dfpt_pw.o\
     dfpt_pw_data.o\
+    dfpt_pw_data_resp.o\
     dfpt_pw_init.o\
     dfpt_pw_q0.o\
     dfpt_pw_run.o\
