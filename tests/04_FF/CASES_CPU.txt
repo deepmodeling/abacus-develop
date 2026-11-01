@@ -24,3 +24,4 @@
 103_SNAP_periodic
 104_SNAP_inner
 105_SNAP_angular_quadratic
+106_SNAP_angular_quadratic_scf

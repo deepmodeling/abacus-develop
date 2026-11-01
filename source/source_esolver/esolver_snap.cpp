@@ -197,6 +197,8 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep)
     const std::vector<NeighborAtom>& inside = search.get_inside_atoms();
     const std::vector<NeighborAtom>& all = search.get_all_atoms();
     snap_force_.zero_out();
+    const std::size_t atom_count = static_cast<std::size_t>(ucell.nat);
+    ModuleMD::SNAP::CellAccumulator contribution(atom_count);
     std::vector<int> offsets(static_cast<std::size_t>(ucell.ntype + 1), 0);
     for (int it = 0; it < ucell.ntype; ++it)
     {
@@ -206,51 +208,39 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep)
     {
         const NeighborAtom& center = inside[static_cast<std::size_t>(local_i)];
         std::vector<ModuleMD::SNAP::Neighbor> neighbors;
-        std::vector<int> atom_indices;
+        std::vector<std::size_t> atom_indices;
         for (int k = 0; k < list.get_numneigh(local_i); ++k)
         {
             const NeighborAtom& neighbor = all[static_cast<std::size_t>(list.get_firstneigh(local_i)[k])];
             neighbors.push_back(make_neighbor(center, neighbor, ucell.lat0, model_.parameters));
-            atom_indices.push_back(offsets[static_cast<std::size_t>(neighbor.atom_type)] + neighbor.atom_index);
+            const int atom_index = offsets[static_cast<std::size_t>(neighbor.atom_type)] + neighbor.atom_index;
+            const std::size_t index = static_cast<std::size_t>(atom_index);
+            atom_indices.push_back(index);
         }
         const std::size_t center_element = static_cast<std::size_t>(center.atom_type);
         const ModuleMD::SNAP::ForceResult result = calculator_->compute_with_analytic_force(neighbors, center_element);
-        snap_potential_ += result.energy.energy / ModuleBase::Ry_to_eV;
-        for (std::size_t k = 0; k < atom_indices.size(); ++k)
-        {
-            const NeighborAtom& neighbor = all[static_cast<std::size_t>(list.get_firstneigh(local_i)[static_cast<int>(k)])];
-            const double dx = (center.position_x - neighbor.position_x) * ucell.lat0 * ModuleBase::BOHR_TO_A;
-            const double dy = (center.position_y - neighbor.position_y) * ucell.lat0 * ModuleBase::BOHR_TO_A;
-            const double dz = (center.position_z - neighbor.position_z) * ucell.lat0 * ModuleBase::BOHR_TO_A;
-            const double center_force_x = -result.neighbor_forces[k][0];
-            const double center_force_y = -result.neighbor_forces[k][1];
-            const double center_force_z = -result.neighbor_forces[k][2];
-            const double relative[3] = {dx, dy, dz};
-            const double pair_force[3] = {center_force_x, center_force_y, center_force_z};
-            for (int row = 0; row < 3; ++row)
-            {
-                for (int column = 0; column < 3; ++column)
-                {
-                    snap_virial_(row, column) += relative[row] * pair_force[column]
-                                                 / (ModuleBase::Ry_to_eV * ucell.omega);
-                }
-            }
-        }
         const int center_index = offsets[static_cast<std::size_t>(center.atom_type)] + center.atom_index;
+        const std::size_t index = static_cast<std::size_t>(center_index);
+        contribution.add(index, atom_indices, neighbors, result);
+    }
+    snap_potential_ = contribution.energy() / ModuleBase::Ry_to_eV;
+    const double virial_scale = 1.0 / (ModuleBase::Ry_to_eV * ucell.omega);
+    for (int row = 0; row < 3; ++row)
+    {
+        for (int column = 0; column < 3; ++column)
+        {
+            const std::size_t index = static_cast<std::size_t>(3 * row + column);
+            snap_virial_(row, column) = contribution.virial()[index] * virial_scale;
+        }
+    }
+    const double force_scale = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
+    for (int atom_index = 0; atom_index < ucell.nat; ++atom_index)
+    {
         for (int direction = 0; direction < 3; ++direction)
         {
-            snap_force_(center_index, direction) +=
-                result.center_force[static_cast<std::size_t>(direction)]
-                / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
-        }
-        for (std::size_t k = 0; k < atom_indices.size(); ++k)
-        {
-            for (int direction = 0; direction < 3; ++direction)
-            {
-                snap_force_(atom_indices[k], direction) +=
-                    result.neighbor_forces[k][static_cast<std::size_t>(direction)]
-                    / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
-            }
+            const std::size_t index = static_cast<std::size_t>(atom_index);
+            const std::size_t component = static_cast<std::size_t>(direction);
+            snap_force_(atom_index, direction) = contribution.forces()[index][component] * force_scale;
         }
     }
 }

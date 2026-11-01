@@ -1,0 +1,20 @@
+ATOMIC_SPECIES
+Si 28.0855 auto auto
+
+LATTICE_CONSTANT
+1.0
+
+LATTICE_VECTORS
+20.0 0.0 0.0
+0.0 20.0 0.0
+0.0 0.0 20.0
+
+ATOMIC_POSITIONS
+Cartesian
+
+Si
+0
+3
+0.0 0.0 0.0 m 1 1 1
+2.0 0.0 0.0 m 1 1 1
+0.5 2.5 0.0 m 1 1 1
