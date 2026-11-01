@@ -235,6 +235,13 @@ class DFPT_PW_Data
     void set_vsc_r(int atom_idx, int dir, const std::vector<std::complex<double>>& v);
     std::vector<std::complex<double>> get_vsc_r(int atom_idx, int dir) const;
 
+    /// converged first-order density response (G space) of displacement
+    /// (atom, dir): the two-pass 2n+1 accumulation needs it to rebuild the
+    /// nlcc kernel input f_xc.(drho_val + drhoc) per displacement, after
+    /// the working drho slots hold the last solved displacement
+    void set_drho_disp(int atom_idx, int dir, const std::vector<std::complex<double>>& rho);
+    std::vector<std::complex<double>> get_drho_disp(int atom_idx, int dir) const;
+
     /// converged dpsi of displacement (atom, dir), indexed [k][band]; the
     /// two-pass 2n+1 accumulation reads it back after all displacements of
     /// the basis have been solved (the working dpsi slots get overwritten by
@@ -301,6 +308,9 @@ class DFPT_PW_Data
 
     /// converged v_sc per displacement (atom, dir): [3*nat] entries
     std::vector<std::vector<std::complex<double>>> vsc_r_;
+
+    /// converged first-order density per displacement (atom, dir): [3*nat]
+    std::vector<std::vector<std::complex<double>>> drho_disp_;
 
     /// converged dpsi per displacement (atom, dir): [3*nat][k][band] entries
     std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> dpsi_disp_;

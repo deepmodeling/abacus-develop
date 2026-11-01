@@ -7,7 +7,7 @@
 #include "source_cell/unitcell.h"
 #include "source_estate/module_dm/unittests/prepare_unitcell.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 /************************************************
  *  unit test of class Structure_factor and 
  ***********************************************/

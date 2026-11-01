@@ -70,9 +70,6 @@ list(
   vnl_pw_init_vnl.cpp
   vnl_pw_qrad.cpp
   vnl_pw_table.cpp
-  stru_fac.cpp
-  stru_fac_k.cpp
-  soc.cpp
   elecond.cpp
   fs_nonlocal_tools.cpp
   fs_nonlocal_tools_vkb.cpp

@@ -11,7 +11,7 @@ addtest(
   parameter
   SOURCES
   test_soc.cpp
-  ../soc.cpp
+  ../../../source_cell/soc.cpp
   ../../../source_base/global_variable.cpp
   ../../../source_base/global_function.cpp
   ../../../source_base/global_file.cpp
@@ -85,7 +85,7 @@ addtest(
   planewave
   SOURCES
   test_stru_fac.cpp
-  ../stru_fac.cpp
+  ../../../source_cell/stru_fac.cpp
   ../../../source_cell/unitcell.cpp
   ../../../source_cell/unitcell_index.cpp
   ../../../source_cell/unitcell_stats.cpp

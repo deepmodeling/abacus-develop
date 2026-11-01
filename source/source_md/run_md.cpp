@@ -319,7 +319,8 @@ void md_line(MDCell& mdcell,
         {
             if (mdcell.has_backing_unitcell())
             {
-                mdcell.sync_backing_unitcell();
+                const bool positions_updated = false;
+                mdcell.sync_backing_unitcell(positions_updated);
             }
             if (param_in.inp.out_stru > 0)
             {

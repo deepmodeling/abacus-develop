@@ -426,10 +426,59 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
         }
     }
 
+    // ground-state XC potential on the rho grid, evaluated on the SAME
+    // density the first-order kernel linearizes around (valence + core
+    // charge): consumed by the nlcc diagonal 2n+1 term (QE dynmatcc).
+    // Only needed when some species carries a nonlinear core correction.
+    bool nlcc_any = false;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        if (ucell.atoms[it].ncpp.nlcc)
+        {
+            nlcc_any = true;
+            break;
+        }
+    }
+    std::vector<double> vxc_r;
+    if (nlcc_any)
+    {
+        const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
+            = XC_Functional::v_xc(this->pw_rho->nrxx, this->pelec->charge, &ucell, 1,
+                                  false, false, this->inp_->gga_grad,
+                                  XC_Functional::get_hybrid_alpha(),
+                                  XC_Functional::get_hse_omega());
+        const ModuleBase::matrix& v_xc_mat = std::get<2>(etxc_vtxc_v);
+        if (v_xc_mat.nr > 0 && v_xc_mat.nc == this->pw_rho->nrxx)
+        {
+            vxc_r.resize(this->pw_rho->nrxx);
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+            {
+                vxc_r[ir] = v_xc_mat(0, ir);
+            }
+        }
+        else
+        {
+            ModuleBase::WARNING("ESolver_DFPT_PW::init_dfpt",
+                                "failed to evaluate the ground-state XC potential; "
+                                "the nlcc diagonal dynamical-matrix term is skipped");
+        }
+    }
+
     this->stp.sync_cpu();
-    dfpt_->init(ucell, *this->stp.psi_cpu, this->pw_rho, this->pw_wfc, &this->sf, veff_r,
-                this->pelec->wg, this->pelec->ekb, xc_adapter_, nelec_, ecutwfc_,
-                dft_plus_u_ ? this->dftu_.get() : nullptr);
+    const ModuleDFPT::DFPT_PW_InitContext ctx{&ucell,
+                                               this->stp.psi_cpu,
+                                               this->pw_rho,
+                                               this->pw_wfc,
+                                               &this->sf,
+                                               &veff_r,
+                                               &this->pelec->wg,
+                                               &this->pelec->ekb,
+                                               xc_adapter_,
+                                               nelec_,
+                                               ecutwfc_,
+                                               dft_plus_u_ ? this->dftu_.get() : nullptr,
+                                               &vxc_r};
+    dfpt_->init(ctx);
 }
 
 void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)

@@ -134,6 +134,17 @@ class DFPT_Rho
                        int q_idx,
                        DFPT_PW_Data& data);
 
+    /// same first-order core-density amplitude as compute_drhoc, but pure:
+    /// takes the cartesian q explicitly and writes into a caller-owned
+    /// vector instead of the DFPT_PW_Data slot. Used by the 2n+1 nlcc
+    /// direct terms, which need the core response of EVERY displacement
+    /// while the data slot holds only the current one.
+    void compute_drhoc_g(const UnitCell& ucell,
+                         int iat,
+                         int dir,
+                         const ModuleBase::Vector3<double>& q_cart,
+                         std::vector<std::complex<double>>& drhoc_g) const;
+
     /// first-order occupation matrix (docc) for DFT+U (U0 reservation).
     void cal_docc(const psi::Psi<std::complex<double>>& psi,
                   const ModuleBase::matrix& wg,

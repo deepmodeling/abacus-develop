@@ -8,7 +8,7 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
-#include "source_pw/module_pwdft/soc.h"
+#include "source_cell/soc.h"
 #include "source_io/module_parameter/parameter.h"
 
 /// @brief Friend helper to mutate PARAM private members in unit tests.

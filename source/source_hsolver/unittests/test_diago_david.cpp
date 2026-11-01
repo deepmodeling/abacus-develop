@@ -1,10 +1,10 @@
-#include "source_hsolver/diago_david.h"
-#include "source_hsolver/diago_dav_subspace.h"
-#include "source_hsolver/diago_cg.h"
 #include "source_base/parallel_cell.h"
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
+#include "source_hsolver/diago_cg.h"
+#include "source_hsolver/diago_dav_subspace.h"
+#include "source_hsolver/diago_david.h"
 
 #include <algorithm>
 #include <cmath>
@@ -16,13 +16,16 @@ namespace
 {
 // A distributed diagonal H with S=I. ld must remain the physical local size,
 // including zero: artificial vector padding must never reach the operator.
-template <typename T>
-class DiagonalOperator final : public hsolver::HSOperator<T>
+template <typename T> class DiagonalOperator final : public hsolver::HSOperator<T>
 {
   public:
     DiagonalOperator(const int offset, const int size) : offset_(offset), size_(size) {}
     void update_k(const int ik) override {}
-    void hpsi(const T* x, T* hx, const int ld, const int nvec) const override
+    void hpsi(
+        const T *x,
+        T *hx,
+        const int ld,
+        const int nvec) const override
     {
         EXPECT_EQ(ld, size_);
 
@@ -34,7 +37,11 @@ class DiagonalOperator final : public hsolver::HSOperator<T>
             }
         }
     }
-    void spsi(const T* x, T* sx, const int ld, const int nvec) const override
+    void spsi(
+        const T *x,
+        T *sx,
+        const int ld,
+        const int nvec) const override
     {
         EXPECT_EQ(ld, size_);
         const int count = size_ * nvec;
@@ -46,22 +53,21 @@ class DiagonalOperator final : public hsolver::HSOperator<T>
     const int size_;
 };
 
-template <typename T>
-T initial_value(const int row, const int band)
+template <typename T> T initial_value(const int row, const int band)
 {
     return std::sin((row + 1) * (band + 1) * 0.37) + 0.2 * std::cos((row + 2) * 0.51);
 }
 
-template <>
-std::complex<double> initial_value(const int row, const int band)
+template <> std::complex<double> initial_value(const int row, const int band)
 {
     const double real = initial_value<double>(row, band);
     const double imag = 0.3 * std::cos((row + 1) * (band + 2) * 0.29);
     return {real, imag};
 }
 
-template <typename T>
-class DavidsonOwnershipTest : public ::testing::Test {};
+template <typename T> class DavidsonOwnershipTest : public ::testing::Test
+{
+};
 using ScalarTypes = ::testing::Types<double, std::complex<double>>;
 TYPED_TEST_SUITE(DavidsonOwnershipTest, ScalarTypes);
 
@@ -124,24 +130,66 @@ TYPED_TEST(DavidsonOwnershipTest, PhysicalEmptyAndUnevenBlocks)
             DiagonalOperator<T> op(offset, local_size);
             if (method == 0)
             {
-                hsolver::DiagoDavid<T> solver(precondition.data(), bands, local_size, 3, comm);
-                solver.diag(op, local_size, vectors.data(), energies, thresholds, 300, 5, 0);
+                hsolver::DiagoDavid<T> solver(
+                    precondition.data(),
+                    bands,
+                    local_size,
+                    3,
+                    comm);
+                solver.diag(
+                    op,
+                    local_size,
+                    vectors.data(),
+                    energies,
+                    thresholds,
+                    300,
+                    5,
+                    0);
             }
             else if (method == 1)
             {
-                hsolver::Diago_DavSubspace<T> solver(precondition, bands, local_size, 3, 1e-13, 300, comm, 0, 1);
-                solver.diag(op, vectors.data(), local_size, energies, thresholds, false);
+                hsolver::Diago_DavSubspace<T> solver(
+                    precondition,
+                    bands,
+                    local_size,
+                    3,
+                    1e-13,
+                    300,
+                    comm,
+                    0,
+                    1);
+                solver.diag(
+                    op,
+                    vectors.data(),
+                    local_size,
+                    energies,
+                    thresholds,
+                    false);
             }
             else
             {
                 const bool initial_subspace = method == 3;
-                hsolver::DiagoCG<T> solver("pw", "nscf", initial_subspace, comm, 1e-13, 300);
-                const double* precondition_data = precondition.data();
+                hsolver::DiagoCG<T> solver(
+                    "pw",
+                    "nscf",
+                    initial_subspace,
+                    comm,
+                    1e-13,
+                    300);
+                const double *precondition_data = precondition.data();
                 if (method == 4)
                 {
                     precondition_data = nullptr;
                 }
-                solver.diag(op, local_size, bands, local_size, vectors.data(), energies, thresholds, precondition_data);
+                solver.diag(
+                    op,
+                    local_size,
+                    bands,
+                    local_size,
+                    vectors.data(),
+                    energies,
+                    thresholds,
+                    precondition_data);
             }
             if (local_size == 0)
             {
@@ -169,12 +217,17 @@ TYPED_TEST(DavidsonOwnershipTest, PhysicalEmptyAndUnevenBlocks)
 }
 } // namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int processes = 1;
     int threads = 1;
     int rank = 0;
-    Parallel_Global::read_pal_param(argc, argv, processes, threads, rank);
+    Parallel_Global::read_pal_param(
+        argc,
+        argv,
+        processes,
+        threads,
+        rank);
 #ifdef __MPI
     POOL_WORLD = MPI_COMM_WORLD;
     KP_WORLD = MPI_COMM_NULL;
