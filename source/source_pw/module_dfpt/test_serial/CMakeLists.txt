@@ -61,7 +61,11 @@ addtest(
   base
   symmetry
   SOURCES
-  dfpt_rho_serial_test.cpp
+  # I-24 split: response kernels vs the mixing family (the shared RNG +
+  # fixture live in dfpt_rho_serial_fixture.h; the mixing file's name
+  # anticipates the Phase-2 source split into dfpt_rho_mix.cpp)
+  test_dfpt_rho.cpp
+  test_dfpt_rho_mixing.cpp
   ../dfpt_rho.cpp
   ../dfpt_pw_data.cpp
   ../dfpt_kq_basis.cpp
