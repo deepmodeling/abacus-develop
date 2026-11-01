@@ -80,8 +80,10 @@ static void gather_and_write(const std::string& prefix,
                              const std::string& global_matrix_dir,
                              std::ofstream* ofs_running)
 {
-    // Mode 1 appends to the fixed file; only mode 2 embeds the step in the name.
-    const bool append = (out_app_flag == 1);
+    // Mode 1 appends one frame per ionic step; the first step (istep == 0)
+    // truncates the fixed file so a rerun does not keep stale records. Only
+    // mode 2 embeds the step in the name.
+    const bool append = (out_app_flag == 1) && (istep > 0);
     const bool numbered = (out_app_flag == 2);
     const int nbasis = hR.get_nbasis();
 #ifdef __MPI

@@ -49,8 +49,10 @@ void write_dh_perI(WriteDHParams& params,
     // calculation or out_app_flag branching is needed here.
     const std::string mat_dir = PARAM.globalv.global_mat_dir;
     const int out_app_flag = PARAM.inp.out_app_flag;
-    // Mode 1 appends to the fixed file; only mode 2 embeds the step in the name.
-    const bool append = (out_app_flag == 1);
+    // Mode 1 appends one frame per ionic step; the first step (istep == 0)
+    // truncates the fixed file so a rerun does not keep stale records. Only
+    // mode 2 embeds the step in the name.
+    const bool append = (out_app_flag == 1) && (params.istep > 0);
     const bool numbered = (out_app_flag == 2);
 
 #ifdef __MPI
@@ -128,7 +130,7 @@ void write_dh_perI(WriteDHParams& params,
                     fk += "_ik" + std::to_string(params.kv->ik2iktot[ik]);
                 }
                 fk += "_nao.txt";
-                const bool append_fk = (out_app_flag == 1);
+                const bool append_fk = (out_app_flag == 1) && (params.istep > 0);
                 ModuleIO::save_mat(params.istep,
                                    hk.data(),
                                    nlocal,

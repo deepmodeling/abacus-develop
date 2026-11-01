@@ -40,9 +40,10 @@ void ModuleIO::write_hsk(
     {
         p_hamilt->updateHk(ik);
         const bool binary = (out_type == 2);
-        // save_mat takes a Boolean append flag: only mode 1 appends, modes
-        // 0 and 2 overwrite their per-step files
-        const bool append_mat = (out_app_flag == 1);
+        // save_mat takes a Boolean append flag: only mode 1 appends, and only
+        // from the second ionic step onward (istep > 0); modes 0 and 2 overwrite
+        // their per-step files.
+        const bool append_mat = (out_app_flag == 1) && (istep > 0);
 
         hamilt::MatrixBlock<T> h_mat;
         hamilt::MatrixBlock<T> s_mat;

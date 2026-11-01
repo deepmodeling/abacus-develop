@@ -95,8 +95,10 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
 {
     const int nspin = dmr.size();
     assert(nspin > 0);
-    // Mode 1 appends to the fixed file; only mode 2 embeds the step in the name.
-    const bool append = (out_app_flag == 1);
+    // Mode 1 appends one frame per ionic step; the first step (istep == 0)
+    // truncates the fixed file so a rerun does not keep stale records. Only
+    // mode 2 embeds the step in the name.
+    const bool append = (out_app_flag == 1) && (istep > 0);
     const bool numbered = (out_app_flag == 2);
     for (int ispin = 0; ispin < nspin; ispin++)
     {

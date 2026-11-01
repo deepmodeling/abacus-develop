@@ -274,7 +274,7 @@ void Relax_Driver::stru_out(const int istep,
         // format truncates to the latest frame instead). Mode 2 keeps the
         // numbered STRU{istep+1} files. Mode 0 only writes STRU_NOW, which is
         // already overwritten each step above.
-        const bool append_stru = (inp.out_app_flag == 1) && (inp.out_stru == 1);
+        const bool append_stru = (inp.out_app_flag == 1) && (inp.out_stru == 1) && (istep > 0);
         const std::string step_file = (inp.out_app_flag == 1)
             ? out_dir_ + (inp.out_stru == 1 ? "STRU" : "STRU.cif")
             : out_dir_ + "STRU" + std::to_string(istep + 1) + (inp.out_stru == 1 ? "" : ".cif");
