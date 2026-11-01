@@ -16,7 +16,7 @@ namespace ModuleIO
  * Matrix number) and the cell-aware format below are accepted. Compact CSR
  * blocks contain an R coordinate/nnz line, values, zero-based column indices,
  * and dimension+1 row pointers. Invalid dimensions, indices and truncated data
- * are rejected rather than producing an empty matrix.
+ * are rejected for both formats rather than producing an empty matrix.
  * The cell-aware format is like:
  * ```
  *  --- Ionic Step 1 ---
@@ -77,7 +77,11 @@ class csrFileReader : public FileReader
     int getMatrixDimension() const;
 
   private:
-    void parseCompactFile();
+    void parseCompactHeader();
+    void parseCellHeader();
+    void readBlocks();
+    void nextDataLine();
+    void nextDataToken();
     std::vector<std::vector<int>> RCoordinates;
     std::vector<SparseMatrix<T>> sparse_matrices;
     int step = 0;
