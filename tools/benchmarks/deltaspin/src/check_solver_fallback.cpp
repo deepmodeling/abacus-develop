@@ -1,4 +1,5 @@
 #include "module_hsolver/hsolver_pw.h"
+#include "module_hsolver/diago_dav_subspace.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
@@ -21,6 +22,9 @@ namespace
 {
 int current_point = 0, failed_point = -1, injections = 0;
 int invalidations = 0, recovery_actions = 0;
+bool count_allocations = false, override_available = false;
+size_t allocated_bytes = 0, available_bytes = 0;
+int pinned_allocations = 0;
 
 class DiagonalOperator : public hamilt::Operator<Complex, GPU>
 {
@@ -49,10 +53,10 @@ class DiagonalHamiltonian : public hamilt::Hamilt<Complex, GPU>
     }
 };
 
-void run(int points, int polarizations)
+void run(int points, int polarizations, int basis_padding = 0)
 {
     constexpr int plane_waves = 16, bands = 3;
-    const int rows = plane_waves * polarizations;
+    const int rows = plane_waves * polarizations + basis_padding;
     GlobalV::NPOL = polarizations;
     GlobalV::NSPIN = polarizations == 2 ? 4 : 1;
     ModulePW::PW_Basis_K basis;
@@ -128,6 +132,42 @@ void run(int points, int polarizations)
                   << " recovery_actions=" << recovery_actions << " eigenpair_error=" << maximum_error << '\n';
     }
 }
+
+int check_memory_boundary(int points, int polarizations, int basis_padding)
+{
+    const int rows = 16 * polarizations;
+    std::vector<double> precondition(rows, 1.0);
+    hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
+    // Measure actual constructor allocations independently of the resource
+    // policy, including scalar/index work arrays and excluding Psi padding.
+    allocated_bytes = 0;
+    count_allocations = true;
+    {
+        hsolver::Diago_DavSubspace<Complex, GPU> resident(
+            precondition, 3, rows, 2, 1e-12, 100, false, comm);
+    }
+    count_allocations = false;
+    if (allocated_bytes == 0) { return 6; }
+    for (int margin : {0, 1, -1})
+    {
+        available_bytes = margin < 0 ? allocated_bytes - 1 : allocated_bytes + margin;
+        pinned_allocations = 0;
+        override_available = true;
+        run(points, polarizations, basis_padding);
+        override_available = false;
+        if ((pinned_allocations != 0) != (margin < 0))
+        {
+            std::cerr << "STORAGE_POLICY_FAILED points=" << points << " npol=" << polarizations
+                      << " padding=" << basis_padding << " resident_bytes=" << allocated_bytes
+                      << " available=" << available_bytes << " pinned_allocations=" << pinned_allocations << '\n';
+            return 7;
+        }
+        std::cout << "STORAGE_POLICY_OK points=" << points << " npol=" << polarizations
+                  << " padding=" << basis_padding << " resident_bytes=" << allocated_bytes
+                  << " available=" << available_bytes << " pinned_allocations=" << pinned_allocations << '\n';
+    }
+    return 0;
+}
 } // namespace
 
 extern "C" cusolverStatus_t __real_cusolverDnZhegvd(cusolverDnHandle_t, cusolverEigType_t,
@@ -149,6 +189,31 @@ extern "C" cusolverStatus_t __wrap_cusolverDnZhegvd(cusolverDnHandle_t handle, c
     return status;
 }
 
+extern "C" cudaError_t __real_cudaMalloc(void**, size_t);
+extern "C" cudaError_t __real_cudaHostAlloc(void**, size_t, unsigned int);
+extern "C" cudaError_t __real_cudaMemGetInfo(size_t*, size_t*);
+
+extern "C" cudaError_t __wrap_cudaMalloc(void** pointer, size_t bytes)
+{
+    const auto status = __real_cudaMalloc(pointer, bytes);
+    if (count_allocations && status == cudaSuccess) { allocated_bytes += bytes; }
+    return status;
+}
+
+extern "C" cudaError_t __wrap_cudaHostAlloc(void** pointer, size_t bytes, unsigned int flags)
+{
+    const auto status = __real_cudaHostAlloc(pointer, bytes, flags);
+    if (override_available && status == cudaSuccess) { ++pinned_allocations; }
+    return status;
+}
+
+extern "C" cudaError_t __wrap_cudaMemGetInfo(size_t* available, size_t* total)
+{
+    const auto status = __real_cudaMemGetInfo(available, total);
+    if (override_available && status == cudaSuccess) { *available = available_bytes; }
+    return status;
+}
+
 int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);
@@ -162,8 +227,22 @@ int main(int argc, char** argv)
     hsolver::DiagoIterAssist<Complex, GPU>::need_subspace = false;
     hsolver::createGpuBlasHandle();
     hsolver::createGpuSolverHandle();
-    for (int points : {1, 2})
-    for (int polarizations : {1, 2}) { run(points, polarizations); }
+    if (argc > 1 && std::string(argv[1]) == "--memory-boundary")
+    {
+        for (int points : {1, 2})
+        for (int polarizations : {1, 2})
+        {
+            const int status = check_memory_boundary(points, polarizations, 0);
+            if (status != 0) { return status; }
+        }
+        const int status = check_memory_boundary(2, 1, 7);
+        if (status != 0) { return status; }
+    }
+    else
+    {
+        for (int points : {1, 2})
+        for (int polarizations : {1, 2}) { run(points, polarizations); }
+    }
     hsolver::destroyGpuSolverHandle();
     hsolver::destoryBLAShandle();
     MPI_Finalize();

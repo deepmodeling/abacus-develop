@@ -17,7 +17,8 @@ for performance on these supercells.
 
 The structures use a 2.866 A conventional bcc lattice. The formal timing cases
 repeat it 2x2x2 for Fe16 and 2x2x4 for Fe32. Capacity inputs use 3x3x3 for Fe54,
-4x4x2 for Fe64, 4x3x3 for Fe72, 5x4x2 for Fe80 and 4x4x3 for Fe96. One atom is
+4x4x2 for Fe64, 4x3x3 for Fe72, 5x4x2 for Fe80, 5x3x3 for Fe90 and 4x4x3 for
+Fe96. One atom is
 displaced by 0.02 A along x to provide nonzero forces for comparison. The local
 moment target is 2.2 uB along +z on every atom.
 
@@ -225,8 +226,63 @@ does not substantially change the mandatory allocation peak.
 The Fe80 and Fe96 parent probes exhaust device memory before the first SCF step.
 An isolated host-staging prototype reduces the Fe72 three-step peak by about
 13% at about 12% greater elapsed time, but also fails at Fe80. It is excluded
-from the production implementation. These observations locate a tested
-capacity boundary; they do not establish a universal maximum atom count.
+as a standalone capacity strategy. The combined scheme below also moves the
+Hamiltonian-action basis to host memory. These observations locate the earlier
+implementation's tested boundary; they do not establish a universal maximum
+atom count.
+
+Host-backed Davidson actions combined with temporary k-point staging complete
+the Fe90 input on four V100s in 42 SCF steps and 4962.559 seconds. The run has
+complete finite energy, force, stress and per-atom magnetic tables. Maximum
+sampled device memory is 30724 MiB per GPU and 122340 MiB across a complete
+sampling round. The four processes reach a summed sampled host RSS of
+193.142 GiB. GPU and host sampling intervals are 100 ms and one second,
+respectively; summed RSS can count shared pages more than once. Native
+electronic convergence is met. The reported magnetic RMS is `4.27025e-7 uB`,
+above the nominal `1e-7 uB` inner-loop threshold; no stopping parameter is changed.
+
+The full Fe90 run validates the storage implementation with its earlier,
+broader selection budget. The final mandatory-allocation rule retains the
+same host path for this input: resident Psi and two Davidson arrays alone
+require approximately 37.324 GiB per rank, exceeding V100 capacity before
+other allocations. Storage arithmetic is unchanged by the selection revision.
+The final automatic executable also completes a natural-trigger one-step
+force/stress probe: energy, forces and magnetic tables match the storage-core
+probe, with at most `1.01e-10 kbar` stress difference. No memory-setting parameter
+is supplied.
+
+A matched four-H20 one-step control isolates the storage change with the same
+corrected force kernel in both binaries. Peak device memory falls from 49781
+to 30929 MiB per GPU (37.87%), while elapsed time rises from 1735.049 to
+1867.767 seconds (7.65%). Maximum force/stress differences are `1.0e-10 eV/angstrom`
+and `6.01e-10 kbar`. This bounded run includes complete force and stress
+evaluation but does not establish full convergence or a full-run speedup.
+The host path is forced by a test-only memory-query injector on this
+larger-memory device; the application adds no input flag.
+
+On a fitting H20 Fe16 single-GPU, one-thread control, automatic selection keeps
+resident storage. Both binaries converge in 30 steps and use 4073 MiB; elapsed
+times are 369.986 and 369.980 seconds. All recorded physical outputs are
+identical. Automatic selection keeps this fitting calculation on the GPU.
+
+The fitting Fe72 four-V100 control also remains resident throughout its full
+run. It retains 33 SCF steps and the same per-device peak of 32026 MiB; elapsed
+times are 1067.371 seconds for the preserved direct-upload stage and 1067.342
+seconds for automatic storage. Maximum force/stress differences are
+`1.0e-9 eV/angstrom` and `3.50e-9 kbar`. This comparison includes the intervening
+CG-recovery and force-index corrections and is not an isolated storage speedup
+claim. It verifies that the capacity policy does not impose host transfers on
+this workload near the device-memory limit.
+
+Eleven complete paired controls cover fitting and forced host-storage paths,
+one/four GPUs, one/twelve threads, disordered Fe, mixed Fe/Ni and an uneven
+27-point distribution. Their largest force/stress differences are
+`4.67e-8 eV/angstrom` and `4.284e-7 kbar`. The final automatic executable also
+passes a complete single-GPU, one-thread forced-host Fe16 control in 30 SCF
+steps, exercising the pressure branch with all eight local k points. The
+single-k-point mixed reference reaches 150 steps without electronic convergence,
+as do its archived parent/candidate runs; it is excluded from these converged
+comparisons without changing its scientific settings.
 
 For MPI profiles, pass one encoded Nsight `globalPid` at a time to
 `analyze_trace.py`, `analyze_gemm_trace.py` and `analyze_idle.py` with
@@ -508,8 +564,73 @@ The preceding loop fails this check with zero recovery applications.
 
 ```bash
 python3 src/link_check.py src/check_solver_fallback.cpp --cxxflag=-std=c++17 \
-    --cxxflag=-UNDEBUG --ldflag=-Wl,--wrap=cusolverDnZhegvd
+    --cxxflag=-UNDEBUG --ldflag=-Wl,--wrap=cusolverDnZhegvd \
+    --ldflag=-Wl,--wrap=cudaMalloc --ldflag=-Wl,--wrap=cudaHostAlloc \
+    --ldflag=-Wl,--wrap=cudaMemGetInfo
 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 results/check_solver_fallback
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 results/check_solver_fallback --memory-boundary
+```
+
+The memory-boundary mode measures allocations made by a resident Davidson
+constructor, then tests public solves with exactly that available capacity,
+one extra byte and one byte less. It checks storage selection independently of
+the policy formula, including padded wavefunctions, while retaining the
+analytic eigenpair and CG-recovery checks.
+
+### Host storage under device-memory pressure
+
+At each CUDA plane-wave `dav_subspace` solve, the solver compares available device memory
+with the mandatory resident Davidson allocations: two basis arrays, four
+projected matrices, the preconditioner, eigenvalues and band indices. The basis
+dimension follows the constructor; nonspinor k-first arrays use their active
+plane-wave counts rather than padded leading dimensions. No additional reserve
+is included, so a constructor that fits
+retains device storage. Existing library workspaces are already reflected in
+available memory. If the mandatory allocations exceed it, the action basis is stored
+in pinned host memory. Dispatch does not depend on atom count, element identity,
+GPU model or named benchmark dimensions. CPU and ROCm retain their existing
+storage path. Selection is automatic and adds no user input parameter. The
+running log records a decision to use host memory with its required/available
+byte counts. Allocations outside this solver retain their existing policies.
+
+The GPU retains at most 64 Hamiltonian-action columns for operator applications
+and projected-matrix formation. Products with the complete action basis stream
+plane-wave row tiles; each GEMM retains every active subspace column in its
+contraction. No basis vectors, precision or convergence settings are discarded.
+Cached initial actions use the unused second band block of the Davidson basis
+as their device destination. The same block receives rotated actions during
+subspace refresh, avoiding an additional wavefunction-sized allocation.
+
+In this mode, owned k-first wavefunctions containing all local k points are
+temporarily stored in pinned host memory, with one k point resident on the GPU.
+Wrapped, borrowed, band-first and already single-k-point arrays retain their
+layout. The complete device array is restored after releasing Davidson, before
+charge construction or return to the caller. Failure to obtain an optional
+pinned allocation retains the corresponding resident path; it does not
+guarantee that a calculation exceeding device capacity can continue.
+
+For a band-wavefunction block of `B` bytes, `q` local k points and expansion
+factor `d`, this replaces approximately `(q + 2*d) * B` of resident wavefunction
+and Davidson storage with `(1 + d) * B` plus the bounded action panel. The
+comparison applies when k-point staging is eligible; projectors, dense work,
+CUDA context and other temporaries add to the application peak. The host
+allocations add approximately `(q + d) * B`, alongside existing host caches.
+Transfers can increase elapsed time, so report host RAM and complete-run time
+along with device memory.
+
+`check_davidson_storage.cpp` verifies action panels, nonzero band offsets,
+partial overwrites, full-contraction products, k-point indexing and exact
+restoration, including ineligible layouts. Its optional-allocation-failure
+mode requires an allocator fault injector. The analytic Davidson driver checks
+both storage modes with a basis wide enough to require row streaming. Run these
+commands from this benchmark directory:
+
+```bash
+python3 src/link_check.py src/check_davidson_storage.cpp --cxxflag=-std=c++17 --cxxflag=-UNDEBUG
+results/check_davidson_storage
+python3 src/link_check.py src/check_davidson.cpp --cxxflag=-std=c++17 --cxxflag=-UNDEBUG
+results/check_davidson --resident 192 18
+results/check_davidson --host-backed 192 18
 ```
 
 ## Fixed-overlap constraint responses

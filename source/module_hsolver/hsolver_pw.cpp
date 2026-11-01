@@ -12,6 +12,8 @@
 #include "module_hsolver/diago_david.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
+#include "module_elecstate/potentials/pot_local.h"
+#include "module_psi/kpoint_storage.h"
 #include "module_psi/psi.h"
 
 #include <algorithm>
@@ -302,6 +304,36 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     std::vector<Real> eigenvalues(this->wfc_basis->nks * psi.get_nbands(), 0.0);
     ethr_band.resize(psi.get_nbands(), this->diag_thr);
 
+    bool host_backed_action = false;
+#if defined(__CUDA)
+    if (this->method == "dav_subspace" && std::is_same<Device, base_device::DEVICE_GPU>::value
+        && this->wfc_basis->nks > 0)
+    {
+        size_t available = 0, total = 0;
+        cudaErrcheck(cudaMemGetInfo(&available, &total));
+        const size_t bands = psi.get_nbands();
+        size_t rows = size_t(psi.get_nbasis()) * (psi.get_k_first() ? 1 : psi.get_nk());
+        if (psi.get_k_first() && psi.npol != 2 && psi.get_ngk_pointer() != nullptr)
+        {
+            const int* active_basis = psi.get_ngk_pointer();
+            rows = *std::max_element(active_basis, active_basis + this->wfc_basis->nks);
+        }
+        const size_t subspace = bands * PARAM.inp.pw_diag_ndim;
+        // Count the resident constructor's two basis arrays, four projected
+        // matrices, preconditioner, eigenvalues and optional band indices.
+        // No extra reserve is included: fitting workspaces retain device storage.
+        const size_t index_bytes = std::is_same<T, std::complex<double>>::value ? bands * sizeof(int) : 0;
+        const size_t required = (2 * subspace * rows + 4 * subspace * subspace) * sizeof(T)
+                                + (rows + subspace) * sizeof(Real) + index_bytes;
+        host_backed_action = required > available;
+        if (host_backed_action)
+        {
+            GlobalV::ofs_running << " Davidson storage selects host memory: resident arrays require "
+                                << required << " bytes; CUDA memory available " << available << " bytes.\n";
+        }
+    }
+#endif
+    psi::KPointStorage<T, Device> storage(psi, this->wfc_basis->nks, host_backed_action);
     std::unique_ptr<Diago_DavSubspace<T, Device>> davidson;
     bool reuse_davidson = false;
 #if defined(__CUDA)
@@ -331,6 +363,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 #endif
 
             // update psi pointer for each k point
+            storage.load(ik);
             psi.fix_k(ik);
 
             // If using k-point continuity and not first k-point, propagate from parent
@@ -360,7 +393,9 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                   this->wfc_basis->nks,
                                   initial_h == nullptr ? nullptr : initial_h + subspace_offset,
                                   initial_s == nullptr ? nullptr : initial_s + subspace_offset,
-                                  initial_hpsi, basis_observer, reuse_davidson ? &davidson : nullptr);
+                                  initial_hpsi, basis_observer, reuse_davidson ? &davidson : nullptr,
+                                  host_backed_action);
+            storage.store(ik);
 
             if (skip_charge)
             {
@@ -421,6 +456,9 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     }
     
     count++;
+    // Wavefunction density construction does not retain solver storage.
+    davidson.reset();
+    storage.restore();
     // END Loop over k points
 
     // copy eigenvalues to ekb in ElecState
@@ -467,7 +505,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                            const T* initial_s,
                                            const InitialHPsiFunc& initial_hpsi,
                                            const BasisObserver* basis_observer,
-                                           std::unique_ptr<Diago_DavSubspace<T, Device>>* reusable_davidson)
+                                           std::unique_ptr<Diago_DavSubspace<T, Device>>* reusable_davidson,
+                                           bool host_backed_action)
 {
 #ifdef __MPI
     const diag_comm_info comm_info = {POOL_WORLD, this->rank_in_pool, this->nproc_in_pool};

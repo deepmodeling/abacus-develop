@@ -18,7 +18,10 @@ int main(int argc, char** argv)
     using Complex = std::complex<double>;
     using GPU = base_device::DEVICE_GPU;
     using CPU = base_device::DEVICE_CPU;
-    const int rows = 96, bands = 6, leading = rows + 7;
+    const bool host_backed = argc > 1 && std::string(argv[1]) == "--host-backed";
+    const int rows = argc > 2 ? std::stoi(argv[2]) : 96;
+    const int bands = argc > 3 ? std::stoi(argv[3]) : 6;
+    const int leading = rows + 7;
     const double pi = std::acos(-1.0);
     std::vector<Complex> basis(rows * rows), hamiltonian(rows * rows);
     for (int column = 0; column < rows; ++column)
@@ -42,14 +45,15 @@ int main(int argc, char** argv)
     }
     Complex* device = nullptr;
     base_device::memory::resize_memory_op<Complex, GPU>()(nullptr, device, leading * bands);
-    std::vector<double> precondition(rows, 1.0), eigenvalues(bands), thresholds(bands, 1e-13);
+    std::vector<double> precondition(rows, 1.0), eigenvalues(bands), thresholds(bands, 1e-14);
     hsolver::diag_comm_info comm(MPI_COMM_SELF, 0, 1);
     double eigen_error = 0, residual_error = 0, orthogonality_error = 0;
     double projector_error = 0, projected_input_error = 0, transport_error = 0;
-    int restart_rotations = 0, final_rotations = 0;
+    int restart_rotations = 0, final_rotations = 0, expected_final_rotations = 0;
     std::vector<Complex> reference_basis;
     {
-        hsolver::Diago_DavSubspace<Complex, GPU> solver(precondition, bands, rows, 4, 1e-13, 100, false, comm);
+        hsolver::Diago_DavSubspace<Complex, GPU> solver(precondition, bands, rows, 4, 1e-13, 100, false, comm,
+                                                     host_backed);
         for (int repetition = 0; repetition < 6; ++repetition)
         {
             std::vector<Complex> psi(leading * bands, Complex(7, -3));
@@ -78,9 +82,11 @@ int main(int argc, char** argv)
                     }
                 }
             }
+            // A positive oscillatory preconditioner excites independent search
+            // directions across the spectrum, including larger band blocks.
             for (int row = 0; row < rows; ++row)
             {
-                precondition[row] = 1.0 + std::min(repetition, 1) * (1.0 + row / 96.0);
+                precondition[row] = 1.0 + std::min(repetition, 1) * (1.0 + 0.25 * std::sin(2.399 * row) + 0.25 * std::cos(1.171 * row));
             }
             base_device::memory::synchronize_memory_op<Complex, GPU, CPU>()(nullptr, nullptr, device,
                                                                            psi.data(), psi.size());
@@ -199,6 +205,8 @@ int main(int argc, char** argv)
             const int iterations = solver.diag(apply, device, leading, eigenvalues.data(), thresholds.data(),
                                                 false, initial_h, initial_s, initial_action, rotate_basis);
             if (iterations < 0) { return 2; }
+            expected_final_rotations += (iterations + 99) / 100;
+            if (final_rotations != expected_final_rotations) { return 5; }
             if (initial_action_calls != (repetition == 4 ? 1 : 0)) { return 4; }
             if (repetition == 3 || repetition == 4)
             {
@@ -272,7 +280,7 @@ int main(int argc, char** argv)
     std::cout << "projector_error=" << projector_error << " projected_input_error=" << projected_input_error << std::endl;
     std::cout << "transport_error=" << transport_error << " restart_rotations=" << restart_rotations
               << " final_rotations=" << final_rotations << std::endl;
-    return transport_error < 1e-10 && restart_rotations > 0 && final_rotations == 6
+    return transport_error < 1e-10 && restart_rotations > 0 && final_rotations == expected_final_rotations && final_rotations >= 6
            && projected_input_error == 0 && projector_error < 1e-6 && eigen_error < 1e-10
            && residual_error < 2e-6 && orthogonality_error < 1e-10 ? 0 : 3;
 }

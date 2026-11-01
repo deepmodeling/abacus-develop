@@ -102,7 +102,8 @@ class HSolverPW
                          const T* initial_s = nullptr,
                          const InitialHPsiFunc& initial_hpsi = {},
                          const BasisObserver* basis_observer = nullptr,
-                         std::unique_ptr<Diago_DavSubspace<T, Device>>* reusable_davidson = nullptr);
+                         std::unique_ptr<Diago_DavSubspace<T, Device>>* reusable_davidson = nullptr,
+                         bool host_backed_action = false);
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
