@@ -131,7 +131,7 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep)
         const std::vector<NeighborAtom>& all_atoms = mdcell.neighbor_search().get_all_atoms();
         const NeighborList& list = mdcell.neighbor_search().get_neighbor_list();
         const int nowned = static_cast<int>(owned_atoms.size());
-        std::vector<ModuleBase::Vector3<double> > all_force(all_atoms.size());
+        ModuleMD::SNAP::CellAccumulator contribution(all_atoms.size());
         for (int i = 0; i < nowned; ++i)
         {
             const NeighborAtom center(owned_atoms[static_cast<std::size_t>(i)].cart.x,
@@ -141,6 +141,7 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep)
                                       i,
                                       i);
             std::vector<ModuleMD::SNAP::Neighbor> neighbors;
+            std::vector<std::size_t> neighbor_indices;
             for (int k = 0; k < list.get_numneigh(i); ++k)
             {
                 const int neighbor_index = list.get_firstneigh(i)[k];
@@ -150,54 +151,40 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep)
                     fail("MDCell atom type is outside the SNAP element map.");
                 }
                 neighbors.push_back(make_neighbor(center, neighbor, mdcell.lat0(), model_.parameters));
+                neighbor_indices.push_back(static_cast<std::size_t>(neighbor_index));
             }
-            const ModuleMD::SNAP::ForceResult result = calculator_->compute_with_analytic_force(
-                neighbors, static_cast<std::size_t>(center.atom_type));
-            snap_potential_ += result.energy.energy / ModuleBase::Ry_to_eV;
-            all_force[static_cast<std::size_t>(i)] += ModuleBase::Vector3<double>(result.center_force[0],
-                                                                                    result.center_force[1],
-                                                                                    result.center_force[2]);
-            for (std::size_t k = 0; k < result.neighbor_forces.size(); ++k)
+            const std::size_t center_element = static_cast<std::size_t>(center.atom_type);
+            const ModuleMD::SNAP::ForceResult result = calculator_->compute_with_analytic_force(neighbors, center_element);
+            const std::size_t center_index = static_cast<std::size_t>(i);
+            contribution.add(center_index, neighbor_indices, neighbors, result);
+        }
+        snap_potential_ = contribution.energy() / ModuleBase::Ry_to_eV;
+        const double virial_scale = 1.0 / (ModuleBase::Ry_to_eV * mdcell.omega());
+        for (int row = 0; row < 3; ++row)
+        {
+            for (int column = 0; column < 3; ++column)
             {
-                const int neighbor_index = list.get_firstneigh(i)[static_cast<int>(k)];
-                all_force[static_cast<std::size_t>(neighbor_index)] +=
-                    ModuleBase::Vector3<double>(result.neighbor_forces[k][0],
-                                                result.neighbor_forces[k][1],
-                                                result.neighbor_forces[k][2]);
-                const NeighborAtom& neighbor = all_atoms[static_cast<std::size_t>(neighbor_index)];
-                const double relative[3] = {
-                    (center.position_x - neighbor.position_x) * mdcell.lat0() * ModuleBase::BOHR_TO_A,
-                    (center.position_y - neighbor.position_y) * mdcell.lat0() * ModuleBase::BOHR_TO_A,
-                    (center.position_z - neighbor.position_z) * mdcell.lat0() * ModuleBase::BOHR_TO_A};
-                const double pair_force[3] = {-result.neighbor_forces[k][0],
-                                              -result.neighbor_forces[k][1],
-                                              -result.neighbor_forces[k][2]};
-                for (int row = 0; row < 3; ++row)
-                {
-                    for (int column = 0; column < 3; ++column)
-                    {
-                        snap_virial_(row, column) += relative[row] * pair_force[column]
-                                                     / (ModuleBase::Ry_to_eV * mdcell.omega());
-                    }
-                }
+                const std::size_t index = static_cast<std::size_t>(3 * row + column);
+                snap_virial_(row, column) = contribution.virial()[index] * virial_scale;
             }
         }
         const double force_scale = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
         for (std::size_t i = 0; i < mdcell.ghost_atoms().size(); ++i)
         {
-            const ModuleBase::Vector3<double>& value = all_force[nowned + i];
-            mdcell.ghost_atoms()[i].force.set(value.x * force_scale,
-                                               value.y * force_scale,
-                                               value.z * force_scale);
+            const std::array<double, 3>& value = contribution.forces()[nowned + i];
+            mdcell.ghost_atoms()[i].force.set(value[0] * force_scale,
+                                               value[1] * force_scale,
+                                               value[2] * force_scale);
         }
         Parallel_Reduce::reduce_all(snap_potential_);
         Parallel_Reduce::reduce_all(snap_virial_.c, 9);
         for (int i = 0; i < nowned; ++i)
         {
+            const std::array<double, 3>& value = contribution.forces()[static_cast<std::size_t>(i)];
             owned_atoms[static_cast<std::size_t>(i)].force.set(
-                all_force[static_cast<std::size_t>(i)].x * force_scale,
-                all_force[static_cast<std::size_t>(i)].y * force_scale,
-                all_force[static_cast<std::size_t>(i)].z * force_scale);
+                value[0] * force_scale,
+                value[1] * force_scale,
+                value[2] * force_scale);
         }
         return;
     }
