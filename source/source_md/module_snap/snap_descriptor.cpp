@@ -65,23 +65,45 @@ std::size_t DescriptorEvaluator::u_index(const int j, const int ma, const int mb
     return u_block_[static_cast<std::size_t>(j)] + static_cast<std::size_t>(mb * (j + 1) + ma);
 }
 
-double DescriptorEvaluator::cutoff(const double distance, const double cutoff_radius) const
+DescriptorEvaluator::SwitchValue DescriptorEvaluator::switching(const double distance,
+                                                                 const Neighbor& neighbor,
+                                                                 const double cutoff_radius) const
 {
-    if (!parameters_.switch_flag)
-    {
-        return distance < cutoff_radius ? 1.0 : 0.0;
-    }
-    if (distance <= parameters_.rmin)
-    {
-        return 1.0;
-    }
+    SwitchValue result;
+    result.value = 1.0;
+    result.derivative = 0.0;
     if (distance >= cutoff_radius)
     {
-        return 0.0;
+        result.value = 0.0;
+        return result;
     }
-    const double angle = ModuleBase::PI * (distance - parameters_.rmin)
-                         / (cutoff_radius - parameters_.rmin);
-    return 0.5 * (std::cos(angle) + 1.0);
+    if (parameters_.switch_flag && distance > parameters_.rmin)
+    {
+        const double angle_scale = ModuleBase::PI / (cutoff_radius - parameters_.rmin);
+        const double angle = (distance - parameters_.rmin) * angle_scale;
+        result.value = 0.5 * (std::cos(angle) + 1.0);
+        result.derivative = -0.5 * std::sin(angle) * angle_scale;
+    }
+    if (parameters_.switchinner_flag)
+    {
+        const double inner_start = neighbor.sinner - neighbor.dinner;
+        const double inner_end = neighbor.sinner + neighbor.dinner;
+        if (distance <= inner_start)
+        {
+            result.value = 0.0;
+            result.derivative = 0.0;
+        }
+        else if (distance < inner_end)
+        {
+            const double angle_scale = 0.5 * ModuleBase::PI / neighbor.dinner;
+            const double angle = (distance - inner_start) * angle_scale;
+            const double inner_value = 0.5 * (1.0 - std::cos(angle));
+            const double inner_derivative = 0.5 * std::sin(angle) * angle_scale;
+            result.derivative = result.derivative * inner_value + result.value * inner_derivative;
+            result.value *= inner_value;
+        }
+    }
+    return result;
 }
 
 std::vector<std::complex<double> > DescriptorEvaluator::compute_u(const Neighbor& neighbor) const
@@ -90,9 +112,13 @@ std::vector<std::complex<double> > DescriptorEvaluator::compute_u(const Neighbor
     const double distance = std::sqrt(rsq);
     const double cutoff_radius = neighbor.cutoff_radius > 0.0 ? neighbor.cutoff_radius : parameters_.rcut;
     std::vector<std::complex<double> > result(u_size_, std::complex<double>(0.0, 0.0));
-    if (distance <= 1.0e-14 || cutoff(distance, cutoff_radius) == 0.0)
+    if (distance <= 1.0e-14 || switching(distance, neighbor, cutoff_radius).value == 0.0)
     {
         return result;
+    }
+    if (distance <= parameters_.rmin)
+    {
+        throw std::domain_error("SNAP neighbor distance must be greater than rmin0.");
     }
 
     const double theta0 = (distance - parameters_.rmin) * parameters_.rfac0 * ModuleBase::PI
@@ -176,7 +202,7 @@ std::vector<std::complex<double> > DescriptorEvaluator::accumulate_u(const std::
         }
         const double distance = std::sqrt(neighbor.x * neighbor.x + neighbor.y * neighbor.y + neighbor.z * neighbor.z);
         const double cutoff_radius = neighbor.cutoff_radius > 0.0 ? neighbor.cutoff_radius : parameters_.rcut;
-        const double scale = cutoff(distance, cutoff_radius) * neighbor.weight;
+        const double scale = switching(distance, neighbor, cutoff_radius).value * neighbor.weight;
         if (scale == 0.0)
         {
             continue;

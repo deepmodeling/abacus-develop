@@ -99,11 +99,6 @@ Dual dual_sqrt(const Dual& value)
     return Dual(root, value.derivative / (2.0 * root));
 }
 
-Dual dual_cos(const Dual& value)
-{
-    return Dual(std::cos(value.value), -std::sin(value.value) * value.derivative);
-}
-
 Dual dual_tan(const Dual& value)
 {
     const double cosine = std::cos(value.value);
@@ -131,23 +126,17 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& n
     {
         return result;
     }
-
-    Dual scale;
-    if (!parameters_.switch_flag)
+    const SwitchValue switch_value = switching(distance.value, neighbor, cutoff_radius);
+    if (switch_value.value == 0.0)
     {
-        scale = Dual(1.0);
+        return result;
     }
-    else if (distance.value <= parameters_.rmin)
+    if (distance.value <= parameters_.rmin)
     {
-        scale = Dual(1.0);
+        throw std::domain_error("SNAP neighbor distance must be greater than rmin0.");
     }
-    else
-    {
-        const Dual angle = (distance - parameters_.rmin) * ModuleBase::PI
-                           / (cutoff_radius - parameters_.rmin);
-        scale = 0.5 * (dual_cos(angle) + 1.0);
-    }
-    scale = scale * neighbor.weight;
+    const Dual scale(switch_value.value * neighbor.weight,
+                     switch_value.derivative * distance.derivative * neighbor.weight);
 
     const Dual theta0 = (distance - parameters_.rmin) * parameters_.rfac0 * ModuleBase::PI
                         / (cutoff_radius - parameters_.rmin);

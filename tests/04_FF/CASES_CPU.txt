@@ -21,3 +21,5 @@
 #50_DP_Al
 #101_NEP_HfO2
 102_SNAP_minimal
+103_SNAP_periodic
+104_SNAP_inner

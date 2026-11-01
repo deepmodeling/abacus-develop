@@ -22,10 +22,13 @@ struct ModelParameters
     bool bzero_flag = true;
     bool quadratic_flag = false;
     bool wselfall_flag = false;
+    bool switchinner_flag = false;
     double wself = 1.0;
     std::vector<std::string> elements;
     std::vector<double> element_weights;
     std::vector<double> element_radii;
+    std::vector<double> sinner;
+    std::vector<double> dinner;
 
     bool valid(std::string& error) const;
 };

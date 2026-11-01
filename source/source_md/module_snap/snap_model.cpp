@@ -84,12 +84,35 @@ bool ModelParameters::valid(std::string& error) const
         error = "SNAP element names and radii must have the same size.";
         return false;
     }
+    if (switchinner_flag && (sinner.size() != elements.size() || dinner.size() != elements.size()))
+    {
+        error = "SNAP switchinnerflag requires sinner and dinner values for every element.";
+        return false;
+    }
     for (std::size_t i = 0; i < element_weights.size(); ++i)
     {
         if (!std::isfinite(element_weights[i]) || !std::isfinite(element_radii[i]) || element_radii[i] <= 0.0)
         {
             error = "SNAP element weights must be finite.";
             return false;
+        }
+        if (switchinner_flag && (!std::isfinite(sinner[i]) || !std::isfinite(dinner[i]) || dinner[i] <= 0.0))
+        {
+            error = "SNAP sinner must be finite and dinner must be finite and positive.";
+            return false;
+        }
+    }
+    for (std::size_t i = 0; i < element_radii.size(); ++i)
+    {
+        for (std::size_t j = i; j < element_radii.size(); ++j)
+        {
+            const double pair_cutoff = (element_radii[i] + element_radii[j]) * rcutfac;
+            if (!std::isfinite(pair_cutoff) || rmin >= pair_cutoff)
+            {
+                error = "SNAP rmin0 must be smaller than the cutoff for element pair "
+                        + elements[i] + "-" + elements[j] + ".";
+                return false;
+            }
         }
     }
     return true;
@@ -100,6 +123,7 @@ bool ModelData::load(const std::string& coefficient_file,
                      const std::vector<std::string>& requested_elements,
                      std::string& error)
 {
+    error.clear();
     parameters = ModelParameters();
     parameters.rfac0 = 0.99363;
     coefficients.clear();
@@ -206,6 +230,8 @@ bool ModelData::load(const std::string& coefficient_file,
     }
     bool has_rcutfac = false;
     bool has_twojmax = false;
+    bool has_sinner = false;
+    bool has_dinner = false;
     while (next_data_line(parameter_stream, line))
     {
         std::istringstream words(line);
@@ -295,6 +321,74 @@ bool ModelData::load(const std::string& coefficient_file,
             }
             parameters.chem_flag = value != 0;
         }
+        else if (keyword == "switchinnerflag")
+        {
+            int value = 0;
+            if (!read_parameter_value(words, value, keyword, error))
+            {
+                return false;
+            }
+            if (value != 0 && value != 1)
+            {
+                error = "SNAP switchinnerflag must be 0 or 1.";
+                return false;
+            }
+            parameters.switchinner_flag = value == 1;
+        }
+        else if (keyword == "sinner" || keyword == "dinner")
+        {
+            std::vector<double>& values = keyword == "sinner" ? parameters.sinner : parameters.dinner;
+            values.resize(parameters.elements.size());
+            for (std::size_t i = 0; i < values.size(); ++i)
+            {
+                if (!read_parameter_value(words, values[i], keyword, error))
+                {
+                    return false;
+                }
+            }
+            if (keyword == "sinner")
+            {
+                has_sinner = true;
+            }
+            else
+            {
+                has_dinner = true;
+            }
+        }
+        else if (keyword == "chunksize" || keyword == "parallelthresh")
+        {
+            int value = 0;
+            if (!read_parameter_value(words, value, keyword, error))
+            {
+                return false;
+            }
+            if (value <= 0)
+            {
+                error = "SNAP " + keyword + " must be positive.";
+                return false;
+            }
+        }
+        else
+        {
+            error = "Unknown SNAP parameter: " + keyword;
+            return false;
+        }
+        std::string extra;
+        if (words >> extra)
+        {
+            error = "Unexpected extra value for SNAP parameter: " + keyword;
+            return false;
+        }
+    }
+    if (parameters.switchinner_flag && (!has_sinner || !has_dinner))
+    {
+        error = "SNAP switchinnerflag=1 requires sinner and dinner.";
+        return false;
+    }
+    if (!parameters.switchinner_flag && (has_sinner || has_dinner))
+    {
+        error = "SNAP sinner and dinner require switchinnerflag=1.";
+        return false;
     }
     if (!has_rcutfac || !has_twojmax)
     {

@@ -167,4 +167,88 @@ TEST(SnapCalculator, AnalyticForceMatchesFiniteDifference)
     }
 }
 
+TEST(SnapCalculator, InnerSwitchMatchesFiniteDifference)
+{
+    ModuleMD::SNAP::ModelData model = make_model();
+    model.parameters.twojmax = 2;
+    model.parameters.switchinner_flag = true;
+    model.parameters.sinner.push_back(1.5);
+    model.parameters.dinner.push_back(0.4);
+    model.coefficients[0] = {0.2, 0.3, -0.1, 0.5, 0.2, -0.4};
+    const ModuleMD::SNAP::Calculator calculator(model);
+    ModuleMD::SNAP::Neighbor first;
+    first.x = 1.4;
+    first.y = 0.3;
+    first.z = 0.2;
+    first.sinner = 1.5;
+    first.dinner = 0.4;
+    ModuleMD::SNAP::Neighbor second = first;
+    second.x = -0.3;
+    second.y = 1.7;
+    second.z = -0.2;
+    const std::vector<ModuleMD::SNAP::Neighbor> neighbors = {first, second};
+    const ModuleMD::SNAP::ForceResult analytic = calculator.compute_with_analytic_force(neighbors, 0);
+    const ModuleMD::SNAP::ForceResult finite = calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+    for (std::size_t i = 0; i < neighbors.size(); ++i)
+    {
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            EXPECT_NEAR(analytic.neighbor_forces[i][static_cast<std::size_t>(direction)],
+                        finite.neighbor_forces[i][static_cast<std::size_t>(direction)], 1.0e-5);
+        }
+    }
+
+    model.parameters.quadratic_flag = true;
+    model.coefficients[0].resize(21, 0.0);
+    model.coefficients[0][6] = 0.25;
+    model.coefficients[0][10] = -0.15;
+    const ModuleMD::SNAP::Calculator quadratic(model);
+    const ModuleMD::SNAP::ForceResult quadratic_analytic = quadratic.compute_with_analytic_force(neighbors, 0);
+    const ModuleMD::SNAP::ForceResult quadratic_finite = quadratic.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+    for (std::size_t i = 0; i < neighbors.size(); ++i)
+    {
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            EXPECT_NEAR(quadratic_analytic.neighbor_forces[i][static_cast<std::size_t>(direction)],
+                        quadratic_finite.neighbor_forces[i][static_cast<std::size_t>(direction)], 1.0e-5);
+        }
+    }
+}
+
+TEST(SnapCalculator, InnerSwitchSkipsSingularRadius)
+{
+    ModuleMD::SNAP::ModelData model = make_model();
+    model.parameters.rmin = 0.5;
+    model.parameters.switchinner_flag = true;
+    model.parameters.sinner.push_back(1.5);
+    model.parameters.dinner.push_back(0.4);
+    const ModuleMD::SNAP::Calculator calculator(model);
+    ModuleMD::SNAP::Neighbor neighbor;
+    neighbor.x = 0.5;
+    neighbor.sinner = 1.5;
+    neighbor.dinner = 0.4;
+    const std::vector<ModuleMD::SNAP::Neighbor> neighbors(1, neighbor);
+    EXPECT_NO_THROW(calculator.compute_with_analytic_force(neighbors, 0));
+    model.parameters.switchinner_flag = false;
+    const ModuleMD::SNAP::Calculator bare(model);
+    EXPECT_THROW(bare.compute(neighbors, 0), std::domain_error);
+    EXPECT_THROW(bare.compute_with_analytic_force(neighbors, 0), std::domain_error);
+
+    model.parameters.twojmax = 2;
+    model.coefficients[0] = {0.2, 0.3, -0.1, 0.5, 0.2, -0.4};
+    const ModuleMD::SNAP::Calculator angular(model);
+    neighbor.x = 0.55;
+    neighbor.y = 0.12;
+    const std::vector<ModuleMD::SNAP::Neighbor> near_neighbors(1, neighbor);
+    const ModuleMD::SNAP::ForceResult near_analytic = angular.compute_with_analytic_force(near_neighbors, 0);
+    const ModuleMD::SNAP::ForceResult near_finite = angular.compute_with_finite_difference_force(near_neighbors, 0, 1.0e-6);
+    EXPECT_TRUE(std::isfinite(near_analytic.energy.energy));
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        EXPECT_TRUE(std::isfinite(near_analytic.neighbor_forces[0][static_cast<std::size_t>(direction)]));
+        EXPECT_NEAR(near_analytic.neighbor_forces[0][static_cast<std::size_t>(direction)],
+                    near_finite.neighbor_forces[0][static_cast<std::size_t>(direction)], 1.0e-4);
+    }
+}
+
 } // namespace

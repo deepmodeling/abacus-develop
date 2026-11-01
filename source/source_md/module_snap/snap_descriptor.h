@@ -20,6 +20,8 @@ struct Neighbor
     double weight = 1.0;
     double cutoff_radius = 0.0;
     std::size_t element_index = 0;
+    double sinner = 0.0;
+    double dinner = 0.0;
 };
 
 struct UWithDerivative
@@ -63,6 +65,11 @@ class DescriptorEvaluator
     }
 
   private:
+    struct SwitchValue
+    {
+        double value;
+        double derivative;
+    };
     struct BispectrumIndex
     {
         int j1;
@@ -71,7 +78,7 @@ class DescriptorEvaluator
     };
 
     std::size_t u_index(int j, int ma, int mb) const;
-    double cutoff(double distance, double cutoff_radius) const;
+    SwitchValue switching(double distance, const Neighbor& neighbor, double cutoff_radius) const;
     void compute_rootpq();
 
     ModelParameters parameters_;

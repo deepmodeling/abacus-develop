@@ -56,6 +56,21 @@ TEST(SnapModel, RejectsInvalidRadialRange)
     EXPECT_FALSE(error.empty());
 }
 
+TEST(SnapModel, RejectsRminOutsideSmallPairCutoff)
+{
+    ModuleMD::SNAP::ModelParameters parameters;
+    parameters.rcut = 4.0;
+    parameters.rcutfac = 1.0;
+    parameters.rmin = 1.5;
+    parameters.rfac0 = 0.99363;
+    parameters.elements = {"Small", "Large"};
+    parameters.element_weights = {1.0, 1.0};
+    parameters.element_radii = {0.5, 2.0};
+    std::string error;
+    EXPECT_FALSE(parameters.valid(error));
+    EXPECT_NE(error.find("Small-Small"), std::string::npos);
+}
+
 TEST(SnapModel, LoadsLammpsStyleCoefficientAndParameterFiles)
 {
     const std::string coefficient_file = testing::TempDir() + "snap_coeff_test.txt";
@@ -164,6 +179,49 @@ TEST(SnapModel, LoadsChemicalCoefficientBlocks)
     EXPECT_EQ(model.coefficients[0].size(), static_cast<std::size_t>(9));
     EXPECT_DOUBLE_EQ(model.coefficients[1][1], 2.0);
 
+    std::remove(coefficient_file.c_str());
+    std::remove(parameter_file.c_str());
+}
+
+TEST(SnapModel, ReadsInnerSwitchAndRejectsUnknownParameter)
+{
+    const std::string coefficient_file = testing::TempDir() + "snap_inner_coeff.txt";
+    const std::string parameter_file = testing::TempDir() + "snap_inner_param.txt";
+    {
+        std::ofstream output(coefficient_file.c_str());
+        output << "1 2\nSi 2.0 1.0\n0.0\n1.0\n";
+    }
+    {
+        std::ofstream output(parameter_file.c_str());
+        output << "rcutfac 1.0\ntwojmax 0\nswitchinnerflag 1\n";
+        output << "sinner 1.5\ndinner 0.4\nchunksize 1024\n";
+    }
+    ModuleMD::SNAP::ModelData model;
+    std::string error;
+    const std::vector<std::string> elements(1, "Si");
+    ASSERT_TRUE(model.load(coefficient_file, parameter_file, elements, error)) << error;
+    EXPECT_TRUE(model.parameters.switchinner_flag);
+    ASSERT_EQ(model.parameters.sinner.size(), static_cast<std::size_t>(1));
+    EXPECT_DOUBLE_EQ(model.parameters.sinner[0], 1.5);
+    {
+        std::ofstream output(parameter_file.c_str(), std::ios::app);
+        output << "unsupported_option 1\n";
+    }
+    EXPECT_FALSE(model.load(coefficient_file, parameter_file, elements, error));
+    EXPECT_NE(error.find("unsupported_option"), std::string::npos);
+    {
+        std::ofstream output(parameter_file.c_str());
+        output << "rcutfac 1.0\ntwojmax 0\nswitchinnerflag 1\nsinner 1.5\n";
+    }
+    error.clear();
+    EXPECT_FALSE(model.load(coefficient_file, parameter_file, elements, error));
+    EXPECT_NE(error.find("requires sinner and dinner"), std::string::npos);
+    {
+        std::ofstream output(parameter_file.c_str());
+        output << "rcutfac 1.0\ntwojmax 0\nswitchinnerflag 0\n";
+    }
+    error.clear();
+    EXPECT_TRUE(model.load(coefficient_file, parameter_file, elements, error)) << error;
     std::remove(coefficient_file.c_str());
     std::remove(parameter_file.c_str());
 }

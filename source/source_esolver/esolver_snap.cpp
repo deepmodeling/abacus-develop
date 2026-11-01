@@ -36,6 +36,13 @@ ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
                             + parameters.element_radii[static_cast<std::size_t>(neighbor.atom_type)])
                            * parameters.rcutfac;
     result.element_index = static_cast<std::size_t>(neighbor.atom_type);
+    if (parameters.switchinner_flag)
+    {
+        const std::size_t center_type = static_cast<std::size_t>(center.atom_type);
+        const std::size_t neighbor_type = static_cast<std::size_t>(neighbor.atom_type);
+        result.sinner = 0.5 * (parameters.sinner[center_type] + parameters.sinner[neighbor_type]);
+        result.dinner = 0.5 * (parameters.dinner[center_type] + parameters.dinner[neighbor_type]);
+    }
     return result;
 }
 }
@@ -152,18 +159,22 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep)
                 }
             }
         }
+        const double force_scale = 1.0 / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
         for (std::size_t i = 0; i < mdcell.ghost_atoms().size(); ++i)
         {
-            mdcell.ghost_atoms()[i].force = all_force[nowned + i];
+            const ModuleBase::Vector3<double>& value = all_force[nowned + i];
+            mdcell.ghost_atoms()[i].force.set(value.x * force_scale,
+                                               value.y * force_scale,
+                                               value.z * force_scale);
         }
         Parallel_Reduce::reduce_all(snap_potential_);
         Parallel_Reduce::reduce_all(snap_virial_.c, 9);
         for (int i = 0; i < nowned; ++i)
         {
             owned_atoms[static_cast<std::size_t>(i)].force.set(
-                all_force[static_cast<std::size_t>(i)].x / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU),
-                all_force[static_cast<std::size_t>(i)].y / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU),
-                all_force[static_cast<std::size_t>(i)].z / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU));
+                all_force[static_cast<std::size_t>(i)].x * force_scale,
+                all_force[static_cast<std::size_t>(i)].y * force_scale,
+                all_force[static_cast<std::size_t>(i)].z * force_scale);
         }
         return;
     }
