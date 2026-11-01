@@ -5,6 +5,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include <cstdio>
 #include <fstream>
 #include <iomanip>
 
@@ -780,8 +781,7 @@ TEST(RelaxSyncCellMove, FixedShapeIsotropicScale)
 // ---------------------------------------------------------------------------
 // Max-step termination on the Relax (simultaneous) path.
 //
-// Unlike IonCellOptimizer::relax_step (which checks istep == relax_nmax and
-// returns true without moving), Relax::relax_step has no max-step guard.
+// Relax::relax_step has no max-step guard.
 // When the driver loop hits relax_nmax, the last relax_step still calls
 // move_cell_ions, so the geometry IS updated and the force/stress in the
 // driver become stale. The driver then sets geometry_evaluated=false.
@@ -837,6 +837,63 @@ TEST(RelaxSyncMaxStep, GeometryMovedAndNotConverged)
     // The geometry was moved: taud is no longer the initial value.
     EXPECT_NE(ucell.atoms[0].taud[0].x, 0.0);
     EXPECT_TRUE(ucell.ionic_position_updated);
+
+    delete[] ucell.atoms;
+}
+
+TEST(RelaxSyncConvergence, ClearsPreviousGeometryUpdate)
+{
+    const int nat = 1;
+    Input_para inp;
+    inp.calculation = "cell-relax";
+    inp.relax_method = "cg";
+    inp.force_thr = 0.01;
+    inp.force_thr_ev = 1.0;
+    inp.fixed_axes = "None";
+    inp.fixed_ibrav = false;
+
+    UnitCell ucell;
+    ucell.ntype = 1;
+    ucell.nat = nat;
+    ucell.atoms = new Atom[1];
+    ucell.atoms[0].na = nat;
+    ucell.atoms[0].label = "Si";
+    ucell.omega = 1.0;
+    ucell.lat0 = 1.0;
+    ucell.iat2it.resize(nat);
+    ucell.iat2ia.resize(nat);
+    ucell.iat2it[0] = 0;
+    ucell.iat2ia[0] = 0;
+    ucell.atoms[0].mbl.resize(nat);
+    ucell.atoms[0].taud.resize(nat);
+    ucell.atoms[0].tau.resize(nat);
+    ucell.atoms[0].dis.resize(nat);
+    ucell.atoms[0].mag.resize(nat);
+    ucell.atoms[0].vel.resize(nat);
+    ucell.atoms[0].mbl[0] = {1, 1, 1};
+    ucell.latvec.Identity();
+
+    ModuleBase::matrix moving_force(nat, 3);
+    moving_force(0, 0) = 0.1;
+    ModuleBase::matrix converged_force(nat, 3);
+    ModuleBase::matrix stress(3, 3);
+
+    Relax rl;
+    rl.init_relax(nat, inp);
+    const std::string log_file = testing::TempDir() + "running_relax_sync_flags.log";
+    std::ofstream ofs(log_file);
+    const bool first_done = rl.relax_step(ucell, moving_force, stress, 0.0, ofs);
+    EXPECT_FALSE(first_done);
+    EXPECT_TRUE(ucell.ionic_position_updated);
+    EXPECT_TRUE(ucell.cell_parameter_updated);
+
+    const bool second_done = rl.relax_step(ucell, converged_force, stress, 0.0, ofs);
+    ofs.close();
+    std::remove(log_file.c_str());
+
+    EXPECT_TRUE(second_done);
+    EXPECT_FALSE(ucell.ionic_position_updated);
+    EXPECT_FALSE(ucell.cell_parameter_updated);
 
     delete[] ucell.atoms;
 }

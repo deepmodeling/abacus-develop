@@ -1,6 +1,6 @@
 abacus_disable_feature_definitions(__MPI)
 # These tests exercise CPU code only and link no GPU kernels, so build them
-# without the device instantiations (as source_hsolver/test does).
+# without the device instantiations (as source_hsolver/unittests does).
 abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 

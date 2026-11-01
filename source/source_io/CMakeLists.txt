@@ -6,6 +6,7 @@ list(APPEND objects
     module_ctrl/ctrl_output_fp.cpp
     module_ctrl/ctrl_output_pw.cpp
     module_ctrl/ctrl_output_td.cpp
+    module_ctrl/ctrl_output_td_pw.cpp
     module_bessel/bessel_basis.cpp
     module_output/cal_test.cpp
     module_dos/cal_dos.cpp
@@ -15,6 +16,7 @@ list(APPEND objects
     module_energy/write_bands.cpp
     module_energy/write_eig_occ.cpp
     module_energy/td_eij_io.cpp
+    module_energy/td_eij_pw.cpp
     module_bessel/numerical_basis.cpp
     module_bessel/numerical_basis_overlap.cpp
     module_bessel/numerical_basis_output.cpp
@@ -34,10 +36,12 @@ list(APPEND objects
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
     module_current/td_current_pw.cpp
+    module_current/td_spin_pw_io.cpp
     module_efield/td_efield_io.cpp
-    module_efield/td_vector_pot_io.cpp
+    module_efield/td_vecpot_io.cpp
     module_chgpot/write_libxc_r.cpp
     module_output/output_log.cpp
+    module_output/td_conserv_io.cpp
     module_json/para_json.cpp
     parse_args.cpp
     input_help.cpp
@@ -133,6 +137,7 @@ add_library(
     module_parameter/read_inp_deepks.cpp
     module_parameter/read_inp_model.cpp
     module_parameter/read_inp_sccs.cpp
+    module_parameter/sccs_inp_check.cpp
     module_parameter/read_inp_postproc.cpp  
     module_parameter/read_inp_exx_dftu.cpp
     module_parameter/read_inp_other.cpp   
@@ -142,6 +147,34 @@ add_library(
     module_parameter/input_domain.cpp
     module_parameter/read_input.cpp
     module_parameter/read_set_globalv.cpp
+)
+
+# Prints docs/parameters.yaml for the documentation build. It links only the
+# INPUT registry and the few source_base files it calls, so .readthedocs.yaml
+# builds this target instead of the full executable.
+add_executable(
+    abacus_input_yaml
+    EXCLUDE_FROM_ALL
+    input_yaml_main.cpp
+    input_help.cpp
+    ../source_base/global_file.cpp
+    ../source_base/global_function.cpp
+    ../source_base/global_variable.cpp
+    ../source_base/parallel_common.cpp
+    ../source_base/parallel_comm.cpp
+    ../source_base/parallel_global.cpp
+    ../source_base/parallel_reduce.cpp
+    ../source_base/timer.cpp
+    ../source_base/tool_quit.cpp
+    ../source_base/tool_title.cpp
+    ../source_base/module_device/device.cpp
+)
+target_link_libraries(
+    abacus_input_yaml
+    PRIVATE
+    io_input
+    parameter
+    abacus::linalg_libs
 )
 
 add_library(
@@ -171,7 +204,7 @@ if(BUILD_TESTING)
   add_subdirectory(module_parameter/test)
   add_subdirectory(module_hs/unittests)
   add_subdirectory(test_serial)
-  add_subdirectory(test)
+  add_subdirectory(unittests)
   add_subdirectory(module_dos/unittests)
 endif()
 

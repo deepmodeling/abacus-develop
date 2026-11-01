@@ -22,7 +22,7 @@
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_q0.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 
 // ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the
 // shared test/dfpt_test_mocks.cpp compiled into every DFPT test binary.

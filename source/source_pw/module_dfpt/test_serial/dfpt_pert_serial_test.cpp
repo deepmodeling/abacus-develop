@@ -21,7 +21,7 @@
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
 // ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the

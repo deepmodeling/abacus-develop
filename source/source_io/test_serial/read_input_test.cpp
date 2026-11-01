@@ -238,7 +238,7 @@ TEST_F(InputTest, ValidateRelaxMethodScalar)
         expect_invalid_input("relax_invalid_INPUT", "relax_method " + invalid + "\n",
                              invalid_method_message);
     }
-    expect_invalid_input("relax_new_removed_INPUT", "relax_new 1\n", "THE PARAMETER NAME 'relax_new' IS INCORRECT");
+    expect_invalid_input("relax_new_removed_INPUT", "relax_new 1\n", "Unknown INPUT parameter 'relax_new'");
 }
 
 TEST_F(InputTest, ValidateNoncollinearSpin)
