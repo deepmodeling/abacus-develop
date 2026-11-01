@@ -171,5 +171,74 @@ ForceResult Calculator::compute_with_finite_difference_force(const std::vector<N
     return result;
 }
 
+CellAccumulator::CellAccumulator(const std::size_t atom_count) : forces_(atom_count)
+{
+    for (std::size_t atom = 0; atom < forces_.size(); ++atom)
+    {
+        forces_[atom].fill(0.0);
+    }
+    virial_.fill(0.0);
+}
+
+void CellAccumulator::add(const std::size_t center_index,
+                          const std::vector<std::size_t>& neighbor_indices,
+                          const std::vector<Neighbor>& neighbors,
+                          const ForceResult& result)
+{
+    if (center_index >= forces_.size() || neighbor_indices.size() != neighbors.size()
+        || result.neighbor_forces.size() != neighbors.size() || result.center_force.size() != 3)
+    {
+        throw std::invalid_argument("SNAP cell contribution has inconsistent atom or force indices.");
+    }
+    for (std::size_t index = 0; index < neighbor_indices.size(); ++index)
+    {
+        if (neighbor_indices[index] >= forces_.size() || result.neighbor_forces[index].size() != 3)
+        {
+            throw std::invalid_argument("SNAP neighbor force index is outside the cell.");
+        }
+    }
+
+    energy_ += result.energy.energy;
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        forces_[center_index][static_cast<std::size_t>(direction)] +=
+            result.center_force[static_cast<std::size_t>(direction)];
+    }
+    for (std::size_t index = 0; index < neighbors.size(); ++index)
+    {
+        const Neighbor& neighbor = neighbors[index];
+        const double displacement[3] = {neighbor.x, neighbor.y, neighbor.z};
+        const std::size_t atom = neighbor_indices[index];
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            forces_[atom][static_cast<std::size_t>(direction)] +=
+                result.neighbor_forces[index][static_cast<std::size_t>(direction)];
+        }
+        for (int row = 0; row < 3; ++row)
+        {
+            for (int column = 0; column < 3; ++column)
+            {
+                virial_[static_cast<std::size_t>(3 * row + column)] +=
+                    displacement[row] * result.neighbor_forces[index][static_cast<std::size_t>(column)];
+            }
+        }
+    }
+}
+
+double CellAccumulator::energy() const
+{
+    return energy_;
+}
+
+const std::vector<std::array<double, 3> >& CellAccumulator::forces() const
+{
+    return forces_;
+}
+
+const std::array<double, 9>& CellAccumulator::virial() const
+{
+    return virial_;
+}
+
 } // namespace SNAP
 } // namespace ModuleMD

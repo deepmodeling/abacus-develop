@@ -90,6 +90,7 @@ SmallCellResult evaluate_small_cell(const ModuleMD::SNAP::Calculator& calculator
                                     const std::array<std::array<double, 3>, 3>& positions)
 {
     SmallCellResult total;
+    ModuleMD::SNAP::CellAccumulator accumulator(positions.size());
     for (std::size_t center = 0; center < positions.size(); ++center)
     {
         std::vector<ModuleMD::SNAP::Neighbor> neighbors;
@@ -109,22 +110,13 @@ SmallCellResult evaluate_small_cell(const ModuleMD::SNAP::Calculator& calculator
             neighbor_indices.push_back(atom);
         }
         const ModuleMD::SNAP::ForceResult result = calculator.compute_with_analytic_force(neighbors, 0);
-        total.energy += result.energy.energy;
-        for (int direction = 0; direction < 3; ++direction)
-        {
-            total.forces[center][static_cast<std::size_t>(direction)] +=
-                result.center_force[static_cast<std::size_t>(direction)];
-        }
-        for (std::size_t index = 0; index < neighbors.size(); ++index)
-        {
-            const std::size_t atom = neighbor_indices[index];
-            for (int direction = 0; direction < 3; ++direction)
-            {
-                total.forces[atom][static_cast<std::size_t>(direction)] +=
-                    result.neighbor_forces[index][static_cast<std::size_t>(direction)];
-            }
-            total.virial_xx += neighbors[index].x * result.neighbor_forces[index][0];
-        }
+        accumulator.add(center, neighbor_indices, neighbors, result);
+    }
+    total.energy = accumulator.energy();
+    total.virial_xx = accumulator.virial()[0];
+    for (std::size_t atom = 0; atom < positions.size(); ++atom)
+    {
+        total.forces[atom] = accumulator.forces()[atom];
     }
     return total;
 }

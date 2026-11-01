@@ -4,6 +4,7 @@
 #include "snap_descriptor.h"
 #include "snap_model.h"
 
+#include <array>
 #include <vector>
 
 namespace ModuleMD
@@ -47,6 +48,26 @@ class Calculator
     ModelData model_;
     DescriptorEvaluator descriptor_evaluator_;
     std::size_t descriptor_size_;
+};
+
+class CellAccumulator
+{
+  public:
+    explicit CellAccumulator(std::size_t atom_count);
+
+    void add(std::size_t center_index,
+             const std::vector<std::size_t>& neighbor_indices,
+             const std::vector<Neighbor>& neighbors,
+             const ForceResult& result);
+
+    double energy() const;
+    const std::vector<std::array<double, 3> >& forces() const;
+    const std::array<double, 9>& virial() const;
+
+  private:
+    double energy_ = 0.0;
+    std::vector<std::array<double, 3> > forces_;
+    std::array<double, 9> virial_;
 };
 
 } // namespace SNAP
