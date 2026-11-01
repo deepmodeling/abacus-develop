@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cmath>
 
 namespace
@@ -64,6 +65,68 @@ ModuleMD::SNAP::ModelData make_chemical_model()
     model.coefficients[0][1] = 2.0;
     model.coefficients[1][1] = 3.0;
     return model;
+}
+
+ModuleMD::SNAP::ModelData make_angular_quadratic_model()
+{
+    ModuleMD::SNAP::ModelData model = make_model();
+    model.parameters.twojmax = 2;
+    model.parameters.quadratic_flag = true;
+    model.coefficients[0] = {0.2, 0.3, -0.1, 0.5, 0.2, -0.4,
+                             0.25, 0.0, 0.0, 0.0, -0.15,
+                             0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0};
+    return model;
+}
+
+struct SmallCellResult
+{
+    double energy = 0.0;
+    double virial_xx = 0.0;
+    std::array<std::array<double, 3>, 3> forces = {};
+};
+
+SmallCellResult evaluate_small_cell(const ModuleMD::SNAP::Calculator& calculator,
+                                    const std::array<std::array<double, 3>, 3>& positions)
+{
+    SmallCellResult total;
+    for (std::size_t center = 0; center < positions.size(); ++center)
+    {
+        std::vector<ModuleMD::SNAP::Neighbor> neighbors;
+        std::vector<std::size_t> neighbor_indices;
+        for (std::size_t atom = 0; atom < positions.size(); ++atom)
+        {
+            if (atom == center)
+            {
+                continue;
+            }
+            ModuleMD::SNAP::Neighbor neighbor;
+            neighbor.x = positions[atom][0] - positions[center][0];
+            neighbor.y = positions[atom][1] - positions[center][1];
+            neighbor.z = positions[atom][2] - positions[center][2];
+            neighbor.cutoff_radius = 4.5;
+            neighbors.push_back(neighbor);
+            neighbor_indices.push_back(atom);
+        }
+        const ModuleMD::SNAP::ForceResult result = calculator.compute_with_analytic_force(neighbors, 0);
+        total.energy += result.energy.energy;
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            total.forces[center][static_cast<std::size_t>(direction)] +=
+                result.center_force[static_cast<std::size_t>(direction)];
+        }
+        for (std::size_t index = 0; index < neighbors.size(); ++index)
+        {
+            const std::size_t atom = neighbor_indices[index];
+            for (int direction = 0; direction < 3; ++direction)
+            {
+                total.forces[atom][static_cast<std::size_t>(direction)] +=
+                    result.neighbor_forces[index][static_cast<std::size_t>(direction)];
+            }
+            total.virial_xx += neighbors[index].x * result.neighbor_forces[index][0];
+        }
+    }
+    return total;
 }
 
 TEST(SnapCalculator, ComputesLinearAtomicEnergy)
@@ -249,6 +312,40 @@ TEST(SnapCalculator, InnerSwitchSkipsSingularRadius)
         EXPECT_NEAR(near_analytic.neighbor_forces[0][static_cast<std::size_t>(direction)],
                     near_finite.neighbor_forces[0][static_cast<std::size_t>(direction)], 1.0e-4);
     }
+}
+
+TEST(SnapCalculator, AngularQuadraticForcesMatchLammpsAndStrain)
+{
+    const ModuleMD::SNAP::Calculator calculator(make_angular_quadratic_model());
+    const std::array<std::array<double, 3>, 3> positions = {{{0.0, 0.0, 0.0},
+                                                              {1.058354, 0.0, 0.0},
+                                                              {0.2645885, 1.3229425, 0.0}}};
+    const SmallCellResult result = evaluate_small_cell(calculator, positions);
+    const double lammps_forces[3][2] = {{67.2928038408958, 57.5476436778783},
+                                         {-92.1399449575303, 60.5944497536836},
+                                         {24.8471411166345, -118.142093431562}};
+    EXPECT_NEAR(result.energy, 54.909561, 1.0e-5);
+    for (std::size_t atom = 0; atom < positions.size(); ++atom)
+    {
+        for (int direction = 0; direction < 2; ++direction)
+        {
+            EXPECT_NEAR(result.forces[atom][static_cast<std::size_t>(direction)],
+                        lammps_forces[atom][direction], 2.0e-4);
+        }
+    }
+
+    const double strain = 1.0e-6;
+    std::array<std::array<double, 3>, 3> expanded = positions;
+    std::array<std::array<double, 3>, 3> contracted = positions;
+    for (std::size_t atom = 0; atom < positions.size(); ++atom)
+    {
+        expanded[atom][0] *= 1.0 + strain;
+        contracted[atom][0] *= 1.0 - strain;
+    }
+    const double expanded_energy = evaluate_small_cell(calculator, expanded).energy;
+    const double contracted_energy = evaluate_small_cell(calculator, contracted).energy;
+    const double strain_derivative = (expanded_energy - contracted_energy) / (2.0 * strain);
+    EXPECT_NEAR(result.virial_xx, -strain_derivative, 1.0e-3);
 }
 
 } // namespace
