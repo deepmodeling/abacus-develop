@@ -289,6 +289,30 @@ Report both the sampled peak memory and its sampling interval. A 100 ms sample
 can miss a shorter allocation peak, so retain the raw samples and use the same
 measurement method for both binaries.
 
+## CUDA force projector storage
+
+Nonlocal force evaluation saves projector values at reciprocal-space rows with
+a zero Cartesian component, then restores their scaled values. Save and restore
+launch one thread per selected projector/row pair, use wide flat indices, and
+skip empty selections. A launch based on the element count as a block count
+can overflow a signed thread index on large systems before device memory is
+exhausted.
+
+`check_force_projector_storage.cpp` compares both public operations with
+independent CPU indexing and complex multiplication. It covers all Cartesian
+directions, zero selections, partial blocks and preservation of unselected
+rows. The large case crosses the signed-index boundary of the oversized launch
+while requiring only a small fraction of device memory:
+
+```bash
+python3 src/link_check.py src/check_force_projector_storage.cpp --cxxflag=-std=c++17
+results/check_force_projector_storage
+results/check_force_projector_storage --large
+```
+
+These operator checks complement complete energy, force and stress comparisons.
+They do not establish SCF convergence or application capacity by themselves.
+
 ## Fused spinor transforms
 
 The optional `USE_CUFFTDX` build uses one common kernel template for the local
