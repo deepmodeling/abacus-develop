@@ -135,6 +135,17 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
 
 namespace
 {
+// Magic value ('H', 'S', 'R', 'B') that starts every versioned native binary
+// CSR record. Unversioned records written before this magic was introduced
+// start with a small ionic-step index instead, so the two layouts can be told
+// apart from the first int alone.
+const int hsr_binary_magic = 0x48535242;
+// Version of the native binary CSR record layout. Version 2 stores the
+// one-based ionic step after the magic and version fields; the unversioned
+// layout that shipped in v3.11.0-beta9/beta10 had no magic and stored a
+// zero-based step.
+const int hsr_binary_format_version = 2;
+
 template <typename T>
 void write_native_value(std::ofstream& ofs, const T& value)
 {
@@ -228,6 +239,8 @@ void ModuleIO::write_hcontainer_csr_binary(const std::string& fname,
     const int step = std::max(istep, 0) + 1;
     const int nbasis = mat_serial->get_nbasis();
     const int nR = static_cast<int>(R_coordinates.size());
+    write_native_value(ofs, hsr_binary_magic);
+    write_native_value(ofs, hsr_binary_format_version);
     write_native_value(ofs, step);
     write_native_value(ofs, nbasis);
     write_native_value(ofs, nR);

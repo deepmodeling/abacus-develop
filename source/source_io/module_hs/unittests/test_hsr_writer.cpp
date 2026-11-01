@@ -300,6 +300,9 @@ TEST(HsrWriterIo, HContainerBinaryWritesSortedAndEmptyRBlocks)
     std::ifstream ifs(filename.c_str(), std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
     const NativeDoubleRecord record = read_native_double_record(ifs);
+    // versioned record header: magic 'HSRB' followed by format version 2
+    EXPECT_EQ(record.magic, 0x48535242);
+    EXPECT_EQ(record.format_version, 2);
     // istep = -1 (single-point SCF) maps to one-based step 1
     EXPECT_EQ(record.step, 1);
     EXPECT_EQ(record.nbasis, 2);
@@ -341,6 +344,9 @@ TEST(HsrWriterIo, HContainerBinaryWritesComplexValuesAsDoublePairs)
 
     std::ifstream ifs(filename.c_str(), std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
+    // versioned record header: magic 'HSRB', format version 2
+    EXPECT_EQ(read_binary_value<int>(ifs), 0x48535242);
+    EXPECT_EQ(read_binary_value<int>(ifs), 2);
     // istep = 4 -> one-based step 5 in the binary header
     EXPECT_EQ(read_binary_value<int>(ifs), 5);
     EXPECT_EQ(read_binary_value<int>(ifs), 2);

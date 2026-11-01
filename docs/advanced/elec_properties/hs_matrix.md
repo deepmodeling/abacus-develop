@@ -97,9 +97,9 @@ In gamma-only mode, every generated file reports one Bravais lattice vector and 
 
 Set `out_hsr 2` to write the same H(R) and S(R) matrix sets with a `.dat` suffix. For example, an `nspin = 2` calculation writes `hrs1_nao.dat`, `hrs2_nao.dat`, and `sr_nao.dat`. When `out_app_flag` is 2, the one-based ionic step is included before `_nao`, for example `hrs1g1_nao.dat` and `srg1_nao.dat`.
 
-Each ionic step is a complete record with no padding or self-describing header:
+Each ionic step is a complete record with no padding; its header is self-identifying through a magic value and a format version:
 
-1. Native `int`: one-based ionic step, matrix dimension, number of R blocks.
+1. Versioned header: five native `int` values, namely the magic `0x48535242` (`HSRB`), the format version (`2`), the one-based ionic step, the matrix dimension, and the number of R blocks. The magic and version are absent from the unversioned layout described in the migration note below.
 2. For every R block in lexicographic `(Rx, Ry, Rz)` order, four native `int` values: `Rx`, `Ry`, `Rz`, and `nnz`.
 3. `nnz` matrix values in CSR order. Real matrices use one native `double`; complex matrices use consecutive real and imaginary `double` values.
 4. `nnz` native `int` column indices.
@@ -108,6 +108,13 @@ Each ionic step is a complete record with no padding or self-describing header:
 All R blocks stored by the internal HContainer are present, including blocks with zero nonzero values. The sparse threshold is `1e-10`, matching text CSR output. The format uses the host integer representation and byte order and therefore requires a compatible ABI. It does not contain unit-cell, spin, or matrix-label metadata; those are determined by the calculation input and filename.
 
 When `out_app_flag` is 1, the first ionic step truncates the shared file and later ionic steps append complete records. When `out_app_flag` is 0, the fixed file is truncated and overwritten at every write. Only when `out_app_flag` is 2 is every ionic step written to its own file.
+
+> **Format version and migration note.** The native binary record is now versioned. Version `2` starts with the magic `0x48535242` and the version itself, and stores a one-based ionic step. Earlier files are unversioned and start directly with the ionic step, so the first `int` of an unversioned file is a small step index (`0` or `1`) rather than the magic, which makes the two layouts distinguishable.
+> - **v3.11.0-beta9 and v3.11.0-beta10** wrote unversioned records with a **zero-based** ionic step (the first ionic step is stored as `0`).
+> - **Development builds between that change and this versioning scheme** wrote unversioned records with a **one-based** ionic step, so an unversioned file cannot be interpreted from its content alone; the writer version is required.
+> - **Version `2` and later** write the magic, the format version, and a **one-based** ionic step.
+>
+> The matrix data itself is unchanged; only the header and the step convention differ. Readers should reject a record whose first `int` is not the expected magic instead of guessing the layout, and must consult the format version before interpreting the remaining fields. Reading an unversioned beta file as version `2`, or a version `2` file as unversioned, shifts the reported ionic-step index and misaligns every following field.
 
 ### NPZ Format
 
