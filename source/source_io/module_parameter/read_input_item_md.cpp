@@ -171,9 +171,12 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "The period to output MD restart information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "Deprecated: use out_freq_ion to control MD output frequency instead. "
-                           "This parameter is kept for backward compatibility as a fallback when "
-                           "out_freq_ion is not set (0).";
+        item.description = "The period (in ionic steps) of writing the MD restart file "
+                           "(Restart_md.txt). This cadence is independent of out_freq_ion: "
+                           "restart files are written every md_restartfreq steps regardless of "
+                           "the STRU output cadence. Set to 0 to disable restart-file output. "
+                           "When out_freq_ion is not set (0), it also falls back to md_restartfreq "
+                           "as the STRU output frequency for backward compatibility.";
         item.default_value = "5";
         item.unit = "";
         read_sync_int(input.mdp.md_restartfreq);

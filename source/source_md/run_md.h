@@ -17,6 +17,12 @@ class ESolver;
  */
 namespace Run_MD
 {
+/// Returns true when a per-step action with cadence frequency `freq` should
+/// fire at `current_step`. A frequency <= 0 disables the action (never
+/// fires). Keeping output and restart cadences behind this predicate makes
+/// their independence directly unit-testable.
+bool is_cadence_step(int current_step, int freq);
+
 void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp);
 
 void prepare_mdcell(MDCell& mdcell, UnitCell& ucell, DomainDecomposition& decomp);

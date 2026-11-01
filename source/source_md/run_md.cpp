@@ -33,6 +33,11 @@
 namespace Run_MD
 {
 
+bool is_cadence_step(const int current_step, const int freq)
+{
+    return freq > 0 && current_step % freq == 0;
+}
+
 void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp)
 {
     const Input_para& input = param_in.inp;
@@ -189,12 +194,16 @@ void md_line(MDCell& mdcell,
         apply_plumed_forces(mdcell, plumed_forces);
     };
 
-    /// Effective ionic-step output frequency.
-    /// Prefer out_freq_ion; fall back to md_restartfreq for backward
-    /// compatibility when out_freq_ion is not set.
+    /// Effective ionic-step output frequency for STRU and other per-step
+    /// output files. Prefer out_freq_ion; fall back to md_restartfreq for
+    /// backward compatibility when out_freq_ion is not set (0).
     const int eff_output_freq = (param_in.inp.out_freq_ion > 0)
                                     ? param_in.inp.out_freq_ion
                                     : param_in.mdp.md_restartfreq;
+
+    /// Restart-file cadence is independent of the output cadence so that
+    /// out_freq_ion and md_restartfreq can be set to different values.
+    const int restart_freq = param_in.mdp.md_restartfreq;
 
     /// out_app_flag == 1 writes one fixed-name "STRU" file. A previous
     /// release kept per-step STRU_MD_{step} files inside a STRU/
@@ -313,8 +322,7 @@ void md_line(MDCell& mdcell,
         }
 
         const int current_step = mdrun->step_ + mdrun->step_rst_;
-        const bool do_output_step = eff_output_freq > 0
-            && current_step % eff_output_freq == 0;
+        const bool do_output_step = is_cadence_step(current_step, eff_output_freq);
         if (do_output_step)
         {
             if (mdcell.has_backing_unitcell())
@@ -349,6 +357,13 @@ void md_line(MDCell& mdcell,
                 }
                 mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str(), frame_comment, append_stru);
             }
+        }
+
+        /// Restart files follow md_restartfreq independently of the output
+        /// cadence, so setting out_freq_ion does not suppress or re-aim
+        /// md_restartfreq.
+        if (is_cadence_step(current_step, restart_freq))
+        {
             mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
 

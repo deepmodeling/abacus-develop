@@ -60,3 +60,51 @@ TEST(RunMDTest, prepare_mdcell_from_unitcell)
     EXPECT_EQ(atom.mbl.x, 0);
     EXPECT_EQ(atom.owner_rank, 0);
 }
+
+// --- Cadence independence: output (out_freq_ion) and restart
+// (md_restartfreq) must be driven by their own frequencies so that
+// setting out_freq_ion does not silently re-aim md_restartfreq.
+
+TEST(RunMDCadenceTest, disabled_when_freq_non_positive)
+{
+    for (int step = 0; step <= 20; ++step)
+    {
+        EXPECT_FALSE(Run_MD::is_cadence_step(step, 0));
+        EXPECT_FALSE(Run_MD::is_cadence_step(step, -1));
+    }
+}
+
+TEST(RunMDCadenceTest, fires_every_freq_steps)
+{
+    const int freq = 3;
+    for (int step = 0; step <= 20; ++step)
+    {
+        const bool expected = (step % freq == 0);
+        EXPECT_EQ(Run_MD::is_cadence_step(step, freq), expected) << "step=" << step;
+    }
+}
+
+// Core regression guard: with out_freq_ion and md_restartfreq set to
+// different positive values, the two cadences must disagree on at least
+// one step. This guarantees md_restartfreq is no longer swallowed by
+// out_freq_ion > 0.
+TEST(RunMDCadenceTest, output_and_restart_are_independent)
+{
+    const int out_freq_ion = 4;
+    const int md_restartfreq = 6;
+
+    bool found_disagreement = false;
+    for (int step = 0; step <= 60; ++step)
+    {
+        const bool output_step = Run_MD::is_cadence_step(step, out_freq_ion);
+        const bool restart_step = Run_MD::is_cadence_step(step, md_restartfreq);
+        if (output_step != restart_step)
+        {
+            found_disagreement = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found_disagreement)
+        << "out_freq_ion=" << out_freq_ion << " and md_restartfreq=" << md_restartfreq
+        << " produced identical cadences; md_restartfreq is still being ignored.";
+}
