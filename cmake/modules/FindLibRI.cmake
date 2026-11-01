@@ -53,10 +53,10 @@ if(LibRI_FOUND AND NOT TARGET LibRI::LibRI)
   endforeach()
 
   if(ENABLE_LIBRI_GPU)
-    find_package(DDLA REQUIRED)
+    find_package(LibDDLA 0.0.6 CONFIG REQUIRED HINTS "${DDLA_ROOT}")
     target_compile_definitions(LibRI::LibRI INTERFACE __GPU_RI __DDLA_RI)
     target_compile_features(LibRI::LibRI INTERFACE cxx_std_17)
-    target_link_libraries(LibRI::LibRI INTERFACE DDLA::DDLA)
+    target_link_libraries(LibRI::LibRI INTERFACE ddla::ddla)
 
     include(CMakePushCheckState)
     include(CheckCXXSourceCompiles)
@@ -68,6 +68,9 @@ if(LibRI_FOUND AND NOT TARGET LibRI::LibRI)
       [=[
             #include <complex>
             #include <RI/ri/LRI.h>
+            #if !defined(DDLA_USE_CUDA) || defined(DDLA_USE_HIP)
+            #error "LibRI GPU requires a CUDA build of DDLA"
+            #endif
             template <typename T> void check_gpu()
             {
                 RI::LRI<int, int, 3, T> lri;
@@ -87,7 +90,7 @@ if(LibRI_FOUND AND NOT TARGET LibRI::LibRI)
       message(
         FATAL_ERROR
           "LibRI/DDLA GPU compile/link check failed. Supply compatible "
-          "LibRI and CUDA DDLA installations; see docs/advanced/install.md "
+          "LibRI and CUDA DDLA 0.0.6 or newer installations; see docs/advanced/install.md "
           "and the CMake configure log.")
     endif()
   endif()

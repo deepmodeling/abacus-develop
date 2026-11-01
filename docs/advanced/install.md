@@ -82,7 +82,7 @@ The new EXX implementation directly depends on [LibRI](https://github.com/abacus
 ```
 
 Experimental LCAO GPU contractions additionally require `ENABLE_LIBRI_GPU=ON`
-(default OFF), `USE_CUDA=ON`, and a CUDA build of DDLA. Like other dependent
+(default OFF), `USE_CUDA=ON`, and a CUDA build of DDLA 0.0.6 or newer. Like other dependent
 options, GPU RI is disabled when its LibRI/CUDA prerequisites are disabled.
 INPUT `device_exx` defaults to `cpu`, retaining CPU contractions even with
 `device gpu`. To use GPU contractions, set both `device gpu` and `device_exx gpu`.
@@ -105,13 +105,17 @@ CUDA_VISIBLE_DEVICES=0,1 mpirun -np 2 abacus
 ```{warning}
 GPU RI is awaiting a LibRI release containing the accumulation, OpenMP and
 atom-list fixes in [LibRI #15](https://github.com/abacusmodeling/LibRI/pull/15)
-and the symmetry fixes in [LibRI #16](https://github.com/abacusmodeling/LibRI/pull/16).
-These changes are merged upstream but are not included in LibRI `v0.2.1.1`.
+and the symmetry fixes in [LibRI #16](https://github.com/abacusmodeling/LibRI/pull/16),
+together with the DDLA 0.0.6 public API adaptation in
+[LibRI #19](https://github.com/abacusmodeling/LibRI/pull/19).
+The fixes in #15 and #16 are merged upstream; #19 is under review.
+None of these changes are included in LibRI `v0.2.1.1`.
 The supported release will be specified here after it passes integration tests.
 ```
 
-The tested DDLA version is `v0.0.4`
-(`9c404ac65148ec1b48977b846f38ba6ef9e134f7`), built with CUDA support.
+DDLA must provide its installed `LibDDLAConfig.cmake` package and `ddla::ddla`
+target. The tested release is [DDLA v0.0.6](https://github.com/userchba/LibDDLA/releases/tag/v0.0.6),
+built with CUDA support. GPU RI requires C++17.
 GPU mode requires an explicitly supplied, compatible LibRI installation;
 the default CPU dependency download is unchanged.
 
@@ -120,7 +124,11 @@ cmake -B build -DENABLE_LIBRI=ON -DUSE_CUDA=ON -DENABLE_LIBRI_GPU=ON \
   -DLIBRI_DIR=/path/to/LibRI -DDDLA_ROOT=/path/to/DDLA
 ```
 
-`CMAKE_PREFIX_PATH` can also locate DDLA. A configure-time compile/link check
+`CMAKE_PREFIX_PATH` can also name the DDLA installation prefix, or `LibDDLA_DIR`
+can point to the directory containing `LibDDLAConfig.cmake`. The package supplies
+DDLA's include paths, backend definitions and link dependencies; separate
+`DDLA_INCLUDE_DIR` and `DDLA_LIBRARY` overrides are no longer used.
+A configure-time compile/link check
 rejects incompatible GPU APIs, but does not validate numerical correctness.
 The standalone tests in `tests/lcao_hse_gpu/cmake` additionally accept
 `ENABLE_LIBRI_GPU_TESTS=ON` with `ENABLE_LIBRI_GPU=ON` to check real and complex

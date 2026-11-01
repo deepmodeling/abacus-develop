@@ -399,7 +399,7 @@ foreach(
   _abacus_feature_target IN
   ITEMS nlohmann_json::nlohmann_json
         LibRI::LibRI
-        DDLA::DDLA
+        ddla::ddla
         cereal::cereal
         ELPA::ELPA
         Libxc::xc
