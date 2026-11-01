@@ -65,4 +65,19 @@ if(ENABLE_LCAO)
     device
     SOURCES
     test_init_chg_hr_error.cpp)
+  addtest(
+    TARGET
+    MODULE_LCAO_integral_reuse
+    LIBS
+    parameter
+    base
+    device
+    container
+    SOURCES
+    test_center2orb_orb21.cpp
+    ../center2orb.cpp
+    ../center2orb_orb11.cpp
+    ../center2orb_orb21.cpp
+    ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_atomic_lm.cpp
+    ${ABACUS_SOURCE_DIR}/source_basis/module_ao/orb_gaunt_table.cpp)
 endif()
