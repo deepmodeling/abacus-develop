@@ -570,6 +570,42 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
         this->add_item(item);
     }
     {
+        Input_Item item("rpa_cut_coulomb");
+        item.annotation = "post-SCF truncated Coulomb kernel for RPA/GW export";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "Post-SCF cut-Coulomb kernel: hard preserves Spencer truncation; log_erfc uses erfc(log(r/Rc)/log(rpa_cut_width))/2r. Applies to Fock components in compressed and uncompressed cut exports; Erfc components retain their existing kernel. Non-default kernel/radius requests require a Fock component. Full Coulomb is unchanged. Forces and stresses for log_erfc are not validated.";
+        item.default_value = "hard";
+        item.unit = "";
+        read_sync_string(input.rpa_cut_coulomb);
+        item.domain.set_choices({"hard", "log_erfc"});
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_radius");
+        item.annotation = "radius convention for post-SCF cut Coulomb";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "legacy preserves the existing cutoff radius. inscribed uses half the shortest nonzero BvK superlattice vector, including the lattice scale in Bohr. Applies only to Fock components; inscribed is rejected if the RPA Coulomb configuration has no Fock component. Independent of rpa_cut_coulomb; intended for controlled radius-versus-smoothing comparisons.";
+        item.default_value = "legacy";
+        item.unit = "";
+        read_sync_string(input.rpa_cut_radius);
+        item.domain.set_choices({"legacy", "inscribed"});
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_width");
+        item.annotation = "multiplicative width of the log-erfc cutoff";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "Width factor for log_erfc. Must be finite and greater than 1 and at most 1.25. The default matches the logged Si FHI-aims width; it is not a universal FHI-aims constant. The finite radial integration range must resolve the smooth tail.";
+        item.default_value = "1.091868692359";
+        item.unit = "";
+        read_sync_double(input.rpa_cut_width);
+        item.domain.set_rule("value>1 and value<=1.25");
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_symmetry_realspace");
         item.annotation = "whether to reduce real-space sector in Hexx calculation";
         item.category = "Exact Exchange (LCAO)";

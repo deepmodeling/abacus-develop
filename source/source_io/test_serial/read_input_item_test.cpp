@@ -723,6 +723,58 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).out_pot[0], 1);
         EXPECT_EQ(TestParameters::input(param).out_pot[1], 2);
     }
+    { // out_sol
+        auto it = find_label("out_sol", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_sol[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_sol[1], 8);
+        it->second.str_values = {"1", "5"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_sol[1], 5);
+
+        TestParameters::input(param).imp_sol = 2;
+        check_item(it->second, param);
+        TestParameters::input(param).imp_sol = 0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        TestParameters::input(param).imp_sol = 1;
+        TestParameters::input(param).out_sol[0] = 2;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        TestParameters::input(param).out_sol[0] = 1;
+        TestParameters::input(param).out_sol[1] = 0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        it->second.str_values = {"x"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes integers"));
+        it->second.str_values = {"6junk"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes integers"));
+        it->second.str_values = {"1", "8x"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes integers"));
+        it->second.str_values = {"1", "8", "3"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes 1 or 2 integers"));
+        TestParameters::input(param).out_sol = {0, 8};
+        TestParameters::input(param).imp_sol = 0;
+    }
     { // out_dos
         auto it = find_label("out_dos", readinput.input_lists);
         TestParameters::input(param).calculation = "get_wf";
@@ -2072,6 +2124,30 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // independent smoothing and radius switches
+        const auto cut_mode_item = find_label("rpa_cut_coulomb", readinput.input_lists);
+        const auto cut_radius_item = find_label("rpa_cut_radius", readinput.input_lists);
+        const auto cut_width_item = find_label("rpa_cut_width", readinput.input_lists);
+        ASSERT_NE(cut_mode_item, readinput.input_lists.end());
+        ASSERT_NE(cut_radius_item, readinput.input_lists.end());
+        ASSERT_NE(cut_width_item, readinput.input_lists.end());
+        EXPECT_EQ(TestParameters::input(param).rpa_cut_coulomb, "hard");
+        EXPECT_EQ(TestParameters::input(param).rpa_cut_radius, "legacy");
+        TestParameters::input(param).rpa_cut_coulomb = "log_erfc";
+        TestParameters::input(param).rpa_cut_radius = "inscribed";
+        check_item(cut_mode_item->second, param);
+        check_item(cut_radius_item->second, param);
+        check_item(cut_width_item->second, param);
+        TestParameters::input(param).rpa_cut_coulomb = "invalid";
+        EXPECT_EXIT(check_item(cut_mode_item->second, param), ::testing::ExitedWithCode(1), "");
+        TestParameters::input(param).rpa_cut_radius = "invalid";
+        EXPECT_EXIT(check_item(cut_radius_item->second, param), ::testing::ExitedWithCode(1), "");
+        TestParameters::input(param).rpa_cut_width = 1.0;
+        EXPECT_EXIT(check_item(cut_width_item->second, param), ::testing::ExitedWithCode(1), "");
+        TestParameters::input(param).rpa_cut_coulomb = "hard";
+        TestParameters::input(param).rpa_cut_radius = "legacy";
+        TestParameters::input(param).rpa_cut_width = 1.091868692359;
+    }
     { // berry_phase
         auto it = find_label("berry_phase", readinput.input_lists);
         TestParameters::input(param).berry_phase = true;
@@ -2815,4 +2891,132 @@ TEST_F(InputTest, PerAtomSccsCavityWidthsDisableSpatialSymmetry)
     input.sccs_solvent_mode = "electronic";
     it->second.reset_value(it->second, param);
     EXPECT_EQ(input.symmetry, "1");
+}
+
+TEST_F(InputTest, DfptMixTypeDomainContract)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    auto it = find_label("dfpt_mix_type", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    Input_para& input = TestParameters::input(param);
+
+    // omitted line: the declared default applies (Input_para default and
+    // item default_value agree)
+    EXPECT_EQ(it->second.default_value, "v_sc_broyden");
+    EXPECT_EQ(input.dfpt_mix_type, "v_sc_broyden");
+
+    // every declared choice is read verbatim
+    for (const std::string scheme : {"rho_plain", "rho_kerker", "rho_broyden", "v_sc_plain", "v_sc_broyden"})
+    {
+        it->second.str_values = {scheme};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(input.dfpt_mix_type, scheme) << scheme;
+    }
+
+    // explicit empty / unknown / multi-token values are rejected by the
+    // scalar choices domain before read_value runs, so the previous value
+    // survives (the legacy get_size()==0 fallback is intentionally gone)
+    readinput.readvalue_items.push_back(&it->second);
+    const std::string previous_scheme = input.dfpt_mix_type;
+    for (const std::vector<std::string>& invalid : {
+             std::vector<std::string>{},
+             std::vector<std::string>{""},
+             std::vector<std::string>{"broyden"},
+             std::vector<std::string>{"v_sc"},
+             std::vector<std::string>{"rho_plain", "v_sc_plain"}})
+    {
+        it->second.str_values = invalid;
+        const std::string error = readinput.prepare_input(param);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'dfpt_mix_type'"));
+        EXPECT_THAT(error, testing::HasSubstr("Expected one String from {rho_plain, rho_kerker, rho_broyden, v_sc_plain, v_sc_broyden}"));
+        EXPECT_THAT(error, testing::HasSubstr("input-main.html#dfpt-mix-type"));
+        EXPECT_EQ(input.dfpt_mix_type, previous_scheme);
+    }
+}
+
+TEST_F(InputTest, DfptKerkerA2RuleBoundaries)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    auto it = find_label("dfpt_kerker_a2", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    Input_para& input = TestParameters::input(param);
+
+    EXPECT_EQ(it->second.default_value, "1.0");
+    EXPECT_DOUBLE_EQ(input.dfpt_kerker_a2, 1.0);
+
+    for (const std::pair<const std::string, double> valid : {
+             std::pair<const std::string, double>{"0.5", 0.5},
+             {"1e-2", 1.0e-2},
+             {"12", 12.0}})
+    {
+        it->second.str_values = {valid.first};
+        it->second.read_value(it->second, param);
+        EXPECT_DOUBLE_EQ(input.dfpt_kerker_a2, valid.second) << valid.first;
+    }
+
+    // a^2 = 0 turns the Kerker screen off, so the rule value>0 rejects the
+    // boundary together with negatives, nonfinite values, and empty input
+    readinput.readvalue_items.push_back(&it->second);
+    const double previous_a2 = input.dfpt_kerker_a2;
+    for (const std::vector<std::string>& invalid : {
+             std::vector<std::string>{},
+             std::vector<std::string>{"0"},
+             std::vector<std::string>{"-1"},
+             std::vector<std::string>{"nan"},
+             std::vector<std::string>{"inf"},
+             std::vector<std::string>{"0.5garbage"}})
+    {
+        it->second.str_values = invalid;
+        const std::string error = readinput.prepare_input(param);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'dfpt_kerker_a2'"));
+        EXPECT_THAT(error, testing::HasSubstr("Expected one finite Real satisfying value>0."));
+        EXPECT_THAT(error, testing::HasSubstr("input-main.html#dfpt-kerker-a2"));
+        EXPECT_DOUBLE_EQ(input.dfpt_kerker_a2, previous_a2);
+    }
+}
+
+TEST_F(InputTest, DfptBroydenNdimRuleBoundaries)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    auto it = find_label("dfpt_broyden_ndim", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    Input_para& input = TestParameters::input(param);
+
+    EXPECT_EQ(it->second.default_value, "8");
+    EXPECT_EQ(input.dfpt_broyden_ndim, 8);
+
+    // ndim = 1 is the smallest legal history depth (single-step memory)
+    for (const std::pair<const std::string, int> valid : {
+             std::pair<const std::string, int>{"1", 1},
+             {"16", 16}})
+    {
+        it->second.str_values = {valid.first};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(input.dfpt_broyden_ndim, valid.second) << valid.first;
+    }
+
+    // ndim = 0 (empty history) is rejected together with negatives,
+    // non-integers, and empty input
+    readinput.readvalue_items.push_back(&it->second);
+    const int previous_ndim = input.dfpt_broyden_ndim;
+    for (const std::vector<std::string>& invalid : {
+             std::vector<std::string>{},
+             std::vector<std::string>{"0"},
+             std::vector<std::string>{"-4"},
+             std::vector<std::string>{"2.5"},
+             std::vector<std::string>{"8", "1"}})
+    {
+        it->second.str_values = invalid;
+        const std::string error = readinput.prepare_input(param);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'dfpt_broyden_ndim'"));
+        EXPECT_THAT(error, testing::HasSubstr("Expected one Integer satisfying value>=1."));
+        EXPECT_THAT(error, testing::HasSubstr("input-main.html#dfpt-broyden-ndim"));
+        EXPECT_EQ(input.dfpt_broyden_ndim, previous_ndim);
+    }
 }

@@ -183,6 +183,9 @@ class DFPT_PW::Impl
     std::string qfile_;
     double conv_thr_ = 1e-8;
     int max_iter_ = 100;
+    /// MPI rank from the init context (0 for serial); used by the dyn
+    /// file writer for the rank-0 output gate
+    int myrank_ = 0;
     double mix_beta_ = 0.4;
     std::string asr_type_ = "no"; ///< acoustic sum rule mode on the Gamma matrix
     std::string mix_type_ = "v_sc_broyden"; ///< response SCF mixing scheme

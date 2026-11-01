@@ -68,6 +68,7 @@ scf_in_chgdat
 082_PW_gatefield
 scf_sol_H2
 scf_sol_H2O
+scf_sol_H2O_out_sol
 085_PW_get_pchg
 086_PW_get_wf
 087_PW_get_pchg_kpar_bndpar
@@ -132,3 +133,4 @@ scf_sccs_pcc_2d
 scf_sccs_pcc_0d
 scf_sccs_pcc_0d_lowpass
 scf_sccs_full
+relax_sccs

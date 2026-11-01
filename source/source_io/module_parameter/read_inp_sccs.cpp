@@ -183,5 +183,46 @@ void ReadInput::item_sccs()
         sync_doublevec(input.sccs_corespread, para.input.sccs_corespread.size(), 0.0);
         this->add_item(item);
     }
+    {
+        Input_Item item("sccs_start_drho");
+        item.annotation = "SCCS delayed-start density threshold";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Delays the start of SCCS until DRHO is at or below this value; until then the SCF runs without the solvent, while PCC, if set, stays on. 0 (default) starts SCCS immediately. A positive value must be larger than scf_thr, so that the SCF cannot converge before SCCS starts. When SCCS starts, the charge mixing restarts, that iteration does not count as converged, and the iteration is printed on the screen. SCCS then stays on for the rest of the run, including later ionic steps. Not set by sccs_preset.";
+        item.default_value = "0.0";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_start_drho);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_start_nmax");
+        item.annotation = "SCCS delayed-start iteration limit";
+        item.category = "Implicit solvation model";
+        item.type = "Integer";
+        item.description = "With sccs_start_drho > 0, starts SCCS at this electronic iteration at the latest, if DRHO has not yet reached sccs_start_drho. Must be positive, and smaller than scf_nmax when sccs_start_drho > 0. Default 30. Not set by sccs_preset.";
+        item.default_value = "30";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_int(input.sccs_start_nmax);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_debug");
+        item.annotation = "SCCS report level";
+        item.category = "Implicit solvation model";
+        item.type = "Integer";
+        item.description = "Level of the SCCS reports, written to the running log (running_*.log in OUT.{suffix}): 0 (default) writes none; 1 writes the sqrt-CG iteration count and the correction energies of every SCF iteration; 2 also writes the residuals, warm start, cavity volume and surface, the FFT counts of the Coulomb operator in the sqrt-CG solve and the count of reused fixed sources, and with PCC the Gauss-law check (far-field polarization charge and its expected value), the charge moments and the energy components.";
+        item.default_value = "0";
+        item.unit = "";
+        read_sync_int(input.sccs_debug);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.sccs_debug < 0 || para.input.sccs_debug > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "sccs_debug must be 0, 1, or 2");
+            }
+        };
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO

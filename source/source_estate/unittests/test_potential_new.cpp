@@ -1,4 +1,5 @@
 #include "source_estate/module_pot/potential_new.h"
+#include "source_estate/module_pot/pot_sccs.h"
 
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
@@ -162,10 +163,16 @@ int MockPotComponent::destroyed = 0;
 int MockPotComponent::fixed_calls = 0;
 int MockPotComponent::dynamic_calls = 0;
 
-PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para&)
+PotBase* Potential::get_pot_type(const std::string& pot_type, const Input_para&, const SccsResume&)
 {
     const int grid_size = this->get_rho_basis() == nullptr ? 0 : this->get_rho_basis()->nrxx;
     return new MockPotComponent(pot_type, grid_size);
+}
+
+// The mock components hold no SCCS state.
+SccsResume Potential::get_resume() const
+{
+    return SccsResume();
 }
 
 } // namespace elecstate

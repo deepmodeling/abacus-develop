@@ -1,6 +1,9 @@
 abacus_disable_feature_definitions(__MLALGO)
 abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
+addtest(
+  TARGET MODULE_RI_smooth_cut_coulomb
+  SOURCES test_smooth_cut_coulomb.cpp ../smooth_cut_coulomb.cpp)
 if(ENABLE_LCAO)
   addtest(
     TARGET

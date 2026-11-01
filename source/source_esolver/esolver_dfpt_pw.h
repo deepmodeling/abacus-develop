@@ -51,6 +51,13 @@ class ESolver_DFPT_PW : public ESolver_KS_PW<std::complex<double>, base_device::
 
     bool dft_plus_u_ = false;
 
+    ///< magnetization flags derived from (nspin, noncolin) with the exact
+    ///< switch of ReadInput::set_globalv; consumed by the FDM XC kernel
+    ///< fallback adapter (replaces the former global-record reads)
+    bool domag_ = false;
+
+    bool domag_z_ = false;
+
     void run_gs(UnitCell& ucell);
 
     /// wires DFPT_PW with the converged ground state; called after run_gs
