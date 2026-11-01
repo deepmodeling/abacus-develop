@@ -122,7 +122,10 @@ addtest(
   base
   symmetry
   SOURCES
-  dfpt_q0_serial_test.cpp
+  # I-24 split along the source boundaries: q0 core vs the position
+  # operator (the shared fixture lives in dfpt_q0_serial_fixture.h)
+  test_dfpt_q0.cpp
+  test_dfpt_q0_pos.cpp
   ../dfpt_q0.cpp
   ../dfpt_q0_pos.cpp
   ../dfpt_pert.cpp
