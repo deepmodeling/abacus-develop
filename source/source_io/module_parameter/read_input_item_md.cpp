@@ -160,6 +160,7 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.type = "Boolean";
         item.description = R"(Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
 * True: ABACUS will read in {md_step}, then read in the corresponding structure file automatically (STRU{istep} from the STRUC/ output directory when out_app_flag=2; older releases wrote STRU_MD_{istep} into a STRU/ subdirectory, which is still recognized). For tddft, ABACUS will also read in WFC_NAO_K${kpoint} of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
+A structure frame is required for {istep}. Because out_freq_ion sets the structure-frame cadence independently of md_restartfreq, keep out_freq_ion unset (0) or equal to md_restartfreq when you intend to restart, and make sure out_stru is positive.
 * False: ABACUS will start molecular dynamics calculations normally from the first step.)";
         item.default_value = "False";
         item.unit = "";
