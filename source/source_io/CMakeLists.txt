@@ -157,6 +157,7 @@ add_executable(
     EXCLUDE_FROM_ALL
     input_yaml_main.cpp
     input_help.cpp
+    ../source_cell/stru_frame_io.cpp
     ../source_base/global_file.cpp
     ../source_base/global_function.cpp
     ../source_base/global_variable.cpp
