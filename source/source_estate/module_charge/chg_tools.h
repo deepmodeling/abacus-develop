@@ -8,11 +8,14 @@
 // from Charge members or globals.
 
 #include <complex>
+#include <vector>
 
 class UnitCell;
 namespace ModuleBase
 {
 class ComplexMatrix;
+template <class T>
+class Vector3;
 }
 namespace ModulePW
 {
@@ -31,6 +34,25 @@ void set_rho_core(const UnitCell& ucell,
                   double* rho_core,
                   std::complex<double>* rhog_core,
                   const ModulePW::PW_Basis& rhopw);
+
+// First-order core-density response (the q-shifted derivative of the
+// core charge, QE addcore convention): for the displacement of atom
+// iat along direction dir,
+//   drhoc_g(G) = -i tpiba (G+q)_dir * rho_atc~(|G+q|) * exp(-i(G+q).tau)
+// with rho_atc~ the numeric Simpson radial transform
+//   4pi/Omega Int r^2 rho_atc(r) j0(|G+q| r) dr.
+// Unlike set_rho_core this evaluates per G (|G+q| differs at every ig,
+// so the gg_uniq shell cache cannot be reused) and carries the
+// single-atom structure-factor phase. Empty output for a non-nlcc atom
+// or an out-of-range (iat, dir); the |G+q| = 0 harmonic is left zero.
+// Consumed by the DFPT first-order density (DFPT_Rho::compute_drhoc_g
+// delegates here).
+void set_drho_core(const UnitCell& ucell,
+                   int iat,
+                   int dir,
+                   const ModuleBase::Vector3<double>& q_cart,
+                   const ModulePW::PW_Basis& rhopw,
+                   std::vector<std::complex<double>>& drhoc_g);
 
 // Sum the (spin-resolved) charge density over the real-space grid and
 // convert it to a total charge using the cell volume and grid size.

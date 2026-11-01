@@ -362,4 +362,73 @@ void set_rho_core(const UnitCell& ucell,
     ModuleBase::timer::end("module_charge", "set_rho_core");
 }
 
+void set_drho_core(const UnitCell& ucell,
+                   int iat,
+                   int dir,
+                   const ModuleBase::Vector3<double>& q_cart,
+                   const ModulePW::PW_Basis& rhopw,
+                   std::vector<std::complex<double>>& drhoc_g)
+{
+    ModuleBase::TITLE("module_charge", "set_drho_core");
+    ModuleBase::timer::start("module_charge", "set_drho_core");
+    const int npw = rhopw.npw;
+    drhoc_g.clear();
+    if (npw == 0 || iat < 0 || iat >= ucell.nat || dir < 0 || dir > 2)
+    {
+        ModuleBase::timer::end("module_charge", "set_drho_core");
+        return;
+    }
+    const int it = ucell.iat2it[iat];
+    if (!ucell.atoms[it].ncpp.nlcc)
+    {
+        ModuleBase::timer::end("module_charge", "set_drho_core");
+        return;
+    }
+
+    // tau in cartesian bohr (lat0-scaled: tau is in direct units of latvec)
+    const ModuleBase::Vector3<double> tau_cart = ucell.atoms[it].tau[ucell.iat2ia[iat]] * ucell.lat0;
+    const pseudo& p = ucell.atoms[it].ncpp;
+    const int mesh = p.msh;
+
+    drhoc_g.assign(npw, std::complex<double>(0.0, 0.0));
+    std::vector<double> aux(mesh);
+
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        const ModuleBase::Vector3<double> w = rhopw.gcar[ig] + q_cart;
+        const double w2 = w * w;
+        // skip the |G+q| = 0 shell (dropped by compute_drho, zero density there)
+        if (w2 < 1.0e-12)
+        {
+            continue;
+        }
+        const double g = std::sqrt(w2) * ucell.tpiba; // physical 1/bohr
+        // radial FT: rho_core~(|G+q|) = 4pi/Omega * Int r^2 rho_atc(r) j0(gr) dr
+        ModuleBase::Sphbes::Spherical_Bessel(mesh, p.r.data(), g, 0, aux.data());
+        double rhocg = 0.0;
+        for (int ir = 0; ir < mesh; ++ir)
+        {
+            aux[ir] = p.r[ir] * p.r[ir] * p.rho_atc[ir] * aux[ir];
+        }
+        ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), p.rab.data(), rhocg);
+        rhocg *= ModuleBase::FOUR_PI / ucell.omega;
+
+        // structure factor phase: exp(-i (G+q) . tau_iat). The sign is
+        // load-bearing: exp(+i(G+q)tau) mirrors the core response to the
+        // -tau site (for wurtzite B the mirror lands exactly on the N
+        // sites of the other layer), which bn_cubic cannot expose (B at
+        // the origin makes both conventions identical) but which showed
+        // up element-by-element in the bn_hex matrix comparison against
+        // QE dyn.G. QE addcore: e^{-i G tau} * e^{-i q tau}.
+        const double phase = ModuleBase::TWO_PI * (w * tau_cart) / ucell.lat0;
+        const std::complex<double> gtau(std::cos(phase), -std::sin(phase));
+
+        // direction derivative: -i * tpiba * (G+q)_dir
+        const double wdir = ucell.tpiba * w[dir];
+
+        drhoc_g[ig] = std::complex<double>(0.0, -wdir) * rhocg * gtau;
+    }
+    ModuleBase::timer::end("module_charge", "set_drho_core");
+}
+
 } // namespace module_charge
