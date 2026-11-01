@@ -179,6 +179,14 @@ TEST(SnapModel, LoadsChemicalCoefficientBlocks)
     EXPECT_EQ(model.coefficients[0].size(), static_cast<std::size_t>(9));
     EXPECT_DOUBLE_EQ(model.coefficients[1][1], 2.0);
 
+    const std::vector<std::string> reversed_elements = {"C", "Si"};
+    ModuleMD::SNAP::ModelData reversed;
+    ASSERT_TRUE(reversed.load(coefficient_file, parameter_file, reversed_elements, error)) << error;
+    EXPECT_EQ(reversed.parameters.elements[0], "C");
+    EXPECT_EQ(reversed.parameters.elements[1], "Si");
+    EXPECT_DOUBLE_EQ(reversed.coefficients[0][1], 2.0);
+    EXPECT_DOUBLE_EQ(reversed.coefficients[1][1], 1.0);
+
     std::remove(coefficient_file.c_str());
     std::remove(parameter_file.c_str());
 }
