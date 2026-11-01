@@ -112,9 +112,12 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& n
     {
         throw std::invalid_argument("SNAP derivative direction must be 0, 1, or 2.");
     }
-    const Dual x(neighbor.x, direction == 0 ? 1.0 : 0.0);
-    const Dual y(neighbor.y, direction == 1 ? 1.0 : 0.0);
-    const Dual z(neighbor.z, direction == 2 ? 1.0 : 0.0);
+    const double dx = direction == 0 ? 1.0 : 0.0;
+    const double dy = direction == 1 ? 1.0 : 0.0;
+    const double dz = direction == 2 ? 1.0 : 0.0;
+    const Dual x(neighbor.x, dx);
+    const Dual y(neighbor.y, dy);
+    const Dual z(neighbor.z, dz);
     const Dual rsq = x * x + y * y + z * z;
     const Dual distance = dual_sqrt(rsq);
     const double cutoff_radius = neighbor.cutoff_radius > 0.0 ? neighbor.cutoff_radius : parameters_.rcut;

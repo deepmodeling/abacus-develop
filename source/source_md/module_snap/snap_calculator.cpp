@@ -84,13 +84,13 @@ ForceResult Calculator::compute_with_analytic_force(const std::vector<Neighbor>&
     result.center_force.assign(3, 0.0);
     result.neighbor_forces.assign(neighbors.size(), std::vector<double>(3, 0.0));
     const std::vector<double>& coefficients = model_.coefficients[central_element];
+    const std::vector<std::complex<double> > u = descriptor_evaluator_.accumulate_u(neighbors, central_element);
     for (std::size_t neighbor_index = 0; neighbor_index < neighbors.size(); ++neighbor_index)
     {
         for (int direction = 0; direction < 3; ++direction)
         {
             const UWithDerivative u_derivative =
                 descriptor_evaluator_.compute_u_with_derivative(neighbors[neighbor_index], direction);
-            std::vector<std::complex<double> > u = descriptor_evaluator_.accumulate_u(neighbors, central_element);
             std::vector<std::complex<double> > du(u.size(), std::complex<double>(0.0, 0.0));
             const std::size_t derivative_offset = model_.parameters.chem_flag
                                                        ? neighbors[neighbor_index].element_index
