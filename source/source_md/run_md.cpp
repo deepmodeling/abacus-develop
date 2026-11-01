@@ -1,6 +1,7 @@
 #include "run_md.h"
 
 #include "source_base/constants.h"
+#include "source_base/fs_compat.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_cell.h"
@@ -332,6 +333,8 @@ void md_line(MDCell& mdcell,
             }
             if (param_in.inp.out_stru > 0)
             {
+                // Mode-2 STRUC/ subdirectory is created lazily at write time.
+                ModuleBase::ensure_directory(stru_out_dir);
                 const int stru_step = current_step + 1;
                 // File-name selection and append/truncate are two independent
                 // decisions. The file name is fixed to "STRU" whenever mode 1

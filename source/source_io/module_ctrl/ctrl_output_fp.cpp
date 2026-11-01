@@ -1,5 +1,6 @@
 #include "ctrl_output_fp.h" // use ctrl_output_fp()
 
+#include "source_base/fs_compat.h"                   // use ModuleBase::ensure_directory
 #include "source_basis/module_pw/pw_basis_big.h"   // use PW_Basis_Big
 #include "source_estate/elecstate.h"               // use elecstate::ElecState
 #include "source_estate/module_charge/charge.h"    // use Charge
@@ -77,6 +78,8 @@ void ctrl_output_fp(UnitCell& ucell,
     // 4) write charge density
     if (inp.out_chg[0] > 0 && should_output)
     {
+        // Mode-2 CHG/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_chg_dir);
         for (int is = 0; is < nspin; ++is)
         {
             std::string fn = global_chg_dir + "chg";
@@ -141,6 +144,8 @@ void ctrl_output_fp(UnitCell& ucell,
     // 5) write potential
     if ((inp.out_pot[0] == 1 || inp.out_pot[0] == 3) && should_output)
     {
+        // Mode-2 POT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_pot_dir);
         for (int is = 0; is < nspin; is++)
         {
             std::string fn = global_pot_dir + "pot";
@@ -178,6 +183,8 @@ void ctrl_output_fp(UnitCell& ucell,
     }
     else if (inp.out_pot[0] == 2 && should_output)
     {
+        // Mode-2 POT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_pot_dir);
         std::string fn = global_pot_dir + "potes";
         fn += geom_block + ".cube";
 
@@ -214,6 +221,8 @@ void ctrl_output_fp(UnitCell& ucell,
         }
 
         std::string out_dir = global_elf_dir;
+        // Mode-2 ELF/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(out_dir);
         ModuleIO::write_elf(out_dir,
                             istep,
                             nspin,
@@ -248,6 +257,8 @@ void ctrl_output_fp(UnitCell& ucell,
     const bool output_dipole = inp.esolver_type == "tddft" || should_output;
     if (inp.out_dipole == 1 && output_dipole)
     {
+        // Mode-2 DIP/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_dip_dir);
         const int dipole_channels = nspin == 4 ? 1 : nspin;
         // In a spinor density only channel zero is charge; the other three channels are magnetization.
         for (int is = 0; is < dipole_channels; ++is)

@@ -1,6 +1,7 @@
 #include "output_mat_sparse.h"
 
 #include "pos_op_mat.h"
+#include "source_base/fs_compat.h"
 #include "source_io/module_hs/hsr_legacy.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -29,6 +30,13 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                        const bool cal_force,
                        std::ofstream& ofs_running)
 {
+    // Mode-2 MAT/ subdirectory is created lazily at write time, only when at
+    // least one matrix output is actually requested.
+    if (options.out_mat_t || options.out_mat_dh || options.out_mat_ds || options.out_mat_r)
+    {
+        ModuleBase::ensure_directory(global_matrix_dir);
+    }
+
     LCAO_HS_Arrays HS_Arrays; // store sparse arrays
 
     MatROutputOptions mat_R_options;

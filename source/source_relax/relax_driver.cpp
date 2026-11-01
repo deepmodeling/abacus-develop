@@ -4,6 +4,7 @@
 #include "relax_stru_io.h"
 #include "socket_driver.h"
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h"
 #include "source_base/global_file.h"
 #include "source_base/module_out/read_exit_file.h"
 #include "source_io/module_json/output_info.h"
@@ -254,6 +255,8 @@ void Relax_Driver::stru_out(const int istep,
     // is written in final_out() to avoid a duplicate file.
     if (is_relax)
     {
+        // Mode-2 STRUC/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(out_dir_);
         const std::string now_file = out_dir_ + (inp.out_stru == 1 ? "STRU_NOW" : "STRU_NOW.cif");
         relax_stru_io::write_stru(ucell,
                                   inp,
@@ -331,6 +334,8 @@ void Relax_Driver::final_out(const int istep,
     // 1: write STRU_FINAL; 2: write STRU_FINAL.cif
     if (stru_effective && (inp.out_stru == 1 || inp.out_stru == 2))
     {
+        // Mode-2 STRUC/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(out_dir_);
         const std::string header = relax_stru_io::build_stru_header(istep, etot, stress, inp, true, geometry_evaluated);
         const bool need_orb = relax_stru_io::need_orbital(inp);
         const std::string final_file = out_dir_ + (inp.out_stru == 1 ? "STRU_FINAL" : "STRU_FINAL.cif");

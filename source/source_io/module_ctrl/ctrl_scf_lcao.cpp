@@ -2,6 +2,7 @@
 #include "source_hamilt/module_xc/exx_info.h"
 
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h" // use ModuleBase::ensure_directory
 #include "source_base/module_out/filename.h"
 #include "source_base/tool_quit.h" // use ModuleBase::WARNING_QUIT
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
@@ -151,6 +152,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_dos)
     {
+        const std::string global_dos_dir = PARAM.globalv.global_dos_dir;
+        // Mode-2 DOS/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_dos_dir);
         ModuleIO::write_dos_lcao(psi,
                                  p_hamilt,
                                  pv,
@@ -173,7 +177,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                  inp.dos_emin_ev,
                                  PARAM.globalv.two_fermi,
                                  inp.bndpar,
-                                 PARAM.globalv.global_dos_dir,
+                                 global_dos_dir,
                                  ofs_running);
     }
 
@@ -182,6 +186,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_dmr[0])
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         const int precision = inp.out_dmr[1];
         // File-name selection and append/truncate are independent decisions:
         // mode 0 keeps the fixed filename and overwrites it at every write,
@@ -196,6 +202,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_dmk[0])
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         std::vector<double> efermis(nspin == 2 ? 2 : 1);
         for (int ispin = 0; ispin < efermis.size(); ispin++)
         {
@@ -212,6 +220,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     const int hsk_out_type = inp.out_hsk[0];
     if (hsk_out_type == 1 || hsk_out_type == 2)
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         const int precision = inp.out_hsk[1];
         ModuleIO::write_hsk(global_mat_dir,
                             nspin,
@@ -282,6 +292,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_hsr[0] == 1 || inp.out_hsr[0] == 2)
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         const int precision = inp.out_hsr[1];
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
@@ -298,12 +310,16 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     const bool output_hsr_npz = inp.out_hsr[0] == 3 || inp.out_hsr_npz_compat;
     if (output_hsr_npz)
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         std::string zipname = global_mat_dir + "sr_nao.npz";
         ModuleIO::output_mat_npz(ucell, zipname, *(p_hamilt->getSR()));
     }
 
     if (inp.out_hr_npz || output_hsr_npz)
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         for (int ispin = 0; ispin < hr_vec.size(); ++ispin)
         {
@@ -315,6 +331,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
     if (inp.out_dm_npz)
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         const std::vector<hamilt::HContainer<double>*>& dmr_vec = dm->get_dmr_vec();
         for (int ispin = 0; ispin < dmr_vec.size(); ++ispin)
         {
@@ -482,27 +500,37 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         // duplicated the T(k) output of the out_mat_tk block below.
         if (inp.out_mat_vnlk[0])
         {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
             h_params.precision = inp.out_mat_vnlk[1];
             ModuleIO::write_h_vnl(h_params);
         }
         if (inp.out_mat_vlk[0])
         {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
             h_params.precision = inp.out_mat_vlk[1];
             ModuleIO::write_h_vl(h_params);
         }
         if (inp.out_mat_vhk[0])
         {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
             h_params.precision = inp.out_mat_vhk[1];
             ModuleIO::write_h_vh(h_params);
         }
         if (inp.out_mat_vxck[0])
         {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
             h_params.precision = inp.out_mat_vxck[1];
             ModuleIO::write_h_vxc(h_params);
         }
 #ifdef __EXX
         if (inp.out_mat_exxk[0] && exx_info.info_global.cal_exx)
         {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
             // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
             h_params.precision = inp.out_mat_exxk[1];
             setup_exx_h_params(h_params, exx_nao, exx_info);
@@ -514,6 +542,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_mat_tk[0])
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         hamilt::HS_Matrix_K<TK> hsk(&pv, true);
         hamilt::HContainer<TR> hR(&pv);
         hamilt::Operator<TK>* ekinetic
@@ -570,6 +600,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_mat_l[0])
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         ModuleIO::Angmom_op mylcalculator(inp.orbital_dir,
                                                           ucell,
                                                           orb.get_rcutmax_Phi(),

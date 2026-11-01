@@ -1,6 +1,7 @@
 #include "write_wfc_nao.h"
 
 #include "source_io/module_parameter/parameter.h"
+#include "source_base/fs_compat.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -347,6 +348,9 @@ void write_wfc_nao(const int out_type,
             {
                 wfc_dir = PARAM.globalv.global_wfc_dir;
             }
+            // The mode-2 PSI/ subdirectory is created lazily at write time;
+            // otherwise this is a no-op on the existing output directory.
+            ModuleBase::ensure_directory(wfc_dir);
             std::string fn = filename_output(wfc_dir,"wf","nao",ik,ik2iktot,nspin,nkstot,
               out_type,out_app_flag,gamma_only,istep);
 

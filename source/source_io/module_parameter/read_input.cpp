@@ -17,7 +17,6 @@
 #include <limits>
 #include <stdexcept>
 #include "source_base/formatter.h"
-#include "source_base/fs_compat.h"
 #include "source_base/global_file.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
@@ -26,7 +25,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <cerrno>
 
 namespace ModuleIO
 {
@@ -325,49 +323,12 @@ void ReadInput::create_directory(const Parameter& param)
                                           param.input.of_ml_gene_data,
                                           param.input.deepks_out_freq_elec > 0); // xiaohui add 2013-09-01
 
-    // Create unified subdirectories when out_app_flag == 2, only for outputs the user actually requested
-    if (param.input.out_app_flag == 2)
-    {
-        const std::vector<std::pair<bool, std::string>> subdir_flags = {
-            {param.input.out_stru > 0, param.globalv.global_stru_dir},
-            {param.input.out_wfc_lcao > 0 || param.input.out_wfc_pw > 0
-                 || !param.input.out_wfc_norm.empty() || !param.input.out_wfc_re_im.empty(),
-             param.globalv.global_psi_dir},
-            {param.input.out_chg[0] > 0 || !param.input.out_pchg.empty(), param.globalv.global_chg_dir},
-            {param.input.out_pot[0] > 0, param.globalv.global_pot_dir},
-            {param.input.out_elf[0] > 0, param.globalv.global_elf_dir},
-            {param.input.out_dos > 0
-                 || (!param.input.out_ldos.empty() && param.input.out_ldos[0] > 0),
-             param.globalv.global_dos_dir},
-            {param.input.out_dipole, param.globalv.global_dip_dir},
-            {param.input.out_dmk[0] > 0 || param.input.out_dmr[0] > 0 || param.input.out_hsk[0] > 0
-                 || param.input.out_mat_hs2[0] > 0 || param.input.out_mat_r[0] > 0 || param.input.out_mat_t[0] > 0
-                 || param.input.out_mat_tk[0] > 0 || param.input.out_mat_l[0] > 0
-                 || param.input.out_mat_dh[0] > 0 || param.input.out_mat_ds[0] > 0
-                 || param.input.out_mat_xc || param.input.out_mat_xc2[0] > 0 || param.input.out_hr_npz
-                 || param.input.out_hsr_npz || param.input.out_dm_npz
-                 || param.input.out_mat_vnlk[0] > 0 || param.input.out_mat_vlk[0] > 0
-                 || param.input.out_mat_vhk[0] > 0 || param.input.out_mat_vxck[0] > 0 || param.input.out_mat_exxk[0] > 0
-                 || param.input.out_mat_dh_t[0] > 0 || param.input.out_mat_dh_vl[0] > 0 || param.input.out_mat_dh_vnl[0] > 0
-                 || param.input.out_mat_dh_vh[0] > 0 || param.input.out_mat_dh_vxc[0] > 0
-                 || param.input.out_hsr[0] == 1 || param.input.out_hsr[0] == 2
-                 || param.input.out_hsr[0] == 3,
-             param.globalv.global_mat_dir}
-        };
-        for (const auto& flag_dir : subdir_flags)
-        {
-            const bool need_create = flag_dir.first;
-            const std::string& dir = flag_dir.second;
-            if (need_create && !dir.empty() && dir != param.globalv.global_out_dir)
-            {
-                int ret = ModuleBase::make_directory(dir);
-                if (ret != 0 && errno != EEXIST)
-                {
-                    std::cout << " CAN NOT MAKE THE DIR: " << dir << std::endl;
-                }
-            }
-        }
-    }
+    // The unified subdirectories used when out_app_flag == 2 (STRUC/, PSI/,
+    // CHG/, POT/, ELF/, DOS/, DIP/, MAT/) are NOT created here. Each output
+    // writer creates its target directory lazily at write time via
+    // ModuleBase::ensure_directory, so this routine no longer needs to
+    // predict which outputs the user requested (a predicate that had to be
+    // fixed by hand for every new writer).
 
     //const std::string ss = "test -d " + PARAM.inp.read_file_dir;
     struct stat st;

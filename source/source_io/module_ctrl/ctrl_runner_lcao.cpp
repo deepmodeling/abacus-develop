@@ -1,5 +1,6 @@
 #include "ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 
+#include "source_base/fs_compat.h" // use ModuleBase::ensure_directory
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
 #include "source_hamilt/module_xc/exx_info.h"
@@ -53,9 +54,12 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 	// 2) out ldos
 	if (inp.out_ldos[0])
     {
+        const std::string global_dos_dir = PARAM.globalv.global_dos_dir;
+        // Mode-2 DOS/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_dos_dir);
         ModuleIO::Cal_ldos<TK>::cal_ldos_lcao(pelec->eferm, chr, dmat, kv,
           pelec->ekb, pelec->wg, psi[0], pgrid, pv, gd, ucell,
-          inp.stm_bias, inp.nspin, PARAM.globalv.global_dos_dir,
+          inp.stm_bias, inp.nspin, global_dos_dir,
           PARAM.globalv.two_fermi, inp.out_ldos[1], ofs_running);
     }
 
@@ -65,6 +69,13 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
     const bool out_vxc_orb = inp.out_mat_xc || inp.out_eband;
     if (out_vxc_orb)
     {
+        const std::string global_mat_dir = PARAM.globalv.global_mat_dir;
+        // Only out_mat_xc writes matrices into MAT/ (out_eband files land in
+        // the output root); the mode-2 subdirectory is created lazily here.
+        if (inp.out_mat_xc)
+        {
+            ModuleBase::ensure_directory(global_mat_dir);
+        }
         bool cal_exx = exx_info.info_global.cal_exx;
         const double etot_xc = pelec->f_en.etot;
 #ifdef __EXX
@@ -92,7 +103,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     inp.dft_plus_u,
                                     PARAM.globalv.gamma_only_local,
                                     inp.out_mat_xc,
-                                    PARAM.globalv.global_mat_dir,
+                                    global_mat_dir,
                                     PARAM.globalv.global_out_dir,
                                     inp.out_ndigits,
                                     inp.ks_solver,
@@ -108,6 +119,9 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 
     if (inp.out_mat_xc2[0])
     {
+        const std::string global_mat_dir = PARAM.globalv.global_mat_dir;
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         bool cal_exx = exx_info.info_global.cal_exx;
         double hybrid_alpha = exx_info.info_global.hybrid_alpha;
         bool real_number = exx_info.info_ri.real_number;
@@ -128,7 +142,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       kv,
                                       orb.cutoffs(),
                                       gd,
-                                      PARAM.globalv.global_mat_dir,
+                                      global_mat_dir,
                                       cal_exx,
                                       hybrid_alpha,
                                       real_number

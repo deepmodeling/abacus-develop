@@ -1,5 +1,6 @@
 #include "write_dh.h"
 
+#include "source_base/fs_compat.h"
 #include "source_base/global_function.h"
 #include "source_base/timer.h"
 #include "source_io/module_hs/hs_dense_io.h"
@@ -48,6 +49,9 @@ void write_dh_perI(WriteDHParams& params,
     // OUT.root/MAT/ in mode 2 by ReadInput::set_global_dir, so no caller-side
     // calculation or out_app_flag branching is needed here.
     const std::string mat_dir = PARAM.globalv.global_mat_dir;
+    // The mode-2 MAT/ subdirectory is created lazily here at write time; in
+    // modes 0/1 this is a no-op because mat_dir is the existing output dir.
+    ModuleBase::ensure_directory(mat_dir);
     const int out_app_flag = PARAM.inp.out_app_flag;
     // Mode 1 appends one frame per ionic step; the first step (istep == 0)
     // truncates the fixed file so a rerun does not keep stale records. Only
