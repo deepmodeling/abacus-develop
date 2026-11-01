@@ -10,6 +10,8 @@
 
 #include <array>
 #include <cmath>
+#include <cstdlib>
+#include <iostream>
 #include <stdexcept>
 
 namespace ModuleESolver
@@ -20,6 +22,18 @@ namespace
 void fail(const std::string& message)
 {
     ModuleBase::WARNING_QUIT("ESolver_SNAP", message);
+}
+
+std::string full_path(const std::string& path)
+{
+    char* resolved = ::realpath(path.c_str(), nullptr);
+    if (resolved == nullptr)
+    {
+        fail("Cannot resolve SNAP file path: " + path);
+    }
+    const std::string result(resolved);
+    std::free(resolved);
+    return result;
 }
 
 ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
@@ -61,6 +75,15 @@ void ESolver_SNAP::initialize(const std::vector<std::string>& labels)
     if (!model_.load(coefficient_file_, parameter_file_, labels, error))
     {
         fail(error);
+    }
+    const std::string coefficient_path = full_path(coefficient_file_);
+    const std::string parameter_path = full_path(parameter_file_);
+    running_log_ << " Read SNAP coefficient file: " << coefficient_path << std::endl;
+    running_log_ << " Read SNAP parameter file: " << parameter_path << std::endl;
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::cout << " Read SNAP coefficient file: " << coefficient_path << std::endl;
+        std::cout << " Read SNAP parameter file: " << parameter_path << std::endl;
     }
     calculator_.reset(new ModuleMD::SNAP::Calculator(model_));
     snap_virial_.create(3, 3);
