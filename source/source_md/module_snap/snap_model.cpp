@@ -35,6 +35,64 @@ bool read_parameter_value(std::istringstream& words, T& value, const std::string
     }
     return true;
 }
+
+bool validate_inner(const ModuleMD::SNAP::ModelParameters& parameters, std::string& error)
+{
+    if (!parameters.switchinner_flag)
+    {
+        return true;
+    }
+    const std::size_t count = parameters.elements.size();
+    if (parameters.sinner.size() != count || parameters.dinner.size() != count)
+    {
+        error = "SNAP switchinnerflag requires sinner and dinner values for every element.";
+        return false;
+    }
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        if (!std::isfinite(parameters.sinner[i]) || !std::isfinite(parameters.dinner[i])
+            || parameters.dinner[i] <= 0.0)
+        {
+            error = "SNAP sinner must be finite and dinner must be finite and positive.";
+            return false;
+        }
+    }
+    return true;
+}
+
+bool validate_cutoff(const ModuleMD::SNAP::ModelParameters& parameters, std::string& error)
+{
+    if (!std::isfinite(parameters.rcut) || parameters.rcut <= 0.0)
+    {
+        error = "SNAP cutoff must be finite and positive.";
+        return false;
+    }
+    if (!std::isfinite(parameters.rcutfac) || parameters.rcutfac <= 0.0)
+    {
+        error = "SNAP rcutfac must be finite and positive.";
+        return false;
+    }
+    return true;
+}
+
+bool validate_pair_cutoffs(const ModuleMD::SNAP::ModelParameters& parameters, std::string& error)
+{
+    for (std::size_t i = 0; i < parameters.element_radii.size(); ++i)
+    {
+        for (std::size_t j = i; j < parameters.element_radii.size(); ++j)
+        {
+            const double pair_cutoff = (parameters.element_radii[i] + parameters.element_radii[j])
+                                       * parameters.rcutfac;
+            if (!std::isfinite(pair_cutoff) || parameters.rmin >= pair_cutoff)
+            {
+                error = "SNAP rmin0 must be smaller than the cutoff for element pair "
+                        + parameters.elements[i] + "-" + parameters.elements[j] + ".";
+                return false;
+            }
+        }
+    }
+    return true;
+}
 }
 
 namespace ModuleMD
@@ -44,14 +102,8 @@ namespace SNAP
 
 bool ModelParameters::valid(std::string& error) const
 {
-    if (!std::isfinite(rcut) || rcut <= 0.0)
+    if (!validate_cutoff(*this, error))
     {
-        error = "SNAP cutoff must be finite and positive.";
-        return false;
-    }
-    if (!std::isfinite(rcutfac) || rcutfac <= 0.0)
-    {
-        error = "SNAP rcutfac must be finite and positive.";
         return false;
     }
     if (!std::isfinite(rmin) || rmin < 0.0 || rmin >= rcut)
@@ -84,9 +136,8 @@ bool ModelParameters::valid(std::string& error) const
         error = "SNAP element names and radii must have the same size.";
         return false;
     }
-    if (switchinner_flag && (sinner.size() != elements.size() || dinner.size() != elements.size()))
+    if (!validate_inner(*this, error))
     {
-        error = "SNAP switchinnerflag requires sinner and dinner values for every element.";
         return false;
     }
     for (std::size_t i = 0; i < element_weights.size(); ++i)
@@ -96,24 +147,10 @@ bool ModelParameters::valid(std::string& error) const
             error = "SNAP element weights must be finite.";
             return false;
         }
-        if (switchinner_flag && (!std::isfinite(sinner[i]) || !std::isfinite(dinner[i]) || dinner[i] <= 0.0))
-        {
-            error = "SNAP sinner must be finite and dinner must be finite and positive.";
-            return false;
-        }
     }
-    for (std::size_t i = 0; i < element_radii.size(); ++i)
+    if (!validate_pair_cutoffs(*this, error))
     {
-        for (std::size_t j = i; j < element_radii.size(); ++j)
-        {
-            const double pair_cutoff = (element_radii[i] + element_radii[j]) * rcutfac;
-            if (!std::isfinite(pair_cutoff) || rmin >= pair_cutoff)
-            {
-                error = "SNAP rmin0 must be smaller than the cutoff for element pair "
-                        + elements[i] + "-" + elements[j] + ".";
-                return false;
-            }
-        }
+        return false;
     }
     return true;
 }
