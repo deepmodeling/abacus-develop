@@ -1,8 +1,8 @@
-#include "source_base/matrix_block.h"
-#include "source_hsolver/diago_scalapack.h"
-#include "source_hsolver/diago_lapack.h"
-#include "source_hsolver/unittests/diago_elpa_utils.h"
 #include "mpi.h"
+#include "source_base/matrix_block.h"
+#include "source_hsolver/diago_lapack.h"
+#include "source_hsolver/diago_scalapack.h"
+#include "source_hsolver/unittests/diago_elpa_utils.h"
 #include "string.h"
 
 #include "gtest/gtest.h"
@@ -34,8 +34,7 @@
 
 /// Minimal H(k)/S(k) supplier. The LCAO eigensolvers take the matrix blocks
 /// directly, so this test no longer needs a hamilt::Hamilt subclass.
-template <typename T>
-class HamiltTEST
+template <typename T> class HamiltTEST
 {
   public:
     int desc[9];
@@ -43,24 +42,26 @@ class HamiltTEST
     std::vector<T> h_local;
     std::vector<T> s_local;
 
-    void matrix(ModuleBase::MatrixBlock<T>& hk_in, ModuleBase::MatrixBlock<T>& sk_in)
+    void matrix(ModuleBase::MatrixBlock<T> &hk_in, ModuleBase::MatrixBlock<T> &sk_in)
     {
-        hk_in = ModuleBase::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-        sk_in = ModuleBase::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
+        hk_in = ModuleBase::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol,
+            this->desc};
+        sk_in = ModuleBase::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol,
+            this->desc};
     }
 };
 
-template <class T>
-class DiagoPrepare
+template <class T> class DiagoPrepare
 {
   public:
-    DiagoPrepare(int nlocal,
-                 int nbands,
-                 int nb2d,
-                 int sparsity,
-                 std::string ks_solver,
-                 std::string hfname,
-                 std::string sfname)
+    DiagoPrepare(
+        int nlocal,
+        int nbands,
+        int nb2d,
+        int sparsity,
+        std::string ks_solver,
+        std::string hfname,
+        std::string sfname)
         : nlocal(nlocal), nbands(nbands), nb2d(nb2d), sparsity(sparsity), ks_solver(ks_solver), hfname(hfname),
           sfname(sfname)
     {
@@ -69,7 +70,7 @@ class DiagoPrepare
 
         if (ks_solver == "scalapack_gvx")
             ;
-//             dh = new hsolver::DiagoScalapack<T>;
+        //             dh = new hsolver::DiagoScalapack<T>;
         else if (ks_solver == "lapack")
             ;
 #ifdef __ELPA
@@ -80,7 +81,9 @@ class DiagoPrepare
         else
         {
             if (myrank == 0)
+            {
                 std::cout << "ERROR: undefined ks_solver: " << ks_solver << std::endl;
+            }
             exit(1);
         }
     }
@@ -118,12 +121,29 @@ class DiagoPrepare
             }
             nlocal = hdim;
         }
-        MPI_Bcast(&nlocal, 1, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&readhfile, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&readsfile, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+        MPI_Bcast(
+            &nlocal,
+            1,
+            MPI_INT,
+            0,
+            MPI_COMM_WORLD);
+        MPI_Bcast(
+            &readhfile,
+            1,
+            MPI_C_BOOL,
+            0,
+            MPI_COMM_WORLD);
+        MPI_Bcast(
+            &readsfile,
+            1,
+            MPI_C_BOOL,
+            0,
+            MPI_COMM_WORLD);
         nbands = nlocal / 2;
         if (readhfile && readsfile)
+        {
             return true;
+        }
         return false;
     }
 
@@ -146,7 +166,12 @@ class DiagoPrepare
         int npcols;
         int myprow;
         int mypcol;
-        BlacsConnector::gridinfo(icontxt, nprows, npcols, myprow, mypcol);
+        BlacsConnector::gridinfo(
+            icontxt,
+            nprows,
+            npcols,
+            myprow,
+            mypcol);
         for (int col = 0; col < hmtest.ncol; ++col)
         {
             const int global_col = (col / nb2d * npcols + mypcol) * nb2d + col % nb2d;
@@ -167,12 +192,20 @@ class DiagoPrepare
         ModuleBase::MatrixBlock<T> s_mat;
         hmtest.matrix(h_mat, s_mat);
         hsolver::DiagoElpaNative<T> solver(nlocal, nbands, false);
-        solver.diag(h_mat, s_mat, psi, e_solver.data());
+        solver.diag(
+            h_mat,
+            s_mat,
+            psi,
+            e_solver.data());
         EXPECT_EQ(hmtest.h_local, h_local);
         EXPECT_EQ(hmtest.s_local, s_local);
         // A second solve must not reuse an in-place decomposition of the
         // private overlap copy or alter the caller's matrix storage.
-        solver.diag(h_mat, s_mat, psi, e_solver.data());
+        solver.diag(
+            h_mat,
+            s_mat,
+            psi,
+            e_solver.data());
         EXPECT_EQ(hmtest.h_local, h_local);
         EXPECT_EQ(hmtest.s_local, s_local);
     }
@@ -181,14 +214,26 @@ class DiagoPrepare
     void print_hs()
     {
         if (!PRINT_HS)
+        {
             return;
+        }
         if (myrank == 0)
         {
             std::ofstream fp("hmatrix.dat");
-            LCAO_DIAGO_TEST::print_matrix(fp, this->h.data(), nlocal, nlocal, true);
+            LCAO_DIAGO_TEST::print_matrix(
+                fp,
+                this->h.data(),
+                nlocal,
+                nlocal,
+                true);
             fp.close();
             fp.open("smatrix.dat");
-            LCAO_DIAGO_TEST::print_matrix(fp, this->s.data(), nlocal, nlocal, true);
+            LCAO_DIAGO_TEST::print_matrix(
+                fp,
+                this->s.data(),
+                nlocal,
+                nlocal,
+                true);
             fp.close();
         }
     }
@@ -196,18 +241,35 @@ class DiagoPrepare
     void pb2d()
     {
         int nprows, npcols, myprow, mypcol;
-        LCAO_DIAGO_TEST::process_2d(nprows, npcols, myprow, mypcol, icontxt);
+        LCAO_DIAGO_TEST::process_2d(
+            nprows,
+            npcols,
+            myprow,
+            mypcol,
+            icontxt);
 
-        hmtest.nrow = LCAO_DIAGO_TEST::na_rc(nlocal,
-                                             nb2d,
-                                             nprows,
-                                             myprow); // the number of row of the new_matrix in each process
-        hmtest.ncol = LCAO_DIAGO_TEST::na_rc(nlocal,
-                                             nb2d,
-                                             npcols,
-                                             mypcol); // the number of column of the new_matrix in each process
+        hmtest.nrow = LCAO_DIAGO_TEST::na_rc(
+            nlocal,
+            nb2d,
+            nprows,
+            myprow); // the number of row of the new_matrix in each process
+        hmtest.ncol = LCAO_DIAGO_TEST::na_rc(
+            nlocal,
+            nb2d,
+            npcols,
+            mypcol); // the number of column of the new_matrix in each process
         int ISRC = 0, info;
-        ScalapackConnector::descinit(hmtest.desc, nlocal, nlocal, nb2d, nb2d, ISRC, ISRC, icontxt, hmtest.nrow, info);
+        ScalapackConnector::descinit(
+            hmtest.desc,
+            nlocal,
+            nlocal,
+            nb2d,
+            nb2d,
+            ISRC,
+            ISRC,
+            icontxt,
+            hmtest.nrow,
+            info);
         if (info != 0)
         {
             printf("Invalid blacs-distribution. Abort!\n");
@@ -222,26 +284,26 @@ class DiagoPrepare
         this->h_local.resize(local_size);
         this->s_local.resize(local_size);
 
-        LCAO_DIAGO_TEST::distribute_data<T>(this->h.data(),
-                                            this->h_local.data(),
-                                            nlocal,
-                                            nb2d,
-                                            hmtest.nrow,
-                                            hmtest.ncol,
-                                            icontxt);
-        LCAO_DIAGO_TEST::distribute_data<T>(this->s.data(),
-                                            this->s_local.data(),
-                                            nlocal,
-                                            nb2d,
-                                            hmtest.nrow,
-                                            hmtest.ncol,
-                                            icontxt);
+        LCAO_DIAGO_TEST::distribute_data<T>(
+            this->h.data(),
+            this->h_local.data(),
+            nlocal,
+            nb2d,
+            hmtest.nrow,
+            hmtest.ncol,
+            icontxt);
+        LCAO_DIAGO_TEST::distribute_data<T>(
+            this->s.data(),
+            this->s_local.data(),
+            nlocal,
+            nb2d,
+            hmtest.nrow,
+            hmtest.ncol,
+            icontxt);
         psi.resize(1, hmtest.ncol, hmtest.nrow);
     }
 
-    void set_env()
-    {
-    }
+    void set_env() {}
 
     void diago()
     {
@@ -262,20 +324,32 @@ class DiagoPrepare
             if (ks_solver == "scalapack_gvx")
             {
                 hsolver::DiagoScalapack<T> dh(nlocal, nbands);
-                dh.diag(h_mat, s_mat, psi, e_solver.data());
+                dh.diag(
+                    h_mat,
+                    s_mat,
+                    psi,
+                    e_solver.data());
             }
             else if (ks_solver == "lapack")
             {
                 hsolver::DiagoLapack<T> la(nlocal, nbands);
-                la.diag(h_mat, s_mat, psi, e_solver.data());
+                la.diag(
+                    h_mat,
+                    s_mat,
+                    psi,
+                    e_solver.data());
             }
-    #ifdef __ELPA
+#ifdef __ELPA
             else if (ks_solver == "genelpa")
             {
                 hsolver::DiagoElpa<T> dh(nlocal, nbands);
-                dh.diag(h_mat, s_mat, psi, e_solver.data());
+                dh.diag(
+                    h_mat,
+                    s_mat,
+                    psi,
+                    e_solver.data());
             }
-    #endif
+#endif
             // dh.diag(&hmtest, psi, e_solver.data());
         }
         endtime = MPI_Wtime();
@@ -288,12 +362,18 @@ class DiagoPrepare
         double starttime = 0.0, endtime = 0.0;
         starttime = MPI_Wtime();
         for (int i = 0; i < REPEATRUN; i++)
-            LCAO_DIAGO_TEST::lapack_diago(this->h.data(), this->s.data(), this->e_lapack.data(), nlocal);
+        {
+            LCAO_DIAGO_TEST::lapack_diago(
+                this->h.data(),
+                this->s.data(),
+                this->e_lapack.data(),
+                nlocal);
+        }
         endtime = MPI_Wtime();
         lapack_time = (endtime - starttime) / REPEATRUN;
     }
 
-    bool compare_eigen(std::stringstream& out_info)
+    bool compare_eigen(std::stringstream &out_info)
     {
         double maxerror = 0.0;
         int iindex = 0;
@@ -308,7 +388,9 @@ class DiagoPrepare
                 iindex = i;
             }
             if (error > PASSTHRESHOLD)
+            {
                 pass = false;
+            }
         }
 
         std::cout << "H/S matrix are read from " << hfname << ", " << sfname << std::endl;
@@ -419,8 +501,14 @@ class DiagoElpaNativeUpperTest : public ::testing::TestWithParam<int>
 
 TEST_P(DiagoElpaNativeUpperTest, PreservesInputsAndIgnoresLowerTriangle)
 {
-    DiagoPrepare<std::complex<double>> dp(0, 0, GetParam(), 0, "genelpa",
-                                          "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
+    DiagoPrepare<std::complex<double>> dp(
+        0,
+        0,
+        GetParam(),
+        0,
+        "genelpa",
+        "H-KPoints-Si2.dat",
+        "S-KPoints-Si2.dat");
     ASSERT_TRUE(dp.produce_HS());
     dp.diago_native_with_poisoned_lower();
     if (dp.myrank == 0)
@@ -436,7 +524,14 @@ INSTANTIATE_TEST_SUITE_P(BlockSizes, DiagoElpaNativeUpperTest, ::testing::Values
 TEST(DiagoElpaComplexTest, UsesAuthoritativeUpperTriangle)
 {
     std::stringstream out_info;
-    DiagoPrepare<std::complex<double>> dp(0, 0, 1, 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
+    DiagoPrepare<std::complex<double>> dp(
+        0,
+        0,
+        1,
+        0,
+        "genelpa",
+        "H-KPoints-Si2.dat",
+        "S-KPoints-Si2.dat");
     ASSERT_TRUE(dp.produce_HS());
 
     if (dp.myrank == 0)
@@ -461,7 +556,14 @@ TEST(DiagoElpaComplexTest, UsesAuthoritativeUpperTriangle)
 TEST(DiagoElpaComplexTest, FallbackUsesAuthoritativeUpperTriangle)
 {
     std::stringstream out_info;
-    DiagoPrepare<std::complex<double>> dp(0, 0, 1, 0, "genelpa", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat");
+    DiagoPrepare<std::complex<double>> dp(
+        0,
+        0,
+        1,
+        0,
+        "genelpa",
+        "H-KPoints-Si2.dat",
+        "S-KPoints-Si2.dat");
     ASSERT_TRUE(dp.produce_HS());
 
     // Supply a precomputed, non-diagonal S^{-1/2} to exercise
@@ -498,17 +600,19 @@ TEST(DiagoElpaComplexTest, FallbackUsesAuthoritativeUpperTriangle)
     dp.pb2d();
     dp.distribute_data();
     int decomposed_state = 3;
-    ELPA_Solver solver(false,
-                       MPI_COMM_WORLD,
-                       dp.nbands,
-                       dp.hmtest.nrow,
-                       dp.hmtest.ncol,
-                       dp.hmtest.desc);
-    solver.generalized_eigenvector(dp.h_local.data(),
-                                   dp.s_local.data(),
-                                   decomposed_state,
-                                   dp.e_solver.data(),
-                                   dp.psi.get_pointer());
+    ELPA_Solver solver(
+        false,
+        MPI_COMM_WORLD,
+        dp.nbands,
+        dp.hmtest.nrow,
+        dp.hmtest.ncol,
+        dp.hmtest.desc);
+    solver.generalized_eigenvector(
+        dp.h_local.data(),
+        dp.s_local.data(),
+        decomposed_state,
+        dp.e_solver.data(),
+        dp.psi.get_pointer());
     solver.exit();
 
     EXPECT_EQ(decomposed_state, 3);
@@ -519,7 +623,7 @@ TEST(DiagoElpaComplexTest, FallbackUsesAuthoritativeUpperTriangle)
 }
 #endif
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
     int mypnum, dsize;
@@ -527,7 +631,7 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
 
     testing::InitGoogleTest(&argc, argv);
-    ::testing::TestEventListeners& listeners = ::testing::UnitTest::GetInstance()->listeners();
+    ::testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (mypnum != 0)
     {
         delete listeners.Release(listeners.default_result_printer());

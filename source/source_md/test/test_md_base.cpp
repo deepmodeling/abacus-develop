@@ -54,6 +54,8 @@ TEST(MdPositionTest, TinyNegativeDisplacementRemainsInsideHalfOpenCell)
         EXPECT_LT(moving.frac[axis], 1.0);
         EXPECT_DOUBLE_EQ(moving.frac[axis], 0.0);
         EXPECT_DOUBLE_EQ(moving.cart[axis], 0.0);
+        EXPECT_EQ(moving.boundary_shift[axis], 0);
+        EXPECT_DOUBLE_EQ(moving.displacement[axis], moving.vel[axis]);
     }
 }
 
@@ -65,7 +67,7 @@ TEST(MdPositionTest, FiniteBoundaryCrossingsAndFrozenComponentsKeepTheirPosition
     parameters.md_tfirst = 0.0;
     parameters.md_tlast = 0.0;
     MD_base integrator(parameters, false, true, 0, cell);
-    cell.owned_atoms()[0].vel.set(-0.5, 1.75, -1.25);
+    cell.owned_atoms()[0].vel.set(-0.5, 0.75, -1.25);
     cell.owned_atoms()[1].mbl.set(0, 0, 0);
     cell.owned_atoms()[1].vel.set(-0.5, 1.75, -1.25);
     std::ofstream log;
@@ -74,9 +76,51 @@ TEST(MdPositionTest, FiniteBoundaryCrossingsAndFrozenComponentsKeepTheirPosition
     EXPECT_DOUBLE_EQ(moving.frac.x, 0.75);
     EXPECT_DOUBLE_EQ(moving.frac.y, 0.25);
     EXPECT_DOUBLE_EQ(moving.frac.z, 0.5);
+    EXPECT_EQ(moving.boundary_shift.x, 1);
+    EXPECT_EQ(moving.boundary_shift.y, -1);
+    EXPECT_EQ(moving.boundary_shift.z, 1);
     const LocalAtom& frozen = cell.owned_atoms()[1];
     EXPECT_DOUBLE_EQ(frozen.frac.x, 0.25);
     EXPECT_DOUBLE_EQ(frozen.frac.y, 0.5);
     EXPECT_DOUBLE_EQ(frozen.frac.z, 0.75);
+}
+TEST(MdPositionTest, ExactUpperBoundaryIsWrappedAndTheNextStepClearsItsShift)
+{
+    MDCell cell = make_position_test_cell();
+    MD_para parameters;
+    parameters.md_dt = ModuleBase::AU_to_FS;
+    parameters.md_tfirst = 0.0;
+    parameters.md_tlast = 0.0;
+    MD_base integrator(parameters, false, true, 0, cell);
+    LocalAtom& moving = cell.owned_atoms()[0];
+    moving.vel.set(0.75, 0.0, 0.0);
+    std::ofstream log;
+    integrator.first_half(log);
+    EXPECT_DOUBLE_EQ(moving.frac.x, 0.0);
+    EXPECT_DOUBLE_EQ(moving.displacement.x, 0.75);
+    EXPECT_EQ(moving.boundary_shift.x, -1);
+    moving.vel.set(0.0, 0.0, 0.0);
+    integrator.first_half(log);
+    EXPECT_DOUBLE_EQ(moving.frac.x, 0.0);
+    EXPECT_DOUBLE_EQ(moving.displacement.x, 0.0);
+    EXPECT_EQ(moving.boundary_shift.x, 0);
+}
+
+TEST(MdPositionTest, RejectsMovementBeyondTheLegacySingleCellRange)
+{
+    MDCell cell = make_position_test_cell();
+    MD_para parameters;
+    parameters.md_dt = ModuleBase::AU_to_FS;
+    parameters.md_tfirst = 0.0;
+    parameters.md_tlast = 0.0;
+    MD_base integrator(parameters, false, true, 0, cell);
+    LocalAtom& moving = cell.owned_atoms()[0];
+    std::ofstream log;
+    for (const double velocity : {-1.5, 2.0})
+    {
+        moving.frac.x = 0.25;
+        moving.vel.x = velocity;
+        EXPECT_EXIT(integrator.first_half(log), testing::ExitedWithCode(1), "");
+    }
 }
 } // namespace

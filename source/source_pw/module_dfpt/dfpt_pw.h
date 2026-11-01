@@ -43,6 +43,11 @@ struct DFPT_PW_InitContext
     double nelec;
     double ecutwfc;
     const Plus_U_Base* dftu;
+    /// ground-state XC potential on the rho grid (valence + core charge
+    /// input, the same density the kernel linearizes around); consumed by
+    /// the nlcc diagonal 2n+1 term (QE dynmatcc). Null disables that term.
+    /// No default member initializer: C++11 aggregate rules require it.
+    const std::vector<double>* vxc_r;
 };
 
 /**
@@ -91,7 +96,7 @@ class DFPT_PW
               double ecutwfc,
               const Plus_U_Base* dftu)
     {
-        const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu};
+        const DFPT_PW_InitContext ctx{&ucell, &psi, pw_rho, pw_wfc, sf, &veff_r, &wg, &eig, xc, nelec, ecutwfc, dftu, nullptr};
         init(ctx);
     }
 

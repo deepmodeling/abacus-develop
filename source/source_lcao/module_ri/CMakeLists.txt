@@ -5,6 +5,8 @@ if(ENABLE_LIBRI)
   list(
     APPEND
     objects
+    invmat_ri.cpp
+    lri_cv_tools.cpp
     matrix_orbs11.cpp
     matrix_orbs21.cpp
     matrix_orbs22.cpp
@@ -15,6 +17,7 @@ if(ENABLE_LIBRI)
     list(
       APPEND
       objects
+      lri_cv.cpp
       conv_coulomb_pot_k.cpp
       exx_abfs_ctor_orbs.cpp
       exx_abfs_io.cpp

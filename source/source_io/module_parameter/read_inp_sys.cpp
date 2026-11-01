@@ -452,7 +452,8 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
         item.description = R"(Controls k-point parallelism. The value must be positive and should not exceed either the number of k-points or the number of MPI processes.
 * For PW calculations, divide all MPI processes into persistent k-point pools. Each pool stores and processes a subset of the k-points.
 * For LCAO calculations with lapack, genelpa, elpa, or scalapack_gvx, divide the diagonalization work into temporary k-point pools. After diagonalization, the eigenvalues and distributed wavefunctions are restored for all k-points before occupations, density matrices, and output are evaluated.
-* Multi-process LCAO cusolver uses its own active-GPU distribution and does not use this value to define its k-point layout. Other LCAO eigensolvers do not use the temporary k-point-pool implementation.)";
+* Multi-process LCAO cusolver uses its own active-GPU distribution and does not use this value to define its k-point layout. Other LCAO eigensolvers do not use the temporary k-point-pool implementation.
+* On DSP builds, the mtblas/C_PACK libraries require kpar (kpar_lcao for LCAO) times bndpar to equal the number of MPI processes exactly; ABACUS aborts at startup otherwise.)";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.kpar);
@@ -478,6 +479,39 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
             }
 #endif
         };
+#ifdef __DSP
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // The mtblas/C_PACK libraries on DSP hardware require exactly one
+            // process per k-point pool: the effective pool count (kpar for PW,
+            // kpar_lcao for LCAO, the other being 1) times bndpar must equal
+            // the number of MPI processes. Other configurations make the vendor
+            // routines return inconsistent results across ranks and the SCF
+            // silently diverges, so reject them at input time. See issue #8228.
+            // bndpar <= 0 is rejected by the bndpar input check; skip here so
+            // the diagnostic below never divides by zero.
+            if (para.input.bndpar <= 0)
+            {
+                return;
+            }
+            const int nproc = para.sys.nproc;
+            const bool layout_valid = dsp_kpar_layout_valid(nproc,
+                                                            para.input.kpar,
+                                                            para.sys.kpar_lcao,
+                                                            para.input.bndpar);
+            if (!layout_valid)
+            {
+                const std::string msg =
+                    "On DSP hardware, the mtblas/C_PACK libraries require kpar (kpar_lcao for LCAO) * bndpar"
+                    " to equal the number of MPI processes, but got NPROC=" + std::to_string(nproc)
+                    + ", kpar=" + std::to_string(para.input.kpar)
+                    + ", kpar_lcao=" + std::to_string(para.sys.kpar_lcao)
+                    + ", bndpar=" + std::to_string(para.input.bndpar)
+                    + ". Please set kpar=" + std::to_string(nproc / para.input.bndpar)
+                    + " or adjust the process count.";
+                ModuleBase::WARNING_QUIT("ReadInput", msg);
+            }
+        };
+#endif
         this->add_item(item);
         add_int_bcast(sys.kpar_lcao);
     }

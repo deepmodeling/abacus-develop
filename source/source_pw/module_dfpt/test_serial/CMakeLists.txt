@@ -88,6 +88,7 @@ addtest(
   ../dfpt_phon.cpp
   ../dfpt_phon_ewald.cpp
   ../dfpt_phon_elec.cpp
+  ../dfpt_rho.cpp
   ../dfpt_pert.cpp
   ../dfpt_pert_vkb.cpp
   ../dfpt_pert_nl.cpp

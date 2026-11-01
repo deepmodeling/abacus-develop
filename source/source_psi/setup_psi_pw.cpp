@@ -2,9 +2,9 @@
 
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
+#include "source_cell/stru_fac.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/stru_fac.h"
 
 Setup_Psi_pw::Setup_Psi_pw()
 {

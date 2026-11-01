@@ -264,7 +264,7 @@ void ReadInput::item_exx()
         item.annotation = "threshold to inverse Vq in abfs for generating Cs";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
-        item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.";
+        item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using Cholesky factorization. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues at or below exx_cs_inv_thr times the largest eigenvalue are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5. Force derivatives assume that modes remain on the same side of the cutoff. Eigenvalue crossings can make the truncated model nonsmooth during relaxation or molecular dynamics.";
         item.default_value = "-1";
         item.unit = "";
         read_sync_double(input.exx_cs_inv_thr);

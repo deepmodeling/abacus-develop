@@ -2,7 +2,7 @@
 #define MODULEHAMILTPW_ONSITEPROJECTOR_H
 #include "source_base/module_device/device.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_proj/onsite_proj_tools.h"
