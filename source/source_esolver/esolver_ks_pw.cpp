@@ -392,9 +392,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
 
     // overwrite occ_mat.txt with the latest occupation matrix and the
     // actual charge-density residual of this electronic step. At the very
-    // first step (istep 0, iter 1) the PW occupation matrix does not exist
-    // yet (iter_init_dftu_pw returns before calculating it), so skip it and
-    // keep the previous behavior where occ_mat.txt first appears at iter 2.
+    // first step (istep 0, iter 1) the PW occupation matrix exists only if
+    // it was loaded from file; otherwise it is first available at iter 2.
     const int iter_limit = this->scf_iter_limit(istep);
     const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion,
                                                 this->inp_->out_freq_elec,
@@ -408,8 +407,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // Read globalv values once into locals so the repeated DFT+U call sites
     // below do not each re-enter the global dependency surface.
     const std::string& global_out_dir = PARAM.globalv.global_out_dir;
-    const bool latest_ready = (iter > 1 || istep > 0);
-    if (latest_ready)
+    const bool occmat_ready = (iter > 1 || istep > 0 || this->dftu_->is_occmat_ready());
+    if (occmat_ready)
     {
         DFTU_BASE::write_latest_occmat(*this->dftu_,
                                       ucell,
@@ -423,7 +422,6 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // At istep 0 / iter 1 the PW occupation matrix does not exist yet,
     // unless it was loaded from dm_onsite_ini.txt or a previous
     // occ_mat.txt; snapshot an "N/A" placeholder in that case.
-    const bool occmat_ready = latest_ready || this->dftu_->is_occmat_ready();
     DFTU_BASE::append_ion_step_snapshot(*this->dftu_,
                                         ucell,
                                         global_out_dir,

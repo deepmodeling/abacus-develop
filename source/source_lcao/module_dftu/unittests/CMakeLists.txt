@@ -94,8 +94,8 @@ if(ENABLE_MPI)
         ../../../source_estate/module_dm/dmr_full.cpp
         ../../../source_pw/module_pwdft/dftu_base.cpp
         ../../../source_pw/module_pwdft/dftu_base_io.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_read.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_write.cpp
+        ../../../source_pw/module_pwdft/dftu_base_read.cpp
+        ../../../source_pw/module_pwdft/dftu_base_write.cpp
         ../../../source_pw/module_pwdft/yukawa_screening.cpp
         ../../../source_estate/occ_matrix.cpp
         ../../../source_estate/occ_mixer.cpp
@@ -148,8 +148,8 @@ if(ENABLE_MPI)
         ../../../source_estate/module_dm/dmr_full.cpp
         ../../../source_pw/module_pwdft/dftu_base.cpp
         ../../../source_pw/module_pwdft/dftu_base_io.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_read.cpp
-        ../../../source_pw/module_pwdft/dftu_base_io_write.cpp
+        ../../../source_pw/module_pwdft/dftu_base_read.cpp
+        ../../../source_pw/module_pwdft/dftu_base_write.cpp
         ../../../source_pw/module_pwdft/yukawa_screening.cpp
         ../../../source_estate/occ_matrix.cpp
         ../../../source_estate/occ_mixer.cpp
