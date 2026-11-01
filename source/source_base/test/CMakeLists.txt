@@ -271,7 +271,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_csr_reader
   LIBS parameter base device
-  SOURCES csr_reader_test.cpp
+  SOURCES csr_reader_test.cpp test_csr_reader.cpp
 )
 
 if(ENABLE_GOOGLEBENCH)

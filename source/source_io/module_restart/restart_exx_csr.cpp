@@ -21,12 +21,20 @@ namespace ModuleIO
         std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
     {
         ModuleBase::TITLE("ModuleIO", "read_Hexxs_csr");
+        Hexxs.clear();
         Hexxs.resize(nspin);
         for (int is = 0;is < nspin;++is)
         {
-            ModuleIO::csrFileReader<Tdata> csr(file_name + "_" + std::to_string(is) + ".csr");
+            const std::string path = file_name + "_" + std::to_string(is) + ".csr";
+            ModuleIO::csrFileReader<Tdata> csr(path);
             int nR = csr.getNumberOfR();
-            int nbasis = csr.getMatrixDimension();
+            if (csr.getMatrixDimension() != nbasis)
+            {
+                ModuleBase::WARNING_QUIT("read_Hexxs_csr", "HexxR matrix dimension does not match the LCAO basis");
+            }
+            const std::string confirmation = "Read HexxR from " + path;
+            std::cout << confirmation << std::endl;
+            ModuleBase::TITLE("read_Hexxs_csr", confirmation, false);
             // allocate Hexxs[is]
             for (int iat1 = 0; iat1 < ucell.nat; ++iat1) {
                 for (int iat2 = 0;iat2 < ucell.nat;++iat2) {

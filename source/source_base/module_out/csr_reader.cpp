@@ -1,4 +1,6 @@
 #include "csr_reader.h"
+#include <cmath>
+#include <set>
 #include "source_base/tool_quit.h"
 
 namespace ModuleIO
@@ -25,7 +27,15 @@ void csrFileReader<T>::parseFile()
 
     // Read the step
     readLine();
-    ss >> tmp_string >> tmp_string >> tmp_string >> step;
+    if (ss.str().find("STEP:") == ss.str().find_first_not_of(" \t"))
+    {
+        parseCompactFile();
+        return;
+    }
+    if (!(ss >> tmp_string >> tmp_string >> tmp_string >> step))
+    {
+        ModuleBase::WARNING_QUIT("csrFileReader::parseFile", "Invalid CSR step header");
+    }
 
     //std::cout << " step is " << step << std::endl; 
     // Read the title
@@ -37,12 +47,18 @@ void csrFileReader<T>::parseFile()
 
     // Read the matrix dimension
     readLine();
-    ss >> matrixDimension;
+    if (!(ss >> matrixDimension) || matrixDimension <= 0)
+    {
+        ModuleBase::WARNING_QUIT("csrFileReader::parseFile", "Invalid CSR matrix dimension");
+    }
     // std::cout << " mat dim is " << matrixDimension << std::endl; 
 
     // Read the number of R
     readLine();
-    ss >> numberOfR;
+    if (!(ss >> numberOfR) || numberOfR < 0)
+    {
+        ModuleBase::WARNING_QUIT("csrFileReader::parseFile", "Invalid CSR R-block count");
+    }
 
     // Read cell
     // Skip empty line before ucell info if present
@@ -184,6 +200,83 @@ void csrFileReader<T>::parseFile()
         // create sparse matrix
         SparseMatrix<T> matrix(matrixDimension, matrixDimension);
         matrix.readCSR(csr_values, csr_col_ind, csr_row_ptr);
+        sparse_matrices.push_back(matrix);
+    }
+}
+
+// Compact three-line header and CSR blocks emitted by save_sparse, including HexxR.
+// Keep the cell-aware format above for density-matrix and other existing callers.
+template <typename T>
+void csrFileReader<T>::parseCompactFile()
+{
+    const auto invalid = []() {
+        ModuleBase::WARNING_QUIT("csrFileReader::parseCompactFile", "Malformed compact CSR file");
+    };
+    std::string label;
+    if (!(ss >> label >> step) || label != "STEP:") { invalid(); }
+    const auto header_integer = [&](const std::string& prefix, int& value) {
+        readLine();
+        const std::string line = ss.str();
+        const std::size_t begin = line.find_first_not_of(" \t");
+        const std::size_t colon = line.find(':');
+        if (begin == std::string::npos || line.compare(begin, prefix.size(), prefix) != 0
+            || colon == std::string::npos) { invalid(); }
+        std::istringstream values(line.substr(colon + 1));
+        if (!(values >> value)) { invalid(); }
+    };
+    header_integer("Matrix Dimension of ", matrixDimension);
+    header_integer("Matrix number of ", numberOfR);
+    if (matrixDimension <= 0 || numberOfR < 0) { invalid(); }
+    // Consume whitespace across lines, but never skip malformed numerical tokens.
+    const auto next_token_line = [&]() {
+        ss >> std::ws;
+        while (ss.eof())
+        {
+            readLine();
+            ss >> std::ws;
+        }
+    };
+    std::set<std::vector<int>> seen;
+    for (int ir = 0; ir < numberOfR; ++ir)
+    {
+        readLine();
+        std::vector<int> coordinate(3);
+        int nnz = 0;
+        if (!(ss >> coordinate[0] >> coordinate[1] >> coordinate[2] >> nnz) || nnz < 0)
+        { invalid(); }
+        const std::size_t dimension = matrixDimension;
+        if (static_cast<std::size_t>(nnz) > dimension * dimension || !seen.insert(coordinate).second)
+        { invalid(); }
+        std::vector<T> values(nnz);
+        std::vector<int> columns(nnz);
+        std::vector<int> pointers(dimension + 1);
+        for (int i = 0; i < nnz; ++i)
+        {
+            next_token_line();
+            if (!(ss >> values[i]) || !std::isfinite(std::abs(values[i]))) { invalid(); }
+        }
+        for (int i = 0; i < nnz; ++i)
+        {
+            next_token_line();
+            if (!(ss >> columns[i]) || columns[i] < 0 || columns[i] >= matrixDimension) { invalid(); }
+        }
+        for (int i = 0; i <= matrixDimension; ++i)
+        {
+            next_token_line();
+            if (!(ss >> pointers[i]) || pointers[i] < 0 || pointers[i] > nnz) { invalid(); }
+            if (i > 0 && pointers[i] < pointers[i - 1]) { invalid(); }
+        }
+        if (pointers.front() != 0 || pointers.back() != nnz) { invalid(); }
+        for (int row = 0; row < matrixDimension; ++row)
+        {
+            for (int i = pointers[row] + 1; i < pointers[row + 1]; ++i)
+            {
+                if (columns[i] <= columns[i - 1]) { invalid(); }
+            }
+        }
+        SparseMatrix<T> matrix(matrixDimension, matrixDimension);
+        matrix.readCSR(values, columns, pointers);
+        RCoordinates.push_back(coordinate);
         sparse_matrices.push_back(matrix);
     }
 }
