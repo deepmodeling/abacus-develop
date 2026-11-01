@@ -84,7 +84,12 @@ addtest(
   base
   symmetry
   SOURCES
-  dfpt_phon_serial_test.cpp
+  # I-24 split along the source boundaries: ewald / elec / asr / core
+  # (the shared fixture lives in dfpt_phon_serial_fixture.h)
+  test_dfpt_phon_ewald.cpp
+  test_dfpt_phon_elec.cpp
+  test_dfpt_phon_asr.cpp
+  test_dfpt_phon.cpp
   ../dfpt_phon.cpp
   ../dfpt_phon_ewald.cpp
   ../dfpt_phon_elec.cpp
