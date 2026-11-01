@@ -458,6 +458,7 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_q0.o\
     dfpt_q0_pos.o\
     dfpt_rho.o\
+    dfpt_rho_mix.o\
     dfpt_stern.o\
     dfpt_write_dyn.o\
     dfpt_xc_analytic.o
