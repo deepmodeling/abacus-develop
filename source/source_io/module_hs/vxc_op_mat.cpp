@@ -4,6 +4,7 @@
 #include "source_base/module_out/filename.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_hs/hs_dense_io.h"
+#include "source_io/module_output/provenance_header.h"
 
 namespace ModuleIO
 {
@@ -146,7 +147,7 @@ void write_Vxc(const int nspin,
     if (GlobalV::MY_RANK == 0)
     {
         const double etot_eV = etot * ModuleBase::Ry_to_eV;
-        const std::string time_stamp = local_time_stamp();
+        const std::string time_stamp = local_timestamp();
         const std::string header_tot = build_eband_header(istep, etot_eV, "V_xc", time_stamp);
         write_orb_energy(kv, nspin0, nbands, e_orb_tot, "eband_vxc.txt", header_tot, global_out_dir);
 #ifdef __EXX

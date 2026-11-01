@@ -16,6 +16,11 @@ AddTest(
   SOURCES test_spin_tag.cpp
 )
 
+AddTest(
+  TARGET MODULE_IO_provenance_header
+  SOURCES test_provenance_header.cpp
+)
+
 if(NOT ENABLE_MPI)
   return()
 endif()

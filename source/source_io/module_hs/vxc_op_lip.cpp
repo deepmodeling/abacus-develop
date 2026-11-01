@@ -5,6 +5,7 @@
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_io/module_hs/hs_dense_io.h"
 #include "source_io/module_hs/vxc_op_tools.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include <fstream>
 #include <iomanip>
@@ -247,7 +248,7 @@ void write_Vxc_LIP(int nspin,
     if (GlobalV::MY_RANK == 0)
     {
         const double etot_eV = etot * ModuleBase::Ry_to_eV;
-        const std::string time_stamp = local_time_stamp();
+        const std::string time_stamp = local_timestamp();
         const std::string header_tot = build_eband_header(istep, etot_eV, "V_xc", time_stamp);
         write_orb_energy_lip(e_orb_tot, "", header_tot);
 #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))

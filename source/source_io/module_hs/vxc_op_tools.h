@@ -94,10 +94,6 @@ void write_orb_energy(const K_Vectors& kv,
                       const std::string& global_out_dir,
                       const bool app = false);
 
-/// @brief Format the current local time for output file headers.
-/// @return Timestamp in "YYYY-MM-DD HH:MM:SS" format.
-std::string local_time_stamp();
-
 /// @brief Build the five comment lines preceding band-decomposed energy data.
 /// @param istep Zero-based ionic step index, printed one-based.
 /// @param etot_eV Total energy of the written frame in eV.

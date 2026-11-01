@@ -3,9 +3,8 @@
 #include "source_base/formatter.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/module_out/filename.h"
-#include "source_main/version.h"
+#include "source_io/module_output/provenance_header.h"
 
-#include <ctime>
 #include <fstream>
 #include <iomanip>
 
@@ -134,34 +133,20 @@ void write_orb_energy(const K_Vectors& kv,
     }
 }
 
-std::string local_time_stamp()
-{
-    const std::time_t now = std::time(nullptr);
-    std::tm tm_now;
-    localtime_r(&now, &tm_now);
-    char buffer[32];
-    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_now);
-    return std::string(buffer);
-}
-
 std::string build_eband_header(const int istep,
                                const double etot_eV,
                                const std::string& term_symbol,
                                const std::string& time_stamp)
 {
     const int istep_one_based = istep + 1;
-    const std::string header = FmtCore::format(
-        "# ABACUS version: %s\n"
-        "# Written at %s\n"
+    const std::string step_lines = FmtCore::format(
         "# RELAX STEP %d, Energy: %.8f eV\n"
         "# e_{ikn} = <psi_{ikn} | %s | psi_{ikn}> in the KS orbital basis\n"
         "# units: columns are e/2 in Hartree and e in eV; data rows follow nk, nspin0, nbands\n",
-        VERSION,
-        time_stamp.c_str(),
         istep_one_based,
         etot_eV,
         term_symbol.c_str());
-    return header;
+    return provenance_header(time_stamp) + step_lines;
 }
 
 // Explicit template instantiations

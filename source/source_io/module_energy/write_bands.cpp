@@ -7,15 +7,13 @@
 #include "source_base/module_parallel/para_bridge.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#include "source_io/module_output/provenance_header.h"
 #include "source_io/module_output/spin_tag.h"
 #include "source_io/module_parameter/parameter.h" // mohan add 20250911
-#include "source_main/version.h"
 
 #ifdef __MPI
 #include <mpi.h>
 #endif
-
-#include <ctime>
 
 namespace
 {
@@ -30,16 +28,9 @@ namespace
  */
 std::string build_band_header(const int istep, const std::string& spin_tag)
 {
-    const std::time_t now = std::time(nullptr);
-    std::tm tm_local;
-    localtime_r(&now, &tm_local);
-    char time_buf[64];
-    std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", &tm_local);
-    return FmtCore::format("# ABACUS version: %s\n# Written at %s\n# IONIC STEP %d%s\n",
-                           VERSION,
-                           time_buf,
-                           istep + 1,
-                           spin_tag.c_str());
+    const int istep_one_based = istep + 1;
+    const std::string step_line = FmtCore::format("# IONIC STEP %d%s\n", istep_one_based, spin_tag.c_str());
+    return ModuleIO::provenance_header(ModuleIO::local_timestamp()) + step_line;
 }
 
 } // namespace

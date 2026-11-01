@@ -11,10 +11,8 @@
 #include "source_base/module_out/binstream.h"
 #include "source_base/module_out/filename.h"
 #include "source_base/formatter.h"
+#include "source_io/module_output/provenance_header.h"
 #include "source_io/module_output/spin_tag.h"
-#include "source_main/version.h"
-
-#include <ctime>
 
 namespace
 {
@@ -56,22 +54,14 @@ int wfc_spin_index(const int ik0, const int nspin, const int nkstot)
  */
 std::string build_wfc_nao_header(const int istep, const std::string& spin_tag)
 {
-    const std::time_t now = std::time(nullptr);
-    std::tm tm_local;
-    localtime_r(&now, &tm_local);
-    char time_buf[64];
-    std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", &tm_local);
+    const std::string header = ModuleIO::provenance_header(ModuleIO::local_timestamp());
     if (istep < 0)
     {
-        return FmtCore::format("# ABACUS version: %s\n# Written at %s\n",
-                               VERSION,
-                               time_buf);
+        return header;
     }
-    return FmtCore::format("# ABACUS version: %s\n# Written at %s\n# IONIC STEP %d%s\n",
-                           VERSION,
-                           time_buf,
-                           istep + 1,
-                           spin_tag.c_str());
+    const int istep_one_based = istep + 1;
+    const std::string step_line = FmtCore::format("# IONIC STEP %d%s\n", istep_one_based, spin_tag.c_str());
+    return header + step_line;
 }
 
 } // namespace

@@ -1,6 +1,7 @@
 #include "write_eband_terms.h"
 
 #include "source_io/module_hs/vxc_op_tools.h"
+#include "source_io/module_output/provenance_header.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
@@ -49,7 +50,7 @@ void write_eband_terms(const int nspin,
         const int& nbands = wg.nc;
         const int nspin0 = (nspin == 2) ? 2 : 1;
         const double etot_eV = etot * ModuleBase::Ry_to_eV;
-        const std::string time_stamp = local_time_stamp();
+        const std::string time_stamp = local_timestamp();
         double etxc = 0.0;
         double vtxc = 0.0;
 
