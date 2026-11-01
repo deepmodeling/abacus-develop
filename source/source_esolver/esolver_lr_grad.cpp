@@ -1,4 +1,5 @@
 #include "source_esolver/esolver_lr_lcao_tddft.h"
+#include "source_lcao/module_lr/window_response.h"
 #include "source_lcao/module_lr/zeq_solver.h"
 #include "source_lcao/module_lr/cal_edm.h"
 #include "source_lcao/module_lr/lr_force.h"
@@ -72,7 +73,7 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::pad_X_to_z_(const int ispin, const 
 }
 
 template<typename T, typename TR>
-ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int ispin, const int nst, const ct::Tensor& Xz)
+ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int ispin, const int nst, const ct::Tensor& Xz, const std::vector<std::vector<ct::Tensor>>& window_density)
 {
     ModuleBase::TITLE("ESolver_LR", "cal_force");
     ModuleBase::timer::start("ESolver_LR", "solve_zvector_eqation");
@@ -91,7 +92,7 @@ ct::Tensor ModuleESolver::ESolver_LR<T, TR>::solve_zvector_eqation(const int isp
     T* const z_data = Z.template data<T>();
     std::weak_ptr<PotHxcLR> pot_weak = inputs.pot[ispin];
     Z_vector_equation(inputs, x_data, z_data, nst, pot_weak,
-        this->spin_types[ispin], this->in_dir, this->openshell, this->inp_->lr_grad_solver);
+        this->spin_types[ispin], this->in_dir, this->openshell, this->inp_->lr_grad_solver, window_density);
     ModuleBase::timer::end("ESolver_LR", "solve_zvector_eqation");
     return Z;
 }
@@ -146,9 +147,10 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
     ModuleBase::timer::start("ESolver_LR", "cal_force_Xz");
     const int nst = static_cast<int>(omega.size());
     const int channel = ispin;
-    const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz);
-    const auto dm_gs = this->cal_dm_gs();
     const LR::GradientInputs<T> inputs = this->gradient_inputs_();
+    const auto window = LR::build_window_response(inputs, Xz, nst, this->nvirt[0], ispin, this->in_dir);
+    const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz, window.density);
+    const auto dm_gs = this->cal_dm_gs();
     const LR::ForceSettings force_settings{this->nspin, this->inp_->test_force,
         this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
     LR_Force<T> force_terms(*this->ucell_, this->kv.kvec_d, this->paraMat_,
@@ -157,7 +159,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_Xz(c
         , inputs.exx_lri, inputs.hybrid_alpha
 #endif
     );
-    const auto forces = LR::evaluate_closed_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, ispin);
+    const auto forces = LR::evaluate_closed_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, ispin, window);
     ModuleBase::timer::end("ESolver_LR", "cal_force_Xz");
     return forces;
 }
@@ -345,9 +347,10 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
     ModuleBase::timer::start("ESolver_LR", "cal_force_openshell_Xz");
     const int nst = static_cast<int>(omega.size());
     const int channel = 0;
-    const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz);
-    const auto dm_gs = this->cal_dm_gs();
     const LR::GradientInputs<T> inputs = this->gradient_inputs_();
+    const auto window = LR::build_open_shell_window_response(inputs, Xz, nst, this->nvirt);
+    const ct::Tensor Z = this->solve_zvector_eqation(channel, nst, Xz, window.density);
+    const auto dm_gs = this->cal_dm_gs();
     const LR::ForceSettings force_settings{this->nspin, this->inp_->test_force,
         this->inp_->vl_in_h, this->inp_->vh_in_h, this->inp_->dft_functional};
     LR_Force<T> force_terms(*this->ucell_, this->kv.kvec_d, this->paraMat_,
@@ -356,7 +359,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force_open
         , inputs.exx_lri, inputs.hybrid_alpha
 #endif
     );
-    const auto forces = LR::evaluate_open_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin);
+    const auto forces = LR::evaluate_open_shell_force(inputs, force_terms, dm_gs, Xz, Z, omega, label_begin, window);
     ModuleBase::timer::end("ESolver_LR", "cal_force_openshell_Xz");
     return forces;
 }

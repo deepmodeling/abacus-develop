@@ -45,3 +45,8 @@ if(ENABLE_LIBXC)
       PROCESSORS 4 TIMEOUT 120 ENVIRONMENT "OMP_NUM_THREADS=1;MKL_NUM_THREADS=1")
   endif()
 endif()
+
+AddTest(
+  TARGET MODULE_LR_window_response
+  SOURCES test_window_response_math.cpp ../window_response_math.cpp
+)

@@ -1,4 +1,5 @@
 #include "gradient_inputs.h"
+#include "window_response.h"
 #include "gradient_output.h"
 #include "gradient_checks.h"
 #include "cal_edm.h"
@@ -13,7 +14,8 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
     const GradientInputs<T>& inputs, LR_Force<T>& lr_force,
     const module_dm::DensityMatrix<T, double>& dm_gs,
     const ct::Tensor& Xz, const ct::Tensor& Z,
-    const std::vector<double>& omega, const int label_begin)
+    const std::vector<double>& omega, const int label_begin,
+    const WindowResponse<T>& window)
 {
     ModuleBase::timer::start("LR", "evaluate_open_shell_force");
     const int nst = static_cast<int>(omega.size());
@@ -72,6 +74,14 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
             }
 #endif
             relaxed_k[is] = dmdiff_k[is] + dmz_k;
+            if (!window.density.empty())
+            {
+                const int state = istate - ist_begin;
+                for (int ik = 0; ik < inputs.nk; ++ik)
+                {
+                    relaxed_k[is][ik] = relaxed_k[is][ik] + window.density[state][is * inputs.nk + ik];
+                }
+            }
         }
 
         // 2. $D^X$. Complex and UN-symmetrized first (the EXX kernel needs the full
@@ -96,8 +106,19 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
         // 4. the energy-weighted density matrix
         std::weak_ptr<PotHxcLR> pot_weak = inputs.pot[0];
         const double omega_istate = omega[istate - ist_begin];
-        const std::vector<std::vector<ct::Tensor>>& edm_k = cal_edm_from_XZ_istate_openshell(
-            inputs, X_istate, Z_istate, omega_istate, inputs.eig_ks.c, dm_trans, pot_weak);
+        std::vector<std::vector<ct::Tensor>> edm_k = cal_edm_from_XZ_istate_openshell(
+            inputs, X_istate, Z_istate, omega_istate, inputs.eig_ks.c, dm_trans, pot_weak, relaxed_k);
+        if (!window.direct_edm.empty())
+        {
+            const int state = istate - ist_begin;
+            for (int is = 0; is < 2; ++is)
+            {
+                for (int ik = 0; ik < inputs.nk; ++ik)
+                {
+                    edm_k[is][ik] = edm_k[is][ik] + window.direct_edm[state][is * inputs.nk + ik];
+                }
+            }
+        }
         module_dm::DensityMatrix<T, double> edm_real = LR_Util::build_dm_from_dmk_spin<T, double>(edm_k,
             inputs.pmat, inputs.nk, inputs.kv.kvec_d, inputs.ucell, inputs.gd, inputs.orb_cutoff,
             /*symmetrize=*/true);
@@ -182,6 +203,6 @@ std::vector<ModuleBase::matrix> evaluate_open_shell_force(
 }
 
 
-template std::vector<ModuleBase::matrix> evaluate_open_shell_force<double>(const GradientInputs<double>&, LR_Force<double>&, const module_dm::DensityMatrix<double, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int);
-template std::vector<ModuleBase::matrix> evaluate_open_shell_force<std::complex<double>>(const GradientInputs<std::complex<double>>&, LR_Force<std::complex<double>>&, const module_dm::DensityMatrix<std::complex<double>, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int);
+template std::vector<ModuleBase::matrix> evaluate_open_shell_force<double>(const GradientInputs<double>&, LR_Force<double>&, const module_dm::DensityMatrix<double, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int, const WindowResponse<double>&);
+template std::vector<ModuleBase::matrix> evaluate_open_shell_force<std::complex<double>>(const GradientInputs<std::complex<double>>&, LR_Force<std::complex<double>>&, const module_dm::DensityMatrix<std::complex<double>, double>&, const ct::Tensor&, const ct::Tensor&, const std::vector<double>&, int, const WindowResponse<std::complex<double>>&);
 }
