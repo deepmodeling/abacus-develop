@@ -485,8 +485,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
     std::unique_ptr<Diago_DavSubspace<T, Device>> local_davidson;
     auto& davidson = reusable_davidson ? *reusable_davidson : local_davidson;
-
-    if (this->method == "cg")
+    int success = 0;
+    while (success != 1)
+    {
+    if (this->method == "cg" || success == -1)
     {
         // wrap the subspace_func into a lambda function
         auto subspace_func = [hm, ngk_vector](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
@@ -588,6 +590,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, this->ethr_band, prec_tensor);
         // TODO: Double check tensormap's potential problem
         ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
+        success = 1;
     }
     else if (this->method == "bpcg")
     {
@@ -616,6 +619,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
         bpcg.init_iter(nband, nbasis);
         bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
+        success = 1;
     }
     else if (this->method == "dav_subspace")
     {
@@ -668,9 +672,21 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                 basis_observer->rotate(ik, size, coefficients, leading, final);
             };
         }
-        DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
-            davidson->diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue, this->ethr_band, scf,
-                              initial_h, initial_s, initial_action, rotate_basis));
+        const int ntry_return = davidson->diag(hpsi_func, psi.get_pointer(), psi.get_nbasis(), eigenvalue,
+                                               this->ethr_band, scf, initial_h, initial_s, initial_action, rotate_basis);
+        if (ntry_return != -1)
+        {
+            DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(ntry_return);
+            success = 1;
+        }
+        else
+        {
+            // Release all Davidson work before the CG recovery and invalidate
+            // projections that no longer correspond to the changed basis.
+            davidson.reset();
+            if (basis_observer) { basis_observer->invalidate(ik); }
+            success = -1;
+        }
     }
     else if (this->method == "dav")
     {
@@ -736,6 +752,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                                                david_maxiter,
                                                                                ntry_max,
                                                                                notconv_max));
+        success = 1;
+    }
     }
     return;
 }

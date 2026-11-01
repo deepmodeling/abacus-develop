@@ -473,6 +473,21 @@ the retained allocation, so both complete-run timing and sampled peak memory
 must be measured. The Davidson driver exercises repeated calls with changed
 preconditioners, initial bases, projected matrices and basis-rotation callbacks.
 
+The solver dispatch loop terminates only at successful completion. A failed
+Davidson solve invalidates its projector observations and enters the CG branch;
+the negative recovery state must not be interpreted as a completed solve.
+`check_solver_fallback.cpp` injects a numerical failure through the cuSolver
+interface while calling the public Hamiltonian solver. It verifies actual
+Hamiltonian applications after invalidation, analytic eigenpairs, and a later
+ordinary Davidson solve for one/two k points and one/two wavefunction components.
+The preceding loop fails this check with zero recovery applications.
+
+```bash
+python3 src/link_check.py src/check_solver_fallback.cpp --cxxflag=-std=c++17 \
+    --cxxflag=-UNDEBUG --ldflag=-Wl,--wrap=cusolverDnZhegvd
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 results/check_solver_fallback
+```
+
 ## Fixed-overlap constraint responses
 
 The wavefunction basis and its projected overlap stay fixed during one
