@@ -223,6 +223,7 @@ void ctrl_output_fp(UnitCell& ucell,
                                           0, // out_fermi
                                           false, // two_fermi, unused without out_fermi
                                           false, // reduce_all_pool
+                                          append_cube,
                                           ofs_running,
                                           data_desc);
         }

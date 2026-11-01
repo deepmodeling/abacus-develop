@@ -112,7 +112,8 @@ if [[ "$out_sol" == "1" ]]; then
 			exit 1
 		fi
 	done
-	integral=$(python3 "$CUBE_TOOL" integrate "OUT.autotest/sol_cavity.cube")
+	# Append mode retains earlier geometries; compare the final complete frame.
+	integral=$(python3 "$CUBE_TOOL" integrate-last "OUT.autotest/sol_cavity.cube") || return 1
 	echo "sol_cavity_integralref $integral" >>$props_result_file
 fi
 
