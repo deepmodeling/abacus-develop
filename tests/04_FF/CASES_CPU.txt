@@ -20,8 +20,8 @@
 20_LJ_dry_run
 #50_DP_Al
 #101_NEP_HfO2
-102_SNAP_minimal
-103_SNAP_periodic
+102_SNAP_base
+103_SNAP_pbc
 104_SNAP_inner
-105_SNAP_angular_quadratic
-106_SNAP_angular_quadratic_scf
+105_SNAP_quad
+106_SNAP_scf

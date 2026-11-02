@@ -9,5 +9,5 @@ target_sources(
 )
 
 if(BUILD_TESTING)
-  add_subdirectory(unittest)
+  add_subdirectory(unittests)
 endif()

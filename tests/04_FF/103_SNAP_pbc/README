@@ -1,6 +1,6 @@
 CPU SNAP periodic-image regression case.
 
-This uses the same potential and two-atom separation as 102_SNAP_minimal,
+This uses the same potential and two-atom separation as 102_SNAP_base,
 but places the atoms on opposite sides of the periodic boundary. Their
 energy, force magnitude, and stress must match the unwrapped case. The
 periodic neighbor contributes through the MDCell ghost-force return path.
