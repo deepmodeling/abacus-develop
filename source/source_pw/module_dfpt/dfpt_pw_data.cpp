@@ -2,7 +2,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
-#include "source_pw/module_pwdft/dftu_base.h"
 #include <cmath>
 #include <sstream>
 
