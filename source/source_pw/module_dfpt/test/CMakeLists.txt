@@ -14,6 +14,7 @@ addtest(
   SOURCES
   dfpt_pw_data_test.cpp
   ../dfpt_pw_data.cpp
+  ../dfpt_pw_data_resp.cpp
   ../../../source_cell/qlist.cpp
   ../../../source_cell/reciprocal_grid.cpp
   ../../../source_psi/psi.cpp
@@ -66,6 +67,7 @@ addtest(
   ../dfpt_pw_solve.cpp
   ../dfpt_pw_q0.cpp
   ../dfpt_pw_data.cpp
+  ../dfpt_pw_data_resp.cpp
   ../dfpt_pert.cpp
   ../dfpt_pert_vkb.cpp
   ../dfpt_pert_nl.cpp

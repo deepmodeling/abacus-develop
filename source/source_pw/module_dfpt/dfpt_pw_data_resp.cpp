@@ -11,6 +11,9 @@
 
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+// u_active dereferences the Plus_U_Base reservation (only forward-declared
+// in dfpt_pw_data.h)
+#include "source_pw/module_pwdft/dftu_base.h"
 
 #include <complex>
 #include <vector>
