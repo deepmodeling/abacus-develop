@@ -86,6 +86,7 @@ addtest(
   SOURCES
   dfpt_phon_serial_test.cpp
   ../dfpt_phon.cpp
+  ../dfpt_phon_asr.cpp
   ../dfpt_phon_ewald.cpp
   ../dfpt_phon_elec.cpp
   ../dfpt_rho.cpp
