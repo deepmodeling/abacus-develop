@@ -7,10 +7,10 @@
 #define ABACUS_SOURCE_LCAO_MODULE_RI_INVMAT_RI_H
 
 
-#include "abfs_construct_pca.h"
 
 #include <RI/global/Tensor.h>
 #include <vector>
+#include <array>
 
 template <typename Tdata>
 class Inverse_Matrix
@@ -22,6 +22,11 @@ class Inverse_Matrix
         syev
     };
     void cal_inverse(const Method& method, const double& threshold_condition_number = 0.);
+
+    /// Invert with a fixed-rank spectral cutoff and differentiate the retained subspace.
+    std::array<RI::Tensor<Tdata>, 3> cal_inverse_with_derivatives(
+        const std::array<RI::Tensor<Tdata>, 3>& derivatives,
+        const double threshold_condition_number);
 
     void input(const RI::Tensor<Tdata>& m);
     void input(const std::vector<std::vector<RI::Tensor<Tdata>>>& ms);
@@ -36,6 +41,5 @@ class Inverse_Matrix
     RI::Tensor<Tdata> A;
 };
 
-#include "invmat_ri.hpp"
 
 #endif // ABACUS_SOURCE_LCAO_MODULE_RI_INVMAT_RI_H

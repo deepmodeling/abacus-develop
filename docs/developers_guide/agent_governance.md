@@ -5,6 +5,15 @@ contributors, general AI agents, CodeRabbit, and GitHub CI. `AGENTS.md` is the
 short entry point; this file is the complete rule source for implementation and
 review.
 
+## Entry Points
+
+The repository-root `AGENTS.md` is the short entry point. A module directory
+under `source/` (e.g., `source/source_esolver/`, `source/source_io/`) may carry
+its own `AGENTS.md` describing module-specific design constraints and
+conventions. When working in, or reviewing, such a directory, read the module
+file together with the root file; module-level rules refine the root baseline
+and never override it.
+
 ## Source Materials
 
 The governance rules consolidate project guidance from @mohanchen's coding
@@ -77,7 +86,7 @@ decisions.
 | Header include guard | New `#pragma once` in a header | phase-one mechanical | hook + CI | high | block | added header lines (`.h`/`.hh`/`.hpp`/`.hxx`/`.cuh`) | Use `#ifndef`/`#define`/`#endif` guards; no exception allowed |
 | Language baseline | C++11 compatibility | build/toolchain | CI | high | block | build/static tooling | Actual compiler/toolchain result wins |
 | Global dependency budget | Net increase of `GlobalV`/`GlobalC`/`PARAM` references in code diff | phase-one mechanical + AI review | CI + AI review | high | block on net increase, warn on non-increasing added usage | added and removed code lines | Historical untouched usage and documentation mentions are not blocked; migration-neutral moves require reviewer rationale |
-| New default parameter | Header declaration adds a default argument | phase-one mechanical + AI review | CI + AI review | high | block | header diff | High misuse risk |
+| New default parameter | Header declaration adds a default argument | phase-one mechanical warning + AI review | CI + AI review | high | warn | header diff | High misuse risk; the single-line heuristic is not reliable enough to block, so AI and human review confirm |
 | `.hpp` propagation | New `.hpp` or header includes `.hpp` | phase-one mechanical warning | CI + AI review | medium | warn | new files and added includes | Exception can be recorded in PR |
 | Header dependency growth | Header diff adds includes | phase-one mechanical warning + AI review | CI + AI review | medium | warn | added header includes | Necessity is semantic and not mechanically decided |
 | Member variable workflow switch | Key flow state hidden as mutable member state | AI review + human confirmation | AI + human review | high | human confirmation | semantic review | Static matching is unreliable |
@@ -92,7 +101,7 @@ decisions.
 | Documentation sync | Behavior/interface docs updated | phase-one mechanical warning + AI review | CI + AI review | medium | warn | changed paths and PR body | Major behavior changes escalate to reviewers |
 | PR metadata completeness | Issue, tests, behavior, INPUT, core impact, exceptions | phase-one mechanical | CI or GitHub bot | medium | warn | PR template fields | Not run by local hook |
 | AI workflow | Interface lookup, uncertainty, verification report | AI review | AI review | high | warn | review transcript/output | Applies to AI agents |
-| Exceptions | Reason, scope, risk, follow-up plan | human confirmation | human review + CI | high | human confirmation | PR exception section | CI checks presence, not approval |
+| Exceptions | Reason, scope, risk, follow-up plan | human confirmation | human review + CI | high | human confirmation | PR exception section + approval label | CI downgrades a covered blocker to a warning only when the section is complete and a maintainer applied the `governance-exception-approved` label |
 
 Implementations must use this matrix as the default baseline. Upgrading warnings
 to blockers or converting human-confirmation rules into mechanical blockers
@@ -259,6 +268,22 @@ Use this template in the PR when a rule must be bypassed temporarily:
 - Follow-up cleanup plan:
 - Requested approver:
 ```
+
+`Rule` names the checker rule(s) being excepted, using the exact rule names
+from the governance summary (for example `Global dependency budget` or
+`CMake linkage for new sources`). The CI checker handles the section as follows:
+
+- An incomplete section (any field empty) produces a warning and changes
+  nothing else.
+- A complete section without approval produces a warning that the exception is
+  awaiting approval; blocking findings still fail the check.
+- A complete section plus the `governance-exception-approved` label, applied by
+  a maintainer other than the PR author, downgrades the blocking findings whose
+  rule appears in `Rule` to warnings. Findings marked `Exception allowed: no`
+  (LF line endings, `#pragma once`) are never downgraded.
+
+Applying or removing the label re-runs the check. The local `--staged` hook has
+no PR body or labels and therefore never applies exceptions.
 
 ## AI Review Finding Format
 

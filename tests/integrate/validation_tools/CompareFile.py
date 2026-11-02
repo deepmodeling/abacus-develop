@@ -1,8 +1,9 @@
 #!/usr/bin/env python
+import math
 import sys
 
 usage = '''
-python CompareFile.py file1 file2 [accuracy] [-abs 0] [-com_type 1]
+python CompareFile.py file1 file2 [accuracy] [-abs 0] [-com_type 1] [-tol value]
 
 accuracy    - the accuracy of two float value.
               default value is 8, which means
@@ -12,6 +13,8 @@ accuracy    - the accuracy of two float value.
 -com_type   - 0: assure the relative difference of two float value is smaller than accuracy
             - 1: assure the absolute difference of two float value is smaller than accuracy
             - Default is 1
+-tol        - finite positive comparison tolerance, overriding accuracy
+              in either absolute or relative difference mode
 
 This script is used to compare whether two files are the same.
 If compared two strings are different OR the difference 
@@ -23,17 +26,28 @@ When the script is finished, then a followed bash command
 '''
 
 def ReadParam():
-    if len(sys.argv) not in [3,4,5,6,7,8]:
+    if len(sys.argv) < 3:
         print(usage)
         sys.exit(1)
     file1 = sys.argv[1]
     file2 = sys.argv[2]
     accur = 8
+    tolerance = None
     useAbsoluteVal = False
     compareAbsoluteDiff = True
     argi = 3
     while argi < len(sys.argv):
-        if sys.argv[argi] == '-abs':
+        if sys.argv[argi] == '-tol':
+            argi += 1
+            if argi >= len(sys.argv):
+                sys.exit('Error: -tol requires a finite positive number.')
+            try:
+                tolerance = float(sys.argv[argi])
+            except ValueError:
+                sys.exit('Error: -tol requires a finite positive number.')
+            if not math.isfinite(tolerance) or tolerance <= 0:
+                sys.exit('Error: -tol requires a finite positive number.')
+        elif sys.argv[argi] == '-abs':
             argi += 1
             useAbsoluteVal = bool(int(sys.argv[argi]))
         elif sys.argv[argi] == '-com_type':
@@ -42,7 +56,7 @@ def ReadParam():
         else:
             accur = int(sys.argv[argi])
         argi += 1
-    epsilon = 0.1**accur
+    epsilon = 0.1**accur if tolerance is None else tolerance
     return file1,file2,epsilon,useAbsoluteVal,compareAbsoluteDiff
 
 def is_two_data_diff(data1,data2,epsilon,compareAbsoluteDiff):

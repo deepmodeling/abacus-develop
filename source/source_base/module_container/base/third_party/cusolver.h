@@ -29,48 +29,6 @@ struct CudaDeleter {
 template <typename T>
 using unique_cuda_ptr = std::unique_ptr<T, CudaDeleter>;
 
-struct HostDeleter {
-    void operator()(void* ptr) const noexcept {
-        if (ptr) free(ptr);
-    }
-};
-
-template <typename T>
-using unique_host_ptr = std::unique_ptr<T, HostDeleter>;
-
-#if CUDA_VERSION >= 11000
-// Generic API (CUDA 11.0+)
-template <typename T>
-static inline
-void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, T* A, const int& lda)
-{
-    size_t d_lwork = 0, h_lwork = 0;
-    using Type = typename GetTypeThrust<T>::type;
-    CHECK_CUSOLVER(cusolverDnXtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, GetTypeCuda<T>::cuda_data_type, reinterpret_cast<Type*>(A), lda, &d_lwork, &h_lwork));
-    void* raw_d_work = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&raw_d_work, d_lwork));
-    unique_cuda_ptr<void> d_work(raw_d_work);
-    unique_host_ptr<void> h_work;
-    if (h_lwork) {
-        void* raw_h_work = malloc(h_lwork);
-        if (raw_h_work == nullptr) {
-            throw std::bad_alloc();
-        }
-        h_work.reset(raw_h_work);
-    }
-    int h_info = 0;
-    int* raw_d_info = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&raw_d_info, sizeof(int)));
-    unique_cuda_ptr<int> d_info(raw_d_info);
-    CHECK_CUSOLVER(cusolverDnXtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, GetTypeCuda<T>::cuda_data_type, reinterpret_cast<Type*>(A), n, d_work.get(), d_lwork, h_work.get(), h_lwork, d_info.get()));
-    CHECK_CUDA(cudaMemcpy(&h_info, d_info.get(), sizeof(int), cudaMemcpyDeviceToHost));
-    if (h_info != 0) {
-        throw std::runtime_error("trtri: failed to invert matrix");
-    }
-}
-#else
-#error "CUDA version < 11.0 is not supported. cusolverDnXtrtri (CUDA 11.0+) is required."
-#endif
 
 static inline
 void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, float * A, const int& lda)
