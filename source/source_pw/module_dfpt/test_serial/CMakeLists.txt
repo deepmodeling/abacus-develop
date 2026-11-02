@@ -63,6 +63,7 @@ addtest(
   SOURCES
   dfpt_rho_serial_test.cpp
   ../dfpt_rho.cpp
+  ../dfpt_rho_mix.cpp
   ../dfpt_pw_data.cpp
   ../dfpt_kq_basis.cpp
   ../../../source_cell/qlist.cpp
@@ -89,6 +90,7 @@ addtest(
   ../dfpt_phon_ewald.cpp
   ../dfpt_phon_elec.cpp
   ../dfpt_rho.cpp
+  ../dfpt_rho_mix.cpp
   ../dfpt_pert.cpp
   ../dfpt_pert_vkb.cpp
   ../dfpt_pert_nl.cpp
@@ -172,6 +174,7 @@ if(ENABLE_LIBXC)
     dfpt_xc_analytic_serial_test.cpp
     ../dfpt_xc_analytic.cpp
     ../dfpt_rho.cpp
+  ../dfpt_rho_mix.cpp
     ../dfpt_pw_data.cpp
     ../dfpt_kq_basis.cpp
     ../../../source_cell/qlist.cpp
