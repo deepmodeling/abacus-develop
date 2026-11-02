@@ -355,6 +355,8 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
     const ModuleBase::Vector3<double> tau_cart
         = ucell_->atoms[it].tau[ucell_->iat2ia[atom_idx]] * ucell_->lat0;
     std::vector<std::complex<double>> w_g(npw);
+    // one radial scratch reused across the six tensor-component G passes
+    std::vector<double> scratch(mesh);
     std::vector<std::complex<double>> w_r(nrxx);
     double d3[3][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
     const double fac = ucell_->omega / static_cast<double>(pw_rho_->nxyz);
@@ -372,9 +374,9 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
                 {
                     continue;
                 }
-                const double gphys = std::sqrt(g2) * ucell_->tpiba;
+                const double k_phys = std::sqrt(g2) * ucell_->tpiba;
                 const double rhocg = module_charge::core_charge_form_factor(
-                    mesh, p.r.data(), p.rab.data(), p.rho_atc.data(), ucell_->omega, gphys);
+                    mesh, p.r.data(), p.rab.data(), p.rho_atc.data(), ucell_->omega, k_phys, scratch);
 
                 const double phase = ModuleBase::TWO_PI * (gv * tau_cart) / ucell_->lat0;
                 // AGENTS rule 14: named locals instead of computed ctor args

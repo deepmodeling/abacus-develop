@@ -36,15 +36,18 @@ void set_rho_core(const UnitCell& ucell,
                   const ModulePW::PW_Basis& rhopw);
 
 // First-order core-density response (the q-shifted derivative of the
-// core charge, QE addcore convention): for the displacement of atom
-// iat along direction dir,
-//   drhoc_g(G) = -i tpiba (G+q)_dir * rho_atc~(|G+q|) * exp(-i(G+q).tau)
-// with rho_atc~ the numeric Simpson radial transform
-//   4pi/Omega Int r^2 rho_atc(r) j0(|G+q| r) dr.
-// Unlike set_rho_core this evaluates per G (|G+q| differs at every ig,
-// so the gg_uniq shell cache cannot be reused) and carries the
+// core charge, QE addcore convention). Conventions: q_cart is in the
+// same scaled Cartesian units as rhopw.gcar (q_cart = q_frac * ucell.G),
+// so the physical wavevector is K = tpiba * (gcar + q_cart) in 1/bohr;
+// with tau_cart = lat0 * tau (bohr), for the displacement of atom iat
+// along direction dir,
+//   drhoc_g(G) = -i K_dir * rho_atc~(|K|) * exp(-i K.tau_cart)
+// where rho_atc~ is the numeric Simpson radial transform
+//   4pi/Omega Int r^2 rho_atc(r) j0(|K| r) dr.
+// Unlike set_rho_core this evaluates per G (|K| differs at every ig, so
+// the gg_uniq shell cache cannot be reused) and carries the
 // single-atom structure-factor phase. Empty output for a non-nlcc atom
-// or an out-of-range (iat, dir); the |G+q| = 0 harmonic is left zero.
+// or an out-of-range (iat, dir); the |K| = 0 harmonic is left zero.
 // Consumed by the DFPT first-order density (DFPT_Rho::compute_drhoc_g
 // delegates here).
 void set_drho_core(const UnitCell& ucell,
@@ -54,18 +57,21 @@ void set_drho_core(const UnitCell& ucell,
                    const ModulePW::PW_Basis& rhopw,
                    std::vector<std::complex<double>>& drhoc_g);
 
-// Core-charge form factor at a single physical wavevector g (1/bohr):
-//   4pi/Omega * Int r^2 rho_atc(r) j0(g r) dr   (numeric Simpson).
+// Core-charge form factor at a single physical wavevector k (1/bohr):
+//   4pi/Omega * Int r^2 rho_atc(r) j0(k r) dr   (numeric Simpson).
 // The shared radial kernel of every per-point core-charge evaluation
 // (the first-order response above and the DFPT dynmatcc second-order
 // route); the ground-state set_rho_core instead shells it through the
-// cached, multithreaded non_linear_core_correction.
+// cached, multithreaded non_linear_core_correction. scratch is a
+// caller-owned buffer of size mesh reused across calls (the kernel
+// allocates nothing per G).
 double core_charge_form_factor(int mesh,
                                const double* r,
                                const double* rab,
                                const double* rho_atc,
                                double omega,
-                               double g);
+                               double k,
+                               std::vector<double>& scratch);
 
 // Sum the (spin-resolved) charge density over the real-space grid and
 // convert it to a total charge using the cell volume and grid size.
