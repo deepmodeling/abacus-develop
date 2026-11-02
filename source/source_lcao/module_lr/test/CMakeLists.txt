@@ -3,82 +3,46 @@ if(ENABLE_MPI)
 endif()
 if(ENABLE_LIBXC)
   addtest(
-    TARGET
-    MODULE_LR_pot_hxc_lrtd
-    LIBS
-    base
-    parameter
-    device
-    container
-    psi
-    Libxc::xc
-    SOURCES
-    test_pot_hxc_lrtd.cpp
-    ../potentials/pot_hxc_lrtd.cpp
-    ../kernel_pots.cpp
-    ../potentials/pot_grad_xc.cpp
-    ../potentials/xc_kernel.cpp
-    ../potentials/xc_kxc.cpp
-    ../utils/lr_util.cpp
-    ../../../source_hamilt/module_xc/xc_functional.cpp
-    ../../../source_hamilt/module_xc/libxc_setup.cpp)
+    TARGET MODULE_LR_pot_hxc_lrtd
+    LIBS base parameter device container psi Libxc::xc
+    SOURCES test_pot_hxc_lrtd.cpp
+            ../potentials/pot_hxc_lrtd.cpp
+            ../kernel_pots.cpp
+            ../potentials/pot_grad_xc.cpp
+            ../potentials/xc_kernel.cpp
+            ../potentials/xc_kxc.cpp
+            ../utils/lr_util.cpp
+            ../../../source_hamilt/module_xc/xc_functional.cpp
+            ../../../source_hamilt/module_xc/libxc_setup.cpp)
 
   addtest(
-    TARGET
-    MODULE_LR_xc_kxc
-    LIBS
-    Libxc::xc
-    SOURCES
-    test_xc_kxc.cpp
-    ../potentials/xc_kxc.cpp)
+    TARGET MODULE_LR_xc_kxc
+    LIBS Libxc::xc
+    SOURCES test_xc_kxc.cpp ../potentials/xc_kxc.cpp)
 endif()
 
 addtest(
-  TARGET
-  MODULE_LR_exx_projection
-  LIBS
-  base
-  parameter
-  ${math_libs}
-  container
-  device
-  SOURCES
-  test_exx_proj.cpp
-  ../exx_proj.cpp)
+  TARGET MODULE_LR_exx_projection
+  LIBS base parameter ${math_libs} container device
+  SOURCES test_exx_proj.cpp ../exx_proj.cpp)
 
 addtest(
-  TARGET
-  MODULE_LR_grad_degen
-  LIBS
-  base
-  parameter
-  ${math_libs}
-  container
-  device
-  SOURCES
-  test_grad_degen.cpp
-  test_grad_jt.cpp
-  ../grad_degen.cpp
-  ../grad_jt.cpp)
+  TARGET MODULE_LR_grad_degen
+  LIBS base parameter ${math_libs} container device
+  SOURCES test_grad_degen.cpp test_grad_jt.cpp ../grad_degen.cpp ../grad_jt.cpp)
 
 if(ENABLE_MPI)
   addtest(
-    TARGET
-    MODULE_LR_zeqlin_solv
-    LIBS
-    base
-    parameter
-    ${math_libs}
-    container
-    device
-    psi
-    MPI::MPI_CXX
-    SOURCES
-    test_zeqlin_solv.cpp
-    ${test_zeqlin_solv_main}
-    ../zeq_cg.cpp
-    ../zeqlin_solv.cpp
-    ../utils/lr_util.cpp)
+    TARGET MODULE_LR_zeqlin_solv
+    LIBS base
+         parameter
+         ${math_libs}
+         container
+         device
+         psi
+         MPI::MPI_CXX
+    SOURCES test_zeqlin_solv.cpp ${test_zeqlin_solv_main} ../zeq_cg.cpp
+            ../zeqlin_solv.cpp ../utils/lr_util.cpp)
   add_test(
     NAME MODULE_LR_zeqlin_failure_mpi
     COMMAND
@@ -92,16 +56,9 @@ if(ENABLE_MPI)
 endif()
 
 addtest(
-  TARGET
-  MODULE_LR_gradient_amplitudes
-  LIBS
-  base
-  parameter
-  ${math_libs}
-  container
-  device
-  SOURCES
-  test_lr_amp.cpp)
+  TARGET MODULE_LR_gradient_amplitudes
+  LIBS base parameter ${math_libs} container device
+  SOURCES test_lr_amp.cpp)
 
 # AO construction shares the existing two-center mock fixture with operator tests.
 set(root_overlap_test_sources
@@ -117,32 +74,14 @@ set(root_overlap_test_sources
     ../../../source_hamilt/module_hcontainer/func_folding.cpp)
 
 addtest(
-  TARGET
-  MODULE_LR_state_ovlp
-  LIBS
-  base
-  parameter
-  ${math_libs}
-  container
-  device
-  psi
-  SOURCES
-  test_state_ovlp.cpp
-  state_ovlp_test.h
-  ${root_overlap_test_sources})
+  TARGET MODULE_LR_state_ovlp
+  LIBS base parameter ${math_libs} container device psi
+  SOURCES test_state_ovlp.cpp state_ovlp_test.h ${root_overlap_test_sources})
 
 addtest(
-  TARGET
-  MODULE_LR_state_group
-  LIBS
-  base
-  parameter
-  ${math_libs}
-  container
-  device
-  SOURCES
-  test_state_group.cpp
-  ../state_group.cpp)
+  TARGET MODULE_LR_state_group
+  LIBS base parameter ${math_libs} container device
+  SOURCES test_state_group.cpp ../state_group.cpp)
 
 set(state_track_test_sources
     test_state_track.cpp ../state_track.cpp ../state_group.cpp
@@ -152,34 +91,18 @@ if(ENABLE_MPI)
        ../../../source_base/test/mpi_test_main.cpp)
 endif()
 addtest(
-  TARGET
-  MODULE_LR_state_track
-  LIBS
-  base
-  parameter
-  ${math_libs}
-  container
-  device
-  psi
-  SOURCES
-  ${state_track_test_sources})
+  TARGET MODULE_LR_state_track
+  LIBS base parameter ${math_libs} container device psi
+  SOURCES ${state_track_test_sources})
 
 set(cal_edm_test_sources test_cal_edm.cpp ../cal_edm.cpp ../utils/lr_util.cpp)
 if(ENABLE_MPI)
   list(APPEND cal_edm_test_sources ../../../source_base/test/mpi_test_main.cpp)
 endif()
 addtest(
-  TARGET
-  MODULE_LR_cal_edm
-  LIBS
-  base
-  parameter
-  ${math_libs}
-  container
-  device
-  psi
-  SOURCES
-  ${cal_edm_test_sources})
+  TARGET MODULE_LR_cal_edm
+  LIBS base parameter ${math_libs} container device psi
+  SOURCES ${cal_edm_test_sources})
 
 # LR/DM adapter regressions belong to LR; estate must not depend on this module.
 set(lr_dm_test_sources
@@ -211,16 +134,9 @@ if(ENABLE_MPI)
   list(APPEND lr_dm_test_sources ../../../source_base/test/mpi_test_main.cpp)
 endif()
 addtest(
-  TARGET
-  MODULE_LR_dm_regressions
-  LIBS
-  parameter
-  base
-  device
-  symmetry
-  container
-  SOURCES
-  ${lr_dm_test_sources})
+  TARGET MODULE_LR_dm_regressions
+  LIBS parameter base device symmetry container
+  SOURCES ${lr_dm_test_sources})
 
 if(ENABLE_MPI)
   add_test(

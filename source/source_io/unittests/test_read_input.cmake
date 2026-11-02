@@ -44,7 +44,7 @@ endif()
 
 execute_process(
   COMMAND "${MPIEXEC_EXECUTABLE}" ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
-    "${READER}" ${MPIEXEC_POSTFLAGS} "${input_file}"
+          "${READER}" ${MPIEXEC_POSTFLAGS} "${input_file}"
   WORKING_DIRECTORY "${CASE_DIR}"
   RESULT_VARIABLE result
   OUTPUT_VARIABLE output
@@ -53,15 +53,19 @@ execute_process(
 string(APPEND output "${error}")
 
 if(NOT "${result}" STREQUAL "${expected_exit}")
-  message(FATAL_ERROR "Expected exit ${expected_exit}, got ${result}:\n${output}")
+  message(
+    FATAL_ERROR "Expected exit ${expected_exit}, got ${result}:\n${output}")
 endif()
 string(REGEX MATCHALL "INPUT reader process reached shutdown" exits "${output}")
 list(LENGTH exits exit_count)
 if(NOT exit_count EQUAL 4)
-  message(FATAL_ERROR "Only ${exit_count} of 4 processes reached reader shutdown:\n${output}")
+  message(
+    FATAL_ERROR
+      "Only ${exit_count} of 4 processes reached reader shutdown:\n${output}")
 endif()
 if(expected_exit EQUAL 1)
-  foreach(diagnostic IN ITEMS "${input_file}" "${expected}" "${expected_manual}")
+  foreach(diagnostic IN ITEMS "${input_file}" "${expected}"
+                              "${expected_manual}")
     string(FIND "${output}" "${diagnostic}" found)
     if(found EQUAL -1)
       message(FATAL_ERROR "Missing diagnostic '${diagnostic}':\n${output}")
