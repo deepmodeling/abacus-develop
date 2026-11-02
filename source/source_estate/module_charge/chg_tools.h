@@ -54,6 +54,19 @@ void set_drho_core(const UnitCell& ucell,
                    const ModulePW::PW_Basis& rhopw,
                    std::vector<std::complex<double>>& drhoc_g);
 
+// Core-charge form factor at a single physical wavevector g (1/bohr):
+//   4pi/Omega * Int r^2 rho_atc(r) j0(g r) dr   (numeric Simpson).
+// The shared radial kernel of every per-point core-charge evaluation
+// (the first-order response above and the DFPT dynmatcc second-order
+// route); the ground-state set_rho_core instead shells it through the
+// cached, multithreaded non_linear_core_correction.
+double core_charge_form_factor(int mesh,
+                               const double* r,
+                               const double* rab,
+                               const double* rho_atc,
+                               double omega,
+                               double g);
+
 // Sum the (spin-resolved) charge density over the real-space grid and
 // convert it to a total charge using the cell volume and grid size.
 // rho[is][ir] is the density for spin channel is. nspin0 is the number of

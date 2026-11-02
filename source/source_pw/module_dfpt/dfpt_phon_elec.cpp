@@ -9,8 +9,7 @@
 #include "dfpt_pert.h"
 #include "dfpt_pw_data.h"
 #include "dfpt_rho.h"
-#include "source_base/math_integral.h"
-#include "source_base/math_sphbes.h"
+#include "source_estate/module_charge/chg_tools.h"
 #include "source_base/parallel_reduce.h"
 
 #include <algorithm>
@@ -355,7 +354,6 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
     const int mesh = p.msh;
     const ModuleBase::Vector3<double> tau_cart
         = ucell_->atoms[it].tau[ucell_->iat2ia[atom_idx]] * ucell_->lat0;
-    std::vector<double> aux(mesh);
     std::vector<std::complex<double>> w_g(npw);
     std::vector<std::complex<double>> w_r(nrxx);
     double d3[3][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
@@ -375,14 +373,8 @@ void DFPT_Phon::accum_nlcc_diag(int atom_idx, int q_idx)
                     continue;
                 }
                 const double gphys = std::sqrt(g2) * ucell_->tpiba;
-                ModuleBase::Sphbes::Spherical_Bessel(mesh, p.r.data(), gphys, 0, aux.data());
-                double rhocg = 0.0;
-                for (int ir = 0; ir < mesh; ++ir)
-                {
-                    aux[ir] = p.r[ir] * p.r[ir] * p.rho_atc[ir] * aux[ir];
-                }
-                ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), p.rab.data(), rhocg);
-                rhocg *= ModuleBase::FOUR_PI / ucell_->omega;
+                const double rhocg = module_charge::core_charge_form_factor(
+                    mesh, p.r.data(), p.rab.data(), p.rho_atc.data(), ucell_->omega, gphys);
 
                 const double phase = ModuleBase::TWO_PI * (gv * tau_cart) / ucell_->lat0;
                 // AGENTS rule 14: named locals instead of computed ctor args

@@ -8,8 +8,6 @@
 #include "source_base/module_mixing/plain_mixing.h"
 #include "source_base/module_mixing/broyden_mixing.h"
 #include "source_base/parallel_reduce.h"
-#include "source_base/math_integral.h"
-#include "source_base/math_sphbes.h"
 #include "source_estate/module_charge/chg_tools.h"
 
 #include <algorithm>

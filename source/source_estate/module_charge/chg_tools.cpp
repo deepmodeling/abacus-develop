@@ -362,6 +362,25 @@ void set_rho_core(const UnitCell& ucell,
     ModuleBase::timer::end("module_charge", "set_rho_core");
 }
 
+double core_charge_form_factor(int mesh,
+                               const double* r,
+                               const double* rab,
+                               const double* rho_atc,
+                               double omega,
+                               double g)
+{
+    // radial FT: rho_core~(g) = 4pi/Omega * Int r^2 rho_atc(r) j0(gr) dr
+    std::vector<double> aux(mesh);
+    ModuleBase::Sphbes::Spherical_Bessel(mesh, r, g, 0, aux.data());
+    for (int ir = 0; ir < mesh; ++ir)
+    {
+        aux[ir] = r[ir] * r[ir] * rho_atc[ir] * aux[ir];
+    }
+    double rhocg = 0.0;
+    ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), rab, rhocg);
+    return ModuleBase::FOUR_PI / omega * rhocg;
+}
+
 void set_drho_core(const UnitCell& ucell,
                    int iat,
                    int dir,
@@ -388,10 +407,8 @@ void set_drho_core(const UnitCell& ucell,
     // tau in cartesian bohr (lat0-scaled: tau is in direct units of latvec)
     const ModuleBase::Vector3<double> tau_cart = ucell.atoms[it].tau[ucell.iat2ia[iat]] * ucell.lat0;
     const pseudo& p = ucell.atoms[it].ncpp;
-    const int mesh = p.msh;
 
     drhoc_g.assign(npw, std::complex<double>(0.0, 0.0));
-    std::vector<double> aux(mesh);
 
     for (int ig = 0; ig < npw; ++ig)
     {
@@ -403,15 +420,8 @@ void set_drho_core(const UnitCell& ucell,
             continue;
         }
         const double g = std::sqrt(w2) * ucell.tpiba; // physical 1/bohr
-        // radial FT: rho_core~(|G+q|) = 4pi/Omega * Int r^2 rho_atc(r) j0(gr) dr
-        ModuleBase::Sphbes::Spherical_Bessel(mesh, p.r.data(), g, 0, aux.data());
-        double rhocg = 0.0;
-        for (int ir = 0; ir < mesh; ++ir)
-        {
-            aux[ir] = p.r[ir] * p.r[ir] * p.rho_atc[ir] * aux[ir];
-        }
-        ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), p.rab.data(), rhocg);
-        rhocg *= ModuleBase::FOUR_PI / ucell.omega;
+        const double rhocg = core_charge_form_factor(p.msh, p.r.data(), p.rab.data(),
+                                                     p.rho_atc.data(), ucell.omega, g);
 
         // structure factor phase: exp(-i (G+q) . tau_iat). The sign is
         // load-bearing: exp(+i(G+q)tau) mirrors the core response to the
