@@ -106,7 +106,7 @@ Dual dual_tan(const Dual& value)
 }
 }
 
-UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& neighbor, const int direction) const
+UWithDerivative DescEval::calc_u_deriv(const Neighbor& neighbor, const int direction) const
 {
     if (direction < 0 || direction > 2)
     {

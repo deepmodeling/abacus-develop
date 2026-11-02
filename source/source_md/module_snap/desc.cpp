@@ -11,7 +11,7 @@ namespace ModuleMD
 namespace SNAP
 {
 
-DescriptorEvaluator::DescriptorEvaluator(const ModelParameters& parameters)
+DescEval::DescEval(const ModelParameters& parameters)
     : parameters_(parameters), cg_table_(parameters.twojmax), u_size_(0)
 {
     std::string error;
@@ -40,14 +40,14 @@ DescriptorEvaluator::DescriptorEvaluator(const ModelParameters& parameters)
                     index.j1 = j1;
                     index.j2 = j2;
                     index.j = j;
-                    bispectrum_indices_.push_back(index);
+                    bispec_indices_.push_back(index);
                 }
             }
         }
     }
 }
 
-void DescriptorEvaluator::compute_rootpq()
+void DescEval::compute_rootpq()
 {
     const int dimension = parameters_.twojmax + 1;
     rootpq_.assign(static_cast<std::size_t>(dimension * dimension), 0.0);
@@ -60,12 +60,12 @@ void DescriptorEvaluator::compute_rootpq()
     }
 }
 
-std::size_t DescriptorEvaluator::u_index(const int j, const int ma, const int mb) const
+std::size_t DescEval::u_index(const int j, const int ma, const int mb) const
 {
     return u_block_[static_cast<std::size_t>(j)] + static_cast<std::size_t>(mb * (j + 1) + ma);
 }
 
-DescriptorEvaluator::SwitchValue DescriptorEvaluator::switching(const double distance,
+DescEval::SwitchValue DescEval::switching(const double distance,
                                                                  const Neighbor& neighbor,
                                                                  const double cutoff_radius) const
 {
@@ -84,7 +84,7 @@ DescriptorEvaluator::SwitchValue DescriptorEvaluator::switching(const double dis
         result.value = 0.5 * (std::cos(angle) + 1.0);
         result.derivative = -0.5 * std::sin(angle) * angle_scale;
     }
-    if (parameters_.switchinner_flag)
+    if (parameters_.inner_flag)
     {
         const double inner_start = neighbor.sinner - neighbor.dinner;
         const double inner_end = neighbor.sinner + neighbor.dinner;
@@ -98,15 +98,15 @@ DescriptorEvaluator::SwitchValue DescriptorEvaluator::switching(const double dis
             const double angle_scale = 0.5 * ModuleBase::PI / neighbor.dinner;
             const double angle = (distance - inner_start) * angle_scale;
             const double inner_value = 0.5 * (1.0 - std::cos(angle));
-            const double inner_derivative = 0.5 * std::sin(angle) * angle_scale;
-            result.derivative = result.derivative * inner_value + result.value * inner_derivative;
+            const double inner_deriv = 0.5 * std::sin(angle) * angle_scale;
+            result.derivative = result.derivative * inner_value + result.value * inner_deriv;
             result.value *= inner_value;
         }
     }
     return result;
 }
 
-std::vector<std::complex<double> > DescriptorEvaluator::compute_u(const Neighbor& neighbor) const
+std::vector<std::complex<double> > DescEval::compute_u(const Neighbor& neighbor) const
 {
     const double rsq = neighbor.x * neighbor.x + neighbor.y * neighbor.y + neighbor.z * neighbor.z;
     const double distance = std::sqrt(rsq);
@@ -162,12 +162,12 @@ std::vector<std::complex<double> > DescriptorEvaluator::compute_u(const Neighbor
     return result;
 }
 
-std::vector<std::complex<double> > DescriptorEvaluator::accumulate_u(const std::vector<Neighbor>& neighbors) const
+std::vector<std::complex<double> > DescEval::accumulate_u(const std::vector<Neighbor>& neighbors) const
 {
     return accumulate_u(neighbors, 0);
 }
 
-std::vector<std::complex<double> > DescriptorEvaluator::accumulate_u(const std::vector<Neighbor>& neighbors,
+std::vector<std::complex<double> > DescEval::accumulate_u(const std::vector<Neighbor>& neighbors,
                                                                       const std::size_t central_element) const
 {
     const std::size_t channels = channel_count();
@@ -217,20 +217,20 @@ std::vector<std::complex<double> > DescriptorEvaluator::accumulate_u(const std::
     return result;
 }
 
-std::vector<double> DescriptorEvaluator::compute_bispectrum(const std::vector<std::complex<double> >& u) const
+std::vector<double> DescEval::calc_bispec(const std::vector<std::complex<double> >& u) const
 {
     const std::size_t channels = channel_count();
     if (u.size() != channels * u_size_)
     {
         throw std::invalid_argument("SNAP u array has an unexpected size.");
     }
-    const std::size_t bispectrum_size = bispectrum_indices_.size();
+    const std::size_t bispectrum_size = bispec_indices_.size();
     std::vector<double> result(channels * channels * channels * bispectrum_size, 0.0);
     const auto compute_one = [this, &u](const std::size_t first_channel,
                                          const std::size_t second_channel,
                                          const std::size_t third_channel,
-                                         const std::size_t bispectrum_index) {
-        const BispectrumIndex& index = bispectrum_indices_[bispectrum_index];
+                                         const std::size_t bispec_index) {
+        const BispectrumIndex& index = bispec_indices_[bispec_index];
         const std::size_t first_offset = first_channel * u_size_;
         const std::size_t second_offset = second_channel * u_size_;
         const std::size_t third_offset = third_channel * u_size_;
@@ -305,7 +305,7 @@ std::vector<double> DescriptorEvaluator::compute_bispectrum(const std::vector<st
     return result;
 }
 
-std::vector<double> DescriptorEvaluator::compute_bispectrum_derivative(
+std::vector<double> DescEval::calc_b_deriv(
     const std::vector<std::complex<double> >& u,
     const std::vector<std::complex<double> >& du) const
 {
@@ -314,13 +314,13 @@ std::vector<double> DescriptorEvaluator::compute_bispectrum_derivative(
     {
         throw std::invalid_argument("SNAP u derivative array has an unexpected size.");
     }
-    const std::size_t bispectrum_size = bispectrum_indices_.size();
+    const std::size_t bispectrum_size = bispec_indices_.size();
     std::vector<double> result(channels * channels * channels * bispectrum_size, 0.0);
     const auto compute_one = [this, &u, &du](const std::size_t first_channel,
                                                const std::size_t second_channel,
                                                const std::size_t third_channel,
-                                               const std::size_t bispectrum_index) {
-        const BispectrumIndex& index = bispectrum_indices_[bispectrum_index];
+                                               const std::size_t bispec_index) {
+        const BispectrumIndex& index = bispec_indices_[bispec_index];
         const std::size_t first_offset = first_channel * u_size_;
         const std::size_t second_offset = second_channel * u_size_;
         const std::size_t third_offset = third_channel * u_size_;

@@ -1,5 +1,5 @@
-#ifndef SNAP_CALCULATOR_H
-#define SNAP_CALCULATOR_H
+#ifndef SNAP_CALC_H
+#define SNAP_CALC_H
 
 #include "desc.h"
 #include "model.h"
@@ -32,22 +32,22 @@ class Calculator
 
     EnergyResult compute(const std::vector<Neighbor>& neighbors, std::size_t central_element) const;
 
-    ForceResult compute_with_analytic_force(const std::vector<Neighbor>& neighbors,
+    ForceResult eval_force(const std::vector<Neighbor>& neighbors,
                                              std::size_t central_element) const;
 
-    ForceResult compute_with_finite_difference_force(const std::vector<Neighbor>& neighbors,
+    ForceResult eval_force_fd(const std::vector<Neighbor>& neighbors,
                                                      std::size_t central_element,
                                                      double displacement) const;
 
     std::size_t descriptor_size() const
     {
-        return descriptor_size_;
+        return desc_size_;
     }
 
   private:
     ModelData model_;
-    DescriptorEvaluator descriptor_evaluator_;
-    std::size_t descriptor_size_;
+    DescEval desc_eval_;
+    std::size_t desc_size_;
 };
 
 class CellAccumulator
@@ -56,7 +56,7 @@ class CellAccumulator
     explicit CellAccumulator(std::size_t atom_count);
 
     void add(std::size_t center_index,
-             const std::vector<std::size_t>& neighbor_indices,
+             const std::vector<std::size_t>& neigh_indices,
              const std::vector<Neighbor>& neighbors,
              const ForceResult& result);
 
@@ -73,4 +73,4 @@ class CellAccumulator
 } // namespace SNAP
 } // namespace ModuleMD
 
-#endif // SNAP_CALCULATOR_H
+#endif // SNAP_CALC_H

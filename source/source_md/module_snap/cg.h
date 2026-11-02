@@ -1,5 +1,5 @@
-#ifndef SNAP_CLEBSCH_GORDAN_H
-#define SNAP_CLEBSCH_GORDAN_H
+#ifndef SNAP_CG_H
+#define SNAP_CG_H
 
 #include <vector>
 
@@ -14,10 +14,10 @@ namespace SNAP
  * If the stored index is j, the physical angular momentum is j/2. The same
  * convention is used for m and m'.
  */
-class ClebschGordanTable
+class CGTable
 {
   public:
-    explicit ClebschGordanTable(int twojmax);
+    explicit CGTable(int twojmax);
 
     double coefficient(int j1, int m1, int j2, int m2, int j, int m) const;
 
@@ -44,7 +44,7 @@ class ClebschGordanTable
     };
 
     static bool allowed(int j1, int m1, int j2, int m2, int j, int m);
-    static double coefficient_uncached(int j1, int m1, int j2, int m2, int j, int m);
+    static double coeff_raw(int j1, int m1, int j2, int m2, int j, int m);
     static double factorial(int value);
     const Entry* find(int j1, int m1, int j2, int m2, int j, int m) const;
 
@@ -55,4 +55,4 @@ class ClebschGordanTable
 } // namespace SNAP
 } // namespace ModuleMD
 
-#endif // SNAP_CLEBSCH_GORDAN_H
+#endif // SNAP_CG_H

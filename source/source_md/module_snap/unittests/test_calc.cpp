@@ -23,7 +23,7 @@ ModuleMD::SNAP::ModelData make_model()
     return model;
 }
 
-ModuleMD::SNAP::ModelData make_multi_element_model()
+ModuleMD::SNAP::ModelData multi_model()
 {
     ModuleMD::SNAP::ModelData model;
     model.parameters.rcut = 4.5;
@@ -43,7 +43,7 @@ ModuleMD::SNAP::ModelData make_multi_element_model()
     return model;
 }
 
-ModuleMD::SNAP::ModelData make_chemical_model()
+ModuleMD::SNAP::ModelData chem_model()
 {
     ModuleMD::SNAP::ModelData model;
     model.parameters.rcut = 4.5;
@@ -67,7 +67,7 @@ ModuleMD::SNAP::ModelData make_chemical_model()
     return model;
 }
 
-ModuleMD::SNAP::ModelData make_angular_quadratic_model()
+ModuleMD::SNAP::ModelData quad_model()
 {
     ModuleMD::SNAP::ModelData model = make_model();
     model.parameters.twojmax = 2;
@@ -86,7 +86,7 @@ struct SmallCellResult
     std::array<std::array<double, 3>, 3> forces = {};
 };
 
-SmallCellResult evaluate_small_cell(const ModuleMD::SNAP::Calculator& calculator,
+SmallCellResult eval_cell(const ModuleMD::SNAP::Calculator& calculator,
                                     const std::array<std::array<double, 3>, 3>& positions)
 {
     SmallCellResult total;
@@ -94,7 +94,7 @@ SmallCellResult evaluate_small_cell(const ModuleMD::SNAP::Calculator& calculator
     for (std::size_t center = 0; center < positions.size(); ++center)
     {
         std::vector<ModuleMD::SNAP::Neighbor> neighbors;
-        std::vector<std::size_t> neighbor_indices;
+        std::vector<std::size_t> neigh_indices;
         for (std::size_t atom = 0; atom < positions.size(); ++atom)
         {
             if (atom == center)
@@ -107,10 +107,10 @@ SmallCellResult evaluate_small_cell(const ModuleMD::SNAP::Calculator& calculator
             neighbor.z = positions[atom][2] - positions[center][2];
             neighbor.cutoff_radius = 4.5;
             neighbors.push_back(neighbor);
-            neighbor_indices.push_back(atom);
+            neigh_indices.push_back(atom);
         }
-        const ModuleMD::SNAP::ForceResult result = calculator.compute_with_analytic_force(neighbors, 0);
-        accumulator.add(center, neighbor_indices, neighbors, result);
+        const ModuleMD::SNAP::ForceResult result = calculator.eval_force(neighbors, 0);
+        accumulator.add(center, neigh_indices, neighbors, result);
     }
     total.energy = accumulator.energy();
     total.virial_xx = accumulator.virial()[0];
@@ -121,7 +121,7 @@ SmallCellResult evaluate_small_cell(const ModuleMD::SNAP::Calculator& calculator
     return total;
 }
 
-TEST(SnapCalculator, ComputesLinearAtomicEnergy)
+TEST(SnapCalculator, LinearEnergy)
 {
     const ModuleMD::SNAP::Calculator calculator(make_model());
     ModuleMD::SNAP::Neighbor neighbor;
@@ -134,9 +134,9 @@ TEST(SnapCalculator, ComputesLinearAtomicEnergy)
     EXPECT_DOUBLE_EQ(result.energy, 2.0 + 3.0 * result.descriptor[0]);
 }
 
-TEST(SnapCalculator, SupportsMultipleCentralElements)
+TEST(SnapCalculator, MultiCenter)
 {
-    const ModuleMD::SNAP::Calculator calculator(make_multi_element_model());
+    const ModuleMD::SNAP::Calculator calculator(multi_model());
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors;
     const ModuleMD::SNAP::EnergyResult silicon = calculator.compute(neighbors, 0);
     const ModuleMD::SNAP::EnergyResult carbon = calculator.compute(neighbors, 1);
@@ -146,9 +146,9 @@ TEST(SnapCalculator, SupportsMultipleCentralElements)
     EXPECT_NE(silicon.energy, carbon.energy);
 }
 
-TEST(SnapCalculator, SupportsChemicalChannels)
+TEST(SnapCalculator, ChemChannel)
 {
-    const ModuleMD::SNAP::Calculator calculator(make_chemical_model());
+    const ModuleMD::SNAP::Calculator calculator(chem_model());
     ModuleMD::SNAP::Neighbor silicon;
     silicon.x = 1.0;
     silicon.cutoff_radius = 4.5;
@@ -158,42 +158,42 @@ TEST(SnapCalculator, SupportsChemicalChannels)
     carbon.element_index = 1;
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors = {silicon, carbon};
 
-    const ModuleMD::SNAP::ForceResult analytic = calculator.compute_with_analytic_force(neighbors, 0);
-    const ModuleMD::SNAP::ForceResult finite_difference
-        = calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+    const ModuleMD::SNAP::ForceResult analytic = calculator.eval_force(neighbors, 0);
+    const ModuleMD::SNAP::ForceResult finite_diff
+        = calculator.eval_force_fd(neighbors, 0, 1.0e-6);
 
     EXPECT_EQ(analytic.energy.descriptor.size(), static_cast<std::size_t>(8));
-    EXPECT_NEAR(analytic.energy.energy, finite_difference.energy.energy, 1.0e-12);
+    EXPECT_NEAR(analytic.energy.energy, finite_diff.energy.energy, 1.0e-12);
     for (int direction = 0; direction < 3; ++direction)
     {
         EXPECT_NEAR(analytic.center_force[static_cast<std::size_t>(direction)],
-                    finite_difference.center_force[static_cast<std::size_t>(direction)],
+                    finite_diff.center_force[static_cast<std::size_t>(direction)],
                     1.0e-5);
         EXPECT_NEAR(analytic.neighbor_forces[0][static_cast<std::size_t>(direction)],
-                    finite_difference.neighbor_forces[0][static_cast<std::size_t>(direction)],
+                    finite_diff.neighbor_forces[0][static_cast<std::size_t>(direction)],
                     1.0e-5);
     }
 }
 
-TEST(SnapCalculator, RejectsMismatchedCoefficientCount)
+TEST(SnapCalculator, BadCoeffCount)
 {
     ModuleMD::SNAP::ModelData model = make_model();
     model.coefficients[0].push_back(4.0);
     EXPECT_THROW(ModuleMD::SNAP::Calculator calculator(model), std::invalid_argument);
 }
 
-TEST(SnapCalculator, RejectsInvalidCentralElement)
+TEST(SnapCalculator, BadCenter)
 {
     const ModuleMD::SNAP::Calculator calculator(make_model());
     EXPECT_THROW(calculator.compute(std::vector<ModuleMD::SNAP::Neighbor>(), 1), std::out_of_range);
 }
 
-TEST(SnapCalculator, FiniteDifferenceForcesConservePairContribution)
+TEST(SnapCalculator, PairBalance)
 {
     const ModuleMD::SNAP::Calculator calculator(make_model());
     ModuleMD::SNAP::Neighbor neighbor;
     neighbor.x = 1.0;
-    const ModuleMD::SNAP::ForceResult result = calculator.compute_with_finite_difference_force(
+    const ModuleMD::SNAP::ForceResult result = calculator.eval_force_fd(
         std::vector<ModuleMD::SNAP::Neighbor>(1, neighbor), 0, 1.0e-5);
 
     for (int direction = 0; direction < 3; ++direction)
@@ -204,7 +204,7 @@ TEST(SnapCalculator, FiniteDifferenceForcesConservePairContribution)
     }
 }
 
-TEST(SnapCalculator, AnalyticForceMatchesFiniteDifference)
+TEST(SnapCalculator, ForceFinite)
 {
     const ModuleMD::SNAP::Calculator calculator(make_model());
     ModuleMD::SNAP::Neighbor neighbor;
@@ -212,8 +212,8 @@ TEST(SnapCalculator, AnalyticForceMatchesFiniteDifference)
     neighbor.y = 0.4;
     neighbor.z = -0.2;
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors(1, neighbor);
-    const ModuleMD::SNAP::ForceResult analytic = calculator.compute_with_analytic_force(neighbors, 0);
-    const ModuleMD::SNAP::ForceResult finite = calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+    const ModuleMD::SNAP::ForceResult analytic = calculator.eval_force(neighbors, 0);
+    const ModuleMD::SNAP::ForceResult finite = calculator.eval_force_fd(neighbors, 0, 1.0e-6);
     for (int direction = 0; direction < 3; ++direction)
     {
         EXPECT_NEAR(analytic.neighbor_forces[0][static_cast<std::size_t>(direction)],
@@ -222,11 +222,11 @@ TEST(SnapCalculator, AnalyticForceMatchesFiniteDifference)
     }
 }
 
-TEST(SnapCalculator, InnerSwitchMatchesFiniteDifference)
+TEST(SnapCalculator, InnerFinite)
 {
     ModuleMD::SNAP::ModelData model = make_model();
     model.parameters.twojmax = 2;
-    model.parameters.switchinner_flag = true;
+    model.parameters.inner_flag = true;
     model.parameters.sinner.push_back(1.5);
     model.parameters.dinner.push_back(0.4);
     model.coefficients[0] = {0.2, 0.3, -0.1, 0.5, 0.2, -0.4};
@@ -242,8 +242,8 @@ TEST(SnapCalculator, InnerSwitchMatchesFiniteDifference)
     second.y = 1.7;
     second.z = -0.2;
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors = {first, second};
-    const ModuleMD::SNAP::ForceResult analytic = calculator.compute_with_analytic_force(neighbors, 0);
-    const ModuleMD::SNAP::ForceResult finite = calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+    const ModuleMD::SNAP::ForceResult analytic = calculator.eval_force(neighbors, 0);
+    const ModuleMD::SNAP::ForceResult finite = calculator.eval_force_fd(neighbors, 0, 1.0e-6);
     for (std::size_t i = 0; i < neighbors.size(); ++i)
     {
         for (int direction = 0; direction < 3; ++direction)
@@ -258,23 +258,23 @@ TEST(SnapCalculator, InnerSwitchMatchesFiniteDifference)
     model.coefficients[0][6] = 0.25;
     model.coefficients[0][10] = -0.15;
     const ModuleMD::SNAP::Calculator quadratic(model);
-    const ModuleMD::SNAP::ForceResult quadratic_analytic = quadratic.compute_with_analytic_force(neighbors, 0);
-    const ModuleMD::SNAP::ForceResult quadratic_finite = quadratic.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+    const ModuleMD::SNAP::ForceResult quad_analytic = quadratic.eval_force(neighbors, 0);
+    const ModuleMD::SNAP::ForceResult quad_finite = quadratic.eval_force_fd(neighbors, 0, 1.0e-6);
     for (std::size_t i = 0; i < neighbors.size(); ++i)
     {
         for (int direction = 0; direction < 3; ++direction)
         {
-            EXPECT_NEAR(quadratic_analytic.neighbor_forces[i][static_cast<std::size_t>(direction)],
-                        quadratic_finite.neighbor_forces[i][static_cast<std::size_t>(direction)], 1.0e-5);
+            EXPECT_NEAR(quad_analytic.neighbor_forces[i][static_cast<std::size_t>(direction)],
+                        quad_finite.neighbor_forces[i][static_cast<std::size_t>(direction)], 1.0e-5);
         }
     }
 }
 
-TEST(SnapCalculator, InnerSwitchSkipsSingularRadius)
+TEST(SnapCalculator, InnerSkip)
 {
     ModuleMD::SNAP::ModelData model = make_model();
     model.parameters.rmin = 0.5;
-    model.parameters.switchinner_flag = true;
+    model.parameters.inner_flag = true;
     model.parameters.sinner.push_back(1.5);
     model.parameters.dinner.push_back(0.4);
     const ModuleMD::SNAP::Calculator calculator(model);
@@ -283,11 +283,11 @@ TEST(SnapCalculator, InnerSwitchSkipsSingularRadius)
     neighbor.sinner = 1.5;
     neighbor.dinner = 0.4;
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors(1, neighbor);
-    EXPECT_NO_THROW(calculator.compute_with_analytic_force(neighbors, 0));
-    model.parameters.switchinner_flag = false;
+    EXPECT_NO_THROW(calculator.eval_force(neighbors, 0));
+    model.parameters.inner_flag = false;
     const ModuleMD::SNAP::Calculator bare(model);
     EXPECT_THROW(bare.compute(neighbors, 0), std::domain_error);
-    EXPECT_THROW(bare.compute_with_analytic_force(neighbors, 0), std::domain_error);
+    EXPECT_THROW(bare.eval_force(neighbors, 0), std::domain_error);
 
     model.parameters.twojmax = 2;
     model.coefficients[0] = {0.2, 0.3, -0.1, 0.5, 0.2, -0.4};
@@ -295,8 +295,8 @@ TEST(SnapCalculator, InnerSwitchSkipsSingularRadius)
     neighbor.x = 0.55;
     neighbor.y = 0.12;
     const std::vector<ModuleMD::SNAP::Neighbor> near_neighbors(1, neighbor);
-    const ModuleMD::SNAP::ForceResult near_analytic = angular.compute_with_analytic_force(near_neighbors, 0);
-    const ModuleMD::SNAP::ForceResult near_finite = angular.compute_with_finite_difference_force(near_neighbors, 0, 1.0e-6);
+    const ModuleMD::SNAP::ForceResult near_analytic = angular.eval_force(near_neighbors, 0);
+    const ModuleMD::SNAP::ForceResult near_finite = angular.eval_force_fd(near_neighbors, 0, 1.0e-6);
     EXPECT_TRUE(std::isfinite(near_analytic.energy.energy));
     for (int direction = 0; direction < 3; ++direction)
     {
@@ -306,13 +306,13 @@ TEST(SnapCalculator, InnerSwitchSkipsSingularRadius)
     }
 }
 
-TEST(SnapCalculator, AngularQuadraticForcesMatchLammpsAndStrain)
+TEST(SnapCalculator, QuadStrain)
 {
-    const ModuleMD::SNAP::Calculator calculator(make_angular_quadratic_model());
+    const ModuleMD::SNAP::Calculator calculator(quad_model());
     const std::array<std::array<double, 3>, 3> positions = {{{0.0, 0.0, 0.0},
                                                               {1.058354, 0.0, 0.0},
                                                               {0.2645885, 1.3229425, 0.0}}};
-    const SmallCellResult result = evaluate_small_cell(calculator, positions);
+    const SmallCellResult result = eval_cell(calculator, positions);
     const double lammps_forces[3][2] = {{67.2928038408958, 57.5476436778783},
                                          {-92.1399449575303, 60.5944497536836},
                                          {24.8471411166345, -118.142093431562}};
@@ -334,10 +334,10 @@ TEST(SnapCalculator, AngularQuadraticForcesMatchLammpsAndStrain)
         expanded[atom][0] *= 1.0 + strain;
         contracted[atom][0] *= 1.0 - strain;
     }
-    const double expanded_energy = evaluate_small_cell(calculator, expanded).energy;
-    const double contracted_energy = evaluate_small_cell(calculator, contracted).energy;
-    const double strain_derivative = (expanded_energy - contracted_energy) / (2.0 * strain);
-    EXPECT_NEAR(result.virial_xx, -strain_derivative, 1.0e-3);
+    const double expanded_energy = eval_cell(calculator, expanded).energy;
+    const double strain_energy = eval_cell(calculator, contracted).energy;
+    const double strain_deriv = (expanded_energy - strain_energy) / (2.0 * strain);
+    EXPECT_NEAR(result.virial_xx, -strain_deriv, 1.0e-3);
 }
 
 } // namespace

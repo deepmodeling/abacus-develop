@@ -7,23 +7,23 @@
 namespace
 {
 
-TEST(SnapClebschGordan, HighestWeightCoefficientIsOne)
+TEST(SnapCG, HighWeight)
 {
-    const ModuleMD::SNAP::ClebschGordanTable table(2);
+    const ModuleMD::SNAP::CGTable table(2);
     EXPECT_NEAR(table.coefficient(1, 1, 1, 1, 2, 2), 1.0, 1.0e-14);
 }
 
-TEST(SnapClebschGordan, SingletHasExpectedSigns)
+TEST(SnapCG, SingletSigns)
 {
-    const ModuleMD::SNAP::ClebschGordanTable table(2);
+    const ModuleMD::SNAP::CGTable table(2);
     const double value = 1.0 / std::sqrt(2.0);
     EXPECT_NEAR(table.coefficient(1, 1, 1, -1, 0, 0), value, 1.0e-14);
     EXPECT_NEAR(table.coefficient(1, -1, 1, 1, 0, 0), -value, 1.0e-14);
 }
 
-TEST(SnapClebschGordan, SelectionRulesReturnZero)
+TEST(SnapCG, SelectZero)
 {
-    const ModuleMD::SNAP::ClebschGordanTable table(2);
+    const ModuleMD::SNAP::CGTable table(2);
     EXPECT_DOUBLE_EQ(table.coefficient(1, 1, 1, 1, 0, 0), 0.0);
     EXPECT_DOUBLE_EQ(table.coefficient(1, 1, 1, -1, 2, 1), 0.0);
     EXPECT_DOUBLE_EQ(table.h_coefficient(1, 1, 1, 1, -1, -1, 0, 0, 0), 0.5);
