@@ -282,8 +282,12 @@ void md_line(MDCell& mdcell,
             /// first local step still appends to the accumulated output files
             /// instead of truncating the previous run's records.
             const int global_step = mdrun->step_ + mdrun->step_rst_;
+            /// first_half has already drifted the positions in this run, so
+            /// the charge-extrapolation history may advance.
+            const bool positions_updated = true;
             MD_func::force_virial(p_esolver,
                                   global_step,
+                                  positions_updated,
                                   mdcell,
                                   decomp,
                                   mdrun->potential,

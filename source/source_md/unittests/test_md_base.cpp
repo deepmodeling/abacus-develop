@@ -526,10 +526,27 @@ TEST_F(MdBoundaryTest, InitialForceEvaluationDoesNotAdvancePositionUpdateState)
     }
     std::ofstream log;
     integrator.first_half(log);
-    MD_func::force_virial(&solver, 1, cell, decomposition,
+    const bool positions_updated = true;
+    MD_func::force_virial(&solver, 1, positions_updated, cell, decomposition,
                           integrator.potential, false, integrator.virial, false);
     ASSERT_EQ(solver.observed_position_updates.size(), 2u);
     EXPECT_TRUE(solver.observed_position_updates[1]);
+}
+
+TEST_F(MdBoundaryTest, RestartedSetupDoesNotAdvancePositionUpdateState)
+{
+    const int rank = domain.rank();
+    MD_base integrator(parameters, false, true, rank, cell);
+    PositionStateSolver solver;
+    const std::string readin_directory;
+    // Simulate a restarted run: the global step (step_ + step_rst_) is already
+    // nonzero at the first force evaluation, but no drift happened in this
+    // run, so the charge-extrapolation history must not advance.
+    integrator.step_rst_ = 2;
+    backing.ionic_position_updated = false;
+    integrator.setup(&solver, readin_directory, decomposition);
+    ASSERT_EQ(solver.observed_position_updates.size(), 1u);
+    EXPECT_FALSE(solver.observed_position_updates[0]);
 }
 
 TEST_F(MdBoundaryTest, InitialSyncPreservesPositionUpdateState)

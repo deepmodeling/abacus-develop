@@ -66,7 +66,11 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
     // non-zero step on a restarted run's first step and append to the
     // accumulated files instead of truncating the previous run's records.
     const int global_step = step_ + step_rst_;
-    MD_func::force_virial(p_esolver, global_step, mdcell, decomp, potential, cal_stress, virial, mdp.md_out_force);
+    // The initial force evaluation of a run has no preceding MD drift, so it
+    // must not advance the charge-extrapolation history -- even on restart
+    // (step_rst_ > 0), where the extrapolation state starts degenerate.
+    const bool positions_updated = false;
+    MD_func::force_virial(p_esolver, global_step, positions_updated, mdcell, decomp, potential, cal_stress, virial, mdp.md_out_force);
     MD_func::compute_stress(mdcell, cal_stress, virial, stress);
     if (mdcell.has_backing_unitcell())
     {
