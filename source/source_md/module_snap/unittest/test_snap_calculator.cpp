@@ -175,6 +175,63 @@ TEST(SnapCalculator, SupportsChemicalChannels)
     }
 }
 
+TEST(SnapCalculator, ChemicalAngularChannelsFollowElementOrder)
+{
+    ModuleMD::SNAP::ModelData model = make_chemical_model();
+    model.parameters.twojmax = 2;
+    model.coefficients.assign(2, std::vector<double>(41, 0.0));
+    // Bispectrum index 1 is angular; the channel triple (Si, C, Si) is 2.
+    const std::size_t original_index = 1 + 2 * 5 + 1;
+    model.coefficients[0][original_index] = 1.7;
+    const ModuleMD::SNAP::Calculator calculator(model);
+
+    ModuleMD::SNAP::Neighbor silicon;
+    silicon.x = 1.0;
+    silicon.y = 0.1;
+    silicon.z = 0.2;
+    silicon.cutoff_radius = 4.5;
+    silicon.element_index = 0;
+    ModuleMD::SNAP::Neighbor carbon = silicon;
+    carbon.x = 0.3;
+    carbon.y = 1.1;
+    carbon.z = -0.4;
+    carbon.weight = 0.8;
+    carbon.element_index = 1;
+    const std::vector<ModuleMD::SNAP::Neighbor> neighbors = {silicon, carbon};
+    const ModuleMD::SNAP::ForceResult original = calculator.compute_with_analytic_force(neighbors, 0);
+    const ModuleMD::SNAP::ForceResult finite = calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+
+    ModuleMD::SNAP::ModelData reordered = model;
+    reordered.parameters.elements = {"C", "Si"};
+    reordered.parameters.element_weights = {0.8, 1.0};
+    reordered.parameters.element_radii = {1.7, 2.25};
+    reordered.coefficients.assign(2, std::vector<double>(41, 0.0));
+    // The same physical channel triple is (Si, C, Si) = (1, 0, 1) after reordering.
+    const std::size_t reordered_index = 1 + 5 * 5 + 1;
+    reordered.coefficients[1][reordered_index] = 1.7;
+    const ModuleMD::SNAP::Calculator reordered_calculator(reordered);
+    silicon.element_index = 1;
+    carbon.element_index = 0;
+    const std::vector<ModuleMD::SNAP::Neighbor> reordered_neighbors = {silicon, carbon};
+    const ModuleMD::SNAP::ForceResult permuted
+        = reordered_calculator.compute_with_analytic_force(reordered_neighbors, 1);
+
+    EXPECT_NEAR(original.energy.energy, permuted.energy.energy, 1.0e-10);
+    for (std::size_t atom = 0; atom < neighbors.size(); ++atom)
+    {
+        double force_size = 0.0;
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            const std::size_t component = static_cast<std::size_t>(direction);
+            const double force = original.neighbor_forces[atom][component];
+            force_size += std::abs(force);
+            EXPECT_NEAR(force, permuted.neighbor_forces[atom][component], 1.0e-10);
+            EXPECT_NEAR(force, finite.neighbor_forces[atom][component], 1.0e-5);
+        }
+        EXPECT_GT(force_size, 1.0e-6);
+    }
+}
+
 TEST(SnapCalculator, RejectsMismatchedCoefficientCount)
 {
     ModuleMD::SNAP::ModelData model = make_model();
