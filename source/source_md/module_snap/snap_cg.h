@@ -1,6 +1,8 @@
 #ifndef SNAP_CG_H
 #define SNAP_CG_H
 
+#include <map>
+#include <tuple>
 #include <vector>
 
 namespace ModuleMD
@@ -50,6 +52,7 @@ class ClebschGordanTable
 
     int twojmax_;
     std::vector<Entry> entries_;
+    std::map<std::tuple<int, int, int, int, int, int>, std::size_t> entry_indices_;
 };
 
 } // namespace SNAP

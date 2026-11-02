@@ -41,6 +41,8 @@ ClebschGordanTable::ClebschGordanTable(const int twojmax)
                         entry.j = j;
                         entry.m = m;
                         entry.value = coefficient_uncached(j1, m1, j2, m2, j, m);
+                        const std::tuple<int, int, int, int, int, int> key(j1, m1, j2, m2, j, m);
+                        entry_indices_[key] = entries_.size();
                         entries_.push_back(entry);
                     }
                 }
@@ -130,15 +132,10 @@ const ClebschGordanTable::Entry* ClebschGordanTable::find(const int j1,
                                                           const int j,
                                                           const int m) const
 {
-    for (std::size_t index = 0; index < entries_.size(); ++index)
-    {
-        const Entry& entry = entries_[index];
-        if (entry.j1 == j1 && entry.m1 == m1 && entry.j2 == j2 && entry.m2 == m2 && entry.j == j && entry.m == m)
-        {
-            return &entry;
-        }
-    }
-    return nullptr;
+    const std::tuple<int, int, int, int, int, int> key(j1, m1, j2, m2, j, m);
+    const std::map<std::tuple<int, int, int, int, int, int>, std::size_t>::const_iterator found
+        = entry_indices_.find(key);
+    return found == entry_indices_.end() ? nullptr : &entries_[found->second];
 }
 
 double ClebschGordanTable::coefficient(const int j1,
