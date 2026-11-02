@@ -4,74 +4,63 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__MPI)
 
 add_library(
-    io_input_serial
-    OBJECT
-    ../module_parameter/read_inp_sys.cpp
-    ../module_parameter/read_inp_estruc.cpp
-    ../module_parameter/read_inp_relax.cpp
-    ../module_parameter/read_input_item_md.cpp
-    ../module_parameter/read_inp_ofdft.cpp
-    ../module_parameter/read_input_item_sdft.cpp
-    ../module_parameter/read_inp_tddft.cpp
-    ../module_parameter/read_inp_bse.cpp
-    ../module_parameter/read_inp_dfpt.cpp
-    ../module_parameter/read_inp_deepks.cpp
-    ../module_parameter/read_inp_model.cpp
-    ../module_parameter/read_inp_sccs.cpp
-    ../module_parameter/sccs_inp_check.cpp
-    ../module_parameter/read_inp_postproc.cpp  
-    ../module_parameter/read_inp_exx_dftu.cpp
-    ../module_parameter/read_inp_other.cpp   
-    ../module_parameter/read_inp_out.cpp
-    ../module_parameter/read_input.cpp
-    ../module_parameter/read_set_globalv.cpp
-    ../module_parameter/availability.cpp
-    ../module_parameter/availability_validator.cpp
-    ../module_parameter/input_domain.cpp
-)
+  io_input_serial OBJECT
+  ../module_parameter/read_inp_sys.cpp
+  ../module_parameter/read_inp_estruc.cpp
+  ../module_parameter/read_inp_relax.cpp
+  ../module_parameter/read_input_item_md.cpp
+  ../module_parameter/read_inp_ofdft.cpp
+  ../module_parameter/read_input_item_sdft.cpp
+  ../module_parameter/read_inp_tddft.cpp
+  ../module_parameter/read_inp_bse.cpp
+  ../module_parameter/read_inp_dfpt.cpp
+  ../module_parameter/read_inp_deepks.cpp
+  ../module_parameter/read_inp_model.cpp
+  ../module_parameter/read_inp_sccs.cpp
+  ../module_parameter/sccs_inp_check.cpp
+  ../module_parameter/read_inp_postproc.cpp
+  ../module_parameter/read_inp_exx_dftu.cpp
+  ../module_parameter/read_inp_other.cpp
+  ../module_parameter/read_inp_out.cpp
+  ../module_parameter/read_input.cpp
+  ../module_parameter/read_set_globalv.cpp
+  ../module_parameter/availability.cpp
+  ../module_parameter/availability_validator.cpp
+  ../module_parameter/input_domain.cpp)
 
 abacus_copy_test_files(support)
 
-AddTest(
+addtest(
   TARGET MODULE_IO_read_input_serial
   LIBS parameter io_input_serial
-  SOURCES read_input_test.cpp 
-          ../../source_base/test/tool_quit_no_exit.cpp 
+  SOURCES read_input_test.cpp ../../source_base/test/tool_quit_no_exit.cpp
           ../../source_base/module_device/device.cpp
-          ../../source_base/module_device/output_device.cpp
-)
+          ../../source_base/module_device/output_device.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_IO_read_item_serial
   LIBS parameter base device io_input_serial
-  SOURCES read_input_item_test.cpp test_read_inp_sccs.cpp
-)
+  SOURCES read_input_item_test.cpp test_read_inp_sccs.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_IO_input_domain_reader
   LIBS parameter base device io_input_serial
-  SOURCES test_read_input.cpp ../input_help.cpp
-)
+  SOURCES test_read_input.cpp ../input_help.cpp)
 
-AddTest(
-  TARGET MODULE_IO_read_input_tool
-  SOURCES read_input_tool_test.cpp
-)
+addtest(TARGET MODULE_IO_read_input_tool SOURCES read_input_tool_test.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_IO_rho_io
   LIBS parameter base device cell_info
-  SOURCES rho_io_test.cpp ../module_output/read_cube.cpp ../module_output/write_cube.cpp
-)
+  SOURCES rho_io_test.cpp ../module_output/read_cube.cpp
+          ../module_output/write_cube.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_IO_read_cube
   LIBS parameter base device cell_info
-  SOURCES test_read_cube.cpp ../module_output/read_cube.cpp
-)
+  SOURCES test_read_cube.cpp ../module_output/read_cube.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_IO_system_variable_test
   LIBS parameter base device io_input_serial
-  SOURCES io_sys_var_test.cpp
-)
+  SOURCES io_sys_var_test.cpp)
