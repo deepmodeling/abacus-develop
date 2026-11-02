@@ -1,7 +1,5 @@
 // Serial unit tests of the DFPT_Rho response-mixing family (the mix_drho
-// stack inside dfpt_rho.cpp; this file's name anticipates the Phase-2
-// source split that moves the mixing stack into dfpt_rho_mix.cpp):
-// plain first/second-step combinations and the residual formula, the
+// stack inside dfpt_rho.cpp): plain first/second-step combinations and the residual formula, the
 // Kerker preconditioned first step, the stiff-model stabilization, and
 // the Modified-Broyden convergence and fresh-q reset regressions.
 

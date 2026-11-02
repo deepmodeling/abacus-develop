@@ -1,6 +1,5 @@
 // Serial unit tests of the acoustic sum rule family DFPT_Phon::apply_asr
-// (currently inside dfpt_phon.cpp; this file's name anticipates the
-// Phase-2 source split that moves the ASR family into dfpt_phon_asr.cpp):
+// (currently implemented in dfpt_phon.cpp):
 // simple/crystal enforcement, equivalent-atom redistribution, Born-charge
 // sum rule, ASR+LO-TO interplay, and the directional-cancellation and
 // cross-Cartesian regressions.

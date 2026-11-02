@@ -61,9 +61,8 @@ addtest(
   base
   symmetry
   SOURCES
-  # I-24 split: response kernels vs the mixing family (the shared RNG +
-  # fixture live in dfpt_rho_serial_fixture.h; the mixing file's name
-  # anticipates the Phase-2 source split into dfpt_rho_mix.cpp)
+  # split: response kernels vs the mixing family (the shared RNG +
+  # fixture live in dfpt_rho_serial_fixture.h)
   test_dfpt_rho.cpp
   test_dfpt_rho_mixing.cpp
   ../dfpt_rho.cpp
@@ -88,7 +87,7 @@ addtest(
   base
   symmetry
   SOURCES
-  # I-24 split along the source boundaries: ewald / elec / asr / core
+  # split along the source boundaries: ewald / elec / asr / core
   # (the shared fixture lives in dfpt_phon_serial_fixture.h)
   test_dfpt_phon_ewald.cpp
   test_dfpt_phon_elec.cpp
@@ -122,7 +121,7 @@ addtest(
   base
   symmetry
   SOURCES
-  # I-24 split along the source boundaries: q0 core vs the position
+  # split along the source boundaries: q0 core vs the position
   # operator (the shared fixture lives in dfpt_q0_serial_fixture.h)
   test_dfpt_q0.cpp
   test_dfpt_q0_pos.cpp
