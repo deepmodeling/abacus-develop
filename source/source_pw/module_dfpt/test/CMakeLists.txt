@@ -44,6 +44,7 @@ addtest(
           ../dfpt_kq_basis.cpp
           ../dfpt_stern.cpp
           ../dfpt_rho.cpp
+          ../../../source_estate/module_charge/chg_tools.cpp
           ../dfpt_phon.cpp
           ../dfpt_phon_asr.cpp
           ../dfpt_phon_ewald.cpp

@@ -51,6 +51,7 @@ addtest(
   SOURCES test_dfpt_rho.cpp
           test_dfpt_rho_mix.cpp
           ../dfpt_rho.cpp
+          ../../../source_estate/module_charge/chg_tools.cpp
           ../dfpt_pw_data.cpp
           ../dfpt_pw_data_resp.cpp
           ../dfpt_kq_basis.cpp
@@ -75,6 +76,7 @@ addtest(
           ../dfpt_phon_ewald.cpp
           ../dfpt_phon_elec.cpp
           ../dfpt_rho.cpp
+          ../../../source_estate/module_charge/chg_tools.cpp
           ../dfpt_pert.cpp
           ../dfpt_pert_vkb.cpp
           ../dfpt_pert_nl.cpp
@@ -140,6 +142,7 @@ if(ENABLE_LIBXC)
     SOURCES dfpt_xc_analytic_serial_test.cpp
             ../dfpt_xc_analytic.cpp
             ../dfpt_rho.cpp
+          ../../../source_estate/module_charge/chg_tools.cpp
             ../dfpt_pw_data.cpp
           ../dfpt_pw_data_resp.cpp
             ../dfpt_kq_basis.cpp
