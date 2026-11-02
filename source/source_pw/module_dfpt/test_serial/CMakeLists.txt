@@ -47,7 +47,8 @@ addtest(
 addtest(
   TARGET MODULE_DFPT_rho_serial
   LIBS parameter dfpt_planewave_serial device base symmetry
-  SOURCES dfpt_rho_serial_test.cpp
+  SOURCES test_dfpt_rho.cpp
+          test_dfpt_rho_mix.cpp
           ../dfpt_rho.cpp
           ../dfpt_pw_data.cpp
           ../dfpt_kq_basis.cpp
@@ -63,7 +64,10 @@ addtest(
 addtest(
   TARGET MODULE_DFPT_phon_serial
   LIBS parameter dfpt_planewave_serial device base symmetry
-  SOURCES dfpt_phon_serial_test.cpp
+  SOURCES test_dfpt_phon_ewald.cpp
+          test_dfpt_phon_elec.cpp
+          test_dfpt_phon_asr.cpp
+          test_dfpt_phon.cpp
           ../dfpt_phon.cpp
           ../dfpt_phon_ewald.cpp
           ../dfpt_phon_elec.cpp
@@ -85,7 +89,8 @@ addtest(
 addtest(
   TARGET MODULE_DFPT_q0_serial
   LIBS parameter dfpt_planewave_serial device base symmetry
-  SOURCES dfpt_q0_serial_test.cpp
+  SOURCES test_dfpt_q0.cpp
+          test_dfpt_q0_pos.cpp
           ../dfpt_q0.cpp
           ../dfpt_q0_pos.cpp
           ../dfpt_pert.cpp
