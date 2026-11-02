@@ -345,6 +345,12 @@ jobs:
         run: |
           ctest --test-dir build -V --timeout 1700 -R 10_others
 
+      - name: Onsite projector mesh regression
+        env:
+          OMP_NUM_THREADS: '1'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R '^17_DS_DFTU_onsite_mesh$'
+
 #      - name: 17_DS_DFTU Test
 #        env:
 #          GTEST_COLOR: 'yes'
