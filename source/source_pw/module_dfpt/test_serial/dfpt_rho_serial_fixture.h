@@ -24,12 +24,21 @@
 namespace dfpt_rho_test_rng
 {
 
-inline unsigned g_seed = 20260815u;
+// C++11-safe shared seed: a function-local static inside an inline
+// function has exactly one instance across the translation units of the
+// test target (an inline VARIABLE would require C++17; the unit-test
+// configuration only raises the language level to C++14)
+inline unsigned& g_seed()
+{
+    static unsigned seed = 20260815u;
+    return seed;
+}
 
 inline double test_rand()
 {
-    g_seed = g_seed * 1664525u + 1013904223u;
-    return ((g_seed >> 8) & 0xffffff) / 16777216.0 * 2.0 - 1.0;
+    unsigned& seed = g_seed();
+    seed = seed * 1664525u + 1013904223u;
+    return ((seed >> 8) & 0xffffff) / 16777216.0 * 2.0 - 1.0;
 }
 
 inline std::complex<double> crand()

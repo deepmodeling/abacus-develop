@@ -46,7 +46,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoSecondStepCombinesCorrectly)
     const std::vector<std::complex<double>> in1 = data_.get_drho_g(0, 0);
 
     // new response from fresh dpsi
-    dfpt_rho_test_rng::g_seed = 777u;
+    dfpt_rho_test_rng::g_seed() = 777u;
     std::vector<std::vector<std::vector<std::complex<double>>>> dpsi2;
     FillRandomStates(psi, dpsi2);
     rho_.compute_drho(psi, wg, 0, data_);

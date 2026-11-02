@@ -8,6 +8,11 @@
 
 #include "dfpt_phon_serial_fixture.h"
 
+// only NlccDirectTermsFillSemantics instantiates DFPT_Rho (kept out of
+// the shared fixture so the Ewald/ASR/core files do not inherit the
+// dependency)
+#include "source_pw/module_dfpt/dfpt_rho.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <cmath>

@@ -7,7 +7,6 @@
 
 #include "dfpt_serial_fixture.h"
 #include "source_base/complexmatrix.h"
-#include "source_pw/module_dfpt/dfpt_rho.h"
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
