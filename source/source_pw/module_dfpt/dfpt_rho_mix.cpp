@@ -2,7 +2,7 @@
 // Response-density mixing family of DFPT_Rho: the per-q input/residual reset,
 // the plain / Kerker / Modified-Broyden mix_drho stack, and the
 // relative-residual getter. The companion tests live in
-// test_serial/test_dfpt_rho_mixing.cpp; the response kernels
+// test_serial/dfpt_rho_serial_test.cpp; the response kernels
 // (compute_drho / drhoc / v_hartree_q) stay in dfpt_rho.cpp.
 // ============================================================
 
