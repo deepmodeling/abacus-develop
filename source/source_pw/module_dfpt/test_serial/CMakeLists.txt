@@ -48,7 +48,7 @@ addtest(
   TARGET MODULE_DFPT_rho_serial
   LIBS parameter dfpt_planewave_serial device base symmetry
   SOURCES test_dfpt_rho.cpp
-          test_dfpt_rho_mixing.cpp
+          test_dfpt_rho_mix.cpp
           ../dfpt_rho.cpp
           ../dfpt_pw_data.cpp
           ../dfpt_kq_basis.cpp

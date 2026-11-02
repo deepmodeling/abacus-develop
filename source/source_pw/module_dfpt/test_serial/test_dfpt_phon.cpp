@@ -3,7 +3,65 @@
 // form, the Gamma check_sum_rule, the LO-TO direction normalization, the
 // corrected-frequency diagonalization, and the output format regression.
 
-#include "dfpt_phon_serial_fixture.h"
+#include "dfpt_serial_fixture.h"
+#include "source_base/constants.h"
+#include "source_base/complexmatrix.h"
+#include "source_cell/stru_fac.h"
+#include "source_pw/module_dfpt/dfpt_pert.h"
+#include "source_pw/module_dfpt/dfpt_phon.h"
+
+// per-file fixture (self-contained, gtest style): only the members and
+// helpers this file's cases need
+class DFPTPhonSerialTest : public DFPTSerialBase
+{
+  protected:
+    Structure_Factor sf_;
+    ModuleDFPT::DFPT_Pert pert_;
+    ModuleDFPT::DFPT_Phon phon_;
+
+    void SetUp() override
+    {
+        DFPTSerialBase::SetUp();
+        SetupPhon(k_d_, q_d_);
+    }
+
+    // (re)initialize the bases and the pert/phon wiring for a given (k, q)
+    // pair; SetUp uses the default fixture values
+    void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    {
+        SetupBases(k_d, q_d, 2);
+        pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
+        phon_.init(ucell_, &pw_rho_, &pert_);
+    }
+
+    // independent Ry/bohr^2/amu -> cm^-1 conversion used by diagonalize
+    double RyBohr2AmuToCm1() const
+    {
+        const double amu_kg = 1.66053906660e-27; // CODATA amu in kg
+        return std::sqrt(ModuleBase::RYDBERG_SI / amu_kg) / (0.529177210903e-10 * 2.0 * ModuleBase::PI * 2.99792458e10);
+    }
+
+    // common setup of the isotropic loto closed-form tests: zero 6x6
+    // dynamical matrix, eps_inf = 3I, Z*_1 = 1, Z*_2 = 2, and the
+    // two-atom 12/4 mass table for the mass lookup
+    void SetupIsotropicLoto()
+    {
+        data_.set_dynmat(0, ModuleBase::ComplexMatrix(6, 6, true));
+        ModuleBase::matrix eps(3, 3, true);
+        for (int d = 0; d < 3; ++d)
+        {
+            eps(d, d) = 3.0;
+        }
+        data_.set_dielectric(eps);
+        ModuleBase::matrix z1(3, 3, true);
+        ModuleBase::matrix z2(3, 3, true);
+        z1(0, 0) = z1(1, 1) = z1(2, 2) = 1.0;
+        z2(0, 0) = z2(1, 1) = z2(2, 2) = 2.0;
+        data_.set_born(0, z1);
+        data_.set_born(1, z2);
+        MakeTwoAtomCell();
+    }
+};
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

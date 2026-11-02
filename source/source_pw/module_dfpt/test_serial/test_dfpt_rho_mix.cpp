@@ -1,13 +1,78 @@
 // Serial unit tests of the DFPT_Rho response-mixing family (the mix_drho
-// stack inside dfpt_rho.cpp): plain first/second-step combinations and the residual formula, the
+// stack inside dfpt_rho.cpp; named after the companion source split
+// dfpt_rho_mix.cpp in #8262): plain first/second-step combinations and the residual formula, the
 // Kerker preconditioned first step, the stiff-model stabilization, and
 // the Modified-Broyden convergence and fresh-q reset regressions.
 
-#include "dfpt_rho_serial_fixture.h"
-
 #include "gtest/gtest.h"
 
-using namespace dfpt_rho_test_rng;
+#include "dfpt_serial_fixture.h"
+#include "source_base/constants.h"
+#include "source_base/matrix.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_psi/psi.h"
+#include "source_pw/module_dfpt/dfpt_kq_basis.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
+#include "source_pw/module_dfpt/dfpt_rho.h"
+
+namespace
+{
+
+// deterministic test RNG (file-local; the sequence is seeded once and
+// stepped by every consumer in this translation unit)
+unsigned g_seed = 20260815u;
+
+double test_rand()
+{
+    g_seed = g_seed * 1664525u + 1013904223u;
+    return ((g_seed >> 8) & 0xffffff) / 16777216.0 * 2.0 - 1.0;
+}
+
+std::complex<double> crand()
+{
+    return std::complex<double>(test_rand(), test_rand());
+}
+
+} // namespace
+
+// per-file fixture (self-contained, gtest style)
+class DFPTRhoSerialTest : public DFPTSerialBase
+{
+  protected:
+    ModuleDFPT::DFPT_Rho rho_;
+
+    static const int nbands_ = 2;
+
+    void SetUp() override
+    {
+        DFPTSerialBase::SetUp();
+        rho_.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_plain"), 0.4, 0.0});
+    }
+
+    void FillRandomStates(psi::Psi<std::complex<double>>& psi,
+                          std::vector<std::vector<std::vector<std::complex<double>>>>& dpsi)
+    {
+        psi::Psi<std::complex<double>> p(1, nbands_, pw_wfc_.npwk_max, pw_wfc_.npwk[0], true);
+        ModuleDFPT::DFPT_KQ_Basis kq;
+        kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
+        dpsi.assign(1, std::vector<std::vector<std::complex<double>>>(nbands_));
+        for (int ib = 0; ib < nbands_; ++ib)
+        {
+            for (int igl = 0; igl < pw_wfc_.npwk[0]; ++igl)
+            {
+                p(0, ib, igl) = crand();
+            }
+            dpsi[0][ib].assign(kq.get_npwk(), std::complex<double>(0.0, 0.0));
+            for (int igl = 0; igl < kq.get_npwk(); ++igl)
+            {
+                dpsi[0][ib][igl] = crand();
+            }
+            data_.set_dpsi(0, 0, ib, dpsi[0][ib]);
+        }
+        psi = p;
+    }
+};
+
 
 TEST_F(DFPTRhoSerialTest, MixDrhoFirstStepIsScaledOutput)
 {
@@ -46,7 +111,7 @@ TEST_F(DFPTRhoSerialTest, MixDrhoSecondStepCombinesCorrectly)
     const std::vector<std::complex<double>> in1 = data_.get_drho_g(0, 0);
 
     // new response from fresh dpsi
-    dfpt_rho_test_rng::g_seed() = 777u;
+    g_seed = 777u;
     std::vector<std::vector<std::vector<std::complex<double>>>> dpsi2;
     FillRandomStates(psi, dpsi2);
     rho_.compute_drho(psi, wg, 0, data_);

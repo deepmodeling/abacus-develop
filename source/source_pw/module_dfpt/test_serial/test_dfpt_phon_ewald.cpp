@@ -5,7 +5,36 @@
 // against a direct (unscreened) lattice Hessian sum at a generic
 // incommensurate q where the dipole sum is oscillation-screened.
 
-#include "dfpt_phon_serial_fixture.h"
+#include "dfpt_serial_fixture.h"
+#include "source_base/complexmatrix.h"
+#include "source_cell/stru_fac.h"
+#include "source_pw/module_dfpt/dfpt_pert.h"
+#include "source_pw/module_dfpt/dfpt_phon.h"
+
+// per-file fixture (self-contained, gtest style): only the members and
+// helpers this file's cases need
+class DFPTPhonSerialTest : public DFPTSerialBase
+{
+  protected:
+    Structure_Factor sf_;
+    ModuleDFPT::DFPT_Pert pert_;
+    ModuleDFPT::DFPT_Phon phon_;
+
+    void SetUp() override
+    {
+        DFPTSerialBase::SetUp();
+        SetupPhon(k_d_, q_d_);
+    }
+
+    // (re)initialize the bases and the pert/phon wiring for a given (k, q)
+    // pair; SetUp uses the default fixture values
+    void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    {
+        SetupBases(k_d, q_d, 2);
+        pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
+        phon_.init(ucell_, &pw_rho_, &pert_);
+    }
+};
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
