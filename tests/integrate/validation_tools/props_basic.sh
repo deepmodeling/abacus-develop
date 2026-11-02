@@ -101,6 +101,22 @@ if ! test -z "$imp_sol" && { [ "$imp_sol" = 1 ] || [ "$imp_sol" = 2 ]; }; then
 	echo "esolcavref $esol_cav" >>$props_result_file
 fi
 
+# out_sol 1: both cubes must exist (the cases set imp_sol 2, or imp_sol 1 with
+# eb_k > 1, so sol_cavity.cube is written). The cavity volume int s dV of
+# sol_cavity.cube is compared; sol_eps.cube is only checked for presence, since
+# its integral is dominated by the bulk permittivity times the volume.
+if [[ "$out_sol" == "1" ]]; then
+	for cube in sol_eps.cube sol_cavity.cube; do
+		if [ ! -f "OUT.autotest/$cube" ]; then
+			echo "Error: out_sol 1 but OUT.autotest/$cube is missing"
+			exit 1
+		fi
+	done
+	# Append mode retains earlier geometries; compare the final complete frame.
+	integral=$(python3 "$CUBE_TOOL" integrate-last "OUT.autotest/sol_cavity.cube") || return 1
+	echo "sol_cavity_integralref $integral" >>$props_result_file
+fi
+
 #--------------------------------------------
 # vacuum point-countercharge correction
 #--------------------------------------------

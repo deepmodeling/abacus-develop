@@ -1,6 +1,7 @@
 #include "source_estate/module_pot/pot_sccs.h"
 #include "source_estate/module_pot/pot_pcc.h"
 #include "source_estate/module_pot/sccs_pcc_0d.h"
+#include "source_basis/module_pw/pw_grid_geometry.h"
 #include "source_cell/cell_tools.h"
 #include "source_hamilt/module_sccs/sccs_coulomb.h"
 #include "source_hamilt/module_sccs/sccs_functional.h"
@@ -9,6 +10,11 @@
 #include "source_hamilt/module_sccs/sccs_response.h"
 #include "sccs_cell_test.h"
 #include "source_io/module_parameter/input_parameter.h"
+
+namespace
+{
+const elecstate::SccsResume no_resume = elecstate::SccsResume();
+}
 
 class SccsPcc0dTest : public SccsTest::CellTest
 {
@@ -34,8 +40,10 @@ TEST_F(SccsPcc0dTest, SolventAddsOnlyReactionAndCavityTermsToThePointIonPcc)
         ModuleSccs::PolarizationSolverParameters solver;
         elecstate::sccs_cfg_input(input, config, solver);
         const std::vector<unitcell::AtomData> atoms = unitcell::get_atom_data(cell.atoms, cell.ntype, cell.lat0);
+        std::vector<ModuleBase::Vector3<double>> grid;
+        ModulePW::grid_positions(basis, cell.latvec, cell.lat0, grid);
         std::unique_ptr<ModuleSccs::CoulombOperator> coulomb;
-        elecstate::pcc_0d_operator(cell, basis, atoms, coulomb);
+        elecstate::pcc_0d_operator(cell, basis, atoms, grid, coulomb);
         std::vector<double> ions;
         ModuleSccs::gauss_ion_rho(atoms, basis, tpiba,
                                   ModuleSccs::gaussian_ion_spread, ions);
@@ -51,7 +59,7 @@ TEST_F(SccsPcc0dTest, SolventAddsOnlyReactionAndCavityTermsToThePointIonPcc)
         ModuleSccs::FunctionalResult functional;
         ModuleSccs::eval_functional(solute_charge, response, config, basis, tpiba,
                                     *coulomb, functional);
-        elecstate::PotSccs solvent(&basis, config, solver, 0.6);
+        elecstate::PotSccs solvent(&basis, config, solver, 0.6, no_resume);
         elecstate::PotPcc correction(&basis, 0.6);
         ModuleBase::matrix potential(1, basis.nrxx);
         correction.cal_v_eff(&charge, &cell, potential);

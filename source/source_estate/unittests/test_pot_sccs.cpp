@@ -9,6 +9,11 @@
 #include <sstream>
 #include <string>
 
+namespace
+{
+const elecstate::SccsResume no_resume = elecstate::SccsResume();
+}
+
 // Public storage fixtures: no INPUT initialization or privately owned atom maps.
 UnitCell::UnitCell() {}
 UnitCell::~UnitCell() {}
@@ -48,7 +53,7 @@ protected:
         Charge charge;
         charge.nspin = 1;
         charge.rho = channels;
-        elecstate::PotSccs component(&basis, config, solver, 2.0);
+        elecstate::PotSccs component(&basis, config, solver, 2.0, no_resume);
         ModuleBase::matrix potential(1, basis.nrxx);
         component.cal_v_eff(&charge, &cell, potential);
         ModuleBase::matrix force(2, 3);
@@ -115,9 +120,9 @@ TEST_F(PotSccsTest, IndependentInstancesAndSpinChannels)
     ModuleSccs::PolarizationSolverParameters solver;
     elecstate::sccs_cfg_input(input, config, solver);
     config.cavity.epsilon_bulk = 5.0;
-    elecstate::PotSccs first(&basis, config, solver, 1.0);
+    elecstate::PotSccs first(&basis, config, solver, 1.0, no_resume);
     config.cavity.epsilon_bulk = 1.0;
-    elecstate::PotSccs vacuum(&basis, config, solver, 1.0);
+    elecstate::PotSccs vacuum(&basis, config, solver, 1.0, no_resume);
     EXPECT_DOUBLE_EQ(first.get_energy(), 0.0);
     ModuleBase::matrix potential(1, basis.nrxx);
     first.cal_v_eff(&charge, &cell, potential);
@@ -209,6 +214,18 @@ TEST_F(PotSccsTest, InputMapsCavityModelKeys)
     EXPECT_EQ(config.core_spreads, input.sccs_corespread);
     // The cavity model keys leave the preset dielectric unchanged.
     EXPECT_DOUBLE_EQ(config.cavity.epsilon_bulk, 78.3);
+    EXPECT_DOUBLE_EQ(config.start_drho, 0.0);
+    EXPECT_FALSE(config.collect_report);
+    input.sccs_start_drho = 1e-3;
+    input.sccs_start_nmax = 3;
+    input.sccs_debug = 2;
+    elecstate::sccs_cfg_input(input, config, solver);
+    EXPECT_DOUBLE_EQ(config.start_drho, 1e-3);
+    EXPECT_EQ(config.start_nmax, 3);
+    EXPECT_TRUE(config.collect_report);
+    input.sccs_debug = 1;
+    elecstate::sccs_cfg_input(input, config, solver);
+    EXPECT_FALSE(config.collect_report);
 }
 
 TEST_F(PotSccsTest, IonicForceAddsRydbergDerivativeOnce)
@@ -238,6 +255,79 @@ TEST_F(PotSccsTest, FullCavityForceMatchesTheEnergyDerivative)
     config.surface_tension = 1e-5;
     config.pressure = 1e-6;
     check_solvation_force(config, solver);
+}
+
+TEST_F(PotSccsTest, DelayedActivationHasOneIrreversibleTransitionAndResumes)
+{
+    ModuleSccs::SccsConfig config;
+    ModuleSccs::PolarizationSolverParameters solver;
+    config.start_drho = 1e-3;
+    config.start_nmax = 3;
+    elecstate::PotSccs threshold(&basis, config, solver, 1.0, no_resume);
+    EXPECT_FALSE(threshold.is_active());
+    EXPECT_FALSE(threshold.try_activate(1, 0.1));
+    EXPECT_TRUE(threshold.try_activate(2, 1e-3));
+    EXPECT_TRUE(threshold.is_active());
+    EXPECT_FALSE(threshold.try_activate(3, 0.2));
+    EXPECT_FALSE(threshold.try_activate(1, 0.2));
+    elecstate::PotSccs forced(&basis, config, solver, 1.0, no_resume);
+    EXPECT_FALSE(forced.try_activate(2, 0.1));
+    EXPECT_TRUE(forced.try_activate(3, 0.1));
+    config.start_drho = 0.0;
+    elecstate::PotSccs immediate(&basis, config, solver, 1.0, no_resume);
+    EXPECT_TRUE(immediate.is_active());
+    EXPECT_FALSE(immediate.try_activate(1, 0.0));
+    // A later ionic step resumes an activation already reached.
+    config.start_drho = 1e-3;
+    elecstate::PotSccs first_ionic_step(&basis, config, solver, 1.0, no_resume);
+    EXPECT_FALSE(first_ionic_step.is_active());
+    elecstate::SccsResume resumed;
+    resumed.active = true;
+    elecstate::PotSccs next_ionic_step(&basis, config, solver, 1.0, resumed);
+    EXPECT_TRUE(next_ionic_step.is_active());
+    EXPECT_FALSE(next_ionic_step.try_activate(1, 0.1));
+    EXPECT_DOUBLE_EQ(next_ionic_step.get_energy(), 0.0);
+    const std::vector<double>* potential = next_ionic_step.sol_elec_pot();
+    EXPECT_TRUE(potential->empty());
+}
+
+TEST_F(PotSccsTest, WaitingSccsContributesNoPotentialEnergyOrForce)
+{
+    UnitCell cell;
+    Atom atom;
+    cell.lat0 = length;
+    cell.tpiba = tpiba;
+    cell.omega = basis.omega;
+    cell.ntype = 1;
+    cell.nat = 1;
+    cell.atoms = &atom;
+    atom.na = 1;
+    atom.ncpp.zv = 1.0;
+    atom.tau = {ModuleBase::Vector3<double>(0.25, 0.25, 0.25)};
+    const double value = 1.0 / basis.omega;
+    std::vector<double> density(basis.nrxx, value);
+    double* channels[] = {density.data()};
+    Charge charge;
+    charge.nspin = 1;
+    charge.rho = channels;
+    ModuleSccs::SccsConfig config = ModuleSccs::preset_config(ModuleSccs::Preset::WaterNeutral);
+    config.start_drho = 1e-3;
+    ModuleSccs::PolarizationSolverParameters solver;
+    elecstate::PotSccs delayed(&basis, config, solver, 1.0, no_resume);
+    ModuleBase::matrix potential(1, basis.nrxx);
+    delayed.cal_v_eff(&charge, &cell, potential);
+    EXPECT_DOUBLE_EQ(delayed.get_energy(), 0.0);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_DOUBLE_EQ(potential(0, ir), 0.0);
+    }
+    ModuleBase::matrix force(1, 3);
+    force(0, 0) = 42.0;
+    delayed.add_sol_force(cell, force);
+    EXPECT_DOUBLE_EQ(force(0, 0), 42.0);
+    EXPECT_TRUE(delayed.try_activate(2, 1e-4));
+    delayed.cal_v_eff(&charge, &cell, potential);
+    EXPECT_LT(delayed.get_energy(), 0.0);
 }
 
 TEST_F(PotSccsTest, FullCavityStructureChecksWarnOnceAndRejectWidthCount)
@@ -311,7 +401,7 @@ TEST_F(PotSccsTest, ChargedDielectricCellWarnsAndRuns)
     const std::string log_name = "pot_sccs_charge_warning_" + std::to_string(basis.poolrank) + ".log";
     std::ofstream& warning_log = GlobalV::ofs_warning;
     warning_log.open(log_name.c_str());
-    elecstate::PotSccs matched(&basis, config, solver, 0.5);
+    elecstate::PotSccs matched(&basis, config, solver, 0.5, no_resume);
     ModuleBase::matrix matched_potential(1, basis.nrxx);
     matched.cal_v_eff(&charge, &cell, matched_potential);
     warning_log.flush();
@@ -321,7 +411,7 @@ TEST_F(PotSccsTest, ChargedDielectricCellWarnsAndRuns)
     EXPECT_EQ(matched_text.str().find("SCCS grid electron count"), std::string::npos);
     EXPECT_TRUE(std::isfinite(matched.get_energy()));
 
-    elecstate::PotSccs mismatched(&basis, config, solver, 1.0);
+    elecstate::PotSccs mismatched(&basis, config, solver, 1.0, no_resume);
     ModuleBase::matrix mismatched_potential(1, basis.nrxx);
     mismatched.cal_v_eff(&charge, &cell, mismatched_potential);
     warning_log.close();
