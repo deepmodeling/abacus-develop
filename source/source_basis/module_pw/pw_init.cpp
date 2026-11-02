@@ -235,11 +235,24 @@ void PW_Basis:: initparameters(
 
     this->ggecut = pwecut_in / this->tpiba2;
     //ggecut should be no larger than gridecut
-    if(this->ggecut > this->gridecut_lat) 
+    if(this->ggecut > this->gridecut_lat)
     {
         this->ggecut = this->gridecut_lat;
     }
     this->distribution_type = distribution_type_in;
+}
+
+void PW_Basis:: init_serial(
+    const double lat0_in,
+    const ModuleBase::Matrix3 latvec_in,
+    const double gridecut
+)
+{
+    initgrids(lat0_in, latvec_in, gridecut);
+    initparameters(false, gridecut);
+    this->fft_bundle.initfftmode(0);
+    setuptransform();
+    collect_local_pw();
 }
 
 // Set parameters about full planewave, used only in OFDFT for now. sunliang added 2022-08-30

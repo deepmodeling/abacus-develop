@@ -38,18 +38,12 @@ void DFPTSerialBase::SetupBases(const ModuleBase::Vector3<double>& k_d,
                                 int nbands)
 {
     G_ = ucell_.G;
-    pw_rho_.initgrids(lat0_, latvec_, rho_mult_ * ecutwfc_);
-    pw_rho_.initparameters(false, rho_mult_ * ecutwfc_);
-    pw_rho_.fft_bundle.initfftmode(0);
-    pw_rho_.setuptransform();
-    pw_rho_.collect_local_pw();
-
+    // the serial assembly chains live in the PW_Basis / PW_Basis_K
+    // sources (init_serial); this fixture only supplies the geometry
+    // and the (k, q) data
+    pw_rho_.init_serial(lat0_, latvec_, rho_mult_ * ecutwfc_);
     const ModuleBase::Vector3<double> klist[1] = {k_d};
-    pw_wfc_.initgrids(lat0_, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz);
-    pw_wfc_.initparameters(false, ecutwfc_, 1, klist);
-    pw_wfc_.fft_bundle.initfftmode(0);
-    pw_wfc_.setuptransform();
-    pw_wfc_.collect_local_pw();
+    pw_wfc_.init_serial(lat0_, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz, ecutwfc_, 1, klist);
 
     qlist_.nkstot = 1;
     qlist_.kvec_d.clear();

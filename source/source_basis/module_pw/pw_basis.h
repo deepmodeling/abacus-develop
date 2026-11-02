@@ -97,6 +97,17 @@ public:
         const bool xprime_in = true
     );
 
+    //Serial basis assembly: the plain production sequence (initgrids ->
+    //initparameters -> default FFT mode -> setuptransform -> collect_local_pw)
+    //without any parallel/device context (no initmpi, default distribution).
+    //The reusable form of the setup chain for serial utilities and unit
+    //tests; the parallel production path stays in setup_pwrho.
+    void init_serial(
+        const double lat0_in, //unit length (unit in bohr)
+        const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors (unit in lat0)
+        const double gridecut //unit in Ry, ecut to set up grids
+    );
+
     //Set parameters about full planewave, only used in OFDFT for now.
     void setfullpw(
         const bool inpt_full_pw = false,

@@ -70,6 +70,22 @@ public:
         const bool xprime_in = true
     );
 
+    //Serial basis assembly on a given FFT box (usually the rho grid's
+    //nx/ny/nz so the two bases share the box): initgrids -> initparameters
+    //with the k list -> default FFT mode -> setuptransform ->
+    //collect_local_pw, without any parallel/device context. The reusable
+    //form of the setup chain for serial utilities and unit tests; the
+    //parallel production path stays in setup_pwwfc.
+    void init_serial(
+        const double lat0_in,
+        const ModuleBase::Matrix3 latvec_in,
+        const int nx_in,
+        const int ny_in,
+        const int nz_in,
+        const double ecut_in,
+        const int nk_in,
+        const ModuleBase::Vector3<double>* kvec_d);
+
   public:
     int nks=0;//number of k points in this pool
     ModuleBase::Vector3<double> *kvec_d=nullptr; // Direct coordinates of k points

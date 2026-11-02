@@ -529,4 +529,20 @@ double* PW_Basis_K::get_gk2_data() const
     return this->d_gk2;
 }
 
+void PW_Basis_K::init_serial(const double lat0_in,
+                             const ModuleBase::Matrix3 latvec_in,
+                             const int nx_in,
+                             const int ny_in,
+                             const int nz_in,
+                             const double ecut_in,
+                             const int nk_in,
+                             const ModuleBase::Vector3<double>* kvec_d)
+{
+    initgrids(lat0_in, latvec_in, nx_in, ny_in, nz_in);
+    initparameters(false, ecut_in, nk_in, kvec_d);
+    this->fft_bundle.initfftmode(0);
+    setuptransform();
+    collect_local_pw();
+}
+
 } // namespace ModulePW
