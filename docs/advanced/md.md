@@ -116,4 +116,5 @@ LAMMPS `pair_coeff` mappings.
 The CPU implementation accepts but does not use the LAMMPS GPU execution
 options `chunksize` and `parallelthresh`. Unknown SNAP parameter keywords are
 rejected. Each element-pair cutoff must exceed `rmin0`; a contributing neighbor
-at or below `rmin0` causes an error.
+at or below `rmin0` causes an error. The radial mapping parameter `rfac0` must
+satisfy `0 < rfac0 <= 1` so that its angle does not cross pi inside a pair cutoff.

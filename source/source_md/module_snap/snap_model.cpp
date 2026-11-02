@@ -111,9 +111,9 @@ bool ModelParameters::valid(std::string& error) const
         error = "SNAP rmin must satisfy 0 <= rmin < rcut.";
         return false;
     }
-    if (!std::isfinite(rfac0) || rfac0 <= 0.0)
+    if (!std::isfinite(rfac0) || rfac0 <= 0.0 || rfac0 > 1.0)
     {
-        error = "SNAP rfac0 must be finite and positive.";
+        error = "SNAP rfac0 must satisfy 0 < rfac0 <= 1.";
         return false;
     }
     if (twojmax < 0)

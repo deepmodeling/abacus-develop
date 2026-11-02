@@ -56,6 +56,26 @@ TEST(SnapModel, RejectsInvalidRadialRange)
     EXPECT_FALSE(error.empty());
 }
 
+TEST(SnapModel, ValidatesRfac0Range)
+{
+    ModuleMD::SNAP::ModelParameters parameters;
+    parameters.rcut = 4.5;
+    parameters.rcutfac = 1.0;
+    parameters.elements.push_back("Si");
+    parameters.element_weights.push_back(1.0);
+    parameters.element_radii.push_back(2.25);
+    std::string error;
+
+    parameters.rfac0 = 1.0;
+    EXPECT_TRUE(parameters.valid(error)) << error;
+    parameters.rfac0 = 0.0;
+    EXPECT_FALSE(parameters.valid(error));
+    EXPECT_NE(error.find("0 < rfac0 <= 1"), std::string::npos);
+    parameters.rfac0 = 1.2;
+    EXPECT_FALSE(parameters.valid(error));
+    EXPECT_NE(error.find("0 < rfac0 <= 1"), std::string::npos);
+}
+
 TEST(SnapModel, RejectsRminOutsideSmallPairCutoff)
 {
     ModuleMD::SNAP::ModelParameters parameters;
@@ -100,6 +120,13 @@ TEST(SnapModel, LoadsLammpsStyleCoefficientAndParameterFiles)
     EXPECT_DOUBLE_EQ(model.parameters.element_radii[0], 2.25);
     EXPECT_DOUBLE_EQ(model.parameters.rcut, 5.4);
     EXPECT_DOUBLE_EQ(model.coefficients[0][1], 1.25);
+
+    {
+        std::ofstream output(parameter_file.c_str());
+        output << "rcutfac 1.2\ntwojmax 4\nrfac0 1.2\n";
+    }
+    EXPECT_FALSE(model.load(coefficient_file, parameter_file, std::vector<std::string>(1, "Si"), error));
+    EXPECT_NE(error.find("0 < rfac0 <= 1"), std::string::npos);
 
     std::remove(coefficient_file.c_str());
     std::remove(parameter_file.c_str());
