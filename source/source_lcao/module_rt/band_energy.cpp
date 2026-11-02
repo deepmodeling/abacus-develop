@@ -25,7 +25,7 @@ void gather_eij(const Parallel_Orbitals& pv,
                 const EijOutputInfo& output_info,
                 std::ofstream& ofs)
 {
-    const bool is_root = pv.blacs_in_this_processor(0, 0);
+    const bool is_root = pv.para_2d().blacs_in_this_processor(0, 0);
     const size_t buffer_size = is_root ? static_cast<size_t>(nband) * nband : 1;
     std::vector<std::complex<double>> gathered(buffer_size);
     int source_desc[9];
@@ -57,16 +57,16 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  std::ofstream& ofs_running,
                  const EijOutputInfo& output_info)
 {
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(pv->nloc_wfc > 0 && pv->para_2d().get_local_size() > 0);
 
     std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
     ModuleBase::GlobalFunc::ZEROS(tmp1, pv->nloc_wfc);
 
-    std::complex<double>* eij = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(eij, pv->nloc);
+    std::complex<double>* eij = new std::complex<double>[pv->para_2d().get_local_size()];
+    ModuleBase::GlobalFunc::ZEROS(eij, pv->para_2d().get_local_size());
 
     ScalapackConnector::
-        gemm('N', 'N', nlocal, nband, nlocal, 1.0, Htmp, 1, 1, pv->desc, psi_k, 1, 1, pv->desc_wfc, 0.0, tmp1, 1, 1, pv->desc_wfc);
+        gemm('N', 'N', nlocal, nband, nlocal, 1.0, Htmp, 1, 1, pv->para_2d().get_desc(), psi_k, 1, 1, pv->desc_wfc, 0.0, tmp1, 1, 1, pv->desc_wfc);
 
     ScalapackConnector::
         gemm('C', 'N', nband, nband, nlocal, 1.0, psi_k, 1, 1, pv->desc_wfc, tmp1, 1, 1, pv->desc_wfc, 0.0, eij, 1, 1, pv->desc_Eij);
@@ -83,24 +83,24 @@ void compute_ekb(const Parallel_Orbitals* pv,
     double* eii = new double[nband];
     ModuleBase::GlobalFunc::ZEROS(eii, nband);
 
-    for (int iprow = 0; iprow < pv->dim0; ++iprow)
+    for (int iprow = 0; iprow < pv->para_2d().get_dim0(); ++iprow)
     {
-        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
+        for (int ipcol = 0; ipcol < pv->para_2d().get_dim1(); ++ipcol)
         {
-            if (pv->blacs_in_this_processor(iprow, ipcol))
+            if (pv->para_2d().blacs_in_this_processor(iprow, ipcol))
             {
-                naroc[0] = pv->nrow;
-                naroc[1] = pv->ncol;
+                naroc[0] = pv->para_2d().get_row_size();
+                naroc[1] = pv->para_2d().get_col_size();
                 for (int j = 0; j < naroc[1]; ++j)
                 {
-                    int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
+                    int igcol = globalIndex(j, pv->para_2d().get_block_size(), pv->para_2d().get_dim1(), ipcol);
                     if (igcol >= nband)
                     {
                         continue;
                     }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
-                        int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
+                        int igrow = globalIndex(i, pv->para_2d().get_block_size(), pv->para_2d().get_dim0(), iprow);
                         if (igrow >= nband)
                         {
                             continue;
@@ -114,7 +114,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
             }
         } // loop ipcol
     } // loop iprow
-    info = MPI_Allreduce(eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+    info = MPI_Allreduce(eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->para_2d().comm());
 
     delete[] tmp1;
     delete[] eij;
