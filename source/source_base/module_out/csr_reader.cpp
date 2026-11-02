@@ -156,6 +156,8 @@ void csrFileReader<T>::readBlocks()
             if (i > 0 && pointers[i] < pointers[i - 1]) { invalid(); }
         }
         if (pointers.front() != 0 || pointers.back() != nnz) { invalid(); }
+        ss >> std::ws;
+        if (!ss.eof() && ss.peek() != '#') { invalid(); }
         for (int row = 0; row < matrixDimension; ++row)
         {
             for (int i = pointers[row] + 1; i < pointers[row + 1]; ++i)

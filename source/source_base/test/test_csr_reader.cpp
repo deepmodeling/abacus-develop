@@ -98,5 +98,16 @@ TEST_P(CsrFormats, RejectsDuplicateR)
     write("0 0 0 1\n1\n0\n0 1 1\n0 0 0 1\n2\n0\n0 1 1\n", "2", "2");
     EXPECT_EXIT({ModuleIO::csrFileReader<double> reader(path);}, testing::ExitedWithCode(1), "");
 }
+TEST_P(CsrFormats, RejectsExtraValueShiftingRowPointers)
+{
+    write("0 0 0 1\n1 0\n0\n0 1 1\n", "2", "1");
+    EXPECT_EXIT({ModuleIO::csrFileReader<double> reader(path);}, testing::ExitedWithCode(1), "");
+}
+TEST_P(CsrFormats, AcceptsCommentAfterFinalRowPointer)
+{
+    write("0 0 0 1\n1\n0\n0 1 1 # end of block\n", "2", "1");
+    ModuleIO::csrFileReader<double> reader(path);
+    EXPECT_DOUBLE_EQ(reader.getMatrix(0)(0, 0), 1.0);
+}
 INSTANTIATE_TEST_SUITE_P(BothHeaders, CsrFormats, testing::Bool());
 }

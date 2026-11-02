@@ -73,8 +73,13 @@ bool read_rhog(const std::string& filename,
                const Parallel::ParaWorld& pw_world,
                std::ostream* os_warning);
 
+/// Collectively select the complete cube set; partial sets fall back to restart.
+bool has_complete_charge_cubes(const std::string& directory, const int nspin,
+                               const Parallel::ParaWorld& world);
+
 /// Decode a reciprocal-space restart and transform every spin channel into rho.
-/// Returns false when the restart cannot be read; rho is unchanged in that case.
+/// Returns false for recoverable open/configuration failures, leaving rho unchanged.
+/// Malformed or truncated binary input can terminate via Binstream/ WARNING_QUIT.
 bool read_rho_restart(const std::string& filename,
                       const ModulePW::PW_Basis& rhopw,
                       const int nspin,

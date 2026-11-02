@@ -66,9 +66,40 @@ TEST(SpectrumWeights, LRAndBSEIndependentTransitionHaveSameSingletStrength)
         const auto lr_weights = LR_Util::spatial_k_weights(ks_weights, 1);
         const std::vector<double> bse_weights(nk, 1.0 / nk);
         const std::complex<double> dipole(1.0, 0.5);
-        const auto lr_amplitude = std::sqrt(2.0) * dipole * lr_weights[0] * double(nk);
-        const auto bse_amplitude = std::sqrt(2.0) * dipole * bse_weights[0] * double(nk);
+        const auto lr_amplitude = std::sqrt(2.0) * LR_Util::weighted_velocity_transition(
+            dipole, 1.0, 0.0, 1.0, true, lr_weights, 0, 0, nk);
+        const auto bse_amplitude = std::sqrt(2.0) * LR_Util::weighted_velocity_transition(
+            dipole, 1.0, 0.0, 1.0, true, bse_weights, 0, 0, nk);
         EXPECT_NEAR(std::norm(lr_amplitude), 2.5, 1e-14);
         EXPECT_NEAR(std::abs(lr_amplitude - bse_amplitude), 0.0, 1e-14);
     }
+}
+
+TEST(SpectrumWeights, ProductionContractionSelectsEachSpinBlock)
+{
+    const std::vector<double> ks_weights = {0.1, 0.9, 0.3, 0.7};
+    const auto weights = LR_Util::spatial_k_weights(ks_weights, 2);
+    const std::complex<double> velocity(2.0, 4.0);
+    const double expected[] = {0.2, 1.8, 0.6, 1.4};
+    for (int spin = 0; spin < 2; ++spin)
+    {
+        for (int ik = 0; ik < 2; ++ik)
+        {
+            const auto actual = LR_Util::weighted_velocity_transition(
+                velocity, 1.0, 0.0, 2.0, true, weights, spin, ik, 2);
+            EXPECT_NEAR(std::abs(actual - std::complex<double>(1.0, 2.0) * expected[spin * 2 + ik]), 0.0, 1e-14);
+        }
+    }
+}
+
+TEST(SpectrumWeights, ProductionFullBSEContractionKeepsDeexcitationSign)
+{
+    const std::vector<double> bse_weights = {1.0};
+    const std::complex<double> velocity(2.0, 4.0);
+    const auto ks_gap = LR_Util::weighted_velocity_transition(
+        velocity, 3.0, 1.0, 2.0, true, bse_weights, 0, 0, 1);
+    const auto lr_energy = LR_Util::weighted_velocity_transition(
+        velocity, 3.0, 1.0, 2.0, false, bse_weights, 0, 0, 1);
+    EXPECT_EQ(ks_gap, std::complex<double>(2.0, 8.0));
+    EXPECT_EQ(lr_energy, std::complex<double>(8.0, 8.0));
 }
