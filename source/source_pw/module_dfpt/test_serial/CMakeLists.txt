@@ -34,6 +34,7 @@ addtest(
           ../dfpt_pert_vkb.cpp
           ../dfpt_pert_nl.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../dfpt_kq_basis.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
@@ -51,6 +52,7 @@ addtest(
           test_dfpt_rho_mix.cpp
           ../dfpt_rho.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../dfpt_kq_basis.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
@@ -77,6 +79,7 @@ addtest(
           ../dfpt_pert_vkb.cpp
           ../dfpt_pert_nl.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../dfpt_kq_basis.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
@@ -98,6 +101,7 @@ addtest(
           ../dfpt_pert_vkb.cpp
           ../dfpt_pert_nl.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../dfpt_kq_basis.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
@@ -117,6 +121,7 @@ addtest(
   SOURCES test_dfpt_write_dyn.cpp
           ../dfpt_write_dyn.cpp
           ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
           ../../../source_cell/qlist.cpp
           ../../../source_cell/reciprocal_grid.cpp
           ../../../source_psi/psi.cpp
@@ -136,6 +141,7 @@ if(ENABLE_LIBXC)
             ../dfpt_xc_analytic.cpp
             ../dfpt_rho.cpp
             ../dfpt_pw_data.cpp
+          ../dfpt_pw_data_resp.cpp
             ../dfpt_kq_basis.cpp
             ../../../source_cell/qlist.cpp
             ../../../source_cell/reciprocal_grid.cpp
