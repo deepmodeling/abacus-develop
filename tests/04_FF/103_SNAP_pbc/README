@@ -5,5 +5,5 @@ but places the atoms on opposite sides of the periodic boundary. Their
 energy, force magnitude, and stress must match the unwrapped case. The
 periodic neighbor contributes through the MDCell ghost-force return path.
 
-Model files: ../../SIMULATION_MODELS/snap_103_pbc.coeff and
-../../SIMULATION_MODELS/snap_103_pbc.param.
+Model files: ../../SIMULATION_MODELS/snap_103.coeff and
+../../SIMULATION_MODELS/snap_103.param.

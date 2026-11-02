@@ -1,7 +1,7 @@
 CPU SNAP regression case with a two-atom Si periodic structure.
 
-The example uses `../../SIMULATION_MODELS/snap_102_base.coeff` for the SNAP
-coefficients and `../../SIMULATION_MODELS/snap_102_base.param` for the SNAP
+The example uses `../../SIMULATION_MODELS/snap_102.coeff` for the SNAP
+coefficients and `../../SIMULATION_MODELS/snap_102.param` for the SNAP
 parameters.
 
 The coefficient and parameter files are deterministic ABACUS-generated test

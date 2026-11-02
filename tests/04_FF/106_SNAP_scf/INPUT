@@ -2,8 +2,8 @@ INPUT_PARAMETERS
 calculation       scf
 suffix            autotest
 esolver_type      snap
-pot_file          ../../SIMULATION_MODELS/snap_106_scf.coeff
-snap_param_file   ../../SIMULATION_MODELS/snap_106_scf.param
+pot_file          ../../SIMULATION_MODELS/snap_106.coeff
+snap_param_file   ../../SIMULATION_MODELS/snap_106.param
 cal_force         1
 cal_stress        1
 md_nstep          1

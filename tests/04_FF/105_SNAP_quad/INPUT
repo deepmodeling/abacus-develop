@@ -2,8 +2,8 @@ INPUT_PARAMETERS
 calculation       md
 suffix            autotest
 esolver_type      snap
-pot_file          ../../SIMULATION_MODELS/snap_105_quad.coeff
-snap_param_file   ../../SIMULATION_MODELS/snap_105_quad.param
+pot_file          ../../SIMULATION_MODELS/snap_105.coeff
+snap_param_file   ../../SIMULATION_MODELS/snap_105.param
 cal_force         1
 cal_stress        1
 md_nstep          1
