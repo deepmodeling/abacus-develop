@@ -306,6 +306,30 @@ TEST(SnapCalculator, InnerSwitchSkipsSingularRadius)
     }
 }
 
+TEST(SnapCalculator, ZeroWeightSkipsInvalidRadius)
+{
+    ModuleMD::SNAP::ModelData model = make_model();
+    model.parameters.rmin = 0.5;
+    const ModuleMD::SNAP::Calculator calculator(model);
+    ModuleMD::SNAP::Neighbor neighbor;
+    neighbor.x = 0.4;
+    neighbor.weight = 0.0;
+    const std::vector<ModuleMD::SNAP::Neighbor> neighbors(1, neighbor);
+    const std::vector<ModuleMD::SNAP::Neighbor> empty;
+    const double isolated_energy = calculator.compute(empty, 0).energy;
+    const ModuleMD::SNAP::ForceResult result = calculator.compute_with_analytic_force(neighbors, 0);
+    EXPECT_DOUBLE_EQ(result.energy.energy, isolated_energy);
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        EXPECT_DOUBLE_EQ(result.center_force[static_cast<std::size_t>(direction)], 0.0);
+        EXPECT_DOUBLE_EQ(result.neighbor_forces[0][static_cast<std::size_t>(direction)], 0.0);
+    }
+    neighbor.weight = 1.0;
+    const std::vector<ModuleMD::SNAP::Neighbor> active(1, neighbor);
+    EXPECT_THROW(calculator.compute(active, 0), std::domain_error);
+    EXPECT_THROW(calculator.compute_with_analytic_force(active, 0), std::domain_error);
+}
+
 TEST(SnapCalculator, AngularQuadraticForcesMatchLammpsAndStrain)
 {
     const ModuleMD::SNAP::Calculator calculator(make_angular_quadratic_model());

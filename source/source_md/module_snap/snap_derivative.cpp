@@ -130,7 +130,7 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& n
         return result;
     }
     const SwitchValue switch_value = switching(distance.value, neighbor, cutoff_radius);
-    if (switch_value.value == 0.0)
+    if (switch_value.value == 0.0 || neighbor.weight == 0.0)
     {
         return result;
     }
@@ -138,8 +138,9 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& n
     {
         throw std::domain_error("SNAP neighbor distance must be greater than rmin0.");
     }
-    const Dual scale(switch_value.value * neighbor.weight,
-                     switch_value.derivative * distance.derivative * neighbor.weight);
+    const double scale_value = switch_value.value * neighbor.weight;
+    const double scale_derivative = switch_value.derivative * distance.derivative * neighbor.weight;
+    const Dual scale(scale_value, scale_derivative);
 
     const Dual theta0 = (distance - parameters_.rmin) * parameters_.rfac0 * ModuleBase::PI
                         / (cutoff_radius - parameters_.rmin);

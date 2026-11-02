@@ -172,19 +172,20 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
         for (std::size_t i = 0; i < mdcell.ghost_atoms().size(); ++i)
         {
             const std::array<double, 3>& value = contribution.forces()[nowned + i];
-            mdcell.ghost_atoms()[i].force.set(value[0] * force_scale,
-                                               value[1] * force_scale,
-                                               value[2] * force_scale);
+            const double fx = value[0] * force_scale;
+            const double fy = value[1] * force_scale;
+            const double fz = value[2] * force_scale;
+            mdcell.ghost_atoms()[i].force.set(fx, fy, fz);
         }
         Parallel_Reduce::reduce_all(snap_potential_);
         Parallel_Reduce::reduce_all(snap_virial_.c, 9);
         for (int i = 0; i < nowned; ++i)
         {
             const std::array<double, 3>& value = contribution.forces()[static_cast<std::size_t>(i)];
-            owned_atoms[static_cast<std::size_t>(i)].force.set(
-                value[0] * force_scale,
-                value[1] * force_scale,
-                value[2] * force_scale);
+            const double fx = value[0] * force_scale;
+            const double fy = value[1] * force_scale;
+            const double fz = value[2] * force_scale;
+            owned_atoms[static_cast<std::size_t>(i)].force.set(fx, fy, fz);
         }
         return;
     }
