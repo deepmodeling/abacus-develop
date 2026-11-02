@@ -150,6 +150,54 @@ TEST_F(SccsResponseTest, ConvergenceFailureBothTolerancesAndExplicitWarmStart)
     EXPECT_GT(tight_rms.polarization.iterations, loose.polarization.iterations);
 }
 
+// Two solves of the same problem with the same OpenMP team give the same bits:
+// thread_sums adds the per-thread partial sums in a fixed order, and the
+// sqrt-CG iteration count depends on the last bits of its inner products.
+// MODULE_HAMILT_sccs_poisson_omp4 runs this with four threads.
+TEST_F(SccsResponseTest, RepeatedSolveWithTheSameTeamIsBitIdentical)
+{
+    const std::vector<double> mode_x = cosine_mode(0);
+    std::vector<double> charge = cosine_mode(1);
+    std::vector<double> density(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        density[ir] = 0.009 + 0.008 * mode_x[ir];
+        charge[ir] *= 1e-3;
+    }
+    ModuleSccs::SccsConfig config;
+    config.cavity.density_min = 0.0024;
+    config.cavity.density_max = 0.0155;
+    config.cavity.epsilon_bulk = 78.3;
+    config.surface_tension = 1e-2;
+    config.pressure = 1e-3;
+    ModuleSccs::PolarizationSolverParameters solver;
+    solver.tolerance_rms = 1e-11;
+    solver.tolerance_max = 1e-10;
+    const std::vector<double> cold_start;
+    ModuleSccs::SccsResponse first;
+    ModuleSccs::SccsResponse second;
+    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold_start, basis, tpiba, first);
+    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold_start, basis, tpiba, second);
+    ModuleSccs::FunctionalResult first_energy;
+    ModuleSccs::FunctionalResult second_energy;
+    ModuleSccs::eval_functional(charge, first, config, basis, tpiba, first_energy);
+    ModuleSccs::eval_functional(charge, second, config, basis, tpiba, second_energy);
+    EXPECT_GT(first.polarization.iterations, 1);
+    EXPECT_EQ(first.polarization.iterations, second.polarization.iterations);
+    EXPECT_EQ(first.polarization.residual_rms, second.polarization.residual_rms);
+    double difference = 0.0;
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        const double deviation = std::abs(first.polarization.potential[ir] - second.polarization.potential[ir]);
+        difference = std::max(difference, deviation);
+    }
+    Parallel_Reduce::reduce_max_pool(basis.poolnproc, difference);
+    EXPECT_EQ(difference, 0.0);
+    EXPECT_EQ(first_energy.reaction_energy, second_energy.reaction_energy);
+    EXPECT_EQ(first_energy.surface, second_energy.surface);
+    EXPECT_EQ(first_energy.volume, second_energy.volume);
+}
+
 namespace
 {
 // cos(2 pi harmonic x / L) on a basis' local real-space grid.

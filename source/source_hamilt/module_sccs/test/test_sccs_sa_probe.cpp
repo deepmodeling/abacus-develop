@@ -151,8 +151,10 @@ TEST_F(SccsSolventAware, ObliqueCellProbeSumsPeriodicImages)
                                         -0.5, sqrt3_half, 0.0,
                                         0.0, 0.0, 1.2);
     const double shear_angle = 10.0 * ModuleBase::PI / 180.0;
+    const double shear_cos = std::cos(shear_angle);
+    const double shear_sin = std::sin(shear_angle);
     const ModuleBase::Matrix3 sheared(1.0, 0.0, 0.0,
-                                      std::cos(shear_angle), std::sin(shear_angle), 0.0,
+                                      shear_cos, shear_sin, 0.0,
                                       0.0, 0.0, 1.0);
     const ModuleSccs::SolventAwareParameters probe = probe_parameters(3.0);
     double hexagonal_count = 0.0;
