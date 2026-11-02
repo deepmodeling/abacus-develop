@@ -27,9 +27,11 @@ class Center2_Orb::Orb21
           const ORB_gaunt_table& MGT_in);
 
     void init_radial_table();
+    /// Selective calls retain previously populated entries for the same orbitals.
     void init_radial_table(const std::set<size_t>& radials); // unit: Bohr/MOT.dr
 
     static void init_radial_table(const std::vector<Orb21 *> &orbitals, const bool use_gpu);
+    /// Selective batches retain each orbital's previously populated entries.
     static void init_radial_table(const std::vector<Orb21 *> &orbitals, const std::set<size_t> &radials);
 
     double cal_overlap(const ModuleBase::Vector3<double>& RA,

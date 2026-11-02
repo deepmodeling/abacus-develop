@@ -85,7 +85,10 @@ void Center2_Orb::Orb21::init_radial_table()
 
 void Center2_Orb::Orb21::init_radial_table(const std::set<size_t>& radials)
 {
-    this->prepare_radial_table();
+    if (!this->nA)
+    {
+        this->prepare_radial_table();
+    }
     for (auto &orbital : this->orb11s)
     {
         orbital.second.init_radial_table(radials);
@@ -100,10 +103,18 @@ void Center2_Orb::Orb21::init_radial_table(const std::vector<Orb21 *> &orbitals,
 
 void Center2_Orb::Orb21::init_radial_table(const std::vector<Orb21 *> &orbitals, const std::set<size_t> &radials)
 {
-    const auto pairs = prepare_radial_tables(orbitals);
-    for (Orb11 *pair : pairs)
+    std::vector<Orb21 *> uninitialized;
+    for (Orb21 *orbital : orbitals)
     {
-        pair->init_radial_table(radials);
+        if (!orbital->nA)
+        {
+            uninitialized.push_back(orbital);
+        }
+    }
+    prepare_radial_tables(uninitialized);
+    for (Orb21 *orbital : orbitals)
+    {
+        orbital->init_radial_table(radials);
     }
 }
 
