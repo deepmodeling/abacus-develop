@@ -35,16 +35,21 @@ AddTest(TARGET MODULE_HAMILT_sccs_poisson
     ../sccs_ion_charge.cpp ../sccs_ion_force.cpp ../sccs_pw_coulomb.cpp ../sccs_response.cpp ../sccs_cavity.cpp
     ../sccs_sa.cpp
     ../../module_xc/xc_grad_utils.cpp)
+# All entries below run this binary in the same directory, where
+# ChargedDielectricCellWarnsAndRuns writes and removes its warning log, so they
+# share a lock and never run at the same time.
 set_tests_properties(MODULE_HAMILT_sccs_poisson PROPERTIES
-  ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60)
+  ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60 RESOURCE_LOCK sccs_poisson_workdir)
 if(ENABLE_OPENMP)
   # Four threads: the grid sums combine per-thread partial sums, and a fixed
-  # team must repeat a solve bit for bit.
+  # team must repeat a solve bit for bit. OMP_DYNAMIC=FALSE keeps the runtime
+  # from shrinking the team.
   add_test(NAME MODULE_HAMILT_sccs_poisson_omp4
     COMMAND $<TARGET_FILE:MODULE_HAMILT_sccs_poisson>
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   set_tests_properties(MODULE_HAMILT_sccs_poisson_omp4 PROPERTIES
-    ENVIRONMENT "OMP_NUM_THREADS=4" TIMEOUT 60 PROCESSORS 4)
+    ENVIRONMENT "OMP_NUM_THREADS=4;OMP_DYNAMIC=FALSE" TIMEOUT 60 PROCESSORS 4
+    RESOURCE_LOCK sccs_poisson_workdir)
 endif()
 
 if(ENABLE_MPI)
@@ -52,12 +57,14 @@ if(ENABLE_MPI)
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
       $<TARGET_FILE:MODULE_HAMILT_sccs_poisson> ${MPIEXEC_POSTFLAGS})
   set_tests_properties(MODULE_HAMILT_sccs_poisson_mpi PROPERTIES
-    ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60 PROCESSORS 2)
+    ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60 PROCESSORS 2
+    RESOURCE_LOCK sccs_poisson_workdir)
   # Three ranks on a grid with two z planes leave one rank with nrxx == 0;
   # a rank that skips a collective hangs, and the timeout turns that into a failure.
   add_test(NAME MODULE_HAMILT_sccs_empty_partition_mpi
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 3 ${MPIEXEC_PREFLAGS}
       $<TARGET_FILE:MODULE_HAMILT_sccs_poisson> ${MPIEXEC_POSTFLAGS} --gtest_filter=*EmptyPartition*)
   set_tests_properties(MODULE_HAMILT_sccs_empty_partition_mpi PROPERTIES
-    ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60 PROCESSORS 3)
+    ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 60 PROCESSORS 3
+    RESOURCE_LOCK sccs_poisson_workdir)
 endif()

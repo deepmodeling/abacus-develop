@@ -13,8 +13,9 @@
 
 namespace
 {
-// Sets the OpenMP team size for one test and restores the previous size, so
-// that the other tests of the binary keep OMP_NUM_THREADS.
+// Sets the OpenMP team size for one test and turns off dynamic teams, so that
+// the runtime cannot shrink the team. Both settings are restored afterwards, so
+// the other tests of the binary keep OMP_NUM_THREADS and OMP_DYNAMIC.
 class ThreadCount
 {
 public:
@@ -22,6 +23,8 @@ public:
     {
 #ifdef _OPENMP
         previous_ = omp_get_max_threads();
+        previous_dynamic_ = omp_get_dynamic();
+        omp_set_dynamic(0);
         omp_set_num_threads(count);
 #else
         (void)count;
@@ -32,11 +35,13 @@ public:
     {
 #ifdef _OPENMP
         omp_set_num_threads(previous_);
+        omp_set_dynamic(previous_dynamic_);
 #endif
     }
 
 private:
     int previous_ = 1;
+    int previous_dynamic_ = 0;
 };
 } // namespace
 

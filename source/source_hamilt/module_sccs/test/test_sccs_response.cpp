@@ -188,7 +188,8 @@ TEST_F(SccsResponseTest, RepeatedSolveWithTheSameTeamIsBitIdentical)
     double difference = 0.0;
     for (int ir = 0; ir < basis.nrxx; ++ir)
     {
-        const double deviation = std::abs(first.polarization.potential[ir] - second.polarization.potential[ir]);
+        const double change = first.polarization.potential[ir] - second.polarization.potential[ir];
+        const double deviation = std::abs(change);
         difference = std::max(difference, deviation);
     }
     Parallel_Reduce::reduce_max_pool(basis.poolnproc, difference);
