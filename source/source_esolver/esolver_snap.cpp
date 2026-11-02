@@ -90,7 +90,15 @@ void ESolver_SNAP::initialize(const std::vector<std::string>& labels)
         std::cout << " Read SNAP coefficient file: " << coefficient_path << std::endl;
         std::cout << " Read SNAP parameter file: " << parameter_path << std::endl;
     }
-    calculator_.reset(new ModuleMD::SNAP::Calculator(model_));
+    try
+    {
+        calculator_.reset(new ModuleMD::SNAP::Calculator(model_));
+    }
+    catch (const std::exception& error)
+    {
+        const std::string message = std::string("Invalid SNAP model: ") + error.what();
+        fail(message, rank_);
+    }
     snap_virial_.create(3, 3);
 }
 

@@ -26,7 +26,22 @@ Calculator::Calculator(const ModelData& model)
     {
         if (model_.coefficients[element].size() != expected_count)
         {
-            throw std::invalid_argument("SNAP coefficient count does not match the descriptor size.");
+            throw std::invalid_argument("SNAP coefficient count for element " + model_.parameters.elements[element]
+                                        + " does not match the descriptor size: expected "
+                                        + std::to_string(expected_count) + ", found "
+                                        + std::to_string(model_.coefficients[element].size()) + ".");
+        }
+    }
+    if (model_.parameters.bzero_flag)
+    {
+        const std::vector<Neighbor> empty_neighbors;
+        bzero_.reserve(model_.coefficients.size());
+        for (std::size_t element = 0; element < model_.coefficients.size(); ++element)
+        {
+            const std::vector<std::complex<double> > self_u
+                = descriptor_evaluator_.accumulate_u(empty_neighbors, element);
+            const std::vector<double> self_bispectrum = descriptor_evaluator_.compute_bispectrum(self_u);
+            bzero_.push_back(self_bispectrum);
         }
     }
 }
@@ -38,17 +53,20 @@ EnergyResult Calculator::compute(const std::vector<Neighbor>& neighbors, const s
         throw std::out_of_range("SNAP central element index is outside the model.");
     }
 
+    const std::vector<std::complex<double> > u = descriptor_evaluator_.accumulate_u(neighbors, central_element);
+    return compute_from_u(u, central_element);
+}
+
+EnergyResult Calculator::compute_from_u(const std::vector<std::complex<double> >& u,
+                                        const std::size_t central_element) const
+{
     EnergyResult result;
-    result.descriptor = descriptor_evaluator_.compute_bispectrum(
-        descriptor_evaluator_.accumulate_u(neighbors, central_element));
+    result.descriptor = descriptor_evaluator_.compute_bispectrum(u);
     if (model_.parameters.bzero_flag)
     {
-        const std::vector<double> bzero =
-            descriptor_evaluator_.compute_bispectrum(
-                descriptor_evaluator_.accumulate_u(std::vector<Neighbor>(), central_element));
         for (std::size_t index = 0; index < result.descriptor.size(); ++index)
         {
-            result.descriptor[index] -= bzero[index];
+            result.descriptor[index] -= bzero_[central_element][index];
         }
     }
     const std::vector<double>& coefficients = model_.coefficients[central_element];
@@ -80,11 +98,36 @@ ForceResult Calculator::compute_with_analytic_force(const std::vector<Neighbor>&
         throw std::out_of_range("SNAP central element index is outside the model.");
     }
     ForceResult result;
-    result.energy = compute(neighbors, central_element);
+    const std::vector<std::complex<double> > u = descriptor_evaluator_.accumulate_u(neighbors, central_element);
+    result.energy = compute_from_u(u, central_element);
     result.center_force.assign(3, 0.0);
     result.neighbor_forces.assign(neighbors.size(), std::vector<double>(3, 0.0));
     const std::vector<double>& coefficients = model_.coefficients[central_element];
-    const std::vector<std::complex<double> > u = descriptor_evaluator_.accumulate_u(neighbors, central_element);
+    std::vector<double> force_coefficients(result.energy.descriptor.size(), 0.0);
+    for (std::size_t i = 0; i < force_coefficients.size(); ++i)
+    {
+        force_coefficients[i] = coefficients[i + 1];
+    }
+    if (model_.parameters.quadratic_flag)
+    {
+        std::size_t coefficient = force_coefficients.size() + 1;
+        for (std::size_t i = 0; i < force_coefficients.size(); ++i)
+        {
+            for (std::size_t j = i; j < force_coefficients.size(); ++j)
+            {
+                const double value = coefficients[coefficient++];
+                if (i == j)
+                {
+                    force_coefficients[i] += value * result.energy.descriptor[i];
+                }
+                else
+                {
+                    force_coefficients[i] += value * result.energy.descriptor[j];
+                    force_coefficients[j] += value * result.energy.descriptor[i];
+                }
+            }
+        }
+    }
     for (std::size_t neighbor_index = 0; neighbor_index < neighbors.size(); ++neighbor_index)
     {
         for (int direction = 0; direction < 3; ++direction)
@@ -105,21 +148,7 @@ ForceResult Calculator::compute_with_analytic_force(const std::vector<Neighbor>&
             double derivative = 0.0;
             for (std::size_t index = 0; index < db.size(); ++index)
             {
-                derivative += coefficients[index + 1] * db[index];
-            }
-            if (model_.parameters.quadratic_flag)
-            {
-                std::size_t coefficient = db.size() + 1;
-                for (std::size_t i = 0; i < db.size(); ++i)
-                {
-                    for (std::size_t j = i; j < db.size(); ++j)
-                    {
-                        const double factor = i == j ? 0.5 : 1.0;
-                        derivative += coefficients[coefficient++] * factor
-                                      * (db[i] * result.energy.descriptor[j]
-                                         + result.energy.descriptor[i] * db[j]);
-                    }
-                }
+                derivative += force_coefficients[index] * db[index];
             }
             result.center_force[static_cast<std::size_t>(direction)] += derivative;
             result.neighbor_forces[neighbor_index][static_cast<std::size_t>(direction)] = -derivative;

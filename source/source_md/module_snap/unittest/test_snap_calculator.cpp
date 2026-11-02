@@ -243,7 +243,36 @@ TEST(SnapCalculator, RejectsMismatchedCoefficientCount)
 {
     ModuleMD::SNAP::ModelData model = make_model();
     model.coefficients[0].push_back(4.0);
-    EXPECT_THROW(ModuleMD::SNAP::Calculator calculator(model), std::invalid_argument);
+    try
+    {
+        const ModuleMD::SNAP::Calculator calculator(model);
+        FAIL() << "Expected a coefficient-count error";
+    }
+    catch (const std::invalid_argument& error)
+    {
+        EXPECT_NE(std::string(error.what()).find("expected 2, found 3"), std::string::npos);
+    }
+}
+
+TEST(SnapCalculator, CachedSelfDescriptorMatchesEnergyAndForce)
+{
+    ModuleMD::SNAP::ModelData model = make_model();
+    const ModuleMD::SNAP::Calculator calculator(model);
+    ModuleMD::SNAP::Neighbor neighbor;
+    neighbor.x = 1.0;
+    neighbor.y = 0.4;
+    const std::vector<ModuleMD::SNAP::Neighbor> neighbors(1, neighbor);
+    const ModuleMD::SNAP::EnergyResult energy = calculator.compute(neighbors, 0);
+    const ModuleMD::SNAP::ForceResult analytic = calculator.compute_with_analytic_force(neighbors, 0);
+    const ModuleMD::SNAP::ForceResult finite = calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+    EXPECT_DOUBLE_EQ(energy.energy, analytic.energy.energy);
+    ASSERT_EQ(energy.descriptor.size(), analytic.energy.descriptor.size());
+    EXPECT_DOUBLE_EQ(energy.descriptor[0], analytic.energy.descriptor[0]);
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        const std::size_t index = static_cast<std::size_t>(direction);
+        EXPECT_NEAR(analytic.neighbor_forces[0][index], finite.neighbor_forces[0][index], 1.0e-6);
+    }
 }
 
 TEST(SnapCalculator, RejectsInvalidCentralElement)

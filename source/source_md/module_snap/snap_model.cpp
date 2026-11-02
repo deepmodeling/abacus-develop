@@ -192,6 +192,12 @@ bool ModelData::load(const std::string& coefficient_file,
         error = "Invalid SNAP coefficient file header.";
         return false;
     }
+    std::string extra;
+    if (header >> extra)
+    {
+        error = "Unexpected extra value in SNAP coefficient file header.";
+        return false;
+    }
 
     std::vector<bool> found(parameters.elements.size(), false);
     parameters.element_weights.assign(parameters.elements.size(), 0.0);
@@ -211,6 +217,11 @@ bool ModelData::load(const std::string& coefficient_file,
         if (!(element_line >> element >> radius >> weight))
         {
             error = "Invalid SNAP element line.";
+            return false;
+        }
+        if (element_line >> extra)
+        {
+            error = "Unexpected extra value in SNAP element line: " + element;
             return false;
         }
         std::size_t element_index = parameters.elements.size();
@@ -236,6 +247,11 @@ bool ModelData::load(const std::string& coefficient_file,
                 error = "Invalid SNAP coefficient value.";
                 return false;
             }
+            if (!std::isfinite(values[static_cast<std::size_t>(coefficient)]) || value_line >> extra)
+            {
+                error = "Invalid or extra SNAP coefficient value for element: " + element;
+                return false;
+            }
         }
         if (element_index < parameters.elements.size())
         {
@@ -249,6 +265,11 @@ bool ModelData::load(const std::string& coefficient_file,
             parameters.element_weights[element_index] = weight;
             coefficients[element_index] = values;
         }
+    }
+    if (next_data_line(coeff_stream, line))
+    {
+        error = "Unexpected data after the SNAP coefficient blocks.";
+        return false;
     }
     for (std::size_t i = 0; i < found.size(); ++i)
     {

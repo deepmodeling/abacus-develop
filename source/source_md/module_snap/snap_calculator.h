@@ -40,9 +40,13 @@ class Calculator
                                                      double displacement) const;
 
   private:
+    EnergyResult compute_from_u(const std::vector<std::complex<double> >& u,
+                                std::size_t central_element) const;
+
     ModelData model_;
     DescriptorEvaluator descriptor_evaluator_;
     std::size_t descriptor_size_;
+    std::vector<std::vector<double> > bzero_;
 };
 
 class CellAccumulator

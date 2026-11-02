@@ -234,4 +234,35 @@ TEST(SnapModel, ReadsInnerSwitchAndRejectsUnknownParameter)
     std::remove(parameter_file.c_str());
 }
 
+TEST(SnapModel, RejectsExtraCoefficientFileData)
+{
+    const std::string coefficient_file = testing::TempDir() + "snap_extra_coeff.txt";
+    const std::string parameter_file = testing::TempDir() + "snap_extra_param.txt";
+    {
+        std::ofstream output(parameter_file.c_str());
+        output << "rcutfac 1.0\ntwojmax 0\n";
+    }
+    const std::vector<std::string> contents = {
+        "1 2 extra\nSi 2.0 1.0\n0.0\n1.0\n",
+        "1 2\nSi 2.0 1.0 extra\n0.0\n1.0\n",
+        "1 2\nSi 2.0 1.0\n0.0 extra\n1.0\n",
+        "1 2\nSi 2.0 1.0\n0.0\n1.0\nextra\n"};
+    const std::vector<std::string> expected = {
+        "header", "element line", "coefficient value", "after the SNAP coefficient blocks"};
+    for (std::size_t i = 0; i < contents.size(); ++i)
+    {
+        {
+            std::ofstream output(coefficient_file.c_str());
+            output << contents[i];
+        }
+        ModuleMD::SNAP::ModelData model;
+        std::string error;
+        const std::vector<std::string> elements(1, "Si");
+        EXPECT_FALSE(model.load(coefficient_file, parameter_file, elements, error));
+        EXPECT_NE(error.find(expected[i]), std::string::npos) << error;
+    }
+    std::remove(coefficient_file.c_str());
+    std::remove(parameter_file.c_str());
+}
+
 } // namespace
