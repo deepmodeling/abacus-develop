@@ -36,8 +36,6 @@ bool Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,
 {
     get_pos(ucell, pos);
     get_pos_taud(ucell, pos_taud);
-    // solver=p_esolver;
-    ucell.ionic_position_updated = true;
     for (int i = 0; i < _force.nr; i++)
     {
         for (int j = 0; j < _force.nc; j++)
@@ -65,14 +63,18 @@ bool Ions_Move_LBFGS::relax_step(const ModuleBase::matrix _force,
         }
         k += ucell.atoms[i].na;
     }
+    this->calculate_largest_grad(_force, ucell);
+    if (this->is_restrain(criteria))
+    {
+        return true;
+    }
     this->prepare_step(force, pos, H, pos0, force0, dpos, ucell, etot);
     this->determine_step(steplength, dpos, maxstep);
     this->update_pos(ucell);
-    this->calculate_largest_grad(_force, ucell);
-    bool converged = this->is_restrain(criteria);
+    ucell.ionic_position_updated = true;
     // mohan add 2025-06-22
     unitcell::print_tau(ucell.atoms, ucell.Coordinate, ucell.ntype, ucell.lat0, ofs_running);
-    return converged;
+    return false;
 }
 
 void Ions_Move_LBFGS::get_pos(UnitCell& ucell, std::vector<ModuleBase::Vector3<double>>& pos)

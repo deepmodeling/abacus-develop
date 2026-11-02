@@ -4,11 +4,11 @@
 #include "source_base/module_device/device.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
+#include "source_cell/stru_fac.h"
 #include "source_cell/unitcell.h"
 #include "source_hamilt/hamilt.h"
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_psi/psi_prepare.h"
-#include "source_pw/module_pwdft/stru_fac.h"
 
 class Setup_Psi_pw
 {

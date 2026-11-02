@@ -1,6 +1,8 @@
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_dipole/dipole_io.h"
 
+#include <iomanip>
+
 namespace ModuleIO
 {
 
@@ -40,7 +42,7 @@ void print_dipole_moment(std::ofstream& ofs_running, const std::string& name, do
 // - istep: current time step
 // - fn: output file name
 // - ofs_running: output stream for logging
-// - precision: floating-point precision for output
+// - precision: number of significant digits for output
 void write_dipole(const UnitCell& ucell,
                   const double* rho,
                   const ModulePW::PW_Basis* rhopw,
@@ -67,10 +69,10 @@ void write_dipole(const UnitCell& ucell,
 
     ofs_running << " Write dipole data to file: " << fn << std::endl;
 
-    // Validate grid dimensions to prevent division by zero
-    if (rhopw->nx == 0 || rhopw->ny == 0 || rhopw->nz == 0 || rhopw->nxyz == 0 || rhopw->nplane == 0)
+    // Empty local FFT partitions contribute zero but must still join the subsequent reduction.
+    if (rhopw->nx == 0 || rhopw->ny == 0 || rhopw->nz == 0 || rhopw->nxyz == 0 || (rhopw->nplane == 0 && rhopw->nrxx != 0))
     {
-        ModuleBase::WARNING_QUIT("ModuleIO::write_dipole", "Invalid grid parameters: nx, ny, nz, nxyz, or nplane is zero");
+        ModuleBase::WARNING_QUIT("ModuleIO::write_dipole", "Invalid global grid dimensions or inconsistent local plane count");
     }
 
     // Accumulate the electronic first moment in fractional coordinates.
@@ -118,8 +120,12 @@ void write_dipole(const UnitCell& ucell,
     print_dipole_moment(ofs_running, "Electronic dipole moment", dipole_elec[0], dipole_elec[1], dipole_elec[2]);
 
     // Write to file: step index and three dipole components
-    ofs << std::setprecision(precision) << istep + 1 << " " << dipole_elec[0] << " " << dipole_elec[1] << " " << dipole_elec[2]
-        << std::endl;
+    ofs << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(precision - 1);
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        ofs << "  " << std::setw(19) << dipole_elec[direction];
+    }
+    ofs << std::endl;
 
     // Calculate ionic dipole moment
     // Accumulate Z_v * taud, then transform to Cartesian coordinates.

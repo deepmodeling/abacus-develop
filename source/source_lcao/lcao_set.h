@@ -8,7 +8,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/allocate_dm.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_pw/module_pwdft/vl_pw.h"

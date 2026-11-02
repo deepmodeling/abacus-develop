@@ -12,6 +12,7 @@
 
 #include "dfpt_serial_fixture.h"
 #include "source_base/complexmatrix.h"
+#include "source_pw/module_dfpt/dfpt_rho.h"
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
@@ -23,7 +24,7 @@
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_phon.h"
-#include "source_pw/module_pwdft/stru_fac.h"
+#include "source_cell/stru_fac.h"
 
 // ctor/dtor stubs for the cell/spepot/stru_fac link closures live in the
 // shared test/dfpt_test_mocks.cpp compiled into every DFPT test binary.
@@ -347,7 +348,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
     }
     data_.set_dpsi(0, 0, 0, dpsi_inj);
 
-    phon_.accumulate_electron(0, 0, 1, psi, wg, data_);
+    phon_.accumulate_electron(0, 0, 1, psi, wg, data_, std::vector<std::complex<double>>());
 
     // expected: row 1 (atom 0, dir 1) of the Hermitian 2n+1 accumulation:
     // the row element receives wg*<dpsi|dV^a|psi> once per off-diagonal
@@ -400,7 +401,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2GateOffGenericQ)
     }
     data_.set_dpsi(0, 0, 0, dpsi_inj);
 
-    phon_.accumulate_electron(0, 0, 0, psi, wg, data_);
+    phon_.accumulate_electron(0, 0, 0, psi, wg, data_, std::vector<std::complex<double>>());
 
     const std::vector<ModuleBase::Vector3<double>> g0(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int adir = 0; adir < 3; ++adir)
@@ -479,7 +480,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
     }
     data_.set_dpsi(0, 0, 0, dpsi_inj);
 
-    phon_.accumulate_electron(0, 0, 1, psi, wg, data_);
+    phon_.accumulate_electron(0, 0, 1, psi, wg, data_, std::vector<std::complex<double>>());
 
     for (int adir = 0; adir < 3; ++adir)
     {
@@ -963,4 +964,99 @@ TEST_F(DFPTPhonSerialTest, AsrSimpleCrossCartesianRegression)
     {
         EXPECT_EQ(out(i, i).imag(), 0.0) << "i=" << i;
     }
+}
+
+// ---------------------------------------------------------------------------
+// nlcc direct-term fill-semantics regression: with a synthetic provider set
+// (all-atoms kernel table, ground-state XC vector, DFPT_Rho), the nlcc
+// kernel accumulation must satisfy the QE-pinned invariants:
+//   (1) the one-sided cross block (nlcc row, coreless column) receives
+//       (1/2)(X_ab + conj(X_ba)) = (1/2) X_ab  [X_ba = 0: coreless row]
+//   (2) every displacement slot's dvaux participates (the "dead row" bug
+//       dropped the entire X(N, B) cross block when the table left
+//       coreless atoms empty)
+//   (3) the matrix stays Hermitian
+// These pin the fill factor (the double-sided same-atom block would double
+// under a both-order fill; a lower-triangle-only fill halves the one-sided
+// cross blocks).
+// ---------------------------------------------------------------------------
+TEST_F(DFPTPhonSerialTest, NlccDirectTermsFillSemantics)
+{
+    MakeNlccTwoAtomCell();
+    SetupPhon(k_d_, q_d_);
+
+    ModuleDFPT::DFPT_Rho rho;
+    rho.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_plain"), 0.4, 1.0, 8});
+    phon_.set_rho(&rho);
+
+    const int nrxx = pw_rho_.nrxx;
+    // synthetic kernel table: f_xc.drhoc stand-ins = distinct constant
+    // complex fields per slot (values chosen to survive exact comparison)
+    std::vector<std::vector<std::complex<double>>> table(6);
+    for (int slot = 0; slot < 6; ++slot)
+    {
+        const double re = 0.1 + 0.05 * slot;
+        const double im = 0.02 * slot - 0.05;
+        table[slot].assign(nrxx, std::complex<double>(re, im));
+    }
+    phon_.set_dvxc_core_table(&table);
+
+    // synthetic ground-state XC vector (only the diag term consumes it);
+    // zero it so the diag term's only effect is absent (this test targets
+    // the kernel fill)
+    const std::vector<double> vxc_zero(nrxx, 0.0);
+    phon_.set_vxc_r(&vxc_zero);
+
+    psi::Psi<std::complex<double>> psi = MakeSinglePlaneWavePsi(k_d_);
+    ModuleBase::matrix wg = MakeOccWeights();
+    // NO dpsi injection: the bare cross term needs occupied dpsi entries
+    // and skips empty slots, so the accumulated matrix isolates the nlcc
+    // kernel contribution exactly
+
+    phon_.accumulate_electron(0, 1, 0, psi, wg, data_, table[3]);
+
+    const auto& m = phon_.dynmat_accum();
+    // row (1, dir 0) = 3*1+0 = 3; column (atom 0, dir j) = j (coreless)
+    // X_3j = sum_r table[3](r) * conj(drhoc(atom0, dir_j)(r)) = 0
+    //   (atom 0 has no nlcc: drhoc = empty -> the kernel term's x_ab arm
+    //    is zero for coreless COLUMNS)
+    // x_ba arm = sum_r table[j](r) * conj(drhoc(atom1, dir0)(r)) != 0
+    //   (row atom 1 has a core; the column's dvaux comes from the table)
+    // So the (3, j) element = (1/2)(0 + conj(x_ba)) = (1/2) conj(x_ba).
+    // The x_ba contraction runs over the actual Gaussian core field, so
+    // verify structurally: the one-sided block is NONZERO (dead-row bug
+    // gave exactly zero) and matches an independent recomputation.
+    const double fac = ucell_.omega / nrxx;
+    std::vector<std::complex<double>> drhoc_g;
+    rho.compute_drhoc_g(ucell_, 1, 0, q_cart_, drhoc_g);
+    ASSERT_EQ(static_cast<int>(drhoc_g.size()), pw_rho_.npw);
+    std::vector<std::complex<double>> drhoc_r(nrxx);
+    pw_rho_.recip2real(drhoc_g.data(), drhoc_r.data());
+    const double m0 = std::sqrt(ucell_.atoms[0].mass);
+    const double m1 = std::sqrt(ucell_.atoms[1].mass);
+    for (int j = 0; j < 3; ++j)
+    {
+        std::complex<double> x_ba(0.0, 0.0);
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            x_ba += std::conj(table[j][ir]) * drhoc_r[ir];
+        }
+        x_ba *= fac;
+        const std::complex<double> expect = 0.5 * std::conj(x_ba) / (m0 * m1);
+        EXPECT_NEAR(std::abs(m(3, j) - expect), 0.0, 1.0e-10 * (1.0 + std::abs(expect)))
+            << "j=" << j << " got " << m(3, j) << " expect " << expect;
+    }
+
+    // Hermiticity of the accumulated block so far: accumulate the column
+    // displacement (atom 1, dir 0 already done as row; do (atom 1, dir 1)
+    // to complete more of the same-atom block, then check the whole
+    // matrix is Hermitian within the accumulated rows
+    phon_.accumulate_electron(0, 1, 1, psi, wg, data_, table[4]);
+    // the (3, 4) and (4, 3) elements must be conjugate pairs: from row 3's
+    // pass, (3,4) = (1/2)(X_34 + conj(X_43)); from row 4's pass, (4,3) =
+    // (1/2)(X_43 + conj(X_34)) = conj((3,4))
+    const std::complex<double> e34 = m(3, 4);
+    const std::complex<double> e43 = m(4, 3);
+    EXPECT_NEAR(e43.real(), e34.real(), 1.0e-12);
+    EXPECT_NEAR(e43.imag(), -e34.imag(), 1.0e-12);
 }

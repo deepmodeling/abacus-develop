@@ -59,6 +59,16 @@ void set_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(FPTYPE* arr,
 }
 
 template <typename FPTYPE>
+void set_memory_2d_op<FPTYPE, base_device::DEVICE_GPU>::operator()(FPTYPE* arr,
+                                                                const size_t pitch,
+                                                                const int var,
+                                                                const size_t width,
+                                                                const size_t height)
+{
+    hipErrcheck(hipMemset2D(arr, sizeof(FPTYPE) * pitch, var, sizeof(FPTYPE) * width, height));
+}
+
+template <typename FPTYPE>
 void synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_GPU>::operator()(
     FPTYPE* arr_out,
     const FPTYPE* arr_in,
@@ -243,6 +253,12 @@ template struct cast_memory_op<std::complex<double>,
                                std::complex<float>,
                                base_device::DEVICE_CPU,
                                base_device::DEVICE_GPU>;
+
+template struct set_memory_2d_op<int, base_device::DEVICE_GPU>;
+template struct set_memory_2d_op<float, base_device::DEVICE_GPU>;
+template struct set_memory_2d_op<double, base_device::DEVICE_GPU>;
+template struct set_memory_2d_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct set_memory_2d_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 template struct delete_memory_op<int, base_device::DEVICE_GPU>;
 template struct delete_memory_op<float, base_device::DEVICE_GPU>;

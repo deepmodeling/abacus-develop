@@ -13,6 +13,18 @@ struct Input_para;
 namespace elecstate
 {
 
+/** @brief Field values for one trial interval, independent of the committed step counter. */
+struct TDFieldState
+{
+    bool active = false;
+    double dt = 0.0;
+    std::vector<double> values;
+    ModuleBase::Vector3<double> left;
+    ModuleBase::Vector3<double> right;
+    ModuleBase::Vector3<double> propagation;
+    ModuleBase::Vector3<double> electric;
+};
+
 /**
  * @brief Own and advance all time-dependent electric fields in RT-TDDFT.
  *
@@ -31,6 +43,15 @@ class TDFieldManager
      * endpoint average, not an exact midpoint sample.
      */
     void prepare_interval(const int left_step, const int sample_step);
+
+    /** @brief Capture the current field without advancing the original sampling grid. */
+    TDFieldState field_state() const;
+    /** @brief Bind trial fields without advancing or integrating the original interval again. */
+    void bind_field(const TDFieldState& state);
+    /** @brief Evaluate interval [index/parts,(index+1)/parts] inside the prepared original step. */
+    TDFieldState subinterval(const TDFieldState& full, int index, int parts) const;
+    /** @brief Duration of the currently bound trial interval in Hartree atomic units. */
+    double interval_dt_ha() const;
 
     /** @brief Supply endpoint samples starting at t=0 before preparing any steps. */
     void set_A_samples(const std::vector<ModuleBase::Vector3<double>>& samples_ha);
@@ -95,6 +116,7 @@ class TDFieldManager
     int start_step_;
     int end_step_;
     double dt_ha_;
+    double interval_dt_ha_;
     double length_cut1_;
     double length_cut2_;
     std::vector<TDField> fields_;
@@ -109,6 +131,7 @@ class TDFieldManager
     ModuleBase::Vector3<double> efield_ha_;
     void sample_field(const int step);
     void select_A_prop();
+    ModuleBase::Vector3<double> substep_a(const TDFieldState& full, int node, int parts) const;
 
     friend std::shared_ptr<TDFieldManager> create_td_field_manager(const Input_para& input);
 };

@@ -285,7 +285,8 @@ void md_line(MDCell& mdcell,
         {
             if (mdcell.has_backing_unitcell())
             {
-                mdcell.sync_backing_unitcell();
+                const bool positions_updated = false;
+                mdcell.sync_backing_unitcell(positions_updated);
             }
             std::stringstream file;
             file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;

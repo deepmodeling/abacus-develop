@@ -149,6 +149,15 @@ void dump_info(const int& step,
                const bool cal_stress,
                const ModuleBase::matrix& virial);
 
+/// Explicit buffer budget for bounded dump collectives; one row is the minimum batch.
+void dump_info(const int& step,
+               const std::string& global_out_dir,
+               const MDCell& mdcell,
+               const MD_para& mdp,
+               const bool cal_stress,
+               const ModuleBase::matrix& virial,
+               const int max_batch_bytes);
+
 /**
  * @brief obtain the atomic mass and whether the freedom is fixed
  *
