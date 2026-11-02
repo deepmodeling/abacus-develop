@@ -160,7 +160,7 @@ set(_abacus_linalg_include_dirs)
 # C_PACK is optional for DSP builds. With MT_CPACK_DIR set, the serial
 # generalized eigensolver is offloaded to cpack_zhegvx_driver from libc_pack.a;
 # otherwise the fallback in source_hsolver/cpack_zhegvx_fallback.cpp forwards it
-# to the reference LAPACK zhegvx_ (see issue #8247).
+# to the configured LAPACK provider's zhegvx_ (see issue #8247).
 if(USE_DSP)
   if(MT_CPACK_DIR)
     set(_abacus_cpack_library "${MT_CPACK_DIR}/lib/libc_pack.a")
@@ -174,7 +174,7 @@ if(USE_DSP)
   else()
     message(STATUS
       "USE_DSP without MT_CPACK_DIR: C_PACK disabled, the serial generalized "
-      "eigensolver falls back to reference LAPACK (zhegvx).")
+      "eigensolver falls back to the configured LAPACK provider (zhegvx).")
   endif()
 endif()
 

@@ -2,7 +2,7 @@
 //
 // diago_lapack.cpp calls cpack_zhegvx_driver under __DSP. The symbol normally
 // comes from libc_pack.a; when C_PACK is not linked, this translation unit
-// provides it by forwarding to the reference LAPACK zhegvx_. CMake adds this
+// provides it by forwarding to the configured LAPACK provider's zhegvx_. CMake adds this
 // file only when USE_DSP is on and MT_CPACK_DIR is unset, so it never coexists
 // with libc_pack.a. See issue #8247.
 

@@ -69,17 +69,22 @@ if (ENABLE_MPI)
   )
 
   if(ENABLE_LCAO)
+    # DSP build without C_PACK: diago_lapack.cpp then needs the zhegvx_
+    # fallback for cpack_zhegvx_driver.
+    if(USE_DSP AND NOT MT_CPACK_DIR)
+      set(_dsp_cpack_fallback_src ../cpack_zhegvx_fallback.cpp)
+    endif()
     if(TARGET ELPA::ELPA)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO
       LIBS parameter  ELPA::ELPA base genelpa psi device
-      SOURCES test_diago_lcao.cpp ../diago_elpa.cpp ../diago_elpa_native.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
+      SOURCES test_diago_lcao.cpp ../diago_elpa.cpp ../diago_elpa_native.cpp ../diago_scalapack.cpp ../diago_lapack.cpp ${_dsp_cpack_fallback_src}
     )
     else()
       AddTest(
         TARGET MODULE_HSOLVER_LCAO
         LIBS parameter  base psi device
-        SOURCES test_diago_lcao.cpp ../diago_scalapack.cpp ../diago_lapack.cpp
+        SOURCES test_diago_lcao.cpp ../diago_scalapack.cpp ../diago_lapack.cpp ${_dsp_cpack_fallback_src}
       )
     endif()
 
