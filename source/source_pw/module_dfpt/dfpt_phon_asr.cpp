@@ -4,7 +4,7 @@
 // residual audit and the simple/crystal enforcement with the
 // mass-weighted symmetric projection and the Born-charge sum
 // rule (QE set_asr convention). Both act at Gamma only; the
-// companion tests live in test_serial/test_dfpt_phon_asr.cpp.
+// companion tests live in test_serial/dfpt_phon_serial_test.cpp.
 // ============================================================
 
 #include "dfpt_phon.h"
@@ -13,6 +13,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <iomanip>
