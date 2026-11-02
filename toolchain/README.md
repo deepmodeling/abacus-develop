@@ -203,7 +203,7 @@ Mix online and offline packages as needed - the toolchain automatically detects 
 | ScaLAPACK | 2.2.3 / 2.2.1 | Parallel linear algebra | BSD-3-Clause | Install |
 | **Scientific Libraries** |||||
 | FFTW | 3.3.11 / 3.3.10 | Fast Fourier Transform | GPL-2.0-or-later | Install |
-| LibXC | 7.0.0 / 6.2.2 | Exchange-correlation | MPL-2.0 | Install |
+| LibXC | 7.1.2 / 7.0.0 | Exchange-correlation | MPL-2.0 | Install |
 | ELPA | 2026.02.001 / 2024.05.001 | Eigenvalue solver | LGPL-3.0-only | Install |
 | **Advanced Features** |||||
 | Cereal | pinned commit | C++ Serialization | BSD | Install |
@@ -247,13 +247,40 @@ CMAKE_VERSION="main"        # main=3.31.7, alt=3.30.5
 OPENMPI_VERSION="main"      # main=5.0.10, alt=4.1.8
 OPENBLAS_VERSION="main"     # main=0.3.33, alt=0.3.30
 ELPA_VERSION="main"         # main=2026.02.001, alt=2024.05.001
-LIBXC_VERSION="main"        # main=7.0.0, alt=6.2.2
+LIBXC_VERSION="main"        # main=7.1.2, alt=7.0.0
 SCALAPACK_VERSION="main"    # main=2.2.3, alt=2.2.1
 # Optional Libraries
 LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
 ```
 
 and other `toolchain_*.sh` scripts share the same version selection.
+
+#### LibXC KXC and HSE excited-state forces
+
+The default LibXC `main` version is 7.1.2; `alt` selects 7.0.0.
+The installer enables third derivatives (KXC) with `-DMAXORDER=3` for
+LibXC 7.1 and newer, or `-DDISABLE_KXC=OFF -DDISABLE_LXC=ON` for older
+versions. These settings apply when the toolchain builds LibXC, not when
+using a system or externally installed library.
+
+Starting with LibXC 7.1.0, the standard omega-PBEH (WPBEH) functional and
+its HSE03/HSE06 combinations provide derivatives only through second order
+(FXC). Enabling KXC at build time does not restore KXC for those functionals.
+Upstream restricted their derivative order because of insufficient smoothness
+at piecewise junctions and numerical stability issues; see the
+[upstream change](https://gitlab.com/libxc/libxc/-/commit/df265b822368651dce578707bd5753d015480feb).
+This limitation concerns HSE LR-TDDFT analytical excited-state forces;
+it does not by itself prevent ground-state HSE calculations or spectra
+requiring only FXC.
+
+Users requiring the existing HSE LR-TDDFT force path can select the older
+version when installing dependencies:
+
+```bash
+cd toolchain
+./toolchain_gnu.sh --package-version libxc:alt
+source install/setup
+```
 
 #### Global Version Strategy
 
