@@ -8,3 +8,6 @@ LAMMPS (30 Mar 2026 development build, c46bbef) gives total potential energy
 (-92.139945, 60.594450, 0), and (24.847141, -118.142093, 0), and Pxx
 -122909.08 bar. ABACUS reports stress in kbar. The calculator unit test
 checks each force component and compares virial with an energy strain derivative.
+
+Model files: ../../SIMULATION_MODELS/snap_105_quad.coeff and
+../../SIMULATION_MODELS/snap_105_quad.param.
