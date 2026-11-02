@@ -33,7 +33,7 @@ TEST(SnapDescriptor, SelfContributionIsDiagonal)
 {
     const ModuleMD::SNAP::DescriptorEvaluator evaluator(make_parameters());
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors;
-    const std::vector<std::complex<double> > u = evaluator.accumulate_u(neighbors);
+    const std::vector<std::complex<double> > u = evaluator.accumulate_u(neighbors, 0);
 
     EXPECT_DOUBLE_EQ(u[0].real(), 1.0);
     EXPECT_DOUBLE_EQ(u[0].imag(), 0.0);
@@ -49,8 +49,9 @@ TEST(SnapDescriptor, OutsideCutoffDoesNotChangeEnvironment)
     ModuleMD::SNAP::Neighbor neighbor;
     neighbor.x = 5.0;
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors(1, neighbor);
-    const std::vector<std::complex<double> > u = evaluator.accumulate_u(neighbors);
-    const std::vector<std::complex<double> > self = evaluator.accumulate_u(std::vector<ModuleMD::SNAP::Neighbor>());
+    const std::vector<std::complex<double> > u = evaluator.accumulate_u(neighbors, 0);
+    const std::vector<ModuleMD::SNAP::Neighbor> no_neighbors;
+    const std::vector<std::complex<double> > self = evaluator.accumulate_u(no_neighbors, 0);
 
     ASSERT_EQ(u.size(), self.size());
     for (std::size_t i = 0; i < u.size(); ++i)
@@ -67,7 +68,8 @@ TEST(SnapDescriptor, BispectrumIsFinite)
     neighbor.x = 1.2;
     neighbor.y = 0.4;
     neighbor.z = -0.8;
-    const std::vector<std::complex<double> > u = evaluator.accumulate_u(std::vector<ModuleMD::SNAP::Neighbor>(1, neighbor));
+    const std::vector<ModuleMD::SNAP::Neighbor> neighbors(1, neighbor);
+    const std::vector<std::complex<double> > u = evaluator.accumulate_u(neighbors, 0);
     const std::vector<double> bispectrum = evaluator.compute_bispectrum(u);
 
     for (std::size_t i = 0; i < bispectrum.size(); ++i)
@@ -90,7 +92,8 @@ TEST(SnapDescriptor, MatchesLammpsSingleElementReference)
         neighbor.cutoff_radius = 4.0;
         neighbors.push_back(neighbor);
     }
-    const std::vector<double> bispectrum = evaluator.compute_bispectrum(evaluator.accumulate_u(neighbors));
+    const std::vector<std::complex<double> > u = evaluator.accumulate_u(neighbors, 0);
+    const std::vector<double> bispectrum = evaluator.compute_bispectrum(u);
     const double reference[5] = {
         13.0368348609, 15.0992648922, 11.7631725456, 13.7069739819, 6.07477849248};
     ASSERT_EQ(bispectrum.size(), static_cast<std::size_t>(5));

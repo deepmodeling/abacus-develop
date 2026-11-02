@@ -162,11 +162,6 @@ std::vector<std::complex<double> > DescriptorEvaluator::compute_u(const Neighbor
     return result;
 }
 
-std::vector<std::complex<double> > DescriptorEvaluator::accumulate_u(const std::vector<Neighbor>& neighbors) const
-{
-    return accumulate_u(neighbors, 0);
-}
-
 std::vector<std::complex<double> > DescriptorEvaluator::accumulate_u(const std::vector<Neighbor>& neighbors,
                                                                       const std::size_t central_element) const
 {

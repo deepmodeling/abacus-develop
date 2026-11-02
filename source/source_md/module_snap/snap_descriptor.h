@@ -39,8 +39,6 @@ class DescriptorEvaluator
 
     UWithDerivative compute_u_with_derivative(const Neighbor& neighbor, int direction) const;
 
-    std::vector<std::complex<double> > accumulate_u(const std::vector<Neighbor>& neighbors) const;
-
     std::vector<std::complex<double> > accumulate_u(const std::vector<Neighbor>& neighbors,
                                                     std::size_t central_element) const;
 
