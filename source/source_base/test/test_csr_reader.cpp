@@ -121,16 +121,26 @@ TEST_P(CsrFormats, PreservesNextFrameAfterComments)
     std::ifstream input(path);
     const std::istreambuf_iterator<char> begin(input);
     const std::istreambuf_iterator<char> end;
-    const std::string frame(begin, end);
+    std::string frame(begin, end);
     input.close();
+    const std::size_t step_position = frame.find('7');
+    ASSERT_NE(step_position, std::string::npos);
+    frame.replace(step_position, 1, "8");
+    const std::string first_block = "0 0 0 1\n1\n";
+    const std::string second_block = "0 0 0 1\n2.5\n";
+    const std::size_t block_position = frame.find(first_block);
+    const std::size_t block_size = first_block.size();
+    ASSERT_NE(block_position, std::string::npos);
+    frame.replace(block_position, block_size, second_block);
     std::ofstream append(path, std::ios::app);
     append << frame;
     append.close();
     ModuleIO::csrFileReader<double> reader(path);
     EXPECT_DOUBLE_EQ(reader.getMatrix(0)(0, 0), 1.0);
-    reader.parseFile();
     EXPECT_EQ(reader.getStep(), 7);
-    EXPECT_DOUBLE_EQ(reader.getMatrix(0)(0, 0), 1.0);
+    reader.parseFile();
+    EXPECT_EQ(reader.getStep(), 8);
+    EXPECT_DOUBLE_EQ(reader.getMatrix(0)(0, 0), 2.5);
 }
 TEST_P(CsrFormats, RejectsDataAfterTrailingComment)
 {
