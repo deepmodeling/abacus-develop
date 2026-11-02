@@ -116,7 +116,7 @@ double Center2_Orb::Orb21::cal_overlap(const ModuleBase::Vector3<double>& RA,
 
     double overlap = 0.0;
 
-    for (const auto& orb11: this->orb11s)
+    for (const std::pair<const int, Center2_Orb::Orb11>& orb11: this->orb11s)
     {
         const int LA = orb11.first;
 
@@ -150,7 +150,7 @@ ModuleBase::Vector3<double> Center2_Orb::Orb21::cal_grad_overlap(const ModuleBas
 
     ModuleBase::Vector3<double> grad_overlap(0.0, 0.0, 0.0);
 
-    for (const auto& orb11: this->orb11s)
+    for (const std::pair<const int, Center2_Orb::Orb11>& orb11: this->orb11s)
     {
         const int LA = orb11.first;
 
@@ -183,7 +183,7 @@ std::vector<T> Center2_Orb::Orb21::cal_magnetic_components(
     const int count_B = 2 * this->nB.getL() + 1;
     const int count = count_A1 * count_A2 * count_B;
     std::vector<T> result(count);
-    for (const auto &orbital : this->orb11s)
+    for (const std::pair<const int, Center2_Orb::Orb11> &orbital : this->orb11s)
     {
         const int LA = orbital.first;
         const int count_A = 2 * LA + 1;

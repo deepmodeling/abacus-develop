@@ -38,25 +38,25 @@ RI::Tensor<Tdata> Matrix_Orbs21::cal_overlap_matrix(
 
     const ModuleBase::Vector3<double> position_A = tauA * lat0;
     const ModuleBase::Vector3<double> position_B = tauB * lat0;
-    for( const auto &co3 : center2_orb21_s.at(TA).at(TB) )
+    for( const std::pair<const int, std::map<size_t, std::map<int, std::map<size_t, std::map<int, std::map<size_t, Center2_Orb::Orb21>>>>>> &co3 : center2_orb21_s.at(TA).at(TB) )
     {
         const int LA1 = co3.first;
-        for( const auto &co4 : co3.second )
+        for( const std::pair<const size_t, std::map<int, std::map<size_t, std::map<int, std::map<size_t, Center2_Orb::Orb21>>>>> &co4 : co3.second )
         {
             const size_t NA1 = co4.first;
-            for (const auto &co5 : co4.second)
+            for (const std::pair<const int, std::map<size_t, std::map<int, std::map<size_t, Center2_Orb::Orb21>>>> &co5 : co4.second)
             {
                 const int LA2 = co5.first;
-                for (const auto &co6 : co5.second)
+                for (const std::pair<const size_t, std::map<int, std::map<size_t, Center2_Orb::Orb21>>> &co6 : co5.second)
                 {
                     const size_t NA2 = co6.first;
-                    for (const auto &co7 : co6.second)
+                    for (const std::pair<const int, std::map<size_t, Center2_Orb::Orb21>> &co7 : co6.second)
                     {
                         const int LB = co7.first;
-                        for (const auto &co8 : co7.second)
+                        for (const std::pair<const size_t, Center2_Orb::Orb21> &co8 : co7.second)
                         {
                             const size_t NB = co8.first;
-                            const auto overlaps = co8.second.cal_overlap(position_A, position_B);
+                            const std::vector<double> overlaps = co8.second.cal_overlap(position_A, position_B);
                             for (size_t MA1 = 0; MA1 != 2 * LA1 + 1; ++MA1)
                             {
                                 for (size_t MA2 = 0; MA2 != 2 * LA2 + 1; ++MA2)
@@ -122,25 +122,25 @@ std::array<RI::Tensor<Tdata>,3> Matrix_Orbs21::cal_grad_overlap_matrix(
 
     const ModuleBase::Vector3<double> position_A = tauA * lat0;
     const ModuleBase::Vector3<double> position_B = tauB * lat0;
-    for( const auto &co3 : center2_orb21_s.at(TA).at(TB) )
+    for( const std::pair<const int, std::map<size_t, std::map<int, std::map<size_t, std::map<int, std::map<size_t, Center2_Orb::Orb21>>>>>> &co3 : center2_orb21_s.at(TA).at(TB) )
     {
         const int LA1 = co3.first;
-        for( const auto &co4 : co3.second )
+        for( const std::pair<const size_t, std::map<int, std::map<size_t, std::map<int, std::map<size_t, Center2_Orb::Orb21>>>>> &co4 : co3.second )
         {
             const size_t NA1 = co4.first;
-            for (const auto &co5 : co4.second)
+            for (const std::pair<const int, std::map<size_t, std::map<int, std::map<size_t, Center2_Orb::Orb21>>>> &co5 : co4.second)
             {
                 const int LA2 = co5.first;
-                for (const auto &co6 : co5.second)
+                for (const std::pair<const size_t, std::map<int, std::map<size_t, Center2_Orb::Orb21>>> &co6 : co5.second)
                 {
                     const size_t NA2 = co6.first;
-                    for (const auto &co7 : co6.second)
+                    for (const std::pair<const int, std::map<size_t, Center2_Orb::Orb21>> &co7 : co6.second)
                     {
                         const int LB = co7.first;
-                        for (const auto &co8 : co7.second)
+                        for (const std::pair<const size_t, Center2_Orb::Orb21> &co8 : co7.second)
                         {
                             const size_t NB = co8.first;
-                            const auto overlaps = co8.second.cal_grad_overlap(position_A, position_B);
+                            const std::vector<ModuleBase::Vector3<double>> overlaps = co8.second.cal_grad_overlap(position_A, position_B);
                             for (size_t MA1 = 0; MA1 != 2 * LA1 + 1; ++MA1)
                             {
                                 for (size_t MA2 = 0; MA2 != 2 * LA2 + 1; ++MA2)
@@ -189,14 +189,14 @@ std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::vector<
 
     std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<RI::Tensor<Tdata>>>>>> matrixes;
 
-    for( const auto &co1 : center2_orb21_s )
+    for( const std::pair<const size_t, std::map<size_t, std::map<int, std::map<size_t, std::map<int, std::map<size_t, std::map<int, std::map<size_t, Center2_Orb::Orb21>>>>>>>> &co1 : center2_orb21_s )
     {
         const size_t TA = co1.first;
         for( size_t IA=0; IA!=ucell.atoms[TA].na; ++IA )
         {
             const ModuleBase::Vector3<double> &tauA( ucell.atoms[TA].tau[IA] );
 
-            for( const auto &co2 : co1.second )
+            for( const std::pair<const size_t, std::map<int, std::map<size_t, std::map<int, std::map<size_t, std::map<int, std::map<size_t, Center2_Orb::Orb21>>>>>>> &co2 : co1.second )
             {
                 const size_t TB = co2.first;
                 for( size_t IB=0; IB!=ucell.atoms[TB].na; ++IB )
@@ -214,10 +214,10 @@ std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::vector<
         }
     }
     // matrixes[T][I][T][I][0] = matrixes[T][I][T][I][1], so delete repeat
-    for (auto m1 : matrixes)
+    for (std::pair<const size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::vector<RI::Tensor<Tdata>>>>>> m1 : matrixes)
     {
         const size_t T = m1.first;
-        for( auto m2 : m1.second )
+        for( std::pair<const size_t, std::map<size_t, std::map<size_t, std::vector<RI::Tensor<Tdata>>>>> m2 : m1.second )
         {
             const size_t I = m2.first;
             matrixes[T][I][T][I].resize(1);

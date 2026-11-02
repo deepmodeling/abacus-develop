@@ -65,12 +65,12 @@ TEST(Center2Orb11, AllMagneticComponentsMatchScalarEvaluation)
     {
         for (int lb : {0, 2, 3})
         {
-            const auto left = make_orbital(
+            const Numerical_Orbital_Lm left = make_orbital(
                 la,
                 0,
                 101,
                 65);
-            const auto right = make_orbital(
+            const Numerical_Orbital_Lm right = make_orbital(
                 lb,
                 1,
                 81,
@@ -95,8 +95,8 @@ TEST(Center2Orb11, AllMagneticComponentsMatchScalarEvaluation)
                 const double y = 0.36 * distance;
                 const double z = 0.48 * distance;
                 const ModuleBase::Vector3<double> position(x, y, z);
-                const auto values = orbital.cal_overlap(origin, position);
-                const auto gradients = orbital.cal_grad_overlap(origin, position);
+                const std::vector<double> values = orbital.cal_overlap(origin, position);
+                const std::vector<ModuleBase::Vector3<double>> gradients = orbital.cal_grad_overlap(origin, position);
                 const int count = (2 * la + 1) * (2 * lb + 1);
                 ASSERT_EQ(values.size(), count);
                 ASSERT_EQ(gradients.size(), count);
@@ -112,7 +112,7 @@ TEST(Center2Orb11, AllMagneticComponentsMatchScalarEvaluation)
                             mb);
                         const double tolerance = 2e-11 * (1.0 + std::abs(expected));
                         EXPECT_NEAR(values[offset], expected, tolerance);
-                        const auto gradient = orbital.cal_grad_overlap(
+                        const ModuleBase::Vector3<double> gradient = orbital.cal_grad_overlap(
                             origin,
                             position,
                             ma,
@@ -130,17 +130,17 @@ TEST(Center2Orb11, AllMagneticComponentsMatchScalarEvaluation)
 TEST(Center2Orb21, AllMagneticComponentsMatchScalarEvaluation)
 {
     // The l=6 auxiliary channel and f orbital produce channels through l=9.
-    const auto left = make_orbital(
+    const Numerical_Orbital_Lm left = make_orbital(
         6,
         0,
         101,
         65);
-    const auto middle = make_orbital(
+    const Numerical_Orbital_Lm middle = make_orbital(
         3,
         1,
         101,
         65);
-    const auto right = make_orbital(
+    const Numerical_Orbital_Lm right = make_orbital(
         3,
         2,
         81,
@@ -173,8 +173,8 @@ TEST(Center2Orb21, AllMagneticComponentsMatchScalarEvaluation)
         const double y = 0.36 * distance;
         const double z = 0.48 * distance;
         const ModuleBase::Vector3<double> position(x, y, z);
-        const auto values = orbital.cal_overlap(origin, position);
-        const auto gradients = orbital.cal_grad_overlap(origin, position);
+        const std::vector<double> values = orbital.cal_overlap(origin, position);
+        const std::vector<ModuleBase::Vector3<double>> gradients = orbital.cal_grad_overlap(origin, position);
         ASSERT_EQ(values.size(), 13 * 7 * 7);
         ASSERT_EQ(gradients.size(), values.size());
         for (int ma = 0; ma < 13; ++ma)
@@ -192,7 +192,7 @@ TEST(Center2Orb21, AllMagneticComponentsMatchScalarEvaluation)
                         mc);
                     const double tolerance = 2e-11 * (1.0 + std::abs(expected));
                     EXPECT_NEAR(values[offset], expected, tolerance);
-                    const auto gradient = orbital.cal_grad_overlap(
+                    const ModuleBase::Vector3<double> gradient = orbital.cal_grad_overlap(
                         origin,
                         position,
                         ma,
@@ -209,17 +209,17 @@ TEST(Center2Orb21, AllMagneticComponentsMatchScalarEvaluation)
 
 TEST(Center2Orb21, ProductGradientMatchesFiniteDifference)
 {
-    const auto left = make_orbital(
+    const Numerical_Orbital_Lm left = make_orbital(
         2,
         0,
         101,
         65);
-    const auto middle = make_orbital(
+    const Numerical_Orbital_Lm middle = make_orbital(
         1,
         1,
         101,
         65);
-    const auto right = make_orbital(
+    const Numerical_Orbital_Lm right = make_orbital(
         3,
         2,
         101,
@@ -240,15 +240,15 @@ TEST(Center2Orb21, ProductGradientMatchesFiniteDifference)
     const ModuleBase::Vector3<double> origin(0.0, 0.0, 0.0);
     const ModuleBase::Vector3<double> position(0.813, 0.321, 0.473);
     const double step = 1e-5;
-    const auto gradients = orbital.cal_grad_overlap(origin, position);
+    const std::vector<ModuleBase::Vector3<double>> gradients = orbital.cal_grad_overlap(origin, position);
     for (int axis = 0; axis < 3; ++axis)
     {
-        auto plus = position;
-        auto minus = position;
+        ModuleBase::Vector3<double> plus = position;
+        ModuleBase::Vector3<double> minus = position;
         plus[axis] += step;
         minus[axis] -= step;
-        const auto upper = orbital.cal_overlap(origin, plus);
-        const auto lower = orbital.cal_overlap(origin, minus);
+        const std::vector<double> upper = orbital.cal_overlap(origin, plus);
+        const std::vector<double> lower = orbital.cal_overlap(origin, minus);
         ASSERT_EQ(upper.size(), gradients.size());
         ASSERT_EQ(lower.size(), gradients.size());
         for (std::size_t i = 0; i < gradients.size(); ++i)

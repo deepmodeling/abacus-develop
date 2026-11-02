@@ -120,7 +120,7 @@ double Center2_Orb::Orb11::cal_overlap(const ModuleBase::Vector3<double>& RA,
     const double* Gaunt_Coefficients_ptr = &(this->MGT.Gaunt_Coefficients(idx1, idx2, 0));
 
     const int rmesh = Center2_Orb::get_rmesh(RcutA, RcutB, dr_);
-    for (const auto& tb_r: this->Table_r)
+    for (const std::pair<const int, std::vector<double>>& tb_r: this->Table_r)
     {
         const int LAB = tb_r.first;
         const double distance_power = std::pow(distance, LAB);
@@ -198,7 +198,7 @@ ModuleBase::Vector3<double> Center2_Orb::Orb11::cal_grad_overlap( // caoyu add 2
     ModuleBase::Vector3<double> grad_overlap(0.0, 0.0, 0.0);
 
     const int rmesh = Center2_Orb::get_rmesh(RcutA, RcutB, dr_);
-    for (const auto& tb_r: this->Table_r)
+    for (const std::pair<const int, std::vector<double>>& tb_r: this->Table_r)
     {
         const int LAB = tb_r.first;
         const double distance_power = std::pow(distance, LAB);
