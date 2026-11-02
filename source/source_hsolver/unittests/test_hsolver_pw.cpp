@@ -220,7 +220,6 @@ class TestHSolverPW : public ::testing::Test
             0,
             false,
             4,
-            16,
             0,
             0);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d =
@@ -238,7 +237,6 @@ class TestHSolverPW : public ::testing::Test
             0,
             false,
             4,
-            16,
             0,
             0);
 

@@ -531,7 +531,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                 this->diag_thr,
                 this->diag_iter_max,
                 this->pw_diag_ndim,
-                this->pw_diag_rr_step,
+                1,
                 cpu_path);
             DiagoIterAssist<T, Device>::avg_iter += ppcg_result.average_iterations;
         }

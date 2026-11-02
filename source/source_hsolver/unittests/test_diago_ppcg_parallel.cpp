@@ -14,7 +14,6 @@
 
 #include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
-#include "source_base/global_variable.h"
 #include "source_basis/module_pw/test/test_tool.h"
 
 #include <gtest/gtest.h>
@@ -134,8 +133,7 @@ int main(int argc, char** argv)
     int mypool = 0;
     int rank_in_pool = 0;
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
-    GlobalV::MY_RANK = myrank;
-    const bool world_root_is_correct = (GlobalV::MY_RANK == 0) == (myrank == 0);
+    const bool world_root_is_correct = Parallel_Reduce::is_world_root() == (myrank == 0);
     BP_WORLD = MPI_COMM_WORLD;
 
     using T    = std::complex<double>;

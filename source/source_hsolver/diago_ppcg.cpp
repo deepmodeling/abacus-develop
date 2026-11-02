@@ -1,5 +1,4 @@
 #include "diago_ppcg.h"
-#include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include <algorithm>
@@ -2004,7 +2003,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     std::ofstream residual_trace;
     const char* residual_trace_path = std::getenv("ABACUS_PPCG_RESIDUAL_TRACE");
-    if (residual_trace_path != nullptr && GlobalV::MY_RANK == 0)
+    if (residual_trace_path != nullptr && Parallel_Reduce::is_world_root())
     {
         // A single writer avoids file corruption when several MPI pools solve
         // different k-points concurrently.

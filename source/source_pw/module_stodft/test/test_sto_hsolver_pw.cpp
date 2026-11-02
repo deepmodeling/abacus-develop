@@ -299,7 +299,6 @@ class TestStoHSolverPW : public ::testing::Test
             0,
             false,
             4,
-            16,
             0,
             0,
             false,
