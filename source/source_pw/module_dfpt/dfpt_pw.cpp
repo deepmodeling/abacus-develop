@@ -66,6 +66,16 @@ int DFPT_PW::get_nq() const
     return pimpl_->qlist_.get_nq();
 }
 
+const DFPT_PW_Data& DFPT_PW::get_data() const
+{
+    return pimpl_->data_;
+}
+
+int DFPT_PW::get_myrank() const
+{
+    return pimpl_->myrank_;
+}
+
 ModuleBase::Vector3<double> DFPT_PW::get_qvec(int q_idx) const
 {
     return pimpl_->data_.get_qvec(q_idx);
