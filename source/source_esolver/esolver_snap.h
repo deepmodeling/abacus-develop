@@ -17,7 +17,8 @@ class ESolver_SNAP : public ESolver
   public:
     ESolver_SNAP(const std::string& coefficient_file,
                  const std::string& parameter_file,
-                 std::ofstream& running_log);
+                 std::ofstream& running_log,
+                 int rank);
 
     void before_all_runners(BaseCell& cell, const Input_para& inp) override;
     void runner(BaseCell& cell, int istep) override;
@@ -32,6 +33,7 @@ class ESolver_SNAP : public ESolver
     std::string coefficient_file_;
     std::string parameter_file_;
     std::ofstream& running_log_;
+    const int rank_;
     ModuleMD::SNAP::ModelData model_;
     std::unique_ptr<ModuleMD::SNAP::Calculator> calculator_;
     double snap_potential_ = 0.0;

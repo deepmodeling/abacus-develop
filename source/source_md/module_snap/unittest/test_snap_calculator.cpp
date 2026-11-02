@@ -179,9 +179,10 @@ TEST(SnapCalculator, ChemicalAngularChannelsFollowElementOrder)
 {
     ModuleMD::SNAP::ModelData model = make_chemical_model();
     model.parameters.twojmax = 2;
-    model.coefficients.assign(2, std::vector<double>(41, 0.0));
-    // Bispectrum index 1 is angular; the channel triple (Si, C, Si) is 2.
-    const std::size_t original_index = 1 + 2 * 5 + 1;
+    const std::vector<double> zero_coefficients(41, 0.0);
+    model.coefficients.assign(2, zero_coefficients);
+    // Bispectrum index 2 couples the Si and C angular channels.
+    const std::size_t original_index = 1 + 2 * 5 + 2;
     model.coefficients[0][original_index] = 1.7;
     const ModuleMD::SNAP::Calculator calculator(model);
 
@@ -200,14 +201,20 @@ TEST(SnapCalculator, ChemicalAngularChannelsFollowElementOrder)
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors = {silicon, carbon};
     const ModuleMD::SNAP::ForceResult original = calculator.compute_with_analytic_force(neighbors, 0);
     const ModuleMD::SNAP::ForceResult finite = calculator.compute_with_finite_difference_force(neighbors, 0, 1.0e-6);
+    ModuleMD::SNAP::Neighbor rotated_carbon = carbon;
+    rotated_carbon.x = carbon.y;
+    rotated_carbon.y = carbon.x;
+    const std::vector<ModuleMD::SNAP::Neighbor> rotated_neighbors = {silicon, rotated_carbon};
+    const double rotated_energy = calculator.compute(rotated_neighbors, 0).energy;
+    EXPECT_GT(std::abs(original.energy.energy - rotated_energy), 1.0e-6);
 
     ModuleMD::SNAP::ModelData reordered = model;
     reordered.parameters.elements = {"C", "Si"};
     reordered.parameters.element_weights = {0.8, 1.0};
     reordered.parameters.element_radii = {1.7, 2.25};
-    reordered.coefficients.assign(2, std::vector<double>(41, 0.0));
+    reordered.coefficients.assign(2, zero_coefficients);
     // The same physical channel triple is (Si, C, Si) = (1, 0, 1) after reordering.
-    const std::size_t reordered_index = 1 + 5 * 5 + 1;
+    const std::size_t reordered_index = 1 + 5 * 5 + 2;
     reordered.coefficients[1][reordered_index] = 1.7;
     const ModuleMD::SNAP::Calculator reordered_calculator(reordered);
     silicon.element_index = 1;

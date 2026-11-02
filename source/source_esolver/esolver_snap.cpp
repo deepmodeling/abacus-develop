@@ -1,7 +1,6 @@
 #include "esolver_snap.h"
 
 #include "source_base/constants.h"
-#include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_cell/mdcell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
@@ -19,17 +18,22 @@ namespace ModuleESolver
 
 namespace
 {
-void fail(const std::string& message)
+void fail(const std::string& message, const int rank)
 {
+    if (rank != 0)
+    {
+        std::cerr << "ESolver_SNAP rank " << rank << ": " << message << std::endl;
+    }
     ModuleBase::WARNING_QUIT("ESolver_SNAP", message);
 }
 
-std::string full_path(const std::string& path)
+std::string full_path(const std::string& path, const int rank)
 {
     char* resolved = ::realpath(path.c_str(), nullptr);
     if (resolved == nullptr)
     {
-        fail("Cannot resolve SNAP file path: " + path);
+        const std::string message = "Cannot resolve SNAP file path: " + path;
+        fail(message, rank);
     }
     const std::string result(resolved);
     std::free(resolved);
@@ -63,8 +67,9 @@ ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
 
 ESolver_SNAP::ESolver_SNAP(const std::string& coefficient_file,
                            const std::string& parameter_file,
-                           std::ofstream& running_log)
-    : coefficient_file_(coefficient_file), parameter_file_(parameter_file), running_log_(running_log)
+                           std::ofstream& running_log,
+                           const int rank)
+    : coefficient_file_(coefficient_file), parameter_file_(parameter_file), running_log_(running_log), rank_(rank)
 {
     classname = "ESolver_SNAP";
 }
@@ -74,13 +79,13 @@ void ESolver_SNAP::initialize(const std::vector<std::string>& labels)
     std::string error;
     if (!model_.load(coefficient_file_, parameter_file_, labels, error))
     {
-        fail(error);
+        fail(error, rank_);
     }
-    const std::string coefficient_path = full_path(coefficient_file_);
-    const std::string parameter_path = full_path(parameter_file_);
+    const std::string coefficient_path = full_path(coefficient_file_, rank_);
+    const std::string parameter_path = full_path(parameter_file_, rank_);
     running_log_ << " Read SNAP coefficient file: " << coefficient_path << std::endl;
     running_log_ << " Read SNAP parameter file: " << parameter_path << std::endl;
-    if (GlobalV::MY_RANK == 0)
+    if (rank_ == 0)
     {
         std::cout << " Read SNAP coefficient file: " << coefficient_path << std::endl;
         std::cout << " Read SNAP parameter file: " << parameter_path << std::endl;
@@ -115,7 +120,7 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
     static_cast<void>(istep);
     if (!calculator_)
     {
-        fail("SNAP solver was not initialized.");
+        fail("SNAP solver was not initialized.", rank_);
     }
     snap_potential_ = 0.0;
     snap_virial_.zero_out();
@@ -125,7 +130,7 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
         MDCell& mdcell = static_cast<MDCell&>(cell);
         if (!mdcell.has_neighbor_search())
         {
-            fail("MDCell neighbors must be prepared before ESolver_SNAP::runner().");
+            fail("MDCell neighbors must be prepared before ESolver_SNAP::runner().", rank_);
         }
         std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms();
         const std::vector<NeighborAtom>& all_atoms = mdcell.neighbor_search().get_all_atoms();
@@ -148,7 +153,7 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
                 const NeighborAtom& neighbor = all_atoms[static_cast<std::size_t>(neighbor_index)];
                 if (neighbor.atom_type < 0 || static_cast<std::size_t>(neighbor.atom_type) >= model_.parameters.elements.size())
                 {
-                    fail("MDCell atom type is outside the SNAP element map.");
+                    fail("MDCell atom type is outside the SNAP element map.", rank_);
                 }
                 neighbors.push_back(make_neighbor(center, neighbor, mdcell.lat0(), model_.parameters));
                 neighbor_indices.push_back(static_cast<std::size_t>(neighbor_index));
@@ -248,7 +253,7 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
 catch (const std::exception& error)
 {
     const std::string message = std::string("SNAP evaluation failed: ") + error.what();
-    fail(message);
+    fail(message, rank_);
 }
 
 double ESolver_SNAP::cal_energy()

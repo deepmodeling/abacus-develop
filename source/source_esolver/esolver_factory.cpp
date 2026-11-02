@@ -397,7 +397,8 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "snap_pot")
     {
-        return new ESolver_SNAP(inp.mdp.pot_file, inp.mdp.snap_param_file, GlobalV::ofs_running);
+        const int rank = GlobalV::MY_RANK;
+        return new ESolver_SNAP(inp.mdp.pot_file, inp.mdp.snap_param_file, GlobalV::ofs_running, rank);
     }
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));
