@@ -5,7 +5,7 @@ target_sources(
     snap_descriptor.cpp
     snap_derivative.cpp
     snap_model.cpp
-    snap_clebsch_gordan.cpp
+    snap_cg.cpp
 )
 
 if(BUILD_TESTING)

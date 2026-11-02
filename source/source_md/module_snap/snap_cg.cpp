@@ -1,4 +1,4 @@
-#include "snap_clebsch_gordan.h"
+#include "snap_cg.h"
 
 #include <cmath>
 

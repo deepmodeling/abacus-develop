@@ -1,5 +1,5 @@
-#ifndef SNAP_CLEBSCH_GORDAN_H
-#define SNAP_CLEBSCH_GORDAN_H
+#ifndef SNAP_CG_H
+#define SNAP_CG_H
 
 #include <vector>
 
@@ -55,4 +55,4 @@ class ClebschGordanTable
 } // namespace SNAP
 } // namespace ModuleMD
 
-#endif // SNAP_CLEBSCH_GORDAN_H
+#endif // SNAP_CG_H

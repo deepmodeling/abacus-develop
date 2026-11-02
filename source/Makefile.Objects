@@ -542,7 +542,7 @@ OBJS_MD=fire.o\
     module_snap/snap_descriptor.o\
     module_snap/snap_derivative.o\
     module_snap/snap_model.o\
-    module_snap/snap_clebsch_gordan.o\
+    module_snap/snap_cg.o\
     verlet.o\
 
 OBJS_NEIGHBOR=sltk_atom.o\
