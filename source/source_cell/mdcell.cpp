@@ -177,7 +177,7 @@ void MDCell::refresh_cart_from_frac()
     neighbor_layout_valid_ = false;
 }
 
-void MDCell::sync_backing_unitcell()
+void MDCell::sync_backing_unitcell(const bool positions_updated)
 {
     if (backing_unitcell_ == nullptr)
     {
@@ -185,6 +185,10 @@ void MDCell::sync_backing_unitcell()
     }
 
     sync_backing_unitcell_geometry_();
+    for (int it = 0; it < backing_unitcell_->ntype; ++it)
+    {
+        backing_unitcell_->atoms[it].boundary_shift.resize(backing_unitcell_->atoms[it].na);
+    }
 
 #ifdef __MPI
     if (size_ > 1)
@@ -195,36 +199,42 @@ void MDCell::sync_backing_unitcell()
             type_offset[it + 1] = type_offset[it] + backing_unitcell_->atoms[it].na;
         }
 
-        std::vector<double> cart(3 * nat_, 0.0);
-        std::vector<double> frac(3 * nat_, 0.0);
-        std::vector<double> vel(3 * nat_, 0.0);
-        std::vector<int> mbl(3 * nat_, 0);
+        const int coordinate_count = 3 * nat_;
+        std::vector<double> cart(coordinate_count, 0.0);
+        std::vector<double> frac(coordinate_count, 0.0);
+        std::vector<double> vel(coordinate_count, 0.0);
+        std::vector<double> displacement(coordinate_count, 0.0);
+        std::vector<int> boundary_shift(coordinate_count, 0);
+        std::vector<int> mbl(coordinate_count, 0);
         std::vector<int> owner(nat_, 0);
 
         for (std::size_t i = 0; i < owned_atoms_.size(); ++i)
         {
             const LocalAtom& atom = owned_atoms_[i];
             const int iat = type_offset[atom.type] + atom.type_index;
-            cart[3 * iat] = atom.cart.x;
-            cart[3 * iat + 1] = atom.cart.y;
-            cart[3 * iat + 2] = atom.cart.z;
-            frac[3 * iat] = atom.frac.x;
-            frac[3 * iat + 1] = atom.frac.y;
-            frac[3 * iat + 2] = atom.frac.z;
-            vel[3 * iat] = atom.vel.x;
-            vel[3 * iat + 1] = atom.vel.y;
-            vel[3 * iat + 2] = atom.vel.z;
-            mbl[3 * iat] = atom.mbl.x;
-            mbl[3 * iat + 1] = atom.mbl.y;
-            mbl[3 * iat + 2] = atom.mbl.z;
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                const int component = 3 * iat + axis;
+                cart[component] = atom.cart[axis];
+                frac[component] = atom.frac[axis];
+                vel[component] = atom.vel[axis];
+                displacement[component] = atom.displacement[axis];
+                boundary_shift[component] = atom.boundary_shift[axis];
+                mbl[component] = atom.mbl[axis];
+            }
             owner[iat] = 1;
         }
 
-        MPI_Allreduce(MPI_IN_PLACE, cart.data(), 3 * nat_, MPI_DOUBLE, MPI_SUM, comm_);
-        MPI_Allreduce(MPI_IN_PLACE, frac.data(), 3 * nat_, MPI_DOUBLE, MPI_SUM, comm_);
-        MPI_Allreduce(MPI_IN_PLACE, vel.data(), 3 * nat_, MPI_DOUBLE, MPI_SUM, comm_);
-        MPI_Allreduce(MPI_IN_PLACE, mbl.data(), 3 * nat_, MPI_INT, MPI_SUM, comm_);
-        MPI_Allreduce(MPI_IN_PLACE, owner.data(), nat_, MPI_INT, MPI_SUM, comm_);
+        ModuleBase::CommunicationDomain domain;
+        domain.initialize(comm_);
+        domain.sum(cart.data(), coordinate_count);
+        domain.sum(frac.data(), coordinate_count);
+        domain.sum(vel.data(), coordinate_count);
+        domain.sum(displacement.data(), coordinate_count);
+        domain.sum(boundary_shift.data(), coordinate_count);
+        domain.sum(mbl.data(), coordinate_count);
+        const int atom_count = nat_;
+        domain.sum(owner.data(), atom_count);
 
         for (int it = 0; it < backing_unitcell_->ntype; ++it)
         {
@@ -235,26 +245,21 @@ void MDCell::sync_backing_unitcell()
                 {
                     throw std::runtime_error("MDCell backing UnitCell atom ownership is invalid.");
                 }
-                backing_unitcell_->atoms[it].tau[ia].set(cart[3 * iat], cart[3 * iat + 1], cart[3 * iat + 2]);
-                ModuleBase::Vector3<double> displacement(frac[3 * iat] - backing_unitcell_->atoms[it].taud[ia].x,
-                                                         frac[3 * iat + 1] - backing_unitcell_->atoms[it].taud[ia].y,
-                                                         frac[3 * iat + 2] - backing_unitcell_->atoms[it].taud[ia].z);
-                for (int k = 0; k < 3; ++k)
+                for (int axis = 0; axis < 3; ++axis)
                 {
-                    if (displacement[k] > 0.5)
-                    {
-                        displacement[k] -= 1.0;
-                    }
-                    else if (displacement[k] < -0.5)
-                    {
-                        displacement[k] += 1.0;
-                    }
+                    const int component = 3 * iat + axis;
+                    backing_unitcell_->atoms[it].tau[ia][axis] = cart[component];
+                    backing_unitcell_->atoms[it].taud[ia][axis] = frac[component];
+                    backing_unitcell_->atoms[it].vel[ia][axis] = vel[component];
+                    backing_unitcell_->atoms[it].dis[ia][axis] = displacement[component];
+                    backing_unitcell_->atoms[it].boundary_shift[ia][axis] = boundary_shift[component];
+                    backing_unitcell_->atoms[it].mbl[ia][axis] = mbl[component];
                 }
-                backing_unitcell_->atoms[it].taud[ia].set(frac[3 * iat], frac[3 * iat + 1], frac[3 * iat + 2]);
-                backing_unitcell_->atoms[it].dis[ia] = displacement;
-                backing_unitcell_->atoms[it].vel[ia].set(vel[3 * iat], vel[3 * iat + 1], vel[3 * iat + 2]);
-                backing_unitcell_->atoms[it].mbl[ia].set(mbl[3 * iat], mbl[3 * iat + 1], mbl[3 * iat + 2]);
             }
+        }
+        if (positions_updated)
+        {
+            backing_unitcell_->ionic_position_updated = true;
         }
         return;
     }
@@ -263,23 +268,16 @@ void MDCell::sync_backing_unitcell()
     for (std::size_t i = 0; i < owned_atoms_.size(); ++i)
     {
         const LocalAtom& atom = owned_atoms_[i];
-        ModuleBase::Vector3<double> displacement = atom.frac - backing_unitcell_->atoms[atom.type].taud[atom.type_index];
-        for (int k = 0; k < 3; ++k)
-        {
-            if (displacement[k] > 0.5)
-            {
-                displacement[k] -= 1.0;
-            }
-            else if (displacement[k] < -0.5)
-            {
-                displacement[k] += 1.0;
-            }
-        }
         backing_unitcell_->atoms[atom.type].tau[atom.type_index] = atom.cart;
         backing_unitcell_->atoms[atom.type].taud[atom.type_index] = atom.frac;
-        backing_unitcell_->atoms[atom.type].dis[atom.type_index] = displacement;
+        backing_unitcell_->atoms[atom.type].dis[atom.type_index] = atom.displacement;
+        backing_unitcell_->atoms[atom.type].boundary_shift[atom.type_index] = atom.boundary_shift;
         backing_unitcell_->atoms[atom.type].vel[atom.type_index] = atom.vel;
         backing_unitcell_->atoms[atom.type].mbl[atom.type_index] = atom.mbl;
+    }
+    if (positions_updated)
+    {
+        backing_unitcell_->ionic_position_updated = true;
     }
 }
 

@@ -43,7 +43,7 @@ class HamiltPW : public Hamilt<T, Device>
     /** @brief Bind local-potential buffers and Hartree vector potential for the same operation.
      *  @note The caller must keep the buffers alive and restore endpoint state after propagation.
      */
-    void bind_td_state(const Real* veff, const Real* vofk, const ModuleBase::Vector3<double>& A_ha);
+    void bind_td_state(const Real* veff, const ModuleBase::Vector3<double>& A_ha);
 
     void sPsi(const T* psi_in, // psi
               T* spsi,         // spsi
