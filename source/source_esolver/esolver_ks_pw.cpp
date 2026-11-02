@@ -324,6 +324,7 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      this->inp_->nbands,
                                                      this->inp_->diago_smooth_ethr,
                                                      this->inp_->pw_diag_ndim,
+                                                     this->inp_->pw_diag_rr_step,
                                                      this->inp_->diag_subspace,
                                                      this->inp_->nb2d,
                                                      this->inp_->use_k_continuity);

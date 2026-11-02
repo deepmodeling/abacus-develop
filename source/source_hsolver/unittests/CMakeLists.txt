@@ -63,7 +63,7 @@ if (ENABLE_MPI)
   AddTest(
     TARGET MODULE_HSOLVER_pw
     LIBS parameter  psi device base container symmetry
-    SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
+    SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diago_ppcg.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_lin_tf.cpp
   ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
   ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
   )
@@ -102,6 +102,19 @@ if (ENABLE_MPI)
   target_compile_definitions(MODULE_HSOLVER_LCAO_cusolver PRIVATE __CUDA)
   endif()
 endif()
+
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg
+  LIBS parameter base psi device container
+  SOURCES test_diago_ppcg.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg_float
+  LIBS parameter base psi device container
+  SOURCES test_diago_ppcg_float.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+
 abacus_copy_test_files(
   H-KPoints-Si2.dat
   H-GammaOnly-Si2.dat
@@ -118,6 +131,7 @@ abacus_copy_test_files(
   diago_cg_parallel_test.sh
   diago_david_parallel_test.sh
   diago_lcao_parallel_test.sh
+  diago_ppcg_parallel_test.sh
   PEXSI-H-GammaOnly-Si2.dat
   PEXSI-S-GammaOnly-Si2.dat
   PEXSI-DM-GammaOnly-Si2.dat
@@ -154,6 +168,13 @@ if(ENABLE_MPI)
     SOURCES test_para_lin_tf.cpp ../para_lin_tf.cpp
   )
 
+  AddTest(
+    TARGET MODULE_HSOLVER_ppcg_parallel
+    LIBS parameter base psi device container MPI::MPI_CXX
+    SOURCES test_diago_ppcg_parallel.cpp ../diago_ppcg.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
+  )
+
   add_test(
     NAME MODULE_HSOLVER_para_linear_trans
     COMMAND mpirun -np 4 "$<TARGET_FILE:MODULE_HSOLVER_linear_trans>"
@@ -179,6 +200,11 @@ if (ENABLE_MPI)
           "$<TARGET_FILE:MODULE_HSOLVER_dav_float>"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       ) 
+  add_test(NAME MODULE_HSOLVER_ppcg_parallel_test
+        COMMAND ${BASH} diago_ppcg_parallel_test.sh
+          "$<TARGET_FILE:MODULE_HSOLVER_ppcg_parallel>"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
   if(ENABLE_LCAO)
     add_test(NAME MODULE_HSOLVER_LCAO_parallel
           COMMAND ${BASH} diago_lcao_parallel_test.sh

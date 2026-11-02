@@ -1,0 +1,7 @@
+Plane-wave Al metal case using `ks_solver=ppcg`.
+
+The case checks the final energy, forces, stress, symmetry and irreducible
+k-point count with the standard integration-test reference. The real-space
+SCF density criterion and the 200-step inner budget keep the stress check
+converged while leaving the PPCG stopping rule unchanged. The case is a
+correctness regression; its recorded wall time is not a performance claim.

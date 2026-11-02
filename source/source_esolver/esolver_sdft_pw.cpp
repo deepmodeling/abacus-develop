@@ -171,6 +171,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
                                                this->inp_->nbands,
                                                this->inp_->diago_smooth_ethr,
                                                this->inp_->pw_diag_ndim,
+                                               this->inp_->pw_diag_rr_step,
                                                this->inp_->diag_subspace,
                                                this->inp_->nb2d,
                                                PARAM.globalv.ks_run,
