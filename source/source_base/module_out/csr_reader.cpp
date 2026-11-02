@@ -36,6 +36,7 @@ void csrFileReader<T>::parseFile()
         ModuleBase::WARNING_QUIT("csrFileReader::parseFile", "Invalid CSR dimensions or R-block count");
     }
     readBlocks();
+    validateFrameEnd();
 }
 
 template <typename T>
@@ -169,6 +170,31 @@ void csrFileReader<T>::readBlocks()
         matrix.readCSR(values, columns, pointers);
         RCoordinates.push_back(coordinate);
         sparse_matrices.push_back(matrix);
+    }
+}
+
+// Only blank/comment lines, EOF or an unconsumed next frame may follow a frame.
+template <typename T>
+void csrFileReader<T>::validateFrameEnd()
+{
+    std::string line;
+    while (peekLine(line))
+    {
+        std::istringstream tokens(line);
+        tokens >> std::ws;
+        if (tokens.eof() || tokens.peek() == '#')
+        {
+            readLine();
+            continue;
+        }
+        std::string marker;
+        tokens >> marker;
+        if (marker == "STEP:") { return; }
+        std::string ionic;
+        std::string step_label;
+        if (marker == "---" && tokens >> ionic >> step_label
+            && ionic == "Ionic" && step_label == "Step") { return; }
+        ModuleBase::WARNING_QUIT("csrFileReader::validateFrameEnd", "Unexpected data after CSR frame");
     }
 }
 

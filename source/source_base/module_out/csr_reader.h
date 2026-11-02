@@ -80,6 +80,7 @@ class csrFileReader : public FileReader
     void parseCompactHeader();
     void parseCellHeader();
     void readBlocks();
+    void validateFrameEnd();
     void nextDataLine();
     void nextDataToken();
     std::vector<std::vector<int>> RCoordinates;

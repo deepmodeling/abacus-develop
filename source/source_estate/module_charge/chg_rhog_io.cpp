@@ -64,12 +64,15 @@ void module_charge::write_density_restart(Charge& charge,
     }
 }
 
-bool module_charge::read_rhog(const std::string& filename,
-                              const ModulePW::PW_Basis* pw_rhod,
-                              const int nspin,
-                              std::complex<double>** rhog,
-                              const Parallel::ParaWorld& pw_world,
-                              std::ostream* os_warning)
+namespace
+{
+bool read_rhog_impl(const std::string& filename,
+                    const ModulePW::PW_Basis* pw_rhod,
+                    const int nspin,
+                    std::complex<double>** rhog,
+                    const Parallel::ParaWorld& pw_world,
+                    std::ostream* os_warning,
+                    const bool require_same_spin)
 {
     if (pw_rhod == nullptr)
     {
@@ -140,7 +143,8 @@ bool module_charge::read_rhog(const std::string& filename,
         {
             warn(os_warning, pw_world, "module_charge::read_rhog", "some planewaves in file are missing");
         }
-        if ((nspin_in != 1 && nspin_in != 2 && nspin_in != 4) || nspin_in > nspin)
+        if ((nspin_in != 1 && nspin_in != 2 && nspin_in != 4) || nspin_in > nspin
+            || (require_same_spin && nspin_in != nspin))
         {
             warn(os_warning, pw_world, "module_charge::read_rhog", "unsupported spin channel count in restart");
             error = true;
@@ -262,6 +266,18 @@ bool module_charge::read_rhog(const std::string& filename,
     return true;
 }
 
+} // namespace
+
+bool module_charge::read_rhog(const std::string& filename,
+                              const ModulePW::PW_Basis* pw_rhod,
+                              const int nspin,
+                              std::complex<double>** rhog,
+                              const Parallel::ParaWorld& pw_world,
+                              std::ostream* os_warning)
+{
+    return read_rhog_impl(filename, pw_rhod, nspin, rhog, pw_world, os_warning, false);
+}
+
 bool module_charge::has_complete_charge_cubes(const std::string& directory, const int nspin,
                                              const Parallel::ParaWorld& world)
 {
@@ -288,7 +304,7 @@ bool module_charge::read_rho_restart(const std::string& filename,
                                       std::ostream& log)
 {
     if (rho == nullptr) { return false; }
-    const bool loaded = read_rhog(filename, &rhopw, nspin, rhog, pw_world, &log);
+    const bool loaded = read_rhog_impl(filename, &rhopw, nspin, rhog, pw_world, &log, true);
     if (!loaded) { return false; }
     for (int is = 0; is < nspin; ++is)
     {

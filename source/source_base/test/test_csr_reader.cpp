@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <fstream>
 #include <complex>
+#include <iterator>
 
 namespace
 {
@@ -108,6 +109,33 @@ TEST_P(CsrFormats, AcceptsCommentAfterFinalRowPointer)
     write("0 0 0 1\n1\n0\n0 1 1 # end of block\n", "2", "1");
     ModuleIO::csrFileReader<double> reader(path);
     EXPECT_DOUBLE_EQ(reader.getMatrix(0)(0, 0), 1.0);
+}
+TEST_P(CsrFormats, RejectsWrappedLeftoverRowPointer)
+{
+    write("0 0 0 1\n1 0\n0\n0 1\n1\n", "2", "1");
+    EXPECT_EXIT({ModuleIO::csrFileReader<double> reader(path);}, testing::ExitedWithCode(1), "");
+}
+TEST_P(CsrFormats, PreservesNextFrameAfterComments)
+{
+    write("0 0 0 1\n1\n0\n0\n1 1\n\n# frame end\n", "2", "1");
+    std::ifstream input(path);
+    const std::istreambuf_iterator<char> begin(input);
+    const std::istreambuf_iterator<char> end;
+    const std::string frame(begin, end);
+    input.close();
+    std::ofstream append(path, std::ios::app);
+    append << frame;
+    append.close();
+    ModuleIO::csrFileReader<double> reader(path);
+    EXPECT_DOUBLE_EQ(reader.getMatrix(0)(0, 0), 1.0);
+    reader.parseFile();
+    EXPECT_EQ(reader.getStep(), 7);
+    EXPECT_DOUBLE_EQ(reader.getMatrix(0)(0, 0), 1.0);
+}
+TEST_P(CsrFormats, RejectsDataAfterTrailingComment)
+{
+    write("0 0 0 1\n1\n0\n0 1 1\n# end\n\n9\n", "2", "1");
+    EXPECT_EXIT({ModuleIO::csrFileReader<double> reader(path);}, testing::ExitedWithCode(1), "");
 }
 INSTANTIATE_TEST_SUITE_P(BothHeaders, CsrFormats, testing::Bool());
 }

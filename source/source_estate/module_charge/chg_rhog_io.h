@@ -78,6 +78,7 @@ bool has_complete_charge_cubes(const std::string& directory, const int nspin,
                                const Parallel::ParaWorld& world);
 
 /// Decode a reciprocal-space restart and transform every spin channel into rho.
+/// Requires the stored spin count to match nspin exactly (no implicit conversion).
 /// Returns false for recoverable open/configuration failures, leaving rho unchanged.
 /// Malformed or truncated binary input can terminate via Binstream/ WARNING_QUIT.
 bool read_rho_restart(const std::string& filename,
