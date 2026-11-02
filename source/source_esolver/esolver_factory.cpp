@@ -24,7 +24,7 @@
 #endif
 #include "esolver_dp.h"
 #include "esolver_nep.h"
-#include "esolver_snap.h"
+#include "snap_solver.h"
 #include "esolver_lj.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"

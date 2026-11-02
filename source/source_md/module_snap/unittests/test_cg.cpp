@@ -1,4 +1,4 @@
-#include "../snap_clebsch_gordan.h"
+#include "../cg.h"
 
 #include <gtest/gtest.h>
 

@@ -1,8 +1,8 @@
 #ifndef SNAP_DESCRIPTOR_H
 #define SNAP_DESCRIPTOR_H
 
-#include "snap_clebsch_gordan.h"
-#include "snap_model.h"
+#include "cg.h"
+#include "model.h"
 
 #include <complex>
 #include <vector>

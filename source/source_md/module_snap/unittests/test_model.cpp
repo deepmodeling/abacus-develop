@@ -1,4 +1,4 @@
-#include "../snap_model.h"
+#include "../model.h"
 
 #include <gtest/gtest.h>
 

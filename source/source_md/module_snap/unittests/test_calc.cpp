@@ -1,4 +1,4 @@
-#include "../snap_calculator.h"
+#include "../calc.h"
 
 #include <gtest/gtest.h>
 

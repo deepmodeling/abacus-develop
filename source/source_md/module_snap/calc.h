@@ -1,8 +1,8 @@
 #ifndef SNAP_CALCULATOR_H
 #define SNAP_CALCULATOR_H
 
-#include "snap_descriptor.h"
-#include "snap_model.h"
+#include "desc.h"
+#include "model.h"
 
 #include <array>
 #include <vector>

@@ -1,11 +1,11 @@
 target_sources(
     md
     PRIVATE
-    snap_calculator.cpp
-    snap_descriptor.cpp
-    snap_descriptor_derivative.cpp
-    snap_model.cpp
-    snap_clebsch_gordan.cpp
+    calc.cpp
+    desc.cpp
+    deriv.cpp
+    model.cpp
+    cg.cpp
 )
 
 if(BUILD_TESTING)

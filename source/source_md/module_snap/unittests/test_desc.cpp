@@ -1,4 +1,4 @@
-#include "../snap_descriptor.h"
+#include "../desc.h"
 
 #include <gtest/gtest.h>
 

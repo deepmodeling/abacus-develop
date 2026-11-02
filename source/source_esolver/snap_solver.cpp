@@ -1,4 +1,4 @@
-#include "esolver_snap.h"
+#include "snap_solver.h"
 
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
