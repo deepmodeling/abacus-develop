@@ -30,14 +30,6 @@ class Velocity
     void init(const int ik_in);
     /** @brief Refresh momentum and projectors with a Hartree-unit vector potential. */
     void init(const int ik_in, const ModuleBase::Vector3<double>& vector_potential);
-    /** @brief Refresh borrowed spin and meta-GGA potential views before reuse. */
-    void set_state(const int* isk, const FPTYPE* vtau, const int cols, const int rows)
-    {
-        this->isk = isk;
-        vtau_ = vtau;
-        vtau_col_ = cols;
-        vtau_row_ = rows;
-    }
 
     /**
      * @brief calculate \hat{v}|\psi>

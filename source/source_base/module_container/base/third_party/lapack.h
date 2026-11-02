@@ -48,9 +48,21 @@ int ilaenv_(const int* ispec, const char* name, const char* opts,
 // Symmetric/Hermitian eigenproblems (QR algorithm)
 void dsyev_(const char* jobz, const char* uplo, const int* n, double* a,
             const int* lda, double* w, double* work, const int* lwork, int* info);
+void cheev_(const char* jobz, const char* uplo, const int* n, std::complex<float>* a,
+            const int* lda, float* w, std::complex<float>* work, const int* lwork,
+            float* rwork, int* info);
 void zheev_(const char* jobz, const char* uplo, const int* n, std::complex<double>* a,
             const int* lda, double* w, std::complex<double>* work, const int* lwork,
             double* rwork, int* info);
+
+// Generalized symmetric/Hermitian eigenproblems (QR algorithm)
+void dsygv_(const int* itype, const char* jobz, const char* uplo, const int* n,
+            double* a, const int* lda, double* b, const int* ldb, double* w,
+            double* work, const int* lwork, int* info);
+void zhegv_(const int* itype, const char* jobz, const char* uplo, const int* n,
+            std::complex<double>* a, const int* lda, std::complex<double>* b,
+            const int* ldb, double* w, std::complex<double>* work,
+            const int* lwork, double* rwork, int* info);
 
 // General nonsymmetric eigenproblems
 void dgeev_(const char* jobvl, const char* jobvr, const int* n, double* a, const int* lda,
@@ -381,10 +393,32 @@ void heev(const char jobz, const char uplo, const int n, double* a, const int ld
     dsyev_(&jobz, &uplo, &n, a, &lda, w, work, &lwork, &info);
 }
 static inline
+void heev(const char jobz, const char uplo, const int n, std::complex<float>* a, const int lda,
+          float* w, std::complex<float>* work, const int lwork, float* rwork, int& info)
+{
+    cheev_(&jobz, &uplo, &n, a, &lda, w, work, &lwork, rwork, &info);
+}
+static inline
 void heev(const char jobz, const char uplo, const int n, std::complex<double>* a, const int lda,
           double* w, std::complex<double>* work, const int lwork, double* rwork, int& info)
 {
     zheev_(&jobz, &uplo, &n, a, &lda, w, work, &lwork, rwork, &info);
+}
+
+// Column-major generalized eigenproblems; preserve uplo, workspace queries, and info.
+static inline
+void hegv(const int itype, const char jobz, const char uplo, const int n,
+          double* a, const int lda, double* b, const int ldb, double* w,
+          double* work, const int lwork, int& info)
+{
+    dsygv_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w, work, &lwork, &info);
+}
+static inline
+void hegv(const int itype, const char jobz, const char uplo, const int n,
+          std::complex<double>* a, const int lda, std::complex<double>* b, const int ldb,
+          double* w, std::complex<double>* work, const int lwork, double* rwork, int& info)
+{
+    zhegv_(&itype, &jobz, &uplo, &n, a, &lda, b, &ldb, w, work, &lwork, rwork, &info);
 }
 
 // wrap function of fortran lapack routine zheevx.

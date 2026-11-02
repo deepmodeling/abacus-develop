@@ -88,6 +88,7 @@ addtest(
   ../dfpt_phon.cpp
   ../dfpt_phon_ewald.cpp
   ../dfpt_phon_elec.cpp
+  ../dfpt_rho.cpp
   ../dfpt_pert.cpp
   ../dfpt_pert_vkb.cpp
   ../dfpt_pert_nl.cpp
@@ -120,6 +121,31 @@ addtest(
   ../dfpt_pert_nl.cpp
   ../dfpt_pw_data.cpp
   ../dfpt_kq_basis.cpp
+  ../../../source_cell/qlist.cpp
+  ../../../source_cell/reciprocal_grid.cpp
+  ../../../source_psi/psi.cpp
+  # Shared ctor/dtor stubs for the cell/spepot/Plus_U link closures
+  # (see test/dfpt_test_mocks.cpp).
+  ../test/dfpt_test_mocks.cpp
+  # Shared serial-side cell/basis/data fixture.
+  dfpt_serial_fixture.cpp)
+
+# QE-format dyn writer + the Gamma-first q-ordering validation consumed by
+# the DFPT driver (test_dfpt_write_dyn.cpp matches dfpt_write_dyn.cpp,
+# coding rule 11)
+addtest(
+  TARGET
+  MODULE_DFPT_write_dyn_serial
+  LIBS
+  parameter
+  dfpt_planewave_serial
+  device
+  base
+  symmetry
+  SOURCES
+  test_dfpt_write_dyn.cpp
+  ../dfpt_write_dyn.cpp
+  ../dfpt_pw_data.cpp
   ../../../source_cell/qlist.cpp
   ../../../source_cell/reciprocal_grid.cpp
   ../../../source_psi/psi.cpp

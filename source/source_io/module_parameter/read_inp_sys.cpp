@@ -452,7 +452,8 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
         item.description = R"(Controls k-point parallelism. The value must be positive and should not exceed either the number of k-points or the number of MPI processes.
 * For PW calculations, divide all MPI processes into persistent k-point pools. Each pool stores and processes a subset of the k-points.
 * For LCAO calculations with lapack, genelpa, elpa, or scalapack_gvx, divide the diagonalization work into temporary k-point pools. After diagonalization, the eigenvalues and distributed wavefunctions are restored for all k-points before occupations, density matrices, and output are evaluated.
-* Multi-process LCAO cusolver uses its own active-GPU distribution and does not use this value to define its k-point layout. Other LCAO eigensolvers do not use the temporary k-point-pool implementation.)";
+* Multi-process LCAO cusolver uses its own active-GPU distribution and does not use this value to define its k-point layout. Other LCAO eigensolvers do not use the temporary k-point-pool implementation.
+* On DSP builds, the mtblas/C_PACK libraries require kpar (kpar_lcao for LCAO) times bndpar to equal the number of MPI processes exactly; ABACUS aborts at startup otherwise.)";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.kpar);
@@ -478,6 +479,39 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
             }
 #endif
         };
+#ifdef __DSP
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // The mtblas/C_PACK libraries on DSP hardware require exactly one
+            // process per k-point pool: the effective pool count (kpar for PW,
+            // kpar_lcao for LCAO, the other being 1) times bndpar must equal
+            // the number of MPI processes. Other configurations make the vendor
+            // routines return inconsistent results across ranks and the SCF
+            // silently diverges, so reject them at input time. See issue #8228.
+            // bndpar <= 0 is rejected by the bndpar input check; skip here so
+            // the diagnostic below never divides by zero.
+            if (para.input.bndpar <= 0)
+            {
+                return;
+            }
+            const int nproc = para.sys.nproc;
+            const bool layout_valid = dsp_kpar_layout_valid(nproc,
+                                                            para.input.kpar,
+                                                            para.sys.kpar_lcao,
+                                                            para.input.bndpar);
+            if (!layout_valid)
+            {
+                const std::string msg =
+                    "On DSP hardware, the mtblas/C_PACK libraries require kpar (kpar_lcao for LCAO) * bndpar"
+                    " to equal the number of MPI processes, but got NPROC=" + std::to_string(nproc)
+                    + ", kpar=" + std::to_string(para.input.kpar)
+                    + ", kpar_lcao=" + std::to_string(para.sys.kpar_lcao)
+                    + ", bndpar=" + std::to_string(para.input.bndpar)
+                    + ". Please set kpar=" + std::to_string(nproc / para.input.bndpar)
+                    + " or adjust the process count.";
+                ModuleBase::WARNING_QUIT("ReadInput", msg);
+            }
+        };
+#endif
         this->add_item(item);
         add_int_bcast(sys.kpar_lcao);
     }
@@ -563,7 +597,7 @@ Available options are:
 * pcc_2d: self-consistent PCC correction for a slab, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane (rewrite a tilted cell as the equivalent perpendicular one), and the k-point sampling along it must be Gamma only. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge. ENVIRON uses -pi*Q/(3*L), so charged-slab energies agree with ENVIRON only for A = L^2.
 * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
-pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho. With imp_sol=2, pcc_0d and pcc_2d support SCF energies and forces; imp_sol=1 is not supported.
+pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho. With imp_sol=2, pcc_0d and pcc_2d support SCF energies, forces and fixed-cell relax; imp_sol=1 is not supported.
 
 Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).)";
         item.default_value = "none";

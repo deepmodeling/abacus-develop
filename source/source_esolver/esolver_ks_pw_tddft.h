@@ -3,9 +3,10 @@
 
 #include "source_esolver/esolver_ks_pw.h"
 #include "source_estate/module_pot/td_field_manager.h"
-#include "source_hsolver/hsolver_pw_tddft.h"
-#include "source_io/module_current/td_current_pw.h"
-#include "source_pw/module_pwdft/td_history_pw.h"
+#include "source_pw/module_rt/td_history_pw.h"
+#include "source_pw/module_rt/td_prop_pw.h"
+#include "source_pw/module_rt/td_spin_pw.h"
+#include "source_pw/module_rt/td_vel_pw.h"
 
 #include <iosfwd>
 #include <memory>
@@ -27,11 +28,14 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     void runner(BaseCell& basecell, const int istep) override;
 
   protected:
+    /** @brief Use independent iteration limits for initial-state SCF and propagation. */
+    int scf_iter_limit(const int istep) const override;
     /** @brief Use ground-state diagonalization for the initial electronic step. */
     std::string diag_policy(const int istep) const override;
 
     /** @brief Require an unmixed endpoint prediction before accepting a corrected step. */
     ESolver_KS::DensityStage density_stage(const int istep, const int iter) const override;
+    bool defer_iter_output(const int istep) const override;
 
     void before_scf(UnitCell& ucell, const int istep) override;
 
@@ -44,29 +48,35 @@ class ESolver_KS_PW_TDDFT : public ESolver_KS_PW<T, Device>
     /** @brief Switch between ground-state diagonalization and real-time propagation. */
     void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
-    /** @brief Apply the convergence policy appropriate to the current stage. */
-    void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
-
-    /** @brief Save the converged state as the origin of the next propagation step. */
+    /** @brief Save the converged or iteration-limited endpoint for the next propagation step. */
     void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
   private:
     using Real = typename GetTypeReal<T>::type;
     std::ofstream& log_;
-    std::unique_ptr<hsolver::HSolverPWTDDFT<T, Device>> td_solver_;
+    std::unique_ptr<pw::TDPropPW<T, Device>> td_prop_;
 
     std::shared_ptr<elecstate::TDFieldManager> td_field_manager_;
-    ModuleIO::CurrentPW<Real, Device> current_output_;
+    pw::TDVelPW<Real, Device> vel_;
+    pw::TDSpinPW<Real, Device> spin_;
+    pw::CurrentRequest current_req_;
 
     pw::TDHistoryPW<T, Device> history_;
     double initial_wave_electrons_ = 0.0;
     double initial_rho_electrons_ = 0.0;
+
+    void run_prop(UnitCell& cell, int step);
+    bool advance_interval(UnitCell& cell,
+                          int step,
+                          int index,
+                          int depth,
+                          const elecstate::TDFieldState& full,
+                          pw::TDElecSnap& accepted,
+                          hsolver::TDOrthStats& stats);
+    void output_field(int step) const;
     /** @brief Print the one-based electronic step header. */
     void print_step(const int istep) const;
-    /** @brief Print Eij from the converged density, collecting all k-point pools on the main rank. */
-    void print_eij(const int istep);
-    void report_orth(const UnitCell& ucell, int istep);
-    void prepare_td_step(const int istep);
+    void prep_td_step(const int istep);
 };
 
 } // namespace ModuleESolver

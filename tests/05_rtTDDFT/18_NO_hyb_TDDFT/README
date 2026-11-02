@@ -1,1 +1,2 @@
 Test RT-TDDFT hybrid gauge output and parameter td_dt for periodic system
+Also checks saved-field timing across a periodic boundary with two electronic steps per MD step.

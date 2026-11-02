@@ -623,6 +623,100 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assertNotIn("No #pragma once", result.stdout)
 
+    def write_exception_event(self, rule, labels, approver="@maintainer"):
+        event = self.repo / "event.json"
+        body = "\n".join(
+            [
+                "### Governance Exception",
+                f"- Rule: {rule}",
+                "- Reason: file is consumed by a generated build list.",
+                "- Scope: source/source_base/generated.cpp only.",
+                "- User or maintenance risk: low.",
+                "- Why the normal rule cannot be followed now: generator lands in a follow-up PR.",
+                "- Follow-up cleanup plan: wire the file through CMakeLists.txt in the follow-up.",
+                f"- Requested approver: {approver}",
+            ]
+        )
+        event.write_text(
+            json.dumps(
+                {"pull_request": {"body": body, "labels": [{"name": name} for name in labels]}}
+            )
+        )
+        return event
+
+    def test_approved_exception_downgrades_covered_blocker(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event(
+            "CMake linkage for new sources", ["governance-exception-approved"]
+        )
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_warns_with_success(result, "CMake linkage for new sources")
+        self.assertIn("Downgraded from error by the approved governance exception", result.stdout)
+
+    def test_unapproved_exception_keeps_blocker(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event("CMake linkage for new sources", [])
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "CMake linkage for new sources")
+        self.assertIn("awaiting maintainer approval", result.stdout)
+
+    def test_incomplete_exception_keeps_blocker_even_with_label(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event(
+            "CMake linkage for new sources", ["governance-exception-approved"], approver=""
+        )
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "CMake linkage for new sources")
+        self.assertIn("missing fields: Requested approver", result.stdout)
+
+    def test_approved_exception_does_not_downgrade_other_rules(self):
+        self.write("source/source_base/generated.cpp", "int generated();\n")
+        head = self.commit_change()
+        event = self.write_exception_event(
+            "Global dependency budget", ["governance-exception-approved"]
+        )
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "CMake linkage for new sources")
+        self.assertNotIn("Downgraded from error", result.stdout)
+
+    def test_approved_exception_never_downgrades_non_exceptable_rule(self):
+        self.write("source/source_base/new_header.h", "#pragma once\n\nint foo();\n")
+        head = self.commit_change()
+        event = self.write_exception_event("No #pragma once", ["governance-exception-approved"])
+
+        result = self.run_checker("--base", self.base, "--head", head, "--event-path", str(event))
+
+        self.assert_blocked_by(result, "No #pragma once")
+        self.assertNotIn("Downgraded from error", result.stdout)
+
+    def test_warns_when_approval_label_has_no_exception_section(self):
+        event = self.repo / "event.json"
+        event.write_text(
+            json.dumps(
+                {
+                    "pull_request": {
+                        "body": "### What's changed?\n- Docs tweak.\n",
+                        "labels": [{"name": "governance-exception-approved"}],
+                    }
+                }
+            )
+        )
+
+        result = self.run_checker("--event-path", str(event))
+
+        self.assert_warns_with_success(result, "Governance exception record")
+
 
 if __name__ == "__main__":
     unittest.main()

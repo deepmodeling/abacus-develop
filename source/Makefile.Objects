@@ -19,6 +19,7 @@ VPATH=./src_global:\
 ./source_cell/module_neighlist:\
 ./source_cell/module_symmetry:\
 ./source_cell:\
+./source_cell/kernels:\
 ./source_base:\
 ./source_base/kernels:\
 ./source_base/module_external:\
@@ -36,6 +37,8 @@ VPATH=./src_global:\
 ./source_base/module_fft:\
 ./source_esolver:\
 ./source_hsolver:\
+./source_hsolver/module_linalg:\
+./source_hsolver/module_linalg/kernels:\
 ./source_hsolver/kernels:\
 ./source_hsolver/module_genelpa:\
 ./source_hsolver/module_pexsi:\
@@ -54,6 +57,7 @@ VPATH=./src_global:\
 ./source_hamilt/module_xc/kernels:\
 ./source_pw/module_proj:\
 ./source_pw/module_pwdft:\
+./source_pw/module_rt:\
 ./source_pw/module_ofdft:\
 ./source_pw/module_stodft:\
 ./source_pw/module_pwdft/kernels:\
@@ -284,6 +288,10 @@ OBJS_ELECSTAT=elecstate.o\
     pcc_2d.o\
     pot_pcc.o\
     pot_sccs.o\
+    potential_sccs.o\
+    sccs_fixed_src.o\
+    sccs_output.o\
+    sccs_collect.o\
     sccs_pcc_0d.o\
     sccs_pcc_2d.o\
     elecstate_op.o\
@@ -380,7 +388,15 @@ OBJS_GINT=batch_biggrid.o\
 OBJS_HAMILT=hamilt_pw.o\
     pw_hybrid_nscf.o\
     pw_hybrid_source.o\
+    td_prop_pw.o\
+    td_hamilt_pw.o\
+    prop_cn_pw.o\
+    prop_etrs_pw.o\
     td_history_pw.o\
+    td_conserv_pw.o\
+    td_endpoint_pw.o\
+    td_vel_pw.o\
+    td_spin_pw.o\
     td_pw.o\
     hs_matrix_k.o\
     sto_hamilt_pw.o\
@@ -443,6 +459,7 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_q0_pos.o\
     dfpt_rho.o\
     dfpt_stern.o\
+    dfpt_write_dyn.o\
     dfpt_xc_analytic.o
 
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
@@ -489,7 +506,12 @@ OBJS_HSOLVER=diago_cg.o\
     para_lin_tf.o\
     hsolver.o\
     hsolver_pw.o\
-    hsolver_pw_tddft.o\
+    cn_solver_pw.o\
+    td_orbital_ops.o\
+    orb_buffer.o\
+    exp_action.o\
+    exp_taylor.o\
+    exp_lanczos.o\
     orthonormal.o\
     orthonormal_small.o\
     hsolver_lcaopw.o\
@@ -634,6 +656,7 @@ OBJS_SURCHEM=surchem.o\
 
 OBJS_SCCS=sccs_cavity.o\
     sccs_cav_deriv.o\
+    sccs_diag.o\
     sccs_functional.o\
     sccs_lowpass.o\
     sccs_parameters.o\
@@ -701,6 +724,9 @@ OBJS_IO=module_parameter/input_conv.o\
     module_dos/write_dos_pw.o\
     module_energy/write_bands.o\
     module_energy/td_eij_io.o\
+    module_energy/td_eij_pw.o\
+    module_ctrl/ctrl_output_td_pw.o\
+    module_output/td_conserv_io.o\
     module_dos/cal_dos.o\
     module_dos/cal_pdos_gamma.o\
     module_dos/cal_pdos_multik.o\
@@ -741,8 +767,9 @@ OBJS_IO=module_parameter/input_conv.o\
     module_current/td_current_io.o\
     module_current/td_current_io_comm.o\
     module_current/td_current_pw.o\
+    module_current/td_spin_pw_io.o\
     td_efield_io.o\
-    td_vector_pot_io.o\
+    td_vecpot_io.o\
     module_chgpot/write_libxc_r.o\
     module_chgpot/get_pchg_pw.o\
     module_output/output_log.o\
@@ -868,6 +895,10 @@ OBJS_LCAO=evolve_elec.o\
       center2orb_orb22.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
+      smooth_cut_coulomb.o\
+      invmat_ri.o\
+      lri_cv.o\
+      lri_cv_tools.o\
       exx_abfs_jle.o\
       module_restart/restart_exx_csr.o\
       exx_abfs_io.o\
