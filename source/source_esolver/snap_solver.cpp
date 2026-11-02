@@ -110,7 +110,7 @@ void ESolver_SNAP::before_all_runners(BaseCell& cell, const Input_para& inp)
     snap_force_.create(ucell.nat, 3);
 }
 
-void ESolver_SNAP::runner(BaseCell& cell, const int istep)
+void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
 {
     static_cast<void>(istep);
     if (!calculator_)
@@ -243,6 +243,11 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep)
             snap_force_(atom_index, direction) = contribution.forces()[index][component] * force_scale;
         }
     }
+}
+catch (const std::exception& error)
+{
+    const std::string message = std::string("SNAP evaluation failed: ") + error.what();
+    fail(message);
 }
 
 double ESolver_SNAP::cal_energy()
