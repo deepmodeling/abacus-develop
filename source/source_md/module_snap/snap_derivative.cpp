@@ -1,4 +1,4 @@
-#include "desc.h"
+#include "snap_descriptor.h"
 
 #include "source_base/constants.h"
 
@@ -106,7 +106,7 @@ Dual dual_tan(const Dual& value)
 }
 }
 
-UWithDerivative DescEval::calc_u_deriv(const Neighbor& neighbor, const int direction) const
+UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& neighbor, const int direction) const
 {
     if (direction < 0 || direction > 2)
     {

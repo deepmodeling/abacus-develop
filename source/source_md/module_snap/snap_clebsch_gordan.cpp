@@ -1,4 +1,4 @@
-#include "cg.h"
+#include "snap_clebsch_gordan.h"
 
 #include <cmath>
 
@@ -15,7 +15,7 @@ int half_sum(const int left, const int right)
 }
 }
 
-CGTable::CGTable(const int twojmax)
+ClebschGordanTable::ClebschGordanTable(const int twojmax)
 {
   twojmax_ = twojmax < 0 ? 0 : twojmax;
     for (int j1 = 0; j1 <= twojmax_; ++j1)
@@ -40,7 +40,7 @@ CGTable::CGTable(const int twojmax)
                         entry.m2 = m2;
                         entry.j = j;
                         entry.m = m;
-                        entry.value = coeff_raw(j1, m1, j2, m2, j, m);
+                        entry.value = coefficient_uncached(j1, m1, j2, m2, j, m);
                         entries_.push_back(entry);
                     }
                 }
@@ -49,7 +49,7 @@ CGTable::CGTable(const int twojmax)
     }
 }
 
-double CGTable::factorial(const int value)
+double ClebschGordanTable::factorial(const int value)
 {
     if (value < 0)
     {
@@ -58,7 +58,7 @@ double CGTable::factorial(const int value)
     return std::tgamma(static_cast<double>(value) + 1.0);
 }
 
-bool CGTable::allowed(const int j1,
+bool ClebschGordanTable::allowed(const int j1,
                                  const int m1,
                                  const int j2,
                                  const int m2,
@@ -80,7 +80,7 @@ bool CGTable::allowed(const int j1,
     return m == m1 + m2;
 }
 
-double CGTable::coeff_raw(const int j1,
+double ClebschGordanTable::coefficient_uncached(const int j1,
                                                 const int m1,
                                                 const int j2,
                                                 const int m2,
@@ -123,7 +123,7 @@ double CGTable::coeff_raw(const int j1,
     return delta * prefactor * sum;
 }
 
-const CGTable::Entry* CGTable::find(const int j1,
+const ClebschGordanTable::Entry* ClebschGordanTable::find(const int j1,
                                                           const int m1,
                                                           const int j2,
                                                           const int m2,
@@ -141,7 +141,7 @@ const CGTable::Entry* CGTable::find(const int j1,
     return nullptr;
 }
 
-double CGTable::coefficient(const int j1,
+double ClebschGordanTable::coefficient(const int j1,
                                        const int m1,
                                        const int j2,
                                        const int m2,
@@ -152,7 +152,7 @@ double CGTable::coefficient(const int j1,
     return entry == nullptr ? 0.0 : entry->value;
 }
 
-double CGTable::h_coefficient(const int j1,
+double ClebschGordanTable::h_coefficient(const int j1,
                                          const int m1,
                                          const int mp1,
                                          const int j2,

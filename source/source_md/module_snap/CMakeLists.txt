@@ -1,13 +1,13 @@
 target_sources(
     md
     PRIVATE
-    calc.cpp
-    desc.cpp
-    deriv.cpp
-    model.cpp
-    cg.cpp
+    snap_calculator.cpp
+    snap_descriptor.cpp
+    snap_derivative.cpp
+    snap_model.cpp
+    snap_clebsch_gordan.cpp
 )
 
 if(BUILD_TESTING)
-  add_subdirectory(unittests)
+  add_subdirectory(unittest)
 endif()

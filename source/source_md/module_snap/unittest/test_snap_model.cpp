@@ -1,4 +1,4 @@
-#include "../model.h"
+#include "../snap_model.h"
 
 #include <gtest/gtest.h>
 
@@ -8,7 +8,7 @@
 namespace
 {
 
-TEST(SnapModel, ValidParams)
+TEST(SnapModel, AcceptsCompleteParameters)
 {
     ModuleMD::SNAP::ModelParameters parameters;
     parameters.rcut = 4.5;
@@ -25,7 +25,7 @@ TEST(SnapModel, ValidParams)
     EXPECT_TRUE(error.empty());
 }
 
-TEST(SnapModel, BadElements)
+TEST(SnapModel, RejectsInconsistentElementData)
 {
     ModuleMD::SNAP::ModelParameters parameters;
     parameters.rcut = 4.5;
@@ -40,7 +40,7 @@ TEST(SnapModel, BadElements)
     EXPECT_FALSE(error.empty());
 }
 
-TEST(SnapModel, BadRadial)
+TEST(SnapModel, RejectsInvalidRadialRange)
 {
     ModuleMD::SNAP::ModelParameters parameters;
     parameters.rcut = 3.0;
@@ -56,7 +56,7 @@ TEST(SnapModel, BadRadial)
     EXPECT_FALSE(error.empty());
 }
 
-TEST(SnapModel, BadPairCutoff)
+TEST(SnapModel, RejectsRminOutsideSmallPairCutoff)
 {
     ModuleMD::SNAP::ModelParameters parameters;
     parameters.rcut = 4.0;
@@ -71,12 +71,12 @@ TEST(SnapModel, BadPairCutoff)
     EXPECT_NE(error.find("Small-Small"), std::string::npos);
 }
 
-TEST(SnapModel, LoadLammps)
+TEST(SnapModel, LoadsLammpsStyleCoefficientAndParameterFiles)
 {
-    const std::string coeff_file = testing::TempDir() + "snap_coeff_test.txt";
+    const std::string coefficient_file = testing::TempDir() + "snap_coeff_test.txt";
     const std::string parameter_file = testing::TempDir() + "snap_param_test.txt";
     {
-        std::ofstream output(coeff_file.c_str());
+        std::ofstream output(coefficient_file.c_str());
         output << "1 3\n";
         output << "Si 2.25 1.0\n";
         output << "-0.5\n1.25\n2.5\n";
@@ -93,24 +93,24 @@ TEST(SnapModel, LoadLammps)
 
     ModuleMD::SNAP::ModelData model;
     std::string error;
-    EXPECT_TRUE(model.load(coeff_file, parameter_file, std::vector<std::string>(1, "Si"), error));
+    EXPECT_TRUE(model.load(coefficient_file, parameter_file, std::vector<std::string>(1, "Si"), error));
     EXPECT_TRUE(error.empty());
-    ASSERT_EQ(model.coeff_count(), static_cast<std::size_t>(3));
+    ASSERT_EQ(model.coefficient_count(), static_cast<std::size_t>(3));
     EXPECT_DOUBLE_EQ(model.parameters.element_weights[0], 1.0);
     EXPECT_DOUBLE_EQ(model.parameters.element_radii[0], 2.25);
     EXPECT_DOUBLE_EQ(model.parameters.rcut, 5.4);
     EXPECT_DOUBLE_EQ(model.coefficients[0][1], 1.25);
 
-    std::remove(coeff_file.c_str());
+    std::remove(coefficient_file.c_str());
     std::remove(parameter_file.c_str());
 }
 
-TEST(SnapModel, MultiBlocks)
+TEST(SnapModel, LoadsMultipleElementBlocks)
 {
-    const std::string coeff_file = testing::TempDir() + "coeff_multi.txt";
-    const std::string parameter_file = testing::TempDir() + "param_multi.txt";
+    const std::string coefficient_file = testing::TempDir() + "snap_coeff_multi_test.txt";
+    const std::string parameter_file = testing::TempDir() + "snap_param_multi_test.txt";
     {
-        std::ofstream output(coeff_file.c_str());
+        std::ofstream output(coefficient_file.c_str());
         output << "2 2\n";
         output << "Si 2.25 1.0\n";
         output << "-0.5\n1.25\n";
@@ -129,23 +129,23 @@ TEST(SnapModel, MultiBlocks)
     ModuleMD::SNAP::ModelData model;
     std::string error;
     const std::vector<std::string> elements = {"Si", "C"};
-    EXPECT_TRUE(model.load(coeff_file, parameter_file, elements, error));
+    EXPECT_TRUE(model.load(coefficient_file, parameter_file, elements, error));
     EXPECT_TRUE(error.empty());
     ASSERT_EQ(model.coefficients.size(), static_cast<std::size_t>(2));
     EXPECT_DOUBLE_EQ(model.parameters.element_weights[1], 0.8);
     EXPECT_DOUBLE_EQ(model.parameters.element_radii[1], 1.7);
     EXPECT_DOUBLE_EQ(model.coefficients[1][1], 2.5);
 
-    std::remove(coeff_file.c_str());
+    std::remove(coefficient_file.c_str());
     std::remove(parameter_file.c_str());
 }
 
-TEST(SnapModel, ChemBlocks)
+TEST(SnapModel, LoadsChemicalCoefficientBlocks)
 {
-    const std::string coeff_file = testing::TempDir() + "coeff_chem.txt";
-    const std::string parameter_file = testing::TempDir() + "param_chem.txt";
+    const std::string coefficient_file = testing::TempDir() + "snap_coeff_chemical_test.txt";
+    const std::string parameter_file = testing::TempDir() + "snap_param_chemical_test.txt";
     {
-        std::ofstream output(coeff_file.c_str());
+        std::ofstream output(coefficient_file.c_str());
         output << "2 9\n";
         output << "Si 2.25 1.0\n";
         for (int i = 0; i < 9; ++i)
@@ -172,31 +172,31 @@ TEST(SnapModel, ChemBlocks)
     ModuleMD::SNAP::ModelData model;
     std::string error;
     const std::vector<std::string> elements = {"Si", "C"};
-    EXPECT_TRUE(model.load(coeff_file, parameter_file, elements, error));
+    EXPECT_TRUE(model.load(coefficient_file, parameter_file, elements, error));
     EXPECT_TRUE(error.empty());
     ASSERT_EQ(model.coefficients.size(), static_cast<std::size_t>(2));
     EXPECT_TRUE(model.parameters.chem_flag);
     EXPECT_EQ(model.coefficients[0].size(), static_cast<std::size_t>(9));
     EXPECT_DOUBLE_EQ(model.coefficients[1][1], 2.0);
 
-    const std::vector<std::string> rev_elements = {"C", "Si"};
+    const std::vector<std::string> reversed_elements = {"C", "Si"};
     ModuleMD::SNAP::ModelData reversed;
-    ASSERT_TRUE(reversed.load(coeff_file, parameter_file, rev_elements, error)) << error;
+    ASSERT_TRUE(reversed.load(coefficient_file, parameter_file, reversed_elements, error)) << error;
     EXPECT_EQ(reversed.parameters.elements[0], "C");
     EXPECT_EQ(reversed.parameters.elements[1], "Si");
     EXPECT_DOUBLE_EQ(reversed.coefficients[0][1], 2.0);
     EXPECT_DOUBLE_EQ(reversed.coefficients[1][1], 1.0);
 
-    std::remove(coeff_file.c_str());
+    std::remove(coefficient_file.c_str());
     std::remove(parameter_file.c_str());
 }
 
-TEST(SnapModel, InnerOptions)
+TEST(SnapModel, ReadsInnerSwitchAndRejectsUnknownParameter)
 {
-    const std::string coeff_file = testing::TempDir() + "inner_coeff.txt";
-    const std::string parameter_file = testing::TempDir() + "inner_param.txt";
+    const std::string coefficient_file = testing::TempDir() + "snap_inner_coeff.txt";
+    const std::string parameter_file = testing::TempDir() + "snap_inner_param.txt";
     {
-        std::ofstream output(coeff_file.c_str());
+        std::ofstream output(coefficient_file.c_str());
         output << "1 2\nSi 2.0 1.0\n0.0\n1.0\n";
     }
     {
@@ -207,30 +207,30 @@ TEST(SnapModel, InnerOptions)
     ModuleMD::SNAP::ModelData model;
     std::string error;
     const std::vector<std::string> elements(1, "Si");
-    ASSERT_TRUE(model.load(coeff_file, parameter_file, elements, error)) << error;
-    EXPECT_TRUE(model.parameters.inner_flag);
+    ASSERT_TRUE(model.load(coefficient_file, parameter_file, elements, error)) << error;
+    EXPECT_TRUE(model.parameters.switchinner_flag);
     ASSERT_EQ(model.parameters.sinner.size(), static_cast<std::size_t>(1));
     EXPECT_DOUBLE_EQ(model.parameters.sinner[0], 1.5);
     {
         std::ofstream output(parameter_file.c_str(), std::ios::app);
-        output << "bad_option 1\n";
+        output << "unsupported_option 1\n";
     }
-    EXPECT_FALSE(model.load(coeff_file, parameter_file, elements, error));
-    EXPECT_NE(error.find("bad_option"), std::string::npos);
+    EXPECT_FALSE(model.load(coefficient_file, parameter_file, elements, error));
+    EXPECT_NE(error.find("unsupported_option"), std::string::npos);
     {
         std::ofstream output(parameter_file.c_str());
         output << "rcutfac 1.0\ntwojmax 0\nswitchinnerflag 1\nsinner 1.5\n";
     }
     error.clear();
-    EXPECT_FALSE(model.load(coeff_file, parameter_file, elements, error));
+    EXPECT_FALSE(model.load(coefficient_file, parameter_file, elements, error));
     EXPECT_NE(error.find("requires sinner and dinner"), std::string::npos);
     {
         std::ofstream output(parameter_file.c_str());
         output << "rcutfac 1.0\ntwojmax 0\nswitchinnerflag 0\n";
     }
     error.clear();
-    EXPECT_TRUE(model.load(coeff_file, parameter_file, elements, error)) << error;
-    std::remove(coeff_file.c_str());
+    EXPECT_TRUE(model.load(coefficient_file, parameter_file, elements, error)) << error;
+    std::remove(coefficient_file.c_str());
     std::remove(parameter_file.c_str());
 }
 

@@ -1,8 +1,8 @@
-#ifndef SNAP_DESC_H
-#define SNAP_DESC_H
+#ifndef SNAP_DESCRIPTOR_H
+#define SNAP_DESCRIPTOR_H
 
-#include "cg.h"
-#include "model.h"
+#include "snap_clebsch_gordan.h"
+#include "snap_model.h"
 
 #include <complex>
 #include <vector>
@@ -30,23 +30,23 @@ struct UWithDerivative
     std::vector<std::complex<double> > derivatives;
 };
 
-class DescEval
+class DescriptorEvaluator
 {
   public:
-    explicit DescEval(const ModelParameters& parameters);
+    explicit DescriptorEvaluator(const ModelParameters& parameters);
 
     std::vector<std::complex<double> > compute_u(const Neighbor& neighbor) const;
 
-    UWithDerivative calc_u_deriv(const Neighbor& neighbor, int direction) const;
+    UWithDerivative compute_u_with_derivative(const Neighbor& neighbor, int direction) const;
 
     std::vector<std::complex<double> > accumulate_u(const std::vector<Neighbor>& neighbors) const;
 
     std::vector<std::complex<double> > accumulate_u(const std::vector<Neighbor>& neighbors,
                                                     std::size_t central_element) const;
 
-    std::vector<double> calc_bispec(const std::vector<std::complex<double> >& u) const;
+    std::vector<double> compute_bispectrum(const std::vector<std::complex<double> >& u) const;
 
-    std::vector<double> calc_b_deriv(const std::vector<std::complex<double> >& u,
+    std::vector<double> compute_bispectrum_derivative(const std::vector<std::complex<double> >& u,
                                                       const std::vector<std::complex<double> >& du) const;
 
     std::size_t u_size() const
@@ -56,7 +56,7 @@ class DescEval
 
     std::size_t bispectrum_size() const
     {
-        return bispec_indices_.size();
+        return bispectrum_indices_.size();
     }
 
     std::size_t channel_count() const
@@ -82,14 +82,14 @@ class DescEval
     void compute_rootpq();
 
     ModelParameters parameters_;
-    CGTable cg_table_;
+    ClebschGordanTable cg_table_;
     std::vector<double> rootpq_;
     std::vector<std::size_t> u_block_;
-    std::vector<BispectrumIndex> bispec_indices_;
+    std::vector<BispectrumIndex> bispectrum_indices_;
     std::size_t u_size_;
 };
 
 } // namespace SNAP
 } // namespace ModuleMD
 
-#endif // SNAP_DESC_H
+#endif // SNAP_DESCRIPTOR_H

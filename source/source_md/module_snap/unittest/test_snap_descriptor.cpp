@@ -1,4 +1,4 @@
-#include "../desc.h"
+#include "../snap_descriptor.h"
 
 #include <gtest/gtest.h>
 
@@ -22,16 +22,16 @@ ModuleMD::SNAP::ModelParameters make_parameters()
     return parameters;
 }
 
-TEST(SnapDescriptor, ArraySizes)
+TEST(SnapDescriptor, AllocatesExpectedArraySizes)
 {
-    const ModuleMD::SNAP::DescEval evaluator(make_parameters());
+    const ModuleMD::SNAP::DescriptorEvaluator evaluator(make_parameters());
     EXPECT_EQ(evaluator.u_size(), static_cast<std::size_t>(1 * 1 + 2 * 2 + 3 * 3));
     EXPECT_EQ(evaluator.bispectrum_size(), static_cast<std::size_t>(5));
 }
 
-TEST(SnapDescriptor, SelfDiagonal)
+TEST(SnapDescriptor, SelfContributionIsDiagonal)
 {
-    const ModuleMD::SNAP::DescEval evaluator(make_parameters());
+    const ModuleMD::SNAP::DescriptorEvaluator evaluator(make_parameters());
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors;
     const std::vector<std::complex<double> > u = evaluator.accumulate_u(neighbors);
 
@@ -43,9 +43,9 @@ TEST(SnapDescriptor, SelfDiagonal)
     EXPECT_DOUBLE_EQ(u[13].imag(), 0.0);
 }
 
-TEST(SnapDescriptor, OutsideCutoff)
+TEST(SnapDescriptor, OutsideCutoffDoesNotChangeEnvironment)
 {
-    const ModuleMD::SNAP::DescEval evaluator(make_parameters());
+    const ModuleMD::SNAP::DescriptorEvaluator evaluator(make_parameters());
     ModuleMD::SNAP::Neighbor neighbor;
     neighbor.x = 5.0;
     const std::vector<ModuleMD::SNAP::Neighbor> neighbors(1, neighbor);
@@ -60,15 +60,15 @@ TEST(SnapDescriptor, OutsideCutoff)
     }
 }
 
-TEST(SnapDescriptor, FiniteBispec)
+TEST(SnapDescriptor, BispectrumIsFinite)
 {
-    const ModuleMD::SNAP::DescEval evaluator(make_parameters());
+    const ModuleMD::SNAP::DescriptorEvaluator evaluator(make_parameters());
     ModuleMD::SNAP::Neighbor neighbor;
     neighbor.x = 1.2;
     neighbor.y = 0.4;
     neighbor.z = -0.8;
     const std::vector<std::complex<double> > u = evaluator.accumulate_u(std::vector<ModuleMD::SNAP::Neighbor>(1, neighbor));
-    const std::vector<double> bispectrum = evaluator.calc_bispec(u);
+    const std::vector<double> bispectrum = evaluator.compute_bispectrum(u);
 
     for (std::size_t i = 0; i < bispectrum.size(); ++i)
     {
@@ -76,9 +76,9 @@ TEST(SnapDescriptor, FiniteBispec)
     }
 }
 
-TEST(SnapDescriptor, LammpsValue)
+TEST(SnapDescriptor, MatchesLammpsSingleElementReference)
 {
-    const ModuleMD::SNAP::DescEval evaluator(make_parameters());
+    const ModuleMD::SNAP::DescriptorEvaluator evaluator(make_parameters());
     const double positions[3][3] = {{1.0, 1.0, 1.0}, {2.0, 1.0, 1.0}, {1.0, 3.0, 1.0}};
     std::vector<ModuleMD::SNAP::Neighbor> neighbors;
     for (int atom = 1; atom < 3; ++atom)
@@ -90,7 +90,7 @@ TEST(SnapDescriptor, LammpsValue)
         neighbor.cutoff_radius = 4.0;
         neighbors.push_back(neighbor);
     }
-    const std::vector<double> bispectrum = evaluator.calc_bispec(evaluator.accumulate_u(neighbors));
+    const std::vector<double> bispectrum = evaluator.compute_bispectrum(evaluator.accumulate_u(neighbors));
     const double reference[5] = {
         13.0368348609, 15.0992648922, 11.7631725456, 13.7069739819, 6.07477849248};
     ASSERT_EQ(bispectrum.size(), static_cast<std::size_t>(5));

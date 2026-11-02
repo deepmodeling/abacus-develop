@@ -22,7 +22,7 @@ struct ModelParameters
     bool bzero_flag = true;
     bool quadratic_flag = false;
     bool wselfall_flag = false;
-    bool inner_flag = false;
+    bool switchinner_flag = false;
     double wself = 1.0;
     std::vector<std::string> elements;
     std::vector<double> element_weights;
@@ -38,12 +38,12 @@ struct ModelData
     ModelParameters parameters;
     std::vector<std::vector<double> > coefficients;
 
-    bool load(const std::string& coeff_file,
+    bool load(const std::string& coefficient_file,
               const std::string& parameter_file,
-              const std::vector<std::string>& wanted_elements,
+              const std::vector<std::string>& requested_elements,
               std::string& error);
 
-    std::size_t coeff_count() const;
+    std::size_t coefficient_count() const;
 };
 
 } // namespace SNAP

@@ -337,7 +337,7 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_nep.o\
-    snap_solver.o\
+    esolver_snap.o\
     esolver_of.o\
     esolver_of_tddft.o\
     esolver_of_interface.o\
@@ -538,11 +538,11 @@ OBJS_MD=fire.o\
     nhchain.o\
     plumed_interface.o\
     run_md.o\
-    module_snap/calc.o\
-    module_snap/desc.o\
-    module_snap/deriv.o\
-    module_snap/model.o\
-    module_snap/cg.o\
+    module_snap/snap_calculator.o\
+    module_snap/snap_descriptor.o\
+    module_snap/snap_derivative.o\
+    module_snap/snap_model.o\
+    module_snap/snap_clebsch_gordan.o\
     verlet.o\
 
 OBJS_NEIGHBOR=sltk_atom.o\

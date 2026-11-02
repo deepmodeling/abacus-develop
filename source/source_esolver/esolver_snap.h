@@ -2,7 +2,7 @@
 #define ESOLVER_SNAP_H
 
 #include "esolver.h"
-#include "source_md/module_snap/calc.h"
+#include "source_md/module_snap/snap_calculator.h"
 
 #include <iosfwd>
 #include <memory>
@@ -15,7 +15,7 @@ namespace ModuleESolver
 class ESolver_SNAP : public ESolver
 {
   public:
-    ESolver_SNAP(const std::string& coeff_file,
+    ESolver_SNAP(const std::string& coefficient_file,
                  const std::string& parameter_file,
                  std::ofstream& running_log);
 
@@ -29,7 +29,7 @@ class ESolver_SNAP : public ESolver
   private:
     void initialize(const std::vector<std::string>& labels);
 
-    std::string coeff_file_;
+    std::string coefficient_file_;
     std::string parameter_file_;
     std::ofstream& running_log_;
     ModuleMD::SNAP::ModelData model_;

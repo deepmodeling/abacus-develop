@@ -1,4 +1,4 @@
-#include "model.h"
+#include "snap_model.h"
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -26,7 +26,7 @@ bool next_data_line(std::istream& input, std::string& line)
 }
 
 template <typename T>
-bool read_param(std::istringstream& words, T& value, const std::string& keyword, std::string& error)
+bool read_parameter_value(std::istringstream& words, T& value, const std::string& keyword, std::string& error)
 {
     if (!(words >> value) || words.fail())
     {
@@ -38,7 +38,7 @@ bool read_param(std::istringstream& words, T& value, const std::string& keyword,
 
 bool validate_inner(const ModuleMD::SNAP::ModelParameters& parameters, std::string& error)
 {
-    if (!parameters.inner_flag)
+    if (!parameters.switchinner_flag)
     {
         return true;
     }
@@ -75,7 +75,7 @@ bool validate_cutoff(const ModuleMD::SNAP::ModelParameters& parameters, std::str
     return true;
 }
 
-bool valid_cutoffs(const ModuleMD::SNAP::ModelParameters& parameters, std::string& error)
+bool validate_pair_cutoffs(const ModuleMD::SNAP::ModelParameters& parameters, std::string& error)
 {
     for (std::size_t i = 0; i < parameters.element_radii.size(); ++i)
     {
@@ -148,33 +148,33 @@ bool ModelParameters::valid(std::string& error) const
             return false;
         }
     }
-    if (!valid_cutoffs(*this, error))
+    if (!validate_pair_cutoffs(*this, error))
     {
         return false;
     }
     return true;
 }
 
-bool ModelData::load(const std::string& coeff_file,
+bool ModelData::load(const std::string& coefficient_file,
                      const std::string& parameter_file,
-                     const std::vector<std::string>& wanted_elements,
+                     const std::vector<std::string>& requested_elements,
                      std::string& error)
 {
     error.clear();
     parameters = ModelParameters();
     parameters.rfac0 = 0.99363;
     coefficients.clear();
-    parameters.elements = wanted_elements;
+    parameters.elements = requested_elements;
     if (parameters.elements.empty())
     {
         error = "SNAP requires at least one requested element.";
         return false;
     }
 
-    std::ifstream coeff_stream(coeff_file.c_str());
+    std::ifstream coeff_stream(coefficient_file.c_str());
     if (!coeff_stream)
     {
-        error = "Cannot open SNAP coefficient file: " + coeff_file;
+        error = "Cannot open SNAP coefficient file: " + coefficient_file;
         return false;
     }
 
@@ -186,8 +186,8 @@ bool ModelData::load(const std::string& coeff_file,
     }
     std::istringstream header(line);
     int block_count = 0;
-    int coeff_count = 0;
-    if (!(header >> block_count >> coeff_count) || block_count <= 0 || coeff_count <= 0)
+    int coefficient_count = 0;
+    if (!(header >> block_count >> coefficient_count) || block_count <= 0 || coefficient_count <= 0)
     {
         error = "Invalid SNAP coefficient file header.";
         return false;
@@ -222,8 +222,8 @@ bool ModelData::load(const std::string& coeff_file,
                 break;
             }
         }
-        std::vector<double> values(static_cast<std::size_t>(coeff_count), 0.0);
-        for (int coefficient = 0; coefficient < coeff_count; ++coefficient)
+        std::vector<double> values(static_cast<std::size_t>(coefficient_count), 0.0);
+        for (int coefficient = 0; coefficient < coefficient_count; ++coefficient)
         {
             if (!next_data_line(coeff_stream, line))
             {
@@ -259,8 +259,8 @@ bool ModelData::load(const std::string& coeff_file,
         }
     }
 
-    std::ifstream param_stream(parameter_file.c_str());
-    if (!param_stream)
+    std::ifstream parameter_stream(parameter_file.c_str());
+    if (!parameter_stream)
     {
         error = "Cannot open SNAP parameter file: " + parameter_file;
         return false;
@@ -269,14 +269,14 @@ bool ModelData::load(const std::string& coeff_file,
     bool has_twojmax = false;
     bool has_sinner = false;
     bool has_dinner = false;
-    while (next_data_line(param_stream, line))
+    while (next_data_line(parameter_stream, line))
     {
         std::istringstream words(line);
         std::string keyword;
         words >> keyword;
         if (keyword == "rcutfac")
         {
-            if (!read_param(words, parameters.rcutfac, keyword, error))
+            if (!read_parameter_value(words, parameters.rcutfac, keyword, error))
             {
                 return false;
             }
@@ -284,7 +284,7 @@ bool ModelData::load(const std::string& coeff_file,
         }
         else if (keyword == "twojmax")
         {
-            if (!read_param(words, parameters.twojmax, keyword, error))
+            if (!read_parameter_value(words, parameters.twojmax, keyword, error))
             {
                 return false;
             }
@@ -292,14 +292,14 @@ bool ModelData::load(const std::string& coeff_file,
         }
         else if (keyword == "rfac0")
         {
-            if (!read_param(words, parameters.rfac0, keyword, error))
+            if (!read_parameter_value(words, parameters.rfac0, keyword, error))
             {
                 return false;
             }
         }
         else if (keyword == "rmin0")
         {
-            if (!read_param(words, parameters.rmin, keyword, error))
+            if (!read_parameter_value(words, parameters.rmin, keyword, error))
             {
                 return false;
             }
@@ -307,7 +307,7 @@ bool ModelData::load(const std::string& coeff_file,
         else if (keyword == "bnormflag")
         {
             int value = 0;
-            if (!read_param(words, value, keyword, error))
+            if (!read_parameter_value(words, value, keyword, error))
             {
                 return false;
             }
@@ -316,7 +316,7 @@ bool ModelData::load(const std::string& coeff_file,
         else if (keyword == "switchflag")
         {
             int value = 0;
-            if (!read_param(words, value, keyword, error))
+            if (!read_parameter_value(words, value, keyword, error))
             {
                 return false;
             }
@@ -325,7 +325,7 @@ bool ModelData::load(const std::string& coeff_file,
         else if (keyword == "bzeroflag")
         {
             int value = 0;
-            if (!read_param(words, value, keyword, error))
+            if (!read_parameter_value(words, value, keyword, error))
             {
                 return false;
             }
@@ -334,7 +334,7 @@ bool ModelData::load(const std::string& coeff_file,
         else if (keyword == "quadraticflag")
         {
             int value = 0;
-            if (!read_param(words, value, keyword, error))
+            if (!read_parameter_value(words, value, keyword, error))
             {
                 return false;
             }
@@ -343,7 +343,7 @@ bool ModelData::load(const std::string& coeff_file,
         else if (keyword == "wselfallflag")
         {
             int value = 0;
-            if (!read_param(words, value, keyword, error))
+            if (!read_parameter_value(words, value, keyword, error))
             {
                 return false;
             }
@@ -352,7 +352,7 @@ bool ModelData::load(const std::string& coeff_file,
         else if (keyword == "chemflag")
         {
             int value = 0;
-            if (!read_param(words, value, keyword, error))
+            if (!read_parameter_value(words, value, keyword, error))
             {
                 return false;
             }
@@ -361,7 +361,7 @@ bool ModelData::load(const std::string& coeff_file,
         else if (keyword == "switchinnerflag")
         {
             int value = 0;
-            if (!read_param(words, value, keyword, error))
+            if (!read_parameter_value(words, value, keyword, error))
             {
                 return false;
             }
@@ -370,7 +370,7 @@ bool ModelData::load(const std::string& coeff_file,
                 error = "SNAP switchinnerflag must be 0 or 1.";
                 return false;
             }
-            parameters.inner_flag = value == 1;
+            parameters.switchinner_flag = value == 1;
         }
         else if (keyword == "sinner" || keyword == "dinner")
         {
@@ -378,7 +378,7 @@ bool ModelData::load(const std::string& coeff_file,
             values.resize(parameters.elements.size());
             for (std::size_t i = 0; i < values.size(); ++i)
             {
-                if (!read_param(words, values[i], keyword, error))
+                if (!read_parameter_value(words, values[i], keyword, error))
                 {
                     return false;
                 }
@@ -395,7 +395,7 @@ bool ModelData::load(const std::string& coeff_file,
         else if (keyword == "chunksize" || keyword == "parallelthresh")
         {
             int value = 0;
-            if (!read_param(words, value, keyword, error))
+            if (!read_parameter_value(words, value, keyword, error))
             {
                 return false;
             }
@@ -417,12 +417,12 @@ bool ModelData::load(const std::string& coeff_file,
             return false;
         }
     }
-    if (parameters.inner_flag && (!has_sinner || !has_dinner))
+    if (parameters.switchinner_flag && (!has_sinner || !has_dinner))
     {
         error = "SNAP switchinnerflag=1 requires sinner and dinner.";
         return false;
     }
-    if (!parameters.inner_flag && (has_sinner || has_dinner))
+    if (!parameters.switchinner_flag && (has_sinner || has_dinner))
     {
         error = "SNAP sinner and dinner require switchinnerflag=1.";
         return false;
@@ -441,7 +441,7 @@ bool ModelData::load(const std::string& coeff_file,
     return parameters.valid(error);
 }
 
-std::size_t ModelData::coeff_count() const
+std::size_t ModelData::coefficient_count() const
 {
     if (coefficients.empty())
     {

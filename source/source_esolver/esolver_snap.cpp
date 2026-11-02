@@ -1,4 +1,4 @@
-#include "snap_solver.h"
+#include "esolver_snap.h"
 
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
@@ -50,7 +50,7 @@ ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
                             + parameters.element_radii[static_cast<std::size_t>(neighbor.atom_type)])
                            * parameters.rcutfac;
     result.element_index = static_cast<std::size_t>(neighbor.atom_type);
-    if (parameters.inner_flag)
+    if (parameters.switchinner_flag)
     {
         const std::size_t center_type = static_cast<std::size_t>(center.atom_type);
         const std::size_t neighbor_type = static_cast<std::size_t>(neighbor.atom_type);
@@ -61,10 +61,10 @@ ModuleMD::SNAP::Neighbor make_neighbor(const NeighborAtom& center,
 }
 }
 
-ESolver_SNAP::ESolver_SNAP(const std::string& coeff_file,
+ESolver_SNAP::ESolver_SNAP(const std::string& coefficient_file,
                            const std::string& parameter_file,
                            std::ofstream& running_log)
-    : coeff_file_(coeff_file), parameter_file_(parameter_file), running_log_(running_log)
+    : coefficient_file_(coefficient_file), parameter_file_(parameter_file), running_log_(running_log)
 {
     classname = "ESolver_SNAP";
 }
@@ -72,17 +72,17 @@ ESolver_SNAP::ESolver_SNAP(const std::string& coeff_file,
 void ESolver_SNAP::initialize(const std::vector<std::string>& labels)
 {
     std::string error;
-    if (!model_.load(coeff_file_, parameter_file_, labels, error))
+    if (!model_.load(coefficient_file_, parameter_file_, labels, error))
     {
         fail(error);
     }
-    const std::string coeff_path = full_path(coeff_file_);
+    const std::string coefficient_path = full_path(coefficient_file_);
     const std::string parameter_path = full_path(parameter_file_);
-    running_log_ << " Read SNAP coefficient file: " << coeff_path << std::endl;
+    running_log_ << " Read SNAP coefficient file: " << coefficient_path << std::endl;
     running_log_ << " Read SNAP parameter file: " << parameter_path << std::endl;
     if (GlobalV::MY_RANK == 0)
     {
-        std::cout << " Read SNAP coefficient file: " << coeff_path << std::endl;
+        std::cout << " Read SNAP coefficient file: " << coefficient_path << std::endl;
         std::cout << " Read SNAP parameter file: " << parameter_path << std::endl;
     }
     calculator_.reset(new ModuleMD::SNAP::Calculator(model_));
@@ -141,7 +141,7 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
                                       i,
                                       i);
             std::vector<ModuleMD::SNAP::Neighbor> neighbors;
-            std::vector<std::size_t> neigh_indices;
+            std::vector<std::size_t> neighbor_indices;
             for (int k = 0; k < list.get_numneigh(i); ++k)
             {
                 const int neighbor_index = list.get_firstneigh(i)[k];
@@ -151,12 +151,12 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
                     fail("MDCell atom type is outside the SNAP element map.");
                 }
                 neighbors.push_back(make_neighbor(center, neighbor, mdcell.lat0(), model_.parameters));
-                neigh_indices.push_back(static_cast<std::size_t>(neighbor_index));
+                neighbor_indices.push_back(static_cast<std::size_t>(neighbor_index));
             }
             const std::size_t center_element = static_cast<std::size_t>(center.atom_type);
-            const ModuleMD::SNAP::ForceResult result = calculator_->eval_force(neighbors, center_element);
+            const ModuleMD::SNAP::ForceResult result = calculator_->compute_with_analytic_force(neighbors, center_element);
             const std::size_t center_index = static_cast<std::size_t>(i);
-            contribution.add(center_index, neigh_indices, neighbors, result);
+            contribution.add(center_index, neighbor_indices, neighbors, result);
         }
         snap_potential_ = contribution.energy() / ModuleBase::Ry_to_eV;
         const double virial_scale = 1.0 / (ModuleBase::Ry_to_eV * mdcell.omega());
@@ -218,7 +218,7 @@ void ESolver_SNAP::runner(BaseCell& cell, const int istep) try
             atom_indices.push_back(index);
         }
         const std::size_t center_element = static_cast<std::size_t>(center.atom_type);
-        const ModuleMD::SNAP::ForceResult result = calculator_->eval_force(neighbors, center_element);
+        const ModuleMD::SNAP::ForceResult result = calculator_->compute_with_analytic_force(neighbors, center_element);
         const int center_index = offsets[static_cast<std::size_t>(center.atom_type)] + center.atom_index;
         const std::size_t index = static_cast<std::size_t>(center_index);
         contribution.add(index, atom_indices, neighbors, result);
