@@ -441,14 +441,5 @@ bool ModelData::load(const std::string& coefficient_file,
     return parameters.valid(error);
 }
 
-std::size_t ModelData::coefficient_count() const
-{
-    if (coefficients.empty())
-    {
-        return 0;
-    }
-    return coefficients[0].size();
-}
-
 } // namespace SNAP
 } // namespace ModuleMD

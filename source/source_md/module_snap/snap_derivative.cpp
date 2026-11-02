@@ -123,7 +123,6 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& n
     const double cutoff_radius = neighbor.cutoff_radius > 0.0 ? neighbor.cutoff_radius : parameters_.rcut;
 
     UWithDerivative result;
-    result.values.assign(u_size_, std::complex<double>(0.0, 0.0));
     result.derivatives.assign(u_size_, std::complex<double>(0.0, 0.0));
     if (distance.value <= 1.0e-14 || distance.value >= cutoff_radius)
     {
@@ -182,7 +181,6 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& n
     for (std::size_t i = 0; i < raw.size(); ++i)
     {
         const std::complex<Dual> value = scale * raw[i];
-        result.values[i] = std::complex<double>(value.real().value, value.imag().value);
         result.derivatives[i] = std::complex<double>(value.real().derivative, value.imag().derivative);
     }
     return result;

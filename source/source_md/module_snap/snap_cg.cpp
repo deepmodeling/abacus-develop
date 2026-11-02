@@ -149,18 +149,5 @@ double ClebschGordanTable::coefficient(const int j1,
     return entry == nullptr ? 0.0 : entry->value;
 }
 
-double ClebschGordanTable::h_coefficient(const int j1,
-                                         const int m1,
-                                         const int mp1,
-                                         const int j2,
-                                         const int m2,
-                                         const int mp2,
-                                         const int j,
-                                         const int m,
-                                         const int mp) const
-{
-    return coefficient(j1, m1, j2, m2, j, m) * coefficient(j1, mp1, j2, mp2, j, mp);
-}
-
 } // namespace SNAP
 } // namespace ModuleMD

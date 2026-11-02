@@ -26,7 +26,6 @@ TEST(SnapCG, SelectionRulesReturnZero)
     const ModuleMD::SNAP::ClebschGordanTable table(2);
     EXPECT_DOUBLE_EQ(table.coefficient(1, 1, 1, 1, 0, 0), 0.0);
     EXPECT_DOUBLE_EQ(table.coefficient(1, 1, 1, -1, 2, 1), 0.0);
-    EXPECT_DOUBLE_EQ(table.h_coefficient(1, 1, 1, 1, -1, -1, 0, 0, 0), 0.5);
 }
 
 } // namespace

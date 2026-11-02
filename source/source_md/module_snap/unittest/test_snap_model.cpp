@@ -95,7 +95,7 @@ TEST(SnapModel, LoadsLammpsStyleCoefficientAndParameterFiles)
     std::string error;
     EXPECT_TRUE(model.load(coefficient_file, parameter_file, std::vector<std::string>(1, "Si"), error));
     EXPECT_TRUE(error.empty());
-    ASSERT_EQ(model.coefficient_count(), static_cast<std::size_t>(3));
+    ASSERT_EQ(model.coefficients[0].size(), static_cast<std::size_t>(3));
     EXPECT_DOUBLE_EQ(model.parameters.element_weights[0], 1.0);
     EXPECT_DOUBLE_EQ(model.parameters.element_radii[0], 2.25);
     EXPECT_DOUBLE_EQ(model.parameters.rcut, 5.4);

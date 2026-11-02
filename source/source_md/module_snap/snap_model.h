@@ -43,7 +43,6 @@ struct ModelData
               const std::vector<std::string>& requested_elements,
               std::string& error);
 
-    std::size_t coefficient_count() const;
 };
 
 } // namespace SNAP

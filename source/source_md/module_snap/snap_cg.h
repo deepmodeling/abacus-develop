@@ -23,16 +23,6 @@ class ClebschGordanTable
 
     double coefficient(int j1, int m1, int j2, int m2, int j, int m) const;
 
-    double h_coefficient(int j1,
-                         int m1,
-                         int mp1,
-                         int j2,
-                         int m2,
-                         int mp2,
-                         int j,
-                         int m,
-                         int mp) const;
-
   private:
     struct Entry
     {

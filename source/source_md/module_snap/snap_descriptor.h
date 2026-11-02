@@ -26,7 +26,6 @@ struct Neighbor
 
 struct UWithDerivative
 {
-    std::vector<std::complex<double> > values;
     std::vector<std::complex<double> > derivatives;
 };
 

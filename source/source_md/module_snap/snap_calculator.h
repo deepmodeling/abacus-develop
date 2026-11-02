@@ -39,11 +39,6 @@ class Calculator
                                                      std::size_t central_element,
                                                      double displacement) const;
 
-    std::size_t descriptor_size() const
-    {
-        return descriptor_size_;
-    }
-
   private:
     ModelData model_;
     DescriptorEvaluator descriptor_evaluator_;
