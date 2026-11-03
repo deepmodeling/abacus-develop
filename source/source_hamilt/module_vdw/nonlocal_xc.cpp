@@ -27,6 +27,7 @@
 #undef I
 
 #include <algorithm>
+#include <cassert>
 #include <vector>
 
 namespace vdw
@@ -36,7 +37,7 @@ namespace
 /// Cartesian components of the stress tensor returned by vdwxc_stress, stored as [3 * a + b]
 const int stress_components = 9;
 
-/// Spin channels of chr.rho that add up to the valence density: for nspin = 4, rho[0] is the total density.
+/// Spin channels of chr.rho that add up to the valence density (for nspin = 4, rho[0] is the total density).
 int density_channels(const Charge& chr)
 {
     return (chr.nspin == 2) ? 2 : 1;
@@ -59,8 +60,9 @@ void libvdwxc_slab(const int nz, const int nproc, const int rank, int& begin, in
  * default; vdwxc_init_mpi does not report the local slab, so libvdwxc_slab computes it the same way. The
  * slab of a process is stored as [z][x][y], the transpose of the ABACUS layout [x][y][z], and whole z
  * planes are moved between the two distributions by all-to-all exchanges.
- * There is no destructor on purpose: the single instance (see workspace()) is destroyed after MPI_Finalize
- * and fftw_cleanup_threads, which the FFT plans of data_ must not outlive, so data_ is never finalized.
+ * No user-defined destructor on purpose: the buffers are freed at exit, but data_ is never finalized,
+ * because the single instance (see workspace()) is destroyed after MPI_Finalize and fftw_cleanup_threads,
+ * which the FFT plans of data_ must not outlive.
  */
 class Rvv10Workspace
 {
@@ -165,7 +167,8 @@ void Rvv10Workspace::prepare(const ModulePW::PW_Basis& pw, const XCFunctionalPar
     {
         this->rebuild(pw);
     }
-    // the libvdwxc slabs depend only on nz and the processes, the ABACUS planes also on the basis
+    // the libvdwxc slabs depend only on nz and the processes, but the ABACUS planes also on the basis, so
+    // the exchange is planned on every call (counts and resizes only)
     this->plan_exchange(pw);
     if (vdwxc_set_rvv10_parameters(data_, parameters.rvv10_b, parameters.rvv10_c) != 0)
     {
@@ -226,7 +229,7 @@ void Rvv10Workspace::to_libvdwxc(const ModulePW::PW_Basis& pw,
 {
     std::vector<double>& planes = (pw.poolnproc > 1) ? planes_ : slab;
 #ifdef _OPENMP
-#pragma omp parallel for
+#pragma omp parallel for schedule(static)
 #endif
     for (int ixy = 0; ixy < pw.nxy; ++ixy)
     {
@@ -267,7 +270,7 @@ void Rvv10Workspace::from_libvdwxc(const ModulePW::PW_Basis& pw,
 #endif
     const std::vector<double>& planes = (pw.poolnproc > 1) ? planes_ : slab;
 #ifdef _OPENMP
-#pragma omp parallel for
+#pragma omp parallel for schedule(static)
 #endif
     for (int ixy = 0; ixy < pw.nxy; ++ixy)
     {
@@ -350,6 +353,7 @@ void total_density(const Charge& chr,
     // the branch is collective (the transforms below are): the caller decides it for the whole pool
     if (total_gradient != nullptr)
     {
+        assert(total_gradient->size() == static_cast<std::size_t>(nrxx));
         grad = *total_gradient;
     }
     else
@@ -399,7 +403,6 @@ void add_rvv10(const XCFunctionalParameters& parameters,
 {
     add_rvv10(parameters, chr, nullptr, etxc, vtxc, v);
 }
-
 void add_rvv10(const XCFunctionalParameters& parameters,
                const Charge& chr,
                const std::vector<ModuleBase::Vector3<double>>* total_gradient,
@@ -419,7 +422,7 @@ void add_rvv10(const XCFunctionalParameters& parameters,
     std::vector<double> dedn;
     std::vector<double> dedsigma;
     const double energy = evaluate_total_density(parameters, chr, total_gradient, grad, &dedn, dedsigma, nullptr);
-    // v = dE/dn - div(2 dE/dsigma grad n), converted from Hartree to Ry by e2
+    // v = dE/dn - div(2 dE/dsigma grad n), Hartree to Ry by e2
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -431,8 +434,7 @@ void add_rvv10(const XCFunctionalParameters& parameters,
     XC_Functional::grad_dot(grad.data(), divergence.data(), &pw, pw.tpiba);
     // for nspin = 4 the potential of the total density goes to v(0) only
     const int nspin0 = density_channels(chr);
-    // the reductions here and in add_rvv10_stress stay serial: the result must not depend on the thread count
-    double vtxc_nl = 0.0;
+    double vtxc_nl = 0.0; // this reduction and the one of the stress stay serial: no thread-count dependence
     for (int ir = 0; ir < nrxx; ++ir)
     {
         const double v_nl = ModuleBase::e2 * (dedn[ir] - divergence[ir]);
@@ -481,9 +483,8 @@ void add_rvv10_stress(const XCFunctionalParameters& parameters, const Charge& ch
     Parallel_Common::reduce_data(gradient_term, stress_components, pw.pool_world);
 #endif
     // The full strain derivative is T - delta_ab Int(n dE/dn + 2 sigma dE/dsigma) - 2 Int dE/dsigma d_a n d_b n,
-    // with T the explicit part from libvdwxc. The XC diagonal -(etxc - vtxc)/omega in PW (in LCAO, -etxc/omega
-    // and the Pulay term of the effective potential) already holds -e2 (E - Int(n dE/dn + 2 sigma dE/dsigma)) / omega,
-    // which leaves the terms below (ABACUS sign, Ry).
+    // T the explicit part from libvdwxc. The XC diagonal -(etxc - vtxc)/omega in PW (in LCAO -etxc/omega plus the
+    // Pulay term of the potential) already holds -e2 (E - Int(n dE/dn + 2 sigma dE/dsigma)) / omega; the rest is below.
     for (int a = 0; a < 3; ++a)
     {
         for (int b = 0; b < 3; ++b)

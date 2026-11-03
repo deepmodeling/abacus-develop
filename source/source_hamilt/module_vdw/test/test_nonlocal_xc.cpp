@@ -262,10 +262,15 @@ ModuleBase::matrix rvv10_stress(ModulePW::PW_Basis& pw,
     return sigma;
 }
 
-void expect_same_result(const VxcResult& actual, const VxcResult& expected, const double tolerance)
+/// etxc and vtxc get scalar_tolerance, the potential point_tolerance: the scalars are sums whose order
+/// may depend on the thread count, the potential is point-wise.
+void expect_same_result(const VxcResult& actual,
+                        const VxcResult& expected,
+                        const double scalar_tolerance,
+                        const double point_tolerance)
 {
-    EXPECT_NEAR(std::get<0>(actual), std::get<0>(expected), tolerance);
-    EXPECT_NEAR(std::get<1>(actual), std::get<1>(expected), tolerance);
+    EXPECT_NEAR(std::get<0>(actual), std::get<0>(expected), scalar_tolerance);
+    EXPECT_NEAR(std::get<1>(actual), std::get<1>(expected), scalar_tolerance);
     const ModuleBase::matrix& v = std::get<2>(actual);
     const ModuleBase::matrix& w = std::get<2>(expected);
     ASSERT_EQ(v.nr, w.nr);
@@ -274,20 +279,24 @@ void expect_same_result(const VxcResult& actual, const VxcResult& expected, cons
     {
         for (int ir = 0; ir < v.nc; ++ir)
         {
-            EXPECT_NEAR(v(is, ir), w(is, ir), tolerance);
+            EXPECT_NEAR(v(is, ir), w(is, ir), point_tolerance);
         }
     }
 }
 
-/// A functional evaluated with rVV10 equals the evaluation without it plus add_rvv10.
-void expect_rvv10_added(const VxcResult& total, VxcResult semilocal, const Charge& chr, const double tolerance)
+/// A functional evaluated with rVV10 equals the evaluation without it plus add_rvv10; point_tolerance 0.0
+/// where the functional hands its gradient to add_rvv10.
+void expect_rvv10_added(const VxcResult& total,
+                        VxcResult semilocal,
+                        const Charge& chr,
+                        const double point_tolerance)
 {
     const XCFunctionalParameters parameters = rvv10_parameters(true);
     double& etxc = std::get<0>(semilocal);
     double& vtxc = std::get<1>(semilocal);
     ModuleBase::matrix& v = std::get<2>(semilocal);
     vdw::add_rvv10(parameters, chr, etxc, vtxc, v);
-    expect_same_result(total, semilocal, tolerance);
+    expect_same_result(total, semilocal, ROUNDING_TOLERANCE, point_tolerance);
 }
 
 /// XC_Functional::v_xc for the given functional and density with and without rVV10.
@@ -296,7 +305,7 @@ void expect_vxc_adds_rvv10(const char* functional,
                            const UnitCell& ucell,
                            const bool domag,
                            const int gga_grad,
-                           const double tolerance)
+                           const double point_tolerance)
 {
     XC_Functional::ScopedType scope(functional);
     const int nrxx = chr.nrxx;
@@ -313,7 +322,7 @@ void expect_vxc_adds_rvv10(const char* functional,
         VxcResult& result = rvv10 ? total : semilocal;
         result = XC_Functional::v_xc(nrxx, &chr, &ucell, nspin, domag, domag_z, gga_grad, hybrid_alpha, hse_omega);
     }
-    expect_rvv10_added(total, semilocal, chr, tolerance);
+    expect_rvv10_added(total, semilocal, chr, point_tolerance);
 }
 
 class NonlocalXCTest : public testing::Test
@@ -388,7 +397,7 @@ TEST_F(NonlocalXCTest, MatchesDirectLibvdwxc)
     const double etxc = ModuleBase::e2 * energy_ha;
     vtxc *= serial.omega / serial.nxyz;
     const VxcResult expected(etxc, vtxc, v);
-    expect_same_result(result, expected, ROUNDING_TOLERANCE);
+    expect_same_result(result, expected, ROUNDING_TOLERANCE, ROUNDING_TOLERANCE);
 
     // spin channels share the total density: same energy and vtxc, and each channel gets the potential
     std::vector<double> up(serial.nrxx);
@@ -538,7 +547,7 @@ TEST_F(NonlocalXCTest, LeftHandedCellGivesTheMirrorImageResult)
     const std::vector<double> core = local_grid(serial, core_density);
     const VxcResult right_handed = rvv10_result(serial, {valence}, core);
     const VxcResult left_handed = rvv10_result(mirror, {valence}, core);
-    expect_same_result(left_handed, right_handed, ROUNDING_TOLERANCE);
+    expect_same_result(left_handed, right_handed, ROUNDING_TOLERANCE, ROUNDING_TOLERANCE);
 }
 
 TEST_F(NonlocalXCTest, WorkspaceFollowsGridCellAndProcessChanges)
@@ -566,9 +575,9 @@ TEST_F(NonlocalXCTest, WorkspaceFollowsGridCellAndProcessChanges)
     const VxcResult other_grid = rvv10_result(finer, {valence_finer}, core_finer);
     const VxcResult again = rvv10_result(serial, {valence}, core);
     const VxcResult other_grid_again = rvv10_result(finer, {valence_finer}, core_finer);
-    expect_same_result(repeated, first, 0.0);
-    expect_same_result(again, first, ROUNDING_TOLERANCE);
-    expect_same_result(other_grid_again, other_grid, ROUNDING_TOLERANCE);
+    expect_same_result(repeated, first, 0.0, 0.0);
+    expect_same_result(again, first, ROUNDING_TOLERANCE, ROUNDING_TOLERANCE);
+    expect_same_result(other_grid_again, other_grid, ROUNDING_TOLERANCE, ROUNDING_TOLERANCE);
     EXPECT_NEAR(std::get<0>(distributed), std::get<0>(first), ROUNDING_TOLERANCE);
     EXPECT_GT(std::abs(std::get<0>(other_cell) - std::get<0>(first)), 1.0e-8);
 }

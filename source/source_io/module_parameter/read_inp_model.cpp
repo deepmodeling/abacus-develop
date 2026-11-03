@@ -347,6 +347,12 @@ Available options are:
             {
                 para.input.vdw_rvv10_b = 11.95;
             }
+            else if (functional == "DEFAULT")
+            {
+                ModuleBase::WARNING("ReadInput",
+                                    "vdw_rvv10_b is not set and dft_functional comes from the pseudopotential: "
+                                    "the rPW86-PBE value 6.3 is used; set vdw_rvv10_b unless that is the functional");
+            }
             else if (functional != "GGA_X_RPW86+GGA_C_PBE")
             {
                 ModuleBase::WARNING("ReadInput",

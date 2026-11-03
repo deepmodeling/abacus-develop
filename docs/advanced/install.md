@@ -114,8 +114,7 @@ In the input file:
 
 ```text
 vdw_method rvv10
-dft_functional scan
-vdw_rvv10_b 15.7     # b of SCAN+rVV10; see vdw_rvv10_b for other functionals
+dft_functional scan   # b follows dft_functional unless vdw_rvv10_b is set: 15.7 for SCAN, 11.95 for r2SCAN, else 6.3
 ```
 
 ## Build with JSON support
