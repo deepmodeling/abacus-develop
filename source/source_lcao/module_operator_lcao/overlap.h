@@ -96,15 +96,6 @@ class Overlap<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     void calculate_SR();
 
     /**
-     * @brief calculate the SR local matrix of <I,J,R> atom pair
-     */
-    void cal_SR_IJR(const int& iat1,
-                    const int& iat2,
-                    const Parallel_Orbitals* paraV,
-                    const ModuleBase::Vector3<double>& dtau,
-                    TR* data_pointer);
-
-    /**
      * @brief calculate force contribution for atom pair <I,J,R>
      */
     void cal_force_IJR(const int& iat1,

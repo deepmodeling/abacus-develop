@@ -37,6 +37,16 @@ class NonlocalWorkspace
 
     /** @brief Borrow the most recently computed projection coefficients. */
     T* get_becp() const { return becp_; }
+
+    /** @brief Project and contract on every pool rank, including empty PW partitions; bands counts spin-component columns.
+     * B uses [column][projector] and DB [projector][column]; both borrowed arrays are pool-reduced and valid until the next operation.
+     */
+    void project_contract(const UnitCell& cell, const pseudopot_cell_vnl& pp,
+                          const ModulePW::PW_Basis_K& basis, int spin,
+                          int bands, int nbasis, int npol, int npw,
+                          const T* vkb, const T* psi);
+    const T* projections() const { return becp_; }
+    const T* contracted() const { return ps_; }
 };
 } // namespace hamilt
 #endif

@@ -1,9 +1,10 @@
 #ifndef PSI_INIT_ATOMIC_H
 #define PSI_INIT_ATOMIC_H
-#include <vector>
-#include <string>
-#include "source_base/realarray.h"
 #include "psi_base.h"
+#include "source_base/realarray.h"
+
+#include <string>
+#include <vector>
 
 /*
 Psi (planewave based wavefunction) initializer: atomic
@@ -27,14 +28,14 @@ class psi_init_atomic : public psi_base<T>
     {
         this->method_ = "atomic";
     }
-    ~psi_init_atomic(){};
+    ~psi_init_atomic() {};
 
     /**
      * @brief Prepare parameters before initialization.
-     * 
+     *
      * This method must be called before initialize(). It sets up the necessary
      * parameters for the psi initialization process.
-     * 
+     *
      * @param nqx Number of q-points for interpolation
      * @param dq Spacing between q-points
      * @param nspin Number of spin components
@@ -53,19 +54,18 @@ class psi_init_atomic : public psi_base<T>
                         const bool& pseudo_mesh,
                         const int& lmaxkb);
 
-    virtual void initialize(const Structure_Factor* sf,             //< structure factor
-                            const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
-                            const UnitCell* p_ucell,                     //< unit cell
-                            const std::vector<int>& ik2iktot,             //< ik2iktot: local->global k-point mapping
-                            const int& random_seed,                      //< random seed
-                            const int& rank,                            //< MPI rank
-                            const int& npol,                            //< npol
-                            const int& nbands) override;                //< nbands
+    virtual void initialize(const Structure_Factor* sf,         //< structure factor
+                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
+                            const UnitCell* p_ucell,            //< unit cell
+                            const std::vector<int>& ik2iktot,   //< ik2iktot: local->global k-point mapping
+                            const int& random_seed,             //< random seed
+                            const int& rank,                    //< MPI rank
+                            const int& npol,                    //< npol
+                            const int& nbands) override;        //< nbands
     virtual void tabulate() override;
     virtual void init_psig(T* psig, const int& ik) override;
 
   protected:
-
     // allocate memory for overlap table
     void allocate_ps_table();
 

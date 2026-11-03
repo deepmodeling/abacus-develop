@@ -11,8 +11,8 @@ namespace ModuleESolver
     template<typename T, typename TR = double>
     class ESolver_BSE : public ESolver_LR<T, TR> {
     public:
-        ESolver_BSE(const Input_para& inp, const std::string& in_dir, const std::string& out_dir)
-            : ESolver_LR<T, TR>(inp, in_dir, out_dir), rpa_dir(inp.rpa_outdir)
+        ESolver_BSE(const Input_para& inp, const std::string& in_dir, const std::string& out_dir, const LRRuntime& runtime)
+            : ESolver_LR<T, TR>(inp, in_dir, out_dir, runtime), rpa_dir(inp.rpa_outdir)
         {
         }
 

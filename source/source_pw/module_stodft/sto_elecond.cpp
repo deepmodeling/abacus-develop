@@ -203,13 +203,13 @@ void Sto_EleCond<FPTYPE, Device>::cal_jmatrix(StoHamiltPW<std::complex<lowTYPE>,
 #ifdef __MPI
     info_gatherv* ks_fact = static_cast<info_gatherv*>(gatherinfo_ks);
     info_gatherv* sto_npwx = static_cast<info_gatherv*>(gatherinfo_sto);
-    rightchi_all = gatherchi_op<lowTYPE, Device>()(rightchi, chi_all, npwx, sto_npwx->nrecv, sto_npwx->displs, perbands_sto);
-    righthchi_all = gatherchi_op<lowTYPE, Device>()(right_hchi, hchi_all, npwx, sto_npwx->nrecv, sto_npwx->displs, perbands_sto);
+    rightchi_all = gatherchi_op<lowTYPE, Device>()(rightchi, chi_all, npwx, sto_npwx->nrecv.data(), sto_npwx->displs.data(), perbands_sto);
+    righthchi_all = gatherchi_op<lowTYPE, Device>()(right_hchi, hchi_all, npwx, sto_npwx->nrecv.data(), sto_npwx->displs.data(), perbands_sto);
     if (PARAM.inp.bndpar > 1 && rightfact != nullptr)
     {
         vec_rightf_all.resize(allbands_ks);
         rightf_all = vec_rightf_all.data();
-        Parallel_Common::gatherv_data(rightfact, perbands_ks, rightf_all, ks_fact->nrecv, ks_fact->displs, BP_WORLD);
+        Parallel_Common::gatherv_data(rightfact, perbands_ks, rightf_all, ks_fact->nrecv.data(), ks_fact->displs.data(), BP_WORLD);
     }
 #endif
 

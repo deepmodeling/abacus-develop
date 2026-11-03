@@ -1,10 +1,11 @@
-#include "source_relax/relax_criteria.h"
-#include <regex>
 #include "for_test.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_sd.h"
+#include "source_relax/relax_criteria.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <regex>
 
 /************************************************
  *  unit tests of class Ions_Move_SD
@@ -121,7 +122,7 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
         {
             for (int ik = 0; ik < 3; ++ik)
             {
-                atom->tau[ia][ik] = (ik + 1)/3;
+                atom->tau[ia][ik] = (ik + 1) / 3;
                 atom->mbl[ia][ik] = 1;
             }
         }

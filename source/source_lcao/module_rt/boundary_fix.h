@@ -6,7 +6,7 @@
 #define BOUNDARY_FIX_H
 
 #include "source_cell/unitcell.h"
-#include "source_cell/klist.h"
+#include <vector>
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_psi/psi.h"
 #include "source_base/module_container/ATen/core/tensor.h"
@@ -16,7 +16,9 @@ namespace module_rt{
 *  @brief Add phases to the matrix and coefficient from the previous step to correct the boundary discontinuity.
 *
 * @param[in] ucell Unitcell information
-* @param[in] kv K-point vectors
+* @param[in] kvec_d Direct k-point vectors
+* @param[in] nks Number of local k points
+* @param[in] cart_At_last Saved hybrid-gauge Cartesian A in Hartree atomic units; zero in other gauges
 * @param[in] pv information of parallel
 * @param[in] hk_last Hamiltonian matrix from last step 
 * @param[in] sk_last Overlap matrix from last step 
@@ -27,7 +29,9 @@ namespace module_rt{
 * @param[out] sk_last the fixed wavefunctions
 */
 void reset_matrix_boundary(const UnitCell& ucell,
-                           const K_Vectors& kv,
+                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                           const int nks,
+                           const ModuleBase::Vector3<double>& cart_At_last,
                            const Parallel_Orbitals* pv,
                            ct::Tensor& hk_last,
                            ct::Tensor& sk_last,

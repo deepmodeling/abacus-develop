@@ -2,7 +2,6 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
 #include <cstdio>
 #include <sstream>
 #include <vector>
@@ -96,7 +95,7 @@ TEST(RelaxStruIO, HeaderWritesThreeStressRowsInKbar)
 // driver-loop control flow is covered by the relax sync/nsync suites.
 class HeaderBehaviorTest : public testing::Test
 {
-protected:
+  protected:
     Input_para inp;
     ModuleBase::matrix stress;
     const double etot = -10.5; // Ry
@@ -184,7 +183,9 @@ TEST_F(HeaderBehaviorTest, CalForceFalse)
 
     ASSERT_EQ(lines.size(), 7u);
     EXPECT_THAT(header, testing::Not(testing::HasSubstr("N/A")));
-    EXPECT_THAT(lines[6], testing::HasSubstr("# NOTE: forces not computed (cal_force=0); per-atom f fields omitted intentionally"));
+    EXPECT_THAT(
+        lines[6],
+        testing::HasSubstr("# NOTE: forces not computed (cal_force=0); per-atom f fields omitted intentionally"));
 }
 
 TEST_F(HeaderBehaviorTest, CalForceStressBothFalse)
@@ -197,7 +198,8 @@ TEST_F(HeaderBehaviorTest, CalForceStressBothFalse)
 
     ASSERT_EQ(lines.size(), 7u);
     EXPECT_EQ(count_substr(header, "# Stress (kbar): N/A N/A N/A"), 3);
-    EXPECT_THAT(lines[6], testing::HasSubstr("# NOTE: stress not computed (cal_stress=0); forces not computed (cal_force=0)"));
+    EXPECT_THAT(lines[6],
+                testing::HasSubstr("# NOTE: stress not computed (cal_stress=0); forces not computed (cal_force=0)"));
 }
 
 TEST_F(HeaderBehaviorTest, FinalStep)

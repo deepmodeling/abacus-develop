@@ -1,5 +1,7 @@
-#include "source_relax/relax_criteria.h"
 #include "for_test.h"
+#include "source_relax/ions_move_methods.h"
+#include "source_relax/relax_criteria.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <algorithm>
@@ -8,7 +10,6 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#include "source_relax/ions_move_methods.h"
 /************************************************
  *  unit tests of class Ions_Move_Methods
  ***********************************************/
@@ -24,67 +25,66 @@
  *   - Ions_Move_Methods::get_update_iter()
  */
 
- // Mock the remake_cell function from update_cell.h
+// Mock the remake_cell function from update_cell.h
 namespace unitcell
 {
-    // Track if remake_cell was called and with what lattice
-    static bool remake_cell_called = false;
-    static std::string remake_cell_latName;
-    static ModuleBase::Matrix3 remake_cell_latvec;
+// Track if remake_cell was called and with what lattice
+static bool remake_cell_called = false;
+static std::string remake_cell_latName;
+static ModuleBase::Matrix3 remake_cell_latvec;
 
-    void remake_cell(Lattice& lat)
+void remake_cell(Lattice& lat)
+{
+    remake_cell_called = true;
+    remake_cell_latName = lat.latName;
+    remake_cell_latvec = lat.latvec;
+
+    // Mock implementation: enforce simple cubic structure for "sc"
+    if (lat.latName == "sc")
     {
-        remake_cell_called = true;
-        remake_cell_latName = lat.latName;
-        remake_cell_latvec = lat.latvec;
-
-        // Mock implementation: enforce simple cubic structure for "sc"
-        if (lat.latName == "sc")
-        {
-            double celldm = std::sqrt(lat.latvec.e11 * lat.latvec.e11 +
-                                     lat.latvec.e12 * lat.latvec.e12 +
-                                     lat.latvec.e13 * lat.latvec.e13);
-            lat.latvec.Zero();
-            lat.latvec.e11 = celldm;
-            lat.latvec.e22 = celldm;
-            lat.latvec.e33 = celldm;
-        }
-        // Mock implementation: enforce FCC structure for "fcc"
-        else if (lat.latName == "fcc")
-        {
-            double celldm = std::sqrt(lat.latvec.e11 * lat.latvec.e11 +
-                                     lat.latvec.e12 * lat.latvec.e12 +
-                                     lat.latvec.e13 * lat.latvec.e13) / std::sqrt(2.0);
-            lat.latvec.e11 = -celldm;
-            lat.latvec.e12 = 0.0;
-            lat.latvec.e13 = celldm;
-            lat.latvec.e21 = 0.0;
-            lat.latvec.e22 = celldm;
-            lat.latvec.e23 = celldm;
-            lat.latvec.e31 = -celldm;
-            lat.latvec.e32 = celldm;
-            lat.latvec.e33 = 0.0;
-        }
+        double celldm = std::sqrt(lat.latvec.e11 * lat.latvec.e11 + lat.latvec.e12 * lat.latvec.e12
+                                  + lat.latvec.e13 * lat.latvec.e13);
+        lat.latvec.Zero();
+        lat.latvec.e11 = celldm;
+        lat.latvec.e22 = celldm;
+        lat.latvec.e33 = celldm;
     }
-
-    void update_pos_tau(const Lattice&, const double*, const int, const int, Atom*)
+    // Mock implementation: enforce FCC structure for "fcc"
+    else if (lat.latName == "fcc")
     {
-    }
-
-    // Helper function to reset mock state
-    void reset_remake_cell_mock()
-    {
-        remake_cell_called = false;
-        remake_cell_latName = "";
-        remake_cell_latvec.Zero();
-    }
-
-    // Helper function to check if remake_cell was called
-    bool was_remake_cell_called()
-    {
-        return remake_cell_called;
+        double celldm = std::sqrt(lat.latvec.e11 * lat.latvec.e11 + lat.latvec.e12 * lat.latvec.e12
+                                  + lat.latvec.e13 * lat.latvec.e13)
+                        / std::sqrt(2.0);
+        lat.latvec.e11 = -celldm;
+        lat.latvec.e12 = 0.0;
+        lat.latvec.e13 = celldm;
+        lat.latvec.e21 = 0.0;
+        lat.latvec.e22 = celldm;
+        lat.latvec.e23 = celldm;
+        lat.latvec.e31 = -celldm;
+        lat.latvec.e32 = celldm;
+        lat.latvec.e33 = 0.0;
     }
 }
+
+void update_pos_tau(const Lattice&, const double*, const int, const int, Atom*)
+{
+}
+
+// Helper function to reset mock state
+void reset_remake_cell_mock()
+{
+    remake_cell_called = false;
+    remake_cell_latName = "";
+    remake_cell_latvec.Zero();
+}
+
+// Helper function to check if remake_cell was called
+bool was_remake_cell_called()
+{
+    return remake_cell_called;
+}
+} // namespace unitcell
 
 // Define a fixture for the tests
 class IonsMoveMethodsTest : public ::testing::Test
@@ -110,16 +110,16 @@ class IonsMoveMethodsTest : public ::testing::Test
 // Test the allocate() function
 TEST_F(IonsMoveMethodsTest, Allocate)
 {
-    imm.allocate(natom, "bfgs", "1");
+    imm.allocate(natom, "bfgs_trad");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    imm.allocate(natom, "sd", "1");
+    imm.allocate(natom, "sd");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    imm.allocate(natom, "cg", "1");
+    imm.allocate(natom, "cg_trad");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    imm.allocate(natom, "cg_bfgs", "1");
+    imm.allocate(natom, "cg_bfgs");
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 }
 
@@ -127,7 +127,7 @@ TEST_F(IonsMoveMethodsTest, Allocate)
 TEST_F(IonsMoveMethodsTest, AllocateWarningQuit)
 {
     GlobalV::ofs_warning.open("log");
-    imm.allocate(natom, "none", "1");
+    imm.allocate(natom, "none");
     GlobalV::ofs_warning.close();
 
     std::ifstream ifs("log");
@@ -149,22 +149,22 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
     UnitCell ucell;
     std::ofstream ofs;
 
-    std::vector<std::string> relax_method;
+    std::string relax_method;
 
-    relax_method = {"bfgs", "1"};
-    imm.allocate(natom, "bfgs", "1");
+    relax_method = "bfgs_trad";
+    imm.allocate(natom, "bfgs_trad");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
-    relax_method = {"sd", "1"};
-    imm.allocate(natom, "sd", "1");
+    relax_method = "sd";
+    imm.allocate(natom, "sd");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
-    relax_method = {"cg", "1"};
-    imm.allocate(natom, "cg", "1");
+    relax_method = "cg_trad";
+    imm.allocate(natom, "cg_trad");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 
-    relax_method = {"cg_bfgs", "1"};
-    imm.allocate(natom, "cg_bfgs", "1");
+    relax_method = "cg_bfgs";
+    imm.allocate(natom, "cg_bfgs");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
 }
 
@@ -177,8 +177,8 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     const double etot = 0.0;
     UnitCell ucell;
     std::ofstream ofs;
-    std::vector<std::string> relax_method = {"none", "1"};
-    imm.allocate(natom, "none", "1");
+    std::string relax_method = "none";
+    imm.allocate(natom, "none");
 
     GlobalV::ofs_warning.open("log");
     imm.cal_movement(istep, force_step, f, etot, ucell, ofs, relax_method, criteria);
@@ -190,8 +190,6 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     ifs.close();
     std::remove("log");
 }
-
-
 
 // Test the get_ediff() function
 TEST_F(IonsMoveMethodsTest, GetEdiff)
@@ -229,7 +227,7 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     const std::string log_file = "reset_after_cell_change.log";
     std::ofstream ofs(log_file);
 
-    imm.allocate(natom, "bfgs", "2");
+    imm.allocate(natom, "bfgs");
     imm.set_converged(true);
     imm.set_update_iter(4);
     imm.get_etot_info() = {-1.0, -2.0};
@@ -246,7 +244,7 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     Ions_Move_Basic::trust_radius = 0.3;
     Ions_Move_Basic::trust_radius_old = 0.2;
 
-    imm.reset_after_cell_change({"bfgs", "2"}, ofs);
+    imm.reset_after_cell_change("bfgs", ofs);
 
     EXPECT_FALSE(imm.get_converged());
     EXPECT_EQ(imm.get_update_iter(), 0);
@@ -270,13 +268,13 @@ TEST_F(IonsMoveMethodsTest, ResetAfterCellChange)
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius, 0.0);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::trust_radius_old, 0.0);
 
-    imm.allocate(natom, "bfgs", "1");
+    imm.allocate(natom, "bfgs_trad");
     imm.set_converged(true);
     imm.set_update_iter(3);
     imm.get_etot_info() = {-3.0, -4.0};
     ASSERT_TRUE(imm.get_bfgs_trad().get_is_initialized());
 
-    imm.reset_after_cell_change({"bfgs", "1"}, ofs);
+    imm.reset_after_cell_change("bfgs_trad", ofs);
     ofs.close();
 
     EXPECT_FALSE(imm.get_converged());

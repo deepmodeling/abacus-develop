@@ -8,12 +8,15 @@
 
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_io/module_energy/td_eij_io.h"
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 #include <complex>
 
 namespace module_rt
 {
+using ModuleIO::EijOutputInfo;
+
 #ifdef __MPI
 /**
  *  @brief compute band energy ekb <psi_i|H|psi_i>
@@ -31,7 +34,8 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  const std::complex<double>* Htmp,
                  const std::complex<double>* psi_k,
                  double* ekb,
-                 std::ofstream& ofs_running);
+                 std::ofstream& ofs_running,
+                 const EijOutputInfo& output_info);
 
 void compute_ekb_tensor(const Parallel_Orbitals* pv,
                         const int nband,
@@ -49,7 +53,8 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                const ct::Tensor& Htmp,
                                const ct::Tensor& psi_k,
                                ct::Tensor& ekb,
-                               std::ofstream& ofs_running);
+                               std::ofstream& ofs_running,
+                               const EijOutputInfo& output_info);
 #endif // __MPI
 } // namespace module_rt
 #endif

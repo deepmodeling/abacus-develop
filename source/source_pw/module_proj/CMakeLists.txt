@@ -11,25 +11,22 @@
 #   the planned cleanup is to split the pseudopotential-specific constructor
 #   of Onsite_Proj_tools so this reverse dependency can be removed.
 
-list(APPEND objects
-    radial_proj.cpp
-    projgen.cpp
-    onsite_proj_print.cpp
-    onsite_proj.cpp
-    onsite_proj_init.cpp
-    onsite_proj_overlap.cpp
-    onsite_proj_tools.cpp
-    onsite_proj_tools_becp.cpp
-    onsite_proj_tools_dbecp.cpp
-    onsite_proj_tools_force.cpp
-    onsite_proj_tools_stress.cpp
-)
+list(
+  APPEND
+  objects
+  radial_proj.cpp
+  projgen.cpp
+  onsite_proj_print.cpp
+  onsite_proj.cpp
+  onsite_proj_init.cpp
+  onsite_proj_overlap.cpp
+  onsite_proj_tools.cpp
+  onsite_proj_tools_becp.cpp
+  onsite_proj_tools_dbecp.cpp
+  onsite_proj_tools_force.cpp
+  onsite_proj_tools_stress.cpp)
 
-add_library(
-    module_proj
-    OBJECT
-    ${objects}
-)
+add_library(module_proj OBJECT ${objects})
 
 if(ENABLE_COVERAGE)
   add_coverage(module_proj)

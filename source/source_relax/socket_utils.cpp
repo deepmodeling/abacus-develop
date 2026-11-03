@@ -50,17 +50,12 @@ void throw_if_any_rank_failed(int local_failed, std::string local_message)
 /// no collective: the exception propagates to Socket_Driver::socket_driver,
 /// which reports a clean WARNING_QUIT into the log. Do not replace the
 /// serial throw with abort(); serial builds are user-facing.
-[[noreturn]] void fail_during_collective_stage(const char* stage,
-                                               const std::string& message)
+[[noreturn]] void fail_during_collective_stage(const char* stage, const std::string& message)
 {
 #ifdef __MPI
     int rank = -1;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    std::fprintf(stderr,
-                 "ABACUS_SOCKET_MPI_FATAL stage=%s rank=%d message=%s\n",
-                 stage,
-                 rank,
-                 message.c_str());
+    std::fprintf(stderr, "ABACUS_SOCKET_MPI_FATAL stage=%s rank=%d message=%s\n", stage, rank, message.c_str());
     std::fflush(stderr);
     MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     std::abort();
@@ -82,8 +77,7 @@ std::string properties_extra(const ComputedFrame& frame)
     {
         extra << ",\"stress\"";
     }
-    extra << "],\"scf_converged\":"
-          << (frame.scf_converged ? "true" : "false") << "}";
+    extra << "],\"scf_converged\":" << (frame.scf_converged ? "true" : "false") << "}";
     return extra.str();
 }
 
@@ -167,9 +161,15 @@ std::vector<double> ipi_cell_bohr_from_unitcell(const UnitCell& ucell)
     // ASE/i-PI sends POSDATA cell as cell.T in C order. ABACUS stores
     // lattice vectors as rows in latvec, so use the transposed order here.
     return {
-        ucell.latvec.e11 * lat0, ucell.latvec.e21 * lat0, ucell.latvec.e31 * lat0,
-        ucell.latvec.e12 * lat0, ucell.latvec.e22 * lat0, ucell.latvec.e32 * lat0,
-        ucell.latvec.e13 * lat0, ucell.latvec.e23 * lat0, ucell.latvec.e33 * lat0,
+        ucell.latvec.e11 * lat0,
+        ucell.latvec.e21 * lat0,
+        ucell.latvec.e31 * lat0,
+        ucell.latvec.e12 * lat0,
+        ucell.latvec.e22 * lat0,
+        ucell.latvec.e32 * lat0,
+        ucell.latvec.e13 * lat0,
+        ucell.latvec.e23 * lat0,
+        ucell.latvec.e33 * lat0,
     };
 }
 

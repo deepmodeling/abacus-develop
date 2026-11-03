@@ -1,8 +1,7 @@
 #include "../cg_base.h"
 
-#include <gtest/gtest.h>
-
 #include <cmath>
+#include <gtest/gtest.h>
 
 // Unit tests for CG_Base. normalize() is protected, so it is exercised
 // through a test subclass that re-exposes it (instead of a
@@ -170,11 +169,11 @@ TEST(CGBase, BrentSameSignBranch)
     cg.Brent(fa, fb, fc, xa, xb, xc, best_x, xpt);
 
     const double dmove = (0.5 * 1.0 - 0.0 * 0.5) / (1.0 - 0.5); // = 1.0
-    EXPECT_DOUBLE_EQ(best_x, dmove);      // xpt was 0
+    EXPECT_DOUBLE_EQ(best_x, dmove);                            // xpt was 0
     EXPECT_DOUBLE_EQ(xpt, dmove);
     EXPECT_DOUBLE_EQ(xc, dmove);
-    EXPECT_DOUBLE_EQ(xb, 0.5);            // old xc
-    EXPECT_DOUBLE_EQ(fb, 0.5);            // old fc
+    EXPECT_DOUBLE_EQ(xb, 0.5); // old xc
+    EXPECT_DOUBLE_EQ(fb, 0.5); // old fc
 }
 
 TEST(CGBase, BrentOppositeSignQuadratic)
@@ -194,7 +193,7 @@ TEST(CGBase, BrentOppositeSignQuadratic)
 
     cg.Brent(fa, fb, fc, xa, xb, xc, best_x, xpt);
 
-    EXPECT_DOUBLE_EQ(xpt, best_x);  // xpt = dmove = best_x + old xpt(0)
+    EXPECT_DOUBLE_EQ(xpt, best_x); // xpt = dmove = best_x + old xpt(0)
     EXPECT_DOUBLE_EQ(xc, xpt);
 }
 

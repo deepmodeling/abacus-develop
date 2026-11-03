@@ -11,7 +11,7 @@
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
-#include "stru_fac.h"
+#include "source_cell/stru_fac.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 
 class pseudopot_cell_vnl;
@@ -32,6 +32,8 @@ class Forces
     friend class Force_Stress_LCAO;
     template <class T>
     friend class hamilt::Veff;
+    template <typename T>
+    friend class ForcePWTerms;
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves
      * is computed from 4 main parts

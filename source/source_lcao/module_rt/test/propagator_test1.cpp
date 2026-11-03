@@ -33,16 +33,16 @@ TEST(PropagatorTest, testPropagatorCN)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->nloc = nlocal * nlocal;
-    pv->ncol = nlocal;
-    pv->set_coord(0, 0);
+    pv->para_2d().nloc = nlocal * nlocal;
+    pv->para_2d().ncol = nlocal;
+    pv->para_2d().set_coord(0, 0);
     const double md_dt = 4 * ModuleBase::AU_to_FS;
 
     // Initialize input matrices
     int info;
     int mb = 1, nb = 1, lda = nlocal, ldc = nlocal;
     int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    descinit_(pv->para_2d().desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
 
     // Initialize data
     U_operator = new std::complex<double>[nlocal * nlocal];

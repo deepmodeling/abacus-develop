@@ -68,6 +68,7 @@ scf_in_chgdat
 082_PW_gatefield
 scf_sol_H2
 scf_sol_H2O
+scf_sol_H2O_out_sol
 085_PW_get_pchg
 086_PW_get_wf
 087_PW_get_pchg_kpar_bndpar
@@ -123,5 +124,13 @@ relax_dftu_spin2
 relax_dftu_spin4
 scf_deltaspin2
 scf_deltaspin4
-221_PW_PCC0D_H3O
-222_PW_PCC2D_H3O
+nscf_hse_same
+nscf_hse_path
+scf_pcc_0d
+scf_pcc_2d
+scf_sccs
+scf_sccs_pcc_2d
+scf_sccs_pcc_0d
+scf_sccs_pcc_0d_lowpass
+scf_sccs_full
+relax_sccs

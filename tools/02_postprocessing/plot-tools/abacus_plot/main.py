@@ -70,9 +70,10 @@ class Show:
             figsize = text.pop("figsize", (12, 10))
             fig, ax = plt.subplots(figsize=figsize)
             prec = text.pop("prec", 0.01)
+            smearing = text.pop("smearing", True)
             tdos = TDOS(tdosfile)
             tdos.plot(fig, ax, efermi=efermi, shift=shift,
-                      energy_range=energy_range, dos_range=dos_range, prec=prec, **text)
+                      energy_range=energy_range, dos_range=dos_range, prec=prec, smearing=smearing, **text)
             dpi = text.pop("dpi", 400)
             fig.savefig(text.pop("tdosfig", "tdos.png"), dpi=dpi)
 
@@ -94,8 +95,11 @@ class Show:
                 fig, ax = plt.subplots(
                     len(atom_index), 1, sharex=True, figsize=figsize)
             if species:
+                # Lists overlay components on one axes; dictionaries use
+                # one row per component for angular-momentum-resolved plots.
                 fig, ax = plt.subplots(
-                    len(species), 1, sharex=True, figsize=figsize)
+                    len(species) if isinstance(species, dict) else 1, 1,
+                    sharex=True, figsize=figsize)
             prec = text.pop("prec", 0.01)
             pdos = PDOS(pdosfile)
             pdos.plot(fig=fig, ax=ax, index=index, atom_index=atom_index, species=species, efermi=efermi, shift=shift,

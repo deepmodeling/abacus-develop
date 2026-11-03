@@ -56,7 +56,6 @@ void init_dftu_lcao(int dft_plus_u,
  * @param hamilt_lcao Hamiltonian LCAO object
  * @param global_out_dir Output directory for occ_mat.txt and occ_matg{#}.txt
  * @param nspin Number of spin channels (1, 2, or 4)
- * @param npol Number of polarizations
  * @param gamma_only_local Whether only the Gamma point is used for LCAO
  * @param istep Ionic-step index, starting from 0
  * @param iter Electronic-iteration index, starting from 1
@@ -74,7 +73,6 @@ void finish_dftu_lcao(const bool conv_esolver,
                        void* hamilt_lcao,
                        const std::string& global_out_dir,
                        int nspin,
-                       int npol,
                        const bool gamma_only_local,
                        int istep,
                        int iter,

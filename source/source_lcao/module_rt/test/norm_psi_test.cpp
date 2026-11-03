@@ -35,16 +35,16 @@ TEST(NormPsiTest, testNormPsi)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->nloc = nlocal * nlocal;
+    pv->para_2d().nloc = nlocal * nlocal;
     pv->nloc_wfc = nlocal * nband;
-    pv->ncol = nlocal;
-    pv->nrow = nlocal;
+    pv->para_2d().ncol = nlocal;
+    pv->para_2d().nrow = nlocal;
     pv->ncol_bands = nband;
-    pv->dim0 = 1;
-    pv->dim1 = 1;
-    pv->nb = 1;
-    pv->blacs_ctxt = 0;
-    pv->set_coord(0, 0);
+    pv->para_2d().dim0 = 1;
+    pv->para_2d().dim1 = 1;
+    pv->para_2d().nb = 1;
+    pv->para_2d().blacs_ctxt = 0;
+    pv->para_2d().set_coord(0, 0);
 
     int dim[2];
     dim[0] = nprow;
@@ -55,7 +55,7 @@ TEST(NormPsiTest, testNormPsi)
     int mb = 1, nb = 1, lda = nband, ldc = nlocal;
     int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow),
         lld1 = numroc_(&nband, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    descinit_(pv->para_2d().desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
     descinit_(pv->desc_wfc, &nlocal, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
     descinit_(pv->desc_Eij, &nband, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
 
@@ -120,4 +120,43 @@ TEST(NormPsiTest, testNormPsi)
 
     delete[] psi_k;
     delete[] Stmp;
+}
+
+// A wavefunction arriving at t+dt must be normalized with S(t+dt).
+// Here the averaged overlap gives a unit norm in the wrong time layer.
+TEST(NormPsiTest, EndpointMetricDiffersFromPropagationMetric)
+{
+    Parallel_Orbitals pv;
+    const int nlocal = 2;
+    const int nband = 1;
+    const int block = 1;
+    const int zero = 0;
+    pv.para_2d().nloc = 4;
+    pv.nloc_wfc = 2;
+    pv.para_2d().nrow = pv.para_2d().ncol = 2;
+    pv.ncol_bands = 1;
+    pv.para_2d().dim0 = pv.para_2d().dim1 = pv.para_2d().nb = 1;
+    pv.para_2d().blacs_ctxt = ictxt;
+    pv.para_2d().set_coord(0, 0);
+    int info = 0;
+    int lld = 2;
+    descinit_(pv.para_2d().desc, &nlocal, &nlocal, &block, &block, &zero, &zero, &ictxt, &lld, &info);
+    ASSERT_EQ(info, 0);
+    descinit_(pv.desc_wfc, &nlocal, &nband, &block, &block, &zero, &zero, &ictxt, &lld, &info);
+    ASSERT_EQ(info, 0);
+    descinit_(pv.desc_Eij, &nband, &nband, &block, &block, &zero, &zero, &ictxt, &lld, &info);
+    ASSERT_EQ(info, 0);
+    std::complex<double> endpoint[4] = {2.0, {0.0, -0.4}, {0.0, 0.4}, 1.0};
+    std::complex<double> midpoint[4] = {1.5, {0.0, -0.2}, {0.0, 0.2}, 1.0};
+    std::complex<double> right[2] = {1.0, {0.0, 0.5}};
+    std::complex<double> wrong[2] = {right[0], right[1]};
+    auto norm = [&](const std::complex<double>* psi) {
+        return (std::conj(psi[0]) * (endpoint[0]*psi[0] + endpoint[2]*psi[1])
+              + std::conj(psi[1]) * (endpoint[1]*psi[0] + endpoint[3]*psi[1])).real();
+    };
+    std::ofstream log;
+    module_rt::norm_psi(&pv, nband, nlocal, endpoint, right, log, 0);
+    module_rt::norm_psi(&pv, nband, nlocal, midpoint, wrong, log, 0);
+    EXPECT_NEAR(norm(right), 1.0, 1e-12);
+    EXPECT_GT(std::abs(norm(wrong)-1.0), 0.1);
 }

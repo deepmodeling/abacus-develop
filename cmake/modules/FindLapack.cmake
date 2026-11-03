@@ -20,8 +20,8 @@ find_package(LAPACK REQUIRED)
 set(CMAKE_MODULE_PATH "${_abacus_lapack_saved_module_path}")
 
 if(NOT TARGET LAPACK::LAPACK)
-    add_library(LAPACK::LAPACK UNKNOWN IMPORTED)
-    set_target_properties(LAPACK::LAPACK PROPERTIES
-        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-        IMPORTED_LOCATION "${LAPACK_LIBRARIES}")
+  add_library(LAPACK::LAPACK UNKNOWN IMPORTED)
+  set_target_properties(
+    LAPACK::LAPACK PROPERTIES IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                              IMPORTED_LOCATION "${LAPACK_LIBRARIES}")
 endif()

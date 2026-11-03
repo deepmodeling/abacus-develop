@@ -1,0 +1,5 @@
+Check the reader-v1 structure export for a compact SOC calculation with
+symmetry enabled. The manifest verifies the spatial and spin symmetry tables;
+the test does not compare energies between symmetry settings.
+The symmetry runner also creates a shifted magnetic variant to exercise the
+antiunitary k-point mesh filter.

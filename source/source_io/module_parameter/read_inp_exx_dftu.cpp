@@ -264,7 +264,7 @@ void ReadInput::item_exx()
         item.annotation = "threshold to inverse Vq in abfs for generating Cs";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
-        item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.";
+        item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using Cholesky factorization. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues at or below exx_cs_inv_thr times the largest eigenvalue are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5. Force derivatives assume that modes remain on the same side of the cutoff. Eigenvalue crossings can make the truncated model nonsmooth during relaxation or molecular dynamics.";
         item.default_value = "-1";
         item.unit = "";
         read_sync_double(input.exx_cs_inv_thr);
@@ -286,7 +286,7 @@ void ReadInput::item_exx()
         item.annotation = "threshold to screen density matrix in exx";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
-        item.description = "The Fock exchange can be expressed as where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4.";
+        item.description = "The Fock exchange can be expressed as where D is the density matrix. Smaller values of the density matrix can be truncated to accelerate calculation. The larger the threshold is, the faster the calculation and the lower the accuracy. A relatively safe choice of the value is 1e-4. LR-TDDFT exchange operators and excited-state force contractions retain all density blocks to preserve linearity; this threshold still applies to the ground-state SCF.";
         item.default_value = "1E-4";
         item.unit = "";
         read_sync_double(input.exx_dm_threshold);
@@ -467,14 +467,19 @@ void ReadInput::item_exx()
     {
         Input_Item item("exx_singularity_correction");
         item.annotation = "set the scheme of Coulomb singularity correction";
-        item.category = "Exact Exchange (LCAO)";
+        item.category = "Exact Exchange (Common)";
         item.type = "String";
-        item.description = R"(* spencer: see Phys. Rev. B 77, 193110 (2008).
-* revised_spencer: see Phys. Rev. Mater. 5, 013807 (2021). Set the scheme of Coulomb singularity correction.)";
+        item.description = R"(Scheme for Coulomb singularity / zero-transfer treatment in exact exchange.
+* limits: use the finite screened Coulomb-kernel limit, without an auxiliary correction. Default for HSE and cwp22 in both PW and LCAO. PW requires screened exchange and exx_gamma_extra=false; the latter defaults to false for this scheme.
+* gygi: retain the historical PW Gygi-Baldereschi auxiliary-function correction. PW only; default for unscreened PW hybrids. For independent-k screened hybrid NSCF this can cause discontinuities at source k points.
+* spencer: LCAO spherical truncation, Phys. Rev. B 77, 193110 (2008).
+* revised_spencer: LCAO, Phys. Rev. Mater. 5, 013807 (2021).
+* massidda / carrier: LCAO auxiliary singularity corrections.
+Use the same scheme for consistent SCF and NSCF bands. A source configuration mismatch produces a warning and does not prevent reading the existing SCF files.)";
         item.default_value = "default";
         item.unit = "";
         read_sync_string(input.exx_singularity_correction);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
+        item.reset_value = [this](const Input_Item& item, Parameter& para) {
             if (para.input.exx_singularity_correction == "default")
             {  
                 std::string& dft_functional = para.input.dft_functional;
@@ -491,12 +496,57 @@ void ReadInput::item_exx()
                     || dft_functional_lower == "lrc_wpbeh"
                     || dft_functional_lower == "cam_pbeh")
                 {
-                    para.input.exx_singularity_correction = "spencer";
+                    if (para.input.basis_type == "pw")
+                    {
+                        para.input.exx_singularity_correction = "gygi";
+                    }
+                    else
+                    {
+                        para.input.exx_singularity_correction = "spencer";
+                    }
                 }
                 else if (dft_functional_lower == "hse" || dft_functional_lower == "cwp22")
                 {
                     para.input.exx_singularity_correction = "limits";
                 }
+            }
+            if (para.input.basis_type == "pw" && para.input.exx_singularity_correction == "limits")
+            {
+                const auto gamma_item = std::find_if(this->input_lists.begin(), this->input_lists.end(),
+                    [](const std::pair<std::string, Input_Item>& entry) {
+                        return entry.first == "exx_gamma_extra";
+                    });
+                if (gamma_item != this->input_lists.end() && !gamma_item->second.is_read())
+                {
+                    para.input.exx_gamma_extra = false;
+                }
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& scheme = para.input.exx_singularity_correction;
+            if (para.input.basis_type == "pw" && scheme != "default")
+            {
+                if (scheme != "limits" && scheme != "gygi")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "PW exx_singularity_correction must be limits or gygi");
+                }
+                if (scheme == "limits")
+                {
+                    bool has_fock = false;
+                    for (const auto& alpha : para.input.exx_fock_alpha)
+                    {
+                        has_fock = has_fock || std::stod(alpha) != 0.0;
+                    }
+                    if (has_fock || para.input.exx_gamma_extra)
+                    {
+                        ModuleBase::WARNING_QUIT("ReadInput",
+                            "PW limits requires screened exchange and exx_gamma_extra=false");
+                    }
+                }
+            }
+            else if (para.input.basis_type != "pw" && scheme == "gygi")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_singularity_correction gygi is only supported for PW");
             }
         };
         this->add_item(item);
@@ -518,6 +568,42 @@ void ReadInput::item_exx()
                 ModuleBase::WARNING_QUIT("ReadInput", "rpa_ccp_rmesh_times must >= 1");
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_coulomb");
+        item.annotation = "post-SCF truncated Coulomb kernel for RPA/GW export";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "Post-SCF cut-Coulomb kernel: hard preserves Spencer truncation; log_erfc uses erfc(log(r/Rc)/log(rpa_cut_width))/2r. Applies to Fock components in compressed and uncompressed cut exports; Erfc components retain their existing kernel. Non-default kernel/radius requests require a Fock component. Full Coulomb is unchanged. Forces and stresses for log_erfc are not validated.";
+        item.default_value = "hard";
+        item.unit = "";
+        read_sync_string(input.rpa_cut_coulomb);
+        item.domain.set_choices({"hard", "log_erfc"});
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_radius");
+        item.annotation = "radius convention for post-SCF cut Coulomb";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "legacy preserves the existing cutoff radius. inscribed uses half the shortest nonzero BvK superlattice vector, including the lattice scale in Bohr. Applies only to Fock components; inscribed is rejected if the RPA Coulomb configuration has no Fock component. Independent of rpa_cut_coulomb; intended for controlled radius-versus-smoothing comparisons.";
+        item.default_value = "legacy";
+        item.unit = "";
+        read_sync_string(input.rpa_cut_radius);
+        item.domain.set_choices({"legacy", "inscribed"});
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_width");
+        item.annotation = "multiplicative width of the log-erfc cutoff";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "Width factor for log_erfc. Must be finite and greater than 1 and at most 1.25. The default matches the logged Si FHI-aims width; it is not a universal FHI-aims constant. The finite radial integration range must resolve the smooth tail.";
+        item.default_value = "1.091868692359";
+        item.unit = "";
+        read_sync_double(input.rpa_cut_width);
+        item.domain.set_rule("value>1 and value<=1.25");
         this->add_item(item);
     }
     {
@@ -817,7 +903,7 @@ void ReadInput::item_dftu()
 * 1: The first SCF step will use an initial density matrix read from a file, but for later steps, the onsite density matrix will be updated.
 * 2: The same onsite density matrix read from the file will be used throughout the entire calculation.
 
-[NOTE] The occupation-matrix file is read from the directory specified by read_file_dir. The search order is dm_onsite_ini.txt -> occ_mat.txt -> dm_onsite.txt, so a previously output occ_mat.txt can be reused directly without renaming. The easiest way to obtain such a file is to run a DFT+U calculation with out_occ_mat=1 (the default); the resulting occ_mat.txt in the OUT.prefix directory (which always holds the occupation matrix of the latest electronic step) can be placed in read_file_dir as-is. When out_freq_ion is positive, separate occ_matg{geom_step}.txt files are also written, one per output ionic step; they may contain several electronic-step sections separated by comment headers. The format of the file is rather straight-forward.)";
+[NOTE] The occupation-matrix file is read from the directory specified by read_file_dir. The search order is dm_onsite_ini.txt -> occ_mat.txt. Input must use the current compact format written by ABACUS; legacy Atom=/L=/spin= files such as dm_onsite.txt are not supported. The easiest way to obtain a valid file is to run a DFT+U calculation with out_occ_mat=1 (the default); the resulting occ_mat.txt in the OUT.prefix directory (which always holds the occupation matrix of the latest electronic step) can be placed in read_file_dir as-is. When out_freq_ion is positive, separate occ_matg{geom_step}.txt files are also written, one per output ionic step; they may contain several electronic-step sections separated by comment headers.)";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.init_occ_mat);
@@ -839,20 +925,30 @@ void ReadInput::item_dftu()
     }
     {
         Input_Item item("onsite_radius");
-        item.annotation = "radius of the sphere for onsite projection (Bohr)";
+        item.domain.set_rule("value>0");
+        item.domain.set_active_when("onsite_radius!=0");
+        item.annotation = "cutoff radius of onsite projection orbitals (Bohr)";
         item.category = "DFT+U correction";
         item.type = "Real";
-        item.description = R"(* The onsite_radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals used for DFT+U projections.
-* The modulation algorithm applies a smooth truncation to the orbital tail followed by normalization. A representative profile is $f(r)=\frac{1}{2}\left[1+\operatorname{erf}\!\left(\frac{r_c-r}{\sigma}\right)\right]$, where $r_c$ is the cutoff radius and $\sigma=\gamma r_c$ controls smoothness.)";
-        item.default_value = "3.0";
+        item.description = R"(Cutoff radius for numerical atomic orbitals used in onsite projections.
+* Controls the localized projections for `dft_plus_u=1` and spin constraints (`sc_mag_switch=true`) in PW and LCAO calculations.
+* Enables onsite population analysis in ordinary PW calculations when set to a positive value.
+* Controls atomic magnetic moment projections for `nspin=4` PW RT-TDDFT with `td_out_mag=onsite`.
+
+When omitted, the value is `3.0` for `dft_plus_u=1`, `sc_mag_switch=true`, or `nspin=4` PW RT-TDDFT with `td_out_mag=onsite`; otherwise it is `0.0`. Explicit values must be positive.
+
+Provide numerical atomic orbital files through `NUMERICAL_ORBITAL` in `STRU`, with their directory specified by `orbital_dir`. Projected magnetic moments depend on the chosen orbitals and radius.)";
+        item.default_value = "`3.0` for `dft_plus_u=1`, `sc_mag_switch=true`, or `nspin=4` PW RT-TDDFT with `td_out_mag=onsite`; `0.0` otherwise";
         item.unit = "Bohr";
-        item.set_availability("dft_plus_u==1");
+        item.set_availability("basis_type in [pw, lcao]");
         read_sync_double(input.onsite_radius);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if ((para.input.dft_plus_u == 1 || para.input.sc_mag_switch) && para.input.onsite_radius == 0.0)
+            if (!item.is_read())
             {
-                // autoset onsite_radius to 3.0 as default, this default value comes from the systematic atomic magnetism test
-                para.input.onsite_radius = 3.0;
+                const bool rt_onsite = para.inp.basis_type == "pw" && para.inp.esolver_type == "tddft"
+                                       && para.inp.nspin == 4 && para.inp.td_out_mag == "onsite";
+                const bool use_onsite = para.inp.dft_plus_u == 1 || para.inp.sc_mag_switch || rt_onsite;
+                para.input.onsite_radius = use_onsite ? 3.0 : 0.0;
             }
         };
         this->add_item(item);

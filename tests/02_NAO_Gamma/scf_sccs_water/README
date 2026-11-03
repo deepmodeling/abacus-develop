@@ -1,0 +1,6 @@
+LCAO (gamma-only) neutral water with periodic SCCS (water-neutral preset), same geometry as
+01_PW/scf_sccs. Covers the LCAO path end to end: SCCS potential in the LCAO
+Hamiltonian, local Pulay force terms and final force assembly of the SCCS ionic force.
+Checks total energy, forces and the electrostatic and cavity solvation terms.
+ecutwfc is 60 because LCAO requires ecutrho = 4 * ecutwfc; ecutrho 240 keeps the density grid of
+the PW case. result.ref was generated on one MPI process and also passes on four.

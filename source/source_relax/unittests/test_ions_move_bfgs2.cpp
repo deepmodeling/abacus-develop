@@ -1,22 +1,22 @@
 // source/source_relax/unittests/test_ions_move_bfgs2.cpp
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include "for_test.h"
-
-#include "source_relax/ions_move_bfgs2.h"
-
 #include "source_io/module_parameter/parameter.h"
-
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
+#include "source_relax/ions_move_bfgs2.h"
 #include "source_relax/relax_data.h"
+#include "source_relax/relax_criteria.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include <fstream>
 
 /************************************************
  *  unit tests for Ions_Move_BFGS2 (no MockUnitCell)
  ***********************************************/
 
-class BFGSTest : public ::testing::Test {
-protected:
+class BFGSTest : public ::testing::Test
+{
+  protected:
     Ions_Move_BFGS2 bfgs;
     void SetUp() override
     {
@@ -167,19 +167,28 @@ TEST_F(BFGSTest, RelaxStepAutoInitialize)
     ucell.atoms[0].tau = std::vector<ModuleBase::Vector3<double>>(2);
     ucell.atoms[0].taud = std::vector<ModuleBase::Vector3<double>>(2);
     ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
-    ucell.atoms[0].tau[0].x = 0.0; ucell.atoms[0].tau[0].y = 0.0; ucell.atoms[0].tau[0].z = 0.0;
-    ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
+    ucell.atoms[0].tau[0].x = 0.0;
+    ucell.atoms[0].tau[0].y = 0.0;
+    ucell.atoms[0].tau[0].z = 0.0;
+    ucell.atoms[0].tau[1].x = 1.0;
+    ucell.atoms[0].tau[1].y = 0.0;
+    ucell.atoms[0].tau[1].z = 0.0;
     ucell.lat0 = 1.0;
 
     ModuleBase::matrix force(2, 3);
-    force(0, 0) = 0.1; force(0, 1) = 0.0; force(0, 2) = 0.0;
-    force(1, 0) = -0.1; force(1, 1) = 0.0; force(1, 2) = 0.0;
+    force(0, 0) = 0.1;
+    force(0, 1) = 0.0;
+    force(0, 2) = 0.0;
+    force(1, 0) = -0.1;
+    force(1, 1) = 0.0;
+    force(1, 2) = 0.0;
 
     std::ofstream ofs_running;
+    const Relax_Criteria criteria;
 
     // Before relax_step, is_initialized should be false
     EXPECT_FALSE(get_is_initialized());
-    bfgs.relax_step(force, ucell, ofs_running);
+    bfgs.relax_step(force, ucell, ofs_running, criteria);
     // After relax_step, is_initialized should be true
     EXPECT_TRUE(get_is_initialized());
 }
@@ -198,10 +207,8 @@ TEST_F(BFGSTest, DetermineStepScaling)
     bfgs.allocate(size);
 
     std::vector<double> steplength = {1.0, 0.1};
-    std::vector<ModuleBase::Vector3<double>> dpos = {
-        ModuleBase::Vector3<double>(1.0, 1.0, 1.0),
-        ModuleBase::Vector3<double>(0.1, 0.1, 0.1)
-    };
+    std::vector<ModuleBase::Vector3<double>> dpos
+        = {ModuleBase::Vector3<double>(1.0, 1.0, 1.0), ModuleBase::Vector3<double>(0.1, 0.1, 0.1)};
     double maxstep = 0.5;
     call_DetermineStep(steplength, dpos, maxstep);
 
@@ -262,15 +269,21 @@ TEST_F(BFGSTest, GetPosAndPostaud)
     ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
 
     // set coordinates
-    ucell.atoms[0].tau[0].x = 0.0; ucell.atoms[0].tau[0].y = 0.0; ucell.atoms[0].tau[0].z = 0.0;
-    ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
+    ucell.atoms[0].tau[0].x = 0.0;
+    ucell.atoms[0].tau[0].y = 0.0;
+    ucell.atoms[0].tau[0].z = 0.0;
+    ucell.atoms[0].tau[1].x = 1.0;
+    ucell.atoms[0].tau[1].y = 0.0;
+    ucell.atoms[0].tau[1].z = 0.0;
 
-    // allocate mapping arrays 
+    // allocate mapping arrays
     ucell.iat2it.resize(ucell.nat);
     ucell.iat2ia.resize(ucell.nat);
     int k = 0;
-    for (int it = 0; it < ucell.ntype; ++it) {
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia) {
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
             ucell.iat2it[k] = it;
             ucell.iat2ia[k] = ia;
             ++k;
@@ -304,8 +317,10 @@ TEST_F(BFGSTest, CalculateLargestGrad)
     ucell.iat2it.resize(ucell.nat);
     ucell.iat2ia.resize(ucell.nat);
     int k = 0;
-    for (int it = 0; it < ucell.ntype; ++it) {
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia) {
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
             ucell.iat2it[k] = it;
             ucell.iat2ia[k] = ia;
             ++k;
@@ -314,10 +329,10 @@ TEST_F(BFGSTest, CalculateLargestGrad)
 
     // build force matrix: 2 atoms x 3 components
     ModuleBase::matrix force(2, 3);
-    force(0, 0) = -2.0;  // this yields grad component = -(-2.0)*lat0 = 4.0 -> divided by lat0 => 2.0
+    force(0, 0) = -2.0; // this yields grad component = -(-2.0)*lat0 = 4.0 -> divided by lat0 => 2.0
     force(0, 1) = 0.0;
     force(0, 2) = 1.0;
-    force(1, 0) = 3.0;   // this yields abs = 6.0 -> divided by lat0 => 3.0 (this should be largest)
+    force(1, 0) = 3.0; // this yields abs = 6.0 -> divided by lat0 => 3.0 (this should be largest)
     force(1, 1) = -1.0;
     force(1, 2) = 0.0;
 
@@ -346,26 +361,37 @@ TEST_F(BFGSTest, RelaxStepBasic)
     ucell.iat2it.resize(ucell.nat);
     ucell.iat2ia.resize(ucell.nat);
     int k = 0;
-    for (int it = 0; it < ucell.ntype; ++it) {
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia) {
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
             ucell.iat2it[k] = it;
             ucell.iat2ia[k] = ia;
             ++k;
         }
     }
     // Set initial positions
-    ucell.atoms[0].tau[0].x = 0.0; ucell.atoms[0].tau[0].y = 0.0; ucell.atoms[0].tau[0].z = 0.0;
-    ucell.atoms[0].tau[1].x = 1.0; ucell.atoms[0].tau[1].y = 0.0; ucell.atoms[0].tau[1].z = 0.0;
+    ucell.atoms[0].tau[0].x = 0.0;
+    ucell.atoms[0].tau[0].y = 0.0;
+    ucell.atoms[0].tau[0].z = 0.0;
+    ucell.atoms[0].tau[1].x = 1.0;
+    ucell.atoms[0].tau[1].y = 0.0;
+    ucell.atoms[0].tau[1].z = 0.0;
     // Setup force matrix
     ModuleBase::matrix force(2, 3);
-    force(0, 0) = 0.1; force(0, 1) = 0.0; force(0, 2) = 0.0;
-    force(1, 0) = -0.1; force(1, 1) = 0.0; force(1, 2) = 0.0;
+    force(0, 0) = 0.1;
+    force(0, 1) = 0.0;
+    force(0, 2) = 0.0;
+    force(1, 0) = -0.1;
+    force(1, 1) = 0.0;
+    force(1, 2) = 0.0;
     // Allocate and call relax_step
     bfgs.allocate(ucell.nat);
 
     std::ofstream ofs_running;
+    const Relax_Criteria criteria;
 
-    bfgs.relax_step(force, ucell, ofs_running);
+    bfgs.relax_step(force, ucell, ofs_running, criteria);
     // Check that ionic_position_updated is true
     EXPECT_TRUE(ucell.ionic_position_updated);
     // Check that force values are set (converted units)
@@ -374,4 +400,39 @@ TEST_F(BFGSTest, RelaxStepBasic)
     // Check that positions are updated (not equal to initial)
     EXPECT_NEAR(get_pos()[0][0], 0.0, 1e-12);
     EXPECT_NE(get_pos()[1][0], 1.0);
+}
+
+TEST_F(BFGSTest, RelaxStepZeroForceReturnsBeforeStepConstruction)
+{
+    UnitCell ucell;
+    ucell.ntype = 1;
+    ucell.nat = 2;
+    ucell.lat0 = 1.0;
+    ucell.atoms = new Atom[ucell.ntype];
+    ucell.atoms[0].na = 2;
+    ucell.atoms[0].tau = std::vector<ModuleBase::Vector3<double>>(2);
+    ucell.atoms[0].taud = std::vector<ModuleBase::Vector3<double>>(2);
+    ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
+    ucell.iat2it.resize(ucell.nat);
+    ucell.iat2ia.resize(ucell.nat);
+    ucell.iat2it[0] = 0;
+    ucell.iat2it[1] = 0;
+    ucell.iat2ia[0] = 0;
+    ucell.iat2ia[1] = 1;
+    ucell.atoms[0].tau[0].x = 0.25;
+    ucell.atoms[0].tau[1].x = 0.75;
+
+    const double initial_tau0_x = ucell.atoms[0].tau[0].x;
+    const double initial_tau1_x = ucell.atoms[0].tau[1].x;
+    ModuleBase::matrix force(2, 3);
+    std::ofstream ofs_running;
+    Relax_Criteria criteria;
+    criteria.force_thr_ev = 1.0;
+
+    const bool converged = bfgs.relax_step(force, ucell, ofs_running, criteria);
+
+    EXPECT_TRUE(converged);
+    EXPECT_FALSE(ucell.ionic_position_updated);
+    EXPECT_NEAR(ucell.atoms[0].tau[0].x, initial_tau0_x, 1e-12);
+    EXPECT_NEAR(ucell.atoms[0].tau[1].x, initial_tau1_x, 1e-12);
 }

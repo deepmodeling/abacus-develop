@@ -104,6 +104,30 @@ class XC_Functional
 
     static void set_xc_type(const std::string xc_func_in);
 
+    // Temporary adapter for legacy Potential -> PotXC -> XC evaluation globals.
+    // Restores the complete selection on scope exit, including exception unwinding.
+    // Scopes may nest, but must not overlap across threads: this is process-wide state.
+    class ScopedType
+    {
+      public:
+        explicit ScopedType(const std::string& functional);
+        ~ScopedType();
+        ScopedType(const ScopedType&) = delete;
+        ScopedType& operator=(const ScopedType&) = delete;
+
+      private:
+        void restore() noexcept;
+        std::vector<int> func_id_;
+        int func_type_;
+        bool ked_flag_;
+        bool need_laplacian_;
+        bool use_libxc_;
+        double hybrid_alpha_;
+        double hse_omega_;
+        XCFunctionalParameters runtime_parameters_;
+        std::map<int, double> scaling_factor_xc_;
+    };
+
     // For hybrid functional
     static void set_hybrid_alpha(const double alpha_in);
 
@@ -168,6 +192,15 @@ class XC_Functional
 
     public:
     static std::vector<int> get_func_id() { return func_id; }
+
+    /// signed combination weight of a functional component id (1.0 when
+    /// the functional is not in the scaling table), e.g. BLYP_LR
+    /// subtracts its short-range components
+    static double get_weight(const int id)
+    {
+        const auto it = scaling_factor_xc.find(id);
+        return it != scaling_factor_xc.end() ? it->second : 1.0;
+    }
 
 //-------------------
 //  xc_lda_wrap.cpp

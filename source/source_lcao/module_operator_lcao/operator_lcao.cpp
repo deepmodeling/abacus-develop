@@ -199,6 +199,11 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
             break;
         }
         case calculation_type::lcao_exx:
+        case calculation_type::lr_dmtrans_hxc:
+        case calculation_type::lr_dmtrans_exx:
+        case calculation_type::lr_dmdiff_hxc:
+        case calculation_type::lr_dmdiff_exx:
+        case calculation_type::lr_dmtrans_gxc:
         {
             // EXX is accumulated in H(R); the last operator-chain node folds
             // the complete H(R) into H(k), including the TD gauge phase.
@@ -256,12 +261,12 @@ void OperatorLCAO<double, double>::contributeHk(int ik) {
     ModuleBase::timer::start("OperatorLCAO", "contributeHk");
     if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
-        const int nrow = this->hsk->get_pv()->get_row_size();
+        const int nrow = this->hsk->get_pv()->para_2d().get_row_size();
         hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);
     }
     else
     {
-        const int ncol = this->hsk->get_pv()->get_col_size();
+        const int ncol = this->hsk->get_pv()->para_2d().get_col_size();
         hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
     }
     ModuleBase::timer::end("OperatorLCAO", "contributeHk");
@@ -273,7 +278,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
     ModuleBase::timer::start("OperatorLCAO", "contributeHk");
     if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
-        const int nrow = this->hsk->get_pv()->get_row_size();
+        const int nrow = this->hsk->get_pv()->para_2d().get_row_size();
         if(this->td_info_ != nullptr && this->td_info_->field().gauge() == 2)
         {
             module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], this->td_info_->endpoint_A(), this->td_info_->get_phase_hybrid(), nrow, 1);
@@ -285,7 +290,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
     }
     else
     {
-        const int ncol = this->hsk->get_pv()->get_col_size();
+        const int ncol = this->hsk->get_pv()->para_2d().get_col_size();
         if(this->td_info_ != nullptr && this->td_info_->field().gauge() == 2)
         {
             module_rt::folding_HR_td(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], this->td_info_->endpoint_A(), this->td_info_->get_phase_hybrid(), ncol, 0);

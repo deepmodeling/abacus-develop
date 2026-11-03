@@ -33,9 +33,9 @@ TEST(RelaxHistory, LineBreakEveryFive)
 TEST(RelaxHistory, LongHistoryTruncated)
 {
     std::vector<double> hist(150, 0.0);
-    hist.front() = 1.0;   // first value kept
-    hist.back() = 2.0;    // last value kept
-    hist[75] = 9.0;       // middle value must be omitted
+    hist.front() = 1.0; // first value kept
+    hist.back() = 2.0;  // last value kept
+    hist[75] = 9.0;     // middle value must be omitted
     const std::string out = format_relax_history(hist);
     EXPECT_THAT(out, HasSubstr("... (omitted 130 step(s)) ..."));
     EXPECT_THAT(out, HasSubstr("1.000e+00"));

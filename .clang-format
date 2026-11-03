@@ -1,49 +1,63 @@
 ---
 Language: Cpp
-BasedOnStyle: Microsoft
+BasedOnStyle: LLVM
 
-AlwaysBreakTemplateDeclarations: Yes
+ColumnLimit: 120
 
-AllowAllArgumentsOnNextLine: false
-AllowAllParametersOfDeclarationOnNextLine: false
+#AlwaysBreakTemplateDeclarations: Yes
+#
+#AllowAllArgumentsOnNextLine: false
+#AllowAllParametersOfDeclarationOnNextLine: false
 BinPackArguments: false
 BinPackParameters: false
-
-BreakBeforeBinaryOperators: All
-BreakBeforeTernaryOperators: true
-
-Cpp11BracedListStyle: true
-FixNamespaceComments: true
-
-# InsertBraces: true # only for clang-format version15.0.0 or later
-
-# About include
-IncludeBlocks: Regroup
-IncludeIsMainRegex: '([-_](test|unittest))?$'
-IncludeIsMainSourceRegex: ''
-
+PackArguments:
+  BinPack: UseBreakAfter
+  BreakAfter: 3
+PackParameters:
+  BinPack: UseBreakAfter
+  BreakAfter: 3
+#
+#BreakBeforeBinaryOperators: None
+#BreakBeforeTernaryOperators: true
+BreakBeforeBraces: Allman
+BreakAfterOpenBracketFunction: true
+AlignAfterOpenBracket: DontAlign
+#
+#Cpp11BracedListStyle: true
+#FixNamespaceComments: true
+#
+InsertBraces: true # only for clang-format version15.0.0 or later
+#
+## About include
+#IncludeBlocks: Regroup
+#IncludeIsMainRegex: '([-_](test|unittest))?$'
+#IncludeIsMainSourceRegex: ''
+#
 IndentWidth: 4
-IndentWrappedFunctionNames: true
+#IndentWrappedFunctionNames: true
+#
+## About Point
+#DerivePointerAlignment: false
+#PointerAlignment: Left
+PenaltyBreakBeforeMemberAccess: 1000
+PenaltyBreakScopeResolution: 1000
 
-# About Point
-DerivePointerAlignment: false
-PointerAlignment: Left
-
-ReflowComments: true
-SortIncludes: true
-SortUsingDeclarations: true
-
-# About space
-SpaceAfterCStyleCast: false
-SpaceAfterLogicalNot: false
-SpaceBeforeRangeBasedForLoopColon: false
-SpaceInEmptyParentheses: false
-SpacesInAngles: false
-SpacesInCStyleCastParentheses: false
-SpacesInContainerLiterals: false
-SpacesInParentheses: false
-SpacesInSquareBrackets: false
-
+#
+#ReflowComments: true
+#SortIncludes: true
+#SortUsingDeclarations: true
+#
+## About space
+#SpaceAfterCStyleCast: false
+#SpaceAfterLogicalNot: false
+#SpaceBeforeRangeBasedForLoopColon: false
+#SpaceInEmptyParentheses: false
+#SpacesInAngles: false
+#SpacesInCStyleCastParentheses: false
+#SpacesInContainerLiterals: false
+#SpacesInParentheses: false
+#SpacesInSquareBrackets: false
+#
 Standard: c++11
 TabWidth: 4
 UseTab: Never

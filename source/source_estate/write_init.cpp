@@ -3,9 +3,10 @@
 // to cube files in real space. It is part of the module_io package.
 //
 // Output files are named according to the following convention:
-//   - out_freq_ion = 0: chg_ini.cube/pot_ini.cube, chgs1_ini.cube/chgs2_ini.cube
-//   - out_freq_ion > 0: chgg{#}_ini.cube/potg{#}_ini.cube, chgs{#}g{#}_ini.cube
-//   - Geometry step index starts from 1 (geom_step = istep + 1)
+//   - Frequency is out_freq_td for RT-TDDFT and out_freq_ion otherwise.
+//   - Frequency = 0: chg_ini.cube/pot_ini.cube, chgs1_ini.cube/chgs2_ini.cube
+//   - Frequency > 0: chgg{#}_ini.cube/potg{#}_ini.cube, chgs{#}g{#}_ini.cube
+//   - File indices start from 1 (istep + 1); RT-TDDFT uses electronic steps.
 //
 // Usage:
 //   ModuleIO::write_chg_init(ucell, para_grid, chr, efermi, istep, out_dir, inp);
@@ -15,19 +16,19 @@
 // =====================================================================
 
 #include "source_estate/write_init.h"
-#include "source_io/module_output/cube_io.h"
+
 #include "source_base/tool_quit.h"
+#include "source_io/module_output/cube_io.h"
 
-#include <sstream>
 #include <cassert>
+#include <sstream>
 
-std::string ModuleIO::gen_ini_filename(
-    const std::string& prefix,
-    const std::string& out_dir,
-    const int nspin,
-    const int is,
-    const int istep,
-    const bool include_geom_step)
+std::string ModuleIO::gen_ini_filename(const std::string& prefix,
+                                       const std::string& out_dir,
+                                       const int nspin,
+                                       const int is,
+                                       const int istep,
+                                       const bool include_geom_step)
 {
     std::stringstream ss;
     ss << out_dir << prefix;
@@ -56,16 +57,15 @@ std::string ModuleIO::gen_ini_filename(
     return ss.str();
 }
 
-void ModuleIO::write_chg_init(
-    const UnitCell& ucell,
-    const Parallel_Grid &para_grid,
-    const Charge &chr,
-    const elecstate::Efermi &efermi,
-    const int istep,
-    const std::string& out_dir,
-    const Input_para& inp,
-    const bool two_fermi,
-    std::ofstream& ofs_running)
+void ModuleIO::write_chg_init(const UnitCell& ucell,
+                              const Parallel_Grid& para_grid,
+                              const Charge& chr,
+                              const elecstate::Efermi& efermi,
+                              const int istep,
+                              const std::string& out_dir,
+                              const Input_para& inp,
+                              const bool two_fermi,
+                              std::ofstream& ofs_running)
 {
     const int nspin = inp.nspin;
     assert(nspin == 1 || nspin == 2 || nspin == 4);
@@ -77,12 +77,12 @@ void ModuleIO::write_chg_init(
 
     if (inp.out_chg[0] == 2)
     {
-        bool should_output = (inp.out_freq_ion == 0) ||
-                             (inp.out_freq_ion > 0 && istep % inp.out_freq_ion == 0);
+        const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+        const bool should_output = output_frequency == 0 || (output_frequency > 0 && istep % output_frequency == 0);
 
         if (should_output)
         {
-            bool include_geom_step = (inp.out_freq_ion > 0);
+            const bool include_geom_step = (output_frequency > 0);
 
             for (int is = 0; is < nspin; is++)
             {
@@ -127,16 +127,14 @@ void ModuleIO::write_chg_init(
     return;
 }
 
-
-void ModuleIO::write_pot_init(
-    const UnitCell& ucell,
-    const Parallel_Grid &para_grid,
-    elecstate::ElecState *pelec,
-    const int istep,
-    const std::string& out_dir,
-    const Input_para& inp,
-    const bool two_fermi,
-    std::ofstream& ofs_running)
+void ModuleIO::write_pot_init(const UnitCell& ucell,
+                              const Parallel_Grid& para_grid,
+                              elecstate::ElecState* pelec,
+                              const int istep,
+                              const std::string& out_dir,
+                              const Input_para& inp,
+                              const bool two_fermi,
+                              std::ofstream& ofs_running)
 {
     const int nspin = inp.nspin;
     assert(nspin == 1 || nspin == 2 || nspin == 4);
@@ -148,12 +146,12 @@ void ModuleIO::write_pot_init(
 
     if (inp.out_pot[0] == 3)
     {
-        bool should_output = (inp.out_freq_ion == 0) ||
-                             (inp.out_freq_ion > 0 && istep % inp.out_freq_ion == 0);
+        const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+        const bool should_output = output_frequency == 0 || (output_frequency > 0 && istep % output_frequency == 0);
 
         if (should_output)
         {
-            bool include_geom_step = (inp.out_freq_ion > 0);
+            const bool include_geom_step = (output_frequency > 0);
 
             for (int is = 0; is < nspin; is++)
             {

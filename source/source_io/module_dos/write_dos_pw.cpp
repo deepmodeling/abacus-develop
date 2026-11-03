@@ -50,16 +50,13 @@ void ModuleIO::write_dos_pw(
     for (int is = 0; is < nspin0; ++is)
     {
         // DOS_ispin contains not smoothed dos
+        // unified naming with the LCAO DOS/PDOS output: doss{spin}g{geom}.txt
         std::stringstream ss;
-        ss << global_out_dir << "dos";
+        ss << global_out_dir << "doss" << is + 1;
 
-        if(nspin0==2)
+        if(istep_in>=0)
         {
-            ss << "s" << is + 1;
-        }
-        else
-        {
-            // do nothing;
+            ss << "g" << istep_in+1;
         }
 
         ss << ".txt";

@@ -8,19 +8,21 @@
 #ifndef PYABACUS_ESOLVER_SCF_CONTROLLER_LCAO_HPP
 #define PYABACUS_ESOLVER_SCF_CONTROLLER_LCAO_HPP
 
-#include "../interfaces/i_scf_controller.hpp"
-#include "../interfaces/i_hamiltonian_builder.hpp"
 #include "../interfaces/i_charge_mixer.hpp"
 #include "../interfaces/i_diagonalizer.hpp"
-#include "hamiltonian_builder_lcao.hpp"
+#include "../interfaces/i_hamiltonian_builder.hpp"
+#include "../interfaces/i_scf_controller.hpp"
 #include "charge_mixer_wrapper.hpp"
 #include "diagonalizer_wrapper.hpp"
+#include "hamiltonian_builder_lcao.hpp"
 
-#include <memory>
 #include <iostream>
+#include <memory>
 
-namespace pyabacus {
-namespace esolver {
+namespace pyabacus
+{
+namespace esolver
+{
 
 /**
  * @brief LCAO SCF controller implementation
@@ -34,19 +36,14 @@ namespace esolver {
 template <typename TK, typename TR = double>
 class SCFControllerLCAO : public ISCFController
 {
-public:
+  public:
     SCFControllerLCAO() = default;
 
     SCFControllerLCAO(int nbasis, int nks, int nbands, int nspin, int nrxx)
-        : nbasis_(nbasis)
-        , nks_(nks)
-        , nbands_(nbands)
-        , nspin_(nspin)
-        , nrxx_(nrxx)
+        : nbasis_(nbasis), nks_(nks), nbands_(nbands), nspin_(nspin), nrxx_(nrxx)
     {
         // Initialize components
-        hamilt_builder_ = std::make_unique<HamiltonianBuilderLCAO<TK, TR>>(
-            nbasis, nks, nbasis, nbasis);
+        hamilt_builder_ = std::make_unique<HamiltonianBuilderLCAO<TK, TR>>(nbasis, nks, nbasis, nbasis);
         charge_mixer_ = std::make_unique<ChargeMixerWrapper>(nspin, nrxx);
         diagonalizer_ = std::make_unique<DiagonalizerWrapper<TK>>(nbasis, nbands);
     }
@@ -109,8 +106,7 @@ public:
         return status_;
     }
 
-    SCFStatus run_scf(const SCFConvergenceCriteria& criteria,
-                      SCFIterationCallback callback) override
+    SCFStatus run_scf(const SCFConvergenceCriteria& criteria, SCFIterationCallback callback) override
     {
         initialize(istep_);
         status_ = SCFStatus::Running;
@@ -153,15 +149,27 @@ public:
         return status_ == SCFStatus::Converged;
     }
 
-    SCFStatus get_status() const override { return status_; }
+    SCFStatus get_status() const override
+    {
+        return status_;
+    }
 
     // ==================== State Queries ====================
 
-    int get_iteration() const override { return iteration_; }
+    int get_iteration() const override
+    {
+        return iteration_;
+    }
 
-    double get_drho() const override { return drho_; }
+    double get_drho() const override
+    {
+        return drho_;
+    }
 
-    double get_energy() const override { return energy_; }
+    double get_energy() const override
+    {
+        return energy_;
+    }
 
     // ==================== Component Access ====================
 
@@ -220,7 +228,7 @@ public:
         }
     }
 
-private:
+  private:
     // Dimensions
     int nbasis_ = 0;
     int nks_ = 0;

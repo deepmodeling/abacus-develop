@@ -4,11 +4,11 @@ By setting `calculation` to be `relax` or `cell-relax`, ABACUS supports structur
 
 ABACUS provides two CG implementations for variable-cell relaxation, selected by the [relax_method](./input_files/input-main.md#relax_method) parameter:
 
-- **CG variant 2** (`relax_method = cg 2` or `relax_method = cg`, default since v3.8): Uses simultaneous conjugate gradient (CG) optimization for both ionic positions and cell parameters. Both degrees of freedom are optimized together in each step.
+- **Simultaneous CG** (`relax_method = cg`, default since v3.8): Uses simultaneous conjugate gradient (CG) optimization for both ionic positions and cell parameters. Both degrees of freedom are optimized together in each step.
 
-- **CG variant 1** (`relax_method = cg 1`): Follows a nested procedure where fixed-cell structural relaxation is performed first, followed by an update of the cell parameters, and the process is repeated until convergence is achieved.
+- **Nested CG** (`relax_method = cg_trad`): Follows a nested procedure where fixed-cell structural relaxation is performed first, followed by an update of the cell parameters, and the process is repeated until convergence is achieved.
 
-An example of the variable cell relaxation can be found in our [repository](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/17_relax/01_pw_cell_relax_BFGS_Al), which is provided with the reference output file log.ref. When using CG variant 1, each ionic step is labelled in the following manner:
+An example of the variable cell relaxation can be found in our [repository](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/17_relax/01_pw_cell_relax_BFGS_Al), which is provided with the reference output file log.ref. When using Nested CG, each ionic step is labelled in the following manner:
 ```
  -------------------------------------------
  RELAX CELL : 3
@@ -21,11 +21,11 @@ indicating that this is the first ionic step of the 3rd cell configuration, and 
 
 ## Optimization Algorithms
 
-ABACUS offers multiple optimization algorithms for structural relaxation, which can be selected using the [relax_method](./input_files/input-main.md#relax_method) keyword. The optional second value selects an implementation variant for CG or BFGS. For both methods, variant 1 is the traditional implementation and variant 2 is the recommended default.
+ABACUS offers multiple optimization algorithms for structural relaxation, which can be selected using the [relax_method](./input_files/input-main.md#relax_method) keyword. Specify one scalar value.
 
 ### Available Algorithms
 
-- **CG (Conjugate Gradient)**: Variant 1 optimizes ionic positions and cell parameters in separate stages; variant 2 optimizes them simultaneously with line search.
+- **CG (Conjugate Gradient)**: `cg_trad` optimizes ionic positions and cell parameters in separate stages; `cg` optimizes them simultaneously with line search.
 - **BFGS**: Quasi-Newton method for ionic relaxation.
 - **LBFGS**: Limited-memory BFGS for ionic relaxation.
 - **SD (Steepest Descent)**: Simple gradient descent for ionic relaxation.
@@ -37,11 +37,11 @@ We also provide a [list of keywords](./input_files/input-main.md#geometry-relaxa
 
 The [BFGS method](https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm) is a quasi-Newton method for solving nonlinear optimization problems. It belongs to the class of quasi-Newton methods where the Hessian matrix is approximated during the optimization process. If the initial point is not far from the extrema, BFGS tends to work better than gradient-based methods.
 
-ABACUS provides two BFGS implementations, controlled by the second element of [relax_method](./input_files/input-main.md#relax_method):
+ABACUS provides two BFGS implementations, selected by [relax_method](./input_files/input-main.md#relax_method):
 
-- **Default BFGS** (`relax_method = bfgs 2` or `relax_method = bfgs`): Updates the inverse of the approximate Hessian matrix B directly. This is the recommended implementation.
+- **Default BFGS** (`relax_method = bfgs`): Updates the inverse of the approximate Hessian matrix B directly. This is the recommended implementation.
 
-- **Traditional BFGS** (`relax_method = bfgs 1`): Updates the approximate Hessian matrix B itself, then obtains the inverse by solving matrix eigenvalues and taking their reciprocals. Both methods are mathematically equivalent, but in some cases the traditional variant may perform better.
+- **Traditional BFGS** (`relax_method = bfgs_trad`): Updates the approximate Hessian matrix B itself, then obtains the inverse by solving matrix eigenvalues and taking their reciprocals. Both methods are mathematically equivalent, but in some cases the traditional variant may perform better.
 
 ### LBFGS method
 
@@ -61,11 +61,9 @@ The [CG (conjugate gradient) method](https://en.wikipedia.org/wiki/Conjugate_gra
 
 ABACUS provides two implementations of the CG method:
 
-- **CG variant 2** (`relax_method = cg 2` or `relax_method = cg`, default): Performs simultaneous optimization of both ionic positions and cell parameters using a line search algorithm. This implementation is more efficient for `cell-relax` calculations as it optimizes all degrees of freedom together. The step size can be controlled by [relax_scale_force](./input_files/input-main.md#relax_scale_force).
+- **Simultaneous CG** (`relax_method = cg`, default): Performs simultaneous optimization of both ionic positions and cell parameters using a line search algorithm. This implementation is more efficient for `cell-relax` calculations as it optimizes all degrees of freedom together. The step size can be controlled by [relax_scale_force](./input_files/input-main.md#relax_scale_force).
 
-- **CG variant 1** (`relax_method = cg 1`): Uses a nested procedure where ionic positions are optimized first using CG, followed by cell parameter optimization (also using CG) in `cell-relax` calculations. This is the traditional approach where the two optimization steps are separated.
-
-The former `relax_new` parameter has been removed. Replace `relax_new = True` with `relax_method = cg 2`, and replace `relax_new = False` with `relax_method = cg 1` when using CG. The `bfgs`, `lbfgs`, `sd`, and `cg_bfgs` methods do not require a separate switch.
+- **Nested CG** (`relax_method = cg_trad`): Uses a nested procedure where ionic positions are optimized first using CG, followed by cell parameter optimization (also using CG) in `cell-relax` calculations. This is the traditional approach where the two optimization steps are separated.
 
 ## Constrained Optimization
 
@@ -105,13 +103,13 @@ Sometimes we want to do variable-cell relaxation with some of the cell degrees o
 
 **Available constraints by implementation:**
 
-- **CG variant 2** (`relax_method = cg 2` or `relax_method = cg`):
+- **Simultaneous CG** (`relax_method = cg`):
   - `fixed_axes = "shape"`: Only allows volume changes (hydrostatic pressure), cell shape is fixed
   - `fixed_axes = "volume"`: Allows shape changes but keeps volume constant
   - `fixed_axes = "a"`, `"b"`, `"c"`, `"ab"`, `"ac"`, `"bc"`, or `"abc"`: Fix specific lattice vectors or combinations
   - `fixed_ibrav = True`: Maintain the Bravais lattice type during relaxation
 
-- **`relax_method = cg 1`, `bfgs`, `lbfgs`, `sd`, or `cg_bfgs`**:
+- **`relax_method = cg_trad`, `bfgs`, `bfgs_trad`, `lbfgs`, `sd`, or `cg_bfgs`**:
   - `fixed_axes = "a"`, `"b"`, `"c"`, `"ab"`, `"ac"`, `"bc"`, or `"abc"`: Fix specific lattice vectors or combinations
   - `fixed_axes = "shape"`, `"volume"` and `fixed_ibrav = True` are not available
 

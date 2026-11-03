@@ -40,7 +40,7 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
     }
 
     // This is the same forward graph used by v_xc_libxc: the local spin map,
-    // its projected FFT gradients, and the sigma invariants are constructed
+    // FFT gradients of the mapped densities, and the sigma invariants are constructed
     // once and shared by all Libxc components.
     const XC_Functional_Libxc::NclSfDiscreteData sf_data
         = XC_Functional_Libxc::make_ncl_sf_discrete_data(nrxx, tpiba, chr, true);
@@ -65,7 +65,7 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
         std::vector<double> vsigma(3 * nrxx);
         constexpr int nr_batch_size = 1024;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, nr_batch_size)
+#pragma omp parallel for schedule(static)
 #endif
         for (int ir_start = 0; ir_start < static_cast<int>(nrxx); ir_start += nr_batch_size)
         {
@@ -105,10 +105,11 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
         }
     }
 
-// For g_s=sum_A J_sA G_h x_A, a reciprocal deformation changes G_h but
-// not the pointwise map J.  Therefore the metric derivative is exactly
-// sum_s h_s,l g_s,m, with h_s=dE/dg_s built from the sanitizer-reversed,
-// component-scaled aggregate above.
+    // For g_s = G_h N_s(x), a reciprocal-metric variation at fixed real-grid
+    // density values changes G_h while holding N_s(x) fixed. The gradient-metric
+    // contribution is sum_s h_s,l g_s,m, with h_s = df/dg_s built from the
+    // sanitizer-reversed, component-scaled aggregate above. This is only the
+    // gradient-metric contribution, not the full cell-strain derivative.
 #ifdef _OPENMP
 #pragma omp parallel
     {
@@ -200,7 +201,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
     const int nspin = (nspin_in == 1 || (nspin_in == 4 && !domag && !domag_z)) ? 1 : 2;
 
     // For nspin=4 with noncollinear magnetism, gga_grad=2 selects the
-    // regularized projected local-collinear graph; gga_grad=0/1 keeps the
+    // regularized mapped-density local-collinear graph; gga_grad=0/1 keeps the
     // original collinear algorithm.
     const bool has_mag = domag || domag_z;
     const bool use_lca = (nspin_in == 4) && has_mag && gga_grad == 2;
@@ -246,7 +247,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
     else if (use_lca)
     {
         // gga_grad=2 uses one complete local map for both the Libxc density
-        // input and the projected FFT-gradient graph.  LDA-only functionals
+        // input and the mapped-density FFT-gradient graph. LDA-only functionals
         // need the same local map but do not pay for gradients.
         sf_data = XC_Functional_Libxc::make_ncl_sf_discrete_data(nrxx, tpiba, chr, is_gga);
         rho = sf_data.rho;
@@ -318,7 +319,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         case XC_FAMILY_LDA: {
             constexpr int nr_batch_size = 1024;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, nr_batch_size)
+#pragma omp parallel for schedule(static)
 #endif
             for (int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size)
             {
@@ -336,7 +337,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         case XC_FAMILY_HYB_GGA: {
             constexpr int nr_batch_size = 1024;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, nr_batch_size)
+#pragma omp parallel for schedule(static)
 #endif
             for (int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size)
             {
@@ -372,7 +373,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
 
         // Keep the established energy accumulation and reduction order.  In
         // gga_grad=2, reverse every sanitizer now, apply the component scaling,
-        // and aggregate before traversing the shared projected graph once.
+        // and aggregate before reversing the shared mapped-density graph once.
         etxc += XC_Functional_Libxc::convert_etxc(nspin, nrxx, energy_mask, rho, exc) * factor;
         if (use_lca)
         {
@@ -573,7 +574,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
         ModuleBase::timer::start("Libxc","xc_mgga_exc_vxc");
         constexpr int nr_batch_size = 1024;
         #ifdef _OPENMP
-        #pragma omp parallel for schedule(static, nr_batch_size)
+        #pragma omp parallel for schedule(static)
         #endif
         for( int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size )
         {

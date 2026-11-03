@@ -17,13 +17,13 @@ namespace ModuleXC
 namespace NCGGA_SF_Builtin
 {
 
-// Exact discrete reverse of the regularized projected LCA graph (gga_grad=2).
+// Exact discrete reverse of the regularized mapped-density LCA graph (gga_grad=2).
 std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(const int& nrxx,
                                                                      const double& omega,
                                                                      const double tpiba,
                                                                      const Charge* const chr);
 
-// Gradient-metric stress of the exact gga_grad=2 projected-LCA graph.  The
+// Gradient-metric stress of the exact gga_grad=2 mapped-density LCA graph. The
 // returned lower triangle is the unnormalised real-grid sum; Stress_Func
 // applies the existing pool reduction and 1/nxyz normalisation.
 void gradcorr_ncgga_lca_builtin(const Charge* const chr,

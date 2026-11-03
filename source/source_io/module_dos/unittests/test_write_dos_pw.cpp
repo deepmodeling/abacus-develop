@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "../write_dos_pw.h"
+#include <sstream>
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -76,7 +77,7 @@ TEST_F(DosPWTest,Dos1)
 			dosp.wg,
 			*kv,
 			dosp.nbands,
-            -1, // istep_in
+            0, // istep_in
 			fermi_energy,
 			dosp.de_ev,
 			dos_scale,
@@ -100,13 +101,14 @@ TEST_F(DosPWTest,Dos1)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("dos.txt");
+		ifs.open("doss1g1.txt");
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str, testing::HasSubstr("4801 # number of points"));
-		EXPECT_THAT(str, testing::HasSubstr("   -4.995000     0.500000     0.500000"));
+		EXPECT_THAT(str, testing::HasSubstr("   -5.000000     0.500000     0.500000"));
 		EXPECT_THAT(str, testing::HasSubstr("   18.000000     0.000000     8.000000"));
+		EXPECT_THAT(str, testing::HasSubstr("2.849588"));
 		ifs.close();
-		remove("dos.txt");
+		remove("doss1g1.txt");
 #ifdef __MPI
 	}
 #endif
@@ -154,7 +156,7 @@ TEST_F(DosPWTest,Dos2)
 			dosp.wg,
 			*kv,
 			dosp.nbands,
-			-1, // istep_in
+			0, // istep_in
             fermi_energy,
 			dosp.de_ev,
 			dos_scale,
@@ -178,13 +180,49 @@ TEST_F(DosPWTest,Dos2)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("dos.txt");
+		ifs.open("doss1g1.txt");
 		std::string str1((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str1, testing::HasSubstr("2526 # number of points"));
-		EXPECT_THAT(str1, testing::HasSubstr("   -4.997500     0.500000     0.500000"));
-		EXPECT_THAT(str1, testing::HasSubstr("    7.567500     0.000000     8.000000"));
+		EXPECT_THAT(str1, testing::HasSubstr("   -5.002500     0.500000     0.500000"));
+		EXPECT_THAT(str1, testing::HasSubstr("    7.562500     0.000000     8.000000"));
+		EXPECT_THAT(str1, testing::HasSubstr("2.847771"));
+        std::istringstream rows(str1);
+        std::string line;
+        std::getline(rows, line); // ionic step
+        std::getline(rows, line); // declared grid size
+        int declared_points = 0;
+        std::istringstream(line) >> declared_points;
+        EXPECT_EQ(declared_points, 2526);
+        std::getline(rows, line); // column names
+        int row_count = 0;
+        while (std::getline(rows, line))
+        {
+            std::istringstream fields(line);
+            double energy = 0.0;
+            double raw = 0.0;
+            double integral = 0.0;
+            double smeared = 0.0;
+            double smeared_integral = 0.0;
+            ASSERT_TRUE(fields >> energy >> raw >> integral >> smeared >> smeared_integral);
+            EXPECT_NEAR(energy, -5.0625 + row_count * 0.005, 5.0e-7);
+            if (row_count == 12)
+            {
+                // The -5 eV state is 0.0025 eV above this automatic-grid node.
+                EXPECT_DOUBLE_EQ(energy, -5.0025);
+                EXPECT_DOUBLE_EQ(raw, 0.5);
+                EXPECT_DOUBLE_EQ(integral, 0.5);
+                EXPECT_NEAR(smeared, 2.847771, 5.0e-7);
+            }
+            if (row_count == 2525)
+            {
+                EXPECT_DOUBLE_EQ(energy, 7.5625);
+                EXPECT_DOUBLE_EQ(integral, 8.0);
+            }
+            ++row_count;
+        }
+        EXPECT_EQ(row_count, declared_points);
 		ifs.close();
-		remove("dos.txt");
+		remove("doss1g1.txt");
 #ifdef __MPI
 	}
 #endif

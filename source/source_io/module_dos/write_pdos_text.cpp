@@ -17,7 +17,6 @@ void ModuleIO::write_pdos_text(
         const double& emin,
         const double& dos_edelta_ev,
         const std::string& out_dir,
-        const std::string& basis,
         const int istep)
 {
     ModuleBase::TITLE("ModuleIO", "write_pdos_text");
@@ -33,7 +32,7 @@ void ModuleIO::write_pdos_text(
         {
             ss << "g" << istep + 1;
         }
-        ss << "_" << basis << ".txt";
+        ss << ".txt";
 
         std::ofstream ofs(ss.str().c_str());
 

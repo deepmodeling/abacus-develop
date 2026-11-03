@@ -36,6 +36,7 @@ exx_ccp_rmesh_times  1
 lr_nstates        2
 xc_kernel         hf
 lr_solver         dav
+lr_grad_solver    cg
 lr_thr            1e-2
 pw_diag_ndim      2
 
@@ -46,3 +47,6 @@ nocc              4
 nvirt             2
 abs_wavelen_range  40 180
 abs_broadening    0.01
+# Skip optical postprocessing in this energy/force regression.
+abs_gauge         none
+cal_force         1

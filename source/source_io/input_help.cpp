@@ -371,6 +371,9 @@ void ParameterHelp::build_registry() {
         meta.default_value = item.default_value;
         meta.unit = item.unit;
         meta.availability = item.get_availability();
+        meta.allowed_values = item.domain.format_choices();
+        meta.value_rule = item.domain.format_rule();
+        meta.requirements = item.domain.format_requirements();
 
         // Pre-compute lowercase name for fast fuzzy matching
         meta.name_lowercase = to_lowercase(item.label);
@@ -398,6 +401,21 @@ bool ParameterHelp::show_parameter_help(const std::string& key, std::ostream& os
     os << "\n";
     os << "Parameter: " << meta.name << "\n";
     os << "Type:      " << meta.type << "\n";
+
+    if (!meta.allowed_values.empty()) {
+        const std::string allowed_values = "Allowed values: " + meta.allowed_values;
+        os << word_wrap(allowed_values, MAX_WIDTH, INDENT_SIZE, 0) << "\n";
+    }
+
+    if (!meta.value_rule.empty()) {
+        const std::string value_rule = "Legal range: " + meta.value_rule;
+        os << word_wrap(value_rule, MAX_WIDTH, INDENT_SIZE, 0) << "\n";
+    }
+
+    if (!meta.requirements.empty()) {
+        const std::string requirements = "Requirements: " + meta.requirements;
+        os << word_wrap(requirements, MAX_WIDTH, INDENT_SIZE, 0) << "\n";
+    }
 
     if (!meta.default_value.empty()) {
         os << "Default:   " << meta.default_value << "\n";
@@ -494,6 +512,28 @@ void ParameterHelp::generate_yaml(std::ostream& os) {
         os << "  - name: " << yaml_quote_if_needed(item.label) << "\n";
         os << "    category: " << yaml_quote_if_needed(item.category) << "\n";
         os << "    type: " << yaml_quote_if_needed(item.type) << "\n";
+
+        if (!item.domain.choices().empty()) {
+            os << "    allowed_values: [";
+            const auto& choices = item.domain.choices();
+            for (size_t i = 0; i < choices.size(); ++i)
+            {
+                if (i != 0) { os << ", "; }
+                if (item.domain.kind() == AvailabilityValueKind::String)
+                {
+                    os << yaml_quote_if_needed(choices[i]);
+                }
+                else { os << choices[i]; }
+            }
+            os << "]\n";
+        }
+
+        if (!item.domain.format_rule().empty()) {
+            os << "    value_rule: " << yaml_quote_if_needed(item.domain.format_rule()) << "\n";
+        }
+        if (!item.domain.format_requirements().empty()) {
+            os << "    requirements: " << yaml_quote_if_needed(item.domain.format_requirements()) << "\n";
+        }
 
         // Description uses block scalar
         os << "    description: ";

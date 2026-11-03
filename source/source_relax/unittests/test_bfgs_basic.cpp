@@ -1,9 +1,10 @@
+#include "source_io/module_parameter/parameter.h"
+#include "source_relax/bfgs_basic.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/relax_data.h"
+
 #include "gmock/gmock.h"
-#include "source_io/module_parameter/parameter.h"
 #include "gtest/gtest.h"
-#include "source_relax/bfgs_basic.h"
 /************************************************
  *  unit tests of class BFGS_Basic
  ***********************************************/
@@ -260,7 +261,9 @@ TEST_F(BFGSBasicTest, NewStepWarningQuit)
     std::vector<double> etot_info(2, 0.0);
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.new_step_for_testing(lat0, update_iter, ofs, etot_info, test_relax_method), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.new_step_for_testing(lat0, update_iter, ofs, etot_info, test_relax_method),
+                ::testing::ExitedWithCode(1),
+                "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs_ndim > 1 not implemented yet"));
 }
@@ -348,7 +351,9 @@ TEST_F(BFGSBasicTest, ComputeTrustRadiusWarningQuit)
 
     std::ofstream ofs("test_log.log");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(bfgs.compute_trust_radius_for_testing(ofs, etot_info, test_relax_method), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(bfgs.compute_trust_radius_for_testing(ofs, etot_info, test_relax_method),
+                ::testing::ExitedWithCode(1),
+                "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("bfgs history already reset at previous step, we got trapped!"));
 }

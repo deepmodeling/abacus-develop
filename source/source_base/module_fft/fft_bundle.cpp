@@ -110,6 +110,28 @@ void FFT_Bundle::initfft(int nx_in,
     }else{
         ModuleBase::WARNING_QUIT("FFT_Bundle", "Please set the device to cpu or gpu or dsp");
     }
+
+    if (this->device != "cpu")
+    {
+        // The gpu/dsp backends implement only the device-memory 3D FFT
+        // interface; the host-memory interface (used by post-processing that
+        // runs on the CPU wavefunction mirror) is served by the extra
+        // FFT_CPU backends host_fft_float/host_fft_double.
+        if (this->float_flag)
+        {
+#if defined(__FLOAT_FFTW)
+            this->host_fft_float = make_unique<FFT_CPU<float>>(this->fft_mode);
+            this->host_fft_float->initfft(
+                nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
+#endif
+        }
+        // The double host backend is needed regardless of the compute precision:
+        // post-processing (e.g. the Wannier90 output path) always reads the
+        // std::complex<double> CPU wavefunction mirror, even for precision=single.
+        this->host_fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
+        this->host_fft_double->initfft(
+            nx_in, ny_in, nz_in, lixy_in, rixy_in, ns_in, nplane_in, nproc_in, gamma_only_in, xprime_in);
+    }
 }
 
 void FFT_Bundle::setupFFT()
@@ -118,9 +140,17 @@ void FFT_Bundle::setupFFT()
     {
         fft_double->setupFFT();
     }
+    if (host_fft_double != nullptr)
+    {
+        host_fft_double->setupFFT();
+    }
     if (float_flag)
     {
         fft_float->setupFFT();
+        if (host_fft_float != nullptr)
+        {
+            host_fft_float->setupFFT();
+        }
     }
 }
 
@@ -130,9 +160,17 @@ void FFT_Bundle::clearFFT()
     {
         fft_double->cleanFFT();
     }
+    if (host_fft_double != nullptr)
+    {
+        host_fft_double->cleanFFT();
+    }
     if (float_flag)
     {
         fft_float->cleanFFT();
+        if (host_fft_float != nullptr)
+        {
+            host_fft_float->cleanFFT();
+        }
     }
 }
 void FFT_Bundle::clear()
@@ -142,9 +180,17 @@ void FFT_Bundle::clear()
     {
         fft_double->clear();
     }
+    if (host_fft_double != nullptr)
+    {
+        host_fft_double->clear();
+    }
     if (float_flag)
     {
         fft_float->clear();
+        if (host_fft_float != nullptr)
+        {
+            host_fft_float->clear();
+        }
     }
 }
 
@@ -165,67 +211,67 @@ void FFT_Bundle::resource_handler(const int flag) const
 template <>
 void FFT_Bundle::fftxyfor(std::complex<float>* in, std::complex<float>* out) const
 {
-    fft_float->fftxyfor(in, out);
+    this->get_host_fft_float()->fftxyfor(in, out);
 }
 template <>
 void FFT_Bundle::fftxyfor(std::complex<double>* in, std::complex<double>* out) const
 {
-    fft_double->fftxyfor(in, out);
+    this->get_host_fft_double()->fftxyfor(in, out);
 }
 
 template <>
 void FFT_Bundle::fftzfor(std::complex<float>* in, std::complex<float>* out) const
 {
-    fft_float->fftzfor(in, out);
+    this->get_host_fft_float()->fftzfor(in, out);
 }
 template <>
 void FFT_Bundle::fftzfor(std::complex<double>* in, std::complex<double>* out) const
 {
-    fft_double->fftzfor(in, out);
+    this->get_host_fft_double()->fftzfor(in, out);
 }
 
 template <>
 void FFT_Bundle::fftxybac(std::complex<float>* in, std::complex<float>* out) const
 {
-    fft_float->fftxybac(in, out);
+    this->get_host_fft_float()->fftxybac(in, out);
 }
 template <>
 void FFT_Bundle::fftxybac(std::complex<double>* in, std::complex<double>* out) const
 {
-    fft_double->fftxybac(in, out);
+    this->get_host_fft_double()->fftxybac(in, out);
 }
 
 template <>
 void FFT_Bundle::fftzbac(std::complex<float>* in, std::complex<float>* out) const
 {
-    fft_float->fftzbac(in, out);
+    this->get_host_fft_float()->fftzbac(in, out);
 }
 template <>
 void FFT_Bundle::fftzbac(std::complex<double>* in, std::complex<double>* out) const
 {
-    fft_double->fftzbac(in, out);
+    this->get_host_fft_double()->fftzbac(in, out);
 }
 
 template <>
 void FFT_Bundle::fftxyr2c(float* in, std::complex<float>* out) const
 {
-    fft_float->fftxyr2c(in, out);
+    this->get_host_fft_float()->fftxyr2c(in, out);
 }
 template <>
 void FFT_Bundle::fftxyr2c(double* in, std::complex<double>* out) const
 {
-    fft_double->fftxyr2c(in, out);
+    this->get_host_fft_double()->fftxyr2c(in, out);
 }
 
 template <>
 void FFT_Bundle::fftxyc2r(std::complex<float>* in, float* out) const
 {
-    fft_float->fftxyc2r(in, out);
+    this->get_host_fft_float()->fftxyc2r(in, out);
 }
 template <>
 void FFT_Bundle::fftxyc2r(std::complex<double>* in, double* out) const
 {
-    fft_double->fftxyc2r(in, out);
+    this->get_host_fft_double()->fftxyc2r(in, out);
 }
 
 template <>
@@ -258,34 +304,34 @@ void FFT_Bundle::fft3D_backward(std::complex<double>* in,
 template <>
 float* FFT_Bundle::get_rspace_data() const
 {
-    return fft_float->get_rspace_data();
+    return this->get_host_fft_float()->get_rspace_data();
 }
 template <>
 double* FFT_Bundle::get_rspace_data() const
 {
-    return fft_double->get_rspace_data();
+    return this->get_host_fft_double()->get_rspace_data();
 }
 
 template <>
 std::complex<float>* FFT_Bundle::get_auxr_data() const
 {
-    return fft_float->get_auxr_data();
+    return this->get_host_fft_float()->get_auxr_data();
 }
 template <>
 std::complex<double>* FFT_Bundle::get_auxr_data() const
 {
-    return fft_double->get_auxr_data();
+    return this->get_host_fft_double()->get_auxr_data();
 }
 
 template <>
 std::complex<float>* FFT_Bundle::get_auxg_data() const
 {
-    return fft_float->get_auxg_data();
+    return this->get_host_fft_float()->get_auxg_data();
 }
 template <>
 std::complex<double>* FFT_Bundle::get_auxg_data() const
 {
-    return fft_double->get_auxg_data();
+    return this->get_host_fft_double()->get_auxg_data();
 }
 
 template <>

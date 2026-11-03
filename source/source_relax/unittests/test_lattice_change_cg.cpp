@@ -1,9 +1,10 @@
-#include "source_relax/relax_criteria.h"
 #include "for_test.h"
-#include "gtest/gtest.h"
 #include "mock_remake_cell.h"
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/lattice_change_cg.h"
+#include "source_relax/relax_criteria.h"
+
+#include "gtest/gtest.h"
 
 /************************************************
  *  unit tests of class Lattice_Change_CG
@@ -108,9 +109,9 @@ TEST_F(LatticeChangeCGTest, TestStartConverged)
     ofs.close();
 
     // Check output
-    std::string expected_output
-        = " Largest stress is 0, movement is impossible.\n end of lattice optimization\n                              stress_step = 1\n       "
-          "                  update iteration = 5\n";
+    std::string expected_output = " Largest stress is 0, movement is impossible.\n end of lattice optimization\n       "
+                                  "                       stress_step = 1\n       "
+                                  "                  update iteration = 5\n";
     std::ifstream ifs("test_lc_cg_start_converged.log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -336,4 +337,3 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrial)
     ifs.close();
     std::remove("test_lc_cg_start_notrial.log");
 }
-

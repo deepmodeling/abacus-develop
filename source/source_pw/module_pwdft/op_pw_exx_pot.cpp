@@ -137,7 +137,7 @@ void get_exx_potential(const K_Vectors* kv,
                     }
                 }
 
-                const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+                const int nk_fac = kv->get_spin_mult();
                 const int nk = nks / nk_fac;
 
                 Real gg = (k_c - q_c + rhopw_dev->gcar[ig]).norm2() * tpiba2;
@@ -167,9 +167,8 @@ void get_exx_potential(const K_Vectors* kv,
             double erfc_omega = std::stod(param["omega"]);
             double erfc_omega2 = erfc_omega * erfc_omega;
             double alpha = std::stod(param["alpha"]);
-            // Like the Fock correction, this global q sum is initialized by
-            // the operator. Recomputing it here would require idle pools to
-            // join a collective after their local k-point bounds check.
+            // Initialized on the SCF mesh, or replaced with the frozen source
+            // correction by set_source. The shared limits scheme stores zero.
             const double exx_div = OperatorEXXPW<std::complex<Real>, Device>::erfc_div[i];
             const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
             const ModuleBase::Vector3<double> k_d = wfcpw->kvec_d[ik];
@@ -205,7 +204,7 @@ void get_exx_potential(const K_Vectors* kv,
                     }
                 }
 
-                const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+                const int nk_fac = kv->get_spin_mult();
                 const int nk = nks / nk_fac;
                 // const int ig_kq = ik * nks * npw + iq * npw + ig;
 
@@ -324,7 +323,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
                     }
                 }
 
-                const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+                const int nk_fac = kv->get_spin_mult();
                 const int nk = nks / nk_fac;
                 // const int ig_kq = ik * nks * npw + iq * npw + ig;
 
@@ -391,7 +390,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
                     }
                 }
 
-                const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+                const int nk_fac = kv->get_spin_mult();
                 const int nk = nks / nk_fac;
                 // const int ig_kq = ik * nks * npw + iq * npw + ig;
 
@@ -442,7 +441,7 @@ double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
     double nqs_half2 = 0.5 * kv->nmp[1];
     double nqs_half3 = 0.5 * kv->nmp[2];
 
-    int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    const int nk_fac = kv->get_spin_mult();
 
     // here we follow the exx_divergence subroutine in q-e (PW/src/exx_base.f90)
     double alpha = 10.0 / wfcpw->gk_ecut;

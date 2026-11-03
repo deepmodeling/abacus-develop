@@ -55,6 +55,67 @@ class WavefunctionContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "disagrees"):
             check_ks_nao(self.ks, self.root, 1e-7)
 
+    def test_spinor_text_file_uses_spinor_tag(self):
+        # Binary v1 stores component-major blocks; the text writer interleaves
+        # the two spinor components at each spatial orbital.
+        values = (1, 0.5, 2, -0.5, 3, 0.25, 4, -0.25,
+                  5, 0.125, 6, -0.125, 7, 0.75, 8, -0.75)
+        header = struct.pack("<6iiq", -12345679, 28, 1, 1, 2, 4, 1, 36)
+        payload = struct.pack("<16d", *values)
+        self.ks.write_bytes(header + payload)
+        (self.root / "wfk1s4_nao.txt").write_text(
+            "1 (index of k points)\n0 0 0\n2 (number of bands)\n4 (number of orbitals)\n"
+            "1 (band)\n0 (Ry)\n1 (Occupations)\n"
+            "1 0.5 5 0.125 2 -0.5 6 -0.125\n"
+            "2 (band)\n1 (Ry)\n0 (Occupations)\n"
+            "3 0.25 7 0.75 4 -0.25 8 -0.75\n")
+        check_ks_nao(self.ks, self.root, 1e-7, spinor=True)
+
+    def test_manifest_propagates_soc_contract_requirements(self):
+        output = self.root / "OUT.librpa"
+        output.mkdir()
+        values = (1, 0.5, 2, -0.5, 3, 0.25, 4, -0.25,
+                  5, 0.125, 6, -0.125, 7, 0.75, 8, -0.75)
+        output.joinpath("KS_wfc_0.dat").write_bytes(
+            struct.pack("<6iiq", -12345679, 28, 1, 1, 2, 4, 1, 36)
+            + struct.pack("<16d", *values)
+        )
+        output.joinpath("band_out.txt").write_text("1\n1\n2\n4\n0\n")
+        output.joinpath("stru_out.txt").write_text(
+            "1 0 0\n0 1 0\n0 0 1\n1 0 0\n0 1 0\n0 0 1\n"
+            "1\n0 0 0 0\n2 row\n"
+            "1 0 0 0 1 0 0 0 1 0 0 0\n"
+            "1 0 0 0 1 0 0 0 1 0 0 0\n"
+            "spin_symmetry 0 1\n"
+            "0 1 0 0 0 0 0 0 1\n"
+            "1 1 0 0 0 0 0 0 1\n"
+        )
+        nao = self.root / "OUT.autotest"
+        nao.mkdir()
+        nao.joinpath("wfk1s4_nao.txt").write_text(
+            "1 (index of k points)\n0 0 0\n2 (number of bands)\n4 (number of orbitals)\n"
+            "1 (band)\n0 (Ry)\n1 (Occupations)\n"
+            "1 0.5 5 0.125 2 -0.5 6 -0.125\n"
+            "2 (band)\n1 (Ry)\n0 (Occupations)\n"
+            "3 0.25 7 0.75 4 -0.25 8 -0.75\n"
+        )
+        manifest = {
+            "output_dir": "OUT.librpa",
+            "required": [
+                {"pattern": "stru_out.txt", "kind": "stru", "symmetry_rows": 2,
+                 "spin_symmetry_rows": 2},
+                {"pattern": "band_out.txt", "kind": "band"},
+                {"pattern": "KS_wfc_0.dat", "kind": "ks_wfc_v1", "nao_dir": "OUT.autotest",
+                 "spinor": True},
+            ],
+        }
+        check_manifest(self.root, manifest)
+        output.joinpath("stru_out.txt").write_text(
+            output.joinpath("stru_out.txt").read_text().split("spin_symmetry", 1)[0]
+        )
+        with self.assertRaisesRegex(ProducerContractError, "spin_symmetry"):
+            check_manifest(self.root, manifest)
+
     def test_truncated_header_and_payload(self):
         for data in (self.data[:20], self.data[:-1], self.data + b"x"):
             self.ks.write_bytes(data)

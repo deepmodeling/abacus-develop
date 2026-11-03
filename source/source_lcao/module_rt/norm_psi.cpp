@@ -34,13 +34,13 @@ void norm_psi(const Parallel_Orbitals* pv,
               std::ofstream& ofs_running,
               const int print_matrix)
 {
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(pv->nloc_wfc > 0 && pv->para_2d().get_local_size() > 0);
 
     std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
     ModuleBase::GlobalFunc::ZEROS(tmp1, pv->nloc_wfc);
 
-    std::complex<double>* Cij = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(Cij, pv->nloc);
+    std::complex<double>* Cij = new std::complex<double>[pv->para_2d().get_local_size()];
+    ModuleBase::GlobalFunc::ZEROS(Cij, pv->para_2d().get_local_size());
 
     ScalapackConnector::gemm('N',
                              'N',
@@ -51,7 +51,7 @@ void norm_psi(const Parallel_Orbitals* pv,
                              Stmp,
                              1,
                              1,
-                             pv->desc,
+                             pv->para_2d().get_desc(),
                              psi_k,
                              1,
                              1,
@@ -85,10 +85,10 @@ void norm_psi(const Parallel_Orbitals* pv,
     if (print_matrix)
     {
         ofs_running << "original Cij :" << std::endl;
-        for (int i = 0; i < pv->ncol; i++)
+        for (int i = 0; i < pv->para_2d().get_col_size(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->nrow; j++)
+            const int in = i * pv->para_2d().get_col_size();
+            for (int j = 0; j < pv->para_2d().get_row_size(); j++)
             {
                 double aa = Cij[in + j].real();
                 double bb = Cij[in + j].imag();
@@ -109,24 +109,24 @@ void norm_psi(const Parallel_Orbitals* pv,
 
     int naroc[2] = {0, 0}; // maximum number of row or column
 
-    for (int iprow = 0; iprow < pv->dim0; ++iprow)
+    for (int iprow = 0; iprow < pv->para_2d().get_dim0(); ++iprow)
     {
-        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
+        for (int ipcol = 0; ipcol < pv->para_2d().get_dim1(); ++ipcol)
         {
-            if (pv->blacs_in_this_processor(iprow, ipcol))
+            if (pv->para_2d().blacs_in_this_processor(iprow, ipcol))
             {
-                naroc[0] = pv->nrow;
-                naroc[1] = pv->ncol;
+                naroc[0] = pv->para_2d().get_row_size();
+                naroc[1] = pv->para_2d().get_col_size();
                 for (int j = 0; j < naroc[1]; ++j)
                 {
-                    int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
+                    int igcol = globalIndex(j, pv->para_2d().get_block_size(), pv->para_2d().get_dim1(), ipcol);
                     if (igcol >= nband)
                     {
                         continue;
                     }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
-                        int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
+                        int igrow = globalIndex(i, pv->para_2d().get_block_size(), pv->para_2d().get_dim0(), iprow);
                         if (igrow >= nband)
                         {
                             continue;
@@ -170,10 +170,10 @@ void norm_psi(const Parallel_Orbitals* pv,
     if (print_matrix)
     {
         ofs_running << " Cij:" << std::endl;
-        for (int i = 0; i < pv->ncol; i++)
+        for (int i = 0; i < pv->para_2d().get_col_size(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->nrow; j++)
+            const int in = i * pv->para_2d().get_col_size();
+            for (int j = 0; j < pv->para_2d().get_row_size(); j++)
             {
                 ofs_running << Cij[in + j].real() << "+" << Cij[in + j].imag() << "i ";
             }
@@ -184,8 +184,8 @@ void norm_psi(const Parallel_Orbitals* pv,
         ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().get_col_size();
+            for (int j = 0; j < pv->para_2d().get_col_size(); j++)
             {
                 double aa = psi_k[in + j].real();
                 double bb = psi_k[in + j].imag();
@@ -205,8 +205,8 @@ void norm_psi(const Parallel_Orbitals* pv,
         ofs_running << " psi_k before normalization:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().get_col_size();
+            for (int j = 0; j < pv->para_2d().get_col_size(); j++)
             {
                 double aa = tmp1[in + j].real();
                 double bb = tmp1[in + j].imag();

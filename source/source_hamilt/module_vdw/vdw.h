@@ -1,13 +1,13 @@
 #ifndef VDW_H
 #define VDW_H
 
-#include <memory>
-#include <fstream>
-#include <utility>
-#include <vector>
-
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/input_parameter.h"
+
+#include <fstream>
+#include <memory>
+#include <utility>
+#include <vector>
 
 namespace vdw
 {
@@ -20,7 +20,9 @@ std::unique_ptr<T> make_unique_compat(Args&&... args)
 
 struct VdwRequest
 {
-    VdwRequest(const bool force_in, const bool stress_in) : force(force_in), stress(stress_in) {}
+    VdwRequest(const bool force_in, const bool stress_in) : force(force_in), stress(stress_in)
+    {
+    }
 
     bool force;
     bool stress;
@@ -43,7 +45,9 @@ struct VdwResult
 class Vdw
 {
   public:
-    Vdw(const UnitCell& unit_in) : ucell_(unit_in) {}
+    Vdw(const UnitCell& unit_in) : ucell_(unit_in)
+    {
+    }
 
     virtual ~Vdw() = default;
 
@@ -68,9 +72,7 @@ class Vdw
  * @param plog optional, for logging the parameter setting process
  * @return std::unique_ptr<Vdw>
  */
-std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell,
-                              const Input_para& input,
-                              std::ofstream* plog = nullptr);
+std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, std::ofstream* plog = nullptr);
 
 } // namespace vdw
 

@@ -4,8 +4,7 @@ if(ENABLE_ELPA)
   list(APPEND bse_solver_test_libs ELPA::ELPA)
 endif()
 
-AddTest(
+addtest(
   TARGET MODULE_BSE_solver_test
   LIBS ${bse_solver_test_libs}
-  SOURCES hamilt_bse_solver_test.cpp ../hamilt_bse_solver.cpp
-)
+  SOURCES hamilt_bse_solver_test.cpp ../hamilt_bse_solver.cpp)

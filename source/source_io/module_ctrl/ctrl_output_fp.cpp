@@ -4,6 +4,7 @@
 #include "source_estate/elecstate.h"               // use elecstate::ElecState
 #include "source_estate/module_charge/charge.h"    // use Charge
 #include "source_estate/module_charge/chg_symm.h"  // use module_charge::cal_rhog_symm
+#include "source_estate/module_pot/sol_grid_field.h" // use SolventGridField
 #include "source_estate/write_elecstat_pot.h"      // use write_elecstat_pot
 #include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 #include "source_io/module_dipole/dipole_io.h"     // use write_dipole
@@ -37,25 +38,19 @@ void ctrl_output_fp(UnitCell& ucell,
     const int nspin = inp.nspin;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
 
-    // print out the 'g' index when istep_in != -1
+    const int output_frequency = inp.esolver_type == "tddft" ? inp.out_freq_td : inp.out_freq_ion;
+    // Print the global electronic step for TDDFT and the ionic step otherwise.
     int istep_in = -1;
-    if (inp.esolver_type != "tddft" && inp.out_freq_ion > 0) // default value of out_freq_ion is 0
+    if (output_frequency > 0)
     {
-        if (istep % inp.out_freq_ion == 0)
-        {
-            istep_in = istep;
-        }
-    }
-    else if (inp.esolver_type == "tddft" && inp.out_freq_td > 0) // default value of out_freq_td is 0
-    {
-        if (istep % inp.out_freq_td == 0)
+        if (istep % output_frequency == 0)
         {
             istep_in = istep;
         }
     }
 
     std::string geom_block;
-    bool should_output = (inp.out_freq_ion == 0);
+    bool should_output = (output_frequency == 0);
     if (istep_in >= 0)
     {
         geom_block = "g" + std::to_string(istep + 1);
@@ -167,6 +162,7 @@ void ctrl_output_fp(UnitCell& ucell,
         fn += geom_block + ".cube";
 
         const std::vector<double>* pcc_potential = pelec->pot->pcc_electron_potential();
+        const std::vector<double>* solvent_potential = pelec->pot->find_sol_pot();
         ModuleIO::write_elecstat_pot(
 #ifdef __MPI
             pw_big->bz,
@@ -180,8 +176,34 @@ void ctrl_output_fp(UnitCell& ucell,
             pelec->pot->get_fixed_v(),
             solvent,
             pcc_potential,
+            solvent_potential,
             inp.out_pot[1],
             ofs_running);
+    }
+
+    // 5b) write the implicit-solvent dielectric function and cavity
+    if (inp.out_sol[0] == 1 && should_output)
+    {
+        const std::vector<elecstate::SolventGridField> fields = pelec->pot->sol_out_fields();
+        for (const elecstate::SolventGridField& field : fields)
+        {
+            const std::string fn = global_out_dir + "sol_" + field.name + geom_block + ".cube";
+            const std::string data_desc = "implicit solvent " + field.name;
+            ModuleIO::write_vdata_palgrid(para_grid,
+                                          field.values.data(),
+                                          -1, // spin-independent field
+                                          nspin,
+                                          istep,
+                                          fn,
+                                          0.0, // efermi
+                                          &(ucell),
+                                          inp.out_sol[1], // precision
+                                          0, // out_fermi
+                                          false, // two_fermi, unused without out_fermi
+                                          false, // reduce_all_pool
+                                          ofs_running,
+                                          data_desc);
+        }
     }
 
     // 6) write ELF
@@ -197,17 +219,17 @@ void ctrl_output_fp(UnitCell& ucell,
 
         std::string out_dir = PARAM.globalv.global_out_dir;
         ModuleIO::write_elf(out_dir,
-            istep,
-            nspin,
-            chr.rho,
-            chr.kin_r,
-            pw_rhod,
-            para_grid,
-            &(ucell),
-            inp.out_elf[1],
-            geom_block,
-            PARAM.globalv.two_fermi,
-            ofs_running);
+                            istep,
+                            nspin,
+                            chr.rho,
+                            chr.kin_r,
+                            pw_rhod,
+                            para_grid,
+                            &(ucell),
+                            inp.out_elf[1],
+                            geom_block,
+                            PARAM.globalv.two_fermi,
+                            ofs_running);
     }
 
 #ifdef __LIBXC
@@ -225,10 +247,13 @@ void ctrl_output_fp(UnitCell& ucell,
     }
 #endif
 
-    // 8) write dipole moment
-    if (inp.out_dipole == 1 && should_output)
+    // RT-TDDFT response analysis requires every dipole sample, independently of snapshot output.
+    const bool output_dipole = inp.esolver_type == "tddft" || should_output;
+    if (inp.out_dipole == 1 && output_dipole)
     {
-        for (int is = 0; is < nspin; ++is)
+        const int dipole_channels = nspin == 4 ? 1 : nspin;
+        // In a spinor density only channel zero is charge; the other three channels are magnetization.
+        for (int is = 0; is < dipole_channels; ++is)
         {
             std::stringstream ss_dipole;
             ss_dipole << global_out_dir << "dipole_s" << is + 1 << ".txt";

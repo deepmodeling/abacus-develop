@@ -1,15 +1,16 @@
 #ifndef RELAX_DRIVER_H
 #define RELAX_DRIVER_H
 
+#include "relax_nsync.h"
+#include "relax_sync.h"
+#include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
-#include "relax_sync.h"
-#include "relax_nsync.h"
 #include "source_io/module_parameter/input_parameter.h"
-#include "source_base/matrix.h"
-#include <vector>
+
 #include <fstream>
 #include <string>
+#include <vector>
 
 /**
  * @brief Driver class for geometry relaxation calculations.
@@ -21,8 +22,8 @@ class Relax_Driver
 {
 
   public:
-    Relax_Driver(){};
-    ~Relax_Driver(){};
+    Relax_Driver() {};
+    ~Relax_Driver() {};
 
     /**
      * @brief Main driver function for relaxation calculations.
@@ -37,11 +38,20 @@ class Relax_Driver
      * @param ofs_running Output stream for running log.
      */
     void relax_driver(ModuleESolver::ESolver* p_esolver,
-            UnitCell& ucell,
-            const Input_para& inp,
-            std::ofstream& ofs_running);
+                      UnitCell& ucell,
+                      const Input_para& inp,
+                      std::ofstream& ofs_running);
 
   private:
+    enum class RelaxStopReason
+    {
+        Converged,
+        MaxSteps,
+        UserExit,
+        DryRun,
+        Finished
+    };
+
     /// New relaxation optimizer (Relax class)
     Relax rl;
     /// Old relaxation optimizer (IonCellOptimizer class)
@@ -81,13 +91,19 @@ class Relax_Driver
      * @param stress Output matrix for calculated stress.
      * @param etot Output total energy.
      */
-    void esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell,
-            const Input_para& inp, ModuleBase::matrix& force, ModuleBase::matrix& stress, double& etot);
+    void esolve(const int istep,
+                ModuleESolver::ESolver* p_esolver,
+                UnitCell& ucell,
+                const Input_para& inp,
+                ModuleBase::matrix& force,
+                ModuleBase::matrix& stress,
+                double& etot);
 
     /**
      * @brief Perform one relaxation step.
      *
-     * @param steps Vector containing step counters (modified in place): steps[0]=istep, steps[1]=force_step, steps[2]=stress_step.
+     * @param steps Vector containing step counters (modified in place): steps[0]=istep, steps[1]=force_step,
+     * steps[2]=stress_step.
      * @param p_esolver Pointer to the energy solver.
      * @param ucell Reference to the unit cell.
      * @param inp Input parameters for the calculation.
@@ -97,9 +113,14 @@ class Relax_Driver
      * @param ofs_running Output stream for running log.
      * @return True if relaxation converged, false otherwise.
      */
-    bool relax_step(std::vector<int>& steps, ModuleESolver::ESolver* p_esolver, UnitCell& ucell,
-            const Input_para& inp, const ModuleBase::matrix& force, const ModuleBase::matrix& stress,
-            const double etot, std::ofstream& ofs_running);
+    bool relax_step(std::vector<int>& steps,
+                    ModuleESolver::ESolver* p_esolver,
+                    UnitCell& ucell,
+                    const Input_para& inp,
+                    const ModuleBase::matrix& force,
+                    const ModuleBase::matrix& stress,
+                    const double etot,
+                    std::ofstream& ofs_running);
 
     /**
      * @brief Output structure files before relaxation move.
@@ -110,7 +131,12 @@ class Relax_Driver
      * @param etot Total energy in Ry corresponding to this structure.
      * @param stress Stress matrix (3x3) in Ry/Bohr^3 corresponding to this structure.
      */
-    void stru_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress, const ModuleBase::matrix& force);
+    void stru_out(const int istep,
+                  UnitCell& ucell,
+                  const Input_para& inp,
+                  const double etot,
+                  const ModuleBase::matrix& stress,
+                  const ModuleBase::matrix& force);
 
     /**
      * @brief Output JSON format results.
@@ -121,13 +147,17 @@ class Relax_Driver
      * @param force Matrix of calculated forces.
      * @param stress Matrix of calculated stress.
      */
-    void json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, const Input_para& inp,
-            const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
+    void json_out(ModuleESolver::ESolver* p_esolver,
+                  UnitCell& ucell,
+                  const Input_para& inp,
+                  const ModuleBase::matrix& force,
+                  const ModuleBase::matrix& stress);
 
     /**
      * @brief Output final results after relaxation.
      *
      * @param istep Final iteration step.
+     * @param stop_reason Reason why the calculation stopped.
      * @param ucell Reference to the unit cell.
      * @param inp Input parameters for the calculation.
      * @param etot Total energy of the final step.
@@ -138,6 +168,7 @@ class Relax_Driver
      *        omitted / marked N/A.
      */
     void final_out(const int istep,
+                   const RelaxStopReason stop_reason,
                    UnitCell& ucell,
                    const Input_para& inp,
                    const double etot,
@@ -153,10 +184,13 @@ class Relax_Driver
      * per-step largest force / stress history, so ASE and users can diagnose
      * why the relaxation stopped at relax_nmax.
      *
+     * @param ionic_steps Number of evaluated ionic steps.
      * @param inp Input parameters (selects the active optimizer and relax_nmax).
      * @param ofs_running Output stream for the running log.
      */
-    void print_not_converged_summary(const Input_para& inp, std::ofstream& ofs_running) const;
+    void print_not_converged_summary(const int ionic_steps,
+                                     const Input_para& inp,
+                                     std::ofstream& ofs_running) const;
 
     /**
      * @brief Print the dry-run success message to screen.

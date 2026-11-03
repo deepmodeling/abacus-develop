@@ -12,6 +12,7 @@ void ReadInput::item_md()
     // 9. Molecular dynamics
     {
         Input_Item item("md_type");
+        item.domain.set_choices({"fire", "nve", "nvt", "npt", "langevin", "msst"});
         item.annotation = "choose ensemble";
         item.category = "Molecular dynamics";
         item.type = "String";
@@ -71,6 +72,7 @@ void ReadInput::item_md()
     }
     {
         Input_Item item("md_thermostat");
+        item.domain.set_choices({"nhc", "anderson", "berendsen", "rescaling", "rescale_v", "csvr"});
         item.annotation = "choose thermostat";
         item.category = "Molecular dynamics";
         item.type = "String";
@@ -338,6 +340,7 @@ Note: It is a system-dependent empirical parameter, ranging from 1/(40*md_dt) to
     }
     {
         Input_Item item("md_pcouple");
+        item.domain.set_choices({"none", "xyz", "xy", "xz", "yz"});
         item.annotation = "whether couple different components: xyz, xy, yz, xz, none";
         item.category = "Molecular dynamics";
         item.type = "String";
@@ -650,18 +653,13 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
     }
     {
         Input_Item item("msst_qmass");
+        item.domain.set_rule("value>0");
         item.annotation = "mass of thermostat";
         item.category = "Molecular dynamics";
         item.type = "Real";
         item.description = "Inertia of the extended system variable. You should set a number larger than 0.";
         item.default_value = "No default";
         item.unit = "";
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.mdp.msst_qmass <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "msst_qmass must be greater than 0!");
-            }
-        };
         read_sync_double(input.mdp.msst_qmass);
         this->add_item(item);
     }

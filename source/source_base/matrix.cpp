@@ -75,7 +75,12 @@ matrix::matrix( matrix && m_in )
 matrix& matrix::operator=( const matrix & m_in )
 {
     this->create( m_in.nr, m_in.nc, false );
-    memcpy( c, m_in.c, nr*nc*sizeof(double) );
+    // `create` leaves `c` null for an empty matrix, and memcpy's arguments are declared
+    // non-null even for a zero count -- so assigning an empty matrix is undefined behaviour.
+    if( nr && nc )
+    {
+        memcpy( c, m_in.c, nr*nc*sizeof(double) );
+    }
     return *this;
 }
 
@@ -155,6 +160,16 @@ void matrix::create( const int nrow, const int ncol, const bool flag_zero )
         nr = nrow;
         nc = ncol;
     }
+}
+
+/* Unary minus*/
+matrix operator-(const matrix& m1)
+{
+    matrix tm(m1);
+    const int size = m1.nr * m1.nc;
+    for (int i = 0; i < size; i++)
+        tm.c[i] = -tm.c[i];
+    return tm;
 }
 
 /* Adding matrices, as a friend */

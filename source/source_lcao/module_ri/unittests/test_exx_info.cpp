@@ -81,3 +81,19 @@ TEST(ExxInfo, LeavesPlaneWaveExchangeImageDomainUnchanged)
     EXPECT_NO_THROW(init_exx_info(info, input));
     EXPECT_FALSE(info.info_ri.unfold_hybrid_images);
 }
+
+TEST(ExxInfo, PreservesFullRangeHybridGaugeImagePath)
+{
+    auto input = hse_input();
+    input.dft_functional = "pbe0";
+    input.exx_real_number = "0";
+    input.exx_erfc_alpha.clear();
+    input.exx_erfc_omega.clear();
+    input.exx_fock_alpha = {"0.25"};
+    input.exx_fock_lambda = {"0.3"};
+    input.kpar = 2;
+    Exx_Info info;
+    EXPECT_NO_THROW(init_exx_info(info, input));
+    EXPECT_FALSE(info.info_ri.unfold_hybrid_images);
+    EXPECT_EQ(info.info_ri.coulomb_param.count(Conv_Coulomb_Pot_K::Coulomb_Type::Fock), 1u);
+}

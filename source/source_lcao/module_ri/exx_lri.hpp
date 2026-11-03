@@ -6,6 +6,7 @@
 #ifndef EXX_LRI_HPP
 #define EXX_LRI_HPP
 
+#include "lri_cv_tools.h"
 #include "exx_lri.h"
 #include "hybrid_image_domain.h"
 #include "source_base/parallel_reduce.h"
@@ -39,6 +40,24 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
                           const K_Vectors &kv_in,
                           const LCAO_Orbitals& orb,
                           const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in)
+{
+    this->init(
+        mpi_comm_in,
+        ucell,
+        kv_in,
+        orb,
+        abfs_in,
+        false);
+}
+
+template <typename Tdata>
+void Exx_LRI<Tdata>::init(
+    const MPI_Comm &mpi_comm_in,
+    const UnitCell &ucell,
+    const K_Vectors &kv_in,
+    const LCAO_Orbitals &orb,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
+    const bool use_gpu)
 {
     ModuleBase::TITLE("Exx_LRI","init");
     ModuleBase::timer::start("Exx_LRI", "init");
@@ -74,15 +93,21 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
     this->exx_objs.clear();
     const auto settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
     this->MGT = std::make_shared<ORB_gaunt_table>();
-    this->refresh_coulomb(ucell, orb, settings);
+    this->refresh_coulomb(
+        ucell,
+        orb,
+        settings,
+        use_gpu);
 
     ModuleBase::timer::end("Exx_LRI", "init");
 }
 
-template<typename Tdata>
-void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
-                                   const LCAO_Orbitals& orb,
-                                   const CoulombSettings& settings)
+template <typename Tdata>
+void Exx_LRI<Tdata>::refresh_coulomb(
+    const UnitCell &ucell,
+    const LCAO_Orbitals &orb,
+    const CoulombSettings &settings,
+    const bool use_gpu)
 {
     ModuleBase::TITLE("Exx_LRI", "refresh_coulomb");
     ModuleBase::timer::start("Exx_LRI", "refresh_coulomb");
@@ -114,8 +139,16 @@ void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
         auto& object = this->exx_objs[settings_list.first];
         object.abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(
             this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
-        object.cv.set_orbitals(ucell, orb, this->lcaos, this->abfs, object.abfs_ccp,
-                               this->info.kmesh_times, this->MGT, settings_list.second.first);
+        object.cv.set_orbitals(
+            ucell,
+            orb,
+            this->lcaos,
+            this->abfs,
+            object.abfs_ccp,
+            this->info.kmesh_times,
+            this->MGT,
+            settings_list.second.first,
+            use_gpu);
         object.cv.set_info_ri(&this->info);
         if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
         {
@@ -192,7 +225,8 @@ void Exx_LRI<Tdata>::init_spencer(
         this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
         this->info.kmesh_times,
         this->MGT,
-        center2_settings->second.first);
+        center2_settings->second.first,
+        false);
     this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_info_ri(&this->info);
 
     ModuleBase::timer::end("Exx_LRI", "init_spencer");
@@ -1009,7 +1043,8 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
     ModuleBase::timer::start("Exx_LRI", "cal_exx_force");
 
     this->force_exx.create(nat, Ndim);
-    for(int is=0; is<PARAM.inp.nspin; ++is)
+    const int& nspin = PARAM.inp.nspin;
+    for(int is=0; is<nspin; ++is)
     {
         this->exx_lri.cal_force({"","",std::to_string(is),"",""});
         for(std::size_t idim=0; idim<Ndim; ++idim) {
@@ -1017,9 +1052,11 @@ void Exx_LRI<Tdata>::cal_exx_force(const int& nat)
                 this->force_exx(force_item.first, idim) += std::real(force_item.second);
                     } 		}
     }
-
-    const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(PARAM.inp.nspin);				// why?
-    const double frac = -2 * SPIN_multiple;		// why?
+    // SPIN_multiple cancels the one in `split_m2D_ktoR`, which are 0.5*0.5 at nspin=1.
+    // but only u-u and d-d pairs of Ds has contribution, so here's 2 instead of 4.
+    // And -2 is the same as post_process_Hexx (which didn't act on Hs)
+    const double SPIN_multiple = std::map<int,double>{{1,2}, {2,1}, {4,1}}.at(nspin);
+    const double frac = -2 * SPIN_multiple;
     this->force_exx *= frac;
     ModuleBase::timer::end("Exx_LRI", "cal_exx_force");
 }

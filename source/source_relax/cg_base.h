@@ -4,13 +4,14 @@
 /**
  * @class CG_Base
  * @brief Base class for conjugate gradient optimization algorithms.
- * 
+ *
  * This class provides common CG utility functions that can be shared between
  * different optimization implementations (ions movement and lattice change).
  * The functions are designed to be independent of specific data sources.
  */
-class CG_Base {
-public:
+class CG_Base
+{
+  public:
     /**
      * @brief Setup conjugate gradient direction.
      * @param dim Dimension of the optimization problem
@@ -21,9 +22,13 @@ public:
      * @param ncggrad CG iteration counter
      * @param flag Restart flag
      */
-    void setup_cg_grad(const int dim, double *grad, const double *grad0,
-                       double *cg_grad, const double *cg_grad0,
-                       const int &ncggrad, int &flag);
+    void setup_cg_grad(const int dim,
+                       double* grad,
+                       const double* grad0,
+                       double* cg_grad,
+                       const double* cg_grad0,
+                       const int& ncggrad,
+                       int& flag);
 
     /**
      * @brief Brent's method for one-dimensional minimization.
@@ -36,9 +41,7 @@ public:
      * @param best_x Output best step length
      * @param xpt Previous best point
      */
-    void Brent(double &fa, double &fb, double &fc,
-               double &xa, double &xb, double &xc,
-               double &best_x, double &xpt);
+    void Brent(double& fa, double& fb, double& fc, double& xa, double& xb, double& xc, double& best_x, double& xpt);
 
     /**
      * @brief Third-order polynomial interpolation for line search.
@@ -49,9 +52,12 @@ public:
      * @param x Current step length
      * @param best_x Output optimal step length
      */
-    void third_order(const double &e0, const double &e1,
-                     const double &fa, const double &fb,
-                     const double x, double &best_x);
+    void third_order(const double& e0,
+                     const double& e1,
+                     const double& fa,
+                     const double& fb,
+                     const double x,
+                     double& best_x);
 
     /**
      * @brief Calculate projection of gradient onto search direction.
@@ -60,7 +66,7 @@ public:
      * @param g1 Second vector (usually gradient)
      * @param f_value Output projection value
      */
-    void f_cal(const int dim, const double *g0, const double *g1, double &f_value);
+    void f_cal(const int dim, const double* g0, const double* g1, double& f_value);
 
     /**
      * @brief Calculate movement vector from CG direction.
@@ -69,17 +75,16 @@ public:
      * @param cg_gradn Normalized CG direction
      * @param trust_radius Step size limit
      */
-    void setup_move(const int dim, double *move, double *cg_gradn, const double &trust_radius);
+    void setup_move(const int dim, double* move, double* cg_gradn, const double& trust_radius);
 
-protected:
-
+  protected:
     /**
      * @brief Normalize vector.
      * @param dim Dimension of vector
      * @param cg_gradn Output normalized vector
      * @param cg_grad Input vector
      */
-    void normalize(const int dim, double *cg_gradn, const double *cg_grad);
+    void normalize(const int dim, double* cg_gradn, const double* cg_grad);
 };
 
 #endif

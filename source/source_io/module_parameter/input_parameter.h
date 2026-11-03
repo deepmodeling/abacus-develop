@@ -87,7 +87,7 @@ struct Input_para
     double nelec_delta = 0.0;          ///< change in the number of total electrons
     double nupdown = 0.0;
     std::string dft_functional = "default"; ///< input DFT functional.
-    int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized projected LCA.
+    int gga_grad = 0; ///< Noncollinear GGA: 0 original, 1 local axis, 2 regularized mapped-density LCA.
     double xc_temperature = 0.0;            ///< only relevant if finite temperature functional is used
     double pseudo_rcut = 15.0;              ///< cut-off radius for calculating msh
     bool pseudo_mesh = false;               ///< 0: use msh to normalize radial wave functions; 1:
@@ -161,11 +161,11 @@ struct Input_para
     //  int		bessel_nao_lmax;		///< lmax used in descriptor
 
     // ==============   #Parameters (4.Relaxation) ===========================
-    std::vector<std::string> relax_method = {"cg", "2"}; ///< relaxation algorithm and optional variant
+    std::string relax_method = "cg"; ///< geometry optimization method
 
     bool uses_simultaneous_relaxation() const
     {
-        return relax_method.size() == 2 && relax_method[0] == "cg" && relax_method[1] == "2";
+        return relax_method == "cg";
     }
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;
@@ -316,10 +316,15 @@ struct Input_para
 
     // ==============   #Parameters (9.rt-tddft) ===========================
     double td_dt = -1.0;       ///< time step for propagation
+    int td_max_halvings = 0;   ///< Maximum depth of PW real-time interval bisection; zero disables retries.
+    int td_scf_nmax = 100;     ///< SCF limit per real-time propagation attempt, independent of initial-state SCF.
     int estep_per_md = 1;      ///< number of electronic steps per MD step
     std::string lin_solver = "gmres"; ///< linear solver for real-time propagation
     std::string td_orthonormal = "cholesky"; ///< Orthonormalization for PW real-time propagation.
     bool td_out_stat = false; ///< Output PW real-time conservation diagnostics.
+    std::string td_out_mag = "voronoi"; ///< RT-TDDFT spinor magnetic moment partition.
+    bool td_out_torque = false; ///< Output XC and SOC spin angular momentum torques.
+    bool td_out_spincur = false; ///< Output the macroscopic spin angular momentum current.
     int lin_gmres_restart = 20; ///< Maximum Arnoldi steps per GMRES cycle.
     bool td_cn_init = true; ///< CN subspace initial guess and residual reuse.
     bool lin_reconstruct = true; ///< Explicit GMRES residual reconstruction with periodic audits.
@@ -335,6 +340,10 @@ struct Input_para
     double td_print_eij = -1.0;      ///< threshold to output Eij elements
     int td_edm = 0;                  ///< 0: new edm method   1: old edm method
     int propagator = 0;              ///< method of propagator
+    std::string td_exp_method = "lanczos"; ///< PW ETRS exponential backend.
+    int td_exp_order = 4; ///< Fixed Taylor polynomial order.
+    double td_exp_thr = 0.0; ///< Zero selects the precision-dependent exponential tolerance.
+    int td_exp_krylov_dim = 32; ///< Maximum Lanczos dimension before frozen-operator subdivision.
     int td_stype = 0;                ///< type of space domain  0 : length gauge  1: velocity gauge
     std::vector<int> td_ttype = {0}; ///< type of time domain
     ///<  0  Gauss type function.
@@ -392,6 +401,12 @@ struct Input_para
 
     // ==============   #Parameters (10.lr-tddft) ===========================
     int lr_nstates = 1;                              ///< the number of 2-particle states to be solved
+    int lr_target_state = 0;                         ///< which excited state the geometry relaxation follows (0-based)
+    std::string lr_target_spin = "singlet";          ///< spin channel of that state: singlet / triplet / updown
+    double lr_degen_thr
+        = 0.0; ///< max excitation-energy spread of a degenerate multiplet whose gradient matrix is computed (Ry); 0 disables
+    std::string lr_degen_mode = "state";       ///< what a relaxation follows when the target state sits in a degenerate multiplet: state / average
+    std::string lr_grad_solver = "cg";               ///< the linear solver of the Z-vector equation for LR-TDDFT gradients: cg / lapack / scalapack / scalapack_chol / elpa
     std::vector<std::string> lr_init_xc_kernel = {}; ///< The method to initalize the xc kernel
     int nocc = -1;                                   ///< the number of occupied orbitals to form the 2-particle basis
     int nvirt = 1;                              ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)
@@ -402,7 +417,7 @@ struct Input_para
     bool lr_unrestricted = false;               ///< whether to use the unrestricted construction for LR-TDDFT
     std::vector<double> abs_wavelen_range = {}; ///< the range of wavelength(nm) to output the absorption spectrum
     double abs_broadening = 0.01;               ///< the broadening (eta) for LR-TDDFT absorption spectrum
-    std::string abs_gauge = "velocity"; ///< whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT
+    std::string abs_gauge = "velocity"; ///< optical gauge: length, velocity, or none to skip the spectrum
     std::string ri_hartree_benchmark = "none"; ///< whether to use the RI approximation for the Hartree potential in
                                                ///< LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)
     std::vector<int> aims_nbasis = {}; ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
@@ -429,10 +444,15 @@ struct Input_para
     std::vector<int> dfpt_qmesh = {1, 1, 1}; ///< Monkhorst-Pack q mesh for DFPT (gamma-centered)
     std::string dfpt_qfile = "";              ///< file containing the DFPT q-point list; empty means dfpt_qmesh
     bool dfpt_compute_q0 = false;             ///< compute epsilon_inf and Born effective charges at q = 0
-    bool dfpt_loto = false;                   ///< apply the LO-TO non-analytic correction at q = 0
+    bool dfpt_loto = false;                   ///< apply the LO-TO nonanalytic correction at q = 0
+    bool dfpt_out_dyn = false;                ///< write the raw (pre-ASR, pre-LO-TO) dynamical matrix in QE dyn format
     double dfpt_conv_thr = 1.0e-8;            ///< convergence threshold of the DFPT first-order density
     int dfpt_max_iter = 100;                  ///< max iterations of the DFPT first-order density mixing
     double dfpt_mix_beta = 0.4;               ///< mixing coefficient of the DFPT first-order density
+    std::string dfpt_asr = "no";              ///< acoustic sum rule on the Gamma dynamical matrix: no | simple | crystal
+    std::string dfpt_mix_type = "v_sc_broyden"; ///< mixing scheme: rho_plain | rho_kerker | rho_broyden | v_sc_plain | v_sc_broyden
+    double dfpt_kerker_a2 = 1.0;              ///< Kerker screening parameter a^2 in 1/lat0^2 (kerker only)
+    int dfpt_broyden_ndim = 8;                ///< Broyden history depth (broyden variants)
 
     // ==============   #Parameters (11.Output) ===========================
     int out_stru = 1;                         ///< output stru file each ion step
@@ -446,6 +466,7 @@ struct Input_para
                                               ///< frequency controlled by out_freq_ion/out_freq_elec
     std::vector<int> out_xc_r = {-1, 3};      ///< output xc(r). -1: no; >=0: output the order of xc(r)
     std::vector<int> out_pot = {0, 8};        ///< output potential
+    std::vector<int> out_sol = {0, 8};        ///< output the implicit-solvent dielectric function and cavity
     int out_wfc_pw = 0;                       ///< 0: no; 1: txt; 2: dat
     std::vector<int> out_band = {0, 8};       ///< band calculation pengfei 2014-10-13
     int out_dos = 0;                          ///< dos calculation. mohan add 20090909
@@ -576,12 +597,28 @@ struct Input_para
     double block_height = 0.1; ///< height of the block
 
     //    implicit solvation model       Menglin Sun added on 2022-04-04
-    bool imp_sol = false;    ///< true: implicit solvation correction; false:
-                             ///< vacuum calculation(default)
+    int imp_sol = 0;         ///< 0: vacuum, 1: legacy solvation, 2: SCCS
     double eb_k = 80;        ///< the relative permittivity of the bulk solvent
     double tau = 1.0798e-05; ///< the effective surface tension parameter
     double sigma_k = 0.6;    ///< the width of the diffuse cavity
     double nc_k = 0.00037;   ///< the cut-off charge density
+    std::string sccs_preset = "custom";
+    double sccs_epsilon = 1.0; // Environ env_static_permittivity default
+    double sccs_rho_min = 1e-4;
+    double sccs_rho_max = 5e-3;
+    double sccs_gamma = 0.0; // dyn/cm
+    double sccs_pressure = 0.0; // GPa
+    int sccs_maxiter = 200;
+    double sccs_tol_rms = 1e-10;
+    double sccs_tol_max = 1e-8;
+    double sccs_surface_eta = 1e-8; // Bohr^-1
+    double sccs_lowpass_p1 = -1.0; // PCC switching-derivative filter slope
+    double sccs_lowpass_p2 = -1.0; // PCC switching-derivative filter offset
+    double sccs_start_drho = 0.0;
+    int sccs_start_nmax = 30;
+    int sccs_debug = 0; // 0: silent, 1: iteration summary, 2: full diagnostics
+    std::string sccs_solvent_mode = "electronic";
+    std::vector<double> sccs_corespread = {0.5}; // Bohr: one value or one per atom
 
     // ==============  #Parameters (14.vdW Correction) ===========================
     // ==========================================================
@@ -645,6 +682,9 @@ struct Input_para
     bool exx_symmetry_realspace = true; ///< whether to reduce the real-space sector in when using symmetry=1 in EXX calculation
     double rpa_ccp_rmesh_times = 10.0;  ///< how many times larger the radial mesh required for
                                         ///< calculating Columb potential is to that of atomic orbitals
+    std::string rpa_cut_coulomb = "hard"; ///< post-SCF cut kernel: hard or log_erfc
+    std::string rpa_cut_radius = "legacy"; ///< legacy radius or BvK inscribed radius
+    double rpa_cut_width = 1.091868692359; ///< multiplicative log-erfc width
     double exx_cs_inv_thr = -1;         ///< threshold to inverse Vq in abfs for generating Cs
     double shrink_abfs_pca_thr = -1;    ///< threshold to shrink auxiliary basis for GW/RPA
     double shrink_LU_inv_thr = 1e-6; ///< threshold to get inverse of overlap matrix by LU decomposition in auxiliary basis representation

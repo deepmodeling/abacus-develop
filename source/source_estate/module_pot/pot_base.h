@@ -9,6 +9,8 @@
 
 namespace elecstate
 {
+struct SolventGridField;
+
 /** This class is the base class of Potential module
  1. Main class Potential is derived from it.
  2. components of potentials on real space grids can derived from it and will be registered into Potential.
@@ -28,7 +30,20 @@ class PotBase
 
     virtual void cal_fixed_v(double* vl_pseudo){}
 
-    virtual double get_energy() const { return 0.0; } 
+    virtual double get_energy() const { return 0.0; }
+
+    // Solvation contributions in Ry, added once after the band-energy potential subtraction.
+    virtual void sol_energy(double& electrostatic, double& non_electrostatic) const
+    {
+        electrostatic = 0.0;
+        non_electrostatic = 0.0;
+    }
+    // Explicit ionic solvation force in Ry/Bohr, added to existing contributions.
+    virtual void add_sol_force(const UnitCell&, ModuleBase::matrix&) const {}
+    // Electronic electrostatic correction only; excludes cavity/surface derivatives.
+    virtual const std::vector<double>* sol_elec_pot() const { return nullptr; }
+    // Implicit-solvent fields of the last correction for out_sol; none by default.
+    virtual void add_sol_fields(std::vector<SolventGridField>&) const {}
     
     bool fixed_mode = 0;
     bool dynamic_mode = 0;

@@ -333,4 +333,23 @@ void XC_Functional_Libxc::finish_func(std::vector<xc_func_type> &funcs)
     }
 }
 
+std::vector<std::vector<double>> XC_Functional_Libxc::ext_params_for(const std::vector<int>& func_id,
+                                                                     const double hybrid_alpha,
+                                                                     const double hse_omega)
+{
+    std::vector<std::vector<double>> params;
+    params.reserve(func_id.size());
+    for (int id : func_id)
+    {
+        const std::vector<double> external_ext_params = external_xc_func_ext_params(id);
+        if (!external_ext_params.empty())
+        {
+            params.push_back(external_ext_params);
+            continue;
+        }
+        params.push_back(in_built_xc_func_ext_params(id, hybrid_alpha, hse_omega));
+    }
+    return params;
+}
+
 #endif

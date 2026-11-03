@@ -8,31 +8,31 @@
 
 #include "py_driver.hpp"
 
-#include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 // ABACUS headers
-#include "source_main/driver.h"
-#include "source_cell/unitcell.h"
+#include "source_base/global_file.h"
+#include "source_base/global_variable.h"
+#include "source_base/matrix.h"
+#include "source_base/memory.h"
+#include "source_base/timer.h"
 #include "source_cell/check_atomic_stru.h"
+#include "source_cell/unitcell.h"
 #include "source_esolver/esolver.h"
-#include "source_io/read_input.h"
 #include "source_io/input_conv.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_base/global_variable.h"
-#include "source_base/global_file.h"
-#include "source_base/timer.h"
-#include "source_base/memory.h"
-#include "source_base/matrix.h"
+#include "source_io/read_input.h"
+#include "source_main/driver.h"
 #include "source_relax/relax_driver.h"
 
-#include <fstream>
-#include <sstream>
-#include <iostream>
 #include <ctime>
-#include <stdexcept>
 #include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
 
 namespace py = pybind11;
 namespace fs = std::filesystem;
@@ -48,7 +48,7 @@ namespace py_driver
  */
 class GlobalStateGuard
 {
-public:
+  public:
     GlobalStateGuard()
     {
         // Save current state
@@ -63,7 +63,7 @@ public:
         GlobalV::NPROC = saved_nproc_;
     }
 
-private:
+  private:
     int saved_my_rank_ = 0;
     int saved_nproc_ = 1;
 };
@@ -73,9 +73,12 @@ private:
  */
 class PyDriver::Impl
 {
-public:
+  public:
     Impl() = default;
-    ~Impl() { cleanup(); }
+    ~Impl()
+    {
+        cleanup();
+    }
 
     void cleanup()
     {
@@ -120,7 +123,7 @@ PyDriver::~PyDriver()
 void PyDriver::initialize_context()
 {
     // Set up for serial mode (no MPI in Python context)
-    PARAM.set_pal_param(0, 1, 1);  // rank=0, nproc=1, nthread=1
+    PARAM.set_pal_param(0, 1, 1); // rank=0, nproc=1, nthread=1
     GlobalV::MY_RANK = 0;
     GlobalV::NPROC = 1;
 
@@ -218,14 +221,13 @@ void PyDriver::setup_output(const std::string& output_dir, int verbosity)
     }
 }
 
-void PyDriver::read_input(
-    const std::string& input_dir,
-    const std::string& input_file,
-    const std::string& stru_file,
-    const std::string& kpt_file,
-    const std::string& pseudo_dir,
-    const std::string& orbital_dir,
-    const std::string& output_dir)
+void PyDriver::read_input(const std::string& input_dir,
+                          const std::string& input_file,
+                          const std::string& stru_file,
+                          const std::string& kpt_file,
+                          const std::string& pseudo_dir,
+                          const std::string& orbital_dir,
+                          const std::string& output_dir)
 {
     // Save original working directory
     impl_->original_cwd_ = fs::current_path().string();
@@ -260,7 +262,7 @@ void PyDriver::read_input(
 
     // Read INPUT file
     // Note: ReadInput will set PARAM.globalv.global_in_card internally
-    ModuleIO::ReadInput reader(0);  // rank 0
+    ModuleIO::ReadInput reader(0); // rank 0
     std::string input_filename = fs::path(input_path).filename().string();
     reader.read_parameters(PARAM, input_filename);
 
@@ -341,15 +343,10 @@ CalculationResult PyDriver::collect_results(bool calculate_force, bool calculate
     if (!result.output_dir.empty() && fs::exists(result.output_dir))
     {
         // Look for running_*.log files
-        std::vector<std::string> log_patterns = {
-            "running_scf.log",
-            "running_relax.log",
-            "running_cell-relax.log",
-            "running_nscf.log",
-            "running_md.log"
-        };
+        std::vector<std::string> log_patterns
+            = {"running_scf.log", "running_relax.log", "running_cell-relax.log", "running_nscf.log", "running_md.log"};
 
-        for (const auto& log_name : log_patterns)
+        for (const auto& log_name: log_patterns)
         {
             std::string log_path = result.output_dir + "/" + log_name;
             if (fs::exists(log_path))
@@ -362,7 +359,7 @@ CalculationResult PyDriver::collect_results(bool calculate_force, bool calculate
         // Iterate directory to populate output_files map
         try
         {
-            for (const auto& entry : fs::directory_iterator(result.output_dir))
+            for (const auto& entry: fs::directory_iterator(result.output_dir))
             {
                 if (entry.is_regular_file())
                 {
@@ -381,17 +378,16 @@ CalculationResult PyDriver::collect_results(bool calculate_force, bool calculate
     return result;
 }
 
-CalculationResult PyDriver::run(
-    const std::string& input_dir,
-    const std::string& input_file,
-    const std::string& stru_file,
-    const std::string& kpt_file,
-    const std::string& pseudo_dir,
-    const std::string& orbital_dir,
-    const std::string& output_dir,
-    bool calculate_force,
-    bool calculate_stress,
-    int verbosity)
+CalculationResult PyDriver::run(const std::string& input_dir,
+                                const std::string& input_file,
+                                const std::string& stru_file,
+                                const std::string& kpt_file,
+                                const std::string& pseudo_dir,
+                                const std::string& orbital_dir,
+                                const std::string& output_dir,
+                                bool calculate_force,
+                                bool calculate_stress,
+                                int verbosity)
 {
     // Use RAII guard for global state
     GlobalStateGuard state_guard;
@@ -411,25 +407,34 @@ CalculationResult PyDriver::run(
     try
     {
         // Read input files
-        read_input(input_dir, input_file, stru_file, kpt_file,
-                   pseudo_dir, orbital_dir, output_dir);
+        read_input(input_dir, input_file, stru_file, kpt_file, pseudo_dir, orbital_dir, output_dir);
 
         // Create UnitCell
         impl_->ucell_ = std::make_unique<UnitCell>();
-        impl_->ucell_->setup(
-            PARAM.inp.latname,
-            PARAM.inp.ntype,
-            PARAM.inp.lmaxmax,
-            PARAM.inp.init_vel,
-            PARAM.inp.fixed_axes
-        );
+        impl_->ucell_->setup(PARAM.inp.latname,
+                             PARAM.inp.ntype,
+                             PARAM.inp.lmaxmax,
+                             PARAM.inp.init_vel,
+                             PARAM.inp.fixed_axes);
 
         // Read structure
-        impl_->ucell_->setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running, PARAM.inp.symmetry_prec, PARAM.inp.dfthalf_type, PARAM.inp.pseudo_dir, PARAM.inp.nspin,
-            PARAM.inp.basis_type, PARAM.inp.orbital_dir, PARAM.inp.init_wfc,
-            PARAM.inp.onsite_radius, PARAM.globalv.deepks_setorb, PARAM.inp.rpa,
-            PARAM.inp.fixed_atoms, PARAM.inp.noncolin, PARAM.inp.calculation, PARAM.inp.esolver_type,
-            std::stoi(PARAM.inp.symmetry));
+        impl_->ucell_->setup_cell(PARAM.globalv.global_in_stru,
+                                  GlobalV::ofs_running,
+                                  PARAM.inp.symmetry_prec,
+                                  PARAM.inp.dfthalf_type,
+                                  PARAM.inp.pseudo_dir,
+                                  PARAM.inp.nspin,
+                                  PARAM.inp.basis_type,
+                                  PARAM.inp.orbital_dir,
+                                  PARAM.inp.init_wfc,
+                                  PARAM.inp.onsite_radius,
+                                  PARAM.globalv.deepks_setorb,
+                                  PARAM.inp.rpa,
+                                  PARAM.inp.fixed_atoms,
+                                  PARAM.inp.noncolin,
+                                  PARAM.inp.calculation,
+                                  PARAM.inp.esolver_type,
+                                  std::stoi(PARAM.inp.symmetry));
 
         // Check atomic structure
         unitcell::check_atomic_stru(*impl_->ucell_, PARAM.inp.min_dist_coef);
@@ -511,8 +516,9 @@ PYBIND11_MODULE(_driver_pack, m)
     )pbdoc";
 
     // Bind CalculationResult
-    py::class_<py_driver::CalculationResult>(m, "CalculationResult",
-        R"pbdoc(
+    py::class_<py_driver::CalculationResult>(m,
+                                             "CalculationResult",
+                                             R"pbdoc(
         Container for DFT calculation results.
 
         Attributes
@@ -531,72 +537,46 @@ PYBIND11_MODULE(_driver_pack, m)
             Stress tensor (3, 3) in kbar
         )pbdoc")
         .def(py::init<>())
-        .def_readonly("converged", &py_driver::CalculationResult::converged,
-            "Whether SCF converged")
-        .def_readonly("niter", &py_driver::CalculationResult::niter,
-            "Number of SCF iterations")
-        .def_readonly("drho", &py_driver::CalculationResult::drho,
-            "Final charge density difference")
-        .def_readonly("etot", &py_driver::CalculationResult::etot,
-            "Total energy (Ry)")
-        .def_readonly("eband", &py_driver::CalculationResult::eband,
-            "Band energy (Ry)")
-        .def_readonly("hartree_energy", &py_driver::CalculationResult::hartree_energy,
-            "Hartree energy (Ry)")
-        .def_readonly("etxc", &py_driver::CalculationResult::etxc,
-            "Exchange-correlation energy (Ry)")
-        .def_readonly("ewald_energy", &py_driver::CalculationResult::ewald_energy,
-            "Ewald energy (Ry)")
-        .def_readonly("demet", &py_driver::CalculationResult::demet,
-            "-TS term for metals (Ry)")
-        .def_readonly("exx", &py_driver::CalculationResult::exx,
-            "Exact exchange energy (Ry)")
-        .def_readonly("evdw", &py_driver::CalculationResult::evdw,
-            "van der Waals energy (Ry)")
-        .def_readonly("forces", &py_driver::CalculationResult::forces,
-            "Forces on atoms (nat, 3) in Ry/Bohr")
-        .def_readonly("has_forces", &py_driver::CalculationResult::has_forces,
-            "Whether forces are available")
-        .def_readonly("stress", &py_driver::CalculationResult::stress,
-            "Stress tensor (3, 3) in kbar")
-        .def_readonly("has_stress", &py_driver::CalculationResult::has_stress,
-            "Whether stress is available")
-        .def_readonly("fermi_energy", &py_driver::CalculationResult::fermi_energy,
-            "Fermi energy (eV)")
-        .def_readonly("bandgap", &py_driver::CalculationResult::bandgap,
-            "Band gap (eV)")
-        .def_readonly("nat", &py_driver::CalculationResult::nat,
-            "Number of atoms")
-        .def_readonly("ntype", &py_driver::CalculationResult::ntype,
-            "Number of atom types")
-        .def_readonly("nbands", &py_driver::CalculationResult::nbands,
-            "Number of bands")
-        .def_readonly("nks", &py_driver::CalculationResult::nks,
-            "Number of k-points")
-        .def_readonly("output_dir", &py_driver::CalculationResult::output_dir,
-            "Path to output directory (OUT.$suffix)")
-        .def_readonly("log_file", &py_driver::CalculationResult::log_file,
-            "Path to the main log file")
-        .def_readonly("output_files", &py_driver::CalculationResult::output_files,
-            "Dictionary of output files (filename -> full path)")
-        .def("etot_eV", &py_driver::CalculationResult::etot_eV,
-            "Get total energy in eV")
-        .def("get_energies", &py_driver::CalculationResult::get_energies,
-            "Get all energies as a dictionary")
-        .def("get_forces_eV_Ang", &py_driver::CalculationResult::get_forces_eV_Ang,
-            "Get forces in eV/Angstrom")
-        .def("summary", &py_driver::CalculationResult::summary,
-            "Get a summary string of the calculation result")
+        .def_readonly("converged", &py_driver::CalculationResult::converged, "Whether SCF converged")
+        .def_readonly("niter", &py_driver::CalculationResult::niter, "Number of SCF iterations")
+        .def_readonly("drho", &py_driver::CalculationResult::drho, "Final charge density difference")
+        .def_readonly("etot", &py_driver::CalculationResult::etot, "Total energy (Ry)")
+        .def_readonly("eband", &py_driver::CalculationResult::eband, "Band energy (Ry)")
+        .def_readonly("hartree_energy", &py_driver::CalculationResult::hartree_energy, "Hartree energy (Ry)")
+        .def_readonly("etxc", &py_driver::CalculationResult::etxc, "Exchange-correlation energy (Ry)")
+        .def_readonly("ewald_energy", &py_driver::CalculationResult::ewald_energy, "Ewald energy (Ry)")
+        .def_readonly("demet", &py_driver::CalculationResult::demet, "-TS term for metals (Ry)")
+        .def_readonly("exx", &py_driver::CalculationResult::exx, "Exact exchange energy (Ry)")
+        .def_readonly("evdw", &py_driver::CalculationResult::evdw, "van der Waals energy (Ry)")
+        .def_readonly("forces", &py_driver::CalculationResult::forces, "Forces on atoms (nat, 3) in Ry/Bohr")
+        .def_readonly("has_forces", &py_driver::CalculationResult::has_forces, "Whether forces are available")
+        .def_readonly("stress", &py_driver::CalculationResult::stress, "Stress tensor (3, 3) in kbar")
+        .def_readonly("has_stress", &py_driver::CalculationResult::has_stress, "Whether stress is available")
+        .def_readonly("fermi_energy", &py_driver::CalculationResult::fermi_energy, "Fermi energy (eV)")
+        .def_readonly("bandgap", &py_driver::CalculationResult::bandgap, "Band gap (eV)")
+        .def_readonly("nat", &py_driver::CalculationResult::nat, "Number of atoms")
+        .def_readonly("ntype", &py_driver::CalculationResult::ntype, "Number of atom types")
+        .def_readonly("nbands", &py_driver::CalculationResult::nbands, "Number of bands")
+        .def_readonly("nks", &py_driver::CalculationResult::nks, "Number of k-points")
+        .def_readonly("output_dir", &py_driver::CalculationResult::output_dir, "Path to output directory (OUT.$suffix)")
+        .def_readonly("log_file", &py_driver::CalculationResult::log_file, "Path to the main log file")
+        .def_readonly("output_files",
+                      &py_driver::CalculationResult::output_files,
+                      "Dictionary of output files (filename -> full path)")
+        .def("etot_eV", &py_driver::CalculationResult::etot_eV, "Get total energy in eV")
+        .def("get_energies", &py_driver::CalculationResult::get_energies, "Get all energies as a dictionary")
+        .def("get_forces_eV_Ang", &py_driver::CalculationResult::get_forces_eV_Ang, "Get forces in eV/Angstrom")
+        .def("summary", &py_driver::CalculationResult::summary, "Get a summary string of the calculation result")
         .def("__repr__", [](const py_driver::CalculationResult& r) {
             std::ostringstream ss;
-            ss << "<CalculationResult converged=" << (r.converged ? "True" : "False")
-               << " etot=" << r.etot << " Ry>";
+            ss << "<CalculationResult converged=" << (r.converged ? "True" : "False") << " etot=" << r.etot << " Ry>";
             return ss.str();
         });
 
     // Bind PyDriver
-    py::class_<py_driver::PyDriver>(m, "PyDriver",
-        R"pbdoc(
+    py::class_<py_driver::PyDriver>(m,
+                                    "PyDriver",
+                                    R"pbdoc(
         Python wrapper for ABACUS Driver.
 
         This class provides a Python interface for running complete ABACUS
@@ -614,8 +594,9 @@ PYBIND11_MODULE(_driver_pack, m)
         >>> print(f"Converged: {result.converged}")
         )pbdoc")
         .def(py::init<>())
-        .def("run", &py_driver::PyDriver::run,
-            R"pbdoc(
+        .def("run",
+             &py_driver::PyDriver::run,
+             R"pbdoc(
             Run a complete DFT calculation.
 
             Parameters
@@ -646,19 +627,19 @@ PYBIND11_MODULE(_driver_pack, m)
             CalculationResult
                 Container with all calculation results
             )pbdoc",
-            py::arg("input_dir") = ".",
-            py::arg("input_file") = "",
-            py::arg("stru_file") = "",
-            py::arg("kpt_file") = "",
-            py::arg("pseudo_dir") = "",
-            py::arg("orbital_dir") = "",
-            py::arg("output_dir") = "",
-            py::arg("calculate_force") = true,
-            py::arg("calculate_stress") = false,
-            py::arg("verbosity") = 1)
-        .def("is_ready", &py_driver::PyDriver::is_ready,
-            "Check if the driver is ready for calculation")
-        .def("get_last_result", &py_driver::PyDriver::get_last_result,
-            py::return_value_policy::reference_internal,
-            "Get the last calculation result");
+             py::arg("input_dir") = ".",
+             py::arg("input_file") = "",
+             py::arg("stru_file") = "",
+             py::arg("kpt_file") = "",
+             py::arg("pseudo_dir") = "",
+             py::arg("orbital_dir") = "",
+             py::arg("output_dir") = "",
+             py::arg("calculate_force") = true,
+             py::arg("calculate_stress") = false,
+             py::arg("verbosity") = 1)
+        .def("is_ready", &py_driver::PyDriver::is_ready, "Check if the driver is ready for calculation")
+        .def("get_last_result",
+             &py_driver::PyDriver::get_last_result,
+             py::return_value_policy::reference_internal,
+             "Get the last calculation result");
 }

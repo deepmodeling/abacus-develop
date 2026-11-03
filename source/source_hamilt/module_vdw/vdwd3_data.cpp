@@ -61,8 +61,7 @@ double reference_c6(int atomic_number_i, int reference_i, int atomic_number_j, i
     }
 
     const std::size_t pair = pair_index(high, low);
-    const std::size_t offset = kReferenceC6Offset[pair]
-                               + high_reference * reference_count(low) + low_reference;
+    const std::size_t offset = kReferenceC6Offset[pair] + high_reference * reference_count(low) + low_reference;
     return kReferenceC6[offset];
 }
 

@@ -15,6 +15,7 @@
 
 class UnitCell;
 class MDCell;
+struct GhostExchangePlan;
 namespace ModuleBase
 {
 class CommunicationDomain;
@@ -59,6 +60,8 @@ private:
         double frac[3];
         double vel[3];
         double force[3];
+        double displacement[3];
+        int boundary_shift[3];
         int mbl[3];
         double mass;
         int image_shift[3];
@@ -117,6 +120,7 @@ private:
                                               const std::array<int, 3>& previous_image_shift,
                                               const GhostExchangeSlot& slot) const;
     void build_ghost_exchange_slots(std::vector<GhostExchangeSlot>& slots) const;
+    GhostExchangePlan build_ghost_exchange_plan(const MDCell& cell) const;
     PackedAtom pack_atom(const LocalAtom& atom, const std::array<int, 3>& image_shift) const;
     LocalAtom unpack_ghost_atom(const PackedAtom& packed) const;
     LocalAtom unpack_owned_atom(const PackedAtom& packed) const;

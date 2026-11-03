@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <cassert>
 #include <string>
+#include <sstream>
+#include <stdexcept>
 #include <vector>
 
 //----------------------------------------------------------
@@ -114,7 +116,8 @@ bool init_general_exx_info(General_Exx_Info& info, const Input_para& inp)
                 {
                     info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
-                        {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])} }};
+                        {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])},
+                        {"singularity_correction", inp.exx_singularity_correction} }};
                 }
             }
         }
@@ -218,8 +221,13 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
             { exx_info.info_lip.lambda = std::stod(inp.exx_fock_lambda[0]); }
 
         exx_info.info_ri.real_number = std::stoi(inp.exx_real_number);
+        // The finite-support image domain applies only to screened exchange.
+        // Full-range kernels retain their existing Ewald/image treatment.
+        const auto& kernels = exx_info.info_global.coulomb_param;
+        const bool screened_exchange = kernels.size() == 1
+            && kernels.count(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc) == 1;
         exx_info.info_ri.unfold_hybrid_images = exx_info.info_global.cal_exx && inp.basis_type == "lcao"
-            && inp.esolver_type == "tddft" && inp.td_stype == 2;
+            && inp.esolver_type == "tddft" && inp.td_stype == 2 && screened_exchange;
         if (exx_info.info_ri.unfold_hybrid_images && inp.kpar != 1)
         {
             throw std::invalid_argument("Unfolded hybrid RI validation currently requires kpar=1");
@@ -254,6 +262,32 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
         // nspin=4/SOC via restore_dm + restore_HR_nspin4), so symmetry=1 is honored here.
 
         exx_info.sync_from_global();
+        // Explicit INPUT -> RI configuration; only init_spencer consumes these
+        // tags, so the full-Coulomb/ground-state exchange kernel is unchanged.
+        if (inp.rpa)
+        {
+            const bool cut_nondefault = inp.rpa_cut_coulomb != "hard" || inp.rpa_cut_radius != "legacy";
+            if (cut_nondefault
+                && exx_info.info_ri.coulomb_param.count(Conv_Coulomb_Pot_K::Coulomb_Type::Fock) == 0)
+            {
+                throw std::invalid_argument(
+                    "Non-default rpa_cut_coulomb/rpa_cut_radius requires a Fock Coulomb component; "
+                    "Erfc-only configurations such as default HSE are unsupported.");
+            }
+            for (auto& cut_family : exx_info.info_ri.coulomb_param)
+            {
+                if (cut_family.first != Conv_Coulomb_Pot_K::Coulomb_Type::Fock) { continue; }
+                for (auto& cut_parameter : cut_family.second)
+                {
+                    cut_parameter["rpa_cut_coulomb"] = inp.rpa_cut_coulomb;
+                    cut_parameter["rpa_cut_radius"] = inp.rpa_cut_radius;
+                    std::ostringstream cut_width_text;
+                    cut_width_text.precision(17);
+                    cut_width_text << inp.rpa_cut_width;
+                    cut_parameter["rpa_cut_width"] = cut_width_text.str();
+                }
+            }
+        }
     }
 
     return generate_opt_orb;

@@ -1,8 +1,9 @@
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "for_test.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/relax_data.h"
-#include "for_test.h"
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 /************************************************
  *  unit tests of namespace Ions_Move_Basic
@@ -85,7 +86,7 @@ TEST_F(IonsMoveBasicTest, MoveAtoms)
     ifs.close();
     std::remove("test_move_atoms.log");
 
-    EXPECT_THAT(output , ::testing::HasSubstr(expected_output));
+    EXPECT_THAT(output, ::testing::HasSubstr(expected_output));
     EXPECT_DOUBLE_EQ(pos[0], 0.0);
     EXPECT_DOUBLE_EQ(pos[1], 1.0);
     EXPECT_DOUBLE_EQ(pos[2], 2.0);
@@ -102,7 +103,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     int update_iter = 1;
     const int test_relax_method = 1;
     const std::string out_level = "ie";
-    const double force_thr = -1; // Input_para default; this test never set it
+    const double force_thr = -1;    // Input_para default; this test never set it
     const double force_thr_ev = -1; // Input_para default; this test never set it
     std::vector<double> etot_info(2, 0.0);
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
@@ -113,7 +114,15 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case1.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info, force_thr, force_thr_ev, out_level, test_relax_method);
+    bool converged = Ions_Move_Basic::check_converged(ucell,
+                                                      grad,
+                                                      update_iter,
+                                                      ofs,
+                                                      etot_info,
+                                                      force_thr,
+                                                      force_thr_ev,
+                                                      out_level,
+                                                      test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -130,7 +139,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
           "movement is possible.\n it may converged, otherwise no movement of atom is allowed.\n";
     std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/Angstrom)  : 0\n";
 
-    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(update_iter, 1);
     EXPECT_EQ(converged, true);
@@ -153,7 +162,15 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case2.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info, force_thr, force_thr_ev, out_level, test_relax_method);
+    bool converged = Ions_Move_Basic::check_converged(ucell,
+                                                      grad,
+                                                      update_iter,
+                                                      ofs,
+                                                      etot_info,
+                                                      force_thr,
+                                                      force_thr_ev,
+                                                      out_level,
+                                                      test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -168,7 +185,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
           "     energy difference (ry) = 0\n               largest gradient (ry/bohr) = 0.1\n";
     std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/Angstrom)  : 2.57111\n";
 
-    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(update_iter, 2);
     EXPECT_EQ(converged, true);
@@ -191,7 +208,15 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
     // Call the function being tested
     std::ofstream ofs("test_check_converged_case3.log");
     testing::internal::CaptureStdout();
-    bool converged = Ions_Move_Basic::check_converged(ucell, grad, update_iter, ofs, etot_info, force_thr, force_thr_ev, out_level, test_relax_method);
+    bool converged = Ions_Move_Basic::check_converged(ucell,
+                                                      grad,
+                                                      update_iter,
+                                                      ofs,
+                                                      etot_info,
+                                                      force_thr,
+                                                      force_thr_ev,
+                                                      out_level,
+                                                      test_relax_method);
     std::string std_outout = testing::internal::GetCapturedStdout();
     ofs.close();
 
@@ -206,7 +231,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
           "     energy difference (ry) = 1\n               largest gradient (ry/bohr) = 0.1\n";
     std::string expected_std = " ETOT DIFF (eV)       : 13.6057\n LARGEST GRAD (eV/Angstrom)  : 2.57111\n";
 
-    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(update_iter, 1);
     EXPECT_EQ(converged, false);
@@ -235,7 +260,7 @@ TEST_F(IonsMoveBasicTest, TerminateConverged)
     std::string expected_ofs = " end of geometry optimization\n                                    istep = 2\n         "
                                "                update iteration = 5\n";
 
-    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
 }
 
 // Test the terminate() function when not converged
@@ -257,9 +282,10 @@ TEST_F(IonsMoveBasicTest, TerminateNotConverged)
     ifs.close();
     std::remove("test_terminate_not_converged.log");
 
-    std::string expected_ofs = " the maximum number of steps has been reached.\n Relaxation is not converged after reaching relax_nmax!\n end of geometry optimization.\n";
+    std::string expected_ofs = " the maximum number of steps has been reached.\n Relaxation is not converged after "
+                               "reaching relax_nmax!\n end of geometry optimization.\n";
 
-    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
+    EXPECT_THAT(ofs_output, ::testing::HasSubstr(expected_ofs));
 }
 
 // Test the setup_etot() function

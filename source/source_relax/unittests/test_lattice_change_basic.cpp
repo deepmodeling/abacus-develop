@@ -1,12 +1,12 @@
-#include <fstream>
+#include "for_test.h"
+#include "mock_remake_cell.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_relax/lattice_change_basic.h"
 #include "source_relax/relax_data.h"
-#include "mock_remake_cell.h"
 
-#include "for_test.h"
-#include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "source_io/module_parameter/parameter.h"
+#include "gtest/gtest.h"
+#include <fstream>
 
 /************************************************
  *  unit tests of namespace Lattice_Change_Basic
@@ -219,7 +219,8 @@ TEST_F(LatticeChangeBasicTest, ChangeLattice)
     EXPECT_DOUBLE_EQ(ucell.invGGT.e33, 0.36);
 }
 
-// Test for check_converged when ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] == 1, but not converged
+// Test for check_converged when ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] ==
+// 1, but not converged
 TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
 {
     // Set up test data
@@ -256,7 +257,8 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
     std::remove("test_check_converged_case1.log");
 }
 
-// Test for check_converged when ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] == 1 && largest_grad == 0
+// Test for check_converged when ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] ==
+// 1 && largest_grad == 0
 TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
 {
     // Set up test data
@@ -293,7 +295,8 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
     std::remove("test_check_converged_case2.log");
 }
 
-// Test for check_converged when ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] == 1, and converged
+// Test for check_converged when ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] ==
+// 1, and converged
 TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
 {
     // Set up test data
@@ -478,7 +481,6 @@ TEST_F(LatticeChangeBasicTest, TerminateNotConverged)
     std::remove("test_terminate_not_converged.log");
 }
 
-
 TEST_F(LatticeChangeBasicTest, SetupEtot)
 {
     Lattice_Change_Basic::stress_step = 2;
@@ -587,7 +589,7 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescaling)
     EXPECT_NEAR(ucell.omega, 1000.0, 1e-8);
 
     // Check that lattice vectors were rescaled uniformly
-    double expected_scale = std::pow(1000.0 / 1331.0, 1.0/3.0); // (old_vol / new_vol)^(1/3)
+    double expected_scale = std::pow(1000.0 / 1331.0, 1.0 / 3.0); // (old_vol / new_vol)^(1/3)
     EXPECT_NEAR(ucell.latvec.e11, 1.1 * expected_scale, 1e-10);
     EXPECT_NEAR(ucell.latvec.e22, 1.1 * expected_scale, 1e-10);
     EXPECT_NEAR(ucell.latvec.e33, 1.1 * expected_scale, 1e-10);
@@ -804,7 +806,8 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
     lat[8] = 0.0;
 
     // Apply a small move
-    for (int i = 0; i < 9; i++) move[i] = 0.01 * ucell.lat0;
+    for (int i = 0; i < 9; i++)
+        move[i] = 0.01 * ucell.lat0;
 
     fixed_ibrav = true;
     Lattice_Change_Basic::fixed_axes = "None";
@@ -821,15 +824,12 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
     // Check that lattice maintains FCC structure
     // For FCC: a1 = (-a, 0, a), a2 = (0, a, a), a3 = (-a, a, 0)
     // All should have same magnitude
-    double mag1 = std::sqrt(ucell.latvec.e11*ucell.latvec.e11 +
-                           ucell.latvec.e12*ucell.latvec.e12 +
-                           ucell.latvec.e13*ucell.latvec.e13);
-    double mag2 = std::sqrt(ucell.latvec.e21*ucell.latvec.e21 +
-                           ucell.latvec.e22*ucell.latvec.e22 +
-                           ucell.latvec.e23*ucell.latvec.e23);
-    double mag3 = std::sqrt(ucell.latvec.e31*ucell.latvec.e31 +
-                           ucell.latvec.e32*ucell.latvec.e32 +
-                           ucell.latvec.e33*ucell.latvec.e33);
+    double mag1 = std::sqrt(ucell.latvec.e11 * ucell.latvec.e11 + ucell.latvec.e12 * ucell.latvec.e12
+                            + ucell.latvec.e13 * ucell.latvec.e13);
+    double mag2 = std::sqrt(ucell.latvec.e21 * ucell.latvec.e21 + ucell.latvec.e22 * ucell.latvec.e22
+                            + ucell.latvec.e23 * ucell.latvec.e23);
+    double mag3 = std::sqrt(ucell.latvec.e31 * ucell.latvec.e31 + ucell.latvec.e32 * ucell.latvec.e32
+                            + ucell.latvec.e33 * ucell.latvec.e33);
 
     EXPECT_NEAR(mag1, mag2, 1e-10);
     EXPECT_NEAR(mag2, mag3, 1e-10);

@@ -6,11 +6,12 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_base/module_mixing/plain_mixing.h"
+#include "source_base/module_mixing/broyden_mixing.h"
+#include "source_estate/module_charge/chg_tools.h"
 
 #include <algorithm>
 #include <cmath>
 #include <complex>
-#include <functional>
 #include <vector>
 
 namespace ModuleDFPT
@@ -20,8 +21,8 @@ DFPT_Rho::DFPT_Rho()
 {
 }
 
-// Defined here (after plain_mixing.h is included) so the unique_ptr deleter
-// sees the complete Plain_Mixing type. The body is implicitly generated.
+// Defined here (after the mixing headers are included) so the unique_ptr
+// deleters see the complete types. The body is implicitly generated.
 DFPT_Rho::~DFPT_Rho() = default;
 
 void DFPT_Rho::init(const Config& cfg)
@@ -34,14 +35,27 @@ void DFPT_Rho::init(const Config& cfg)
     pw_wfc_ = cfg.pw_wfc;
     recip_matrix_ = cfg.recip_matrix;
     mix_beta_ = cfg.mix_beta;
-    mix_type_ = cfg.mix_type;
+    mix_type_ = cfg.mix_type; // internal: rho_plain|rho_kerker|rho_broyden (v_sc handled at solver)
     kerker_a2_ = cfg.kerker_a2;
-    if (cfg.mix_type != "plain" && cfg.mix_type != "kerker")
+    // DFPT_Rho handles density mixing only; the solver-side init maps the
+    // v_sc_* INPUT modes onto the plain density mixer for its E-field loop
+    if (cfg.mix_type != "rho_plain" && cfg.mix_type != "rho_kerker" && cfg.mix_type != "rho_broyden")
     {
-        ModuleBase::WARNING_QUIT("DFPT_Rho", "unsupported mix_type, expected plain or kerker");
+        ModuleBase::WARNING_QUIT("DFPT_Rho", "unsupported mix_type, expected rho_plain, rho_kerker or rho_broyden");
     }
     // make_unique is C++14; C++11 uses new directly through reset()
     mixer_.reset(new Base_Mixing::Plain_Mixing(mix_beta_));
+    if (mix_type_ == "rho_broyden")
+    {
+        // Config is an aggregate initialized with braces, so a caller
+        // passing fewer fields gets broyden_ndim = 0; Broyden_Mixing
+        // would then divide by zero in its % mixing_ndim history wrap
+        if (cfg.broyden_ndim < 1)
+        {
+            ModuleBase::WARNING_QUIT("DFPT_Rho", "broyden_ndim must be >= 1 for rho_broyden mixing");
+        }
+        broyden_mixer_.reset(new Base_Mixing::Broyden_Mixing(cfg.broyden_ndim));
+    }
     ModuleBase::timer::end("DFPT_Rho", "init");
 }
 
@@ -242,6 +256,64 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
     ModuleBase::timer::end("DFPT_Rho", "compute_drho");
 }
 
+void DFPT_Rho::compute_drhoc(const UnitCell& ucell,
+                              int iat,
+                              int dir,
+                              int q_idx,
+                              DFPT_PW_Data& data)
+{
+    ModuleBase::TITLE("DFPT_Rho", "compute_drhoc");
+    ModuleBase::timer::start("DFPT_Rho", "compute_drhoc");
+    const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
+    const ModuleBase::Vector3<double> q_cart = q_frac * recip_matrix_;
+    std::vector<std::complex<double>> drhoc_g;
+    compute_drhoc_g(ucell, iat, dir, q_cart, drhoc_g);
+    data.set_drhoc_g(q_idx, drhoc_g);
+
+    // early return for invalid/coreless atoms: compute_drhoc_g already
+    // returned empty, so the iat2it indexing below would be out of
+    // bounds for a bad index — skip the diagnostic in that case
+    if (drhoc_g.empty() || iat < 0 || iat >= ucell.nat)
+    {
+        ModuleBase::timer::end("DFPT_Rho", "compute_drhoc");
+        return;
+    }
+    const int it = ucell.iat2it[iat];
+    // report magnitude for diagnostics
+    double norm2 = 0.0;
+    for (const std::complex<double>& c : drhoc_g)
+    {
+        norm2 += std::norm(c);
+    }
+    std::cout << "  DFPT nlcc core derivative: atom " << iat + 1 << "("
+              << ucell.atoms[it].label << ") dir " << static_cast<char>('x' + dir)
+              << " |drhoc_g| = " << std::setprecision(3) << std::scientific << std::sqrt(norm2)
+              << std::defaultfloat << std::setprecision(6) << std::endl;
+
+    ModuleBase::timer::end("DFPT_Rho", "compute_drhoc");
+}
+
+void DFPT_Rho::compute_drhoc_g(const UnitCell& ucell,
+                               int iat,
+                               int dir,
+                               const ModuleBase::Vector3<double>& q_cart,
+                               std::vector<std::complex<double>>& drhoc_g) const
+{
+    ModuleBase::TITLE("DFPT_Rho", "compute_drhoc_g");
+    ModuleBase::timer::start("DFPT_Rho", "compute_drhoc_g");
+    // the q-shifted core-density response lives in module_charge
+    // (set_drho_core) next to its ground-state sibling set_rho_core;
+    // this is a thin delegate keeping the DFPT_Rho call surface stable
+    if (pw_rho_ == nullptr)
+    {
+        drhoc_g.clear();
+        ModuleBase::timer::end("DFPT_Rho", "compute_drhoc_g");
+        return;
+    }
+    module_charge::set_drho_core(ucell, iat, dir, q_cart, *pw_rho_, drhoc_g);
+    ModuleBase::timer::end("DFPT_Rho", "compute_drhoc_g");
+}
+
 void DFPT_Rho::cal_docc(const psi::Psi<std::complex<double>>& psi,
                         const ModuleBase::matrix& wg,
                         int q_idx,
@@ -267,127 +339,6 @@ void DFPT_Rho::cal_docc(const psi::Psi<std::complex<double>>& psi,
     (void)q_idx;
     (void)data;
     ModuleBase::timer::end("DFPT_Rho", "cal_docc");
-}
-
-void DFPT_Rho::reset_mixing(int q_idx)
-{
-    ModuleBase::TITLE("DFPT_Rho", "reset_mixing");
-    ModuleBase::timer::start("DFPT_Rho", "reset_mixing");
-    if (q_idx < 0)
-    {
-        ModuleBase::timer::end("DFPT_Rho", "reset_mixing");
-        return;
-    }
-    if (q_idx < static_cast<int>(drho_in_.size()))
-    {
-        drho_in_[q_idx].clear();
-    }
-    if (q_idx < static_cast<int>(residual_.size()))
-    {
-        residual_[q_idx] = 0.0;
-    }
-    ModuleBase::timer::end("DFPT_Rho", "reset_mixing");
-}
-
-void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data)
-{
-    ModuleBase::TITLE("DFPT_Rho", "mix_drho");
-    ModuleBase::timer::start("DFPT_Rho", "mix_drho");
-    if (mixer_ == nullptr || pw_rho_ == nullptr)
-    {
-        ModuleBase::timer::end("DFPT_Rho", "mix_drho");
-        return;
-    }
-    const std::vector<std::complex<double>> out = data.get_drho_g(q_idx, 0);
-    if (out.empty() || static_cast<int>(out.size()) != pw_rho_->npw)
-    {
-        ModuleBase::timer::end("DFPT_Rho", "mix_drho");
-        return;
-    }
-    const int npw = pw_rho_->npw;
-    if (q_idx >= static_cast<int>(drho_in_.size()))
-    {
-        drho_in_.resize(q_idx + 1);
-        residual_.resize(q_idx + 1, 0.0);
-    }
-    // first iteration starts from a zero input density
-    if (drho_in_[q_idx].empty())
-    {
-        drho_in_[q_idx].assign(1, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
-    }
-    const std::vector<std::complex<double>>& rin = drho_in_[q_idx][0];
-    std::vector<std::complex<double>> mixed(npw);
-    const double w2_floor = 1.0e-12; ///< empirical parameter: |G+q|^2 zero-shell guard (1/lat0^2, Kerker freeze)
-    // the fractional q is needed both by the Kerker screen and by the
-    // real-space manifest below; the q-shifted |G+q| convention matches
-    // v_hartree_q (gcar + q_frac * recip, 1/lat0^2 units)
-    const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
-    if (mix_type_ == "kerker")
-    {
-        const ModuleBase::Vector3<double> q_cart = q_frac * recip_matrix_;
-        std::vector<std::complex<double>> rin_s(npw);
-        std::vector<std::complex<double>> out_s(npw);
-        std::vector<std::complex<double>> mixed_s(npw);
-        for (int ig = 0; ig < npw; ++ig)
-        {
-            const ModuleBase::Vector3<double> w = pw_rho_->gcar[ig] + q_cart;
-            const double w2 = w * w;
-            // |G+q| = 0 harmonic: f = 0, frozen at rin (that harmonic is
-            // dropped by compute_drho, so both inputs are zero there)
-            const double f = (w2 < w2_floor) ? 0.0 : w2 / (w2 + kerker_a2_);
-            rin_s[ig] = f * rin[ig];
-            out_s[ig] = f * out[ig];
-        }
-        mixer_->plain_mix(mixed_s.data(),
-                          rin_s.data(),
-                          out_s.data(),
-                          npw,
-                          std::function<void(std::complex<double>*)>());
-        // add back the screened-out part: mixed = rin + beta f (out - rin),
-        // i.e. a plain mix with the per-shell coefficient beta f_g while
-        // the stored density stays physical (not screen-scaled)
-        for (int ig = 0; ig < npw; ++ig)
-        {
-            mixed[ig] = rin[ig] + (mixed_s[ig] - rin_s[ig]);
-        }
-    }
-    else
-    {
-        mixer_->plain_mix(mixed.data(), rin.data(), out.data(), npw, std::function<void(std::complex<double>*)>());
-    }
-    // relative residual ||out - in|| / ||out||
-    double dn2 = 0.0;
-    double o2 = 0.0;
-    for (int ig = 0; ig < npw; ++ig)
-    {
-        dn2 += std::norm(out[ig] - rin[ig]);
-        o2 += std::norm(out[ig]);
-    }
-    residual_[q_idx] = (o2 > 0.0) ? std::sqrt(dn2 / o2) : 0.0;
-    drho_in_[q_idx][0] = mixed;
-    data.set_drho_g(q_idx, 0, mixed);
-
-    // rebuild the real-space manifest from the mixed coefficients (q = 0:
-    // completed coefficients are the full real response; otherwise the
-    // one-sided 2 Re[e^{i q r} A(r)] manifest)
-    std::vector<double> drho_r;
-    make_drho_r_(mixed, q_frac, drho_r);
-    data.set_drho_r(q_idx, 0, drho_r);
-    ModuleBase::timer::end("DFPT_Rho", "mix_drho");
-}
-
-double DFPT_Rho::get_residual(int q_idx, DFPT_PW_Data& data) const
-{
-    ModuleBase::TITLE("DFPT_Rho", "get_residual");
-    ModuleBase::timer::start("DFPT_Rho", "get_residual");
-    (void)data;
-    if (q_idx < 0 || q_idx >= static_cast<int>(residual_.size()))
-    {
-        ModuleBase::timer::end("DFPT_Rho", "get_residual");
-        return 0.0;
-    }
-    ModuleBase::timer::end("DFPT_Rho", "get_residual");
-    return residual_[q_idx];
 }
 
 void DFPT_Rho::v_hartree_q(const ModuleBase::Vector3<double>& q_cart,

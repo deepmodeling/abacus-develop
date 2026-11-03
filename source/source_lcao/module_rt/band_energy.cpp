@@ -1,20 +1,44 @@
 #include "band_energy.h"
 
-#include "evolve_elec.h"
+#include "source_base/global_function.h"
 #include "source_base/module_container/ATen/kernels/blas.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_io/module_parameter/parameter.h"
 
 #ifdef __CUBLASMP
 #include "kernels/cuda/band_energy_kernel.cuh"
 #endif
 
+#include <algorithm>
 #include <complex>
-#include <iostream>
+#include <fstream>
+#include <vector>
 
 namespace module_rt
 {
 #ifdef __MPI
+namespace
+{
+void gather_eij(const Parallel_Orbitals& pv,
+                const int nband,
+                std::complex<double>* eij,
+                const EijOutputInfo& output_info,
+                std::ofstream& ofs)
+{
+    const bool is_root = pv.para_2d().blacs_in_this_processor(0, 0);
+    const size_t buffer_size = is_root ? static_cast<size_t>(nband) * nband : 1;
+    std::vector<std::complex<double>> gathered(buffer_size);
+    int source_desc[9];
+    std::copy(pv.desc_Eij, pv.desc_Eij + 9, source_desc);
+    int target_desc[9] = {1, source_desc[1], nband, nband, nband, nband, 0, 0, nband};
+    // All grid ranks participate, including ranks whose running log is closed.
+    Cpxgemr2d(nband, nband, eij, 1, 1, source_desc, gathered.data(), 1, 1, target_desc, source_desc[1]);
+    if (is_root)
+    {
+        ModuleIO::print_eij(gathered.data(), nband, nband, output_info, ofs);
+    }
+}
+} // namespace
 
 inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
 {
@@ -30,64 +54,26 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  const std::complex<double>* Htmp,
                  const std::complex<double>* psi_k,
                  double* ekb,
-                 std::ofstream& ofs_running)
+                 std::ofstream& ofs_running,
+                 const EijOutputInfo& output_info)
 {
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(pv->nloc_wfc > 0 && pv->para_2d().get_local_size() > 0);
 
     std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
     ModuleBase::GlobalFunc::ZEROS(tmp1, pv->nloc_wfc);
 
-    std::complex<double>* eij = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(eij, pv->nloc);
+    std::complex<double>* eij = new std::complex<double>[pv->para_2d().get_local_size()];
+    ModuleBase::GlobalFunc::ZEROS(eij, pv->para_2d().get_local_size());
 
     ScalapackConnector::
-        gemm('N', 'N', nlocal, nband, nlocal, 1.0, Htmp, 1, 1, pv->desc, psi_k, 1, 1, pv->desc_wfc, 0.0, tmp1, 1, 1, pv->desc_wfc);
+        gemm('N', 'N', nlocal, nband, nlocal, 1.0, Htmp, 1, 1, pv->para_2d().get_desc(), psi_k, 1, 1, pv->desc_wfc, 0.0, tmp1, 1, 1, pv->desc_wfc);
 
     ScalapackConnector::
         gemm('C', 'N', nband, nband, nlocal, 1.0, psi_k, 1, 1, pv->desc_wfc, tmp1, 1, 1, pv->desc_wfc, 0.0, eij, 1, 1, pv->desc_Eij);
 
-    if (PARAM.inp.td_print_eij >= 0.0)
+    if (output_info.threshold >= 0.0)
     {
-        ofs_running << "------------------------------------------------------------------------------------------------" << std::endl;
-        ofs_running << " Eij:" << std::endl;
-        for (int i = 0; i < pv->nrow_bands; i++)
-        {
-            const int global_i = globalIndex(i, pv->nb, pv->dim0, pv->get_coord_row());
-            if (global_i >= nband)
-            {
-                continue;
-            }
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol_bands; j++)
-            {
-                const int global_j = globalIndex(j, pv->nb, pv->dim1, pv->get_coord_col());
-                if (global_j >= nband)
-                {
-                    continue;
-                }
-                double aa = eij[in + j].real();
-                double bb = eij[in + j].imag();
-                if (std::abs(aa) < PARAM.inp.td_print_eij)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < PARAM.inp.td_print_eij)
-                {
-                    bb = 0.0;
-                }
-                if (std::abs(aa) > 0.0 || std::abs(bb) > 0.0)
-                {
-                    std::streamsize original_precision = ofs_running.precision();
-                    ofs_running << std::fixed << std::setprecision(8);
-                    ofs_running << "i = " << std::setw(2) << global_i + 1 << ", j = " << std::setw(2) << global_j + 1
-                                << ", Eij = " << std::setw(12) << aa << " + " << std::setw(12) << bb << " i" << std::endl;
-                    ofs_running.unsetf(std::ios_base::fixed);
-                    ofs_running.precision(original_precision);
-                }
-            }
-        }
-        ofs_running << std::endl;
-        ofs_running << "------------------------------------------------------------------------------------------------" << std::endl;
+        gather_eij(*pv, nband, eij, output_info, ofs_running);
     }
 
     int info = 0;
@@ -97,24 +83,24 @@ void compute_ekb(const Parallel_Orbitals* pv,
     double* eii = new double[nband];
     ModuleBase::GlobalFunc::ZEROS(eii, nband);
 
-    for (int iprow = 0; iprow < pv->dim0; ++iprow)
+    for (int iprow = 0; iprow < pv->para_2d().get_dim0(); ++iprow)
     {
-        for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
+        for (int ipcol = 0; ipcol < pv->para_2d().get_dim1(); ++ipcol)
         {
-            if (pv->blacs_in_this_processor(iprow, ipcol))
+            if (pv->para_2d().blacs_in_this_processor(iprow, ipcol))
             {
-                naroc[0] = pv->nrow;
-                naroc[1] = pv->ncol;
+                naroc[0] = pv->para_2d().get_row_size();
+                naroc[1] = pv->para_2d().get_col_size();
                 for (int j = 0; j < naroc[1]; ++j)
                 {
-                    int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
+                    int igcol = globalIndex(j, pv->para_2d().get_block_size(), pv->para_2d().get_dim1(), ipcol);
                     if (igcol >= nband)
                     {
                         continue;
                     }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
-                        int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
+                        int igrow = globalIndex(i, pv->para_2d().get_block_size(), pv->para_2d().get_dim0(), iprow);
                         if (igrow >= nband)
                         {
                             continue;
@@ -128,7 +114,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
             }
         } // loop ipcol
     } // loop iprow
-    info = MPI_Allreduce(eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+    info = MPI_Allreduce(eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->para_2d().comm());
 
     delete[] tmp1;
     delete[] eij;
@@ -370,7 +356,8 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                const ct::Tensor& Htmp,
                                const ct::Tensor& psi_k,
                                ct::Tensor& ekb,
-                               std::ofstream& ofs_running)
+                               std::ofstream& ofs_running,
+                               const EijOutputInfo& output_info)
 {
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
@@ -418,40 +405,10 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                                               eij.data<std::complex<double>>(),
                                                               nlocal); // Leading dimension of eij
 
-    if (PARAM.inp.td_print_eij >= 0.0)
+    if (output_info.threshold >= 0.0)
     {
         ct::Tensor eij_cpu = eij.to_device<ct::DEVICE_CPU>();
-
-        ofs_running << "------------------------------------------------------------------------------------------------" << std::endl;
-        ofs_running << " Eij:" << std::endl;
-        for (int i = 0; i < nband; i++)
-        {
-            const int in = i * nlocal;
-            for (int j = 0; j < nband; j++)
-            {
-                double aa = eij_cpu.data<std::complex<double>>()[in + j].real();
-                double bb = eij_cpu.data<std::complex<double>>()[in + j].imag();
-                if (std::abs(aa) < PARAM.inp.td_print_eij)
-                {
-                    aa = 0.0;
-                }
-                if (std::abs(bb) < PARAM.inp.td_print_eij)
-                {
-                    bb = 0.0;
-                }
-                if (std::abs(aa) > 0.0 || std::abs(bb) > 0.0)
-                {
-                    std::streamsize original_precision = ofs_running.precision();
-                    ofs_running << std::fixed << std::setprecision(8);
-                    ofs_running << "i = " << std::setw(2) << i + 1 << ", j = " << std::setw(2) << j + 1 << ", Eij = " << std::setw(12) << aa
-                                << " + " << std::setw(12) << bb << " i" << std::endl;
-                    ofs_running.unsetf(std::ios_base::fixed);
-                    ofs_running.precision(original_precision);
-                }
-            }
-        }
-        ofs_running << std::endl;
-        ofs_running << "------------------------------------------------------------------------------------------------" << std::endl;
+        ModuleIO::print_eij(eij_cpu.data<std::complex<double>>(), nband, nlocal, output_info, ofs_running);
     }
 
     // Extract diagonal elements of eij into ekb
@@ -483,7 +440,8 @@ template void compute_ekb_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_
                                                                  const ct::Tensor& Htmp,
                                                                  const ct::Tensor& psi_k,
                                                                  ct::Tensor& ekb,
-                                                                 std::ofstream& ofs_running);
+                                                                 std::ofstream& ofs_running,
+                                                                 const EijOutputInfo& output_info);
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 template void compute_ekb_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
@@ -492,7 +450,8 @@ template void compute_ekb_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_
                                                                  const ct::Tensor& Htmp,
                                                                  const ct::Tensor& psi_k,
                                                                  ct::Tensor& ekb,
-                                                                 std::ofstream& ofs_running);
+                                                                 std::ofstream& ofs_running,
+                                                                 const EijOutputInfo& output_info);
 #endif // __CUDA
 #endif // __MPI
 

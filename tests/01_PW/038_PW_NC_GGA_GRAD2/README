@@ -1,16 +1,40 @@
-PBE noncollinear Fe2 regression for gga_grad=2, including forces and stress.
+Finite-moment ferromagnetic bcc Fe regression for PBE, nspin=4, gga_grad=2.
 
-Derived from 038_PW_NC with different initial spin directions on the two atoms,
-explicit PBE/gga_grad settings, and scf_thr=1e-10.
-The initial moments point in different directions and decay towards zero during
-SCF. This case exercises the noncollinear path including its weak-moment limit;
-it is not a regression for a stable magnetic ground state.
-The pseudopotential is reused from tests/PP_ORB; no numerical orbitals are needed.
+The two-atom cubic cell has a lattice constant of approximately 2.87 Angstrom.
+The body-centre atom is displaced from (0.5, 0.5, 0.5) to (0.503, 0.502, 0.499)
+so all three atomic-force components are nonzero. Both initial moments are
+(1.32, 1.056, 1.408) uB: a common tilted FM direction, not magnetic constraints.
+No DeltaSpin, onsite projection, numerical orbitals, or SOC is enabled.
+The converged total moment is approximately (2.70, 2.16, 2.88) uB/cell,
+with magnitude 4.5 uB (cell-average 2.25 uB/Fe, not an atom-projected moment).
+
+The existing Fe.upf contains PP_PSWFC data, allowing genuine atomic wavefunction
+initialization. The previous Fe_ONCV_PBE-1.0.upf has no atomic wavefunctions and
+would fall back to random initialization. No new pseudopotential is added.
+The test uses 20 Ry, a 2x2x2 Gamma-centred k mesh, 40 spinor bands, Gaussian
+smearing of 0.01 Ry, Davidson, and scf_thr=1e-10. The deliberately coarse basis
+is for regression cost, not converged material energies, forces, or pressure.
+In particular, the large coarse-basis pressure is not a physical bcc Fe result.
+
+This replaces the previous near-zero-moment Fe2 fixture and its scf_thr=1e-14.
+The new state is globally tilted and approximately collinear; it does not test
+a spatially nonparallel spin texture. Weak-moment, clipping, local-rotation,
+and density/metric-stress derivative coverage remains in the XC module tests.
 
 From tests/01_PW, run:
-  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -r '^038_PW_NC_GGA_GRAD2$'
+  OMP_NUM_THREADS=1 bash ../integrate/Autotest.sh -a /path/to/abacus -n 4 -o 1 -r '^038_PW_NC_GGA_GRAD2$'
 
-result.ref is generated with one MPI rank using the same command with -n 1 -g.
-The reference covers energy per atom, the force summary, and the stress summary.
-Default Autotest tolerances apply; no case-specific threshold overrides are used.
-This SCF regression complements the XC module's density/stress derivative tests.
+result.ref was generated with one CPU MPI rank, using -n 1 -g. CPU four-rank
+and GPU one-rank runs pass against it with the unchanged default tolerances:
+1e-7 eV for energy, 1e-4 eV/Angstrom for the force fingerprint, and 1e-3 kbar
+for the stress fingerprint. Use device=gpu in a separate copy for the GPU run.
+All three runs explicitly converge in 18 SCF steps. The full Autotest invocations
+took 5.41, 3.67, and 7.69 seconds, respectively, on the tested V100 node (OMP=1).
+These single-run times include launch/harness overhead, not queue/build time.
+
+The force/stress fingerprints are sums of absolute components, not vector norms
+or derivative-error bounds. Relative to CPU1, the largest fingerprint deviations
+are 2e-6 eV/Angstrom and 1.7e-5 kbar. These are reproducibility checks, not new
+end-to-end finite-difference validation. No test comparison tolerance is relaxed.
+The reference must change because both the physical fixture and XC definition
+have changed; it must not be compared directly with the retired Fe2 reference.

@@ -1,6 +1,7 @@
 #include "../overlap.h"
 
 #include "gtest/gtest.h"
+#include <memory>
 
 //---------------------------------------
 // Unit test of Overlap class
@@ -76,7 +77,7 @@ class OverlapTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -156,7 +157,7 @@ TEST_F(OverlapTest, constructHRd2cd)
     op.contributeHk(0);
     // check the value of SK of gamma point
     auto* sk = hsk.get_sk();
-    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
     {
         EXPECT_EQ(sk[i].real(), 1.0);
         EXPECT_EQ(sk[i].imag(), 0.0);
@@ -165,10 +166,37 @@ TEST_F(OverlapTest, constructHRd2cd)
     hsk.set_zero_sk();
     op.contributeHk(1);
     // check the value of SK
-    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
     {
         EXPECT_NEAR(sk[i].real(), -0.80901699437494723, 1e-10);
         EXPECT_NEAR(sk[i].imag(), -0.58778525229247336, 1e-10);
+    }
+}
+
+TEST_F(OverlapTest, AsyncOverlapKeepsSeparateContainer)
+{
+    ucell.lat0 = 1.0;
+    const ModuleBase::Vector3<double> velocity(0.001, 0.0, 0.0);
+    ucell.atoms[0].vel.assign(ucell.nat, velocity);
+    const ModuleBase::Vector3<double> gamma(0.0, 0.0, 0.0);
+    const std::vector<ModuleBase::Vector3<double>> kpoints{gamma};
+    const std::vector<double> cutoff{1.0};
+    hamilt::HS_Matrix_K<double> hsk(paraV);
+    Grid_Driver neighbors(0, 0);
+    hamilt::Overlap<hamilt::OperatorLCAO<double, double>> op(
+        &hsk, kpoints, nullptr, SR, &ucell, cutoff, &neighbors, &intor_);
+    auto* const async_container = op.calculate_SR_async(ucell, 0.1, paraV);
+    std::unique_ptr<hamilt::HContainer<double>> async(async_container);
+    ASSERT_EQ(async->size_atom_pairs(), SR->size_atom_pairs());
+    for (int i = 0; i < async->size_atom_pairs(); ++i)
+    {
+        const auto& pair = async->get_atom_pair(i);
+        const int count = pair.get_row_size() * pair.get_col_size();
+        for (int j = 0; j < count; ++j)
+        {
+            EXPECT_DOUBLE_EQ(pair.get_pointer(0)[j], 1.0);
+            EXPECT_DOUBLE_EQ(SR->get_atom_pair(i).get_pointer(0)[j], 0.0);
+        }
     }
 }
 
