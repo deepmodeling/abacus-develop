@@ -1,5 +1,8 @@
 #include "ekinetic.h"
 
+#include "source_base/atom_basis_view.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -12,11 +15,18 @@ hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::EKinetic(
     HS_Matrix_K<TK>* hsk_in,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
     hamilt::HContainer<TR>* hR_in,
+    const BasisFlattenedIndexing& basis,
+    const BlockCyclicDistributionInformation& layout,
     const UnitCell* ucell_in,
     const std::vector<double>& orb_cutoff,
     const Grid_Driver* GridD_in,
     const TwoCenterIntegrator* intor)
-    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor), gridD(GridD_in)
+    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
+      orb_cutoff_(orb_cutoff),
+      basis_(basis),
+      layout_(layout),
+      intor_(intor),
+      gridD(GridD_in)
 {
     this->cal_type = calculation_type::lcao_fixed;
     this->ucell = ucell_in;
@@ -48,9 +58,6 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
     ModuleBase::TITLE("EKinetic", "initialize_HR");
     ModuleBase::timer::start("EKinetic", "initialize_HR");
 
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
-    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
-
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
@@ -59,13 +66,15 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
+        const AtomBasisView rows = AtomBasisView::rows(basis_, layout_, iat1);
         std::vector<bool> is_adj(adjs.adj_num + 1, false);
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell->itia2iat(T2, I2);
-            if (paraV->is_invalid_atom_pair(iat1, iat2))
+            const AtomBasisView cols = AtomBasisView::cols(basis_, layout_, iat2);
+            if (rows.empty() || cols.empty())
             {
                 continue;
             }
@@ -88,8 +97,7 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index, paraV);
-            this->hR->insert_pair(tmp);
+            this->hR->insert_pair(iat1, iat2, R_index);
         }
     }
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
@@ -110,7 +118,6 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     }
     ModuleBase::timer::start("EKinetic", "calculate_HR");
 
-    const Parallel_Orbitals* paraV = this->HR_fixed->get_atom_pair(0).get_paraV();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -132,7 +139,7 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             hamilt::BaseMatrix<TR>* tmp = this->HR_fixed->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
-                this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer());
+                this->cal_HR_IJR(iat1, iat2, dtau, tmp->get_pointer());
             }
             else
             {
@@ -148,7 +155,6 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 template <typename TK, typename TR>
 void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
                                                                    const int& iat2,
-                                                                   const Parallel_Orbitals* paraV,
                                                                    const ModuleBase::Vector3<double>& dtau,
                                                                    TR* data_pointer)
 {
@@ -178,12 +184,12 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
     // calculate the Ekinetic matrix for each pair of orbitals
     // ---------------------------------------------
     double olm[3] = {0, 0, 0};
-    auto row_indexes = paraV->get_indexes_row(iat1);
-    auto col_indexes = paraV->get_indexes_col(iat2);
-    const int step_trace = col_indexes.size() + 1;
-    for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
+    const AtomBasisView rows = AtomBasisView::rows(basis_, layout_, iat1);
+    const AtomBasisView cols = AtomBasisView::cols(basis_, layout_, iat2);
+    const int step_trace = cols.nloc() + 1;
+    for (int iw1l = 0; iw1l < rows.nloc(); iw1l += npol)
     {
-        const int iw1 = row_indexes[iw1l] / npol;
+        const int iw1 = rows[iw1l] / npol;
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
@@ -191,9 +197,9 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
         // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
         int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
-        for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
+        for (int iw2l = 0; iw2l < cols.nloc(); iw2l += npol)
         {
-            const int iw2 = col_indexes[iw2l] / npol;
+            const int iw2 = cols[iw2l] / npol;
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
@@ -209,7 +215,7 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
             }
             data_pointer += npol;
         }
-        data_pointer += (npol - 1) * col_indexes.size();
+        data_pointer += (npol - 1) * cols.nloc();
     }
 }
 

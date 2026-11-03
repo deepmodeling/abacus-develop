@@ -1,5 +1,8 @@
 #include "td_info.h"
 
+#include "source_base/atom_basis_view.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/libm/libm.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_parameter/parameter.h"
@@ -10,18 +13,29 @@ bool TD_info::out_current_k = false;
 bool TD_info::evolve_once = false;
 
 TD_info::TD_info(const UnitCell* ucell_in,
-                 const Parallel_Orbitals& pv,
+                 const BasisFlattenedIndexing& basis,
+                 const BlockCyclicDistributionInformation& layout,
                  const LCAO_Orbitals& orb,
                  const elecstate::TDFieldManager& field_manager)
-    : field_manager_(field_manager)
+    : basis_(basis), layout_(layout), field_manager_(field_manager)
 {
     if (out_current == 2 || field_manager_.gauge() == 2)
     {
         const bool cal_force = PARAM.inp.cal_force;
         const int nlocal = PARAM.globalv.nlocal;
-        r_calculator.init(*ucell_in, pv, orb, cal_force, nlocal);
+        r_calculator.init(*ucell_in, layout, orb, cal_force, nlocal);
     }
     return;
+}
+
+AtomBasisView TD_info::row_basis(const int iat) const
+{
+    return AtomBasisView::rows(basis_, layout_, iat);
+}
+
+AtomBasisView TD_info::col_basis(const int iat) const
+{
+    return AtomBasisView::cols(basis_, layout_, iat);
 }
 TD_info::~TD_info()
 {
@@ -91,36 +105,15 @@ void TD_info::initialize_phase_hybrid(const UnitCell& ucell, const hamilt::HCont
         }
     }
 }
-void TD_info::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV)
+void TD_info::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR)
 {
     ModuleBase::TITLE("TD_info", "initialize_current_term");
     ModuleBase::timer::start("TD_info", "initialize_current_term");
 
     for (int dir = 0; dir < 3; dir++)
     {
-        if (this->current_term[dir] == nullptr)
-            this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
-    }
-
-    for (int i = 0; i < HR->size_atom_pairs(); ++i)
-    {
-        hamilt::AtomPair<std::complex<double>>& tmp = HR->get_atom_pair(i);
-        for (int ir = 0; ir < tmp.get_R_size(); ++ir)
-        {
-            const ModuleBase::Vector3<int> R_index = tmp.get_R_index(ir);
-            const int iat1 = tmp.get_atom_i();
-            const int iat2 = tmp.get_atom_j();
-
-            hamilt::AtomPair<std::complex<double>> tmp1(iat1, iat2, R_index, paraV);
-            for (int dir = 0; dir < 3; dir++)
-            {
-                this->current_term[dir]->insert_pair(tmp1);
-            }
-        }
-    }
-    for (int dir = 0; dir < 3; dir++)
-    {
-        this->current_term[dir]->allocate(nullptr, true);
+        delete this->current_term[dir];
+        this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(*HR);
     }
 
     ModuleBase::timer::end("TD_info", "initialize_current_term");
@@ -134,8 +127,7 @@ void TD_info::destroy_HS_R_td_sparse(void)
     HR_sparse_td_vel[1].swap(empty_HR_sparse_td_vel_down);
 }
 
-void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
-                                     const UnitCell& ucell,
+void TD_info::calculate_grad_overlap(const UnitCell& ucell,
                                      const Grid_Driver& GridD,
                                      const std::vector<double>& orb_cutoff,
                                      const TwoCenterIntegrator* intor)
@@ -148,7 +140,8 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
         {
             delete this->grad_overlap[dir];
         }
-        this->grad_overlap[dir] = new hamilt::HContainer<double>(&paraV);
+        this->grad_overlap[dir] =
+            new hamilt::HContainer<double>(basis_, layout_, static_cast<double*>(nullptr));
     }
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
     {
@@ -163,10 +156,6 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
             const int T2 = adjs.ntype[ad];
             const int I2 = adjs.natom[ad];
             int iat2 = ucell.itia2iat(T2, I2);
-            if (paraV.get_nrow_atom(iat1) <= 0 || paraV.get_ncol_atom(iat2) <= 0)
-            {
-                continue;
-            }
             const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
             // choose the real adjacent atoms
             // Note: the distance of atoms should less than the cutoff radius,
@@ -176,10 +165,9 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
             {
                 continue;
             }
-            hamilt::AtomPair<double> tmp(iat1, iat2, R_index, &paraV);
             for (int dir = 0; dir < 3; dir++)
             {
-                this->grad_overlap[dir]->insert_pair(tmp);
+                this->grad_overlap[dir]->insert_pair(iat1, iat2, R_index);
             }
         }
     }
@@ -236,12 +224,12 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
             // calculate the overlap matrix for each pair of orbitals
             // ---------------------------------------------
             double olm[3] = {0, 0, 0};
-            auto row_indexes = paraV.get_indexes_row(iat1);
-            auto col_indexes = paraV.get_indexes_col(iat2);
-            const int step_trace = col_indexes.size() + 1;
-            for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
+            const AtomBasisView rows = this->row_basis(iat1);
+            const AtomBasisView cols = this->col_basis(iat2);
+            const int step_trace = cols.nloc() + 1;
+            for (int iw1l = 0; iw1l < rows.nloc(); iw1l += npol)
             {
-                const int iw1 = row_indexes[iw1l] / npol;
+                const int iw1 = rows[iw1l] / npol;
                 const int L1 = iw2l1[iw1];
                 const int N1 = iw2n1[iw1];
                 const int m1 = iw2m1[iw1];
@@ -249,9 +237,9 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
                 // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
                 int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
-                for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
+                for (int iw2l = 0; iw2l < cols.nloc(); iw2l += npol)
                 {
-                    const int iw2 = col_indexes[iw2l] / npol;
+                    const int iw2 = cols[iw2l] / npol;
                     const int L2 = iw2l2[iw2];
                     const int N2 = iw2n2[iw2];
                     const int m2 = iw2m2[iw2];
@@ -270,7 +258,7 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
                 }
                 for (int dir = 0; dir < 3; dir++)
                 {
-                    p_data[dir] += (npol - 1) * col_indexes.size();
+                    p_data[dir] += (npol - 1) * cols.nloc();
                 }
             }
         }

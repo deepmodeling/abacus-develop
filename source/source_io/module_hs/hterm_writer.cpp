@@ -2,7 +2,9 @@
 #include "source_io/module_output/spin_tag.h"
 
 #include "source_base/parallel_reduce.h"
+#include "source_base/basis_flattened_indexing.h"
 #include "source_base/timer.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_hs/hs_dense_io.h"
@@ -232,6 +234,11 @@ void write_h_t(WriteHParams& params)
     const LCAO_Orbitals& orb = *params.orb;
     const K_Vectors& kv = *params.kv;
     const std::vector<double>& orb_cutoff = orb.cutoffs();
+    const ModuleBase::Element_Basis_Index::Range basis_range =
+        ModuleBase::Element_Basis_Index::construct_range(orb);
+    const ModuleBase::Element_Basis_Index::IndexLNM basis_hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(basis_range);
+    const BasisFlattenedIndexing basis(basis_hierarchy, ucell.iat2it, ucell.get_npol());
 
     HTermSpec spec;
     spec.timer_label = "write_h_t";
@@ -241,7 +248,7 @@ void write_h_t(WriteHParams& params)
     spec.term_name = "kinetic";
     spec.build = [&](hamilt::HContainer<double>& hR_tmp, int /*ispin*/) {
         hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>
-            tmp_ekinetic(nullptr, kv.kvec_d, &hR_tmp, &ucell, orb_cutoff, &gd,
+            tmp_ekinetic(nullptr, kv.kvec_d, &hR_tmp, basis, pv.para_2d(), &ucell, orb_cutoff, &gd,
                          two_center_bundle.kinetic_orb.get());
         tmp_ekinetic.contributeHR();
     };

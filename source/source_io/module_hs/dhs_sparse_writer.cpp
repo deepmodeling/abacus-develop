@@ -214,9 +214,9 @@ void ModuleIO::save_dH_sparse(const int& istep,
             {
                 if (comp.nonzero_num[ispin][count] > 0) {
                     if (nspin != 4) {
-                        save_lat_r(comp.ofs[ispin], comp.sparse[ispin][R_coor], pv, lat_r_options);
+                        save_lat_r(comp.ofs[ispin], comp.sparse[ispin][R_coor], pv.para_2d(), lat_r_options);
                     } else {
-                        save_lat_r(comp.ofs[ispin], (*comp.soc_sparse)[R_coor], pv, lat_r_options);
+                        save_lat_r(comp.ofs[ispin], (*comp.soc_sparse)[R_coor], pv.para_2d(), lat_r_options);
                     }
                 }
             }

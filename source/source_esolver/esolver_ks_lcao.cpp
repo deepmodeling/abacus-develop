@@ -2,6 +2,8 @@
 
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/tool_quit.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_basis/module_pw/pw_basis_big.h" // use PW_Basis_Big
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
@@ -41,9 +43,22 @@
 namespace ModuleESolver
 {
 
-#ifdef __EXX
 namespace
 {
+std::unique_ptr<BasisFlattenedIndexing> make_basis_flattened_indexing(
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb)
+{
+    const ModuleBase::Element_Basis_Index::Range range =
+        ModuleBase::Element_Basis_Index::construct_range(orb);
+    const ModuleBase::Element_Basis_Index::IndexLNM hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(range);
+    std::unique_ptr<BasisFlattenedIndexing> indexing(
+        new BasisFlattenedIndexing(hierarchy, ucell.iat2it, ucell.get_npol()));
+    return indexing;
+}
+
+#ifdef __EXX
 void validate_librpa_v1_kpoints(const Input_para& input, const K_Vectors& kv)
 {
     // Reader-v1 writes the complete Monkhorst-Pack mesh for LibRPA.
@@ -52,8 +67,8 @@ void validate_librpa_v1_kpoints(const Input_para& input, const K_Vectors& kv)
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_all_runners", "out_librpa_ver=1 requires a uniform Monkhorst-Pack k-point grid.");
     }
 }
-} // namespace
 #endif
+} // namespace
 
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
@@ -109,6 +124,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
                                  ucell,
                                  two_center_bundle_,
                                  orb_);
+    this->basis_index_ = make_basis_flattened_indexing(ucell, this->orb_);
 
     // 6) generate matrices for optimized auxiliary basis functions when requested
     if (inp.calculation == "gen_opt_abfs")
@@ -233,6 +249,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep, const
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(ucell,
                                                         this->gd,
                                                         &this->pv,
+                                                        *(this->basis_index_),
+                                                        this->pv.para_2d(),
                                                         this->pelec->pot,
                                                         this->kv,
                                                         two_center_bundle_,
@@ -373,6 +391,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
                        this->inp_->test_stress,
                        this->gd,
                        this->pv,
+                       *(this->basis_index_),
                        this->pelec,
                        this->dmat,
                        this->psi,

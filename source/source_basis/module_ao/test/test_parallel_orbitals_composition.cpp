@@ -1,7 +1,8 @@
 // test_parallel_orbitals_composition.cpp
 //
 // Regression coverage for Parallel_Orbitals composition:
-// - the composed BlockCyclicDistributionInformation is exposed only through para_2d();
+// - the square-matrix BCDI is exposed through para_2d() and the distinct
+//   wavefunction BCDI through wfc_layout();
 // - derived atom and band metadata can be resynchronized after layout changes;
 // - copy and move semantics remain explicit;
 // - MPI and serial builds exercise their respective initialization paths.
@@ -49,17 +50,17 @@ protected:
     const int nat = 3;
 
     /// Refresh state derived from the current para_2d() layout.
-    void run_derived_layer(Parallel_Orbitals& po, const int nlocal_global, const int nbands_global)
+    void run_derived_layer(Parallel_Orbitals& po, const int nlocal_global, const int nmo_global)
     {
         po.set_atomic_trace(iat2iwt.data(), nat, nlocal_global);
 #ifdef __MPI
-        ASSERT_EQ(po.set_nloc_wfc_Eij(nbands_global, ofs_running, ofs_warning), 0);
-        po.set_desc_wfc_Eij(nlocal_global, nbands_global, po.para_2d().nrloc());
+        ASSERT_EQ(po.set_wfc_and_mo_sizes(nmo_global, ofs_running, ofs_warning), 0);
+        po.set_wfc_and_mo_layouts(nlocal_global, nmo_global);
 #endif
     }
 
     /// Assert that derived state matches the current para_2d() layout.
-    void assert_sync_with(const Parallel_Orbitals& po, const int nlocal_global, const int nbands_global)
+    void assert_sync_with(const Parallel_Orbitals& po, const int nlocal_global, const int nmo_global)
     {
         // The trailing sentinels must follow the new distribution.
         EXPECT_EQ(po.atom_begin_row[nat], po.para_2d().nrloc());
@@ -90,14 +91,42 @@ protected:
         // Band metadata must be re-derived from the current distribution.
         EXPECT_EQ(po.nrow_bands, po.para_2d().nrloc());
         EXPECT_EQ(po.nloc_wfc, static_cast<std::size_t>(po.ncol_bands) * po.para_2d().nrloc());
-        EXPECT_EQ(po.nloc_Eij, static_cast<std::size_t>(po.ncol_bands) * po.ncol_bands);
+        EXPECT_EQ(po.wfc_layout().nrloc(), po.para_2d().nrloc());
+        EXPECT_EQ(po.wfc_layout().ncloc(), po.ncol_bands);
+        EXPECT_EQ(po.wfc_layout().size(), static_cast<std::size_t>(po.nloc_wfc));
         EXPECT_EQ(po.get_wfc_global_nbands(), po.desc_wfc[3]);
         EXPECT_EQ(po.get_wfc_global_nbasis(), po.desc_wfc[2]);
         // The embedded descriptor context must match the composed layout.
         EXPECT_EQ(po.desc_wfc[1], po.para_2d().ictxt());
         EXPECT_EQ(po.desc_wfc[2], nlocal_global);
-        EXPECT_EQ(po.desc_wfc[3], nbands_global);
+        EXPECT_EQ(po.desc_wfc[3], nmo_global);
         EXPECT_EQ(po.desc_wfc[8], po.para_2d().nrloc());
+        EXPECT_EQ(po.desc_wfc[1], po.wfc_layout().ictxt());
+        EXPECT_EQ(po.desc_wfc[2], po.wfc_layout().desc()[2]);
+        EXPECT_EQ(po.desc_wfc[3], po.wfc_layout().desc()[3]);
+        EXPECT_EQ(po.desc_wfc[8], po.wfc_layout().desc()[8]);
+        // The MO representation of S and H must carry its own descriptor and
+        // local size; its square global extent follows from nmo_global, the
+        // number of MOs, and is distinct from the nbasis x nbasis Hamiltonian
+        // distribution.
+        ASSERT_GT(po.mo_repr_layout().size(), 0);
+        EXPECT_EQ(po.mo_repr_layout().ictxt(), po.para_2d().ictxt());
+        EXPECT_EQ(po.mo_repr_layout().desc()[1], po.para_2d().ictxt());
+        EXPECT_EQ(po.mo_repr_layout().desc()[2], nmo_global);
+        EXPECT_EQ(po.mo_repr_layout().desc()[3], nmo_global);
+        EXPECT_EQ(po.mo_repr_layout().desc()[4], po.para_2d().nb());
+        EXPECT_EQ(po.mo_repr_layout().desc()[5], po.para_2d().nb());
+        EXPECT_EQ(po.mo_repr_layout().desc()[8], std::max(po.mo_repr_layout().nrloc(), 1));
+        EXPECT_EQ(po.mo_repr_layout().size(),
+                  static_cast<std::size_t>(po.mo_repr_layout().nrloc()) * po.mo_repr_layout().ncloc());
+        EXPECT_EQ(po.mo_repr_layout().nb(), po.para_2d().nb());
+        EXPECT_EQ(po.mo_repr_layout().nrproc(), po.para_2d().nrproc());
+        EXPECT_EQ(po.mo_repr_layout().ncproc(), po.para_2d().ncproc());
+        if (nmo_global < nlocal_global)
+        {
+            EXPECT_LT(po.mo_repr_layout().ncglb(), po.para_2d().ncglb());
+            EXPECT_LT(po.mo_repr_layout().nrglb(), po.para_2d().nrglb());
+        }
 #endif
     }
 };

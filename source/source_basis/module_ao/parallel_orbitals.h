@@ -25,6 +25,18 @@ public:
 
     const BlockCyclicDistributionInformation& para_2d() const { return para_2d_; }
 
+    /// Block-cyclic distribution of the wavefunction (nbasis x nbands).  This is
+    /// a distinct layout from the square Hamiltonian distribution, shared with
+    /// the same process grid; it is a temporary adapter seam, not a duplicate of
+    /// para_2d_.
+    const BlockCyclicDistributionInformation& wfc_layout() const { return wfc_layout_; }
+
+    /// Block-cyclic layout of the MO representation: S and H represented in the MOs
+    /// defined by the DFT reference determinant, i.e. Psi^dagger * S * Psi and
+    /// Psi^dagger * H * Psi.  The square global extent of this layout follows from
+    /// the number nmo of MOs.  Shares the process grid of para_2d_.
+    const BlockCyclicDistributionInformation& mo_repr_layout() const { return mo_repr_layout_; }
+
     /// local size of bands, used for 2d wavefunction
     /// must divided on dim1 because of elpa interface
     int ncol_bands;
@@ -32,9 +44,6 @@ public:
     
     /// ncol_bands*nrow
     long nloc_wfc;
-
-    //ncol_bands*ncol_bands
-    long nloc_Eij;
 
     int lastband_in_proc;
     int lastband_number; 
@@ -49,18 +58,15 @@ public:
     
 #ifdef __MPI
     int desc_wfc[9]; //for wfc, nlocal*nbands
-    int desc_Eij[9]; // for Eij in TDDFT, nbands*nbands
-    int desc_wfc1[9]; // for wfc^T in TDDFT, nbands*nlocal
 
-    /// set the local size of wavefunction and Eij
-    int set_nloc_wfc_Eij(const int& N_A/**< global row size*/,
+    /// set the local sizes of the wavefunction and the MO representation
+    int set_wfc_and_mo_sizes(const int& nmo/**< number of MOs*/,
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning);
 
-    ///@brief set the desc[9] of the 2D-block-cyclic distribution of wavefunction and Eij
-    void set_desc_wfc_Eij(const int& nbasis,
-        const int& nbands,
-        const int& lld);
+    ///@brief set the 2D-block-cyclic layouts of the wavefunction and the MO representation
+    void set_wfc_and_mo_layouts(const int& nbasis,
+        const int& nmo);
 #endif
 
     int get_wfc_global_nbands () const;
@@ -116,6 +122,16 @@ private:
     /// Block-cyclic distribution of the Hamiltonian matrix.  Single source of
     /// truth for nrow/ncol/nloc/nb/dim0/dim1/desc/blacs_ctxt (R4).
     BlockCyclicDistributionInformation para_2d_;
+
+    /// Block-cyclic distribution of the wavefunction (nbasis x nbands), sharing
+    /// the process grid of para_2d_.  Temporary adapter seam for runtime
+    /// consumers; not a duplicate of the Hamiltonian distribution.
+    BlockCyclicDistributionInformation wfc_layout_;
+
+    /// Block-cyclic layout of S and H represented in the MOs defined by the DFT
+    /// reference determinant.  Its square global extent follows from the number nmo
+    /// of MOs; it shares the process grid of para_2d_.
+    BlockCyclicDistributionInformation mo_repr_layout_;
 
 };
 #endif

@@ -100,7 +100,7 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
         r_matrix.binary = options.binary;
         r_matrix.sparse_threshold = options.sparse_threshold;
         const bool cal_force = PARAM.inp.cal_force;
-        r_matrix.init(ucell, pv, orb, cal_force, nlocal);
+        r_matrix.init(ucell, pv.para_2d(), orb, cal_force, nlocal);
         r_matrix.out_rR(ucell,
                         grid,
                         istep,

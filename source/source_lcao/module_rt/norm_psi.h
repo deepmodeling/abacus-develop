@@ -7,10 +7,11 @@
 #define NORM_PSI_H
 
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 #include <complex>
+
+class BlockCyclicDistributionInformation;
 
 namespace module_rt
 {
@@ -18,7 +19,9 @@ namespace module_rt
 /**
  *  @brief normalize the wave function
  *
- * @param[in] pv information of parallel
+ * @param[in] matrix_layout block-cyclic distribution of the square matrix (S)
+ * @param[in] wfc_layout block-cyclic distribution of the wavefunction (nbasis x nbands)
+ * @param[in] mo_repr_layout block-cyclic layout of the MO representation of S
  * @param[in] nband number of bands
  * @param[in] nlocal number of orbitals
  * @param[in] Stmp overlap matrix
@@ -26,7 +29,9 @@ namespace module_rt
  * @param[in] print_matirx print internal matrix or not
  * @param[out] psi_k psi of this step after normalization
  */
-void norm_psi(const Parallel_Orbitals* pv,
+void norm_psi(const BlockCyclicDistributionInformation& matrix_layout,
+              const BlockCyclicDistributionInformation& wfc_layout,
+              const BlockCyclicDistributionInformation& mo_repr_layout,
               const int nband,
               const int nlocal,
               const std::complex<double>* Stmp,
@@ -34,7 +39,9 @@ void norm_psi(const Parallel_Orbitals* pv,
               std::ofstream& ofs_running,
               const int print_matrix);
 
-void norm_psi_tensor(const Parallel_Orbitals* pv,
+void norm_psi_tensor(const BlockCyclicDistributionInformation& matrix_layout,
+                     const BlockCyclicDistributionInformation& wfc_layout,
+                     const BlockCyclicDistributionInformation& mo_repr_layout,
                      const int nband,
                      const int nlocal,
                      const ct::Tensor& Stmp,
@@ -44,8 +51,7 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                      CublasMpResources& cublas_res);
 
 template <typename Device>
-void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
-                            const int nband,
+void norm_psi_tensor_lapack(const int nband,
                             const int nlocal,
                             const ct::Tensor& Stmp,
                             ct::Tensor& psi_k,

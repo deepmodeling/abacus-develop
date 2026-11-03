@@ -1,4 +1,5 @@
 #include "../overlap.h"
+#include "test_operator_basis.h"
 
 #include "gtest/gtest.h"
 #include <memory>
@@ -19,6 +20,7 @@
 // modify test_size to test different size of unitcell
 int test_size = 10;
 int test_nw = 10;
+
 class OverlapTest : public ::testing::Test
 {
   protected:
@@ -102,8 +104,9 @@ TEST_F(OverlapTest, constructHRd2d)
     hamilt::HS_Matrix_K<double> hsk(paraV);
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of SR
     for (int iap = 0; iap < SR->size_atom_pairs(); ++iap)
@@ -136,8 +139,9 @@ TEST_F(OverlapTest, constructHRd2cd)
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV);
     hsk.set_zero_sk();
     Grid_Driver gd(0, 0);
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, double>>
-        op(&hsk, kvec_d_in, nullptr, SR, &ucell, {1.0}, &gd, &intor_);
+        op(&hsk, kvec_d_in, nullptr, SR, basis, paraV->para_2d(), &ucell, {1.0}, &gd, &intor_);
     op.contributeHR();
     // check the value of SR
     for (int iap = 0; iap < SR->size_atom_pairs(); ++iap)
@@ -183,8 +187,9 @@ TEST_F(OverlapTest, AsyncOverlapKeepsSeparateContainer)
     const std::vector<double> cutoff{1.0};
     hamilt::HS_Matrix_K<double> hsk(paraV);
     Grid_Driver neighbors(0, 0);
+    const BasisFlattenedIndexing basis = operator_test::make_s_orbital_basis(ucell);
     hamilt::Overlap<hamilt::OperatorLCAO<double, double>> op(
-        &hsk, kpoints, nullptr, SR, &ucell, cutoff, &neighbors, &intor_);
+        &hsk, kpoints, nullptr, SR, basis, paraV->para_2d(), &ucell, cutoff, &neighbors, &intor_);
     auto* const async_container = op.calculate_SR_async(ucell, 0.1, paraV);
     std::unique_ptr<hamilt::HContainer<double>> async(async_container);
     ASSERT_EQ(async->size_atom_pairs(), SR->size_atom_pairs());

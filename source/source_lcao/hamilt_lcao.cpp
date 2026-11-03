@@ -29,9 +29,12 @@ template <typename TK, typename TR>
 HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const Grid_Driver& grid_d,
                                const Parallel_Orbitals* paraV,
+                               const BasisFlattenedIndexing& basis,
+                               const BlockCyclicDistributionInformation& layout,
                                const K_Vectors& kv_in,
                                const TwoCenterIntegrator& intor_overlap_orb,
                                const std::vector<double>& orb_cutoff)
+    : basis_(basis), layout_(layout)
 {
     this->classname = "HamiltLCAO";
 
@@ -45,6 +48,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 
     this->getOperator() = new Overlap<OperatorLCAO<TK, TR>>(this->hsk.get(),
                                                                this->kv->kvec_d, this->hR.get(), this->sR.get(),
+                                                               basis, layout,
                                                                &ucell, orb_cutoff, &grid_d,
                                                                &intor_overlap_orb);
 }
@@ -53,6 +57,8 @@ template <typename TK, typename TR>
 HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const Grid_Driver& grid_d,
                                const Parallel_Orbitals* paraV,
+                               const BasisFlattenedIndexing& basis,
+                               const BlockCyclicDistributionInformation& layout,
                                elecstate::Potential* pot_in,
                                const K_Vectors& kv_in,
                                const TwoCenterBundle& two_center_bundle,
@@ -66,6 +72,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                const Input_para& inp,
                                const bool load_exx_flag,
                                TD_info* td_info)
+    : basis_(basis), layout_(layout)
 {
     this->classname = "HamiltLCAO";
 
@@ -107,14 +114,14 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     LcaoOpsBundle<TK, TR> bundle;
     if (std::is_same<TK, double>::value)
     {
-        bundle = build_gamma_ops<TK, TR>(ucell, grid_d, paraV, pot_in, two_center_bundle,
+        bundle = build_gamma_ops<TK, TR>(ucell, grid_d, paraV, basis, layout, pot_in, two_center_bundle,
                                          orb, DM_in, p_dftu, deepks, inp, pot_register_in,
                                          this->kv, this->hsk.get(), this->hR.get(), this->sR.get());
     }
     // multi-k-points case to initialize HamiltLCAO, ops will be used
     else if (std::is_same<TK, std::complex<double>>::value)
     {
-        bundle = build_multik_ops<TK, TR>(ucell, grid_d, paraV, pot_in, two_center_bundle,
+        bundle = build_multik_ops<TK, TR>(ucell, grid_d, paraV, basis, layout, pot_in, two_center_bundle,
                                           orb, DM_in, p_dftu, deepks, inp, pot_register_in,
                                           this->kv, this->hsk.get(), this->hR.get(), this->sR.get(), td_info);
     }

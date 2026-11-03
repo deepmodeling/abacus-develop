@@ -1,6 +1,5 @@
 #ifndef EKINETIC_H
 #define EKINETIC_H
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
@@ -8,6 +7,9 @@
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include <array>
 #include <vector>
+
+class BasisFlattenedIndexing;
+class BlockCyclicDistributionInformation;
 
 namespace hamilt
 {
@@ -39,6 +41,8 @@ class EKinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     EKinetic<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                       HContainer<TR>* hR_in,
+                                      const BasisFlattenedIndexing& basis,
+                                      const BlockCyclicDistributionInformation& layout,
                                       const UnitCell* ucell_in,
                                       const std::vector<double>& orb_cutoff,
                                       const Grid_Driver* GridD_in,
@@ -80,6 +84,9 @@ class EKinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     hamilt::HContainer<TR>* HR_fixed = nullptr;
 
+    const BasisFlattenedIndexing& basis_;
+    const BlockCyclicDistributionInformation& layout_;
+
     const TwoCenterIntegrator* intor_ = nullptr;
 
     const Grid_Driver* gridD = nullptr;
@@ -106,34 +113,8 @@ class EKinetic<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_HR_IJR(const int& iat1,
                     const int& iat2,
-                    const Parallel_Orbitals* paraV,
                     const ModuleBase::Vector3<double>& dtau,
                     TR* data_pointer);
-
-    /**
-     * @brief calculate force contribution for atom pair <I,J,R>
-     */
-    void cal_force_IJR(const int& iat1,
-                       const int& iat2,
-                       const Parallel_Orbitals* paraV,
-                       const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                       const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                       const hamilt::BaseMatrix<TR>* dmR_pointer,
-                       double* force1,
-                       double* force2);
-
-    /**
-     * @brief calculate stress contribution for atom pair <I,J,R>
-     */
-    void cal_stress_IJR(const int& iat1,
-                        const int& iat2,
-                        const Parallel_Orbitals* paraV,
-                        const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                        const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                        const hamilt::BaseMatrix<TR>* dmR_pointer,
-                        const ModuleBase::Vector3<double>& dis1,
-                        const ModuleBase::Vector3<double>& dis2,
-                        double* stress);
 
     /// @brief exact the nearest neighbor atoms from all adjacent atoms
     std::vector<AdjacentAtomInfo> adjs_all;

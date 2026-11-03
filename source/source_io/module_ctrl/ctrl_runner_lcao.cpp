@@ -154,6 +154,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                             pelec->wg,
                                             gd,
                                             orb.cutoffs(),
+                                            orb,
                                             two_center_bundle,
                                             exx_info
 #ifdef __EXX

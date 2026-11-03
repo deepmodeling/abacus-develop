@@ -34,8 +34,7 @@ endif()
 addtest(
   TARGET MODULE_LCAO_tddft_middle_hamilt_test
   LIBS parameter base device tddft_test_lib
-  SOURCES middle_hamilt_test.cpp ../middle_hamilt.cpp
-          ../../../source_basis/module_ao/parallel_orbitals.cpp)
+  SOURCES middle_hamilt_test.cpp ../middle_hamilt.cpp)
 
 addtest(
   TARGET MODULE_LCAO_tddft_band_energy_test
@@ -107,6 +106,29 @@ addtest(
   TARGET MODULE_LCAO_tddft_rad_interp_test
   LIBS base device
   SOURCES rad_interp_test.cpp ../radial_interpolation.cpp)
+
+addtest(
+  TARGET MODULE_LCAO_tddft_boundary_fix_test
+  LIBS parameter
+       base
+       device
+       cell
+       domain_decomposition
+       neighbor
+       neighbor_search
+       symmetry
+       psi
+  SOURCES boundary_fix_test.cpp ../boundary_fix.cpp)
+
+abacus_copy_test_files(test_boundary_fix_parallel.sh)
+find_program(BASH bash)
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_LCAO_tddft_boundary_fix_test_parallel
+    COMMAND ${BASH} test_boundary_fix_parallel.sh
+            "$<TARGET_FILE:MODULE_LCAO_tddft_boundary_fix_test>"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif()
 
 if(USE_CUDA)
   addtest(

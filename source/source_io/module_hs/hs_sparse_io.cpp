@@ -133,12 +133,12 @@ void ModuleIO::save_sparse(
 
         if (smat.count(R_coor))
         {
-            save_lat_r(ofs, smat.at(R_coor), pv, options);
+            save_lat_r(ofs, smat.at(R_coor), pv.para_2d(), options);
         }
         else
         {
             SparseRBlock<Tdata> empty_map;
-            save_lat_r(ofs, empty_map, pv, options);
+            save_lat_r(ofs, empty_map, pv.para_2d(), options);
         }
         ++count;
     }

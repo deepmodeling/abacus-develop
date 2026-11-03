@@ -1,8 +1,8 @@
 #ifndef GATHER_MAT_H
 #define GATHER_MAT_H
 
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/module_external/scalapack_connector.h" // Cpxgemr2d
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hamilt/matrixblock.h"
 
 namespace module_rt
@@ -49,7 +49,7 @@ void gatherMatrix(const int myid, const int root_proc, const hamilt::MatrixBlock
 template <typename T>
 void distributeMatrix(hamilt::MatrixBlock<T>& mat_l, const module_rt::Matrix_g<T>& mat_g)
 {
-    const int* desc_local = mat_l.desc; // Obtain the descriptor from Parallel_Orbitals
+    const int* desc_local = mat_l.desc; // Obtain the descriptor of the local matrix
     int ctxt = desc_local[1];           // BLACS context
     int nrows = desc_local[2];          // Global matrix row number
     int ncols = desc_local[3];          // Global matrix column number
@@ -68,10 +68,10 @@ template <typename T>
 void gatherPsi(const int myid,
                const int root_proc,
                T* psi_l,
-               const Parallel_Orbitals& para_orb,
+               const BlockCyclicDistributionInformation& wfc_layout,
                module_rt::Matrix_g<T>& psi_g)
 {
-    const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
+    const int* desc_psi = wfc_layout.desc(); // Obtain the descriptor from the wavefunction layout
     int ctxt = desc_psi[1];                  // BLACS context
     int nrows = desc_psi[2];                 // Global matrix row number
     int ncols = desc_psi[3];                 // Global matrix column number
@@ -95,9 +95,9 @@ void gatherPsi(const int myid,
 }
 
 template <typename T>
-void distributePsi(const Parallel_Orbitals& para_orb, T* psi_l, const module_rt::Matrix_g<T>& psi_g)
+void distributePsi(const BlockCyclicDistributionInformation& wfc_layout, T* psi_l, const module_rt::Matrix_g<T>& psi_g)
 {
-    const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
+    const int* desc_psi = wfc_layout.desc(); // Obtain the descriptor from the wavefunction layout
     int ctxt = desc_psi[1];                  // BLACS context
     int nrows = desc_psi[2];                 // Global matrix row number
     int ncols = desc_psi[3];                 // Global matrix column number

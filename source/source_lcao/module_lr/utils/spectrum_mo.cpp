@@ -1,6 +1,8 @@
 #include "spectrum_mo.h"
+#include "source_base/basis_flattened_indexing.h"
 #include "source_base/tool_title.h"
 #include "source_base/parallel_device.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/klist.h"
 #include "source_io/module_parameter/parameter.h"
@@ -37,7 +39,17 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
     two_center_bundle.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
                                         inp.out_element_info, inp.cal_force);
 
-    Velocity_op<std::complex<double>> vR(&ucell, &gd, &pmat, orb, two_center_bundle.overlap_orb.get());
+    const ModuleBase::Element_Basis_Index::Range range =
+        ModuleBase::Element_Basis_Index::construct_range(orb);
+    const ModuleBase::Element_Basis_Index::IndexLNM hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(range);
+    const BasisFlattenedIndexing basis(hierarchy, ucell.iat2it, ucell.get_npol());
+    Velocity_op<std::complex<double>> vR(&ucell,
+                                         &gd,
+                                         basis,
+                                         pmat.para_2d(),
+                                         orb,
+                                         two_center_bundle.overlap_orb.get());
     vR.calculate_grad_term();   // $<\mu, 0|-i∇r|\nu, R>$
     vR.calculate_vcomm_r(); // $<\mu, 0|i[Vnl, r]|\nu, R>$
 

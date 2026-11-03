@@ -167,7 +167,7 @@ class WriteWfcLcaoTest : public testing::Test
         }
 #ifdef __MPI
         pv.para_2d().init(nbasis, nbands, 1, MPI_COMM_WORLD, false);
-        pv.set_desc_wfc_Eij(nbasis, nbands, pv.para_2d().nrloc());
+        pv.set_wfc_and_mo_layouts(nbasis, nbands);
 
         // create a global PV, and distribute the psi_init to local
         BlockCyclicDistributionInformation pv_glb;

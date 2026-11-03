@@ -13,6 +13,9 @@
 
 #include "../snap_psibeta_gpu.h"
 #include "snap_psibeta_kernel.cuh"
+#include "source_base/atom_basis_view.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 
@@ -102,7 +105,8 @@ struct OrbitalRadialMapping
  * @param A         Vector potential for phase factor
  * @param adjs      Adjacent atom information
  * @param ucell     Unit cell information
- * @param paraV     Parallel orbital distribution
+ * @param basis     Canonical atom-major basis indexing
+ * @param layout    Block-cyclic matrix distribution
  * @param npol      Number of spin polarizations
  * @param nlm_dim   Output dimension (1 for overlap only, 4 for overlap + current)
  * @param nlm_tot   Output: overlap integrals indexed as [neighbor][direction][orbital]
@@ -115,7 +119,8 @@ void snap_psibeta_atom_batch_gpu(
     const ModuleBase::Vector3<double>& A,
     const AdjacentAtomInfo& adjs,
     const UnitCell* ucell,
-    const Parallel_Orbitals* paraV,
+    const BasisFlattenedIndexing& basis,
+    const BlockCyclicDistributionInformation& layout,
     const int npol,
     const int nlm_dim,
     std::vector<std::vector<std::unordered_map<int, std::vector<std::complex<double>>>>>& nlm_tot)
@@ -173,9 +178,18 @@ void snap_psibeta_atom_batch_gpu(
         const Atom* atom1 = &ucell->atoms[T1];
 
         // Get unique orbital indices (union of row and column indices)
-        auto all_indexes = paraV->get_indexes_row(iat1);
-        auto col_indexes = paraV->get_indexes_col(iat1);
-        all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+        const AtomBasisView rows = AtomBasisView::rows(basis, layout, iat1);
+        const AtomBasisView cols = AtomBasisView::cols(basis, layout, iat1);
+        std::vector<int> all_indexes;
+        all_indexes.reserve(rows.nloc() + cols.nloc());
+        for (int k = 0; k < rows.nloc(); ++k)
+        {
+            all_indexes.push_back(rows[k]);
+        }
+        for (int k = 0; k < cols.nloc(); ++k)
+        {
+            all_indexes.push_back(cols[k]);
+        }
         std::sort(all_indexes.begin(), all_indexes.end());
         all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
 

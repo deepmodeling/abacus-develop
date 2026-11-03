@@ -34,6 +34,9 @@ template <typename TR> class Exx_LRI;
 #include <complex>
 #include <vector>
 #include <iomanip>
+#include <memory>
+
+class BasisFlattenedIndexing;
 
 //! Reduced Density Matrix Functional Theory (RDMFT)
 namespace rdmft
@@ -148,6 +151,8 @@ class RDMFT
     hamilt::HS_Matrix_K<TK>* hsk_exx_XC = nullptr;
 
     std::vector<TK> HK_XC;
+
+    std::unique_ptr<BasisFlattenedIndexing> basis_index_;
     std::vector< std::vector<TK> > DM_XC_pass;
     // ModuleDirectMin::ProdStiefelVariable HK_RDMFT_pass;
     // ModuleDirectMin::ProdStiefelVariable HK_XC_pass;

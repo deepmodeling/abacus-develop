@@ -57,8 +57,8 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
     //  setup 2d-block distribution for AO-matrix and KS wfc
     LR_Util::setup_2d_division(this->paraMat_.para_2d(), 1, this->nbasis, this->nbasis);
 #ifdef __MPI
-    this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, this->paraMat_.para_2d().nrloc());
-    int err = this->paraMat_.set_nloc_wfc_Eij(this->nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
+    this->paraMat_.set_wfc_and_mo_layouts(this->nbasis, this->nbands);
+    int err = this->paraMat_.set_wfc_and_mo_sizes(this->nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     this->paraMat_.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nbasis);
 #else
     this->paraMat_.nrow_bands = this->nbasis;

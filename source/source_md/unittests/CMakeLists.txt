@@ -25,7 +25,9 @@ if(ENABLE_MPI)
             ../../source_hamilt/module_hcontainer/atom_pair.cpp
             ../../source_hamilt/module_hcontainer/hcontainer.cpp
             ../../source_basis/module_ao/parallel_orbitals.cpp
+            ../../source_base/basis_flattened_indexing.cpp
             ../../source_base/block_cyclic_distribution_information.cpp
+            ../../source_base/element_basis_index.cpp
             ../../source_base/parallel_common.cpp
             ../../source_cell/magnetism.cpp
             ${md_test_depend_files})

@@ -7,11 +7,12 @@
 #define BANDENERGY_H
 
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_energy/td_eij_io.h"
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 #include <complex>
+
+class BlockCyclicDistributionInformation;
 
 namespace module_rt
 {
@@ -21,14 +22,18 @@ using ModuleIO::EijOutputInfo;
 /**
  *  @brief compute band energy ekb <psi_i|H|psi_i>
  *
- * @param[in] pv information of parallel
+ * @param[in] matrix_layout block-cyclic distribution of the square matrix (H)
+ * @param[in] wfc_layout block-cyclic distribution of the wavefunction (nbasis x nbands)
+ * @param[in] mo_repr_layout block-cyclic layout of the MO representation of H
  * @param[in] nband number of bands
  * @param[in] nlocal number of orbitals
  * @param[in] Htmp Hamiltonian
  * @param[in] psi_k psi of this step
  * @param[out] ekb band energy
  */
-void compute_ekb(const Parallel_Orbitals* pv,
+void compute_ekb(const BlockCyclicDistributionInformation& matrix_layout,
+                 const BlockCyclicDistributionInformation& wfc_layout,
+                 const BlockCyclicDistributionInformation& mo_repr_layout,
                  const int nband,
                  const int nlocal,
                  const std::complex<double>* Htmp,
@@ -37,7 +42,9 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  std::ofstream& ofs_running,
                  const EijOutputInfo& output_info);
 
-void compute_ekb_tensor(const Parallel_Orbitals* pv,
+void compute_ekb_tensor(const BlockCyclicDistributionInformation& matrix_layout,
+                        const BlockCyclicDistributionInformation& wfc_layout,
+                        const BlockCyclicDistributionInformation& mo_repr_layout,
                         const int nband,
                         const int nlocal,
                         const ct::Tensor& Htmp,
@@ -47,8 +54,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                         CublasMpResources& cublas_res);
 
 template <typename Device>
-void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
-                               const int nband,
+void compute_ekb_tensor_lapack(const int nband,
                                const int nlocal,
                                const ct::Tensor& Htmp,
                                const ct::Tensor& psi_k,

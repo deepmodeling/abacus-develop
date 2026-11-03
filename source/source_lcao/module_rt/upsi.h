@@ -8,10 +8,12 @@
 #define UPSI_H
 
 #include "source_base/module_container/ATen/core/tensor.h" // ct::Tensor
-#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 
 #include <complex>
+#include <fstream>
+
+class BlockCyclicDistributionInformation;
 
 namespace module_rt
 {
@@ -19,7 +21,8 @@ namespace module_rt
 /**
  *  @brief apply U_operator to the wave function of the previous step for new wave function
  *
- * @param[in] pv information of parallel
+ * @param[in] matrix_layout block-cyclic layout of the U/Hamiltonian matrices
+ * @param[in] wfc_layout block-cyclic layout of the wavefunction
  * @param[in] nband number of bands
  * @param[in] nlocal number of orbitals
  * @param[in] U_operator operator of propagator
@@ -27,7 +30,8 @@ namespace module_rt
  * @param[in] print_matirx print internal matrix or not
  * @param[out] psi_k psi of this step
  */
-void upsi(const Parallel_Orbitals* pv,
+void upsi(const BlockCyclicDistributionInformation& matrix_layout,
+          const BlockCyclicDistributionInformation& wfc_layout,
           const int nband,
           const int nlocal,
           const std::complex<double>* U_operator,
@@ -36,7 +40,8 @@ void upsi(const Parallel_Orbitals* pv,
           std::ofstream& ofs_running,
           const int print_matrix);
 
-void upsi_tensor(const Parallel_Orbitals* pv,
+void upsi_tensor(const BlockCyclicDistributionInformation& matrix_layout,
+                 const BlockCyclicDistributionInformation& wfc_layout,
                  const int nband,
                  const int nlocal,
                  const ct::Tensor& U_operator,
@@ -47,8 +52,7 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                  CublasMpResources& cublas_res);
 
 template <typename Device>
-void upsi_tensor_lapack(const Parallel_Orbitals* pv,
-                        const int nband,
+void upsi_tensor_lapack(const int nband,
                         const int nlocal,
                         const ct::Tensor& U_operator,
                         const ct::Tensor& psi_k_laststep,

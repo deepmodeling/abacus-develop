@@ -16,6 +16,8 @@
 #include <complex>
 #include <memory>
 
+class BasisFlattenedIndexing;
+
 //-----------------------------------
 // ESolver for LCAO
 //-----------------------------------
@@ -86,6 +88,9 @@ class ESolver_KS_LCAO : public ESolver_KS
 
     //! NAO orbitals: 2D block-cyclic distribution info
     Parallel_Orbitals pv;
+
+    //! Canonical global ordering and atom slices of the LCAO basis.
+    std::unique_ptr<BasisFlattenedIndexing> basis_index_;
 
     //! GintInfo: used to store basic grid-integration information for module_gint
     std::unique_ptr<ModuleGint::GintInfo> gint_info_;

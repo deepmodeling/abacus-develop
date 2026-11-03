@@ -18,6 +18,7 @@ class surchem;
 class Charge;
 class K_Vectors;
 class TwoCenterBundle;
+class LCAO_Orbitals;
 struct Exx_Info;
 
 namespace ModulePW
@@ -61,6 +62,7 @@ void write_eband_terms(const int nspin,
                        const ModuleBase::matrix& wg,
                        Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff,
+                       const LCAO_Orbitals& orb,
                        const TwoCenterBundle& two_center_bundle,
                        const Exx_Info& exx_info
 #ifdef __EXX

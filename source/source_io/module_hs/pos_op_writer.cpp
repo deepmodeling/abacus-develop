@@ -1,5 +1,6 @@
 #include "pos_op_writer.h"
 
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
@@ -10,8 +11,10 @@
 #include <cstdio>
 #include <sstream>
 
-PosOpWriter::PosOpWriter(const PosOpBasis& basis, const PosOpCalc& calc, const Parallel_Orbitals& pv)
-    : basis_(basis), calc_(calc), pv_(pv)
+PosOpWriter::PosOpWriter(const PosOpBasis& basis,
+                         const PosOpCalc& calc,
+                         const BlockCyclicDistributionInformation& layout)
+    : basis_(basis), calc_(calc), layout_(layout)
 {
 }
 
@@ -98,12 +101,12 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
         int ir, ic;
         for (int iw1 = 0; iw1 < nlocal; iw1++)
         {
-            ir = pv_.para_2d().irloc(iw1);
+            ir = layout_.irloc(iw1);
             if (ir >= 0)
             {
                 for (int iw2 = 0; iw2 < nlocal; iw2++)
                 {
-                    ic = pv_.para_2d().icloc(iw2);
+                    ic = layout_.icloc(iw2);
                     if (ic >= 0)
                     {
                         int orb_index_row = iw1 / npol;
@@ -203,7 +206,7 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
 
                 if (rR_nonzero_num[direction])
                 {
-                    ModuleIO::save_lat_r(ofs_tem1, psi_r_psi_sparse[direction], pv_, lat_r_options);
+                    ModuleIO::save_lat_r(ofs_tem1, psi_r_psi_sparse[direction], layout_, lat_r_options);
                 }
                 else
                 {

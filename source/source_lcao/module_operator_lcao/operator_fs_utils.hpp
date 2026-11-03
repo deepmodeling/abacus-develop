@@ -2,11 +2,14 @@
 #define OPERATOR_FS_UTILS_HPP
 
 #include "operator_fs_utils.h"
+#include "source_base/atom_basis_view.h"
+#include "source_base/basis_flattened_indexing.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "source_basis/module_ao/parallel_orbitals.h"
+
+class BlockCyclicDistributionInformation;
 
 namespace OperatorForceStress {
 
@@ -29,7 +32,8 @@ namespace OperatorForceStress {
  * @param ucell Unit cell containing atomic structure
  * @param gridD Grid driver for finding adjacent atoms
  * @param orb_cutoff Orbital cutoff radii for each atom type
- * @param paraV Parallel orbital distribution information
+ * @param basis Canonical atom-major basis flattening used to slice each atom pair
+ * @param layout Block-cyclic distribution of the operator matrices
  * @param integral_calculator Functor that calculates integral and its derivatives
  * @param force Output force matrix (natom x 3)
  * @param stress Output stress matrix (3 x 3)
@@ -42,7 +46,8 @@ void cal_force_stress_2center(
     const UnitCell* ucell,
     const Grid_Driver* gridD,
     const std::vector<double>& orb_cutoff,
-    const Parallel_Orbitals* paraV,
+    const BasisFlattenedIndexing& basis,
+    const BlockCyclicDistributionInformation& layout,
     IntegralFunc& integral_calculator,
     ModuleBase::matrix& force,
     ModuleBase::matrix& stress)
@@ -68,6 +73,11 @@ void cal_force_stress_2center(
             int T1 = 0, I1 = 0;
             ucell->iat2iait(iat1, &I1, &T1);
             Atom& atom1 = ucell->atoms[T1];
+            const AtomBasisView rows = AtomBasisView::rows(basis, layout, iat1);
+            if (rows.empty())
+            {
+                continue;
+            }
 
             // Find adjacent atoms
             AdjacentAtomInfo adjs;
@@ -99,10 +109,9 @@ void cal_force_stress_2center(
                 double* force_tmp2 = (cal_force) ? &force_local(iat2, 0) : nullptr;
 
                 Atom& atom2 = ucell->atoms[T2];
-                auto row_indexes = paraV->get_indexes_row(iat1);
-                auto col_indexes = paraV->get_indexes_col(iat2);
+                const AtomBasisView cols = AtomBasisView::cols(basis, layout, iat2);
 
-                if (row_indexes.size() == 0 || col_indexes.size() == 0)
+                if (cols.empty())
                 {
                     continue;
                 }
@@ -110,27 +119,29 @@ void cal_force_stress_2center(
                 const double* dm_pointer = dm_matrix->get_pointer();
                 double olm[4] = {0, 0, 0, 0}; // value, dx, dy, dz
 
-                // step_trace = 0 for npol=1; ={0, 1, col_size, col_size+1} for npol=2
+                // step_trace = 0 for npol=1; ={0, 1, ncol, ncol+1} for npol=2
+                const int ncol = cols.nloc();
+                const int ncol_stride = ncol + 1;
                 std::vector<int> step_trace(npol * npol, 0);
                 if (npol == 2)
                 {
                     step_trace[1] = 1;
-                    step_trace[2] = col_indexes.size();
-                    step_trace[3] = col_indexes.size() + 1;
+                    step_trace[2] = ncol;
+                    step_trace[3] = ncol_stride;
                 }
 
                 // Loop over orbital pairs
-                for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
+                for (int iw1l = 0; iw1l < rows.nloc(); iw1l += npol)
                 {
-                    const int iw1 = row_indexes[iw1l] / npol;
+                    const int iw1 = rows[iw1l] / npol;
                     const int L1 = atom1.iw2l[iw1];
                     const int N1 = atom1.iw2n[iw1];
                     const int m1 = atom1.iw2m[iw1];
                     const int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
-                    for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
+                    for (int iw2l = 0; iw2l < ncol; iw2l += npol)
                     {
-                        const int iw2 = col_indexes[iw2l] / npol;
+                        const int iw2 = cols[iw2l] / npol;
                         const int L2 = atom2.iw2l[iw2];
                         const int N2 = atom2.iw2n[iw2];
                         const int m2 = atom2.iw2m[iw2];
@@ -166,7 +177,7 @@ void cal_force_stress_2center(
 
                         dm_pointer += npol;
                     }
-                    dm_pointer += (npol - 1) * col_indexes.size();
+                    dm_pointer += (npol - 1) * ncol;
                 }
             }
         }

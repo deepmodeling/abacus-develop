@@ -5,8 +5,10 @@
 
 #include "rdmft.h"
 #include "source_lcao/module_rdmft/rdmft_tools.h"
+#include "source_base/basis_flattened_indexing.h"
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_cell/module_symmetry/symmetry.h"
 
 #ifdef __EXX
@@ -78,6 +80,12 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
     two_center_bundle = &two_center_bundle_in;
     XC_func_rdmft = XC_func_rdmft_in;
     alpha_power = alpha_power_in;
+
+    const ModuleBase::Element_Basis_Index::Range basis_range =
+        ModuleBase::Element_Basis_Index::construct_range(orb_in);
+    const ModuleBase::Element_Basis_Index::IndexLNM basis_hierarchy =
+        ModuleBase::Element_Basis_Index::construct_index(basis_range);
+    basis_index_.reset(new BasisFlattenedIndexing(basis_hierarchy, ucell_in.iat2it, ucell_in.get_npol()));
 
     nspin = PARAM.inp.nspin;
     nbands_total = PARAM.inp.nbands;
