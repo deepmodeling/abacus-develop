@@ -85,7 +85,7 @@ fi
 
 log "Installing system launchers..."
 
-cat >/usr/local/bin/abacus <<EOF
+cat > /usr/local/bin/abacus << EOF
 #!/usr/bin/env bash
 # Cap OpenMP threads to 1 by default to avoid oversubscription.
 # Override from Windows via: set OMP_NUM_THREADS=4 (forwarded through WSLENV).
@@ -97,7 +97,7 @@ exec "$ENV_BIN/abacus" "\$@"
 EOF
 chmod +x /usr/local/bin/abacus
 
-cat >/usr/local/bin/abacus-mpi <<EOF
+cat > /usr/local/bin/abacus-mpi << EOF
 #!/usr/bin/env bash
 : "\${OMP_NUM_THREADS:=1}"
 export OMP_NUM_THREADS
@@ -114,7 +114,7 @@ EOF
 chmod +x /usr/local/bin/abacus-mpi
 
 log "Verifying..."
-if /usr/local/bin/abacus --version >/dev/null 2>&1; then
+if /usr/local/bin/abacus --version > /dev/null 2>&1; then
   /usr/local/bin/abacus --version || true
 elif [ -x "$ENV_BIN/abacus" ]; then
   log "abacus binary present at $ENV_BIN/abacus (no --version flag)."

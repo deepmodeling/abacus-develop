@@ -19,4 +19,4 @@ while read -r case_name; do
   case_dir="$cases_dir/$case_name"
   (cd "$case_dir" && python3 "$script_dir/check_librpa_producer.py" \
     --root . --manifest librpa_producer_manifest.json)
-done <CASES_LIBRPA_PRODUCER.txt
+done < CASES_LIBRPA_PRODUCER.txt

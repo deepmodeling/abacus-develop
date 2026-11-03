@@ -52,8 +52,8 @@ test -e $1 && rm $1
 if [ $calculation != "nscf" ]; then
   etot=$(grep ETOT_ $running_path | awk '{print $2}')
   etotperatom=$(awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}')
-  echo "etotref $etot" >>$1
-  echo "etotperatomref $etotperatom" >>$1
+  echo "etotref $etot" >> $1
+  echo "etotperatomref $etotperatom" >> $1
 fi
 
 #echo $etot
@@ -63,20 +63,20 @@ if ! test -z "$has_force" && [ $has_force -eq 1 ]; then
   #nn1=`echo "$natom + 1" |bc`
   #nn5=`echo "$natom + 6" |bc`
   #grep -A$nn3 "TOTAL-FORCE" $running_path|sed '1,5d'|sed ''$nn1','$nn5'd'|awk '{printf $2"\t"$3"\t"$4"\n"}' > force.txt
-  grep -A$nn3 "TOTAL-FORCE" $running_path | awk 'NF==4{print $2,$3,$4}' | tail -$natom >force.txt #check the last step result
+  grep -A$nn3 "TOTAL-FORCE" $running_path | awk 'NF==4{print $2,$3,$4}' | tail -$natom > force.txt #check the last step result
   total_force=$(sum_file force.txt)
   rm force.txt
-  echo "totalforceref $total_force" >>$1
+  echo "totalforceref $total_force" >> $1
 fi
 
 #echo $total_force
 #echo "has_stress:"$has_stress
 if ! test -z "$has_stress" && [ $has_stress -eq 1 ]; then
   #grep -A6 "TOTAL-STRESS" $running_path|sed '1,4d'|sed '4,8d' >stress.txt
-  grep -A6 "TOTAL-STRESS" $running_path | awk 'NF==3' | tail -3 >stress.txt
+  grep -A6 "TOTAL-STRESS" $running_path | awk 'NF==3' | tail -3 > stress.txt
   total_stress=$(sum_file stress.txt)
   rm stress.txt
-  echo "totalstressref $total_stress" >>$1
+  echo "totalstressref $total_stress" >> $1
 fi
 
 #echo $total_stress
@@ -88,7 +88,7 @@ fi
 #echo $total_charge
 if ! test -z "$has_dos" && [ $has_dos -eq 1 ]; then
   total_dos=$(cat OUT.autotest/doss1g1.txt | awk 'END {print}' | awk '{print $3}')
-  echo "totaldosref $total_dos" >>$1
+  echo "totaldosref $total_dos" >> $1
 fi
 #	smearing_dos=`sum_file OUT.autotest/doss1g1.txt`
 #	echo "totaldossmearing $smearing_dos" >> $1
@@ -97,16 +97,16 @@ fi
 #echo $has_band
 if ! test -z "$has_band" && [ $has_band -eq 1 ]; then
   total_band=$(sum_file OUT.autotest/BANDS_1.dat)
-  echo "totalbandref $total_band" >>$1
+  echo "totalbandref $total_band" >> $1
 fi
 #echo $has_hs
 if ! test -z "$has_hs" && [ $has_hs -eq 1 ]; then
   total_h=$(sum_file OUT.autotest/data-H)
-  echo "totalHmatrix $total_h" >>$1
+  echo "totalHmatrix $total_h" >> $1
   total_s=$(sum_file OUT.autotest/data-S)
-  echo "totalSmatrix $total_s" >>$1
+  echo "totalSmatrix $total_s" >> $1
 fi
 
 #echo $total_band
 ttot=$(grep $word $running_path | awk '{print $3}')
-echo "totaltimeref $ttot" >>$1
+echo "totaltimeref $ttot" >> $1

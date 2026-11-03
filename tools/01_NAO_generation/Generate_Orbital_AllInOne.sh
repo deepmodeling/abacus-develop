@@ -68,7 +68,7 @@ if [ -z "$EXE_mpi" ]; then
   cpu_num=8
   hostfpath="myhosts"
   #hostfpath="/home/nic/wszhang/eclipse_project/mesia_dft/delta_test/delta_dft/cifs2deltaDFT/myhosts"
-  grep slots $hostfpath >/dev/null
+  grep slots $hostfpath > /dev/null
   if [ $? = 0 ]; then # has "slots" in file: $hostfpath
     cpu_num=$(cat $hostfpath | cut -d "=" -f 2-3 | awk '{sum += $1};END {print sum}')
   else
@@ -79,7 +79,7 @@ if [ -z "$EXE_mpi" ]; then
   EXE_mpi="mpirun -np $cpu_num -hostfile ../$hostfpath "
 fi
 echo "        EXE_mpi = $EXE_mpi "
-Host_List=($($EXE_mpi hostname 2>/dev/null))
+Host_List=($($EXE_mpi hostname 2> /dev/null))
 Host1_List=($(echo ${Host_List[@]} | grep -o "$Host_List"))
 Host1_NCore=${#Host1_List[@]}
 echo "    Host1_NCore = $Host1_NCore"
@@ -475,7 +475,7 @@ for name in $targets; do
 
         if [ "${ListSTRU[iSTRU]}" == "dimer" ]; then
           na=2
-          cat >$name.stru <<EOF
+          cat > $name.stru << EOF
 ATOMIC_SPECIES
 $element $mass $pseudofile
 LATTICE_CONSTANT
@@ -495,7 +495,7 @@ EOF
 
         elif [ "${ListSTRU[iSTRU]}" == "trimer" ]; then
           na=3
-          cat >$name.stru <<EOF
+          cat > $name.stru << EOF
 ATOMIC_SPECIES
 $element $mass $pseudofile
 LATTICE_CONSTANT
@@ -516,7 +516,7 @@ EOF
 
         elif [ "${ListSTRU[iSTRU]}" == "tetramer" ]; then
           na=4
-          cat >$name.stru <<EOF
+          cat > $name.stru << EOF
 ATOMIC_SPECIES
 $element $mass $pseudofile
 LATTICE_CONSTANT
@@ -540,7 +540,7 @@ EOF
         echo " na=$na"
 
         # (1.4.2.2) get KPOINTS
-        cat >KPOINTS <<EOF
+        cat > KPOINTS << EOF
 K_POINTS
 0
 Gamma
@@ -548,7 +548,7 @@ Gamma
 EOF
 
         # (1.4.2.3) get INPUTw
-        cat >INPUTw <<EOF
+        cat > INPUTw << EOF
 WANNIER_PARAMETERS
 rcut 10
 out_spillage 2
@@ -568,7 +568,7 @@ EOF
         # EOF
 
         # (1.4.2.5) get INPUT
-        cat >INPUT <<EOF
+        cat > INPUT << EOF
 INPUT_PARAMETERS
 suffix              $element-$rcut-$BL
 stru_file           $name.stru
@@ -641,7 +641,7 @@ EOF
         echo -e " Using Simulated Annealing Method \n"
 
         ### (1.4.3.2) prepare for the INPUT file
-        cat >INPUT <<EOF
+        cat > INPUT << EOF
 <PW_QS>
 1                       // if or not calculate the spillage. 1/0
 $((${RestartSTRU[$iSTRU]} > 0))                       // restart or not. 1/0
@@ -653,13 +653,13 @@ EOF
         count_files=1
         while [ $count_files -le ${BL_number[iSTRU]} ]; do
           BL=$(echo "${BLSTRU[iSTRU]}" | awk '{print $'$count_files'}')
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
 ../OUT.$element-$rcut-$BL/orb_matrix.0.dat
 EOF
           let count_files++
         done
 
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
 </PW_QS>
 
 <PARALLEL>
@@ -707,7 +707,7 @@ ${ref_bands[$iSTRU]}          // int, the ed band index(<provied bands).
 
 EOF
 
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
 <OPTIMIZE>
 ${EndLevel[$iSTRU]}             // Number of levels.
 label / na / skip / lmax / each L /
@@ -720,16 +720,16 @@ EOF
             leveltype="skip"
           fi
           #echo "leveltype=$leveltype"
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
 $id $na $leveltype ${Llevels[i]}
 EOF
         done
 
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
 </OPTIMIZE>
 EOF
 
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
 <PLOT>
 0.01    //dr(a.u.) of uniform mesh. Attention!!dr will affect kinetic energy minmized largely.
 -6      //xmin
@@ -763,7 +763,7 @@ EOF
         ### len(dis[info["input"]["element"]]),
         ### (1.4.3.2) prepare INPUT file in json for PyTorch program
 
-        cat >INPUT <<EOF
+        cat > INPUT << EOF
 {
     "file_list":
     {
@@ -774,13 +774,13 @@ EOF
         count_files=1
         while [ $count_files -lt ${BL_number[iSTRU]} ]; do
           BL=$(echo "${BLSTRU[iSTRU]}" | awk '{print $'$count_files'}')
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
             "../OUT.$element-$rcut-$BL/orb_matrix.0.dat",
 EOF
           let count_files++
         done
         BL=$(echo "${BLSTRU[iSTRU]}" | awk '{print $'$count_files'}')
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
             "../OUT.$element-$rcut-$BL/orb_matrix.0.dat"
         ],
         "linear":
@@ -791,19 +791,19 @@ EOF
         count_files=1
         while [ $count_files -lt ${BL_number[iSTRU]} ]; do
           BL=$(echo "${BLSTRU[iSTRU]}" | awk '{print $'$count_files'}')
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
             "../OUT.$element-$rcut-$BL/orb_matrix.1.dat",
 EOF
           let count_files++
         done
         BL=$(echo "${BLSTRU[iSTRU]}" | awk '{print $'$count_files'}')
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
             "../OUT.$element-$rcut-$BL/orb_matrix.1.dat"
             ]
         ]
 EOF
 
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
 
     },
     "info":
@@ -857,12 +857,12 @@ EOF
         echo " numL = ${numL[@]}, LValueMax = $LValueMax "
 
         for ((LValue = 0; LValue < ${LValueMax}; LValue++)); do
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
                 ${numL[$LValue]}, 
 EOF
         done
 
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
                 ${numL[$LValueMax]}
                 ]
         },
@@ -885,50 +885,50 @@ EOF
 EOF
 
         for ((i_BL = 1; i_BL < ${BL_number[iSTRU]}; i_BL++)); do
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
             1, 
 EOF
         done
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
             1
          ],
 EOF
 
         if [ 2 -ge 1 ]; then
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
         "bands_range": [
 EOF
           for ((i_BL = 1; i_BL < ${BL_number[iSTRU]}; i_BL++)); do
-            cat >>INPUT <<EOF
+            cat >> INPUT << EOF
             $(printf %.0f ${ref_bands[iSTRU]}), 
 EOF
           done
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
             $(printf %.0f ${ref_bands[iSTRU]})
          ]
 EOF
         else
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
         "bands_file": [
          ]
 EOF
         fi
 
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
     },
     "C_init_info":
     {
 EOF
         C_init_file="ORBITAL_RESULTS.txt"
         if [ ${RestartSTRU[$iSTRU]} -ge 1 ]; then ## [ "$C_init_from_file" == "true" ]; then
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
         "init_from_file": true,
         "C_init_file"   : "$C_init_file",
         "opt_C_read"    : false
 EOF
           echo -e " init_from_file : true, \n C_init_file : $C_init_file, \n opt_C_read: false\n"
         elif [ ${RestartSTRU[$iSTRU]} -eq 0 ]; then
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
         "init_from_file": false
 EOF
           echo -e " init_from_file : false \n "
@@ -936,7 +936,7 @@ EOF
           exit
         fi
 
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
     },
     "V_info": 
     {
@@ -958,7 +958,7 @@ EOF
         ### len(dis[info["input"]["element"]]),
         ### (1.4.3.2) prepare INPUT file in json for PyTorch program
 
-        cat >INPUT <<EOF
+        cat > INPUT << EOF
 {
     "file_list": [
 EOF
@@ -966,13 +966,13 @@ EOF
         count_files=1
         while [ $count_files -lt ${BL_number[iSTRU]} ]; do
           BL=$(echo "${BLSTRU[iSTRU]}" | awk '{print $'$count_files'}')
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
         "../OUT.$element-$rcut-$BL/orb_matrix.0.dat",
 EOF
           let count_files++
         done
         BL=$(echo "${BLSTRU[iSTRU]}" | awk '{print $'$count_files'}')
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
         "../OUT.$element-$rcut-$BL/orb_matrix.0.dat"
     ],
     "info": {
@@ -1020,11 +1020,11 @@ EOF
         echo " numL = ${numL[@]}, LValueMax = $LValueMax "
 
         for ((LValue = 0; LValue < ${LValueMax}; LValue++)); do
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
                 ${numL[$LValue]}, 
 EOF
         done
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
                 ${numL[$LValueMax]}
                 ]
         },
@@ -1032,18 +1032,18 @@ EOF
 EOF
 
         for ((i_BL = 1; i_BL < ${BL_number[iSTRU]}; i_BL++)); do
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
             ${ref_bands[iSTRU]}, 
 EOF
         done
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
             ${ref_bands[iSTRU]}
             ],
         "weight": [
 EOF
 
         for ((i_BL = 1; i_BL < ${BL_number[iSTRU]}; i_BL++)); do
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
             1, 
 EOF
         done
@@ -1052,7 +1052,7 @@ EOF
         else
           lr_value=0.01
         fi
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
             1
             ],
         "Rcut": {
@@ -1073,13 +1073,13 @@ EOF
 
         C_init_file="ORBITAL_RESULTS.txt"
         if [ ${RestartSTRU[$iSTRU]} -ge 1 ]; then ## [ "$C_init_from_file" == "true" ]; then
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
         "init_from_file": true,
         "C_init_file"   : "$C_init_file"
 EOF
           echo -e " init_from_file : true \n C_init_file : $C_init_file \n "
         elif [ ${RestartSTRU[$iSTRU]} -eq 0 ]; then
-          cat >>INPUT <<EOF
+          cat >> INPUT << EOF
         "init_from_file": false
 EOF
           echo -e " init_from_file : false \n "
@@ -1087,7 +1087,7 @@ EOF
           exit
         fi
 
-        cat >>INPUT <<EOF
+        cat >> INPUT << EOF
     },
     "V_info": {
         "same_band": true,

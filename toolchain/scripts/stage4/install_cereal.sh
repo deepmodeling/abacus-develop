@@ -79,8 +79,8 @@ case "$with_cereal" in
         -DTHREAD_SAFE=ON \
         -DSKIP_PORTABILITY_TEST=ON \
         -DSKIP_PERFORMANCE_COMPARISON=ON \
-        .. >cmake.log 2>&1 || tail -n ${LOG_LINES} cmake.log
-      make install -j $(get_nprocs) >make.log 2>&1 || tail -n ${LOG_LINES} make.log
+        .. > cmake.log 2>&1 || tail -n ${LOG_LINES} cmake.log
+      make install -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
     CEREAL_CFLAGS="-I'${pkg_install_dir}/include'"
@@ -116,11 +116,11 @@ case "$with_cereal" in
 esac
 if [ "$with_cereal" != "__DONTUSE__" ]; then
   if [ "$with_cereal" != "__SYSTEM__" ]; then
-    cat <<EOF >"${BUILDDIR}/setup_cereal"
+    cat << EOF > "${BUILDDIR}/setup_cereal"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
   fi
-  cat <<EOF >>"${BUILDDIR}/setup_cereal"
+  cat << EOF >> "${BUILDDIR}/setup_cereal"
 export CEREAL_ROOT="${pkg_install_dir}"
 export CEREAL_VERSION="${cereal_ver}"
 EOF

@@ -110,8 +110,8 @@ ui_detect_unicode_support() {
   fi
 
   # Additional check using locale command if available
-  if [[ "$locale_utf8" == "false" ]] && command -v locale &>/dev/null; then
-    local charset=$(locale charmap 2>/dev/null || echo "")
+  if [[ "$locale_utf8" == "false" ]] && command -v locale &> /dev/null; then
+    local charset=$(locale charmap 2> /dev/null || echo "")
     if [[ "$charset" =~ UTF-?8 ]]; then
       locale_utf8=true
     fi
@@ -312,7 +312,7 @@ ui_print_color() {
 
   # Log to file if specified
   if [[ -n "$UI_LOG_FILE" ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $message" >>"$UI_LOG_FILE"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $message" >> "$UI_LOG_FILE"
   fi
 }
 
@@ -360,8 +360,8 @@ ui_get_glibc_version() {
   fi
 
   # Method 1: ldd --version (most reliable)
-  if command -v ldd &>/dev/null; then
-    local ldd_output=$(ldd --version 2>/dev/null | head -n1)
+  if command -v ldd &> /dev/null; then
+    local ldd_output=$(ldd --version 2> /dev/null | head -n1)
     if [[ $? -eq 0 && -n "$ldd_output" ]]; then
       # Extract version from ldd output (e.g., "ldd (Ubuntu GLIBC 2.35-0ubuntu3.1) 2.35")
       glibc_version=$(echo "$ldd_output" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
@@ -383,7 +383,7 @@ ui_get_glibc_version() {
 
   for libc_path in "${libc_paths[@]}"; do
     if [[ -x "$libc_path" ]]; then
-      local libc_output=$("$libc_path" 2>/dev/null | head -n1)
+      local libc_output=$("$libc_path" 2> /dev/null | head -n1)
       if [[ $? -eq 0 && -n "$libc_output" ]]; then
         # Extract version from libc output
         glibc_version=$(echo "$libc_output" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
@@ -396,8 +396,8 @@ ui_get_glibc_version() {
   done
 
   # Method 3: getconf GNU_LIBC_VERSION (alternative)
-  if command -v getconf &>/dev/null; then
-    local getconf_output=$(getconf GNU_LIBC_VERSION 2>/dev/null)
+  if command -v getconf &> /dev/null; then
+    local getconf_output=$(getconf GNU_LIBC_VERSION 2> /dev/null)
     if [[ $? -eq 0 && -n "$getconf_output" ]]; then
       # Extract version from getconf output (e.g., "glibc 2.35")
       glibc_version=$(echo "$getconf_output" | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
@@ -410,7 +410,7 @@ ui_get_glibc_version() {
 
   # Method 4: Check /proc/version_signature or similar (last resort)
   if [[ -r "/proc/version" ]]; then
-    local proc_version=$(cat /proc/version 2>/dev/null)
+    local proc_version=$(cat /proc/version 2> /dev/null)
     if [[ -n "$proc_version" ]]; then
       # Look for glibc version in kernel version string (rare but possible)
       glibc_version=$(echo "$proc_version" | grep -oE 'glibc[[:space:]]*[0-9]+\.[0-9]+(\.[0-9]+)?' | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1)
@@ -445,10 +445,10 @@ ui_get_version() {
 
   if [[ -n "$version_file" && -f "$version_file" ]]; then
     # Extract version from VERSION file, handling different formats
-    version=$(grep -E '^VERSION=' "$version_file" 2>/dev/null | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+    version=$(grep -E '^VERSION=' "$version_file" 2> /dev/null | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
     if [[ -z "$version" ]]; then
       # Fallback: try to read the entire file content if no VERSION= line
-      version=$(head -n 1 "$version_file" 2>/dev/null | grep -v '^#' | xargs)
+      version=$(head -n 1 "$version_file" 2> /dev/null | grep -v '^#' | xargs)
     fi
     if [[ -z "$version" ]]; then
       version="Unknown"
@@ -550,7 +550,7 @@ ui_progress() {
 ui_show_help() {
   ui_welcome_banner
 
-  cat <<'EOF'
+  cat << 'EOF'
 USAGE:
     install_abacus_toolchain_new.sh [OPTIONS]
 
@@ -689,17 +689,17 @@ ui_show_summary() {
   echo "   ├─ OS: $(uname -s) $(uname -m)"
   echo "   ├─ Kernel: $(uname -r)"
   echo "   ├─ glibc: $(ui_get_glibc_version)"
-  echo "   ├─ CPU Cores: $(nproc 2>/dev/null || echo "unknown")"
+  echo "   ├─ CPU Cores: $(nproc 2> /dev/null || echo "unknown")"
   # CPU model detection
   local cpu_model="unknown"
-  if command -v lscpu &>/dev/null; then
+  if command -v lscpu &> /dev/null; then
     cpu_model=$(LC_ALL=C lscpu | awk -F: '/^Model name/{print $2}' | sed 's/^[[:space:]]*//')
   fi
   if [[ -z "$cpu_model" || "$cpu_model" == "unknown" ]] && [[ -r /proc/cpuinfo ]]; then
     cpu_model=$(awk -F: '/model name|Hardware|Processor/{print $2; exit}' /proc/cpuinfo | sed 's/^[[:space:]]*//')
   fi
   echo "   ├─ CPU Model: ${cpu_model}"
-  if command -v free &>/dev/null; then
+  if command -v free &> /dev/null; then
     local mem_gb=$(free -g | awk '/^Mem:/ {print $2}')
     echo "   ├─ Memory: ${mem_gb}GB"
   else
@@ -712,8 +712,8 @@ ui_show_summary() {
   local gpu_models=""
 
   # Method 1: Try nvidia-smi for NVIDIA GPUs
-  if command -v nvidia-smi &>/dev/null; then
-    local nvidia_output=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits 2>/dev/null)
+  if command -v nvidia-smi &> /dev/null; then
+    local nvidia_output=$(nvidia-smi --query-gpu=name --format=csv,noheader,nounits 2> /dev/null)
     if [[ $? -eq 0 && -n "$nvidia_output" ]]; then
       gpu_count=$(echo "$nvidia_output" | wc -l)
       if [[ $gpu_count -gt 0 ]]; then
@@ -728,12 +728,12 @@ ui_show_summary() {
   fi
 
   # Method 2: Try rocm-smi for AMD GPUs (if no NVIDIA found)
-  if [[ "$gpu_info" == "no GPU detected" ]] && command -v rocm-smi &>/dev/null; then
-    local amd_output=$(rocm-smi --showproductname 2>/dev/null | grep -E "GPU\[" | head -n1)
+  if [[ "$gpu_info" == "no GPU detected" ]] && command -v rocm-smi &> /dev/null; then
+    local amd_output=$(rocm-smi --showproductname 2> /dev/null | grep -E "GPU\[" | head -n1)
     if [[ $? -eq 0 && -n "$amd_output" ]]; then
       local amd_name=$(echo "$amd_output" | sed -n 's/.*: \(.*\)/\1/p' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
       if [[ -n "$amd_name" ]]; then
-        local amd_count=$(rocm-smi --showproductname 2>/dev/null | grep -c "GPU\[" || echo "1")
+        local amd_count=$(rocm-smi --showproductname 2> /dev/null | grep -c "GPU\[" || echo "1")
         if [[ $amd_count -eq 1 ]]; then
           gpu_info="$amd_name"
         else
@@ -744,8 +744,8 @@ ui_show_summary() {
   fi
 
   # Method 3: Try lspci as fallback for any GPU vendor
-  if [[ "$gpu_info" == "no GPU detected" ]] && command -v lspci &>/dev/null; then
-    local pci_gpus=$(lspci 2>/dev/null | grep -i "vga\|3d\|display" | grep -v "audio")
+  if [[ "$gpu_info" == "no GPU detected" ]] && command -v lspci &> /dev/null; then
+    local pci_gpus=$(lspci 2> /dev/null | grep -i "vga\|3d\|display" | grep -v "audio")
     if [[ -n "$pci_gpus" ]]; then
       gpu_count=$(echo "$pci_gpus" | wc -l)
       local first_gpu_line=$(echo "$pci_gpus" | head -n1)
@@ -779,12 +779,12 @@ ui_show_summary() {
 
   local nvidia_driver="unavailable"
   local cuda_version="unavailable"
-  if command -v nvidia-smi &>/dev/null; then
-    nvidia_driver=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>/dev/null | head -n1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  if command -v nvidia-smi &> /dev/null; then
+    nvidia_driver=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader 2> /dev/null | head -n1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     if [[ -z "$nvidia_driver" ]]; then
       nvidia_driver="unavailable"
     fi
-    local nvidia_banner=$(nvidia-smi 2>/dev/null | head -n 3 | tr '\n' ' ')
+    local nvidia_banner=$(nvidia-smi 2> /dev/null | head -n 3 | tr '\n' ' ')
     cuda_version=$(echo "$nvidia_banner" | sed -n 's/.*CUDA Version:[[:space:]]*\([0-9.]*\).*/\1/p')
     cuda_version=$(echo "$cuda_version" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     if [[ -z "$cuda_version" ]]; then
@@ -854,7 +854,7 @@ ui_show_summary() {
   echo ""
 
   # Installation summary
-  local install_list=$(package_list_to_install 2>/dev/null || echo "")
+  local install_list=$(package_list_to_install 2> /dev/null || echo "")
   if [[ -n "$install_list" ]]; then
     ui_print_color "${UI_GREEN}${UI_BOLD}" "🚀 Packages to be built from source:"
     for pkg in $install_list; do
@@ -1142,9 +1142,9 @@ ui_show_system_info() {
   printf "   ├─ %-20s %s\n" "Operating System:" "$(uname -s)"
   printf "   ├─ %-20s %s\n" "Architecture:" "$(uname -m)"
   printf "   ├─ %-20s %s\n" "Kernel Version:" "$(uname -r)"
-  printf "   ├─ %-20s %s\n" "CPU Cores:" "$(nproc 2>/dev/null || echo "unknown")"
+  printf "   ├─ %-20s %s\n" "CPU Cores:" "$(nproc 2> /dev/null || echo "unknown")"
 
-  if command -v free &>/dev/null; then
+  if command -v free &> /dev/null; then
     local mem_gb=$(free -g | awk '/^Mem:/ {print $2}')
     printf "   ├─ %-20s %sGB\n" "Total Memory:" "$mem_gb"
   fi
@@ -1167,7 +1167,7 @@ ui_check_system_requirements() {
   ui_print_color "${UI_BLUE}${UI_BOLD}" "🔍 Checking required system tools..."
 
   for tool in $required_tools; do
-    if ! command -v "$tool" &>/dev/null; then
+    if ! command -v "$tool" &> /dev/null; then
       missing_tools="$missing_tools $tool"
       ui_print_color "${UI_RED}" "   ${UI_ICON_CROSS} $tool - not found"
     else

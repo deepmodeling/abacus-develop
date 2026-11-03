@@ -6,7 +6,7 @@ for i in STRU_*; do
   mkdir SCF-$stru
   cd SCF-$stru
   pwd
-  cat >INPUT <<EOF
+  cat > INPUT << EOF
 INPUT_PARAMETERS
 #Parameters (General)
 suffix          DIA-50-$stru
@@ -32,7 +32,7 @@ mixing_beta     0.7
 
 stru_file       STRU_$stru
 EOF
-  cat >KPT <<EOF
+  cat > KPT << EOF
 K_POINTS
 0
 Gamma
