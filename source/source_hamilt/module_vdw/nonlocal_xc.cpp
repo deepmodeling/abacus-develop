@@ -324,8 +324,10 @@ Rvv10Workspace& workspace()
     return instance;
 }
 
-/// Total density of chr (valence plus core), its plane-wave gradient and sigma = |grad n|^2.
+/// Total density of chr (valence plus core), its plane-wave gradient (a copy of total_gradient when that
+/// is given) and sigma = |grad n|^2.
 void total_density(const Charge& chr,
+                   const ModuleBase::Vector3<double>* total_gradient,
                    std::vector<double>& rho,
                    std::vector<ModuleBase::Vector3<double>>& grad,
                    std::vector<double>& sigma)
@@ -343,10 +345,17 @@ void total_density(const Charge& chr,
             rho[ir] += chr.rho[is][ir];
         }
     }
-    std::vector<std::complex<double>> rhog(pw.npw);
-    pw.real2recip(rho.data(), rhog.data());
-    grad.resize(nrxx);
-    XC_Functional::grad_rho(rhog.data(), grad.data(), &pw, pw.tpiba);
+    if (total_gradient != nullptr)
+    {
+        grad.assign(total_gradient, total_gradient + nrxx);
+    }
+    else
+    {
+        std::vector<std::complex<double>> rhog(pw.npw);
+        pw.real2recip(rho.data(), rhog.data());
+        grad.resize(nrxx);
+        XC_Functional::grad_rho(rhog.data(), grad.data(), &pw, pw.tpiba);
+    }
     sigma.resize(nrxx);
     for (int ir = 0; ir < nrxx; ++ir)
     {
@@ -354,10 +363,11 @@ void total_density(const Charge& chr,
     }
 }
 
-/// rVV10 energy (Ha) of the total density of chr, with the density gradient, dE/dn (unless dedn is
-/// nullptr), dE/dsigma and, with stress != nullptr, the explicit strain derivative.
+/// rVV10 energy (Ha) of the total density of chr, with the density gradient (see total_density), dE/dn
+/// (unless dedn is nullptr), dE/dsigma and, with stress != nullptr, the explicit strain derivative.
 double evaluate_total_density(const XCFunctionalParameters& parameters,
                               const Charge& chr,
+                              const ModuleBase::Vector3<double>* total_gradient,
                               std::vector<ModuleBase::Vector3<double>>& grad,
                               std::vector<double>* dedn,
                               std::vector<double>& dedsigma,
@@ -365,7 +375,7 @@ double evaluate_total_density(const XCFunctionalParameters& parameters,
 {
     std::vector<double> rho;
     std::vector<double> sigma;
-    total_density(chr, rho, grad, sigma);
+    total_density(chr, total_gradient, rho, grad, sigma);
     if (dedn != nullptr)
     {
         dedn->resize(chr.nrxx);
@@ -381,6 +391,16 @@ void add_rvv10(const XCFunctionalParameters& parameters,
                double& vtxc,
                ModuleBase::matrix& v)
 {
+    add_rvv10(parameters, chr, nullptr, etxc, vtxc, v);
+}
+
+void add_rvv10(const XCFunctionalParameters& parameters,
+               const Charge& chr,
+               const ModuleBase::Vector3<double>* total_gradient,
+               double& etxc,
+               double& vtxc,
+               ModuleBase::matrix& v)
+{
     if (!parameters.rvv10)
     {
         return;
@@ -392,7 +412,7 @@ void add_rvv10(const XCFunctionalParameters& parameters,
     std::vector<ModuleBase::Vector3<double>> grad;
     std::vector<double> dedn;
     std::vector<double> dedsigma;
-    const double energy = evaluate_total_density(parameters, chr, grad, &dedn, dedsigma, nullptr);
+    const double energy = evaluate_total_density(parameters, chr, total_gradient, grad, &dedn, dedsigma, nullptr);
 
     // v = dE/dn - div(2 dE/dsigma grad n), converted from Hartree to Ry by e2
     for (int ir = 0; ir < nrxx; ++ir)
@@ -434,7 +454,7 @@ void add_rvv10_stress(const XCFunctionalParameters& parameters, const Charge& ch
     std::vector<ModuleBase::Vector3<double>> grad;
     std::vector<double> dedsigma;
     double explicit_stress[stress_components] = {0.0};
-    const double energy = evaluate_total_density(parameters, chr, grad, nullptr, dedsigma, explicit_stress);
+    const double energy = evaluate_total_density(parameters, chr, nullptr, grad, nullptr, dedsigma, explicit_stress);
 
     // integral of dE/dsigma d_a n d_b n, in units of the volume element
     double gradient_term[stress_components] = {0.0};

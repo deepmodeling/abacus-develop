@@ -6,7 +6,9 @@ struct XCFunctionalParameters;
 namespace ModuleBase
 {
 class matrix;
-}
+template <class T>
+class Vector3;
+} // namespace ModuleBase
 
 namespace vdw
 {
@@ -19,6 +21,16 @@ namespace vdw
 /// Add the rVV10 energy, potential and vtxc (Ry) to the pool-reduced results of an XC evaluation.
 void add_rvv10(const XCFunctionalParameters& parameters,
                const Charge& chr,
+               double& etxc,
+               double& vtxc,
+               ModuleBase::matrix& v);
+
+/// The same, reusing the plane-wave gradient of the total density (valence plus core) on the chr.nrxx
+/// points of this process that the caller has already computed, which saves its four FFTs; nullptr
+/// computes the gradient here.
+void add_rvv10(const XCFunctionalParameters& parameters,
+               const Charge& chr,
+               const ModuleBase::Vector3<double>* total_gradient,
                double& etxc,
                double& vtxc,
                ModuleBase::matrix& v);

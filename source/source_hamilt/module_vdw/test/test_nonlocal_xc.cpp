@@ -280,14 +280,14 @@ void expect_same_result(const VxcResult& actual, const VxcResult& expected, cons
 }
 
 /// A functional evaluated with rVV10 equals the evaluation without it plus add_rvv10.
-void expect_rvv10_added(const VxcResult& total, VxcResult semilocal, const Charge& chr)
+void expect_rvv10_added(const VxcResult& total, VxcResult semilocal, const Charge& chr, const double tolerance)
 {
     const XCFunctionalParameters parameters = rvv10_parameters(true);
     double& etxc = std::get<0>(semilocal);
     double& vtxc = std::get<1>(semilocal);
     ModuleBase::matrix& v = std::get<2>(semilocal);
     vdw::add_rvv10(parameters, chr, etxc, vtxc, v);
-    expect_same_result(total, semilocal, ROUNDING_TOLERANCE);
+    expect_same_result(total, semilocal, tolerance);
 }
 
 /// XC_Functional::v_xc for the given functional and density with and without rVV10.
@@ -295,7 +295,8 @@ void expect_vxc_adds_rvv10(const char* functional,
                            const Charge& chr,
                            const UnitCell& ucell,
                            const bool domag,
-                           const int gga_grad)
+                           const int gga_grad,
+                           const double tolerance)
 {
     XC_Functional::ScopedType scope(functional);
     const int nrxx = chr.nrxx;
@@ -312,7 +313,7 @@ void expect_vxc_adds_rvv10(const char* functional,
         VxcResult& result = rvv10 ? total : semilocal;
         result = XC_Functional::v_xc(nrxx, &chr, &ucell, nspin, domag, domag_z, gga_grad, hybrid_alpha, hse_omega);
     }
-    expect_rvv10_added(total, semilocal, chr);
+    expect_rvv10_added(total, semilocal, chr, tolerance);
 }
 
 class NonlocalXCTest : public testing::Test
@@ -636,15 +637,19 @@ TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
     ucell.magnet.lsign_ = false;
     const ChargeOnGrid polarized(pw, collinear, core);
     const ChargeOnGrid magnetized(pw, noncollinear, core);
-    expect_vxc_adds_rvv10("PBE", polarized.chr, ucell, false, 0);
-    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", polarized.chr, ucell, false, 0);
-    expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 2);
-    expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 0);
-    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", magnetized.chr, ucell, true, 0);
-    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", magnetized.chr, ucell, true, 2);
+    expect_vxc_adds_rvv10("PBE", polarized.chr, ucell, false, 0, ROUNDING_TOLERANCE);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", polarized.chr, ucell, false, 0, ROUNDING_TOLERANCE);
+    expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 2, ROUNDING_TOLERANCE);
+    expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 0, ROUNDING_TOLERANCE);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", magnetized.chr, ucell, true, 0, ROUNDING_TOLERANCE);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", magnetized.chr, ucell, true, 2, ROUNDING_TOLERANCE);
+    // with one spin channel, v_xc_libxc and v_xc_meta hand their density gradient to add_rvv10, so the
+    // results are identical to the last bit
+    const std::vector<std::vector<double>> unpolarized(1, valence);
+    const ChargeOnGrid single(pw, unpolarized, core);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", single.chr, ucell, false, 0, 0.0);
 
     XC_Functional::ScopedType scan("SCAN");
-    const std::vector<std::vector<double>> unpolarized(1, valence);
     std::vector<double> kinetic = local_grid(pw, kinetic_density);
     std::vector<double*> kinetic_rows(1, kinetic.data());
     ChargeOnGrid charge(pw, unpolarized, core);
@@ -668,7 +673,7 @@ TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
                                                                hse_omega);
         results[with_rvv10] = VxcResult(std::get<0>(meta), std::get<1>(meta), std::get<2>(meta));
     }
-    expect_rvv10_added(results[1], results[0], charge.chr);
+    expect_rvv10_added(results[1], results[0], charge.chr, 0.0);
 }
 
 } // namespace

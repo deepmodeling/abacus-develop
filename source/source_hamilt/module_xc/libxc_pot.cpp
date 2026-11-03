@@ -454,7 +454,10 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
     vtxc *= omega / chr->rhopw->nxyz;
 #ifdef __LIBVDWXC
     const XCFunctionalParameters& xc_parameters = XC_Functional::get_runtime_parameters();
-    vdw::add_rvv10(xc_parameters, *chr, etxc, vtxc, v);
+    // with one spin channel, gdr[0] is the gradient of the total density that add_rvv10 would recompute
+    const bool share_gradient = is_gga && nspin == 1 && !use_lca;
+    const ModuleBase::Vector3<double>* total_gradient = share_gradient ? gdr[0].data() : nullptr;
+    vdw::add_rvv10(xc_parameters, *chr, total_gradient, etxc, vtxc, v);
 #endif
 
     XC_Functional_Libxc::finish_func(funcs);
@@ -777,7 +780,10 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     vtxc *= omega / chr->rhopw->nxyz;
 #ifdef __LIBVDWXC
     const XCFunctionalParameters& xc_parameters = XC_Functional::get_runtime_parameters();
-    vdw::add_rvv10(xc_parameters, *chr, etxc, vtxc, v);
+    // with one spin channel, gdr[0] is the gradient of the total density that add_rvv10 would recompute
+    const bool share_gradient = nspin == 1;
+    const ModuleBase::Vector3<double>* total_gradient = share_gradient ? gdr[0].data() : nullptr;
+    vdw::add_rvv10(xc_parameters, *chr, total_gradient, etxc, vtxc, v);
 #endif
 
     XC_Functional_Libxc::finish_func(funcs);
