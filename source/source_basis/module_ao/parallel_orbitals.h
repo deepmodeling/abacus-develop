@@ -21,18 +21,17 @@ public:
     /// Access to the block-cyclic distribution information.  The non-const
     /// overload exists only for the two cases a const getter cannot serve:
     /// non-const mutation by setup_2d_division, and test-side descriptor writes.
-    // DEPRECATED-ALIAS: para_2d() -> get_block_cyclic_distribution()
-    // DELETION-COMMIT: PR#TBD/3 commits after merge; trigger: git grep -w para_2d == 0
+    // Transitional name. The accessor becomes block_cyclic_distribution() (no
+    // get_ prefix) and para_2d() is deleted once `git grep -w para_2d` has no
+    // hits outside these two declarations.
     Parallel_2D& para_2d() { return para_2d_; }
 
     const Parallel_2D& para_2d() const { return para_2d_; }
 
-    // DEPRECATED-ALIAS: implicit upcast -> explicit para_2d() call
-    // DELETION-COMMIT: PR#TBD/stage II (D4); trigger: every const Parallel_2D
-    // argument passes para_2d() explicitly, so no site relies on this operator
-    // Transitional only: it keeps the existing const call sites (passing a
-    // Parallel_Orbitals where a const Parallel_2D& argument is expected)
-    // compiling.  It is removed in stage II, when every use site is explicit.
+    // Transitional implicit upcast. Keeping it lets the const call sites that
+    // pass a Parallel_Orbitals where a const Parallel_2D& is expected compile
+    // while they are migrated. It is deleted once every such site calls
+    // para_2d() explicitly; no new site may rely on it.
     operator const Parallel_2D&() const { return para_2d_; }
 
 #ifdef __MPI
