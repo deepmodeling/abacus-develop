@@ -144,13 +144,13 @@ class BlockCyclicDistributionInformation
 #endif
 
   private:
-    static constexpr int kDescriptorEntryCount = 9;
-    static constexpr int kDescriptorBlacsContextIndex = 1;
-    static constexpr int kDescriptorGlobalRowsIndex = 2;
-    static constexpr int kDescriptorGlobalColsIndex = 3;
-    static constexpr int kDescriptorLeadingDimIndex = 8;
-    static constexpr int kUnownedBlacsContext = -1;
-    static constexpr int kBlacsWhatSystemContext = 10;
+    static constexpr int DESCRIPTOR_ENTRY_COUNT = 9;
+    static constexpr int DESCRIPTOR_BLACS_CONTEXT_INDEX = 1;
+    static constexpr int DESCRIPTOR_GLOBAL_ROWS_INDEX = 2;
+    static constexpr int DESCRIPTOR_GLOBAL_COLS_INDEX = 3;
+    static constexpr int DESCRIPTOR_LEADING_DIM_INDEX = 8;
+    static constexpr int UNOWNED_BLACS_CONTEXT = -1;
+    static constexpr int BLACS_WHAT_SYSTEM_CONTEXT = 10;
 
     int nrloc_ = 0;
     int ncloc_ = 0;
@@ -160,16 +160,16 @@ class BlockCyclicDistributionInformation
     int ncproc_ = 0;
 
 #ifdef __MPI
-    int ictxt_ = kUnownedBlacsContext;
-    std::array<int, kDescriptorEntryCount> desc_ = {};
+    int ictxt_ = UNOWNED_BLACS_CONTEXT;
+    std::array<int, DESCRIPTOR_ENTRY_COUNT> desc_ = {};
 #endif
 
     std::vector<int> irglb2loc_;
     std::vector<int> icglb2loc_;
     std::vector<int> irloc2glb_;
     std::vector<int> icloc2glb_;
-    int irproc_ = kUnownedBlacsContext;
-    int icproc_ = kUnownedBlacsContext;
+    int irproc_ = UNOWNED_BLACS_CONTEXT;
+    int icproc_ = UNOWNED_BLACS_CONTEXT;
     bool is_serial_ = false;
 
 #ifdef __MPI

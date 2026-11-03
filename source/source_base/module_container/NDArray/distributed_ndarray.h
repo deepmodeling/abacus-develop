@@ -11,9 +11,9 @@
 
 namespace distributed_ndarray_detail
 {
-constexpr int kDescriptorBlacsContextIndex = 1;
-constexpr int kDescriptorLeadingDimIndex = 8;
-constexpr int kDescriptorEntryCount = 9;
+constexpr int DESCRIPTOR_BLACS_CONTEXT_INDEX = 1;
+constexpr int DESCRIPTOR_LEADING_DIM_INDEX = 8;
+constexpr int DESCRIPTOR_ENTRY_COUNT = 9;
 } // namespace distributed_ndarray_detail
 
 enum class StorageMajorOrder
@@ -51,7 +51,7 @@ class DistributedNDArray
         const int* const descriptor = distribution_->desc();
         assert(descriptor != nullptr);
         assert(leading_dimension_
-               == descriptor[distributed_ndarray_detail::kDescriptorLeadingDimIndex]);
+               == descriptor[distributed_ndarray_detail::DESCRIPTOR_LEADING_DIM_INDEX]);
 #endif
 
         int nrstore = leading_dimension_;

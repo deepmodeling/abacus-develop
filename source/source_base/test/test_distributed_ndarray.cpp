@@ -22,15 +22,15 @@ static_assert(std::is_nothrow_move_assignable<DistributedNDArray<double>>::value
 namespace
 {
 #ifdef __MPI
-constexpr int kDescriptorMatrixTypeIndex = 0;
-constexpr int kDescriptorBlacsContextIndex = 1;
-constexpr int kDescriptorGlobalRowsIndex = 2;
-constexpr int kDescriptorGlobalColsIndex = 3;
-constexpr int kDescriptorBlockRowsIndex = 4;
-constexpr int kDescriptorBlockColsIndex = 5;
-constexpr int kDescriptorProcessRowsIndex = 6;
-constexpr int kDescriptorProcessColsIndex = 7;
-constexpr int kDescriptorLeadingDimIndex = 8;
+constexpr int DESCRIPTOR_MATRIX_TYPE_INDEX = 0;
+constexpr int DESCRIPTOR_BLACS_CONTEXT_INDEX = 1;
+constexpr int DESCRIPTOR_GLOBAL_ROWS_INDEX = 2;
+constexpr int DESCRIPTOR_GLOBAL_COLS_INDEX = 3;
+constexpr int DESCRIPTOR_BLOCK_ROWS_INDEX = 4;
+constexpr int DESCRIPTOR_BLOCK_COLS_INDEX = 5;
+constexpr int DESCRIPTOR_PROCESS_ROWS_INDEX = 6;
+constexpr int DESCRIPTOR_PROCESS_COLS_INDEX = 7;
+constexpr int DESCRIPTOR_LEADING_DIM_INDEX = 8;
 #endif
 
 std::shared_ptr<BlockCyclicDistributionInformation> make_serial_distribution(
@@ -43,15 +43,15 @@ std::shared_ptr<BlockCyclicDistributionInformation> make_serial_distribution(
 
 #ifdef __MPI
     int* const descriptor = distribution->desc();
-    descriptor[kDescriptorMatrixTypeIndex] = 1;
-    descriptor[kDescriptorBlacsContextIndex] = -1;
-    descriptor[kDescriptorGlobalRowsIndex] = global_rows;
-    descriptor[kDescriptorGlobalColsIndex] = global_cols;
-    descriptor[kDescriptorBlockRowsIndex] = 1;
-    descriptor[kDescriptorBlockColsIndex] = 1;
-    descriptor[kDescriptorProcessRowsIndex] = 0;
-    descriptor[kDescriptorProcessColsIndex] = 0;
-    descriptor[kDescriptorLeadingDimIndex] = global_rows > 1 ? global_rows : 1;
+    descriptor[DESCRIPTOR_MATRIX_TYPE_INDEX] = 1;
+    descriptor[DESCRIPTOR_BLACS_CONTEXT_INDEX] = -1;
+    descriptor[DESCRIPTOR_GLOBAL_ROWS_INDEX] = global_rows;
+    descriptor[DESCRIPTOR_GLOBAL_COLS_INDEX] = global_cols;
+    descriptor[DESCRIPTOR_BLOCK_ROWS_INDEX] = 1;
+    descriptor[DESCRIPTOR_BLOCK_COLS_INDEX] = 1;
+    descriptor[DESCRIPTOR_PROCESS_ROWS_INDEX] = 0;
+    descriptor[DESCRIPTOR_PROCESS_COLS_INDEX] = 0;
+    descriptor[DESCRIPTOR_LEADING_DIM_INDEX] = global_rows > 1 ? global_rows : 1;
 #endif
 
     return distribution;
@@ -77,8 +77,8 @@ void check_linearization(const int global_rows,
     std::size_t leading_dimension = static_cast<std::size_t>(array.leading_dimension());
 #ifdef __MPI
     const int* const descriptor = distribution->desc();
-    EXPECT_EQ(array.leading_dimension(), descriptor[kDescriptorLeadingDimIndex]);
-    leading_dimension = static_cast<std::size_t>(descriptor[kDescriptorLeadingDimIndex]);
+    EXPECT_EQ(array.leading_dimension(), descriptor[DESCRIPTOR_LEADING_DIM_INDEX]);
+    leading_dimension = static_cast<std::size_t>(descriptor[DESCRIPTOR_LEADING_DIM_INDEX]);
 #endif
 
     for (int local_row = 0; local_row < global_rows; ++local_row)
@@ -154,7 +154,7 @@ TEST(DistributedNDArrayTest, RejectsMismatchedDescriptorLeadingDimension)
     std::shared_ptr<BlockCyclicDistributionInformation> distribution
         = make_serial_distribution(global_rows, global_cols);
     int* const descriptor = distribution->desc();
-    descriptor[kDescriptorLeadingDimIndex] += 1;
+    descriptor[DESCRIPTOR_LEADING_DIM_INDEX] += 1;
     const int expected_leading_dimension = global_rows > 1 ? global_rows : 1;
 
     EXPECT_DEATH(
