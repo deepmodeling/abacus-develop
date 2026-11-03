@@ -160,17 +160,17 @@ TEST_F(TestParaO, Serial)
 
         //1. set dim0 and dim1
         //2. set_serial
-        po.set_serial(gr, gc);
-        EXPECT_EQ(po.dim0 * po.dim1, 1);
-        EXPECT_EQ(po.get_row_size(), gr);
-        EXPECT_EQ(po.get_col_size(), gc);
-        EXPECT_EQ(po.get_local_size(), gr * gc);
+        po.para_2d().set_serial(gr, gc);
+        EXPECT_EQ(po.para_2d().dim0 * po.para_2d().dim1, 1);
+        EXPECT_EQ(po.para_2d().get_row_size(), gr);
+        EXPECT_EQ(po.para_2d().get_col_size(), gc);
+        EXPECT_EQ(po.para_2d().get_local_size(), gr * gc);
 
         //3. global2local
         for (int i = 0;i < gr;++i)
-            EXPECT_EQ(po.global2local_row(i), i);
+            EXPECT_EQ(po.para_2d().global2local_row(i), i);
         for (int i = 0;i < gc;++i)
-            EXPECT_EQ(po.global2local_col(i), i);
+            EXPECT_EQ(po.para_2d().global2local_col(i), i);
         //6. set_atomic_trace
         for(auto nat0 : nat)
         {
@@ -182,8 +182,8 @@ TEST_F(TestParaO, Serial)
                 iat2iwt[i] = i * nw;
             }
             po.set_atomic_trace(iat2iwt.data(), nat0, gr);
-            EXPECT_EQ(po.get_col_size(), gr);
-            EXPECT_EQ(po.get_row_size(), gr);
+            EXPECT_EQ(po.para_2d().get_col_size(), gr);
+            EXPECT_EQ(po.para_2d().get_row_size(), gr);
             // check get_ncol_atom(iat) and get_nrow_atom(iat)
             for (int i = 0; i < nat0; ++i)
             {

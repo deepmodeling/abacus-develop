@@ -65,7 +65,7 @@ protected:
         para.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
         para.set_desc_wfc_Eij(nlocal, nbands, para.para_2d().get_row_size());
 #else
-        para.set_serial(nlocal, nlocal);
+        para.para_2d().set_serial(nlocal, nlocal);
         para.nrow_bands = nlocal;
         para.ncol_bands = nbands;
 #endif
@@ -137,7 +137,7 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
     ParaV.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning); 
     ParaV.set_desc_wfc_Eij(nlocal, nbands, ParaV.para_2d().get_row_size());
 #else
-    ParaV.set_serial(nlocal, nlocal);
+    ParaV.para_2d().set_serial(nlocal, nlocal);
     ParaV.nrow_bands = nlocal;
     ParaV.ncol_bands = nbands;
 #endif 
