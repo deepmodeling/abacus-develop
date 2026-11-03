@@ -14,6 +14,7 @@ set(SOURCES
     dfpt_pert_nl.cpp
     dfpt_stern.cpp
     dfpt_rho.cpp
+    dfpt_rho_mix.cpp
     dfpt_phon.cpp
     dfpt_phon_asr.cpp
     dfpt_phon_ewald.cpp
