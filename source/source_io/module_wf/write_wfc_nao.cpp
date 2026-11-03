@@ -244,8 +244,8 @@ void write_wfc_nao(const int out_type,
     for (int ik = 0; ik < psi.get_nk(); ik++)
     {
         psi.fix_k(ik);
-#ifdef __MPI        
-        pv_glb.set(nlocal, nbands, blk_glb, pv.get_blacs_ctxt());   
+#ifdef __MPI
+        pv_glb.set(nlocal, nbands, blk_glb, pv.get_blacs_ctxt());
         Cpxgemr2d(nlocal,
                   nbands,
                   psi.get_pointer(),

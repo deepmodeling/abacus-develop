@@ -1,10 +1,6 @@
-if (ENABLE_ABACUS_LIBM)
-list (APPEND LIBM_SRC
-  libm/branred.cpp
-  libm/cexp.cpp
-  libm/exp.cpp
-  libm/sincos.cpp
-)
+if(ENABLE_ABACUS_LIBM)
+  list(APPEND LIBM_SRC libm/branred.cpp libm/cexp.cpp libm/exp.cpp
+       libm/sincos.cpp)
 endif()
 add_library(
     base
@@ -105,7 +101,8 @@ if(BUILD_TESTING)
     LIBS parameter base device container
     SOURCES test/test_distributed_ndarray.cpp
   )
-  if(ENABLE_MPI) #Zhang Xiaoyang: A temporary solution. Please classify the serial and parrallel tests later. 2024-7-8
+  # TODO: classify the serial and parallel tests
+  if(ENABLE_MPI)
     add_subdirectory(test)
     add_subdirectory(test_parallel)
     add_subdirectory(kernels/test)
@@ -113,7 +110,7 @@ if(BUILD_TESTING)
     add_subdirectory(module_device/test)
     add_subdirectory(module_grid/test)
     add_subdirectory(module_parallel/test)
-    if (ENABLE_ABACUS_LIBM)
+    if(ENABLE_ABACUS_LIBM)
       add_subdirectory(libm/test)
     endif()
   endif()

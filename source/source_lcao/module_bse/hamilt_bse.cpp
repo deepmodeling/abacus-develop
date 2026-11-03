@@ -51,7 +51,7 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
         std::cerr<< "Warning: BlockCyclicDistributionInformation in RANK "+std::to_string(this->my_rank) +" has no local size, please use less mpi." << std::endl;
         std::cerr<< " [File:"<<__FILE__<< ", Function: " << __FUNCTION__ << ", Line: " << __LINE__ << "]" << std::endl;
     }
-    assert(naos == pmat.get_global_row_size() && naos == pmat.get_global_col_size());
+    assert(naos == pmat.para_2d().get_global_row_size() && naos == pmat.para_2d().get_global_col_size());
     this->nk = this->nspin == 2 ? this->kv.get_nks() / 2 : this->kv.get_nks();
     this->ndim = nk * nocc[0] * nvirt[0];
 
@@ -515,9 +515,10 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
                 this->grid_calculation(*VR);
 
                 // 5. V(R)→V(k) 
-                std::vector<ct::Tensor> v_k_2d(nk, LR_Util::newTensor<T>({ pmat.get_col_size(), pmat.get_row_size() }));
+                std::vector<ct::Tensor> v_k_2d(
+                    nk, LR_Util::newTensor<T>({pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size()}));
                 for (auto& v : v_k_2d) v.zero();
-                int nrow = this->pmat.get_row_size();
+                int nrow = this->pmat.para_2d().get_row_size();
                 for (int ik1 = 0;ik1 < nk;++ik1) {
                     folding_HR(*VR, v_k_2d[ik1].data<T>(), this->kv.kvec_d[ik1], nrow, 1);
                 }

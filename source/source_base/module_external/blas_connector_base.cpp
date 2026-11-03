@@ -11,6 +11,8 @@
 
 namespace BlasUtils{
 
+    cublasHandle_t cublas_handle = nullptr;
+
     void createGpuBlasHandle(){
         if (cublas_handle == nullptr) {
             CHECK_CUBLAS(cublasCreate(&cublas_handle));

@@ -1,7 +1,9 @@
 abacus_disable_feature_definitions(__EXX)
 
-list(APPEND depend_files
- ../../../source_base/math_integral.cpp
+list(
+  APPEND
+  depend_files
+  ../../../source_base/math_integral.cpp
   ../../../source_base/math_sphbes.cpp
   ../../../source_base/math_polyint.cpp
   ../../../source_base/math_ylmreal.cpp
@@ -38,71 +40,57 @@ list(APPEND depend_files
   ../orb_gaunt_table.cpp
   ../parallel_orbitals.cpp
   ../../../source_lcao/center2orb_orb11.cpp
-  ../../../source_lcao/center2orb.cpp
-  )
+  ../../../source_lcao/center2orb.cpp)
 
 abacus_copy_test_files(GaAs)
 
-AddTest(
-    TARGET MODULE_AO_ORB_nonlocal_test
-    SOURCES orb_nonlocal_test.cpp
-        ../orb_nonlocal.cpp
-        ../orb_nonlocal_lm.cpp
-    LIBS parameter device base
-)
+addtest(
+  TARGET MODULE_AO_ORB_nonlocal_test
+  SOURCES orb_nonlocal_test.cpp ../orb_nonlocal.cpp ../orb_nonlocal_lm.cpp
+  LIBS parameter device base)
 
-AddTest(
-    TARGET MODULE_AO_ORB_nonlocal_lm_test
-    SOURCES orb_nonlocal_lm_test.cpp
-        ../orb_nonlocal_lm.cpp
-    LIBS parameter device base
-)
+addtest(
+  TARGET MODULE_AO_ORB_nonlocal_lm_test
+  SOURCES orb_nonlocal_lm_test.cpp ../orb_nonlocal_lm.cpp
+  LIBS parameter device base)
 
-AddTest(
-    TARGET MODULE_AO_ORB_atomic_lm_test
-    SOURCES orb_atomic_lm_test.cpp
-        test_orb_atomic_lm.cpp
-        ../orb_atomic_lm.cpp
-    LIBS parameter device base
-)
+addtest(
+  TARGET MODULE_AO_ORB_atomic_lm_test
+  SOURCES orb_atomic_lm_test.cpp test_orb_atomic_lm.cpp ../orb_atomic_lm.cpp
+  LIBS parameter device base)
 
-AddTest(
-    TARGET MODULE_AO_ORB_read_test
-    SOURCES orb_read_test.cpp
-        ../orb_read.cpp
-        ../orb_atomic.cpp
-        ../orb_atomic_lm.cpp
-    LIBS parameter device base
-)
+addtest(
+  TARGET MODULE_AO_ORB_read_test
+  SOURCES orb_read_test.cpp ../orb_read.cpp ../orb_atomic.cpp
+          ../orb_atomic_lm.cpp
+  LIBS parameter device base)
 
-
-AddTest(
-    TARGET MODULE_AO_parallel_orbitals_test 
-    SOURCES parallel_orbitals_test.cpp ../parallel_orbitals.cpp
-    LIBS parameter device base
-)
+addtest(
+  TARGET MODULE_AO_parallel_orbitals_test
+  SOURCES parallel_orbitals_test.cpp ../parallel_orbitals.cpp
+  LIBS parameter device base)
 
 abacus_copy_test_files(parallel_orbitals_test.sh)
 find_program(BASH bash)
 if(ENABLE_MPI)
-add_test(NAME MODULE_AO_parallel_orbitals_test_para
-      COMMAND ${BASH} parallel_orbitals_test.sh "$<TARGET_FILE:MODULE_AO_parallel_orbitals_test>"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
+  add_test(
+    NAME MODULE_AO_parallel_orbitals_test_para
+    COMMAND ${BASH} parallel_orbitals_test.sh
+            "$<TARGET_FILE:MODULE_AO_parallel_orbitals_test>"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
 abacus_copy_test_files(lcao_H2O)
-AddTest(
-    TARGET MODULE_AO_parallel_orbitals_composition_test
-    SOURCES test_parallel_orbitals_composition.cpp ../parallel_orbitals.cpp
-    LIBS parameter device base
-)
+addtest(
+  TARGET MODULE_AO_parallel_orbitals_composition_test
+  SOURCES test_parallel_orbitals_composition.cpp ../parallel_orbitals.cpp
+  LIBS parameter device base)
 
 abacus_copy_test_files(test_parallel_orbitals_composition.sh)
 if(ENABLE_MPI)
-add_test(NAME MODULE_AO_parallel_orbitals_composition_test_para
-      COMMAND ${BASH} test_parallel_orbitals_composition.sh "$<TARGET_FILE:MODULE_AO_parallel_orbitals_composition_test>"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
+  add_test(
+    NAME MODULE_AO_parallel_orbitals_composition_test_para
+    COMMAND ${BASH} test_parallel_orbitals_composition.sh
+            "$<TARGET_FILE:MODULE_AO_parallel_orbitals_composition_test>"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif()
-

@@ -8,13 +8,12 @@ OMP_NUM_THREADS=${ABACUS_THREADS} mpirun -np ${ABACUS_NPROCS} ${ABACUS_PATH} | t
 
 rm KPT
 
-if [[ ! -f scf.output ]] || 
-   [[ ! -f OUT.ABACUS/running_scf.log ]] ||
-   [[ ! ( "$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"* ) ]] 
-then
-	echo "job failed!"
-	exit 1
+if [[ ! -f scf.output ]] ||
+  [[ ! -f OUT.ABACUS/running_scf.log ]] ||
+  [[ ! ("$(tail -1 OUT.ABACUS/running_scf.log)" == " Total  Time  :"*) ]]; then
+  echo "job failed!"
+  exit 1
 else
-	echo "job succeeded!"
-	exit 0
+  echo "job succeeded!"
+  exit 0
 fi

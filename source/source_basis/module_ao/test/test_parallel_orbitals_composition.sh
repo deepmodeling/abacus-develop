@@ -1,19 +1,18 @@
-#!/bin/bash -e
+#!/bin/bash
+set -eu
 export OMPI_ALLOW_RUN_AS_ROOT=1
 export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 
-np=`cat /proc/cpuinfo | grep "cpu cores" | uniq| awk '{print $NF}'`
+np=$(awk '/cpu cores/ { print $NF; exit }' /proc/cpuinfo)
 echo "nprocs in this machine is $np"
 
-for i in 2 3 4; do
-    if [[ $i -gt $np ]];then
+for ranks in 2 3 4; do
+    if ((ranks > np)); then
         continue
     fi
-    echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i "${1:-./MODULE_AO_parallel_orbitals_composition_test}"
-    if [[ $? -ne 0 ]]; then
-        echo -e "\e[1;33m [  FAILED  ] \e[0m"\
-			"execute UT with $i cores error."
+    echo "TEST in parallel, nprocs=$ranks"
+    if ! mpirun -np "$ranks" "${1:-./MODULE_AO_parallel_orbitals_composition_test}"; then
+        echo -e "\e[1;33m [  FAILED  ] \e[0m execute UT with $ranks ranks."
         exit 1
     fi
 done

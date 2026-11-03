@@ -16,7 +16,7 @@
  * - get_indexes_row(iat)
  * - get_indexes_col(iat)
  * 
- * the test framework is based on parallel_2d_test.cpp
+ * the test framework follows the block-cyclic layout tests
 */
 class TestParaO : public testing::Test
 {

@@ -6,6 +6,7 @@
 #ifndef EXX_LRI_HPP
 #define EXX_LRI_HPP
 
+#include "lri_cv_tools.h"
 #include "exx_lri.h"
 #include "source_cell/unitcell.h"
 #include "ri_2d_comm.h"

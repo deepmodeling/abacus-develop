@@ -686,7 +686,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         const ModuleRI::RpaLriRuntime rpa_runtime = {
             inp,
             global_out_dir,
-            pv.get_global_row_size(),
+            pv.para_2d().get_global_row_size(),
             GlobalV::MY_RANK,
             GlobalV::NPROC,
             GlobalV::ofs_running};

@@ -9,7 +9,6 @@
 #include "gint_rho.h"
 #include "gint_drho.h"
 #include "gint_tau.h"
-#include "gint_dvlocal.h"
 
 #ifdef __CUDA
 #include "gint_vl_gpu.h"
@@ -189,25 +188,6 @@ void cal_gint_fvl_meta(
         Gint_fvl_meta gint_fvl_meta(nspin, vr_eff, vofk, dm_vec, isforce, isstress, fvl, svl);
         gint_fvl_meta.cal_gint();
     }
-}
-
-void cal_dvlocal_R_sparse(
-    const int nspin,
-    const int npol,
-    const int current_spin,
-    const int nlocal,
-    const double sparse_thr,
-    const double* vr_eff,
-    const Parallel_Orbitals& pv,
-    const UnitCell& ucell,
-    const Grid_Driver& gdriver,
-    LCAO_HS_Arrays& hs_arrays)
-{
-    Gint_dvlocal gint_dvlocal(vr_eff, nspin, npol);
-    gint_dvlocal.cal_dvlocal();
-    gint_dvlocal.cal_dvlocal_R_sparse(
-        nspin, current_spin, nlocal, sparse_thr,
-        pv, ucell, gdriver, hs_arrays);
 }
 
 } // namespace ModuleGint

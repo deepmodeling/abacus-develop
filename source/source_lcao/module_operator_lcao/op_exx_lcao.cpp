@@ -359,10 +359,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     this->Hexxd_k_load.resize(this->kv.get_nks());
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
-                        this->Hexxd_k_load[ik].resize(pv->get_local_size(), 0.0);
+                        this->Hexxd_k_load[ik].resize(pv->para_2d().get_local_size(), 0.0);
                         this->restart = GlobalC::restart.load_disk("Hexx",
                                                                    ik,
-                                                                   pv->get_local_size(),
+                                                                   pv->para_2d().get_local_size(),
                                                                    this->Hexxd_k_load[ik].data(),
                                                                    false);
                         if (!this->restart)
@@ -376,10 +376,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     this->Hexxc_k_load.resize(this->kv.get_nks());
                     for (int ik = 0; ik < this->kv.get_nks(); ik++)
                     {
-                        this->Hexxc_k_load[ik].resize(pv->get_local_size(), 0.0);
+                        this->Hexxc_k_load[ik].resize(pv->para_2d().get_local_size(), 0.0);
                         this->restart = GlobalC::restart.load_disk("Hexx",
                                                                    ik,
-                                                                   pv->get_local_size(),
+                                                                   pv->para_2d().get_local_size(),
                                                                    this->Hexxc_k_load[ik].data(),
                                                                    false);
                         if (!this->restart)

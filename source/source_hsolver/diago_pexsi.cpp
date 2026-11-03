@@ -39,8 +39,8 @@ DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
     this->EDM.resize(this->nspin_dm);
     for (int i = 0; i < this->nspin_dm; i++)
     {
-        this->DM[i] = new T[ParaV->nrow * ParaV->ncol];
-        this->EDM[i] = new T[ParaV->nrow * ParaV->ncol];
+        this->DM[i] = new T[ParaV->para_2d().get_row_size() * ParaV->para_2d().get_col_size()];
+        this->EDM[i] = new T[ParaV->para_2d().get_row_size() * ParaV->para_2d().get_col_size()];
     }
 
 }
@@ -64,10 +64,10 @@ void DiagoPexsi<double>::diag(ModuleBase::MatrixBlock<double>& h_mat,
 {
     ModuleBase::TITLE("DiagoPEXSI", "diag");
     int ik = psi.get_current_k();
-    this->ps->prepare(this->ParaV->get_blacs_ctxt(),
-                      this->ParaV->nb,
-                      this->ParaV->nrow,
-                      this->ParaV->ncol,
+    this->ps->prepare(this->ParaV->para_2d().get_blacs_ctxt(),
+                      this->ParaV->para_2d().get_block_size(),
+                      this->ParaV->para_2d().get_row_size(),
+                      this->ParaV->para_2d().get_col_size(),
                       this->nlocal,
                       this->nelec,
                       h_mat.p,

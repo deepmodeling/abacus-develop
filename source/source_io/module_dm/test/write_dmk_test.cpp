@@ -8,7 +8,7 @@
 
 #include "source_io/module_dm/write_dmk.h"
 #include "source_base/global_variable.h"
-#include "../../test/prepare_unitcell.h"
+#include "../../unittests/prepare_unitcell.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

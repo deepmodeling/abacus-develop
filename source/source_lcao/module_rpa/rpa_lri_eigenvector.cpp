@@ -34,8 +34,9 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, 
     // Preserve the legacy text writer when reader-v1 output is disabled.
 #ifdef __MPI
     const MPI_Comm mpi_comm = parav.comm();
-    const int mpi_rank = parav.get_coord_row() * parav.get_dim1() + parav.get_coord_col();
-    const int mpi_size = parav.get_dim0() * parav.get_dim1();
+    const int mpi_rank
+        = parav.para_2d().get_coord_row() * parav.para_2d().get_dim1() + parav.para_2d().get_coord_col();
+    const int mpi_size = parav.para_2d().get_dim0() * parav.para_2d().get_dim1();
     const auto check_mpi = [mpi_comm](const int local_error, const std::string& context) {
         const int local_failed = local_error == MPI_SUCCESS ? 0 : 1;
         int any_failed = 0;
@@ -85,13 +86,13 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, 
     std::vector<int> send_counts(mpi_size, 0);
     for (int ib = 0; ib < nbands; ++ib)
     {
-        if (parav.global2local_col(ib) < 0)
+        if (parav.para_2d().global2local_col(ib) < 0)
         {
             continue;
         }
         for (int ir = 0; ir < psi.get_nbasis(); ++ir)
         {
-            send_counts[output_basis_owner[parav.local2global_row(ir)]] += npsin_tmp;
+            send_counts[output_basis_owner[parav.para_2d().local2global_row(ir)]] += npsin_tmp;
         }
     }
     std::vector<int> send_displacements(mpi_size, 0);
@@ -118,14 +119,14 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, 
     std::vector<int> send_positions = send_displacements;
     for (int ib = 0; ib < nbands; ++ib)
     {
-        const int ib_local = parav.global2local_col(ib);
+        const int ib_local = parav.para_2d().global2local_col(ib);
         if (ib_local < 0)
         {
             continue;
         }
         for (int ir = 0; ir < psi.get_nbasis(); ++ir)
         {
-            const int iw = parav.local2global_row(ir);
+            const int iw = parav.para_2d().local2global_row(ir);
             const int destination = output_basis_owner[iw];
             for (int is = 0; is < npsin_tmp; ++is)
             {

@@ -30,7 +30,7 @@ void DeePKS_domain::cal_gdmepsl(const int nks,
     ModuleBase::timer::start("DeePKS_domain", "cal_gdmepsl");
     // get DS_alpha_mu and S_nu_beta
 
-    int nrow = pv.get_row_size();
+    int nrow = pv.para_2d().get_row_size();
     const int nm = 2 * deepks_param.lmaxd + 1;
     // gdmepsl: dD/d\epsilon_{\alpha\beta}
     // size: [6][tot_Inl][2l+1][2l+1]

@@ -68,6 +68,9 @@ bool Relax::relax_step(UnitCell& ucell,
 {
     ModuleBase::TITLE("Relax", "relax_step");
 
+    ucell.ionic_position_updated = false;
+    ucell.cell_parameter_updated = false;
+
     etot = etot_in * ModuleBase::Ry_to_eV; // convert to eV
     if (istep == 0)
     {
