@@ -6,7 +6,12 @@
 // = 1 keeps only the G=0 harmonic); the dpsi slot is restored after the
 // accumulation. Plus the nlcc kernel fill-semantics regression.
 
-#include "dfpt_serial_fixture.h"
+#include "dfpt_test_tool.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_base/complexmatrix.h"
 #include "source_cell/stru_fac.h"
 #include "source_psi/psi.h"
@@ -17,26 +22,46 @@
 // only NlccDirectTermsFillSemantics instantiates DFPT_Rho
 #include "source_pw/module_dfpt/dfpt_rho.h"
 
-// per-file fixture (self-contained, gtest style): only the members and
-// helpers this file's cases need
-class DFPTPhonSerialTest : public DFPTSerialBase
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
+// per-file self-contained fixture (gtest style): owns its objects and
+// calls the dfpt_test free-function utilities
+class DFPTPhonSerialTest : public ::testing::Test
 {
   protected:
+    ModuleBase::Matrix3 latvec_;
+    UnitCell ucell_;
+    ModulePW::PW_Basis pw_rho_;
+    ModulePW::PW_Basis_K pw_wfc_;
+    ModuleCell::QList qlist_;
+    ModuleDFPT::DFPT_PW_Data data_;
+    ModuleBase::Vector3<double> q_cart_;
     Structure_Factor sf_;
     ModuleDFPT::DFPT_Pert pert_;
     ModuleDFPT::DFPT_Phon phon_;
 
+    // default (k, q) of this file: q is generic and k = -q so k+q = 0
+    const ModuleBase::Vector3<double> k_d_{-0.13, 0.0, -0.07};
+    const ModuleBase::Vector3<double> q_d_{0.13, 0.0, 0.07};
+
     void SetUp() override
     {
-        DFPTSerialBase::SetUp();
+        dfpt_test::setup_cell(ucell_, latvec_);
         SetupPhon(k_d_, q_d_);
+    }
+
+    void TearDown() override
+    {
+        delete[] ucell_.atoms;
+        ucell_.atoms = nullptr;
     }
 
     // (re)initialize the bases and the pert/phon wiring for a given (k, q)
     // pair; SetUp uses the default fixture values
     void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
     {
-        SetupBases(k_d, q_d, 2);
+        dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, 2, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
         phon_.init(ucell_, &pw_rho_, &pert_);
     }
@@ -85,15 +110,17 @@ class DFPTPhonSerialTest : public DFPTSerialBase
                                            const std::vector<std::complex<double>>& dpsi_inj,
                                            int adir) const
     {
+        // tau of the fixture cell's atom 0 (lat0-cartesian units)
+        const ModuleBase::Vector3<double> tau(1.1, 2.3, 0.7);
         std::complex<double> cross(0.0, 0.0);
         for (int igl = 0; igl < kq.get_npwk(); ++igl)
         {
             const ModuleBase::Vector3<double> gpp = kq.get_gpluskq(igl);
             for (size_t ic = 0; ic < psi_coef.size(); ++ic)
             {
-                // AnalyticDVloc returns 0 at w = 0 (dVloc drop)
+                // dfpt_test::analytic_dvloc returns 0 at w = 0 (dVloc drop)
                 cross += psi_coef[ic] * std::conj(dpsi_inj[igl])
-                         * AnalyticDVloc(adir, gpp - psi_gcart[ic] + q_cart_);
+                         * dfpt_test::analytic_dvloc(ucell_, tau, adir, gpp - psi_gcart[ic] + q_cart_);
             }
         }
         return cross;
@@ -284,9 +311,10 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
                     {
                         continue;
                     }
-                    const double arg = -ModuleBase::TWO_PI * (g * tau_);
+                    const ModuleBase::Vector3<double> tau(1.1, 2.3, 0.7);
+                    const double arg = -ModuleBase::TWO_PI * (g * tau);
                     const std::complex<double> kterm = -(ucell_.tpiba * g[adir]) * (ucell_.tpiba * g[1])
-                                                       * VlocCoulomb(g2 * ucell_.tpiba2)
+                                                       * dfpt_test::vloc_coulomb(ucell_.atoms[0].ncpp.zv, ucell_.omega, g2 * ucell_.tpiba2)
                                                        * std::complex<double>(std::cos(arg), std::sin(arg));
                     d2elem += std::conj(ccoef[i]) * ccoef[j] * kterm;
                 }
@@ -315,11 +343,11 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
 // ---------------------------------------------------------------------------
 TEST_F(DFPTPhonSerialTest, NlccDirectTermsFillSemantics)
 {
-    MakeNlccTwoAtomCell();
+    dfpt_test::make_nlcc_two_atom_cell(ucell_);
     SetupPhon(k_d_, q_d_);
 
     ModuleDFPT::DFPT_Rho rho;
-    rho.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_plain"), 0.4, 1.0, 8});
+    rho.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, ucell_.G, std::string("rho_plain"), 0.4, 1.0, 8});
     phon_.set_rho(&rho);
 
     const int nrxx = pw_rho_.nrxx;

@@ -4,32 +4,63 @@
 // sum rule, ASR+LO-TO interplay, and the directional-cancellation and
 // cross-Cartesian regressions.
 
-#include "dfpt_serial_fixture.h"
+#include "dfpt_test_tool.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_base/complexmatrix.h"
 #include "source_cell/stru_fac.h"
+#include "source_psi/psi.h"
+#include "source_pw/module_dfpt/dfpt_kq_basis.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_phon.h"
 
-// per-file fixture (self-contained, gtest style): only the members and
-// helpers this file's cases need
-class DFPTPhonSerialTest : public DFPTSerialBase
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <vector>
+
+// per-file self-contained fixture (gtest style): owns its objects and
+// calls the dfpt_test free-function utilities
+class DFPTPhonSerialTest : public ::testing::Test
 {
   protected:
+    ModuleBase::Matrix3 latvec_;
+    UnitCell ucell_;
+    ModulePW::PW_Basis pw_rho_;
+    ModulePW::PW_Basis_K pw_wfc_;
+    ModuleCell::QList qlist_;
+    ModuleDFPT::DFPT_PW_Data data_;
+    ModuleBase::Vector3<double> q_cart_;
     Structure_Factor sf_;
     ModuleDFPT::DFPT_Pert pert_;
     ModuleDFPT::DFPT_Phon phon_;
 
+    // default (k, q) of this file: q is generic and k = -q so k+q = 0
+    const ModuleBase::Vector3<double> k_d_{-0.13, 0.0, -0.07};
+    const ModuleBase::Vector3<double> q_d_{0.13, 0.0, 0.07};
+
     void SetUp() override
     {
-        DFPTSerialBase::SetUp();
+        dfpt_test::setup_cell(ucell_, latvec_);
         SetupPhon(k_d_, q_d_);
+    }
+
+    void TearDown() override
+    {
+        delete[] ucell_.atoms;
+        ucell_.atoms = nullptr;
     }
 
     // (re)initialize the bases and the pert/phon wiring for a given (k, q)
     // pair; SetUp uses the default fixture values
     void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
     {
-        SetupBases(k_d, q_d, 2);
+        dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, 2, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
         phon_.init(ucell_, &pw_rho_, &pert_);
     }
@@ -90,7 +121,7 @@ ModuleBase::ComplexMatrix make_violating_dyn()
 
 TEST_F(DFPTPhonSerialTest, AsrSimpleZeroesRowSums)
 {
-    MakeTwoAtomCell();
+    dfpt_test::make_two_atom_cell(ucell_);
     // rewire the q list to Gamma (the fixture default q is not 0)
     SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     const ModuleBase::ComplexMatrix dyn0 = make_violating_dyn();
@@ -113,7 +144,7 @@ TEST_F(DFPTPhonSerialTest, AsrSimpleZeroesRowSums)
 
 TEST_F(DFPTPhonSerialTest, AsrCrystalZeroesRowSumsExactlyAndProjectsAcousticToZero)
 {
-    MakeTwoAtomCell();
+    dfpt_test::make_two_atom_cell(ucell_);
     // rewire the q list to Gamma (the fixture default q is not 0)
     SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     data_.set_dynmat(0, make_violating_dyn());
@@ -144,7 +175,7 @@ TEST_F(DFPTPhonSerialTest, AsrCrystalZeroesRowSumsExactlyAndProjectsAcousticToZe
 
 TEST_F(DFPTPhonSerialTest, AsrCrystalKeepsEquivalentAtomsEquivalent)
 {
-    MakeTwoAtomCell();
+    dfpt_test::make_two_atom_cell(ucell_);
     // symmetry-equivalent atoms carry equal masses; make the two fixture
     // species mass-equal so the equivalence assertion is meaningful
     ucell_.atoms[1].mass = ucell_.atoms[0].mass;
@@ -177,7 +208,7 @@ TEST_F(DFPTPhonSerialTest, AsrCrystalKeepsEquivalentAtomsEquivalent)
 
 TEST_F(DFPTPhonSerialTest, AsrCrystalCorrectsBornChargeSumRule)
 {
-    MakeTwoAtomCell();
+    dfpt_test::make_two_atom_cell(ucell_);
     // rewire the q list to Gamma (the fixture default q is not 0)
     SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     data_.set_dynmat(0, make_violating_dyn());
@@ -211,7 +242,7 @@ TEST_F(DFPTPhonSerialTest, AsrCrystalPlusLotoKeepsAcousticExactlyZero)
     // the physical acoustic subspace only through sum_a Z*_a = 0 -- mixes
     // into the projected null space and lifts one acoustic frequency (the
     // bn_cubic Gamma run showed +36 cm^-1 before the fix)
-    MakeTwoAtomCell(); // masses 12 / 4: unequal, the trigger
+    dfpt_test::make_two_atom_cell(ucell_); // masses 12 / 4: unequal, the trigger
     SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     data_.set_dynmat(0, make_violating_dyn());
     ModuleBase::matrix eps(3, 3, true);
@@ -245,7 +276,7 @@ TEST_F(DFPTPhonSerialTest, AsrDirectionalCancellationDetected)
     // regression of the audit-metric fix: the block [[1,-1,0],[-1,1,0]]
     // has zero row sums (sum over ALL columns) but a NONZERO per-direction
     // residual D*t_x; the audit and apply_asr report must not miss it
-    MakeTwoAtomCell();
+    dfpt_test::make_two_atom_cell(ucell_);
     SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     ModuleBase::ComplexMatrix dyn(6, 6, true);
     // atom0 self-block with the cancellation pattern
@@ -280,7 +311,7 @@ TEST_F(DFPTPhonSerialTest, AsrSimpleCrossCartesianRegression)
     // Hermitian onsite-only fix; simple must still produce a final matrix
     // that is Hermitian, satisfies all three translation constraints
     // exactly, and has a real diagonal
-    MakeTwoAtomCell(); // masses 12/4 (unequal)
+    dfpt_test::make_two_atom_cell(ucell_); // masses 12/4 (unequal)
     SetupPhon(k_d_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     ModuleBase::ComplexMatrix dyn(6, 6, true);
     const double delta = 0.07;
