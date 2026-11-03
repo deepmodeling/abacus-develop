@@ -6,12 +6,14 @@ add_library(
     base
     OBJECT
     assoc_laguerre.cpp
+    atom_basis_view.cpp
     module_external/blas_connector_base.cpp
     module_external/blas_connector_vector.cpp
     module_external/blas_connector_matrix.cpp
     clebsch_gordan_coeff.cpp
     complexarray.cpp
     complexmatrix.cpp
+    basis_flattened_indexing.cpp
     element_basis_index.cpp
     inverse_matrix.cpp
     gather_math_lib_info.cpp
@@ -92,6 +94,15 @@ endif()
 
 if(BUILD_TESTING)
   AddTest(
+    TARGET MODULE_BASE_atom_basis_view
+    LIBS parameter
+    SOURCES test/test_atom_basis_view.cpp
+            atom_basis_view.cpp
+            basis_flattened_indexing.cpp
+            block_cyclic_distribution_information.cpp
+            element_basis_index.cpp
+  )
+  AddTest(
     TARGET MODULE_BASE_block_cyclic_distribution_information
     LIBS parameter base device container
     SOURCES test/test_block_cyclic_distribution_information.cpp
@@ -100,6 +111,14 @@ if(BUILD_TESTING)
     TARGET MODULE_BASE_distributed_ndarray
     LIBS parameter base device container
     SOURCES test/test_distributed_ndarray.cpp
+  )
+  AddTest(
+    TARGET MODULE_BASE_basis_flattened_indexing
+    LIBS parameter
+    SOURCES test/test_basis_flattened_indexing.cpp
+            basis_flattened_indexing.cpp
+            block_cyclic_distribution_information.cpp
+            element_basis_index.cpp
   )
   # TODO: classify the serial and parallel tests
   if(ENABLE_MPI)
