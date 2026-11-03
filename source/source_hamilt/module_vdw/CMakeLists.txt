@@ -6,8 +6,7 @@ set(vdw_sources
     vdwd3_parameters.cpp
     vdwd3_evaluator.cpp
     vdwd3.cpp
-    vdw.cpp
-)
+    vdw.cpp)
 
 if(ENABLE_DFTD4)
   list(APPEND vdw_sources vdwd4.cpp)

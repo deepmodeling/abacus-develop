@@ -59,13 +59,13 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
         if (!use_tensor)
         {
             // Construct the local P_k matrix for moving spatial gauge, CPU only for now
-            std::vector<std::complex<double>> P_k_local(para_orb.nloc, {0.0, 0.0});
+            std::vector<std::complex<double>> P_k_local(para_orb.para_2d().get_local_size(), {0.0, 0.0});
             if (use_td_moving_gauge && td_mg != nullptr)
             {
-                td_mg->get_P_k(ucell, kvec_d[ik], P_k_local.data(), para_orb.nloc, para_orb.ncol);
+                td_mg->get_P_k(ucell, kvec_d[ik], P_k_local.data(), para_orb.para_2d().get_local_size(), para_orb.para_2d().get_col_size());
             }
 
-            const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.nloc;
+            const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.para_2d().get_local_size();
             evolve_psi(nband,
                        nlocal,
                        &(para_orb),
@@ -90,7 +90,7 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
 
             const int len_psi_k_1 = use_lapack ? nband : psi->get_nbands();
             const int len_psi_k_2 = use_lapack ? nlocal : psi->get_nbasis();
-            const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.nloc;
+            const int len_HS_laststep = use_lapack ? nlocal * nlocal : para_orb.para_2d().get_local_size();
 
             // Create Tensor for psi_k, psi_k_laststep, H_laststep, S_laststep, ekb
             ct::Tensor psi_k_tensor(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_psi_k_1, len_psi_k_2}));

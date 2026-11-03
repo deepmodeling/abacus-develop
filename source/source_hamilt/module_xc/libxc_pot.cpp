@@ -65,7 +65,7 @@ void XC_Functional_Libxc::gradcorr_ncgga_sf_libxc(const std::vector<int>& func_i
         std::vector<double> vsigma(3 * nrxx);
         constexpr int nr_batch_size = 1024;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, nr_batch_size)
+#pragma omp parallel for schedule(static)
 #endif
         for (int ir_start = 0; ir_start < static_cast<int>(nrxx); ir_start += nr_batch_size)
         {
@@ -319,7 +319,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         case XC_FAMILY_LDA: {
             constexpr int nr_batch_size = 1024;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, nr_batch_size)
+#pragma omp parallel for schedule(static)
 #endif
             for (int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size)
             {
@@ -337,7 +337,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc( 
         case XC_FAMILY_HYB_GGA: {
             constexpr int nr_batch_size = 1024;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, nr_batch_size)
+#pragma omp parallel for schedule(static)
 #endif
             for (int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size)
             {
@@ -574,7 +574,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
         ModuleBase::timer::start("Libxc","xc_mgga_exc_vxc");
         constexpr int nr_batch_size = 1024;
         #ifdef _OPENMP
-        #pragma omp parallel for schedule(static, nr_batch_size)
+        #pragma omp parallel for schedule(static)
         #endif
         for( int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size )
         {

@@ -448,10 +448,12 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_pert_nl.o\
     dfpt_pert_vkb.o\
     dfpt_phon.o\
+    dfpt_phon_asr.o\
     dfpt_phon_elec.o\
     dfpt_phon_ewald.o\
     dfpt_pw.o\
     dfpt_pw_data.o\
+    dfpt_pw_data_resp.o\
     dfpt_pw_init.o\
     dfpt_pw_q0.o\
     dfpt_pw_run.o\
@@ -459,6 +461,7 @@ OBJS_DFPT=dfpt_hamilt_shift.o\
     dfpt_q0.o\
     dfpt_q0_pos.o\
     dfpt_rho.o\
+    dfpt_rho_mix.o\
     dfpt_stern.o\
     dfpt_write_dyn.o\
     dfpt_xc_analytic.o

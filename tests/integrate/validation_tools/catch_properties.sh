@@ -11,7 +11,7 @@ props_init "$1"
 
 source "$PROPS_SCRIPT_DIR/props_lr.sh"
 if run_lr_tracking_props; then
-    exit 0
+  exit 0
 fi
 
 source "$PROPS_SCRIPT_DIR/props_basic.sh"
@@ -80,7 +80,10 @@ run_ml_rpa_props
 # so a failing helper (get_sum_*.py, a missing deepks_desc.dat) left an
 # empty value for the threshold check instead of aborting the collection.
 # Keep that behavior with a subshell that disables errexit.
-( set +e; run_deepks_props )
+(
+  set +e
+  run_deepks_props
+)
 
 #--------------------------------------------
 # basic collectors that run after deepks: symmetry
