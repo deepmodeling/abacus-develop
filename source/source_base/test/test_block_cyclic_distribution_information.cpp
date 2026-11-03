@@ -26,17 +26,17 @@ static_assert(std::is_nothrow_move_assignable<BlockCyclicDistributionInformation
 
 namespace
 {
-constexpr int kDescriptorEntryCount = 9;
-constexpr int kDescriptorMatrixTypeIndex = 0;
-constexpr int kDescriptorBlacsContextIndex = 1;
-constexpr int kDescriptorGlobalRowsIndex = 2;
-constexpr int kDescriptorGlobalColsIndex = 3;
-constexpr int kDescriptorBlockRowsIndex = 4;
-constexpr int kDescriptorBlockColsIndex = 5;
-constexpr int kDescriptorProcessRowsIndex = 6;
-constexpr int kDescriptorProcessColsIndex = 7;
-constexpr int kDescriptorLeadingDimIndex = 8;
-constexpr int kUnownedBlacsContext = -1;
+constexpr int DESCRIPTOR_ENTRY_COUNT = 9;
+constexpr int DESCRIPTOR_MATRIX_TYPE_INDEX = 0;
+constexpr int DESCRIPTOR_BLACS_CONTEXT_INDEX = 1;
+constexpr int DESCRIPTOR_GLOBAL_ROWS_INDEX = 2;
+constexpr int DESCRIPTOR_GLOBAL_COLS_INDEX = 3;
+constexpr int DESCRIPTOR_BLOCK_ROWS_INDEX = 4;
+constexpr int DESCRIPTOR_BLOCK_COLS_INDEX = 5;
+constexpr int DESCRIPTOR_PROCESS_ROWS_INDEX = 6;
+constexpr int DESCRIPTOR_PROCESS_COLS_INDEX = 7;
+constexpr int DESCRIPTOR_LEADING_DIM_INDEX = 8;
+constexpr int UNOWNED_BLACS_CONTEXT = -1;
 } // namespace
 
 TEST(BlockCyclicDistributionInformationTest, DefaultConstruction)
@@ -49,13 +49,13 @@ TEST(BlockCyclicDistributionInformationTest, DefaultConstruction)
     EXPECT_EQ(distribution.nb(), 1);
     EXPECT_EQ(distribution.nrproc(), 0);
     EXPECT_EQ(distribution.ncproc(), 0);
-    EXPECT_EQ(distribution.irproc(), kUnownedBlacsContext);
-    EXPECT_EQ(distribution.icproc(), kUnownedBlacsContext);
+    EXPECT_EQ(distribution.irproc(), UNOWNED_BLACS_CONTEXT);
+    EXPECT_EQ(distribution.icproc(), UNOWNED_BLACS_CONTEXT);
     EXPECT_FALSE(distribution.is_serial());
 #ifdef __MPI
-    EXPECT_EQ(distribution.ictxt(), kUnownedBlacsContext);
+    EXPECT_EQ(distribution.ictxt(), UNOWNED_BLACS_CONTEXT);
     const int* const descriptor = distribution.desc();
-    for (int i = 0; i < kDescriptorEntryCount; ++i)
+    for (int i = 0; i < DESCRIPTOR_ENTRY_COUNT; ++i)
     {
         EXPECT_EQ(descriptor[i], 0);
     }
@@ -135,15 +135,15 @@ TEST(BlockCyclicDistributionInformationTest, MpiInitializationAndIndexMaps)
 
     const int* const descriptor = distribution.desc();
     ASSERT_NE(descriptor, nullptr);
-    EXPECT_EQ(descriptor[kDescriptorMatrixTypeIndex], 1);
-    EXPECT_EQ(descriptor[kDescriptorBlacsContextIndex], distribution.ictxt());
-    EXPECT_EQ(descriptor[kDescriptorGlobalRowsIndex], global_rows);
-    EXPECT_EQ(descriptor[kDescriptorGlobalColsIndex], global_cols);
-    EXPECT_EQ(descriptor[kDescriptorBlockRowsIndex], block_size);
-    EXPECT_EQ(descriptor[kDescriptorBlockColsIndex], block_size);
-    EXPECT_EQ(descriptor[kDescriptorProcessRowsIndex], 0);
-    EXPECT_EQ(descriptor[kDescriptorProcessColsIndex], 0);
-    EXPECT_EQ(descriptor[kDescriptorLeadingDimIndex],
+    EXPECT_EQ(descriptor[DESCRIPTOR_MATRIX_TYPE_INDEX], 1);
+    EXPECT_EQ(descriptor[DESCRIPTOR_BLACS_CONTEXT_INDEX], distribution.ictxt());
+    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_ROWS_INDEX], global_rows);
+    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_COLS_INDEX], global_cols);
+    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_ROWS_INDEX], block_size);
+    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_COLS_INDEX], block_size);
+    EXPECT_EQ(descriptor[DESCRIPTOR_PROCESS_ROWS_INDEX], 0);
+    EXPECT_EQ(descriptor[DESCRIPTOR_PROCESS_COLS_INDEX], 0);
+    EXPECT_EQ(descriptor[DESCRIPTOR_LEADING_DIM_INDEX],
               std::max(distribution.nrloc(), 1));
     for (int iat = 0; iat < global_rows; ++iat)
     {
@@ -179,7 +179,7 @@ TEST(BlockCyclicDistributionInformationTest, MpiMoveTransfersBlacsOwnershipOnce)
 
     BlockCyclicDistributionInformation moved(std::move(source));
     EXPECT_EQ(moved.ictxt(), source_context);
-    EXPECT_EQ(source.ictxt(), kUnownedBlacsContext);
+    EXPECT_EQ(source.ictxt(), UNOWNED_BLACS_CONTEXT);
 }
 
 TEST(BlockCyclicDistributionInformationTest, BindDescriptorBorrowsBlacsContext)
@@ -195,7 +195,7 @@ TEST(BlockCyclicDistributionInformationTest, BindDescriptorBorrowsBlacsContext)
 
     BlockCyclicDistributionInformation moved_borrower(std::move(borrower));
     EXPECT_EQ(moved_borrower.ictxt(), owner_context);
-    EXPECT_EQ(borrower.ictxt(), kUnownedBlacsContext);
+    EXPECT_EQ(borrower.ictxt(), UNOWNED_BLACS_CONTEXT);
     EXPECT_GE(owner.ictxt(), 0);
 }
 
@@ -216,8 +216,8 @@ TEST(BlockCyclicDistributionInformationTest, SharedBorrowedContextSupportsMultip
 
     EXPECT_EQ(first_borrower.ictxt(), owner_context);
     EXPECT_EQ(second_borrower.ictxt(), owner_context);
-    EXPECT_EQ(first_borrower.desc()[kDescriptorBlacsContextIndex], owner_context);
-    EXPECT_EQ(second_borrower.desc()[kDescriptorBlacsContextIndex], owner_context);
+    EXPECT_EQ(first_borrower.desc()[DESCRIPTOR_BLACS_CONTEXT_INDEX], owner_context);
+    EXPECT_EQ(second_borrower.desc()[DESCRIPTOR_BLACS_CONTEXT_INDEX], owner_context);
 
     BlockCyclicDistributionInformation independent_owner;
     independent_owner.init(57, 57, 2, MPI_COMM_WORLD, false);
@@ -236,12 +236,12 @@ TEST(BlockCyclicDistributionInformationTest, RebindingOwnedContextKeepsGridAlive
 
     const int* const descriptor = distribution.desc();
     EXPECT_EQ(distribution.ictxt(), original_context);
-    EXPECT_EQ(descriptor[kDescriptorMatrixTypeIndex], 1);
-    EXPECT_EQ(descriptor[kDescriptorBlacsContextIndex], original_context);
-    EXPECT_EQ(descriptor[kDescriptorGlobalRowsIndex], 30);
-    EXPECT_EQ(descriptor[kDescriptorGlobalColsIndex], 35);
-    EXPECT_EQ(descriptor[kDescriptorBlockRowsIndex], 1);
-    EXPECT_EQ(descriptor[kDescriptorBlockColsIndex], 1);
+    EXPECT_EQ(descriptor[DESCRIPTOR_MATRIX_TYPE_INDEX], 1);
+    EXPECT_EQ(descriptor[DESCRIPTOR_BLACS_CONTEXT_INDEX], original_context);
+    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_ROWS_INDEX], 30);
+    EXPECT_EQ(descriptor[DESCRIPTOR_GLOBAL_COLS_INDEX], 35);
+    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_ROWS_INDEX], 1);
+    EXPECT_EQ(descriptor[DESCRIPTOR_BLOCK_COLS_INDEX], 1);
     EXPECT_EQ(distribution.nb(), 1);
     EXPECT_EQ(distribution.size(),
               static_cast<std::size_t>(distribution.nrloc())
@@ -263,7 +263,7 @@ TEST(BlockCyclicDistributionInformationTest, SerialInitializationClearsBorrowedC
     EXPECT_EQ(borrower.ictxt(), owner_context);
 
     borrower.set_serial(3, 4);
-    EXPECT_EQ(borrower.ictxt(), kUnownedBlacsContext);
+    EXPECT_EQ(borrower.ictxt(), UNOWNED_BLACS_CONTEXT);
     EXPECT_EQ(borrower.comm(), MPI_COMM_NULL);
     EXPECT_GE(owner.ictxt(), 0);
     EXPECT_NE(owner.comm(), MPI_COMM_NULL);

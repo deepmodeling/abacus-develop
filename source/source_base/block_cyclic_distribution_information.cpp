@@ -33,7 +33,7 @@ BlockCyclicDistributionInformation& BlockCyclicDistributionInformation::operator
         owns_ictxt_ = rhs.owns_ictxt_;
         rhs.owns_ictxt_ = false;
         ictxt_ = rhs.ictxt_;
-        rhs.ictxt_ = kUnownedBlacsContext;
+        rhs.ictxt_ = UNOWNED_BLACS_CONTEXT;
 #endif
         nrloc_ = rhs.nrloc_;
         ncloc_ = rhs.ncloc_;
@@ -77,7 +77,7 @@ int BlockCyclicDistributionInformation::nrglb() const
     if (!is_serial_)
     {
 #ifdef __MPI
-        return desc_[kDescriptorGlobalRowsIndex];
+        return desc_[DESCRIPTOR_GLOBAL_ROWS_INDEX];
 #endif
     }
     return nrloc_;
@@ -88,7 +88,7 @@ int BlockCyclicDistributionInformation::ncglb() const
     if (!is_serial_)
     {
 #ifdef __MPI
-        return desc_[kDescriptorGlobalColsIndex];
+        return desc_[DESCRIPTOR_GLOBAL_COLS_INDEX];
 #endif
     }
     return ncloc_;
@@ -104,7 +104,7 @@ MPI_Comm BlockCyclicDistributionInformation::comm() const
     }
 
     int sys_ctxt = 0;
-    Cblacs_get(ictxt_, kBlacsWhatSystemContext, &sys_ctxt);
+    Cblacs_get(ictxt_, BLACS_WHAT_SYSTEM_CONTEXT, &sys_ctxt);
     // blacs_get with "what" = 10 takes a BLACS context and returns the index
     // of the associated system context (MPI communicator) that can be used by
     // blacs2sys_handle to get the MPI communicator.
@@ -139,7 +139,7 @@ void BlockCyclicDistributionInformation::release_grid()
     if (owns_ictxt_ && ictxt_ >= 0)
     {
         Cblacs_gridexit(ictxt_);
-        ictxt_ = kUnownedBlacsContext;
+        ictxt_ = UNOWNED_BLACS_CONTEXT;
         owns_ictxt_ = false;
     }
 }
@@ -261,6 +261,6 @@ void BlockCyclicDistributionInformation::set_serial(const int nrglb, const int n
     // release_grid() is a no-op, so clear the handle explicitly;
     // otherwise the object keeps a reference to the old grid, which also
     // dangles once the owner destroys it.
-    ictxt_ = kUnownedBlacsContext;
+    ictxt_ = UNOWNED_BLACS_CONTEXT;
 #endif
 }

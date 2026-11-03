@@ -49,10 +49,10 @@ void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK>& hs,
             this->hk_pool.resize(this->P2D_pool->size(), 0.0);
             this->sk_pool.resize(this->P2D_pool->size(), 0.0);
         }
-        constexpr int kDescriptorEntryCount = 9;
-        int desc_pool[kDescriptorEntryCount];
+        constexpr int DESCRIPTOR_ENTRY_COUNT = 9;
+        int desc_pool[DESCRIPTOR_ENTRY_COUNT];
         const int* const pool_descriptor = this->P2D_pool->desc();
-        std::copy(pool_descriptor, pool_descriptor + kDescriptorEntryCount, desc_pool);
+        std::copy(pool_descriptor, pool_descriptor + DESCRIPTOR_ENTRY_COUNT, desc_pool);
         if (this->MY_POOL != this->Pkpoints->whichpool[ik_kpar[ipool]]) {
             desc_pool[1] = -1;
         }
