@@ -328,7 +328,7 @@ Rvv10Workspace& workspace()
 /// Total density of chr (valence plus core), its plane-wave gradient (a copy of total_gradient when that
 /// is given) and sigma = |grad n|^2.
 void total_density(const Charge& chr,
-                   const ModuleBase::Vector3<double>* total_gradient,
+                   const std::vector<ModuleBase::Vector3<double>>* total_gradient,
                    std::vector<double>& rho,
                    std::vector<ModuleBase::Vector3<double>>& grad,
                    std::vector<double>& sigma)
@@ -347,9 +347,10 @@ void total_density(const Charge& chr,
             rho[ir] += chr.rho[is][ir];
         }
     }
+    // the branch is collective (the transforms below are): the caller decides it for the whole pool
     if (total_gradient != nullptr)
     {
-        grad.assign(total_gradient, total_gradient + nrxx);
+        grad = *total_gradient;
     }
     else
     {
@@ -372,7 +373,7 @@ void total_density(const Charge& chr,
 /// (unless dedn is nullptr), dE/dsigma and, with stress != nullptr, the explicit strain derivative.
 double evaluate_total_density(const XCFunctionalParameters& parameters,
                               const Charge& chr,
-                              const ModuleBase::Vector3<double>* total_gradient,
+                              const std::vector<ModuleBase::Vector3<double>>* total_gradient,
                               std::vector<ModuleBase::Vector3<double>>& grad,
                               std::vector<double>* dedn,
                               std::vector<double>& dedsigma,
@@ -401,7 +402,7 @@ void add_rvv10(const XCFunctionalParameters& parameters,
 
 void add_rvv10(const XCFunctionalParameters& parameters,
                const Charge& chr,
-               const ModuleBase::Vector3<double>* total_gradient,
+               const std::vector<ModuleBase::Vector3<double>>* total_gradient,
                double& etxc,
                double& vtxc,
                ModuleBase::matrix& v)

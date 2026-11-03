@@ -1,6 +1,8 @@
 #ifndef NONLOCAL_XC_H
 #define NONLOCAL_XC_H
 
+#include <vector>
+
 class Charge;
 struct XCFunctionalParameters;
 namespace ModuleBase
@@ -25,12 +27,12 @@ void add_rvv10(const XCFunctionalParameters& parameters,
                double& vtxc,
                ModuleBase::matrix& v);
 
-/// The same, reusing the plane-wave gradient of the total density (valence plus core) on the chr.nrxx
-/// points of this process that the caller has already computed, which saves its four FFTs; nullptr
-/// computes the gradient here.
+/// The same, reusing the plane-wave gradient of the total density (valence plus core) that the caller
+/// has already computed, which saves its four FFTs. nullptr computes the gradient here; the choice is
+/// collective, so a process without grid points passes its empty vector, not nullptr.
 void add_rvv10(const XCFunctionalParameters& parameters,
                const Charge& chr,
-               const ModuleBase::Vector3<double>* total_gradient,
+               const std::vector<ModuleBase::Vector3<double>>* total_gradient,
                double& etxc,
                double& vtxc,
                ModuleBase::matrix& v);

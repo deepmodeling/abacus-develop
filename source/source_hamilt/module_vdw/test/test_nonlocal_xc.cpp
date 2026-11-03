@@ -488,6 +488,14 @@ TEST_F(NonlocalXCTest, BigGridDistributionMatchesCompleteGrid)
         EXPECT_EQ(big.numz[3], 0);
     }
     expect_distributed_matches_complete(big, complete);
+    // v_xc_libxc hands its gradient to add_rvv10 on every process of the pool, also on one without points
+    UnitCell ucell;
+    ucell.omega = big.omega;
+    ucell.tpiba = big.tpiba;
+    ucell.magnet.lsign_ = false;
+    const std::vector<std::vector<double>> unpolarized(1, local_grid(big, valence_density));
+    const ChargeOnGrid single(big, unpolarized, local_grid(big, core_density));
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", single.chr, ucell, false, 0, 0.0);
 }
 
 TEST_F(NonlocalXCTest, PotentialIsTheDerivativeOfTheEnergy)
