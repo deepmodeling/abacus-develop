@@ -68,13 +68,13 @@ class OperatorLCAO : public Operator<TK> {
                                this->hsk->get_pv()->para_2d().get_desc()};
 #else
         hk_in = MatrixBlock<TK>{hmatrix_k, 
-                                (size_t)this->hsk->get_pv()->para_2d().get_row_size(), 
-                                (size_t)this->hsk->get_pv()->para_2d().get_col_size(), 
+                                (size_t)this->hsk->get_pv()->para_2d().get_row_size(),
+                                (size_t)this->hsk->get_pv()->para_2d().get_col_size(),
                                 nullptr};
         
         sk_in = MatrixBlock<TK>{smatrix_k, 
-                                (size_t)this->hsk->get_pv()->para_2d().get_row_size(), 
-                                (size_t)this->hsk->get_pv()->para_2d().get_col_size(), 
+                                (size_t)this->hsk->get_pv()->para_2d().get_row_size(),
+                                (size_t)this->hsk->get_pv()->para_2d().get_col_size(),
                                 nullptr};
 #endif
     }

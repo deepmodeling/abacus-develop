@@ -13,12 +13,15 @@
 
 #include "dfpt_pw_data.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 
 #include <cmath>
 #include <complex>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 namespace ModuleDFPT
@@ -312,13 +315,15 @@ void DFPT_PW::Impl::solve_efield_resp(int q_idx)
         rho_.reset_mixing(q_idx);
         data_.set_drho_g(q_idx, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
         bool converged = false;
+        int n_iter_done = 0;
+        double residual_last = 0.0;
         for (int iter = 0; iter < max_iter_ && !converged; ++iter)
         {
             // screened response potential of the mixed input density
             // (shared Impl::assemble_v_sc from dfpt_pw_solve.cpp)
             std::vector<std::complex<double>> v_sc_r;
             const std::vector<std::complex<double>> drho_in_g = data_.get_drho_g(q_idx, 0);
-            assemble_v_sc(q_cart, drho_in_g, v_sc_r);
+            assemble_v_sc(q_idx, q_cart, drho_in_g, v_sc_r);
             for (int ik = 0; ik < nk; ++ik)
             {
                 if (static_cast<int>(occ_kq_.size()) <= ik || occ_kq_[ik].empty())
@@ -338,12 +343,25 @@ void DFPT_PW::Impl::solve_efield_resp(int q_idx)
             rho_.compute_drho(gs_psi_, wg_, q_idx, data_);
             rho_.mix_drho(q_idx, data_);
             const double residual = rho_.get_residual(q_idx, data_);
+            residual_last = residual;
             converged = (residual < conv_thr_);
+            ++n_iter_done;
             if (converged)
             {
                 std::cout << "DFPT efield dir=" << a << " converged, residual=" << residual << " (iter=" << iter << ")"
                           << std::endl;
             }
+        }
+        if (!converged)
+        {
+            // same explicit non-convergence report as solve_displacement:
+            // a silently truncated E-field solve corrupts Z* / LO-TO
+            std::ostringstream oss;
+            oss << "the E-field response (dir " << static_cast<char>('x' + a)
+                << ") did not converge within dfpt_max_iter=" << max_iter_ << ": final residual " << std::scientific
+                << std::setprecision(3) << residual_last << " vs threshold " << std::setprecision(1) << conv_thr_
+                << std::defaultfloat << ". Z* / LO-TO splitting from this solve is unreliable";
+            ModuleBase::WARNING("DFPT_PW::solve_efield_resp", oss.str());
         }
         stash_dpsi_efield(q_idx, a, nk, nbands);
     }

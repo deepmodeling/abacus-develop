@@ -264,7 +264,7 @@ void ReadInput::item_exx()
         item.annotation = "threshold to inverse Vq in abfs for generating Cs";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
-        item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.";
+        item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using Cholesky factorization. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues at or below exx_cs_inv_thr times the largest eigenvalue are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5. Force derivatives assume that modes remain on the same side of the cutoff. Eigenvalue crossings can make the truncated model nonsmooth during relaxation or molecular dynamics.";
         item.default_value = "-1";
         item.unit = "";
         read_sync_double(input.exx_cs_inv_thr);
@@ -567,6 +567,42 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
                 ModuleBase::WARNING_QUIT("ReadInput", "rpa_ccp_rmesh_times must >= 1");
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_coulomb");
+        item.annotation = "post-SCF truncated Coulomb kernel for RPA/GW export";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "Post-SCF cut-Coulomb kernel: hard preserves Spencer truncation; log_erfc uses erfc(log(r/Rc)/log(rpa_cut_width))/2r. Applies to Fock components in compressed and uncompressed cut exports; Erfc components retain their existing kernel. Non-default kernel/radius requests require a Fock component. Full Coulomb is unchanged. Forces and stresses for log_erfc are not validated.";
+        item.default_value = "hard";
+        item.unit = "";
+        read_sync_string(input.rpa_cut_coulomb);
+        item.domain.set_choices({"hard", "log_erfc"});
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_radius");
+        item.annotation = "radius convention for post-SCF cut Coulomb";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "legacy preserves the existing cutoff radius. inscribed uses half the shortest nonzero BvK superlattice vector, including the lattice scale in Bohr. Applies only to Fock components; inscribed is rejected if the RPA Coulomb configuration has no Fock component. Independent of rpa_cut_coulomb; intended for controlled radius-versus-smoothing comparisons.";
+        item.default_value = "legacy";
+        item.unit = "";
+        read_sync_string(input.rpa_cut_radius);
+        item.domain.set_choices({"legacy", "inscribed"});
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_width");
+        item.annotation = "multiplicative width of the log-erfc cutoff";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "Width factor for log_erfc. Must be finite and greater than 1 and at most 1.25. The default matches the logged Si FHI-aims width; it is not a universal FHI-aims constant. The finite radial integration range must resolve the smooth tail.";
+        item.default_value = "1.091868692359";
+        item.unit = "";
+        read_sync_double(input.rpa_cut_width);
+        item.domain.set_rule("value>1 and value<=1.25");
         this->add_item(item);
     }
     {
@@ -888,20 +924,30 @@ void ReadInput::item_dftu()
     }
     {
         Input_Item item("onsite_radius");
-        item.annotation = "radius of the sphere for onsite projection (Bohr)";
+        item.domain.set_rule("value>0");
+        item.domain.set_active_when("onsite_radius!=0");
+        item.annotation = "cutoff radius of onsite projection orbitals (Bohr)";
         item.category = "DFT+U correction";
         item.type = "Real";
-        item.description = R"(* The onsite_radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals used for DFT+U projections.
-* The modulation algorithm applies a smooth truncation to the orbital tail followed by normalization. A representative profile is $f(r)=\frac{1}{2}\left[1+\operatorname{erf}\!\left(\frac{r_c-r}{\sigma}\right)\right]$, where $r_c$ is the cutoff radius and $\sigma=\gamma r_c$ controls smoothness.)";
-        item.default_value = "3.0";
+        item.description = R"(Cutoff radius for numerical atomic orbitals used in onsite projections.
+* Controls the localized projections for `dft_plus_u=1` and spin constraints (`sc_mag_switch=true`) in PW and LCAO calculations.
+* Enables onsite population analysis in ordinary PW calculations when set to a positive value.
+* Controls atomic magnetic moment projections for `nspin=4` PW RT-TDDFT with `td_out_mag=onsite`.
+
+When omitted, the value is `3.0` for `dft_plus_u=1`, `sc_mag_switch=true`, or `nspin=4` PW RT-TDDFT with `td_out_mag=onsite`; otherwise it is `0.0`. Explicit values must be positive.
+
+Provide numerical atomic orbital files through `NUMERICAL_ORBITAL` in `STRU`, with their directory specified by `orbital_dir`. Projected magnetic moments depend on the chosen orbitals and radius.)";
+        item.default_value = "`3.0` for `dft_plus_u=1`, `sc_mag_switch=true`, or `nspin=4` PW RT-TDDFT with `td_out_mag=onsite`; `0.0` otherwise";
         item.unit = "Bohr";
-        item.set_availability("dft_plus_u==1");
+        item.set_availability("basis_type in [pw, lcao]");
         read_sync_double(input.onsite_radius);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if ((para.input.dft_plus_u == 1 || para.input.sc_mag_switch) && para.input.onsite_radius == 0.0)
+            if (!item.is_read())
             {
-                // autoset onsite_radius to 3.0 as default, this default value comes from the systematic atomic magnetism test
-                para.input.onsite_radius = 3.0;
+                const bool rt_onsite = para.inp.basis_type == "pw" && para.inp.esolver_type == "tddft"
+                                       && para.inp.nspin == 4 && para.inp.td_out_mag == "onsite";
+                const bool use_onsite = para.inp.dft_plus_u == 1 || para.inp.sc_mag_switch || rt_onsite;
+                para.input.onsite_radius = use_onsite ? 3.0 : 0.0;
             }
         };
         this->add_item(item);

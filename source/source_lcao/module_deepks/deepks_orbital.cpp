@@ -25,8 +25,8 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
         {
             for (int j = 0; j < PARAM.globalv.nlocal; ++j)
             {
-                const int mu = pv.global2local_row(j);
-                const int nu = pv.global2local_col(i);
+                const int mu = pv.para_2d().global2local_row(j);
+                const int nu = pv.para_2d().global2local_col(i);
 
                 if (mu >= 0 && nu >= 0)
                 {
@@ -34,11 +34,11 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
                     if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "scalapack_gvx"
                         || PARAM.inp.ks_solver == "pexsi") // save the matrix as column major format
                     {
-                        iic = mu + nu * pv.nrow;
+                        iic = mu + nu * pv.para_2d().get_row_size();
                     }
                     else
                     {
-                        iic = mu * pv.ncol + nu;
+                        iic = mu * pv.para_2d().get_col_size() + nu;
                     }
                     for (int is = 0; is < nspin; is++)
                     {

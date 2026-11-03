@@ -1,5 +1,6 @@
 #include "md_base.h"
 #include "md_func.h"
+#include "source_base/parallel_cell.h"
 #include "source_cell/unitcell.h"
 #ifdef __MPI
 #include "mpi.h"
@@ -92,6 +93,8 @@ void MD_base::second_half()
 void MD_base::update_pos()
 {
     std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    int invalid_position = 0;
+    const double epsilon = 1.0e-12;
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
         LocalAtom& atom = atoms[i];
@@ -108,11 +111,36 @@ void MD_base::update_pos()
             }
         }
         pos = pos * mdcell.GT();
+        atom.displacement = pos;
         atom.frac += pos;
-        atom.frac.x -= std::floor(atom.frac.x);
-        atom.frac.y -= std::floor(atom.frac.y);
-        atom.frac.z -= std::floor(atom.frac.z);
+        atom.boundary_shift.set(0, 0, 0);
+        for (int k = 0; k < 3; ++k)
+        {
+            if (atom.frac[k] < 0.0)
+            {
+                ++atom.boundary_shift[k];
+                atom.frac[k] += 1.0;
+            }
+            // Keep the legacy second check: a tiny negative can round to 1.0.
+            if (atom.frac[k] >= 1.0)
+            {
+                --atom.boundary_shift[k];
+                atom.frac[k] -= 1.0;
+            }
+            if (atom.frac[k] < -epsilon || atom.frac[k] >= 1.0 + epsilon)
+            {
+                invalid_position = 1;
+            }
+        }
         atom.cart = atom.frac * mdcell.latvec();
+    }
+    ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
+#ifdef __MPI
+    domain.initialize(mdcell.communicator());
+#endif
+    if (domain.max(invalid_position) != 0)
+    {
+        ModuleBase::WARNING_QUIT("MD_base::update_pos", "Movement of atom is larger than the cell length");
     }
 
     return;

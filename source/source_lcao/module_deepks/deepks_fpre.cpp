@@ -29,7 +29,7 @@ void DeePKS_domain::cal_gdmx(const int nks,
     ModuleBase::timer::start("DeePKS_domain", "cal_gdmx");
     // get DS_alpha_mu and S_nu_beta
 
-    int nrow = pv.nrow;
+    int nrow = pv.para_2d().get_row_size();
     const int nm = 2 * deepks_param.lmaxd + 1;
     // gdmx: dD/dX
     // \sum_{mu,nu} 2*c_mu*c_nu * <dphi_mu/dx|alpha_m><alpha_m'|phi_nu>

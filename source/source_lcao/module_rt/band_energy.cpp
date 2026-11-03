@@ -137,7 +137,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
         return;
     }
 
-    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+    assert(pv->nloc_wfc > 0 && pv->para_2d().get_local_size() > 0);
     assert(Htmp.device_type() == ct::DeviceType::GpuDevice);
     assert(psi_k.device_type() == ct::DeviceType::GpuDevice);
     assert(ekb.device_type() == ct::DeviceType::GpuDevice);
@@ -150,7 +150,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     ct::Tensor Tmp1_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({psi_elems}));
     void* d_Tmp1 = static_cast<void*>(Tmp1_gpu.data<std::complex<double>>());
 
-    int64_t eij_elems = pv->nloc;
+    int64_t eij_elems = pv->para_2d().get_local_size();
     ct::Tensor Eij_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({eij_elems}));
     void* d_Eij = static_cast<void*>(Eij_gpu.data<std::complex<double>>());
 
@@ -161,13 +161,13 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cublasMpMatrixDescriptor_t desc_H, desc_Psi, desc_Eij;
 
     // H descriptor: nlocal x nlocal
-    cublasMpMatrixDescriptorCreate(pv->desc[2],
-                                   pv->desc[3],
-                                   pv->desc[4],
-                                   pv->desc[5],
+    cublasMpMatrixDescriptorCreate(pv->para_2d().get_desc()[2],
+                                   pv->para_2d().get_desc()[3],
+                                   pv->para_2d().get_desc()[4],
+                                   pv->para_2d().get_desc()[5],
                                    0,
                                    0,
-                                   pv->desc[8],
+                                   pv->para_2d().get_desc()[8],
                                    CUDA_C_64F,
                                    cublas_res.cublasmp_grid,
                                    &desc_H);
@@ -203,9 +203,9 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cublasMpGemm_bufferSize(cublas_res.cublasmp_handle,
                             CUBLAS_OP_N,
                             CUBLAS_OP_N,
-                            pv->desc[2],
+                            pv->para_2d().get_desc()[2],
                             pv->desc_wfc[3],
-                            pv->desc[3],
+                            pv->para_2d().get_desc()[3],
                             &alpha,
                             d_H,
                             1,
@@ -230,9 +230,9 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     cublasMpGemm(cublas_res.cublasmp_handle,
                  CUBLAS_OP_N,
                  CUBLAS_OP_N,
-                 pv->desc[2],
+                 pv->para_2d().get_desc()[2],
                  pv->desc_wfc[3],
-                 pv->desc[3],
+                 pv->para_2d().get_desc()[3],
                  &alpha,
                  d_H,
                  1,
@@ -323,12 +323,12 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     module_rt::gpu::launch_extract_ekb_kernel(reinterpret_cast<cuDoubleComplex*>(d_Eij),
                                               d_eii,
                                               pv->desc_Eij[8],
-                                              pv->nloc,
+                                              pv->para_2d().get_local_size(),
                                               pv->desc_Eij[4],
-                                              pv->dim0,
-                                              pv->dim1,
-                                              pv->get_coord_row(),
-                                              pv->get_coord_col(),
+                                              pv->para_2d().get_dim0(),
+                                              pv->para_2d().get_dim1(),
+                                              pv->para_2d().get_coord_row(),
+                                              pv->para_2d().get_coord_col(),
                                               nband,
                                               cublas_res.stream);
 
