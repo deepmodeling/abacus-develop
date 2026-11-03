@@ -262,6 +262,11 @@ ACCESS_HACK_RE = re.compile(r"^\s*#\s*define\s+(?:private|protected)\s+public\b"
 # `#pragma once`. See AGENTS.md rule 15.
 PRAGMA_ONCE_RE = re.compile(r"^\s*#\s*pragma\s+once\b")
 
+# Per-element LCAO work must consume AtomBasisView, not hand-built offsets.
+ATOM_BASIS_OFFSET_RE = re.compile(
+    r"\b(?:local_(?:row|col)_offsets|(?:row|col)_basis_offsets)\b"
+)
+
 
 def is_global_dependency_check_path(path: str) -> bool:
     if path.startswith("tools/03_code_analysis/"):
@@ -396,6 +401,31 @@ def check_pragma_once(
                 line.line,
                 "Adds `#pragma once` to a header file.",
                 "Use traditional `#ifndef`/`#define`/`#endif` include guards instead.",
+                allow_exception=False,
+            )
+
+
+def check_atom_basis_offsets(
+    findings: List[Finding],
+    added_lines: Iterable[DiffLine],
+) -> None:
+    """Block offset-based per-element LCAO basis access."""
+    for line in added_lines:
+        if Path(line.path).suffix.lower() not in SOURCE_REVIEW_EXTENSIONS:
+            continue
+        if ATOM_BASIS_OFFSET_RE.search(line.content):
+            add_finding(
+                findings,
+                "No atom basis offsets",
+                BLOCK,
+                line.path,
+                line.line,
+                "Adds offset-based atom-local basis access in LCAO code.",
+                (
+                    "Derive AtomBasisView from BasisFlattenedIndexing and "
+                    "BlockCyclicDistributionInformation; do not reintroduce "
+                    "local_row_offsets/local_col_offsets or equivalent helpers."
+                ),
                 allow_exception=False,
             )
 
@@ -866,6 +896,7 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     check_global_dependencies(findings, lines, removed_lines)
     check_access_hacks(findings, lines, removed_lines)
     check_pragma_once(findings, lines)
+    check_atom_basis_offsets(findings, lines)
     check_default_parameters(findings, lines)
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)

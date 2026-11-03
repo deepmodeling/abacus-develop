@@ -148,6 +148,28 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_blocks_atom_basis_offsets(self):
+        self.write(
+            "source/source_io/module_parameter/read_input_item_model.cpp",
+            "const auto rows = basis.local_row_offsets(layout, 0);\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_blocked_by(result, "No atom basis offsets")
+
+    def test_allows_atom_basis_views(self):
+        self.write(
+            "source/source_io/module_parameter/read_input_item_model.cpp",
+            "const AtomBasisView rows = AtomBasisView::rows(basis, layout, 0);\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_warns_for_default_parameters_added_to_headers(self):
         self.write("source/source_base/defaults.h", "void update_solver(int step = 0);\n")
         head = self.commit_change()

@@ -79,6 +79,10 @@ rules. Read the complete governance document before making or reviewing changes:
       guards and `#ifdef`/`#ifndef` usages of existing macros are exempt.
   21. Do not initialize member variables from `PARAM` in `.h`/`.hpp`
       files; pass the value through the constructor or a setter instead.
+  22. Do not implement per-element LCAO basis access with offset vectors.
+      Derive `AtomBasisView` from `BasisFlattenedIndexing` and
+      `BlockCyclicDistributionInformation`; do not reintroduce
+      `local_row_offsets`, `local_col_offsets`, or equivalent helpers.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.
