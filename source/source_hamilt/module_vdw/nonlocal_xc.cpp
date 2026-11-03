@@ -54,13 +54,11 @@ void libvdwxc_slab(const int nz, const int nproc, const int rank, int& begin, in
 
 /**
  * libvdwxc object for one FFT grid and pool, kept between calls and rebuilt when either changes.
- *
  * libvdwxc gets the lattice vectors in the cyclic order (a3, a1, a2), so that the first axis of its grid
  * is the z axis that ABACUS distributes. It splits that axis into blocks of ceil(nz/P) planes, the FFTW-MPI
  * default; vdwxc_init_mpi does not report the local slab, so libvdwxc_slab computes it the same way. The
  * slab of a process is stored as [z][x][y], the transpose of the ABACUS layout [x][y][z], and whole z
  * planes are moved between the two distributions by all-to-all exchanges.
- *
  * There is no destructor on purpose: the single instance (see workspace()) is destroyed after MPI_Finalize
  * and fftw_cleanup_threads, which the FFT plans of data_ must not outlive, so data_ is never finalized.
  */
@@ -167,8 +165,7 @@ void Rvv10Workspace::prepare(const ModulePW::PW_Basis& pw, const XCFunctionalPar
     {
         this->rebuild(pw);
     }
-    // The libvdwxc slabs depend only on nz and the number of processes, but the ABACUS planes depend on
-    // the basis, so the exchange is planned on every call.
+    // the libvdwxc slabs depend only on nz and the processes, the ABACUS planes also on the basis
     this->plan_exchange(pw);
     if (vdwxc_set_rvv10_parameters(data_, parameters.rvv10_b, parameters.rvv10_c) != 0)
     {
@@ -211,8 +208,7 @@ void Rvv10Workspace::plan_exchange(const ModulePW::PW_Basis& pw)
         }
     }
     // libvdwxc expects valid pointers also for an empty slab
-    const int slab_points = (slab_end - slab_start) * pw.nxy;
-    const int slab_size = std::max(1, slab_points);
+    const int slab_size = std::max(1, (slab_end - slab_start) * pw.nxy);
     // the transposed ABACUS planes are only needed for the exchange between processes
     const int planes_size = (nproc > 1) ? std::max(1, pw.nrxx) : 0;
     planes_.resize(planes_size);
@@ -229,6 +225,9 @@ void Rvv10Workspace::to_libvdwxc(const ModulePW::PW_Basis& pw,
                                  std::vector<double>& slab)
 {
     std::vector<double>& planes = (pw.poolnproc > 1) ? planes_ : slab;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int ixy = 0; ixy < pw.nxy; ++ixy)
     {
         for (int iz = 0; iz < pw.nplane; ++iz)
@@ -267,6 +266,9 @@ void Rvv10Workspace::from_libvdwxc(const ModulePW::PW_Basis& pw,
     }
 #endif
     const std::vector<double>& planes = (pw.poolnproc > 1) ? planes_ : slab;
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int ixy = 0; ixy < pw.nxy; ++ixy)
     {
         for (int iz = 0; iz < pw.nplane; ++iz)
@@ -304,8 +306,7 @@ double Rvv10Workspace::evaluate(const ModulePW::PW_Basis& pw,
     }
     this->from_libvdwxc(pw, dedsigma_, dedsigma);
 #ifdef __MPI
-    // the distributed backend returns the contribution of this process
-    if (pw.poolnproc > 1)
+    if (pw.poolnproc > 1) // the distributed backend returns the contribution of this process
     {
         Parallel_Common::reduce_data(&energy, 1, pw.pool_world);
         if (stress != nullptr)
@@ -334,12 +335,13 @@ void total_density(const Charge& chr,
 {
     const ModulePW::PW_Basis& pw = *chr.rhopw;
     const int nrxx = chr.nrxx;
-    const double* core_begin = chr.rho_core;
-    const double* core_end = core_begin + nrxx;
     const int nspin0 = density_channels(chr);
-    rho.assign(core_begin, core_end);
+    rho.assign(chr.rho_core, chr.rho_core + nrxx);
     for (int is = 0; is < nspin0; ++is)
     {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
         for (int ir = 0; ir < nrxx; ++ir)
         {
             rho[ir] += chr.rho[is][ir];
@@ -357,6 +359,9 @@ void total_density(const Charge& chr,
         XC_Functional::grad_rho(rhog.data(), grad.data(), &pw, pw.tpiba);
     }
     sigma.resize(nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (int ir = 0; ir < nrxx; ++ir)
     {
         sigma[ir] = grad[ir].norm2();
@@ -413,8 +418,10 @@ void add_rvv10(const XCFunctionalParameters& parameters,
     std::vector<double> dedn;
     std::vector<double> dedsigma;
     const double energy = evaluate_total_density(parameters, chr, total_gradient, grad, &dedn, dedsigma, nullptr);
-
     // v = dE/dn - div(2 dE/dsigma grad n), converted from Hartree to Ry by e2
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
     for (int ir = 0; ir < nrxx; ++ir)
     {
         grad[ir] *= 2.0 * dedsigma[ir];
@@ -423,6 +430,7 @@ void add_rvv10(const XCFunctionalParameters& parameters,
     XC_Functional::grad_dot(grad.data(), divergence.data(), &pw, pw.tpiba);
     // for nspin = 4 the potential of the total density goes to v(0) only
     const int nspin0 = density_channels(chr);
+    // the reductions here and in add_rvv10_stress stay serial: the result must not depend on the thread count
     double vtxc_nl = 0.0;
     for (int ir = 0; ir < nrxx; ++ir)
     {
@@ -455,7 +463,6 @@ void add_rvv10_stress(const XCFunctionalParameters& parameters, const Charge& ch
     std::vector<double> dedsigma;
     double explicit_stress[stress_components] = {0.0};
     const double energy = evaluate_total_density(parameters, chr, nullptr, grad, nullptr, dedsigma, explicit_stress);
-
     // integral of dE/dsigma d_a n d_b n, in units of the volume element
     double gradient_term[stress_components] = {0.0};
     for (int ir = 0; ir < nrxx; ++ir)
@@ -472,7 +479,6 @@ void add_rvv10_stress(const XCFunctionalParameters& parameters, const Charge& ch
 #ifdef __MPI
     Parallel_Common::reduce_data(gradient_term, stress_components, pw.pool_world);
 #endif
-
     // The full strain derivative is T - delta_ab Int(n dE/dn + 2 sigma dE/dsigma) - 2 Int dE/dsigma d_a n d_b n,
     // with T the explicit part from libvdwxc. The XC diagonal -(etxc - vtxc)/omega in PW (in LCAO, -etxc/omega
     // and the Pulay term of the effective potential) already holds -e2 (E - Int(n dE/dn + 2 sigma dE/dsigma)) / omega,
