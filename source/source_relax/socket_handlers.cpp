@@ -610,7 +610,8 @@ void handle_exit(const DriverContext& context, std::ofstream& ofs_running)
 {
     const bool unfinished = context.cp.enabled
                             && (context.state == DriverState::HasData || context.charge_pending);
-    throw_if_any_rank_failed(unfinished ? 1 : 0, "EXIT with an unfinished request/result");
+    const int local_failed = unfinished ? 1 : 0;
+    throw_if_any_rank_failed(local_failed, "EXIT with an unfinished request/result");
     if (is_root())
     {
         ofs_running << " ABACUS socket driver received i-PI EXIT" << std::endl;
