@@ -116,11 +116,11 @@ void upsi_tensor(const Parallel_Orbitals* pv,
     void* d_Psi_k = static_cast<void*>(psi_k.data<std::complex<double>>());
 
     // 3. Create matrix descriptor for U operator (N x N)
-    int64_t m_u = pv->desc[2];
-    int64_t n_u = pv->desc[3];
-    int64_t mb_u = pv->desc[4];
-    int64_t nb_u = pv->desc[5];
-    int64_t lld_u = pv->desc[8];
+    int64_t m_u = pv->para_2d().get_desc()[2];
+    int64_t n_u = pv->para_2d().get_desc()[3];
+    int64_t mb_u = pv->para_2d().get_desc()[4];
+    int64_t nb_u = pv->para_2d().get_desc()[5];
+    int64_t lld_u = pv->para_2d().get_desc()[8];
 
     cublasMpMatrixDescriptor_t desc_U;
     cublasMpMatrixDescriptorCreate(m_u, n_u, mb_u, nb_u, 0, 0, lld_u, CUDA_C_64F, cublas_res.cublasmp_grid, &desc_U);
