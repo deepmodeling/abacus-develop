@@ -7,6 +7,7 @@ set(SOURCES
     dfpt_pw_solve.cpp
     dfpt_pw_q0.cpp
     dfpt_pw_data.cpp
+    dfpt_pw_data_resp.cpp
     dfpt_kq_basis.cpp
     dfpt_pert.cpp
     dfpt_pert_vkb.cpp
@@ -15,6 +16,7 @@ set(SOURCES
     dfpt_rho.cpp
     dfpt_rho_mix.cpp
     dfpt_phon.cpp
+    dfpt_phon_asr.cpp
     dfpt_phon_ewald.cpp
     dfpt_phon_elec.cpp
     dfpt_write_dyn.cpp

@@ -7,8 +7,6 @@
 #include "source_base/tool_title.h"
 #include "source_base/module_mixing/plain_mixing.h"
 #include "source_base/module_mixing/broyden_mixing.h"
-#include "source_base/math_integral.h"
-#include "source_base/math_sphbes.h"
 #include "source_estate/module_charge/chg_tools.h"
 
 #include <algorithm>
@@ -301,61 +299,19 @@ void DFPT_Rho::compute_drhoc_g(const UnitCell& ucell,
                                const ModuleBase::Vector3<double>& q_cart,
                                std::vector<std::complex<double>>& drhoc_g) const
 {
-    const int npw = pw_rho_ ? pw_rho_->npw : 0;
-    drhoc_g.clear();
-    if (pw_rho_ == nullptr || npw == 0 || iat < 0 || iat >= ucell.nat || dir < 0 || dir > 2)
+    ModuleBase::TITLE("DFPT_Rho", "compute_drhoc_g");
+    ModuleBase::timer::start("DFPT_Rho", "compute_drhoc_g");
+    // the q-shifted core-density response lives in module_charge
+    // (set_drho_core) next to its ground-state sibling set_rho_core;
+    // this is a thin delegate keeping the DFPT_Rho call surface stable
+    if (pw_rho_ == nullptr)
     {
+        drhoc_g.clear();
+        ModuleBase::timer::end("DFPT_Rho", "compute_drhoc_g");
         return;
     }
-    const int it = ucell.iat2it[iat];
-    if (!ucell.atoms[it].ncpp.nlcc)
-    {
-        return;
-    }
-
-    // tau in cartesian bohr (lat0-scaled: tau is in direct units of latvec)
-    const ModuleBase::Vector3<double> tau_cart = ucell.atoms[it].tau[ucell.iat2ia[iat]] * ucell.lat0;
-    const pseudo& p = ucell.atoms[it].ncpp;
-    const int mesh = p.msh;
-
-    drhoc_g.assign(npw, std::complex<double>(0.0, 0.0));
-    std::vector<double> aux(mesh);
-
-    for (int ig = 0; ig < npw; ++ig)
-    {
-        const ModuleBase::Vector3<double> w = pw_rho_->gcar[ig] + q_cart;
-        const double w2 = w * w;
-        // skip the |G+q| = 0 shell (dropped by compute_drho, zero density there)
-        if (w2 < 1.0e-12)
-        {
-            continue;
-        }
-        const double g = std::sqrt(w2) * ucell.tpiba; // physical 1/bohr
-        // radial FT: rho_core~(|G+q|) = 4pi/Omega * Int r^2 rho_atc(r) j0(gr) dr
-        ModuleBase::Sphbes::Spherical_Bessel(mesh, p.r.data(), g, 0, aux.data());
-        double rhocg = 0.0;
-        for (int ir = 0; ir < mesh; ++ir)
-        {
-            aux[ir] = p.r[ir] * p.r[ir] * p.rho_atc[ir] * aux[ir];
-        }
-        ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), p.rab.data(), rhocg);
-        rhocg *= ModuleBase::FOUR_PI / ucell.omega;
-
-        // structure factor phase: exp(-i (G+q) . tau_iat). The sign is
-        // load-bearing: exp(+i(G+q)tau) mirrors the core response to the
-        // -tau site (for wurtzite B the mirror lands exactly on the N
-        // sites of the other layer), which bn_cubic cannot expose (B at
-        // the origin makes both conventions identical) but which showed
-        // up element-by-element in the bn_hex matrix comparison against
-        // QE dyn.G. QE addcore: e^{-i G tau} * e^{-i q tau}.
-        const double phase = ModuleBase::TWO_PI * (w * tau_cart) / ucell.lat0;
-        const std::complex<double> gtau(std::cos(phase), -std::sin(phase));
-
-        // direction derivative: -i * tpiba * (G+q)_dir
-        const double wdir = ucell.tpiba * w[dir];
-
-        drhoc_g[ig] = std::complex<double>(0.0, -wdir) * rhocg * gtau;
-    }
+    module_charge::set_drho_core(ucell, iat, dir, q_cart, *pw_rho_, drhoc_g);
+    ModuleBase::timer::end("DFPT_Rho", "compute_drhoc_g");
 }
 
 void DFPT_Rho::cal_docc(const psi::Psi<std::complex<double>>& psi,

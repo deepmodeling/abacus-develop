@@ -29,15 +29,15 @@ TEST(UpsiTest, testUpsi2)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->nloc = nlocal * nband;
-    pv->ncol = nlocal;
+    pv->para_2d().nloc = nlocal * nband;
+    pv->para_2d().ncol = nlocal;
     pv->ncol_bands = nband;
 
     // Initialize input matrices
     int info;
     int mb = 1, nb = 1, lda = nband, ldc = nlocal;
     int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    descinit_(pv->para_2d().desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
     descinit_(pv->desc_wfc, &nlocal, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
 
     // Initialize data
