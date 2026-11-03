@@ -247,6 +247,7 @@ double Rvv10Workspace::evaluate(const ModulePW::PW_Basis& pw,
                                 std::vector<double>& dedsigma,
                                 double* stress)
 {
+    ModuleBase::timer::start("Rvv10Workspace", "evaluate");
     this->prepare(pw, b, c);
     this->to_libvdwxc(pw, rho, rho_);
     this->to_libvdwxc(pw, sigma, sigma_);
@@ -272,6 +273,7 @@ double Rvv10Workspace::evaluate(const ModulePW::PW_Basis& pw,
         }
     }
 #endif
+    ModuleBase::timer::end("Rvv10Workspace", "evaluate");
     return energy;
 }
 
