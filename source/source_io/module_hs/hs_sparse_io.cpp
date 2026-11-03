@@ -100,7 +100,7 @@ void ModuleIO::save_sparse(
     const SparseWriteOptions& options) {
     ModuleBase::TITLE("ModuleIO", "save_sparse");
     ModuleBase::timer::start("ModuleIO", "save_sparse");
-    const int nlocal = pv.para_2d().get_global_row_size();
+    const int nlocal = pv.para_2d().nrglb();
     if (nlocal <= 0)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::save_sparse",

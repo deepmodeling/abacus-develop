@@ -24,27 +24,27 @@ void arrayFlatten1(const std::vector<std::complex<double>>& A,
                    const BlockCyclicDistributionInformation& pA,
                    const BlockCyclicDistributionInformation& pM)
 {
-    int nA = pA.get_global_row_size();
+    int nA = pA.nrglb();
 #ifdef __MPI
-    Cpxgemr2d(nA, nA, const_cast<std::complex<double>*>(A.data()), 1, 1, const_cast<int*>(pA.get_desc()),
-                result.data(), 1, 1, const_cast<int*>(pM.get_desc()),
-                pA.get_blacs_ctxt());
-    Cpxgemr2d(nA, nA, const_cast<std::complex<double>*>(B.data()), 1, 1, const_cast<int*>(pA.get_desc()),
-                result.data(), 1, nA+1, const_cast<int*>(pM.get_desc()),
-                pA.get_blacs_ctxt());
-    std::vector<std::complex<double>> temp_A(pA.get_local_size(), 0.0);
-    std::vector<std::complex<double>> temp_B(pA.get_local_size(), 0.0);
+    Cpxgemr2d(nA, nA, const_cast<std::complex<double>*>(A.data()), 1, 1, const_cast<int*>(pA.desc()),
+                result.data(), 1, 1, const_cast<int*>(pM.desc()),
+                pA.ictxt());
+    Cpxgemr2d(nA, nA, const_cast<std::complex<double>*>(B.data()), 1, 1, const_cast<int*>(pA.desc()),
+                result.data(), 1, nA+1, const_cast<int*>(pM.desc()),
+                pA.ictxt());
+    std::vector<std::complex<double>> temp_A(pA.size(), 0.0);
+    std::vector<std::complex<double>> temp_B(pA.size(), 0.0);
     #pragma omp parallel for
-    for (int i = 0; i < pA.get_local_size(); i++ ){
+    for (int i = 0; i < pA.size(); i++ ){
         temp_A[i] = -std::conj(A[i]);
         temp_B[i] = -std::conj(B[i]);
     }
-    Cpxgemr2d(nA, nA, temp_A.data(), 1, 1, const_cast<int*>(pA.get_desc()),
-                result.data(), nA+1, nA+1, const_cast<int*>(pM.get_desc()),
-                pA.get_blacs_ctxt());
-    Cpxgemr2d(nA, nA, temp_B.data(), 1, 1, const_cast<int*>(pA.get_desc()),
-                result.data(), nA+1, 1, const_cast<int*>(pM.get_desc()),
-                pA.get_blacs_ctxt());
+    Cpxgemr2d(nA, nA, temp_A.data(), 1, 1, const_cast<int*>(pA.desc()),
+                result.data(), nA+1, nA+1, const_cast<int*>(pM.desc()),
+                pA.ictxt());
+    Cpxgemr2d(nA, nA, temp_B.data(), 1, 1, const_cast<int*>(pA.desc()),
+                result.data(), nA+1, 1, const_cast<int*>(pM.desc()),
+                pA.ictxt());
 #else
     for (int j = 0; j < nA; j++ ){
         for (int i = 0; i < nA; i++ ){
@@ -63,33 +63,33 @@ void arrayFlatten2(const std::vector<std::complex<double>>& A,
                    const BlockCyclicDistributionInformation& pA,
                    const BlockCyclicDistributionInformation& pM)
 {
-    int nA = pA.get_global_row_size();
+    int nA = pA.nrglb();
 #ifdef __MPI
-    std::vector<double> temp(pA.get_local_size(), 0.0);
-    for (int i = 0; i < pA.get_local_size(); i++ ){
+    std::vector<double> temp(pA.size(), 0.0);
+    for (int i = 0; i < pA.size(); i++ ){
         temp[i] = A[i].real() + B[i].real();
     }
-    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.get_desc()),
-                result.data(), 1, 1, const_cast<int*>(pM.get_desc()),
-                pA.get_blacs_ctxt());
-    for (int i = 0; i < pA.get_local_size(); i++ ){
+    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.desc()),
+                result.data(), 1, 1, const_cast<int*>(pM.desc()),
+                pA.ictxt());
+    for (int i = 0; i < pA.size(); i++ ){
         temp[i] = A[i].imag() - B[i].imag();
     }
-    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.get_desc()),
-                result.data(), 1, nA+1, const_cast<int*>(pM.get_desc()),
-                pA.get_blacs_ctxt());
-    for (int i = 0; i < pA.get_local_size(); i++ ){
+    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.desc()),
+                result.data(), 1, nA+1, const_cast<int*>(pM.desc()),
+                pA.ictxt());
+    for (int i = 0; i < pA.size(); i++ ){
         temp[i] = - A[i].imag() - B[i].imag();
     }
-    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.get_desc()),
-                result.data(), nA+1, 1, const_cast<int*>(pM.get_desc()),
-                pA.get_blacs_ctxt());
-    for (int i = 0; i < pA.get_local_size(); i++ ){
+    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.desc()),
+                result.data(), nA+1, 1, const_cast<int*>(pM.desc()),
+                pA.ictxt());
+    for (int i = 0; i < pA.size(); i++ ){
         temp[i] = A[i].real() - B[i].real();
     }
-    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.get_desc()),
-                result.data(), nA+1, nA+1, const_cast<int*>(pM.get_desc()),
-                pA.get_blacs_ctxt());
+    Cpxgemr2d(nA, nA, temp.data(), 1, 1, const_cast<int*>(pA.desc()),
+                result.data(), nA+1, nA+1, const_cast<int*>(pM.desc()),
+                pA.ictxt());
 #else
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
@@ -117,9 +117,9 @@ void solve_full(const int my_rank,
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full");
     ModuleBase::timer::start("HamiltBSE", "elpa_solve_full");
 
-    assert(pM.get_global_row_size() == pM.get_global_col_size());
-    int n = pM.get_global_row_size(); // full matrix size
-    int nA = pA.get_global_row_size();
+    assert(pM.nrglb() == pM.ncglb());
+    int n = pM.nrglb(); // full matrix size
+    int nA = pA.nrglb();
     assert(n == 2*nA);
 
     elpa_t elpaInstance;
@@ -139,12 +139,12 @@ void solve_full(const int my_rank,
     }
     elpa_set(elpaInstance, "na", n, &status);
     elpa_set(elpaInstance, "nev", n, &status); // have to solve all ev, see step6: v = SQLzΩ^(-1/2)
-    elpa_set(elpaInstance, "local_nrows", pM.get_row_size(), &status);
-    elpa_set(elpaInstance, "local_ncols", pM.get_col_size(), &status);
-    elpa_set(elpaInstance, "nblk", pM.get_block_size(), &status);
+    elpa_set(elpaInstance, "local_nrows", pM.nrloc(), &status);
+    elpa_set(elpaInstance, "local_ncols", pM.ncloc(), &status);
+    elpa_set(elpaInstance, "nblk", pM.nb(), &status);
     elpa_set(elpaInstance, "mpi_comm_parent", MPI_Comm_c2f(MPI_COMM_WORLD), &status);
-    elpa_set(elpaInstance, "process_row", pM.get_coord_row(), &status);
-    elpa_set(elpaInstance, "process_col", pM.get_coord_col(), &status);
+    elpa_set(elpaInstance, "process_row", pM.irproc(), &status);
+    elpa_set(elpaInstance, "process_col", pM.icproc(), &status);
     elpa_set(elpaInstance, "solver", ELPA_SOLVER_2STAGE, &status);
 #ifdef _OPENMP
     int num_threads = omp_get_max_threads();
@@ -161,27 +161,27 @@ void solve_full(const int my_rank,
     // step1: construct M
     // M = {{Re(A_part+B_part), Im(A_part-B_part)}, {-Im(A_part+B_part), Re(A_part-B_part)}}
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full1");
-    std::vector<double> M(pM.get_local_size());
+    std::vector<double> M(pM.size());
     arrayFlatten2(A_part, B_part, M, pA, pM);
     std::vector<std::complex<double>>().swap(A_part);
     std::vector<std::complex<double>>().swap(B_part);
 
     // step2: construct J = {{0, I}, {-I, 0}}
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full2");
-    std::vector<double> J(pM.get_local_size(), 0.0);
+    std::vector<double> J(pM.size(), 0.0);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int j = 0;j < pM.get_col_size();++j)
+    for (int j = 0;j < pM.ncloc();++j)
     {
-        int col_glb = pM.local2global_col(j);
-        for (int i = 0;i < pM.get_row_size();++i)
+        int col_glb = pM.icglb(j);
+        for (int i = 0;i < pM.nrloc();++i)
         {
-            int row_glb = pM.local2global_row(i);
+            int row_glb = pM.irglb(i);
             if (col_glb - row_glb == nA)
-                J[j * pM.get_row_size() + i] = 1.0;
+                J[j * pM.nrloc() + i] = 1.0;
             else if (row_glb - col_glb == nA)
-                J[j * pM.get_row_size() + i] = -1.0;
+                J[j * pM.nrloc() + i] = -1.0;
         }
     }
 
@@ -197,13 +197,13 @@ void solve_full(const int my_rank,
 
     // step4: compute anti-symmetric matrix UJL = U J U^T
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full4");
-    std::vector<double> UJ (pM.get_local_size(), 0.0);
+    std::vector<double> UJ (pM.size(), 0.0);
 
     ScalapackConnector::gemm('N', 'N', n, n, n, 1.0,
-        M.data(), 1, 1, pM.get_desc(),
-        J.data(), 1, 1, pM.get_desc(),
+        M.data(), 1, 1, pM.desc(),
+        J.data(), 1, 1, pM.desc(),
         0.0,
-        UJ.data(), 1, 1, pM.get_desc());
+        UJ.data(), 1, 1, pM.desc());
 
     // std::vector<double> global_UJ (n*n);
     // Cpxgemr2d(n, n, UJ.data(), 1, 1, const_cast<int*>(pM.desc),
@@ -212,10 +212,10 @@ void solve_full(const int my_rank,
     //if (my_rank == 0) {std::cout<<"UJ:"<<std::endl; printM( global_UJ, n, n, "M", "M" );}
 
     ScalapackConnector::gemm('N', 'T', n, n, n, 1.0,
-        UJ.data(), 1, 1, pM.get_desc(),
-        M.data(), 1, 1, pM.get_desc(),
+        UJ.data(), 1, 1, pM.desc(),
+        M.data(), 1, 1, pM.desc(),
         0.0,
-        J.data(), 1, 1, pM.get_desc()); // J is UJL here
+        J.data(), 1, 1, pM.desc()); // J is UJL here
     std::vector<double>().swap(UJ);
 
     // std::vector<double> global_UJL(n*n);
@@ -226,7 +226,7 @@ void solve_full(const int my_rank,
 
     // step5: compute eigenvalues ev and eigenvectors z of UJL
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full5");
-    std::vector<double> z(2 * pM.get_local_size()); // 2 for elpa_skew stores complex as 2 double
+    std::vector<double> z(2 * pM.size()); // 2 for elpa_skew stores complex as 2 double
 
     elpa_skew_eigenvectors(elpaInstance, J.data()/*UJL*/, ev.data(), z.data(), &status);
     assert(status == ELPA_OK);
@@ -247,20 +247,20 @@ void solve_full(const int my_rank,
     //}
     // step6: compute normalized eigenvectors v = SQLzΩ^(-1/2), where Ω = diag(ev)
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full6.1");
-    std::vector<double> Lz_real(pM.get_local_size(), 0.0);
-    std::vector<double> Lz_imag(pM.get_local_size(), 0.0);
+    std::vector<double> Lz_real(pM.size(), 0.0);
+    std::vector<double> Lz_imag(pM.size(), 0.0);
 
 // 6.1: zΩ^(-1/2). NOTE: both positive and negative eigenvalues are handled here
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int j = 0; j < pM.get_col_size(); ++j)
+    for (int j = 0; j < pM.ncloc(); ++j)
     {
-        double ev_sqrt = std::sqrt(std::abs(ev[pM.local2global_col(j)]));
-        for (int i = 0; i < pM.get_row_size(); ++i)
+        double ev_sqrt = std::sqrt(std::abs(ev[pM.icglb(j)]));
+        for (int i = 0; i < pM.nrloc(); ++i)
         {
-            z[j * pM.get_row_size() + i] /= ev_sqrt;                       // real part
-            z[j * pM.get_row_size() + i + pM.get_local_size()] /= ev_sqrt; // imaginary part
+            z[j * pM.nrloc() + i] /= ev_sqrt;                       // real part
+            z[j * pM.nrloc() + i + pM.size()] /= ev_sqrt; // imaginary part
         }
     }
     MPI_Barrier(MPI_COMM_WORLD);
@@ -268,50 +268,50 @@ void solve_full(const int my_rank,
     // 6.2: LzΩ^(-1/2), combine real and imaginary part
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full6.2");
     ScalapackConnector::gemm('T', 'N', n, n, n, 1.0,
-        M.data(), 1, 1, pM.get_desc(),
-        z.data(), 1, 1, pM.get_desc(),
+        M.data(), 1, 1, pM.desc(),
+        z.data(), 1, 1, pM.desc(),
         0.0,
-        Lz_real.data(), 1, 1, pM.get_desc());
+        Lz_real.data(), 1, 1, pM.desc());
     ScalapackConnector::gemm('T', 'N', n, n, n, 1.0,
-        M.data(), 1, 1, pM.get_desc(),
-        z.data() + pM.get_local_size(), 1, 1, pM.get_desc(),
+        M.data(), 1, 1, pM.desc(),
+        z.data() + pM.size(), 1, 1, pM.desc(),
         0.0,
-        Lz_imag.data(), 1, 1, pM.get_desc());
+        Lz_imag.data(), 1, 1, pM.desc());
 
-    std::vector<std::complex<double>> Lz(pM.get_local_size(), 0.0);
+    std::vector<std::complex<double>> Lz(pM.size(), 0.0);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static)
 #endif
-    for (int j = 0; j < pM.get_col_size(); ++j)
+    for (int j = 0; j < pM.ncloc(); ++j)
     {
-        for (int i = 0; i < pM.get_row_size(); ++i)
+        for (int i = 0; i < pM.nrloc(); ++i)
         {
-            Lz[j * pM.get_row_size() + i]
-                = std::complex<double>(Lz_real[j * pM.get_row_size() + i], Lz_imag[j * pM.get_row_size() + i]);
+            Lz[j * pM.nrloc() + i]
+                = std::complex<double>(Lz_real[j * pM.nrloc() + i], Lz_imag[j * pM.nrloc() + i]);
         }
     }
     std::vector<double>().swap(Lz_real);
     std::vector<double>().swap(Lz_imag);
 
-    std::vector<std::complex<double>> SQ(pM.get_local_size(), 0.0);// SQ = {{I, -i I}, {-I, -i I}} / sqrt(2)
+    std::vector<std::complex<double>> SQ(pM.size(), 0.0);// SQ = {{I, -i I}, {-I, -i I}} / sqrt(2)
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-    for (int j = 0; j < pM.get_col_size(); ++j) {
-        int col_glb = pM.local2global_col(j);
-        for (int i = 0; i < pM.get_row_size(); ++i) {
-            int row_glb = pM.local2global_row(i);
+    for (int j = 0; j < pM.ncloc(); ++j) {
+        int col_glb = pM.icglb(j);
+        for (int i = 0; i < pM.nrloc(); ++i) {
+            int row_glb = pM.irglb(i);
             if ( (col_glb < nA) && (row_glb < nA) && (col_glb == row_glb) ) {
-                SQ[j * pM.get_row_size() + i] = 1/std::sqrt(2);
+                SQ[j * pM.nrloc() + i] = 1/std::sqrt(2);
             }
             else if ( (col_glb >= nA) && (row_glb >= nA) && (col_glb == row_glb) ) {
-                SQ[j * pM.get_row_size() + i] = {0, -1/std::sqrt(2)};
+                SQ[j * pM.nrloc() + i] = {0, -1/std::sqrt(2)};
             }
             else if (col_glb == row_glb - nA) {
-                SQ[j * pM.get_row_size() + i] = -1/std::sqrt(2);
+                SQ[j * pM.nrloc() + i] = -1/std::sqrt(2);
             }
             else if (col_glb - nA == row_glb) {
-                SQ[j * pM.get_row_size() + i] = {0, -1/std::sqrt(2)};
+                SQ[j * pM.nrloc() + i] = {0, -1/std::sqrt(2)};
             }
         }
     }
@@ -319,10 +319,10 @@ void solve_full(const int my_rank,
     // 6.3: v=SQLzΩ^{-1/2}
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full6.3");
     ScalapackConnector::gemm('N', 'N', n, n, n, 1.0,
-        SQ.data(), 1, 1, pM.get_desc(),
-        Lz.data(), 1, 1, pM.get_desc(),
+        SQ.data(), 1, 1, pM.desc(),
+        Lz.data(), 1, 1, pM.desc(),
         0.0,
-        v.data(), 1, 1, pM.get_desc());
+        v.data(), 1, 1, pM.desc());
 
     elpa_deallocate(elpaInstance, &status);
     elpa_uninit(&status);

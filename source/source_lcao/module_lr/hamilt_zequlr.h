@@ -54,7 +54,7 @@ namespace LR
         void hPsi(const T* const psi_in, T* const hpsi, const int ld_psi, const int nband)
         {
             assert(ld_psi == this->ldim);
-            const std::vector<int> ldim_is = { static_cast<int>(nk * pX[0].get_local_size()), static_cast<int>(nk * pX[1].get_local_size()) };
+            const std::vector<int> ldim_is = { static_cast<int>(nk * pX[0].size()), static_cast<int>(nk * pX[1].size()) };
             for (int ib = 0;ib < nband;++ib)
             {
                 const int offset_band = ib * ld_psi;
@@ -99,7 +99,7 @@ namespace LR
         {
             ModuleBase::TITLE("ZeqULR", "matrix");
             const std::vector<int> npairs = { nocc[0] * nvirt[0], nocc[1] * nvirt[1] };
-            const std::vector<int> ldim_is = { static_cast<int>(nk * pX[0].get_local_size()), static_cast<int>(nk * pX[1].get_local_size()) };
+            const std::vector<int> ldim_is = { static_cast<int>(nk * pX[0].size()), static_cast<int>(nk * pX[1].size()) };
             const std::vector<int> gdim_is = { nk * npairs[0], nk * npairs[1] };
             std::vector<T> mat_full(static_cast<std::size_t>(gdim) * gdim, T(0));
             for (int is_in : {0, 1})
@@ -115,11 +115,11 @@ namespace LR
                         {
                             const int gcol = goffset_in + ik_in * npairs[is_in] + j * nvirt[is_in] + b;
                             std::vector<T> X_col(this->ldim, T(0));
-                            const int lj = px.global2local_col(j);
-                            const int lb = px.global2local_row(b);
+                            const int lj = px.icloc(j);
+                            const int lb = px.irloc(b);
                             if (px.in_this_processor(b, j))
                             {
-                                X_col[loffset_in + ik_in * px.get_local_size() + lj * px.get_row_size() + lb] = T(1);
+                                X_col[loffset_in + ik_in * px.size() + lj * px.nrloc() + lb] = T(1);
                             }
                             this->set_dm(is_in, X_col.data() + loffset_in);
                             std::vector<T> col(this->ldim, T(0));
@@ -139,7 +139,7 @@ namespace LR
                                 for (int ik_out = 0;ik_out < this->nk;++ik_out)
                                 {
                                     LR_Util::gather_2d_to_full(pax,
-                                        col.data() + loffset_out + ik_out * pax.get_local_size(),
+                                        col.data() + loffset_out + ik_out * pax.size(),
                                         mat_full.data() + static_cast<std::size_t>(gcol) * gdim
                                         + goffset_out + ik_out * npairs[is_out],
                                         false, nvirt[is_out], nocc[is_out]);

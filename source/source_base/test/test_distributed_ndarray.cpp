@@ -39,10 +39,10 @@ std::shared_ptr<BlockCyclicDistributionInformation> make_serial_distribution(
 {
     std::shared_ptr<BlockCyclicDistributionInformation> distribution
         = std::make_shared<BlockCyclicDistributionInformation>();
-    distribution->initialize_serial(global_rows, global_cols);
+    distribution->set_serial(global_rows, global_cols);
 
 #ifdef __MPI
-    int* const descriptor = distribution->get_mutable_descriptor();
+    int* const descriptor = distribution->desc();
     descriptor[kDescriptorMatrixTypeIndex] = 1;
     descriptor[kDescriptorBlacsContextIndex] = -1;
     descriptor[kDescriptorGlobalRowsIndex] = global_rows;
@@ -67,17 +67,17 @@ void check_linearization(const int global_rows,
 
     DistributedNDArray<double> array(distribution, major_order, expected_leading_dimension);
 
-    EXPECT_EQ(array.get_distribution().get(), distribution.get());
-    EXPECT_EQ(array.get_major_order(), major_order);
-    EXPECT_EQ(array.get_leading_dimension(), expected_leading_dimension);
-    EXPECT_EQ(array.get_number_of_local_rows(), global_rows);
-    EXPECT_EQ(array.get_number_of_local_cols(), global_cols);
-    EXPECT_EQ(array.get_local_block().data(), array.data());
+    EXPECT_EQ(array.distribution().get(), distribution.get());
+    EXPECT_EQ(array.major_order(), major_order);
+    EXPECT_EQ(array.leading_dimension(), expected_leading_dimension);
+    EXPECT_EQ(array.nrloc(), global_rows);
+    EXPECT_EQ(array.ncloc(), global_cols);
+    EXPECT_EQ(array.local_block().data(), array.data());
 
-    std::size_t leading_dimension = static_cast<std::size_t>(array.get_leading_dimension());
+    std::size_t leading_dimension = static_cast<std::size_t>(array.leading_dimension());
 #ifdef __MPI
-    const int* const descriptor = distribution->get_descriptor();
-    EXPECT_EQ(array.get_leading_dimension(), descriptor[kDescriptorLeadingDimIndex]);
+    const int* const descriptor = distribution->desc();
+    EXPECT_EQ(array.leading_dimension(), descriptor[kDescriptorLeadingDimIndex]);
     leading_dimension = static_cast<std::size_t>(descriptor[kDescriptorLeadingDimIndex]);
 #endif
 
@@ -104,8 +104,8 @@ void check_linearization(const int global_rows,
             array.at_local(local_row, local_col) = element_value;
             EXPECT_EQ(array.at_local(local_row, local_col), element_value);
 
-            const int mapped_local_row = distribution->global_to_local_row(local_row);
-            const int mapped_local_col = distribution->global_to_local_col(local_col);
+            const int mapped_local_row = distribution->irloc(local_row);
+            const int mapped_local_col = distribution->icloc(local_col);
             ASSERT_NE(mapped_local_row, -1);
             ASSERT_NE(mapped_local_col, -1);
             EXPECT_EQ(&array.at_global(local_row, local_col),
@@ -113,7 +113,7 @@ void check_linearization(const int global_rows,
             EXPECT_EQ(array.at_global(local_row, local_col),
                       array.at_local(mapped_local_row, mapped_local_col));
 
-            const bool expected_owner = distribution->owns_index(local_row, local_col);
+            const bool expected_owner = distribution->in_this_processor(local_row, local_col);
             EXPECT_EQ(array.owns_global_index(local_row, local_col), expected_owner);
         }
     }
@@ -153,7 +153,7 @@ TEST(DistributedNDArrayTest, RejectsMismatchedDescriptorLeadingDimension)
     const int global_cols = 3;
     std::shared_ptr<BlockCyclicDistributionInformation> distribution
         = make_serial_distribution(global_rows, global_cols);
-    int* const descriptor = distribution->get_mutable_descriptor();
+    int* const descriptor = distribution->desc();
     descriptor[kDescriptorLeadingDimIndex] += 1;
     const int expected_leading_dimension = global_rows > 1 ? global_rows : 1;
 

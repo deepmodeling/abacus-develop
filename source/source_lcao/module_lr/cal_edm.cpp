@@ -11,9 +11,9 @@ namespace LR
         const T* const c, const BlockCyclicDistributionInformation& pc,
         T* const X_ao_occ, const BlockCyclicDistributionInformation& px_ao_occ)
     {
-        const int nocc = px.get_global_col_size();
-        const int nvirt = px.get_global_row_size();
-        const int naos = pc.get_global_row_size();
+        const int nocc = px.ncglb();
+        const int nvirt = px.nrglb();
+        const int naos = pc.nrglb();
         const T alpha = T(1.0);
         const T beta = T(0.0);
         const char normal = 'N';
@@ -21,8 +21,8 @@ namespace LR
         const int first = 1;
         const int virtual_start = nocc + 1;
         ScalapackConnector::gemm(normal, normal, naos, nocc, nvirt,
-            alpha, c, first, virtual_start, pc.get_desc(),
-            X, first, first, px.get_desc(), beta, X_ao_occ, first, first, px_ao_occ.get_desc());
+            alpha, c, first, virtual_start, pc.desc(),
+            X, first, first, px.desc(), beta, X_ao_occ, first, first, px_ao_occ.desc());
 #else
         const T* const c_virtual = c + nocc * naos;
         BlasConnector::gemm_cm(normal, normal, naos, nocc, nvirt,
@@ -35,8 +35,8 @@ namespace LR
     void matdot(const T* const vec1, const T* const vec2, const BlockCyclicDistributionInformation& pvec,
         T* const dm, const BlockCyclicDistributionInformation& pmat)
     {
-        const int nocc = pvec.get_global_col_size();
-        const int naos = pvec.get_global_row_size();
+        const int nocc = pvec.ncglb();
+        const int naos = pvec.nrglb();
         const T alpha = T(1.0);
         const T beta = T(0.0);
         const char normal = 'N';
@@ -44,8 +44,8 @@ namespace LR
 #ifdef __MPI
         const int first = 1;
         ScalapackConnector::gemm(normal, adjoint, naos, naos, nocc,
-            alpha, vec1, first, first, pvec.get_desc(),
-            vec2, first, first, pvec.get_desc(), beta, dm, first, first, pmat.get_desc());
+            alpha, vec1, first, first, pvec.desc(),
+            vec2, first, first, pvec.desc(), beta, dm, first, first, pmat.desc());
 #else
         BlasConnector::gemm_cm(normal, adjoint, naos, naos, nocc,
             alpha, vec1, naos, vec2, naos, beta, dm, naos);

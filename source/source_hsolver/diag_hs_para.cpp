@@ -24,7 +24,7 @@ void elpa_diag(MPI_Comm comm,
                BlockCyclicDistributionInformation& para2d_local)
 {
     int DecomposedState = 0;
-    ELPA_Solver es(false, comm, nband, para2d_local.get_row_size(), para2d_local.get_col_size(), para2d_local.get_desc());
+    ELPA_Solver es(false, comm, nband, para2d_local.nrloc(), para2d_local.ncloc(), para2d_local.desc());
     es.generalized_eigenvector(h_local, s_local, DecomposedState, ekb, wfc_2d);
     es.exit();
 }
@@ -38,7 +38,7 @@ void elpa_diag(MPI_Comm comm,
                BlockCyclicDistributionInformation& para2d_local)
 {
     int DecomposedState = 0;
-    ELPA_Solver es(true, comm, nband, para2d_local.get_row_size(), para2d_local.get_col_size(), para2d_local.get_desc());
+    ELPA_Solver es(true, comm, nband, para2d_local.nrloc(), para2d_local.ncloc(), para2d_local.desc());
     es.generalized_eigenvector(h_local, s_local, DecomposedState, ekb, wfc_2d);
     es.exit();
 }
@@ -86,7 +86,7 @@ void diago_hs_para(T* h,
     MPI_Comm_rank(comm, &myrank);
     BlockCyclicDistributionInformation para2d_global;
     BlockCyclicDistributionInformation para2d_local;
-    para2d_global.init(lda, lda, lda, comm);
+    para2d_global.init(lda, lda, lda, comm, false);
 
     int max_nb = block_size;
     if (block_size == 0)
@@ -109,25 +109,25 @@ void diago_hs_para(T* h,
     // for genelpa, if the block size is too large that some cores have no data, then it will cause error.
     if (diag_subspace == 1)
     {
-        if (max_nb * (std::max(para2d_global.get_dim0(), para2d_global.get_dim1()) - 1) >= lda)
+        if (max_nb * (std::max(para2d_global.nrproc(), para2d_global.ncproc()) - 1) >= lda)
         {
-            max_nb = lda / std::max(para2d_global.get_dim0(), para2d_global.get_dim1());
+            max_nb = lda / std::max(para2d_global.nrproc(), para2d_global.ncproc());
         }
     }
 
-    para2d_local.init(lda, lda, max_nb, comm);
-    std::vector<T> h_local(para2d_local.get_col_size() * para2d_local.get_row_size());
-    std::vector<T> s_local(para2d_local.get_col_size() * para2d_local.get_row_size());
-    std::vector<T> wfc_2d(para2d_local.get_col_size() * para2d_local.get_row_size());
+    para2d_local.init(lda, lda, max_nb, comm, false);
+    std::vector<T> h_local(para2d_local.ncloc() * para2d_local.nrloc());
+    std::vector<T> s_local(para2d_local.ncloc() * para2d_local.nrloc());
+    std::vector<T> wfc_2d(para2d_local.ncloc() * para2d_local.nrloc());
 
     // distribute h and s to 2D
     // Cpxgemr2d is a legacy BLACS boundary that requires non-const descriptors.
-    int* const global_descriptor = const_cast<int*>(para2d_global.get_desc());
-    int* const local_descriptor = const_cast<int*>(para2d_local.get_desc());
+    int* const global_descriptor = const_cast<int*>(para2d_global.desc());
+    int* const local_descriptor = const_cast<int*>(para2d_local.desc());
     Cpxgemr2d(lda, lda, h, 1, 1, global_descriptor, h_local.data(), 1, 1,
-              local_descriptor, para2d_local.get_blacs_ctxt());
+              local_descriptor, para2d_local.ictxt());
     Cpxgemr2d(lda, lda, s, 1, 1, global_descriptor, s_local.data(), 1, 1,
-              local_descriptor, para2d_local.get_blacs_ctxt());
+              local_descriptor, para2d_local.ictxt());
 
     if (diag_subspace == 1)
     {
@@ -141,9 +141,9 @@ void diago_hs_para(T* h,
     }
     else if (diag_subspace == 2)
     {
-        hsolver::pxxxgvx_diag(para2d_local.get_desc(),
-                              para2d_local.get_row_size(),
-                              para2d_local.get_col_size(),
+        hsolver::pxxxgvx_diag(para2d_local.desc(),
+                              para2d_local.nrloc(),
+                              para2d_local.ncloc(),
                               nband,
                               h_local.data(),
                               s_local.data(),
@@ -159,7 +159,7 @@ void diago_hs_para(T* h,
 
     // gather wfc
     Cpxgemr2d(lda, lda, wfc_2d.data(), 1, 1, local_descriptor, wfc, 1, 1,
-              global_descriptor, para2d_local.get_blacs_ctxt());
+              global_descriptor, para2d_local.ictxt());
 }
 
 // template instantiation

@@ -97,7 +97,7 @@ class FakeHamilt : public hamilt::Hamilt<T>
 void initialize_distribution(Parallel_Orbitals& pv, const int dim)
 {
 #ifdef __MPI
-    ASSERT_EQ(pv.para_2d().init(dim, dim, 1, DIAG_WORLD), 0);
+    ASSERT_EQ(pv.para_2d().init(dim, dim, 1, DIAG_WORLD, false), 0);
 #else
     pv.para_2d().set_serial(dim, dim);
 #endif
@@ -111,20 +111,20 @@ std::vector<T> distribute_matrix(const Parallel_Orbitals& pv,
                                  const std::vector<T>& global,
                                  const int dim)
 {
-    std::vector<T> local(pv.para_2d().get_local_size(), T());
+    std::vector<T> local(pv.para_2d().size(), T());
     for (int i = 0; i < dim; ++i)
     {
-        const int ir = pv.para_2d().global2local_row(i);
+        const int ir = pv.para_2d().irloc(i);
         if (ir < 0)
         {
             continue;
         }
         for (int j = 0; j < dim; ++j)
         {
-            const int ic = pv.para_2d().global2local_col(j);
+            const int ic = pv.para_2d().icloc(j);
             if (ic >= 0)
             {
-                local[ir * pv.para_2d().get_col_size() + ic] = global[i * dim + j];
+                local[ir * pv.para_2d().ncloc() + ic] = global[i * dim + j];
             }
         }
     }

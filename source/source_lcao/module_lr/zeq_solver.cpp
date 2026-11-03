@@ -40,8 +40,8 @@ namespace LR
         ModuleBase::TITLE("Z_vector", "Z_vector");
         const int nk = kv.get_nks() / nspin;
         const int nloc_per_band = openshell
-            ? nk * (px[0].get_local_size() + px[1].get_local_size())
-            : nk * px[0].get_local_size();
+            ? nk * (px[0].size() + px[1].size())
+            : nk * px[0].size();
         container::Tensor R = LR_Util::newTensor<T>({ nstates, nloc_per_band });
         R.zero();
 

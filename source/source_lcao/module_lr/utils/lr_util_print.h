@@ -171,11 +171,11 @@ namespace LR_Util
     void print_tensor(const container::Tensor& t, const std::string& label, const BlockCyclicDistributionInformation* pmat, const double& threshold = 1e-10)
     {
         std::cout << label << "\n";
-        for (int j = 0; j < pmat->get_col_size();++j)
+        for (int j = 0; j < pmat->ncloc(); ++j)
         {
-            for (int i = 0;i < pmat->get_row_size();++i)
+            for (int i = 0; i < pmat->nrloc(); ++i)
             {
-                std::cout << filter(t.data<T>()[j * pmat->get_row_size() + i]) << " ";
+                std::cout << filter(t.data<T>()[j * pmat->nrloc() + i]) << " ";
             }
             std::cout << std::endl;
         }

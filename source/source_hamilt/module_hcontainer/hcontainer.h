@@ -483,7 +483,7 @@ class HContainer
      */
     int get_nbasis() const
     {
-        return paraV->para_2d().get_global_row_size();
+        return paraV->para_2d().nrglb();
     }
 
   private:

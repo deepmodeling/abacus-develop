@@ -116,11 +116,11 @@ std::vector<double> cross_ao_overlap(const UnitCell& cell,
     }
     // Use the complex Fourier overload even at Gamma: it folds every retained R
     // without fix_gamma(), so the same S(R) can later be folded at nonzero k.
-    const int local_count = pmat.para_2d().get_local_size();
+    const int local_count = pmat.para_2d().size();
     const std::complex<double> zero(0.0, 0.0);
     std::vector<std::complex<double>> local_overlap(local_count, zero);
     const ModuleBase::Vector3<double> gamma(0.0, 0.0, 0.0);
-    const int leading_dimension = pmat.para_2d().get_row_size();
+    const int leading_dimension = pmat.para_2d().nrloc();
     if (local_count > 0)
     {
         hamilt::folding_HR(overlap_r, local_overlap.data(), gamma, leading_dimension, 1);
@@ -138,7 +138,7 @@ namespace
 void check_grid(const BlockCyclicDistributionInformation& a, const BlockCyclicDistributionInformation& b)
 {
 #ifdef __MPI
-    if (a.get_blacs_ctxt() != b.get_blacs_ctxt() || a.get_block_size() != b.get_block_size())
+    if (a.ictxt() != b.ictxt() || a.nb() != b.nb())
     {
         throw std::invalid_argument("Root overlap matrices require the same BLACS grid and block size");
     }
@@ -153,13 +153,13 @@ std::vector<T> mo_overlap_dist(const std::vector<T>& old_coefficients,
 {
     check_grid(pc, ps);
     check_grid(pc, po);
-    const int naos = pc.get_global_row_size();
-    const int bands = po.get_global_row_size();
-    if (ps.get_global_row_size() != naos || ps.get_global_col_size() != naos
-        || bands <= 0 || first_band < 0 || first_band + bands > pc.get_global_col_size()
-        || po.get_global_col_size() != bands
-        || old_coefficients.size() < pc.get_local_size()
-        || current_coefficients.size() < pc.get_local_size() || ao.size() < ps.get_local_size())
+    const int naos = pc.nrglb();
+    const int bands = po.nrglb();
+    if (ps.nrglb() != naos || ps.ncglb() != naos
+        || bands <= 0 || first_band < 0 || first_band + bands > pc.ncglb()
+        || po.ncglb() != bands
+        || old_coefficients.size() < pc.size()
+        || current_coefficients.size() < pc.size() || ao.size() < ps.size())
     {
         throw std::invalid_argument("Root overlap matrix dimensions do not match their distributions");
     }
@@ -169,13 +169,13 @@ std::vector<T> mo_overlap_dist(const std::vector<T>& old_coefficients,
     // Only this occupied or virtual block is formed, never the full MO overlap.
     BlockCyclicDistributionInformation coefficients;
 #ifdef __MPI
-    const int block_size = pc.get_block_size();
-    coefficients.set(naos, bands, block_size, pc.get_blacs_ctxt());
+    const int block_size = pc.nb();
+    coefficients.set(naos, bands, block_size, pc.ictxt());
 #else
     coefficients.set_serial(naos, bands);
 #endif
-    const int coefficient_count = std::max<int>(1, coefficients.get_local_size());
-    const int overlap_count = std::max<int>(1, po.get_local_size());
+    const int coefficient_count = std::max<int>(1, coefficients.size());
+    const int overlap_count = std::max<int>(1, po.size());
     std::vector<T> coefficient_block(coefficient_count, zero);
     std::vector<T> intermediate(coefficient_count, zero);
     std::vector<T> overlap(overlap_count, zero);
@@ -189,22 +189,22 @@ std::vector<T> mo_overlap_dist(const std::vector<T>& old_coefficients,
     // GEMR2D's legacy wrapper is non-const but only reads these sources.
     T* const old_source = const_cast<T*>(old_data);
     T* const new_source = const_cast<T*>(new_data);
-    int* const source_desc = const_cast<int*>(pc.get_desc());
+    int* const source_desc = const_cast<int*>(pc.desc());
     Cpxgemr2d(naos, bands, new_source, first, source_column, source_desc,
         coefficient_block.data(), first, first,
-        const_cast<int*>(coefficients.get_desc()), pc.get_blacs_ctxt());
+        const_cast<int*>(coefficients.desc()), pc.ictxt());
     // Empty local blocks join all redistribution and PBLAS calls.
     ScalapackConnector::gemm('N', 'N', naos, bands, naos, one,
-        ao_data, first, first, ps.get_desc(), coefficient_block.data(), first, first, coefficients.get_desc(),
-        zero, intermediate.data(), first, first, coefficients.get_desc());
+        ao_data, first, first, ps.desc(), coefficient_block.data(), first, first, coefficients.desc(),
+        zero, intermediate.data(), first, first, coefficients.desc());
     // Reuse the coefficient buffer once S*C_current has been evaluated.
     Cpxgemr2d(naos, bands, old_source, first, source_column, source_desc,
         coefficient_block.data(), first, first,
-        const_cast<int*>(coefficients.get_desc()), pc.get_blacs_ctxt());
+        const_cast<int*>(coefficients.desc()), pc.ictxt());
     ScalapackConnector::gemm(adjoint, 'N', bands, bands, naos, one,
-        coefficient_block.data(), first, first, coefficients.get_desc(),
-        intermediate.data(), first, first, coefficients.get_desc(),
-        zero, overlap.data(), first, first, po.get_desc());
+        coefficient_block.data(), first, first, coefficients.desc(),
+        intermediate.data(), first, first, coefficients.desc(),
+        zero, overlap.data(), first, first, po.desc());
 #else
     const int source_offset = first_band * naos;
     const int selected_count = naos * bands;
@@ -215,7 +215,7 @@ std::vector<T> mo_overlap_dist(const std::vector<T>& old_coefficients,
     BlasConnector::gemm_cm(adjoint, 'N', bands, bands, naos, one,
         coefficient_block.data(), naos, intermediate.data(), naos, zero, overlap.data(), bands);
 #endif
-    overlap.resize(po.get_local_size());
+    overlap.resize(po.size());
     return overlap;
 }
 
@@ -226,19 +226,19 @@ std::vector<T> project_reference_dist(const std::vector<T>& previous,
 {
     check_grid(pi, px);
     check_grid(pv, px);
-    const int nocc = px.get_global_col_size();
-    const int nvirt = px.get_global_row_size();
-    if (pi.get_global_row_size() != nocc || pi.get_global_col_size() != nocc
-        || pv.get_global_row_size() != nvirt || pv.get_global_col_size() != nvirt
-        || previous.size() != px.get_local_size()
-        || occupied_overlap.size() != pi.get_local_size()
-        || virtual_overlap.size() != pv.get_local_size())
+    const int nocc = px.ncglb();
+    const int nvirt = px.nrglb();
+    if (pi.nrglb() != nocc || pi.ncglb() != nocc
+        || pv.nrglb() != nvirt || pv.ncglb() != nvirt
+        || previous.size() != px.size()
+        || occupied_overlap.size() != pi.size()
+        || virtual_overlap.size() != pv.size())
     {
         throw std::invalid_argument("Root projection requires matching windows and local matrix sizes");
     }
     const T zero = T(0);
     const T one = T(1);
-    const int local_count = std::max<int>(1, px.get_local_size());
+    const int local_count = std::max<int>(1, px.size());
     std::vector<T> intermediate(local_count, zero);
     std::vector<T> projected(local_count, zero);
     const T* const old_data = previous.empty() ? &zero : previous.data();
@@ -248,20 +248,20 @@ std::vector<T> project_reference_dist(const std::vector<T>& previous,
 #ifdef __MPI
     const int first = 1;
     ScalapackConnector::gemm(adjoint, 'N', nvirt, nocc, nvirt, one,
-        virtual_data, first, first, pv.get_desc(),
-        old_data, first, first, px.get_desc(), zero,
-        intermediate.data(), first, first, px.get_desc());
+        virtual_data, first, first, pv.desc(),
+        old_data, first, first, px.desc(), zero,
+        intermediate.data(), first, first, px.desc());
     ScalapackConnector::gemm('N', 'N', nvirt, nocc, nocc, one,
-        intermediate.data(), first, first, px.get_desc(),
-        occupied_data, first, first, pi.get_desc(), zero,
-        projected.data(), first, first, px.get_desc());
+        intermediate.data(), first, first, px.desc(),
+        occupied_data, first, first, pi.desc(), zero,
+        projected.data(), first, first, px.desc());
 #else
     BlasConnector::gemm_cm(adjoint, 'N', nvirt, nocc, nvirt, one,
         virtual_data, nvirt, old_data, nvirt, zero, intermediate.data(), nvirt);
     BlasConnector::gemm_cm('N', 'N', nvirt, nocc, nocc, one,
         intermediate.data(), nvirt, occupied_data, nocc, zero, projected.data(), nvirt);
 #endif
-    projected.resize(px.get_local_size());
+    projected.resize(px.size());
     return projected;
 }
 

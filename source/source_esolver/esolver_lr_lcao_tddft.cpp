@@ -108,7 +108,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
             for (int is : {0, 1})
             {
                 if (this->inp_->lr_solver != "lapack") {
-                    const int offset_is = is * this->paraX_[0].get_local_size();
+                    const int offset_is = is * this->paraX_[0].size();
                     OperatorLRDiag<double> pre_op(this->eig_ks.c + is * nk * (nocc[0] + nvirt[0]), this->paraX_[is], this->nk, this->nocc[is], this->nvirt[is], false);
                     pre_op.act(1, offset_is, 1, precondition.data() + offset_is, precondition.data() + offset_is);
                 }

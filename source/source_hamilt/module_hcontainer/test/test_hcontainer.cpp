@@ -643,7 +643,7 @@ TEST_F(HContainerTest, atompair_funcs)
     hamilt::AtomPair<double> atom_ij5(0, 1, rx_shift, ry_shift, rz_shift, &PO, &test_array[4]);
     hamilt::AtomPair<double> atom_ij6(1, 0, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, &test_array[8]);
     hamilt::AtomPair<double> atom_ij7(1, 1, rx_shift, ry_shift, rz_shift, PO.atom_begin_row.data(), PO.atom_begin_col.data(), natom, &test_array[12]);
-    // get_matrix_value will use global2local_row and global2local_col in Parallel_Orbitals
+    // get_matrix_value will use irloc and icloc in Parallel_Orbitals
     // so we need to set them
     std::ofstream ofs("test_hcontainer.log");
     PO.para_2d().set_serial(4, 4);

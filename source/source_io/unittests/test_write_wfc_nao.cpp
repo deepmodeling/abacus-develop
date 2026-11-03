@@ -166,14 +166,14 @@ class WriteWfcLcaoTest : public testing::Test
             psi_init_complex[i] = std::complex<double>(i * 0.2, i * 0.3);
         }
 #ifdef __MPI
-        pv.para_2d().init(nbasis, nbands, 1, MPI_COMM_WORLD);
-        pv.set_desc_wfc_Eij(nbasis, nbands, pv.para_2d().get_row_size());
+        pv.para_2d().init(nbasis, nbands, 1, MPI_COMM_WORLD, false);
+        pv.set_desc_wfc_Eij(nbasis, nbands, pv.para_2d().nrloc());
 
         // create a global PV, and distribute the psi_init to local
         BlockCyclicDistributionInformation pv_glb;
-        pv_glb.init(nbasis, nbands, std::max(nbasis, nbands), MPI_COMM_WORLD);
-        psi_local_double.resize(nk * pv.para_2d().get_row_size() * pv.para_2d().get_col_size());
-        psi_local_complex.resize(nk * pv.para_2d().get_row_size() * pv.para_2d().get_col_size());
+        pv_glb.init(nbasis, nbands, std::max(nbasis, nbands), MPI_COMM_WORLD, false);
+        psi_local_double.resize(nk * pv.para_2d().nrloc() * pv.para_2d().ncloc());
+        psi_local_complex.resize(nk * pv.para_2d().nrloc() * pv.para_2d().ncloc());
         for (int ik = 0; ik < nk; ik++)
         {
             Cpxgemr2d(nbasis,
@@ -181,26 +181,26 @@ class WriteWfcLcaoTest : public testing::Test
                       psi_init_double.data() + ik * nbands * nbasis,
                       1,
                       1,
-                      const_cast<int*>(pv_glb.get_desc()),
-                      psi_local_double.data() + ik * pv.para_2d().get_row_size() * pv.para_2d().get_col_size(),
+                      const_cast<int*>(pv_glb.desc()),
+                      psi_local_double.data() + ik * pv.para_2d().nrloc() * pv.para_2d().ncloc(),
                       1,
                       1,
-                      const_cast<int*>(pv.para_2d().get_desc()),
-                      pv.get_blacs_ctxt());
+                      const_cast<int*>(pv.para_2d().desc()),
+                      pv.para_2d().ictxt());
             Cpxgemr2d(nbasis,
                       nbands,
                       psi_init_complex.data() + ik * nbands * nbasis,
                       1,
                       1,
-                      const_cast<int*>(pv_glb.get_desc()),
-                      psi_local_complex.data() + ik * pv.para_2d().get_row_size() * pv.para_2d().get_col_size(),
+                      const_cast<int*>(pv_glb.desc()),
+                      psi_local_complex.data() + ik * pv.para_2d().nrloc() * pv.para_2d().ncloc(),
                       1,
                       1,
-                      const_cast<int*>(pv.para_2d().get_desc()),
-                      pv.get_blacs_ctxt());
+                      const_cast<int*>(pv.para_2d().desc()),
+                      pv.para_2d().ictxt());
         }
-        nbands_local = pv.para_2d().get_col_size();
-        nbasis_local = pv.para_2d().get_row_size();
+        nbands_local = pv.para_2d().ncloc();
+        nbasis_local = pv.para_2d().nrloc();
 #else
         psi_local_double = psi_init_double;
         psi_local_complex = psi_init_complex;

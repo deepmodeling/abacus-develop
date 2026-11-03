@@ -129,29 +129,29 @@ TEST_F(DMTransTest, DoubleParallel)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
         BlockCyclicDistributionInformation px_vo, px_oo, px_vv;
         LR_Util::setup_2d_division(px_vo, s.nb, s.nvirt, s.nocc);
-        LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.get_blacs_ctxt());
-        LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.get_blacs_ctxt());
+        LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.ictxt());
+        LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.ictxt());
 
-        psi::Psi<double> X_vo(s.nks, nstate, px_vo.get_local_size(), px_vo.get_local_size(), false);
-        set_rand(X_vo.get_pointer(), nstate * s.nks * px_vo.get_local_size());
-        psi::Psi<double> X_oo(s.nks, nstate, px_oo.get_local_size(), px_oo.get_local_size(), false);
-        set_rand(X_oo.get_pointer(), nstate * s.nks * px_oo.get_local_size());
-        psi::Psi<double> X_vv(s.nks, nstate, px_vv.get_local_size(), px_vv.get_local_size(), false);
-        set_rand(X_vv.get_pointer(), nstate * s.nks * px_vv.get_local_size());
+        psi::Psi<double> X_vo(s.nks, nstate, px_vo.size(), px_vo.size(), false);
+        set_rand(X_vo.get_pointer(), nstate * s.nks * px_vo.size());
+        psi::Psi<double> X_oo(s.nks, nstate, px_oo.size(), px_oo.size(), false);
+        set_rand(X_oo.get_pointer(), nstate * s.nks * px_oo.size());
+        psi::Psi<double> X_vv(s.nks, nstate, px_vv.size(), px_vv.size(), false);
+        set_rand(X_vv.get_pointer(), nstate * s.nks * px_vv.size());
 
         BlockCyclicDistributionInformation pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.get_blacs_ctxt());
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.ictxt());
 
-        std::vector<int> temp_2(s.nks, pc.get_row_size());
-        psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), temp_2, true);
+        std::vector<int> temp_2(s.nks, pc.nrloc());
+        psi::Psi<double> c(s.nks, pc.ncloc(), pc.nrloc(), temp_2, true);
         BlockCyclicDistributionInformation pmat;
-        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.get_blacs_ctxt());
+        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.ictxt());
 
-        EXPECT_EQ(px_vo.get_dim0(), pc.get_dim0());
-        EXPECT_EQ(px_vo.get_dim1(), pc.get_dim1());
-        EXPECT_GE(s.nvirt, px_vo.get_dim0());
-        EXPECT_GE(s.nocc, px_vo.get_dim1());
-        EXPECT_GE(s.naos, pc.get_dim0());
+        EXPECT_EQ(px_vo.nrproc(), pc.nrproc());
+        EXPECT_EQ(px_vo.ncproc(), pc.ncproc());
+        EXPECT_GE(s.nvirt, px_vo.nrproc());
+        EXPECT_GE(s.nocc, px_vo.ncproc());
+        EXPECT_GE(s.naos, pc.nrproc());
 
         psi::Psi<double> X_full_vo(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);        // allocate X_full
         psi::Psi<double> X_full_oo(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);        // allocate X_full
@@ -179,7 +179,7 @@ TEST_F(DMTransTest, DoubleParallel)
         for (int istate = 0;istate < nstate;++istate)
         {
             c.fix_k(0);
-            set_rand(c.get_pointer(), s.nks * pc.get_local_size()); // set c 
+            set_rand(c.get_pointer(), s.nks * pc.size()); // set c
 
             // gather C
             std::vector<int> temp(s.nks, s.naos);
@@ -223,23 +223,23 @@ TEST_F(DMTransTest, ComplexParallel)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
         BlockCyclicDistributionInformation px_vo, px_oo, px_vv;
         LR_Util::setup_2d_division(px_vo, s.nb, s.nvirt, s.nocc);
-        LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.get_blacs_ctxt());
-        LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.get_blacs_ctxt());
+        LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.ictxt());
+        LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.ictxt());
 
-        psi::Psi<std::complex<double>> X_vo(s.nks, nstate, px_vo.get_local_size(), px_vo.get_local_size(), false);
-        set_rand(X_vo.get_pointer(), nstate * s.nks * px_vo.get_local_size());
-        psi::Psi<std::complex<double>> X_oo(s.nks, nstate, px_oo.get_local_size(), px_oo.get_local_size(), false);
-        set_rand(X_oo.get_pointer(), nstate * s.nks * px_oo.get_local_size());
-        psi::Psi<std::complex<double>> X_vv(s.nks, nstate, px_vv.get_local_size(), px_vv.get_local_size(), false);
-        set_rand(X_vv.get_pointer(), nstate * s.nks * px_vv.get_local_size());
+        psi::Psi<std::complex<double>> X_vo(s.nks, nstate, px_vo.size(), px_vo.size(), false);
+        set_rand(X_vo.get_pointer(), nstate * s.nks * px_vo.size());
+        psi::Psi<std::complex<double>> X_oo(s.nks, nstate, px_oo.size(), px_oo.size(), false);
+        set_rand(X_oo.get_pointer(), nstate * s.nks * px_oo.size());
+        psi::Psi<std::complex<double>> X_vv(s.nks, nstate, px_vv.size(), px_vv.size(), false);
+        set_rand(X_vv.get_pointer(), nstate * s.nks * px_vv.size());
 
         BlockCyclicDistributionInformation pc;
-        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.get_blacs_ctxt());
+        LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.ictxt());
 
-        std::vector<int> temp(s.nks, pc.get_row_size());
-        psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size(), temp, true);
+        std::vector<int> temp(s.nks, pc.nrloc());
+        psi::Psi<std::complex<double>> c(s.nks, pc.ncloc(), pc.nrloc(), temp, true);
         BlockCyclicDistributionInformation pmat;
-        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.get_blacs_ctxt());
+        LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.ictxt());
 
         psi::Psi<std::complex<double>> X_full_vo(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);        // allocate X_full
         psi::Psi<std::complex<double>> X_full_oo(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nvirt, false);        // allocate X_full
@@ -267,7 +267,7 @@ TEST_F(DMTransTest, ComplexParallel)
         for (int istate = 0;istate < nstate;++istate)
         {
             c.fix_k(0);
-            set_rand(c.get_pointer(), s.nks * pc.get_local_size()); // set c 
+            set_rand(c.get_pointer(), s.nks * pc.size()); // set c
             // compare to global matrix
             std::vector<int> ngk_temp_2(s.nks, s.naos);
             psi::Psi<std::complex<double>> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_2, true);

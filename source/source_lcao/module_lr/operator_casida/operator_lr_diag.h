@@ -19,17 +19,17 @@ namespace LR
             ModuleBase::TITLE("OperatorLRDiag", "OperatorLRDiag");
             const int nbands = nocc + nvirt;
             this->cal_type = hamilt::calculation_type::no;
-            this->eig_ks_diff.create(nk, pX.get_local_size(), false);
+            this->eig_ks_diff.create(nk, pX.size(), false);
             for (int ik = 0;ik < nk;++ik)
             {
                 const int& istart = ik * nbands;
-                for (int io = 0;io < pX.get_col_size();++io)    //nocc_local
+                for (int io = 0; io < pX.ncloc(); ++io)    //nocc_local
                 {
-                    for (int iv = 0;iv < pX.get_row_size();++iv)    //nvirt_local
+                    for (int iv = 0; iv < pX.nrloc(); ++iv)    //nvirt_local
                     {
-                        int io_g = pX.local2global_col(io);
-                        int iv_g = pX.local2global_row(iv);
-                        this->eig_ks_diff(ik, io * pX.get_row_size() + iv) = eig_ks[istart + nocc + iv_g] - eig_ks[istart + io_g];
+                        int io_g = pX.icglb(io);
+                        int iv_g = pX.irglb(iv);
+                        this->eig_ks_diff(ik, io * pX.nrloc() + iv) = eig_ks[istart + nocc + iv_g] - eig_ks[istart + io_g];
                     }
                 }
             }
@@ -52,7 +52,7 @@ namespace LR
         {
             ModuleBase::TITLE("OperatorLRDiag", "act");
             ModuleBase::timer::start("OperatorLRDiag", "act");
-            ModuleBase::vector_mul_vector_op<T, Device, double>()(nk * pX.get_local_size(),   // local size of particle-hole basis
+            ModuleBase::vector_mul_vector_op<T, Device, double>()(nk * pX.size(),   // local size of particle-hole basis
                 hpsi,
                 psi_in,
                 this->eig_ks_diff.c,

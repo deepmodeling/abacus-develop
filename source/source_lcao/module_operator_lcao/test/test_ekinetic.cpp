@@ -76,7 +76,7 @@ class EKineticTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD, false);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -122,7 +122,7 @@ TEST_F(EKineticTest, constructHRd2d)
     op.contributeHk(0);
     // check the value of HK
     double* hk = hsk.get_hk();
-    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_EQ(hk[i], 1.0);
     }
@@ -172,7 +172,7 @@ TEST_F(EKineticTest, constructHRd2cd)
     op.contributeHk(0);
     auto* hk = hsk.get_hk();
     // check the value of HK of gamma point
-    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_EQ(hk[i].real(), 1.0);
         EXPECT_EQ(hk[i].imag(), 0.0);
@@ -181,7 +181,7 @@ TEST_F(EKineticTest, constructHRd2cd)
     hsk.set_zero_hk();
     op.contributeHk(1);
     // check the value of HK
-    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().nrloc() * paraV->para_2d().ncloc(); ++i)
     {
         EXPECT_NEAR(hk[i].real(), -1.6180339887498945 / 2, 1e-10);
         EXPECT_NEAR(hk[i].imag(), -1.1755705045849467 / 2, 1e-10);

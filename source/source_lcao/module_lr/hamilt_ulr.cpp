@@ -8,6 +8,9 @@
 #ifdef __EXX
 #include "source_lcao/module_lr/operator_casida/operator_lr_exx.h"
 #endif
+
+#include <cstddef>
+
 namespace LR
 {
 template<typename T>
@@ -32,7 +35,7 @@ HamiltULR<T>::HamiltULR(const std::string& xc_kernel,
     const Parallel_Orbitals& pmat_in) :nocc(nocc), nvirt(nvirt), pX(pX_in)
 {
     nk = kv_in.get_nks() / nspin;
-    ldim = nk * (pX[0].get_local_size() + pX[1].get_local_size());
+    ldim = nk * (pX[0].size() + pX[1].size());
     int pairs_per_kpoint = 0;
     for (std::size_t spin = 0; spin < nocc.size(); ++spin)
     {
@@ -74,7 +77,7 @@ HamiltULR<T>::HamiltULR(const std::string& xc_kernel,
     this->cal_dm_trans = [this, &psi_ks_in, &pc_in, naos, &nocc, &nvirt, &pmat_in](const int& is, const T* const X)->void
         {
             const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks_in, is, nk);
-            // LR_Util::print_value(X, pX_in[is].get_local_size());
+            // LR_Util::print_value(X, pX_in[is].size());
 #ifdef __MPI
             std::vector<ct::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X, pX[is], psi_ks_is, pc_in, naos, nocc[is], nvirt[is], pmat_in.para_2d(), (T)1.0 / (T)nk);
             if (this->tdm_sym)
@@ -109,7 +112,10 @@ void HamiltULR<T>::hPsi(const T* const psi_in, T* const hpsi, const int ld_psi, 
 {
     ModuleBase::TITLE("HamiltULR", "hPsi");
     assert(ld_psi == this->ldim);
-    const std::vector<int64_t> xdim_is = { nk * pX[0].get_local_size(), nk * pX[1].get_local_size() };
+    const std::vector<std::size_t> xdim_is = {
+        static_cast<std::size_t>(nk) * pX[0].size(),
+        static_cast<std::size_t>(nk) * pX[1].size()
+    };
     /// band-wise act (also works for close-shell, but not efficient)
     for (int ib = 0;ib < nband;++ib)
     {
@@ -143,7 +149,10 @@ std::vector<T> HamiltULR<T>::matrix()const
 {
     ModuleBase::TITLE("HamiltULR", "matrix");
     const std::vector<int> npairs = { this->nocc[0] * this->nvirt[0], this->nocc[1] * this->nvirt[1] };
-    const std::vector<int64_t> ldim_is = { nk * pX[0].get_local_size(), nk * pX[1].get_local_size() };
+    const std::vector<std::size_t> ldim_is = {
+        static_cast<std::size_t>(nk) * pX[0].size(),
+        static_cast<std::size_t>(nk) * pX[1].size()
+    };
     const std::vector<int> gdim_is = { nk * npairs[0], nk * npairs[1] };
     std::vector<T> Amat_full(gdim * gdim, 0.0);
     for (int is_bj : {0, 1})
@@ -162,9 +171,9 @@ std::vector<T> HamiltULR<T>::matrix()const
                     const int gcol = goffset_bj + ik_bj * npairs[is_bj] + j * nv + b;//global
                     const int storage_size = std::max(this->ldim, 1);
                     std::vector<T> X_bj(storage_size, T(0));
-                    const int lj = px.global2local_col(j);
-                    const int lb = px.global2local_row(b);
-                    const int lcol = loffset_bj + ik_bj * px.get_local_size() + lj * px.get_row_size() + lb;//local
+                    const int lj = px.icloc(j);
+                    const int lb = px.irloc(b);
+                    const int lcol = loffset_bj + ik_bj * px.size() + lj * px.nrloc() + lb;//local
                     if (px.in_this_processor(b, j))
                     {
                         X_bj[lcol] = T(1);
@@ -189,7 +198,7 @@ std::vector<T> HamiltULR<T>::matrix()const
                             // shape is (nvirt[is_ai], nocc[is_ai]). Passing the IN channel's
                             // `nv`/`no` copies the wrong number of elements as soon as the
                             // two channels differ in size.
-                            LR_Util::gather_2d_to_full(pax, Aloc_col.data() + loffset_ai + ik_ai * pax.get_local_size(),
+                            LR_Util::gather_2d_to_full(pax, Aloc_col.data() + loffset_ai + ik_ai * pax.size(),
                                 Amat_full.data() + gcol * gdim /*col, bj*/ + goffset_ai + ik_ai * npairs[is_ai]/*row, ai*/,
                                 false, this->nvirt[is_ai], this->nocc[is_ai]);
                         }

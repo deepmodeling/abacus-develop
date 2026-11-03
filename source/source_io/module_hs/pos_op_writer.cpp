@@ -98,12 +98,12 @@ void PosOpWriter::out_lat_r(const UnitCell& ucell,
         int ir, ic;
         for (int iw1 = 0; iw1 < nlocal; iw1++)
         {
-            ir = pv_.para_2d().global2local_row(iw1);
+            ir = pv_.para_2d().irloc(iw1);
             if (ir >= 0)
             {
                 for (int iw2 = 0; iw2 < nlocal; iw2++)
                 {
-                    ic = pv_.para_2d().global2local_col(iw2);
+                    ic = pv_.para_2d().icloc(iw2);
                     if (ic >= 0)
                     {
                         int orb_index_row = iw1 / npol;

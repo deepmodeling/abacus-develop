@@ -33,17 +33,17 @@ namespace LR
         for (int ik = 0;ik < nk;++ik)
         {
             // 1. calculate (\Omega-\epsilon_a)X_{aj}
-            std::vector<T> wX(px.get_local_size());
+            std::vector<T> wX(px.size());
             const int eigks_start_k = ik * (nocc + nvirt);
-            const int x_start_k = ik * px.get_local_size();
-            const int inout_start_k = ik * p_occ_occ.get_local_size();
-            for (int la = 0;la < px.get_row_size();++la)
+            const int x_start_k = ik * px.size();
+            const int inout_start_k = ik * p_occ_occ.size();
+            for (int la = 0;la < px.nrloc();++la)
             {
-                const int ga = px.local2global_row(la);
+                const int ga = px.irglb(la);
                 const double weight = eig_ext_istate - eig_ks[eigks_start_k + nocc + ga];
-                for (int li = 0;li < px.get_col_size();++li)
+                for (int li = 0;li < px.ncloc();++li)
                 {
-                    const int idx = li * px.get_row_size() + la;
+                    const int idx = li * px.nrloc() + la;
                     wX[idx] = weight * X[x_start_k + idx];
                 }
             }
@@ -51,9 +51,9 @@ namespace LR
 #ifdef __MPI
             const int i1 = 1;
             ScalapackConnector::gemm('C', 'N', nocc, nocc, nvirt,
-                T(1.0), X + x_start_k, i1, i1, px.get_desc(),
-                wX.data(), i1, i1, px.get_desc(),
-                T(1.0)/*add-on*/, inout + inout_start_k, i1, i1, p_occ_occ.get_desc());
+                T(1.0), X + x_start_k, i1, i1, px.desc(),
+                wX.data(), i1, i1, px.desc(),
+                T(1.0)/*add-on*/, inout + inout_start_k, i1, i1, p_occ_occ.desc());
 #else
             BlasConnector::gemm_cm('C', 'N', nocc, nocc, nvirt,
                 T(1.0), X + x_start_k, nvirt,
@@ -180,20 +180,20 @@ namespace LR
             };
 
         // act the operators onto current state
-        const int ld_vo = nk * px[0].get_local_size();
-        const int ld_oo = nk * p_occ_occ[0].get_local_size();
+        const int ld_vo = nk * px[0].size();
+        const int ld_oo = nk * p_occ_occ[0].size();
         cal_dm_trans(0, X);  // transition density matrix DX
         cal_dm_diff_relaxed(0, X, Z);  // relaxed difference density matrix T+DZ
         // the 3 terms
         op_ht.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);    //comment out this line to test H[T+Z]=0
         // std::cout << "W (H[T+Z])) local terms: " << std::endl;
-        // LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
+        // LR_Util::print_value(W, nk, p_occ_occ[0].ncloc(), p_occ_occ[0].nrloc());
 #ifdef __EXX
         if (LR::gs_is_hybrid(dft_functional))  // H[T+Z] term depends on ground-state kernel
             op_ht_exx.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);
 #endif
         // std::cout << "W (H[T+Z])) local +exx terms: " << std::endl;
-        // LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
+        // LR_Util::print_value(W, nk, p_occ_occ[0].ncloc(), p_occ_occ[0].nrloc());
         // Not singlet-only: $K^T_{xc}=f_{uu}-f_{ud}\ne0$ for a local functional, so $W^{c,T}$ has a
         // $g^{xc}$ term as well, built from the "-" spin combination (the `triplet` flag above).
         if (LR_Util::has_local_xc(xc_kernel))
@@ -248,8 +248,8 @@ namespace LR
         using ATYPE_EXX = typename OperatorLREXX<T>::MO_TO_AO_TYPE;
 #endif
         const int nk = kv.get_nks() / nspin;
-        const std::vector<int> ld_x = { static_cast<int>(nk * px[0].get_local_size()), static_cast<int>(nk * px[1].get_local_size()) };
-        const std::vector<int> ld_oo = { static_cast<int>(nk * p_occ_occ[0].get_local_size()), static_cast<int>(nk * p_occ_occ[1].get_local_size()) };
+        const std::vector<int> ld_x = { static_cast<int>(nk * px[0].size()), static_cast<int>(nk * px[1].size()) };
+        const std::vector<int> ld_oo = { static_cast<int>(nk * p_occ_occ[0].size()), static_cast<int>(nk * p_occ_occ[1].size()) };
         const std::vector<int> off_x = { 0, ld_x[0] };
         const int nband_window = nocc[0] + nvirt[0];   // common KS window, see `set_dimension`
 

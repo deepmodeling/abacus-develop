@@ -39,37 +39,35 @@ class DistributedNDArray
     {
         assert(distribution_ != nullptr);
 
-        const int number_of_local_rows = distribution_->get_number_of_local_rows();
-        const int number_of_local_cols = distribution_->get_number_of_local_cols();
-        assert(number_of_local_rows >= 0);
-        assert(number_of_local_cols >= 0);
+        const int nrloc = distribution_->nrloc();
+        const int ncloc = distribution_->ncloc();
+        assert(nrloc >= 0);
+        assert(ncloc >= 0);
 
-        const int minimum_leading_dimension = number_of_local_rows > 1 ? number_of_local_rows : 1;
+        const int minimum_leading_dimension = nrloc > 1 ? nrloc : 1;
         assert(leading_dimension_ == minimum_leading_dimension);
 
 #ifdef __MPI
-        const int* const descriptor = distribution_->get_descriptor();
+        const int* const descriptor = distribution_->desc();
         assert(descriptor != nullptr);
         assert(leading_dimension_
                == descriptor[distributed_ndarray_detail::kDescriptorLeadingDimIndex]);
 #endif
 
-        int number_of_storage_rows = leading_dimension_;
-        int number_of_storage_cols = number_of_local_cols;
+        int nrstore = leading_dimension_;
+        int ncstore = ncloc;
         if (major_order_ == StorageMajorOrder::RowMajor)
         {
-            number_of_storage_rows = number_of_local_rows;
-            if (number_of_storage_cols < leading_dimension_)
+            nrstore = nrloc;
+            if (ncstore < leading_dimension_)
             {
-                number_of_storage_cols = leading_dimension_;
+                ncstore = leading_dimension_;
             }
         }
 
-        NDArray<T> local_block(number_of_storage_rows, number_of_storage_cols);
-        const std::size_t required_number_of_elements
-            = static_cast<std::size_t>(number_of_storage_rows)
-            * static_cast<std::size_t>(number_of_storage_cols);
-        assert(required_number_of_elements == local_block.size());
+        NDArray<T> local_block(nrstore, ncstore);
+        const std::size_t nelem = static_cast<std::size_t>(nrstore) * static_cast<std::size_t>(ncstore);
+        assert(nelem == local_block.size());
         local_block_ = std::move(local_block);
     }
 
@@ -101,9 +99,9 @@ class DistributedNDArray
     T& at_local(const int local_row, const int local_col)
     {
         assert(local_row >= 0);
-        assert(local_row < distribution_->get_number_of_local_rows());
+        assert(local_row < distribution_->nrloc());
         assert(local_col >= 0);
-        assert(local_col < distribution_->get_number_of_local_cols());
+        assert(local_col < distribution_->ncloc());
 
         std::ptrdiff_t flat_index = 0;
         if (major_order_ == StorageMajorOrder::ColumnMajor)
@@ -124,9 +122,9 @@ class DistributedNDArray
     const T& at_local(const int local_row, const int local_col) const
     {
         assert(local_row >= 0);
-        assert(local_row < distribution_->get_number_of_local_rows());
+        assert(local_row < distribution_->nrloc());
         assert(local_col >= 0);
-        assert(local_col < distribution_->get_number_of_local_cols());
+        assert(local_col < distribution_->ncloc());
 
         std::ptrdiff_t flat_index = 0;
         if (major_order_ == StorageMajorOrder::ColumnMajor)
@@ -147,17 +145,15 @@ class DistributedNDArray
     T& at_global(const int global_row, const int global_col)
     {
         assert(global_row >= 0);
-        assert(global_row < distribution_->get_number_of_global_rows());
+        assert(global_row < distribution_->nrglb());
         assert(global_col >= 0);
-        assert(global_col < distribution_->get_number_of_global_cols());
+        assert(global_col < distribution_->ncglb());
 
-        const std::size_t global_row_index = static_cast<std::size_t>(global_row);
-        const std::size_t global_col_index = static_cast<std::size_t>(global_col);
-        const bool owns_index = distribution_->owns_index(global_row_index, global_col_index);
-        assert(owns_index);
+        const bool owned = distribution_->in_this_processor(global_row, global_col);
+        assert(owned);
 
-        const int local_row = distribution_->global_to_local_row(global_row);
-        const int local_col = distribution_->global_to_local_col(global_col);
+        const int local_row = distribution_->irloc(global_row);
+        const int local_col = distribution_->icloc(global_col);
         assert(local_row != -1);
         assert(local_col != -1);
         return at_local(local_row, local_col);
@@ -166,17 +162,15 @@ class DistributedNDArray
     const T& at_global(const int global_row, const int global_col) const
     {
         assert(global_row >= 0);
-        assert(global_row < distribution_->get_number_of_global_rows());
+        assert(global_row < distribution_->nrglb());
         assert(global_col >= 0);
-        assert(global_col < distribution_->get_number_of_global_cols());
+        assert(global_col < distribution_->ncglb());
 
-        const std::size_t global_row_index = static_cast<std::size_t>(global_row);
-        const std::size_t global_col_index = static_cast<std::size_t>(global_col);
-        const bool owns_index = distribution_->owns_index(global_row_index, global_col_index);
-        assert(owns_index);
+        const bool owned = distribution_->in_this_processor(global_row, global_col);
+        assert(owned);
 
-        const int local_row = distribution_->global_to_local_row(global_row);
-        const int local_col = distribution_->global_to_local_col(global_col);
+        const int local_row = distribution_->irloc(global_row);
+        const int local_col = distribution_->icloc(global_col);
         assert(local_row != -1);
         assert(local_col != -1);
         return at_local(local_row, local_col);
@@ -185,17 +179,15 @@ class DistributedNDArray
     bool owns_global_index(const int global_row, const int global_col) const
     {
         assert(global_row >= 0);
-        assert(global_row < distribution_->get_number_of_global_rows());
+        assert(global_row < distribution_->nrglb());
         assert(global_col >= 0);
-        assert(global_col < distribution_->get_number_of_global_cols());
+        assert(global_col < distribution_->ncglb());
 
-        const std::size_t global_row_index = static_cast<std::size_t>(global_row);
-        const std::size_t global_col_index = static_cast<std::size_t>(global_col);
-        return distribution_->owns_index(global_row_index, global_col_index);
+        return distribution_->in_this_processor(global_row, global_col);
     }
 
     /// Returns the local block beginning. Its leading dimension is
-    /// get_leading_dimension().
+    /// leading_dimension().
     T* data()
     {
         return local_block_.data();
@@ -206,39 +198,39 @@ class DistributedNDArray
         return local_block_.data();
     }
 
-    const std::shared_ptr<const BlockCyclicDistributionInformation>& get_distribution() const
+    const std::shared_ptr<const BlockCyclicDistributionInformation>& distribution() const
     {
         return distribution_;
     }
 
-    NDArray<T>& get_local_block()
+    NDArray<T>& local_block()
     {
         return local_block_;
     }
 
-    const NDArray<T>& get_local_block() const
+    const NDArray<T>& local_block() const
     {
         return local_block_;
     }
 
-    StorageMajorOrder get_major_order() const
+    StorageMajorOrder major_order() const
     {
         return major_order_;
     }
 
-    int get_leading_dimension() const
+    int leading_dimension() const
     {
         return leading_dimension_;
     }
 
-    int get_number_of_local_rows() const
+    int nrloc() const
     {
-        return distribution_->get_number_of_local_rows();
+        return distribution_->nrloc();
     }
 
-    int get_number_of_local_cols() const
+    int ncloc() const
     {
-        return distribution_->get_number_of_local_cols();
+        return distribution_->ncloc();
     }
 
   private:

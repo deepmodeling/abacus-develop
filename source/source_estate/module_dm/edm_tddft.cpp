@@ -22,7 +22,7 @@ void edm_tddft(Parallel_Orbitals& pv,
     // Scalapack getrf/getri/gemm/geadd below take the GLOBAL matrix
     // dimension; pv.nrow is only the per-process local row count and
     // would truncate the operations to a submatrix of the full matrix.
-    const int nlocal = pv.para_2d().get_global_row_size();
+    const int nlocal = pv.para_2d().nrglb();
     assert(nlocal >= 0);
 
     dmat.dm->edmk.resize(kv.get_nks());
@@ -34,9 +34,9 @@ void edm_tddft(Parallel_Orbitals& pv,
         ModuleBase::ComplexMatrix& tmp_edmk = dmat.dm->edmk[ik];
 
 #ifdef __MPI
-        const int nloc = pv.para_2d().get_local_size();
-        const int ncol = pv.para_2d().get_col_size();
-        const int nrow = pv.para_2d().get_row_size();
+        const int nloc = pv.para_2d().size();
+        const int ncol = pv.para_2d().ncloc();
+        const int nrow = pv.para_2d().nrloc();
 
         tmp_edmk.create(ncol, nrow);
         std::vector<std::complex<double>> Htmp_vec(nloc);
@@ -68,7 +68,7 @@ void edm_tddft(Parallel_Orbitals& pv,
         int info = 0;
         const int one_int = 1;
 
-        ScalapackConnector::getrf(nlocal, nlocal, Sinv, one_int, one_int, pv.para_2d().get_desc(), ipiv.data(), &info);
+        ScalapackConnector::getrf(nlocal, nlocal, Sinv, one_int, one_int, pv.para_2d().desc(), ipiv.data(), &info);
 
         int lwork = -1;
         int liwork = -1;
@@ -83,7 +83,7 @@ void edm_tddft(Parallel_Orbitals& pv,
                                   Sinv,
                                   one_int,
                                   one_int,
-                                  pv.para_2d().get_desc(),
+                                  pv.para_2d().desc(),
                                   ipiv.data(),
                                   work.data(),
                                   &lwork,
@@ -100,7 +100,7 @@ void edm_tddft(Parallel_Orbitals& pv,
                                   Sinv,
                                   one_int,
                                   one_int,
-                                  pv.para_2d().get_desc(),
+                                  pv.para_2d().desc(),
                                   ipiv.data(),
                                   work.data(),
                                   &lwork,
@@ -124,16 +124,16 @@ void edm_tddft(Parallel_Orbitals& pv,
                                  Htmp,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  Sinv,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  zero_complex,
                                  tmp1,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc());
+                                 pv.para_2d().desc());
 
         // tmp2 = tmp1^T * tmp_dmk
         ScalapackConnector::gemm(T_char,
@@ -145,16 +145,16 @@ void edm_tddft(Parallel_Orbitals& pv,
                                  tmp1,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  tmp_dmk,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  zero_complex,
                                  tmp2,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc());
+                                 pv.para_2d().desc());
 
         // tmp3 = Sinv * Htmp
         ScalapackConnector::gemm(N_char,
@@ -166,16 +166,16 @@ void edm_tddft(Parallel_Orbitals& pv,
                                  Sinv,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  Htmp,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  zero_complex,
                                  tmp3,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc());
+                                 pv.para_2d().desc());
 
         // tmp4 = tmp_dmk * tmp3^T
         ScalapackConnector::gemm(N_char,
@@ -187,16 +187,16 @@ void edm_tddft(Parallel_Orbitals& pv,
                                  tmp_dmk,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  tmp3,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc(),
+                                 pv.para_2d().desc(),
                                  zero_complex,
                                  tmp4,
                                  one_int,
                                  one_int,
-                                 pv.para_2d().get_desc());
+                                 pv.para_2d().desc());
 
         // tmp4 = 0.5 * (tmp2 + tmp4)
         ScalapackConnector::geadd(N_char,
@@ -206,18 +206,18 @@ void edm_tddft(Parallel_Orbitals& pv,
                                   tmp2,
                                   one_int,
                                   one_int,
-                                  pv.para_2d().get_desc(),
+                                  pv.para_2d().desc(),
                                   half_complex,
                                   tmp4,
                                   one_int,
                                   one_int,
-                                  pv.para_2d().get_desc());
+                                  pv.para_2d().desc());
 
         BlasConnector::copy(nloc, tmp4, inc, tmp_edmk.c, inc);
 
 #else
         // for serial version
-        tmp_edmk.create(pv.para_2d().get_col_size(), pv.para_2d().get_row_size());
+        tmp_edmk.create(pv.para_2d().ncloc(), pv.para_2d().nrloc());
         ModuleBase::ComplexMatrix Sinv(nlocal, nlocal);
         ModuleBase::ComplexMatrix Htmp(nlocal, nlocal);
 

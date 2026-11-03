@@ -25,13 +25,6 @@ public:
 
     const BlockCyclicDistributionInformation& para_2d() const { return para_2d_; }
 
-#ifdef __MPI
-    /// BLACS context of the 2D process grid, completing the getter family
-    /// (get_row_size / get_col_size / get_local_size / get_block_size /
-    /// get_dim0 / get_dim1 / get_desc) of the held BlockCyclicDistributionInformation.
-    int get_blacs_ctxt() const { return para_2d_.get_blacs_ctxt(); }
-#endif
-
     /// local size of bands, used for 2d wavefunction
     /// must divided on dim1 because of elpa interface
     int ncol_bands;
@@ -86,8 +79,8 @@ public:
 
     /**
      * @brief dimension getters for 2D-block-cyclic division of Hamiltonian matrix
-     * get_col_size() : total number of columns of Hamiltonian matrix in this processor
-     * get_row_size() : total number of rows of Hamiltonian matrix in this processor
+     * ncloc() : total number of columns of Hamiltonian matrix in this processor
+     * nrloc() : total number of rows of Hamiltonian matrix in this processor
      * get_ncol_atom(iat) : number of columns of Hamiltonian matrix in atom iat
      * get_nrow_atom(iat) : number of rows of Hamiltonian matrix in atom iat
     */

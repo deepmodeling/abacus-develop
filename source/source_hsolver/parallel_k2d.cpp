@@ -31,8 +31,8 @@ void Parallel_K2D<TK>::set_para_env(int nks,
     this->P2D_pool.reset(new BlockCyclicDistributionInformation());
     this->Pkpoints
         ->kinfo(nks, kpar, this->MY_POOL, this->RANK_IN_POOL, nproc, nspin);
-    this->P2D_global->init(nw, nw, nb2d, MPI_COMM_WORLD);
-    this->P2D_pool->init(nw, nw, nb2d, this->POOL_WORLD_K2D);
+    this->P2D_global->init(nw, nw, nb2d, MPI_COMM_WORLD, false);
+    this->P2D_pool->init(nw, nw, nb2d, this->POOL_WORLD_K2D, false);
 }
 
 template <typename TK>
@@ -46,12 +46,12 @@ void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK>& hs,
         ModuleBase::MatrixBlock<TK> HK_global, SK_global;
         hs.hs_at_k(ik_kpar[ipool], HK_global, SK_global);
         if (this->MY_POOL == this->Pkpoints->whichpool[ik_kpar[ipool]]) {
-            this->hk_pool.resize(this->P2D_pool->get_local_size(), 0.0);
-            this->sk_pool.resize(this->P2D_pool->get_local_size(), 0.0);
+            this->hk_pool.resize(this->P2D_pool->size(), 0.0);
+            this->sk_pool.resize(this->P2D_pool->size(), 0.0);
         }
         constexpr int kDescriptorEntryCount = 9;
         int desc_pool[kDescriptorEntryCount];
-        const int* const pool_descriptor = this->P2D_pool->get_desc();
+        const int* const pool_descriptor = this->P2D_pool->desc();
         std::copy(pool_descriptor, pool_descriptor + kDescriptorEntryCount, desc_pool);
         if (this->MY_POOL != this->Pkpoints->whichpool[ik_kpar[ipool]]) {
             desc_pool[1] = -1;
@@ -61,25 +61,25 @@ void Parallel_K2D<TK>::distribute_hsk(hsolver::HSMatrix<TK>& hs,
                   HK_global.p,
                   1,
                   1,
-                    const_cast<int*>(this->P2D_global->get_desc()),
+                    const_cast<int*>(this->P2D_global->desc()),
                   hk_pool.data(),
                   1,
                   1,
                   desc_pool,
-                    this->P2D_global->get_blacs_ctxt());
+                    this->P2D_global->ictxt());
         Cpxgemr2d(nw,
                   nw,
                   SK_global.p,
                   1,
                   1,
-                    const_cast<int*>(this->P2D_global->get_desc()),
+                    const_cast<int*>(this->P2D_global->desc()),
                   sk_pool.data(),
                   1,
                   1,
                   desc_pool,
-                    this->P2D_global->get_blacs_ctxt());
+                    this->P2D_global->ictxt());
     }
-    ModuleBase::Memory::record("Parallel_K2D::hsk_pool", this->P2D_pool->get_local_size() * 2 * sizeof(TK));
+    ModuleBase::Memory::record("Parallel_K2D::hsk_pool", this->P2D_pool->size() * 2 * sizeof(TK));
     ModuleBase::timer::end("Parallel_K2D", "distribute_hsk");
     MPI_Barrier(MPI_COMM_WORLD);
 #endif

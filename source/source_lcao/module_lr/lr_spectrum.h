@@ -28,7 +28,7 @@ namespace LR
             orb_cutoff_(orb_cutoff), two_center_bundle_(two_center_bundle_),
             pX(pX_in), pc(pc_in), pmat(pmat_in),
             omega(omega), eig_ks(eig_ks), X(X), nstate(nstate), gauge(gauge), out_dir(out_dir),
-            ldim(nk* (nspin_x == 2 ? pX_in[0].get_local_size() + pX_in[1].get_local_size() : pX_in[0].get_local_size())),
+            ldim(nk* (nspin_x == 2 ? pX_in[0].size() + pX_in[1].size() : pX_in[0].size())),
             gdim(nk* std::inner_product(nocc.begin(), nocc.end(), nvirt.begin(), 0))
         {
             for (int is = 0;is < nspin_global;++is) { psi_ks_vec.emplace_back(LR_Util::get_psi_spin(psi_ks_in, is, nk)); }

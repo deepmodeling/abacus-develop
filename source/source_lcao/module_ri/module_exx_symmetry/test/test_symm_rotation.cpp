@@ -49,7 +49,7 @@ void check_little_group_restoration(const int nspin)
     const int channels = nspin == 2 ? 2 : 1;
     const int n = 4;
     BlockCyclicDistributionInformation pv;
-    pv.init(n, n, 1, MPI_COMM_WORLD);
+    pv.init(n, n, 1, MPI_COMM_WORLD, false);
     ModuleSymmetry::Symmetry_rotation rotation;
     std::vector<Complex> identity(n * n, 0.0);
     std::vector<Complex> little(n * n, 0.0);
@@ -65,14 +65,14 @@ void check_little_group_restoration(const int nspin)
         alternate[row + i * n] = double(sign[row]) * representative[row + i * n];
     }
     auto local = [&pv, n](const std::vector<Complex>& dense) {
-        std::vector<Complex> result(pv.get_local_size());
+        std::vector<Complex> result(pv.size());
         for (int i = 0; i < n; ++i)
         {
             for (int j = 0; j < n; ++j)
             {
                 if (pv.in_this_processor(i, j))
                 {
-                    result[pv.global2local_row(i) + pv.global2local_col(j) * pv.get_row_size()]
+                    result[pv.irloc(i) + pv.icloc(j) * pv.get_row_size()]
                         = dense[i + j * n];
                 }
             }
@@ -211,7 +211,7 @@ TEST(SymmetryDensityRestoration, RebuildAfterCellSymmetryAnalysis)
         kv.kstars[0][operation] = kv.kvec_d[0] * cell.symm.kgmatrix[operation];
     }
     BlockCyclicDistributionInformation pv;
-    pv.init(3, 3, 1, MPI_COMM_WORLD);
+    pv.init(3, 3, 1, MPI_COMM_WORLD, false);
     const ModuleSymmetry::TC period = {2, 2, 2};
     const std::vector<ModuleSymmetry::TC> cells = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
     CellSymmetryRotation reused;

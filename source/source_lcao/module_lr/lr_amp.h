@@ -156,8 +156,8 @@ ct::Tensor pad_amplitudes(const std::vector<ct::Tensor>& X, const bool openshell
             T* const dst = Xz.data<T>() + ist * nloc_z + zoff_ch;
             for (int ik = 0;ik < nk;++ik)
             {
-                const int soff = ik * pxs.get_local_size();
-                const int zoff = ik * pxz.get_local_size();
+                const int soff = ik * pxs.size();
+                const int zoff = ik * pxz.size();
                 // Both windows are block-cyclic with nb2d = 1 on the same process grid and share
                 // the occupied dimension, so a global (virt, occ) element lives on the same
                 // process in both -- only its local index differs. The widening is therefore a
@@ -170,14 +170,14 @@ ct::Tensor pad_amplitudes(const std::vector<ct::Tensor>& X, const bool openshell
                         {
                             continue;
                         }
-                        dst[zoff + pxz.global2local_col(o) * pxz.get_row_size() + pxz.global2local_row(v)]
-                            = src[soff + pxs.global2local_col(o) * pxs.get_row_size() + pxs.global2local_row(v)];
+                        dst[zoff + pxz.icloc(o) * pxz.nrloc() + pxz.irloc(v)]
+                            = src[soff + pxs.icloc(o) * pxs.nrloc() + pxs.irloc(v)];
                     }
                 }
             }
         }
-        soff_ch += nk * pxs.get_local_size();
-        zoff_ch += nk * pxz.get_local_size();
+        soff_ch += nk * pxs.size();
+        zoff_ch += nk * pxz.size();
     }
     return Xz;
 }

@@ -57,7 +57,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
     //  setup 2d-block distribution for AO-matrix and KS wfc
     LR_Util::setup_2d_division(this->paraMat_.para_2d(), 1, this->nbasis, this->nbasis);
 #ifdef __MPI
-    this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, this->paraMat_.get_row_size());
+    this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, this->paraMat_.para_2d().nrloc());
     int err = this->paraMat_.set_nloc_wfc_Eij(this->nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     this->paraMat_.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nbasis);
 #else
@@ -67,7 +67,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
 
     this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
                                        this->paraMat_.ncol_bands,
-                                       this->paraMat_.get_row_size(),
+                                       this->paraMat_.para_2d().nrloc(),
                                        this->kv.ngk,
                                        true));
     this->psi_ks_global = new psi::Psi<T>(this->kv.get_nks(),
@@ -83,9 +83,9 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
         this->reset_dim_spin2();
     }
 
-    LR_Util::setup_2d_division(this->paraC_, this->paraMat_.get_block_size(), this->nbasis, this->nbands
+    LR_Util::setup_2d_division(this->paraC_, this->paraMat_.nb(), this->nbasis, this->nbands
 #ifdef __MPI
-            , this->paraMat_.get_blacs_ctxt()
+            , this->paraMat_.para_2d().ictxt()
 #endif
         );
 
@@ -608,13 +608,13 @@ void ESolver_BSE<T, TR>::ipa_solver()
     {
         int sorted_index = indices[istate];
         int ik = sorted_index / (this->nocc[0] * this->nvirt[0]);
-        int loffset_X = (istate * this->nk + ik) * this->paraX_[0].get_local_size();
+        int loffset_X = (istate * this->nk + ik) * this->paraX_[0].size();
         int i = (sorted_index / this->nvirt[0]) % this->nocc[0];
         int a = sorted_index % this->nvirt[0];
-        int col_loc = this->paraX_[0].global2local_col(i);
-        int row_loc = this->paraX_[0].global2local_row(a);
+        int col_loc = this->paraX_[0].icloc(i);
+        int row_loc = this->paraX_[0].irloc(a);
         if (col_loc == -1 || row_loc == -1) continue;
-        this->X[0].template data<T>()[loffset_X + col_loc * this->paraX_[0].get_row_size() + row_loc] = 1.0;
+        this->X[0].template data<T>()[loffset_X + col_loc * this->paraX_[0].nrloc() + row_loc] = 1.0;
     }
     ModuleBase::timer::end("ESolver_BSE", "ipa_solver");
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "IPA solver");
@@ -772,14 +772,14 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
         BlockCyclicDistributionInformation px;
         LR_Util::setup_2d_division(px, /*nb2d=*/1, this->nvirt[is], this->nocc[is]
 #ifdef __MPI
-            , this->paraC_.get_blacs_ctxt()
+            , this->paraC_.ictxt()
 #endif
         );
         this->paraX_.emplace_back(std::move(px));
     }
     this->nloc_per_state = this->nk
-                           * (this->openshell ? this->paraX_[0].get_local_size() + this->paraX_[1].get_local_size()
-                                              : this->paraX_[0].get_local_size());
+                           * (this->openshell ? this->paraX_[0].size() + this->paraX_[1].size()
+                                              : this->paraX_[0].size());
 
     int n_spin_types = this->inp_->bse_spin_types.size();
     if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "tda") {

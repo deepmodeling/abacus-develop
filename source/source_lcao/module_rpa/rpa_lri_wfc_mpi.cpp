@@ -126,7 +126,7 @@ int pack_ks_eigenvector_chunk(const Parallel_Orbitals& parav,
         while (cursor.row_local < psi.get_nbasis() && packed < requested_count)
         {
             const int ir_local = cursor.row_local++;
-            const int iw_global = parav.para_2d().local2global_row(ir_local);
+            const int iw_global = parav.para_2d().irglb(ir_local);
             if (is_soc && iw_global % 2 != spinor_component)
             {
                 continue;
@@ -170,7 +170,7 @@ void write_ks_eigenvector_v1_mpi(const MPI_Comm mpi_comm,
         bool dimensions_valid = nks_tot >= 0 && nbands >= 0 && nbasis_wfc >= 0 && nspins > 0
                                 && (nspin_abacus == 1 || nspin_abacus == 2 || nspin_abacus == 4)
                                 && nspins == (nspin_abacus == 2 ? 2 : 1) && (!is_soc || nbasis_wfc % 2 == 0)
-                                && psi.get_nbasis() == parav.para_2d().get_row_size()
+                                && psi.get_nbasis() == parav.para_2d().nrloc()
                                 && psi.get_nbands() == parav.ncol_bands
                                 && parav.get_wfc_global_nbasis() == nbasis_wfc
                                 && parav.get_wfc_global_nbands() == nbands;
