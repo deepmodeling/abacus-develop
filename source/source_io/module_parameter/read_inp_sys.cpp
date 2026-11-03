@@ -1546,8 +1546,9 @@ updates structures smoothly enough for second-order extrapolation.)";
         item.type = "String";
         item.description = "Location of files, such as the electron density (chgs1.cube), required as a starting point. "
                            "Standalone LR first reads the complete chg.cube/chgs*.cube set. If unavailable, it reads "
-                           "{suffix}-CHARGE-DENSITY.restart and Fourier-transforms the density onto the current grid. "
-                           "The restart stored spin count must match the requested nspin exactly.";
+                           "the binary density file {suffix}-CHARGE-DENSITY.restart and performs inverse FFT onto the current grid. "
+                           "The stored spin count must match the requested nspin exactly. "
+                           "This reads ground-state density only; it does not resume a previous calculation.";
         item.default_value = "OUT.$suffix";
         read_sync_string(input.read_file_dir);
         item.reset_value = [](const Input_Item& item, Parameter& para) {

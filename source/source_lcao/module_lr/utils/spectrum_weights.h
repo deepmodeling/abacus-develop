@@ -36,7 +36,10 @@ inline std::complex<double> weighted_velocity_transition(
     const double weight = weights[spin * nk + ik] * nk;
     const std::complex<double> excitation = velocity * x;
     const std::complex<double> deexcitation = std::conj(velocity) * y;
-    if (use_ks_gap) { return (excitation - deexcitation) * (weight / gap); }
+    if (use_ks_gap)
+    {
+        return (excitation - deexcitation) * (weight / gap);
+    }
     return (excitation + deexcitation) * weight;
 }
 

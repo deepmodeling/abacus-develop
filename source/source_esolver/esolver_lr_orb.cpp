@@ -301,8 +301,8 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
     const bool have_cubes = module_charge::has_complete_charge_cubes(this->in_dir, this->nspin, world);
     if (!have_cubes)
     {
-        const std::string restart = this->in_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart";
-        const bool loaded = module_charge::read_rho_restart(restart, *this->pw_rho, this->nspin,
+        const std::string density_file = this->in_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart";
+        const bool loaded = module_charge::read_rho_from_binary(density_file, *this->pw_rho, this->nspin,
             chg_gs.rhog, chg_gs.rho, world, this->ofs_running_);
         if (!loaded)
         {

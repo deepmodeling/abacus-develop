@@ -479,7 +479,7 @@ TEST_F(ReadRhogTest, RestartDensityTransformsEverySpin)
     std::vector<double> down(rhopw.nrxx, -1.0);
     double* density[] = {up.data(), down.data()};
     std::ostringstream log;
-    const bool loaded = module_charge::read_rho_restart(filename, rhopw, 2, rhog.data(), density, pw_world, log);
+    const bool loaded = module_charge::read_rho_from_binary(filename, rhopw, 2, rhog.data(), density, pw_world, log);
     EXPECT_TRUE(loaded);
     for (int ir = 0; ir < rhopw.nrxx; ++ir)
     {
@@ -503,7 +503,7 @@ TEST_F(ReadRhogTest, MissingRestartPreservesRealDensity)
     std::vector<double> density(rhopw.nrxx, 0.125);
     double* channels[] = {density.data()};
     std::ostringstream log;
-    const bool loaded = module_charge::read_rho_restart(filename, rhopw, 1, rhog.data(), channels, pw_world, log);
+    const bool loaded = module_charge::read_rho_from_binary(filename, rhopw, 1, rhog.data(), channels, pw_world, log);
     EXPECT_FALSE(loaded);
     for (double value : density) { EXPECT_DOUBLE_EQ(value, 0.125); }
 }
@@ -522,7 +522,7 @@ TEST_F(ReadRhogTest, RestartRejectsExcessSpinChannelsBeforeWriting)
     std::vector<double> density(rhopw.nrxx, 0.125);
     double* channels[] = {density.data()};
     std::ostringstream log;
-    EXPECT_FALSE(module_charge::read_rho_restart(filename, rhopw, 1, rhog.data(), channels, pw_world, log));
+    EXPECT_FALSE(module_charge::read_rho_from_binary(filename, rhopw, 1, rhog.data(), channels, pw_world, log));
     EXPECT_EQ(rhog_data, original);
     for (double value : density) { EXPECT_DOUBLE_EQ(value, 0.125); }
     Parallel::barrier(pw_world);
@@ -543,7 +543,7 @@ TEST_F(ReadRhogTest, RestartRejectsMissingSpinChannelsBeforeWriting)
     std::vector<double> down(rhopw.nrxx, 0.375);
     double* channels[] = {up.data(), down.data()};
     std::ostringstream log;
-    EXPECT_FALSE(module_charge::read_rho_restart(filename, rhopw, 2, rhog.data(), channels, pw_world, log));
+    EXPECT_FALSE(module_charge::read_rho_from_binary(filename, rhopw, 2, rhog.data(), channels, pw_world, log));
     EXPECT_EQ(rhog_data, original);
     for (double value : up) { EXPECT_DOUBLE_EQ(value, 0.125); }
     for (double value : down) { EXPECT_DOUBLE_EQ(value, 0.375); }
@@ -573,7 +573,7 @@ TEST_F(ReadRhogTest, RestartSkipsModesOutsideSmallerCutoffOnOwnedStick)
     std::vector<double> density(rhopw.nrxx, -1.0);
     double* channels[] = {density.data()};
     std::ostringstream log;
-    EXPECT_TRUE(module_charge::read_rho_restart(filename, rhopw, 1, reciprocal, channels, pw_world, log));
+    EXPECT_TRUE(module_charge::read_rho_from_binary(filename, rhopw, 1, reciprocal, channels, pw_world, log));
     EXPECT_EQ(guarded.front(), sentinel);
     EXPECT_EQ(guarded.back(), sentinel);
     const double two_pi = 2.0 * std::acos(-1.0);
@@ -640,7 +640,7 @@ TEST_F(ReadRhogTest, PartialCubeSetUsesRestartForEverySpin)
     std::vector<double> down(rhopw.nrxx, -1.0);
     double* density[] = {up.data(), down.data()};
     std::ostringstream log;
-    EXPECT_TRUE(module_charge::read_rho_restart(restart, rhopw, 2, rhog.data(), density, pw_world, log));
+    EXPECT_TRUE(module_charge::read_rho_from_binary(restart, rhopw, 2, rhog.data(), density, pw_world, log));
     for (double value : up) { EXPECT_NEAR(value, 0.25, 1e-12); }
     for (double value : down) { EXPECT_NEAR(value, 0.75, 1e-12); }
     Parallel::barrier(pw_world);
@@ -668,7 +668,7 @@ TEST_F(ReadRhogTest, NeitherDensitySourceIsAvailable)
     std::vector<double> rho(rhopw.nrxx, 0.125);
     double* density[] = {rho.data()};
     std::ostringstream log;
-    EXPECT_FALSE(module_charge::read_rho_restart(restart, rhopw, 1, rhog.data(), density, pw_world, log));
+    EXPECT_FALSE(module_charge::read_rho_from_binary(restart, rhopw, 1, rhog.data(), density, pw_world, log));
     for (double value : rho) { EXPECT_DOUBLE_EQ(value, 0.125); }
 }
 

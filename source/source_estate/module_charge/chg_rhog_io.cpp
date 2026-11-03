@@ -295,7 +295,7 @@ bool module_charge::has_complete_charge_cubes(const std::string& directory, cons
     return complete;
 }
 
-bool module_charge::read_rho_restart(const std::string& filename,
+bool module_charge::read_rho_from_binary(const std::string& filename,
                                       const ModulePW::PW_Basis& rhopw,
                                       const int nspin,
                                       std::complex<double>** rhog,
@@ -312,7 +312,7 @@ bool module_charge::read_rho_restart(const std::string& filename,
     }
     if (pw_world.rank() == 0)
     {
-        const std::string message = " Read electron density from restart and FFT: " + filename;
+        const std::string message = " Read electron density from binary file and perform inverse FFT: " + filename;
         log << message << std::endl;
         std::cout << message << std::endl;
     }

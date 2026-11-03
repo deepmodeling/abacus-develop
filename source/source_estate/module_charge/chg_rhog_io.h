@@ -77,11 +77,12 @@ bool read_rhog(const std::string& filename,
 bool has_complete_charge_cubes(const std::string& directory, const int nspin,
                                const Parallel::ParaWorld& world);
 
-/// Decode a reciprocal-space restart and transform every spin channel into rho.
+/// Read binary reciprocal-space density and perform inverse FFT for every spin.
 /// Requires the stored spin count to match nspin exactly (no implicit conversion).
+/// Reads density only; does not restore calculation or solver state.
 /// Returns false for recoverable open/configuration failures, leaving rho unchanged.
 /// Malformed or truncated binary input can terminate via Binstream/ WARNING_QUIT.
-bool read_rho_restart(const std::string& filename,
+bool read_rho_from_binary(const std::string& filename,
                       const ModulePW::PW_Basis& rhopw,
                       const int nspin,
                       std::complex<double>** rhog,
