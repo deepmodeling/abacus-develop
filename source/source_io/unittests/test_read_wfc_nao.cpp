@@ -87,14 +87,14 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
 #ifdef __MPI
       MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
       std::ofstream ofs_running, ofs_warning;
-      ParaV.para_2d().init(nlocal, nlocal, 1, MPI_COMM_WORLD);   
-      ParaV.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);   
+      ParaV.para_2d().init(nlocal, nlocal, 1, MPI_COMM_WORLD);
+      ParaV.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
       ParaV.set_desc_wfc_Eij(nlocal, nbands, ParaV.para_2d().get_row_size());
 #else
-      ParaV.set_serial(nlocal, nlocal);
+      ParaV.para_2d().set_serial(nlocal, nlocal);
       ParaV.nrow_bands = nlocal;
-      ParaV.ncol_bands = nbands;  
-#endif 
+      ParaV.ncol_bands = nbands;
+#endif
 
       psi::Psi<double> psid;
       ModuleBase::matrix ekb;
