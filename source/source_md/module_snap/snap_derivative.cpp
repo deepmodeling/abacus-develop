@@ -119,12 +119,15 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& n
     const Dual y(neighbor.y, dy);
     const Dual z(neighbor.z, dz);
     const Dual rsq = x * x + y * y + z * z;
-    const Dual distance = dual_sqrt(rsq);
-    const double cutoff_radius = neighbor.cutoff_radius > 0.0 ? neighbor.cutoff_radius : parameters_.rcut;
-
     UWithDerivative result;
     result.derivatives.assign(u_size_, std::complex<double>(0.0, 0.0));
-    if (distance.value <= 1.0e-14 || distance.value >= cutoff_radius)
+    if (rsq.value == 0.0)
+    {
+        return result;
+    }
+    const Dual distance = dual_sqrt(rsq);
+    const double cutoff_radius = neighbor.cutoff_radius > 0.0 ? neighbor.cutoff_radius : parameters_.rcut;
+    if (distance.value >= cutoff_radius)
     {
         return result;
     }

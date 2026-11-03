@@ -17,7 +17,7 @@ find_program(SNAP_TEST_PYTHON python3)
 if(ENABLE_MPI AND SNAP_TEST_PYTHON AND MPIEXEC_EXECUTABLE)
   add_test(
     NAME 04_FF_SNAP_rank_error
-    COMMAND ${SNAP_TEST_PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/check_snap_rank_error.py
+    COMMAND ${SNAP_TEST_PYTHON} ${ABACUS_TEST_DIR}/integrate/validation_tools/check_snap_rank_error.py
             --abacus ${ABACUS_BIN_PATH}
             --mpiexec ${MPIEXEC_EXECUTABLE}
             --numproc-flag=${MPIEXEC_NUMPROC_FLAG}

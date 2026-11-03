@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 
 namespace
@@ -76,6 +77,25 @@ TEST(SnapDescriptor, BispectrumIsFinite)
     {
         EXPECT_TRUE(std::isfinite(bispectrum[i]));
     }
+}
+
+TEST(SnapDescriptor, SmallNonzeroDistanceIsNotDiscarded)
+{
+    const ModuleMD::SNAP::DescriptorEvaluator evaluator(make_parameters());
+    // This is smaller than the former 1e-14 Angstrom skip threshold.
+    const double small_distance = 1.0e-15;
+    ModuleMD::SNAP::Neighbor neighbor;
+    neighbor.x = small_distance;
+    const std::vector<std::complex<double> > u = evaluator.compute_u(neighbor);
+    EXPECT_DOUBLE_EQ(u[0].real(), 1.0);
+
+    const ModuleMD::SNAP::UWithDerivative result = evaluator.compute_u_with_derivative(neighbor, 0);
+    double largest_derivative = 0.0;
+    for (std::size_t i = 0; i < result.derivatives.size(); ++i)
+    {
+        largest_derivative = std::max(largest_derivative, std::abs(result.derivatives[i]));
+    }
+    EXPECT_GT(largest_derivative, 0.1);
 }
 
 TEST(SnapDescriptor, MatchesLammpsSingleElementReference)

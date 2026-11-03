@@ -112,7 +112,7 @@ std::vector<std::complex<double> > DescriptorEvaluator::compute_u(const Neighbor
     const double distance = std::sqrt(rsq);
     const double cutoff_radius = neighbor.cutoff_radius > 0.0 ? neighbor.cutoff_radius : parameters_.rcut;
     std::vector<std::complex<double> > result(u_size_, std::complex<double>(0.0, 0.0));
-    if (distance <= 1.0e-14 || switching(distance, neighbor, cutoff_radius).value == 0.0)
+    if (rsq == 0.0 || switching(distance, neighbor, cutoff_radius).value == 0.0)
     {
         return result;
     }
