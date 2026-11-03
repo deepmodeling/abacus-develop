@@ -275,6 +275,27 @@ TEST(SnapCalculator, CachedSelfDescriptorMatchesEnergyAndForce)
     }
 }
 
+TEST(SnapCalculator, CachedSelfDescriptorSelectsCentralElement)
+{
+    ModuleMD::SNAP::ModelData model = make_chemical_model();
+    model.parameters.wselfall_flag = false;
+    model.coefficients[0] = {2.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 5.0};
+    model.coefficients[1] = {7.0, 11.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 13.0};
+    const ModuleMD::SNAP::Calculator calculator(model);
+    const std::vector<ModuleMD::SNAP::Neighbor> neighbors;
+    for (std::size_t element = 0; element < model.parameters.elements.size(); ++element)
+    {
+        const ModuleMD::SNAP::EnergyResult energy = calculator.compute(neighbors, element);
+        const ModuleMD::SNAP::ForceResult force = calculator.compute_with_analytic_force(neighbors, element);
+        EXPECT_DOUBLE_EQ(energy.energy, model.coefficients[element][0]);
+        EXPECT_DOUBLE_EQ(force.energy.energy, model.coefficients[element][0]);
+        for (std::size_t index = 0; index < energy.descriptor.size(); ++index)
+        {
+            EXPECT_DOUBLE_EQ(energy.descriptor[index], 0.0);
+        }
+    }
+}
+
 TEST(SnapCalculator, RejectsInvalidCentralElement)
 {
     const ModuleMD::SNAP::Calculator calculator(make_model());

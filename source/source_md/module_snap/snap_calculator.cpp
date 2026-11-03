@@ -26,10 +26,11 @@ Calculator::Calculator(const ModelData& model)
     {
         if (model_.coefficients[element].size() != expected_count)
         {
-            throw std::invalid_argument("SNAP coefficient count for element " + model_.parameters.elements[element]
+            const std::string message = "SNAP coefficient count for element " + model_.parameters.elements[element]
                                         + " does not match the descriptor size: expected "
                                         + std::to_string(expected_count) + ", found "
-                                        + std::to_string(model_.coefficients[element].size()) + ".");
+                                        + std::to_string(model_.coefficients[element].size()) + ".";
+            throw std::invalid_argument(message);
         }
     }
     if (model_.parameters.bzero_flag)

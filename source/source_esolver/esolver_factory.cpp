@@ -29,6 +29,7 @@
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
 
+#include <sstream>
 #include <stdexcept>
 
 namespace ModuleESolver
@@ -124,7 +125,8 @@ std::string determine_type(const Input_para& inp)
         ModuleBase::WARNING_QUIT("ESolver", "No such esolver_type combined with basis_type");
     }
 
-    GlobalV::ofs_running << "\n #ENERGY SOLVER# " << esolver_type << std::endl;
+    std::ostream& running_log = GlobalV::ofs_running;
+    running_log << "\n #ENERGY SOLVER# " << esolver_type << std::endl;
 
     auto device_info = inp.device;
 
@@ -135,7 +137,14 @@ std::string determine_type(const Input_para& inp)
             c = std::toupper(c);
         }
     }
-    base_device::information::output_device_info(std::cout, inp.device);
+    std::ostringstream device_summary;
+    base_device::information::output_device_info(device_summary, inp.device);
+    const std::string summary = device_summary.str();
+    if (!summary.empty())
+    {
+        std::cout << summary;
+        running_log << summary;
+    }
     /***auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     std::cout << "hipGetDeviceInfo took " << duration.count() << " seconds" << std::endl;***/
