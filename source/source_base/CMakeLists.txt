@@ -90,20 +90,17 @@ endif()
 
 if(BUILD_TESTING)
   # TODO: classify the serial and parrallel tests
-  AddTest(
+  addtest(
     TARGET MODULE_BASE_block_cyclic_distribution
     LIBS parameter base device container
-    SOURCES test/test_block_cyclic_distribution.cpp
-  )
+    SOURCES test/test_block_cyclic_distribution.cpp)
   if(ENABLE_MPI)
     add_test(
       NAME MODULE_BASE_block_cyclic_distribution_mpi
       COMMAND
-        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
-        ${MPIEXEC_PREFLAGS}
+        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
         $<TARGET_FILE:MODULE_BASE_block_cyclic_distribution>
-        ${MPIEXEC_POSTFLAGS}
-    )
+        ${MPIEXEC_POSTFLAGS})
     add_subdirectory(test)
     add_subdirectory(test_parallel)
     add_subdirectory(kernels/test)

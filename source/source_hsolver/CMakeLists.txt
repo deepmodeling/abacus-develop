@@ -29,9 +29,7 @@ if(ENABLE_LCAO)
   # DSP build without C_PACK: provide the zhegvx_ fallback for
   # cpack_zhegvx_driver (used by diago_lapack.cpp under __DSP).
   if(USE_DSP AND NOT MT_CPACK_DIR)
-    list(APPEND objects
-        cpack_zhegvx_fallback.cpp
-    )
+    list(APPEND objects cpack_zhegvx_fallback.cpp)
   endif()
 
   if(USE_CUDA)

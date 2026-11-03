@@ -43,7 +43,8 @@ target_link_options(MODULE_RI_invmat_ri PRIVATE -Wl,--gc-sections)
 addtest(
   TARGET MODULE_RI_hybrid_gauge_phase_test
   LIBS parameter base device
-  SOURCES test_hybrid_gauge_phase.cpp ../hybrid_gauge_phase.cpp ../mix_dmk_2d.cpp)
+  SOURCES test_hybrid_gauge_phase.cpp ../hybrid_gauge_phase.cpp
+          ../mix_dmk_2d.cpp)
 
 addtest(
   TARGET MODULE_RI_hybrid_image_domain_test

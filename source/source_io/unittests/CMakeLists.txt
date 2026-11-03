@@ -22,7 +22,8 @@ if(NOT ENABLE_MPI)
 endif()
 
 add_executable(
-  MODULE_IO_input_error_mpi test_read_input.cpp
+  MODULE_IO_input_error_mpi
+  test_read_input.cpp
   # io_input references stru_frame_io::extract_last_frame without linking cell.
   ../../source_cell/stru_frame_io.cpp)
 target_link_libraries(
@@ -69,9 +70,10 @@ abacus_copy_test_files(support INPUTs)
 addtest(
   TARGET MODULE_IO_input_test_para
   LIBS parameter base device io_input
-  SOURCES test_read_input_parallel.cpp
-          # io_input references stru_frame_io::extract_last_frame without linking cell.
-          ../../source_cell/stru_frame_io.cpp)
+  SOURCES
+    test_read_input_parallel.cpp
+    # io_input references stru_frame_io::extract_last_frame without linking cell.
+    ../../source_cell/stru_frame_io.cpp)
 
 add_test(
   NAME MODULE_IO_input_test_para_4
@@ -320,8 +322,7 @@ if(ENABLE_LIBRI)
     LIBS parameter base device
     SOURCES test_restart_exx_csr.cpp ../module_restart/restart_exx_csr.cpp
             ../module_hs/hs_sparse_io.cpp ../module_hs/lat_r_csr.cpp
-            ../../source_basis/module_ao/parallel_orbitals.cpp
-            tmp_mocks.cpp)
+            ../../source_basis/module_ao/parallel_orbitals.cpp tmp_mocks.cpp)
 endif()
 
 addtest(TARGET MODULE_IO_write_elf_logic_test SOURCES test_write_elf_logic.cpp)
