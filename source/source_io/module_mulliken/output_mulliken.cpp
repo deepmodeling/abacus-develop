@@ -32,7 +32,7 @@ void collect_MW_nspin4(ModuleBase::matrix& MecMulP,
                 MecMulP(0, j) += mud(ic, ir).real();
                 MecMulP(3, j) += mud(ic, ir).real();
             }
-            // mud is DM.S with the conj-first density matrix built by
+            // mud is DM*S^T with the conj-first density matrix built by
             // dm_from_psi (DM_{ab} = sum_n w_n conj(c_{n,a}) c_{n,b}), i.e.
             // DM = conj(P) for the physical one-body density matrix P. The
             // up-down spin block therefore satisfies mud_{up,down} =
