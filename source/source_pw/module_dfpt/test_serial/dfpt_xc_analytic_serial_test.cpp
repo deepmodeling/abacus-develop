@@ -16,6 +16,9 @@
 
 namespace
 {
+// reference helpers (basis builder, synthetic fields, FFT gradient /
+// divergence, summed libxc vrho/vsigma); file-local in gtest style
+
 
 // simple serial PW_Basis on a cubic cell (rho-grid only); PW_Basis owns raw
 // FFT state, so it is initialized in place instead of returned by value
@@ -72,7 +75,9 @@ std::vector<double> cosine_amplitude(const ModulePW::PW_Basis& pw, const double 
 
 // FFT gradient of a real field on the rho grid (physical units: pw gcar is
 // dimensionless, the physical wavevector is tpiba * gcar)
-void fft_gradient(const ModulePW::PW_Basis& pw, const std::vector<double>& f, std::vector<std::vector<double>>& grad)
+void fft_gradient(const ModulePW::PW_Basis& pw,
+                         const std::vector<double>& f,
+                         std::vector<std::vector<double>>& grad)
 {
     const int npw = pw.npw;
     std::vector<std::complex<double>> f_g(npw);
@@ -96,8 +101,8 @@ void fft_gradient(const ModulePW::PW_Basis& pw, const std::vector<double>& f, st
 
 // divergence of a real vector field on the rho grid (physical units)
 void fft_divergence(const ModulePW::PW_Basis& pw,
-                    const std::vector<std::vector<double>>& h,
-                    std::vector<double>& div)
+                           const std::vector<std::vector<double>>& h,
+                           std::vector<double>& div)
 {
     const int npw = pw.npw;
     std::vector<std::complex<double>> dh_g(npw, std::complex<double>(0.0, 0.0));
@@ -121,10 +126,10 @@ void fft_divergence(const ModulePW::PW_Basis& pw,
 
 // sum of libxc vrho / vsigma over functional components (Hartree)
 void libxc_vxc(const std::vector<int>& func_id,
-               const std::vector<double>& rho,
-               const std::vector<double>& sigma,
-               std::vector<double>& vrho,
-               std::vector<double>& vsigma)
+                      const std::vector<double>& rho,
+                      const std::vector<double>& sigma,
+                      std::vector<double>& vrho,
+                      std::vector<double>& vsigma)
 {
     const int n = rho.size();
     vrho.assign(n, 0.0);
@@ -147,6 +152,7 @@ void libxc_vxc(const std::vector<int>& func_id,
 }
 
 } // namespace
+
 
 TEST(DFPTXcAnalytic, LdaKernelMatchesVrhofiniteDifference)
 {

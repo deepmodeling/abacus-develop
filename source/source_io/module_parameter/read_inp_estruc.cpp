@@ -444,15 +444,22 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "Noncollinear GGA gradient method: 0 original, 1 local axis, 2 regularized mapped-density LCA";
         item.category = "Electronic structure";
         item.type = "Integer";
-        item.description = R"(Selects the local spin mapping for LDA/GGA functionals in magnetic nspin=4 calculations.
-* 0: preserves the original algorithm (default).
-* 1: uses the local magnetization magnitude instead of the global quantization axis in the built-in GGA gradient correction. For LIBXC functionals, 0 and 1 are equivalent.
-* 2: uses a C2-regularized magnetization magnitude with eta = 1e-3 in atomic density units. The spin densities are (abs(n + rho_core) +/- min(S_eta(m), abs(n + rho_core)))/2. GGA gradients are the FFT gradients of these mapped spin densities. The potential reverses this same discrete energy graph: apply the FFT divergence to each spin-channel flux, then apply the local-map Jacobian. Density/sigma clipping branches and the GGA metric stress derivative use the same mapped densities. This changes the finite-grid functional relative to projecting the four density-channel gradients; converged energies can therefore change.
-For r = |m| and x = r/eta, S_eta = eta*x^3*(3*x^2 - 8*x + 6) for r < eta, and S_eta = r otherwise. The regularization is part of the functional definition, including its first and second derivatives.
-Mode 2 also uses this local map for the LDA contribution. Other spin configurations retain their existing behavior.)";
-        item.default_value = "0";
+        item.description = R"(Selects the local spin mapping for LDA/GGA functionals in magnetic `nspin=4` calculations.
+* `0`: In the built-in GGA gradient correction, constructs spin densities using the local magnetization magnitude, with its sign determined by the projection onto the global quantization axis when that axis is enabled. Otherwise, uses the unsigned magnitude.
+* `1`: Always uses the unsigned local magnetization magnitude in the built-in GGA gradient correction, independent of the global quantization axis. For Libxc functionals, `0` and `1` are equivalent.
+* `2`: Uses the regularized spin densities $\rho_{\pm}=\frac{|n+\rho_{\mathrm{core}}|\pm\min(S_{\eta}(r),|n+\rho_{\mathrm{core}}|)}{2}$, where $n$ is the valence electron density, $\rho_{\mathrm{core}}$ is the NLCC core density, and $r=|\boldsymbol{m}|$. With $x=r/\eta$ and fixed $\eta=10^{-3}\,\mathrm{electrons}/\mathrm{bohr}^{3}$, the $C^2$ mapping is $S_{\eta}(r)=\eta x^3(3x^2-8x+6)$ for $r\lt\eta$, and $S_{\eta}(r)=r$ otherwise. GGA gradients use these mapped densities. This regularization affects both LDA and GGA and can change energies and magnetic responses.
+
+When omitted, the value is `2` for `esolver_type=tddft` and `0` otherwise. Explicit values are preserved.)";
+        item.default_value = "`2` for `esolver_type=tddft`; `0` otherwise";
+        item.unit = "";
         item.domain.set_choices({"0", "1", "2"});
         read_sync_int(input.gga_grad);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (!item.is_read() && para.inp.esolver_type == "tddft")
+            {
+                para.input.gga_grad = 2;
+            }
+        };
         this->add_item(item);
     }
     {
@@ -780,7 +787,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.annotation = "number of electron iterations";
         item.category = "Electronic structure";
         item.type = "Integer";
-        item.description = "This variable indicates the maximal iteration number for electronic iterations.";
+        item.description = "Maximum number of electronic self-consistency iterations. In PW and LCAO RT-TDDFT, this controls initial-state calculations; real-time propagation uses the independent `td_scf_nmax` limit.";
         item.default_value = "100";
         item.unit = "";
         read_sync_int(input.scf_nmax);

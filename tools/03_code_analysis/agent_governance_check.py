@@ -47,6 +47,18 @@ TEST_PATH_PREFIXES = ("tests/", "test/", "unit_test/", "examples/")
 TEST_NAME_PATTERNS = ("test", "tests", "unittest", "pytest", "ctest", "case")
 HETEROGENEOUS_MARKERS = ("/cuda/", "/rocm/", "/kernels/", "cuda/", "rocm/", "kernels/")
 PR_SECTION_RE = re.compile(r"^###\s+(.+?)\s*$", re.MULTILINE)
+EXCEPTION_SECTION = "Governance Exception"
+EXCEPTION_APPROVED_LABEL = "governance-exception-approved"
+EXCEPTION_FIELDS = (
+    "Rule",
+    "Reason",
+    "Scope",
+    "User or maintenance risk",
+    "Why the normal rule cannot be followed now",
+    "Follow-up cleanup plan",
+    "Requested approver",
+)
+EXCEPTION_FIELD_RE = re.compile(r"^[-*]\s*([^:]+):\s*(.*)$")
 
 
 @dataclass
@@ -578,7 +590,7 @@ def check_cmake_linkage(findings: List[Finding], statuses: Dict[str, str], chang
 
 
 
-def read_pr_body(event_path: Optional[str]) -> Optional[str]:
+def read_pull_request(event_path: Optional[str]) -> Optional[dict]:
     if not event_path:
         return None
     try:
@@ -588,10 +600,29 @@ def read_pr_body(event_path: Optional[str]) -> Optional[str]:
         return None
     if "pull_request" not in payload or not isinstance(payload["pull_request"], dict):
         return None
-    body = payload["pull_request"].get("body")
+    return payload["pull_request"]
+
+
+def read_pr_body(event_path: Optional[str]) -> Optional[str]:
+    pull_request = read_pull_request(event_path)
+    if pull_request is None:
+        return None
+    body = pull_request.get("body")
     if body is None:
         return ""
     return str(body)
+
+
+def read_pr_labels(event_path: Optional[str]) -> List[str]:
+    pull_request = read_pull_request(event_path)
+    if pull_request is None:
+        return []
+    labels = pull_request.get("labels") or []
+    return [
+        str(label.get("name", ""))
+        for label in labels
+        if isinstance(label, dict)
+    ]
 
 
 def pr_sections(body: str) -> Dict[str, str]:
@@ -751,11 +782,84 @@ def check_documentation_warning(findings: List[Finding], changed: Sequence[str],
         )
 
 
+def parse_governance_exception(body: str) -> Optional[Dict[str, str]]:
+    sections = pr_sections(body)
+    content = sections.get(EXCEPTION_SECTION)
+    if content is None:
+        return None
+    fields: Dict[str, str] = {}
+    for raw in content.splitlines():
+        match = EXCEPTION_FIELD_RE.match(raw.strip())
+        if match:
+            fields[match.group(1).strip().lower()] = match.group(2).strip()
+    return fields
+
+
+def apply_governance_exception(
+    findings: List[Finding],
+    body: Optional[str],
+    labels: Sequence[str],
+) -> None:
+    """Downgrade blocking findings covered by an approved Governance Exception.
+
+    The PR body records the exception; the maintainer-applied label is the
+    approval. Findings with allow_exception=False are never downgraded.
+    """
+    if body is None:
+        return
+    approved = EXCEPTION_APPROVED_LABEL in labels
+    fields = parse_governance_exception(body)
+    if fields is None or not any(fields.values()):
+        if approved:
+            add_finding(
+                findings,
+                "Governance exception record",
+                WARN,
+                "pull_request.body",
+                None,
+                f"PR carries the `{EXCEPTION_APPROVED_LABEL}` label but has no filled `### {EXCEPTION_SECTION}` section.",
+                "Record the exception with the template in docs/developers_guide/agent_governance.md, or remove the label.",
+            )
+        return
+    missing = [field for field in EXCEPTION_FIELDS if not fields.get(field.lower())]
+    if missing:
+        add_finding(
+            findings,
+            "Governance exception record",
+            WARN,
+            "pull_request.body",
+            None,
+            f"`### {EXCEPTION_SECTION}` section is incomplete; missing fields: " + ", ".join(missing) + ".",
+            "Fill every field of the exception template; incomplete exceptions do not downgrade blocking findings.",
+        )
+        return
+    if not approved:
+        add_finding(
+            findings,
+            "Governance exception record",
+            WARN,
+            "pull_request.body",
+            None,
+            f"Governance exception requested for: {fields['rule']}; awaiting maintainer approval.",
+            f"A maintainer approves the exception by applying the `{EXCEPTION_APPROVED_LABEL}` label.",
+        )
+        return
+    excepted_rules = fields["rule"].lower()
+    for finding in findings:
+        if finding.severity != BLOCK or not finding.allow_exception:
+            continue
+        if finding.rule.lower() not in excepted_rules:
+            continue
+        finding.severity = WARN
+        finding.reason += " Downgraded from error by the approved governance exception."
+
+
 def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     findings: List[Finding] = []
     statuses, changed = changed_paths(root, args)
     lines, removed_lines = changed_lines(root, args)
     body = read_pr_body(args.event_path)
+    labels = read_pr_labels(args.event_path)
     body_text = body or ""
 
     check_line_endings(findings, root, changed, statuses, args)
@@ -770,6 +874,7 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     check_test_evidence_warning(findings, changed, body_text)
     check_heterogeneous_test_warning(findings, changed, body_text)
     check_documentation_warning(findings, changed, body_text)
+    apply_governance_exception(findings, body, labels)
     return findings
 
 

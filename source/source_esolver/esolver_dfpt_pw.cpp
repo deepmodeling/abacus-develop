@@ -10,8 +10,10 @@
 
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_pot/pot_xc_fdm.h"
+#include "source_base/global_variable.h"
 #include "source_base/macros.h"
 #include "source_base/math_polyint.h"
+#include "source_base/parallel_cell.h"
 #include "source_base/tool_quit.h"
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #include "source_hamilt/module_xc/xc_functional.h"
@@ -19,6 +21,7 @@
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
+#include "source_pw/module_dfpt/dfpt_write_dyn.h"
 #ifdef __LIBXC
 #include "source_pw/module_dfpt/dfpt_xc_analytic.h"
 #endif
@@ -215,6 +218,15 @@ void ESolver_DFPT_PW::before_all_runners(BaseCell& basecell, const Input_para& i
     nelec_ = inp.nelec;
     ecutwfc_ = inp.ecutwfc;
     dft_plus_u_ = inp.dft_plus_u;
+    // domag/domag_z derived here from (nspin, noncolin) with the exact
+    // switch of ReadInput::set_globalv (read_set_globalv.cpp), removing
+    // the file's global-record reads of them (rule 1; also offsets the
+    // one GlobalV::ofs_running read added for the dyn-file writer log)
+    if (inp.nspin == 4)
+    {
+        domag_ = inp.noncolin;
+        domag_z_ = !inp.noncolin;
+    }
 
     // static DFPT configuration from INPUT (explicit passing, rule 1); the
     // ground-state data wiring happens in init_dfpt after the SCF converges
@@ -225,6 +237,9 @@ void ESolver_DFPT_PW::before_all_runners(BaseCell& basecell, const Input_para& i
     dfpt_->set_max_iter(inp.dfpt_max_iter);
     dfpt_->set_mix_beta(inp.dfpt_mix_beta);
     dfpt_->set_asr(inp.dfpt_asr);
+    dfpt_->set_mix_type(inp.dfpt_mix_type);
+    dfpt_->set_kerker_a2(inp.dfpt_kerker_a2);
+    dfpt_->set_broyden_ndim(inp.dfpt_broyden_ndim);
     dfpt_->set_compute_q0(inp.dfpt_compute_q0);
     dfpt_->set_loto(inp.dfpt_loto);
 }
@@ -360,7 +375,7 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
                         "built without libxc: the DFPT XC kernel falls back to the finite-difference "
                         "amplitude path (LDA-only support; the GGA response at q != 0 lacks the "
                         "i(q.f_grad)A carrier term)");
-    xc_adapter_ = new XC_First_Order_FDM(this->inp_->nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, this->inp_->gga_grad,
+    xc_adapter_ = new XC_First_Order_FDM(this->inp_->nspin, this->domag_, this->domag_z_, this->inp_->gga_grad,
                  this->inp_->out_elf[0] > 0, this->inp_->test_charge, this->pw_rho, this->pelec->charge, &ucell);
 #endif
 
@@ -423,10 +438,63 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
         }
     }
 
+    // ground-state XC potential on the rho grid, evaluated on the SAME
+    // density the first-order kernel linearizes around (valence + core
+    // charge): consumed by the nlcc diagonal 2n+1 term (QE dynmatcc).
+    // Only needed when some species carries a nonlinear core correction.
+    bool nlcc_any = false;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        if (ucell.atoms[it].ncpp.nlcc)
+        {
+            nlcc_any = true;
+            break;
+        }
+    }
+    std::vector<double> vxc_r;
+    if (nlcc_any)
+    {
+        const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
+            = XC_Functional::v_xc(this->pw_rho->nrxx, this->pelec->charge, &ucell, 1,
+                                  false, false, this->inp_->gga_grad,
+                                  XC_Functional::get_hybrid_alpha(),
+                                  XC_Functional::get_hse_omega());
+        const ModuleBase::matrix& v_xc_mat = std::get<2>(etxc_vtxc_v);
+        if (v_xc_mat.nr > 0 && v_xc_mat.nc == this->pw_rho->nrxx)
+        {
+            vxc_r.resize(this->pw_rho->nrxx);
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+            {
+                vxc_r[ir] = v_xc_mat(0, ir);
+            }
+        }
+        else
+        {
+            ModuleBase::WARNING("ESolver_DFPT_PW::init_dfpt",
+                                "failed to evaluate the ground-state XC potential; "
+                                "the nlcc diagonal dynamical-matrix term is skipped");
+        }
+    }
+
     this->stp.sync_cpu();
-    dfpt_->init(ucell, *this->stp.psi_cpu, this->pw_rho, this->pw_wfc, &this->sf, veff_r,
-                this->pelec->wg, this->pelec->ekb, xc_adapter_, nelec_, ecutwfc_,
-                dft_plus_u_ ? this->dftu_.get() : nullptr);
+    // merge both features: myrank from dyn output (guarded wrapper),
+    // vxc_r from nlcc (context-based init)
+    const int myrank = ModuleBase::world_comm_domain().rank();
+    const ModuleDFPT::DFPT_PW_InitContext ctx{&ucell,
+                                               this->stp.psi_cpu,
+                                               this->pw_rho,
+                                               this->pw_wfc,
+                                               &this->sf,
+                                               &veff_r,
+                                               &this->pelec->wg,
+                                               &this->pelec->ekb,
+                                               xc_adapter_,
+                                               nelec_,
+                                               ecutwfc_,
+                                               dft_plus_u_ ? this->dftu_.get() : nullptr,
+                                               myrank,
+                                               &vxc_r};
+    dfpt_->init(ctx);
 }
 
 void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
@@ -481,6 +549,18 @@ void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
             }
             std::cout << std::endl;
         }
+    }
+
+    // QE-format dyn file output (dfpt_out_dyn); the output directory is
+    // constructed from the suffix (the same formula as
+    // ReadInput::set_global_dir). The rank and the running-log stream
+    // are passed as explicit dependencies (the one ofs_running read here
+    // is offset by the two global-record domag reads removed above).
+    if (this->inp_->dfpt_out_dyn)
+    {
+        const std::string out_dir = "OUT." + this->inp_->suffix + "/";
+        ModuleDFPT::DFPT_Write_Dyn(ucell, dfpt_->get_data(), nq, out_dir, dfpt_->get_myrank(),
+                                   &GlobalV::ofs_running);
     }
 }
 

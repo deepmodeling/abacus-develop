@@ -38,10 +38,12 @@ void pcc_0d_relative(const unitcell::OrthogonalCell& geometry,
                      std::vector<ModuleBase::Vector3<double>>& positions);
 
 // Assemble an SCCS grid-charge operator using the existing cell geometry and
-// mass-weighted ionic origin. An unsupported cell stops the run.
+// mass-weighted ionic origin, on the Cartesian grid coordinates grid_positions
+// (e.g. from SccsFixedSources). An unsupported cell stops the run.
 void pcc_0d_operator(const UnitCell& cell,
                      const ModulePW::PW_Basis& basis,
                      const std::vector<unitcell::AtomData>& atoms,
+                     const std::vector<ModuleBase::Vector3<double>>& grid_positions,
                      std::unique_ptr<ModuleSccs::CoulombOperator>& coulomb);
 } // namespace elecstate
 
