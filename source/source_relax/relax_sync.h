@@ -26,7 +26,6 @@ class Relax
                     const ModuleBase::matrix& stress,
                     const double etot_in,
                     std::ofstream& ofs_running);
-
   private:
     int istep = 0; // count ionic step
 

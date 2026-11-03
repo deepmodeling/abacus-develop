@@ -1,8 +1,14 @@
 #include <ATen/kernels/blas.h>
+#include <ATen/kernels/lapack.h>
 #include <base/third_party/blas.h>
 
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+
+#include <algorithm>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace container {
 namespace kernels {
@@ -21,6 +27,86 @@ void destroyGpuBlasHandle() {
         cublas_handle = nullptr;
     }
 }
+
+namespace {
+template <typename T>
+__global__ void set_identity(T* matrix, const int n)
+{
+    const size_t count = static_cast<size_t>(n) * n;
+    const size_t stride = static_cast<size_t>(blockDim.x) * gridDim.x;
+    for (size_t i = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x; i < count; i += stride)
+    {
+        matrix[i] = i % n == i / n ? T(1) : T(0);
+    }
+}
+
+template <typename T>
+__global__ void copy_triangle(const T* inverse, T* matrix, const int n, const int lda, const bool upper)
+{
+    const size_t count = static_cast<size_t>(n) * n;
+    const size_t stride = static_cast<size_t>(blockDim.x) * gridDim.x;
+    for (size_t i = static_cast<size_t>(blockIdx.x) * blockDim.x + threadIdx.x; i < count; i += stride)
+    {
+        const size_t row = i % n;
+        const size_t column = i / n;
+        if (upper ? row <= column : row >= column)
+        {
+            matrix[column * lda + row] = inverse[i];
+        }
+    }
+}
+} // namespace
+
+template <typename T>
+struct lapack_trtri<T, DEVICE_GPU> {
+    void operator()(const char& uplo, const char& diag, const int& n, T* matrix, const int& lda)
+    {
+        if (n < 0 || lda < std::max(1, n))
+        {
+            throw std::invalid_argument("trtri: invalid matrix dimensions");
+        }
+        const bool upper = cublas_fill_mode(uplo) == CUBLAS_FILL_MODE_UPPER;
+        const bool unit_diag = cublas_diag_type(diag) == CUBLAS_DIAG_UNIT;
+        if (n == 0)
+        {
+            return;
+        }
+        if (!unit_diag)
+        {
+            // TRSM does not report singularity; preserve TRTRI's zero-diagonal rejection.
+            std::vector<T> diagonal(n);
+            const size_t pitch = (static_cast<size_t>(lda) + 1) * sizeof(T);
+            CHECK_CUDA(cudaMemcpy2D(diagonal.data(), sizeof(T), matrix, pitch, sizeof(T), n, cudaMemcpyDeviceToHost));
+            for (int i = 0; i < n; ++i)
+            {
+                if (diagonal[i] == T(0))
+                {
+                    throw std::runtime_error("trtri: zero diagonal at index " + std::to_string(i + 1));
+                }
+            }
+        }
+
+        // Solve A * inverse = I without the Xtrtri workspace overrun seen in CUDA 11.8/12.1.
+        Tensor inverse(DataTypeToEnum<T>::value, DeviceType::GpuDevice, {n, n});
+        T* data = inverse.data<T>();
+        using CudaType = typename GetTypeThrust<T>::type;
+        CudaType* cuda_data = reinterpret_cast<CudaType*>(data);
+        CudaType* cuda_matrix = reinterpret_cast<CudaType*>(matrix);
+        const size_t count = static_cast<size_t>(n) * n;
+        const size_t blocks_needed = (count + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+        const int blocks = std::min<size_t>(65535, blocks_needed);
+        set_identity<<<blocks, THREADS_PER_BLOCK>>>(cuda_data, n);
+        CHECK_CUDA(cudaGetLastError());
+        cuBlasConnector::trsm(cublas_handle, uplo, diag, n, matrix, lda, data);
+        copy_triangle<<<blocks, THREADS_PER_BLOCK>>>(cuda_data, cuda_matrix, n, lda, upper);
+        CHECK_CUDA_SYNC();
+    }
+};
+
+template struct lapack_trtri<float, DEVICE_GPU>;
+template struct lapack_trtri<double, DEVICE_GPU>;
+template struct lapack_trtri<std::complex<float>, DEVICE_GPU>;
+template struct lapack_trtri<std::complex<double>, DEVICE_GPU>;
 
 template <typename T>
 struct blas_nrm2<T, DEVICE_GPU> {

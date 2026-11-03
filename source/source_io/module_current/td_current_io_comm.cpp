@@ -695,6 +695,8 @@ void ModuleIO::write_current(const UnitCell& ucell,
 {
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
+    // Restart replay is skipped by the caller, so only a fresh run writes step zero.
+    const std::ios::openmode mode = istep == 0 ? std::ios::out | std::ios::trunc : std::ios::app;
     double omega = ucell.omega;
 
     std::vector<ModuleBase::Vector3<double>> current_k;
@@ -723,11 +725,13 @@ void ModuleIO::write_current(const UnitCell& ucell,
                     std::string filename = PARAM.globalv.global_out_dir + "current_s" + std::to_string(is + 1) + "k"
                                            + std::to_string(kpoint_index) + "_comm.txt";
                     std::ofstream fout;
-                    fout.open(filename, std::ios::app);
-                    fout << std::setprecision(16);
-                    fout << std::scientific;
-                    fout << istep + 1 << " " << current_k[ik][0] / omega << " " << current_k[ik][1] / omega << " "
-                         << current_k[ik][2] / omega << std::endl;
+                    fout.open(filename, mode);
+                    fout << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(12);
+                    for (int direction = 0; direction < 3; ++direction)
+                    {
+                        fout << "  " << std::setw(19) << current_k[ik][direction] / omega;
+                    }
+                    fout << std::endl;
                     fout.close();
                 }
             }
@@ -746,11 +750,13 @@ void ModuleIO::write_current(const UnitCell& ucell,
     {
         std::string filename = PARAM.globalv.global_out_dir + "current_tot_comm.txt";
         std::ofstream fout;
-        fout.open(filename, std::ios::app);
-        fout << std::setprecision(16);
-        fout << std::scientific;
-        fout << istep + 1 << " " << current_total[0] / omega << " " << current_total[1] / omega << " " << current_total[2] / omega
-             << std::endl;
+        fout.open(filename, mode);
+        fout << std::right << std::setw(6) << istep + 1 << std::scientific << std::setprecision(12);
+        for (int direction = 0; direction < 3; ++direction)
+        {
+            fout << "  " << std::setw(19) << current_total[direction] / omega;
+        }
+        fout << std::endl;
         fout.close();
     }
 

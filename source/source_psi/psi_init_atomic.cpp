@@ -8,10 +8,10 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/soc.h"
+#include "source_cell/stru_fac.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_output/write_pao.h"
-#include "source_pw/module_pwdft/soc.h"
-#include "source_pw/module_pwdft/stru_fac.h"
 
 template <typename T>
 void psi_init_atomic<T>::allocate_ps_table()

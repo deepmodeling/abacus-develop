@@ -121,3 +121,42 @@ TEST_F(SccsFunctionalTest, ExplicitPeriodicOperatorPreservesResponseAndFunctiona
     EXPECT_EQ(legacy_result.reaction_potential, explicit_result.reaction_potential);
     EXPECT_EQ(legacy_result.electron_potential, explicit_result.electron_potential);
 }
+
+// The cavity-density derivative is produced only for the core-Gaussian forces
+// of the full cavity; the electron potential does not depend on it.
+TEST_F(SccsFunctionalTest, CavityDensityDerivativeOnlyForTheFullCavity)
+{
+    const std::vector<double> mode = cosine_mode(0);
+    std::vector<double> density(basis.nrxx);
+    std::vector<double> charge(basis.nrxx);
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        density[ir] = 1e-3 * (1.0 + 0.3 * mode[ir]);
+        charge[ir] = -density[ir];
+    }
+    ModuleSccs::SccsConfig config;
+    config.cavity.density_min = 1e-4;
+    config.cavity.density_max = 5e-3;
+    config.cavity.epsilon_bulk = 5.0;
+    config.surface_regularization = 1e-8;
+    config.surface_tension = 1e-5;
+    config.pressure = 1e-6;
+    ModuleSccs::PolarizationSolverParameters solver;
+    const std::vector<double> cold;
+    ModuleSccs::SccsResponse response;
+    ModuleSccs::solve_response(density, charge, config.cavity, solver, cold,
+                               basis, tpiba, response);
+    ModuleSccs::FunctionalResult electronic;
+    ModuleSccs::eval_functional(charge, response, config, basis, tpiba, electronic);
+    EXPECT_TRUE(electronic.cavity_potential.empty());
+    config.core_electrons = true;
+    ModuleSccs::FunctionalResult full;
+    ModuleSccs::eval_functional(charge, response, config, basis, tpiba, full);
+    ASSERT_EQ(full.cavity_potential.size(), static_cast<std::size_t>(basis.nrxx));
+    for (int ir = 0; ir < basis.nrxx; ++ir)
+    {
+        EXPECT_EQ(full.electron_potential[ir], electronic.electron_potential[ir]);
+        const double expected = full.electron_potential[ir] + full.reaction_potential[ir];
+        EXPECT_NEAR(full.cavity_potential[ir], expected, 1e-14);
+    }
+}

@@ -1,0 +1,2 @@
+# Parallel-layout and threading sweeps measured current deviations up to 3.005e-10.
+current_threshold 5e-10

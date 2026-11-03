@@ -4,6 +4,7 @@
 #include "source_relax/ions_move_basic.h" // for Ions_Move_Basic static members
 #include "source_relax/ions_move_bfgs2.h"
 #include "source_relax/relax_data.h"
+#include "source_relax/relax_criteria.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -183,10 +184,11 @@ TEST_F(BFGSTest, RelaxStepAutoInitialize)
     force(1, 2) = 0.0;
 
     std::ofstream ofs_running;
+    const Relax_Criteria criteria;
 
     // Before relax_step, is_initialized should be false
     EXPECT_FALSE(get_is_initialized());
-    bfgs.relax_step(force, ucell, ofs_running);
+    bfgs.relax_step(force, ucell, ofs_running, criteria);
     // After relax_step, is_initialized should be true
     EXPECT_TRUE(get_is_initialized());
 }
@@ -387,8 +389,9 @@ TEST_F(BFGSTest, RelaxStepBasic)
     bfgs.allocate(ucell.nat);
 
     std::ofstream ofs_running;
+    const Relax_Criteria criteria;
 
-    bfgs.relax_step(force, ucell, ofs_running);
+    bfgs.relax_step(force, ucell, ofs_running, criteria);
     // Check that ionic_position_updated is true
     EXPECT_TRUE(ucell.ionic_position_updated);
     // Check that force values are set (converted units)
@@ -397,4 +400,39 @@ TEST_F(BFGSTest, RelaxStepBasic)
     // Check that positions are updated (not equal to initial)
     EXPECT_NEAR(get_pos()[0][0], 0.0, 1e-12);
     EXPECT_NE(get_pos()[1][0], 1.0);
+}
+
+TEST_F(BFGSTest, RelaxStepZeroForceReturnsBeforeStepConstruction)
+{
+    UnitCell ucell;
+    ucell.ntype = 1;
+    ucell.nat = 2;
+    ucell.lat0 = 1.0;
+    ucell.atoms = new Atom[ucell.ntype];
+    ucell.atoms[0].na = 2;
+    ucell.atoms[0].tau = std::vector<ModuleBase::Vector3<double>>(2);
+    ucell.atoms[0].taud = std::vector<ModuleBase::Vector3<double>>(2);
+    ucell.atoms[0].mbl = std::vector<ModuleBase::Vector3<int>>(2, {1, 1, 1});
+    ucell.iat2it.resize(ucell.nat);
+    ucell.iat2ia.resize(ucell.nat);
+    ucell.iat2it[0] = 0;
+    ucell.iat2it[1] = 0;
+    ucell.iat2ia[0] = 0;
+    ucell.iat2ia[1] = 1;
+    ucell.atoms[0].tau[0].x = 0.25;
+    ucell.atoms[0].tau[1].x = 0.75;
+
+    const double initial_tau0_x = ucell.atoms[0].tau[0].x;
+    const double initial_tau1_x = ucell.atoms[0].tau[1].x;
+    ModuleBase::matrix force(2, 3);
+    std::ofstream ofs_running;
+    Relax_Criteria criteria;
+    criteria.force_thr_ev = 1.0;
+
+    const bool converged = bfgs.relax_step(force, ucell, ofs_running, criteria);
+
+    EXPECT_TRUE(converged);
+    EXPECT_FALSE(ucell.ionic_position_updated);
+    EXPECT_NEAR(ucell.atoms[0].tau[0].x, initial_tau0_x, 1e-12);
+    EXPECT_NEAR(ucell.atoms[0].tau[1].x, initial_tau1_x, 1e-12);
 }
