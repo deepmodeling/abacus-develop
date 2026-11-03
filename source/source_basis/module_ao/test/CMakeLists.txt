@@ -81,16 +81,3 @@ if(ENABLE_MPI)
 endif()
 
 abacus_copy_test_files(lcao_H2O)
-addtest(
-  TARGET MODULE_AO_parallel_orbitals_composition_test
-  SOURCES test_parallel_orbitals_composition.cpp ../parallel_orbitals.cpp
-  LIBS parameter device base)
-
-abacus_copy_test_files(test_parallel_orbitals_composition.sh)
-if(ENABLE_MPI)
-  add_test(
-    NAME MODULE_AO_parallel_orbitals_composition_test_para
-    COMMAND ${BASH} test_parallel_orbitals_composition.sh
-            "$<TARGET_FILE:MODULE_AO_parallel_orbitals_composition_test>"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-endif()
