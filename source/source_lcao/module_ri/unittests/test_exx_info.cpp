@@ -45,6 +45,7 @@ TEST(ExxInfo, AcceptsComplexHybridGauge)
     Exx_Info info;
     EXPECT_NO_THROW(init_exx_info(info, input));
     EXPECT_FALSE(info.info_ri.real_number);
+    EXPECT_TRUE(info.info_ri.unfold_hybrid_images);
 }
 
 TEST(ExxInfo, PreservesRealRiForOtherGaugesAndGroundState)
@@ -54,8 +55,29 @@ TEST(ExxInfo, PreservesRealRiForOtherGaugesAndGroundState)
     Exx_Info info;
     EXPECT_NO_THROW(init_exx_info(info, input));
     EXPECT_TRUE(info.info_ri.real_number);
+    EXPECT_FALSE(info.info_ri.unfold_hybrid_images);
     input.td_stype = 2;
     input.esolver_type = "ksdft";
     EXPECT_NO_THROW(init_exx_info(info, input));
     EXPECT_TRUE(info.info_ri.real_number);
+    EXPECT_FALSE(info.info_ri.unfold_hybrid_images);
+}
+
+TEST(ExxInfo, RejectsUnsupportedHybridImageKPointPools)
+{
+    auto input = hse_input();
+    input.exx_real_number = "0";
+    input.kpar = 2;
+    Exx_Info info;
+    EXPECT_THROW(init_exx_info(info, input), std::invalid_argument);
+}
+
+TEST(ExxInfo, LeavesPlaneWaveExchangeImageDomainUnchanged)
+{
+    auto input = hse_input();
+    input.basis_type = "pw";
+    input.exx_real_number = "0";
+    Exx_Info info;
+    EXPECT_NO_THROW(init_exx_info(info, input));
+    EXPECT_FALSE(info.info_ri.unfold_hybrid_images);
 }

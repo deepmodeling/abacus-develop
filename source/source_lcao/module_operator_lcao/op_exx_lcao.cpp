@@ -519,6 +519,46 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
         }
         else
         {
+            if (exx_info_ptr->info_ri.unfold_hybrid_images && !this->Hexxc->empty())
+            {
+                bool missing_image = false;
+                const auto* pv = this->hR->get_paraV();
+                for (const auto& spin : *this->Hexxc)
+                {
+                    for (const auto& row : spin)
+                    {
+                        for (const auto& block : row.second)
+                        {
+                            const auto& R = block.first.second;
+                            const int other_atom = block.first.first;
+                            if (pv->get_nrow_atom(row.first) > 0 && pv->get_ncol_atom(other_atom) > 0
+                                && this->hR->find_matrix(row.first, other_atom, R[0], R[1], R[2]) == nullptr)
+                            {
+                                missing_image = true;
+                            }
+                        }
+                    }
+                }
+                if (missing_image)
+                {
+                    // allocate() zeros the entire container. Preserve contributions
+                    // already assembled by preceding operators before growing it.
+                    HContainer<TR> saved(*this->hR);
+                    saved.add_value_intersection(*this->hR);
+                    using ComplexHexx = std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>;
+                    std::vector<ComplexHexx> spin_blocks(1);
+                    for (const auto& spin : *this->Hexxc)
+                    {
+                        spin_blocks[0] = spin;
+                        reallocate_hcontainer(spin_blocks, this->hR, nullptr);
+                    }
+                    this->hR->add_value_intersection(saved);
+                }
+                if (this->td_info_ != nullptr)
+                {
+                    this->td_info_->initialize_phase_hybrid(this->ucell, this->hR);
+                }
+            }
             RI_2D_Comm::add_HexxR(this->current_spin,
                                   exx_info_ptr->info_global.hybrid_alpha,
                                   *this->Hexxc,

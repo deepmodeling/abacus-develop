@@ -122,9 +122,11 @@ public:
 
     int abfs_Lmax() const { return abfs_Lmax_; }
     const Exx_Info_RI& get_info_ri() const { return info; }
+    const std::array<int, 3>& hybrid_images_period() const { return hybrid_images_period_; }
 
 private:
     Exx_Info_RI info;
+    std::array<int, 3> hybrid_images_period_{{1, 1, 1}};
     int abfs_Lmax_ = 0;
     MPI_Comm mpi_comm;
     const K_Vectors *p_kv = nullptr;

@@ -1,6 +1,7 @@
 #ifndef EXX_LRI_INTERFACE_HPP
 #define EXX_LRI_INTERFACE_HPP
 #include "exx_lri_interface.h"
+#include "hybrid_image_domain.h"
 #include "source_estate/module_pot/td_field_manager.h"
 #include "source_cell/unitcell.h"
 #include "source_base/formatter.h"
@@ -87,8 +88,27 @@ void Exx_LRI_Interface<T, Tdata>::mix_common_density(
     const ModuleBase::Vector3<double>& source_A,
     const bool restart)
 {
-    RI_2D_Comm::mix_hybrid_density(ucell.latvec, ucell.lat0, source_A, restart,
-                                 this->mix_common_density_, this->common_density_layout_, density);
+    if (this->exx_ptr->get_info_ri().unfold_hybrid_images)
+    {
+        if (this->exx_spacegroup_symmetry)
+        {
+            throw std::invalid_argument("Unfolded hybrid RI requires a full k mesh without space-group reconstruction");
+        }
+        const auto& kv = *this->exx_ptr->p_kv;
+        const std::array<int, 3> physical_period{{kv.nmp[0], kv.nmp[1], kv.nmp[2]}};
+        const auto& k0 = kv.kvec_d.at(0);
+        const std::array<double, 3> mesh_origin{{k0.x, k0.y, k0.z}};
+        const auto input_phase = RI_2D_Comm::hybrid_input_phase_per_cell(ucell.latvec, ucell.lat0, source_A);
+        RI_2D_Comm::unfold_hybrid_images(density, physical_period,
+                                        this->exx_ptr->hybrid_images_period(), mesh_origin, input_phase);
+        RI_2D_Comm::mix_common_frame_density(restart, this->mix_common_density_,
+                                            this->common_density_layout_, density);
+    }
+    else
+    {
+        RI_2D_Comm::mix_hybrid_density(ucell.latvec, ucell.lat0, source_A, restart,
+                                     this->mix_common_density_, this->common_density_layout_, density);
+    }
 }
 
 template<typename T, typename Tdata>
@@ -123,9 +143,23 @@ Exx_LRI_Interface<T, Tdata>::prepare_exx_density(
     if (source_A == nullptr)
     {
         this->mix_DMk_2D.mix(*restored, restart);
-        return RI_2D_Comm::split_m2D_ktoR<Tdata>(
+        auto density = RI_2D_Comm::split_m2D_ktoR<Tdata>(
             ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_out(), pv, nspin,
             this->exx_spacegroup_symmetry);
+        if (this->exx_ptr->get_info_ri().unfold_hybrid_images)
+        {
+            if (this->exx_spacegroup_symmetry)
+            {
+                throw std::invalid_argument("Unfolded hybrid RI requires a full k mesh");
+            }
+            const std::array<int, 3> physical_period{{kv.nmp[0], kv.nmp[1], kv.nmp[2]}};
+            const auto& k0 = this->exx_ptr->p_kv->kvec_d.at(0);
+            const std::array<double, 3> mesh_origin{{k0.x, k0.y, k0.z}};
+            const std::array<double, 3> input_phase{{0.0, 0.0, 0.0}};
+            RI_2D_Comm::unfold_hybrid_images(density, physical_period,
+                                            this->exx_ptr->hybrid_images_period(), mesh_origin, input_phase);
+        }
+        return density;
     }
     std::vector<const std::vector<T>*> raw;
     for (const auto& block : *restored)

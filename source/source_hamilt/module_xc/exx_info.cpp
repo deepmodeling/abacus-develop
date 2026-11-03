@@ -218,6 +218,12 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
             { exx_info.info_lip.lambda = std::stod(inp.exx_fock_lambda[0]); }
 
         exx_info.info_ri.real_number = std::stoi(inp.exx_real_number);
+        exx_info.info_ri.unfold_hybrid_images = exx_info.info_global.cal_exx && inp.basis_type == "lcao"
+            && inp.esolver_type == "tddft" && inp.td_stype == 2;
+        if (exx_info.info_ri.unfold_hybrid_images && inp.kpar != 1)
+        {
+            throw std::invalid_argument("Unfolded hybrid RI validation currently requires kpar=1");
+        }
         if (exx_info.info_global.cal_exx && inp.basis_type == "lcao"
             && inp.esolver_type == "tddft" && inp.td_stype == 2 && exx_info.info_ri.real_number)
         {

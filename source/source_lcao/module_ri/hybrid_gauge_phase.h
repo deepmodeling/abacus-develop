@@ -161,6 +161,51 @@ inline void apply_hybrid_input_phase(const ModuleBase::Matrix3& lattice,
     }
 }
 
+// Project Cartesian A onto the lattice once, before expanding density images.
+inline std::array<double, 3> hybrid_input_phase_per_cell(
+    const ModuleBase::Matrix3& lattice, const double lat0,
+    const ModuleBase::Vector3<double>& source_A)
+{
+    std::array<double, 3> phase;
+    for (int d = 0; d < 3; ++d)
+    {
+        if (!std::isfinite(source_A[d]))
+        {
+            throw std::invalid_argument("Nonfinite RI density source phase");
+        }
+        ModuleBase::Vector3<double> unit_cell(0.0, 0.0, 0.0);
+        unit_cell[d] = 1.0;
+        const ModuleBase::Vector3<double> translation = (unit_cell * lattice) * lat0;
+        phase[d] = source_A * translation;
+    }
+    return phase;
+}
+
+// Mix density blocks that have already been converted to the ordinary NAO frame.
+inline void mix_common_frame_density(const bool restart,
+                               Mix_DMk_2D<std::complex<double>>& mixer,
+                               HybridDensityLayout& history_layout,
+                               HybridGaugeComplexDensity& density)
+{
+    if (density.empty())
+    {
+        throw std::invalid_argument("Missing spin blocks in RI density mixing");
+    }
+    const auto layout = hybrid_density_layout(density);
+    if (!restart && layout != history_layout)
+    {
+        throw std::invalid_argument("RI density topology changed without a mixing restart");
+    }
+    const auto flat = flatten_hybrid_density(density);
+    if (restart)
+    {
+        mixer.set_nks(static_cast<int>(density.size()));
+        history_layout = layout;
+    }
+    mixer.mix(flat, restart);
+    assign_flat_hybrid_density(mixer.get_DMk_out(), history_layout, density);
+}
+
 // The production transaction: transform first, validate topology before mixing,
 // then copy the mixed values back without changing shared source storage.
 inline void mix_hybrid_density(const ModuleBase::Matrix3& lattice,
@@ -181,14 +226,7 @@ inline void mix_hybrid_density(const ModuleBase::Matrix3& lattice,
         throw std::invalid_argument("RI density topology changed without a mixing restart");
     }
     apply_hybrid_input_phase(lattice, lat0, source_A, density);
-    const auto flat = flatten_hybrid_density(density);
-    if (restart)
-    {
-        mixer.set_nks(static_cast<int>(density.size()));
-        history_layout = layout;
-    }
-    mixer.mix(flat, restart);
-    assign_flat_hybrid_density(mixer.get_DMk_out(), history_layout, density);
+    mix_common_frame_density(restart, mixer, history_layout, density);
 }
 } // namespace RI_2D_Comm
 

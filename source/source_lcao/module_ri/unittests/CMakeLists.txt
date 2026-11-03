@@ -36,6 +36,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_RI_hybrid_image_domain_test
+  LIBS parameter base device
+  SOURCES test_hybrid_image_domain.cpp ../mix_dmk_2d.cpp
+)
+
+AddTest(
   TARGET MODULE_RI_exx_info_test
   LIBS parameter base device
   SOURCES test_exx_info.cpp ../../../source_hamilt/module_xc/exx_info.cpp
