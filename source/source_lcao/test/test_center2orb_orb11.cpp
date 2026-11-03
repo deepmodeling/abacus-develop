@@ -498,6 +498,130 @@ TEST(Center2Orb21, SelectiveInitializationAccumulates)
     }
 }
 
+TEST(Center2Orb21, SharedProductOrbitalsSurviveOwnerChanges)
+{
+    const Numerical_Orbital_Lm left = make_orbital(
+        1,
+        0,
+        101,
+        65);
+    const Numerical_Orbital_Lm middle = make_orbital(
+        2,
+        1,
+        101,
+        65);
+    const Numerical_Orbital_Lm right = make_orbital(
+        1,
+        2,
+        101,
+        65);
+    ORB_gaunt_table gaunt;
+    gaunt.init_Gaunt_CH(3);
+    gaunt.init_Gaunt(3);
+    ModuleBase::Sph_Bessel_Recursive::D2 bessel;
+    bessel.set_dx(0.001);
+    bessel.cal_jlx(7, 405, 65);
+    Center2_Orb::Orb21 reference(
+        left,
+        middle,
+        right,
+        &bessel,
+        gaunt);
+    reference.init_radial_table();
+
+    const std::set<size_t> first_radials{72,
+        73,
+        74,
+        75,
+        76,
+        77};
+    const std::set<size_t> second_radials{190,
+        191,
+        192,
+        193,
+        194,
+        195};
+    const ModuleBase::Vector3<double> origin(0.0, 0.0, 0.0);
+    for (const bool reinitialize_first : {false, true})
+    {
+        const char *transition = reinitialize_first ? "reinitialize" : "destroy";
+        SCOPED_TRACE(transition);
+        std::unique_ptr<Center2_Orb::Orb21> first(new Center2_Orb::Orb21(
+            left,
+            middle,
+            left,
+            &bessel,
+            gaunt));
+        Center2_Orb::Orb21 survivor(
+            left,
+            middle,
+            right,
+            &bessel,
+            gaunt);
+        {
+            const std::vector<Center2_Orb::Orb21 *> tasks{first.get(), &survivor};
+            Center2_Orb::Orb21::init_radial_table(tasks, first_radials);
+        }
+        if (reinitialize_first)
+        {
+            first->init_radial_table();
+        }
+        else
+        {
+            first.reset();
+        }
+        // New rows must still be able to read the shared product orbitals.
+        survivor.init_radial_table(second_radials);
+
+        for (const double distance : {0.73, 1.91})
+        {
+            SCOPED_TRACE(distance);
+            const double x = 0.8 * distance;
+            const double y = 0.36 * distance;
+            const double z = 0.48 * distance;
+            const ModuleBase::Vector3<double> position(x, y, z);
+            for (int ma1 = 0; ma1 < 3; ++ma1)
+            {
+                for (int ma2 = 0; ma2 < 5; ++ma2)
+                {
+                    for (int mb = 0; mb < 3; ++mb)
+                    {
+                        const double expected = reference.cal_overlap(
+                            origin,
+                            position,
+                            ma1,
+                            ma2,
+                            mb);
+                        const double actual = survivor.cal_overlap(
+                            origin,
+                            position,
+                            ma1,
+                            ma2,
+                            mb);
+                        const double tolerance = 2e-11 * (1.0 + std::abs(expected));
+                        EXPECT_NEAR(actual, expected, tolerance);
+                        const ModuleBase::Vector3<double> grad_expected = reference.cal_grad_overlap(
+                            origin,
+                            position,
+                            ma1,
+                            ma2,
+                            mb);
+                        const ModuleBase::Vector3<double> grad_actual = survivor.cal_grad_overlap(
+                            origin,
+                            position,
+                            ma1,
+                            ma2,
+                            mb);
+                        const double error = (grad_actual - grad_expected).norm();
+                        const double grad_tolerance = 2e-10 * (1.0 + grad_expected.norm());
+                        EXPECT_LT(error, grad_tolerance);
+                    }
+                }
+            }
+        }
+    }
+}
+
 TEST(Center2Orb21, ProductGradientMatchesFiniteDifference)
 {
     const auto left = make_orbital(
