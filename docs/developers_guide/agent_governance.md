@@ -97,6 +97,7 @@ decisions.
 | Heterogeneous test evidence | CUDA/ROCM/kernel change has test evidence or reason | phase-one mechanical warning + AI review | CI + AI review | high | warn | changed paths and PR body | Sufficiency is human-reviewed |
 | Test existence | Source change has test evidence or reason | phase-one mechanical warning + AI review | CI + AI review | high | warn | PR body and changed paths | Sufficiency is human-reviewed |
 | Test sufficiency | Tests cover important behavior | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Not mechanically blocked |
+| Integration test driver | Integration test uses an Autotest case, not a standalone `add_test()` script | AI review + human confirmation | AI + human review | medium | human confirmation | `tests/**/CMakeLists.txt` and new scripts under `tests/` | Standalone drivers need a stated reason Autotest cannot express the check; see Integration Test Drivers |
 | INPUT behavior linkage | Parameter metadata/default/type/parser behavior updates YAML and docs | phase-one mechanical + AI review | CI + AI review | high | warn | behavior-field diff plus docs/PR body | Comment-only parameter-file changes are not blocked |
 | Documentation sync | Behavior/interface docs updated | phase-one mechanical warning + AI review | CI + AI review | medium | warn | changed paths and PR body | Major behavior changes escalate to reviewers |
 | PR metadata completeness | Issue, tests, behavior, INPUT, core impact, exceptions | phase-one mechanical | CI or GitHub bot | medium | warn | PR template fields | Not run by local hook |
@@ -178,6 +179,51 @@ MPI-linked builds or runs should be treated as sandbox artifacts first, not as
 project regressions. Do not relax existing integration tests or reference files
 just to make a failure pass. Update references only when the intended behavior
 changed and the PR explains why the new reference is correct.
+
+## Integration Test Drivers
+
+Integration tests use the Autotest framework. A test is a case directory under
+a suite such as `tests/01_PW/`, with its own `INPUT`, `STRU`, `KPT` (when
+needed), and a `result.ref`. The case is listed in the suite's `CASES_*.txt`,
+and `Autotest.sh` runs it through the suite's existing CTest entry. A reviewer
+can then find every case, its inputs, and its reference values in one place,
+and can rerun any case the same way.
+
+Helper scripts that Autotest calls, such as `CompareFile.py` or `cube_tool.py`
+under `tests/integrate/validation_tools/`, are part of this framework and are
+not affected by this section.
+
+Do not bypass the framework with a standalone driver. A standalone driver is a
+script registered directly with `add_test()` that launches ABACUS, builds or
+rewrites inputs at run time, and decides pass or fail with its own assertions.
+Such drivers spread test inputs across scripts, are invisible to the
+`CASES_*.txt` lists, and copy launcher, environment, and fixture handling from
+PR to PR.
+
+A standalone driver is acceptable only when Autotest cannot express the check.
+Examples are an expected nonzero exit status, a message that must appear on
+the stderr of a specific MPI rank, or a property of the process rather than of
+the output files. When a driver is justified:
+
+- Put the script in `tests/integrate/validation_tools/` and name it after the
+  check it performs (for example `check_<feature>.py`). Reserve the `test_*.py`
+  prefix for unit tests of the validation tools themselves.
+- Keep inputs in a dedicated fixture directory. Do not rewrite another case's
+  `INPUT` by string replacement at run time; that couples the driver to the
+  formatting of a fixture it does not own.
+- Treat the interpreter as optional: use `find_program(... python3)` with an
+  `if()` guard, never `find_package(Python3 ... REQUIRED)`, so configuring the
+  tests never fails on a machine without Python.
+- For MPI drivers, pass `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS`, and
+  `MPIEXEC_POSTFLAGS` through, and set the CTest `PROCESSORS` property to the
+  number of ranks launched.
+- Set `OMP_NUM_THREADS=1`, write scratch files to a temporary directory, and
+  set a CTest `TIMEOUT`.
+- State in the PR why an Autotest case cannot express the check.
+
+Reviewers should ask for an Autotest case first. If part of the check fits
+Autotest, that part belongs in a case directory, and the driver covers only
+the remainder.
 
 ## CLI Verification
 
