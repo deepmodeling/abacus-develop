@@ -1,0 +1,5 @@
+rVV10 nonlocal correlation (vdw_method rvv10, libvdwxc) on top of PBE through the native XC path for zincblende
+GaAs with nonlinear core correction pseudopotentials and two spin channels: energy, forces (As displaced) and
+stress. b is set explicitly because the PBE pairing has no published value. The native path is used on purpose:
+in PW, the stress of a libxc functional with NLCC pseudopotentials has a separate, pre-existing issue.
+Requires ENABLE_LIBXC and ENABLE_LIBVDWXC; listed in CASES_LIBVDWXC.txt.
