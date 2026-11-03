@@ -180,8 +180,8 @@ TEST(OutputMullikenSpinTest, Nspin4MyFollowsPauliConvention)
         // mud(ic, ir) as the (ir, ic) element of the logical matrix.
         const int nw = 2;
         Parallel_Orbitals pv;
-        pv.set_serial(nw, nw);
-        ModuleBase::ComplexMatrix mud(pv.ncol, pv.nrow, true);
+        pv.para_2d().set_serial(nw, nw);
+        ModuleBase::ComplexMatrix mud(pv.para_2d().ncol, pv.para_2d().nrow, true);
         for (int ir = 0; ir < nw; ++ir)
         {
             for (int ic = 0; ic < nw; ++ic)
