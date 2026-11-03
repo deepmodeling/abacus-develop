@@ -1,4 +1,5 @@
-add_library(sccs OBJECT
+add_library(
+  sccs OBJECT
   sccs_diag.cpp
   sccs_cavity.cpp
   sccs_cav_deriv.cpp

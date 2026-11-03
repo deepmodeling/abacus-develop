@@ -5,10 +5,11 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 
 addtest(TARGET MODULE_RELAX_socket_ipi_test SOURCES test_socket_ipi.cpp
-        ../socket_ipi.cpp)
+                                                    ../socket_ipi.cpp)
 
-addtest(TARGET MODULE_RELAX_socket_frame_test SOURCES test_socket_frame.cpp
-        ../socket_frame.cpp ../socket_frame_utils.cpp)
+addtest(TARGET MODULE_RELAX_socket_frame_test
+        SOURCES test_socket_frame.cpp ../socket_frame.cpp
+                ../socket_frame_utils.cpp)
 
 set(socket_json_sources)
 if(ENABLE_JSON)
@@ -17,332 +18,215 @@ if(ENABLE_JSON)
 endif()
 
 addtest(
-  TARGET
-  MODULE_RELAX_socket_driver_test
-  LIBS
-  MPI::MPI_CXX
-  base
-  device
-  KEEP_FEATURE_DEFINITIONS
-  __MPI
-  SOURCES
-  test_socket_driver.cpp
-  ../socket_driver.cpp
-  ../socket_utils.cpp
-  ../socket_handlers.cpp
-  ../socket_frame_utils.cpp
-  ../socket_frame.cpp
-  ../socket_ipi.cpp
-  ../../source_cell/update_cell.cpp
-  ../../source_cell/bcast_cell.cpp
-  ${socket_json_sources})
+  TARGET MODULE_RELAX_socket_driver_test
+  LIBS MPI::MPI_CXX base device
+  KEEP_FEATURE_DEFINITIONS __MPI
+  SOURCES test_socket_driver.cpp
+          ../socket_driver.cpp
+          ../socket_utils.cpp
+          ../socket_handlers.cpp
+          ../socket_frame_utils.cpp
+          ../socket_frame.cpp
+          ../socket_ipi.cpp
+          ../../source_cell/update_cell.cpp
+          ../../source_cell/bcast_cell.cpp
+          ${socket_json_sources})
 set_tests_properties(MODULE_RELAX_socket_driver_test PROPERTIES TIMEOUT 15)
 
 addtest(
-  TARGET
-  MODULE_RELAX_line_search_test
-  LIBS
-  parameter
-  SOURCES
-  test_line_search.cpp
-  ../line_search.cpp
-  ../../source_base/global_variable.cpp
-  ../../source_base/global_file.cpp
-  ../../source_base/global_function.cpp
-  ../../source_base/timer.cpp
-  ../../source_base/tool_quit.cpp)
+  TARGET MODULE_RELAX_line_search_test
+  LIBS parameter
+  SOURCES test_line_search.cpp
+          ../line_search.cpp
+          ../../source_base/global_variable.cpp
+          ../../source_base/global_file.cpp
+          ../../source_base/global_function.cpp
+          ../../source_base/timer.cpp
+          ../../source_base/tool_quit.cpp)
 
 addtest(TARGET MODULE_RELAX_matrix_methods_test SOURCES test_matrix_methods.cpp
-        ../matrix_methods.cpp)
+                                                        ../matrix_methods.cpp)
 
 addtest(
-  TARGET
-  MODULE_RELAX_cg_base_test
-  LIBS
-  parameter
-  SOURCES
-  test_cg_base.cpp
-  ../cg_base.cpp
-  ../../source_base/global_variable.cpp
-  ../../source_base/global_file.cpp
-  ../../source_base/global_function.cpp
-  ../../source_base/timer.cpp
-  ../../source_base/tool_quit.cpp
-  ../../source_base/tool_title.cpp)
+  TARGET MODULE_RELAX_cg_base_test
+  LIBS parameter
+  SOURCES test_cg_base.cpp
+          ../cg_base.cpp
+          ../../source_base/global_variable.cpp
+          ../../source_base/global_file.cpp
+          ../../source_base/global_function.cpp
+          ../../source_base/timer.cpp
+          ../../source_base/tool_quit.cpp
+          ../../source_base/tool_title.cpp)
 
 addtest(
-  TARGET
-  MODULE_RELAX_relax_sync_test
-  SOURCES
-  test_relax_sync.cpp
-  ../relax_sync.cpp
-  ../line_search.cpp
-  ../relax_data.cpp
-  ../../source_base/tool_quit.cpp
-  ../../source_base/global_variable.cpp
-  ../../source_base/global_file.cpp
-  ../../source_base/timer.cpp
-  ../../source_base/matrix3.cpp
-  ../../source_base/intarray.cpp
-  ../../source_base/tool_title.cpp
-  ../../source_base/global_function.cpp
-  ../../source_base/matrix.cpp
-  ../../source_base/complexarray.cpp
-  ../../source_base/realarray.cpp
-  ../../source_base/module_external/blas_connector_base.cpp
-  ../../source_base/module_external/blas_connector_vector.cpp
-  ../../source_base/module_external/blas_connector_matrix.cpp
-  ../../source_cell/update_cell.cpp
-  ../../source_cell/print_cell.cpp
-  ../../source_cell/bcast_cell.cpp
-  ../../source_base/output.cpp
-  LIBS
-  parameter)
+  TARGET MODULE_RELAX_relax_sync_test
+  SOURCES test_relax_sync.cpp
+          ../relax_sync.cpp
+          ../line_search.cpp
+          ../relax_data.cpp
+          ../../source_base/tool_quit.cpp
+          ../../source_base/global_variable.cpp
+          ../../source_base/global_file.cpp
+          ../../source_base/timer.cpp
+          ../../source_base/matrix3.cpp
+          ../../source_base/intarray.cpp
+          ../../source_base/tool_title.cpp
+          ../../source_base/global_function.cpp
+          ../../source_base/matrix.cpp
+          ../../source_base/complexarray.cpp
+          ../../source_base/realarray.cpp
+          ../../source_base/module_external/blas_connector_base.cpp
+          ../../source_base/module_external/blas_connector_vector.cpp
+          ../../source_base/module_external/blas_connector_matrix.cpp
+          ../../source_cell/update_cell.cpp
+          ../../source_cell/print_cell.cpp
+          ../../source_cell/bcast_cell.cpp
+          ../../source_base/output.cpp
+  LIBS parameter)
 
 list(APPEND cell_source_files ../../source_cell/update_cell.cpp
      ../../source_cell/bcast_cell.cpp ../../source_cell/print_cell.cpp)
 addtest(
-  TARGET
-  MODULE_RELAX_lat_change_method_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_lat_change_method.cpp
-  ../lat_change_method.cpp
-  ../lattice_change_basic.cpp
-  ../relax_data.cpp
-  mock_remake_cell.cpp)
+  TARGET MODULE_RELAX_lat_change_method_test
+  LIBS parameter base device
+  SOURCES test_lat_change_method.cpp ../lat_change_method.cpp
+          ../lattice_change_basic.cpp ../relax_data.cpp mock_remake_cell.cpp)
 
 addtest(
-  TARGET
-  MODULE_RELAX_lattice_change_basic_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_lattice_change_basic.cpp
-  ../lattice_change_basic.cpp
-  ../relax_data.cpp
-  mock_remake_cell.cpp)
+  TARGET MODULE_RELAX_lattice_change_basic_test
+  LIBS parameter base device
+  SOURCES test_lattice_change_basic.cpp ../lattice_change_basic.cpp
+          ../relax_data.cpp mock_remake_cell.cpp)
 
 addtest(
-  TARGET
-  MODULE_RELAX_lattice_change_cg_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_lattice_change_cg.cpp
-  ../lattice_change_cg.cpp
-  ../lattice_change_basic.cpp
-  ../cg_base.cpp
-  ../relax_data.cpp
-  mock_remake_cell.cpp)
+  TARGET MODULE_RELAX_lattice_change_cg_test
+  LIBS parameter base device
+  SOURCES test_lattice_change_cg.cpp ../lattice_change_cg.cpp
+          ../lattice_change_basic.cpp ../cg_base.cpp ../relax_data.cpp
+          mock_remake_cell.cpp)
 
 addtest(
-  TARGET
-  MODULE_RELAX_bfgs_basic_test
-  LIBS
-  parameter
-  base
-  device
-  symmetry
-  SOURCES
-  test_bfgs_basic.cpp
-  ../bfgs_basic.cpp
-  ../relax_data.cpp
-  ../ions_move_basic.cpp
-  ${cell_source_files})
+  TARGET MODULE_RELAX_bfgs_basic_test
+  LIBS parameter base device symmetry
+  SOURCES test_bfgs_basic.cpp ../bfgs_basic.cpp ../relax_data.cpp
+          ../ions_move_basic.cpp ${cell_source_files})
 
 addtest(
-  TARGET
-  MODULE_RELAX_ions_move_bfgs2_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_ions_move_bfgs2.cpp
-  ../ions_move_bfgs2.cpp
-  ../ions_move_basic.cpp
-  ../matrix_methods.cpp
-  ../relax_data.cpp
-  ${cell_source_files})
+  TARGET MODULE_RELAX_ions_move_bfgs2_test
+  LIBS parameter base device
+  SOURCES test_ions_move_bfgs2.cpp ../ions_move_bfgs2.cpp
+          ../ions_move_basic.cpp ../matrix_methods.cpp ../relax_data.cpp
+          ${cell_source_files})
 
 addtest(
-  TARGET
-  MODULE_RELAX_ions_move_basic_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_ions_move_basic.cpp
-  ../ions_move_basic.cpp
-  ../relax_data.cpp
-  ${cell_source_files})
+  TARGET MODULE_RELAX_ions_move_basic_test
+  LIBS parameter base device
+  SOURCES test_ions_move_basic.cpp ../ions_move_basic.cpp ../relax_data.cpp
+          ${cell_source_files})
 
 addtest(
-  TARGET
-  MODULE_RELAX_ions_move_bfgs_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_ions_move_bfgs.cpp
-  ../ions_move_bfgs.cpp
-  ../ions_move_basic.cpp
-  ../bfgs_basic.cpp
-  ../relax_data.cpp
-  ${cell_source_files})
+  TARGET MODULE_RELAX_ions_move_bfgs_test
+  LIBS parameter base device
+  SOURCES test_ions_move_bfgs.cpp ../ions_move_bfgs.cpp ../ions_move_basic.cpp
+          ../bfgs_basic.cpp ../relax_data.cpp ${cell_source_files})
 
 addtest(
-  TARGET
-  MODULE_RELAX_ions_move_methods_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_ions_move_methods.cpp
-  ../ions_move_methods.cpp
-  ../ions_move_bfgs.cpp
-  ../ions_move_bfgs2.cpp
-  ../ions_move_cg.cpp
-  ../ions_move_sd.cpp
-  ../ions_move_lbfgs.cpp
-  ../ions_move_basic.cpp
-  ../bfgs_basic.cpp
-  ../cg_base.cpp
-  ../matrix_methods.cpp
-  ../relax_data.cpp
-  ../../source_cell/bcast_cell.cpp
-  ../../source_cell/print_cell.cpp)
+  TARGET MODULE_RELAX_ions_move_methods_test
+  LIBS parameter base device
+  SOURCES test_ions_move_methods.cpp
+          ../ions_move_methods.cpp
+          ../ions_move_bfgs.cpp
+          ../ions_move_bfgs2.cpp
+          ../ions_move_cg.cpp
+          ../ions_move_sd.cpp
+          ../ions_move_lbfgs.cpp
+          ../ions_move_basic.cpp
+          ../bfgs_basic.cpp
+          ../cg_base.cpp
+          ../matrix_methods.cpp
+          ../relax_data.cpp
+          ../../source_cell/bcast_cell.cpp
+          ../../source_cell/print_cell.cpp)
 
 addtest(
-  TARGET
-  MODULE_RELAX_ions_move_cg_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_ions_move_cg.cpp
-  ../ions_move_cg.cpp
-  ../cg_base.cpp
-  ../ions_move_basic.cpp
-  ../relax_data.cpp
-  ${cell_source_files})
+  TARGET MODULE_RELAX_ions_move_cg_test
+  LIBS parameter base device
+  SOURCES test_ions_move_cg.cpp ../ions_move_cg.cpp ../cg_base.cpp
+          ../ions_move_basic.cpp ../relax_data.cpp ${cell_source_files})
 
 addtest(
-  TARGET
-  MODULE_RELAX_ions_move_sd_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_ions_move_sd.cpp
-  ../ions_move_sd.cpp
-  ../ions_move_basic.cpp
-  ../relax_data.cpp
-  ${cell_source_files})
+  TARGET MODULE_RELAX_ions_move_sd_test
+  LIBS parameter base device
+  SOURCES test_ions_move_sd.cpp ../ions_move_sd.cpp ../ions_move_basic.cpp
+          ../relax_data.cpp ${cell_source_files})
 
 addtest(TARGET MODULE_RELAX_relax_history_test SOURCES test_relax_history.cpp)
 
 addtest(
-  TARGET
-  MODULE_RELAX_relax_stru_io_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_relax_stru_io.cpp
-  ../relax_stru_io.cpp
-  ../../source_cell/print_cell.cpp
-  ../../source_cell/cif_io.cpp
-  ../../source_cell/bcast_cell.cpp)
+  TARGET MODULE_RELAX_relax_stru_io_test
+  LIBS parameter base device
+  SOURCES test_relax_stru_io.cpp ../relax_stru_io.cpp
+          ../../source_cell/print_cell.cpp ../../source_cell/cif_io.cpp
+          ../../source_cell/bcast_cell.cpp)
 
 addtest(
-  TARGET
-  MODULE_RELAX_ions_move_lbfgs_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_ions_move_lbfgs.cpp
-  ../ions_move_lbfgs.cpp
-  ../ions_move_basic.cpp
-  ../matrix_methods.cpp
-  ../relax_data.cpp
-  ../../source_cell/bcast_cell.cpp
-  ../../source_cell/print_cell.cpp)
+  TARGET MODULE_RELAX_ions_move_lbfgs_test
+  LIBS parameter base device
+  SOURCES test_ions_move_lbfgs.cpp
+          ../ions_move_lbfgs.cpp
+          ../ions_move_basic.cpp
+          ../matrix_methods.cpp
+          ../relax_data.cpp
+          ../../source_cell/bcast_cell.cpp
+          ../../source_cell/print_cell.cpp)
 
 addtest(
-  TARGET
-  MODULE_RELAX_relax_nsync_test
-  LIBS
-  parameter
-  base
-  device
-  SOURCES
-  test_relax_nsync.cpp
-  ../relax_nsync.cpp
-  ../ions_move_methods.cpp
-  ../ions_move_bfgs.cpp
-  ../ions_move_bfgs2.cpp
-  ../ions_move_cg.cpp
-  ../ions_move_sd.cpp
-  ../ions_move_lbfgs.cpp
-  ../ions_move_basic.cpp
-  ../bfgs_basic.cpp
-  ../cg_base.cpp
-  ../matrix_methods.cpp
-  ../relax_data.cpp
-  ../lat_change_method.cpp
-  ../lattice_change_basic.cpp
-  ../lattice_change_cg.cpp
-  ../../source_cell/cell_tools.cpp
-  mock_remake_cell.cpp
-  ../../source_cell/bcast_cell.cpp
-  ../../source_cell/print_cell.cpp)
+  TARGET MODULE_RELAX_relax_nsync_test
+  LIBS parameter base device
+  SOURCES test_relax_nsync.cpp
+          ../relax_nsync.cpp
+          ../ions_move_methods.cpp
+          ../ions_move_bfgs.cpp
+          ../ions_move_bfgs2.cpp
+          ../ions_move_cg.cpp
+          ../ions_move_sd.cpp
+          ../ions_move_lbfgs.cpp
+          ../ions_move_basic.cpp
+          ../bfgs_basic.cpp
+          ../cg_base.cpp
+          ../matrix_methods.cpp
+          ../relax_data.cpp
+          ../lat_change_method.cpp
+          ../lattice_change_basic.cpp
+          ../lattice_change_cg.cpp
+          ../../source_cell/cell_tools.cpp
+          mock_remake_cell.cpp
+          ../../source_cell/bcast_cell.cpp
+          ../../source_cell/print_cell.cpp)
 
 addtest(
-  TARGET
-  MODULE_RELAX_relax_driver_test
-  KEEP_FEATURE_DEFINITIONS
-  __MPI
-  SOURCES
-  test_relax_driver.cpp
-  ../../source_base/test/mpi_test_main.cpp
-  ../relax_driver.cpp
-  ../relax_nsync.cpp
-  ../relax_sync.cpp
-  ../relax_data.cpp
-  ../line_search.cpp
-  ../ions_move_methods.cpp
-  ../ions_move_bfgs.cpp
-  ../ions_move_bfgs2.cpp
-  ../ions_move_cg.cpp
-  ../ions_move_sd.cpp
-  ../ions_move_lbfgs.cpp
-  ../ions_move_basic.cpp
-  ../bfgs_basic.cpp
-  ../cg_base.cpp
-  ../matrix_methods.cpp
-  ../lat_change_method.cpp
-  ../lattice_change_basic.cpp
-  ../lattice_change_cg.cpp
-  ${socket_json_sources}
-  LIBS
-  MPI::MPI_CXX
-  parameter
-  base
-  device)
+  TARGET MODULE_RELAX_relax_driver_test
+  KEEP_FEATURE_DEFINITIONS __MPI
+  SOURCES test_relax_driver.cpp
+          ../../source_base/test/mpi_test_main.cpp
+          ../relax_driver.cpp
+          ../relax_nsync.cpp
+          ../relax_sync.cpp
+          ../relax_data.cpp
+          ../line_search.cpp
+          ../ions_move_methods.cpp
+          ../ions_move_bfgs.cpp
+          ../ions_move_bfgs2.cpp
+          ../ions_move_cg.cpp
+          ../ions_move_sd.cpp
+          ../ions_move_lbfgs.cpp
+          ../ions_move_basic.cpp
+          ../bfgs_basic.cpp
+          ../cg_base.cpp
+          ../matrix_methods.cpp
+          ../lat_change_method.cpp
+          ../lattice_change_basic.cpp
+          ../lattice_change_cg.cpp
+          ${socket_json_sources}
+  LIBS MPI::MPI_CXX parameter base device)
