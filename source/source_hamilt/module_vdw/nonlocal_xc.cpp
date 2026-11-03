@@ -3,6 +3,7 @@
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
+#include "source_base/memory_recorder.h"
 #include "source_base/parallel_device.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -33,33 +34,59 @@ namespace vdw
 namespace
 {
 /// Cartesian components of the stress tensor returned by vdwxc_stress, stored as [3 * a + b]
-const int STRESS_COMPONENTS = 9;
+const int stress_components = 9;
+
+/// Spin channels of chr.rho that add up to the valence density: for nspin = 4, rho[0] is the total density.
+int density_channels(const Charge& chr)
+{
+    return (chr.nspin == 2) ? 2 : 1;
+}
+
+/// z planes [begin, end) of the libvdwxc slab of process rank: FFTW-MPI blocks of ceil(nz / nproc) planes.
+void libvdwxc_slab(const int nz, const int nproc, const int rank, int& begin, int& end)
+{
+    const int block = (nz + nproc - 1) / nproc;
+    const int first_plane = rank * block;
+    begin = std::min(first_plane, nz);
+    const int block_end = begin + block;
+    end = std::min(block_end, nz);
+}
 
 /**
  * libvdwxc object for one FFT grid and pool, kept between calls and rebuilt when either changes.
  *
  * libvdwxc gets the lattice vectors in the cyclic order (a3, a1, a2), so that the first axis of its grid
  * is the z axis that ABACUS distributes. It splits that axis into blocks of ceil(nz/P) planes, the FFTW-MPI
- * default; vdwxc_init_mpi does not report the local slab, so plan_exchange computes it the same way. The
+ * default; vdwxc_init_mpi does not report the local slab, so libvdwxc_slab computes it the same way. The
  * slab of a process is stored as [z][x][y], the transpose of the ABACUS layout [x][y][z], and whole z
  * planes are moved between the two distributions by all-to-all exchanges.
+ *
+ * There is no destructor on purpose: the single instance (see workspace()) is destroyed after MPI_Finalize
+ * and fftw_cleanup_threads, which the FFT plans of data_ must not outlive, so data_ is never finalized.
  */
 class Rvv10Workspace
 {
   public:
-    /// libvdwxc energy (Ha) and derivatives of the ABACUS-distributed fields rho and sigma; with
-    /// stress != nullptr also the explicit strain derivative (Ha, Cartesian, not divided by the volume).
+    Rvv10Workspace() = default;
+    Rvv10Workspace(const Rvv10Workspace&) = delete;
+    Rvv10Workspace& operator=(const Rvv10Workspace&) = delete;
+
+    /// libvdwxc energy (Ha) and derivatives of the ABACUS-distributed fields rho and sigma. dedn may be
+    /// nullptr when dE/dn is not needed; with stress != nullptr also the explicit strain derivative
+    /// (Ha, Cartesian, not divided by the volume).
     double evaluate(const ModulePW::PW_Basis& pw,
-                    const double b,
-                    const double c,
+                    const XCFunctionalParameters& parameters,
                     const std::vector<double>& rho,
                     const std::vector<double>& sigma,
-                    std::vector<double>& dedn,
+                    std::vector<double>* dedn,
                     std::vector<double>& dedsigma,
                     double* stress);
 
   private:
-    void prepare(const ModulePW::PW_Basis& pw, const double b, const double c);
+    bool same_grid(const ModulePW::PW_Basis& pw) const;
+    void set_cell(const ModulePW::PW_Basis& pw);
+    void rebuild(const ModulePW::PW_Basis& pw);
+    void prepare(const ModulePW::PW_Basis& pw, const XCFunctionalParameters& parameters);
     void plan_exchange(const ModulePW::PW_Basis& pw);
     void to_libvdwxc(const ModulePW::PW_Basis& pw, const std::vector<double>& field, std::vector<double>& slab);
     void from_libvdwxc(const ModulePW::PW_Basis& pw, const std::vector<double>& slab, std::vector<double>& field);
@@ -85,66 +112,76 @@ class Rvv10Workspace
     std::vector<double> dedsigma_;
 };
 
-void Rvv10Workspace::prepare(const ModulePW::PW_Basis& pw, const double b, const double c)
+bool Rvv10Workspace::same_grid(const ModulePW::PW_Basis& pw) const
 {
-    bool same_grid = data_ != nullptr && pw.nx == nx_ && pw.ny == ny_ && pw.nz == nz_ && pw.poolnproc == nproc_;
+    bool same = data_ != nullptr && pw.nx == nx_ && pw.ny == ny_ && pw.nz == nz_ && pw.poolnproc == nproc_;
 #ifdef __MPI
-    same_grid = same_grid && (pw.poolnproc == 1 || pw.pool_world == comm_);
+    same = same && (pw.poolnproc == 1 || pw.pool_world == comm_);
 #endif
-    if (!same_grid)
-    {
-        if (data_ != nullptr)
-        {
-            vdwxc_finalize(&data_);
-        }
-        data_ = vdwxc_new(VDWXC_RVV10);
-        nx_ = pw.nx;
-        ny_ = pw.ny;
-        nz_ = pw.nz;
-        nproc_ = pw.poolnproc;
-    }
-    // The cell is set on every call: a cell relaxation keeps the FFT grid but changes the cell. libvdwxc
-    // integrates with the signed cell volume, and inverting a left-handed cell leaves rVV10 unchanged.
+    return same;
+}
+
+/// The cell is set on every call: a cell relaxation keeps the FFT grid but changes the cell. libvdwxc
+/// integrates with the signed cell volume, and inverting a left-handed cell leaves rVV10 unchanged.
+void Rvv10Workspace::set_cell(const ModulePW::PW_Basis& pw)
+{
     ModuleBase::Matrix3 a = pw.latvec * pw.lat0;
     if (a.Det() < 0.0)
     {
         a = a * -1.0;
     }
     vdwxc_set_unit_cell(data_, pw.nz, pw.nx, pw.ny, a.e31, a.e32, a.e33, a.e11, a.e12, a.e13, a.e21, a.e22, a.e23);
-    if (!same_grid)
+}
+
+void Rvv10Workspace::rebuild(const ModulePW::PW_Basis& pw)
+{
+    if (data_ != nullptr)
     {
+        vdwxc_finalize(&data_);
+    }
+    data_ = vdwxc_new(VDWXC_RVV10);
+    nx_ = pw.nx;
+    ny_ = pw.ny;
+    nz_ = pw.nz;
+    nproc_ = pw.poolnproc;
+    // the cell must be known before the FFT plans are made
+    this->set_cell(pw);
 #ifdef __MPI
-        comm_ = pw.pool_world;
-        if (pw.poolnproc > 1)
-        {
-            vdwxc_init_mpi(data_, comm_);
-        }
-        else
-        {
-            vdwxc_init_serial(data_);
-        }
-#else
-        vdwxc_init_serial(data_);
+    comm_ = pw.pool_world;
+    if (pw.poolnproc > 1)
+    {
+        vdwxc_init_mpi(data_, comm_);
+        return;
+    }
 #endif
+    vdwxc_init_serial(data_);
+}
+
+void Rvv10Workspace::prepare(const ModulePW::PW_Basis& pw, const XCFunctionalParameters& parameters)
+{
+    if (this->same_grid(pw))
+    {
+        this->set_cell(pw);
+    }
+    else
+    {
+        this->rebuild(pw);
     }
     // The libvdwxc slabs depend only on nz and the number of processes, but the ABACUS planes depend on
     // the basis, so the exchange is planned on every call.
     this->plan_exchange(pw);
-    if (vdwxc_set_rvv10_parameters(data_, b, c) != 0)
+    if (vdwxc_set_rvv10_parameters(data_, parameters.rvv10_b, parameters.rvv10_c) != 0)
     {
-        ModuleBase::WARNING_QUIT("vdw::add_rvv10", "libvdwxc rejected vdw_rvv10_b or vdw_rvv10_c");
+        ModuleBase::WARNING_QUIT("Rvv10Workspace::prepare", "libvdwxc rejected vdw_rvv10_b or vdw_rvv10_c");
     }
 }
 
 void Rvv10Workspace::plan_exchange(const ModulePW::PW_Basis& pw)
 {
     const int nproc = pw.poolnproc;
-    const int block = (pw.nz + nproc - 1) / nproc;
-    const int first_slab_plane = pw.poolrank * block;
-    const int slab_start = std::min(first_slab_plane, pw.nz);
-    const int planes_after_start = pw.nz - slab_start;
-    const int nslab = std::min(block, planes_after_start);
-    const int slab_end = slab_start + nslab;
+    int slab_start = 0;
+    int slab_end = 0;
+    libvdwxc_slab(pw.nz, nproc, pw.poolrank, slab_start, slab_end);
     const int plane_end = pw.startz_current + pw.nplane;
     send_count_.assign(nproc, 0);
     send_offset_.assign(nproc, 0);
@@ -153,10 +190,9 @@ void Rvv10Workspace::plan_exchange(const ModulePW::PW_Basis& pw)
     for (int ip = 0; nproc > 1 && ip < nproc; ++ip)
     {
         // ABACUS planes of this process that lie in the slab of ip
-        const int first_plane_of_ip = ip * block;
-        const int begin = std::min(first_plane_of_ip, pw.nz);
-        const int block_end = begin + block;
-        const int end = std::min(block_end, pw.nz);
+        int begin = 0;
+        int end = 0;
+        libvdwxc_slab(pw.nz, nproc, ip, begin, end);
         int low = std::max(pw.startz_current, begin);
         int high = std::min(plane_end, end);
         if (high > low)
@@ -175,7 +211,7 @@ void Rvv10Workspace::plan_exchange(const ModulePW::PW_Basis& pw)
         }
     }
     // libvdwxc expects valid pointers also for an empty slab
-    const int slab_points = nslab * pw.nxy;
+    const int slab_points = (slab_end - slab_start) * pw.nxy;
     const int slab_size = std::max(1, slab_points);
     // the transposed ABACUS planes are only needed for the exchange between processes
     const int planes_size = (nproc > 1) ? std::max(1, pw.nrxx) : 0;
@@ -184,6 +220,8 @@ void Rvv10Workspace::plan_exchange(const ModulePW::PW_Basis& pw)
     sigma_.resize(slab_size);
     dedn_.resize(slab_size);
     dedsigma_.resize(slab_size);
+    const long buffer_bytes = static_cast<long>(sizeof(double)) * (planes_size + 4L * slab_size);
+    ModuleBase::Memory::record("Rvv10Workspace::buffers", buffer_bytes);
 }
 
 void Rvv10Workspace::to_libvdwxc(const ModulePW::PW_Basis& pw,
@@ -239,16 +277,15 @@ void Rvv10Workspace::from_libvdwxc(const ModulePW::PW_Basis& pw,
 }
 
 double Rvv10Workspace::evaluate(const ModulePW::PW_Basis& pw,
-                                const double b,
-                                const double c,
+                                const XCFunctionalParameters& parameters,
                                 const std::vector<double>& rho,
                                 const std::vector<double>& sigma,
-                                std::vector<double>& dedn,
+                                std::vector<double>* dedn,
                                 std::vector<double>& dedsigma,
                                 double* stress)
 {
     ModuleBase::timer::start("Rvv10Workspace", "evaluate");
-    this->prepare(pw, b, c);
+    this->prepare(pw, parameters);
     this->to_libvdwxc(pw, rho, rho_);
     this->to_libvdwxc(pw, sigma, sigma_);
     double energy = 0.0;
@@ -260,7 +297,11 @@ double Rvv10Workspace::evaluate(const ModulePW::PW_Basis& pw,
     {
         energy = vdwxc_stress(data_, stress, rho_.data(), sigma_.data(), dedn_.data(), dedsigma_.data());
     }
-    this->from_libvdwxc(pw, dedn_, dedn);
+    // the exchange is collective, and every process of the pool asks for dE/dn or none does
+    if (dedn != nullptr)
+    {
+        this->from_libvdwxc(pw, dedn_, *dedn);
+    }
     this->from_libvdwxc(pw, dedsigma_, dedsigma);
 #ifdef __MPI
     // the distributed backend returns the contribution of this process
@@ -269,7 +310,7 @@ double Rvv10Workspace::evaluate(const ModulePW::PW_Basis& pw,
         Parallel_Common::reduce_data(&energy, 1, pw.pool_world);
         if (stress != nullptr)
         {
-            Parallel_Common::reduce_data(stress, STRESS_COMPONENTS, pw.pool_world);
+            Parallel_Common::reduce_data(stress, stress_components, pw.pool_world);
         }
     }
 #endif
@@ -277,12 +318,10 @@ double Rvv10Workspace::evaluate(const ModulePW::PW_Basis& pw,
     return energy;
 }
 
-/// The workspace is never destroyed: a static object would be destroyed after MPI_Finalize and
-/// fftw_cleanup_threads, which libvdwxc's FFT plans must not outlive.
 Rvv10Workspace& workspace()
 {
-    static Rvv10Workspace* const instance = new Rvv10Workspace;
-    return *instance;
+    static Rvv10Workspace instance;
+    return instance;
 }
 
 /// Total density of chr (valence plus core), its plane-wave gradient and sigma = |grad n|^2.
@@ -295,8 +334,7 @@ void total_density(const Charge& chr,
     const int nrxx = chr.nrxx;
     const double* core_begin = chr.rho_core;
     const double* core_end = core_begin + nrxx;
-    // for nspin = 4, rho[0] is the total valence density
-    const int nspin0 = (chr.nspin == 2) ? 2 : 1;
+    const int nspin0 = density_channels(chr);
     rho.assign(core_begin, core_end);
     for (int is = 0; is < nspin0; ++is)
     {
@@ -315,6 +353,26 @@ void total_density(const Charge& chr,
         sigma[ir] = grad[ir].norm2();
     }
 }
+
+/// rVV10 energy (Ha) of the total density of chr, with the density gradient, dE/dn (unless dedn is
+/// nullptr), dE/dsigma and, with stress != nullptr, the explicit strain derivative.
+double evaluate_total_density(const XCFunctionalParameters& parameters,
+                              const Charge& chr,
+                              std::vector<ModuleBase::Vector3<double>>& grad,
+                              std::vector<double>* dedn,
+                              std::vector<double>& dedsigma,
+                              double* stress)
+{
+    std::vector<double> rho;
+    std::vector<double> sigma;
+    total_density(chr, rho, grad, sigma);
+    if (dedn != nullptr)
+    {
+        dedn->resize(chr.nrxx);
+    }
+    dedsigma.resize(chr.nrxx);
+    return workspace().evaluate(*chr.rhopw, parameters, rho, sigma, dedn, dedsigma, stress);
+}
 } // namespace
 
 void add_rvv10(const XCFunctionalParameters& parameters,
@@ -331,14 +389,10 @@ void add_rvv10(const XCFunctionalParameters& parameters,
     ModuleBase::timer::start("vdw", "add_rvv10");
     const ModulePW::PW_Basis& pw = *chr.rhopw;
     const int nrxx = chr.nrxx;
-    std::vector<double> rho;
     std::vector<ModuleBase::Vector3<double>> grad;
-    std::vector<double> sigma;
-    total_density(chr, rho, grad, sigma);
-    std::vector<double> dedn(nrxx);
-    std::vector<double> dedsigma(nrxx);
-    const double energy
-        = workspace().evaluate(pw, parameters.rvv10_b, parameters.rvv10_c, rho, sigma, dedn, dedsigma, nullptr);
+    std::vector<double> dedn;
+    std::vector<double> dedsigma;
+    const double energy = evaluate_total_density(parameters, chr, grad, &dedn, dedsigma, nullptr);
 
     // v = dE/dn - div(2 dE/dsigma grad n), converted from Hartree to Ry by e2
     for (int ir = 0; ir < nrxx; ++ir)
@@ -348,7 +402,7 @@ void add_rvv10(const XCFunctionalParameters& parameters,
     std::vector<double> divergence(nrxx);
     XC_Functional::grad_dot(grad.data(), divergence.data(), &pw, pw.tpiba);
     // for nspin = 4 the potential of the total density goes to v(0) only
-    const int nspin0 = (chr.nspin == 2) ? 2 : 1;
+    const int nspin0 = density_channels(chr);
     double vtxc_nl = 0.0;
     for (int ir = 0; ir < nrxx; ++ir)
     {
@@ -377,24 +431,13 @@ void add_rvv10_stress(const XCFunctionalParameters& parameters, const Charge& ch
     ModuleBase::timer::start("vdw", "add_rvv10_stress");
     const ModulePW::PW_Basis& pw = *chr.rhopw;
     const int nrxx = chr.nrxx;
-    std::vector<double> rho;
     std::vector<ModuleBase::Vector3<double>> grad;
-    std::vector<double> density_sigma;
-    total_density(chr, rho, grad, density_sigma);
-    std::vector<double> dedn(nrxx);
-    std::vector<double> dedsigma(nrxx);
-    double explicit_stress[STRESS_COMPONENTS] = {0.0};
-    const double energy = workspace().evaluate(pw,
-                                               parameters.rvv10_b,
-                                               parameters.rvv10_c,
-                                               rho,
-                                               density_sigma,
-                                               dedn,
-                                               dedsigma,
-                                               explicit_stress);
+    std::vector<double> dedsigma;
+    double explicit_stress[stress_components] = {0.0};
+    const double energy = evaluate_total_density(parameters, chr, grad, nullptr, dedsigma, explicit_stress);
 
     // integral of dE/dsigma d_a n d_b n, in units of the volume element
-    double gradient_term[STRESS_COMPONENTS] = {0.0};
+    double gradient_term[stress_components] = {0.0};
     for (int ir = 0; ir < nrxx; ++ir)
     {
         const double g[3] = {grad[ir].x, grad[ir].y, grad[ir].z};
@@ -407,7 +450,7 @@ void add_rvv10_stress(const XCFunctionalParameters& parameters, const Charge& ch
         }
     }
 #ifdef __MPI
-    Parallel_Common::reduce_data(gradient_term, STRESS_COMPONENTS, pw.pool_world);
+    Parallel_Common::reduce_data(gradient_term, stress_components, pw.pool_world);
 #endif
 
     // The full strain derivative is T - delta_ab Int(n dE/dn + 2 sigma dE/dsigma) - 2 Int dE/dsigma d_a n d_b n,
