@@ -66,7 +66,8 @@ class InputTest : public testing::Test
 TEST_F(InputTest, PwOnsiteRequiresDoublePrecision)
 {
     ModuleIO::ReadInput readinput(0);
-    auto item = find_label("precision", readinput.input_lists);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item
+        = find_label("precision", readinput.input_lists);
     ASSERT_NE(item, readinput.input_lists.end());
 
     Parameter param;

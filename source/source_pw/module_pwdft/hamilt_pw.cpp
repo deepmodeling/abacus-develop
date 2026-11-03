@@ -172,14 +172,14 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
             this->ops->add(nonlocal);
         }
     }
-    if (PARAM.inp.sc_mag_switch || PARAM.inp.dft_plus_u)
+    const bool cal_delta_spin = PARAM.inp.sc_mag_switch;
+    const int dft_plus_u = PARAM.inp.dft_plus_u;
+    if (cal_delta_spin || dft_plus_u)
     {
-        Operator<T, Device>* onsite_proj = new OnsiteProj<OperatorPW<T, Device>>(isk,
-                                                                                 ucell,
-                                                                                 p_dftu,
-                                                                                 PARAM.inp.nspin,
-                                                                                 PARAM.inp.sc_mag_switch,
-                                                                                 (PARAM.inp.dft_plus_u > 0));
+        const int nspin = PARAM.inp.nspin;
+        const bool cal_dftu = dft_plus_u > 0;
+        Operator<T, Device>* onsite_proj
+            = new OnsiteProj<OperatorPW<T, Device>>(isk, ucell, p_dftu, nspin, cal_delta_spin, cal_dftu);
         this->ops->add(onsite_proj);
     }
     if (exx_info && exx_info->cal_exx)
