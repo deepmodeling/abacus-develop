@@ -11,8 +11,11 @@
 #include <tuple>
 #include <cassert>
 
+class AtomBasisView;
+
 namespace hamilt
 {
+
 /**
 Class: AtomPair
 
@@ -75,6 +78,17 @@ class AtomPair
              T* existed_array
              = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
     );
+    AtomPair(const int& atom_i,
+             const int& atom_j,
+             const AtomBasisView& rows,
+             const AtomBasisView& cols,
+             T* existed_matrix);
+    AtomPair(const int& atom_i,
+             const int& atom_j,
+             const ModuleBase::Vector3<int>& R_index,
+             const AtomBasisView& rows,
+             const AtomBasisView& cols,
+             T* existed_matrix);
     // This constructor used for initialize a atom-pair local Hamiltonian with only center cell
     // which is used for constructing HK (k space Hamiltonian) objects, (gamma_only case)
     AtomPair(const int& atom_i,         // atomic index of atom i, used to identify atom

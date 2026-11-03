@@ -8,6 +8,9 @@
 #include <set>
 #include <vector>
 
+class BasisFlattenedIndexing;
+class BlockCyclicDistributionInformation;
+
 namespace hamilt
 {
 
@@ -177,12 +180,26 @@ class HContainer
      */
     HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr, const std::vector<int>* ijr_info = nullptr);
 
+    HContainer(const BasisFlattenedIndexing& basis,
+               const BlockCyclicDistributionInformation& layout);
+
+    HContainer(const BasisFlattenedIndexing& basis,
+               const BlockCyclicDistributionInformation& layout,
+               T* data_pointer);
+
+    HContainer(const BasisFlattenedIndexing& basis,
+               const BlockCyclicDistributionInformation& layout,
+               T* data_pointer,
+               const std::vector<int>* ijr_info);
+
     /**
     * @brief set parallel orbital pointer to check parallel information
     */
     void set_paraV(const Parallel_Orbitals* paraV_in)
     {
         this->paraV = paraV_in;
+        this->basis_index = nullptr;
+        this->matrix_dist = nullptr;
         for (auto& ap : atom_pairs) ap.set_paraV(paraV_in);
     };
     /**
@@ -216,6 +233,11 @@ class HContainer
      * @param atom_ij AtomPair object
      */
     void insert_pair(const AtomPair<T>& atom_ij);
+
+    void insert_pair(const int iat1, const int iat2);
+    void insert_pair(const int iat1,
+                     const int iat2,
+                     const ModuleBase::Vector3<int>& R_index);
 
     /**
      * @brief find AtomPair with atom index atom_i and atom_j
@@ -481,10 +503,7 @@ class HContainer
      * @brief get number of basis in each H matrix
      * @return int
      */
-    int get_nbasis() const
-    {
-        return paraV->para_2d().nrglb();
-    }
+    int get_nbasis() const;
 
   private:
     // i-j atom pairs, sorted by matrix of (atom_i, atom_j)
@@ -521,6 +540,12 @@ class HContainer
      * @brief pointer of Parallel_Orbitals, which is used to get atom-pair information
      */
     const Parallel_Orbitals* paraV = nullptr;
+
+    const BasisFlattenedIndexing* basis_index = nullptr;
+    const BlockCyclicDistributionInformation* matrix_dist = nullptr;
+
+    bool same_layout(const HContainer<T>& other) const;
+    bool same_layout(const AtomPair<T>& atom_ij) const;
 
     // int multiple = 1;
     // int current_multiple = 0;

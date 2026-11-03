@@ -1,5 +1,10 @@
 #include "hcontainer.h"
+#include "source_base/atom_basis_view.h"
+#include "source_base/basis_flattened_indexing.h"
+#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/memory_recorder.h"
+
+#include <utility>
 
 namespace hamilt
 {
@@ -32,6 +37,8 @@ HContainer<T>::HContainer(const HContainer<T>& HR_in, T* data_array)
     this->sparse_ap_index = HR_in.sparse_ap_index;
     this->gamma_only = HR_in.gamma_only;
     this->paraV = HR_in.paraV;
+    this->basis_index = HR_in.basis_index;
+    this->matrix_dist = HR_in.matrix_dist;
     this->current_R = -1;
     this->wrapper_pointer = data_array;
     this->allocated = false;
@@ -54,10 +61,14 @@ HContainer<T>::HContainer(HContainer<T>&& HR_in) noexcept
     this->wrapper_pointer = HR_in.wrapper_pointer;
     this->gamma_only = HR_in.gamma_only;
     this->paraV = HR_in.paraV;
+    this->basis_index = HR_in.basis_index;
+    this->matrix_dist = HR_in.matrix_dist;
     this->allocated = HR_in.allocated;
     this->allocated_size = HR_in.allocated_size;
     this->current_R = -1;
     HR_in.wrapper_pointer = nullptr;
+    HR_in.basis_index = nullptr;
+    HR_in.matrix_dist = nullptr;
     HR_in.allocated = false;
     HR_in.allocated_size = 0;
     // tmp terms not moved
@@ -75,11 +86,15 @@ HContainer<T>& HContainer<T>::operator=(HContainer<T>&& HR_in) noexcept
         this->wrapper_pointer = HR_in.wrapper_pointer;
         this->gamma_only = HR_in.gamma_only;
         this->paraV = HR_in.paraV;
+        this->basis_index = HR_in.basis_index;
+        this->matrix_dist = HR_in.matrix_dist;
         this->allocated = HR_in.allocated;
         this->allocated_size = HR_in.allocated_size;
         this->current_R = -1;
 
         HR_in.wrapper_pointer = nullptr;
+        HR_in.basis_index = nullptr;
+        HR_in.matrix_dist = nullptr;
         HR_in.allocated = false;
         HR_in.allocated_size = 0;
     }
@@ -185,6 +200,130 @@ HContainer<T>::HContainer(const Parallel_Orbitals* paraV_in, T* data_pointer, co
         // allocate memory
         this->allocate(data_pointer, false);
     }
+}
+
+template <typename T>
+HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
+                          const BlockCyclicDistributionInformation& layout)
+{
+    this->gamma_only = false;
+    this->current_R = -1;
+    this->allocated_size = 0;
+    this->basis_index = &basis;
+    this->matrix_dist = &layout;
+
+    const int natom = basis.nat();
+    this->sparse_ap.resize(natom);
+    this->sparse_ap_index.resize(natom);
+    for (int iat1 = 0; iat1 < natom; ++iat1)
+    {
+        const AtomBasisView rows = AtomBasisView::rows(basis, layout, iat1);
+        if (rows.empty())
+        {
+            continue;
+        }
+        for (int iat2 = 0; iat2 < natom; ++iat2)
+        {
+            const AtomBasisView cols = AtomBasisView::cols(basis, layout, iat2);
+            if (cols.empty())
+            {
+                continue;
+            }
+            AtomPair<T> atom_pair(iat1,
+                                  iat2,
+                                  rows,
+                                  cols,
+                                  nullptr);
+            this->insert_pair(atom_pair);
+        }
+    }
+    this->allocate(nullptr, true);
+}
+
+template <typename T>
+HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
+                          const BlockCyclicDistributionInformation& layout,
+                          T* data_pointer)
+{
+    this->gamma_only = false;
+    this->current_R = -1;
+    this->allocated_size = 0;
+    this->wrapper_pointer = data_pointer;
+    this->basis_index = &basis;
+    this->matrix_dist = &layout;
+
+    const int natom = basis.nat();
+    this->sparse_ap.resize(natom);
+    this->sparse_ap_index.resize(natom);
+}
+
+template <typename T>
+HContainer<T>::HContainer(const BasisFlattenedIndexing& basis,
+                          const BlockCyclicDistributionInformation& layout,
+                          T* data_pointer,
+                          const std::vector<int>* ijr_info)
+{
+    this->gamma_only = false;
+    this->current_R = -1;
+    this->allocated_size = 0;
+    this->wrapper_pointer = data_pointer;
+    this->basis_index = &basis;
+    this->matrix_dist = &layout;
+
+    const int natom = basis.nat();
+    this->sparse_ap.resize(natom);
+    this->sparse_ap_index.resize(natom);
+    if (ijr_info != nullptr)
+    {
+        this->insert_ijrs(ijr_info);
+        this->allocate(data_pointer, false);
+    }
+}
+
+template <typename T>
+int HContainer<T>::get_nbasis() const
+{
+    if (this->basis_index != nullptr)
+    {
+        return static_cast<int>(this->basis_index->size());
+    }
+    return this->paraV->para_2d().nrglb();
+}
+
+template <typename T>
+bool HContainer<T>::same_layout(const HContainer<T>& other) const
+{
+    if (this->basis_index != nullptr || this->matrix_dist != nullptr)
+    {
+        return this->basis_index == other.basis_index && this->matrix_dist == other.matrix_dist;
+    }
+    return this->paraV == other.paraV;
+}
+
+template <typename T>
+bool HContainer<T>::same_layout(const AtomPair<T>& atom_pair) const
+{
+    if (this->basis_index == nullptr)
+    {
+        return this->paraV == atom_pair.get_paraV();
+    }
+
+    const int iat1 = atom_pair.get_atom_i();
+    const int iat2 = atom_pair.get_atom_j();
+    const int natom = this->basis_index->nat();
+    if (iat1 < 0 || iat1 >= natom || iat2 < 0 || iat2 >= natom)
+    {
+        return false;
+    }
+    const AtomBasisView rows = AtomBasisView::rows(*this->basis_index, *this->matrix_dist, iat1);
+    const AtomBasisView cols = AtomBasisView::cols(*this->basis_index, *this->matrix_dist, iat2);
+    const bool rows_match =
+        atom_pair.get_begin_row() == rows.local0()
+        && atom_pair.get_row_size() == rows.nloc();
+    const bool cols_match =
+        atom_pair.get_begin_col() == cols.local0()
+        && atom_pair.get_col_size() == cols.nloc();
+    return atom_pair.get_paraV() == nullptr && rows_match && cols_match;
 }
 
 // allocate
@@ -743,13 +882,13 @@ void HContainer<T>::insert_pair(const AtomPair<T>& atom_ij)
     else
     {
         // 3. insert atom_ij
-        // check paraV pointer
-        if (this->paraV != atom_ij.get_paraV())
+        if (!this->same_layout(atom_ij))
         {
-            ModuleBase::WARNING_QUIT("HContainer::insert_pair", "atom_ij has different paraV pointer as HContainer");
+            ModuleBase::WARNING_QUIT("HContainer::insert_pair",
+                                     "atom_ij has a different layout from HContainer");
         }
         else
-        { //insert atom_ij, and set paraV pointer for HContainer if atom_ij has paraV pointer
+        {
             this->atom_pairs.push_back(atom_ij);
             //if gamma_only case, merge atom_ij to gamma_only
             if(this->gamma_only)
@@ -769,6 +908,81 @@ void HContainer<T>::insert_pair(const AtomPair<T>& atom_ij)
                 this->sparse_ap_index[atom_i].push_back(this->atom_pairs.size() - 1);
             }
         }
+    }
+}
+
+template <typename T>
+void HContainer<T>::insert_pair(const int iat1, const int iat2)
+{
+    const int natom = static_cast<int>(this->sparse_ap.size());
+    if (iat1 < 0 || iat1 >= natom || iat2 < 0 || iat2 >= natom)
+    {
+        ModuleBase::WARNING_QUIT("HContainer::insert_pair", "atom index is out of range");
+    }
+    if (this->basis_index != nullptr)
+    {
+        const AtomBasisView rows
+            = AtomBasisView::rows(*this->basis_index, *this->matrix_dist, iat1);
+        const AtomBasisView cols
+            = AtomBasisView::cols(*this->basis_index, *this->matrix_dist, iat2);
+        if (rows.empty() || cols.empty())
+        {
+            return;
+        }
+        AtomPair<T> atom_pair(iat1,
+                              iat2,
+                              rows,
+                              cols,
+                              nullptr);
+        this->insert_pair(atom_pair);
+    }
+    else if (this->paraV != nullptr)
+    {
+        AtomPair<T> atom_pair(iat1, iat2, this->paraV);
+        this->insert_pair(atom_pair);
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("HContainer::insert_pair", "HContainer layout is not initialized");
+    }
+}
+
+template <typename T>
+void HContainer<T>::insert_pair(const int iat1,
+                                const int iat2,
+                                const ModuleBase::Vector3<int>& R_index)
+{
+    const int natom = static_cast<int>(this->sparse_ap.size());
+    if (iat1 < 0 || iat1 >= natom || iat2 < 0 || iat2 >= natom)
+    {
+        ModuleBase::WARNING_QUIT("HContainer::insert_pair", "atom index is out of range");
+    }
+    if (this->basis_index != nullptr)
+    {
+        const AtomBasisView rows
+            = AtomBasisView::rows(*this->basis_index, *this->matrix_dist, iat1);
+        const AtomBasisView cols
+            = AtomBasisView::cols(*this->basis_index, *this->matrix_dist, iat2);
+        if (rows.empty() || cols.empty())
+        {
+            return;
+        }
+        AtomPair<T> atom_pair(iat1,
+                              iat2,
+                              R_index,
+                              rows,
+                              cols,
+                              nullptr);
+        this->insert_pair(atom_pair);
+    }
+    else if (this->paraV != nullptr)
+    {
+        AtomPair<T> atom_pair(iat1, iat2, R_index, this->paraV);
+        this->insert_pair(atom_pair);
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("HContainer::insert_pair", "HContainer layout is not initialized");
     }
 }
 
@@ -823,10 +1037,9 @@ size_t HContainer<T>::get_memory_size() const
 template <typename T>
 void HContainer<T>::shape_synchron( const HContainer<T>& other)
 {
-    // check paraV pointer
-    if (this->paraV != other.paraV)
+    if (!this->same_layout(other))
     {
-        ModuleBase::WARNING_QUIT("HContainer::synchronize", "paraV pointer not match");
+        ModuleBase::WARNING_QUIT("HContainer::synchronize", "HContainer layouts do not match");
     }
     // synchronize atom_pairs
     for (int i = 0; i < other.atom_pairs.size(); ++i)
@@ -893,9 +1106,9 @@ std::vector<int> HContainer<T>::get_ijr_info() const
 template<typename T>
 void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs)
 {
-    if (this->paraV == nullptr)
+    if (this->paraV == nullptr && this->basis_index == nullptr)
     {
-        ModuleBase::WARNING_QUIT("HContainer::insert_ijrs", "paraV pointer can not be nullptr!");
+        ModuleBase::WARNING_QUIT("HContainer::insert_ijrs", "HContainer layout is not initialized");
     }
     // get number of atom pairs
     const int number_ap = (*ijrs)[0];
@@ -908,23 +1121,53 @@ void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs)
         const int atom_j = *ijr_p++;
         // get number of R
         const int number_R = *ijr_p++;
-        // skip atom pairs not belonging to this process
-        if (this->paraV->atom_begin_row[atom_i] == -1
-            || this->paraV->atom_begin_col[atom_j] == -1)
+        if (this->basis_index == nullptr)
         {
-            ijr_p += number_R * 3; // skip all R entries
-            continue;
+            const bool atom_pair_on_this_rank
+                = this->paraV->atom_begin_row[atom_i] != -1
+                  && this->paraV->atom_begin_col[atom_j] != -1;
+            if (!atom_pair_on_this_rank)
+            {
+                ijr_p += number_R * 3;
+                continue;
+            }
+            for (int k = 0; k < number_R; ++k)
+            {
+                int r_index[3];
+                r_index[0] = *ijr_p++;
+                r_index[1] = *ijr_p++;
+                r_index[2] = *ijr_p++;
+                AtomPair<T> atom_pair(
+                    atom_i, atom_j, r_index[0], r_index[1], r_index[2], this->paraV);
+                this->insert_pair(atom_pair);
+            }
         }
-        for (int k = 0; k < number_R; ++k)
+        else
         {
-            int r_index[3];
-            // get R index
-            r_index[0] = *ijr_p++;
-            r_index[1] = *ijr_p++;
-            r_index[2] = *ijr_p++;
-            //insert this IJ AtomPair
-            AtomPair<T> tmp_ap(atom_i, atom_j, r_index[0], r_index[1], r_index[2], this->paraV);
-            this->insert_pair(tmp_ap);
+            const AtomBasisView rows
+                = AtomBasisView::rows(*this->basis_index, *this->matrix_dist, atom_i);
+            const AtomBasisView cols
+                = AtomBasisView::cols(*this->basis_index, *this->matrix_dist, atom_j);
+            if (rows.empty() || cols.empty())
+            {
+                ijr_p += number_R * 3;
+                continue;
+            }
+            for (int k = 0; k < number_R; ++k)
+            {
+                int r_index[3];
+                r_index[0] = *ijr_p++;
+                r_index[1] = *ijr_p++;
+                r_index[2] = *ijr_p++;
+                const ModuleBase::Vector3<int> R_index(r_index[0], r_index[1], r_index[2]);
+                AtomPair<T> atom_pair(atom_i,
+                                      atom_j,
+                                      R_index,
+                                      rows,
+                                      cols,
+                                      nullptr);
+                this->insert_pair(atom_pair);
+            }
         }
     }
 }
