@@ -1,1 +1,8 @@
-Test case without current dependent potential in TDOFDFT
+TDOFDFT Al without a current-dependent potential, evolved to t=0.5 fs.
+Use dt=0.001 fs and 501 outputs (initial state plus 500 advances).
+The previous dt=0.25 fs trajectory had severe energy drift and amplified
+parallel numerical differences. The smaller step is checked against dt/2
+and dt/4 at the same physical times; see VALIDATION.md and check_timestep.py.
+The reference is regenerated for the new trajectory; comparison thresholds
+are unchanged. This case does not establish exact energy conservation or
+the convergence order of the coupled propagator.
