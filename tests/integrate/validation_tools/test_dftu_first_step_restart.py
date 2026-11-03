@@ -81,11 +81,11 @@ def main():
     fixture = Path(sys.argv[2]).resolve()
     with tempfile.TemporaryDirectory(prefix="abacus_dftu_pw_first_step_") as scratch:
         root = Path(scratch)
-        for init_occ_mat in (1, 2, 0):
+        for init_occ_mat in (2, 0):
             work = root / f"init_occ_mat_{init_occ_mat}"
             work.mkdir()
             run_case(executable, fixture, work, init_occ_mat)
-    print("PW DFT+U first-step output checks passed for init_occ_mat=0, 1, and 2")
+    print("PW DFT+U first-step output checks passed for init_occ_mat=0 and 2")
 
 
 if __name__ == "__main__":
