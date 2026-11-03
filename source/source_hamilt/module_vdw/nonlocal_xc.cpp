@@ -62,7 +62,7 @@ void libvdwxc_slab(const int nz, const int nproc, const int rank, int& begin, in
  * planes are moved between the two distributions by all-to-all exchanges.
  * No user-defined destructor on purpose: the buffers are freed at exit, but data_ is never finalized,
  * because the single instance (see workspace()) is destroyed after MPI_Finalize and fftw_cleanup_threads,
- * which the FFT plans of data_ must not outlive.
+ * after which the FFTW-MPI plans of data_ can no longer be destroyed safely.
  */
 class Rvv10Workspace
 {

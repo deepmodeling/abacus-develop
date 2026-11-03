@@ -15,7 +15,7 @@ class Vector3;
 namespace vdw
 {
 
-// rVV10 nonlocal correlation of vdw_method rvv10, evaluated by libvdwxc. Both functions do nothing
+// rVV10 nonlocal correlation of vdw_method rvv10, evaluated by libvdwxc. All three functions do nothing
 // unless parameters.rvv10 is set. They use the total density of chr (valence plus core) and are
 // collective over the pool communicator of chr.rhopw. The libvdwxc object, its FFT plans and its
 // buffers are kept between calls.

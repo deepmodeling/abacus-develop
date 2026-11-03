@@ -1,4 +1,4 @@
-INPUT_PARAMETERS 
+INPUT_PARAMETERS
 
 ecutwfc           10
 scf_thr           1e-06

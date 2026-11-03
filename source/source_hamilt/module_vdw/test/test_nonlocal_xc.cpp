@@ -159,8 +159,9 @@ void setup_grid(ModulePW::PW_Basis& basis,
 }
 
 /// 5x7x9 grid: on two processes the z planes split 5 + 4, on four processes 3 + 2 + 2 + 2 against
-/// libvdwxc's 3 + 3 + 3 + 0, which exercises the redistribution and an empty slab. Odd nx and ny leave
-/// no Nyquist plane, so libvdwxc's result does not depend on the order in which it gets the axes.
+/// libvdwxc's 3 + 3 + 3 + 0, which exercises the redistribution and an empty slab. Odd ny and nz leave no
+/// Nyquist plane on libvdwxc's halved axis (ABACUS y in the adapter's (z, x, y) order, ABACUS z in the
+/// direct call's (x, y, z) order), so libvdwxc's result does not depend on the axis order.
 void setup(ModulePW::PW_Basis& basis, const ModuleBase::Matrix3& lattice, const double cutoff)
 {
     setup_grid(basis, lattice, cutoff, 5, 7, 9);
