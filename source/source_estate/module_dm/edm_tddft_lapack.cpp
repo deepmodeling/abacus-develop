@@ -25,7 +25,7 @@ void edm_tddft_lapack(Parallel_Orbitals& pv,
 
     // Dense gather/lapack/gemm operations below take the GLOBAL matrix
     // dimension; pv.nrow is only the per-process local row count.
-    const int nlocal = pv.get_global_row_size();
+    const int nlocal = pv.para_2d().get_global_row_size();
     assert(nlocal >= 0);
     dmat.dm->edmk.resize(kv.get_nks());
 
@@ -91,7 +91,7 @@ void edm_tddft_lapack(Parallel_Orbitals& pv,
 
             hamilt::MatrixBlock<std::complex<double>> dmk_local_block;
             dmk_local_block.p = tmp_dmk_local;
-            dmk_local_block.desc = pv.desc;
+            dmk_local_block.desc = pv.para_2d().get_desc();
             module_rt::gatherMatrix(myid, root_proc, dmk_local_block, dmk_global);
 
             if (myid == root_proc)
@@ -229,7 +229,7 @@ void edm_tddft_lapack(Parallel_Orbitals& pv,
             if (num_procs == 1)
             {
                 // Directly copy to target local matrix
-                tmp_edmk.create(pv.ncol, pv.nrow);
+                tmp_edmk.create(pv.para_2d().get_col_size(), pv.para_2d().get_row_size());
                 edm_dest = tmp_edmk.c;
             }
             else
@@ -258,12 +258,12 @@ void edm_tddft_lapack(Parallel_Orbitals& pv,
 
             edm_global.row = nlocal;
             edm_global.col = nlocal;
-            edm_global.desc.reset(new int[9]{1, pv.desc[1], nlocal, nlocal, nlocal, nlocal, 0, 0, nlocal});
+            edm_global.desc.reset(new int[9]{1, pv.para_2d().get_desc()[1], nlocal, nlocal, nlocal, nlocal, 0, 0, nlocal});
 
-            tmp_edmk.create(pv.ncol, pv.nrow);
+            tmp_edmk.create(pv.para_2d().get_col_size(), pv.para_2d().get_row_size());
             hamilt::MatrixBlock<std::complex<double>> edm_local_block;
             edm_local_block.p = tmp_edmk.c;
-            edm_local_block.desc = pv.desc;
+            edm_local_block.desc = pv.para_2d().get_desc();
             module_rt::distributeMatrix(edm_local_block, edm_global);
         }
 #else
