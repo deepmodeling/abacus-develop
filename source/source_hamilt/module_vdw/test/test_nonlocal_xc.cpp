@@ -5,6 +5,7 @@
 #include "source_base/parallel_device.h"
 #include "source_base/parallel_global.h"
 #include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_big.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_hamilt/module_xc/libxc_abacus.h"
@@ -404,29 +405,53 @@ TEST_F(NonlocalXCTest, MatchesDirectLibvdwxc)
         EXPECT_NEAR(std::get<2>(polarized)(0, ir), v(0, ir), ROUNDING_TOLERANCE);
         EXPECT_NEAR(std::get<2>(polarized)(1, ir), v(0, ir), ROUNDING_TOLERANCE);
     }
-}
 
-TEST_F(NonlocalXCTest, DistributedGridMatchesCompleteGrid)
-{
-    const std::vector<double> valence = local_grid(pw, valence_density);
-    const std::vector<double> core = local_grid(pw, core_density);
-    const std::vector<double> valence_complete = local_grid(serial, valence_density);
-    const std::vector<double> core_complete = local_grid(serial, core_density);
-    const VxcResult distributed = rvv10_result(pw, {valence}, core);
-    const VxcResult complete = rvv10_result(serial, {valence_complete}, core_complete);
-    EXPECT_NEAR(std::get<0>(distributed), std::get<0>(complete), ROUNDING_TOLERANCE);
-    EXPECT_NEAR(std::get<1>(distributed), std::get<1>(complete), ROUNDING_TOLERANCE);
-    for (int ixy = 0; ixy < pw.nxy; ++ixy)
+    // four-component layout: rho[0] is the total valence density, and only v(0) gets the potential
+    std::vector<double> mx(serial.nrxx);
+    std::vector<double> my(serial.nrxx);
+    std::vector<double> mz(serial.nrxx);
+    for (int ir = 0; ir < serial.nrxx; ++ir)
     {
-        for (int iz = 0; iz < pw.nplane; ++iz)
+        mx[ir] = 0.1 * valence[ir];
+        my[ir] = -0.05 * valence[ir];
+        mz[ir] = 0.2 * valence[ir];
+    }
+    const VxcResult noncollinear = rvv10_result(serial, {valence, mx, my, mz}, core);
+    EXPECT_NEAR(std::get<0>(noncollinear), etxc, ROUNDING_TOLERANCE);
+    EXPECT_NEAR(std::get<1>(noncollinear), vtxc, ROUNDING_TOLERANCE);
+    for (int ir = 0; ir < serial.nrxx; ++ir)
+    {
+        EXPECT_NEAR(std::get<2>(noncollinear)(0, ir), v(0, ir), ROUNDING_TOLERANCE);
+        for (int is = 1; is < 4; ++is)
         {
-            const int local = ixy * pw.nplane + iz;
-            const int global = ixy * pw.nz + pw.startz_current + iz;
-            EXPECT_NEAR(std::get<2>(distributed)(0, local), std::get<2>(complete)(0, global), ROUNDING_TOLERANCE);
+            EXPECT_EQ(std::get<2>(noncollinear)(is, ir), 0.0);
         }
     }
-    const ModuleBase::matrix stress = rvv10_stress(pw, {valence}, core);
-    const ModuleBase::matrix stress_complete = rvv10_stress(serial, {valence_complete}, core_complete);
+}
+
+/// The result on the distributed grid equals the result on the complete grid, on the planes of this
+/// process, for the energy, vtxc, the potential and the stress.
+void expect_distributed_matches_complete(ModulePW::PW_Basis& distributed, ModulePW::PW_Basis& complete)
+{
+    const std::vector<double> valence = local_grid(distributed, valence_density);
+    const std::vector<double> core = local_grid(distributed, core_density);
+    const std::vector<double> valence_complete = local_grid(complete, valence_density);
+    const std::vector<double> core_complete = local_grid(complete, core_density);
+    const VxcResult result = rvv10_result(distributed, {valence}, core);
+    const VxcResult reference = rvv10_result(complete, {valence_complete}, core_complete);
+    EXPECT_NEAR(std::get<0>(result), std::get<0>(reference), ROUNDING_TOLERANCE);
+    EXPECT_NEAR(std::get<1>(result), std::get<1>(reference), ROUNDING_TOLERANCE);
+    for (int ixy = 0; ixy < distributed.nxy; ++ixy)
+    {
+        for (int iz = 0; iz < distributed.nplane; ++iz)
+        {
+            const int local = ixy * distributed.nplane + iz;
+            const int global = ixy * distributed.nz + distributed.startz_current + iz;
+            EXPECT_NEAR(std::get<2>(result)(0, local), std::get<2>(reference)(0, global), ROUNDING_TOLERANCE);
+        }
+    }
+    const ModuleBase::matrix stress = rvv10_stress(distributed, {valence}, core);
+    const ModuleBase::matrix stress_complete = rvv10_stress(complete, {valence_complete}, core_complete);
     EXPECT_GT(std::abs(stress_complete(0, 0)), 1.0e-10);
     for (int a = 0; a < 3; ++a)
     {
@@ -435,6 +460,33 @@ TEST_F(NonlocalXCTest, DistributedGridMatchesCompleteGrid)
             EXPECT_NEAR(stress(a, b), stress_complete(a, b), ROUNDING_TOLERANCE);
         }
     }
+}
+
+TEST_F(NonlocalXCTest, DistributedGridMatchesCompleteGrid)
+{
+    expect_distributed_matches_complete(pw, serial);
+}
+
+TEST_F(NonlocalXCTest, BigGridDistributionMatchesCompleteGrid)
+{
+    // The density grid of a run is a PW_Basis_Big, which hands out whole blocks of bz planes: on two
+    // processes 8 + 4 against libvdwxc's 6 + 6, on four 4 + 4 + 4 + 0 against 3 + 3 + 3 + 3, so that a
+    // process may own no plane at all and one ABACUS block may span two libvdwxc slabs.
+    ModulePW::PW_Basis_Big big{"cpu", "double"};
+    big.setbxyz(1, 1, 4);
+    big.initmpi(test_size, test_rank, MPI_COMM_WORLD);
+    ModulePW::PW_Basis complete{"cpu", "double"};
+    complete.initmpi(1, 0, MPI_COMM_SELF);
+    const ModuleBase::Matrix3 lattice = oblique_lattice(1.0);
+    setup_grid(big, lattice, BASIS_CUTOFF, 5, 7, 12);
+    setup_grid(complete, lattice, BASIS_CUTOFF, 5, 7, 12);
+    ASSERT_EQ(big.nz, 12);
+    ASSERT_EQ(big.nplane % 4, 0);
+    if (test_size == 4)
+    {
+        EXPECT_EQ(big.numz[3], 0);
+    }
+    expect_distributed_matches_complete(big, complete);
 }
 
 TEST_F(NonlocalXCTest, PotentialIsTheDerivativeOfTheEnergy)
@@ -561,7 +613,9 @@ TEST_F(NonlocalXCTest, StressIsTheStrainDerivativeOfTheEnergy)
 TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
 {
     // v_xc and v_xc_meta with rVV10 equal the semilocal result plus add_rvv10, for native PBE (final
-    // return), a libxc GGA (v_xc_libxc), noncollinear PBE (NCGGA return) and SCAN (v_xc_meta).
+    // return), a libxc GGA (v_xc_libxc), noncollinear PBE and libxc GGA with the default gga_grad 0
+    // (collinear-mapped branches of v_xc and v_xc_libxc) and with gga_grad 2 (NCGGA return, libxc local
+    // collinear map), and SCAN (v_xc_meta).
     const std::vector<double> valence = local_grid(pw, valence_density);
     const std::vector<double> core = local_grid(pw, core_density);
     const std::vector<double> zeros(pw.nrxx);
@@ -585,6 +639,9 @@ TEST_F(NonlocalXCTest, VxcAddsRvv10ToEveryFunctionalPath)
     expect_vxc_adds_rvv10("PBE", polarized.chr, ucell, false, 0);
     expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", polarized.chr, ucell, false, 0);
     expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 2);
+    expect_vxc_adds_rvv10("PBE", magnetized.chr, ucell, true, 0);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", magnetized.chr, ucell, true, 0);
+    expect_vxc_adds_rvv10("GGA_X_RPW86+GGA_C_PBE", magnetized.chr, ucell, true, 2);
 
     XC_Functional::ScopedType scan("SCAN");
     const std::vector<std::vector<double>> unpolarized(1, valence);

@@ -222,6 +222,17 @@ TEST_F(InputTest, VdwMethodRvv10)
     EXPECT_EQ(param.inp.vdw_method, "rvv10");
     EXPECT_DOUBLE_EQ(param.inp.vdw_rvv10_b, 15.7);
     EXPECT_DOUBLE_EQ(param.inp.vdw_rvv10_c, 0.0093);
+    // b follows dft_functional unless it is set: SCAN 15.7, r2SCAN 11.95, otherwise the rPW86-PBE value 6.3
+    const char* b_cases[4][2] = {{"vdw_method rvv10\ndft_functional scan\n", "15.7"},
+                                 {"vdw_method rvv10\ndft_functional MGGA_X_R2SCAN+MGGA_C_R2SCAN\n", "11.95"},
+                                 {"vdw_method rvv10\ndft_functional scan\nvdw_rvv10_b 9.0\n", "9.0"},
+                                 {"vdw_method rvv10\ndft_functional pbe\n", "6.3"}};
+    for (const char* const* b_case: b_cases)
+    {
+        Parameter param_b;
+        EXPECT_NO_THROW(read_parameters(input_file, b_case[0], param_b));
+        EXPECT_DOUBLE_EQ(param_b.inp.vdw_rvv10_b, std::stod(b_case[1]));
+    }
     const std::string reason = "Requires esolver_type!=dfpt";
     expect_invalid_input(input_file, "vdw_method rvv10\nesolver_type dfpt\n", reason);
     expect_invalid_input(input_file, "vdw_method rvv10\nesolver_type lr\ncalculation nscf\ncal_force 1\n", reason);

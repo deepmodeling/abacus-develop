@@ -3,6 +3,9 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 #include "read_inp_sccs.h"
+
+#include <algorithm>
+#include <cctype>
 namespace ModuleIO
 {
 void ReadInput::item_model()
@@ -324,10 +327,33 @@ Available options are:
         item.category = "vdW correction";
         item.type = "Real";
         item.description
-            = R"(Parameter b of rVV10, which sets the short-range damping and depends on dft_functional. Published values are 6.3 for rPW86 exchange with PBE correlation (dft_functional GGA_X_RPW86+GGA_C_PBE, the original rVV10), 15.7 for SCAN and 11.95 for r2SCAN.)";
+            = R"(Parameter b of rVV10, which sets the short-range damping and depends on dft_functional. Published values are 6.3 for rPW86 exchange with PBE correlation (dft_functional GGA_X_RPW86+GGA_C_PBE, the original rVV10), 15.7 for SCAN and 11.95 for r2SCAN. If not set, ABACUS uses 15.7 for dft_functional scan or MGGA_X_SCAN+MGGA_C_SCAN, 11.95 for MGGA_X_R2SCAN+MGGA_C_R2SCAN and 6.3 otherwise, with a warning for functionals other than GGA_X_RPW86+GGA_C_PBE.)";
         item.default_value = "6.3";
         item.unit = "";
         item.set_availability("vdw_method==rvv10");
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            // the published pairings of b with the functional, unless the user chose b
+            if (item.is_read() || para.input.vdw_method != "rvv10")
+            {
+                return;
+            }
+            std::string functional = para.input.dft_functional;
+            std::transform(functional.begin(), functional.end(), functional.begin(), ::toupper);
+            if (functional == "SCAN" || functional == "MGGA_X_SCAN+MGGA_C_SCAN")
+            {
+                para.input.vdw_rvv10_b = 15.7;
+            }
+            else if (functional == "MGGA_X_R2SCAN+MGGA_C_R2SCAN")
+            {
+                para.input.vdw_rvv10_b = 11.95;
+            }
+            else if (functional != "GGA_X_RPW86+GGA_C_PBE")
+            {
+                ModuleBase::WARNING("ReadInput",
+                                    "vdw_rvv10_b is not set: the rPW86-PBE value 6.3 is used with dft_functional "
+                                        + para.input.dft_functional);
+            }
+        };
         read_sync_double(input.vdw_rvv10_b);
         this->add_item(item);
     }
