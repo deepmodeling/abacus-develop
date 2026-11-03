@@ -148,7 +148,7 @@ double pauli_expectation(const cd c[2], const int component)
 
 // Regression test for the nspin=4 Mulliken M_y sign.
 // The stored DM is conj-first (DM_{ab} = conj(c_a) c_b, see dm_from_psi.h), so
-// the physical Pauli components of mud = DM.S (S = 1 here) are
+// the physical Pauli components of mud = DM*S^T (S = 1 here) are
 //   Mx = Re(mud_{up,down} + mud_{down,up})
 //   My = Im(mud_{up,down} - mud_{down,up})
 //   Mz = Re(mud_{up,up} - mud_{down,down}).
