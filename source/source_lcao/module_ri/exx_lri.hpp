@@ -272,19 +272,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
     {
         throw std::invalid_argument("Unfolded hybrid RI stress is not yet implemented");
     }
-    if (this->info.unfold_hybrid_images)
-    {
-        for (const auto& setting : this->coulomb_settings)
-        {
-            for (const auto& kernel : setting.second.second)
-            {
-                if (kernel.first != Conv_Coulomb_Pot_K::Coulomb_Type::Erfc)
-                {
-                    throw std::invalid_argument("Unfolded hybrid RI validation currently supports HSE kernels only");
-                }
-            }
-        }
-    }
     for(const auto &settings_list : this->coulomb_settings)
     {
         std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>

@@ -82,18 +82,63 @@ TEST(ExxInfo, LeavesPlaneWaveExchangeImageDomainUnchanged)
     EXPECT_FALSE(info.info_ri.unfold_hybrid_images);
 }
 
-TEST(ExxInfo, PreservesFullRangeHybridGaugeImagePath)
+TEST(ExxInfo, UnfoldsDirectFullRangeKernels)
 {
     auto input = hse_input();
-    input.dft_functional = "pbe0";
     input.exx_real_number = "0";
     input.exx_erfc_alpha.clear();
     input.exx_erfc_omega.clear();
     input.exx_fock_alpha = {"0.25"};
     input.exx_fock_lambda = {"0.3"};
+    for (const auto& functional : {"pbe0", "hf"})
+    {
+        input.dft_functional = functional;
+        for (const auto& method : {"spencer", "revised_spencer", "limits"})
+        {
+            input.exx_singularity_correction = method;
+            Exx_Info info;
+            EXPECT_NO_THROW(init_exx_info(info, input));
+            EXPECT_TRUE(info.info_ri.unfold_hybrid_images);
+            input.kpar = 2;
+            EXPECT_THROW(init_exx_info(info, input), std::invalid_argument);
+            input.kpar = 1;
+        }
+    }
+}
+
+TEST(ExxInfo, PreservesEwaldImagePathIncludingMixedKernels)
+{
+    auto input = hse_input();
+    input.dft_functional = "pbe0";
+    input.exx_real_number = "0";
+    input.exx_fock_alpha = {"0.25"};
+    input.exx_fock_lambda = {"0.3"};
     input.kpar = 2;
+    for (const auto& method : {"massidda", "carrier"})
+    {
+        input.exx_singularity_correction = method;
+        for (const bool mixed : {false, true})
+        {
+            input.exx_erfc_alpha.clear();
+            input.exx_erfc_omega.clear();
+            if (mixed)
+            {
+                input.exx_erfc_alpha = {"0.25"};
+                input.exx_erfc_omega = {"0.11"};
+            }
+            Exx_Info info;
+            EXPECT_NO_THROW(init_exx_info(info, input));
+            EXPECT_FALSE(info.info_ri.unfold_hybrid_images);
+        }
+    }
+}
+
+TEST(ExxInfo, ErfcRemainsDirectRegardlessOfFockSingularityMethod)
+{
+    auto input = hse_input();
+    input.exx_real_number = "0";
+    input.exx_singularity_correction = "massidda";
     Exx_Info info;
     EXPECT_NO_THROW(init_exx_info(info, input));
-    EXPECT_FALSE(info.info_ri.unfold_hybrid_images);
-    EXPECT_EQ(info.info_ri.coulomb_param.count(Conv_Coulomb_Pot_K::Coulomb_Type::Fock), 1u);
+    EXPECT_TRUE(info.info_ri.unfold_hybrid_images);
 }

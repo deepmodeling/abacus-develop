@@ -221,13 +221,16 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
             { exx_info.info_lip.lambda = std::stod(inp.exx_fock_lambda[0]); }
 
         exx_info.info_ri.real_number = std::stoi(inp.exx_real_number);
-        // The finite-support image domain applies only to screened exchange.
-        // Full-range kernels retain their existing Ewald/image treatment.
+        // Preserve actual images for all direct (Center2) RI kernels.
+        // Ewald preperiodizes its integrals and retains its existing treatment.
         const auto& kernels = exx_info.info_global.coulomb_param;
-        const bool screened_exchange = kernels.size() == 1
-            && kernels.count(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc) == 1;
+        const bool has_fock = kernels.count(Conv_Coulomb_Pot_K::Coulomb_Type::Fock) != 0;
+        const bool direct_fock = inp.exx_singularity_correction == "spencer"
+            || inp.exx_singularity_correction == "revised_spencer"
+            || inp.exx_singularity_correction == "limits";
+        const bool direct_integrals = !has_fock || direct_fock;
         exx_info.info_ri.unfold_hybrid_images = exx_info.info_global.cal_exx && inp.basis_type == "lcao"
-            && inp.esolver_type == "tddft" && inp.td_stype == 2 && screened_exchange;
+            && inp.esolver_type == "tddft" && inp.td_stype == 2 && direct_integrals;
         if (exx_info.info_ri.unfold_hybrid_images && inp.kpar != 1)
         {
             throw std::invalid_argument("Unfolded hybrid RI validation currently requires kpar=1");

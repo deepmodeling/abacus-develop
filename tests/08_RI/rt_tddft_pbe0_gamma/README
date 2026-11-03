@@ -1,4 +1,4 @@
-RT-TDDFT PBE0 on Si, hybrid gauge (td_stype=2), Gamma k point, td_vext=1, out_current=1.
+RT-TDDFT PBE0 on Si, hybrid gauge (td_stype=2), Gamma-centered 2x1x1 k-point mesh, td_vext=1, out_current=1.
 
-Current and energy references include the ordinary-NAO input-density phase before RI exchange mixing.
-Validated with 1 and 4 MPI ranks; the phase-disabled control recovers the previous references.
+Current and energy references include ordinary-NAO input-density conversion and RI image phases before exchange mixing.
+Validated with 1 and 4 MPI ranks at unchanged tolerances; the image-disabled control recovers the preceding input-phase-only references.
