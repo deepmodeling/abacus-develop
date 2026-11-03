@@ -206,7 +206,7 @@ namespace LR_Util
     template<>
     void matsym<double>(const double* in, const int n, const BlockCyclicDistributionInformation& pmat, double* out)
     {
-        std::copy(in, in + pmat.get_local_size(), out);
+        std::copy(in, in + pmat.size(), out);
         const double alpha = 0.5, beta = 0.5;
         const int i1 = 1;
         ScalapackConnector::tranu(n,
@@ -215,18 +215,18 @@ namespace LR_Util
             in,
             i1,
             i1,
-            pmat.get_desc(),
+            pmat.desc(),
             beta,
             out,
             i1,
             i1,
-            pmat.get_desc());
+            pmat.desc());
     }
     template<>
     void matsym<double>(double* inout, const int n, const BlockCyclicDistributionInformation& pmat)
     {
-        std::vector<double> tmp(pmat.get_local_size());
-        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        std::vector<double> tmp(pmat.size());
+        std::copy(inout, inout + pmat.size(), tmp.begin());
         const double alpha = 0.5, beta = 0.5;
         const int i1 = 1;
         ScalapackConnector::tranu(n,
@@ -235,17 +235,17 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.get_desc(),
+            pmat.desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.get_desc());
+            pmat.desc());
     }
     template<>
     void matsym<std::complex<double>>(const std::complex<double>* in, const int n, const BlockCyclicDistributionInformation& pmat, std::complex<double>* out)
     {
-        std::copy(in, in + pmat.get_local_size(), out);
+        std::copy(in, in + pmat.size(), out);
         const std::complex<double> alpha(0.5, 0.0), beta(0.5, 0.0);
         const int i1 = 1;
         ScalapackConnector::tranc(n,
@@ -254,18 +254,18 @@ namespace LR_Util
             in,
             i1,
             i1,
-            pmat.get_desc(),
+            pmat.desc(),
             beta,
             out,
             i1,
             i1,
-            pmat.get_desc());
+            pmat.desc());
     }
     template<>
     void matsym<std::complex<double>>(std::complex<double>* inout, const int n, const BlockCyclicDistributionInformation& pmat)
     {
-        std::vector<std::complex<double>> tmp(pmat.get_local_size());
-        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        std::vector<std::complex<double>> tmp(pmat.size());
+        std::copy(inout, inout + pmat.size(), tmp.begin());
         const std::complex<double> alpha(0.5, 0.0), beta(0.5, 0.0);
         const int i1 = 1;
         ScalapackConnector::tranc(n,
@@ -274,18 +274,18 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.get_desc(),
+            pmat.desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.get_desc());
+            pmat.desc());
     }
 
     template<>
     void mattrans<double>(const double* in, const int n, const BlockCyclicDistributionInformation& pmat, double* out)
     {
-        std::copy(in, in + pmat.get_local_size(), out);
+        std::copy(in, in + pmat.size(), out);
         const double alpha = 1.0;
         const double beta = 0.0;
         const int i1 = 1;
@@ -295,18 +295,18 @@ namespace LR_Util
             in,
             i1,
             i1,
-            pmat.get_desc(),
+            pmat.desc(),
             beta,
             out,
             i1,
             i1,
-            pmat.get_desc());
+            pmat.desc());
     }
     template<>
     void mattrans<double>(double* inout, const int n, const BlockCyclicDistributionInformation& pmat)
     {
-        std::vector<double> tmp(pmat.get_local_size());
-        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        std::vector<double> tmp(pmat.size());
+        std::copy(inout, inout + pmat.size(), tmp.begin());
         const double alpha = 1.0;
         const double beta = 0.0;
         const int i1 = 1;
@@ -316,17 +316,17 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.get_desc(),
+            pmat.desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.get_desc());
+            pmat.desc());
     }
     template<>
     void mattrans<std::complex<double>>(const std::complex<double>* in, const int n, const BlockCyclicDistributionInformation& pmat, std::complex<double>* out)
     {
-        std::copy(in, in + pmat.get_local_size(), out);
+        std::copy(in, in + pmat.size(), out);
         const std::complex<double> alpha(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
         const int i1 = 1;
@@ -336,18 +336,18 @@ namespace LR_Util
             in,
             i1,
             i1,
-            pmat.get_desc(),
+            pmat.desc(),
             beta,
             out,
             i1,
             i1,
-            pmat.get_desc());
+            pmat.desc());
     }
     template<>
     void mattrans<std::complex<double>>(std::complex<double>* inout, const int n, const BlockCyclicDistributionInformation& pmat)
     {
-        std::vector<std::complex<double>> tmp(pmat.get_local_size());
-        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        std::vector<std::complex<double>> tmp(pmat.size());
+        std::copy(inout, inout + pmat.size(), tmp.begin());
         const std::complex<double> alpha(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
         const int i1 = 1;
@@ -357,20 +357,20 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.get_desc(),
+            pmat.desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.get_desc());
+            pmat.desc());
     }
 
 
     template<>
     void matantisym<double>(double* inout, const int n, const BlockCyclicDistributionInformation& pmat)
     {
-        std::vector<double> tmp(pmat.get_local_size());
-        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        std::vector<double> tmp(pmat.size());
+        std::copy(inout, inout + pmat.size(), tmp.begin());
         const double alpha = -0.5;
         const double beta = 0.5;
         const int i1 = 1;
@@ -380,18 +380,18 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.get_desc(),
+            pmat.desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.get_desc());
+            pmat.desc());
     }
     template<>
     void matantisym<std::complex<double>>(std::complex<double>* inout, const int n, const BlockCyclicDistributionInformation& pmat)
     {
-        std::vector<std::complex<double>> tmp(pmat.get_local_size());
-        std::copy(inout, inout + pmat.get_local_size(), tmp.begin());
+        std::vector<std::complex<double>> tmp(pmat.size());
+        std::copy(inout, inout + pmat.size(), tmp.begin());
         const std::complex<double> alpha(-0.5, 0.0);
         const std::complex<double> beta(0.5, 0.0);
         const int i1 = 1;
@@ -401,12 +401,12 @@ namespace LR_Util
             tmp.data(),
             i1,
             i1,
-            pmat.get_desc(),
+            pmat.desc(),
             beta,
             inout,
             i1,
             i1,
-            pmat.get_desc());
+            pmat.desc());
     }
 #endif
 
@@ -415,7 +415,7 @@ namespace LR_Util
     {
         ModuleBase::TITLE("LR_Util", "setup_2d_division");
 #ifdef __MPI
-        pv.init(gr, gc, nb, MPI_COMM_WORLD);
+        pv.init(gr, gc, nb, MPI_COMM_WORLD, false);
 #else
         pv.set_serial(gr, gc);
 #endif

@@ -58,7 +58,7 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
     ModuleBase::timer::start("MolecularLRI", "transform_k_2dlocal");
     const int npair = this->nocc * this->nvirt;
     const double fac_base = factor * 2.0; // factor 2 for Ha → Ry; k-point weight multiplies below
-    const int nb = pm_2d.get_block_size();
+    const int nb = pm_2d.nb();
 #ifdef __MPI
     MPI_Datatype mpitype_blockhead = mpi_type_blockhead();
     // 0. outer loop of k1: communicate per 64 k1
@@ -175,9 +175,9 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
                         const int owner = pm_2d.owner_processor(global_row, global_col);
                         if (owner == this->my_rank)
                         {
-                            const int lr0 = pm_2d.global2local_row(global_row);
-                            const int lc0 = pm_2d.global2local_col(global_col);
-                            const int lld = pm_2d.get_row_size();
+                            const int lr0 = pm_2d.irloc(global_row);
+                            const int lc0 = pm_2d.icloc(global_col);
+                            const int lld = pm_2d.nrloc();
                             for(int jj = j; jj < j_next; ++jj)
                             {
                                 for(int ii = i; ii < i_next; ++ii)
@@ -229,9 +229,9 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
             const BlockHead& rh = recv_heads[iblock];
             const int nr = rh.nr;
             const int nc = rh.nc;
-            const int lr = pm_2d.global2local_row(rh.gr0);
-            const int lc = pm_2d.global2local_col(rh.gc0);
-            const int lld = pm_2d.get_row_size();
+            const int lr = pm_2d.irloc(rh.gr0);
+            const int lc = pm_2d.icloc(rh.gc0);
+            const int lld = pm_2d.nrloc();
             for (int j = 0; j < nc; ++j)
             {
                 for (int i = 0; i < nr; ++i)

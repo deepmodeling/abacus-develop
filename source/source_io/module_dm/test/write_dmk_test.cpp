@@ -41,7 +41,7 @@ Magnetism::~Magnetism() { }
 void init_pv(int nlocal, BlockCyclicDistributionInformation& pv)
 {
 #ifdef __MPI
-        pv.init(nlocal, nlocal, 1, MPI_COMM_WORLD);
+        pv.init(nlocal, nlocal, 1, MPI_COMM_WORLD, false);
 #else
         pv.set_serial(nlocal, nlocal);
 #endif             
@@ -68,8 +68,8 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
     }
 #ifdef __MPI
     BlockCyclicDistributionInformation pv_global;
-    pv_global.init(nlocal, nlocal, nlocal, MPI_COMM_WORLD);
-    dmk.resize(nspin * nk, std::vector<T>(pv.get_local_size(), 0.0));
+    pv_global.init(nlocal, nlocal, nlocal, MPI_COMM_WORLD, false);
+    dmk.resize(nspin * nk, std::vector<T>(pv.size(), 0.0));
     for (int i = 0; i < nspin * nk; i++)
     {
         Cpxgemr2d(nlocal,
@@ -77,12 +77,12 @@ void gen_dmk(std::vector<std::vector<T>>& dmk, std::vector<double>& efs,  int ns
                   dmk_global[i].data(),
                   1,
                   1,
-                  const_cast<int*>(pv_global.get_desc()),
+                  const_cast<int*>(pv_global.desc()),
                   dmk[i].data(),
                   1,
                   1,
-                  const_cast<int*>(pv.get_desc()),
-                  pv.get_blacs_ctxt());
+                  const_cast<int*>(pv.desc()),
+                  pv.ictxt());
     }
 #else
     dmk = dmk_global;
@@ -437,8 +437,8 @@ TEST(DMKTest, ReadDMK) {
     EXPECT_TRUE(ModuleIO::read_dmk(1, 1, kv, pv, "./support/", dmk_multik, ofs_running));
     EXPECT_EQ(dmk.size(), 1);
     EXPECT_EQ(dmk_multik.size(), 1);
-    EXPECT_EQ(dmk[0].size(), pv.get_local_size());
-    EXPECT_EQ(dmk_multik[0].size(), pv.get_local_size());
+    EXPECT_EQ(dmk[0].size(), pv.size());
+    EXPECT_EQ(dmk_multik[0].size(), pv.size());
     if (GlobalV::MY_RANK == 0)
     {
         EXPECT_NEAR(dmk[0][0], 3.904e-01, 1e-6);

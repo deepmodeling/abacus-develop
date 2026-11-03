@@ -30,23 +30,23 @@ void gather_row(const T* mat,
 {
 #ifdef __MPI
     std::fill(line.begin(), line.end(), T(0));
-    const int ir = pv.global2local_row(i);
+    const int ir = pv.irloc(i);
     if (ir >= 0)
     {
         // data collection
         for (int j = (tri ? i : 0); j < dim; ++j)
         {
-            const int ic = pv.global2local_col(j);
+            const int ic = pv.icloc(j);
             if (ic >= 0)
             {
                 int iic = 0;
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
                 {
-                    iic = ir + ic * pv.get_row_size();
+                    iic = ir + ic * pv.nrloc();
                 }
                 else
                 {
-                    iic = ir * pv.get_col_size() + ic;
+                    iic = ir * pv.ncloc() + ic;
                 }
                 line[tri ? j - i : j] = mat[iic];
             }

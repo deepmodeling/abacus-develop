@@ -172,10 +172,10 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
     // matrix is made column-memory-consecutive, thus the vectorized data must be cut by "the
     // number of rows", then by "the number of columns".
     // nbands is "the number of rows", nbasis is "the number of columns"
-    para2d_test.init(nbands, nbasis, 4, MPI_COMM_WORLD);
+    para2d_test.init(nbands, nbasis, 4, MPI_COMM_WORLD, false);
     BlockCyclicDistributionInformation para2d_glb;
-    para2d_glb.init(nbands, nbasis, std::max(nbands, nbasis), MPI_COMM_WORLD);
-    lowf_loc.resize(para2d_test.get_row_size() * para2d_test.get_col_size()); // the nrow and ncol are automatically
+    para2d_glb.init(nbands, nbasis, std::max(nbands, nbasis), MPI_COMM_WORLD, false);
+    lowf_loc.resize(para2d_test.nrloc() * para2d_test.ncloc()); // the nrow and ncol are automatically
                                                           // calculated by BlockCyclicDistributionInformation
     // wait, what is the meaning of nrow here? The "nrow" again is just the number to cut
     // the vectorized data into a matrix. The "nrow" is the number of rows in the matrix but
@@ -184,8 +184,8 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
     // the following function can do the scattering-gathering automatically.
     // a double counterpart is pdgemr2d_, int counterpart is pigemr2d_
     // Those in C style are Cpzgemr2d, Cdgemr2d, Cigemr2d...
-    Cpxgemr2d(nbands, nbasis, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb.get_desc()), lowf_loc.data(), 1, 1,
-              const_cast<int*>(para2d_test.get_desc()), para2d_glb.get_blacs_ctxt());
+    Cpxgemr2d(nbands, nbasis, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb.desc()), lowf_loc.data(), 1, 1,
+              const_cast<int*>(para2d_test.desc()), para2d_glb.ictxt());
     // what will happen if impose a row-major processor grid onto a column-major matrix?
     // you can get correct results, expect each block is column-major.
     // Have a look:
@@ -205,13 +205,13 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
             for (int j = 0; j < lowf_loc.size(); j++)
             {
                 printf("(%2.0f,%2.0f)", lowf_loc[j].real(), lowf_loc[j].imag());
-                if ((j + 1) % para2d_test.get_row_size() == 0)
+                if ((j + 1) % para2d_test.nrloc() == 0)
                 {
                     printf("\n");
                 }
-                const int k = j % para2d_test.get_row_size();
+                const int k = j % para2d_test.nrloc();
                 EXPECT_NEAR(lowf_loc[j].real(), reals[i][k], 1e-7);
-                const int l = j / para2d_test.get_row_size();
+                const int l = j / para2d_test.nrloc();
                 EXPECT_NEAR(lowf_loc[j].imag(), imags[i][l], 1e-7);
             }
             printf("Or INDEX IT to show like \"row-major\":\n");
@@ -220,9 +220,9 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
             // i = x/ncol, j = x%ncol, x' = j*nrow + i = x%ncol*nrow + x/ncol
             for (int j = 0; j < lowf_loc.size(); j++)
             {
-                const int x = j % para2d_test.get_col_size() * para2d_test.get_row_size() + j / para2d_test.get_col_size();
+                const int x = j % para2d_test.ncloc() * para2d_test.nrloc() + j / para2d_test.ncloc();
                 printf("(%2.0f,%2.0f)", lowf_loc[x].real(), lowf_loc[x].imag());
-                if ((j + 1) % para2d_test.get_col_size() == 0)
+                if ((j + 1) % para2d_test.ncloc() == 0)
                 {
                     printf("\n");
                 }
@@ -253,12 +253,12 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
     // note! this time the memory is first cut by "the number of columns",
     // then by "the number of rows". Therefore the "nbasis" is put the first.
     // This is how ScaLAPCK defines a matrix: the first number defines the leading dimension.
-    para2d_test_prime.init(nbasis, nbands, 4, MPI_COMM_WORLD);
+    para2d_test_prime.init(nbasis, nbands, 4, MPI_COMM_WORLD, false);
     BlockCyclicDistributionInformation para2d_glb_prime;
-    para2d_glb_prime.init(nbasis, nbands, std::max(nbands, nbasis), MPI_COMM_WORLD);
-    lowf_loc.resize(para2d_test_prime.get_row_size() * para2d_test_prime.get_col_size());
-    Cpxgemr2d(nbasis, nbands, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb_prime.get_desc()), lowf_loc.data(), 1, 1,
-              const_cast<int*>(para2d_test_prime.get_desc()), para2d_glb_prime.get_blacs_ctxt());
+    para2d_glb_prime.init(nbasis, nbands, std::max(nbands, nbasis), MPI_COMM_WORLD, false);
+    lowf_loc.resize(para2d_test_prime.nrloc() * para2d_test_prime.ncloc());
+    Cpxgemr2d(nbasis, nbands, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb_prime.desc()), lowf_loc.data(), 1, 1,
+              const_cast<int*>(para2d_test_prime.desc()), para2d_glb_prime.ictxt());
     MPI_Barrier(MPI_COMM_WORLD);
     sizes_loc = {4 * 4 * 3, 4 * 4 * 2, 4 * 4 + 4 * 2, 4 * 4};
     reals = {{0, 1, 2, 3, 8, 9}, {4, 5, 6, 7}, {0, 1, 2, 3, 8, 9}, {4, 5, 6, 7}};
@@ -272,13 +272,13 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
             for (int j = 0; j < lowf_loc.size(); j++)
             {
                 printf("(%2.0f,%2.0f)", lowf_loc[j].real(), lowf_loc[j].imag());
-                if ((j + 1) % para2d_test_prime.get_row_size() == 0)
+                if ((j + 1) % para2d_test_prime.nrloc() == 0)
                 {
                     printf("\n");
                 }
-                const int k = j / para2d_test_prime.get_row_size();
+                const int k = j / para2d_test_prime.nrloc();
                 EXPECT_NEAR(lowf_loc[j].real(), reals[i][k], 1e-7);
-                const int l = j % para2d_test_prime.get_row_size();
+                const int l = j % para2d_test_prime.nrloc();
                 EXPECT_NEAR(lowf_loc[j].imag(), imags[i][l], 1e-7);
             }
             printf("\n");
@@ -392,12 +392,12 @@ TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
     MPI_Barrier(MPI_COMM_WORLD);
     std::vector<double> lowf_loc;
     BlockCyclicDistributionInformation para2d_test;
-    para2d_test.init(nbasis, nbands, 4, MPI_COMM_WORLD);
+    para2d_test.init(nbasis, nbands, 4, MPI_COMM_WORLD, false);
     BlockCyclicDistributionInformation para2d_glb;
-    para2d_glb.init(nbasis, nbands, std::max(nbands, nbasis), MPI_COMM_WORLD);
-    lowf_loc.resize(para2d_test.get_row_size() * para2d_test.get_col_size());
-    Cpxgemr2d(nbasis, nbands, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb.get_desc()), lowf_loc.data(), 1, 1,
-              const_cast<int*>(para2d_test.get_desc()), para2d_glb.get_blacs_ctxt());
+    para2d_glb.init(nbasis, nbands, std::max(nbands, nbasis), MPI_COMM_WORLD, false);
+    lowf_loc.resize(para2d_test.nrloc() * para2d_test.ncloc());
+    Cpxgemr2d(nbasis, nbands, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb.desc()), lowf_loc.data(), 1, 1,
+              const_cast<int*>(para2d_test.desc()), para2d_glb.ictxt());
     MPI_Barrier(MPI_COMM_WORLD);
     std::vector<int> sizes_loc = {4 * 4 * 3, 4 * 4 * 2, 4 * 4 + 4 * 2, 4 * 4};
     for (int i = 0; i < nprocs; i++)
@@ -418,12 +418,12 @@ TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
     }
     MPI_Barrier(MPI_COMM_WORLD);
     BlockCyclicDistributionInformation para2d_test_prime;
-    para2d_test_prime.init(nbands, nbasis, 4, MPI_COMM_WORLD);
+    para2d_test_prime.init(nbands, nbasis, 4, MPI_COMM_WORLD, false);
     BlockCyclicDistributionInformation para2d_glb_prime;
-    para2d_glb_prime.init(nbands, nbasis, std::max(nbands, nbasis), MPI_COMM_WORLD);
-    lowf_loc.resize(para2d_test_prime.get_row_size() * para2d_test_prime.get_col_size());
-    Cpxgemr2d(nbands, nbasis, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb_prime.get_desc()), lowf_loc.data(), 1, 1,
-              const_cast<int*>(para2d_test_prime.get_desc()), para2d_glb_prime.get_blacs_ctxt());
+    para2d_glb_prime.init(nbands, nbasis, std::max(nbands, nbasis), MPI_COMM_WORLD, false);
+    lowf_loc.resize(para2d_test_prime.nrloc() * para2d_test_prime.ncloc());
+    Cpxgemr2d(nbands, nbasis, lowf_glb.data(), 1, 1, const_cast<int*>(para2d_glb_prime.desc()), lowf_loc.data(), 1, 1,
+              const_cast<int*>(para2d_test_prime.desc()), para2d_glb_prime.ictxt());
     MPI_Barrier(MPI_COMM_WORLD);
     sizes_loc = {4 * 4 * 3, 4 * 4 + 4 * 2, 4 * 4 * 2, 4 * 4};
     for (int i = 0; i < nprocs; i++)
@@ -456,7 +456,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
     }
     BlockCyclicDistributionInformation para2d_test;
     // this time the nbands and nbasis are given as priori, from reading of INPUT and of orb files.
-    para2d_test.init(63, 3, 2, MPI_COMM_WORLD);
+    para2d_test.init(63, 3, 2, MPI_COMM_WORLD, false);
     // therefore it is a nrows x ncols matrix, where nr = 3, nc = 63
     // scatter it with block size 2 x 2, on 4-processors grid. From testcase ReadWfcLcaoTest::Cpzgemr2dTest
     // it is known the processor grid will be transposed to column-major, thus
@@ -469,36 +469,36 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
     // total size check
     if (iproc == 0)
     {
-        EXPECT_EQ(64, para2d_test.get_row_size() * para2d_test.get_col_size());
+        EXPECT_EQ(64, para2d_test.nrloc() * para2d_test.ncloc());
     }
     if (iproc == 1)
     {
-        EXPECT_EQ(32, para2d_test.get_row_size() * para2d_test.get_col_size());
+        EXPECT_EQ(32, para2d_test.nrloc() * para2d_test.ncloc());
     }
     if (iproc == 2)
     {
-        EXPECT_EQ(62, para2d_test.get_row_size() * para2d_test.get_col_size());
+        EXPECT_EQ(62, para2d_test.nrloc() * para2d_test.ncloc());
     }
     if (iproc == 3)
     {
-        EXPECT_EQ(31, para2d_test.get_row_size() * para2d_test.get_col_size());
+        EXPECT_EQ(31, para2d_test.nrloc() * para2d_test.ncloc());
     }
     // nrows check
     if (iproc == 0)
     {
-        EXPECT_EQ(2, para2d_test.get_col_size());
+        EXPECT_EQ(2, para2d_test.ncloc());
     }
     if (iproc == 1)
     {
-        EXPECT_EQ(1, para2d_test.get_col_size());
+        EXPECT_EQ(1, para2d_test.ncloc());
     }
     if (iproc == 2)
     {
-        EXPECT_EQ(2, para2d_test.get_col_size());
+        EXPECT_EQ(2, para2d_test.ncloc());
     }
     if (iproc == 3)
     {
-        EXPECT_EQ(1, para2d_test.get_col_size());
+        EXPECT_EQ(1, para2d_test.ncloc());
     }
 
     const std::string out_dir = "./support";

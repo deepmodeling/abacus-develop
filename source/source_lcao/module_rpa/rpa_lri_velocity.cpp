@@ -38,14 +38,14 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell& ucell,
 
     BlockCyclicDistributionInformation parac;
     const BlockCyclicDistributionInformation& distribution = parav.para_2d();
-    const int block_size = distribution.get_block_size();
+    const int block_size = distribution.nb();
     LR_Util::setup_2d_division(parac,
                                block_size,
                                this->runtime.nlocal,
                                this->runtime.input.nbands
 #ifdef __MPI
                                ,
-                               distribution.get_blacs_ctxt()
+                               distribution.ictxt()
 #endif
     );
 

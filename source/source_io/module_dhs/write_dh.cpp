@@ -113,7 +113,7 @@ void write_dh_perI(WriteDHParams& params,
             // build the filename directly (filename_output only accepts a fixed property set)
 #ifdef __MPI
             const bool col_major = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver);
-            const size_t hk_size = static_cast<size_t>(pv.para_2d().get_row_size()) * pv.para_2d().get_col_size();
+            const size_t hk_size = static_cast<size_t>(pv.para_2d().nrloc()) * pv.para_2d().ncloc();
 #else
             const size_t hk_size = static_cast<size_t>(nlocal) * nlocal;
 #endif
@@ -122,9 +122,9 @@ void write_dh_perI(WriteDHParams& params,
                 std::vector<std::complex<double>> hk(hk_size, 0);
 #ifdef __MPI
                 if (col_major)
-                    hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], pv.para_2d().get_row_size(), 1);
+                    hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], pv.para_2d().nrloc(), 1);
                 else
-                    hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], pv.para_2d().get_col_size(), 0);
+                    hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], pv.para_2d().ncloc(), 0);
 #else
                 hamilt::folding_HR(*hR, hk.data(), params.kv->kvec_d[ik], nlocal, 0);
 #endif

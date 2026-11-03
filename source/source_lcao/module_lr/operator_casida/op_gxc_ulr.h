@@ -67,8 +67,8 @@ namespace LR
         {
             ModuleBase::TITLE("OperatorGxcULR", "act");
             ModuleBase::timer::start("OperatorGxcULR", "act");
-            const std::vector<int> off_x = { 0, static_cast<int>(nk_ * pX_[0].get_local_size()) };
-            const std::vector<int> off_out = { 0, static_cast<int>(nk_ * pout_[0].get_local_size()) };
+            const std::vector<int> off_x = { 0, static_cast<int>(nk_ * pX_[0].size()) };
+            const std::vector<int> off_out = { 0, static_cast<int>(nk_ * pout_[0].size()) };
 
             // 1. the two transition-density channels, on the grid together
             std::vector<std::vector<ct::Tensor>> dmk(2);
@@ -111,13 +111,13 @@ namespace LR
 
                 this->hR_->set_zero();
                 ModuleGint::cal_gint_vl(v2.c, this->hR_.get());
-                std::vector<ct::Tensor> v_2d(nk_, LR_Util::newTensor<T>({ pmat_.para_2d().get_col_size(), pmat_.para_2d().get_row_size() }));
+                std::vector<ct::Tensor> v_2d(nk_, LR_Util::newTensor<T>({ pmat_.para_2d().ncloc(), pmat_.para_2d().nrloc() }));
                 for (auto& v: v_2d)
                 {
                     v.zero();
                 }
                 const int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(this->ks_solver_)
-                    ? pmat_.para_2d().get_row_size() : pmat_.para_2d().get_col_size();
+                    ? pmat_.para_2d().nrloc() : pmat_.para_2d().ncloc();
                 for (int ik = 0;ik < nk_;++ik)
                 {
                     folding_HR(*this->hR_, v_2d[ik].template data<T>(), kv_.kvec_d[ik], nrow, 1);

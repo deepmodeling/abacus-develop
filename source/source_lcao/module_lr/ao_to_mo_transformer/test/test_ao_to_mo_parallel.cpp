@@ -34,31 +34,31 @@ template <typename T> void check_empty_blocks(const int naos, const int nocc, co
     BlockCyclicDistributionInformation pc;
     BlockCyclicDistributionInformation px;
     LR_Util::setup_2d_division(pao, block, naos, naos);
-    LR_Util::setup_2d_division(pc, block, naos, nocc + nvirt, pao.get_blacs_ctxt());
-    LR_Util::setup_2d_division(px, block, nvirt, nocc, pao.get_blacs_ctxt());
-    const int csize = std::max<int>(1, pc.get_local_size());
-    const int xsize = std::max<int>(1, px.get_local_size());
+    LR_Util::setup_2d_division(pc, block, naos, nocc + nvirt, pao.ictxt());
+    LR_Util::setup_2d_division(px, block, nvirt, nocc, pao.ictxt());
+    const int csize = std::max<int>(1, pc.size());
+    const int xsize = std::max<int>(1, px.size());
     std::vector<T> coefficients(csize, T(0));
     std::vector<T> result(xsize, T(0));
-    for (int col = 0; col < pc.get_col_size(); ++col)
+    for (int col = 0; col < pc.ncloc(); ++col)
     {
-        const int band = pc.local2global_col(col);
-        for (int row = 0; row < pc.get_row_size(); ++row)
+        const int band = pc.icglb(col);
+        for (int row = 0; row < pc.nrloc(); ++row)
         {
-            const int ao = pc.local2global_row(row);
-            coefficients[col * pc.get_row_size() + row] = coefficient<T>(ao, band);
+            const int ao = pc.irglb(row);
+            coefficients[col * pc.nrloc() + row] = coefficient<T>(ao, band);
         }
     }
-    psi::Psi<T> c(coefficients.data(), 1, pc.get_col_size(), pc.get_row_size(), true);
-    auto identity = LR_Util::newTensor<T>({pao.get_col_size(), pao.get_row_size()});
+    psi::Psi<T> c(coefficients.data(), 1, pc.ncloc(), pc.nrloc(), true);
+    auto identity = LR_Util::newTensor<T>({pao.ncloc(), pao.nrloc()});
     identity.zero();
-    for (int col = 0; col < pao.get_col_size(); ++col)
+    for (int col = 0; col < pao.ncloc(); ++col)
     {
-        for (int row = 0; row < pao.get_row_size(); ++row)
+        for (int row = 0; row < pao.nrloc(); ++row)
         {
-            if (pao.local2global_row(row) == pao.local2global_col(col))
+            if (pao.irglb(row) == pao.icglb(col))
             {
-                identity.template data<T>()[col * pao.get_row_size() + row] = T(1);
+                identity.template data<T>()[col * pao.nrloc() + row] = T(1);
             }
         }
     }
@@ -79,13 +79,13 @@ template <typename T> void check_empty_blocks(const int naos, const int nocc, co
             full_amplitudes[occ * nvirt + virt] = T(0.002 * (occ + virt + 1));
         }
     }
-    for (int col = 0; col < px.get_col_size(); ++col)
+    for (int col = 0; col < px.ncloc(); ++col)
     {
-        for (int row = 0; row < px.get_row_size(); ++row)
+        for (int row = 0; row < px.nrloc(); ++row)
         {
-            const int occ = px.local2global_col(col);
-            const int virt = px.local2global_row(row);
-            amplitudes[col * px.get_row_size() + row] = full_amplitudes[occ * nvirt + virt];
+            const int occ = px.icglb(col);
+            const int virt = px.irglb(row);
+            amplitudes[col * px.nrloc() + row] = full_amplitudes[occ * nvirt + virt];
         }
     }
     auto full_identity = LR_Util::newTensor<T>({naos, naos});
@@ -100,22 +100,22 @@ template <typename T> void check_empty_blocks(const int naos, const int nocc, co
     EXPECT_EQ(spin_view.get_nbasis(), c.get_nbasis());
     const std::vector<container::Tensor> potential = {identity};
     const T factor(1);
-    T* const local_result = px.get_local_size() == 0 ? nullptr : result.data();
-    const T* const local_amplitudes = px.get_local_size() == 0 ? nullptr : amplitudes.data();
+    T* const local_result = px.size() == 0 ? nullptr : result.data();
+    const T* const local_amplitudes = px.size() == 0 ? nullptr : amplitudes.data();
     LR::ao_to_mo_pblas(potential, pao, c, pc, naos, nocc, nvirt, px,
         local_result, false, LR_Util::MO_TYPE::VO, factor);
-    for (int col = 0; col < px.get_col_size(); ++col)
+    for (int col = 0; col < px.ncloc(); ++col)
     {
-        const int occ = px.local2global_col(col);
-        for (int row = 0; row < px.get_row_size(); ++row)
+        const int occ = px.icglb(col);
+        for (int row = 0; row < px.nrloc(); ++row)
         {
-            const int virt = nocc + px.local2global_row(row);
+            const int virt = nocc + px.irglb(row);
             T expected(0);
             for (int ao = 0; ao < naos; ++ao)
             {
                 expected += conjugate(coefficient<T>(ao, virt)) * coefficient<T>(ao, occ);
             }
-            EXPECT_NEAR(std::abs(result[col * px.get_row_size() + row] - T(expected)), 0, 1e-9);
+            EXPECT_NEAR(std::abs(result[col * px.nrloc() + row] - T(expected)), 0, 1e-9);
         }
     }
     std::vector<T> full_result(nvirt * nocc);
@@ -135,12 +135,12 @@ template <typename T> void check_empty_blocks(const int naos, const int nocc, co
             LR::CVCX_virt_blas(full_potential, full_c, full_amplitudes.data(),
                 naos, nocc, nvirt, full_result.data(), false, factor);
         }
-        for (int col = 0; col < px.get_col_size(); ++col)
+        for (int col = 0; col < px.ncloc(); ++col)
         {
-            for (int row = 0; row < px.get_row_size(); ++row)
+            for (int row = 0; row < px.nrloc(); ++row)
             {
-                const int global = px.local2global_col(col) * nvirt + px.local2global_row(row);
-                const int local = col * px.get_row_size() + row;
+                const int global = px.icglb(col) * nvirt + px.irglb(row);
+                const int local = col * px.nrloc() + row;
                 EXPECT_NEAR(std::abs(result[local] - full_result[global]), 0, 1e-9);
             }
         }
@@ -163,12 +163,12 @@ template <typename T> void check_empty_blocks(const int naos, const int nocc, co
             serial = LR::cal_dm_diff_blas(full_amplitudes.data(), full_c,
                 naos, nocc, nvirt, false, 1);
         }
-        for (int col = 0; col < pao.get_col_size(); ++col)
+        for (int col = 0; col < pao.ncloc(); ++col)
         {
-            for (int row = 0; row < pao.get_row_size(); ++row)
+            for (int row = 0; row < pao.nrloc(); ++row)
             {
-                const int global = pao.local2global_col(col) * naos + pao.local2global_row(row);
-                const int local = col * pao.get_row_size() + row;
+                const int global = pao.icglb(col) * naos + pao.irglb(row);
+                const int local = col * pao.nrloc() + row;
                 const T difference = distributed[0].template data<T>()[local] - serial[0].template data<T>()[global];
                 EXPECT_NEAR(std::abs(difference), 0, 1e-9);
             }

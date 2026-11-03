@@ -96,16 +96,16 @@ auto RI_2D_Comm::split_m2D_ktoR_gamma(const UnitCell& ucell,
         for (int iwt0_2D = 0; iwt0_2D != mR_2D.shape[0]; ++iwt0_2D)
         {
             const int iwt0 = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
-                ? pv.local2global_col(iwt0_2D)
-                : pv.local2global_row(iwt0_2D);
+                ? pv.icglb(iwt0_2D)
+                : pv.irglb(iwt0_2D);
             int iat0, iw0_b, is0_b;
             std::tie(iat0, iw0_b, is0_b) = RI_2D_Comm::get_iat_iw_is_block(ucell, iwt0);
             const int it0 = ucell.iat2it[iat0];
             for (int iwt1_2D = 0; iwt1_2D != mR_2D.shape[1]; ++iwt1_2D)
             {
                 const int iwt1 = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
-                    ? pv.local2global_row(iwt1_2D)
-                    : pv.local2global_col(iwt1_2D);
+                    ? pv.irglb(iwt1_2D)
+                    : pv.icglb(iwt1_2D);
                 int iat1, iw1_b, is1_b;
                 std::tie(iat1, iw1_b, is1_b) = RI_2D_Comm::get_iat_iw_is_block(ucell, iwt1);
                 const int it1 = ucell.iat2it[iat1];
@@ -217,16 +217,16 @@ auto RI_2D_Comm::split_m2D_ktoR_k(const UnitCell& ucell,
                 for(int iwt0_2D=0; iwt0_2D!=mR_2D.shape[0]; ++iwt0_2D)
                 {
                     const int iwt0 =ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
-                        ? pv.local2global_col(iwt0_2D)
-                        : pv.local2global_row(iwt0_2D);
+                        ? pv.icglb(iwt0_2D)
+                        : pv.irglb(iwt0_2D);
                     int iat0, iw0_b, is0_b;
                     std::tie(iat0,iw0_b,is0_b) = RI_2D_Comm::get_iat_iw_is_block(ucell,iwt0);
                     const int it0 = ucell.iat2it[iat0];
                     for(int iwt1_2D=0; iwt1_2D!=mR_2D.shape[1]; ++iwt1_2D)
                     {
                         const int iwt1 =ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
-                            ? pv.local2global_row(iwt1_2D)
-                            : pv.local2global_col(iwt1_2D);
+                            ? pv.irglb(iwt1_2D)
+                            : pv.icglb(iwt1_2D);
                         int iat1, iw1_b, is1_b;
                         std::tie(iat1,iw1_b,is1_b) = RI_2D_Comm::get_iat_iw_is_block(ucell,iwt1);
                         const int it1 = ucell.iat2it[iat1];
@@ -294,13 +294,13 @@ void RI_2D_Comm::add_Hexx(
                 for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
                 {
                     const int iwt0 = RI_2D_Comm::get_iwt(ucell,iat0, iw0_b, is0_b);
-                    if (pv.para_2d().global2local_row(iwt0) < 0) {
+                    if (pv.irloc(iwt0) < 0) {
                         continue;
                     }
                     for(size_t iw1_b=0; iw1_b<H.shape[1]; ++iw1_b)
                     {
                         const int iwt1 = RI_2D_Comm::get_iwt(ucell,iat1, iw1_b, is1_b);
-                        if (pv.para_2d().global2local_col(iwt1) < 0) {
+                        if (pv.icloc(iwt1) < 0) {
                             continue;
                         }
                         LCAO_domain::set_mat2d(iwt0, iwt1, RI::Global_Func::convert<TK>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<TK>(frac), pv, hk);

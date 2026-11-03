@@ -23,7 +23,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
 {
     ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_pblas");
     assert(px.comm() == pc.comm() && px.comm() == pmat.comm());
-    assert(px.get_blacs_ctxt() == pc.get_blacs_ctxt() && px.get_blacs_ctxt() == pmat.get_blacs_ctxt());
+    assert(px.ictxt() == pc.ictxt() && px.ictxt() == pmat.ictxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         double empty_block(0);
@@ -39,11 +39,11 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
     const int imo2 = imo2_set + 1;
 
     std::vector<container::Tensor> dm_trans(nks,
-        container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pmat.get_col_size(), pmat.get_row_size() }));
+        container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pmat.ncloc(), pmat.nrloc() }));
     for (int isk = 0; isk < nks; ++isk)
     {
         c.fix_k(isk);
-        const int x_start = isk * px.get_local_size();
+        const int x_start = isk * px.size();
 
         char transa = 'N';
         char transb = 'T';
@@ -52,21 +52,21 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
 
         // 1. [X*C_occ^T]^T=C_occ*X^T
         BlockCyclicDistributionInformation pXc; // nvirt*naos
-        LR_Util::setup_2d_division(pXc, px.get_block_size(), naos, nmo2, px.get_blacs_ctxt());
+        LR_Util::setup_2d_division(pXc, px.nb(), naos, nmo2, px.ictxt());
         container::Tensor Xc(DAT::DT_DOUBLE,
                              DEV::CpuDevice,
-                             {pXc.get_col_size(), pXc.get_row_size()}); // row is "inside"(memory contiguity) for pblas
+                             {pXc.ncloc(), pXc.nrloc()}); // row is "inside"(memory contiguity) for pblas
         Xc.zero();
         ScalapackConnector::gemm(transa, transb, naos, nmo2, nmo1,
-            alpha, c.get_pointer(), 1, imo1, pc.get_desc(),
-            X_istate_data + x_start, 1, 1, px.get_desc(),
-            beta, Xc.data<double>(), 1, 1, pXc.get_desc());
+            alpha, c.get_pointer(), 1, imo1, pc.desc(),
+            X_istate_data + x_start, 1, 1, px.desc(),
+            beta, Xc.data<double>(), 1, 1, pXc.desc());
 
         // 2. C_virt*[X*C_occ^T]
         ScalapackConnector::gemm(transa, transb, naos, naos, nmo2,
-            factor, c.get_pointer(), 1, imo2, pc.get_desc(),
-            Xc.data<double>(), 1, 1, pXc.get_desc(),
-            beta, dm_trans[isk].data<double>(), 1, 1, pmat.get_desc());
+            factor, c.get_pointer(), 1, imo2, pc.desc(),
+            Xc.data<double>(), 1, 1, pXc.desc(),
+            beta, dm_trans[isk].data<double>(), 1, 1, pmat.desc());
     }
     return dm_trans;
 }
@@ -84,7 +84,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
 {
     ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_pblas");
     assert(px.comm() == pc.comm() && px.comm() == pmat.comm());
-    assert(px.get_blacs_ctxt() == pc.get_blacs_ctxt() && px.get_blacs_ctxt() == pmat.get_blacs_ctxt());
+    assert(px.ictxt() == pc.ictxt() && px.ictxt() == pmat.ictxt());
 
         // Empty local blocks still participate in every collective PBLAS call.
         std::complex<double> empty_block(0);
@@ -99,19 +99,19 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
     const int imo2 = imo2_set + 1;
 
     std::vector<container::Tensor> dm_trans(nks,
-        container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, {pmat.get_col_size(), pmat.get_row_size()}));
+        container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, {pmat.ncloc(), pmat.nrloc()}));
     for (int isk = 0; isk < nks; ++isk)
     {
         c.fix_k(isk);
-        const int x_start = isk * px.get_local_size();
+        const int x_start = isk * px.size();
 
         // ============== C_virt * X * C_occ^\dagger=============
         // char transa = 'N';
         // char transb = 'C';
         // // 1. [X*C_occ^\dagger]^\dagger=C_occ*X^\dagger
         // BlockCyclicDistributionInformation pXc;
-        // LR_Util::setup_2d_division(pXc, px.get_block_size(), naos, nvirt,px.blacs_ctxt);
-        // container::Tensor Xc(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pXc.get_col_size(), pXc.get_row_size()
+        // LR_Util::setup_2d_division(pXc, px.nb(), naos, nvirt,px.blacs_ctxt);
+        // container::Tensor Xc(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pXc.ncloc(), pXc.nrloc()
         // });//row is "inside"(memory contiguity) for pblas Xc.zero(); const std::complex<double> alpha(1.0, 0.0);
         // const std::complex<double> beta(0.0, 0.0);
         // pzgemm_(&transa, &transb, &naos, &nvirt, &nocc,
@@ -131,24 +131,24 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
         char transa = 'N';
         char transb = 'C';
         BlockCyclicDistributionInformation pXc;
-        LR_Util::setup_2d_division(pXc, px.get_block_size(), nmo2, naos, px.get_blacs_ctxt());
+        LR_Util::setup_2d_division(pXc, px.nb(), nmo2, naos, px.ictxt());
         container::Tensor Xc(DAT::DT_COMPLEX_DOUBLE,
                              DEV::CpuDevice,
-                             {pXc.get_col_size(), pXc.get_row_size()}); // row is "inside"(memory contiguity) for pblas
+                             {pXc.ncloc(), pXc.nrloc()}); // row is "inside"(memory contiguity) for pblas
         Xc.zero();
         const std::complex<double> alpha(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
         ScalapackConnector::gemm(transa, transb, nmo2, naos, nmo1, alpha,
-            X_istate_data + x_start, i1, i1, px.get_desc(),
-            c.get_pointer(), i1, imo1, pc.get_desc(),
-            beta, Xc.data<std::complex<double>>(), i1, i1, pXc.get_desc());
+            X_istate_data + x_start, i1, i1, px.desc(),
+            c.get_pointer(), i1, imo1, pc.desc(),
+            beta, Xc.data<std::complex<double>>(), i1, i1, pXc.desc());
 
         // 2. [X*C_occ^\dagger]^TC_virt^T
         transa = transb = 'T';
         ScalapackConnector::gemm(transa, transb, naos, naos, nmo2,
-            factor, Xc.data<std::complex<double>>(), i1, i1, pXc.get_desc(),
-            c.get_pointer(), i1, imo2, pc.get_desc(),
-            beta, dm_trans[isk].data<std::complex<double>>(), i1, i1, pmat.get_desc());
+            factor, Xc.data<std::complex<double>>(), i1, i1, pXc.desc(),
+            c.get_pointer(), i1, imo2, pc.desc(),
+            beta, dm_trans[isk].data<std::complex<double>>(), i1, i1, pmat.desc());
     }
     return dm_trans;
 }

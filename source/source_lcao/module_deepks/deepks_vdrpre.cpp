@@ -82,7 +82,7 @@ void DeePKS_domain::prepare_phialpha_iRmat(const int nlocal,
 
             for (int ix = 0; ix < nw_tot; ix++)
             {
-                if (pv.para_2d().global2local_row(start + ix) < 0 || pv.para_2d().global2local_col(start + ix) < 0)
+                if (pv.para_2d().irloc(start + ix) < 0 || pv.para_2d().icloc(start + ix) < 0)
                 {
                     continue;
                 }
@@ -170,7 +170,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
                                    for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
                                    {
                                        const int iw1_all = start1 + iw1; // this is \mu
-                                       const int iw1_local = pv.para_2d().global2local_row(iw1_all);
+                                       const int iw1_local = pv.para_2d().irloc(iw1_all);
                                        if (iw1_local < 0)
                                        {
                                            continue;
@@ -178,7 +178,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
                                        for (int iw2 = 0; iw2 < nw2_tot; ++iw2)
                                        {
                                            const int iw2_all = start2 + iw2; // this is \nu
-                                           const int iw2_local = pv.para_2d().global2local_col(iw2_all);
+                                           const int iw2_local = pv.para_2d().icloc(iw2_all);
                                            if (iw2_local < 0)
                                            {
                                                continue;

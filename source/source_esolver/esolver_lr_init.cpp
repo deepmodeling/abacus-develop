@@ -159,10 +159,10 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
     this->set_dimension();
 
     // KS and LR must use the same AO distribution, including its BLACS grid.
-    const int ks_block_size = ks_sol.pv.para_2d().get_block_size();
+    const int ks_block_size = ks_sol.pv.para_2d().nb();
     LR_Util::setup_2d_division(this->paraMat_.para_2d(), ks_block_size, this->nbasis, this->nbasis
 #ifdef __MPI
-        , ks_sol.pv.get_blacs_ctxt()
+        , ks_sol.pv.para_2d().ictxt()
 #endif
     );
     this->set_parallel_orbitals_band(this->paraMat_, this->nbands);
@@ -170,7 +170,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
     {
         LR_Util::setup_2d_division(this->paraMat_all_.para_2d(), ks_block_size, this->nbasis, this->nbasis
 #ifdef __MPI
-            , ks_sol.pv.get_blacs_ctxt()
+            , ks_sol.pv.para_2d().ictxt()
 #endif
         );
         this->set_parallel_orbitals_band(this->paraMat_all_, this->inp_->nbands);
@@ -182,15 +182,15 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
 
     LR_Util::setup_2d_division(this->paraC_, ks_block_size, this->nbasis, this->nbands
 #ifdef __MPI
-        , this->paraMat_.get_blacs_ctxt()
+        , this->paraMat_.para_2d().ictxt()
 #endif
     );
 
     // allocate psi_ks and eig_ks in the [nocc, nvirt] window
 #ifdef __MPI
     this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
-        this->paraC_.get_col_size(),
-        this->paraC_.get_row_size(),
+        this->paraC_.ncloc(),
+        this->paraC_.nrloc(),
         this->kv.ngk,
         true));
 #else
@@ -260,8 +260,8 @@ void ModuleESolver::ESolver_LR<T, TR>::refresh_from_ks_(UnitCell& ucell)
         this->psi_ks->fix_k(ik);
         const int first_band = start_band + 1;
         Cpxgemr2d(this->nbasis, this->nbands, this->psi_ks_all_->get_pointer(), 1, first_band, ks_sol.pv.desc_wfc,
-            this->psi_ks->get_pointer(), 1, 1, const_cast<int*>(this->paraC_.get_desc()),
-            this->paraC_.get_blacs_ctxt());
+            this->psi_ks->get_pointer(), 1, 1, const_cast<int*>(this->paraC_.desc()),
+            this->paraC_.ictxt());
 #else
         // serial: each band is `nbasis` contiguous coefficients, so the window is a plain
         // band-by-band copy (this loop used to compute the two pointers and copy nothing,
@@ -393,7 +393,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     // it need improvement to read only the bands needed
     this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
                                        this->paraMat_.ncol_bands,
-                                       this->paraMat_.para_2d().get_row_size(),
+                                       this->paraMat_.para_2d().nrloc(),
                                        this->kv.ngk,
                                        true));
     this->read_ks_wfc();
@@ -413,7 +413,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
 
     LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
 #ifdef __MPI
-        , paraMat_.get_blacs_ctxt()
+        , paraMat_.para_2d().ictxt()
 #endif
     );
 

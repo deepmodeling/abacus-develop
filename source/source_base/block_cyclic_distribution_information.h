@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <vector>
 
 #ifdef __MPI
@@ -26,81 +25,81 @@ class BlockCyclicDistributionInformation
     BlockCyclicDistributionInformation(BlockCyclicDistributionInformation&& rhs) noexcept;
     BlockCyclicDistributionInformation& operator=(BlockCyclicDistributionInformation&& rhs) noexcept;
 
-    int get_number_of_local_rows() const
+    int nrloc() const
     {
-        return number_of_local_rows_;
+        return nrloc_;
     }
 
-    int get_number_of_local_cols() const
+    int ncloc() const
     {
-        return number_of_local_cols_;
+        return ncloc_;
     }
 
-    int get_number_of_global_rows() const;
-    int get_number_of_global_cols() const;
+    int nrglb() const;
+    int ncglb() const;
 
-    int64_t get_number_of_local_elements() const
+    std::size_t size() const
     {
-        return number_of_local_elements_;
+        return size_;
     }
 
-    int get_block_size() const
+    int nb() const
     {
-        return block_size_;
+        return nb_;
     }
 
-    int get_grid_rows() const
+    int nrproc() const
     {
-        return grid_rows_;
+        return nrproc_;
     }
 
-    int get_grid_cols() const
+    int ncproc() const
     {
-        return grid_cols_;
+        return ncproc_;
     }
 
-    int get_coord_row() const
+    int irproc() const
     {
-        return coord_[0];
+        return irproc_;
     }
 
-    int get_coord_col() const
+    int icproc() const
     {
-        return coord_[1];
+        return icproc_;
     }
 
-    int global_to_local_row(const int global_row) const
+    int irloc(const int irglb) const
     {
-        return global_to_local_row_[global_row];
+        return irglb2loc_[irglb];
     }
 
-    int global_to_local_col(const int global_col) const
+    int icloc(const int icglb) const
     {
-        return global_to_local_col_[global_col];
+        return icglb2loc_[icglb];
     }
 
-    int local_to_global_row(const int local_row) const
+    int irglb(const int irloc) const
     {
-        return local_to_global_row_[local_row];
+        return irloc2glb_[irloc];
     }
 
-    int local_to_global_col(const int local_col) const
+    int icglb(const int icloc) const
     {
-        return local_to_global_col_[local_col];
+        return icloc2glb_[icloc];
     }
 
-    bool owns_index(const std::size_t iw1_all, const std::size_t iw2_all) const;
-    int owner_of_index(const std::size_t iw1_all, const std::size_t iw2_all) const;
+    bool in_this_processor(const int irglb, const int icglb) const;
+    int owner_processor(const int irglb, const int icglb) const;
 
-    bool owns_blacs_index(const int iprow, const int ipcol) const
+    bool blacs_in_this_processor(const int irproc, const int icproc) const
     {
-        return iprow == coord_[0] && ipcol == coord_[1];
+        return irproc == irproc_ && icproc == icproc_;
     }
 
-    void set_coord(const int coord_row, const int coord_col)
+    void set_iproc(const int irproc, const int icproc)
     {
-        coord_[0] = coord_row;
-        coord_[1] = coord_col;
+        irproc_ = irproc;
+        icproc_ = icproc;
     }
 
     bool is_serial() const
@@ -108,140 +107,40 @@ class BlockCyclicDistributionInformation
         return is_serial_;
     }
 
-    void initialize_serial(const int global_rows, const int global_cols);
+    void set_serial(const int nrglb, const int ncglb);
 
 #ifdef __MPI
-    int initialize(const int grid_rows, const int grid_cols, const int block_size, const MPI_Comm comm);
-    int initialize(const int grid_rows,
-                   const int grid_cols,
-                   const int block_size,
-                   const MPI_Comm comm,
-                   const bool swap_grid);
-    int bind_descriptor(const int grid_rows,
-                        const int grid_cols,
-                        const int block_size,
-                        const int blacs_context);
+    int bind_descriptor(const int nrglb,
+                        const int ncglb,
+                        const int nb,
+                        const int ictxt);
 
-    const int* get_descriptor() const
+    const int* desc() const
     {
-        return descriptor_.data();
+        return desc_.data();
     }
 
-    int get_blacs_context() const
+    int ictxt() const
     {
-        return blacs_context_;
+        return ictxt_;
     }
 
-    MPI_Comm get_mpi_communicator() const;
+    MPI_Comm comm() const;
 
-    // DEPRECATED-ALIAS: get_mutable_descriptor() is only for tests/specializations.
-    // DELETION-COMMIT: remove after descriptor writes use initialize/bind_descriptor; trigger: grep count == 0.
-    int* get_mutable_descriptor()
+    int* desc()
     {
-        return descriptor_.data();
-    }
-#endif
-
-    int get_row_size() const
-    {
-        return get_number_of_local_rows();
+        return desc_.data();
     }
 
-    int get_col_size() const
-    {
-        return get_number_of_local_cols();
-    }
-
-    int get_global_row_size() const
-    {
-        return get_number_of_global_rows();
-    }
-
-    int get_global_col_size() const
-    {
-        return get_number_of_global_cols();
-    }
-
-    int64_t get_local_size() const
-    {
-        return get_number_of_local_elements();
-    }
-
-    int get_dim0() const
-    {
-        return get_grid_rows();
-    }
-
-    int get_dim1() const
-    {
-        return get_grid_cols();
-    }
-
-    int global2local_row(const std::size_t igr) const
-    {
-        return global_to_local_row(static_cast<int>(igr));
-    }
-
-    int global2local_col(const std::size_t igc) const
-    {
-        return global_to_local_col(static_cast<int>(igc));
-    }
-
-    int local2global_row(const int ilr) const
-    {
-        return local_to_global_row(ilr);
-    }
-
-    int local2global_col(const int ilc) const
-    {
-        return local_to_global_col(ilc);
-    }
-
-    bool in_this_processor(const std::size_t iw1_all, const std::size_t iw2_all) const
-    {
-        return owns_index(iw1_all, iw2_all);
-    }
-
-    int owner_processor(const std::size_t iw1_all, const std::size_t iw2_all) const
-    {
-        return owner_of_index(iw1_all, iw2_all);
-    }
-
-    bool blacs_in_this_processor(const int iprow, const int ipcol) const
-    {
-        return owns_blacs_index(iprow, ipcol);
-    }
-
-    void set_serial(const int global_rows, const int global_cols)
-    {
-        initialize_serial(global_rows, global_cols);
-    }
-
-#ifdef __MPI
-    int init(const int grid_rows,
-             const int grid_cols,
-             const int block_size,
+    int init(const int nrglb,
+             const int ncglb,
+             const int nb,
              const MPI_Comm comm,
-             const bool swap_grid = false);
-    int set(const int grid_rows,
-            const int grid_cols,
-            const int block_size,
-            const int blacs_context);
-
-    const int* get_desc() const
-    {
-        return get_descriptor();
-    }
-
-    int get_blacs_ctxt() const
-    {
-        return get_blacs_context();
-    }
-
-    MPI_Comm comm() const
-    {
-        return get_mpi_communicator();
-    }
+             const bool swap_grid);
+    int set(const int nrglb,
+            const int ncglb,
+            const int nb,
+            const int ictxt);
 #endif
 
   private:
@@ -251,34 +150,34 @@ class BlockCyclicDistributionInformation
     static constexpr int kDescriptorGlobalColsIndex = 3;
     static constexpr int kDescriptorLeadingDimIndex = 8;
     static constexpr int kUnownedBlacsContext = -1;
-    static constexpr int kCoordinateDimension = 2;
     static constexpr int kBlacsWhatSystemContext = 10;
 
-    int number_of_local_rows_ = 0;
-    int number_of_local_cols_ = 0;
-    int64_t number_of_local_elements_ = 0;
-    int block_size_ = 1;
-    int grid_rows_ = 0;
-    int grid_cols_ = 0;
+    int nrloc_ = 0;
+    int ncloc_ = 0;
+    std::size_t size_ = 0;
+    int nb_ = 1;
+    int nrproc_ = 0;
+    int ncproc_ = 0;
 
 #ifdef __MPI
-    int blacs_context_ = kUnownedBlacsContext;
-    std::array<int, kDescriptorEntryCount> descriptor_ = {};
+    int ictxt_ = kUnownedBlacsContext;
+    std::array<int, kDescriptorEntryCount> desc_ = {};
 #endif
 
-    std::vector<int> global_to_local_row_;
-    std::vector<int> global_to_local_col_;
-    std::vector<int> local_to_global_row_;
-    std::vector<int> local_to_global_col_;
-    std::array<int, kCoordinateDimension> coord_ = {{kUnownedBlacsContext, kUnownedBlacsContext}};
+    std::vector<int> irglb2loc_;
+    std::vector<int> icglb2loc_;
+    std::vector<int> irloc2glb_;
+    std::vector<int> icloc2glb_;
+    int irproc_ = kUnownedBlacsContext;
+    int icproc_ = kUnownedBlacsContext;
     bool is_serial_ = false;
 
 #ifdef __MPI
-    bool owns_blacs_context_ = false;
+    bool owns_ictxt_ = false;
 
-    void initialize_blacs_grid(const MPI_Comm comm, const bool swap_grid);
-    void set_distribution_info(const int global_rows, const int global_cols, const int block_size);
-    void release_blacs_grid();
+    void init_grid(const MPI_Comm comm, const bool swap_grid);
+    void init_dist(const int nrglb, const int ncglb, const int nb);
+    void release_grid();
 #endif
 };
 

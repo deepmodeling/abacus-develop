@@ -186,8 +186,8 @@ namespace ModuleSymmetry
                     if (isym_kvd.first == 0)
                     {
                         double factor = 1.0 / static_cast<double>(kv.kstars[ik_ibz].size());
-                        std::vector<std::complex<double>> dm_scaled(pv.get_local_size());
-                        for (int i = 0;i < pv.get_local_size();++i) { dm_scaled[i] = factor * projected[i]; }
+                        std::vector<std::complex<double>> dm_scaled(pv.size());
+                        for (int i = 0;i < pv.size();++i) { dm_scaled[i] = factor * projected[i]; }
                         dm_k_full.push_back(dm_scaled);
                     }
                     else if (isym_kvd.first < nsym_)
@@ -378,7 +378,7 @@ namespace ModuleSymmetry
             for (int i = 0;i < block.nc;++i) { //inside dimension
                 if (pv.in_this_processor(starti + i, startj + j))
                 {
-                    int index = pv.global2local_col(startj + j) * pv.get_row_size() + pv.global2local_row(starti + i);
+                    int index = pv.icloc(startj + j) * pv.nrloc() + pv.irloc(starti + i);
                     obj_mat[index] = trans ? block(i, j) : block(j, i);
                 }
 }
@@ -392,7 +392,7 @@ namespace ModuleSymmetry
             for (int i = 0;i < block.nc;++i) { //inside dimension
                 if (pv.in_this_processor(starti + i, startj + j))
                 {
-                    int index = pv.global2local_col(startj + j) * pv.get_row_size() + pv.global2local_row(starti + i);
+                    int index = pv.icloc(startj + j) * pv.nrloc() + pv.irloc(starti + i);
                     obj_mat[index] = trans ? block(i, j).real() : block(j, i).real();
                 }
 }
@@ -407,7 +407,7 @@ namespace ModuleSymmetry
     {
         const bool soc = (this->nspin_ == 4);
         const int npol = soc ? 2 : 1;  // spinor: global AO index is spin-fast interleaved, I = npol*iw_orb + s
-        std::vector<std::complex<double>> M_isym(pv.get_local_size(), 0.0);
+        std::vector<std::complex<double>> M_isym(pv.size(), 0.0);
         // isym >= symm.nrotk addresses the antiunitary coset (spatial part gmatrix_anti[isym-nrotk]),
         // whose atom map lives in a separate table.
         const int nrotk_u = symm.nrotk;
@@ -460,7 +460,7 @@ namespace ModuleSymmetry
                                     const int gj = base1 + (iw + mp) * npol + b;
                                     if (pv.in_this_processor(gi, gj))
                                     {
-                                        const int index = pv.global2local_col(gj) * pv.get_row_size() + pv.global2local_row(gi);
+                                        const int index = pv.icloc(gj) * pv.nrloc() + pv.irloc(gi);
                                         // M(isym) = T_l (x) U is the spinor rep, with U = so3_to_su2 placed as-is:
                                         //   M[(m,a),(m',b)] = phase * T_l(m,m') * U_{ab},   U_{ab} = spin_U[a*npol + b].
                                         // Both T_l (rotmat_Slm) and U are ANTI-homomorphisms here (row-vector / R^T convention:
@@ -486,22 +486,22 @@ namespace ModuleSymmetry
     std::vector<std::complex<double>> Symmetry_rotation_k::rot_matrix_ao(const std::vector<std::complex<double>>& DMkibz,
         const int ik_ibz, const int kstar_size, const int isym, const BlockCyclicDistributionInformation& pv, const bool TRS_conj) const
     {
-        std::vector<std::complex<double>> DMk(pv.get_local_size(), 0.0);
-        std::vector<std::complex<double>> DMkibz_M(pv.get_local_size(), 0.0);    // intermediate result
+        std::vector<std::complex<double>> DMk(pv.size(), 0.0);
+        std::vector<std::complex<double>> DMkibz_M(pv.size(), 0.0);    // intermediate result
         const char dagger = 'C';
         const char transpose = 'T';
         const char notrans = 'N';
         std::complex<double> alpha(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
-        const int nbasis = pv.get_global_row_size();
+        const int nbasis = pv.nrglb();
         const int i1 = 1;
         if (TRS_conj)
         {
             // D^T* = M^T [M^T (D^T)^T]^\dagger
 #ifdef __MPI
             ScalapackConnector::gemm(transpose, transpose, nbasis, nbasis, nbasis,
-                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.get_desc(), DMkibz.data(), i1, i1, pv.get_desc(),
-                beta, DMkibz_M.data(), i1, i1, pv.get_desc());
+                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc(), DMkibz.data(), i1, i1, pv.desc(),
+                beta, DMkibz_M.data(), i1, i1, pv.desc());
 #else
             // without MPI, pv holds the whole (non-block-cyclic) dense matrix locally,
             // so the 2D-block-cyclic pdgemm/pzgemm degenerates to a plain col-major gemm.
@@ -512,8 +512,8 @@ namespace ModuleSymmetry
             alpha.real(1.0 / static_cast<double>(kstar_size));
 #ifdef __MPI
             ScalapackConnector::gemm(transpose, dagger, nbasis, nbasis, nbasis,
-                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.get_desc(), DMkibz_M.data(), i1, i1, pv.get_desc(),
-                beta, DMk.data(), i1, i1, pv.get_desc());
+                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc(), DMkibz_M.data(), i1, i1, pv.desc(),
+                beta, DMk.data(), i1, i1, pv.desc());
 #else
             BlasConnector::gemm_cm(transpose, dagger, nbasis, nbasis, nbasis,
                 alpha, this->Ms_[ik_ibz].at(isym).data(), nbasis, DMkibz_M.data(), nbasis,
@@ -530,8 +530,8 @@ namespace ModuleSymmetry
             for (size_t i = 0; i < Mref.size(); ++i) { Mc[i] = std::conj(Mref[i]); }
 #ifdef __MPI
             ScalapackConnector::gemm(dagger, notrans, nbasis, nbasis, nbasis,
-                alpha, Mc.data(), i1, i1, pv.get_desc(), DMkibz.data(), i1, i1, pv.get_desc(),
-                beta, DMkibz_M.data(), i1, i1, pv.get_desc());
+                alpha, Mc.data(), i1, i1, pv.desc(), DMkibz.data(), i1, i1, pv.desc(),
+                beta, DMkibz_M.data(), i1, i1, pv.desc());
 #else
             BlasConnector::gemm_cm(dagger, notrans, nbasis, nbasis, nbasis,
                 alpha, Mc.data(), nbasis, DMkibz.data(), nbasis,
@@ -540,8 +540,8 @@ namespace ModuleSymmetry
             alpha.real(1.0 / static_cast<double>(kstar_size));
 #ifdef __MPI
             ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
-                alpha, DMkibz_M.data(), i1, i1, pv.get_desc(), Mc.data(), i1, i1, pv.get_desc(),
-                beta, DMk.data(), i1, i1, pv.get_desc());
+                alpha, DMkibz_M.data(), i1, i1, pv.desc(), Mc.data(), i1, i1, pv.desc(),
+                beta, DMk.data(), i1, i1, pv.desc());
 #else
             BlasConnector::gemm_cm(notrans, notrans, nbasis, nbasis, nbasis,
                 alpha, DMkibz_M.data(), nbasis, Mc.data(), nbasis,
@@ -553,8 +553,8 @@ namespace ModuleSymmetry
 
     std::vector<std::complex<double>> Symmetry_rotation_k::set_sigma_y_2d(const BlockCyclicDistributionInformation& pv) const
     {
-        std::vector<std::complex<double>> sigma_y(pv.get_local_size(), 0.0);
-        const int nlocal = pv.get_global_row_size();    // = 2*nao for nspin=4
+        std::vector<std::complex<double>> sigma_y(pv.size(), 0.0);
+        const int nlocal = pv.nrglb();    // = 2*nao for nspin=4
         // sigma_y = [[0, -i], [i, 0]] on the interleaved spin index (I = 2*iorb + spin)
         const std::complex<double> sy[2][2] = { {std::complex<double>(0.0, 0.0), std::complex<double>(0.0, -1.0)},
                                                 {std::complex<double>(0.0, 1.0), std::complex<double>(0.0, 0.0)} };
@@ -567,7 +567,7 @@ namespace ModuleSymmetry
                 const int gj = 2 * iorb + b;
                 if (pv.in_this_processor(gi, gj))
                 {
-                    const int index = pv.global2local_col(gj) * pv.get_row_size() + pv.global2local_row(gi);
+                    const int index = pv.icloc(gj) * pv.nrloc() + pv.irloc(gi);
                     sigma_y[index] = sy[a][b];
                 }
             }
@@ -581,19 +581,19 @@ namespace ModuleSymmetry
         // stored (transposed 2d-block) form of  D_new = sigma_y * conj(D) * sigma_y  is
         // Sigma_y * conj(X) * Sigma_y  (Sigma_y^T = -Sigma_y, the two minus signs cancel).
         const char notrans = 'N';
-        const int nbasis = pv.get_global_row_size();
+        const int nbasis = pv.nrglb();
         const int i1 = 1;
         const std::complex<double> one(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
         std::vector<std::complex<double>> Xc(X.size());
         for (size_t i = 0; i < X.size(); ++i) { Xc[i] = std::conj(X[i]); }
-        std::vector<std::complex<double>> tmp(pv.get_local_size(), 0.0);
-        std::vector<std::complex<double>> out(pv.get_local_size(), 0.0);
+        std::vector<std::complex<double>> tmp(pv.size(), 0.0);
+        std::vector<std::complex<double>> out(pv.size(), 0.0);
         // tmp = Sigma_y * conj(X)
 #ifdef __MPI
         ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
-            one, sigma_y.data(), i1, i1, pv.get_desc(), Xc.data(), i1, i1, pv.get_desc(),
-            beta, tmp.data(), i1, i1, pv.get_desc());
+            one, sigma_y.data(), i1, i1, pv.desc(), Xc.data(), i1, i1, pv.desc(),
+            beta, tmp.data(), i1, i1, pv.desc());
 #else
         // without MPI, pv holds the whole (non-block-cyclic) dense matrix locally,
         // so the 2D-block-cyclic pzgemm degenerates to a plain col-major gemm.
@@ -604,8 +604,8 @@ namespace ModuleSymmetry
         // out = scale * tmp * Sigma_y
 #ifdef __MPI
         ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
-            std::complex<double>(scale, 0.0), tmp.data(), i1, i1, pv.get_desc(), sigma_y.data(), i1, i1, pv.get_desc(),
-            beta, out.data(), i1, i1, pv.get_desc());
+            std::complex<double>(scale, 0.0), tmp.data(), i1, i1, pv.desc(), sigma_y.data(), i1, i1, pv.desc(),
+            beta, out.data(), i1, i1, pv.desc());
 #else
         BlasConnector::gemm_cm(notrans, notrans, nbasis, nbasis, nbasis,
             std::complex<double>(scale, 0.0), tmp.data(), nbasis, sigma_y.data(), nbasis,

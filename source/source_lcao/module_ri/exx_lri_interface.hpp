@@ -320,7 +320,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
 
             GlobalC::restart.save_disk("Hexx",
                                        ik,
-                                       this->pv.get_local_size(),
+                                       this->pv.size(),
                                        Hexxk_save.get_hk());
         }*/
         ////////// for Add_Hexx_Type:R

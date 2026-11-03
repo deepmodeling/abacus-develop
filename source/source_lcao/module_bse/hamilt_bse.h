@@ -86,7 +86,7 @@ public:
         }
         ofs << file << "(Ry, transpose) with threshold " << prec << std::endl;
         ofs << std::setprecision(prec) << std::scientific;
-        LR_Util::write_value(ofs, ptr, pM.get_row_size(), pM.get_col_size());
+        LR_Util::write_value(ofs, ptr, pM.nrloc(), pM.ncloc());
         ofs.close();
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "finish writing " + file);
     }
@@ -98,7 +98,7 @@ public:
             throw std::runtime_error("Cannot open file " + file);
         }
         ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // skip the first line
-        LR_Util::read_value(ifs, ptr, pM.get_row_size(), pM.get_col_size());
+        LR_Util::read_value(ifs, ptr, pM.nrloc(), pM.ncloc());
         ifs.close();
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "finish reading " + file);
     }

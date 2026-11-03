@@ -315,7 +315,7 @@ void write_wfc_nao(const int out_type,
     {
         psi.fix_k(ik);
 #ifdef __MPI
-        pv_glb.set(nlocal, nbands, blk_glb, pv.get_blacs_ctxt());
+        pv_glb.set(nlocal, nbands, blk_glb, pv.para_2d().ictxt());
         Cpxgemr2d(nlocal,
                   nbands,
                   psi.get_pointer(),
@@ -325,8 +325,8 @@ void write_wfc_nao(const int out_type,
                   ctot.data(),
                   1,
                   1,
-                  const_cast<int*>(pv_glb.get_desc()),
-                  pv_glb.get_blacs_ctxt());
+                  const_cast<int*>(pv_glb.desc()),
+                  pv_glb.ictxt());
 #else
         for (int ib = 0; ib < nbands; ib++)
         {

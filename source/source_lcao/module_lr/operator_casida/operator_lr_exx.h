@@ -139,13 +139,13 @@ inline bool gs_is_hybrid(const std::string& dft_functional)
             const auto& c = this->psi_ks;
             // allocate local cvx
             BlockCyclicDistributionInformation pcx;
-            LR_Util::setup_2d_division(pcx, pX.get_block_size(), naos, nocc, pX.get_blacs_ctxt());
-            ct::Tensor cvx(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcx.get_col_size(), pcx.get_row_size() });
+            LR_Util::setup_2d_division(pcx, pX.nb(), naos, nocc, pX.ictxt());
+            ct::Tensor cvx(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcx.ncloc(), pcx.nrloc() });
 
             // allocate local coxt
             BlockCyclicDistributionInformation pcxt;
-            LR_Util::setup_2d_division(pcxt, pX.get_block_size(), naos, nvirt, pX.get_blacs_ctxt());
-            ct::Tensor coxt(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcxt.get_col_size(), pcxt.get_row_size() });
+            LR_Util::setup_2d_division(pcxt, pX.nb(), naos, nvirt, pX.ictxt());
+            ct::Tensor coxt(ct::DataTypeToEnum<T>::value, DEV::CpuDevice, { pcxt.ncloc(), pcxt.nrloc() });
 
             // calculate global coxt_full, cvx_full
             cvx_full.zero_out();
@@ -153,7 +153,7 @@ inline bool gs_is_hybrid(const std::string& dft_functional)
             for (int ik = 0;ik < nk;++ik)
             {
                 c.fix_k(ik);
-                const int start = ik * pX.get_local_size();
+                const int start = ik * pX.size();
                 CvX(c.get_pointer(), pc, x_istate + start, pX, naos, nocc, nvirt, cvx.data<T>(), pcx);
                 LR_Util::gather_2d_to_full(pcx, cvx.data<T>(), &cvx_full(ik, 0, 0), false, naos, nocc);
                 CoXT(c.get_pointer(), pc, x_istate + start, pX, naos, nocc, nvirt, coxt.data<T>(), pcxt);

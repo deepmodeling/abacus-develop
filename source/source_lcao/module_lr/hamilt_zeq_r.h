@@ -176,7 +176,7 @@ namespace LR
         }
         virtual void hPsi(const T* const psi, T* const hpsi, const int ld_psi, const int nband) const override
         {
-            assert(ld_psi == this->nk * this->pX[0].get_local_size());
+            assert(ld_psi == this->nk * this->pX[0].size());
             for (int ib = 0;ib < nband;++ib)
             {
                 const int offset = ib * ld_psi;

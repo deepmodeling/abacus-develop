@@ -20,11 +20,11 @@ namespace LR
     template <typename T>
     void hermitize_2d(T* A, const BlockCyclicDistributionInformation& pA)
     {
-        const int n = pA.get_global_row_size();
-        std::vector<T> AH(pA.get_local_size(), T(0));
+        const int n = pA.nrglb();
+        std::vector<T> AH(pA.size(), T(0));
         const T one(1.0);
         const T zero(0.0);
-        ScalapackConnector::tranc(n, n, one, A, 1, 1, pA.get_desc(), zero, AH.data(), 1, 1, pA.get_desc());
+        ScalapackConnector::tranc(n, n, one, A, 1, 1, pA.desc(), zero, AH.data(), 1, 1, pA.desc());
         for (std::size_t i = 0; i < AH.size(); ++i)
         {
             A[i] = 0.5 * (A[i] + AH[i]);
@@ -36,16 +36,16 @@ namespace LR
     {
         ModuleBase::TITLE("LR", "scalapack_linear_solver");
         ModuleBase::timer::start("LR", "scalapack_linear_solver");
-        const int n = pA.get_global_row_size();
-        const int nrhs = pB.get_global_col_size();
-        assert(pA.get_global_col_size() == n);
-        assert(pB.get_global_row_size() == n);
-        assert(pA.get_blacs_ctxt() == pB.get_blacs_ctxt());
-        assert(pA.get_block_size() == pB.get_block_size());
+        const int n = pA.nrglb();
+        const int nrhs = pB.ncglb();
+        assert(pA.ncglb() == n);
+        assert(pB.nrglb() == n);
+        assert(pA.ictxt() == pB.ictxt());
+        assert(pA.nb() == pB.nb());
         // p?gesv needs LOCr(M_A) + MB_A pivot entries
-        std::vector<int> ipiv(pA.get_row_size() + pA.get_block_size());
+        std::vector<int> ipiv(pA.nrloc() + pA.nb());
         int info = 0;
-        ScalapackConnector::gesv(n, nrhs, A, 1, 1, pA.get_desc(), ipiv.data(), B, 1, 1, pB.get_desc(), &info);
+        ScalapackConnector::gesv(n, nrhs, A, 1, 1, pA.desc(), ipiv.data(), B, 1, 1, pB.desc(), &info);
         if (info != 0)
         {
             ModuleBase::timer::end("LR", "scalapack_linear_solver");
@@ -59,19 +59,19 @@ namespace LR
     {
         ModuleBase::TITLE("LR", "scalapack_cholesky_linear_solver");
         ModuleBase::timer::start("LR", "scalapack_cholesky_linear_solver");
-        const int n = pA.get_global_row_size();
-        const int nrhs = pB.get_global_col_size();
-        assert(pA.get_global_col_size() == n);
-        assert(pB.get_global_row_size() == n);
-        assert(pA.get_blacs_ctxt() == pB.get_blacs_ctxt());
-        assert(pA.get_block_size() == pB.get_block_size());
+        const int n = pA.nrglb();
+        const int nrhs = pB.ncglb();
+        assert(pA.ncglb() == n);
+        assert(pB.nrglb() == n);
+        assert(pA.ictxt() == pB.ictxt());
+        assert(pA.nb() == pB.nb());
 
         hermitize_2d(A, pA);
 
         // A = U^H U, U in the upper triangle. p?potrf's INFO is global output, so a
         // non-positive-definite A is reported identically on every rank.
         int desc_a[9];
-        std::copy(pA.get_desc(), pA.get_desc() + 9, desc_a);
+        std::copy(pA.desc(), pA.desc() + 9, desc_a);
         int info = ScalapackConnector::potrf('U', n, A, desc_a);
         if (info != 0)
         {
@@ -85,7 +85,7 @@ namespace LR
             ModuleBase::timer::end("LR", "scalapack_cholesky_linear_solver");
             throw std::runtime_error(message);
         }
-        ScalapackConnector::potrs('U', n, nrhs, A, 1, 1, pA.get_desc(), B, 1, 1, pB.get_desc(), &info);
+        ScalapackConnector::potrs('U', n, nrhs, A, 1, 1, pA.desc(), B, 1, 1, pB.desc(), &info);
         if (info != 0)
         {
             ModuleBase::timer::end("LR", "scalapack_cholesky_linear_solver");

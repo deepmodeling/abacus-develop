@@ -58,11 +58,11 @@ void HkPsi(const Parallel_Orbitals* ParaV, const TK& HK, const TK& wfc, TK& H_wf
     const char C_char = 'C';    // Using 'C' is consistent with the formula
 
 #ifdef __MPI
-    const int nbasis = ParaV->para_2d().get_desc()[2];
+    const int nbasis = ParaV->para_2d().desc()[2];
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_complex, &HK, one_int, one_int, ParaV->para_2d().get_desc(),
+    ScalapackConnector::gemm( C_char, N_char, nbasis, nbands, nbasis, one_complex, &HK, one_int, one_int, ParaV->para_2d().desc(),
         &wfc, one_int, one_int, ParaV->desc_wfc, zero_complex, &H_wfc, one_int, one_int, ParaV->desc_wfc );
 #endif
 }
@@ -82,15 +82,15 @@ void cal_bra_op_ket(const Parallel_Orbitals* ParaV, const BlockCyclicDistributio
     const char N_char = 'N';
     const char C_char = 'C';
 
-    const int nrow_bands = para_Eij_in.get_row_size();
-    const int ncol_bands = para_Eij_in.get_col_size();
+    const int nrow_bands = para_Eij_in.nrloc();
+    const int ncol_bands = para_Eij_in.ncloc();
 
 #ifdef __MPI
-    const int nbasis = ParaV->para_2d().get_desc()[2];
+    const int nbasis = ParaV->para_2d().desc()[2];
     const int nbands = ParaV->desc_wfc[3];
 
     ScalapackConnector::gemm( C_char, N_char, nbands, nbands, nbasis, one_complex, &wfc, one_int, one_int, ParaV->desc_wfc,
-            &H_wfc, one_int, one_int, ParaV->desc_wfc, zero_complex, &Dmn[0], one_int, one_int, para_Eij_in.get_desc() );
+            &H_wfc, one_int, one_int, ParaV->desc_wfc, zero_complex, &Dmn[0], one_int, one_int, para_Eij_in.desc() );
 #endif
 }
 
@@ -104,15 +104,15 @@ void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, const BlockCyclicDis
 template <typename TK>
 void _diagonal_in_serial(const BlockCyclicDistributionInformation& para_Eij_in, const std::vector<TK>& Dmn, double* wfcHwfc)
 {
-    const int nrow_bands = para_Eij_in.get_row_size();
-    const int ncol_bands = para_Eij_in.get_col_size();
+    const int nrow_bands = para_Eij_in.nrloc();
+    const int ncol_bands = para_Eij_in.ncloc();
 
     for(int i=0; i<nrow_bands; ++i)
     {
-        int i_global = para_Eij_in.local2global_row(i);
+        int i_global = para_Eij_in.irglb(i);
         for(int j=0; j<ncol_bands; ++j)
         {
-            int j_global = para_Eij_in.local2global_col(j);
+            int j_global = para_Eij_in.icglb(j);
             if(i_global==j_global)
             {   
                 // because the Dmn obtained from pzgemm_() is stored column-major
@@ -139,7 +139,7 @@ void occNum_MulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ
     {
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)  // ib_local < nbands_local , some problem, ParaV->ncol_bands
         {
-            const double occNum_local = occNum_func( occ_number(ik, ParaV->para_2d().local2global_col(ib_local)), symbol, XC_func_rdmft, alpha);
+            const double occNum_local = occNum_func( occ_number(ik, ParaV->para_2d().icglb(ib_local)), symbol, XC_func_rdmft, alpha);
             TK* wfc_pointer = &(wfc(ik, ib_local, 0));
             BlasConnector::scal(nbasis_local, occNum_local, wfc_pointer, 1);
         }

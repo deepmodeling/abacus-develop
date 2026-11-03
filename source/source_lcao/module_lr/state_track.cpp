@@ -20,17 +20,17 @@ RootBasis<T> capture_basis(const RootInputs<T>& inputs)
     RootBasis<T> basis;
     basis.lattice = inputs.cell.latvec;
     basis.lat0 = inputs.cell.lat0;
-    basis.nbasis = inputs.pc.get_global_row_size();
+    basis.nbasis = inputs.pc.nrglb();
     basis.nbands = inputs.nocc[0] + inputs.nvirt[0];
     basis.nocc = inputs.nocc;
     basis.nvirt = inputs.nvirt;
-    basis.layout = {inputs.pc.get_block_size(), inputs.pc.get_dim0(), inputs.pc.get_dim1(),
-        inputs.pc.get_coord_row(), inputs.pc.get_coord_col(), inputs.pc.get_row_size(), inputs.pc.get_col_size()};
+    basis.layout = {inputs.pc.nb(), inputs.pc.nrproc(), inputs.pc.ncproc(),
+        inputs.pc.irproc(), inputs.pc.icproc(), inputs.pc.nrloc(), inputs.pc.ncloc()};
     for (const auto& px : inputs.px)
     {
-        basis.layout.push_back(px.get_block_size());
-        basis.layout.push_back(px.get_row_size());
-        basis.layout.push_back(px.get_col_size());
+        basis.layout.push_back(px.nb());
+        basis.layout.push_back(px.nrloc());
+        basis.layout.push_back(px.ncloc());
     }
 
     for (int atom = 0; atom < inputs.cell.nat; ++atom)
@@ -39,16 +39,16 @@ RootBasis<T> capture_basis(const RootInputs<T>& inputs)
         basis.positions.push_back(position);
     }
     // Snapshot only this rank's column-major coefficient block; no AO-by-band gather.
-    const int coefficient_count = inputs.pc.get_local_size();
+    const int coefficient_count = inputs.pc.size();
     const T zero = T(0);
     for (int spin = 0; spin < inputs.orbitals.get_nk(); ++spin)
     {
         std::vector<T> coefficients(coefficient_count, zero);
-        for (int band = 0; band < inputs.pc.get_col_size(); ++band)
+        for (int band = 0; band < inputs.pc.ncloc(); ++band)
         {
-            for (int ao = 0; ao < inputs.pc.get_row_size(); ++ao)
+            for (int ao = 0; ao < inputs.pc.nrloc(); ++ao)
             {
-                coefficients[band * inputs.pc.get_row_size() + ao] = inputs.orbitals(spin, band, ao);
+                coefficients[band * inputs.pc.nrloc() + ao] = inputs.orbitals(spin, band, ao);
             }
         }
         basis.coefficients.push_back(std::move(coefficients));
@@ -76,13 +76,13 @@ void project_local_references(const RootInputs<T>& inputs, const RootBasis<T>& o
         const BlockCyclicDistributionInformation& px = inputs.px[spin];
         const int no = inputs.nocc[spin];
         const int nv = inputs.nvirt[spin];
-        const int local_count = px.get_local_size();
+        const int local_count = px.size();
         BlockCyclicDistributionInformation pi;
         BlockCyclicDistributionInformation pv;
 #ifdef __MPI
-        const int block_size = px.get_block_size();
-        pi.set(no, no, block_size, px.get_blacs_ctxt());
-        pv.set(nv, nv, block_size, px.get_blacs_ctxt());
+        const int block_size = px.nb();
+        pi.set(no, no, block_size, px.ictxt());
+        pv.set(nv, nv, block_size, px.ictxt());
 #else
         pi.set_serial(no, no);
         pv.set_serial(nv, nv);
@@ -100,7 +100,7 @@ void project_local_references(const RootInputs<T>& inputs, const RootBasis<T>& o
             const auto projected = project_reference_dist(local_reference, occupied, virtuals, pi, pv, px);
             std::copy(projected.begin(), projected.end(), reference->begin() + offset);
         }
-        offset += px.get_local_size();
+        offset += px.size();
     }
 }
 
