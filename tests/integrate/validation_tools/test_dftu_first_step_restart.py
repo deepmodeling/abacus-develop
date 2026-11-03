@@ -22,18 +22,18 @@ def first_matrix_element(text):
     raise AssertionError("First spin matrix is missing")
 
 
-def run_case(executable, fixture, work, loaded):
+def run_case(executable, fixture, work, init_occ_mat):
     for name in ("KPT", "STRU"):
         shutil.copy2(fixture / name, work / name)
-    if loaded:
+    if init_occ_mat:
         shutil.copy2(fixture / "occ_mat.txt", work / "occ_mat.txt")
 
     input_text = (fixture / "INPUT").read_text()
     input_text = replace_setting(input_text, "calculation     relax", "calculation     scf")
     input_text = replace_setting(input_text, "scf_nmax        70", "scf_nmax        1")
     input_text = replace_setting(input_text, "out_freq_ion    2", "out_freq_ion    1")
-    if not loaded:
-        input_text = replace_setting(input_text, "init_occ_mat    2", "init_occ_mat    0")
+    if init_occ_mat != 2:
+        input_text = replace_setting(input_text, "init_occ_mat    2", f"init_occ_mat    {init_occ_mat}")
     data_dir = fixture.parent.parent / "PP_ORB"
     input_text = replace_setting(input_text, "pseudo_dir      ../../PP_ORB/", f"pseudo_dir      {data_dir}/")
     input_text = replace_setting(input_text, "orbital_dir     ../../PP_ORB/", f"orbital_dir     {data_dir}/")
@@ -51,7 +51,7 @@ def run_case(executable, fixture, work, loaded):
     )
     if result.returncode != 0:
         raise AssertionError(
-            f"ABACUS failed in {'loaded' if loaded else 'fresh'} case: {result.returncode}\n"
+            f"ABACUS failed with init_occ_mat={init_occ_mat}: {result.returncode}\n"
             + (result.stdout + result.stderr)[-4000:]
         )
 
@@ -60,7 +60,7 @@ def run_case(executable, fixture, work, loaded):
     assert "STALE SECTION" not in snapshot
     assert snapshot.count("# Electronic step 1") == 1
     latest = output_dir / "occ_mat.txt"
-    if loaded:
+    if init_occ_mat:
         assert latest.exists(), "Loaded matrix was not written at the first PW step"
         latest_text = latest.read_text()
         assert "# Electronic step 1" in latest_text
@@ -81,11 +81,11 @@ def main():
     fixture = Path(sys.argv[2]).resolve()
     with tempfile.TemporaryDirectory(prefix="abacus_dftu_pw_first_step_") as scratch:
         root = Path(scratch)
-        for loaded in (True, False):
-            work = root / ("loaded" if loaded else "fresh")
+        for init_occ_mat in (1, 2, 0):
+            work = root / f"init_occ_mat_{init_occ_mat}"
             work.mkdir()
-            run_case(executable, fixture, work, loaded)
-    print("PW DFT+U first-step loaded and fresh output checks passed")
+            run_case(executable, fixture, work, init_occ_mat)
+    print("PW DFT+U first-step output checks passed for init_occ_mat=0, 1, and 2")
 
 
 if __name__ == "__main__":
