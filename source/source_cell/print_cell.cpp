@@ -10,6 +10,7 @@
 #include "print_cell.h"
 #include "source_cell/mdcell.h"
 #include "source_base/formatter.h"
+#include "source_base/parallel_common.h"
 #include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
 #include "source_base/global_variable.h"
@@ -390,6 +391,10 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
     MPI_Comm_rank(comm, &rank);
     int header_ok = 1;
     MPI_Offset base_offset = 0;
+    // Write position of the first species block. Only rank 0 knows it, since
+    // only rank 0 observed the end of the pre-existing file before writing
+    // the header; the value is shared by broadcast below.
+    MPI_Offset offset = 0;
     if (rank == 0)
     {
         // No O_APPEND: on Linux pwrite() ignores the given offset when the
@@ -408,6 +413,9 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
             const bool header_written = end_pos >= 0 && write_at(header_file, header, base_offset);
             const bool header_closed = close(header_file) == 0;
             header_ok = header_written && header_closed;
+            // The header occupies [base_offset, base_offset + header.size()),
+            // so this is where the first species header goes.
+            offset = base_offset + static_cast<MPI_Offset>(header.size());
         }
     }
     MPI_Bcast(&header_ok, 1, MPI_INT, 0, comm);
@@ -415,6 +423,14 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
     {
         throw std::runtime_error("Unable to create MDCell restart STRU file: " + fn + ": " + std::strerror(errno));
     }
+    // Every rank must agree on the write position. Learning it from a local
+    // lseek(SEEK_END) is unsafe: MPI_Allreduce is a collective, not a barrier,
+    // so rank 0 may resume afterwards and write the first species header before
+    // another rank has seeked. That rank would then observe a larger EOF and
+    // place its atoms at a base offset shifted by the species header, corrupting
+    // the frame. Broadcast rank 0's value instead, so the position has a single
+    // authoritative source.
+    Parallel_Common::bcast_mpi_offset(offset, comm);
     MPI_Barrier(comm);
 
     const int file = open(fn.c_str(), O_WRONLY);
@@ -426,14 +442,6 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
         if (file >= 0) close(file);
         throw std::runtime_error("Unable to open MDCell restart STRU file: " + fn + ": " + std::strerror(errno));
     }
-
-    // Every rank learns the write position from the file itself instead of
-    // broadcasting the MPI_Offset held by rank 0: after the barrier the header
-    // is in place, so the end of the file is the current base offset plus the
-    // header that was just written (zero for a truncated fresh file).
-    const off_t file_end = lseek(file, 0, SEEK_END);
-    MPI_Offset offset = file_end >= 0 ? static_cast<MPI_Offset>(file_end)
-                                      : static_cast<MPI_Offset>(header.size());
     for (std::size_t it = 0; it < stru_meta.species.size(); ++it)
     {
         const std::string type_header = mdcell_type_header(cell, stru_meta, it);

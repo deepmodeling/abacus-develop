@@ -25,6 +25,11 @@ void bcast_double(double& object);
 void bcast_int(int& object);
 void bcast_bool(bool& object);
 
+#ifdef __MPI
+//(3) bcast single on an explicit communicator, from the communicator's rank 0
+void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm);
+#endif
+
 } // namespace Parallel_Common
 
 #endif
