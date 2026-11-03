@@ -7,171 +7,187 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__MLALGO)
 abacus_disable_feature_definitions(_OPENMP)
 
-AddTest(
+addtest(
   TARGET MODULE_ESTATE_charge_moments
   LIBS base device
-  SOURCES test_charge_moments.cpp ../charge_moments.cpp
-)
+  SOURCES test_charge_moments.cpp ../charge_moments.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_ESTATE_pcc_0d
   LIBS base device
-  SOURCES test_pcc_0d.cpp ../pcc_0d.cpp ../charge_moments.cpp ../../source_cell/cell_geometry.cpp
-)
+  SOURCES test_pcc_0d.cpp ../pcc_0d.cpp ../charge_moments.cpp
+          ../../source_cell/cell_geometry.cpp)
 
-AddTest(
+addtest(
   TARGET MODULE_ESTATE_pcc_2d
   LIBS base device
-  SOURCES test_pcc_2d.cpp ../pcc_2d.cpp ../charge_moments.cpp ../../source_cell/cell_geometry.cpp
-)
+  SOURCES test_pcc_2d.cpp ../pcc_2d.cpp ../charge_moments.cpp
+          ../../source_cell/cell_geometry.cpp)
 
-if (ENABLE_MPI)
+if(ENABLE_MPI)
 
-AddTest(
-  TARGET MODULE_ESTATE_electronic_occupations_test
-  LIBS base device MPI::MPI_CXX
-  KEEP_FEATURE_DEFINITIONS __MPI
-  SOURCES test_electronic_occupations.cpp ../electronic_occupations.cpp
-)
-set_tests_properties(MODULE_ESTATE_electronic_occupations_test
-  PROPERTIES TIMEOUT 30 ENVIRONMENT "OMP_NUM_THREADS=1")
-add_test(
-  NAME MODULE_ESTATE_electronic_occupations_mpi4_test
-  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
-          $<TARGET_FILE:MODULE_ESTATE_electronic_occupations_test> ${MPIEXEC_POSTFLAGS}
-)
-set_tests_properties(MODULE_ESTATE_electronic_occupations_mpi4_test
-  PROPERTIES TIMEOUT 30 PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
+  addtest(
+    TARGET MODULE_ESTATE_electronic_occupations_test
+    LIBS base device MPI::MPI_CXX
+    KEEP_FEATURE_DEFINITIONS __MPI
+    SOURCES test_electronic_occupations.cpp ../electronic_occupations.cpp)
+  set_tests_properties(MODULE_ESTATE_electronic_occupations_test
+                       PROPERTIES TIMEOUT 30 ENVIRONMENT "OMP_NUM_THREADS=1")
+  add_test(
+    NAME MODULE_ESTATE_electronic_occupations_mpi4_test
+    COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:MODULE_ESTATE_electronic_occupations_test>
+      ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(
+    MODULE_ESTATE_electronic_occupations_mpi4_test
+    PROPERTIES TIMEOUT 30 PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
 
+  addtest(
+    TARGET MODULE_ESTATE_electrostatic_potential_test
+    LIBS parameter base device planewave MPI::MPI_CXX
+    KEEP_FEATURE_DEFINITIONS __MPI
+    SOURCES test_electrostatic_potential.cpp
+            ../module_pot/electrostatic_potential.cpp)
+  set_tests_properties(MODULE_ESTATE_electrostatic_potential_test
+                       PROPERTIES TIMEOUT 30 ENVIRONMENT "OMP_NUM_THREADS=1")
+  add_test(
+    NAME MODULE_ESTATE_electrostatic_potential_mpi4_test
+    COMMAND
+      ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
+      $<TARGET_FILE:MODULE_ESTATE_electrostatic_potential_test>
+      ${MPIEXEC_POSTFLAGS})
+  set_tests_properties(
+    MODULE_ESTATE_electrostatic_potential_mpi4_test
+    PROPERTIES TIMEOUT 30 PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
 
-AddTest(
-  TARGET MODULE_ESTATE_electrostatic_potential_test
-  LIBS parameter base device planewave MPI::MPI_CXX
-  KEEP_FEATURE_DEFINITIONS __MPI
-  SOURCES test_electrostatic_potential.cpp ../module_pot/electrostatic_potential.cpp
-)
-set_tests_properties(MODULE_ESTATE_electrostatic_potential_test
-  PROPERTIES TIMEOUT 30 ENVIRONMENT "OMP_NUM_THREADS=1")
-add_test(
-  NAME MODULE_ESTATE_electrostatic_potential_mpi4_test
-  COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4 ${MPIEXEC_PREFLAGS}
-          $<TARGET_FILE:MODULE_ESTATE_electrostatic_potential_test> ${MPIEXEC_POSTFLAGS}
-)
-set_tests_properties(MODULE_ESTATE_electrostatic_potential_mpi4_test
-  PROPERTIES TIMEOUT 30 PROCESSORS 4 ENVIRONMENT "OMP_NUM_THREADS=1")
+  set(pcc_test_sources
+      ../module_pot/sccs_output.cpp
+      ../module_pot/pot_pcc.cpp
+      ../pcc_0d.cpp
+      ../pcc_2d.cpp
+      ../charge_moments.cpp
+      ../../source_cell/cell_geometry.cpp
+      ../../source_cell/cell_tools.cpp
+      ../../source_cell/atom_spec.cpp
+      ../../source_cell/atom_pseudo.cpp
+      ../../source_cell/pseudo.cpp)
 
-set(pcc_test_sources
-    ../module_pot/sccs_output.cpp
-    ../module_pot/pot_pcc.cpp ../pcc_0d.cpp ../pcc_2d.cpp ../charge_moments.cpp
-    ../../source_cell/cell_geometry.cpp ../../source_cell/cell_tools.cpp
-    ../../source_cell/atom_spec.cpp ../../source_cell/atom_pseudo.cpp ../../source_cell/pseudo.cpp
-)
+  addtest(
+    TARGET MODULE_ESTATE_pot_pcc
+    LIBS parameter base device planewave_serial
+    SOURCES test_pot_pcc.cpp ${pcc_test_sources})
 
-AddTest(
-  TARGET MODULE_ESTATE_pot_pcc
-  LIBS parameter base device planewave_serial
-  SOURCES test_pot_pcc.cpp ${pcc_test_sources}
-)
+  abacus_copy_test_files(support)
 
-abacus_copy_test_files(support)
+  addtest(
+    TARGET MODULE_ESTATE_Elecstate_Op_UTs
+    LIBS parameter psi base device
+    SOURCES ../kernels/test/elecstate_op_test.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_Elecstate_Op_UTs
-  LIBS parameter  psi base device
-  SOURCES ../kernels/test/elecstate_op_test.cpp
-)
+  if(USE_CUDA)
+    target_compile_definitions(MODULE_ESTATE_Elecstate_Op_UTs
+                               PRIVATE __UT_USE_CUDA)
+  elseif(USE_ROCM)
+    target_compile_definitions(MODULE_ESTATE_Elecstate_Op_UTs
+                               PRIVATE __UT_USE_ROCM)
+  endif()
 
-if(USE_CUDA)
-  target_compile_definitions(MODULE_ESTATE_Elecstate_Op_UTs PRIVATE __UT_USE_CUDA)
-elseif(USE_ROCM)
-  target_compile_definitions(MODULE_ESTATE_Elecstate_Op_UTs PRIVATE __UT_USE_ROCM)
-endif()
+  addtest(
+    TARGET MODULE_ESTATE_elecstate_occupy
+    LIBS parameter base device
+    SOURCES test_occupy.cpp ../occupy.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_elecstate_occupy
-  LIBS parameter  base device
-  SOURCES test_occupy.cpp ../occupy.cpp
-)
+  addtest(
+    TARGET MODULE_ESTATE_elecstate_fp_energy
+    LIBS parameter base device
+    SOURCES test_fp_energy.cpp ../fp_energy.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_elecstate_fp_energy
-  LIBS parameter  base device
-  SOURCES test_fp_energy.cpp ../fp_energy.cpp
-)
+  addtest(
+    TARGET MODULE_ESTATE_elecstate_print
+    LIBS parameter base device symmetry
+    SOURCES test_elecstate_print.cpp
+            ../elecstate_print.cpp
+            ../occupy.cpp
+            ../../source_cell/klist.cpp
+            ../../source_cell/klist_io.cpp
+            ../../source_cell/parallel_kpoints.cpp
+            ../../source_cell/reciprocal_grid.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_elecstate_print
-  LIBS parameter  base device symmetry
-  SOURCES test_elecstate_print.cpp ../elecstate_print.cpp ../occupy.cpp
-  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
-)
+  addtest(
+    TARGET MODULE_ESTATE_elecstate_base
+    KEEP_FEATURE_DEFINITIONS __MPI
+    LIBS parameter base device symmetry
+    SOURCES test_elecstate.cpp
+            ../elecstate.cpp
+            ../elecstate_tools.cpp
+            ../occupy.cpp
+            ../../source_psi/psi.cpp
+            ../../source_base/module_fft/fft_bundle.cpp
+            ../../source_base/module_fft/fft_cpu.cpp
+            ../../source_cell/klist.cpp
+            ../../source_cell/klist_io.cpp
+            ../../source_cell/parallel_kpoints.cpp
+            ../../source_cell/reciprocal_grid.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_elecstate_base
-  KEEP_FEATURE_DEFINITIONS __MPI
-  LIBS parameter  base device symmetry
-  SOURCES test_elecstate.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
-  ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
-  ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
-)
+  addtest(
+    TARGET MODULE_ESTATE_elecstate_pw
+    LIBS parameter planewave_serial base device symmetry
+    SOURCES test_elecstate_pw.cpp
+            ../elecstate_pw.cpp
+            ../uspp_density.cpp
+            ../elecstate_pw_cal_tau.cpp
+            ../elecstate.cpp
+            ../occupy.cpp
+            ../module_charge/chg_parallel.cpp
+            ../../source_lcao/module_deltaspin/spin_constrain.cpp
+            ../../source_lcao/module_deltaspin/deltaspin_state.cpp
+            ../../source_psi/psi.cpp
+            ../../source_base/module_device/memory_op.cpp
+            ../../source_cell/klist.cpp
+            ../../source_cell/klist_io.cpp
+            ../../source_cell/parallel_kpoints.cpp
+            ../../source_cell/reciprocal_grid.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_elecstate_pw
-  LIBS parameter  planewave_serial base device symmetry
-  SOURCES test_elecstate_pw.cpp
-    ../elecstate_pw.cpp
-    ../uspp_density.cpp
-    ../elecstate_pw_cal_tau.cpp
-    ../elecstate.cpp
-    ../occupy.cpp
-    ../module_charge/chg_parallel.cpp
-    ../../source_lcao/module_deltaspin/spin_constrain.cpp
-    ../../source_lcao/module_deltaspin/deltaspin_state.cpp
-    ../../source_psi/psi.cpp
-    ../../source_base/module_device/memory_op.cpp
-    ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
-)
+  addtest(
+    TARGET MODULE_ESTATE_elecstate_energy
+    LIBS parameter base device planewave_serial symmetry
+    SOURCES test_elecstate_energy.cpp
+            ../elecstate_energy.cpp
+            ../fp_energy.cpp
+            ../makov_payne.cpp
+            ../module_pot/h_hartree_pw.cpp
+            ../../source_cell/klist.cpp
+            ../../source_cell/klist_io.cpp
+            ../../source_cell/parallel_kpoints.cpp
+            ../../source_cell/reciprocal_grid.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_elecstate_energy
-  LIBS parameter  base device planewave_serial symmetry
-  SOURCES test_elecstate_energy.cpp
-    ../elecstate_energy.cpp
-    ../fp_energy.cpp
-    ../makov_payne.cpp
-    ../module_pot/h_hartree_pw.cpp
-    ../../source_cell/klist.cpp ../../source_cell/klist_io.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/reciprocal_grid.cpp
-)
+  addtest(TARGET MODULE_ESTATE_potentials_base SOURCES test_pot_base.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_potentials_base
-  SOURCES test_pot_base.cpp
-)
+  addtest(
+    TARGET MODULE_ESTATE_occ_mixer
+    LIBS parameter base device cell_info
+    SOURCES test_occ_mixer.cpp ../occ_mixer.cpp ../occ_matrix.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_occ_mixer
-  LIBS parameter base device cell_info
-  SOURCES test_occ_mixer.cpp ../occ_mixer.cpp ../occ_matrix.cpp
-)
+  addtest(
+    TARGET MODULE_ESTATE_occ_matrix
+    LIBS parameter base device cell_info
+    SOURCES test_occ_matrix.cpp ../occ_matrix.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_occ_matrix
-  LIBS parameter base device cell_info
-  SOURCES test_occ_matrix.cpp ../occ_matrix.cpp
-)
+  addtest(
+    TARGET MODULE_ESTATE_occ_comput
+    LIBS parameter base device
+    SOURCES test_occ_comput.cpp ../occ_comput.cpp)
 
-AddTest(
-  TARGET MODULE_ESTATE_occ_comput
-  LIBS parameter base device
-  SOURCES test_occ_comput.cpp ../occ_comput.cpp
-)
-
-AddTest(
-  TARGET MODULE_ESTATE_potentials_new
-  LIBS parameter  base device planewave_serial
-  SOURCES test_potential_new.cpp test_td_field.cpp ../module_pot/potential_new.cpp
-    ../module_pot/td_field.cpp ../module_pot/td_field_profiles.cpp ../module_pot/td_field_manager.cpp
-    ${pcc_test_sources}
-)
+  addtest(
+    TARGET MODULE_ESTATE_potentials_new
+    LIBS parameter base device planewave_serial
+    SOURCES test_potential_new.cpp
+            test_td_field.cpp
+            ../module_pot/potential_new.cpp
+            ../module_pot/td_field.cpp
+            ../module_pot/td_field_profiles.cpp
+            ../module_pot/td_field_manager.cpp
+            ${pcc_test_sources})
 
 endif()

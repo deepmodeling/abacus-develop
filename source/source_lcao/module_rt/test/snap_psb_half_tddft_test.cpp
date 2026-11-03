@@ -314,7 +314,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
         atom.set_index();
         ucell.itia2iat(0, 0) = 0;
         ucell.set_iat2iwt(1);
-        pv.set_serial(atom.nw, atom.nw);
+        pv.para_2d().set_serial(atom.nw, atom.nw);
         pv.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, atom.nw);
 
         Pseudopot_upf pseudo_reader;
@@ -405,7 +405,7 @@ class SnapPsibetaNonuniformHalfTddftTest : public ::testing::Test
         atom.set_index();
         ucell.itia2iat(0, 0) = 0;
         ucell.set_iat2iwt(1);
-        pv.set_serial(atom.nw, atom.nw);
+        pv.para_2d().set_serial(atom.nw, atom.nw);
         pv.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, atom.nw);
 
         Pseudopot_upf pseudo_reader;
