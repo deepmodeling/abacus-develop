@@ -115,8 +115,8 @@ void toW90_LCAO::unkdotkb(const UnitCell& ucell,
 {
     Mmn.create(num_bands, num_bands);
 
-    int row = this->ParaV->get_row_size();
-    int col = this->ParaV->get_col_size();
+    int row = this->ParaV->para_2d().get_row_size();
+    int col = this->ParaV->para_2d().get_col_size();
     int nloc = row * col;
     std::vector<std::complex<double>> midmatrix(nloc);
 
@@ -150,11 +150,11 @@ void toW90_LCAO::unkdotkb(const UnitCell& ucell,
             for (int i = 0; i < row_size; ++i)
             {
                 int mu = row_indexes[start_i + i];
-                int ir = ParaV->global2local_row(mu);
+                int ir = ParaV->para_2d().global2local_row(mu);
                 for (int j = 0; j < col_size; ++j)
                 {
                     int nu = col_indexes[start_j + j];
-                    int ic = ParaV->global2local_col(nu);
+                    int ic = ParaV->para_2d().global2local_col(nu);
                     int index = ic * row + ir;
                     midmatrix[index] += kRn_phase * matrix.get_value(i, j);
                 }
@@ -182,16 +182,16 @@ void toW90_LCAO::unkdotkb(const UnitCell& ucell,
             &psi_in(ik, 0, 0),
             one,
             one,
-            this->ParaV->desc,
+            this->ParaV->para_2d().get_desc(),
             midmatrix.data(),
             one,
             one,
-            this->ParaV->desc,
+            this->ParaV->para_2d().get_desc(),
             beta,
             C_matrix.data(),
             one,
             one,
-            this->ParaV->desc);
+            this->ParaV->para_2d().get_desc());
 
     ScalapackConnector::gemm(transb,
             transb,
@@ -202,16 +202,16 @@ void toW90_LCAO::unkdotkb(const UnitCell& ucell,
             C_matrix.data(),
             one,
             one,
-            this->ParaV->desc,
+            this->ParaV->para_2d().get_desc(),
             &psi_in(ikb, 0, 0),
             one,
             one,
-            this->ParaV->desc,
+            this->ParaV->para_2d().get_desc(),
             beta,
             out_matrix.data(),
             one,
             one,
-            this->ParaV->desc);
+            this->ParaV->para_2d().get_desc());
 #endif
 
     int count_m = -1;
@@ -222,7 +222,7 @@ void toW90_LCAO::unkdotkb(const UnitCell& ucell,
 }
         count_m++;
 
-        int ir = this->ParaV->global2local_row(m);
+        int ir = this->ParaV->para_2d().global2local_row(m);
         if (ir >= 0)
         {
             int count_n = -1;
@@ -233,7 +233,7 @@ void toW90_LCAO::unkdotkb(const UnitCell& ucell,
 }
                 count_n++;
 
-                int ic = this->ParaV->global2local_col(n);
+                int ic = this->ParaV->para_2d().global2local_col(n);
                 if (ic >= 0)
                 {
                     int index = ic * row + ir;
@@ -414,12 +414,12 @@ void toW90_LCAO::produce_trial_in_lcao()
 
 void toW90_LCAO::construct_overlap_table_project()
 {
-    int row = this->ParaV->get_row_size();
+    int row = this->ParaV->para_2d().get_row_size();
     int global_ir = 0;
 
     for (int ir = 0; ir < row; ir += npol_)
     {
-        global_ir = ParaV->local2global_row(ir);
+        global_ir = ParaV->para_2d().local2global_row(ir);
         int orb_index_row = global_ir / npol_;
 
         for (int wannier_index = 0; wannier_index < num_wannier; wannier_index++)

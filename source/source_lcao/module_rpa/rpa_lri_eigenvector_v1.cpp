@@ -16,7 +16,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector_v1(const Parallel_Orbitals& parav, cons
     const int nks_tot = this->runtime.input.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
     const int npsin_tmp = this->runtime.input.nspin == 2 ? 2 : 1;
     ModuleBase::timer::start("RPA_LRI", "out_eigen_vector_v1_mpi_io");
-    const MPI_Comm io_comm = parav.comm();
+    const MPI_Comm io_comm = parav.para_2d().comm();
     if (io_comm == MPI_COMM_NULL)
     {
         RpaLriDetail::abort_output(this->mpi_comm, "KS eigenvector MPI-IO writer has no wavefunction communicator.");

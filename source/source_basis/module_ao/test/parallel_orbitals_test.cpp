@@ -51,49 +51,49 @@ TEST_F(TestParaO, Divide2D)
 
             for (auto mode : { 0,1 })
             {
-                po.init(gr, gc, nb, MPI_COMM_WORLD, mode);
-                EXPECT_EQ(po.get_block_size(), nb);
+                po.para_2d().init(gr, gc, nb, MPI_COMM_WORLD, mode);
+                EXPECT_EQ(po.para_2d().get_block_size(), nb);
 
                 //1. dim0 and dim1
-                EXPECT_EQ(po.dim0 * po.dim1, dsize);
-                if (mode)EXPECT_LE(po.dim1, po.dim0);
-                else EXPECT_LE(po.dim0, po.dim1);
+                EXPECT_EQ(po.para_2d().get_dim0() * po.para_2d().get_dim1(), dsize);
+                if (mode)EXPECT_LE(po.para_2d().get_dim1(), po.para_2d().get_dim0());
+                else EXPECT_LE(po.para_2d().get_dim0(), po.para_2d().get_dim1());
 
                 //2. comm_2D
                 //EXPECT_NE(po.comm_2D, MPI_COMM_NULL);
 
                 //3. local2global and local sizes
-                int lr = po.get_row_size();
-                int lc = po.get_col_size();
-                EXPECT_EQ(lr * lc, po.get_local_size());
+                int lr = po.para_2d().get_row_size();
+                int lc = po.para_2d().get_col_size();
+                EXPECT_EQ(lr * lc, po.para_2d().get_local_size());
                 auto cal_lsize = [](const int& gsize, const int& nb, const int& np, const int& pcoord) -> int
                     {
                         int nblock = gsize / nb;
                         return nblock / np * nb + static_cast<int>(nblock % np > pcoord) * nb //full blocks' contribution
                             + static_cast<int>(nblock % np == pcoord) * (gsize % nb);   // the last block's contribution
                     };
-                EXPECT_EQ(lr, cal_lsize(gr, nb, po.dim0, po.get_coord_row()));
-                EXPECT_EQ(lc, cal_lsize(gc, nb, po.dim1, po.get_coord_col()));
+                EXPECT_EQ(lr, cal_lsize(gr, nb, po.para_2d().get_dim0(), po.para_2d().get_coord_row()));
+                EXPECT_EQ(lc, cal_lsize(gc, nb, po.para_2d().get_dim1(), po.para_2d().get_coord_col()));
 
                 //4. ScaLAPACK descriptor
-                EXPECT_EQ(po.desc[0], 1);
-                EXPECT_EQ(po.desc[1], po.blacs_ctxt);
-                EXPECT_EQ(po.desc[2], gr);
-                EXPECT_EQ(po.desc[3], gc);
-                EXPECT_EQ(po.desc[4], po.get_block_size());
-                EXPECT_EQ(po.desc[5], po.get_block_size());
-                EXPECT_EQ(po.desc[6], 0);
-                EXPECT_EQ(po.desc[7], 0);
-                EXPECT_EQ(po.desc[8], lr);
+                EXPECT_EQ(po.para_2d().get_desc()[0], 1);
+                EXPECT_EQ(po.para_2d().get_desc()[1], po.get_blacs_ctxt());
+                EXPECT_EQ(po.para_2d().get_desc()[2], gr);
+                EXPECT_EQ(po.para_2d().get_desc()[3], gc);
+                EXPECT_EQ(po.para_2d().get_desc()[4], po.para_2d().get_block_size());
+                EXPECT_EQ(po.para_2d().get_desc()[5], po.para_2d().get_block_size());
+                EXPECT_EQ(po.para_2d().get_desc()[6], 0);
+                EXPECT_EQ(po.para_2d().get_desc()[7], 0);
+                EXPECT_EQ(po.para_2d().get_desc()[8], lr);
 
                 //5. global2local
                 auto sum_array = [&po](const int& gr, const int& gc) -> std::pair<int, int>
                 {
                     int sum_row = 0; int sum_col = 0;
                     for (int i = 0; i < gr; ++i)
-                        sum_row += po.global2local_row(i);
+                        sum_row += po.para_2d().global2local_row(i);
                     for (int i = 0; i < gc; ++i)
-                        sum_col += po.global2local_col(i);
+                        sum_col += po.para_2d().global2local_col(i);
                     return { sum_row, sum_col };
                 };
                 std::pair<int, int> sumrc = sum_array(gr, gc);
@@ -101,7 +101,7 @@ TEST_F(TestParaO, Divide2D)
                 EXPECT_EQ(std::get<1>(sumrc), lc * (lc - 1) / 2 - (gc - lc));
                 for (int i = 0;i < lr;++i)
                     for (int j = 0;j < lc;++j)
-                        EXPECT_TRUE(po.in_this_processor(po.local2global_row(i), po.local2global_col(j)));
+                        EXPECT_TRUE(po.para_2d().in_this_processor(po.para_2d().local2global_row(i), po.para_2d().local2global_col(j)));
                 
                 //6. set_atomic_trace
                 for(auto nat0 : nat)
@@ -130,7 +130,7 @@ TEST_F(TestParaO, Divide2D)
                             //check global_index == global_index
                             EXPECT_EQ(atomic_row_array[j]+iat2iwt[i], global_row_array[local_index_trace_row]);
                             //check local_index == local_index
-                            EXPECT_EQ(local_index_trace_row, po.global2local_row(atomic_row_array[j]+iat2iwt[i]));
+                            EXPECT_EQ(local_index_trace_row, po.para_2d().global2local_row(atomic_row_array[j]+iat2iwt[i]));
                             local_index_trace_row++;
                         }
                         for (int j = 0; j < atomic_col_array.size(); ++j)
@@ -138,7 +138,7 @@ TEST_F(TestParaO, Divide2D)
                             //check global_index == global_index
                             EXPECT_EQ(atomic_col_array[j]+iat2iwt[i], global_col_array[local_index_trace_col]);
                             //check local_index == local_index
-                            EXPECT_EQ(local_index_trace_col, po.global2local_col(atomic_col_array[j]+iat2iwt[i]));
+                            EXPECT_EQ(local_index_trace_col, po.para_2d().global2local_col(atomic_col_array[j]+iat2iwt[i]));
                             local_index_trace_col++;
                         }
                         
@@ -160,17 +160,17 @@ TEST_F(TestParaO, Serial)
 
         //1. set dim0 and dim1
         //2. set_serial
-        po.set_serial(gr, gc);
-        EXPECT_EQ(po.dim0 * po.dim1, 1);
-        EXPECT_EQ(po.get_row_size(), gr);
-        EXPECT_EQ(po.get_col_size(), gc);
-        EXPECT_EQ(po.get_local_size(), gr * gc);
+        po.para_2d().set_serial(gr, gc);
+        EXPECT_EQ(po.para_2d().dim0 * po.para_2d().dim1, 1);
+        EXPECT_EQ(po.para_2d().get_row_size(), gr);
+        EXPECT_EQ(po.para_2d().get_col_size(), gc);
+        EXPECT_EQ(po.para_2d().get_local_size(), gr * gc);
 
         //3. global2local
         for (int i = 0;i < gr;++i)
-            EXPECT_EQ(po.global2local_row(i), i);
+            EXPECT_EQ(po.para_2d().global2local_row(i), i);
         for (int i = 0;i < gc;++i)
-            EXPECT_EQ(po.global2local_col(i), i);
+            EXPECT_EQ(po.para_2d().global2local_col(i), i);
         //6. set_atomic_trace
         for(auto nat0 : nat)
         {
@@ -182,8 +182,8 @@ TEST_F(TestParaO, Serial)
                 iat2iwt[i] = i * nw;
             }
             po.set_atomic_trace(iat2iwt.data(), nat0, gr);
-            EXPECT_EQ(po.get_col_size(), gr);
-            EXPECT_EQ(po.get_row_size(), gr);
+            EXPECT_EQ(po.para_2d().get_col_size(), gr);
+            EXPECT_EQ(po.para_2d().get_row_size(), gr);
             // check get_ncol_atom(iat) and get_nrow_atom(iat)
             for (int i = 0; i < nat0; ++i)
             {

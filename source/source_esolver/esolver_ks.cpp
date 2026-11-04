@@ -19,6 +19,7 @@
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_pw/module_pwdft/dftu_base.h" // Plus_U_Base::u_converged in iter_finish
+#include "source_pw/module_pwdft/dftu_base_io.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for init_general_exx_info
 
 namespace ModuleESolver
@@ -271,6 +272,16 @@ void ESolver_KS::before_scf(UnitCell& ucell, const int istep)
 
 void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
+    if (this->inp_->dft_plus_u > 0)
+    {
+        const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion,
+                                                    this->inp_->out_freq_elec,
+                                                    this->scf_iter_limit(istep),
+                                                    this->inp_->out_occ_mat,
+                                                    this->inp_->dft_plus_u};
+        DFTU_BASE::prepare_ion_step_output(PARAM.globalv.global_out_dir, istep, iter, occmat_cfg);
+    }
+
     if(this->inp_->esolver_type != "tddft")
     {
         ModuleIO::write_head(GlobalV::ofs_running, istep, iter, this->basisname);

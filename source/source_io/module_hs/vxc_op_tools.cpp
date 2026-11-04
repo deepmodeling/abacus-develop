@@ -12,7 +12,7 @@ namespace ModuleIO
 void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p2d)
 {
 #ifdef __MPI
-    p2d.set(nbands, nbands, pv.nb, pv.blacs_ctxt);
+    p2d.set(nbands, nbands, pv.para_2d().get_block_size(), pv.get_blacs_ctxt());
 #else
     p2d.set_serial(nbands, nbands);
 #endif
@@ -35,7 +35,7 @@ std::vector<T> cVc(const T* V,
     const int i1 = 1;
     ScalapackConnector::gemm(transa, transb,
         nbasis, nbands, nbasis,
-        alpha, V, i1, i1, pv.desc,
+        alpha, V, i1, i1, pv.para_2d().get_desc(),
         c, i1, i1, pv.desc_wfc,
         beta, Vc.data(), i1, i1, pv.desc_wfc);
 #else

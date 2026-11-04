@@ -59,7 +59,7 @@ void ModuleIO::write_proj_band_lcao(
     {
         std::vector<ModuleBase::matrix> Mulk;
         Mulk.resize(1);
-        Mulk[0].create(pv.ncol, pv.nrow);
+        Mulk[0].create(pv.para_2d().get_col_size(), pv.para_2d().get_row_size());
 
         psi->fix_k(is);
         for (int i = 0; i < PARAM.inp.nbands; ++i)
@@ -77,26 +77,26 @@ void ModuleIO::write_proj_band_lcao(
                 sk,
                 &one_int,
                 &one_int,
-                pv.desc,
+                pv.para_2d().get_desc(),
                 psi->get_pointer(),
                 &one_int,
                 &NB,
-                pv.desc,
+                pv.para_2d().get_desc(),
                 &one_int,
                 &zero_float,
                 Mulk[0].c,
                 &one_int,
                 &NB,
-                pv.desc,
+                pv.para_2d().get_desc(),
                 &one_int);
 #endif
             for (int j = 0; j < PARAM.globalv.nlocal; ++j)
             {
 
-                if (pv.in_this_processor(j, i))
+                if (pv.para_2d().in_this_processor(j, i))
                 {
-                    const int ir = pv.global2local_row(j);
-                    const int ic = pv.global2local_col(i);
+                    const int ir = pv.para_2d().global2local_row(j);
+                    const int ic = pv.para_2d().global2local_col(i);
                     weightk(is, i * PARAM.globalv.nlocal + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
                 }
             }
@@ -227,7 +227,7 @@ void ModuleIO::write_proj_band_lcao(
     {
             std::vector<ModuleBase::ComplexMatrix> Mulk;
             Mulk.resize(1);
-            Mulk[0].create(pv.ncol, pv.nrow);
+            Mulk[0].create(pv.para_2d().get_col_size(), pv.para_2d().get_row_size());
 
             for (int ik = 0; ik < kv.get_nks(); ik++)
             {
@@ -276,27 +276,27 @@ void ModuleIO::write_proj_band_lcao(
                             sk,
                             &one_int,
                             &one_int,
-                            pv.desc,
+                            pv.para_2d().get_desc(),
                             p_dwfc,
                             &one_int,
                             &NB,
-                            pv.desc,
+                            pv.para_2d().get_desc(),
                             &one_int,
                             &zero_float[0],
                             Mulk[0].c,
                             &one_int,
                             &NB,
-                            pv.desc,
+                            pv.para_2d().get_desc(),
                             &one_int);
 #endif
                         for (int j = 0; j < PARAM.globalv.nlocal; ++j)
                         {
 
-                            if (pv.in_this_processor(j, i))
+                            if (pv.para_2d().in_this_processor(j, i))
                             {
 
-                                const int ir = pv.global2local_row(j);
-                                const int ic = pv.global2local_col(i);
+                                const int ir = pv.para_2d().global2local_row(j);
+                                const int ic = pv.para_2d().global2local_col(i);
 
                                 weightk(ik, i * PARAM.globalv.nlocal + j) = Mulk[0](ic, ir) * psi[0](ic, ir);
                             }

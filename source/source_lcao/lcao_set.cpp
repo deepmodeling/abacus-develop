@@ -86,8 +86,8 @@ void LCAO_domain::set_pot(
     {
         // init_base does not see paraV; validate the square-matrix invariant
         // of the LCAO parallel distribution here.
-        const int global_rows = pv.get_global_row_size();
-        const int global_cols = pv.get_global_col_size();
+        const int global_rows = pv.para_2d().get_global_row_size();
+        const int global_cols = pv.para_2d().get_global_col_size();
         if (global_rows != global_cols)
         {
             ModuleBase::WARNING_QUIT("LCAO_domain::set_pot",

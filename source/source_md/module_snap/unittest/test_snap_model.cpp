@@ -91,7 +91,7 @@ TEST(SnapModel, RejectsRminOutsideSmallPairCutoff)
     EXPECT_NE(error.find("Small-Small"), std::string::npos);
 }
 
-TEST(SnapModel, LoadsLammpsStyleCoefficientAndParameterFiles)
+TEST(SnapModel, LoadsSnapCoefficientAndParameterFiles)
 {
     const std::string coefficient_file = testing::TempDir() + "snap_coeff_test.txt";
     const std::string parameter_file = testing::TempDir() + "snap_param_test.txt";
@@ -229,7 +229,7 @@ TEST(SnapModel, ReadsInnerSwitchAndRejectsUnknownParameter)
     {
         std::ofstream output(parameter_file.c_str());
         output << "rcutfac 1.0\ntwojmax 0\nswitchinnerflag 1\n";
-        output << "sinner 1.5\ndinner 0.4\nchunksize 1024\n";
+        output << "sinner 1.5\ndinner 0.4\n";
     }
     ModuleMD::SNAP::ModelData model;
     std::string error;

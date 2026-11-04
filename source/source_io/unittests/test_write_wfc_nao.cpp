@@ -166,17 +166,17 @@ class WriteWfcLcaoTest : public testing::Test
             psi_init_complex[i] = std::complex<double>(i * 0.2, i * 0.3);
         }
 #ifdef __MPI
-        pv.init(nbasis, nbands, 1, MPI_COMM_WORLD);
+        pv.para_2d().init(nbasis, nbands, 1, MPI_COMM_WORLD);
         for (int i = 0; i < 9; i++)
         {
-            pv.desc_wfc[i] = pv.desc[i];
+            pv.desc_wfc[i] = pv.para_2d().get_desc()[i];
         }
 
         // create a global PV, and distribute the psi_init to local
         Parallel_2D pv_glb;
         pv_glb.init(nbasis, nbands, std::max(nbasis, nbands), MPI_COMM_WORLD);
-        psi_local_double.resize(nk * pv.get_row_size() * pv.get_col_size());
-        psi_local_complex.resize(nk * pv.get_row_size() * pv.get_col_size());
+        psi_local_double.resize(nk * pv.para_2d().get_row_size() * pv.para_2d().get_col_size());
+        psi_local_complex.resize(nk * pv.para_2d().get_row_size() * pv.para_2d().get_col_size());
         for (int ik = 0; ik < nk; ik++)
         {
             Cpxgemr2d(nbasis,
@@ -185,25 +185,25 @@ class WriteWfcLcaoTest : public testing::Test
                       1,
                       1,
                       pv_glb.desc,
-                      psi_local_double.data() + ik * pv.get_row_size() * pv.get_col_size(),
+                      psi_local_double.data() + ik * pv.para_2d().get_row_size() * pv.para_2d().get_col_size(),
                       1,
                       1,
-                      pv.desc,
-                      pv.blacs_ctxt);
+                      pv.para_2d().desc,
+                      pv.get_blacs_ctxt());
             Cpxgemr2d(nbasis,
                       nbands,
                       psi_init_complex.data() + ik * nbands * nbasis,
                       1,
                       1,
                       pv_glb.desc,
-                      psi_local_complex.data() + ik * pv.get_row_size() * pv.get_col_size(),
+                      psi_local_complex.data() + ik * pv.para_2d().get_row_size() * pv.para_2d().get_col_size(),
                       1,
                       1,
-                      pv.desc,
-                      pv.blacs_ctxt);
+                      pv.para_2d().desc,
+                      pv.get_blacs_ctxt());
         }
-        nbands_local = pv.get_col_size();
-        nbasis_local = pv.get_row_size();
+        nbands_local = pv.para_2d().get_col_size();
+        nbasis_local = pv.para_2d().get_row_size();
 #else
         psi_local_double = psi_init_double;
         psi_local_complex = psi_init_complex;

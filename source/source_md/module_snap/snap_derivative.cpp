@@ -164,8 +164,8 @@ UWithDerivative DescriptorEvaluator::compute_u_with_derivative(const Neighbor& n
             {
                 const std::size_t current = u_index(j, ma, mb);
                 const std::size_t previous = u_index(j - 1, ma, mb);
-                const double first_root = rootpq_[static_cast<std::size_t>((j - ma) * dimension + (j - mb))];
-                const double second_root = rootpq_[static_cast<std::size_t>((ma + 1) * dimension + (j - mb))];
+                const double first_root = root_factors_[static_cast<std::size_t>((j - ma) * dimension + (j - mb))];
+                const double second_root = root_factors_[static_cast<std::size_t>((ma + 1) * dimension + (j - mb))];
                 raw[current] += Dual(first_root) * std::complex<Dual>(ar, -ai) * raw[previous];
                 raw[current + 1] = Dual(-second_root) * std::complex<Dual>(br, -bi) * raw[previous];
             }
