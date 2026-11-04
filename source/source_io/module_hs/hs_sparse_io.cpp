@@ -33,7 +33,10 @@ void open_sparse_file(std::ofstream& ofs, const ModuleIO::SparseWriteOptions& op
     {
         mode |= std::ios::binary;
     }
-    const bool append_on_restart = (options.calculation == "md") && options.out_app_flag && options.istep >= 0;
+    // Append from the second ionic step onward in append mode; the first
+    // step (istep == 0) truncates so a rerun does not retain prior frames.
+    // Single-point SCF passes istep = -1 and also starts a fresh file.
+    const bool append_on_restart = (options.out_app_flag == 1) && (options.istep > 0);
     if (append_on_restart)
     {
         mode |= std::ios::app;
@@ -51,7 +54,9 @@ void write_sparse_header(std::ofstream& ofs,
                          const int nlocal,
                          const int output_R_number)
 {
-    const int step = std::max(options.istep, 0);
+    // ionic step printed one-based per governance rule 22, consistent
+    // with the g{N} filename suffix (g1 holds the first ionic step)
+    const int step = std::max(options.istep, 0) + 1;
     if (options.binary)
     {
         ofs.write(reinterpret_cast<const char*>(&step), sizeof(int));

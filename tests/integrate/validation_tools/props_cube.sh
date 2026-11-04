@@ -146,35 +146,71 @@ run_cube_props() {
   # echo "$has_lowf" # test out_wfc_lcao > 0
   #--------------------------------------------
   if ! test -z "$has_lowf" && [ "$has_lowf" == 1 ]; then
+    wfc_prep_ok=1
     if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
       wfc_cal=OUT.autotest/wf_nao.txt
       wfc_ref=wf_nao.txt.ref
-    else # multi-k point case
+    else  # multi-k point case
       if ! test -z "$out_app_flag" && [ $out_app_flag == 0 ]; then
-        wfc_name=wfk1g3_nao
-        input_file=WFC/wfk1g3_nao
+        # mode 0 overwrites one fixed file at every write, so the file holds
+        # the last written step; the reference below records that step (3).
+        wfc_name=wfk1_nao
+        input_file=wfk1_nao
+        wfc_ref_name=wfk1g3_nao
       else
         wfc_name=wfk2_nao
         input_file=wfk2_nao
+        wfc_ref_name=wfk2_nao
+      fi
+      if [[ ! -f "OUT.autotest/$input_file.txt" ]]; then
+        echo "Can't find file OUT.autotest/$input_file.txt"
+        exit 1
       fi
       awk 'BEGIN {flag=999}
-	{
-		if($2 == "(band)") {flag=2;print $0}
-		else if(flag>0) {flag-=1;print $0}
-		else if(flag==0)
-		{
-			for(i=1;i<=NF/2;i++)
-			{printf "%.10e ",sqrt( $(2*i)*$(2*i)+$(2*i-1)*$(2*i-1) )};
-			printf "\n"
-		}
-		else {print $0}
-	}' OUT.autotest/"$input_file".txt >OUT.autotest/"$wfc_name"_mod.txt
+    {
+      if($2 == "(band)") {flag=2;print $0}
+      else if(flag>0) {flag-=1;print $0}
+      else if(flag==0)
+      {
+        for(i=1;i<=NF/2;i++)
+        {printf "%.10e ",sqrt( $(2*i)*$(2*i)+$(2*i-1)*$(2*i-1) )};
+        printf "\n"
+      }
+      else {print $0}
+    }' OUT.autotest/"$input_file".txt > OUT.autotest/"$wfc_name"_mod.txt
+      if [ $? -ne 0 ]; then
+        echo "Error: failed to preprocess OUT.autotest/$input_file.txt"
+        wfc_prep_ok=0
+      fi
       wfc_cal=OUT.autotest/"$wfc_name"_mod.txt
-      wfc_ref="$wfc_name"_mod.txt.ref
+      wfc_ref="$wfc_ref_name"_mod.txt.ref
     fi
 
-    python3 $COMPARE_SCRIPT $wfc_cal $wfc_ref 8 -abs 1
-    echo "Compare_wfc_lcao_pass $?" >>$props_result_file
+    # wfc text output carries a provenance header ("# ABACUS version:",
+    # "# Written at ...", "# IONIC STEP ...") since v3.11; the multi-k awk
+    # pass also forwards those comment lines into the *_mod.txt file.
+    # Strip comment lines from both sides so the (run-dependent) header and
+    # its timestamp never affect the comparison.
+    local wfc_cal_nohdr
+    local wfc_ref_nohdr
+    wfc_cal_nohdr=$(mktemp)
+    wfc_ref_nohdr=$(mktemp)
+    # A missing source file makes sed leave a truncated temporary file, and
+    # CompareFile.py would then compare a nonempty reference against nothing.
+    # Detect that preprocessing failure here instead of trusting the
+    # downstream comparison.
+    if [ "$wfc_prep_ok" -ne 1 ]; then
+      wfc_pass=1
+    elif ! sed '/^[[:space:]]*#/d' "$wfc_cal" >"$wfc_cal_nohdr" \
+      || ! sed '/^[[:space:]]*#/d' "$wfc_ref" >"$wfc_ref_nohdr"; then
+      echo "Error: failed to strip comment lines from $wfc_cal or $wfc_ref"
+      wfc_pass=1
+    else
+      python3 $COMPARE_SCRIPT "$wfc_cal_nohdr" "$wfc_ref_nohdr" 8 -abs 1
+      wfc_pass=$?
+    fi
+    rm -f "$wfc_cal_nohdr" "$wfc_ref_nohdr"
+    echo "Compare_wfc_lcao_pass $wfc_pass" >>$props_result_file
   fi
 
 }
