@@ -380,9 +380,9 @@ void HSolverLCAO<T>::parakSolve_cusolver(HSMatrix<T>& hs,
 
     MPI_Comm self_comm;  // the communicator that only contains the current process itself
     MPI_Comm_split(MPI_COMM_WORLD, world_rank, 0, &self_comm);
-    int nrow = this->ParaV->get_global_row_size(); // number of rows in the global matrix
+    int nrow = this->ParaV->para_2d().get_global_row_size(); // number of rows in the global matrix
     int ncol = nrow;
-    int nb2d = this->ParaV->get_block_size();      // block size for the 2D matrix distribution
+    int nb2d = this->ParaV->para_2d().get_block_size();      // block size for the 2D matrix distribution
     mat_para_global.init(nrow, ncol, nb2d, MPI_COMM_WORLD);
     psi_para_global.init(nrow, nbands, nb2d, MPI_COMM_WORLD);
     mat_para_local.init(nrow, ncol, nb2d, self_comm);

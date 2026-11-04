@@ -39,6 +39,24 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
                           const LCAO_Orbitals& orb,
                           const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in)
 {
+    this->init(
+        mpi_comm_in,
+        ucell,
+        kv_in,
+        orb,
+        abfs_in,
+        false);
+}
+
+template <typename Tdata>
+void Exx_LRI<Tdata>::init(
+    const MPI_Comm &mpi_comm_in,
+    const UnitCell &ucell,
+    const K_Vectors &kv_in,
+    const LCAO_Orbitals &orb,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
+    const bool use_gpu)
+{
     ModuleBase::TITLE("Exx_LRI","init");
     ModuleBase::timer::start("Exx_LRI", "init");
 
@@ -73,15 +91,21 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
     this->exx_objs.clear();
     const auto settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
     this->MGT = std::make_shared<ORB_gaunt_table>();
-    this->refresh_coulomb(ucell, orb, settings);
+    this->refresh_coulomb(
+        ucell,
+        orb,
+        settings,
+        use_gpu);
 
     ModuleBase::timer::end("Exx_LRI", "init");
 }
 
-template<typename Tdata>
-void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
-                                   const LCAO_Orbitals& orb,
-                                   const CoulombSettings& settings)
+template <typename Tdata>
+void Exx_LRI<Tdata>::refresh_coulomb(
+    const UnitCell &ucell,
+    const LCAO_Orbitals &orb,
+    const CoulombSettings &settings,
+    const bool use_gpu)
 {
     ModuleBase::TITLE("Exx_LRI", "refresh_coulomb");
     ModuleBase::timer::start("Exx_LRI", "refresh_coulomb");
@@ -113,8 +137,16 @@ void Exx_LRI<Tdata>::refresh_coulomb(const UnitCell& ucell,
         auto& object = this->exx_objs[settings_list.first];
         object.abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(
             this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
-        object.cv.set_orbitals(ucell, orb, this->lcaos, this->abfs, object.abfs_ccp,
-                               this->info.kmesh_times, this->MGT, settings_list.second.first);
+        object.cv.set_orbitals(
+            ucell,
+            orb,
+            this->lcaos,
+            this->abfs,
+            object.abfs_ccp,
+            this->info.kmesh_times,
+            this->MGT,
+            settings_list.second.first,
+            use_gpu);
         object.cv.set_info_ri(&this->info);
         if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
         {
@@ -191,7 +223,8 @@ void Exx_LRI<Tdata>::init_spencer(
         this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].abfs_ccp,
         this->info.kmesh_times,
         this->MGT,
-        center2_settings->second.first);
+        center2_settings->second.first,
+        false);
     this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_info_ri(&this->info);
 
     ModuleBase::timer::end("Exx_LRI", "init_spencer");

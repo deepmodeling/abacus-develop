@@ -21,8 +21,9 @@ public:
     /// Access to the block-cyclic distribution information.  The non-const
     /// overload exists only for the two cases a const getter cannot serve:
     /// non-const mutation by setup_2d_division, and test-side descriptor writes.
-    // DEPRECATED-ALIAS: para_2d() -> get_block_cyclic_distribution()
-    // DELETION-COMMIT: PR#TBD/3 commits after merge; trigger: git grep -w para_2d == 0
+    // Transitional name. The accessor becomes block_cyclic_distribution() (no
+    // get_ prefix) and para_2d() is deleted once `git grep -w para_2d` has no
+    // hits outside these two declarations.
     Parallel_2D& para_2d() { return para_2d_; }
 
     const Parallel_2D& para_2d() const { return para_2d_; }

@@ -340,7 +340,8 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     double* d_ekb = static_cast<double*>(ekb.data<double>());
 
     // Direct GPU-to-GPU reduction using CUDA-aware MPI
-    MPI_Allreduce(d_eii, d_ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+    MPI_Comm comm = pv->para_2d().comm();
+    MPI_Allreduce(d_eii, d_ekb, nband, MPI_DOUBLE, MPI_SUM, comm);
 
     // 8. Cleanup
     cublasMpMatrixDescriptorDestroy(desc_H);
