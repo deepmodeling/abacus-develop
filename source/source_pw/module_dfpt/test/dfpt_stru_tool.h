@@ -4,11 +4,12 @@
 // Shared free-function utilities for the MPI-side DFPT tests
 // (dfpt_pw_data_test / dfpt_pw_run_test): building a minimal UnitCell
 // from a hand-written structure table (abbreviated from
-// module_symmetry/test/symm_test.cpp and klist_test.cpp), in the same
-// free-function test-tool pattern as test_serial/dfpt_test_tool.
-// Every test file derives its own fixture from ::testing::Test, owns
-// its UnitCell and calls these functions; there is no shared fixture
-// base class.
+// module_symmetry/test/symm_test.cpp and klist_test.cpp), in the
+// free-function test-tool pattern of module_pw's test/test_tool (a
+// serial-side counterpart for test_serial/ is pending review and not
+// part of this change). Every test file derives its own fixture from
+// ::testing::Test, owns its UnitCell and calls these functions; there
+// is no shared fixture base class on this side.
 
 #include <string>
 #include <vector>

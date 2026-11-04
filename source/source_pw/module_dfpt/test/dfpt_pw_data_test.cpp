@@ -47,7 +47,8 @@ class DFPT_PW_DataTest : public ::testing::Test
     // build a reduced 2x2x2 q-mesh (4 irreducible q-points for O_h)
     void init_qlist()
     {
-        dfpt_test::construct_ucell(ucell, dfpt_test::cubic_carbon_stru());
+        const dfpt_test::stru_ stru = dfpt_test::cubic_carbon_stru();
+        dfpt_test::construct_ucell(ucell, stru);
         ofs_running.open("tmp_dfpt_qlist");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};

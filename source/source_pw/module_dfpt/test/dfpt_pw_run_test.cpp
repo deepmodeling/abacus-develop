@@ -43,7 +43,8 @@ class DFPT_PWRunTest : public ::testing::Test
 
     void SetUp() override
     {
-        dfpt_test::construct_ucell(ucell, dfpt_test::cubic_carbon_stru());
+        const dfpt_test::stru_ stru = dfpt_test::cubic_carbon_stru();
+        dfpt_test::construct_ucell(ucell, stru);
         ofs_running.open("tmp_dfpt_run");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
