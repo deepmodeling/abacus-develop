@@ -56,8 +56,10 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
     this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
     LR_Util::setup_2d_division(this->paraMat_.para_2d(), 1, this->nbasis, this->nbasis);
+    const int nrow = this->paraMat_.para_2d().get_row_size();
+    const int block_size = this->paraMat_.para_2d().get_block_size();
 #ifdef __MPI
-    this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, this->paraMat_.get_row_size());
+    this->paraMat_.set_desc_wfc_Eij(this->nbasis, this->nbands, nrow);
     int err = this->paraMat_.set_nloc_wfc_Eij(this->nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     this->paraMat_.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nbasis);
 #else
@@ -67,7 +69,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
 
     this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
                                        this->paraMat_.ncol_bands,
-                                       this->paraMat_.get_row_size(),
+                                       nrow,
                                        this->kv.ngk,
                                        true));
     this->psi_ks_global = new psi::Psi<T>(this->kv.get_nks(),
@@ -83,9 +85,9 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
         this->reset_dim_spin2();
     }
 
-    LR_Util::setup_2d_division(this->paraC_, this->paraMat_.get_block_size(), this->nbasis, this->nbands
+    LR_Util::setup_2d_division(this->paraC_, block_size, this->nbasis, this->nbands
 #ifdef __MPI
-            , this->paraMat_.blacs_ctxt
+            , this->paraMat_.para_2d().blacs_ctxt
 #endif
         );
 

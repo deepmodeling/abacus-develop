@@ -11,14 +11,17 @@
 // the real serial initgrids/initparameters/setuptransform path on a shared
 // FFT grid, exactly like the production setup_pwrho/setup_pwwfc sequence.
 
-#include "dfpt_serial_fixture.h"
+#include "dfpt_test_tool.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_base/constants.h"
 #include "source_base/matrix3.h"
 #include "source_base/vector3.h"
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
-#include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_cell/stru_fac.h"
@@ -49,16 +52,37 @@
  *   - build_dv under with_u()/u_active()==false (pure-PW DFT+U safety).
  */
 
-class DFPTPertSerialTest : public DFPTSerialBase
+// per-file self-contained fixture (gtest style): owns its objects and
+// calls the dfpt_test free-function utilities
+class DFPTPertSerialTest : public ::testing::Test
 {
   protected:
+    ModuleBase::Matrix3 latvec_;
+    UnitCell ucell_;
+    ModulePW::PW_Basis pw_rho_;
+    ModulePW::PW_Basis_K pw_wfc_;
+    ModuleCell::QList qlist_;
+    ModuleDFPT::DFPT_PW_Data data_;
+    ModuleBase::Vector3<double> q_cart_;
     Structure_Factor sf_;
     ModuleDFPT::DFPT_Pert pert_;
 
+    // default (k, q): q generic, k = -q so k+q = 0; tau of atom 0
+    const ModuleBase::Vector3<double> k_d_{-0.13, 0.0, -0.07};
+    const ModuleBase::Vector3<double> q_d_{0.13, 0.0, 0.07};
+    const ModuleBase::Vector3<double> tau_{1.1, 2.3, 0.7};
+
     void SetUp() override
     {
-        DFPTSerialBase::SetUp();
+        dfpt_test::setup_cell(ucell_, latvec_);
+        dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d_, q_d_, 2, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
+    }
+
+    void TearDown() override
+    {
+        delete[] ucell_.atoms;
+        ucell_.atoms = nullptr;
     }
 };
 
@@ -100,8 +124,8 @@ TEST_F(DFPTPertSerialTest, DVlocDtauMatchesFiniteDifference)
                 // per bohr of displacement (GS stru_fac phase convention)
                 const double ap = -ModuleBase::TWO_PI * (w * (tau_ + eps * d));
                 const double am = -ModuleBase::TWO_PI * (w * (tau_ - eps * d));
-                const std::complex<double> fd = VlocCoulomb((w * w) * ucell_.tpiba2)
-                                                * (std::polar(1.0, ap) - std::polar(1.0, am)) / (2.0 * eps * lat0_);
+                const std::complex<double> fd = dfpt_test::vloc_coulomb(ucell_.atoms[0].ncpp.zv, ucell_.omega, (w * w) * ucell_.tpiba2)
+                                                * (std::polar(1.0, ap) - std::polar(1.0, am)) / (2.0 * eps * dfpt_test::lat0);
                 EXPECT_NEAR(dv[ig].real(), fd.real(), 1.0e-9);
                 EXPECT_NEAR(dv[ig].imag(), fd.imag(), 1.0e-9);
             }
@@ -120,7 +144,7 @@ TEST_F(DFPTPertSerialTest, ApplyDvConvolutionMatchesAnalyticMatrixElement)
     ASSERT_EQ(dv_recip.size(), static_cast<size_t>(pw_rho_.npw));
     for (int ig = 0; ig < pw_rho_.npw; ++ig)
     {
-        const std::complex<double> expect = AnalyticDVloc(0, pw_rho_.gcar[ig] + q_cart_);
+        const std::complex<double> expect = dfpt_test::analytic_dvloc(ucell_, tau_, 0, pw_rho_.gcar[ig] + q_cart_);
         EXPECT_NEAR(dv_recip[ig].real(), expect.real(), 1.0e-9);
         EXPECT_NEAR(dv_recip[ig].imag(), expect.imag(), 1.0e-9);
     }
@@ -131,16 +155,16 @@ TEST_F(DFPTPertSerialTest, ApplyDvConvolutionMatchesAnalyticMatrixElement)
     int ig_zero = -1, ig_x = -1, ig_y = -1;
     for (int ig = 0; ig < npwk; ++ig)
     {
-        const long long key = GKey(pw_wfc_.getgpluskcar(0, ig) - kc);
-        if (key == FKey(0, 0, 0))
+        const long long key = dfpt_test::gkey(pw_wfc_.getgpluskcar(0, ig) - kc, dfpt_test::cubic_edge);
+        if (key == dfpt_test::fkey(0, 0, 0))
         {
             ig_zero = ig;
         }
-        else if (key == FKey(1, 0, 0))
+        else if (key == dfpt_test::fkey(1, 0, 0))
         {
             ig_x = ig;
         }
-        else if (key == FKey(0, 1, 0))
+        else if (key == dfpt_test::fkey(0, 1, 0))
         {
             ig_y = ig;
         }
@@ -168,9 +192,9 @@ TEST_F(DFPTPertSerialTest, ApplyDvConvolutionMatchesAnalyticMatrixElement)
     for (int igl = 0; igl < kq.get_npwk(); ++igl)
     {
         const ModuleBase::Vector3<double> gpp = kq.get_gcar(igl);
-        const std::complex<double> e0 = AnalyticDVloc(0, gpp + q_cart_);
-        const std::complex<double> e1 = 0.7 * AnalyticDVloc(0, gpp - g1 + q_cart_)
-                                        + std::complex<double>(0.3, 0.2) * AnalyticDVloc(0, gpp - g2 + q_cart_);
+        const std::complex<double> e0 = dfpt_test::analytic_dvloc(ucell_, tau_, 0, gpp + q_cart_);
+        const std::complex<double> e1 = 0.7 * dfpt_test::analytic_dvloc(ucell_, tau_, 0, gpp - g1 + q_cart_)
+                                        + std::complex<double>(0.3, 0.2) * dfpt_test::analytic_dvloc(ucell_, tau_, 0, gpp - g2 + q_cart_);
         EXPECT_NEAR(d0[igl].real(), e0.real(), 1.0e-8);
         EXPECT_NEAR(d0[igl].imag(), e0.imag(), 1.0e-8);
         EXPECT_NEAR(d1[igl].real(), e1.real(), 1.0e-8);
@@ -180,7 +204,7 @@ TEST_F(DFPTPertSerialTest, ApplyDvConvolutionMatchesAnalyticMatrixElement)
 
 TEST_F(DFPTPertSerialTest, BuildVkbL0MatchesIndependentSimpson)
 {
-    MakeNCAtom();
+    dfpt_test::make_nc_atom(ucell_);
     const int npwk = pw_wfc_.npwk[0];
     std::vector<ModuleBase::Vector3<double>> gk(npwk);
     for (int ig = 0; ig < npwk; ++ig)
@@ -245,7 +269,7 @@ TEST_F(DFPTPertSerialTest, BuildVkbL0MatchesIndependentSimpson)
 
 TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
 {
-    MakeNCAtom();
+    dfpt_test::make_nc_atom(ucell_);
     const int npwk = pw_wfc_.npwk[0];
     ModuleDFPT::DFPT_KQ_Basis kq;
     kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
@@ -354,7 +378,7 @@ TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
         }
         for (int igl = 0; igl < npwkq; ++igl)
         {
-            fd[igl] /= (2.0 * eps * lat0_);
+            fd[igl] /= (2.0 * eps * dfpt_test::lat0);
             EXPECT_NEAR(dv_psi[b][igl].real(), fd[igl].real(), 1.0e-7);
             EXPECT_NEAR(dv_psi[b][igl].imag(), fd[igl].imag(), 1.0e-7);
         }
@@ -364,7 +388,7 @@ TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
 TEST_F(DFPTPertSerialTest, NonlocalPathRejectsUltrasoft)
 {
     ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-    MakeNCAtom();
+    dfpt_test::make_nc_atom(ucell_);
     ucell_.atoms[0].ncpp.tvanp = true;
     const int npwk = pw_wfc_.npwk[0];
     psi::Psi<std::complex<double>> psi(1, 1, npwk, npwk, true);

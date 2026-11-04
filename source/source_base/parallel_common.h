@@ -36,6 +36,9 @@ int my_rank(const MPI_Comm mpi_comm);
 int nproc(const MPI_Comm mpi_comm);
 /// @brief Barrier on an arbitrary communicator.
 void barrier(const MPI_Comm mpi_comm);
+
+//(4) bcast single on an explicit communicator, from the communicator's rank 0
+void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm);
 #endif
 
 } // namespace Parallel_Common

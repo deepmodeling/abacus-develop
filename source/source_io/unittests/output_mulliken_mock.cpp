@@ -111,12 +111,12 @@ TK* Output_DMK<TK>::get_dmk(int ik)
         for (size_t i = 0; i < dmk1.size(); i++)
         {
             /// sk1 is column-major, find ir and irc
-            int ir_nspin2 = i % (ParaV_->nrow / 2);
-            int ic_nspin2 = i / (ParaV_->nrow / 2);
+            int ir_nspin2 = i % (ParaV_->para_2d().get_row_size() / 2);
+            int ic_nspin2 = i / (ParaV_->para_2d().get_row_size() / 2);
             int ir_nspin4 = ir_nspin2 * 2;
             int ic_nspin4 = ic_nspin2 * 2;
-            int index_nspin4_up = ir_nspin4 + ic_nspin4 * ParaV_->nrow;
-            int index_nspin4_dn = ir_nspin4 + 1 + (ic_nspin4 + 1) * ParaV_->nrow;
+            int index_nspin4_up = ir_nspin4 + ic_nspin4 * ParaV_->para_2d().get_row_size();
+            int index_nspin4_dn = ir_nspin4 + 1 + (ic_nspin4 + 1) * ParaV_->para_2d().get_row_size();
             this->DMK[index_nspin4_up] = dmk1[i];
             this->DMK[index_nspin4_dn] = dmk2[i];
         }
@@ -166,12 +166,12 @@ TK* Output_Sk<TK>::get_Sk(int ik)
         for (size_t i = 0; i < sk1.size(); i++)
         {
             /// sk1 is column-major, find ir and irc
-            int ir_nspin2 = i % (ParaV_->nrow / 2);
-            int ic_nspin2 = i / (ParaV_->nrow / 2);
+            int ir_nspin2 = i % (ParaV_->para_2d().get_row_size() / 2);
+            int ic_nspin2 = i / (ParaV_->para_2d().get_row_size() / 2);
             int ir_nspin4 = ir_nspin2 * 2;
             int ic_nspin4 = ic_nspin2 * 2;
-            int index_nspin4_up = ir_nspin4 + ic_nspin4 * ParaV_->nrow;
-            int index_nspin4_dn = ir_nspin4 + 1 + (ic_nspin4 + 1) * ParaV_->nrow;
+            int index_nspin4_up = ir_nspin4 + ic_nspin4 * ParaV_->para_2d().get_row_size();
+            int index_nspin4_dn = ir_nspin4 + 1 + (ic_nspin4 + 1) * ParaV_->para_2d().get_row_size();
             this->SK[index_nspin4_up] = sk1[i];
             this->SK[index_nspin4_dn] = sk2[i];
         }

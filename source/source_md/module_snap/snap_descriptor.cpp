@@ -26,7 +26,7 @@ DescriptorEvaluator::DescriptorEvaluator(const ModelParameters& parameters)
         u_block_[static_cast<std::size_t>(j)] = u_size_;
         u_size_ += static_cast<std::size_t>((j + 1) * (j + 1));
     }
-    compute_rootpq();
+    init_root_factors();
 
     for (int j1 = 0; j1 <= parameters_.twojmax; ++j1)
     {
@@ -47,15 +47,15 @@ DescriptorEvaluator::DescriptorEvaluator(const ModelParameters& parameters)
     }
 }
 
-void DescriptorEvaluator::compute_rootpq()
+void DescriptorEvaluator::init_root_factors()
 {
     const int dimension = parameters_.twojmax + 1;
-    rootpq_.assign(static_cast<std::size_t>(dimension * dimension), 0.0);
+    root_factors_.assign(static_cast<std::size_t>(dimension * dimension), 0.0);
     for (int p = 1; p <= parameters_.twojmax; ++p)
     {
         for (int q = 1; q <= parameters_.twojmax; ++q)
         {
-            rootpq_[static_cast<std::size_t>(p * dimension + q)] = std::sqrt(static_cast<double>(p) / q);
+            root_factors_[static_cast<std::size_t>(p * dimension + q)] = std::sqrt(static_cast<double>(p) / q);
         }
     }
 }
@@ -141,8 +141,8 @@ std::vector<std::complex<double> > DescriptorEvaluator::compute_u(const Neighbor
             {
                 const std::size_t current = u_index(j, ma, mb);
                 const std::size_t previous = u_index(j - 1, ma, mb);
-                const double first_root = rootpq_[static_cast<std::size_t>((j - ma) * dimension + (j - mb))];
-                const double second_root = rootpq_[static_cast<std::size_t>((ma + 1) * dimension + (j - mb))];
+                const double first_root = root_factors_[static_cast<std::size_t>((j - ma) * dimension + (j - mb))];
+                const double second_root = root_factors_[static_cast<std::size_t>((ma + 1) * dimension + (j - mb))];
                 result[current] += first_root * std::complex<double>(ar, -ai) * result[previous];
                 result[current + 1] = -second_root * std::complex<double>(br, -bi) * result[previous];
             }

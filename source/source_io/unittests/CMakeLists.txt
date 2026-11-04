@@ -15,11 +15,16 @@ addtest(
 
 addtest(TARGET MODULE_IO_spin_tag SOURCES test_spin_tag.cpp)
 
+addtest(TARGET MODULE_IO_provenance_header SOURCES test_provenance_header.cpp)
+
 if(NOT ENABLE_MPI)
   return()
 endif()
 
-add_executable(MODULE_IO_input_error_mpi test_read_input.cpp)
+add_executable(
+  MODULE_IO_input_error_mpi test_read_input.cpp
+  # io_input references stru_frame_io::extract_last_frame without linking cell.
+  ../../source_cell/stru_frame_io.cpp)
 target_link_libraries(
   MODULE_IO_input_error_mpi PRIVATE parameter base device io_input
                                     abacus::linalg_libs)
@@ -64,7 +69,9 @@ abacus_copy_test_files(support INPUTs)
 addtest(
   TARGET MODULE_IO_input_test_para
   LIBS parameter base device io_input
-  SOURCES test_read_input_parallel.cpp)
+  SOURCES test_read_input_parallel.cpp
+          # io_input references stru_frame_io::extract_last_frame without linking cell.
+          ../../source_cell/stru_frame_io.cpp)
 
 add_test(
   NAME MODULE_IO_input_test_para_4
@@ -144,7 +151,8 @@ addtest(
 addtest(
   TARGET MODULE_IO_parse_args
   LIBS parameter base device io_input
-  SOURCES test_parse_args.cpp ../parse_args.cpp ../input_help.cpp)
+  SOURCES test_parse_args.cpp ../parse_args.cpp ../input_help.cpp
+          ../../source_cell/stru_frame_io.cpp)
 
 addtest(
   TARGET MODULE_IO_test_read_inp_sys
@@ -154,7 +162,8 @@ addtest(
 addtest(
   TARGET MODULE_IO_input_help_test
   LIBS parameter base device io_input
-  SOURCES test_input_help.cpp ../input_help.cpp)
+  SOURCES test_input_help.cpp ../input_help.cpp
+          ../../source_cell/stru_frame_io.cpp)
 
 addtest(
   TARGET MODULE_IO_bessel_basis_test

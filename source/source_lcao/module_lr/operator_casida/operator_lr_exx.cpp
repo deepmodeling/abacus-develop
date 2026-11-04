@@ -100,7 +100,7 @@ namespace LR
                         {
                             const int native_col = ucell.itiaiw2iwt(it2, ia2, nu);
                             const int col = benchmark_probe ? aims_nbasis[it2] : native_col;
-                            if (pmat.in_this_processor(row, col))
+                            if (pmat.para_2d().in_this_processor(row, col))
                             {
                                 h[static_cast<std::size_t>(col) * naos + row] += phase * block(mu, nu);
                             }

@@ -137,6 +137,12 @@ void barrier(const MPI_Comm mpi_comm)
 {
     MPI_Barrier(mpi_comm);
 }
+
+// bcast single on an explicit communicator, from the communicator's rank 0
+void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm)
+{
+    MPI_Bcast(&object, 1, MPI_OFFSET, 0, comm);
+}
 #endif
 
 } // namespace Parallel_Common

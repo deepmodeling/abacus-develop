@@ -65,9 +65,9 @@ TEST(VxcOpTools, SetPara2dMO)
     const int nbands = 4;
     Parallel_Orbitals pv;
 #ifdef __MPI
-    ASSERT_EQ(pv.init(nbands, nbands, 1, DIAG_WORLD), 0);
+    ASSERT_EQ(pv.para_2d().init(nbands, nbands, 1, DIAG_WORLD), 0);
 #else
-    pv.set_serial(nbands, nbands);
+    pv.para_2d().set_serial(nbands, nbands);
 #endif
     Parallel_2D p2d;
     ModuleIO::set_para2d_MO(pv, nbands, p2d);

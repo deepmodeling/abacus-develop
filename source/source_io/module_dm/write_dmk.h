@@ -68,6 +68,9 @@ bool read_dmk(const int nspin,
  * @param ucell A pointer to the UnitCell object.
  * @param pv The Parallel_2D object. The 2d-block parallel information of DMK.
  * @param dmk_dir The directory the DMK files are written into.
+ * @param out_app_flag Append-mode selector: 1 reuses the fixed filename
+ * across ionic steps and appends a new record per step in multi-step
+ * runs (MD or relax), 0 or 2 inserts the geometry-step index g{N}.
  */
 template <typename T>
 void write_dmk(const std::vector<std::vector<T>>& dmk,
@@ -78,6 +81,7 @@ void write_dmk(const std::vector<std::vector<T>>& dmk,
                const Parallel_2D& pv,
                const std::string& dmk_dir,
                const int istep,
+               const int out_app_flag,
                std::ofstream& ofs_running);
 
 } // namespace ModuleIO

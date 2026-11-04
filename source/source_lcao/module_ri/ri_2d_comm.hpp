@@ -294,13 +294,13 @@ void RI_2D_Comm::add_Hexx(
                 for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
                 {
                     const int iwt0 = RI_2D_Comm::get_iwt(ucell,iat0, iw0_b, is0_b);
-                    if (pv.global2local_row(iwt0) < 0) {
+                    if (pv.para_2d().global2local_row(iwt0) < 0) {
                         continue;
                     }
                     for(size_t iw1_b=0; iw1_b<H.shape[1]; ++iw1_b)
                     {
                         const int iwt1 = RI_2D_Comm::get_iwt(ucell,iat1, iw1_b, is1_b);
-                        if (pv.global2local_col(iwt1) < 0) {
+                        if (pv.para_2d().global2local_col(iwt1) < 0) {
                             continue;
                         }
                         LCAO_domain::set_mat2d(iwt0, iwt1, RI::Global_Func::convert<TK>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<TK>(frac), pv, hk);

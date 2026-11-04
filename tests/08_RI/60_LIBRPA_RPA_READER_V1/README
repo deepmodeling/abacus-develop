@@ -1,5 +1,5 @@
 Check reader-v1 RPA producer output, including shrink LRI, Coulomb, and GW
-preprocessor input (`KPT.info`, `vxc.txt`, and text LCAO wavefunctions),
+preprocessor input (`KPT.info`, `eband_vxc.txt`, and text LCAO wavefunctions),
 for a compact two-atom H `1x1x2` solid.
 
 For symmetry-reduced grids, reader-v1 appends the actual full-to-SCF mapping

@@ -176,12 +176,12 @@ template <class T> class PexsiPrepare
         }
 
         // set po variables
-        po.ncol = hmtest.ncol;
-        po.nrow = hmtest.nrow;
-        po.nb = nb2d;
-        po.blacs_ctxt = icontxt;
-        po.dim0 = nprows;
-        po.dim1 = npcols;
+        po.para_2d().ncol = hmtest.ncol;
+        po.para_2d().nrow = hmtest.nrow;
+        po.para_2d().nb = nb2d;
+        po.para_2d().blacs_ctxt = icontxt;
+        po.para_2d().dim0 = nprows;
+        po.para_2d().dim1 = npcols;
 
         if (DETAILINFO && myrank == 0)
         {

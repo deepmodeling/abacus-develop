@@ -227,7 +227,8 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
     {
         HR_exx_XC->set_zero();
 
-        std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(ParaV->nloc));
+        const int64_t nloc = ParaV->para_2d().get_local_size();
+        std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(nloc));
         get_DM_XC(DM_XC);
         // get DM_XC of all k points
         if( exx_spacegroup_symmetry )

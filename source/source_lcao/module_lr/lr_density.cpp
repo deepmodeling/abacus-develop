@@ -87,7 +87,7 @@ void LR_Density<T>::write_density_single_state(const double* const* const densit
 {
     const std::string data_desc = "LR-TDDFT electron-hole density difference (electrons/Bohr^3)";
     ModuleIO::write_vdata_palgrid(pgrid_, density[0], 0, 1, 0, filepath, 0.0, &ucell_,
-                                this->out_chg_precision_, 0, false, true, ofs_running, data_desc);
+                                this->out_chg_precision_, 0, false, true, false, ofs_running, data_desc);
 }
 
 template<typename T>

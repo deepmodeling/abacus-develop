@@ -19,14 +19,14 @@ void reset_matrix_boundary(const UnitCell& ucell,
     ModuleBase::TITLE("module_rt", "reset_matrix_boundary");
     ModuleBase::timer::start("module_rt", "reset_matrix_boundary");
     // Tensor-LAPACK keeps full H/S matrices on rank zero, while psi stays distributed.
-    const bool gathered_matrices = len_hs != static_cast<size_t>(pv->nloc);
+    const bool gathered_matrices = len_hs != static_cast<size_t>(pv->para_2d().get_local_size());
     Parallel_Orbitals full_distribution;
     const Parallel_Orbitals* matrix_distribution = pv;
     bool update_matrices = true;
     if (gathered_matrices)
     {
-        const int basis_size = pv->get_global_row_size();
-        full_distribution.set_serial(basis_size, basis_size);
+        const int basis_size = pv->para_2d().get_global_row_size();
+        full_distribution.para_2d().set_serial(basis_size, basis_size);
         full_distribution.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, basis_size);
         matrix_distribution = &full_distribution;
         const ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
@@ -64,7 +64,7 @@ void reset_matrix_boundary(const UnitCell& ucell,
                     module_rt::boundary_shift_mat(phase, h, matrix_distribution, iat);
                     module_rt::boundary_shift_mat(phase, s, matrix_distribution, iat);
                 }
-                if (pv->nrow > 0 && pv->ncol_bands > 0)
+                if (pv->para_2d().get_row_size() > 0 && pv->ncol_bands > 0)
                 {
                     // Saved LCAO coefficients use k-first storage. Index it without
                     // changing the shared Psi cursor in this OpenMP loop.

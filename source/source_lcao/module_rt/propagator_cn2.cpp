@@ -272,20 +272,20 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
     void* d_H = static_cast<void*>(Htmp.data<std::complex<double>>());
     void* d_Num = static_cast<void*>(U_operator.data<std::complex<double>>());
 
-    int64_t len_loc = this->ParaV->nloc;
+    int64_t len_loc = this->ParaV->para_2d().get_local_size();
 
     // Allocate temporary tensor for denominator matrix
     ct::Tensor Denominator_gpu(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::GpuDevice, ct::TensorShape({len_loc}));
     void* d_Den = static_cast<void*>(Denominator_gpu.data<std::complex<double>>());
 
     // 3. Matrix Descriptors Creation
-    int64_t m_global = this->ParaV->desc[2];
-    int64_t n_global = this->ParaV->desc[3];
-    int64_t mb = this->ParaV->desc[4];
-    int64_t nb = this->ParaV->desc[5];
-    int64_t rsrc = this->ParaV->desc[6];
-    int64_t csrc = this->ParaV->desc[7];
-    int64_t lld = this->ParaV->desc[8];
+    int64_t m_global = this->ParaV->para_2d().get_desc()[2];
+    int64_t n_global = this->ParaV->para_2d().get_desc()[3];
+    int64_t mb = this->ParaV->para_2d().get_desc()[4];
+    int64_t nb = this->ParaV->para_2d().get_desc()[5];
+    int64_t rsrc = this->ParaV->para_2d().get_desc()[6];
+    int64_t csrc = this->ParaV->para_2d().get_desc()[7];
+    int64_t lld = this->ParaV->para_2d().get_desc()[8];
 
     // 3.1 cuBLASMp Descriptor
     cublasMpMatrixDescriptor_t desc_blas;

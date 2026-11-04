@@ -13,10 +13,10 @@ namespace hamilt
 
         public:
             HS_Matrix_K(const Parallel_Orbitals* paraV, bool no_s=false){
-                hk.resize(paraV->nloc);
+                hk.resize(paraV->para_2d().get_local_size());
                 if(!no_s) 
                 {
-                    sk.resize(paraV->nloc);
+                    sk.resize(paraV->para_2d().get_local_size());
                 }
                 this->pv = paraV;
             }

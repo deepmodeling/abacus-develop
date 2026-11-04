@@ -133,10 +133,11 @@ namespace ModuleIO
             ModuleBase::WARNING_QUIT("ModuleIO::write_Hexxs_csr",
                                      "LCAO matrix dimension must be positive.");
         }
-        // The Hexx restart files must round-trip through read_Hexxs_csr, whose
-        // csrFileReader parses the sparse-file layout shared with the DM(R)
-        // restart files: header, lattice block, then CSR blocks per R. The
-        // bare save_sparse header cannot be read back.
+        // The Hexx restart files are written by hand below in the sparse-file
+        // layout that read_Hexxs_csr expects (header, lattice block, then CSR
+        // blocks per R). The bare save_sparse header cannot be read back, and
+        // this path no longer goes through save_sparse, so no parallel
+        // distribution object is needed here.
         for (int is = 0;is < Hexxs.size();++is)
         {
             std::set<Abfs::Vector3_Order<int>> all_R_coor;

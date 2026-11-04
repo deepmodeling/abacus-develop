@@ -215,7 +215,7 @@ TEST_F(FoldingTest, folding_HR_d2d)
 TEST(CrossOverlapFolding, PreservesOrderedPairsAndAllImages)
 {
     Parallel_Orbitals distribution;
-    distribution.set_serial(2, 2);
+    distribution.para_2d().set_serial(2, 2);
     const int atom_offsets[] = {0, 1, 2};
     distribution.set_atomic_trace(atom_offsets, 2, 2);
     hamilt::HContainer<double> overlap(&distribution);

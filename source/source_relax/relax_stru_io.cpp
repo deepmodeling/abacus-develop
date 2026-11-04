@@ -117,7 +117,8 @@ void write_stru(UnitCell& ucell,
                 const bool need_orb,
                 const bool deepks_setorb,
                 const int my_rank,
-                const bool has_force)
+                const bool has_force,
+                const bool append)
 {
     if (inp.out_stru == 1)
     {
@@ -133,7 +134,8 @@ void write_stru(UnitCell& ucell,
                                   deepks_setorb,
                                   my_rank,
                                   force,
-                                  has_force);
+                                  has_force,
+                                  append);
     }
     else if (inp.out_stru == 2)
     {

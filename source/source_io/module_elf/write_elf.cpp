@@ -18,6 +18,7 @@ void write_elf(
     const int& precision,
     const std::string& geom_block,
     const bool two_fermi,
+    const bool append,
     std::ofstream& ofs_running)
 {
     ModuleBase::timer::start("ModuleIO", "write_elf");
@@ -35,8 +36,14 @@ void write_elf(
     const int nrxx = rho_basis->nrxx;
     const int npw = rho_basis->npw;
 
-    assert(nrxx>0);
-    assert(npw>0);
+    // A rank may own zero real-space grid points (nrxx == 0) when the FFT
+    // grid is decomposed across more processes than it has z-slabs. Such
+    // empty partitions are legitimate: the per-grid-point loops below simply
+    // do not execute, but every rank must still call real2recip / recip2real
+    // because PW_Basis::gatherp_scatters performs an MPI_Alltoallv that
+    // requires all ranks in POOL_WORLD to participate. Skipping the FFT on
+    // empty ranks would deadlock the grid-owning ranks inside Alltoallv.
+    // The asserts are removed to allow nrxx == 0 / npw == 0 through.
 
     std::vector<std::vector<double>> elf(nspin_eff, std::vector<double>(nrxx, 0.));
     // 1) calculate the kinetic energy density of vW KEDF
@@ -154,7 +161,12 @@ void write_elf(
         }
     }
 
-    // 4) output the ELF = 1 / (1 + F^2) to cube file
+    // 4) output the ELF = 1 / (1 + F^2) to cube file.
+    //    Every rank, including empty-partition ranks with nrxx == 0, must
+    //    enter this block so write_vdata_palgrid (which calls
+    //    Parallel_Grid::reduce / MPI_Gatherv) sees a collective call from all
+    //    ranks. Empty partitions pass a null pointer which Parallel_Grid::reduce
+    //    accepts only when nrxx == 0 (sendcount 0 ignores the buffer).
     const double ef_tmp = 0.0;
     const int out_fermi = 0;
 
@@ -175,6 +187,7 @@ void write_elf(
             out_fermi,
             two_fermi,
             false,
+            append,
             ofs_running,
             "electron localization function");
     }
@@ -200,6 +213,7 @@ void write_elf(
                 out_fermi,
                 two_fermi,
                 false,
+                append,
                 ofs_running,
                 desc_elf);
         }
@@ -238,6 +252,7 @@ void write_elf(
             out_fermi,
             two_fermi,
             false,
+            append,
             ofs_running,
             "electron localization function");
     }

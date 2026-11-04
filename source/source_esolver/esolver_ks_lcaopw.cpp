@@ -13,6 +13,7 @@
 #include "source_pw/module_pwdft/stress_pw.h"
 //---------------------------------------------------
 #include "source_base/global_variable.h"
+#include "source_base/fs_compat.h"
 #include "source_base/parallel_comm.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_pw/module_pwdft/hamilt_lcaopw.h"
@@ -277,6 +278,9 @@ namespace ModuleESolver
 #ifdef __LCAO
         if (this->inp_->out_mat_xc)
         {
+            const std::string global_mat_dir = PARAM.globalv.global_mat_dir;
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
 #ifdef __EXX
             bool cal_exx = this->general_exx_info_.cal_exx;
             double hybrid_alpha = this->general_exx_info_.hybrid_alpha;
@@ -284,7 +288,12 @@ namespace ModuleESolver
             bool cal_exx = false;
             double hybrid_alpha = 0.0;
 #endif
+            // one-shot output after the whole run; the single frame is step 1
+            const int istep_xc = 0;
+            const double etot_xc = this->pelec->f_en.etot;
             ModuleIO::write_Vxc_LIP(this->inp_->nspin,
+                                istep_xc,
+                                etot_xc,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
                                 *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
@@ -299,7 +308,7 @@ namespace ModuleESolver
                                 this->kv,
                                 this->pelec->wg,
                                 PARAM.globalv.gamma_only_local,
-                                PARAM.globalv.global_out_dir,
+                                global_mat_dir,
                                 this->inp_->out_ndigits,
                                 this->inp_->ks_solver,
                                 cal_exx,
