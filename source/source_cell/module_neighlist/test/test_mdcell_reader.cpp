@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <fstream>
+#include <iomanip>
 #include <mpi.h>
 #include <set>
 #include <sstream>
@@ -149,6 +150,111 @@ TEST(MDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 
     MPI_Comm_free(&md_comm);
 }
+
+// All inputs describe the same unwrapped fractional positions in a skew cell.
+// Expected positions below are independent of the reader's inverse transform.
+class MDCellReaderUnitsTest : public testing::TestWithParam<const char*>
+{};
+
+TEST_P(MDCellReaderUnitsTest, ConvertsWrapsAndReplicates)
+{
+    const ModuleBase::CommunicationDomain comm = ModuleBase::world_comm_domain();
+    const double lat0 = 2.5;
+    const double tolerance = 1.0e-12;
+    const double input_frac[4][3] = {{0.1, 0.2, 0.3}, {-0.2, 1.3, 0.4},
+                                     {1.4, -0.3, 2.2}, {-1.3, 2.4, -0.2}};
+    const double wrapped[4][3] = {{0.1, 0.2, 0.3}, {0.8, 0.3, 0.4},
+                                  {0.4, 0.7, 0.2}, {0.7, 0.4, 0.8}};
+    const int moves[4][3] = {{1, 1, 1}, {1, 0, 1}, {0, 1, 1}, {1, 1, 0}};
+    const std::string units = GetParam();
+    std::ostringstream filename;
+    filename << testing::TempDir() << "mdcell_reader_" << units << "_rank" << comm.rank() << ".STRU";
+    const std::string stru_file = filename.str();
+    double scale = 1.0;
+    if (units == "Cartesian_au") scale = lat0;
+    if (units == "Cartesian_angstrom") scale = lat0 * ModuleBase::BOHR_TO_A;
+    {
+        std::ofstream ofs(stru_file.c_str());
+        ASSERT_TRUE(ofs.good());
+        ofs << std::setprecision(17);
+        ofs << "ATOMIC_SPECIES\nHe 4.0026 auto auto\n\nLATTICE_CONSTANT\n" << lat0;
+        ofs << "\n\nLATTICE_VECTORS\n4 0 0\n1 3 0\n0.5 0.75 2\n\nATOMIC_POSITIONS\n";
+        ofs << units << "\n\nHe\n0.0\n4\n";
+        for (int ia = 0; ia < 4; ++ia)
+        {
+            const double x = 4.0 * input_frac[ia][0] + input_frac[ia][1] + 0.5 * input_frac[ia][2];
+            const double y = 3.0 * input_frac[ia][1] + 0.75 * input_frac[ia][2];
+            const double z = 2.0 * input_frac[ia][2];
+            ofs << x * scale << " " << y * scale << " " << z * scale
+                << " m " << moves[ia][0] << " " << moves[ia][1] << " " << moves[ia][2]
+                << " v " << 0.01 * (ia + 1) << " 0 0\n";
+        }
+    }
+
+    const std::vector<std::vector<int> > replicas = {{1, 1, 1}, {2, 3, 2}};
+    for (const std::vector<int>& replica : replicas)
+    {
+        SCOPED_TRACE(units);
+        SCOPED_TRACE(replica[0]);
+        DomainDecomposition decomp;
+        MDCell cell = MDCellReader::read_stru(stru_file, replica, 0.0, comm, decomp);
+        const int expected_count = 4 * replica[0] * replica[1] * replica[2];
+        EXPECT_EQ(cell.nat(), expected_count);
+        ASSERT_EQ(cell.type_atom_counts().size(), 1U);
+        EXPECT_EQ(cell.type_atom_counts()[0], expected_count);
+        EXPECT_DOUBLE_EQ(cell.lat0(), lat0);
+        const double expected_volume = 24.0 * lat0 * lat0 * lat0 * expected_count / 4;
+        EXPECT_NEAR(cell.omega(), expected_volume, tolerance);
+        const ModuleBase::Matrix3& lattice = cell.latvec();
+        EXPECT_DOUBLE_EQ(lattice.e11, 4.0 * replica[0]);
+        EXPECT_DOUBLE_EQ(lattice.e12, 0.0);
+        EXPECT_DOUBLE_EQ(lattice.e13, 0.0);
+        EXPECT_DOUBLE_EQ(lattice.e21, 1.0 * replica[1]);
+        EXPECT_DOUBLE_EQ(lattice.e22, 3.0 * replica[1]);
+        EXPECT_DOUBLE_EQ(lattice.e23, 0.0);
+        EXPECT_DOUBLE_EQ(lattice.e31, 0.5 * replica[2]);
+        EXPECT_DOUBLE_EQ(lattice.e32, 0.75 * replica[2]);
+        EXPECT_DOUBLE_EQ(lattice.e33, 2.0 * replica[2]);
+        std::vector<int> owners(expected_count, 0);
+        for (const LocalAtom& atom : cell.owned_atoms())
+        {
+            ASSERT_GE(atom.type_index, 0);
+            ASSERT_LT(atom.type_index, expected_count);
+            const int id = static_cast<int>(atom.type_index);
+            ++owners[id];
+            const int ia = id % 4;
+            const int image = id / 4;
+            const int iz = image % replica[2];
+            const int iy = (image / replica[2]) % replica[1];
+            const int ix = image / (replica[1] * replica[2]);
+            const double x = wrapped[ia][0] + ix;
+            const double y = wrapped[ia][1] + iy;
+            const double z = wrapped[ia][2] + iz;
+            EXPECT_NEAR(atom.frac.x, x / replica[0], tolerance);
+            EXPECT_NEAR(atom.frac.y, y / replica[1], tolerance);
+            EXPECT_NEAR(atom.frac.z, z / replica[2], tolerance);
+            EXPECT_NEAR(atom.cart.x, 4.0 * x + y + 0.5 * z, tolerance);
+            EXPECT_NEAR(atom.cart.y, 3.0 * y + 0.75 * z, tolerance);
+            EXPECT_NEAR(atom.cart.z, 2.0 * z, tolerance);
+            EXPECT_EQ(decomp.owner_rank_from_frac(atom.frac), comm.rank());
+            EXPECT_EQ(atom.type, 0);
+            EXPECT_DOUBLE_EQ(atom.vel.x, 0.01 * (ia + 1));
+            EXPECT_DOUBLE_EQ(atom.vel.y, 0.0);
+            EXPECT_DOUBLE_EQ(atom.vel.z, 0.0);
+            EXPECT_EQ(atom.mbl.x, moves[ia][0]);
+            EXPECT_EQ(atom.mbl.y, moves[ia][1]);
+            EXPECT_EQ(atom.mbl.z, moves[ia][2]);
+            EXPECT_DOUBLE_EQ(atom.mass, 4.0026 / ModuleBase::AU_to_MASS);
+        }
+        comm.sum(owners.data(), expected_count);
+        for (int count : owners) EXPECT_EQ(count, 1);
+    }
+    EXPECT_EQ(std::remove(stru_file.c_str()), 0);
+}
+
+INSTANTIATE_TEST_SUITE_P(CartesianCoordinates,
+                         MDCellReaderUnitsTest,
+                         testing::Values("Cartesian", "Cartesian_angstrom", "Cartesian_au"));
 
 TEST(MDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
 {
