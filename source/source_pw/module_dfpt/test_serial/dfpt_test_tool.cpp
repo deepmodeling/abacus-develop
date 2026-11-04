@@ -191,9 +191,14 @@ void setup_bases(ModulePW::PW_Basis& pw_rho,
                  int nbands,
                  ModuleBase::Vector3<double>& q_cart)
 {
-    // NOTE: adopt PW_Basis::init_serial / PW_Basis_K::init_serial here
-    // (two two-line calls) once the pw-init-serial PR lands; the raw
-    // chains are kept so this branch carries a single dependency.
+    // The tool keeps its own five-call assembly chains instead of
+    // calling the production pw::setup_pwrho / setup_pwwfc wrappers
+    // (which also run without __MPI): the tests need rho_mult = 9x
+    // ecutwfc for the DFPT convolution (every Delta = G''-G' must fit
+    // in the rho ball) while production hardcodes 4x ecutwfc; they
+    // re-assemble for arbitrary (k, q) pairs per case, which the
+    // K_Vectors-driven wrapper is not shaped for; and the wrappers
+    // read GlobalV::ofs_running and require a fabricated Input_para.
     const ModuleBase::Matrix3& latvec = ucell.latvec;
     pw_rho.initgrids(lat0, latvec, rho_mult * ecutwfc);
     pw_rho.initparameters(false, rho_mult * ecutwfc);
