@@ -30,8 +30,8 @@ addtest(
   SOURCES test_dftu_base.cpp
           ../dftu_base.cpp
           ../dftu_base_io.cpp
-          ../dftu_base_io_read.cpp
-          ../dftu_base_io_write.cpp
+          ../dftu_base_read.cpp
+          ../dftu_base_write.cpp
           ../dftu_pw_tools.cpp
           ../yukawa_screening.cpp
           ../../../source_estate/occ_matrix.cpp
