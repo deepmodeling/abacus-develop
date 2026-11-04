@@ -1579,12 +1579,12 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.category = "Output information";
         item.type = "Integer";
         item.description = R"(Controls output file organization during multi-step calculations (MD, relax, RT-TDDFT). The directory routing applies to both LCAO and PW basis calculations.
-* 0: Write directly to the OUT directory under a fixed filename. Every write truncates the previous content, so only the most recently written step is kept on disk. out_freq_ion only controls how often a write happens; it does not change the number of files (default, disk-friendly).
+* 0: Write directly to the OUT directory under a fixed filename. Every write truncates the previous content, so only the most recently written step is kept on disk. out_freq_ion only controls how often a write happens; it does not change the number of fixed-name files (default, disk-friendly). Exception: MD structure frames are still written as numbered STRU{istep} files, so their count follows out_freq_ion.
 * 1: Reuse fixed filenames across steps: text outputs append new records, cube outputs accumulate one frame per written step
   In mode 1 the first output step of a fresh (non-restart) run truncates the fixed-name file so a rerun does not keep stale records from a previous run; later steps and restarted runs keep appending.
-* 2: Write to subdirectory (STRUC/ for structure files, PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/), files carry a g{step} suffix
+* 2: Write to subdirectory (STRUC/ for structure files, PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/), output data files carry a g{step} suffix (structures use STRU{istep})
 For MD structure frames specifically, mode 0 keeps the numbered STRU{istep} files (STRU1 is the initial geometry) and writes no STRU_NOW, mode 1 writes one cumulative STRU file, and mode 2 writes the numbered files under STRUC/; see out_stru.
-The legacy Boolean spellings (true/false, yes/no, on/off, t/f, y/n, and the dotted forms) are still accepted and map to modes 1/0 as before.
+The legacy Boolean spellings (true/false, yes/no, on/off, t/f, y/n, and the dotted forms) are still accepted: true maps to mode 1 and preserves the old append behavior; false maps to mode 0, which now overwrites a fixed file instead of the old g{step} per-step files, so use mode 2 to reproduce that old behavior.
 For more information, refer to the documentation of out_mat_r, out_hsr, out_mat_t, out_mat_dh, out_hsk, out_wfc_lcao, out_chg, out_pot, out_elf, out_dos, out_dipole, out_stru.)";
         item.default_value = "0";
         item.unit = "";
