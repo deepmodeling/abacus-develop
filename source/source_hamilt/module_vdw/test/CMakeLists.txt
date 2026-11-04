@@ -31,7 +31,8 @@ if(ENABLE_LIBVDWXC AND ENABLE_MPI)
          device
          container
          base
-    SOURCES test_nonlocal_xc.cpp)
+    SOURCES test_nonlocal_xc.cpp test_nonlocal_xc_helpers.cpp
+            test_nonlocal_xc_paths.cpp)
   # a collective-path regression shows as a hang, so every registration gets a timeout
   set_tests_properties(MODULE_HAMILT_nonlocal_xcTest
                        PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1" TIMEOUT 300)

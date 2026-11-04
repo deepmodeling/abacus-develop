@@ -45,6 +45,11 @@ std::string parse_xcname(const std::string& xc_input, const std::vector<std::str
 namespace vdw
 {
 
+bool is_rvv10(const std::string& vdw_method)
+{
+    return vdw_method == "rvv10";
+}
+
 std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, std::ofstream* plog)
 {
     // NOTE: the following lines are incorrect!
@@ -94,7 +99,7 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell& ucell, const Input_para& input, st
                                  "Rebuild ABACUS with -DENABLE_DFTD4=ON.");
 #endif
     }
-    else if (input.vdw_method == "rvv10")
+    else if (is_rvv10(input.vdw_method))
     {
 #ifndef __LIBVDWXC
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw",

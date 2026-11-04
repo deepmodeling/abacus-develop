@@ -12,6 +12,10 @@
 namespace vdw
 {
 
+/// Whether vdw_method selects the rVV10 nonlocal correlation (evaluated inside XC, see nonlocal_xc.h).
+bool is_rvv10(const std::string& vdw_method);
+
+
 template <typename T, typename... Args>
 std::unique_ptr<T> make_unique_compat(Args&&... args)
 {

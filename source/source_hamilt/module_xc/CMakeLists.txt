@@ -31,7 +31,8 @@ endif()
 
 if(ENABLE_LIBVDWXC)
   # The XC evaluators (v_xc, v_xc_libxc, v_xc_meta) and Stress_Func::stress_gga add rVV10 through this adapter.
-  target_sources(xc_ PRIVATE ../module_vdw/nonlocal_xc.cpp)
+  target_sources(xc_ PRIVATE ../module_vdw/nonlocal_xc.cpp
+                             ../module_vdw/rvv10_workspace.cpp)
   target_link_libraries(xc_ PUBLIC libvdwxc::vdwxc)
 endif()
 

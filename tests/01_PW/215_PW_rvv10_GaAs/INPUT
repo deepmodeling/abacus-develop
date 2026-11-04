@@ -4,7 +4,7 @@ calculation       scf
 pseudo_dir        ../../PP_ORB
 basis_type        pw
 nspin             2
-ecutwfc           60
+ecutwfc           30
 scf_thr           1e-8
 scf_nmax          100
 dft_functional    pbe

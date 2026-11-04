@@ -1,4 +1,2 @@
-One cell-relaxation step of SnTe (LCAO, as relax_cell_vdw4_d4) with the rVV10 nonlocal correlation
-(vdw_method rvv10, libvdwxc) on top of rPW86-PBE: energy, forces and stress through the LCAO grid.
-Requires ENABLE_LIBXC and ENABLE_LIBVDWXC; listed in CASES_LIBVDWXC.txt. The reference was generated with 4 MPI
-ranks.
+One cell-relaxation step of SnTe in LCAO (relax_cell_vdw4_d4 with rVV10 instead of D4): energy, forces, stress through the LCAO grid.
+Needs ENABLE_LIBXC and ENABLE_LIBVDWXC; reference from 4 MPI ranks.

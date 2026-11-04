@@ -1,4 +1,2 @@
-rVV10 nonlocal correlation (vdw_method rvv10, libvdwxc) on top of rPW86-PBE through libxc, which hands its
-density gradient to the rVV10 term, for AB graphite at c = 6.70 A (one atom displaced along z): energy, forces and
-stress in PW. Requires ENABLE_LIBXC and ENABLE_LIBVDWXC; listed in CASES_LIBVDWXC.txt. The reference was
-generated with 4 MPI ranks.
+rVV10 (vdw_method rvv10, libvdwxc) on rPW86-PBE through libxc, which hands its density gradient to the rVV10 term, for AB graphite with one atom displaced: energy, forces, stress in PW.
+Needs ENABLE_LIBXC and ENABLE_LIBVDWXC; reference from 4 MPI ranks.
