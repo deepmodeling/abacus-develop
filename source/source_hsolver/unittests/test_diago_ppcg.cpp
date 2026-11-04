@@ -514,7 +514,8 @@ TEST_F(DiagoPPCGTridiagTest, ReusesProjectedOperatorImages)
             const T spsi = (1.0 + 0.1 * i) * psi_run[i + j * ld];
             residual_squared += std::norm(hpsi - eval[j] * spsi);
         }
-        max_residual = std::max(max_residual, std::sqrt(residual_squared));
+        const Real residual_norm = std::sqrt(residual_squared);
+        max_residual = std::max(max_residual, residual_norm);
     }
     EXPECT_NEAR(solver.max_residual(), max_residual, 1.0e-13);
 }
@@ -641,7 +642,8 @@ TEST(DiagoPPCGPeriodicRitzTest, HonorsIntervalAndChecksFinalRitzResidual)
                 const T value = hpsi[i + j * dimension] - eigenvalues[j] * psi[i + j * dimension];
                 norm_squared += std::norm(value);
             }
-            residual = std::max(residual, std::sqrt(norm_squared));
+            const Real residual_norm = std::sqrt(norm_squared);
+            residual = std::max(residual, residual_norm);
             for (int k = 0; k < bands; ++k)
             {
                 T overlap = T(0);
@@ -896,7 +898,7 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
     const char* old_env = std::getenv(env_name);
     const bool had_old_env = old_env != nullptr;
     const std::string old_env_value = had_old_env ? old_env : "";
-    const std::string trace_path = testing::TempDir() + "ppcg_residual_trace_test.csv";
+    const std::string trace_path = testing::TempDir() + "./ppcg_residual_trace_test.csv";
     std::remove(trace_path.c_str());
     ASSERT_EQ(::setenv(env_name, trace_path.c_str(), 1), 0);
 
@@ -912,7 +914,8 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
         dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
     };
 
-    solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
+    std::ostringstream running_log;
+    solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log);
 
     if (had_old_env)
     {
@@ -925,6 +928,12 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
 
     std::ifstream trace(trace_path);
     ASSERT_TRUE(trace.good());
+    char* resolved_path = ::realpath(trace_path.c_str(), nullptr);
+    ASSERT_NE(resolved_path, nullptr);
+    const std::string full_path(resolved_path);
+    std::free(resolved_path);
+    const std::string expected_log = "PPCG residual trace written: " + full_path;
+    EXPECT_NE(running_log.str().find(expected_log), std::string::npos);
     std::string header;
     std::string first_record;
     std::getline(trace, header);
@@ -1616,7 +1625,8 @@ TEST(DiagoPPCGRankTruncationTest, ComplexHermitianStartupSubspace)
     std::vector<Real> prec(n_dim);
     for (int i = 0; i < n_dim; ++i)
     {
-        prec[i] = std::max(Real(1), std::real(h_mat[i + i * n_dim]));
+        const Real diagonal_value = std::real(h_mat[i + i * n_dim]);
+        prec[i] = std::max(Real(1), diagonal_value);
     }
 
     // The third column is an exact high-energy state.  Its zero residual
@@ -2619,14 +2629,17 @@ TEST_F(DiagoPPCGWithSTest, BlockSubspace)
     std::vector<T> res(n_dim);
     for (int i = 0; i < nband; ++i)
     {
-        dense_h_multiply(H_mat.data(), n_dim, psi_run.data() + i * ld, hpsi.data(), n_dim, 1);
-        spsi_func(psi_run.data() + i * ld, spsi.data(), n_dim, 1);
+        T* psi_column = psi_run.data() + i * ld;
+        dense_h_multiply(H_mat.data(), n_dim, psi_column, hpsi.data(), n_dim, 1);
+        spsi_func(psi_column, spsi.data(), n_dim, 1);
         for (int j = 0; j < n_dim; ++j)
         {
             res[j] = hpsi[j] - T(eval[i], 0) * spsi[j];
         }
         Real res_nrm = column_norm(res.data(), n_dim);
-        EXPECT_LE(res_nrm, std::max(1e-6, 1e2 * ethr[i]))
+        const double scaled_threshold = 1e2 * ethr[i];
+        const double residual_threshold = std::max(1e-6, scaled_threshold);
+        EXPECT_LE(res_nrm, residual_threshold)
             << "WithS BLOCK: residual[" << i << "] too large, r=" << res_nrm;
     }
 
@@ -2836,7 +2849,8 @@ TEST_F(DiagoPPCGEigenvectorTest, BlockSubspace)
     std::vector<T> res(n_dim);
     for (int i = 0; i < nband; ++i)
     {
-        dense_h_multiply(H_mat.data(), n_dim, psi_run.data() + i * ld, hpsi.data(), n_dim, 1);
+        const T* psi_column = psi_run.data() + i * ld;
+        dense_h_multiply(H_mat.data(), n_dim, psi_column, hpsi.data(), n_dim, 1);
         for (int j = 0; j < n_dim; ++j)
         {
             res[j] = hpsi[j] - eval[i] * psi_run[j + i * ld];
@@ -3113,7 +3127,8 @@ class DiagoPPCGPentaTest : public ::testing::Test
         H_mat.assign(n_dim * n_dim, T(0));
         for (int i = 0; i < n_dim; ++i)
         {
-            H_mat[i + i * n_dim] = T((i == 0 || i == n_dim - 1) ? 5.0 : 6.0, 0);
+            const Real diagonal_value = (i == 0 || i == n_dim - 1) ? 5.0 : 6.0;
+            H_mat[i + i * n_dim] = T(diagonal_value, 0);
             if (i >= 1)
             {
                 H_mat[i + (i - 1) * n_dim] = T(-4.0, 0);
@@ -3348,8 +3363,14 @@ class DiagoPPCGBadPrecTest : public ::testing::Test
             }
         }
 
-        // Bad preconditioner: use 1.0 instead of 2.0
-        prec.assign(n_dim, 1.0);
+        // Deliberately nonuniform and suboptimal positive preconditioner.
+        // The exact diagonal is 2.0; varying this estimate exercises the
+        // solver without reducing the test to a uniform rescaling.
+        prec.resize(n_dim);
+        for (int i = 0; i < n_dim; ++i)
+        {
+            prec[i] = 0.6 + 0.1 * Real(i);
+        }
 
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
@@ -3429,7 +3450,24 @@ TEST_F(DiagoPPCGBadPrecTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "BadPrec BLOCK: eigenvalue[" << i << "] mismatch";
     }
+    EXPECT_TRUE(solver.converged()) << "BadPrec BLOCK: solver did not converge";
     EXPECT_LE(avg_iter, double(200)) << "BadPrec BLOCK: too many iterations";
+
+    for (int j = 0; j < nband; ++j)
+    {
+        std::vector<T> hpsi(n_dim, T(0));
+        const T* psi_column = psi_run.data() + j * ld;
+        dense_h_multiply(H_mat.data(), n_dim, psi_column, hpsi.data(), n_dim, 1);
+        Real residual_squared = 0;
+        for (int i = 0; i < n_dim; ++i)
+        {
+            const T residual = hpsi[i] - T(eval[j]) * psi_run[i + j * ld];
+            residual_squared += std::norm(residual);
+        }
+        const Real residual = std::sqrt(residual_squared);
+        EXPECT_TRUE(std::isfinite(residual));
+        EXPECT_LT(residual, 1e-8) << "BadPrec BLOCK: residual[" << j << "] too large";
+    }
 }
 
 // =============================================================================
@@ -3779,7 +3817,8 @@ class DiagoPPCGNeumannTest : public ::testing::Test
         H_mat.assign(n_dim * n_dim, T(0));
         for (int i = 0; i < n_dim; ++i)
         {
-            H_mat[i + i * n_dim] = T((i == 0 || i == n_dim - 1) ? 1.0 : 2.0, 0);
+            const Real diagonal_value = (i == 0 || i == n_dim - 1) ? 1.0 : 2.0;
+            H_mat[i + i * n_dim] = T(diagonal_value, 0);
             if (i > 0)
             {
                 H_mat[i + (i - 1) * n_dim] = T(-1.0, 0);
@@ -4208,7 +4247,8 @@ class DiagoPPCGBenchmarkTest : public ::testing::Test
         prec.resize(n);
         for (int i = 0; i < n; ++i)
         {
-            prec[i] = std::max(std::real(H[i + i * n]), 1e-6);
+            const Real diagonal_value = std::real(H[i + i * n]);
+            prec[i] = std::max(diagonal_value, 1e-6);
         }
     }
 

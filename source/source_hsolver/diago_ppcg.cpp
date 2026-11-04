@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
 #include <limits>
 #include <numeric>
 #include <utility>
@@ -377,7 +378,8 @@ void DiagoPPCG<T, Device>::gram(const T* mat_a, const T* mat_b,
                                  std::vector<T>& out,
                                  int ld_out) const
 {
-    out.resize(ld_out * ncol_b);
+    const int reduction_count = ld_out * ncol_b;
+    out.resize(reduction_count);
     const T one = T(1);
     const T zero = T(0);
     ModuleBase::gemm_op<T, Device>()('C',
@@ -393,7 +395,7 @@ void DiagoPPCG<T, Device>::gram(const T* mat_a, const T* mat_b,
                                      &zero,
                                      out.data(),
                                      ld_out);
-    reduce_pool_values(out.data(), ld_out * ncol_b);
+    reduce_pool_values(out.data(), reduction_count);
 }
 
 // =============================================================================
@@ -1074,15 +1076,17 @@ void DiagoPPCG<T, Device>::build_small_subspace(
 #endif
         for (int j = 0; j < l; ++j)
         {
-            std::copy(src.begin() + j * ld_psi_,
-                      src.begin() + (j + 1) * ld_psi_,
-                      dst.begin() + (col0 + j) * ld_psi_);
+            const auto source_begin = src.begin() + j * ld_psi_;
+            const auto source_end = source_begin + ld_psi_;
+            const auto destination_begin = dst.begin() + (col0 + j) * ld_psi_;
+            std::copy(source_begin, source_end, destination_begin);
         }
     };
 
-    subspace.basis.resize(ld_psi_ * dim);
-    subspace.hbasis.resize(ld_psi_ * dim);
-    subspace.sbasis.resize(ld_psi_ * dim);
+    const int basis_size = ld_psi_ * dim;
+    subspace.basis.resize(basis_size);
+    subspace.hbasis.resize(basis_size);
+    subspace.sbasis.resize(basis_size);
     copy_block(subspace.psi_l, 0, subspace.basis);
     copy_block(subspace.hpsi_l, 0, subspace.hbasis);
     copy_block(subspace.spsi_l, 0, subspace.sbasis);
@@ -1091,9 +1095,10 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     copy_block(subspace.sw_l, l, subspace.sbasis);
     if (nblk >= 3)
     {
-        copy_block(subspace.p_l, 2 * l, subspace.basis);
-        copy_block(subspace.hp_l, 2 * l, subspace.hbasis);
-        copy_block(subspace.sp_l, 2 * l, subspace.sbasis);
+        const int p_block_offset = 2 * l;
+        copy_block(subspace.p_l, p_block_offset, subspace.basis);
+        copy_block(subspace.hp_l, p_block_offset, subspace.hbasis);
+        copy_block(subspace.sp_l, p_block_offset, subspace.sbasis);
     }
 
     gram(subspace.basis.data(), subspace.hbasis.data(), dim, dim, subspace.k, dim);
@@ -1958,6 +1963,22 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                                   const std::vector<double>& ethr_band,
                                   const Real* prec)
 {
+    return diag(hpsi_func, spsi_func, ld_psi, nband, dim,
+                psi_in, eigenvalue_in, ethr_band, prec, std::clog);
+}
+
+template <typename T, typename Device>
+double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
+                                  const SPsiFunc& spsi_func,
+                                  int ld_psi,
+                                  int nband,
+                                  int dim,
+                                  T* psi_in,
+                                  Real* eigenvalue_in,
+                                  const std::vector<double>& ethr_band,
+                                  const Real* prec,
+                                  std::ostream& log)
+{
     const PPCGFunctionTimer timer("diag");
     ld_psi_ = ld_psi;
     n_band_ = nband;
@@ -2010,6 +2031,22 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         residual_trace.open(residual_trace_path);
         if (residual_trace)
         {
+#ifdef _WIN32
+            char* full_path = ::_fullpath(nullptr, residual_trace_path, 0);
+#else
+            char* full_path = ::realpath(residual_trace_path, nullptr);
+#endif
+            if (full_path != nullptr)
+            {
+                const std::string trace_filename(full_path);
+                std::free(full_path);
+                log << "PPCG residual trace written: " << trace_filename << std::endl;
+            }
+            else
+            {
+                log << "WARNING: PPCG residual trace opened, but the full path could not be resolved: "
+                    << residual_trace_path << std::endl;
+            }
             residual_trace << std::setprecision(std::numeric_limits<Real>::max_digits10);
             residual_trace << "iteration,stage,max_residual";
             // Test-side tools compare these Ritz values with analytical or

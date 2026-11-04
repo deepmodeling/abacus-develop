@@ -13,6 +13,7 @@
 #include "../diago_ppcg.h"
 
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
 #include "source_basis/module_pw/test/test_tool.h"
 
@@ -28,6 +29,7 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 // A local block can discover two low roots while another block already holds
@@ -37,7 +39,11 @@ static bool check_competing_roots(const int rank_in_pool, const int nproc_in_poo
 {
     using Scalar = std::complex<double>;
     const int bands = 2;
-    const int local_rows = nproc_in_pool == 1 ? 4 : 2;
+    int local_rows = 2;
+    if (nproc_in_pool == 1)
+    {
+        local_rows = 4;
+    }
     const int size = local_rows * bands;
     std::vector<double> diagonal(local_rows);
     std::vector<double> preconditioner(local_rows, 1.0);
@@ -47,7 +53,14 @@ static bool check_competing_roots(const int rank_in_pool, const int nproc_in_poo
     for (int row = 0; row < local_rows; ++row)
     {
         const int global_row = rank_in_pool * local_rows + row;
-        diagonal[row] = global_row < 3 ? global_row + 1.0 : 97.0 + global_row;
+        if (global_row < 3)
+        {
+            diagonal[row] = global_row + 1.0;
+        }
+        else
+        {
+            diagonal[row] = 97.0 + global_row;
+        }
         if (global_row == 0 || global_row == 1 || global_row == 3)
         {
             vectors[row] = Scalar(scale);
@@ -88,7 +101,8 @@ static bool check_competing_roots(const int rank_in_pool, const int nproc_in_poo
             }
         }
     }
-    Parallel_Reduce::reduce_pool(residuals.data(), bands);
+    const int residual_count = bands;
+    Parallel_Reduce::reduce_pool(residuals.data(), residual_count);
     const int overlap_size = bands * bands;
     Parallel_Reduce::reduce_pool(overlap.data(), overlap_size);
     bool correct = solver.converged() && operator_capacity_ok && solver.root_recovery_count() > 0;
@@ -100,7 +114,11 @@ static bool check_competing_roots(const int rank_in_pool, const int nproc_in_poo
         correct = correct && std::isfinite(residuals[column]) && residuals[column] < 1.0e-16;
         for (int other = 0; other < bands; ++other)
         {
-            const Scalar expected_overlap = other == column ? Scalar(1) : Scalar(0);
+            Scalar expected_overlap = Scalar(0);
+            if (other == column)
+            {
+                expected_overlap = Scalar(1);
+            }
             const double error = std::abs(overlap[other + column * bands] - expected_overlap);
             correct = correct && std::isfinite(error) && error < 1.0e-8;
         }
@@ -147,16 +165,51 @@ int main(int argc, char** argv)
     // process environments. With multiple pools, every rank requests the same
     // path to verify that only the MPI world root writes it.
     const char* trace_environment = "ABACUS_PPCG_RESIDUAL_TRACE";
-    const std::string trace_path = testing::TempDir() + "ppcg_residual_trace_parallel_test.csv";
+    std::string trace_path;
+    bool trace_path_ok = true;
+    if (myrank == 0)
+    {
+        std::string trace_template = testing::TempDir() + "ppcg_residual_trace_parallel_test_XXXXXX";
+        char* trace_template_data = &trace_template[0];
+        const int trace_fd = ::mkstemp(trace_template_data);
+        trace_path_ok = trace_fd >= 0;
+        if (trace_path_ok)
+        {
+            const int close_status = ::close(trace_fd);
+            char* resolved_path = ::realpath(trace_template_data, nullptr);
+            trace_path_ok = close_status == 0 && resolved_path != nullptr;
+            if (trace_path_ok)
+            {
+                trace_path = resolved_path;
+            }
+            else
+            {
+                std::remove(trace_template_data);
+            }
+            std::free(resolved_path);
+        }
+    }
+    Parallel_Common::bcast_bool(trace_path_ok);
+    if (!trace_path_ok)
+    {
+        if (myrank == 0)
+        {
+            std::fprintf(stderr, "rank 0: cannot create a unique residual trace file\n");
+        }
+        finishmpi();
+        return 1;
+    }
+    // One root reserves a unique file per launch; all ranks still request the
+    // same absolute path when the two-pool single-writer check is enabled.
+    Parallel_Common::bcast_string(trace_path);
     int trace_environment_ok = 1;
     if (myrank == 0)
     {
-        std::remove(trace_path.c_str());
-        trace_environment_ok = ::setenv(trace_environment, trace_path.c_str(), 1) == 0 ? 1 : 0;
+        trace_environment_ok = ::setenv(trace_environment, trace_path.c_str(), 1) == 0;
     }
     else if (kpar > 1)
     {
-        trace_environment_ok = ::setenv(trace_environment, trace_path.c_str(), 1) == 0 ? 1 : 0;
+        trace_environment_ok = ::setenv(trace_environment, trace_path.c_str(), 1) == 0;
     }
     else
     {
@@ -318,7 +371,7 @@ int main(int argc, char** argv)
         }
         if (!trace.eof() || header_count != 1 || record_count == 0 || !has_final_record)
         {
-            const int final_record = has_final_record ? 1 : 0;
+            const int final_record = static_cast<int>(has_final_record);
             std::fprintf(stderr,
                          "rank 0: residual trace is incomplete (headers=%d, records=%d, final=%d)\n",
                          header_count,
@@ -352,7 +405,11 @@ int main(int argc, char** argv)
             std::printf("PPCG MPI parallel test FAILED\n");
         }
     }
-    const int exit_code = global_ok == 1 ? 0 : 1;
+    int exit_code = 1;
+    if (global_ok == 1)
+    {
+        exit_code = 0;
+    }
     finishmpi();
     return exit_code;
 }

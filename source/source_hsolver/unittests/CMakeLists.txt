@@ -70,6 +70,7 @@ if(ENABLE_MPI)
             ../diag_const_nums.cpp
             ../diago_iter_assist.cpp
             ../para_lin_tf.cpp
+            ../../source_basis/module_pw/test/test_tool.cpp
             ../../source_estate/elecstate_tools.cpp
             ../../source_estate/occupy.cpp
             ../../source_base/module_fft/fft_bundle.cpp

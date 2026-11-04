@@ -1,6 +1,7 @@
 GPU smoke case for the PPCG host/device bridge.
 
-It uses the same GaAs input as the CPU PPCG case and checks the standard energy,
-force and stress reference with the existing GPU acceptance limits. Run it on
-a CUDA-enabled build with one OpenMP/BLAS thread; no CPU timing or GPU speedup
-is inferred from this fixture.
+It uses the same GaAs structure as the CPU PPCG case, but samples a 2x2x2
+Gamma-centered k-point mesh instead of the CPU case's 1x1x2 mesh. It checks the
+standard energy, force and stress reference with the existing GPU acceptance
+limits. Run it on a CUDA-enabled build with one OpenMP/BLAS thread; no CPU
+timing or GPU speedup is inferred from this fixture.

@@ -9,8 +9,12 @@
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
+#ifdef __MPI
+#include "source_basis/module_pw/test/test_tool.h"
+#endif
 
 #include <algorithm>
+#include <cmath>
 #include <complex>
 
 /// H = S = identity: the simplest operator the solvers can be handed
@@ -34,6 +38,41 @@ template <typename T> class IdentityHSOperator : public hsolver::HSOperator<T, b
     {
         std::copy(x, x + static_cast<size_t>(ld) * nvec, sx);
     }
+};
+
+class DiagonalHSOperator : public hsolver::HSOperator<std::complex<double>, base_device::DEVICE_CPU>
+{
+  public:
+    explicit DiagonalHSOperator(const std::vector<double>& diagonal) : diagonal_(diagonal) {}
+
+    void update_k(const int ik) override {}
+
+    void hpsi(const std::complex<double>* x,
+              std::complex<double>* hx,
+              const int ld,
+              const int nvec) const override
+    {
+        for (int column = 0; column < nvec; ++column)
+        {
+            for (int row = 0; row < ld; ++row)
+            {
+                hx[row + column * ld] = diagonal_[row] * x[row + column * ld];
+            }
+        }
+    }
+
+    void spsi(const std::complex<double>* x,
+              std::complex<double>* sx,
+              const int ld,
+              const int nvec) const override
+    {
+        const size_t count = static_cast<size_t>(ld) * nvec;
+        const std::complex<double>* end = x + count;
+        std::copy(x, end, sx);
+    }
+
+  private:
+    std::vector<double> diagonal_;
 };
 
 // Mock implementations for the template functions causing linking errors
@@ -194,14 +233,50 @@ class TestHSolverPW : public ::testing::Test
         psi::Psi<T, Device> &ps,
         std::vector<typename GetTypeReal<T>::type> &pre,
         typename GetTypeReal<T>::type *eig,
-        const int ntry)
+        const int ntry,
+        std::ostream& log)
     {
         hs.hamiltSolvePsiK(
             op,
             ps,
             pre,
             eig,
-            ntry);
+            ntry,
+            log);
+    }
+
+    template <typename T, typename Device>
+    static void set_ethr_band(hsolver::HSolverPW<T, Device>& hs, const int count, const double value)
+    {
+        hs.ethr_band.assign(count, value);
+    }
+
+    std::vector<double> run_ppcg_dispatch(const std::string& calculation,
+                                         const bool exact_vectors,
+                                         std::ostream& log)
+    {
+        hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs(
+            &pwbk, calculation, "pw", "ppcg", false, 1, 1, 0, 1.0e-12, false, 2, false, 1, 0, 0);
+        const std::vector<double> diagonal = {1.0, 2.0, 4.0};
+        DiagonalHSOperator op(diagonal);
+        psi::Psi<std::complex<double>> ps;
+        ps.resize(1, 2, 3);
+        std::complex<double>* vectors = ps.get_pointer();
+        std::complex<double>* end = vectors + 6;
+        const std::complex<double> zero(0.0, 0.0);
+        std::fill(vectors, end, zero);
+        vectors[0] = std::complex<double>(1.0, 0.0);
+        vectors[4] = std::complex<double>(1.0, 0.0);
+        if (!exact_vectors)
+        {
+            vectors[1] = std::complex<double>(1.0, 0.0);
+            vectors[5] = std::complex<double>(1.0, 0.0);
+        }
+        std::vector<double> preconditioner(3, 1.0);
+        std::vector<double> eigenvalues(2, 0.0);
+        set_ethr_band(hs, 2, 1.0e-12);
+        hamiltSolvePsiK(hs, op, ps, preconditioner, eigenvalues.data(), 1, log);
+        return eigenvalues;
     }
 
     ModulePW::PW_Basis_K pwbk;
@@ -502,6 +577,7 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
     psi_test_cd.resize(1, 5, 3);
     std::vector<double> precond(3, 0.0);
     std::vector<double> eigenvalues(5, 0.0);
+    std::ostringstream log;
     // Expect death from WARNING_QUIT due to npwx < nbands
     EXPECT_EXIT(
         hamiltSolvePsiK(
@@ -510,6 +586,59 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
             psi_test_cd,
             precond,
             eigenvalues.data(),
-            1),
+            1,
+            log),
         ::testing::ExitedWithCode(1), ".*");
+}
+
+TEST_F(TestHSolverPW, PPCGScfDispatchReportsExhaustedBudget)
+{
+    std::ostringstream log;
+    const std::vector<double> eigenvalues = run_ppcg_dispatch("scf", false, log);
+    EXPECT_NE(log.str().find("PPCG did not converge"), std::string::npos);
+    EXPECT_NE(log.str().find("active bands=2"), std::string::npos);
+    EXPECT_NE(log.str().find("max residual="), std::string::npos);
+    EXPECT_NE(log.str().find("iteration limit reached"), std::string::npos);
+    for (const double eigenvalue : eigenvalues)
+    {
+        EXPECT_TRUE(std::isfinite(eigenvalue));
+    }
+}
+
+TEST_F(TestHSolverPW, PPCGNscfDispatchRejectsExhaustedBudget)
+{
+    std::ostringstream log;
+    EXPECT_EXIT(
+        run_ppcg_dispatch("nscf", false, log),
+        ::testing::ExitedWithCode(1),
+        "PPCG did not converge.*iteration limit reached");
+}
+
+TEST_F(TestHSolverPW, PPCGConvergedDispatchHasNoWarning)
+{
+    std::ostringstream log;
+    const std::vector<double> eigenvalues = run_ppcg_dispatch("scf", true, log);
+    EXPECT_EQ(log.str().find("PPCG did not converge"), std::string::npos);
+    EXPECT_NEAR(eigenvalues[0], 1.0, 1.0e-12);
+    EXPECT_NEAR(eigenvalues[1], 2.0, 1.0e-12);
+}
+
+int main(int argc, char** argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+#ifdef __MPI
+    int nproc = 1;
+    int myrank = 0;
+    setupmpi(argc, argv, nproc, myrank);
+    int nproc_in_pool = 1;
+    int kpar = nproc;
+    int mypool = 0;
+    int rank_in_pool = 0;
+    divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
+#endif
+    const int result = RUN_ALL_TESTS();
+#ifdef __MPI
+    finishmpi();
+#endif
+    return result;
 }

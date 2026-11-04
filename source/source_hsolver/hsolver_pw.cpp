@@ -19,7 +19,9 @@
 #include <algorithm>
 #include <cmath>
 #include <exception>
+#include <iostream>
 #include <ostream>
+#include <sstream>
 #include <type_traits>
 #include <vector>
 
@@ -51,6 +53,7 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
                           const int diag_iter_max,
                           const int pw_diag_ndim,
                           const int rr_step,
+                          std::ostream& log,
                           std::true_type)
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
@@ -66,7 +69,8 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
                                           psi,
                                           eigenvalue,
                                           ethr_band,
-                                          pre_condition);
+                                          pre_condition,
+                                          log);
     result.converged = ppcg.converged();
     result.active_band_count = ppcg.active_band_count();
     result.iteration_limit_reached = ppcg.iteration_limit_reached();
@@ -88,6 +92,7 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
                           const int diag_iter_max,
                           const int pw_diag_ndim,
                           const int rr_step,
+                          std::ostream& log,
                           std::false_type)
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
@@ -165,7 +170,8 @@ PPCGRunResult run_ppcg_pw(const HPsiFunc& hpsi_func,
                                           psi_host_ptr,
                                           eigenvalue,
                                           ethr_band,
-                                          pre_condition);
+                                          pre_condition,
+                                          log);
     result.converged = ppcg.converged();
     result.active_band_count = ppcg.active_band_count();
     result.iteration_limit_reached = ppcg.iteration_limit_reached();
@@ -286,7 +292,8 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            Real* k_eigenvalues = eigenvalues.data() + ik * psi.get_nbands();
+            this->hamiltSolvePsiK(op, psi, precondition, k_eigenvalues, this->wfc_basis->nks, log);
 
             if (skip_charge)
             {
@@ -324,7 +331,8 @@ void HSolverPW<T, Device>::solve(HSOperator<T, Device>& op,
 
 
             // solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(op, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+            Real* k_eigenvalues = eigenvalues.data() + ik * psi.get_nbands();
+            this->hamiltSolvePsiK(op, psi, precondition, k_eigenvalues, this->wfc_basis->nks, log);
 
             // output iteration information and reset avg_iter
             if (skip_charge)
@@ -383,7 +391,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                                            psi::Psi<T, Device>& psi,
                                            std::vector<Real>& pre_condition,
                                            Real* eigenvalue,
-                                           const int& nk_nums)
+                                           const int& nk_nums,
+                                           std::ostream& log)
 {
     ModuleBase::timer::start("HSolverPW", "solve_psik");
 #ifdef __MPI
@@ -532,7 +541,29 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(const HSOperator<T, Device>& op,
                 this->diag_iter_max,
                 this->pw_diag_ndim,
                 1,
+                log,
                 cpu_path);
+            if (!ppcg_result.converged)
+            {
+                std::ostringstream message;
+                message << "PPCG did not converge: active bands=" << ppcg_result.active_band_count
+                        << ", max residual=" << ppcg_result.max_residual;
+                if (ppcg_result.iteration_limit_reached)
+                {
+                    message << ", iteration limit reached (pw_diag_nmax=" << this->diag_iter_max << ")";
+                }
+                const std::string diagnostic = message.str();
+                if (this->rank_in_pool == 0)
+                {
+                    log << "WARNING: " << diagnostic << std::endl;
+                    // Other k-point pools may not own an open running log.
+                    std::cerr << "WARNING: " << diagnostic << std::endl;
+                }
+                if (this->calculation_type == "nscf" || !std::isfinite(ppcg_result.max_residual))
+                {
+                    ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK", diagnostic);
+                }
+            }
             DiagoIterAssist<T, Device>::avg_iter += ppcg_result.average_iterations;
         }
         catch (const std::exception& error)

@@ -10,6 +10,10 @@ The `ppcg` setting uses the projection preconditioned conjugate-gradient method,
 
 PPCG uses `pw_diag_ndim` as its block size and performs the conservative full Rayleigh--Ritz correction on every iteration. Cached Hamiltonian and overlap images are refreshed independently, with additional refreshes when numerical cancellation threatens the residual.
 
+If PPCG reaches `pw_diag_nmax` before satisfying its residual criterion, the running log reports the active-band count and maximum residual. An SCF calculation can continue to its next electronic iteration with a warning; an NSCF calculation stops with an error because it has no subsequent SCF iteration to improve these eigenpairs. A non-finite residual is an error in either calculation.
+
+For diagnostics, `ABACUS_PPCG_RESIDUAL_TRACE` selects an optional CSV trace. Only the MPI world root writes this file, and its resolved full path is recorded in the running log each time the file is created or overwritten.
+
 When "basis_type = lcao", `ks_solver` can be `genelpa` or `scalapack_gvx`. The default setting `genelpa` is recommended, which is based on ELPA (EIGENVALUE SOLVERS FOR PETAFLOP APPLICATIONS) (https://elpa.mpcdf.mpg.de/) and the kernel is auto choosed by GENELPA(https://github.com/pplab/GenELPA), usually faster than the setting of "scalapack_gvx", which is based on ScaLAPACK(Scalable Linear Algebra PACKage)  
 
 ## Stochasic DFT

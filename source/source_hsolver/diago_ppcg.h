@@ -5,6 +5,7 @@
 
 #include <complex>
 #include <functional>
+#include <iosfwd>
 #include <type_traits>
 #include <vector>
 
@@ -67,6 +68,19 @@ public:
                 Real* eigenvalue_in,
                 const std::vector<double>& ethr_band,
                 const Real* prec);
+
+    // The PW caller supplies its running log; standalone callers of the
+    // overload above use std::clog for optional trace-file diagnostics.
+    double diag(const HPsiFunc& hpsi_func,
+                const SPsiFunc& spsi_func,
+                int ld_psi,
+                int nband,
+                int dim,
+                T* psi_in,
+                Real* eigenvalue_in,
+                const std::vector<double>& ethr_band,
+                const Real* prec,
+                std::ostream& log);
 
     bool converged() const
     {
