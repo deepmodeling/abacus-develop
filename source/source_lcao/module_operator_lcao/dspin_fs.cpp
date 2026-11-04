@@ -153,8 +153,8 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                                   R_index2[1] - R_index1[1],
                                                   R_index2[2] - R_index1[2]);
                 const hamilt::BaseMatrix<double>* tmp = dmR->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
-                int row_size = paraV->get_row_size();
-                int col_size = paraV->get_col_size();
+                int row_size = paraV->para_2d().get_row_size();
+                int col_size = paraV->para_2d().get_col_size();
                 if(row_size == 0 || col_size == 0)
                 {
                     continue;
