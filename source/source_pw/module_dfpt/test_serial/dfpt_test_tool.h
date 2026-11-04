@@ -6,16 +6,27 @@
 // its own gtest fixture from ::testing::Test, owns the objects it needs
 // and calls these functions -- there is no shared fixture base class.
 
-#include "source_base/matrix3.h"
-#include "source_base/vector3.h"
-
 #include <complex>
 
 class UnitCell;
+namespace ModuleBase
+{
+class Matrix3;
+template <class T>
+class Vector3;
+}
 namespace ModulePW
 {
 class PW_Basis;
 class PW_Basis_K;
+}
+namespace ModuleCell
+{
+class QList;
+}
+namespace ModuleDFPT
+{
+class DFPT_PW_Data;
 }
 namespace ModuleCell
 {

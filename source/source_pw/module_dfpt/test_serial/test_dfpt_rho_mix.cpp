@@ -14,14 +14,10 @@
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
-#include "source_basis/module_pw/pw_basis_k.h"
-#include "source_cell/qlist.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
 
-#include "gtest/gtest.h"
 
 namespace
 {

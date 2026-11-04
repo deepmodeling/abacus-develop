@@ -20,8 +20,6 @@
 #include "source_base/vector3.h"
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
-#include "source_cell/qlist.h"
-#include "source_cell/unitcell.h"
 #include "source_cell/stru_fac.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"

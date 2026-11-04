@@ -7,6 +7,8 @@
 #include "dfpt_test_tool.h"
 
 #include "source_base/constants.h"
+#include "source_base/matrix3.h"
+#include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/atom_pseudo.h"

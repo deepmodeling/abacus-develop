@@ -66,12 +66,6 @@ class DFPTPhonSerialTest : public ::testing::Test
     }
 };
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#include <algorithm>
-#include <cmath>
-#include <complex>
-#include <vector>
 
 namespace
 {
