@@ -116,11 +116,11 @@ std::vector<double> cross_ao_overlap(const UnitCell& cell,
     }
     // Use the complex Fourier overload even at Gamma: it folds every retained R
     // without fix_gamma(), so the same S(R) can later be folded at nonzero k.
-    const int local_count = pmat.get_local_size();
+    const int local_count = pmat.para_2d().get_local_size();
     const std::complex<double> zero(0.0, 0.0);
     std::vector<std::complex<double>> local_overlap(local_count, zero);
     const ModuleBase::Vector3<double> gamma(0.0, 0.0, 0.0);
-    const int leading_dimension = pmat.get_row_size();
+    const int leading_dimension = pmat.para_2d().get_row_size();
     if (local_count > 0)
     {
         hamilt::folding_HR(overlap_r, local_overlap.data(), gamma, leading_dimension, 1);

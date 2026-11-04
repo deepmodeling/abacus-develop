@@ -68,10 +68,12 @@ public:
 
     // Processes in ESolver_KS_LCAO
     /// @brief in init: Exx_LRI::init()
-    void init(const MPI_Comm &mpi_comm,
-              const UnitCell &ucell,
-              const K_Vectors &kv,
-              const LCAO_Orbitals& orb);
+    void init(
+        const MPI_Comm &mpi_comm,
+        const UnitCell &ucell,
+        const K_Vectors &kv,
+        const LCAO_Orbitals &orb,
+        const bool use_gpu);
 
     /// @brief: in cal_exx_ions: Exx_LRI::cal_exx_ions()
     void cal_exx_ions(const UnitCell& ucell, const bool write_cv = false);
@@ -96,8 +98,15 @@ public:
     void refresh_symmetry(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv);
 
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
-    void exx_beforescf(const int istep, const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const LCAO_Orbitals& orb,
-                       const Parallel_2D& pv, const bool update_symmetry);
+    void exx_beforescf(
+        const int istep,
+        const K_Vectors &kv,
+        const Charge_Mixing &chgmix,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        const Parallel_2D &pv,
+        const bool update_symmetry,
+        const bool use_gpu);
 
     /// @brief in eachiterinit:  do DM mixing and calculate Hexx when entering 2nd SCF
     void exx_eachiterinit(const int istep,

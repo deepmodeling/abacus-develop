@@ -553,6 +553,18 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         this->add_item(item);
     }
     {
+        Input_Item item("snap_param_file");
+        item.annotation = "the SNAP parameter file";
+        item.category = "Molecular dynamics";
+        item.type = "String";
+        item.description = "The SNAP parameter file used with pot_file as the SNAP coefficient file.";
+        item.default_value = "snap.param";
+        item.unit = "";
+        item.set_availability("esolver_type==snap");
+        read_sync_string(input.mdp.snap_param_file);
+        this->add_item(item);
+    }
+    {
         Input_Item item("dp_rescaling");
         item.annotation = "rescaling factor for dp potential";
         item.category = "Molecular dynamics";

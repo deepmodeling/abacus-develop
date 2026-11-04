@@ -76,7 +76,7 @@ class OverlapTest : public ::testing::Test
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -120,7 +120,7 @@ TEST_F(OverlapTest, constructHRcd2cd)
 
     // Verify SK is computed (values should be non-zero for non-gamma k-point)
     bool has_nonzero = false;
-    for (int i = 0; i < paraV->get_row_size() * paraV->get_col_size(); ++i)
+    for (int i = 0; i < paraV->para_2d().get_row_size() * paraV->para_2d().get_col_size(); ++i)
     {
         if (std::abs(sk[i]) > 1e-10)
         {
@@ -223,7 +223,7 @@ TEST_F(OverlapTest, singleAtom)
 #ifdef __MPI
     int nb = 5;
     paraV_single = new Parallel_Orbitals();
-    paraV_single->init(5, 5, nb, MPI_COMM_WORLD);
+    paraV_single->para_2d().init(5, 5, nb, MPI_COMM_WORLD);
     paraV_single->set_atomic_trace(ucell_single.get_iat2iwt(), 1, 5);
 #endif
 
@@ -573,8 +573,8 @@ TEST_F(OverlapTest, hermitianProperty)
     op.contributeHk(0);
 
     auto* sk = hsk.get_sk();
-    int nrow = paraV->get_row_size();
-    int ncol = paraV->get_col_size();
+    int nrow = paraV->para_2d().get_row_size();
+    int ncol = paraV->para_2d().get_col_size();
 
     // For overlap matrix at gamma point, SK should be real and symmetric
     // Diagonal elements should be real (imaginary part should be zero)
@@ -621,7 +621,7 @@ TEST_F(OverlapTest, forceCalculationNpol2)
     int global_row = test_size * test_nw * 2;  // doubled for npol=2
     int global_col = test_size * test_nw * 2;
     paraV = new Parallel_Orbitals();
-    paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+    paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
     paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
 #endif
 
@@ -714,7 +714,7 @@ TEST_F(OverlapTest, stressCalculationNpol2)
     int global_row = test_size * test_nw * 2;  // doubled for npol=2
     int global_col = test_size * test_nw * 2;
     paraV = new Parallel_Orbitals();
-    paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+    paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
     paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
 #endif
 
