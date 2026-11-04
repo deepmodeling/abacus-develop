@@ -21,9 +21,11 @@ class PeriodicCoulombOperator : public CoulombOperator
 public:
     PeriodicCoulombOperator(const ModulePW::PW_Basis& basis, double tpiba);
     bool has_correction() const override;
+    CoulombTransformCounts fft_counts() const override { return counts_; }
     void apply_potential(const std::vector<double>& charge, std::vector<double>& potential) override;
 
 private:
+    CoulombTransformCounts counts_;
     const ModulePW::PW_Basis& basis_;
     const double tpiba_;
     // Scratch only, overwritten on each call; PW_Basis FFTs are also non-reentrant.

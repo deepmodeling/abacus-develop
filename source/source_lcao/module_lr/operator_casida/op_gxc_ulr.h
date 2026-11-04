@@ -111,13 +111,13 @@ namespace LR
 
                 this->hR_->set_zero();
                 ModuleGint::cal_gint_vl(v2.c, this->hR_.get());
-                std::vector<ct::Tensor> v_2d(nk_, LR_Util::newTensor<T>({ pmat_.get_col_size(), pmat_.get_row_size() }));
+                std::vector<ct::Tensor> v_2d(nk_, LR_Util::newTensor<T>({ pmat_.para_2d().get_col_size(), pmat_.para_2d().get_row_size() }));
                 for (auto& v: v_2d)
                 {
                     v.zero();
                 }
                 const int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(this->ks_solver_)
-                    ? pmat_.get_row_size() : pmat_.get_col_size();
+                    ? pmat_.para_2d().get_row_size() : pmat_.para_2d().get_col_size();
                 for (int ik = 0;ik < nk_;++ik)
                 {
                     folding_HR(*this->hR_, v_2d[ik].template data<T>(), kv_.kvec_d[ik], nrow, 1);

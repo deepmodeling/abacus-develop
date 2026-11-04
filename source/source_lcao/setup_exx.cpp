@@ -50,6 +50,11 @@ void Exx_NAO<TK>::before_runner(
         Exx_Info& exx_info)
 {
 #ifdef __EXX
+#ifdef __CUDA
+    const bool use_gpu_tables = inp.device == "gpu";
+#else
+    const bool use_gpu_tables = false;
+#endif
     if (inp.calculation == "scf" || inp.calculation == "relax" || inp.calculation == "cell-relax"
         || inp.calculation == "md")
     {
@@ -63,12 +68,22 @@ void Exx_NAO<TK>::before_runner(
             // initialize 2-center radial tables for EXX-LRI
             if (exx_info.info_ri.real_number)
             {
-                this->exd->init(MPI_COMM_WORLD, ucell, kv, orb);
+                this->exd->init(
+                    MPI_COMM_WORLD,
+                    ucell,
+                    kv,
+                    orb,
+                    use_gpu_tables);
                 this->exd->exx_before_all_runners(kv, ucell, pv);
             }
             else
             {
-                this->exc->init(MPI_COMM_WORLD, ucell, kv, orb);
+                this->exc->init(
+                    MPI_COMM_WORLD,
+                    ucell,
+                    kv,
+                    orb,
+                    use_gpu_tables);
                 this->exc->exx_before_all_runners(kv, ucell, pv);
             }
         }
@@ -80,11 +95,21 @@ void Exx_NAO<TK>::before_runner(
         {
             if (exx_info.info_ri.real_number)
             {
-                this->exd->init(MPI_COMM_WORLD, ucell, kv, orb);
+                this->exd->init(
+                    MPI_COMM_WORLD,
+                    ucell,
+                    kv,
+                    orb,
+                    use_gpu_tables);
             }
             else
             {
-                this->exc->init(MPI_COMM_WORLD, ucell, kv, orb);
+                this->exc->init(
+                    MPI_COMM_WORLD,
+                    ucell,
+                    kv,
+                    orb,
+                    use_gpu_tables);
             }
         }
     }
@@ -104,6 +129,11 @@ void Exx_NAO<TK>::before_scf(
         Exx_Info& exx_info)
 {
 #ifdef __EXX
+#ifdef __CUDA
+    const bool use_gpu_tables = inp.device == "gpu";
+#else
+    const bool use_gpu_tables = false;
+#endif
     if (inp.calculation != "nscf")
     {
         const bool update_symmetry = inp.calculation == "cell-relax"
@@ -111,11 +141,27 @@ void Exx_NAO<TK>::before_scf(
                                      && ModuleSymmetry::Symmetry::symm_flag == 1;
         if (exx_info.info_ri.real_number)
         {
-            this->exd->exx_beforescf(istep, kv, *p_chgmix, ucell, orb, pv, update_symmetry);
+            this->exd->exx_beforescf(
+                istep,
+                kv,
+                *p_chgmix,
+                ucell,
+                orb,
+                pv,
+                update_symmetry,
+                use_gpu_tables);
         }
         else
         {
-            this->exc->exx_beforescf(istep, kv, *p_chgmix, ucell, orb, pv, update_symmetry);
+            this->exc->exx_beforescf(
+                istep,
+                kv,
+                *p_chgmix,
+                ucell,
+                orb,
+                pv,
+                update_symmetry,
+                use_gpu_tables);
         }
     }
     else

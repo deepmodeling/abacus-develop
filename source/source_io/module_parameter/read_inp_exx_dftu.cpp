@@ -264,7 +264,7 @@ void ReadInput::item_exx()
         item.annotation = "threshold to inverse Vq in abfs for generating Cs";
         item.category = "Exact Exchange (LCAO)";
         item.type = "Real";
-        item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.";
+        item.description = "By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using Cholesky factorization. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr > 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues at or below exx_cs_inv_thr times the largest eigenvalue are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5. Force derivatives assume that modes remain on the same side of the cutoff. Eigenvalue crossings can make the truncated model nonsmooth during relaxation or molecular dynamics.";
         item.default_value = "-1";
         item.unit = "";
         read_sync_double(input.exx_cs_inv_thr);
@@ -567,6 +567,42 @@ Use the same scheme for consistent SCF and NSCF bands. A source configuration mi
                 ModuleBase::WARNING_QUIT("ReadInput", "rpa_ccp_rmesh_times must >= 1");
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_coulomb");
+        item.annotation = "post-SCF truncated Coulomb kernel for RPA/GW export";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "Post-SCF cut-Coulomb kernel: hard preserves Spencer truncation; log_erfc uses erfc(log(r/Rc)/log(rpa_cut_width))/2r. Applies to Fock components in compressed and uncompressed cut exports; Erfc components retain their existing kernel. Non-default kernel/radius requests require a Fock component. Full Coulomb is unchanged. Forces and stresses for log_erfc are not validated.";
+        item.default_value = "hard";
+        item.unit = "";
+        read_sync_string(input.rpa_cut_coulomb);
+        item.domain.set_choices({"hard", "log_erfc"});
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_radius");
+        item.annotation = "radius convention for post-SCF cut Coulomb";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "legacy preserves the existing cutoff radius. inscribed uses half the shortest nonzero BvK superlattice vector, including the lattice scale in Bohr. Applies only to Fock components; inscribed is rejected if the RPA Coulomb configuration has no Fock component. Independent of rpa_cut_coulomb; intended for controlled radius-versus-smoothing comparisons.";
+        item.default_value = "legacy";
+        item.unit = "";
+        read_sync_string(input.rpa_cut_radius);
+        item.domain.set_choices({"legacy", "inscribed"});
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_cut_width");
+        item.annotation = "multiplicative width of the log-erfc cutoff";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "Width factor for log_erfc. Must be finite and greater than 1 and at most 1.25. The default matches the logged Si FHI-aims width; it is not a universal FHI-aims constant. The finite radial integration range must resolve the smooth tail.";
+        item.default_value = "1.091868692359";
+        item.unit = "";
+        read_sync_double(input.rpa_cut_width);
+        item.domain.set_rule("value>1 and value<=1.25");
         this->add_item(item);
     }
     {

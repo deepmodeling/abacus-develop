@@ -19,8 +19,7 @@
 
 /// Minimal H(k)/S(k) supplier. The LCAO eigensolvers take the matrix blocks
 /// directly, so this test no longer needs a hamilt::Hamilt subclass.
-template <typename T>
-class HamiltTEST
+template <typename T> class HamiltTEST
 {
   public:
     int desc[9];
@@ -28,10 +27,12 @@ class HamiltTEST
     std::vector<T> h_local;
     std::vector<T> s_local;
 
-    void matrix(ModuleBase::MatrixBlock<T>& hk_in, ModuleBase::MatrixBlock<T>& sk_in)
+    void matrix(ModuleBase::MatrixBlock<T> &hk_in, ModuleBase::MatrixBlock<T> &sk_in)
     {
-        hk_in = ModuleBase::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
-        sk_in = ModuleBase::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol, this->desc};
+        hk_in = ModuleBase::MatrixBlock<T>{this->h_local.data(), (size_t)this->nrow, (size_t)this->ncol,
+            this->desc};
+        sk_in = ModuleBase::MatrixBlock<T>{this->s_local.data(), (size_t)this->nrow, (size_t)this->ncol,
+            this->desc};
     }
 };
 
@@ -41,13 +42,13 @@ template <class T> bool read_hs(std::string fname, T &matrix)
 {
     int ndim;
     std::ifstream inf(fname);
-    if(! inf.is_open())
+    if (!inf.is_open())
     {
         std::cout << "Error: open file " << fname << " failed, skip!" << std::endl;
         return false;
     }
     inf >> ndim;
-    matrix.resize(ndim*ndim);
+    matrix.resize(ndim * ndim);
     for (int i = 0; i < ndim; i++)
     {
         for (int j = i; j < ndim; j++)
@@ -67,7 +68,7 @@ bool read_solution(std::string fname, std::vector<double> &result)
 {
     int ndim;
     std::ifstream inf(fname);
-    if(! inf.is_open())
+    if (!inf.is_open())
     {
         std::cout << "Error: open file " << fname << " failed, skip!" << std::endl;
         return false;
@@ -81,8 +82,13 @@ bool read_solution(std::string fname, std::vector<double> &result)
     return true;
 }
 
-
-template <class T> inline void print_matrix(std::ofstream &fp, T *matrix, int &nrow, int &ncol, bool row_first)
+template <class T>
+inline void print_matrix(
+    std::ofstream &fp,
+    T *matrix,
+    int &nrow,
+    int &ncol,
+    bool row_first)
 {
     int coef_row = row_first ? ncol : 1;
     int coef_col = row_first ? 1 : nrow;
@@ -96,20 +102,19 @@ template <class T> inline void print_matrix(std::ofstream &fp, T *matrix, int &n
     }
 }
 
-
-template <class T>
-class DiagoLapackPrepare
+template <class T> class DiagoLapackPrepare
 {
-    public:
-    DiagoLapackPrepare(int nlocal,
-                       int nbands,
-                       int nb2d,
-                       int sparsity,
-                       std::string hfname,
-                       std::string sfname,
-                       std::string solutionfname)
-        : nlocal(nlocal), nbands(nbands), nb2d(nb2d), sparsity(sparsity), hfname(hfname),
-          sfname(sfname), solutionfname(solutionfname)
+  public:
+    DiagoLapackPrepare(
+        int nlocal,
+        int nbands,
+        int nb2d,
+        int sparsity,
+        std::string hfname,
+        std::string sfname,
+        std::string solutionfname)
+        : nlocal(nlocal), nbands(nbands), nb2d(nb2d), sparsity(sparsity), hfname(hfname), sfname(sfname),
+          solutionfname(solutionfname)
     {
         // dh = new hsolver::DiagoLapack<T>;
     }
@@ -141,9 +146,10 @@ class DiagoLapackPrepare
         }
         nlocal = hdim;
         nbands = nlocal / 2;
-        if (readhfile && readsfile) {
+        if (readhfile && readsfile)
+        {
             return true;
-        }  
+        }
         return false;
     }
 
@@ -157,14 +163,25 @@ class DiagoLapackPrepare
 
     void print_hs()
     {
-        if (!PRINT_HS) {
+        if (!PRINT_HS)
+        {
             return;
         }
         std::ofstream fp("hmatrix.dat");
-        print_matrix(fp, this->h.data(), nlocal, nlocal, true);
+        print_matrix(
+            fp,
+            this->h.data(),
+            nlocal,
+            nlocal,
+            true);
         fp.close();
         fp.open("smatrix.dat");
-        print_matrix(fp, this->s.data(), nlocal, nlocal, true);
+        print_matrix(
+            fp,
+            this->s.data(),
+            nlocal,
+            nlocal,
+            true);
         fp.close();
     }
 
@@ -187,18 +204,19 @@ class DiagoLapackPrepare
         for (int i = 0; i < REPEATRUN; i++)
         {
             hsolver::DiagoLapack<T> dh(nlocal, nbands);
-            dh.diag(h_mat, s_mat, psi, e_solver.data());
+            dh.diag(
+                h_mat,
+                s_mat,
+                psi,
+                e_solver.data());
             // dh->diag(&hmtest, psi, e_solver.data());
         }
         // delete dh;
     }
 
-    void read_SOLUTION()
-    {
-        read_solution(this->solutionfname, this->e_lapack);
-    }
+    void read_SOLUTION() { read_solution(this->solutionfname, this->e_lapack); }
 
-    bool compare_eigen(std::stringstream& out_info)
+    bool compare_eigen(std::stringstream &out_info)
     {
         double maxerror = 0.0;
         int iindex = 0;
@@ -211,7 +229,8 @@ class DiagoLapackPrepare
                 maxerror = error;
                 iindex = i;
             }
-            if (error > PASSTHRESHOLD) {
+            if (error > PASSTHRESHOLD)
+            {
                 pass = false;
             }
         }
@@ -249,12 +268,24 @@ TEST_P(DiagoLapackGammaOnlyTest, LCAO)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    DiagoLapackTest,
-    DiagoLapackGammaOnlyTest,
+    DiagoLapackTest, DiagoLapackGammaOnlyTest,
     ::testing::Values(
-        DiagoLapackPrepare<double>(0, 0, 1, 0, "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat", "GammaOnly-Si2-Solution.dat"),
-        DiagoLapackPrepare<double>(0, 0, 32, 0, "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat", "GammaOnly-Si64-Solution.dat")));
-
+        DiagoLapackPrepare<double>(
+            0,
+            0,
+            1,
+            0,
+            "H-GammaOnly-Si2.dat",
+            "S-GammaOnly-Si2.dat",
+            "GammaOnly-Si2-Solution.dat"),
+        DiagoLapackPrepare<double>(
+            0,
+            0,
+            32,
+            0,
+            "H-GammaOnly-Si64.dat",
+            "S-GammaOnly-Si64.dat",
+            "GammaOnly-Si64-Solution.dat")));
 
 class DiagoLapackKPointsTest : public ::testing::TestWithParam<DiagoLapackPrepare<std::complex<double>>>
 {
@@ -272,16 +303,29 @@ TEST_P(DiagoLapackKPointsTest, LCAO)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    DiagoLapackTest,
-    DiagoLapackKPointsTest,
+    DiagoLapackTest, DiagoLapackKPointsTest,
     ::testing::Values(
-        DiagoLapackPrepare<std::complex<double>>(0, 0, 1, 0, "H-KPoints-Si2.dat", "S-KPoints-Si2.dat", "KPoints-Si2-Solution.dat"),
-        DiagoLapackPrepare<std::complex<double>>(0, 0, 32, 0, "H-KPoints-Si64.dat", "S-KPoints-Si64.dat", "KPoints-Si64-Solution.dat")));
+        DiagoLapackPrepare<std::complex<double>>(
+            0,
+            0,
+            1,
+            0,
+            "H-KPoints-Si2.dat",
+            "S-KPoints-Si2.dat",
+            "KPoints-Si2-Solution.dat"),
+        DiagoLapackPrepare<std::complex<double>>(
+            0,
+            0,
+            32,
+            0,
+            "H-KPoints-Si64.dat",
+            "S-KPoints-Si64.dat",
+            "KPoints-Si64-Solution.dat")));
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     testing::InitGoogleTest(&argc, argv);
-    ::testing::TestEventListeners& listeners = ::testing::UnitTest::GetInstance()->listeners();
+    ::testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
     delete listeners.Release(listeners.default_result_printer());
     int result = RUN_ALL_TESTS();
     if (result != 0)

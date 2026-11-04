@@ -67,7 +67,8 @@ class DFPT_PW::Impl
     /// v_sc^q = v_Hartree(drho_in) + xc(drho_in) on the shared grid;
     /// shared by solve_displacement and solve_efield_resp so the
     /// real-space Hartree+XC add loop is not duplicated
-    void assemble_v_sc(const ModuleBase::Vector3<double>& q_cart,
+    void assemble_v_sc(int q_idx,
+                       const ModuleBase::Vector3<double>& q_cart,
                        const std::vector<std::complex<double>>& drho_in_g,
                        std::vector<std::complex<double>>& v_sc_r) const;
 
@@ -159,6 +160,10 @@ class DFPT_PW::Impl
     ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
     Structure_Factor* sf_ = nullptr;
     std::vector<double> veff_r_;
+    /// ground-state XC potential (valence + core input), copied from the
+    /// init context: the nlcc diagonal 2n+1 term consumes it; the copy
+    /// owns the storage because the context points at caller stack state
+    std::vector<double> vxc_r_;
     ModuleBase::matrix wg_;
     ModuleBase::matrix eig_;
     const XC_First_Order* xc_ = nullptr;
@@ -178,6 +183,9 @@ class DFPT_PW::Impl
     std::string qfile_;
     double conv_thr_ = 1e-8;
     int max_iter_ = 100;
+    /// MPI rank from the init context (0 for serial); used by the dyn
+    /// file writer for the rank-0 output gate
+    int myrank_ = 0;
     double mix_beta_ = 0.4;
     std::string asr_type_ = "no"; ///< acoustic sum rule mode on the Gamma matrix
     std::string mix_type_ = "v_sc_broyden"; ///< response SCF mixing scheme

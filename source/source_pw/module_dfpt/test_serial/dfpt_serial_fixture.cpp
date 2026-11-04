@@ -2,6 +2,8 @@
 
 #include "source_base/constants.h"
 
+#include <cmath>
+
 void DFPTSerialBase::SetUp()
 {
     SetUpCell();
@@ -145,6 +147,52 @@ void DFPTSerialBase::MakeTwoAtomCell()
     ucell_.iat2ia[0] = 0;
     ucell_.iat2it[1] = 1;
     ucell_.iat2ia[1] = 0;
+}
+
+void DFPTSerialBase::MakeNlccTwoAtomCell()
+{
+    // start from the symmetric-broken two-atom cell, then upgrade the
+    // second species (the one at the non-origin tau_nlcc_) to an NC
+    // pseudo with a nonlinear core correction
+    MakeTwoAtomCell();
+    Atom& at = ucell_.atoms[1];
+    at.label = "Bc";
+    at.coulomb_potential = false;
+    pseudo& p = at.ncpp;
+    p.zv = 2.0;
+    p.tvanp = false;
+    p.has_so = false;
+    p.nbeta = 0;
+    p.lll = {};
+    p.nh = 0;
+    p.msh = 121;
+    p.kkbeta = 121;
+    p.r.resize(121);
+    p.rab.resize(121);
+    p.vloc_at.assign(121, 0.0);
+    const double dx = 0.025;
+    for (int i = 0; i < 121; ++i)
+    {
+        p.r[i] = i * dx;
+        p.rab[i] = dx;
+    }
+    // Gaussian core charge normalized to the integrated nlcc_core_charge_
+    // (rho_atc carries the 4 pi r^2 measure of the radial grid)
+    const double s2 = nlcc_sigma_ * nlcc_sigma_;
+    double norm = 0.0;
+    for (int i = 0; i < 121; ++i)
+    {
+        const double r = p.r[i];
+        norm += r * r * std::exp(-r * r / (2.0 * s2)) * p.rab[i];
+    }
+    const double amp = nlcc_core_charge_ / (norm * ModuleBase::FOUR_PI);
+    p.rho_atc.resize(121);
+    for (int i = 0; i < 121; ++i)
+    {
+        const double r = p.r[i];
+        p.rho_atc[i] = amp * std::exp(-r * r / (2.0 * s2));
+    }
+    p.nlcc = true;
 }
 
 long long DFPTSerialBase::FKey(int ix, int iy, int iz) const
