@@ -13,7 +13,7 @@ namespace
 void check_borrowed_charge_mixer(Base_Mixing::Mixing& charge_mixer)
 {
     const ModuleBase::Matrix3 lattice(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-    const auto key = std::make_pair(1, std::array<int, 3>{{1, 0, 0}});
+    const std::pair<int, std::array<int, 3>> key = std::make_pair(1, std::array<int, 3>{{1, 0, 0}});
     const std::complex<double> physical(0.8, -0.1);
     RI_2D_Comm::HybridGaugeComplexDensity density(1);
     density[0][0][key] = RI::Tensor<std::complex<double>>({1, 1});
@@ -36,7 +36,7 @@ void check_borrowed_charge_mixer(Base_Mixing::Mixing& charge_mixer)
             charge_mixer.reset();
             charge_mixer.init_mixing_data(charge_history, 2, sizeof(double));
         }
-        const auto time = RI_2D_Comm::hybrid_density_time(2, iteration);
+        const RI_2D_Comm::HybridDensityTime time = RI_2D_Comm::hybrid_density_time(2, iteration);
         const double left_value = 0.1;
         const double right_value = 0.2 * iteration;
         const double source_value = time == RI_2D_Comm::HybridDensityTime::Left ? left_value : right_value;
@@ -90,12 +90,12 @@ TEST(HybridGaugePhase, SelectsExplicitDensityTimeLayer)
 TEST(HybridGaugePhase, ExplicitSourceFrameAndUnchangedCache)
 {
     const std::array<int, 3> cell = {{1, -1, 0}};
-    const auto key = std::make_pair(2, cell);
+    const std::pair<int, std::array<int, 3>> key = std::make_pair(2, cell);
     RI_2D_Comm::HybridGaugeComplexDensity original(2);
     original[1][0][key] = RI::Tensor<std::complex<double>>({1, 2});
     original[1][0][key](0, 0) = std::complex<double>(0.7, 0.4);
     original[1][0][key](0, 1) = std::complex<double>(-0.2, 0.1);
-    auto transformed = original;
+    RI_2D_Comm::HybridGaugeComplexDensity transformed = original;
     const ModuleBase::Matrix3 lattice(2.0, 0.5, 0.0,
                                      0.0, 3.0, 0.2,
                                      0.0, 0.0, 4.0);
@@ -116,13 +116,13 @@ TEST(HybridGaugePhase, EqualPhysicalDensityAcrossTwoSourceFrames)
     const ModuleBase::Vector3<double> left_A(0.1, 0.2, -0.1);
     const ModuleBase::Vector3<double> right_A(0.4, -0.1, 0.2);
     const std::complex<double> physical(0.7, -0.2);
-    const auto left_phase = RI_2D_Comm::hybrid_input_phase(left_A, translation);
-    const auto right_phase = RI_2D_Comm::hybrid_input_phase(right_A, translation);
-    const auto left_raw = physical / left_phase;
-    const auto right_raw = physical / right_phase;
-    const auto common_mixed = 0.4 * left_raw * left_phase + 0.6 * right_raw * right_phase;
+    const std::complex<double> left_phase = RI_2D_Comm::hybrid_input_phase(left_A, translation);
+    const std::complex<double> right_phase = RI_2D_Comm::hybrid_input_phase(right_A, translation);
+    const std::complex<double> left_raw = physical / left_phase;
+    const std::complex<double> right_raw = physical / right_phase;
+    const std::complex<double> common_mixed = 0.4 * left_raw * left_phase + 0.6 * right_raw * right_phase;
     EXPECT_NEAR(std::abs(common_mixed - physical), 0.0, 1e-15);
-    const auto wrong_stage_mixed = (0.4 * left_raw + 0.6 * right_raw) * right_phase;
+    const std::complex<double> wrong_stage_mixed = (0.4 * left_raw + 0.6 * right_raw) * right_phase;
     EXPECT_GT(std::abs(wrong_stage_mixed - physical), 0.01);
 }
 
@@ -139,8 +139,8 @@ TEST(HybridGaugePhase, ImageRelabelCommutesWithOrdinaryFrameConversion)
     const ModuleBase::Vector3<int> bi(-1, 0, 1);
     const ModuleBase::Vector3<int> bj(0, 1, -1);
     const ModuleBase::Vector3<int> r(1, -2, 0);
-    const auto delta = bi - bj;
-    const auto rn = r + delta;
+    const ModuleBase::Vector3<int> delta = bi - bj;
+    const ModuleBase::Vector3<int> rn = r + delta;
     const auto cartesian = [&](const ModuleBase::Vector3<int>& image)
     {
         return ModuleBase::Vector3<double>(image.x, image.y, image.z) * lattice * lat0;
@@ -157,20 +157,20 @@ TEST(HybridGaugePhase, ImageRelabelCommutesWithOrdinaryFrameConversion)
     const std::complex<double> uj = coefficient_phase(bj);
     // dm_from_psi stores conj(C_i)*C_j; RI's row-major tensor view
     // transposes its column-major buffer before Fourier conversion.
-    const auto stored_old = std::conj(ci) * cj;
-    const auto stored_new = std::conj(ui * ci) * (uj * cj);
+    const std::complex<double> stored_old = std::conj(ci) * cj;
+    const std::complex<double> stored_new = std::conj(ui * ci) * (uj * cj);
     EXPECT_NEAR(std::abs(stored_new - std::conj(ui) * stored_old * uj), 0.0, 1e-14);
     EXPECT_GT(std::abs(stored_new - ui * stored_old * std::conj(uj)), 1e-3);
 
     const double k_delta = k_phase.x * delta.x + k_phase.y * delta.y + k_phase.z * delta.z;
-    const auto transposed_new_ratio = ui * std::conj(uj);
-    const auto fourier_relabel = std::exp(std::complex<double>(0.0, -k_delta));
-    const auto raw_ri_ratio = transposed_new_ratio * fourier_relabel;
+    const std::complex<double> transposed_new_ratio = ui * std::conj(uj);
+    const std::complex<double> fourier_relabel = std::exp(std::complex<double>(0.0, -k_delta));
+    const std::complex<double> raw_ri_ratio = transposed_new_ratio * fourier_relabel;
     EXPECT_NEAR(std::abs(raw_ri_ratio - std::exp(std::complex<double>(0.0, a * cartesian(delta)))),
                 0.0, 1e-14);
 
-    const auto old_key = std::make_pair(1, std::array<int, 3>{{r.x, r.y, r.z}});
-    const auto new_key = std::make_pair(1, std::array<int, 3>{{rn.x, rn.y, rn.z}});
+    const std::pair<int, std::array<int, 3>> old_key = std::make_pair(1, std::array<int, 3>{{r.x, r.y, r.z}});
+    const std::pair<int, std::array<int, 3>> new_key = std::make_pair(1, std::array<int, 3>{{rn.x, rn.y, rn.z}});
     RI_2D_Comm::HybridGaugeComplexDensity old_density(1);
     RI_2D_Comm::HybridGaugeComplexDensity new_density(1);
     old_density[0][0][old_key] = RI::Tensor<std::complex<double>>({1, 1});
@@ -178,8 +178,8 @@ TEST(HybridGaugePhase, ImageRelabelCommutesWithOrdinaryFrameConversion)
     const std::complex<double> raw(0.8, -0.3);
     old_density[0][0][old_key](0, 0) = raw;
     new_density[0][0][new_key](0, 0) = raw * raw_ri_ratio;
-    const auto old_source = old_density;
-    const auto new_source = new_density;
+    const RI_2D_Comm::HybridGaugeComplexDensity old_source = old_density;
+    const RI_2D_Comm::HybridGaugeComplexDensity new_source = new_density;
     RI_2D_Comm::apply_hybrid_input_phase(lattice, lat0, a, old_density);
     RI_2D_Comm::apply_hybrid_input_phase(lattice, lat0, a, new_density);
     EXPECT_NEAR(std::abs(old_density[0][0][old_key](0, 0) - new_density[0][0][new_key](0, 0)),
@@ -191,29 +191,29 @@ TEST(HybridGaugePhase, ImageRelabelCommutesWithOrdinaryFrameConversion)
 TEST(HybridGaugePhase, ProductionPlainMixerAndTransactionalTopologyGuard)
 {
     const std::array<int, 3> cell = {{1, 0, 0}};
-    const auto key = std::make_pair(1, cell);
+    const std::pair<int, std::array<int, 3>> key = std::make_pair(1, cell);
     RI_2D_Comm::HybridGaugeComplexDensity density(1);
     density[0][0][key] = RI::Tensor<std::complex<double>>({1, 2});
     density[0][0][key](0, 0) = std::complex<double>(0.5, 0.2);
     density[0][0][key](0, 1) = std::complex<double>(0.3, -0.1);
-    const auto accepted = density;
-    const auto layout = RI_2D_Comm::hybrid_density_layout(density);
-    auto first = RI_2D_Comm::flatten_hybrid_density(density);
-    auto second = first;
+    const RI_2D_Comm::HybridGaugeComplexDensity accepted = density;
+    const RI_2D_Comm::HybridDensityLayout layout = RI_2D_Comm::hybrid_density_layout(density);
+    std::vector<std::vector<std::complex<double>>> first = RI_2D_Comm::flatten_hybrid_density(density);
+    std::vector<std::vector<std::complex<double>>> second = first;
     second[0][0] += std::complex<double>(0.4, -0.2);
     Mix_DMk_2D<std::complex<double>> mixer;
     mixer.set_nks(1);
     mixer.set_mixing_plain(0.25);
     mixer.mix(first, true);
     mixer.mix(second, false);
-    const auto output = mixer.get_DMk_out();
+    const std::vector<const std::vector<std::complex<double>>*> output = mixer.get_DMk_out();
     RI_2D_Comm::assign_flat_hybrid_density(output, layout, density);
     EXPECT_NEAR(std::abs(density[0][0][key](0, 0) - std::complex<double>(0.6, 0.15)), 0.0, 1e-15);
     EXPECT_EQ(accepted[0].at(0).at(key)(0, 0), first[0][0]);
 
-    auto changed = density;
+    RI_2D_Comm::HybridGaugeComplexDensity changed = density;
     const std::array<int, 3> other_cell = {{2, 0, 0}};
-    const auto other_key = std::make_pair(1, other_cell);
+    const std::pair<int, std::array<int, 3>> other_key = std::make_pair(1, other_cell);
     changed[0][0][other_key] = changed[0][0][key];
     changed[0][0].erase(key);
     EXPECT_THROW(RI_2D_Comm::assign_flat_hybrid_density(output, layout, changed), std::invalid_argument);
@@ -233,7 +233,7 @@ TEST(HybridGaugePhase, ProductionMixerReceivesCommonFrameNotRawSourceFrames)
     const ModuleBase::Vector3<double> left_A(0.2, 0.0, 0.0);
     const ModuleBase::Vector3<double> right_A(0.5, 0.0, 0.0);
     const std::array<int, 3> cell = {{1, 0, 0}};
-    const auto key = std::make_pair(1, cell);
+    const std::pair<int, std::array<int, 3>> key = std::make_pair(1, cell);
     const std::complex<double> physical(0.8, -0.1);
     RI_2D_Comm::HybridGaugeComplexDensity left(1);
     RI_2D_Comm::HybridGaugeComplexDensity right(1);
@@ -248,9 +248,9 @@ TEST(HybridGaugePhase, ProductionMixerReceivesCommonFrameNotRawSourceFrames)
     RI_2D_Comm::mix_hybrid_density(lattice, 1.0, right_A, false, mixer, layout, right);
     EXPECT_NEAR(std::abs(right[0][0][key](0, 0) - physical), 0.0, 1e-15);
 
-    const auto before = *mixer.get_DMk_out()[0];
-    auto changed = right;
-    const auto other_key = std::make_pair(1, std::array<int, 3>{{2, 0, 0}});
+    const std::vector<std::complex<double>> before = *mixer.get_DMk_out()[0];
+    RI_2D_Comm::HybridGaugeComplexDensity changed = right;
+    const std::pair<int, std::array<int, 3>> other_key = std::make_pair(1, std::array<int, 3>{{2, 0, 0}});
     changed[0][0][other_key] = changed[0][0][key];
     changed[0][0].erase(key);
     EXPECT_THROW(RI_2D_Comm::mix_hybrid_density(lattice, 1.0, right_A, false,

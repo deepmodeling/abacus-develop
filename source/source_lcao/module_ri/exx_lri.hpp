@@ -369,14 +369,14 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
         { LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs"); }
     if (this->info.unfold_hybrid_images)
     {
-        auto c_extent = RI_2D_Comm::retained_image_extent(Cs, this->info.C_threshold);
-        auto v_extent = RI_2D_Comm::retained_image_extent(Vs, this->info.V_threshold);
+        RI_2D_Comm::ImageCell c_extent = RI_2D_Comm::retained_image_extent(Cs, this->info.C_threshold);
+        RI_2D_Comm::ImageCell v_extent = RI_2D_Comm::retained_image_extent(Vs, this->info.V_threshold);
         for (int d = 0; d < 3; ++d)
         {
             Parallel_Reduce::reduce_max(c_extent[d]);
             Parallel_Reduce::reduce_max(v_extent[d]);
         }
-        const auto image_period = RI_2D_Comm::hybrid_image_period(c_extent, v_extent);
+        const RI_2D_Comm::ImageCell image_period = RI_2D_Comm::hybrid_image_period(c_extent, v_extent);
         if (image_period != this->hybrid_images_period_
             && RI::MPI_Wrapper::mpi_get_rank(this->mpi_comm) == 0)
         {

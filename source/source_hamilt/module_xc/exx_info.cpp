@@ -223,7 +223,7 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
         exx_info.info_ri.real_number = std::stoi(inp.exx_real_number);
         // Preserve actual images for all direct (Center2) RI kernels.
         // Ewald preperiodizes its integrals and retains its existing treatment.
-        const auto& kernels = exx_info.info_global.coulomb_param;
+        const CoulombParam& kernels = exx_info.info_global.coulomb_param;
         const bool has_fock = kernels.count(Conv_Coulomb_Pot_K::Coulomb_Type::Fock) != 0;
         const bool direct_fock = inp.exx_singularity_correction == "spencer"
             || inp.exx_singularity_correction == "revised_spencer"

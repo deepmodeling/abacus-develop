@@ -38,8 +38,9 @@ inline HybridDensityTime hybrid_density_time(const int step, const int iteration
     return step > 0 && iteration == 1 ? HybridDensityTime::Left : HybridDensityTime::Right;
 }
 
-using HybridGaugeComplexDensity = std::vector<
-    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>;
+using HybridDensityRow = std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>;
+using HybridSpinDensity = std::map<int, HybridDensityRow>;
+using HybridGaugeComplexDensity = std::vector<HybridSpinDensity>;
 
 using HybridDensityBlock = std::tuple<int, int, std::array<int, 3>, std::vector<std::size_t>>;
 using HybridDensityLayout = std::vector<std::vector<HybridDensityBlock>>;
@@ -49,9 +50,9 @@ inline HybridDensityLayout hybrid_density_layout(const HybridGaugeComplexDensity
     HybridDensityLayout layout(density.size());
     for (std::size_t is = 0; is < density.size(); ++is)
     {
-        for (const auto& row_atom : density[is])
+        for (const HybridSpinDensity::value_type& row_atom : density[is])
         {
-            for (const auto& block : row_atom.second)
+            for (const HybridDensityRow::value_type& block : row_atom.second)
             {
                 if (block.second.empty())
                 {
@@ -71,11 +72,11 @@ inline std::vector<std::vector<std::complex<double>>> flatten_hybrid_density(
     std::vector<std::vector<std::complex<double>>> flat(density.size());
     for (std::size_t is = 0; is < density.size(); ++is)
     {
-        for (const auto& row_atom : density[is])
+        for (const HybridSpinDensity::value_type& row_atom : density[is])
         {
-            for (const auto& block : row_atom.second)
+            for (const HybridDensityRow::value_type& block : row_atom.second)
             {
-                const auto& tensor = block.second;
+                const RI::Tensor<std::complex<double>>& tensor = block.second;
                 if (tensor.empty())
                 {
                     throw std::invalid_argument("Empty RI density block in common-frame mixing");
@@ -93,7 +94,7 @@ inline void assign_flat_hybrid_density(
     const HybridDensityLayout& expected_layout,
     HybridGaugeComplexDensity& density)
 {
-    const auto actual_layout = hybrid_density_layout(density);
+    const HybridDensityLayout actual_layout = hybrid_density_layout(density);
     if (flat.size() != density.size() || actual_layout != expected_layout)
     {
         throw std::invalid_argument("RI density topology changed during common-frame mixing");
@@ -102,9 +103,9 @@ inline void assign_flat_hybrid_density(
     for (std::size_t is = 0; is < density.size(); ++is)
     {
         std::size_t expected_size = 0;
-        for (const auto& row_atom : density[is])
+        for (const HybridSpinDensity::value_type& row_atom : density[is])
         {
-            for (const auto& block : row_atom.second)
+            for (const HybridDensityRow::value_type& block : row_atom.second)
             {
                 expected_size += block.second.shape.get_shape_all();
             }
@@ -117,9 +118,9 @@ inline void assign_flat_hybrid_density(
     for (std::size_t is = 0; is < density.size(); ++is)
     {
         std::size_t offset = 0;
-        for (auto& row_atom : density[is])
+        for (HybridSpinDensity::value_type& row_atom : density[is])
         {
-            for (auto& block : row_atom.second)
+            for (HybridDensityRow::value_type& block : row_atom.second)
             {
                 const std::size_t size = block.second.shape.get_shape_all();
                 // Avoid writing through a shallow copy into accepted-state storage.
@@ -145,13 +146,13 @@ inline void apply_hybrid_input_phase(const ModuleBase::Matrix3& lattice,
             throw std::invalid_argument("Nonfinite RI density source phase");
         }
     }
-    for (auto& spin_density : density)
+    for (HybridSpinDensity& spin_density : density)
     {
-        for (auto& row_atom : spin_density)
+        for (HybridSpinDensity::value_type& row_atom : spin_density)
         {
-            for (auto& block : row_atom.second)
+            for (HybridDensityRow::value_type& block : row_atom.second)
             {
-                const auto& cell = block.first.second;
+                const std::array<int, 3>& cell = block.first.second;
                 const ModuleBase::Vector3<double> cell_index(cell[0], cell[1], cell[2]);
                 const ModuleBase::Vector3<double> translation = (cell_index * lattice) * lat0;
                 const std::complex<double> phase = hybrid_input_phase(source_A, translation);
@@ -191,12 +192,12 @@ inline void mix_common_frame_density(const bool restart,
     {
         throw std::invalid_argument("Missing spin blocks in RI density mixing");
     }
-    const auto layout = hybrid_density_layout(density);
+    const HybridDensityLayout layout = hybrid_density_layout(density);
     if (!restart && layout != history_layout)
     {
         throw std::invalid_argument("RI density topology changed without a mixing restart");
     }
-    const auto flat = flatten_hybrid_density(density);
+    const std::vector<std::vector<std::complex<double>>> flat = flatten_hybrid_density(density);
     if (restart)
     {
         mixer.set_nks(static_cast<int>(density.size()));
@@ -220,7 +221,7 @@ inline void mix_hybrid_density(const ModuleBase::Matrix3& lattice,
     {
         throw std::invalid_argument("Missing spin blocks in RI density mixing");
     }
-    const auto layout = hybrid_density_layout(density);
+    const HybridDensityLayout layout = hybrid_density_layout(density);
     if (!restart && layout != history_layout)
     {
         throw std::invalid_argument("RI density topology changed without a mixing restart");

@@ -25,7 +25,7 @@ Input_para hse_input()
 
 TEST(ExxInfo, RejectsRealHybridGaugeBeforeRiSetup)
 {
-    const auto input = hse_input();
+    const Input_para input = hse_input();
     Exx_Info info;
     try
     {
@@ -40,7 +40,7 @@ TEST(ExxInfo, RejectsRealHybridGaugeBeforeRiSetup)
 
 TEST(ExxInfo, AcceptsComplexHybridGauge)
 {
-    auto input = hse_input();
+    Input_para input = hse_input();
     input.exx_real_number = "0";
     Exx_Info info;
     EXPECT_NO_THROW(init_exx_info(info, input));
@@ -50,7 +50,7 @@ TEST(ExxInfo, AcceptsComplexHybridGauge)
 
 TEST(ExxInfo, PreservesRealRiForOtherGaugesAndGroundState)
 {
-    auto input = hse_input();
+    Input_para input = hse_input();
     input.td_stype = 1;
     Exx_Info info;
     EXPECT_NO_THROW(init_exx_info(info, input));
@@ -65,7 +65,7 @@ TEST(ExxInfo, PreservesRealRiForOtherGaugesAndGroundState)
 
 TEST(ExxInfo, RejectsUnsupportedHybridImageKPointPools)
 {
-    auto input = hse_input();
+    Input_para input = hse_input();
     input.exx_real_number = "0";
     input.kpar = 2;
     Exx_Info info;
@@ -74,7 +74,7 @@ TEST(ExxInfo, RejectsUnsupportedHybridImageKPointPools)
 
 TEST(ExxInfo, LeavesPlaneWaveExchangeImageDomainUnchanged)
 {
-    auto input = hse_input();
+    Input_para input = hse_input();
     input.basis_type = "pw";
     input.exx_real_number = "0";
     Exx_Info info;
@@ -84,16 +84,16 @@ TEST(ExxInfo, LeavesPlaneWaveExchangeImageDomainUnchanged)
 
 TEST(ExxInfo, UnfoldsDirectFullRangeKernels)
 {
-    auto input = hse_input();
+    Input_para input = hse_input();
     input.exx_real_number = "0";
     input.exx_erfc_alpha.clear();
     input.exx_erfc_omega.clear();
     input.exx_fock_alpha = {"0.25"};
     input.exx_fock_lambda = {"0.3"};
-    for (const auto& functional : {"pbe0", "hf"})
+    for (const char* functional : {"pbe0", "hf"})
     {
         input.dft_functional = functional;
-        for (const auto& method : {"spencer", "revised_spencer", "limits"})
+        for (const char* method : {"spencer", "revised_spencer", "limits"})
         {
             input.exx_singularity_correction = method;
             Exx_Info info;
@@ -108,13 +108,13 @@ TEST(ExxInfo, UnfoldsDirectFullRangeKernels)
 
 TEST(ExxInfo, PreservesEwaldImagePathIncludingMixedKernels)
 {
-    auto input = hse_input();
+    Input_para input = hse_input();
     input.dft_functional = "pbe0";
     input.exx_real_number = "0";
     input.exx_fock_alpha = {"0.25"};
     input.exx_fock_lambda = {"0.3"};
     input.kpar = 2;
-    for (const auto& method : {"massidda", "carrier"})
+    for (const char* method : {"massidda", "carrier"})
     {
         input.exx_singularity_correction = method;
         for (const bool mixed : {false, true})
@@ -135,7 +135,7 @@ TEST(ExxInfo, PreservesEwaldImagePathIncludingMixedKernels)
 
 TEST(ExxInfo, ErfcRemainsDirectRegardlessOfFockSingularityMethod)
 {
-    auto input = hse_input();
+    Input_para input = hse_input();
     input.exx_real_number = "0";
     input.exx_singularity_correction = "massidda";
     Exx_Info info;

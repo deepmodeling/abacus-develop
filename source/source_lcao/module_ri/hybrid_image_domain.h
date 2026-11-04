@@ -37,10 +37,11 @@ template <typename T>
 ImageCell retained_image_extent(std::map<int, std::map<std::pair<int, ImageCell>, RI::Tensor<T>>>& blocks,
                                 const double threshold)
 {
+    using ImageBlocks = std::map<std::pair<int, ImageCell>, RI::Tensor<T>>;
     ImageCell extent{{0, 0, 0}};
-    for (auto& row : blocks)
+    for (typename std::map<int, ImageBlocks>::value_type& row : blocks)
     {
-        for (auto block = row.second.begin(); block != row.second.end();)
+        for (typename ImageBlocks::iterator block = row.second.begin(); block != row.second.end();)
         {
             const double norm = block->second.norm(std::numeric_limits<double>::max());
             if (!std::isfinite(norm))
@@ -97,17 +98,19 @@ void unfold_hybrid_images(std::vector<std::map<int, std::map<std::pair<int, Imag
     // Pass zeros when only unfolding an ordinary density without a field phase.
     // On a regular full mesh, D(R+B) = exp(-i 2*pi*k0.B) D(R).
     // Any mesh point can serve as k0; B is a physical BvK translation.
-    for (auto& spin : density)
+    using ImageBlocks = std::map<std::pair<int, ImageCell>, RI::Tensor<T>>;
+    using AtomImages = std::map<ImageCell, RI::Tensor<T>>;
+    for (std::map<int, ImageBlocks>& spin : density)
     {
-        for (auto& row : spin)
+        for (typename std::map<int, ImageBlocks>::value_type& row : spin)
         {
-            std::map<int, std::map<ImageCell, RI::Tensor<T>>> by_atom;
-            for (const auto& block : row.second)
+            std::map<int, AtomImages> by_atom;
+            for (const typename ImageBlocks::value_type& block : row.second)
             {
                 by_atom[block.first.first].emplace(block.first.second, block.second);
             }
-            std::map<std::pair<int, ImageCell>, RI::Tensor<T>> unfolded;
-            for (const auto& atom : by_atom)
+            ImageBlocks unfolded;
+            for (const typename std::map<int, AtomImages>::value_type& atom : by_atom)
             {
                 for (int x = -image_period[0] / 2; x <= image_period[0] / 2; ++x)
                 {
@@ -117,7 +120,7 @@ void unfold_hybrid_images(std::vector<std::map<int, std::map<std::pair<int, Imag
                         {
                             const ImageCell cell{{x, y, z}};
                             const ImageCell representative = centered_image(cell, physical_period);
-                            const auto source = atom.second.find(representative);
+                            const typename AtomImages::const_iterator source = atom.second.find(representative);
                             if (source != atom.second.end())
                             {
                                 double cycles = 0.0;
@@ -130,7 +133,7 @@ void unfold_hybrid_images(std::vector<std::map<int, std::map<std::pair<int, Imag
                                 const double angle = -2.0 * std::acos(-1.0) * std::remainder(cycles, 1.0) - input_phase;
                                 const std::complex<double> twist = std::exp(std::complex<double>(0.0, angle));
                                 const T factor = RI::Global_Func::convert<T>(twist);
-                                const auto image = source->second * factor;
+                                const RI::Tensor<T> image = source->second * factor;
                                 unfolded.emplace(std::make_pair(atom.first, cell), image);
                             }
                         }
@@ -146,13 +149,15 @@ template <typename T>
 void decode_hybrid_images(std::map<int, std::map<std::pair<int, ImageCell>, RI::Tensor<T>>>& blocks,
                           const ImageCell& period)
 {
-    for (auto& row : blocks)
+    using ImageBlocks = std::map<std::pair<int, ImageCell>, RI::Tensor<T>>;
+    for (typename std::map<int, ImageBlocks>::value_type& row : blocks)
     {
-        std::map<std::pair<int, ImageCell>, RI::Tensor<T>> decoded;
-        for (const auto& block : row.second)
+        ImageBlocks decoded;
+        for (const typename ImageBlocks::value_type& block : row.second)
         {
             const ImageCell cell = centered_image(block.first.second, period);
-            const auto inserted = decoded.emplace(std::make_pair(block.first.first, cell), block.second);
+            const std::pair<typename ImageBlocks::iterator, bool> inserted =
+                decoded.emplace(std::make_pair(block.first.first, cell), block.second);
             if (!inserted.second)
             {
                 throw std::runtime_error("Aliased output in hybrid RI image domain");

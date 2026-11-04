@@ -1,3 +1,1 @@
-Fixed-ion Si HSE/hybrid-gauge RT regression with nspin=2 on a Gamma-centered 2x1x1 mesh.
-The unfolded EXX images grow HR during assembly; both spin channels must be remapped before switching spins.
-This case exercises the production HamiltLCAO/OperatorEXX path. The preceding implementation corrupts the heap; the corrected calculation completes the initial state and two propagation steps.
+Fixed-ion Si HSE/hybrid-gauge RT regression for two-spin HR storage during EXX image expansion on a Gamma-centered 2x1x1 mesh.

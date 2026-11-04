@@ -1,4 +1,1 @@
-RT-TDDFT PBE0 on Si, hybrid gauge (td_stype=2), Gamma-centered 2x1x1 k-point mesh, td_vext=1, out_current=1.
-
-Current and energy references include ordinary-NAO input-density conversion and RI image phases before exchange mixing.
-Validated with 1 and 4 MPI ranks at unchanged tolerances; the image-disabled control recovers the preceding input-phase-only references.
+Si PBE0/hybrid-gauge RT regression for input-density and periodic-image phases on a Gamma-centered 2x1x1 mesh.

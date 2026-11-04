@@ -44,7 +44,7 @@ TEST(HybridImageDomain, BoundsAllFourContractions)
 
 TEST(HybridImageDomain, RetainsExistingMaxNormThreshold)
 {
-    auto density = source_density();
+    Density density = source_density();
     const Cell extent = RI_2D_Comm::retained_image_extent(density[0], 0.39);
     const Cell expected{{1, 0, 0}};
     EXPECT_EQ(extent, expected);
@@ -62,13 +62,13 @@ TEST(HybridImageDomain, ExtendsEachSourceBeforeRealMixerAndReset)
     std::map<int, Complex> previous;
     for (int iteration = 0; iteration < 5; ++iteration)
     {
-        auto density = source_density();
-        const auto unmodified = density;
+        Density density = source_density();
+        const Density unmodified = density;
         const bool restart = iteration == 0 || iteration == 3;
         const double A = 0.17 + 0.11 * iteration;
         const ModuleBase::Vector3<double> source_A(A, 0, 0);
         const std::array<double, 3> mesh_origin{{0.0, 0.0, 0.0}};
-        const auto input_phase = RI_2D_Comm::hybrid_input_phase_per_cell(lattice, 1.0, source_A);
+        const std::array<double, 3> input_phase = RI_2D_Comm::hybrid_input_phase_per_cell(lattice, 1.0, source_A);
         RI_2D_Comm::unfold_hybrid_images(density, physical, images, mesh_origin, input_phase);
         RI_2D_Comm::mix_common_frame_density(restart, mixer, layout, density);
         ASSERT_EQ(density[0][0].size(), 7u);
@@ -89,8 +89,8 @@ TEST(HybridImageDomain, ExtendsEachSourceBeforeRealMixerAndReset)
 
 TEST(HybridImageDomain, DecodesOutputUsingInternalPeriod)
 {
-    auto density = source_density();
-    auto& blocks = density[0];
+    Density density = source_density();
+    RI_2D_Comm::HybridSpinDensity& blocks = density[0];
     const Cell images{{7, 1, 1}};
     const Cell external{{5, 0, 0}};
     blocks[0][{2, external}] = blocks[0].begin()->second;
@@ -107,7 +107,7 @@ TEST(HybridImageDomain, MatchesDirectFourierSumAtActualImages)
     const ModuleBase::Matrix3 lattice(1.2, 0.3, 0.1, -0.2, 0.9, 0.4, 0.05, -0.1, 1.7);
     const double lat0 = 2.3;
     const ModuleBase::Vector3<double> source_A(0.37, -0.19, 0.23);
-    for (const auto& origin : {std::array<double, 3>{{0.0, 0.0, 0.0}},
+    for (const std::array<double, 3>& origin : {std::array<double, 3>{{0.0, 0.0, 0.0}},
                                std::array<double, 3>{{-0.375, -0.25, 0.0}},
                                std::array<double, 3>{{0.07, 0.13, -0.09}}})
     {
@@ -137,17 +137,17 @@ TEST(HybridImageDomain, MatchesDirectFourierSumAtActualImages)
                 density[0][0][{0, cell}] = tensor;
             }
         }
-        const auto original = density;
-        const auto input_phase = RI_2D_Comm::hybrid_input_phase_per_cell(lattice, lat0, source_A);
+        const Density original = density;
+        const std::array<double, 3> input_phase = RI_2D_Comm::hybrid_input_phase_per_cell(lattice, lat0, source_A);
         RI_2D_Comm::unfold_hybrid_images(density, physical, images, origin, input_phase);
         Mix_DMk_2D<Complex> mixer;
         mixer.set_mixing_plain(1.0);
         RI_2D_Comm::HybridDensityLayout layout;
         RI_2D_Comm::mix_common_frame_density(true, mixer, layout, density);
         ASSERT_EQ(density[0][0].size(), 273u);
-        for (const auto& block : density[0][0])
+        for (const RI_2D_Comm::HybridDensityRow::value_type& block : density[0][0])
         {
-            const auto& cell = block.first.second;
+            const Cell& cell = block.first.second;
             // Independent Cartesian projection checks row convention and lat0.
             const double rx = lat0 * (1.2 * cell[0] - 0.2 * cell[1] + 0.05 * cell[2]);
             const double ry = lat0 * (0.3 * cell[0] + 0.9 * cell[1] - 0.1 * cell[2]);
@@ -157,7 +157,7 @@ TEST(HybridImageDomain, MatchesDirectFourierSumAtActualImages)
             EXPECT_NEAR(std::abs(block.second.ptr()[0] - expected), 0.0, 2e-14);
         }
         // Expanded tensors and input phase must not mutate the source/history.
-        for (const auto& block : original[0].at(0))
+        for (const RI_2D_Comm::HybridDensityRow::value_type& block : original[0].at(0))
         {
             EXPECT_NEAR(std::abs(block.second.ptr()[0] - direct(block.first.second)), 0.0, 1e-15);
         }
@@ -166,8 +166,8 @@ TEST(HybridImageDomain, MatchesDirectFourierSumAtActualImages)
 
 TEST(HybridImageDomain, ZeroFieldStillPreservesShiftedMeshTwist)
 {
-    auto density = source_density();
-    const auto original = density;
+    Density density = source_density();
+    const Density original = density;
     const Cell physical{{4, 1, 1}};
     const Cell images{{7, 1, 1}};
     const std::array<double, 3> origin{{0.125, 0.0, 0.0}};
