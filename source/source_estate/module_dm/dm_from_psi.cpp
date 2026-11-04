@@ -62,7 +62,7 @@ void fill_weighted_wfc(const Parallel_Orbitals* ParaV,
     int ib_global = 0;
     for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
     {
-        while (ib_local != ParaV->global2local_col(ib_global))
+        while (ib_local != ParaV->para_2d().global2local_col(ib_global))
         {
             ++ib_global;
             if (ib_global >= wg.nc)
@@ -249,7 +249,7 @@ void dmk_from_psi_impl(const Parallel_Orbitals* ParaV,
     wfc.fix_k(ik);
     fill_weighted_wfc(ParaV, wg, ik, wfc, wg_wfc);
 #ifdef __MPI
-    gemm_dm(wg_wfc, wfc, dmk_out, ParaV->desc_wfc, ParaV->desc);
+    gemm_dm(wg_wfc, wfc, dmk_out, ParaV->desc_wfc, ParaV->para_2d().get_desc());
 #else
     gemm_dm(wg_wfc, wfc, dmk_out);
 #endif

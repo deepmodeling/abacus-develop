@@ -28,7 +28,7 @@ class OverlapBlockTest : public ::testing::Test
         const std::vector<int> offsets{0};
         cell.set_iat2iwt_for_test(offsets, npol);
         const int size = atom->nw * npol;
-        distribution.set_serial(size, size);
+        distribution.para_2d().set_serial(size, size);
         distribution.set_atomic_trace(cell.get_iat2iwt(), cell.nat, size);
     }
     UnitCell cell;
