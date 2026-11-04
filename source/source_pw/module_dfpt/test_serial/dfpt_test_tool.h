@@ -28,14 +28,6 @@ namespace ModuleDFPT
 {
 class DFPT_PW_Data;
 }
-namespace ModuleCell
-{
-class QList;
-}
-namespace ModuleDFPT
-{
-class DFPT_PW_Data;
-}
 
 namespace dfpt_test
 {
