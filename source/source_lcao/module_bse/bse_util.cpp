@@ -67,7 +67,7 @@ container::Tensor cal_dm_trans_onebase_pblas(
     const int one = 1;
     const int ncol = matrix_dist.get_col_size();
     const int nrow = matrix_dist.get_row_size();
-    const int nloc = matrix_dist.get_local_size();
+    const int64_t nloc = matrix_dist.get_local_size();
 
     container::Tensor dm_trans(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice,
         { ncol, nrow }); // row is "inside"(memory contiguity) for pblas
