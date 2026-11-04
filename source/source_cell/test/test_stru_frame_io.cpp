@@ -110,3 +110,48 @@ TEST_F(StruFrameIoTest, LastFrameStepIsZeroOnMissingOrUnmarkedFile)
 
     EXPECT_EQ(stru_frame_io::last_frame_step(unmarked), 0);
 }
+
+TEST_F(StruFrameIoTest, ExtractFrameByStepPicksExactMarker)
+{
+    const std::string cumulative = case_dir + "STRU";
+    std::ofstream ofs(cumulative.c_str());
+    ofs << "# MD step 1\n\nATOMIC_SPECIES\nSi 28.0855\n";
+    ofs << "# MD step 3\n\nLATTICE_CONSTANT\n10.2\n";
+    ofs << "# MD step 7\n\nLATTICE_CONSTANT\n10.9\n";
+    ofs.close();
+
+    const std::string frame = case_dir + "STRU_restart_frame";
+
+    // step 3 exists between 1 and 7: must extract the frame that belongs to step 3,
+    // not the earlier or later one.
+    EXPECT_TRUE(stru_frame_io::extract_frame_by_step(cumulative, 3, frame));
+    const std::string content = read_all(frame);
+    EXPECT_EQ(content.find("# MD step"), std::string::npos);
+    EXPECT_NE(content.find("10.2"), std::string::npos);
+    EXPECT_EQ(content.find("10.9"), std::string::npos);
+}
+
+TEST_F(StruFrameIoTest, ExtractFrameByStepFailsOnMissingStep)
+{
+    const std::string cumulative = case_dir + "STRU";
+    std::ofstream ofs(cumulative.c_str());
+    ofs << "# MD step 1\n\nATOMIC_SPECIES\nSi 28.0855\n";
+    ofs << "# MD step 3\n\nLATTICE_CONSTANT\n10.2\n";
+    ofs.close();
+
+    const std::string frame = case_dir + "STRU_restart_frame";
+
+    // step 5 sits past the last marker and is not present
+    EXPECT_FALSE(stru_frame_io::extract_frame_by_step(cumulative, 5, frame));
+    // step 2 sits between markers and is not present
+    EXPECT_FALSE(stru_frame_io::extract_frame_by_step(cumulative, 2, frame));
+    // step 0 is invalid
+    EXPECT_FALSE(stru_frame_io::extract_frame_by_step(cumulative, 0, frame));
+}
+
+TEST_F(StruFrameIoTest, ExtractFrameByStepFailsOnMissingFile)
+{
+    const std::string missing = case_dir + "NO_SUCH_STRU";
+    const std::string frame = case_dir + "STRU_restart_frame";
+    EXPECT_FALSE(stru_frame_io::extract_frame_by_step(missing, 3, frame));
+}

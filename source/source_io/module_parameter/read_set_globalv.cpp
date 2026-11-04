@@ -14,35 +14,36 @@ namespace
 /// @param istep number of completed ionic steps recorded in Restart_md.txt
 /// @return path of the first existing structure file, empty if none exists
 /// @details Three naming schemes are accepted, in order:
-/// - "STRU": fixed-name cumulative file written in out_app_flag == 1 mode,
-///   accepted when its last "# MD step N" frame matches step istep + 1; the
-///   last frame is extracted to "STRU_restart_frame" and that path is
-///   returned so the restart readers see a single-frame file;
+/// - "STRU": fixed-name cumulative file written in out_app_flag == 1 mode.
+///   Unlike an earlier implementation that blindly took the last frame (and thus
+///   risked mixing geometry from a later step with Restart_md.txt metadata from
+///   {istep}), this helper now walks the cumulative file and locates the frame
+///   whose "# MD step N" marker matches istep + 1 exactly. When found, the
+///   frame is extracted to "STRU_restart_frame" and that path is returned so
+///   the restart readers see a single-frame file;
 /// - "STRU{istep + 1}": written by run_md since the ionic-step numbering
 ///   was unified with relax (1-based);
 /// - "STRU_MD_{istep}": written by older ABACUS versions.
-/// If none matches, the last frame of an arbitrary cumulative STRU is used as
-/// a last resort, preserving restarts whose frame numbering cannot be
-/// validated against Restart_md.txt.
+/// None of these schemes is allowed to silently fall back to an unrelated
+/// frame. The caller turns an empty return value into a hard error with a
+/// message pointing to the output cadences that produced the gap.
 std::string find_md_restart_stru(const std::string& stru_dir, const int istep)
 {
-    // Prefer the fixed-name cumulative STRU when its last frame belongs to the
-    // step this restart resumes from. A stale number-named file left behind by
-    // an earlier run must not shadow it, so the header is checked before the
-    // legacy names are consulted.
+    // Prefer the fixed-name cumulative STRU when its marker exactly matches
+    // the step this restart resumes from. Walking the cumulative file picks
+    // the frame that belongs to Restart_md.txt even when the user configured
+    // out_freq_ion and md_restartfreq to different values: run_md guarantees
+    // a checkpoint frame on every md_restartfreq step, so the marker must be
+    // present whenever the restart file was written.
     const std::string stru_cumulative = stru_dir + "STRU";
     std::ifstream file_cumulative(stru_cumulative.c_str());
     if (file_cumulative.good())
     {
         file_cumulative.close();
-        const int last_step = stru_frame_io::last_frame_step(stru_cumulative);
-        if (last_step == istep + 1)
+        const std::string frame_path = stru_dir + "STRU_restart_frame";
+        if (stru_frame_io::extract_frame_by_step(stru_cumulative, istep + 1, frame_path))
         {
-            const std::string frame_path = stru_dir + "STRU_restart_frame";
-            if (stru_frame_io::extract_last_frame(stru_cumulative, frame_path))
-            {
-                return frame_path;
-            }
+            return frame_path;
         }
     }
     const std::string stru_new = stru_dir + "STRU" + std::to_string(istep + 1);
@@ -56,16 +57,6 @@ std::string find_md_restart_stru(const std::string& stru_dir, const int istep)
     if (file_old.good())
     {
         return stru_old;
-    }
-    std::ifstream file_last_frame(stru_cumulative.c_str());
-    if (file_last_frame.good())
-    {
-        file_last_frame.close();
-        const std::string frame_path = stru_dir + "STRU_restart_frame";
-        if (stru_frame_io::extract_last_frame(stru_cumulative, frame_path))
-        {
-            return frame_path;
-        }
     }
     return "";
 }
@@ -230,7 +221,15 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
         if (sys.global_in_stru.empty())
         {
             const std::string message = "no STRU file found for MD restart in " + sys.global_readin_dir
-                                        + "; expected STRU_MD_{step}, STRU{step+1} or cumulative STRU";
+                                        + "; Restart_md.txt reports step "
+                                        + std::to_string(istep)
+                                        + " but no matching structure frame is present. "
+                                          "run_md writes a checkpoint STRU frame on every md_restartfreq "
+                                          "step (independent of out_stru) since the decoupling fix, so "
+                                          "this usually means the restart directory was produced by an "
+                                          "older ABACUS release or is missing both the numbered STRU{step+1} "
+                                          "/ STRU_MD_{step} file and a cumulative STRU with a matching "
+                                          "\"# MD step N\" marker.";
             ModuleBase::WARNING_QUIT("ReadInput::set_global_dir", message);
         }
     }

@@ -39,6 +39,19 @@ bool is_cadence_step(const int current_step, const int freq)
     return freq > 0 && current_step % freq == 0;
 }
 
+bool is_frame_write_step(const int current_step,
+                         const int out_freq_ion,
+                         const int md_restartfreq,
+                         const bool out_stru)
+{
+    const int eff_output_freq = (out_freq_ion > 0) ? out_freq_ion : md_restartfreq;
+    const bool do_output_step = is_cadence_step(current_step, eff_output_freq);
+    const bool do_restart_step = is_cadence_step(current_step, md_restartfreq);
+    const bool want_output_frame = do_output_step && out_stru;
+    const bool want_checkpoint_frame = do_restart_step;
+    return want_output_frame || want_checkpoint_frame;
+}
+
 void prepare_mdcell(MDCell& mdcell, const Parameter& param_in, DomainDecomposition& decomp)
 {
     const Input_para& input = param_in.inp;
@@ -330,48 +343,62 @@ void md_line(MDCell& mdcell,
 
         const int current_step = mdrun->step_ + mdrun->step_rst_;
         const bool do_output_step = is_cadence_step(current_step, eff_output_freq);
-        if (do_output_step)
+        const bool do_restart_step = is_cadence_step(current_step, restart_freq);
+        const bool write_any_frame = is_frame_write_step(current_step,
+                                                         param_in.inp.out_freq_ion,
+                                                         restart_freq,
+                                                         param_in.inp.out_stru > 0);
+
+        /// A checkpoint STRU frame must exist on every restart step so that the
+        /// state written to Restart_md.txt (coordinates + thermostat state +
+        /// step number) can actually be resumed from. This frame is paired
+        /// with Restart_md.txt on the md_restartfreq cadence and is independent
+        /// of both out_freq_ion and out_stru: out_stru=0 silences the regular
+        /// per-step output only, not the restart-ready frame. When the same
+        /// step fires both the output cadence and the restart cadence we write
+        /// one frame shared by both paths, so the cumulative STRU is not
+        /// duplicated in out_app_flag=1 mode. See is_frame_write_step for the
+        /// formal predicate behind write_any_frame.
+        if (write_any_frame)
         {
             if (mdcell.has_backing_unitcell())
             {
                 const bool positions_updated = false;
                 mdcell.sync_backing_unitcell(positions_updated);
             }
-            if (param_in.inp.out_stru > 0)
+            // Mode-2 STRUC/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(stru_out_dir);
+            const int stru_step = current_step + 1;
+            // File-name selection and append/truncate are two independent
+            // decisions. The file name is fixed to "STRU" whenever mode 1
+            // accumulation is allowed (and no legacy STRU/ directory is in
+            // the way); modes 0/2 keep the numbered STRU{stru_step} files.
+            // Whether to append depends on whether this is the very first
+            // step of a fresh (non-restart) run: a fresh first frame
+            // truncates the fixed-name file so it does not keep frames
+            // from a previous run, while later steps and restarted runs
+            // append one frame each, introduced by a one-based
+            // "# MD step N" comment line.
+            const bool use_fixed_name = append_stru_allowed && !has_legacy_stru_dir;
+            const bool is_first_step_of_fresh_run = (mdrun->step_ == 0) && (mdrun->step_rst_ == 0);
+            const bool append_stru = use_fixed_name && !is_first_step_of_fresh_run;
+            const std::string frame_comment = use_fixed_name
+                ? "# MD step " + std::to_string(stru_step) + "\n\n"
+                : "";
+            std::stringstream file;
+            file << stru_out_dir << "STRU";
+            if (!use_fixed_name)
             {
-                // Mode-2 STRUC/ subdirectory is created lazily at write time.
-                ModuleBase::ensure_directory(stru_out_dir);
-                const int stru_step = current_step + 1;
-                // File-name selection and append/truncate are two independent
-                // decisions. The file name is fixed to "STRU" whenever mode 1
-                // accumulation is allowed (and no legacy STRU/ directory is in
-                // the way); modes 0/2 keep the numbered STRU{stru_step} files.
-                // Whether to append depends on whether this is the very first
-                // step of a fresh (non-restart) run: a fresh first frame
-                // truncates the fixed-name file so it does not keep frames
-                // from a previous run, while later steps and restarted runs
-                // append one frame each, introduced by a one-based
-                // "# MD step N" comment line.
-                const bool use_fixed_name = append_stru_allowed && !has_legacy_stru_dir;
-                const bool is_first_step_of_fresh_run = (mdrun->step_ == 0) && (mdrun->step_rst_ == 0);
-                const bool append_stru = use_fixed_name && !is_first_step_of_fresh_run;
-                const std::string frame_comment = use_fixed_name
-                    ? "# MD step " + std::to_string(stru_step) + "\n\n"
-                    : "";
-                std::stringstream file;
-                file << stru_out_dir << "STRU";
-                if (!use_fixed_name)
-                {
-                    file << stru_step;
-                }
-                mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str(), frame_comment, append_stru);
+                file << stru_step;
             }
+            mdcell::print_stru_file(mdcell, mdcell.stru_meta(), file.str(), frame_comment, append_stru);
         }
 
         /// Restart files follow md_restartfreq independently of the output
         /// cadence, so setting out_freq_ion does not suppress or re-aim
-        /// md_restartfreq.
-        if (is_cadence_step(current_step, restart_freq))
+        /// md_restartfreq. A matching checkpoint STRU frame was written in
+        /// the block above whenever do_restart_step was true.
+        if (do_restart_step)
         {
             mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
