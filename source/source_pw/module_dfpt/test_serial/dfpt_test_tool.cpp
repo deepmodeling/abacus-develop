@@ -198,7 +198,8 @@ void setup_bases(ModulePW::PW_Basis& pw_rho,
     // in the rho ball) while production hardcodes 4x ecutwfc; they
     // re-assemble for arbitrary (k, q) pairs per case, which the
     // K_Vectors-driven wrapper is not shaped for; and the wrappers
-    // read GlobalV::ofs_running and require a fabricated Input_para.
+    // write to the running-log global stream and require a fabricated
+    // Input_para.
     const ModuleBase::Matrix3& latvec = ucell.latvec;
     pw_rho.initgrids(lat0, latvec, rho_mult * ecutwfc);
     pw_rho.initparameters(false, rho_mult * ecutwfc);
