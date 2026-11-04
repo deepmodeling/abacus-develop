@@ -159,8 +159,10 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     EXPECT_EQ(sys.global_in_stru, stru_new);
 
     // Restart from a read_file_dir holding only the fixed-name cumulative
-    // "STRU" written in out_app_flag == 1 mode: the last "# MD step N" frame
-    // must be extracted to a single-frame file and picked up.
+    // "STRU" written in out_app_flag == 1 mode: the frame whose "# MD step N"
+    // marker matches istep + 1 must be extracted to a single-frame file and
+    // picked up. Restart_md.txt records the 0-based completed-step count, so
+    // resuming from step 2 corresponds to the frame tagged "# MD step 3".
     const std::string cumulative_dir = case_dir + "cumulative/";
     ModuleBase::make_directory(cumulative_dir);
     const std::string restart_txt_cum = cumulative_dir + "Restart_md.txt";
@@ -172,6 +174,7 @@ TEST_F(InputTest, SetGlobalDirMdRestart)
     std::ofstream stru_file_cum(stru_cumulative.c_str());
     stru_file_cum << "# MD step 1\n\nATOMIC_SPECIES\nSi 28.0855\n" << std::endl;
     stru_file_cum << "# MD step 2\n\nATOMIC_SPECIES\nSi 28.0855\n\nLATTICE_CONSTANT\n10.2\n" << std::endl;
+    stru_file_cum << "# MD step 3\n\nATOMIC_SPECIES\nSi 28.0855\n\nLATTICE_CONSTANT\n10.5\n" << std::endl;
     stru_file_cum.close();
 
     input.read_file_dir = cumulative_dir;
