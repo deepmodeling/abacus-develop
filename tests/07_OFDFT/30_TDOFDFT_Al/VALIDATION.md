@@ -66,10 +66,11 @@ Run the three inputs in independent directories, changing only `md_dt` and
 processes, and with the CI layout of 4 MPI / 2 OpenMP threads. Preserve all
 logs. Use the cluster's supported launcher and run within allocated resources.
 
-The checker reads logs only and has no MPI implementation dependency:
+The shared checker reads logs only and has no MPI implementation dependency.
+Run it from the repository root:
 
 ```bash
-python3 check_timestep.py \
+python3 tests/integrate/validation_tools/check_tdofdft_timestep.py \
   --coarse /absolute/path/dt001-mpi1/OUT.autotest/running_md.log \
   --fine /absolute/path/dt0005-mpi1/OUT.autotest/running_md.log \
   --finer /absolute/path/dt00025-mpi1/OUT.autotest/running_md.log \
