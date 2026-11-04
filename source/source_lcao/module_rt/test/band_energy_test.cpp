@@ -27,7 +27,7 @@ class BandEnergyTest : public testing::Test
         // Reuse the existing test executable's 1x1 BLACS grid.
         ASSERT_EQ(nprow, 1);
         ASSERT_EQ(npcol, 1);
-        ASSERT_EQ(pv.set(nlocal, nlocal, 1, ictxt), 0);
+        ASSERT_EQ(pv.para_2d().set(nlocal, nlocal, 1, ictxt), 0);
         pv.ncol_bands = nband;
         pv.nrow_bands = nband;
         pv.nloc_wfc = nlocal * nband;

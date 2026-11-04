@@ -47,7 +47,7 @@ TK DensityMatrix<TK, TR>::get_dmk(const int ispin, const int ik, const int i, co
     assert(ispin > 0 && ispin <= this->spin_mult);
 #endif
     // consider transpose col=>row
-    return this->dmk[ik + this->_nk * (ispin - 1)][i * this->pv->nrow + j];
+    return this->dmk[ik + this->_nk * (ispin - 1)][i * this->pv->para_2d().get_row_size() + j];
 }
 
 // get dmk nks, nrow, ncol
@@ -75,7 +75,7 @@ int DensityMatrix<TK, TR>::get_dmk_nrow() const
 #ifdef __DEBUG
     assert(this->dmk.size() != 0);
 #endif
-    return this->pv->nrow;
+    return this->pv->para_2d().get_row_size();
 }
 
 template <typename TK, typename TR>
@@ -84,7 +84,7 @@ int DensityMatrix<TK, TR>::get_dmk_ncol() const
 #ifdef __DEBUG
     assert(this->dmk.size() != 0);
 #endif
-    return this->pv->ncol;
+    return this->pv->para_2d().get_col_size();
 }
 
 // T of HContainer can be double or std::complex<double>

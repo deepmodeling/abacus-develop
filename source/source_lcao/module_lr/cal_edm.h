@@ -60,7 +60,7 @@ namespace LR
         const Parallel_2D& pc,
         const Parallel_Orbitals& pmat)
     {
-        const int& naos = pmat.get_global_row_size();
+        const int& naos = pmat.para_2d().get_global_row_size();
         const int& nocc = px.get_global_col_size();
         const int& nvirt = px.get_global_row_size();
         // 4. $\sum_i (\Omega + \epsilon_i) \sum_{ab} C_{\mu a} X_{ia} C_{\nu b} X_{ib}$
@@ -106,7 +106,7 @@ namespace LR
         const Parallel_2D& pc,
         const Parallel_Orbitals& pmat)
     {
-        const int& naos = pmat.get_global_col_size();
+        const int& naos = pmat.para_2d().get_global_col_size();
         const int& nocc = p_occ_occ.get_global_col_size();
         const int& nvirt = p_virt_occ.get_global_row_size();
         const Parallel_2D& px = p_virt_occ;
@@ -163,13 +163,13 @@ namespace LR
         if (test_force)
         {
             std::cout << "cWc: " << std::endl;
-            LR_Util::print_value(cWc[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            LR_Util::print_value(cWc[0].data<T>(), pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size());
             std::cout << "cZc: " << std::endl;
-            LR_Util::print_value(cZc[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            LR_Util::print_value(cZc[0].data<T>(), pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size());
             std::cout << "cKc: " << std::endl;
-            LR_Util::print_value(cKc[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            LR_Util::print_value(cKc[0].data<T>(), pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size());
             std::cout << "edm term 4: " << std::endl;
-            LR_Util::print_value(edm[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            LR_Util::print_value(edm[0].data<T>(), pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size());
         }
         return edm + cWc + cZc + cKc;
     }

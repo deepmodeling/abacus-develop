@@ -31,7 +31,7 @@ namespace ModuleDFPT
 namespace
 {
 /// relative defect ||out - in|| / ||out|| with convergence-safe guards
-/// (shared definition with dfpt_rho.cpp; see the note there): a zero
+/// (shared definition with dfpt_rho_mix.cpp; see the note there): a zero
 /// output norm only reports convergence when the defect itself is zero,
 /// and non-finite norms never report convergence
 double safe_relative_defect(double dn2, double o2)
