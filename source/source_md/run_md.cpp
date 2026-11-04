@@ -277,16 +277,18 @@ void md_line(MDCell& mdcell,
             ModuleIO::print_screen(stress_step, force_step, istep_print);
             mdrun->first_half(GlobalV::ofs_running);
 
-            /// update force and virial due to the update of atom positions
-            /// Use the global (1 + restarted) step index so a restarted run's
-            /// first local step still appends to the accumulated output files
-            /// instead of truncating the previous run's records.
-            const int global_step = mdrun->step_ + mdrun->step_rst_;
+            /// update force and virial due to the update of atom positions.
+            /// The electronic solver interprets the step index as the local
+            /// step of this run: istep == 0/1 enables its initialization
+            /// branches (init_chg dm/hr, init_wfc file, PW need_subspace),
+            /// so pass the local step; the global step is used only by the
+            /// MD-side output writers below (print_md, dump_info, STRU
+            /// naming, write_restart, PLUMED).
             /// first_half has already drifted the positions in this run, so
             /// the charge-extrapolation history may advance.
             const bool positions_updated = true;
             MD_func::force_virial(p_esolver,
-                                  global_step,
+                                  mdrun->step_,
                                   positions_updated,
                                   mdcell,
                                   decomp,

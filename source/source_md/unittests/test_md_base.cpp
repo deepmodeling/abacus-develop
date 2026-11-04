@@ -23,13 +23,15 @@ class PositionStateSolver : public ModuleESolver::ESolver
 {
 public:
     std::vector<bool> observed_position_updates;
+    std::vector<int> observed_steps;
 
     void before_all_runners(BaseCell&, const Input_para&) override {}
     void after_all_runners(BaseCell&) override {}
-    void runner(BaseCell& base, const int) override
+    void runner(BaseCell& base, const int istep) override
     {
         const UnitCell& cell = static_cast<const UnitCell&>(base);
         observed_position_updates.push_back(cell.ionic_position_updated);
+        observed_steps.push_back(istep);
     }
     double cal_energy() override { return 0.0; }
     void cal_force(BaseCell&, ModuleBase::matrix& force) override { force.zero_out(); }
@@ -547,6 +549,11 @@ TEST_F(MdBoundaryTest, RestartedSetupDoesNotAdvancePositionUpdateState)
     integrator.setup(&solver, readin_directory, decomposition);
     ASSERT_EQ(solver.observed_position_updates.size(), 1u);
     EXPECT_FALSE(solver.observed_position_updates[0]);
+    // The solver still receives the local step so that its istep == 0
+    // initialization branches (init_chg dm/hr, init_wfc file) fire on the
+    // first force evaluation of a restarted run.
+    ASSERT_EQ(solver.observed_steps.size(), 1u);
+    EXPECT_EQ(solver.observed_steps[0], 0);
 }
 
 TEST_F(MdBoundaryTest, InitialSyncPreservesPositionUpdateState)
