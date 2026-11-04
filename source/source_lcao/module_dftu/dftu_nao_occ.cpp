@@ -52,19 +52,19 @@ void acc_channel(OccupationMatrix& occmat,
         for (int ipol0 = 0; ipol0 < npol; ipol0++)
         {
             const int iwt0 = occmat.corr_iwt(iat, l, m0, ipol0);
-            const int mu = pv.global2local_row(iwt0);
-            const int mu_prime = pv.global2local_col(iwt0);
+            const int mu = pv.para_2d().global2local_row(iwt0);
+            const int mu_prime = pv.para_2d().global2local_col(iwt0);
 
             for (int m1 = 0; m1 < two_l_plus_one; m1++)
             {
                 for (int ipol1 = 0; ipol1 < npol; ipol1++)
                 {
                     const int iwt1 = occmat.corr_iwt(iat, l, m1, ipol1);
-                    const int nu = pv.global2local_col(iwt1);
-                    const int nu_prime = pv.global2local_row(iwt1);
+                    const int nu = pv.para_2d().global2local_col(iwt1);
+                    const int nu_prime = pv.para_2d().global2local_row(iwt1);
 
-                    const int irc = nu * pv.nrow + mu;
-                    const int irc_prime = mu_prime * pv.nrow + nu_prime;
+                    const int irc = nu * pv.para_2d().get_row_size() + mu;
+                    const int irc_prime = mu_prime * pv.para_2d().get_row_size() + nu_prime;
 
                     const int m0_all = m0 + ipol0 * two_l_plus_one;
                     const int m1_all = m1 + ipol1 * two_l_plus_one;
@@ -336,7 +336,7 @@ void cal_occ_mat_k(const Parallel_Orbitals* pv,
     ModuleBase::timer::start("DFTU_LCAO", "cal_occ_mat_k");
 
     const int nspin = dftu.occmat().nspin();
-    const int nlocal = pv->get_global_row_size();
+    const int nlocal = pv->para_2d().get_global_row_size();
     const std::vector<int>& l_channel = dftu.get_l_channel_vec();
 
     // copy occ_mat to occ_mat_save, then zero occ_mat
@@ -350,7 +350,7 @@ void cal_occ_mat_k(const Parallel_Orbitals* pv,
     const int one_int = 1;
     const std::complex<double> beta(0.0,0.0), alpha(1.0,0.0);
 
-    std::vector<std::complex<double>> srho(pv->nloc);
+    std::vector<std::complex<double>> srho(pv->para_2d().get_local_size());
 
     // (symmetry) when crystal symmetry reduces the k-mesh, each ik below is only
     // the irreducible representative; build the AO rotation machinery once so
@@ -397,16 +397,16 @@ void cal_occ_mat_k(const Parallel_Orbitals* pv,
             s_k_pointer,
             one_int,
             one_int,
-            &pv->desc[0],
+            &pv->para_2d().get_desc()[0],
             dm_k[ik].data(),
             one_int,
             one_int,
-            &pv->desc[0],
+            &pv->para_2d().get_desc()[0],
             beta,
             srho.data(),
             one_int,
             one_int,
-            &pv->desc[0]);
+            &pv->para_2d().get_desc()[0]);
 #endif
 
         const int spin = kv.isk[ik];
@@ -451,7 +451,7 @@ void cal_occ_mat_gamma(const Parallel_Orbitals* pv,
     ModuleBase::timer::start("DFTU_LCAO", "cal_occ_mat_gamma");
 
     const int nspin = dftu.occmat().nspin();
-    const int nlocal = pv->get_global_row_size();
+    const int nlocal = pv->para_2d().get_global_row_size();
     const std::vector<int>& l_channel = dftu.get_l_channel_vec();
 
     // copy occ_mat to occ_mat_save, then zero occ_mat
@@ -466,7 +466,7 @@ void cal_occ_mat_gamma(const Parallel_Orbitals* pv,
     const double alpha = 1.0;
     const double beta = 0.0;
 
-    std::vector<double> srho(pv->nloc);
+    std::vector<double> srho(pv->para_2d().get_local_size());
     for (int is = 0; is < nspin; is++)
     {
         double* s_gamma_pointer = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
@@ -481,16 +481,16 @@ void cal_occ_mat_gamma(const Parallel_Orbitals* pv,
             s_gamma_pointer,
             one_int,
             one_int,
-            &pv->desc[0],
+            &pv->para_2d().get_desc()[0],
             dm_gamma[is].data(),
             one_int,
             one_int,
-            &pv->desc[0],
+            &pv->para_2d().get_desc()[0],
             beta,
             srho.data(),
             one_int,
             one_int,
-            &pv->desc[0]);
+            &pv->para_2d().get_desc()[0]);
 #endif
 
         // Per (it, ia, l, n=0, spin) block: accumulate + Allreduce + symmetrize

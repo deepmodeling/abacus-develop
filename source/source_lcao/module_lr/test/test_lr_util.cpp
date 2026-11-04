@@ -46,9 +46,9 @@ protected:
         ucell.set_iat2iwt(1);
         const int dimension = test_size * test_nw;
 #ifdef __MPI
-        distribution.init(dimension, dimension, 2, MPI_COMM_WORLD);
+        distribution.para_2d().init(dimension, dimension, 2, MPI_COMM_WORLD);
 #else
-        distribution.set_serial(dimension, dimension);
+        distribution.para_2d().set_serial(dimension, dimension);
 #endif
         distribution.set_atomic_trace(ucell.get_iat2iwt(), test_size, dimension);
         paraV = &distribution;
@@ -106,13 +106,13 @@ TEST_F(LRDMTest, LRTransposePreservesAtomIndices)
     hr.fix_gamma();
     dm.init_dmr(hr);
     auto& dk = dm.get_dmk_vec()[0];
-    for (int j = 0; j < paraV->ncol; ++j)
+    for (int j = 0; j < paraV->para_2d().get_col_size(); ++j)
     {
-        for (int i = 0; i < paraV->nrow; ++i)
+        for (int i = 0; i < paraV->para_2d().get_row_size(); ++i)
         {
-            const int mu = paraV->local2global_row(i);
-            const int nu = paraV->local2global_col(j);
-            dk[j * paraV->nrow + i] = mu * n + nu;
+            const int mu = paraV->para_2d().local2global_row(i);
+            const int nu = paraV->para_2d().local2global_col(j);
+            dk[j * paraV->para_2d().get_row_size() + i] = mu * n + nu;
         }
     }
     dm.cal_dmr(-1);
@@ -127,8 +127,8 @@ TEST_F(LRDMTest, LRTransposePreservesAtomIndices)
             {
                 for (int j = 0; j < pair.get_col_size(); ++j)
                 {
-                    const int mu = paraV->local2global_row(pair.get_begin_row() + i);
-                    const int nu = paraV->local2global_col(pair.get_begin_col() + j);
+                    const int mu = paraV->para_2d().local2global_row(pair.get_begin_row() + i);
+                    const int nu = paraV->para_2d().local2global_col(pair.get_begin_col() + j);
                     const double expected = pass == 0 ? mu * n + nu : nu * n + mu;
                     EXPECT_DOUBLE_EQ(values[i * pair.get_col_size() + j], expected);
                 }
@@ -186,8 +186,8 @@ int elecstate::TDFieldManager::gauge() const { return 0; }
 
 TEST_F(LRDMTest, SparseWriterKeepsSpinFilesAndDisjointRankKeys)
 {
-    const int rank = paraV->get_coord_row() * paraV->get_dim1() + paraV->get_coord_col();
-    const int process_count = paraV->get_dim0() * paraV->get_dim1();
+    const int rank = paraV->para_2d().get_coord_row() * paraV->para_2d().get_dim1() + paraV->para_2d().get_coord_col();
+    const int process_count = paraV->para_2d().get_dim0() * paraV->para_2d().get_dim1();
     const int active_ranks = std::max(1, process_count - 1);
     GlobalV::DRANK = rank; // The common writer uses the existing diagonal-grid output rank.
     hamilt::HContainer<double> structure(paraV);
