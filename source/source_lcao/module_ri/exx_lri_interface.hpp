@@ -232,7 +232,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
             auto cal = [this, &ucell,&kv, &pv, &flag_restart](const module_dm::DensityMatrix<T, double>& dm_in)
             {
                 if (this->exx_spacegroup_symmetry)
-                    { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm_in.get_dmk_vec(), pv), flag_restart); }
+                    { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm_in.get_dmk_vec(), pv.para_2d()), flag_restart); }
                 else
                     { this->mix_DMk_2D.mix(dm_in.get_dmk_vec(), flag_restart); }
                 const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds =
@@ -240,7 +240,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                         ucell,
                         *this->exx_ptr->p_kv,
                         this->mix_DMk_2D.get_DMk_out(),
-                        pv,
+                        pv.para_2d(),
                         PARAM.inp.nspin,
                         this->exx_spacegroup_symmetry);
                 if(this->exx_spacegroup_symmetry && this->exx_ptr->info.exx_symmetry_realspace)
@@ -448,7 +448,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             const bool flag_restart = (this->two_level_step == 0 && PARAM.inp.init_wfc != "file") ? true : false;
 
             if(this->exx_spacegroup_symmetry)
-                { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_dmk_vec(), pv), flag_restart); }
+                { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_dmk_vec(), pv.para_2d()), flag_restart); }
             else
                 { this->mix_DMk_2D.mix(dm.get_dmk_vec(), flag_restart); }
             const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds =
@@ -456,7 +456,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                     ucell,
                     *this->exx_ptr->p_kv,
                     this->mix_DMk_2D.get_DMk_out(),
-                    pv,
+                    pv.para_2d(),
                     nspin,
                     this->exx_spacegroup_symmetry);
             if(this->exx_spacegroup_symmetry && this->exx_ptr->info.exx_symmetry_realspace)

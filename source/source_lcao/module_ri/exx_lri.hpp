@@ -856,7 +856,8 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
     ModuleBase::TITLE("Exx_LRI","cal_exx_elec");
     ModuleBase::timer::start("Exx_LRI", "cal_exx_elec");
 
-    const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell,pv);
+    const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge
+        = RI_2D_Comm::get_2D_judge(ucell, pv.para_2d());
 
     if(p_symrot)
         { this->exx_lri.set_symmetry(true, p_symrot->get_irred_sector()); }
