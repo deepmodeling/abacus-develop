@@ -332,7 +332,7 @@ void OutputMyData::write(const std::string& filename, int precision)
 | File | Location | Strengths |
 |------|----------|-----------|
 | `chgs1.cube` | `tests/03_NAO_multik/scf_out_chg_tau/OUT.autotest/` | Short name, spin index convention |
-| `doss1g1.txt` | `tests/03_NAO_multik/scf_out_dos_spin2/OUT.autotest/` | Clear header with metadata |
+| `doss1.txt` | `tests/03_NAO_multik/scf_out_dos_spin2/OUT.autotest/` | Clear header with metadata |
 | `eig_occ.txt` | Same as above | Clear block structure for spin/k-point |
 | `mulliken.txt` | `tests/03_NAO_multik/scf_out_mul/OUT.autotest/` | Clear atom separators |
 
