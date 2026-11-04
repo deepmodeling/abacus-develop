@@ -133,7 +133,7 @@ namespace ModuleIO
                                      "LCAO matrix dimension must be positive.");
         }
         Parallel_Orbitals pv;
-        pv.set_serial(matrix_dimension, matrix_dimension);
+        pv.para_2d().set_serial(matrix_dimension, matrix_dimension);
         for (int is = 0;is < Hexxs.size();++is)
         {
             for (const auto& HexxA : Hexxs[is])

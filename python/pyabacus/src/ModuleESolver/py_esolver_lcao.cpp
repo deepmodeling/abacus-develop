@@ -236,10 +236,10 @@ void PyHamiltonianAccessor<TK, TR>::set_from_hamilt(hamilt::HamiltLCAO<TK, TR>* 
     // Get dimensions from Parallel_Orbitals if available
     if (pv != nullptr)
     {
-        nrow_ = pv->get_row_size();
-        ncol_ = pv->get_col_size();
+        nrow_ = pv->para_2d().get_row_size();
+        ncol_ = pv->para_2d().get_col_size();
         nloc_ = nrow_ * ncol_;
-        nbasis_ = pv->get_global_row_size();
+        nbasis_ = pv->para_2d().get_global_row_size();
     }
 
     // Initialize pointer arrays for compatibility mode

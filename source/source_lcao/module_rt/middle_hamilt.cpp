@@ -104,13 +104,13 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
     void* d_H_last = static_cast<void*>(const_cast<std::complex<double>*>(H_laststep.data<std::complex<double>>()));
     void* d_S_last = static_cast<void*>(const_cast<std::complex<double>*>(S_laststep.data<std::complex<double>>()));
 
-    int64_t m_global = pv->desc[2];
-    int64_t n_global = pv->desc[3];
-    int64_t mb = pv->desc[4];
-    int64_t nb = pv->desc[5];
-    int64_t rsrc = pv->desc[6];
-    int64_t csrc = pv->desc[7];
-    int64_t lld = pv->desc[8];
+    int64_t m_global = pv->para_2d().get_desc()[2];
+    int64_t n_global = pv->para_2d().get_desc()[3];
+    int64_t mb = pv->para_2d().get_desc()[4];
+    int64_t nb = pv->para_2d().get_desc()[5];
+    int64_t rsrc = pv->para_2d().get_desc()[6];
+    int64_t csrc = pv->para_2d().get_desc()[7];
+    int64_t lld = pv->para_2d().get_desc()[8];
 
     // 3. Create matrix descriptor
     cublasMpMatrixDescriptor_t desc_mat;

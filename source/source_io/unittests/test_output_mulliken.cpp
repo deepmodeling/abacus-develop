@@ -43,7 +43,7 @@ TYPED_TEST(OutputMullikenTest, nspin1)
 {
     this->nrow = 13;
     this->ncol = 13;
-    this->paraV.init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
+    this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
     auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 1);
     auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 1, 1);
     auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 1, 1);
@@ -62,7 +62,7 @@ TYPED_TEST(OutputMullikenTest, nspin2)
 {
     this->nrow = 13;
     this->ncol = 13;
-    this->paraV.init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
+    this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
     auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 2);
     auto out_s_k = ModuleIO::Output_Sk<TypeParam>(nullptr, &this->paraV, 2, 1);
     auto out_dm_k = ModuleIO::Output_DMK<TypeParam>(nullptr, &this->paraV, 2, 1);
@@ -85,7 +85,7 @@ TYPED_TEST(OutputMullikenTest, nspin4)
 {
     this->nrow = 26;
     this->ncol = 26;
-    this->paraV.init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
+    this->paraV.para_2d().init(this->nrow, this->ncol, 1, MPI_COMM_WORLD, 0);
     auto cell_index = CellIndex(this->atomLabels, this->atomCounts, this->lnchiCounts, 4);
     auto out_s_k = ModuleIO::Output_Sk<std::complex<double>>(nullptr, &this->paraV, 4, 1);
     auto out_dm_k = ModuleIO::Output_DMK<std::complex<double>>(nullptr, &this->paraV, 4, 1);
@@ -180,8 +180,8 @@ TEST(OutputMullikenSpinTest, Nspin4MyFollowsPauliConvention)
         // mud(ic, ir) as the (ir, ic) element of the logical matrix.
         const int nw = 2;
         Parallel_Orbitals pv;
-        pv.set_serial(nw, nw);
-        ModuleBase::ComplexMatrix mud(pv.ncol, pv.nrow, true);
+        pv.para_2d().set_serial(nw, nw);
+        ModuleBase::ComplexMatrix mud(pv.para_2d().ncol, pv.para_2d().nrow, true);
         for (int ir = 0; ir < nw; ++ir)
         {
             for (int ic = 0; ic < nw; ++ic)

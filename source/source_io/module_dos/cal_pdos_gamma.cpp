@@ -59,7 +59,7 @@ void ModuleIO::cal_pdos(
     {
         std::vector<ModuleBase::matrix> mulk;
         mulk.resize(1);
-        mulk[0].create(pv.ncol, pv.nrow);
+        mulk[0].create(pv.para_2d().get_col_size(), pv.para_2d().get_row_size());
 
         psi->fix_k(is);
         const double* ppsi = psi->get_pointer();
@@ -92,23 +92,23 @@ void ModuleIO::cal_pdos(
                     sk,
                     &one_int,
                     &one_int,
-                    pv.desc,
+                    pv.para_2d().get_desc(),
                     ppsi,
                     &one_int,
                     &nb,
-                    pv.desc,
+                    pv.para_2d().get_desc(),
                     &one_int,
                     &zero_float,
                     mulk[0].c,
                     &one_int,
                     &nb,
-                    pv.desc,
+                    pv.para_2d().get_desc(),
                     &one_int);
 #else
             // Serial fallback: mulk = S^T * psi (column i of the wavefunction),
             // written into column i of mulk to match the pdgemv_ layout above
             const char T_char = 'T';
-            double* mulk_col = mulk[0].c + static_cast<size_t>(i) * pv.nrow;
+            double* mulk_col = mulk[0].c + static_cast<size_t>(i) * pv.para_2d().get_row_size();
             BlasConnector::gemv(T_char,
                                 nlocal,
                                 nlocal,
@@ -125,10 +125,10 @@ void ModuleIO::cal_pdos(
             for (int j = 0; j < nlocal; ++j)
             {
                 // computation performed on this processor
-                if (pv.in_this_processor(j, i))
+                if (pv.para_2d().in_this_processor(j, i))
                 {
-                    const int ir = pv.global2local_row(j);
-                    const int ic = pv.global2local_col(i);
+                    const int ir = pv.para_2d().global2local_row(j);
+                    const int ic = pv.para_2d().global2local_col(i);
                     waveg[j] = mulk[0](ic, ir) * psi[0](ic, ir);
                     const double x = waveg[j].real();
                     BlasConnector::axpy(npoints, x, gauss.data(), 1, pdosk[is].c + j * pdosk[is].nc, 1);
