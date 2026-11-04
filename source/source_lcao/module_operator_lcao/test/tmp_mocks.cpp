@@ -134,7 +134,7 @@ void hamilt::OperatorLCAO<TK, TR>::contributeHk(int ik)
     }
     else
     {
-        const int ncol = this->hR->get_atom_pair(0).get_paraV()->get_col_size();
+        const int ncol = this->hR->get_atom_pair(0).get_paraV()->para_2d().get_col_size();
         hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
     }
 }

@@ -18,14 +18,23 @@
 #include <string>
 #include <sys/time.h>
 
-template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::init(const MPI_Comm &mpi_comm,
-                                       const UnitCell &ucell,
-                                       const K_Vectors &kv,
-                                       const LCAO_Orbitals& orb)
+template <typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::init(
+    const MPI_Comm &mpi_comm,
+    const UnitCell &ucell,
+    const K_Vectors &kv,
+    const LCAO_Orbitals &orb,
+    const bool use_gpu)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","init");
-    this->exx_ptr->init(mpi_comm, ucell, kv, orb);
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
+    this->exx_ptr->init(
+        mpi_comm,
+        ucell,
+        kv,
+        orb,
+        abfs,
+        use_gpu);
     this->flag_finish.init = true;
 }
 
@@ -110,14 +119,16 @@ void Exx_LRI_Interface<T, Tdata>::refresh_symmetry(
     }
 }
 
-template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
-                                                const K_Vectors& kv,
-                                                const Charge_Mixing& chgmix,
-                                                const UnitCell& ucell,
-                                                const LCAO_Orbitals& orb,
-                                                const Parallel_2D& pv,
-                                                const bool update_symmetry)
+template <typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_beforescf(
+    const int istep,
+    const K_Vectors &kv,
+    const Charge_Mixing &chgmix,
+    const UnitCell &ucell,
+    const LCAO_Orbitals &orb,
+    const Parallel_2D &pv,
+    const bool update_symmetry,
+    const bool use_gpu)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_beforescf");
 #ifdef __MPI
@@ -148,7 +159,11 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
             this->exx_ptr->get_info_ri().coulomb_param, ucell, &kv);
         if (coulomb_settings != this->exx_ptr->coulomb_settings)
         {
-            this->exx_ptr->refresh_coulomb(ucell, orb, coulomb_settings);
+            this->exx_ptr->refresh_coulomb(
+                ucell,
+                orb,
+                coulomb_settings,
+                use_gpu);
         }
 
         this->cal_exx_ions(ucell,PARAM.inp.out_ri_cv);
