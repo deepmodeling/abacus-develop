@@ -75,7 +75,7 @@ class OverlapTest : public ::testing::Test
         int global_col = test_size * test_nw * 2;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
+        paraV->para_2d().init(global_row, global_col, nb, MPI_COMM_WORLD);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -136,9 +136,9 @@ TEST_F(OverlapTest, constructHRcd2cd)
     // check the value of SK of gamma point
     auto* sk = hsk.get_sk();
     int i = 0;
-    for (int irow = 0; irow < paraV->get_row_size(); ++irow)
+    for (int irow = 0; irow < paraV->para_2d().get_row_size(); ++irow)
     {
-        for (int icol = 0; icol < paraV->get_col_size(); ++icol)
+        for (int icol = 0; icol < paraV->para_2d().get_col_size(); ++icol)
         {
             if (irow % npol == icol % npol)
             {
@@ -158,9 +158,9 @@ TEST_F(OverlapTest, constructHRcd2cd)
     op.contributeHk(1);
     // check the value of SK
     i = 0;
-    for (int irow = 0; irow < paraV->get_row_size(); ++irow)
+    for (int irow = 0; irow < paraV->para_2d().get_row_size(); ++irow)
     {
-        for (int icol = 0; icol < paraV->get_col_size(); ++icol)
+        for (int icol = 0; icol < paraV->para_2d().get_col_size(); ++icol)
         {
             if (irow % npol == icol % npol)
             {

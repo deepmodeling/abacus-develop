@@ -29,13 +29,13 @@ void DFTU_firstzeta<OperatorLCAO<TK, TR>>::contributeHk(int ik)
     }
     ModuleBase::timer::start("DFTU_firstzeta", "contributeHk");
     // Effective potential of DFT+U is added to total Hamiltonian here; Quxin adds on 20201029
-    std::vector<TK> pot_uterm(this->hsk->get_pv()->nloc);
+    std::vector<TK> pot_uterm(this->hsk->get_pv()->para_2d().get_local_size());
 
     DFTU_LCAO::cal_pot_uterm(*this->dftu, *this->ucell, this->hsk->get_pv(), isk[ik], &pot_uterm[0], this->hsk->get_sk());
 
     TK* hk = this->hsk->get_hk();
 
-    for (int irc = 0; irc < this->hsk->get_pv()->nloc; irc++)
+    for (int irc = 0; irc < this->hsk->get_pv()->para_2d().get_local_size(); irc++)
     {
         hk[irc] += pot_uterm[irc];
     }

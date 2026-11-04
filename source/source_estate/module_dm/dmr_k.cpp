@@ -19,7 +19,7 @@ void accumulate_dmr(
     const int ik_in,
     const char* func_name)
 {
-    const int ld_hk = dm.pv->nrow;
+    const int ld_hk = dm.pv->para_2d().get_row_size();
     for (int is = 1; is <= dm.spin_mult; ++is)
     {
         const int ik_begin = dm._nk * (is - 1); // jump dm._nk for spin_down if nspin==2
