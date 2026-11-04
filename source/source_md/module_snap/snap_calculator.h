@@ -46,7 +46,7 @@ class Calculator
     ModelData model_;
     DescriptorEvaluator descriptor_evaluator_;
     std::size_t descriptor_size_;
-    std::vector<std::vector<double> > bzero_;
+    std::vector<std::vector<double> > self_spectra_;
 };
 
 class CellAccumulator

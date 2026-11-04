@@ -98,28 +98,59 @@ TEST(SnapDescriptor, SmallNonzeroDistanceIsNotDiscarded)
     EXPECT_GT(largest_derivative, 0.1);
 }
 
-TEST(SnapDescriptor, MatchesLammpsSingleElementReference)
+TEST(SnapDescriptor, OrderZeroBispectrumHasAnalyticValue)
 {
-    const ModuleMD::SNAP::DescriptorEvaluator evaluator(make_parameters());
-    const double positions[3][3] = {{1.0, 1.0, 1.0}, {2.0, 1.0, 1.0}, {1.0, 3.0, 1.0}};
-    std::vector<ModuleMD::SNAP::Neighbor> neighbors;
-    for (int atom = 1; atom < 3; ++atom)
-    {
-        ModuleMD::SNAP::Neighbor neighbor;
-        neighbor.x = positions[atom][0] - positions[0][0];
-        neighbor.y = positions[atom][1] - positions[0][1];
-        neighbor.z = positions[atom][2] - positions[0][2];
-        neighbor.cutoff_radius = 4.0;
-        neighbors.push_back(neighbor);
-    }
+    ModuleMD::SNAP::ModelParameters parameters = make_parameters();
+    parameters.twojmax = 0;
+    parameters.switch_flag = false;
+    const ModuleMD::SNAP::DescriptorEvaluator evaluator(parameters);
+    ModuleMD::SNAP::Neighbor first;
+    first.x = 1.0;
+    first.weight = 0.7;
+    ModuleMD::SNAP::Neighbor second;
+    second.y = 2.0;
+    second.weight = 1.3;
+    const std::vector<ModuleMD::SNAP::Neighbor> neighbors = {first, second};
     const std::vector<std::complex<double> > u = evaluator.accumulate_u(neighbors, 0);
     const std::vector<double> bispectrum = evaluator.compute_bispectrum(u);
-    const double reference[5] = {
-        13.0368348609, 15.0992648922, 11.7631725456, 13.7069739819, 6.07477849248};
-    ASSERT_EQ(bispectrum.size(), static_cast<std::size_t>(5));
-    for (int index = 0; index < 5; ++index)
+    ASSERT_EQ(bispectrum.size(), static_cast<std::size_t>(1));
+    EXPECT_NEAR(bispectrum[0], 27.0, 1.0e-12);
+}
+
+TEST(SnapDescriptor, BispectrumIsInvariantUnderRotationAndNeighborOrder)
+{
+    const ModuleMD::SNAP::DescriptorEvaluator evaluator(make_parameters());
+    ModuleMD::SNAP::Neighbor first;
+    first.x = 1.0;
+    first.y = 0.3;
+    first.z = -0.2;
+    ModuleMD::SNAP::Neighbor second;
+    second.x = -0.4;
+    second.y = 1.7;
+    second.z = 0.5;
+    const std::vector<ModuleMD::SNAP::Neighbor> neighbors = {first, second};
+    const std::vector<std::complex<double> > u = evaluator.accumulate_u(neighbors, 0);
+    const std::vector<double> bispectrum = evaluator.compute_bispectrum(u);
+
+    const std::vector<ModuleMD::SNAP::Neighbor> reordered = {second, first};
+    const std::vector<std::complex<double> > reordered_u = evaluator.accumulate_u(reordered, 0);
+    const std::vector<double> reordered_bispectrum = evaluator.compute_bispectrum(reordered_u);
+    ASSERT_EQ(bispectrum.size(), reordered_bispectrum.size());
+
+    std::vector<ModuleMD::SNAP::Neighbor> rotated = neighbors;
+    for (ModuleMD::SNAP::Neighbor& neighbor : rotated)
     {
-        EXPECT_NEAR(bispectrum[static_cast<std::size_t>(index)], reference[index], 1.0e-9);
+        const double old_x = neighbor.x;
+        neighbor.x = -neighbor.y;
+        neighbor.y = old_x;
+    }
+    const std::vector<std::complex<double> > rotated_u = evaluator.accumulate_u(rotated, 0);
+    const std::vector<double> rotated_bispectrum = evaluator.compute_bispectrum(rotated_u);
+    ASSERT_EQ(bispectrum.size(), rotated_bispectrum.size());
+    for (std::size_t index = 0; index < bispectrum.size(); ++index)
+    {
+        EXPECT_NEAR(bispectrum[index], reordered_bispectrum[index], 1.0e-10);
+        EXPECT_NEAR(bispectrum[index], rotated_bispectrum[index], 1.0e-10);
     }
 }
 

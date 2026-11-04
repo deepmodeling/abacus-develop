@@ -76,11 +76,11 @@ class DescriptorEvaluator
 
     std::size_t u_index(int j, int ma, int mb) const;
     SwitchValue switching(double distance, const Neighbor& neighbor, double cutoff_radius) const;
-    void compute_rootpq();
+    void init_root_factors();
 
     ModelParameters parameters_;
     ClebschGordanTable cg_table_;
-    std::vector<double> rootpq_;
+    std::vector<double> root_factors_;
     std::vector<std::size_t> u_block_;
     std::vector<BispectrumIndex> bispectrum_indices_;
     std::size_t u_size_;

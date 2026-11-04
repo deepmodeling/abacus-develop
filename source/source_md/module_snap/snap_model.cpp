@@ -413,19 +413,6 @@ bool ModelData::load(const std::string& coefficient_file,
                 has_dinner = true;
             }
         }
-        else if (keyword == "chunksize" || keyword == "parallelthresh")
-        {
-            int value = 0;
-            if (!read_parameter_value(words, value, keyword, error))
-            {
-                return false;
-            }
-            if (value <= 0)
-            {
-                error = "SNAP " + keyword + " must be positive.";
-                return false;
-            }
-        }
         else
         {
             error = "Unknown SNAP parameter: " + keyword;
