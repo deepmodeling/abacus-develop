@@ -2,6 +2,7 @@
 #include "source_hamilt/module_xc/exx_info.h"
 
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h" // use ModuleBase::ensure_directory
 #include "source_base/module_out/filename.h"
 #include "source_base/tool_quit.h" // use ModuleBase::WARNING_QUIT
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
@@ -53,8 +54,8 @@ void setup_exx_h_params(ModuleIO::WriteHParams& h_params, Exx_NAO<TK>& exx_nao, 
     // EXX-H output is unsupported. Reject it explicitly here so the request cannot be silently
     // dropped (the WARNING_QUIT inside write_h_exx is unreachable at multi-k).
     ModuleBase::WARNING_QUIT("setup_exx_h_params",
-                             "out_mat_h_exx is only supported for gamma-only: the V^EXX(R) "
-                             "output is not available at multi-k. Use gamma_only.");
+                             "out_mat_exxk (legacy out_mat_h_exx) is only supported for gamma-only: "
+                             "the V^EXX(R) output is not available at multi-k. Use gamma_only.");
 }
 
 template <>
@@ -136,16 +137,24 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
     //*****
 
-    const bool out_app_flag = inp.out_app_flag;
+    const int out_app_flag = inp.out_app_flag;
     const bool gamma_only = PARAM.globalv.gamma_only_local;
     const int nspin = inp.nspin;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    const std::string global_mat_dir = PARAM.globalv.global_mat_dir;
+    const std::string global_matrix_dir = PARAM.globalv.global_matrix_dir;
+    const int npol = PARAM.globalv.npol;
+    const int nlocal = PARAM.globalv.nlocal;
+    const bool cal_force = inp.cal_force;
 
     //------------------------------------------------------------------
     //! 1) print out density of states (DOS)
     //------------------------------------------------------------------
     if (inp.out_dos)
     {
+        const std::string global_dos_dir = PARAM.globalv.global_dos_dir;
+        // Mode-2 DOS/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_dos_dir);
         ModuleIO::write_dos_lcao(psi,
                                  p_hamilt,
                                  pv,
@@ -168,7 +177,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                  inp.dos_emin_ev,
                                  PARAM.globalv.two_fermi,
                                  inp.bndpar,
-                                 PARAM.globalv.global_out_dir,
+                                 global_dos_dir,
                                  ofs_running);
     }
 
@@ -177,10 +186,11 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_dmr[0])
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         const int precision = inp.out_dmr[1];
-
         ModuleIO::write_dmr(dm->get_dmr_vec(), &ucell, precision, pv.para_2d(), out_app_flag,
-			ucell.get_iat2iwt(), ucell.nat, istep, ofs_running);
+            ucell.get_iat2iwt(), ucell.nat, global_mat_dir, istep, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -188,6 +198,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_dmk[0])
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         std::vector<double> efermis(nspin == 2 ? 2 : 1);
         for (int ispin = 0; ispin < efermis.size(); ispin++)
         {
@@ -195,7 +207,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         }
         const int precision = inp.out_dmk[1];
 
-        ModuleIO::write_dmk(dm->get_dmk_vec(), kv, precision, efermis, &(ucell), pv.para_2d(), global_out_dir, istep, ofs_running);
+        ModuleIO::write_dmk(dm->get_dmk_vec(), kv, precision, efermis, &(ucell), pv.para_2d(),
+                            global_mat_dir, istep, out_app_flag, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -204,8 +217,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     const int hsk_out_type = inp.out_hsk[0];
     if (hsk_out_type == 1 || hsk_out_type == 2)
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         const int precision = inp.out_hsk[1];
-        ModuleIO::write_hsk(global_out_dir,
+        ModuleIO::write_hsk(global_mat_dir,
                             nspin,
                             kv.get_nks(),
                             kv.get_nkstot(),
@@ -274,13 +289,15 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_hsr[0] == 1 || inp.out_hsr[0] == 2)
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         const int precision = inp.out_hsr[1];
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
 
         ModuleIO::write_hsr(hr_vec, sr, &ucell, inp.out_hsr[0], precision, pv.para_2d(),
                             out_app_flag, gamma_only, ucell.get_iat2iwt(), ucell.nat, istep,
-                            PARAM.globalv.global_out_dir, pelec->eferm,
+                            global_mat_dir, pelec->eferm,
                             ofs_running);
     }
 
@@ -290,28 +307,34 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     const bool output_hsr_npz = inp.out_hsr[0] == 3 || inp.out_hsr_npz_compat;
     if (output_hsr_npz)
     {
-        std::string zipname = PARAM.globalv.global_out_dir + "sr_nao.npz";
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
+        std::string zipname = global_mat_dir + "sr_nao.npz";
         ModuleIO::output_mat_npz(ucell, zipname, *(p_hamilt->getSR()));
     }
 
     if (inp.out_hr_npz || output_hsr_npz)
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         for (int ispin = 0; ispin < hr_vec.size(); ++ispin)
         {
             std::string zipname
-                = PARAM.globalv.global_out_dir + "hrs" + std::to_string(ispin + 1) + "_nao.npz";
+                = global_mat_dir + "hrs" + std::to_string(ispin + 1) + "_nao.npz";
             ModuleIO::output_mat_npz(ucell, zipname, *(hr_vec[ispin]));
         }
     }
 
     if (inp.out_dm_npz)
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         const std::vector<hamilt::HContainer<double>*>& dmr_vec = dm->get_dmr_vec();
         for (int ispin = 0; ispin < dmr_vec.size(); ++ispin)
         {
             std::string zipname
-                = PARAM.globalv.global_out_dir + "output_DM" + std::to_string(ispin) + ".npz";
+                = global_mat_dir + "output_DM" + std::to_string(ispin) + ".npz";
             ModuleIO::output_mat_npz(ucell, zipname, *(dmr_vec[ispin]));
         }
     }
@@ -343,6 +366,15 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                 kv,
                                 p_ham_tk,
                                 &dftu,
+                                global_out_dir,
+                                global_matrix_dir,
+                                inp.calculation,
+                                out_app_flag,
+                                nspin,
+                                gamma_only,
+                                npol,
+                                nlocal,
+                                cal_force,
                                 ofs_running);
 
     //------------------------------------------------------------------
@@ -399,7 +431,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         dh_params.nspin = inp.nspin;
         dh_params.istep = istep;
         dh_params.gamma_only = gamma_only;
-        dh_params.append = out_app_flag;
+        dh_params.append = (out_app_flag == 1);
         dh_params.ofs_running = &ofs_running;
         if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
         {
@@ -442,7 +474,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         h_params.nrxx = pw_rho->nrxx;
         h_params.nspin = nspin;
         h_params.istep = istep;
-        h_params.append = out_app_flag;
+        h_params.append = (out_app_flag == 1);
         h_params.iat2iwt = ucell.get_iat2iwt();
         h_params.nat = ucell.nat;
         h_params.nlocal = PARAM.globalv.nlocal;
@@ -453,35 +485,51 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         h_params.gga_grad = PARAM.inp.gga_grad;
         h_params.out_app_flag = out_app_flag;
         h_params.calculation = inp.calculation;
-        h_params.global_out_dir = global_out_dir;
-        h_params.global_matrix_dir = PARAM.globalv.global_matrix_dir;
+        // H(k) component matrices follow the selected matrix directory so
+        // they land in MAT/ together with the other matrix outputs in mode 2
+        h_params.global_out_dir = global_mat_dir;
+        h_params.global_matrix_dir = global_matrix_dir;
         h_params.ks_solver = PARAM.inp.ks_solver;
         h_params.drank = GlobalV::DRANK;
         h_params.ofs_running = &ofs_running;
-        if (inp.out_mat_h_t[0])
+        // out_mat_h_t is a legacy alias for out_mat_tk (resolved at input
+        // normalization); the dedicated write_h_t path is removed because it
+        // duplicated the T(k) output of the out_mat_tk block below.
+        if (inp.out_mat_vnlk[0])
         {
-            ModuleIO::write_h_t(h_params);
-        }
-        if (inp.out_mat_h_vnl[0])
-        {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
+            h_params.precision = inp.out_mat_vnlk[1];
             ModuleIO::write_h_vnl(h_params);
         }
-        if (inp.out_mat_h_vl[0])
+        if (inp.out_mat_vlk[0])
         {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
+            h_params.precision = inp.out_mat_vlk[1];
             ModuleIO::write_h_vl(h_params);
         }
-        if (inp.out_mat_h_vh[0])
+        if (inp.out_mat_vhk[0])
         {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
+            h_params.precision = inp.out_mat_vhk[1];
             ModuleIO::write_h_vh(h_params);
         }
-        if (inp.out_mat_h_vxc[0])
+        if (inp.out_mat_vxck[0])
         {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
+            h_params.precision = inp.out_mat_vxck[1];
             ModuleIO::write_h_vxc(h_params);
         }
 #ifdef __EXX
-        if (inp.out_mat_h_exx[0] && exx_info.info_global.cal_exx)
+        if (inp.out_mat_exxk[0] && exx_info.info_global.cal_exx)
         {
+            // Mode-2 MAT/ subdirectory is created lazily at write time.
+            ModuleBase::ensure_directory(global_mat_dir);
             // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
+            h_params.precision = inp.out_mat_exxk[1];
             setup_exx_h_params(h_params, exx_nao, exx_info);
         }
 #endif
@@ -491,6 +539,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_mat_tk[0])
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         hamilt::HS_Matrix_K<TK> hsk(&pv, true);
         hamilt::HContainer<TR> hR(&pv);
         hamilt::Operator<TK>* ekinetic
@@ -509,7 +559,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
             const int out_label = 1; // 1: .txt, 2: .dat
 
-            std::string t_fn = ModuleIO::filename_output(global_out_dir,
+            std::string t_fn = ModuleIO::filename_output(global_mat_dir,
                                                          "tk",
                                                          "nao",
                                                          ik,
@@ -527,7 +577,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                false, // bit
                                inp.out_mat_tk[1],
                                1, // true for upper triangle matrix
-                               inp.out_app_flag,
+                               (inp.out_app_flag == 1),
                                t_fn,
                                pv.para_2d(),
                                GlobalV::DRANK,
@@ -547,6 +597,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_mat_l[0])
     {
+        // Mode-2 MAT/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(global_mat_dir);
         ModuleIO::Angmom_op mylcalculator(inp.orbital_dir,
                                                           ucell,
                                                           orb.get_rcutmax_Phi(),
@@ -558,7 +610,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           PARAM.globalv.gamma_only_local,
                                                           &ofs_running,
                                                           GlobalV::MY_RANK);
-        mylcalculator.calculate(inp.suffix, global_out_dir, ucell, inp.out_mat_l[1], GlobalV::MY_RANK, istep_in);
+        mylcalculator.calculate(inp.suffix, global_mat_dir, ucell, inp.out_mat_l[1], GlobalV::MY_RANK, istep_in, out_app_flag);
     }
 
     //------------------------------------------------------------------

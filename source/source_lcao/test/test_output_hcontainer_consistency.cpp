@@ -115,7 +115,8 @@ protected:
                         int ispin, int nspin, int precision = 8)
     {
         std::string fname = filename;
-        ModuleIO::write_dmr_csr(fname, &ucell, precision, hc, 0, ispin, nspin);
+        const bool append = false;
+        ModuleIO::write_dmr_csr(fname, &ucell, precision, hc, 0, ispin, nspin, append);
     }
 };
 

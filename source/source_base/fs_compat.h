@@ -43,6 +43,30 @@ inline int make_directory(const std::string& path)
 #endif
 }
 
+/**
+ * @brief Ensure a directory exists, creating it lazily if needed.
+ *
+ * Intended for write-time directory creation: output writers call this just
+ * before writing a file into a directory that may not exist yet, instead of
+ * relying on a central startup routine to predict which directories will be
+ * needed. An already-existing directory (EEXIST) is not an error, so callers
+ * on different MPI ranks may invoke it concurrently for the same path. The
+ * parent directory must already exist (only one level is created).
+ *
+ * @param path directory path to ensure; an empty path is accepted as a no-op
+ * @return true if the directory now exists (created or already present),
+ *         false on a real creation failure (errno is set)
+ */
+inline bool ensure_directory(const std::string& path)
+{
+    if (path.empty())
+    {
+        return true;
+    }
+    const int ret = make_directory(path);
+    return ret == 0 || errno == EEXIST;
+}
+
 } // namespace ModuleBase
 
 #endif // MODULEBASE_FS_COMPAT_H

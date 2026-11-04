@@ -6,14 +6,18 @@
 
 #include "gtest/gtest.h"
 
-#include "dfpt_serial_fixture.h"
+#include "dfpt_test_tool.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
-#include "source_basis/module_pw/pw_basis_k.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_dfpt/dfpt_kq_basis.h"
-#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
+
 
 namespace
 {
@@ -35,18 +39,43 @@ std::complex<double> crand()
 
 } // namespace
 
-// per-file fixture (self-contained, gtest style)
-class DFPTRhoSerialTest : public DFPTSerialBase
+// per-file self-contained fixture (gtest style): owns its objects and
+// calls the dfpt_test free-function utilities
+class DFPTRhoSerialTest : public ::testing::Test
 {
   protected:
+    ModuleBase::Matrix3 latvec_;
+    UnitCell ucell_;
+    ModulePW::PW_Basis pw_rho_;
+    ModulePW::PW_Basis_K pw_wfc_;
+    ModuleCell::QList qlist_;
+    ModuleDFPT::DFPT_PW_Data data_;
+    ModuleBase::Vector3<double> q_cart_;
     ModuleDFPT::DFPT_Rho rho_;
 
     static const int nbands_ = 2;
 
+    // default (k, q) of this file: q is generic and k = -q so k+q = 0
+    const ModuleBase::Vector3<double> k_d_{-0.13, 0.0, -0.07};
+    const ModuleBase::Vector3<double> q_d_{0.13, 0.0, 0.07};
+
     void SetUp() override
     {
-        DFPTSerialBase::SetUp();
-        rho_.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, std::string("rho_plain"), 0.4, 0.0});
+        dfpt_test::setup_cell(ucell_, latvec_);
+        SetupRho(k_d_, q_d_);
+    }
+
+    void TearDown() override
+    {
+        delete[] ucell_.atoms;
+        ucell_.atoms = nullptr;
+    }
+
+    // (re)initialize the bases and the plain rho mixer for a given (k, q)
+    void SetupRho(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
+    {
+        dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, nbands_, q_cart_);
+        rho_.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, ucell_.G, std::string("rho_plain"), 0.4, 0.0});
     }
 
     void FillRandomStates(psi::Psi<std::complex<double>>& psi,
@@ -114,7 +143,7 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoMatchesBruteForceGSpace)
         const int mx = (ix <= pw_rho_.nx / 2) ? ix : ix - pw_rho_.nx;
         const int my = (iy <= pw_rho_.ny / 2) ? iy : iy - pw_rho_.ny;
         const int mz = (iz <= pw_rho_.nz / 2) ? iz : iz - pw_rho_.nz;
-        const ModuleBase::Vector3<double> delta = ModuleBase::Vector3<double>(mx, my, mz) * G_;
+        const ModuleBase::Vector3<double> delta = ModuleBase::Vector3<double>(mx, my, mz) * ucell_.G;
         // A_Delta = (2 w / omega) * sum_G c*_G d_{G+Delta}: the spin factor
         // 2 sits in the band weight w1 = 2 w / omega (the QE incdrhoscf
         // convention, a915352cd), brute-forced over the lists
@@ -212,8 +241,8 @@ TEST_F(DFPTRhoSerialTest, ChargeConservationAtGamma)
     // rebuild the fixture bases with q = k = 0
     ModuleBase::Vector3<double> klist0[1] = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0)};
     ModulePW::PW_Basis_K pw_wfc0;
-    pw_wfc0.initgrids(lat0_, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz);
-    pw_wfc0.initparameters(false, ecutwfc_, 1, klist0);
+    pw_wfc0.initgrids(dfpt_test::lat0, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz);
+    pw_wfc0.initparameters(false, dfpt_test::ecutwfc, 1, klist0);
     pw_wfc0.fft_bundle.initfftmode(0);
     pw_wfc0.setuptransform();
     pw_wfc0.collect_local_pw();
@@ -225,7 +254,7 @@ TEST_F(DFPTRhoSerialTest, ChargeConservationAtGamma)
     ModuleDFPT::DFPT_PW_Data data0;
     data0.init(&qlist0, 1, nbands_, pw_wfc0.npwk_max, pw_rho_.nrxx, 1, 1, nullptr);
     ModuleDFPT::DFPT_Rho rho0;
-    rho0.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc0, G_, std::string("rho_plain"), 0.4, 0.0});
+    rho0.init({1, pw_rho_.nrxx, &pw_rho_, &pw_wfc0, ucell_.G, std::string("rho_plain"), 0.4, 0.0});
 
     psi::Psi<std::complex<double>> psi(1, nbands_, pw_wfc0.npwk_max, pw_wfc0.npwk[0], true);
     ModuleDFPT::DFPT_KQ_Basis kq0;
@@ -328,14 +357,14 @@ TEST_F(DFPTRhoSerialTest, VHartreeQClosedFormAndZeroMode)
 // ---------------------------------------------------------------------------
 TEST_F(DFPTRhoSerialTest, DrhocLocalizesAtTheAtomNotItsMirror)
 {
-    MakeNlccTwoAtomCell();
-    SetupBases(k_d_, q_d_, 2);
+    dfpt_test::make_nlcc_two_atom_cell(ucell_);
+    SetupRho(k_d_, q_d_);
     ModuleDFPT::DFPT_Rho::Config cfg;
     cfg.nspin = 1;
     cfg.nrxx = pw_rho_.nrxx;
     cfg.pw_rho = &pw_rho_;
     cfg.pw_wfc = &pw_wfc_;
-    cfg.recip_matrix = G_;
+    cfg.recip_matrix = ucell_.G;
     cfg.mix_type = "rho_plain";
     cfg.mix_beta = 0.4;
     cfg.kerker_a2 = 1.0;
@@ -350,7 +379,7 @@ TEST_F(DFPTRhoSerialTest, DrhocLocalizesAtTheAtomNotItsMirror)
     ASSERT_TRUE(ucell_.atoms[it].ncpp.nlcc);
     // tau is stored in lat0-cartesian units (fixture convention: cell edge
     // a_ in lat0 units); the true fractional position divides by a_
-    const double inv_a = 1.0 / a_;
+    const double inv_a = 1.0 / dfpt_test::cubic_edge;
     const ModuleBase::Vector3<double> tau_frac(ucell_.atoms[it].tau[ucell_.iat2ia[iat]].x * inv_a,
                                                ucell_.atoms[it].tau[ucell_.iat2ia[iat]].y * inv_a,
                                                ucell_.atoms[it].tau[ucell_.iat2ia[iat]].z * inv_a);

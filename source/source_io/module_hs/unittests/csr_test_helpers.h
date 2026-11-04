@@ -69,6 +69,8 @@ struct NativeDoubleRBlock
 
 struct NativeDoubleRecord
 {
+    int magic = 0;
+    int format_version = 0;
     int step = 0;
     int nbasis = 0;
     std::vector<NativeDoubleRBlock> blocks;
@@ -77,6 +79,8 @@ struct NativeDoubleRecord
 NativeDoubleRecord read_native_double_record(std::ifstream& ifs)
 {
     NativeDoubleRecord record;
+    record.magic = read_binary_value<int>(ifs);
+    record.format_version = read_binary_value<int>(ifs);
     record.step = read_binary_value<int>(ifs);
     record.nbasis = read_binary_value<int>(ifs);
     const int nR = read_binary_value<int>(ifs);

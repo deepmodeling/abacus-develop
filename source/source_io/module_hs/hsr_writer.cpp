@@ -22,20 +22,20 @@
 
 std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
                                      const int ispin,
-                                     const bool append,
+                                     const bool numbered,
                                      const int istep)
 {
-    return hsr_gen_fname(prefix, ispin, append, istep, 1);
+    return hsr_gen_fname(prefix, ispin, numbered, istep, 1);
 }
 
 std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
                                      const int ispin,
-                                     const bool append,
+                                     const bool numbered,
                                      const int istep,
                                      const int out_type)
 {
     const std::string extension = out_type == 2 ? ".dat" : ".csr";
-    if (!append && istep >= 0)
+    if (numbered && istep >= 0)
     {
         return prefix + std::to_string(ispin + 1) + "g" + std::to_string(istep + 1) + "_nao" + extension;
     }
@@ -45,15 +45,15 @@ std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
     }
 }
 
-std::string ModuleIO::sr_gen_fname(const bool append, const int istep)
+std::string ModuleIO::sr_gen_fname(const bool numbered, const int istep)
 {
-    return sr_gen_fname(append, istep, 1);
+    return sr_gen_fname(numbered, istep, 1);
 }
 
-std::string ModuleIO::sr_gen_fname(const bool append, const int istep, const int out_type)
+std::string ModuleIO::sr_gen_fname(const bool numbered, const int istep, const int out_type)
 {
     const std::string extension = out_type == 2 ? ".dat" : ".csr";
-    if (!append && istep >= 0)
+    if (numbered && istep >= 0)
     {
         return "srg" + std::to_string(istep + 1) + "_nao" + extension;
     }
@@ -62,11 +62,11 @@ std::string ModuleIO::sr_gen_fname(const bool append, const int istep, const int
 
 std::string ModuleIO::dhr_gen_fname(const std::string& prefix,
                                      const int ispin,
-                                     const bool append,
+                                     const bool numbered,
                                      const int istep)
 {
     std::string fname = prefix + "rs" + std::to_string(ispin + 1);
-    if (!append && istep >= 0)
+    if (numbered && istep >= 0)
     {
         fname += "g" + std::to_string(istep + 1);
     }
@@ -80,6 +80,7 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const int precision,
                                      hamilt::HContainer<TR>* mat_serial,
                                      const int istep,
+                                     const bool append,
                                      const int ispin,
                                      const int nspin,
                                      const std::string& label,
@@ -88,13 +89,17 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const bool has_efermi)
 {
     std::ofstream ofs;
-    if (istep <= 0)
+    // The first written step of a run (or a single-point SCF) truncates the
+    // fixed file so a rerun does not keep stale records; later steps append
+    // only when the caller asks for it (mode 1).
+    const bool append_now = append && (istep > 0);
+    if (append_now)
     {
-        ofs.open(fname);
+        ofs.open(fname, std::ios::app);
     }
     else
     {
-        ofs.open(fname, std::ios::app);
+        ofs.open(fname);
     }
     if (!ofs.is_open())
     {
@@ -130,6 +135,17 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
 
 namespace
 {
+// Magic value ('H', 'S', 'R', 'B') that starts every versioned native binary
+// CSR record. Unversioned records written before this magic was introduced
+// start with a small ionic-step index instead, so the two layouts can be told
+// apart from the first int alone.
+const int hsr_binary_magic = 0x48535242;
+// Version of the native binary CSR record layout. Version 2 stores the
+// one-based ionic step after the magic and version fields; the unversioned
+// layout that shipped in v3.11.0-beta9/beta10 had no magic and stored a
+// zero-based step.
+const int hsr_binary_format_version = 2;
+
 template <typename T>
 void write_native_value(std::ofstream& ofs, const T& value)
 {
@@ -219,9 +235,12 @@ void ModuleIO::write_hcontainer_csr_binary(const std::string& fname,
     }
     std::sort(R_coordinates.begin(), R_coordinates.end());
 
-    const int step = std::max(istep, 0);
+    // ionic step written one-based per governance rule 22
+    const int step = std::max(istep, 0) + 1;
     const int nbasis = mat_serial->get_nbasis();
     const int nR = static_cast<int>(R_coordinates.size());
+    write_native_value(ofs, hsr_binary_magic);
+    write_native_value(ofs, hsr_binary_format_version);
     write_native_value(ofs, step);
     write_native_value(ofs, nbasis);
     write_native_value(ofs, nR);
@@ -283,7 +302,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                           const int out_type,
                           const int precision,
                           const Parallel_2D& paraV,
-                          const bool append,
+                          const int out_app_flag,
                           const bool gamma_only,
                           const int* iat2iwt,
                           const int nat,
@@ -298,6 +317,9 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
     }
     const int nspin = hr_vec.size();
     assert(nspin > 0);
+    // Mode 1 appends to the fixed file; only mode 2 embeds the step in the name.
+    const bool append = (out_app_flag == 1);
+    const bool numbered = (out_app_flag == 2);
     const std::string representation_note
         = gamma_only
               ? "gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)"
@@ -321,7 +343,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
         if (GlobalV::MY_RANK == 0)
         {
             std::string fname = global_out_dir
-                                + hsr_gen_fname("hrs", ispin, append, istep, out_type);
+                                + hsr_gen_fname("hrs", ispin, numbered, istep, out_type);
             if (out_type == 2)
             {
                 write_hcontainer_csr_binary(fname, &hr_serial, istep, append);
@@ -330,7 +352,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
             {
                 const double efermi_eV = eferm.get_efval(ispin) * ModuleBase::Ry_to_eV;
                 write_hcontainer_csr(
-                    fname, ucell, precision, &hr_serial, istep, ispin, nspin, "H", representation_note, efermi_eV, true);
+                    fname, ucell, precision, &hr_serial, istep, append, ispin, nspin, "H", representation_note, efermi_eV, true);
             }
             const std::string spin_tag = ModuleIO::make_spin_tag(ispin, nspin);
             ofs_running << " Write H(R)" << spin_tag << " matrix in NAO basis to file: " << fname << std::endl;
@@ -354,7 +376,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
         if (GlobalV::MY_RANK == 0)
         {
             std::string fname = global_out_dir
-                                + sr_gen_fname(append, istep, out_type);
+                                + sr_gen_fname(numbered, istep, out_type);
             if (out_type == 2)
             {
                 write_hcontainer_csr_binary(fname, &sr_serial, istep, append);
@@ -362,7 +384,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
             else
             {
                 write_hcontainer_csr(
-                    fname, ucell, precision, &sr_serial, istep, 0, 1, "S", representation_note, 0.0, false);
+                    fname, ucell, precision, &sr_serial, istep, append, 0, 1, "S", representation_note, 0.0, false);
             }
             ofs_running << " Write S(R) matrix in NAO basis to file: " << fname << std::endl;
         }
@@ -372,10 +394,10 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 // Explicit instantiations
 template void ModuleIO::write_hcontainer_csr<double>(
     const std::string&, const UnitCell*, const int,
-    hamilt::HContainer<double>*, const int, const int, const int, const std::string&, const std::string&, const double, const bool);
+    hamilt::HContainer<double>*, const int, const bool, const int, const int, const std::string&, const std::string&, const double, const bool);
 template void ModuleIO::write_hcontainer_csr<std::complex<double>>(
     const std::string&, const UnitCell*, const int,
-    hamilt::HContainer<std::complex<double>>*, const int, const int, const int, const std::string&, const std::string&, const double, const bool);
+    hamilt::HContainer<std::complex<double>>*, const int, const bool, const int, const int, const std::string&, const std::string&, const double, const bool);
 
 template void ModuleIO::write_hcontainer_csr_binary<double>(
     const std::string&, hamilt::HContainer<double>*, const int, const bool);
@@ -386,11 +408,11 @@ template void ModuleIO::write_hsr<double>(
     const std::vector<hamilt::HContainer<double>*>&,
     const hamilt::HContainer<double>*,
     const UnitCell*, const int, const int, const Parallel_2D&,
-    const bool, const bool, const int*, const int, const int,
+    const int, const bool, const int*, const int, const int,
     const std::string&, const elecstate::Efermi&, std::ofstream&);
 template void ModuleIO::write_hsr<std::complex<double>>(
     const std::vector<hamilt::HContainer<std::complex<double>>*>&,
     const hamilt::HContainer<std::complex<double>>*,
     const UnitCell*, const int, const int, const Parallel_2D&,
-    const bool, const bool, const int*, const int, const int,
+    const int, const bool, const int*, const int, const int,
     const std::string&, const elecstate::Efermi&, std::ofstream&);

@@ -1,6 +1,5 @@
 #include "source_pw/module_pwdft/setup_dftu_pw.h"
 #include "source_pw/module_pwdft/dftu_base.h" // mohan add 2025-11-06
-#include "source_pw/module_pwdft/dftu_base_io.h" // mohan add 2025-11-08
 #include "source_pw/module_pwdft/dftu_pw.h"
 #include "source_pw/module_pwdft/dftu_pw_tools.h"
 
@@ -14,19 +13,15 @@ void iter_init_dftu_pw(const int iter,
                         const ModuleBase::matrix& wg,
                         const UnitCell& ucell,
                         Charge_Mixing* p_chgmix,
-                        const std::string& global_out_dir,
-                        const OccmatOutputCfg& occmat_cfg,
+                        const int dft_plus_u,
                         const int* isk,
                         const int nspin,
                         const int kpar)
 {
-    if (!p_chgmix || occmat_cfg.dft_plus_u <= 0)
+    if (!p_chgmix || dft_plus_u <= 0)
     {
         return;
     }
-
-    // Prepare the per-ionic-step file before the first snapshot is appended.
-    DFTU_BASE::prepare_ion_step_output(global_out_dir, istep, iter, occmat_cfg);
 
     const bool first_scf_step = (iter == 1 && istep == 0);
 

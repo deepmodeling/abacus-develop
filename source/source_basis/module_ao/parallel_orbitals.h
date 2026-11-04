@@ -27,7 +27,6 @@ public:
     Parallel_2D& para_2d() { return para_2d_; }
 
     const Parallel_2D& para_2d() const { return para_2d_; }
-
 #ifdef __MPI
     /// BLACS context of the 2D process grid, completing the getter family
     /// (get_row_size / get_col_size / get_local_size / get_block_size /
