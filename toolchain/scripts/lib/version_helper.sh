@@ -68,7 +68,7 @@ version_show_package_info() {
 # Display version switching help
 # Usage: version_show_help
 version_show_help() {
-  cat <<'EOF'
+  cat << 'EOF'
 ABACUS Toolchain Version Switching Help
 =======================================
 

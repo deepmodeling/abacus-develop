@@ -134,7 +134,7 @@ main() {
 
   # Start writing setup file
   ui_info "Generating setup configuration..."
-  cat <<EOF >"$SETUPFILE"
+  cat << EOF > "$SETUPFILE"
 #!/bin/bash
 source "${SCRIPTDIR}/tool_kit.sh"
 export ABACUS_TOOLCHAIN_OPTIONS="${TOOLCHAIN_OPTIONS}"
@@ -146,10 +146,10 @@ EOF
 
   # write toolchain config
   ui_info "Writing toolchain configuration..."
-  echo "tool_list=\"${tool_list}\"" >${INSTALLDIR}/toolchain.conf
+  echo "tool_list=\"${tool_list}\"" > ${INSTALLDIR}/toolchain.conf
   for ii in ${package_list}; do
     install_mode="$(eval echo \${with_${ii}})"
-    echo "with_${ii}=\"${install_mode}\"" >>${INSTALLDIR}/toolchain.conf
+    echo "with_${ii}=\"${install_mode}\"" >> ${INSTALLDIR}/toolchain.conf
   done
 
   # Exit if dry run
@@ -162,7 +162,7 @@ EOF
   # Build packages (following original toolchain logic)
   ui_section "Starting Package Installation"
   ui_info "Initializing build environment..."
-  echo "# Leak suppressions" >${INSTALLDIR}/lsan.supp
+  echo "# Leak suppressions" > ${INSTALLDIR}/lsan.supp
 
   # Install packages stage by stage with enhanced progress display
   ui_stage_progress "0" "Build Tools & Compilers"

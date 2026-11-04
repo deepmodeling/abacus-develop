@@ -57,7 +57,7 @@ case "${with_aocl}" in
     ;;
 esac
 if [ "$with_aocl" != "__DONTUSE__" ]; then
-  cat <<EOF >>"${BUILDDIR}/setup_aocl"
+  cat << EOF >> "${BUILDDIR}/setup_aocl"
 export AOCL_ROOT="${pkg_install_dir}"
 export AOCL_CFLAGS="${AOCL_CFLAGS}"
 export AOCL_LDFLAGS="${AOCL_LDFLAGS}"

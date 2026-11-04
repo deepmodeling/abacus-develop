@@ -110,7 +110,7 @@ if [ "${with_mkl}" != "__DONTUSE__" ]; then
   fi
 
   # write setup files
-  cat <<EOF >"${BUILDDIR}/setup_mkl"
+  cat << EOF > "${BUILDDIR}/setup_mkl"
 export MKLROOT="${MKLROOT}"
 export MKL_CFLAGS="${MKL_CFLAGS}"
 export MKL_LIBS="${MKL_LIBS}"
@@ -119,13 +119,13 @@ export MATH_LIBS="\${MATH_LIBS} ${MKL_LIBS}"
 export CP_DFLAGS="\${CP_DFLAGS} -D__MKL -D__FFTW3 IF_COVERAGE(IF_MPI(|-U__FFTW3)|)"
 EOF
   if [ -n "${mkl_scalapack_lib}" ]; then
-    cat <<EOF >>"${BUILDDIR}/setup_mkl"
+    cat << EOF >> "${BUILDDIR}/setup_mkl"
 export CP_DFLAGS="\${CP_DFLAGS} IF_MPI(-D__SCALAPACK|)"
 export with_scalapack="__DONTUSE__"
 EOF
   fi
   if [ "${MKL_FFTW}" != "no" ]; then
-    cat <<EOF >>"${BUILDDIR}/setup_mkl"
+    cat << EOF >> "${BUILDDIR}/setup_mkl"
 export with_fftw="__DONTUSE__"
 export FFTW3_INCLUDES="${MKL_CFLAGS}"
 export FFTW3_LIBS="${MKL_LIBS}"

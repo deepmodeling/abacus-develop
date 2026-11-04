@@ -21,7 +21,7 @@ package_manager_init() {
   fi
 
   # Initialize dependencies
-  if ! command -v config_manager_init &>/dev/null; then
+  if ! command -v config_manager_init &> /dev/null; then
     source "${SCRIPTDIR}/lib/config_manager.sh"
   fi
 
@@ -191,7 +191,7 @@ package_check_system_requirements() {
   local missing_tools=""
 
   for tool in $required_tools; do
-    if ! command -v "$tool" &>/dev/null; then
+    if ! command -v "$tool" &> /dev/null; then
       missing_tools="$missing_tools $tool"
     fi
   done
@@ -206,17 +206,17 @@ package_check_system_requirements() {
   local compiler_mode=$(config_get MATH_MODE)
   case "$compiler_mode" in
     gcc)
-      if ! command -v gcc &>/dev/null; then
+      if ! command -v gcc &> /dev/null; then
         report_warning ${LINENO} "GCC compiler not found in system PATH"
       fi
       ;;
     intel)
-      if ! command -v icc &>/dev/null && ! command -v icx &>/dev/null; then
+      if ! command -v icc &> /dev/null && ! command -v icx &> /dev/null; then
         report_warning ${LINENO} "Intel compiler not found in system PATH"
       fi
       ;;
     amd)
-      if ! command -v clang &>/dev/null; then
+      if ! command -v clang &> /dev/null; then
         report_warning ${LINENO} "AMD/Clang compiler not found in system PATH"
       fi
       ;;
@@ -231,30 +231,30 @@ package_check_system_requirements() {
 package_write_config() {
   local config_file="$1"
 
-  echo "# ABACUS Toolchain Package Configuration" >"$config_file"
-  echo "# Generated on $(date)" >>"$config_file"
-  echo "" >>"$config_file"
+  echo "# ABACUS Toolchain Package Configuration" > "$config_file"
+  echo "# Generated on $(date)" >> "$config_file"
+  echo "" >> "$config_file"
 
   # Write package lists
-  echo "tool_list=\"${tool_list}\"" >>"$config_file"
-  echo "mpi_list=\"${mpi_list}\"" >>"$config_file"
-  echo "math_list=\"${math_list}\"" >>"$config_file"
-  echo "lib_list=\"${lib_list}\"" >>"$config_file"
-  echo "package_list=\"${package_list}\"" >>"$config_file"
-  echo "" >>"$config_file"
+  echo "tool_list=\"${tool_list}\"" >> "$config_file"
+  echo "mpi_list=\"${mpi_list}\"" >> "$config_file"
+  echo "math_list=\"${math_list}\"" >> "$config_file"
+  echo "lib_list=\"${lib_list}\"" >> "$config_file"
+  echo "package_list=\"${package_list}\"" >> "$config_file"
+  echo "" >> "$config_file"
 
   # Write package configurations
   for pkg in ${package_list}; do
     local status=$(config_get "with_${pkg}")
-    echo "with_${pkg}=\"${status}\"" >>"$config_file"
+    echo "with_${pkg}=\"${status}\"" >> "$config_file"
   done
 
-  echo "" >>"$config_file"
-  echo "# Configuration modes" >>"$config_file"
-  echo "MPI_MODE=\"$(config_get MPI_MODE)\"" >>"$config_file"
-  echo "MATH_MODE=\"$(config_get MATH_MODE)\"" >>"$config_file"
-  echo "TARGET_CPU=\"$(config_get TARGET_CPU)\"" >>"$config_file"
-  echo "GPUVER=\"$(config_get GPUVER)\"" >>"$config_file"
+  echo "" >> "$config_file"
+  echo "# Configuration modes" >> "$config_file"
+  echo "MPI_MODE=\"$(config_get MPI_MODE)\"" >> "$config_file"
+  echo "MATH_MODE=\"$(config_get MATH_MODE)\"" >> "$config_file"
+  echo "TARGET_CPU=\"$(config_get TARGET_CPU)\"" >> "$config_file"
+  echo "GPUVER=\"$(config_get GPUVER)\"" >> "$config_file"
 
   echo "Package configuration written to: $config_file"
 }
