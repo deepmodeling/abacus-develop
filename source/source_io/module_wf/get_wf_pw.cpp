@@ -338,7 +338,7 @@ void Get_wf_pw<T, Device>::write_cube(const int band,
     }
     // collinear spin channel (nspin=2); spinor components (nspin=4) are not spin channels
     data_desc += ModuleIO::make_spin_tag(component, nspin_);
-    ModuleIO::write_vdata_palgrid(pgrid, values.data(), component, nspin_, 0, filename.str(), 0.0, &ucell, 11, 0, false, true, ofs_running, data_desc);
+    ModuleIO::write_vdata_palgrid(pgrid, values.data(), component, nspin_, 0, filename.str(), 0.0, &ucell, 11, 0, false, true, false, ofs_running, data_desc);
 }
 
 // Explicit instantiation emits both precisions for each supported device from this .cpp file.

@@ -16,13 +16,14 @@ namespace ModuleIO
  *
  * @param out_type The output type. 1: csr, 2: npz.
  * @param ispin    The spin value, starting from 0.
- * @param append   A boolean indicating whether append the data to one file or create a new file.
+ * @param numbered Whether the ionic step is embedded in the filename as a g{step} suffix
+ *                 (true for out_app_flag == 2).
  * @param istep    The ION step (default: -1), starting from 0.
  * @return         The generated filename as a string.
  */
 std::string dmr_gen_fname(const int out_type,
     const int ispin,
-    const bool append = true,
+    const bool numbered = false,
     const int istep = -1);
 
 /**
@@ -33,6 +34,8 @@ std::string dmr_gen_fname(const int out_type,
  * @param precision Control the ouptut precision
  * @param dm_serial A pointer to the Hamiltonian container.
  * @param istep The current step number.
+ * @param append Whether to append to the existing file. The first written step
+ *               (istep <= 0) always truncates.
  */
 void write_dmr_csr(std::string& fname,
         const UnitCell *ucell,
@@ -40,7 +43,8 @@ void write_dmr_csr(std::string& fname,
         hamilt::HContainer<double>* dm_serial,
         const int istep,
         const int ispin,
-        const int nspin);
+        const int nspin,
+        const bool append);
 
 /**
  * Writes DMR to a file.
@@ -49,20 +53,21 @@ void write_dmr_csr(std::string& fname,
  * @param ucell stands for unitcell
  * @param precision Control the output precision
  * @param paraV The parallel 2D object.
- * @param out_type The output file type. 1: csr, 2: npz.
- * @param sparse Whether output the sparse DM.
- * @param ispin The spin index, starting from 0.
- * @param append Whether to append the data to an existing file or create a new file. The file name is related to this
- * flag.
+ * @param out_app_flag Output mode: 0 = fixed filename, overwritten at every write; 1 = fixed filename,
+ *                    appended; 2 = per-step g{step} filename.
+ * @param iat2iwt The mapping from atom index to the first local orbital index.
+ * @param nat The number of atoms.
+ * @param dmr_dir The directory the DM(R) files are written into.
  * @param istep The ION step, starting from 0.
  */
 void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
                const UnitCell *ucell,
                const int precision,
                const Parallel_2D& paraV,
-               const bool append,
+               const int out_app_flag,
                const int* iat2iwt,
                const int nat,
+               const std::string& dmr_dir,
                const int istep,
                std::ofstream& ofs_running);
 } // namespace ModuleIO

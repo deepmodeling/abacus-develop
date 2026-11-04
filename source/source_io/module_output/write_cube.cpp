@@ -23,6 +23,7 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
                                    const int out_fermi,
                                    const bool two_fermi,
                                    const bool reduce_all_pool,
+                                   const bool append,
                                    std::ofstream& ofs_running,
                                    const std::string& data_desc)
 {
@@ -173,7 +174,8 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
                    atom_charge,
                    atom_pos,
                    data_xyz_full,
-                   precision);
+                   precision,
+                   append);
 
         ofs_running << " Write " << data_desc << " to file: " << fn << std::endl;
 
@@ -199,6 +201,7 @@ void ModuleIO::write_cube(const std::string& file,
                           const std::vector<std::vector<double>>& atom_pos,
                           const std::vector<double>& data,
                           const int precision,
+                          const bool append,
                           const int ndata_line)
 {
     assert(comment.size() >= 2);
@@ -222,7 +225,16 @@ void ModuleIO::write_cube(const std::string& file,
 
     assert(data.size() >= nx * ny * nz);
 
-    std::ofstream ofs(file);
+    // In append mode (out_app_flag == 1) each written ionic step contributes
+    // one complete cube frame; the previous frame always ends with a newline,
+    // so the appended frame starts on a fresh line. Otherwise the file is
+    // truncated and holds a single frame.
+    std::ios_base::openmode open_mode = std::ios::out | std::ios::trunc;
+    if (append)
+    {
+        open_mode = std::ios::out | std::ios::app;
+    }
+    std::ofstream ofs(file, open_mode);
 
     for (int i = 0; i < 2; ++i)
     {

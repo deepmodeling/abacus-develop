@@ -1484,6 +1484,33 @@ TEST_F(InputTest, Item_test)
     }
 }
 
+TEST_F(InputTest, OutEbandLegacyAlias)
+{
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_eband_terms", readinput.input_lists);
+        legacy->second.str_values = {"1"};
+        legacy->second.read_value(legacy->second, param);
+
+        readinput.normalize_out_eband_alias(param);
+        EXPECT_TRUE(TestParameters::input(param).out_eband);
+    }
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto primary = find_label("out_eband", readinput.input_lists);
+        auto legacy = find_label("out_eband_terms", readinput.input_lists);
+        primary->second.str_values = {"0"};
+        legacy->second.str_values = {"1"};
+        primary->second.read_value(primary->second, param);
+        legacy->second.read_value(legacy->second, param);
+
+        readinput.normalize_out_eband_alias(param);
+        EXPECT_FALSE(TestParameters::input(param).out_eband);
+    }
+}
+
 TEST_F(InputTest, HsOutputAliases)
 {
     {
@@ -1568,6 +1595,66 @@ TEST_F(InputTest, HsOutputAliases)
         TestParameters::input(param).qo_switch = true;
         readinput.normalize_hs_output_options(param);
         EXPECT_EQ(TestParameters::input(param).out_hsk[0], 1);
+    }
+}
+
+// The out_mat_h_* keywords are legacy aliases for the canonical k-space names
+// (out_mat_tk and out_mat_{vnl,vl,vh,vxc,exx}k). Verify that each alias feeds
+// the canonical value and that the canonical name wins when both are present.
+TEST_F(InputTest, HkComponentAliases)
+{
+    // alias alone populates the canonical name
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_h_t", readinput.input_lists);
+        legacy->second.str_values = {"1", "5"};
+        legacy->second.read_value(legacy->second, param);
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[1], 5);
+    }
+    // canonical name takes precedence over the alias
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_h_t", readinput.input_lists);
+        auto primary = find_label("out_mat_tk", readinput.input_lists);
+        legacy->second.str_values = {"1", "5"};
+        primary->second.str_values = {"1", "3"};
+        legacy->second.read_value(legacy->second, param);
+        primary->second.read_value(primary->second, param);
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[1], 3);
+    }
+    // the five renamed terms: legacy alias -> canonical k-space name
+    const std::vector<std::pair<std::string, std::string>> aliases = {
+        {"out_mat_h_vnl", "out_mat_vnlk"},
+        {"out_mat_h_vl", "out_mat_vlk"},
+        {"out_mat_h_vh", "out_mat_vhk"},
+        {"out_mat_h_vxc", "out_mat_vxck"},
+        {"out_mat_h_exx", "out_mat_exxk"},
+    };
+    for (const auto& pair : aliases)
+    {
+        SCOPED_TRACE(pair.first);
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label(pair.first, readinput.input_lists);
+        auto primary = find_label(pair.second, readinput.input_lists);
+        legacy->second.str_values = {"1", "6"};
+        legacy->second.read_value(legacy->second, param);
+        readinput.normalize_hs_output_options(param);
+        const auto& canon = TestParameters::input(param);
+        const std::vector<int>* value = nullptr;
+        if (pair.second == "out_mat_vnlk") { value = &canon.out_mat_vnlk; }
+        else if (pair.second == "out_mat_vlk") { value = &canon.out_mat_vlk; }
+        else if (pair.second == "out_mat_vhk") { value = &canon.out_mat_vhk; }
+        else if (pair.second == "out_mat_vxck") { value = &canon.out_mat_vxck; }
+        else { value = &canon.out_mat_exxk; }
+        EXPECT_EQ((*value)[0], 1);
+        EXPECT_EQ((*value)[1], 6);
     }
 }
 TEST_F(InputTest, PreserveExplicitMagneticMixing)
@@ -2938,6 +3025,51 @@ TEST_F(InputTest, PerAtomSccsCavityWidthsDisableSpatialSymmetry)
     input.sccs_solvent_mode = "electronic";
     it->second.reset_value(it->second, param);
     EXPECT_EQ(input.symmetry, "1");
+}
+
+// The optional second value of the H(k) component controls selects the text
+// precision; it must survive both direct reads and legacy alias merging so the
+// writer can forward it to save_mat.
+TEST_F(InputTest, OutMatComponentPrecision)
+{
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto it = find_label("out_mat_vnlk", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        it->second.str_values = {"1", "5"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[1], 5);
+    }
+    {
+        // Legacy out_mat_h_vnl carries its own precision; the alias merge must
+        // copy the whole value vector, not only the enable flag.
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_h_vnl", readinput.input_lists);
+        ASSERT_NE(legacy, readinput.input_lists.end());
+        legacy->second.str_values = {"1", "4"};
+        legacy->second.read_value(legacy->second, param);
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[1], 4);
+    }
+}
+
+// MD writes ABACUS STRU frames only and the restart logic reads them back, so
+// CIF output (out_stru = 2) must be rejected instead of silently emitting
+// STRU content under the CIF setting.
+TEST_F(InputTest, OutStruCifRejectedForMd)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    TestParameters::input(param).calculation = "md";
+    TestParameters::input(param).out_stru = 2;
+    const std::string error = readinput.prepare_input(param);
+    EXPECT_THAT(error, testing::HasSubstr("out_stru"));
+    EXPECT_THAT(error, testing::HasSubstr("not supported for calculation = md"));
 }
 
 TEST_F(InputTest, DfptMixTypeDomainContract)
