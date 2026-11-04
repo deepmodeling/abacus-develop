@@ -3336,9 +3336,9 @@ TEST_F(DiagoPCGGappedSpectrumTest, BlockSubspace)
 
 // =============================================================================
 // Test fixture: preconditioner stress test
-// Uses the 10×10 tridiagonal Laplacian but with a suboptimal preconditioner:
-// prec[i] = 1.0 instead of 2.0 (the exact diagonal). The solver should still
-// converge, just more slowly. Tests robustness against a bad preconditioner.
+// Uses the 10×10 tridiagonal Laplacian with a fixed, nonuniform positive
+// preconditioner that differs from the exact diagonal. The test checks that
+// the solver still converges and returns a small independently computed residual.
 // =============================================================================
 class DiagoPPCGBadPrecTest : public ::testing::Test
 {
