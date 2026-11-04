@@ -293,6 +293,7 @@ void write_latest_occmat(const Plus_U_Base& dftu,
     // esolver gates on latest_ready, the LCAO esolver computes it every
     // electronic iteration.
     write_snapshot_section(ofdftu, dftu, ucell, step, true, soc_layout);
+    write_occup_eigenvalues(dftu, ucell, ofdftu, soc_layout);
 }
 
 
