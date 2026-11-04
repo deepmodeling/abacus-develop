@@ -29,10 +29,10 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
         ofs_running << std::setprecision(10);
         ofs_running << std::endl;
         ofs_running << " H(t+dt) :" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < pv->para_2d().get_row_size(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().get_col_size();
+            for (int j = 0; j < pv->para_2d().get_col_size(); j++)
             {
                 ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
@@ -41,10 +41,10 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
         ofs_running << std::endl;
         ofs_running << std::endl;
         ofs_running << " H(t):" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < pv->para_2d().get_row_size(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().get_col_size();
+            for (int j = 0; j < pv->para_2d().get_col_size(); j++)
             {
                 ofs_running << H_laststep[in + j].real() << "+" << H_laststep[in + j].imag() << "i ";
             }
@@ -55,17 +55,17 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
 
     std::complex<double> alpha = {0.5, 0.0};
     std::complex<double> beta = {0.5, 0.0};
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, H_laststep, 1, 1, pv->desc, beta, Htmp, 1, 1, pv->desc);
-    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, S_laststep, 1, 1, pv->desc, beta, Stmp, 1, 1, pv->desc);
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, H_laststep, 1, 1, pv->para_2d().get_desc(), beta, Htmp, 1, 1, pv->para_2d().get_desc());
+    ScalapackConnector::geadd('N', nlocal, nlocal, alpha, S_laststep, 1, 1, pv->para_2d().get_desc(), beta, Stmp, 1, 1, pv->para_2d().get_desc());
 
     if (print_matrix)
     {
         ofs_running << std::endl;
         ofs_running << " H (t+dt/2) :" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < pv->para_2d().get_row_size(); i++)
         {
-            const int in = i * pv->ncol;
-            for (int j = 0; j < pv->ncol; j++)
+            const int in = i * pv->para_2d().get_col_size();
+            for (int j = 0; j < pv->para_2d().get_col_size(); j++)
             {
                 ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
