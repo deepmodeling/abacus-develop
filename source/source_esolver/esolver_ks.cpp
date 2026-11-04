@@ -19,6 +19,7 @@
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_pw/module_pwdft/dftu_base.h" // Plus_U_Base::u_converged in iter_finish
+#include "source_pw/module_pwdft/dftu_base_io.h"
 #include "source_hamilt/module_xc/general_exx_info.h" // for init_general_exx_info
 
 namespace ModuleESolver
@@ -271,6 +272,16 @@ void ESolver_KS::before_scf(UnitCell& ucell, const int istep)
 
 void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
+    if (this->inp_->dft_plus_u > 0)
+    {
+        const DFTU_BASE::OccmatOutputCfg occmat_cfg{this->inp_->out_freq_ion,
+                                                    this->inp_->out_freq_elec,
+                                                    this->scf_iter_limit(istep),
+                                                    this->inp_->out_occ_mat,
+                                                    this->inp_->dft_plus_u};
+        DFTU_BASE::prepare_ion_step_output(PARAM.globalv.global_out_dir, istep, iter, occmat_cfg);
+    }
+
     if(this->inp_->esolver_type != "tddft")
     {
         ModuleIO::write_head(GlobalV::ofs_running, istep, iter, this->basisname);
@@ -314,9 +325,12 @@ bool ESolver_KS::defer_iter_output(const int istep) const
 void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
 {
     const int iter_limit = this->scf_iter_limit(istep);
+    const bool two_fermi = PARAM.globalv.two_fermi;
+    const bool model_changed
+        = module_charge::update_pot_model(iter, this->drho, this->kv, *this->pelec->pot, this->p_chgmix);
 
     // 1.1) print out band gap 
-    if (!PARAM.globalv.two_fermi)
+    if (!two_fermi)
     {
         this->pelec->cal_bandgap();
     }
@@ -336,7 +350,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // 2.1) compute magnetization, only for spin==2
     ucell.magnet.compute_mag(ucell.omega, this->chr.nrxx, this->chr.nxyz, this->chr.rho,
-                                       this->inp_->nspin, PARAM.globalv.two_fermi, this->inp_->nelec,
+                                       this->inp_->nspin, two_fermi, this->inp_->nelec,
                                        this->pelec->nelec_spin.data());
 
     // 2.2) charge mixing
@@ -354,6 +368,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     ctx.iter_limit = iter_limit;
     ctx.hsolver_error = hsolver_error;
     ctx.scf_thr = this->scf_thr;
+    ctx.model_changed = model_changed;
     ctx.scf_ene_thr = this->scf_ene_thr;
     ctx.converged_u = converged_u;
     ctx.ks_run = PARAM.globalv.ks_run;
@@ -435,7 +450,9 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // print energies
     elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, iter_limit, drho,
-    dkin, duration, *this->inp_, PARAM.globalv.two_fermi, diag_ethr, 0, true, this->ds_rms_);
+    dkin, duration, *this->inp_, two_fermi, diag_ethr, 0, true, this->ds_rms_);
+
+    module_charge::print_corr_iter(this->kv, this->inp_->sccs_debug, this->drho, *this->pelec->pot);
 
 
     if (!this->defer_iter_output(istep))

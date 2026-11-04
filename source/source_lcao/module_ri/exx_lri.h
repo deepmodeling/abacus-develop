@@ -90,10 +90,19 @@ public:
         const K_Vectors &kv_in,
         const LCAO_Orbitals& orb,
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs_in = {});
+    void init(
+        const MPI_Comm &mpi_comm_in,
+        const UnitCell &ucell,
+        const K_Vectors &kv_in,
+        const LCAO_Orbitals &orb,
+        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
+        const bool use_gpu);
     /// Refresh changed Coulomb kernels while retaining the initialized basis and Gaunt table.
-    void refresh_coulomb(const UnitCell& ucell,
-                         const LCAO_Orbitals& orb,
-                         const CoulombSettings& settings);
+    void refresh_coulomb(
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        const CoulombSettings &settings,
+        const bool use_gpu);
     void init_spencer(const MPI_Comm& mpi_comm_in,
                       const UnitCell& ucell,
                       const K_Vectors& kv_in,

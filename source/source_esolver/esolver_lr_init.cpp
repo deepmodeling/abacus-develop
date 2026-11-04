@@ -159,18 +159,18 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
     this->set_dimension();
 
     // KS and LR must use the same AO distribution, including its BLACS grid.
-    const int ks_block_size = ks_sol.pv.get_block_size();
-    LR_Util::setup_2d_division(this->paraMat_, ks_block_size, this->nbasis, this->nbasis
+    const int ks_block_size = ks_sol.pv.para_2d().get_block_size();
+    LR_Util::setup_2d_division(this->paraMat_.para_2d(), ks_block_size, this->nbasis, this->nbasis
 #ifdef __MPI
-        , ks_sol.pv.blacs_ctxt
+        , ks_sol.pv.get_blacs_ctxt()
 #endif
     );
     this->set_parallel_orbitals_band(this->paraMat_, this->nbands);
     if (this->inp_->cal_force)
     {
-        LR_Util::setup_2d_division(this->paraMat_all_, ks_block_size, this->nbasis, this->nbasis
+        LR_Util::setup_2d_division(this->paraMat_all_.para_2d(), ks_block_size, this->nbasis, this->nbasis
 #ifdef __MPI
-            , ks_sol.pv.blacs_ctxt
+            , ks_sol.pv.get_blacs_ctxt()
 #endif
         );
         this->set_parallel_orbitals_band(this->paraMat_all_, this->inp_->nbands);
@@ -182,7 +182,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(UnitCell& ucell, cons
 
     LR_Util::setup_2d_division(this->paraC_, ks_block_size, this->nbasis, this->nbands
 #ifdef __MPI
-        , this->paraMat_.blacs_ctxt
+        , this->paraMat_.get_blacs_ctxt()
 #endif
     );
 
@@ -379,11 +379,11 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
 
     this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
-    LR_Util::setup_2d_division(this->paraMat_, 1, this->nbasis, this->nbasis);
+    LR_Util::setup_2d_division(this->paraMat_.para_2d(), 1, this->nbasis, this->nbasis);
     this->set_parallel_orbitals_band(this->paraMat_, this->nbands);
     if (this->inp_->cal_force)
     {
-        LR_Util::setup_2d_division(this->paraMat_all_, 1, this->nbasis, this->nbasis);
+        LR_Util::setup_2d_division(this->paraMat_all_.para_2d(), 1, this->nbasis, this->nbasis);
         this->set_parallel_orbitals_band(this->paraMat_all_, this->inp_->nbands);
     }
 
@@ -392,7 +392,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     // it need improvement to read only the bands needed
     this->psi_ks.reset(new psi::Psi<T>(this->kv.get_nks(),
                                        this->paraMat_.ncol_bands,
-                                       this->paraMat_.get_row_size(),
+                                       this->paraMat_.para_2d().get_row_size(),
                                        this->kv.ngk,
                                        true));
     this->read_ks_wfc();
@@ -412,7 +412,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
 
     LR_Util::setup_2d_division(this->paraC_, 1, this->nbasis, this->nbands
 #ifdef __MPI
-        , paraMat_.blacs_ctxt
+        , paraMat_.get_blacs_ctxt()
 #endif
     );
 

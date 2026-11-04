@@ -3,10 +3,9 @@
 // DATE :   2022-08-17
 //=======================
 
-#ifndef INVERSE_MATRIX_HPP
-#define INVERSE_MATRIX_HPP
 
 #include "invmat_ri.h"
+#include "abfs_construct_pca.h"
 #include "source_base/module_external/lapack_connector.h"
 
 #include <algorithm>
@@ -103,7 +102,7 @@ struct InverseMatrixTraits<std::complex<float>>
 };
 
 template <typename T>
-inline void Inverse_Matrix<T>::using_syev(const double& threshold_condition_number)
+void Inverse_Matrix<T>::using_syev(const double& threshold_condition_number)
 {
     using traits = InverseMatrixTraits<T>;
     using val_t = typename traits::value_type;
@@ -141,6 +140,71 @@ inline void Inverse_Matrix<T>::using_syev(const double& threshold_condition_numb
     // std::cout << "No. of singularity: " << A.shape[0] - ie << std::endl;
 
     BlasConnector::gemm(traits::gemm_trans, 'N', eA.nc, eA.nc, ie, 1, eA.c, eA.nc, eA.c, eA.nc, 0, A.ptr(), A.shape[1]);
+}
+
+template <typename T>
+std::array<RI::Tensor<T>, 3> Inverse_Matrix<T>::cal_inverse_with_derivatives(
+    const std::array<RI::Tensor<T>, 3>& derivatives,
+    const double threshold_condition_number)
+{
+    using traits = InverseMatrixTraits<T>;
+    using real_type = typename traits::value_type;
+    const std::size_t n = A.shape[0];
+    std::vector<real_type> eigenvalues(n);
+    int info = 0;
+    traits::syev(A, eigenvalues.data(), info);
+    if (info != 0)
+    {
+        throw std::range_error("Spectral inverse eigensolve failed, info=" + std::to_string(info));
+    }
+    const real_type maximum = *std::max_element(eigenvalues.begin(), eigenvalues.end());
+    const double cutoff = maximum * threshold_condition_number;
+    std::vector<bool> retained(n);
+    std::vector<real_type> inverse_values(n, 0);
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        retained[i] = eigenvalues[i] > cutoff;
+        if (retained[i])
+        {
+            inverse_values[i] = 1 / eigenvalues[i];
+        }
+    }
+    // LAPACK eigenvectors are stored as rows U^H in the row-major tensor.
+    const RI::Tensor<T> vectors = A.copy();
+    const RI::Tensor<T> adjoint = vectors.conjugate().transpose();
+    RI::Tensor<T> weighted = vectors.copy();
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        for (std::size_t j = 0; j < n; ++j)
+        {
+            weighted(i, j) *= inverse_values[i];
+        }
+    }
+    A = adjoint * weighted;
+    std::array<RI::Tensor<T>, 3> result;
+    for (std::size_t axis = 0; axis < 3; ++axis)
+    {
+        RI::Tensor<T> response = vectors * derivatives[axis] * adjoint;
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            for (std::size_t j = 0; j < n; ++j)
+            {
+                real_type divided_difference = 0;
+                if (retained[i] && retained[j])
+                {
+                    divided_difference = -inverse_values[i] * inverse_values[j];
+                }
+                else if (retained[i] != retained[j])
+                {
+                    divided_difference = (inverse_values[i] - inverse_values[j])
+                                         / (eigenvalues[i] - eigenvalues[j]);
+                }
+                response(i, j) *= divided_difference;
+            }
+        }
+        result[axis] = adjoint * response * vectors;
+    }
+    return result;
 }
 
 /*
@@ -259,4 +323,6 @@ void Inverse_Matrix<Tdata>::copy_down_triangle()
             A(i0, i1) = A(i1, i0);
 }
 
-#endif
+// Supported real and complex double-precision RI backends.
+template class Inverse_Matrix<double>;
+template class Inverse_Matrix<std::complex<double>>;

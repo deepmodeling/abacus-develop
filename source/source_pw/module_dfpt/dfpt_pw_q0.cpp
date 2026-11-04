@@ -323,7 +323,7 @@ void DFPT_PW::Impl::solve_efield_resp(int q_idx)
             // (shared Impl::assemble_v_sc from dfpt_pw_solve.cpp)
             std::vector<std::complex<double>> v_sc_r;
             const std::vector<std::complex<double>> drho_in_g = data_.get_drho_g(q_idx, 0);
-            assemble_v_sc(q_cart, drho_in_g, v_sc_r);
+            assemble_v_sc(q_idx, q_cart, drho_in_g, v_sc_r);
             for (int ik = 0; ik < nk; ++ik)
             {
                 if (static_cast<int>(occ_kq_.size()) <= ik || occ_kq_[ik].empty())

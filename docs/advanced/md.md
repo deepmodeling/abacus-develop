@@ -97,3 +97,24 @@ And the filename of DP model is specified by keyword [pot_file](./input_files/in
 ## NEP
 
 If ABACUS is compiled with the Neuroevolution Potential ([NEP](https://gpumd.org/potentials/nep.html)), MD simulations using  NEP models are enabled. To use this feature, set [esolver_type](./input_files/input-main.md#esolver_type) to `nep` and specify the potential file path with the [pot_file](./input_files/input-main.md#pot_file) keyword in your INPUT file.
+
+## SNAP
+
+CPU SNAP calculations use `esolver_type snap`, with the coefficient file in
+`pot_file` and the LAMMPS-style parameter file in `snap_param_file`. The
+implementation supports linear and quadratic coefficients, chemical channels,
+outer cutoff switching, and `switchinnerflag` with `sinner` and `dinner`.
+
+For `chemflag 1`, the chemical-channel axes of each flattened coefficient vector
+follow the element order in the STRU file. Coefficient blocks are matched by
+element name, so their order within `pot_file` is not significant. Reordering
+the elements in STRU without reordering the chemical-channel coefficients can
+change the potential. The values in `sinner` and `dinner` also follow STRU
+element order. This corresponds to the first-appearance order of elements in
+LAMMPS `pair_coeff` mappings.
+
+The CPU implementation accepts but does not use the LAMMPS GPU execution
+options `chunksize` and `parallelthresh`. Unknown SNAP parameter keywords are
+rejected. Each element-pair cutoff must exceed `rmin0`; a contributing neighbor
+at or below `rmin0` causes an error. The radial mapping parameter `rfac0` must
+satisfy `0 < rfac0 <= 1` so that its angle does not cross pi inside a pair cutoff.

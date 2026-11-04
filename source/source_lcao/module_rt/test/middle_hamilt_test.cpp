@@ -37,15 +37,15 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->nloc = nlocal * nlocal;
-    pv->ncol = nlocal;
-    pv->nrow = nlocal;
+    pv->para_2d().nloc = nlocal * nlocal;
+    pv->para_2d().ncol = nlocal;
+    pv->para_2d().nrow = nlocal;
 
     // Initialize input matrices
     int info;
     int mb = 1, nb = 1, lda = nlocal, ldc = nlocal;
     int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
+    descinit_(pv->para_2d().desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
 
     // Initialize data
     Htmp = new std::complex<double>[nlocal * nlocal];
