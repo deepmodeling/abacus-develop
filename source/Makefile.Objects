@@ -33,6 +33,7 @@ VPATH=./src_global:\
 ./source_base/module_out:\
 ./source_md:\
 ./source_md/module_plumed:\
+./source_md/module_snap:\
 ./source_basis/module_pw:\
 ./source_base/module_fft:\
 ./source_esolver:\
@@ -345,6 +346,7 @@ OBJS_ESOLVER=esolver_factory.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_nep.o\
+    esolver_snap.o\
     esolver_of.o\
     esolver_of_tddft.o\
     esolver_of_interface.o\
@@ -562,6 +564,11 @@ OBJS_MD=fire.o\
     nhchain.o\
     plumed_interface.o\
     run_md.o\
+    module_snap/snap_calculator.o\
+    module_snap/snap_descriptor.o\
+    module_snap/snap_derivative.o\
+    module_snap/snap_model.o\
+    module_snap/snap_cg.o\
     verlet.o\
 
 OBJS_NEIGHBOR=sltk_atom.o\
@@ -1013,8 +1020,8 @@ OBJS_SRCPW=h_ewald_pw.o\
     update_cell_pw.o\
     dftu_base.o\
     dftu_base_io.o\
-    dftu_base_io_read.o\
-    dftu_base_io_write.o\
+    dftu_base_read.o\
+    dftu_base_write.o\
     dftu_pw.o\
     dftu_pw_tools.o\
     yukawa_screening.o\
