@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 
 /**
  * Unit test of HContainer
@@ -730,6 +731,75 @@ TEST_F(HContainerTest, wrapper_mode)
     EXPECT_EQ(HR->get_atom_pair(1).get_value(r_index_center, 1, 1), 0.0);
     EXPECT_EQ(HR->get_atom_pair(2).get_value(r_index_center, 1, 1), 0.0);
     EXPECT_EQ(HR->get_atom_pair(3).get_value(r_index_center, 1, 1), 0.0);
+}
+
+template <typename T>
+void check_spin_storage_growth(const T factor, const int first_spin)
+{
+    const int offsets[] = {0, 1, 2};
+    hamilt::HContainer<T> hr(2);
+    hamilt::AtomPair<T> first(0, 0, 0, 0, 0, offsets, offsets, 2);
+    hamilt::AtomPair<T> last(1, 1, 0, 0, 0, offsets, offsets, 2);
+    hr.insert_pair(first);
+    hr.insert_pair(last);
+    std::vector<T> storage = {factor * 10.0, factor * 11.0, factor * 20.0, factor * 21.0};
+    T* active = storage.data() + first_spin * 2;
+    hr.allocate(active, false);
+
+    for (int pass = 0; pass < 2; ++pass)
+    {
+        const int spin = (first_spin + pass) % 2;
+        const size_t old_nnr = hr.get_nnr();
+        active = storage.data() + spin * old_nnr;
+        hr.allocate(active, false);
+        hamilt::HContainer<T> old_layout(hr, storage.data());
+        hamilt::HContainer<T> saved(hr);
+        saved.add_value_intersection(hr);
+
+        // Inserting into the first atom pair shifts the last pair's offset.
+        const int image = pass + 1;
+        hamilt::AtomPair<T> added(0, 0, image, 0, 0, offsets, offsets, 2);
+        hr.insert_pair(added);
+        hr.allocate(nullptr, true);
+        hr.add_value_intersection(saved);
+        T* new_block = hr.find_matrix(0, 0, image, 0, 0)->get_pointer();
+        new_block[0] = factor * (30.0 + pass);
+
+        hamilt::resize_spin_storage(hr, old_layout, storage, spin);
+        ASSERT_EQ(storage.size(), 2 * hr.get_nnr());
+        EXPECT_EQ(hr.get_wrapper(), storage.data() + spin * hr.get_nnr());
+
+        // Exercise both directions, including switching back to the assembled spin.
+        for (int step = 0; step < 3; ++step)
+        {
+            const int selected = (spin + step) % 2;
+            active = storage.data() + selected * hr.get_nnr();
+            hr.allocate(active, false);
+            const double base = 10.0 * (selected + 1);
+            EXPECT_EQ(hr.find_matrix(0, 0, 0, 0, 0)->get_pointer()[0], factor * base);
+            EXPECT_EQ(hr.find_matrix(1, 1, 0, 0, 0)->get_pointer()[0], factor * (base + 1.0));
+            const T expected_new = selected == spin ? factor * (30.0 + pass) : T{};
+            EXPECT_EQ(hr.find_matrix(0, 0, image, 0, 0)->get_pointer()[0], expected_new);
+            if (pass == 1)
+            {
+                const T expected_previous = selected == first_spin ? factor * 30.0 : T{};
+                EXPECT_EQ(hr.find_matrix(0, 0, 1, 0, 0)->get_pointer()[0], expected_previous);
+            }
+        }
+    }
+}
+
+TEST(HContainerSpinStorage, RealGrowthAndSpinSwitches)
+{
+    check_spin_storage_growth(1.0, 0);
+    check_spin_storage_growth(1.0, 1);
+}
+
+TEST(HContainerSpinStorage, ComplexGrowthAndSpinSwitches)
+{
+    const std::complex<double> factor(1.0, 0.5);
+    check_spin_storage_growth(factor, 0);
+    check_spin_storage_growth(factor, 1);
 }
 
 int main(int argc, char** argv)
