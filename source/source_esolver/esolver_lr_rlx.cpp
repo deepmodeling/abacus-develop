@@ -142,9 +142,8 @@ void ModuleESolver::ESolver_LR<T, TR>::cal_force(BaseCell& basecell, ModuleBase:
             "the excited-state gradient has not been computed for this geometry.");
     }
     // Both halves already follow the ABACUS force convention F = -dE/dR (Ry/Bohr), so they add.
-    // The "Gradients of each excited state" heading that `cal_force(int)` prints under is a
-    // misnomer: the finite-difference reference it was validated against (`abacus-fd lr-custom`)
-    // computes (E(-h) - E(+h))/h, which is -d(Omega)/dR, and the two agree in sign.
+    // The per-state LR table reports the excitation-energy contribution -d(Omega)/dR;
+    // adding the ground-state force gives the total force on the excited-state surface.
     force.create(ucell.nat, 3);
     force = this->force_gs_ + this->lr_force_;
     ModuleIO::print_force(this->ofs_running_, ucell, "EXCITED-STATE TOTAL-FORCE (eV/Angstrom)", force, false);
