@@ -1,23 +1,30 @@
-#include "dfpt_stru_fixture.h"
+// Shared free-function utilities for the MPI-side DFPT tests,
+// implementation (see dfpt_stru_tool.h).
+
+#include "dfpt_stru_tool.h"
 
 #include "source_base/mathzone.h"
+#include "source_cell/unitcell.h"
 
-DFPTStruTestFixture::DFPTStruTestFixture()
+namespace dfpt_test
 {
-    stru_lib.push_back(stru_{1,
-                             "O_h",
-                             "m-3m",
-                             "Pm-3m",
-                             std::vector<double>{1., 0., 0., 0., 1., 0., 0., 0., 1.},
-                             std::vector<atomtype_>{atomtype_{"C",
-                                                              std::vector<std::vector<double>>{
-                                                                  {0., 0., 0.},
-                                                              }}}});
+
+stru_ cubic_carbon_stru()
+{
+    return stru_{1,
+                 "O_h",
+                 "m-3m",
+                 "Pm-3m",
+                 std::vector<double>{1., 0., 0., 0., 1., 0., 0., 0., 1.},
+                 std::vector<atomtype_>{atomtype_{"C",
+                                                  std::vector<std::vector<double>>{
+                                                      {0., 0., 0.},
+                                                  }}}};
 }
 
-void DFPTStruTestFixture::construct_ucell(stru_& stru)
+void construct_ucell(UnitCell& ucell, const stru_& stru)
 {
-    std::vector<atomtype_> coord = stru.all_type;
+    const std::vector<atomtype_>& coord = stru.all_type;
     ucell.a1 = ModuleBase::Vector3<double>(stru.cell[0], stru.cell[1], stru.cell[2]);
     ucell.a2 = ModuleBase::Vector3<double>(stru.cell[3], stru.cell[4], stru.cell[5]);
     ucell.a3 = ModuleBase::Vector3<double>(stru.cell[6], stru.cell[7], stru.cell[8]);
@@ -66,7 +73,7 @@ void DFPTStruTestFixture::construct_ucell(stru_& stru)
     }
     // atom-index tables: real cells always carry them (iat2it/iat2ia map the
     // running atom index to type and in-type index); populate them so any
-    // consumer (e.g. DFPT_Phon::apply_asr mass lookup) works on this fixture
+    // consumer (e.g. DFPT_Phon::apply_asr mass lookup) works on this cell
     ucell.iat2it.resize(ucell.nat);
     ucell.iat2ia.resize(ucell.nat);
     int iat = 0;
@@ -81,7 +88,4 @@ void DFPTStruTestFixture::construct_ucell(stru_& stru)
     }
 }
 
-void DFPTStruTestFixture::ClearUcell()
-{
-    delete[] ucell.atoms;
-}
+} // namespace dfpt_test

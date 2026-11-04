@@ -8,7 +8,7 @@
 #include "source_cell/pseudo.h"
 #include "source_cell/qlist.h"
 #include "source_cell/unitcell.h"
-#include "dfpt_stru_fixture.h"
+#include "dfpt_stru_tool.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_global.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
@@ -33,9 +33,10 @@
  *     - per-(q, irrep) SCF ledger (B4: sunk from DFPT_IrrepData)
  */
 
-class DFPT_PW_DataTest : public DFPTStruTestFixture
+class DFPT_PW_DataTest : public ::testing::Test
 {
   protected:
+    UnitCell ucell;
     ModuleCell::QList qlist;
     ModuleDFPT::DFPT_PW_Data data;
     std::ifstream ifs;
@@ -46,7 +47,7 @@ class DFPT_PW_DataTest : public DFPTStruTestFixture
     // build a reduced 2x2x2 q-mesh (4 irreducible q-points for O_h)
     void init_qlist()
     {
-        construct_ucell(stru_lib[0]);
+        dfpt_test::construct_ucell(ucell, dfpt_test::cubic_carbon_stru());
         ofs_running.open("tmp_dfpt_qlist");
         ModuleSymmetry::Symmetry symm;
         const int cal_symm_repr[2] = {0, 6};
@@ -61,7 +62,8 @@ class DFPT_PW_DataTest : public DFPTStruTestFixture
     {
         data.clean();
         ofs_running.close();
-        ClearUcell();
+        delete[] ucell.atoms;
+        ucell.atoms = nullptr;
         remove("tmp_dfpt_qlist");
     }
 };
