@@ -125,7 +125,7 @@ std::string nonfinite_error(const Input_para& input)
         {"sccs_solvent_radius", input.sccs_solvent_radius},
         {"sccs_radial_scale", input.sccs_radial_scale},
         {"sccs_radial_spread", input.sccs_radial_spread},
-        {"sccs_filling_threshold", input.sccs_filling_threshold},
+        {"sccs_filling_thr", input.sccs_filling_thr},
         {"sccs_filling_spread", input.sccs_filling_spread}};
     for (const std::pair<const char*, double>& value : values)
     {
@@ -198,9 +198,9 @@ std::string sa_error(const Input_para& input)
     }
     // The probe solute fraction never exceeds one, so a threshold of one or
     // more would fill nothing.
-    else if (input.sccs_filling_threshold <= 0.0 || input.sccs_filling_threshold >= 1.0)
+    else if (input.sccs_filling_thr <= 0.0 || input.sccs_filling_thr >= 1.0)
     {
-        error = "sccs_filling_threshold must lie between 0 and 1";
+        error = "sccs_filling_thr must lie between 0 and 1";
     }
     else if (input.sccs_filling_spread <= 0.0)
     {

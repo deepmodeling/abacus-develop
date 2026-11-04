@@ -177,7 +177,7 @@ SolventAwareBoundary sa_boundary(const std::vector<double>& local,
     SolventAwareBoundary filled;
     filled.fraction = convolve_probe(kernel, basis, local);
     const std::size_t size = local.size();
-    const double threshold = parameters.filling_threshold;
+    const double threshold = parameters.filling_thr;
     const double spread = parameters.filling_spread;
     const double sqrt_pi = std::sqrt(ModuleBase::PI);
     filled.filling.resize(size);

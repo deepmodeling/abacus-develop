@@ -57,7 +57,7 @@ void sccs_cfg_input(const Input_para& input,
     config.cavity.solvent_aware.solvent_radius = input.sccs_solvent_radius;
     config.cavity.solvent_aware.radial_scale = input.sccs_radial_scale;
     config.cavity.solvent_aware.radial_spread = input.sccs_radial_spread;
-    config.cavity.solvent_aware.filling_threshold = input.sccs_filling_threshold;
+    config.cavity.solvent_aware.filling_thr = input.sccs_filling_thr;
     config.cavity.solvent_aware.filling_spread = input.sccs_filling_spread;
     if (input.assume_isolated == "pcc_0d")
     {

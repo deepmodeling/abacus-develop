@@ -338,7 +338,7 @@ TEST_F(PotSccsEmptyPartitionTest, FilledSolventOutputIsCollectiveOnEmptyGridPart
     ModuleSccs::SccsConfig config = active_config();
     config.cavity.solvent_aware.solvent_radius = 0.5;
     config.cavity.solvent_aware.radial_spread = 0.3;
-    config.cavity.solvent_aware.filling_threshold = 0.6;
+    config.cavity.solvent_aware.filling_thr = 0.6;
     config.cavity.solvent_aware.filling_spread = 0.1;
     double energy = 0.0;
     std::vector<elecstate::SolventGridField> fields;

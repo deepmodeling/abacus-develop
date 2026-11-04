@@ -220,7 +220,7 @@ void ReadInput::item_sccs()
         this->add_item(item);
     }
     {
-        Input_Item item("sccs_filling_threshold");
+        Input_Item item("sccs_filling_thr");
         item.annotation = "probe solute fraction that fills a point";
         item.category = "Implicit solvation model";
         item.type = "Real";
@@ -228,7 +228,7 @@ void ReadInput::item_sccs()
         item.default_value = "0.825";
         item.unit = "";
         item.set_availability("imp_sol==2");
-        read_sync_double(input.sccs_filling_threshold);
+        read_sync_double(input.sccs_filling_thr);
         this->add_item(item);
     }
     {
@@ -236,7 +236,7 @@ void ReadInput::item_sccs()
         item.annotation = "erfc width of the solvent-aware filling";
         item.category = "Implicit solvation model";
         item.type = "Real";
-        item.description = "Width of the erfc step of the solvent-aware filling in the probe solute fraction, as Environ filling_spread; positive, default 0.02. Used only when sccs_solvent_radius is positive. As in Environ, open solvent is filled by erfc(sccs_filling_threshold / sccs_filling_spread) / 2, which lowers the bulk permittivity: below 1e-17 up to a spread of sccs_filling_threshold / 6, but 1e-2 at 0.5.";
+        item.description = "Width of the erfc step of the solvent-aware filling in the probe solute fraction, as Environ filling_spread; positive, default 0.02. Used only when sccs_solvent_radius is positive. As in Environ, open solvent is filled by erfc(sccs_filling_thr / sccs_filling_spread) / 2, which lowers the bulk permittivity: below 1e-17 up to a spread of sccs_filling_thr / 6, but 1e-2 at 0.5.";
         item.default_value = "0.02";
         item.unit = "";
         item.set_availability("imp_sol==2");

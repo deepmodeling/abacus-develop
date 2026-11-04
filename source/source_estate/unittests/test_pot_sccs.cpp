@@ -218,14 +218,14 @@ TEST_F(PotSccsTest, InputMapsCavityModelKeys)
     input.sccs_solvent_radius = 3.0;
     input.sccs_radial_scale = 1.5;
     input.sccs_radial_spread = 0.4;
-    input.sccs_filling_threshold = 0.6;
+    input.sccs_filling_thr = 0.6;
     input.sccs_filling_spread = 0.05;
     elecstate::sccs_cfg_input(input, config, solver);
     const ModuleSccs::SolventAwareParameters& filling = config.cavity.solvent_aware;
     EXPECT_DOUBLE_EQ(filling.solvent_radius, 3.0);
     EXPECT_DOUBLE_EQ(filling.radial_scale, 1.5);
     EXPECT_DOUBLE_EQ(filling.radial_spread, 0.4);
-    EXPECT_DOUBLE_EQ(filling.filling_threshold, 0.6);
+    EXPECT_DOUBLE_EQ(filling.filling_thr, 0.6);
     EXPECT_DOUBLE_EQ(filling.filling_spread, 0.05);
     EXPECT_DOUBLE_EQ(config.start_drho, 0.0);
     EXPECT_FALSE(config.collect_report);

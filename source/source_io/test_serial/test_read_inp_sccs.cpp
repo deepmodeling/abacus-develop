@@ -118,7 +118,7 @@ TEST(ReadInpSccs, SolventAwareFillingUsesEnvironRanges)
     EXPECT_DOUBLE_EQ(input.sccs_solvent_radius, 0.0);
     EXPECT_DOUBLE_EQ(input.sccs_radial_scale, 2.0);
     EXPECT_DOUBLE_EQ(input.sccs_radial_spread, 0.5);
-    EXPECT_DOUBLE_EQ(input.sccs_filling_threshold, 0.825);
+    EXPECT_DOUBLE_EQ(input.sccs_filling_thr, 0.825);
     EXPECT_DOUBLE_EQ(input.sccs_filling_spread, 0.02);
     input.sccs_solvent_radius = 3.0;
     EXPECT_TRUE(ModuleIO::check_sccs_inp(input, error)) << error;
@@ -133,10 +133,10 @@ TEST(ReadInpSccs, SolventAwareFillingUsesEnvironRanges)
     input.sccs_radial_spread = 0.0;
     EXPECT_FALSE(ModuleIO::check_sccs_inp(input, error));
     input = valid;
-    input.sccs_filling_threshold = 0.0;
+    input.sccs_filling_thr = 0.0;
     EXPECT_FALSE(ModuleIO::check_sccs_inp(input, error));
     // The probe solute fraction never exceeds one.
-    input.sccs_filling_threshold = 1.0;
+    input.sccs_filling_thr = 1.0;
     EXPECT_FALSE(ModuleIO::check_sccs_inp(input, error));
     input = valid;
     input.sccs_filling_spread = 0.0;
@@ -236,7 +236,7 @@ TEST(ReadInpSccs, RejectsNonfiniteReals)
                              &input.sccs_gamma,       &input.sccs_pressure,   &input.sccs_tol_rms,
                              &input.sccs_tol_max,     &input.sccs_surface_eta, &input.sccs_lowpass_p1,
                              &input.sccs_lowpass_p2,  &input.sccs_start_drho, &input.sccs_solvent_radius,
-                             &input.sccs_radial_scale, &input.sccs_radial_spread, &input.sccs_filling_threshold,
+                             &input.sccs_radial_scale, &input.sccs_radial_spread, &input.sccs_filling_thr,
                              &input.sccs_filling_spread};
     const double infinity = std::numeric_limits<double>::infinity();
     const double nonfinite[] = {std::nan(""), infinity, -infinity};

@@ -16,7 +16,7 @@ using SccsTest::spectral_laplacian;
 TEST_F(SccsSolventAware, AdjointIsTheDerivativeOfTheFilledBoundary)
 {
     ModuleSccs::SolventAwareParameters probe = probe_parameters(1.5);
-    probe.filling_threshold = 0.45;
+    probe.filling_thr = 0.45;
     probe.filling_spread = 0.1;
     set_up_cube(16.0, 20.0, probe);
     const std::vector<double> local = sphere(origin, 3.5, 0.6);
@@ -67,7 +67,7 @@ TEST_F(SccsSolventAware, AdjointIsTheDerivativeOfTheFilledBoundary)
 TEST_F(SccsSolventAware, ChainDerivativesMatchSpectralDerivativesOfTheFilledBoundary)
 {
     ModuleSccs::SolventAwareParameters probe = probe_parameters(1.5);
-    probe.filling_threshold = 0.45;
+    probe.filling_thr = 0.45;
     probe.filling_spread = 0.3;
     set_up_cube(16.0, 80.0, probe);
     const std::vector<double> local = sphere(origin, 3.5, 1.5);
@@ -119,7 +119,7 @@ TEST_F(SccsSolventAware, ChainSurfaceDerivativeStaysBoundedAtADensitySaddle)
     cavity.density_max = 5e-3;
     cavity.epsilon_bulk = 1.0;
     cavity.solvent_aware = probe_parameters(0.5);
-    cavity.solvent_aware.filling_threshold = 0.99;
+    cavity.solvent_aware.filling_thr = 0.99;
     set_up_cube(12.0, 60.0, cavity.solvent_aware);
     const std::vector<double> density = gaussian_pair(1.5);
     const double regularization = 1.0e-8;

@@ -21,5 +21,5 @@ sccs_tol_max      1.0e-8
 sccs_surface_eta  1.0e-8
 out_sol           1
 sccs_solvent_radius 2.0
-sccs_filling_threshold 0.3
+sccs_filling_thr 0.3
 sccs_debug        2

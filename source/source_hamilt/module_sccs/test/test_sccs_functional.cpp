@@ -37,7 +37,7 @@ protected:
         config.surface_regularization = 1e-8;
         // s is about 0.67 +- 0.13; the probe solute fraction stays inside the filling step.
         config.cavity.solvent_aware.solvent_radius = 1.5;
-        config.cavity.solvent_aware.filling_threshold = 0.67;
+        config.cavity.solvent_aware.filling_thr = 0.67;
         config.cavity.solvent_aware.filling_spread = 0.1;
         const ModuleBase::Matrix3 lattice;
         const std::vector<double> kernel = ModuleSccs::sa_probe_kernel(basis, lattice, length,

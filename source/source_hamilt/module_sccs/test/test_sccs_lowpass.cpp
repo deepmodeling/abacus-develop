@@ -38,7 +38,7 @@ protected:
         {
             // The probe solute fraction is about 0.67 everywhere, inside the filling step.
             config.cavity.solvent_aware.solvent_radius = 1.5;
-            config.cavity.solvent_aware.filling_threshold = 0.67;
+            config.cavity.solvent_aware.filling_thr = 0.67;
             config.cavity.solvent_aware.filling_spread = 0.05;
             const ModuleBase::Matrix3 lattice;
             probe_kernel = ModuleSccs::sa_probe_kernel(basis, lattice, length, config.cavity.solvent_aware);

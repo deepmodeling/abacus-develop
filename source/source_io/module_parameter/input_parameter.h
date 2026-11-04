@@ -622,7 +622,7 @@ struct Input_para
     double sccs_solvent_radius = 0.0; // Bohr: solvent-aware cavity, 0 is off
     double sccs_radial_scale = 2.0; // solvent-aware probe radius over sccs_solvent_radius
     double sccs_radial_spread = 0.5; // Bohr: erfc spread of the solvent-aware probe
-    double sccs_filling_threshold = 0.825; // probe solute fraction that fills a point
+    double sccs_filling_thr = 0.825; // probe solute fraction that fills a point
     double sccs_filling_spread = 0.02; // erfc width of the solvent-aware filling
 
     // ==============  #Parameters (14.vdW Correction) ===========================

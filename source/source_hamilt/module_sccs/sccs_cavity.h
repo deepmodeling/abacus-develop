@@ -11,7 +11,7 @@ struct SolventAwareParameters
     double solvent_radius = 0.0; // zero disables the filling
     double radial_scale = 2.0; // probe radius over solvent_radius
     double radial_spread = 0.5; // erfc spread of the probe sphere
-    double filling_threshold = 0.825; // probe solute fraction that fills a point
+    double filling_thr = 0.825; // probe solute fraction that fills a point
     double filling_spread = 0.02; // erfc width of the filling step
 };
 

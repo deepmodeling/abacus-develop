@@ -202,7 +202,7 @@ TEST_F(SccsCavityDerivativesTest, FilledDielectricPathsFollowBoundaryAndLowpass)
     cavity.density_max = 5e-3;
     cavity.epsilon_bulk = 5.0;
     cavity.solvent_aware.solvent_radius = 1.5;
-    cavity.solvent_aware.filling_threshold = 0.67;
+    cavity.solvent_aware.filling_thr = 0.67;
     cavity.solvent_aware.filling_spread = 0.1;
     const ModuleBase::Matrix3 lattice;
     const std::vector<double> kernel = ModuleSccs::sa_probe_kernel(basis, lattice, length, cavity.solvent_aware);
@@ -279,7 +279,7 @@ TEST_F(SccsCavityDerivativesTest, SolventAwareParametersWithoutARadiusLeaveTheCa
     ModuleSccs::CavityParameters parameters_only = plain;
     parameters_only.solvent_aware.radial_scale = 1.5;
     parameters_only.solvent_aware.radial_spread = 0.3;
-    parameters_only.solvent_aware.filling_threshold = 0.6;
+    parameters_only.solvent_aware.filling_thr = 0.6;
     parameters_only.solvent_aware.filling_spread = 0.05;
     const std::vector<double> mode = cosine_mode(0);
     std::vector<double> density(basis.nrxx);

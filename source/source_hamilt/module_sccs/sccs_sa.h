@@ -39,7 +39,7 @@ std::vector<ModuleBase::Vector3<double>> convolve_grad(
     const std::vector<ModuleBase::Vector3<double>>& gradient);
 
 // Filled boundary s_sa = s + (1 - s) f(c) of the probe solute fraction c = p * s,
-// f(c) = 1 - erfc((c - filling_threshold)/filling_spread)/2, with f' and f''
+// f(c) = 1 - erfc((c - filling_thr)/filling_spread)/2, with f' and f''
 // (Environ solvent_aware_boundary).
 struct SolventAwareBoundary
 {

@@ -265,7 +265,7 @@ TEST_F(SccsIonicForceTest, FilledFullCavityPccLowpassTotalCorrectionForceFiniteD
     // The uniform electrons alone give s = 0.92; the core Gaussian moves the
     // probe solute fraction through the filling step.
     config.cavity.solvent_aware.solvent_radius = 1.0;
-    config.cavity.solvent_aware.filling_threshold = 0.93;
+    config.cavity.solvent_aware.filling_thr = 0.93;
     config.cavity.solvent_aware.filling_spread = 0.05;
     const std::vector<double> probe_kernel = ModuleSccs::sa_probe_kernel(basis, lattice, length,
                                                                          config.cavity.solvent_aware);
