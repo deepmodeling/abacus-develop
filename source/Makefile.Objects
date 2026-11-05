@@ -249,10 +249,10 @@ OBJS_CELL=atom_pseudo.o\
     cal_ux.o\
     mdcell_reader.o\
     mdcell.o\
-    domain_decomposition.o\
-    domain_decomposition_ghost.o\
-    domain_decomposition_migration.o\
-    domain_decomposition_force.o\
+    dom_core.o\
+    dom_ghost.o\
+    dom_migrate.o\
+    dom_force.o\
     cif_io.o\
     ucell_io.o\
 

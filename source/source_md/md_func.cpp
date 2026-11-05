@@ -1,5 +1,5 @@
 #include "md_func.h"
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 
 #include "source_base/global_variable.h"
 #include "source_base/parallel_cell.h"

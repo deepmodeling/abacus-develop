@@ -3,10 +3,10 @@ add_subdirectory(module_neighbor)
 add_subdirectory(module_neighlist)
 
 add_library(domain_decomposition OBJECT
-  domain_decomposition.cpp
-  domain_decomposition_ghost.cpp
-  domain_decomposition_migration.cpp
-  domain_decomposition_force.cpp)
+  dom_core.cpp
+  dom_ghost.cpp
+  dom_migrate.cpp
+  dom_force.cpp)
 
 add_library(
   cell OBJECT

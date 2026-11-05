@@ -1,8 +1,9 @@
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 #include "source_cell/ghost_exchange_plan.h"
 #include "source_cell/mdcell.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <map>

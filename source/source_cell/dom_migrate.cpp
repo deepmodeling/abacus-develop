@@ -1,8 +1,12 @@
-#include "source_cell/domain_decomposition.h"
+#include "source_cell/dom_decomp.h"
 #include "source_cell/mdcell.h"
 
 #include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <limits>
 #include <stdexcept>
+#include <utility>
 
 void DomainDecomposition::migrate_owned_atoms(MDCell& cell)
 {
