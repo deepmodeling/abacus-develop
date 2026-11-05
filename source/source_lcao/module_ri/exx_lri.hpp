@@ -2482,7 +2482,7 @@ void Exx_LRI<Tdata>::cal_exx_dHs(
     ModuleBase::TITLE("Exx_LRI", "cal_exx_dHs");
     ModuleBase::timer::start("Exx_LRI", "cal_exx_dHs");
 #ifdef __EXX_DEV
-    const auto judge = RI_2D_Comm::get_2D_judge(ucell, pv);
+    const auto judge = RI_2D_Comm::get_2D_judge(ucell, pv.para_2d());
     for (int is = 0; is < this->runtime.nspin; ++is)
     {
         this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, std::to_string(is));
