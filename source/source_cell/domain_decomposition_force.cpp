@@ -119,4 +119,3 @@ void DomainDecomposition::accumulate_ghost_forces(MDCell& cell)
         }
     }
 }
-

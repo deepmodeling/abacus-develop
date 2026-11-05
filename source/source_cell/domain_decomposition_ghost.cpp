@@ -399,4 +399,3 @@ void DomainDecomposition::build_ghost_exchange_slots(std::vector<GhostExchangeSl
         }
     }
 }
-
