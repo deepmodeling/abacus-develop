@@ -28,26 +28,9 @@ TEST(PropagatorTest, testPropagatorTaylor)
     bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
-    pv->para_2d().nloc = nlocal * nlocal;
-    pv->para_2d().ncol = nlocal;
-    pv->para_2d().nrow = nlocal;
-    pv->para_2d().dim0 = 1;
-    pv->para_2d().dim1 = 1;
-    pv->para_2d().nb = 1;
-    pv->para_2d().blacs_ctxt = 0;
-    pv->para_2d().set_coord(0, 0);
-
-    int dim[2];
-    dim[0] = nprow;
-    dim[1] = npcol;
+    ASSERT_EQ(pv->para_2d().set(nlocal, nlocal, 1, ictxt), 0);
 
     const double md_dt = 4 * ModuleBase::AU_to_FS;
-
-    // Initialize input matrices
-    int info;
-    int mb = 1, nb = 1, lda = nlocal, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow);
-    descinit_(pv->para_2d().desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
 
     // Initialize data
     U_operator = new std::complex<double>[nlocal * nlocal];

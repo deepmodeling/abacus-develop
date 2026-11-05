@@ -279,7 +279,7 @@ TEST(HsDenseIoSaveMat, BinaryGammaUpperTriangle)
     const std::vector<double> local = distribute_matrix(pv, global, dim);
 
     ModuleIO::save_mat(0, local.data(), dim, true, 8, true, false, filename,
-                       pv, test_rank, "cg");
+                       pv.para_2d(), test_rank, "cg");
 
     if (test_rank == 0)
     {
@@ -312,7 +312,7 @@ TEST(HsDenseIoSaveMat, BinaryComplexUpperTriangleMpiReduction)
         = distribute_matrix(pv, global, dim);
 
     ModuleIO::save_mat(0, local.data(), dim, true, 8, true, false, filename,
-                       pv, test_rank, "cg");
+                       pv.para_2d(), test_rank, "cg");
 
     if (test_rank == 0)
     {
@@ -348,9 +348,9 @@ TEST(HsDenseIoSaveMat, BinaryAppendCompleteRecordsAndOverwrite)
         = distribute_matrix(pv, replacement, dim);
 
     ModuleIO::save_mat(0, first_local.data(), dim, true, 8, true, true,
-                       filename, pv, test_rank, "cg");
+                       filename, pv.para_2d(), test_rank, "cg");
     ModuleIO::save_mat(1, second_local.data(), dim, true, 8, true, true,
-                       filename, pv, test_rank, "cg");
+                       filename, pv.para_2d(), test_rank, "cg");
 
     if (test_rank == 0)
     {
@@ -365,7 +365,7 @@ TEST(HsDenseIoSaveMat, BinaryAppendCompleteRecordsAndOverwrite)
     MPI_Barrier(DIAG_WORLD);
 #endif
     ModuleIO::save_mat(2, replacement_local.data(), dim, true, 8, true, false,
-                       filename, pv, test_rank, "cg");
+                       filename, pv.para_2d(), test_rank, "cg");
 
     if (test_rank == 0)
     {
@@ -397,12 +397,12 @@ TEST(HsDenseIoSaveMat, AppendFalseOverwritesSameIstep)
 
     // Step 1: append=true writes the full record for istep=0.
     ModuleIO::save_mat(0, first_local.data(), dim, true, 8, true, true,
-                       filename, pv, test_rank, "cg");
+                       filename, pv.para_2d(), test_rank, "cg");
 
     // Step 2: append=false on the same istep must truncate the file, not
     // append a second copy.
     ModuleIO::save_mat(0, replacement_local.data(), dim, true, 8, true, false,
-                       filename, pv, test_rank, "cg");
+                       filename, pv.para_2d(), test_rank, "cg");
 
     if (test_rank == 0)
     {

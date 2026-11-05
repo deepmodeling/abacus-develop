@@ -62,7 +62,7 @@ void ModuleIO::write_hsk(
                 1,
                 append_mat,
                 h_fn,
-                pv,
+                pv.para_2d(),
                 drank,
                 ks_solver);
 
@@ -89,7 +89,7 @@ void ModuleIO::write_hsk(
                 1,
                 append_mat,
                 s_fn,
-                pv,
+                pv.para_2d(),
                 drank,
                 ks_solver);
     } // end ik

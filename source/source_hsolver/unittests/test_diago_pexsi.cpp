@@ -175,13 +175,8 @@ template <class T> class PexsiPrepare
             exit(1);
         }
 
-        // set po variables
-        po.para_2d().ncol = hmtest.ncol;
-        po.para_2d().nrow = hmtest.nrow;
-        po.para_2d().nb = nb2d;
-        po.para_2d().blacs_ctxt = icontxt;
-        po.para_2d().dim0 = nprows;
-        po.para_2d().dim1 = npcols;
+        // set po variables from the same BLACS grid used for hmtest
+        po.para_2d().set(nlocal, nlocal, nb2d, icontxt);
 
         if (DETAILINFO && myrank == 0)
         {

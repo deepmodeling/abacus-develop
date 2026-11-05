@@ -19,7 +19,7 @@ module_dm::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix
         const int offset_x = offset_b + is * nk * this->pX[0].get_local_size();
         //1. transition density 
 #ifdef __MPI
-        std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X + offset_x, this->pX[is], psi_ks_vec[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat, (T)1.0 / (T)nk);
+        std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X + offset_x, this->pX[is], psi_ks_vec[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat.para_2d(), (T)1.0 / (T)nk);
         // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat);
 #else
         std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(X + offset_x, this->psi_ks_vec[is], this->nocc[is], this->nvirt[is], (T)1.0 / (T)nk);

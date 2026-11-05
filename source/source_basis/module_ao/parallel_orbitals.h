@@ -27,13 +27,6 @@ public:
     Parallel_2D& para_2d() { return para_2d_; }
 
     const Parallel_2D& para_2d() const { return para_2d_; }
-
-    // Transitional implicit upcast. Keeping it lets the const call sites that
-    // pass a Parallel_Orbitals where a const Parallel_2D& is expected compile
-    // while they are migrated. It is deleted once every such site calls
-    // para_2d() explicitly; no new site may rely on it.
-    operator const Parallel_2D&() const { return para_2d_; }
-
 #ifdef __MPI
     /// BLACS context of the 2D process grid, completing the getter family
     /// (get_row_size / get_col_size / get_local_size / get_block_size /

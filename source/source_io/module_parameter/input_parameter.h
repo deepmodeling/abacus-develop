@@ -627,6 +627,11 @@ struct Input_para
     int sccs_debug = 0; // 0: silent, 1: iteration summary, 2: full diagnostics
     std::string sccs_solvent_mode = "electronic";
     std::vector<double> sccs_corespread = {0.5}; // Bohr: one value or one per atom
+    double sccs_solvent_radius = 0.0; // Bohr: solvent-aware cavity, 0 is off
+    double sccs_radial_scale = 2.0; // solvent-aware probe radius over sccs_solvent_radius
+    double sccs_radial_spread = 0.5; // Bohr: erfc spread of the solvent-aware probe
+    double sccs_filling_thr = 0.825; // probe solute fraction that fills a point
+    double sccs_filling_spread = 0.02; // erfc width of the solvent-aware filling
 
     // ==============  #Parameters (14.vdW Correction) ===========================
     // ==========================================================

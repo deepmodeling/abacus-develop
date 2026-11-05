@@ -16,36 +16,6 @@
  *   - ModuleIO::save_lat_r
  *     - write one lattice-R block in CSR format
  */
-Parallel_Orbitals::Parallel_Orbitals()
-{
-}
-
-Parallel_Orbitals::~Parallel_Orbitals()
-{
-}
-
-Parallel_2D::~Parallel_2D()
-{
-}
-
-void Parallel_2D::set_serial(const int M_A, const int N_A)
-{
-    this->nrow = M_A;
-    this->ncol = N_A;
-    this->is_serial = true;
-    this->global2local_row_.resize(M_A);
-    this->global2local_row_[0] = 0;
-    this->global2local_row_[1] = 1;
-    this->global2local_row_[2] = -1;
-    this->global2local_row_[3] = 2;
-    this->global2local_row_[4] = -1; //Some rows have global2local_row_ < 0
-}
-
-int Parallel_2D::get_global_row_size() const
-{
-    return this->nrow;
-}
-
 TEST(ModuleIOTest, SaveLatR)
 {
     // Create temporary output file
