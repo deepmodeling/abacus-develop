@@ -26,7 +26,7 @@
 template <typename T, typename Tdata>
 void RPA_LRI<T, Tdata>::out_eigen_vector_legacy(const Parallel_Orbitals& parav, const psi::Psi<T>& psi)
 {
-    const Parallel_2D& distribution = parav.para_2d();
+    const BlockCyclicDistributionInformation& distribution = parav.para_2d();
     const int nks_tot = this->runtime.input.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
     const int npsin_tmp = this->runtime.input.nspin == 2 ? 2 : 1;
     const int nbands = parav.get_wfc_global_nbands();

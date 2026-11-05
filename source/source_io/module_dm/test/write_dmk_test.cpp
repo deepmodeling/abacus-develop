@@ -248,7 +248,7 @@ TEST(DMKTest, Mode0FixedNameOverwrite) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<double> efs;
-    Parallel_2D pv;
+    BlockCyclicDistributionInformation pv;
     init_pv(nlocal, pv);
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
@@ -311,7 +311,7 @@ TEST(DMKTest, Mode1FixedNameAppend) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<double> efs;
-    Parallel_2D pv;
+    BlockCyclicDistributionInformation pv;
     init_pv(nlocal, pv);
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 
@@ -372,7 +372,7 @@ TEST(DMKTest, Mode2PerStepFile) {
     int nlocal = 20;
     std::vector<std::vector<double>> dmk;
     std::vector<double> efs;
-    Parallel_2D pv;
+    BlockCyclicDistributionInformation pv;
     init_pv(nlocal, pv);
     gen_dmk(dmk, efs, nspin, nk, nlocal, pv);
 

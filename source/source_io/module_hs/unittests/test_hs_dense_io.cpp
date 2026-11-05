@@ -424,7 +424,7 @@ TEST(HsDenseIoSaveMat, TextPrecisionFollowsArgument)
     const int dim = 2;
     std::vector<double> mat(dim * dim, 0.0);
     mat[0] = 1.23456789;
-    const Parallel_2D pv = make_serial_pv(dim);
+    const BlockCyclicDistributionInformation pv = make_serial_pv(dim);
     ModuleIO::save_mat(0, mat.data(), dim, false, 5, false, false,
                        filename, pv, 0, "genelpa", false);
     const std::string content = read_text_file(filename);

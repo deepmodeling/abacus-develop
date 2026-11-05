@@ -72,7 +72,7 @@ void check_little_group_restoration(const int nspin)
             {
                 if (pv.in_this_processor(i, j))
                 {
-                    result[pv.irloc(i) + pv.icloc(j) * pv.get_row_size()]
+                    result[pv.irloc(i) + pv.icloc(j) * pv.nrloc()]
                         = dense[i + j * n];
                 }
             }
