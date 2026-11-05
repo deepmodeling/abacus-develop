@@ -58,6 +58,7 @@ list(
   ../../source_cell/domain_decomposition.cpp
   ../../source_cell/domain_decomposition_ghost.cpp
   ../../source_cell/domain_decomposition_migration.cpp
+  ../../source_cell/domain_decomposition_force.cpp
   ../../source_cell/mdcell.cpp
   ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp

@@ -8,7 +8,11 @@ addtest(
   TARGET MODULE_CELL_NEIGHBOR_neighbor_search
   LIBS parameter base device cell neighbor symmetry
   SOURCES test_neighbor_search.cpp ../neighbor_search.cpp
-          ../../domain_decomposition.cpp ../../domain_decomposition_ghost.cpp ../../domain_decomposition_migration.cpp ../bin_manager.cpp
+          ../../domain_decomposition.cpp
+          ../../domain_decomposition_ghost.cpp
+          ../../domain_decomposition_migration.cpp
+          ../../domain_decomposition_force.cpp
+          ../bin_manager.cpp
           ../page_allocator.cpp)
 
 addtest(
@@ -41,7 +45,10 @@ if(ENABLE_MPI)
     test_mdcell_migrate_mpi.cpp
     test_domain_decomposition.cpp
     ../../mdcell.cpp
-    ../../domain_decomposition.cpp ../../domain_decomposition_ghost.cpp ../../domain_decomposition_migration.cpp
+    ../../domain_decomposition.cpp
+    ../../domain_decomposition_ghost.cpp
+    ../../domain_decomposition_migration.cpp
+    ../../domain_decomposition_force.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp)
@@ -86,7 +93,10 @@ if(ENABLE_MPI)
     ../../mdcell.cpp
     ../../print_cell.cpp
     ../../stru_frame_io.cpp
-    ../../domain_decomposition.cpp ../../domain_decomposition_ghost.cpp ../../domain_decomposition_migration.cpp
+    ../../domain_decomposition.cpp
+    ../../domain_decomposition_ghost.cpp
+    ../../domain_decomposition_migration.cpp
+    ../../domain_decomposition_force.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp)

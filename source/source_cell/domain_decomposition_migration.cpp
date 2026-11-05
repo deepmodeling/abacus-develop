@@ -2,14 +2,7 @@
 #include "source_cell/mdcell.h"
 
 #include <algorithm>
-#include <limits>
 #include <stdexcept>
-
-namespace
-{
-const int tag_migration_count_base = 100;
-const int tag_migration_atoms_base = 200;
-}
 
 void DomainDecomposition::migrate_owned_atoms(MDCell& cell)
 {
@@ -100,58 +93,6 @@ void DomainDecomposition::migrate_owned_atoms(MDCell& cell)
 
     owned_atoms.swap(retained_atoms);
     exchange_ghost_atoms(cell);
-}
-
-void DomainDecomposition::exchange_migration_(
-    const std::array<int, 6>& neighbors,
-    const std::array<std::vector<PackedAtom>, 6>& send_atoms,
-    const std::array<int, 6>& send_counts,
-    std::array<std::vector<PackedAtom>, 6>& recv_atoms) const
-{
-    const int direction_count = 6;
-    if (size_ == 1)
-    {
-        for (int idir = 0; idir < direction_count; ++idir)
-        {
-            recv_atoms[idir] = send_atoms[idir ^ 1];
-        }
-        return;
-    }
-#ifdef __MPI
-    std::array<int, direction_count> recv_counts;
-    std::array<MPI_Request, 2 * direction_count> requests;
-    for (int idir = 0; idir < direction_count; ++idir)
-    {
-        const int opposite = idir ^ 1;
-        MPI_Irecv(&recv_counts[idir], 1, MPI_INT, neighbors[idir], tag_migration_count_base + opposite, comm_, &requests[idir]);
-        MPI_Isend(&send_counts[idir], 1, MPI_INT, neighbors[idir], tag_migration_count_base + idir, comm_, &requests[direction_count + idir]);
-    }
-    MPI_Waitall(2 * direction_count, &requests[0], MPI_STATUSES_IGNORE);
-
-    for (int idir = 0; idir < direction_count; ++idir)
-    {
-        if (recv_counts[idir] < 0 || recv_counts[idir] % static_cast<int>(sizeof(PackedAtom)) != 0)
-        {
-            throw std::runtime_error("Invalid DomainDecomposition migration receive count.");
-        }
-        recv_atoms[idir].resize(static_cast<std::size_t>(recv_counts[idir] / static_cast<int>(sizeof(PackedAtom))));
-    }
-
-    for (int idir = 0; idir < direction_count; ++idir)
-    {
-        const int opposite = idir ^ 1;
-        MPI_Irecv(recv_atoms[idir].empty() ? NULL : reinterpret_cast<char*>(&recv_atoms[idir][0]),
-                  recv_counts[idir], MPI_BYTE, neighbors[idir], tag_migration_atoms_base + opposite, comm_, &requests[idir]);
-        MPI_Isend(send_atoms[idir].empty() ? NULL : reinterpret_cast<const char*>(&send_atoms[idir][0]),
-                  send_counts[idir], MPI_BYTE, neighbors[idir], tag_migration_atoms_base + idir, comm_, &requests[direction_count + idir]);
-    }
-    MPI_Waitall(2 * direction_count, &requests[0], MPI_STATUSES_IGNORE);
-
-#else
-    static_cast<void>(neighbors);
-    static_cast<void>(send_counts);
-    throw std::runtime_error("A serial communication domain cannot migrate to a remote rank.");
-#endif
 }
 
 DomainDecomposition::PackedAtom DomainDecomposition::pack_atom(

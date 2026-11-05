@@ -2,7 +2,11 @@ add_subdirectory(module_symmetry)
 add_subdirectory(module_neighbor)
 add_subdirectory(module_neighlist)
 
-add_library(domain_decomposition OBJECT domain_decomposition.cpp domain_decomposition_ghost.cpp domain_decomposition_migration.cpp)
+add_library(domain_decomposition OBJECT
+  domain_decomposition.cpp
+  domain_decomposition_ghost.cpp
+  domain_decomposition_migration.cpp
+  domain_decomposition_force.cpp)
 
 add_library(
   cell OBJECT

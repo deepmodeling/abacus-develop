@@ -252,6 +252,7 @@ OBJS_CELL=atom_pseudo.o\
     domain_decomposition.o\
     domain_decomposition_ghost.o\
     domain_decomposition_migration.o\
+    domain_decomposition_force.o\
     cif_io.o\
     ucell_io.o\
 
