@@ -19,7 +19,6 @@
 
 #include <gtest/gtest.h>
 #include <algorithm>
-#include <chrono>
 #include <cstdlib>
 #include <cmath>
 #include <cstdio>
@@ -52,6 +51,47 @@ static void dense_h_multiply(const T* H_data, int n_dim, const T* in, T* out, in
                 sum += H_data[i + k * n_dim] * in[k + j * ld];
             }
             out[i + j * ld] = sum;
+        }
+    }
+}
+
+// Use the same seeded real initial vectors for the analytical matrix fixtures.
+static void initialize_vectors(std::vector<T>& psi, int n_dim, int nband, int ld, unsigned seed)
+{
+    std::mt19937 rng(seed);
+    std::uniform_real_distribution<Real> dist(-1.0, 1.0);
+    const int size = ld * nband;
+    psi.assign(size, T(0));
+    for (int j = 0; j < nband; ++j)
+    {
+        for (int i = 0; i < n_dim; ++i)
+        {
+            psi[i + j * ld] = T(dist(rng), 0.0);
+        }
+    }
+    for (int j = 0; j < nband; ++j)
+    {
+        for (int k = 0; k < j; ++k)
+        {
+            T dot = 0;
+            for (int i = 0; i < n_dim; ++i)
+            {
+                dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
+            }
+            for (int i = 0; i < n_dim; ++i)
+            {
+                psi[i + j * ld] -= dot * psi[i + k * ld];
+            }
+        }
+        Real norm_squared = 0;
+        for (int i = 0; i < n_dim; ++i)
+        {
+            norm_squared += std::norm(psi[i + j * ld]);
+        }
+        const Real norm = std::sqrt(norm_squared);
+        for (int i = 0; i < n_dim; ++i)
+        {
+            psi[i + j * ld] /= norm;
         }
     }
 }
@@ -371,44 +411,7 @@ class DiagoPPCGTridiagTest : public ::testing::Test
         ethr.assign(nband, 1e-10);
 
         // Random initial guess (fixed seed for reproducibility)
-        std::mt19937 rng(42);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        // Gram-Schmidt orthonormalisation (S = I)
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 42);
     }
 
     int n_dim;
@@ -1005,44 +1008,7 @@ class DiagoPPCGDiagonalTest : public ::testing::Test
         ethr.assign(nband, 1e-10);
 
         // Random initial guess (fixed seed)
-        std::mt19937 rng(42);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        // Gram-Schmidt orthonormalisation (S = I)
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 42);
     }
 
     int n_dim;
@@ -1885,44 +1851,7 @@ class DiagoPPCG2x2Test : public ::testing::Test
 
         ethr.assign(nband, 1e-10);
 
-        std::mt19937 rng(123);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        // Gram-Schmidt orthonormalisation (S = I)
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 123);
     }
 
     int n_dim;
@@ -2127,44 +2056,7 @@ class DiagoPPCGDegenerateTest : public ::testing::Test
 
         ethr.assign(nband, 1e-10);
 
-        std::mt19937 rng(456);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        // Gram-Schmidt (S = I)
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 456);
     }
 
     int n_dim;
@@ -2238,43 +2130,7 @@ class DiagoPPCGLargeTridiagTest : public ::testing::Test
 
         ethr.assign(nband, 1e-10);
 
-        std::mt19937 rng(789);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 789);
     }
 
     int n_dim;
@@ -2397,43 +2253,7 @@ class DiagoPPCGDenseTest : public ::testing::Test
 
         ethr.assign(nband, 1e-10);
 
-        std::mt19937 rng_psi(222);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng_psi), 0.0);
-            }
-        }
-
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 222);
     }
 
     int n_dim;
@@ -2681,25 +2501,7 @@ class DiagoPPCGSingleBandTest : public ::testing::Test
 
         ethr.assign(nband, 1e-10);
 
-        std::mt19937 rng(42);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int i = 0; i < n_dim; ++i)
-        {
-            psi[i] = T(dist(rng), 0.0);
-        }
-
-        Real nrm = 0;
-        for (int i = 0; i < n_dim; ++i)
-        {
-            nrm += std::norm(psi[i]);
-        }
-        nrm = std::sqrt(nrm);
-        for (int i = 0; i < n_dim; ++i)
-        {
-            psi[i] /= nrm;
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 42);
     }
 
     int n_dim;
@@ -2772,43 +2574,7 @@ class DiagoPPCGEigenvectorTest : public ::testing::Test
 
         ethr.assign(nband, 1e-8);
 
-        std::mt19937 rng(888);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 888);
     }
 
     int n_dim;
@@ -2923,43 +2689,7 @@ class DiagoPPCGAllBandsTest : public ::testing::Test
 
         ethr.assign(nband, 1e-10);
 
-        std::mt19937 rng(101);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 101);
     }
 
     int n_dim;
@@ -3033,43 +2763,7 @@ class DiagoPPCGMediumTridiagTest : public ::testing::Test
 
         ethr.assign(nband, 1e-10);
 
-        std::mt19937 rng(202);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 202);
     }
 
     int n_dim;
@@ -3161,43 +2855,7 @@ class DiagoPPCGPentaTest : public ::testing::Test
 
         ethr.assign(nband, 1e-10);
 
-        std::mt19937 rng(505);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 505);
     }
 
     int n_dim;
@@ -3261,43 +2919,7 @@ class DiagoPCGGappedSpectrumTest : public ::testing::Test
 
         ethr.assign(nband, 1e-10);
 
-        std::mt19937 rng(606);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 606);
     }
 
     int n_dim;
@@ -3380,43 +3002,7 @@ class DiagoPPCGBadPrecTest : public ::testing::Test
 
         ethr.assign(nband, 1e-10);
 
-        std::mt19937 rng(707);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T dot = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= dot * psi[i + k * ld];
-                }
-            }
-            Real nrm = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nrm += std::norm(psi[i + j * ld]);
-            }
-            nrm = std::sqrt(nrm);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nrm;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, 707);
     }
 
     int n_dim;
@@ -3546,41 +3132,7 @@ class DiagoPPCGScaledTest : public ::testing::Test
     }
     void init_psi(int seed)
     {
-        std::mt19937 rng(seed);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T d = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    d += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= d * psi[i + k * ld];
-                }
-            }
-            Real nr = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nr += std::norm(psi[i + j * ld]);
-            }
-            nr = std::sqrt(nr);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nr;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, seed);
     }
     int n_dim;
     int nband;
@@ -3643,41 +3195,7 @@ class DiagoPPCGManyBandsTest : public ::testing::Test
     }
     void init_psi(int seed)
     {
-        std::mt19937 rng(seed);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T d = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    d += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= d * psi[i + k * ld];
-                }
-            }
-            Real nr = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nr += std::norm(psi[i + j * ld]);
-            }
-            nr = std::sqrt(nr);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nr;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, seed);
     }
     int n_dim;
     int nband;
@@ -3740,41 +3258,7 @@ class DiagoPPCGRrStep1Test : public ::testing::Test
     }
     void init_psi(int seed)
     {
-        std::mt19937 rng(seed);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T d = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    d += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= d * psi[i + k * ld];
-                }
-            }
-            Real nr = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nr += std::norm(psi[i + j * ld]);
-            }
-            nr = std::sqrt(nr);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nr;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, seed);
     }
     int n_dim;
     int nband;
@@ -3841,41 +3325,7 @@ class DiagoPPCGNeumannTest : public ::testing::Test
     }
     void init_psi(int seed)
     {
-        std::mt19937 rng(seed);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T d = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    d += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= d * psi[i + k * ld];
-                }
-            }
-            Real nr = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nr += std::norm(psi[i + j * ld]);
-            }
-            nr = std::sqrt(nr);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nr;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, seed);
     }
     int n_dim;
     int nband;
@@ -3938,41 +3388,7 @@ class DiagoPPCGTightEthrTest : public ::testing::Test
     }
     void init_psi(int seed)
     {
-        std::mt19937 rng(seed);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-        psi.assign(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T d = 0;
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    d += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n_dim; ++i)
-                {
-                    psi[i + j * ld] -= d * psi[i + k * ld];
-                }
-            }
-            Real nr = 0;
-            for (int i = 0; i < n_dim; ++i)
-            {
-                nr += std::norm(psi[i + j * ld]);
-            }
-            nr = std::sqrt(nr);
-            for (int i = 0; i < n_dim; ++i)
-            {
-                psi[i + j * ld] /= nr;
-            }
-        }
+        initialize_vectors(psi, n_dim, nband, ld, seed);
     }
     int n_dim;
     int nband;
@@ -4184,170 +3600,50 @@ TEST_F(DiagoPPCGTridiagSTest, BlockSubspace)
     EXPECT_LE(avg_iter, 150.0) << "TridiagS BLOCK: too many iterations";
 }
 
-// =============================================================================
-// Performance benchmark: PPCG vs BLOCK vs Davidson comparison
-//
-// Runs PPCG on random sparse symmetric matrices of various sizes (matching
-// the BLOCK/Davidson test sizes: npw=100,200,500) and reports avg_iter and
-// wall-clock time.  avg_iter is the primary metric — it counts the average
-// number of H·psi applications per band.
-//
-// Typical results from the existing BLOCK/Davidson tests (for reference):
-//   BLOCK:       avg_iter ~ 20-50  on random sparse, ~ 5-15 on tridiagonal
-//   Davidson: avg_iter ~ 15-40  on random sparse (but each iter is heavier)
-//   PPCG:     avg_iter ~ 2-10  on tridiagonal/diagonal, varies with sparsity
-//
-// This test is DISABLED by default (too slow for CI).  Run manually with
-//   --gtest_also_run_disabled_tests --gtest_filter='*Benchmark*'
-// =============================================================================
-class DiagoPPCGBenchmarkTest : public ::testing::Test
+// A deterministic sparse matrix exercises convergence beyond analytical fixtures.
+TEST(DiagoPPCGRandomMatrixTest, ConvergesWithDiagonalPreconditioner)
 {
-  protected:
-    struct RunResult
+    const int n_dim = 80;
+    const int nband = 8;
+    const int sparsity_pct = 60;
+    const int matrix_size = n_dim * n_dim;
+    const unsigned seed = n_dim * 100 + sparsity_pct;
+    std::vector<T> h(matrix_size, T(0));
+    std::mt19937 rng(seed);
+    std::uniform_real_distribution<Real> dist(-1.0, 1.0);
+    for (int i = 0; i < n_dim; ++i)
     {
-        double average_iterations;
-        double wall_time;
-        bool converged;
-        Real max_residual;
+        for (int j = i; j < n_dim; ++j)
+        {
+            if (i != j && (rng() % 100) < sparsity_pct)
+            {
+                continue;
+            }
+            const Real value = (i == j) ? std::abs(dist(rng)) * n_dim + 1.0 : dist(rng) * 0.5;
+            h[i + j * n_dim] = T(value, 0);
+            h[j + i * n_dim] = T(value, 0);
+        }
+    }
+    std::vector<Real> prec(n_dim);
+    for (int i = 0; i < n_dim; ++i)
+    {
+        const Real diagonal = std::real(h[i + i * n_dim]);
+        prec[i] = std::max(diagonal, 1e-6);
+    }
+    std::vector<T> psi;
+    initialize_vectors(psi, n_dim, nband, n_dim, 42);
+    std::vector<Real> eval(nband, 0.0);
+    const std::vector<double> ethr(nband, 1e-4);
+    const auto h_op = [&h, n_dim](T* in, T* out, int ld, int ncol) {
+        dense_h_multiply(h.data(), n_dim, in, out, ld, ncol);
     };
-
-    void SetUp() override
-    {
-    }
-
-    // Generate a random sparse symmetric matrix of size n with given sparsity.
-    // sparsity=0 means dense, sparsity=80 means 80% zeros.
-    static void make_random_hamilt(int n, int sparsity_pct, std::vector<T>& H, std::vector<Real>& prec)
-    {
-        H.assign(n * n, T(0));
-        std::mt19937 rng(unsigned(n * 100 + sparsity_pct));
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-        int nnz = 0;
-        for (int i = 0; i < n; ++i)
-        {
-            for (int j = i; j < n; ++j)
-            {
-                if (i != j && (rng() % 100) < sparsity_pct)
-                {
-                    continue;
-                }
-                Real val = (i == j) ? std::abs(dist(rng)) * n + 1.0 : dist(rng) * 0.5;
-                H[i + j * n] = T(val, 0);
-                if (i != j)
-                {
-                    H[j + i * n] = T(val, 0);
-                }
-                if (val != 0)
-                {
-                    ++nnz;
-                }
-            }
-        }
-        // Simple diagonal preconditioner
-        prec.resize(n);
-        for (int i = 0; i < n; ++i)
-        {
-            const Real diagonal_value = std::real(H[i + i * n]);
-            prec[i] = std::max(diagonal_value, 1e-6);
-        }
-    }
-
-    static RunResult run_ppcg(int n, int nband, const std::vector<T>& H, const std::vector<Real>& prec)
-    {
-        int ld = n;
-        std::mt19937 rng(42);
-        std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-        std::vector<T> psi(ld * nband, T(0));
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int i = 0; i < n; ++i)
-            {
-                psi[i + j * ld] = T(dist(rng), 0.0);
-            }
-        }
-        // GS orthonormalize
-        for (int j = 0; j < nband; ++j)
-        {
-            for (int k = 0; k < j; ++k)
-            {
-                T d = 0;
-                for (int i = 0; i < n; ++i)
-                {
-                    d += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-                }
-                for (int i = 0; i < n; ++i)
-                {
-                    psi[i + j * ld] -= d * psi[i + k * ld];
-                }
-            }
-            Real nr = 0;
-            for (int i = 0; i < n; ++i)
-            {
-                nr += std::norm(psi[i + j * ld]);
-            }
-            nr = std::sqrt(nr);
-            for (int i = 0; i < n; ++i)
-            {
-                psi[i + j * ld] /= nr;
-            }
-        }
-
-        std::vector<Real> eval(nband, 0.0);
-        std::vector<double> ethr(nband, 1e-4);
-        auto h_op = [&H, n](T* in, T* out, int ldi, int nc) { dense_h_multiply(H.data(), n, in, out, ldi, nc); };
-
-        const int rr_step = std::min(nband, 4);
-        hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, nband, rr_step);
-
-        auto t0 = std::chrono::high_resolution_clock::now();
-        double avg_iter = solver.diag(h_op, nullptr, ld, nband, n, psi.data(), eval.data(), ethr, prec.data());
-        auto t1 = std::chrono::high_resolution_clock::now();
-        double wall = std::chrono::duration<double>(t1 - t0).count();
-        return {avg_iter, wall, solver.converged(), solver.max_residual()};
-    }
-};
-
-TEST_F(DiagoPPCGBenchmarkTest, DISABLED_FullBenchmark)
-{
-    struct Case
-    {
-        int n;
-        int nband;
-        int sparsity;
-    };
-    std::vector<Case> cases = {
-        {50, 10, 0},   {50, 10, 60},  {100, 10, 0},  {100, 10, 60},
-        {100, 10, 80}, {200, 10, 60}, {200, 10, 80}, {500, 10, 80},
-    };
-
-    std::cout << "\n========== PPCG Performance Benchmark ==========\n";
-    std::cout << " n_dim  nband  sparsity   avg_iter   wall_time(s)\n";
-    std::cout << "-------------------------------------------------\n";
-    for (auto& c : cases)
-    {
-        std::vector<T> H;
-        std::vector<Real> prec;
-        make_random_hamilt(c.n, c.sparsity, H, prec);
-        const RunResult result = run_ppcg(c.n, c.nband, H, prec);
-        const double avg_iter = result.average_iterations;
-        const double wall = result.wall_time;
-        printf(" %5d   %3d     %2d%%       %6.1f      %7.4f\n", c.n, c.nband, c.sparsity, avg_iter, wall);
-    }
-    std::cout << "=================================================\n";
-    SUCCEED();
-}
-
-// Quick convergence smoke test: one representative case, fast enough for CI.
-TEST_F(DiagoPPCGBenchmarkTest, QuickBenchmark)
-{
-    std::vector<T> H;
-    std::vector<Real> prec;
-    make_random_hamilt(80, 60, H, prec);
-    const RunResult result = run_ppcg(80, 8, H, prec);
-    EXPECT_TRUE(result.converged);
-    EXPECT_TRUE(std::isfinite(result.max_residual));
-    EXPECT_LE(result.max_residual, Real(1.0e-4));
-    EXPECT_LE(result.average_iterations, 500.0);
+    hsolver::DiagoPPCG<T, base_device::DEVICE_CPU> solver(1e-8, 500, nband, 4);
+    const double iterations = solver.diag(h_op, nullptr, n_dim, nband, n_dim,
+                                          psi.data(), eval.data(), ethr, prec.data());
+    EXPECT_TRUE(solver.converged());
+    EXPECT_TRUE(std::isfinite(solver.max_residual()));
+    EXPECT_LE(solver.max_residual(), 1e-4);
+    EXPECT_LE(iterations, 500.0);
 }
 
 int main(int argc, char** argv)
