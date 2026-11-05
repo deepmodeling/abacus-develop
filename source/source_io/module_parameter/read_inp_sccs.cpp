@@ -132,7 +132,7 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS switching-derivative low-pass slope";
         item.category = "Implicit solvation model";
         item.type = "Real";
-        item.description = "Low-pass filter of the SCCS switching-function derivatives, as Environ deriv_lowpass_p1 with deriv_method fft. Only with assume_isolated pcc_0d or pcc_2d. The default -1 turns it off and reproduces Environ deriv_method fft (continuum cavity potential). With lowpass disabled (the default), analytical forces may differ from finite differences of the self-consistent energy. For geometry optimization with PCC, consider enabling lowpass and check force accuracy against finite differences. With lowpass disabled, the cavity potential uses the FFT gradient of the PCC-corrected potential, which oscillates around the potential step at the cell boundary half a cell from the system center; keep the dielectric transition region several bohr away from that boundary. Typical values are sccs_lowpass_p1 10 and sccs_lowpass_p2 5. The filter changes the model energy, so compare only results computed with the same values.";
+        item.description = "Low-pass filter of the SCCS switching-function derivatives, as Environ deriv_lowpass_p1 with deriv_method fft. Only with assume_isolated pcc_0d or pcc_2d. The default -1 turns it off, which reproduces Environ deriv_method fft (continuum cavity potential) for the plain cavity; the solvent-aware cavity then differentiates the filling analytically on the FFT derivatives of the local cavity. With lowpass disabled (the default), analytical forces may differ from finite differences of the self-consistent energy. For geometry optimization with PCC, consider enabling lowpass and check force accuracy against finite differences. With lowpass disabled, the cavity potential uses the FFT gradient of the PCC-corrected potential, which oscillates around the potential step at the cell boundary half a cell from the system center; keep the dielectric transition region several bohr away from that boundary. Typical values are sccs_lowpass_p1 10 and sccs_lowpass_p2 5. The filter changes the model energy, so compare only results computed with the same values.";
         item.default_value = "-1";
         item.unit = "";
         item.set_availability("imp_sol==2");
@@ -184,6 +184,66 @@ void ReadInput::item_sccs()
         this->add_item(item);
     }
     {
+        Input_Item item("sccs_solvent_radius");
+        item.annotation = "solvent radius of the solvent-aware SCCS cavity";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Solvent radius in bohr of the solvent-aware SCCS cavity, as Environ solvent_radius (Andreussi et al., J. Chem. Theory Comput. 15, 1996 (2019)). A positive value fills the parts of the cavity that a probe sphere of radius sccs_radial_scale * sccs_solvent_radius cannot reach, for example small voids between atoms. Unlike Environ, the probe sums all periodic images within its cutoff, so cells narrower than the probe are not truncated. With PCC, see also sccs_lowpass_p1. Non-negative; default 0 (off).";
+        item.default_value = "0.0";
+        item.unit = "bohr";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_solvent_radius);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_radial_scale");
+        item.annotation = "solvent-aware probe radius over sccs_solvent_radius";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Probe radius of the solvent-aware SCCS cavity in units of sccs_solvent_radius, as Environ radial_scale; at least 1, default 2. Used only when sccs_solvent_radius is positive.";
+        item.default_value = "2.0";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_radial_scale);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_radial_spread");
+        item.annotation = "erfc spread of the solvent-aware probe";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "erfc spread of the solvent-aware probe sphere, as Environ radial_spread; positive, default 0.5 bohr. Used only when sccs_solvent_radius is positive.";
+        item.default_value = "0.5";
+        item.unit = "bohr";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_radial_spread);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_filling_thr");
+        item.annotation = "probe solute fraction that fills a point";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Solute fraction of the solvent-aware probe sphere above which a point is filled, as Environ filling_threshold; between 0 and 1 (exclusive), default 0.825. Used only when sccs_solvent_radius is positive.";
+        item.default_value = "0.825";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_filling_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sccs_filling_spread");
+        item.annotation = "erfc width of the solvent-aware filling";
+        item.category = "Implicit solvation model";
+        item.type = "Real";
+        item.description = "Width of the erfc step of the solvent-aware filling in the probe solute fraction, as Environ filling_spread; positive, default 0.02. Used only when sccs_solvent_radius is positive. As in Environ, open solvent is filled by erfc(sccs_filling_thr / sccs_filling_spread) / 2, which lowers the bulk permittivity: below 1e-17 up to a spread of sccs_filling_thr / 6, but 1e-2 at 0.5.";
+        item.default_value = "0.02";
+        item.unit = "";
+        item.set_availability("imp_sol==2");
+        read_sync_double(input.sccs_filling_spread);
+        this->add_item(item);
+    }
+    {
         Input_Item item("sccs_start_drho");
         item.annotation = "SCCS delayed-start density threshold";
         item.category = "Implicit solvation model";
@@ -212,7 +272,7 @@ void ReadInput::item_sccs()
         item.annotation = "SCCS report level";
         item.category = "Implicit solvation model";
         item.type = "Integer";
-        item.description = "Level of the SCCS reports, written to the running log (running_*.log in OUT.{suffix}): 0 (default) writes none; 1 writes the sqrt-CG iteration count and the correction energies of every SCF iteration; 2 also writes the residuals, warm start, cavity volume and surface, the FFT counts of the Coulomb operator in the sqrt-CG solve and the count of reused fixed sources, and with PCC the Gauss-law check (far-field polarization charge and its expected value), the charge moments and the energy components.";
+        item.description = "Level of the SCCS reports, written to the running log (running_*.log in OUT.{suffix}): 0 (default) writes none; 1 writes the sqrt-CG iteration count and the correction energies of every SCF iteration; 2 also writes the residuals, warm start, cavity volume and surface (with the solvent-aware filled volume), the FFT counts of the Coulomb operator in the sqrt-CG solve and the count of reused fixed sources, and with PCC the Gauss-law check (far-field polarization charge and its expected value), the charge moments and the energy components.";
         item.default_value = "0";
         item.unit = "";
         read_sync_int(input.sccs_debug);
