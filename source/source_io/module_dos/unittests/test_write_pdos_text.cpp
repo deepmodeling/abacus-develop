@@ -131,7 +131,7 @@ TEST_F(WritePdosTextTest, Mode0FixedNameWithStep)
                               emin, dos_edelta_ev, "./", 2, 0);
 
     const std::string str = read_file("./pdoss1.txt");
-    EXPECT_THAT(str, testing::HasSubstr("# istep: 3"));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 3"));
 
     remove("./pdoss1.txt");
     GlobalV::ofs_running.close();
@@ -204,9 +204,9 @@ TEST_F(WritePdosTextTest, Mode1FixedNameAppend)
                               emin, dos_edelta_ev, "./", /*istep=*/1, out_app_flag);
 
     const std::string str = read_file("./pdoss1.txt");
-    // Two istep headers present -> two appended records.
-    EXPECT_THAT(str, testing::HasSubstr("# istep: 1"));
-    EXPECT_THAT(str, testing::HasSubstr("# istep: 2"));
+    // Two Ionic_Step headers present -> two appended records.
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 1"));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 2"));
     // g-suffixed file must NOT exist.
     std::ifstream ifs("./pdoss1g1.txt");
     EXPECT_FALSE(ifs.good());
@@ -236,7 +236,7 @@ TEST_F(WritePdosTextTest, Mode2PerStepFile)
                               emin, dos_edelta_ev, "./", 3, out_app_flag);
 
     const std::string str = read_file("./pdoss1g4.txt");
-    EXPECT_THAT(str, testing::HasSubstr("# istep: 4"));
+    EXPECT_THAT(str, testing::HasSubstr("# Ionic_Step 4"));
 
     remove("./pdoss1g4.txt");
     GlobalV::ofs_running.close();
