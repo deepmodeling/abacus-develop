@@ -241,7 +241,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
             ofs_eig0.open(filename.c_str());
         }
        
-        ofs_eig0 << istep+1 << "     # ionic step" << std::endl;
+        ofs_eig0 << istep+1 << "     # Ionic_Step" << std::endl;
         ofs_eig0 << " Electronic state energy (eV) and occupations" << std::endl;
         ofs_eig0 << " Spin number " << nspin << std::endl;
         ofs_eig0.close();

@@ -112,8 +112,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     EXPECT_THAT(str, testing::HasSubstr("spin=1 k-point=1/10 Cartesian=0.0000000 0.0000000 0.0000000 (299 plane wave)"));
     EXPECT_THAT(str, testing::HasSubstr("1 2.040854700000000 0.000000000000000"));
     EXPECT_THAT(str, testing::Not(testing::HasSubstr("stale calculation")));
-    EXPECT_THAT(str, testing::HasSubstr("1     # ionic step"));
-    EXPECT_THAT(str, testing::HasSubstr("2     # ionic step"));
+    EXPECT_THAT(str, testing::HasSubstr("1     # Ionic_Step"));
+    EXPECT_THAT(str, testing::HasSubstr("2     # Ionic_Step"));
     ifs.close();
 
     remove("eig_occ.txt");

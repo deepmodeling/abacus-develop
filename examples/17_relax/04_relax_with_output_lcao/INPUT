@@ -30,8 +30,9 @@ out_wfc_lcao         1    # PSI/wf{ki}s{spin}g{step}_nao.txt (多 k); wfs{spin}g
 
 out_dos              1    # DOS/doss{spin}g{step}.txt, pdos{spin}g{step}.txt
 out_ldos             1    # DOS/ldos_{bias}ev.cube
-out_band             1    # DOS/eigs{spin}.txt
+out_band             1    # BANDS/bands{spin}.txt (nspin=2 → bands1.txt, bands2.txt)
 
+out_elf              1
 out_mul              1    # mulliken.txt
 
 out_dmk              1    # MAT/dmk{ki}s{spin}g{step}_nao.txt (多 k); dms{spin}g{step}_nao.txt (gamma-only)
@@ -43,12 +44,27 @@ out_mat_r            1    # MAT/rxrs{spin}g{step}_nao.csr, ryrs{spin}..., rzrs{s
 out_mat_t            1    # MAT/trs{spin}g{step}_nao.csr
 out_mat_ds           1    # MAT/dsxrs{spin}g{step}_nao.csr, dsyr..., dsrz...
 out_mat_tk           1    # MAT/tk{ki}s{spin}g{step}_nao.txt (T(k), newer name; legacy out_mat_h_t 别名同此)
-#out_mat_dh          1    # HAS BUGS!!! MAT/dhrxs{spin}g{step}_nao.csr, dhrys..., dhrzs...
 out_mat_h_t          1    # MAT/tk{ki}s{spin}g{step}_nao.txt (legacy alias of out_mat_tk)
 out_mat_h_vnl        1    # MAT/vnlk{ki}s{spin}g{step}_nao.txt
 out_mat_h_vl         1    # MAT/vlk{ki}s{spin}g{step}_nao.txt
 out_mat_h_vh         1    # MAT/vhk{ki}s{spin}g{step}_nao.txt
 out_mat_h_vxc        1    # MAT/vxck{ki}s{spin}g{step}_nao.txt
+
+out_proj_band        1
+#out_mat_dh          1    # HAS BUGS!!! MAT/dhrxs{spin}g{step}_nao.csr, dhrys..., dhrzs...
+#out_mat_dh_t         1
+#out_mat_dh_vl        1
+#out_mat_dh_vnl       1
+#out_mat_dh_vxc       1
+#out_mat_dh_vh        1
+
+#out_mat_vnlk
+#out_mat_vlk
+#out_mat_vhk
+#out_mat_vxck
+
+
+
 
 out_eband            1    # eband_vxc.txt, eband_vxc_local.txt, eband_vxc_exx.txt
 out_mat_xc           1    # eband_vxc.txt, eband_vxc_local.txt, eband_vxc_exx.txt (KS-orbital repr.)

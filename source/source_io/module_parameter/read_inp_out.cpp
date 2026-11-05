@@ -379,7 +379,7 @@ Also controled by out_freq_ion and out_app_flag.
 * 0: no output
 * 1: output the density of states (DOS) and projected density of states (PDOS, LCAO only)
  * With out_app_flag = 0: fixed-name files (`doss{s}.txt`, `pdoss{s}.txt`) are truncated and overwritten at every write.
- * With out_app_flag = 1: the same fixed-name files are reused; the first written step truncates them and later steps append one record per step (prefixed with a `# ionic step N` header, one-based).
+ * With out_app_flag = 1: the same fixed-name files are reused; the first written step truncates them and later steps append one record per step (prefixed with a `# Ionic_Step N` header, one-based).
  * With out_app_flag = 2: per-step files are named `doss{s}g{geom}.txt` and `pdoss{s}g{geom}.txt` where `{geom}` is the one-based geometry index (e.g. `doss1g3.txt` for the third ionic step).
  * nspin=1 or 4: one spin channel (`s1`). nspin=2: two channels (`s1`, `s2`). PW and LCAO use the same naming.
 Note: values 2 and 3 are no longer supported. Setting out_dos to 2 or 3 will raise an error.)";
