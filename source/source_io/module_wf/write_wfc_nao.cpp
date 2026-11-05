@@ -61,7 +61,7 @@ std::string build_wfc_nao_header(const int istep, const std::string& spin_tag)
         return header;
     }
     const int istep_one_based = istep + 1;
-    const std::string step_line = FmtCore::format("# IONIC STEP %d%s\n", istep_one_based, spin_tag.c_str());
+    const std::string step_line = FmtCore::format("# Ionic_Step %d%s\n", istep_one_based, spin_tag.c_str());
     return header + step_line;
 }
 

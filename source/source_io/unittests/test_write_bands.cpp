@@ -284,7 +284,7 @@ class BandOutputTest : public testing::TestWithParam<BandTopology>
         EXPECT_EQ(comments[3 * block + 1].compare(0, written.size(), written), 0)
             << comments[3 * block + 1];
         const std::string tag = (channels == 2) ? (spin == 0 ? " (spin up)" : " (spin down)") : "";
-        EXPECT_EQ(comments[3 * block + 2], "# IONIC STEP " + std::to_string(block + 1) + tag);
+        EXPECT_EQ(comments[3 * block + 2], "# Ionic_Step " + std::to_string(block + 1) + tag);
     }
 
     void expect_output(const std::string& name, int spin, int nbands,
