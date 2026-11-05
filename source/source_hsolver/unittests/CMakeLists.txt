@@ -68,6 +68,7 @@ if(ENABLE_MPI)
             ../diago_dav_subspace.cpp
             ../diago_ppcg.cpp
             ../diag_const_nums.cpp
+            ../diago_params.cpp
             ../diago_iter_assist.cpp
             ../para_lin_tf.cpp
             ../../source_basis/module_pw/test/test_tool.cpp

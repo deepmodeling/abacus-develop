@@ -6,6 +6,7 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "source_hsolver/diag_comm_info.h"
+#include "source_hsolver/diago_params.h"
 #include "source_hsolver/hs_operator.h"
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/hsolver_pw.h"
@@ -223,6 +224,24 @@ template void diago_hs_para<std::complex<float>>(
 class TestHSolverPW : public ::testing::Test
 {
   public:
+    using DiagoAssist = hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
+
+    void SetUp() override
+    {
+        saved_diag_iter_max = DiagoAssist::PW_DIAG_NMAX;
+        saved_diag_thr = DiagoAssist::PW_DIAG_THR;
+        saved_scf_iter = DiagoAssist::SCF_ITER;
+        saved_need_subspace = DiagoAssist::need_subspace;
+    }
+
+    void TearDown() override
+    {
+        DiagoAssist::PW_DIAG_NMAX = saved_diag_iter_max;
+        DiagoAssist::PW_DIAG_THR = saved_diag_thr;
+        DiagoAssist::SCF_ITER = saved_scf_iter;
+        DiagoAssist::need_subspace = saved_need_subspace;
+    }
+
     // HSolverPW declares this fixture a friend, but a TEST_F body lives in a
     // class derived from it and friendship is not inherited, so the call into
     // the protected hamiltSolvePsiK() is routed through here.
@@ -253,10 +272,31 @@ class TestHSolverPW : public ::testing::Test
 
     std::vector<double> run_ppcg_dispatch(const std::string& calculation,
                                          const bool exact_vectors,
+                                         const int iteration_budget,
                                          std::ostream& log)
     {
+        Input_para inp;
+        inp.calculation = calculation;
+        inp.ks_solver = "ppcg";
+        inp.pw_diag_nmax = iteration_budget;
+        hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1.0e-12, inp);
         hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs(
-            &pwbk, calculation, "pw", "ppcg", false, 1, 1, 0, 1.0e-12, false, 2, false, 1, 0, 0);
+            &pwbk,
+            calculation,
+            "pw",
+            "ppcg",
+            false,
+            1,
+            DiagoAssist::SCF_ITER,
+            DiagoAssist::PW_DIAG_NMAX,
+            DiagoAssist::PW_DIAG_THR,
+            DiagoAssist::need_subspace,
+            2,
+            false,
+            1,
+            0,
+            0);
+        EXPECT_EQ(hs.diag_iter_max, iteration_budget);
         const std::vector<double> diagonal = {1.0, 2.0, 4.0};
         DiagonalHSOperator op(diagonal);
         psi::Psi<std::complex<double>> ps;
@@ -328,6 +368,12 @@ class TestHSolverPW : public ::testing::Test
     std::vector<float> ekb_f;
 
     std::ofstream temp_ofs;
+
+  private:
+    int saved_diag_iter_max = 0;
+    double saved_diag_thr = 0.0;
+    int saved_scf_iter = 0;
+    bool saved_need_subspace = false;
 };
 
 // TEST_F(TestHSolverPW, solve) {
@@ -594,7 +640,7 @@ TEST_F(TestHSolverPW, NpwxLessThanNbandsDeath)
 TEST_F(TestHSolverPW, PPCGScfDispatchReportsExhaustedBudget)
 {
     std::ostringstream log;
-    const std::vector<double> eigenvalues = run_ppcg_dispatch("scf", false, log);
+    const std::vector<double> eigenvalues = run_ppcg_dispatch("scf", false, 0, log);
     EXPECT_NE(log.str().find("PPCG did not converge"), std::string::npos);
     EXPECT_NE(log.str().find("active bands=2"), std::string::npos);
     EXPECT_NE(log.str().find("max residual="), std::string::npos);
@@ -609,7 +655,7 @@ TEST_F(TestHSolverPW, PPCGNscfDispatchRejectsExhaustedBudget)
 {
     std::ostringstream log;
     EXPECT_EXIT(
-        run_ppcg_dispatch("nscf", false, log),
+        run_ppcg_dispatch("nscf", false, 0, log),
         ::testing::ExitedWithCode(1),
         "PPCG did not converge.*iteration limit reached");
 }
@@ -617,10 +663,50 @@ TEST_F(TestHSolverPW, PPCGNscfDispatchRejectsExhaustedBudget)
 TEST_F(TestHSolverPW, PPCGConvergedDispatchHasNoWarning)
 {
     std::ostringstream log;
-    const std::vector<double> eigenvalues = run_ppcg_dispatch("scf", true, log);
+    const std::vector<double> eigenvalues = run_ppcg_dispatch("scf", true, 0, log);
     EXPECT_EQ(log.str().find("PPCG did not converge"), std::string::npos);
     EXPECT_NEAR(eigenvalues[0], 1.0, 1.0e-12);
     EXPECT_NEAR(eigenvalues[1], 2.0, 1.0e-12);
+}
+
+TEST_F(TestHSolverPW, PPCGNscfDispatchUsesConfiguredBudget)
+{
+    DiagoAssist::PW_DIAG_NMAX = 30;
+    std::ostringstream log;
+    const std::vector<double> eigenvalues = run_ppcg_dispatch("nscf", false, 77, log);
+    EXPECT_EQ(log.str().find("PPCG did not converge"), std::string::npos);
+    EXPECT_NEAR(eigenvalues[0], 1.0, 1.0e-12);
+    EXPECT_NEAR(eigenvalues[1], 2.0, 1.0e-12);
+}
+
+TEST_F(TestHSolverPW, DiagoParamsPreservesOtherNscfSolverBudgets)
+{
+    Input_para inp;
+    inp.calculation = "nscf";
+    inp.pw_diag_nmax = 77;
+    for (const std::string solver : {"cg", "dav", "dav_subspace", "bpcg"})
+    {
+        SCOPED_TRACE(solver);
+        inp.ks_solver = solver;
+        DiagoAssist::PW_DIAG_NMAX = 30;
+        hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1.0e-12, inp);
+        EXPECT_EQ(DiagoAssist::PW_DIAG_NMAX, 30);
+    }
+}
+
+TEST_F(TestHSolverPW, DiagoParamsSetsScfSolverBudgets)
+{
+    Input_para inp;
+    inp.calculation = "scf";
+    inp.pw_diag_nmax = 77;
+    for (const std::string solver : {"cg", "dav", "dav_subspace", "bpcg", "ppcg"})
+    {
+        SCOPED_TRACE(solver);
+        inp.ks_solver = solver;
+        DiagoAssist::PW_DIAG_NMAX = 30;
+        hsolver::setup_diago_params_pw<std::complex<double>, base_device::DEVICE_CPU>(0, 1, 1.0e-12, inp);
+        EXPECT_EQ(DiagoAssist::PW_DIAG_NMAX, 77);
+    }
 }
 
 int main(int argc, char** argv)
