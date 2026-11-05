@@ -447,7 +447,7 @@ void build_ST_new(ForceStressArrays& fsr,
                             // so, here we use ParaO::in_this_processor,
                             // in build_Non... use global2local_row
                             // and global2local_col directly,
-                            if (!pv.in_this_processor(iw1_all, iw2_all))
+                            if (!pv.para_2d().in_this_processor(iw1_all, iw2_all))
                             {
                                 ++iw2_all;
                                 continue;
@@ -515,14 +515,14 @@ void build_ST_new(ForceStressArrays& fsr,
                     {
                         for (int jj = 0; jj < atom1->nw * npol; ++jj)
                         {
-                            const int mu = pv.global2local_row(start1 + jj);
+                            const int mu = pv.para_2d().global2local_row(start1 + jj);
                             if (mu < 0)
                             {
                                 continue;
                             }
                             for (int kk = 0; kk < atom2->nw * npol; ++kk)
                             {
-                                const int nu = pv.global2local_col(start2 + kk);
+                                const int nu = pv.para_2d().global2local_col(start2 + kk);
                                 if (nu < 0)
                                 {
                                     continue;

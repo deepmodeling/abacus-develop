@@ -79,6 +79,9 @@ rules. Read the complete governance document before making or reviewing changes:
       guards and `#ifdef`/`#ifndef` usages of existing macros are exempt.
   21. Do not initialize member variables from `PARAM` in `.h`/`.hpp`
       files; pass the value through the constructor or a setter instead.
+  22. Print ionic-step indices one-based (starting from 1) in user-facing
+      output files, matching the `g{N}` filename suffix convention; do not
+      write zero-based step counters such as `STEP: 0` into output files.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.

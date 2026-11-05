@@ -47,7 +47,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
     int KS_num = nocc[0] + nvirt[0];
     std::vector<std::complex<double>> velocity_mo(nspin_tmp * 3 * nk * KS_num * KS_num, 0.0);
     Parallel_2D pmo;
-    LR_Util::setup_2d_division(pmo, pmat.get_block_size(), KS_num, KS_num
+    LR_Util::setup_2d_division(pmo, pmat.para_2d().get_block_size(), KS_num, KS_num
 #ifdef __MPI
         , pc.blacs_ctxt
 #endif
@@ -71,7 +71,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
     }
 
     //2. calculate v_mo = c^\dagger v c
-    std::vector<ct::Tensor> vk(nks, LR_Util::newTensor<std::complex<double>>({ pmat.get_col_size(), pmat.get_row_size() }));
+    std::vector<ct::Tensor> vk(nks, LR_Util::newTensor<std::complex<double>>({ pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size() }));
     for (int id = 0; id < 3; ++id)
     {
         for (auto& v : vk) v.zero();
@@ -84,11 +84,11 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
 
             for (int ik = is*nk; ik < (is+1)*nk; ++ik)
             {
-                hamilt::folding_HR(*vR.get_current_term_pointer(id), vk[ik].data<std::complex<double>>(), kv.kvec_d[ik], pmat.get_row_size(), 1/*column-major*/);
+                hamilt::folding_HR(*vR.get_current_term_pointer(id), vk[ik].data<std::complex<double>>(), kv.kvec_d[ik], pmat.para_2d().get_row_size(), 1/*column-major*/);
             }
         }
 #ifdef __MPI
-        LR::ao_to_mo_pblas(vk, pmat, c_psi_ks, pc, nbasis,
+        LR::ao_to_mo_pblas(vk, pmat.para_2d(), c_psi_ks, pc, nbasis,
                         nocc[0], nvirt[0], pmo, v_mo.data(),
                         false, // add_on
                         LR_Util::MO_TYPE::ALL, unit_factor);

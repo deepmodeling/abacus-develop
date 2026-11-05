@@ -67,7 +67,7 @@ TEST_F(DosPWTest,Dos1)
     const bool dos_setemax = true;
     const bool dos_setemin = true;
     const bool two_fermi = false;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const int bndpar = 1;
     const std::string global_out_dir = "./";
 
@@ -101,14 +101,14 @@ TEST_F(DosPWTest,Dos1)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("doss1g1.txt");
+		ifs.open("doss1.txt");
 		std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str, testing::HasSubstr("4801 # number of points"));
 		EXPECT_THAT(str, testing::HasSubstr("   -5.000000     0.500000     0.500000"));
 		EXPECT_THAT(str, testing::HasSubstr("   18.000000     0.000000     8.000000"));
 		EXPECT_THAT(str, testing::HasSubstr("2.849588"));
 		ifs.close();
-		remove("doss1g1.txt");
+		remove("doss1.txt");
 #ifdef __MPI
 	}
 #endif
@@ -144,7 +144,7 @@ TEST_F(DosPWTest,Dos2)
     const int nspin = 1;
     const int out_dos = 1;
     const bool two_fermi = false;
-    const bool out_app_flag = false;
+    const int out_app_flag = 0;
     const int bndpar = 1;
     const std::string global_out_dir = "./";
     const bool dos_setemax = false;
@@ -180,7 +180,7 @@ TEST_F(DosPWTest,Dos2)
 	{
 #endif
 		std::ifstream ifs;
-		ifs.open("doss1g1.txt");
+		ifs.open("doss1.txt");
 		std::string str1((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
 		EXPECT_THAT(str1, testing::HasSubstr("2526 # number of points"));
 		EXPECT_THAT(str1, testing::HasSubstr("   -5.002500     0.500000     0.500000"));
@@ -222,7 +222,7 @@ TEST_F(DosPWTest,Dos2)
         }
         EXPECT_EQ(row_count, declared_points);
 		ifs.close();
-		remove("doss1g1.txt");
+		remove("doss1.txt");
 #ifdef __MPI
 	}
 #endif

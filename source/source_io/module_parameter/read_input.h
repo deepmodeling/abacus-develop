@@ -88,6 +88,13 @@ class ReadInput
      */
     void normalize_occ_mat_options(Parameter& param);
     /**
+     * @brief Resolve out_eband and its legacy alias out_eband_terms.
+     *
+     * This is called after all INPUT values have been read so that the result
+     * does not depend on the order of keywords in the INPUT file.
+     */
+    void normalize_out_eband_alias(Parameter& param);
+    /**
      * @brief write INPUT file of txt format
      *
      * @param param parameters of ABACUS

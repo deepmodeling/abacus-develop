@@ -21,7 +21,7 @@ struct Input_para
                                         ///< "nscf" : non-self consistent calculation.
                                         ///< "relax" : cell relaxations
     bool socket_driver = false;         ///< run ABACUS as an i-PI socket client
-    std::string esolver_type = "ksdft"; ///< the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
+    std::string esolver_type = "ksdft"; ///< the energy solver: ksdft, sdft, ofdft, tddft, lj, dp, nep, snap
     /* symmetry level:
       -1, no symmetry at all;
       0, only basic time reversal would be considered;
@@ -484,12 +484,17 @@ struct Input_para
     std::vector<int> out_mat_tk = {0, 8};     ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};      ///< output L matrix in local basis.
     std::vector<int> out_mat_hs2 = {0, 8};    ///< legacy alias for text H(R) and S(R) output
-    std::vector<int> out_mat_h_t = {0, 8};    ///< output kinetic energy T(R) matrix
-    std::vector<int> out_mat_h_vnl = {0, 8};  ///< output nonlocal pseudopotential Vnl(R) matrix
-    std::vector<int> out_mat_h_vl = {0, 8};   ///< output local pseudopotential Vl(R) matrix
-    std::vector<int> out_mat_h_vh = {0, 8};   ///< output Hartree Vh(R) matrix
-    std::vector<int> out_mat_h_vxc = {0, 8};  ///< output XC Vxc(R) matrix
-    std::vector<int> out_mat_h_exx = {0, 8};  ///< output exact-exchange Vexx(R) matrix
+    std::vector<int> out_mat_h_t = {0, 8};    ///< legacy alias for out_mat_tk (kinetic T(k) matrix)
+    std::vector<int> out_mat_vnlk = {0, 8};   ///< output nonlocal pseudopotential Vnl(k) matrix
+    std::vector<int> out_mat_vlk = {0, 8};    ///< output local pseudopotential Vl(k) matrix
+    std::vector<int> out_mat_vhk = {0, 8};    ///< output Hartree Vh(k) matrix
+    std::vector<int> out_mat_vxck = {0, 8};   ///< output XC Vxc(k) matrix
+    std::vector<int> out_mat_exxk = {0, 8};   ///< output exact-exchange Vexx(k) matrix
+    std::vector<int> out_mat_h_vnl = {0, 8};  ///< legacy alias for out_mat_vnlk
+    std::vector<int> out_mat_h_vl = {0, 8};   ///< legacy alias for out_mat_vlk
+    std::vector<int> out_mat_h_vh = {0, 8};   ///< legacy alias for out_mat_vhk
+    std::vector<int> out_mat_h_vxc = {0, 8};  ///< legacy alias for out_mat_vxck
+    std::vector<int> out_mat_h_exx = {0, 8};  ///< legacy alias for out_mat_exxk
     std::vector<int> out_mat_dh = {0, 8};     ///< output dH/dR matrices with precision
     std::vector<int> out_mat_dh_t = {0, 8};   ///< output kinetic dH/dR (dT/dR) matrices
     std::vector<int> out_mat_dh_vl = {0, 8};  ///< output local pseudopotential dH/dR (dV^L/dR) matrices
@@ -500,12 +505,15 @@ struct Input_para
     bool out_mat_xc = false;                  ///< output exchange-correlation matrix in
                                               ///< KS-orbital representation.
     std::vector<int> out_mat_xc2 = {0, 8};    ///< output Vxc(R) matrix with precision
-    bool out_eband_terms = false;             ///< output the band energy terms separately
+    bool out_eband = false;                   ///< output the band energy terms separately
+    bool out_eband_terms_compat = false;      ///< legacy alias out_eband_terms for out_eband
     bool out_hr_npz = false;                  ///< output H(R) matrix in npz format
     bool out_hsr_npz = false;                 ///< output H(R) and S(R) matrices in npz format
     bool out_dm_npz = false;                  ///< output DM(R) matrix in npz format
-    bool out_app_flag = true;                ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
-                                             ///< in an append manner during MD liuyu 2023-03-20
+    int out_app_flag = 0;                   ///< 0: fixed filename, truncated and overwritten at every write;
+                                            ///< 1: append to the same fixed file; 2: write to subdirectory
+                                            ///< (PSI/, CHG/, POT/, ELF/, DOS/, DIP/, MAT/) with a g{step} suffix
+                                            ///< liuyu 2023-03-20, modified 2025-10-16
     int out_ndigits = 8;                     ///< Assuming 8 digits precision is needed for matrices output
     std::vector<int> out_mat_t = {0, 8};     ///< output T(R) matrix with precision
     bool out_element_info = false;           ///< output information of all elements
@@ -619,6 +627,11 @@ struct Input_para
     int sccs_debug = 0; // 0: silent, 1: iteration summary, 2: full diagnostics
     std::string sccs_solvent_mode = "electronic";
     std::vector<double> sccs_corespread = {0.5}; // Bohr: one value or one per atom
+    double sccs_solvent_radius = 0.0; // Bohr: solvent-aware cavity, 0 is off
+    double sccs_radial_scale = 2.0; // solvent-aware probe radius over sccs_solvent_radius
+    double sccs_radial_spread = 0.5; // Bohr: erfc spread of the solvent-aware probe
+    double sccs_filling_thr = 0.825; // probe solute fraction that fills a point
+    double sccs_filling_spread = 0.02; // erfc width of the solvent-aware filling
 
     // ==============  #Parameters (14.vdW Correction) ===========================
     // ==========================================================

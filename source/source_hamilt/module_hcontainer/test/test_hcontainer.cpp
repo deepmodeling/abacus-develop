@@ -460,8 +460,7 @@ TEST_F(HContainerTest, atompair_funcs)
         PO.atom_begin_row[i] = i*2; // nw = 2, value should be i*nw
         PO.atom_begin_col[i] = i*2;
     }
-    PO.nrow = 4;
-    PO.ncol = 4;
+    PO.para_2d().set_serial(4, 4);
     const int natom = 2;
     const int rx_shift = 1, ry_shift = 1, rz_shift = 1;
     hamilt::AtomPair<double> atom_ij(0, 0, &PO, nullptr);
@@ -647,7 +646,7 @@ TEST_F(HContainerTest, atompair_funcs)
     // get_matrix_value will use global2local_row and global2local_col in Parallel_Orbitals
     // so we need to set them
     std::ofstream ofs("test_hcontainer.log");
-    PO.set_serial(4, 4);
+    PO.para_2d().set_serial(4, 4);
     // joint 4 2*2 BaseMatrix to whole 4*4 matrix
     // lambda function for check data
     // Note: these AtomPairs only contain R=(0,0,0), so r_index is always 0

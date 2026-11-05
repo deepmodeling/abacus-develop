@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <vector>
 
 namespace SccsTest
 {
@@ -28,6 +29,8 @@ const double cavity_amplitude = 2e-5;
 
 extern int pool_size;
 extern int pool_rank;
+// Probe kernel of a cavity without the solvent-aware filling.
+const std::vector<double> no_probe;
 
 class PwTest : public testing::Test
 {

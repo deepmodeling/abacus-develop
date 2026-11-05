@@ -60,7 +60,7 @@ namespace LR
         const Parallel_2D& pc,
         const Parallel_Orbitals& pmat)
     {
-        const int& naos = pmat.get_global_row_size();
+        const int& naos = pmat.para_2d().get_global_row_size();
         const int& nocc = px.get_global_col_size();
         const int& nvirt = px.get_global_row_size();
         // 4. $\sum_i (\Omega + \epsilon_i) \sum_{ab} C_{\mu a} X_{ia} C_{\nu b} X_{ib}$
@@ -83,7 +83,7 @@ namespace LR
             {
                 eig_ks_plus_ext[occupied] = eig_ks[idx_eig_ks + occupied] + eig_ext_istate;
             }
-            edm[ik] = cal_edm_single_kpoint(X_ao_occ.data(), px_ao_occ, eig_ks_plus_ext.data(), pmat);
+            edm[ik] = cal_edm_single_kpoint(X_ao_occ.data(), px_ao_occ, eig_ks_plus_ext.data(), pmat.para_2d());
         }
         return edm;
     }
@@ -106,14 +106,14 @@ namespace LR
         const Parallel_2D& pc,
         const Parallel_Orbitals& pmat)
     {
-        const int& naos = pmat.get_global_col_size();
+        const int& naos = pmat.para_2d().get_global_col_size();
         const int& nocc = p_occ_occ.get_global_col_size();
         const int& nvirt = p_virt_occ.get_global_row_size();
         const Parallel_2D& px = p_virt_occ;
 
         // 1. c * W * c
 #ifdef __MPI
-        const std::vector<ct::Tensor> cWc = cal_dm_trans_pblas(W, p_occ_occ, c, pc, naos, nocc, nvirt, pmat, (T)1., LR_Util::MO_TYPE::OO);
+        const std::vector<ct::Tensor> cWc = cal_dm_trans_pblas(W, p_occ_occ, c, pc, naos, nocc, nvirt, pmat.para_2d(), (T)1., LR_Util::MO_TYPE::OO);
 #else
         const std::vector<ct::Tensor> cWc = cal_dm_trans_blas(W, c, nocc, nvirt, (T)1., LR_Util::MO_TYPE::OO);
 #endif
@@ -126,10 +126,10 @@ namespace LR
                 px, epsi_Z.data() + ik * px.get_local_size());
         }
 #ifdef __MPI
-        std::vector<ct::Tensor> cZc = cal_dm_trans_pblas(epsi_Z.data(), px, c, pc, naos, nocc, nvirt, pmat);
+        std::vector<ct::Tensor> cZc = cal_dm_trans_pblas(epsi_Z.data(), px, c, pc, naos, nocc, nvirt, pmat.para_2d());
         for (ct::Tensor& block : cZc)
         {
-            LR_Util::matsym(block.data<T>(), naos, pmat);
+            LR_Util::matsym(block.data<T>(), naos, pmat.para_2d());
         }
 #else
         std::vector<ct::Tensor> cZc = cal_dm_trans_blas(epsi_Z.data(), c, nocc, nvirt);
@@ -144,10 +144,10 @@ namespace LR
         // `K_cvcx` already carries the factor 2 of $W^X_{ij}=2K_{ij}[D^X]$ (see `op_K_cvcx` above),
         // `matsym` then supplies the 1/2 that turns $2\,X_\kappa K c_\lambda$ into the symmetric pair above.
 #ifdef __MPI
-        std::vector<ct::Tensor> cKc = cal_dm_trans_pblas(K_cvcx, px, c, pc, naos, nocc, nvirt, pmat, (T)1.0);
+        std::vector<ct::Tensor> cKc = cal_dm_trans_pblas(K_cvcx, px, c, pc, naos, nocc, nvirt, pmat.para_2d(), (T)1.0);
         for (ct::Tensor& block : cKc)
         {
-            LR_Util::matsym(block.data<T>(), naos, pmat);
+            LR_Util::matsym(block.data<T>(), naos, pmat.para_2d());
         }
 #else
         std::vector<ct::Tensor> cKc = cal_dm_trans_blas(K_cvcx, c, nocc, nvirt, (T)1.0);
@@ -163,13 +163,13 @@ namespace LR
         if (test_force)
         {
             std::cout << "cWc: " << std::endl;
-            LR_Util::print_value(cWc[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            LR_Util::print_value(cWc[0].data<T>(), pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size());
             std::cout << "cZc: " << std::endl;
-            LR_Util::print_value(cZc[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            LR_Util::print_value(cZc[0].data<T>(), pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size());
             std::cout << "cKc: " << std::endl;
-            LR_Util::print_value(cKc[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            LR_Util::print_value(cKc[0].data<T>(), pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size());
             std::cout << "edm term 4: " << std::endl;
-            LR_Util::print_value(edm[0].data<T>(), pmat.get_col_size(), pmat.get_row_size());
+            LR_Util::print_value(edm[0].data<T>(), pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size());
         }
         return edm + cWc + cZc + cKc;
     }
@@ -348,10 +348,10 @@ namespace LR
         auto set_dm_trans = [&dmx_buf, X, &off_x, &px, &psi_ks_spin, &pc, naos, &nocc, &nvirt, &pmat, nk, &DM_trans](const int is)->void
             {
 #ifdef __MPI
-                dmx_buf = cal_dm_trans_pblas(X + off_x[is], px[is], psi_ks_spin[is], pc, naos, nocc[is], nvirt[is], pmat);
+                dmx_buf = cal_dm_trans_pblas(X + off_x[is], px[is], psi_ks_spin[is], pc, naos, nocc[is], nvirt[is], pmat.para_2d());
                 for (auto& t: dmx_buf)
                 {
-                    LR_Util::mattrans(t.data<T>(), naos, pmat);
+                    LR_Util::mattrans(t.data<T>(), naos, pmat.para_2d());
                 }
 #else
                 dmx_buf = cal_dm_trans_blas(X + off_x[is], psi_ks_spin[is], nocc[is], nvirt[is]);

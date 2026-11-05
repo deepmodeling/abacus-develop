@@ -93,7 +93,7 @@ TEST_F(WritePdosTextTest, BasicOutput)
     }
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, out_dir, istep);
+                              emin, dos_edelta_ev, out_dir, istep, 0);
 
     const std::string str = read_file("./pdoss1.txt");
 
@@ -113,8 +113,9 @@ TEST_F(WritePdosTextTest, BasicOutput)
     remove("test_write_pdos_text.log");
 }
 
-// istep >= 0 appends g{istep+1} to the file name.
-TEST_F(WritePdosTextTest, IstepFileName)
+// mode 0 keeps a fixed name even when istep >= 0; the step only appears in
+// the record header.
+TEST_F(WritePdosTextTest, Mode0FixedNameWithStep)
 {
     GlobalV::ofs_running.open("test_write_pdos_text.log");
 
@@ -127,12 +128,12 @@ TEST_F(WritePdosTextTest, IstepFileName)
     pdos.zero_out();
 
     ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", 2);
+                              emin, dos_edelta_ev, "./", 2, 0);
 
-    const std::string str = read_file("./pdoss1g3.txt");
+    const std::string str = read_file("./pdoss1.txt");
     EXPECT_THAT(str, testing::HasSubstr("# istep: 3"));
 
-    remove("./pdoss1g3.txt");
+    remove("./pdoss1.txt");
     GlobalV::ofs_running.close();
     remove("test_write_pdos_text.log");
 }
@@ -163,7 +164,7 @@ TEST_F(WritePdosTextTest, SpinPolarized)
     }
 
     ModuleIO::write_pdos_text(*ucell, pdos_arr, nspin, nlocal, npoints,
-                              emin, dos_edelta_ev, "./", -1);
+                              emin, dos_edelta_ev, "./", -1, 0);
 
     const std::string s1 = read_file("./pdoss1.txt");
     const std::string s2 = read_file("./pdoss2.txt");
@@ -174,6 +175,70 @@ TEST_F(WritePdosTextTest, SpinPolarized)
 
     remove("./pdoss1.txt");
     remove("./pdoss2.txt");
+    GlobalV::ofs_running.close();
+    remove("test_write_pdos_text.log");
+}
+
+// ---------------------------------------------------------------------------
+// out_app_flag = 1: fixed-name files, successive calls append records.
+// ---------------------------------------------------------------------------
+TEST_F(WritePdosTextTest, Mode1FixedNameAppend)
+{
+    GlobalV::ofs_running.open("test_write_pdos_text.log");
+
+    const int nspin = 1;
+    const int nlocal = 4;
+    const int npoints = 2;
+    const double emin = 0.0;
+    const double dos_edelta_ev = 1.0;
+    const int out_app_flag = 1;
+
+    ModuleBase::matrix pdos(nlocal, npoints);
+    pdos.zero_out();
+
+    // First call: istep=0, mode 1 -> fixed name pdoss1.txt.
+    ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
+                              emin, dos_edelta_ev, "./", /*istep=*/0, out_app_flag);
+    // Second call: istep=1, mode 1 -> append to same file.
+    ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
+                              emin, dos_edelta_ev, "./", /*istep=*/1, out_app_flag);
+
+    const std::string str = read_file("./pdoss1.txt");
+    // Two istep headers present -> two appended records.
+    EXPECT_THAT(str, testing::HasSubstr("# istep: 1"));
+    EXPECT_THAT(str, testing::HasSubstr("# istep: 2"));
+    // g-suffixed file must NOT exist.
+    std::ifstream ifs("./pdoss1g1.txt");
+    EXPECT_FALSE(ifs.good());
+
+    remove("./pdoss1.txt");
+    GlobalV::ofs_running.close();
+    remove("test_write_pdos_text.log");
+}
+
+// ---------------------------------------------------------------------------
+// out_app_flag = 2: per-step g{step} filename (the only mode that adds it).
+// ---------------------------------------------------------------------------
+TEST_F(WritePdosTextTest, Mode2PerStepFile)
+{
+    GlobalV::ofs_running.open("test_write_pdos_text.log");
+
+    const int nspin = 1;
+    const int nlocal = 4;
+    const int npoints = 2;
+    const double emin = 0.0;
+    const double dos_edelta_ev = 1.0;
+    const int out_app_flag = 2;
+    ModuleBase::matrix pdos(nlocal, npoints);
+    pdos.zero_out();
+
+    ModuleIO::write_pdos_text(*ucell, &pdos, nspin, nlocal, npoints,
+                              emin, dos_edelta_ev, "./", 3, out_app_flag);
+
+    const std::string str = read_file("./pdoss1g4.txt");
+    EXPECT_THAT(str, testing::HasSubstr("# istep: 4"));
+
+    remove("./pdoss1g4.txt");
     GlobalV::ofs_running.close();
     remove("test_write_pdos_text.log");
 }

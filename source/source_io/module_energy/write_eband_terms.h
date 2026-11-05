@@ -4,10 +4,6 @@
 #include "source_base/matrix.h"
 #include "source_psi/psi.h"
 
-#include <array>
-#include <complex>
-#include <map>
-#include <utility>
 #include <vector>
 
 class Grid_Driver;
@@ -18,36 +14,30 @@ class surchem;
 class Charge;
 class K_Vectors;
 class TwoCenterBundle;
-struct Exx_Info;
 
 namespace ModulePW
 {
 class PW_Basis;
 }
 
-#ifdef __EXX
-namespace hamilt
-{
-using TAC = std::pair<int, std::array<int, 3>>;
-}
-namespace RI
-{
-template <typename T>
-class Tensor;
-}
-#endif
-
 namespace ModuleIO
 {
 
 /// @brief Write the band-decomposed energy of each Hamiltonian term
-/// (kinetic, local/nonlocal pp, Hartree, XC) in KS orbital representation.
+/// (kinetic, local/nonlocal pp, Hartree) in KS orbital representation.
+/// The XC term is handled by write_Vxc in ctrl_runner_lcao.cpp instead.
+/// @param nspin Number of spin components (1, 2 or 4)
+/// @param istep Zero-based ionic step index; written one-based in the header
+/// @param etot Total energy of the current frame in Ry
+/// @param my_rank World rank; only rank 0 writes the files
 /// @tparam TK K-point data type (double or std::complex<double>)
 /// @tparam TR Real-space data type (double or std::complex<double>)
 template <typename TK, typename TR>
 void write_eband_terms(const int nspin,
+                       const int istep,
+                       const double etot,
+                       const int my_rank,
                        const int nbasis,
-                       const int drank,
                        const Parallel_Orbitals* pv,
                        const psi::Psi<TK>& psi,
                        const UnitCell& ucell,
@@ -61,13 +51,7 @@ void write_eband_terms(const int nspin,
                        const ModuleBase::matrix& wg,
                        Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff,
-                       const TwoCenterBundle& two_center_bundle,
-                       const Exx_Info& exx_info
-#ifdef __EXX
-                       ,
-                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd,
-                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
-#endif
+                       const TwoCenterBundle& two_center_bundle
 );
 
 } // namespace ModuleIO
