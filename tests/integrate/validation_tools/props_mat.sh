@@ -250,8 +250,8 @@ run_mat_props() {
   # exchange-correlation potential
   #--------------------------------
   if ! test -z "$has_xc2" && [ $has_xc2 == 1 ]; then
-    xc2ref=Vxc_R_spin0.ref
-    xc2cal=OUT.autotest/Vxc_R_spin0.csr
+    xc2ref=vxcrs1_nao.csr.ref
+    xc2cal=OUT.autotest/vxcrs1_nao.csr
     python3 $COMPARE_SCRIPT $xc2ref $xc2cal 8
     echo "CompareVXC_R_pass $?" >>$props_result_file
   fi

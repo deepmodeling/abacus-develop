@@ -39,10 +39,10 @@ out_dmk              1    # MAT/dmk{ki}s{spin}g{step}_nao.txt (多 k); dms{spin}
 out_dmr              1    # MAT/dmrs{spin}g{step}_nao.csr
 out_hsk              1    # MAT/hk{ki}s{spin}g{step}_nao.txt, sk{ki}g{step}_nao.txt
 out_hsr              1    # MAT/hrs{spin}g{step}_nao.csr, srg{step}_nao.csr
+out_mat_ds           1    # MAT/dsxrs{spin}g{step}_nao.csr, dsyr..., dsrz...
 out_mat_l            1    # MAT/lxg{step}_nao.txt, lyg{step}_nao.txt, lzg{step}_nao.txt
 out_mat_r            1    # MAT/rrg{step}_nao.txt (single file, x/y/z components; mode 0/1 → rr_nao.txt in OUT.${suffix})
 out_mat_t            1    # MAT/trs{spin}g{step}_nao.csr
-out_mat_ds           1    # MAT/dsxrs{spin}g{step}_nao.csr, dsyr..., dsrz...
 out_mat_tk           1    # MAT/tk{ki}s{spin}g{step}_nao.txt (T(k), newer name; legacy out_mat_h_t 别名同此)
 
 out_mat_h_t          1    # MAT/tk{ki}s{spin}g{step}_nao.txt (legacy alias of out_mat_tk)
@@ -69,7 +69,7 @@ out_proj_band        1
 
 out_eband            1    # eband_vxc.txt, eband_vxc_local.txt, eband_vxc_exx.txt
 out_mat_xc           1    # eband_vxc.txt, eband_vxc_local.txt, eband_vxc_exx.txt (KS-orbital repr.)
-out_mat_xc2          1    # MAT/vxcrs{spin}g{step}_nao.csr (NAO repr., CSR)
+out_mat_xc2          1    # MAT/vxcrs{spin}_nao.csr (NAO repr., CSR)
 out_xc_r             1    # CHG/rho*.cube, vrho*.cube, etc. (Libxc real-space XC derivs.)
 
 out_freq_ion         2
