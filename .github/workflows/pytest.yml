@@ -2,6 +2,10 @@ name: Pyabacus Build and Test
 
 on:
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '.coderabbit.yaml'
 
 defaults:
   run:
