@@ -250,6 +250,7 @@ OBJS_CELL=atom_pseudo.o\
     mdcell_reader.o\
     mdcell.o\
     domain_decomposition.o\
+    domain_decomposition_ghost.o\
     cif_io.o\
     ucell_io.o\
 
