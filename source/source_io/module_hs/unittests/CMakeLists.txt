@@ -14,6 +14,9 @@ addtest(
   LIBS parameter
   SOURCES test_lat_r_csr.cpp
           ../lat_r_csr.cpp
+          ../../../source_basis/module_ao/parallel_orbitals.cpp
+          ../../../source_base/parallel_2d.cpp
+          ../../../source_base/tool_title.cpp
           ../../../source_base/global_variable.cpp
           ../../../source_base/parallel_reduce.cpp
           ../../../source_base/parallel_common.cpp

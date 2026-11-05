@@ -26,12 +26,12 @@ void PulayForceStress::cal_pulay_fs(
         const int iat = ucell.iwt2iat[i];
         for (int j = 0; j < nlocal; ++j)
         {
-            const int mu = pv.global2local_row(j);
-            const int nu = pv.global2local_col(i);
+            const int mu = pv.para_2d().global2local_row(j);
+            const int nu = pv.para_2d().global2local_col(i);
 
             if (mu >= 0 && nu >= 0)
             {
-                const int index = mu * pv.ncol + nu;
+                const int index = mu * pv.para_2d().get_col_size() + nu;
                 double sum = 0.0;
                 for (int is = 0; is < nspin; ++is) 
                 { 

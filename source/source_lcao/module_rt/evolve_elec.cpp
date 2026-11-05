@@ -45,7 +45,7 @@ void Evolve_elec<Device>::solve_psi(const std::vector<EijOutputInfo>& eij_output
     // Multi-GPU support
     CublasMpResources cublas_res;
 #ifdef __CUBLASMP
-    init_cublasmp_resources(cublas_res, MPI_COMM_WORLD, para_orb.desc);
+    init_cublasmp_resources(cublas_res, MPI_COMM_WORLD, para_orb.para_2d().get_desc());
 #endif
 
     for (int ik = 0; ik < nks; ik++)

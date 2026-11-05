@@ -60,7 +60,7 @@ template <typename TK>
 void SpinConstrain<TK>::set_ParaV(Parallel_Orbitals* ParaV_in)
 {
     this->ParaV = ParaV_in;
-    int nloc = this->ParaV->nloc;
+    int nloc = this->ParaV->para_2d().get_local_size();
     if (nloc <= 0)
     {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_ParaV", "nloc <= 0");

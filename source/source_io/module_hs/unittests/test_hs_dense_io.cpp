@@ -79,9 +79,9 @@ Parallel_2D make_serial_pv(int dim)
 void initialize_distribution(Parallel_Orbitals& pv, const int dim)
 {
 #ifdef __MPI
-    ASSERT_EQ(pv.init(dim, dim, 1, DIAG_WORLD), 0);
+    ASSERT_EQ(pv.para_2d().init(dim, dim, 1, DIAG_WORLD), 0);
 #else
-    pv.set_serial(dim, dim);
+    pv.para_2d().set_serial(dim, dim);
 #endif
 }
 
@@ -93,20 +93,20 @@ std::vector<T> distribute_matrix(const Parallel_Orbitals& pv,
                                  const std::vector<T>& global,
                                  const int dim)
 {
-    std::vector<T> local(pv.get_local_size(), T());
+    std::vector<T> local(pv.para_2d().get_local_size(), T());
     for (int i = 0; i < dim; ++i)
     {
-        const int ir = pv.global2local_row(i);
+        const int ir = pv.para_2d().global2local_row(i);
         if (ir < 0)
         {
             continue;
         }
         for (int j = 0; j < dim; ++j)
         {
-            const int ic = pv.global2local_col(j);
+            const int ic = pv.para_2d().global2local_col(j);
             if (ic >= 0)
             {
-                local[ir * pv.ncol + ic] = global[i * dim + j];
+                local[ir * pv.para_2d().get_col_size() + ic] = global[i * dim + j];
             }
         }
     }
@@ -279,7 +279,7 @@ TEST(HsDenseIoSaveMat, BinaryGammaUpperTriangle)
     const std::vector<double> local = distribute_matrix(pv, global, dim);
 
     ModuleIO::save_mat(0, local.data(), dim, true, 8, true, false, filename,
-                       pv, test_rank, "cg");
+                       pv.para_2d(), test_rank, "cg");
 
     if (test_rank == 0)
     {
@@ -312,7 +312,7 @@ TEST(HsDenseIoSaveMat, BinaryComplexUpperTriangleMpiReduction)
         = distribute_matrix(pv, global, dim);
 
     ModuleIO::save_mat(0, local.data(), dim, true, 8, true, false, filename,
-                       pv, test_rank, "cg");
+                       pv.para_2d(), test_rank, "cg");
 
     if (test_rank == 0)
     {
@@ -348,9 +348,9 @@ TEST(HsDenseIoSaveMat, BinaryAppendCompleteRecordsAndOverwrite)
         = distribute_matrix(pv, replacement, dim);
 
     ModuleIO::save_mat(0, first_local.data(), dim, true, 8, true, true,
-                       filename, pv, test_rank, "cg");
+                       filename, pv.para_2d(), test_rank, "cg");
     ModuleIO::save_mat(1, second_local.data(), dim, true, 8, true, true,
-                       filename, pv, test_rank, "cg");
+                       filename, pv.para_2d(), test_rank, "cg");
 
     if (test_rank == 0)
     {
@@ -365,7 +365,7 @@ TEST(HsDenseIoSaveMat, BinaryAppendCompleteRecordsAndOverwrite)
     MPI_Barrier(DIAG_WORLD);
 #endif
     ModuleIO::save_mat(2, replacement_local.data(), dim, true, 8, true, false,
-                       filename, pv, test_rank, "cg");
+                       filename, pv.para_2d(), test_rank, "cg");
 
     if (test_rank == 0)
     {
@@ -376,6 +376,60 @@ TEST(HsDenseIoSaveMat, BinaryAppendCompleteRecordsAndOverwrite)
     }
 
     remove_test_file(filename);
+}
+
+TEST(HsDenseIoSaveMat, AppendFalseOverwritesSameIstep)
+{
+    /// Protects against regression where an int-mode value (out_app_flag) is
+    /// passed to a bool append parameter. The older BinaryAppend test covers
+    /// cross-stepping; this one exercises the same-istep overwrite path.
+    const int dim = 2;
+    const std::string filename = "save_mat_overwrite_same_step.dat";
+    remove_test_file(filename);
+
+    Parallel_Orbitals pv;
+    initialize_distribution(pv, dim);
+    const std::vector<double> first = {1.0, 2.0, 3.0, 4.0};
+    const std::vector<double> replacement = {9.0, 10.0, 11.0, 12.0};
+    const std::vector<double> first_local = distribute_matrix(pv, first, dim);
+    const std::vector<double> replacement_local
+        = distribute_matrix(pv, replacement, dim);
+
+    // Step 1: append=true writes the full record for istep=0.
+    ModuleIO::save_mat(0, first_local.data(), dim, true, 8, true, true,
+                       filename, pv.para_2d(), test_rank, "cg");
+
+    // Step 2: append=false on the same istep must truncate the file, not
+    // append a second copy.
+    ModuleIO::save_mat(0, replacement_local.data(), dim, true, 8, true, false,
+                       filename, pv.para_2d(), test_rank, "cg");
+
+    if (test_rank == 0)
+    {
+        std::ifstream ifs(filename.c_str(), std::ios::binary);
+        ASSERT_TRUE(ifs.is_open());
+        // Exactly one record, containing the replacement values.
+        EXPECT_EQ(read_record<double>(ifs, dim), upper_triangle(replacement, dim));
+        EXPECT_EQ(ifs.peek(), std::ifstream::traits_type::eof());
+    }
+
+    remove_test_file(filename);
+}
+
+TEST(HsDenseIoSaveMat, TextPrecisionFollowsArgument)
+{
+    // The H(k) component writers forward the second INPUT value to this
+    // precision argument; a non-default value must change the printed mantissa.
+    const std::string filename = testing::TempDir() + "/save_mat_precision.dat";
+    const int dim = 2;
+    std::vector<double> mat(dim * dim, 0.0);
+    mat[0] = 1.23456789;
+    const Parallel_2D pv = make_serial_pv(dim);
+    ModuleIO::save_mat(0, mat.data(), dim, false, 5, false, false,
+                       filename, pv, 0, "genelpa", false);
+    const std::string content = read_text_file(filename);
+    EXPECT_NE(content.find("1.23457"), std::string::npos);
+    std::remove(filename.c_str());
 }
 
 // ---------------------------------------------------------------------------

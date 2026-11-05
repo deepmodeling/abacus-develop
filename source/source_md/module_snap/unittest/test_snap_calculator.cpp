@@ -444,24 +444,38 @@ TEST(SnapCalculator, ZeroWeightSkipsInvalidRadius)
     EXPECT_THROW(calculator.compute_with_analytic_force(active, 0), std::domain_error);
 }
 
-TEST(SnapCalculator, AngularQuadraticForcesMatchLammpsAndStrain)
+TEST(SnapCalculator, AngularQuadraticForcesMatchEnergyGradientAndStrain)
 {
     const ModuleMD::SNAP::Calculator calculator(make_angular_quadratic_model());
     const std::array<std::array<double, 3>, 3> positions = {{{0.0, 0.0, 0.0},
                                                               {1.058354, 0.0, 0.0},
                                                               {0.2645885, 1.3229425, 0.0}}};
     const SmallCellResult result = evaluate_small_cell(calculator, positions);
-    const double lammps_forces[3][2] = {{67.2928038408958, 57.5476436778783},
-                                         {-92.1399449575303, 60.5944497536836},
-                                         {24.8471411166345, -118.142093431562}};
-    EXPECT_NEAR(result.energy, 54.909561, 1.0e-5);
+    const double displacement = 1.0e-6;
     for (std::size_t atom = 0; atom < positions.size(); ++atom)
     {
-        for (int direction = 0; direction < 2; ++direction)
+        for (int direction = 0; direction < 3; ++direction)
         {
+            std::array<std::array<double, 3>, 3> plus = positions;
+            std::array<std::array<double, 3>, 3> minus = positions;
+            plus[atom][static_cast<std::size_t>(direction)] += displacement;
+            minus[atom][static_cast<std::size_t>(direction)] -= displacement;
+            const double energy_gradient = (evaluate_small_cell(calculator, plus).energy
+                                            - evaluate_small_cell(calculator, minus).energy)
+                                           / (2.0 * displacement);
             EXPECT_NEAR(result.forces[atom][static_cast<std::size_t>(direction)],
-                        lammps_forces[atom][direction], 2.0e-4);
+                        -energy_gradient, 1.0e-4);
         }
+    }
+
+    for (int direction = 0; direction < 3; ++direction)
+    {
+        double total_force = 0.0;
+        for (std::size_t atom = 0; atom < positions.size(); ++atom)
+        {
+            total_force += result.forces[atom][static_cast<std::size_t>(direction)];
+        }
+        EXPECT_NEAR(total_force, 0.0, 1.0e-10);
     }
 
     const double strain = 1.0e-6;

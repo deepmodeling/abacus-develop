@@ -36,13 +36,13 @@ Calculator::Calculator(const ModelData& model)
     if (model_.parameters.bzero_flag)
     {
         const std::vector<Neighbor> empty_neighbors;
-        bzero_.reserve(model_.coefficients.size());
+        self_spectra_.reserve(model_.coefficients.size());
         for (std::size_t element = 0; element < model_.coefficients.size(); ++element)
         {
             const std::vector<std::complex<double> > self_u
                 = descriptor_evaluator_.accumulate_u(empty_neighbors, element);
             const std::vector<double> self_bispectrum = descriptor_evaluator_.compute_bispectrum(self_u);
-            bzero_.push_back(self_bispectrum);
+            self_spectra_.push_back(self_bispectrum);
         }
     }
 }
@@ -67,7 +67,7 @@ EnergyResult Calculator::compute_from_u(const std::vector<std::complex<double> >
     {
         for (std::size_t index = 0; index < result.descriptor.size(); ++index)
         {
-            result.descriptor[index] -= bzero_[central_element][index];
+            result.descriptor[index] -= self_spectra_[central_element][index];
         }
     }
     const std::vector<double>& coefficients = model_.coefficients[central_element];
