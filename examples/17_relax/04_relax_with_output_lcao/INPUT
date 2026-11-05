@@ -1,45 +1,59 @@
 INPUT_PARAMETERS
 #Parameters    (General)
 suffix               autotest
-    
 nbands               8
 calculation          cell-relax
 ecutwfc              10
 scf_nmax             20
-
 basis_type           lcao
 relax_nmax           5
-
 cal_stress           1
 stress_thr           1e-6
 cal_force            1
 force_thr_ev         1.0e-3
-
 ks_solver            scalapack_gvx
 mixing_type          broyden
 mixing_beta          0.7
-
 relax_method         cg_trad
-
-pseudo_dir           ../../../tests/PP_ORB    
+pseudo_dir           ../../../tests/PP_ORB
 orbital_dir          ../../../tests/PP_ORB
-
 nspin                2
+gamma_only           0
 
-out_chg              1
-out_pot              1
-out_dmk              1
-out_dmr              1
-#out_wfc_lcao    1   // OK
-out_dos              1
-out_band             1
-out_stru             1
+out_element_info     1    # OUT.{element_label}/ (pseudopotential + orbital files)
 
-out_mat_l 1
-out_mat_r 1
-out_mat_t 1 
-#out_mat_dh 1
+out_stru             1    # STRUC/STRU{step+1}
+
+out_chg              1    # CHG/chgs{spin}g{step}.cube
+out_pot              1    # POT/pots{spin}g{step}.cube
+out_wfc_lcao         1    # PSI/wf{ki}s{spin}g{step}_nao.txt (多 k); wfs{spin}g{step}_nao.txt (gamma-only)
+
+out_dos              1    # DOS/doss{spin}g{step}.txt, pdos{spin}g{step}.txt
+out_ldos             1    # DOS/ldos_{bias}ev.cube
+out_band             1    # DOS/eigs{spin}.txt
+
+out_mul              1    # mulliken.txt
+
+out_dmk              1    # MAT/dmk{ki}s{spin}g{step}_nao.txt (多 k); dms{spin}g{step}_nao.txt (gamma-only)
+out_dmr              1    # MAT/dmrs{spin}g{step}_nao.csr
+out_hsk              1    # MAT/hk{ki}s{spin}g{step}_nao.txt, sk{ki}g{step}_nao.txt
+out_hsr              1    # MAT/hrs{spin}g{step}_nao.csr, srg{step}_nao.csr
+out_mat_l            1    # MAT/lxg{step}_nao.txt, lyg{step}_nao.txt, lzg{step}_nao.txt
+out_mat_r            1    # MAT/rxrs{spin}g{step}_nao.csr, ryrs{spin}..., rzrs{spin}...
+out_mat_t            1    # MAT/trs{spin}g{step}_nao.csr
+out_mat_ds           1    # MAT/dsxrs{spin}g{step}_nao.csr, dsyr..., dsrz...
+out_mat_tk           1    # MAT/tk{ki}s{spin}g{step}_nao.txt (T(k), newer name; legacy out_mat_h_t 别名同此)
+#out_mat_dh          1    # HAS BUGS!!! MAT/dhrxs{spin}g{step}_nao.csr, dhrys..., dhrzs...
+out_mat_h_t          1    # MAT/tk{ki}s{spin}g{step}_nao.txt (legacy alias of out_mat_tk)
+out_mat_h_vnl        1    # MAT/vnlk{ki}s{spin}g{step}_nao.txt
+out_mat_h_vl         1    # MAT/vlk{ki}s{spin}g{step}_nao.txt
+out_mat_h_vh         1    # MAT/vhk{ki}s{spin}g{step}_nao.txt
+out_mat_h_vxc        1    # MAT/vxck{ki}s{spin}g{step}_nao.txt
+
+out_eband            1    # eband_vxc.txt, eband_vxc_local.txt, eband_vxc_exx.txt
+out_mat_xc           1    # eband_vxc.txt, eband_vxc_local.txt, eband_vxc_exx.txt (KS-orbital repr.)
+out_mat_xc2          1    # MAT/vxcrs{spin}g{step}_nao.csr (NAO repr., CSR)
+out_xc_r             1    # CHG/rho*.cube, vrho*.cube, etc. (Libxc real-space XC derivs.)
 
 out_freq_ion         2
-
-out_app_flag         2
+out_app_flag         1
