@@ -108,4 +108,11 @@ void bcast_char(char* object, const int n)
 #endif
 }
 
+#ifdef __MPI
+void bcast_mpi_offset(MPI_Offset& object, const MPI_Comm& comm)
+{
+    MPI_Bcast(&object, 1, MPI_OFFSET, 0, comm);
+}
+#endif
+
 } // namespace Parallel_Common

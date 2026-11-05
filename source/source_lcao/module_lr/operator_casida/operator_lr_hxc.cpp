@@ -58,14 +58,14 @@ namespace LR
         {
         case MO_TO_AO_TYPE::CC_vo:  //[AX]^{Hxc}_{ai}=\sum_{\mu,\nu}c^*_{\mu,a}V^{Hxc}_{\mu,\nu}c_{\nu,i}
 #ifdef __MPI
-            ao_to_mo_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, this->naos, this->nocc[sl], this->nvirt[sl], this->pX[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::VO, this->factor_);
+            ao_to_mo_pblas(v_hxc_2d, this->pmat.para_2d(), psil_ks, this->pc, this->naos, this->nocc[sl], this->nvirt[sl], this->pX[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::VO, this->factor_);
 #else
             ao_to_mo_blas(v_hxc_2d, psil_ks, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::VO, this->factor_);
 #endif
             break;
         case MO_TO_AO_TYPE::CC_oo:  //[AX]^{Hxc}_{ij}=\sum_{\mu,\nu}c^*_{\mu,i}V^{Hxc}_{\mu,\nu}c_{\nu,j}
 #ifdef __MPI
-            ao_to_mo_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, this->naos, this->nocc[sl], this->nvirt[sl], this->pX[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::OO, this->factor_);
+            ao_to_mo_pblas(v_hxc_2d, this->pmat.para_2d(), psil_ks, this->pc, this->naos, this->nocc[sl], this->nvirt[sl], this->pX[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::OO, this->factor_);
 #else
             ao_to_mo_blas(v_hxc_2d, psil_ks, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::OO, this->factor_);
 #endif
@@ -73,9 +73,9 @@ namespace LR
         case MO_TO_AO_TYPE::CXC:
         {
 #ifdef __MPI
-            CVCX_virt_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
+            CVCX_virt_pblas(v_hxc_2d, this->pmat.para_2d(), psil_ks, this->pc, psi_in, this->pX[sl],
                 this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);
-            CVCX_occ_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
+            CVCX_occ_pblas(v_hxc_2d, this->pmat.para_2d(), psil_ks, this->pc, psi_in, this->pX[sl],
                 this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, -this->factor_);
 #else
             CVCX_virt_blas(v_hxc_2d, psil_ks, psi_in, this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);
@@ -85,7 +85,7 @@ namespace LR
         }
         case MO_TO_AO_TYPE::CXC_o:
 #ifdef __MPI
-            CVCX_occ_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
+            CVCX_occ_pblas(v_hxc_2d, this->pmat.para_2d(), psil_ks, this->pc, psi_in, this->pX[sl],
                 this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);
 #else
             CVCX_occ_blas(v_hxc_2d, psil_ks, psi_in, this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);

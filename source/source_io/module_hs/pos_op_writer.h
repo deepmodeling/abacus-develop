@@ -35,7 +35,7 @@ class PosOpWriter
                    const std::string& global_out_dir,
                    const std::string& global_matrix_dir,
                    const std::string& calculation,
-                   bool out_app_flag,
+                   int out_app_flag,
                    int nlocal,
                    int npol,
                    double sparse_threshold,

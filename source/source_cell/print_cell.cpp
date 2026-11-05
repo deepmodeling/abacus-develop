@@ -10,6 +10,7 @@
 #include "print_cell.h"
 #include "source_cell/mdcell.h"
 #include "source_base/formatter.h"
+#include "source_base/parallel_common.h"
 #include "source_base/tool_title.h"
 #include "source_base/tool_quit.h"
 #include "source_base/global_variable.h"
@@ -101,7 +102,8 @@ namespace unitcell
                          const bool& dpks_desc,
                          const int& iproc,
                          const ModuleBase::matrix& force,
-                         const bool& has_force)
+                         const bool& has_force,
+                         const bool  append)
     {
         ModuleBase::TITLE("UnitCell","print_stru_file");
         if (iproc != 0)
@@ -235,7 +237,12 @@ namespace unitcell
                 nat_++;
             }
         }
-        std::ofstream ofs(fn.c_str());
+        std::ios_base::openmode mode = std::ios::out;
+        if (append)
+        {
+            mode |= std::ios::app;
+        }
+        std::ofstream ofs(fn.c_str(), mode);
         ofs << str;
         ofs.close();
         return;
@@ -368,7 +375,8 @@ StruMeta make_stru_meta(const UnitCell& ucell)
 
 namespace mdcell
 {
-void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::string& fn)
+void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::string& fn,
+                     const std::string& frame_comment, const bool append)
 {
     if (stru_meta.species.size() != cell.type_labels().size()
         || stru_meta.species.size() != cell.type_masses().size()
@@ -376,24 +384,38 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
     {
         throw std::runtime_error("MDCell STRU metadata does not match the MDCell type data.");
     }
-    const std::string header = mdcell_stru_header(cell, stru_meta);
+    const std::string header = frame_comment + mdcell_stru_header(cell, stru_meta);
 #ifdef __MPI
     int rank = 0;
     const MPI_Comm comm = cell.communicator();
     MPI_Comm_rank(comm, &rank);
     int header_ok = 1;
+    MPI_Offset base_offset = 0;
+    // Write position of the first species block. Only rank 0 knows it, since
+    // only rank 0 observed the end of the pre-existing file before writing
+    // the header; the value is shared by broadcast below.
+    MPI_Offset offset = 0;
     if (rank == 0)
     {
-        const int header_file = open(fn.c_str(), O_CREAT | O_TRUNC | O_WRONLY, 0666);
+        // No O_APPEND: on Linux pwrite() ignores the given offset when the
+        // file was opened with O_APPEND. Truncate unless appending, then
+        // seek to the current end to learn the base offset.
+        const int open_flags = O_CREAT | O_WRONLY | (append ? 0 : O_TRUNC);
+        const int header_file = open(fn.c_str(), open_flags, 0666);
         if (header_file < 0)
         {
             header_ok = 0;
         }
         else
         {
-            const bool header_written = write_at(header_file, header, 0);
+            const off_t end_pos = lseek(header_file, 0, SEEK_END);
+            base_offset = end_pos >= 0 ? static_cast<MPI_Offset>(end_pos) : 0;
+            const bool header_written = end_pos >= 0 && write_at(header_file, header, base_offset);
             const bool header_closed = close(header_file) == 0;
             header_ok = header_written && header_closed;
+            // The header occupies [base_offset, base_offset + header.size()),
+            // so this is where the first species header goes.
+            offset = base_offset + static_cast<MPI_Offset>(header.size());
         }
     }
     MPI_Bcast(&header_ok, 1, MPI_INT, 0, comm);
@@ -401,6 +423,14 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
     {
         throw std::runtime_error("Unable to create MDCell restart STRU file: " + fn + ": " + std::strerror(errno));
     }
+    // Every rank must agree on the write position. Learning it from a local
+    // lseek(SEEK_END) is unsafe: MPI_Allreduce is a collective, not a barrier,
+    // so rank 0 may resume afterwards and write the first species header before
+    // another rank has seeked. That rank would then observe a larger EOF and
+    // place its atoms at a base offset shifted by the species header, corrupting
+    // the frame. Broadcast rank 0's value instead, so the position has a single
+    // authoritative source.
+    Parallel_Common::bcast_mpi_offset(offset, comm);
     MPI_Barrier(comm);
 
     const int file = open(fn.c_str(), O_WRONLY);
@@ -412,8 +442,6 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
         if (file >= 0) close(file);
         throw std::runtime_error("Unable to open MDCell restart STRU file: " + fn + ": " + std::strerror(errno));
     }
-
-    MPI_Offset offset = static_cast<MPI_Offset>(header.size());
     for (std::size_t it = 0; it < stru_meta.species.size(); ++it)
     {
         const std::string type_header = mdcell_type_header(cell, stru_meta, it);
@@ -453,7 +481,12 @@ void print_stru_file(const MDCell& cell, const StruMeta& stru_meta, const std::s
         throw std::runtime_error("Unable to close MDCell restart STRU file: " + fn + ": " + std::strerror(errno));
     }
 #else
-    std::ofstream output(fn.c_str());
+    std::ios_base::openmode mode = std::ios::out;
+    if (append)
+    {
+        mode |= std::ios::app;
+    }
+    std::ofstream output(fn.c_str(), mode);
     output << header;
     for (std::size_t it = 0; it < stru_meta.species.size(); ++it)
         output << mdcell_type_header(cell, stru_meta, it) << local_mdcell_atoms(cell, it);

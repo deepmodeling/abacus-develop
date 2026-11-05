@@ -79,7 +79,10 @@ rules. Read the complete governance document before making or reviewing changes:
       guards and `#ifdef`/`#ifndef` usages of existing macros are exempt.
   21. Do not initialize member variables from `PARAM` in `.h`/`.hpp`
       files; pass the value through the constructor or a setter instead.
-  22. Use Autotest cases for integration tests. Standalone `add_test()` drivers
+  22. Print ionic-step indices one-based (starting from 1) in user-facing
+      output files, matching the `g{N}` filename suffix convention; do not
+      write zero-based step counters such as `STEP: 0` into output files.
+  23. Use Autotest cases for integration tests. Standalone `add_test()` drivers
       require a check Autotest cannot express, a PR rationale, and compliance
       with "Integration Test Drivers" in the governance document. Autotest
       helpers are unaffected.

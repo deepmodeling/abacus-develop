@@ -17,12 +17,12 @@ int half_sum(const int left, const int right)
 
 ClebschGordanTable::ClebschGordanTable(const int twojmax)
 {
-  twojmax_ = twojmax < 0 ? 0 : twojmax;
-    for (int j1 = 0; j1 <= twojmax_; ++j1)
+    max_j_ = twojmax < 0 ? 0 : twojmax;
+    for (int j1 = 0; j1 <= max_j_; ++j1)
     {
-        for (int j2 = 0; j2 <= twojmax_; ++j2)
+        for (int j2 = 0; j2 <= max_j_; ++j2)
         {
-            for (int j = std::abs(j1 - j2); j <= std::min(twojmax_, j1 + j2); j += 2)
+            for (int j = std::abs(j1 - j2); j <= std::min(max_j_, j1 + j2); j += 2)
             {
                 for (int m1 = -j1; m1 <= j1; m1 += 2)
                 {

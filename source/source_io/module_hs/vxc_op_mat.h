@@ -29,11 +29,19 @@ namespace ModuleIO
 {
 
 /// @brief Write the Vxc matrix in KS orbital representation, useful for GW calculation
-/// including terms: local/semi-local XC, EXX, DFTU
+/// including terms: local/semi-local XC, EXX, DFTU.
+/// The band-decomposed diagonal energies (eband_vxc.txt and, with EXX,
+/// eband_vxc_local.txt and eband_vxc_exx.txt) are always written to
+/// global_out_dir; the full MO-basis matrices (vxc_nao.txt / vxck*_nao.txt)
+/// are written to mat_dir only when out_mat is true.
+/// @param istep Zero-based ionic step index; written one-based in the header
+/// @param etot Total energy of the current frame in Ry
 /// @tparam TK K-point data type (double or std::complex<double>)
 /// @tparam TR Real-space data type (double or std::complex<double>)
 template <typename TK, typename TR>
 void write_Vxc(const int nspin,
+               const int istep,
+               const double etot,
                const int nbasis,
                const int drank,
                const Parallel_Orbitals* pv,
@@ -51,6 +59,8 @@ void write_Vxc(const int nspin,
                Grid_Driver& gd,
                const bool dft_plus_u,
                const bool gamma_only,
+               const bool out_mat,
+               const std::string& mat_dir,
                const std::string& global_out_dir,
                const int out_ndigits,
                const std::string& ks_solver,

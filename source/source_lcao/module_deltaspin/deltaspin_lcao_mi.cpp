@@ -192,10 +192,10 @@ void collect_mw(ModuleBase::matrix& MecMulP,
     {
         for (size_t i=0; i < nw; ++i)
         {
-            if (pv->in_this_processor(i, i))
+            if (pv->para_2d().in_this_processor(i, i))
             {
-                const int ir = pv->global2local_row(i);
-                const int ic = pv->global2local_col(i);
+                const int ir = pv->para_2d().global2local_row(i);
+                const int ic = pv->para_2d().global2local_col(i);
                 MecMulP(isk, i) += mud(ic, ir).real();
             }
         }
@@ -210,34 +210,34 @@ void collect_mw(ModuleBase::matrix& MecMulP,
                 const int j = i / 2;
                 const int k1 = 2 * j;
                 const int k2 = 2 * j + 1;
-                if (pv->in_this_processor(k1, k1))
+                if (pv->para_2d().in_this_processor(k1, k1))
                 {
-                    const int ir = pv->global2local_row(k1);
-                    const int ic = pv->global2local_col(k1);
+                    const int ir = pv->para_2d().global2local_row(k1);
+                    const int ic = pv->para_2d().global2local_col(k1);
                     MecMulP(0, j) += mud(ic, ir).real();
                     MecMulP(3, j) += mud(ic, ir).real();
                 }
-                if (pv->in_this_processor(k1, k2))
+                if (pv->para_2d().in_this_processor(k1, k2))
                 {
-                    const int ir = pv->global2local_row(k1);
-                    const int ic = pv->global2local_col(k2);
+                    const int ir = pv->para_2d().global2local_row(k1);
+                    const int ic = pv->para_2d().global2local_col(k2);
                     // note that mud is column major
                     MecMulP(1, j) += mud(ic, ir).real();
                     // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
                     MecMulP(2, j) -= mud(ic, ir).imag();
                 }
-                if (pv->in_this_processor(k2, k1))
+                if (pv->para_2d().in_this_processor(k2, k1))
                 {
-                    const int ir = pv->global2local_row(k2);
-                    const int ic = pv->global2local_col(k1);
+                    const int ir = pv->para_2d().global2local_row(k2);
+                    const int ic = pv->para_2d().global2local_col(k1);
                     MecMulP(1, j) += mud(ic, ir).real();
                     // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
                     MecMulP(2, j) += mud(ic, ir).imag();
                 }
-                if (pv->in_this_processor(k2, k2))
+                if (pv->para_2d().in_this_processor(k2, k2))
                 {
-                    const int ir = pv->global2local_row(k2);
-                    const int ic = pv->global2local_col(k2);
+                    const int ir = pv->para_2d().global2local_row(k2);
+                    const int ic = pv->para_2d().global2local_col(k2);
                     MecMulP(0, j) += mud(ic, ir).real();
                     MecMulP(3, j) -= mud(ic, ir).real();
                 }

@@ -42,23 +42,10 @@ class EvolvePsiTest : public testing::Test
     {
         const int nlocal = 2;
         const int nband = 1;
-        const int block = 1;
-        const int zero = 0;
-        const int lld = 2;
-        int info = 0;
-        pv.para_2d().nloc = 4;
+        ASSERT_EQ(pv.para_2d().set(nlocal, nlocal, 1, ictxt), 0);
         pv.nloc_wfc = 2;
-        pv.para_2d().nrow = pv.para_2d().ncol = 2;
         pv.nrow_bands = pv.ncol_bands = 1;
-        pv.para_2d().dim0 = pv.para_2d().dim1 = pv.para_2d().nb = 1;
-        pv.para_2d().blacs_ctxt = ictxt;
-        pv.para_2d().set_coord(0, 0);
-        descinit_(pv.para_2d().desc, &nlocal, &nlocal, &block, &block, &zero, &zero, &ictxt, &lld, &info);
-        ASSERT_EQ(info, 0);
-        descinit_(pv.desc_wfc, &nlocal, &nband, &block, &block, &zero, &zero, &ictxt, &lld, &info);
-        ASSERT_EQ(info, 0);
-        descinit_(pv.desc_Eij, &nband, &nband, &block, &block, &zero, &zero, &ictxt, &lld, &info);
-        ASSERT_EQ(info, 0);
+        pv.set_desc_wfc_Eij(nlocal, nband, pv.para_2d().get_row_size());
     }
 
     void expect_endpoint_norm(const Complex* psi)

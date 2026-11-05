@@ -100,6 +100,7 @@ void write_stru(UnitCell&,
                 const bool,
                 const bool,
                 const int,
+                const bool,
                 const bool)
 {
 }

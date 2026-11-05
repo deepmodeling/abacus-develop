@@ -40,7 +40,7 @@ class ClebschGordanTable
     static double factorial(int value);
     const Entry* find(int j1, int m1, int j2, int m2, int j, int m) const;
 
-    int twojmax_;
+    int max_j_;
     std::vector<Entry> entries_;
     std::map<std::tuple<int, int, int, int, int, int>, std::size_t> entry_indices_;
 };

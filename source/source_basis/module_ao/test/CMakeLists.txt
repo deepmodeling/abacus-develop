@@ -72,10 +72,12 @@ addtest(
 
 abacus_copy_test_files(parallel_orbitals_test.sh)
 find_program(BASH bash)
-add_test(
-  NAME MODULE_AO_parallel_orbitals_test_para
-  COMMAND ${BASH} parallel_orbitals_test.sh
-          "$<TARGET_FILE:MODULE_AO_parallel_orbitals_test>"
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+if(ENABLE_MPI)
+  add_test(
+    NAME MODULE_AO_parallel_orbitals_test_para
+    COMMAND ${BASH} parallel_orbitals_test.sh
+            "$<TARGET_FILE:MODULE_AO_parallel_orbitals_test>"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif()
 
 abacus_copy_test_files(lcao_H2O)

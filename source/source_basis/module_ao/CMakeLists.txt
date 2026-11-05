@@ -15,8 +15,8 @@ if(ENABLE_LCAO)
   endif()
 
   if(BUILD_TESTING)
-    if(ENABLE_MPI)
-      add_subdirectory(test)
-    endif()
+    # These tests support both MPI and serial builds: MPI-only cases are
+    # guarded by __MPI, while the remaining cases use the serial layout.
+    add_subdirectory(test)
   endif()
 endif()
