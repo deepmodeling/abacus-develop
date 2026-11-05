@@ -143,7 +143,7 @@ void write_dh_perI(WriteDHParams& params,
                                    false,
                                    append_fk,
                                    fk,
-                                   pv,
+                                   pv.para_2d(),
                                    GlobalV::DRANK,
                                    PARAM.inp.ks_solver);
             }

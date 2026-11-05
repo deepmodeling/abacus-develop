@@ -76,10 +76,10 @@ namespace LR
             {
 #ifdef __MPI
                 dmk[is] = cal_dm_trans_pblas(X_full + off_x[is], pX_[is], psi_spin_[is], pc_,
-                    naos_, nocc_[is], nvirt_[is], pmat_);
+                    naos_, nocc_[is], nvirt_[is], pmat_.para_2d());
                 for (auto& t: dmk[is])
                 {
-                    LR_Util::matsym(t.template data<T>(), naos_, pmat_);
+                    LR_Util::matsym(t.template data<T>(), naos_, pmat_.para_2d());
                 }
 #else
                 dmk[is] = cal_dm_trans_blas(X_full + off_x[is], psi_spin_[is], nocc_[is], nvirt_[is]);
@@ -123,7 +123,7 @@ namespace LR
                     folding_HR(*this->hR_, v_2d[ik].template data<T>(), kv_.kvec_d[ik], nrow, 1);
                 }
 #ifdef __MPI
-                ao_to_mo_pblas(v_2d, pmat_, psi_spin_[tau], pc_, naos_, nocc_[tau], nvirt_[tau],
+                ao_to_mo_pblas(v_2d, pmat_.para_2d(), psi_spin_[tau], pc_, naos_, nocc_[tau], nvirt_[tau],
                     pout_[tau], out_full + off_out[tau], /*add_on=*/true, mo_type_, factor_);
 #else
                 ao_to_mo_blas(v_2d, psi_spin_[tau], nocc_[tau], nvirt_[tau],

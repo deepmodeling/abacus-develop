@@ -525,7 +525,7 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
                 // for (int ik1 = 0;ik1 < nk;++ik1)
                 //     LR_Util::print_tensor<T>(v_k_2d[ik1], "V(k)[ik=" + std::to_string(ik1) + "]", &this->pmat);
     #ifdef __MPI
-                LR::ao_to_mo_pblas(v_k_2d, this->pmat, psi_is, this->pc, this->naos,
+                LR::ao_to_mo_pblas(v_k_2d, this->pmat.para_2d(), psi_is, this->pc, this->naos,
                                 nocc[is], nvirt[is], pV_col, V_col_local.data(), false, LR_Util::MO_TYPE::VO, T(1.0));
 
                 for (int ik1 = 0; ik1 < this->nk; ++ik1) {

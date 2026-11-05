@@ -189,12 +189,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         // Mode-2 MAT/ subdirectory is created lazily at write time.
         ModuleBase::ensure_directory(global_mat_dir);
         const int precision = inp.out_dmr[1];
-        // File-name selection and append/truncate are independent decisions:
-        // mode 0 keeps the fixed filename and overwrites it at every write,
-        // mode 1 keeps the fixed filename and appends later steps, and mode 2
-        // embeds the ionic step in the g{step} filename.
-        ModuleIO::write_dmr(dm->get_dmr_vec(), &ucell, precision, pv, out_app_flag,
-				ucell.get_iat2iwt(), ucell.nat, global_mat_dir, istep, ofs_running);
+        ModuleIO::write_dmr(dm->get_dmr_vec(), &ucell, precision, pv.para_2d(), out_app_flag,
+            ucell.get_iat2iwt(), ucell.nat, global_mat_dir, istep, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -211,7 +207,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         }
         const int precision = inp.out_dmk[1];
 
-        ModuleIO::write_dmk(dm->get_dmk_vec(), kv, precision, efermis, &(ucell), pv, global_mat_dir, istep, out_app_flag, ofs_running);
+        ModuleIO::write_dmk(dm->get_dmk_vec(), kv, precision, efermis, &(ucell), pv.para_2d(),
+                            global_mat_dir, istep, out_app_flag, ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -298,7 +295,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
 
-        ModuleIO::write_hsr(hr_vec, sr, &ucell, inp.out_hsr[0], precision, pv,
+        ModuleIO::write_hsr(hr_vec, sr, &ucell, inp.out_hsr[0], precision, pv.para_2d(),
                             out_app_flag, gamma_only, ucell.get_iat2iwt(), ucell.nat, istep,
                             global_mat_dir, pelec->eferm,
                             ofs_running);
@@ -582,7 +579,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                1, // true for upper triangle matrix
                                (inp.out_app_flag == 1),
                                t_fn,
-                               pv,
+                               pv.para_2d(),
                                GlobalV::DRANK,
                                PARAM.inp.ks_solver);
 

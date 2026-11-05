@@ -161,7 +161,7 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                            false,
                            append,
                            fname,
-                           pv,
+                           pv.para_2d(),
                            drank,
                            ks_solver);
     }

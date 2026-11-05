@@ -320,6 +320,7 @@ if(ENABLE_LIBRI)
     LIBS parameter base device
     SOURCES test_restart_exx_csr.cpp ../module_restart/restart_exx_csr.cpp
             ../module_hs/hs_sparse_io.cpp ../module_hs/lat_r_csr.cpp
+            ../../source_basis/module_ao/parallel_orbitals.cpp
             tmp_mocks.cpp)
 endif()
 

@@ -88,7 +88,7 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
             }
         }
 #ifdef __MPI
-        LR::ao_to_mo_pblas(vk, pmat, c_psi_ks, pc, nbasis,
+        LR::ao_to_mo_pblas(vk, pmat.para_2d(), c_psi_ks, pc, nbasis,
                         nocc[0], nvirt[0], pmo, v_mo.data(),
                         false, // add_on
                         LR_Util::MO_TYPE::ALL, unit_factor);

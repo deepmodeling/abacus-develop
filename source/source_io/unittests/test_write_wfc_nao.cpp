@@ -195,10 +195,7 @@ class WriteWfcLcaoTest : public testing::Test
         }
 #ifdef __MPI
         pv.para_2d().init(nbasis, nbands, 1, MPI_COMM_WORLD);
-        for (int i = 0; i < 9; i++)
-        {
-            pv.desc_wfc[i] = pv.para_2d().get_desc()[i];
-        }
+        pv.set_desc_wfc_Eij(nbasis, nbands, pv.para_2d().get_row_size());
 
         // create a global PV, and distribute the psi_init to local
         Parallel_2D pv_glb;

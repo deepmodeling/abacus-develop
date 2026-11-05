@@ -34,7 +34,8 @@ endif()
 addtest(
   TARGET MODULE_LCAO_tddft_middle_hamilt_test
   LIBS parameter base device tddft_test_lib
-  SOURCES middle_hamilt_test.cpp ../middle_hamilt.cpp)
+  SOURCES middle_hamilt_test.cpp ../middle_hamilt.cpp
+          ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
   TARGET MODULE_LCAO_tddft_band_energy_test
@@ -46,12 +47,14 @@ addtest(
 addtest(
   TARGET MODULE_LCAO_tddft_norm_psi_test
   LIBS parameter base device tddft_test_lib
-  SOURCES norm_psi_test.cpp ../norm_psi.cpp)
+  SOURCES norm_psi_test.cpp ../norm_psi.cpp
+          ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
   TARGET MODULE_LCAO_tddft_upsi_test
   LIBS parameter base device tddft_test_lib
-  SOURCES upsi_test1.cpp upsi_test2.cpp upsi_test3.cpp ../upsi.cpp)
+  SOURCES upsi_test1.cpp upsi_test2.cpp upsi_test3.cpp ../upsi.cpp
+          ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
   TARGET MODULE_LCAO_tddft_propagator_test
@@ -62,7 +65,8 @@ addtest(
           ../propagator.cpp
           ../propagator_cn2.cpp
           ../propagator_taylor.cpp
-          ../propagator_etrs.cpp)
+          ../propagator_etrs.cpp
+          ../../../source_basis/module_ao/parallel_orbitals.cpp)
 
 addtest(
   TARGET MODULE_LCAO_tddft_snap_psibeta_half_test

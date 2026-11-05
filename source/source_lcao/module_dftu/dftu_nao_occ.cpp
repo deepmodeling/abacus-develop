@@ -145,21 +145,21 @@ void acc_over_kstar(OccupationMatrix& occmat,
         std::vector<std::complex<double>> srho_rot;
         if (isym < nsym)
         { // unitary space-group operation (isym==0 is the identity)
-            srho_rot = dftu_occ_symrot.rot_matrix_ao(srho_ibz, ik_ibz, kstar_size, isym, pv);
+            srho_rot = dftu_occ_symrot.rot_matrix_ao(srho_ibz, ik_ibz, kstar_size, isym, pv.para_2d());
         }
         else
         { // antiunitary element: TRS * (spatial operation), see restore_dm
             const int isym_M = ucell.symm.magnetic_nspin4 ? isym : (isym - nsym);
             if (nspin == 4)
             {
-                if (sigma_y.empty()) { sigma_y = dftu_occ_symrot.set_sigma_y_2d(pv); }
+                if (sigma_y.empty()) { sigma_y = dftu_occ_symrot.set_sigma_y_2d(pv.para_2d()); }
                 srho_rot = dftu_occ_symrot.trs_spin_rotate(
-                    dftu_occ_symrot.rot_matrix_ao(srho_ibz, ik_ibz, kstar_size, isym_M, pv, false),
-                    sigma_y, pv, 1.0);
+                    dftu_occ_symrot.rot_matrix_ao(srho_ibz, ik_ibz, kstar_size, isym_M, pv.para_2d(), false),
+                    sigma_y, pv.para_2d(), 1.0);
             }
             else
             {
-                srho_rot = dftu_occ_symrot.rot_matrix_ao(srho_ibz, ik_ibz, kstar_size, isym_M, pv, true);
+                srho_rot = dftu_occ_symrot.rot_matrix_ao(srho_ibz, ik_ibz, kstar_size, isym_M, pv.para_2d(), true);
             }
         }
         acc_for_ik(occmat, ucell, pv, srho_rot.data(), spin, l_channel);
@@ -367,7 +367,7 @@ void cal_occ_mat_k(const Parallel_Orbitals* pv,
             ModuleSymmetry::Symmetry_rotation_k::get_bvk_cells(period), period, ucell.lat);
         dftu_occ_symrot.cal_Ms(kv, ucell.symm, ucell.atoms,
             ucell.latvec, ucell.lmax, ucell.nat, ucell.iat2it, ucell.iat2ia,
-            *pv, nspin);
+            pv->para_2d(), nspin);
         dftu_occ_symrot_built = true;
     }
 

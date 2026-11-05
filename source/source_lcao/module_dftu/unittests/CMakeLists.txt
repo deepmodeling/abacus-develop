@@ -58,7 +58,12 @@ if(ENABLE_MPI)
   addtest(
     TARGET MODULE_DFTU_fs_k
     LIBS base device
-    SOURCES test_dftu_nao_fs_k.cpp)
+    SOURCES
+      test_dftu_nao_fs_k.cpp
+      ../../../source_basis/module_ao/parallel_orbitals.cpp
+      # The test constructs Parallel_Orbitals normally and links the MPI-built
+      # base library, so it must keep __MPI to match the Parallel_2D layout.
+    KEEP_FEATURE_DEFINITIONS __MPI)
 
   addtest(
     TARGET MODULE_DFTU_fs_accum

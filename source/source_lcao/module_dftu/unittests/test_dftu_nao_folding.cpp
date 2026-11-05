@@ -42,8 +42,7 @@ namespace DFTU_LCAO
 TEST(GetLinearIndexTest, RowMajor)
 {
     Parallel_Orbitals pv;
-    pv.para_2d().nrow = 3;
-    pv.para_2d().ncol = 4;
+    pv.para_2d().set_serial(3, 4);
 
     // row-major: mu * ncol + nu ("cg" is not column-major)
     EXPECT_EQ(get_linear_index("cg", 0, 0, pv), 0);
@@ -56,8 +55,7 @@ TEST(GetLinearIndexTest, RowMajor)
 TEST(GetLinearIndexTest, ColumnMajor)
 {
     Parallel_Orbitals pv;
-    pv.para_2d().nrow = 3;
-    pv.para_2d().ncol = 4;
+    pv.para_2d().set_serial(3, 4);
 
     // column-major: mu + nu * nrow
     EXPECT_EQ(get_linear_index("scalapack_gvx", 0, 0, pv), 0);

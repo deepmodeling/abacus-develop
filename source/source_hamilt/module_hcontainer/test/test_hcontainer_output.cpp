@@ -72,8 +72,6 @@ TEST_F(OutputHContainerTest, Write)
         ParaV.atom_begin_row[i] = i * 2;
         ParaV.atom_begin_col[i] = i * 2;
     }
-    ParaV.para_2d().nrow = 4;
-    ParaV.para_2d().ncol = 4;
     std::ofstream ofs("output_hcontainer.log");
     ParaV.para_2d().set_serial(4, 4);
     // std::cout << "ParaV.global2local_row = " << ParaV.global2local_row(0) << " " << ParaV.global2local_row(1) << " "
