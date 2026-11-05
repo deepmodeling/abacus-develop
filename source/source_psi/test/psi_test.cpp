@@ -9,7 +9,7 @@ TEST(PsiLargeOffsets, ThreeDimensionalAccess)
     std::unique_ptr<float[]> storage(new float[3221225472ULL]);
     float* const data = storage.get();
     data[2684354567ULL] = 42.0f;
-    for (const bool k_first : {true, false})
+    for (const bool k_first: {true, false})
     {
         const int nk = k_first ? 3 : 2;
         const int nbands = k_first ? 2 : 3;
@@ -60,7 +60,7 @@ TEST(PsiLargeOffsets, TwoDimensionalAccess)
     std::unique_ptr<float[]> storage(new float[3221225472ULL]);
     float* const data = storage.get();
     data[2147483655ULL] = 24.0f;
-    for (const bool k_first : {true, false})
+    for (const bool k_first: {true, false})
     {
         const int nk = k_first ? 1 : 3;
         const int nbands = k_first ? 3 : 1;
@@ -74,14 +74,16 @@ TEST(PsiLargeOffsets, TwoDimensionalAccess)
 class TestPsi : public ::testing::Test
 {
   public:
-      const int ink = 2;
+    const int ink = 2;
     const int inbands = 4;
     const int inbasis = 10;
     std::vector<int> ngk = {10, 10, 10, 10};
 
-    const psi::Psi<std::complex<double>>* psi_object31 = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<std::complex<double>>* psi_object31
+        = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, true);
     const psi::Psi<double>* psi_object32 = new psi::Psi<double>(ink, inbands, inbasis, ngk, true);
-    const psi::Psi<std::complex<float>>* psi_object33 = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<std::complex<float>>* psi_object33
+        = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, true);
     const psi::Psi<float>* psi_object34 = new psi::Psi<float>(ink, inbands, inbasis, ngk, true);
 };
 
@@ -136,7 +138,7 @@ TEST_F(TestPsi, get_pointer_op_zero_complex_double)
         psi_object31->fix_k(i);
         for (int j = 0; j < inbands; j++)
         {
-            for (int k = 0; k< inbasis; k++)
+            for (int k = 0; k < inbasis; k++)
             {
                 psi_object31->get_pointer()[j * inbasis + k].real(j * inbasis + k);
                 psi_object31->get_pointer()[j * inbasis + k].imag(j * inbasis + k);
@@ -180,7 +182,7 @@ TEST_F(TestPsi, get_pointer_op_zero_complex_float)
         psi_object33->fix_k(i);
         for (int j = 0; j < inbands; j++)
         {
-            for (int k = 0; k< inbasis; k++)
+            for (int k = 0; k < inbasis; k++)
             {
                 psi_object33->get_pointer()[j * inbasis + k].real(j * inbasis + k);
                 psi_object33->get_pointer()[j * inbasis + k].imag(j * inbasis + k);
@@ -214,7 +216,7 @@ TEST_F(TestPsi, get_pointer_op_zero_double)
         psi_object32->fix_k(i);
         for (int j = 0; j < inbands; j++)
         {
-            for (int k = 0; k< inbasis; k++)
+            for (int k = 0; k < inbasis; k++)
             {
                 psi_object32->get_pointer()[j * inbasis + k] = j * inbasis + k;
             }
@@ -242,7 +244,7 @@ TEST_F(TestPsi, get_pointer_op_zero_float)
         psi_object34->fix_k(i);
         for (int j = 0; j < inbands; j++)
         {
-            for (int k = 0; k< inbasis; k++)
+            for (int k = 0; k < inbasis; k++)
             {
                 psi_object34->get_pointer()[j * inbasis + k] = j * inbasis + k;
             }
@@ -263,7 +265,6 @@ TEST_F(TestPsi, get_pointer_op_zero_float)
     delete psi_object6;
 }
 
-
 TEST_F(TestPsi, size)
 {
     EXPECT_EQ(psi_object31->size(), ink * inbands * inbasis);
@@ -278,8 +279,8 @@ TEST_F(TestPsi, size)
 
 TEST_F(TestPsi, range)
 {
-    psi::Range range1(1);// k_first = 1;index_1 = 0;range_1 = 1;range_2 = 1;
-    psi::Range range2(false,1,0,0);
+    psi::Range range1(1); // k_first = 1;index_1 = 0;range_1 = 1;range_2 = 1;
+    psi::Range range2(false, 1, 0, 0);
     EXPECT_EQ(range1.range_1, 1);
     EXPECT_EQ(range1.range_2, 1);
     EXPECT_EQ(range2.k_first, 0);
@@ -310,24 +311,26 @@ TEST_F(TestPsi, range)
 
 TEST_F(TestPsi, band_first)
 {
-    const psi::Psi<std::complex<double>>* psi_band_c64 = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<std::complex<double>>* psi_band_c64
+        = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, false);
     const psi::Psi<double>* psi_band_64 = new psi::Psi<double>(ink, inbands, inbasis, ngk, false);
-    const psi::Psi<std::complex<float>>* psi_band_c32 = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<std::complex<float>>* psi_band_c32
+        = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, false);
     const psi::Psi<float>* psi_band_32 = new psi::Psi<float>(ink, inbands, inbasis, ngk, false);
 
     // set values: cover 4 different cases
-    for (int ib = 0;ib < inbands;++ib)
+    for (int ib = 0; ib < inbands; ++ib)
     {
         psi_band_c64->fix_b(ib); // 1. fix_b, fix_k, (ibasis)
-        psi_band_64->fix_b(ib);// 2. fix_kb, (ibasis)
-        psi_band_c32->fix_b(ib);// 3. fix_b, (ik, ibasis)
+        psi_band_64->fix_b(ib);  // 2. fix_kb, (ibasis)
+        psi_band_c32->fix_b(ib); // 3. fix_b, (ik, ibasis)
         EXPECT_EQ(psi_band_c64->get_current_b(), ib);
         EXPECT_EQ(psi_band_64->get_current_b(), ib);
         EXPECT_EQ(psi_band_c32->get_current_b(), ib);
         EXPECT_EQ(psi_band_c64->get_psi_bias(), ib * ink * inbasis);
         EXPECT_EQ(psi_band_64->get_psi_bias(), ib * ink * inbasis);
         EXPECT_EQ(psi_band_c32->get_psi_bias(), ib * ink * inbasis);
-        for (int ik = 0;ik < ink;++ik)
+        for (int ik = 0; ik < ink; ++ik)
         {
             psi_band_c64->fix_k(ik);
             psi_band_64->fix_kb(ik, ib);
@@ -335,13 +338,13 @@ TEST_F(TestPsi, band_first)
             EXPECT_EQ(psi_band_64->get_current_k(), ik);
             EXPECT_EQ(psi_band_c64->get_psi_bias(), (ib * ink + ik) * inbasis);
             EXPECT_EQ(psi_band_64->get_psi_bias(), (ib * ink + ik) * inbasis);
-            for (int ibas = 0;ibas < inbasis;++ibas)
+            for (int ibas = 0; ibas < inbasis; ++ibas)
             {
                 int index = ((ib * ink) + ik) * inbasis + ibas;
                 (*psi_band_c64)(ibas).real(index);
                 (*psi_band_64)(ibas) = index;
                 (*psi_band_c32)(ik, ibas).real(index);
-                (*psi_band_32)(ib, ik, ibas) = index; //4. no fix, (ib, ik, ibasis)
+                (*psi_band_32)(ib, ik, ibas) = index; // 4. no fix, (ib, ik, ibasis)
             }
         }
     }

@@ -63,8 +63,9 @@ def _numeric_tokens(path):
 
 
 def _compare_text(actual, reference, tolerance):
-    actual_lines = actual.read_text().splitlines()
-    reference_lines = reference.read_text().splitlines()
+    # ignore provenance comment lines starting with '#' on both sides
+    actual_lines = [line for line in actual.read_text().splitlines() if not line.lstrip().startswith("#")]
+    reference_lines = [line for line in reference.read_text().splitlines() if not line.lstrip().startswith("#")]
     # Some ABACUS text writers leave an extra blank record at EOF.  It has no
     # parser-visible meaning, so keep the value comparison strict while
     # ignoring only trailing empty records.
@@ -153,7 +154,8 @@ def _check_stru(path, minimum_symmetry_rows, spin_symmetry_rows=None):
             raise ProducerContractError(str(error))
 def _check_wfc_nao(path):
     """Validate the text LCAO wavefunction format consumed by GW preprocessing."""
-    lines = [line.strip() for line in path.read_text().splitlines() if line.strip()]
+    # ignore provenance comment lines starting with '#'
+    lines = [line.strip() for line in path.read_text().splitlines() if line.strip() and not line.strip().startswith("#")]
     if len(lines) < 6:
         raise ProducerContractError("{} is too short for an LCAO wavefunction".format(path))
 

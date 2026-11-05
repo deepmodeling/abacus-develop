@@ -1,7 +1,9 @@
 #include "vxc_op_tools.h"
 
+#include "source_base/formatter.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/module_out/filename.h"
+#include "source_io/module_output/provenance_header.h"
 
 #include <fstream>
 #include <iomanip>
@@ -12,7 +14,7 @@ namespace ModuleIO
 void set_para2d_MO(const Parallel_Orbitals& pv, const int nbands, Parallel_2D& p2d)
 {
 #ifdef __MPI
-    p2d.set(nbands, nbands, pv.nb, pv.blacs_ctxt);
+    p2d.set(nbands, nbands, pv.para_2d().get_block_size(), pv.get_blacs_ctxt());
 #else
     p2d.set_serial(nbands, nbands);
 #endif
@@ -35,7 +37,7 @@ std::vector<T> cVc(const T* V,
     const int i1 = 1;
     ScalapackConnector::gemm(transa, transb,
         nbasis, nbands, nbasis,
-        alpha, V, i1, i1, pv.desc,
+        alpha, V, i1, i1, pv.para_2d().get_desc(),
         c, i1, i1, pv.desc_wfc,
         beta, Vc.data(), i1, i1, pv.desc_wfc);
 #else
@@ -102,19 +104,21 @@ void write_orb_energy(const K_Vectors& kv,
                       const int nspin0,
                       const int nbands,
                       const std::vector<std::vector<double>>& e_orb,
-                      const std::string& term,
-                      const std::string& label,
+                      const std::string& out_name,
+                      const std::string& header,
                       const std::string& global_out_dir,
                       const bool app)
 {
     assert(e_orb.size() == kv.get_nks());
+    assert(!out_name.empty());
     const int nk = kv.get_nks() / nspin0;
     std::ofstream ofs;
-    const std::string out_name = term == "vxc"
-        ? (label.empty() ? "vxc.txt" : "vxc_" + label + ".txt")
-        : term + "_" + (label.empty() ? "out.dat" : label + "_out.dat");
     ofs.open(global_out_dir + out_name,
         app ? std::ios::app : std::ios::out);
+    if (!header.empty())
+    {
+        ofs << header;
+    }
     ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
     ofs << std::scientific << std::setprecision(16);
     for (int ik = 0; ik < nk; ++ik)
@@ -127,6 +131,22 @@ void write_orb_energy(const K_Vectors& kv,
             }
         }
     }
+}
+
+std::string build_eband_header(const int istep,
+                               const double etot_eV,
+                               const std::string& term_symbol,
+                               const std::string& time_stamp)
+{
+    const int istep_one_based = istep + 1;
+    const std::string step_lines = FmtCore::format(
+        "# RELAX STEP %d, Energy: %.8f eV\n"
+        "# e_{ikn} = <psi_{ikn} | %s | psi_{ikn}> in the KS orbital basis\n"
+        "# units: columns are e/2 in Hartree and e in eV; data rows follow nk, nspin0, nbands\n",
+        istep_one_based,
+        etot_eV,
+        term_symbol.c_str());
+    return provenance_header(time_stamp) + step_lines;
 }
 
 // Explicit template instantiations

@@ -17,6 +17,8 @@
 
 #include "source_base/matrix_block.h"
 #include "source_base/module_out/filename.h"
+#include "source_base/module_parallel/para_mpi_func.h"
+#include "source_base/module_parallel/para_world.h"
 #include "source_base/parallel_comm.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hamilt/hamilt.h"
@@ -37,6 +39,16 @@ namespace
 {
 /// Rank in DIAG_WORLD; 0 without MPI.
 int test_rank = 0;
+
+/// Collectively synchronize DIAG_WORLD through the guarded Parallel wrappers.
+/// Governance rule 9 forbids direct MPI calls in tests; no-op in serial builds.
+void diag_world_barrier()
+{
+#ifdef __MPI
+    const Parallel::ParaWorld world = Parallel::ParaWorld::make_mpi("test_hsk_writer", DIAG_WORLD);
+    Parallel::barrier(world);
+#endif
+}
 
 /// Output options shared by the tests (binary, no append, step 0).
 const int k_out_type = 2;
@@ -97,9 +109,9 @@ class FakeHamilt : public hamilt::Hamilt<T>
 void initialize_distribution(Parallel_Orbitals& pv, const int dim)
 {
 #ifdef __MPI
-    ASSERT_EQ(pv.init(dim, dim, 1, DIAG_WORLD), 0);
+    ASSERT_EQ(pv.para_2d().init(dim, dim, 1, DIAG_WORLD), 0);
 #else
-    pv.set_serial(dim, dim);
+    pv.para_2d().set_serial(dim, dim);
 #endif
 }
 
@@ -111,20 +123,20 @@ std::vector<T> distribute_matrix(const Parallel_Orbitals& pv,
                                  const std::vector<T>& global,
                                  const int dim)
 {
-    std::vector<T> local(pv.get_local_size(), T());
+    std::vector<T> local(pv.para_2d().get_local_size(), T());
     for (int i = 0; i < dim; ++i)
     {
-        const int ir = pv.global2local_row(i);
+        const int ir = pv.para_2d().global2local_row(i);
         if (ir < 0)
         {
             continue;
         }
         for (int j = 0; j < dim; ++j)
         {
-            const int ic = pv.global2local_col(j);
+            const int ic = pv.para_2d().global2local_col(j);
             if (ic >= 0)
             {
-                local[ir * pv.ncol + ic] = global[i * dim + j];
+                local[ir * pv.para_2d().get_col_size() + ic] = global[i * dim + j];
             }
         }
     }
@@ -428,6 +440,91 @@ TEST(WriteHsk, WritesComplexKMatrix)
         ASSERT_TRUE(sfs.is_open());
         EXPECT_EQ((read_record<std::complex<double>>(sfs, dim)),
                   upper_triangle(sk_global, dim));
+    }
+
+    remove_test_file(h_fn);
+    remove_test_file(s_fn);
+    ofs.close();
+    remove_test_file("write_hsk_running_" + std::to_string(test_rank) + ".log");
+}
+
+// ---------------------------------------------------------------------------
+// Regression guard: out_app_flag = 2 must write non-append records.
+// The old code passed the integer out_app_flag directly to save_mat's
+// boolean append argument, so a rerun in mode 2 would silently grow the
+// file instead of replacing the snapshot. This test sets out_app_flag=2,
+// writes one snapshot, swaps the FakeHamilt buffers, writes the same step
+// again, and verifies the file contains exactly one record holding the
+// second payload.
+// ---------------------------------------------------------------------------
+
+TEST(WriteHsk, Mode2OverwritesSameIstep)
+{
+    const int dim = 2;
+    const int nspin = 1;
+    const int nks = 1;
+    const int nkstot = 1;
+    const std::vector<int> ik2iktot = {0};
+    const std::vector<int> isk = {0};
+    const bool gamma_only = false;
+    const int istep = 0;
+    const int out_app_flag = 2;  // mode 2 => overwrite semantics
+    const int out_type = 2;      // binary
+    const int precision = 8;
+
+    Parallel_Orbitals pv;
+    initialize_distribution(pv, dim);
+
+    FakeHamilt<double> fake;
+    fake.dim = dim;
+
+    // Round 1 payload: H = all 1.0, S = all -1.0
+    std::vector<double> hk_first(dim * dim, 1.0);
+    std::vector<double> sk_first(dim * dim, -1.0);
+    fake.set_k_matrix(0,
+                      distribute_matrix(pv, hk_first, dim),
+                      distribute_matrix(pv, sk_first, dim));
+
+    // filename_output with out_app_flag=2 + istep=0 yields hk{ik}g{step+1}_nao.dat
+    const std::string h_fn = ModuleIO::filename_output(
+        "", "hk", "nao", 0, ik2iktot, nspin, nkstot, out_type,
+        out_app_flag, gamma_only, istep);
+    const std::string s_fn = ModuleIO::filename_output(
+        "", "sk", "nao", 0, ik2iktot, nspin, nkstot, out_type,
+        out_app_flag, gamma_only, istep);
+    remove_test_file(h_fn);
+    remove_test_file(s_fn);
+
+    std::ofstream ofs = open_running_log();
+    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+                        gamma_only, out_app_flag, istep, out_type, precision, dim,
+                        "cg", test_rank, ofs);
+
+    // Round 2 payload: different data, same out_app_flag and istep.
+    std::vector<double> hk_second(dim * dim, 9.0);
+    std::vector<double> sk_second(dim * dim, -9.0);
+    fake.set_k_matrix(0,
+                      distribute_matrix(pv, hk_second, dim),
+                      distribute_matrix(pv, sk_second, dim));
+
+    diag_world_barrier();
+    ModuleIO::write_hsk("", nspin, nks, nkstot, ik2iktot, isk, &fake, pv,
+                        gamma_only, out_app_flag, istep, out_type, precision, dim,
+                        "cg", test_rank, ofs);
+
+    if (test_rank == 0)
+    {
+        std::ifstream hfs(h_fn.c_str(), std::ios::binary);
+        ASSERT_TRUE(hfs.is_open()) << h_fn;
+        // Exactly one record — second payload — not two records stacked.
+        EXPECT_EQ(read_record<double>(hfs, dim), upper_triangle(hk_second, dim));
+        EXPECT_EQ(hfs.peek(), std::ifstream::traits_type::eof())
+            << "hk file should contain one overwrite record, not two";
+
+        std::ifstream sfs(s_fn.c_str(), std::ios::binary);
+        ASSERT_TRUE(sfs.is_open()) << s_fn;
+        EXPECT_EQ(read_record<double>(sfs, dim), upper_triangle(sk_second, dim));
+        EXPECT_EQ(sfs.peek(), std::ifstream::traits_type::eof());
     }
 
     remove_test_file(h_fn);

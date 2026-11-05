@@ -31,7 +31,7 @@ struct SparseWriteOptions
     // Runtime flags that decide file-open mode (append on md restart).
     // Must be provided explicitly by the caller instead of reading PARAM.
     std::string calculation;
-    bool out_app_flag = false;
+    int out_app_flag = 0;
 };
 
 template <typename Tdata>

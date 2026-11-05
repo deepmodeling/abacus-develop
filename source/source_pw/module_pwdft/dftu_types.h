@@ -23,11 +23,13 @@ struct OccmatOutputCfg
     int dft_plus_u;
 };
 
-/// Text format used by write_occup_m().
-enum OccmatTextFormat
+/// Electronic-step metadata recorded in an occupation-matrix snapshot.
+struct OccmatStepInfo
 {
-    OCMAT_FMT_LEGACY,   ///< legacy diagnostic layout; not accepted on input
-    OCMAT_FMT_READABLE  ///< compact human-readable layout for snapshot files
+    int istep;
+    int iter;
+    double scf_thr;
+    double drho;
 };
 
 /// Storage layout of the real (2l+1)*npol matrix when nspin == 4.

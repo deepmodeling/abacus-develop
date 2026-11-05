@@ -14,7 +14,7 @@ void KEDF_TF::set_para(int nx, double dV, double tf_weight)
 
 /**
  * @brief Get the energy of TF KEDF,
- * \f[ E_{TF} = c_{TF} * \int{\rho^{5/3} dr} \f]
+ * \f[ E_{TF} = tf_weight * c_{TF} * \int{\rho^{5/3} dr} \f]
  *
  * @param prho charge density
  * @return the energy of TF KEDF
@@ -28,7 +28,7 @@ double KEDF_TF::get_energy(const double* const* prho)
         {
             energy += std::pow(prho[0][ir], 5. / 3.);
         }
-        energy *= this->dV_ * this->c_tf_;
+        energy *= this->dV_ * this->c_tf_ * this->tf_weight_;
     }
     else if (PARAM.inp.nspin == 2)
     {

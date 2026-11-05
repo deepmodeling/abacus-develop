@@ -17,6 +17,7 @@ void ReadInput::item_others()
     // non-collinear spin-constrained
     {
         Input_Item item("sc_mag_switch");
+        item.domain.add_requirement("sc_mag_switch==true", "nspin in [2, 4]");
         item.annotation = "switch to control spin-constrained DFT";
         item.category = "Spin-Constrained DFT";
         item.type = "Boolean";
@@ -24,15 +25,6 @@ void ReadInput::item_others()
         item.default_value = "False";
         item.unit = "";
         read_sync_bool(input.sc_mag_switch);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-             if (para.input.sc_mag_switch)
-             {
-                 if (para.input.nspin != 4 && para.input.nspin != 2)
-                 {
-                     ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 2 or 4 when sc_mag_switch is true");
-                 }
-             }
-        };
         this->add_item(item);
     }
     {
@@ -48,6 +40,7 @@ void ReadInput::item_others()
     }
     {
         Input_Item item("sc_thr");
+        item.domain.set_rule("value>=0");
         item.annotation = "Convergence criterion of spin-constrained iteration (RMS) in uB";
         item.category = "Spin-Constrained DFT";
         item.type = "Real";
@@ -56,16 +49,11 @@ void ReadInput::item_others()
         item.unit = "uB";
         item.set_availability("sc_mag_switch==true");
         read_sync_double(input.sc_thr);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_thr < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "sc_thr must >= 0");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("nsc");
+        item.domain.set_rule("value>0");
         item.annotation = "Maximal number of spin-constrained iteration";
         item.category = "Spin-Constrained DFT";
         item.type = "Integer";
@@ -74,16 +62,11 @@ void ReadInput::item_others()
         item.unit = "";
         item.set_availability("sc_mag_switch==true");
         read_sync_int(input.nsc);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nsc <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "nsc must > 0");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("nsc_min");
+        item.domain.set_rule("value>0");
         item.annotation = "Minimum number of spin-constrained iteration";
         item.category = "Spin-Constrained DFT";
         item.type = "Integer";
@@ -92,16 +75,11 @@ void ReadInput::item_others()
         item.unit = "";
         item.set_availability("sc_mag_switch==true");
         read_sync_int(input.nsc_min);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nsc_min <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "nsc_min must > 0");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("alpha_trial");
+        item.domain.set_rule("value>0");
         item.annotation = "Initial trial step size for lambda in eV/uB^2";
         item.category = "Spin-Constrained DFT";
         item.type = "Real";
@@ -110,16 +88,11 @@ void ReadInput::item_others()
         item.unit = "eV/uB^2";
         item.set_availability("sc_mag_switch==true");
         read_sync_double(input.alpha_trial);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.alpha_trial <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "alpha_trial must > 0");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("sccut");
+        item.domain.set_rule("value>0");
         item.annotation = "Maximal step size for lambda in eV/uB";
         item.category = "Spin-Constrained DFT";
         item.type = "Real";
@@ -128,12 +101,6 @@ void ReadInput::item_others()
         item.unit = "eV/uB";
         item.set_availability("sc_mag_switch==true");
         read_sync_double(input.sccut);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sccut <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "sccut must > 0");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -150,6 +117,7 @@ void ReadInput::item_others()
     }
     {
         Input_Item item("sc_scf_thr");
+        item.domain.set_rule("value>0");
         item.annotation = "Density error threshold for inner loop of spin-constrained SCF";
         item.category = "Spin-Constrained DFT";
         item.type = "Real";
@@ -158,12 +126,6 @@ void ReadInput::item_others()
         item.unit = "";
         item.set_availability("sc_mag_switch==true");
         read_sync_double(input.sc_scf_thr);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_scf_thr <= 0.0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_thr must > 0.0");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -182,6 +144,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
     }
     {
         Input_Item item("sc_lambda_strategy");
+        item.domain.set_choices({"bfgs", "bfgs2", "linear_response", "augmented_lagrangian", "hybrid_delayed", "linear_scan"});
         item.annotation = "lambda update strategy for spin-constrained DFT";
         item.category = "Spin-Constrained DFT";
         item.type = "String";
@@ -195,13 +158,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.unit = "";
         item.set_availability("sc_mag_switch==true");
         read_sync_string(input.sc_lambda_strategy);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> valid = {"bfgs", "bfgs2", "linear_response", "augmented_lagrangian", "hybrid_delayed", "linear_scan"};
-            if (std::find(valid.begin(), valid.end(), para.input.sc_lambda_strategy) == valid.end())
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "sc_lambda_strategy must be bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, or linear_scan");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -839,6 +795,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
     }
     {
         Input_Item item("rdmft_power_alpha");
+        item.domain.set_rule("value>=0 and value<=1");
         item.annotation = "the alpha parameter of power-functional, g(occ_number) = occ_number^alpha"
                           " used in exx-type functionals such as muller and power";
         item.category = "Reduced Density Matrix Functional Theory";
@@ -855,12 +812,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
             else if( para.input.dft_functional == "muller" )
             {
                 para.input.rdmft_power_alpha = 0.5;
-            }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if( (para.input.rdmft_power_alpha < 0) || (para.input.rdmft_power_alpha > 1) )
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "rdmft_power_alpha should be greater than 0.0 and less than 1.0");
             }
         };
         this->add_item(item);
@@ -894,6 +845,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
     }
     {
         Input_Item item("ecutexx");
+        item.domain.set_rule("value>=0");
         item.annotation = "energy cutoff for exx calculation, Ry";
         item.category = "Exact Exchange (PW)";
         item.type = "Real";
@@ -901,29 +853,18 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.default_value = "same as ecutrho";
         item.unit = "Ry";
         read_sync_double(input.ecutexx);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ecutexx < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "ecutexx must >= 0");
-            }
-        };
         this->add_item(item);
     }
 
     {
         Input_Item item("exx_batch_size");
+        item.domain.set_rule("value>=0");
         item.annotation = "band chunk width of the EXX batched path, 0 = all bands";
         item.category = "Exact Exchange (PW)";
         item.type = "Integer";
         item.description = "Number of bands processed per round of the EXX batched FFT path. 0 (the default) processes all bands in one round, which is fastest but needs nbands * nxyz work buffers; a positive value processes the bands in chunks of that width, trading some performance for a proportionally smaller memory footprint. The result is independent of the chunking.";
         item.default_value = "0";
         read_sync_int(input.exx_batch_size);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_batch_size < 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_batch_size must >= 0");
-            }
-        };
         this->add_item(item);
     }
 
@@ -950,6 +891,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
     }
     {
         Input_Item item("exx_ene_thr");
+        item.domain.set_rule("value>0");
         item.annotation = "threshold for exx outer loop when exx_thr_type = energy";
         item.category = "Exact Exchange (PW)";
         item.type = "Real";
@@ -958,12 +900,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.unit = "Ry";
         item.set_availability("exx_thr_type==energy");
         read_sync_double(input.exx_ene_thr);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.exx_ene_thr <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "exx_ene_thr must > 0");
-            }
-        };
         this->add_item(item);
     }
 }

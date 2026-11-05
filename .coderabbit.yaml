@@ -46,6 +46,7 @@ knowledge_base:
     enabled: true
     filePatterns:
       - "AGENTS.md"
+      - "**/AGENTS.md"
       - "docs/developers_guide/agent_governance.md"
       - ".github/copilot-instructions.md"
       - ".github/instructions/*.instructions.md"

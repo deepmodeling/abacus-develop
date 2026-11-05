@@ -7,7 +7,7 @@
 void ModuleIO::write_orb_info(const UnitCell* ucell)
 {
     std::stringstream os;
-    os << PARAM.globalv.global_out_dir << "Orbital";
+    os << PARAM.globalv.global_out_dir << "nao.txt";
     std::ofstream out(os.str().c_str());
     out << std::setw(5) << "#io" 
         << std::setw(8) << "spec" 

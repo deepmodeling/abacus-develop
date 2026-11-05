@@ -56,36 +56,24 @@ std::string find_first_existing_file(const std::string& dir,
 /// of the current electronic step, followed by the occupation matrices and
 /// per-atom magnetism. When occmat_ready is false, an "N/A" placeholder is
 /// recorded instead of the matrix body (the PW path has no matrix at
-/// istep 0 / iter 1 unless it was loaded from file). The caller is
-/// responsible for truncating the file at the first electronic step of the
-/// ionic step (see prepare_ion_step_file()) and for invoking this function
-/// only after drho of the current electronic step is computed.
+/// istep 0 / iter 1 unless it was loaded from file). The caller invokes this
+/// function only after drho of the current electronic step is computed.
 ///
 /// @param dftu DFT+U object holding the occupation matrices
 /// @param ucell unit cell
 /// @param global_out_dir output directory (including the trailing separator)
-/// @param nspin number of spin components (1, 2 or 4)
-/// @param npol number of polarizations
-/// @param istep ionic-step index, starting from 0
-/// @param iter electronic-iteration index, starting from 1
+/// @param step electronic-step metadata and convergence values
 /// @param conv_esolver whether the electronic SCF is converged at this step
 /// @param occmat_ready whether the occupation matrix of this step exists;
 ///        false records an "N/A" placeholder instead of the matrix body
-/// @param scf_thr configured charge-density convergence threshold
-/// @param drho actual charge-density residual of the current electronic step
 /// @param cfg frequency configuration
 /// @param soc_layout storage layout of the nspin == 4 occupation matrix
 void append_ion_step_snapshot(const Plus_U_Base& dftu,
                               const UnitCell& ucell,
                               const std::string& global_out_dir,
-                              int nspin,
-                              int npol,
-                              int istep,
-                              int iter,
+                              const OccmatStepInfo& step,
                               bool conv_esolver,
                               bool occmat_ready,
-                              double scf_thr,
-                              double drho,
                               const OccmatOutputCfg& cfg,
                               OccmatSocLayout soc_layout);
 
@@ -113,46 +101,18 @@ void read_occup_m(const UnitCell& ucell,
 /// Implemented in dftu_base_io.cpp (only available in MPI builds).
 void local_occup_bcast(const UnitCell& ucell,
                        OccupationMatrix& occ,
-                       const std::vector<int>& l_channel,
-                       int nspin,
-                       int npol);
+                       const std::vector<int>& l_channel);
 
 /// Create (or truncate) the per-ionic-step file occ_matg{istep+1}.txt and
 /// write its header (rank 0 only).
 ///
-/// Must be called once at the first electronic step (iter == 1) of an output
-/// ionic step, before any append_ion_step_snapshot() section. Truncating here
-/// also guarantees that a rerun in the same output directory can not append
-/// snapshots of a previous calculation.
-void prepare_ion_step_file(const std::string& global_out_dir,
-                           const int istep,
-                           const OccmatOutputCfg& cfg);
-
-/// Output DFT+U information (Hubbard U/J, local occupation matrices) to the
-/// running log.
-///
-/// When cfg.out_occ_mat is true, cfg.out_freq_ion is positive and istep is an
-/// output ionic step, the per-ionic-step file occ_matg{istep+1}.txt is
-/// created: at the first electronic step (iter == 1) it is truncated and
-/// initialized with a provenance header, then append_ion_step_snapshot()
-/// appends one section per recorded electronic step.
-///
-/// Note: occ_mat.txt is NOT written here. It records the actual
-/// charge-density residual drho, which is only known after the electronic
-/// solve, so write_latest_occmat() writes it from the iter_finish stage.
-///
-/// Extracted from Plus_U_Base::output as a free function so that IO logic is
-/// decoupled from the Plus_U_Base class. The function only reads the
-/// Plus_U_Base state via public accessors; no friend declaration needed.
-void output(const Plus_U_Base& dftu,
-            const UnitCell& ucell,
-            const std::string& global_out_dir,
-            int nspin,
-            int npol,
-            int istep,
-            int iter,
-            const OccmatOutputCfg& cfg,
-            OccmatSocLayout soc_layout);
+/// At iter == 1 of an enabled output ionic step, truncates the file and writes
+/// its provenance header. Other calls are no-ops. Truncating here guarantees
+/// that a rerun can not append snapshots from a previous calculation.
+void prepare_ion_step_output(const std::string& global_out_dir,
+                             int istep,
+                             int iter,
+                             const OccmatOutputCfg& cfg);
 
 /// Overwrite occ_mat.txt with the occupation matrix of the current
 /// electronic step (rank 0 only).
@@ -167,41 +127,26 @@ void output(const Plus_U_Base& dftu,
 /// @param dftu DFT+U object holding the occupation matrices
 /// @param ucell unit cell
 /// @param global_out_dir output directory (including the trailing separator)
-/// @param nspin number of spin components (1, 2 or 4)
-/// @param npol number of polarizations
-/// @param istep ionic-step index, starting from 0
-/// @param iter electronic-iteration index, starting from 1
-/// @param scf_thr configured charge-density convergence threshold
-/// @param drho actual charge-density residual of the current electronic step
+/// @param step electronic-step metadata and convergence values
 /// @param cfg output configuration; only cfg.out_occ_mat is consulted here
 /// @param soc_layout storage layout of the nspin == 4 occupation matrix
 void write_latest_occmat(const Plus_U_Base& dftu,
                          const UnitCell& ucell,
                          const std::string& global_out_dir,
-                         int nspin,
-                         int npol,
-                         int istep,
-                         int iter,
-                         double scf_thr,
-                         double drho,
+                         const OccmatStepInfo& step,
                          const OccmatOutputCfg& cfg,
                          OccmatSocLayout soc_layout);
 
 /// Write local occupation matrices to the given stream.
 ///
-/// When diag is true, eigenvalues and magnetism are also printed; otherwise
-/// only raw matrix elements. fmt selects between the legacy token layout
-/// (used for running log) and the readable snapshot layout of
-/// occ_mat.txt and occ_matg{#}.txt. soc_layout tells how the nspin == 4
-/// storage is arranged (PW Pauli blocks or LCAO real spin-basis matrix).
+/// Writes the compact snapshot layout accepted by read_occup_m(). The output
+/// includes per-atom magnetism, electron counts and the full matrix blocks.
+/// soc_layout tells how the nspin == 4 storage is arranged (PW Pauli blocks
+/// or LCAO real spin-basis matrix).
 /// Caller is responsible for opening/closing the stream.
 void write_occup_m(const Plus_U_Base& dftu,
                    const UnitCell& ucell,
                    std::ostream& ofs,
-                   bool diag,
-                   int nspin,
-                   int npol,
-                   OccmatTextFormat fmt,
                    OccmatSocLayout soc_layout);
 
 } // namespace DFTU_BASE

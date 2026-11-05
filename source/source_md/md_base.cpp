@@ -1,6 +1,8 @@
 #include "md_base.h"
 #include "md_func.h"
+#include "source_base/parallel_cell.h"
 #include "source_cell/unitcell.h"
+#include "source_io/module_output/print_info.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -53,7 +55,24 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
         restart(global_readin_dir);
     }
 
-    MD_func::force_virial(p_esolver, step_, mdcell, decomp, potential, cal_stress, virial);
+    const int md_step = step_ + step_rst_;
+    const bool print_thermo = mdp.md_thermo_freq > 0 && md_step % mdp.md_thermo_freq == 0;
+    if (print_thermo)
+    {
+        const int stress_step = 0;
+        const int force_step = 0;
+        const int istep_print = md_step + 1;
+        ModuleIO::print_screen(stress_step, force_step, istep_print);
+    }
+
+    // The electronic solver interprets the step index as the local step of
+    // this run: istep == 0 enables its initialization branches (init_chg
+    // dm/hr, init_wfc file, PW need_subspace), so pass the local step here.
+    // The initial force evaluation of a run has no preceding MD drift, so it
+    // must not advance the charge-extrapolation history -- even on restart
+    // (step_rst_ > 0), where the extrapolation state starts degenerate.
+    const bool positions_updated = false;
+    MD_func::force_virial(p_esolver, step_, positions_updated, mdcell, decomp, potential, cal_stress, virial);
     MD_func::compute_stress(mdcell, cal_stress, virial, stress);
     if (mdcell.has_backing_unitcell())
     {
@@ -84,6 +103,8 @@ void MD_base::second_half()
 void MD_base::update_pos()
 {
     std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
+    int invalid_position = 0;
+    const double epsilon = 1.0e-12;
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
         LocalAtom& atom = atoms[i];
@@ -100,11 +121,36 @@ void MD_base::update_pos()
             }
         }
         pos = pos * mdcell.GT();
+        atom.displacement = pos;
         atom.frac += pos;
-        atom.frac.x -= std::floor(atom.frac.x);
-        atom.frac.y -= std::floor(atom.frac.y);
-        atom.frac.z -= std::floor(atom.frac.z);
+        atom.boundary_shift.set(0, 0, 0);
+        for (int k = 0; k < 3; ++k)
+        {
+            if (atom.frac[k] < 0.0)
+            {
+                ++atom.boundary_shift[k];
+                atom.frac[k] += 1.0;
+            }
+            // Keep the legacy second check: a tiny negative can round to 1.0.
+            if (atom.frac[k] >= 1.0)
+            {
+                --atom.boundary_shift[k];
+                atom.frac[k] -= 1.0;
+            }
+            if (atom.frac[k] < -epsilon || atom.frac[k] >= 1.0 + epsilon)
+            {
+                invalid_position = 1;
+            }
+        }
         atom.cart = atom.frac * mdcell.latvec();
+    }
+    ModuleBase::CommunicationDomain domain = ModuleBase::world_comm_domain();
+#ifdef __MPI
+    domain.initialize(mdcell.communicator());
+#endif
+    if (domain.max(invalid_position) != 0)
+    {
+        ModuleBase::WARNING_QUIT("MD_base::update_pos", "Movement of atom is larger than the cell length");
     }
 
     return;

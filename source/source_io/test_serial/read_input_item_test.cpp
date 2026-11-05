@@ -37,6 +37,20 @@ class TestParameters
 class InputTest : public testing::Test
 {
   protected:
+    void check_item(const ModuleIO::Input_Item& item, const Parameter& param)
+    {
+        ModuleIO::ReadInput schema(-1);
+        ModuleIO::InputValues values;
+        for (const auto& entry : schema.get_input_lists())
+        {
+            if (entry.second.domain.bound()) { values[entry.first] = entry.second.domain.value(param); }
+        }
+        std::string error = item.domain.validate_resolved(item.label, values);
+        error += item.domain.validate_requirements(item.label, values);
+        if (!error.empty()) { ModuleBase::WARNING_QUIT("ReadInput", error); }
+        if (item.check_value) { item.check_value(item, param); }
+    }
+
     std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator find_label(
         const std::string& label,
         std::vector<std::pair<std::string, ModuleIO::Input_Item>>& input_lists)
@@ -48,6 +62,72 @@ class InputTest : public testing::Test
         return it;
     }
 };
+
+TEST_F(InputTest, PwOnsiteRequiresDoublePrecision)
+{
+    ModuleIO::ReadInput readinput(0);
+    std::vector<std::pair<std::string, ModuleIO::Input_Item>>::iterator item
+        = find_label("precision", readinput.input_lists);
+    ASSERT_NE(item, readinput.input_lists.end());
+
+    Parameter param;
+    Input_para& inp = TestParameters::input(param);
+    inp.basis_type = "pw";
+    inp.esolver_type = "ksdft";
+    inp.device = "gpu";
+    inp.precision = "single";
+
+    inp.dft_plus_u = 1;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(check_item(item->second, param), ::testing::ExitedWithCode(1), "");
+    EXPECT_THAT(testing::internal::GetCapturedStdout(), testing::HasSubstr("PW DFT+U requires precision = double"));
+
+    inp.dft_plus_u = 0;
+    inp.sc_mag_switch = true;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(check_item(item->second, param), ::testing::ExitedWithCode(1), "");
+    EXPECT_THAT(testing::internal::GetCapturedStdout(), testing::HasSubstr("PW DeltaSpin requires precision = double"));
+
+    inp.esolver_type = "tddft";
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(check_item(item->second, param), ::testing::ExitedWithCode(1), "");
+    EXPECT_THAT(testing::internal::GetCapturedStdout(),
+                testing::HasSubstr("PW RT-TDDFT does not support spin constraints at any precision"));
+
+    inp.sc_mag_switch = false;
+    inp.dft_plus_u = 1;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(check_item(item->second, param), ::testing::ExitedWithCode(1), "");
+    EXPECT_THAT(testing::internal::GetCapturedStdout(),
+                testing::HasSubstr("PW RT-TDDFT does not support DFT+U at any precision"));
+
+    inp.precision = "double";
+    inp.dft_plus_u = 1;
+    check_item(item->second, param);
+    inp.dft_plus_u = 0;
+    inp.sc_mag_switch = false;
+    inp.precision = "single";
+    check_item(item->second, param);
+}
+
+TEST_F(InputTest, InvalidExplicitDomainDoesNotReachReadOrResetHooks)
+{
+    ModuleIO::ReadInput reader(0);
+    auto item = find_label("nspin", reader.input_lists);
+    ASSERT_NE(item, reader.input_lists.end());
+    item->second.str_values = {"3"};
+    bool reset_called = false;
+    item->second.reset_value = [&reset_called](const ModuleIO::Input_Item&, Parameter& input) {
+        reset_called = true;
+        TestParameters::input(input).nspin = 1;
+    };
+    reader.readvalue_items.push_back(&item->second);
+    Parameter input;
+    const std::string error = reader.prepare_input(input);
+    EXPECT_THAT(error, testing::HasSubstr("supplied '3'"));
+    EXPECT_EQ(input.inp.nspin, 1);
+    EXPECT_FALSE(reset_called);
+}
 
 TEST_F(InputTest, RelaxMethod)
 {
@@ -70,6 +150,8 @@ TEST_F(InputTest, RelaxMethod)
         EXPECT_EQ(it->second.final_value.str(), method);
     }
 
+    readinput.readvalue_items.push_back(&it->second);
+    const std::string previous_method = param.inp.relax_method;
     for (const std::vector<std::string>& invalid : {
              std::vector<std::string>{},
              std::vector<std::string>{"none"},
@@ -82,7 +164,11 @@ TEST_F(InputTest, RelaxMethod)
              std::vector<std::string>{"cg", "2", "extra"}})
     {
         it->second.str_values = invalid;
-        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        const std::string error = readinput.prepare_input(param);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'relax_method'"));
+        EXPECT_THAT(error, testing::HasSubstr("Expected one String from {cg, cg_trad, bfgs, bfgs_trad, sd, cg_bfgs, lbfgs}"));
+        EXPECT_THAT(error, testing::HasSubstr("input-main.html#relax-method"));
+        EXPECT_EQ(param.inp.relax_method, previous_method);
     }
     EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
 }
@@ -101,37 +187,47 @@ TEST_F(InputTest, PccSelectionAndUnsupportedCombinations)
     it->second.str_values = {"pcc_0d"};
     it->second.read_value(it->second, param);
     EXPECT_EQ(input.assume_isolated, "pcc_0d");
-    it->second.check_value(it->second, param);
+    check_item(it->second, param);
     input.basis_type = "lcao";
     input.calculation = "relax";
-    it->second.check_value(it->second, param);
+    check_item(it->second, param);
+    input.imp_sol = 1;
+    EXPECT_EXIT(check_item(it->second, param), testing::ExitedWithCode(1), "");
+    input.imp_sol = 2;
+    input.calculation = "scf";
+    input.cal_force = false;
+    check_item(it->second, param);
+    input.assume_isolated = "pcc_2d";
+    check_item(it->second, param);
+    input.imp_sol = 0;
+    input.assume_isolated = "pcc_0d";
     const Input_para valid = input;
 
     input.nspin = 4;
-    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(check_item(it->second, param), testing::ExitedWithCode(1), "");
     input = valid;
     input.device = "gpu";
-    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(check_item(it->second, param), testing::ExitedWithCode(1), "");
     input = valid;
     input.cal_stress = true;
-    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(check_item(it->second, param), testing::ExitedWithCode(1), "");
     input = valid;
     input.calculation = "cell-relax";
-    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(check_item(it->second, param), testing::ExitedWithCode(1), "");
     input = valid;
     input.assume_isolated = "pcc_2d";
-    it->second.check_value(it->second, param);
+    check_item(it->second, param);
     auto axis = find_label("pcc_2d_axis", readinput.input_lists);
     ASSERT_NE(axis, readinput.input_lists.end());
     for (int value = 0; value < 3; ++value)
     {
         input.pcc_2d_axis = value;
-        axis->second.check_value(axis->second, param);
+        check_item(axis->second, param);
     }
     input.pcc_2d_axis = 3;
-    EXPECT_EXIT(axis->second.check_value(axis->second, param), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(check_item(axis->second, param), testing::ExitedWithCode(1), "");
     input.assume_isolated = "pcc_invalid";
-    EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(check_item(it->second, param), testing::ExitedWithCode(1), "");
 }
 
 TEST_F(InputTest, RejectInvalidMemSaver)
@@ -157,18 +253,21 @@ TEST_F(InputTest, RejectInvalidMemSaver)
             testing::internal::CaptureStdout();
             EXPECT_EXIT(reader.read_parameters(param, filename), testing::ExitedWithCode(1), "");
             const std::string diagnostic = testing::internal::GetCapturedStdout();
-            const std::string invalid_value = "Invalid INPUT mem_saver=" + std::to_string(value);
+            const std::string invalid_value = "Invalid INPUT parameter 'mem_saver'";
             EXPECT_THAT(diagnostic, testing::HasSubstr(invalid_value));
             EXPECT_THAT(diagnostic, testing::HasSubstr("input-main.html#mem-saver"));
             if (value == 1)
             {
+                EXPECT_THAT(diagnostic, testing::HasSubstr("mem_saver=1"));
                 const std::string invalid_mode = "calculation=" + calculation;
                 EXPECT_THAT(diagnostic, testing::HasSubstr(invalid_mode));
-                EXPECT_THAT(diagnostic, testing::HasSubstr("mem_saver=0"));
+                EXPECT_THAT(diagnostic, testing::HasSubstr("Requires mem_saver==0"));
             }
             else
             {
-                EXPECT_THAT(diagnostic, testing::HasSubstr("0 or 1"));
+                const std::string supplied = "supplied '" + std::to_string(value) + "'";
+                EXPECT_THAT(diagnostic, testing::HasSubstr(supplied));
+                EXPECT_THAT(diagnostic, testing::HasSubstr("from {0, 1}"));
             }
             EXPECT_EQ(std::remove(filename.c_str()), 0);
         }
@@ -212,26 +311,26 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).calculation = "get_pchg";
         TestParameters::input(param).basis_type = "pw";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).calculation = "gen_bessel";
         TestParameters::input(param).basis_type = "lcao";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).calculation = "none";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).calculation = "socket";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -241,13 +340,13 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).socket_driver = true;
         TestParameters::input(param).calculation = "nscf";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).socket_driver = true;
         TestParameters::input(param).calculation = "scf";
-        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        EXPECT_NO_THROW(check_item(it->second, param));
         TestParameters::input(param).socket_driver = false;
     }
 
@@ -255,13 +354,13 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("esolver_type", readinput.input_lists);
         TestParameters::input(param).esolver_type = "none";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).esolver_type = "dp";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
@@ -269,7 +368,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).calculation = "scf";
         it = find_label("esolver_type", readinput.input_lists);
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("esolver_type=lr requires calculation=nscf"));
     }
@@ -277,16 +376,14 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("nspin", readinput.input_lists);
         TestParameters::input(param).noncolin = false;
         TestParameters::input(param).nspin = 3;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        output = it->second.domain.validate_resolved(it->first, {{it->first, it->second.domain.value(param)}});
+        EXPECT_THAT(output, testing::HasSubstr("Expected one Integer from {1, 2, 4}"));
     }
     { // smearing_method
         auto it = find_label("smearing_method", readinput.input_lists);
         TestParameters::input(param).smearing_method = "fix";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -305,13 +402,13 @@ TEST_F(InputTest, Item_test)
 
         TestParameters::input(param).kspacing = {0, -1, 1};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).kspacing = {0, 1, 2};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -319,7 +416,7 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("nbands", readinput.input_lists);
         TestParameters::input(param).nbands = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -358,14 +455,14 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("nelec", readinput.input_lists);
         TestParameters::input(param).nelec = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).nelec = 100;
         TestParameters::input(param).nbands = 5;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -373,14 +470,14 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("bndpar", readinput.input_lists);
         TestParameters::input(param).esolver_type = "sdft";
         TestParameters::input(param).bndpar = 1;
-        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        EXPECT_NO_THROW(check_item(it->second, param));
     }
     { // dft_plus_dmft
         auto it = find_label("dft_plus_dmft", readinput.input_lists);
         TestParameters::input(param).basis_type = "pw";
         TestParameters::input(param).dft_plus_dmft = true;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -389,17 +486,17 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).mem_saver = 1;
         it->second.str_values = {"1"};
         TestParameters::input(param).calculation = "scf";
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
 
         TestParameters::input(param).calculation = "relax";
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         EXPECT_EQ(TestParameters::input(param).mem_saver, 1);
     }
     { // gint_precision
         auto it = find_label("gint_precision", readinput.input_lists);
         TestParameters::input(param).gint_precision = "invalid";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
@@ -407,7 +504,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).basis_type = "pw";
         TestParameters::input(param).device = "cpu";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -453,7 +550,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).ecutwfc = 1;
         TestParameters::input(param).ecutrho = 1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -469,7 +566,7 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("nb2d", readinput.input_lists);
         TestParameters::input(param).nb2d = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -518,14 +615,14 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).init_wfc, "file");
         EXPECT_EQ(TestParameters::input(param).init_wfc_file_format, "txt");
-        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        EXPECT_NO_THROW(check_item(it->second, param));
 
         it->second.str_values = {"file", "binary"};
         it->second.read_value(it->second, param);
         it->second.reset_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).init_wfc, "file");
         EXPECT_EQ(TestParameters::input(param).init_wfc_file_format, "binary");
-        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        EXPECT_NO_THROW(check_item(it->second, param));
 
         it->second.str_values = {"file"};
         it->second.read_value(it->second, param);
@@ -594,14 +691,14 @@ TEST_F(InputTest, Item_test)
         it->second.read_value(it->second, param);
         it->second.reset_value(it->second, param);
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("not supported for basis_type=pw"));
 
         it->second.str_values = {"file", "binary"};
         it->second.read_value(it->second, param);
         it->second.reset_value(it->second, param);
-        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        EXPECT_NO_THROW(check_item(it->second, param));
 
         EXPECT_EQ(find_label("read_wfc_lcao", readinput.input_lists), readinput.input_lists.end());
         TestParameters::input(param).calculation = "get_wf";
@@ -620,7 +717,7 @@ TEST_F(InputTest, Item_test)
 
         TestParameters::input(param).init_chg = "none";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -673,6 +770,58 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(TestParameters::input(param).out_pot[0], 1);
         EXPECT_EQ(TestParameters::input(param).out_pot[1], 2);
     }
+    { // out_sol
+        auto it = find_label("out_sol", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_sol[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_sol[1], 8);
+        it->second.str_values = {"1", "5"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_sol[1], 5);
+
+        TestParameters::input(param).imp_sol = 2;
+        check_item(it->second, param);
+        TestParameters::input(param).imp_sol = 0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        TestParameters::input(param).imp_sol = 1;
+        TestParameters::input(param).out_sol[0] = 2;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        TestParameters::input(param).out_sol[0] = 1;
+        TestParameters::input(param).out_sol[1] = 0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        it->second.str_values = {"x"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes integers"));
+        it->second.str_values = {"6junk"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes integers"));
+        it->second.str_values = {"1", "8x"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes integers"));
+        it->second.str_values = {"1", "8", "3"};
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("out_sol takes 1 or 2 integers"));
+        TestParameters::input(param).out_sol = {0, 8};
+        TestParameters::input(param).imp_sol = 0;
+    }
     { // out_dos
         auto it = find_label("out_dos", readinput.input_lists);
         TestParameters::input(param).calculation = "get_wf";
@@ -683,14 +832,14 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).out_dos = 3;
         TestParameters::input(param).symmetry = "1";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).basis_type = "pw";
         TestParameters::input(param).out_dos = 3;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -714,7 +863,7 @@ TEST_F(InputTest, Item_test)
 
         TestParameters::input(param).out_ldos = {5, 5};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -740,13 +889,13 @@ TEST_F(InputTest, Item_test)
 
         TestParameters::input(param).stm_bias = {1.0, 0.1, 0.0};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).stm_bias = {1.0, 0.0, 2.0};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -776,7 +925,7 @@ TEST_F(InputTest, Item_test)
 
         TestParameters::input(param).ldos_line = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 0};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -813,7 +962,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).basis_type = "pw";
         TestParameters::input(param).out_proj_band = true;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -833,7 +982,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).nx = 1;
         TestParameters::input(param).ny = 0;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -842,7 +991,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).ny = 1;
         TestParameters::input(param).nz = 0;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -851,7 +1000,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).nz = 1;
         TestParameters::input(param).nx = 0;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -867,14 +1016,14 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).ndy = 0;
         it->second.str_values = {"1"};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).ndx = 1;
         TestParameters::input(param).nx = 2;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -890,14 +1039,14 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).ndz = 0;
         it->second.str_values = {"1"};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).ndy = 1;
         TestParameters::input(param).ny = 2;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -913,14 +1062,14 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).nz = 2;
         it->second.str_values = {"1"};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).ndz = 1;
         TestParameters::input(param).nz = 2;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -948,9 +1097,9 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).basis_type = "lcao";
         TestParameters::input(param).device = "gpu";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("Please use ks_solver = elpa with device = gpu"));
+        EXPECT_THAT(output, testing::HasSubstr("Requires device==cpu"));
 #ifdef __ELPA
         TestParameters::input(param).towannier90 = true;
         TestParameters::input(param).basis_type = "lcao_in_pw";
@@ -977,28 +1126,28 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).ks_solver = "genelpa";
         TestParameters::input(param).basis_type = "pw";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).ks_solver = "cg";
         TestParameters::input(param).basis_type = "lcao";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).ks_solver = "scalapack_gvx";
         TestParameters::input(param).basis_type = "lcao";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).ks_solver = "cg";
         TestParameters::input(param).basis_type = "lcao_in_pw";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1044,14 +1193,14 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).fixed_axes = "shape";
         TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).fixed_axes = "volume";
         TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1060,14 +1209,14 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).fixed_ibrav = true;
         TestParameters::input(param).relax_method = "cg_trad";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).fixed_ibrav = true;
         TestParameters::input(param).latname = "none";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1076,7 +1225,7 @@ TEST_F(InputTest, Item_test)
         TestParameters::input(param).fixed_atoms = true;
         TestParameters::input(param).calculation = "relax";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1135,7 +1284,7 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("method_sto", readinput.input_lists);
         TestParameters::input(param).method_sto = 0;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1145,31 +1294,31 @@ TEST_F(InputTest, Item_test)
 
         it->second.str_values = {"all"};
         it->second.read_value(it->second, param);
-        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        EXPECT_NO_THROW(check_item(it->second, param));
         EXPECT_EQ(TestParameters::input(param).nbands_sto, 0);
         EXPECT_EQ(TestParameters::input(param).esolver_type, "sdft");
 
         it->second.str_values = {"8"};
         it->second.read_value(it->second, param);
-        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        EXPECT_NO_THROW(check_item(it->second, param));
         EXPECT_EQ(TestParameters::input(param).nbands_sto, 8);
         EXPECT_EQ(TestParameters::input(param).esolver_type, "sdft");
 
         it->second.str_values = {"1000000"};
         it->second.read_value(it->second, param);
-        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+        EXPECT_NO_THROW(check_item(it->second, param));
 
         it->second.str_values = {"1000001"};
         it->second.read_value(it->second, param);
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         it->second.str_values = {"0"};
         it->second.read_value(it->second, param);
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
         EXPECT_EQ(TestParameters::input(param).nbands_sto, 0);
@@ -1178,7 +1327,7 @@ TEST_F(InputTest, Item_test)
         it->second.str_values = {"-1"};
         TestParameters::input(param).nbands_sto = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
@@ -1201,7 +1350,7 @@ TEST_F(InputTest, Item_test)
 
         TestParameters::input(param).basis_type = "gauss";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1231,15 +1380,15 @@ TEST_F(InputTest, Item_test)
         auto it = find_label("out_mat_r", readinput.input_lists);
         TestParameters::input(param).out_hsr[0] = 1;
         TestParameters::sys(param).gamma_only_local = true;
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
         TestParameters::input(param).out_hsr[0] = 3;
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
         TestParameters::input(param).out_hsr[0] = 0;
 
         TestParameters::input(param).esolver_type = "lcao";
         TestParameters::input(param).out_mat_r[0] = 1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("available"));
         TestParameters::input(param).out_mat_r[0] = 0;
@@ -1277,11 +1426,11 @@ TEST_F(InputTest, Item_test)
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_hsk[0], 2);
         EXPECT_EQ(TestParameters::input(param).out_hsk[1], 12);
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
 
         TestParameters::input(param).out_hsk[0] = 3;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NPZ output is not implemented"));
     }
@@ -1296,23 +1445,23 @@ TEST_F(InputTest, Item_test)
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_hsr[0], 2);
         EXPECT_EQ(TestParameters::input(param).out_hsr[1], 12);
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
 
         TestParameters::input(param).out_hsr[0] = 4;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("format must be 0, 1, 2, or 3"));
 
 #ifndef __CNPY
         TestParameters::input(param).out_hsr[0] = 3;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("ENABLE_CNPY"));
 #else
         TestParameters::input(param).out_hsr[0] = 3;
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
 #endif
     }
     { // out_hr_npz
@@ -1332,6 +1481,33 @@ TEST_F(InputTest, Item_test)
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(TestParameters::input(param).out_dm_npz, true);
+    }
+}
+
+TEST_F(InputTest, OutEbandLegacyAlias)
+{
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_eband_terms", readinput.input_lists);
+        legacy->second.str_values = {"1"};
+        legacy->second.read_value(legacy->second, param);
+
+        readinput.normalize_out_eband_alias(param);
+        EXPECT_TRUE(TestParameters::input(param).out_eband);
+    }
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto primary = find_label("out_eband", readinput.input_lists);
+        auto legacy = find_label("out_eband_terms", readinput.input_lists);
+        primary->second.str_values = {"0"};
+        legacy->second.str_values = {"1"};
+        primary->second.read_value(primary->second, param);
+        legacy->second.read_value(legacy->second, param);
+
+        readinput.normalize_out_eband_alias(param);
+        EXPECT_FALSE(TestParameters::input(param).out_eband);
     }
 }
 
@@ -1421,6 +1597,66 @@ TEST_F(InputTest, HsOutputAliases)
         EXPECT_EQ(TestParameters::input(param).out_hsk[0], 1);
     }
 }
+
+// The out_mat_h_* keywords are legacy aliases for the canonical k-space names
+// (out_mat_tk and out_mat_{vnl,vl,vh,vxc,exx}k). Verify that each alias feeds
+// the canonical value and that the canonical name wins when both are present.
+TEST_F(InputTest, HkComponentAliases)
+{
+    // alias alone populates the canonical name
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_h_t", readinput.input_lists);
+        legacy->second.str_values = {"1", "5"};
+        legacy->second.read_value(legacy->second, param);
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[1], 5);
+    }
+    // canonical name takes precedence over the alias
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_h_t", readinput.input_lists);
+        auto primary = find_label("out_mat_tk", readinput.input_lists);
+        legacy->second.str_values = {"1", "5"};
+        primary->second.str_values = {"1", "3"};
+        legacy->second.read_value(legacy->second, param);
+        primary->second.read_value(primary->second, param);
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_tk[1], 3);
+    }
+    // the five renamed terms: legacy alias -> canonical k-space name
+    const std::vector<std::pair<std::string, std::string>> aliases = {
+        {"out_mat_h_vnl", "out_mat_vnlk"},
+        {"out_mat_h_vl", "out_mat_vlk"},
+        {"out_mat_h_vh", "out_mat_vhk"},
+        {"out_mat_h_vxc", "out_mat_vxck"},
+        {"out_mat_h_exx", "out_mat_exxk"},
+    };
+    for (const auto& pair : aliases)
+    {
+        SCOPED_TRACE(pair.first);
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label(pair.first, readinput.input_lists);
+        auto primary = find_label(pair.second, readinput.input_lists);
+        legacy->second.str_values = {"1", "6"};
+        legacy->second.read_value(legacy->second, param);
+        readinput.normalize_hs_output_options(param);
+        const auto& canon = TestParameters::input(param);
+        const std::vector<int>* value = nullptr;
+        if (pair.second == "out_mat_vnlk") { value = &canon.out_mat_vnlk; }
+        else if (pair.second == "out_mat_vlk") { value = &canon.out_mat_vlk; }
+        else if (pair.second == "out_mat_vhk") { value = &canon.out_mat_vhk; }
+        else if (pair.second == "out_mat_vxck") { value = &canon.out_mat_vxck; }
+        else { value = &canon.out_mat_exxk; }
+        EXPECT_EQ((*value)[0], 1);
+        EXPECT_EQ((*value)[1], 6);
+    }
+}
 TEST_F(InputTest, PreserveExplicitMagneticMixing)
 {
     const std::string filename = testing::TempDir() + "abacus_magnetic_mixing_INPUT";
@@ -1489,7 +1725,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).out_mat_dh[0] = 1;
         TestParameters::input(param).nspin = 4;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1498,7 +1734,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).dm_to_rho = true;
         GlobalV::NPROC = 2;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
@@ -1506,7 +1742,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).gamma_only = true;
         GlobalV::NPROC = 1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
@@ -1514,7 +1750,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).dm_to_rho = true;
         GlobalV::NPROC = 1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 #endif
@@ -1528,14 +1764,14 @@ TEST_F(InputTest, Item_test2)
 
         TestParameters::input(param).out_wfc_lcao = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).out_wfc_lcao = 1;
         TestParameters::input(param).basis_type = "pw";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1543,7 +1779,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("bx", readinput.input_lists);
         TestParameters::input(param).bx = 11;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
@@ -1558,7 +1794,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("by", readinput.input_lists);
         TestParameters::input(param).by = 11;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1566,7 +1802,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("bz", readinput.input_lists);
         TestParameters::input(param).bz = 11;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1612,7 +1848,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).dip_cor_flag = true;
         TestParameters::input(param).efield_flag = false;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1622,7 +1858,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).efield_flag = true;
         TestParameters::input(param).dip_cor_flag = false;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1686,7 +1922,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("vdw_c6_unit", readinput.input_lists);
         TestParameters::input(param).vdw_C6_unit = "test";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1694,7 +1930,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("vdw_r0_unit", readinput.input_lists);
         TestParameters::input(param).vdw_R0_unit = "test";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1702,7 +1938,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("vdw_cutoff_type", readinput.input_lists);
         TestParameters::input(param).vdw_cutoff_type = "test";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1731,7 +1967,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).vdw_cutoff_radius = "-1";
         TestParameters::input(param).vdw_method = "d2";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1739,7 +1975,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("vdw_radius_unit", readinput.input_lists);
         TestParameters::input(param).vdw_radius_unit = "test";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1747,7 +1983,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("vdw_cutoff_width2", readinput.input_lists);
         TestParameters::input(param).vdw_cutoff_width2 = -1.0;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1755,7 +1991,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("vdw_cutoff_width3", readinput.input_lists);
         TestParameters::input(param).vdw_cutoff_width3 = -1.0;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1763,7 +1999,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("vdw_cn_thr", readinput.input_lists);
         TestParameters::input(param).vdw_cn_thr = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1771,7 +2007,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("vdw_cn_thr_unit", readinput.input_lists);
         TestParameters::input(param).vdw_cn_thr_unit = "test";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1791,7 +2027,7 @@ TEST_F(InputTest, Item_test2)
 
         TestParameters::input(param).vdw_cutoff_period = {-1, 1, 1};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1880,7 +2116,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("exx_hybrid_step", readinput.input_lists);
         TestParameters::input(param).exx_hybrid_step = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1964,7 +2200,7 @@ TEST_F(InputTest, Item_test2)
 
         TestParameters::input(param).exx_ccp_rmesh_times = "-1";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1972,7 +2208,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("exx_opt_orb_ecut", readinput.input_lists);
         TestParameters::input(param).exx_opt_orb_ecut = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1980,7 +2216,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("exx_opt_orb_tolerence", readinput.input_lists);
         TestParameters::input(param).exx_opt_orb_tolerence = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -1995,7 +2231,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("rpa_ccp_rmesh_times", readinput.input_lists);
         TestParameters::input(param).rpa_ccp_rmesh_times = 0;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2011,16 +2247,40 @@ TEST_F(InputTest, Item_test2)
         for (const std::string symmetry : {"-1", "0", "1"})
         {
             TestParameters::input(param).symmetry = symmetry;
-            it->second.check_value(it->second, param);
+            check_item(it->second, param);
         }
         TestParameters::input(param).out_librpa_ver = 0;
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
 
         TestParameters::input(param).out_librpa_ver = 2;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // independent smoothing and radius switches
+        const auto cut_mode_item = find_label("rpa_cut_coulomb", readinput.input_lists);
+        const auto cut_radius_item = find_label("rpa_cut_radius", readinput.input_lists);
+        const auto cut_width_item = find_label("rpa_cut_width", readinput.input_lists);
+        ASSERT_NE(cut_mode_item, readinput.input_lists.end());
+        ASSERT_NE(cut_radius_item, readinput.input_lists.end());
+        ASSERT_NE(cut_width_item, readinput.input_lists.end());
+        EXPECT_EQ(TestParameters::input(param).rpa_cut_coulomb, "hard");
+        EXPECT_EQ(TestParameters::input(param).rpa_cut_radius, "legacy");
+        TestParameters::input(param).rpa_cut_coulomb = "log_erfc";
+        TestParameters::input(param).rpa_cut_radius = "inscribed";
+        check_item(cut_mode_item->second, param);
+        check_item(cut_radius_item->second, param);
+        check_item(cut_width_item->second, param);
+        TestParameters::input(param).rpa_cut_coulomb = "invalid";
+        EXPECT_EXIT(check_item(cut_mode_item->second, param), ::testing::ExitedWithCode(1), "");
+        TestParameters::input(param).rpa_cut_radius = "invalid";
+        EXPECT_EXIT(check_item(cut_radius_item->second, param), ::testing::ExitedWithCode(1), "");
+        TestParameters::input(param).rpa_cut_width = 1.0;
+        EXPECT_EXIT(check_item(cut_width_item->second, param), ::testing::ExitedWithCode(1), "");
+        TestParameters::input(param).rpa_cut_coulomb = "hard";
+        TestParameters::input(param).rpa_cut_radius = "legacy";
+        TestParameters::input(param).rpa_cut_width = 1.091868692359;
     }
     { // berry_phase
         auto it = find_label("berry_phase", readinput.input_lists);
@@ -2031,20 +2291,20 @@ TEST_F(InputTest, Item_test2)
 
         TestParameters::input(param).gdir = 0;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).calculation = "scf";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).basis_type = "lcao_in_pw";
         TestParameters::input(param).calculation = "nscf";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
     }
     { // towannier90
@@ -2054,14 +2314,14 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).nspin = 2;
         TestParameters::input(param).wannier_spin = "none";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("towannier90"));
 
         TestParameters::input(param).towannier90 = true;
         TestParameters::input(param).calculation = "scf";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("towannier90"));
     }
@@ -2102,7 +2362,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).basis_type = "pw";
         GlobalV::NPROC = 1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
@@ -2111,7 +2371,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).basis_type = "lcao";
         GlobalV::NPROC = 1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
@@ -2120,7 +2380,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).basis_type = "pw";
         GlobalV::NPROC = 2;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2150,17 +2410,17 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).ntype = 2;
         it->second.str_values = {"1.0", "2.0"};
         TestParameters::sys(param).hubbard_u = {1.0, 2.0};
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
         TestParameters::input(param).ntype = 3;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).ntype = 2;
         TestParameters::sys(param).hubbard_u = {1.0, -1.0};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2169,17 +2429,17 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).ntype = 2;
         it->second.str_values = {"1", "2"};
         TestParameters::input(param).l_channel = {1, 2};
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
         TestParameters::input(param).ntype = 3;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).ntype = 2;
         TestParameters::input(param).l_channel = {1, 4};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2192,7 +2452,7 @@ TEST_F(InputTest, Item_test2)
 
         TestParameters::input(param).bessel_nao_ecut = "-1";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2200,7 +2460,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("bessel_nao_rcut", readinput.input_lists);
         TestParameters::input(param).bessel_nao_rcuts = {-1};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2213,7 +2473,7 @@ TEST_F(InputTest, Item_test2)
 
         TestParameters::input(param).bessel_descriptor_ecut = "-1";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2221,7 +2481,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("bessel_descriptor_rcut", readinput.input_lists);
         TestParameters::input(param).bessel_descriptor_rcut = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2229,13 +2489,13 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("sc_mag_switch", readinput.input_lists);
         TestParameters::input(param).sc_mag_switch = true;
         // Since sc_mag_switch check is disabled, just call the function without expecting exit
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
     }
     { // sc_thr
         auto it = find_label("sc_thr", readinput.input_lists);
         TestParameters::input(param).sc_thr = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2243,7 +2503,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("nsc", readinput.input_lists);
         TestParameters::input(param).nsc = 0;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2251,7 +2511,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("nsc_min", readinput.input_lists);
         TestParameters::input(param).nsc_min = 0;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2259,7 +2519,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("alpha_trial", readinput.input_lists);
         TestParameters::input(param).alpha_trial = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2267,7 +2527,7 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("sccut", readinput.input_lists);
         TestParameters::input(param).sccut = -1;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2275,14 +2535,14 @@ TEST_F(InputTest, Item_test2)
         auto it = find_label("sc_scf_thr", readinput.input_lists);
         TestParameters::input(param).sc_scf_thr = -1e-3;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // qo_thr
         auto it = find_label("qo_thr", readinput.input_lists);
         TestParameters::input(param).qo_thr = 1e-5;
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
     }
     { // qo_strategy
         auto it = find_label("qo_strategy", readinput.input_lists);
@@ -2344,13 +2604,13 @@ TEST_F(InputTest, Item_test2)
 
         TestParameters::input(param).qo_screening_coeff = {0.2, -0.1};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).qo_screening_coeff = {0.2, 1e-8};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2404,7 +2664,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).esolver_type = "lj";
         TestParameters::input(param).mdp.lj_rule = 3;
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2415,14 +2675,14 @@ TEST_F(InputTest, Item_test2)
         it->second.str_values = {"1.0", "2.0"};
         TestParameters::input(param).mdp.lj_rcut = {1.0, 2.0};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         TestParameters::input(param).mdp.lj_rcut = {1.0, 2.0, -1.0};
         it->second.str_values = {"1.0", "2.0", "-1.0"};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2433,7 +2693,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).mdp.lj_epsilon = {1.0};
         it->second.str_values = {"1.0"};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2444,7 +2704,7 @@ TEST_F(InputTest, Item_test2)
         TestParameters::input(param).mdp.lj_sigma = {1.0};
         it->second.str_values = {"1.0"};
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
@@ -2455,21 +2715,21 @@ TEST_F(InputTest, Item_test2)
         for (const std::string solver : { "cg", "lapack" })
         {
             TestParameters::input(param).lr_grad_solver = solver;
-            it->second.check_value(it->second, param);   // accepted in every build
+            check_item(it->second, param);   // accepted in every build
         }
         TestParameters::input(param).lr_grad_solver = "gmres";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("lr_grad_solver must be cg, lapack, scalapack or scalapack_chol"));
         for (const std::string solver : { "scalapack", "scalapack_chol" })
         {
             TestParameters::input(param).lr_grad_solver = solver;
 #ifdef __MPI
-            it->second.check_value(it->second, param);
+            check_item(it->second, param);
 #else
             testing::internal::CaptureStdout();
-            EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+            EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
             output = testing::internal::GetCapturedStdout();
             EXPECT_THAT(output, testing::HasSubstr("needs an MPI build"));
 #endif
@@ -2477,7 +2737,7 @@ TEST_F(InputTest, Item_test2)
         // Removed solver names are rejected independently of MPI/ELPA build options.
         TestParameters::input(param).lr_grad_solver = "elpa";
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("elpa has been removed"));
     }
@@ -2625,7 +2885,7 @@ TEST_F(InputTest, OutStru)
             TestParameters::input(param).out_stru = v;
             // Expect no exit / no crash; check_value is a void function that only
             // calls WARNING_QUIT on bad input.
-            it->second.check_value(it->second, param);
+            check_item(it->second, param);
         }
     }
 
@@ -2676,7 +2936,7 @@ TEST_F(InputTest, OutStru)
         {
             it->second.str_values = {s};
             it->second.read_value(it->second, param);
-            EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+            EXPECT_EXIT(check_item(it->second, param), ::testing::ExitedWithCode(1), "");
         }
     }
 
@@ -2705,17 +2965,17 @@ TEST_F(InputTest, LRExternalKernelSupportsSpectraOnly)
             input.lr_init_xc_kernel = {mode, "external.cube"};
             input.calculation = "scf";
             input.cal_force = false;
-            it->second.check_value(it->second, param);
+            check_item(it->second, param);
             input.cal_force = true;
-            EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+            EXPECT_EXIT(check_item(it->second, param), testing::ExitedWithCode(1), "");
             input.cal_force = false;
             input.calculation = "relax";
-            EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+            EXPECT_EXIT(check_item(it->second, param), testing::ExitedWithCode(1), "");
             input.lr_init_xc_kernel = {"default"};
-            it->second.check_value(it->second, param);
+            check_item(it->second, param);
             input.esolver_type = "ksdft";
             input.lr_init_xc_kernel = {mode, "external.cube"};
-            it->second.check_value(it->second, param);
+            check_item(it->second, param);
         }
     }
 }
@@ -2732,16 +2992,216 @@ TEST_F(InputTest, LRFixedFieldRejectsForcesAndRelaxation)
         input.efield_flag = true;
         input.calculation = "scf";
         input.cal_force = false;
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
         input.cal_force = true;
-        EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), testing::ExitedWithCode(1), "");
         input.cal_force = false;
         input.calculation = "relax";
-        EXPECT_EXIT(it->second.check_value(it->second, param), testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(check_item(it->second, param), testing::ExitedWithCode(1), "");
         input.efield_flag = false;
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
         input.esolver_type = "ksdft";
         input.efield_flag = true;
-        it->second.check_value(it->second, param);
+        check_item(it->second, param);
+    }
+}
+
+// Per-atom full-cavity widths can differ between equivalent atoms, which the
+// symmetry analysis does not see, so symmetry 1 is reduced to 0.
+TEST_F(InputTest, PerAtomSccsCavityWidthsDisableSpatialSymmetry)
+{
+    ModuleIO::ReadInput readinput(0);
+    Parameter param;
+    auto it = find_label("symmetry", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    Input_para& input = TestParameters::input(param);
+    input.imp_sol = 2;
+    input.sccs_solvent_mode = "full";
+    input.sccs_corespread = {0.5};
+    input.symmetry = "1";
+    it->second.reset_value(it->second, param);
+    EXPECT_EQ(input.symmetry, "1");
+    input.sccs_corespread = {0.5, 0.0};
+    it->second.reset_value(it->second, param);
+    EXPECT_EQ(input.symmetry, "0");
+    input.symmetry = "-1";
+    it->second.reset_value(it->second, param);
+    EXPECT_EQ(input.symmetry, "-1");
+    input.symmetry = "1";
+    input.sccs_solvent_mode = "electronic";
+    it->second.reset_value(it->second, param);
+    EXPECT_EQ(input.symmetry, "1");
+}
+
+// The optional second value of the H(k) component controls selects the text
+// precision; it must survive both direct reads and legacy alias merging so the
+// writer can forward it to save_mat.
+TEST_F(InputTest, OutMatComponentPrecision)
+{
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto it = find_label("out_mat_vnlk", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        it->second.str_values = {"1", "5"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[1], 5);
+    }
+    {
+        // Legacy out_mat_h_vnl carries its own precision; the alias merge must
+        // copy the whole value vector, not only the enable flag.
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_h_vnl", readinput.input_lists);
+        ASSERT_NE(legacy, readinput.input_lists.end());
+        legacy->second.str_values = {"1", "4"};
+        legacy->second.read_value(legacy->second, param);
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[0], 1);
+        EXPECT_EQ(TestParameters::input(param).out_mat_vnlk[1], 4);
+    }
+}
+
+// MD writes ABACUS STRU frames only and the restart logic reads them back, so
+// CIF output (out_stru = 2) must be rejected instead of silently emitting
+// STRU content under the CIF setting.
+TEST_F(InputTest, OutStruCifRejectedForMd)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    TestParameters::input(param).calculation = "md";
+    TestParameters::input(param).out_stru = 2;
+    const std::string error = readinput.prepare_input(param);
+    EXPECT_THAT(error, testing::HasSubstr("out_stru"));
+    EXPECT_THAT(error, testing::HasSubstr("not supported for calculation = md"));
+}
+
+TEST_F(InputTest, DfptMixTypeDomainContract)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    auto it = find_label("dfpt_mix_type", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    Input_para& input = TestParameters::input(param);
+
+    // omitted line: the declared default applies (Input_para default and
+    // item default_value agree)
+    EXPECT_EQ(it->second.default_value, "v_sc_broyden");
+    EXPECT_EQ(input.dfpt_mix_type, "v_sc_broyden");
+
+    // every declared choice is read verbatim
+    for (const std::string scheme : {"rho_plain", "rho_kerker", "rho_broyden", "v_sc_plain", "v_sc_broyden"})
+    {
+        it->second.str_values = {scheme};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(input.dfpt_mix_type, scheme) << scheme;
+    }
+
+    // explicit empty / unknown / multi-token values are rejected by the
+    // scalar choices domain before read_value runs, so the previous value
+    // survives (the legacy get_size()==0 fallback is intentionally gone)
+    readinput.readvalue_items.push_back(&it->second);
+    const std::string previous_scheme = input.dfpt_mix_type;
+    for (const std::vector<std::string>& invalid : {
+             std::vector<std::string>{},
+             std::vector<std::string>{""},
+             std::vector<std::string>{"broyden"},
+             std::vector<std::string>{"v_sc"},
+             std::vector<std::string>{"rho_plain", "v_sc_plain"}})
+    {
+        it->second.str_values = invalid;
+        const std::string error = readinput.prepare_input(param);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'dfpt_mix_type'"));
+        EXPECT_THAT(error, testing::HasSubstr("Expected one String from {rho_plain, rho_kerker, rho_broyden, v_sc_plain, v_sc_broyden}"));
+        EXPECT_THAT(error, testing::HasSubstr("input-main.html#dfpt-mix-type"));
+        EXPECT_EQ(input.dfpt_mix_type, previous_scheme);
+    }
+}
+
+TEST_F(InputTest, DfptKerkerA2RuleBoundaries)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    auto it = find_label("dfpt_kerker_a2", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    Input_para& input = TestParameters::input(param);
+
+    EXPECT_EQ(it->second.default_value, "1.0");
+    EXPECT_DOUBLE_EQ(input.dfpt_kerker_a2, 1.0);
+
+    for (const std::pair<const std::string, double> valid : {
+             std::pair<const std::string, double>{"0.5", 0.5},
+             {"1e-2", 1.0e-2},
+             {"12", 12.0}})
+    {
+        it->second.str_values = {valid.first};
+        it->second.read_value(it->second, param);
+        EXPECT_DOUBLE_EQ(input.dfpt_kerker_a2, valid.second) << valid.first;
+    }
+
+    // a^2 = 0 turns the Kerker screen off, so the rule value>0 rejects the
+    // boundary together with negatives, nonfinite values, and empty input
+    readinput.readvalue_items.push_back(&it->second);
+    const double previous_a2 = input.dfpt_kerker_a2;
+    for (const std::vector<std::string>& invalid : {
+             std::vector<std::string>{},
+             std::vector<std::string>{"0"},
+             std::vector<std::string>{"-1"},
+             std::vector<std::string>{"nan"},
+             std::vector<std::string>{"inf"},
+             std::vector<std::string>{"0.5garbage"}})
+    {
+        it->second.str_values = invalid;
+        const std::string error = readinput.prepare_input(param);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'dfpt_kerker_a2'"));
+        EXPECT_THAT(error, testing::HasSubstr("Expected one finite Real satisfying value>0."));
+        EXPECT_THAT(error, testing::HasSubstr("input-main.html#dfpt-kerker-a2"));
+        EXPECT_DOUBLE_EQ(input.dfpt_kerker_a2, previous_a2);
+    }
+}
+
+TEST_F(InputTest, DfptBroydenNdimRuleBoundaries)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    auto it = find_label("dfpt_broyden_ndim", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+    Input_para& input = TestParameters::input(param);
+
+    EXPECT_EQ(it->second.default_value, "8");
+    EXPECT_EQ(input.dfpt_broyden_ndim, 8);
+
+    // ndim = 1 is the smallest legal history depth (single-step memory)
+    for (const std::pair<const std::string, int> valid : {
+             std::pair<const std::string, int>{"1", 1},
+             {"16", 16}})
+    {
+        it->second.str_values = {valid.first};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(input.dfpt_broyden_ndim, valid.second) << valid.first;
+    }
+
+    // ndim = 0 (empty history) is rejected together with negatives,
+    // non-integers, and empty input
+    readinput.readvalue_items.push_back(&it->second);
+    const int previous_ndim = input.dfpt_broyden_ndim;
+    for (const std::vector<std::string>& invalid : {
+             std::vector<std::string>{},
+             std::vector<std::string>{"0"},
+             std::vector<std::string>{"-4"},
+             std::vector<std::string>{"2.5"},
+             std::vector<std::string>{"8", "1"}})
+    {
+        it->second.str_values = invalid;
+        const std::string error = readinput.prepare_input(param);
+        EXPECT_THAT(error, testing::HasSubstr("Invalid INPUT parameter 'dfpt_broyden_ndim'"));
+        EXPECT_THAT(error, testing::HasSubstr("Expected one Integer satisfying value>=1."));
+        EXPECT_THAT(error, testing::HasSubstr("input-main.html#dfpt-broyden-ndim"));
+        EXPECT_EQ(input.dfpt_broyden_ndim, previous_ndim);
     }
 }

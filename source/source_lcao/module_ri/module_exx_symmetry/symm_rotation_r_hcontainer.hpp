@@ -17,9 +17,10 @@ namespace ModuleSymmetry
     inline void print_local(const Parallel_Orbitals& pv, const TR* tlocal, const std::string name)
     {
         GlobalV::ofs_running << name << std::endl;
-        for (int i = 0;i < pv.get_row_size();++i)
+        for (int i = 0;i < pv.para_2d().get_row_size();++i)
         {
-            for (int j = 0;j < pv.get_col_size();++j) GlobalV::ofs_running << tlocal[j + i * pv.get_col_size()] << " ";
+            for (int j = 0;j < pv.para_2d().get_col_size();++j)
+                GlobalV::ofs_running << tlocal[j + i * pv.para_2d().get_col_size()] << " ";
             GlobalV::ofs_running << "\n";
         }
     }
@@ -114,7 +115,8 @@ namespace ModuleSymmetry
         { // "pv.local2global_row(i) - iw1start": global index in current atom pair
             for (int j = 0;j < pv.get_ncol_atom(iat2);++j)
                 for (int i = 0;i < pv.get_nrow_atom(iat1);++i)
-                    A[(pv.local2global_row(i + abr1) - iw1start) * atoms[it2].nw + (pv.local2global_col(j + abc2) - iw2start)]
+                    A[(pv.para_2d().local2global_row(i + abr1) - iw1start) * atoms[it2].nw
+                      + (pv.para_2d().local2global_col(j + abc2) - iw2start)]
                     = Alocal_in[j + i * pv.get_ncol_atom(iat2)];
         }
         if (output) print_global(A.data(), atoms[it1].nw, atoms[it2].nw, "A before allreduce");
@@ -161,7 +163,8 @@ namespace ModuleSymmetry
             for (int j = 0;j < pv.get_ncol_atom(iat2);++j)
                 for (int i = 0;i < pv.get_nrow_atom(iat1);++i)
                     Alocal_out[j + i * pv.get_ncol_atom(iat2)]
-                    = TAT[(pv.local2global_row(i + abr1) - iw1start) * atoms[it2].nw + (pv.local2global_col(j + abc2) - iw2start)];
+                    = TAT[(pv.para_2d().local2global_row(i + abr1) - iw1start) * atoms[it2].nw
+                          + (pv.para_2d().local2global_col(j + abc2) - iw2start)];
         }
     }
 }

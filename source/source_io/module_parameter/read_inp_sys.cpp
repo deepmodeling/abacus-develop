@@ -145,6 +145,9 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("calculation");
+        item.domain.set_choices({"scf", "relax", "md", "cell-relax", "nscf", "get_s", "get_wf", "get_pchg", "gen_bessel", "gen_opt_abfs", "test_memory", "test_neighbour"});
+        item.domain.add_requirement("calculation in [get_pchg, get_wf]", "basis_type!=pw");
+        item.domain.add_requirement("calculation==gen_bessel", "basis_type==pw");
         item.annotation = "scf; relax; md; cell-relax; nscf; get_s; get_wf; get_pchg; gen_bessel; gen_opt_abfs; test_memory; test_neighbour";
         item.category = "System variables";
         item.type = "String";
@@ -244,6 +247,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
 * `lj`: Lennard-Jones potential.
 * `dp`: Deep Potential (DP) model.
 * `nep`: Neuroevolution potential (NEP).
+* `snap`: Spectral Neighbor Analysis Potential (SNAP).
 * `ks-lr`: Kohn-Sham density functional theory followed by linear-response time-dependent density functional theory (LR-TDDFT; under development).
 * `lr`: Linear-response time-dependent density functional theory (LR-TDDFT) using precomputed Kohn-Sham orbitals (under development).
 * `dfpt`: Density functional perturbation theory (DFPT; under development).
@@ -252,7 +256,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
         item.default_value = "ksdft";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "lr", "ks-lr", "dfpt" };
+            const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tdofdft", "tddft", "lj", "dp", "nep", "snap", "lr", "ks-lr", "dfpt" };
             if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
@@ -262,11 +266,16 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "esolver_type=tddft requires calculation=md.");
             }
-            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep")
+            if (para.input.esolver_type == "dp" || para.input.esolver_type == "nep"
+                || para.input.esolver_type == "snap")
             {
                 if (access(para.input.mdp.pot_file.c_str(), 0) == -1)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "Can not find `pot_file` !");
+                }
+                if (para.input.esolver_type == "snap" && access(para.input.mdp.snap_param_file.c_str(), 0) == -1)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "Can not find `snap_param_file` !");
                 }
             }
             // LR reads the ground state wave function from a separate SCF run,
@@ -318,6 +327,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
     }
     {
         Input_Item item("symmetry");
+        item.domain.set_choices({"-1", "0", "1"});
         item.annotation = "the control of symmetry";
         item.category = "System variables";
         item.type = "String";
@@ -327,7 +337,7 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
 * 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations (point groups, space groups, primitive cells, and irreducible k-points). For a magnetic system, the symmetry of the initial magnetic structure will be analyzed and preserved.
 
 [NOTE] When symmetry is enabled (value 1), k-points are reduced to the irreducible Brillouin zone (IBZ). For explicit k-point lists with custom weights (see KPT file), the custom weights are preserved during symmetry reduction. For Monkhorst-Pack grids, uniform weights are used.)";
-        item.default_value = "default";
+        item.default_value = "1 normally; 0 or -1 depending on the calculation and enabled features.";
         read_sync_string(input.symmetry);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry == "default")
@@ -366,6 +376,13 @@ Socket mode always computes energy. Force and stress extraction follows cal_forc
             if (para.input.berry_phase)
             {
                 para.input.symmetry = "-1"; // disable kpoint reduce
+            }
+            // Per-atom SCCS cavity widths can differ between equivalent atoms,
+            // which the symmetry analysis does not see.
+            const bool sccs_full = para.input.imp_sol == 2 && para.input.sccs_solvent_mode == "full";
+            if (sccs_full && para.input.sccs_corespread.size() > 1 && para.input.symmetry == "1")
+            {
+                para.input.symmetry = "0";
             }
         };
         this->add_item(item);
@@ -441,7 +458,8 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
         item.description = R"(Controls k-point parallelism. The value must be positive and should not exceed either the number of k-points or the number of MPI processes.
 * For PW calculations, divide all MPI processes into persistent k-point pools. Each pool stores and processes a subset of the k-points.
 * For LCAO calculations with lapack, genelpa, elpa, or scalapack_gvx, divide the diagonalization work into temporary k-point pools. After diagonalization, the eigenvalues and distributed wavefunctions are restored for all k-points before occupations, density matrices, and output are evaluated.
-* Multi-process LCAO cusolver uses its own active-GPU distribution and does not use this value to define its k-point layout. Other LCAO eigensolvers do not use the temporary k-point-pool implementation.)";
+* Multi-process LCAO cusolver uses its own active-GPU distribution and does not use this value to define its k-point layout. Other LCAO eigensolvers do not use the temporary k-point-pool implementation.
+* On DSP builds, the mtblas/C_PACK libraries require kpar (kpar_lcao for LCAO) times bndpar to equal the number of MPI processes exactly; ABACUS aborts at startup otherwise.)";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.kpar);
@@ -467,6 +485,39 @@ In socket_driver mode, this flag controls whether the returned frame advertises 
             }
 #endif
         };
+#ifdef __DSP
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            // The mtblas/C_PACK libraries on DSP hardware require exactly one
+            // process per k-point pool: the effective pool count (kpar for PW,
+            // kpar_lcao for LCAO, the other being 1) times bndpar must equal
+            // the number of MPI processes. Other configurations make the vendor
+            // routines return inconsistent results across ranks and the SCF
+            // silently diverges, so reject them at input time. See issue #8228.
+            // bndpar <= 0 is rejected by the bndpar input check; skip here so
+            // the diagnostic below never divides by zero.
+            if (para.input.bndpar <= 0)
+            {
+                return;
+            }
+            const int nproc = para.sys.nproc;
+            const bool layout_valid = dsp_kpar_layout_valid(nproc,
+                                                            para.input.kpar,
+                                                            para.sys.kpar_lcao,
+                                                            para.input.bndpar);
+            if (!layout_valid)
+            {
+                const std::string msg =
+                    "On DSP hardware, the mtblas/C_PACK libraries require kpar (kpar_lcao for LCAO) * bndpar"
+                    " to equal the number of MPI processes, but got NPROC=" + std::to_string(nproc)
+                    + ", kpar=" + std::to_string(para.input.kpar)
+                    + ", kpar_lcao=" + std::to_string(para.sys.kpar_lcao)
+                    + ", bndpar=" + std::to_string(para.input.bndpar)
+                    + ". Please set kpar=" + std::to_string(nproc / para.input.bndpar)
+                    + " or adjust the process count.";
+                ModuleBase::WARNING_QUIT("ReadInput", msg);
+            }
+        };
+#endif
         this->add_item(item);
         add_int_bcast(sys.kpar_lcao);
     }
@@ -552,7 +603,7 @@ Available options are:
 * pcc_2d: self-consistent PCC correction for a slab, open along the lattice vector selected by pcc_2d_axis (default: the third) and periodic along the other two. The open vector must be perpendicular to the periodic plane (rewrite a tilted cell as the equivalent perpendicular one), and the k-point sampling along it must be Gamma only. The monopole term uses the open planar kernel that vanishes on the plane of the charge, -pi*Q*L/(3*A) with L the cell length along the open vector and A the periodic area, so the energy of a charged slab converges with the vacuum size; it is referenced to zero potential on the plane of the charge. ENVIRON uses -pi*Q/(3*L), so charged-slab energies agree with ENVIRON only for A = L^2.
 * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
 
-pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho.
+pcc_0d and pcc_2d contribute to the energy, the potential and the fixed-cell forces; the correction energy is printed as E_pcc. They require CPU KS-DFT (esolver_type ksdft) with basis_type pw or lcao, calculation scf or relax, and nspin 1 or 2, without efield_flag, gate_flag, cal_stress, DFT-1/2, deepks output or dm_to_rho. With imp_sol=2, pcc_0d and pcc_2d support SCF energies, forces and fixed-cell relax; imp_sol=1 is not supported.
 
 Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreussi and N. Marzari, Phys. Rev. B 90, 245101 (2014).)";
         item.default_value = "none";
@@ -580,7 +631,7 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreuss
             if (inp.assume_isolated == "pcc_0d" || inp.assume_isolated == "pcc_2d")
             {
                 std::string error;
-                if (inp.imp_sol) { error = "cannot be combined with imp_sol"; }
+                if (inp.imp_sol == 1) { error = "cannot be combined with imp_sol=1"; }
                 else if (inp.nspin != 1 && inp.nspin != 2) { error = "requires nspin 1 or 2"; }
                 else if (inp.device != "cpu") { error = "requires device cpu"; }
                 else if (inp.esolver_type != "ksdft") { error = "requires esolver_type ksdft"; }
@@ -606,6 +657,7 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreuss
     }
     {
         Input_Item item("pcc_2d_axis");
+        item.domain.set_choices({"0", "1", "2"});
         item.annotation = "open lattice vector of assume_isolated pcc_2d";
         item.category = "System variables";
         item.type = "Integer";
@@ -613,12 +665,6 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995); PCC: O. Andreuss
         item.default_value = "2";
         item.set_availability("assume_isolated==pcc_2d");
         read_sync_int(input.pcc_2d_axis);
-        item.check_value = [](const Input_Item&, const Parameter& para) {
-            if (para.input.pcc_2d_axis < 0 || para.input.pcc_2d_axis > 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "pcc_2d_axis must be 0, 1 or 2");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -769,6 +815,8 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
     }
     {
         Input_Item item("mem_saver");
+        item.domain.set_choices({"0", "1"});
+        item.domain.add_requirement("calculation in [scf, relax]", "mem_saver==0");
         item.annotation = "Only for nscf calculations. if set to 1, then a "
                           "memory saving technique will be used for "
                           "many k point calculations.";
@@ -782,26 +830,6 @@ Legal values are 0 and 1. For calculation=scf or relax, mem_saver must be 0; set
         item.default_value = "0";
         item.set_availability("calculation==nscf and basis_type==pw");
         read_sync_int(input.mem_saver);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.mem_saver != 0 && para.input.mem_saver != 1)
-            {
-                const std::string message
-                    = "Invalid INPUT mem_saver=" + longstring(item.str_values)
-                      + ". Legal values are 0 or 1.\n"
-                        "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#mem-saver";
-                ModuleBase::WARNING_QUIT("ReadInput", message);
-            }
-            if (para.input.mem_saver == 1
-                && (para.input.calculation == "scf" || para.input.calculation == "relax"))
-            {
-                const std::string message
-                    = "Invalid INPUT mem_saver=" + longstring(item.str_values)
-                      + " with calculation=" + para.input.calculation
-                      + ". Use mem_saver=0 for this calculation; memory saving with mem_saver=1 is intended for nscf.\n"
-                        "See https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html#mem-saver";
-                ModuleBase::WARNING_QUIT("ReadInput", message);
-            }
-        };
         this->add_item(item);
     }
     {
@@ -982,6 +1010,7 @@ In socket_driver mode, this flag independently controls whether the returned fra
     }
     {
         Input_Item item("device");
+        item.domain.set_choices({"cpu", "gpu"});
         item.annotation = "the computing device for ABACUS";
         item.category = "System variables";
         item.type = "String";
@@ -998,39 +1027,56 @@ Available options are:
             para.input.device=base_device::information::get_device_flag(
                                 para.inp.device, para.inp.basis_type);
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"cpu", "gpu"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.device) == avail_list.end())
-            {
-                const std::string warningstr = nofound_str(avail_list, "device");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("precision");
+        item.domain.set_choices({"single", "double"});
+        item.domain.add_requirement("precision==single", "basis_type!=lcao");
         item.annotation = "the computing precision for ABACUS";
         item.category = "System variables";
         item.type = "String";
         item.description = R"(Specifies the precision when performing scf calculation.
 * single: single precision
-* double: double precision)";
+* double: double precision
+PW Kohn-Sham DFT+U and DeltaSpin onsite corrections require double precision.
+PW RT-TDDFT does not support DFT+U or spin constraints at any precision.)";
         item.default_value = "double";
         item.set_availability("basis_type==pw");
         read_sync_string(input.precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"single", "double"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.precision) == avail_list.end())
+            const Input_para& inp = para.inp;
+            const bool pw_onsite_solver = inp.basis_type == "pw"
+                                          && (inp.esolver_type == "ksdft" || inp.esolver_type == "tddft");
+            if (pw_onsite_solver && inp.precision == "single")
             {
-                const std::string warningstr = nofound_str(avail_list, "precision");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-            if (para.inp.precision == "single" && para.inp.basis_type == "lcao")
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "Single precision is not supported for NAO basis,\nPlease use double precision for NAO basis.\n");
+                if (inp.esolver_type == "tddft")
+                {
+                    if (inp.dft_plus_u != 0)
+                    {
+                        ModuleBase::WARNING_QUIT(
+                            "ReadInput",
+                            "PW RT-TDDFT does not support DFT+U at any precision; set dft_plus_u=0.");
+                    }
+                    if (inp.sc_mag_switch)
+                    {
+                        ModuleBase::WARNING_QUIT(
+                            "ReadInput",
+                            "PW RT-TDDFT does not support spin constraints at any precision; set sc_mag_switch=false.");
+                    }
+                }
+                if (inp.dft_plus_u != 0)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "PW DFT+U requires precision = double; single precision onsite corrections are not supported.");
+                }
+                if (inp.sc_mag_switch)
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ReadInput",
+                        "PW DeltaSpin requires precision = double; single precision onsite corrections are not supported.");
+                }
             }
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
@@ -1047,6 +1093,8 @@ Available options are:
     }
     {
         Input_Item item("gint_precision");
+        item.domain.set_choices({"single", "double", "mix"});
+        item.domain.add_requirement("gint_precision!=double", "basis_type==lcao and nspin!=4");
         item.annotation = "the computing precision for LCAO grid integral";
         item.category = "System variables";
         item.type = "String";
@@ -1057,26 +1105,6 @@ Available options are:
         item.default_value = "double";
         item.set_availability("basis_type==lcao");
         read_sync_string(input.gint_precision);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            std::vector<std::string> avail_list = {"single", "double", "mix"};
-            if (std::find(avail_list.begin(), avail_list.end(), para.input.gint_precision) == avail_list.end())
-            {
-                const std::string warningstr = nofound_str(avail_list, "gint_precision");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-            if (para.inp.gint_precision != "double" && para.inp.basis_type != "lcao")
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "gint_precision = single or mix is currently supported only for LCAO calculations.\n");
-            }
-            if (para.inp.gint_precision != "double" && para.inp.nspin == 4)
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "gint_precision = single or mix is not supported for nspin = 4 (noncollinear/SOC) calculations.\n");
-            }
-        };
         this->add_item(item);
     }
     {
@@ -1173,6 +1201,7 @@ updates structures smoothly enough for second-order extrapolation.)";
     }
     {
         Input_Item item("ecutwfc");
+        item.domain.set_rule("value>0");
         item.annotation = "energy cutoff for wave functions";
         item.category = "Plane wave related variables";
         item.type = "Real";
@@ -1201,16 +1230,11 @@ updates structures smoothly enough for second-order extrapolation.)";
                 }
             }
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.ecutwfc <= 0)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "ecutwfc should be positive");
-            }
-        };
         this->add_item(item);
     }
     {
         Input_Item item("ecutrho");
+        item.domain.set_rule("value>0");
         item.annotation = "energy cutoff for charge density and potential";
         item.category = "Plane wave related variables";
         item.type = "Real";
@@ -1423,6 +1447,7 @@ updates structures smoothly enough for second-order extrapolation.)";
     }
     {
         Input_Item item("diag_subspace");
+        item.domain.set_choices({"0", "1", "2"});
         item.annotation = "method of subspace diagonalization in dav_subspace. 0:LaPack; 1:genelpa, 2:scalapack";
         item.category = "Plane wave related variables";
         item.type = "Integer";
@@ -1448,6 +1473,7 @@ updates structures smoothly enough for second-order extrapolation.)";
     }
     {
         Input_Item item("fft_mode");
+        item.domain.set_choices({"0", "1", "2", "3"});
         item.annotation = "mode of FFTW";
         item.category = "Plane wave related variables";
         item.type = "Integer";

@@ -7,6 +7,7 @@
 #include "source_base/module_parallel/para_bridge.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#include "source_io/module_output/provenance_header.h"
 #include "source_io/module_output/spin_tag.h"
 #include "source_io/module_parameter/parameter.h" // mohan add 20250911
 
@@ -14,8 +15,28 @@
 #include <mpi.h>
 #endif
 
+namespace
+{
+
+/**
+ * @brief build the STRU-style provenance header that precedes the k-point
+ *        block of one ionic step in a band output file.
+ *
+ * @param istep zero-based ionic step index, printed one-based
+ * @param spin_tag label of the collinear spin channel, empty when nspin != 2
+ * @return three comment lines: ABACUS version, local timestamp, ionic step
+ */
+std::string build_band_header(const int istep, const std::string& spin_tag)
+{
+    const int istep_one_based = istep + 1;
+    const std::string step_line = FmtCore::format("# IONIC STEP %d%s\n", istep_one_based, spin_tag.c_str());
+    return ModuleIO::provenance_header(ModuleIO::local_timestamp()) + step_line;
+}
+
+} // namespace
+
 void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb, const K_Vectors& kv,
-                           std::ofstream& ofs_running)
+                           std::ofstream& ofs_running, const int istep)
 {
     // write band information to band.txt
     if (inp.out_band[0])
@@ -41,9 +62,11 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
             ss << ".txt";
 
             const std::string eig_file = ss.str();
-            const std::string spin_tag = ModuleIO::make_spin_tag(is, nspin0);
-            ofs_running << " Write eigenvalues" << spin_tag << " to file: " << eig_file << std::endl;
+            const std::string log_spin_tag = ModuleIO::make_spin_tag(is, nspin0);
+            ofs_running << " Write eigenvalues" << log_spin_tag << " to file: " << eig_file << std::endl;
 
+            const std::string header_spin_tag = ModuleIO::make_compact_spin_tag(is, nspin0);
+            const std::string header = build_band_header(istep, header_spin_tag);
             const double eshift = 0.0;
             nscf_bands(is,
                        eig_file,
@@ -51,7 +74,8 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
                        eshift,
                        inp.out_band[1], // precision
                        global_ekb,
-                       kv);
+                       kv,
+                       header);
         }
     }
 }
@@ -62,7 +86,8 @@ void ModuleIO::nscf_bands(const int& is,
                           const double& fermie,
                           const int& precision,
                           const ModuleBase::matrix& ekb,
-                          const K_Vectors& kv)
+                          const K_Vectors& kv,
+                          const std::string& header)
 {
     ModuleBase::TITLE("ModuleIO", "nscf_bands");
     ModuleBase::timer::start("ModuleIO", "nscf_bands");
@@ -89,7 +114,7 @@ void ModuleIO::nscf_bands(const int& is,
     const int band_group = Parallel::make_band_world().rank();
     if (GlobalV::MY_RANK == 0)
     {
-        if (PARAM.inp.out_app_flag == true)
+        if (PARAM.inp.out_app_flag == 1)
         {
             // do nothing
         }
@@ -125,6 +150,10 @@ void ModuleIO::nscf_bands(const int& is,
             if (kv.para_k.rank_in_pool == 0 && band_group == 0)
             {
                 std::ofstream ofs(eig_file.c_str(), std::ios::app);
+                if (ik == 0)
+                {
+                    ofs << header;
+                }
                 ofs << FmtCore::format("%4d", ik + 1);
                 int width = precision + 4;
                 std::string fmtstr = " %." + std::to_string(precision) + "f";
@@ -149,7 +178,7 @@ void ModuleIO::nscf_bands(const int& is,
 
     if (GlobalV::MY_RANK == 0)
     {
-        if (PARAM.inp.out_app_flag == true)
+        if (PARAM.inp.out_app_flag == 1)
         {
             ofs.open(eig_file.c_str(), std::ios::app);
         }
@@ -171,6 +200,10 @@ void ModuleIO::nscf_bands(const int& is,
         const int spin_k = ik + is * nks_np;
         if (kv.isk[spin_k] == is)
         {
+            if (ik == 0)
+            {
+                ofs << header;
+            }
             ofs << FmtCore::format("%4d", ik + 1);
             int width = precision + 4;
             std::string fmtstr = " %." + std::to_string(precision) + "f";

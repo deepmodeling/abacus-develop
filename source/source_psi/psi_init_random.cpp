@@ -1,16 +1,18 @@
 #include "psi_init_random.h"
+
 #include "source_basis/module_pw/pw_basis_k.h"
+
 #include <vector>
 
 template <typename T>
 void psi_init_random<T>::initialize(const Structure_Factor* sf,
-                                               const ModulePW::PW_Basis_K* pw_wfc,
-                                               const UnitCell* p_ucell,
-                                               const std::vector<int>& ik2iktot,
-                                               const int& random_seed,
-                                               const int& rank,
-                                               const int& npol,
-                                               const int& nbands)
+                                    const ModulePW::PW_Basis_K* pw_wfc,
+                                    const UnitCell* p_ucell,
+                                    const std::vector<int>& ik2iktot,
+                                    const int& random_seed,
+                                    const int& rank,
+                                    const int& npol,
+                                    const int& nbands)
 {
     psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
     this->ixy2is_.clear();

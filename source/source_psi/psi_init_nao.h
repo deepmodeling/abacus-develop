@@ -1,9 +1,9 @@
 #ifndef PSI_INIT_NAO_H
 #define PSI_INIT_NAO_H
+#include "psi_base.h"
 #include "source_base/cubic_spline.h"
 #include "source_base/realarray.h"
 #include "source_base/sph_bessel_tf.h"
-#include "psi_base.h"
 
 #include <memory>
 #include <string>
@@ -26,34 +26,31 @@ class psi_init_nao : public psi_base<T>
     {
         this->method_ = "nao";
     };
-    ~psi_init_nao(){};
+    ~psi_init_nao() {};
 
     /**
      * @brief Prepare parameters before initialization.
-     * 
+     *
      * This method must be called before initialize(). It sets up the necessary
      * parameters for the psi initialization process.
-     * 
+     *
      * @param nqx Number of q-points for interpolation
      * @param dq Spacing between q-points
      * @param nspin Number of spin components
      * @param orbital_dir Directory containing orbital files
-     * 
+     *
      * @see initialize()
      */
-    void prepare_params(const int& nqx,
-                        const double& dq,
-                        const int& nspin,
-                        const std::string& orbital_dir);
+    void prepare_params(const int& nqx, const double& dq, const int& nspin, const std::string& orbital_dir);
 
-    virtual void initialize(const Structure_Factor* sf,             //< structure factor
-                            const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
-                            const UnitCell* p_ucell,                     //< unit cell
-                            const std::vector<int>& ik2iktot,             //< ik2iktot: local->global k-point mapping
-                            const int& random_seed,                      //< random seed
-                            const int& rank,                            //< MPI rank
-                            const int& npol,                            //< npol
-                            const int& nbands) override;                //< nbands
+    virtual void initialize(const Structure_Factor* sf,         //< structure factor
+                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
+                            const UnitCell* p_ucell,            //< unit cell
+                            const std::vector<int>& ik2iktot,   //< ik2iktot: local->global k-point mapping
+                            const int& random_seed,             //< random seed
+                            const int& rank,                    //< MPI rank
+                            const int& npol,                    //< npol
+                            const int& nbands) override;        //< nbands
 
     void read_external_orbs(const std::string* orbital_files, const int& rank);
 

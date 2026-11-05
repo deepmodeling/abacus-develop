@@ -233,10 +233,10 @@ namespace LR_Util
 #ifdef __MPI
             // dm(k) is 2D-block-cyclic distributed, so the transpose needs the PBLAS routine
             // `mattrans` (pdtran_/pztranc_) rather than a plain serial swap.
-            LR_Util::mattrans(dk.data(), pv.get_global_row_size(), pv);
+            LR_Util::mattrans(dk.data(), pv.para_2d().get_global_row_size(), pv.para_2d());
 #else
             // In a serial build the entire square AO matrix is local, in column-major order.
-            const int n = pv.get_global_row_size();
+            const int n = pv.para_2d().get_global_row_size();
             std::vector<TK> transposed(dk.size());
             for (int j = 0; j < n; ++j)
             {
@@ -260,7 +260,7 @@ namespace LR_Util
         for (auto& dk : dm.get_dmk_vec())
         {
 #ifdef __MPI
-            LR_Util::mattrans(dk.data(), pv.get_global_row_size(), pv);
+            LR_Util::mattrans(dk.data(), pv.para_2d().get_global_row_size(), pv.para_2d());
 #else
             throw std::runtime_error("transpose_DMR requires MPI (PBLAS mattrans) for the 2D-block-cyclic dm(k) transpose.");
 #endif
@@ -288,9 +288,9 @@ namespace LR_Util
         if (symmetrize)
             for (int ik = 0; ik < nk; ++ik)
 #ifdef __MPI
-                LR_Util::matsym(dmk[ik].data<TK>(), pmat.get_global_row_size(), pmat);
+                LR_Util::matsym(dmk[ik].data<TK>(), pmat.para_2d().get_global_row_size(), pmat.para_2d());
 #else
-                LR_Util::matsym(dmk[ik].data<TK>(), pmat.get_global_row_size());
+                LR_Util::matsym(dmk[ik].data<TK>(), pmat.para_2d().get_global_row_size());
 #endif
 
         for (int ik = 0; ik < nk; ++ik)
@@ -331,9 +331,9 @@ namespace LR_Util
                 for (int ik = 0; ik < nk; ++ik)
                 {
 #ifdef __MPI
-                    LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.get_global_row_size(), pmat);
+                    LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.para_2d().get_global_row_size(), pmat.para_2d());
 #else
-                    LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.get_global_row_size());
+                    LR_Util::matsym(dmk[is][ik].data<TK>(), pmat.para_2d().get_global_row_size());
 #endif
                 }
             }
@@ -375,7 +375,8 @@ namespace LR_Util
         {
             DMk_trans_pointer[ik] = &dm.get_dmk_vec()[ik];
         }
-        return RI_2D_Comm::split_m2D_ktoR<TK>(ucell, kv, DMk_trans_pointer, pmat, /*nspin=*/1)[0];
+        return RI_2D_Comm::split_m2D_ktoR<TK>(
+            ucell, kv, DMk_trans_pointer, pmat.para_2d(), /*nspin=*/1)[0];
     }
     // return SPIN_multiple*D[0] as implemented in split_m2D_ktoR
     // SPIN_multiple = map({ {1,0.5}, {2,1}, {4,1} }).at(nspin)
@@ -389,7 +390,8 @@ namespace LR_Util
         std::vector<const std::vector<TK>*> DMk_trans_pointer(nks);
         for (int iks = 0;iks < dm.get_DMK_nks();++iks)
             DMk_trans_pointer[iks] = &dm.get_dmk_vec()[iks];
-        return RI_2D_Comm::split_m2D_ktoR<TK>(ucell, kv, DMk_trans_pointer, pmat, nspin);
+        return RI_2D_Comm::split_m2D_ktoR<TK>(
+            ucell, kv, DMk_trans_pointer, pmat.para_2d(), nspin);
     }
 #endif
 }

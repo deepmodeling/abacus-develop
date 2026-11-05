@@ -1,15 +1,16 @@
 #include "psi_init_atom_rand.h"
+
 #include "source_basis/module_pw/pw_basis_k.h"
 
 template <typename T>
 void psi_init_atomic_random<T>::initialize(const Structure_Factor* sf,
-                                                  const ModulePW::PW_Basis_K* pw_wfc,
-                                                  const UnitCell* p_ucell,
-                                                  const std::vector<int>& ik2iktot,
-                                                  const int& random_seed,
-                                                  const int& rank,
-                                                  const int& npol,
-                                                  const int& nbands)
+                                           const ModulePW::PW_Basis_K* pw_wfc,
+                                           const UnitCell* p_ucell,
+                                           const std::vector<int>& ik2iktot,
+                                           const int& random_seed,
+                                           const int& rank,
+                                           const int& npol,
+                                           const int& nbands)
 {
     psi_init_atomic<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
 }

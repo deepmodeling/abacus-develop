@@ -12,17 +12,17 @@ class PSIPrepare : public PSIPrepareBase
 {
   public:
     PSIPrepare(const std::string& init_wfc_in,
-            const std::string& ks_solver_in,
-            const std::string& basis_type_in,
-            const int& rank,
-            const UnitCell& ucell,
-            const Structure_Factor& sf,
-            const std::vector<int>& ik2iktot,
-            const int& nkstot,
-            const int& lmaxkb,
-            const ModulePW::PW_Basis_K& pw_wfc);
+               const std::string& ks_solver_in,
+               const std::string& basis_type_in,
+               const int& rank,
+               const UnitCell& ucell,
+               const Structure_Factor& sf,
+               const std::vector<int>& ik2iktot,
+               const int& nkstot,
+               const int& lmaxkb,
+               const ModulePW::PW_Basis_K& pw_wfc);
 
-    ~PSIPrepare(){};
+    ~PSIPrepare() {};
 
     ///@brief prepare the wavefunction initialization
     ///@param random_seed seed for random initialization
@@ -52,7 +52,6 @@ class PSIPrepare : public PSIPrepareBase
     std::unique_ptr<psi_base<T>> psi_initer;
 
   private:
-
     // wavefunction initialization type
     std::string init_wfc = "none";
 
@@ -87,7 +86,11 @@ class PSIPrepare : public PSIPrepareBase
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
 };
 
-void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const std::vector<int>& ngk, const int& nbands, const int& npwx);
+void allocate_psi(Psi<std::complex<double>>*& psi,
+                  const int& nks,
+                  const std::vector<int>& ngk,
+                  const int& nbands,
+                  const int& npwx);
 
 } // namespace psi
 #endif

@@ -36,6 +36,21 @@ TEST_F(SccsPwCoulombTest, FourierModeAndConstantBackground)
     }
 }
 
+// Each application is one forward and one inverse FFT, reported by sccs_debug 2.
+TEST_F(SccsPwCoulombTest, FftCountsFollowTheApplications)
+{
+    ModuleSccs::PeriodicCoulombOperator coulomb(basis, tpiba);
+    const std::vector<double> charge = cosine_mode(0);
+    std::vector<double> potential;
+    EXPECT_EQ(coulomb.fft_counts().forward_calls, 0);
+    for (int application = 1; application <= 2; ++application)
+    {
+        coulomb.apply_potential(charge, potential);
+        EXPECT_EQ(coulomb.fft_counts().forward_calls, application);
+        EXPECT_EQ(coulomb.fft_counts().inverse_calls, application);
+    }
+}
+
 int main(int argc, char** argv)
 {
     int threads = 1;
@@ -60,6 +75,14 @@ int main(int argc, char** argv)
                                 pool);
 #endif
     testing::InitGoogleTest(&argc, argv);
+    // A forked death-test child would inherit the OpenMP thread pool and
+    // deadlock in its first parallel region, so a single rank re-executes the
+    // binary instead. Under mpirun a re-executed child would join the MPI
+    // job; there the death tests that run OpenMP code are skipped.
+    if (SccsTest::pool_size == 1)
+    {
+        testing::GTEST_FLAG(death_test_style) = "threadsafe";
+    }
     const int status = RUN_ALL_TESTS();
 #ifdef __MPI
     Parallel_Global::finalize_mpi();

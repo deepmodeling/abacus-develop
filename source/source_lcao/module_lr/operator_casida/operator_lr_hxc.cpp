@@ -44,9 +44,9 @@ namespace LR
         // ========================= end grid calculation ===========================
 
         // V(R)->V(k) 
-        std::vector<ct::Tensor> v_hxc_2d(nk, LR_Util::newTensor<T>({ pmat.get_col_size(), pmat.get_row_size() }));
+        std::vector<ct::Tensor> v_hxc_2d(nk, LR_Util::newTensor<T>({ pmat.para_2d().get_col_size(), pmat.para_2d().get_row_size() }));
         for (auto& v : v_hxc_2d) v.zero();
-        int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver) ? this->pmat.get_row_size() : this->pmat.get_col_size();
+        int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver) ? this->pmat.para_2d().get_row_size() : this->pmat.para_2d().get_col_size();
         for (int ik = 0;ik < nk;++ik) { folding_HR(*this->hR, v_hxc_2d[ik].data<T>(), this->kv.kvec_d[ik], nrow, 1); }  // V(R) -> V(k)
         // LR_Util::print_HR(*this->hR, this->ucell.nat, "4.VR");
         // if (this->first_print)
@@ -58,14 +58,14 @@ namespace LR
         {
         case MO_TO_AO_TYPE::CC_vo:  //[AX]^{Hxc}_{ai}=\sum_{\mu,\nu}c^*_{\mu,a}V^{Hxc}_{\mu,\nu}c_{\nu,i}
 #ifdef __MPI
-            ao_to_mo_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, this->naos, this->nocc[sl], this->nvirt[sl], this->pX[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::VO, this->factor_);
+            ao_to_mo_pblas(v_hxc_2d, this->pmat.para_2d(), psil_ks, this->pc, this->naos, this->nocc[sl], this->nvirt[sl], this->pX[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::VO, this->factor_);
 #else
             ao_to_mo_blas(v_hxc_2d, psil_ks, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::VO, this->factor_);
 #endif
             break;
         case MO_TO_AO_TYPE::CC_oo:  //[AX]^{Hxc}_{ij}=\sum_{\mu,\nu}c^*_{\mu,i}V^{Hxc}_{\mu,\nu}c_{\nu,j}
 #ifdef __MPI
-            ao_to_mo_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, this->naos, this->nocc[sl], this->nvirt[sl], this->pX[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::OO, this->factor_);
+            ao_to_mo_pblas(v_hxc_2d, this->pmat.para_2d(), psil_ks, this->pc, this->naos, this->nocc[sl], this->nvirt[sl], this->pX[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::OO, this->factor_);
 #else
             ao_to_mo_blas(v_hxc_2d, psil_ks, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::OO, this->factor_);
 #endif
@@ -73,9 +73,9 @@ namespace LR
         case MO_TO_AO_TYPE::CXC:
         {
 #ifdef __MPI
-            CVCX_virt_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
+            CVCX_virt_pblas(v_hxc_2d, this->pmat.para_2d(), psil_ks, this->pc, psi_in, this->pX[sl],
                 this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);
-            CVCX_occ_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
+            CVCX_occ_pblas(v_hxc_2d, this->pmat.para_2d(), psil_ks, this->pc, psi_in, this->pX[sl],
                 this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, -this->factor_);
 #else
             CVCX_virt_blas(v_hxc_2d, psil_ks, psi_in, this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);
@@ -85,7 +85,7 @@ namespace LR
         }
         case MO_TO_AO_TYPE::CXC_o:
 #ifdef __MPI
-            CVCX_occ_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
+            CVCX_occ_pblas(v_hxc_2d, this->pmat.para_2d(), psil_ks, this->pc, psi_in, this->pX[sl],
                 this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);
 #else
             CVCX_occ_blas(v_hxc_2d, psil_ks, psi_in, this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);

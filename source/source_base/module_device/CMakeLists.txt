@@ -9,14 +9,13 @@
 #   )
 # endif()
 
-
 # if(USE_ROCM)
 #   hip_add_library(module_device_rocm STATIC
 #     rocm/memory_op.hip.cu
 #   )
 #   target_link_libraries(
-#     device 
-#     module_device_rocm 
+#     device
+#     module_device_rocm
 #     hip::host
 #     hip::device
 #     hip::hipfft
@@ -29,12 +28,12 @@
 
 # if(USE_CUDA)
 #   target_link_libraries(
-#     device 
+#     device
 #   )
 # elseif(USE_ROCM)
 #   target_link_libraries(
-#     device 
-#     device_rocm 
+#     device
+#     device_rocm
 #     hip::host
 #     hip::device
 #     hip::hipfft
