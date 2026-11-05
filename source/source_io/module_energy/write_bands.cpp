@@ -1,6 +1,7 @@
 #include "write_bands.h"
 
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h" // use ModuleBase::ensure_directory
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/module_parallel/para_band_output.h"
@@ -41,6 +42,8 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
     // write band information to band.txt
     if (inp.out_band[0])
     {
+        // Mode-2 BANDS/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(PARAM.globalv.global_band_dir);
         // Taoni fix out_band under bndpar on 2026-08-21
         const Parallel::ParaBandOutput band_output(ekb.nc, inp.nbands, Parallel::make_band_world());
         const ModuleBase::matrix global_ekb = band_output.gather_matrix(ekb);
@@ -48,7 +51,7 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "band";
+            ss << PARAM.globalv.global_band_dir << "band";
 
             if (nspin0 == 1)
             {
@@ -57,6 +60,11 @@ void ModuleIO::write_bands(const Input_para& inp, const ModuleBase::matrix& ekb,
             else if (nspin0 == 2)
             {
                 ss << "s" << is + 1;
+            }
+
+            if (inp.out_app_flag == 2)
+            {
+                ss << "g" << istep + 1;
             }
 
             ss << ".txt";

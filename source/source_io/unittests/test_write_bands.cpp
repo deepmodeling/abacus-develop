@@ -35,17 +35,20 @@ class TestParameters
     {
         append_ = parameter_.input.out_app_flag;
         directory_ = parameter_.sys.global_out_dir;
+        band_directory_ = parameter_.sys.global_band_dir;
     }
 
     ~TestParameters()
     {
         parameter_.input.out_app_flag = append_;
         parameter_.sys.global_out_dir = directory_;
+        parameter_.sys.global_band_dir = band_directory_;
     }
 
     void set_output(const std::string& directory, bool append)
     {
         parameter_.sys.global_out_dir = directory;
+        parameter_.sys.global_band_dir = directory;
         parameter_.input.out_app_flag = append;
     }
 
@@ -53,6 +56,7 @@ class TestParameters
     Parameter& parameter_;
     bool append_ = false;
     std::string directory_;
+    std::string band_directory_;
 };
 
 namespace
