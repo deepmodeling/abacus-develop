@@ -57,6 +57,7 @@ list(
   ../../source_cell/module_neighlist/page_allocator.cpp
   ../../source_cell/domain_decomposition.cpp
   ../../source_cell/domain_decomposition_ghost.cpp
+  ../../source_cell/domain_decomposition_migration.cpp
   ../../source_cell/mdcell.cpp
   ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp
