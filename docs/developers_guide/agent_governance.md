@@ -182,48 +182,28 @@ changed and the PR explains why the new reference is correct.
 
 ## Integration Test Drivers
 
-Integration tests use the Autotest framework. A test is a case directory under
-a suite such as `tests/01_PW/`, with its own `INPUT`, `STRU`, `KPT` (when
-needed), and a `result.ref`. The case is listed in the suite's `CASES_*.txt`,
-and `Autotest.sh` runs it through the suite's existing CTest entry. A reviewer
-can then find every case, its inputs, and its reference values in one place,
-and can rerun any case the same way.
+Integration tests use Autotest cases under a suite such as `tests/01_PW/`:
+dedicated `INPUT`, `STRU`, `KPT` (when needed), and `result.ref`, listed in the
+suite's `CASES_*.txt` and run by `Autotest.sh` through its existing CTest entry.
+This keeps inputs and references together and gives reviewers one way to find
+and rerun cases. Helpers called by Autotest, such as `CompareFile.py`, are unaffected.
 
-Helper scripts that Autotest calls, such as `CompareFile.py` or `cube_tool.py`
-under `tests/integrate/validation_tools/`, are part of this framework and are
-not affected by this section.
+Standalone `add_test()` drivers that launch ABACUS are allowed only when
+Autotest cannot express the check (e.g., expected nonzero exits or per-rank
+stderr). Keep Autotest-compatible checks in cases and explain the remaining
+need in the PR. For a justified driver:
 
-Do not bypass the framework with a standalone driver. A standalone driver is a
-script registered directly with `add_test()` that launches ABACUS, builds or
-rewrites inputs at run time, and decides pass or fail with its own assertions.
-Such drivers spread test inputs across scripts, are invisible to the
-`CASES_*.txt` lists, and copy launcher, environment, and fixture handling from
-PR to PR.
-
-A standalone driver is acceptable only when Autotest cannot express the check.
-Examples are an expected nonzero exit status, a message that must appear on
-the stderr of a specific MPI rank, or a property of the process rather than of
-the output files. When a driver is justified:
-
-- Put the script in `tests/integrate/validation_tools/` and name it after the
-  check it performs (for example `check_<feature>.py`). Reserve the `test_*.py`
-  prefix for unit tests of the validation tools themselves.
-- Keep inputs in a dedicated fixture directory. Do not rewrite another case's
-  `INPUT` by string replacement at run time; that couples the driver to the
-  formatting of a fixture it does not own.
-- Treat the interpreter as optional: use `find_program(... python3)` with an
-  `if()` guard, never `find_package(Python3 ... REQUIRED)`, so configuring the
-  tests never fails on a machine without Python.
-- For MPI drivers, pass `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS`, and
-  `MPIEXEC_POSTFLAGS` through, and set the CTest `PROCESSORS` property to the
-  number of ranks launched.
-- Set `OMP_NUM_THREADS=1`, write scratch files to a temporary directory, and
-  set a CTest `TIMEOUT`.
-- State in the PR why an Autotest case cannot express the check.
-
-Reviewers should ask for an Autotest case first. If part of the check fits
-Autotest, that part belongs in a case directory, and the driver covers only
-the remainder.
+- Put scripts in `tests/integrate/validation_tools/` with descriptive names
+  (e.g., `check_<feature>.py`); reserve `test_*.py` for tool unit tests.
+- Use dedicated fixtures; do not rewrite another case's `INPUT` by string
+  replacement at run time.
+- Make the interpreter optional with `find_program(... python3)` and `if()`;
+  do not use `find_package(Python3 ... REQUIRED)`, so test configuration still
+  succeeds without Python.
+- For MPI, forward `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS`, and
+  `MPIEXEC_POSTFLAGS`; set CTest `PROCESSORS` to the launched rank count.
+- Set `OMP_NUM_THREADS=1`, use a temporary scratch directory, and set CTest
+  `TIMEOUT`.
 
 ## CLI Verification
 
