@@ -3,33 +3,60 @@
 // form, the Gamma check_sum_rule, the LO-TO direction normalization, the
 // corrected-frequency diagonalization, and the output format regression.
 
-#include "dfpt_serial_fixture.h"
-#include "source_base/constants.h"
+#include "dfpt_test_tool.h"
+#include "source_basis/module_pw/pw_basis.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/qlist.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_dfpt/dfpt_pw_data.h"
 #include "source_base/complexmatrix.h"
+#include "source_base/constants.h"
 #include "source_cell/stru_fac.h"
+#include "source_psi/psi.h"
+#include "source_pw/module_dfpt/dfpt_kq_basis.h"
 #include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_phon.h"
 
-// per-file fixture (self-contained, gtest style): only the members and
-// helpers this file's cases need
-class DFPTPhonSerialTest : public DFPTSerialBase
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
+// per-file self-contained fixture (gtest style): owns its objects and
+// calls the dfpt_test free-function utilities
+class DFPTPhonSerialTest : public ::testing::Test
 {
   protected:
+    ModuleBase::Matrix3 latvec_;
+    UnitCell ucell_;
+    ModulePW::PW_Basis pw_rho_;
+    ModulePW::PW_Basis_K pw_wfc_;
+    ModuleCell::QList qlist_;
+    ModuleDFPT::DFPT_PW_Data data_;
+    ModuleBase::Vector3<double> q_cart_;
     Structure_Factor sf_;
     ModuleDFPT::DFPT_Pert pert_;
     ModuleDFPT::DFPT_Phon phon_;
 
+    // default (k, q) of this file: q is generic and k = -q so k+q = 0
+    const ModuleBase::Vector3<double> k_d_{-0.13, 0.0, -0.07};
+    const ModuleBase::Vector3<double> q_d_{0.13, 0.0, 0.07};
+
     void SetUp() override
     {
-        DFPTSerialBase::SetUp();
+        dfpt_test::setup_cell(ucell_, latvec_);
         SetupPhon(k_d_, q_d_);
+    }
+
+    void TearDown() override
+    {
+        delete[] ucell_.atoms;
+        ucell_.atoms = nullptr;
     }
 
     // (re)initialize the bases and the pert/phon wiring for a given (k, q)
     // pair; SetUp uses the default fixture values
     void SetupPhon(const ModuleBase::Vector3<double>& k_d, const ModuleBase::Vector3<double>& q_d)
     {
-        SetupBases(k_d, q_d, 2);
+        dfpt_test::setup_bases(pw_rho_, pw_wfc_, qlist_, data_, ucell_, k_d, q_d, 2, q_cart_);
         pert_.init(ucell_, &pw_rho_, &pw_wfc_, sf_);
         phon_.init(ucell_, &pw_rho_, &pert_);
     }
@@ -59,12 +86,9 @@ class DFPTPhonSerialTest : public DFPTSerialBase
         z2(0, 0) = z2(1, 1) = z2(2, 2) = 2.0;
         data_.set_born(0, z1);
         data_.set_born(1, z2);
-        MakeTwoAtomCell();
+        dfpt_test::make_two_atom_cell(ucell_);
     }
 };
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include <algorithm>
 #include <cmath>
 #include <complex>
@@ -76,7 +100,7 @@ TEST_F(DFPTPhonSerialTest, DiagonalizeKnownMatrix)
     // 2-atom layout so nat3 = 6. Hermitian blocks with known closed-form
     // spectra: [[a, c], [conj(c), b]] has eigenvalues (a+b)/2
     // +- sqrt(((a-b)/2)^2 + |c|^2)
-    MakeTwoAtomCell();
+    dfpt_test::make_two_atom_cell(ucell_);
     const double lam[6] = {0.04, 0.09, 0.16, -0.02, 0.01, 0.1225}; // Ry/bohr^2/amu
     ModuleBase::ComplexMatrix dyn(6, 6, true);
     for (int i = 0; i < 6; ++i)

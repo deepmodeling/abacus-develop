@@ -74,7 +74,7 @@ void Exx_NAO<TK>::before_runner(
                     kv,
                     orb,
                     use_gpu_tables);
-                this->exd->exx_before_all_runners(kv, ucell, pv);
+                this->exd->exx_before_all_runners(kv, ucell, pv.para_2d());
             }
             else
             {
@@ -84,7 +84,7 @@ void Exx_NAO<TK>::before_runner(
                     kv,
                     orb,
                     use_gpu_tables);
-                this->exc->exx_before_all_runners(kv, ucell, pv);
+                this->exc->exx_before_all_runners(kv, ucell, pv.para_2d());
             }
         }
     }
@@ -147,7 +147,7 @@ void Exx_NAO<TK>::before_scf(
                 *p_chgmix,
                 ucell,
                 orb,
-                pv,
+                pv.para_2d(),
                 update_symmetry,
                 use_gpu_tables);
         }
@@ -159,7 +159,7 @@ void Exx_NAO<TK>::before_scf(
                 *p_chgmix,
                 ucell,
                 orb,
-                pv,
+                pv.para_2d(),
                 update_symmetry,
                 use_gpu_tables);
         }

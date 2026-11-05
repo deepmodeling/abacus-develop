@@ -19,22 +19,22 @@ void set_mat2d(
 {
     // use iw1_all and iw2_all to set Hloc
     // becareful! The ir and ic may be < 0 !!!
-    const int ir = pv.global2local_row(global_ir);
-    const int ic = pv.global2local_col(global_ic);
+    const int ir = pv.para_2d().global2local_row(global_ir);
+    const int ic = pv.para_2d().global2local_col(global_ic);
 
     const long index =
         ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
-        ? ic * static_cast<long>(pv.nrow) + ir
-        : ir * static_cast<long>(pv.ncol) + ic;
+        ? ic * static_cast<long>(pv.para_2d().get_row_size()) + ir
+        : ir * static_cast<long>(pv.para_2d().get_col_size()) + ic;
 
-    if (index >= pv.nloc)
+    if (index >= pv.para_2d().get_local_size())
     {
         std::cout << " iw1_all = " << global_ir << std::endl;
         std::cout << " iw2_all = " << global_ic << std::endl;
         std::cout << " ir = " << ir << std::endl;
         std::cout << " ic = " << ic << std::endl;
         std::cout << " index = " << index << std::endl;
-        std::cout << " ParaV->nloc = " << pv.nloc << std::endl;
+        std::cout << " ParaV->nloc = " << pv.para_2d().get_local_size() << std::endl;
         ModuleBase::WARNING_QUIT("LCAO_domain", "set_mat2d");
     }	 
 

@@ -146,14 +146,14 @@ Exx_LRI_Interface<T, Tdata>::prepare_exx_density(
     const std::vector<std::vector<T>>* restored = &dmk;
     if (this->exx_spacegroup_symmetry)
     {
-        restored_storage = this->symrot_.restore_dm(kv, dmk, pv);
+        restored_storage = this->symrot_.restore_dm(kv, dmk, pv.para_2d());
         restored = &restored_storage;
     }
     if (source_A == nullptr)
     {
         this->mix_DMk_2D.mix(*restored, restart);
         std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> density = RI_2D_Comm::split_m2D_ktoR<Tdata>(
-            ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_out(), pv, nspin,
+            ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_out(), pv.para_2d(), nspin,
             this->exx_spacegroup_symmetry);
         if (this->exx_ptr->get_info_ri().unfold_hybrid_images)
         {
@@ -176,7 +176,7 @@ Exx_LRI_Interface<T, Tdata>::prepare_exx_density(
         raw.push_back(&block);
     }
     std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> density = RI_2D_Comm::split_m2D_ktoR<Tdata>(
-        ucell, *this->exx_ptr->p_kv, raw, pv, nspin, this->exx_spacegroup_symmetry);
+        ucell, *this->exx_ptr->p_kv, raw, pv.para_2d(), nspin, this->exx_spacegroup_symmetry);
     this->mix_common_density(density, ucell, *source_A, restart);
     return density;
 }

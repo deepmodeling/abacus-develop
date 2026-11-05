@@ -288,12 +288,12 @@ void HamiltLCAO<TK, TR>::updateSk(
 
     if (hk_type == 1) // collumn-major matrix for SK
     {
-        const int nrow = this->hsk->get_pv()->get_row_size();
+        const int nrow = this->hsk->get_pv()->para_2d().get_row_size();
         hamilt::folding_HR(*this->sR, this->getSk(), this->kv->kvec_d[ik], nrow, 1);
     }
     else if (hk_type == 0) // row-major matrix for SK
     {
-        const int ncol = this->hsk->get_pv()->get_col_size();
+        const int ncol = this->hsk->get_pv()->para_2d().get_col_size();
         hamilt::folding_HR(*this->sR, this->getSk(), this->kv->kvec_d[ik], ncol, 0);
     }
     else

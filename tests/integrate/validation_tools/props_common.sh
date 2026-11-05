@@ -113,7 +113,7 @@ props_init() {
   fi
   has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
   has_xc2=$(get_input_key_value "out_mat_xc2" "INPUT")
-  has_eband_separate=$(get_input_key_value "out_eband_terms" "INPUT")
+  has_eband_separate=$(get_input_key_value "out_eband" "INPUT")
   has_lowf=$(get_input_key_value "out_wfc_lcao" "INPUT")
   out_app_flag=$(get_input_key_value "out_app_flag" "INPUT")
   has_wfc_r=$(get_input_key_value "out_wfc_r" "INPUT")
@@ -123,6 +123,8 @@ props_init() {
   gamma_only=$(get_input_key_value "gamma_only" "INPUT")
   imp_sol=$(get_input_key_value "imp_sol" "INPUT")
   out_sol=$(get_input_key_value "out_sol" "INPUT")
+  sccs_solvent_radius=$(get_input_key_value "sccs_solvent_radius" "INPUT")
+  sccs_debug=$(get_input_key_value "sccs_debug" "INPUT")
   assume_isolated=$(get_input_key_value "assume_isolated" "INPUT")
   run_rpa=$(get_input_key_value "rpa" "INPUT")
   out_pot=$(get_input_key_value "out_pot" "INPUT")

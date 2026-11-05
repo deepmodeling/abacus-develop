@@ -7,6 +7,10 @@
 #include "prepare_unitcell.h"
 #include "source_base/parallel_grid.h"
 
+#include <cstdio>
+#include <iterator>
+#include <string>
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
@@ -97,7 +101,7 @@ TEST_F(RhoIOTest, Write)
     ucell->atoms[0].ncpp.zv = 4;
     Parallel_Grid pgrid(nx, ny, nz, nz, nrxx, nz, 1);
     ModuleIO::read_vdata_palgrid(pgrid, my_rank, ofs_running, "support/chg.cube", rho[0], ucell->nat);
-    ModuleIO::write_vdata_palgrid(pgrid, rho[0], 0, nspin, 0, "test_write_vdata_palgrid.cube", 0.461002, ucell, 11, 1, false, false, ofs_running, "charge density");
+    ModuleIO::write_vdata_palgrid(pgrid, rho[0], 0, nspin, 0, "test_write_vdata_palgrid.cube", 0.461002, ucell, 11, 1, false, false, false, ofs_running, "charge density");
     std::ifstream ifs1("test_write_vdata_palgrid.cube", std::ifstream::binary | std::ifstream::ate);
     std::ifstream ifs2("support/chg.cube", std::ifstream::binary | std::ifstream::ate);
     EXPECT_EQ(ifs1.tellg(), ifs2.tellg());
@@ -217,10 +221,80 @@ TEST_F(CubeIOTest, WriteCube)
 			comment, natom, origin, 
 			nx_read, ny_read, nz_read, 
 			dx, dy, dz, atom_type, 
-			atom_charge, atom_pos, data_read, 11);
+			atom_charge, atom_pos, data_read, 11, false);
     std::ifstream ifs1("test_write.cube", std::ifstream::binary | std::ifstream::ate);
     std::ifstream ifs2("./support/chg.cube", std::ifstream::binary | std::ifstream::ate);
     EXPECT_EQ(ifs1.tellg(), ifs2.tellg());
     ifs1.close();
     ifs2.close();
+}
+
+/**
+ * - Tested Functions:
+ *   - write_cube()
+ *     - append == false truncates the file, leaving exactly one frame
+ *     - append == true accumulates one complete frame per call, which is how
+ *       out_app_flag == 1 writes successive ionic steps into a fixed filename
+ */
+TEST_F(CubeIOTest, WriteCubeAppendFrames)
+{
+    ModuleIO::read_cube(fn, comment, natom, origin,
+            nx_read, ny_read, nz_read,
+            dx, dy, dz,
+            atom_type, atom_charge, atom_pos, data_read);
+
+    const std::string fname = std::string(testing::TempDir()) + "abacus_cube_append.cube";
+
+    auto count_frames = [&fname, this]() {
+        std::ifstream ifs(fname.c_str());
+        const std::string content((std::istreambuf_iterator<char>(ifs)),
+                                  std::istreambuf_iterator<char>());
+        ifs.close();
+        std::size_t frames = 0;
+        std::size_t pos = content.find(comment[0]);
+        while (pos != std::string::npos)
+        {
+            ++frames;
+            pos = content.find(comment[0], pos + comment[0].size());
+        }
+        return frames;
+    };
+
+    // The first frame of a run truncates stale content from any previous run.
+    ModuleIO::write_cube(fname,
+            comment, natom, origin,
+            nx_read, ny_read, nz_read,
+            dx, dy, dz, atom_type,
+            atom_charge, atom_pos, data_read, 11, false);
+    EXPECT_EQ(count_frames(), 1u);
+
+    // Two appended frames stack a second and a third complete cube block.
+    for (int iframe = 0; iframe < 2; ++iframe)
+    {
+        ModuleIO::write_cube(fname,
+                comment, natom, origin,
+                nx_read, ny_read, nz_read,
+                dx, dy, dz, atom_type,
+                atom_charge, atom_pos, data_read, 11, true);
+    }
+    EXPECT_EQ(count_frames(), 3u);
+
+    // Every frame ends with a newline, so the next frame starts on a fresh line.
+    {
+        std::ifstream ifs(fname.c_str());
+        const std::string content((std::istreambuf_iterator<char>(ifs)),
+                                  std::istreambuf_iterator<char>());
+        ifs.close();
+        EXPECT_EQ(content.back(), '\n');
+    }
+
+    // Overwriting once more drops the two accumulated frames.
+    ModuleIO::write_cube(fname,
+            comment, natom, origin,
+            nx_read, ny_read, nz_read,
+            dx, dy, dz, atom_type,
+            atom_charge, atom_pos, data_read, 11, false);
+    EXPECT_EQ(count_frames(), 1u);
+
+    std::remove(fname.c_str());
 }

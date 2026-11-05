@@ -25,7 +25,6 @@ class GlobalFile : public testing::Test
 {
 	protected:
 		std::string global_out_dir;
-		std::string global_stru_dir;
 		std::string global_matrix_dir;
 		std::string global_wfc_dir;
 		std::string global_mlkedf_descriptor_dir;
@@ -34,7 +33,6 @@ class GlobalFile : public testing::Test
 		{
 				const std::string suffix = "Si";
 				global_out_dir = "OUT." + suffix + "/";
-				global_stru_dir = global_out_dir + "STRU/";
 				global_matrix_dir = global_out_dir + "matrix/";
 				global_wfc_dir = global_out_dir + "WFC/";
 				global_mlkedf_descriptor_dir = global_out_dir + "MLKEDF_Descriptors/";
@@ -47,7 +45,7 @@ TEST_F(GlobalFile,mkdirout)
 	    std::string output;
 	    testing::internal::CaptureStdout();
 	    ModuleBase::Global_File::make_dir_out("Si","m",false,false,0,true,true,
-	        global_out_dir, global_stru_dir, global_matrix_dir, global_wfc_dir,
+	        global_out_dir, global_matrix_dir, global_wfc_dir,
 	        global_mlkedf_descriptor_dir, global_deepks_label_elec_dir,
 	        "running_m_1.log", false, false);
 	    output = testing::internal::GetCapturedStdout();
@@ -59,21 +57,8 @@ TEST_F(GlobalFile,mkdirout)
         remove(dd.c_str());
 
 	    testing::internal::CaptureStdout();
-	    ModuleBase::Global_File::make_dir_out("Si","md",false,false,0,true,false,
-	        global_out_dir, global_stru_dir, global_matrix_dir, global_wfc_dir,
-	        global_mlkedf_descriptor_dir, global_deepks_label_elec_dir,
-	        "running_md.log", false, false);
-	    output = testing::internal::GetCapturedStdout();
-	    EXPECT_THAT(output,testing::HasSubstr("MAKE THE STRU DIR"));
-	    EXPECT_TRUE(GlobalV::ofs_running.is_open());
-	    GlobalV::ofs_running.close();
-	    GlobalV::ofs_warning.close();
-	    std::string bb = "OUT.Si/running_md.log";
-        remove(bb.c_str());
-
-	    testing::internal::CaptureStdout();
 	    ModuleBase::Global_File::make_dir_out("Si","md",true,false,0,true,true,
-	        global_out_dir, global_stru_dir, global_matrix_dir, global_wfc_dir,
+	        global_out_dir, global_matrix_dir, global_wfc_dir,
 	        global_mlkedf_descriptor_dir, global_deepks_label_elec_dir,
 	        "running_md_1.log", false, false);
 	    output = testing::internal::GetCapturedStdout();
@@ -84,7 +69,6 @@ TEST_F(GlobalFile,mkdirout)
         remove(cc.c_str());
         std::string aa = "OUT.Si/warning.log";
         remove(aa.c_str());
-        rmdir(global_stru_dir.c_str());
         rmdir(global_matrix_dir.c_str());
         rmdir(global_out_dir.c_str());
 }

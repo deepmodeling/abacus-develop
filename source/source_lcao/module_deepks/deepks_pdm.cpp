@@ -165,11 +165,11 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
                 TK* kphase_ptr = reinterpret_cast<TK*>(&kphase);
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                 {
-                    dm_pair.add_from_matrix(r_index, dmk[ik].data(), pv.get_row_size(), *kphase_ptr, 1);
+                    dm_pair.add_from_matrix(r_index, dmk[ik].data(), pv.para_2d().get_row_size(), *kphase_ptr, 1);
                 }
                 else
                 {
-                    dm_pair.add_from_matrix(r_index, dmk[ik].data(), pv.get_col_size(), *kphase_ptr, 0);
+                    dm_pair.add_from_matrix(r_index, dmk[ik].data(), pv.para_2d().get_col_size(), *kphase_ptr, 0);
                 }
             }
         }

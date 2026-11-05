@@ -127,10 +127,10 @@ namespace LR
                 {
                     const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
-                    std::vector<ct::Tensor> dm_trans_2d = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
+                    std::vector<ct::Tensor> dm_trans_2d = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
                     for (auto& t: dm_trans_2d)
                     {
-                        LR_Util::mattrans(t.data<T>(), naos, pmat);
+                        LR_Util::mattrans(t.data<T>(), naos, pmat.para_2d());
                     }
 #else
                     std::vector<ct::Tensor> dm_trans_2d = cal_dm_trans_blas(X, psi_ks_is, nocc[is], nvirt[is]);
@@ -156,9 +156,9 @@ namespace LR
                 {
                     const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
-                    std::vector<ct::Tensor> dm_diff_2d = cal_dm_diff_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
+                    std::vector<ct::Tensor> dm_diff_2d = cal_dm_diff_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat.para_2d());
                     for (auto& t: dm_diff_2d)
-                        LR_Util::matsym(t.data<T>(), naos, pmat);
+                        LR_Util::matsym(t.data<T>(), naos, pmat.para_2d());
 #else
                     std::vector<ct::Tensor> dm_diff_2d = cal_dm_diff_blas(X, psi_ks_is, naos, nocc[is], nvirt[is]);
                     for (auto& t: dm_diff_2d)
@@ -331,16 +331,16 @@ namespace LR
             const auto psi_ks_is = LR_Util::get_psi_spin(this->psi_ks_, is, this->nk);
 #ifdef __MPI
             this->dmx_buf_ = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, this->pc_,
-                this->naos_, this->nocc[is], this->nvirt[is], this->pmat_);
+                this->naos_, this->nocc[is], this->nvirt[is], this->pmat_.para_2d());
             for (auto& t: this->dmx_buf_)
             {
-                LR_Util::mattrans(t.template data<T>(), this->naos_, this->pmat_);
+                LR_Util::mattrans(t.template data<T>(), this->naos_, this->pmat_.para_2d());
             }
             this->dmd_buf_ = cal_dm_diff_pblas(X, this->pX[is], psi_ks_is, this->pc_,
-                this->naos_, this->nocc[is], this->nvirt[is], this->pmat_);
+                this->naos_, this->nocc[is], this->nvirt[is], this->pmat_.para_2d());
             for (auto& t: this->dmd_buf_)
             {
-                LR_Util::matsym(t.template data<T>(), this->naos_, this->pmat_);
+                LR_Util::matsym(t.template data<T>(), this->naos_, this->pmat_.para_2d());
             }
 #else
             this->dmx_buf_ = cal_dm_trans_blas(X, psi_ks_is, this->nocc[is], this->nvirt[is]);

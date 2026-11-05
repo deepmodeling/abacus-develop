@@ -4,6 +4,7 @@
 #include "relax_stru_io.h"
 #include "socket_driver.h"
 #include "source_base/formatter.h"
+#include "source_base/fs_compat.h"
 #include "source_base/global_file.h"
 #include "source_base/module_out/read_exit_file.h"
 #include "source_io/module_json/output_info.h"
@@ -21,7 +22,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver,
 
     // Cache global configuration once so downstream helpers do not each reach
     // into PARAM / GlobalV.
-    out_dir_ = PARAM.globalv.global_out_dir;
+    out_dir_ = PARAM.globalv.global_stru_dir;
     deepks_setorb_ = PARAM.globalv.deepks_setorb;
     my_rank_ = GlobalV::MY_RANK;
 
@@ -226,7 +227,7 @@ void Relax_Driver::stru_out(const int istep,
                             const ModuleBase::matrix& stress,
                             const ModuleBase::matrix& force)
 {
-    // out_stru is effective for scf/nscf/relax/cell-relax (md writes STRU_MD_* via md_restartfreq)
+    // out_stru is effective for scf/nscf/relax/cell-relax; md handles STRU output in run_md.cpp
     if (inp.calculation != "relax" && inp.calculation != "cell-relax" && inp.calculation != "scf"
         && inp.calculation != "nscf")
     {
@@ -254,6 +255,8 @@ void Relax_Driver::stru_out(const int istep,
     // is written in final_out() to avoid a duplicate file.
     if (is_relax)
     {
+        // Mode-2 STRUC/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(out_dir_);
         const std::string now_file = out_dir_ + (inp.out_stru == 1 ? "STRU_NOW" : "STRU_NOW.cif");
         relax_stru_io::write_stru(ucell,
                                   inp,
@@ -263,13 +266,21 @@ void Relax_Driver::stru_out(const int istep,
                                   need_orb,
                                   deepks_setorb_,
                                   my_rank_,
-                                  inp.cal_force);
+                                  inp.cal_force,
+                                  false);
     }
 
     // Numbered files per out_freq_ion: only meaningful for relaxation calculations
-    if (is_relax && freq_ok)
+    if (is_relax && freq_ok && inp.out_app_flag != 0)
     {
-        const std::string step_file = out_dir_ + "STRU" + std::to_string(istep + 1) + (inp.out_stru == 1 ? "" : ".cif");
+        // Mode 1: single fixed-name STRU accumulates one block per step (CIF
+        // format truncates to the latest frame instead). Mode 2 keeps the
+        // numbered STRU{istep+1} files. Mode 0 only writes STRU_NOW, which is
+        // already overwritten each step above.
+        const bool append_stru = (inp.out_app_flag == 1) && (inp.out_stru == 1) && (istep > 0);
+        const std::string step_file = (inp.out_app_flag == 1)
+            ? out_dir_ + (inp.out_stru == 1 ? "STRU" : "STRU.cif")
+            : out_dir_ + "STRU" + std::to_string(istep + 1) + (inp.out_stru == 1 ? "" : ".cif");
         relax_stru_io::write_stru(ucell,
                                   inp,
                                   step_file,
@@ -278,7 +289,8 @@ void Relax_Driver::stru_out(const int istep,
                                   need_orb,
                                   deepks_setorb_,
                                   my_rank_,
-                                  inp.cal_force);
+                                  inp.cal_force,
+                                  append_stru);
     }
 }
 
@@ -322,6 +334,8 @@ void Relax_Driver::final_out(const int istep,
     // 1: write STRU_FINAL; 2: write STRU_FINAL.cif
     if (stru_effective && (inp.out_stru == 1 || inp.out_stru == 2))
     {
+        // Mode-2 STRUC/ subdirectory is created lazily at write time.
+        ModuleBase::ensure_directory(out_dir_);
         const std::string header = relax_stru_io::build_stru_header(istep, etot, stress, inp, true, geometry_evaluated);
         const bool need_orb = relax_stru_io::need_orbital(inp);
         const std::string final_file = out_dir_ + (inp.out_stru == 1 ? "STRU_FINAL" : "STRU_FINAL.cif");
@@ -336,7 +350,8 @@ void Relax_Driver::final_out(const int istep,
                                   need_orb,
                                   deepks_setorb_,
                                   my_rank_,
-                                  write_force);
+                                  write_force,
+                                  false);
     }
 
     if (stop_reason == RelaxStopReason::MaxSteps)
