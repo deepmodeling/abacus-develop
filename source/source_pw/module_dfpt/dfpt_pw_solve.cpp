@@ -445,8 +445,8 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir)
         // default iteration trace (GS-SCF style); the DFPT_DEBUG snapshots
         // above stay opt-in diagnostics. Formatting goes through a local
         // buffer so the stream flags/precision are never disturbed for
-        // the surrounding output (#8164 review: setprecision pollution
-        // degraded the DBG snapshots of the next iteration)
+        // the surrounding output (setprecision pollution degraded the
+        // DBG snapshots of the next iteration)
         {
             std::ostringstream trace;
             trace << "  DFPT mix iter=" << std::setw(3) << std::right << iter + 1 << "/" << max_iter_ << " residual="
