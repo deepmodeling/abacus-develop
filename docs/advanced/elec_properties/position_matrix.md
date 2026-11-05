@@ -1,12 +1,12 @@
 # Extracting Position Matrices
 
-In ABACUS, we provide the INPUT keyword [out_mat_r](../input_files/input-main.md#out_mat_r) to write the position matrices into a file named `data-rR-tr` in the directory `OUT.${suffix}`. The position matrices is defined as:
+In ABACUS, we provide the INPUT keyword [out_mat_r](../input_files/input-main.md#out_mat_r) to write the position matrices into a single file in the directory `OUT.${suffix}` (named `rr_nao.txt` when [out_app_flag](../input_files/input-main.md#out_app_flag) is 0 or 1, and `MAT/rrg${step}_nao.txt` when out_app_flag is 2, where `${step}` is the one-based ionic-step index). The position matrices is defined as:
 
 $$\langle \chi_\mu|\hat{r}|\chi_\nu\rangle$$
 
 This functionality is not available for gamma_only calculations. If you want to use it in gamma_only calculations, you should turn off [gamma_only](../input_files/input-main.md#gamma_only), and explicitly specifies that gamma point is the only k point in the KPT file.
 
-Each file or each section of the appended file starts with "STEP: " followed by the current ion/md step, then the second line starts with "Matrix Dimension of $r(R)$: " followed by the dimension of the matrix, and the third line starts with "Matrix number of $r(R)$: " followed by the matrix number. The rest of the format is arranged into blocks, such as:
+Each file or each section of the appended file starts with "Ionic_Step " followed by the one-based current ion/md step, then the second line starts with "Matrix Dimension of $r(R)$: " followed by the dimension of the matrix, and the third line starts with "Matrix number of $r(R)$: " followed by the matrix number. The rest of the format is arranged into blocks, such as:
 
 ```
 -5 -5 -5    //R (lattice vector)

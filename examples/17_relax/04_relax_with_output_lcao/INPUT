@@ -40,10 +40,11 @@ out_dmr              1    # MAT/dmrs{spin}g{step}_nao.csr
 out_hsk              1    # MAT/hk{ki}s{spin}g{step}_nao.txt, sk{ki}g{step}_nao.txt
 out_hsr              1    # MAT/hrs{spin}g{step}_nao.csr, srg{step}_nao.csr
 out_mat_l            1    # MAT/lxg{step}_nao.txt, lyg{step}_nao.txt, lzg{step}_nao.txt
-out_mat_r            1    # MAT/rxrs{spin}g{step}_nao.csr, ryrs{spin}..., rzrs{spin}...
+out_mat_r            1    # MAT/rrg{step}_nao.txt (single file, x/y/z components; mode 0/1 → rr_nao.txt in OUT.${suffix})
 out_mat_t            1    # MAT/trs{spin}g{step}_nao.csr
 out_mat_ds           1    # MAT/dsxrs{spin}g{step}_nao.csr, dsyr..., dsrz...
 out_mat_tk           1    # MAT/tk{ki}s{spin}g{step}_nao.txt (T(k), newer name; legacy out_mat_h_t 别名同此)
+
 out_mat_h_t          1    # MAT/tk{ki}s{spin}g{step}_nao.txt (legacy alias of out_mat_tk)
 out_mat_h_vnl        1    # MAT/vnlk{ki}s{spin}g{step}_nao.txt
 out_mat_h_vl         1    # MAT/vlk{ki}s{spin}g{step}_nao.txt

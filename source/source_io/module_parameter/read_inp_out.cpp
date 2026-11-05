@@ -769,7 +769,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.annotation = "output r(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. The optional second parameter controls text output precision. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md."
+        item.description = "Whether to print the matrix representation of the position matrix into a single file. With out_app_flag = 0 or 1 the file is OUT.${suffix}/rr_nao.txt (mode 0 overwrites it at every write, mode 1 appends one record per written ionic step); with out_app_flag = 2 the file is MAT/rrg${step}_nao.txt, where ${step} is the one-based ionic-step index. Each R block stores the x, y and z components. The optional second parameter controls text output precision. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-rR-sparse.csr.";
         item.default_value = "False 8";
         item.unit = "Bohr";
