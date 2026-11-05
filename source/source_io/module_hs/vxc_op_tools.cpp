@@ -140,7 +140,7 @@ std::string build_eband_header(const int istep,
 {
     const int istep_one_based = istep + 1;
     const std::string step_lines = FmtCore::format(
-        "# RELAX STEP %d, Energy: %.8f eV\n"
+        "# Ionic_Step %d, Energy: %.8f eV\n"
         "# e_{ikn} = <psi_{ikn} | %s | psi_{ikn}> in the KS orbital basis\n"
         "# units: columns are e/2 in Hartree and e in eV; data rows follow nk, nspin0, nbands\n",
         istep_one_based,

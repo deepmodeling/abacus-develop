@@ -61,7 +61,7 @@ void write_dmr_csr(std::string& fname,
     }
 
 
-    ofs << " --- Ionic Step " << istep+1 << " ---" << std::endl;
+    ofs << " --- Ionic_Step " << istep+1 << " ---" << std::endl;
     ofs << " # print density matrix in real space DM(R)" << std::endl;
     ofs << " " << nspin << " # number of spin directions" << std::endl;
     ofs << " " << ispin+1 << " # spin index" << std::endl;

@@ -187,14 +187,14 @@ TEST_F(PrintInfoTest, PrintScreen)
 				testing::internal::CaptureStdout();
                 ModuleIO::print_screen(stress_step, force_step, istep);
                 output = testing::internal::GetCapturedStdout();
-				EXPECT_THAT(output,testing::HasSubstr("RELAX STEP"));
+				EXPECT_THAT(output,testing::HasSubstr("Ionic_Step"));
 			}
 			else if(TestParameters::input().calculation=="cell-relax")
 			{
 				testing::internal::CaptureStdout();
                 ModuleIO::print_screen(stress_step, force_step, istep);
                 output = testing::internal::GetCapturedStdout();
-				EXPECT_THAT(output,testing::HasSubstr("RELAX STEP"));
+				EXPECT_THAT(output,testing::HasSubstr("Ionic_Step"));
 			EXPECT_THAT(output,testing::HasSubstr("CELL#"));
 			EXPECT_THAT(output,testing::HasSubstr("IONS#"));
 			}

@@ -40,7 +40,7 @@ TEST(RelaxStruIO, HeaderContainsVersionAndStep)
     const Input_para inp = fully_evaluated_inp();
     const std::string header = relax_stru_io::build_stru_header(0, 1.0, identity_stress(), inp, false, true);
     EXPECT_THAT(header, HasSubstr("# ABACUS version:"));
-    EXPECT_THAT(header, HasSubstr("# RELAX STEP 1,"));
+    EXPECT_THAT(header, HasSubstr("# Ionic_Step 1,"));
     EXPECT_THAT(header, Not(HasSubstr("(FINAL)")));
 }
 
@@ -48,7 +48,7 @@ TEST(RelaxStruIO, HeaderFinalStepLabel)
 {
     const Input_para inp = fully_evaluated_inp();
     const std::string header = relax_stru_io::build_stru_header(4, 1.0, identity_stress(), inp, true, true);
-    EXPECT_THAT(header, HasSubstr("# RELAX STEP 5 (FINAL),"));
+    EXPECT_THAT(header, HasSubstr("# Ionic_Step 5 (FINAL),"));
 }
 
 TEST(RelaxStruIO, HeaderConvertsEnergyToEv)
@@ -150,7 +150,7 @@ TEST_F(HeaderBehaviorTest, CalForceStressTrue)
     ASSERT_EQ(lines.size(), 7u);
     EXPECT_THAT(lines[0], testing::HasSubstr("# ABACUS version:"));
     EXPECT_THAT(lines[1], testing::HasSubstr("# Written at"));
-    EXPECT_THAT(lines[2], testing::HasSubstr("# RELAX STEP 1, Energy:"));
+    EXPECT_THAT(lines[2], testing::HasSubstr("# Ionic_Step 1, Energy:"));
     EXPECT_THAT(lines[3], testing::HasSubstr("# Stress (kbar): "));
     EXPECT_THAT(lines[4], testing::HasSubstr("# Stress (kbar): "));
     EXPECT_THAT(lines[5], testing::HasSubstr("# Stress (kbar): "));
@@ -211,7 +211,7 @@ TEST_F(HeaderBehaviorTest, FinalStep)
     const auto lines = split_lines(header);
 
     ASSERT_EQ(lines.size(), 7u);
-    EXPECT_THAT(lines[2], testing::HasSubstr("# RELAX STEP 5 (FINAL), Energy:"));
+    EXPECT_THAT(lines[2], testing::HasSubstr("# Ionic_Step 5 (FINAL), Energy:"));
 }
 
 TEST_F(HeaderBehaviorTest, GeometryNotEvaluated)
