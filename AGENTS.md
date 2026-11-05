@@ -79,12 +79,10 @@ rules. Read the complete governance document before making or reviewing changes:
       guards and `#ifdef`/`#ifndef` usages of existing macros are exempt.
   21. Do not initialize member variables from `PARAM` in `.h`/`.hpp`
       files; pass the value through the constructor or a setter instead.
-  22. Use Autotest cases (`INPUT`/`STRU`/`KPT`, `result.ref`, `CASES_*.txt`,
-      `Autotest.sh`) for integration tests. Standalone `add_test()` drivers
-      are allowed only for checks Autotest cannot express; explain the need
-      in the PR. Keep drivers in `tests/integrate/validation_tools/` with
-      dedicated fixtures and an optional interpreter. Follow "Integration
-      Test Drivers" in the governance document; Autotest helpers are unaffected.
+  22. Use Autotest cases for integration tests. Standalone `add_test()` drivers
+      require a check Autotest cannot express, a PR rationale, and compliance
+      with "Integration Test Drivers" in the governance document. Autotest
+      helpers are unaffected.
 - Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
 - Keep source file additions deterministic: update the relevant `CMakeLists.txt`
   or explain why the file is generated or included indirectly.

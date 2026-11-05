@@ -182,28 +182,21 @@ changed and the PR explains why the new reference is correct.
 
 ## Integration Test Drivers
 
-Integration tests use Autotest cases under a suite such as `tests/01_PW/`:
-dedicated `INPUT`, `STRU`, `KPT` (when needed), and `result.ref`, listed in the
-suite's `CASES_*.txt` and run by `Autotest.sh` through its existing CTest entry.
-This keeps inputs and references together and gives reviewers one way to find
-and rerun cases. Helpers called by Autotest, such as `CompareFile.py`, are unaffected.
+Use Autotest cases with `INPUT`, `STRU`, `KPT` (when needed) and `result.ref`,
+listed in `CASES_*.txt` and run by `Autotest.sh` through the suite's CTest entry.
+Autotest helpers are unaffected.
 
-Standalone `add_test()` drivers that launch ABACUS are allowed only when
-Autotest cannot express the check (e.g., expected nonzero exits or per-rank
-stderr). Keep Autotest-compatible checks in cases and explain the remaining
-need in the PR. For a justified driver:
+Standalone `add_test()` drivers that launch ABACUS require a check Autotest
+cannot express (e.g., nonzero exits or per-rank stderr) and a PR rationale.
+Keep Autotest-compatible checks in cases. Drivers must:
 
-- Put scripts in `tests/integrate/validation_tools/` with descriptive names
+- Live in `tests/integrate/validation_tools/` with descriptive names
   (e.g., `check_<feature>.py`); reserve `test_*.py` for tool unit tests.
-- Use dedicated fixtures; do not rewrite another case's `INPUT` by string
-  replacement at run time.
-- Make the interpreter optional with `find_program(... python3)` and `if()`;
-  do not use `find_package(Python3 ... REQUIRED)`, so test configuration still
-  succeeds without Python.
-- For MPI, forward `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS`, and
+- Use dedicated fixtures; never rewrite another case's `INPUT` at run time.
+- Use `find_program` plus `if()` for optional interpreters; never `REQUIRED`.
+- For MPI, forward `MPIEXEC_NUMPROC_FLAG`, `MPIEXEC_PREFLAGS` and
   `MPIEXEC_POSTFLAGS`; set CTest `PROCESSORS` to the launched rank count.
-- Set `OMP_NUM_THREADS=1`, use a temporary scratch directory, and set CTest
-  `TIMEOUT`.
+- Set `OMP_NUM_THREADS=1`, use temporary scratch space and a CTest `TIMEOUT`.
 
 ## CLI Verification
 
