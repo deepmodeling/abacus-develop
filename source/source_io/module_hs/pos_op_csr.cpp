@@ -48,7 +48,7 @@ void assemble_csr(const std::string& output_filename,
     }
     else
     {
-        out_r << "STEP: " << step << std::endl;
+        out_r << "Ionic_Step " << step << std::endl;
         out_r << "Matrix Dimension of r(R): " << nlocal << std::endl;
         out_r << "Matrix number of r(R): " << output_R_number << std::endl;
     }

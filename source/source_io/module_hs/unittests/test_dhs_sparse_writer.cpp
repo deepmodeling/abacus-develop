@@ -45,7 +45,7 @@ TEST(DhsSparseWriter, TextCountsOnlyValuesAboveThreshold)
     const std::vector<std::string> lines = read_lines("dhrxs1_nao.csr");
     ASSERT_GE(lines.size(), 7);
     // istep = 5 is the sixth ionic step, printed one-based as 6
-    EXPECT_EQ(lines[0], "STEP: 6");
+    EXPECT_EQ(lines[0], "Ionic_Step 6");
     EXPECT_EQ(lines[1], "Matrix Dimension of dHx(R): 2");
     EXPECT_EQ(lines[2], "Matrix number of dHx(R): 1");
     EXPECT_EQ(lines[3], "0 0 0 2");
@@ -161,22 +161,22 @@ TEST(DhsSparseWriter, AppendModeReusesFixedFilename)
     ModuleIO::save_dH_sparse(0, pv, arrays, 1e-10, false, "s", 8, "./", "md", 1, 1, 2, ofs_running);
     const std::string first_frame = read_file("dsrxs1_nao.csr");
     ASSERT_FALSE(first_frame.empty());
-    EXPECT_EQ(count_substr(first_frame, "STEP: "), 1);
-    EXPECT_EQ(count_substr(first_frame, "STEP: 1"), 1);
+    EXPECT_EQ(count_substr(first_frame, "Ionic_Step "), 1);
+    EXPECT_EQ(count_substr(first_frame, "Ionic_Step 1"), 1);
 
     // The next ionic step appends a second frame to the same file.
     ModuleIO::save_dH_sparse(1, pv, arrays, 1e-10, false, "s", 8, "./", "md", 1, 1, 2, ofs_running);
     const std::string two_frames = read_file("dsrxs1_nao.csr");
-    EXPECT_EQ(count_substr(two_frames, "STEP: "), 2);
-    EXPECT_EQ(count_substr(two_frames, "STEP: 1"), 1);
-    EXPECT_EQ(count_substr(two_frames, "STEP: 2"), 1);
+    EXPECT_EQ(count_substr(two_frames, "Ionic_Step "), 2);
+    EXPECT_EQ(count_substr(two_frames, "Ionic_Step 1"), 1);
+    EXPECT_EQ(count_substr(two_frames, "Ionic_Step 2"), 1);
 
     // Mode 2 keeps one suffixed file per ionic step and never appends; mode 0
     // overwrites the fixed filename instead.
     ModuleIO::save_dH_sparse(0, pv, arrays, 1e-10, false, "s", 8, "./", "md", 2, 1, 2, ofs_running);
     const std::vector<std::string> mode2_lines = read_lines("dsrxs1g1_nao.csr");
     ASSERT_FALSE(mode2_lines.empty());
-    EXPECT_EQ(mode2_lines[0], "STEP: 1");
+    EXPECT_EQ(mode2_lines[0], "Ionic_Step 1");
 
     remove_derivative_files("s");
     remove_derivative_files("s", 0);

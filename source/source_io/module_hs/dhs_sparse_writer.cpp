@@ -175,7 +175,7 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 }
                 else
                 {
-                    comp.ofs[ispin] << "STEP: " << header_step << std::endl;
+                    comp.ofs[ispin] << "Ionic_Step " << header_step << std::endl;
                     comp.ofs[ispin] << "Matrix Dimension of " << label << "(R): " << nlocal << std::endl;
                     comp.ofs[ispin] << "Matrix number of " << label << "(R): " << output_R_number << std::endl;
                 }
