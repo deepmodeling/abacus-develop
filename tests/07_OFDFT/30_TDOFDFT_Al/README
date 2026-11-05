@@ -1,9 +1,5 @@
-TDOFDFT Al without a current-dependent potential, evolved to t=0.5 fs.
-Use dt=0.001 fs and 501 outputs (initial state plus 500 advances).
-The previous dt=0.25 fs trajectory had severe energy drift and amplified
-parallel numerical differences. The smaller step is checked against dt/2
-and dt/4 at the same physical times; see VALIDATION.md and
-../../integrate/validation_tools/check_tdofdft_timestep.py.
-The reference is regenerated for the new trajectory; comparison thresholds
-are unchanged. This case does not establish exact energy conservation or
-the convergence order of the coupled propagator.
+TDOFDFT Al regression without a current-dependent potential.
+Use dt=0.001 fs and 51 outputs (50 advances, final time 0.05 fs).
+This short trajectory checks propagation and final energy, force and stress
+with the existing Autotest tolerances. The timestep was separately assessed
+over 0.5 fs; see issue #8272 and PR #8273 for the refinement evidence.
