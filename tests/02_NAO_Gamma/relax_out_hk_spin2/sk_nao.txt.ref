@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------
-# ionic step 1
+# Ionic_Step 1
 # filename OUT.autotest/sk_nao.txt
 # gamma only 1
 # rows 8
@@ -22,7 +22,7 @@ Row 7
 Row 8
  1.16565e+00
 #------------------------------------------------------------------------
-# ionic step 2
+# Ionic_Step 2
 # filename OUT.autotest/sk_nao.txt
 # gamma only 1
 # rows 8

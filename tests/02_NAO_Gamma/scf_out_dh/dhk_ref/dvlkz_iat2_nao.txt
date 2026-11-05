@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------
-# ionic step 1
+# Ionic_Step 1
 # filename OUT.autotest/dvlkz_iat2_nao.txt
 # gamma only 0
 # rows 10
