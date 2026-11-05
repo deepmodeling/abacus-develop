@@ -1,11 +1,11 @@
 #ifndef ABACUS_LR_STATE_TRACK_H
 #define ABACUS_LR_STATE_TRACK_H
-#include "source_base/block_cyclic_distribution_information.h"
 #include "source_base/matrix3.h"
 #include <vector>
 #include <ostream>
 class UnitCell;
 class Parallel_Orbitals;
+class BlockCyclicDistributionInformation;
 class TwoCenterIntegrator;
 namespace base_device
 {

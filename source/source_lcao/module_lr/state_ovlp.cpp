@@ -120,10 +120,10 @@ std::vector<double> cross_ao_overlap(const UnitCell& cell,
     const std::complex<double> zero(0.0, 0.0);
     std::vector<std::complex<double>> local_overlap(local_count, zero);
     const ModuleBase::Vector3<double> gamma(0.0, 0.0, 0.0);
-    const int leading_dimension = pmat.para_2d().nrloc();
+    const int ld = pmat.para_2d().nrloc();
     if (local_count > 0)
     {
-        hamilt::folding_HR(overlap_r, local_overlap.data(), gamma, leading_dimension, 1);
+        hamilt::folding_HR(overlap_r, local_overlap.data(), gamma, ld, 1);
     }
     std::vector<double> overlap(local_count, 0.0);
     for (int index = 0; index < local_count; ++index)

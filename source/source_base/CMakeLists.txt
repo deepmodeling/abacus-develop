@@ -101,6 +101,14 @@ if(BUILD_TESTING)
     SOURCES test/test_distributed_ndarray.cpp
   )
   if(ENABLE_MPI)
+    add_test(
+      NAME MODULE_BASE_block_cyclic_distribution_information_mpi
+      COMMAND
+        ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
+        ${MPIEXEC_PREFLAGS}
+        $<TARGET_FILE:MODULE_BASE_block_cyclic_distribution_information>
+        ${MPIEXEC_POSTFLAGS}
+    )
     add_subdirectory(test)
     add_subdirectory(test_parallel)
     add_subdirectory(kernels/test)

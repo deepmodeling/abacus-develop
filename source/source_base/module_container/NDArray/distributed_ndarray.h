@@ -31,11 +31,11 @@ class DistributedNDArray
   public:
     DistributedNDArray(std::shared_ptr<const BlockCyclicDistributionInformation> distribution,
                        StorageMajorOrder major_order,
-                       int leading_dimension)
+                       int ld)
         : distribution_(distribution),
           local_block_(1, 1),
           major_order_(major_order),
-          leading_dimension_(leading_dimension)
+          ld_(ld)
     {
         assert(distribution_ != nullptr);
 
@@ -44,25 +44,29 @@ class DistributedNDArray
         assert(nrloc >= 0);
         assert(ncloc >= 0);
 
-        const int minimum_leading_dimension = nrloc > 1 ? nrloc : 1;
-        assert(leading_dimension_ == minimum_leading_dimension);
+        const int local_extent
+            = major_order_ == StorageMajorOrder::ColumnMajor ? nrloc : ncloc;
+        const int minimum_ld = local_extent > 1 ? local_extent : 1;
+        assert(ld_ == minimum_ld);
 
 #ifdef __MPI
-        const int* const descriptor = distribution_->desc();
-        assert(descriptor != nullptr);
-        assert(leading_dimension_
-               == descriptor[distributed_ndarray_detail::DESCRIPTOR_LEADING_DIM_INDEX]);
+        if (!distribution_->is_serial())
+        {
+            const int* const descriptor = distribution_->desc();
+            assert(descriptor != nullptr);
+            const int descriptor_ld
+                = descriptor[distributed_ndarray_detail::DESCRIPTOR_LEADING_DIM_INDEX];
+            const int expected_descriptor_ld = nrloc > 1 ? nrloc : 1;
+            assert(descriptor_ld == expected_descriptor_ld);
+        }
 #endif
 
-        int nrstore = leading_dimension_;
+        int nrstore = ld_;
         int ncstore = ncloc;
         if (major_order_ == StorageMajorOrder::RowMajor)
         {
             nrstore = nrloc;
-            if (ncstore < leading_dimension_)
-            {
-                ncstore = leading_dimension_;
-            }
+            ncstore = ld_;
         }
 
         NDArray<T> local_block(nrstore, ncstore);
@@ -80,7 +84,7 @@ class DistributedNDArray
         : distribution_(std::move(other.distribution_)),
           local_block_(std::move(other.local_block_)),
           major_order_(other.major_order_),
-          leading_dimension_(other.leading_dimension_)
+          ld_(other.ld_)
     {
     }
 
@@ -91,7 +95,7 @@ class DistributedNDArray
             distribution_ = std::move(other.distribution_);
             local_block_ = std::move(other.local_block_);
             major_order_ = other.major_order_;
-            leading_dimension_ = other.leading_dimension_;
+            ld_ = other.ld_;
         }
         return *this;
     }
@@ -106,11 +110,11 @@ class DistributedNDArray
         std::ptrdiff_t flat_index = 0;
         if (major_order_ == StorageMajorOrder::ColumnMajor)
         {
-            flat_index = static_cast<std::ptrdiff_t>(local_col) * leading_dimension_ + local_row;
+            flat_index = static_cast<std::ptrdiff_t>(local_col) * ld_ + local_row;
         }
         else
         {
-            flat_index = static_cast<std::ptrdiff_t>(local_row) * leading_dimension_ + local_col;
+            flat_index = static_cast<std::ptrdiff_t>(local_row) * ld_ + local_col;
         }
 
         assert(flat_index >= 0);
@@ -129,11 +133,11 @@ class DistributedNDArray
         std::ptrdiff_t flat_index = 0;
         if (major_order_ == StorageMajorOrder::ColumnMajor)
         {
-            flat_index = static_cast<std::ptrdiff_t>(local_col) * leading_dimension_ + local_row;
+            flat_index = static_cast<std::ptrdiff_t>(local_col) * ld_ + local_row;
         }
         else
         {
-            flat_index = static_cast<std::ptrdiff_t>(local_row) * leading_dimension_ + local_col;
+            flat_index = static_cast<std::ptrdiff_t>(local_row) * ld_ + local_col;
         }
 
         assert(flat_index >= 0);
@@ -186,8 +190,7 @@ class DistributedNDArray
         return distribution_->in_this_processor(global_row, global_col);
     }
 
-    /// Returns the local block beginning. Its leading dimension is
-    /// leading_dimension().
+    /// Returns the local block beginning. Its leading dimension is ld().
     T* data()
     {
         return local_block_.data();
@@ -218,9 +221,9 @@ class DistributedNDArray
         return major_order_;
     }
 
-    int leading_dimension() const
+    int ld() const
     {
-        return leading_dimension_;
+        return ld_;
     }
 
     int nrloc() const
@@ -237,7 +240,7 @@ class DistributedNDArray
     std::shared_ptr<const BlockCyclicDistributionInformation> distribution_;
     NDArray<T> local_block_;
     StorageMajorOrder major_order_;
-    int leading_dimension_ = 0;
+    int ld_ = 0;
 };
 
 #endif // ABACUS_SOURCE_SOURCE_BASE_MODULE_CONTAINER_NDARRAY_DISTRIBUTED_NDARRAY_H

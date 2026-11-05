@@ -13,8 +13,8 @@ template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::set_parallel_orbitals_band(Parallel_Orbitals& pmat, const int nbands_in)
 {
 #ifdef __MPI
-    const int leading_dimension = std::max(pmat.para_2d().nrloc(), 1);
-    pmat.set_desc_wfc_Eij(this->nbasis, nbands_in, leading_dimension);
+    const int ld = std::max(pmat.para_2d().nrloc(), 1);
+    pmat.set_desc_wfc_Eij(this->nbasis, nbands_in, ld);
     // The KS helper rejects empty band columns. LR windows may legitimately
     // have fewer blocks than the inherited KS process grid has columns.
     BlockCyclicDistributionInformation bands;
