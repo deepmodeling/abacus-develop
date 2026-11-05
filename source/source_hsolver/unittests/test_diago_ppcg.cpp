@@ -13,6 +13,7 @@
  */
 
 #include "../diago_ppcg.h"
+#include "source_base/timer.h"
 #ifdef __MPI
 #include "source_basis/module_pw/test/test_tool.h"
 #endif
@@ -928,7 +929,6 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
     const std::string old_env_value = had_old_env ? old_env : "";
     const std::string trace_path = testing::TempDir() + "./ppcg_residual_trace_test.csv";
     std::remove(trace_path.c_str());
-    ASSERT_EQ(::setenv(env_name, trace_path.c_str(), 1), 0);
 
     std::vector<T> psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -943,7 +943,31 @@ TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
     };
 
     std::ostringstream running_log;
+    auto& residual_timer = ModuleBase::timer::timer_pool["DiagoPPCG"]["max_generalized_residual"];
+    const size_t before_disabled = residual_timer.calls;
+    ASSERT_EQ(::unsetenv(env_name), 0);
     solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log);
+    const size_t disabled_calls = residual_timer.calls - before_disabled;
+    EXPECT_TRUE(solver.converged());
+
+    // An unset variable and a failed open must both skip trace-only work.
+    // Opening the existing temporary directory fails without creating a file.
+    const std::string directory_path = testing::TempDir();
+    ASSERT_EQ(::setenv(env_name, directory_path.c_str(), 1), 0);
+    psi_run = psi;
+    const size_t before_failed_open = residual_timer.calls;
+    solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log);
+    const size_t failed_open_calls = residual_timer.calls - before_failed_open;
+    EXPECT_EQ(disabled_calls, failed_open_calls);
+    EXPECT_TRUE(solver.converged());
+    EXPECT_TRUE(running_log.str().empty());
+
+    ASSERT_EQ(::setenv(env_name, trace_path.c_str(), 1), 0);
+    psi_run = psi;
+    const size_t before_enabled = residual_timer.calls;
+    solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data(), running_log);
+    const size_t enabled_calls = residual_timer.calls - before_enabled;
+    EXPECT_GT(enabled_calls, disabled_calls);
 
     if (had_old_env)
     {

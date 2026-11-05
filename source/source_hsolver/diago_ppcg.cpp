@@ -90,6 +90,7 @@ Real max_generalized_residual(
     int n_dim,
     int ncol)
 {
+    const PPCGFunctionTimer timer("max_generalized_residual");
     Real max_res = 0;
     std::vector<double> nrm2_all(ncol, 0.0);
 #ifdef _OPENMP
@@ -2058,10 +2059,10 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             residual_trace << ",local_overlap_min,local_overlap_max,local_overlap_condition\n";
         }
     }
-    int residual_trace_writer_count = residual_trace ? 1 : 0;
+    const bool write_residual_trace = residual_trace.is_open() && residual_trace.good();
+    int residual_trace_writer_count = write_residual_trace ? 1 : 0;
     reduce_pool_values(&residual_trace_writer_count, 1);
     const bool residual_trace_enabled = residual_trace_writer_count > 0;
-    const bool write_residual_trace = bool(residual_trace);
     Real local_overlap_min = std::numeric_limits<Real>::quiet_NaN();
     Real local_overlap_max = std::numeric_limits<Real>::quiet_NaN();
     Real local_overlap_condition = std::numeric_limits<Real>::quiet_NaN();
